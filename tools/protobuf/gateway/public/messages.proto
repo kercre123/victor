@@ -104,11 +104,17 @@ message ListAnimationsResponse {
 // See DisplayFaceImageRGB rpc for more details.
 message DisplayFaceImageRGBRequest {
   // The image to render.
-  bytes face_data = 1;
+  bytes face_data        = 1;
   // How long to display the image on the face.
-  uint32 duration_ms = 2;
+  uint32 duration_ms     = 2;
   // If this image should overwrite any current images on the face.
   bool interrupt_running = 3;
+  // Ignored for SDK applications
+  uint32 chunk_index     = 4;
+  // Ignored for SDK applications  
+  uint32 num_chunks      = 5;
+  // Ignored for SDK applications
+  uint32 num_pixels      = 6;
 }
 
 // See DisplayFaceImageRGB rpc for more details.

@@ -268,6 +268,10 @@ message GatewayWrapper {
     DeleteCustomObjectsResponse     delete_custom_objects_response      = 1753;
     DefineCustomObjectRequest       define_custom_object_request        = 1754;
     DefineCustomObjectResponse      define_custom_object_response       = 1755;
+
+    // ------------ Image Chunks, sent to bot for screen display -------
+    DisplayFaceImageRGBRequest      display_face_image_rgb_request      = 1800;
+    DisplayFaceImageRGBResponse     display_face_image_rgb_response     = 1801;
     
     // ------------ Facial Registration -------------------------
     RequestEnrolledNamesRequest   request_enrolled_names_request     = 2000;

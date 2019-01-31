@@ -11,6 +11,9 @@
  * Copyright: Anki, Inc. 2018
  **/
 
+#include <thread>
+#include <sstream>
+
 #include "protoCladInterpreter.h"
 
 #include "util/logging/logging.h"
@@ -56,16 +59,14 @@ void ProtoCladInterpreter::HandleEvents(const AnkiEvent<external_interface::Gate
 bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & proto_message) {
   
   ExternalInterface::MessageGameToEngine clad_message;
-
   /*
   auto od = proto_message.GetMetadata().descriptor->FindOneofByName("oneof_message_type");
-  LOG_WARNING("proto_clad_interpreter", "ProtoCladInterpreter::Redirect((%d, %s, %s, %s)=>clad)", 
+  LOG_WARNING("proto_clad_interpreter", "========ProtoCladInterpreter::Redirect((%d, %s, %s, %s)=>clad)", 
       proto_message.oneof_message_type_case(),
       proto_message.GetMetadata().reflection->GetOneofFieldDescriptor(proto_message, od)->name().c_str(),
       proto_message.GetMetadata().descriptor->full_name().c_str(),
       MessageGameToEngineTagToString(clad_message.GetTag()));
   */
-
   switch(proto_message.oneof_message_type_case()) {
     case external_interface::GatewayWrapper::kDriveWheelsRequest:
     {
@@ -120,6 +121,11 @@ bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & p
     case external_interface::GatewayWrapper::kNavMapFeedRequest:
     {
       ProtoNavMapFeedRequestToClad(proto_message, clad_message);
+      break;
+    }
+    case external_interface::GatewayWrapper::kDisplayFaceImageRgbRequest:
+    {
+      ProtoDisplayFaceImageRgbRequestToClad(proto_message, clad_message);
       break;
     }
     default:
@@ -191,11 +197,11 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageGameToEngine
   
   external_interface::GatewayWrapper proto_message;
 
-  /*
+  
   LOG_WARNING("proto_clad_interpreter", "Redirect(MG2E(%d, %s))=>proto", 
       (int)message.GetTag(),
       MessageGameToEngineTagToString(message.GetTag()));
-  */
+  
 //  ____ _____ ___  ____  _
 // / ___|_   _/ _ \|  _ \| |
 // \___ \ | || | | | |_) | | If you're thinking about processing messages here, you're probably doing
@@ -410,6 +416,28 @@ void ProtoCladInterpreter::ProtoNavMapFeedRequestToClad(
   clad_message.Set_SetMemoryMapBroadcastFrequency_sec(memory_map_broadcast_frequency_sec);
 }
 
+void ProtoCladInterpreter::ProtoDisplayFaceImageRgbRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+  
+  ExternalInterface::DisplayFaceImageRGBChunk display_face_image_rgb_chunk;
+
+  display_face_image_rgb_chunk.chunkIndex = proto_message.display_face_image_rgb_request().chunk_index();
+  display_face_image_rgb_chunk.numChunks = proto_message.display_face_image_rgb_request().num_chunks();
+  display_face_image_rgb_chunk.interruptRunning = proto_message.display_face_image_rgb_request().interrupt_running();
+  display_face_image_rgb_chunk.duration_ms = proto_message.display_face_image_rgb_request().duration_ms();
+  display_face_image_rgb_chunk.numPixels = proto_message.display_face_image_rgb_request().num_pixels();
+
+  const unsigned short* raw_face_data = 
+      (unsigned short*)(proto_message.display_face_image_rgb_request().face_data().c_str());
+  for (int i=0; i<display_face_image_rgb_chunk.numPixels; i++) {
+    unsigned short s = raw_face_data[i];
+    //Endian swap:
+    display_face_image_rgb_chunk.faceData[i] = ((s&0xff00)>>8)|((s&0x00ff)<<8);
+  }
+
+  clad_message.Set_DisplayFaceImageRGBChunk(display_face_image_rgb_chunk);
+}
 
 //
 // Clad-to-Proto interpreters

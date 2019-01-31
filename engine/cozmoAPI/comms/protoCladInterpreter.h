@@ -30,6 +30,10 @@ class ProtoCladInterpreter {
 public:
   ProtoCladInterpreter(CozmoContext* cozmo_context);
 
+  static bool print_warnings; 
+
+  static void warn(const char * msg);
+
   void HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event);
 
   bool Redirect(const external_interface::GatewayWrapper& message);
@@ -134,6 +138,9 @@ private:
       const external_interface::GatewayWrapper& proto_message,
       ExternalInterface::MessageGameToEngine& clad_message);
 
+  void ProtoDisplayFaceImageRgbRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
 
   //
   // Clad-to-Proto interpreters

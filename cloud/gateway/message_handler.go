@@ -1,7 +1,6 @@
 package main
 
 import (
-	"encoding/binary"
 	"io/ioutil"
 	"os"
 	"os/exec"
@@ -28,22 +27,6 @@ var (
 	connectionIdLock sync.Mutex
 	connectionId     string
 )
-
-// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func FaceImageChunkToClad(faceData [faceImagePixelsPerChunk]uint16, pixelCount uint16, chunkIndex uint8, chunkCount uint8, durationMs uint32, interruptRunning bool) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithDisplayFaceImageRGBChunk(&gw_clad.DisplayFaceImageRGBChunk{
-		FaceData:         faceData,
-		NumPixels:        pixelCount,
-		ChunkIndex:       chunkIndex,
-		NumChunks:        chunkCount,
-		DurationMs:       durationMs,
-		InterruptRunning: interruptRunning,
-	})
-}
-
-func ProtoRequestEnrolledNamesToClad(msg *extint.RequestEnrolledNamesRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithRequestEnrolledNames(&gw_clad.RequestEnrolledNames{})
-}
 
 func ProtoCancelFaceEnrollmentToClad(msg *extint.CancelFaceEnrollmentRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithCancelFaceEnrollment(&gw_clad.CancelFaceEnrollment{})
@@ -438,42 +421,44 @@ func (service *rpcService) MoveLift(ctx context.Context, in *extint.MoveLiftRequ
 	}, nil
 }
 
-func SendFaceDataAsChunks(in *extint.DisplayFaceImageRGBRequest, chunkCount int, pixelsPerChunk int, totalPixels int) error {
-	var convertedUint16Data [faceImagePixelsPerChunk]uint16
+func (service *rpcService) DisplayFaceImageRGB(ctx context.Context, in *extint.DisplayFaceImageRGBRequest) 
+     (*extint.DisplayFaceImageRGBResponse, error) {
+	// This was hard-coded in clad:
+	chunkSize := 600
 
-	// cycle until we run out of bytes to transfer
-	for i := 0; i < chunkCount; i++ {
-		pixelCount := faceImagePixelsPerChunk
-		if i == chunkCount-1 {
-			pixelCount = totalPixels - faceImagePixelsPerChunk*i
+	// len(in.FaceData) is a byte count. Pixel count is len()/2
+	numPixels := len(in.FaceData) / 2
+
+	numChunks := (numPixels + chunkSize - 1) / chunkSize
+	var chunkData []byte
+
+	for chunkIndex := 0; chunkIndex < numChunks; chunkIndex++ {
+		//600 pixels per chunk is 1200 bytes per chunk:
+		if chunkIndex == numChunks-1 {
+			chunkData = in.FaceData[chunkSize*chunkIndex*2:]
+		} else {
+			chunkData = in.FaceData[chunkSize*chunkIndex*2 : chunkSize*(chunkIndex*2+2)]
 		}
 
-		firstByte := (pixelsPerChunk * 2) * i
-		finalByte := firstByte + (pixelCount * 2)
-		slicedBinaryData := in.FaceData[firstByte:finalByte] // TODO: Make this not implode on empty
-
-		for j := 0; j < pixelCount; j++ {
-			uintAsBytes := slicedBinaryData[j*2 : j*2+2]
-			convertedUint16Data[j] = binary.BigEndian.Uint16(uintAsBytes)
+		message := &extint.GatewayWrapper{
+			OneofMessageType: &extint.GatewayWrapper_DisplayFaceImageRgbRequest{
+				DisplayFaceImageRgbRequest: &extint.DisplayFaceImageRGBRequest{
+					FaceData:         chunkData,
+					DurationMs:       in.DurationMs,
+					InterruptRunning: in.InterruptRunning,
+					ChunkIndex:       uint32(chunkIndex),
+					NumChunks:        uint32(numChunks),
+					NumPixels:        uint32(len(chunkData) / 2),
+				},
+			},
 		}
 
-		// Copy a subset of the pixels to the bytes?
-		message := FaceImageChunkToClad(convertedUint16Data, uint16(pixelCount), uint8(i), uint8(chunkCount), in.DurationMs, in.InterruptRunning)
-
-		_, err := engineCladManager.Write(message)
+		_, err := engineProtoManager.Write(message)
 		if err != nil {
-			return err
+			return nil, err
 		}
+		time.Sleep(20 * time.Millisecond)
 	}
-
-	return nil
-}
-
-func (service *rpcService) DisplayFaceImageRGB(ctx context.Context, in *extint.DisplayFaceImageRGBRequest) (*extint.DisplayFaceImageRGBResponse, error) {
-	const totalPixels = 17664
-	chunkCount := (totalPixels + faceImagePixelsPerChunk + 1) / faceImagePixelsPerChunk
-
-	SendFaceDataAsChunks(in, chunkCount, faceImagePixelsPerChunk, totalPixels)
 
 	return &extint.DisplayFaceImageRGBResponse{
 		Status: &extint.ResponseStatus{

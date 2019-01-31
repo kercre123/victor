@@ -8,14 +8,6 @@ message UiDeviceConnectionWrongVersion {
   string placeHolder,
 }
 
-message MoveHead {
-  float_32 speed_rad_per_sec,
-}
-
-message MoveLift {
-  float_32 speed_rad_per_sec,
-}
-
 // Sends a chunk of oled data, to be later displayed using DisplayFaceImageRGB
 message DisplayFaceImageRGBChunk {
     uint_16  faceData[600], // Splitting into chunks of 600 similar to the e2r layer
@@ -37,21 +29,12 @@ message DisplayFaceImageRGBChunk {
 // a union over the temporary webservice handler. This will need replacing once the
 // real app->engine channel is working
 //
-// Start Meet Victor
-message AppIntent {
-  string intent,
-  string param,
-}
 
 // CancelFaceEnrollment - Unsets face enrollment settings, meaning BehaviorEnrollFace will no
 //                        longer be activatable
 //
 // Cancels Meet Victor.
 message CancelFaceEnrollment {
-}
-
-// Request a list of names and IDs
-message RequestEnrolledNames {
 }
 
 // Rename given ID+oldName pair to use newName. For safety if current face with given ID
@@ -116,47 +99,15 @@ enum uint_8 AlignmentType {
   CUSTOM
 }
 
-// AlignWithObject
-// "Docks" to object so that it is aligned with it at the specified AligmentType or distance
-// If alignmentType is CUSTOM, distanceFromMarker_mm is used, otherwise distanceFromMarker_mm is ignored
-message AlignWithObject {
-    int_32 objectID,
-    PathMotionProfile motionProf,
-    float_32 distanceFromMarker_mm,
-    float_32 approachAngle_rad,
-    bool useApproachAngle,
-    bool usePreDockPose,
-    AlignmentType alignmentType
-}
-
-// SetLiftAngle
-message SetLiftAngle {
-    float_32 angle_rad,
-    float_32 max_speed_rad_per_sec,
-    float_32 accel_rad_per_sec2,
-    float_32 duration_sec
-}
-
-message SetMemoryMapBroadcastFrequency_sec {
-  float_32 frequency=-1.0  // If frequency is negative, don't send
-}
-
 // Note: these values and messages must match the values that get added to MessageGameToEngine
 union MessageExternalToRobot {
   UiDeviceConnectionWrongVersion UiDeviceConnectionWrongVersion = 0x00, // DO NOT CHANGE THIS VALUE
-  MoveHead                           MoveHead                           = 0x03,
-  MoveLift                           MoveLift                           = 0x04,
   DisplayFaceImageRGBChunk           DisplayFaceImageRGBChunk           = 0x08,
-  AppIntent                          AppIntent                          = 0x09,
   CancelFaceEnrollment               CancelFaceEnrollment               = 0x0A,
-  RequestEnrolledNames               RequestEnrolledNames               = 0x0B,
   UpdateEnrolledFaceByID             UpdateEnrolledFaceByID             = 0x0C,
   EraseEnrolledFaceByID              EraseEnrolledFaceByID              = 0x0D,
   EraseAllEnrolledFaces              EraseAllEnrolledFaces              = 0x0E,
   SetFaceToEnroll                    SetFaceToEnroll                    = 0x0F,
-  AlignWithObject                    AlignWithObject                    = 0x18,
-  SetLiftAngle                       SetLiftAngle                       = 0x19,
-  SetMemoryMapBroadcastFrequency_sec SetMemoryMapBroadcastFrequency_sec = 0x21,
 }
 
 } // Gateway

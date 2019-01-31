@@ -31,6 +31,8 @@ void RGB565ImageBuilder::AddDataChunk(const ChunkDataContainer& chunkData, uint1
   _chunkMask |= (1L << chunkIndex);
 
   const uint32_t offset = chunkIndex * PIXEL_COUNT_PER_CHUNK;
+  //TODO: I'd like to DEV_ASSERT, here, enforcing that we're not writing past the end of the allocated data...
+  //      It's not an easy bug to trace.
   std::copy(std::begin(chunkData), std::begin(chunkData) + numPixels, std::begin(_data) + offset);
 }
 
