@@ -727,7 +727,7 @@ namespace Anki {
             // UNEXPECTED_ROTATION_SPEED_THRESH is being used as a multipurpose margin here. Because GetCurrNoSlipBodyRotSpeed() is based
             // on filtered wheel speeds there's a little delay which permits measuredBodyRotSpeed to be a little faster than maxPossibleBodyRotSpeed.
             const f32 maxPossibleBodyRotSpeed = WheelController::GetCurrNoSlipBodyRotSpeed();
-            const f32 measuredBodyRotSpeed = IMUFilter::GetRotationSpeed();
+            const f32 measuredBodyRotSpeed = rotSpeed_;
             gyroZBasedMotionDetect = (((maxPossibleBodyRotSpeed > UNEXPECTED_ROTATION_SPEED_THRESH) &&
                                        ((measuredBodyRotSpeed < -UNEXPECTED_ROTATION_SPEED_THRESH) || (measuredBodyRotSpeed > maxPossibleBodyRotSpeed + UNEXPECTED_ROTATION_SPEED_THRESH))) ||
                                       ((maxPossibleBodyRotSpeed < -UNEXPECTED_ROTATION_SPEED_THRESH) &&
@@ -1166,9 +1166,9 @@ namespace Anki {
 
       f32 GetRotation()
       {
-        const float headAngle = HeadController::GetAngleRad();// - DEG_TO_RAD(2.f); // empirical testing shows this ~2 degrees off
+        // const float headAngle = HeadController::GetAngleRad();// - DEG_TO_RAD(2.f); // empirical testing shows this ~2 degrees off
 
-        const Rotation3d& rot = ukf_.GetRotation() * Rotation3d(headAngle, Y_AXIS_3D());
+        const Rotation3d& rot = ukf_.GetRotation() * Rotation3d(HeadController::GetAngleRad(), Y_AXIS_3D());
         const float yaw  = RAD_TO_DEG( rot.GetAngleAroundZaxis().ToFloat() );
         const float pit  = RAD_TO_DEG( rot.GetAngleAroundYaxis().ToFloat() );
         const float roll = RAD_TO_DEG( rot.GetAngleAroundXaxis().ToFloat() );
@@ -1183,22 +1183,26 @@ namespace Anki {
           printf("ukf eul: {Z %.2f, Y %.2f, X %.2f} old yaw: %.2f\n", yaw, pit, roll, RAD_TO_DEG(rot_.ToFloat()));
           i = 0;
         }
-        return DEG_TO_RAD(yaw);
+        
+        return rot.GetAngleAroundZaxis().ToFloat();
       }
 
       f32 GetRotationSpeed()
       {
-        return rotSpeed_;
+        const Point3f& vel = Rotation3d(HeadController::GetAngleRad(), Y_AXIS_3D()) * ukf_.GetRotationSpeed(); // rotate point by quaternion
+        return vel.z();
       }
 
       f32 GetPitch()
       {
-        return pitch_;
+        const Rotation3d& rot = ukf_.GetRotation() * Rotation3d(HeadController::GetAngleRad(), Y_AXIS_3D());
+        return rot.GetAngleAroundYaxis().ToFloat();;
       }
 
       f32 GetRoll()
       {
-        return roll_;
+        const Rotation3d& rot = ukf_.GetRotation() * Rotation3d(HeadController::GetAngleRad(), Y_AXIS_3D());
+        return rot.GetAngleAroundXaxis().ToFloat();;
       }
 
       bool IsPickedUp()
