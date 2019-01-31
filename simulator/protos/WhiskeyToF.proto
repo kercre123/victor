@@ -1,13 +1,10 @@
-PROTO WhiskeyToF_SideBySide [
+PROTO WhiskeyToF [
   field SFVec3f    translation 0 0 0
   field SFRotation rotation 0 0 1 0
 
   # 12.5 degree rotation
-  field SFVec3f    rightTranslation 0 0.008 0
-  field SFRotation rightRotation 1 0 0 -0.2094395102
-
-  field SFVec3f    leftTranslation 0 -0.008 0
-  field SFRotation leftRotation 1 0 0 0.2094395102
+  field SFVec3f    leftTranslation 0 0.008 0
+  field SFRotation leftRotation 1 0 0 -0.2094395102
 
   field SFFloat fov 0.3316
   field SFFloat minRange 0.0011
@@ -19,23 +16,6 @@ PROTO WhiskeyToF_SideBySide [
     rotation IS rotation
     
     children [
-      Transform {
-        rotation IS rightRotation
-        children [
-          RangeFinder {
-            name "rightRangeSensor"
-            translation IS rightTranslation
-            rotation 0 0 1 -1.5708046928
-            fieldOfView IS fov
-            width 4
-            height 4
-            near 0.001
-            minRange IS minRange
-            maxRange IS maxRange
-          }
-        ]
-      }
-
       Transform {
         rotation IS leftRotation
         children [

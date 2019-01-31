@@ -59,7 +59,6 @@
 #include <webots/Display.hpp>
 #include <webots/Gyro.hpp>
 #include <webots/DistanceSensor.hpp>
-#include <webots/RangeFinder.hpp>
 #include <webots/Accelerometer.hpp>
 #include <webots/Receiver.hpp>
 #include <webots/Connector.hpp>
@@ -135,7 +134,7 @@ namespace Anki {
       webots::Accelerometer* accel_;
 
       // Prox sensors
-      //webots::DistanceSensor *proxCenter_;
+      webots::DistanceSensor *proxCenter_;
       webots::DistanceSensor *cliffSensors_[HAL::CLIFF_COUNT];
 
       // Charge contact
@@ -386,6 +385,13 @@ namespace Anki {
       accel_ = webotRobot_.getAccelerometer("accel");
       accel_->enable(ROBOT_TIME_STEP_MS);
 
+      // Proximity sensor	
+      proxCenter_ = webotRobot_.getDistanceSensor("forwardProxSensor");
+      if(proxCenter_ != nullptr)
+      {
+        proxCenter_->enable(ROBOT_TIME_STEP_MS);
+      }
+      
       // Cliff sensors
       cliffSensors_[HAL::CLIFF_FL] = webotRobot_.getDistanceSensor("cliffSensorFL");
       cliffSensors_[HAL::CLIFF_FR] = webotRobot_.getDistanceSensor("cliffSensorFR");
@@ -767,24 +773,30 @@ namespace Anki {
     ProxSensorDataRaw HAL::GetRawProxData()
     {
       ProxSensorDataRaw proxData;
-      // if (PowerGetMode() == POWER_MODE_ACTIVE) {
-      //   proxData.distance_mm = static_cast<u16>( proxCenter_->getValue() );
-      //   // Note: These fields are spoofed with simple defaults for now, but should be computed
-      //   // to reflect the actual behavior of the sensor once we do some more testing with it.
-      //   proxData.signalIntensity  = 25.f;
-      //   proxData.ambientIntensity = 0.25f;
-      //   proxData.spadCount        = 90.f;
-      //   proxData.timestamp_ms     = HAL::GetTimeStamp();
-      //   proxData.rangeStatus      = RangeStatus::RANGE_VALID;
-      // } else {
-      //   // Calm mode values
-      //   proxData.distance_mm      = PROX_CALM_MODE_DIST_MM;
-      //   proxData.signalIntensity  = 0.f;
-      //   proxData.ambientIntensity = 0.f;
-      //   proxData.spadCount        = 200.f;
-      //   proxData.timestamp_ms     = HAL::GetTimeStamp();
-      //   proxData.rangeStatus      = RangeStatus::RANGE_VALID;
-      // }
+
+      if(proxCenter_ == nullptr)
+      {
+        return proxData;
+      }
+      
+      if (PowerGetMode() == POWER_MODE_ACTIVE) {
+        proxData.distance_mm = static_cast<u16>( proxCenter_->getValue() );
+        // Note: These fields are spoofed with simple defaults for now, but should be computed
+        // to reflect the actual behavior of the sensor once we do some more testing with it.
+        proxData.signalIntensity  = 25.f;
+        proxData.ambientIntensity = 0.25f;
+        proxData.spadCount        = 90.f;
+        proxData.timestamp_ms     = HAL::GetTimeStamp();
+        proxData.rangeStatus      = RangeStatus::RANGE_VALID;
+      } else {
+        // Calm mode values
+        proxData.distance_mm      = PROX_CALM_MODE_DIST_MM;
+        proxData.signalIntensity  = 0.f;
+        proxData.ambientIntensity = 0.f;
+        proxData.spadCount        = 200.f;
+        proxData.timestamp_ms     = HAL::GetTimeStamp();
+        proxData.rangeStatus      = RangeStatus::RANGE_VALID;
+      }
 
       return proxData;
     }

@@ -65,7 +65,7 @@ void RangeSensorComponent::InitDependent(Robot* robot, const RobotCompMap& depen
   
 
 
-void RangeSensorComponent::Update()
+void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
   auto* tof = ToFSensor::getInstance();
   if(tof == nullptr)
@@ -91,7 +91,7 @@ void RangeSensorComponent::Update()
       for(const auto& reading : e.readings)
       {
         // Use the status and signalRate from the reading that corresponds to the processedRange_mm
-        if(Util::IsFltNear((f32)reading.rawRange_mm, e.processedRange_mm))
+        if(reading.rawRange_mm == e.processedRange_mm)
         {
           disp[e.roi].signalRate_mcps = reading.signalRate_mcps;
           disp[e.roi].status = reading.status;

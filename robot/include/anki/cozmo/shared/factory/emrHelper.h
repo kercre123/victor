@@ -28,7 +28,16 @@ namespace Factory {
 
   namespace 
   {
+#if SIMULATOR
+    // The simulated EMR is created at runtime by webotsCtrlRobot2.cpp which allows us
+    // to determine if the simulated robot is Whiskey or Vector. As such it needs to be created
+    // in a shared location so all webots controllers that need access to it can easily access it.
+    // We already create and write files to the playbackLogs dir so it felt like the best place to
+    // stick the EMR
+    static const char* kEMRFile = "../../../_build/mac/Debug/playbackLogs/emr";
+#else
     static const char* kEMRFile = "/dev/block/bootdevice/by-name/emr";
+#endif
 
     static Factory::EMR* _emr = nullptr;
 
@@ -40,7 +49,7 @@ namespace Factory {
       
       if(fd == -1)
       {
-        LOG_ERROR("Factory.CheckEMRForPackout.OpenFailed", "%d", errno);
+        LOG_ERROR("Factory.CheckEMRForPackout.OpenFailed", "%d %s", errno, kEMRFile);
         return nullptr; // exit instead? will probably end up crashing in WriteEMR or GetEMR will return null
       }
 
@@ -133,11 +142,6 @@ namespace Factory {
 
   static const Factory::EMR* const GetEMR()
   {
-    #ifdef SIMULATOR
-      static Factory::EMR emr;
-      return &emr;
-    #endif
-
     // Attempt to read the EMR, will do nothing if it has already been read
     ReadEMR();
 

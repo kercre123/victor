@@ -57,6 +57,12 @@ using namespace Anki::Vector;
 
 int main(int argc, char **argv)
 {
+  // Instantiate supervisor and pass to AndroidHAL and cubeBleClient
+  webots::Supervisor engineSupervisor;
+
+  // Start with a step so that we can attach to the process here for debugging
+  engineSupervisor.step(BS_TIME_STEP_MS);
+  
   // parse commands
   WebotsCtrlShared::ParsedCommandLine params = WebotsCtrlShared::ParseCommandLine(argc, argv);
 
@@ -66,8 +72,6 @@ int main(int argc, char **argv)
   //const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
   Anki::Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlGameEngine2");
 
-  // Instantiate supervisor and pass to AndroidHAL and cubeBleClient
-  webots::Supervisor engineSupervisor;
   CameraService::SetSupervisor(&engineSupervisor);
   OSState::SetSupervisor(&engineSupervisor);
   CubeBleClient::SetSupervisor(&engineSupervisor);
@@ -153,9 +157,6 @@ int main(int argc, char **argv)
   {
     PRINT_NAMED_INFO("webotsCtrlGameEngine.main.noFilter", "Console will not be filtered due to program args");
   }
-
-  // Start with a step so that we can attach to the process here for debugging
-  engineSupervisor.step(BS_TIME_STEP_MS);
 
   // Get configuration JSON
   Json::Value config;

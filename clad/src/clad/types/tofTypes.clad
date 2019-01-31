@@ -17,7 +17,7 @@ structure RangeReading {
 structure RangingData {
   RangeReading readings[uint_8],
   float_32 spadCount,
-  float_32 processedRange_mm,
+  int_16 processedRange_mm,
   uint_8 roi,
   uint_8 numObjects,
   uint_8 roiStatus

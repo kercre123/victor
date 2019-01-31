@@ -43,12 +43,12 @@ public:
   
   virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override { }
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override { }
+  
+  virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
 
   //////
   // end IDependencyManagedComponent functions
   //////
-
-  void Update();
 
   using RangeData = std::array<Vec3f, 16>;
   const RangeData& GetLatestRangeData() const { return _latestRangeData; }

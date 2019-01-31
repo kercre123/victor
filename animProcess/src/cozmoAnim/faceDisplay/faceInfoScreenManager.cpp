@@ -230,9 +230,17 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   }
 
   ADD_SCREEN(MicDirectionClock, Camera);
-  ADD_SCREEN(Camera, ToF);
   ADD_SCREEN(CameraMotorTest, Camera);
-  ADD_SCREEN(ToF, Main);    // Last screen cycles back to Main
+  
+  if(IsWhiskey())
+  {
+    ADD_SCREEN(Camera, ToF);
+    ADD_SCREEN(ToF, Main);    // Last screen cycles back to Main
+  }
+  else
+  {
+    ADD_SCREEN(Camera, Main);
+  }
 
 
   // ========== Screen Customization ========= 
@@ -412,22 +420,25 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   SET_ENTER_ACTION(CameraMotorTest, cameraEnterAction);
   SET_EXIT_ACTION(CameraMotorTest, cameraMotorTestExitAction);
 
-  // ToF screen 
-  FaceInfoScreen::ScreenAction enterToFScreen = []() {
-                                                 RobotInterface::SendRangeData msg;
-                                                 msg.enable = true;
-                                                 RobotInterface::SendAnimToEngine(std::move(msg));
-  };
-  GetScreen(ScreenName::ToF)->SetEnterScreenAction(enterToFScreen);
+  if(IsWhiskey())
+  {
+    // ToF screen 
+    FaceInfoScreen::ScreenAction enterToFScreen = []() {
+                                                    RobotInterface::SendRangeData msg;
+                                                    msg.enable = true;
+                                                    RobotInterface::SendAnimToEngine(std::move(msg));
+                                                  };
+    SET_ENTER_ACTION(ToF, enterToFScreen);
 
-  // ToF screen 
-  FaceInfoScreen::ScreenAction exitToFScreen = []() {
-                                                 RobotInterface::SendRangeData msg;
-                                                 msg.enable = false;
-                                                 RobotInterface::SendAnimToEngine(std::move(msg));
-  };
-  GetScreen(ScreenName::ToF)->SetExitScreenAction(exitToFScreen);
-  DISABLE_TIMEOUT(ToF);
+    // ToF screen 
+    FaceInfoScreen::ScreenAction exitToFScreen = []() {
+                                                   RobotInterface::SendRangeData msg;
+                                                   msg.enable = false;
+                                                   RobotInterface::SendAnimToEngine(std::move(msg));
+                                                 };
+    SET_EXIT_ACTION(ToF, exitToFScreen);
+    //DISABLE_TIMEOUT(ToF);
+  }
 
   
   // Check if we booted in recovery mode
@@ -1358,18 +1369,21 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
   const std::string cliffs = temp;
 
 
-  // sprintf(temp,
-  //         "DIST:   %3umm",
-  //         state.proxData.distance_mm);
-  // const std::string prox1 = temp;
+  std::string prox1, prox2;
+  if(!IsWhiskey())
+  {
+    sprintf(temp,
+            "DIST:   %3umm",
+            state.proxData.distance_mm);
+    prox1 = temp;
 
-  // sprintf(temp,
-  //         "        (%2.1f %2.1f %3.f)",
-  //         state.proxData.signalIntensity,
-  //         state.proxData.ambientIntensity,
-  //         state.proxData.spadCount);
-  // const std::string prox2 = temp;
-
+    sprintf(temp,
+            "        (%2.1f %2.1f %3.f)",
+            state.proxData.signalIntensity,
+            state.proxData.ambientIntensity,
+            state.proxData.spadCount);
+    prox2 = temp;
+  }
 
   sprintf(temp,
           "TOUCH: %u",
@@ -1394,8 +1408,14 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
           state.battTemp_C);
   const std::string tempC = temp;
 
-  //DrawTextOnScreen({syscon, cliffs, prox1, prox2, touch, batt, charger, tempC});
-  DrawTextOnScreen({cliffs, touch, batt, charger, tempC});
+  if(IsWhiskey())
+  {
+    DrawTextOnScreen({cliffs, touch, batt, charger, tempC});
+  }
+  else
+  {
+    DrawTextOnScreen({syscon, cliffs, prox1, prox2, touch, batt, charger, tempC});
+  }
 }
 
 void FaceInfoScreenManager::DrawIMUInfo(const RobotState& state)
