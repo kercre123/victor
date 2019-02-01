@@ -28,7 +28,7 @@ namespace Vector {
 
 class ProtoCladInterpreter {
 public:
-  ProtoCladInterpreter(CozmoContext* cozmo_context);
+  ProtoCladInterpreter(CozmoContext* cozmo_context) : _context(cozmo_context) {}
 
   static bool print_warnings; 
 

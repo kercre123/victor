@@ -28,34 +28,6 @@
 namespace Anki {
 namespace Vector {
 
-ProtoCladInterpreter::ProtoCladInterpreter(CozmoContext* context) : _context(context) {
-  auto* gi = _context->GetGatewayInterface();
-
-  // QUESTION FOR CODE REVIEW: If this comes back null, messages aren't going to be processed. Alternatives?
-  if (gi != nullptr)
-  {
-    auto commonCallback = std::bind(&ProtoCladInterpreter::HandleEvents, this, std::placeholders::_1);
-
-    // Subscribe to desired simple events
-    _signalHandlers.push_back(gi->Subscribe(
-      external_interface::GatewayWrapperTag::kDriveWheelsRequest, commonCallback));
-  }
-}
-
-// Given a message reference, checks to see if that Oneof type used to be
-// translated (to Clad) by the gateway. If it is, it's now the engine's
-// responsibility to do the translation, so we do that, then re-broadcast
-// the Clad version of the message to uiMessageHandler - where it would
-// have arrived, had gateway left it as Clad.
-// 
-// @param message The Proto message to check-translate-rebroadcast
-// @return true, if a conversion-and-Broadcast was done, false otherwise.
-
-void ProtoCladInterpreter::HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event) {
-  
-}
-
-
 bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & proto_message) {
   
   ExternalInterface::MessageGameToEngine clad_message;
