@@ -118,6 +118,8 @@ const std::string& TestIntentsFramework::GetLabelForIntent( const UserIntent& in
     bool match = !entry.second.def.empty();
     for( const auto& key : entry.second.def.getMemberNames() ) {
       const auto& intentValue = intentJson[key];
+      //PRINT_NAMED_INFO("TestIntentsFramework.GetLabelForIntent.IntentValue",
+      //                 "Intent value = %s", intentValue.asString().c_str());
       if( intentValue.isNull() || (intentValue.asString() != entry.second.def[key].asString()) ) {
         match = false;
         break;

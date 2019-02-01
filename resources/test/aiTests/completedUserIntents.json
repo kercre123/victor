@@ -57,9 +57,10 @@
       "type": "imperative_lookatme"
     },
 
-    "imperative_lookoverthere": {
-      "type": "imperative_lookatme"
-    },
+    // commented out until the 'GazeDirection' feature is enabled in resources/config/features.json
+    //"imperative_lookoverthere": {
+    //  "type": "imperative_lookoverthere"
+    //},
 
     "names_ask": {
       "type": "names_ask"
@@ -75,21 +76,20 @@
 
     "shut_up": {
       "type": "imperative_shutup"
+    },
+
+    "imperative_volumelevel": {
+      "type": "imperative_volumelevel"
+      // how do I specify one of several values for a parameter?
+    },
+
+    "imperative_volumeup": {
+      "type": "imperative_volumeup"
+    },
+
+    "imperative_volumedown": {
+      "type": "imperative_volumedown"
     }
-
-    // commented out until featureGate gets set to true
-  //   "imperative_volumelevel": {
-  //     "type": "imperative_volumelevel"
-  //     // how do I specify one of several values for a parameter?
-  //   },
-
-  //   "imperative_volumeup": {
-  //     "type": "imperative_volumeup"
-  //   },
-
-  //   "imperative_volumedown": {
-  //     "type": "imperative_volumedown"
-  //   }
   }
 
 }

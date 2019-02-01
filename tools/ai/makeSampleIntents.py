@@ -25,8 +25,10 @@ USAGE_MSG = 'USAGE: {0} <dialogFlowDataDir> <outputFile.json>'.format( sys.argv[
 ANKI_ENTITIES = [ "entity_anki_words", "entity_bad_words", "entity_behavior",
                   "entity_behavior_deletable", "entity_behavior_stoppable",
                   "entity_charger_words", "entity_clothes_words", "entity_cube_words",
-                  "entity_exploring_words", "entity_forecast_words", "entity_photo_selfie",
-                  "entity_robotnames", "entity_topic", "entity_weather_words" ]
+                  "entity_exploring_words", "entity_fetch_words", "entity_forecast_words",
+                  "entity_mean_ai_names", "entity_nice_ai_names", "entity_photo_selfie",
+                  "entity_robotnames", "entity_topic", "entity_volume_levels",
+                  "entity_weather_words" ]
 
 # These are from https://dialogflow.com/docs/reference/system-entities
 SYSTEM_ENTITIES = { "sys.any": ["flower"],
@@ -71,7 +73,7 @@ def GetIntents(path):
   for file in os.listdir( path ):
     if file.endswith( '.json' ):
       filename = os.path.join( path, file )
-      if 'usersays_en' not in filename:
+      if 'usersays' not in filename:
         files.append( filename )
 
   for file in files:
