@@ -10,7 +10,7 @@
 #include <unordered_map>
 #include <string>
 #include "engine/events/ankiEventMgr.h"
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/shared/math/point.h"
 #include "coretech/messaging/shared/UdpServer.h"
 #include "clad/physicsInterface/messageSimPhysics.h"
 

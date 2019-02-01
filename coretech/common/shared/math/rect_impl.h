@@ -15,9 +15,7 @@
 #ifndef _ANKICORETECH_COMMON_RECT_IMPL_H_
 #define _ANKICORETECH_COMMON_RECT_IMPL_H_
 
-#include "coretech/common/engine/math/rect.h"
-
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/shared/math/rect.h"
 
 #include "util/logging/logging.h"
 
@@ -50,20 +48,6 @@ namespace Anki {
   {
     DEV_ASSERT(width  >= T(0), "Rectangle.TwoPointConstructor.NegativeWidth");
     DEV_ASSERT(height >= T(0), "Rectangle.TwoPointConstructor.NegativeHeight");
-  }
-  
-  template<typename T>
-  Rectangle<T>::Rectangle(const CladRect& cladRect)
-  : Rectangle<T>(cladRect.x_topLeft, cladRect.y_topLeft, cladRect.width, cladRect.height)
-  {
-    
-  }
-  
-  template<typename T>
-  CladRect Rectangle<T>::ToCladRect() const
-  {
-    const CladRect cladRect(this->GetX(), this->GetY(), this->GetWidth(), this->GetHeight());
-    return cladRect;
   }
   
 #if ANKICORETECH_USE_OPENCV
@@ -123,23 +107,7 @@ namespace Anki {
   {
     return Point<2,T>(GetXmid(), GetYmid());
   }
-  
-  template<typename T>
-  void Rectangle<T>::GetQuad(Quadrilateral<2,T>& quad) const
-  {
-    quad[Quad::TopLeft].x() = x;
-    quad[Quad::TopLeft].y() = y;
-    
-    quad[Quad::BottomLeft].x() = x;
-    quad[Quad::BottomLeft].y() = y + height;
-    
-    quad[Quad::TopRight].x() = x + width;
-    quad[Quad::TopRight].y() = y;
-    
-    quad[Quad::BottomRight].x() = x + width;
-    quad[Quad::BottomRight].y() = y + height;
-  }
-  
+
   template<typename T>
   Point<2,T> Rectangle<T>::GetTopLeft() const {
     return Point<2,T>(GetX(),GetY());
@@ -206,14 +174,7 @@ namespace Anki {
 #endif
     }
   } // Rectangle<T>::initFromPointContainer
-  
-  template<typename T>
-  template<typename T_other>
-  Rectangle<T>::Rectangle(const Quadrilateral<2,T_other>& quad)
-  {
-    InitFromPointContainer(quad);
-  }
-  
+    
   template<typename T>
   template<typename T_other>
   Rectangle<T>::Rectangle(const std::vector<Point<2,T_other> >& points)
@@ -222,10 +183,10 @@ namespace Anki {
   }
   
   template<typename T>
-  template<size_t NumPoints>
-  Rectangle<T>::Rectangle(const std::array<Point<2,T>,NumPoints>& points)
+  template<size_t NumPoints, typename T_other>
+  Rectangle<T>::Rectangle(const std::array<Point<2,T_other>,NumPoints>& points)
   {
-    InitFromPointContainer<std::array<Point<2,T>,NumPoints> >(points);
+    InitFromPointContainer(points);
   }
   
   template<typename T>

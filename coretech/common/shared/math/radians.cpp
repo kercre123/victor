@@ -11,12 +11,12 @@
 *
 **/
 
+#include "coretech/common/shared/types.h"
+#include "coretech/common/shared/math/radians.h"
+
 #include <assert.h>
 #include <cmath>
 #include <cstdlib>
-#include "coretech/common/shared/types.h"
-#include "coretech/common/shared/radians.h"
-#include "util/math/math.h"
 
 namespace Anki {
   //////////////////////////////////////////////////////////////////

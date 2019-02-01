@@ -10,7 +10,7 @@
  *
  **/
 
-#include "coretech/common/shared/radiansMath.h"
+#include "coretech/common/shared/math/radiansMath.h"
 #include "util/logging/logging.h"
 
 #include <math.h>

@@ -1,8 +1,9 @@
 #include "cannedAnimLib/proceduralFace/proceduralFaceDrawer.h"
 #include "cannedAnimLib/proceduralFace/scanlineDistorter.h"
 
-#include "coretech/common/engine/array2d_impl.h"
-#include "coretech/common/engine/math/rotation.h"
+#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/shared/math/rotation.h"
 
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
@@ -722,9 +723,7 @@ namespace Vector {
       DrawEye(_faceCache.faceData, WhichEye::Left,  W_facePtr, _faceCache.img8[_faceCache.eyes], _leftBBox);
       DrawEye(_faceCache.faceData, WhichEye::Right, W_facePtr, _faceCache.img8[_faceCache.eyes], _rightBBox);
       
-      std::array<Quad2f,2> leftRightQuads;
-      _leftBBox.GetQuad(leftRightQuads[0]);
-      _rightBBox.GetQuad(leftRightQuads[1]);
+      const std::array<Quad2f,2> leftRightQuads{{ Quad2f(_leftBBox), Quad2f(_rightBBox) }};
       
       _faceRowMin = ProceduralFace::HEIGHT-1;
       _faceRowMax = 0;

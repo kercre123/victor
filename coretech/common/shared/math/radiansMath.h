@@ -13,7 +13,7 @@
 #ifndef _ANKICORETECH_COMMON_RADIANS_MATH_H_
 #define _ANKICORETECH_COMMON_RADIANS_MATH_H_
 
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/radians.h"
 #include <vector>
 
 namespace Anki {

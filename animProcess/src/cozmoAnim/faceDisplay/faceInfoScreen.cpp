@@ -15,7 +15,7 @@
 */
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreen.h"
-#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/shared/math/rect_impl.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image.h"
 

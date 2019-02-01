@@ -13,7 +13,7 @@
 #define __CozmoPhysics_PhysVizControllerImpl_H__
 
 #include "coretech/messaging/shared/UdpServer.h"
-#include "coretech/common/engine/math/point_fwd.h"
+#include "coretech/common/shared/math/point_fwd.h"
 #include "engine/events/ankiEventMgr.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/vizInterface/messageViz.h"
