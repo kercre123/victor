@@ -47,15 +47,19 @@ if (VICOS)
   set(PLATFORM_LIBS log)
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
-  include(webots)
-  set(PLATFORM_LIBS
-    ${FOUNDATION}
-    ${OPENCV_LIBS}
-    ${WEBOTS_LIBS}
-  )
-  set(PLATFORM_COMPILE_DEFS
-    SIMULATOR
-  )
+  if (WEBOTS)
+    include(webots)
+    set(PLATFORM_LIBS
+        ${FOUNDATION}
+        ${OPENCV_LIBS}
+        ${WEBOTS_LIBS}
+    )
+  else()
+    set(PLATFORM_LIBS
+        ${FOUNDATION}
+        ${OPENCV_LIBS}
+    )
+  endif()
 endif()
 
 target_link_libraries(cozmo_engine
@@ -120,8 +124,7 @@ target_include_directories(cozmo_engine
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated>
 )
 
-if (VICOS)
-  # TODO: support tools on mac
+if (VICOS OR (MACOSX AND NOT WEBOTS))
   add_subdirectory(tools)
 
   # Placeholder install task for cozmo_engine. We will eventually transition to using

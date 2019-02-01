@@ -19,7 +19,9 @@
 
 #include "coretech/common/shared/array2d_impl.h"
 
+#ifdef WEBOTS
 #include "simulator/controllers/shared/webotsHelpers.h"
+#endif
 
 #include "util/logging/logging.h"
 
@@ -28,15 +30,17 @@
 
 #include <vector>
 
+#ifdef WEBOTS
 #include <webots/Supervisor.hpp>
 #include <webots/Camera.hpp>
+#endif
 
 #define BLUR_CAPTURED_IMAGES 0
 
 #include "opencv2/imgproc/imgproc.hpp"
 
-#ifndef SIMULATOR
-#error SIMULATOR should be defined by any target using cameraService_mac.cpp
+#ifndef MACOSX
+#error MACOSX should be defined by any target using cameraService_mac.cpp
 #endif
 
 namespace Anki {
@@ -44,6 +48,7 @@ namespace Anki {
 
     namespace { // "Private members"
 
+#ifdef WEBOTS
       // Has SetSupervisor() been called yet?
       bool _engineSupervisorSet = false;
 
@@ -77,13 +82,16 @@ namespace Anki {
       TimeStamp_t lastImageCapturedTime_ms_;
 
       bool _skipNextImage = false;
+#endif
     } // "private" namespace
 
 
 #pragma mark --- Simulated Hardware Method Implementations ---
 
+#ifdef WEBOTS
     // Declarations
     void FillCameraInfo(const webots::Camera *camera, CameraCalibration &info);
+#endif
 
     // Apply lens distortion to the RGB image in frame, using the information from headCamInfo
     void ApplyLensDistortion(u8* frame, const CameraCalibration& headCamInfo);
@@ -95,8 +103,10 @@ namespace Anki {
      * Returns the single instance of the object.
      */
     CameraService* CameraService::getInstance() {
+#ifdef WEBOTS
       // Did you remember to call SetSupervisor()?
       DEV_ASSERT(_engineSupervisorSet, "cameraService_mac.NoSupervisorSet");
+#endif
       // check if the instance has been created yet
       if (nullptr == _instance) {
         // if not, then create it
@@ -117,16 +127,21 @@ namespace Anki {
       }
     };
 
+#ifdef WEBOTS
     void CameraService::SetSupervisor(webots::Supervisor *sup)
     {
       _engineSupervisor = sup;
       _engineSupervisorSet = true;
     }
+#endif
 
     CameraService::CameraService()
+#ifdef WEBOTS
     : _imageSensorCaptureHeight(DEFAULT_CAMERA_RESOLUTION_HEIGHT)
     , _imageSensorCaptureWidth(DEFAULT_CAMERA_RESOLUTION_WIDTH)
+#endif
     {
+#ifdef WEBOTS
       imageBuffer_.resize(CAMERA_SENSOR_RESOLUTION_WIDTH * CAMERA_SENSOR_RESOLUTION_HEIGHT * 3);
             
       if (nullptr != _engineSupervisor) {
@@ -176,6 +191,7 @@ namespace Anki {
           }
         }
       }
+#endif
     }
 
     CameraService::~CameraService()
@@ -190,18 +206,29 @@ namespace Anki {
     
     TimeStamp_t CameraService::GetTimeStamp(void)
     {
+#ifdef WEBOTS
       if (nullptr != _engineSupervisor) {
         return static_cast<TimeStamp_t>(_engineSupervisor->getTime() * 1000.0);
       }
+#endif
       return 0;
     }
 
     Result CameraService::Update()
     {
+#ifdef WEBOTS
+      if (nullptr != _engineSupervisor) {
+        if (_engineSupervisor->step(Vector::ROBOT_TIME_STEP_MS) == -1) {
+          return RESULT_FAIL;
+        }
+        // AudioUpdate();
+      }
+#endif
       return RESULT_OK;
     }
 
 
+#ifdef WEBOTS
     // Helper function to create a CameraInfo struct from Webots camera properties:
     void FillCameraInfo(const webots::Camera *camera, CameraCalibration &info)
     {
@@ -300,6 +327,7 @@ namespace Anki {
     {
       return &headCamInfo_;
     }
+#endif
 
     void CameraService::CameraSetParameters(u16 exposure_ms, f32 gain)
     {
@@ -343,6 +371,7 @@ namespace Anki {
     
     void CameraService::PauseCamera(bool pause)
     {
+#ifdef WEBOTS
       if(pause)
       {
         headCam_->disable();
@@ -356,12 +385,14 @@ namespace Anki {
       // you can't get images while paused it does not matter that this is being set
       // when pausing
       _skipNextImage = true;
+#endif
     }
 
     // Starts camera frame synchronization.
     // Returns true and popuates buffer if we have an available image from at or before atTimestamp_ms.
     bool CameraService::CameraGetFrame(u32 atTimestamp_ms, Vision::ImageBuffer& buffer)
     {
+#ifdef WEBOTS
       if (nullptr == headCam_) {
         return false;
       }
@@ -467,6 +498,7 @@ namespace Anki {
                                    Vision::ImageEncoding::RawRGB,
                                    outputTimestamp,
                                    _imageFrameID);
+#endif
 
       _imageFrameID++;
             

@@ -22,7 +22,7 @@ namespace Anki {
 
       namespace {
 
-#ifndef SIMULATOR
+#ifndef MACOSX
         struct ProxSensorLookupEntry {
           u16 rawDistance_mm; // raw distance reading from the sensor
           int offset_mm;      // offset to add to the raw distance to get actual distance
@@ -109,6 +109,7 @@ namespace Anki {
       ProxSensorDataRaw GetProxData()
       {
         auto proxData = HAL::GetRawProxData();
+<<<<<<< HEAD
 
         if(IsWhiskey())
         {
@@ -117,6 +118,9 @@ namespace Anki {
         }
         
 #ifndef SIMULATOR
+=======
+#ifndef MACOSX
+>>>>>>> VIC-13174 Add ability to build OSX without webots and run as native vic-* processes
         // Apply look-up table to convert from raw distance reading
         // to corrected reading. Piecewise linear interpolation.
         // Assumes kProxSensorRawDistLUT_mm is sorted on 'first' elements.

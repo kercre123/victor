@@ -38,7 +38,9 @@
 
 
 // Allow the build to include/exclude the audio libs
-//#define EXCLUDE_ANKI_AUDIO_LIBS 0
+#if defined(MACOSX) && defined(WEBOTS)
+#define EXCLUDE_ANKI_AUDIO_LIBS !WEBOTS
+#endif
 
 #ifndef EXCLUDE_ANKI_AUDIO_LIBS
 

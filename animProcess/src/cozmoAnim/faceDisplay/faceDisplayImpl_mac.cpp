@@ -15,27 +15,32 @@
 #include "coretech/vision/engine/colorPixelTypes.h"
 #include "util/logging/logging.h"
 
+#ifdef WEBOTS
 #include <webots/Supervisor.hpp>
 #include <webots/Display.hpp>
-
-
-#ifndef SIMULATOR
-#error SIMULATOR should be defined by any target using faceDisplay_mac.cpp
 #endif
 
+#ifndef MACOSX
+#error MACOSX should be defined by any target using faceDisplay_mac.cpp
+#endif
+
+#ifdef WEBOTS
 extern webots::Supervisor animSupervisor;
+#endif
 
 namespace Anki {
 namespace Vector {
   
 namespace { // "Private members"
 
+#ifdef WEBOTS
   // Face display
   webots::Display* face_;
   
   // Face 'image' to send to webots each frame
   u32 faceImg_[FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT] = {0};
-  
+#endif
+
 } // "private" namespace
 
 
@@ -43,6 +48,7 @@ namespace { // "Private members"
   
   FaceDisplayImpl::FaceDisplayImpl()
   {
+#ifdef WEBOTS
     // Did you remember to call SetSupervisor()?
 //      DEV_ASSERT(animSupervisor != nullptr, "animSupervisor.NullWebotsSupervisor");
     
@@ -55,18 +61,22 @@ namespace { // "Private members"
     assert(face_->getHeight() == FACE_DISPLAY_HEIGHT);
     face_->setFont("Lucida Console", 8, true);
     FaceClear();
+#endif
   }
 
   FaceDisplayImpl::~FaceDisplayImpl() = default;
 
   void FaceDisplayImpl::FaceClear()
   {
+#ifdef WEBOTS
     face_->setColor(0);
     face_->fillRectangle(0,0, FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
+#endif
   }
   
   void FaceDisplayImpl::FaceDraw(const u16* frame)
   {
+#ifdef WEBOTS
     // Convert an RGB565 color into a 32-bit BGRA color image (i.e. 0xBBGGRRAA) which webots expects
     u32* imgPtr = &faceImg_[0];
     for (u32 i = 0; i < FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT; ++i) {
@@ -81,10 +91,12 @@ namespace { // "Private members"
     auto imgRef = face_->imageNew(FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT, faceImg_, webots::Display::ARGB);
     face_->imagePaste(imgRef, 0, 0);
     face_->imageDelete(imgRef);
+#endif
   }
   
   void FaceDisplayImpl::FacePrintf(const char* format, ...)
   {
+#ifdef WEBOTS
     // TODO: Smartly insert line breaks?
 
     face_->setColor(0xf0ff);
@@ -98,6 +110,7 @@ namespace { // "Private members"
     va_end(argptr);
     
     face_->drawText(std::string(line), 0, 0);
+#endif
   }
 
   void FaceDisplayImpl::SetFaceBrightness(int level)

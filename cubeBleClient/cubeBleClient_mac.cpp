@@ -21,12 +21,14 @@
 #include "util/logging/logging.h"
 #include "util/helpers/templateHelpers.h"
 
+#ifdef WEBOTS
 #include <webots/Emitter.hpp>
 #include <webots/Receiver.hpp>
 #include <webots/Supervisor.hpp>
+#endif
 
-#ifndef SIMULATOR
-#error SIMULATOR should be defined by any target using cubeBleClient_mac.cpp
+#ifndef MACOSX
+#error MACOSX should be defined by any target using cubeBleClient_mac.cpp
 #endif
 
 namespace Anki {
@@ -34,6 +36,7 @@ namespace Vector {
 
 namespace { // "Private members"
 
+#ifdef WEBOTS
   // Has SetSupervisor() been called yet?
   bool _engineSupervisorSet = false;
 
@@ -63,7 +66,7 @@ namespace { // "Private members"
   // use this value to automatically 'disconnect' it (or else it will
   // remain 'connected').
   double _connectedCubeLastHeardTime_sec = 0.f;
-  
+#endif
 } // "private" namespace
 
 
@@ -81,6 +84,7 @@ int GetEmitterChannel(const BleFactoryId& factoryId)
 
 CubeBleClient::CubeBleClient()
 {
+#ifdef WEBOTS
   // Ensure that we have a webots supervisor
   DEV_ASSERT(_engineSupervisorSet, "CubeBleClient.NoWebotsSupervisor");
   
@@ -107,6 +111,7 @@ CubeBleClient::CubeBleClient()
     }
     DEV_ASSERT(!_receivers.empty(), "CubeBleClient.NoReceiversFound");
   }
+#endif
 }
 
 
@@ -116,16 +121,20 @@ CubeBleClient::~CubeBleClient()
 }
 
 
+#ifdef WEBOTS
 void CubeBleClient::SetSupervisor(webots::Supervisor *sup)
 {
   _engineSupervisor = sup;
   _engineSupervisorSet = true;
 }
+#endif
 
 
 void CubeBleClient::SetScanDuration(const float duration_sec)
 {
+#ifdef WEBOTS
   _scanDuration_sec = duration_sec;
+#endif
 }
 
 
@@ -137,19 +146,24 @@ void CubeBleClient::SetCubeFirmwareFilepath(const std::string& path)
 
 void CubeBleClient::StartScanInternal()
 {
+#ifdef WEBOTS
   _cubeConnectionState = CubeConnectionState::ScanningForCubes;
   _scanUntil_sec = _scanDuration_sec + _engineSupervisor->getTime();
+#endif
 }
 
 
 void CubeBleClient::StopScanInternal()
 {
+#ifdef WEBOTS
   _scanUntil_sec = _engineSupervisor->getTime();
+#endif
 }
 
 
 bool CubeBleClient::SendMessageInternal(const MessageEngineToCube& msg)
 {
+#ifdef WEBOTS
   const int channel = GetEmitterChannel(_currentCube);
   _cubeEmitter->setChannel(channel);
   
@@ -159,11 +173,15 @@ bool CubeBleClient::SendMessageInternal(const MessageEngineToCube& msg)
   
   // return value of 1 indicates that the message was successfully queued (see Webots documentation)
   return (res == 1);
+#else
+  return false;
+#endif
 }
   
   
 bool CubeBleClient::RequestConnectInternal(const BleFactoryId& factoryId)
 {
+#ifdef WEBOTS
   _currentCube = factoryId;
   
   // Grab an available receiver for this cube:
@@ -191,12 +209,14 @@ bool CubeBleClient::RequestConnectInternal(const BleFactoryId& factoryId)
   
   // Mark as connection pending
   _cubeConnectionState = CubeConnectionState::PendingConnect;
+#endif
   return true;
 }
 
 
 bool CubeBleClient::RequestDisconnectInternal()
 {
+#ifdef WEBOTS
   // The simulated cubes do not know if they are 'connected' or not,
   // so we need to send a 'black' light animation to the cube so it
   // doesn't continue to play its current light animation.
@@ -216,6 +236,7 @@ bool CubeBleClient::RequestDisconnectInternal()
   
   // Mark as disconnection pending
   _cubeConnectionState = CubeConnectionState::PendingDisconnect;
+#endif
   return true;
 }
 
@@ -228,6 +249,7 @@ bool CubeBleClient::InitInternal()
   
 bool CubeBleClient::UpdateInternal()
 {
+#ifdef WEBOTS
   // Check for unwanted disconnects (cube removed from webots world)
   if (_cubeConnectionState == CubeConnectionState::Connected &&
       _engineSupervisor->getTime() > _connectedCubeLastHeardTime_sec + 3.0) {
@@ -311,10 +333,12 @@ bool CubeBleClient::UpdateInternal()
     }
   }
   
+#endif
   return true;
 }
 
   
+#ifdef WEBOTS
 void CubeBleClient::SendLightsOffToCube()
 {
   static const CubeLightKeyframe blackKeyframe({{0, 0, 0}}, 0, 0, 0);
@@ -328,6 +352,7 @@ void CubeBleClient::SendLightsOffToCube()
   SendMessageToLightCube(MessageEngineToCube(std::move(keyframeChunk)));
   SendMessageToLightCube(MessageEngineToCube(std::move(lightSequence)));
 }
+#endif
 
 
 } // namespace Vector
