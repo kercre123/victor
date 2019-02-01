@@ -2492,7 +2492,6 @@ func (service *rpcService) NavMapFeed(in *extint.NavMapFeedRequest, stream extin
 
 			if navMapFeedResponse.LastResponse == true {
 				if err := stream.Send(pendingMap); err != nil {
-					log.Println("stream.Send ERROR!!!", err)
 					return err
 				} else if err = stream.Context().Err(); err != nil {
 					// This is the case where the user disconnects the stream

@@ -697,7 +697,6 @@ void ProtoCladInterpreter::CladObjectAvailableToProto(
   external_interface::ObjectAvailable* object_available = new external_interface::ObjectAvailable;
 
   object_available->set_factory_id(clad_message.factory_id);
-  //there is no objectType or factory_id in the proto format.
 
   external_interface::ObjectEvent* object_event = new external_interface::ObjectEvent{ object_available };
 
