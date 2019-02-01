@@ -86,6 +86,8 @@ namespace {
   CONSOLE_VAR(bool, kFakeLowBattery, CONSOLE_GROUP, false);
   const float kFakeLowBatteryVoltage = 3.5f;
 
+  CONSOLE_VAR(bool, kForceChargeUntilSysconDisconnect, CONSOLE_GROUP, true);
+
 #if ANKI_DEV_CHEATS
   CONSOLE_VAR(bool, kPeriodicDebugDASLogging, CONSOLE_GROUP, true);
 #endif
@@ -217,7 +219,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   bool isSaturationCharging = _isCharging && !_battDisconnected && _batteryVoltsFilt > kSaturationChargingThresholdVolts;
   bool isFullyCharged = false;
   bool saturationChargingStateChanged = false;
-  if (isSaturationCharging) {
+  if (isSaturationCharging && !kForceChargeUntilSysconDisconnect) {
     if (_saturationChargingStartTime_sec <= 0.f) {
       // Saturation charging has started
       _saturationChargingStartTime_sec = now_sec;
