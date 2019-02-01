@@ -463,7 +463,10 @@ func (service *rpcService) DisplayFaceImageRGB(ctx context.Context, in *extint.D
 		if err != nil {
 			return nil, err
 		}
-		time.Sleep(20 * time.Millisecond)
+		//TODO: Should I maybe sleep for 5ms every 5-10 chunks? The point is to ensure that there is never an
+		//      entire image in any of the datagram buffers, but I also don't like making the process so slow
+		//      with such a poor reason.
+		time.Sleep(2 * time.Millisecond)
 	}
 
 	return &extint.DisplayFaceImageRGBResponse{

@@ -37,8 +37,10 @@ public:
   void HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event);
 
   bool Redirect(const external_interface::GatewayWrapper& message);
-  bool Redirect(const ExternalInterface::MessageGameToEngine& message);
   bool Redirect(const ExternalInterface::MessageEngineToGame& message);
+  // DO NOT IMPLEMENT! (If you're forwarding G2E msgs -> Gateway you're probably doing something wrong.)
+  // bool Redirect(const ExternalInterface::MessageGameToEngine& message);
+
 
   //
   // Events
@@ -115,6 +117,18 @@ private:
       ExternalInterface::MessageGameToEngine& clad_message);
 
   void ProtoDeleteCustomObjectsRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
+  void ProtoDefineCustomBoxToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
+  void ProtoDefineCustomCubeToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
+  void ProtoDefineCustomWallToClad(
       const external_interface::GatewayWrapper& proto_message,
       ExternalInterface::MessageGameToEngine& clad_message);
 

@@ -165,34 +165,6 @@ bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageEngineToGame
   return true;
 }
 
-bool ProtoCladInterpreter::Redirect(const ExternalInterface::MessageGameToEngine& message) {
-  
-  external_interface::GatewayWrapper proto_message;
-
-  /*
-  LOG_WARNING("proto_clad_interpreter", "Redirect(MG2E(%d, %s))=>proto", 
-      (int)message.GetTag(),
-      MessageGameToEngineTagToString(message.GetTag()));
-  */
-  
-//  ____ _____ ___  ____  _
-// / ___|_   _/ _ \|  _ \| |
-// \___ \ | || | | | |_) | | If you're thinking about processing messages here, you're probably doing
-//  ___) || || |_| |  __/|_| something wrong. G2E messages should never be forwarded to the gateway.
-// |____/ |_| \___/|_|   (_)
-// 
-  switch(message.GetTag()) {
-    default:
-    {
-      return false;
-    }
-  }
-
-  _context->GetGatewayInterface()->Broadcast(std::move(proto_message));
-  return true;
-}
-
-
 //
 // Proto-to-Clad interpreters
 //
@@ -281,71 +253,89 @@ void ProtoCladInterpreter::ProtoDeleteCustomObjectsRequestToClad(
 
 }
 
+void ProtoCladInterpreter::ProtoDefineCustomBoxToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+
+  Anki::Vector::ExternalInterface::DefineCustomBox define_custom_box;
+  const Anki::Vector::external_interface::CustomBoxDefinition& proto_custom_box = 
+      proto_message.define_custom_object_request().custom_box();
+  
+  define_custom_box.customType = Anki::Vector::ObjectType(
+      proto_message.define_custom_object_request().custom_type() -
+      Anki::Vector::external_interface::CUSTOM_TYPE_00 +
+      int(Anki::Vector::ObjectType::CustomType00));
+
+  define_custom_box.markerFront = Anki::Vector::CustomObjectMarker(proto_custom_box.marker_front() - 1);
+  define_custom_box.markerBack = Anki::Vector::CustomObjectMarker(proto_custom_box.marker_back() - 1);
+  define_custom_box.markerTop = Anki::Vector::CustomObjectMarker(proto_custom_box.marker_top() - 1);
+  define_custom_box.markerBottom = Anki::Vector::CustomObjectMarker(proto_custom_box.marker_bottom() - 1);
+  define_custom_box.markerLeft = Anki::Vector::CustomObjectMarker(proto_custom_box.marker_left() - 1);
+  define_custom_box.markerRight = Anki::Vector::CustomObjectMarker(proto_custom_box.marker_right() - 1);
+  define_custom_box.xSize_mm = proto_custom_box.x_size_mm();
+  define_custom_box.ySize_mm = proto_custom_box.y_size_mm();
+  define_custom_box.zSize_mm = proto_custom_box.z_size_mm();
+  define_custom_box.markerWidth_mm = proto_custom_box.marker_width_mm();
+  define_custom_box.markerHeight_mm = proto_custom_box.marker_height_mm();
+  define_custom_box.isUnique = proto_message.define_custom_object_request().is_unique();
+
+  clad_message.Set_DefineCustomBox(define_custom_box);
+}
+
+void ProtoCladInterpreter::ProtoDefineCustomCubeToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+
+  Anki::Vector::ExternalInterface::DefineCustomCube define_custom_cube;
+  const Anki::Vector::external_interface::CustomCubeDefinition& proto_custom_cube = 
+      proto_message.define_custom_object_request().custom_cube();
+
+  define_custom_cube.customType = Anki::Vector::ObjectType(
+      proto_message.define_custom_object_request().custom_type() -
+      Anki::Vector::external_interface::CUSTOM_TYPE_00 +
+      int(Anki::Vector::ObjectType::CustomType00));
+  define_custom_cube.marker = Anki::Vector::CustomObjectMarker(proto_custom_cube.marker() - 1);
+  define_custom_cube.size_mm = proto_custom_cube.size_mm();
+  define_custom_cube.markerWidth_mm = proto_custom_cube.marker_width_mm();
+  define_custom_cube.markerHeight_mm = proto_custom_cube.marker_height_mm();
+  define_custom_cube.isUnique = proto_message.define_custom_object_request().is_unique();
+
+  clad_message.Set_DefineCustomCube(define_custom_cube);
+}
+
+void ProtoCladInterpreter::ProtoDefineCustomWallToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+
+  Anki::Vector::ExternalInterface::DefineCustomWall define_custom_wall;
+  const Anki::Vector::external_interface::CustomWallDefinition& proto_custom_wall = 
+      proto_message.define_custom_object_request().custom_wall();
+
+  define_custom_wall.customType = Anki::Vector::ObjectType(
+      proto_message.define_custom_object_request().custom_type() -
+      Anki::Vector::external_interface::CUSTOM_TYPE_00 +
+      int(Anki::Vector::ObjectType::CustomType00));
+  define_custom_wall.marker = Anki::Vector::CustomObjectMarker(proto_custom_wall.marker() - 1);
+  define_custom_wall.width_mm = proto_custom_wall.width_mm();
+  define_custom_wall.height_mm = proto_custom_wall.height_mm();
+  define_custom_wall.markerWidth_mm = proto_custom_wall.marker_width_mm();
+  define_custom_wall.markerHeight_mm = proto_custom_wall.marker_height_mm();
+  define_custom_wall.isUnique = proto_message.define_custom_object_request().is_unique();
+
+  clad_message.Set_DefineCustomWall(define_custom_wall);
+}
+
 void ProtoCladInterpreter::ProtoDefineCustomObjectRequestToClad(
     const external_interface::GatewayWrapper& proto_message,
     ExternalInterface::MessageGameToEngine& clad_message) {
 
-    if(proto_message.define_custom_object_request().has_custom_box()) {
-      Anki::Vector::ExternalInterface::DefineCustomBox define_custom_box;
-
-      define_custom_box.customType = Anki::Vector::ObjectType(
-          proto_message.define_custom_object_request().custom_type() -
-          Anki::Vector::external_interface::CUSTOM_TYPE_00 +
-          int(Anki::Vector::ObjectType::CustomType00));
-      define_custom_box.markerFront = Anki::Vector::CustomObjectMarker(
-          proto_message.define_custom_object_request().custom_box().marker_front() - 1);
-      define_custom_box.markerBack = Anki::Vector::CustomObjectMarker(
-          proto_message.define_custom_object_request().custom_box().marker_back() - 1);
-      define_custom_box.markerTop = Anki::Vector::CustomObjectMarker(
-          proto_message.define_custom_object_request().custom_box().marker_top() - 1);
-      define_custom_box.markerBottom = Anki::Vector::CustomObjectMarker(
-          proto_message.define_custom_object_request().custom_box().marker_bottom() - 1);
-      define_custom_box.markerLeft = Anki::Vector::CustomObjectMarker(
-          proto_message.define_custom_object_request().custom_box().marker_left() - 1);
-      define_custom_box.markerRight = Anki::Vector::CustomObjectMarker(
-          proto_message.define_custom_object_request().custom_box().marker_right() - 1);
-      define_custom_box.xSize_mm = proto_message.define_custom_object_request().custom_box().x_size_mm();
-      define_custom_box.ySize_mm = proto_message.define_custom_object_request().custom_box().y_size_mm();
-      define_custom_box.zSize_mm = proto_message.define_custom_object_request().custom_box().z_size_mm();
-      define_custom_box.markerWidth_mm = proto_message.define_custom_object_request().custom_box().marker_width_mm();
-      define_custom_box.markerHeight_mm = proto_message.define_custom_object_request().custom_box().marker_height_mm();
-      define_custom_box.isUnique = proto_message.define_custom_object_request().is_unique();
-
-      clad_message.Set_DefineCustomBox(define_custom_box);
-    } else if (proto_message.define_custom_object_request().has_custom_cube()) {
-      Anki::Vector::ExternalInterface::DefineCustomCube define_custom_cube;
-
-      define_custom_cube.customType = Anki::Vector::ObjectType(
-          proto_message.define_custom_object_request().custom_type() -
-          Anki::Vector::external_interface::CUSTOM_TYPE_00 +
-          int(Anki::Vector::ObjectType::CustomType00));
-      define_custom_cube.marker = Anki::Vector::CustomObjectMarker(
-          proto_message.define_custom_object_request().custom_cube().marker() - 1);
-      define_custom_cube.size_mm = proto_message.define_custom_object_request().custom_cube().size_mm();
-      define_custom_cube.markerWidth_mm = proto_message.define_custom_object_request().custom_cube().marker_width_mm();
-      define_custom_cube.markerHeight_mm = proto_message.define_custom_object_request().custom_cube().marker_height_mm();
-      define_custom_cube.isUnique = proto_message.define_custom_object_request().is_unique();
-
-      clad_message.Set_DefineCustomCube(define_custom_cube);
-    } else if (proto_message.define_custom_object_request().has_custom_wall()) {
-      Anki::Vector::ExternalInterface::DefineCustomWall define_custom_wall;
-
-      define_custom_wall.customType = Anki::Vector::ObjectType(
-          proto_message.define_custom_object_request().custom_type() -
-          Anki::Vector::external_interface::CUSTOM_TYPE_00 +
-          int(Anki::Vector::ObjectType::CustomType00));
-      define_custom_wall.marker = Anki::Vector::CustomObjectMarker(
-          proto_message.define_custom_object_request().custom_wall().marker() - 1);
-      define_custom_wall.width_mm = proto_message.define_custom_object_request().custom_wall().width_mm();
-      define_custom_wall.height_mm = proto_message.define_custom_object_request().custom_wall().height_mm();
-      define_custom_wall.markerWidth_mm = proto_message.define_custom_object_request().custom_wall().marker_width_mm();
-      define_custom_wall.markerHeight_mm = proto_message.define_custom_object_request().custom_wall().marker_height_mm();
-      define_custom_wall.isUnique = proto_message.define_custom_object_request().is_unique();
-
-      clad_message.Set_DefineCustomWall(define_custom_wall);
-    } else {
-      //Code review: how to handle?
-    }
+  if(proto_message.define_custom_object_request().has_custom_box()) {
+    ProtoDefineCustomBoxToClad(proto_message, clad_message);
+  } else if (proto_message.define_custom_object_request().has_custom_cube()) {
+    ProtoDefineCustomCubeToClad(proto_message, clad_message);
+  } else if (proto_message.define_custom_object_request().has_custom_wall()) {
+    ProtoDefineCustomWallToClad(proto_message, clad_message);
+  }
 }
 
 void ProtoCladInterpreter::ProtoMoveHeadRequestToClad(
