@@ -16,7 +16,7 @@
 #define IMU_FILTER_H_
 
 #include "clad/types/imu.h"
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/radians.h"
 #include "coretech/common/shared/types.h"
 #include "anki/cozmo/robot/hal.h"
 #include "util/container/fixedCircularBuffer.h"

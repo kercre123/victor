@@ -50,11 +50,10 @@
       
       // TODO(GB): Change to corresponding "nestle" animations
       // and add corresponding tracks to lock for those animations
-      "getIn"            : "StuckOnEdgeGetIn",
-      "loopAnimation"    : "StuckOnEdgeIdle",
-      "getOut"           : "WakeupGetout",
-      "emergencyGetOut"  : "WakeupGetout",
-      
+      "getIn"            : "NeutralFace",
+      "loopAnimation"    : "HeldOnPalmNestling",
+      "getOut"           : "NeutralFace",
+      "loopInterval_s"   : 10,
       "shouldCheckEndCondDuringAnim": false,
       "lockTreads"       : false,
       

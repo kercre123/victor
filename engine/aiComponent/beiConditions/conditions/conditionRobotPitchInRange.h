@@ -15,7 +15,7 @@
 
 #include "coretech/common/shared/types.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/radians.h"
 
 namespace Anki {
 namespace Vector {

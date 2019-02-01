@@ -14,7 +14,7 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/polygon_impl.h"
-#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/shared/math/rect_impl.h"
 #include "coretech/neuralnets/neuralNetModel_tensorflow.h"
 #include "coretech/vision/engine/image_impl.h"
 

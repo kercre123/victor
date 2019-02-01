@@ -25,10 +25,9 @@
 #ifndef _ANKICORETECH_MATRIX_IMPL_H_
 #define _ANKICORETECH_MATRIX_IMPL_H_
 
-#include "coretech/common/engine/math/matrix.h"
-#include "coretech/common/engine/math/point.h"
-
-#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/shared/math/matrix.h"
+#include "coretech/common/shared/math/point.h"
+#include "coretech/common/shared/array2d_impl.h"
 
 #include <ostream>
 #include <cstdio>
@@ -106,28 +105,28 @@ namespace Anki {
   Matrix<T>::Matrix(s32 nrows, s32 ncols)
   : Array2d<T>(nrows, ncols)
   {
-    CORETECH_THROW_IF(nrows == 0 || ncols == 0);
+    DEV_ASSERT(nrows > 0 && ncols > 0, "Matrix.Constructor.InitializedRequiresPositiveDimensions");
   }
   
   template<typename T>
   Matrix<T>::Matrix(s32 nrows, s32 ncols, const T &initVal)
   : Array2d<T>(nrows, ncols, initVal)
   {
-    CORETECH_THROW_IF(nrows == 0 || ncols == 0);
+    DEV_ASSERT(nrows > 0 && ncols > 0, "Matrix.Constructor.InitializedRequiresPositiveDimensions");
   }
   
   template<typename T>
   Matrix<T>::Matrix(s32 nrows, s32 ncols, T *data)
   : Array2d<T>(nrows, ncols, data)
   {
-    CORETECH_THROW_IF(nrows == 0 || ncols == 0 || data==NULL);
+    DEV_ASSERT(nrows > 0 && ncols > 0 && data!=NULL, "Matrix.Constructor.InitializedRequiresPositiveDimensions");
   }
   
   template<typename T>
   Matrix<T>::Matrix(s32 nrows, s32 ncols, std::vector<T> &data)
   : Array2d<T>(nrows, ncols, data)
   {
-    CORETECH_THROW_IF(nrows == 0 || ncols == 0);
+    DEV_ASSERT(nrows > 0 && ncols > 0, "Matrix.Constructor.InitializedRequiresPositiveDimensions");
   }
   
   
@@ -145,14 +144,14 @@ namespace Anki {
   Matrix<T> Matrix<T>::operator*(const Matrix<T> &other) const
   {
     // Make sure the matrices have compatible sizes for multiplication
-    CORETECH_THROW_IF(this->GetNumCols() != other.GetNumRows());
+    DEV_ASSERT(this->GetNumCols() == other.GetNumRows(), "Matrix.Multiply.DimensionMismatch");
     
     
 #if ANKICORETECH_USE_OPENCV
     // For now (?), rely on OpenCV for matrix multiplication:
     Matrix<T> result( this->get_CvMat_() * other.get_CvMat_() );
 #else
-    CORETECH_ASSERT(false);
+    DEV_ASSERT(false, "Matrix.Multiply.RequiresOpenCV");
     Matrix<T> result;
     // TODO: Implement our own matrix multiplication.
 #endif
@@ -165,14 +164,15 @@ namespace Anki {
   Matrix<T>& Matrix<T>::operator*=(const Matrix<T> &other)
   {
     // Make sure the matrices have compatible sizes for multiplication
-    CORETECH_THROW_IF(this->GetNumCols() != other.GetNumRows());
+    DEV_ASSERT(this->GetNumCols() == other.GetNumRows(), "Matrix.MultiplyInPlace.DimensionMismatch");
+
     
     
 #if ANKICORETECH_USE_OPENCV
     // For now (?), rely on OpenCV for matrix multiplication:
     *this = this->get_CvMat_() * other.get_CvMat_();
 #else
-    CORETECH_ASSERT(false);
+    DEV_ASSERT(false, "Matrix.MultiplyInPlace.RequiresOpenCV");
     // TODO: Implement our own matrix multiplication.
 #endif
     
@@ -184,13 +184,13 @@ namespace Anki {
   template<typename T>
   Matrix<T>& Matrix<T>::Invert(void)
   {
-    CORETECH_THROW_IF(this->GetNumRows() != this->GetNumCols());
+    DEV_ASSERT(this->GetNumRows() != this->GetNumCols(), "Matrix.Invert.NonSquareMatrix");
     
 #if ANKICORETECH_USE_OPENCV
     // For now (?), rely on OpenCV for matrix inversion:
     *this = (Matrix<T>)this->get_CvMat_().inv();
 #else
-    CORETECH_ASSERT(false);
+    DEV_ASSERT(false, "Matrix.Invert.RequiresOpenCV");
     // TODO: Define our own opencv-free inverse?
 #endif
     
@@ -200,13 +200,13 @@ namespace Anki {
   template<typename T>
   void Matrix<T>::GetInverse(Matrix<T>& outInverse) const
   {
-    CORETECH_THROW_IF(this->GetNumRows() != this->GetNumCols());
+    DEV_ASSERT(this->GetNumRows() != this->GetNumCols(), "Matrix.GetInverse.NonSquareMatrix");
     
 #if ANKICORETECH_USE_OPENCV
     // For now (?), rely on OpenCV for matrix inversion:
     cv::invert(this->get_CvMat_(), outInverse.get_CvMat_());
 #else
-    CORETECH_ASSERT(false);
+    DEV_ASSERT(false, "Matrix.GetInverse.RequiresOpenCV");
     // TODO: Define our own opencv-free transpose?
 #endif
     
@@ -221,7 +221,7 @@ namespace Anki {
 #if ANKICORETECH_USE_OPENCV
     cv::transpose(this->get_CvMat_(), outTranspose.get_CvMat_());
 #else
-    CORETECH_ASSERT(false);
+    DEV_ASSERT(false, "Matrix.GetTranspose.RequiresOpenCV");
     // TODO: Define our own opencv-free tranpose?
 #endif
     
@@ -234,7 +234,7 @@ namespace Anki {
 #if ANKICORETECH_USE_OPENCV
     cv::transpose(this->get_CvMat_(), this->get_CvMat_());
 #else
-    CORETECH_ASSERT(false);
+    DEV_ASSERT(false, "Matrix.Transpose.RequiresOpenCV");
     // TODO: Define our own opencv-free tranpose?
 #endif
     
@@ -265,7 +265,7 @@ namespace Anki {
 #endif
   {
 #if (!defined(ANKICORETECH_USE_OPENCV))
-    CORETECH_ASSERT(false);
+    DEV_ASSERT(false, "SmallMatrix.Constructor.RequiresOpenCV");
     // TODO: Define our own opencv-free constructor?
 #endif
   }
@@ -278,7 +278,7 @@ namespace Anki {
 #endif
   {
 #if !defined(ANKICORETECH_USE_OPENCV)
-    CORETECH_ASSERT(false);
+    DEV_ASSERT(false, "SmallMatrix.Constructor.RequiresOpenCV");
     // TODO: Define our own opencv-free constructor?
 #endif
   }
@@ -286,7 +286,7 @@ namespace Anki {
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(std::initializer_list<T> valsList)
   {
-    CORETECH_ASSERT(valsList.size() == NROWS*NCOLS);
+    DEV_ASSERT(valsList.size() == NROWS*NCOLS, "SmallMatrix.Constructor.InitializerListDimensionMismatch");
     
     T vals[NROWS*NCOLS];
     MatDimType i=0;
@@ -299,7 +299,7 @@ namespace Anki {
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
   SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(std::initializer_list<Point<NROWS,T> > colsList)
   {
-    CORETECH_ASSERT(colsList.size() == NCOLS);
+    DEV_ASSERT(colsList.size() == NCOLS, "SmallMatrix.Constructor.InitializerListDimensionMismatch");
     
     MatDimType j=0;
     for(auto col = colsList.begin(); j<NCOLS; ++col, ++j)
@@ -332,7 +332,7 @@ namespace Anki {
 #endif
   {
 #if !defined(ANKICORETECH_USE_OPENCV)
-    CORETECH_ASSERT(false);
+    DEV_ASSERT(false, "SmallMatrix.Constructor.RequiresOpenCV");
     // TODO: Define our own opencv-free copy constructor?
 #endif
   }
@@ -354,11 +354,11 @@ namespace Anki {
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
   T&  SmallMatrix<NROWS,NCOLS,T>::operator() (const MatDimType i, const MatDimType j)
   {
-    CORETECH_THROW_IF(i >= NROWS || j >= NCOLS);
+    DEV_ASSERT(i < NROWS && j < NCOLS, "SmallMatrix.ElementAccess.OutOfBounds");
 #if ANKICORETECH_USE_OPENCV
     return cv::Matx<T,NROWS,NCOLS>::operator()((int) i, (int) j);
 #else
-    CORETECH_ASSERT(false);
+    DEV_ASSERT(false, "SmallMatrix.ElementAccess.RequiresOpenCV");
     // TODO: Define our own opencv-free (i,j) accessor?
     static T t(0);
     return t;
@@ -368,11 +368,11 @@ namespace Anki {
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
   const T& SmallMatrix<NROWS,NCOLS,T>::operator() (const MatDimType i, const MatDimType j) const
   {
-    CORETECH_THROW_IF(i >= NROWS || j >= NCOLS);
+    DEV_ASSERT(i < NROWS && j < NCOLS, "SmallMatrix.ElementAccess.OutOfBounds");
 #if ANKICORETECH_USE_OPENCV
     return cv::Matx<T,NROWS,NCOLS>::operator()((int) i, (int)j);
 #else
-    CORETECH_ASSERT(false);
+    DEV_ASSERT(false, "SmallMatrix.ElementAccess.RequiresOpenCV");
     // TODO: Define our own opencv-free const (i,j) accessor?
     static T t(0);
     return t;
@@ -383,7 +383,7 @@ namespace Anki {
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
   Point<NCOLS,T> SmallMatrix<NROWS,NCOLS,T>::GetRow(const MatDimType i) const
   {
-    CORETECH_THROW_IF(i >= NROWS);
+    DEV_ASSERT(i < NROWS, "SmallMatrix.GetRow.OutOfBounds");
     
     Point<NCOLS,T> row;
     for(MatDimType j=0; j<NCOLS; ++j) {
@@ -396,7 +396,7 @@ namespace Anki {
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
   Point<NROWS,T> SmallMatrix<NROWS,NCOLS,T>::GetColumn(const MatDimType j) const
   {
-    CORETECH_THROW_IF(j >= NCOLS);
+    DEV_ASSERT(j < NCOLS, "SmallMatrix.GetColumn.OutOfBounds");
     
     Point<NROWS,T> column;
     for(MatDimType i=0; i<NROWS; ++i) {
@@ -409,7 +409,7 @@ namespace Anki {
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
   void SmallMatrix<NROWS,NCOLS,T>::SetRow(const MatDimType i, const Point<NCOLS,T>& row)
   {
-    CORETECH_THROW_IF(i >= NROWS);
+    DEV_ASSERT(i < NROWS, "SmallMatrix.SetRow.OutOfBounds");
 
     for(MatDimType j=0; j<NCOLS; ++j) {
       this->operator()(i,j) = row[j];
@@ -419,7 +419,7 @@ namespace Anki {
   template<MatDimType NROWS, MatDimType NCOLS, typename T>
   void SmallMatrix<NROWS,NCOLS,T>::SetColumn(const MatDimType j, const Point<NROWS,T>& column)
   {
-    CORETECH_THROW_IF(j >= NCOLS);
+    DEV_ASSERT(j < NCOLS, "SmallMatrix.SetColumn.OutOfBounds");
     
     for(MatDimType i=0; i<NROWS; ++i) {
       this->operator()(i,j) = column[i];
@@ -538,7 +538,7 @@ namespace Anki {
 #if ANKICORETECH_USE_OPENCV
     retv = this->t();
 #else
-    CORETECH_ASSERT(false);
+    DEV_ASSERT(false, "SmallMatrix.GetTranspose.RequiresOpenCV");
     // TODO: Define our own opencv-free tranpose?
 #endif
     return retv;
@@ -641,7 +641,7 @@ namespace Anki {
 #if ANKICORETECH_USE_OPENCV
     (*this) = this->inv();
 #else
-    CORETECH_ASSERT(false);
+    DEV_ASSERT(false, "SmallMatrix.Invert.RequiresOpenCV");
     // TODO: Define our own opencv-free inverse?
 #endif
     
@@ -655,7 +655,7 @@ namespace Anki {
     outInverse = *this;
     outInverse.Invert();
 #else
-    CORETECH_ASSERT(false);
+    DEV_ASSERT(false, "SmallMatrix.GetInverse.RequiresOpenCV");
     // TODO: Define our own opencv-free inverse?
 #endif
   }

@@ -14,7 +14,7 @@
 #include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/shared/math/point.h"
 #include "coretech/vision/shared/compositeImage/compositeImageLayoutModifier.h"
 #include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 

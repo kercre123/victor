@@ -19,6 +19,7 @@
 #include "engine/components/animationComponent.h"
 #include "engine/robot.h"
 
+#include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/vision/engine/image_impl.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"

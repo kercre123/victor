@@ -14,7 +14,7 @@
 #ifndef __COMMON_ENGINE_MATH_BRESENHAM_LINE_2D_H__
 #define __COMMON_ENGINE_MATH_BRESENHAM_LINE_2D_H__
 
-#include "coretech/common/engine/math/point_fwd.h"
+#include "coretech/common/shared/math/point_fwd.h"
 #include <vector>
 
 namespace Anki {

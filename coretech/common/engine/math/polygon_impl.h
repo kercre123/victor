@@ -50,7 +50,7 @@ Polygon<N,T>::Polygon(const std::vector<CladPoint2d>& cladPoints)
   this->reserve(cladPoints.size());
   for(auto& cladPoint : cladPoints)
   {
-    this->emplace_back(cladPoint);
+    this->emplace_back({cladPoint.x, cladPoint.y});
   }
 }
   
@@ -61,7 +61,7 @@ Polygon<N,T>::Polygon(const std::vector<CladPoint3d>& cladPoints)
   this->reserve(cladPoints.size());
   for(auto& cladPoint : cladPoints)
   {
-    this->emplace_back(cladPoint);
+    this->emplace_back({cladPoint.x, cladPoint.y, cladPoint.z});
   }
 }
  

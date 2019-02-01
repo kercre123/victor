@@ -28,7 +28,7 @@
 
 #include "micDataTypes.h"
 
-#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/shared/array2d_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image.h"
@@ -1047,12 +1047,11 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
     // NOTE: Due to lack of quadrature encoding on the wheels
     //       when they are not actively powered the reported speed
     //       of the wheels when moved manually have a fixed sign.
-    //       Left wheel is always -ve and right wheel is always +ve.
     //       Consequently, moving the left wheel in any direction
     //       moves the menu cursor down and moving the right wheel
     //       in any direction moves it up.
-    const auto lWheelSpeed = state.lwheel_speed_mmps;
-    const auto rWheelSpeed = state.rwheel_speed_mmps;
+    const auto lWheelSpeed = std::fabsf(state.lwheel_speed_mmps);
+    const auto rWheelSpeed = std::fabsf(state.rwheel_speed_mmps);
     if (rWheelSpeed > kWheelMotionThresh_mmps) {
 
       ++_wheelMovingForwardsCount;
@@ -1064,7 +1063,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
         DrawScratch();
       }
 
-    } else if (lWheelSpeed < -kWheelMotionThresh_mmps) {
+    } else if (lWheelSpeed > kWheelMotionThresh_mmps) {
 
       ++_wheelMovingBackwardsCount;
       _wheelMovingForwardsCount = 0;

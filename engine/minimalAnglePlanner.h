@@ -16,8 +16,8 @@
 #ifndef __BASESTATION_MINIMALANGLEPLANNER_H__
 #define __BASESTATION_MINIMALANGLEPLANNER_H__
 
-#include "coretech/common/engine/math/point_fwd.h"
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/point_fwd.h"
+#include "coretech/common/shared/math/radians.h"
 #include "pathPlanner.h"
 
 namespace Anki {

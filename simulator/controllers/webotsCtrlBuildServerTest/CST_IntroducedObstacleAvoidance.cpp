@@ -1,5 +1,5 @@
 #include "simulator/game/cozmoSimTestController.h"
-#include "coretech/common/engine/math/rotation.h"
+#include "coretech/common/shared/math/rotation.h"
 
 namespace Anki {
 namespace Vector {

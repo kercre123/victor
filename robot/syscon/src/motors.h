@@ -17,6 +17,8 @@ namespace Motors {
   void init();
   void stop();
   void tick();
+
+  void resetEncoderHysteresis();
 }
 
 #endif

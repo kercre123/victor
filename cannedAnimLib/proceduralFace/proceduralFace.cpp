@@ -14,7 +14,7 @@
 #include "cannedAnimLib/proceduralFace/proceduralFace.h"
 #include "cannedAnimLib/proceduralFace/scanlineDistorter.h"
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/matrix_impl.h"
+#include "coretech/common/shared/math/matrix_impl.h"
 #include "coretech/vision/shared/hueSatWrapper.h"
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/helpers/templateHelpers.h"

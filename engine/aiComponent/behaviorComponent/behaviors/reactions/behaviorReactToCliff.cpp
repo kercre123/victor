@@ -811,10 +811,47 @@ void BehaviorReactToCliff::TransitionToFaceAndBackAwayCliff()
   f32 angularDistanceToCliff = std::acos(cliffHeading.x());
   if( angularDistanceToCliff > M_PI_4_F ) {
     auto compoundAction = new CompoundActionSequential();
-    // Turn to face cliff
-    auto turnAction = new TurnTowardsPoseAction(cliffPose);
-    turnAction->SetMaxPanSpeed(DEG_TO_RAD(kBodyTurnSpeedForCliffSearch_degPerSec)); // no fast turning near cliffs
-    compoundAction->AddAction(turnAction);
+
+    // turn and animate simultaneously in order to face the cliff
+    Pose3d cliffPoseWrtRobot;
+    cliffPose.GetWithRespectTo(GetBEI().GetRobotInfo().GetPose(), cliffPoseWrtRobot);
+    float bodyTurnAngle = std::atan2(cliffPoseWrtRobot.GetTranslation().y(), cliffPoseWrtRobot.GetTranslation().x());
+    
+    // animation is chosen based on the degree and direction of turn
+    AnimationTrigger anim;
+    if(bodyTurnAngle < 0.f) {
+      if(std::abs(bodyTurnAngle) < (M_PI_F/3)) {
+        anim = AnimationTrigger::ReactToCliffTurnRight60;
+      } else if(std::abs(bodyTurnAngle) < (2*M_PI_F/3)) {
+        anim = AnimationTrigger::ReactToCliffTurnRight120;
+      } else {
+        anim = AnimationTrigger::ReactToCliffTurnRight180;
+      }
+    } else {
+      if(bodyTurnAngle < (M_PI_F/3)) {
+        anim = AnimationTrigger::ReactToCliffTurnLeft60;
+      } else if(bodyTurnAngle < (2*M_PI_F/3)) {
+        anim = AnimationTrigger::ReactToCliffTurnLeft120;
+      } else {
+        anim = AnimationTrigger::ReactToCliffTurnLeft180;
+      }
+    }
+
+    // combine a procedural turn with an animation
+    auto waitAction = new WaitAction(0.25f); // constant time-delay prior to turn: reads better for animation
+    auto turnAction = new TurnInPlaceAction(bodyTurnAngle, false);
+    auto animAction = new TriggerLiftSafeAnimationAction(anim);
+
+    auto waitTurn = new CompoundActionSequential();
+    waitTurn->AddAction(waitAction);
+    waitTurn->AddAction(turnAction);
+    
+    auto waitTurnAndAnimate = new CompoundActionParallel();
+    waitTurnAndAnimate->AddAction(waitTurn);
+    waitTurnAndAnimate->AddAction(animAction);
+    
+    compoundAction->AddAction(waitTurnAndAnimate);
+
     // Cliff reaction animation that causes the robot to backup about 8cm
     compoundAction->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliff));
     action = compoundAction;
