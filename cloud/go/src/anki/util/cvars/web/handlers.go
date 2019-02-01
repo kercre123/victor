@@ -1,4 +1,4 @@
-package dev
+package web
 
 import (
 	"anki/util/cvars"
@@ -11,7 +11,7 @@ import (
 
 const baseDir = "/anki/data/assets/cozmo_resources/webserver/cloud/cvars"
 
-func listCVars(w http.ResponseWriter, r *http.Request) {
+func ListCVars(w http.ResponseWriter, r *http.Request) {
 	vars := toOurVars(cvars.GetAllVars())
 
 	t, err := template.ParseFiles(path.Join(baseDir, "list.html"))
@@ -71,7 +71,7 @@ func (c CVar) HTML(name string) template.HTML {
 		name, itemID, innerForm, itemID+"-resp", initialVal))
 }
 
-func cvarHandler(w http.ResponseWriter, r *http.Request) {
+func CVarHandler(w http.ResponseWriter, r *http.Request) {
 	query := r.URL.Query()
 	name := query.Get("name")
 	value := query.Get("value")
