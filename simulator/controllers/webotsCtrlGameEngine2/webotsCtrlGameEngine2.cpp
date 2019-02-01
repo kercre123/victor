@@ -53,6 +53,46 @@ namespace Anki {
 using namespace Anki;
 using namespace Anki::Vector;
 
+webots::Supervisor engineSupervisor;
+Json::Value config;
+Anki::Util::Data::DataPlatform* dataPlatformPtr;
+
+void* ENGINE_THREAD(void*) {
+  // Initialize the API
+  CozmoAPI myVictor;
+  myVictor.Start(dataPlatformPtr, config);
+
+  PRINT_NAMED_INFO("webotsCtrlGameEngine.main", "CozmoGame created and initialized.");
+
+  Anki::Util::Time::StopWatch stopWatch("tick");
+
+  //
+  // Main Execution loop: step the world forward forever
+  //
+  while (engineSupervisor.step(BS_TIME_STEP_MS) != -1)
+  {
+    stopWatch.Start();
+
+    const double currTimeNanoseconds = Util::SecToNanoSec(engineSupervisor.getTime());
+    myVictor.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
+
+    const float time_ms = Util::numeric_cast<float>(stopWatch.Stop());
+
+    // Record engine tick performance; this includes a call to PerfMetric.
+    // For webots, we 'fake' the sleep time here.  Unlike in Cozmo webots,
+    // we don't actually sleep in this loop
+    static const float kTargetDuration_ms = Util::numeric_cast<float>(BS_TIME_STEP_MS);
+    const float engineFreq_ms = std::max(time_ms, kTargetDuration_ms);
+    const float sleepTime_ms = std::max(0.0f, kTargetDuration_ms - time_ms);
+    const float sleepTimeActual_ms = sleepTime_ms;
+    myVictor.RegisterEngineTickPerformance(time_ms,
+                                           engineFreq_ms,
+                                           sleepTime_ms,
+                                           sleepTimeActual_ms);
+  }
+
+  return nullptr;
+}
 
 int main(int argc, char **argv)
 {
@@ -64,9 +104,9 @@ int main(int argc, char **argv)
   // is too big of a change, since it involves changing down to the context, so create a non-const platform
   //const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
   Anki::Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlGameEngine2");
-
+  dataPlatformPtr = &dataPlatform;
   // Instantiate supervisor and pass to AndroidHAL and cubeBleClient
-  webots::Supervisor engineSupervisor;
+//  webots::Supervisor engineSupervisor;
   CameraService::SetSupervisor(&engineSupervisor);
   OSState::SetSupervisor(&engineSupervisor);
   CubeBleClient::SetSupervisor(&engineSupervisor);
@@ -156,7 +196,7 @@ int main(int argc, char **argv)
   engineSupervisor.step(BS_TIME_STEP_MS);
 
   // Get configuration JSON
-  Json::Value config;
+//  Json::Value config;
 
   if (!dataPlatform.readAsJson(Util::Data::Scope::Resources,
                                "config/engine/configuration.json", config)) {
@@ -185,38 +225,11 @@ int main(int argc, char **argv)
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT("consoleVarsEngine.ini");
 
-  // Initialize the API
-  CozmoAPI myVictor;
-  myVictor.Start(&dataPlatform, config);
-
-  PRINT_NAMED_INFO("webotsCtrlGameEngine.main", "CozmoGame created and initialized.");
-
-  Anki::Util::Time::StopWatch stopWatch("tick");
-
-  //
-  // Main Execution loop: step the world forward forever
-  //
-  while (engineSupervisor.step(BS_TIME_STEP_MS) != -1)
-  {
-    stopWatch.Start();
-    
-    const double currTimeNanoseconds = Util::SecToNanoSec(engineSupervisor.getTime());
-    myVictor.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
-
-    const float time_ms = Util::numeric_cast<float>(stopWatch.Stop());
-
-    // Record engine tick performance; this includes a call to PerfMetric.
-    // For webots, we 'fake' the sleep time here.  Unlike in Cozmo webots,
-    // we don't actually sleep in this loop
-    static const float kTargetDuration_ms = Util::numeric_cast<float>(BS_TIME_STEP_MS);
-    const float engineFreq_ms = std::max(time_ms, kTargetDuration_ms);
-    const float sleepTime_ms = std::max(0.0f, kTargetDuration_ms - time_ms);
-    const float sleepTimeActual_ms = sleepTime_ms;
-    myVictor.RegisterEngineTickPerformance(time_ms,
-                                           engineFreq_ms,
-                                           sleepTime_ms,
-                                           sleepTimeActual_ms);
-  }
+  pthread_t thread_id;
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+  pthread_create(&thread_id, &attr, ENGINE_THREAD, NULL);
+  while(1);
 
 #if ANKI_DEV_CHEATS
   DevLoggingSystem::DestroyInstance();

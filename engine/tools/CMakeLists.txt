@@ -33,6 +33,7 @@ target_link_libraries(vic-engine
   PRIVATE
   # anki libs
   util
+  victor_anim
   cozmo_engine
   # platform
   ${PLATFORM_LIBS}

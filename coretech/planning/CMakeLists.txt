@@ -46,39 +46,39 @@ target_include_directories(cti_planning
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
 )
 
-#
-# cti_planning_robot
-#
-
-anki_build_cxx_library(cti_planning_robot ${ANKI_SRCLIST_DIR} STATIC)
-anki_build_target_license(cti_planning_robot "ANKI")
-
-target_compile_definitions(cti_planning_robot
-  PRIVATE
-  CORETECH_ROBOT
-)
-
-set_target_properties(cti_planning_robot PROPERTIES
-  FOLDER "CoreTech"#/Basestation"
-)
-
-target_compile_options(cti_planning_robot
-  PRIVATE
-  -stdlib=libc++
-  -Os
-  ${ASAN_CXX_FLAGS} 
-)
-
-target_link_libraries(cti_planning_robot
-  PUBLIC
-  cti_common_robot
-  ${ASAN_LINKER_FLAGS}
-)
-
-target_include_directories(cti_planning_robot
-  PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
-)
+# #
+# # cti_planning_robot
+# #
+# 
+# anki_build_cxx_library(cti_planning_robot ${ANKI_SRCLIST_DIR} STATIC)
+# anki_build_target_license(cti_planning_robot "ANKI")
+# 
+# target_compile_definitions(cti_planning_robot
+#   PRIVATE
+#   CORETECH_ROBOT
+# )
+# 
+# set_target_properties(cti_planning_robot PROPERTIES
+#   FOLDER "CoreTech"#/Basestation"
+# )
+# 
+# target_compile_options(cti_planning_robot
+#   PRIVATE
+#   -stdlib=libc++
+#   -Os
+#   ${ASAN_CXX_FLAGS} 
+# )
+# 
+# target_link_libraries(cti_planning_robot
+#   PUBLIC
+#   cti_common_robot
+#   ${ASAN_LINKER_FLAGS}
+# )
+# 
+# target_include_directories(cti_planning_robot
+#   PUBLIC
+#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
+# )
 
 if (MACOSX)
 

@@ -67,36 +67,36 @@ endif()
 #
 add_dependencies(cti_common cti_common_clad)
 
-#
-# cti_common_robot
-#
-
-anki_build_cxx_library(cti_common_robot ${ANKI_SRCLIST_DIR} STATIC)
-anki_build_target_license(cti_common_robot "ANKI")
-
-target_link_libraries(cti_common_robot
-  PUBLIC
-  util
-  cti_common_clad_cpplite
-  PRIVATE
-  opencv_interface
-  ${ASAN_LINKER_FLAGS}
-)
-
-target_compile_definitions(cti_common_robot
-  PUBLIC
-  ANKICORETECH_USE_OPENCV=1
-  ANKICORETECH_USE_MATLAB=0
-  ANKICORETECH_EMBEDDED_USE_OPENCV=1
-  ANKICORETECH_EMBEDDED_USE_MATLAB=0
-  PRIVATE
-  CORETECH_ROBOT
-)
-
-target_include_directories(cti_common_robot
-  PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
-)
+# #
+# # cti_common_robot
+# #
+# 
+# anki_build_cxx_library(cti_common_robot ${ANKI_SRCLIST_DIR} STATIC)
+# anki_build_target_license(cti_common_robot "ANKI")
+# 
+# target_link_libraries(cti_common_robot
+#   PUBLIC
+#   util
+#   cti_common_clad
+#   PRIVATE
+#   opencv_interface
+#   ${ASAN_LINKER_FLAGS}
+# )
+# 
+# target_compile_definitions(cti_common_robot
+#   PUBLIC
+#   ANKICORETECH_USE_OPENCV=1
+#   ANKICORETECH_USE_MATLAB=0
+#   ANKICORETECH_EMBEDDED_USE_OPENCV=1
+#   ANKICORETECH_EMBEDDED_USE_MATLAB=0
+#   PRIVATE
+#   CORETECH_ROBOT
+# )
+# 
+# target_include_directories(cti_common_robot
+#   PUBLIC
+#   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
+# )
 
 #
 # cti_common_shared

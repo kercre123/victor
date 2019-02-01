@@ -196,12 +196,15 @@ void CannedAnimationLoader::LoadAnimationFile(const std::string& path, CannedAni
     return;
   }
 
-  //PRINT_CH_DEBUG("Animations", "CannedAnimationLoader.LoadAnimationFile.LoadingAnimationsFromBinaryOrJson",
-  //               "Loading animations from %s", path.c_str());
+  PRINT_CH_DEBUG("Animations", "CannedAnimationLoader.LoadAnimationFile.LoadingAnimationsFromBinaryOrJson",
+                 "Loading animations from %s", path.c_str());
 
   const bool binFile = Util::FileUtils::FilenameHasSuffix(path.c_str(), "bin");
 
   if (binFile) {
+
+    // TODO: Should this mutex lock happen here or immediately before this for loop (COZMO-8766)?
+    std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
 
     // Read the binary file
     auto binFileContents = Util::FileUtils::ReadFileAsBinary(path);
@@ -214,6 +217,13 @@ void CannedAnimationLoader::LoadAnimationFile(const std::string& path, CannedAni
       LOG_ERROR("CannedAnimationLoader.LoadAnimationFile.BinaryDataNull", "Found no data in %s", path.c_str());
       return;
     }
+
+    flatbuffers::Verifier verifier(binFileContents.data(), binFileContents.size());
+    bool safe = CozmoAnim::VerifyAnimClipsBuffer(verifier);
+    if (!safe) {
+      LOG_ERROR("XXXX", "!VerifyAnimClipsBuffer");
+    }
+
     auto animClips = CozmoAnim::GetAnimClips(binData);
     if (nullptr == animClips) {
       LOG_ERROR("CannedAnimationLoader.LoadAnimationFile.AnimClipsNull", "Found no animations in %s", path.c_str());
@@ -232,12 +242,9 @@ void CannedAnimationLoader::LoadAnimationFile(const std::string& path, CannedAni
     for (int clipIdx=0; clipIdx < allClips->size(); clipIdx++) {
       auto animClip = allClips->Get(clipIdx);
       auto animName = animClip->Name()->c_str();
-      //PRINT_CH_DEBUG("Animations", "CannedAnimationLoader.LoadAnimationFile.LoadingSpecificAnimFromBinary",
-      //              "Loading '%s' from %s", animName, path.c_str());
+      PRINT_CH_DEBUG("Animations", "CannedAnimationLoader.LoadAnimationFile.LoadingSpecificAnimFromBinary",
+                    "Loading '%s' from %s", animName, path.c_str());
       std::string strName = animName;
-
-      // TODO: Should this mutex lock happen here or immediately before this for loop (COZMO-8766)?
-      std::lock_guard<std::mutex> guard(_parallelLoadingMutex);
 
       DefineFromFlatBuf(animClip, strName, container);
     }

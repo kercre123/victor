@@ -38,7 +38,7 @@ add_custom_command(
 anki_build_cxx_library(cozmo_engine ${ANKI_SRCLIST_DIR} ${GATEWAY_PROTO_CPP_GEN_SRCS} ${GATEWAY_PROTO_CPP_GEN_HEADERS})
 anki_build_target_license(cozmo_engine "ANKI")
 
-
+ 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")

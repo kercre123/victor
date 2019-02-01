@@ -32,7 +32,7 @@ add_library(robot_hal STATIC
 
 target_link_libraries(robot_hal
   PRIVATE
-  cti_common_robot
+  cti_common
   robot_interface
   robot_clad_cpplite
   hdr_histogram_static
@@ -168,8 +168,8 @@ target_link_libraries(supervisor
   PRIVATE
   robot_interface
   robot_clad_cpplite
-  cti_common_robot
-  cti_planning_robot
+  cti_common
+  cti_planning
   ${PLATFORM_LIBS}
 )
 
@@ -287,8 +287,8 @@ if (VICOS OR (SIMULATOR AND NOT WEBOTS))
     spine
     robot_interface
     robot_clad_cpplite
-    cti_common_robot
-    cti_messaging_robot
+    cti_common
+    cti_messaging
     ${PLATFORM_LIBS}
     ${ASAN_EXE_LINKER_FLAGS}
   )

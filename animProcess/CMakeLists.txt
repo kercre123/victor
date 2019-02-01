@@ -18,7 +18,7 @@ set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
 if (VICOS)
-    set(PLATFORM_LIBS
+    set(PLATFORM_LIBS 
         log
         robot_core)
 elseif (MACOSX)
@@ -42,15 +42,15 @@ target_link_libraries(victor_anim
   PRIVATE
   util
   util_audio
-  canned_anim_lib_anim
+  canned_anim_lib_engine
   # cti
-  cti_common_robot
+  cti_common
   cti_vision
-  cti_messaging_robot
+  cti_messaging
   robot_clad_cpplite
   cloud_clad_cpp
   audio_engine
-  audio_multiplexer_robot
+  audio_multiplexer_engine
   osState
   micdata
   libev

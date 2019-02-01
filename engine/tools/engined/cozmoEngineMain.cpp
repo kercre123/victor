@@ -14,8 +14,10 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "platform/common/diagnosticDefines.h"
 
 #include "engine/cozmoAPI/cozmoAPI.h"
+#include "../../animProcess/src/cozmoAnim/animEngine.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
 
 #include "util/console/consoleSystem.h"
@@ -54,6 +56,8 @@
 #include <unistd.h>
 #include <csignal>
 
+using namespace Anki;
+using namespace Anki::Vector;
 
 // What IP do we use for advertisement?
 constexpr const char * ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
@@ -274,14 +278,165 @@ static int cozmo_stop()
   return result;
 }
 
-int main(int argc, char* argv[])
+Anki::Util::Data::DataPlatform* createPlatform()
 {
-  // Install signal handler
-  signal(SIGTERM, sigterm);
+  char config_file_path[PATH_MAX] = { 0 };
+  const char* env_config = "/anki/etc/config/platform_config.json"; // TODO:REG getenv("VIC_ANIM_CONFIG");
+  if (env_config != NULL) {
+    strncpy(config_file_path, env_config, sizeof(config_file_path));
+  }
 
+  Json::Value config;
+
+  printf("config_file: %s\n", config_file_path);
+  if (strlen(config_file_path)) {
+    std::string config_file{config_file_path};
+    if (!Anki::Util::FileUtils::FileExists(config_file)) {
+      fprintf(stderr, "config file not found: %s\n", config_file_path);
+    }
+
+    std::string jsonContents = Anki::Util::FileUtils::ReadFile(config_file);
+    printf("jsonContents: %s\n", jsonContents.c_str());
+    Json::Reader reader;
+    if (!reader.parse(jsonContents, config)) {
+      PRINT_STREAM_ERROR("cozmo_startup",
+        "json configuration parsing error: " << reader.getFormattedErrorMessages());
+    }
+  }
+
+  std::string persistentPath;
+  std::string cachePath;
+  std::string resourcesPath;
+
+  if (config.isMember("DataPlatformPersistentPath")) {
+    persistentPath = config["DataPlatformPersistentPath"].asCString();
+  } else {
+    PRINT_NAMED_ERROR("cozmoAnimMain.createPlatform.DataPlatformPersistentPathUndefined", "");
+  }
+
+  if (config.isMember("DataPlatformCachePath")) {
+    cachePath = config["DataPlatformCachePath"].asCString();
+  } else {
+    PRINT_NAMED_ERROR("cozmoAnimMain.createPlatform.DataPlatformCachePathUndefined", "");
+  }
+
+  if (config.isMember("DataPlatformResourcesPath")) {
+    resourcesPath = config["DataPlatformResourcesPath"].asCString();
+  } else {
+    PRINT_NAMED_ERROR("cozmoAnimMain.createPlatform.DataPlatformResourcesPathUndefined", "");
+  }
+
+  return createPlatform(persistentPath, cachePath, resourcesPath);
+}
+
+void* ANIM_THREAD(void *) {
+  auto dataPlatform = createPlatform();
+
+  // Create and init AnimEngine
+  AnimEngine * animEngine = new AnimEngine(dataPlatform);
+
+  Result result = animEngine->Init();
+  if (RESULT_OK != result) {
+    LOG_ERROR("CozmoAnimMain.main.InitFailed", "Unable to initialize (exit %d)", result);
+    delete animEngine;
+    Util::gLoggerProvider = nullptr;
+    Util::gEventProvider = nullptr;
 #ifdef VICOS
-  Anki::Vector::InstallCrashReporter(LOG_PROCNAME);
+    UninstallCrashReporter();
 #endif
+    sync();
+    exit(result);
+  }
+
+  using namespace std::chrono;
+  using TimeClock = steady_clock;
+
+  const auto runStart = TimeClock::now();
+  auto prevTickStart  = runStart;
+  auto tickStart      = runStart;
+
+  // Set the target time for the end of the first frame
+  auto targetEndFrameTime = runStart + (microseconds)(ANIM_TIME_STEP_US);
+
+  // Loop until shutdown or error
+  while (!gShutdown) {
+
+    const duration<double> curTime_s = tickStart - runStart;
+    const BaseStationTime_t curTime_ns = Anki::Util::numeric_cast<BaseStationTime_t>(Util::SecToNanoSec(curTime_s.count()));
+
+    result = animEngine->Update(curTime_ns);
+    if (RESULT_OK != result) {
+      PRINT_NAMED_WARNING("CozmoAnimMain.main.UpdateFailed", "Unable to update (result %d)", result);
+
+      // Don't exit with error code so as not to trigger
+      // fault code 800 on what is actually a clean shutdown.
+      if (result == RESULT_SHUTDOWN) {
+        result = RESULT_OK;
+      }
+      break;
+    }
+
+    const auto tickAfterAnimExecution = TimeClock::now();
+    const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickAfterAnimExecution);
+    const auto tickDuration_us = duration_cast<microseconds>(tickAfterAnimExecution - tickStart);
+
+    tracepoint(anki_ust, vic_anim_loop_duration, tickDuration_us.count());
+#if ENABLE_TICK_TIME_WARNINGS
+    // Complain if we're going overtime
+    if (remaining_us < microseconds(-ANIM_OVERTIME_WARNING_THRESH_US))
+    {
+      PRINT_NAMED_WARNING("CozmoAnimMain.overtime", "Update() (%dms max) is behind by %.3fms",
+                          ANIM_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
+    }
+#endif
+    // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
+    // allows other threads to run
+    static const auto minimumSleepTime_us = microseconds((long)0);
+    const auto sleepTime_us = std::max(minimumSleepTime_us, remaining_us);
+    std::this_thread::sleep_for(sleepTime_us);
+
+    // Set the target end time for the next frame
+    targetEndFrameTime += (microseconds)(ANIM_TIME_STEP_US);
+
+    // See if we've fallen very far behind (this happens e.g. after a 5-second blocking
+    // load operation); if so, compensate by catching the target frame end time up somewhat.
+    // This is so that we don't spend the next SEVERAL frames catching up.
+    const auto timeBehind_us = -remaining_us;
+    static const auto kusPerFrame = ((microseconds)(ANIM_TIME_STEP_US)).count();
+    static const int kTooFarBehindFramesThreshold = 2;
+    static const auto kTooFarBehindThreshold = (microseconds)(kTooFarBehindFramesThreshold * kusPerFrame);
+    if (timeBehind_us >= kTooFarBehindThreshold)
+    {
+      const int framesBehind = (int)(timeBehind_us.count() / kusPerFrame);
+      const auto forwardJumpDuration = kusPerFrame * framesBehind;
+      targetEndFrameTime += (microseconds)forwardJumpDuration;
+#if ENABLE_TICK_TIME_WARNINGS
+      PRINT_NAMED_WARNING("CozmoAnimMain.catchup",
+                          "Update was too far behind so moving target end frame time forward by an additional %.3fms",
+                          (float)(forwardJumpDuration * 0.001f));
+#endif
+    }
+    tickStart = TimeClock::now();
+
+    const auto timeSinceLastTick_us = duration_cast<microseconds>(tickStart - prevTickStart);
+    prevTickStart = tickStart;
+
+    const auto sleepTimeActual_us = duration_cast<microseconds>(tickStart - tickAfterAnimExecution);
+    animEngine->RegisterTickPerformance(tickDuration_us.count() * 0.001f,
+                                        timeSinceLastTick_us.count() * 0.001f,
+                                        sleepTime_us.count() * 0.001f,
+                                        sleepTimeActual_us.count() * 0.001f);
+  }
+
+  LOG_INFO("CozmoAnimMain.main.Shutdown", "Shutting down (exit %d)", result);
+
+  return nullptr;
+}
+
+void* ENGINE_THREAD(void *) {
+  int argc = 0;
+  char argv0[32] = "cozmoEngineMain.cpp";
+  char *argv[] = { argv0 };
 
   char cwd[PATH_MAX] = { 0 };
   (void)getcwd(cwd, sizeof(cwd));
@@ -354,7 +509,7 @@ int main(int argc, char* argv[])
     printf("  -h, --help                          print this help message\n");
     printf("  -v, --verbose                       dump verbose output\n");
     printf("  -c, --config [JSON FILE]            load config json file\n");
-    return 1;
+    return (void*)1;
   }
 
   if (verbose_flag) {
@@ -368,7 +523,7 @@ int main(int argc, char* argv[])
     std::string config_file{config_file_path};
     if (!Anki::Util::FileUtils::FileExists(config_file)) {
       fprintf(stderr, "config file not found: %s\n", config_file_path);
-      return (int)1;
+      return (void*)1;
     }
 
     std::string jsonContents = Anki::Util::FileUtils::ReadFile(config_file);
@@ -376,7 +531,7 @@ int main(int argc, char* argv[])
     Json::Reader reader;
     if (!reader.parse(jsonContents, config)) {
       PRINT_STREAM_ERROR("cozmo_startup", "json configuration parsing error: " << reader.getFormattedErrorMessages());
-      return (int)1;
+      return (void*)1;
     }
   }
 
@@ -402,8 +557,28 @@ int main(int argc, char* argv[])
   LOG_INFO("CozmoEngineMain.main", "Stopping engine");
   res = cozmo_stop();
 
+  return nullptr;
+}
+
+int main(int argc, char* argv[])
+{
+  // Install signal handler
+  signal(SIGTERM, sigterm);
+
+#ifdef VICOS
+  Anki::Vector::InstallCrashReporter(LOG_PROCNAME);
+#endif
+
+  pthread_t ENGINE_thread_id;
+  pthread_t ANIM_thread_id;
+  pthread_attr_t attr;
+  pthread_attr_init(&attr);
+  pthread_create(&ANIM_thread_id, &attr, ANIM_THREAD, NULL);
+  pthread_create(&ENGINE_thread_id, &attr, ENGINE_THREAD, NULL);
+  while(1);
+
 #ifdef VICOS
   Anki::Vector::UninstallCrashReporter();
 #endif
-  return res;
+  return 0;
 }
