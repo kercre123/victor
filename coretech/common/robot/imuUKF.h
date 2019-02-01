@@ -15,9 +15,7 @@
 #ifndef _IMU_UKF_H_
 #define _IMU_UKF_H_
 
-#include "coretech/common/engine/math/rotation.h"
-#include "coretech/common/engine/robotTimeStamp.h"
-
+#include "coretech/common/shared/math/rotation.h"
 
 namespace Anki {
 

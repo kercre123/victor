@@ -34,8 +34,8 @@
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/types/motorTypes.h"
 #include "coretech/common/robot/imuUKF.h"
-#include "coretech/common/engine/math/point.h"
-#include "coretech/common/engine/math/rotation.h"
+#include "coretech/common/shared/math/point.h"
+#include "coretech/common/shared/math/rotation.h"
 
 #include "util/container/minMaxQueue.h"
 #include "util/logging/logging.h"
@@ -1166,21 +1166,19 @@ namespace Anki {
 
       f32 GetRotation()
       {
-        // const float headAngle = HeadController::GetAngleRad();// - DEG_TO_RAD(2.f); // empirical testing shows this ~2 degrees off
-
         const Rotation3d& rot = ukf_.GetRotation() * Rotation3d(HeadController::GetAngleRad(), Y_AXIS_3D());
         const float yaw  = RAD_TO_DEG( rot.GetAngleAroundZaxis().ToFloat() );
         const float pit  = RAD_TO_DEG( rot.GetAngleAroundYaxis().ToFloat() );
         const float roll = RAD_TO_DEG( rot.GetAngleAroundXaxis().ToFloat() );
         static uint16_t i = 0;
         if (++i == 256) {
-          // printf("ukf acc: {X %.2f, Y %.2f, Z %.2f}\n", imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]);
+          // printf("ukf acc: {%.2f, %.2f, %.2f}\n", imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]);
           const auto bias = ukf_.GetBias();
           printf("ukf bias: {X %.5f, Y %.5f, Z %.5f}   old bias: {X %.5f, Y %.5f, Z %.5f}\n", 
                 bias[0], bias[1], bias[2], 
                 gyro_bias_filt[0], gyro_bias_filt[1], gyro_bias_filt[2]);
           // printf("ukf gyro: {Z %.5f, Y %.5f, X %.5f}\n", imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2]);
-          printf("ukf eul: {Z %.2f, Y %.2f, X %.2f} old yaw: %.2f\n", yaw, pit, roll, RAD_TO_DEG(rot_.ToFloat()));
+          printf("ukf eul: {Z %.2f, Y %.2f, X %.2f} head angle: %.2f\n", yaw, pit, roll, RAD_TO_DEG( HeadController::GetAngleRad() ));
           i = 0;
         }
         
@@ -1196,13 +1194,13 @@ namespace Anki {
       f32 GetPitch()
       {
         const Rotation3d& rot = ukf_.GetRotation() * Rotation3d(HeadController::GetAngleRad(), Y_AXIS_3D());
-        return rot.GetAngleAroundYaxis().ToFloat();;
+        return rot.GetAngleAroundYaxis().ToFloat();
       }
 
       f32 GetRoll()
       {
         const Rotation3d& rot = ukf_.GetRotation() * Rotation3d(HeadController::GetAngleRad(), Y_AXIS_3D());
-        return rot.GetAngleAroundXaxis().ToFloat();;
+        return rot.GetAngleAroundXaxis().ToFloat();
       }
 
       bool IsPickedUp()
