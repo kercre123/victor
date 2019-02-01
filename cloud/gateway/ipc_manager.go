@@ -590,18 +590,6 @@ func (manager *EngineCladIpcManager) SendToListeners(msg gw_clad.MessageRobotToE
 	wg.Wait()
 }
 
-// SendEventToChannel is a temporary function to more easily turn CLAD messages into Protobuf events.
-func (manager *EngineCladIpcManager) SendEventToChannel(event *extint.Event) {
-	tag := reflect.TypeOf(&extint.GatewayWrapper_Event{}).String()
-	msg := extint.GatewayWrapper{
-		OneofMessageType: &extint.GatewayWrapper_Event{
-			// TODO: Convert all events into proto events
-			Event: event,
-		},
-	}
-	engineProtoManager.SendToListeners(tag, msg)
-}
-
 // ProcessMessages loops through incoming messages on the ipc channel.
 // Note: this will ignore unparsable messages because there are more
 // clad messages sent from engine than understood by gateway.
