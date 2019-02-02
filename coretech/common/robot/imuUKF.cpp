@@ -84,16 +84,16 @@ namespace {
   }
 
   // Process Noise
-  constexpr const double kRotStability_rad    = .01;   
-  constexpr const double kGyroStability_radps = 1.;      
-  constexpr const double kBiasStability_radps = .0000001; 
+  constexpr const double kRotStability_rad    = .001;      // assume pitch & roll don't change super fast when driving
+  constexpr const double kGyroStability_radps = 1.;        // leave this relatively high to trust most recent gyro data
+  constexpr const double kBiasStability_radps = .0000001;  // leave this small so that bias is very stable
 
   // Measurement Noise
-  constexpr const double kAccelNoise_rad  = .0105;     // alignment error + rms noise := atan2(17.7, 9810)
-  constexpr const double kGyroNoise_radps = .1059;     // zero-rate offset + temp offset + rms noise
-  constexpr const double kBiasNoise_radps = .0000145;  // bias stability
+  constexpr const double kAccelNoise_rad  = .0018;          // rms noise
+  constexpr const double kGyroNoise_radps = .1059;//.00122;         // rms noise
+  constexpr const double kBiasNoise_radps = .0000145;       // bias stability
 
-  constexpr const Point<3,double> kGravity_mmps = {0., 0., 9810.};
+  constexpr const Point<3,double> kGravity_mmpsSq = {0., 0., 9810.};
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -150,7 +150,7 @@ void ImuUKF::Update(const Point<3,double>& accel, const Point<3,double>& gyro, c
   // NOTE: I think there is a more computationally efficient way for getting the 
   //       correct rotation using just the residual and rotG, but this makes more
   //       intuitive sense for now...
-  const auto rotG = _state.GetRotation().GetConj() * kGravity_mmps;
+  const auto rotG = _state.GetRotation().GetConj() * kGravity_mmpsSq;
   const auto rotCorrection = FindRotation(rotG, rotG + residual.Slice<0,2>());
   _state = State{ _state.GetRotation() * rotCorrection,
                   _state.GetVelocity() + residual.Slice<3,5>(),
@@ -210,7 +210,7 @@ Point<9,double> ImuUKF::MeasurementUpdate(const Point<9,double>& measurement)
   SmallMatrix<State::Dim,State::Dim*2,double> Z;
   for (int i = 0; i < 2*State::Dim; ++i) {
     const State yi = _Y.GetColumn(i);
-    const auto zi = Join(Join( yi.GetRotation().GetConj() * kGravity_mmps, yi.GetVelocity() ), yi.GetGyroBias());
+    const auto zi = Join(Join( yi.GetRotation().GetConj() * kGravity_mmpsSq, yi.GetVelocity() ), yi.GetGyroBias());
     Z.SetColumn(i, zi);
   }
 
