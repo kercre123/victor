@@ -1,4 +1,4 @@
-#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/shared/array2d_impl.h"
 
 #include <iostream>
 
@@ -13,4 +13,4 @@ namespace Anki
     // Exponentiate "stuff" in place:
     stuff.ApplyScalarFunction(expf);
   }
-} // namespace Anki
+} // namespace Anki

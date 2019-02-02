@@ -14,7 +14,7 @@
 #define __Anki_Cozmo_ProceduralFace_H__
 
 #include "coretech/common/shared/types.h"
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/shared/math/point.h"
 #include "coretech/vision/engine/image.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/proceduralFaceTypes.h"

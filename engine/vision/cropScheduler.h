@@ -11,7 +11,7 @@
 
 
 #include "coretech/common/shared/types.h"
-#include "coretech/common/engine/math/rect.h"
+#include "coretech/common/shared/math/rect.h"
 
 #include <vector>
 

@@ -25,7 +25,7 @@
 #ifndef __COMMON_ENGINE_MATH_POINT_SET_H__
 #define __COMMON_ENGINE_MATH_POINT_SET_H__
 
-#include "coretech/common/engine/math/point_fwd.h"
+#include "coretech/common/shared/math/point_fwd.h"
 #include <type_traits>
 
 namespace Anki {

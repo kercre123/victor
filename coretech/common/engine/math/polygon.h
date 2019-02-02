@@ -15,7 +15,7 @@
 #ifndef __COMMON_BASESTATION_MATH_POLYGON_H__
 #define __COMMON_BASESTATION_MATH_POLYGON_H__
 
-#include "coretech/common/engine/math/point_fwd.h"
+#include "coretech/common/shared/math/point_fwd.h"
 
 #include "clad/types/cladPoint.h"
 

@@ -7,9 +7,9 @@
 #define __Anki_Vision_Image_Impl_H__
 
 #include "coretech/vision/engine/image.h"
-#include "coretech/common/engine/array2d_impl.h"
-#include "coretech/common/engine/math/rect_impl.h"
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/math/rect_impl.h"
+#include "coretech/common/shared/math/point.h"
 
 namespace Anki {
 namespace Vision {

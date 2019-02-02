@@ -193,7 +193,7 @@ struct BehaviorEnrollFace::DynamicVariables
     bool           isManualReEnroll = false;
     
     using EnrollmentSettings = ExternalInterface::SetFaceToEnroll;
-    std::unique_ptr<EnrollmentSettings> settings;
+    EnrollmentSettings settings;
     
     std::map<std::string, WrongFaceInfo> wrongFaceStats;
     
@@ -275,7 +275,6 @@ BehaviorEnrollFace::BehaviorEnrollFace(const Json::Value& config)
 , _iConfig(new InstanceConfig)
 , _dVars(new DynamicVariables)
 {
-  _dVars->persistent.settings.reset( new ExternalInterface::SetFaceToEnroll() );
 
   SubscribeToTags({EngineToGameTag::RobotChangedObservedFaceID});
 
@@ -346,12 +345,12 @@ void BehaviorEnrollFace::CheckForIntentData()
   UserIntentPtr intentData = uic.GetUserIntentIfActive(USER_INTENT(meet_victor));
   if( intentData != nullptr ) {
     const auto& meetVictor = intentData->intent.Get_meet_victor();
-    _dVars->persistent.settings->name = meetVictor.username;
-    _dVars->persistent.settings->observedID = Vision::UnknownFaceID;
-    _dVars->persistent.settings->saveID = 0;
-    _dVars->persistent.settings->saveToRobot = true;
-    _dVars->persistent.settings->sayName = true;
-    _dVars->persistent.settings->useMusic = false;
+    _dVars->persistent.settings.name = meetVictor.username;
+    _dVars->persistent.settings.observedID = Vision::UnknownFaceID;
+    _dVars->persistent.settings.saveID = 0;
+    _dVars->persistent.settings.saveToRobot = true;
+    _dVars->persistent.settings.sayName = true;
+    _dVars->persistent.settings.useMusic = false;
   }
 }
 
@@ -400,12 +399,12 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
                         "BehaviorEnrollFace started without an enrollment request");
   }
 
-  _dVars->faceID        = _dVars->persistent.settings->observedID;
-  _dVars->saveID        = _dVars->persistent.settings->saveID;
-  _dVars->faceName      = _dVars->persistent.settings->name;
-  _dVars->saveToRobot   = _dVars->persistent.settings->saveToRobot;
-  _dVars->useMusic      = _dVars->persistent.settings->useMusic;
-  _dVars->sayName       = _dVars->persistent.settings->sayName;
+  _dVars->faceID        = _dVars->persistent.settings.observedID;
+  _dVars->saveID        = _dVars->persistent.settings.saveID;
+  _dVars->faceName      = _dVars->persistent.settings.name;
+  _dVars->saveToRobot   = _dVars->persistent.settings.saveToRobot;
+  _dVars->useMusic      = _dVars->persistent.settings.useMusic;
+  _dVars->sayName       = _dVars->persistent.settings.sayName;
 
   _dVars->enrollingSpecificID = (_dVars->faceID != Vision::UnknownFaceID);
 
@@ -449,7 +448,7 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
           // Indicate that this is a re-enrollment of the ID we have that already matches
           // the specified name. Update persistent settings too, in case we get interrupted.
           _dVars->saveID = *(faceIDsWithName.begin());
-          _dVars->persistent.settings->saveID = _dVars->saveID;
+          _dVars->persistent.settings.saveID = _dVars->saveID;
         }
       }
     }
@@ -520,15 +519,15 @@ void BehaviorEnrollFace::OnBehaviorActivated()
   // Must happen _after_ InitEnrollmentSettings (so that _dVars->faceName is populated)
   {
     DEV_ASSERT(!_dVars->faceName.empty(), "BehaviorEnrollFace.InitInternal.FaceNameNotSet");
-    const bool prevNameSet = !_dVars->persistent.settings->name.empty();
-    const bool nameChanged = (_dVars->faceName != _dVars->persistent.settings->name);
+    const bool prevNameSet = !_dVars->persistent.settings.name.empty();
+    const bool nameChanged = (_dVars->faceName != _dVars->persistent.settings.name);
     const bool interrupted = (_dVars->persistent.state != State::NotStarted);
     if(interrupted && prevNameSet && nameChanged)
     {
       // We were interrupted by a new enrollment. Just start the new enrollment from scratch
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal.InterruptedByNewEnrollment",
                     "Was enrolling %s, interrupted to enroll %s. Starting over.",
-                    Util::HidePersonallyIdentifiableInfo(_dVars->persistent.settings->name.c_str()),
+                    Util::HidePersonallyIdentifiableInfo(_dVars->persistent.settings.name.c_str()),
                     Util::HidePersonallyIdentifiableInfo(_dVars->faceName.c_str()));
       
       _dVars->persistent.state = State::NotStarted;
@@ -609,7 +608,7 @@ void BehaviorEnrollFace::OnBehaviorActivated()
 void BehaviorEnrollFace::BehaviorUpdate()
 {
   // conditions that would end enrollment, even if the behavior has been interrupted
-  if( (_dVars->persistent.settings != nullptr) && IsEnrollmentRequested() ) {
+  if( IsEnrollmentRequested() ) {
     const bool lowBattery = GetBEI().GetRobotInfo().GetBatteryLevel() == BatteryLevel::Low;
     const auto& uic = GetBehaviorComp<UserIntentComponent>();
     const bool triggerWordPending = uic.IsTriggerWordPending();
@@ -1098,7 +1097,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorEnrollFace::IsEnrollmentRequested() const
 {
-  const bool hasName = !_dVars->persistent.settings->name.empty();
+  const bool hasName = !_dVars->persistent.settings.name.empty();
   return hasName;
 }
 
@@ -2279,7 +2278,7 @@ void BehaviorEnrollFace::HandleWhileInScopeButNotActivated(const GameToEngineEve
                     "SaveID:%d ObsID:%d Name:%s",
                     msg.saveID, msg.observedID, Util::HidePersonallyIdentifiableInfo(msg.name.c_str()));
 
-      *(_dVars->persistent.settings) = msg;
+      _dVars->persistent.settings = msg;
       
       _dVars->persistent.requestedRescan = true;
       

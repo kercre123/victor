@@ -12,6 +12,7 @@
 
 #include "overheadEdgesDetector.h"
 #include "coretech/vision/engine/imageCache.h"
+#include "coretech/common/engine/math/quad_impl.h"
 #include "engine/robot.h"
 
 namespace Anki {

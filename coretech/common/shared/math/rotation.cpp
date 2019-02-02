@@ -6,10 +6,8 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
-#include "coretech/common/engine/math/rotation.h"
-
-#include "coretech/common/engine/math/matrix_impl.h"
-
+#include "coretech/common/shared/math/rotation.h"
+#include "coretech/common/shared/math/matrix_impl.h"
 #include "coretech/common/shared/utilities_shared.h"
 
 #include "util/logging/logging.h"

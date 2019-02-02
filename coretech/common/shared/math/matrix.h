@@ -32,11 +32,8 @@
 #include "opencv2/core/core.hpp"
 #endif
 
-//#include <ostream>
-//#include <cstdio>
-
-#include "coretech/common/engine/array2d.h"
-#include "coretech/common/engine/math/point_fwd.h"
+#include "coretech/common/shared/array2d.h"
+#include "coretech/common/shared/math/point_fwd.h"
 
 namespace Anki {
   
