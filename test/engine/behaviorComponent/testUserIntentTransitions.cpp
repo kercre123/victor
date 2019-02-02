@@ -151,17 +151,17 @@ TEST_INTENT(UserIntentsTransitions, Sleep, "system_sleep")
 //   EXPECT_TRUE(res);
 // }
 
-TEST_INTENT(UserIntentsTransitions, VolumeUp, "imperative_volumeup")
-{
-  const bool res = IntentHelper( UserIntent::Createimperative_volumeup({}), BehaviorID::Volume, true );
-  EXPECT_TRUE(res);
-}
+// TEST_INTENT(UserIntentsTransitions, VolumeUp, "imperative_volumeup")
+// {
+//   const bool res = IntentHelper( UserIntent::Createimperative_volumeup({}), BehaviorID::Volume, true );
+//   EXPECT_TRUE(res);
+// }
 
-TEST_INTENT(UserIntentsTransitions, VolumeDown, "imperative_volumedown")
-{
-  const bool res = IntentHelper( UserIntent::Createimperative_volumedown({}), BehaviorID::Volume, true );
-  EXPECT_TRUE(res);
-}
+// TEST_INTENT(UserIntentsTransitions, VolumeDown, "imperative_volumedown")
+// {
+//   const bool res = IntentHelper( UserIntent::Createimperative_volumedown({}), BehaviorID::Volume, true );
+//   EXPECT_TRUE(res);
+// }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
