@@ -9,6 +9,8 @@
 #include <assert.h>
 #include <unistd.h>
 #include <termios.h>
+#include <sys/ioctl.h>
+#include <linux/serial.h>
 
 #define spine_error(code, fmt, args...)   (LOGE( fmt, ##args)?(code):(code))
 #ifdef CONSOLE_DEBUG_PRINTF
@@ -57,6 +59,22 @@ static SpineErr spine_open_internal(spine_ctx_t spine, struct spine_params param
     /* Configure device */
     {
         struct termios cfg;
+        struct serial_struct serial;
+
+        if (ioctl(spine->fd, TIOCGSERIAL, &serial) != 0) {
+          int errnosv = errno;
+          spine_close(spine);
+          return spine_error(err_TERMIOS_FAIL, "ioctl TIOCGSERIAL failed %s", strerror(errnosv));
+        }
+
+        serial.flags |= ASYNC_LOW_LATENCY;
+
+        if (ioctl(spine->fd, TIOCSSERIAL, &serial)) {
+          int errnosv = errno;
+          spine_close(spine);
+          return spine_error(err_TERMIOS_FAIL, "ioctl TIOCSSERIAL failed %s", strerror(errnosv));
+        }
+
         if (tcgetattr(spine->fd, &cfg)) {
             spine_close(spine);
             return spine_error(err_TERMIOS_FAIL, "tcgetattr() failed");

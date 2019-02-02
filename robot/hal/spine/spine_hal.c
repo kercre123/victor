@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <termios.h>
 #include <string.h>
+#include <sys/ioctl.h>
+#include <linux/serial.h>
 
 #include "schema/messages.h"
 #include "spine_crc.h"
@@ -86,6 +88,23 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
   /* Configure device */
   {
     struct termios cfg;
+    struct serial_struct serial;
+
+    if (ioctl(gHal.fd, TIOCGSERIAL, &serial) != 0) {
+      int errnosv = errno;
+      hal_serial_close();
+      return spine_error(err_TERMIOS_FAIL, "ioctl TIOCGSERIAL failed %s", strerror(errnosv));
+    }
+
+    serial.flags |= ASYNC_LOW_LATENCY;
+
+    if (ioctl(gHal.fd, TIOCSSERIAL, &serial)) {
+      int errnosv = errno;
+      hal_serial_close();
+      return spine_error(err_TERMIOS_FAIL, "ioctl TIOCSSERIAL failed %s", strerror(errnosv));
+    }
+
+
     if (tcgetattr(gHal.fd, &cfg)) {
       hal_serial_close();
       return spine_error(err_TERMIOS_FAIL, "tcgetattr() failed");
