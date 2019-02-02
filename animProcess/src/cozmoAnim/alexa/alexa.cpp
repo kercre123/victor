@@ -58,6 +58,8 @@ namespace {
   
   const float kAlexaErrorTimeout_s = 15.0f; // max duration for error audio
 }
+
+CONSOLE_VAR(bool, kAllowAudioOnCharger, "Alexa", true);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngine::AudioEventId GetErrorAudioEvent( AlexaNetworkErrorType errorType )
@@ -572,7 +574,7 @@ void Alexa::SetUXState( AlexaUXState newState )
   }
   
   // Only play earcons when not frozen on charger (alexa acoustic test mode)
-  if( !(_frozenOnCharger && _onCharger) ) {
+  if( !(_frozenOnCharger && _onCharger) || kAllowAudioOnCharger ) {
     using namespace AudioEngine;
     using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
     // Play Audio Event for state change
