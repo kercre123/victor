@@ -49,7 +49,7 @@ private:
   
   // Gets the most recently observed marker pose (wrt robot) of the expected object
   // Returns true if markerPoseWrtRobot is valid
-  bool GetExpectedObjectMarkerPoseWrtRobot(Pose3d& markerPoseWrtRobot);
+  bool GetExpectedObjectMarkerPoseWrtRobot(Pose3d& markerPoseWrtRobot, ObjectID& objectID);
   
   // Initial starting angle when the behavior started
   Radians    _startingAngle               = 0;
