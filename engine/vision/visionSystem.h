@@ -18,6 +18,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "engine/debugImageList.h"
 #include "engine/overheadEdge.h"
 #include "engine/robotStateHistory.h"
 #include "engine/rollingShutterCorrector.h"
@@ -34,7 +35,6 @@
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/cameraCalibration.h"
 #include "coretech/vision/engine/compressedImage.h"
-#include "coretech/vision/engine/debugImageList.h"
 #include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/profiler.h"
 #include "coretech/vision/engine/trackedFace.h"

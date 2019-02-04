@@ -80,8 +80,9 @@ namespace Vision {
     CONSOLE_VAR_ENUM(s32,                    kPoseAngle,            "Vision.FaceDetectorCommon", Okao::GetIndex(Okao::PoseAngle::Front), Okao::GetConsoleString<Okao::PoseAngle>().c_str());
     CONSOLE_VAR_ENUM(s32,                    kRollAngle,            "Vision.FaceDetectorCommon", Okao::GetIndex(Okao::RollAngle::UpperPm45), Okao::GetConsoleString<Okao::RollAngle>().c_str());
     CONSOLE_VAR_ENUM(s32,                    kSearchDensity,        "Vision.FaceDetectorCommon", Okao::GetIndex(Okao::SearchDensity::Normal), Okao::GetConsoleString<Okao::SearchDensity>().c_str());
-    CONSOLE_VAR_RANGED(s32,                  kFaceDetectionThreshold,        "Vision.FaceDetectorCommon", 500, 1, 1000);
+    CONSOLE_VAR_RANGED(s32,                  kFaceThreshold,        "Vision.FaceDetectorCommon", 500, 1, 1000);
     CONSOLE_VAR_ENUM(s32,                    kDetectionMode,        "Vision.FaceDetectorCommon", Okao::GetIndex(Okao::DetectionMode::Movie), Okao::GetConsoleString<Okao::DetectionMode>().c_str());
+
 
     // Movie only
     CONSOLE_VAR_RANGED(s32,                  kSearchInitialCycle,   "Vision.FaceDetectorMovie", 2, 1, 45);
@@ -110,6 +111,7 @@ namespace Vision {
     CONSOLE_VAR(     bool,                   kUseHeadTracking,      "Vision.FaceDetectorMovie", false);
     
     CONSOLE_VAR(     bool,                   kDirectionMask,        "Vision.FaceDetectorMovie", false);
+
   }
 
   FaceTracker::Impl::Impl(const Camera& camera,
@@ -119,6 +121,14 @@ namespace Vision {
   , _recognizer(config)
   , _rng(new Util::RandomGenerator(FaceEnrollParams::kRandomSeed))
   {
+    if(config.isMember("FaceDetection")) {
+      // TODO: Use string constants
+      _config = config["FaceDetection"];
+    } else {
+      LOG_WARNING("FaceTrackerImpl.Constructor.NoFaceDetectConfig",
+                  "Did not find 'FaceDetection' field in config");
+    }
+
     Profiler::SetProfileGroupName("FaceTracker.Profiler");
 
     Result initResult = Init();
@@ -127,6 +137,19 @@ namespace Vision {
     }
 
   } // Impl Constructor()
+
+  template<class T>
+  static inline bool SetParamHelper(const Json::Value& config, const std::string& keyName, T& value)
+  {
+    // TODO: Use string constants
+    if(JsonTools::GetValueOptional(config, keyName, value)) {
+      // TODO: Print value too...
+      LOG_INFO("FaceTrackerImpl.SetParamHelper", "%s", keyName.c_str());
+      return true;
+    } else {
+      return false;
+    }
+  }
 
   Result FaceTracker::Impl::Init()
   {
@@ -141,25 +164,7 @@ namespace Vision {
       return RESULT_FAIL;
     }
     LOG_INFO("FaceTrackerImpl.Init.FaceLibVersion",
-             "Initializing with FaceLib version %d.%d",
-             okaoVersionMajor, okaoVersionMinor);
-    
-    okaoResult = OKAO_DT_GetVersion(&okaoVersionMajor, &okaoVersionMinor);
-    if(okaoResult != OKAO_NORMAL) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceDetectorVersionFail", "");
-      return RESULT_FAIL;
-    }
-    LOG_INFO("FaceTrackerImpl.Init.FaceDetectorVersion",
-             "Initializing with FaceDetector version %d.%d",
-             okaoVersionMajor, okaoVersionMinor);
-    
-    okaoResult = OKAO_PT_GetVersion(&okaoVersionMajor, &okaoVersionMinor);
-    if(okaoResult != OKAO_NORMAL) {
-      LOG_ERROR("FaceTrackerImpl.Init.PartDetectorVersionFail", "");
-      return RESULT_FAIL;
-    }
-    LOG_INFO("FaceTrackerImpl.Init.PartDetectorVersion",
-             "Initializing with PartDetector version %d.%d",
+             "Initializing with FaceLibVision version %d.%d",
              okaoVersionMajor, okaoVersionMinor);
 
     _okaoCommonHandle = OKAO_CO_CreateHandle();
@@ -279,7 +284,7 @@ namespace Vision {
       return RESULT_FAIL_INVALID_PARAMETER;
     }
 
-    okaoResult = OKAO_DT_SetThreshold(_okaoDetectorHandle, DetectParams::kFaceDetectionThreshold);
+    okaoResult = OKAO_DT_SetThreshold(_okaoDetectorHandle, DetectParams::kFaceThreshold);
     if(OKAO_NORMAL != okaoResult) {
       LOG_ERROR("FaceTrackerImpl.Init.FaceLibSetThresholdFailed",
                 "FaceLib Result Code=%d", okaoResult);
@@ -490,14 +495,11 @@ namespace Vision {
   }
 
   template<class PointType>
-  static inline void SetFeatureHelper(const PointType* faceParts,
-                                      const int* faceConfs,
-                                      std::vector<s32>&& indices,
+  static inline void SetFeatureHelper(const PointType* faceParts, std::vector<s32>&& indices,
                                       TrackedFace::FeatureName whichFeature,
                                       TrackedFace& face)
   {
     TrackedFace::Feature feature;
-    TrackedFace::FeatureConfidence confs;
     bool allPointsPresent = true;
     for(auto index : indices) {
       if(faceParts[index].x == FEATURE_NO_POINT ||
@@ -507,22 +509,22 @@ namespace Vision {
         break;
       }
       feature.emplace_back(faceParts[index].x, faceParts[index].y);
-      confs.emplace_back(faceConfs[index]);
     }
 
     if(allPointsPresent) {
-      face.SetFeature(whichFeature, std::move(feature), std::move(confs));
+      face.SetFeature(whichFeature, std::move(feature));
     }
   } // SetFeatureHelper()
 
 
   bool FaceTracker::Impl::DetectFaceParts(INT32 nWidth, INT32 nHeight, RAWIMAGE* dataPtr,
-                                          INT32 detectionIndex, Vision::TrackedFace& face)
+                                          INT32 detectionIndex,
+                                          Vision::TrackedFace& face)
   {
     INT32 okaoResult = OKAO_PT_SetPositionFromHandle(_okaoPartDetectorHandle, _okaoDetectionResultHandle, detectionIndex);
-    
+
     if(OKAO_NORMAL != okaoResult) {
-      LOG_WARNING("FaceTrackerImpl.DetectFaceParts.FaceLibSetPositionFail",
+      LOG_WARNING("FaceTrackerImpl.Update.FaceLibSetPositionFail",
                   "FaceLib Result Code=%d", okaoResult);
       return false;
     }
@@ -531,7 +533,7 @@ namespace Vision {
 
     if(OKAO_NORMAL != okaoResult) {
       if(OKAO_ERR_PROCESSCONDITION != okaoResult) {
-        LOG_WARNING("FaceTrackerImpl.DetectFaceParts.FaceLibPartDetectionFail",
+        LOG_WARNING("FaceTrackerImpl.Update.FaceLibPartDetectionFail",
                     "FaceLib Result Code=%d", okaoResult);
       }
       return false;
@@ -540,7 +542,7 @@ namespace Vision {
     okaoResult = OKAO_PT_GetResult(_okaoPartDetectionResultHandle, PT_POINT_KIND_MAX,
                                    _facialParts, _facialPartConfs);
     if(OKAO_NORMAL != okaoResult) {
-      LOG_WARNING("FaceTrackerImpl.DetectFaceParts.FaceLibGetFacePartResultFail",
+      LOG_WARNING("FaceTrackerImpl.Update.FaceLibGetFacePartResultFail",
                   "FaceLib Result Code=%d", okaoResult);
       return false;
     }
@@ -552,19 +554,19 @@ namespace Vision {
                                _facialParts[PT_POINT_RIGHT_EYE].y));
 
     // Set other facial features
-    SetFeatureHelper(_facialParts, _facialPartConfs, {
+    SetFeatureHelper(_facialParts, {
       PT_POINT_LEFT_EYE_OUT, PT_POINT_LEFT_EYE, PT_POINT_LEFT_EYE_IN
     }, TrackedFace::FeatureName::LeftEye, face);
 
-    SetFeatureHelper(_facialParts, _facialPartConfs, {
+    SetFeatureHelper(_facialParts, {
       PT_POINT_RIGHT_EYE_IN, PT_POINT_RIGHT_EYE, PT_POINT_RIGHT_EYE_OUT
     }, TrackedFace::FeatureName::RightEye, face);
 
-    SetFeatureHelper(_facialParts, _facialPartConfs, {
+    SetFeatureHelper(_facialParts, {
       PT_POINT_NOSE_LEFT, PT_POINT_NOSE_RIGHT
     }, TrackedFace::FeatureName::Nose, face);
 
-    SetFeatureHelper(_facialParts, _facialPartConfs, {
+    SetFeatureHelper(_facialParts, {
       PT_POINT_MOUTH_LEFT, PT_POINT_MOUTH_UP, PT_POINT_MOUTH_RIGHT,
       PT_POINT_MOUTH, PT_POINT_MOUTH_LEFT,
     }, TrackedFace::FeatureName::UpperLip, face);
@@ -994,27 +996,19 @@ namespace Vision {
                                  undistortedPoints[PT_POINT_RIGHT_EYE].y));
 
       // Set other facial features to their undistorted locations
-      SetFeatureHelper(undistortedPoints.data(),
-                       face.GetFeatureConfidence(TrackedFace::FeatureName::LeftEye).data(),
-      {
+      SetFeatureHelper(undistortedPoints.data(), {
         PT_POINT_LEFT_EYE_OUT, PT_POINT_LEFT_EYE, PT_POINT_LEFT_EYE_IN
       }, TrackedFace::FeatureName::LeftEye, face);
 
-      SetFeatureHelper(undistortedPoints.data(),
-                       face.GetFeatureConfidence(TrackedFace::FeatureName::RightEye).data(),
-      {
+      SetFeatureHelper(undistortedPoints.data(), {
         PT_POINT_RIGHT_EYE_IN, PT_POINT_RIGHT_EYE, PT_POINT_RIGHT_EYE_OUT
       }, TrackedFace::FeatureName::RightEye, face);
 
-      SetFeatureHelper(undistortedPoints.data(),
-                       face.GetFeatureConfidence(TrackedFace::FeatureName::Nose).data(),
-      {
+      SetFeatureHelper(undistortedPoints.data(), {
         PT_POINT_NOSE_LEFT, PT_POINT_NOSE_RIGHT
       }, TrackedFace::FeatureName::Nose, face);
 
-      SetFeatureHelper(undistortedPoints.data(),
-                       face.GetFeatureConfidence(TrackedFace::FeatureName::UpperLip).data(),
-      {
+      SetFeatureHelper(undistortedPoints.data(), {
         PT_POINT_MOUTH_LEFT, PT_POINT_MOUTH_UP, PT_POINT_MOUTH_RIGHT,
         PT_POINT_MOUTH, PT_POINT_MOUTH_LEFT,
       }, TrackedFace::FeatureName::UpperLip, face);
@@ -1052,24 +1046,20 @@ namespace Vision {
                   rcEdgeMask.right, rcEdgeMask.bottom);
     }
     
-    if(DetectParams::kDetectionMode == Okao::GetIndex(Okao::DetectionMode::Movie))
-    {
-      // Tracking edge mask only applies in Movie mode
-      okaoResult = OKAO_DT_MV_SetTrackingEdgeMask(_okaoDetectorHandle, rcEdgeMask);
-      if(OKAO_NORMAL != okaoResult) {
-        LOG_WARNING("FaceTrackerImpl.SetCroppingMask.FaceLibSetTrackingEdgeMaskFail",
-                    "FaceLib Result Code=%d, Rect=[%d %d %d %d]",
-                    okaoResult, rcEdgeMask.left, rcEdgeMask.top,
-                    rcEdgeMask.right, rcEdgeMask.bottom);
-      }
+    okaoResult = OKAO_DT_MV_SetTrackingEdgeMask(_okaoDetectorHandle, rcEdgeMask);
+    if(OKAO_NORMAL != okaoResult) {
+      LOG_WARNING("FaceTrackerImpl.SetCroppingMask.FaceLibSetTrackingEdgeMaskFail",
+                  "FaceLib Result Code=%d, Rect=[%d %d %d %d]",
+                  okaoResult, rcEdgeMask.left, rcEdgeMask.top,
+                  rcEdgeMask.right, rcEdgeMask.bottom);
     }
+    
   }
 
   Result FaceTracker::Impl::Update(const Vision::Image& frameOrig,
                                    const float cropFactor,
                                    std::list<TrackedFace>& faces,
-                                   std::list<UpdatedFaceID>& updatedIDs,
-                                   DebugImageList<CompressedImage>& debugImages)
+                                   std::list<UpdatedFaceID>& updatedIDs)
   {
     if(!_isInitialized) {
       LOG_ERROR("FaceTrackerImpl.Update.NotInitialized", "");
@@ -1211,7 +1201,7 @@ namespace Vision {
       face.SetTimeStamp(frameOrig.GetTimestamp());
 
       // Do we need to find parts?
-      const bool doRecognition = _isRecognitionEnabled && !(skipRecognition.count(detectionInfo.nID)>0);
+      const bool doRecognition = !(skipRecognition.count(detectionInfo.nID)>0);
       const bool doPartDetection = (_detectEmotion ||
                                     _detectSmiling ||
                                     _detectGaze ||
@@ -1347,7 +1337,7 @@ namespace Vision {
 
       // Get whatever is the latest recognition information for the current tracker ID
       s32 enrollmentCompleted = 0;
-      auto recognitionData = _recognizer.GetRecognitionData(detectionInfo.nID, enrollmentCompleted, debugImages);
+      auto recognitionData = _recognizer.GetRecognitionData(detectionInfo.nID, enrollmentCompleted);
     
       face.SetBestGuessName(_recognizer.GetBestGuessNameForTrackingID(detectionInfo.nID));
 
@@ -1513,35 +1503,6 @@ namespace Vision {
     return _recognizer.SetSerializedData(albumData, enrollData, loadedFaces);
   }
 
-#if ANKI_DEVELOPER_CODE
-  Result FaceTracker::Impl::DevAddFaceToAlbum(const Image& img, const TrackedFace& face, int albumEntry)
-  {
-    return _recognizer.DevAddFaceToAlbum(img, face, albumEntry);
-  }
-  
-  Result FaceTracker::Impl::DevFindFaceInAlbum(const Image& img, const TrackedFace& face,
-                                            int& albumEntry, float& score) const
-  {
-    return _recognizer.DevFindFaceInAlbum(img, face, albumEntry, score);
-  }
-  
-  Result FaceTracker::Impl::DevFindFaceInAlbum(const Image& img, const TrackedFace& face, const int maxMatches,
-                                            std::vector<std::pair<int, float>>& matches) const
-  {
-    return _recognizer.DevFindFaceInAlbum(img, face, maxMatches, matches);
-  }
-  
-  float FaceTracker::Impl::DevComputePairwiseMatchScore(int faceID1, int faceID2) const
-  {
-    return _recognizer.DevComputePairwiseMatchScore(faceID1, faceID2);
-  }
-  
-  float FaceTracker::Impl::DevComputePairwiseMatchScore(int faceID1, const Image& img2, const TrackedFace& face2) const
-  {
-    return _recognizer.DevComputePairwiseMatchScore(faceID1, img2, face2);
-  }
-#endif /* ANKI_DEVELOPER_CODE */
-  
 } // namespace Vision
 } // namespace Anki
 

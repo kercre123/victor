@@ -48,7 +48,6 @@ namespace Okao {
     All,
     None,
     UpperPm45,
-    UpperPm60,
     UpperLeftRightPm15,
     UpperLeftRightPm45,
     _Count

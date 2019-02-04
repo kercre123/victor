@@ -511,7 +511,7 @@ TEST(SurfaceClassifier, DISABLED_GroundClassifier_NoiseRemoval)
 
   Anki::Vector::GroundPlaneClassifier groundPlaneClassifier(config, cozmoContext);
 
-  Anki::Vision::DebugImageList<Anki::Vision::CompressedImage> debugImageList;
+  Anki::Vector::DebugImageList<Anki::Vision::CompressedImage> debugImageList;
   std::list<Anki::Vector::OverheadEdgeFrame> outEdges;
   const std::string path = cozmoContext->GetDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
                                                                            "test/overheadMap/realImagesDesk");

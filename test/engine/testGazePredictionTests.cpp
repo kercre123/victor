@@ -15,7 +15,6 @@
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/vision/engine/camera.h"
-#include "coretech/vision/engine/compressedImage.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "coretech/vision/engine/eyeContact.h"
 #include "engine/cozmoContext.h"
@@ -75,9 +74,8 @@ TEST(EyeContact, GazeEstimationInterface)
     // Do the gaze estimation
     std::list<TrackedFace> faces;
     std::list<UpdatedFaceID> updatedIDs;
-    DebugImageList<CompressedImage> debugImages;
     const float cropFactor = 1.f;
-    lastResult = faceTracker.Update(image, cropFactor, faces, updatedIDs, debugImages);
+    lastResult = faceTracker.Update(image, cropFactor, faces, updatedIDs);
     // We don't detect a face in the first frame (even though
     // there is one present) but should find one face in the
     // rest of the frames

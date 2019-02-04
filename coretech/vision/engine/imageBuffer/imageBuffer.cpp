@@ -231,7 +231,7 @@ bool ImageBuffer::GetRGBFromBAYER(ImageRGB& rgb, ImageCacheSize size) const
   }
 }
 
-bool ImageBuffer::GetRGBFromRawRGB(ImageRGB& rgb, ImageCacheSize size) const
+  bool ImageBuffer::GetRGBFromRawRGB(ImageRGB& rgb, ImageCacheSize size) const
 {
   // Wrap ImageRGB around raw rgb data and we will resize it to the "size"
   ImageRGB orig(_rawNumRows, _rawNumCols, _rawData);

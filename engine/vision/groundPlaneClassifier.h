@@ -16,9 +16,9 @@
 
 #include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/shared/types.h"
-#include "coretech/vision/engine/debugImageList.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/profiler.h"
+#include "engine/debugImageList.h"
 #include "engine/vision/rawPixelsClassifier.h"
 #include "engine/vision/visionPoseData.h"
 
@@ -155,7 +155,7 @@ public:
   GroundPlaneClassifier(const Json::Value& config, const CozmoContext *context);
 
   Result Update(const Vision::ImageRGB& image, const VisionPoseData& poseData,
-                Vision::DebugImageList<Vision::CompressedImage>& debugImages,
+                DebugImageList<Vision::CompressedImage>& debugImages,
                 std::list<OverheadEdgeFrame>& outEdges);
 
   bool IsInitialized() const {

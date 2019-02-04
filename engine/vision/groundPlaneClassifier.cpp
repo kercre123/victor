@@ -101,7 +101,7 @@ GroundPlaneClassifier::GroundPlaneClassifier(const Json::Value& config, const Co
 }
 
 Result GroundPlaneClassifier::Update(const Vision::ImageRGB& image, const VisionPoseData& poseData,
-                                     Vision::DebugImageList<Vision::CompressedImage>& debugImages,
+                                     DebugImageList<Vision::CompressedImage>& debugImages,
                                      std::list<OverheadEdgeFrame>& outEdges)
 {
 
