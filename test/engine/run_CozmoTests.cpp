@@ -31,6 +31,7 @@
 #include "engine/robotToEngineImplMessaging.h"
 #include "engine/vision/visionSystem.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/factory/emrHelper.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "gtest/gtest.h"
 #include "json/json.h"
@@ -103,6 +104,23 @@ TEST(DataPlatform, ReadWrite)
 TEST(Cozmo, SimpleCozmoTest)
 {
   ASSERT_TRUE(true);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(Cozmo, WhiskeyTest)
+{
+  using namespace Anki::Vector;
+
+  UNIT_TEST_WHISKEY;
+
+  ASSERT_TRUE(IsWhiskey());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(Cozmo, NotWhiskeyTest)
+{
+  using namespace Anki::Vector;
+  ASSERT_FALSE(IsWhiskey());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

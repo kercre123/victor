@@ -86,12 +86,14 @@ target_link_libraries(webotsCtrlCommon
   PUBLIC
   util
   cti_common
+  robot_interface # for emrHelper.h
   ${PLATFORM_LIBS}
 )
 
 target_compile_definitions(webotsCtrlCommon
   PUBLIC
   WEBOTS_VER=\"${WEBOTS_VER}\"
+  SIMULATOR
 )
 
 #

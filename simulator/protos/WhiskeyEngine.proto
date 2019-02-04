@@ -1,6 +1,7 @@
 PROTO WhiskeyEngine [
   field SFString name "CozmoEngine"
   field SFInt32 robotID 0
+  field SFBool isWhiskey TRUE
 
   field SFVec3f translation 0 0 0
   field SFRotation rotation 0 0 1 0
@@ -21,13 +22,10 @@ Supervisor {
   controller "webotsCtrlGameEngine2"
 
   # append optional command line parameters
-  %{ ctrlArgs="" }%
-  %{ if fields.filterLogs.value then }%
-    %{ ctrlArgs = ctrlArgs .. " --applyLogFilter"}%
-  %{ end }%
-  %{ if fields.colorizeStderrOutput.value then }%
-    %{ ctrlArgs = ctrlArgs .. " --colorizeStderrOutput"}%
-  %{ end }%
+  %{
+    protoHelper = require(context.project_path .. "protos/lua/protoHelper")
+    ctrlArgs = protoHelper.setCtrlOptArgs(fields)
+  }%
 
   controllerArgs "%{=ctrlArgs}%"
 
