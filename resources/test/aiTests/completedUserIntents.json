@@ -76,20 +76,21 @@
 
     "shut_up": {
       "type": "imperative_shutup"
-    },
-
-    "imperative_volumelevel": {
-      "type": "imperative_volumelevel"
-      // how do I specify one of several values for a parameter?
-    },
-
-    "imperative_volumeup": {
-      "type": "imperative_volumeup"
-    },
-
-    "imperative_volumedown": {
-      "type": "imperative_volumedown"
     }
+
+    // commented out until we enable the corresponding tests in test/engine/behaviorComponent/testUserIntentTransitions.cpp
+  //  "imperative_volumelevel": {
+  //    "type": "imperative_volumelevel"
+  //    // how do I specify one of several values for a parameter?
+  //  },
+
+  //  "imperative_volumeup": {
+  //    "type": "imperative_volumeup"
+  //  },
+
+  //  "imperative_volumedown": {
+  //    "type": "imperative_volumedown"
+  //  }
   }
 
 }
