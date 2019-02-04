@@ -160,7 +160,7 @@ namespace Vision {
   
   template<class ObsObjectType>
   Result ObservableObjectLibrary<ObsObjectType>::CreateObjectsFromMarkers(const std::list<ObservedMarker>& markers,
-                                                                          std::multimap<f32, ObsObjectType*>& objectsSeen,
+                                                                          std::vector<ObsObjectType*>& objectsSeen,
                                                                           const CameraID_t seenOnlyBy,
                                                                           bool clampPosesToFlatIfWithinLocalizableTol) const
   {
@@ -227,7 +227,6 @@ namespace Vision {
         // pose was computed).
         // (This is all so we can recompute object pose later from clusters of
         // markers, without having to reassociate observed and known markers.)
-        // reassociate them.)
         // Note that each observed marker can generate multiple poses because
         // an object may have the same known marker on it several times.
         
@@ -252,12 +251,10 @@ namespace Vision {
         // Create a new object of the observed type from the library, and set
         // its pose to the computed pose, in _historical_ world frame (since
         // it is computed w.r.t. a camera from a pose in history).
-        //objectsSeen.push_back(libObject->CloneType());
         ObsObjectType* newObject = libObject->CloneType();
-        const f32 observedDistSq = poseCluster.GetPose().GetTranslation().LengthSq();
         Pose3d newPose = poseCluster.GetPose().GetWithRespectToRoot();
         
-        if(clampPosesToFlatIfWithinLocalizableTol && newObject->IsActive())
+        if(clampPosesToFlatIfWithinLocalizableTol && newObject->CanBeUsedForLocalization())
         {
           ObservableObject::ClampPoseToFlat(newPose, DEG_TO_RAD(newObject->GetRestingFlatTolForLocalization_deg()));
         }
@@ -270,32 +267,15 @@ namespace Vision {
           // Set the observed markers based on their position in the image,
           // not based on their code, since an object can have multiple markers
           // with the same code.
-          //const KnownMarker& marker = match.second;
-          //objectsSeen.back()->SetMarkersAsObserved(marker.GetCode(),
-          //                                         observedTime);
-          
           newObject->SetMarkerAsObserved(match.first, observedTime);
         }
         
         newObject->SetLastObservedTime(observedTime);
         
-        // Finally actually insert the object into the objectsSeen container,
-        // using its (squared) distance from the robot (really, the robot's camera)
-        // as a sorting criterion
-        objectsSeen.insert(std::make_pair(observedDistSq, newObject));
+        // Finally actually insert the object into the objectsSeen container
+        objectsSeen.push_back(newObject);
         
       } // FOR each pose cluster
-      
-      /*
-       if(seenOnlyBy != NULL) {
-       // If there were (or could have been) multiple observers, we will put
-       // all poses in a common World coordinate frame *after* pose clustering,
-       // since that process takes the markers' observers into account.
-       for(auto & poseMatch : possiblePoses) {
-       poseMatch.first = poseMatch.first.GetWithRespectTo(Pose3d::World);
-       }
-       }
-       */
       
     } // FOR each objectType
     
@@ -310,9 +290,6 @@ namespace Vision {
     const ObservedMarker* obsMarker = markerMatch.first;
     const KnownMarker* knownMarker  = markerMatch.second;
     _matches.emplace_back(obsMarker, *knownMarker);
-    
-    // Mark the new KnownMarker object in this match as observed
-    //_matches.back().second.SetWasObserved(true);
     
     // Keep a unique set of observed markers as part of the cluster so that
     // we don't add multiple (ambiguous) poses to one cluster that
@@ -354,9 +331,6 @@ namespace Vision {
       // Create a match between the original observed marker pointer
       // and a copy of the original KnownMarker.
       _matches.emplace_back(match.second.first, *match.second.second);
-      
-      // Mark the new KnownMarker object in this match as observed
-      //_matches.back().second.SetWasObserved(true);
       
       // If there were rotation ambiguities to look for, modify
       // the original (canonical) KnownMarker's pose based on P_diff
