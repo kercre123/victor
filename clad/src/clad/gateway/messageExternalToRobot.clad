@@ -4,20 +4,6 @@ namespace Anki {
 namespace Vector {
 namespace Gateway {
 
-message UiDeviceConnectionWrongVersion {
-  string placeHolder,
-}
-
-// Sends a chunk of oled data, to be later displayed using DisplayFaceImageRGB
-message DisplayFaceImageRGBChunk {
-    uint_16  faceData[600], // Splitting into chunks of 600 similar to the e2r layer
-    uint_16  numPixels,
-    uint_8   chunkIndex,
-    uint_8   numChunks,
-    uint_32  duration_ms,     // Use uint_32 max value to keep the image on the screen
-    bool     interruptRunning,
-}
-
 // ====================================================
 //                      Meet Victor
 // ====================================================
@@ -30,31 +16,13 @@ message DisplayFaceImageRGBChunk {
 // real app->engine channel is working
 //
 
-// CancelFaceEnrollment - Unsets face enrollment settings, meaning BehaviorEnrollFace will no
-//                        longer be activatable
-//
-// Cancels Meet Victor.
-message CancelFaceEnrollment {
-}
-
-// Rename given ID+oldName pair to use newName. For safety if current face with given ID
-// does not match oldName, nothing happens.
-// On success, a RobotLoadedKnownFace message with faceID and newName will be sent.
-message UpdateEnrolledFaceByID {
-  int_32 faceID,
-  string oldName,
-  string newName
-}
 
 // Erase a face record by ID
 message EraseEnrolledFaceByID {
   int_32 faceID
 }
 
-// Erase all enrolled faces (use with care!)
-message EraseAllEnrolledFaces {
-}
-
+/*
 // SetFaceToEnroll - Send face enrollments settings. Actual face enrollment only happens
 //                   when the BehaviorEnrollFace runs. That behavior requires these settings
 //                   be sent in order to be activatable.
@@ -74,6 +42,7 @@ message SetFaceToEnroll {
     bool sayName=0,       // Play say-name/celebration animations on success before completing
     bool useMusic=0       // Starts special music during say-name animations (will leave music playing!)
 }
+*/
 
 // Struct containing all the information relevant to how a 
 // path should be modified or traversed.
@@ -92,22 +61,9 @@ structure PathMotionProfile {
     bool         isCustom = 0
 }
 
-enum uint_8 AlignmentType {
-  LIFT_FINGER = 0, // Fingers aligned with object
-  LIFT_PLATE,      // Lift plate aligned with object
-  BODY,            // Front of body aligned with object
-  CUSTOM
-}
-
 // Note: these values and messages must match the values that get added to MessageGameToEngine
 union MessageExternalToRobot {
-  UiDeviceConnectionWrongVersion UiDeviceConnectionWrongVersion = 0x00, // DO NOT CHANGE THIS VALUE
-  DisplayFaceImageRGBChunk           DisplayFaceImageRGBChunk           = 0x08,
-  CancelFaceEnrollment               CancelFaceEnrollment               = 0x0A,
-  UpdateEnrolledFaceByID             UpdateEnrolledFaceByID             = 0x0C,
-  EraseEnrolledFaceByID              EraseEnrolledFaceByID              = 0x0D,
-  EraseAllEnrolledFaces              EraseAllEnrolledFaces              = 0x0E,
-  SetFaceToEnroll                    SetFaceToEnroll                    = 0x0F,
+  EraseEnrolledFaceByID             UpdateEnrolledFaceByID             = 0x00,
 }
 
 } // Gateway

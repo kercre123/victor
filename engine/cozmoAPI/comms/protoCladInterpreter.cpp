@@ -100,6 +100,31 @@ bool ProtoCladInterpreter::Redirect(const external_interface::GatewayWrapper & p
       ProtoDisplayFaceImageRgbRequestToClad(proto_message, clad_message);
       break;
     }
+    case external_interface::GatewayWrapper::kCancelFaceEnrollmentRequest:
+    {
+      ProtoCancelFaceEnrollmentRequestToClad(proto_message, clad_message);
+      break;
+    }
+    case external_interface::GatewayWrapper::kEraseAllEnrolledFacesRequest:
+    {
+      ProtoEraseAllEnrolledFacesRequestToClad(proto_message, clad_message);
+      break;
+    }
+    case external_interface::GatewayWrapper::kUpdateEnrolledFaceByIdRequest:
+    {
+      ProtoUpdateEnrolledFaceByIDRequestToClad(proto_message, clad_message);
+      break;
+    }
+    case external_interface::GatewayWrapper::kSetFaceToEnrollRequest:
+    {
+      ProtoSetFaceToEnrollRequestToClad(proto_message, clad_message);
+      break;
+    }
+    case external_interface::GatewayWrapper::kEraseEnrolledFaceByIdRequest:
+    {
+      ProtoEraseEnrolledFaceByIDRequestToClad(proto_message, clad_message);
+      break;
+    }
     default:
     {
       return false;
@@ -400,6 +425,62 @@ void ProtoCladInterpreter::ProtoDisplayFaceImageRgbRequestToClad(
   }
 
   clad_message.Set_DisplayFaceImageRGBChunk(display_face_image_rgb_chunk);
+}
+
+void ProtoCladInterpreter::ProtoCancelFaceEnrollmentRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+
+  ExternalInterface::CancelFaceEnrollment cancel_face_enrollment;
+  clad_message.Set_CancelFaceEnrollment(cancel_face_enrollment);
+}
+
+void ProtoCladInterpreter::ProtoEraseAllEnrolledFacesRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+
+  ExternalInterface::EraseAllEnrolledFaces erase_all_enrolled_faces;
+  clad_message.Set_EraseAllEnrolledFaces(erase_all_enrolled_faces);
+}
+
+void ProtoCladInterpreter::ProtoUpdateEnrolledFaceByIDRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+
+  ExternalInterface::UpdateEnrolledFaceByID update_enrolled_face_by_id;
+
+  update_enrolled_face_by_id.faceID = proto_message.update_enrolled_face_by_id_request().face_id();
+  update_enrolled_face_by_id.oldName = proto_message.update_enrolled_face_by_id_request().old_name();
+  update_enrolled_face_by_id.newName = proto_message.update_enrolled_face_by_id_request().new_name();
+
+  clad_message.Set_UpdateEnrolledFaceByID(update_enrolled_face_by_id);
+}
+
+void ProtoCladInterpreter::ProtoSetFaceToEnrollRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+
+  ExternalInterface::SetFaceToEnroll set_face_to_enroll;
+
+  set_face_to_enroll.name = proto_message.set_face_to_enroll_request().name();
+  set_face_to_enroll.observedID = proto_message.set_face_to_enroll_request().observed_id();
+  set_face_to_enroll.saveID = proto_message.set_face_to_enroll_request().save_id();
+  set_face_to_enroll.saveToRobot = proto_message.set_face_to_enroll_request().save_to_robot();
+  set_face_to_enroll.sayName = proto_message.set_face_to_enroll_request().say_name();
+  set_face_to_enroll.useMusic = proto_message.set_face_to_enroll_request().use_music();
+
+  clad_message.Set_SetFaceToEnroll(set_face_to_enroll);
+}
+
+void ProtoCladInterpreter::ProtoEraseEnrolledFaceByIDRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+
+  ExternalInterface::EraseEnrolledFaceByID erase_enrolled_face_by_id;
+
+  erase_enrolled_face_by_id.faceID = proto_message.erase_enrolled_face_by_id_request().face_id();
+             
+  clad_message.Set_EraseEnrolledFaceByID(erase_enrolled_face_by_id);
 }
 
 //

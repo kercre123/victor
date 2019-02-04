@@ -28,66 +28,6 @@ var (
 	connectionId     string
 )
 
-func ProtoCancelFaceEnrollmentToClad(msg *extint.CancelFaceEnrollmentRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithCancelFaceEnrollment(&gw_clad.CancelFaceEnrollment{})
-}
-
-func ProtoUpdateEnrolledFaceByIDToClad(msg *extint.UpdateEnrolledFaceByIDRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithUpdateEnrolledFaceByID(&gw_clad.UpdateEnrolledFaceByID{
-		FaceID:  msg.FaceId,
-		OldName: msg.OldName,
-		NewName: msg.NewName,
-	})
-}
-
-func ProtoEraseEnrolledFaceByIDToClad(msg *extint.EraseEnrolledFaceByIDRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithEraseEnrolledFaceByID(&gw_clad.EraseEnrolledFaceByID{
-		FaceID: msg.FaceId,
-	})
-}
-
-func ProtoEraseAllEnrolledFacesToClad(msg *extint.EraseAllEnrolledFacesRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithEraseAllEnrolledFaces(&gw_clad.EraseAllEnrolledFaces{})
-}
-
-func ProtoSetFaceToEnrollToClad(msg *extint.SetFaceToEnrollRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithSetFaceToEnroll(&gw_clad.SetFaceToEnroll{
-		Name:        msg.Name,
-		ObservedID:  msg.ObservedId,
-		SaveID:      msg.SaveId,
-		SaveToRobot: msg.SaveToRobot,
-		SayName:     msg.SayName,
-		UseMusic:    msg.UseMusic,
-	})
-}
-
-func ProtoPoseToClad(msg *extint.PoseStruct) *gw_clad.PoseStruct3d {
-	return &gw_clad.PoseStruct3d{
-		X:        msg.X,
-		Y:        msg.Y,
-		Z:        msg.Z,
-		Q0:       msg.Q0,
-		Q1:       msg.Q1,
-		Q2:       msg.Q2,
-		Q3:       msg.Q3,
-		OriginID: msg.OriginId,
-	}
-}
-
-func SliceToArray(msg []uint32) [3]uint32 {
-	var arr [3]uint32
-	copy(arr[:], msg)
-	return arr
-}
-
-func CladExpressionValuesToProto(msg []uint8) []uint32 {
-	var expression_values []uint32
-	for _, val := range msg {
-		expression_values = append(expression_values, uint32(val))
-	}
-	return expression_values
-}
-
 func SendOnboardingComplete(in *extint.GatewayWrapper_OnboardingCompleteRequest) (*extint.OnboardingInputResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingCompleteResponse{}, 1)
 	defer f()
@@ -495,10 +435,17 @@ func (service *rpcService) AppIntent(ctx context.Context, in *extint.AppIntentRe
 }
 
 func (service *rpcService) CancelFaceEnrollment(ctx context.Context, in *extint.CancelFaceEnrollmentRequest) (*extint.CancelFaceEnrollmentResponse, error) {
-	_, err := engineCladManager.Write(ProtoCancelFaceEnrollmentToClad(in))
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_CancelFaceEnrollmentRequest{
+			CancelFaceEnrollmentRequest: &extint.CancelFaceEnrollmentRequest{},
+		},
+	}
+
+	_, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
+
 	return &extint.CancelFaceEnrollmentResponse{
 		Status: &extint.ResponseStatus{
 			Code: extint.ResponseStatus_REQUEST_PROCESSING,
@@ -550,7 +497,14 @@ func (service *rpcService) RequestEnrolledNames(ctx context.Context, in *extint.
 
 // TODO Wait for response RobotRenamedEnrolledFace
 func (service *rpcService) UpdateEnrolledFaceByID(ctx context.Context, in *extint.UpdateEnrolledFaceByIDRequest) (*extint.UpdateEnrolledFaceByIDResponse, error) {
-	_, err := engineCladManager.Write(ProtoUpdateEnrolledFaceByIDToClad(in))
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_UpdateEnrolledFaceByIdRequest{
+			UpdateEnrolledFaceByIdRequest: &extint.UpdateEnrolledFaceByIDRequest{},
+		},
+	}
+
+	_, err := engineProtoManager.Write(message)
+
 	if err != nil {
 		return nil, err
 	}
@@ -563,7 +517,14 @@ func (service *rpcService) UpdateEnrolledFaceByID(ctx context.Context, in *extin
 
 // TODO Wait for response RobotRenamedEnrolledFace
 func (service *rpcService) EraseEnrolledFaceByID(ctx context.Context, in *extint.EraseEnrolledFaceByIDRequest) (*extint.EraseEnrolledFaceByIDResponse, error) {
-	_, err := engineCladManager.Write(ProtoEraseEnrolledFaceByIDToClad(in))
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_EraseEnrolledFaceByIdRequest{
+			EraseEnrolledFaceByIdRequest: &extint.EraseEnrolledFaceByIDRequest{},
+		},
+	}
+
+	_, err := engineProtoManager.Write(message)
+
 	if err != nil {
 		return nil, err
 	}
@@ -576,7 +537,14 @@ func (service *rpcService) EraseEnrolledFaceByID(ctx context.Context, in *extint
 
 // TODO Wait for response RobotErasedAllEnrolledFaces
 func (service *rpcService) EraseAllEnrolledFaces(ctx context.Context, in *extint.EraseAllEnrolledFacesRequest) (*extint.EraseAllEnrolledFacesResponse, error) {
-	_, err := engineCladManager.Write(ProtoEraseAllEnrolledFacesToClad(in))
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_EraseAllEnrolledFacesRequest{
+			EraseAllEnrolledFacesRequest: &extint.EraseAllEnrolledFacesRequest{},
+		},
+	}
+
+	_, err := engineProtoManager.Write(message)
+
 	if err != nil {
 		return nil, err
 	}
@@ -588,7 +556,14 @@ func (service *rpcService) EraseAllEnrolledFaces(ctx context.Context, in *extint
 }
 
 func (service *rpcService) SetFaceToEnroll(ctx context.Context, in *extint.SetFaceToEnrollRequest) (*extint.SetFaceToEnrollResponse, error) {
-	_, err := engineCladManager.Write(ProtoSetFaceToEnrollToClad(in))
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_SetFaceToEnrollRequest{
+			SetFaceToEnrollRequest: &extint.SetFaceToEnrollRequest{},
+		},
+	}
+
+	_, err := engineProtoManager.Write(message)
+
 	if err != nil {
 		return nil, err
 	}

@@ -278,6 +278,11 @@ message GatewayWrapper {
     // ------------ Facial Registration -------------------------
     RequestEnrolledNamesRequest   request_enrolled_names_request     = 2000;
     RequestEnrolledNamesResponse  request_enrolled_names_response    = 2001;
+    CancelFaceEnrollmentRequest   cancel_face_enrollment_request     = 2002; 
+    EraseAllEnrolledFacesRequest  erase_all_enrolled_faces_request   = 2003;
+    UpdateEnrolledFaceByIDRequest update_enrolled_face_by_id_request = 2004;
+    EraseEnrolledFaceByIDRequest  erase_enrolled_face_by_id_request  = 2005;
+    SetFaceToEnrollRequest        set_face_to_enroll_request         = 2006;
 
     // ------------ NavMap -------------------------
     NavMapFeedRequest             nav_map_feed_request               = 2050;
