@@ -202,7 +202,6 @@ struct BehaviorEnrollFace::DynamicVariables
   Persistent       persistent;
   
   bool             sayName;
-  bool             useMusic;
   bool             saveToRobot;
   bool             saveSucceeded;
   bool             enrollingSpecificID;
@@ -350,7 +349,6 @@ void BehaviorEnrollFace::CheckForIntentData()
     _dVars->persistent.settings.saveID = 0;
     _dVars->persistent.settings.saveToRobot = true;
     _dVars->persistent.settings.sayName = true;
-    _dVars->persistent.settings.useMusic = false;
   }
 }
 
@@ -403,7 +401,6 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
   _dVars->saveID        = _dVars->persistent.settings.saveID;
   _dVars->faceName      = _dVars->persistent.settings.name;
   _dVars->saveToRobot   = _dVars->persistent.settings.saveToRobot;
-  _dVars->useMusic      = _dVars->persistent.settings.useMusic;
   _dVars->sayName       = _dVars->persistent.settings.sayName;
 
   _dVars->enrollingSpecificID = (_dVars->faceID != Vision::UnknownFaceID);
@@ -1538,15 +1535,7 @@ void BehaviorEnrollFace::TransitionToSayingName()
     if(_dVars->saveID == Vision::UnknownFaceID)
     {
       // If we're not being told which ID to save to, then assume this is a
-      // first-time enrollment and play the bigger sequence of animations,
-      // along with special music state
-      // TODO: PostMusicState should take in a GameState::Music, making the cast unnecessary...
-      if(_dVars->useMusic)
-      {
-        // NOTE: it will be up to the caller to stop this music
-//        robot.GetRobotAudioClient()->PostMusicState((AudioMetaData::GameState::GenericState)AudioMetaData::GameState::Music::Minigame__Meet_Cozmo_Say_Name, false, 0);
-      }
-
+      // first-time enrollment and play the bigger sequence of animations
       {
         // 1. Say name once
         const auto nameQuestionStr = _dVars->faceName + "?";
