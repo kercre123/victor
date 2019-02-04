@@ -430,7 +430,7 @@ func (service *rpcService) DisplayFaceImageRGB(ctx context.Context, in *extint.D
 	*extint.DisplayFaceImageRGBResponse, error) {
 
 	// This was hard-coded in clad:
-	chunkSize := 600
+	chunkSize := faceImagePixelsPerChunk
 
 	// len(in.FaceData) is a byte count. Pixel count is len()/2
 	numPixels := len(in.FaceData) / 2
