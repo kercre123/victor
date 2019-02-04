@@ -197,6 +197,10 @@ struct BehaviorEnrollFace::DynamicVariables
     
     std::map<std::string, WrongFaceInfo> wrongFaceStats;
     
+    // To prevent repeatedly asking if we already know a face when
+    // re-enrollment is requested, store a list of faceIDs we've already asked about.
+    std::map<Vision::FaceID_t, bool> alreadyKnowYouIDs;
+    
     int numInterruptions = 0;
   };
   Persistent       persistent;
@@ -1300,8 +1304,28 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
                   {
                     if(!face->HasName())
                     {
-                      // We don't recognize the person we're seeing, so we need to prompt.
-                      TransitionToAlreadyKnowYouPrompt();
+                      // We don't recognize the person we're seeing, so we need to prompt if we haven't already.
+                      auto iter = _dVars->persistent.alreadyKnowYouIDs.find(_dVars->faceID);
+                      if(iter == _dVars->persistent.alreadyKnowYouIDs.end())
+                      {
+                        // No record of asking before: prompt
+                        TransitionToAlreadyKnowYouPrompt();
+                      }
+                      else
+                      {
+                        // We've already asked this face ID...
+                        const bool alreadyKnowYou = iter->second;
+                        if(alreadyKnowYou)
+                        {
+                          // ...safe to go straight to re-enroll
+                          TransitionToStartEnrollment();
+                        }
+                        else
+                        {
+                          // ...new person with same name: that's a no-no
+                          TransitionToSayingIKnowThatName();
+                        }
+                      }
                     }
                     else if(face->GetName() == _dVars->faceName)
                     {
@@ -1376,6 +1400,9 @@ void BehaviorEnrollFace::TransitionToAlreadyKnowYouHandler()
     // Fake like we just saw them here to reset that clock:
     _dVars->lastFaceSeenTime_ms = GetBEI().GetVisionComponent().GetLastProcessedImageTimeStamp();
     
+    // So we don't ask again
+    _dVars->persistent.alreadyKnowYouIDs[_dVars->faceID] = true;
+    
     TransitionToStartEnrollment();
     
     PRINT_CH_INFO(kLogChannelName,
@@ -1387,6 +1414,9 @@ void BehaviorEnrollFace::TransitionToAlreadyKnowYouHandler()
     PRINT_CH_INFO(kLogChannelName,
                   "BehaviorEnrollFace.TransitionToAlreadyKnowYouHandler.Negative",
                   "Got negative intent. Transition to AlreadyKnowName");
+    
+    // So we don't ask again
+    _dVars->persistent.alreadyKnowYouIDs[_dVars->faceID] = false;
     
     // If user says they haven't met the robot before (or some "play again" garbage),
     // drop the user intents on the floor, tell them we already know that name, and fail
