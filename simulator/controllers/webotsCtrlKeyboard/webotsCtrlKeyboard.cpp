@@ -1142,8 +1142,7 @@ namespace Vector {
     // will change, but since we don't know what SetFaceToEnroll will be replaced by yet, both messages
     // are being send for now. Eventually there should be one "meet_victor" message and one "I'm changing
     // the name, but don't restart meet victor"
-    const std::string json("{\"intent\": \"intent_names_username_extend\", "
-                           "\"parameters\": \"{\\\"username\\\": \\\"" + userName + "\\\"}\" }");
+    std::string json = "{ \"intent\": \"intent_names_username\", \"params\": { \"username\": \"" + userName + "\" } }";
     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FakeCloudIntent(json)));
   }
   
