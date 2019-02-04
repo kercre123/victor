@@ -5,6 +5,7 @@
 #include "timer.h"
 #include "vectors.h"
 #include "flash.h"
+#include "analog.h"
 
 extern void Main_Execution(void);
 
@@ -19,7 +20,9 @@ void Timer::init(void) {
   __asm("nop\nnop\nnop\nnop");
   TIM14->PSC = MAIN_EXEC_PRESCALE - 1;
   TIM14->ARR = MAIN_EXEC_OVERFLOW - 1;  
-  TIM14->DIER = TIM_DIER_UIE | TIM_DIER_CC1IE;
+  TIM14->DIER = TIM_DIER_UIE 
+              | TIM_DIER_CC1IE
+              ;
   TIM14->CR1 = TIM_CR1_CEN;
   TIM14->CCR1 = MAIN_EXEC_OVERFLOW - (12 * 40);     // 40uS lead
 
@@ -32,12 +35,13 @@ extern "C" void TIM14_IRQHandler(void) {
     Timer::clock++;
     Timer::getTime();
 
+    Analog::battery_sample();
     Main_Execution();
   }
 
   if (TIM14->SR & TIM_SR_CC1IF) {
     Encoders::tick_start();
   }
-  
+
   TIM14->SR = 0;
 }

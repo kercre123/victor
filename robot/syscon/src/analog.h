@@ -21,6 +21,7 @@ namespace Analog {
   void init(void);
   void tick(void);
   void stop(void);
+  void battery_sample(void);
   void transmit(BodyToHead* data);
   void receive(HeadToBody* data);
   void setPower(bool power);

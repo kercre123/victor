@@ -2,6 +2,7 @@
 
 #include "common.h"
 #include "hardware.h"
+#include "analog.h"
 
 #include "touch.h"
 
@@ -56,6 +57,8 @@ extern "C" void TIM16_IRQHandler(void) {
     ;
   CAPI::modenoirq(MODE_ALTERNATE);
   __enable_irq();
+
+  Analog::battery_sample();
 }
 
 void Touch::transmit(uint16_t* data) {

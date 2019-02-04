@@ -44,6 +44,10 @@ static const int BOUNCE_LENGTH = 3;
 static const int MINIMUM_RELEASE_UNSTUCK = 20;
 static const int BUTTON_THRESHOLD = ADC_VOLTS(2.0) * 2;
 
+static uint32_t battery_accumulate;
+static uint32_t battery_count;
+static uint32_t battery_compensate;
+
 static bool is_charging = false;
 bool Analog::on_charger = false;
 static bool charge_cutoff = false;
@@ -141,6 +145,7 @@ void Analog::init(void) {
   DMA1_Channel1->CCR |= DMA_CCR_EN;
 
   allow_power = true;
+  battery_compensate = *VREFINT_CAL_ADDR * 33 / 28;
 
   NVIC_DisableIRQ(ADC1_IRQn);
   NVIC_SetPriority(ADC1_IRQn, PRIORITY_ADC);
@@ -162,7 +167,18 @@ void Analog::stop(void) {
 }
 
 void Analog::transmit(BodyToHead* data) {
-  data->battery.main_voltage = EXACT_ADC(ADC_VMAIN);
+  static uint32_t battery_level = 0;
+  static int battery_sample = 0;
+
+  if (battery_sample++ >= 7) {
+    battery_level = battery_accumulate / battery_count;
+
+    battery_accumulate = 0;
+    battery_count = 0;
+    battery_sample = 0;
+  }
+
+  data->battery.main_voltage = battery_level;
   data->battery.charger = EXACT_ADC(ADC_VEXT);
   data->battery.temperature = (int16_t) temperature;
   data->battery.flags = 0
@@ -188,6 +204,11 @@ void Analog::receive(HeadToBody* data) {
 
 void Analog::setPower(bool powered) {
   allow_power = powered;
+}
+
+void Analog::battery_sample(void) {
+  battery_accumulate += adc_values[ADC_VMAIN] * battery_compensate / adc_values[ADC_VREF];
+  battery_count++;
 }
 
 static void handleButton() {
