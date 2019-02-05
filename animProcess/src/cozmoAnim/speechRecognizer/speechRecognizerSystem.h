@@ -28,6 +28,7 @@ namespace Anki {
   }
   namespace Vector {
     class Alexa;
+    class AlexaPlaybackRecognizerComponent;
     class AnimContext;
     namespace MicData {
       class MicDataSystem;
@@ -51,6 +52,9 @@ namespace Vector {
 class SpeechRecognizerSystem
 {
 public:
+
+  friend class AlexaPlaybackRecognizerComponent;
+
   SpeechRecognizerSystem(const AnimContext* context,
                          MicData::MicDataSystem* micDataSystem,
                          const std::string& triggerWordDataDir);
@@ -67,27 +71,7 @@ public:
   void InitVector(const RobotDataLoader& dataLoader,
                   const Util::Locale& locale,
                   TriggerWordDetectedCallback callback);
-  
-  // Init Alexa trigger detector
-  // Note: This is done after Alex user has been authicated
-  void InitAlexa(const RobotDataLoader& dataLoader,
-                 const Util::Locale& locale,
-                 TriggerWordDetectedCallback callback);
-  
-  // Init Alex playback trigger detector
-  // Run trigger detection on playback audio
-  // Note: This is done after Alex user has been authicated
-  void InitAlexaPlayback(const RobotDataLoader& dataLoader,
-                         TriggerWordDetectedCallback callback);
-  
-  // Disable Alexa trigger
-  void DisableAlexa();
-  
-  // Disable Alexa trigger TEMPORARILY (re-enable with ReEnableAlexa)
-  void DisableAlexaTemporarily();
-  // Re-enable Alexa trigger following call to DisableAlexaTemporarily
-  void ReEnableAlexa();
-  
+
   // set whether the notch detector should be active (for alexa keyword only). When active,
   // alexa triggers get dropped if we detect a notch.
   void ToggleNotchDetector(bool active);
@@ -102,11 +86,19 @@ public:
   // Set Default models for locale
   // Return true when locale file was found and is different then current locale
   // NOTE: Locale is not updated until the next Update() call
-  bool UpdateTriggerForLocale(const Util::Locale newLocale);
+  bool UpdateTriggerForLocale(const Util::Locale& newLocale);
   
-  // HACK: Test using a detector on playback audio
-  // Return null when recognizer
-  SpeechRecognizerTHF* GetAlexaPlaybackRecognizer();
+  // Alexa Methods
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Alexa has been set active set current locale and callback for Alexa trigger recognitions
+  void ActivateAlexa(const Util::Locale& locale, TriggerWordDetectedCallback callback);
+  
+  // Alexa has been disabled, turn off the "Alexa" recognizer
+  void DisableAlexa();
+  
+  // Start/Stop playback recognizer when Alexa is in Speaking state
+  void SetAlexaSpeakingState(bool isSpeaking);
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
 private:
@@ -138,16 +130,35 @@ private:
   Alexa*                                      _alexaComponent = nullptr;
   bool                                        _isAlexaActive = false;
   
-  std::unique_ptr<TriggerContextThf>          _alexaPlaybackTrigger;
+  std::unique_ptr<TriggerContextPryon>        _alexaPlaybackTrigger;
+  std::atomic_uint64_t                        _playbackTrigerSampleIdx{ 0 };
+  
   std::string                                 _triggerWordDataDir;
   
   std::mutex                                  _triggerModelMutex;
-  std::atomic<bool>                           _isPendingLocaleUpdate{ false };
+  std::atomic_bool                            _isPendingLocaleUpdate{ false };
+  
+  std::unique_ptr<AlexaPlaybackRecognizerComponent>   _alexaPlaybackRecognizerComponent;
   
   std::shared_ptr<NotchDetector>              _notchDetector;
   std::mutex                                  _notchMutex;
   bool                                        _notchDetectorActive = false;
-
+  
+  // Alexa Methods
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Init Alexa trigger detector
+  // Note: This is done after Alex user has been authicated
+  void InitAlexa(const Util::Locale& locale,
+                 const TriggerWordDetectedCallback callback);
+  
+  // Init Alex playback trigger detector
+  void InitAlexaPlayback(const Util::Locale& locale,
+                         TriggerWordDetectedCallback callback);
+  
+  // Check Alexa component states to update _isAlexaActive flag
+  void UpdateAlexaActiveState();
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
   // Set custom model and search files for locale
   // Return true when locale file was found and is different then current locale
   // NOTE: This only sets the _nextTriggerPaths the locale will be updated in the Update() call
@@ -166,10 +177,8 @@ private:
   bool UpdateRecognizerModel(TriggerContext<SpeechRecognizerTHF>& aTrigger);
   bool UpdateRecognizerModel(TriggerContext<SpeechRecognizerPryonLite>& aTrigger);
   
-  // Check Alexa component states to update _isAlexaActive flag
-  void UpdateAlexaActiveState();
-  
   // Console Var methods
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // NOTE: These methods provide no functionality when ANKI_DEV_CHEATS is turned off
   void SetupConsoleFuncs();
   

@@ -204,13 +204,17 @@ private:
                         f32 textScale = kDefaultTextScale);
 
   struct ColoredText {
-    ColoredText(const std::string& text, const ColorRGBA& color = NamedColors::WHITE)
+    ColoredText(const std::string& text,
+                const ColorRGBA& color = NamedColors::WHITE,
+                bool leftAlign = true)
     : text(text)
     , color(color)
+    , leftAlign(leftAlign)
     {}
 
     const std::string text;
     const ColorRGBA color;
+    const bool leftAlign;
   };
 
   using ColoredTextLines = std::vector<std::vector<ColoredText> >;

@@ -197,12 +197,15 @@ struct BehaviorEnrollFace::DynamicVariables
     
     std::map<std::string, WrongFaceInfo> wrongFaceStats;
     
+    // To prevent repeatedly asking if we already know a face when
+    // re-enrollment is requested, store a list of faceIDs we've already asked about.
+    std::map<Vision::FaceID_t, bool> alreadyKnowYouIDs;
+    
     int numInterruptions = 0;
   };
   Persistent       persistent;
   
   bool             sayName;
-  bool             useMusic;
   bool             saveToRobot;
   bool             saveSucceeded;
   bool             enrollingSpecificID;
@@ -350,7 +353,6 @@ void BehaviorEnrollFace::CheckForIntentData()
     _dVars->persistent.settings.saveID = 0;
     _dVars->persistent.settings.saveToRobot = true;
     _dVars->persistent.settings.sayName = true;
-    _dVars->persistent.settings.useMusic = false;
   }
 }
 
@@ -403,7 +405,6 @@ Result BehaviorEnrollFace::InitEnrollmentSettings()
   _dVars->saveID        = _dVars->persistent.settings.saveID;
   _dVars->faceName      = _dVars->persistent.settings.name;
   _dVars->saveToRobot   = _dVars->persistent.settings.saveToRobot;
-  _dVars->useMusic      = _dVars->persistent.settings.useMusic;
   _dVars->sayName       = _dVars->persistent.settings.sayName;
 
   _dVars->enrollingSpecificID = (_dVars->faceID != Vision::UnknownFaceID);
@@ -1303,8 +1304,28 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
                   {
                     if(!face->HasName())
                     {
-                      // We don't recognize the person we're seeing, so we need to prompt.
-                      TransitionToAlreadyKnowYouPrompt();
+                      // We don't recognize the person we're seeing, so we need to prompt if we haven't already.
+                      auto iter = _dVars->persistent.alreadyKnowYouIDs.find(_dVars->faceID);
+                      if(iter == _dVars->persistent.alreadyKnowYouIDs.end())
+                      {
+                        // No record of asking before: prompt
+                        TransitionToAlreadyKnowYouPrompt();
+                      }
+                      else
+                      {
+                        // We've already asked this face ID...
+                        const bool alreadyKnowYou = iter->second;
+                        if(alreadyKnowYou)
+                        {
+                          // ...safe to go straight to re-enroll
+                          TransitionToStartEnrollment();
+                        }
+                        else
+                        {
+                          // ...new person with same name: that's a no-no
+                          TransitionToSayingIKnowThatName();
+                        }
+                      }
                     }
                     else if(face->GetName() == _dVars->faceName)
                     {
@@ -1379,6 +1400,9 @@ void BehaviorEnrollFace::TransitionToAlreadyKnowYouHandler()
     // Fake like we just saw them here to reset that clock:
     _dVars->lastFaceSeenTime_ms = GetBEI().GetVisionComponent().GetLastProcessedImageTimeStamp();
     
+    // So we don't ask again
+    _dVars->persistent.alreadyKnowYouIDs[_dVars->faceID] = true;
+    
     TransitionToStartEnrollment();
     
     PRINT_CH_INFO(kLogChannelName,
@@ -1390,6 +1414,9 @@ void BehaviorEnrollFace::TransitionToAlreadyKnowYouHandler()
     PRINT_CH_INFO(kLogChannelName,
                   "BehaviorEnrollFace.TransitionToAlreadyKnowYouHandler.Negative",
                   "Got negative intent. Transition to AlreadyKnowName");
+    
+    // So we don't ask again
+    _dVars->persistent.alreadyKnowYouIDs[_dVars->faceID] = false;
     
     // If user says they haven't met the robot before (or some "play again" garbage),
     // drop the user intents on the floor, tell them we already know that name, and fail
@@ -1538,15 +1565,7 @@ void BehaviorEnrollFace::TransitionToSayingName()
     if(_dVars->saveID == Vision::UnknownFaceID)
     {
       // If we're not being told which ID to save to, then assume this is a
-      // first-time enrollment and play the bigger sequence of animations,
-      // along with special music state
-      // TODO: PostMusicState should take in a GameState::Music, making the cast unnecessary...
-      if(_dVars->useMusic)
-      {
-        // NOTE: it will be up to the caller to stop this music
-//        robot.GetRobotAudioClient()->PostMusicState((AudioMetaData::GameState::GenericState)AudioMetaData::GameState::Music::Minigame__Meet_Cozmo_Say_Name, false, 0);
-      }
-
+      // first-time enrollment and play the bigger sequence of animations
       {
         // 1. Say name once
         const auto nameQuestionStr = _dVars->faceName + "?";

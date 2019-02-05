@@ -335,6 +335,16 @@ PROTOBUF_HOME=${TOPLEVEL}/EXTERNALS/protobuf/${HOST}
 
 # Build protocCppPlugin if needed
 if [[ ! -x ${TOPLEVEL}/tools/protobuf/plugin/protocCppPlugin ]]; then
+  BUILD_PROTOC_PLUGIN=1
+else 
+  BUILD_PROTOC_PLUGIN=0
+  for f in `find ${TOPLEVEL}/tools/protobuf/plugin -type f`; do
+    if [ "$f" -nt ${TOPLEVEL}/tools/protobuf/plugin/protocCppPlugin ]; then
+      BUILD_PROTOC_PLUGIN=1
+    fi
+  done
+fi
+if [[ $BUILD_PROTOC_PLUGIN -eq 1 ]]; then
     ${TOPLEVEL}/tools/protobuf/plugin/make.sh
 fi
 

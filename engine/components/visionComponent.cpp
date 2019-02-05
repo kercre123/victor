@@ -1522,7 +1522,7 @@ namespace Vector {
     }
 
     const Transform3d& liftPoseWrtCamera = _robot->GetLiftTransformWrtCamera(histState.GetLiftAngle_rad(),
-                                                                            histState.GetHeadAngle_rad());
+                                                                             histState.GetHeadAngle_rad());
 
     std::vector<Point3f> liftCrossBar;
     liftPoseWrtCamera.ApplyTo(_liftCrossBarSource, liftCrossBar);

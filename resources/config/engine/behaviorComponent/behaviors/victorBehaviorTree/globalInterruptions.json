@@ -23,6 +23,7 @@
     "Volume",
     "ReactToSoundAwake",
     "ReactToUnclaimedIntent",
+    "HeldInPalmDispatcher",
     "WhileInAirDispatcher",
     "ReactToPutDown",
     "ReactToDarkness",

@@ -79,6 +79,12 @@ class Connection:
         data = MessageToJson(message, including_default_value_fields=True, preserving_proto_field_name=True)
         return self.send_raw(url_suffix, data, response_type, stream, callback)
 
+def is_local():
+    return os.environ.get('ANKI_ROBOT_SERIAL', '') == "Local"
+
+def live_robot_only(fn):
+    return pytest.mark.skipif(is_local(), reason="vic-cloud is not available on webots")(fn)
+
 @pytest.fixture(scope="module")
 def vector_connection():
     serial = os.environ.get('ANKI_ROBOT_SERIAL', None)
