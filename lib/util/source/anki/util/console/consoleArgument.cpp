@@ -142,7 +142,7 @@ bool ConsoleArg<const char*>::SetArgValue( const std::string& textvalue )
     return true;
   }
   
-  strncpy( value_, textvalue.c_str(), 256 );
+  strncpy( value_, textvalue.c_str(), 512 );
   isSet_ = true;
   return true;
 }
