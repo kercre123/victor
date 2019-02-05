@@ -14,7 +14,6 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorExploring__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/math/pose.h"
 #include "util/random/rejectionSamplerHelper_fwd.h"

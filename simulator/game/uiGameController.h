@@ -296,8 +296,7 @@ protected:
   ///
   // @brief      Send SetActiveObjectLEDs CLAD message
   //
-  // See the .clad file for documentation on parameters. The parameter robotID does not need to be
-  // passed in.
+  // See the .clad file for documentation on parameters.
   //
   void SendSetActiveObjectLEDs(const u32 objectID, 
                                const u32 onColor,
@@ -350,7 +349,6 @@ protected:
   f32           GetLiftHeight_mm() const;
   void          GetWheelSpeeds_mmps(f32& left, f32& right) const;
   s32           GetCarryingObjectID() const;
-  s32           GetCarryingObjectOnTopID() const;
   bool          IsRobotStatus(RobotStatusFlag mask) const;
   
   const ExternalInterface::RobotState& GetRobotState() const { return _robotStateMsg; }

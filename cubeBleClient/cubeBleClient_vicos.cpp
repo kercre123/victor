@@ -103,7 +103,6 @@ CubeBleClient::CubeBleClient()
 
 CubeBleClient::~CubeBleClient()
 {
-  _bleClient->Stop();
   _bleClient.reset();
   ev_loop_destroy(_loop);
   _loop = nullptr;

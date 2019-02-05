@@ -33,6 +33,7 @@
 #include "cozmoAnim/showAudioStreamStateManager.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/console/consoleInterface.h"
+#include "util/environment/locale.h"
 #include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "webServerProcess/src/webService.h"
@@ -57,6 +58,8 @@ namespace {
   
   const float kAlexaErrorTimeout_s = 15.0f; // max duration for error audio
 }
+
+CONSOLE_VAR(bool, kAllowAudioOnCharger, "Alexa", true);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngine::AudioEventId GetErrorAudioEvent( AlexaNetworkErrorType errorType )
@@ -151,6 +154,11 @@ void Alexa::Update()
     _implDtorResult = {};
   }
   
+  if( _pendingLocale && HasInitializedImpl() ) {
+    _impl->SetLocale( *_pendingLocale );
+    _pendingLocale.reset();
+  }
+  
   if( _impl != nullptr) {
     // should be called even if not initialized, because this drives the init process
     _impl->Update();
@@ -160,8 +168,7 @@ void Alexa::Update()
 
   if( (_timeEnableWakeWord_s >= 0.0f) && (currTime_s >= _timeEnableWakeWord_s) ) {
     _timeEnableWakeWord_s = -1.0f;
-    // TODO (VIC-11517): downgrade. for now this is useful in webots
-    LOG_WARNING("Alexa.Update.EnablingWakeWord", "Enabling the wakeword because of a delay in connecting");
+    LOG_INFO("Alexa.Update.EnablingWakeWord", "Enabling the wakeword because of a delay in connecting");
     // enable the wakeword
     SetSimpleState( AlexaSimpleState::Idle );
   }
@@ -372,12 +379,11 @@ void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, co
   const auto oldState = _authState;
   bool codeExpired = false;
 
-  // TODO (VIC-11517): downgrade. for now this is useful in webots
-  LOG_WARNING( "Alexa.OnAlexaAuthChanged", "from '%s' to '%s' url='%s' code='%s'",
-               EnumToString(oldState),
-               EnumToString(state),
-               url.c_str(),
-               code.c_str() );
+  LOG_INFO( "Alexa.OnAlexaAuthChanged", "from '%s' to '%s' url='%s' code='%s'",
+            EnumToString(oldState),
+            EnumToString(state),
+            url.c_str(),
+            code.c_str() );
 
   switch( state ) {
     case AlexaAuthState::Uninitialized:
@@ -547,6 +553,8 @@ void Alexa::SetUXState( AlexaUXState newState )
     // set backpack lights if streaming
     const bool listening = (_uxState == AlexaUXState::Listening);
     _context->GetBackpackLightComponent()->SetAlexaStreaming( listening );
+    const bool speaking = ( _uxState == AlexaUXState::Speaking );
+    _context->GetMicDataSystem()->GetSpeechRecognizerSystem()->SetAlexaSpeakingState( speaking );
   }
   
   if( _authState == AlexaAuthState::Authorized ) {
@@ -567,23 +575,26 @@ void Alexa::SetUXState( AlexaUXState newState )
     }
   }
   
-  using namespace AudioEngine;
-  using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-  // Play Audio Event for state change
-  if (_uxState == AlexaUXState::Listening) {
-    if ( (oldState == AlexaUXState::Idle) && (_notifyType != NotifyType::None) ) {
-      // Alexa triggered by voice or button press
-      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
+  // Only play earcons when not frozen on charger (alexa acoustic test mode)
+  if( !(_frozenOnCharger && _onCharger) || kAllowAudioOnCharger ) {
+    using namespace AudioEngine;
+    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+    // Play Audio Event for state change
+    if (_uxState == AlexaUXState::Listening) {
+      if ( (oldState == AlexaUXState::Idle) && (_notifyType != NotifyType::None) ) {
+        // Alexa triggered by voice or button press
+        PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
+      }
+      else if (oldState == AlexaUXState::Speaking) {
+        // Play EarCon for follow up question
+        PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
+      }
+      _notifyType = NotifyType::None;
     }
-    else if (oldState == AlexaUXState::Speaking) {
-      // Play EarCon for follow up question
-      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
+    else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
+      // Play when listening ends
+      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Endpointing ) );
     }
-    _notifyType = NotifyType::None;
-  }
-  else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
-    // Play when listening ends
-    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Endpointing ) );
   }
 }
   
@@ -790,7 +801,28 @@ void Alexa::NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex )
     OnAlexaNetworkError( AlexaNetworkErrorType::AuthRevoked );
   }
 }
-  
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void Alexa::UpdateLocale( const Util::Locale& locale )
+{
+  if( HasInitializedImpl() ) {
+    _impl->SetLocale( locale );
+    _pendingLocale.reset();
+  } else {
+    _pendingLocale.reset( new Util::Locale{locale} );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+uint64_t Alexa::GetMichrophoneSampleIndex() const
+{
+  std::lock_guard<std::mutex> lg{ _implMutex };
+  if( HasInitializedImpl() ) {
+    return _impl->GetMicrophoneTotalNumSamples();
+  }
+  return 0;
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::PlayErrorAudio( AlexaNetworkErrorType errorType )
 {

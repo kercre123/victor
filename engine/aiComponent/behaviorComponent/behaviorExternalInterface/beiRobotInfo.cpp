@@ -125,12 +125,6 @@ const GyroData& BEIRobotInfo::GetHeadGyroData() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const RobotID_t BEIRobotInfo::GetID() const
-{
-  return _robot.GetID();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 RobotTimeStamp_t BEIRobotInfo::GetLastImageTimeStamp() const
 {
   return _robot.GetLastImageTimeStamp();

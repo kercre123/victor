@@ -35,13 +35,15 @@ enum class ThreadPriority : uint8_t
   
 void SetThreadPriority(std::thread& inThread, ThreadPriority threadPriority);
 
-// Set thread name
+// Set thread name, which must be less than 16 characters long.
 // on osx/ios it only sets the name if it is called from the target thread
 // on linux/android it works as implied
 // on success returns true
 bool SetThreadName(std::thread::native_handle_type inThread, const char* threadName);
 
-
+// Same as above, but auto-truncates the name to be less than 16 characters as needed
+bool SetThreadName(std::thread::native_handle_type inThread, const std::string& threadName);
+  
 } // namespace Util
 } // namespace Anki
 

@@ -15,11 +15,11 @@
 #ifndef __Anki_Common_Math_PoseBase_H__
 #define __Anki_Common_Math_PoseBase_H__
 
-#include "coretech/common/engine/math/matrix.h"
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/shared/math/matrix.h"
+#include "coretech/common/shared/math/point_fwd.h"
 #include "coretech/common/engine/math/quad.h"
-#include "coretech/common/engine/math/rotation.h"
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/rotation.h"
+#include "coretech/common/shared/math/radians.h"
 
 #include "coretech/common/engine/exceptions.h"
 

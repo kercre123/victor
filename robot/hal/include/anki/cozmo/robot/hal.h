@@ -330,6 +330,8 @@ bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID);
 /// Returns the unique serial number of the robot
 u32 GetID();
 
+const uint8_t* const GetSysconVersionInfo();
+
 /************************************************************************
  * \section Error reporting
  */

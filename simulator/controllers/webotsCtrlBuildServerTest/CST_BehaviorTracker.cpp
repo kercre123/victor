@@ -10,7 +10,6 @@
  *
  */
 
-#include "coretech/common/engine/math/point_impl.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/robot.h"

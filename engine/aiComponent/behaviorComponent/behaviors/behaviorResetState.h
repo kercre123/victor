@@ -23,6 +23,8 @@ class BehaviorResetState : public ICozmoBehavior
 {
 public: 
   virtual ~BehaviorResetState() = default;
+  
+  void SetFollowupBehaviorID( BehaviorID behaviorID );
 
 protected:
 
@@ -30,18 +32,22 @@ protected:
   friend class BehaviorFactory;
   explicit BehaviorResetState(const Json::Value& config);
 
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override{}
   
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
+  
+  virtual void BehaviorUpdate() override;
 
 private:
   
   void PutDownCubeIfNeeded();
-  void ResetComponents();
-
-  // this behavior holds no state!
+  void ResetComponentsAndDelegate();
+  
+  ICozmoBehaviorPtr _currBehavior = nullptr;
+  ICozmoBehaviorPtr _nextBehavior = nullptr;
   
 };
 

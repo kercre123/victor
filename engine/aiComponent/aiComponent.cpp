@@ -13,7 +13,7 @@
 #include "engine/aiComponent/aiComponent.h"
 
 #include "coretech/common/engine/utils/timer.h"
-#include "coretech/common/shared/radiansMath.h"
+#include "coretech/common/shared/math/radiansMath.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/alexaComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"

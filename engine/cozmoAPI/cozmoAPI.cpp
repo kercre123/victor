@@ -314,7 +314,6 @@ void CozmoAPI::CozmoInstanceRunner::Run()
                           (float)(forwardJumpDuration * 0.001f));
 #endif
     }
-
     tickStart = TimeClock::now();
 
     const auto timeSinceLastTick_us = duration_cast<microseconds>(tickStart - prevTickStart);

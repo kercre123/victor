@@ -13,7 +13,7 @@
 
 #include "engine/components/cubes/cubeLights/cubeLightAnimationHelpers.h"
 
-#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/shared/math/point.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "util/logging/logging.h"
 

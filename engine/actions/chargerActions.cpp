@@ -20,6 +20,7 @@
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/robot.h"
 
+#define LOG_CHANNEL "Actions"
 
 namespace Anki {
 namespace Vector {
@@ -212,15 +213,21 @@ ActionResult TurnToAlignWithChargerAction::Init()
   // This value is the distance from the origin into the charger of the point that the
   // robot should angle towards. Setting this distance to 0 means the robot will angle
   // itself toward the charger origin.
-  const float distanceIntoChargerToAimFor_mm = 10.f;
+  const float distanceIntoChargerToAimFor_mm = 50.f;
   Pose3d poseToAngleToward(0.f, Z_AXIS_3D(),
                            {distanceIntoChargerToAimFor_mm, 0.f, 0.f},
                            charger->GetPose());
 
   // Get the vector from the target pose to the drive center pose, expressed in the world origin frame
-  const auto targetToRobotVec = ComputeVectorBetween(GetRobot().GetDriveCenterPose(),
-                                                     poseToAngleToward,
-                                                     GetRobot().GetWorldOrigin());
+  Vec3f targetToRobotVec;
+  if (!ComputeVectorBetween(GetRobot().GetDriveCenterPose(),
+                            poseToAngleToward,
+                            GetRobot().GetWorldOrigin(),
+                            targetToRobotVec)) {
+    PRINT_NAMED_WARNING("TurnToAlignWithChargerAction.Init.CouldNotComputeVector",
+                        "Failed to compute vector from target pose to robot pose");
+    return ActionResult::BAD_POSE;
+  }
   const float angleToTurnTo = atan2f(targetToRobotVec.y(), targetToRobotVec.x());
   
   auto* turnAction = new TurnInPlaceAction(angleToTurnTo, true);
@@ -275,7 +282,6 @@ BackupOntoChargerAction::BackupOntoChargerAction(ObjectID chargerID,
   
   // Don't turn toward the object since we're expected to be facing away from it
   SetShouldFirstTurnTowardsObject(false);
-  SetShouldCheckForObjectOnTopOf(false);
 }
 
 
@@ -311,8 +317,8 @@ ActionResult BackupOntoChargerAction::Verify()
 {
   // Verify that robot is on charger
   if (GetRobot().GetBatteryComponent().IsOnChargerContacts()) {
-    PRINT_CH_INFO("Actions", "BackupOntoChargerAction.Verify.MountingChargerComplete",
-                  "Robot has mounted charger.");
+    LOG_INFO("BackupOntoChargerAction.Verify.MountingChargerComplete",
+             "Robot has mounted charger.");
     return ActionResult::SUCCESS;
   }
   
@@ -362,7 +368,8 @@ ActionResult BackupOntoChargerAction::Verify()
 #pragma mark ---- DriveToAndMountChargerAction ----
   
 DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objectID,
-                                                           const bool useCliffSensorCorrection)
+                                                           const bool useCliffSensorCorrection,
+                                                           const bool enableDockingAnims)
 : CompoundActionSequential()
 {
   // Get DriveToObjectAction
@@ -374,11 +381,17 @@ DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objec
   driveToAction->SetPreActionPoseAngleTolerance(DEG_TO_RAD(15.f));
   AddAction(driveToAction);
   AddAction(new TurnToAlignWithChargerAction(objectID));
-  AddAction(new MountChargerAction(objectID, useCliffSensorCorrection));
+
+  auto mountAction = new MountChargerAction(objectID, useCliffSensorCorrection);
+  if(!enableDockingAnims)
+  {
+    mountAction->SetDockingAnimTriggers(AnimationTrigger::Count,
+                                        AnimationTrigger::Count,
+                                        AnimationTrigger::Count);
+  }
+  AddAction(mountAction);
 }
   
-  
-
 } // namespace Vector
 } // namespace Anki
 

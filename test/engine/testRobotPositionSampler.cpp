@@ -13,7 +13,6 @@
 
 #include "gtest/gtest.h"
 #include "engine/utils/robotPointSamplerHelper.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "util/math/math.h"
 #include "util/random/randomGenerator.h"
 

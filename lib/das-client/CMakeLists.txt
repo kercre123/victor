@@ -71,14 +71,14 @@ elseif (MACOSX)
 
 endif()
 
-add_library(DAS
-  ${SRCS}
-  ${PLATFORM_SRCS}
+add_library(DAS STATIC
+  ${SRCS} ${PLATFORM_SRCS}
 )
 
 target_compile_options(DAS
   PRIVATE
   ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+  ${ASAN_CXX_FLAGS} 
 )
 
 target_compile_definitions(DAS
@@ -98,8 +98,10 @@ target_include_directories(DAS
 )
 
 target_link_libraries(DAS
+  PRIVATE
   ${PLATFORM_LIBS}
   jsoncpp
+  ${ASAN_STATIC_LINKER_FLAGS}
 )
 
 anki_build_target_license(DAS "ANKI")

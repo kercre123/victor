@@ -24,6 +24,7 @@
 #include "util/threading/threadPriority.h"
 #include "json/json.h"
 #include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/quad_impl.h"
 
 #include "OkaoCoAPI.h"
 
@@ -482,14 +483,14 @@ namespace Vision {
           if(kFaceRecognitionExtraDebug)
           {
             LOG_INFO("UpdateRecognitionData.MergeBasedOnEnrollmentTime",
-                          "Merging ID=%d into ID=%d (%d enrolled at %s, %d enrolled at %s)",
-                          mergeFrom,  mergeTo, faceID,
-                          EnrolledFaceEntry::GetTimeString(faceIDenrollData->second.GetEnrollmentTime()).c_str(),
-                          recognizedID,
-                          EnrolledFaceEntry::GetTimeString(recIDenrollData->second.GetEnrollmentTime()).c_str());
+                     "Merging ID=%d into ID=%d (%d enrolled at %s, %d enrolled at %s)",
+                     mergeFrom,  mergeTo, faceID,
+                     EnrolledFaceEntry::GetTimeString(faceIDenrollData->second.GetEnrollmentTime()).c_str(),
+                     recognizedID,
+                     EnrolledFaceEntry::GetTimeString(recIDenrollData->second.GetEnrollmentTime()).c_str());
           }
         }
-
+        
         if(mergeFrom != Vision::UnknownFaceID && mergeTo != Vision::UnknownFaceID)
         {
           // Only merge the face we are currently tracking into another record
@@ -498,26 +499,26 @@ namespace Vision {
           if(mergeFrom == recognizedID || isMergingAllowed)
           {
             LOG_INFO("UpdateRecognitionData.MergingFaces",
-                          "Tracking %d: merging ID=%d into ID=%d (merging allowed=%d)",
-                          -_detectionInfo.nID, mergeFrom, mergeTo, isMergingAllowed);
-
+                     "Tracking %d: merging ID=%d into ID=%d (merging allowed=%d)",
+                     -_detectionInfo.nID, mergeFrom, mergeTo, isMergingAllowed);
+            
             Result mergeResult = MergeFaces(mergeTo, mergeFrom);
-
+            
             if(RESULT_OK != mergeResult) {
               LOG_WARNING("FaceRecognizer.UpdateRecognitionData.MergeFail",
-                                  "Trying to merge %d with %d", faceID, recognizedID);
+                          "Trying to merge %d with %d", faceID, recognizedID);
             }
           }
           else if(mergeFrom == _enrollmentID)
           {
             LOG_INFO("UpdateRecognitionData.UpdateEnrollmentID",
-                          "Updating enrollment ID %d->%d while to tracking %d (not merging)",
-                          _enrollmentID, mergeTo, -_detectionInfo.nID);
+                     "Updating enrollment ID %d->%d while to tracking %d (not merging)",
+                     _enrollmentID, mergeTo, -_detectionInfo.nID);
             _enrollmentID = mergeTo;
           } else if(kFaceRecognitionExtraDebug) {
             LOG_INFO("UpdateRecognitionData.NotMergingTrackedFace",
-                          "Enrollment disabled: not merging tracked face ID=%d into recognized ID=%d",
-                          faceID, recognizedID);
+                     "Enrollment disabled: not merging tracked face ID=%d into recognized ID=%d",
+                     faceID, recognizedID);
           }
 
           // Either way we want to update the ID associated with this tracker ID
@@ -578,6 +579,12 @@ namespace Vision {
 
   EnrolledFaceEntry FaceRecognizer::GetRecognitionData(INT32 forTrackingID, s32& enrollmentCountReached)
   {
+    if(_shouldClearAllTrackingData)
+    {
+      ClearAllTrackingDataInternal();
+      _shouldClearAllTrackingData = false;
+    }
+    
     if(ProcessingState::FeaturesReady == _state)
     {
       if(_detectionInfo.nID == UnknownFaceID)
@@ -721,6 +728,11 @@ namespace Vision {
 
   void FaceRecognizer::ClearAllTrackingData()
   {
+    _shouldClearAllTrackingData = true;
+  }
+  
+  void FaceRecognizer::ClearAllTrackingDataInternal()
+  {
     for(auto & enrollData : _enrollmentData)
     {
       enrollData.second.ClearTrackingID();
@@ -759,7 +771,7 @@ namespace Vision {
     }
 
     LOG_WARNING("FaceRecognizer.Run.ThreadHasStopped",
-                        "FaceRecognizer thread has stopped. No longer running asynchronously");
+                "FaceRecognizer thread has stopped. No longer running asynchronously");
   } // Run()
 
 
@@ -790,7 +802,7 @@ namespace Vision {
 
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceRecognizer.ExtractFeatures.FaceLibFailure",
-                          "Going back to Idle state. FaceLib Result=%d", okaoResult);
+                  "Going back to Idle state. FaceLib Result=%d", okaoResult);
       newState = ProcessingState::Idle;
     }
 
@@ -829,13 +841,13 @@ namespace Vision {
         // No session-only faces (this really should not happen because MaxNamedFaces*MaxAlbumEntriesPerFace
         // should generally be far less than kMaxTotalAlbumEntries -- which is static_asserted in the header)
         LOG_ERROR("FaceRecognizer.GetNextAlbumEntryToUse.TooManyUsers",
-                          "Already have %zu users, could not add another", _enrollmentData.size());
+                  "Already have %zu users, could not add another", _enrollmentData.size());
         return failureEntry;
       }
       
       LOG_INFO("GetNextAlbumEntryToUse.ReplacingOldestSessionOnlyUser",
-                    "Session-only face %d not updated since %s and will be replaced.",
-                    oldestSessionOnlyID, EnrolledFaceEntry::GetTimeString(oldestUpdateTime).c_str());
+               "Session-only face %d not updated since %s and will be replaced.",
+               oldestSessionOnlyID, EnrolledFaceEntry::GetTimeString(oldestUpdateTime).c_str());
 
       auto & albumEntries = _enrollmentData.at(oldestSessionOnlyID).GetAlbumEntries();
 
@@ -848,21 +860,21 @@ namespace Vision {
       if(RESULT_OK != removeResult)
       {
         LOG_WARNING("FaceRecognizer.GetNextAlbumEntryToUse.RemoveOldestUserFailed",
-                            "Attempting to remove %d", oldestSessionOnlyID);
+                    "Attempting to remove %d", oldestSessionOnlyID);
       }
-
+      
       // That should have freed up some entries (at least the first one!)
       BOOL isStillRegistered = false;
       okaoResult = OKAO_FR_IsRegistered(_okaoFaceAlbum, _nextAlbumEntry, 0, &isStillRegistered);
       if(OKAO_NORMAL != okaoResult) {
         LOG_WARNING("FaceRecognizer.GetNextAlbumEntryToUse.CouldNotCheckIfStillRegistered",
-                            "Using anyway. Entry:%d FaceLib Result:%d", _nextAlbumEntry, okaoResult);
+                    "Using anyway. Entry:%d FaceLib Result:%d", _nextAlbumEntry, okaoResult);
       }
-
+      
       if(isStillRegistered)
       {
         LOG_WARNING("FaceRecognizer.GetNextAlbumEntryToUse.FirstFreedEntryStillRegistered",
-                            "Entry:%d", _nextAlbumEntry);
+                    "Entry:%d", _nextAlbumEntry);
         return failureEntry;
       }
 
@@ -877,8 +889,8 @@ namespace Vision {
 
         if(OKAO_NORMAL != okaoResult) {
           LOG_WARNING("FaceRecognizer.GetNextAlbumEntryToUse.IsRegisteredCheckFailed",
-                              "Failed to determine if albumEntry %d is already registered. FaceLib result=%d",
-                              _nextAlbumEntry, okaoResult);
+                      "Failed to determine if albumEntry %d is already registered. FaceLib result=%d",
+                      _nextAlbumEntry, okaoResult);
           return failureEntry;
         }
 
@@ -895,7 +907,7 @@ namespace Vision {
 
       if(tries >= kMaxTotalAlbumEntries) {
         LOG_WARNING("FaceRecognizer.GetNextAlbumEntryToUse.NoIDsAvailable",
-                            "Could not find free space in the album to use for a new entry");
+                    "Could not find free space in the album to use for a new entry");
         return failureEntry;
       }
     } // if/else numUsersInAlbum > max
@@ -938,7 +950,7 @@ namespace Vision {
     OkaoResult okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, albumEntry, 0);
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceRecognizer.RegisterNewUser.RegisterDataFailed",
-                          "Failed trying to register album entry %d", albumEntry);
+                  "Failed trying to register album entry %d", albumEntry);
       return RESULT_FAIL;
     }
 
@@ -970,8 +982,7 @@ namespace Vision {
       SetEnrollmentImage(albumEntry, 0);
     }
 
-    LOG_INFO("RegisterNewUser.Success",
-                  "Added user with ID %d to album", faceID);
+    LOG_INFO("RegisterNewUser.Success", "Added user with ID %d to album", faceID);
 
     return RESULT_OK;
   } // RegisterNewUser()
@@ -983,7 +994,7 @@ namespace Vision {
     if(_enrollmentID != UnknownFaceID && _enrollmentCount > 0)
     {
       LOG_INFO("FaceRecognizer.CancelExistingEnrollment",
-                    "Cancelling enrollment of ID %d", _enrollmentID);
+               "Cancelling enrollment of FaceID %d", _enrollmentID);
       _isEnrollmentCancelled = true;
       
       // Remove the (partial) album entry we were in the process of enrolling
@@ -991,32 +1002,52 @@ namespace Vision {
       if(enrollDataIter == _enrollmentData.end())
       {
         LOG_WARNING("FaceRecognizer.CancelExistingEnrollment.NoEnrollmentDataToErase",
-                            "enrollmentID=%d", _enrollmentID);
+                    "enrollmentID=%d", _enrollmentID);
+        return;
       }
-      else
+      
+      const auto& albumEntries = enrollDataIter->second.GetAlbumEntries();
+      if(albumEntries.empty())
       {
-        if(enrollDataIter->second.GetNumAlbumEntries() == 1)
+        // This really should not happen: erase the bad entry if it does (if there are no
+        // album entries associated with a faceID, we can never match to it)
+        LOG_ERROR("FaceRecognizer.CancelExistingEnrollment.EmptyAlbumEntries",
+                  "Erasing %s enrollmentID=%d",
+                  (enrollDataIter->second.IsForThisSessionOnly() ? "session-only" : "named"),
+                  _enrollmentID);
+        EraseFace(_enrollmentID);
+        return;
+      }
+      
+      // By definition, there can't be "mixing" of enrollments of different people if there's only
+      // one album entry for this ID. Just leave it as a session-only entry, since that doesn't
+      // really cause any harm.
+      if(albumEntries.size() == 1)
+      {
+        return;
+      }
+      
+      // Figure out which album entry we were in the process of adding/updating for the current enrollment ID
+      // and erase it. We'll use the most recently seen one.
+      auto albumEntryIter = albumEntries.begin();
+      AlbumEntryID_t mostRecentAlbumeEntryID = albumEntryIter->first;
+      EnrolledFaceEntry::Time mostRecentTime = albumEntryIter->second;
+      ++albumEntryIter;
+      while(albumEntryIter != albumEntries.end())
+      {
+        if(albumEntryIter->second > mostRecentTime)
         {
-          LOG_INFO("FaceRecognizer.CancelExistingEnrollment.ErasingFace",
-                        "Removing entire Face %d, which had only one album entry remaining",
-                        _enrollmentID);
-          EraseFace(_enrollmentID);
-        }
-        else if(ANKI_VERIFY(enrollDataIter->second.GetAlbumEntries().find(_nextAlbumEntry)
-                            != enrollDataIter->second.GetAlbumEntries().end(),
-                            "FaceRecognizer.CancelExistingEnrollment.BadNextAlbumEntry",
-                            "AlbumEntry:%d",
-                            _nextAlbumEntry))
-        {
-          // Just remove the album entry we were enrolling into
-          enrollDataIter->second.RemoveAlbumEntry(_nextAlbumEntry);
-          _albumEntryToFaceID.erase(_nextAlbumEntry);
-          
-          LOG_INFO("FaceRecognizer.CancelExistingEnrollment.RemoveAlbumEntry",
-                        "Removed AlbumEntry %d from Face %d, %zu entries remain",
-                        _nextAlbumEntry, _enrollmentID, enrollDataIter->second.GetNumAlbumEntries());
+          mostRecentTime = albumEntryIter->second;
+          mostRecentAlbumeEntryID = albumEntryIter->first;
         }
       }
+      
+      enrollDataIter->second.RemoveAlbumEntry(mostRecentAlbumeEntryID);
+      _albumEntryToFaceID.erase(mostRecentAlbumeEntryID);
+      
+      LOG_INFO("FaceRecognizer.CancelExistingEnrollment.RemoveAlbumEntry",
+               "Removed AlbumEntry %d from Face %d, %zu entries remain",
+               _nextAlbumEntry, _enrollmentID, enrollDataIter->second.GetNumAlbumEntries());
     }
   } // CancelExistingEnrollment()
   
@@ -1041,7 +1072,7 @@ namespace Vision {
       auto enrollDataIter = _enrollmentData.find(_enrollmentID);
       if(enrollDataIter == _enrollmentData.end()) {
         LOG_WARNING("FaceRecognizer.SetAllowedEnrollments.NoEnrollmentData",
-                            "No data for enrollmentID=%d", _enrollmentID);
+                    "No data for enrollmentID=%d", _enrollmentID);
         _enrollmentTrackID = UnknownFaceID;
       } else {
         _enrollmentTrackID = enrollDataIter->second.GetTrackingID();
@@ -1079,7 +1110,7 @@ namespace Vision {
       // Not currently busy: copy in the given data and start working on it
 
       _mutex.lock();
-      img.CopyTo(_img);
+      img.CopyTo(_img); // TODO: Copy only the ROI of the image where the face is (VIC-12784)
       _isEnrollmentEnabled = enableEnrollment;
       _okaoPartDetectionResultHandle = okaoPartDetectionResultHandle;
       _detectionInfo = detectionInfo;
@@ -1138,18 +1169,18 @@ namespace Vision {
     // Keep the tracking ID current
     if(_detectionInfo.nID != enrollData.GetTrackingID()) {
       LOG_INFO("UpdateExistingAlbumEntry.UpdateTrackID",
-                    "Update trackID for face %d: %d -> %d",
-                    faceID, -enrollData.GetTrackingID(), -_detectionInfo.nID);
+               "Update trackID for face %d: %d -> %d",
+               faceID, -enrollData.GetTrackingID(), -_detectionInfo.nID);
       _trackingToFaceID.erase(enrollData.GetTrackingID());
       enrollData.SetTrackingID(_detectionInfo.nID);
     }
-
+    
     INT32 numDataStored = 0;
     OkaoResult okaoResult = OKAO_FR_GetRegisteredUsrDataNum(_okaoFaceAlbum, albumEntry, &numDataStored);
     if(OKAO_NORMAL != okaoResult) {
       LOG_ERROR("FaceRecognizer.UpdateExistingAlbumEntry.GetRegisteredUserDataFailed",
-                        "albumEntry:%d dataEntry:%d FaceLib result=%d",
-                        albumEntry, numDataStored, okaoResult);
+                "albumEntry:%d dataEntry:%d FaceLib result=%d",
+                albumEntry, numDataStored, okaoResult);
       return RESULT_FAIL;
     }
 
@@ -1180,15 +1211,15 @@ namespace Vision {
         if(OKAO_NORMAL != okaoResult)
         {
           LOG_WARNING("FaceRecognizer.UpdateExistingUser.FailedToRegisterNewEntry",
-                              "AlbumEntry:%d Data:%d for FaceID:%d, FaceLib result %d",
-                              albumEntry, entryToReplace, faceID, okaoResult);
+                      "AlbumEntry:%d Data:%d for FaceID:%d, FaceLib result %d",
+                      albumEntry, entryToReplace, faceID, okaoResult);
           return RESULT_FAIL;
         }
-
+        
         if(kFaceRecognitionExtraDebug) {
           LOG_INFO("UpdateExistingUser",
-                        "Adding Data %d to AlbumEntry %d of %zu for FaceID %d",
-                        entryToReplace, albumEntry, enrollData.GetAlbumEntries().size(), faceID);
+                   "Adding Data %d to AlbumEntry %d of %zu for FaceID %d",
+                   entryToReplace, albumEntry, enrollData.GetAlbumEntries().size(), faceID);
         }
       }
       else if(enrollEvenIfFull)
@@ -1197,11 +1228,11 @@ namespace Vision {
         OkaoResult okaoResult = OKAO_FR_Verify(hFeature, _okaoFaceAlbum, albumEntry, &newEntryScore);
         if(OKAO_NORMAL != okaoResult) {
           LOG_ERROR("FaceRecognizer.UpdateExistingAlbumEntry.VerifyNewFeatureFailed",
-                            "albumEntry:%d FaceLib result=%d",
-                            albumEntry, okaoResult);
+                    "albumEntry:%d FaceLib result=%d",
+                    albumEntry, okaoResult);
           return RESULT_FAIL;
         }
-
+        
         // Find the entry with a score lower than the potential new entry (and keep
         // the lowest of those). If we find one, we will replace it with this new
         // better-matching feature.
@@ -1213,17 +1244,17 @@ namespace Vision {
           okaoResult = OKAO_FR_GetFeatureFromAlbum(_okaoFaceAlbum, albumEntry, iData, _okaoRecogMergeFeatureHandle);
           if(OKAO_NORMAL != okaoResult) {
             LOG_ERROR("FaceRecognizer.UpdateExistingAlbumEntry.GetFeatureFailed",
-                              "albumEntry:%d dataEntry:%d FaceLib result=%d",
-                              albumEntry, iData, okaoResult);
+                      "albumEntry:%d dataEntry:%d FaceLib result=%d",
+                      albumEntry, iData, okaoResult);
             return RESULT_FAIL;
           }
-
+          
           // Remove the current data
           okaoResult = OKAO_FR_ClearData(_okaoFaceAlbum, albumEntry, iData);
           if(OKAO_NORMAL != okaoResult) {
             LOG_ERROR("FaceRecognizer.UpdateExistingAlbumEntry.ClearDataFailed",
-                              "albumEntry:%d dataEntry:%d FaceLib result=%d",
-                              albumEntry, iData, okaoResult);
+                      "albumEntry:%d dataEntry:%d FaceLib result=%d",
+                      albumEntry, iData, okaoResult);
             return RESULT_FAIL;
           }
 
@@ -1231,46 +1262,46 @@ namespace Vision {
           okaoResult = OKAO_FR_Verify(_okaoRecogMergeFeatureHandle, _okaoFaceAlbum, albumEntry, &currentEntryScore);
           if(OKAO_NORMAL != okaoResult) {
             LOG_ERROR("FaceRecognizer.UpdateExistingAlbumEntry.VerifyExistingFeatureFailed",
-                              "albumEntry:%d FaceLib result=%d",
-                              albumEntry, okaoResult);
+                      "albumEntry:%d FaceLib result=%d",
+                      albumEntry, okaoResult);
             return RESULT_FAIL;
           }
-
+          
           if(currentEntryScore < lowestScoreBelowNewEntry) {
             entryToReplace = iData;
             lowestScoreBelowNewEntry = currentEntryScore;
           }
-
+          
           // Put the current data back
           okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, _okaoRecogMergeFeatureHandle, albumEntry, iData);
           if(OKAO_NORMAL != okaoResult) {
             LOG_ERROR("FaceRecognizer.UpdateExistingAlbumEntry.ReRegisterDataFailed",
-                              "albumEntry:%d dataEntry:%d FaceLib result=%d",
-                              albumEntry, iData, okaoResult);
+                      "albumEntry:%d dataEntry:%d FaceLib result=%d",
+                      albumEntry, iData, okaoResult);
             return RESULT_FAIL;
           }
-
+          
           if(kFaceRecognitionExtraDebug) {
             LOG_INFO("UpdateExistingUser.EvaluatingAlbumEntryClusteredness",
-                          "Data:%d in AlbumEntry:%d got score:%d (vs. possible addition with score:%d)",
-                          iData, albumEntry, currentEntryScore, newEntryScore);
+                     "Data:%d in AlbumEntry:%d got score:%d (vs. possible addition with score:%d)",
+                     iData, albumEntry, currentEntryScore, newEntryScore);
           }
         }
-
+        
         if(EnrolledFaceEntry::UnknownAlbumEntryID != entryToReplace)
         {
           okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, hFeature, albumEntry, entryToReplace);
           if(OKAO_NORMAL != okaoResult) {
             LOG_ERROR("FaceRecognizer.UpdateExistingAlbumEntry.RegisterReplacementDataFailed",
-                              "albumEntry:%d dataEntry:%d FaceLib result=%d",
-                              albumEntry, entryToReplace, okaoResult);
+                      "albumEntry:%d dataEntry:%d FaceLib result=%d",
+                      albumEntry, entryToReplace, okaoResult);
             return RESULT_FAIL;
           }
-
+          
           if(kFaceRecognitionExtraDebug) {
             LOG_INFO("UpdateExistingUser.ReplacedDataEntry",
-                          "Replaced Data:%d in AlbumEntry:%d with new feature (score:%d)",
-                          entryToReplace, albumEntry, lowestScoreBelowNewEntry);
+                     "Replaced Data:%d in AlbumEntry:%d with new feature (score:%d)",
+                     entryToReplace, albumEntry, lowestScoreBelowNewEntry);
           }
         }
       }
@@ -1299,9 +1330,9 @@ namespace Vision {
     else
     {
       LOG_DEBUG("FaceRecognizer.UpdateExistingAlbumEntry.NotAddingEnrollmentEntry",
-                     "FaceID:%d isEnabled:%d isNamed:%d hasSpaceLeft:%d haveCountAndID:%d enrollIfFull:%d isTime:%d",
-                     faceID, isEnrollmentEnabled, isNamedFace, hasEnrollSpaceLeft,
-                     haveEnrollmentCountAndID, enrollEvenIfFull, isTimeToEnroll);
+                "FaceID:%d isEnabled:%d isNamed:%d hasSpaceLeft:%d haveCountAndID:%d enrollIfFull:%d isTime:%d",
+                faceID, isEnrollmentEnabled, isNamedFace, hasEnrollSpaceLeft,
+                haveEnrollmentCountAndID, enrollEvenIfFull, isTimeToEnroll);
     }
 
     return result;
@@ -1462,21 +1493,21 @@ namespace Vision {
       OkaoResult okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, albumEntry);
       if(OKAO_NORMAL != okaoResult) {
         LOG_WARNING("FaceRecognizer.RemoveUser.ClearUserFailed",
-                            "AlbumEntry:%d FaceID:%d FaceLib result:%d",
-                            albumEntry, faceID, okaoResult);
+                    "AlbumEntry:%d FaceID:%d FaceLib result:%d",
+                    albumEntry, faceID, okaoResult);
       }
-
+      
       if(DEBUG_ENROLLMENT_IMAGES)
       {
         _enrollmentImages.erase(albumEntry);
       }
     }
-
+    
     if(DEBUG_ENROLLMENT_IMAGES)
     {
       Vision::Image::CloseDisplayWindow(GetDisplayName(userIter->second).c_str());
     }
-
+    
     // TODO: Keep a reference to which trackerIDs are pointing to each faceID to avoid this search
     if(ANKI_DEVELOPER_CODE)
     {
@@ -1485,8 +1516,8 @@ namespace Vision {
       {
         if(iter->second == faceID) {
           LOG_WARNING("FaceRecognizer.RemoveUserHelper.StaleTrackingToFaceID",
-                              "TrackID %d still maps to FaceID %d",
-                              iter->first, iter->second);
+                      "TrackID %d still maps to FaceID %d",
+                      iter->first, iter->second);
           iter = _trackingToFaceID.erase(iter);
         } else {
           ++iter;
@@ -1496,8 +1527,8 @@ namespace Vision {
       {
         if(iter->second == faceID) {
           LOG_WARNING("FaceRecognizer.RemoveUserHelper.StaleAlbumEntryToFaceID",
-                              "AlbumEntry %d still maps to FaceID %d",
-                              iter->first, iter->second);
+                      "AlbumEntry %d still maps to FaceID %d",
+                      iter->first, iter->second);
           iter = _albumEntryToFaceID.erase(iter);
         } else {
           ++iter;
@@ -1529,7 +1560,7 @@ namespace Vision {
     {
       // Bookkeeping has failed us...
       LOG_ERROR("FaceRecognizer.GetFaceIDforAlbumEntry.MissingEntry",
-                        "AlbumEntry:%d", albumEntry);
+                "AlbumEntry:%d", albumEntry);
       return UnknownFaceID;
     }
 
@@ -1572,20 +1603,20 @@ namespace Vision {
     {
       // Special case: Nobody in album yet, just add this person
       LOG_INFO("RecognizeFace.AddingFirstUser",
-                    "Adding first user to empty album");
-
+               "Adding first user to empty album");
+      
       Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle, faceID);
       if(RESULT_OK != lastResult) {
         LOG_WARNING("FaceRecognizer.RecognizeFace.FailedToRegisterFirstUser",
-                            "FaceID:%d", faceID);
+                    "FaceID:%d", faceID);
         return lastResult;
-
+        
       }
-
+      
       recognitionScore = kMaxScore;
       return RESULT_OK;
     }
-
+    
     if(!canEnrollAnyFace && _forceNewEnrollment &&
        haveEnrollmentCountsLeft &&
        _detectionInfo.nID == _enrollmentTrackID)
@@ -1596,13 +1627,13 @@ namespace Vision {
       {
         // Special case: Force enrollment of this person as a new person
         LOG_INFO("RecognizeFace.ForceAddingNewFaceID",
-                      "Adding new user to empty album, while enrolling track ID:%d",
-                      _enrollmentTrackID);
+                 "Adding new user to empty album, while enrolling track ID:%d",
+                 _enrollmentTrackID);
         
         Result result = RegisterNewUser(_okaoRecognitionFeatureHandle, faceID);
         if(RESULT_OK != result) {
           LOG_WARNING("FaceRecognizer.RecognizeFace.FailedToRegisterNewUser",
-                              "TrackingID:%d FaceID:%d", _detectionInfo.nID, faceID);
+                      "TrackingID:%d FaceID:%d", _detectionInfo.nID, faceID);
           return result;
         }
         
@@ -1612,7 +1643,7 @@ namespace Vision {
       else
       {
         LOG_INFO("RecognizeFace.ForceUpdatingNewFaceID",
-                      "Updating forced enrollment ID:%d", _enrollmentID);
+                 "Updating forced enrollment ID:%d", _enrollmentID);
         
         auto enrollDataIter = _enrollmentData.find(_enrollmentID);
         if(ANKI_VERIFY(enrollDataIter != _enrollmentData.end(),
@@ -1629,7 +1660,7 @@ namespace Vision {
           if(RESULT_OK != result)
           {
             LOG_WARNING("FaceRecognizer.RecognizeFace.ForceUpdatingExistingAlbumEntryFailed",
-                                "EnrollmentID:%d AlbumEntry:%d", _enrollmentID, albumEntry);
+                        "EnrollmentID:%d AlbumEntry:%d", _enrollmentID, albumEntry);
           }
         }
       }
@@ -1651,18 +1682,18 @@ namespace Vision {
     if(resultNum > kMaxIdentifyResults)
     {
       LOG_ERROR("FaceRecognizer.RecognizeFace.FaceLibReturnedBadResultNum",
-                        "%d > %d", resultNum, kMaxIdentifyResults);
+                "%d > %d", resultNum, kMaxIdentifyResults);
       resultNum = kMaxIdentifyResults;
     }
-
+    
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceRecognizer.RecognizeFace.FaceLibFaceRecognitionIdentifyFailed",
-                          "maxResults:%d, hFeature:%p, hAlbum:%p, FaceLib Result Code=%d",
-                          kMaxIdentifyResults, _okaoRecognitionFeatureHandle, _okaoFaceAlbum, okaoResult);
+                  "maxResults:%d, hFeature:%p, hAlbum:%p, FaceLib Result Code=%d",
+                  kMaxIdentifyResults, _okaoRecognitionFeatureHandle, _okaoFaceAlbum, okaoResult);
       // Sometimes this happens (bad features?), so just warn and return "OK"
       return RESULT_OK;
     }
-
+    
     UpdateBestGuessName(matchingAlbumEntries, scores, resultNum);
     
     const bool foundMatchAboveThreshold = (resultNum > 0) && (scores[0] > kFaceRecognitionThreshold);
@@ -1672,17 +1703,17 @@ namespace Vision {
       FaceID_t matchingID = GetFaceIDforAlbumEntry(matchingAlbumEntries[0]);
       if(matchingID == UnknownFaceID) {
         LOG_WARNING("FaceRecognizer.RecognizeFace.FailedToGetTopFaceID",
-                            "MatchingAlbumEntry=%d", matchingAlbumEntries[0]);
+                    "MatchingAlbumEntry=%d", matchingAlbumEntries[0]);
         return RESULT_FAIL;
       }
-
+      
       RecognitionScore matchingScore = scores[0];
-
+      
       auto matchIter = _enrollmentData.find(matchingID);
-
+      
       if(matchIter == _enrollmentData.end()) {
         LOG_WARNING("FaceRecognizer.RecognizeFace.MissingTopMatchEnrollmentData",
-                            "ID:%d", matchingID);
+                    "ID:%d", matchingID);
         return RESULT_FAIL;
       }
 
@@ -1748,7 +1779,7 @@ namespace Vision {
           if(nextMatchIter == _enrollmentData.end())
           {
             LOG_WARNING("FaceRecognizer.RecognizeFace.Missing2ndMatchEnrollmentData",
-                                "ID:%d", nextMatchingID);
+                        "ID:%d", nextMatchingID);
             nextMatchingID = UnknownFaceID;
             break;
           }
@@ -1783,7 +1814,7 @@ namespace Vision {
                   if(nextNextIter == _enrollmentData.end())
                   {
                     LOG_WARNING("FaceRecognizer.RecognizeFace.Missing3rdMatchEnrollmentData",
-                                        "ID:%d", nextNextID);
+                                "ID:%d", nextNextID);
 
                   }
                   else if(!nextMatchIter->second.IsForThisSessionOnly())
@@ -1827,27 +1858,27 @@ namespace Vision {
                 if(ANKI_DEV_CHEATS)
                 {
                   LOG_DEBUG("RecognizeFace.BeforeMergeOfLowerRankedMatch",
-                                 "Top match entries: %s. Next match entries: %s.",
-                                 matchIter->second.GetAlbumEntriesString().c_str(),
-                                 nextMatchIter->second.GetAlbumEntriesString().c_str());
+                            "Top match entries: %s. Next match entries: %s.",
+                            matchIter->second.GetAlbumEntriesString().c_str(),
+                            nextMatchIter->second.GetAlbumEntriesString().c_str());
                 }
-
+                
                 Result mergeResult = MergeFaces(nextMatchingID, matchingID);
                 if(RESULT_OK != mergeResult) {
                   LOG_WARNING("FaceRecognizer.RecognizeFace.MergeFacesFailed", "Merging %d into %d",
-                                      matchingID, nextMatchingID);
+                              matchingID, nextMatchingID);
                 }
-
+                
                 // If nextMatchingID is set, nextMatchIter should be as well
                 DEV_ASSERT(nextMatchIter != _enrollmentData.end(),
                            "FaceRecognizer.RecognizeFace.NextMatchIterNotSet");
-
+                
                 if(ANKI_DEV_CHEATS)
                 {
                   // Note: matchIter is no longer valid -- its entry has been merged into nextMatchIter!
                   LOG_DEBUG("RecognizeFace.AfterMergeOfLowerRankedMatch",
-                                 "Merged match entries: %s",
-                                 nextMatchIter->second.GetAlbumEntriesString().c_str());
+                            "Merged match entries: %s",
+                            nextMatchIter->second.GetAlbumEntriesString().c_str());
                 }
 
                 // We just merged, so the matching album entry for "matchIndex" no
@@ -1872,8 +1903,8 @@ namespace Vision {
                   DEV_ASSERT_MSG(_albumEntryToFaceID.find(recognizedAlbumEntryID) == _albumEntryToFaceID.end(),
                                  "FaceRecognizer.RecognizeFace.UnexpectedAlbumEntryToFaceID",
                                  "matchIndex:%d albumEntry:%d still maps to faceID:%d",
-                                     matchIndex, recognizedAlbumEntryID,
-                                     _albumEntryToFaceID.at(recognizedAlbumEntryID));
+                                 matchIndex, recognizedAlbumEntryID,
+                                 _albumEntryToFaceID.at(recognizedAlbumEntryID));
                 }
               } // if(nextNextScoreLowEnough)
             } // if(nextScoreHighEnough)
@@ -1899,17 +1930,17 @@ namespace Vision {
                                                  recognitionScore);
         if(RESULT_OK != result) {
           LOG_WARNING("FaceRecognizer.RecognizeFace.UpdatingExistingAlbumEntryFailed",
-                              "albumEntry:%d", matchingAlbumEntries[matchIndex]);
+                      "albumEntry:%d", matchingAlbumEntries[matchIndex]);
         }
       }
-
+      
       if(_enrollmentID == faceID && _enrollmentTrackID != _detectionInfo.nID)
       {
         // We recognized the current track as the face ID we're enrolling,
         // update the track ID to match if it has changed.
         LOG_INFO("RecognizeFace.SetEnrollmentTrackID",
-                      "EnrollmentID:%d EnrollmentTrackID:%d (was %d)",
-                      _enrollmentID, -_detectionInfo.nID, -_enrollmentTrackID);
+                 "EnrollmentID:%d EnrollmentTrackID:%d (was %d)",
+                 _enrollmentID, -_detectionInfo.nID, -_enrollmentTrackID);
         _enrollmentTrackID = _detectionInfo.nID;
       }
 
@@ -1942,13 +1973,13 @@ namespace Vision {
             }
 
             LOG_INFO("RecognizeFace.UpdatingEnrollmentFace",
-                          "Did not recognize enrollmentID:%d, updating with score %d based on enrolledTrackID:%d",
-                          _enrollmentID, recognitionScore, _enrollmentTrackID);
-
+                     "Did not recognize enrollmentID:%d, updating with score %d based on enrolledTrackID:%d",
+                     _enrollmentID, recognitionScore, _enrollmentTrackID);
+            
             break;
           }
         }
-
+        
         faceID = _enrollmentID;
       }
       else if(canEnrollAnyFace)
@@ -1959,8 +1990,7 @@ namespace Vision {
         // similar, since that is apparently not great for OKAO.
         if(resultNum == 0 || scores[0] < kFaceRecognitionThreshold-kFaceRecognitionThresholdMarginForAdding)
         {
-          LOG_INFO("RecognizeFace.AddingNewUser",
-                        "Observed new person. Adding to album.");
+          LOG_INFO("RecognizeFace.AddingNewUser", "Observed new person. Adding to album.");
           Result lastResult = RegisterNewUser(_okaoRecognitionFeatureHandle, faceID);
           if(RESULT_OK != lastResult) {
             return lastResult;
@@ -2014,22 +2044,22 @@ namespace Vision {
     if(keepID == mergeID)
     {
       LOG_INFO("FaceRecognizer.MergeFaces.NothingToDo",
-                    "keepID=mergeID=%d", keepID);
+               "keepID=mergeID=%d", keepID);
       return RESULT_OK;
     }
-
+    
     // Look up enrollment data for keepID and mergeID
     auto keepIter = _enrollmentData.find(keepID);
     if(keepIter == _enrollmentData.end()) {
       LOG_WARNING("FaceRecognizer.MergeFaces.MissingEnrollDataForKeepID",
-                          "KeepID:%d", keepID);
+                  "KeepID:%d", keepID);
       return RESULT_FAIL;
     }
-
+    
     auto mergeIter = _enrollmentData.find(mergeID);
     if(mergeIter == _enrollmentData.end()) {
       LOG_WARNING("FaceRecognizer.MergeFaces.MissingEnrollDataForMergeID",
-                          "MergeID:%d", mergeID);
+                  "MergeID:%d", mergeID);
       return RESULT_FAIL;
     }
 
@@ -2053,29 +2083,29 @@ namespace Vision {
     Result mergeResult = keepIter->second.MergeWith(mergeIter->second, kMaxAlbumEntriesPerFace, entriesRemovedFromKeep);
     if(RESULT_OK != mergeResult) {
       LOG_WARNING("FaceRecognizer.MergeFaces.MergeFailed",
-                          "Merging faceID:%d with %d",
-                          keepIter->first, mergeIter->first);
+                  "Merging faceID:%d with %d",
+                  keepIter->first, mergeIter->first);
       return mergeResult;
     }
-
+    
     // Fix the albumEntryToFaceID bookkeeping now that keepID's albumEntries have changed
     for(auto & albumEntryPair : keepIter->second.GetAlbumEntries())
     {
       _albumEntryToFaceID[albumEntryPair.first] = keepID;
     }
-
+    
     for(AlbumEntryID_t removedEntry : entriesRemovedFromKeep)
     {
       _albumEntryToFaceID.erase(removedEntry);
       OkaoResult okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, removedEntry);
       if(OKAO_NORMAL != okaoResult) {
         LOG_WARNING("FaceRecognizer.MergeFaces.ClearUserFailed",
-                            "AlbumEntry:%d originally part of keepID:%d",
-                            removedEntry, keepID);
+                    "AlbumEntry:%d originally part of keepID:%d",
+                    removedEntry, keepID);
         return RESULT_FAIL;
       }
     }
-
+    
     // "Unregister" all album entries still left associated with mergeID (since they
     // were not taken by keepID above).
     for(auto & albumEntryPair : mergeIter->second.GetAlbumEntries())
@@ -2089,8 +2119,8 @@ namespace Vision {
         OkaoResult okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, albumEntryPair.first);
         if(OKAO_NORMAL != okaoResult) {
           LOG_WARNING("FaceRecognizer.MergeFaces.ClearUserFailed",
-                              "AlbumEntry:%d from mergeID:%d",
-                              albumEntryPair.first, mergeID);
+                      "AlbumEntry:%d from mergeID:%d",
+                      albumEntryPair.first, mergeID);
           return RESULT_FAIL;
         }
       }
@@ -2102,8 +2132,8 @@ namespace Vision {
 
     if(kFaceRecognitionExtraDebug) {
       LOG_INFO("MergeFaces.Success",
-                    "Merged FaceID %d into %d. Kept %zu album entries.",
-                    mergeID, keepID, keepIter->second.GetAlbumEntries().size());
+               "Merged FaceID %d into %d. Kept %zu album entries.",
+               mergeID, keepID, keepIter->second.GetAlbumEntries().size());
     }
 
     return removeResult;
@@ -2131,24 +2161,24 @@ namespace Vision {
     });
 
     OkaoResult okaoResult = OKAO_NORMAL;
-
+    
     tempAlbumHandle = OKAO_FR_CreateAlbumHandle(_okaoCommonHandle,
                                                 kMaxTotalAlbumEntries,
                                                 kMaxEnrollDataPerAlbumEntry);
     if(tempAlbumHandle == NULL) {
       LOG_WARNING("FaceRecognizer.GetSerializedAlbum.AlbumHandleFail",
-                          "Could not create temporary album handle for serializing.");
+                  "Could not create temporary album handle for serializing.");
       return RESULT_FAIL;
     }
-
+    
     s32 permanentIdCount = 0;
     for(auto const& enrollData : _enrollmentData)
     {
       if(permanentIdCount >= kMaxNamedFacesInAlbum)
       {
         LOG_WARNING("FaceRecognizer.GetSerializedAlbum.MaxNumFacesReached",
-                            "Can't save more than %d faces",
-                            kMaxNamedFacesInAlbum);
+                    "Can't save more than %d faces",
+                    kMaxNamedFacesInAlbum);
         break;
       }
 
@@ -2165,30 +2195,30 @@ namespace Vision {
             okaoResult = OKAO_FR_IsRegistered(_okaoFaceAlbum, albumEntry, iData, &isRegistered);
             if(OKAO_NORMAL != okaoResult) {
               LOG_WARNING("FaceRecognizer.GetSerializedAlbum.IsRegisteredFail",
-                                  "Could not get registration status for face:%d albumEntry:%d data:%d",
-                                  faceID, albumEntry, iData);
+                          "Could not get registration status for face:%d albumEntry:%d data:%d",
+                          faceID, albumEntry, iData);
               return RESULT_FAIL;
             }
-
+            
             if(isRegistered)
             {
               // Copy this user's registered feature data to temp album for serialization
               okaoResult = OKAO_FR_GetFeatureFromAlbum(_okaoFaceAlbum, albumEntry, iData, _okaoRecognitionFeatureHandle);
               if(OKAO_NORMAL != okaoResult) {
                 LOG_WARNING("FaceRecognizer.GetSerializedAlbum.GetFeatureFail",
-                                    "Could not get feature for face:%d albumEntry:%d data:%d",
-                                    faceID, albumEntry, iData);
+                            "Could not get feature for face:%d albumEntry:%d data:%d",
+                            faceID, albumEntry, iData);
                 return RESULT_FAIL;
               }
-
+              
               okaoResult = OKAO_FR_RegisterData(tempAlbumHandle, _okaoRecognitionFeatureHandle, albumEntry, iData);
               if(OKAO_NORMAL != okaoResult) {
                 LOG_WARNING("FaceRecognizer.GetSerializedAlbum.IsRegisteredFail",
-                                    "Could not register temp feature for face:%d albumEntry:%d data:%d",
-                                    faceID, albumEntry, iData);
+                            "Could not register temp feature for face:%d albumEntry:%d data:%d",
+                            faceID, albumEntry, iData);
                 return RESULT_FAIL;
               }
-
+              
             } // if isRegistered
           } // for each data
         }
@@ -2205,22 +2235,22 @@ namespace Vision {
       okaoResult = OKAO_FR_GetSerializedAlbumSize(tempAlbumHandle, &albumSize);
       if(OKAO_NORMAL != okaoResult) {
         LOG_WARNING("FaceRecognizer.GetSerializedAlbum.GetSizeFail",
-                            "FaceLib Result=%d", okaoResult);
+                    "FaceLib Result=%d", okaoResult);
         return RESULT_FAIL;
       }
-
+      
       serializedAlbum.resize(albumSize);
       okaoResult = OKAO_FR_SerializeAlbum(tempAlbumHandle, &(serializedAlbum[0]), albumSize);
       if(OKAO_NORMAL != okaoResult) {
         LOG_WARNING("FaceRecognizer.GetSerializedAlbum.SerializeFail",
-                            "FaceLib Result=%d", okaoResult);
+                    "FaceLib Result=%d", okaoResult);
         return RESULT_FAIL;
       }
-
+      
       LOG_INFO("GetSerializedAlbum.AlbumSize",
-                    "Album with %d permanent faces = %d bytes (%.1f bytes/person)",
-                    permanentIdCount, albumSize, (f32)albumSize/(f32)permanentIdCount);
-
+               "Album with %d permanent faces = %d bytes (%.1f bytes/person)",
+               permanentIdCount, albumSize, (f32)albumSize/(f32)permanentIdCount);
+      
     } // if(permanentIdCount == 0)
     else
     {
@@ -2243,34 +2273,34 @@ namespace Vision {
       LOG_WARNING("FaceRecognizer.SetSerializedAlbum.EmptyAlbumData", "");
       return RESULT_FAIL;
     }
-
+    
     FR_ERROR error;
     album = OKAO_FR_RestoreAlbum(okaoCommonHandle, const_cast<UINT8*>(serializedAlbum.data()), (UINT32)serializedAlbum.size(), &error);
     if(NULL == album) {
       LOG_WARNING("FaceRecognizer.SetSerializedAlbum.RestoreFail",
-                          "FaceLib Result=%d", error);
+                  "FaceLib Result=%d", error);
       return RESULT_FAIL;
     }
-
+    
     INT32 numAlbumEntries=0;
     OkaoResult okaoResult = OKAO_FR_GetRegisteredUserNum(album, &numAlbumEntries);
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceRecognizer.SetSerializedAlbum.GetNumEntriesFailed",
-                          "FaceLib result=%d", okaoResult);
+                  "FaceLib result=%d", okaoResult);
       return RESULT_FAIL;
     }
-
+    
     INT32 numDataEntries = 0;
     okaoResult = OKAO_FR_GetRegisteredAllDataNum(album, &numDataEntries);
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceRecognizer.SetSerializedAlbum.GetNumDataFailed",
-                          "FaceLib result=%d", okaoResult);
+                  "FaceLib result=%d", okaoResult);
       return RESULT_FAIL;
     }
-
+    
     LOG_INFO("SetSerializedAlbum.RestoredAlbum",
-                  "Restored FaceLib album with %d album entries and %d data entries from %zu-byte serialized album",
-                  numAlbumEntries, numDataEntries, serializedAlbum.size());
+             "Restored FaceLib album with %d album entries and %d data entries from %zu-byte serialized album",
+             numAlbumEntries, numDataEntries, serializedAlbum.size());
 
     return RESULT_OK;
   } // SetSerializedAlbum()
@@ -2308,24 +2338,24 @@ namespace Vision {
       if(iterToRename == _enrollmentData.end())
       {
         LOG_WARNING("FaceRecognizer.AssignNameToID.InvalidMergeWithID",
-                            "No enrollment data for mergeWithID=%d", mergeWithID);
+                    "No enrollment data for mergeWithID=%d", mergeWithID);
         return RESULT_FAIL;
       }
-
+      
       if(iterToRename->second.IsForThisSessionOnly())
       {
         LOG_WARNING("FaceRecognizer.AssignNameToID.SessionOnlyMergeWithID",
-                            "MergeWithID must be for a named face, not session-only");
+                    "MergeWithID must be for a named face, not session-only");
         return RESULT_FAIL;
       }
-
+      
       // Merge the two records, keeping mergeWithID, but use the name of the new one,
       // since that's what was just assigned
       Result lastResult = MergeFaces(mergeWithID, faceID);
       if(RESULT_OK != lastResult) {
         LOG_WARNING("FaceRecognizer.AssignNameToID.MergeFailed",
-                            "Merging faceID:%d into mergeWithID:%d",
-                            faceID, mergeWithID);
+                    "Merging faceID:%d into mergeWithID:%d",
+                    faceID, mergeWithID);
         return lastResult;
       }
     }
@@ -2335,7 +2365,7 @@ namespace Vision {
       {
         // Caller should have checked if there was room first!
         LOG_ERROR("FaceRecognizer.AssignNameToID.TooManyNamedFaces",
-                          "Already have %d named faces", kMaxNamedFacesInAlbum);
+                  "Already have %d named faces", kMaxNamedFacesInAlbum);
         return RESULT_FAIL;
       }
       iterToRename = _enrollmentData.find(faceID);
@@ -2354,33 +2384,32 @@ namespace Vision {
     else
     {
       LOG_WARNING("FaceRecognizer.AssignNameToID.InvalidID",
-                          "Unknown ID %d, ignoring name %s",
-                          faceID, Util::HidePersonallyIdentifiableInfo(name.c_str()));
-
+                  "Unknown ID %d, ignoring name %s",
+                  faceID, Util::HidePersonallyIdentifiableInfo(name.c_str()));
+      
       return RESULT_FAIL;
     }
-
+    
     return RESULT_OK;
-
+    
   } // AssignNameToID()
-
-
+  
   Result FaceRecognizer::EraseFace(FaceID_t faceID)
   {
-     auto enrollIter = _enrollmentData.find(faceID);
-     if(enrollIter != _enrollmentData.end())
-     {
-       Result removeResult = RemoveUser(enrollIter->first);
-       if(RESULT_OK != removeResult) {
-         LOG_WARNING("FaceRecognizer.EraseName.RemoveUserFailed", "ID=%d", enrollIter->first);
-       }
-       return removeResult;
-     }
-     else {
-       LOG_WARNING("FaceRecognizer.EraseFace.NotFound",
-                           "Did not find a record for ID=%d", faceID);
-       return RESULT_FAIL;
-     }
+    auto enrollIter = _enrollmentData.find(faceID);
+    if(enrollIter != _enrollmentData.end())
+    {
+      Result removeResult = RemoveUser(enrollIter->first);
+      if(RESULT_OK != removeResult) {
+        LOG_WARNING("FaceRecognizer.EraseName.RemoveUserFailed", "ID=%d", enrollIter->first);
+      }
+      return removeResult;
+    }
+    else {
+      LOG_WARNING("FaceRecognizer.EraseFace.NotFound",
+                  "Did not find a record for ID=%d", faceID);
+      return RESULT_FAIL;
+    }
   } // EraseFace()
 
   std::vector<Vision::LoadedKnownFace> FaceRecognizer::GetEnrolledNames() const
@@ -2410,9 +2439,9 @@ namespace Vision {
     OkaoResult okaoResult = OKAO_FR_ClearAlbum(_okaoFaceAlbum);
     if(OKAO_NORMAL != okaoResult) {
       LOG_WARNING("FaceRecognizer.EraseAllFaces.FaceLibClearAlbumFailed",
-                          "FaceLib Result=%d", okaoResult);
+                  "FaceLib Result=%d", okaoResult);
     }
-
+    
     LOG_INFO("EraseAllFaces.Complete", "");
 
   } // EraseAllFaces()
@@ -2427,9 +2456,9 @@ namespace Vision {
       {
         enrollIter->second.SetName( newName );
 
-        PRINT_CH_INFO("FaceRecognizer", "RenameFace.Success", "Renamed ID=%d from '%s' to '%s'",
-                      faceID, Util::HidePersonallyIdentifiableInfo(oldName.c_str()),
-                      enrollIter->second.GetName().piiGuardedString());
+        LOG_INFO("FaceRecognizer.RenameFace.Success", "Renamed ID=%d from '%s' to '%s'",
+                 faceID, Util::HidePersonallyIdentifiableInfo(oldName.c_str()),
+                 enrollIter->second.GetName().piiGuardedString());
 
         // Construct and then swap to make sure we miss fields that get added to LoadedKnownFace later
         Vision::RobotRenamedEnrolledFace temp(enrollIter->second.GetFaceID(),
@@ -2441,18 +2470,17 @@ namespace Vision {
       else
       {
         LOG_WARNING("FaceRecognizer.RenameFace.OldNameMismatch",
-                            "OldName '%s' does not match stored name '%s' for ID=%d",
-                            Util::HidePersonallyIdentifiableInfo(oldName.c_str()),
-                            enrollIter->second.GetName().piiGuardedString(),
-                            faceID);
-
+                    "OldName '%s' does not match stored name '%s' for ID=%d",
+                    Util::HidePersonallyIdentifiableInfo(oldName.c_str()),
+                    enrollIter->second.GetName().piiGuardedString(),
+                    faceID);
+        
         return RESULT_FAIL;
       }
     }
     else
     {
-      LOG_WARNING("FaceRecognizer.RenameFace.InvalidID",
-                          "No record for ID=%d", faceID);
+      LOG_WARNING("FaceRecognizer.RenameFace.InvalidID", "No record for ID=%d", faceID);
       return RESULT_FAIL;
     }
   }
@@ -2503,8 +2531,7 @@ namespace Vision {
 
         if(RESULT_OK == lastResult)
         {
-          LOG_INFO("SetSerializedData.NewNextFaceID",
-                        "Setting next FaceID=%d", loadedNextFaceID);
+          LOG_INFO("SetSerializedData.NewNextFaceID", "Setting next FaceID=%d", loadedNextFaceID);
 
           _nextFaceID = loadedNextFaceID;
           
@@ -2538,7 +2565,7 @@ namespace Vision {
     //
     if (loadedAlbum != NULL) {
       LOG_DEBUG("FaceRecognizer.SetSerializedData.DeleteAlbumHandle",
-                     "Delete album handle %p", loadedAlbum);
+                "Delete album handle %p", loadedAlbum);
       DEV_ASSERT(loadedAlbum != _okaoFaceAlbum, "FaceRecognizer.SetSerializedData.InvalidAlbumHandle");
       OKAO_FR_DeleteAlbumHandle(loadedAlbum);
       loadedAlbum = NULL;
@@ -2573,34 +2600,34 @@ namespace Vision {
       OkaoResult okaoResult = OKAO_FR_GetAlbumMaxNum(_okaoFaceAlbum, &currentMaxAlbumEntries, &currentMaxDataEntries);
       if(OKAO_NORMAL != okaoResult) {
         LOG_WARNING("FaceRecognizer.UseLoadedAlbumAndEnrollData.GetCurrentMaxNumFailed",
-                            "FaceLib Result=%d", okaoResult);
+                    "FaceLib Result=%d", okaoResult);
         return RESULT_FAIL;
       }
-
+      
       okaoResult = OKAO_FR_GetAlbumMaxNum(loadedAlbumData, &loadedMaxAlbumEntries, &loadedMaxDataEntries);
       if(OKAO_NORMAL != okaoResult) {
         LOG_WARNING("FaceRecognizer.UseLoadedAlbumAndEnrollData.GetLoadedMaxNumFailed",
-                            "FaceLib Result=%d", okaoResult);
+                    "FaceLib Result=%d", okaoResult);
         return RESULT_FAIL;
       }
-
+      
       if(loadedMaxAlbumEntries > currentMaxAlbumEntries ||  loadedMaxDataEntries > currentMaxDataEntries)
       {
         LOG_WARNING("FaceRecognizer.UseLoadedAlbumAndEnrollmentData.LoadedMaxNumTooLarge",
-                            "Loaded album too large (maxAlbumEntries:%d maxDataEntries:%d) too large "
-                            "for current settings (%d and %d)",
-                            loadedMaxAlbumEntries, loadedMaxDataEntries,
-                            currentMaxAlbumEntries, currentMaxDataEntries);
-
+                    "Loaded album too large (maxAlbumEntries:%d maxDataEntries:%d) too large "
+                    "for current settings (%d and %d)",
+                    loadedMaxAlbumEntries, loadedMaxDataEntries,
+                    currentMaxAlbumEntries, currentMaxDataEntries);
+        
         return RESULT_FAIL;
       }
-
+      
       if(loadedMaxAlbumEntries == currentMaxAlbumEntries && loadedMaxDataEntries == currentMaxDataEntries)
       {
         // Simple case: just swap in the new album
         LOG_DEBUG("FaceRecognizer.UseLoadedAlbumAndEnrollmentData.Swap",
-                       "Stop using %p, start using %p",
-                       _okaoFaceAlbum, loadedAlbumData);
+                  "Stop using %p, start using %p",
+                  _okaoFaceAlbum, loadedAlbumData);
         std::swap(loadedAlbumData, _okaoFaceAlbum);
       }
       else
@@ -2609,22 +2636,22 @@ namespace Vision {
         // one at a time. We've already verified that the current album is large
         // enough in both dimensions (album entries and data entries)
         LOG_DEBUG("FaceRecognizer.UseLoadedAlbumAndEnrollmentData.Update",
-                       "Keep using %p, copy data from %p",
-                       _okaoFaceAlbum, loadedAlbumData);
-
+                  "Keep using %p, copy data from %p",
+                  _okaoFaceAlbum, loadedAlbumData);
+        
         okaoResult = OKAO_FR_ClearAlbum(_okaoFaceAlbum);
         if(OKAO_NORMAL != okaoResult) {
           LOG_WARNING("FaceRecognizer.UserLoadedAlbumAndEnrollmentData.ClearAlbumFailed",
-                              "FaceLib Result=%d", okaoResult);
+                      "FaceLib Result=%d", okaoResult);
           return RESULT_FAIL;
         }
-
+        
         LOG_INFO("UseLoadedAlbumAndEnrollmentData.ManualLoadDueToDifferingMaxNums",
-                      "Loaded album has smaller max album/data entries than current settings (%d/%d vs. %d/%d) "
-                      "Loading each manually.",
-                      loadedMaxAlbumEntries, loadedMaxDataEntries,
-                      currentMaxAlbumEntries, currentMaxDataEntries);
-
+                 "Loaded album has smaller max album/data entries than current settings (%d/%d vs. %d/%d) "
+                 "Loading each manually.",
+                 loadedMaxAlbumEntries, loadedMaxDataEntries,
+                 currentMaxAlbumEntries, currentMaxDataEntries);
+        
         for(AlbumEntryID_t iAlbumEntry=0; iAlbumEntry<loadedMaxAlbumEntries; ++iAlbumEntry)
         {
           for(INT32 iData=0; iData<loadedMaxDataEntries; ++iData)
@@ -2633,29 +2660,29 @@ namespace Vision {
             okaoResult = OKAO_FR_IsRegistered(loadedAlbumData, iAlbumEntry, iData, &isRegistered);
             if(OKAO_NORMAL != okaoResult) {
               LOG_WARNING("FaceRecognizer.UserLoadedAlbumAndEnrollmentData.IsRegisteredFailed",
-                                  "AlbumEntry:%d DataEntry:%d FaceLib Result=%d",
-                                  iAlbumEntry, iData, okaoResult);
+                          "AlbumEntry:%d DataEntry:%d FaceLib Result=%d",
+                          iAlbumEntry, iData, okaoResult);
               return RESULT_FAIL;
             }
-
+            
             if(isRegistered)
             {
               okaoResult = OKAO_FR_GetFeatureFromAlbum(loadedAlbumData, iAlbumEntry, iData, _okaoRecogMergeFeatureHandle);
               if(OKAO_NORMAL != okaoResult) {
                 LOG_WARNING("FaceRecognizer.UserLoadedAlbumAndEnrollmentData.GetFeatureFailed",
-                                    "AlbumEntry:%d DataEntry:%d FaceLib Result=%d",
-                                    iAlbumEntry, iData, okaoResult);
+                            "AlbumEntry:%d DataEntry:%d FaceLib Result=%d",
+                            iAlbumEntry, iData, okaoResult);
                 return RESULT_FAIL;
               }
-
+              
               okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, _okaoRecogMergeFeatureHandle, iAlbumEntry, iData);
               if(OKAO_NORMAL != okaoResult) {
                 LOG_WARNING("FaceRecognizer.UserLoadedAlbumAndEnrollmentData.RegisterDataFailed",
-                                    "AlbumEntry:%d DataEntry:%d FaceLib Result=%d",
-                                    iAlbumEntry, iData, okaoResult);
+                            "AlbumEntry:%d DataEntry:%d FaceLib Result=%d",
+                            iAlbumEntry, iData, okaoResult);
                 return RESULT_FAIL;
               }
-
+              
             }
 
           }
@@ -2664,41 +2691,41 @@ namespace Vision {
 
       std::swap(loadedEnrollmentData, _enrollmentData);
       std::swap(loadedAlbumEntryToFaceID, _albumEntryToFaceID);
-
+      
       _trackingToFaceID.clear();
-
+      
       LOG_INFO("UseLoadedAlbumAndEnrollData.Success",
-                    "Loaded album and enroll data passed sanity checks (%zu entries)",
-                    _enrollmentData.size());
+               "Loaded album and enroll data passed sanity checks (%zu entries)",
+               _enrollmentData.size());
     }
-
+    
     return lastResult;
   }
-
-
+  
+  
   Result FaceRecognizer::GetSerializedEnrollData(std::vector<u8>& serializedEnrollData)
   {
     // Put version prefix at start: 4 bytes = [0xFA 0xCE XX XX], as in "FACEXXXX"
     serializedEnrollData.clear();
-
+    
     if(!_enrollmentData.empty())
     {
       const u8 * VersionPrefixU8 = (u8*)VersionPrefix;
       std::copy(VersionPrefixU8, VersionPrefixU8+4, std::back_inserter(serializedEnrollData));
-
+      
       DEV_ASSERT(((u32*)serializedEnrollData.data())[0] == ((u32*)VersionPrefix)[0],
                  "FaceRecognizer.GetSerialzedEnrollData.AddingVersionPrefixFailed");
-
+      
       LOG_INFO("GetSerializedEnrollData.AddedVersionData",
-                    "Added to front: %04X%04X",
-                    ((u16*)serializedEnrollData.data())[0],
-                    ((u16*)serializedEnrollData.data())[1]);
-
+               "Added to front: %04X%04X",
+               ((u16*)serializedEnrollData.data())[0],
+               ((u16*)serializedEnrollData.data())[1]);
+      
       // Put the next faceID in first, so we can start there next time and avoid
       // re-using IDs, since that is better for DAS
       const u8* faceIdU8 = (u8*)(&_nextFaceID);
       std::copy(faceIdU8, faceIdU8+sizeof(FaceID_t), std::back_inserter(serializedEnrollData));
-
+      
       for(auto & enrollData : _enrollmentData)
       {
         // Skip session-only entries
@@ -2719,78 +2746,78 @@ namespace Vision {
     const size_t kMinSize = sizeof(VersionPrefix) + sizeof(FaceID_t);
     if(serializedEnrollData.size() < kMinSize) {
       LOG_WARNING("FaceRecognizer.SetSerializedEnrollData.TooShortForVersion",
-                          "Data is not even %zu bytes long to read version and nextFaceID",
-                          kMinSize);
+                  "Data is not even %zu bytes long to read version and nextFaceID",
+                  kMinSize);
       return RESULT_FAIL;
     }
-
+    
     const u32 incomingVersion = ((u32*)serializedEnrollData.data())[0];
     const u32 correctVersion  = ((u32*)VersionPrefix)[0];
-
+    
     if(incomingVersion != correctVersion)
     {
       LOG_WARNING("FaceRecognizer.SetSerializedEnrollData.VersionPrefixMismatch",
-                          "Expected: %04X%04X, Incoming: %04X%04X",
-                          VersionPrefix[0], VersionPrefix[1],
-                          ((u16*)serializedEnrollData.data())[0],
-                          ((u16*)serializedEnrollData.data())[1]);
-
+                  "Expected: %04X%04X, Incoming: %04X%04X",
+                  VersionPrefix[0], VersionPrefix[1],
+                  ((u16*)serializedEnrollData.data())[0],
+                  ((u16*)serializedEnrollData.data())[1]);
+      
       // TODO: Provide helpers to "upgrade" old versions?
-
+      
       return RESULT_FAIL;
     }
-
+    
     LOG_INFO("SetSerializedEnrollData.MatchedVersionPrefix",
-                  "Got correct prefix: %04X%04X", VersionPrefix[0], VersionPrefix[1]);
-
+             "Got correct prefix: %04X%04X", VersionPrefix[0], VersionPrefix[1]);
+    
     EnrolledFaceEntry entry;
-
+    
     size_t startIndex = sizeof(VersionPrefix); // start after the prefix
-
+    
     // Grab the starting faceID from the start of the buffer
     newNextFaceID = ((FaceID_t*)(serializedEnrollData.data()+startIndex))[0];
 
     startIndex += sizeof(FaceID_t);
-
+    
     while(startIndex < serializedEnrollData.size()-3) // "-3" to handle an extra bytes of padding
     {
       Result lastResult = entry.Deserialize(serializedEnrollData, startIndex);
       if(RESULT_OK != lastResult) {
         LOG_WARNING("FaceRecognizer.SetSerializedEnrollData.DeserializeFail",
-                            "Failed to deserialize EnrolledFaceEntry at start=%zu (from %zu-length buffer)",
-                            startIndex, serializedEnrollData.size());
+                    "Failed to deserialize EnrolledFaceEntry at start=%zu (from %zu-length buffer)",
+                    startIndex, serializedEnrollData.size());
         return RESULT_FAIL;
       }
-
+      
       newEnrollmentData[entry.GetFaceID()] = entry;
     }
-
+    
     LOG_INFO("SetSerializedEnrollData.Complete",
-                  "Deserialized %zu entries from buffer", newEnrollmentData.size());
-
+             "Deserialized %zu entries from buffer", newEnrollmentData.size());
+    
     return RESULT_OK;
   }
-
+  
   Result FaceRecognizer::SaveAlbum(const std::string &albumName)
   {
     Result result = RESULT_OK;
-
+    
     std::vector<u8> serializedAlbum;
     result = GetSerializedAlbum(serializedAlbum);
     if(RESULT_OK != result) {
       return result;
     }
-
+    
     if(serializedAlbum.empty()) {
       PRINT_NAMED_INFO("FaceRecognizer.SaveAlbum.EmptyAlbum",
                        "No serialized data returned from private implementation; removing folder");
       Util::FileUtils::RemoveDirectory(albumName);
       return result;
     }
-
+    
     if(false == Util::FileUtils::CreateDirectory(albumName, false, true)) {
       LOG_WARNING("FaceRecognizer.SaveAlbum.DirCreationFail",
-                          "Tried to create: %s", albumName.c_str());
+                  "Tried to create: %s", albumName.c_str());
       result = RESULT_FAIL;
     } else {
 
@@ -2916,8 +2943,8 @@ namespace Vision {
               FaceID_t faceID = std::stoi(idStr);
               if(!json.isMember(idStr)) {
                 LOG_WARNING("FaceRecognizer.LoadAlbum.BadFaceIdString",
-                                    "Could not find member for string %s with value %d",
-                                    idStr.c_str(), faceID);
+                            "Could not find member for string %s with value %d",
+                            idStr.c_str(), faceID);
                 return RESULT_FAIL;
               } else {
                 EnrolledFaceEntry entry(faceID, json[idStr]);

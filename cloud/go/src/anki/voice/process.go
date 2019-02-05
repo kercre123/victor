@@ -15,10 +15,7 @@ import (
 )
 
 var (
-	// ChipperSecret should be baked in at build time and serves as the access
-	// key for Chipper use
-	ChipperSecret string
-	verbose       bool
+	verbose bool
 )
 
 const (
@@ -376,8 +373,7 @@ func (p *Process) defaultChipperOptions() chipper.StreamOpts {
 
 func (p *Process) newStream(ctx context.Context, receiver *strmReceiver, strmopts ...stream.Option) *stream.Streamer {
 	strmopts = append(strmopts, stream.WithTokener(p.opts.tokener, p.opts.requireToken),
-		stream.WithChipperURL(config.Env.Chipper),
-		stream.WithChipperSecret(ChipperSecret))
+		stream.WithChipperURL(config.Env.Chipper))
 	newReceiver := *receiver
 	stream := stream.NewStreamer(ctx, &newReceiver, p.StreamSize(), strmopts...)
 	newReceiver.stream = stream

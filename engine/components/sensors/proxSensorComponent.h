@@ -108,7 +108,7 @@ public:
   bool CalculateSensedObjectPose(Pose3d& sensedObjectPose) const;
 
   // enable or disable this entire component's ability to update the nav map
-  void SetEnabled(bool enabled) { _enabled = enabled; }
+  void SetNavMapUpdateEnabled(bool enabled) { _enabled = enabled; }
 
 private:
 
@@ -138,8 +138,13 @@ private:
   // latest distance sensor data
   uint32_t _lastMsgTimestamp = 0;
 
+  // The pose frame ID of the RobotState message with the
+  // latest distance sensor data
+  uint32_t _lastMsgPoseFrameID = 0;
+
   uint32_t _numTicsLiftOutOfFOV = 0;
 
+  // Whether or not navmap updates are enabled
   bool _enabled = true;
   
 };

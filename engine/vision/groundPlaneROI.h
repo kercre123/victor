@@ -15,7 +15,7 @@
 #define __Anki_Cozmo_Basestation_GroundPlaneROI_H__
 
 #include "coretech/vision/engine/image.h"
-#include "coretech/common/engine/math/matrix.h"
+#include "coretech/common/shared/math/matrix.h"
 
 namespace Anki {
 namespace Vector {

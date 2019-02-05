@@ -13,6 +13,7 @@
       "CoordinateInHabitat",
       "HabitatMutedDispatcher",
       "CoordinateGlobalInterrupts",
+      "CoordinateWhileHeldInPalm",
       "CoordinateWhileInAir",
       "GlobalInterruptions",
       "HighLevelAI"   
@@ -27,6 +28,7 @@
     "CoordinateInHabitat",
     "HabitatMutedDispatcher",
     "CoordinateGlobalInterrupts",
+    "CoordinateWhileHeldInPalm",
     "CoordinateWhileInAir",
     "GlobalInterruptions",
     "HighLevelAI",

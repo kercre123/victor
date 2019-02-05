@@ -21,7 +21,6 @@
 #include "clad/types/activeObjectAccel.h"
 
 #include "coretech/common/engine/objectIDs.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/shared/types.h"
 
 #include "util/entityComponent/iDependencyManagedComponent.h"

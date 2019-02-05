@@ -49,3 +49,33 @@ func OSVersion() string {
 	}
 	return ""
 }
+
+var ankiVersion string
+
+func AnkiVersion() string {
+	if ankiVersion != "" {
+		return ankiVersion
+	}
+
+	buf, err := exec.Command("getprop", "ro.anki.version").Output()
+	if err != nil {
+		return ""
+	}
+	ankiVersion = strings.TrimSpace(string(buf))
+	return ankiVersion
+}
+
+var victorVersion string
+
+func VictorVersion() string {
+	if victorVersion != "" {
+		return victorVersion
+	}
+
+	buf, err := exec.Command("getprop", "ro.anki.victor.version").Output()
+	if err != nil {
+		return ""
+	}
+	victorVersion = strings.TrimSpace(string(buf))
+	return victorVersion
+}

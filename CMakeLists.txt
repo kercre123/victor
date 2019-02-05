@@ -77,6 +77,9 @@ endif()
 #
 # Factory build options
 #
+option(FACTORY_TEST "Enable factory test features" OFF)
+option(FACTORY_TEST_DEV "Enable factory test development features" OFF)
+
 if (FACTORY_TEST)
   add_definitions(-DFACTORY_TEST=1)
 else()
@@ -132,7 +135,7 @@ if (NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 endif()
 
 set(ANKI_EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/EXTERNALS")
-set(CORETECH_EXTERNAL_DIR "${ANKI_EXTERNAL_DIR}/coretech_external")
+set(OKAO_VISION_DIR "${CMAKE_CURRENT_SOURCE_DIR}/okaoVision")
 
 set(ANKI_SRCLIST_DIR "${CMAKE_SOURCE_DIR}/generated/cmake")
 
@@ -148,6 +151,9 @@ include(wwise) # for Wwise targets
 include(protobuf) # for protobuf target
 include(breakpad) # for breakpad targets
 include(avs-device-sdk)
+
+include(speexdsp)
+include(pffft)
 
 import(util "lib/util")
 import(ble_cozmo "lib/BLECozmo")
@@ -173,7 +179,6 @@ add_subdirectory("animProcess")
 add_subdirectory("webServerProcess")
 add_subdirectory("testCrash")
 add_subdirectory("dasmgr")
-add_subdirectory("neuralnets")
 
 target_include_directories(victor_anim PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/anki/cozmo>

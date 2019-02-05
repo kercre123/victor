@@ -102,7 +102,6 @@ public:
   const f32                   GetHeadAngle()                          const;
   const GyroData&             GetHeadGyroData()                       const;
   u32                         GetHeadSerialNumber()                   const;
-  const RobotID_t             GetID()                                 const;
   RobotTimeStamp_t            GetLastImageTimeStamp()                 const;
   RobotTimeStamp_t            GetLastMsgTimestamp()                   const;
   f32                         GetLiftAngle()                          const;
@@ -174,6 +173,20 @@ private:
   friend class BehaviorPlaypenWaitToStart;
   friend class BehaviorPlaypenCameraCalibration;
 
+  friend class BehaviorSelfTest;
+  friend class BehaviorSelfTestPutOnCharger;
+  friend class BehaviorSelfTestScreenAndBackpack;
+  friend class BehaviorSelfTestMotorCalibration;
+  friend class BehaviorSelfTestDriftCheck;
+  friend class BehaviorSelfTestInitChecks;
+  friend class BehaviorSelfTestSoundCheck;
+  friend class BehaviorSelfTestTouch;
+  friend class BehaviorSelfTestButton;
+  friend class BehaviorSelfTestDriveForwards;
+  friend class BehaviorSelfTestLookAtCharger;
+  friend class BehaviorSelfTestDockWithCharger;
+  friend class BehaviorSelfTestPickup;
+  
   Robot& _robot;
 };
 

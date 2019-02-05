@@ -13,10 +13,8 @@
 #include "coretech/planning/engine/pathHelper.h"
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/planning/shared/path.h"
-#include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/math/pose.h"
-#include "coretech/common/engine/math/point_impl.h"
-
+ 
 
 namespace Anki{
 namespace Planning{

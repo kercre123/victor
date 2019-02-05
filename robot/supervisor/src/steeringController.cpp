@@ -712,12 +712,17 @@ namespace Anki {
       // Check to make sure the robot is not pitched too steeply,
       // and if it is, stop and cancel the point turn
       const Radians& currPitch = IMUFilter::GetPitch();
-      if (currPitch.getAbsoluteVal() > MAX_PITCH_POINT_TURN_RAD) {
+      // The only exception is that when the robot is being held, we don't care if the pitch
+      // is out of the acceptable range, since some behaviors like the HeldInPalm or the
+      // WhileInAir reactions can have actions that execute point turns while the robot
+      // is tilted in mid-air, on a user's palm, etc.
+      const bool isBeingHeld = IMUFilter::IsBeingHeld();
+      if (currPitch.getAbsoluteVal() > MAX_PITCH_POINT_TURN_RAD && !isBeingHeld) {
         ExitPointTurn();
         AnkiInfo( "SteeringController.ManagePointTurn.StoppingDueToPitch",
-                  "Pitch magnitude of %f [rad] is higher than max allowed pitch of %f [rad]",
-                  currPitch.getAbsoluteVal().ToFloat(),
-                  MAX_PITCH_POINT_TURN_RAD);
+                  "Pitch magnitude of %f [deg] is higher than max allowed pitch of %f [deg]",
+                  currPitch.getAbsoluteVal().getDegrees(),
+                  RAD_TO_DEG(MAX_PITCH_POINT_TURN_RAD));
         return;
       }
       

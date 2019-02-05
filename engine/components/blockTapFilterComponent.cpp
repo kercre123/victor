@@ -108,8 +108,7 @@ void BlockTapFilterComponent::UpdateDependent(const RobotCompMap& dependentComps
       for(auto& object : matchingObjects)
       {
         if ( object->IsPoseStateKnown() ) {
-          static const bool propagateStack = false;
-          _robot->GetObjectPoseConfirmer().MarkObjectDirty(object, propagateStack);
+          _robot->GetObjectPoseConfirmer().MarkObjectDirty(object);
         }
       }
     }

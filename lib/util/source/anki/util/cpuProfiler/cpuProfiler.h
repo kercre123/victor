@@ -41,7 +41,7 @@
   {
   public:
     static const char* CpuProfilerLogging() {
-      return "Never,1ms,2ms,4ms,8ms,16ms,32ms";
+      return "Never,Every tick,Every 2 ticks,Every 4 ticks,Every 8 ticks,Every 16 ticks,Every 32 ticks";
     }
     
     static uint32_t CpuProfilerLoggingTime(int option) {

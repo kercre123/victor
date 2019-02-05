@@ -105,6 +105,7 @@ namespace Switchboard {
       void HandleOtaUpdateExit(int rc);
       void HandleOtaUpdateProgress();
       void HandlePairingTimeout();
+      void LogWifiState();
       int GetOtaProgress(uint64_t* progress, uint64_t* expected);
 
       Signal::SmartHandle _pinHandle;

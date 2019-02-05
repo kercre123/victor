@@ -1,0 +1,15 @@
+{
+  "dependencies": {
+    "commander": "^2.19.0",
+    "libsodium": "^0.7.3",
+    "libsodium-wrappers": "^0.7.3",
+    "noble-mac": "github:Timeular/noble-mac#master",
+    "string-argv": "^0.1.1",
+    "xpc-connection": "github:sandeepmistry/node-xpc-connection#pull/26/head",
+    "nconf": "^0.10.0"
+  },
+  "resolutions": {
+    "noble-mac": "Timeular/noble-mac#head",
+    "xpc-connection": "sandeepmistry/node-xpc-connection#26/head"
+  }
+}

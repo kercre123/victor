@@ -1,5 +1,5 @@
 namespace Anki {
-namespace Victor {
+namespace Vector {
 namespace Gateway {
 
 structure PoseStruct3d

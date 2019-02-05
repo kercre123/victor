@@ -60,6 +60,10 @@ public:
     }
 
     bool IsValid() const { return !_dataDir.empty() && !_netFile.empty() && !_searchFile.empty(); }
+    
+    std::string GenerateNetFilePath(const std::string& prefixPath = "") const;
+
+    std::string GenerateSearchFilePath(const std::string& prefixPath = "") const;
   };
 
   // Note 'Count' and '-1' values indicate to use default

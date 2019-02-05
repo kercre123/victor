@@ -14,7 +14,7 @@
     "WeatherResponses",
     "GreetAfterLongTime",
     "TakeAPhotoCoordinator",
-    "ReactToRobotShaken",
+    "ReactToRobotShakenSnowGlobe",
     "ReactToTouchPetting",
     "BasicVoiceCommands", // these are simple voice commands that we want to ignore obstacles
     "ReactToObstacle",
@@ -23,6 +23,7 @@
     "Volume",
     "ReactToSoundAwake",
     "ReactToUnclaimedIntent",
+    "HeldInPalmDispatcher",
     "WhileInAirDispatcher",
     "ReactToPutDown",
     "ReactToDarkness",

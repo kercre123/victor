@@ -40,7 +40,7 @@ namespace Vision {
   
 namespace NeuralNets {
   
-class NeuralNetModel;
+class INeuralNetModel;
  
 class INeuralNetMain
 {
@@ -59,6 +59,13 @@ public:
   Result Run();
   
   virtual ~INeuralNetMain();
+  
+  // Helpers for turning SalientPoints into Json and saving
+  static void ConvertSalientPointsToJson(const std::list<Vision::SalientPoint>& salientPoints,
+                                         const bool isVerbose, Json::Value& detectionResults);
+  
+  static bool WriteResults(const std::string& jsonFilename, const Json::Value& detectionResults);
+  
   
 protected:
   
@@ -91,12 +98,7 @@ private:
                        const std::string& timestampFilename,
                        Vision::ImageRGB&  img);
   
-  static void ConvertSalientPointsToJson(const std::list<Vision::SalientPoint>& salientPoints,
-                                         const bool isVerbose, Json::Value& detectionResults);
-  
-  static bool WriteResults(const std::string jsonFilename, const Json::Value& detectionResults);
-  
-  std::map<std::string, std::unique_ptr<NeuralNetModel>> _neuralNets;
+  std::map<std::string, std::unique_ptr<INeuralNetModel>> _neuralNets;
   
   std::string _cachePath;
   std::string _imageFilename;

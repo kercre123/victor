@@ -10,7 +10,6 @@
  **/
 #include "memoryMapData_Cliff.h"
 #include "clad/types/memoryMap.h"
-#include "coretech/common/engine/math/point_impl.h"
 
 namespace {
   const float kRotationTolerance = 1e-6f;

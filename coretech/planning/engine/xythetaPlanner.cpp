@@ -12,7 +12,6 @@
 
 #include "coretech/planning/engine/xythetaPlanner.h"
 #include "coretech/planning/engine/xythetaPlannerContext.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/boundedWhile.h"
 #include "util/helpers/templateHelpers.h"

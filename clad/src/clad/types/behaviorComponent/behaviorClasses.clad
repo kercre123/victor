@@ -72,6 +72,7 @@ enum uint_8 BehaviorClass {
   // coordinators
   CoordinateGlobalInterrupts,
   CoordinateInHabitat,
+  CoordinateWhileHeldInPalm,
   CoordinateWhileInAir,
   QuietModeCoordinator,
 
@@ -117,6 +118,21 @@ enum uint_8 BehaviorClass {
   PlaypenSoundCheck,
   PlaypenTest,
   PlaypenWaitToStart,
+
+  // devBehaviors/selfTest
+  SelfTest,
+  SelfTestButton,
+  SelfTestDockWithCharger,
+  SelfTestDriftCheck,
+  SelfTestDriveForwards,
+  SelfTestInitChecks,
+  SelfTestLookAtCharger,
+  SelfTestMotorCalibration,
+  SelfTestPickup,
+  SelfTestPutOnCharger,
+  SelfTestScreenAndBackpack,
+  SelfTestSoundCheck,
+  SelfTestTouch,
 
   // dispatch
   DispatcherPassThrough,

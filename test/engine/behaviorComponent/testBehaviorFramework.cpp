@@ -857,7 +857,7 @@ void TestBehaviorFramework::AddFakeFirstFace()
   if( _robot->GetStateHistory()->GetNumRawStates() == 0 ) {
     // faceworld needs an update to robot state before adding a face (this should only happen in unit tests)
     RobotState robotState = Robot::GetDefaultRobotState();
-    _robot->GetStateHistory()->AddRawOdomState(faceWorld->_lastObservedFaceTimeStamp, HistRobotState(_robot->GetPose(), robotState, {}, {}));
+    _robot->GetStateHistory()->AddRawOdomState(faceWorld->_lastObservedFaceTimeStamp, HistRobotState(_robot->GetPose(), robotState, {}));
     
     // a face only gets added if the robot isn't moving much. to check this, there must be some IMU values
     TimeStamp_t ts = (TimeStamp_t)faceWorld->_lastObservedFaceTimeStamp;

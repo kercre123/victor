@@ -15,7 +15,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/math/pose.h"
 
@@ -116,8 +115,8 @@ private:
   InstanceConfig   _iConfig;
   DynamicVariables _dVars;
   
-  void TransitionToHeadStraight();
   void TransitionToStartSearch();
+  void TransitionToLookInPlace();
   void TransitionToSearchTurn();
   void TransitionToRandomDrive();
   

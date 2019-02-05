@@ -1,7 +1,7 @@
 #include "clad/gateway/shared.clad"
 
 namespace Anki {
-namespace Victor {
+namespace Vector {
 namespace Gateway {
 
 message UiDeviceConnected {
@@ -108,24 +108,8 @@ message ObjectAccel
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-//////////////////////////////////  META  /////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-
-enum uint_8 MessageType {
-  AnimationAvailable
-}
-
-message EndOfMessage {
-  MessageType messageType
-}
-
-///////////////////////////////////////////////////////////////////////////////
 ///////////////////////////////  ANIMATIONS  //////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////
-
-message AnimationAvailable {
-  string animName
-}
 
 message RobotCompletedAction {
     uint_32 idTag,                                 // The identifier of the specific action that completed
@@ -337,12 +321,9 @@ union MessageRobotToExternal {
   UiDeviceConnected                 UiDeviceConnected                  = 0x00, // DO NOT CHANGE THIS VALUE
   RobotCompletedAction              RobotCompletedAction               = 0x01,
   Event                             Event                              = 0x02,
-  // empty slot, feel free to use
   EnrolledNamesResponse             EnrolledNamesResponse              = 0x05,
   RobotObservedFace                 RobotObservedFace                  = 0x06, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   RobotChangedObservedFaceID        RobotChangedObservedFaceID         = 0x07, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
-  AnimationAvailable                AnimationAvailable                 = 0x08,
-  EndOfMessage                      EndOfMessage                       = 0x09,
   ObjectConnectionState             ObjectConnectionState              = 0x0A, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   ObjectMoved                       ObjectMoved                        = 0x0B, // TODO: Add this to Events once webots dependancy on heirarchy is lifted
   ObjectStoppedMoving               ObjectStoppedMoving                = 0x0C, // TODO: Add this to Events once webots dependancy on heirarchy is lifted

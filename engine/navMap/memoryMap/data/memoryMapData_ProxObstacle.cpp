@@ -11,7 +11,6 @@
  
 #include "memoryMapData_ProxObstacle.h"
 #include "clad/types/memoryMap.h"
-#include "coretech/common/engine/math/point_impl.h"
 
 namespace Anki {
 namespace Vector {

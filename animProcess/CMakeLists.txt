@@ -7,10 +7,9 @@ include(aubio)
 include(flatbuffers)
 include(opencv)
 include(text2speech)
+include(pryon_lite)
 include(sensory)
-include(speexdsp)
 include(robot_core)
-include(pffft)
 
 anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
 anki_build_target_license(victor_anim "ANKI" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/gif-h/LICENSE" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/jo_gif/jo_gif.h" "CC0,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/minimp3/LICENSE" "FFTPACK5,${CMAKE_SOURCE_DIR}/licenses/pffft.license")
@@ -55,6 +54,7 @@ target_link_libraries(victor_anim
   ${FLATBUFFERS_LIBS}
   signal_essence
   ${TEXT2SPEECH_LIBS}
+  ${PRYON_LITE_LIBS}
   ${SENSORY_LIBS}
   ${SPEEXDSP_LIBS}
   # platform
@@ -66,6 +66,7 @@ target_link_libraries(victor_anim
   PUBLIC
   victor_web_library
   robot_interface  # Needs to be public for cozmoConfig.h
+  ${ASAN_LINKER_FLAGS}
 )
 
 anki_build_strip(TARGET victor_anim)
@@ -106,6 +107,7 @@ if (VICOS)
     jsoncpp
     ${ANKITRACE}
     ${PLATFORM_LIBS}
+    ${ASAN_EXE_LINKER_FLAGS}
   )
 
   anki_build_strip(TARGET vic-anim)
@@ -120,6 +122,7 @@ if (VICOS)
   target_link_libraries(vic-bootAnim
     PRIVATE
     robot_core
+    ${ASAN_EXE_LINKER_FLAGS}
   )
 
   anki_build_target_license(vic-bootAnim "ANKI")

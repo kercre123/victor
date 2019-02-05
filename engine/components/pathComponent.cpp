@@ -275,9 +275,9 @@ void PathComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depe
 
 Result PathComponent::Abort()
 {
-  LOG_INFO("PathComponent.Abort",
-           "Aborting from status '%s'",
-           ERobotDriveToPoseStatusToString(_driveToPoseStatus));
+  // LOG_INFO("PathComponent.Abort",
+  //          "Aborting from status '%s'",
+  //          ERobotDriveToPoseStatusToString(_driveToPoseStatus));
 
   if( _selectedPathPlanner ) {
     _selectedPathPlanner->StopPlanning();

@@ -101,7 +101,7 @@
   },
   {
     "feature": "HowOldAreYou",
-    "enabled": false
+    "enabled": true
   }
 ]
 

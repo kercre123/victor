@@ -20,7 +20,6 @@
 #include "coretech/common/engine/exceptions.h"
 
 #include "coretech/common/engine/math/linearAlgebra_impl.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/triangle_impl.h"
 #include "coretech/common/engine/utils/helpers/compareFcns.h"
 #include "coretech/common/shared/utilities_shared.h"
@@ -70,6 +69,24 @@ namespace Anki {
   : std::array<Point<N,T>,4>(quad)
   {
   
+  }
+
+  template<QuadDimType N, typename T>
+  Quadrilateral<N,T>::Quadrilateral(const Rectangle<T>& rect)
+  {
+    static_assert(N == 2, "can only create 2d Quad from Rectangle");
+
+    (*this)[Quad::TopLeft].x() = rect.GetX();
+    (*this)[Quad::TopLeft].y() = rect.GetY();
+    
+    (*this)[Quad::BottomLeft].x() = rect.GetX();
+    (*this)[Quad::BottomLeft].y() = rect.GetY() + rect.GetHeight();
+    
+    (*this)[Quad::TopRight].x() = rect.GetX() + rect.GetWidth();
+    (*this)[Quad::TopRight].y() = rect.GetY();
+    
+    (*this)[Quad::BottomRight].x() = rect.GetX() + rect.GetWidth();
+    (*this)[Quad::BottomRight].y() = rect.GetY() + rect.GetHeight();
   }
   
   template<QuadDimType N, typename T>

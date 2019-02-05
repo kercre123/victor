@@ -146,6 +146,10 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   _settingSetters[external_interface::RobotSetting::button_wakeword]
     = { false, &SettingsManager::ValidateSettingButtonWakeWord, &SettingsManager::ApplySettingButtonWakeWord };
 
+  for(auto& iter : _settingSetters) {
+    iter.second.callbackSignal.reset(new SettingsSignal());
+  }
+
   _jdocsManager->RegisterOverwriteNotificationCallback(external_interface::JdocType::ROBOT_SETTINGS, [this]() {
     _currentSettings = _jdocsManager->GetJdocBody(external_interface::JdocType::ROBOT_SETTINGS);
     ApplyAllCurrentSettings();
@@ -237,6 +241,19 @@ bool SettingsManager::SetRobotSetting(const external_interface::RobotSetting rob
   }
 
   return success;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Signal::SmartHandle SettingsManager::RegisterSettingsCallbackOnSet(const external_interface::RobotSetting key, const std::function<SettingsCallbackOnSetFunc>& cbFun)
+{
+  auto got = _settingSetters.find(key);
+  if(got != _settingSetters.end()) {
+    const auto& callbackSignal = got->second.callbackSignal;
+    return callbackSignal->ScopedSubscribe(cbFun);
+  }
+
+  return Signal::SmartHandle(nullptr);
 }
 
 
@@ -349,6 +366,10 @@ bool SettingsManager::ApplyRobotSetting(const external_interface::RobotSetting r
         LOG_DEBUG("SettingsManager.ApplyRobotSetting", "Applying Robot Setting '%s'",
                   RobotSetting_Name(robotSetting).c_str());
         success = (this->*(applicationFunc))();
+        if(success) {
+          const auto& callbackSignal = it->second.callbackSignal;
+          callbackSignal->emit();
+        }
       }
     }
     else

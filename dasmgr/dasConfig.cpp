@@ -13,7 +13,7 @@
 #include <fstream>
 
 namespace Anki {
-namespace Victor {
+namespace Vector {
 
 DASConfig::DASConfig(const std::string & url,
                      size_t file_threshold_size,
@@ -129,5 +129,5 @@ std::unique_ptr<DASConfig> DASConfig::GetDASConfig(const std::string & path)
   return GetDASConfig(json);
 }
 
-} // end namespace Victor
+} // end namespace Vector
 } // end namespace Anki

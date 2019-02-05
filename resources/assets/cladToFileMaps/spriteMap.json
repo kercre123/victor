@@ -780,6 +780,10 @@
     "SpriteName" : "face_holiday_lights_03"
   },
   {
+    "CladEvent" : "Face_Howold_Fastloop",
+    "SpriteName" : "face_howold_fastloop"
+  },
+  {
     "CladEvent" : "Face_Knowledgegraph_Answer",
     "SpriteName" : "face_knowledgegraph_answer"
   },
@@ -910,6 +914,26 @@
   {
     "CladEvent" : "Face_Snow_Mist",
     "SpriteName" : "face_snow_mist"
+  },
+  {
+    "CladEvent" : "Face_Snowglobe_Getin_01",
+    "SpriteName" : "face_snowglobe_getin_01"
+  },
+  {
+    "CladEvent" : "Face_Snowglobe_Loop_01",
+    "SpriteName" : "face_snowglobe_loop_01"
+  },
+  {
+    "CladEvent" : "Face_Snowglobe_Pregetout_01",
+    "SpriteName" : "face_snowglobe_pregetout_01"
+  },
+  {
+    "CladEvent" : "Face_Snowglobe_Rtonground_01",
+    "SpriteName" : "face_snowglobe_rtonground_01"
+  },
+  {
+    "CladEvent" : "Face_Snowglobe_Rtonhand_01",
+    "SpriteName" : "face_snowglobe_rtonhand_01"
   },
   {
     "CladEvent" : "Face_Stars",

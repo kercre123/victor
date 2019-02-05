@@ -20,6 +20,7 @@ namespace Vector {
 
   enum class EVisionUpdateFrequency
   {
+    SingleShot, // Run once and auto-disable the next time schedule is requested
     Low,
     Med,
     High,

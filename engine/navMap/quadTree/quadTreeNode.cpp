@@ -14,7 +14,6 @@
 #include "quadTreeNode.h"
 #include "engine/navMap/memoryMap/data/memoryMapData.h"
 
-#include "coretech/common/engine/math/point_impl.h"
 #include "util/math/math.h"
 
 namespace Anki {

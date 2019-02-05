@@ -25,7 +25,7 @@ void SpeechRecognizer::Stop()
   StopInternal();
 }
 
-void SpeechRecognizer::DoCallback(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info)
+void SpeechRecognizer::DoCallback(const SpeechRecognizerCallbackInfo& info) const
 {
   if (_speechCallback)
   {
@@ -33,7 +33,7 @@ void SpeechRecognizer::DoCallback(const AudioUtil::SpeechRecognizer::SpeechCallb
   }
 }
   
-const std::string SpeechRecognizer::SpeechCallbackInfo::Description() const
+const std::string SpeechRecognizerCallbackInfo::Description() const
 {
   const auto desc = std::string(result) + " StartTime_ms: " + std::to_string(startTime_ms) + " EndTime_ms: " +
                     std::to_string(endTime_ms) + " Score: " + std::to_string(score) +

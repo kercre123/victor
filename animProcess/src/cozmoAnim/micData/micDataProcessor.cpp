@@ -27,6 +27,7 @@
 #include "cozmoAnim/micData/micImmediateDirection.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
 #include "cozmoAnim/speechRecognizer/speechRecognizerSystem.h"
+#include "audioUtil/speechRecognizer.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleFunction.h"
 #include "util/cpuProfiler/cpuProfiler.h"
@@ -156,14 +157,14 @@ void MicDataProcessor::InitVAD()
   SVadInit(_sVadObject.get(), _sVadConfig.get());
 }
 
-void MicDataProcessor::VoiceTriggerWordDetection(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info)
+void MicDataProcessor::VoiceTriggerWordDetection(const AudioUtil::SpeechRecognizerCallbackInfo& info)
 {
   TriggerWordDetectCallback(TriggerWordDetectSource::Voice, info);
 }
   
 void MicDataProcessor::FakeTriggerWordDetection(bool fromMute)
 {
-  const AudioUtil::SpeechRecognizer::SpeechCallbackInfo info {
+  const AudioUtil::SpeechRecognizerCallbackInfo info {
     .result       = "",
     .startTime_ms = 0,
     .endTime_ms   = 0,
@@ -181,7 +182,7 @@ void MicDataProcessor::GetLatestMicDirectionData(MicDirectionData& out_lastSampl
 }
   
 void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
-                                                 const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info)
+                                                 const AudioUtil::SpeechRecognizerCallbackInfo& info)
 {
   ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
   // Ignore extra triggers during streaming

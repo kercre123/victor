@@ -1,13 +1,13 @@
-set(FLATBUFFERS_INCLUDE_PATH "${CORETECH_EXTERNAL_DIR}/flatbuffers/include")
+set(FLATBUFFERS_INCLUDE_PATH "${ANKI_EXTERNAL_DIR}/flatbuffers/include")
 
 set(FLATBUFFERS_LIBS
   flatbuffers
 )
 
 if (VICOS)
-  set(FLATBUFFERS_LIB_PATH "${CORETECH_EXTERNAL_DIR}/flatbuffers/vicos")
+  set(FLATBUFFERS_LIB_PATH "${ANKI_EXTERNAL_DIR}/flatbuffers/vicos")
 elseif (MACOSX)
-  set(FLATBUFFERS_LIB_PATH "${CORETECH_EXTERNAL_DIR}/flatbuffers/ios/Release")
+  set(FLATBUFFERS_LIB_PATH "${ANKI_EXTERNAL_DIR}/flatbuffers/mac/Release")
 endif()
 
 foreach(LIB ${FLATBUFFERS_LIBS})

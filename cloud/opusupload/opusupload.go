@@ -2,7 +2,6 @@ package main
 
 import (
 	"anki/config"
-	"anki/voice"
 	"context"
 	"flag"
 	"fmt"
@@ -20,7 +19,7 @@ func main() {
 
 	fmt.Println("Connecting")
 	ctx := context.Background()
-	conn, err := chipper.NewConn(ctx, config.DefaultURLs.Chipper, voice.ChipperSecret,
+	conn, err := chipper.NewConn(ctx, config.DefaultURLs.Chipper,
 		chipper.WithSessionID(uuid.New().String()[:16]))
 	if err != nil {
 		fmt.Println("Error starting chipper:", err)

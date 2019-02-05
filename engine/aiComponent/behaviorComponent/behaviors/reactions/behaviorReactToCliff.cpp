@@ -99,12 +99,6 @@ namespace {
   CONSOLE_VAR(bool, kEnableVisualCliffExtension, CONSOLE_GROUP, true);
 
   CONSOLE_VAR(float, kMinViewingDistanceToCliff_mm, CONSOLE_GROUP, 80.0f);
-
-  CONSOLE_VAR(float,  kProceduralReactionArcRadius_mm, CONSOLE_GROUP, 200);
-  CONSOLE_VAR(float,  kProceduralReactionArcAngle_rad, CONSOLE_GROUP, 0.40);
-  CONSOLE_VAR(float,  kProceduralReactionArcSpeed_mmps, CONSOLE_GROUP, -250);
-  CONSOLE_VAR(float,  kProceduralReactionArcAccel_mmps2, CONSOLE_GROUP, 500);
-  CONSOLE_VAR(float,  kProceduralReactionArcDecel_mmps2, CONSOLE_GROUP, 500);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -178,7 +172,7 @@ void BehaviorReactToCliff::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.stuckOnEdgeBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(StuckOnEdge));
-  _iConfig.askForHelpBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(AskForHelp));
+  _iConfig.askForHelpBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(ForceStuckOnEdge));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -277,7 +271,7 @@ void BehaviorReactToCliff::TransitionToStuckOnEdge()
     DelegateIfInControl(_iConfig.stuckOnEdgeBehavior.get());
   } else {
     PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToStuckOnEdge.DoesNotWantToBeActivated",
-                  "Behavior %s does not want to be activated, re-starting cliff reaction",
+                  "Behavior %s does not want to be activated!",
                   _iConfig.stuckOnEdgeBehavior->GetDebugLabel().c_str());
     // We should ALWAYS be able to delegate to the AskForHelp behavior,
     // i.e. no activation conditions should block this delegation
@@ -704,7 +698,6 @@ IActionRunner* BehaviorReactToCliff::GetCliffReactAction(uint8_t cliffDetectedFl
   // Possibly supplement with "dramatic" reaction which involves
   // turning towards the cliff and backing up in a scared/shocked fashion.
   AnimationTrigger anim;
-  char proceduralDriveDirection = '\0'; // if empty, then no procedural drive selected
   switch (cliffDetectedFlags) {
     case (FL | FR):
       // Hit cliff straight-on. Play stop reaction and move on
@@ -713,12 +706,10 @@ IActionRunner* BehaviorReactToCliff::GetCliffReactAction(uint8_t cliffDetectedFl
     case FL:
       // Play stop reaction animation and turn CCW a bit
       anim = AnimationTrigger::ReactToCliffFrontLeft;
-      proceduralDriveDirection = 'R';
       break;
     case FR:
       // Play stop reaction animation and turn CW a bit
       anim = AnimationTrigger::ReactToCliffFrontRight;
-      proceduralDriveDirection = 'L';
       break;
     case BL:
       // Drive forward and turn CCW to face the cliff
@@ -736,63 +727,8 @@ IActionRunner* BehaviorReactToCliff::GetCliffReactAction(uint8_t cliffDetectedFl
       // This is some scary configuration that we probably shouldn't move from.
       return nullptr;
   }
-
-  if(proceduralDriveDirection != '\0' ) {
-    // compound action is:
-    // in parallel:
-    //   + in serial:
-    //      + fixed delay for animation to sync up with procedural motion
-    //      + drive in an arc
-    //      + wait until animation finishes (if shorter duration)
-    //   + play appropriate face/lift/audio animation
-    CompoundActionParallel* compoundAction = new CompoundActionParallel();
-    std::weak_ptr<IActionRunner> animHandle = compoundAction->AddAction(new TriggerLiftSafeAnimationAction(anim));
-
-    // compute path based on the curvature desired
-    Planning::Path arcPath;
-    const Pose3d& robot = GetBEI().GetRobotInfo().GetPose();
-    f32 angle = robot.GetRotationAngle<'Z'>().ToFloat();
-    if(proceduralDriveDirection == 'L') {
-      arcPath.AppendArc(robot.GetTranslation().x() - kProceduralReactionArcRadius_mm * std::sin(angle), 
-                        robot.GetTranslation().y() + kProceduralReactionArcRadius_mm * std::cos(angle), 
-                        kProceduralReactionArcRadius_mm, 
-                        robot.GetRotationAngle<'Z'>().ToFloat() - M_PI_2, 
-                        -kProceduralReactionArcAngle_rad, 
-                        kProceduralReactionArcSpeed_mmps, kProceduralReactionArcAccel_mmps2, kProceduralReactionArcDecel_mmps2);
-    } else {
-      arcPath.AppendArc(robot.GetTranslation().x() + kProceduralReactionArcRadius_mm * std::sin(angle), 
-                        robot.GetTranslation().y() - kProceduralReactionArcRadius_mm * std::cos(angle), 
-                        kProceduralReactionArcRadius_mm, 
-                        robot.GetRotationAngle<'Z'>().ToFloat() + M_PI_2, 
-                        kProceduralReactionArcAngle_rad, 
-                        kProceduralReactionArcSpeed_mmps, kProceduralReactionArcAccel_mmps2, kProceduralReactionArcDecel_mmps2);
-    }
-
-    // drive action in parallel
-    CompoundActionSequential* driveAndWait = new CompoundActionSequential();
-    auto wait = new WaitAction(0.75f); // fixed delay that helps the animation + driving line up better
-    auto drive = new DrivePathAction(arcPath);
-    auto waitAnim = new WaitForLambdaAction([animHandle](Robot& robot)->bool{
-      if(!animHandle.expired()) {
-        auto animShared = animHandle.lock();
-        return animShared->GetState() != ActionResult::RUNNING;
-      }
-      return true;
-    },2.0f);
-    wait->SetTracksToLock((u8)AnimTrackFlag::BODY_TRACK);
-    drive->SetTracksToLock((u8)AnimTrackFlag::BODY_TRACK);
-    waitAnim->SetTracksToLock((u8)AnimTrackFlag::BODY_TRACK);
-    driveAndWait->AddAction(wait); // let the robot look left before moving
-    driveAndWait->AddAction(drive);
-    driveAndWait->AddAction(waitAnim);
-
-    compoundAction->AddAction(driveAndWait);
-
-    action = compoundAction;
-  } else {
-    action = new TriggerLiftSafeAnimationAction(anim);
-  }
-
+  
+  action = new TriggerLiftSafeAnimationAction(anim);
   return action;
 }
 
@@ -811,10 +747,47 @@ void BehaviorReactToCliff::TransitionToFaceAndBackAwayCliff()
   f32 angularDistanceToCliff = std::acos(cliffHeading.x());
   if( angularDistanceToCliff > M_PI_4_F ) {
     auto compoundAction = new CompoundActionSequential();
-    // Turn to face cliff
-    auto turnAction = new TurnTowardsPoseAction(cliffPose);
-    turnAction->SetMaxPanSpeed(DEG_TO_RAD(kBodyTurnSpeedForCliffSearch_degPerSec)); // no fast turning near cliffs
-    compoundAction->AddAction(turnAction);
+
+    // turn and animate simultaneously in order to face the cliff
+    Pose3d cliffPoseWrtRobot;
+    cliffPose.GetWithRespectTo(GetBEI().GetRobotInfo().GetPose(), cliffPoseWrtRobot);
+    float bodyTurnAngle = std::atan2(cliffPoseWrtRobot.GetTranslation().y(), cliffPoseWrtRobot.GetTranslation().x());
+    
+    // animation is chosen based on the degree and direction of turn
+    AnimationTrigger anim;
+    if(bodyTurnAngle < 0.f) {
+      if(std::abs(bodyTurnAngle) < (M_PI_F/3)) {
+        anim = AnimationTrigger::ReactToCliffTurnRight60;
+      } else if(std::abs(bodyTurnAngle) < (2*M_PI_F/3)) {
+        anim = AnimationTrigger::ReactToCliffTurnRight120;
+      } else {
+        anim = AnimationTrigger::ReactToCliffTurnRight180;
+      }
+    } else {
+      if(bodyTurnAngle < (M_PI_F/3)) {
+        anim = AnimationTrigger::ReactToCliffTurnLeft60;
+      } else if(bodyTurnAngle < (2*M_PI_F/3)) {
+        anim = AnimationTrigger::ReactToCliffTurnLeft120;
+      } else {
+        anim = AnimationTrigger::ReactToCliffTurnLeft180;
+      }
+    }
+
+    // combine a procedural turn with an animation
+    auto waitAction = new WaitAction(0.25f); // constant time-delay prior to turn: reads better for animation
+    auto turnAction = new TurnInPlaceAction(bodyTurnAngle, false);
+    auto animAction = new TriggerLiftSafeAnimationAction(anim);
+
+    auto waitTurn = new CompoundActionSequential();
+    waitTurn->AddAction(waitAction);
+    waitTurn->AddAction(turnAction);
+    
+    auto waitTurnAndAnimate = new CompoundActionParallel();
+    waitTurnAndAnimate->AddAction(waitTurn);
+    waitTurnAndAnimate->AddAction(animAction);
+    
+    compoundAction->AddAction(waitTurnAndAnimate);
+
     // Cliff reaction animation that causes the robot to backup about 8cm
     compoundAction->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToCliff));
     action = compoundAction;

@@ -13,7 +13,7 @@
 #ifndef __Vision_CompositeImageLayoutModifier_fwd_H__
 #define __Vision_CompositeImageLayoutModifier_fwd_H__
 
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/shared/math/point_fwd.h"
 #include "coretech/vision/shared/spriteSequence/spriteSequence.h"
 
 

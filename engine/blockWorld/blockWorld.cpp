@@ -16,10 +16,9 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
 #include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/shared/math/rect_impl.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/shared/utilities_shared.h"
 #include "engine/activeCube.h"
@@ -38,14 +37,11 @@
 #include "engine/cozmoContext.h"
 #include "engine/customObject.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/flatMat.h"
 #include "engine/humanHead.h"
 #include "engine/markerlessObject.h"
-#include "engine/mat.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
 #include "engine/objectPoseConfirmer.h"
-#include "engine/platform.h"
 #include "engine/potentialObjectsForLocalizingTo.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
@@ -63,42 +59,22 @@
 #include "util/math/math.h"
 #include "webServerProcess/src/webVizSender.h"
 
-// TODO: Expose these as parameters
-#define BLOCK_IDENTIFICATION_TIMEOUT_MS 500
-
-#define DEBUG_ROBOT_POSE_UPDATES 0
-#if DEBUG_ROBOT_POSE_UPDATES
-#  define PRINT_LOCALIZATION_INFO(...) PRINT_CH_INFO("BlockWorld", "Localization", __VA_ARGS__)
-#else
-#  define PRINT_LOCALIZATION_INFO(...)
-#endif
-
 // Giving this its own local define, in case we want to control it independently of DEV_CHEATS / SHIPPING, etc.
 #define ENABLE_DRAWING ANKI_DEV_CHEATS
-
 
 namespace Anki {
 namespace Vector {
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // CONSOLE VARS
 
-// Enable to draw (semi-experimental) bounding cuboids around stacks of 2 blocks
-CONSOLE_VAR(bool, kVisualizeStacks, "BlockWorld", false);
-
 // How long to wait until deleting non-cliff Markerless objects
 CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
-
-// How "recently" a cube can be seen for it not to get updated via UpdateStacks
-CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   BlockWorld::BlockWorld()
   : UnreliableComponent<BCComponentID>(this, BCComponentID::BlockWorld)
   , IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::BlockWorld)
-  , _didObjectsChange(false)
-  , _robotMsgTimeStampAtChange(0)
   , _trackPoseChanges(false)
   {
   } // BlockWorld() Constructor
@@ -109,80 +85,16 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     _robot = robot;
     DEV_ASSERT(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");
 
-
-    // TODO: Create each known block / matpiece from a configuration/definitions file
-
-    //////////////////////////////////////////////////////////////////////////
-    // 1x1 Cubes
-    //
-
-    //blockLibrary_.AddObject(new Block_Cube1x1(Block::FUEL_BLOCK_TYPE));
-
-    /*
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_ANGRYFACE));
-
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_BULLSEYE2));
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_BULLSEYE2_INVERTED));
-
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_SQTARGET));
-
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_FIRE));
-
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_ANKILOGO));
-
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_STAR5));
-    */
-
-    //_objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_DICE));
-
-    /*
-    _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER1));
-    _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER2));
-    _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER3));
-    _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER4));
-    _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER5));
-    _objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_NUMBER6));
-     */
-    //_objectLibrary[ObjectFamily::BLOCKS].AddObject(new Block_Cube1x1(ObjectType::Block_BANGBANGBANG));
-
-    /*
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_ARROW));
-
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_FLAG));
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_FLAG2));
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_FLAG_INVERTED));
-
-    // For CREEP Test
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_SPIDER));
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_KITTY));
-    _objectLibrary[ObjectFamily::Block].AddObject(new Block_Cube1x1(ObjectType::Block_BEE));
-    */
-
     //////////////////////////////////////////////////////////////////////////
     // 1x1 Light Cubes
     //
     DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE1));
+#ifdef SIMULATOR
+    // VIC-12886 These object types are only used in Webots tests (not in the real world), so only define them if this
+    // is sim. The physical robot can sometimes hallucinate these objects, which causes issues.
     DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE2));
     DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE3));
-
-    //////////////////////////////////////////////////////////////////////////
-    // 2x1 Blocks
-    //
-
-    //_objectLibrary[ObjectFamily::Block].AddObject(new Block_2x1(ObjectType::Block_BANGBANGBANG));
-
-
-    //////////////////////////////////////////////////////////////////////////
-    // Mat Pieces
-    //
-
-    // Flat mats:
-    //_objectLibrary[ObjectFamily::Mat].AddObject(new FlatMat(ObjectType::FlatMat_LETTERS_4x4));
-    //_objectLibrary[ObjectFamily::Mat].AddObject(new FlatMat(ObjectType::FlatMat_GEARS_4x4));
-
-    // Platform piece:
-    //_objectLibrary[ObjectFamily::Mat].AddObject(new Platform(Platform::Type::LARGE_PLATFORM));
-
+#endif
 
     //////////////////////////////////////////////////////////////////////////
     // Charger
@@ -220,7 +132,6 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
   {
     // Store due to std::move
     const ObjectType objType = object->GetType();
-    const ObjectFamily objFamily = object->GetFamily();
 
     // Find objects that already exist with this type
     BlockWorldFilter filter;
@@ -246,10 +157,6 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
         filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
         filter.AddAllowedType(objType);
         DeleteLocatedObjects(filter);
-      }
-      else
-      {
-        ++_definedObjectTypeCount[objFamily];
       }
     }
     else
@@ -315,14 +222,6 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
         ++numRemoved;
       }
     }
-
-    DEV_ASSERT(numRemoved <= _definedObjectTypeCount[ObjectFamily::CustomObject],
-      "BlockWorld.UndefineAllCustomObjects.RemovingTooManyObjectTypes");
-
-    _definedObjectTypeCount[ObjectFamily::CustomObject] -= numRemoved;
-
-    DEV_ASSERT(_definedObjectTypeCount[ObjectFamily::CustomObject] == 0,
-               "BlockWorld.UndefineAllCustomObjects.NonZeroObjectCount");
 
     PRINT_CH_INFO("BlockWorld", "BlockWorld.HandleMessage.UndefineAllCustomObjects",
                   "%d objects removed from library", numRemoved);
@@ -579,7 +478,12 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     BlockWorldFilter filter(filterIn);
     filter.AddFilterFcn([&pose, &closestDist](const ObservableObject* current)
                         {
-                          const float dist = ComputeDistanceBetween(pose, current->GetPose());
+                          float dist = 0.f;
+                          if (!ComputeDistanceBetween(pose, current->GetPose(), dist)) {
+                            LOG_ERROR("BlockWorld.FindLocatedObjectClosestToHelper.FilterFcn",
+                                      "Failed to compute distance between input pose and block pose");
+                            return false;
+                          }
                           if(dist < closestDist) {
                             closestDist = dist;
                             return true;
@@ -653,11 +557,6 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
   }
 
 
-
-
-
-
-
     void CheckForOverlapHelper(const ObservableObject* objectToMatch,
                                ObservableObject* objectToCheck,
                                std::vector<ObservableObject*>& overlappingObjects)
@@ -702,16 +601,6 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
                                             std::vector<ObservableObject*>& overlappingSeenObjects) const
     {
       for(const auto& objectToCheck : objectsSeen) {
-        CheckForOverlapHelper(objectExisting, objectToCheck, overlappingSeenObjects);
-      }
-    }
-
-    void BlockWorld::FindOverlappingObjects(const ObservableObject* objectExisting,
-                                            const std::multimap<f32, ObservableObject*>& objectsSeen,
-                                            std::vector<ObservableObject*>& overlappingSeenObjects) const
-    {
-      for(const auto& objectToCheckPair : objectsSeen) {
-        ObservableObject* objectToCheck = objectToCheckPair.second;
         CheckForOverlapHelper(objectExisting, objectToCheck, overlappingSeenObjects);
       }
     }
@@ -1130,17 +1019,17 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  Result BlockWorld::AddAndUpdateObjects(const std::multimap<f32, ObservableObject*>& objectsSeen,
+  Result BlockWorld::AddAndUpdateObjects(const std::vector<ObservableObject*>& objectsSeen,
                                          const RobotTimeStamp_t atTimestamp)
   {
     const Pose3d& currFrame = _robot->GetWorldOrigin();
     const PoseOriginID_t currFrameID = currFrame.GetID();
 
-    // Construct a helper data structure for determining which objets we might
+    // Construct a helper data structure for determining which objects we might
     // want to localize to
     PotentialObjectsForLocalizingTo potentialObjectsForLocalizingTo(*_robot);
 
-    for(const auto& objSeenPair : objectsSeen)
+    for(const auto& objSeenRawPtr : objectsSeen)
     {
       // Note that we wrap shared_ptr around the passed-in object, which was created
       // by the caller (via Cloning from the library of known objects). We will either
@@ -1149,12 +1038,17 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       // localization, both done by potentialObjectsForLocalizingTo. In that case,
       // once potentialObjectsForLocalizingTo is done with it, and we have exited
       // this for loop, its refcount will be zero and it'll get deleted for us.
-      std::shared_ptr<ObservableObject> objSeen(objSeenPair.second);
+      std::shared_ptr<ObservableObject> objSeen(objSeenRawPtr);
 
       // We use the distance to the observed object to decide (a) if the object is
       // close enough to do localization/identification and (b) to use only the
       // closest object in each coordinate frame for localization.
-      const f32 distToObjSeen = ComputeDistanceBetween(_robot->GetPose(), objSeen->GetPose());
+      f32 distToObjSeen = 0.f;
+      if (!ComputeDistanceBetween(_robot->GetPose(), objSeen->GetPose(), distToObjSeen)) {
+        LOG_ERROR("BlockWorld.AddAndUpdateObjects.ComputeDistanceFailure",
+                  "Failed to compute distance between robot and object seen");
+        return RESULT_FAIL;
+      }
 
       // First thing that we have to do is ask the PoseConfirmer whether this is a confirmed object,
       // or a visual observation of an object that we want to consider for the future (unconfirmed object).
@@ -1175,13 +1069,13 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
         Note: Andrew and Raul think that next iteration of PoseConfirmer vs PotentialObjectsToLocalizeTo should
               separate 'observations' from 'confirmations', where PoseConfirmer turns into ObservationFilter,
               and only reports accepted observations (aka confirmation) towards this method/PotentialOTLT. In
-              that scenario, observations that come here would either udpate the robot (localizing) or update
+              that scenario, observations that come here would either update the robot (localizing) or update
               the object in blockworld (not localizing), but there would be no need to feed back that observation
               back into the PoseConfirmer/ObservationFilter, which is a one-way filter.
 
               For now, to prevent adding an observation twice or not adding it at all, flag here whether the
               observation is used by the PoseConfirmer before letting it cascade down when it confirms an object (which
-              is a fix for a bug in which observations that confirm an object where not used for localization,
+              is a fix for a bug in which observations that confirm an object were not used for localization,
               which would delay rejiggering by one tick, while any other system already had access to the object from
               the BlockWorld.)
       */
@@ -1223,24 +1117,21 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       }
 
       // At this point the object is confirmed in the current origin, find matches and see if we want to localize to it
-      // Note that if it just became confirmed we still want to localize to it in case that in can rejigger
+      // Note that if it just became confirmed we still want to localize to it in case that it can rejigger
       // other origins
 
       // Keep a list of objects matching this objSeen, by coordinate frame
       std::map<PoseOriginID_t, ObservableObject*> matchingObjects;
 
-      // Match active objects by type and inactive objects by pose. Regardless,
+      // Match unique objects by type and nonunique objects by pose. Regardless,
       // only look at objects in the same family with the same type.
-      // Also override the default filter function to intentionally consider objects
-      // that are unknown here. Otherwise, we'd never be able to match new observations
-      // to existing objects whose pose has been set to unknown!
       BlockWorldFilter filter;
       filter.AddAllowedFamily(objSeen->GetFamily());
       filter.AddAllowedType(objSeen->GetType());
 
       if (objSeen->IsUnique())
       {
-        // Can consider matches for active objects in other coordinate frames,
+        // Can consider matches for unique objects in other coordinate frames
         filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
         filter.AddFilterFcn(&BlockWorldFilter::UniqueObjectsFilter);
 
@@ -1300,7 +1191,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       {
         // For non-unique objects, match based on pose (considering only objects in current frame)
         // Ignore objects we're carrying
-        const ObjectID& carryingObjectID = _robot->GetCarryingComponent().GetCarryingObject();
+        const ObjectID& carryingObjectID = _robot->GetCarryingComponent().GetCarryingObjectID();
         filter.AddFilterFcn([&carryingObjectID](const ObservableObject* candidate) {
           const bool isObjectBeingCarried = (candidate->GetID() == carryingObjectID);
           return !isObjectBeingCarried;
@@ -1322,7 +1213,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
                             "Must find match in current origin, since object is confirmed.");
         }
 
-      } // if/else object is active
+      }
 
       // We know the object was confirmed, so we must have found the instance in the current origin
       ObservableObject* observedObject = nullptr;
@@ -1395,22 +1286,18 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       //      // TODO: Eventually, we should be able to remove this check
       //      ActionableObject* actionObject = dynamic_cast<ActionableObject*>(observedObject);
       //      if(actionObject != nullptr) {
-      //        if(actionObject->IsBeingCarried() && _robot->GetCarryingObject() != obsID) {
+      //        if(actionObject->IsBeingCarried() && _robot->GetCarryingObjectID() != obsID) {
       //          PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObject.CarryStateMismatch",
       //                              "Object %d thinks it is being carried, but does not match "
       //                              "robot %d's carried object ID (%d). Setting as uncarried.",
       //                              obsID.GetValue(), _robot->GetID(),
-      //                              _robot->GetCarryingObject().GetValue());
+      //                              _robot->GetCarryingObjectID().GetValue());
       //          actionObject->SetBeingCarried(false);
       //        }
       //      }
 
       // Tell the world about the observed object. NOTE: it is guaranteed to be in the current frame.
       BroadcastObjectObservation(observedObject);
-
-      _didObjectsChange = true;
-      _robotMsgTimeStampAtChange = atTimestamp;
-
     } // for each object seen
 
     // NOTE: This will be a no-op if we no objects got inserted above as being potentially
@@ -1420,119 +1307,6 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     return localizeResult;
 
   } // AddAndUpdateObjects()
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::UpdatePoseOfStackedObjects()
-  {
-    DEV_ASSERT(_trackPoseChanges, "BlockWorld.UpdatePoseOfStackedObjects.CanRunOnlyWhileTrackingPoseChanges");
-
-    // iterate all changed objects updating any objects we think are on top of them
-    auto changedObjectIt = _objectPoseChangeList.begin();
-    while ( changedObjectIt != _objectPoseChangeList.end() )
-    {
-      // grab the object whose pose we changed (we can't trust caching pointers in case we rejigger)
-      ObservableObject* changedObjectPtr = GetLocatedObjectByID( changedObjectIt->_id );
-      if ( nullptr != changedObjectPtr )
-      {
-        // find the object that is currently on top of the old position
-
-        // TODO COZMO-5591
-        // change FindLocatedObjectOnTopOf to FindObjectsOnTopOf and return a vector. Potentially we could have more
-        // than object directly on top of us, or a moved object could have ended up on top of our old pose, which
-        // would then trump the object that used to be our old top. This could be solved by returning all
-        // current objects on top of our old pose, and then discarding those that have changed their poses, allowing
-        // us to fix both issues. For the moment, because we need to ship I am supporting only one (old code
-        // was supporting one anyway)
-        ObservableObject* myOldCopy = changedObjectPtr->CloneType();
-        myOldCopy->InitPose(changedObjectIt->_oldPose, changedObjectIt->_oldPoseState);
-
-        BlockWorldFilter filter;
-        // Ignore the object we are looking on top off so that we don't consider it as on top of itself
-        filter.AddIgnoreID(changedObjectPtr->GetID());
-
-        // some objects should not be updated! (specially those that are not managed through observations)
-        // TODO rsam/andrew: I don't like not having to specify true/false for families. Whether a new family
-        // gets included or ignored happens silently for filters if we don't static_assert requiring all
-        filter.AddIgnoreFamily(Anki::Vector::ObjectFamily::MarkerlessObject);
-        filter.AddIgnoreFamily(Anki::Vector::ObjectFamily::CustomObject);
-
-        // When Cozmo is looking at a stack/pyramid from a certain distance, the top cube can toggle rapidly between
-        // 'known' and 'dirty' pose state, causing the cube LEDs to flash on and off rapidly. This may cause users
-        // to think there is an issue with the cube. To avoid this, we do not allow updating a stack if we have seen
-        // the top cube "recently", because it's likely that we are simply not seeing all the cubes' markers in all the
-        // frames. See also notes in COZMO-10580.
-        const RobotTimeStamp_t lastProcImageTime_ms = _robot->GetLastImageTimeStamp();
-        BlockWorldFilter::FilterFcn notSeenRecently = [lastProcImageTime_ms](const ObservableObject* obj)
-        {
-          if(obj->GetLastObservedTime() + kRecentlySeenTimeForStackUpdate_ms < lastProcImageTime_ms) {
-            // Not seen recently, so DO allow this object through the filter for updating
-            return true;
-          }
-          // Seen recently, don't update this object
-          return false;
-        };
-
-        filter.AddFilterFcn(notSeenRecently);
-
-        // find object
-        ObservableObject* objectOnTopOfOldPose = FindLocatedObjectOnTopOf(*myOldCopy, STACKED_HEIGHT_TOL_MM, filter);
-        if ( nullptr != objectOnTopOfOldPose )
-        {
-          // we found an object currently on top of our old pose
-          const ObjectID& topID = objectOnTopOfOldPose->GetID();
-
-          // if this is not an object we are carrying
-          if ( !_robot->GetCarryingComponent().IsCarryingObject(topID) )
-          {
-            // check if it used to be there too or we have already moved it this udpate
-            auto matchIDlambda = [&topID](const PoseChange& a) { return a._id == topID; };
-            const bool alreadyChanged = std::find_if(_objectPoseChangeList.begin(), _objectPoseChangeList.end(), matchIDlambda) != _objectPoseChangeList.end();
-            if ( !alreadyChanged )
-            {
-              // we haven't changed it this frame, we want to modify it based on the change we made to the bottom one
-              Pose3d topPose = objectOnTopOfOldPose->GetPose();
-              if(topPose.GetWithRespectTo(myOldCopy->GetPose(), topPose))
-              {
-                // P_top_wrt_origin = P_newBtm_wrt_origin * P_top_wrt_oldBtm:
-                topPose.PreComposeWith(changedObjectPtr->GetPose());
-                topPose.SetParent(changedObjectPtr->GetPose().GetParent());
-
-                // update its pose based on the stack dependency. We expect this observation to add the entry for this
-                // object in objectPoseUpdates, and thus naturally iterating our way up stacks of more than 2 objects
-                Result result = _robot->GetObjectPoseConfirmer().AddObjectRelativeObservation(objectOnTopOfOldPose, topPose, changedObjectPtr);
-                if(RESULT_OK != result)
-                {
-                  PRINT_NAMED_WARNING("BlockWorld.UpdateRotationOfObjectsStackedOn.AddRelativeObservationFailed",
-                                      "Giving up on rest of stack");
-                }
-              }
-              else
-              {
-                PRINT_NAMED_WARNING("BlockWorld.UpdateStacks.OriginMismatch",
-                                    "Can't obtain topPose wrt old, but that's exactly how we found the object in topPose.");
-              }
-            } // else: object already moved
-          } // else: we are carrying the object on top
-        } // else: there are no objects on top
-
-        Util::SafeDelete(myOldCopy);
-      }
-      else
-      {
-        // if the object changed to Invalid (unobserved, unknown, ..), then we don't have to update objects
-        // that were on top of it here. The system that flagged as unobserved should have updated the top one
-        // two.
-        // TODO: Is that currently happening ^?
-        // TODO Test: see a stack, look to bottom only, move stack, see cube behind (will unobserve bottom of stack).
-        //            Does this flag the top as unknown too? Should it?
-        PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateStacks", "'%d' does not exist in current frame. Ignoring change.",
-          changedObjectIt->_id.GetValue() );
-      }
-
-      // continue to next object
-      ++changedObjectIt;
-    }
-  } // UpdatePoseOfStackedObjects()
 
   void BlockWorld::CheckForUnobservedObjects(RobotTimeStamp_t atTimestamp)
   {
@@ -1578,11 +1352,9 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
           // Look for "unobserved" objects not seen atTimestamp -- but skip objects:
           //    - that are currently being carried
           //    - that we are currently docking to
-          //    - whose pose origin does not match the robot's
-          //    - who are a charger (since those stay around)
           const RobotTimeStamp_t lastVisuallyMatchedTime = _robot->GetObjectPoseConfirmer().GetLastVisuallyMatchedTime(object->GetID());
           const bool isUnobserved = ( (lastVisuallyMatchedTime < atTimestamp) &&
-                                      (_robot->GetCarryingComponent().GetCarryingObject() != object->GetID()) &&
+                                      (_robot->GetCarryingComponent().GetCarryingObjectID() != object->GetID()) &&
                                       (_robot->GetDockingComponent().GetDockObject() != object->GetID()) );
           if ( isUnobserved )
           {
@@ -1744,9 +1516,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     markerlessObject->SetID();
 
     AddLocatedObject(markerlessObject);
-    _didObjectsChange = true;
-    _robotMsgTimeStampAtChange = lastTimestamp;
-
+    
     return RESULT_OK;
   }
 
@@ -1772,18 +1542,8 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     customObject->SetID();
 
     AddLocatedObject(customObject);
-    _didObjectsChange = true;
-    _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
 
     return customObject->GetID();
-  }
-
-  bool BlockWorld::DidObjectsChange() const {
-    return _didObjectsChange;
-  }
-  
-  const RobotTimeStamp_t& BlockWorld::GetTimeOfLastChange() const {
-    return _robotMsgTimeStampAtChange;
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1880,8 +1640,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
           }
 
           // COZMO-9663: Separate localizable property from poseState
-          const bool propagateStack = false;
-          _robot->GetObjectPoseConfirmer().MarkObjectDirty(sameTypeObject, propagateStack);
+          _robot->GetObjectPoseConfirmer().MarkObjectDirty(sameTypeObject);
 
           // check if the instance has activeID
           if (sameTypeObject->GetActiveID() == ObservableObject::InvalidActiveID)
@@ -2241,63 +2000,6 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     BroadcastLocatedObjectStates();
   }
 
-  Result BlockWorld::AddCollisionObstacle(const Pose3d& p)
-  {
-    const Result ret = AddMarkerlessObject(p, ObjectType::CollisionObstacle);
-    return ret;
-  }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::RemoveMarkersWithinMarkers(std::list<Vision::ObservedMarker>& currentObsMarkers)
-  {
-    for(auto markerIter1 = currentObsMarkers.begin(); markerIter1 != currentObsMarkers.end(); ++markerIter1)
-    {
-      const Vision::ObservedMarker& marker1 = *markerIter1;
-
-      for(auto markerIter2 = currentObsMarkers.begin(); markerIter2 != currentObsMarkers.end(); /* incrementing decided in loop */ )
-      {
-        const Vision::ObservedMarker& marker2 = *markerIter2;
-
-        if(marker1.GetTimeStamp() != marker2.GetTimeStamp())
-        {
-          PRINT_NAMED_WARNING("BlockWorld.RemoveMarkersWithinMarkers.MismatchedTimestamps",
-                              "Marker1 t=%u vs. Marker2 t=%u",
-                              marker1.GetTimeStamp(), marker2.GetTimeStamp());
-          ++markerIter2;
-          continue;
-        }
-
-        // These two markers must be different and observed at the same time
-        if(markerIter1 != markerIter2) {
-
-          // See if #2 is inside #1
-          bool marker2isInsideMarker1 = true;
-          for(auto & corner : marker2.GetImageCorners()) {
-            if(marker1.GetImageCorners().Contains(corner) == false) {
-              marker2isInsideMarker1 = false;
-              break;
-            }
-          }
-
-          if(marker2isInsideMarker1) {
-            PRINT_CH_INFO("BlockWorld", "BlockWorld.RemoveMarkersWithinMarkers",
-                          "Removing %s marker completely contained within %s marker.",
-                          marker2.GetCodeName(), marker1.GetCodeName());
-            // Note: erase does increment of iterator for us
-            markerIter2 = currentObsMarkers.erase(markerIter2);
-          } else {
-            // Need to iterate marker2
-            ++markerIter2;
-          } // if/else marker2isInsideMarker1
-        } else {
-          // Need to iterate marker2
-          ++markerIter2;
-        } // if/else marker1 != marker2 && time1 != time2
-      } // for markerIter2
-    } // for markerIter1
-
-  } // RemoveMarkersWithinMarkers()
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result BlockWorld::SanityCheckBookkeeping() const
   {
@@ -2384,10 +2086,11 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       _robot->GetVisionComponent().AddLiftOccluder(atTimestamp);
 
       // Optional: don't allow markers seen enclosed in other markers
+      // Note: If we still need this method at some future point, take a look at
+      // https://github.com/anki/victor/blob/dce0730b201f1cd8f1cacdf7c101152c545c08ad/engine/blockWorld/blockWorld.cpp#L2193
+      // or
+      // https://github.com/anki/cozmo-one/blob/18ae758c6fd0f4f7b47356410a5612c1d46526bd/engine/blockWorld/blockWorld.cpp#L2356
       //RemoveMarkersWithinMarkers(currentObsMarkers);
-
-      // Reset the flag telling us objects changed here, before we update any objects:
-      _didObjectsChange = false;
 
       // Add, update, and/or localize the robot to any objects indicated by the
       // observed markers
@@ -2398,13 +2101,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
         DEV_ASSERT(_robot->IsPoseInWorldOrigin(_robot->GetPose()),
                    "BlockWorld.Update.BadRobotOrigin");
 
-        // Keep the objects sorted by increasing distance from the robot.
-        // This will allow us to only use the closest object that can provide
-        // localization information (if any) to update the robot's pose.
-        // Note that we use a multimap to handle the corner case that there are two
-        // objects that have the exact same distance. (We don't want to only report
-        // seeing one of them and it doesn't matter which we use to localize.)
-        std::multimap<f32, ObservableObject*> objectsSeen;
+        std::vector<ObservableObject*> objectsSeen;
 
         Result lastResult = _objectLibrary.CreateObjectsFromMarkers(currentObsMarkers, objectsSeen);
         if(lastResult != RESULT_OK) {
@@ -2422,14 +2119,10 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       // Delete any objects that should have been observed but weren't,
       // visualize objects that were observed:
       CheckForUnobservedObjects(atTimestamp);
-
-      // update stacks
-      UpdatePoseOfStackedObjects();
     }
     else
     {
       _currentObservedMarkerTimestamp = 0;
-
 
       const RobotTimeStamp_t lastImgTimestamp = _robot->GetLastImageTimeStamp();
       if(lastImgTimestamp > 0) // Avoid warning on first Update()
@@ -2485,8 +2178,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
       {
         // Mark object and everything on top of it as "dirty". Next time we look
         // for it and don't see it, we will fully clear it and mark it as "unknown"
-        const bool propagateStack = true;
-        _robot->GetObjectPoseConfirmer().MarkObjectDirty(object, propagateStack);
+        _robot->GetObjectPoseConfirmer().MarkObjectDirty(object);
       };
 
       ModifyLocatedObjects(markAsDirty, unobservedCollidingObjectFilter);
@@ -2574,8 +2266,8 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     if(bboxIntersects)
     {
       PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForCollisionWithRobot.ObjectRobotIntersection",
-                    "Marking object %s %d as 'dirty', because it intersects robot %d's bounding quad.",
-                    EnumToString(object->GetType()), object->GetID().GetValue(), _robot->GetID());
+                    "Marking object %s %d as 'dirty', because it intersects robot's bounding quad.",
+                    EnumToString(object->GetType()), object->GetID().GetValue());
 
       return true;
     }
@@ -2655,24 +2347,20 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
     // If so, the robot needs to be marked as localized to nothing.
     if(_robot->GetLocalizedTo() == object->GetID()) {
       PRINT_CH_INFO("BlockWorld", "BlockWorld.ClearObjectHelper.LocalizeRobotToNothing",
-                    "Setting robot %d as localized to no object, because it "
+                    "Setting robot as localized to no object, because it "
                     "is currently localized to %s object with ID=%d, which is "
                     "about to be cleared.",
-                    _robot->GetID(), ObjectTypeToString(object->GetType()), object->GetID().GetValue());
+                    ObjectTypeToString(object->GetType()), object->GetID().GetValue());
       _robot->SetLocalizedTo(nullptr);
     }
 
-    // TODO: If this is a mat piece, check to see if there are any objects "on" it (COZMO-138)
-    // If so, clear them too or update their poses somehow? (Deleting seems easier)
-
     // Check to see if this object is the one the robot is carrying.
-    if(_robot->GetCarryingComponent().GetCarryingObject() == object->GetID()) {
+    if(_robot->GetCarryingComponent().GetCarryingObjectID() == object->GetID()) {
       PRINT_CH_INFO("BlockWorld", "BlockWorld.ClearObjectHelper.ClearingCarriedObject",
-                    "Clearing %s object %d which robot %d thinks it is carrying.",
+                    "Clearing %s object %d which robot thinks it is carrying.",
                     ObjectTypeToString(object->GetType()),
-                    object->GetID().GetValue(),
-                    _robot->GetID());
-      _robot->GetCarryingComponent().UnSetCarryingObjects();
+                    object->GetID().GetValue());
+      _robot->GetCarryingComponent().UnSetCarryingObject();
     }
 
     if(_selectedObjectID == object->GetID()) {
@@ -2682,142 +2370,6 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
                     object->GetID().GetValue());
       _selectedObjectID.UnSet();
     }
-
-    ObservableObject* objectOnTop = FindLocatedObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM);
-    if(objectOnTop != nullptr)
-    {
-      ClearLocatedObjectHelper(objectOnTop);
-    }
-
-    // TODO: evaluate if we want the concept of "previously known to be somewhere"
-    // _robot->GetObjectPoseConfirmer().MarkObjectUnknown(object);
-
-    // Flag that we removed an object
-    _didObjectsChange = true;
-    _robotMsgTimeStampAtChange = _robot->GetLastMsgTimestamp();
-  }
-
-  ObservableObject* BlockWorld::FindObjectOnTopOrUnderneathHelper(const ObservableObject& referenceObject,
-                                                                  f32 zTolerance,
-                                                                  const BlockWorldFilter& filterIn,
-                                                                  bool onTop) const
-  {
-    // Three checks:
-    // 1. objects are within same coordinate frame
-    // 2. centroid of candidate object projected onto "ground" (XY) plane must lie within
-    //    the check object's projected bounding box
-    // 3. (a) for "onTop": bottom of candidate object must be "near" top of reference object
-    //    (b) for "!onTop": top of canddiate object must be "near" bottom of reference object
-
-    const Pose3d refWrtOrigin = referenceObject.GetPose().GetWithRespectToRoot();
-    const Quad2f refProjectedQuad = referenceObject.GetBoundingQuadXY(refWrtOrigin);
-
-    // Find the point at the top middle of the object on bottom
-    // (or if !onTop, the bottom middle of the object on top)
-    const f32 zSize = referenceObject.GetDimInParentFrame<'Z'>(refWrtOrigin);
-    const f32 topOfObjectOnBottom = (refWrtOrigin.GetTranslation().z() +
-                                    (onTop ? 0.5f : -0.5f) * zSize);
-
-    BlockWorldFilter filter(filterIn);
-    filter.AddIgnoreID(referenceObject.GetID());
-    filter.AddFilterFcn(
-      [&topOfObjectOnBottom, &refWrtOrigin, &refProjectedQuad, &zTolerance, &onTop](const ObservableObject* candidateObject) -> bool
-      {
-        // This should never happen: objects in blockworld should always have parents (and not be origins themselves)
-        DEV_ASSERT(refWrtOrigin.HasParent(), "BlockWorld.FindLocatedObjectOnTopOfUnderneathHelper.NullParent");
-
-        Pose3d candidateWrtOrigin;
-        const bool inSameFrame = candidateObject->GetPose().GetWithRespectTo(refWrtOrigin.GetParent(), candidateWrtOrigin);
-        if(!inSameFrame)
-        {
-          return false;
-        }
-
-        //re-assign z coordinate for intersection check
-        const float candidateCurrentZ = candidateWrtOrigin.GetTranslation().z();
-        Vec3f candidateProjectedTranslation = {candidateWrtOrigin.GetTranslation().x(),
-                                                     candidateWrtOrigin.GetTranslation().y(),
-                                                     refWrtOrigin.GetTranslation().z()};
-        candidateWrtOrigin.SetTranslation(candidateProjectedTranslation);
-
-        // perform intersection check
-        const Quad2f candidateProjected = candidateObject->GetBoundingQuadXY(candidateWrtOrigin);
-        const bool projectedQuadsIntersect = refProjectedQuad.Intersects(candidateProjected);
-
-        // restore candidate z
-        candidateProjectedTranslation.z() = candidateCurrentZ;
-        candidateWrtOrigin.SetTranslation(candidateProjectedTranslation);
-
-        if(!projectedQuadsIntersect)
-        {
-          return false;
-        }
-
-        // Find the point at bottom middle of the object we're checking to be on top
-        // (or if !onTop, the top middle of object we're checking to be underneath)
-        const f32 zSize = candidateObject->GetDimInParentFrame<'Z'>(candidateWrtOrigin);
-        const f32 bottomOfCandidateObject = (candidateWrtOrigin.GetTranslation().z() +
-                                            (onTop ? -0.5f : 0.5f) * zSize);
-
-        // If the top of the bottom object and the bottom the candidate top object are
-        // close enough together, return this as the object on top
-        const f32 dist = std::abs(topOfObjectOnBottom - bottomOfCandidateObject);
-
-        if(Util::IsFltLE(dist, zTolerance))
-        {
-          return true;
-        }
-        else
-        {
-          return false;
-        }
-      });
-
-    ObservableObject* foundObject = FindLocatedObjectHelper(filter, nullptr, true);
-
-    if(kVisualizeStacks && _robot->GetContext()->GetVizManager() != nullptr)
-    {
-      // Cheap method to visualize stacks as a cuboid around both objects involved
-      const u32 stackID = referenceObject.GetID().GetValue() + (onTop ? 250 : 500);
-      if(nullptr != foundObject)
-      {
-        Quad2f foundQuad = foundObject->GetBoundingQuadXY(foundObject->GetPose().GetWithRespectToRoot());
-
-        // Get bounding box for the two object's projected bounding quads
-        std::vector<Point2f> corners;
-        corners.reserve(8);
-        std::copy(refProjectedQuad.begin(), refProjectedQuad.end(), std::back_inserter(corners));
-        std::copy(foundQuad.begin(), foundQuad.end(), std::back_inserter(corners));
-        Rectangle<f32> bbox(corners);
-
-        Pose3d vizPose(0, Z_AXIS_3D(), Point3f(bbox.GetXmid(), bbox.GetYmid(), topOfObjectOnBottom));
-
-        // compute maxRotatedAxis_zValue: the value of the axis that contributes the most in Z after the object
-        // has been rotated (like we do in the actual code, this is just render)
-        const Vec3f& foundObjSize = foundObject->GetSize();
-        const Vec3f zCoordRotation = foundObject->GetPose().GetWithRespectToRoot().GetRotation().GetRotationMatrix().GetRow(2);
-        const float rotatedXAxis_zValue = std::abs(zCoordRotation.x() * foundObjSize.x());
-        const float rotatedYAxis_zValue = std::abs(zCoordRotation.y() * foundObjSize.y());
-        const float rotatedZAxis_zValue = std::abs(zCoordRotation.z() * foundObjSize.z());
-
-        const float maxRotatedAxis_zValue = std::max( rotatedXAxis_zValue,
-                                                      std::max(rotatedYAxis_zValue, rotatedZAxis_zValue) );
-        const f32 height = topOfObjectOnBottom + maxRotatedAxis_zValue;
-
-        _robot->GetContext()->GetVizManager()->DrawCuboid(stackID,
-                                                          Point3f(bbox.GetHeight(),
-                                                                  bbox.GetWidth(),
-                                                                  height),
-                                                          vizPose,
-                                                          onTop ? ColorRGBA(0.5f,0.f,0.75f,0.6f) : ColorRGBA(0.75f,0.1f,0.5f,0.6f) );
-      }
-      else
-      {
-        _robot->GetContext()->GetVizManager()->EraseCuboid(stackID);
-      }
-    }
-
-    return foundObject;
   }
 
 
@@ -3010,7 +2562,9 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
   void BlockWorld::GetObstacles(std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes, const f32 padding) const
   {
     BlockWorldFilter filter;
-    filter.SetIgnoreIDs(std::set<ObjectID>(_robot->GetCarryingComponent().GetCarryingObjects()));
+    if (_robot->GetCarryingComponent().IsCarryingObject()) {
+      filter.SetIgnoreIDs({{_robot->GetCarryingComponent().GetCarryingObjectID()}});
+    }
 
     // Figure out height filters in world coordinates (because GetLocatedObjectBoundingBoxesXY()
     // uses heights of objects in world coordinates)
@@ -3379,7 +2933,7 @@ CONSOLE_VAR(u32, kRecentlySeenTimeForStackUpdate_ms, "BlockWorld", 100);
         } else {
           std::vector<std::pair<Quad2f,ObjectID> > obstacles;
           _robot->GetBlockWorld().GetObstacles(obstacles);
-          selectedObject->VisualizePreActionPoses(obstacles, &_robot->GetPose());
+          selectedObject->VisualizePreActionPoses(obstacles, _robot->GetPose());
         }
       }
       else if(object->GetID() == locObject) {

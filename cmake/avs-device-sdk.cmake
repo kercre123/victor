@@ -5,11 +5,11 @@ endif(AVS_INCLUDED)
 set(AVS_INCLUDED true)
 
 if (VICOS)
-  set(LIBAVS_INCLUDE_PATH "${CORETECH_EXTERNAL_DIR}/build/avs-device-sdk/vicos/include")
-  set(LIBAVS_LIB_PATH "${CORETECH_EXTERNAL_DIR}/build/avs-device-sdk/vicos/lib")
+  set(LIBAVS_INCLUDE_PATH "${ANKI_EXTERNAL_DIR}/avs-device-sdk/vicos/include")
+  set(LIBAVS_LIB_PATH "${ANKI_EXTERNAL_DIR}/avs-device-sdk/vicos/lib")
 elseif (MACOSX)
-  set(LIBAVS_INCLUDE_PATH "${CORETECH_EXTERNAL_DIR}/build/avs-device-sdk/mac/include")
-  set(LIBAVS_LIB_PATH "${CORETECH_EXTERNAL_DIR}/build/avs-device-sdk/mac/lib")
+  set(LIBAVS_INCLUDE_PATH "${ANKI_EXTERNAL_DIR}/avs-device-sdk/mac/include")
+  set(LIBAVS_LIB_PATH "${ANKI_EXTERNAL_DIR}/avs-device-sdk/mac/lib")
 endif()
 
 
@@ -33,6 +33,7 @@ set(AVS_LIBS
   PlaybackController
   PlaylistParser
   RegistrationManager
+  Settings
   SpeakerManager
   SpeechSynthesizer
   SQLiteStorage
@@ -51,7 +52,7 @@ foreach(LIB ${AVS_LIBS})
     "${LIBAVS_LIB_PATH}/lib${LIB}${AVS_LIB_EXT}"
     INTERFACE_INCLUDE_DIRECTORIES
     "${LIBAVS_INCLUDE_PATH}")
-  anki_build_target_license(${LIB} "Apache-2.0,${CMAKE_SOURCE_DIR}/licenses/avs-device-sdk.license" "curl,${CMAKE_SOURCE_DIR}/licenses/curl.license" "OpenSSL/SSLeay,${CMAKE_SOURCE_DIR}/licenses/openssl.license" "MIT,${CMAKE_SOURCE_DIR}/licenses/nghttp2.license")
+  anki_build_target_license(${LIB} "Apache-2.0,${CMAKE_SOURCE_DIR}/licenses/avs-device-sdk.license" "curl,${CMAKE_SOURCE_DIR}/licenses/curl.license" "OpenSSL-SSLeay,${CMAKE_SOURCE_DIR}/licenses/openssl.license" "MIT,${CMAKE_SOURCE_DIR}/licenses/nghttp2.license")
 endforeach()
 
 if (VICOS)

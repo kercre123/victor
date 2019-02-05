@@ -204,12 +204,11 @@ void ShowAudioStreamStateManager::SetAlexaUXResponses(const RobotInterface::SetA
     info.getInAnimTag = msg.getInAnimTags[i];
     info.getInAnimName = animNames[i];
 
-    // TODO (VIC-11517): downgrade. for now this is useful in webots
-    LOG_WARNING( "Alexa.SetAlexaUXResponses.response",
-                 "%d: %s (tag %d)",
-                 i,
-                 info.getInAnimName.c_str(),
-                 info.getInAnimTag);
+    PRINT_CH_INFO( "Alexa", "Alexa.SetAlexaUXResponses.response",
+                   "%d: %s (tag %d)",
+                   i,
+                   info.getInAnimName.c_str(),
+                   info.getInAnimTag);
 
     _alexaResponses.push_back( std::move(info) );
   }
@@ -280,15 +279,18 @@ bool ShowAudioStreamStateManager::StartAlexaResponse(AlexaUXState state, bool ig
     }
   }
   
-  Audio::CozmoAudioController* controller = _context->GetAudioController();
-  if( ANKI_VERIFY(nullptr != controller, "ShowAudioStreamStateManager.StartAlexaResponse.NullAudioController",
-                  "The CozmoAudioController is null so the audio event cannot be played" ) )
-  {
-    using namespace AudioEngine;
-    const auto audioEvent = response->audioEvent.audioEvent;
-    if ( audioEvent != AudioMetaData::GameEvent::GenericEvent::Invalid ) {
-      controller->PostAudioEvent( ToAudioEventId( audioEvent ),
-                                  ToAudioGameObject( response->audioEvent.gameObject ) );
+  // Only play earcons when not frozen on charger (alexa acoustic test mode)
+  if( !(_onCharger && _frozenOnCharger) ) {
+    Audio::CozmoAudioController* controller = _context->GetAudioController();
+    if( ANKI_VERIFY(nullptr != controller, "ShowAudioStreamStateManager.StartAlexaResponse.NullAudioController",
+                    "The CozmoAudioController is null so the audio event cannot be played" ) )
+    {
+      using namespace AudioEngine;
+      const auto audioEvent = response->audioEvent.audioEvent;
+      if ( audioEvent != AudioMetaData::GameEvent::GenericEvent::Invalid ) {
+        controller->PostAudioEvent( ToAudioEventId( audioEvent ),
+                                    ToAudioGameObject( response->audioEvent.gameObject ) );
+      }
     }
   }
   

@@ -176,7 +176,11 @@ message GatewayWrapper {
     GoToPoseResponse              go_to_pose_response                = 511;
     DockWithCubeRequest           dock_with_cube_request             = 512;
     DockWithCubeResponse          dock_with_cube_response            = 513;
-
+    DriveWheelsRequest            drive_wheels_request               = 514;
+    DriveWheelsResponse           drive_wheels_response              = 515;
+    ListAnimationsRequest         list_animations_request            = 516;
+    ListAnimationsResponse        list_animations_response           = 517;
+    
     // ------------ status history --------------------
     RobotHistoryRequest           robot_history_request              = 600;
     RobotHistoryResponse          robot_history_response             = 601;
@@ -197,8 +201,6 @@ message GatewayWrapper {
     BatteryStateResponse            battery_state_response           = 801;
     VersionStateRequest             version_state_request            = 802;
     VersionStateResponse            version_state_response           = 803;
-    NetworkStateRequest             network_state_request            = 804;
-    NetworkStateResponse            network_state_response           = 805;
 
     // ------------ text-to-speech pairs ------------
     SayTextRequest                say_text_request                   = 900;
@@ -222,6 +224,9 @@ message GatewayWrapper {
     EnableImageStreamingRequest   enable_image_streaming_request     = 1110;
     EnableImageStreamingResponse  enable_image_streaming_response    = 1111;
 
+    IsImageStreamingEnabledRequest  is_image_streaming_enabled_request  = 1112;
+    IsImageStreamingEnabledResponse is_image_streaming_enabled_response = 1113;
+
     // ------------ Message and response for cloud connectivity check ------------
     CheckCloudRequest             check_cloud_request                = 1200;
     CheckCloudResponse            check_cloud_response               = 1201;
@@ -234,6 +239,8 @@ message GatewayWrapper {
     // ------------ Feature flags ------------
     FeatureFlagRequest            feature_flag_request               = 1400;
     FeatureFlagResponse           feature_flag_response              = 1401;
+    FeatureFlagListRequest        feature_flag_list_request          = 1402;
+    FeatureFlagListResponse       feature_flag_list_response         = 1403;
 
     // ------------ App/engine connectivity ------------
     AppDisconnected               app_disconnected                   = 1500;

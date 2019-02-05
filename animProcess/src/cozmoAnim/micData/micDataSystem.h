@@ -33,6 +33,9 @@
 
 // Declarations
 namespace Anki {
+  namespace AudioUtil {
+    struct SpeechRecognizerCallbackInfo;
+  }
   namespace Vector {
     namespace CloudMic {
       class Message;
@@ -139,8 +142,10 @@ public:
   // sending any data to the cloud; this lasts for a set duration
   bool ShouldSimulateStreaming() const;
 
+
 private:
-  void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
+
+  const AnimContext* _context;
 
   bool IsButtonPressAlexa() const;
 
@@ -200,14 +205,15 @@ private:
 
   void SetWillStream(bool willStream) const;
 
+  void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
   void ClearCurrentStreamingJob();
   float GetIncomingMicDataPercentUsed();
   void SendUdpMessage(const CloudMic::Message& msg);
   
-  void SendRecognizerDasLog(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info,
-                            const char* stateStr) const;
+  void SendTriggerDetectionToWebViz(const AudioUtil::SpeechRecognizerCallbackInfo& info);
 
-  const AnimContext* _context;
+  void SendRecognizerDasLog(const AudioUtil::SpeechRecognizerCallbackInfo& info,
+                            const char* stateStr) const;
 };
 
 } // namespace MicData

@@ -239,15 +239,6 @@ namespace Anki {
         message.Set_VisionRunMode(m);
         SendMessage(message);
       }
-      
-      {
-        // Set planner to synchronous
-        ExternalInterface::PlannerRunMode mode;
-        mode.isSync = true;
-        ExternalInterface::MessageGameToEngine message;
-        message.Set_PlannerRunMode(mode);
-        SendMessage(message);
-      }
     }
 
     void CozmoSimTestController::DisableRandomPathSpeeds()

@@ -14,6 +14,7 @@
 #define __Anki_Cozmo_Engine_Vision_ImageSaver_H__
 
 #include "clad/types/imageTypes.h"
+#include "clad/types/visionModes.h"
 #include "coretech/vision/engine/imageCache.h"
 
 namespace Anki {
@@ -27,9 +28,18 @@ namespace Vision {
   
 namespace Vector {
 
+// Forward declaration
+struct VisionProcessingResult;
+
 struct ImageSaverParams
 {
   using Mode = ImageSendMode;
+  
+  enum class SaveConditionType : uint8_t {
+    ModeProcessed = 0,  // Save when mode was run, whether or not it found anything
+    OnDetection,        // Save when mode ran and detected something
+    NoDetection,        // Save when mode ran and detected nothing
+  };
   
   std::string            path;  // absolute path for output images (including thumbnails)
   std::string            basename; // leave empty to use frame number
@@ -41,6 +51,8 @@ struct ImageSaverParams
   bool                   removeDistortion  = false;
   uint8_t                medianFilterSize  = 0; // 0 to disable
   float                  sharpeningAmount  = 0.f; // 0 to disable
+  
+  std::map<VisionMode, SaveConditionType> saveConditions;
   
   ImageSaverParams() = default;
   
@@ -55,6 +67,8 @@ struct ImageSaverParams
                             uint8_t                medianFilterSize = 0,
                             float                  sharpeningAmount = 0.f);
   
+  
+  static bool SaveConditionTypeFromString(const std::string& str, SaveConditionType& saveCondType);
 };
   
 class ImageSaver
@@ -72,9 +86,14 @@ public:
   Result CacheUndistortionMaps(s32 nrows, s32 ncols);
   
   Result SetParams(const ImageSaverParams& params);
+  const ImageSaverParams& GetParams() const { return _params; }
   
   // Returns true if the current mode is set such that the saver wants to save an image (SingleShot* or Stream)
   bool WantsToSave() const;
+  
+  // Uses specified save conditions (if any) and the given processing result to determine
+  // whether to save. Will check whether detections within result match atTimestamp.
+  bool WantsToSave(const VisionProcessingResult& result, const TimeStamp_t atTimestamp) const;
   
   // Returns true if the current mode is SingleShotWithSensorData or Stream
   bool ShouldSaveSensorData() const;
@@ -86,6 +105,9 @@ public:
   
   // Save the specified size image from the cache and a corresponding thumbnail if requested.
   Result Save(Vision::ImageCache& imageCache, const s32 frameNumber);
+  
+  // Same as above, but uses specific image ("size" parameter will be ignored)
+  Result Save(const Vision::ImageRGB& img, const s32 frameNumber);
   
   // Return the extension for the given quality
   static const char* GetExtension(int8_t forQuality);

@@ -16,6 +16,7 @@
 
 #include "audioEngine/audioCallback.h"
 #include "audioEngine/audioTypeTranslator.h"
+#include "audioUtil/speechRecognizer.h"
 #include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
@@ -39,6 +40,8 @@
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 
+#include "webServerProcess/src/webService.h"
+
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 
 #include <iomanip>
@@ -51,21 +54,20 @@ namespace {
 # define CONSOLE_GROUP "MicData"
 
 #if ANKI_DEV_CHEATS
-  std::string _debugMicDataWriteLocation = "";
 
-  void ClearMicData(ConsoleFunctionContextRef context)
+CONSOLE_VAR_RANGED(u32, kMicData_ClipRecordTime_ms, CONSOLE_GROUP, 4000, 500, 15000);
+CONSOLE_VAR(bool, kSuppressTriggerResponse, "SpeechRecognizer", false);
+
+std::string _debugMicDataWriteLocation = "";
+void ClearMicData(ConsoleFunctionContextRef context)
+{
+  if (!_debugMicDataWriteLocation.empty())
   {
-    if (!_debugMicDataWriteLocation.empty())
-    {
-      Anki::Util::FileUtils::RemoveDirectory(_debugMicDataWriteLocation);
-    }
+    Anki::Util::FileUtils::RemoveDirectory(_debugMicDataWriteLocation);
   }
-  CONSOLE_FUNC(ClearMicData, "zHiddenForSafety");
-
-#endif
-
-#if ANKI_DEV_CHEATS
-  CONSOLE_VAR_RANGED(u32, kMicData_ClipRecordTime_ms, CONSOLE_GROUP, 4000, 500, 15000);
+}
+CONSOLE_FUNC(ClearMicData, "zHiddenForSafety");
+ 
 #endif // ANKI_DEV_CHEATS
 
 # undef CONSOLE_GROUP
@@ -96,12 +98,12 @@ static_assert(
 
 MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
                              const AnimContext* context)
-: _udpServer(new LocalUdpServer())
+: _context(context)
+, _udpServer(new LocalUdpServer())
 , _fftResultData(new FFTResultData())
 , _alexaState(AlexaSimpleState::Disabled)
 , _micMuted(false)
 , _abortAlexaScreenDueToHeyVector(false)
-, _context(context)
 {
   const std::string& dataWriteLocation = dataPlatform->pathToResource(Util::Data::Scope::Cache, "micdata");
   const std::string& triggerDataDir = dataPlatform->pathToResource(Util::Data::Scope::Resources, "assets");
@@ -120,7 +122,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
   }
 
   const RobotID_t robotID = OSState::getInstance()->GetRobotID();
-  const std::string sockName = std::string{Victor::MIC_SERVER_BASE_PATH} + (robotID == 0 ? "" : std::to_string(robotID));
+  const std::string sockName = std::string{MIC_SERVER_BASE_PATH} + (robotID == 0 ? "" : std::to_string(robotID));
   _udpServer->SetBindClients(false);
   const bool udpSuccess = _udpServer->StartListening(sockName);
   ANKI_VERIFY(udpSuccess,
@@ -132,7 +134,15 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
 void MicDataSystem::Init(const RobotDataLoader& dataLoader)
 {
   // SpeechRecognizerSystem
-  SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
+  SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info) {
+    
+ #if ANKI_DEV_CHEATS
+    SendTriggerDetectionToWebViz(info);
+    if (kSuppressTriggerResponse) {
+      return;
+    }
+#endif
+    
     if( _alexaState == AlexaSimpleState::Active ) {
       // Don't run "hey vector" when alexa is in the middle of an interaction, or if the mic is muted
       return;
@@ -360,7 +370,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
 
         // Send the results back to engine
         ReportCloudConnectivity msgToEngine;
-        msgToEngine.code            = static_cast<Anki::Vector::ConnectionCode>(msg.Get_connectionResult().code);
+        msgToEngine.code            = static_cast<ConnectionCode>(msg.Get_connectionResult().code);
         msgToEngine.numPackets      = msg.Get_connectionResult().numPackets;
         msgToEngine.expectedPackets = msg.Get_connectionResult().expectedPackets;
         RobotInterface::SendAnimToEngine(msgToEngine);
@@ -748,10 +758,17 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
   const bool enabled = (_alexaState != AlexaSimpleState::Disabled);
   
   if ((oldState == AlexaSimpleState::Disabled) && enabled) {
-    RobotDataLoader *dataLoader = _context->GetDataLoader();
-    const auto callback = [this] (const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info) {
-      LOG_INFO("MicDataSystem.SetAlexaState.TriggerWordDetectCallback",
-               "info - %s", info.Description().c_str());
+    const auto callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info)
+    {
+      LOG_INFO("MicDataSystem.SetAlexaState.TriggerWordDetectCallback", "info - %s", info.Description().c_str());
+      
+#if ANKI_DEV_CHEATS
+      SendTriggerDetectionToWebViz(info);
+      if (kSuppressTriggerResponse) {
+        return;
+      }
+#endif
+      
       if( HasStreamingJob() ) {
         // don't run alexa wakeword if there's a "hey vector" streaming job or if the mic is muted
         return;
@@ -763,8 +780,7 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
       }
       SendRecognizerDasLog( info, EnumToString(_alexaState) );
     };
-    _speechRecognizerSystem->InitAlexa(*dataLoader, _locale, callback);
-
+    _speechRecognizerSystem->ActivateAlexa(_locale, callback);
   }
   else if((oldState != AlexaSimpleState::Disabled) && !enabled) {
     // Disable "Alexa" wake word in SpeechRecognizerSystem
@@ -896,8 +912,26 @@ void MicDataSystem::RequestConnectionStatus()
     SendUdpMessage( CloudMic::Message::CreateconnectionCheck({}) );
   }
 }
+  
+void MicDataSystem::SendTriggerDetectionToWebViz(const AudioUtil::SpeechRecognizerCallbackInfo& info)
+{
+  if ( _context != nullptr ) {
+    auto* webService = _context->GetWebService();
+    const std::string kModuleName = "speechrecognizersys";
+    if( webService != nullptr && webService->IsWebVizClientSubscribed( kModuleName ) ) {
+      Json::Value data;
+      data["result"] = info.result;
+      data["startTime_ms"] = info.startTime_ms;
+      data["endTime_ms"] = info.endTime_ms;
+      data["startSampleIndex"] = info.startSampleIndex;
+      data["endSampleIndex"] = info.endSampleIndex;
+      data["score"] = info.score;
+      webService->SendToWebViz( kModuleName, data );
+    }
+  }
+}
 
-void MicDataSystem::SendRecognizerDasLog(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info,
+void MicDataSystem::SendRecognizerDasLog(const AudioUtil::SpeechRecognizerCallbackInfo& info,
                                          const char* stateStr) const
 {
   MicData::MicDirectionData directionData;
@@ -910,9 +944,9 @@ void MicDataSystem::SendRecognizerDasLog(const AudioUtil::SpeechRecognizer::Spee
   DASMSG_SET( i1, dominantDirection, "Dominant Direction Index [0, 11], 12 is Unknown Direction" );
   DASMSG_SET( i2, directionData.selectedDirection, "Selected Direction Index [0, 11], 12 is Unknown Direction" );
   DASMSG_SET( i3, static_cast<int>(directionData.latestPowerValue),
-             "Latest power value, calculate dB by log(val) * 10" );
+              "Latest power value, calculate dB by log(val) * 10" );
   DASMSG_SET( i4, static_cast<int>(directionData.latestNoiseFloor),
-             "Latest floor noise value, calculate dB by log(val) * 10" );
+              "Latest floor noise value, calculate dB by log(val) * 10" );
   DASMSG_SEND();
 }
 

@@ -64,6 +64,11 @@ namespace alexaClientSDK {
 
 
 namespace Anki {
+  
+namespace Util {
+  class Locale;
+}
+  
 namespace Vector {
 
 class AlexaAudioInput;
@@ -93,6 +98,8 @@ public:
   
   void Update();
   
+  void SetLocale( const Util::Locale& locale );
+  
   void Logout();
   
   bool IsAlertActive() const { return _alertActive; }
@@ -101,6 +108,9 @@ public:
   
   // Adds samples to the mic stream buffer. Should be ok to call on another thread
   void AddMicrophoneSamples( const AudioUtil::AudioSample* const samples, size_t nSamples );
+  
+  // Get the number of samples already added to microphone stream buffer
+  uint64_t GetMicrophoneTotalNumSamples() const;
   
   void NotifyOfTapToTalk();
   

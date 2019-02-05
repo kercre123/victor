@@ -11,7 +11,6 @@
  */
 
 #include "simulator/game/cozmoSimTestController.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "engine/actions/basicActions.h"
 #include "engine/robot.h"
 
@@ -102,7 +101,7 @@ namespace Anki {
             m.idTag = 1;
             m.numRetries = 3;
             // Pickup object 0
-            m.action.Set_pickupObject(ExternalInterface::PickupObject(0, mp, 0, false, true, true));
+            m.action.Set_pickupObject(ExternalInterface::PickupObject(0, mp, 0, false, true));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -130,7 +129,7 @@ namespace Anki {
             m.idTag = 2;
             m.numRetries = 3;
             // Pickup object 0
-            m.action.Set_pickupObject(ExternalInterface::PickupObject(0, mp, 0, false, true, true));
+            m.action.Set_pickupObject(ExternalInterface::PickupObject(0, mp, 0, false, true));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -156,7 +155,7 @@ namespace Anki {
             m.idTag = 3;
             m.numRetries = 3;
             // Pickup object 0
-            m.action.Set_pickupObject(ExternalInterface::PickupObject(0, mp, 0, false, true, true));
+            m.action.Set_pickupObject(ExternalInterface::PickupObject(0, mp, 0, false, true));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -183,7 +182,7 @@ namespace Anki {
             m.idTag = 4;
             m.numRetries = 3;
             // Pickup object 0
-            m.action.Set_pickupObject(ExternalInterface::PickupObject(0, mp, 0, false, true, true));
+            m.action.Set_pickupObject(ExternalInterface::PickupObject(0, mp, 0, false, true));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);
@@ -210,7 +209,7 @@ namespace Anki {
             m.idTag = 5;
             m.numRetries = 3;
             // Pickup object 0
-            m.action.Set_pickupObject(ExternalInterface::PickupObject(0, mp, 0, false, true, true));
+            m.action.Set_pickupObject(ExternalInterface::PickupObject(0, mp, 0, false, true));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);

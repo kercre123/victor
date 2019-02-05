@@ -18,15 +18,6 @@ except ImportError:
              ))
 
 try:
-    import anki_vector
-except ImportError:
-    sys.exit("\n\nThis script requires you to install the anki_vector sdk'.\n"
-             "To do so, please run '{pip_install}' from the tools/sdk/vector-python-sdk-private/sdk directory\n"
-             "Then try again".format(
-                 pip_install="pip3 install -e .",
-             ))
-
-try:
     # Non-critical import to add color output
     from termcolor import colored
 except ImportError:
@@ -35,20 +26,8 @@ except ImportError:
 
 try:
     from google.protobuf.json_format import MessageToJson, Parse
-    import anki_vector.messaging.protocol as p
 except ImportError:
-    base_dir = Path(os.path.dirname(os.path.realpath(__file__))) / ".." / ".."
-    base_dir = base_dir.resolve()
-    sys.exit("\n\nThis script requires you to install the Vector SDK.\n"
-                "To do so, please navigate to '{tools_path}' and run '{make}'\n"
-                "Next navigate to '{sdk_path}', run '{pip_install}', and run '{configure}'\n"
-                "Then try again".format(
-                    tools_path=str(base_dir / "scripts"),
-                    make="./update_proto.sh",
-                    sdk_path=str(base_dir / "vector-python-sdk-private" / "sdk"),
-                    pip_install="pip install -e .",
-                    configure="python3 configure.py",
-                ))
+    sys.exit("Error: This script requires you to run setup.sh")
 
 class Connection:
     def __init__(self, serial):
@@ -100,15 +79,18 @@ class Connection:
         data = MessageToJson(message, including_default_value_fields=True, preserving_proto_field_name=True)
         return self.send_raw(url_suffix, data, response_type, stream, callback)
 
+def is_local():
+    return os.environ.get('ANKI_ROBOT_SERIAL', '') == "Local"
+
+def live_robot_only(fn):
+    return pytest.mark.skipif(is_local(), reason="vic-cloud is not available on webots")(fn)
+
 @pytest.fixture(scope="module")
 def vector_connection():
     serial = os.environ.get('ANKI_ROBOT_SERIAL', None)
     if serial is None:
         sys.exit("Please set 'ANKI_ROBOT_SERIAL' environment variable with 'export ANKI_ROBOT_SERIAL=<your robot's serial number>'. To run with webots set your serial number to 'Local'")
     return Connection(serial)
-
-def image_data_from_file(image_path):
-    return anki_vector.screen.convert_image_to_screen_data(Image.open(image_path))
 
 def data_from_file(name):
     with open(name, 'rb') as f:

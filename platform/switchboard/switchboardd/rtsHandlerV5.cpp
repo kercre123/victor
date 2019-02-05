@@ -208,6 +208,11 @@ void RtsHandlerV5::SaveSessionKeys() {
   // Only save on fully authed connection
   // this should be when cloud has been authed
   SaveKeys();
+
+  // Tell engine
+  if(_engineClient != nullptr) {
+    _engineClient->HandleHasBleKeysRequest();
+  }
 }
 
 //

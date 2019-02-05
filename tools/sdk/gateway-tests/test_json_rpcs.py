@@ -9,25 +9,18 @@ import sys
 import pytest
 
 try:
-    import anki_vector.messaging.protocol as p
+    import protocol as p
     from google.protobuf.json_format import Parse
 except ImportError:
-    sys.exit("Error: This script requires you to install the Vector SDK")
+    sys.exit("Error: This script requires you to run setup.sh")
 
-from util import vector_connection, image_data_from_file
+from util import live_robot_only, vector_connection
 
 def test_protocol_version(vector_connection):
     vector_connection.send("v1/protocol_version", p.ProtocolVersionRequest(), p.ProtocolVersionResponse())
 
 def test_list_animations(vector_connection):
     vector_connection.send("v1/list_animations", p.ListAnimationsRequest(), p.ListAnimationsResponse())
-
-@pytest.mark.parametrize("data", [
-    pytest.param(image_data_from_file(os.path.join('assets', 'cozmo_image.jpg')), id='cozmo_image.jpg')
-])
-def test_display_face_image_rgb(vector_connection, data):
-    message = p.DisplayFaceImageRGBRequest(face_data=data, duration_ms=1000, interrupt_running=True)
-    vector_connection.send("v1/display_face_image_rgb", message, p.DisplayFaceImageRGBResponse())
 
 @pytest.mark.parametrize("data", [
     '{"intent":"intent_meet_victor","param":"Bobert"}'
@@ -78,6 +71,9 @@ def test_enable_mirror_mode(vector_connection):
     vector_connection.send("v1/enable_mirror_mode", p.EnableMirrorModeRequest(enable=True), p.EnableMirrorModeResponse())
     vector_connection.send("v1/enable_mirror_mode", p.EnableMirrorModeRequest(enable=False), p.EnableMirrorModeResponse())
 
+# This can only run locally because webots will always have image streaming turned on (meaning the second rpc call will not succeed).
+# Note: if there was a change made to have a webots world run without the keyboard controller enabled then this test could be re-enabled for local testing.
+@live_robot_only
 def test_enable_image_streaming(vector_connection):
     vector_connection.send("v1/enable_image_streaming", p.EnableImageStreamingRequest(enable=True), p.EnableImageStreamingResponse())
     vector_connection.send("v1/enable_image_streaming", p.EnableImageStreamingRequest(enable=False), p.EnableImageStreamingResponse())
@@ -202,6 +198,7 @@ def test_update_account_settings(vector_connection, data):
 def test_update_user_entitlements(vector_connection, data):
     vector_connection.send_raw("v1/update_user_entitlements", data, p.UpdateUserEntitlementsResponse())
 
+@live_robot_only
 def test_user_authentication(vector_connection):
     vector_connection.send("v1/user_authentication", p.UserAuthenticationRequest(), p.UserAuthenticationResponse())
 
@@ -210,12 +207,6 @@ def test_battery_state(vector_connection):
 
 def test_version_state(vector_connection):
     vector_connection.send("v1/version_state", p.VersionStateRequest(), p.VersionStateResponse())
-
-def test_network_state(vector_connection):
-    vector_connection.send("v1/network_state", p.NetworkStateRequest(), p.NetworkStateResponse())
-
-def test_say_text(vector_connection):
-    vector_connection.send("v1/say_text", p.SayTextRequest(), p.SayTextResponse())
 
 def test_connect_cube(vector_connection):
     vector_connection.send("v1/connect_cube", p.ConnectCubeRequest(), p.ConnectCubeResponse())
@@ -244,6 +235,7 @@ def test_check_update_status(vector_connection):
 def test_update_and_restart(vector_connection):
     vector_connection.send("v1/update_and_restart", p.UpdateAndRestartRequest(), p.UpdateAndRestartResponse())
 
+@live_robot_only
 def test_upload_debug_logs(vector_connection):
     def callback(response, response_type):
         print("Default response: {}".format(response.content))
@@ -255,6 +247,7 @@ def test_upload_debug_logs(vector_connection):
         print("Converted Protobuf: {}".format(response_type))
     vector_connection.send("v1/upload_debug_logs", p.UploadDebugLogsRequest(), p.UploadDebugLogsResponse(), callback=callback)
 
+@live_robot_only
 def test_check_cloud_connection(vector_connection):
     vector_connection.send("v1/check_cloud_connection", p.CheckCloudRequest(), p.CheckCloudResponse())
 
@@ -271,6 +264,21 @@ def test_feature_flag(vector_connection, data, result):
         assert data["valid_feature"] == result
         assert data["feature_enabled"] == 0
     vector_connection.send_raw("v1/feature_flag", data, p.FeatureFlagResponse(), callback=callback)
+
+@pytest.mark.parametrize("data,result", [
+    ('{"request_list":[]}', 1),  # result is whether the result list is non-empty
+    ('{"request_list":["TestFeature"]}', 0),
+    ('{"request_list":["NotAFeature"]}', 0)
+])
+def test_feature_flag_list(vector_connection, data, result):
+    length = 0
+    def callback(response, response_type):
+        print("Default response: {}".format(response.content))
+        data = json.loads(response.content)
+        assert "list" in data
+        
+        assert ((len(data["list"]) > 0) == result)
+    vector_connection.send_raw("v1/feature_flag_list", data, p.FeatureFlagListResponse(), callback=callback)
 
 def test_alexa_auth_state(vector_connection):
     def callback(response, response_type):

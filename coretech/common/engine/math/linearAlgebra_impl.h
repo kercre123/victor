@@ -20,9 +20,7 @@
 #define ANKI_COMMON_BASESTATION_MATH_LINEAR_ALGEBRA_IMPL_H
 
 #include "coretech/common/engine/math/linearAlgebra.h"
-
-#include "coretech/common/engine/math/point_impl.h"
-#include "coretech/common/engine/math/matrix_impl.h"
+#include "coretech/common/shared/math/matrix_impl.h"
 
 namespace Anki {
   

@@ -11,11 +11,21 @@
 #include "quadTreeTypes.h"
 
 #include "coretech/common/engine/exceptions.h"
-#include "coretech/common/engine/math/point_impl.h"
 
 namespace Anki {
 namespace Vector {
 namespace QuadTreeTypes {
+
+static_assert(Vec2Quadrant( Vec2f( 1.f,  1.f) ) == EQuadrant::PlusXPlusY,   "Incorrect Quadrant 1");
+static_assert(Vec2Quadrant( Vec2f( 1.f, -1.f) ) == EQuadrant::PlusXMinusY,  "Incorrect Quadrant 2");
+static_assert(Vec2Quadrant( Vec2f(-1.f,  1.f) ) == EQuadrant::MinusXPlusY,  "Incorrect Quadrant 3");
+static_assert(Vec2Quadrant( Vec2f(-1.f, -1.f) ) == EQuadrant::MinusXMinusY, "Incorrect Quadrant 4");
+
+static_assert(Vec2Quadrant( Vec2f( 1.f,  0.f) ) == EQuadrant::PlusXPlusY,   "Incorrect +x 0y Axis quadrant");
+static_assert(Vec2Quadrant( Vec2f(-1.f,  0.f) ) == EQuadrant::MinusXMinusY, "Incorrect -x 0y Axis quadrant");
+static_assert(Vec2Quadrant( Vec2f( 0.f,  1.f) ) == EQuadrant::MinusXPlusY,  "Incorrect 0x +y Axis quadrant");
+static_assert(Vec2Quadrant( Vec2f( 0.f, -1.f) ) == EQuadrant::PlusXMinusY,  "Incorrect 0x -y Axis quadrant");
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Vec2f Quadrant2Vec(EQuadrant dir) 
@@ -26,21 +36,6 @@ Vec2f Quadrant2Vec(EQuadrant dir)
     case EQuadrant::MinusXPlusY:  { return {-1, 1}; };
     case EQuadrant::MinusXMinusY: { return {-1,-1}; };
     default:                      { return {0, 0}; };
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-QuadTreeTypes::EQuadrant Vec2Quadrant(const Vec2f& dir) 
-{
-  // NOTE: check sign bit explicitly here to discriminate the difference between -0.f and 0.f.
-  //       This preserves the property that checking a vector reflected through the origin
-  //       results in a quadrant reflected through the origin (this property is not true for
-  //       vertical and horizontal lines when using float comparison operations, since 
-  //       -0.f == 0.f by definition)  
-  if ( signbit( dir.x() ) ) {
-    return signbit( dir.y() ) ? EQuadrant::MinusXMinusY : EQuadrant::MinusXPlusY;
-  } else {
-    return signbit( dir.y() ) ? EQuadrant::PlusXMinusY : EQuadrant::PlusXPlusY;
   }
 }
 

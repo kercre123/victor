@@ -36,3 +36,11 @@ func OSVersion() string {
 	}
 	return ""
 }
+
+func AnkiVersion() string {
+	return ""
+}
+
+func VictorVersion() string {
+	return ""
+}

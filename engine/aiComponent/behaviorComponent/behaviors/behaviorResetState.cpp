@@ -12,6 +12,8 @@
 
 
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorResetState.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
@@ -26,6 +28,10 @@ namespace Vector {
 namespace {
   const float kTimeWaitWhenOnTreads_s = 0.5f;
   const float kTimeWaitWhenOffTreads_s = 3.0f;
+  
+  const BehaviorID kBackupBehaviorID = BEHAVIOR_ID(Wait);
+  
+  #define LOG_CHANNEL "Behaviors"
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -39,6 +45,29 @@ bool BehaviorResetState::WantsToBeActivatedBehavior() const
 {
   return true;
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorResetState::SetFollowupBehaviorID( BehaviorID behaviorID )
+{
+  const auto& BC = GetBEI().GetBehaviorContainer();
+  _nextBehavior = BC.FindBehaviorByID( behaviorID );
+  if( !ANKI_VERIFY( _nextBehavior != nullptr,
+                    "BehaviorResetState.SetFollowupBehaviorID.Invalid",
+                    "Could not find behavior '%s', using '%s'",
+                    BehaviorTypesWrapper::BehaviorIDToString(behaviorID),
+                    BehaviorTypesWrapper::BehaviorIDToString(kBackupBehaviorID) ) )
+  {
+    _nextBehavior = BC.FindBehaviorByID( kBackupBehaviorID );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorResetState::GetAllDelegates(std::set<IBehavior*>& delegates) const
+{
+  if( _nextBehavior != nullptr ) {
+    delegates.insert( _nextBehavior.get() );
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorResetState::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
@@ -46,12 +75,15 @@ void BehaviorResetState::GetBehaviorOperationModifiers(BehaviorOperationModifier
   modifiers.wantsToBeActivatedWhenCarryingObject = true;
   modifiers.wantsToBeActivatedWhenOffTreads = true;
   modifiers.wantsToBeActivatedWhenOnCharger = true;
-  modifiers.behaviorAlwaysDelegates = true;
+  modifiers.behaviorAlwaysDelegates = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorResetState::OnBehaviorActivated()
 {
+  _currBehavior = _nextBehavior;
+  _nextBehavior = nullptr;
+  
   // freeze all motor functions
   GetBEI().GetRobotInfo().GetMoveComponent().StopAllMotors();
   
@@ -80,20 +112,20 @@ void BehaviorResetState::PutDownCubeIfNeeded()
     auto* putDownCube = new PlaceObjectOnGroundAction();
     DelegateIfInControl( putDownCube, [this](const ActionResult& res) {
       if( res == ActionResult::SUCCESS ) {
-        ResetComponents();
+        ResetComponentsAndDelegate();
       } else {
         // try just putting the lift down
         auto* moveLiftDown = new MoveLiftToHeightAction{ MoveLiftToHeightAction::Preset::LOW_DOCK };
-        DelegateIfInControl( moveLiftDown, &BehaviorResetState::ResetComponents );
+        DelegateIfInControl( moveLiftDown, &BehaviorResetState::ResetComponentsAndDelegate );
       }
     });
   } else {
-    ResetComponents();
+    ResetComponentsAndDelegate();
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorResetState::ResetComponents()
+void BehaviorResetState::ResetComponentsAndDelegate()
 {
   // ForceDelocalizeRobot already handled blockworld, unexpected movement, and the navmap because of
   // resulting calls to OnRobotDelocalized(). Now take care of other components:
@@ -101,7 +133,30 @@ void BehaviorResetState::ResetComponents()
   // In case the last known face was causing the robot to turn towards something...? Might not be necessary
   GetBEI().GetFaceWorldMutable().ClearAllFaces();
   
-  // and then the behavior ends
+  if( _currBehavior != nullptr ) {
+    ANKI_VERIFY( _currBehavior->WantsToBeActivated(),
+                 "BehaviorResetState.ResetComponentsAndDelegate.DWTBA",
+                 "Behavior '%s' doesnt want to activate as the base behavior",
+                 BehaviorTypesWrapper::BehaviorIDToString( _currBehavior->GetID() ) );
+    
+    DelegateIfInControl( _currBehavior.get() );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorResetState::BehaviorUpdate()
+{
+  // just in case the delegate ends, start a new one.
+  if( IsActivated() && !IsControlDelegated() && (_currBehavior != nullptr) ) {
+    LOG_WARNING("BehaviorResetState.BehaviorUpdate.Ended", "Delegate should not end");
+    
+    ANKI_VERIFY( _currBehavior->WantsToBeActivated(),
+                 "BehaviorResetState.BehaviorUpdate.DWTBA",
+                 "Behavior '%s' doesnt want to activate as the base behavior",
+                 BehaviorTypesWrapper::BehaviorIDToString( _currBehavior->GetID() ) );
+    
+    DelegateIfInControl( _currBehavior.get() );
+  }
 }
 
 }

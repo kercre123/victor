@@ -18,9 +18,8 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/enrolledFaceStorage.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/radians.h"
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
@@ -73,7 +72,7 @@ namespace Vector {
 
   static const Point3f kHumanHeadSize{148.f, 225.f, 195.f};
   static const Point3f kGazeGroundPointSize{100.f, 100.f, 100.f};
-  
+
   static const std::string kWebVizObservedObjectsName = "observedobjects";
   static const std::string kWebVizNavMapName = "navmap";
 
@@ -248,7 +247,7 @@ namespace Vector {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result FaceWorld::AddOrUpdateFace(const Vision::TrackedFace& face)
   {
-    
+
     // Head pose is stored w.r.t. historical world origin, but needs its parent
     // set up to be the robot's world origin here, using the origin ID from the
     // time the face was seen
@@ -313,7 +312,6 @@ namespace Vector {
 
         // Note we're using really loose thresholds for checking pose sameness
         // since our ability to accurately localize face's 3D pose is limited.
-        Vec3f Tdiff;
         Radians angleDiff;
 
         const auto & entryRect = faceEntryIter->second.face.GetRect();
@@ -394,7 +392,7 @@ namespace Vector {
         const bool fastRotationAllowed = (_robot->GetVisionComponent().IsVisionWhileRotatingFastEnabled() &&
                                           (Util::IsFltGT(kBodyTurnSpeedThreshFace_degs, 0.f) ||
                                            Util::IsFltGT(kHeadTurnSpeedThreshFace_degs, 0.f)));
-        
+
         auto const& imuHistory = _robot->GetImuComponent().GetImuHistory();
         const bool wasRotatingTooFast = (!fastRotationAllowed &&
                                          imuHistory.WasRotatingTooFast(face.GetTimeStamp(),
@@ -470,7 +468,7 @@ namespace Vector {
           }
         }
       }
-      
+
     } // if(false == Vision::FaceTracker::IsRecognitionSupported()
 
     // By now, we should have either created a new face or be pointing at an
@@ -532,10 +530,22 @@ namespace Vector {
     {
       // Update the last observed face pose.
       // If more than one was observed in the same timestamp then take the closest one.
-      if (((_lastObservedFaceTimeStamp != faceEntry->face.GetTimeStamp()) ||
-          (ComputeDistanceBetween(_robot->GetPose(), _lastObservedFacePose) >
-           ComputeDistanceBetween(_robot->GetPose(), faceEntry->face.GetHeadPose()))))
-      {
+      const bool newerThanLastObservation = (faceEntry->face.GetTimeStamp() > _lastObservedFaceTimeStamp);
+      bool closerThanLastObservation = false; // note: only computed if there were multiple observations in one tick
+      if (!newerThanLastObservation) {
+        // More than one face was observed in the same timestamp, so see if this one is closest
+        float lastObservedFaceDist_mm = 0.f;
+        float thisFaceDist_mm = 0.f;
+        if (!ComputeDistanceBetween(_robot->GetPose(), _lastObservedFacePose, lastObservedFaceDist_mm) ||
+            !ComputeDistanceBetween(_robot->GetPose(), faceEntry->face.GetHeadPose(), thisFaceDist_mm)) {
+          LOG_ERROR("FaceWorld.AddOrUpdateFace.ComputeDistanceFailure",
+                    "Failed computing distance between robot and faces");
+          return RESULT_FAIL;
+        }
+        closerThanLastObservation = (thisFaceDist_mm < lastObservedFaceDist_mm);
+      }
+
+      if (newerThanLastObservation || closerThanLastObservation) {
         _lastObservedFacePose = faceEntry->face.GetHeadPose();
         _lastObservedFaceTimeStamp = faceEntry->face.GetTimeStamp();
 
@@ -729,7 +739,7 @@ namespace Vector {
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool FaceWorld::ShouldReturnFace(const FaceEntry& faceEntry, RobotTimeStamp_t seenSinceTime_ms, bool includeRecognizableOnly,
-                                   float relativeRobotAngleTolerence_rad, const Radians& angleRelativeRobot_rad) const
+                                   float relativeRobotAngleTolerance_rad, const Radians& angleRelativeRobot_rad) const
   {
     if (faceEntry.face.GetTimeStamp() >= seenSinceTime_ms)
     {
@@ -737,12 +747,12 @@ namespace Vector {
       {
         bool isFaceValid = _robot->IsPoseInWorldOrigin(faceEntry.face.GetHeadPose());
         if(isFaceValid &&
-           (relativeRobotAngleTolerence_rad != kDontCheckRelativeAngle)){
+           (relativeRobotAngleTolerance_rad != kDontCheckRelativeAngle)){
           const Pose3d& robotPose = _robot->GetPose();
           Pose3d relPose;
           if( faceEntry.face.GetHeadPose().GetWithRespectTo( robotPose, relPose ) ) {
             Radians angle{ atan2f(relPose.GetTranslation().y(), relPose.GetTranslation().x()) };
-            if(!angle.IsNear(angleRelativeRobot_rad, relativeRobotAngleTolerence_rad)){
+            if(!angle.IsNear(angleRelativeRobot_rad, relativeRobotAngleTolerance_rad)){
               isFaceValid = false;
             }
           }
@@ -867,7 +877,7 @@ namespace Vector {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   std::set<Vision::FaceID_t> FaceWorld::GetFaceIDs(RobotTimeStamp_t seenSinceTime_ms,
                                                    bool includeRecognizableOnly,
-                                                   float relativeRobotAngleTolerence_rad,
+                                                   float relativeRobotAngleTolerance_rad,
                                                    const Radians& angleRelativeRobot_rad) const
   {
     std::set<Vision::FaceID_t> faceIDs;
@@ -882,7 +892,7 @@ namespace Vector {
       if(ShouldReturnFace(faceEntryIter->second,
                           seenSinceTime_ms,
                           includeRecognizableOnly,
-                          relativeRobotAngleTolerence_rad,
+                          relativeRobotAngleTolerance_rad,
                           angleRelativeRobot_rad))
       {
         faceIDs.insert(faceEntryIter->first);
@@ -897,14 +907,14 @@ namespace Vector {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   std::vector<SmartFaceID> FaceWorld::GetSmartFaceIDs(RobotTimeStamp_t seenSinceTime_ms,
                                                       bool includeRecognizableOnly,
-                                                      float relativeRobotAngleTolerence_rad,
+                                                      float relativeRobotAngleTolerance_rad,
                                                       const Radians& angleRelativeRobot_rad) const
   {
     std::set< Vision::FaceID_t > faces = GetFaceIDs(seenSinceTime_ms,
-                                                    includeRecognizableOnly, 
-                                                    relativeRobotAngleTolerence_rad,
+                                                    includeRecognizableOnly,
+                                                    relativeRobotAngleTolerance_rad,
                                                     angleRelativeRobot_rad);
-    
+
     std::vector<SmartFaceID> smartFaces;
     for(auto& entry : faces){
       smartFaces.emplace_back(GetSmartFaceID(entry));
@@ -1052,7 +1062,7 @@ namespace Vector {
   void FaceWorld::Enroll(Vision::FaceID_t faceID, bool forceNewID)
   {
     SetFaceEnrollmentComplete(false);
-    
+
     // If starting session enrollment, then set the num enrollments to -1 to get "ongoing"
     // enrollment. Otherwise, use the max we can store.
     const bool sessionOnly = (Vision::UnknownFaceID == faceID);
@@ -1080,7 +1090,7 @@ namespace Vector {
       Json::Value data;
       data["type"] = "RobotDeletedFace";
       data["faceID"] = msg.faceID;
-      
+
       webService->SendToWebViz( kWebVizObservedObjectsName, data );
       webService->SendToWebViz( kWebVizNavMapName, data );
     }

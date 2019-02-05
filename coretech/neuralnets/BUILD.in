@@ -1,14 +1,9 @@
 cxx_project(
     name = 'cti_neuralnets',
-    srcs = [
-      "iNeuralNetMain.cpp",
-      "neuralNetModel_interface.cpp", 
-      "neuralNetModel_tensorflow.cpp", 
-      "neuralNetModel_tflite.cpp",
-      "neuralNetParams.cpp", 
-      "neuralNetJsonKeys.cpp",
-      "neuralNetFilenames.cpp"
-    ],
+    srcs = cxx_src_glob(
+      ['.'],
+      excludes=['test/*']
+    ),
     platform_srcs = [
     ],
     headers = glob([
@@ -23,7 +18,7 @@ cxx_project(
 cxx_project(
     name = 'cti_neuralnet_test',
     srcs = [
-      "testNeuralNets.cpp"
+      "test/testNeuralNets.cpp"
     ],
     platform_srcs = [
     ],

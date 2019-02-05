@@ -75,15 +75,15 @@ Result RobotConnectionManager::Update()
 
 void RobotConnectionManager::SendAndResetQueueStats()
 {
-  DASMSG(robot.msg_queue.recent_incoming_size,
-         "robot.msg_queue.recent_incoming_size",
-         "Stats about RobotConnectionManager incoming queue");
-  DASMSG_SET(i1, _queueSizeAccumulator.GetNum(), "Number of queue size stats entries");
-  DASMSG_SET(i2, _queueSizeAccumulator.GetMin(), "Min queue size");
-  DASMSG_SET(i3, _queueSizeAccumulator.GetMean(), "Mean queue size");
-  DASMSG_SET(i4, _queueSizeAccumulator.GetMax(), "Max queue size");
-  DASMSG_SEND();
-
+  // Note: This used to be the DAS message "robot.msg_queue.recent_incoming_size" but was demoted to an INFO since it
+  // was spamming DAS
+  LOG_INFO("RobotConnectionManager.SendAndResetQueueStats.Stats",
+           "num %d, min %.2f, mean %.2f, max %.2f",
+           _queueSizeAccumulator.GetNum(),
+           _queueSizeAccumulator.GetMin(),
+           _queueSizeAccumulator.GetMean(),
+           _queueSizeAccumulator.GetMax());
+  
   // clear accumulator so we only send recent stats
   _queueSizeAccumulator.Clear();
 }
@@ -106,8 +106,8 @@ Result RobotConnectionManager::Connect(RobotID_t robotID)
     _udpClient.Disconnect();
   }
 
-  const std::string & client_path = Anki::Victor::ENGINE_ANIM_CLIENT_PATH + std::to_string(robotID);
-  const std::string & server_path = Anki::Victor::ENGINE_ANIM_SERVER_PATH + std::to_string(robotID);
+  const std::string & client_path = ENGINE_ANIM_CLIENT_PATH + std::to_string(robotID);
+  const std::string & server_path = ENGINE_ANIM_SERVER_PATH + std::to_string(robotID);
 
   const bool ok = _udpClient.Connect(client_path, server_path);
   if (!ok) {

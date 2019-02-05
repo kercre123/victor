@@ -25,6 +25,7 @@
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micData/micDataSystem.h"
+#include "cozmoAnim/perfMetricAnim.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
 #include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
@@ -143,7 +144,6 @@ Result AnimEngine::Init()
   }
 
 
-
   AnimProcessMessages::Init(this, _animationStreamer.get(), _streamingAnimationModifier.get(), audioInput, _context.get());
 
   _context->GetWebService()->Start(_context->GetDataPlatform(),
@@ -151,6 +151,13 @@ Result AnimEngine::Init()
   FaceInfoScreenManager::getInstance()->Init(_context.get(), _animationStreamer.get());
 
   _context->GetAlexa()->Init(_context.get());
+
+  const auto pm = _context->GetPerfMetric();
+  pm->Init(_context->GetDataPlatform(), _context->GetWebService());
+  if (pm->GetAutoRecord())
+  {
+    pm->Start();
+  }
 
   // Make sure OpenCV isn't threading
   Result cvResult = SetNumOpencvThreads( NUM_ANIM_OPENCV_THREADS, "AnimEngine.Init" );
@@ -232,6 +239,15 @@ Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
 #endif
 
   return RESULT_OK;
+}
+
+void AnimEngine::RegisterTickPerformance(const float tickDuration_ms,
+                                         const float tickFrequency_ms,
+                                         const float sleepDurationIntended_ms,
+                                         const float sleepDurationActual_ms) const
+{
+  _context->GetPerfMetric()->Update(tickDuration_ms, tickFrequency_ms,
+                                    sleepDurationIntended_ms, sleepDurationActual_ms);
 }
 
 void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechPrepare & msg)

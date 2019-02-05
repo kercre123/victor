@@ -15,8 +15,7 @@
 
 #include "engine/humanHead.h"
 
-#include "coretech/common/engine/math/point_impl.h"
-
+ 
 namespace Anki {
 namespace Vector {
 

@@ -68,15 +68,15 @@ bool _errG = false;
 
 // Do we break on any error?
 bool _errBreakOnError = true;
-  
+
 // If true, access to _errG uses a mutex device
 bool _lockErrG = false;
-  
+
 // Cached _errG during sPushErrG and sPopErrG
 std::vector<bool> sOldErrG;
-  
+
 std::recursive_mutex sErrGMutex;
-  
+
 const size_t kMaxStringBufferSize = 1024;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -362,6 +362,7 @@ void sChanneledInfo(const char* channel, const char* name, const KVV& keyvals, c
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void sChanneledDebugF(const char* channel, const char* name, const KVV& keyvals, const char* format, ...)
 {
+  #if ALLOW_DEBUG_LOGGING
   if (nullptr == gLoggerProvider) {
     return;
   }
@@ -375,6 +376,7 @@ void sChanneledDebugF(const char* channel, const char* name, const KVV& keyvals,
 
   // log it
   LogChannelDebug(channel, name, keyvals, logString);
+  #endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -536,7 +538,7 @@ void sAbort()
   abort();
 
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 void sSetErrG()
@@ -564,7 +566,7 @@ void sUnSetErrG()
     sErrGMutex.unlock();
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 bool sGetErrG()
@@ -598,7 +600,7 @@ void sPopErrG()
   DEV_ASSERT( !sOldErrG.empty(), "sPopErrG.PushWasntCalled" );
   _errG = sOldErrG.back();
   sOldErrG.pop_back();
-  
+
   if (_lockErrG) {
     sErrGMutex.unlock();
   }
@@ -638,7 +640,7 @@ bool DropBreadcrumb(bool result, const char* file, int line)
 
   if (!crashed) {
     bool loop = false;
-    
+
     for(int i = 1; i <= LOOP_DEPTH; ++i) {
       // ptr is one past the last entry
       const int prevPtr = ((ptr - i) + BUFFER_SIZE) % BUFFER_SIZE;

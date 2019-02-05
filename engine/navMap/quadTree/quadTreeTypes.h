@@ -145,7 +145,23 @@ using FoldFunctorConst      = std::function<void (const QuadTreeNode& node)>;;
 Vec2f Quadrant2Vec(EQuadrant dir) ;
 
 // Vec2f to EQuadrant
-QuadTreeTypes::EQuadrant Vec2Quadrant(const Vec2f& dir);
+constexpr QuadTreeTypes::EQuadrant Vec2Quadrant(const Vec2f& dir) 
+{
+  if      ( (dir.x() < 0.f) && (dir.y() < 0.f) ) { return EQuadrant::MinusXMinusY; }
+  else if ( (dir.x() > 0.f) && (dir.y() < 0.f) ) { return EQuadrant::PlusXMinusY; }
+  else if ( (dir.x() < 0.f) && (dir.y() > 0.f) ) { return EQuadrant::MinusXPlusY; }
+  else if ( (dir.x() > 0.f) && (dir.y() > 0.f) ) { return EQuadrant::PlusXPlusY; }
+
+  // NOTE: when we have exact matches for 0.f, discriminate the difference between -0.f and 0.f.
+  //       This preserves the property that checking a vector reflected through the origin
+  //       results in a quadrant reflected through the origin (this property is not true for
+  //       vertical and horizontal lines when using float comparison operations, since 
+  //       -0.f == 0.f by definition)  
+  else if ( dir.x() == 0.f ) { return (dir.y() >= 0.f) ? EQuadrant::MinusXPlusY : EQuadrant::PlusXMinusY; }
+  else if ( dir.y() == 0.f ) { return (dir.x() >= 0.f) ? EQuadrant::PlusXPlusY  : EQuadrant::MinusXMinusY; }
+
+  return EQuadrant::PlusXPlusY;
+}
 
 // step from a quadrant in direction
 inline constexpr QuadTreeTypes::EQuadrant GetQuadrantInDirection(EQuadrant from, EDirection dir)
@@ -211,6 +227,7 @@ inline Point2f GetCartesianCoordinateOfNode(const Point2i& point, const Point2f&
   return Point2f((point.x() - offset) * precision + center.x(),
                  (point.y() - offset) * precision + center.y());
 }
+
 
 } // namespace
 } // namespace

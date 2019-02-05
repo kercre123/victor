@@ -15,6 +15,8 @@
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 
+#define ANKI_HAS_LIBARCHIVE 0
+
 #if ANKI_HAS_LIBARCHIVE
   #include "archive.h"
   #include "archive_entry.h"
