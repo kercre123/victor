@@ -79,6 +79,7 @@ target_link_libraries(cti_common_robot
   util
   cti_common_clad_cpplite
   PRIVATE
+  opencv_interface
   ${ASAN_LINKER_FLAGS}
 )
 
