@@ -48,7 +48,7 @@ VL53L1_Error VL53L1_CommsInitialise(VL53L1_Dev_t *pdev, int16_t address, uint8_t
   }
 
   if (ts.tv_sec != 0) {
-    printf("Clock resolution tv_sec = %d!\n", ts.tv_sec);
+    printf("Clock resolution tv_sec = %ld!\n", ts.tv_sec);
     return VL53L1_ERROR_INVALID_PARAMS;
   }
   g_timer_res = ts.tv_nsec;
