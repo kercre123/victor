@@ -64,24 +64,24 @@ namespace Anki {
         ImuUKF ukf_;
 
         // Orientation and speed in XY-plane (i.e. horizontal plane) of robot
-        Radians rot_ = 0;   // radians
+        Rotation3d rot_ = UnitQuaternion();
         f32 rotSpeed_ = 0; // rad/s
 
         // Roll angle:
-        f32 roll_                        = 0.f;
-        const f32 ROLL_FILT_COEFF        = 0.75f; // Filter to combine gyro and accel for smooth roll estimation
-                                                  // The higher this value, the slower it approaches accel-based roll,
-                                                  // but the less noisy it is.
-        const f32 ROLL_FILT_COEFF_MOVING = 0.9f;  // Same as above, but used when the robot's wheels are moving
+        // f32 roll_                        = 0.f;
+        // const f32 ROLL_FILT_COEFF        = 0.75f; // Filter to combine gyro and accel for smooth roll estimation
+        //                                           // The higher this value, the slower it approaches accel-based roll,
+        //                                           // but the less noisy it is.
+        // const f32 ROLL_FILT_COEFF_MOVING = 0.9f;  // Same as above, but used when the robot's wheels are moving
 
         // Pitch angle: Approaches angle of accelerometer wrt gravity horizontal
-        f32 pitch_                      = 0;
-        const f32 PITCH_FILT_COEFF      = 0.98f;  // Filter to combine gyro and accel for smooth pitch estimation
-                                                  // The higher this value, the slower it approaches accel-based pitch,
-                                                  // but the less noisy it is.
-        const f32 PITCH_FILT_COEFF_MOVING = 0.998f;  // Same as above, but used when the robot's wheels are moving
-        const f32 UNINIT_HEAD_ANGLE     = 10000;  // Just has to be some not physically possible value
-        f32 prevHeadAngle_              = UNINIT_HEAD_ANGLE;
+        // f32 pitch_                      = 0;
+        // const f32 PITCH_FILT_COEFF      = 0.98f;  // Filter to combine gyro and accel for smooth pitch estimation
+        //                                           // The higher this value, the slower it approaches accel-based pitch,
+        //                                           // but the less noisy it is.
+        // const f32 PITCH_FILT_COEFF_MOVING = 0.998f;  // Same as above, but used when the robot's wheels are moving
+        // const f32 UNINIT_HEAD_ANGLE     = 10000;  // Just has to be some not physically possible value
+        // f32 prevHeadAngle_              = UNINIT_HEAD_ANGLE;
 
         f32 gyro_[3]                    = {0};    // Bias-compensated gyro measurements
         f32 gyro_robot_frame[3]         = {0};    // Unfiltered gyro measurements in robot frame
@@ -882,47 +882,47 @@ namespace Anki {
 
       // This pitch measurement isn't precise to begin with, but it's extra imprecise when the head is moving
       // so be careful relying on it when the head is moving!
-      void UpdatePitch()
-      {
-        f32 headAngle = HeadController::GetAngleRad();
+      // void UpdatePitch()
+      // {
+      //   f32 headAngle = HeadController::GetAngleRad();
 
-        if (prevHeadAngle_ != UNINIT_HEAD_ANGLE) {
-          const f32 accelBasedPitch = atan2f(imu_data_.accel[0], imu_data_.accel[2]) - headAngle;
-          const f32 gyroBasedPitch = pitch_ - (gyro_robot_frame[1] * CONTROL_DT) - (headAngle - prevHeadAngle_);
+      //   if (prevHeadAngle_ != UNINIT_HEAD_ANGLE) {
+      //     const f32 accelBasedPitch = atan2f(imu_data_.accel[0], imu_data_.accel[2]) - headAngle;
+      //     const f32 gyroBasedPitch = pitch_ - (gyro_robot_frame[1] * CONTROL_DT) - (headAngle - prevHeadAngle_);
 
-          // Complementary filter to mostly trust gyro integration for current pitch in the short term
-          // but always approach accelerometer-based pitch in the "long" term. Because of things like
-          // keepaway and pounce which require fast and somewhat accurate measurements of pitch, use
-          // a different coefficient while the wheels are moving.
-          const f32 coeff = (WheelController::AreWheelsPowered() || WheelController::AreWheelsMoving() || HeadController::IsMoving()) ?
-                              PITCH_FILT_COEFF_MOVING :
-                              PITCH_FILT_COEFF;
-          pitch_ = (coeff * gyroBasedPitch) + ((1.f - coeff) * accelBasedPitch);
-        }
+      //     // Complementary filter to mostly trust gyro integration for current pitch in the short term
+      //     // but always approach accelerometer-based pitch in the "long" term. Because of things like
+      //     // keepaway and pounce which require fast and somewhat accurate measurements of pitch, use
+      //     // a different coefficient while the wheels are moving.
+      //     const f32 coeff = (WheelController::AreWheelsPowered() || WheelController::AreWheelsMoving() || HeadController::IsMoving()) ?
+      //                         PITCH_FILT_COEFF_MOVING :
+      //                         PITCH_FILT_COEFF;
+      //     pitch_ = (coeff * gyroBasedPitch) + ((1.f - coeff) * accelBasedPitch);
+      //   }
 
-        prevHeadAngle_ = headAngle;
+      //   prevHeadAngle_ = headAngle;
 
-        //AnkiDebugPeriodic(50, "RobotPitch", "%f deg (motion %d, gyro %f)", RAD_TO_DEG_F32(pitch_), MotionDetected(), gyro_robot_frame_filt[1]);
-      }
+      //   //AnkiDebugPeriodic(50, "RobotPitch", "%f deg (motion %d, gyro %f)", RAD_TO_DEG_F32(pitch_), MotionDetected(), gyro_robot_frame_filt[1]);
+      // }
 
-      void UpdateRoll()
-      {
-        const f32 headAngle = HeadController::GetAngleRad();
-        const f32 accelBasedRoll = atan2f(imu_data_.accel[1], imu_data_.accel[2] * cosf(headAngle));
-        const f32 gyroBasedRoll = roll_ - (gyro_robot_frame[0] * CONTROL_DT);
+      // void UpdateRoll()
+      // {
+      //   const f32 headAngle = HeadController::GetAngleRad();
+      //   const f32 accelBasedRoll = atan2f(imu_data_.accel[1], imu_data_.accel[2] * cosf(headAngle));
+      //   const f32 gyroBasedRoll = roll_ - (gyro_robot_frame[0] * CONTROL_DT);
 
-        // Complementary filter to mostly trust gyro integration for current roll in the short term
-        // but always approach accelerometer-based roll in the "long" term.
-        const bool isMoving = WheelController::AreWheelsPowered() || WheelController::AreWheelsMoving() || HeadController::IsMoving();
-        const f32 coeff = isMoving ? ROLL_FILT_COEFF_MOVING : ROLL_FILT_COEFF;
-        roll_ = (coeff * gyroBasedRoll) + ((1.f - coeff) * accelBasedRoll);
-        AnkiDebugPeriodic(250, "IMUFilter.UpdateRoll",
-                         "Filtered, accel-based, gyro-based: %f %f %f, (In motion: %d)",
-                         RAD_TO_DEG_F32(roll_),
-                         RAD_TO_DEG_F32(accelBasedRoll),
-                         RAD_TO_DEG_F32(gyroBasedRoll),
-                         isMoving);
-      }
+      //   // Complementary filter to mostly trust gyro integration for current roll in the short term
+      //   // but always approach accelerometer-based roll in the "long" term.
+      //   const bool isMoving = WheelController::AreWheelsPowered() || WheelController::AreWheelsMoving() || HeadController::IsMoving();
+      //   const f32 coeff = isMoving ? ROLL_FILT_COEFF_MOVING : ROLL_FILT_COEFF;
+      //   roll_ = (coeff * gyroBasedRoll) + ((1.f - coeff) * accelBasedRoll);
+      //   AnkiDebugPeriodic(250, "IMUFilter.UpdateRoll",
+      //                    "Filtered, accel-based, gyro-based: %f %f %f, (In motion: %d)",
+      //                    RAD_TO_DEG_F32(roll_),
+      //                    RAD_TO_DEG_F32(accelBasedRoll),
+      //                    RAD_TO_DEG_F32(gyroBasedRoll),
+      //                    isMoving);
+      // }
 
       Result Update()
       {
@@ -969,6 +969,9 @@ namespace Anki {
         // It has been observed that the z axis gyro usually reports about a 1.03% higher
         // rate than it is actually experiencing, so simply scale it here.
         gyro_[2] *= 0.989f;
+        const float z_gyro_scale = .989f;
+#else 
+        const float z_gyro_scale = 1.f;
 #endif
 
 
@@ -979,8 +982,8 @@ namespace Anki {
 
         // Don't do any other IMU updates until head is calibrated
         if (!HeadController::IsCalibrated()) {
-          pitch_ = 0.f;
-          prevHeadAngle_ = UNINIT_HEAD_ANGLE;
+          // pitch_ = 0.f;
+          // prevHeadAngle_ = UNINIT_HEAD_ANGLE;
           ResetPickupVars();
           return retVal;
         }
@@ -1052,29 +1055,38 @@ namespace Anki {
           accelMagnitudeSqrd_ += (imu_data_.accel[i] * imu_data_.accel[i]);
         }
 
-#if(DEBUG_IMU_FILTER)
-        PERIODIC_PRINT(200, "Accel angle %f %f\n", accel_angle_imu_frame, accel_angle_robot_frame);
-        PERIODIC_PRINT(200, "Accel (robot frame): %f %f %f\n",
-                       accel_robot_frame_filt[0],
-                       accel_robot_frame_filt[1],
-                       accel_robot_frame_filt[2]);
-#endif
         ukf_.Update(
           {imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]},
-          {imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2] * 0.987f},
+          {imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2] * z_gyro_scale},
           static_cast<float>(curTime) / 1000.f,
           isMotionDetected_
         );
 
-        UpdatePitch();
-        UpdateRoll();
+        // UpdatePitch();
+        // UpdateRoll();
+
+#if(DEBUG_IMU_FILTER)
+        AnkiDebugPeriodic(200, "Accel angle %f %f", accel_angle_imu_frame, accel_angle_robot_frame);
+        AnkiDebugPeriodic(200, "Accel (robot frame): %f %f %f",
+                       accel_robot_frame_filt[0],
+                       accel_robot_frame_filt[1],
+                       accel_robot_frame_filt[2]);
+        
+        const auto bias = ukf_.GetBias();
+        AnkiDebugPeriodic(200, "ukf bias: {X %.5f, Y %.5f, Z %.5f}   old bias: {X %.5f, Y %.5f, Z %.5f}\n", 
+              bias[0], bias[1], bias[2], 
+              gyro_bias_filt[0], gyro_bias_filt[1], gyro_bias_filt[2]);
+        AnkiDebugPeriodic(200, "ukf eul: {Z %.2f, Y %.2f, X %.2f}\n", 
+                          RAD_TO_DEG( GetRotation() ), 
+                          RAD_TO_DEG( GetPitch() ), 
+                          RAD_TO_DEG( GetRoll() ));s
+#endif
 
         // XY-plane rotation rate is robot frame z-axis rotation rate
         rotSpeed_ = gyro_robot_frame_filt[2];
 
         // Update orientation
-        f32 dAngle = rotSpeed_ * CONTROL_DT;
-        rot_ += dAngle;
+        rot_ = ukf_.GetRotation() * Rotation3d(HeadController::GetAngleRad(), Y_AXIS_3D());
 
         //MadgwickAHRSupdateIMU(gyro_[0], gyro_[1], gyro_[2],
         //                      imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]);
@@ -1166,23 +1178,8 @@ namespace Anki {
 
       f32 GetRotation()
       {
-        const Rotation3d& rot = ukf_.GetRotation() * Rotation3d(HeadController::GetAngleRad(), Y_AXIS_3D());
-        const float yaw  = RAD_TO_DEG( rot.GetAngleAroundZaxis().ToFloat() );
-        const float pit  = RAD_TO_DEG( rot.GetAngleAroundYaxis().ToFloat() );
-        const float roll = RAD_TO_DEG( rot.GetAngleAroundXaxis().ToFloat() );
-        static uint16_t i = 0;
-        if (++i == 256) {
-          // printf("ukf acc: {%.2f, %.2f, %.2f}\n", imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]);
-          const auto bias = ukf_.GetBias();
-          printf("ukf bias: {X %.5f, Y %.5f, Z %.5f}   old bias: {X %.5f, Y %.5f, Z %.5f}\n", 
-                bias[0], bias[1], bias[2], 
-                gyro_bias_filt[0], gyro_bias_filt[1], gyro_bias_filt[2]);
-          // printf("ukf gyro: {Z %.5f, Y %.5f, X %.5f}\n", imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2]);
-          printf("ukf eul: {Z %.2f, Y %.2f, X %.2f} head angle: %.2f\n", yaw, pit, roll, RAD_TO_DEG( HeadController::GetAngleRad() ));
-          i = 0;
-        }
-        
-        return rot.GetAngleAroundZaxis().ToFloat();
+        const auto robotX = rot_ * X_AXIS_3D();
+        return atan2f( robotX.y(), robotX.x() );
       }
 
       f32 GetRotationSpeed()
@@ -1193,14 +1190,15 @@ namespace Anki {
 
       f32 GetPitch()
       {
-        const Rotation3d& rot = ukf_.GetRotation() * Rotation3d(HeadController::GetAngleRad(), Y_AXIS_3D());
-        return rot.GetAngleAroundYaxis().ToFloat();
+        return asinf( (rot_ * X_AXIS_3D()).z() );
       }
 
       f32 GetRoll()
       {
-        const Rotation3d& rot = ukf_.GetRotation() * Rotation3d(HeadController::GetAngleRad(), Y_AXIS_3D());
-        return rot.GetAngleAroundXaxis().ToFloat();
+        // TODO: Maybe account for when the robot is upside down here? This roll seems
+        //       more useful, but we cannot combine it with roll and pitch to reconstruct
+        //       rotation. Tait–Bryan angles are subject to gimbal lock, and can cause deloc's
+        return asinf( (rot_ * Y_AXIS_3D()).z() );
       }
 
       bool IsPickedUp()

@@ -38,9 +38,9 @@ namespace {
   }
   
   // transforms rotation vector into a quaternion
-  inline UnitQuaternion ToQuat(Point<3,double> v) { 
-    const double alpha = v.MakeUnitLength();
-    const double sinAlpha = sin(alpha * .5);
+  inline UnitQuaternion ToQuat(const Point<3,double>& v) { 
+    const double alpha = v.Length();
+    const double sinAlpha = sin(alpha * .5) / (NEAR_ZERO(alpha) ? 1. : alpha);
     return {cos(alpha * .5), sinAlpha * v.x(),  sinAlpha * v.y(),  sinAlpha * v.z()};
   };
   
@@ -50,22 +50,6 @@ namespace {
     const double alpha = asin( axis.MakeUnitLength() ) * 2;
     return axis * alpha;
   };
-
-  // given two vectors, find the rotation that maps `from` onto `to`
-  UnitQuaternion FindRotation(const Point<3,double>& from, const Point<3,double>& to) {
-    Point<3,double> a = from;
-    Point<3,double> b = to;
-    a.MakeUnitLength();
-    b.MakeUnitLength();
-    
-    const double cosAlpha = DotProduct(a, b);
-    const double sinAlpha2 = sqrt( (1.-cosAlpha) / 2. );
-    const double cosAlpha2 = sqrt( (1.+cosAlpha) / 2. );
-    const auto v = CrossProduct(a,b) * sinAlpha2;
-    const Point<4,double> q{cosAlpha2, v.x(), v.y(), v.z()};
-
-    return NEAR_ZERO(q.LengthSq()) ? UnitQuaternion{} : q;
-  }
 
   // fast mean calculation for columns of a matrix
   template <MatDimType M, MatDimType N>
@@ -85,15 +69,30 @@ namespace {
 
   // Process Noise
   constexpr const double kRotStability_rad    = .001;      // assume pitch & roll don't change super fast when driving
-  constexpr const double kGyroStability_radps = 1.;        // leave this relatively high to trust most recent gyro data
-  constexpr const double kBiasStability_radps = .0000001;  // leave this small so that bias is very stable
+  constexpr const double kGyroStability_radps = .2;        // leave this relatively high to trust most recent gyro data
+  constexpr const double kBiasStability_radps = .0000145;  // bias stability
 
   // Measurement Noise
-  constexpr const double kAccelNoise_rad  = .0018;          // rms noise
-  constexpr const double kGyroNoise_radps = .1059;//.00122;         // rms noise
-  constexpr const double kBiasNoise_radps = .0000145;       // bias stability
+  // NOTES: 1) measured rms noise on the gyro (~.006 rms) is higher on Z axis than the spec sheet (.00122 rms)
+  //        2) we should be careful with using noise anyway - if the integration from the gyro is off and the
+  //           calculated pitch/roll conflict with the accelerometer reading, using a lower noise on the gyro
+  //           will result in trusting the integration more, causing very slow adjustments to gravity vector.
+  constexpr const double kAccelNoise_rad      = .0018;  // rms noise
+  constexpr const double kGyroNoise_radps     = .008;   // see note
+  constexpr const double kBiasNoise_radps     = .006;   // measured gyro noise
 
+
+  // Why enforce a slower update rate rather than lower process noise? I'm glad you asked! I honestly have 
+  // no idea why we get better data from this - but it was found when compariing the same filter running
+  // on the robot and engine process where the only difference was the update frequency. When running
+  // on the robot thread, we consistently over-integrated the gyro around the gravity vector. My assumption
+  // is that this is a result of inflating the gyro noise to allow for gravity compensation, but I have
+  // been unable to verify.
+  constexpr const double kUpdatePeriod_s = .02;
+
+  // Gravity constants
   constexpr const Point<3,double> kGravity_mmpsSq = {0., 0., 9810.};
+  constexpr const double          kG_over_mmpsSq  = 1./9810.;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -101,7 +100,7 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // Process Uncertainty
-const SmallSquareMatrix<ImuUKF::State::Dim,double> ImuUKF::_Q{{  
+const SmallSquareMatrix<ImuUKF::Error::Dim,double> ImuUKF::_Q{{  
   Util::Square(kRotStability_rad), 0., 0., 0., 0., 0., 0., 0., 0.,
   0., Util::Square(kRotStability_rad), 0., 0., 0., 0., 0., 0., 0.,
   0., 0., Util::Square(kRotStability_rad), 0., 0., 0., 0., 0., 0.,
@@ -114,7 +113,7 @@ const SmallSquareMatrix<ImuUKF::State::Dim,double> ImuUKF::_Q{{
 }}; 
 
 // Measurement Uncertainty
-const SmallSquareMatrix<ImuUKF::State::Dim,double> ImuUKF::_R{{  
+const SmallSquareMatrix<ImuUKF::Error::Dim,double> ImuUKF::_R{{  
   Util::Square(kAccelNoise_rad), 0., 0., 0., 0., 0., 0., 0., 0.,
   0., Util::Square(kAccelNoise_rad), 0., 0., 0., 0., 0., 0., 0.,
   0., 0., Util::Square(kAccelNoise_rad), 0., 0., 0., 0., 0., 0.,
@@ -142,19 +141,20 @@ void ImuUKF::Reset(const Rotation3d& rot) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ImuUKF::Update(const Point<3,double>& accel, const Point<3,double>& gyro, const float timestamp_s, bool isMoving)
 {
+  if (timestamp_s - _lastMeasurement_s < kUpdatePeriod_s) { return; }
+
   ProcessUpdate( NEAR_ZERO(_lastMeasurement_s) ? 0. : timestamp_s - _lastMeasurement_s );
 
   const auto measurement = Join(Join(accel, gyro), (isMoving ? _state.GetGyroBias() : gyro));
-  const auto residual = MeasurementUpdate( measurement );
+  const Error residual = MeasurementUpdate( measurement );
 
-  // NOTE: I think there is a more computationally efficient way for getting the 
-  //       correct rotation using just the residual and rotG, but this makes more
-  //       intuitive sense for now...
-  const auto rotG = _state.GetRotation().GetConj() * kGravity_mmpsSq;
-  const auto rotCorrection = FindRotation(rotG, rotG + residual.Slice<0,2>());
-  _state = State{ _state.GetRotation() * rotCorrection,
-                  _state.GetVelocity() + residual.Slice<3,5>(),
-                  _state.GetGyroBias() + (isMoving ? Point<3,double>() : residual.Slice<6,8>())
+  // Add the residual to the current state. 
+  // NOTE: Right now I am artificially scaling the bias back just to limit rapid change during startup.
+  //       When initializing it can be quite noisy, resulting in an unstable z-rotation for the first ~30 seconds
+  const double biasScale = isMoving ? 0. : .02;
+  _state = State{ _state.GetRotation() * ToQuat(residual.GetRotation() * kG_over_mmpsSq),
+                  _state.GetVelocity() + residual.GetVelocity(),
+                  _state.GetGyroBias() + (residual.GetGyroBias() * biasScale)
                 };
 
   _lastMeasurement_s = timestamp_s;
@@ -163,21 +163,19 @@ void ImuUKF::Update(const Point<3,double>& accel, const Point<3,double>& gyro, c
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ImuUKF::ProcessUpdate(double dt_s)
 { 
-  // sample the covariance, generating the set {𝑊ᵢ} and add the mean
-  const auto S = Cholesky(_P + _Q) * sqrt(2*State::Dim);
-  for (int i = 0; i < State::Dim; ++i) {
+  // sample the covariance, generating the set {𝑌ᵢ} and add the mean
+  const auto S = Cholesky(_P + _Q) * sqrt(2*Error::Dim);
+  for (int i = 0; i < Error::Dim; ++i) {
     // current process model assumes we continue moving at constant velocity
-    const auto Si = S.GetColumn(i);
-    const auto q  = ToQuat(Si.Slice<0,2>());
-    const auto w1 = _state.GetVelocity() + Si.Slice<3,5>();
-    const auto w2 = _state.GetVelocity() - Si.Slice<3,5>();
-    const auto b1 = _state.GetGyroBias() + Si.Slice<6,8>();
-    const auto b2 = _state.GetGyroBias() - Si.Slice<6,8>();
-    const State s1(_state.GetRotation() * q * ToQuat((w1-b1) * dt_s), w1, b1);
-    const State s2(_state.GetRotation() * q.GetConj() * ToQuat((w2-b2) * dt_s), w2, b2);
+    const Error Si = S.GetColumn(i);
+    const auto  q  = ToQuat(Si.GetRotation());
+    const auto  w1 = _state.GetVelocity() + Si.GetVelocity();
+    const auto  w2 = _state.GetVelocity() - Si.GetVelocity();
+    const auto  b1 = _state.GetGyroBias() + Si.GetGyroBias();
+    const auto  b2 = _state.GetGyroBias() - Si.GetGyroBias();
 
-    _Y.SetColumn(2*i,s1);
-    _Y.SetColumn((2*i)+1, s2);
+    _Y.SetColumn(2*i,     State{_state.GetRotation() * q * ToQuat((w1-b1) * dt_s), w1, b1} );
+    _Y.SetColumn((2*i)+1, State{_state.GetRotation() * q.GetConj() * ToQuat((w2-b2) * dt_s), w2, b2} );
   }
 
   // NOTE: we are making a huge assumption here. Technically, quaternions cannot be averaged using
@@ -188,11 +186,11 @@ void ImuUKF::ProcessUpdate(double dt_s)
   //       that both a gradient decent method and largest Eigen Vector method work well.
   _state = CalculateMean(_Y);
 
-  // Calculate Process Noise by mean centering Y
+  // Calculate Process Noise {𝑊ᵢ} by mean centering {𝑌ᵢ}
   const auto meanRot  = _state.GetRotation();
   const auto meanVel  = _state.GetVelocity();
   const auto meanBias = _state.GetGyroBias();
-  for (int i = 0; i < 2*State::Dim; ++i) {
+  for (int i = 0; i < 2*Error::Dim; ++i) {
     const State yi = _Y.GetColumn(i);
     const auto err = FromQuat(meanRot.GetConj() * yi.GetRotation());
     const auto omega = yi.GetVelocity() - meanVel;
@@ -206,17 +204,17 @@ void ImuUKF::ProcessUpdate(double dt_s)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Point<9,double> ImuUKF::MeasurementUpdate(const Point<9,double>& measurement)
 {
-  // Calculate Predicted Measurement Distribution {Zᵢ}
-  SmallMatrix<State::Dim,State::Dim*2,double> Z;
-  for (int i = 0; i < 2*State::Dim; ++i) {
+  // Calculate Predicted Measurement Distribution {𝑍ᵢ}
+  SmallMatrix<Error::Dim,Error::Dim*2,double> Z;
+  for (int i = 0; i < 2*Error::Dim; ++i) {
     const State yi = _Y.GetColumn(i);
     const auto zi = Join(Join( yi.GetRotation().GetConj() * kGravity_mmpsSq, yi.GetVelocity() ), yi.GetGyroBias());
     Z.SetColumn(i, zi);
   }
 
-  // mean center {Zᵢ}
+  // mean center {𝑍ᵢ}
   const auto meanZ = CalculateMean(Z);
-  for (int i = 0; i < 2*State::Dim; ++i) { 
+  for (int i = 0; i < 2*Error::Dim; ++i) { 
     Z.SetColumn(i, Z.GetColumn(i) - meanZ); 
   }
 

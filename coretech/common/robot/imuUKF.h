@@ -52,8 +52,17 @@ private:
     Point3<double> GetVelocity() const { return this->Slice<4,6>(); }
     Point3<double> GetGyroBias() const { return this->Slice<7,9>(); }
 
-    // Dim is 1 less than the state Size, since the rotation quaternion only has 3 DoF (4 Dims and 1 constraint)
-    static constexpr size_t Size = 10;
+    static constexpr size_t Dim = 10;
+  };
+    
+  class Error : public Point<9,double> {
+  public:
+    Error(Point<9,double>&& p) : Point<9,double>(p) {}
+    Point3<double> GetRotation() const { return this->Slice<0,2>(); }
+    Point3<double> GetVelocity() const { return this->Slice<3,5>(); }
+    Point3<double> GetGyroBias() const { return this->Slice<6,8>(); }
+
+    // Dim is 1 less than the State, since the rotation quaternion only has 3 DoF (4 Dims and 1 constraint)
     static constexpr size_t Dim = 9;
   };
 
@@ -66,12 +75,12 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Variables
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  State                                          _state;      // current state estimate
-  SmallSquareMatrix<State::Dim, double>          _P;          // current state covariance matrix
-  SmallMatrix<State::Size, State::Dim*2, double> _Y;          // a discrete set of points representing the state estimate
-  SmallMatrix<State::Dim, State::Dim*2, double>  _W;          // a discrete set of points representing covariance of the state 
+  State                                         _state;      // current state estimate
+  SmallSquareMatrix<Error::Dim, double>         _P;          // current state covariance matrix
+  SmallMatrix<State::Dim, Error::Dim*2, double> _Y;          // a discrete set of points representing the state estimate
+  SmallMatrix<Error::Dim, Error::Dim*2, double> _W;          // a discrete set of points representing covariance of the state 
 
-  static const SmallSquareMatrix<State::Dim,double> _Q, _R;   // process and measurement uncertainty
+  static const SmallSquareMatrix<Error::Dim,double> _Q, _R;   // process and measurement uncertainty
   float _lastMeasurement_s;                                   // time of last measurement update for calculating predicted process update
 };
 
