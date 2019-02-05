@@ -64,8 +64,10 @@ enum class SupportedThfLocales
   enUS_Alt_1mb,
   enUS_Alt_500kb,
   enUS_Alt_250kb,
-  enUK,
-  enAU,
+  enUK_1mb,
+  enUK_500kb,
+  enAU_1mb,
+  enAU_500kb,
   frFR,
   deDE,
   Count
@@ -85,8 +87,10 @@ const TriggerModelTypeData kThfTriggerModelDataList[] =
   { .locale = Util::Locale("en","ZW"), .modelType = MicConfigModelType::size_500kb, .searchFileIndex = -1 },
   { .locale = Util::Locale("en","ZW"), .modelType = MicConfigModelType::size_250kb, .searchFileIndex = -1 },
   // Other Locales
-  { .locale = Util::Locale("en","GB"), .modelType = MicConfigModelType::Count, .searchFileIndex = -1 },
-  { .locale = Util::Locale("en","AU"), .modelType = MicConfigModelType::Count, .searchFileIndex = -1 },
+  { .locale = Util::Locale("en","GB"), .modelType = MicConfigModelType::size_1mb, .searchFileIndex = -1 },
+  { .locale = Util::Locale("en","GB"), .modelType = MicConfigModelType::size_500kb, .searchFileIndex = -1 },
+  { .locale = Util::Locale("en","AU"), .modelType = MicConfigModelType::size_1mb, .searchFileIndex = -1 },
+  { .locale = Util::Locale("en","AU"), .modelType = MicConfigModelType::size_500kb, .searchFileIndex = -1 },
   { .locale = Util::Locale("fr","FR"), .modelType = MicConfigModelType::Count, .searchFileIndex = -1 },
   { .locale = Util::Locale("de","DE"), .modelType = MicConfigModelType::Count, .searchFileIndex = -1 },
 };
@@ -95,7 +99,7 @@ static_assert(kThfTriggerDataListLen == (size_t) SupportedThfLocales::Count, "Ne
 
 const char* kThfRecognizerModelStr = "enUS_1mb, enUS_500kb, enUS_250kb, \
                                       enUS_Alt_1mb, enUS_Alt_500kb, enUS_Alt_250kb, \
-                                      enUK, enAU, frFR, deDE";
+                                      enUK_1mb, enUK_500kb, enAU_1mb, enAU_500kb, frFR, deDE";
 const char* kThfRecognizerModelSensitivityStr = "default,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20";
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
