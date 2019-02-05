@@ -109,9 +109,9 @@ anki_build_target_license(cti_common_shared "ANKI")
 target_link_libraries(cti_common_shared
   PUBLIC
   util
-  PRIVATE
   opencv_interface
   ${OPENCV_LIBS}
+  PRIVATE
   ${ASAN_LINKER_FLAGS}
 )
 
