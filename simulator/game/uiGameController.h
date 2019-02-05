@@ -100,7 +100,6 @@ protected:
   virtual void HandleRobotStateUpdate(const ExternalInterface::RobotState& msg){};
   virtual void HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg){};
   virtual void HandleRobotObservedFace(const ExternalInterface::RobotObservedFace& msg){};
-  virtual void HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg){};
   virtual void HandleRobotObservedPet(const ExternalInterface::RobotObservedPet& msg) {};
   virtual void HandleRobotDeletedLocatedObject(const ExternalInterface::RobotDeletedLocatedObject& msg){};
   virtual void HandleUiDeviceAvailable(const ExternalInterface::UiDeviceAvailable& msgIn){};
