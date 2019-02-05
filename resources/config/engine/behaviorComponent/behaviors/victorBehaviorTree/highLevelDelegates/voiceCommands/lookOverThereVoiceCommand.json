@@ -15,7 +15,7 @@
   "driveOffChargerBehavior": "DriveOffChargerStraight",
 
   "behavior": "ReactToGazeDirectionSurface",
-  "timeUntilCancelFollowup_s": 15.0,
+  "timeUntilCancelFollowup_s": 100000.0,
 
   "useBodyDetector": true,
   "additionalLookTimeIfSawBody_s": 3.0,

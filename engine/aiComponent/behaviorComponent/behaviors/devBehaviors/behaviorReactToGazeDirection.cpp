@@ -35,8 +35,8 @@ namespace {
   // Console vars for tuning
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinXThres_mm,        "Vision.GazeDirection", -25.f);
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxXThres_mm,        "Vision.GazeDirection",  20.f);
-  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinYThres_mm,        "Vision.GazeDirection", -100.f);
-  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxYThres_mm,        "Vision.GazeDirection",  100.f);
+  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinYThres_mm,        "Vision.GazeDirection", -20.f);
+  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxYThres_mm,        "Vision.GazeDirection",  20.f);
   CONSOLE_VAR(f32,  kTurnWaitAfterFinalTurn_s,               "Vision.GazeDirection",  1.f);
   CONSOLE_VAR(f32,  kSleepTimeAfterActionCompleted_s,        "Vision.GazeDirection",  2.f);
   CONSOLE_VAR(f32,  kMaxPanSpeed_radPerSec,                  "Vision.GazeDirection",  MAX_BODY_ROTATION_SPEED_RAD_PER_SEC);
@@ -51,16 +51,32 @@ namespace {
   CONSOLE_VAR(u32,  kMaxTimeSinceTrackedFaceUpdated_ms,      "Vision.GazeDirection",  500);
   CONSOLE_VAR(bool, kUseEyeGazeToLookAtSurfaceorFaces,       "Vision.GazeDirection",  false);
   // TODO disable this use -1
-  CONSOLE_VAR(f32,  kMaxDriveToSurfacePointDistance_mm2,     "Vision.GazeDirection",  -1.f);
+  CONSOLE_VAR(f32,  kMaxDriveToSurfacePointDistance_mm2,     "Vision.GazeDirection",  30000.f*30000.f);
   CONSOLE_VAR(bool, kUseDriveStraightActionForDriveTo,       "Vision.GazeDirection", false);
   CONSOLE_VAR(f32,  kDriveStraightDistance_mm,               "Vision.GazeDirection", 200);
+  CONSOLE_VAR(f32,  kMaxDriveStraightDistance_mm,            "Vision.GazeDirection", 300);
   CONSOLE_VAR(bool, kDriveStraightTurnBackToFace,            "Vision.GazeDirection", true);
   CONSOLE_VAR(bool, kUseHandDetectionHack,                   "Vision.GazeDirection", true);
   CONSOLE_VAR(f32,  kProxSensorStopingDistance_mm,           "Vision.GazeDirection", 30);
   CONSOLE_VAR(bool, kUseTranslationDistanceForDriveStraight, "Vision.GazeDirection", true);
-  CONSOLE_VAR(f32,  kEyeGazeDirectionXSurfaceThreshold_mm,   "Vision.GazeDirection",  2000.f);
-  CONSOLE_VAR(f32,  kEyeGazeDirectionYSurfaceThreshold_mm,   "Vision.GazeDirection",  2000.f);
-  CONSOLE_VAR(f32,  kEyeGazeDirectionZSurfaceThreshold_mm,   "Vision.GazeDirection",  20.f);
+  CONSOLE_VAR(f32,  kEyeGazeDirectionXSurfaceThreshold_mm,   "Vision.GazeDirection", 2000.f);
+  CONSOLE_VAR(f32,  kEyeGazeDirectionYSurfaceThreshold_mm,   "Vision.GazeDirection", 2000.f);
+  CONSOLE_VAR(f32,  kEyeGazeDirectionZSurfaceThreshold_mm,   "Vision.GazeDirection", 20.f);
+
+  CONSOLE_VAR(f32,  kEyeGazeDirectionLowerAngleLinearizationThreshold_deg,   "Vision.GazeDirection",  45.f);
+  CONSOLE_VAR(f32,  kEyeGazeDirectionUpperAngleLinearizationThreshold_deg,   "Vision.GazeDirection",  180.f);
+
+  CONSOLE_VAR(f32,  kEyeGazeDirectionLowerAngleGaussianThreshold_deg,   "Vision.GazeDirection",  45.f);
+  CONSOLE_VAR(f32,  kEyeGazeDirectionUpperAngleGaussianThreshold_deg,   "Vision.GazeDirection",  180.f);
+  CONSOLE_VAR(f32,  kEyeGazeDirectionGaussianMean_deg,   "Vision.GazeDirection",  95.f);
+  CONSOLE_VAR(f32,  kEyeGazeDirectionGaussianSTD_deg,   "Vision.GazeDirection",   .5555f);
+
+  CONSOLE_VAR(bool,  kEyeGazeDirectionUseCorrection,   "Vision.GazeDirection",   true);
+  CONSOLE_VAR(bool,  kEyeGazeDirectionUseLinearCorrection,   "Vision.GazeDirection",   false);
+  CONSOLE_VAR(bool,  kEyeGazeDirectionUseGaussianCorrection,   "Vision.GazeDirection",   true);
+
+  // If this is set to -1 the turns will loop
+  CONSOLE_VAR(s32,  kEyeGazeDirectionMaxNumberOfTurns,   "Vision.GazeDirection",   20);
 }
 
 namespace {
@@ -86,6 +102,10 @@ void BehaviorReactToGazeDirection::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::BehaviorUpdate()
 {
+
+  if( !IsActivated() ) {
+    return;
+  }
   TransitionToCheckGazeDirection();
 }
 
@@ -94,11 +114,13 @@ BehaviorReactToGazeDirection::InstanceConfig::InstanceConfig(const Json::Value& 
 {
   const std::string& debugName = "BehaviorReactToBody.InstanceConfig.LoadConfig";
   searchForPointsOnSurface = JsonTools::ParseBool(config, kSearchForPointsOnSurface, debugName);
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToGazeDirection::DynamicVariables::DynamicVariables()
 {
+  turnCount = 0;
 }
 
 
@@ -114,8 +136,7 @@ void BehaviorReactToGazeDirection::GetBehaviorJsonKeys(std::set<const char*>& ex
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToGazeDirection::WantsToBeActivatedBehavior() const
 {
-  // return GetBEI().GetFaceWorld().AnyStableGazeDirection(kMaxTimeSinceTrackedFaceUpdated_ms);
-  return true;
+  return GetBEI().GetFaceWorld().AnyStableGazeDirection(kMaxTimeSinceTrackedFaceUpdated_ms);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -139,13 +160,15 @@ void BehaviorReactToGazeDirection::TransitionToCheckForFace(const Radians& turnA
   CompoundActionParallel* turnAndAnimate = new CompoundActionParallel();
   if (turnAngle > 0) {
     turnAndAnimate->AddAction(new TurnInPlaceAction(turnAngle.ToFloat(), false));
-    turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtFacesTurnLeft});
+    // turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtFacesTurnLeft});
+    turnAndAnimate->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtFacesTurnLeft));
   } else {
     turnAndAnimate->AddAction(new TurnInPlaceAction(turnAngle.ToFloat(), false));
-    turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtFacesTurnRight});
+    // turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtFacesTurnRight});
+    turnAndAnimate->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtFacesTurnRight));
   }
 
-  turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
+  // turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
   turnAction->AddAction(turnAndAnimate);
   turnAction->AddAction(new WaitForImagesAction(kSearchForFaceNumberOfImagesToWait, VisionMode::DetectingFaces));
   turnAction->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
@@ -188,6 +211,8 @@ void BehaviorReactToGazeDirection::TransitionToLookAtFace(const SmartFaceID& fac
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::TransitionToDriveToPointOnSurface(const Pose3d& gazePose)
 {
+  LOG_WARNING("BehaviorReactToGazeDirection.TransitionToDriveToPointOnSurface",
+              "going to try to drive to a point on the surface");
   const auto& translation = gazePose.GetTranslation();
   CompoundActionSequential* turnAction = new CompoundActionSequential();
 
@@ -203,17 +228,24 @@ void BehaviorReactToGazeDirection::TransitionToDriveToPointOnSurface(const Pose3
   CompoundActionParallel* turnAndAnimate = new CompoundActionParallel();
   turnAndAnimate->AddAction(turnTowardsPose);
   if ( Util::IsFltLT(translation.y(), 0.f) ) {
-    turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfacesTurnRight});
+    // turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfacesTurnRight});
+    turnAndAnimate->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesTurnRight));
   } else {
-    turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfaceTurnLeft});
+    // turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfaceTurnLeft});
+    turnAndAnimate->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceTurnLeft));
   }
-  turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
+  // turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
   turnAction->AddAction(turnAndAnimate);
-  turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
 
   float distanceToDrive_mm = kDriveStraightDistance_mm;
   if (kUseTranslationDistanceForDriveStraight) {
     distanceToDrive_mm = translation.Length();
+  }
+
+  if (kMaxDriveStraightDistance_mm > 0.f) {
+    if (distanceToDrive_mm > kMaxDriveStraightDistance_mm) {
+      distanceToDrive_mm = kMaxDriveStraightDistance_mm;
+    }
   }
 
   if (kUseDriveStraightActionForDriveTo) {
@@ -221,10 +253,15 @@ void BehaviorReactToGazeDirection::TransitionToDriveToPointOnSurface(const Pose3
     turnAction->AddAction(driveStraightAction);
 
   } else if (kUseHandDetectionHack) {
+    Radians gazeAngle = atan2f(translation.y(), translation.x());
+    LOG_WARNING("BehaviorReactToGazeDirection.TransitionToDriveToPointOnSurface",
+                "Turn pose (x=%.3f, y=%.3f, z=%.3f), Turn Angle %.3f",
+                translation.x(), translation.y(), translation.z(),
+                RAD_TO_DEG(gazeAngle.ToFloat()));
 
     CompoundActionParallel* driveAction = new CompoundActionParallel({
       new DriveStraightAction(distanceToDrive_mm),
-      new ReselectingLoopAnimationAction{AnimationTrigger::ExploringReactToHandDrive},
+      //new ReselectingLoopAnimationAction{AnimationTrigger::ExploringReactToHandDrive},
       new WaitForLambdaAction([this](Robot& robot) {
         const bool detectedUnexpectedMovement = (robot.GetMoveComponent().IsUnexpectedMovementDetected());
 
@@ -250,11 +287,30 @@ void BehaviorReactToGazeDirection::TransitionToDriveToPointOnSurface(const Pose3
     turnAction->AddAction(driveToAction);
   }
 
+  turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
+
   if (kDriveStraightTurnBackToFace) {
     turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
-    turnAction->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
+    CompoundActionParallel* returnTurnAndAnimate = new CompoundActionParallel();
+    returnTurnAndAnimate->AddAction(new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo));
+    // Reverse the direction of the turn because we're turning back to the point we started at
+    if ( Util::IsFltGT(translation.y(), 0.f) ) {
+      // turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfacesTurnRight});
+      returnTurnAndAnimate->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesTurnRight));
+    } else {
+      // turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfaceTurnLeft});
+      returnTurnAndAnimate->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceTurnLeft));
+    }
+    turnAction->AddAction(returnTurnAndAnimate);
   }
-  DelegateIfInControl(turnAction);
+  LOG_WARNING("BehaviorReactToGazeDirection.TransitionToDriveToPointOnSurface",
+              "about to delegate");
+  // TODO not sure if this will work but let's try it
+  // CancelDelegates(false);
+  DelegateIfInControl(turnAction, [this] {
+        ++_dVars.turnCount;
+        _dVars.turnInProgress = false;
+    });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -277,14 +333,32 @@ void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose
     turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
     turnAction->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
     turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
-    DelegateIfInControl(turnAction);
+    DelegateIfInControl(turnAction, [this] {
+        ++_dVars.turnCount;
+        _dVars.turnInProgress = false;
+    });
 
   } else {
+    Pose3d correctedGazePose(gazePose);
+    if (kEyeGazeDirectionUseCorrection) {
+      if (kEyeGazeDirectionUseLinearCorrection) {
+        CorrectPoseForOvershootLinear(gazePose, correctedGazePose);
+      } else if (kEyeGazeDirectionUseGaussianCorrection) {
+        CorrectPoseForOvershootGaussian(gazePose, correctedGazePose);
+      }
+    }
+
     // Check if the gaze pose is too far to drive to. If kMaxDriveToSurfacePointDistance_mm2
     // is set to -1 then driving to the gaze point is disabled.
+    LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckForPointOnSurface",
+                "length of translation %.3f, max drive surface point distance %.3f",
+                translation.LengthSq(), kMaxDriveToSurfacePointDistance_mm2);
     if (translation.LengthSq() < kMaxDriveToSurfacePointDistance_mm2) {
       TransitionToDriveToPointOnSurface(gazePose);
+      // We either turn and drive, or just turn
+      return;
     }
+
 
     // This is the case where we aren't looking at the robot, so we need to turn
     // right or left towards the pose, play the correct animation, and then turn
@@ -298,17 +372,27 @@ void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose
         turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesGetInLeft));
       }
 
-      TurnTowardsPoseAction* turnTowardsPose = new TurnTowardsPoseAction(gazePose);
+      TurnTowardsPoseAction* turnTowardsPose = new TurnTowardsPoseAction(correctedGazePose);
       turnTowardsPose->SetMaxPanSpeed(kMaxPanSpeed_radPerSec);
       turnTowardsPose->SetPanAccel(kMaxPanAccel_radPerSec2);
       CompoundActionParallel* turnAndAnimate = new CompoundActionParallel();
       turnAndAnimate->AddAction(turnTowardsPose);
+
+      
+      Radians gazeAngle = atan2f(translation.y(), translation.x());
+      LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckForPointOnSurface",
+                  "Turn pose (x=%.3f, y=%.3f, z=%.3f), Turn Angle %.3f",
+                  translation.x(), translation.y(), translation.z(),
+                  RAD_TO_DEG(gazeAngle.ToFloat()));
+
       if ( Util::IsFltLT(translation.y(), 0.f) ) {
-        turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfacesTurnRight});
+        // turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfacesTurnRight});
+        turnAndAnimate->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfacesTurnRight));
       } else {
-        turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfaceTurnLeft});
+        // turnAndAnimate->AddAction(new ReselectingLoopAnimationAction{AnimationTrigger::GazingLookAtSurfaceTurnLeft});
+        turnAndAnimate->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceTurnLeft));
       }
-      turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
+      // turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
       turnAction->AddAction(turnAndAnimate);
       turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::GazingLookAtSurfaceReaction));
       turnAction->AddAction(new WaitAction(kTurnWaitAfterFinalTurn_s));
@@ -316,8 +400,157 @@ void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose
 
       turnAction->AddAction(new WaitAction(kSleepTimeAfterActionCompleted_s));
     }
-    DelegateIfInControl(turnAction);
+    DelegateIfInControl(turnAction, [this] {
+        ++_dVars.turnCount;
+        _dVars.turnInProgress = false;
+    });
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToGazeDirection::CorrectPoseForOvershootLinear(const Pose3d& gazePose, Pose3d& correctedGazePose) 
+{
+
+  const Radians lowerAngleLimit_rad(DEG_TO_RAD(kEyeGazeDirectionLowerAngleLinearizationThreshold_deg));
+  const Radians upperAngleLimit_rad(DEG_TO_RAD(kEyeGazeDirectionUpperAngleLinearizationThreshold_deg));
+
+
+  // Find translation
+  const auto& translation = gazePose.GetTranslation();
+
+  // Find angle
+  Radians gazeAngle = atan2f(translation.y(), translation.x());
+  Radians correctedGazeAngle(0.f);
+
+  // TODO add print that logs original angle
+  LOG_WARNING("BehaviorReactToGazeDirection.CorrectPoseForOvershootLinear",
+              "Original Turn pose (x=%.3f, y=%.3f, z=%.3f), Turn Angle %.3f degrees %.3f radians",
+              translation.x(), translation.y(), translation.z(),
+              RAD_TO_DEG(gazeAngle.ToFloat()), gazeAngle.ToFloat());
+
+  // Linearlize angle over new domain
+  // Check if a "positive angle" is the range we want
+  if ( (gazeAngle > lowerAngleLimit_rad) && (gazeAngle < upperAngleLimit_rad) ) {
+    correctedGazeAngle = (gazeAngle - lowerAngleLimit_rad) * (upperAngleLimit_rad / (upperAngleLimit_rad - lowerAngleLimit_rad).ToFloat()).ToFloat();
+    if (correctedGazeAngle < lowerAngleLimit_rad) {
+      correctedGazeAngle = lowerAngleLimit_rad;
+    }
+  }
+
+  float gazeAngleRaw = gazeAngle.ToFloat();
+  if ( (gazeAngleRaw < DEG_TO_RAD(-kEyeGazeDirectionLowerAngleLinearizationThreshold_deg)) &&
+       (gazeAngleRaw > DEG_TO_RAD(-kEyeGazeDirectionUpperAngleLinearizationThreshold_deg))) {
+      gazeAngleRaw = (gazeAngleRaw - DEG_TO_RAD(-kEyeGazeDirectionLowerAngleLinearizationThreshold_deg))
+            * (DEG_TO_RAD(-kEyeGazeDirectionUpperAngleLinearizationThreshold_deg) / (DEG_TO_RAD(-kEyeGazeDirectionUpperAngleLinearizationThreshold_deg) - DEG_TO_RAD(-kEyeGazeDirectionLowerAngleLinearizationThreshold_deg)));
+    if (gazeAngleRaw > DEG_TO_RAD(-kEyeGazeDirectionLowerAngleLinearizationThreshold_deg)) {
+      LOG_WARNING("BehaviorReactToGazeDirection.CorrectPoseForOvershootLinear",
+                  "Hit lower threshold clamping Turn Angle %.3f degrees to %.3f",
+                  RAD_TO_DEG(gazeAngleRaw), -kEyeGazeDirectionLowerAngleLinearizationThreshold_deg);
+      gazeAngleRaw = DEG_TO_RAD(-kEyeGazeDirectionLowerAngleLinearizationThreshold_deg);
+    }
+    correctedGazeAngle = Radians(gazeAngleRaw);
+  }
+
+  const auto translationMagnitude = translation.Length();
+  const float newX = translationMagnitude * std::cos(correctedGazeAngle.ToFloat());
+  const float newY = translationMagnitude * std::sin(correctedGazeAngle.ToFloat());
+  Radians newGazeAngle = atan2f(newY, newX);
+  const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
+  correctedGazePose = Pose3d(0.f, Z_AXIS_3D(), {newX, newY, 0.f}, robotPose);
+  const auto& newTranslation = correctedGazePose.GetTranslation();
+
+  // TODO add print that logs new angle
+  LOG_WARNING("BehaviorReactToGazeDirection.CorrectPoseForOvershootLinear",
+              "New Turn pose (x=%.3f, y=%.3f, z=%.3f), Turn Angle %.3f degrees %.3f radians,"
+              "The negative bounds are lower: %.3f upper: %.3f",
+              newTranslation.x(), newTranslation.y(), newTranslation.z(),
+              RAD_TO_DEG(newGazeAngle.ToFloat()), newGazeAngle.ToFloat(),
+              -lowerAngleLimit_rad.ToFloat(), -upperAngleLimit_rad.ToFloat());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToGazeDirection::CorrectPoseForOvershootGaussian(const Pose3d& gazePose, Pose3d& correctedGazePose) 
+{
+
+  const Radians lowerAngleLimit_rad(DEG_TO_RAD(kEyeGazeDirectionLowerAngleGaussianThreshold_deg));
+  const Radians upperAngleLimit_rad(DEG_TO_RAD(kEyeGazeDirectionUpperAngleGaussianThreshold_deg));
+  const Radians mean(DEG_TO_RAD(kEyeGazeDirectionGaussianMean_deg));
+  const Radians std(DEG_TO_RAD(kEyeGazeDirectionGaussianSTD_deg));
+
+  // Find translation
+  const auto& translation = gazePose.GetTranslation();
+
+  // Find angle
+  Radians gazeAngle = atan2f(translation.y(), translation.x());
+  Radians correctedGazeAngle(0.f);
+
+  // TODO add print that logs original angle
+  LOG_WARNING("BehaviorReactToGazeDirection.CorrectPoseForOvershootGaussian",
+              "Original Turn pose (x=%.3f, y=%.3f, z=%.3f), Turn Angle %.3f degrees %.3f radians",
+              translation.x(), translation.y(), translation.z(),
+              RAD_TO_DEG(gazeAngle.ToFloat()), gazeAngle.ToFloat());
+
+  // Linearlize angle over new domain
+  // Check if a "positive angle" is the range we want
+  if ( (gazeAngle > lowerAngleLimit_rad) && (gazeAngle < upperAngleLimit_rad) ) {
+    correctedGazeAngle = Radians(DEG_TO_RAD((gazeAngle.ToFloat() - mean.ToFloat()) / (std).ToFloat()));
+    if (correctedGazeAngle < lowerAngleLimit_rad) {
+      LOG_WARNING("BehaviorReactToGazeDirection.CorrectPoseForOvershootGaussian",
+                  "Hit lower threshold clamping Turn Angle %.3f degrees to %.3f,"
+                  "using a mean %.3f and a std %.3f",
+                  RAD_TO_DEG(correctedGazeAngle.ToFloat()), kEyeGazeDirectionLowerAngleGaussianThreshold_deg,
+                  RAD_TO_DEG(mean.ToFloat()), RAD_TO_DEG(std.ToFloat()));
+      correctedGazeAngle = lowerAngleLimit_rad;
+    }
+    if (correctedGazeAngle > upperAngleLimit_rad) {
+      LOG_WARNING("BehaviorReactToGazeDirection.CorrectPoseForOvershootGaussian",
+                  "Hit upper threshold clamping Turn Angle %.3f degrees to %.3f,"
+                  "using a mean %.3f and a std %.3f",
+                  RAD_TO_DEG(correctedGazeAngle.ToFloat()), kEyeGazeDirectionUpperAngleGaussianThreshold_deg,
+                  RAD_TO_DEG(mean.ToFloat()), RAD_TO_DEG(std.ToFloat()));
+      correctedGazeAngle = upperAngleLimit_rad;
+    }
+  }
+
+  float gazeAngleRaw = gazeAngle.ToFloat();
+  if ( (gazeAngleRaw < DEG_TO_RAD(-kEyeGazeDirectionLowerAngleGaussianThreshold_deg)) &&
+       (gazeAngleRaw > DEG_TO_RAD(-kEyeGazeDirectionUpperAngleGaussianThreshold_deg))) {
+      // I'm not sure why this is needed ... but sigh for some reason it is
+      gazeAngleRaw = DEG_TO_RAD(-((-gazeAngleRaw - mean.ToFloat()) / std.ToFloat()));
+    if (gazeAngleRaw > DEG_TO_RAD(-kEyeGazeDirectionLowerAngleGaussianThreshold_deg)) {
+      LOG_WARNING("BehaviorReactToGazeDirection.CorrectPoseForOvershootGaussian",
+                  "Hit lower threshold clamping Turn Angle %.3f degrees to %.3f,"
+                  "using a mean %.3f and a std %.3f",
+                  RAD_TO_DEG(gazeAngleRaw), -kEyeGazeDirectionLowerAngleGaussianThreshold_deg,
+                  RAD_TO_DEG(mean.ToFloat()), RAD_TO_DEG(std.ToFloat()));
+      gazeAngleRaw = DEG_TO_RAD(-kEyeGazeDirectionLowerAngleGaussianThreshold_deg);
+    }
+    if (gazeAngleRaw < DEG_TO_RAD(-kEyeGazeDirectionUpperAngleGaussianThreshold_deg)) {
+      LOG_WARNING("BehaviorReactToGazeDirection.CorrectPoseForOvershootGaussian",
+                  "Hit upper threshold clamping Turn Angle %.3f degrees to %.3f,"
+                  "using a mean %.3f and a std %.3f",
+                  RAD_TO_DEG(gazeAngleRaw), -kEyeGazeDirectionUpperAngleGaussianThreshold_deg,
+                  RAD_TO_DEG(mean.ToFloat()), RAD_TO_DEG(std.ToFloat()));
+      gazeAngleRaw = DEG_TO_RAD(-kEyeGazeDirectionUpperAngleGaussianThreshold_deg);
+    }
+    correctedGazeAngle = Radians(gazeAngleRaw);
+  }
+
+  const auto translationMagnitude = translation.Length();
+  const float newX = translationMagnitude * std::cos(correctedGazeAngle.ToFloat());
+  const float newY = translationMagnitude * std::sin(correctedGazeAngle.ToFloat());
+  Radians newGazeAngle = atan2f(newY, newX);
+  const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
+  correctedGazePose = Pose3d(0.f, Z_AXIS_3D(), {newX, newY, 0.f}, robotPose);
+  const auto& newTranslation = correctedGazePose.GetTranslation();
+
+  // TODO add print that logs new angle
+  LOG_WARNING("BehaviorReactToGazeDirection.CorrectPoseForOvershootGaussian",
+              "New Turn pose (x=%.3f, y=%.3f, z=%.3f), Turn Angle %.3f degrees %.3f radians,"
+              "The negative bounds are lower: %.3f upper: %.3f",
+              newTranslation.x(), newTranslation.y(), newTranslation.z(),
+              RAD_TO_DEG(newGazeAngle.ToFloat()), newGazeAngle.ToFloat(),
+              -lowerAngleLimit_rad.ToFloat(), -upperAngleLimit_rad.ToFloat());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -354,6 +587,22 @@ Radians BehaviorReactToGazeDirection::ComputeTurnAngleFromGazePose(const Pose3d&
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::TransitionToCheckGazeDirection()
 {
+
+  // TODO not sure if I need this outside of the "looping" portion of
+  // this but ... who knows. Anyway, don't turn if there is already a
+  // turn in progress, or log anything it's too spammy right now.
+  if (_dVars.turnInProgress && false) {
+    /*
+    LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckGazeDirection",
+                "early exit because turn in progress");
+    */
+    return;
+  }
+
+  // Put looping eye state into behavior update, and then cancel if conditions are satisfied
+  // This could possibly "cut" the animation sort if this is an issue, just have each loop delegate
+  // to a call back which determines flow
+
   if(GetBEI().GetFaceWorld().GetGazeDirectionPose(kMaxTimeSinceTrackedFaceUpdated_ms,
                                                   _dVars.gazeDirectionPose, _dVars.faceIDToTurnBackTo)) {
     const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
@@ -361,64 +610,85 @@ void BehaviorReactToGazeDirection::TransitionToCheckGazeDirection()
     if (_dVars.gazeDirectionPose.GetWithRespectTo(robotPose, gazeDirectionPoseWRTRobot)) {
 
       SendDASEventForPoseToFollow(gazeDirectionPoseWRTRobot);
+      _dVars.turnInProgress = true;
+      LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckGazeDirection",
+                  "Turn Count %d Number of Allowable Turns %d.",
+                  _dVars.turnCount, kEyeGazeDirectionMaxNumberOfTurns);
 
       // Now that we know we are going to turn clear the history
       GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
 
-      // Check how we want to determine whether to search for faces
-      bool searchForPointsOnSurface = _iConfig.searchForPointsOnSurface;
+      if (_dVars.turnCount < kEyeGazeDirectionMaxNumberOfTurns || kEyeGazeDirectionMaxNumberOfTurns == -1) {
 
-      // This serious of if statements is looking to see if we should override
-      // searchForPointsOnSurface so if any of this calls return false ... we
-      // don't want to do anything thus no else statement
-      if (kUseEyeGazeToLookAtSurfaceorFaces) {
-        Pose3d eyeDirectionPose;
-        if(GetBEI().GetFaceWorld().GetEyeDirectionPose(_dVars.faceIDToTurnBackTo, kMaxTimeSinceTrackedFaceUpdated_ms, eyeDirectionPose)) {
-          Pose3d eyeDirectionPoseWRTRobot;
-          if (eyeDirectionPose.GetWithRespectTo(robotPose, eyeDirectionPoseWRTRobot)) {
-            const auto& translation = eyeDirectionPoseWRTRobot.GetTranslation();
+        /*
+        // Check how we want to determine whether to search for faces
+        bool searchForPointsOnSurface = _iConfig.searchForPointsOnSurface;
 
-            // If the eye direction pose on the ground plane is too far out then
-            // update the searchForPointsOnSurface to be false, otherwise ... update
-            // it to be true
-            if (std::abs(translation.x()) > kEyeGazeDirectionXSurfaceThreshold_mm &&
-                std::abs(translation.y()) > kEyeGazeDirectionYSurfaceThreshold_mm &&
-                std::abs(translation.z()) > kEyeGazeDirectionZSurfaceThreshold_mm) {
-                searchForPointsOnSurface = false;
-            } else {
-                searchForPointsOnSurface = true;
+        // This serious of if statements is looking to see if we should override
+        // searchForPointsOnSurface so if any of this calls return false ... we
+        // don't want to do anything thus no else statement
+        if (kUseEyeGazeToLookAtSurfaceorFaces) {
+          Pose3d eyeDirectionPose;
+          if(GetBEI().GetFaceWorld().GetEyeDirectionPose(_dVars.faceIDToTurnBackTo, kMaxTimeSinceTrackedFaceUpdated_ms, eyeDirectionPose)) {
+            Pose3d eyeDirectionPoseWRTRobot;
+            if (eyeDirectionPose.GetWithRespectTo(robotPose, eyeDirectionPoseWRTRobot)) {
+              const auto& translation = eyeDirectionPoseWRTRobot.GetTranslation();
+
+              // If the eye direction pose on the ground plane is too far out then
+              // update the searchForPointsOnSurface to be false, otherwise ... update
+              // it to be true
+              if (std::abs(translation.x()) > kEyeGazeDirectionXSurfaceThreshold_mm &&
+                  std::abs(translation.y()) > kEyeGazeDirectionYSurfaceThreshold_mm &&
+                  std::abs(translation.z()) > kEyeGazeDirectionZSurfaceThreshold_mm) {
+                  searchForPointsOnSurface = false;
+              } else {
+                  searchForPointsOnSurface = true;
+              }
             }
           }
         }
-      }
+        */
 
-      if (searchForPointsOnSurface) {
-        // We're looking for points on the surface, similar to looking for faces
-        // but the head angle will be pointed towards the ground plane.
-        TransitionToCheckForPointOnSurface(gazeDirectionPoseWRTRobot);
-      } else {
-        // Bucket the angle to turn to look for faces
-        const Radians turnAngle = ComputeTurnAngleFromGazePose(gazeDirectionPoseWRTRobot);
-
-        // If we're configured to look for existing faces in face world to turn towards
-        // check if there are any existing faces visible from the angle we want to turn to.
-        // faces visible from that angle, or we're not configured to do use faces existing in
-        // face world then turn to the specificied angle and search for a face.
-        SmartFaceID faceToTurnTowards;
-        if (GetBEI().GetFaceWorld().FaceInTurnAngle(Radians(turnAngle), _dVars.faceIDToTurnBackTo, robotPose, faceToTurnTowards)
-            && kUseExistingFacesWhenSearchingForFaces) {
-          // If a face is visible turn towards it instead of the angle.
-          TransitionToLookAtFace(faceToTurnTowards, turnAngle);
+        if (true) {
+          // We're looking for points on the surface, similar to looking for faces
+          // but the head angle will be pointed towards the ground plane.
+          TransitionToCheckForPointOnSurface(gazeDirectionPoseWRTRobot);
         } else {
-          // If there aren't any faces visible from that angle, or we're not configured to
-          // use faces existing in face world then turn to the specificied angle and search
-          // for a face.
-          TransitionToCheckForFace(turnAngle);
+          // Bucket the angle to turn to look for faces
+          const Radians turnAngle = ComputeTurnAngleFromGazePose(gazeDirectionPoseWRTRobot);
+
+          // If we're configured to look for existing faces in face world to turn towards
+          // check if there are any existing faces visible from the angle we want to turn to.
+          // faces visible from that angle, or we're not configured to do use faces existing in
+          // face world then turn to the specificied angle and search for a face.
+          SmartFaceID faceToTurnTowards;
+          if (GetBEI().GetFaceWorld().FaceInTurnAngle(Radians(turnAngle), _dVars.faceIDToTurnBackTo, robotPose, faceToTurnTowards)
+              && kUseExistingFacesWhenSearchingForFaces) {
+            // If a face is visible turn towards it instead of the angle.
+            TransitionToLookAtFace(faceToTurnTowards, turnAngle);
+          } else {
+            // If there aren't any faces visible from that angle, or we're not configured to
+            // use faces existing in face world then turn to the specificied angle and search
+            // for a face.
+            TransitionToCheckForFace(turnAngle);
+          }
         }
+      } else {
+        // We have reached the maximum number of turns ... terminate
+        // not sure the best way to do this so ... and shouldn't really live in
+        // master
+        _dVars.turnCount = 0;
+        _dVars.turnInProgress = false;
+        CancelSelf();
       }
     } else {
       LOG_ERROR("BehaviorReactToGazeDirection.TransitionToCheckFaceDirection.GetWithRespectToFailed", "");
+      // TODO shouldn't need this but whatever, this should hurt ... i think
+      // _dVars.turnInProgress = false;
     }
+  } else {
+  LOG_WARNING("BehaviorReactToGazeDirection.TransitionToCheckGazeDirection",
+              "Didn't find stable gaze direction");
   }
 }
 

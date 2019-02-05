@@ -210,8 +210,8 @@
     },
     {
       "user_intent": "imperative_lookoverthere",
-      "cloud_intent": "intent_imperative_lookoverthere",
-      "app_intent": "intent_imperative_lookoverthere",
+      "cloud_intent": "intent_imperative_gaze",
+      "app_intent": "intent_imperative_gaze",
       "feature_gate": "GazeDirection"
     },
     {

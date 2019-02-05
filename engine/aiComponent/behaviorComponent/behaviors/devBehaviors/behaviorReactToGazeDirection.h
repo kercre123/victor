@@ -44,6 +44,7 @@ private:
     InstanceConfig(const Json::Value& config);
 
     bool searchForPointsOnSurface;
+    int  numberOfTurns;
   };
 
   struct DynamicVariables {
@@ -51,6 +52,8 @@ private:
 
     Pose3d                gazeDirectionPose;
     SmartFaceID           faceIDToTurnBackTo;
+    int                   turnCount;
+    bool                  turnInProgress;
   };
 
   InstanceConfig _iConfig;
@@ -61,6 +64,9 @@ private:
   void TransitionToLookAtFace(const SmartFaceID& faceToTurnTowards, const Radians& turnAngle);
   void TransitionToCheckForPointOnSurface(const Pose3d& gazePose);
   void TransitionToDriveToPointOnSurface(const Pose3d& gazePose);
+  void CorrectPoseForOvershootLinear(const Pose3d& gazePose, Pose3d& correctedGazePose);
+  void CorrectPoseForOvershootGaussian(const Pose3d& gazePose, Pose3d& correctedGazePose);
+  void CorrectPoseForOvershootQuadratic(const Pose3d& gazePose, Pose3d& correctedGazePose);
 
   Radians ComputeTurnAngleFromGazePose(const Pose3d& gazePose);
   void FoundNewFace(ActionResult result);
