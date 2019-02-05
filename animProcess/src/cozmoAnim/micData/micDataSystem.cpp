@@ -758,8 +758,8 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
   const bool enabled = (_alexaState != AlexaSimpleState::Disabled);
   
   if ((oldState == AlexaSimpleState::Disabled) && enabled) {
-    RobotDataLoader *dataLoader = _context->GetDataLoader();
-    const auto callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info) {
+    const auto callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info)
+    {
       LOG_INFO("MicDataSystem.SetAlexaState.TriggerWordDetectCallback", "info - %s", info.Description().c_str());
       
 #if ANKI_DEV_CHEATS
@@ -780,8 +780,7 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
       }
       SendRecognizerDasLog( info, EnumToString(_alexaState) );
     };
-    _speechRecognizerSystem->InitAlexa(*dataLoader, _locale, callback);
-
+    _speechRecognizerSystem->ActivateAlexa(_locale, callback);
   }
   else if((oldState != AlexaSimpleState::Disabled) && !enabled) {
     // Disable "Alexa" wake word in SpeechRecognizerSystem

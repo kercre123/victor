@@ -553,6 +553,8 @@ void Alexa::SetUXState( AlexaUXState newState )
     // set backpack lights if streaming
     const bool listening = (_uxState == AlexaUXState::Listening);
     _context->GetBackpackLightComponent()->SetAlexaStreaming( listening );
+    const bool speaking = ( _uxState == AlexaUXState::Speaking );
+    _context->GetMicDataSystem()->GetSpeechRecognizerSystem()->SetAlexaSpeakingState( speaking );
   }
   
   if( _authState == AlexaAuthState::Authorized ) {
