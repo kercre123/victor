@@ -148,6 +148,18 @@ def get_prop(property_name):
     return None
 
 
+def is_dev_robot(cmdline):
+    "Returns true if this robot is a dev robot"
+    if "anki.dev" in cmdline:
+        return True
+    emrcat = subprocess.Popen(['/bin/emr-cat', 'v'], shell=False, stdout=subprocess.PIPE)
+    if emrcat.wait() == 0:
+        hw_ver = int(emrcat.communicate()[0], 16)
+        if hw_ver == 0x7:
+            return True # All whiskey DVT1s are dev even though cmdline doesn't indicate it
+    return False
+
+
 def get_cmdline():
     "Returns /proc/cmdline arguments as a dict"
     cmdline = open("/proc/cmdline", "r").read()
@@ -491,7 +503,7 @@ def update_from_url(url):
         validate_new_os_version(get_prop("ro.anki.version"), next_boot_os_version, cmdline)
         if DEBUG:
             print("Updating to version {}".format(next_boot_os_version))
-        if "anki.dev" in cmdline:
+        if is_dev_robot(cmdline):
             if not manifest.getint("META", "ankidev"):
                 die(214, "Ankidev OS can't install non-ankidev OTA file")
         elif manifest.getint("META", "ankidev"):
