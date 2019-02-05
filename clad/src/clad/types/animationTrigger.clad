@@ -496,6 +496,7 @@ enum int_32 AnimationTrigger
   ReactToTriggerWordOffChargerBehindLeft,
   ReactToTriggerWordOffChargerBehindRight,
   ReactToUnclaimedIntent,
+  ReactToUnclaimedIntentInAir,
   ReactToUnexpectedMovement,
   RollBlockRealign,
   RollBlockRetry,
