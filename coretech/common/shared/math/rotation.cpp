@@ -258,18 +258,19 @@ namespace Anki {
 #pragma mark --- Rotation3d ---
 #endif
   
-  Rotation3d::Rotation3d(const Radians& angle, const Vec3f& axis2)
+  Rotation3d::Rotation3d(const Radians& angle, const Vec3f& axis)
   {
     const f32 halfAngle = angle.ToFloat() * 0.5f;
     const f32 q1 = std::cos(halfAngle);
+    DEV_ASSERT_MSG(FLT_NEAR(axis.LengthSq(), 1.f), "Rotation3d.Constructor.NonUnitAxisLength",
+                   "%s, Length=%f", axis.ToString().c_str(), axis.LengthSq());
 
-    Vec3f axis(axis2);
-    if ( NEAR_ZERO(axis.MakeUnitLength()) ) {
-      axis = Z_AXIS_3D();
-    }
+    const f32 sinHalfAngle = std::sin(halfAngle);
+    const f32 q2 = sinHalfAngle * axis[0];
+    const f32 q3 = sinHalfAngle * axis[1];
+    const f32 q4 = sinHalfAngle * axis[2];
 
-    axis *= std::sin(halfAngle);
-    _q = {q1, axis[0], axis[1], axis[2]};
+     _q = {q1, q2, q3, q4};
   }
   
   Rotation3d::Rotation3d(const RotationVector3d& Rvec)
