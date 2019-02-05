@@ -78,7 +78,6 @@ target_link_libraries(cti_common_robot
   PUBLIC
   util
   cti_common_clad_cpplite
-  cti_common
   PRIVATE
   ${ASAN_LINKER_FLAGS}
 )
