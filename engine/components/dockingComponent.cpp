@@ -97,8 +97,7 @@ Result DockingComponent::DockWithObject(const ObjectID objectID,
   
   // If the dock object is expected to move, then mark as dirty so that the robot no longer localizes to this object
   if (ExpectDockObjectToMove(dockAction, true)) {
-    const bool propagateStack = false;
-    _robot->GetObjectPoseConfirmer().MarkObjectDirty(object, propagateStack);
+    _robot->GetObjectPoseConfirmer().MarkObjectDirty(object);
   }
   
   _lastPickOrPlaceSucceeded = false;
@@ -295,19 +294,12 @@ bool DockingComponent::CanInteractWithObjectHelper(const ObservableObject& objec
   // check that the object is ready to place on top of
   if( !object.IsRestingFlat() ||
      (_robot->GetCarryingComponent().IsCarryingObject() &&
-      _robot->GetCarryingComponent().GetCarryingObject() == object.GetID()) ) {
+      _robot->GetCarryingComponent().GetCarryingObjectID() == object.GetID()) ) {
        return false;
      }
   
   // check if we can transform to robot space
   if ( !object.GetPose().GetWithRespectTo(_robot->GetPose(), relPose) ) {
-    return false;
-  }
-  
-  // check if it has something on top
-  const ObservableObject* objectOnTop = _robot->GetBlockWorld().FindLocatedObjectOnTopOf(object,
-                                                                                        STACKED_HEIGHT_TOL_MM);
-  if ( nullptr != objectOnTop ) {
     return false;
   }
   

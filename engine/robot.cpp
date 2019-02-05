@@ -743,16 +743,13 @@ void Robot::Delocalize(bool isCarryingObject)
   if (GetCarryingComponent().IsCarryingObject())
   {
     // Carried objects are in the pose chain of the robot, whose origin has now changed.
-    // Thus the carried objects' actual origin no longer matches the way they are stored
+    // Thus the carried object's actual origin no longer matches the way they are stored
     // in BlockWorld.
-    for(auto const& objectID : GetCarryingComponent().GetCarryingObjects())
+    const auto& objectID = GetCarryingComponent().GetCarryingObjectID();
+    const Result result = GetBlockWorld().UpdateObjectOrigin(objectID, oldOriginID);
+    if(RESULT_OK != result)
     {
-      const Result result = GetBlockWorld().UpdateObjectOrigin(objectID, oldOriginID);
-      if(RESULT_OK != result)
-      {
-        LOG_WARNING("Robot.Delocalize.UpdateObjectOriginFailed", "Object %d", objectID.GetValue());
-      }
-
+      LOG_WARNING("Robot.Delocalize.UpdateObjectOriginFailed", "Object %d", objectID.GetValue());
     }
   }
 
@@ -1365,8 +1362,6 @@ Result Robot::Update()
     std::vector<ObservableObject*> matchingObjects;
     GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects); // note this doesn't retrieve unknowns anymore
     for( const auto obj : matchingObjects ) {
-        const ObservableObject* topObj __attribute__((unused)) =
-            GetBlockWorld().FindLocatedObjectOnTopOf(*obj, STACKED_HEIGHT_TOL_MM);
         Pose3d relPose;
         bool gotRelPose __attribute__((unused)) =
             obj->GetPose().GetWithRespectTo(GetPose(), relPose);
@@ -1382,16 +1377,15 @@ Result Robot::Update()
         }
 
         LOG_DEBUG("Robot.ObjectInteractionState",
-                  "block:%d poseState:%8s moving?%d RestingFlat?%d carried?%d poseWRT?%d objOnTop:%d"
+                  "block:%d poseState:%8s moving?%d RestingFlat?%d carried?%d poseWRT?%d"
                   " z=%6.2f UpAxis:%s CanStack?%d CanPickUp?%d FromGround?%d",
                   obj->GetID().GetValue(),
                   PoseStateToString( obj->GetPoseState() ),
                   obj->IsMoving(),
                   obj->IsRestingFlat(),
                   (GetCarryingComponent().IsCarryingObject() && GetCarryingComponent().
-                   GetCarryingObject() == obj->GetID()),
+                   GetCarryingObjectID() == obj->GetID()),
                   gotRelPose,
-                  topObj ? topObj->GetID().GetValue() : -1,
                   relPose.GetTranslation().z(),
                   axisStr,
                   GetDockingComponent().CanStackOnTopOfObject(*obj),
@@ -1684,10 +1678,10 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
 
   if (nullptr != seenObject)
   {
-    //
-    if ((lastResult = AddVisionOnlyStateToHistory(seenObject->GetLastObservedTime(),
-                                                robotPoseWrtOrigin,
-                                                headAngle, liftAngle)) != RESULT_OK)
+    lastResult = AddVisionOnlyStateToHistory(seenObject->GetLastObservedTime(),
+                                             robotPoseWrtOrigin,
+                                             headAngle, liftAngle);
+    if (lastResult != RESULT_OK)
     {
       LOG_ERROR("Robot.LocalizeToObject.FailedAddingVisionOnlyPoseToHistory", "");
       return lastResult;
@@ -1701,9 +1695,9 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   if (!existingObject->GetPose().HasSameRootAs(origOrigin))
   {
     LOG_INFO("Robot.LocalizeToObject.RejiggeringOrigins",
-                     "Robot's current origin is %s, about to localize to origin %s.",
-                     origOrigin.GetName().c_str(),
-                     existingObject->GetPose().FindRoot().GetName().c_str());
+             "Robot's current origin is %s, about to localize to origin %s.",
+             origOrigin.GetName().c_str(),
+             existingObject->GetPose().FindRoot().GetName().c_str());
 
     const PoseOriginID_t origOriginID = GetPoseOriginList().GetCurrentOriginID();
 
@@ -1729,8 +1723,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
       // after updating all block world objects, flatten out origins to remove grandparents
       _poseOrigins->Flatten(newOriginID);
     }
-
-  } // if(_worldOrigin != &existingObject->GetPose().FindRoot())
+  }
 
 
   if (nullptr != histStatePtr)
@@ -2284,12 +2277,11 @@ ExternalInterface::RobotState Robot::GetRobotState() const
 
   if (GetCarryingComponent().IsCarryingObject()) {
     msg.status |= (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK;
-    msg.carryingObjectID = GetCarryingComponent().GetCarryingObject();
-    msg.carryingObjectOnTopID = GetCarryingComponent().GetCarryingObjectOnTop();
+    msg.carryingObjectID = GetCarryingComponent().GetCarryingObjectID();
   } else {
     msg.carryingObjectID = -1;
-    msg.carryingObjectOnTopID = -1;
   }
+  msg.carryingObjectOnTopID = -1;
 
   msg.headTrackingObjectID = GetMoveComponent().GetTrackToObject();
 
@@ -2346,12 +2338,12 @@ external_interface::RobotState* Robot::GenerateRobotStateProto() const
 
   if (GetCarryingComponent().IsCarryingObject()) {
     status |= (uint32_t)RobotStatusFlag::IS_CARRYING_BLOCK;
-    msg->set_carrying_object_id(GetCarryingComponent().GetCarryingObject());
-    msg->set_carrying_object_on_top_id(GetCarryingComponent().GetCarryingObjectOnTop());
+    msg->set_carrying_object_id(GetCarryingComponent().GetCarryingObjectID());
   } else {
     msg->set_carrying_object_id(-1);
-    msg->set_carrying_object_on_top_id(-1);
   }
+  msg->set_carrying_object_on_top_id(-1);
+  
   msg->set_status(status);
 
   msg->set_head_tracking_object_id(GetMoveComponent().GetTrackToObject());

@@ -72,6 +72,7 @@ enum uint_8 BehaviorClass {
   // coordinators
   CoordinateGlobalInterrupts,
   CoordinateInHabitat,
+  CoordinateWhileHeldInPalm,
   CoordinateWhileInAir,
   QuietModeCoordinator,
 

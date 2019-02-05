@@ -115,8 +115,8 @@ private:
   InstanceConfig   _iConfig;
   DynamicVariables _dVars;
   
-  void TransitionToHeadStraight();
   void TransitionToStartSearch();
+  void TransitionToLookInPlace();
   void TransitionToSearchTurn();
   void TransitionToRandomDrive();
   

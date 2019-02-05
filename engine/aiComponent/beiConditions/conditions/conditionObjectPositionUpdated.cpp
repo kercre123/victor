@@ -105,7 +105,7 @@ void ConditionObjectPositionUpdated::HandleObjectObserved(BehaviorExternalInterf
   Pose3d obsPose( msg.pose, robotInfo.GetPoseOriginList() );
 
   // ignore cubes we are carrying or docking to (don't react to them)
-  if(msg.objectID == robotInfo.GetCarryingComponent().GetCarryingObject() ||
+  if(msg.objectID == robotInfo.GetCarryingComponent().GetCarryingObjectID() ||
      msg.objectID == robotInfo.GetDockingComponent().GetDockObject())
   {
     const bool considerReaction = false;

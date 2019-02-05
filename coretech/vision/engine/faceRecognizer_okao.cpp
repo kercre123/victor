@@ -483,14 +483,14 @@ namespace Vision {
           if(kFaceRecognitionExtraDebug)
           {
             LOG_INFO("UpdateRecognitionData.MergeBasedOnEnrollmentTime",
-                          "Merging ID=%d into ID=%d (%d enrolled at %s, %d enrolled at %s)",
-                          mergeFrom,  mergeTo, faceID,
-                          EnrolledFaceEntry::GetTimeString(faceIDenrollData->second.GetEnrollmentTime()).c_str(),
-                          recognizedID,
-                          EnrolledFaceEntry::GetTimeString(recIDenrollData->second.GetEnrollmentTime()).c_str());
+                     "Merging ID=%d into ID=%d (%d enrolled at %s, %d enrolled at %s)",
+                     mergeFrom,  mergeTo, faceID,
+                     EnrolledFaceEntry::GetTimeString(faceIDenrollData->second.GetEnrollmentTime()).c_str(),
+                     recognizedID,
+                     EnrolledFaceEntry::GetTimeString(recIDenrollData->second.GetEnrollmentTime()).c_str());
           }
         }
-
+        
         if(mergeFrom != Vision::UnknownFaceID && mergeTo != Vision::UnknownFaceID)
         {
           // Only merge the face we are currently tracking into another record
@@ -499,26 +499,26 @@ namespace Vision {
           if(mergeFrom == recognizedID || isMergingAllowed)
           {
             LOG_INFO("UpdateRecognitionData.MergingFaces",
-                          "Tracking %d: merging ID=%d into ID=%d (merging allowed=%d)",
-                          -_detectionInfo.nID, mergeFrom, mergeTo, isMergingAllowed);
-
+                     "Tracking %d: merging ID=%d into ID=%d (merging allowed=%d)",
+                     -_detectionInfo.nID, mergeFrom, mergeTo, isMergingAllowed);
+            
             Result mergeResult = MergeFaces(mergeTo, mergeFrom);
-
+            
             if(RESULT_OK != mergeResult) {
               LOG_WARNING("FaceRecognizer.UpdateRecognitionData.MergeFail",
-                                  "Trying to merge %d with %d", faceID, recognizedID);
+                          "Trying to merge %d with %d", faceID, recognizedID);
             }
           }
           else if(mergeFrom == _enrollmentID)
           {
             LOG_INFO("UpdateRecognitionData.UpdateEnrollmentID",
-                          "Updating enrollment ID %d->%d while to tracking %d (not merging)",
-                          _enrollmentID, mergeTo, -_detectionInfo.nID);
+                     "Updating enrollment ID %d->%d while to tracking %d (not merging)",
+                     _enrollmentID, mergeTo, -_detectionInfo.nID);
             _enrollmentID = mergeTo;
           } else if(kFaceRecognitionExtraDebug) {
             LOG_INFO("UpdateRecognitionData.NotMergingTrackedFace",
-                          "Enrollment disabled: not merging tracked face ID=%d into recognized ID=%d",
-                          faceID, recognizedID);
+                     "Enrollment disabled: not merging tracked face ID=%d into recognized ID=%d",
+                     faceID, recognizedID);
           }
 
           // Either way we want to update the ID associated with this tracker ID
@@ -994,7 +994,7 @@ namespace Vision {
     if(_enrollmentID != UnknownFaceID && _enrollmentCount > 0)
     {
       LOG_INFO("FaceRecognizer.CancelExistingEnrollment",
-                    "Cancelling enrollment of ID %d", _enrollmentID);
+               "Cancelling enrollment of FaceID %d", _enrollmentID);
       _isEnrollmentCancelled = true;
       
       // Remove the (partial) album entry we were in the process of enrolling
@@ -1003,31 +1003,51 @@ namespace Vision {
       {
         LOG_WARNING("FaceRecognizer.CancelExistingEnrollment.NoEnrollmentDataToErase",
                     "enrollmentID=%d", _enrollmentID);
+        return;
       }
-      else
+      
+      const auto& albumEntries = enrollDataIter->second.GetAlbumEntries();
+      if(albumEntries.empty())
       {
-        if(enrollDataIter->second.GetNumAlbumEntries() == 1)
+        // This really should not happen: erase the bad entry if it does (if there are no
+        // album entries associated with a faceID, we can never match to it)
+        LOG_ERROR("FaceRecognizer.CancelExistingEnrollment.EmptyAlbumEntries",
+                  "Erasing %s enrollmentID=%d",
+                  (enrollDataIter->second.IsForThisSessionOnly() ? "session-only" : "named"),
+                  _enrollmentID);
+        EraseFace(_enrollmentID);
+        return;
+      }
+      
+      // By definition, there can't be "mixing" of enrollments of different people if there's only
+      // one album entry for this ID. Just leave it as a session-only entry, since that doesn't
+      // really cause any harm.
+      if(albumEntries.size() == 1)
+      {
+        return;
+      }
+      
+      // Figure out which album entry we were in the process of adding/updating for the current enrollment ID
+      // and erase it. We'll use the most recently seen one.
+      auto albumEntryIter = albumEntries.begin();
+      AlbumEntryID_t mostRecentAlbumeEntryID = albumEntryIter->first;
+      EnrolledFaceEntry::Time mostRecentTime = albumEntryIter->second;
+      ++albumEntryIter;
+      while(albumEntryIter != albumEntries.end())
+      {
+        if(albumEntryIter->second > mostRecentTime)
         {
-          LOG_INFO("FaceRecognizer.CancelExistingEnrollment.ErasingFace",
-                   "Removing entire Face %d, which had only one album entry remaining",
-                   _enrollmentID);
-          EraseFace(_enrollmentID);
-        }
-        else if(ANKI_VERIFY(enrollDataIter->second.GetAlbumEntries().find(_nextAlbumEntry)
-                            != enrollDataIter->second.GetAlbumEntries().end(),
-                            "FaceRecognizer.CancelExistingEnrollment.BadNextAlbumEntry",
-                            "AlbumEntry:%d",
-                            _nextAlbumEntry))
-        {
-          // Just remove the album entry we were enrolling into
-          enrollDataIter->second.RemoveAlbumEntry(_nextAlbumEntry);
-          _albumEntryToFaceID.erase(_nextAlbumEntry);
-          
-          LOG_INFO("FaceRecognizer.CancelExistingEnrollment.RemoveAlbumEntry",
-                   "Removed AlbumEntry %d from Face %d, %zu entries remain",
-                   _nextAlbumEntry, _enrollmentID, enrollDataIter->second.GetNumAlbumEntries());
+          mostRecentTime = albumEntryIter->second;
+          mostRecentAlbumeEntryID = albumEntryIter->first;
         }
       }
+      
+      enrollDataIter->second.RemoveAlbumEntry(mostRecentAlbumeEntryID);
+      _albumEntryToFaceID.erase(mostRecentAlbumeEntryID);
+      
+      LOG_INFO("FaceRecognizer.CancelExistingEnrollment.RemoveAlbumEntry",
+               "Removed AlbumEntry %d from Face %d, %zu entries remain",
+               _nextAlbumEntry, _enrollmentID, enrollDataIter->second.GetNumAlbumEntries());
     }
   } // CancelExistingEnrollment()
   

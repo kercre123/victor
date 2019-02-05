@@ -250,7 +250,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PickupObje
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
     }
-    action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
 
     return action;
   }
@@ -264,7 +263,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PickupObje
     action->SetDoNearPredockPoseCheck(false);
     // We don't care about a specific marker just that we are docking with the correct object
     action->SetShouldVisuallyVerifyObjectOnly(true);
-    action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
     return action;
   }
 }
@@ -324,7 +322,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceOnObj
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
     }
-    action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
     return action;
   } else {
     PlaceRelObjectAction* action = new PlaceRelObjectAction(selectedObjectID,
@@ -334,7 +331,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::PlaceOnObj
     action->SetDoNearPredockPoseCheck(false);
     // We don't care about a specific marker just that we are docking with the correct object
     action->SetShouldVisuallyVerifyObjectOnly(true);
-    action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
     return action;
   }
 }
@@ -511,7 +507,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::RollObject
     {
       robot.GetPathComponent().SetCustomMotionProfileForAction(msg.motionProf, action);
     }
-    action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
     return action;
   } else {
     RollObjectAction* action = new RollObjectAction(selectedObjectID);
@@ -523,7 +518,6 @@ IActionRunner* GetActionHelper(Robot& robot, const ExternalInterface::RollObject
     action->SetDoNearPredockPoseCheck(false);
     // We don't care about a specific marker just that we are docking with the correct object
     action->SetShouldVisuallyVerifyObjectOnly(true);
-    action->SetShouldCheckForObjectOnTopOf(msg.checkForObjectOnTop);
     action->EnableRollWithoutDock(msg.rollWithoutDocking);
     return action;
   }
@@ -1647,12 +1641,12 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::DrawPoseMarker& m
   {
     if(robot->GetCarryingComponent().IsCarryingObject()) {
       Pose3d targetPose(msg.rad, Z_AXIS_3D(), Vec3f(msg.x_mm, msg.y_mm, 0));
-      const ObservableObject* carryObject = robot->GetBlockWorld().GetLocatedObjectByID(robot->GetCarryingComponent().GetCarryingObject());
+      const ObservableObject* carryObject = robot->GetBlockWorld().GetLocatedObjectByID(robot->GetCarryingComponent().GetCarryingObjectID());
       if(nullptr == carryObject)
       {
         PRINT_NAMED_WARNING("RobotEventHandler.HandleDrawPoseMarker.NullCarryObject",
                             "Carry object set to ID=%d, but BlockWorld returned NULL",
-                            robot->GetCarryingComponent().GetCarryingObject().GetValue());
+                            robot->GetCarryingComponent().GetCarryingObjectID().GetValue());
         return;
       }
       Quad2f objectFootprint = carryObject->GetBoundingQuadXY(targetPose);

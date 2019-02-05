@@ -890,7 +890,7 @@ void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
     }
   }
   
-  if(_robot->GetCarryingComponent().GetCarryingObject() == objectID)
+  if(_robot->GetCarryingComponent().GetCarryingObjectID() == objectID)
   {
     animTrigger = CubeAnimationTrigger::Carrying;
   }
