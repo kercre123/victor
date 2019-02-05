@@ -282,7 +282,6 @@ BackupOntoChargerAction::BackupOntoChargerAction(ObjectID chargerID,
   
   // Don't turn toward the object since we're expected to be facing away from it
   SetShouldFirstTurnTowardsObject(false);
-  SetShouldCheckForObjectOnTopOf(false);
 }
 
 

@@ -113,6 +113,7 @@ enum uint_16 BehaviorID {
   ConnectToCube,
   CoordinateGlobalInterrupts,
   CoordinateInHabitat,
+  CoordinateWhileHeldInPalm,
   CoordinateWhileInAir,
 
   // victorBehaviorTree/danceToTheBeat
@@ -317,9 +318,13 @@ enum uint_16 BehaviorID {
   WhatsMyNameVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates/whileInAir/heldInPalm
-  ReactToJoltInPalm,
   HeldInPalmDispatcher,
   HeldInPalmResponses,
+  InitialHeldInPalmReaction,
+  ReactToJoltInPalm,
+  ReactToPalmTilt,
+  ReactToPickupFromPalm,
+  ReactToPutDownFromPalm,
 
   // victorBehaviorTree/highLevelDelegates/whileInAir
   InitialPickupAnimation,

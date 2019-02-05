@@ -49,6 +49,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/character/howOldAreYou/behaviorHowOldAreYou.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateGlobalInterrupts.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateInHabitat.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateWhileHeldInPalm.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateWhileInAir.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorQuietModeCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/cubeSpinner/behaviorVectorPlaysCubeSpinner.h"
@@ -438,6 +439,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::CoordinateInHabitat:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorCoordinateInHabitat(config));
+      break;
+    }
+      
+    case BehaviorClass::CoordinateWhileHeldInPalm:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorCoordinateWhileHeldInPalm(config));
       break;
     }
     

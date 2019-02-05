@@ -89,18 +89,23 @@ bool DataPlatform::readAsJson(const Scope& resourceScope, const std::string& res
 // reads resource as json file. returns true if successful.
 bool DataPlatform::readAsJson(const std::string& resourceName, Json::Value& data)
 {
-  std::ifstream jsonFile(resourceName);
-  Json::Reader reader;
-  bool success = reader.parse(jsonFile, data);
-  if (!success) {
-    LOG_ERROR("DataPlatform.readAsJson", "Failed to read [%s]", resourceName.c_str());
-    const std::string& errors = reader.getFormattedErrorMessages();
-    if (!errors.empty()) {
-      LOG_DEBUG("DataPlatform.readAsJson", "Json reader errors [%s]", errors.c_str());
+  try {
+    std::ifstream jsonFile(resourceName);
+    Json::Reader reader;
+    bool success = reader.parse(jsonFile, data);
+    if (!success) {
+      LOG_ERROR("DataPlatform.readAsJson", "Failed to read [%s]", resourceName.c_str());
+      const std::string& errors = reader.getFormattedErrorMessages();
+      if (!errors.empty()) {
+        LOG_DEBUG("DataPlatform.readAsJson", "Json reader errors [%s]", errors.c_str());
+      }
     }
+    jsonFile.close();
+    return success;
+  } catch (const std::exception & ex) {
+    LOG_ERROR("DataPlatform.readAsJson", "Failed to read [%s] (%s)", resourceName.c_str(), ex.what());
+    return false;
   }
-  jsonFile.close();
-  return success;
 }
 
 // write data to json file. returns true if successful.

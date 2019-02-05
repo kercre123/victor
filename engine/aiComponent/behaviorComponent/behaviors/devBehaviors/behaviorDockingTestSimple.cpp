@@ -407,8 +407,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
                                           robot.GetPose(),
                                           {(kRollInsteadOfPickup ? PreActionPose::ROLLING : PreActionPose::DOCKING)},
                                           {_dVars.initialVisionMarker.GetCode()},
-                                          obstacles,
-                                          nullptr);
+                                          obstacles);
         
         if(preActionPoses.empty())
         {
@@ -662,8 +661,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
                                         robot.GetPose(),
                                         {(kRollInsteadOfPickup ? PreActionPose::ROLLING : PreActionPose::DOCKING)},
                                         {_dVars.initialVisionMarker.GetCode()},
-                                        obstacles,
-                                        nullptr);
+                                        obstacles);
       
       if(preActionPoses.size() != kExpectedNumPreDockPoses)
       {
@@ -675,8 +673,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
                                             robot.GetPose(),
                                             {(kRollInsteadOfPickup ? PreActionPose::ROLLING : PreActionPose::DOCKING)},
                                             {_dVars.markerBeingSeen.GetCode()},
-                                            obstacles,
-                                            nullptr);
+                                            obstacles);
           
           if(preActionPoses.size() != kExpectedNumPreDockPoses)
           {

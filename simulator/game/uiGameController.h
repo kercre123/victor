@@ -100,7 +100,6 @@ protected:
   virtual void HandleRobotStateUpdate(const ExternalInterface::RobotState& msg){};
   virtual void HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg){};
   virtual void HandleRobotObservedFace(const ExternalInterface::RobotObservedFace& msg){};
-  virtual void HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg){};
   virtual void HandleRobotObservedPet(const ExternalInterface::RobotObservedPet& msg) {};
   virtual void HandleRobotDeletedLocatedObject(const ExternalInterface::RobotDeletedLocatedObject& msg){};
   virtual void HandleUiDeviceAvailable(const ExternalInterface::UiDeviceAvailable& msgIn){};
@@ -350,7 +349,6 @@ protected:
   f32           GetLiftHeight_mm() const;
   void          GetWheelSpeeds_mmps(f32& left, f32& right) const;
   s32           GetCarryingObjectID() const;
-  s32           GetCarryingObjectOnTopID() const;
   bool          IsRobotStatus(RobotStatusFlag mask) const;
   
   const ExternalInterface::RobotState& GetRobotState() const { return _robotStateMsg; }

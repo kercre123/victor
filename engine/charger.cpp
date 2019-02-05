@@ -245,33 +245,7 @@ namespace Anki {
     {
       return kUseChargerForLocalization;
     }
-        
-    bool Charger::IsPreActionPoseValid(const PreActionPose& preActionPose,
-                                    const Pose3d* reachableFromPose,
-                                    const std::vector<std::pair<Quad2f,ObjectID> >& obstacles) const
-    {
-      bool isValid = ActionableObject::IsPreActionPoseValid(preActionPose, reachableFromPose, obstacles);
-      
-      // TODO: While charger pose estimation is as jumpy as it currently is, skip height check
-      /*
-      if(isValid && reachableFromPose != nullptr && preActionPose.GetActionType() == PreActionPose::ENTRY) {
-        // Valid according to default check, now continue with checking reachability:
-        // Make sure reachableFrom pose is at about the same height of the ENTRY pose.
-        
-        Pose3d reachableFromWrtEntryPose;
-        if(reachableFromPose->GetWithRespectTo(*preActionPose.GetPose().GetParent(), reachableFromWrtEntryPose) == false) {
-          PRINT_NAMED_WARNING("Charger.IsPreActionPoseValid.PoseOriginMisMatch",
-                              "Could not get specified reachableFrom pose w.r.t. entry action's pose.\n");
-          isValid = false;
-        } else {
-          const f32 zThreshold = 10.f;
-          isValid = std::fabsf(reachableFromWrtEntryPose.GetTranslation().z()) < zThreshold;
-        }
-      }
-       */
-      
-      return isValid;
-    }
+
     
   } // namespace Vector
 } // namespace Anki

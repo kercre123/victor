@@ -69,7 +69,7 @@ namespace Anki {
             // Roll first LightCube
             _cubeID = objIds[0];
             
-            m.action.Set_rollObject(ExternalInterface::RollObject(_cubeID, _defaultTestMotionProfile, 0, false, false, true, true, false));
+            m.action.Set_rollObject(ExternalInterface::RollObject(_cubeID, _defaultTestMotionProfile, 0, false, false, true, false));
             ExternalInterface::MessageGameToEngine message;
             message.Set_QueueSingleAction(m);
             SendMessage(message);

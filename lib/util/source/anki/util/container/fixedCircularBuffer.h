@@ -169,6 +169,25 @@ public:
     nextSlot = newEntry;
   }
   
+  // Push back continous data without copy
+  // Return false if there is not enough continuous memory
+  bool push_back(T*& out_dataHeadPtr, size_t pushSize)
+  {
+    out_dataHeadPtr = nullptr;
+    const size_t dataIndex = ItemIndexToBufferIndex(_numEntries);
+    // Check if there is enough room
+    const long remainingCap = capacity() - size();
+    // Remaing space before end of array
+    const long remainingSpace = capacity() - dataIndex - pushSize;
+    if ( (remainingCap < pushSize) || (remainingSpace < 0) )
+    {
+      return false;
+    }
+    out_dataHeadPtr = &_buffer[dataIndex];
+    _numEntries += pushSize;
+    return true;
+  }
+  
   void push_back(const T& newEntry)
   {
     auto& nextSlot = push_back();
@@ -236,7 +255,8 @@ public:
   {
     return (*this)[size()-1];
   }
-  
+
+
 private:
   
   size_t ItemIndexToBufferIndex(size_t itemIndex) const

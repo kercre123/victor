@@ -23,9 +23,9 @@
             },
             "avs-device-sdk": {
                 "checksums": {
-                    "sha256": "052ad8307236e262b64839ec427a33c9c18e7567e57c5175a65fc4f661f8181d"
+                    "sha256": "63a00aa1c1e111f794d81338279b94343ae72976fa328cefa923f0855c827beb"
                 },
-                "version": "v1.10-anki"
+                "version": "30e278a"
             },
             "flatbuffers": {
                 "checksums": {
@@ -84,7 +84,7 @@
         "repo_names": {
             "anki-thirdparty": {
                 "branch": "branches/victor",
-                "version": "202"
+                "version": "203"
             },
             "victor-animation-assets": {
                 "additional_files": [
@@ -105,7 +105,7 @@
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "162"
+                "version": "164"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

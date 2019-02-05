@@ -335,7 +335,7 @@ bool ObjectInteractionInfoCache::CanPickupAxisCheck(const ObservableObject* obje
 bool ObjectInteractionInfoCache::CanUseAsStackTopNoAxisCheck(const ObservableObject* object) const
 {
   if(_robot.GetCarryingComponent().IsCarryingObject()) {
-    return object == _robot.GetBlockWorld().GetLocatedObjectByID(_robot.GetCarryingComponent().GetCarryingObject());
+    return object == _robot.GetBlockWorld().GetLocatedObjectByID(_robot.GetCarryingComponent().GetCarryingObjectID());
   }else{
     return CanPickupNoAxisCheck(object);
   }
@@ -346,7 +346,7 @@ bool ObjectInteractionInfoCache::CanUseAsStackTopNoAxisCheck(const ObservableObj
 bool ObjectInteractionInfoCache::CanUseAsStackTopAxisCheck(const ObservableObject* object) const
 {
   if(_robot.GetCarryingComponent().IsCarryingObject()) {
-    const bool isCarriedObj = (object == _robot.GetBlockWorld().GetLocatedObjectByID(_robot.GetCarryingComponent().GetCarryingObject()));
+    const bool isCarriedObj = (object == _robot.GetBlockWorld().GetLocatedObjectByID(_robot.GetCarryingComponent().GetCarryingObjectID()));
     const bool isCarriedUpright = (object->GetPose().GetRotationMatrix().GetRotatedParentAxis<'Z'>() == AxisName::Z_POS);
     return isCarriedObj && isCarriedUpright;
   }else{
