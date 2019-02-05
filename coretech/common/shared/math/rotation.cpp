@@ -262,6 +262,7 @@ namespace Anki {
   {
     const f32 halfAngle = angle.ToFloat() * 0.5f;
     const f32 q1 = std::cos(halfAngle);
+ 
     DEV_ASSERT_MSG(FLT_NEAR(axis.LengthSq(), 1.f), "Rotation3d.Constructor.NonUnitAxisLength",
                    "%s, Length=%f", axis.ToString().c_str(), axis.LengthSq());
 
@@ -270,7 +271,7 @@ namespace Anki {
     const f32 q3 = sinHalfAngle * axis[1];
     const f32 q4 = sinHalfAngle * axis[2];
 
-     _q = {q1, q2, q3, q4};
+    _q = {q1, q2, q3, q4};
   }
   
   Rotation3d::Rotation3d(const RotationVector3d& Rvec)
