@@ -41,6 +41,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleFunction.h"
 #include "util/logging/DAS.h"
+#include "util/logging/latencyHelper.h"
 #include "webServerProcess/src/webVizSender.h"
 
 
@@ -232,6 +233,9 @@ UserIntentPtr UserIntentComponent::ActivateUserIntent(UserIntentTag userIntent, 
     // just in case we were told to transition, let's stop it
     _activeIntentFeedback.StopTransitionIntoActive();
   }
+
+  RECORD_INTERVAL_TIME( "Response.IntentBehaviorActivated" );
+  END_INTERVAL_TIME();
 
   return _activeIntent;
 }
@@ -535,6 +539,7 @@ void UserIntentComponent::SetUserIntentPending(UserIntent&& userIntent, const Us
 
 
   if (_pendingIntent == nullptr) {
+    RECORD_INTERVAL_TIME( "Cloud.IntentReady" );
     _pendingIntent.reset( new UserIntentData(userIntent, source) );
   } else {
     _pendingIntent->intent = std::move(userIntent);
@@ -1120,6 +1125,17 @@ void UserIntentComponent::DisableEngineResponseToTriggerWord( const std::string&
 void UserIntentComponent::OnCloudData(CloudMic::Message&& data)
 {
   LOG_DEBUG("UserIntentComponent.OnCloudData", "'%s'", CloudMic::MessageTagToString(data.GetTag()) );
+
+  if ( data.GetTag() == CloudMic::MessageTag::result )
+  {
+    BEGIN_INTERVAL_TIME();
+    RECORD_INTERVAL_TIME( "Cloud.IntentReceived" );
+  }
+  else if ( data.GetTag() == CloudMic::MessageTag::streamOpen )
+  {
+    BEGIN_INTERVAL_TIME();
+    RECORD_INTERVAL_TIME( "Cloud.StreamOpened" );
+  }
 
   std::lock_guard<std::mutex> lock{_mutex};
   _pendingCloudIntent = std::move(data);

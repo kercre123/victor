@@ -53,6 +53,7 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/logging/latencyHelper.h"
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 #include "util/logging/printfLoggerProvider.h"
@@ -211,6 +212,8 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
   if (Anki::Util::gTickTimeProvider == nullptr) {
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
   }
+
+  INIT_LATENCY_INTERVALS( dataPlatform->pathToResource(Util::Data::Scope::Cache, "engine_latency.json") );
 
   //
   // The "engine thread" is meant to be the one Update is run on. However, on some systems, some messaging

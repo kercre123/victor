@@ -37,6 +37,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/DAS.h"
+#include "util/logging/latencyHelper.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 
@@ -342,6 +343,8 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       case CloudMic::MessageTag::stopSignal:
         LOG_INFO("MicDataSystem.Update.RecvCloudProcess.StopSignal", "");
         receivedStopMessage = true;
+
+        END_INTERVAL_TIME();
         break;
 
       #if ANKI_DEV_CHEATS
@@ -459,6 +462,8 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         }
         SendUdpMessage(CloudMic::Message::Createhotword(std::move(hw)));
         LOG_INFO("MicDataSystem.Update.StreamingStart", "");
+
+        RECORD_INTERVAL_TIME( "VoiceRecording.Begin" );
       }
       else
       {
@@ -480,6 +485,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
           if (didTimeout)
           {
             SendUdpMessage(CloudMic::Message::CreateaudioDone({}));
+            RECORD_INTERVAL_TIME( "VoiceRecording.Timeout" );
           }
           LOG_INFO("MicDataSystem.Update.StreamingEnd", "%zu ms", _streamingAudioIndex * kTimePerSEBlock_ms);
           #if ANKI_DEV_CHEATS

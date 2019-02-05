@@ -44,6 +44,7 @@
 
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
+#include "util/logging/latencyHelper.h"
 #include "util/logging/logging.h"
 #include "util/time/universalTime.h"
 
@@ -79,6 +80,8 @@ AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
   if (Anki::Util::gTickTimeProvider == nullptr) {
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
   }
+
+  INIT_LATENCY_INTERVALS( dataPlatform->pathToResource(Util::Data::Scope::Cache, "anim_latency.json") );
 
   _microphoneAudioClient.reset(new Audio::MicrophoneAudioClient(_context->GetAudioController()));
 

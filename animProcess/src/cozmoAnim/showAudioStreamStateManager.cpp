@@ -19,6 +19,7 @@
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/robotDataLoader.h"
 #include "util/string/stringUtils.h"
+#include "util/logging/latencyHelper.h"
 
 #include "audioEngine/audioTypeTranslator.h"
 
@@ -147,6 +148,7 @@ void ShowAudioStreamStateManager::StartTriggerResponseWithoutGetIn(OnTriggerAudi
       });
     }
 
+    RECORD_INTERVAL_TIME("EarconStarted");
     controller->PostAudioEvent(ToAudioEventId(_postAudioEvent.audioEvent),
                                ToAudioGameObject(_postAudioEvent.gameObject),
                                audioCallbackContext);

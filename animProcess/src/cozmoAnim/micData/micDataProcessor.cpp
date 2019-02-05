@@ -33,6 +33,7 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
+#include "util/logging/latencyHelper.h"
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include "util/threading/threadPriority.h"
@@ -207,6 +208,9 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
       LOG_WARNING("MicDataProcessor.TWCallback", "Don't have a wake word response setup");
     }
   };
+
+  BEGIN_INTERVAL_TIME();
+  RECORD_INTERVAL_TIME( "TriggerWordDetected" );
   
   const bool muteButton = (source == TriggerWordDetectSource::ButtonFromMute);
   const bool buttonPress = (source == TriggerWordDetectSource::Button) || muteButton;
@@ -305,6 +309,8 @@ RobotTimeStamp_t MicDataProcessor::CreateStreamJob(CloudMic::StreamType streamTy
       newJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
     }
   }
+
+  RECORD_INTERVAL_TIME( "VoiceRecording.Created" );
 
   const bool isStreamingJob = true;
   _micDataSystem->AddMicDataJob(newJob, isStreamingJob);

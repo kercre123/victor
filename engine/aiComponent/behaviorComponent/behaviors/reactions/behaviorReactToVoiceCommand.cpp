@@ -44,6 +44,7 @@
 #include "micDataTypes.h"
 #include "osState/osState.h"
 #include "util/console/consoleInterface.h"
+#include "util/logging/latencyHelper.h"
 
 #include "clad/types/behaviorComponent/behaviorClasses.h"
 
@@ -908,6 +909,7 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
         // allow the reaction to not want to run in certain directions/states
         if ( _iVars.reactionBehavior->WantsToBeActivated() )
         {
+          RECORD_INTERVAL_TIME( "Response.TurnToUser" );
           DelegateIfInControl( _iVars.reactionBehavior.get(), &BehaviorReactToVoiceCommand::TransitionToIntentReceived );
         }
         else
@@ -955,6 +957,8 @@ void BehaviorReactToVoiceCommand::TransitionToIntentReceived()
       GetBehaviorComp<AttentionTransferComponent>().ResetAttentionTransfer(AttentionTransferReason::NoCloudConnection);
       _iVars.cloudErrorTracker.Reset();
       _iVars.wifiErrorTracker.Reset();
+
+      RECORD_INTERVAL_TIME( "Response.WaitingForIntentBehavior" );
       break;
     }
 
