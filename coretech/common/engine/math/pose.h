@@ -33,13 +33,13 @@
 
 #include "util/logging/logging.h"
 
-#include "coretech/common/engine/math/matrix.h"
-#include "coretech/common/engine/math/point_fwd.h"
+#include "coretech/common/shared/math/matrix.h"
+#include "coretech/common/shared/math/point_fwd.h"
 #include "coretech/common/engine/math/poseBase.h"
 #include "coretech/common/engine/math/quad.h"
-#include "coretech/common/engine/math/rotation.h"
+#include "coretech/common/shared/math/rotation.h"
 #include "coretech/common/engine/math/transform.h"
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/radians.h"
 
 #include "coretech/common/engine/exceptions.h"
 

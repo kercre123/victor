@@ -24,13 +24,12 @@
 #ifndef _ANKICORETECH_COMMON_ARRAY2D_IMPL_H_
 #define _ANKICORETECH_COMMON_ARRAY2D_IMPL_H_
 
-#include "coretech/common/engine/array2d.h"
-#include "coretech/common/engine/math/rect_impl.h"
-#include "util/logging/logging.h"
-
+#include "coretech/common/shared/array2d.h"
+#include "coretech/common/shared/math/rect_impl.h"
 #include "coretech/common/shared/types.h"
 
-#include "exceptions.h"
+#include "util/logging/logging.h"
+
 
 #include <iostream>
 #include <assert.h>
@@ -220,7 +219,7 @@ namespace Anki
   template<typename T>
   T  Array2d<T>::operator() (const int row, const int col) const
   {
-    CORETECH_THROW_IF(row >= GetNumRows() || col >= GetNumCols());
+    DEV_ASSERT(row < GetNumRows() && col < GetNumCols(), "Array2d.GetElement.OutOfBounds");
     
 #if ANKICORETECH_USE_OPENCV
     // Provide thin wrapper to OpenCV's (row,col) access:
@@ -231,7 +230,7 @@ namespace Anki
   template<typename T>
   T& Array2d<T>::operator() (const int row, const int col)
   {
-    CORETECH_THROW_IF(row >= GetNumRows() || col >= GetNumCols());
+    DEV_ASSERT(row < GetNumRows() && col < GetNumCols(), "Array2d.GetElement.OutOfBounds");
     
 #if ANKICORETECH_USE_OPENCV    
     // Provide thin wrapper to OpenCV's (row,col) access:

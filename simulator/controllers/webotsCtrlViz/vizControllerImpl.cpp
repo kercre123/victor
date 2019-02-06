@@ -13,7 +13,7 @@
 #include "vizControllerImpl.h"
 
 #include "simulator/controllers/shared/webotsHelpers.h"
-#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/shared/array2d_impl.h"
 #include "coretech/common/engine/colorRGBA.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "coretech/vision/engine/image.h"

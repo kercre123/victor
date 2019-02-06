@@ -152,7 +152,7 @@ private:
   
   std::vector<std::shared_ptr<std::istream>> GetConfigs() const;
   
-  void OnDirective(const std::string& directive, const std::string& payload);
+  void OnDirective(const std::string& directive, const std::string& payload, const std::string& fullUnparsed);
   
   void SetAuthState( AlexaAuthState state, const std::string& url, const std::string& code, bool errFlag );
   

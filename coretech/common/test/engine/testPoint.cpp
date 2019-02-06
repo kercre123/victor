@@ -1,6 +1,6 @@
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/shared/math/point.h"
  
 #include <iostream>
 
@@ -50,26 +50,4 @@ GTEST_TEST(TestPoint, PointInitialization)
   Point<2, int> p9 = {4, 3};
   EXPECT_TRUE(p9 == p8.CastTo<int>());
   
-}
-
-GTEST_TEST(TestPoint, CladConversion)
-{
-  const Point2f p2(1.23f, 4.56f);
-  const Point3f p3(1.23f, 4.56f, 7.89f);
-  
-  const CladPoint2d p2_clad = p2.ToCladPoint2d();
-  const CladPoint3d p3_clad = p3.ToCladPoint3d();
-  
-  EXPECT_TRUE(Util::IsFltNear(p2_clad.x, p2.x()));
-  EXPECT_TRUE(Util::IsFltNear(p2_clad.y, p2.y()));
-  
-  EXPECT_TRUE(Util::IsFltNear(p3_clad.x, p3.x()));
-  EXPECT_TRUE(Util::IsFltNear(p3_clad.y, p3.y()));
-  EXPECT_TRUE(Util::IsFltNear(p3_clad.z, p3.z()));
-  
-  const Point2f p2_check(p2_clad);
-  const Point3f p3_check(p3_clad);
-  
-  EXPECT_TRUE(IsNearlyEqual(p2, p2_check));
-  EXPECT_TRUE(IsNearlyEqual(p3, p3_check));
 }

@@ -48,6 +48,7 @@
 #include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/string/stringUtils.h"
+#include "webServerProcess/src/webService.h"
 
 #include <ACL/Transport/HTTP2TransportFactory.h>
 #include <AVSCommon/AVS/Initialization/AlexaClientSDKInit.h>
@@ -429,7 +430,7 @@ void AlexaImpl::InitThread()
     return;
   }
   
-  _client->SetDirectiveCallback( std::bind(&AlexaImpl::OnDirective, this, std::placeholders::_1, std::placeholders::_2) );
+  _client->SetDirectiveCallback( std::bind(&AlexaImpl::OnDirective, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3) );
   
   _client->AddSpeakerManagerObserver( _observer );
   _client->AddInternetConnectionObserver( _observer );
@@ -919,7 +920,7 @@ std::vector<std::shared_ptr<std::istream>> AlexaImpl::GetConfigs() const
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaImpl::OnDirective(const std::string& directive, const std::string& payload)
+void AlexaImpl::OnDirective(const std::string& directive, const std::string& payload, const std::string& fullUnparsed)
 {
   if( directive == "Play" || directive == "Speak" || directive == "SetAlert" || directive == "DeleteAlert" ) {
     _lastPlayDirective_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -928,6 +929,8 @@ void AlexaImpl::OnDirective(const std::string& directive, const std::string& pay
   // "StopCapture" might be it. needs further investigation to see how it overlaps with music audio
   
   if( kLogAlexaDirectives ) {
+    LOG_INFO( "AlexaImpl.OnDirective.Full", "%s", fullUnparsed.c_str() );
+    
     Json::Value json;
     Json::Reader reader;
     const float bsTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -937,6 +940,16 @@ void AlexaImpl::OnDirective(const std::string& directive, const std::string& pay
       Util::FileUtils::WriteFile( _alexaCacheFolder + kDirectivesFile,
                                   std::to_string(bsTime) + " " + directive + ": " + json.toStyledString(),
                                   append );
+      
+      // send to webviz, if a client is connected
+      auto* webService = _context->GetWebService();
+      static const std::string kWebVizModuleName = "alexa";
+      if( (webService != nullptr) && webService->IsWebVizClientSubscribed( kWebVizModuleName ) ) {
+        Json::Value data;
+        data["type"] = "directive";
+        data["data"] = json;
+        webService->SendToWebViz( kWebVizModuleName, data );
+      }
     }
   }
 }

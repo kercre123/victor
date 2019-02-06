@@ -19,8 +19,7 @@
 #include "opencv2/core.hpp"
 #endif
 
-#include "coretech/common/engine/math/quad.h"
-#include "clad/types/cladRect.h"
+#include "coretech/common/shared/math/point.h"
 
 namespace Anki {
   
@@ -41,19 +40,13 @@ namespace Anki {
     Rectangle(T x, T y, T width, T height);
     Rectangle(const Point2<T>& corner1, const Point2<T>& corner2);
     
-    // Construct bounding boxes:
-    template<typename T_other>
-    explicit Rectangle(const Quadrilateral<2,T_other>& quad);
-    
+    // Construct bounding boxes:    
     template<typename T_other>
     explicit Rectangle(const std::vector<Point<2,T_other> >& points);
     
-    template<size_t NumPoints>
-    explicit Rectangle(const std::array<Point<2,T>,NumPoints>& points);
-    
-    Rectangle(const CladRect& cladRect);
-    CladRect ToCladRect() const;
-    
+    template<size_t NumPoints, typename T_other>
+    explicit Rectangle(const std::array<Point<2,T_other>,NumPoints>& points);
+        
     T Area() const { return width*height; }
     
     // (x,y) is the top left
@@ -76,9 +69,7 @@ namespace Anki {
     inline Point<2,T> GetBottomRight() const;
     
     inline Point<2,T> GetMidPoint() const;
-    
-    void GetQuad(Quadrilateral<2,T>& quad) const;
-    
+        
     Rectangle<T> Intersect(const Rectangle<T>& other) const;
     
     bool Contains(const Point<2,T>& point) const;

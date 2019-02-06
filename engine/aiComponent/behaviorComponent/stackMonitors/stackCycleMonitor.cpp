@@ -23,6 +23,7 @@
 #include "engine/aiComponent/behaviorComponent/iBehavior.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "util/container/circularBuffer.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 
 namespace Anki {
@@ -33,6 +34,8 @@ namespace {
   constexpr unsigned int kMaxTicks = 2; // ditto
   
   const BehaviorID kBehaviorIDForReset = BEHAVIOR_ID(ResetSafely);
+
+  #define LOG_CHANNEL "Behaviors"
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -58,16 +61,19 @@ void StackCycleMonitor::NotifyOfChange( BehaviorExternalInterface& bei,
     if( CheckForCycle() ) {
       std::string behaviorA = (_recentBehaviors[0] != nullptr) ? _recentBehaviors[0]->GetDebugLabel() : "null";
       std::string behaviorB = (_recentBehaviors[1] != nullptr) ? _recentBehaviors[1]->GetDebugLabel() : "null";
-      // intentional spam. deal with it
+      // intentional spam. deal with it. this will also become a das event in dev
       if( behaviorA == behaviorB ) {
-        PRINT_NAMED_WARNING( "StackCycleMonitor.NotifyOfChange.CycleDetected",
-                             "A cycle was detected. %s is repeatedly delegating to something that ends immediately",
-                             behaviorA.c_str() );
+        LOG_ERROR( "StackCycleMonitor.NotifyOfChange.CycleDetected",
+                   "A cycle was detected. %s is repeatedly delegating to something that ends immediately",
+                   behaviorA.c_str() );
       } else {
-        PRINT_NAMED_WARNING( "StackCycleMonitor.NotifyOfChange.CycleDetected",
-                             "A cycle was detected between %s and %s",
-                             behaviorA.c_str(), behaviorB.c_str() );
+        LOG_ERROR( "StackCycleMonitor.NotifyOfChange.CycleDetected",
+                   "A cycle was detected between %s and %s",
+                   behaviorA.c_str(), behaviorB.c_str() );
       }
+      // in prod, send a das event only once per robot boot
+      SendDASEvent( behaviorA, behaviorB );
+      
       auto& bbl = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<BehaviorsBootLoader>();
       IBehavior* bootBehavior = bbl.GetBootBehavior();
       if( bootBehavior != nullptr ) {
@@ -133,6 +139,23 @@ void StackCycleMonitor::SwitchToSafeStack( BehaviorExternalInterface& bei, IBeha
       bsm.ResetBehaviorStack( resetBehavior.get(), waitUntilNextTick );
       // note that even if resetBehavior is already the base of the stack, it will be stopped and restarted
     }
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void StackCycleMonitor::SendDASEvent( const std::string& behaviorA, const std::string& behaviorB )
+{
+  std::string key = behaviorA + behaviorB;
+  auto it = std::find( _dasMsgsSent.begin(), _dasMsgsSent.end(), key );
+  if( it == _dasMsgsSent.end() ) {
+    _dasMsgsSent.push_back( std::move(key) );
+    
+    DASMSG( behavior_cycle_detected,
+            "behavior.cycle_detected",
+            "A cycle was detected. Only one msg is sent per behavior pair per boot" );
+    DASMSG_SET( s1, behaviorA, "One behavior" );
+    DASMSG_SET( s2, behaviorB, "The other behavior" );
+    DASMSG_SEND();
   }
 }
 

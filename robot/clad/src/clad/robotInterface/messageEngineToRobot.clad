@@ -677,6 +677,8 @@ message BatteryStatus {
   bool isCharging,
   bool onChargerContacts,
   bool isBatteryFull,
+  bool isBatteryDisconnected  // happens when it is too hot to charge (needs to cooldown)
+                              // the robot reports charging, when it actually is not
 }
 
 message TriggerBackpackAnimation {

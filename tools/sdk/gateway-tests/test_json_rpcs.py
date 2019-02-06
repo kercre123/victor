@@ -14,7 +14,7 @@ try:
 except ImportError:
     sys.exit("Error: This script requires you to run setup.sh")
 
-from util import vector_connection
+from util import live_robot_only, vector_connection
 
 def test_protocol_version(vector_connection):
     vector_connection.send("v1/protocol_version", p.ProtocolVersionRequest(), p.ProtocolVersionResponse())
@@ -71,6 +71,9 @@ def test_enable_mirror_mode(vector_connection):
     vector_connection.send("v1/enable_mirror_mode", p.EnableMirrorModeRequest(enable=True), p.EnableMirrorModeResponse())
     vector_connection.send("v1/enable_mirror_mode", p.EnableMirrorModeRequest(enable=False), p.EnableMirrorModeResponse())
 
+# This can only run locally because webots will always have image streaming turned on (meaning the second rpc call will not succeed).
+# Note: if there was a change made to have a webots world run without the keyboard controller enabled then this test could be re-enabled for local testing.
+@live_robot_only
 def test_enable_image_streaming(vector_connection):
     vector_connection.send("v1/enable_image_streaming", p.EnableImageStreamingRequest(enable=True), p.EnableImageStreamingResponse())
     vector_connection.send("v1/enable_image_streaming", p.EnableImageStreamingRequest(enable=False), p.EnableImageStreamingResponse())
@@ -195,6 +198,7 @@ def test_update_account_settings(vector_connection, data):
 def test_update_user_entitlements(vector_connection, data):
     vector_connection.send_raw("v1/update_user_entitlements", data, p.UpdateUserEntitlementsResponse())
 
+@live_robot_only
 def test_user_authentication(vector_connection):
     vector_connection.send("v1/user_authentication", p.UserAuthenticationRequest(), p.UserAuthenticationResponse())
 
@@ -203,9 +207,6 @@ def test_battery_state(vector_connection):
 
 def test_version_state(vector_connection):
     vector_connection.send("v1/version_state", p.VersionStateRequest(), p.VersionStateResponse())
-
-def test_say_text(vector_connection):
-    vector_connection.send("v1/say_text", p.SayTextRequest(), p.SayTextResponse())
 
 def test_connect_cube(vector_connection):
     vector_connection.send("v1/connect_cube", p.ConnectCubeRequest(), p.ConnectCubeResponse())
@@ -234,6 +235,7 @@ def test_check_update_status(vector_connection):
 def test_update_and_restart(vector_connection):
     vector_connection.send("v1/update_and_restart", p.UpdateAndRestartRequest(), p.UpdateAndRestartResponse())
 
+@live_robot_only
 def test_upload_debug_logs(vector_connection):
     def callback(response, response_type):
         print("Default response: {}".format(response.content))
@@ -245,6 +247,7 @@ def test_upload_debug_logs(vector_connection):
         print("Converted Protobuf: {}".format(response_type))
     vector_connection.send("v1/upload_debug_logs", p.UploadDebugLogsRequest(), p.UploadDebugLogsResponse(), callback=callback)
 
+@live_robot_only
 def test_check_cloud_connection(vector_connection):
     vector_connection.send("v1/check_cloud_connection", p.CheckCloudRequest(), p.CheckCloudResponse())
 

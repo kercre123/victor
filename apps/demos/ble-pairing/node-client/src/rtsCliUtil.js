@@ -529,6 +529,30 @@ class RtsCliUtil {
   
     return ret;
   }
+
+  static byteToHexStr(n) {
+    let s = n.toString(16).toUpperCase();
+    return '0'.repeat(2 - s.length) + s;
+  }
+
+  static keyToHexStr(arr) {
+    let str = ""; 
+    for(let i = 0; i < arr.length; i++) {
+      str += RtsCliUtil.byteToHexStr(arr[i]);
+    }
+    return str;
+  }
+
+  static printHelp(args) {
+    let keys = Object.keys(args);
+    let p = "";
+    for(let i = 0; i < keys.length; i++) {
+      p += keys[i] + " ".repeat(24 - keys[i].length) + args[keys[i]].des + "\n";
+      p += " ".repeat(24) + args[keys[i]].help + "\n\n";
+    }
+
+    console.log(p);
+  }
 }
 
 module.exports = { RtsCliUtil };

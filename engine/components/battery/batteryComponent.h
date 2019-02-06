@@ -19,7 +19,7 @@
 #include "clad/types/batteryTypes.h"
 
 #include "coretech/common/engine/robotTimeStamp.h"
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/radians.h"
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"

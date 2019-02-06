@@ -128,12 +128,7 @@ namespace Anki {
       const Vision::KnownMarker* _marker;
       
       mutable VizManager::Handle_t _vizHandle;
-      
-      virtual bool IsPreActionPoseValid(const PreActionPose& preActionPose,
-                                        const Pose3d* reachableFromPose,
-                                        const std::vector<std::pair<Quad2f,ObjectID> >& obstacles) const override;
-      
-      
+
     }; // class Charger
     
   } // namespace Vector

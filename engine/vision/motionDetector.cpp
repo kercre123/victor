@@ -14,6 +14,7 @@
 #include "engine/vision/motionDetector_neon.h"
 
 #include "coretech/common/engine/math/linearAlgebra_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/imageCache.h"
 #include "coretech/common/engine/jsonTools.h"

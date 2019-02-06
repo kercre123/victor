@@ -42,7 +42,7 @@ def test_event_repeated(vector_connection):
             assert "result" in data
             Parse(json.dumps(data["result"]), response_type, ignore_unknown_fields=True)
             print("Converted Protobuf: {}".format(colored(response_type, "cyan")))
-            assert response_type.event.connection_response.is_primary
+            assert response_type.event.connection_response != None
             break
 
     for id in random_id_generator(10, 50):

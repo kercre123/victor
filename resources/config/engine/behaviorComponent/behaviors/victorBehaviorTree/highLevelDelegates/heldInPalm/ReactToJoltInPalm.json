@@ -13,7 +13,7 @@
   //  "joltThresholdHard"    : 20000,
 
   // TODO(GB): Change to corresponding "jolt" animation(s)
-  "animTriggers": ["ReactToObstacle"],
+  "animTriggers": ["HeldOnPalmReactToJolt"],
   "wantsToBeActivatedCondition": {
     "conditionType": "RobotShaken",
     "minAccelMagnitudeThreshold": 10500

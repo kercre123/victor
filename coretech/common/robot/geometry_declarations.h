@@ -13,7 +13,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define _ANKICORETECHEMBEDDED_COMMON_POINT_DECLARATIONS_H_
 
 #include "coretech/common/robot/config.h"
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/radians.h"
 #include "coretech/common/robot/memory.h"
 
 #if ANKICORETECH_EMBEDDED_USE_OPENCV

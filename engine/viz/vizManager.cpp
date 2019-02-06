@@ -15,7 +15,7 @@
 #include "engine/debug/devLoggingSystem.h"
 #include "coretech/common/engine/exceptions.h"
 #include "coretech/common/engine/math/polygon_impl.h"
-#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/shared/math/rect_impl.h"
 #include "coretech/vision/engine/imageIO.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
@@ -390,8 +390,7 @@ namespace Anki {
       DrawCameraText(Point2f(face.GetRect().GetX(), face.GetRect().GetYmax()), name, color);
       
       // Draw bounding rectangle (?)
-      Quad2f quad;
-      face.GetRect().GetQuad(quad);
+      Quad2f quad( face.GetRect() );
       DrawCameraQuad(quad, color);
       
       // Draw smile amount bar along bottom of bounding quad for face. Thickness (height) of bar

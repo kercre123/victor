@@ -192,6 +192,10 @@ void BehaviorDevBatteryLogging::BehaviorUpdate()
   }
 
   const auto& battComp = GetBEI().GetRobotInfo()._robot.GetBatteryComponent();
+    _drivingOffCharger = true;
+    DelegateNow(driveAction, [](){
+      _drivingOffCharger = false;
+    });
 
   if (battComp.IsOnChargerPlatform()) {
     // Drive off charger when full

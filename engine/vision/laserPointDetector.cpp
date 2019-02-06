@@ -13,7 +13,7 @@
 #include "laserPointDetector.h"
 
 #include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/shared/math/rect_impl.h"
 #include "coretech/common/engine/math/linearAlgebra_impl.h"
 
 #include "coretech/vision/engine/image_impl.h"

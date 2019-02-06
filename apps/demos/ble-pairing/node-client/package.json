@@ -5,7 +5,8 @@
     "libsodium-wrappers": "^0.7.3",
     "noble-mac": "github:Timeular/noble-mac#master",
     "string-argv": "^0.1.1",
-    "xpc-connection": "github:sandeepmistry/node-xpc-connection#pull/26/head"
+    "xpc-connection": "github:sandeepmistry/node-xpc-connection#pull/26/head",
+    "nconf": "^0.10.0"
   },
   "resolutions": {
     "noble-mac": "Timeular/noble-mac#head",

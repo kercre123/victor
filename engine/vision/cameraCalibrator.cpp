@@ -13,8 +13,8 @@
 #include "engine/vision/cameraCalibrator.h"
 
 #include "coretech/common/engine/math/pose.h"
-#include "coretech/common/engine/math/rect_impl.h"
-#include "coretech/common/engine/math/rotation.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/shared/math/rotation.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 

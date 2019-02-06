@@ -13,7 +13,7 @@
  *
  **/
 
-#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/shared/array2d_impl.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "cozmoAnim/animation/animationStreamer.h"
@@ -84,7 +84,7 @@ namespace Vector {
   CONSOLE_VAR_ENUM(int, kProcFace_GammaType,            CONSOLE_GROUP, 0, "None,FromLinear,ToLinear,AddGamma,RemoveGamma,Custom");
   CONSOLE_VAR_RANGED(f32, kProcFace_Gamma,              CONSOLE_GROUP, 1.f, 1.f, 4.f);
   // for automation to test earcons in dev builds
-  CONSOLE_VAR(bool, kAllowAudioOnCharger, "Alexa", true);
+  CONSOLE_VAR_EXTERN(bool, kAllowAudioOnCharger);
 
   enum class FaceGammaType {
     None,
@@ -2228,7 +2228,9 @@ namespace Vector {
       Anki::Util::SafeDelete(messageWrapper.bodyMotionMessage);
       Anki::Util::SafeDelete(messageWrapper.moveLiftMessage);
       Anki::Util::SafeDelete(messageWrapper.moveHeadMessage);
-      Anki::Util::SafeDelete(messageWrapper.audioKeyFrameMessage);
+      if( !kAllowAudioOnCharger ) {
+        Anki::Util::SafeDelete(messageWrapper.audioKeyFrameMessage);
+      }
     }
     else if (needToCheckWhitelist && !animWhitelisted)
     {

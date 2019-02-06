@@ -1,6 +1,6 @@
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 
-#include "coretech/common/shared/radiansMath.h"
+#include "coretech/common/shared/math/radiansMath.h"
 
 #include <iostream>
 #include <vector>

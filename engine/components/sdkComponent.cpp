@@ -21,17 +21,21 @@
  *
  **/
 
+
 #include "coretech/common/engine/robotTimeStamp.h"
 
 #include "engine/ankiEventUtil.h"
 #include "engine/components/sdkComponent.h"
+#include "engine/components/animationComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
+#include "engine/robotManager.h"
 #include "engine/robotEventHandler.h"
 #include "engine/externalInterface/gatewayInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 #include "util/logging/logging.h"
 
@@ -86,6 +90,8 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
     // _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kCaptureSingleImageRequest,    callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kEnableImageStreamingRequest,  callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kIsImageStreamingEnabledRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSayTextRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetEyeColorRequest, callback));
   }
 
   auto* context = _robot->GetContext();
@@ -230,7 +236,7 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
   using namespace external_interface;
   auto* gi = _robot->GetGatewayInterface();
     
-  switch(event.GetData().GetTag()){
+  switch(event.GetData().GetTag()) {
     // Receives a message that external SDK wants an SDK behavior to be activated.
     case external_interface::GatewayWrapperTag::kControlRequest:
       LOG_INFO("SDKComponent.HandleMessageRequest", "SDK requested control");
@@ -349,6 +355,34 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
       {
         // Determine if the image streaming is enabled on the robot
         IsImageStreamingEnabledRequest(event);
+      }
+      break;
+
+    case external_interface::GatewayWrapperTag::kSayTextRequest:
+      {
+        if (_sdkBehaviorActivated) 
+        {
+          SayText(event);
+        }
+        else
+        {
+          SEND_FORBIDDEN(SayTextResponse);          
+        }
+        
+      }
+      break;
+
+    case external_interface::GatewayWrapperTag::kSetEyeColorRequest:
+      {
+        if (_sdkBehaviorActivated) 
+        {
+          SetEyeColor(event);
+        }
+        else
+        {
+          SEND_FORBIDDEN(SetEyeColorResponse);          
+        }
+        
       }
       break;
 
@@ -588,6 +622,43 @@ void SDKComponent::DisableMirrorMode()
     gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
   }
 }
+
+void SDKComponent::SayText(const AnkiEvent<external_interface::GatewayWrapper>& event) 
+{
+  external_interface::SayTextRequest request = event.GetData().say_text_request();
+  AudioMetaData::SwitchState::Robot_Vic_External_Processing processingStyle;
+
+  if (request.use_vector_voice()) {
+    processingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing::Default_Processed;
+  }
+  else {
+    processingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing::Unprocessed;
+  }
+  auto ttsCallback = [this](const UtteranceState& state) {
+    external_interface::SayTextResponse* response = 
+      new external_interface::SayTextResponse{nullptr, (external_interface::SayTextResponse::UtteranceState) state};
+    external_interface::GatewayWrapper wrapper;
+    wrapper.set_allocated_say_text_response(response);
+    this->_robot->GetGatewayInterface()->Broadcast(wrapper);
+  };
+  _robot->GetTextToSpeechCoordinator().CreateUtterance(request.text(),
+                                                       UtteranceTriggerType::Immediate, 
+                                                       processingStyle,
+                                                       request.duration_scalar(),
+                                                       ttsCallback);
+}
+
+void SDKComponent::SetEyeColor(const AnkiEvent<external_interface::GatewayWrapper>& event) 
+{
+  external_interface::SetEyeColorRequest request = event.GetData().set_eye_color_request();
+
+  const float hue = request.hue();
+  const float saturation = request.saturation();
+
+  _robot->SendRobotMessage<RobotInterface::SetFaceHue>(hue);
+  _robot->SendRobotMessage<RobotInterface::SetFaceSaturation>(saturation);
+}
+
 
 } // namespace Vector
 } // namespace Anki

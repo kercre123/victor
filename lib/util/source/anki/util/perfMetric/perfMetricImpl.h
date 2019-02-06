@@ -28,6 +28,13 @@ namespace Vector {
 
 const std::string PerfMetric::_logBaseFileName = "perfMetric_";
 
+static const uint32_t kMsPerSecond = 1000;
+static const uint32_t kMsPerMinute = 60 * kMsPerSecond;
+static const uint32_t kMsPerHour = 60 * kMsPerMinute;
+static const float kMsPerDay = kMsPerHour * 24.0f;
+
+static const int kNumLinesInSummary = 4;
+
 
 #if ANKI_PERF_METRIC_ENABLED
 
@@ -85,7 +92,7 @@ PerfMetric::PerfMetric()
   , _autoRecord(false)
 #endif
   , _fileDir()
-  , _lineBuffer(nullptr)
+  , _dumpBuffer(nullptr)
   , _queuedCommands()
 {
 }
@@ -93,7 +100,7 @@ PerfMetric::PerfMetric()
 PerfMetric::~PerfMetric()
 {
 #if ANKI_PERF_METRIC_ENABLED
-  delete[] _lineBuffer;
+  delete[] _dumpBuffer;
 #endif
 }
 
@@ -114,10 +121,10 @@ void PerfMetric::OnShutdown()
 void PerfMetric::InitInternal(Util::Data::DataPlatform* dataPlatform, WebService::WebService* webService)
 {
 #if ANKI_PERF_METRIC_ENABLED
-  _lineBuffer = new char[kNumCharsInLineBuffer];
+  _dumpBuffer = new char[kSizeDumpBuffer];
   
   _fileDir = dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "")
-  + "/perfMetricLogs";
+             + "/perfMetricLogs";
   Util::FileUtils::CreateDirectory(_fileDir);
   
   _webService = webService;
@@ -165,11 +172,27 @@ void PerfMetric::Start()
     LOG_INFO("PerfMetric.Start", "Interrupting recording already in progress; re-starting");
   }
   _isRecording = true;
-  
+
   // Reset the buffer:
   _nextFrameIndex = 0;
   _bufferFilled = false;
-  
+
+  // Save the current system time as 'milliseconds past midnight'
+  // Note:  When running on webots pure simulator, note that the log time will
+  // drift considerably because we're 'faking' tick time in webots and are not
+  // running in real time
+  using namespace std::chrono;
+  const auto now = system_clock::now();
+  const time_t tnow = system_clock::to_time_t(now);
+  tm *date = std::localtime(&tnow);
+  date->tm_hour = 0;
+  date->tm_min = 0;
+  date->tm_sec = 0;
+  const auto midnight = system_clock::from_time_t(std::mktime(date));
+  const auto timeSinceMidnight = now - midnight;
+  const auto msSinceMidnight = duration_cast<milliseconds>(timeSinceMidnight);
+  _firstFrameTime = msSinceMidnight.count();
+
   LOG_INFO("PerfMetric.Start", "Recording started");
 }
 
@@ -186,7 +209,168 @@ void PerfMetric::Stop()
   }
 }
 
-void PerfMetric::DumpFiles() const
+
+void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
+                      const std::string* fileName, std::string* resultStr)
+{
+  ANKI_CPU_PROFILE("PerfMetric::Dump");
+
+  if (FrameBufferEmpty())
+  {
+    LOG_INFO("PerfMetric.Dump", "Nothing to dump; buffer is empty");
+    return;
+  }
+
+  FILE* fd = nullptr;
+  if (dumpType == DT_FILE_TEXT || dumpType == DT_FILE_CSV)
+  {
+    fd = fopen(fileName->c_str(), "w");
+  }
+
+  if (dumpAll)
+  {
+    static const bool kDumpLine2Extra = true;
+    DumpHeading(dumpType, kDumpLine2Extra, fd, resultStr);
+  }
+
+  int frameBufferIndex = _bufferFilled ? _nextFrameIndex : 0;
+  const int numFrames  = _bufferFilled ? kNumFramesInBuffer : _nextFrameIndex;
+  float timeAtStartOfFrame = _firstFrameTime;
+  Util::Stats::StatsAccumulator accTickDuration;
+  Util::Stats::StatsAccumulator accTickTotal;
+  Util::Stats::StatsAccumulator accSleepIntended;
+  Util::Stats::StatsAccumulator accSleepActual;
+  Util::Stats::StatsAccumulator accSleepOver;
+  InitDumpAccumulators();
+
+  for (int frameIndex = 0; frameIndex < numFrames; frameIndex++)
+  {
+    // Decode time of start of frame in format HH:MM:SS.MMM
+    auto timeSinceMidnight_ms = static_cast<uint32_t>(timeAtStartOfFrame);
+    const auto h = timeSinceMidnight_ms / kMsPerHour;
+    timeSinceMidnight_ms -= (h * kMsPerHour);
+    const auto m = timeSinceMidnight_ms / kMsPerMinute;
+    timeSinceMidnight_ms -= (m * kMsPerMinute);
+    const auto s = timeSinceMidnight_ms / kMsPerSecond;
+    timeSinceMidnight_ms -= (s * kMsPerSecond);
+    std::ostringstream stringStream;
+    stringStream << std::setfill('0') << std::setw(2) << h
+                 << ":" << std::setw(2) << m
+                 << ":" << std::setw(2) << s
+                 << "." << std::setw(3) << timeSinceMidnight_ms;
+    const auto frameTimeString = stringStream.str();
+
+    const FrameMetric& frame = UpdateDumpAccumulators(frameBufferIndex);
+
+    // This stat is calculated rather than stored
+    const float tickSleepOver_ms = frame._tickSleepActual_ms - frame._tickSleepIntended_ms;
+
+    accTickDuration    += frame._tickExecution_ms;
+    accTickTotal       += frame._tickTotal_ms;
+    accSleepIntended   += frame._tickSleepIntended_ms;
+    accSleepActual     += frame._tickSleepActual_ms;
+    accSleepOver       += tickSleepOver_ms;
+
+    if (dumpAll)
+    {
+#define LINE_DATA_VARS \
+      frameTimeString.c_str(), frameIndex, \
+      frame._tickExecution_ms, frame._tickTotal_ms,\
+      frame._tickSleepIntended_ms, frame._tickSleepActual_ms, tickSleepOver_ms
+
+      static const char* kFormatLine = "%s %5i %8.3f %8.3f %8.3f %8.3f %8.3f";
+      static const char* kFormatLineCSV = "%s,%5i,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f";
+
+      int strSize = snprintf(_dumpBuffer, kSizeDumpBuffer,
+                             dumpType == DT_FILE_CSV ? kFormatLineCSV : kFormatLine,
+                             LINE_DATA_VARS);
+
+      // Append additional data from derived class
+      strSize += AppendFrameData(dumpType, frameBufferIndex, strSize);
+
+      DumpLine(dumpType, strSize, fd, resultStr);
+    }
+
+    timeAtStartOfFrame = IncrementFrameTime(timeAtStartOfFrame, frame._tickTotal_ms);
+
+    if (++frameBufferIndex >= kNumFramesInBuffer)
+    {
+      frameBufferIndex = 0;
+    }
+  }
+
+  const float totalTime_sec = accTickTotal.GetVal() * 0.001f;
+  const int strSize = snprintf(_dumpBuffer, kSizeDumpBuffer,
+           "Summary:  (%s build; %s; %i engine ticks; %.3f seconds total)\n",
+#if defined(NDEBUG)
+           "RELEASE"
+#else
+           "DEBUG"
+#endif
+           ,
+#if defined(ANKI_PLATFORM_OSX)
+           "MAC"
+#elif defined(ANKI_PLATFORM_VICOS)
+           "VICOS"
+#else
+           "UNKNOWN"
+#endif
+           , numFrames, totalTime_sec);
+  DumpLine(dumpType, strSize, fd, resultStr);
+
+  static const bool kDumpLine2Extra = false;
+  DumpHeading(dumpType, kDumpLine2Extra, fd, resultStr);
+
+  for (int lineIndex = 0; lineIndex < kNumLinesInSummary; lineIndex++)
+  {
+    static const char* kSummaryLineFormat = "%18s %8.3f %8.3f %8.3f %8.3f %8.3f";
+    static const char* kSummaryLineCSVFormat = "%s,,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f";
+
+#define SUMMARY_LINE_VARS(StatCall)\
+    accTickDuration.StatCall(), accTickTotal.StatCall(),\
+    accSleepIntended.StatCall(), accSleepActual.StatCall(), accSleepOver.StatCall()
+
+    int strSize = 0;
+#define OUTPUT_SUMMARY_LINE(StatDescription, StatCall)\
+    strSize += snprintf(&_dumpBuffer[strSize], kSizeDumpBuffer - strSize,\
+                        dumpType == DT_FILE_CSV ? kSummaryLineCSVFormat : kSummaryLineFormat,\
+                        StatDescription, SUMMARY_LINE_VARS(StatCall));
+    switch (lineIndex)
+    {
+      case 0:   OUTPUT_SUMMARY_LINE("Min:",  GetMin);   break;
+      case 1:   OUTPUT_SUMMARY_LINE("Max:",  GetMax);   break;
+      case 2:   OUTPUT_SUMMARY_LINE("Mean:", GetMean);  break;
+      case 3:   OUTPUT_SUMMARY_LINE("Std:",  GetStd);   break;
+    }
+
+    strSize += AppendSummaryData(dumpType, strSize, lineIndex);
+
+    DumpLine(dumpType, strSize, fd, resultStr);
+  }
+
+  if (dumpType == DT_FILE_TEXT || dumpType == DT_FILE_CSV)
+  {
+    fclose(fd);
+  }
+}
+
+
+void PerfMetric::DumpHeading(const DumpType dumpType, const bool dumpLine2Extra,
+                             FILE* fd, std::string* resultStr) const
+{
+  const int head1Len = snprintf(_dumpBuffer, kSizeDumpBuffer, "%s\n",
+                                dumpType == DT_FILE_CSV ? _headingLine1CSV : _headingLine1);
+  DumpLine(dumpType, head1Len, fd, resultStr);
+
+  const int head2Len = snprintf(_dumpBuffer, kSizeDumpBuffer, "%s%s\n",
+                                dumpType == DT_FILE_CSV ? _headingLine2CSV : _headingLine2,
+                                dumpLine2Extra ?
+                                dumpType == DT_FILE_CSV ? _headingLine2ExtraCSV : _headingLine2Extra : "");
+  DumpLine(dumpType, head2Len, fd, resultStr);
+}
+
+
+void PerfMetric::DumpFiles()
 {
   if (FrameBufferEmpty())
   {
@@ -214,12 +398,52 @@ void PerfMetric::DumpFiles() const
 
   // Write to text file
   Dump(DT_FILE_TEXT, kDumpAll, &logFileNameText);
-  LOG_INFO("PerfMetric.DumpFiles", "File written to %s",
-           logFileNameText.c_str());
+  LOG_INFO("PerfMetric.DumpFiles", "File written to %s", logFileNameText.c_str());
 
   // Write to CSV file
   Dump(DT_FILE_CSV, kDumpAll, &logFileNameCSV);
   LOG_INFO("PerfMetric.DumpFiles", "File written to %s", logFileNameCSV.c_str());
+}
+
+
+void PerfMetric::DumpLine(const DumpType dumpType,
+                          int dumpBufferOffset,
+                          FILE* fd,
+                          std::string* resultStr) const
+{
+  switch (dumpType)
+  {
+    case DT_LOG:
+      {
+#ifdef SIMULATOR
+        // In webots, the log system adds a newline for us, unlike in VicOS, so we strip it
+        // off here rather than have code below to append a newline in the VicOS version
+        if (_dumpBuffer[dumpBufferOffset - 1] == '\n')
+        {
+          _dumpBuffer[--dumpBufferOffset] = 0;
+        }
+#endif
+        LOG_INFO("PerfMetric.Dump", "%s", _dumpBuffer);
+      }
+      break;
+    case DT_RESPONSE_STRING:  // Intentional fall-through
+    case DT_FILE_TEXT:        // Intentional fall-through
+    case DT_FILE_CSV:
+      {
+        if (dumpType == DT_RESPONSE_STRING)
+        {
+          if (resultStr)
+          {
+            *resultStr += _dumpBuffer;
+          }
+        }
+        else
+        {
+          fwrite(_dumpBuffer, 1, dumpBufferOffset, fd);
+        }
+      }
+      break;
+  }
 }
 
 
@@ -240,6 +464,21 @@ void PerfMetric::RemoveOldFiles() const
       Util::FileUtils::DeleteFile(fileList[i]);
     }
   }
+}
+
+
+float PerfMetric::IncrementFrameTime(float msSinceMidnight, const float msToAdd) const
+{
+  msSinceMidnight += msToAdd;
+  if (msSinceMidnight >= kMsPerDay)
+  {
+    msSinceMidnight -= kMsPerDay;
+    if (msSinceMidnight < 0.0f) // Just in case
+    {
+      msSinceMidnight = 0.0f;
+    }
+  }
+  return msSinceMidnight;
 }
 
 

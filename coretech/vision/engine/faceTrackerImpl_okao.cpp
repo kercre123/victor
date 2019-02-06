@@ -15,8 +15,8 @@
 
 #include "faceTrackerImpl_okao.h"
 
-#include "coretech/common/engine/math/rect_impl.h"
-#include "coretech/common/engine/math/rotation.h"
+#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/shared/math/rotation.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/okaoParamInterface.h"

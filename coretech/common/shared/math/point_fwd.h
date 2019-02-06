@@ -22,7 +22,6 @@
 #define _ANKICORETECH_COMMON_POINT_FORWARD_H_
 
 #include "coretech/common/shared/types.h"
-#include "clad/types/cladPoint.h"
 #include "opencv2/core.hpp"
 
 namespace Anki {
@@ -51,10 +50,6 @@ namespace Anki {
     // by just using the (x,y) dimensions and ignoring z.
     template <PointDimType M, typename = std::enable_if_t<(M > N)>>
     constexpr Point(const Point<M,T>& pt);
-
-    // Create from a CladPoint
-    constexpr Point(const CladPoint2d& cladPoint);
-    constexpr Point(const CladPoint3d& cladPoint);
     
     constexpr explicit Point(const SmallMatrix<N,1,T>& M);
 
@@ -86,10 +81,6 @@ namespace Anki {
     //    Point<3,int> b = a.Slice<1,3>();  // b == {2,3,4}
     template<PointDimType A, PointDimType B, typename = std::enable_if_t< B <= N && A <= N && A<B >>
     constexpr Point<B-A+1, T> Slice() const;
-    
-    // Return a CladPoint
-    constexpr CladPoint2d ToCladPoint2d() const;
-    constexpr CladPoint3d ToCladPoint3d() const;
     
     // Special mnemonic accessors for the first, second,
     // and third elements, available when N is large enough.
