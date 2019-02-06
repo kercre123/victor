@@ -534,5 +534,3 @@ service ExternalInterface {
     };
   }  
 }
-
-// Testing if SDK is automatically added as a code reviewer when files under victor/tools/protobuf/gateway/public are changed
