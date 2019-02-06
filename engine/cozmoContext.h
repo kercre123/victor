@@ -49,8 +49,7 @@ class IGatewayInterface;
 class RobotDataLoader;
 class RobotManager;
 class VizManager;
-class PerfMetric;
-class AppToEngineHandler;
+class PerfMetricEngine;
 
 namespace WebService {
   class WebService;
@@ -95,7 +94,7 @@ public:
   VizManager*                           GetVizManager() const { return _vizManager.get(); }
   //Util::TransferQueueMgr*               GetTransferQueue() const { return _transferQueueMgr.get(); }
   CozmoExperiments*                     GetExperiments() const { return _cozmoExperiments.get(); }
-  PerfMetric*                           GetPerfMetric() const { return _perfMetric.get(); }
+  PerfMetricEngine*                     GetPerfMetric() const { return _perfMetric.get(); }
   WebService::WebService*               GetWebService() const { return _webService.get(); }
 
   void  SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const;
@@ -134,9 +133,8 @@ private:
   //std::unique_ptr<Util::TransferQueueMgr>               _transferQueueMgr;
   //std::unique_ptr<Util::GameLogTransferTask>            _gameLogTransferTask;
   std::unique_ptr<CozmoExperiments>                     _cozmoExperiments;
-  std::unique_ptr<PerfMetric>                           _perfMetric;
+  std::unique_ptr<PerfMetricEngine>                     _perfMetric;
   std::unique_ptr<WebService::WebService>               _webService;
-  std::unique_ptr<AppToEngineHandler>                   _appToEngineHandler;
 
 };
 

@@ -34,6 +34,6 @@ set(ANKI_BUILD_CXX_COMPILE_OPTIONS
   -Woverloaded-virtual
   -Wshorten-64-to-32
   -Wundef
+  -Wunused-variable
   -Wno-unused-command-line-argument
 )
-

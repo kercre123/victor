@@ -433,7 +433,10 @@ bool BehaviorFetchCube::ComputeFaceBasedTargetPose()
                                      projectedFacePose.GetTranslation().y(),
                                      robotPose.GetTranslation().z() });
 
-  float distanceToProjectedPose = ComputeDistanceBetween(projectedFacePose, robotPose);
+  float distanceToProjectedPose = 0.f;
+  if (!ComputeDistanceBetween(projectedFacePose, robotPose, distanceToProjectedPose)) {
+    return false;
+  }
   float fwdTranslation = distanceToProjectedPose - kTargetDistFromFace_mm;
   Radians angleRobotFwdToFace(atan2f(projectedFacePose.GetTranslation().y(), projectedFacePose.GetTranslation().x()));
 

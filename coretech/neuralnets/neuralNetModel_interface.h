@@ -12,7 +12,7 @@
 #ifndef __Anki_NeuralNets_NeuralNetModel_Interface_H__
 #define __Anki_NeuralNets_NeuralNetModel_Interface_H__
 
-#include "coretech/common/engine/array2d.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/neuralnets/neuralNetParams.h"
 #include "coretech/vision/engine/image.h"
@@ -30,12 +30,7 @@ class INeuralNetModel
 {
 public:
 
-  explicit INeuralNetModel(const std::string& cachePath);
-
-  ~INeuralNetModel()
-  {
-    
-  }
+  virtual ~INeuralNetModel();
   
   bool IsVerbose() const { return _params.verbose; }
   
@@ -50,12 +45,16 @@ public:
   
   // Run forward inference on the given image and return any SalientPoints found
   // Note that the input imge could be modified (e.g. resized in place)
-  Result Detect(Vision::ImageRGB& img, std::list<Vision::SalientPoint>& salientPoints);
+  virtual Result Detect(Vision::ImageRGB& img, std::list<Vision::SalientPoint>& salientPoints) = 0;
+  
+  const std::string& GetName() const { return _name; }
   
 protected:
   
-  // Base model not meant to be directly instantiated
-  INeuralNetModel() = default;
+  INeuralNetModel();
+  
+  // Called by LoadModel, to be implemented by all derived classes
+  virtual Result LoadModelInternal(const std::string& modelPath, const Json::Value& config) = 0;
   
   // Helper to read simple text labels files (one label per line)
   static Result ReadLabelsFile(const std::string& fileName, std::vector<std::string>& labels_out);
@@ -91,7 +90,13 @@ private:
 
   void SaveResponseMaps(const std::vector<cv::Mat>& channels, const int numberOfChannels,
                         const TimeStamp_t timestamp);
+
+  std::string _name;
   std::string _cachePath;
+  
+  class SlidingWindow;
+  std::map<int,std::unique_ptr<SlidingWindow>> _slidingScoreWindows;
+    
 };
 
 } // namespace NeuralNets

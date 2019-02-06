@@ -18,7 +18,7 @@ namespace Json {
 }
 
 namespace Anki {
-namespace Victor {
+namespace Vector {
 
 class DASConfig
 {
@@ -107,7 +107,7 @@ private:
   std::string _transient_globals_path;
 };
 
-} // end namespace Victor
+} // end namespace Vector
 } // end namespace Anki
 
 #endif // __platform_dasmgr_dasConfig_h

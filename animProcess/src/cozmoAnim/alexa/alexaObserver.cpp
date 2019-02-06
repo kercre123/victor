@@ -270,8 +270,10 @@ void AlexaObserver::onCapabilitiesStateChange( CapabilitiesObserverInterface::St
                                              CapabilitiesObserverInterface::Error newError)
 {
   auto func = [this, newState, newError]() {
-    // TODO (VIC-11517): downgrade. for now this is useful in webots
-    LOG_WARNING("AlexaObserver.onCapabilitiesStateChange", "capabilityiesStateChange: newState=%d, newError=%d", (int)newState, (int)newError);
+    LOG_INFO("AlexaObserver.onCapabilitiesStateChange",
+             "capabilityiesStateChange: newState=%d, newError=%d",
+             (int)newState,
+             (int)newError);
     if ((_capabilitiesState != newState) && (_capabilitiesError != newError)) {
       _capabilitiesState = newState;
       _capabilitiesError = newError;
@@ -383,7 +385,7 @@ void AlexaObserver::onExceptionReceived( const std::string& exceptionMessage )
   //     }
   //   }
 
-  LOG_WARNING( "AlexaObserver.onExceptionReceived", "SDK exception: %s", exceptionMessage.c_str() );
+  LOG_WARNING( "AlexaObserver.onExceptionReceived", "AVS SDK exception: %s", exceptionMessage.c_str() );
 
   Json::Value exceptionData;
 

@@ -212,17 +212,6 @@ for feature in ${FEATURES} ; do
   esac
 done
 
-# Until the coretech-external (CTE) build works again (BI-1614), copy the Alexa
-# SDK libs and headers from artifactory into where CTE build artifacts normally
-# live. Only copy src files if changed, and delete any dst files not in src.
-rsync -raz --delete \
-  ${TOPLEVEL}/EXTERNALS/avs-device-sdk/avs-device-sdk \
-  ${TOPLEVEL}/EXTERNALS/coretech_external/build/
-# same thing for pffft
-rsync -raz --delete \
-  ${TOPLEVEL}/EXTERNALS/pffft/pffft \
-  ${TOPLEVEL}/EXTERNALS/coretech_external/build/
-
 #
 # Get short commit sha
 #
@@ -340,9 +329,36 @@ else
   echo "Ignore Go dependencies"
 fi
 
-# install build tool binaries + set protoc location
-PROTOC_EXE=`${TOPLEVEL}/tools/build/tools/ankibuild/protobuf.py --install --helpers | tail -1`
-PROTOBUF_HOME=`cd $(dirname "${PROTOC_EXE}")/.. && pwd`
+# Set protobuf location
+HOST=`uname -a | awk '{print tolower($1);}' | sed -e 's/darwin/mac/'`
+PROTOBUF_HOME=${TOPLEVEL}/EXTERNALS/protobuf/${HOST}
+
+# Build protocCppPlugin if needed
+if [[ ! -x ${TOPLEVEL}/tools/protobuf/plugin/protocCppPlugin ]]; then
+  BUILD_PROTOC_PLUGIN=1
+else 
+  BUILD_PROTOC_PLUGIN=0
+  for f in `find ${TOPLEVEL}/tools/protobuf/plugin -type f`; do
+    if [ "$f" -nt ${TOPLEVEL}/tools/protobuf/plugin/protocCppPlugin ]; then
+      BUILD_PROTOC_PLUGIN=1
+    fi
+  done
+fi
+if [[ $BUILD_PROTOC_PLUGIN -eq 1 ]]; then
+    ${TOPLEVEL}/tools/protobuf/plugin/make.sh
+fi
+
+# Build/Install the protoc generators for go
+GOBIN="${TOPLEVEL}/cloud/go/bin"
+if [[ ! -x $GOBIN/protoc-gen-go ]] || [[ ! -x $GOBIN/protoc-gen-grpc-gateway ]]; then
+    echo "Building/Installing protoc-gen-go and protoc-gen-grpc-gateway"
+    GOBIN=$GOBIN \
+    CC=/usr/bin/cc \
+    CXX=/usr/bin/c++ \
+    "${GOROOT}/bin/go" install \
+    github.com/golang/protobuf/protoc-gen-go \
+    github.com/grpc-ecosystem/grpc-gateway/protoc-gen-grpc-gateway
+fi
 
 #
 # generate source file lists

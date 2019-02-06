@@ -51,6 +51,8 @@
 #error SIMULATOR should NOT be defined by any target using osState_vicos.cpp
 #endif
 
+#define LOG_CHANNEL "OsState"
+
 namespace Anki {
 namespace Vector {
 
@@ -160,9 +162,9 @@ std::string GetProperty(const std::string& key)
   int rc = property_get(key.c_str(), propBuf, "");
   if(rc <= 0)
   {
-    PRINT_NAMED_WARNING("OSState.GetProperty.FailedToFindProperty",
-                        "Property %s not found",
-                        key.c_str());
+    LOG_WARNING("OSState.GetProperty.FailedToFindProperty",
+                "Property %s not found",
+                key.c_str());
   }
 
   return std::string(propBuf);
@@ -179,11 +181,11 @@ OSState::OSState()
   file.open(kNominalCPUFreqFile, std::ifstream::in);
   if(file.is_open()) {
     file >> kNominalCPUFreq_kHz;
-    PRINT_NAMED_INFO("OSState.Constructor.NominalCPUFreq", "%dkHz", kNominalCPUFreq_kHz);
+    LOG_INFO("OSState.Constructor.NominalCPUFreq", "%dkHz", kNominalCPUFreq_kHz);
     file.close();
   }
   else {
-    PRINT_NAMED_WARNING("OSState.Constructor.FailedToOpenNominalCPUFreqFile", "%s", kNominalCPUFreqFile);
+    LOG_ERROR("OSState.Constructor.FailedToOpenNominalCPUFreqFile", "%s", kNominalCPUFreqFile);
   }
 
   _cpuFreq_kHz = kNominalCPUFreq_kHz;
@@ -205,7 +207,7 @@ OSState::OSState()
         _incrementalVersion = std::stoi(tokens[2]);
         _buildVersion = std::stoi(tokens[3], &remSz);
       } catch(const std::invalid_argument& ia) {
-        PRINT_NAMED_WARNING("OSState.GetOSBuildVersion.UnableToParseVersionString","%s",osv.c_str());
+        LOG_WARNING("OSState.GetOSBuildVersion.UnableToParseVersionString","%s",osv.c_str());
         _majorVersion = -1;
         _minorVersion = -1;
         _incrementalVersion = -1;
@@ -279,6 +281,9 @@ void OSState::UpdateCPUFreq_kHz() const
     _cpuFile >> _cpuFreq_kHz;
     _cpuFile.close();
   }
+  else {
+    LOG_ERROR("OSState.UpdateCPUFreq_kHz.FailedToOpenCPUFreqFile", "%s", kCPUFreqFile);
+  }
 }
 
 void OSState::SetDesiredCPUFrequency(DesiredCPUFrequency freq)
@@ -288,10 +293,10 @@ void OSState::SetDesiredCPUFrequency(DesiredCPUFrequency freq)
   // write governor mode
   const bool ok1 = Util::FileUtils::WriteFile(kCPUGovernorFile, desiredGovernor);
   if( !ok1 ) {
-    PRINT_NAMED_ERROR("OSState.SetDesiredCPUFrequency.SetGovernor.Failed",
-                      "Failed to write governor value '%s' to file '%s'",
-                      desiredGovernor.c_str(),
-                      kCPUGovernorFile);
+    LOG_ERROR("OSState.SetDesiredCPUFrequency.SetGovernor.Failed",
+              "Failed to write governor value '%s' to file '%s'",
+              desiredGovernor.c_str(),
+              kCPUGovernorFile);
     return;
   }
 
@@ -301,26 +306,26 @@ void OSState::SetDesiredCPUFrequency(DesiredCPUFrequency freq)
     // write frequency
     const unsigned int freqVal = Util::EnumToUnderlying(freq);
     if( freqVal <= 0  ){
-      PRINT_NAMED_ERROR("OSState.SetDesiredCPUFrequency.InvalidFrequency",
-                        "Can't set frequency to %d",
-                        freqVal);
+      LOG_ERROR("OSState.SetDesiredCPUFrequency.InvalidFrequency",
+                "Can't set frequency to %d",
+                freqVal);
       return;
     }
 
     const bool ok2 = Util::FileUtils::WriteFile(kCPUFreqSetFile, std::to_string(freqVal));
     if( !ok2 ) {
-      PRINT_NAMED_ERROR("OSState.SetDesiredCPUFrequency.SetFrequency.Failed",
-                        "Failed to write frequency value '%d' to file '%s'",
-                        freqVal,
-                        kCPUFreqSetFile);
+      LOG_ERROR("OSState.SetDesiredCPUFrequency.SetFrequency.Failed",
+                "Failed to write frequency value '%d' to file '%s'",
+                freqVal,
+                kCPUFreqSetFile);
       return;
     }
 
-    PRINT_NAMED_INFO("OSState.SetDesiredCPUFrequency.Manual", "Set to manual cpu frequency %u",
-                     freqVal);
+    LOG_INFO("OSState.SetDesiredCPUFrequency.Manual", "Set to manual cpu frequency %u",
+             freqVal);
   }
   else {
-    PRINT_NAMED_INFO("OSState.SetDesiredCPUFrequency.Automatic", "Set to automatic cpu frequency management");
+    LOG_INFO("OSState.SetDesiredCPUFrequency.Automatic", "Set to automatic cpu frequency management");
   }
 
 
@@ -338,6 +343,9 @@ void OSState::UpdateTemperature_C() const
     _temperatureFile >> _cpuTemp_C;
     _temperatureFile.close();
   }
+  else {
+    LOG_ERROR("OSState.UpdateTemperature_C.FailedToOpenTemperatureFile", "%s", kTemperatureFile);
+  }
 }
 
 void OSState::UpdateUptimeAndIdleTime() const
@@ -348,6 +356,9 @@ void OSState::UpdateUptimeAndIdleTime() const
   if (_uptimeFile.is_open()) {
     _uptimeFile >> _uptime_s >> _idleTime_s;
     _uptimeFile.close();
+  }
+  else {
+    LOG_ERROR("OSState.UpdateUptimeAndIdleTime.FailedToOpenUptimeFile", "%s", kUptimeFile);
   }
 }
 
@@ -360,6 +371,9 @@ void OSState::UpdateMemoryInfo() const
     std::string discard;
     _memInfoFile >> discard >> _totalMem_kB >> discard >> discard >> _freeMem_kB >> discard >> discard >> _availMem_kB;
     _memInfoFile.close();
+  }
+  else {
+    LOG_ERROR("OSState.UpdateMemoryInfo.FailedToOpenMemInfoFile", "%s", kMemInfoFile);
   }
 }
 
@@ -375,6 +389,9 @@ void OSState::UpdateCPUTimeStats() const
       std::getline(_cpuTimeStatsFile, _CPUTimeStats[i]);
     }
     _cpuTimeStatsFile.close();
+  }
+  else {
+    LOG_ERROR("OSState.UpdateCPUTimeStats.FailedToOpenCPUTimeStatsFile", "%s", kCPUTimeStatsFile);
   }
 }
 
@@ -538,7 +555,7 @@ static std::string GetIPV4AddressForInterface(const char* if_name) {
 
   int rc = getifaddrs(&ifaddr);
   if (rc == -1) {
-    PRINT_NAMED_ERROR("OSState.GetIPAddress.GetIfAddrsFailed", "%s", strerror(errno));
+    LOG_ERROR("OSState.GetIPAddress.GetIfAddrsFailed", "%s", strerror(errno));
     return "";
   }
 
@@ -562,7 +579,7 @@ static std::string GetIPV4AddressForInterface(const char* if_name) {
                         host, sizeof(host),
                         NULL, 0, NI_NUMERICHOST);
     if (s != 0) {
-      PRINT_NAMED_ERROR("OSState.GetIPAddress.GetNameInfoFailed", "%s", gai_strerror(s));
+      LOG_ERROR("OSState.GetIPAddress.GetNameInfoFailed", "%s", gai_strerror(s));
       memset(host, 0, sizeof(host));
     }
   }
@@ -577,13 +594,13 @@ static std::string GetIPV4AddressForInterface(const char* if_name) {
     {
       sPrevIP = ip;
       sPrevIface = iface;
-      PRINT_NAMED_INFO("OSState.GetIPAddress.IPV4AddressFound", "iface = %s , ip = %s",
-                       if_name, host);
+      LOG_INFO("OSState.GetIPAddress.IPV4AddressFound", "iface = %s , ip = %s",
+               if_name, host);
     }
   }
   else
   {
-    PRINT_NAMED_INFO("OSState.GetIPAddress.IPV4AddressNotFound", "iface = %s", if_name);
+    LOG_INFO("OSState.GetIPAddress.IPV4AddressNotFound", "iface = %s", if_name);
   }
   freeifaddrs(ifaddr);
 
@@ -605,12 +622,12 @@ static std::string GetWiFiSSIDForInterface(const char* if_name) {
   req.u.essid.length = sizeof(essid) - 2;
 
   if (ioctl(fd, SIOCGIWESSID, &req) == -1) {
-    PRINT_NAMED_INFO("OSState.UpdateWifiInfo.FailedToGetSSID", "iface = %s , errno = %s",
-                     if_name, strerror(errno));
+    LOG_INFO("OSState.UpdateWifiInfo.FailedToGetSSID", "iface = %s , errno = %s",
+             if_name, strerror(errno));
     memset(essid, 0, sizeof(essid));
   }
   (void) close(fd);
-  PRINT_NAMED_INFO("OSState.GetSSID", "%s", essid);
+  LOG_INFO("OSState.GetSSID", "%s", essid);
   return std::string(essid);
 }
 
@@ -657,6 +674,9 @@ std::string OSState::GetMACAddress() const
     macFile.close();
     return macStr;
   }
+  else {
+    LOG_ERROR("OSState.GetMACAddress.FailedToOpenMACAddressFile", "%s", kMACAddressFile);
+  }
   return "";
 }
 
@@ -668,6 +688,9 @@ static bool GetCounter(const char * path, uint64_t & val)
     rxFile >> val;
     rxFile.close();
     return true;
+  }
+  else {
+    LOG_ERROR("OSState.GetCounter.FailedToOpenCounterFile", "%s", path);
   }
   return false;
 }

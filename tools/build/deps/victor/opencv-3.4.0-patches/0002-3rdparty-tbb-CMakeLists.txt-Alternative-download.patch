@@ -1,0 +1,43 @@
+From d5949d429c7e8ba2b6e0b3c6b372473d6ad2f38e Mon Sep 17 00:00:00 2001
+From: Stuart Eichert <seichert@anki.com>
+Date: Fri, 11 Jan 2019 17:41:41 -0800
+Subject: [PATCH 2/2] 3rdparty/tbb/CMakeLists.txt - Alternative download
+
+Add an alternative download site for the archive.
+
+This change was originally introduced in commit 143c19f7
+in the git@github.com:anki/coretech-external.git repo.
+---
+ 3rdparty/tbb/CMakeLists.txt | 13 +++++++++++++
+ 1 file changed, 13 insertions(+)
+
+diff --git a/3rdparty/tbb/CMakeLists.txt b/3rdparty/tbb/CMakeLists.txt
+index f2b7b286a..b0efabbe9 100644
+--- a/3rdparty/tbb/CMakeLists.txt
++++ b/3rdparty/tbb/CMakeLists.txt
+@@ -26,9 +26,22 @@ ocv_download(FILENAME ${tbb_filename}
+              ID TBB
+              STATUS res
+              UNPACK RELATIVE_URL)
++if(NOT res)
++  ocv_download(FILENAME "2018_U1"
++               HASH ${tbb_md5}
++               URL
++                 "${OPENCV_TBB_URL}"
++                 "$ENV{OPENCV_TBB_URL}"
++                 "https://codeload.github.com/01org/tbb/tar.gz/"
++               DESTINATION_DIR ${tbb_src_dir}
++               ID TBB
++               STATUS res
++             UNPACK RELATIVE_URL)
++endif()
+ if(NOT res)
+   return()
+ endif()
++
+ set(tbb_src_dir "${tbb_src_dir}/${tbb_subdir}")
+ 
+ ocv_include_directories("${tbb_src_dir}/include"
+-- 
+2.15.2 (Apple Git-101.1)
+

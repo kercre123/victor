@@ -15,6 +15,7 @@
 
 #include "engine/cozmoContext.h"
 #include "engine/debug/devLoggingSystem.h"
+#include "engine/cozmoAPI/comms/protoCladInterpreter.h"
 #include "engine/cozmoAPI/comms/localUdpSocketComms.h"
 #include "engine/cozmoAPI/comms/udpSocketComms.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
@@ -29,6 +30,7 @@
 #include "coretech/messaging/engine/IComms.h"
 
 #include "clad/externalInterface/messageGameToEngine_hash.h"
+#include "clad/externalInterface/messageGameToEngineTag.h"
 #include "clad/externalInterface/messageEngineToGame_hash.h"
 
 #include "util/console/consoleInterface.h"
@@ -106,12 +108,12 @@ namespace Anki {
         }
         case UiConnectionType::Switchboard:
         {
-          ISocketComms* comms = new LocalUdpSocketComms(true, Anki::Victor::ENGINE_SWITCH_SERVER_PATH);
+          ISocketComms* comms = new LocalUdpSocketComms(true, ENGINE_SWITCH_SERVER_PATH);
           return comms;
         }
         case UiConnectionType::Gateway:
         {
-          ISocketComms* comms = new LocalUdpSocketComms(true, Anki::Victor::ENGINE_GATEWAY_SERVER_PATH);
+          ISocketComms* comms = new LocalUdpSocketComms(true, ENGINE_GATEWAY_SERVER_PATH);
           return comms;
         }
         default:
@@ -126,8 +128,8 @@ namespace Anki {
     UiMessageHandler::UiMessageHandler(u32 hostUiDeviceID)
       : _sdkStatus()
       , _hostUiDeviceID(hostUiDeviceID)
-      , _messageCountGtE(0)
-      , _messageCountEtG(0)
+      , _messageCountGameToEngine(0)
+      , _messageCountEngineToGame(0)
     {
 
       // Currently not supporting UI connections for any sim robot other
@@ -243,10 +245,12 @@ namespace Anki {
       {
         ANKI_CPU_PROFILE("UiMH::DeliverToGame");
 
-        ++_messageCountEtG;
+        ++_messageCountEngineToGame;
 
         Comms::MsgPacket p;
         message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
+
+        (void) ProtoCladInterpreter::Redirect(message, _context);
 
         #if ANKI_DEV_CHEATS
         if (nullptr != DevLoggingSystem::GetInstance())
@@ -344,7 +348,7 @@ namespace Anki {
     void UiMessageHandler::HandleProcessedMessage(const ExternalInterface::MessageGameToEngine& message,
                                 UiConnectionType connectionType, size_t messageSize, bool handleMessagesFromConnection)
     {
-      ++_messageCountGtE;
+      ++_messageCountGameToEngine;
 
       const ExternalInterface::MessageGameToEngine::Tag messageTag = message.GetTag();
       if (!handleMessagesFromConnection)

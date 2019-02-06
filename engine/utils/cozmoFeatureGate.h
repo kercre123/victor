@@ -16,6 +16,10 @@
 #include "util/featureGate/featureGate.h"
 #include "util/signals/simpleSignal_fwd.h"
 
+namespace Json {
+  class Value;
+}
+
 namespace Anki {
 
 namespace Util {
@@ -40,6 +44,9 @@ public:
   bool IsFeatureEnabled(FeatureType feature) const;
   void SetFeatureEnabled(FeatureType feature, bool enabled);
 private:
+  
+  void SendFeaturesToWebViz(const std::function<void(const Json::Value&)>& sendFunc) const;
+  
   std::vector<::Signal::SmartHandle> _signalHandles;
 };
 

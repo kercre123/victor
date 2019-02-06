@@ -170,8 +170,14 @@ void BehaviorConfirmObject::OnBehaviorActivated()
   std::sort( _dVars.sortedObjects.begin(), _dVars.sortedObjects.end(), [&robotPose](const auto* a, const auto* b) {
     const auto& poseA = a->GetPose();
     const auto& poseB = b->GetPose();
-    const float distA = ComputeDistanceBetween( poseA, robotPose );
-    const float distB = ComputeDistanceBetween( poseB, robotPose );
+    float distA = 0.f;
+    float distB = 0.f;
+    if (!ComputeDistanceBetween( poseA, robotPose, distA ) ||
+        !ComputeDistanceBetween( poseB, robotPose, distB )) {
+      LOG_ERROR("BehaviorConfirmObject.OnBehaviorActivated.Sort.ComputeDistanceFailure",
+                "Failed computing distance between input pose(s) and robot pose - returning false");
+      return false;
+    }
     return distA > distB; // descending order
   });
   

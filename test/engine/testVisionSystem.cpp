@@ -16,7 +16,7 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/shared/types.h"
-#include "coretech/common/engine/math/rotation.h"
+#include "coretech/common/shared/math/rotation.h"
 
 #include "engine/cozmoContext.h"
 #include "engine/robotDataLoader.h"

@@ -11,7 +11,7 @@
  **/
 
 #include "engine/cozmoContext.h"
-#include "engine/perfMetric.h"
+#include "engine/perfMetricEngine.h"
 #include "engine/robotInitialConnection.h"
 #include "engine/robotManager.h"
 #include "engine/externalInterface/externalInterface.h"

@@ -26,6 +26,7 @@
 #include <linux/reboot.h>
 #include <sys/reboot.h>
 #include <fstream>
+#include <iomanip>
 
 #include "anki-ble/common/log.h"
 #include "anki-ble/common/anki_ble_uuids.h"
@@ -90,6 +91,9 @@ void Daemon::Start() {
   InitializeCloudComms();   // must come before gateway comms
   InitializeGatewayComms();
   InitializeEngineComms();
+
+  // Log the initial wifi state
+  LogWifiState();
   Log::Write("Finished Starting");
 }
 
@@ -113,6 +117,36 @@ void Daemon::OnWifiChanged(bool connected, std::string manufacturerMac) {
     Log::Write("Daemon: OnWifiChanged -- trying to connect to wifi");
     _wifiWatcher->ConnectIfNoWifi();
   }
+}
+
+void Daemon::LogWifiState() {
+  Anki::Wifi::WiFiState wifiState = Anki::Wifi::GetWiFiState();
+
+  bool connected = (wifiState.connState == Anki::Wifi::WiFiConnState::CONNECTED) ||
+                   (wifiState.connState == Anki::Wifi::WiFiConnState::ONLINE);
+
+  std::string event = "wifi.initial_state";
+
+  DASMSG(wifi_initial_connection_status, event,
+          "WiFi connection state on Switchboard load up.");
+
+  uint8_t apMac[6];
+  bool hasMac = Anki::Wifi::GetApMacAddress(apMac);
+
+  std::string apMacManufacturerBytes = "";
+
+  if(hasMac) {
+    // Strip ap MAC of last three bytes
+    for(int i = 0; i < 3; i++) {
+      std::stringstream ss;
+      ss << std::setfill('0') << std::setw(2) << std::hex << (int)apMac[i];
+      apMacManufacturerBytes += ss.str();
+    }
+  }
+
+  DASMSG_SET(s1, connected?"connected":"disconnected", "Connection state.");
+  DASMSG_SET(s2, apMacManufacturerBytes, "Mac address prefix.");
+  DASMSG_SEND();
 }
 
 void Daemon::InitializeEngineComms() {
@@ -197,6 +231,8 @@ bool Daemon::TryConnectToTokenServer() {
 
 void Daemon::InitializeBleComms() {
   Log::Write("Initialize BLE");
+
+  _engineMessagingClient->HandleHasBleKeysRequest();
 
   if(_bleClient.get() == nullptr) {
     _bleClient = std::make_unique<Anki::Switchboard::BleClient>(_loop);
@@ -617,6 +653,18 @@ void Daemon::OnPairingStatus(Anki::Vector::ExternalInterface::MessageEngineToGam
       _engineMessagingClient->HandleWifiScanRequest();
       break;
     }
+    case Anki::Vector::ExternalInterface::MessageEngineToGameTag::WifiConnectRequest: {
+      Log::Write("Got WifiConnectRequest\n");
+      const auto& payload = message.Get_WifiConnectRequest();
+      _engineMessagingClient->HandleWifiConnectRequest(std::string((char*)&payload.ssid),
+                                                       std::string((char*)&payload.pwd),
+                                                       payload.disconnectAfterConnection);
+      break;
+    }
+    case Anki::Vector::ExternalInterface::MessageEngineToGameTag::HasBleKeysRequest: {
+      _engineMessagingClient->HandleHasBleKeysRequest();
+      break;
+    }
     default: {
       printf("Unknown Tag: %hhu\n", tag);
       break;
@@ -700,7 +748,7 @@ static void ExitHandler(int status = 0) {
   Anki::Util::gLoggerProvider = nullptr;
   Anki::Util::gEventProvider = nullptr;
 
-  Anki::Victor::UninstallCrashReporter();
+  Anki::Vector::UninstallCrashReporter();
 
   _exit(status);
 }
@@ -724,7 +772,7 @@ static void Tick(struct ev_loop* loop, struct ev_timer* w, int revents) {
 
 int SwitchboardMain() {
 
-  Anki::Victor::InstallCrashReporter(LOG_PROCNAME);
+  Anki::Vector::InstallCrashReporter(LOG_PROCNAME);
 
   Anki::Util::VictorLogger logger(LOG_PROCNAME);
   Anki::Util::gLoggerProvider = &logger;

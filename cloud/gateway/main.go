@@ -12,7 +12,6 @@ import (
 	"runtime"
 	"runtime/debug"
 	"strings"
-	"sync"
 	"syscall"
 	"time"
 
@@ -31,10 +30,8 @@ import (
 // Enables logs about the requests coming and going from the gateway.
 // Most useful for debugging the json output being sent to the app.
 const (
-	logVerbose          = false
-	logMessageContent   = false
-	hostProtocolVersion = 2
-	minProtocolVersion  = 0
+	logVerbose        = false
+	logMessageContent = false
 )
 
 var (
@@ -52,12 +49,6 @@ var (
 
 	// TODO: remove clad socket and map when there are no more clad messages being used
 	engineCladManager EngineCladIpcManager
-	// TODO: Remove these when the closed stream from the app actually disconnects properly.
-	// Right now it's preventing us from being able to rely on the property of a stream closing on disconnect.
-	// So these three variables are used to force event streams into only running one at a time.
-	tempEventStreamDone   chan struct{}
-	tempEventStreamMutex1 sync.Mutex
-	tempEventStreamMutex2 sync.Mutex
 )
 
 func LoggingUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (_ interface{}, errOut error) {

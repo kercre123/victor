@@ -52,4 +52,4 @@ if [ $SHOW_ALL_LOGS -eq 1 ]; then
   robot_sh ls $LOG_ZIP 2>/dev/null && robot_sh zcat $LOG_ZIP
 fi
 
-robot_sh /bin/tail -F -n +1 /var/log/messages
+robot_sh /bin/tail -F -n +1 /var/log/messages \| /bin/tr '\\x1f' ':'

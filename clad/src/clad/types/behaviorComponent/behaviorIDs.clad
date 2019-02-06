@@ -16,6 +16,7 @@ enum uint_16 BehaviorID {
   Wait_TestInjectable,
 
   // devBehaviors
+  AcousticTestMode,
   DevBaseBehavior,
   DevBatteryLogging,
   DevCubeSpinner,
@@ -60,6 +61,24 @@ enum uint_16 BehaviorID {
   ReactToBody,
   ReactToGazeDirection,
   ReactToGazeDirectionSurface,
+
+  // devBehaviors/selfTest
+  SelfTest,
+  SelfTestButton,
+  SelfTestDockWithCharger,
+  SelfTestDriftCheck,
+  SelfTestDriveForwards,
+  SelfTestInitChecks,
+  SelfTestLookAtCharger,
+  SelfTestMotorCalibration,
+  SelfTestPickup,
+  SelfTestPutOnCharger,
+  SelfTestPutOnCharger2,
+  SelfTestScreenAndBackpack,
+  SelfTestSoundCheck,
+  SelfTestTouch,
+
+  // devBehaviors
   TestStackMonitors,
 
   // victorBehaviorTree/alexa
@@ -94,6 +113,7 @@ enum uint_16 BehaviorID {
   ConnectToCube,
   CoordinateGlobalInterrupts,
   CoordinateInHabitat,
+  CoordinateWhileHeldInPalm,
   CoordinateWhileInAir,
 
   // victorBehaviorTree/danceToTheBeat
@@ -298,9 +318,13 @@ enum uint_16 BehaviorID {
   WhatsMyNameVoiceCommand,
 
   // victorBehaviorTree/highLevelDelegates/whileInAir/heldInPalm
-  ReactToJoltInPalm,
   HeldInPalmDispatcher,
   HeldInPalmResponses,
+  InitialHeldInPalmReaction,
+  ReactToJoltInPalm,
+  ReactToPalmTilt,
+  ReactToPickupFromPalm,
+  ReactToPutDownFromPalm,
 
   // victorBehaviorTree/highLevelDelegates/whileInAir
   InitialPickupAnimation,
@@ -344,7 +368,6 @@ enum uint_16 BehaviorID {
   OnboardingTeachMeetVictor1p2,
   OnboardingTeachWakeWord1p2,
   OnboardingWakeUp1p2,
-  ResetOnboarding1p2Safely,
 
   // victorBehaviorTree/prDemo
   PRDemoBigGreeting,
@@ -371,6 +394,7 @@ enum uint_16 BehaviorID {
   AskForHelpOnSide,
   BasicVoiceCommands,
   CheckForAndReactToHand,
+  ForceStuckOnEdge,
   InterruptingVoiceReactions,
   MandatoryPhysicalReactions,
   ProceduralTurnToMicDirection,

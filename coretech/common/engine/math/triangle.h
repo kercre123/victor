@@ -9,7 +9,7 @@
 #ifndef CORETECH_ENGINE_MATH_TRIANGLE_H
 #define CORETECH_ENGINE_MATH_TRIANGLE_H
 
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/shared/math/point_fwd.h"
 #include "coretech/common/shared/types.h"
 
 namespace Anki {

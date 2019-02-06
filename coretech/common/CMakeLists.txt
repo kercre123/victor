@@ -40,6 +40,7 @@ target_compile_options(cti_common
   PRIVATE
   -Os
   ${SYMBOL_VISIBILITY_FLAGS}
+  ${ASAN_CXX_FLAGS}
 )
 
 target_link_libraries(cti_common
@@ -51,6 +52,7 @@ target_link_libraries(cti_common
   ${OPENCV_LIBS}
   PRIVATE
   z
+  ${ASAN_LINKER_FLAGS}
 )
 
 if (VICOS)
@@ -78,6 +80,7 @@ target_link_libraries(cti_common_robot
   cti_common_clad_cpplite
   PRIVATE
   opencv_interface
+  ${ASAN_LINKER_FLAGS}
 )
 
 target_compile_definitions(cti_common_robot
@@ -106,13 +109,15 @@ target_link_libraries(cti_common_shared
   PUBLIC
   util
   PRIVATE
+  opencv_interface
+  ${ASAN_LINKER_FLAGS}
 )
 
 target_compile_definitions(cti_common_shared
   PUBLIC
-  ANKICORETECH_USE_OPENCV=0
+  ANKICORETECH_USE_OPENCV=1
   ANKICORETECH_USE_MATLAB=0
-  ANKICORETECH_EMBEDDED_USE_OPENCV=0
+  ANKICORETECH_EMBEDDED_USE_OPENCV=1
   ANKICORETECH_EMBEDDED_USE_MATLAB=0
   PRIVATE
   CORETECH_SHARED

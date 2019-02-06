@@ -18,7 +18,7 @@
 #define __Anki_Vision_NeuralNetRunner_H__
 
 #include "coretech/common/shared/types.h"
-#include "coretech/common/engine/math/rect.h"
+#include "coretech/common/shared/math/rect.h"
 
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/profiler.h"
@@ -34,6 +34,11 @@ namespace Json {
 }
 
 namespace Anki {
+  
+namespace NeuralNets {
+  class INeuralNetModel;
+}
+  
 namespace Vision {
 
 class ImageCache;
@@ -45,13 +50,7 @@ public:
   NeuralNetRunner();
   ~NeuralNetRunner();
   
-  // Load a DNN model and assocated labels specified by the "graph" and "labels" fields of config.
-  // Supports either TensorFlow or Caffe models using the following conventions:
-  //  - If specified graph ends in ".pb", it is assumed to be TensorFlow
-  //  - If there is also a ".pbtxt" file of the same name, it is used as well. Otherwise
-  //    the detector attempts to interpret the graph entirely from the frozen ".pb" file.
-  //  - Otherwise, the model is assumed to be Caffe and both <graph>.prototxt and <graph>.caffemodel are
-  //    assumed to exist and used to read the model.
+  // Load a DNN model described by Json config
   Result Init(const std::string& modelPath, const std::string& cachePath, const Json::Value& config);
   
   // Returns true if image was used, false if otherwise occupied or image wasn't suitable (e.g., not color)
@@ -74,9 +73,7 @@ private:
   
   Profiler _profiler;
   
-  // Hide the library/implementation we actually use for detecting objects
-  class Model;
-  std::unique_ptr<Model> _model;
+  std::unique_ptr<NeuralNets::INeuralNetModel> _model;
   std::future<std::list<SalientPoint>> _future; // for processing aysnchronously
 
   // We process asynchronsously, so need a copy of the image data (at processing resolution)
@@ -93,6 +90,8 @@ private:
   std::array<u8,256>    _gammaLUT{};
   
   void ApplyGamma(ImageRGB& img);
+  
+  std::list<SalientPoint> RunModel();
   
 }; // class NeuralNetworkRunner
   

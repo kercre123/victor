@@ -26,6 +26,7 @@
 #include "engine/vision/groundPlaneROI.h"
 #include "engine/vision/visionModeSet.h"
 #include "engine/vision/visionPoseData.h"
+#include "engine/vision/visionProcessingResult.h"
 #include "engine/vision/visionSystemInput.h"
 
 #include "coretech/common/engine/matlabInterface.h"
@@ -83,35 +84,6 @@ namespace Vector {
   class Robot;
   class VizManager;
   class GroundPlaneClassifier;
-  
-  // Everything that can be generated from one image in one big package:
-  struct VisionProcessingResult
-  {
-    RobotTimeStamp_t timestamp; // Always set, even if all the lists below are empty (e.g. nothing is found)
-    VisionModeSet modesProcessed;
-    
-    Vision::ImageQuality imageQuality;
-    Vision::CameraParams cameraParams;
-    u8 imageMean;
-
-    std::list<ExternalInterface::RobotObservedMotion>     observedMotions;
-    std::list<Vision::ObservedMarker>                     observedMarkers;
-    std::list<Vision::TrackedFace>                        faces;
-    std::list<Vision::TrackedPet>                         pets;
-    std::list<OverheadEdgeFrame>                          overheadEdges;
-    std::list<Vision::UpdatedFaceID>                      updatedFaceIDs;
-    std::list<ExternalInterface::RobotObservedLaserPoint> laserPoints;
-    std::list<Vision::CameraCalibration>                  cameraCalibration;
-    std::list<OverheadEdgeFrame>                          visualObstacles;
-    std::list<Vision::SalientPoint>                       salientPoints;
-    ExternalInterface::RobotObservedIllumination          illumination;
-
-    Vision::CompressedImage compressedDisplayImg;
-    Vision::ImageRGB565 mirrorModeImg;
-    
-    // Used to pass debug images back to main thread for display:
-    DebugImageList<Vision::CompressedImage> debugImages;
-  };
   
   class VisionSystem : public Vision::Profiler
   {
@@ -265,7 +237,7 @@ namespace Vector {
     
     std::map<std::string, std::unique_ptr<Vision::NeuralNetRunner>> _neuralNetRunners;
     
-    RobotTimeStamp_t                                _neuralNetRunnerTimestamp = 0;
+    Vision::ImageRGB                                _neuralNetRunnerImage;
 
     Vision::CompressedImage _compressedDisplayImg;
     s32 _imageCompressQuality = 0;

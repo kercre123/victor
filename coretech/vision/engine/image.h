@@ -14,12 +14,12 @@
 
 #include "coretech/common/shared/types.h"
 
-#include "coretech/common/engine/array2d.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/engine/colorRGBA.h"
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/shared/math/point_fwd.h"
 #include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/math/quad.h"
-#include "coretech/common/engine/math/rect.h"
+#include "coretech/common/shared/math/rect.h"
 
 #include "coretech/vision/engine/colorPixelTypes.h"
 

@@ -22,18 +22,6 @@
 
 #include <numeric>
 
-namespace std {
-  using namespace Anki;
-  template <> struct std::hash<Point2f> {
-    s64 operator()(const Point2f& p) const { return ((s64) p.x()) << 32 | ((s64) p.y()); }
-  };
-
-  template <> struct std::equal_to<Point2f>  {
-    bool operator()(const Point2f& p, const Point2f& q) const { 
-      return Anki::IsNearlyEqual(p, q, (float) Anki::Util::FLOATING_POINT_COMPARISON_TOLERANCE); 
-    }
-  };
-}
 
 namespace Anki {
 namespace Vector {

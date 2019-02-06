@@ -209,14 +209,14 @@ int main(int argc, char **argv)
     // For webots, we 'fake' the sleep time here.  Unlike in Cozmo webots,
     // we don't actually sleep in this loop
     static const float kTargetDuration_ms = Util::numeric_cast<float>(BS_TIME_STEP_MS);
-    const float engineFreq_ms = time_ms > kTargetDuration_ms ? time_ms : kTargetDuration_ms;
-    const float sleepTime_ms = time_ms > kTargetDuration_ms ? 0.0f : kTargetDuration_ms - time_ms;
+    const float engineFreq_ms = std::max(time_ms, kTargetDuration_ms);
+    const float sleepTime_ms = std::max(0.0f, kTargetDuration_ms - time_ms);
     const float sleepTimeActual_ms = sleepTime_ms;
-    myVictor.RegisterEngineTickPerformance(Util::numeric_cast<float>(time_ms),
+    myVictor.RegisterEngineTickPerformance(time_ms,
                                            engineFreq_ms,
                                            sleepTime_ms,
                                            sleepTimeActual_ms);
-  } // while still stepping
+  }
 
 #if ANKI_DEV_CHEATS
   DevLoggingSystem::DestroyInstance();

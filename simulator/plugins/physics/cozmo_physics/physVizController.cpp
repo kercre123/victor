@@ -223,6 +223,10 @@ void PhysVizController::Draw(int pass, const char *view)
           DrawHead(obj->x_size_m, obj->y_size_m, obj->z_size_m);
           break;
 
+        case VizObjectType::VIZ_OBJECT_TEXT:
+          DrawTextAtOffset(obj->text, 0.f, 0.f, 0.f);
+          break;
+
         default:
           PRINT("Unknown objectTypeID %d\n", obj->objectTypeID);
           break;

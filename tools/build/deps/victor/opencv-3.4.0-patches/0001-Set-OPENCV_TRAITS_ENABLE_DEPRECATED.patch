@@ -1,0 +1,26 @@
+From 94696362aba9742ccb6474de4ac0c92a736e1931 Mon Sep 17 00:00:00 2001
+From: Stuart Eichert <seichert@anki.com>
+Date: Fri, 11 Jan 2019 17:32:45 -0800
+Subject: [PATCH 1/2] Set OPENCV_TRAITS_ENABLE_DEPRECATED
+
+We still rely on these traits definitions.
+---
+ modules/core/include/opencv2/core/traits.hpp | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/modules/core/include/opencv2/core/traits.hpp b/modules/core/include/opencv2/core/traits.hpp
+index 6cb10f44c..9d20f6bd0 100644
+--- a/modules/core/include/opencv2/core/traits.hpp
++++ b/modules/core/include/opencv2/core/traits.hpp
+@@ -49,7 +49,7 @@
+ namespace cv
+ {
+ 
+-//#define OPENCV_TRAITS_ENABLE_DEPRECATED
++#define OPENCV_TRAITS_ENABLE_DEPRECATED
+ 
+ //! @addtogroup core_basic
+ //! @{
+-- 
+2.15.2 (Apple Git-101.1)
+

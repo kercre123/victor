@@ -391,11 +391,16 @@ ConsoleFuncCall(struct mg_connection *conn, void *cbdata)
       args = func.substr(amp+6);  // skip over "args="
       func = func.substr(5, amp-5);
 
-      // unescape '+' => ' '
+      // unescape '+' => ' ',  except if it follows a '\', in which case keep the '+' and drop the '\'
 
       size_t plus = args.find("+");
       while (plus != std::string::npos) {
-        args = args.replace(plus, 1, " ");
+        if( (plus > 0) && (args[plus-1] == '\\') ) {
+          args.erase(plus-1, 1);
+          --plus;
+        } else {
+          args = args.replace(plus, 1, " ");
+        }
         plus = args.find("+", plus+1);
       }
 

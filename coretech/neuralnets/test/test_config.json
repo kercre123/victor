@@ -10,6 +10,7 @@
     //
     "Models" : [
       {
+        "modelType"           : "TFLite",
         "networkName"         : "quantized",
         "graphFile"           : "mobilenet_v1_1.0_224_quant.tflite",
         "memoryMapGraph"      : 0,
@@ -24,13 +25,14 @@
         "inputHeight"         : 224,
         "inputScale"          : 127.5, // When input is float, data is first divided by scale and then shifted
         "inputShift"          : -1,    // I.e.:  float_input = data / inputScale + inputShift
-        "minScore"            : 0.5,
+        "minScore"            : 0.1,
         "verbose"             : 1,
         "pollPeriod_ms"       : 10,
         "timeoutDuration_sec" : 10.0,
         "benchmarkRuns"       : 0
       },
       {
+        "modelType"           : "TFLite",
         "networkName"         : "non-quantized",
         "graphFile"           : "mobilenet_v1_0.5_128.tflite",
         "memoryMapGraph"      : 0,
@@ -45,7 +47,7 @@
         "inputHeight"         : 128,
         "inputScale"          : 127.5, // When input is float, data is first divided by scale and then shifted
         "inputShift"          : -1,    // I.e.:  float_input = data / inputScale + inputShift
-        "minScore"            : 0.5,
+        "minScore"            : 0.1,
         "verbose"             : 1,
         "pollPeriod_ms"       : 10,
         "timeoutDuration_sec" : 10.0,

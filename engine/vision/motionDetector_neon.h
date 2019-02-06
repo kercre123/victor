@@ -14,7 +14,7 @@
 
 #include "engine/vision/motionDetector.h"
 
-#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/shared/array2d_impl.h"
 
 namespace Anki {
 namespace Vector {

@@ -410,6 +410,7 @@ def main(json_files, bin_name, flatc_dir, schema_file=SCHEMA_FILE, bin_file_ext=
     write_json_file(tmp_json_file, {CLIPS_ATTR:anim_clips})
     bin_file = convert_json_to_binary(tmp_json_file, flatc_dir, schema_file, bin_file_ext)
     os.close(fd)
+    os.remove(tmp_json_file)
     renamed_bin_file = os.path.join(os.path.dirname(bin_file), bin_name)
     os.rename(bin_file, renamed_bin_file)
     if not os.path.isfile(renamed_bin_file):

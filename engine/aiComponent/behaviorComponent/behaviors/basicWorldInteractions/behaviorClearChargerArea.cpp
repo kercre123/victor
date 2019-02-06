@@ -213,7 +213,6 @@ void BehaviorClearChargerArea::TransitionToPositionForRamming()
   const auto& cubePose = cube->GetPose();
   const float cubeToRobotAngle = atan2f(cubePose.GetTranslation().y() - robotY,
                                         cubePose.GetTranslation().x() - robotX);
-  const float cubeToRobotDist_mm = ComputeDistanceBetween(robotPose, cubePose);
   Point2f p1(robotX - 0.5f * ROBOT_BOUNDING_Y * std::sin(cubeToRobotAngle),
              robotY + 0.5f * ROBOT_BOUNDING_Y * std::cos(cubeToRobotAngle));
   Point2f p2(robotX + 0.5f * ROBOT_BOUNDING_Y * std::sin(cubeToRobotAngle),
@@ -237,6 +236,11 @@ void BehaviorClearChargerArea::TransitionToPositionForRamming()
   if (shovingPathIntersectsCharger) {
     // Cannot ram the block, since we would ram it into the charger. Position ourselves to the side of the charger
     // first before shoving it. Choose the side such that we will shove the cube _away_ from the charger.
+    float cubeToRobotDist_mm = 0.f;
+    if (!ComputeDistanceBetween(robotPose, cubePose, cubeToRobotDist_mm)) {
+      LOG_ERROR("BehaviorClearChargerArea.TransitionToPositionForRamming.ComputeDistanceFailure", "poses not comparable");
+      return;
+    }
     const auto& chargerPose = charger->GetPose();
     const float chargerToRobotAngle = atan2f(chargerPose.GetTranslation().y() - robotY,
                                              chargerPose.GetTranslation().x() - robotX);
@@ -277,7 +281,11 @@ void BehaviorClearChargerArea::TransitionToRamCube()
   
   const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
   const auto& cubePose = cube->GetPose();
-  const float cubeToRobotDist_mm = ComputeDistanceBetween(robotPose, cubePose);
+  float cubeToRobotDist_mm = 0.f;
+  if (!ComputeDistanceBetween(robotPose, cubePose, cubeToRobotDist_mm)) {
+    LOG_ERROR("BehaviorClearChargerArea.TransitionToRamCube.ComputeDistanceFailure", "poses not comparable");
+    return;
+  }
   
   auto* action = new CompoundActionSequential();
   const float rammingDist_mm = 100.f + cubeToRobotDist_mm;

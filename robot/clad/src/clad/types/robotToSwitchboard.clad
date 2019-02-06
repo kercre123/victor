@@ -17,6 +17,22 @@ message WifiScanRequest
 {
 }
 
+// Scans for and attempts to connect to ssid
+// Will immediately disconnect if connection was successful
+// Sends WifiConnectResponse back indicating if connection to
+// ssid was successfull
+message WifiConnectRequest
+{
+  uint_8 ssid[33], // 32 plus null
+  uint_8 pwd[33],
+  bool disconnectAfterConnection
+}
+
+// Request to see if switchboard has any BLE session keys saved
+message HasBleKeysRequest
+{
+}
+
 } // SwitchboardInterface
 } // Cozmo
 } // Anki

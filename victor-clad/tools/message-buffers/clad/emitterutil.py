@@ -478,6 +478,47 @@ def write_go_file(output_directory, output_file, output_callback, comment_lines=
 
         output_callback(output)
 
+def js_main(emitter, options, scanner=None):
+    tree = parse(options)
+    main_output_file = get_output_file(options, '.js')
+    comment_lines = get_comment_lines(options, 'JS')
+
+    def output_callback(output):
+        emitter(output).visit(tree)
+
+    properties = dict()
+    if scanner is not None:
+        scanner(properties).visit(tree)
+
+    write_js_file(options.output_directory, main_output_file, output_callback,
+        comment_lines=comment_lines, package=options.package, properties=properties)
+
+def write_js_file(output_directory, output_file, output_callback, comment_lines=None, package=None,
+    imports=None, properties=dict()):
+
+    includes = []
+    if properties.get('use_bytes', True):
+        includes.append('bytes')
+    if properties.get('use_binary', True):
+        includes.append('encoding/binary')
+    if properties.get('use_errors', True):
+        includes.append('errors')
+    if properties.get('use_clad', True):
+        includes.append('anki/clad')
+    if properties.get('use_fmt', True):
+        includes.append('fmt')
+
+    if package == None:
+        full_path = os.path.join(output_directory, output_file)
+        package = os.path.basename(os.path.normpath(os.path.dirname(full_path)))
+    with get_output(output_directory, output_file) as output:
+        if comment_lines:
+            output.write('\n'.join('// {0}'.format(line) for line in comment_lines))
+            output.write('\n\n')
+        output.write('const {{ Clad, CladBuffer }} = require(\'./cladConfig.js\');\n\n'.format(package))
+
+        output_callback(output)
+
 def write_python_file(output_directory, output_file, output_callback,
         comment_lines=None, future_features=('absolute_import', 'print_function'),
         additional_paths=None, import_modules=None):

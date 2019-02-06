@@ -321,13 +321,6 @@ MESSAGES_TO_TEST = [
                                              protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
                                              ["os_version", "engine_build_id"])),
 
-    # NetworkState message
-    (client.ExternalInterfaceServicer.NetworkState,
-     protocol.NetworkStateRequest(),
-     TestResultIsTypeWithStatusAndFieldNames(protocol.NetworkStateResponse,
-                                             protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
-                                             ["network_stats"])),
-
     # SayText message
     # 12/4/2018 thanhlelgg's Note: This usually fails because somehow webots failed to say text with below error:
     # `grpc._channel._Rendezvous: <_Rendezvous of RPC that terminated with (StatusCode.INTERNAL, Failed to say text)>`

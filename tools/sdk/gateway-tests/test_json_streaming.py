@@ -10,10 +10,10 @@ import sys
 import pytest
 
 try:
+    import protocol as p
     from google.protobuf.json_format import MessageToJson, Parse
-    import anki_vector.messaging.protocol as p
 except ImportError:
-    sys.exit("Error: This script requires you to install the Vector SDK")
+    sys.exit("Error: This script requires you to run setup.sh")
 
 from util import vector_connection
 
@@ -42,7 +42,7 @@ def test_event_repeated(vector_connection):
             assert "result" in data
             Parse(json.dumps(data["result"]), response_type, ignore_unknown_fields=True)
             print("Converted Protobuf: {}".format(colored(response_type, "cyan")))
-            assert response_type.event.connection_response.is_primary
+            assert response_type.event.connection_response != None
             break
 
     for id in random_id_generator(10, 50):
@@ -58,7 +58,6 @@ def test_event(vector_connection, request_params):
 
 @pytest.mark.parametrize("request_params", [
     {"control_request": p.ControlRequest(priority=p.ControlRequest.UNKNOWN)},
-    {"control_request": p.ControlRequest(priority=p.ControlRequest.OVERRIDE_ALL)},
     {"control_request": p.ControlRequest(priority=p.ControlRequest.TOP_PRIORITY_AI)},
     {"control_request": p.ControlRequest()},
     {"control_release": p.ControlRelease()}

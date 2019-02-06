@@ -38,7 +38,7 @@ namespace Vector {
 namespace {
   // When there is a non-zero cooldown defined in iConfig, override with this if set to a value > 0
   // Note that this will affect *all* instantiations of of this behavior class with non-zero cooldown!
-  CONSOLE_VAR(float, kCFARTSP_CooldownOverride_sec, "Behavers.CheckForAndReactToSalientPoint", 0.f);
+  CONSOLE_VAR(float, kCFARTSP_CooldownOverride_sec, "Behaviors.CheckForAndReactToSalientPoint", 0.f);
 }
 
 namespace JsonKeys {

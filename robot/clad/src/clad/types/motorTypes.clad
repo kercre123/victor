@@ -33,6 +33,7 @@ enum uint_8 MotorCalibrationReason
 {
   Startup,
   Playpen,
+  SelfTest,
   Game,
   LiftMotorBurnoutProtection,
   HeadMotorBurnoutProtection,

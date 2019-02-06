@@ -12,7 +12,7 @@
 #include <vector>
 #include <array>
 
-#include "coretech/common/engine/math/rect.h"
+#include "coretech/common/shared/math/rect.h"
 
 namespace Anki {
     

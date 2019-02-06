@@ -34,11 +34,24 @@ font_size = '12'
 ## set to true to show points at the invisible joint nodes
 debugInvisibleJoints = False
 
+kGlobalMaxDepth = 100
+
+def cropTree( inputEdges, root, crops ):
+  """ Crop the tree by cutting off any branches below nodes named in args.crop
+  """
+  edges = {}
+  for k in inputEdges:
+    if k not in crops:
+      # add " ..." to the name if there are hidden children
+      edges[k] = [x + ' ...' if x in crops else x for x in inputEdges[k]]
+
+  return edges
+
 def extractTree( inputEdges, root, nodes=None, edges=None, depth=0 ):
   """ Recursively pull out tree from root. Only supply first 2 args
   """
 
-  if depth > 100:
+  if depth > kGlobalMaxDepth:
     print('WARNING: depth ({0}) unexpectedly large'.format(depth))
     return nodes,edges
 
@@ -60,7 +73,7 @@ def flattenTree( inputEdges, root, nodes_lvl=None, edges_lvl=None, depth=0 ):
   """ Recursively duplicate nodes to flatten the DAG into a simpler tree
   """
 
-  if depth > 100:
+  if depth > kGlobalMaxDepth:
     print('WARNING: depth ({0}) unexpectedly large'.format(depth))
     return nodes_lvl,edges_lvl
 
@@ -203,9 +216,14 @@ def main():
                       help='plot horizontal tree instead of veritcal (espcially useful with -f on large plot)')
   parser.add_argument('-t', '--text', action="store", dest='textFilename', metavar='TEXTFILE',
                       help='load the given text file and add it as a label node to the output')
-
+  parser.add_argument('-c', '--crop', metavar='BEHAVIOR', nargs='+',
+                      help='List (seperated by space) behavior to "crop" (i.e. don\'t descend into)')
 
   args = parser.parse_args()
+
+  if args.crop and not args.rootBehavior:
+    print('Cannoy specify crop without root behavior')
+    sys.exit(1)
 
   inputFilename = args.inputFilename
   outputFilename = args.outputFilename
@@ -231,6 +249,10 @@ def main():
     if rootBehavior not in edges:
       print( 'Root {0} not found in edges (if it exists, does it have outbound edges?)'.format(rootBehavior) )
       sys.exit(1)
+
+    if args.crop:
+      edges = cropTree( edges, rootBehavior, args.crop )
+
     if args.flatten:
       nodes, edges = flattenTree( edges, rootBehavior )
     else:

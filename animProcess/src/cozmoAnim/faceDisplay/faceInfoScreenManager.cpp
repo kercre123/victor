@@ -18,6 +18,7 @@
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/animation/animationStreamer.h"
+#include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 #include "cozmoAnim/connectionFlow.h"
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreen.h"
@@ -27,8 +28,7 @@
 
 #include "micDataTypes.h"
 
-#include "coretech/common/engine/array2d_impl.h"
-#include "coretech/common/engine/math/point_impl.h"
+#include "coretech/common/shared/array2d_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image.h"
@@ -76,6 +76,8 @@
 #else
 #define FORCE_TRANSITION_TO_PAIRING 0
 #endif
+
+#define ENABLE_SELF_TEST 1
 
 #if !FACTORY_TEST
 
@@ -208,6 +210,7 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   ADD_SCREEN_WITH_TEXT(ClearUserDataFail, Main, {"CLEAR USER DATA FAILED"});
   ADD_SCREEN_WITH_TEXT(Rebooting, Rebooting, {"REBOOTING..."});
   ADD_SCREEN_WITH_TEXT(SelfTest, Main, {"START SELF TEST?"});
+  ADD_SCREEN(SelfTestRunning, SelfTestRunning)
   ADD_SCREEN(Network, SensorInfo);
   ADD_SCREEN(SensorInfo, IMUInfo);
   ADD_SCREEN(IMUInfo, MotorInfo);
@@ -285,14 +288,24 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   SET_ENTER_ACTION(Main, mainEnterFcn);
 
   ADD_MENU_ITEM(Main, "EXIT", None);
-  // ADD_MENU_ITEM(Main, "Self Test", SelfTest);   // TODO: VIC-1498
+#if ENABLE_SELF_TEST
+  ADD_MENU_ITEM(Main, "RUN SELF TEST", SelfTest);
+#endif
   ADD_MENU_ITEM(Main, "CLEAR USER DATA", ClearUserData);
 
   // === Self test screen ===
   ADD_MENU_ITEM(SelfTest, "EXIT", Main);
-  ADD_MENU_ITEM(SelfTest, "CONFIRM", Main);        // TODO: VIC-1498
-
-  // === Clear User Data menu ===
+  FaceInfoScreen::MenuItemAction confirmSelfTest = [animStreamer, this]() {
+    animStreamer->Abort();
+    animStreamer->EnableKeepFaceAlive(false, 0);
+    _context->GetBackpackLightComponent()->SetSelfTestRunning(true);
+    RobotInterface::SendAnimToEngine(RobotInterface::StartSelfTest());
+    return ScreenName::SelfTestRunning;
+  };
+  ADD_MENU_ITEM_WITH_ACTION(SelfTest, "CONFIRM", confirmSelfTest);
+  DISABLE_TIMEOUT(SelfTestRunning);
+  
+  // Clear User Data menu
   FaceInfoScreen::MenuItemAction confirmClearUserData = [this]() {
     // Write this file to indicate that the data partition should be wiped on reboot
     if (!Util::FileUtils::WriteFile("/run/wipe-data", "1")) {
@@ -430,6 +443,7 @@ bool FaceInfoScreenManager::IsActivelyDrawingToScreen() const
     case ScreenName::Pairing:
     case ScreenName::ToggleMute:
     case ScreenName::AlexaNotification:
+    case ScreenName::SelfTestRunning:
       return false;
     default:
       return true;
@@ -520,7 +534,9 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   // Enable/Disable lift
   RobotInterface::EnableMotorPower msg;
   msg.motorID = MotorID::MOTOR_LIFT;
-  msg.enable = !currScreenIsDebug || GetCurrScreenName() == ScreenName::CameraMotorTest;
+  msg.enable = (!currScreenIsDebug ||
+                GetCurrScreenName() == ScreenName::CameraMotorTest ||
+                GetCurrScreenName() == ScreenName::SelfTestRunning);
   SendAnimToRobot(std::move(msg));
 #endif
 
@@ -1031,12 +1047,11 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
     // NOTE: Due to lack of quadrature encoding on the wheels
     //       when they are not actively powered the reported speed
     //       of the wheels when moved manually have a fixed sign.
-    //       Left wheel is always -ve and right wheel is always +ve.
     //       Consequently, moving the left wheel in any direction
     //       moves the menu cursor down and moving the right wheel
     //       in any direction moves it up.
-    const auto lWheelSpeed = state.lwheel_speed_mmps;
-    const auto rWheelSpeed = state.rwheel_speed_mmps;
+    const auto lWheelSpeed = std::fabsf(state.lwheel_speed_mmps);
+    const auto rWheelSpeed = std::fabsf(state.rwheel_speed_mmps);
     if (rWheelSpeed > kWheelMotionThresh_mmps) {
 
       ++_wheelMovingForwardsCount;
@@ -1048,7 +1063,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
         DrawScratch();
       }
 
-    } else if (lWheelSpeed < -kWheelMotionThresh_mmps) {
+    } else if (lWheelSpeed > kWheelMotionThresh_mmps) {
 
       ++_wheelMovingBackwardsCount;
       _wheelMovingForwardsCount = 0;
@@ -1223,9 +1238,12 @@ void FaceInfoScreenManager::DrawMain()
 
   const std::string serialNo = "ESN: "  + esn;
 
+  const std::string hwVer    = "HW: "   + std::to_string(Factory::GetEMR()->fields.HW_VER);
+
   const std::string osVer    = "OS: "   + osstate->GetOSBuildVersion() +
                                           (FACTORY_TEST ? " (V4)" : "") +
                                           (osstate->IsInRecoveryMode() ? " U" : "");
+
   const std::string ssid     = "SSID: " + osstate->GetSSID(true);
 
 #if ANKI_DEV_CHEATS
@@ -1237,7 +1255,9 @@ void FaceInfoScreenManager::DrawMain()
     ip = "XXX.XXX.XXX.XXX";
   }
 
-  ColoredTextLines lines = { {serialNo}, 
+  // ESN/serialNo and the HW version are drawn on the same line with serialNo default left aligned and
+  // HW version right aligned.
+  ColoredTextLines lines = { { {serialNo}, {hwVer, NamedColors::WHITE, false} },
                              {osVer}, 
                              {ssid}, 
 #if FACTORY_TEST
@@ -1310,6 +1330,12 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
 {
   char temp[32] = "";
   sprintf(temp,
+          "SYS: %s",
+          _sysconVersion.c_str());
+  const std::string syscon = temp;
+
+
+  sprintf(temp,
           "CLF: %4u %4u %4u %4u",
           state.cliffDataRaw[0],
           state.cliffDataRaw[1],
@@ -1354,8 +1380,7 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
           state.battTemp_C);
   const std::string tempC = temp;
 
-
-  DrawTextOnScreen({cliffs, prox1, prox2, touch, batt, charger, tempC});
+  DrawTextOnScreen({syscon, cliffs, prox1, prox2, touch, batt, charger, tempC});
 }
 
 void FaceInfoScreenManager::DrawIMUInfo(const RobotState& state)
@@ -1600,11 +1625,11 @@ void FaceInfoScreenManager::DrawAlexaNotification()
 // Draws each element of the textVec on a separate line (spacing determined by textSpacing_pix)
 // in textColor with a background of bgColor.
 void FaceInfoScreenManager::DrawTextOnScreen(const std::vector<std::string>& textVec,
-                                    const ColorRGBA& textColor,
-                                    const ColorRGBA& bgColor,
-                                    const Point2f& loc,
-                                    u32 textSpacing_pix,
-                                    f32 textScale)
+                                             const ColorRGBA& textColor,
+                                             const ColorRGBA& bgColor,
+                                             const Point2f& loc,
+                                             u32 textSpacing_pix,
+                                             f32 textScale)
 {
   _scratchDrawingImg->FillWith( {bgColor.r(), bgColor.g(), bgColor.b()} );
 
@@ -1641,18 +1666,32 @@ void FaceInfoScreenManager::DrawTextOnScreen(const ColoredTextLines& lines,
   f32 textLocY = loc.y();
   for(const auto& line : lines)
   {
-    f32 textLocX = loc.x();
+    f32 textOffsetX = loc.x();
+    f32 textOffsetXRight = loc.x();
     for(const auto& coloredText : line)
     {
-      _scratchDrawingImg->DrawText(
-        {textLocX, textLocY},
-        coloredText.text.c_str(),
-        coloredText.color,
-        textScale,
-        textLineThickness);
+      f32 textLocX = textOffsetX;
+      
+      auto bbox = Vision::Image::GetTextSize(coloredText.text.c_str(), textScale, textLineThickness);
+      if(coloredText.leftAlign)
+      {
+        textOffsetX += bbox.x();
+      }
+      else
+      {
+        // Right align text, need to account for the width of the text as DrawText expects the bottom left corner
+        // location
+        textLocX = FACE_DISPLAY_WIDTH - bbox.x() - textOffsetXRight;
+        textOffsetXRight += bbox.x();
+      }
+      
+      _scratchDrawingImg->DrawText({textLocX, textLocY},
+                                   coloredText.text.c_str(),
+                                   coloredText.color,
+                                   textScale,
+                                   textLineThickness);
 
-      auto bbox = _scratchDrawingImg->GetTextSize(coloredText.text.c_str(), textScale, textLineThickness);
-      textLocX += bbox.x();
+
     }
     textLocY += textSpacing_pix;
   }
@@ -1896,6 +1935,20 @@ bool FaceInfoScreenManager::ScreenNeedsWait(const ScreenName& screenName) const
     default:
       return false;
   }
+}
+
+void FaceInfoScreenManager::SelfTestEnd(AnimationStreamer* animStreamer)
+{
+  const ScreenName curScreen = FaceInfoScreenManager::getInstance()->GetCurrScreenName();
+  if(curScreen != ScreenName::SelfTestRunning)
+  {
+    return;
+  }
+
+  animStreamer->EnableKeepFaceAlive(true, 0);
+  _context->GetBackpackLightComponent()->SetSelfTestRunning(false);
+  
+  SetScreen(ScreenName::Main);
 }
 
 } // namespace Vector

@@ -11,8 +11,8 @@
 
 #include "json/json.h"
 #include "coretech/common/shared/types.h"
-#include "coretech/common/engine/math/point.h"
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/point.h"
+#include "coretech/common/shared/math/radians.h"
 #include <cmath>
 
 namespace Anki {

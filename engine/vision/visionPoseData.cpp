@@ -12,7 +12,6 @@
 
 #include "visionPoseData.h"
 
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
 
 namespace Anki {

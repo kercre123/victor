@@ -53,9 +53,9 @@ namespace {
   
   // How long to remain in discovery mode
 #ifdef SIMULATOR
-  const float kDefaultDiscoveryTime_sec = 3.f;
+  const float kDefaultScanningTime_sec = 3.f;
 #else
-  const float kDefaultDiscoveryTime_sec = 7.f;
+  const float kDefaultScanningTime_sec = 15.f;
 #endif
 
   const float kSendWebVizDataPeriod_sec = 1.0f;
@@ -383,11 +383,11 @@ bool CubeCommsComponent::StartScanningForCubes(const bool autoConnectAfterScan)
   
   LOG_INFO("CubeCommsComponent.StartScanningForCubes.StartScan",
                    "Beginning scan for cubes (duration %.2f seconds). Will %sattempt to connect to a cube after scan.",
-                   kDefaultDiscoveryTime_sec,
+                   kDefaultScanningTime_sec,
                    _connectAfterScan ? "" : "NOT ");
   
   _cubeScanResults.clear();
-  _cubeBleClient->SetScanDuration(kDefaultDiscoveryTime_sec);
+  _cubeBleClient->SetScanDuration(kDefaultScanningTime_sec);
   _cubeBleClient->StartScanning();
   
   return true;

@@ -35,7 +35,8 @@ const char* kBehaviorIDConfigKey = "delegateID";
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDispatcherPassThrough::BehaviorDispatcherPassThrough(const Json::Value& config)
-: ICozmoBehavior(config)
+: ICozmoBehavior(config),
+  _hasUpdatedOnce(false)
 {
   auto debugStr = "BehaviorDispatcherPassThrough.Constructor.MissingDelegateID";
   _iConfig.delegateID = JsonTools::ParseString(config, kBehaviorIDConfigKey, debugStr);
@@ -66,6 +67,7 @@ void BehaviorDispatcherPassThrough::GetBehaviorOperationModifiers(BehaviorOperat
 void BehaviorDispatcherPassThrough::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   expectedKeys.insert( kBehaviorIDConfigKey );
+  GetPassThroughJsonKeys( expectedKeys );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -110,6 +112,9 @@ void BehaviorDispatcherPassThrough::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherPassThrough::BehaviorUpdate()
 {
+  if ( !_hasUpdatedOnce ) {
+    OnFirstUpdate();
+  }
   if(!IsActivated()){
     return;
   }
@@ -134,6 +139,12 @@ void BehaviorDispatcherPassThrough::OnBehaviorDeactivated()
   CancelDelegates();
 }
   
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherPassThrough::OnFirstUpdate()
+{
+  OnFirstPassThroughUpdate();
+  _hasUpdatedOnce = true;
+}
 
 } // namespace Vector
 } // namespace Anki

@@ -340,10 +340,11 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 
   static RobotInterface::BatteryStatus prevStatus;
   RobotInterface::BatteryStatus curStatus;
-  curStatus.isLow             = IsBatteryLow();
-  curStatus.isCharging        = IsCharging();
-  curStatus.onChargerContacts = IsOnChargerContacts();
-  curStatus.isBatteryFull     = IsBatteryFull();
+  curStatus.isLow                 = IsBatteryLow();
+  curStatus.isCharging            = IsCharging();
+  curStatus.onChargerContacts     = IsOnChargerContacts();
+  curStatus.isBatteryFull         = IsBatteryFull();
+  curStatus.isBatteryDisconnected = IsBatteryDisconnectedFromCharger();
 
   if(curStatus != prevStatus)
   {

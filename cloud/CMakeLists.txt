@@ -48,23 +48,18 @@ set(GATEWAY_PROTO_HOME_DIR "${GATEWAY_PROTO_HOME_DIR}" PARENT_SCOPE)
 
 set(__extra_go_deps "${CLAD_GO_GEN_SRCS}" "${GATEWAY_PROTO_GO_GEN_SRCS}" "${GATEWAY_GRPC_GO_GEN_SRCS}" "${CLAD_GATEWAY_GEN_SRCS}")
 
-if (NOT EXISTS "${ANKI_EXTERNAL_DIR}/chipper_key")
-  message(WARNING "Need chipper_key file to be able to connect to cloud services!")
-  message(WARNING "Check your VPN settings. You must be on VPN or office network to get chipper key.")
-  message(FATAL_ERROR "Can't build cloud without chipper key")
-endif()
-
-set(chipper_flags "")
-file(READ "${ANKI_EXTERNAL_DIR}/chipper_key" chipper_flags)
-set(chipper_flags "-X \\\\\'anki/voice.ChipperSecret=${chipper_flags}\\\\\'")
+# preserving this now-unused option as an example of how to set variables at build times
+# hopefully someday this saves someone hours of figuring out how many backslashes are necessary
+# set(chipper_flags "-X \\\\\'anki/voice.ChipperSecret=${chipper_flags}\\\\\'")
+# anki_go_set_ldflags(${target_name} ${chipper_flags})
 
 if(VICOS)
-  set(__opus_build_dir ${CORETECH_EXTERNAL_DIR}/build/opus-vicos)
+  set(__opus_build_dir ${ANKI_EXTERNAL_DIR}/opus/vicos)
   add_library(opus SHARED IMPORTED)
   anki_build_target_license(opus "BSD-3,${CMAKE_SOURCE_DIR}/licenses/opus.license")
   set_target_properties(opus PROPERTIES IMPORTED_LOCATION ${__opus_build_dir}/lib/libopus.so.0.6.1)
 elseif(MACOSX)
-  set(__opus_build_dir ${CORETECH_EXTERNAL_DIR}/build/opus-mac)
+  set(__opus_build_dir ${ANKI_EXTERNAL_DIR}/opus/mac)
   add_library(opus STATIC IMPORTED)
   anki_build_target_license(opus "BSD-3,${CMAKE_SOURCE_DIR}/licenses/opus.license")
   set_target_properties(opus PROPERTIES IMPORTED_LOCATION ${__opus_build_dir}/lib/libopus.a)
@@ -72,7 +67,6 @@ endif()
 
 
 macro(_add_chipper_flags target_name)
-  anki_go_set_ldflags(${target_name} ${chipper_flags})
   anki_go_add_include_dir(${target_name} ${__opus_build_dir}/include/opus)
   anki_go_add_c_library(${target_name} opus)
 endmacro()
@@ -254,14 +248,14 @@ set(GOPATH_GATEWAY "${CMAKE_CURRENT_SOURCE_DIR}/go")
 add_custom_command(
   OUTPUT ${GATEWAY_PROTO_GO_GEN_SRCS} ${GATEWAY_GRPC_GO_GEN_SRCS}
   COMMAND mkdir -p ${GATEWAY_GRPC_OUTPUT_DIR}
-  COMMAND ${CMAKE_COMMAND} -E env "PATH=${PROTOBUF_HOME}/go/bin:$ENV{PATH}"
+  COMMAND ${CMAKE_COMMAND} -E env "PATH=${GOPATH_GATEWAY}/bin:$ENV{PATH}"
     ${PROTOBUF_HOME}/bin/protoc "-I${GATEWAY_PROTO_HOME_DIR}/public"
     "-I${PROTOBUF_HOME}/include"
     "-I${GOPATH_GATEWAY}/src"
     "-I${GOPATH_GATEWAY}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis"
     "--go_out=plugins=grpc:${GATEWAY_GRPC_OUTPUT_DIR}"
     ${GATEWAY_GRPC_SRCS} ${GATEWAY_PROTO_SRCS}
-  COMMAND ${CMAKE_COMMAND} -E env "PATH=${PROTOBUF_HOME}/go/bin:$ENV{PATH}"
+  COMMAND ${CMAKE_COMMAND} -E env "PATH=${GOPATH_GATEWAY}/bin:$ENV{PATH}"
     ${PROTOBUF_HOME}/bin/protoc "-I${GATEWAY_PROTO_HOME_DIR}/public"
     "-I${PROTOBUF_HOME}/include"
     "-I${GOPATH_GATEWAY}/src"

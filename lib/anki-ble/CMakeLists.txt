@@ -22,6 +22,7 @@ PRIVATE
   ${PLATFORM_LIBS}
 PUBLIC
   libev
+  ${ASAN_SHARED_LINKER_FLAGS}
 )
 
 target_compile_definitions(anki-ble

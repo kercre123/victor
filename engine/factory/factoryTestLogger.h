@@ -12,7 +12,6 @@
 #ifndef __Basestation_Factory_FactoryTestLogger_H_
 #define __Basestation_Factory_FactoryTestLogger_H_
 
-#include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/math/pose.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"

@@ -14,8 +14,7 @@
 #ifndef __Anki_AudioUtil_AudioRecognizerProcessor_H_
 #define __Anki_AudioUtil_AudioRecognizerProcessor_H_
 
-#include "audioDataTypes.h"
-#include "audioUtil/speechRecognizer.h"
+#include "audioUtil/audioDataTypes.h"
 
 #include <deque>
 #include <memory>
@@ -24,8 +23,10 @@
 
 namespace Anki {
 namespace AudioUtil {
-  
 class IAudioInputSource;
+class SpeechRecognizer;
+struct SpeechRecognizerCallbackInfo;
+
   
 class AudioRecognizerProcessor
 {
@@ -55,7 +56,7 @@ private:
   std::deque<ResultType>                  _procResults;
   
   void AudioSamplesCallback(const AudioSample* buffer, uint32_t numSamples);
-  void AddRecognizerResult(const AudioUtil::SpeechRecognizer::SpeechCallbackInfo& info);
+  void AddRecognizerResult(const AudioUtil::SpeechRecognizerCallbackInfo& info);
   
 }; // class AudioRecognizerProcessor
     

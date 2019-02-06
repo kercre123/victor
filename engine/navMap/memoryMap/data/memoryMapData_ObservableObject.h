@@ -14,7 +14,6 @@
 
 #include "memoryMapData.h"
 
-#include "coretech/common/engine/math/point.h"
 #include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "engine/cozmoObservableObject.h"

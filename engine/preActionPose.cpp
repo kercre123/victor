@@ -18,8 +18,7 @@
 #include "coretech/vision/engine/visionMarker.h"
 
 #include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/engine/math/point_impl.h"
-
+ 
 namespace Anki {
   
   namespace Vector {

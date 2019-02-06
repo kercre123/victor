@@ -7,7 +7,6 @@ include(anki_build_strip)
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
-set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
 
 if (VICOS)
@@ -30,6 +29,7 @@ target_link_libraries(vic-engine
   victorCrashReports
   # platform
   ${PLATFORM_LIBS}
+  ${ASAN_EXE_LINKER_FLAGS}
 )
 
 anki_build_strip(TARGET vic-engine)

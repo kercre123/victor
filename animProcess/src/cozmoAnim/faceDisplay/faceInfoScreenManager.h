@@ -20,7 +20,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/colorRGBA.h"
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/shared/math/point_fwd.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenTypes.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/cloud/mic.h"
@@ -109,8 +109,12 @@ public:
   // Sets the power mode message to send when returning to none screen
   void SetCalmPowerModeOnReturnToNone(const RobotInterface::CalmPowerMode& msg) { _calmModeMsgOnNone = msg; }
 
+  void SelfTestEnd(AnimationStreamer* animStreamer);
+
   // Note when the engine has finished loading for internal use
   void OnEngineLoaded() {_engineLoaded = true;}
+
+  void SetSysconVersion(const std::string& version) { _sysconVersion = version; }
 
 private:
   const AnimContext* _context = nullptr;
@@ -200,13 +204,17 @@ private:
                         f32 textScale = kDefaultTextScale);
 
   struct ColoredText {
-    ColoredText(const std::string& text, const ColorRGBA& color = NamedColors::WHITE)
+    ColoredText(const std::string& text,
+                const ColorRGBA& color = NamedColors::WHITE,
+                bool leftAlign = true)
     : text(text)
     , color(color)
+    , leftAlign(leftAlign)
     {}
 
     const std::string text;
     const ColorRGBA color;
+    const bool leftAlign;
   };
 
   using ColoredTextLines = std::vector<std::vector<ColoredText> >;
@@ -226,6 +234,8 @@ private:
   
   bool _drawFAC = false;
   bool _engineLoaded = false;
+
+  std::string _sysconVersion = "";
   
   // Reboot Linux
   void Reboot();

@@ -15,7 +15,6 @@
 
 #include "coretech/common/engine/math/pose.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/planning/shared/path.h"
 #include "minimalAnglePlanner.h"
 #include "util/logging/logging.h"

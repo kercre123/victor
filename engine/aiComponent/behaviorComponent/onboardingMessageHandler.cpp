@@ -45,6 +45,7 @@ void OnboardingMessageHandler::InitDependent( Robot* robot, const BCCompMap& dep
 {
   _behaviorsBootLoader = &dependentComps.GetComponent<BehaviorsBootLoader>();
   _gatewayInterface = robot->GetGatewayInterface();
+  _robot = robot;
 
   if(nullptr != _gatewayInterface){
     // Locally handled messages
@@ -129,6 +130,17 @@ void OnboardingMessageHandler::InitDependent( Robot* robot, const BCCompMap& dep
                                 "OnboardingCoordinator",
                                 "");
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void OnboardingMessageHandler::ShowUrlFace(bool show)
+{
+  _robot->SendRobotMessage<RobotInterface::ShowUrlFace>(show);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void OnboardingMessageHandler::RequestBleSessions() {
+  _robot->Broadcast(ExternalInterface::MessageEngineToGame(SwitchboardInterface::HasBleKeysRequest()));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

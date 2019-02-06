@@ -25,7 +25,7 @@
 typedef struct AndroidLogEntry_t AndroidLogEntry;
 
 namespace Anki {
-namespace Victor {
+namespace Vector {
 
 class DASManager {
 public:
@@ -107,6 +107,9 @@ private:
   uint32_t GetNextIndexForJsonFile();
   std::string GetPathNameForNextJsonLogFile();
 
+  // Update state flag and magic state file
+  void SetAllowUpload(bool allow_upload);
+
   void LoadTransientGlobals(const std::string & path);
   void LoadPersistentGlobals(const std::string & path);
   void LoadGlobalState();
@@ -117,7 +120,7 @@ private:
 
 };
 
-} // end namespace Victor
+} // end namespace Vector
 } // end namespace Anki
 
 #endif // __platform_dasmgr_dasManager_h

@@ -13,7 +13,6 @@
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/math/pose.h"
-#include "coretech/common/engine/math/point_impl.h"
 
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"

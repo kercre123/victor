@@ -54,6 +54,7 @@ endif()
 target_compile_options(util_audio
   PRIVATE
   ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
+  ${ASAN_CXX_FLAGS} 
 )
 
 target_compile_definitions(util_audio
@@ -69,8 +70,10 @@ PRIVATE
 )
 
 target_link_libraries(util_audio
+  PRIVATE
   util
   ${PLATFORM_LIBS}
+  ${ASAN_LINKER_FLAGS}
 )
 
 anki_build_target_license(util_audio "ANKI")

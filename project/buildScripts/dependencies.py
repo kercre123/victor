@@ -23,6 +23,7 @@ THIS_DIR = os.path.dirname(os.path.realpath(__file__))
 sys.path.insert(0, os.path.join(THIS_DIR, '..', '..', 'tools', 'build', 'tools'))
 
 import ankibuild.util
+import ankibuild.deptool
 
 # configure unbuffered output
 # https://stackoverflow.com/a/107717/217431
@@ -46,6 +47,7 @@ VERBOSE = True
 REPORT_ERRORS = True
 RETRIES = 10
 SVN_INFO_CMD = "svn info %s %s --xml"
+SVN_LS_CMD = "svn ls -R %s"
 SVN_CRED = "--username %s --password %s --no-auth-cache --non-interactive --trust-server-cert"
 PROJECT_ROOT_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..'))
 DEPS_FILE = os.path.join(PROJECT_ROOT_DIR, 'DEPS')
@@ -69,9 +71,75 @@ MANIFEST_LENGTH_KEY = "length_ms"
 ASSET_VALIDATION_TRIGGERS = ["victor-animation-assets", "victor-audio-assets"]
 
 def get_anki_deps_cache_directory():
-    anki_deps_cache_dir = os.path.join(os.path.expanduser("~"), ".anki", "deps-cache", "sha256")
-    ankibuild.util.File.mkdir_p(anki_deps_cache_dir)
-    return anki_deps_cache_dir
+   anki_deps_cache_dir = os.path.join(os.path.expanduser("~"), ".anki", "deps-cache")
+   ankibuild.util.File.mkdir_p(anki_deps_cache_dir)
+   return anki_deps_cache_dir
+
+
+def get_anki_sha256_cache_directory():
+   anki_sha256_cache_dir = os.path.join(get_anki_deps_cache_directory(), "sha256")
+   ankibuild.util.File.mkdir_p(anki_sha256_cache_dir)
+   return anki_sha256_cache_dir
+
+
+def get_anki_svn_cache_directory(url = None):
+   anki_svn_cache_dir = os.path.join(get_anki_deps_cache_directory(), "svn")
+   if url:
+      url = url.replace('/', '-')
+      anki_svn_cache_dir = os.path.join(anki_svn_cache_dir, url)
+   ankibuild.util.File.mkdir_p(anki_svn_cache_dir)
+   return anki_svn_cache_dir
+
+def get_anki_file_cache_directory(url = None):
+   anki_file_cache_dir = os.path.join(get_anki_deps_cache_directory(), "files")
+   if url:
+      url = url.replace('/', '-')
+      anki_file_cache_dir = os.path.join(anki_file_cache_dir, url)
+   ankibuild.util.File.mkdir_p(anki_file_cache_dir)
+   return anki_file_cache_dir
+
+def get_anki_svn_cache_tarball(url, rev):
+   anki_svn_cache_dir = get_anki_svn_cache_directory(url)
+   tarball = os.path.join(anki_svn_cache_dir, "r" + str(rev) + ".tgz")
+   return tarball
+
+def extract_svn_cache_tarball_to_directory(url, rev, loc):
+   tarball = get_anki_svn_cache_tarball(url, rev)
+   if not os.path.isfile(tarball):
+      return False
+   ankibuild.util.File.rm_rf(loc)
+   ankibuild.util.File.mkdir_p(loc)
+   ptool = "tar"
+   ptool_options = ['-v', '-x', '-z', '-f']
+   unpack = [ptool] + ptool_options + [tarball, '-C', loc]
+   pipe = subprocess.Popen(unpack, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+   (stdout, stderr) = pipe.communicate()
+   status = pipe.poll()
+   if status != 0:
+      ankibuild.util.File.rm_rf(loc)
+   return status == 0
+
+def save_svn_cache_tarball_from_directory(url, rev, loc, cred):
+   tarball = get_anki_svn_cache_tarball(url, rev)
+   tmp_tarball = tarball + ".tmp"
+   ankibuild.util.File.rm_rf(tarball)
+   ankibuild.util.File.rm_rf(tmp_tarball)
+   svn_ls_cmd = SVN_LS_CMD % (cred)
+   pipe = subprocess.Popen(svn_ls_cmd.split(), stdout=subprocess.PIPE,
+                           stderr=subprocess.PIPE, close_fds=True, cwd=loc)
+   (stdoutdata, stderrdata) = pipe.communicate()
+   status = pipe.poll()
+   if status != 0:
+      return False
+   files = stdoutdata.split('\n')
+   with tarfile.open(tmp_tarball, "w:gz") as tar:
+      tar.add(os.path.join(loc, '.svn'), arcname = '.svn', recursive = True)
+      for f in files:
+         if f:
+            fullpath = os.path.join(loc, f)
+            if os.path.exists(fullpath):
+               tar.add(fullpath, arcname = f, recursive = False)
+   os.rename(tmp_tarball, tarball)
 
 
 def is_tool(name):
@@ -254,13 +322,13 @@ def get_flatc_dir():
   target_triple = platform_map.get(platform_name)
 
   if target_triple:
-    flatc_dir = os.path.join(DEPENDENCY_LOCATION, 'coretech_external',
+    flatc_dir = os.path.join(DEPENDENCY_LOCATION,
                              'flatbuffers', 'host-prebuilts',
                              'current', target_triple, 'bin')
   else: 
     # default
-    flatc_dir = os.path.join(DEPENDENCY_LOCATION, 'coretech_external',
-                             'flatbuffers', 'ios', 'Release')
+    flatc_dir = os.path.join(DEPENDENCY_LOCATION,
+                             'flatbuffers', 'mac', 'Release')
  
   return flatc_dir
   
@@ -285,6 +353,7 @@ def convert_json_to_binary(json_files, bin_name, dest_dir, flatc_dir):
     else:
         bin_dest = os.path.join(dest_dir, bin_name)
         shutil.move(bin_file, bin_dest)
+        shutil.rmtree(tmp_dir)
 
 
 def unpack_tarball(tar_file, file_types=[], put_in_subdir=False, add_metadata=False, convert_to_binary=True):
@@ -368,11 +437,20 @@ def get_svn_file_rev(file_from_svn, cred=''):
       return rev
 
 
-def svn_checkout(checkout, cleanup, unpack, package, allow_extra_files, verbose=VERBOSE):
-    pipe = subprocess.Popen(checkout, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-    successful, err = pipe.communicate()
-    status = pipe.poll()
-    #print("status = %s" % status)
+def svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
+                 unpack, package, allow_extra_files, verbose=VERBOSE):
+    status = 0
+    err = ''
+    successful = ''
+    # Try to import an svn tarball from the cache before contacting the server
+    need_to_cache_svn_checkout = not extract_svn_cache_tarball_to_directory(url, r_rev, loc)
+    if need_to_cache_svn_checkout:
+       pipe = subprocess.Popen(checkout, stdout=subprocess.PIPE,
+                               stderr=subprocess.PIPE, close_fds=True)
+       successful, err = pipe.communicate()
+       status = pipe.poll()
+       #print("status = %s" % status)
+
     if err == '' and status == 0:
         print(successful.strip())
         # Equivalent to a git clean
@@ -386,6 +464,8 @@ def svn_checkout(checkout, cleanup, unpack, package, allow_extra_files, verbose=
                     shutil.rmtree(a_file)
                 elif os.path.isfile(a_file):
                     os.remove(a_file)
+        if need_to_cache_svn_checkout:
+           save_svn_cache_tarball_from_directory(url, r_rev, loc, cred)
         if os.path.isfile(package):
             # call waits for the result.  Moving on to the next checkout doesnt need this to finish.
             pipe = subprocess.Popen(unpack, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
@@ -483,14 +563,16 @@ def svn_package(svn_dict):
             if need_to_checkout:
                 print("Checking out '{0}'".format(repo))
                 checked_out_repos.append(repo)
-                err = svn_checkout(checkout, cleanup, unpack, package, allow_extra_files)
+                err = svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
+                                   unpack, package, allow_extra_files)
                 if err:
                     print("Error in checking out {0}: {1}".format(repo, err.strip()))
                     if DIFF_BRANCH_MSG in err:
                         print("Clearing out [%s] directory to replace it with a fresh copy" % loc)
                         shutil.rmtree(loc)
                         print("Checking out '{0}' again".format(repo))
-                        err = svn_checkout(checkout, cleanup, unpack, package, allow_extra_files)
+                        err = svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
+                                           unpack, package, allow_extra_files)
                         if err:
                             print("Error in checking out {0}: {1}".format(repo, err.strip()))
                             print(stale_warning)
@@ -567,7 +649,12 @@ def files_package(files):
     assert isinstance(files, dict)
     for file in files:
         url = files[file].get("url", "undefined")
+        cached_file = os.path.join(get_anki_file_cache_directory(url), file)
         outfile = os.path.join(DEPENDENCY_LOCATION, file)
+        if os.path.isfile(cached_file):
+           ankibuild.util.File.cp(cached_file, outfile)
+           continue
+
         if not is_up(url):
             print "WARNING File {0} is not available. Please check your internet connection.".format(url)
             return pulled_files
@@ -585,14 +672,44 @@ def files_package(files):
                 output.write(stdout)
                 print "Updated {0} from {1}".format(file, url)
                 pulled_files.append(outfile)
+            ankibuild.util.File.cp(outfile, cached_file)
         else:
             print "File {0} does not need to be updated".format(file)
 
     return pulled_files
 
 
+def deptool_package(deptool_dict):
+   deps_retrieved = []
+   deps = deptool_dict.get("deps")
+   project = deptool_dict.get("project")
+   url_prefix = deptool_dict.get("url_prefix")
+   for dep in deps:
+      required_version = deps[dep].get("version", None)
+      sha256_checksum = None
+      checksums = deps[dep].get("checksums", None)
+      if checksums:
+         sha256_checksum = checksums.get("sha256", sha256_checksum)
+      dst = os.path.join(DEPENDENCY_LOCATION, dep)
+      if os.path.exists(dst):
+         version = ankibuild.deptool.get_version_from_dir(dst)
+         if version == required_version:
+            continue
+      if os.path.islink(dst):
+         os.unlink(dst)
+      else:
+         ankibuild.util.File.rm_rf(dst)
+      src = ankibuild.deptool.find_or_install_dep(project, dep, required_version, url_prefix, sha256_checksum)
+      if not src:
+         raise RuntimeError('Could not find or install {0}/{1} at version {2} under {3}'
+                            .format(project, dep, required_version, url_prefix))
+      os.symlink(src, dst)
+      deps_retrieved.append(dep)
+
+   return deps_retrieved
+
 def teamcity_package(tc_dict):
-    anki_deps_cache_dir = get_anki_deps_cache_directory()
+    cache_dir = get_anki_sha256_cache_directory()
     downloaded_builds = []
     teamcity=True
     tool = "curl"
@@ -605,6 +722,9 @@ def teamcity_package(tc_dict):
     password = tc_dict.get("pwd", "")
     user = tc_dict.get("default_usr", "undefined")
     builds = tc_dict.get("builds", "undefined")
+    if not builds:
+       return downloaded_builds
+
     if user == "undefined":
         # These artifacts are stored on artifactory.
         teamcity=False
@@ -636,7 +756,7 @@ def teamcity_package(tc_dict):
         package = package_name + '.' + ext
         dist = os.path.join(DEPENDENCY_LOCATION, package)
         if sha:
-           dist = os.path.join(anki_deps_cache_dir, sha)
+           dist = os.path.join(cache_dir, sha)
            if os.path.isfile(dist) and sha != sha256sum(dist):
               os.remove(dist)
         else:
@@ -750,6 +870,8 @@ def json_parser(version_file):
     if os.path.isfile(version_file):
         with open(version_file, mode="r") as file_obj:
             djson = json.load(file_obj)
+            if "deptool" in djson:
+                updated_deps.extend(deptool_package(djson["deptool"]))
             if "artifactory" in djson:
                 updated_deps.extend(teamcity_package(djson["artifactory"]))
             if "teamcity" in djson:

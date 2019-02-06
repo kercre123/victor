@@ -12,7 +12,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/cozmoAPI/comms/gameComms.h"
 #include "engine/cozmoAPI/comms/gameMessageHandler.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
@@ -36,8 +35,6 @@ namespace Anki {
 
     
     // ======== Message handler callbacks =======
-      
-    // TODO: Update these not to need robotID
     
     void UiGameController::AddOrUpdateObject(s32 objID, ObjectType objType, ObjectFamily objFamily,
                                              const PoseStruct3d& poseStruct)
@@ -230,12 +227,9 @@ namespace Anki {
         case RobotActionType::PICKUP_OBJECT_LOW:
         {
           const ObjectInteractionCompleted info = msg.completionInfo.Get_objectInteractionCompleted();
-          printf("Robot %s picking up stack of %d objects with IDs: ",
+          printf("Robot %s picking up object with ID: %d ",
                  ActionResultToString(msg.result),
-                 info.numObjects);
-          for(int i=0; i<info.numObjects; ++i) {
-            printf("%d ", info.objectIDs[i]);
-          }
+                 info.objectIDs[0]);
           printf("[Tag=%d]\n", msg.idTag);
         }
           break;
@@ -244,12 +238,9 @@ namespace Anki {
         case RobotActionType::PLACE_OBJECT_LOW:
         {
           const ObjectInteractionCompleted info = msg.completionInfo.Get_objectInteractionCompleted();
-          printf("Robot %s placing stack of %d objects with IDs: ",
+          printf("Robot %s placing object with ID: %d ",
                  ActionResultToString(msg.result),
-                 info.numObjects);
-          for(int i=0; i<info.numObjects; ++i) {
-            printf("%d ", info.objectIDs[i]);
-          }
+                 info.objectIDs[0]);
           printf("[Tag=%d]\n", msg.idTag);
         }
           break;
@@ -1135,24 +1126,6 @@ namespace Anki {
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(delocMsg)));
     }
     
-//    void UiGameController::SendClearAllBlocks()
-//    {
-//      ExternalInterface::ClearAllBlocks m;
-//      m.robotID = 1;
-//      ExternalInterface::MessageGameToEngine message;
-//      message.Set_ClearAllBlocks(m);
-//      SendMessage(message);
-//    }
-    
-//    void UiGameController::SendClearAllObjects()
-//    {
-//      ExternalInterface::ClearAllObjects m;
-//      m.robotID = 1;
-//      ExternalInterface::MessageGameToEngine message;
-//      message.Set_ClearAllObjects(m);
-//      SendMessage(message);
-//    }
-    
     void UiGameController::SendSelectNextObject()
     {
       ExternalInterface::SelectNextObject m;
@@ -1774,11 +1747,6 @@ namespace Anki {
     s32 UiGameController::GetCarryingObjectID() const
     {
       return _robotStateMsg.carryingObjectID;
-    }
-    
-    s32 UiGameController::GetCarryingObjectOnTopID() const
-    {
-      return _robotStateMsg.carryingObjectOnTopID;
     }
     
     bool UiGameController::IsRobotStatus(RobotStatusFlag mask) const

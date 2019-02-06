@@ -40,6 +40,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
+#include "util/string/stringUtils.h"
 #include "util/threading/threadPriority.h"
 #include "util/time/universalTime.h"
 #include <json/json.h>
@@ -638,33 +639,19 @@ void RobotDataLoader::LoadAnimationWhitelist()
               jsonFilename.c_str());
   }
   else {
-    static constexpr const char* kChargerSafeAnimsKey = "safeChargerAnims";
     static constexpr const char* kDriveOffChargerAnimsKey = "driveOffChargerAnims";
-
-    for( const auto& clipName : whitelistConfig[kChargerSafeAnimsKey] ) {
-      if( ANKI_VERIFY( clipName.isString(),
-                       "RobotDataLoader.LoadAnimationWhitelist.SafeAnims.NonString",
-                       "List values must be strings" ) ) {
-        
-        _whitelistedChargerSafeAnimationClips.insert(clipName.asString());
-        _allWhitelistedChargerAnimationClips.insert(clipName.asString());
-      }
-    }
     
     for( const auto& clipName : whitelistConfig[kDriveOffChargerAnimsKey] ) {
       if( ANKI_VERIFY( clipName.isString(),
                        "RobotDataLoader.LoadAnimationWhitelist.DriveOffAnims.NonString",
                        "List values must be strings" ) ) {
-        _allWhitelistedChargerAnimationClips.insert(clipName.asString());
+        _whitelistedChargerAnimationPrefixes.push_back(clipName.asString());
       }
     }
 
     PRINT_CH_INFO("Animations", "RobotDataLoader.AnimationWhitelist.LoadedConfig",
-                  "Loaded %zu charger whitelisted animations (%zu safe anims)",
-                  _allWhitelistedChargerAnimationClips.size(),
-                  _whitelistedChargerSafeAnimationClips.size());
-
-
+                  "Loaded %zu charger whitelisted animation prefixes",
+                  _whitelistedChargerAnimationPrefixes.size());
   }
 }
 
@@ -1187,7 +1174,15 @@ std::string RobotDataLoader::GetCubeAnimationForTrigger( CubeAnimationTrigger ev
   return _cubeAnimationTriggerMap->GetValue(ev);
 }
 
-
+bool RobotDataLoader::IsAnimationAllowedToMoveBodyOnCharger(const std::string& animName) const
+{
+  for (const auto& whitelistAnimPrefix : _whitelistedChargerAnimationPrefixes) {
+    if (Util::StringStartsWith(animName, whitelistAnimPrefix)) {
+      return true;
+    }
+  }
+  return false;
+}
 
 
 }

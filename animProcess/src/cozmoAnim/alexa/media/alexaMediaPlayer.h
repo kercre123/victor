@@ -58,10 +58,6 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include <mutex>
 #include <queue>
 
-// TEMP
-struct SpeexResamplerState_;
-typedef struct SpeexResamplerState_ SpeexResamplerState;
-
 
 namespace Anki {
   
@@ -285,16 +281,6 @@ private:
   // held the entire time the play loop is active
   std::mutex _playLoopMutex;
 
-  // TEMP
-  SpeechRecognizerTHF*            _recognizer = nullptr;
-  SpeexResamplerState*            _speexState = nullptr;
-  SpeechRecognizerSystem*         _speechRegSys = nullptr;
-  static constexpr size_t         _kResampleMaxSize = 2000;
-  short                           _resampledPcm[_kResampleMaxSize];
-  std::queue<std::pair<int, int>> _detectedTriggers_ms;
-  
-  void UpdateDetectorState(float& inout_lastPlayedMs);
-  
 };
 
 } // namespace Vector

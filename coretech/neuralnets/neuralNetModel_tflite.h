@@ -29,16 +29,18 @@ namespace tflite
 namespace Anki {
 namespace NeuralNets {
 
-class NeuralNetModel : public INeuralNetModel
+class TFLiteModel : public INeuralNetModel
 {
 public:
   
-  explicit NeuralNetModel(const std::string& cachePath);
-  ~NeuralNetModel();
-
-  // ObjectDetector expects LoadModel and Run to exist
-  Result LoadModel(const std::string& modelPath, const Json::Value& config);
-  Result Detect(Vision::ImageRGB& img, std::list<Vision::SalientPoint>& salientPoints);
+  TFLiteModel();
+  virtual ~TFLiteModel();
+  
+  virtual Result Detect(Vision::ImageRGB& img, std::list<Vision::SalientPoint>& salientPoints) override;
+  
+protected:
+  
+  virtual Result LoadModelInternal(const std::string& modelPath, const Json::Value& config) override;
   
 private:
   

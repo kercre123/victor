@@ -811,6 +811,45 @@ TEST(FixedCircularBuffer, PushPopMix)
   EXPECT_EQ(testBuff.back(),  testBuff[2]);
 }
 
+TEST(FixedCircularBuffer, PushBackContinousData)
+{
+  Anki::Util::FixedCircularBuffer<int, 10> testBuff;
+  // Test pushing continious data
+  size_t pushSize = 2;
+  int* inData = nullptr;
+  size_t idx = 0;
+  // Buffer data [__________]
+  for (; testBuff.size() < testBuff.capacity(); ++idx) {
+    EXPECT_TRUE(testBuff.push_back(inData, pushSize));
+  }
+  // Check loop correctly executed
+  // Buffer data [XXXXXXXXXX]
+  EXPECT_EQ(idx, (testBuff.capacity() / pushSize));
+  EXPECT_EQ(testBuff.size(), testBuff.capacity());
+  
+  // Test wrapping around popping data and push more data
+  // Buffer data [__XXXXXXXX]
+  testBuff.pop_front(pushSize);
+  EXPECT_TRUE(testBuff.push_back(inData, pushSize));
+  
+  // Test trying to add larger size then available
+  // Buffer data [XX__XXXXXX]
+  testBuff.pop_front(pushSize);
+  EXPECT_FALSE(testBuff.push_back(inData, pushSize + 1));
+  
+  // Test continious data doesn't try to wrap around
+  testBuff.clear();
+  // Buffer data [__________]
+  testBuff.push_back();
+  testBuff.push_back();
+  testBuff.push_back();
+  testBuff.push_back();
+  // Buffer data [XXXX______]
+  testBuff.pop_front(2);
+  // Buffer data [__XX______]
+  EXPECT_FALSE(testBuff.push_back(inData, 8));
+}
+
 
 // ========== Move and Copy Tests ==========
 

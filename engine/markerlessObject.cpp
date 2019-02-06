@@ -13,7 +13,6 @@
 #include "engine/markerlessObject.h"
 
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/quad_impl.h"
 
 namespace Anki {

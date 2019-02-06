@@ -51,7 +51,6 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/opencvThreading.h"
 #include "coretech/common/engine/math/polygon_impl.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -598,10 +597,6 @@ namespace Vector {
       return lastResult;
     }
 
-    // Get most recent pose data in history
-    Anki::Vector::HistRobotState lastHistState;
-    _robot->GetStateHistory()->GetLastStateWithFrameID(_robot->GetPoseFrameID(), lastHistState);
-
     const Pose3d& cameraPose = _robot->GetHistoricalCameraPose(imageHistState, imageHistTimeStamp);
     Matrix_3x3f groundPlaneHomography;
     const bool groundPlaneVisible = LookupGroundPlaneHomography(imageHistState.GetHeadAngle_rad(),
@@ -647,7 +642,9 @@ namespace Vector {
     {
       _visionSystemInput.modesToProcess.Enable(mode, schedule.IsTimeToProcess(mode, scheduleCount));
       _visionSystemInput.futureModesToProcess.Enable(mode, schedule.GetScheduleForMode(mode).WillEverRun());
-    }
+    } 
+    const bool kResetSingleShotModes = true;
+    _robot->GetVisionScheduleMediator().AddSingleShotModesToSet(_visionSystemInput.modesToProcess, kResetSingleShotModes);
     scheduleCount++;
 
     // We are all set to process this image so lock input
@@ -1525,7 +1522,7 @@ namespace Vector {
     }
 
     const Transform3d& liftPoseWrtCamera = _robot->GetLiftTransformWrtCamera(histState.GetLiftAngle_rad(),
-                                                                            histState.GetHeadAngle_rad());
+                                                                             histState.GetHeadAngle_rad());
 
     std::vector<Point3f> liftCrossBar;
     liftPoseWrtCamera.ApplyTo(_liftCrossBarSource, liftCrossBar);
@@ -1664,7 +1661,7 @@ namespace Vector {
         _robot->Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
         // Forward the image chunks to Viz as well (Note that this does nothing if
         // sending images is disabled in VizManager)
-        _robot->GetContext()->GetVizManager()->SendImageChunk(_robot->GetID(), m);
+        _robot->GetContext()->GetVizManager()->SendImageChunk(m);
       }
 
       bytesRemainingToSend -= chunkSize;

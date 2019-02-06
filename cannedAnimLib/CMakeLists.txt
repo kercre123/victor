@@ -20,6 +20,7 @@ target_link_libraries(canned_anim_lib_anim
     ${FLATBUFFERS_LIBS}
     PUBLIC
     robot_interface # Needs to be public for cozmoConfig.h
+    ${ASAN_LINKER_FLAGS}
 )
 
 anki_build_cxx_library(canned_anim_lib_engine ${ANKI_SRCLIST_DIR} STATIC)
@@ -38,4 +39,5 @@ target_link_libraries(canned_anim_lib_engine
     ${FLATBUFFERS_LIBS}
     PUBLIC
     robot_interface # Needs to be public for cozmoConfig.h
+    ${ASAN_LINKER_FLAGS}
 )

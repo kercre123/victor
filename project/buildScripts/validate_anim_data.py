@@ -247,6 +247,7 @@ def check_anims_all_anim_groups(externals_dir, anim_assets_dir=ANIM_ASSETS_DIR,
         unpacked_files = unpack_tarball(file_path)
         for json_file in unpacked_files:
             all_anims.append(os.path.splitext(os.path.basename(json_file))[0])
+        map(os.remove, unpacked_files)
 
     # Check all animations in all animation groups and keep track of what unavailable
     # animations are currently being used
@@ -309,6 +310,7 @@ def check_audio_events_all_anims(externals_dir, anim_assets_dir=ANIM_ASSETS_DIR,
             if unavailable_events:
                 anim_name = os.path.basename(json_file)
                 problems[anim_name] = unavailable_events
+        map(os.remove, unpacked_files)
 
     if problems:
         msg_title = "Found unavailable audio events used in the following animations:"

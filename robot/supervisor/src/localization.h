@@ -1,7 +1,7 @@
 #ifndef LOCALIZATION_H
 #define LOCALIZATION_H
 #include "localization_geometry.h"
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/radians.h"
 #include "coretech/common/shared/types.h"
 
 namespace Anki {

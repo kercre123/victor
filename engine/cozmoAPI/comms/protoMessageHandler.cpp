@@ -17,6 +17,7 @@
 #include "engine/robot.h"
 #include "engine/cozmoAPI/comms/localUdpSocketComms.h"
 #include "engine/cozmoAPI/comms/protoMessageHandler.h"
+#include "engine/cozmoAPI/comms/protoCladInterpreter.h"
 #include "engine/components/robotExternalRequestComponent.h"
 
 #include "coretech/common/engine/utils/timer.h"
@@ -36,7 +37,7 @@ namespace Vector {
 
 
 ProtoMessageHandler::ProtoMessageHandler()
-  : _socketComms(new LocalUdpSocketComms(true, Anki::Victor::ENGINE_GATEWAY_PROTO_SERVER_PATH))
+  : _socketComms(new LocalUdpSocketComms(true, ENGINE_GATEWAY_PROTO_SERVER_PATH))
   , _messageCountOutgoing(0)
   , _messageCountIncoming(0)
 {
@@ -70,17 +71,11 @@ Result ProtoMessageHandler::Init(CozmoContext* context, const Json::Value& confi
   auto * externalRequestComponent = _externalRequestComponent.get();
 
   auto versionStateRequestCallback = std::bind(&RobotExternalRequestComponent::GetVersionState, externalRequestComponent, std::placeholders::_1);
-  auto networkStateRequestCallback = std::bind(&RobotExternalRequestComponent::GetNetworkState, externalRequestComponent, std::placeholders::_1);
   auto batteryStateRequestCallback = std::bind(&RobotExternalRequestComponent::GetBatteryState, externalRequestComponent, std::placeholders::_1);
-  auto sayTextCallback = std::bind(&RobotExternalRequestComponent::SayText, externalRequestComponent, std::placeholders::_1);
-  auto setEyeColorCallback = std::bind(&RobotExternalRequestComponent::SetEyeColor, externalRequestComponent, std::placeholders::_1);
 
   // Subscribe to desired simple events
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kBatteryStateRequest, batteryStateRequestCallback));
   _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kVersionStateRequest, versionStateRequestCallback));
-  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kNetworkStateRequest, networkStateRequestCallback));
-  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kSayTextRequest, sayTextCallback));
-  _signalHandles.push_back(Subscribe(external_interface::GatewayWrapperTag::kSetEyeColorRequest, setEyeColorCallback));
 
   return RESULT_OK;
 }
@@ -103,7 +98,6 @@ void ProtoMessageHandler::DeliverToExternal(const external_interface::GatewayWra
   }
 }
 
-
 Result ProtoMessageHandler::ProcessMessageBytes(const uint8_t* const packetBytes, const size_t packetSize, bool isSingleMessage)
 {
   ANKI_CPU_PROFILE("ProtoMH::ProcessMessageBytes");
@@ -123,6 +117,10 @@ Result ProtoMessageHandler::ProcessMessageBytes(const uint8_t* const packetBytes
                          "Failed to parse buffer as protobuf message.");
       return RESULT_FAIL;
     }
+
+    // Is there a potential, in adding the redirect and not returning (on success), for these messages
+    // to arrive at their destination twice?
+    (void) ProtoCladInterpreter::Redirect(message, _context);
 
     ++_messageCountIncoming;
 

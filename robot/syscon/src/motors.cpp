@@ -50,6 +50,7 @@ struct MotorStatus {
   uint32_t        last_time;
   int             power;
   MotorDirection  direction;
+  MotorDirection  hysteresis_direction;
   uint8_t         serviceCountdown;
 };
 
@@ -122,7 +123,7 @@ static void Motors::transmit(BodyToHead *payload) {
       switch (i) {
         case MOTOR_LEFT:
         case MOTOR_RIGHT:
-          payload->motor[i].delta = (state->direction == DIRECTION_FORWARD) ? delta_last[i] : -delta_last[i];
+          payload->motor[i].delta = (state->hysteresis_direction == DIRECTION_FORWARD) ? delta_last[i] : -delta_last[i];
           break ;
         default:
           payload->motor[i].delta = delta_last[i];
@@ -220,6 +221,14 @@ void Motors::stop() {
   LTN2::mode(MODE_OUTPUT);
 }
 
+// Reset hysteresis values to Vector factory settings
+// so that debug screen cursors work
+void Motors::resetEncoderHysteresis() {
+  motorStatus[MOTOR_LEFT].hysteresis_direction = DIRECTION_BACKWARD;
+  motorStatus[MOTOR_RIGHT].hysteresis_direction = DIRECTION_BACKWARD;
+}
+
+
 static MotorDirection motorDirection(int power) {
   if (power > 0) {
     return DIRECTION_FORWARD;
@@ -280,6 +289,7 @@ void Motors::tick() {
         }
 
         state->direction = direction;
+        state->hysteresis_direction = direction;
         break ;
     }
   }

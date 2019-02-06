@@ -44,7 +44,7 @@ bool GatewayMessagingServer::Init() {
   }
 
   _server.StopListening();
-  _server.StartListening(Anki::Victor::SWITCH_GATEWAY_SERVER_PATH);
+  _server.StartListening(Anki::Vector::SWITCH_GATEWAY_SERVER_PATH);
 
   ev_timer_init(&_handleGatewayMessageTimer.timer,
                 &GatewayMessagingServer::sEvGatewayMessageHandler,

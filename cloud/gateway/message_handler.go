@@ -30,30 +30,6 @@ var (
 )
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func ProtoDriveWheelsToClad(msg *extint.DriveWheelsRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithDriveWheels(&gw_clad.DriveWheels{
-		LeftWheelMmps:   msg.LeftWheelMmps,
-		RightWheelMmps:  msg.RightWheelMmps,
-		LeftWheelMmps2:  msg.LeftWheelMmps2,
-		RightWheelMmps2: msg.RightWheelMmps2,
-	})
-}
-
-// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
-func ProtoPlayAnimationToClad(msg *extint.PlayAnimationRequest) *gw_clad.MessageExternalToRobot {
-	if msg.Animation == nil {
-		return nil
-	}
-	return gw_clad.NewMessageExternalToRobotWithPlayAnimation(&gw_clad.PlayAnimation{
-		NumLoops:        msg.Loops,
-		AnimationName:   msg.Animation.Name,
-		IgnoreBodyTrack: msg.IgnoreBodyTrack,
-		IgnoreHeadTrack: msg.IgnoreHeadTrack,
-		IgnoreLiftTrack: msg.IgnoreLiftTrack,
-	})
-}
-
-// TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
 func ProtoMoveHeadToClad(msg *extint.MoveHeadRequest) *gw_clad.MessageExternalToRobot {
 	return gw_clad.NewMessageExternalToRobotWithMoveHead(&gw_clad.MoveHead{
 		SpeedRadPerSec: msg.SpeedRadPerSec,
@@ -121,10 +97,6 @@ func ProtoSetFaceToEnrollToClad(msg *extint.SetFaceToEnrollRequest) *gw_clad.Mes
 		SayName:     msg.SayName,
 		UseMusic:    msg.UseMusic,
 	})
-}
-
-func ProtoListAnimationsToClad(msg *extint.ListAnimationsRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithRequestAvailableAnimations(&gw_clad.RequestAvailableAnimations{})
 }
 
 func ProtoPoseToClad(msg *extint.PoseStruct) *gw_clad.PoseStruct3d {
@@ -563,14 +535,24 @@ func SendOnboardingMarkCompleteAndExit(in *extint.GatewayWrapper_OnboardingMarkC
 type rpcService struct{}
 
 func (service *rpcService) ProtocolVersion(ctx context.Context, in *extint.ProtocolVersionRequest) (*extint.ProtocolVersionResponse, error) {
-	return &extint.ProtocolVersionResponse{
-		Result:      extint.ProtocolVersionResponse_SUCCESS,
-		HostVersion: hostProtocolVersion,
-	}, nil
+	response := &extint.ProtocolVersionResponse{
+		HostVersion: int64(extint.ProtocolVersion_PROTOCOL_VERSION_CURRENT),
+	}
+	if in.ClientVersion < int64(extint.ProtocolVersion_PROTOCOL_VERSION_MINIMUM) {
+		response.Result = extint.ProtocolVersionResponse_UNSUPPORTED
+	} else {
+		response.Result = extint.ProtocolVersionResponse_SUCCESS
+	}
+	return response, nil
 }
 
 func (service *rpcService) DriveWheels(ctx context.Context, in *extint.DriveWheelsRequest) (*extint.DriveWheelsResponse, error) {
-	_, err := engineCladManager.Write(ProtoDriveWheelsToClad(in))
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_DriveWheelsRequest{
+			DriveWheelsRequest: in,
+		},
+	}
+	_, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -585,7 +567,12 @@ func (service *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAni
 	f, animResponseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PlayAnimationResponse{}, 1)
 	defer f()
 
-	_, err := engineCladManager.Write(ProtoPlayAnimationToClad(in))
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_PlayAnimationRequest{
+			PlayAnimationRequest: in,
+		},
+	}
+	_, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -602,14 +589,17 @@ func (service *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAni
 }
 
 func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAnimationsRequest) (*extint.ListAnimationsResponse, error) {
-	// 50 messages are sent per engine tick, so this channel is set to read 50 at a time
-	f1, animationAvailableResponse := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_AnimationAvailable, 50)
-	defer f1()
+	// 50 messages are sent per engine tick, however, in case it puts out multiple ticks before we drain, we need a buffer to hold lots o' data.
+	delete_listener_callback, animationAvailableResponse := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ListAnimationsResponse{}, 500)
+	defer delete_listener_callback()
 
-	f2, endOfMessageResponse := engineCladManager.CreateChannel(gw_clad.MessageRobotToExternalTag_EndOfMessage, 1)
-	defer f2()
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_ListAnimationsRequest{
+			ListAnimationsRequest: in,
+		},
+	}
 
-	_, err := engineCladManager.Write(ProtoListAnimationsToClad(in))
+	_, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -617,31 +607,27 @@ func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAn
 	var anims []*extint.Animation
 
 	done := false
-	remaining := -1
-	for done == false || remaining != 0 {
+	for done == false {
 		select {
 		case chanResponse, ok := <-animationAvailableResponse:
 			if !ok {
 				return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
 			}
-			var newAnim = extint.Animation{
-				Name: chanResponse.GetAnimationAvailable().AnimName,
-			}
-
-			if strings.Contains(newAnim.Name, "_avs_") {
-				// VIC-11583 All Alexa animation names contain "_avs_". Prevent these animations from reaching the SDK.
-				continue
-			}
-
-			anims = append(anims, &newAnim)
-			remaining = remaining - 1
-		case chanResponse, ok := <-endOfMessageResponse:
-			if !ok {
-				return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
-			}
-			if chanResponse.GetEndOfMessage().MessageType == gw_clad.MessageType_AnimationAvailable {
-				remaining = len(animationAvailableResponse)
-				done = true
+			for _, anim := range chanResponse.GetListAnimationsResponse().AnimationNames {
+				animName := anim.GetName()
+				// Don't change "EndOfListAnimationsResponses" - it's what we'll receive from the .cpp sender.
+				if animName == "EndOfListAnimationsResponses" {
+					done = true
+				} else {
+					if strings.Contains(animName, "_avs_") {
+						// VIC-11583 All Alexa animation names contain "_avs_". Prevent these animations from reaching the SDK.
+						continue
+					}
+					var newAnim = extint.Animation{
+						Name: animName,
+					}
+					anims = append(anims, &newAnim)
+				}
 			}
 		case <-time.After(5 * time.Second):
 			return nil, grpc.Errorf(codes.DeadlineExceeded, "ListAnimations request timed out")
@@ -767,8 +753,8 @@ func (service *rpcService) RequestEnrolledNames(ctx context.Context, in *extint.
 			SecondsSinceLastUpdated:   element.SecondsSinceLastUpdated,
 			SecondsSinceLastSeen:      element.SecondsSinceLastSeen,
 			LastSeenSecondsSinceEpoch: element.LastSeenSecondsSinceEpoch,
-			FaceId:                    element.FaceID,
-			Name:                      element.Name,
+			FaceId: element.FaceID,
+			Name:   element.Name,
 		}
 		faces = append(faces, &newFace)
 	}
@@ -927,17 +913,6 @@ func (service *rpcService) SDKInitialization(ctx context.Context, in *extint.SDK
 
 // Long running message for sending events to listening sdk users
 func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.ExternalInterface_EventStreamServer) error {
-	// TODO: v Remove the tempEventStream handling below when the app connection properly closes v
-	tempEventStreamMutex1.Lock()
-	if tempEventStreamDone != nil {
-		close(tempEventStreamDone)
-	}
-	tempEventStreamMutex2.Lock()
-	defer tempEventStreamMutex2.Unlock()
-	tempEventStreamDone = make(chan struct{})
-	tempEventStreamMutex1.Unlock()
-	// TODO: ^ Remove the tempEventStream handling above when the app connection properly closes ^
-
 	isPrimary := service.checkConnectionID(in.ConnectionId)
 	if isPrimary {
 		service.onConnect(connectionId)
@@ -990,10 +965,6 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 
 	for {
 		select {
-		// TODO: remove entire tempEventStreamDone case when the app connection properly closes
-		case <-tempEventStreamDone:
-			log.Println("EventStream closing because another stream has opened")
-			return grpc.Errorf(codes.Unavailable, "Connection closed because another event stream has opened")
 		case response, ok := <-eventsChannel:
 			if !ok {
 				return grpc.Errorf(codes.Internal, "EventStream: event channel closed")
@@ -1955,28 +1926,6 @@ func (service *rpcService) VersionState(ctx context.Context, in *extint.VersionS
 	return payload.GetVersionStateResponse(), nil
 }
 
-func (service *rpcService) NetworkState(ctx context.Context, in *extint.NetworkStateRequest) (*extint.NetworkStateResponse, error) {
-	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_NetworkStateResponse{}, 1)
-	defer f()
-
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
-		OneofMessageType: &extint.GatewayWrapper_NetworkStateRequest{
-			NetworkStateRequest: in,
-		},
-	})
-	if err != nil {
-		return nil, err
-	}
-	payload, ok := <-responseChan
-	if !ok {
-		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
-	}
-	payload.GetNetworkStateResponse().Status = &extint.ResponseStatus{
-		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
-	}
-	return payload.GetNetworkStateResponse(), nil
-}
-
 func (service *rpcService) SayText(ctx context.Context, in *extint.SayTextRequest) (*extint.SayTextResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_SayTextResponse{}, 1)
 	defer f()
@@ -2303,6 +2252,28 @@ func (service *rpcService) EnableImageStreaming(ctx context.Context, request *ex
 	}
 
 	return response, nil
+}
+
+// indicates if image streaming is enabled or not
+func (service *rpcService) IsImageStreamingEnabled(ctx context.Context, request *extint.IsImageStreamingEnabledRequest) (*extint.IsImageStreamingEnabledResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_IsImageStreamingEnabledResponse{}, 1)
+	defer f()
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_IsImageStreamingEnabledRequest{
+			IsImageStreamingEnabledRequest: request,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := payload.GetIsImageStreamingEnabledResponse()
+	return &extint.IsImageStreamingEnabledResponse{
+		IsImageStreamingEnabled: response.IsImageStreamingEnabled,
+	}, nil
 }
 
 type CameraFeedCache struct {
@@ -2646,6 +2617,30 @@ func (service *rpcService) GetFeatureFlag(ctx context.Context, in *extint.Featur
 		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
 	}
 	response := payload.GetFeatureFlagResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+// FeatureFlagList is used to check what features are enabled on the robot
+func (service *rpcService) GetFeatureFlagList(ctx context.Context, in *extint.FeatureFlagListRequest) (*extint.FeatureFlagListResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_FeatureFlagListResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_FeatureFlagListRequest{
+			FeatureFlagListRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := payload.GetFeatureFlagListResponse()
 	response.Status = &extint.ResponseStatus{
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}

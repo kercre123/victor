@@ -275,6 +275,11 @@ public:
   {
     return _baselineCalibrator.IsCalibrated();
   }
+
+  bool IsChargerModeCheckRunning() const
+  {
+    return _baselineCalibrator.IsChargerModeCheckRunning();
+  }
   
 private:
   // Let Playpen behaviors have access to Start/Stop recording touch sensor data

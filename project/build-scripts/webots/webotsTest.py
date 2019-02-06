@@ -134,7 +134,7 @@ def sudo_this(command, password):
 
 def is_firewall_enabled(password):
   output = firewall_cli(["--getglobalstate"], password, sudo=False)
-  return b"Firewall is enabled. (State = 1)" in output
+  return b"Firewall is enabled" in output
 
 def firewall_cli(flags, password, sudo=True, executable_path=""):
   """

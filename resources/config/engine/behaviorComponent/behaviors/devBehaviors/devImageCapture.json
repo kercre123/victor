@@ -6,6 +6,8 @@
   "save_path": "classes",
 
   // class names to cycle through by raising lift, used as subdirs to above path when saving
+  // special case: use "FalseNegatives" and/or "FalsePositives" to cause images to be saved only once
+  //  a any vision_mode specified below results in a detection or no detection, respectively
   "class_names": ["class_A", "class_B", "class_C"],
 
   // image quality: [1-100]:JPEG quality, -1: use PNG

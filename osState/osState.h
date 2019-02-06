@@ -27,7 +27,7 @@ namespace webots {
   class Supervisor;
 }
 namespace Anki {
-  namespace Victor {
+  namespace Vector {
     class DASManager;
   }
 }
@@ -217,7 +217,7 @@ protected:
    // Return true if robot has a valid EMR.
    // This function is "off limits" to normal robot services
    // but allows vic-dasmgr to check for ESN without crashing.
-  friend class Anki::Victor::DASManager;
+  friend class DASManager;
   bool HasValidEMR() const;
 
 private:

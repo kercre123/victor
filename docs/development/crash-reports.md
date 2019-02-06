@@ -41,8 +41,9 @@ To install noah on OSX type:
 ```
 brew install linux-noah/noah/noah
 ```
+The first time noah runs, it'll need to prompt you as to whether or not you want to allow it to run as root, so run it manually before ever calling victor-show-minidump.py, or the minidump process will freeze silently.
 
-then to generate symbol files, copy the crash dump file and execute `minidump_stackwalk` type:
+To generate symbol files, copy the crash dump file and execute `minidump_stackwalk` type:
 
 ```
 ./project/victor/scripts/victor-show-minidump.py -d -c Debug vic-anim-V0-2018-11-14T14-27-50-459.dmp

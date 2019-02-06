@@ -11,7 +11,6 @@
 
 #include "simulator/controllers/shared/webotsHelpers.h"
 
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/common/engine/math/pose.h"
 #include "util/logging/logging.h"
 

@@ -11,8 +11,7 @@
  **/
 
 #include "coretech/vision/engine/trackedFace.h"
-#include "coretech/common/engine/math/point_impl.h"
-
+ 
 namespace Anki {
 namespace Vision {
   

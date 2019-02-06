@@ -86,7 +86,8 @@ namespace Vision {
     TrackingID_t GetEnrollmentTrackID() const { return _enrollmentTrackID; }
     FaceID_t     GetEnrollmentID()      const { return _enrollmentID; }
     
-    void RemoveTrackingID(TrackingID_t trackerID);
+    // Note that this will take effect on the next call to GetRecognitionData below
+    // (I.e., this just "queues" the clear to help prevent race conditions when running asynchronously)
     void ClearAllTrackingData();
     
     // Return existing or newly-computed recognitino info for a given tracking ID.
@@ -159,6 +160,10 @@ namespace Vision {
     Result RemoveUser(FaceID_t userID);
     EnrollmentData::iterator RemoveUser(EnrollmentData::iterator userIter);
 
+    void RemoveTrackingID(TrackingID_t trackerID);
+    
+    void ClearAllTrackingDataInternal();
+    
     Result GetSerializedAlbum(std::vector<u8>& serializedAlbum) const;
     
     static Result SetSerializedAlbum(HCOMMON okaoCommonHandle, const std::vector<u8>&serializedAlbum, HALBUM& album);
@@ -232,9 +237,10 @@ namespace Vision {
     DETECTION_INFO _detectionInfo;
     
     // Internal bookkeeping and parameters
-    std::map<TrackingID_t, FaceID_t> _trackingToFaceID;
-    std::map<TrackingID_t, std::string> _trackingIDtoBestGuessName;
-    AlbumEntryToFaceID   _albumEntryToFaceID;
+    std::map<TrackingID_t, FaceID_t>     _trackingToFaceID;
+    std::map<TrackingID_t, std::string>  _trackingIDtoBestGuessName;
+    AlbumEntryToFaceID                   _albumEntryToFaceID;
+    bool                                 _shouldClearAllTrackingData = false;
     
     FaceID_t       _nextFaceID     = 1; // Skip UnknownFaceID
     AlbumEntryID_t _nextAlbumEntry = 0; 

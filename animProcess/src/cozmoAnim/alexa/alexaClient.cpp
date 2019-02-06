@@ -59,6 +59,7 @@
 #include <ContextManager/ContextManager.h>
 #include <Notifications/SQLiteNotificationsStorage.h>
 #include <SQLiteStorage/SQLiteMiscStorage.h>
+#include <Settings/SettingsUpdatedEventSender.h>
 #include <Settings/SQLiteSettingStorage.h>
 #include <System/EndpointHandler.h>
 #include <System/SystemCapabilityProvider.h>
@@ -87,6 +88,7 @@ namespace {
   
 #if ANKI_DEV_CHEATS
   DevShutdownChecker AlexaClient::_shutdownChecker;
+  std::list<Anki::Util::IConsoleFunction> sConsoleFuncs;
 #endif
   
   
@@ -98,6 +100,7 @@ std::unique_ptr<AlexaClient>
                       std::shared_ptr<certifiedSender::MessageStorageInterface> messageStorage,
                       std::shared_ptr<capabilityAgents::alerts::storage::AlertStorageInterface> alertStorage,
                       std::shared_ptr<capabilityAgents::notifications::NotificationsStorageInterface> notificationsStorage,
+                      std::shared_ptr<capabilityAgents::settings::SettingsStorageInterface> settingsStorage,
                       std::shared_ptr<avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
                       std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::DialogUXStateObserverInterface>> alexaDialogStateObservers,
                       std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>> connectionObservers,
@@ -121,6 +124,7 @@ std::unique_ptr<AlexaClient>
                      messageStorage,
                      alertStorage,
                      notificationsStorage,
+                     settingsStorage,
                      audioFactory,
                      alexaDialogStateObservers,
                      connectionObservers,
@@ -202,6 +206,7 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
                         std::shared_ptr<certifiedSender::MessageStorageInterface> messageStorage,
                         std::shared_ptr<capabilityAgents::alerts::storage::AlertStorageInterface> alertStorage,
                         std::shared_ptr<capabilityAgents::notifications::NotificationsStorageInterface> notificationsStorage,
+                        std::shared_ptr<capabilityAgents::settings::SettingsStorageInterface> settingsStorage,
                         std::shared_ptr<avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
                         std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::DialogUXStateObserverInterface>> alexaDialogStateObservers,
                         std::unordered_set<std::shared_ptr<avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>> connectionObservers,
@@ -439,6 +444,20 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
     return false;
   }
   
+  std::shared_ptr<capabilityAgents::settings::SettingsUpdatedEventSender> settingsUpdatedEventSender
+    = capabilityAgents::settings::SettingsUpdatedEventSender::create( _certifiedSender );
+  if( !settingsUpdatedEventSender ) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateSettingsObserver"));
+    return false;
+  }
+  
+  // Creating the Setting object - This component implements the Setting interface of AVS.
+  _settings = capabilityAgents::settings::Settings::create( settingsStorage, {settingsUpdatedEventSender}, customerDataManager );
+  if( !_settings ) {
+    ACSDK_ERROR(LX("initializeFailed").d("reason", "unableToCreateSettingsObject"));
+    return false;
+  }
+  
   // Creating the Endpoint Handler - This component is responsible for handling directives from AVS instructing the
   // client to change the endpoint to connect to.
   auto endpointHandler = capabilityAgents::system::EndpointHandler::create( _connectionManager, _exceptionSender );
@@ -625,6 +644,13 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
     return false;
   }
   
+  if( !capabilitiesDelegate->registerCapability(_settings) ) {
+    ACSDK_ERROR(LX("initializeFailed")
+                .d("reason", "unableToRegisterCapability")
+                .d("capabilitiesDelegate", "Settings"));
+    return false;
+  }
+  
   if( !capabilitiesDelegate->registerCapability(_speakerManager) ) {
     ACSDK_ERROR(LX("initializeFailed")
                 .d("reason", "unableToRegisterCapability")
@@ -655,6 +681,21 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
       return false;
     }
   }
+  
+  // create console func(s)
+  auto sendDirective = [&](ConsoleFunctionContextRef context ) {
+    const char* unparsedDirective = ConsoleArg_Get_String( context, "directive" );
+    if( _directiveSequencer ) {
+      // if whatever responds to the directive needs to parse an attachment, that will be undefined behavior.
+      // for other things like alerts, this should work. Set LogAlexaDirectives to true, note the
+      // full directive printed to logs, and then modify it as needed and re-send it here
+      const std::string attachmentContextId;
+      auto directive = avsCommon::avs::AVSDirective::create( unparsedDirective, attachmentManager, attachmentContextId );
+      _directiveSequencer->onDirective( std::move(directive.first) );
+    }
+  };
+  sConsoleFuncs.emplace_front( "SendAlexaDirective", std::move(sendDirective), "Alexa", "const char* directive" );
+  
 #endif
   
 #if ANKI_DEV_CHEATS
@@ -695,6 +736,22 @@ void AlexaClient::Connect( const std::shared_ptr<avsCommon::sdkInterfaces::Capab
   }
   else {
     LOG_ERROR("AlexaClient.Connect.NoCapabilities", "no capabilities delegate, can't register capabilities");
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaClient::ChangeSetting( const std::string& key, const std::string& value )
+{
+  if( _settings != nullptr ) {
+     _settings->changeSetting( key, value );
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaClient::SendDefaultSettings()
+{
+  if( _settings != nullptr ) {
+    _settings->sendDefaultSettings();
   }
 }
 

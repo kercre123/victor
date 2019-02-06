@@ -11,7 +11,6 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "coretech/common/engine/math/pose.h"
-#include "coretech/common/engine/math/point_impl.h"
 #include "coretech/planning/engine/robotActionParams.h"
 #include "pathPlanner.h"
 #include "util/logging/logging.h"

@@ -30,8 +30,7 @@
 #include "engine/robot.h"
 #include "engine/sayNameProbabilityTable.h"
 
-#include "coretech/common/engine/math/point_impl.h"
-#include "coretech/common/engine/math/rotation.h"
+#include "coretech/common/shared/math/rotation.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"

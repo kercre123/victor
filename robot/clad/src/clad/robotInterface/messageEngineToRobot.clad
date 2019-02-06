@@ -243,6 +243,11 @@ message PlaypenStart
 
 }
 
+message SelfTestEnd
+{
+
+}
+
 message PrintBodyData
 {
   // Print syscon body data to log every specified number of tics.
@@ -472,17 +477,6 @@ message SetAlexaUsage
   bool optedIn
 }
 
-enum uint_8 CancelAlexaFromEngineReason
-{
-  AppDisconnect
-}
-
-message CancelPendingAlexaAuth
-{
-  // reason of cancellation (for DAS message)
-  CancelAlexaFromEngineReason reason
-}
-
 structure ColorRGB
 {
   uint_8 r,
@@ -498,6 +492,11 @@ message DrawTextOnScreen
   ColorRGB textColor,
   ColorRGB bgColor,
   string   text
+}
+
+message ShowUrlFace
+{
+  bool show
 }
 
 // Switch to the debug screen used for the vision system's "MirrorMode"
@@ -674,10 +673,16 @@ message BatteryStatus {
   bool isCharging,
   bool onChargerContacts,
   bool isBatteryFull,
+  bool isBatteryDisconnected  // happens when it is too hot to charge (needs to cooldown)
+                              // the robot reports charging, when it actually is not
 }
 
 message TriggerBackpackAnimation {
   BackpackAnimationTrigger trigger,
+}
+
+message AcousticTestEnabled {
+  bool enabled,
 }
 
 // Because we're running low on message tags, expand this enum and message as we add more settings
@@ -828,6 +833,7 @@ union EngineToRobot
   AudioEngine::Multiplexer::PostAudioParameter    postAudioParameter   = 0x74,
 
   FakeWakeWordFromExternalInterface fakeWakeWordFromExternalInterface = 0x80,
+  ShowUrlFace                   showUrlFace                 = 0x81,
 
   SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
@@ -847,12 +853,15 @@ union EngineToRobot
   ResetBeatDetector             resetBeatDetector           = 0x9C,
 
   SetAlexaUsage                 setAlexaUsage               = 0x9D,
-  CancelPendingAlexaAuth        cancelPendingAlexaAuth      = 0x9E,
 
   SwitchboardInterface::SetConnectionStatus     setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin               setBLEPin                 = 0xA1,
   AlterStreamingAnimationAtTime                 alterStreamingAnimation   = 0xA2,
   SwitchboardInterface::SendBLEConnectionStatus sendBLEConnectionStatus   = 0xA3,
+
+  SelfTestEnd                   selfTestEnd                 = 0xA4,
+
+  AcousticTestEnabled           acousticTestEnabled         = 0xA5,
 
   SetLCDBrightnessLevel setLCDBrightnessLevel = 0xAA,
 

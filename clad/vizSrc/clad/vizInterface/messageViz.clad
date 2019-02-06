@@ -56,7 +56,8 @@ message Object
   float_32   rot_axis_x,
   float_32   rot_axis_y,
   float_32   rot_axis_z,
-  float_32   objParameters[4] // for object-specific parameters
+  float_32   objParameters[4],  // for object-specific parameters
+  string     text               // note: only applies to VIZ_OBJECT_TEXT. Is the text drawn in visualizer.                 
 }
 
 // LineSegment
