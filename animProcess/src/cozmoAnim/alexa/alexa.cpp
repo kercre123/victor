@@ -155,8 +155,8 @@ void Alexa::Update()
   }
   
   if( _pendingLocale && HasInitializedImpl() ) {
-    _impl->SetLocale( *_pendingLocale );
-    _pendingLocale.reset();
+    _impl->SetLocale( *_locale );
+    _pendingLocale = false;
   }
   
   if( _impl != nullptr) {
@@ -253,6 +253,11 @@ void Alexa::SetAlexaActive( bool active, bool deleteUserData )
     // this is also set in other ways, but just to be sure
     SetAuthState( AlexaAuthState::Uninitialized );
     OnAlexaUXStateChanged( AlexaUXState::Idle );
+    
+    // If the user signs in again without rebooting, use the old locale
+    if( _locale != nullptr ) {
+      _pendingLocale = true;
+    }
   }
 }
   
@@ -805,11 +810,12 @@ void Alexa::NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::UpdateLocale( const Util::Locale& locale )
 {
+  _locale.reset( new Util::Locale{locale} );
   if( HasInitializedImpl() ) {
     _impl->SetLocale( locale );
-    _pendingLocale.reset();
+    _pendingLocale = false;
   } else {
-    _pendingLocale.reset( new Util::Locale{locale} );
+    _pendingLocale = true;
   }
 }
 

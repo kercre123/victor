@@ -102,6 +102,8 @@ namespace {
   
   const std::string kDirectivesFile = "directives.txt";
   const std::string kAlexaFolder = "alexa";
+  
+  const std::string kDefaultLocale = "en-US";
 
   static const float kTimeToHoldSpeakingBetweenAudioPlays_s = 1.0f;
   static const float kAlexaImplWatchdogFailTime_s = 5.0f;
@@ -173,6 +175,36 @@ namespace {
     std::stringstream ss;
     ss << error;
     return ss.str();
+  }
+  
+  std::string LocaleToString( const Util::Locale& locale ) {
+    // possible values: de-DE, en-AU, en-CA, en-GB, en-IN, en-US, es-ES, es-MX, fr-FR, ja-JP
+    // ( https://developer.amazon.com/docs/alexa-voice-service/settings.html )
+    // obtain the en-COUNTRY locale string from the passed-in locale's country. Note that if a
+    // user goes into their alexa app and changes locale to something like fr-CA, then goes into chewie
+    // and selects CA, we send to amazon en-CA, and they'll have to go back into the alexa app if they
+    // need to reselect french.
+    std::string settingValue;
+    switch( locale.GetCountry() ) {
+      case Util::Locale::CountryISO2::US:
+      {
+        return "en-US";
+      }
+      case Util::Locale::CountryISO2::CA:
+      {
+        return "en-CA";
+      }
+      case Util::Locale::CountryISO2::GB:
+      {
+        return "en-GB";
+      }
+      case Util::Locale::CountryISO2::AU:
+      {
+        return "en-AU";
+      }
+      default:
+        return "";
+    }
   }
 }
   
@@ -805,37 +837,7 @@ void AlexaImpl::SetLocale( const Util::Locale& locale )
   {
     const std::string kSettingKey = "locale";
     
-    // possible values: de-DE, en-AU, en-CA, en-GB, en-IN, en-US, es-ES, es-MX, fr-FR, ja-JP
-    // ( https://developer.amazon.com/docs/alexa-voice-service/settings.html )
-    // obtain the en-COUNTRY locale string from the passed-in locale's country. Note that if a
-    // user goes into their alexa app and changes locale to something like fr-CA, then goes into chewie
-    // and selects CA, we send to amazon en-CA, and they'll have to go back into the alexa app if they
-    // need to reselect french.
-    std::string settingValue;
-    switch( locale.GetCountry() ) {
-      case Util::Locale::CountryISO2::US:
-      {
-        settingValue = "en-US";
-        break;
-      }
-      case Util::Locale::CountryISO2::CA:
-      {
-        settingValue = "en-CA";
-        break;
-      }
-      case Util::Locale::CountryISO2::GB:
-      {
-        settingValue = "en-GB";
-        break;
-      }
-      case Util::Locale::CountryISO2::AU:
-      {
-        settingValue = "en-AU";
-        break;
-      }
-      default:
-        break;
-    }
+    const std::string settingValue = LocaleToString( locale );
     
     // Only notify the client if the user selected a country we expect (i.e., those listed in chewie)
     if( !settingValue.empty() ) {
@@ -907,6 +909,9 @@ std::vector<std::shared_ptr<std::istream>> AlexaImpl::GetConfigs() const
     return configJsonStreams;
   }
   
+  const Util::Locale* locale = _context->GetLocale();
+  const std::string localeStr = (locale == nullptr) ? kDefaultLocale : LocaleToString( *locale );
+  
   std::string configJson = dataLoader->GetAlexaConfig();
   auto* osState = OSState::getInstance();
   const uint32_t esn = osState->GetSerialNumber();
@@ -914,6 +919,8 @@ std::vector<std::shared_ptr<std::istream>> AlexaImpl::GetConfigs() const
   
   const std::string pathToPersistent = _alexaPersistentFolder;
   Util::StringReplace( configJson, "<ALEXA_STORAGE_PATH>", pathToPersistent );
+  
+  Util::StringReplace( configJson, "<INITIAL_LOCALE>", localeStr );
   
   configJsonStreams.push_back( std::shared_ptr<std::istringstream>( new std::istringstream( configJson ) ) );
   return configJsonStreams;
