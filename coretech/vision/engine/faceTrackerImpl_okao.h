@@ -11,13 +11,11 @@
  * Copyright: Anki, Inc. 2015
  **/
 
-
-#include "coretech/vision/engine/debugImageList.h"
-#include "coretech/vision/engine/eyeContact.h"
-#include "coretech/vision/engine/faceTracker.h"
 #include "coretech/vision/engine/image.h"
-#include "coretech/vision/engine/profiler.h"
+#include "coretech/vision/engine/faceTracker.h"
+#include "coretech/vision/engine/eyeContact.h"
 #include "coretech/vision/engine/trackedFace.h"
+#include "coretech/vision/engine/profiler.h"
 
 #include "clad/types/loadedKnownFace.h"
 
@@ -46,8 +44,6 @@ namespace Util {
   
 namespace Vision {
 
-  class CompressedImage;
-  
   class FaceTracker::Impl : public Profiler
   {
   public:
@@ -61,8 +57,7 @@ namespace Vision {
     Result Update(const Vision::Image&        frameOrig,
                   const float                 cropFactor,
                   std::list<TrackedFace>&     faces,
-                  std::list<UpdatedFaceID>&   updatedIDs,
-                  DebugImageList<CompressedImage>& debugImages);
+                  std::list<UpdatedFaceID>&   updatedIDs);
     
     // These methods allow to add or clear the contents of the set that
     // contains the face id's we're allowed to track. All other
@@ -84,17 +79,15 @@ namespace Vision {
                                s32 numEnrollments,
                                bool forceNewID);
 																						      
-    void EnableEmotionDetection(bool enable) { _detectEmotion        = enable; }
-    void EnableSmileDetection(bool enable)   { _detectSmiling        = enable; }
-    void EnableGazeDetection(bool enable)    { _detectGaze           = enable; }
-    void EnableBlinkDetection(bool enable)   { _detectBlinks         = enable; }
-    void EnableRecognition(bool enable)      { _isRecognitionEnabled = enable; }
+    void EnableEmotionDetection(bool enable) { _detectEmotion = enable; }
+    void EnableSmileDetection(bool enable)   { _detectSmiling = enable; }
+    void EnableGazeDetection(bool enable)    { _detectGaze    = enable; }
+    void EnableBlinkDetection(bool enable)   { _detectBlinks  = enable; }
     
-    bool IsEmotionDetectionEnabled() const   { return _detectEmotion;        }
-    bool IsSmileDetectionEnabled()   const   { return _detectSmiling;        }
-    bool IsGazeDetectionEnabled()    const   { return _detectGaze;           }
-    bool IsBlinkDetectionEnabled()   const   { return _detectBlinks;         }
-    bool IsRecognitionEnabled()      const   { return _isRecognitionEnabled; }
+    bool IsEmotionDetectionEnabled() const   { return _detectEmotion;  }
+    bool IsSmileDetectionEnabled()   const   { return _detectSmiling;  }
+    bool IsGazeDetectionEnabled()    const   { return _detectGaze;     }
+    bool IsBlinkDetectionEnabled()   const   { return _detectBlinks;   }
     
     bool     CanAddNamedFace() const;
     Result   AssignNameToID(FaceID_t faceID, const std::string& name, FaceID_t mergeWithID);
@@ -115,16 +108,6 @@ namespace Vision {
                              const std::vector<u8>& enrollData,
                              std::list<LoadedKnownFace>& loadedFaces);
 
-#if ANKI_DEVELOPER_CODE
-    // For testing/evaluation:
-    Result DevAddFaceToAlbum(const Image& img, const TrackedFace& face, int albumEntry);
-    Result DevFindFaceInAlbum(const Image& img, const TrackedFace& face, int& albumEntry, float& score) const;
-    Result DevFindFaceInAlbum(const Image& img, const TrackedFace& face, const int maxMatches,
-                              std::vector<std::pair<int, float>>& matches) const;
-    float DevComputePairwiseMatchScore(int faceID1, int faceID2) const;
-    float DevComputePairwiseMatchScore(int faceID1, const Image& img2, const TrackedFace& face2) const;
-#endif
-    
   private:
     
     // Creates new face detectors using current parameters
@@ -164,8 +147,8 @@ namespace Vision {
     bool _detectGaze    = false;
     bool _detectBlinks  = false;
     
-    bool _isRecognitionEnabled = true;
-    
+    Json::Value _config;
+
     const Camera& _camera;
     
     // Okao Vision Library "Handles"

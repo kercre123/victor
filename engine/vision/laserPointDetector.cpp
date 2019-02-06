@@ -240,7 +240,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
                                   const VisionPoseData& poseData,
                                   const bool isDarkExposure,
                                   std::list<ExternalInterface::RobotObservedLaserPoint>& points,
-                                  Vision::DebugImageList<Vision::CompressedImage>& debugImages)
+                                  DebugImageList<Vision::CompressedImage>& debugImages)
 {
   if(!poseData.groundPlaneVisible)
   {
@@ -399,7 +399,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
 Result LaserPointDetector::Detect(Vision::ImageCache& imageCache,
                                   const bool isDarkExposure,
                                   std::list<ExternalInterface::RobotObservedLaserPoint>& points,
-                                  Vision::DebugImageList<Vision::CompressedImage>& debugImages)
+                                  DebugImageList<Vision::CompressedImage>& debugImages)
 {
 
   Point2f centroidInImage(0.f, 0.f);

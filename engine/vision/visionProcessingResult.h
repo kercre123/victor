@@ -15,7 +15,6 @@
 #include "coretech/common/engine/robotTimeStamp.h"
 
 #include "coretech/vision/engine/compressedImage.h"
-#include "coretech/vision/engine/debugImageList.h"
 #include "coretech/vision/engine/trackedFace.h"
 #include "coretech/vision/engine/trackedPet.h"
 #include "coretech/vision/engine/visionMarker.h"
@@ -24,6 +23,7 @@
 #include "clad/types/cameraParams.h"
 #include "clad/types/imageTypes.h"
 
+#include "engine/debugImageList.h"
 #include "engine/overheadEdge.h"
 #include "engine/vision/visionModeSet.h"
 
@@ -57,7 +57,7 @@ struct VisionProcessingResult
   Vision::ImageRGB565 mirrorModeImg;
   
   // Used to pass debug images back to main thread for display:
-  Vision::DebugImageList<Vision::CompressedImage> debugImages;
+  DebugImageList<Vision::CompressedImage> debugImages;
   
   // Returns true if there is a detection for the corresponding mode present in this result.
   // The detection(s) must match the given timestamp as well (since in some cases, such as salientPoints,

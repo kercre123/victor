@@ -601,7 +601,7 @@ GTEST_TEST(LaserPointDetector, LaserDetect)
     imageCache.Reset(testImg);
 
     // Create LaserPointDetector and test on image
-    Vision::DebugImageList<Vision::CompressedImage> debugImageList;
+    Vector::DebugImageList<Vision::CompressedImage> debugImageList;
     std::list<Vector::ExternalInterface::RobotObservedLaserPoint> points;
 
     Vector::LaserPointDetector detector(nullptr);
