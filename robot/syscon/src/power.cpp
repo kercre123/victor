@@ -55,7 +55,7 @@ void Power::signalRecovery() {
 
 static inline void enableHead(void) {
   if (IS_WHISKEY) {
-    MAIN_EN_VIC::set();
+    MAIN_EN_WIS::set();
   } else {
     MAIN_EN_VIC::set();
   }
@@ -65,7 +65,7 @@ static inline void enableHead(void) {
 
 static inline void disableHead(void) {
   if (IS_WHISKEY) {
-    MAIN_EN_VIC::reset();
+    MAIN_EN_WIS::reset();
   } else {
     MAIN_EN_VIC::reset();
   }
