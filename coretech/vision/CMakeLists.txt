@@ -104,5 +104,14 @@ if (MACOSX)
     ENVIRONMENT "GTEST_OUTPUT=xml:ctiVisionGoogleTest.xml"
   )
 
+  # Standalone face detection / recognition testing tool
+  anki_build_cxx_executable(cti_vision_face_eval ${ANKI_SRCLIST_DIR})
+  anki_build_target_license(cti_vision_face_eval "ANKI")
+
+  target_link_libraries(cti_vision_face_eval
+    PRIVATE
+    cti_vision
+  )
+
 endif()
 
