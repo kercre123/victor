@@ -168,7 +168,7 @@ void SpeechRecognizerSystem::SetupConsoleFuncs()
     std::string result = UpdateRecognizerHelper(_vectorRecognizerModelTypeIndex, kVectorRecognizerModel,
                                                 _vectorTriggerModelSensitivityIndex, kVectorRecognizerModelSensitivity,
                                                 kThfTriggerModelDataList, *_victorTrigger.get());
-    context->channel->WriteLog("UpdateVectorRecognizer %s", result.c_str());
+    context->channel->WriteLog("Update Vector Recognizer %s", result.c_str());
   };
 
   auto updateAlexaRecognizerModel = [this](ConsoleFunctionContextRef context) {
@@ -181,7 +181,7 @@ void SpeechRecognizerSystem::SetupConsoleFuncs()
     std::string result = UpdateRecognizerHelper(_alexaRecognizerModelTypeIndex, kAlexaRecognizerModel,
                                                 tmpTriggerModelSensitivityIndex, tmpNewTriggerModelSensitivityIndex,
                                                 kPryonTriggerModelDataList, *_alexaTrigger.get());
-    context->channel->WriteLog("UpdateAlexaRecognizer %s", result.c_str());
+    context->channel->WriteLog("Update Alexa Recognizer %s", result.c_str());
   };
 
   auto updateAlexaPlaybackRecognizerModel = [this](ConsoleFunctionContextRef context) {
@@ -280,7 +280,7 @@ void SpeechRecognizerSystem::InitVector(const RobotDataLoader& dataLoader,
     return;
   }
   
-  _victorTrigger = std::make_unique<TriggerContextThf>();
+  _victorTrigger = std::make_unique<TriggerContextThf>("Vector");
   _victorTrigger->recognizer->Init("");
   _victorTrigger->recognizer->SetCallback(callback);
   _victorTrigger->recognizer->Start();
@@ -297,7 +297,7 @@ void SpeechRecognizerSystem::InitVector(const RobotDataLoader& dataLoader,
   }
 #endif // ANKI_DEVELOPER_CODE
   
-  UpdateTriggerForLocale(locale);
+  UpdateTriggerForLocale(locale, RecognizerTypeFlag::VectorMic);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -379,19 +379,25 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample * audioData, un
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SpeechRecognizerSystem::UpdateTriggerForLocale(const Util::Locale& newLocale)
+bool SpeechRecognizerSystem::UpdateTriggerForLocale(const Util::Locale& newLocale, RecognizerTypeFlag recognizerFlags)
 {
   // Set local using defualt locale settings
   bool success = false;
   // We always expect to have victorTrigger
-  success = UpdateTriggerForLocale(*_victorTrigger.get(), newLocale, MicData::MicTriggerConfig::ModelType::Count, -1);
+  if (_victorTrigger &&
+      (RecognizerTypeFlag::VectorMic & recognizerFlags) == RecognizerTypeFlag::VectorMic) {
+    success = UpdateTriggerForLocale(*_victorTrigger.get(), newLocale, MicData::MicTriggerConfig::ModelType::Count, -1);
+  }
   
-  if (_alexaTrigger) {
+  if (_alexaTrigger &&
+      ((RecognizerTypeFlag::AlexaMic & recognizerFlags) == RecognizerTypeFlag::AlexaMic)) {
     success &= UpdateTriggerForLocale(*_alexaTrigger.get(), newLocale, MicData::MicTriggerConfig::ModelType::Count, -1);
   }
   
-  if (_alexaPlaybackTrigger) {
-    success &= UpdateTriggerForLocale(*_alexaPlaybackTrigger.get(), newLocale, MicData::MicTriggerConfig::ModelType::Count, -1);
+  if (_alexaPlaybackTrigger &&
+      ((RecognizerTypeFlag::AlexaPlayback & recognizerFlags) == RecognizerTypeFlag::AlexaPlayback)) {
+    success &= UpdateTriggerForLocale(*_alexaPlaybackTrigger.get(), newLocale,
+                                      MicData::MicTriggerConfig::ModelType::Count, -1);
     if (_alexaPlaybackRecognizerComponent) {
       // Notify Component to update locale on it's thread
       _alexaPlaybackRecognizerComponent->PendingLocaleUpdate();
@@ -419,18 +425,22 @@ void SpeechRecognizerSystem::ActivateAlexa(const Util::Locale& locale, TriggerWo
   InitAlexa(locale, callback);
   
   // Setup Playback Recognzier and operating component
+  // First, create the component so it's ready for recognizer states
+  _alexaPlaybackRecognizerComponent.reset( new AlexaPlaybackRecognizerComponent(_context, *this) );
+  
+  // Second, create the recognizer
   const auto playbackRecognizerCallback = [this](const AudioUtil::SpeechRecognizerCallbackInfo& info)
   {
     // LOG_WARNING("SpeechRecognizerSystem.SetAlexaActive.playbackRecCallback","Info %s", info.Description().c_str());
     _playbackTrigerSampleIdx = _alexaComponent->GetMichrophoneSampleIndex();
   };
-  
   InitAlexaPlayback(locale, playbackRecognizerCallback);
-  _alexaPlaybackRecognizerComponent.reset( new AlexaPlaybackRecognizerComponent(_context, *this) );
-  
-  // Check if component was properly instantiated
+
+  // Finally, init() the component now that the recognizer exist
   if ( !_alexaPlaybackRecognizerComponent->Init() ) {
+    // Clear recognizer component if it was not Init correctly
     _alexaPlaybackRecognizerComponent.reset();
+    LOG_ERROR("SpeechRecognizerSystem.ActivateAlexa._alexaPlaybackRecognizerComponent.Init.Failed", "");
   }
   
   UpdateAlexaActiveState();
@@ -504,7 +514,7 @@ void SpeechRecognizerSystem::InitAlexa(const Util::Locale& locale,
   const auto dataLoader = _context->GetDataLoader();
   ASSERT_NAMED(_alexaComponent != nullptr, "SpeechRecognizerSystem.InitAlexa._context.GetAlexa.IsNull");
   
-  _alexaTrigger = std::make_unique<TriggerContextPryon>();
+  _alexaTrigger = std::make_unique<TriggerContextPryon>("Alexa");
   _alexaTrigger->recognizer->SetCallback(wrappedCallback);
   _alexaTrigger->micTriggerConfig->Init("alexa_pryon", dataLoader->GetMicTriggerConfig());
   _alexaTrigger->recognizer->Start();
@@ -520,7 +530,7 @@ void SpeechRecognizerSystem::InitAlexa(const Util::Locale& locale,
   }
 #endif // ANKI_DEVELOPER_CODE
   
-  UpdateTriggerForLocale(locale);
+  UpdateTriggerForLocale(locale, RecognizerTypeFlag::AlexaMic);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -534,14 +544,11 @@ void SpeechRecognizerSystem::InitAlexaPlayback(const Util::Locale& locale,
   }
   
   const auto dataLoader = _context->GetDataLoader();
-  _alexaPlaybackTrigger = std::make_unique<TriggerContextPryon>();
+  _alexaPlaybackTrigger = std::make_unique<TriggerContextPryon>("AlexaPlayback");
   _alexaPlaybackTrigger->recognizer->SetCallback(callback);
   _alexaPlaybackTrigger->micTriggerConfig->Init("alexa_pryon", dataLoader->GetMicTriggerConfig());
   
-  UpdateTriggerForLocale(*_alexaPlaybackTrigger.get(),
-                         locale,
-                         MicData::MicTriggerConfig::ModelType::Count,
-                         -1);
+  UpdateTriggerForLocale(locale, RecognizerTypeFlag::AlexaPlayback);
   
   // Need to manually tell recognizer to update since it doesn't run in the normal recognizer Update() loop
   ApplySpeechRecognizerLoacleUpdate(*_alexaPlaybackTrigger.get());
@@ -569,8 +576,8 @@ bool SpeechRecognizerSystem::UpdateTriggerForLocale(TriggerContext<SpeechRecogni
   
   if (!trigger.nextTriggerPaths.IsValid()) {
     LOG_WARNING("SpeechRecognizerSystem.UpdateTriggerForLocale.NoPathsFoundForLocale",
-                "locale: %s modelType: %d searchFileIndex: %d",
-                newLocale.ToString().c_str(), (int) modelType, searchFileIndex);
+                "recognizer: %s locale: %s modelType: %d searchFileIndex: %d",
+                trigger.name.c_str(), newLocale.ToString().c_str(), (int) modelType, searchFileIndex);
   }
   
   if (trigger.currentTriggerPaths != trigger.nextTriggerPaths) {
@@ -616,20 +623,20 @@ void SpeechRecognizerSystem::ApplySpeechRecognizerLoacleUpdate(TriggerContext<Sp
     
     if (success) {
       LOG_INFO("SpeechRecognizerSystem.UpdateTriggerForLocale.SwitchTriggerSearch",
-               "Switched speechRecognizer to netFile: %s searchFile %s",
-               netFilePath.c_str(), searchFilePath.c_str());
+               "Switched speechRecognizer '%s' to netFile: %s searchFile %s",
+               aTrigger.name.c_str(), netFilePath.c_str(), searchFilePath.c_str());
     }
     else {
       currentTrigPathRef = MicData::MicTriggerConfig::TriggerDataPaths{};
       nextTrigPathRef = MicData::MicTriggerConfig::TriggerDataPaths{};
       LOG_WARNING("SpeechRecognizerSystem.UpdateTriggerForLocale.FailedSwitchTriggerSearch",
-                  "Failed to add speechRecognizer netFile: %s searchFile %s",
-                  netFilePath.c_str(), searchFilePath.c_str());
+                  "Failed to add speechRecognizer '%s' netFile: %s searchFile %s",
+                  aTrigger.name.c_str(), netFilePath.c_str(), searchFilePath.c_str());
     }
     
     if (!currentTrigPathRef.IsValid()) {
       LOG_WARNING("SpeechRecognizerSystem.UpdateTriggerForLocale.ClearTriggerSearch",
-                  "Cleared speechRecognizer to have no search");
+                  "Cleared speechRecognizer '%s' to have no search", aTrigger.name.c_str());
     }
   }
 }

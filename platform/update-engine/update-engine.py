@@ -157,6 +157,18 @@ def get_prop(property_name):
     return None
 
 
+def is_dev_robot(cmdline):
+    "Returns true if this robot is a dev robot"
+    if "anki.dev" in cmdline:
+        return True
+    emrcat = subprocess.Popen(['/bin/emr-cat', 'v'], shell=False, stdout=subprocess.PIPE)
+    if emrcat.wait() == 0:
+        hw_ver = int(emrcat.communicate()[0], 16)
+        if hw_ver == 0x7:
+            return True # All whiskey DVT1s are dev even though cmdline doesn't indicate it
+    return False
+
+
 def get_cmdline():
     "Returns /proc/cmdline arguments as a dict"
     cmdline = open("/proc/cmdline", "r").read()
@@ -522,7 +534,7 @@ def handle_factory(manifest, tar_stream):
 
 def validate_new_os_version(current_os_version, new_os_version, cmdline):
     allow_downgrade = os.getenv("UPDATE_ENGINE_ALLOW_DOWNGRADE", "False") in TRUE_SYNONYMS
-    if allow_downgrade and "anki.dev" in cmdline:
+    if allow_downgrade and is_dev_robot(cmdline):
         return
     os_version_regex = re.compile('^(?:\d+\.){2,3}\d+(d|ud)?$')
     m = os_version_regex.match(new_os_version)
@@ -583,7 +595,7 @@ def update_from_url(url):
         validate_new_os_version(current_os_version, next_boot_os_version, cmdline)
         if DEBUG:
             print("Updating to version {}".format(next_boot_os_version))
-        if "anki.dev" in cmdline:
+        if is_dev_robot(cmdline):
             if not manifest.getint("META", "ankidev"):
                 die(214, "Ankidev OS can't install non-ankidev OTA file")
         elif manifest.getint("META", "ankidev"):
@@ -653,7 +665,7 @@ def generate_shard_id():
 
 def construct_update_url(os_version, cmdline):
     base_url = os.getenv("UPDATE_ENGINE_BASE_URL", None)
-    if "anki.dev" in cmdline:
+    if is_dev_robot(cmdline):
         base_url = os.getenv("UPDATE_ENGINE_ANKIDEV_BASE_URL", base_url)
     if not base_url:
         return None
