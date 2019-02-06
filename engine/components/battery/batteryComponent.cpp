@@ -86,7 +86,11 @@ namespace {
   CONSOLE_VAR(bool, kFakeLowBattery, CONSOLE_GROUP, false);
   const float kFakeLowBatteryVoltage = 3.5f;
 
-  CONSOLE_VAR(bool, kForceChargeUntilSysconDisconnect, CONSOLE_GROUP, true);
+  CONSOLE_VAR(bool, kForceChargeUntilSysconDisconnect, CONSOLE_GROUP, false);
+
+  // If non-zero, a low battery status is faked after this many seconds off charger
+  CONSOLE_VAR(uint32_t, kFakeLowBatteryAfterOffChargerTimeout_sec, CONSOLE_GROUP, 220);
+  float _fakeLowBatteryTime_sec = 0.f;
 
 #if ANKI_DEV_CHEATS
   CONSOLE_VAR(bool, kPeriodicDebugDASLogging, CONSOLE_GROUP, true);
@@ -198,6 +202,11 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   SetOnChargeContacts(msg.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
   SetIsCharging(msg.status & (uint32_t)RobotStatusFlag::IS_CHARGING);
   UpdateOnChargerPlatform();
+
+  // Fake low battery timeout
+  if (IsOnChargerContacts() && kFakeLowBatteryAfterOffChargerTimeout_sec != 0) {
+    _fakeLowBatteryTime_sec = now_sec + kFakeLowBatteryAfterOffChargerTimeout_sec;
+  }
 
 
   // Check for change in disconnected state
@@ -334,6 +343,15 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     level = BatteryLevel::Full;
   } else if (_batteryVoltsFilt < lowBattThreshold) {
     level = BatteryLevel::Low;
+  }
+
+  if (kFakeLowBatteryAfterOffChargerTimeout_sec != 0) {
+    if (now_sec > _fakeLowBatteryTime_sec) {
+      if (_batteryLevel != BatteryLevel::Low) {
+        LOG_INFO("BatteryComponent.ForceLowBattery", "");
+      }
+      level = BatteryLevel::Low;
+    }
   }
 
   if (level != _batteryLevel) {

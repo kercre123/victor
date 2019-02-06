@@ -62,7 +62,10 @@ namespace {
   static const char* kDoExploring = "doExploring";
 
   bool _startMovingVoltageReached = false;
+  bool _drivingOffCharger = false;
 }
+
+#define LOG_CHANNEL "Behaviors"
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevBatteryLogging::InstanceConfig::InstanceConfig()
@@ -141,6 +144,7 @@ void BehaviorDevBatteryLogging::OnBehaviorActivated()
   //robot.GetActionList().Cancel();
 
   _startMovingVoltageReached = false;
+  _drivingOffCharger = false;
 
   InitLog();
 }
@@ -183,7 +187,7 @@ void BehaviorDevBatteryLogging::EnqueueMotorActions()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevBatteryLogging::BehaviorUpdate()
 {
-  if(!IsActivated()){
+  if(!IsActivated() || _drivingOffCharger){
     return;
   }
 
@@ -192,9 +196,17 @@ void BehaviorDevBatteryLogging::BehaviorUpdate()
   if (battComp.IsOnChargerPlatform()) {
     // Drive off charger when full
     if (_iConfig.driveOffChargerWhenFull && battComp.IsBatteryFull()) {
+      _drivingOffCharger = true;
       DriveStraightAction* driveAction = new DriveStraightAction(100.f);
       driveAction->SetCanMoveOnCharger(true);
-      DelegateIfInControl(driveAction);
+      DelegateNow(driveAction, [](){
+        _drivingOffCharger = false;
+      });
+    }
+
+    if (!_drivingOffCharger && IsControlDelegated()) {
+      LOG_INFO("DevBatteryLogging.BackOnCharger.CancelDelegates", "");
+      CancelDelegates(false);
     }
   } else {
 
@@ -276,7 +288,7 @@ void BehaviorDevBatteryLogging::InitLog()
       << "CPU_activeTime), "
       << "CPU_idleTime)\n";
 
-  PRINT_CH_INFO("Behaviors", "BehaviorDevBatteryLogging.InitLog.StartingLog", "%s", _logFile.c_str());
+  LOG_INFO("BehaviorDevBatteryLogging.InitLog.StartingLog", "%s", _logFile.c_str());
 }
 
 
