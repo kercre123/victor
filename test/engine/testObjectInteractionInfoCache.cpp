@@ -49,7 +49,6 @@ ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ObjectType objectTyp
   {
     BlockWorldFilter filter;
     filter.SetAllowedTypes( {objectPtr->GetType()} );
-    filter.SetAllowedFamilies( {objectPtr->GetFamily()} );
     ObservableObject* sameBlock = blockWorld.FindLocatedMatchingObject(filter);
     ANKI_VERIFY(nullptr == sameBlock, "CreateObjectLocatedAtOrigin.TypeAlreadyInUse", "");
   }

@@ -351,13 +351,12 @@ void ObjectPoseConfirmer::FindObjectMatchForObservation(const std::shared_ptr<Ob
   objectToCopyIDFrom = nullptr;
 
   BlockWorldFilter filter;
-  filter.AddAllowedFamily(objSeen->GetFamily());
   filter.AddAllowedType(objSeen->GetType());
 
   // find confirmed object or unconfirmed
   if ( objSeen->IsUnique() )
   {
-    // ask blockworld to find matches by type/family in the current origin, since we assume only one instance per type
+    // ask blockworld to find matches by type in the current origin, since we assume only one instance per type
     std::vector<ObservableObject*> confirmedMatches;
     _robot->GetBlockWorld().FindLocatedMatchingObjects(filter, confirmedMatches);
     
@@ -372,16 +371,15 @@ void ObjectPoseConfirmer::FindObjectMatchForObservation(const std::shared_ptr<Ob
     }
     else
     {
-      // did not find a confirmed match, is there an unconfirmed match by family and type?
+      // did not find a confirmed match, is there an unconfirmed match by  type?
       for( const auto& confirmationInfoPair : _poseConfirmations )
       {
         const PoseConfirmation& confirmationInfo = confirmationInfoPair.second;
         // check only entries that have an unconfirmed object
         if ( confirmationInfo.unconfirmedObject )
         {
-          // compare family and type
-          const bool matchOk = (confirmationInfo.unconfirmedObject->GetFamily() == objSeen->GetFamily()) &&
-                               (confirmationInfo.unconfirmedObject->GetType()   == objSeen->GetType()  );
+          // compare type
+          const bool matchOk = (confirmationInfo.unconfirmedObject->GetType() == objSeen->GetType());
           if ( matchOk ) {
             DEV_ASSERT(confirmationInfo.unconfirmedObject->GetID() == confirmationInfoPair.first,
                        "ObjectPoseConfirmer.IsObjectConfirmed.KeyNotMatchingID");
@@ -440,9 +438,8 @@ void ObjectPoseConfirmer::FindObjectMatchForObservation(const std::shared_ptr<Ob
           // should not be possible to carry unconfirmed objects
           DEV_ASSERT( carryingObjectID != confirmationInfo.unconfirmedObject->GetID(),
                       "ObjectPoseConfirmer.IsObjectConfirmed.CarryingUnconfirmed");
-          // unconfirmed objects are not applied the filter, check for family/type now
-          const bool isSameType = (confirmationInfo.unconfirmedObject->GetFamily() == objSeen->GetFamily()) &&
-                                  (confirmationInfo.unconfirmedObject->GetType()   == objSeen->GetType()  );
+          // unconfirmed objects are not applied the filter, check for type now
+          const bool isSameType = (confirmationInfo.unconfirmedObject->GetType() == objSeen->GetType());
           if ( isSameType )
           {
             // compare location

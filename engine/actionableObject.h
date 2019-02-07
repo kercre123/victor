@@ -23,7 +23,6 @@
 #include "engine/viz/vizManager.h"
 
 #include "clad/types/objectTypes.h"
-#include "clad/types/objectFamilies.h"
 
 namespace Anki {
   namespace Vector {

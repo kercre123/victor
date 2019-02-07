@@ -12,21 +12,25 @@ type options struct {
 
 	robotsPerProcess *int
 	tasksPerCluster  *int
+	reportingTasks   *int
 
 	enableDistributedControl *bool
 	enableAccountCreation    *bool
 
-	redisAddress    *string
-	defaultCloudDir *string
-	urlConfigFile   *string
-	testLogFile     *string
-	numberOfCerts   *int
+	redisAddress     *string
+	wavefrontAddress *string
+	defaultCloudDir  *string
+	urlConfigFile    *string
+	testLogFile      *string
+	numberOfCerts    *int
 
 	defaultTestUserName *string
 	testUserPassword    *string
 
 	rampupDuration   time.Duration
 	rampdownDuration time.Duration
+
+	reportingInterval time.Duration
 
 	robotsPerCluster int
 
@@ -89,6 +93,20 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Value:  1,
 	})
 
+	options.reportingTasks = app.Int(cli.IntOpt{
+		Name:   "reporting-tasks-per-cluster",
+		Desc:   "Number of tasks per ECS/Fargate cluster reporting metrics",
+		EnvVar: "REPORTING_TASKS_PER_CLUSTER",
+		Value:  1000,
+	})
+
+	reportingInterval := app.String(cli.StringOpt{
+		Name:   "metrics-reporting-interval",
+		Desc:   "Wavefront metrics reporing interval (time.Duration string)",
+		EnvVar: "METRICS_REPORTING_INTERVAL",
+		Value:  "30s",
+	})
+
 	options.enableAccountCreation = app.Bool(cli.BoolOpt{
 		Name:   "a account-creation",
 		Desc:   "Enables account creation as part of test",
@@ -108,6 +126,13 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Desc:   "Redis host and port",
 		EnvVar: "REDIS_ADDRESS",
 		Value:  "localhost:6379",
+	})
+
+	options.wavefrontAddress = app.String(cli.StringOpt{
+		Name:   "r wavefront-endpoint",
+		Desc:   "Wavefront host and port",
+		EnvVar: "WAVEFRONT_ADDRESS",
+		Value:  "",
 	})
 
 	options.defaultCloudDir = app.String(cli.StringOpt{
@@ -239,6 +264,8 @@ func newFromEnvironment(app *cli.Cli) *options {
 	// Note this only works for environment variables
 	options.rampupDuration = parseIntervalString(rampupDuration)
 	options.rampdownDuration = parseIntervalString(rampdownDuration)
+
+	options.reportingInterval = parseIntervalString(reportingInterval)
 
 	options.heartBeatInterval = parseIntervalString(heartBeatInterval)
 	options.jdocsInterval = parseIntervalString(jdocsInterval)

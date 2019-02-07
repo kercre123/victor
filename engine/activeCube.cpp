@@ -24,8 +24,8 @@ namespace Anki {
 namespace Vector {
 
 ActiveCube::ActiveCube(ObjectType type)
-: ObservableObject(ObjectFamily::LightCube, type)
-, Block(ObjectFamily::LightCube, type)
+: ObservableObject(type)
+, Block(type)
 {
   _activeID = -1;
   _factoryID = "";
@@ -49,9 +49,8 @@ ActiveCube::ActiveCube(ObjectType type)
 ActiveCube::ActiveCube(ActiveID activeID, FactoryID factoryID, ObjectType objType)
 : ActiveCube(objType)
 {
-  DEV_ASSERT(IsValidLightCube(objType, false) ||
-             objType == ObjectType::Block_LIGHTCUBE_GHOST,
-             "ActiveCube.InvalidFactoryID");
+  DEV_ASSERT(IsBlockType(objType, false),
+             "ActiveCube.InvalidType");
   
   _activeID = activeID;
   _factoryID = factoryID;

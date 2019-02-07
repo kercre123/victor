@@ -55,9 +55,8 @@ BehaviorFetchCube::InstanceConfig::InstanceConfig()
 , chargerFilter(std::make_unique<BlockWorldFilter>())
 , skipConnectToCubeBehavior(true) //skip by default so we run it only when user driven
 {
-  cubesFilter->AddAllowedFamily(ObjectFamily::LightCube);
+  cubesFilter->AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
 
-  chargerFilter->AddAllowedFamily(ObjectFamily::Charger);
   chargerFilter->AddAllowedType(ObjectType::Charger_Basic);
 }
 

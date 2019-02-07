@@ -83,10 +83,10 @@ BehaviorLookForFaceAndCube::InstanceConfig::InstanceConfig(const Json::Value& co
   face_bodyAngleRelRangeMax_rad = DEG_TO_RAD( ParseFloat(config, kFace_bodyAngleRelRangeMaxKey, debugName) );
   face_sidePicks = ParseUint8(config, kFace_sidePicksKey, debugName);
   // cube states
-  cube_headAngleAbsRangeMin_rad = DEG_TO_RAD( ParseFloat(config, kCube_headAngleAbsRangeMinKey, debugName) );;
-  cube_headAngleAbsRangeMax_rad = DEG_TO_RAD( ParseFloat(config, kCube_headAngleAbsRangeMaxKey, debugName) );;
-  cube_bodyAngleRelRangeMin_rad = DEG_TO_RAD( ParseFloat(config, kCube_bodyAngleRelRangeMinKey, debugName) );;
-  cube_bodyAngleRelRangeMax_rad = DEG_TO_RAD( ParseFloat(config, kCube_bodyAngleRelRangeMaxKey, debugName) );;
+  cube_headAngleAbsRangeMin_rad = DEG_TO_RAD( ParseFloat(config, kCube_headAngleAbsRangeMinKey, debugName) );
+  cube_headAngleAbsRangeMax_rad = DEG_TO_RAD( ParseFloat(config, kCube_headAngleAbsRangeMaxKey, debugName) );
+  cube_bodyAngleRelRangeMin_rad = DEG_TO_RAD( ParseFloat(config, kCube_bodyAngleRelRangeMinKey, debugName) );
+  cube_bodyAngleRelRangeMax_rad = DEG_TO_RAD( ParseFloat(config, kCube_bodyAngleRelRangeMaxKey, debugName) );
   cube_sidePicks = ParseUint8(config, kCube_sidePicksKey, debugName);
   stopBehaviorOnCube = config.get(kStopBehaviorOnCubeKey, false).asBool();
   
@@ -367,8 +367,7 @@ void BehaviorLookForFaceAndCube::StopBehaviorOnFaceIfNeeded(FaceID_t observedID)
 bool BehaviorLookForFaceAndCube::DoesCubeExist() const
 {
   BlockWorldFilter filter;
-  filter.AddAllowedFamily(ObjectFamily::LightCube);
-  filter.SetFilterFcn(nullptr);
+  filter.AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
   
   std::vector<const ObservableObject*> objects;
   GetBEI().GetBlockWorld().FindLocatedMatchingObjects(filter, objects);

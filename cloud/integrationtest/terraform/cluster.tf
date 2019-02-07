@@ -22,6 +22,9 @@ data "template_file" "load_test" {
     robots_per_process = "${var.robots_per_process}"
     tasks_per_cluster = "${var.instance_count * var.service_count}"
 
+    reporting_tasks_per_cluster = "${var.wavefront["reporting_tasks"]}"
+    metrics_reporting_interval = "${var.wavefront["reporting_interval"]}"
+
     ramp_up_duration = "${var.ramp_durations["up"]}"
     ramp_down_duration = "${var.ramp_durations["down"]}"
 
@@ -72,18 +75,9 @@ resource "aws_ecs_service" "load_test" {
 
 ///////////////////////////////////////////////////////////////////////////// Redis Service
 
-data "template_file" "redis" {
-  template = "${file("task-definitions/redis.json")}"
-
-  vars {
-    cpu = "${var.fargate_cpu}"
-    memory = "${var.fargate_memory}"
-  }
-}
-
 resource "aws_ecs_task_definition" "redis" {
   family                   = "redis"
-  container_definitions    = "${data.template_file.redis.rendered}"
+  container_definitions    = "${file("task-definitions/redis.json")}"
 
   network_mode             = "awsvpc"
 
@@ -113,4 +107,45 @@ resource "aws_ecs_service" "redis" {
 
 resource "aws_ecr_repository" "load_test" {
   name = "load_test"
+}
+
+///////////////////////////////////////////////////////////////////////////// WaveFront Proxy
+
+data "template_file" "wavefront" {
+  template = "${file("task-definitions/wavefront.json")}"
+
+  vars {
+    wavefront_url = "${var.wavefront["url"]}"
+    wavefront_token = "${var.wavefront["token"]}"
+  }
+}
+
+resource "aws_ecs_task_definition" "wavefront" {
+  family                   = "wavefront"
+  container_definitions    = "${data.template_file.wavefront.rendered}"
+
+  network_mode             = "awsvpc"
+
+  // Fargate required options
+  requires_compatibilities = ["FARGATE"]
+  cpu                      = 1024  // CPU Units
+  memory                   = 2048  // MiB
+}
+
+resource "aws_ecs_service" "wavefront" {
+  name            = "wavefront"
+  cluster         = "${aws_ecs_cluster.load_test.id}"
+  task_definition = "${aws_ecs_task_definition.wavefront.arn}"
+  desired_count   = 1
+  launch_type     = "FARGATE"
+
+  network_configuration {
+    security_groups  = ["${aws_security_group.ecs_tasks.id}"]
+    subnets          = ["${aws_subnet.private.*.id}"]
+  }
+
+  service_registries {
+    registry_arn    = "${aws_service_discovery_service.wavefront.arn}"
+    container_name  = "wavefront"
+  }
 }

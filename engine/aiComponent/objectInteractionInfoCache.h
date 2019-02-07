@@ -103,6 +103,7 @@ private:
   static const char* ObjectUseIntentionToString(ObjectInteractionIntention intention);
   
   // Common logic for checking validity of blocks for any Pickup, PopAWheelie, or Roll Interactions
+  bool CanBeInteractedWith(const ObservableObject* object) const;
   bool CanPickupNoAxisCheck(const ObservableObject* object) const;
   bool CanPickupAxisCheck(const ObservableObject* object) const;
   bool CanUseAsStackTopNoAxisCheck(const ObservableObject* object) const;

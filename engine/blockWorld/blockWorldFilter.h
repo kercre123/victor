@@ -21,7 +21,6 @@
 #include "coretech/common/engine/objectIDs.h"
 #include "coretech/common/engine/math/poseOrigin.h"
 #include "engine/cozmoObservableObject.h"
-#include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
 
 #include <set>
@@ -41,42 +40,36 @@ namespace Vector {
     BlockWorldFilter() { }
     
     // These are the methods called by BlockWorld when looping over existing
-    // object families, types, and IDs to decide whether to continue.
+    // object origins, types, and IDs to decide whether to continue.
     // An object cannot be in an ignore list and either the allowed list must be
     // empty or the object must be in it in order to pass.
     bool ConsiderOrigin(PoseOriginID_t objectOriginID, PoseOriginID_t robotOriginID) const;
-    bool ConsiderFamily(ObjectFamily family) const;
     bool ConsiderType(ObjectType type) const;
     bool ConsiderObject(const ObservableObject* object) const; // Checks ID and runs FilterFcn(object)
     
-    // Set the entire set of IDs, types, or families to ignore in one go.
+    // Set the entire set of IDs, types, or origins to ignore in one go.
     void SetIgnoreIDs(std::set<ObjectID>&& IDs);
     void SetIgnoreTypes(std::set<ObjectType>&& types);
-    void SetIgnoreFamilies(std::set<ObjectFamily>&& families);
     void SetIgnoreOrigins(std::set<PoseOriginID_t>&& originIDs);
     
-    // Add to the existing set of IDs, types, or families
+    // Add to the existing set of IDs, types, or origins
     void AddIgnoreID(const ObjectID& ID);
     void AddIgnoreIDs(const std::set<ObjectID>& IDs);
     void AddIgnoreType(ObjectType type);
-    void AddIgnoreFamily(ObjectFamily family);
     void AddIgnoreOrigin(PoseOriginID_t originID);
     
-    // Set the entire set of IDs, types, or families to be allowed in one go.
+    // Set the entire set of IDs, types, or origins to be allowed in one go.
     void SetAllowedIDs(std::set<ObjectID>&& IDs);
     void SetAllowedTypes(std::set<ObjectType>&& types);
-    void SetAllowedFamilies(std::set<ObjectFamily>&& families);
     void SetAllowedOrigins(std::set<PoseOriginID_t>&& originIDs);
     
-    // Add to the existing set of IDs, types, or families
+    // Add to the existing set of IDs, types, or origins
     void AddAllowedID(const ObjectID& ID);
     void AddAllowedIDs(const std::set<ObjectID>& IDs);
     void AddAllowedType(ObjectType type);
-    void AddAllowedFamily(ObjectFamily family);
     void AddAllowedOrigin(PoseOriginID_t originID);
     
     // Set the filtering function used at the object level
-    // NOTE: Default filter requires object to have poseState != Unknown
     using FilterFcn = std::function<bool(const ObservableObject*)>;
     void SetFilterFcn(const FilterFcn& filterFcn); // replace any existing
     void AddFilterFcn(const FilterFcn& filterFcn); // add to list of filters (all must pass)
@@ -84,7 +77,9 @@ namespace Vector {
     // Handy, commonly-used filter functions
     static bool PoseStateKnownFilter(const ObservableObject* object);
     static bool ActiveObjectsFilter(const ObservableObject* object);
-    static bool UniqueObjectsFilter(const ObservableObject* object);
+    static bool UniqueObjectsFilter(const ObservableObject* object);    
+    static bool IsLightCubeFilter(const ObservableObject* object);
+    static bool IsCustomObjectFilter(const ObservableObject* object);
     
     // Normally, all objects known to BlockWorld are checked. Setting this to
     // true will only check those objects observed in the most recent BlockWorld
@@ -103,7 +98,6 @@ namespace Vector {
   protected:
     std::set<ObjectID>             _ignoreIDs,      _allowedIDs;
     std::set<ObjectType>           _ignoreTypes,    _allowedTypes;
-    std::set<ObjectFamily>         _ignoreFamilies, _allowedFamilies;
     std::set<PoseOriginID_t>       _ignoreOrigins,  _allowedOrigins;
     
     std::list<FilterFcn>    _filterFcns;
@@ -123,10 +117,6 @@ namespace Vector {
     _ignoreOrigins = origins;
   }
   
-  inline void BlockWorldFilter::SetIgnoreFamilies(std::set<ObjectFamily> &&families) {
-    _ignoreFamilies = families;
-  }
-  
   inline void BlockWorldFilter::SetIgnoreTypes(std::set<ObjectType> &&types) {
     _ignoreTypes = types;
   }
@@ -141,10 +131,6 @@ namespace Vector {
   
   inline void BlockWorldFilter::SetAllowedTypes(std::set<ObjectType>&& types) {
     _allowedTypes = types;
-  }
-  
-  inline void BlockWorldFilter::SetAllowedFamilies(std::set<ObjectFamily>&& families) {
-    _allowedFamilies = families;
   }
   
   inline void BlockWorldFilter::SetAllowedOrigins(std::set<PoseOriginID_t>&& origins) {
@@ -176,11 +162,6 @@ namespace Vector {
     _ignoreTypes.insert(type);
   }
   
-  inline void BlockWorldFilter::AddIgnoreFamily(ObjectFamily family) {
-    assert(_allowedFamilies.count(family) == 0); // Should not be in both lists
-    _ignoreFamilies.insert(family);
-  }
-  
   inline void BlockWorldFilter::AddAllowedID(const ObjectID& ID) {
     assert(_ignoreIDs.count(ID) == 0); // Should not be in both lists
     _allowedIDs.insert(ID);
@@ -193,11 +174,6 @@ namespace Vector {
   inline void BlockWorldFilter::AddAllowedType(ObjectType type) {
     assert(_ignoreTypes.count(type) == 0); // Should not be in both lists
     _allowedTypes.insert(type);
-  }
-  
-  inline void BlockWorldFilter::AddAllowedFamily(ObjectFamily family) {
-    assert(_ignoreFamilies.count(family) == 0); // Should not be in both lists
-    _allowedFamilies.insert(family);
   }
   
   inline void BlockWorldFilter::AddAllowedOrigin(PoseOriginID_t originID) {
@@ -245,10 +221,6 @@ namespace Vector {
     }
   }
   
-  inline bool BlockWorldFilter::ConsiderFamily(ObjectFamily family) const {
-    return ConsiderHelper(_ignoreFamilies, _allowedFamilies, family);
-  }
-  
   inline bool BlockWorldFilter::ConsiderType(ObjectType type) const {
     return ConsiderHelper(_ignoreTypes, _allowedTypes, type);
   }
@@ -289,6 +261,15 @@ namespace Vector {
     return object->IsUnique();
   }
   
+  inline bool BlockWorldFilter::IsLightCubeFilter(const ObservableObject* object) {
+    DEV_ASSERT(nullptr != object, "BlockWorldFilter.IsLightCubeFilter.NullObject");
+    return IsValidLightCube(object->GetType(), false);
+  }
+  
+  inline bool BlockWorldFilter::IsCustomObjectFilter(const ObservableObject* object) {
+    DEV_ASSERT(nullptr != object, "BlockWorldFilter.IsCustomObjectFilter.NullObject");
+    return IsCustomType(object->GetType(), false);
+  }
   
 
 } // namespace Vector

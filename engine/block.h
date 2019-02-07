@@ -157,7 +157,6 @@ namespace Anki {
     protected:
       
       Block(const ObjectType type);
-      Block(const ObjectFamily family, const ObjectType type);
       
       virtual void GeneratePreActionPoses(const PreActionPose::ActionType type,
                                           std::vector<PreActionPose>& preActionPoses) const override;
@@ -221,7 +220,7 @@ namespace Anki {
     public:
       
       Block_Cube1x1(Type type)
-      : ObservableObject(ObjectFamily::Block, type)
+      : ObservableObject(type)
       , Block(type)
       {
         // The sizes specified by the block definitions should
@@ -240,121 +239,15 @@ namespace Anki {
 
     };
     
-    /*
-#   define MAKE_BLOCK_CLASS(__BLOCK_NAME__) \
-    class __BLOCK_NAME__ : public Block_Cube1x1 { \
-      public: \
-      virtual __BLOCK_NAME__* Clone() const override { \
-        return new __BLOCK_NAME__(*this); \
-      } \
-      virtual ObjectType GetType() const override { \
-        static const ObjectType type(QUOTE(__BLOCK_NAME__)); \
-        return type; \
-    };
-    
-    MAKE_BLOCK_CLASS(Block_Cube1x1_AngryFace)
-    */
-    
-    // Long dimension is along the x axis (so one unique face has x axis
-    // sticking out of it, the other unique face type has y and z axes sticking
-    // out of it).  One marker on
-    class Block_2x1 : public Block
-    {
-    public:
-      
-      Block_2x1(Type type)
-      : ObservableObject(ObjectFamily::Block, type)
-      , Block(type)
-      {
-        
-      }
-      
-      virtual RotationAmbiguities const& GetRotationAmbiguities() const override;
-      
-      virtual Block_2x1* CloneType() const override
-      {
-        return new Block_2x1(this->_type);
-      }
-      
-    protected:
-      // Protected constructor using generic ObjectType
-      
-      
-    };
-    
 #pragma mark --- Inline Accessors Implementations ---
-    
-       
-
-    //
-    // Block:
-    //
-    /*
-    inline BlockID_t Block::GetID() const
-    { return this->blockID_; }
-    */
     
     inline Point3f const& Block::GetSize() const
     { return _size; }
-    
-    /*
-    inline float Block::GetWidth() const
-    { return _size.y(); }
-    
-    inline float Block::GetHeight() const
-    { return _size.z(); }
-    
-    inline float Block::GetDepth() const
-    { return _size.x(); }
-    */
-    
-    /*
-    inline float Block::GetMinDim() const
-    {
-      return std::min(GetWidth(), std::min(GetHeight(), GetDepth()));
-    }
-     */
-    
-    /*
-    inline void Block::SetSize(const float width,
-                               const float height,
-                               const float depth)
-    {
-      _size = {width, height, depth};
-    }
-    */
-    
-    /*
-    inline void Block::SetColor(const unsigned char red,
-                                const unsigned char green,
-                                const unsigned char blue)
-    {
-      _color = {red, green, blue};
-    }
-     */
     
     inline void Block::SetName(const std::string name)
     {
       _name = name;
     }
-    
-    /*
-    inline void Block::SetPose(const Pose3d &newPose)
-    { this->pose_ = newPose; }
-    */
-    
-    /*
-    inline const BlockMarker3d& Block::get_faceMarker(const FaceName face) const
-    { return this->markers[face]; }
-    */
-    
-    /*
-    inline Block::FaceName Block::FaceType_to_FaceName(FaceType type)
-    {
-      ASSERT_NAMED(type > 0 && type < NUM_FACES+1, "Block.FaceTypeToFaceName.InvalidType");
-      return static_cast<FaceName>(type-1);
-    }
-     */
 
   } // namespace Vector
 } // namespace Anki
