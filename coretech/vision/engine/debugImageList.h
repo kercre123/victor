@@ -9,19 +9,19 @@
  * Copyright: Anki, Inc. 2017
  **/
 
-#ifndef __Anki_Cozmo_Basestation_DebugImageList_H__
-#define __Anki_Cozmo_Basestation_DebugImageList_H__
+#ifndef __Anki_Coretech_Vision_Basestation_DebugImageList_H__
+#define __Anki_Coretech_Vision_Basestation_DebugImageList_H__
 
 #include <list>
 #include <string>
 
 namespace Anki {
-namespace Vector {
+namespace Vision {
 
   template<class ImageType>
   using DebugImageList = std::list<std::pair<std::string, ImageType>>;
 
-} // namespace Vector
+} // namespace Vision
 } // namespace Anki
 
-#endif /* __Anki_Cozmo_Basestation_DebugImageList_H__ */
+#endif /* __Anki_Coretech_Vision_Basestation_DebugImageList_H__ */

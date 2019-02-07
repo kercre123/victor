@@ -29,7 +29,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/markerlessObject.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
 #include "engine/robotStateHistory.h"
@@ -362,8 +361,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Vector::RobotState& rob
       {
         Pose3d obstaclePoseWrtRobot;
         
-        const f32 extraPad_mm = 5.f; // fudge factor
-        const f32 obstaclePositionPad_mm = MarkerlessObject::GetSizeByType(ObjectType::CollisionObstacle).x() + extraPad_mm;
+        const f32 obstaclePositionPad_mm = 25.f;
         
         const char *debugStr = "";
         

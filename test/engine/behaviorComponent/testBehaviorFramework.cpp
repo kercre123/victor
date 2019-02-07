@@ -890,17 +890,14 @@ void TestBehaviorFramework::AddFakeFirstObject( ObjectType objectType, Pose3d* p
     pose = &originPose;
   }
   
-  ObjectFamily objectFamily;
   ObservableObject* objectPtr;
   switch( objectType ) {
     case ObjectType::Charger_Basic:
-      objectFamily = ObjectFamily::Charger;
       objectPtr = new Charger();
       break;
     case ObjectType::Block_LIGHTCUBE1:
     case ObjectType::Block_LIGHTCUBE2:
     case ObjectType::Block_LIGHTCUBE3:
-      objectFamily = ObjectFamily::Block;
       objectPtr = new ActiveCube( objectType );
       break;
     default:

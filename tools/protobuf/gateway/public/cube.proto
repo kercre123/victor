@@ -122,9 +122,9 @@ enum ObjectType
   //
   BLOCK_LIGHTCUBE1 = 2;
 
-  FIRST_CUSTOM_OBJECT_TYPE = 15;
+  FIRST_CUSTOM_OBJECT_TYPE = 7;
 
-  OBJECT_TYPE_COUNT = 38;
+  OBJECT_TYPE_COUNT = 26;
 }
 
 enum CustomType
@@ -155,19 +155,6 @@ enum CustomType
   CUSTOM_TYPE_19 = 20;
 
   CUSTOM_TYPE_COUNT = 20;
-}
-
-enum ObjectFamily {
-  option allow_alias = true;
-
-  INVALID_FAMILY    = 0;
-  UNKNOWN_FAMILY    = 1;
-  BLOCK             = 2;
-  LIGHT_CUBE        = 3;
-  CHARGER           = 4;
-  CUSTOM_OBJECT     = 7;
-
-  OBJECT_FAMILY_COUNT = 7;
 }
 
 message ObjectAvailable {
@@ -217,17 +204,16 @@ message ObjectTapped {
 }
 
 // RobotObservedObject for signaling that an object
-//  with specified ID/Type/Family was seen at a particular location in the image
+//  with specified ID/Type was seen at a particular location in the image
 //  and the world
 message RobotObservedObject {
     uint32       timestamp                = 1;
-    ObjectFamily object_family            = 2;
-    ObjectType   object_type              = 3;
-    int32        object_id                = 4; // signed to match U2G::PickAndPlaceObject which has the option to have objectID<0
-    CladRect     img_rect                 = 5; // position in image coords
-    PoseStruct   pose                     = 6;
-    float        top_face_orientation_rad = 7; // absolute orienation of top face, iff isActive==true
-    uint32       is_active                = 8;
+    ObjectType   object_type              = 2;
+    int32        object_id                = 3; // signed to match U2G::PickAndPlaceObject which has the option to have objectID<0
+    CladRect     img_rect                 = 4; // position in image coords
+    PoseStruct   pose                     = 5;
+    float        top_face_orientation_rad = 6; // absolute orienation of top face, iff isActive==true
+    uint32       is_active                = 7;
 }
 
 // Indicates that a the connection subscribed through ConnectCube has

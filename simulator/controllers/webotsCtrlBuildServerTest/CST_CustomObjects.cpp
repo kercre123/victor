@@ -449,7 +449,7 @@ void CST_CustomObjects::CheckPoses()
 {
   // Check wall:
   {
-    auto wallIDs = GetAllObjectIDsByFamilyAndType(ObjectFamily::CustomObject, ObjectType::CustomType01);
+    auto wallIDs = GetAllObjectIDsByType(ObjectType::CustomType01);
     CST_ASSERT(wallIDs.size() == 1, "CST_CustomObjects.CheckPoses.ExpectingOneWall");
     
     CustomObject *customObj = CustomObject::CreateWall(ObjectType::CustomType01,
@@ -493,7 +493,7 @@ void CST_CustomObjects::CheckPoses()
   
   // Check cube:
   {
-    auto customCubeIDs = GetAllObjectIDsByFamilyAndType(ObjectFamily::CustomObject, ObjectType::CustomType00);
+    auto customCubeIDs = GetAllObjectIDsByType(ObjectType::CustomType00);
     
     struct PoseAndID {
       const Pose3d* cubePose;
@@ -530,7 +530,7 @@ void CST_CustomObjects::CheckPoses()
   // Check LightCube
   if(_testState > TestState::LookAtObjects)
   {
-    auto lightcubeIDs = GetAllObjectIDsByFamily(ObjectFamily::LightCube);
+    auto lightcubeIDs = GetAllLightCubeObjectIDs();
     CST_ASSERT(lightcubeIDs.size() == 1, "CST_CustomObjects.CheckPoses.ExpectingOneLightCube");
     
     ActiveCube* activeCube = new ActiveCube(ObjectType::Block_LIGHTCUBE1);

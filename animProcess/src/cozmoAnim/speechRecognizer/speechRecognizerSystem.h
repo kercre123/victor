@@ -84,9 +84,19 @@ public:
   void Update(const AudioUtil::AudioSample * audioData, unsigned int audioDataLen, bool vadActive);
   
   // Set Default models for locale
+  // Use flag to describe what recognizer(s) to updated
   // Return true when locale file was found and is different then current locale
   // NOTE: Locale is not updated until the next Update() call
-  bool UpdateTriggerForLocale(const Util::Locale& newLocale);
+  enum RecognizerTypeFlag {
+    None          = 0,
+    VectorMic     = 1 << 0,
+    AlexaMic      = 1 << 1,
+    AlexaPlayback = 1 << 2,
+    All           = VectorMic | AlexaMic | AlexaPlayback
+  };
+  
+  bool UpdateTriggerForLocale(const Util::Locale& newLocale,
+                              RecognizerTypeFlag recognizerFlags = RecognizerTypeFlag::All);
   
   // Alexa Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -106,6 +116,7 @@ private:
   // Trigger context
   template <class SpeechRecognizerType>
   struct TriggerContext {
+    std::string                                 name;
     std::unique_ptr<SpeechRecognizerType>       recognizer;
     std::unique_ptr<MicData::MicTriggerConfig>  micTriggerConfig;
 
@@ -113,8 +124,9 @@ private:
     MicData::MicTriggerConfig::TriggerDataPaths currentTriggerPaths;
     MicData::MicTriggerConfig::TriggerDataPaths nextTriggerPaths;
 
-    TriggerContext()
-    : recognizer(std::make_unique<SpeechRecognizerType>())
+    TriggerContext(const std::string& name)
+    : name(name)
+    , recognizer(std::make_unique<SpeechRecognizerType>())
     , micTriggerConfig(std::make_unique<MicData::MicTriggerConfig>())
     { }
   };

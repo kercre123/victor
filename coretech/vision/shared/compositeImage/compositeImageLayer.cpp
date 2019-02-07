@@ -102,7 +102,7 @@ bool CompositeImageLayer::GetFrame(SpriteBoxName sbName, const u32 index,
 {
   auto imageMapIter = _imageMap.find(sbName);
   if(imageMapIter != _imageMap.end()){
-    return imageMapIter->second.GetFrame(index, handle);;
+    return imageMapIter->second.GetFrame(index, handle);
   }
   return false;
 }

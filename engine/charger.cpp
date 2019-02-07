@@ -58,7 +58,7 @@ namespace Anki {
     
     
     Charger::Charger(ObjectType type)
-    : ObservableObject(ObjectFamily::Charger, type), ActionableObject()
+    : ObservableObject(type), ActionableObject()
     , _size(kLength, kWidth, kHeight)
     , _vizHandle(VizManager::INVALID_HANDLE)
     {

@@ -93,13 +93,16 @@ void FaceEvalConfusion::DisplayHelper(FaceID_t faceID, const EnrolledFace& enrol
   {
     dispStr << "[" << std::fixed << std::setprecision(2) << score << " vs. " << _params.recognitionThreshold << "]";
   }
+#if ANKI_DEVELOPER_CODE
   img.DrawText({1, img.GetNumRows()-1}, dispStr.str(), NamedColors::RED, 0.4f);
+#endif
   img.Display(windowName, pauseTime);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void FaceEvalConfusion::ShowTiledImage(const std::map<int, EnrolledFace>& enrolledFaces) const
 {
+#if ANKI_DEVELOPER_CODE
   const int kTileWidth = 128;
   const int kTileHeight = 72;
   ImageRGB tiledImg(720/2, 1280/2);
@@ -136,6 +139,7 @@ void FaceEvalConfusion::ShowTiledImage(const std::map<int, EnrolledFace>& enroll
     
     tiledImg.Display(identityToID.first.c_str(), 5);
   }
+#endif
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -702,8 +702,10 @@ namespace Vector {
       img->SetFromGray(_faceImageGrayscale);
       auto handle = std::make_shared<Vision::SpriteWrapper>(img);
       //LOG_DEBUG("AnimationStreamer.Process_displayFaceImageChunk.CompleteFaceReceived", "");
+      EnableKeepFaceAlive(false, msg.duration_ms);
       const bool shouldRenderInEyeHue = true;
       SetFaceImage(handle, shouldRenderInEyeHue, msg.duration_ms);
+      _wasAnimationInterruptedWithNothing = true;
       _faceImageId = 0;
       _faceImageChunksReceivedBitMask = 0;
     }
@@ -738,8 +740,10 @@ namespace Vector {
       img->SetFromGray(_faceImageGrayscale);
       auto handle = std::make_shared<Vision::SpriteWrapper>(img);
       //LOG_DEBUG("AnimationStreamer.Process_displayFaceImageGrayscaleChunk.CompleteFaceReceived", "");
+      EnableKeepFaceAlive(false, msg.duration_ms);
       const bool shouldRenderInEyeHue = true;
       SetFaceImage(handle, shouldRenderInEyeHue, msg.duration_ms);
+      _wasAnimationInterruptedWithNothing = true;
       _faceImageGrayscaleId = 0;
       _faceImageGrayscaleChunksReceivedBitMask = 0;
     }
@@ -768,8 +772,10 @@ namespace Vector {
       img->SetFromRGB565(_faceImageRGB565);
       auto handle = std::make_shared<Vision::SpriteWrapper>(img);
       //LOG_DEBUG("AnimationStreamer.Process_displayFaceImageRGBChunk.CompleteFaceReceived", "");
+      EnableKeepFaceAlive(false, msg.duration_ms);
       const bool shouldRenderInEyeHue = false;
       SetFaceImage(handle, shouldRenderInEyeHue, msg.duration_ms);
+      _wasAnimationInterruptedWithNothing = true;
       _faceImageRGBId = 0;
       _faceImageRGBChunksReceivedBitMask = 0;
     }
@@ -1829,7 +1835,6 @@ namespace Vector {
     const bool haveStreamingAnimation = _streamingAnimation != nullptr;
     const bool haveStreamedAnything   = _lastAnimationStreamTime > 0.f;
     const bool longEnoughSinceStream  = (BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() - _lastAnimationStreamTime) > _longEnoughSinceLastStreamTimeout_s;
-
     if(!haveStreamingAnimation &&
        haveStreamedAnything &&
        longEnoughSinceStream)
@@ -1974,6 +1979,7 @@ namespace Vector {
   {
     if (s_enableKeepFaceAlive && !enable) {
       _proceduralTrackComponent->RemoveKeepFaceAlive(_relativeStreamTime_ms, disableTimeout_ms);
+
     } else if (enable && !s_enableKeepFaceAlive) {
       if (_wasAnimationInterruptedWithNothing) {
         // The last animation ended without a replacement, but neutral eyes weren't inserted because

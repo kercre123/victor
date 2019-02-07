@@ -17,7 +17,7 @@
 namespace Anki{ namespace Util
 {
 
-static const int ARG_TEXT_LENGTH              = 256;
+static const int ARG_TEXT_LENGTH              = 512;
 static const ConsoleArgType INVALID_TYPE      = ConsoleArgType_Num;
 static const char* OPTIONAL_DECLARATOR        = "optional";
 

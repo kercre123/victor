@@ -16,6 +16,8 @@
 #include "util/math/math.h"
 
 #include <assert.h>
+#include <pthread.h>
+#include <signal.h>
 #include <stdarg.h>
 #include <stdio.h>
 
@@ -47,9 +49,9 @@ namespace Anki { namespace Util {
   #define CONSOLE_DEBUG( ... )
 #endif
 
-static const int TEXT_PARSING_MAX_LENGTH    = 256;
+static const int TEXT_PARSING_MAX_LENGTH    = 512;
 static const char* TEXT_PARSING_TOKENS      = " ";
-static const char* ARGS_PARSING_TOKENS      = " ,";
+static const char* ARGS_PARSING_TOKENS      = " ";
 
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -428,10 +430,94 @@ ConsoleSystem& ConsoleSystem::Instance()
 
 void IntentionalCrash( ConsoleFunctionContextRef context )
 {
+  LOG_ERROR("IntentionalCrash", "*(int*)0 = 42\n");
   volatile int* a = reinterpret_cast<volatile int*>(0);
   *a = 42;
 }
 CONSOLE_FUNC( IntentionalCrash, "Debug" );
+
+void IntentionalExit( ConsoleFunctionContextRef context )
+{
+  LOG_ERROR("IntentionalExit", "exit(-1);\n");
+  exit(-1);
+}
+CONSOLE_FUNC( IntentionalExit, "Debug" );
+
+void IntentionalAbort( ConsoleFunctionContextRef context )
+{
+  LOG_ERROR("IntentionalAbort", "abort();\n");
+  abort();
+}
+CONSOLE_FUNC( IntentionalAbort, "Debug" );
+
+void IntentionalAssert( ConsoleFunctionContextRef context )
+{
+  LOG_ERROR("IntentionalAssert", "assert(false);\n");
+  assert(false);
+}
+CONSOLE_FUNC( IntentionalAssert, "Debug" );
+
+void IntentionalSIGTERM( ConsoleFunctionContextRef context )
+{
+  LOG_ERROR("IntentionalSIGTERM", "raise(SIGTERM);\n");
+  raise(SIGTERM);
+}
+CONSOLE_FUNC( IntentionalSIGTERM, "Debug" );
+
+void IntentionalSIGINT( ConsoleFunctionContextRef context )
+{
+  LOG_ERROR("IntentionalSIGINT", "raise(SIGINT);\n");
+  raise(SIGINT);
+}
+CONSOLE_FUNC( IntentionalSIGINT, "Debug" );
+
+void IntentionalSIGQUIT( ConsoleFunctionContextRef context )
+{
+  LOG_ERROR("IntentionalSIGQUIT", "raise(SIGQUIT);\n");
+  raise(SIGQUIT);
+}
+CONSOLE_FUNC( IntentionalSIGQUIT, "Debug" );
+
+void IntentionalSIGKILL( ConsoleFunctionContextRef context )
+{
+  LOG_ERROR("IntentionalSIGKILL", "raise(SIGKILL);\n");
+  raise(SIGKILL);
+}
+CONSOLE_FUNC( IntentionalSIGKILL, "Debug" );
+
+void IntentionalPthreadExit( ConsoleFunctionContextRef context )
+{
+  LOG_ERROR("IntentionalPthreadExit", "pthread_exit(-1);\n");
+  pthread_exit(NULL);
+}
+CONSOLE_FUNC( IntentionalPthreadExit, "Debug" );
+
+void IntentionalThrow( ConsoleFunctionContextRef context )
+{
+  LOG_ERROR("IntentionalThrow", "throw \"error\"\n");
+  throw "error";
+}
+CONSOLE_FUNC( IntentionalThrow, "Debug" );
+
+void IntentionalMallocBigNum( ConsoleFunctionContextRef context )
+{
+  void** lastPtr = nullptr;
+
+  size_t size = 128*1024*1024; // 128MB
+  while (size > 4) {
+    void** ptr = (void**)malloc(size);
+    if (ptr) {
+      LOG_ERROR("IntentionalMallocBigNum", "malloc(%zu)\n", size);
+      if (lastPtr) {
+        *lastPtr = ptr;
+      }
+      lastPtr = ptr;
+    } else {
+      size /= 2;
+    }
+  }
+}
+CONSOLE_FUNC( IntentionalMallocBigNum, "Debug" );
 
 void ResetConsoleVars( ConsoleFunctionContextRef context )
 {
@@ -983,7 +1069,7 @@ void NativeAnkiUtilConsoleLoadVarsWithContext(ConsoleFunctionContextRef context)
   FILE* inputFile = fopen(k_ConsoleVarIniFilePath, "r");
   if (inputFile)
   {
-    char tempBuffer[256];
+    char tempBuffer[Anki::Util::TEXT_PARSING_MAX_LENGTH];
 
     bool isAtEOF = false;
     while (!isAtEOF)

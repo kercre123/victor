@@ -271,7 +271,7 @@ namespace Anki
 
         // Do final two rows
 
-        const IntermediateType * restrict pImageFilteredTmpYEndm4 = imageFilteredTmp.Pointer(imageFilteredTmp.get_size(0)-4, 0);;
+        const IntermediateType * restrict pImageFilteredTmpYEndm4 = imageFilteredTmp.Pointer(imageFilteredTmp.get_size(0)-4, 0);
         const IntermediateType * restrict pImageFilteredTmpYEndm3 = pImageFilteredTmpYEndm4 + imageFilteredTmpStep;
         const IntermediateType * restrict pImageFilteredTmpYEndm2 = pImageFilteredTmpYEndm4 + 2*imageFilteredTmpStep;
         const IntermediateType * restrict pImageFilteredTmpYEndm1 = pImageFilteredTmpYEndm4 + 3*imageFilteredTmpStep;

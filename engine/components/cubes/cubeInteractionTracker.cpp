@@ -136,7 +136,7 @@ CubeInteractionTracker::CubeInteractionTracker()
 , _debugStateString("Idle")
 {
   _targetFilter = std::make_unique<BlockWorldFilter>();
-  _targetFilter->AddAllowedFamily(ObjectFamily::LightCube);
+  _targetFilter->AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

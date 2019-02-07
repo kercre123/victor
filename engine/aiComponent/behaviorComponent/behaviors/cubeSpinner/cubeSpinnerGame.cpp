@@ -211,7 +211,7 @@ void CubeSpinnerGame::StopGame()
 bool CubeSpinnerGame::CanGameStart() const
 {
   BlockWorldFilter filter;
-  filter.AddAllowedFamily(ObjectFamily::LightCube);
+  filter.AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
   const ActiveObject* obj = _blockWorld.FindConnectedActiveMatchingObject(filter);
   return obj != nullptr;
 }
@@ -231,7 +231,7 @@ bool CubeSpinnerGame::ResetGame()
   _currentGame.baseLightPattern.canBeOverridden = false;
   
   BlockWorldFilter filter;
-  filter.AddAllowedFamily(ObjectFamily::LightCube);
+  filter.AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
   const ActiveObject* obj = _blockWorld.FindConnectedActiveMatchingObject(filter);
   if(obj != nullptr){
     _currentGame.targetObject = obj->GetID();

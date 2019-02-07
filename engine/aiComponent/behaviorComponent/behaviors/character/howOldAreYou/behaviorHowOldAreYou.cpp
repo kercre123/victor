@@ -62,6 +62,7 @@ bool BehaviorHowOldAreYou::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorHowOldAreYou::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
+  modifiers.wantsToBeActivatedWhenOffTreads = true;
 }
 
 
