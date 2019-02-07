@@ -148,16 +148,19 @@ void ImuUKF::ProcessUpdate(double dt_s)
   // sample the covariance, generating the set {𝑌ᵢ} and add the mean
   const auto S = Cholesky(_P + _Q) * sqrt(kCholScaleSq);
   for (int i = 0; i < Error::Size; ++i) {
-    // current process model assumes we continue moving at constant velocity
+    // get the Sigma points for the given state
     const Error Si = S.GetColumn(i);
     const auto  q  = ToQuat(Si.GetRotation());
+    const auto  r1 = _state.GetRotation() * q;
+    const auto  r2 = _state.GetRotation() * q.GetConj();
     const auto  w1 = _state.GetVelocity() + Si.GetVelocity();
     const auto  w2 = _state.GetVelocity() - Si.GetVelocity();
     const auto  b1 = _state.GetGyroBias() + Si.GetGyroBias();
     const auto  b2 = _state.GetGyroBias() - Si.GetGyroBias();
 
-    _Y.SetColumn(2*i,     State{_state.GetRotation() * q * ToQuat((w1-b1) * dt_s), w1, b1} );
-    _Y.SetColumn((2*i)+1, State{_state.GetRotation() * q.GetConj() * ToQuat((w2-b2) * dt_s), w2, b2} );
+    // current process model assumes we continue moving at constant velocity
+    _Y.SetColumn(2*i,     State{r1 * ToQuat((w1-b1) * dt_s), w1, b1} );
+    _Y.SetColumn((2*i)+1, State{r2 * ToQuat((w2-b2) * dt_s), w2, b2} );
   }
 
   // NOTE: we are making a huge assumption here. Technically, quaternions cannot be averaged using
@@ -186,7 +189,7 @@ void ImuUKF::ProcessUpdate(double dt_s)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ImuUKF::MeasurementUpdate(const Point<9,double>& measurement)
 {
-  // Calculate Predicted Measurement Distribution {𝑍ᵢ}
+  // Calculate Predicted measurement distribution {𝑍ᵢ} given State estimate distribution {𝑌ᵢ}
   SmallMatrix<Error::Size,Error::Size*2,double> Z;
   for (int i = 0; i < 2*Error::Size; ++i) {
     const State yi = _Y.GetColumn(i);
