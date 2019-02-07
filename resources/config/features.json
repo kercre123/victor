@@ -102,6 +102,10 @@
   {
     "feature": "HowOldAreYou",
     "enabled": true
+  },
+  {
+    "feature": "StayOnChargerUntilCharged",
+    "enabled": false
   }
 ]
 
