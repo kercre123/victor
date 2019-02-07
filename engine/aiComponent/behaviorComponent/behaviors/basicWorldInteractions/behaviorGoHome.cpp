@@ -57,6 +57,16 @@ namespace {
   const char* kDriveToRetryCountKey      = "driveToRetryCount";
   const char* kTurnToDockRetryCountKey   = "turnToDockRetryCount";
   const char* kMountChargerRetryCountKey = "mountChargerRetryCount";
+
+  // behavior failure reason Json key (used to populate DAS message fields)
+  const char* kFailureReasonNameKey = "s1";
+  const char* kFailureReasonDescKey = "s2";
+  // use this key to message any enums as strings
+  const char* kFailureReasonString3Key = "s3";
+  // note: DAS message field i1 is used for "removed charger" flag
+  //        use the following fields to send up integer debug values
+  const char* kFailureReasonInt2Key = "i2";
+  const char* kFailureReasonInt3Key = "i3";
   
   // Pre-action pose angle tolerance to use for driving to the charger. This
   // can be a bit looser than the default, since the robot can successfully
@@ -403,7 +413,18 @@ void BehaviorGoHome::TransitionToDriveToCharger()
                           }
                         } else {
                           // Either out of retries or we got another failure type
-                          ActionFailure();
+                          Json::Value failReason;
+                          failReason[kFailureReasonNameKey] = "DriveToChargerFailure";
+                          failReason[kFailureReasonString3Key] = EnumToString(result);
+                          failReason[kFailureReasonString3Key].setComment("Engine enum for action-failure",
+                            Json::CommentPlacement::commentAfterOnSameLine);
+                          failReason[kFailureReasonInt2Key] = _dVars.driveToRetryCount;
+                          failReason[kFailureReasonInt2Key].setComment("Number of drive-to-charger attempts so far",
+                            Json::CommentPlacement::commentAfterOnSameLine);
+                          failReason[kFailureReasonInt3Key] = _iConfig.driveToRetryCount;
+                          failReason[kFailureReasonInt3Key].setComment("Max allowed number of drive-to-charger attempts",
+                            Json::CommentPlacement::commentAfterOnSameLine);
+                          ActionFailure(false, failReason);
                         }
                       });
 }
@@ -476,14 +497,26 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
                                               "Deleting charger with ID %d since visual verification failed",
                                               _dVars.chargerID.GetValue());
                           const bool removeChargerFromBlockworld = true;
-                          ActionFailure(removeChargerFromBlockworld);
+                          Json::Value failReason;
+                          failReason[kFailureReasonNameKey] = "CheckPreTurnPositionFailure";
+                          failReason[kFailureReasonDescKey] = "MissingCharger";
+                          failReason[kFailureReasonInt2Key] = _dVars.turnToDockRetryCount;
+                          failReason[kFailureReasonInt2Key].setComment("Number of attempts at checking for charger pre-turn-to-dock",
+                            Json::CommentPlacement::commentAfterOnSameLine);
+                          failReason[kFailureReasonInt3Key] = _iConfig.turnToDockRetryCount;
+                          failReason[kFailureReasonInt3Key].setComment("Max allowed number of attempts at checking for charger pre-turn-to-dock",
+                            Json::CommentPlacement::commentAfterOnSameLine);
+                          ActionFailure(removeChargerFromBlockworld, failReason);
                         } else if (_dVars.turnToDockRetryCount++ < _iConfig.turnToDockRetryCount) {
                           // Simply go back to the starting pose, which will allow visual
                           // verification to happen again, etc.
                           TransitionToDriveToCharger();
                         } else {
                           // Out of retries
-                          ActionFailure();
+                          Json::Value failReason;
+                          failReason[kFailureReasonNameKey] = "CheckPreTurnPositionFailure";
+                          failReason[kFailureReasonDescKey] = "OutOfRetries";
+                          ActionFailure(false, failReason);
                         }
                       });
 }
@@ -510,7 +543,11 @@ void BehaviorGoHome::TransitionToTurn()
                           TransitionToDriveToCharger();
                         } else {
                           // Either out of retries or we got another failure type
-                          ActionFailure();
+                          Json::Value failReason;
+                          failReason[kFailureReasonNameKey] = "TurnAlignToChargerFailure";
+                          failReason[kFailureReasonInt2]    = _dVars.turnToDockRetryCount;
+                          failReason[kFailureReasonInt3]    = _iConfig.turnToDockRetryCount;
+                          ActionFailure(false, failReason);
                         }
                       });
 }
@@ -552,13 +589,21 @@ void BehaviorGoHome::TransitionToMountCharger()
                                                                         DEFAULT_PATH_MOTION_PROFILE.speed_mmps,
                                                                         false),
                                                 [this]() {
-                                                  ActionFailure(false);
+                                                  Json::Value failReason;
+                                                  failReason[kFailureReasonNameKey] = "MountChargerFailure";
+                                                  failReason[kFailureReasonDescKey] = "UnpluggedCharger";
+                                                  ActionFailure(false, failReason);
                                                 });
                           } else {
                             // If the robot did not end the action on the charger, then clear the charger from the
                             // world since we clearly do not know where it is.
                             const bool removeChargerFromBlockworld = (result == ActionResult::NOT_ON_CHARGER_ABORT);
-                            ActionFailure(removeChargerFromBlockworld);
+                            Json::Value failReason;
+                            failReason[kFailureReasonNameKey] = "MountChargerFailure";
+                            failReason[kFailureReasonString3Key] = EnumToString(result);
+                            failReason[kFailureReasonString3Key].setComment("Engine enum for the action-failure type",
+                              Json::CommentPlacement::commentAfterOnSameLine);
+                            ActionFailure(removeChargerFromBlockworld, failReason);
                           }
                         }
                       });
@@ -594,7 +639,7 @@ void BehaviorGoHome::TransitionToOnChargerCheck()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGoHome::ActionFailure(bool removeChargerFromBlockWorld)
+void BehaviorGoHome::ActionFailure(bool removeChargerFromBlockWorld, const Json::Value& reason)
 {
   // If we are ending due to an action failure, now is a good time to check
   // how recently we have seen the charger. If we haven't seen the charger
@@ -611,6 +656,28 @@ void BehaviorGoHome::ActionFailure(bool removeChargerFromBlockWorld)
   PRINT_NAMED_WARNING("BehaviorGoHome.ActionFailure",
                       "BehaviorGoHome had an action failure. Delegating to the request to go home. %s",
                       removeChargerFromBlockWorld ? "Removing charger from block world." : "");
+
+  DASMSG(go_home_action_failure, "go_home.action_failure", "GoHome behavior failure message");
+  if(ANKI_VERIFY(reason.isMember(kFailureReasonNameKey), "BehaviorGoHome.ActionFailure.MissingFailureReasonName", "")) {
+    DASMSG_SET(s1, reason[kFailureReasonNameKey].asString(), "Type of action that we failed on");
+  } else {
+    DASMSG_SET(s1, "NoNameProvided", "Type of action that we failed on");
+  }
+  DASMSG_SET(i1, removeChargerFromBlockWorld, "Whether the charger was removed from blockworld as a result (1 = removed)");
+  // Optional DAS message fields for the go home failures
+  if(reason.isMember(kFailureReasonDescKey)) {
+    DASMSG_SET(s2, reason[kFailureReasonDescKey].asString(), "Specific description of the action failure");
+  }
+  if(reason.isMember(kFailureReasonString3Key)) {
+    DASMSG_SET(s3, reason[kFailureReasonString3Key].asString(), reason[kFailureReasonString3Key].getComment(Json::CommentPlacement::commentAfterOnSameLine));
+  }
+  if(reason.isMember(kFailureReasonInt2Key)) {
+    DASMSG_SET(i2, reason[kFailureReasonInt2Key].asInt(), reason[kFailureReasonInt2Key].getComment(Json::CommentPlacement::commentAfterOnSameLine));
+  }
+  if(reason.isMember(kFailureReasonInt3Key)) {
+    DASMSG_SET(i3, reason[kFailureReasonInt3Key].asString(), reason[kFailureReasonInt3Key].getComment(Json::CommentPlacement::commentAfterOnSameLine));
+  }
+  DASMSG_SEND();
   
   if (removeChargerFromBlockWorld) {
     BlockWorldFilter deleteFilter;
