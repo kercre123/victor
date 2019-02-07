@@ -90,6 +90,27 @@
 #endif // REMOTE_CONSOLE_ENABLED
 
 
+// "const" variables are just a handy way to remove variables from appearing in the console without having to
+// change the code too much, and making it easy to turn them back into console vars
+
+  #define CONSOLE_CONST( type, name, path, default ) \
+    extern const type name = default;
+
+  #define WRAP_CONSOLE_CONST( type, name, path )
+
+  #define WRAP_EXTERN_CONSOLE_CONST( type, name, path )
+
+  #define CONSOLE_CONST_RANGED( type , name, path, default, minVal, maxVal ) \
+    extern const type name = default;
+
+  #define CONSOLE_CONST_ENUM( type, name, path, default, values ) \
+    extern const type name = default;
+
+  // no such thing as a "fixed" function
+  // #define FIXED_FUNC( ... )
+
+
+
 //==============================================================================================================================
 // C Console Variable Interface
 #else
