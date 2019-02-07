@@ -61,11 +61,12 @@ namespace Anki {
         // Last read IMU data
         HAL::IMU_DataStructure imu_data_;
 
+        // Unscented Kalman Filter for orientation tracking
         ImuUKF ukf_;
-
-        // Orientation and speed in XY-plane (i.e. horizontal plane) of robot
-        Rotation3d rot_ = UnitQuaternion();
-        f32 rotSpeed_ = 0; // rad/s
+        Point3f rotSpeed_ = Point3f(); // rad/s
+        f32     pitch_    = 0.;        // radians
+        f32     roll_     = 0.;        // radians
+        f32     yaw_      = 0.;        // radians
 
         // Roll angle:
         // f32 roll_                        = 0.f;
@@ -727,7 +728,7 @@ namespace Anki {
             // UNEXPECTED_ROTATION_SPEED_THRESH is being used as a multipurpose margin here. Because GetCurrNoSlipBodyRotSpeed() is based
             // on filtered wheel speeds there's a little delay which permits measuredBodyRotSpeed to be a little faster than maxPossibleBodyRotSpeed.
             const f32 maxPossibleBodyRotSpeed = WheelController::GetCurrNoSlipBodyRotSpeed();
-            const f32 measuredBodyRotSpeed = rotSpeed_;
+            const f32 measuredBodyRotSpeed = GetRotationSpeed();
             gyroZBasedMotionDetect = (((maxPossibleBodyRotSpeed > UNEXPECTED_ROTATION_SPEED_THRESH) &&
                                        ((measuredBodyRotSpeed < -UNEXPECTED_ROTATION_SPEED_THRESH) || (measuredBodyRotSpeed > maxPossibleBodyRotSpeed + UNEXPECTED_ROTATION_SPEED_THRESH))) ||
                                       ((maxPossibleBodyRotSpeed < -UNEXPECTED_ROTATION_SPEED_THRESH) &&
@@ -1082,11 +1083,20 @@ namespace Anki {
                           RAD_TO_DEG( GetRoll() ));s
 #endif
 
-        // XY-plane rotation rate is robot frame z-axis rotation rate
-        rotSpeed_ = gyro_robot_frame_filt[2];
-
         // Update orientation
-        rot_ = ukf_.GetRotation() * Rotation3d(HeadController::GetAngleRad(), Y_AXIS_3D());
+        const Rotation3d headRot(HeadController::GetAngleRad(), Y_AXIS_3D());
+        const Rotation3d bodyRot = ukf_.GetRotation() * headRot;
+        rotSpeed_ = headRot * ukf_.GetRotationSpeed(); // RotationSpeed is a point, not a rotation, so post-multiply
+
+        // NOTE: Maybe account for when the robot is upside down here? we use projection vector projects to get 
+        //       smooth transiitions for roll/pitch/yaw when moving, but these do not result in proper Euler or
+        //       Tait-Bryan angles. If we use either of those, we can get gymbal lock, and accidentally trigger
+        //       a delocalization event
+        const auto robotX = bodyRot * X_AXIS_3D();
+        yaw_   = atan2f( robotX.y(), robotX.x() );
+        pitch_ = asinf( (bodyRot * X_AXIS_3D()).z() );
+        roll_  = asinf( (bodyRot * Y_AXIS_3D()).z() );
+
 
         //MadgwickAHRSupdateIMU(gyro_[0], gyro_[1], gyro_[2],
         //                      imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]);
@@ -1178,27 +1188,22 @@ namespace Anki {
 
       f32 GetRotation()
       {
-        const auto robotX = rot_ * X_AXIS_3D();
-        return atan2f( robotX.y(), robotX.x() );
+        return yaw_;
       }
 
       f32 GetRotationSpeed()
       {
-        const Point3f& vel = Rotation3d(HeadController::GetAngleRad(), Y_AXIS_3D()) * ukf_.GetRotationSpeed(); // rotate point by quaternion
-        return vel.z();
+        return rotSpeed_.z();
       }
 
       f32 GetPitch()
       {
-        return asinf( (rot_ * X_AXIS_3D()).z() );
+        return pitch_;
       }
 
       f32 GetRoll()
       {
-        // TODO: Maybe account for when the robot is upside down here? This roll seems
-        //       more useful, but we cannot combine it with roll and pitch to reconstruct
-        //       rotation. Tait–Bryan angles are subject to gimbal lock, and can cause deloc's
-        return asinf( (rot_ * Y_AXIS_3D()).z() );
+        return roll_;
       }
 
       bool IsPickedUp()

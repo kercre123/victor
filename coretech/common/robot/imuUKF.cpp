@@ -95,7 +95,7 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 // Process Uncertainty
-const SmallSquareMatrix<ImuUKF::Error::Dim,double> ImuUKF::_Q{{  
+const SmallSquareMatrix<ImuUKF::Error::Size,double> ImuUKF::_Q{{  
   Util::Square(kRotStability_rad), 0., 0., 0., 0., 0., 0., 0., 0.,
   0., Util::Square(kRotStability_rad), 0., 0., 0., 0., 0., 0., 0.,
   0., 0., Util::Square(kRotStability_rad), 0., 0., 0., 0., 0., 0.,
@@ -108,7 +108,7 @@ const SmallSquareMatrix<ImuUKF::Error::Dim,double> ImuUKF::_Q{{
 }}; 
 
 // Measurement Uncertainty
-const SmallSquareMatrix<ImuUKF::Error::Dim,double> ImuUKF::_R{{  
+const SmallSquareMatrix<ImuUKF::Error::Size,double> ImuUKF::_R{{  
   Util::Square(kAccelNoise_rad), 0., 0., 0., 0., 0., 0., 0., 0.,
   0., Util::Square(kAccelNoise_rad), 0., 0., 0., 0., 0., 0., 0.,
   0., 0., Util::Square(kAccelNoise_rad), 0., 0., 0., 0., 0., 0.,
@@ -147,7 +147,7 @@ void ImuUKF::ProcessUpdate(double dt_s)
 { 
   // sample the covariance, generating the set {𝑌ᵢ} and add the mean
   const auto S = Cholesky(_P + _Q) * sqrt(kCholScaleSq);
-  for (int i = 0; i < Error::Dim; ++i) {
+  for (int i = 0; i < Error::Size; ++i) {
     // current process model assumes we continue moving at constant velocity
     const Error Si = S.GetColumn(i);
     const auto  q  = ToQuat(Si.GetRotation());
@@ -172,7 +172,7 @@ void ImuUKF::ProcessUpdate(double dt_s)
   const auto meanRot  = _state.GetRotation();
   const auto meanVel  = _state.GetVelocity();
   const auto meanBias = _state.GetGyroBias();
-  for (int i = 0; i < 2*Error::Dim; ++i) {
+  for (int i = 0; i < 2*Error::Size; ++i) {
     const State yi    = _Y.GetColumn(i);
     const auto  err   = FromQuat(meanRot.GetConj() * yi.GetRotation());
     const auto  omega = yi.GetVelocity() - meanVel;
@@ -187,8 +187,8 @@ void ImuUKF::ProcessUpdate(double dt_s)
 void ImuUKF::MeasurementUpdate(const Point<9,double>& measurement)
 {
   // Calculate Predicted Measurement Distribution {𝑍ᵢ}
-  SmallMatrix<Error::Dim,Error::Dim*2,double> Z;
-  for (int i = 0; i < 2*Error::Dim; ++i) {
+  SmallMatrix<Error::Size,Error::Size*2,double> Z;
+  for (int i = 0; i < 2*Error::Size; ++i) {
     const State yi = _Y.GetColumn(i);
     const auto zi = Join(Join( yi.GetRotation().GetConj() * kGravity_mmpsSq, yi.GetVelocity() ), yi.GetGyroBias());
     Z.SetColumn(i, zi);
@@ -196,7 +196,7 @@ void ImuUKF::MeasurementUpdate(const Point<9,double>& measurement)
 
   // mean center {𝑍ᵢ}
   const auto meanZ = CalculateMean(Z);
-  for (int i = 0; i < 2*Error::Dim; ++i) { 
+  for (int i = 0; i < 2*Error::Size; ++i) { 
     Z.SetColumn(i, Z.GetColumn(i) - meanZ); 
   }
 
