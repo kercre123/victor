@@ -68,27 +68,21 @@ namespace {
   }
 
   // Process Noise
-  constexpr const double kRotStability_rad    = .001;      // assume pitch & roll don't change super fast when driving
-  constexpr const double kGyroStability_radps = .2;        // leave this relatively high to trust most recent gyro data
+  constexpr const double kRotStability_rad    = .0003;     // assume pitch & roll don't change super fast when driving
+  constexpr const double kGyroStability_radps = 2.;        // max observable rotation from gyro
   constexpr const double kBiasStability_radps = .0000145;  // bias stability
 
   // Measurement Noise
-  // NOTES: 1) measured rms noise on the gyro (~.006 rms) is higher on Z axis than the spec sheet (.00122 rms)
+  // NOTES: 1) measured rms noise on the gyro (~.003 rms) is higher on Z axis than the spec sheet (.00122 rms)
   //        2) we should be careful with using noise anyway - if the integration from the gyro is off and the
   //           calculated pitch/roll conflict with the accelerometer reading, using a lower noise on the gyro
   //           will result in trusting the integration more, causing very slow adjustments to gravity vector.
   constexpr const double kAccelNoise_rad      = .0018;  // rms noise
-  constexpr const double kGyroNoise_radps     = .008;   // see note
-  constexpr const double kBiasNoise_radps     = .006;   // measured gyro noise
+  constexpr const double kGyroNoise_radps     = .003;   // see note
+  constexpr const double kBiasNoise_radps     = .00003; // bias stability
 
-
-  // Why enforce a slower update rate rather than lower process noise? I'm glad you asked! I honestly have 
-  // no idea why we get better data from this - but it was found when compariing the same filter running
-  // on the robot and engine process where the only difference was the update frequency. When running
-  // on the robot thread, we consistently over-integrated the gyro around the gravity vector. My assumption
-  // is that this is a result of inflating the gyro noise to allow for gravity compensation, but I have
-  // been unable to verify.
-  constexpr const double kUpdatePeriod_s = .02;
+  // extra tuning param for how much we distribute the sigma points
+  constexpr const double kSigmaScale = .2;
 
   // Gravity constants
   constexpr const Point<3,double> kGravity_mmpsSq = {0., 0., 9810.};
@@ -106,7 +100,7 @@ const SmallSquareMatrix<ImuUKF::Error::Dim,double> ImuUKF::_Q{{
   0., 0., Util::Square(kRotStability_rad), 0., 0., 0., 0., 0., 0.,
   0., 0., 0., Util::Square(kGyroStability_radps), 0., 0., 0., 0., 0.,
   0., 0., 0., 0., Util::Square(kGyroStability_radps), 0., 0., 0., 0.,
-  0., 0., 0., 0., 0., Util::Square(kGyroStability_radps) , 0., 0., 0.,
+  0., 0., 0., 0., 0., Util::Square(kGyroStability_radps), 0., 0., 0.,
   0., 0., 0., 0., 0., 0., Util::Square(kBiasStability_radps), 0., 0.,
   0., 0., 0., 0., 0., 0., 0., Util::Square(kBiasStability_radps), 0.,
   0., 0., 0., 0., 0., 0., 0., 0., Util::Square(kBiasStability_radps)
@@ -141,9 +135,8 @@ void ImuUKF::Reset(const Rotation3d& rot) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ImuUKF::Update(const Point<3,double>& accel, const Point<3,double>& gyro, const float timestamp_s, bool isMoving)
 {
-  if (timestamp_s - _lastMeasurement_s < kUpdatePeriod_s) { return; }
-
   ProcessUpdate( NEAR_ZERO(_lastMeasurement_s) ? 0. : timestamp_s - _lastMeasurement_s );
+
 
   const auto measurement = Join(Join(accel, gyro), (isMoving ? _state.GetGyroBias() : gyro));
   const Error residual = MeasurementUpdate( measurement );
@@ -151,12 +144,10 @@ void ImuUKF::Update(const Point<3,double>& accel, const Point<3,double>& gyro, c
   // Add the residual to the current state. 
   // NOTE: Right now I am artificially scaling the bias back just to limit rapid change during startup.
   //       When initializing it can be quite noisy, resulting in an unstable z-rotation for the first ~30 seconds
-  const double biasScale = isMoving ? 0. : .02;
   _state = State{ _state.GetRotation() * ToQuat(residual.GetRotation() * kG_over_mmpsSq),
                   _state.GetVelocity() + residual.GetVelocity(),
-                  _state.GetGyroBias() + (residual.GetGyroBias() * biasScale)
+                  _state.GetGyroBias() + residual.GetGyroBias()
                 };
-
   _lastMeasurement_s = timestamp_s;
 }
 
@@ -164,7 +155,7 @@ void ImuUKF::Update(const Point<3,double>& accel, const Point<3,double>& gyro, c
 void ImuUKF::ProcessUpdate(double dt_s)
 { 
   // sample the covariance, generating the set {𝑌ᵢ} and add the mean
-  const auto S = Cholesky(_P + _Q) * sqrt(2*Error::Dim);
+  const auto S = Cholesky(_P + _Q) * sqrt(Error::Dim * kSigmaScale);
   for (int i = 0; i < Error::Dim; ++i) {
     // current process model assumes we continue moving at constant velocity
     const Error Si = S.GetColumn(i);
