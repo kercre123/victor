@@ -37,7 +37,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/customObject.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/humanHead.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
 #include "engine/objectPoseConfirmer.h"
@@ -552,6 +551,7 @@ namespace Vector {
     using namespace ExternalInterface;
 
     RobotObservedObject observation(observedObject->GetLastObservedTime(),
+                                    LegacyGetObjectFamily(observedObject),
                                     observedObject->GetType(),
                                     observedObject->GetID(),
                                     CladRect(boundingBox.GetX(),
@@ -2541,5 +2541,22 @@ namespace Vector {
 
   } // SendObjectUpdateToWebViz()
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  ObjectFamily BlockWorld::LegacyGetObjectFamily(const ObservableObject* const object) const
+  {
+    auto fam = ObjectFamily::Unknown;
+    const auto& type = object->GetType();
+    if (IsValidLightCube(type, false)) {
+      fam = ObjectFamily::LightCube;
+    } else if (IsBlockType(type, false)) {
+      fam = ObjectFamily::Block;
+    } else if (IsChargerType(type, false)) {
+      fam = ObjectFamily::Charger;
+    } else if (IsCustomType(type, false)) {
+      fam = ObjectFamily::CustomObject;
+    }
+    return fam;
+  }
+  
 } // namespace Vector
 } // namespace Anki

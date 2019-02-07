@@ -463,6 +463,9 @@ namespace Anki
       std::vector<Signal::SmartHandle> _eventHandles;
             
       RobotTimeStamp_t _currentObservedMarkerTimestamp = 0;
+      
+      // Note: This is only required for SDK v0.5.1 compatibility
+      ObjectFamily LegacyGetObjectFamily(const ObservableObject* const object) const;
     }; // class BlockWorld
 
 

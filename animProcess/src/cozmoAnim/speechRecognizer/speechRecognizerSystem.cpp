@@ -411,7 +411,7 @@ bool SpeechRecognizerSystem::UpdateTriggerForLocale(const Util::Locale& newLocal
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SpeechRecognizerSystem::ActivateAlexa(const Util::Locale& locale, TriggerWordDetectedCallback callback)
+void SpeechRecognizerSystem::ActivateAlexa(const Util::Locale& locale, AlexaTriggerWordDetectedCallback callback)
 {
   if (_isAlexaActive) {
     LOG_WARNING("SpeechRecognizerSystem.ActivateAlexa",
@@ -479,7 +479,7 @@ void SpeechRecognizerSystem::SetAlexaSpeakingState(bool isSpeaking)
 // Private Methods
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpeechRecognizerSystem::InitAlexa(const Util::Locale& locale,
-                                       const TriggerWordDetectedCallback callback)
+                                       const AlexaTriggerWordDetectedCallback callback)
 {
   // This called when Alexa is authorized
   if (_alexaTrigger) {
@@ -491,23 +491,21 @@ void SpeechRecognizerSystem::InitAlexa(const Util::Locale& locale,
   const auto wrappedCallback = [callback=std::move(callback), this](const AudioUtil::SpeechRecognizerCallbackInfo& info)
   {
     bool notchDetected = false;
-    bool playbackRecognizerDetected = false;
     if (_notchDetectorActive || kForceRunNotchDetector) {
       std::lock_guard<std::mutex> lg{_notchMutex};
       notchDetected = _notchDetector->HasNotch();
     }
     const auto diff = info.endSampleIndex - _playbackTrigerSampleIdx;
-    playbackRecognizerDetected = (diff <= kPlaybackRecognizerSampleCountThreshold);
+    const bool playbackRecognizerDetected = (diff <= kPlaybackRecognizerSampleCountThreshold);
+    const bool ignore = notchDetected || playbackRecognizerDetected;
     
-    if (!notchDetected && !playbackRecognizerDetected) {
-      callback(info);
-    }
-    else {
+    if (ignore) {
       LOG_INFO("SpeechRecognizerSystem.InitAlexaCallback.Ignored",
                "Alexa wake word contained a notch '%c' or playback recognizer '%c'"
-               " samples between playback and user recognizers %llu",
-               notchDetected ? 'Y' : 'N', playbackRecognizerDetected ? 'Y' : 'N', diff);
+               " samples between playback and user recognizers %llu samples | %llu ms",
+               notchDetected ? 'Y' : 'N', playbackRecognizerDetected ? 'Y' : 'N', diff, (diff/16));
     }
+    callback(info, ignore);
   };
   
   _alexaComponent = _context->GetAlexa();
