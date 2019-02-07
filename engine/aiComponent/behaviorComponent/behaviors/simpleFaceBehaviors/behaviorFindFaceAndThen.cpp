@@ -61,7 +61,7 @@ const float kInitialHeadAngle_rad = 0.8f*MAX_HEAD_ANGLE;
   
 const TimeStamp_t kTimeToWaitForImage_ms = 2*STATE_MESSAGE_FREQUENCY*ROBOT_TIME_STEP_MS; // = 60ms (*2 in case slowdown)
   
-CONSOLE_VAR_RANGED(float, kMinTimeLookInMicDirection_s, "Behaviors.FindFaceAndThen", 0.5f, 0.0f, 2.0f);
+CONSOLE_VAR_RANGED(float, kMinTimeLookInMicDirection_s, "Behavior.FindFaceAndThen", 0.5f, 0.0f, 2.0f);
 }
 
 

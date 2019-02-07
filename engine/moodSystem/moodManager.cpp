@@ -60,7 +60,7 @@ static const char* kActionResultEmotionEventKey = "actionResultEmotionEvents";
 static const char* kAudioParametersMapKey = "audioParameterMap";
 static const char* kSimpleMoodAudioKey = "simpleMoodAudioParameters";
 
-CONSOLE_VAR(float, kMoodManager_AudioSendPeriod_s, "MoodManager", 0.5f);
+CONSOLE_CONST(float, kMoodManager_AudioSendPeriod_s, "MoodManager", 0.5f);
 CONSOLE_VAR(float, kMoodManager_WebVizPeriod_s, "MoodManager", 1.0f);
 CONSOLE_VAR(float, kMoodManager_AppPeriod_s, "MoodManager", 1.0f);
 }

@@ -81,7 +81,7 @@ namespace Vector {
 namespace {
   const char* kCustomConditionKey = "customCondition";
 
-  #define CONSOLE_GROUP "Behaviors.ConditionFactory"
+  #define CONSOLE_GROUP "BehaviorSystem.ConditionFactory"
   CONSOLE_VAR(bool, kDebugConditionFactory, CONSOLE_GROUP, false);
 
 }

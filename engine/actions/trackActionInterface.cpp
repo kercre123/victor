@@ -39,7 +39,7 @@ static const char * const kLogChannelName = "Actions";
 
 namespace {
 
-#define CONSOLE_GROUP "TrackingActions"
+#define CONSOLE_GROUP "Actions.Tracking"
 
 CONSOLE_VAR_RANGED(f32, kOverride_PanDuration_s, CONSOLE_GROUP, -1.0f, 0.0f, 1.0f);
 CONSOLE_VAR_RANGED(f32, kOverride_TiltDuration_s, CONSOLE_GROUP, -1.0f, 0.0f, 1.0f);

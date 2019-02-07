@@ -27,9 +27,9 @@ namespace Anki {
 namespace Vector {
 
 namespace {
-
-CONSOLE_VAR(int, kDedupTimeAfterLock_ms, "CubeSpinner", 1000);
-CONSOLE_VAR(bool, kShouldLockPulseTargetColor, "CubeSpinner", true);
+#define CONSOLE_GROUP "Behavior.CubeSpinner"
+CONSOLE_CONST(int, kDedupTimeAfterLock_ms, CONSOLE_GROUP, 1000);
+CONSOLE_CONST(bool, kShouldLockPulseTargetColor, CONSOLE_GROUP, true);
 ////////
 // Light Keys
 ////////

@@ -26,7 +26,7 @@ namespace Vector {
 
 namespace {
   const int kBSTickInterval = 1;
-  CONSOLE_VAR(bool, kDebugActivationState, "Behaviors.ActivationState", false);
+  CONSOLE_VAR(bool, kDebugActivationState, "Behavior.ActivationState", false);
 }
 
 

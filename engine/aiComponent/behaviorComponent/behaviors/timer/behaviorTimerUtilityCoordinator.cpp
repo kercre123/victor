@@ -61,7 +61,7 @@ Anki::Vector::BehaviorTimerUtilityCoordinator* sCoordinator = nullptr;
 ///////////
 
 #if ANKI_DEV_CHEATS
-CONSOLE_VAR(u32, kAdvanceAnticSeconds,   "TimerUtility.AdvanceAnticSeconds", 10);
+CONSOLE_VAR(u32, kAdvanceAnticSeconds,   "TimerUtility.Antic", 10);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ForceAntic(ConsoleFunctionContextRef context)
@@ -86,8 +86,8 @@ void AdvanceAnticBySeconds(int seconds)
   }
 }
 
-CONSOLE_FUNC(ForceAntic, "TimerUtility.ForceAntic");
-CONSOLE_FUNC(AdvanceAntic, "TimerUtility.AdvanceAntic");
+CONSOLE_FUNC(ForceAntic, "TimerUtility.Antic");
+CONSOLE_FUNC(AdvanceAntic, "TimerUtility.Antic");
 #endif // ANKI_DEV_CHEATS
 
 ///////////

@@ -51,7 +51,7 @@ class IReactionTriggerStrategy;
 namespace {
   const int kArbitrarilyLargeCancelBound = 1000;
 
-  #define CONSOLE_GROUP "Behaviors.BehaviorSystemManager"
+  #define CONSOLE_GROUP "BehaviorSystem.Manager"
   CONSOLE_VAR(bool, kDebugBehaviorStack, CONSOLE_GROUP, false);
 }
 

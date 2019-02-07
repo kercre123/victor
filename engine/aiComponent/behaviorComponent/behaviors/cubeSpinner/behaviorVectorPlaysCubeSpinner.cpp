@@ -60,7 +60,7 @@ const char* kOddsOfTappingCorrectPatternOnLockKey = "oddsOfTappingCorrectPattern
 // there is a concern from Hanns/Troy that "faking" the interaction is un-Vector-like
 // So if you really really want to break cube spinner and introduce tons of potential bugs that will be extremely 
 // hard to test for go ahead and flip this bool
-CONSOLE_VAR(bool, kIReallyReallyWantToBreakCubeSpinner, "CubeSpinner", false);
+CONSOLE_CONST(bool, kIReallyReallyWantToBreakCubeSpinner, "Behavior.CubeSpinner", false);
 
 }
 

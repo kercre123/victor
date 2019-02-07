@@ -20,6 +20,8 @@
 #include "engine/actions/animActions.h"
 #include "util/console/consoleInterface.h"
 
+#define CONSOLE_GROUP "BlackJack.TestViz"
+
 namespace Anki {
 namespace Vector {
 
@@ -35,7 +37,7 @@ void DealToPlayer(ConsoleFunctionContextRef context)
   }
 }
 
-CONSOLE_FUNC(DealToPlayer, "BlackJackTestViz.DealToPlayer");
+CONSOLE_FUNC(DealToPlayer, CONSOLE_GROUP);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void DealToDealer(ConsoleFunctionContextRef context)
@@ -45,7 +47,7 @@ void DealToDealer(ConsoleFunctionContextRef context)
   }
 }
 
-CONSOLE_FUNC(DealToDealer, "BlackJackTestViz.DealToDealer");
+CONSOLE_FUNC(DealToDealer, CONSOLE_GROUP);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Flop(ConsoleFunctionContextRef context)
@@ -55,7 +57,7 @@ void Flop(ConsoleFunctionContextRef context)
   }
 }
 
-CONSOLE_FUNC(Flop, "BlackJackTestViz.Flop");
+CONSOLE_FUNC(Flop, CONSOLE_GROUP);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpreadPlayerCards(ConsoleFunctionContextRef context)
@@ -65,7 +67,7 @@ void SpreadPlayerCards(ConsoleFunctionContextRef context)
   }
 }
 
-CONSOLE_FUNC(SpreadPlayerCards, "BlackJackTestViz.SpreadPlayerCards");
+CONSOLE_FUNC(SpreadPlayerCards, CONSOLE_GROUP);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Charlie(ConsoleFunctionContextRef context)
@@ -75,7 +77,7 @@ void Charlie(ConsoleFunctionContextRef context)
   }
 }
 
-CONSOLE_FUNC(Charlie, "BlackJackTestViz.Charlie");
+CONSOLE_FUNC(Charlie, CONSOLE_GROUP);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ClearCardsToSortedDeck(ConsoleFunctionContextRef context)
@@ -85,7 +87,7 @@ void ClearCardsToSortedDeck(ConsoleFunctionContextRef context)
   }
 }
 
-CONSOLE_FUNC(ClearCardsToSortedDeck, "BlackJackTestViz.ClearCardsToSortedDeck");
+CONSOLE_FUNC(ClearCardsToSortedDeck, CONSOLE_GROUP);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ClearCardsAndShuffle(ConsoleFunctionContextRef context)
@@ -95,7 +97,7 @@ void ClearCardsAndShuffle(ConsoleFunctionContextRef context)
   }
 }
 
-CONSOLE_FUNC(ClearCardsAndShuffle, "BlackJackTestViz.ClearCardsAndShuffle");
+CONSOLE_FUNC(ClearCardsAndShuffle, CONSOLE_GROUP);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnnouncePlayerScore(ConsoleFunctionContextRef context)
@@ -105,7 +107,7 @@ void AnnouncePlayerScore(ConsoleFunctionContextRef context)
   }
 }
 
-CONSOLE_FUNC(AnnouncePlayerScore, "BlackJackTestViz.AnnouncePlayerScore");
+CONSOLE_FUNC(AnnouncePlayerScore, CONSOLE_GROUP);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AnnounceDealerScore(ConsoleFunctionContextRef context)
@@ -115,7 +117,7 @@ void AnnounceDealerScore(ConsoleFunctionContextRef context)
   }
 }
 
-CONSOLE_FUNC(AnnounceDealerScore, "BlackJackTestViz.AnnounceDealerScore");
+CONSOLE_FUNC(AnnounceDealerScore, CONSOLE_GROUP);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevTestBlackjackViz::InstanceConfig::InstanceConfig()

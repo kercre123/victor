@@ -33,13 +33,15 @@ const float kAccelMagnitudeShakingStartedThreshold = 16000.f;
   
 const char* const kBehaviorsKey = "behaviors";
 
+#define CONSOLE_GROUP "Behavior.DevBase"
+
 #if REMOTE_CONSOLE_ENABLED
 // set to > 0 from console to fake the repeated "shakes" (shakes are hard to do in webots sim)
-CONSOLE_VAR(unsigned int, kDevDispatchAfterShake, "DevBaseBehavior", 0);
+CONSOLE_VAR(unsigned int, kDevDispatchAfterShake, CONSOLE_GROUP, 0);
 #endif
 
 // how long you have to shake/pause
-CONSOLE_VAR_RANGED(float, kShakeTime, "DevBaseBehavior", 0.1f, 0.01f, 2.0f);
+CONSOLE_CONST_RANGED(float, kShakeTime, CONSOLE_GROUP, 0.1f, 0.01f, 2.0f);
   
 // if the robot is put down and no behavior wants to be active after this many ticks, the shake count is reset
 const unsigned int kFailTicksBeforeReset = 10;

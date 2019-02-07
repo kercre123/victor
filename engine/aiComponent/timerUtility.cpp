@@ -29,8 +29,8 @@ Anki::Vector::TimerUtility* sTimerUtility = nullptr;
 }
 
 #if ANKI_DEV_CHEATS
-CONSOLE_VAR(u32, kAdvanceTimerSeconds,   "TimerUtility.AdvanceTimerSeconds", 60);
-CONSOLE_VAR(u32, kAdvanceTimerAndAnticSeconds,   "TimerUtility.AdvanceTimerAndAnticSeconds", 60);
+CONSOLE_VAR(u32, kAdvanceTimerSeconds,   "TimerUtility.Timer", 60);
+CONSOLE_VAR(u32, kAdvanceTimerAndAnticSeconds,   "TimerUtility.TimerAndAntic", 60);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AdvanceTimer(ConsoleFunctionContextRef context)
@@ -55,8 +55,8 @@ void AdvanceTimerBySeconds(int seconds)
 
 
 
-CONSOLE_FUNC(AdvanceTimer, "TimerUtility.AdvanceTimer");
-CONSOLE_FUNC(AdvanceTimerAndAntic, "TimerUtility.AdvanceTimerAndAntic");
+CONSOLE_FUNC(AdvanceTimer, "TimerUtility.Timer");
+CONSOLE_FUNC(AdvanceTimerAndAntic, "TimerUtility.TimerAndAntic");
 #endif // ANKI_DEV_CHEATS
 
 

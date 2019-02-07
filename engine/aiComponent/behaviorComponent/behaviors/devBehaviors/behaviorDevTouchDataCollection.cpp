@@ -35,7 +35,7 @@ bool _rcvdNextDatasetRequest = false;
   {
     _rcvdNextDatasetRequest = true;
   }
-  CONSOLE_FUNC(NextDatasetState, "NextDatasetState");
+  CONSOLE_FUNC(NextDatasetState, "Touch.DataCollection");
 #endif
 }
 

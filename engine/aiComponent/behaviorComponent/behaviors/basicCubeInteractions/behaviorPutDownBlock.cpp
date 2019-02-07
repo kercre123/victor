@@ -23,11 +23,13 @@ namespace Anki {
 namespace Vector {
 
 namespace{
-CONSOLE_VAR(f32, kBPDB_finalHeadAngle_deg,    "Behavior.PutDownBlock", -20.0f);
-CONSOLE_VAR(f32, kBPDB_verifyBackupDist_mm,   "Behavior.PutDownBlock", -30.0f);
-CONSOLE_VAR(f32, kBPDB_putDownBackupSpeed_mm, "Behavior.PutDownBlock", 100.f);
-CONSOLE_VAR(f32, kBPDB_kBackupDistanceMin_mm,     "Behavior.PutDownBlock", -45.0);
-CONSOLE_VAR(f32, kBPDB_kBackupDistanceMax_mm,     "Behavior.PutDownBlock", -75.0);
+  
+#define CONSOLE_GROUP "Behavior.PutDownBlock"
+CONSOLE_CONST(f32, kBPDB_finalHeadAngle_deg,    CONSOLE_GROUP, -20.0f);
+CONSOLE_CONST(f32, kBPDB_verifyBackupDist_mm,   CONSOLE_GROUP, -30.0f);
+CONSOLE_CONST(f32, kBPDB_putDownBackupSpeed_mm, CONSOLE_GROUP, 100.f);
+CONSOLE_CONST(f32, kBPDB_kBackupDistanceMin_mm, CONSOLE_GROUP, -45.0);
+CONSOLE_CONST(f32, kBPDB_kBackupDistanceMax_mm, CONSOLE_GROUP, -75.0);
  
 }
 

@@ -27,17 +27,19 @@
 
 namespace Anki {
 namespace Vector {
-  
+
 namespace {
 bool s_LockLightNextTick = false;
-#if ANKI_DEV_CHEATS
-void LockLight(ConsoleFunctionContextRef context)
-{
-  s_LockLightNextTick = true;
-}
 
-CONSOLE_FUNC(LockLight, "CubeSpinnerDev");
-#endif
+// BN: disabled because not in use
+// #if ANKI_DEV_CHEATS
+// void LockLight(ConsoleFunctionContextRef context)
+// {
+//   s_LockLightNextTick = true;
+// }
+
+// CONSOLE_FUNC(LockLight, "CubeSpinnerDev");
+// #endif
 
 const char* kGameConfigKey = "gameConfig";
 

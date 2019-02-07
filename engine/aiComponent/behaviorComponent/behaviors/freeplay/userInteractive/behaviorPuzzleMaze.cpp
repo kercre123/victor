@@ -50,7 +50,7 @@ namespace {
 #define CONSOLE_GROUP "Behavior.PuzzleMaze"
   
 // Max time allowed in this behavior, in seconds
-CONSOLE_VAR_RANGED(float, kPuzzleTimeout_sec, CONSOLE_GROUP, 24000.f, 0.f, 24000.f);
+CONSOLE_CONST_RANGED(float, kPuzzleTimeout_sec, CONSOLE_GROUP, 24000.f, 0.f, 24000.f);
   
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

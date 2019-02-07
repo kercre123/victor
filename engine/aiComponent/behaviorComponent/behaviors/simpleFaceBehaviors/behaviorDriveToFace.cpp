@@ -49,7 +49,7 @@ const char* const kFindFaceBehaviorKey           = "findFaceBehavior"; // must b
 const char* const kResumeAnimKey                 = "resumeAnimation";
 const char* const kMaxNumResumesKey              = "maxNumResumes";
 const char* const kMaxNumFailuresKey             = "maxNumFailures";
-const char* const kDebugName = "BehaviorDriveToFace";
+const char* const kDebugName = "Behavior.DriveToFace";
 
 static constexpr const float kMaxTimeToTrackWithoutFace_s = 1.0f;
   

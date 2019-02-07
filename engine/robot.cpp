@@ -90,10 +90,10 @@
 namespace Anki {
 namespace Vector {
 
-CONSOLE_VAR(bool, kDebugPossibleBlockInteraction, "Robot", false);
+CONSOLE_CONST(bool, kDebugPossibleBlockInteraction, "Robot", false);
 
 // if false, vision system keeps running while picked up, on side, etc.
-CONSOLE_VAR(bool, kUseVisionOnlyWhileOnTreads,    "Robot", false);
+CONSOLE_CONST(bool, kUseVisionOnlyWhileOnTreads,    "Robot", false);
 
 // Enable to enable example code of face image drawing
 CONSOLE_VAR(bool, kEnableTestFaceImageRGBDrawing,  "Robot", false);

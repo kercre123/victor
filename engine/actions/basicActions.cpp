@@ -49,11 +49,11 @@ namespace Anki {
   namespace Vector {
     
     // Whether or not to insert WaitActions before and after TurnTowardsObject's VisuallyVerifyAction
-    CONSOLE_VAR(bool, kInsertWaitsInTurnTowardsObjectVerify,"TurnTowardsObject", false);
+    CONSOLE_CONST(bool, kInsertWaitsInTurnTowardsObjectVerify,"TurnTowardsObject", false);
 
-    CONSOLE_VAR(u32, kDefaultNumFramesToWait, "WaitForImages", 3);
+    CONSOLE_CONST(u32, kDefaultNumFramesToWait, "WaitForImages", 3);
     
-    CONSOLE_VAR(f32, kMaxTimeToWaitForRecognition_sec, "TurnTowardsFace", 3.f);
+    CONSOLE_CONST(f32, kMaxTimeToWaitForRecognition_sec, "TurnTowardsFace", 3.f);
 
     
     TurnInPlaceAction::TurnInPlaceAction(const float angle_rad, const bool isAbsolute)

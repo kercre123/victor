@@ -21,14 +21,16 @@
 #include "engine/faceWorld.h"
 #include "util/console/consoleInterface.h"
 
+#define CONSOLE_GROUP "Behavior.FacePositionUpdated"
+
 namespace Anki {
 namespace Vector {
   
 namespace{
 const bool kDebugFaceDist = false;
-CONSOLE_VAR_RANGED(f32, kDistanceToConsiderClose_mm, "AcknowledgementBehaviors", 300.0f, 0.0f, 1000.0f);
-CONSOLE_VAR_RANGED(f32, kDistanceToConsiderClose_gap_mm, "AcknowledgementBehaviors", 100.0f, 0.0f, 1000.0f);
-CONSOLE_VAR_RANGED(f32, kFaceReactCooldown_s, "AcknowledgementBehaviors", 4.0f, 0.0f, 60.0f);
+CONSOLE_CONST_RANGED(f32, kDistanceToConsiderClose_mm, CONSOLE_GROUP, 300.0f, 0.0f, 1000.0f);
+CONSOLE_CONST_RANGED(f32, kDistanceToConsiderClose_gap_mm, CONSOLE_GROUP, 100.0f, 0.0f, 1000.0f);
+CONSOLE_CONST_RANGED(f32, kFaceReactCooldown_s, CONSOLE_GROUP, 4.0f, 0.0f, 60.0f);
 
 }
 

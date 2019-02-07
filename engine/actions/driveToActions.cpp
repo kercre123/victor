@@ -41,8 +41,8 @@ namespace Anki {
     class BlockWorld;
 
     namespace {
-      CONSOLE_VAR(bool, kEnablePredockDistanceCheckFix, "DriveToActions", true);
-      CONSOLE_VAR(f32, kDriveToPoseTimeout, "DriveToActions", 30.f);
+      constexpr const bool kEnablePredockDistanceCheckFix = true;
+      CONSOLE_VAR(f32, kDriveToPoseTimeout, "Actions.DriveTo", 30.f);
     }
     
 #pragma mark ---- DriveToObjectAction ----

@@ -25,9 +25,9 @@
 namespace  Anki {
 namespace Vector {
 
-CONSOLE_VAR(f32, kHeadTurnSpeedThreshPet_degs, "WasRotatingTooFast.Pet.Head_deg/s", 10.f);
-CONSOLE_VAR(f32, kBodyTurnSpeedThreshPet_degs, "WasRotatingTooFast.Pet.Body_deg/s", 30.f);
-CONSOLE_VAR(u8,  kNumImuDataToLookBackPet,     "WasRotatingTooFast.Pet.NumToLookBack", 5);
+CONSOLE_CONST(f32, kHeadTurnSpeedThreshPet_degs, "WasRotatingTooFast.Pet.Head_deg/s", 10.f);
+CONSOLE_CONST(f32, kBodyTurnSpeedThreshPet_degs, "WasRotatingTooFast.Pet.Body_deg/s", 30.f);
+CONSOLE_CONST(u8,  kNumImuDataToLookBackPet,     "WasRotatingTooFast.Pet.NumToLookBack", 5);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 PetWorld::PetWorld()

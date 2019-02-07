@@ -30,7 +30,7 @@ namespace Anki {
 namespace Vector {
   
 namespace {
-#define CONSOLE_GROUP "Behaviors.TakeAPhoto"
+#define CONSOLE_GROUP "Behavior.TakeAPhoto"
   
 CONSOLE_VAR(f32, kHeadAngleDeg,                  CONSOLE_GROUP, 25.0);
 CONSOLE_VAR(f32, kReadyToTakePhotoTimeout_sec,   CONSOLE_GROUP, 3.f);

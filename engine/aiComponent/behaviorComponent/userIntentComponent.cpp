@@ -48,6 +48,8 @@
 
 #define LOG_CHANNEL "BehaviorSystem"
 
+#define CONSOLE_CHANNEL "UserIntentComponent"
+
 namespace Anki {
 namespace Vector {
 
@@ -63,8 +65,8 @@ static const char* kAltParamsKey = "parameters"; // "params" is reserved in CLAD
 static const float kDefaultIntentFeedbackShutoffTime     =  5.0f;
 static const float kIntentFeedbackTransitionShutoffTime  =  2.0f;
 
-  CONSOLE_VAR(bool, kStreamAfterDevWakeWord, "UserIntentComponent", false);
-  CONSOLE_VAR(bool, kPlayGetInAfterDevWakeWord, "UserIntentComponent", false);
+CONSOLE_VAR(bool, kStreamAfterDevWakeWord, CONSOLE_CHANNEL, false);
+CONSOLE_VAR(bool, kPlayGetInAfterDevWakeWord, CONSOLE_CHANNEL, false);
 
 }
 

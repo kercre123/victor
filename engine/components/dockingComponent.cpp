@@ -25,7 +25,7 @@ namespace Anki {
 namespace Vector {
 
 // Don't send docking error signal if body is rotating faster than this
-CONSOLE_VAR(f32, kDockingRotatingTooFastThresh_degPerSec, "WasRotatingTooFast.Dock.Body_deg/s", RAD_TO_DEG(0.4f));
+CONSOLE_VAR(f32, kDockingRotatingTooFastThresh_degPerSec, "Docking.WasRotatingTooFast", RAD_TO_DEG(0.4f));
 
 DockingComponent::DockingComponent()
 : IDependencyManagedComponent(this, RobotComponentID::Docking)

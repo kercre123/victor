@@ -26,18 +26,18 @@ namespace Vector {
 
 namespace {
 
-#define CONSOLE_GROUP "Behavior.InteractWithFaces"
+#define CONSOLE_GROUP "Behavior.WiggleOntoCharger"
 #define SET_STATE(s) { _dVars.state = State::s; SetDebugStateName(#s); }
 
 const float kMaxPitchToRun_degs = 10.0f;
 const float kMinPitchToRun_degs = -25.0f;
 
-CONSOLE_VAR_RANGED(f32, kWiggle_ForwardDist_mm,     CONSOLE_GROUP, 6.0f, 0.0f, 20.0f);
-CONSOLE_VAR_RANGED(f32, kWiggle_ForwardSpeed_mmps,  CONSOLE_GROUP, 120.0, 0.0f, 200.0f);
-CONSOLE_VAR_RANGED(f32, kWiggle_BackupDist_mm,      CONSOLE_GROUP, 15.0f, 0.0f, 20.0f);
-CONSOLE_VAR_RANGED(f32, kWiggle_BackupSpeed_mmps,   CONSOLE_GROUP, 100.0f, 0.0f, 200.0f);
-CONSOLE_VAR_RANGED(f32, kWiggle_VerifyWaitTime_s,   CONSOLE_GROUP, 0.25f, 0.0f, 2.0f);
-CONSOLE_VAR_RANGED(f32, kWiggle_BackupSettleTime_s, CONSOLE_GROUP, 0.4f, 0.0f, 2.0f);
+CONSOLE_CONST_RANGED(f32, kWiggle_ForwardDist_mm,     CONSOLE_GROUP, 6.0f, 0.0f, 20.0f);
+CONSOLE_CONST_RANGED(f32, kWiggle_ForwardSpeed_mmps,  CONSOLE_GROUP, 120.0, 0.0f, 200.0f);
+CONSOLE_CONST_RANGED(f32, kWiggle_BackupDist_mm,      CONSOLE_GROUP, 15.0f, 0.0f, 20.0f);
+CONSOLE_CONST_RANGED(f32, kWiggle_BackupSpeed_mmps,   CONSOLE_GROUP, 100.0f, 0.0f, 200.0f);
+CONSOLE_CONST_RANGED(f32, kWiggle_VerifyWaitTime_s,   CONSOLE_GROUP, 0.25f, 0.0f, 2.0f);
+CONSOLE_CONST_RANGED(f32, kWiggle_BackupSettleTime_s, CONSOLE_GROUP, 0.4f, 0.0f, 2.0f);
 }
 
 

@@ -45,6 +45,8 @@
 
 #define LOG_CHANNEL "Behaviors"
 
+#define CONSOLE_GROUP "Exploring.Behavior"
+
 namespace Anki {
 namespace Vector {
   
@@ -60,13 +62,13 @@ namespace {
   // For bumping an object. The robot is usually around 5-8cm from the object at this point, but may
   // not be facing it perfectly, so only bump if the object seems to have an appropriate width. The
   // delegated behavior decides if it is close enough
-  CONSOLE_VAR_RANGED( float, kMinObjectWidthToBump_rad, "BehaviorExploring", DEG_TO_RAD(10.0f), 0.0f, M_PI_F);
-  CONSOLE_VAR_RANGED( float, kMaxObjectWidthToBump_rad, "BehaviorExploring", DEG_TO_RAD(80.0f), 0.0f, M_TWO_PI_F);
+  CONSOLE_VAR_RANGED( float, kMinObjectWidthToBump_rad, CONSOLE_GROUP, DEG_TO_RAD(10.0f), 0.0f, M_PI_F);
+  CONSOLE_VAR_RANGED( float, kMaxObjectWidthToBump_rad, CONSOLE_GROUP, DEG_TO_RAD(80.0f), 0.0f, M_TWO_PI_F);
   const float kProbBumpNominalObject = 0.8f;
 
   // BN: disabled because it looks much nicer when he bumps right after the scan, so instead I've got it set
   // to reference _after_ the bump from within the bump behavior
-  CONSOLE_VAR_RANGED( float, kProbReferenceBeforeBump, "BehaviorExploring", 0.0f, 0.0f, 1.0f);
+  CONSOLE_VAR_RANGED( float, kProbReferenceBeforeBump, CONSOLE_GROUP, 0.0f, 0.0f, 1.0f);
     
   const float kProbScan = 0.7f;
   

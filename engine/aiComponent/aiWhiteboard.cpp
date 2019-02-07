@@ -45,20 +45,25 @@ namespace Vector {
 
 namespace {
 
-// all coordinates have to be this close from their counterpart to be considered the same observation (and thus override it)
-CONSOLE_VAR(float, kBW_PossibleObjectClose_mm, "AIWhiteboard", 50.0f);
-CONSOLE_VAR(float, kBW_PossibleObjectClose_rad, "AIWhiteboard", M_PI_F); // current objects flip due to distance, consider 360 since we don't care
+// all coordinates have to be this close from their counterpart to be considered the same observation (and
+// thus override it)
+CONSOLE_CONST(float, kBW_PossibleObjectClose_mm, "AIWhiteboard.PossibleObjects", 50.0f);
+
+// current objects flip due to distance, consider 360 since we don't care
+CONSOLE_CONST(float, kBW_PossibleObjectClose_rad, "AIWhiteboard.PossibleObjects", M_PI_F);
+
 // limit to how many pending possible objects we have stored
-CONSOLE_VAR(uint32_t, kBW_MaxPossibleObjects, "AIWhiteboard", 10);
-CONSOLE_VAR(float, kFlatPosisbleObjectTol_deg, "AIWhiteboard", 10.0f);
-CONSOLE_VAR(float, kBW_MaxHeightForPossibleObject_mm, "AIWhiteboard", 30.0f);
+CONSOLE_CONST(uint32_t, kBW_MaxPossibleObjects, "AIWhiteboard.PossibleObjects", 10);
+CONSOLE_CONST(float, kFlatPosisbleObjectTol_deg, "AIWhiteboard.PossibleObjects", 10.0f);
+CONSOLE_CONST(float, kBW_MaxHeightForPossibleObject_mm, "AIWhiteboard.PossibleObjects", 30.0f);
 // debug render
-CONSOLE_VAR(bool, kBW_DebugRenderPossibleObjects, "AIWhiteboard", true);
-CONSOLE_VAR(float, kBW_DebugRenderPossibleObjectsZ, "AIWhiteboard", 35.0f);
-CONSOLE_VAR(float, kAI_MaxExtraExploringCooldown_s, "AIWhiteboard", 800.0f);
+CONSOLE_CONST(bool, kBW_DebugRenderPossibleObjects, "AIWhiteboard.PossibleObjectsRender", true);
+CONSOLE_CONST(float, kBW_DebugRenderPossibleObjectsZ, "AIWhiteboard.PossibleObjectsRender", 35.0f);
+
+CONSOLE_VAR(float, kAI_MaxExtraExploringCooldown_s, "Exploring.Cooldown", 800.0f);
 
 // how often to update the actual exploring cooldown (yeah... it's a kind of cooldown cooldown)
-CONSOLE_VAR(float, kExploringCooldownUpdatePeriod_s, "AIWhiteboard", 60.0f);
+CONSOLE_VAR(float, kExploringCooldownUpdatePeriod_s, "Exploring.Cooldown", 60.0f);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const char* ObjectActionFailureToString(AIWhiteboard::ObjectActionFailure action)

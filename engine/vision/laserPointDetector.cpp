@@ -34,38 +34,38 @@ namespace Params
 # define CONSOLE_GROUP_NAME "Vision.LaserPointDetector"
 
   // Set > 1 to process at lower resolution for speed
-  CONSOLE_VAR_RANGED(s32, kLaser_scaleMultiplier, CONSOLE_GROUP_NAME, 2, 1, 8);
+  CONSOLE_CONST_RANGED(s32, kLaser_scaleMultiplier, CONSOLE_GROUP_NAME, 2, 1, 8);
 
   // NOTE: these are tuned for 320x240 resolution:
   static const Point2f kRadiusAtResolution{320.f, 240.f};
-  CONSOLE_VAR(f32, kLaser_minRadius_pix, CONSOLE_GROUP_NAME, 2.f);
-  CONSOLE_VAR(f32, kLaser_maxRadius_pix, CONSOLE_GROUP_NAME, 25.f);
+  CONSOLE_CONST(f32, kLaser_minRadius_pix, CONSOLE_GROUP_NAME, 2.f);
+  CONSOLE_CONST(f32, kLaser_maxRadius_pix, CONSOLE_GROUP_NAME, 25.f);
 
-  CONSOLE_VAR_RANGED(f32, kLaser_darkThresholdFraction_darkExposure, CONSOLE_GROUP_NAME,  0.7f, 0.f, 1.f);
-  CONSOLE_VAR_RANGED(f32, kLaser_darkThresholdFraction_normalExposure, CONSOLE_GROUP_NAME,  0.9f, 0.f, 1.f);
+  CONSOLE_CONST_RANGED(f32, kLaser_darkThresholdFraction_darkExposure, CONSOLE_GROUP_NAME,  0.7f, 0.f, 1.f);
+  CONSOLE_CONST_RANGED(f32, kLaser_darkThresholdFraction_normalExposure, CONSOLE_GROUP_NAME,  0.9f, 0.f, 1.f);
 
-  CONSOLE_VAR(f32, kLaser_darkSurroundRadiusFraction, CONSOLE_GROUP_NAME, 2.5f);
+  CONSOLE_CONST(f32, kLaser_darkSurroundRadiusFraction, CONSOLE_GROUP_NAME, 2.5f);
 
-  CONSOLE_VAR(s32, kLaser_MaxSurroundStdDev, CONSOLE_GROUP_NAME, 25);
+  CONSOLE_CONST(s32, kLaser_MaxSurroundStdDev, CONSOLE_GROUP_NAME, 25);
 
-  CONSOLE_VAR(u8, kLaser_lowThreshold_normalExposure,  CONSOLE_GROUP_NAME, 235);
-  CONSOLE_VAR(u8, kLaser_highThreshold_normalExposure, CONSOLE_GROUP_NAME, 240);
+  CONSOLE_CONST(u8, kLaser_lowThreshold_normalExposure,  CONSOLE_GROUP_NAME, 235);
+  CONSOLE_CONST(u8, kLaser_highThreshold_normalExposure, CONSOLE_GROUP_NAME, 240);
 
-  CONSOLE_VAR(u8, kLaser_lowThreshold_darkExposure,    CONSOLE_GROUP_NAME, 128);
-  CONSOLE_VAR(u8, kLaser_highThreshold_darkExposure,   CONSOLE_GROUP_NAME, 160);
+  CONSOLE_CONST(u8, kLaser_lowThreshold_darkExposure,    CONSOLE_GROUP_NAME, 128);
+  CONSOLE_CONST(u8, kLaser_highThreshold_darkExposure,   CONSOLE_GROUP_NAME, 160);
 
   // For determining when a laser point is saturated enough in either red or green, when color
   // data is available. Bounding box fraction should be >= 1.0
-  CONSOLE_VAR(f32, kLaser_saturationThreshold_red,       CONSOLE_GROUP_NAME, 30.f);
-  CONSOLE_VAR(f32, kLaser_saturationThreshold_green,     CONSOLE_GROUP_NAME, 15.f);
-  CONSOLE_VAR(f32, kLaser_saturationBoundingBoxFraction, CONSOLE_GROUP_NAME, 1.25f);
+  CONSOLE_CONST(f32, kLaser_saturationThreshold_red,       CONSOLE_GROUP_NAME, 30.f);
+  CONSOLE_CONST(f32, kLaser_saturationThreshold_green,     CONSOLE_GROUP_NAME, 15.f);
+  CONSOLE_CONST(f32, kLaser_saturationBoundingBoxFraction, CONSOLE_GROUP_NAME, 1.25f);
 
-  CONSOLE_VAR(bool, kLaser_DrawDetectionsInCameraView, CONSOLE_GROUP_NAME, false);
+  CONSOLE_CONST(bool, kLaser_DrawDetectionsInCameraView, CONSOLE_GROUP_NAME, false);
 
   // Set to 0 to disable
   // Set to 1 to draw laser point(s) in the camera image
   // Set to 2 to also draw separate debug images showing laser saliency (in image and on ground)
-  CONSOLE_VAR(s32, kLaserDetectionDebug, CONSOLE_GROUP_NAME, 0 )
+  CONSOLE_CONST(s32, kLaserDetectionDebug, CONSOLE_GROUP_NAME, 0 )
 
 # undef CONSOLE_GROUP_NAME
 }

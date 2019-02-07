@@ -47,7 +47,7 @@ namespace {
   const float kPaddingPushedObject_mm = 30.0f; // distance extending from drive center where an object would fall off a cliff
   const float kCliffWidth_mm = 100.0f;
 
-  CONSOLE_VAR_RANGED( float, kExploringPostBumpReferenceProb, "BehaviorExploring", 1.0f, 0.0f, 1.0f);
+  CONSOLE_VAR_RANGED( float, kExploringPostBumpReferenceProb, "Exploring.Behavior", 1.0f, 0.0f, 1.0f);
   
   static const DrivingAnimationHandler::DrivingAnimations kSlowDrivingAnimations {
     AnimationTrigger::Count,

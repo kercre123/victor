@@ -61,19 +61,21 @@ if ((_BEHAVIORDEF)) { PRINT_CH_INFO("Behaviors",  __VA_ARGS__ ); } \
 else { PRINT_CH_DEBUG("Behaviors",  __VA_ARGS__ ); } \
 } while(0) \
 
-CONSOLE_VAR(u32, kMaxNumAttempts,              "DockingTest", 30);
-CONSOLE_VAR(u32, kMaxConsecFails,              "DockingTest", 3);
-CONSOLE_VAR(u32, kTestDockingMethod,           "DockingTest", (u8)DockingMethod::HYBRID_DOCKING);
-CONSOLE_VAR(f32, kMaxXAwayFromPreDock_mm,      "DockingTest", 50);
-CONSOLE_VAR(f32, kMaxYAwayFromPreDock_mm,      "DockingTest", 250);
-CONSOLE_VAR(f32, kMaxAngleAwayFromPreDock_deg, "DockingTest", 10);
-CONSOLE_VAR(bool, kDriveToAndPickupBlockOneAction, "DockingTest", true);
-CONSOLE_VAR(bool, kJustPickup,                 "DockingTest", false);
-CONSOLE_VAR(bool, kRollInsteadOfPickup,        "DockingTest", false);
-CONSOLE_VAR(bool, kAlignInsteadOfPickup,       "DockingTest", false);
-CONSOLE_VAR(bool, kDoDeepRoll,                 "DockingTest", false);
-CONSOLE_VAR(bool, kUseClosePreActionPose,      "DockingTest", false);
-CONSOLE_VAR(u32,  kNumRandomObstacles,         "DockingTest", 10);
+#define CONSOLE_GROUP "Docking.TestBehavior"
+  
+CONSOLE_VAR(u32, kMaxNumAttempts,                  CONSOLE_GROUP, 30);
+CONSOLE_VAR(u32, kMaxConsecFails,                  CONSOLE_GROUP, 3);
+CONSOLE_VAR(u32, kTestDockingMethod,               CONSOLE_GROUP, (u8)DockingMethod::HYBRID_DOCKING);
+CONSOLE_VAR(f32, kMaxXAwayFromPreDock_mm,          CONSOLE_GROUP, 50);
+CONSOLE_VAR(f32, kMaxYAwayFromPreDock_mm,          CONSOLE_GROUP, 250);
+CONSOLE_VAR(f32, kMaxAngleAwayFromPreDock_deg,     CONSOLE_GROUP, 10);
+CONSOLE_VAR(bool, kDriveToAndPickupBlockOneAction, CONSOLE_GROUP, true);
+CONSOLE_VAR(bool, kJustPickup,                     CONSOLE_GROUP, false);
+CONSOLE_VAR(bool, kRollInsteadOfPickup,            CONSOLE_GROUP, false);
+CONSOLE_VAR(bool, kAlignInsteadOfPickup,           CONSOLE_GROUP, false);
+CONSOLE_VAR(bool, kDoDeepRoll,                     CONSOLE_GROUP, false);
+CONSOLE_VAR(bool, kUseClosePreActionPose,          CONSOLE_GROUP, false);
+CONSOLE_VAR(u32,  kNumRandomObstacles,             CONSOLE_GROUP, 10);
 
 // Prevents obstacles from being created within +/- this y range of preDock pose
 // Ensures that no obstacles are created in front of the marker/preDock pose

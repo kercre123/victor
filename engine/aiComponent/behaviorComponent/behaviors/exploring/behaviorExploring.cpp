@@ -66,8 +66,10 @@ namespace {
   const float kMaxCubeFromChargerDist_mm = 2000.0f;
   const float kProbReferenceHuman = 1.0f;
 
-  CONSOLE_VAR_RANGED( float, kProbReferenceOnResume, "BehaviorExploring", 1.0f, 0.0f, 1.0f);
-  CONSOLE_VAR_RANGED( float, kResumeReferenceCooldown_s, "BehaviorExploring", 20.0f, 0.0f, 60.0f);
+  #define CONSOLE_GROUP "Exploring.Behavior"
+
+  CONSOLE_VAR_RANGED( float, kProbReferenceOnResume, CONSOLE_GROUP, 1.0f, 0.0f, 1.0f);
+  CONSOLE_VAR_RANGED( float, kResumeReferenceCooldown_s, CONSOLE_GROUP, 20.0f, 0.0f, 60.0f);
 
   // if no face is known (meaning we can't run the referencing behavior) then run a short face search (at
   // most) this often (instead of driving to a new pose)
@@ -86,7 +88,7 @@ namespace {
   
   const float kChargerRadius_mm = 68.89f; // radius of circle that circumscribes the charger
   
-  const char* const kDebugName = "BehaviorExploring";
+  const char* const kDebugName = "Exploring.Behavior";
   
   // number of sample positions for new poses. multiple goals are provided so that the planner can choose
   // one, which will probably cause the robot to tend in its current direction when possible
@@ -104,7 +106,7 @@ namespace {
   // (set to 0 for an efficiency boost!)
   const float kMinProxObstacleSeparation_mm = 100.0f;
   
-  CONSOLE_VAR( bool, kMoveLiftAboveProx, "BehaviorExploring", false);
+  CONSOLE_CONST( bool, kMoveLiftAboveProx, CONSOLE_GROUP, false);
   
   constexpr MemoryMapTypes::FullContentArray kTypesToBlockSampling =
   {

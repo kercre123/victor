@@ -50,10 +50,10 @@ namespace Vector {
 namespace {
 
 // how far forward to check and ideally drive
-CONSOLE_VAR_RANGED(f32, kInteractWithFaces_DriveForwardIdealDist_mm, CONSOLE_GROUP, 40.0f, 0.0f, 200.0f);
+CONSOLE_CONST_RANGED(f32, kInteractWithFaces_DriveForwardIdealDist_mm, CONSOLE_GROUP, 40.0f, 0.0f, 200.0f);
 
 // how far forward to move in case the check fails
-CONSOLE_VAR_RANGED(f32, kInteractWithFaces_DriveForwardMinDist_mm, CONSOLE_GROUP, -15.0f, -100.0f, 100.0f);
+CONSOLE_CONST_RANGED(f32, kInteractWithFaces_DriveForwardMinDist_mm, CONSOLE_GROUP, -15.0f, -100.0f, 100.0f);
 
 // if true, do a glance down before the memory map check (only valid if we are doing the check)
 // TODO:(bn) could check memory map for Unknown, and only glance down in that case
@@ -65,6 +65,7 @@ CONSOLE_VAR(bool, kInteractWithFaces_DoMemoryMapCheckForDriveForward, CONSOLE_GR
 
 CONSOLE_VAR(bool, kInteractWithFaces_VizMemoryMapCheck, CONSOLE_GROUP, false);
 
+// TODO:(bn) use a motion profile?
 CONSOLE_VAR_RANGED(f32, kInteractWithFaces_DriveForwardSpeed_mmps, CONSOLE_GROUP, 40.0f, 0.0f, 200.0f);
 
 // Minimum angles to turn during tracking to keep the robot moving and looking alive

@@ -39,13 +39,14 @@
 #define PRINT_DEBUG( format, ... ) \
   PRINT_CH_DEBUG( "Microphones", "BehaviorReactToSound", format, ##__VA_ARGS__ )
 
+#define CONSOLE_GROUP "Behavior.ReactToSound"
 
 namespace Anki {
 namespace Vector {
 
 
-CONSOLE_VAR( float,                        kRTS_MaxReactionTime_s,                  "SoundReaction", 1.00f ); // we have this much time to respond to a sound
-CONSOLE_VAR( float,                        kRTS_ReReactionCooldown_s,               "SoundReaction", 0.25f ); // we have this much time to respond to a sound
+CONSOLE_VAR( float, kRTS_MaxReactionTime_s,    CONSOLE_GROUP, 1.00f ); // we have this much time to respond to a sound
+CONSOLE_VAR( float, kRTS_ReReactionCooldown_s, CONSOLE_GROUP, 0.25f ); // we have this much time to respond to a sound
 
 
 namespace

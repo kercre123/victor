@@ -70,68 +70,68 @@ template<> void ConsoleVar<Vector::CustomObjectMarker>::ToggleValue() { _value =
 namespace Vector {
 namespace PlaypenConfig {
 
-WRAP_EXTERN_CONSOLE_VAR(bool,  kDisconnectAtEnd,              "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(bool,  kWriteToStorage,               "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(bool,  kIgnoreFailures,               "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(float, kDefaultTimeout_ms,            "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(float, kTimeToDisplayResultOnFace_ms, "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u32,   kTouchDurationToStart_ms,      "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(bool,  kSkipActiveObjectCheck,        "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(bool,  kUseTouchToStart,              "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(bool,  kUseButtonToStart,             "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u32,   kDurationOfTouchToRecord_ms,   "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(bool,  kDisconnectAtEnd,              "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(bool,  kWriteToStorage,               "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(bool,  kIgnoreFailures,               "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(float, kDefaultTimeout_ms,            "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(float, kTimeToDisplayResultOnFace_ms, "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u32,   kTouchDurationToStart_ms,      "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(bool,  kSkipActiveObjectCheck,        "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(bool,  kUseTouchToStart,              "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(bool,  kUseButtonToStart,             "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u32,   kDurationOfTouchToRecord_ms,   "Playpen");
 
-WRAP_EXTERN_CONSOLE_VAR(bool, kCheckFirmwareVersion,  "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32,  kMinBatteryVoltage,     "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u32,  kMinFirmwareVersion,    "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(int,  kMinHardwareVersion,    "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u32,  kMfgIDTimeout_ms,       "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u16,  kMinExpectedTouchValue, "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u16,  kMaxExpectedTouchValue, "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(bool, kCheckFirmwareVersion,  "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32,  kMinBatteryVoltage,     "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u32,  kMinFirmwareVersion,    "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(int,  kMinHardwareVersion,    "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u32,  kMfgIDTimeout_ms,       "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u16,  kMinExpectedTouchValue, "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u16,  kMaxExpectedTouchValue, "Playpen");
 
-WRAP_EXTERN_CONSOLE_VAR(u32, kMotorCalibrationTimeout_ms, "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u32, kMotorCalibrationTimeout_ms, "Playpen");
 
-WRAP_EXTERN_CONSOLE_VAR(f32, kHeadAngleForDriftCheck,     "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kHeadAngleToPlaySound,       "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kSoundVolume,                "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u32, kDurationOfAudioToRecord_ms, "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u32, kFFTExpectedFreq_hz,         "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u32, kFFTFreqTolerance_hz,        "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u32, kIMUDriftDetectPeriod_ms,    "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kIMUDriftAngleThreshDeg,     "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kHeadAngleForDriftCheck,     "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kHeadAngleToPlaySound,       "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kSoundVolume,                "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u32, kDurationOfAudioToRecord_ms, "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u32, kFFTExpectedFreq_hz,         "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u32, kFFTFreqTolerance_hz,        "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u32, kIMUDriftDetectPeriod_ms,    "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kIMUDriftAngleThreshDeg,     "Playpen");
 
-WRAP_EXTERN_CONSOLE_VAR(u32, kNumDistanceSensorReadingsToRecord,             "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kVisualDistanceToDistanceSensorObjectThresh_mm, "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kDistanceSensorReadingThresh_mm,                "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kDistanceSensorBiasAdjustment_mm,               "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u32, kNumDistanceSensorReadingsToRecord,             "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kVisualDistanceToDistanceSensorObjectThresh_mm, "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kDistanceSensorReadingThresh_mm,                "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kDistanceSensorBiasAdjustment_mm,               "Playpen");
 
-WRAP_EXTERN_CONSOLE_VAR(u16, kExposure_ms,                               "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kGain,                                      "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u32, kFocalLengthTolerance,                      "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u32, kCenterTolerance,                           "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kRadialDistortionTolerance,                 "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kTangentialDistortionTolerance,             "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kHeadAngleToSeeTarget_rad,                  "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u32, kTimeoutWaitingForTarget_ms,                "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u32, kTimeoutForComputingCalibration_ms,         "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kCalibMarkerSize_mm,                        "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u32, kPlaypenCalibTarget,                        "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kCalibMarkerCubeSize_mm,                    "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(CustomObjectMarker, kMarkerToTriggerCalibration, "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u16, kExposure_ms,                               "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kGain,                                      "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u32, kFocalLengthTolerance,                      "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u32, kCenterTolerance,                           "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kRadialDistortionTolerance,                 "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kTangentialDistortionTolerance,             "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kHeadAngleToSeeTarget_rad,                  "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u32, kTimeoutWaitingForTarget_ms,                "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u32, kTimeoutForComputingCalibration_ms,         "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kCalibMarkerSize_mm,                        "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u32, kPlaypenCalibTarget,                        "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kCalibMarkerCubeSize_mm,                    "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(CustomObjectMarker, kMarkerToTriggerCalibration, "Playpen");
 
-WRAP_EXTERN_CONSOLE_VAR(f32, kDistanceToTriggerFrontCliffs_mm, "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kDistanceToTriggerBackCliffs_mm,  "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kDistanceToDriveOverCliff_mm,     "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kCliffSpeed_mmps,                 "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kTimeToWaitForCliffEvent_ms,      "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u16, kCliffSensorThreshold,            "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kDistanceToTriggerFrontCliffs_mm, "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kDistanceToTriggerBackCliffs_mm,  "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kDistanceToDriveOverCliff_mm,     "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kCliffSpeed_mmps,                 "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kTimeToWaitForCliffEvent_ms,      "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(u16, kCliffSensorThreshold,            "Playpen");
 
-WRAP_EXTERN_CONSOLE_VAR(f32, kExpectedCubePoseX_mm,                "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kExpectedCubePoseY_mm,                "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kExpectedCubePoseDistThresh_mm,       "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kExpectedCubePoseHeightThresh_mm,     "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kExpectedCubePoseAngleThresh_rad,     "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(f32, kMaxRobotAngleChangeDuringBackup_rad, "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kExpectedCubePoseX_mm,                "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kExpectedCubePoseY_mm,                "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kExpectedCubePoseDistThresh_mm,       "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kExpectedCubePoseHeightThresh_mm,     "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kExpectedCubePoseAngleThresh_rad,     "Playpen");
+WRAP_EXTERN_CONSOLE_CONST(f32, kMaxRobotAngleChangeDuringBackup_rad, "Playpen");
 
 }
 }

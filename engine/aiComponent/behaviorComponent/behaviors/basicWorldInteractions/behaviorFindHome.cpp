@@ -64,7 +64,7 @@ namespace {
   const float kMaxCliffPenaltyDist_mm = 600.0f;
   
   // Enable for debug, to save images during WaitForImageAction
-  CONSOLE_VAR(bool, kFindHome_SaveImages, "Behaviors.FindHome", false);
+  CONSOLE_VAR(bool, kFindHome_SaveImages, "Behavior.FindHome", false);
   
   // When generating new locations from which to search for the charger, new
   // locations should be at least this far from previously-searched locations.

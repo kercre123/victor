@@ -43,7 +43,7 @@ namespace {
   // steady before looking for motion, and elongates the time spent in this state
   const float kTurnTimeBuffer = 0.25f;
   
-  CONSOLE_VAR(bool, kTurnFirst, "BehaviorReactToMotion", true);
+  CONSOLE_VAR(bool, kTurnFirst, "Behavior.ReactToMotion", true);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

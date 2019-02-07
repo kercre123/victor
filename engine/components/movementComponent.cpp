@@ -40,13 +40,15 @@
 
 #define LOG_CHANNEL    "Movement"
 
+#define CONSOLE_CHANNEL "Robot.Movement"
+
 #define DEBUG_ANIMATION_LOCKING 0
 
 namespace Anki {
 namespace Vector {
   
-CONSOLE_VAR(bool, kDebugTrackLocking, "Robot", false);
-CONSOLE_VAR(bool, kCreateUnexpectedMovementObstacles, "Robot", true);
+CONSOLE_VAR(bool, kDebugTrackLocking, CONSOLE_CHANNEL, false);
+CONSOLE_VAR(bool, kCreateUnexpectedMovementObstacles, CONSOLE_CHANNEL, true);
   
 using namespace ExternalInterface;
 

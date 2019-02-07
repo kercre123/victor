@@ -21,7 +21,7 @@
 namespace Anki {
 namespace Vector {
 
-CONSOLE_VAR(u32, kMaxTimeSinceTrackedFaceUpdated_ms, "Behaviors.ConditionEyeContact", 500);
+CONSOLE_CONST(u32, kMaxTimeSinceTrackedFaceUpdated_ms, "BehaviorCondition.EyeContact", 500);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ConditionEyeContact::ConditionEyeContact(const Json::Value& config)

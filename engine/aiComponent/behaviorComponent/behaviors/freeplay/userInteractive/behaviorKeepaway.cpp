@@ -36,6 +36,8 @@
                           SetDebugStateName(#s); \
                         } while(0);
 
+#define ENABLE_KEEPAWAY_CONSOLE_VARS 0
+
 namespace Anki{
 namespace Vector{
 
@@ -135,40 +137,42 @@ BehaviorKeepaway::BehaviorKeepaway(const Json::Value& config)
 , _iConfig(config)
 , _dVars(_iConfig)
 {
-  // Add configurable params as ConsoleVars
-  MakeMemberTunable(_iConfig.minPouncesForSoloPlay, "minPouncesForSoloPlay", kDebugName);
-  MakeMemberTunable(_iConfig.maxPouncesForSoloPlay, "maxPouncesForSoloPlay", kDebugName);
-  MakeMemberTunable(_iConfig.targetUnmovedGameEndTimeout_s, "targetUnmovedGameEndTimeout_s", kDebugName);
-  MakeMemberTunable(_iConfig.noVisibleTargetGameEndTimeout_s, "noVisibleTargetGameEndTimeout_s", kDebugName);
-  MakeMemberTunable(_iConfig.outOfPlayGameEndTimeout_s, "outOfPlayGameEndTimeout_s", kDebugName);
-  MakeMemberTunable(_iConfig.targetVisibleTimeout_s, "targetVisibleTimeout_s", kDebugName);
-  MakeMemberTunable(_iConfig.globalOffsetDist_mm, "globalOffsetDist_mm", kDebugName);
-  MakeMemberTunable(_iConfig.inPlayDistance_mm, "inPlayDistance_mm", kDebugName);
-  MakeMemberTunable(_iConfig.outOfPlayDistance_mm, "outOfPlayDistance_mm", kDebugName);
-  MakeMemberTunable(_iConfig.allowablePointingError_deg, "allowablePointingError_deg", kDebugName);
-  MakeMemberTunable(_iConfig.targetUnmovedCreepTimeout_s, "targetUnmovedCreepTimeout_s", kDebugName);
-  MakeMemberTunable(_iConfig.creepDistanceMin_mm, "creepDistanceMin_mm", kDebugName);
-  MakeMemberTunable(_iConfig.creepDistanceMax_mm, "creepDistanceMax_mm", kDebugName);
-  MakeMemberTunable(_iConfig.creepDelayTimeMin_s, "creepDelayTimeMin_s", kDebugName);
-  MakeMemberTunable(_iConfig.creepDelayTimeMax_s, "creepDelayTimeMax_s", kDebugName);
-  MakeMemberTunable(_iConfig.pounceDelayTimeMin_s, "pounceDelayTimeMin_s", kDebugName);
-  MakeMemberTunable(_iConfig.pounceDelayTimeMax_s, "pounceDelayTimeMax_s", kDebugName);
-  MakeMemberTunable(_iConfig.basePounceChance, "basePounceChance", kDebugName);
-  MakeMemberTunable(_iConfig.pounceChanceIncrement, "pounceChanceIncrement", kDebugName);
-  MakeMemberTunable(_iConfig.nominalPounceDistance_mm, "nominalPounceDistance_mm", kDebugName);
-  MakeMemberTunable(_iConfig.mousetrapPounceDistance_mm, "mousetrapPounceDistance_mm", kDebugName);
-  MakeMemberTunable(_iConfig.probBackupInsteadOfMousetrap, "probBackupInsteadOfMousetrap", kDebugName);
-  MakeMemberTunable(_iConfig.pounceSuccessPitchDiff_deg, "pounceSuccessPitchDiff_deg", kDebugName);
-  MakeMemberTunable(_iConfig.excitementIncPerHit, "excitementIncPerHit", kDebugName);
-  MakeMemberTunable(_iConfig.maxProbExitExcited, "maxProbExitExcited", kDebugName);
-  MakeMemberTunable(_iConfig.frustrationIncPerMiss, "frustrationIncPerMiss", kDebugName);
-  MakeMemberTunable(_iConfig.maxProbExitFrustrated, "maxProbExitFrustrated", kDebugName);
-  MakeMemberTunable(_iConfig.minProbToExit, "minProbToExit", kDebugName);
-  MakeMemberTunable(_iConfig.baseProbReact, "baseProbReact", kDebugName);
-  MakeMemberTunable(_iConfig.minProbToReact, "minProbToReact", kDebugName);
-  MakeMemberTunable(_iConfig.probReactIncrement, "probReactIncrement", kDebugName);
-  MakeMemberTunable(_iConfig.probReactMax, "probReactMax", kDebugName);
-  MakeMemberTunable(_iConfig.useProxForDistance, "useProxForDistance", kDebugName);
+  if( ENABLE_KEEPAWAY_CONSOLE_VARS ) {
+    // Add configurable params as ConsoleVars
+    MakeMemberTunable(_iConfig.minPouncesForSoloPlay, "minPouncesForSoloPlay", kDebugName);
+    MakeMemberTunable(_iConfig.maxPouncesForSoloPlay, "maxPouncesForSoloPlay", kDebugName);
+    MakeMemberTunable(_iConfig.targetUnmovedGameEndTimeout_s, "targetUnmovedGameEndTimeout_s", kDebugName);
+    MakeMemberTunable(_iConfig.noVisibleTargetGameEndTimeout_s, "noVisibleTargetGameEndTimeout_s", kDebugName);
+    MakeMemberTunable(_iConfig.outOfPlayGameEndTimeout_s, "outOfPlayGameEndTimeout_s", kDebugName);
+    MakeMemberTunable(_iConfig.targetVisibleTimeout_s, "targetVisibleTimeout_s", kDebugName);
+    MakeMemberTunable(_iConfig.globalOffsetDist_mm, "globalOffsetDist_mm", kDebugName);
+    MakeMemberTunable(_iConfig.inPlayDistance_mm, "inPlayDistance_mm", kDebugName);
+    MakeMemberTunable(_iConfig.outOfPlayDistance_mm, "outOfPlayDistance_mm", kDebugName);
+    MakeMemberTunable(_iConfig.allowablePointingError_deg, "allowablePointingError_deg", kDebugName);
+    MakeMemberTunable(_iConfig.targetUnmovedCreepTimeout_s, "targetUnmovedCreepTimeout_s", kDebugName);
+    MakeMemberTunable(_iConfig.creepDistanceMin_mm, "creepDistanceMin_mm", kDebugName);
+    MakeMemberTunable(_iConfig.creepDistanceMax_mm, "creepDistanceMax_mm", kDebugName);
+    MakeMemberTunable(_iConfig.creepDelayTimeMin_s, "creepDelayTimeMin_s", kDebugName);
+    MakeMemberTunable(_iConfig.creepDelayTimeMax_s, "creepDelayTimeMax_s", kDebugName);
+    MakeMemberTunable(_iConfig.pounceDelayTimeMin_s, "pounceDelayTimeMin_s", kDebugName);
+    MakeMemberTunable(_iConfig.pounceDelayTimeMax_s, "pounceDelayTimeMax_s", kDebugName);
+    MakeMemberTunable(_iConfig.basePounceChance, "basePounceChance", kDebugName);
+    MakeMemberTunable(_iConfig.pounceChanceIncrement, "pounceChanceIncrement", kDebugName);
+    MakeMemberTunable(_iConfig.nominalPounceDistance_mm, "nominalPounceDistance_mm", kDebugName);
+    MakeMemberTunable(_iConfig.mousetrapPounceDistance_mm, "mousetrapPounceDistance_mm", kDebugName);
+    MakeMemberTunable(_iConfig.probBackupInsteadOfMousetrap, "probBackupInsteadOfMousetrap", kDebugName);
+    MakeMemberTunable(_iConfig.pounceSuccessPitchDiff_deg, "pounceSuccessPitchDiff_deg", kDebugName);
+    MakeMemberTunable(_iConfig.excitementIncPerHit, "excitementIncPerHit", kDebugName);
+    MakeMemberTunable(_iConfig.maxProbExitExcited, "maxProbExitExcited", kDebugName);
+    MakeMemberTunable(_iConfig.frustrationIncPerMiss, "frustrationIncPerMiss", kDebugName);
+    MakeMemberTunable(_iConfig.maxProbExitFrustrated, "maxProbExitFrustrated", kDebugName);
+    MakeMemberTunable(_iConfig.minProbToExit, "minProbToExit", kDebugName);
+    MakeMemberTunable(_iConfig.baseProbReact, "baseProbReact", kDebugName);
+    MakeMemberTunable(_iConfig.minProbToReact, "minProbToReact", kDebugName);
+    MakeMemberTunable(_iConfig.probReactIncrement, "probReactIncrement", kDebugName);
+    MakeMemberTunable(_iConfig.probReactMax, "probReactMax", kDebugName);
+    MakeMemberTunable(_iConfig.useProxForDistance, "useProxForDistance", kDebugName);
+  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

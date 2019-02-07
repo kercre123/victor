@@ -34,7 +34,7 @@ namespace Anki {
 namespace Vector {
 
 namespace {
-CONSOLE_VAR(bool, kVizConeOfFocus, "Behavior.LookAroundInPlace", false);
+CONSOLE_CONST(bool, kVizConeOfFocus, "Behavior.LookAroundInPlace", false);
 static const char* kConfigParamsKey = "params";
 }
 

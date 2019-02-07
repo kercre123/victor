@@ -41,7 +41,7 @@
 #define LOG_CHANNEL "Behaviors"
 
 namespace {
-  #define CONSOLE_GROUP "Behaviors.InternalStatesBehavior"
+  #define CONSOLE_GROUP "Behavior.InternalStatesBehavior"
   CONSOLE_VAR(bool, kDebugInternalStatesBehavior, CONSOLE_GROUP, false);
 }
 

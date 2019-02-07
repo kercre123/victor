@@ -25,8 +25,9 @@ namespace Anki {
 namespace Vector {
 
 namespace {
-  CONSOLE_VAR(int, kSlowLoopBeginSize_loops, "BehaviorCountingAnimation", -1);
-  CONSOLE_VAR(int, kSlowLoopEndSize_loops, "BehaviorCountingAnimation", -1);
+#define CONSOLE_GROUP "Behavior.CountingAnimation"
+CONSOLE_VAR(int, kSlowLoopBeginSize_loops, CONSOLE_GROUP, -1);
+CONSOLE_VAR(int, kSlowLoopEndSize_loops, CONSOLE_GROUP, -1);
 }
 
 namespace JsonKeys {

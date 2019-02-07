@@ -62,7 +62,7 @@ void StackDeck(ConsoleFunctionContextRef context)
   BlackJackGame::StackDeck(stackedDeckOrder);
 }
 
-CONSOLE_FUNC(StackDeck, "TestBlackJackBehavior.StackDeck(Up To Ten Comma Separated Integer Card ID's)",
+CONSOLE_FUNC(StackDeck, "BlackJack.StackDeck(Up To Ten Comma Separated Integer Card ID's)",
              optional int card1, optional int card2, optional int card3, optional int card4, optional int card5,
              optional int card6, optional int card7, optional int card8, optional int card9, optional int card10);
 
@@ -71,7 +71,7 @@ void StopStackingDeck(ConsoleFunctionContextRef context)
   BlackJackGame::StopStackingDeck();
 }
 
-CONSOLE_FUNC(StopStackingDeck, "TestBlackJackBehavior.StopStackingDeck");
+CONSOLE_FUNC(StopStackingDeck, "BlackJack.StopStackingDeck");
 #endif // ANKI_DEV_CHEATS
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

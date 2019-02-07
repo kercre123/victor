@@ -62,7 +62,7 @@ void ForceNextBigGreeting(ConsoleFunctionContextRef context)
 
 }
 
-#define CONSOLE_GROUP "BehaviorBigGreeting"
+#define CONSOLE_GROUP "Behavior.BigGreeting"
 
 CONSOLE_FUNC(ForceNextBigGreeting, CONSOLE_GROUP);
 CONSOLE_VAR(bool, kBigGreetingDriveOffCharger, CONSOLE_GROUP, true);

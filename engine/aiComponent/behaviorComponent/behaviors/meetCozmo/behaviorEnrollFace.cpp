@@ -62,7 +62,8 @@
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 
-#define CONSOLE_GROUP "Behavior.EnrollFace"
+// so many variables here, pull this one out of the main "Behavior" group
+#define CONSOLE_GROUP "BehaviorEnrollFace"
 
 namespace Anki {
 namespace Vector {
