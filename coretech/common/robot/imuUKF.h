@@ -70,7 +70,7 @@ private:
   void ProcessUpdate(double dt_s);
 
   // Calculates the residual according to the provided measurement
-  Point<9,double> MeasurementUpdate(const Point<9,double>& measurement);
+  void MeasurementUpdate(const Point<9,double>& measurement);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Variables

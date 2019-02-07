@@ -184,7 +184,7 @@ namespace Anki {
   template<typename T>
   Matrix<T>& Matrix<T>::Invert(void)
   {
-    DEV_ASSERT(this->GetNumRows() != this->GetNumCols(), "Matrix.Invert.NonSquareMatrix");
+    DEV_ASSERT(this->GetNumRows() == this->GetNumCols(), "Matrix.Invert.NonSquareMatrix");
     
 #if ANKICORETECH_USE_OPENCV
     // For now (?), rely on OpenCV for matrix inversion:
@@ -200,7 +200,7 @@ namespace Anki {
   template<typename T>
   void Matrix<T>::GetInverse(Matrix<T>& outInverse) const
   {
-    DEV_ASSERT(this->GetNumRows() != this->GetNumCols(), "Matrix.GetInverse.NonSquareMatrix");
+    DEV_ASSERT(this->GetNumRows() == this->GetNumCols(), "Matrix.GetInverse.NonSquareMatrix");
     
 #if ANKICORETECH_USE_OPENCV
     // For now (?), rely on OpenCV for matrix inversion:

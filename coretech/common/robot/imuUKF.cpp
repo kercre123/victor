@@ -68,8 +68,8 @@ namespace {
   }
 
   // Process Noise
-  constexpr const double kRotStability_rad    = .0003;     // assume pitch & roll don't change super fast when driving
-  constexpr const double kGyroStability_radps = 2.;        // max observable rotation from gyro
+  constexpr const double kRotStability_rad    = .0005;     // assume pitch & roll don't change super fast when driving
+  constexpr const double kGyroStability_radps = 1.;        // half max observable rotation from gyro
   constexpr const double kBiasStability_radps = .0000145;  // bias stability
 
   // Measurement Noise
@@ -82,7 +82,8 @@ namespace {
   constexpr const double kBiasNoise_radps     = .00003; // bias stability
 
   // extra tuning param for how much we distribute the sigma points
-  constexpr const double kSigmaScale = .2;
+  constexpr const double kWsigma = .08;
+  constexpr const double kCholScaleSq = 1./(2*kWsigma);
 
   // Gravity constants
   constexpr const Point<3,double> kGravity_mmpsSq = {0., 0., 9810.};
@@ -135,19 +136,9 @@ void ImuUKF::Reset(const Rotation3d& rot) {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ImuUKF::Update(const Point<3,double>& accel, const Point<3,double>& gyro, const float timestamp_s, bool isMoving)
 {
-  ProcessUpdate( NEAR_ZERO(_lastMeasurement_s) ? 0. : timestamp_s - _lastMeasurement_s );
-
-
   const auto measurement = Join(Join(accel, gyro), (isMoving ? _state.GetGyroBias() : gyro));
-  const Error residual = MeasurementUpdate( measurement );
-
-  // Add the residual to the current state. 
-  // NOTE: Right now I am artificially scaling the bias back just to limit rapid change during startup.
-  //       When initializing it can be quite noisy, resulting in an unstable z-rotation for the first ~30 seconds
-  _state = State{ _state.GetRotation() * ToQuat(residual.GetRotation() * kG_over_mmpsSq),
-                  _state.GetVelocity() + residual.GetVelocity(),
-                  _state.GetGyroBias() + residual.GetGyroBias()
-                };
+  ProcessUpdate( timestamp_s - _lastMeasurement_s );
+  MeasurementUpdate( measurement );
   _lastMeasurement_s = timestamp_s;
 }
 
@@ -155,7 +146,7 @@ void ImuUKF::Update(const Point<3,double>& accel, const Point<3,double>& gyro, c
 void ImuUKF::ProcessUpdate(double dt_s)
 { 
   // sample the covariance, generating the set {𝑌ᵢ} and add the mean
-  const auto S = Cholesky(_P + _Q) * sqrt(Error::Dim * kSigmaScale);
+  const auto S = Cholesky(_P + _Q) * sqrt(kCholScaleSq);
   for (int i = 0; i < Error::Dim; ++i) {
     // current process model assumes we continue moving at constant velocity
     const Error Si = S.GetColumn(i);
@@ -182,18 +173,18 @@ void ImuUKF::ProcessUpdate(double dt_s)
   const auto meanVel  = _state.GetVelocity();
   const auto meanBias = _state.GetGyroBias();
   for (int i = 0; i < 2*Error::Dim; ++i) {
-    const State yi = _Y.GetColumn(i);
-    const auto err = FromQuat(meanRot.GetConj() * yi.GetRotation());
-    const auto omega = yi.GetVelocity() - meanVel;
-    const auto bias = yi.GetGyroBias() - meanBias;
-    const auto wi = Join(Join(err, omega), bias);
+    const State yi    = _Y.GetColumn(i);
+    const auto  err   = FromQuat(meanRot.GetConj() * yi.GetRotation());
+    const auto  omega = yi.GetVelocity() - meanVel;
+    const auto  bias  = yi.GetGyroBias() - meanBias;
+    const auto  wi    = Join(Join(err, omega), bias);
     _W.SetColumn(i, wi);
   }
-  _P = GetCovariance(_W);
+  _P = GetCovariance(_W) * kWsigma;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Point<9,double> ImuUKF::MeasurementUpdate(const Point<9,double>& measurement)
+void ImuUKF::MeasurementUpdate(const Point<9,double>& measurement)
 {
   // Calculate Predicted Measurement Distribution {𝑍ᵢ}
   SmallMatrix<Error::Dim,Error::Dim*2,double> Z;
@@ -210,13 +201,19 @@ Point<9,double> ImuUKF::MeasurementUpdate(const Point<9,double>& measurement)
   }
 
   // get Kalman gain and update covariance
-  const auto Pvv = GetCovariance(Z) + _R;
-  const auto Pxz = GetCovariance(_W, Z.GetTranspose());
+  const auto Pvv = GetCovariance(Z) * kWsigma + _R;
+  const auto Pxz = GetCovariance(_W, Z.GetTranspose()) * kWsigma;
   const auto K = Pxz * Pvv.GetInverse();
   _P -= K * Pvv * K.GetTranspose();
 
   // get measurement residual
-  return K*(measurement - meanZ);
+  const Error residual = K*(measurement - meanZ);
+    
+  // Add the residual to the current state. 
+  _state = State{ _state.GetRotation() * ToQuat(residual.GetRotation() * kG_over_mmpsSq),
+                  _state.GetVelocity() + residual.GetVelocity(),
+                  _state.GetGyroBias() + residual.GetGyroBias()
+                };
 }
       
 } // namespace Anki
