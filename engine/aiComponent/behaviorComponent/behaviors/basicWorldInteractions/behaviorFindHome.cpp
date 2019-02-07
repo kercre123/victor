@@ -127,7 +127,7 @@ BehaviorFindHome::BehaviorFindHome(const Json::Value& config)
     EngineToGameTag::RobotOffTreadsStateChanged,
   });
 
-  chargerSeenRecentlyCondition = BEIConditionFactory::CreateBEICondition(config[kChargerSeenRecentlyCondition], GetDebugLabel());
+  _iConfig.chargerSeenRecentlyCondition = BEIConditionFactory::CreateBEICondition(config[kChargerSeenRecentlyCondition], GetDebugLabel());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -201,7 +201,7 @@ void BehaviorFindHome::InitBehavior()
     std::make_shared<RejectIfCollidesWithMemoryMap>(kTypesToBlockSampling)
   );
 
-  chargerSeenRecentlyCondition->Init(GetBEI());
+  _iConfig.chargerSeenRecentlyCondition->Init(GetBEI());
   if(_iConfig.chargerSeenRecentlyCondition != nullptr){
     _iConfig.chargerSeenRecentlyCondition->Init(GetBEI());
   }
@@ -255,7 +255,7 @@ void BehaviorFindHome::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::OnBehaviorDeactivated()
 {
-  if(chargerSeenRecentlyCondition->AreConditionsMet(GetBEI())) {
+  if(_iConfig.chargerSeenRecentlyCondition->AreConditionsMet(GetBEI())) {
     DASMSG(find_home_result, "find_home.result", "Result of FindHome behavior");
     DASMSG_SET(i1, 1, "Success or failure to get onto the charger (1 for success, 0 for failure)");
     DASMSG_SEND();
@@ -268,7 +268,7 @@ void BehaviorFindHome::OnBehaviorDeactivated()
 
 void BehaviorFindHome::BehaviorUpdate()
 {
-  if(IsActivated() && chargerSeenRecentlyCondition->AreConditionsMet(GetBEI())) {
+  if(IsActivated() && _iConfig.chargerSeenRecentlyCondition->AreConditionsMet(GetBEI())) {
     // we saw the charger so we can finish with this behavior by cancelling
     CancelSelf();
   }
@@ -413,7 +413,7 @@ void BehaviorFindHome::TransitionToRandomDrive()
     _dVars.persistent.searchedLocations.clear();
     CancelSelf();
     
-    DAS_MSG(find_home_result, "find_home.result", "Result of the FindHome behavior");
+    DASMSG(find_home_result, "find_home.result", "Result of the FindHome behavior");
     DASMSG_SET(i1, 0, "Success or failure to get onto the charger (1 for success, 0 for failure)");
     return;
   }
