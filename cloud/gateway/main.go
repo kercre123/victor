@@ -46,9 +46,6 @@ var (
 	engineProtoManager EngineProtoIpcManager
 	tokenManager       ClientTokenManager
 	bleProxy           BLEProxy
-
-	// TODO: remove clad socket and map when there are no more clad messages being used
-	engineCladManager EngineCladIpcManager
 )
 
 func LoggingUnaryInterceptor(ctx context.Context, req interface{}, info *grpc.UnaryServerInfo, handler grpc.UnaryHandler) (_ interface{}, errOut error) {
@@ -178,9 +175,6 @@ func main() {
 	}
 	addr := fmt.Sprintf("localhost:%d", Port)
 
-	engineCladManager.Init()
-	defer engineCladManager.Close()
-
 	engineProtoManager.Init()
 	defer engineProtoManager.Close()
 
@@ -278,7 +272,6 @@ func main() {
 		},
 	}
 
-	go engineCladManager.ProcessMessages()
 	go engineProtoManager.ProcessMessages()
 	if IsOnRobot {
 		go switchboardManager.ProcessMessages()

@@ -156,6 +156,27 @@ private:
       const external_interface::GatewayWrapper& proto_message,
       ExternalInterface::MessageGameToEngine& clad_message);
 
+  void ProtoCancelFaceEnrollmentRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
+  void ProtoEraseAllEnrolledFacesRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
+  void ProtoUpdateEnrolledFaceByIDRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
+  void ProtoSetFaceToEnrollRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
+  void ProtoEraseEnrolledFaceByIDRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
+
   //
   // Clad-to-Proto interpreters
   //
