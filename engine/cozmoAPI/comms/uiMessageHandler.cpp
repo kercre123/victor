@@ -274,7 +274,9 @@ namespace Anki {
         Comms::MsgPacket p;
         message.Pack(p.data, Comms::MsgPacket::MAX_SIZE);
 
-        (void) _context->GetProtoCladInterpreter()->Redirect(message);
+        if(_isInitialized && _context != nullptr) {
+          (void) _context->GetProtoCladInterpreter()->Redirect(message);
+        }
 
         #if ANKI_DEV_CHEATS
         if (nullptr != DevLoggingSystem::GetInstance())

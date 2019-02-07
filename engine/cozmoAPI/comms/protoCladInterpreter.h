@@ -30,10 +30,6 @@ class ProtoCladInterpreter {
 public:
   ProtoCladInterpreter(CozmoContext* cozmo_context) : _context(cozmo_context) {}
 
-  static bool print_warnings; 
-
-  static void warn(const char * msg);
-
   void HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event);
 
   bool Redirect(const external_interface::GatewayWrapper& message);

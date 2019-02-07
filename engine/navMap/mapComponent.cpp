@@ -764,7 +764,8 @@ namespace {
   const size_t kReservedBytes = 1 + 2; // Message overhead for:  Tag, and vector size
   const size_t kMaxBufferSize = Anki::Comms::MsgPacket::MAX_SIZE;
   const size_t kMaxBufferForQuads = kMaxBufferSize - kReservedBytes;
-  const size_t kQuadsPerMessage = 
+  const size_t kQuadsPerMessage = kMaxBufferForQuads / sizeof(QuadInfoVector::value_type);	
+  const size_t kQuadsPerProtoMessage = 
       (kMaxBufferForQuads - sizeof(external_interface::NavMapQuadInfo)) / sizeof(external_interface::NavMapInfo);
   const size_t kFullQuadsPerMessage = kMaxBufferForQuads / sizeof(QuadInfoFullVector::value_type);
 
@@ -846,11 +847,11 @@ void MapComponent::BroadcastMapToWeb(const MapBroadcastData& mapData) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::BroadcastMapToSDK(const MemoryMapTypes::MapBroadcastData& mapData) const
 {
-  if(mapData.quadInfo.size() <= 0) {
+  if(mapData.quadInfo.empty()) {
     return;
   }
 
-  for(u32 seqNum = 0; seqNum*kQuadsPerMessage < mapData.quadInfo.size(); seqNum++)
+  for(u32 seqNum = 0; seqNum*kQuadsPerProtoMessage < mapData.quadInfo.size(); seqNum++)
   {
     external_interface::GatewayWrapper gateway_wrapper;
   
@@ -863,8 +864,8 @@ void MapComponent::BroadcastMapToSDK(const MemoryMapTypes::MapBroadcastData& map
     nav_map_info->set_root_center_y(mapData.mapInfo.rootCenterY);
     nav_map_info->set_root_center_z(0.0);
     nav_map_feed_response->set_allocated_map_info(nav_map_info);
-    size_t start = seqNum*kQuadsPerMessage;
-    size_t end   = std::min(mapData.quadInfo.size(), start + kQuadsPerMessage);
+    size_t start = seqNum*kQuadsPerProtoMessage;
+    size_t end   = std::min(mapData.quadInfo.size(), start + kQuadsPerProtoMessage);
     nav_map_feed_response->set_last_response(end < mapData.quadInfo.size() ? false : true);
     gateway_wrapper.set_allocated_nav_map_feed_response(nav_map_feed_response);
 
