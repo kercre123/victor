@@ -186,6 +186,7 @@ message RobotProcessedImage {
 //  and the world
 message RobotObservedObject {
     uint_32       timestamp,
+    ObjectFamily  objectFamily,  // Note: This field is deprecated and is only here for SDK v0.5.1 compatibility
     ObjectType    objectType,
     int_32        objectID,      // signed to match U2G::PickAndPlaceObject which has the option to have objectID<0
     CladRect      img_rect,      // position in image coords

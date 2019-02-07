@@ -14,7 +14,7 @@ namespace Vector {
     // Light Cubes (a.k.a. Active Blocks)
     //
     
-    Block_LIGHTCUBE1,
+    Block_LIGHTCUBE1 = 1, // value is specified here for SDK backward compatibility
     Block_LIGHTCUBE2,
     Block_LIGHTCUBE3,
 
@@ -23,11 +23,11 @@ namespace Vector {
     //////////////////////////////////////////////////////////////////////////
     // Charger
     //
-    Charger_Basic,
+    Charger_Basic = 5, // value is specified here for SDK backward compatibility
 
     //////////////////////////////////////////////////////////////////////////
     // Custom Objects defined via DefineCustomObject
-    CustomType00,
+    CustomType00 = 14, // value is specified here for SDK backward compatibility
     CustomType01,
     CustomType02,
     CustomType03,
@@ -179,6 +179,19 @@ namespace Vector {
     CustomType19           = 1,
     CustomFixedObstacle    = 1
   }
+  
+  // Note: ObjectFamily is deprecated and is only still here for compatiblity with SDK version 0.5.1 and earlier.
+  //       This should eventually be removed when we no longer care about maintaining compatibility with that version.
+  // DO NOT change the values for these enum entries!
+  enum int_32 ObjectFamily {
+    Invalid      = -1,
+    Unknown      = 0,
+    Block        = 1,
+    LightCube    = 2,
+    Charger      = 3,
+    CustomObject = 6,
+  }
+
   
 } // namespace Vector
 } // namespace Anki
