@@ -65,6 +65,7 @@ public:
   SpeechRecognizerSystem& operator=(const SpeechRecognizerSystem& other) = delete;
   
   using TriggerWordDetectedCallback = std::function<void(const AudioUtil::SpeechRecognizerCallbackInfo& info)>;
+  using AlexaTriggerWordDetectedCallback = std::function<void(const AudioUtil::SpeechRecognizerCallbackInfo& info, bool ignore)>;
   
   // Init Vector trigger detector
   // Note: This always happens at boot
@@ -101,7 +102,7 @@ public:
   // Alexa Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Alexa has been set active set current locale and callback for Alexa trigger recognitions
-  void ActivateAlexa(const Util::Locale& locale, TriggerWordDetectedCallback callback);
+  void ActivateAlexa(const Util::Locale& locale, AlexaTriggerWordDetectedCallback callback);
   
   // Alexa has been disabled, turn off the "Alexa" recognizer
   void DisableAlexa();
@@ -161,7 +162,7 @@ private:
   // Init Alexa trigger detector
   // Note: This is done after Alex user has been authicated
   void InitAlexa(const Util::Locale& locale,
-                 const TriggerWordDetectedCallback callback);
+                 const AlexaTriggerWordDetectedCallback callback);
   
   // Init Alex playback trigger detector
   void InitAlexaPlayback(const Util::Locale& locale,

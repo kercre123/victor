@@ -20,6 +20,7 @@
     InfoDiv.append('<div class="dataTitle">' + "End Time: " + data["endTime_ms"] + " ms" + '</div>');
     InfoDiv.append('<div class="dataTitle">' + "Start Sample Index: " + data["startSampleIndex"] + '</div>');
     InfoDiv.append('<div class="dataTitle">' + "End Sample Index: " + data["endSampleIndex"] + '</div>');
+    InfoDiv.append('<div class="dataTitle">' + "Trigger was ignored: " + data["ignore"] + '</div>');
   };
 
   myMethods.update = function(dt, elem) { 
