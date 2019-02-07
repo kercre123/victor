@@ -6,7 +6,9 @@
     "noble-mac": "github:Timeular/noble-mac#master",
     "string-argv": "^0.1.1",
     "xpc-connection": "github:sandeepmistry/node-xpc-connection#pull/26/head",
-    "nconf": "^0.10.0"
+    "nconf": "^0.10.0",
+    "node-wifi": "^2.0.5",
+    "cli-progress": "^2.1.1"
   },
   "resolutions": {
     "noble-mac": "Timeular/noble-mac#head",

@@ -2,6 +2,8 @@ var readline = require('readline');
 var program = require('commander');
 var stringArgv = require('string-argv');
 var fs = require('fs');
+var wifi = require('node-wifi');
+var _progress = require('cli-progress');
 
 const { Sessions } = require('./sessions.js');
 const { RtsCliUtil } = require('./rtsCliUtil.js');
@@ -20,6 +22,7 @@ class RtsV5Handler {
     this.keysAuthorized = false;
     this.waitForResponse = '';
     this.promiseKeys = {};
+    this.progressBar = null;
 
     // remembered state
     this.wifiScanResults = {};
@@ -54,6 +57,10 @@ class RtsV5Handler {
       } else {
         process.exit();
       }
+    });
+
+    wifi.init({
+      iface : null
     });
 
     this.setHelp();
@@ -99,7 +106,10 @@ class RtsV5Handler {
                         help:'connection-id {id}' },
       'sdk':{           args:3, 
                         des:'Send an SDK request over BLE.',
-                        help:'sdk {path} {json} {client_app_guid}' }
+                        help:'sdk {path} {json} {client_app_guid}' },
+      'wifi-ap-connect':{args:0, 
+                        des:'Enable Vector\'s WiFi AP and connect to it.',
+                        help:'wifi-ap-connect' }
     };
 
     this.helpArgs = helpArgs;
@@ -108,7 +118,7 @@ class RtsV5Handler {
   }
 
   completer(line) {
-    const completions = 'wifi-connect wifi-scan wifi-ip wifi-ap wifi-forget ota-start ota-cancel ota-progress logs status connection-id anki-auth'.split(' ');
+    const completions = 'wifi-connect wifi-scan wifi-ip wifi-ap wifi-forget ota-start ota-cancel ota-progress logs status connection-id anki-auth sdk wifi-ap-connect'.split(' ');
     const hits = completions.filter((c) => c.startsWith(line));
     return [hits.length? hits : [], line];
   }
@@ -184,7 +194,13 @@ class RtsV5Handler {
             case Rts.RtsConnection_5Tag.RtsOtaUpdateResponse:
               this.otaProgress['value'] = rtsMsg.value;
               if(this.waitForResponse == 'ota-start') {
-                this.resolvePromise(this.waitForResponse, rtsMsg);
+                console.log("starting ota...");
+                let p = Math.round((Number(rtsMsg.value.current) * 100) / Number(rtsMsg.value.expected));
+                this.progressBar.update(p, {});
+
+                if((rtsMsg.value.current == rtsMsg.value.expected) && (rtsMsg.value.current > 0)) {
+                  this.resolvePromise(this.waitForResponse, rtsMsg);
+                }
               } else if(this.waitForResponse == 'ota-cancel') {
                 if(rtsMsg.status != 2) {
                   this.resolvePromise(this.waitForResponse, rtsMsg);
@@ -397,6 +413,11 @@ class RtsV5Handler {
     this.startPrompt();
   }
 
+  cliResolveWithNothing() {
+    this.waitForResponse = '';
+    this.startPrompt();
+  }
+
   //
   // <!-- API Promises
   //
@@ -494,6 +515,26 @@ class RtsV5Handler {
       self.send(Rts.RtsConnection_5.NewRtsConnection_5WithRtsOtaUpdateRequest(
         new Rts.RtsOtaUpdateRequest(url)
       ));
+
+      self.progressBar = new _progress.Bar({
+        format: 'progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}'
+      });
+      
+      // initialize the bar - set payload token "speed" with the default value "N/A"
+      self.progressBar.start(100, 0, {
+          speed: "N/A"
+      });
+      
+      // some code/update loop
+      // ...
+      
+      // update bar value. set custom token "speed" to 125
+      // bar.update(5, {
+      //     speed: '125'
+      // });
+      
+      // process finished
+      //bar.stop();
     });
 
     return p;
@@ -684,6 +725,27 @@ class RtsV5Handler {
           self.doSdk(args[3], RtsCliUtil.makeId(), args[1], args[2]).then(function(msg) { 
             self.cliResolve(msg); 
           }, r);
+          break;
+        case "wifi-ap-connect":
+          self.waitForResponse = 'wifi-ap-connect';
+          wifi.scan().then(function(networks) {
+            let ssids = {};
+            for(let i = 0; i < networks.length; i++) {
+              if(!(networks[i].ssid in ssids)) {
+                ssids[networks[i].ssid] = [];
+              }
+
+              ssids[networks[i].ssid].push(networks[i]);
+            }
+
+            let ks = Object.keys(ssids);
+            for(let i = 0; i < ks.length; i++) {
+              //console.log(ks);
+            }
+            self.cliResolveWithNothing();
+          }).catch(function(error) {
+
+          });
           break;
         case "logs":
           console.log('downloading logs over BLE will probably take about 30 seconds...');

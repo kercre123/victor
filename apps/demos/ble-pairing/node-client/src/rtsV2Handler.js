@@ -2,6 +2,7 @@ var readline = require('readline');
 var program = require('commander');
 var stringArgv = require('string-argv');
 var fs = require('fs');
+var _progress = require('cli-progress');
 
 const { RtsCliUtil } = require('./rtsCliUtil.js');
 
@@ -165,7 +166,12 @@ class RtsV2Handler {
             case Rts.RtsConnection_2Tag.RtsOtaUpdateResponse:
               this.otaProgress['value'] = rtsMsg.value;
               if(this.waitForResponse == 'ota-start') {
-                this.resolvePromise(this.waitForResponse, rtsMsg);
+                let p = Math.round((Number(rtsMsg.value.current) * 100) / Number(rtsMsg.value.expected));
+                this.progressBar.update(p, {});
+
+                if((rtsMsg.value.current == rtsMsg.value.expected) && (rtsMsg.value.current > 0)) {
+                  this.resolvePromise(this.waitForResponse, rtsMsg);
+                }
               } else if(this.waitForResponse == 'ota-cancel') {
                 if(rtsMsg.status != 2) {
                   this.resolvePromise(this.waitForResponse, rtsMsg);
@@ -406,6 +412,13 @@ class RtsV2Handler {
       self.send(Rts.RtsConnection_2.NewRtsConnection_2WithRtsOtaUpdateRequest(
         new Rts.RtsOtaUpdateRequest(url)
       ));
+
+      self.progressBar = new _progress.Bar({
+        format: 'progress [{bar}] {percentage}% | ETA: {eta}s | {value}/{total}'
+      });
+      
+      self.progressBar.start(100, 0, {
+      });
     });
 
     return p;
