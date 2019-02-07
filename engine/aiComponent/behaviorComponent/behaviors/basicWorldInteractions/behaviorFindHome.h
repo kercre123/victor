@@ -83,6 +83,8 @@ private:
     std::shared_ptr<RobotPointSamplerHelper::RejectIfInRange> condHandleNearPrevSearch;
     std::shared_ptr<RobotPointSamplerHelper::RejectIfWouldCrossCliff> condHandleCliffs;
     std::shared_ptr<RobotPointSamplerHelper::RejectIfCollidesWithMemoryMap> condHandleCollisions;
+
+    IBEIConditionPtr chargerSeenRecentlyCondition;
   };
 
   struct DynamicVariables {

@@ -1,6 +1,8 @@
 {
   "behaviorClass": "FindHome",
   "behaviorID": "FindHome",
+
+  "associatedActiveFeature": "FindHome",
   
   // Cannot be activated if we already know where a charger is and have seen it recently enough
   "wantsToBeActivatedCondition": {
@@ -13,7 +15,7 @@
   },
   
   // Behavior should cancel itself if we see a charger while running
-  "wantsToCancelSelfCondition" : {
+  "chargerSeenRecentlyCondition" : {
     "conditionType" : "ObjectKnown",
     "objectTypes" : [ "Charger_Basic" ],
     "maxAge_ms" : 5000
