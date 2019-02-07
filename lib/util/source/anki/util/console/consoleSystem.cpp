@@ -47,9 +47,9 @@ namespace Anki { namespace Util {
   #define CONSOLE_DEBUG( ... )
 #endif
 
-static const int TEXT_PARSING_MAX_LENGTH    = 256;
+static const int TEXT_PARSING_MAX_LENGTH    = 512;
 static const char* TEXT_PARSING_TOKENS      = " ";
-static const char* ARGS_PARSING_TOKENS      = " ,";
+static const char* ARGS_PARSING_TOKENS      = " ";
 
 
 //------------------------------------------------------------------------------------------------------------------------------
@@ -983,7 +983,7 @@ void NativeAnkiUtilConsoleLoadVarsWithContext(ConsoleFunctionContextRef context)
   FILE* inputFile = fopen(k_ConsoleVarIniFilePath, "r");
   if (inputFile)
   {
-    char tempBuffer[256];
+    char tempBuffer[Anki::Util::TEXT_PARSING_MAX_LENGTH];
 
     bool isAtEOF = false;
     while (!isAtEOF)

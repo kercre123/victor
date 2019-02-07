@@ -1666,7 +1666,11 @@
   },
   {
     "CladEvent": "ReactToUnclaimedIntent",
-    "AnimName": "ag_pounceonmotionfail"
+    "AnimName": "ag_communication_cantdothat"
+  },
+  {
+    "CladEvent": "ReactToUnclaimedIntentInAir",
+    "AnimName": "ag_communication_pickup_cantdothat"
   },
   {
     "CladEvent": "Feedback_GoodRobot",

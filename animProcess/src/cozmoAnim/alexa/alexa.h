@@ -176,7 +176,8 @@ private:
   
   NotifyType _notifyType = NotifyType::None;
   
-  std::unique_ptr<Util::Locale> _pendingLocale;
+  std::unique_ptr<Util::Locale> _locale;
+  bool _pendingLocale = false;
 
   // whether a message was received from engine saying to opt in. this gets reset after auth completes
   bool _authStartedByUser = false;
