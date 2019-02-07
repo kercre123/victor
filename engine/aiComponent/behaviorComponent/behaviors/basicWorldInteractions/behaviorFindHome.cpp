@@ -111,7 +111,6 @@ BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, cons
   numImagesToWaitFor      = JsonTools::ParseInt32(config, kNumImagesToWaitForKey, debugName);
   
   // Set up block world filter for finding charger object
-  homeFilter->AddAllowedFamily(ObjectFamily::Charger);
   homeFilter->AddAllowedType(ObjectType::Charger_Basic);
 }
 

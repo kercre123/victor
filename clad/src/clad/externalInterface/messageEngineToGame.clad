@@ -25,7 +25,6 @@
 #include "clad/types/loadedKnownFace.clad"
 #include "clad/types/logLevels.clad"
 #include "clad/types/motorTypes.clad"
-#include "clad/types/objectFamilies.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/onboardingStages.clad"
 #include "clad/types/offTreadsStates.clad"
@@ -183,11 +182,10 @@ message RobotProcessedImage {
 }
 
 // RobotObservedObject for signaling that an object
-//  with specified ID/Type/Family was seen at a particular location in the image
+//  with specified ID/Type was seen at a particular location in the image
 //  and the world
 message RobotObservedObject {
     uint_32       timestamp,
-    ObjectFamily  objectFamily,
     ObjectType    objectType,
     int_32        objectID,      // signed to match U2G::PickAndPlaceObject which has the option to have objectID<0
     CladRect      img_rect,      // position in image coords
@@ -363,7 +361,6 @@ message RobotMarkedObjectPoseUnknown {
 structure LocatedObjectState {
     uint_32      objectID,
     uint_32      lastObservedTimestamp,
-    ObjectFamily objectFamily,
     ObjectType   objectType,
     PoseStruct3d pose,
     PoseState    poseState,
@@ -376,7 +373,6 @@ message LocatedObjectStates {
 
 structure ConnectedObjectState {
     uint_32      objectID,
-    ObjectFamily objectFamily,
     ObjectType   objectType
 }
 

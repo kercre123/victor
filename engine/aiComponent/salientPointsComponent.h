@@ -14,7 +14,6 @@
 #define __Cozmo_Basestation_BehaviorSystem_SalientPointsComponent_H__
 
 #include "clad/types/behaviorComponent/postBehaviorSuggestions.h"
-#include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
 #include "clad/types/salientPointTypes.h"
 #include "coretech/common/engine/math/pose.h"

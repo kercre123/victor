@@ -35,7 +35,7 @@ CustomObject::CustomObject(ObjectType objectType,
                            f32 markerWidth_mm, f32 markerHeight_mm,
                            bool isUnique,
                            CustomShape shape)
-: ObservableObject(ObjectFamily::CustomObject, objectType)
+: ObservableObject(objectType)
 , _size(xSize_mm, ySize_mm, zSize_mm)
 , _markerSize(markerWidth_mm, markerHeight_mm)
 , _vizHandle(VizManager::INVALID_HANDLE)

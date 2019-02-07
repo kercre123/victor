@@ -63,7 +63,7 @@ namespace Vector {
   
   
   HumanHead::HumanHead(Type type)
-  : ObservableObject(ObjectFamily::Unknown,type)
+  : ObservableObject(type)
   , _size(GetSizeByType(_type))
   {
     _canonicalCorners = {{
@@ -81,7 +81,7 @@ namespace Vector {
     const Pose3d facePose(0, Z_AXIS_3D(), {0,0.5f*_size.y(),0.f});
     AddMarker(-1, facePose, _size.x()); // Using entire head width for face size
     
-  } // MarkerlessObject(type) Constructor
+  }
   
   HumanHead::~HumanHead() {
     EraseVisualization();

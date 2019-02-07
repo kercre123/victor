@@ -31,7 +31,6 @@
 #include "engine/robot.h"
 #include "engine/robotStateHistory.h"
 #include "engine/cozmoContext.h"
-#include "engine/markerlessObject.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/habitatDetectorComponent.h"
 #include "engine/actions/actionContainers.h"
@@ -70,9 +69,6 @@ CONSOLE_VAR(float, kObjectPositionChangeToReport_mm, "MapComponent", 5.0f);
 // kNeverMergeOldMaps: if set to false, we only relocalize if the robot is in the same world origin as the previous map
 CONSOLE_VAR(bool, kMergeOldMaps, "MapComponent", false);
 
-// Whether or not to put unrecognized markerless objects like collision/prox obstacles and cliffs into the memory map
-CONSOLE_VAR(bool, kAddUnrecognizedMarkerlessObjectsToMemMap, "MapComponent", false);
-
 // kRobotRotationChangeToReport_deg: if the rotation of the robot changes by this much, memory map will be notified
 CONSOLE_VAR(float, kRobotRotationChangeToReport_deg, "MapComponent", 20.0f);
 // kRobotPositionChangeToReport_mm: if the position of the robot changes by this much, memory map will be notified
@@ -99,49 +95,16 @@ CONSOLE_VAR(int,   kMaxPixelsUsedForHoughTransform, "MapComponent.VisualEdgeDete
 
 namespace {
 
-// return the content type we would set in the memory type for each object family
-MemoryMapTypes::EContentType ObjectFamilyToMemoryMapContentType(ObjectFamily family, bool isAdding)
+// return the content type we would set in the memory type for each object type
+MemoryMapTypes::EContentType ObjectTypeToMemoryMapContentType(ObjectType type, bool isAdding)
 {
   using ContentType = MemoryMapTypes::EContentType;
   ContentType retType = ContentType::Unknown;
-  switch(family)
-  {
-    case ObjectFamily::Block:
-    case ObjectFamily::LightCube:
-    case ObjectFamily::Charger:
-      // pick depending on addition or removal
-      retType = isAdding ? ContentType::ObstacleObservable : ContentType::ClearOfObstacle;
-      break;
-    case ObjectFamily::MarkerlessObject:
-    {
-      // old .badIsAdding message
-      if(!isAdding)
-      {
-        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.MarkerlessObject.RemovalNotSupported",
-                            "ContentType MarkerlessObject removal is not supported. kAddUnrecognizedMarkerlessObjectsToMemMap was (%s)",
-                            kAddUnrecognizedMarkerlessObjectsToMemMap ? "true" : "false");
-      }
-      else
-      {
-        PRINT_NAMED_WARNING("ObjectFamilyToMemoryMapContentType.MarkerlessObject.AdditionNotSupported",
-                            "ContentType MarkerlessObject addition is not supported. kAddUnrecognizedMarkerlessObjectsToMemMap was (%s)",
-                            kAddUnrecognizedMarkerlessObjectsToMemMap ? "true" : "false");
-        // retType = ContentType::ObstacleUnrecognized;
-      }
-      break;
-    }
-
-    case ObjectFamily::CustomObject:
-    {
-      retType = isAdding ? ContentType::ObstacleObservable : ContentType::ClearOfObstacle;
-      break;
-    }
-
-    case ObjectFamily::Invalid:
-    case ObjectFamily::Unknown:
-    case ObjectFamily::Mat:
-    break;
-  };
+  if (IsBlockType(type, false) ||
+      IsCustomType(type, false) ||
+      IsChargerType(type, false)) {
+    retType = isAdding ? ContentType::ObstacleObservable : ContentType::ClearOfObstacle;
+  }
 
   return retType;
 }
@@ -957,95 +920,87 @@ void MapComponent::UpdateObjectPose(const ObservableObject& object, const Pose3d
   DEV_ASSERT(objectID.IsSet(), "MapComponent.OnObjectPoseChanged.InvalidObjectID");
 
   const PoseState newPoseState = object.GetPoseState();
-  const ObjectFamily family = object.GetFamily();
-  bool objectTrackedInMemoryMap = true;
-  if (family == ObjectFamily::MarkerlessObject && !kAddUnrecognizedMarkerlessObjectsToMemMap) {
-    objectTrackedInMemoryMap = false; // COZMO-7496?
-  }
 
-  if( objectTrackedInMemoryMap )
+  /*
+    Three things can happen:
+     a) first time we see an object: OldPoseState=!Valid, NewPoseState= Valid
+     b) updating an object:          OldPoseState= Valid, NewPoseState= Valid
+     c) deleting an object:          OldPoseState= Valid, NewPoseState=!Valid
+   */
+  const bool oldValid = ObservableObject::IsValidPoseState(oldPoseState);
+  const bool newValid = ObservableObject::IsValidPoseState(newPoseState);
+  if ( !oldValid && newValid )
   {
-    /*
-      Three things can happen:
-       a) first time we see an object: OldPoseState=!Valid, NewPoseState= Valid
-       b) updating an object:          OldPoseState= Valid, NewPoseState= Valid
-       c) deleting an object:          OldPoseState= Valid, NewPoseState=!Valid
-     */
-    const bool oldValid = ObservableObject::IsValidPoseState(oldPoseState);
-    const bool newValid = ObservableObject::IsValidPoseState(newPoseState);
-    if ( !oldValid && newValid )
+    // first time we see the object, add report
+    AddObservableObject(object, object.GetPose());
+  }
+  else if ( oldValid && newValid )
+  {
+    // updating the pose of an object, decide if we update the report. As an optimization, we don't update
+    // it if the poses are close enough
+    const int objectIdInt = objectID.GetValue();
+    const OriginToPoseInMapInfo& reportedPosesForObject = _reportedPoses[objectIdInt];
+    const PoseOrigin& curOrigin = object.GetPose().FindRoot();
+    const PoseOriginID_t curOriginID = curOrigin.GetID();
+    DEV_ASSERT_MSG(_robot->GetPoseOriginList().ContainsOriginID(curOriginID),
+                   "MapComponent.OnObjectPoseChanged.ObjectOriginNotInOriginList",
+                   "ID:%d", curOriginID);
+    const auto poseInNewOriginIter = reportedPosesForObject.find( curOriginID );
+
+    if ( poseInNewOriginIter != reportedPosesForObject.end() )
     {
-      // first time we see the object, add report
-      AddObservableObject(object, object.GetPose());
-    }
-    else if ( oldValid && newValid )
-    {
-      // updating the pose of an object, decide if we update the report. As an optimization, we don't update
-      // it if the poses are close enough
-      const int objectIdInt = objectID.GetValue();
-      const OriginToPoseInMapInfo& reportedPosesForObject = _reportedPoses[objectIdInt];
-      const PoseOrigin& curOrigin = object.GetPose().FindRoot();
-      const PoseOriginID_t curOriginID = curOrigin.GetID();
-      DEV_ASSERT_MSG(_robot->GetPoseOriginList().ContainsOriginID(curOriginID),
-                     "MapComponent.OnObjectPoseChanged.ObjectOriginNotInOriginList",
-                     "ID:%d", curOriginID);
-      const auto poseInNewOriginIter = reportedPosesForObject.find( curOriginID );
+      // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
+      // be smaller than the threshold to not report
+      DEV_ASSERT(kObjectPositionChangeToReport_mm < object.GetDimInParentFrame<'Z'>()*0.5f,
+                "OnObjectPoseChanged.ChangeThresholdTooBig");
+      const float distThreshold = kObjectPositionChangeToReport_mm;
+      const Radians angleThreshold( DEG_TO_RAD(kObjectRotationChangeToReport_deg) );
 
-      if ( poseInNewOriginIter != reportedPosesForObject.end() )
-      {
-        // note that for distThreshold, since Z affects whether we add to the memory map, distThreshold should
-        // be smaller than the threshold to not report
-        DEV_ASSERT(kObjectPositionChangeToReport_mm < object.GetDimInParentFrame<'Z'>()*0.5f,
-                  "OnObjectPoseChanged.ChangeThresholdTooBig");
-        const float distThreshold = kObjectPositionChangeToReport_mm;
-        const Radians angleThreshold( DEG_TO_RAD(kObjectRotationChangeToReport_deg) );
+      // compare new pose with previous entry and decide if isFarFromPrev
+      const PoseInMapInfo& info = poseInNewOriginIter->second;
+      const bool isFarFromPrev =
+        ( !info.isInMap || (!object.GetPose().IsSameAs(info.pose, Point3f(distThreshold), angleThreshold)));
 
-        // compare new pose with previous entry and decide if isFarFromPrev
-        const PoseInMapInfo& info = poseInNewOriginIter->second;
-        const bool isFarFromPrev =
-          ( !info.isInMap || (!object.GetPose().IsSameAs(info.pose, Point3f(distThreshold), angleThreshold)));
-
-        // if it is far from previous (or previous was not in the map, remove-add)
-        if ( isFarFromPrev ) {
-          if (object.IsUnique())
-          {
-            RemoveObservableObject(object, curOriginID);
-          }
-          AddObservableObject(object, object.GetPose());
+      // if it is far from previous (or previous was not in the map, remove-add)
+      if ( isFarFromPrev ) {
+        if (object.IsUnique())
+        {
+          RemoveObservableObject(object, curOriginID);
         }
-      }
-      else
-      {
-        // did not find an entry in the current origin for this object, add it now
         AddObservableObject(object, object.GetPose());
       }
     }
-    else if ( oldValid && !newValid )
-    {
-      // deleting an object, remove its report using oldOrigin (the origin it was removed from)
-      const PoseOriginID_t oldOriginID = oldPose->GetRootID();
-      RemoveObservableObject(object, oldOriginID);
-    }
     else
     {
-      // not possible
-      PRINT_NAMED_ERROR("MapComponent.OnObjectPoseChanged.BothStatesAreInvalid",
-                        "Object %d changing from Invalid to Invalid", objectID.GetValue());
+      // did not find an entry in the current origin for this object, add it now
+      AddObservableObject(object, object.GetPose());
     }
+  }
+  else if ( oldValid && !newValid )
+  {
+    // deleting an object, remove its report using oldOrigin (the origin it was removed from)
+    const PoseOriginID_t oldOriginID = oldPose->GetRootID();
+    RemoveObservableObject(object, oldOriginID);
+  }
+  else
+  {
+    // not possible
+    PRINT_NAMED_ERROR("MapComponent.OnObjectPoseChanged.BothStatesAreInvalid",
+                      "Object %d changing from Invalid to Invalid", objectID.GetValue());
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::AddObservableObject(const ObservableObject& object, const Pose3d& newPose)
 {
-  const ObjectFamily objectFam = object.GetFamily();
-  const MemoryMapTypes::EContentType addType = ObjectFamilyToMemoryMapContentType(objectFam, true);
+  const auto& objectType = object.GetType();
+  const MemoryMapTypes::EContentType addType = ObjectTypeToMemoryMapContentType(objectType, true);
   if ( addType == MemoryMapTypes::EContentType::Unknown )
   {
-    // this is ok, this obstacle family is not tracked in the memory map
+    // this is ok, this object type is not tracked in the memory map
     PRINT_CH_INFO("MapComponent", "MapComponent.AddObservableObject.InvalidAddType",
-                  "Family '%s' is not known in memory map",
-                  ObjectFamilyToString(objectFam) );
+                  "ObjectType '%s' is not known in memory map",
+                  ObjectTypeToString(objectType) );
     return;
   }
 
@@ -1073,36 +1028,26 @@ void MapComponent::AddObservableObject(const ObservableObject& object, const Pos
         // add to memory map flattened out wrt origin
         Pose3d newPoseWrtOrigin = newPose.GetWithRespectToRoot();
         Poly2f boundingPoly(object.GetBoundingQuadXY(newPoseWrtOrigin));
-        switch(objectFam)
-        {
-          case ObjectFamily::Charger:
-          {
-            const bool inHabitat = (_robot->GetHabitatDetectorComponent().GetHabitatBeliefState() == HabitatBeliefState::InHabitat);
-            MemoryMapData_ObservableObject data(object, boundingPoly, _robot->GetLastImageTimeStamp());
-
-            if (inHabitat) {
-              const auto region = MakeUnion2f( GetChargerRegion(newPoseWrtOrigin), GetHabitatRegion(newPoseWrtOrigin) );
-              InsertData( region, data );
-            } else {
-              InsertData( GetChargerRegion(newPoseWrtOrigin), data );
-            }            
-            break;
+        if (IsChargerType(objectType, false)) {
+          const bool inHabitat = (_robot->GetHabitatDetectorComponent().GetHabitatBeliefState() == HabitatBeliefState::InHabitat);
+          MemoryMapData_ObservableObject data(object, boundingPoly, _robot->GetLastImageTimeStamp());
+          
+          if (inHabitat) {
+            const auto region = MakeUnion2f( GetChargerRegion(newPoseWrtOrigin), GetHabitatRegion(newPoseWrtOrigin) );
+            InsertData( region, data );
+          } else {
+            InsertData( GetChargerRegion(newPoseWrtOrigin), data );
           }
-          case ObjectFamily::Block:
-          case ObjectFamily::LightCube:
-          case ObjectFamily::CustomObject:
-          {
-            // eventually we will want to store multiple ID's to the node data in the case for multiple blocks
-            // however, we have no mechanism for merging data, so for now we just replace with the new id
-            MemoryMapData_ObservableObject data(object, boundingPoly, _robot->GetLastImageTimeStamp());
-            InsertData(boundingPoly, data);
-            break;
-          }
-          default:
-            PRINT_NAMED_WARNING("MapComponent.AddObservableObject.AddedNonObservableType",
-                                "AddObservableObject was called to add a non observable object");
-            InsertData(boundingPoly, MemoryMapData(addType, _robot->GetLastImageTimeStamp()));
-            break;
+        } else if (IsBlockType(objectType, false) ||
+                   IsCustomType(objectType, false)) {
+          // eventually we will want to store multiple ID's to the node data in the case for multiple blocks
+          // however, we have no mechanism for merging data, so for now we just replace with the new id
+          MemoryMapData_ObservableObject data(object, boundingPoly, _robot->GetLastImageTimeStamp());
+          InsertData(boundingPoly, data);
+        } else {
+          PRINT_NAMED_WARNING("MapComponent.AddObservableObject.AddedNonObservableType",
+                              "AddObservableObject was called to add a non observable object");
+          InsertData(boundingPoly, MemoryMapData(addType, _robot->GetLastImageTimeStamp()));
         }
 
         // store in as a reported pose
@@ -1129,14 +1074,14 @@ void MapComponent::RemoveObservableObject(const ObservableObject& object, PoseOr
 {
   using namespace MemoryMapTypes;
 
-  const ObjectFamily objectFam = object.GetFamily();
-  const MemoryMapTypes::EContentType removalType = ObjectFamilyToMemoryMapContentType(objectFam, false);
+  const auto& objectType = object.GetType();
+  const MemoryMapTypes::EContentType removalType = ObjectTypeToMemoryMapContentType(objectType, false);
   if ( removalType == EContentType::Unknown )
   {
-    // this is not ok, this obstacle family can be added but can't be removed from the map
+    // this is not ok, this object type can be added but can't be removed from the map
     PRINT_NAMED_WARNING("MapComponent.RemoveObservableObject.InvalidRemovalType",
-                        "Family '%s' does not have a removal type in memory map",
-                        ObjectFamilyToString(objectFam) );
+                        "ObjectType '%s' does not have a removal type in memory map",
+                        ObjectTypeToString(objectType) );
     return;
   }
 

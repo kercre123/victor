@@ -274,7 +274,6 @@ VisuallyVerifyNoObjectAtPoseAction::VisuallyVerifyNoObjectAtPoseAction(const Pos
   name += std::to_string((int)_pose.GetTranslation().z()) + ")";
   SetName(name);
   
-  _filter.SetIgnoreFamilies({ObjectFamily::MarkerlessObject});
   // Augment the default filter (object not in unknown pose state) with one that
   // checks that this object was observed in the last frame
   _filter.AddFilterFcn([this](const ObservableObject* object)
