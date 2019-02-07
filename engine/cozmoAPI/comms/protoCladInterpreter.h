@@ -204,9 +204,6 @@ private:
   external_interface::FacialExpression CladFacialExpressionToProto(
       const Anki::Vision::FacialExpression& clad_message);
 
-  external_interface::ObjectFamily CladObjectFamilyToProto(
-      const Anki::Vector::ObjectFamily& clad_message);
-
   external_interface::ObjectType CladObjectTypeToProto(
       const Anki::Vector::ObjectType& clad_message);
 
