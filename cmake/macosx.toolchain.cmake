@@ -13,7 +13,7 @@ list(APPEND MACOSX_COMPILER_FLAGS_RELEASE
   -D_FORTIFY_SOURCE=2)
 
 set(MACOSX TRUE)
-option(WEBOTS "Use Webots for simulator build" ON)
+option(WEBOTS "Use Webots for macOS build" ON)
 
 list(APPEND MACOSX_COMPILER_FLAGS "-DMACOSX")
 if (WEBOTS)

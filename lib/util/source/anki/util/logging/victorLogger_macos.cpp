@@ -1,7 +1,7 @@
 /**
-* File: util/logging/victorLogger_vicos.cpp
+* File: util/logging/victorLogger_macos.cpp
 *
-* Description: Implements ILoggerProvider for Victor
+* Description: Implements ILoggerProvider for MacOSX
 *
 * Copyright: Anki, inc. 2018
 *

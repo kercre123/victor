@@ -95,8 +95,6 @@ target_include_directories(victor_anim
   ${PLATFORM_INCLUDES}
 )
 
-# victor_anim binary only builds on vicos now
-# mac implementation uses (webotsCtrlAnim)
 if (VICOS OR (MACOSX AND NOT WEBOTS))
 
   if (VICOS)

@@ -111,7 +111,7 @@ private:
   // Path of NVStorage data folder
   std::string _kStoragePath;
 
-# if defined(WEBOTS) || defined(MACOSX)
+# if defined(MACOSX)
   void LoadSimData();
 # endif
   
