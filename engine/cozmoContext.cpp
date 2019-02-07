@@ -46,7 +46,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _cozmoExperiments(new CozmoExperiments(this))
   , _perfMetric(new PerfMetricEngine(this))
   , _webService(new WebService::WebService())
-  , _protoCladInterpreter( new ProtoCladInterpreter(this) )
+  , _protoCladInterpreter(new ProtoCladInterpreter(this))
 {
   //_gameLogTransferTask->Init(_transferQueueMgr.get());
 }

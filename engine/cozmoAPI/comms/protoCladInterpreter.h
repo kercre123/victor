@@ -30,10 +30,6 @@ class ProtoCladInterpreter {
 public:
   ProtoCladInterpreter(CozmoContext* cozmo_context) : _context(cozmo_context) {}
 
-  static bool print_warnings; 
-
-  static void warn(const char * msg);
-
   void HandleEvents(const AnkiEvent<external_interface::GatewayWrapper>& event);
 
   bool Redirect(const external_interface::GatewayWrapper& message);
@@ -228,9 +224,6 @@ private:
 
   external_interface::FacialExpression CladFacialExpressionToProto(
       const Anki::Vision::FacialExpression& clad_message);
-
-  external_interface::ObjectFamily CladObjectFamilyToProto(
-      const Anki::Vector::ObjectFamily& clad_message);
 
   external_interface::ObjectType CladObjectTypeToProto(
       const Anki::Vector::ObjectType& clad_message);
