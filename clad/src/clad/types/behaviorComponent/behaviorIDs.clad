@@ -443,6 +443,7 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree
   SingletonICantDoThat,
   SingletonPoweringRobotOff,
+  StayOnChargerUntilCharged,
 
   // victorBehaviorTree/takeAPhoto
   FindFacesPhoto,

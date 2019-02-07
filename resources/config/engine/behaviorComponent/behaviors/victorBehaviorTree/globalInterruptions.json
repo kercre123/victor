@@ -10,9 +10,7 @@
     "TriggerWordDetected",
     "SingletonWallTimeCoordinator",
     "TimerUtilityCoordinator",
-    "DemoTimerUtilityCoordinator",
     "WeatherResponses",
-    "GreetAfterLongTime",
     "TakeAPhotoCoordinator",
     "ReactToRobotShakenSnowGlobe",
     "ReactToTouchPetting",
@@ -21,15 +19,16 @@
     "InterruptingVoiceReactions",
     "ChangeEyeColor",
     "Volume",
-    "ReactToSoundAwake",
     "ReactToUnclaimedIntent",
     "HeldInPalmDispatcher",
     "WhileInAirDispatcher",
     "ReactToPutDown",
     "ReactToDarkness",
-    "DanceToTheBeatCoordinator",
+    "GreetAfterLongTime", // autonomous - I think this should be higher priority than StayOnCharger--the magic moment is worth it (?)
+    "StayOnChargerUntilCharged", // delegate includes ReactToSoundAwake
+    "ReactToSoundAwake",
+    "DanceToTheBeatCoordinator", 
     "ConfirmHabitat",
-    "PRDemoStateMachine",
     "HighLevelAI"
   ]
 }

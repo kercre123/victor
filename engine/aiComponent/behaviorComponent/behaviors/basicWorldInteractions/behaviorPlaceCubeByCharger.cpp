@@ -81,7 +81,6 @@ BehaviorPlaceCubeByCharger::InstanceConfig::InstanceConfig()
 , turnToUserBeforeSuccessReaction(false)
 , turnToUserAfterSuccessReaction(false)
 { 
-  chargerFilter->AddAllowedFamily(ObjectFamily::Charger);
   chargerFilter->AddAllowedType(ObjectType::Charger_Basic);
 
   searchSpacePointEvaluator = std::make_unique<Util::RejectionSamplerHelper<Point2f>>();
@@ -291,7 +290,7 @@ void BehaviorPlaceCubeByCharger::TransitionToTakeCubeToCharger()
 {
   SET_STATE(TakeCubeToCharger);
 
-  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID, ObjectFamily::Charger);
+  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
   if (charger == nullptr) {
     LOG_ERROR("BehaviorPlaceCubeByCharger.TransitionToTakeCubeToCharger.NullCharger",
               "Null charger! Should have run TransitionToTakeCubeToRandomPlacement");

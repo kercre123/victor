@@ -27,8 +27,8 @@ func (s *DistributedControllerTestSuite) SetupSuite() {
 
 	s.simulator = newTestSimulator()
 
-	s.simulator.addSetupAction(0, s.simulator.setupAction)
-	s.simulator.addTearDownAction(0, s.simulator.tearDownAction)
+	s.simulator.addSetupAction("setup", 0, s.simulator.setupAction)
+	s.simulator.addTearDownAction("teardown", 0, s.simulator.tearDownAction)
 	s.simulator.addPeriodicAction("action1", time.Millisecond*50, 0, s.simulator.periodicAction1)
 	s.simulator.addPeriodicAction("action2", time.Millisecond*100, 0, s.simulator.periodicAction2)
 	s.simulator.addPeriodicAction("action3", 0, 0, s.simulator.periodicAction3)

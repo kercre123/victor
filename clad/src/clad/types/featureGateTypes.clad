@@ -27,6 +27,7 @@ enum uint_8 FeatureType {
   HandDetection,
   GazeDirection,
   HowOldAreYou,
+  StayOnChargerUntilCharged,
 
   TestFeature,
   PRDemo,

@@ -106,7 +106,6 @@ BatteryComponent::BatteryComponent()
                                                                     kBatteryVoltsFilterTimeConstant_sec);
 
   // setup block world filter to find chargers:
-  _chargerFilter->AddAllowedFamily(ObjectFamily::Charger);
   _chargerFilter->AddAllowedType(ObjectType::Charger_Basic);
 
   _lastOnChargerContactsPitchAngle.performRescaling(false);

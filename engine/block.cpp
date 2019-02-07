@@ -247,15 +247,9 @@ namespace Vector {
     }
   }
   
-
-  Block::Block(const ObjectType type)
-  : Block(ObjectFamily::Block, type)
-  {
-    
-  }
   
-  Block::Block(const ObjectFamily family, const ObjectType type)
-  : ObservableObject(family, type)
+  Block::Block(const ObjectType type)
+  : ObservableObject(type)
   , _size(LookupBlockInfo(_type).size)
   , _name(LookupBlockInfo(_type).name)
   , _vizHandle(VizManager::INVALID_HANDLE)
@@ -346,20 +340,6 @@ namespace Vector {
     EraseVisualization();
   }
   
-   /*
-  unsigned int Block::get_numBlocks(void)
-  {
-    return Block::numBlocks;
-  }
-  */
- 
-  /*
-  f32 Block::GetDefaultPreDockDistance() const
-  {
-    return Block::PreDockDistance;
-  } 
-   */
-  
   
   // These should match the order in which faces are defined! (See Block constructor)
   const std::array<Point3f, 6> Block::CanonicalDockingPoints = {
@@ -370,29 +350,6 @@ namespace Vector {
       Z_AXIS_3D(),
      -Z_AXIS_3D()}
   };
-  
-  /*
-  void Block::GetPreDockPoses(const float distance_mm,
-                              std::vector<PoseMarkerPair_t>& poseMarkerPairs,
-                              const Vision::Marker::Code withCode) const
-  {
-    Pose3d preDockPose;
-    
-    for(FaceName i_face = FIRST_FACE; i_face < NUM_FACES; ++i_face)
-    {
-      if(withCode == Vision::Marker::ANY_CODE || GetMarker(i_face).GetCode() == withCode) {
-        const Vision::KnownMarker& faceMarker = GetMarker(i_face);
-        const f32 distanceForThisFace = faceMarker.GetPose().GetTranslation().Length() + distance_mm;
-        if(GetPreDockPose(CanonicalDockingPoints[i_face], distanceForThisFace, preDockPose) == true) {
-          poseMarkerPairs.emplace_back(preDockPose, GetMarker(i_face));
-        }
-      }
-    } // for each canonical docking point
-    
-  } // Block::GetDockingPoses()
-  */
-  
-
   
   // prefix operator (++fname)
   Block::FaceName& operator++(Block::FaceName& fname) {
@@ -407,35 +364,6 @@ namespace Vector {
     return newFname;
   }
 
-  
-  /*
-  Block::FaceName GetOppositeFace(Block::FaceName whichFace) {
-    switch(whichFace)
-    {
-      case Block::FRONT_FACE:
-        return Block::BACK_FACE;
-        
-      case Block::BACK_FACE:
-        return Block::FRONT_FACE;
-        
-      case Block::LEFT_FACE:
-        return Block::RIGHT_FACE;
-        
-      case Block::RIGHT_FACE:
-        return Block::LEFT_FACE;
-        
-      case Block::TOP_FACE:
-        return Block::BOTTOM_FACE;
-        
-      case Block::BOTTOM_FACE:
-        return Block::TOP_FACE;
-        
-      default:
-        CORETECH_THROW("Unknown Block::FaceName.");
-    }
-  }
-   */
-  
   Vision::KnownMarker const& Block::GetMarker(FaceName onFace) const
   {
     static const Block::FaceName OppositeFaceLUT[Block::NUM_FACES] = {
@@ -516,24 +444,6 @@ namespace Vector {
     ActionableObject::EraseVisualization();
   }
   
-  /*
-  ObjectType Block::GetTypeByName(const std::string& name)
-  {
-    static const std::map<std::string, Block::Type> BlockNameToTypeMap =
-    {
-#       define BLOCK_DEFINITION_MODE BLOCK_STRING_TO_TYPE_LUT_MODE
-#       include "engine/BlockDefinitions.h"
-    };
-    
-    auto typeIter = BlockNameToTypeMap.find(name);
-    if(typeIter != BlockNameToTypeMap.end()) {
-      return typeIter->second;
-    } else {
-      return Block::Type::INVALID;
-    }
-  } // GetBlockTypeByName()
-  */
-  
 #pragma mark ---  Block_Cube1x1 Implementation ---
   
   //const ObjectType Block_Cube1x1::BlockType = Block::NumTypes++;
@@ -553,24 +463,6 @@ namespace Vector {
     
     return kFullyAmbiguous;
   }
-  
-#pragma mark ---  Block_2x1 Implementation ---
-  
-  //const ObjectType Block_2x1::BlockType = Block::NumTypes++;
-  
-  
-  
-  RotationAmbiguities const& Block_2x1::GetRotationAmbiguities() const
-  {
-    // TODO: We don't have any 2x1 blocks anymore, but these ambiguities probably need revisiting
-    static const RotationAmbiguities kRotationAmbiguities(true, {
-      RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
-      RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
-    });
-    
-    return kRotationAmbiguities;
-  }
-
 
 
 } // namespace Vector

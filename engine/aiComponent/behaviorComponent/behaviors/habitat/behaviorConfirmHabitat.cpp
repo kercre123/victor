@@ -108,7 +108,6 @@ BehaviorConfirmHabitat::BehaviorConfirmHabitat(const Json::Value& config)
   }});
 
   BlockWorldFilter* chargerFilter = new BlockWorldFilter();
-  chargerFilter->AddAllowedFamily(ObjectFamily::Charger);
   chargerFilter->AddAllowedType(ObjectType::Charger_Basic);
   _chargerFilter.reset(chargerFilter);
 

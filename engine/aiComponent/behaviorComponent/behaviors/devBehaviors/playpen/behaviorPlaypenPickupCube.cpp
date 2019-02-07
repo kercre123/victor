@@ -84,7 +84,6 @@ void BehaviorPlaypenPickupCube::TransitionToWaitForCube()
   // Clear all objects from blockworld since the marker for the distance sensor check creates an
   // object that is in the way of the pickup object's predock pose
   BlockWorldFilter filter;
-  filter.SetFilterFcn(nullptr);
   filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
   robot.GetBlockWorld().DeleteLocatedObjects(filter);
 

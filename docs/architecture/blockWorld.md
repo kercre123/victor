@@ -5,7 +5,7 @@
 * Robot component for storing [Observable Objects](observableObjects.md)
 * ["Located" and "Connected"](#locatedVsConnected) objects accessed separately
 * Active objects assumed unique and matched by _type_, Passive objects matched by [_pose_](poses.md)
-* Query for objects by origin, family, type, ID, etc, using a [BlockWorldFilter](#blockWorldFilter)
+* Query for objects by origin, type, ID, etc, using a [BlockWorldFilter](#blockWorldFilter)
 * Handles "[rejiggering](#rejiggering)" of origins when same object observed in different coordinate frames
 
 ---
@@ -52,7 +52,7 @@ Also note that Active Objects may be removed from the located list, but the Robo
 <a name="blockWorldFilter"></a>
 ### Object Organization and BlockWorldFilters
 
-Objects in BlockWorld are stored in nested maps by origin, family, type, and ID. The main object families in use are LightCube, Charger, and CustomObject. Most methods for accessing objects allow you to filter queries based on these properties using a `BlockWorldFilter`. Again owing to the original design for Cozmo, the degree of taxonomy here is probably overkill for Victor, but it also works. (Until it's an actual performance issue, it's probably not worth changing.)
+Objects in BlockWorld are stored in internal containers. Most methods for accessing objects allow you to filter queries based on these properties using a `BlockWorldFilter`. Again owing to the original design for Cozmo, the degree of taxonomy here is probably overkill for Victor, but it also works. (Until it's an actual performance issue, it's probably not worth changing.)
 
 BlockWorld technically supports any number of **passive objects** of the same type, so each observed instance gets a runtime-assigned unique `ObjectID`. BlockWorld attempts to match and merge passive, non-unqiue objects by their pose. Due to robot localization errors and drift, this is inevitably an imperfect process, so one cannot rely completely on ID. 
 

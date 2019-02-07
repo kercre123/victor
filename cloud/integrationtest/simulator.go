@@ -8,17 +8,28 @@ import (
 	"time"
 )
 
-type actionFunc func() error
+type actionFunc func(action action) error
 
 type action struct {
+	id     string
+	taskID int
+
 	quitChan   chan struct{}
 	actionFunc actionFunc
+
+	metrics *actionMetrics
+}
+
+func (a action) reportAction(requestor string, latency time.Duration, err error) {
+	// Note: as we can not send all metrics to Wavefront (this would exceed our quota)
+	//       we typically subsample and therefore also send the latency data to Splunk
+	logLatency(err, a.taskID, requestor, a.id, latency)
+
+	a.metrics.reportActionMetrics(latency, err)
 }
 
 type periodicAction struct {
 	action
-
-	id string
 
 	meanDuration   time.Duration
 	stdDevDuration time.Duration
@@ -44,6 +55,8 @@ const (
 	SimulatorStopping
 	SimulatorStopped
 	SimulatorTerminated
+	SimulatorErrorStarting
+	SimulatorErrorStopping
 )
 
 type simulator struct {
@@ -52,15 +65,26 @@ type simulator struct {
 	state     SimulatorState
 	startTime time.Time
 
+	robotID   int
+	taskID    int
+	requestor string
+
 	setupAction    *oneShotAction
 	tearDownAction *oneShotAction
 
+	metricsEnabled    bool
+	actionRegistry    *actionMetricRegistry
 	periodicActionMap map[string]*periodicAction
 }
 
-func newSimulator() *simulator {
+func newSimulator(actionRegistry *actionMetricRegistry, options *options, instanceOptions *instanceOptions) *simulator {
 	return &simulator{
 		state:             SimulatorInitialized,
+		requestor:         instanceOptions.testUserName,
+		robotID:           instanceOptions.robotID,
+		taskID:            instanceOptions.taskID,
+		metricsEnabled:    instanceOptions.taskID < *options.reportingTasks,
+		actionRegistry:    actionRegistry,
 		periodicActionMap: make(map[string]*periodicAction),
 	}
 }
@@ -121,7 +145,13 @@ func (s *simulator) start() error {
 			case <-time.After(s.setupAction.delay):
 				s.mutex.Lock()
 
-				s.setupAction.actionFunc()
+				start := time.Now()
+				err := s.setupAction.actionFunc(s.setupAction.action)
+				s.setupAction.reportAction(s.requestor, time.Since(start), err)
+				if err != nil {
+					s.state = SimulatorErrorStarting
+					return
+				}
 
 				for _, action := range s.periodicActionMap {
 					s.startPeriodicAction(action)
@@ -173,7 +203,13 @@ func (s *simulator) stop() error {
 					s.stopPeriodicAction(action)
 				}
 
-				s.tearDownAction.actionFunc()
+				start := time.Now()
+				err := s.tearDownAction.actionFunc(s.tearDownAction.action)
+				s.tearDownAction.reportAction(s.requestor, time.Since(start), err)
+				if err != nil {
+					s.state = SimulatorErrorStopping
+					return
+				}
 
 				s.state = SimulatorStopped
 
@@ -218,33 +254,62 @@ func (s *simulator) quit() error {
 	return nil
 }
 
-func (s *simulator) addSetupAction(delay time.Duration, actionFunc actionFunc) {
+func (s *simulator) addSetupAction(actionID string, delay time.Duration, actionFunc actionFunc) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
+
+	actionMetrics := s.actionRegistry.getActionMetrics(actionID)
+	if actionMetrics == nil {
+		actionMetrics = s.actionRegistry.registerActionMetrics(actionID, fmt.Sprintf("action.setup.%s", actionID), s.metricsEnabled)
+	}
 
 	s.setupAction = &oneShotAction{
-		action: action{actionFunc: actionFunc},
-		delay:  delay,
+		action: action{
+			id:         actionID,
+			taskID:     s.taskID,
+			actionFunc: actionFunc,
+			metrics:    actionMetrics,
+		},
+		delay: delay,
 	}
 }
 
-func (s *simulator) addTearDownAction(delay time.Duration, actionFunc actionFunc) {
+func (s *simulator) addTearDownAction(actionID string, delay time.Duration, actionFunc actionFunc) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
+
+	actionMetrics := s.actionRegistry.getActionMetrics(actionID)
+	if actionMetrics == nil {
+		actionMetrics = s.actionRegistry.registerActionMetrics(actionID, fmt.Sprintf("action.teardown.%s", actionID), s.metricsEnabled)
+	}
 
 	s.tearDownAction = &oneShotAction{
-		action: action{actionFunc: actionFunc},
-		delay:  delay,
+		action: action{
+			id:         actionID,
+			taskID:     s.taskID,
+			actionFunc: actionFunc,
+			metrics:    actionMetrics,
+		},
+		delay: delay,
 	}
 }
 
-func (s *simulator) addPeriodicAction(id string, meanDuration time.Duration, stdDevDuration time.Duration, actionFunc actionFunc) {
+func (s *simulator) addPeriodicAction(actionID string, meanDuration time.Duration, stdDevDuration time.Duration, actionFunc actionFunc) {
 	s.mutex.Lock()
 	defer s.mutex.Unlock()
 
-	s.periodicActionMap[id] = &periodicAction{
-		action:         action{actionFunc: actionFunc},
-		id:             id,
+	actionMetrics := s.actionRegistry.getActionMetrics(actionID)
+	if actionMetrics == nil {
+		actionMetrics = s.actionRegistry.registerActionMetrics(actionID, fmt.Sprintf("action.periodic.%s", actionID), s.metricsEnabled)
+	}
+
+	s.periodicActionMap[actionID] = &periodicAction{
+		action: action{
+			id:         actionID,
+			taskID:     s.taskID,
+			actionFunc: actionFunc,
+			metrics:    actionMetrics,
+		},
 		meanDuration:   meanDuration,
 		stdDevDuration: stdDevDuration,
 	}
@@ -279,8 +344,8 @@ func (s *simulator) startPeriodicAction(periodicAction *periodicAction) {
 			select {
 			case <-time.After(calculateDuration(periodicAction, actionDuration)):
 				start := time.Now()
-				periodicAction.actionFunc()
-				actionDuration = time.Since(start)
+				err := periodicAction.actionFunc(periodicAction.action)
+				periodicAction.reportAction(s.requestor, time.Since(start), err)
 			case <-periodicAction.quitChan:
 				return
 			}

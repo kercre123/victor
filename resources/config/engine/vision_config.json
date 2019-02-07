@@ -14,11 +14,6 @@
   "ColorImages" : true,        // Whether color images are enabled on startup (can still be toggled later)
 
   "FaceAlbum" : "default",     
-  
-  "FaceDetection" :
-  {
-    "DetectionMode": "video"   // "video" or "singleImage"
-  },
 
   "FaceRecognition" :
   {

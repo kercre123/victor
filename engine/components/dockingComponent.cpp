@@ -285,9 +285,7 @@ bool DockingComponent::CanPickUpObjectFromGround(const ObservableObject& objectT
 
 bool DockingComponent::CanInteractWithObjectHelper(const ObservableObject& object, Pose3d& relPose) const
 {
-  // TODO:(bn) maybe there should be some central logic for which object families are valid here
-  if( object.GetFamily() != ObjectFamily::Block &&
-     object.GetFamily() != ObjectFamily::LightCube ) {
+  if (!IsBlockType(object.GetType(), false)) {
     return false;
   }
   

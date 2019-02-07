@@ -44,7 +44,7 @@ ConditionObjectKnown::ConditionObjectKnown(const Json::Value& config)
                  "Empty type array" );
     for( const auto& type : typeArray ) {
       const auto& objectTypeStr = type.asString();
-      ObjectType targetType =  ObjectType::InvalidObject;
+      ObjectType targetType =  ObjectType::UnknownObject;
       ANKI_VERIFY( ObjectTypeFromString( objectTypeStr, targetType ),
                    "ConditionObjectKnown.Ctor.UnknownObjectType",
                    "Object type '%s' is not valid",

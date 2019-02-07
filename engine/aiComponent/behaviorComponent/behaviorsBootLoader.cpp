@@ -34,7 +34,6 @@
 #include "util/console/consoleInterface.h"
 #include "util/entityComponent/dependencyManagedEntity.h"
 #include "util/fileUtils/fileUtils.h"
-#include "util/console/consoleInterface.h"
 #include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 

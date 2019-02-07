@@ -283,7 +283,7 @@ void BehaviorReactToCubeTap::TransitionToFindCube()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToCubeTap::IsCubeLocated() const
 {
-  const ObservableObject* locatedCube = GetBEI().GetBlockWorld().GetLocatedObjectByID( _iVars.targetCube.id, ObjectFamily::LightCube );
+  const ObservableObject* locatedCube = GetBEI().GetBlockWorld().GetLocatedObjectByID( _iVars.targetCube.id );
   return ( nullptr != locatedCube );
 }
 

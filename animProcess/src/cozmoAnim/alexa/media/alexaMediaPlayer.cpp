@@ -699,7 +699,7 @@ bool AlexaMediaPlayer::play( SourceId id )
       _dataValidity = DataValidity::Invalid;
       using namespace AudioEngine;
       using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-      _playableClip = ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__En_Us_Avs_System_Prompt_Error_Cannot_Play_Song );
+      _playableClip = ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Avs_System_Prompt_Error_Cannot_Play_Song );
       SetState( State::ClipPlayable );
       // to be determined is whether the sdk will do something unexpected if we close the readers
       // below when switching to playing a clip.

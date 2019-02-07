@@ -17,13 +17,12 @@
 
 #include "coretech/vision/engine/cameraCalibration.h"
 #include "coretech/vision/engine/compressedImage.h"
+#include "coretech/vision/engine/debugImageList.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/visionMarker.h"
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "coretech/common/shared/types.h"
-
-#include "engine/debugImageList.h"
 
 #include <set>
 
@@ -47,14 +46,14 @@ public:
   // Computes camera calibration using stored images of checkerboard target
   // Outputs calibrations and debugImages via reference and returns whether or not calibration succeeded
   Result ComputeCalibrationFromCheckerboard(std::list<Vision::CameraCalibration>& calibration_out,
-                                            DebugImageList<Vision::CompressedImage>& debugImages_out);
+                                            Vision::DebugImageList<Vision::CompressedImage>& debugImages_out);
   
   // Computes camera calibration using observed markers on either the INVERTED_BOX or QBERT target
   // Outputs calibrations and debugImages via reference and returns whether or not calibration succeeded
   Result ComputeCalibrationFromSingleTarget(CalibTargetType targetType,
                                             const std::list<Vision::ObservedMarker>& observedMarkers,
                                             std::list<Vision::CameraCalibration>& calibration_out,
-                                            DebugImageList<Vision::CompressedImage>& debugImages_out);
+                                            Vision::DebugImageList<Vision::CompressedImage>& debugImages_out);
   
   // Add an image to be stored for calibration along with a region of interest
   Result AddCalibrationImage(const Vision::Image& calibImg, const Anki::Rectangle<s32>& targetROI);

@@ -46,9 +46,7 @@ public:
     // check it currently doesn't exist in BlockWorld
     {
       BlockWorldFilter filter;
-      filter.SetFilterFcn(nullptr); // TODO Should not be needed by default
       filter.SetAllowedTypes( {objectPtr->GetType()} );
-      filter.SetAllowedFamilies( {objectPtr->GetFamily()} );
       ObservableObject* sameBlock = blockWorld.FindLocatedMatchingObject(filter);
       DEV_ASSERT(nullptr == sameBlock, "CreateObjectLocatedAtOrigin.TypeAlreadyInUse");
     }

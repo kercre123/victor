@@ -111,7 +111,6 @@ BehaviorGoHome::BehaviorGoHome(const Json::Value& config)
   _iConfig = InstanceConfig(config, debugName);
   
   // Set up block world filter for finding Home object
-  _iConfig.homeFilter->AddAllowedFamily(ObjectFamily::Charger);
   _iConfig.homeFilter->AddAllowedType(ObjectType::Charger_Basic);
 }
   
@@ -257,8 +256,7 @@ void BehaviorGoHome::TransitionToObserveCharger()
   DelegateIfInControl(turnToAction, [this](){
     // If we have not observed the charger recently or we are too far away, then drive to a pose from which to try and
     // observe the charger and confirm its pose.
-    const auto* charger = dynamic_cast<const Charger*>(GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID,
-                                                                                                     ObjectFamily::Charger));
+    const auto* charger = dynamic_cast<const Charger*>(GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID));
     if (charger == nullptr) {
       PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToObserveCharger", "Null charger!");
       return;
@@ -318,7 +316,7 @@ void BehaviorGoHome::TransitionToPlacingCubeOnGround()
 {
   LOG_FUNCTION_NAME();
   
-  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID, ObjectFamily::Charger);
+  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
   if (charger == nullptr) {
     PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToPlacingCubeOnGround", "Null charger!");
     return;
@@ -335,7 +333,7 @@ void BehaviorGoHome::TransitionToPlacingCubeOnGround()
                           // Still carrying an object. Simply turn away from the charger
                           // and place it on the ground right there. This will hopefully
                           // get it out of the way.
-                          const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID, ObjectFamily::Charger);
+                          const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
                           if (charger == nullptr) {
                             PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToPlacingCubeOnGroundCallback.NullCharger", "Null charger!");
                             return;
@@ -359,7 +357,7 @@ void BehaviorGoHome::TransitionToDriveToCharger()
 {
   LOG_FUNCTION_NAME();
   
-  const auto* charger = dynamic_cast<const Charger*>(GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID, ObjectFamily::Charger));
+  const auto* charger = dynamic_cast<const Charger*>(GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID));
   if (charger == nullptr) {
     PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToDriveToCharger.NullCharger", "Null charger!");
     return;
@@ -429,7 +427,7 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
   compoundAction->AddAction(new WaitForImagesAction(kNumAdditionalImagesToWaitFor, VisionMode::DetectingMarkers));
 
   auto checkPoseFunc = [this]() -> bool {
-    const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID, ObjectFamily::Charger);
+    const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
     if (charger == nullptr) {
       return false;
     }
@@ -600,7 +598,7 @@ void BehaviorGoHome::ActionFailure(bool removeChargerFromBlockWorld)
   // how recently we have seen the charger. If we haven't seen the charger
   // in a while, just remove it from the world since it's possible that we
   // really don't know where it is. 
-  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID, ObjectFamily::Charger);
+  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
   const auto nowTimestamp = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
   const TimeStamp_t kMaxObservedAge_ms = Util::SecToMilliSec(120.f);
   if ((charger != nullptr) &&
@@ -657,7 +655,7 @@ void BehaviorGoHome::ClearNavMapUpToCharger()
 {
   // Take the center point on the line between the robot and the charger,
   // and clear a 'circular' area of radius slightly larger than the line.
-  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID, ObjectFamily::Charger);
+  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
   if (charger == nullptr) {
     PRINT_NAMED_ERROR("BehaviorGoHome.ClearNavMapUpToCharger.NullCharger", "Null charger!");
     return;
