@@ -415,6 +415,7 @@ void BehaviorFindHome::TransitionToRandomDrive()
     
     DASMSG(find_home_result, "find_home.result", "Result of the FindHome behavior");
     DASMSG_SET(i1, 0, "Success or failure to get onto the charger (1 for success, 0 for failure)");
+    DASMSG_SEND();
     return;
   }
   

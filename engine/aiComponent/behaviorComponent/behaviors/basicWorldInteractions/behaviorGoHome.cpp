@@ -545,8 +545,8 @@ void BehaviorGoHome::TransitionToTurn()
                           // Either out of retries or we got another failure type
                           Json::Value failReason;
                           failReason[kFailureReasonNameKey] = "TurnAlignToChargerFailure";
-                          failReason[kFailureReasonInt2]    = _dVars.turnToDockRetryCount;
-                          failReason[kFailureReasonInt3]    = _iConfig.turnToDockRetryCount;
+                          failReason[kFailureReasonInt2Key] = _dVars.turnToDockRetryCount;
+                          failReason[kFailureReasonInt3Key] = _iConfig.turnToDockRetryCount;
                           ActionFailure(false, failReason);
                         }
                       });
