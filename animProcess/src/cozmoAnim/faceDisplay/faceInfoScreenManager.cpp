@@ -951,10 +951,15 @@ void FaceInfoScreenManager::DrawMain()
      << Factory::GetEMR()->fields.ESN;
   const std::string serialNo = "ESN: "  + ss.str();
 
+
   auto *osstate = OSState::getInstance();
+
+  const std::string hwVer    = "HW: "   + std::to_string(Factory::GetEMR()->fields.HW_VER);
+
   const std::string osVer    = "OS: "   + osstate->GetOSBuildVersion() +
                                           (FACTORY_TEST ? " (V4)" : "") +
                                           (osstate->IsInRecoveryMode() ? " U" : "");
+
   const std::string ssid     = "SSID: " + osstate->GetSSID(true);
 
   std::string ip             = osstate->GetIPAddress();
@@ -966,8 +971,9 @@ void FaceInfoScreenManager::DrawMain()
   const bool hasInternet = HasInternet();
 #endif  
   
-
-  ColoredTextLines lines = { {serialNo}, 
+  // ESN/serialNo and the HW version are drawn on the same line with serialNo default left aligned and
+  // HW version right aligned.
+  ColoredTextLines lines = { { {serialNo}, {hwVer, NamedColors::WHITE, false} },
                              {osVer}, 
                              {ssid}, 
 #if FACTORY_TEST
@@ -1177,12 +1183,12 @@ void FaceInfoScreenManager::DrawCustomText()
 
 // Draws each element of the textVec on a separate line (spacing determined by textSpacing_pix)
 // in textColor with a background of bgColor.
-void FaceInfoScreenManager::DrawTextOnScreen(const std::vector<std::string>& textVec, 
-                                    const ColorRGBA& textColor,
-                                    const ColorRGBA& bgColor,
-                                    const Point2f& loc,
-                                    u32 textSpacing_pix,
-                                    f32 textScale)
+void FaceInfoScreenManager::DrawTextOnScreen(const std::vector<std::string>& textVec,
+                                             const ColorRGBA& textColor,
+                                             const ColorRGBA& bgColor,
+                                             const Point2f& loc,
+                                             u32 textSpacing_pix,
+                                             f32 textScale)
 {
   _scratchDrawingImg->FillWith( {bgColor.r(), bgColor.g(), bgColor.b()} );
 
@@ -1219,18 +1225,32 @@ void FaceInfoScreenManager::DrawTextOnScreen(const ColoredTextLines& lines,
   f32 textLocY = loc.y();
   for(const auto& line : lines) 
   {
-    f32 textLocX = loc.x();
+    f32 textOffsetX = loc.x();
+    f32 textOffsetXRight = loc.x();
     for(const auto& coloredText : line)
     {
-      _scratchDrawingImg->DrawText(
-        {textLocX, textLocY},
-        coloredText.text.c_str(),
-        coloredText.color,
-        textScale,
-        textLineThickness);
+      f32 textLocX = textOffsetX;
+      
+      auto bbox = Vision::Image::GetTextSize(coloredText.text.c_str(), textScale, textLineThickness);
+      if(coloredText.leftAlign)
+      {
+        textOffsetX += bbox.x();
+      }
+      else
+      {
+        // Right align text, need to account for the width of the text as DrawText expects the bottom left corner
+        // location
+        textLocX = FACE_DISPLAY_WIDTH - bbox.x() - textOffsetXRight;
+        textOffsetXRight += bbox.x();
+      }
+      
+      _scratchDrawingImg->DrawText({textLocX, textLocY},
+                                   coloredText.text.c_str(),
+                                   coloredText.color,
+                                   textScale,
+                                   textLineThickness);
 
-      auto bbox = _scratchDrawingImg->GetTextSize(coloredText.text.c_str(), textScale, textLineThickness);
-      textLocX += bbox.x();
+
     }
     textLocY += textSpacing_pix;
   }
