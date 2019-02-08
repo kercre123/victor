@@ -1,9 +1,17 @@
 body {
-	font-family: Arial, Helvetica, sans-serif;
+    font-family: Arial, Helvetica, sans-serif;
 }
 
 .perfmetricbutton {
   width:150px;
+}
+
+.perfmetricbutton2 {
+  width:100px;
+}
+
+.perfmetricinput {
+  width:40px;
 }
 
 .consoleoutput {
@@ -13,9 +21,9 @@ body {
 }
 
 table {
-	font-size: 1em;
+    font-size: 1em;
 }
 
 .ui-draggable, .ui-droppable {
-	background-position: top;
+    background-position: top;
 }
