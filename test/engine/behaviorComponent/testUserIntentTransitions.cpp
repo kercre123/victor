@@ -98,11 +98,12 @@ TEST_INTENT(UserIntentsTransitions, LookAtMe, "imperative_lookatme")
   EXPECT_TRUE(res);
 }
 
-TEST_INTENT(UserIntentsTransitions, LookOverThere, "imperative_lookoverthere")
-{
-  const bool res = IntentHelper( UserIntent::Createimperative_lookoverthere({}), BehaviorID::LookOverThereVoiceCommand, true );
-  EXPECT_TRUE(res);
-}
+// commented out until the 'GazeDirection' feature is enabled in resources/config/features.json
+// TEST_INTENT(UserIntentsTransitions, LookOverThere, "imperative_lookoverthere")
+// {
+//   const bool res = IntentHelper( UserIntent::Createimperative_lookoverthere({}), BehaviorID::LookOverThereVoiceCommand, true );
+//   EXPECT_TRUE(res);
+// }
   
 TEST_INTENT(UserIntentsTransitions, WhatsMyName, "names_ask")
 {
