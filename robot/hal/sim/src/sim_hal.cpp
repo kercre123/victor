@@ -893,6 +893,11 @@ namespace Anki {
       return 40;
     }
 
+    void HAL::EnableBatteryCharging(bool enable) 
+    {
+    }
+
+
     f32 HAL::ChargerGetVoltage()
     {
       if (BatteryIsOnCharger()) {
