@@ -189,13 +189,16 @@
       "feature_gate": "KnowledgeGraph"
     },
     {
-      "user_intent": "blackjack_hit"
+      "user_intent": "blackjack_hit",
+      "cloud_intent": "intent_blackjack_hit"
     },
     {
-      "user_intent": "blackjack_stand"
+      "user_intent": "blackjack_stand",
+      "cloud_intent": "intent_blackjack_stand"
     },
     {
-      "user_intent": "blackjack_playagain"
+      "user_intent": "blackjack_playagain",
+      "cloud_intent": "intent_blackjack_playagain"
     },
     {
       "user_intent": "imperative_lookatme",
