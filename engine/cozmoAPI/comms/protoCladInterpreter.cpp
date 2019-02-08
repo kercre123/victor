@@ -636,6 +636,14 @@ external_interface::FacialExpression ProtoCladInterpreter::CladFacialExpressionT
 }
 
 //TODO: templatize the ENUM converters do DRY out the code:
+external_interface::ObjectFamily ProtoCladInterpreter::CladObjectFamilyToProto(const ObjectFamily& clad_message) {
+
+  // Admittedly, this is nasty, but 1) it's the way that it's being done on the gateway, already, and
+  // 2) it ensures that adding a new expression doesn't require that you alter this interpreter.
+  return external_interface::ObjectFamily((int)clad_message + 1);
+}
+
+//TODO: templatize the ENUM converters do DRY out the code:
 external_interface::ObjectType ProtoCladInterpreter::CladObjectTypeToProto(const ObjectType& clad_message) {
 
   // Admittedly, this is nasty, but 1) it's the way that it's being done on the gateway, already, and
@@ -733,6 +741,7 @@ void ProtoCladInterpreter::CladRobotObservedObjectToProto(
   external_interface::RobotObservedObject* robot_observed_object = new external_interface::RobotObservedObject;
 
   robot_observed_object->set_timestamp(clad_message.timestamp);
+  robot_observed_object->set_object_family(CladObjectFamilyToProto(clad_message.objectFamily));
   robot_observed_object->set_object_type(CladObjectTypeToProto(clad_message.objectType));
   robot_observed_object->set_object_id(clad_message.objectID);
   robot_observed_object->set_allocated_img_rect(CladCladRectToProto(clad_message.img_rect));

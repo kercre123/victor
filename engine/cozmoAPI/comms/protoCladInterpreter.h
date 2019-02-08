@@ -55,6 +55,7 @@ public:
       const Anki::Vector::ExternalInterface::RobotChangedObservedFaceID& clad_message,
       external_interface::GatewayWrapper& proto_message);
 
+
   void CladRobotObservedObjectToProto(
       const Anki::Vector::ExternalInterface::RobotObservedObject& clad_message,
       external_interface::GatewayWrapper& proto_message);
@@ -224,6 +225,9 @@ private:
 
   external_interface::FacialExpression CladFacialExpressionToProto(
       const Anki::Vision::FacialExpression& clad_message);
+
+  external_interface::ObjectFamily CladObjectFamilyToProto(
+      const Anki::Vector::ObjectFamily& clad_message);
 
   external_interface::ObjectType CladObjectTypeToProto(
       const Anki::Vector::ObjectType& clad_message);
