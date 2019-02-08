@@ -201,7 +201,6 @@ void BehaviorFindHome::InitBehavior()
     std::make_shared<RejectIfCollidesWithMemoryMap>(kTypesToBlockSampling)
   );
 
-  _iConfig.chargerSeenRecentlyCondition->Init(GetBEI());
   if(_iConfig.chargerSeenRecentlyCondition != nullptr){
     _iConfig.chargerSeenRecentlyCondition->Init(GetBEI());
   }
