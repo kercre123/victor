@@ -1090,9 +1090,9 @@ i = 0;
           rotSpeed_ = headRot * ukf_.GetRotationSpeed(); // RotationSpeed is a point, not a rotation, so post-multiply
 
           // NOTE: Maybe account for when the robot is upside down here? we use projection vector projects to get 
-          //       smooth transiitions for roll/pitch/yaw when moving, but these do not result in proper Euler or
-          //       Tait-Bryan angles. If we use either of those, we can get gymbal lock, and accidentally trigger
-          //       a delocalization event
+          //   smooth transitions for roll/pitch/yaw when moving, but these do not result in proper Euler or
+          //   Tait-Bryan angles. If we use either of those, we can get gymbal lock, and accidentally trigger
+          //   a delocalization event
           const auto robotX = bodyRot * X_AXIS_3D();
           yaw_   = atan2f( robotX.y(), robotX.x() );
           pitch_ = asinf( (bodyRot * X_AXIS_3D()).z() );
