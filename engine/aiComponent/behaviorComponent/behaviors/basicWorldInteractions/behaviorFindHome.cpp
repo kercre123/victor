@@ -255,11 +255,10 @@ void BehaviorFindHome::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::OnBehaviorDeactivated()
 {
-  if(_iConfig.chargerSeenRecentlyCondition->AreConditionsMet(GetBEI())) {
-    DASMSG(find_home_result, "find_home.result", "Result of FindHome behavior");
-    DASMSG_SET(i1, 1, "Success or failure to get onto the charger (1 for success, 0 for failure)");
-    DASMSG_SEND();
-  }
+  const bool success = _iConfig.chargerSeenRecentlyCondition->AreConditionsMet(GetBEI());
+  DASMSG(find_home_result, "find_home.result", "Result of FindHome behavior");
+  DASMSG_SET(i1, success, "Success or failure to get onto the charger (1 for success, 0 for failure)");
+  DASMSG_SEND();
 
   if(_iConfig.chargerSeenRecentlyCondition != nullptr) {
     _iConfig.chargerSeenRecentlyCondition->SetActive(GetBEI(), false);
@@ -408,10 +407,6 @@ void BehaviorFindHome::TransitionToRandomDrive()
     // Clear our recent searches so we can start fresh next time
     _dVars.persistent.searchedLocations.clear();
     CancelSelf();
-    
-    DASMSG(find_home_result, "find_home.result", "Result of the FindHome behavior");
-    DASMSG_SET(i1, 0, "Success or failure to get onto the charger (1 for success, 0 for failure)");
-    DASMSG_SEND();
     return;
   }
   
