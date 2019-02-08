@@ -245,6 +245,8 @@ void BehaviorFindHome::OnBehaviorDeactivated()
   const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
   const ObservableObject* charger = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, chargerFilter);
 
+  // NOTE: The charger is considered not seen, if it was deleted from Blockworld (i.e. the charger object is null).
+  // This can happen under certain situations when getting a "negative-observation" (not seeing it when it was expected).
   bool chargerSeen = false;
   if(charger != nullptr) {
     TimeStamp_t chrgObsTime = charger->GetLastObservedTime();
