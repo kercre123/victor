@@ -140,6 +140,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/proxBehaviors/behaviorProxGetToDistance.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAskForHelp.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorCheckForAndReactToSalientPoint.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToBatteryTooHotToCharge.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCubeTap.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToDarkness.h"
@@ -448,7 +449,7 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       newBehavior = ICozmoBehaviorPtr(new BehaviorCoordinateInHabitat(config));
       break;
     }
-      
+    
     case BehaviorClass::CoordinateWhileHeldInPalm:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorCoordinateWhileHeldInPalm(config));
@@ -986,6 +987,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::CheckForAndReactToSalientPoint:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorCheckForAndReactToSalientPoint(config));
+      break;
+    }
+    
+    case BehaviorClass::ReactToBatteryTooHotToCharge:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToBatteryTooHotToCharge(config));
       break;
     }
     

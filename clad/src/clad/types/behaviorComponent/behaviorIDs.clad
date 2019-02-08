@@ -189,7 +189,17 @@ enum uint_16 BehaviorID {
   RequestToGoHome,
   WiggleBackOntoChargerFromPlatform,
 
+  // victorBehaviorTree/highLevelDelegates/heldInPalm
+  ReactToJoltInPalm,
+  HeldInPalmDispatcher,
+  HeldInPalmResponses,
+  InitialHeldInPalmReaction,
+  ReactToPalmTilt,
+  ReactToPickupFromPalm,
+  ReactToPutDownFromPalm,
+
   // victorBehaviorTree/highLevelDelegates
+  InitialPickupAnimation,
   InteractWithFaces,
 
   // victorBehaviorTree/highLevelDelegates/investigateCube
@@ -317,17 +327,7 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/highLevelDelegates/voiceCommands
   WhatsMyNameVoiceCommand,
 
-  // victorBehaviorTree/highLevelDelegates/whileInAir/heldInPalm
-  HeldInPalmDispatcher,
-  HeldInPalmResponses,
-  InitialHeldInPalmReaction,
-  ReactToJoltInPalm,
-  ReactToPalmTilt,
-  ReactToPickupFromPalm,
-  ReactToPutDownFromPalm,
-
-  // victorBehaviorTree/highLevelDelegates/whileInAir
-  InitialPickupAnimation,
+  // victorBehaviorTree/highLevelDelegates
   WhileInAirDispatcher,
   WhileInAirResponses,
   WhileInAirResponsesPRDemo,
@@ -401,6 +401,7 @@ enum uint_16 BehaviorID {
   ReactToAbuse,
   ReactToAffirmative,
   ReactToApology,
+  ReactToBatteryTooHotToCharge,
   ReactToCliff,
   ReactToCliffDuringFetch,
   ReactToDarkness,
