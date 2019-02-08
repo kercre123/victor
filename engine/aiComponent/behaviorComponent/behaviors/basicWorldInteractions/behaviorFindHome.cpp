@@ -238,6 +238,26 @@ void BehaviorFindHome::OnBehaviorActivated()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindHome::OnBehaviorDeactivated()
+{
+  BlockWorldFilter chargerFilter;
+  chargerFilter.AddAllowedType(ObjectType::Charger_Basic);
+  const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
+  const ObservableObject* charger = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, chargerFilter);
+
+  bool chargerSeen = false;
+  if(charger != nullptr) {
+    TimeStamp_t chrgObsTime = charger->GetLastObservedTime();
+    TimeSTamp_t now = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
+    bool chargerSeen = (now-chrgObsTime) < kMaxAgeForChargerSeenRecently;
+  }
+
+  DASMSG(find_home_result, "find_home.result", "Whether the FindHome behavior succeeded in locating the object");
+  DASMSG_SET(i1, chargerSeen, "Success/failure on locating the charger. 1=success 0=failuire");
+  DASMSG_SEND();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::TransitionToStartSearch()
 {
   // Make sure we haven't already searched this location recently

@@ -50,6 +50,7 @@ protected:
   virtual void InitBehavior() override;
   virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
   virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
 
 private:
   struct InstanceConfig {
