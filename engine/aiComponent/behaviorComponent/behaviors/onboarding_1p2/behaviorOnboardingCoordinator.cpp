@@ -343,9 +343,13 @@ void BehaviorOnboardingCoordinator::HandleOnboardingMessageFromApp(const AppToEn
       // lost connection, just let the emulation behavior finish up onboarding naturally on a 60 sec timeout
       // or the first voice command
       if( !_dVars.emulate1p0Onboarding || !_dVars.started1p0WakeUp ){
-        const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-        const bool appDisconnectTimeOutSet = _iConfig.appDisconnectTimeout_s > 0.0f;
-        _dVars.appDisconnectExitTime_s = appDisconnectTimeOutSet ? (currTime_s + _iConfig.appDisconnectTimeout_s) : 0.0f;
+        // Don't timeout based on AppDisconnected messages if we haven't yet started onboarding
+        if( _dVars.onboardingStarted ){
+          const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          const bool appDisconnectTimeOutSet = _iConfig.appDisconnectTimeout_s > 0.0f;
+          _dVars.appDisconnectExitTime_s = appDisconnectTimeOutSet ?
+            (currTime_s + _iConfig.appDisconnectTimeout_s) : 0.0f;
+        }
       }
       // This particular message should NOT reset appDisconnect params; return early
       return;
