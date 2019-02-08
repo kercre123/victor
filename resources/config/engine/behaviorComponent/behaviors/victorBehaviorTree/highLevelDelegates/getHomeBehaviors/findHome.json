@@ -15,7 +15,7 @@
   },
   
   // Behavior should cancel itself if we see a charger while running
-  "chargerSeenRecentlyCondition" : {
+  "wantsToCancelSelfCondition" : {
     "conditionType" : "ObjectKnown",
     "objectTypes" : [ "Charger_Basic" ],
     "maxAge_ms" : 5000

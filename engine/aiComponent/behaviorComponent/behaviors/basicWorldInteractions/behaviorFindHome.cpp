@@ -59,7 +59,6 @@ namespace {
   const char* kMaxDrivingDistKey                 = "maxDrivingDist_mm";
   const char* kUseExposureCyclingKey             = "useExposureCycling";
   const char* kNumImagesToWaitForKey             = "numImagesToWaitFor";
-  const char* kChargerSeenRecentlyCondition      = "chargerSeenRecentlyCondition";
 
   const float kMinCliffPenaltyDist_mm = 100.0f;
   const float kMaxCliffPenaltyDist_mm = 600.0f;
@@ -113,8 +112,6 @@ BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, cons
   
   // Set up block world filter for finding charger object
   homeFilter->AddAllowedType(ObjectType::Charger_Basic);
-
-  chargerSeenRecentlyCondition.reset();
 }
 
 
@@ -126,8 +123,6 @@ BehaviorFindHome::BehaviorFindHome(const Json::Value& config)
   SubscribeToTags({
     EngineToGameTag::RobotOffTreadsStateChanged,
   });
-
-  _iConfig.chargerSeenRecentlyCondition = BEIConditionFactory::CreateBEICondition(config[kChargerSeenRecentlyCondition], GetDebugLabel());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -166,7 +161,6 @@ void BehaviorFindHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) 
     kMaxDrivingDistKey,
     kUseExposureCyclingKey,
     kNumImagesToWaitForKey,
-    kChargerSeenRecentlyCondition,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 } 
@@ -200,10 +194,6 @@ void BehaviorFindHome::InitBehavior()
   _iConfig.condHandleCollisions = _iConfig.searchSpacePolyEvaluator->AddCondition(
     std::make_shared<RejectIfCollidesWithMemoryMap>(kTypesToBlockSampling)
   );
-
-  if(_iConfig.chargerSeenRecentlyCondition != nullptr){
-    _iConfig.chargerSeenRecentlyCondition->Init(GetBEI());
-  }
 }
 
 
@@ -244,31 +234,6 @@ void BehaviorFindHome::OnBehaviorActivated()
                         &BehaviorFindHome::TransitionToStartSearch);
   } else {
     TransitionToStartSearch();
-  }
-
-  if(_iConfig.chargerSeenRecentlyCondition != nullptr) {
-    _iConfig.chargerSeenRecentlyCondition->SetActive(GetBEI(), true);
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindHome::OnBehaviorDeactivated()
-{
-  const bool success = _iConfig.chargerSeenRecentlyCondition->AreConditionsMet(GetBEI());
-  DASMSG(find_home_result, "find_home.result", "Result of FindHome behavior");
-  DASMSG_SET(i1, success, "Success or failure to get onto the charger (1 for success, 0 for failure)");
-  DASMSG_SEND();
-
-  if(_iConfig.chargerSeenRecentlyCondition != nullptr) {
-    _iConfig.chargerSeenRecentlyCondition->SetActive(GetBEI(), false);
-  }
-}
-
-void BehaviorFindHome::BehaviorUpdate()
-{
-  if(IsActivated() && _iConfig.chargerSeenRecentlyCondition->AreConditionsMet(GetBEI())) {
-    // we saw the charger so we can finish with this behavior by cancelling
-    CancelSelf();
   }
 }
 

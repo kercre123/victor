@@ -50,8 +50,6 @@ protected:
   virtual void InitBehavior() override;
   virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
   virtual void OnBehaviorActivated() override;
-  virtual void OnBehaviorDeactivated() override;
-  virtual void BehaviorUpdate() override;
 
 private:
   struct InstanceConfig {
@@ -85,8 +83,6 @@ private:
     std::shared_ptr<RobotPointSamplerHelper::RejectIfInRange> condHandleNearPrevSearch;
     std::shared_ptr<RobotPointSamplerHelper::RejectIfWouldCrossCliff> condHandleCliffs;
     std::shared_ptr<RobotPointSamplerHelper::RejectIfCollidesWithMemoryMap> condHandleCollisions;
-
-    IBEIConditionPtr chargerSeenRecentlyCondition;
   };
 
   struct DynamicVariables {
