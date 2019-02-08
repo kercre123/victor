@@ -210,7 +210,7 @@ private:
   float GetIncomingMicDataPercentUsed();
   void SendUdpMessage(const CloudMic::Message& msg);
   
-  void SendTriggerDetectionToWebViz(const AudioUtil::SpeechRecognizerCallbackInfo& info);
+  void SendTriggerDetectionToWebViz(const AudioUtil::SpeechRecognizerCallbackInfo& info, bool ignore = false);
 
   void SendRecognizerDasLog(const AudioUtil::SpeechRecognizerCallbackInfo& info,
                             const char* stateStr) const;

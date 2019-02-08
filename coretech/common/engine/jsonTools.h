@@ -21,7 +21,7 @@
 #include "json/json.h" // can't just use forwards b/c of template for arrays
 
 #include "coretech/common/engine/exceptions.h"
-#include "coretech/common/engine/math/point_fwd.h"
+#include "coretech/common/shared/math/point_fwd.h"
 #include "coretech/common/engine/colorRGBA.h"
 
 namespace Anki

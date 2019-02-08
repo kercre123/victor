@@ -17,6 +17,7 @@ enum uint_8 BehaviorClass {
   HighLevelAI,
   LookAroundInPlace,
   ResetState,
+  StayOnChargerUntilCharged,
   Wait,
 
   // alexa
@@ -72,6 +73,7 @@ enum uint_8 BehaviorClass {
   // coordinators
   CoordinateGlobalInterrupts,
   CoordinateInHabitat,
+  CoordinateWhileHeldInPalm,
   CoordinateWhileInAir,
   QuietModeCoordinator,
 

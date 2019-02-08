@@ -64,11 +64,13 @@ anki_build_strip(TARGET ble_cozmo)
 target_link_libraries(ble_cozmo
   PUBLIC
   ${PLATFORM_LIBS}
+  ${ASAN_SHARED_LINKER_FLAGS}
 )
 
 target_compile_options(ble_cozmo
   PRIVATE
   ${PLATFORM_FLAGS}
+  ${ASAN_CXX_FLAGS} 
 )
 
 target_compile_definitions(ble_cozmo

@@ -79,6 +79,9 @@ public:
   // Whether there is a session that is active or in the process of initializing.
   // Assumes that the existence of the impl is still tied to opt-in state (which may change)
   bool IsOptedIn() const { return HasImpl(); }
+  
+  void SetFrozenOnCharger(bool frozenOnCharger) { _frozenOnCharger = frozenOnCharger; }
+  void SetOnCharger(bool onCharger) { _onCharger = onCharger; }
 
 protected:
   // explicitly declare noncopyable (Util::noncopyable doesn't play well with movable)
@@ -173,7 +176,8 @@ private:
   
   NotifyType _notifyType = NotifyType::None;
   
-  std::unique_ptr<Util::Locale> _pendingLocale;
+  std::unique_ptr<Util::Locale> _locale;
+  bool _pendingLocale = false;
 
   // whether a message was received from engine saying to opt in. this gets reset after auth completes
   bool _authStartedByUser = false;
@@ -188,6 +192,9 @@ private:
   // guards access to _impl when releasing it on main thread, and when used in NotifyOfWakeWord
   // and AddMicrophoneSamples, which can be called off thread
   mutable std::mutex _implMutex;
+  
+  bool _frozenOnCharger = false;
+  bool _onCharger = false;
 };
 
 

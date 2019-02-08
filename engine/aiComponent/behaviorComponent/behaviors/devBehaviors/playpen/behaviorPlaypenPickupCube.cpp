@@ -84,7 +84,6 @@ void BehaviorPlaypenPickupCube::TransitionToWaitForCube()
   // Clear all objects from blockworld since the marker for the distance sensor check creates an
   // object that is in the way of the pickup object's predock pose
   BlockWorldFilter filter;
-  filter.SetFilterFcn(nullptr);
   filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
   robot.GetBlockWorld().DeleteLocatedObjects(filter);
 
@@ -174,7 +173,6 @@ void BehaviorPlaypenPickupCube::TransitionToPickupCube()
   PickupObjectAction* action = new PickupObjectAction(object->GetID());
   action->SetMotionProfile(DEFAULT_PATH_MOTION_PROFILE);
   action->SetDoNearPredockPoseCheck(true);
-  action->SetShouldCheckForObjectOnTopOf(false);
   action->SetDoLiftLoadCheck(true);
   
   DelegateIfInControl(action, [this, objectID = object->GetID()](ActionResult result) {
@@ -184,7 +182,7 @@ void BehaviorPlaypenPickupCube::TransitionToPickupCube()
     
     
     if(!(result == ActionResult::SUCCESS &&
-         robot.GetCarryingComponent().GetCarryingObject() == objectID))
+         robot.GetCarryingComponent().GetCarryingObjectID() == objectID))
     {
       PLAYPEN_SET_RESULT(FactoryTestResultCode::PICKUP_FAILED)
     }

@@ -66,6 +66,7 @@ target_link_libraries(victor_anim
   PUBLIC
   victor_web_library
   robot_interface  # Needs to be public for cozmoConfig.h
+  ${ASAN_LINKER_FLAGS}
 )
 
 anki_build_strip(TARGET victor_anim)
@@ -106,6 +107,7 @@ if (VICOS)
     jsoncpp
     ${ANKITRACE}
     ${PLATFORM_LIBS}
+    ${ASAN_EXE_LINKER_FLAGS}
   )
 
   anki_build_strip(TARGET vic-anim)
@@ -120,6 +122,7 @@ if (VICOS)
   target_link_libraries(vic-bootAnim
     PRIVATE
     robot_core
+    ${ASAN_EXE_LINKER_FLAGS}
   )
 
   anki_build_target_license(vic-bootAnim "ANKI")

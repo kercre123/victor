@@ -15,7 +15,7 @@
 #include "engine/debug/devLoggingSystem.h"
 #include "coretech/common/engine/exceptions.h"
 #include "coretech/common/engine/math/polygon_impl.h"
-#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/shared/math/rect_impl.h"
 #include "coretech/vision/engine/imageIO.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
@@ -168,6 +168,21 @@ namespace Anki {
       
       const u32 vizID = VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_CUBOID] + blockID;
       DrawObject(vizID, VizObjectType::VIZ_OBJECT_CUBOID, size, pose, color);
+      return vizID;
+    }
+
+    VizManager::Handle_t VizManager::DrawTextAtPose(const u32 textObjectID, const std::string& text, const ColorRGBA& color, const Pose3d& pose)
+    {
+      if(textObjectID >= _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_TEXT]) {
+        PRINT_NAMED_WARNING("VizManager.DrawTextAtPose.IDtooLarge",
+                            "Specified text object ID=%d larger than maxID=%d",
+                            textObjectID, _VizObjectMaxID[(int)VizObjectType::VIZ_OBJECT_TEXT]);
+        return INVALID_HANDLE;
+      }
+      
+      const u32 vizID = VizObjectBaseID[(int)VizObjectType::VIZ_OBJECT_TEXT] + textObjectID;
+      DrawObject(vizID, VizObjectType::VIZ_OBJECT_TEXT, Point3f(0.f, 0.f, 0.f), pose, color, nullptr, text);
+
       return vizID;
     }
     
@@ -375,8 +390,7 @@ namespace Anki {
       DrawCameraText(Point2f(face.GetRect().GetX(), face.GetRect().GetYmax()), name, color);
       
       // Draw bounding rectangle (?)
-      Quad2f quad;
-      face.GetRect().GetQuad(quad);
+      Quad2f quad( face.GetRect() );
       DrawCameraQuad(quad, color);
       
       // Draw smile amount bar along bottom of bounding quad for face. Thickness (height) of bar
@@ -472,7 +486,8 @@ namespace Anki {
       const Anki::Point3f &size_mm,
       const Anki::Pose3d &pose,
       const ColorRGBA& color,
-      const f32* params)
+      const f32* params,
+      const std::string& text)
     {
       ANKI_CPU_PROFILE("VizManager::DrawObject");
       
@@ -502,6 +517,8 @@ namespace Anki {
           v.objParameters[i] = params[i];
         }
       }
+
+      v.text = text;
       
       SendMessage(VizInterface::MessageViz(std::move(v)));
     }

@@ -9,6 +9,7 @@
 #include "power.h"
 #include "vectors.h"
 #include "flash.h"
+#include "motors.h"
 
 static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL2
@@ -226,6 +227,10 @@ static void handleButton() {
   if (++hold_count >= POWER_WIPE_TIME) {
     // Restart head in recovery mode
     if (Analog::on_charger) {
+      // Reset encoder hysteresis to old values so that
+      // factory menu cursor moves as expected.
+      Motors::resetEncoderHysteresis();
+
       Power::signalRecovery();
       Power::setMode(POWER_ACTIVE);
     }

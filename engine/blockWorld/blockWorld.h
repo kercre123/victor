@@ -60,7 +60,6 @@ namespace Anki
     {
     public:
       using ObservableObjectLibrary = Vision::ObservableObjectLibrary<ObservableObject>;
-      constexpr static const float kOnCubeStackHeightTolerance = 2 * STACKED_HEIGHT_TOL_MM;
       
       BlockWorld();
             
@@ -91,11 +90,7 @@ namespace Anki
       // and updating robot's and objects' poses from them.
       Result UpdateObservedMarkers(const std::list<Vision::ObservedMarker>& observedMarkers);
       
-      // Adds a collision-based obstacle (for when we think we bumped into something)
-      Result AddCollisionObstacle(const Pose3d& p);
-      
       ObjectID CreateFixedCustomObject(const Pose3d& p, const f32 xSize_mm, const f32 ySize_mm, const f32 zSize_mm);
-
 
       // Defines an object that could be observed later.
       // Does not add an instance of this object to the existing objects in the world.
@@ -107,9 +102,11 @@ namespace Anki
       // However, if an object of the same type is found as an unconnected object, the objectID is inherited, and
       // the unconnected instances (in origins) become linked to this connected object instance.
       // It returns the new or inherited objectID on success, or invalid objectID if it fails.
-      ObjectID AddConnectedActiveObject(ActiveID activeID, FactoryID factoryID, ObjectType objectType);
+      ObjectID AddConnectedActiveObject(const ActiveID& activeID,
+                                        const FactoryID& factoryID,
+                                        const ObjectType& objectType);
       // Removes connected object from the connected objects container. Returns matching objectID if found
-      ObjectID RemoveConnectedActiveObject(ActiveID activeID);
+      ObjectID RemoveConnectedActiveObject(const ActiveID& activeID);
 
       // Adds the given object to the BlockWorld according to its current objectID and pose. The objectID is expected
       // to be set, and not be currently in use in the BlockWorld. Otherwise it's a sign that something went
@@ -133,15 +130,6 @@ namespace Anki
       // regardless of pose, are not affected by this. Passive objects don't have connected instances.
       void DeleteLocatedObjects(const BlockWorldFilter& filter);   // objects that pass the filter will be deleted
       
-      // Delete all objects that intersect with the provided quad
-      void DeleteIntersectingObjects(const Quad2f& quad,
-                                     f32 padding_mm,
-                                     const BlockWorldFilter& filter = BlockWorldFilter());
-                                     
-      void DeleteIntersectingObjects(const std::shared_ptr<ObservableObject>& object,
-                                     f32 padding_mm,
-                                     const BlockWorldFilter& filter = BlockWorldFilter());
-      
       // Clear the object from shared uses, like localization, selection or carrying, etc. So that it can be removed
       // without those system lingering
       void ClearLocatedObjectByIDInCurOrigin(const ObjectID& withID);
@@ -155,8 +143,8 @@ namespace Anki
       // If that object does not exist in the current origin, nullptr is returned.
       // If you want an object regardless of its pose, use GetConnectedActiveObjectById instead.
       // For more complex queries, use one of the Find methods with a BlockWorldFilter.
-      inline const ObservableObject* GetLocatedObjectByID(const ObjectID& objectID, ObjectFamily family=ObjectFamily::Invalid) const;
-      inline       ObservableObject* GetLocatedObjectByID(const ObjectID& objectID, ObjectFamily family=ObjectFamily::Invalid);
+      inline const ObservableObject* GetLocatedObjectByID(const ObjectID& objectID) const;
+      inline       ObservableObject* GetLocatedObjectByID(const ObjectID& objectID);
       
       // Returns a pointer to a connected object with the specified objectID without any pose information. If you need to obtain
       // the instance of this object in the current origin (if it exists), you can do so with GetLocatedObjectByID
@@ -187,13 +175,9 @@ namespace Anki
       // Find objects by filter query
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       
-      // Applies given filter or modifier to located objects.
-      // NOTE: Calling FilterLocatedObjects this way doesn't return anything, so the only
-      //  way it has any effect is via the filter's FilterFcn, which presumably
-      //  is doing useful work for you somehow. Otherwise what are you doing?
+      // Applies given modifier to all located objects that match 'filter'
       using ModifierFcn = std::function<void(ObservableObject*)>;
-      inline void FilterLocatedObjects(const BlockWorldFilter& filter) const;
-      inline void ModifyLocatedObjects(const ModifierFcn& modiferFcn, const BlockWorldFilter& filter = BlockWorldFilter());
+      inline void ModifyLocatedObjects(const ModifierFcn& modifierFcn, const BlockWorldFilter& filter = BlockWorldFilter());
       
       // Returns (in arguments) all objects matching a filter, among objects that are currently located (their pose
       // is valid in the origins matching the filter)
@@ -219,7 +203,7 @@ namespace Anki
                                                                 const Vec3f& distThreshold,
                                                                 const BlockWorldFilter& filter = BlockWorldFilter());
       
-      // Finds a matching object (one with the same family and type) that is closest to the given object, within the
+      // Finds a matching object (one with the same type) that is closest to the given object, within the
       // specified distance and angle thresholds.
       // Returns nullptr if none found.
       inline const ObservableObject* FindLocatedClosestMatchingObject(const ObservableObject& object,
@@ -245,7 +229,6 @@ namespace Anki
                                                                       const Radians& angleThreshold,
                                                                       const BlockWorldFilter& filter = BlockWorldFilter());
       
-      //
       const ObservableObject* FindMostRecentlyObservedObject(const BlockWorldFilter& filter = BlockWorldFilter()) const;
       
       // Finds existing objects whose XY bounding boxes intersect with objectSeen's XY bounding box, and pass
@@ -267,24 +250,6 @@ namespace Anki
                                           std::vector<ObservableObject*> &intersectingExistingObjects,
                                           f32 padding_mm,
                                           const BlockWorldFilter& filter = BlockWorldFilter());
-      
-      // Find an object on top of the given object, using a given height tolerance
-      // between the top of the given object on bottom and the bottom of existing
-      // candidate objects on top. Returns nullptr if no object is found.
-      inline const ObservableObject* FindLocatedObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                                              f32 zTolerance,
-                                                              const BlockWorldFilter& filter = BlockWorldFilter()) const;
-      inline       ObservableObject* FindLocatedObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                                              f32 zTolerance,
-                                                              const BlockWorldFilter& filter = BlockWorldFilter());
-      // Similar to FindLocatedObjectOnTopOf, but in reverse: find object directly underneath given object
-      inline const ObservableObject* FindLocatedObjectUnderneath(const ObservableObject& objectOnTop,
-                                                                 f32 zTolerance,
-                                                                 const BlockWorldFilter& filterIn = BlockWorldFilter()) const;
-      inline       ObservableObject* FindLocatedObjectUnderneath(const ObservableObject& objectOnTop,
-                                                                 f32 zTolerance,
-                                                                 const BlockWorldFilter& filterIn = BlockWorldFilter());
-      
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // BoundingBoxes
@@ -313,8 +278,7 @@ namespace Anki
       // is not a zombie even if it doesn't have any cubes yet.
       bool IsZombiePoseOrigin(PoseOriginID_t originID) const;
       
-      // Returns true if there are remaining objects that the robot could potentially
-      // localize to
+      // Returns true if there are remaining objects that the robot could potentially localize to
       bool AnyRemainingLocalizableObjects() const;
       
       // returns true if there are localizable objects at the specified origin. It iterates all localizable objects
@@ -324,12 +288,6 @@ namespace Anki
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Others. TODO Categorize/organize
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      
-      // Returns true if any blocks were moved, added, or deleted on the
-      // last call to Update().
-      bool DidObjectsChange() const;
-      // Gets the timestamp of the last robot msg when objects changed
-      const RobotTimeStamp_t& GetTimeOfLastChange() const;
       
       // Get/Set currently-selected object
       ObjectID GetSelectedObject() const { return _selectedObjectID; }
@@ -356,16 +314,6 @@ namespace Anki
       
       size_t GetNumAliveOrigins() const { return _locatedObjects.size(); }
       
-      // Returns the number of defined ObjectTypes for a given ObjectFamily
-      size_t GetNumDefinedObjects(const ObjectFamily& objectFamily) const {
-        auto objectTypeCount = _definedObjectTypeCount.find(objectFamily);
-        if ( objectTypeCount != _definedObjectTypeCount.end())
-        {
-          return objectTypeCount->second;
-        }
-        return 0;
-      }
-      
       //
       // Visualization
       //
@@ -385,18 +333,11 @@ namespace Anki
     private:
 
       // active objects
-      using ActiveObjectsMapByID_t     = std::map<ObjectID, std::shared_ptr<ActiveObject> >;
-      using ActiveObjectsMapByType_t   = std::map<ObjectType, ActiveObjectsMapByID_t >;
-      using ActiveObjectsMapByFamily_t = std::map<ObjectFamily, ActiveObjectsMapByType_t>;
+      using ActiveObjectsContainer_t = std::vector<std::shared_ptr<ActiveObject>>;
 
       // observable objects
-      using ObjectsMapByID_t     = std::map<ObjectID, std::shared_ptr<ObservableObject> >;
-      using ObjectsMapByType_t   = std::map<ObjectType, ObjectsMapByID_t >;
-      using ObjectsMapByFamily_t = std::map<ObjectFamily, ObjectsMapByType_t>;
-      using ObjectsByOrigin_t    = std::map<PoseOriginID_t, ObjectsMapByFamily_t>;
-      
-      // defined objects
-      using DefinedObjectsMapCountByFamily_t = std::map<ObjectFamily, size_t>;
+      using ObjectsContainer_t = std::vector<std::shared_ptr<ObservableObject>>;
+      using ObjectsByOrigin_t  = std::map<PoseOriginID_t, ObjectsContainer_t>;
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Helpers for accessors and queries
@@ -405,17 +346,21 @@ namespace Anki
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
       // Located by filter (most basic, other helpers rely on it)
+      // If modifierFcn is non-null, it is applied to the matching object. Furthermore, if returnFirstFound is false,
+      // then modifierFcn is applied to all matching objects, and the final object that matched is returned.
       ObservableObject* FindLocatedObjectHelper(const BlockWorldFilter& filter,
-                                                const ModifierFcn& modiferFcn = nullptr,
+                                                const ModifierFcn& modifierFcn = nullptr,
                                                 bool returnFirstFound = false) const;
       
       // Connected by filter (most basic, other helpers rely on it)
+      // If modifierFcn is non-null, it is applied to the matching object. Furthermore, if returnFirstFound is false,
+      // then modifierFcn is applied to all matching objects, and the final object that matched is returned.
       ActiveObject* FindConnectedObjectHelper(const BlockWorldFilter& filter,
-                                              const ModifierFcn& modiferFcn = nullptr,
+                                              const ModifierFcn& modifierFcn = nullptr,
                                               bool returnFirstFound = false) const;
 
       // By ID or activeID
-      ObservableObject* GetLocatedObjectByIdHelper(const ObjectID& objectID, ObjectFamily family) const;
+      ObservableObject* GetLocatedObjectByIdHelper(const ObjectID& objectID) const;
       ActiveObject* GetConnectedActiveObjectByIdHelper(const ObjectID& objectID) const;
       ActiveObject* GetConnectedActiveObjectByActiveIdHelper(const ActiveID& activeID) const;
       
@@ -437,37 +382,14 @@ namespace Anki
                                                              const Radians& angleThreshold,
                                                              const BlockWorldFilter& filter) const;
       
-
-      ObservableObject* FindObjectOnTopOrUnderneathHelper(const ObservableObject& referenceObject,
-                                                          f32 zTolerance,
-                                                          const BlockWorldFilter& filterIn,
-                                                          bool onTop) const;
-      
+      // Helper for finding the object with a specified ID in the given container.
+      // Returns an iterator to that object's entry.
+      ObjectsContainer_t::const_iterator FindInContainerWithID(const ObjectsContainer_t& container,
+                                                               const ObjectID& objectID);
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       //
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-      
-      Result UpdateMarkerlessObjects(RobotTimeStamp_t atTimestamp);
-      
-      // Finds existing objects that overlap with and are of the same type as objectSeen,
-      // where overlap is defined by the IsSameAs() function.
-      // NOTE: these populate return vectors with non-const ObservableObject pointers
-      //       even though the methods are marked const, but these are protected helpers
-      void FindOverlappingObjects(const ObservableObject* objectSeen,
-                                  const ObjectsMapByType_t& objectsExisting,
-                                  std::vector<ObservableObject*>& overlappingExistingObjects) const;
-      
-      void FindOverlappingObjects(const ObservableObject* objectExisting,
-                                  const std::vector<ObservableObject*>& objectsSeen,
-                                  std::vector<ObservableObject*>& overlappingSeenObjects) const;
-      
-      void FindOverlappingObjects(const ObservableObject* objectExisting,
-                                  const std::multimap<f32, ObservableObject*>& objectsSeen,
-                                  std::vector<ObservableObject*>& overlappingSeenObjects) const;
-      
-      // Helper for removing markers that are inside other detected markers
-      static void RemoveMarkersWithinMarkers(std::list<Vision::ObservedMarker>& currentObsMarkers);
       
       // Looks for objects that should have been seen (markers should have been visible
       // but something was seen through/behind their last known location) and delete
@@ -481,15 +403,8 @@ namespace Anki
       // NOTE: this function takes control over the passed-in ObservableObject*'s and
       //  will either directly add them to BlockWorld's existing objects or delete them
       //  if/when they are no longer needed.
-      Result AddAndUpdateObjects(const std::multimap<f32, ObservableObject*>& objectsSeen,
+      Result AddAndUpdateObjects(const std::vector<ObservableObject*>& objectsSeen,
                                  const RobotTimeStamp_t atTimestamp);
-      
-      // Updates poses of stacks of objects by finding the difference between old object
-      // poses and applying that to the new observed poses
-      void UpdatePoseOfStackedObjects();
-      
-      // adds a markerless object at the given pose
-      Result AddMarkerlessObject(const Pose3d& pose, ObjectType type);
       
       // Clear the object from shared uses, like localization, selection or carrying, etc. So that it can be removed
       // without those system lingering
@@ -504,7 +419,7 @@ namespace Anki
       
       void SetupEventHandlers(IExternalInterface& externalInterface);
       
-      Result SanityCheckBookkeeping() const;
+      void SanityCheckBookkeeping() const;
       
       void SendObjectUpdateToWebViz( const ExternalInterface::RobotDeletedLocatedObject& msg ) const;
       void SendObjectUpdateToWebViz( const ExternalInterface::RobotObservedObject& msg ) const;
@@ -524,7 +439,7 @@ namespace Anki
       // The instances of objects in this container are expected to NEVER have a valid Pose/PoseState. If they are
       // present in any origin, a copy of the object with the proper pose will be placed in the located objects container.
       // Note: by definition it stores ActiveObjects instead of ObservableObjects
-      ActiveObjectsMapByFamily_t _connectedObjects;
+      ActiveObjectsContainer_t _connectedObjects;
 
       // Objects that we have located indexed by the origin they belong to.
       // The instances of objects in this container are expected to always have a valid Pose/PoseState. If they are
@@ -532,19 +447,7 @@ namespace Anki
       // connected objects container.
       ObjectsByOrigin_t _locatedObjects;
       
-      // Number of object types we have defined for each family
-      // We are keeping track of the number of defined ObjectTypes for each ObjectFamily here instead of in ObjectLibrary
-      // because the ObjectLibrary has no concept of ObjectFamily. If we were to get this info from ObjectLibrary directly
-      // we would have to iterate over the list every time, so it's faster to keep a count when (un)defining objects.
-      DefinedObjectsMapCountByFamily_t _definedObjectTypeCount;
-      
-      bool _didObjectsChange;
-      RobotTimeStamp_t _robotMsgTimeStampAtChange; // time of the last robot msg when objects changed
-      
       ObjectID _selectedObjectID;
-
-      // For tracking, keep track of the id of the actions we are doing
-      u32 _lastTrackingActionTag = static_cast<u32>(ActionConstants::INVALID_TAG);
 
       // changes in poses in the current frame to keep stacks aligned
       struct PoseChange {
@@ -557,22 +460,23 @@ namespace Anki
       std::list<PoseChange> _objectPoseChangeList;  // changes registered (within an update tick)
       bool _trackPoseChanges;               // whether we want to register pose changes
       
-      std::set<ObjectID> _unidentifiedActiveObjects;
-      
       std::vector<Signal::SmartHandle> _eventHandles;
             
       RobotTimeStamp_t _currentObservedMarkerTimestamp = 0;
+      
+      // Note: This is only required for SDK v0.5.1 compatibility
+      ObjectFamily LegacyGetObjectFamily(const ObservableObject* const object) const;
     }; // class BlockWorld
 
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    const ObservableObject* BlockWorld::GetLocatedObjectByID(const ObjectID& objectID, ObjectFamily family) const {
-      return GetLocatedObjectByIdHelper(objectID, family); // returns const*
+    const ObservableObject* BlockWorld::GetLocatedObjectByID(const ObjectID& objectID) const {
+      return GetLocatedObjectByIdHelper(objectID); // returns const*
     }
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    ObservableObject* BlockWorld::GetLocatedObjectByID(const ObjectID& objectID, ObjectFamily family) {
-      return GetLocatedObjectByIdHelper(objectID, family); // returns non-const*
+    ObservableObject* BlockWorld::GetLocatedObjectByID(const ObjectID& objectID) {
+      return GetLocatedObjectByIdHelper(objectID); // returns non-const*
     }
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -608,12 +512,6 @@ namespace Anki
       return FindConnectedObjectHelper(filter); // returns non-const
     }
     
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    void BlockWorld::FilterLocatedObjects(const BlockWorldFilter& filter) const
-    {
-      FindLocatedObjectHelper(filter, nullptr, false);
-    }
-
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     void BlockWorld::ModifyLocatedObjects(const ModifierFcn& modifierFcn, const BlockWorldFilter& filter)
     {
@@ -701,38 +599,6 @@ namespace Anki
                                                                    const BlockWorldFilter& filter)
     {
       return FindLocatedClosestMatchingTypeHelper(withType, pose, distThreshold, angleThreshold, filter);
-    }
-    
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    const ObservableObject* BlockWorld::FindLocatedObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                                                 f32 zTolerance,
-                                                                 const BlockWorldFilter& filter) const
-    {
-      return FindObjectOnTopOrUnderneathHelper(objectOnBottom, zTolerance, filter, true); // returns const
-    }
-    
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    ObservableObject* BlockWorld::FindLocatedObjectOnTopOf(const ObservableObject& objectOnBottom,
-                                                           f32 zTolerance,
-                                                           const BlockWorldFilter& filter)
-    {
-      return FindObjectOnTopOrUnderneathHelper(objectOnBottom, zTolerance, filter, true); // returns non-const
-    }
-    
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    const ObservableObject* BlockWorld::FindLocatedObjectUnderneath(const ObservableObject& objectOnTop,
-                                                             f32 zTolerance,
-                                                             const BlockWorldFilter& filter) const
-    {
-      return FindObjectOnTopOrUnderneathHelper(objectOnTop, zTolerance, filter, false); // returns const
-    }
-    
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    ObservableObject* BlockWorld::FindLocatedObjectUnderneath(const ObservableObject& objectOnTop,
-                                                       f32 zTolerance,
-                                                       const BlockWorldFilter& filter)
-    {
-      return FindObjectOnTopOrUnderneathHelper(objectOnTop, zTolerance, filter, false); // returns non-const
     }
     
   } // namespace Vector

@@ -473,14 +473,6 @@ void Process_setButtonWakeWord(const Anki::Vector::RobotInterface::SetButtonWake
   }
 }
 
-void Process_cancelPendingAlexaAuth(const Anki::Vector::RobotInterface::CancelPendingAlexaAuth& msg)
-{
-  auto* alexa = _context->GetAlexa();
-  if (alexa != nullptr) {
-    alexa->CancelPendingAlexaAuth(EnumToString(msg.reason));
-  }
-}
-
 void Process_setLCDBrightnessLevel(const Anki::Vector::RobotInterface::SetLCDBrightnessLevel& msg)
 {
   FaceDisplay::getInstance()->SetFaceBrightness(msg.level);
@@ -591,6 +583,20 @@ void Process_batteryStatus(const RobotInterface::BatteryStatus& msg)
 {
   _context->GetBackpackLightComponent()->UpdateBatteryStatus(msg);
   _context->GetMicDataSystem()->SetBatteryLowStatus(msg.isLow);
+}
+  
+void Process_acousticTestEnabled(const Anki::Vector::RobotInterface::AcousticTestEnabled& msg)
+{
+  bool enabled = msg.enabled;
+  _animStreamer->SetFrozenOnCharger( enabled );
+  auto* alexa = _context->GetAlexa();
+  if( alexa != nullptr ) {
+    alexa->SetFrozenOnCharger( enabled );
+  }
+  auto* showStreamStateManager = _context->GetShowAudioStreamStateManager();
+  if( showStreamStateManager != nullptr ) {
+    showStreamStateManager->SetFrozenOnCharger( enabled );
+  }
 }
 
 void Process_triggerBackpackAnimation(const RobotInterface::TriggerBackpackAnimation& msg)
@@ -752,7 +758,18 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
     {
       HandleRobotStateUpdate(msg.state);
       const bool onChargerContacts = (msg.state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
-      _animStreamer->SetBodyWhitelistActive(onChargerContacts);
+      _animStreamer->SetOnCharger(onChargerContacts);
+      auto* showStreamStateManager = _context->GetShowAudioStreamStateManager();
+      if (showStreamStateManager != nullptr)
+      {
+        showStreamStateManager->SetOnCharger( onChargerContacts );
+      }
+      auto* alexa = _context->GetAlexa();
+      if (alexa != nullptr)
+      {
+        alexa->SetOnCharger( onChargerContacts );
+      }
+      
     }
     break;
     case RobotInterface::RobotToEngine::Tag_robotStopped:

@@ -4,6 +4,55 @@ Debugging on Victor is provided by `lldb` and can be used via the command-line o
 
 You can also use `gdb` on the robot itself.
 
+## Address spaces
+
+The heap, starts at `0xadxxxxxx` and grows down
+The stack, starts at `0xa7xxxxxx` and grows up
+
+Static variables are at: `0x80xxxxxx`
+Global variables are at: `0x80xxxxxx`
+Code and function pointers are at: `0x7fxxxxxx`
+
+## Running a process standalone
+
+```
+systemctl stop victor.target
+systemctl restart vic-robot
+/anki/bin/vic-anim -c /anki/etc/config/platform_config.json
+```
+
+## Running a process with the address sanitizer
+
+```
+systemctl stop victor.target
+systemctl restart vic-robot
+ASAN_OPTIONS=detect_container_overflow=0 /anki/bin/vic-anim -c /anki/etc/config/platform_config.json
+ASAN_OPTIONS=detect_container_overflow=0:replace_intrin=0 /anki/bin/vic-anim -c /anki/etc/config/platform_config.json
+
+```
+
+## Running a process with the address sanitizer in gdb
+
+```
+systemctl stop victor.target
+systemctl restart vic-robot
+ASAN_OPTIONS=detect_container_overflow=0:replace_intrin=0 VIC_ANIM_CONFIG=/anki/etc/config/platform_config.json gdb /anki/bin/vic-anim
+```
+
+Note: setting arguments within `gdb` does not work, for example:
+
+```
+(gdb) set args "-c" "/anki/etc/config/platform_config.json"
+(gdb) set args -c /anki/etc/config/platform_config.json
+(gdb) run "-c /anki/etc/config/platform_config.json" 
+```
+
+## Useful gdb commands
+
+`info address <symbol>`
+
+`info symbol <address>`
+
 ## Robot setup
 
 - modify the robot filesystem to allow writes

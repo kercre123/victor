@@ -52,12 +52,13 @@ protected:
   virtual void InitBehavior() override;
   virtual void BehaviorUpdate() override;
   virtual void OnBehaviorActivated() final override;
-  virtual void OnBehaviorDeactivated() override;
+  virtual void OnBehaviorDeactivated() final override;
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override { }
   virtual bool WantsToBeActivatedBehavior() const override { return true; }
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   virtual void OverrideResumeState( StateID& resumeState ) {}
   virtual void OnBehaviorActivatedInternal() {}
+  virtual void OnBehaviorDeactivatedInternal() {}
   
   // for debug/DAS
   virtual void OnStateNameChange( const std::string& oldStateName, const std::string& newStateName ) const {}

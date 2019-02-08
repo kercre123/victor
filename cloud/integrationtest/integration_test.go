@@ -48,8 +48,8 @@ func (s *IntegrationTestSuite) TearDownSuite() {
 	s.robotInstance.closeClients()
 }
 
-func (s *IntegrationTestSuite) logIfNoError(err error, action, format string, a ...interface{}) {
-	logIfNoError(err, s.instanceOptions.testUserName, action, format, a...)
+func (s *IntegrationTestSuite) logIfNoError(err error, subAction, format string, a ...interface{}) {
+	logInfoIfNoError(err, s.instanceOptions.taskID, s.instanceOptions.testUserName, "unittest", subAction, format, a...)
 }
 
 func (s *IntegrationTestSuite) TestPrimaryPairingSequence() {

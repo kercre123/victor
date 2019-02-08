@@ -7,7 +7,7 @@
 //
 
 #include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/shared/math/rect_impl.h"
 
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/occluderList.h"

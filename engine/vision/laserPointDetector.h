@@ -14,12 +14,11 @@
 #define __Anki_Cozmo_Basestation_LaserPointDetector_H__
 
 #include "coretech/common/shared/types.h"
-#include "coretech/common/engine/math/point_fwd.h"
+#include "coretech/common/shared/math/point_fwd.h"
 
 #include "coretech/vision/engine/compressedImage.h"
+#include "coretech/vision/engine/debugImageList.h"
 #include "coretech/vision/engine/image.h"
-
-#include "engine/debugImageList.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 
@@ -52,13 +51,13 @@ public:
                 const VisionPoseData& poseData,
                 const bool isDarkExposure,
                 std::list<ExternalInterface::RobotObservedLaserPoint>& points,
-                DebugImageList<Vision::CompressedImage>& debugImages);
+                Vision::DebugImageList<Vision::CompressedImage>& debugImages);
 
   // Same as above, but without the poseData. Searches in the whole image. Used for testing and debug
   Result Detect(Vision::ImageCache&   imageCache,
                 const bool isDarkExposure,
                 std::list<ExternalInterface::RobotObservedLaserPoint>& points,
-                DebugImageList<Vision::CompressedImage>& debugImages);
+                Vision::DebugImageList<Vision::CompressedImage>& debugImages);
 
 private:
 

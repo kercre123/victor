@@ -60,6 +60,7 @@ namespace {
   static const char* kDriveOffChargerWhenFull = "driveOffChargerWhenFull";
 
   bool _startMovingVoltageReached = false;
+  bool _drivingOffCharger = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -129,6 +130,7 @@ void BehaviorDevBatteryLogging::OnBehaviorActivated()
   //robot.GetActionList().Cancel();
 
   _startMovingVoltageReached = false;
+  _drivingOffCharger = false;
 
   InitLog();
 }
@@ -171,15 +173,18 @@ void BehaviorDevBatteryLogging::EnqueueMotorActions()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevBatteryLogging::BehaviorUpdate()
 {
-  if(!IsActivated()){
+  if(!IsActivated() || _drivingOffCharger){
     return;
   }
 
   // Drive off charger when full
   const auto& battComp = GetBEI().GetRobotInfo()._robot.GetBatteryComponent();
   if (_iConfig.driveOffChargerWhenFull && battComp.IsBatteryFull()) {
+    _drivingOffCharger = true;
     DriveStraightAction* driveAction = new DriveStraightAction(40.f);
-    DelegateIfInControl(driveAction);
+    DelegateNow(driveAction, [](){
+      _drivingOffCharger = false;
+    });
   }
 
   // Start motors if voltage threshold has been reached

@@ -85,11 +85,9 @@ protected:
 
   struct DynamicVariables
   {
-    State state;
-    f32 waitStartTime;
-    u32 numChecksSucceeded;
-
-    void Reset();
+    State state = State::Waiting;
+    f32 waitStartTime = 0.f;
+    u32 numChecksSucceeded = 0;
   };
 
   InstanceConfig _iConfig;

@@ -236,7 +236,7 @@ void BehaviorQuietModeCoordinator::SimmerDownNow()
   
   GetBEI().GetCubeLightComponent().StopAllAnims();
   BlockWorldFilter filter;
-  filter.AddAllowedFamily(ObjectFamily::LightCube);
+  filter.AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
   std::vector<const ActiveObject*> connectedCubes;
   GetBEI().GetBlockWorld().FindConnectedActiveMatchingObjects(filter, connectedCubes);
   for( const auto* obj : connectedCubes ) {

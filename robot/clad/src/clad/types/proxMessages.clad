@@ -41,6 +41,8 @@ message SetWhiteDetectThresholds
   uint_16 whiteThresholds[4]
 }
 
+// NOTE: If any new entries are added here, be sure to update the size of
+//       invalidProxSensorStatusCounts_ in hal.cpp
 enum uint_8 RangeStatus {
   RANGE_VALID    = 0,  // Ranging measurement is valid
   SIGMA_FAIL     = 1,  // Ambient light is adding too much noise to the ranging measurement

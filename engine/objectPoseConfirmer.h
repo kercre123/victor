@@ -19,7 +19,6 @@
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/objectIDs.h"
 #include "coretech/common/engine/robotTimeStamp.h"
-#include "clad/types/objectFamilies.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 
@@ -72,14 +71,6 @@ public:
   // Pose will not be confirmed (until we see it, or until such time that the robot can tell
   // it's carrying something)
   Result AddLiftRelativeObservation(ObservableObject* object, const Pose3d& newPoseWrtLift);
-  
-  // Saw one object and that observation influenced another object (e.g. stacked blocks).
-  // Checks the blockWorld, and if the object doesn't exist, it could add it to the
-  // blockWorld at this point. This is not supported because we don't have a use case, but it's
-  // how AddRobotRelativeObservation works, for example to add a charger. Inherits observation time from the
-  // observedObject, but does not inherit its poseState.
-  Result AddObjectRelativeObservation(ObservableObject* objectToUpdate, const Pose3d& newPose,
-                                      const ObservableObject* observedObject);
 
   // New object's pose will immediately be updated, but will inherit old object's
   // number of observations and pose state.
@@ -89,12 +80,6 @@ public:
   // Simply adds the given object in its current pose to the PoseConfirmer's records,
   // without changing its pose or changing its observation count.
   Result AddInExistingPose(const ObservableObject* object);
-  
-  // Ghost objects are expected to not be in the BlockWorld and to not be added. They also do not notify of changes.
-  // This should not be a PoseConfirmation event, however to keep a consistent API to access SetPose, we need to
-  // provide it here. TODO: Design proper API, for example having BlockWorldPoseConfirmer vs BlockWorldGhostConfirmer,
-  // which share code, but make this distinction clear.
-  Result SetGhostObjectPose(ObservableObject* ghostObject, const Pose3d& newPose, PoseState newPoseState);
   
   // Notify listeners of the pose and poseState change happening for the given object. It should arguably not be in the
   // poseConfirmer, but for now it's a good place to put together these calls
@@ -120,26 +105,18 @@ public:
   
   // Purposely mark the object as Unknown in the current origin, and notify listeners of the change.
   // In the current implementation this means the located instance will be deleted
-  // @propagateStack: if set to true, objects on top of this one will also be marked. Note that this can be ok
-  // from outside BlockWorld update ticks, but if two requests to change objects are made from different
-  // systems, no conflict resolution is made, and they are processed in the way they are requested.
-  // Note: See BlockWorld::UpdatePoseOfStackedObjects for conflict resolution inside BlockWorld
   // Note: It does not need to count how many times we set Unknown, 1 is enough to make the change. This is in
   // contrast with MarkObjectUnobserved, and they should be standarized so that MarkObjectX is the confirming change,
   // rather than an unconfirmed mark.
   // Note: This method takes a reference to a pointer, because the object will be deleted (Unknown objects
   // are not stored in BlockWorld anymore). After deletion, the pointer will be nulled out.
-  void MarkObjectUnknown(ObservableObject*& object, bool propagateStack);
+  void MarkObjectUnknown(ObservableObject*& object);
 
   // Purposely mark the object as Dirty and notify listeners of the change.
-  // @propagateStack: if set to true, objects on top of this one will also be marked. Note that this can be ok
-  // from outside BlockWorld update ticks, but if two requests to change objects are made from different
-  // systems, no conflict resolution is made, and they are processed in the way they are requested.
-  // Note: See BlockWorld::UpdatePoseOfStackedObjects for conflict resolution inside BlockWorld
   // Note: It does not need to count how many times we set Dirty, 1 is enough to make the change. This is in
   // contrast with MarkObjectUnobserved, and they should be standarized so that MarkObjectX is the confirming change,
   // rather than an unconfirmed mark.
-  void MarkObjectDirty(ObservableObject* object, bool propagateStack);
+  void MarkObjectDirty(ObservableObject* object);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   //

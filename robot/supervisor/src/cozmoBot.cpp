@@ -79,6 +79,10 @@ namespace Anki {
         // Parameters / Constants:
         bool wasConnected_ = false;
 
+        // Whether or not Init() was called.
+        // Only reset by Destroy().
+        bool initialized_ = false;
+
         // For only sending robot state messages every STATE_MESSAGE_FREQUENCY
         // times through the main loop
         u32 robotStateMessageCounter_ = 0;
@@ -114,6 +118,8 @@ namespace Anki {
       {
         Result lastResult = RESULT_OK;
 
+        initialized_ = true;
+
         // HAL and supervisor init
         lastResult = HAL::Init(shutdownSignal);
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.HAL", "");
@@ -133,7 +139,7 @@ namespace Anki {
         lastResult = IMUFilter::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.IMUFilter", "");
 
-        lastResult = DockingController::Init();;
+        lastResult = DockingController::Init();
         AnkiConditionalErrorAndReturnValue(lastResult == RESULT_OK, lastResult, "CozmoBot.InitFail.DockingController", "");
 
         // Before liftController?!
@@ -159,12 +165,12 @@ namespace Anki {
       // Note: Motors are disabled automatically by syscon after 25ms of spine sync loss
       void Destroy()
       {
-        AnkiInfo("CozmoBot.Destroy", "");
-
-        HAL::Stop();
-
-        // Turn off lights
-        BackpackLightController::TurnOffAll();
+        if (initialized_) {
+          AnkiInfo("CozmoBot.Destroy", "");
+          HAL::Stop();
+          BackpackLightController::TurnOffAll();
+          initialized_ = false;
+        }
       }
 
       void SaveWallClockToDisk() {

@@ -179,7 +179,6 @@ void BehaviorPlaypenCameraCalibration::OnBehaviorDeactivated()
   // Clear all objects from blockworld since calib target contains markers it will
   // cause objects to get added to the world
   BlockWorldFilter filter;
-  filter.SetFilterFcn(nullptr);
   filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
   robot.GetBlockWorld().DeleteLocatedObjects(filter);
   

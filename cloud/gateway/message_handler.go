@@ -535,10 +535,15 @@ func SendOnboardingMarkCompleteAndExit(in *extint.GatewayWrapper_OnboardingMarkC
 type rpcService struct{}
 
 func (service *rpcService) ProtocolVersion(ctx context.Context, in *extint.ProtocolVersionRequest) (*extint.ProtocolVersionResponse, error) {
-	return &extint.ProtocolVersionResponse{
-		Result:      extint.ProtocolVersionResponse_SUCCESS,
-		HostVersion: hostProtocolVersion,
-	}, nil
+	response := &extint.ProtocolVersionResponse{
+		HostVersion: int64(extint.ProtocolVersion_PROTOCOL_VERSION_CURRENT),
+	}
+	if in.ClientVersion < int64(extint.ProtocolVersion_PROTOCOL_VERSION_MINIMUM) {
+		response.Result = extint.ProtocolVersionResponse_UNSUPPORTED
+	} else {
+		response.Result = extint.ProtocolVersionResponse_SUCCESS
+	}
+	return response, nil
 }
 
 func (service *rpcService) DriveWheels(ctx context.Context, in *extint.DriveWheelsRequest) (*extint.DriveWheelsResponse, error) {
@@ -2612,6 +2617,30 @@ func (service *rpcService) GetFeatureFlag(ctx context.Context, in *extint.Featur
 		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
 	}
 	response := payload.GetFeatureFlagResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+// FeatureFlagList is used to check what features are enabled on the robot
+func (service *rpcService) GetFeatureFlagList(ctx context.Context, in *extint.FeatureFlagListRequest) (*extint.FeatureFlagListResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_FeatureFlagListResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_FeatureFlagListRequest{
+			FeatureFlagListRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := payload.GetFeatureFlagListResponse()
 	response.Status = &extint.ResponseStatus{
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}

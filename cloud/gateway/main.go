@@ -30,10 +30,8 @@ import (
 // Enables logs about the requests coming and going from the gateway.
 // Most useful for debugging the json output being sent to the app.
 const (
-	logVerbose          = false
-	logMessageContent   = false
-	hostProtocolVersion = 2
-	minProtocolVersion  = 0
+	logVerbose        = false
+	logMessageContent = false
 )
 
 var (

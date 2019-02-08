@@ -53,7 +53,7 @@ BehaviorFindCube::InstanceConfig::InstanceConfig()
 : cubesFilter(std::make_unique<BlockWorldFilter>())
 , skipReactToCubeAnim(false) // play the cube reaction by default
 {
-  cubesFilter->AddAllowedFamily(ObjectFamily::LightCube);
+  cubesFilter->AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

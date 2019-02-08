@@ -189,7 +189,7 @@ void BehaviorDevDesignCubeLights::BehaviorUpdate()
     }
 
     BlockWorldFilter filter;
-    filter.AddAllowedFamily(ObjectFamily::LightCube);
+    filter.AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
     const ActiveObject* obj = GetBEI().GetBlockWorld().FindConnectedActiveMatchingObject(filter);
 
     if((newLights != _dVars.currentLights) &&

@@ -23,7 +23,6 @@
 #include "engine/viz/vizManager.h"
 
 #include "clad/types/objectTypes.h"
-#include "clad/types/objectFamilies.h"
 
 namespace Anki {
   namespace Vector {
@@ -54,15 +53,12 @@ namespace Anki {
                                     const std::set<PreActionPose::ActionType>& withAction = std::set<PreActionPose::ActionType>(),
                                     const std::set<Vision::Marker::Code>& withCode = std::set<Vision::Marker::Code>(),
                                     const std::vector<std::pair<Quad2f,ObjectID> >& obstacles = std::vector<std::pair<Quad2f,ObjectID> >(),
-                                    const Pose3d* reachableFromPose = nullptr,
                                     const f32 offset_mm = 0,
                                     bool visualize = false) const;
       
-      // Draws just the pre-action poses. The reachableFrom pose (e.g. the
-      // current pose of the robot) is passed along to GetCurrenPreActionsPoses()
-      // (see above).
-      void VisualizePreActionPoses(const std::vector<std::pair<Quad2f,ObjectID> >& obstacles = std::vector<std::pair<Quad2f,ObjectID> >(),
-                                   const Pose3d* reachableFrom = nullptr) const;
+      // Draws just the pre-action poses given robotPose
+      void VisualizePreActionPoses(const std::vector<std::pair<Quad2f,ObjectID> >& obstacles,
+                                   const Pose3d& robotPose) const;
       
       // Just erases pre-action poses (if any were drawn). Subclasses should
       // call this from their virtual EraseVisualization() implementations.
@@ -75,12 +71,8 @@ namespace Anki {
  
       // Only "valid" poses are returned by GetCurrenPreActionPoses
       // By default, allows any rotation around Z, but none around X/Y, meaning
-      // the pose must be vertically-oriented to be "valid". ReachableFromPose
-      // is not used by default. Derived classes can implement their own
-      // specific checks, but note that reachableFromPose could be nullptr
-      // (meaning it was unspecified).     
+      // the pose must be vertically-oriented to be "valid".
       virtual bool IsPreActionPoseValid(const PreActionPose& preActionPose,
-                                        const Pose3d* reachableFromPose,
                                         const std::vector<std::pair<Quad2f,ObjectID> >& obstacles) const;
       
       // Generates all possible preAction poses of the given type

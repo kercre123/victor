@@ -758,19 +758,22 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
   const bool enabled = (_alexaState != AlexaSimpleState::Disabled);
   
   if ((oldState == AlexaSimpleState::Disabled) && enabled) {
-    RobotDataLoader *dataLoader = _context->GetDataLoader();
-    const auto callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info) {
+    const auto callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info, bool ignore)
+    {
       LOG_INFO("MicDataSystem.SetAlexaState.TriggerWordDetectCallback", "info - %s", info.Description().c_str());
       
 #if ANKI_DEV_CHEATS
-      SendTriggerDetectionToWebViz(info);
+      SendTriggerDetectionToWebViz(info, ignore);
       if (kSuppressTriggerResponse) {
         return;
       }
 #endif
       
-      if( HasStreamingJob() ) {
-        // don't run alexa wakeword if there's a "hey vector" streaming job or if the mic is muted
+      if( ignore || HasStreamingJob() ) {
+        // Don't run alexa wakeword if
+        // 1. there's a "hey vector" streaming job
+        // 2. if the mic is muted
+        // 3. ignore flag is ture, either playback recognizer triggered positive or there is a "notch"
         return;
       }
       Alexa* alexa = _context->GetAlexa();
@@ -780,8 +783,7 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
       }
       SendRecognizerDasLog( info, EnumToString(_alexaState) );
     };
-    _speechRecognizerSystem->InitAlexa(*dataLoader, _locale, callback);
-
+    _speechRecognizerSystem->ActivateAlexa(_locale, callback);
   }
   else if((oldState != AlexaSimpleState::Disabled) && !enabled) {
     // Disable "Alexa" wake word in SpeechRecognizerSystem
@@ -914,7 +916,7 @@ void MicDataSystem::RequestConnectionStatus()
   }
 }
   
-void MicDataSystem::SendTriggerDetectionToWebViz(const AudioUtil::SpeechRecognizerCallbackInfo& info)
+void MicDataSystem::SendTriggerDetectionToWebViz(const AudioUtil::SpeechRecognizerCallbackInfo& info, bool ignore)
 {
   if ( _context != nullptr ) {
     auto* webService = _context->GetWebService();
@@ -927,6 +929,7 @@ void MicDataSystem::SendTriggerDetectionToWebViz(const AudioUtil::SpeechRecogniz
       data["startSampleIndex"] = info.startSampleIndex;
       data["endSampleIndex"] = info.endSampleIndex;
       data["score"] = info.score;
+      data["ignore"] = ignore;
       webService->SendToWebViz( kModuleName, data );
     }
   }

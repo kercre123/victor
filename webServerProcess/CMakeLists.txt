@@ -68,6 +68,7 @@ if (VICOS AND NOT ANKI_NO_WEBSERVER_ENABLED)
     cti_common
     victorCrashReports
     ${PLATFORM_LIBS}
+    ${ASAN_EXE_LINKER_FLAGS}
   )
 
   anki_build_strip(TARGET vic-webserver)

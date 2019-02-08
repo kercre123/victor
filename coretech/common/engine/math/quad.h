@@ -15,7 +15,7 @@
 #ifndef _ANKICORETECH_COMMON_QUAD_H_
 #define _ANKICORETECH_COMMON_QUAD_H_
 
-#include "coretech/common/engine/math/point_fwd.h"
+#include "coretech/common/shared/math/rect.h"
 
 namespace Anki {
 
@@ -57,6 +57,8 @@ namespace Anki {
     Quadrilateral(std::initializer_list<Point<N,T> >& points);
     
     Quadrilateral(const Quadrilateral<N,T>& quad);
+
+    Quadrilateral(const Rectangle<T>& rect);
     
     // Construct from quad living in one dimension higher. Last dimension
     // simply gets dropped. For example, this allows construction of a 2D quad

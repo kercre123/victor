@@ -54,9 +54,6 @@ vlog "CMake"
 vlog "Go"
 ./tools/build/tools/ankibuild/go.py
 
-vlog "protobuf"                                                                                     
-./tools/build/tools/ankibuild/protobuf.py --install
-
 vlog "git lfs"
 $GIT lfs install
 

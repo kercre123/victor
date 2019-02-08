@@ -30,5 +30,6 @@ target_link_libraries(utilUnitTest
   util
   ${JSONCPP_LIBRARY}
   gtest
+  ${ASAN_LINKER_FLAGS}
 )
 

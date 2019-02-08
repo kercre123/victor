@@ -23,7 +23,6 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageFromAnimProcess.h"
 #include "clad/types/imageTypes.h"
-#include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
 #include "clad/types/robotTestModes.h"
 #include "clad/types/visionModes.h"
@@ -46,19 +45,11 @@ class UiGameController {
 
 public:
   typedef struct {
-    ObjectFamily family;
     ObjectType   type;
     s32 id;
-    f32 area;
     bool isActive;
-    
-    void Reset() {
-      family = ObjectFamily::Unknown;
-      type = ObjectType::UnknownObject;
-      id = -1;
-      area = 0;
-      isActive = false;
-    }
+    uint32_t observedTimestamp;
+    Pose3d pose;
   } ObservedObject;
   
   
@@ -349,32 +340,30 @@ protected:
   f32           GetLiftHeight_mm() const;
   void          GetWheelSpeeds_mmps(f32& left, f32& right) const;
   s32           GetCarryingObjectID() const;
-  s32           GetCarryingObjectOnTopID() const;
   bool          IsRobotStatus(RobotStatusFlag mask) const;
   
   const ExternalInterface::RobotState& GetRobotState() const { return _robotStateMsg; }
   
   std::vector<s32> GetAllObjectIDs() const;
-  std::vector<s32> GetAllObjectIDsByFamily(ObjectFamily family) const;
-  std::vector<s32> GetAllObjectIDsByFamilyAndType(ObjectFamily family, ObjectType type) const;
-  Result           GetObjectFamily(s32 objectID, ObjectFamily& family) const;
+  std::vector<s32> GetAllLightCubeObjectIDs() const;
+  std::vector<s32> GetAllObjectIDsByType(const ObjectType& type) const;
   Result           GetObjectType(s32 objectID, ObjectType& type) const;
   Result           GetObjectPose(s32 objectID, Pose3d& pose) const;
   
-  u32              GetNumObjectsInFamily(ObjectFamily family) const;
-  u32              GetNumObjectsInFamilyAndType(ObjectFamily family, ObjectType type) const;
   u32              GetNumObjects() const;
   void             ClearAllKnownObjects();
   
   // Helper to create a Pose3d from a poseStruct and add a new origin if needed
   Pose3d CreatePoseHelper(const PoseStruct3d& poseStruct);
   
-  void AddOrUpdateObject(s32 objID, ObjectType objType, ObjectFamily objFamily,
-                         const PoseStruct3d& poseStruct);
+  void AddOrUpdateObject(s32 objID, ObjectType objType,
+                         const PoseStruct3d& poseStruct,
+                         const uint32_t observedTimestamp,
+                         const bool isActive);
   
-  const std::map<s32, Pose3d>& GetObjectPoseMap();
+  std::map<s32, Pose3d> GetObjectPoseMap();
   
-  const ObservedObject& GetLastObservedObject() const;
+  ObservedObject GetLastObservedObject() const;
 
   const Vision::FaceID_t GetLastObservedFaceID() const;
   
@@ -538,10 +527,7 @@ private:
   
   ExternalInterface::RobotState _robotStateMsg;
   
-  UiGameController::ObservedObject _lastObservedObject;
-  std::map<s32, std::pair<ObjectFamily, ObjectType> > _objectIDToFamilyTypeMap;
-  std::map<ObjectFamily, std::map<ObjectType, std::vector<s32> > > _objectFamilyToTypeToIDMap;
-  std::map<s32, Pose3d> _objectIDToPoseMap;
+  std::vector<UiGameController::ObservedObject> _observedObjects;
   
   Vision::FaceID_t _lastObservedFaceID;
   

@@ -14,6 +14,7 @@
 #include "engine/vision/motionDetector_neon.h"
 
 #include "coretech/common/engine/math/linearAlgebra_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/imageCache.h"
 #include "coretech/common/engine/jsonTools.h"
@@ -483,7 +484,7 @@ Result MotionDetector::Detect(Vision::ImageCache&     imageCache,
                               const VisionPoseData&   crntPoseData,
                               const VisionPoseData&   prevPoseData,
                               std::list<ExternalInterface::RobotObservedMotion>& observedMotions,
-                              DebugImageList<Vision::CompressedImage>& debugImages)
+                              Vision::DebugImageList<Vision::CompressedImage>& debugImages)
 {
   const Vision::ImageCacheSize imageSize = Vision::ImageCache::GetSize(kMotionDetection_ScaleMultiplier);
 
@@ -515,7 +516,7 @@ Result MotionDetector::DetectHelper(const ImageType &image,
                                     const VisionPoseData& crntPoseData,
                                     const VisionPoseData& prevPoseData,
                                     std::list<ExternalInterface::RobotObservedMotion> &observedMotions,
-                                    DebugImageList<Vision::CompressedImage>& debugImages)
+                                    Vision::DebugImageList<Vision::CompressedImage>& debugImages)
 {
 
   // Create the ImageRegionSelector. It has to be done here since the image size is not known before
@@ -620,7 +621,7 @@ bool MotionDetector::DetectGroundAndImageHelper(Vision::Image &foregroundMotion,
                                                 const VisionPoseData &crntPoseData,
                                                 const VisionPoseData &prevPoseData,
                                                 std::list<ExternalInterface::RobotObservedMotion> &observedMotions,
-                                                DebugImageList<Vision::CompressedImage> &debugImages,
+                                                Vision::DebugImageList<Vision::CompressedImage> &debugImages,
                                                 ExternalInterface::RobotObservedMotion &msg)
 {
 
@@ -882,7 +883,7 @@ void MotionDetector::FilterImageAndPrevImages(const ImageType& image, ImageType&
 }
 
 bool MotionDetector::DetectPeripheralMotionHelper(Vision::Image &ratioImage,
-                                                  DebugImageList<Vision::CompressedImage> &debugImages,
+                                                  Vision::DebugImageList<Vision::CompressedImage> &debugImages,
                                                   ExternalInterface::RobotObservedMotion &msg, f32 scaleMultiplier)
 {
 
@@ -1106,13 +1107,13 @@ template Result MotionDetector::DetectHelper(const Vision::Image&, s32, s32, f32
                                              const VisionPoseData&,
                                              const VisionPoseData&,
                                              std::list<ExternalInterface::RobotObservedMotion>&,
-                                             DebugImageList<Vision::CompressedImage>&);
+                                             Vision::DebugImageList<Vision::CompressedImage>&);
 
 template Result MotionDetector::DetectHelper(const Vision::ImageRGB&, s32, s32, f32,
                                              const VisionPoseData&,
                                              const VisionPoseData&,
                                              std::list<ExternalInterface::RobotObservedMotion>&,
-                                             DebugImageList<Vision::CompressedImage>&);
+                                             Vision::DebugImageList<Vision::CompressedImage>&);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Computes "centroid" at specified percentiles in X and Y

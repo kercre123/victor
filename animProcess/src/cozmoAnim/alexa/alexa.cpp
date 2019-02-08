@@ -58,6 +58,8 @@ namespace {
   
   const float kAlexaErrorTimeout_s = 15.0f; // max duration for error audio
 }
+
+CONSOLE_VAR(bool, kAllowAudioOnCharger, "Alexa", true);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AudioEngine::AudioEventId GetErrorAudioEvent( AlexaNetworkErrorType errorType )
@@ -67,16 +69,16 @@ AudioEngine::AudioEventId GetErrorAudioEvent( AlexaNetworkErrorType errorType )
   switch( errorType ) {
     case AlexaNetworkErrorType::NoInitialConnection:
       // "I'm having trouble connecting to the internet. For help, go to your device's companion app"
-      return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__En_Us_Avs_System_Prompt_Error_Offline_Not_Connected_To_Internet );
+      return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Avs_System_Prompt_Error_Offline_Not_Connected_To_Internet );
     case AlexaNetworkErrorType::LostConnection:
       // "Sorry, your device lost its connection."
-      return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__En_Us_Avs_System_Prompt_Error_Offline_Lost_Connection );
+      return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Avs_System_Prompt_Error_Offline_Lost_Connection );
     case AlexaNetworkErrorType::HavingTroubleThinking:
       // "Sorry, I'm having trouble understanding right now. please try a little later"
-      return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__En_Us_Avs_System_Prompt_Error_Offline_Not_Connected_To_Service_Else );
+      return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Avs_System_Prompt_Error_Offline_Not_Connected_To_Service_Else );
     case AlexaNetworkErrorType::AuthRevoked:
       // "Your device isnt registered. For help, go it its companion app"
-      return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__En_Us_Avs_System_Prompt_Error_Offline_Not_Registered );
+      return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Avs_System_Prompt_Error_Offline_Not_Registered );
     case AlexaNetworkErrorType::NoError:
     default:
       return AudioEngine::kInvalidAudioEventId;
@@ -153,8 +155,8 @@ void Alexa::Update()
   }
   
   if( _pendingLocale && HasInitializedImpl() ) {
-    _impl->SetLocale( *_pendingLocale );
-    _pendingLocale.reset();
+    _impl->SetLocale( *_locale );
+    _pendingLocale = false;
   }
   
   if( _impl != nullptr) {
@@ -251,6 +253,11 @@ void Alexa::SetAlexaActive( bool active, bool deleteUserData )
     // this is also set in other ways, but just to be sure
     SetAuthState( AlexaAuthState::Uninitialized );
     OnAlexaUXStateChanged( AlexaUXState::Idle );
+    
+    // If the user signs in again without rebooting, use the old locale
+    if( _locale != nullptr ) {
+      _pendingLocale = true;
+    }
   }
 }
   
@@ -551,6 +558,8 @@ void Alexa::SetUXState( AlexaUXState newState )
     // set backpack lights if streaming
     const bool listening = (_uxState == AlexaUXState::Listening);
     _context->GetBackpackLightComponent()->SetAlexaStreaming( listening );
+    const bool speaking = ( _uxState == AlexaUXState::Speaking );
+    _context->GetMicDataSystem()->GetSpeechRecognizerSystem()->SetAlexaSpeakingState( speaking );
   }
   
   if( _authState == AlexaAuthState::Authorized ) {
@@ -571,23 +580,26 @@ void Alexa::SetUXState( AlexaUXState newState )
     }
   }
   
-  using namespace AudioEngine;
-  using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-  // Play Audio Event for state change
-  if (_uxState == AlexaUXState::Listening) {
-    if ( (oldState == AlexaUXState::Idle) && (_notifyType != NotifyType::None) ) {
-      // Alexa triggered by voice or button press
-      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
+  // Only play earcons when not frozen on charger (alexa acoustic test mode)
+  if( !(_frozenOnCharger && _onCharger) || kAllowAudioOnCharger ) {
+    using namespace AudioEngine;
+    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+    // Play Audio Event for state change
+    if (_uxState == AlexaUXState::Listening) {
+      if ( (oldState == AlexaUXState::Idle) && (_notifyType != NotifyType::None) ) {
+        // Alexa triggered by voice or button press
+        PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
+      }
+      else if (oldState == AlexaUXState::Speaking) {
+        // Play EarCon for follow up question
+        PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
+      }
+      _notifyType = NotifyType::None;
     }
-    else if (oldState == AlexaUXState::Speaking) {
-      // Play EarCon for follow up question
-      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
+    else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
+      // Play when listening ends
+      PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Endpointing ) );
     }
-    _notifyType = NotifyType::None;
-  }
-  else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
-    // Play when listening ends
-    PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Endpointing ) );
   }
 }
   
@@ -798,11 +810,49 @@ void Alexa::NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::UpdateLocale( const Util::Locale& locale )
 {
+  _locale.reset( new Util::Locale{locale} );
   if( HasInitializedImpl() ) {
     _impl->SetLocale( locale );
-    _pendingLocale.reset();
+    _pendingLocale = false;
   } else {
-    _pendingLocale.reset( new Util::Locale{locale} );
+    _pendingLocale = true;
+  }
+  // tell audio about the new locale for its baked in assets
+
+  auto* audioController = _context->GetAudioController();
+  if ( audioController != nullptr ) {
+    using namespace AudioEngine;
+    const auto gameObject = ToAudioGameObject( AudioMetaData::GameObjectType::Alexa );
+    bool matched = true;
+    AudioMetaData::SwitchState::Robot_Alexa_Locale newState = AudioMetaData::SwitchState::Robot_Alexa_Locale::En_Us;
+    switch( locale.GetCountry() ) {
+      case Util::Locale::CountryISO2::US:
+      case Util::Locale::CountryISO2::CA:
+      {
+        newState = AudioMetaData::SwitchState::Robot_Alexa_Locale::En_Us;
+      }
+        break;
+      case Util::Locale::CountryISO2::GB:
+      {
+        newState = AudioMetaData::SwitchState::Robot_Alexa_Locale::En_Uk;
+      }
+        break;
+      case Util::Locale::CountryISO2::AU:
+      {
+        newState = AudioMetaData::SwitchState::Robot_Alexa_Locale::En_Au;
+      }
+        break;
+      default:
+      {
+        matched = false;
+      }
+        break;
+    }
+    if( matched ) {
+      audioController->SetSwitchState( ToAudioSwitchGroupId( AudioMetaData::SwitchState::SwitchGroupType::Robot_Alexa_Locale ),
+                                       ToAudioSwitchStateId( (AudioMetaData::SwitchState::GenericSwitch) newState ),
+                                       gameObject );
+    }
   }
 }
 

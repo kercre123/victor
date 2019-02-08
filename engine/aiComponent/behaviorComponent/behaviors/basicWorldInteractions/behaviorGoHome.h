@@ -79,7 +79,7 @@ private:
   struct DynamicVariables {
     DynamicVariables() {};
     ObjectID chargerID;
-    bool     drivingAnimsPushed = false;;
+    bool     drivingAnimsPushed = false;
     int      driveToRetryCount = 0;
     int      turnToDockRetryCount = 0;
     int      mountChargerRetryCount = 0;

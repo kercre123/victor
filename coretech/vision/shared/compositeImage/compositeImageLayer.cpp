@@ -14,7 +14,7 @@
 #include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/shared/math/point.h"
 #include "coretech/vision/shared/compositeImage/compositeImageLayoutModifier.h"
 #include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 
@@ -102,7 +102,7 @@ bool CompositeImageLayer::GetFrame(SpriteBoxName sbName, const u32 index,
 {
   auto imageMapIter = _imageMap.find(sbName);
   if(imageMapIter != _imageMap.end()){
-    return imageMapIter->second.GetFrame(index, handle);;
+    return imageMapIter->second.GetFrame(index, handle);
   }
   return false;
 }

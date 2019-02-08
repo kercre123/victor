@@ -40,6 +40,14 @@
 
 namespace Anki {
 namespace Vector {
+  
+namespace {
+ 
+# if !ALEXA_ACOUSTIC_TEST
+  CONSOLE_VAR(bool, kAcousticTestMode, "Alexa", false);
+# endif
+
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorsBootLoader::BehaviorsBootLoader(const Json::Value& config)
@@ -48,6 +56,7 @@ BehaviorsBootLoader::BehaviorsBootLoader(const Json::Value& config)
   _behaviors.factoryBehavior = BEHAVIOR_ID(PlaypenTest);
   _behaviors.prDemoBehavior = BEHAVIOR_ID(InitPRDemo);
   _behaviors.selfTestBehavior = BEHAVIOR_ID(SelfTest);
+  _behaviors.acousticTestBehavior = BEHAVIOR_ID(AcousticTestMode);
   
   if( ANKI_VERIFY(!config.empty(), "BehaviorsBootLoader.Ctor.InvalidConfig", "Empty config") ) {
     
@@ -65,6 +74,13 @@ BehaviorsBootLoader::BehaviorsBootLoader(const Json::Value& config)
     _behaviors.postOnboardingBehavior = BEHAVIOR_ID(Wait);
     _behaviors.devBaseBehavior = BEHAVIOR_ID(Wait);
   }
+  
+# if ALEXA_ACOUSTIC_TEST
+  {
+    _behaviors.postOnboardingBehavior = _behaviors.acousticTestBehavior;
+    _behaviors.normalBaseBehavior = _behaviors.acousticTestBehavior;
+  }
+# endif
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -77,6 +93,8 @@ BehaviorsBootLoader::BehaviorsBootLoader( IBehavior* overrideBehavior, const Uni
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorsBootLoader::InitDependent( Robot* robot, const BCCompMap& dependentComps )
 {
+  _robot = robot;
+  
   using namespace Util;
   const Data::DataPlatform* platform = robot->GetContextDataPlatform();
   _saveFolder = platform->pathToResource( Data::Scope::Persistent, BehaviorOnboardingCoordinator::kOnboardingFolder );
@@ -220,8 +238,7 @@ void BehaviorsBootLoader::UpdateDependent(const BCCompMap& dependentComps)
     }
   }
 
-  if(_selfTestEnded)
-  {
+  if( _selfTestEnded ) {
     // Self test has ended so reset the behavior stack to what
     // it was before the self ran as well as the boot behavior
     _selfTestEnded = false;
@@ -233,6 +250,24 @@ void BehaviorsBootLoader::UpdateDependent(const BCCompMap& dependentComps)
       
     _prevBootBehavior = nullptr;
     _prevBottomOfStackBehavior = nullptr;
+  }
+  
+  // wait until we know we can communicate with anim to send anything
+  if( _robot->GetSyncRobotAcked() ) {
+#   if ALEXA_ACOUSTIC_TEST
+    const bool enterAcousticTestMode = (_bootBehaviorID != _behaviors.onboardingBehavior);
+#   else
+    const bool enterAcousticTestMode = kAcousticTestMode;
+    if( kAcousticTestMode && (_bootBehaviorID != _behaviors.acousticTestBehavior) ) {
+      SetNewBehavior( _behaviors.acousticTestBehavior );
+    }
+#   endif
+    if( enterAcousticTestMode != _wasAcousticTestMode ) {
+      _wasAcousticTestMode = enterAcousticTestMode;
+      
+      RobotInterface::AcousticTestEnabled msg{ enterAcousticTestMode };
+      _robot->SendMessage( RobotInterface::EngineToRobot( std::move(msg) ) );
+    }
   }
 }
   
@@ -296,6 +331,7 @@ IBehavior* BehaviorsBootLoader::GetBootBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorsBootLoader::SetNewBehavior(BehaviorID behaviorID, bool requestStackReset)
 {
+  _bootBehaviorID = behaviorID;
   DEV_ASSERT(_behaviorContainer != nullptr, "BehaviorsBootLoader.SetNewBehavior.NoBC");
   
   IBehavior* behavior = _behaviorContainer->FindBehaviorByID(behaviorID).get();

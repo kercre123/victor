@@ -9,7 +9,7 @@
 #ifndef __ROBOT_LOCALIZATION_GEOMETRY_H_
 #define __ROBOT_LOCALIZATION_GEOMETRY_H_
 
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/radians.h"
 
 namespace Anki
 {

@@ -22,7 +22,10 @@ namespace Vector {
 BehaviorSelfTestButton::BehaviorSelfTestButton(const Json::Value& config)
 : IBehaviorSelfTest(config, SelfTestResultCode::BUTTON_PRESS_TIMEOUT)
 {
-
+  // Allow offtreads state to change while this behavior is running
+  // We sometimes detect pickup/InAir when the button is pressed while on the charger due to
+  // bouncy charge contacts
+  SubscribeToTags({EngineToGameTag::RobotOffTreadsStateChanged});
 }
 
 Result BehaviorSelfTestButton::OnBehaviorActivatedInternal()

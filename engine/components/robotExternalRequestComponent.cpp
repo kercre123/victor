@@ -48,43 +48,5 @@ namespace Vector {
     robot->GetGatewayInterface()->Broadcast(wrapper);
   }
 
-  // TODO Only allow this if the SDK behavior is activated.
-  void RobotExternalRequestComponent::SayText(const AnkiEvent<external_interface::GatewayWrapper>& event) {
-    Robot* robot = _context->GetRobotManager()->GetRobot();
-    external_interface::SayTextRequest request = event.GetData().say_text_request();
-    AudioMetaData::SwitchState::Robot_Vic_External_Processing processingStyle;
-
-    if (request.use_vector_voice()) {
-      processingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing::Default_Processed;
-    }
-    else {
-      processingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing::Unprocessed;
-    }
-    auto ttsCallback = [robot](const UtteranceState& state) {
-      external_interface::SayTextResponse* response = new external_interface::SayTextResponse{nullptr,
-                                                                                            (external_interface::SayTextResponse::UtteranceState)state};
-      external_interface::GatewayWrapper wrapper;
-      wrapper.set_allocated_say_text_response(response);
-      robot->GetGatewayInterface()->Broadcast(wrapper);
-    };
-    robot->GetTextToSpeechCoordinator().CreateUtterance(request.text(),
-                                                        UtteranceTriggerType::Immediate, 
-                                                        processingStyle,
-                                                        request.duration_scalar(),
-                                                        ttsCallback);
-  }
-
-  // TODO Only allow this if the SDK behavior is activated.
-  void RobotExternalRequestComponent::SetEyeColor(const AnkiEvent<external_interface::GatewayWrapper>& event){
-    Robot* robot = _context->GetRobotManager()->GetRobot();
-    external_interface::SetEyeColorRequest request = event.GetData().set_eye_color_request();
-
-    const float hue = request.hue();
-    const float saturation = request.saturation();
-
-    robot->SendRobotMessage<RobotInterface::SetFaceHue>(hue);
-    robot->SendRobotMessage<RobotInterface::SetFaceSaturation>(saturation);
-  }
-
-} // Cozmo namespace
+} // Vector namespace
 } // Anki namespace

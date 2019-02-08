@@ -23,6 +23,7 @@
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/components/settingsManager.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/utils/cozmoFeatureGate.h"
@@ -161,6 +162,11 @@ void HabitatDetectorComponent::InitDependent(Robot* robot, const RobotCompMap& d
 
   _toSendJson["reason"] = "~";
   _toSendJson["whiteThresholds"] = "~";
+
+  std::function<SettingsManager::SettingsCallbackOnSetFunc> onVolumeChangeFunc = std::bind(&HabitatDetectorComponent::OnVolumeChanged, this);
+  _signalHandles.emplace_back(_robot->GetComponentPtr<SettingsManager>()->RegisterSettingsCallbackOnSet(external_interface::RobotSetting::master_volume, onVolumeChangeFunc));
+
+  _lastMasterVolumeBeforeInHabitat = _robot->GetComponentPtr<SettingsManager>()->GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
 }
 
 template<>
@@ -196,6 +202,11 @@ void HabitatDetectorComponent::HandleMessage(const ExternalInterface::RobotDeloc
   _poseOriginIdOnDelocalize = _robot->GetWorldOriginID();
 }
 
+void HabitatDetectorComponent::OnVolumeChanged()
+{
+  _lastMasterVolumeBeforeInHabitat = _robot->GetComponentPtr<SettingsManager>()->GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
+}
+
 void HabitatDetectorComponent::SetBelief(HabitatBeliefState state, std::string devReasonStr)
 {
   PRINT_NAMED_INFO("HabitatDetectorComponent.SetBelief","%s <- %s", EnumToString(state), devReasonStr.c_str());
@@ -226,6 +237,11 @@ bool HabitatDetectorComponent::UpdateProxObservations()
   
 void HabitatDetectorComponent::ForceSetHabitatBeliefState(HabitatBeliefState belief, const std::string& sourceStr)
 {
+  if(belief == HabitatBeliefState::InHabitat) {
+    SetRobotMasterVolumeLow();
+  } else {
+    RestoreRobotMasterVolume();
+  }
   // prepend ForceSet to calls to this method so we can track the caller
   SetBelief(belief, "ForceSet(" + sourceStr + ")");
 }
@@ -247,7 +263,7 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
 
   const bool isPickedUp = _robot->GetOffTreadsState() != OffTreadsState::OnTreads;
 
-  if(cliffSensor.IsCliffDetected() && isPickedUp) {
+  if(cliffSensor.IsCliffDetected() && isPickedUp && _habitatBelief != HabitatBeliefState::Unknown) {
     _habitatBelief = HabitatBeliefState::Unknown;
     _detectedWhiteFromCliffs = false;
     _proxReadingBuffer.clear();
@@ -267,6 +283,9 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
     _lastSentWhiteThreshFL = 0;
     _lastSentWhiteThreshFR = 0;
     _timeForWhiteThresholdUpdate_s = 0.0;
+
+    // reset the robot master volume to pre-habitat settings
+    RestoreRobotMasterVolume();
   }
   
   // habitat confirmation (or disconfirmation) can occur if we are in the unknown state
@@ -382,6 +401,9 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
 
             if(distance_mm <= kConfirmationConfigProxMaxReading) {
               SetBelief(HabitatBeliefState::InHabitat, reason.str());
+              // VIC-12807 lower the volume when we are in the habitat
+              // do this once here, because the user may change the volume at another time
+              SetRobotMasterVolumeLow();
             } else {
               SetBelief(HabitatBeliefState::NotInHabitat, reason.str());
             }
@@ -404,6 +426,30 @@ void HabitatDetectorComponent::UpdateDependent(const DependencyManagedEntity<Rob
     SendDataToWebViz();
     _nextSendWebVizDataTime_sec = now_sec + kSendWebVizDataPeriod_sec;
   }
+}
+
+void HabitatDetectorComponent::SetRobotMasterVolumeLow()
+{
+  u32 oldVolume = _robot->GetComponentPtr<SettingsManager>()->GetRobotSettingAsUInt(external_interface::RobotSetting::master_volume);
+
+  if(oldVolume != static_cast<u32>(external_interface::Volume::MUTE)) {
+    bool dummy;
+    _robot->GetComponentPtr<SettingsManager>()->SetRobotSetting(external_interface::RobotSetting::master_volume, static_cast<u32>(external_interface::Volume::LOW), true, dummy);
+  }
+
+  // we overwrite the cached volume because we get a callback whenever the volume is changed
+  // - we must ignore the previous instance of volume change (since Habitat triggered it)
+  // - thus we save the volume before and overwrite with the restore-point value
+  _lastMasterVolumeBeforeInHabitat = oldVolume;
+}
+
+void HabitatDetectorComponent::RestoreRobotMasterVolume() const
+{
+  bool dummy;
+  _robot->GetComponentPtr<SettingsManager>()->SetRobotSetting(
+    external_interface::RobotSetting::master_volume, 
+    static_cast<external_interface::Volume>(_lastMasterVolumeBeforeInHabitat), 
+    true, dummy);
 }
   
 void HabitatDetectorComponent::UpdateWhiteDetectThreshold(const CliffSensorComponent::CliffSensorDataArray& cliffValues)

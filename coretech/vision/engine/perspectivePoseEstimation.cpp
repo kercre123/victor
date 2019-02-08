@@ -46,7 +46,7 @@
 
 #include "coretech/vision/engine/perspectivePoseEstimation.h"
 
-#include "coretech/common/engine/math/matrix_impl.h"
+#include "coretech/common/shared/math/matrix_impl.h"
 #include "coretech/common/engine/math/quad_impl.h"
 
 namespace Anki {
@@ -282,10 +282,8 @@ namespace Anki {
         solveQuartic(factors, realRoots);
         
         // Backsubstitution of each solution
-        MATRIX Tt;
-        T.GetTranspose(Tt);
-        MATRIX Nt;
-        N.GetTranspose(Nt);
+        MATRIX Tt = T.GetTranspose();
+        MATRIX Nt = N.GetTranspose();
         for(s32 i=0; i<4; i++)
         {
           PRECISION cot_alpha = (-f_1*p_1/f_2-realRoots[i]*p_2+d_12*b)/(-f_1*realRoots[i]*p_2/f_2+p_1-d_12);

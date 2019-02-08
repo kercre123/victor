@@ -135,7 +135,7 @@ using NodeContent           = SmartTuple<MemoryMapDataPtr>;
 using NodeTransformFunction = std::function<NodeContent (const NodeContent&)>;
 using NodeAddress           = std::vector<EQuadrant>;
 using FoldFunctor           = std::function<void (QuadTreeNode& node)>;
-using FoldFunctorConst      = std::function<void (const QuadTreeNode& node)>;;
+using FoldFunctorConst      = std::function<void (const QuadTreeNode& node)>;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Helper functions

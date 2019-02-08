@@ -106,7 +106,6 @@ BatteryComponent::BatteryComponent()
                                                                     kBatteryVoltsFilterTimeConstant_sec);
 
   // setup block world filter to find chargers:
-  _chargerFilter->AddAllowedFamily(ObjectFamily::Charger);
   _chargerFilter->AddAllowedType(ObjectType::Charger_Basic);
 
   _lastOnChargerContactsPitchAngle.performRescaling(false);
@@ -340,10 +339,11 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 
   static RobotInterface::BatteryStatus prevStatus;
   RobotInterface::BatteryStatus curStatus;
-  curStatus.isLow             = IsBatteryLow();
-  curStatus.isCharging        = IsCharging();
-  curStatus.onChargerContacts = IsOnChargerContacts();
-  curStatus.isBatteryFull     = IsBatteryFull();
+  curStatus.isLow                 = IsBatteryLow();
+  curStatus.isCharging            = IsCharging();
+  curStatus.onChargerContacts     = IsOnChargerContacts();
+  curStatus.isBatteryFull         = IsBatteryFull();
+  curStatus.isBatteryDisconnected = IsBatteryDisconnectedFromCharger();
 
   if(curStatus != prevStatus)
   {
