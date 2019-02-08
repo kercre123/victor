@@ -40,12 +40,10 @@ class CozmoEngine;
 class CozmoAPI : private Util::noncopyable
 {
 public:
-  // When the engine should run in a separate thread
-  ANKI_VISIBLE bool StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Value& config);
   ANKI_VISIBLE bool IsRunning() const;
 
-  // When manual control over updating the engine is desired:
   ANKI_VISIBLE bool Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& config);
+
   ANKI_VISIBLE bool Update(const BaseStationTime_t currentTime_nanosec);
 
   // Activate A/B experiment
@@ -71,11 +69,9 @@ private:
 
     virtual ~CozmoInstanceRunner();
 
-    void Run();
     bool IsRunning() const { return _isRunning; }
     void Stop() { _isRunning.store(false); }
 
-    // For manually ticking the game
     bool Update(const BaseStationTime_t currentTime_nanosec);
     CozmoEngine* GetEngine() const { return _cozmoInstance.get(); }
     void SyncWithEngineUpdate(const std::function<void()>& func) const;
@@ -87,12 +83,10 @@ private:
     std::unique_ptr<CozmoEngine> _cozmoInstance;
     std::atomic<bool> _isRunning;
     mutable std::mutex _updateMutex;
-
   }; // class CozmoInstanceRunner
 
   // Our running instance, if we have one
   std::unique_ptr<CozmoInstanceRunner> _cozmoRunner;
-  std::thread _cozmoRunnerThread;
 }; // class CozmoAPI
 
 } // namespace Vector
