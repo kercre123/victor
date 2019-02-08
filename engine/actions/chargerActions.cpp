@@ -369,7 +369,8 @@ ActionResult BackupOntoChargerAction::Verify()
   
 DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objectID,
                                                            const bool useCliffSensorCorrection,
-                                                           const bool enableDockingAnims)
+                                                           const bool enableDockingAnims,
+                                                           const bool doPositionCheckOnPathCompletion)
 : CompoundActionSequential()
 {
   // Get DriveToObjectAction
@@ -379,6 +380,7 @@ DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objec
                                                false,
                                                0);
   driveToAction->SetPreActionPoseAngleTolerance(DEG_TO_RAD(15.f));
+  driveToAction->DoPositionCheckOnPathCompletion(doPositionCheckOnPathCompletion);
   AddAction(driveToAction);
   AddAction(new TurnToAlignWithChargerAction(objectID));
 
