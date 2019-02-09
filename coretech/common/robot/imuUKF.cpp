@@ -70,8 +70,8 @@ namespace {
   constexpr const double kBiasNoise_radps     = .00003; // 2 * bias stability
 
   // extra tuning param for how much we distribute the sigma points
-  constexpr const double kWsigma = .056; // 1/(2*N)
-  constexpr const double kCholScaleSq = 1./(2*kWsigma);
+  const double kWsigma =  1/(2*9); // 1 / (2N) := equal weight for all sigma points
+  const double kCholScale = sqrt(1./(2*kWsigma));
 
   // Gravity constants
   constexpr const Point<3,double> kGravity_G = {0., 0., 1.};
@@ -131,7 +131,7 @@ void ImuUKF::Update(const Point<3,double>& accel, const Point<3,double>& gyro, c
 void ImuUKF::ProcessUpdate(double dt_s)
 { 
   // sample the covariance, generating the set {𝑌ᵢ} and add the mean
-  const auto S = Cholesky(_P + _Q) * sqrt(kCholScaleSq);
+  const auto S = Cholesky(_P + _Q) * kCholScale;
   for (int i = 0; i < Error::Size; ++i) {
     // get the Sigma points for the given state
     const Error Si = S.GetColumn(i);
