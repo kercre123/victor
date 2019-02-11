@@ -14,7 +14,7 @@
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
-#include "engine/activeObject.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightAnimation.h"
@@ -212,7 +212,7 @@ bool CubeSpinnerGame::CanGameStart() const
 {
   BlockWorldFilter filter;
   filter.AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
-  const ActiveObject* obj = _blockWorld.FindConnectedActiveMatchingObject(filter);
+  const auto* obj = _blockWorld.FindConnectedMatchingBlock(filter);
   return obj != nullptr;
 }
 
@@ -232,7 +232,7 @@ bool CubeSpinnerGame::ResetGame()
   
   BlockWorldFilter filter;
   filter.AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
-  const ActiveObject* obj = _blockWorld.FindConnectedActiveMatchingObject(filter);
+  const auto* obj = _blockWorld.FindConnectedMatchingBlock(filter);
   if(obj != nullptr){
     _currentGame.targetObject = obj->GetID();
   }else{

@@ -41,7 +41,7 @@ namespace Anki
     class Robot;
     class RobotManager;
     class RobotMessageHandler;
-    class ActiveObject;
+    class Block;
     class IExternalInterface;
     class INavMap;
     class MapComponent;
@@ -102,11 +102,11 @@ namespace Anki
       // However, if an object of the same type is found as an unconnected object, the objectID is inherited, and
       // the unconnected instances (in origins) become linked to this connected object instance.
       // It returns the new or inherited objectID on success, or invalid objectID if it fails.
-      ObjectID AddConnectedActiveObject(const ActiveID& activeID,
+      ObjectID AddConnectedBlock(const ActiveID& activeID,
                                         const FactoryID& factoryID,
                                         const ObjectType& objectType);
       // Removes connected object from the connected objects container. Returns matching objectID if found
-      ObjectID RemoveConnectedActiveObject(const ActiveID& activeID);
+      ObjectID RemoveConnectedBlock(const ActiveID& activeID);
 
       // Adds the given object to the BlockWorld according to its current objectID and pose. The objectID is expected
       // to be set, and not be currently in use in the BlockWorld. Otherwise it's a sign that something went
@@ -141,20 +141,20 @@ namespace Anki
       
       // Return a pointer to an object with the specified ID in the current world coordinate frame.
       // If that object does not exist in the current origin, nullptr is returned.
-      // If you want an object regardless of its pose, use GetConnectedActiveObjectById instead.
+      // If you want an object regardless of its pose, use GetConnectedBlockById instead.
       // For more complex queries, use one of the Find methods with a BlockWorldFilter.
       inline const ObservableObject* GetLocatedObjectByID(const ObjectID& objectID) const;
       inline       ObservableObject* GetLocatedObjectByID(const ObjectID& objectID);
       
       // Returns a pointer to a connected object with the specified objectID without any pose information. If you need to obtain
       // the instance of this object in the current origin (if it exists), you can do so with GetLocatedObjectByID
-      inline const ActiveObject* GetConnectedActiveObjectByID(const ObjectID& objectID) const;
-      inline       ActiveObject* GetConnectedActiveObjectByID(const ObjectID& objectID);
+      inline const Block* GetConnectedBlockByID(const ObjectID& objectID) const;
+      inline       Block* GetConnectedBlockByID(const ObjectID& objectID);
       
       // Returns a pointer to a connected object with the specified objectID without any pose information. If you need to obtain
       // the instance of this object in the current origin (if it exists), you can do so with GetLocatedObjectByID
-      inline const ActiveObject* GetConnectedActiveObjectByActiveID(const ActiveID& activeID) const;
-      inline       ActiveObject* GetConnectedActiveObjectByActiveID(const ActiveID& activeID);
+      inline const Block* GetConnectedBlockByActiveID(const ActiveID& activeID) const;
+      inline       Block* GetConnectedBlockByActiveID(const ActiveID& activeID);
 
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Find connected objects by filter query
@@ -162,14 +162,14 @@ namespace Anki
       
       // Returns first object matching filter, among objects that are currently connected (regardless of pose)
       // Note OriginMode in the filter is ignored (TODO: provide ConnectedFilter API without origin)
-      inline const ActiveObject* FindConnectedActiveMatchingObject(const BlockWorldFilter& filter) const;
-      inline       ActiveObject* FindConnectedActiveMatchingObject(const BlockWorldFilter& filter);
+      inline const Block* FindConnectedMatchingBlock(const BlockWorldFilter& filter) const;
+      inline       Block* FindConnectedMatchingBlock(const BlockWorldFilter& filter);
 
       // Returns (in arguments) all objects matching a filter, among objects that are currently connected (regardless
       // of pose). Note OriginMode in the filter is ignored (TODO: provide ConnectedFilter API without origin)
       // NOTE: does not clear result (thus can be used multiple times with the same vector)
-      void FindConnectedActiveMatchingObjects(const BlockWorldFilter& filter, std::vector<const ActiveObject*>& result) const;
-      void FindConnectedActiveMatchingObjects(const BlockWorldFilter& filter, std::vector<ActiveObject*>& result);
+      void FindConnectedMatchingBlocks(const BlockWorldFilter& filter, std::vector<const Block*>& result) const;
+      void FindConnectedMatchingBlocks(const BlockWorldFilter& filter, std::vector<Block*>& result);
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // Find objects by filter query
@@ -333,7 +333,7 @@ namespace Anki
     private:
 
       // active objects
-      using ActiveObjectsContainer_t = std::vector<std::shared_ptr<ActiveObject>>;
+      using ConnectedObjectsContainer_t = std::vector<std::shared_ptr<Block>>;
 
       // observable objects
       using ObjectsContainer_t = std::vector<std::shared_ptr<ObservableObject>>;
@@ -355,14 +355,14 @@ namespace Anki
       // Connected by filter (most basic, other helpers rely on it)
       // If modifierFcn is non-null, it is applied to the matching object. Furthermore, if returnFirstFound is false,
       // then modifierFcn is applied to all matching objects, and the final object that matched is returned.
-      ActiveObject* FindConnectedObjectHelper(const BlockWorldFilter& filter,
-                                              const ModifierFcn& modifierFcn = nullptr,
-                                              bool returnFirstFound = false) const;
+      Block* FindConnectedObjectHelper(const BlockWorldFilter& filter,
+                                       const ModifierFcn& modifierFcn = nullptr,
+                                       bool returnFirstFound = false) const;
 
       // By ID or activeID
       ObservableObject* GetLocatedObjectByIdHelper(const ObjectID& objectID) const;
-      ActiveObject* GetConnectedActiveObjectByIdHelper(const ObjectID& objectID) const;
-      ActiveObject* GetConnectedActiveObjectByActiveIdHelper(const ActiveID& activeID) const;
+      Block* GetConnectedBlockByIdHelper(const ObjectID& objectID) const;
+      Block* GetConnectedBlockByActiveIdHelper(const ActiveID& activeID) const;
       
       // By location/pose
       ObservableObject* FindLocatedObjectClosestToHelper(const Pose3d& pose,
@@ -438,8 +438,7 @@ namespace Anki
       // Objects that we know about because they have connected, but for which we may or may not know their location.
       // The instances of objects in this container are expected to NEVER have a valid Pose/PoseState. If they are
       // present in any origin, a copy of the object with the proper pose will be placed in the located objects container.
-      // Note: by definition it stores ActiveObjects instead of ObservableObjects
-      ActiveObjectsContainer_t _connectedObjects;
+      ConnectedObjectsContainer_t _connectedObjects;
 
       // Objects that we have located indexed by the origin they belong to.
       // The instances of objects in this container are expected to always have a valid Pose/PoseState. If they are
@@ -480,34 +479,34 @@ namespace Anki
     }
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    const ActiveObject* BlockWorld::GetConnectedActiveObjectByID(const ObjectID& objectID) const {
-      return GetConnectedActiveObjectByIdHelper(objectID);
+    const Block* BlockWorld::GetConnectedBlockByID(const ObjectID& objectID) const {
+      return GetConnectedBlockByIdHelper(objectID);
     }
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    ActiveObject* BlockWorld::GetConnectedActiveObjectByID(const ObjectID& objectID) {
-      return GetConnectedActiveObjectByIdHelper(objectID);
+    Block* BlockWorld::GetConnectedBlockByID(const ObjectID& objectID) {
+      return GetConnectedBlockByIdHelper(objectID);
     }
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    const ActiveObject* BlockWorld::GetConnectedActiveObjectByActiveID(const ActiveID& activeID) const {
-      return GetConnectedActiveObjectByActiveIdHelper(activeID);
+    const Block* BlockWorld::GetConnectedBlockByActiveID(const ActiveID& activeID) const {
+      return GetConnectedBlockByActiveIdHelper(activeID);
     }
 
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    ActiveObject* BlockWorld::GetConnectedActiveObjectByActiveID(const ActiveID& activeID)
+    Block* BlockWorld::GetConnectedBlockByActiveID(const ActiveID& activeID)
     {
-      return GetConnectedActiveObjectByActiveIdHelper(activeID);
+      return GetConnectedBlockByActiveIdHelper(activeID);
     }
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    const ActiveObject* BlockWorld::FindConnectedActiveMatchingObject(const BlockWorldFilter& filter) const
+    const Block* BlockWorld::FindConnectedMatchingBlock(const BlockWorldFilter& filter) const
     {
       return FindConnectedObjectHelper(filter); // returns non-const
     }
     
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    ActiveObject* BlockWorld::FindConnectedActiveMatchingObject(const BlockWorldFilter& filter)
+    Block* BlockWorld::FindConnectedMatchingBlock(const BlockWorldFilter& filter)
     {
       return FindConnectedObjectHelper(filter); // returns non-const
     }

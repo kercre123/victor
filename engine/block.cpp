@@ -6,28 +6,18 @@
 //  Copyright (c) 2013 Anki, Inc. All rights reserved.
 //
 
-#include "coretech/common/engine/math/linearAlgebra_impl.h"
-
-#include "coretech/vision/engine/camera.h"
-
 #include "engine/block.h"
-#include "engine/robot.h"
-
-#include "coretech/common/engine/math/quad_impl.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
-#if ANKICORETECH_USE_OPENCV
-#include "opencv2/imgproc/imgproc.hpp"
-#endif
+#include "coretech/vision/engine/camera.h"
+#include "coretech/common/engine/math/linearAlgebra_impl.h"
+#include "coretech/common/engine/math/quad_impl.h"
 
-#define SAVE_SET_BLOCK_LIGHTS_MESSAGES_FOR_DEBUG 0
-
-#if SAVE_SET_BLOCK_LIGHTS_MESSAGES_FOR_DEBUG
-#  include <fstream>
-#endif
 #include <iomanip>
+
+#define LOG_CHANNEL "Block"
 
 namespace Anki {
 namespace Vector {
@@ -38,10 +28,6 @@ namespace Vector {
   //     x: distance along marker horizontal
   //     y: distance along marker normal
   const Pose2d kBlockPreDockPoseOffset = {0, 0, DEFAULT_MIN_PREDOCK_POSE_DISTANCE_MM};
-
-  
-  //#define BLOCK_DEFINITION_MODE BLOCK_ENUM_VALUE_MODE
-  //#include "engine/BlockDefinitions.h"
   
   // Static helper for looking up block properties by type
   const Block::BlockInfoTableEntry_t& Block::LookupBlockInfo(const ObjectType type)
@@ -248,12 +234,19 @@ namespace Vector {
   }
   
   
-  Block::Block(const ObjectType type)
-  : ObservableObject(type)
+  Block::Block(const ObjectType& type,
+               const ActiveID& activeID,
+               const FactoryID& factoryID)
+  : ActionableObject(type)
   , _size(LookupBlockInfo(_type).size)
-  , _name(LookupBlockInfo(_type).name)
   , _vizHandle(VizManager::INVALID_HANDLE)
   {
+    _activeID = activeID;
+    _factoryID = factoryID;
+    
+    DEV_ASSERT(IsBlockType(type, false),
+               "Block.InvalidType");
+    
     SetColor(LookupBlockInfo(_type).color);
              
     markersByFace_.fill(NULL);
@@ -264,6 +257,20 @@ namespace Vector {
     
     // Every block should at least have a front face defined in the BlockDefinitions file
     DEV_ASSERT(markersByFace_[FRONT_FACE] != NULL, "Block.Constructor.InvalidFrontFace");
+    
+    // Skip the check for ghost objects, which are a special case (they have 6 unknown markers)
+    if(ANKI_DEVELOPER_CODE && (type != ObjectType::Block_LIGHTCUBE_GHOST))
+    {
+      // For now, assume 6 different markers, so we can avoid rotation ambiguities
+      // Verify that here by making sure a set of markers has as many elements
+      // as the original list:
+      std::list<Vision::KnownMarker> const& markerList = GetMarkers();
+      std::set<Vision::Marker::Code> uniqueCodes;
+      for(auto & marker : markerList) {
+        uniqueCodes.insert(marker.GetCode());
+      }
+      DEV_ASSERT(uniqueCodes.size() == markerList.size(), "Block.Constructor.InvalidMarkerList");
+    }
     
   } // Constructor: Block(type)
   
@@ -339,18 +346,7 @@ namespace Vector {
     //--Block::numBlocks;
     EraseVisualization();
   }
-  
-  
-  // These should match the order in which faces are defined! (See Block constructor)
-  const std::array<Point3f, 6> Block::CanonicalDockingPoints = {
-    {-X_AXIS_3D(),
-      Y_AXIS_3D(),
-      X_AXIS_3D(),
-     -Y_AXIS_3D(),
-      Z_AXIS_3D(),
-     -Z_AXIS_3D()}
-  };
-  
+
   // prefix operator (++fname)
   Block::FaceName& operator++(Block::FaceName& fname) {
     fname = (fname < Block::NUM_FACES) ? static_cast<Block::FaceName>( static_cast<int>(fname) + 1 ) : Block::NUM_FACES;
@@ -411,9 +407,6 @@ namespace Vector {
       }
     }
     
-    //PRINT_INFO("ActiveCube %d's TopMarker is = %s\n", GetID().GetValue(),
-    //           topMarker->GetCodeName());
-    
     return *topMarker;
   }
   
@@ -440,28 +433,388 @@ namespace Vector {
     }
     
     // Erase the pre-dock poses
-    //DockableObject::EraseVisualization();
     ActionableObject::EraseVisualization();
   }
   
-#pragma mark ---  Block_Cube1x1 Implementation ---
-  
-  //const ObjectType Block_Cube1x1::BlockType = Block::NumTypes++;
-  
-  
-  
-  RotationAmbiguities const& Block_Cube1x1::GetRotationAmbiguities() const
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void Block::SetLEDs(const WhichCubeLEDs whichLEDs,
+                      const ColorRGBA& onColor,
+                      const ColorRGBA& offColor,
+                      const u32 onPeriod_ms,
+                      const u32 offPeriod_ms,
+                      const u32 transitionOnPeriod_ms,
+                      const u32 transitionOffPeriod_ms,
+                      const s32 offset,
+                      const bool turnOffUnspecifiedLEDs)
   {
-    static const RotationAmbiguities kFullyAmbiguous(true, {
-        RotationMatrix3d({1,0,0,  0,1,0,  0,0,1}),
-        RotationMatrix3d({0,1,0,  1,0,0,  0,0,1}),
-        RotationMatrix3d({0,1,0,  0,0,1,  1,0,0}),
-        RotationMatrix3d({0,0,1,  0,1,0,  1,0,0}),
-        RotationMatrix3d({0,0,1,  1,0,0,  0,1,0}),
-        RotationMatrix3d({1,0,0,  0,0,1,  0,1,0})
-    });
+    static const u8 FIRST_BIT = 0x01;
+    u8 shiftedLEDs = static_cast<u8>(whichLEDs);
+    for(u8 iLED=0; iLED<NUM_LEDS; ++iLED) {
+      // If this LED is specified in whichLEDs (its bit is set), then
+      // update
+      if(shiftedLEDs & FIRST_BIT) {
+        _ledState[iLED].onColor      = onColor;
+        _ledState[iLED].offColor     = offColor;
+        _ledState[iLED].onPeriod_ms  = onPeriod_ms;
+        _ledState[iLED].offPeriod_ms = offPeriod_ms;
+        _ledState[iLED].transitionOnPeriod_ms = transitionOnPeriod_ms;
+        _ledState[iLED].transitionOffPeriod_ms = transitionOffPeriod_ms;
+        _ledState[iLED].offset = offset;
+      } else if(turnOffUnspecifiedLEDs) {
+        _ledState[iLED].onColor      = ::Anki::NamedColors::BLACK;
+        _ledState[iLED].offColor     = ::Anki::NamedColors::BLACK;
+        _ledState[iLED].onPeriod_ms  = 1000;
+        _ledState[iLED].offPeriod_ms = 1000;
+        _ledState[iLED].transitionOnPeriod_ms = 0;
+        _ledState[iLED].transitionOffPeriod_ms = 0;
+        _ledState[iLED].offset = 0;
+      }
+      shiftedLEDs = shiftedLEDs >> 1;
+    }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void Block::SetLEDs(const std::array<u32,NUM_LEDS>& onColors,
+                      const std::array<u32,NUM_LEDS>& offColors,
+                      const std::array<u32,NUM_LEDS>& onPeriods_ms,
+                      const std::array<u32,NUM_LEDS>& offPeriods_ms,
+                      const std::array<u32,NUM_LEDS>& transitionOnPeriods_ms,
+                      const std::array<u32,NUM_LEDS>& transitionOffPeriods_ms,
+                      const std::array<s32,NUM_LEDS>& offsets)
+  {
+    for(u8 iLED=0; iLED<NUM_LEDS; ++iLED) {
+      _ledState[iLED].onColor      = onColors[iLED];
+      _ledState[iLED].offColor     = offColors[iLED];
+      _ledState[iLED].onPeriod_ms  = onPeriods_ms[iLED];
+      _ledState[iLED].offPeriod_ms = offPeriods_ms[iLED];
+      _ledState[iLED].transitionOnPeriod_ms = transitionOnPeriods_ms[iLED];
+      _ledState[iLED].transitionOffPeriod_ms = transitionOffPeriods_ms[iLED];
+      _ledState[iLED].offset = offsets[iLED];
+    }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void Block::MakeStateRelativeToXY(const Point2f& xyPosition, MakeRelativeMode mode)
+  {
+    WhichCubeLEDs referenceLED = WhichCubeLEDs::NONE;
+    switch(mode)
+    {
+      case MakeRelativeMode::RELATIVE_LED_MODE_OFF:
+        // Nothing to do
+        return;
+        
+      case MakeRelativeMode::RELATIVE_LED_MODE_BY_CORNER:
+        referenceLED = GetCornerClosestToXY(xyPosition);
+        break;
+        
+      case MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE:
+        referenceLED = GetFaceClosestToXY(xyPosition);
+        break;
+        
+      default:
+        LOG_ERROR("Block.MakeStateRelativeToXY", "Unrecognized relative LED mode %s.", MakeRelativeModeToString(mode));
+        return;
+    }
     
-    return kFullyAmbiguous;
+    switch(referenceLED)
+    {
+        //
+        // When using upper left corner (of current top face) as reference corner:
+        //
+        //   OR
+        //
+        // When using upper side (of current top face) as reference side:
+        // (Note this is the current "Left" face of the block.)
+        //
+        
+      case WhichCubeLEDs::FRONT_RIGHT:
+      case WhichCubeLEDs::FRONT:
+        // Nothing to do
+        return;
+        
+      case WhichCubeLEDs::FRONT_LEFT:
+      case WhichCubeLEDs::LEFT:
+        // Rotate clockwise one slot
+        RotatePatternAroundTopFace(true);
+        return;
+        
+      case WhichCubeLEDs::BACK_RIGHT:
+      case WhichCubeLEDs::RIGHT:
+        // Rotate counterclockwise one slot
+        RotatePatternAroundTopFace(false);
+        return;
+        
+      case WhichCubeLEDs::BACK_LEFT:
+      case WhichCubeLEDs::BACK:
+        // Rotate two slots (either direction)
+        // TODO: Do this in one shot
+        RotatePatternAroundTopFace(true);
+        RotatePatternAroundTopFace(true);
+        return;
+        
+      default:
+        LOG_ERROR("Block.MakeStateRelativeToXY", "Unexpected reference LED %d.", static_cast<int>(referenceLED));
+        return;
+    }
+  } // MakeStateRelativeToXY()
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  WhichCubeLEDs Block::MakeWhichLEDsRelativeToXY(const WhichCubeLEDs whichLEDs,
+                                                 const Point2f& xyPosition,
+                                                 MakeRelativeMode mode) const
+  {
+    WhichCubeLEDs referenceLED = WhichCubeLEDs::NONE;
+    switch(mode)
+    {
+      case MakeRelativeMode::RELATIVE_LED_MODE_OFF:
+        // Nothing to do
+        return whichLEDs;
+        
+      case MakeRelativeMode::RELATIVE_LED_MODE_BY_CORNER:
+        referenceLED = GetCornerClosestToXY(xyPosition);
+        break;
+        
+      case MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE:
+        referenceLED = GetFaceClosestToXY(xyPosition);
+        break;
+        
+      default:
+        LOG_ERROR("Block.MakeStateRelativeToXY", "Unrecognized relateive LED mode %s.", MakeRelativeModeToString(mode));
+        return whichLEDs;
+    }
+    
+    switch(referenceLED)
+    {
+        //
+        // When using upper left corner (of current top face) as reference corner:
+        //
+        //  OR
+        //
+        // When using upper side (of current top face) as reference side:
+        // (Note this is the current "Left" face of the block.)
+        //
+        
+      case WhichCubeLEDs::FRONT_RIGHT:
+      case WhichCubeLEDs::FRONT:
+        // Nothing to do
+        return whichLEDs;
+        
+      case WhichCubeLEDs::FRONT_LEFT:
+      case WhichCubeLEDs::LEFT:
+        // Rotate clockwise one slot
+        return RotateWhichLEDsAroundTopFace(whichLEDs, true);
+        
+      case WhichCubeLEDs::BACK_RIGHT:
+      case WhichCubeLEDs::RIGHT:
+        // Rotate counterclockwise one slot
+        return RotateWhichLEDsAroundTopFace(whichLEDs, false);
+        
+      case WhichCubeLEDs::BACK_LEFT:
+      case WhichCubeLEDs::BACK:
+        // Rotate two slots (either direction)
+        // TODO: Do this in one shot
+        return RotateWhichLEDsAroundTopFace(RotateWhichLEDsAroundTopFace(whichLEDs, true), true);
+        
+      default:
+        LOG_ERROR("Block.MakeStateRelativeToXY", "Unexpected reference LED %d.", static_cast<int>(referenceLED));
+        return whichLEDs;
+    }
+  } // MakeWhichLEDsRelativeToXY()
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  WhichCubeLEDs Block::GetCornerClosestToXY(const Point2f& xyPosition) const
+  {
+    // Get a vector from center of marker in its current pose to given xyPosition
+    Pose3d topMarkerPose;
+    const Vision::KnownMarker& topMarker = GetTopMarker(topMarkerPose);
+    const Vec2f topMarkerCenter(topMarkerPose.GetTranslation());
+    Vec2f v(xyPosition);
+    v -= topMarkerCenter;
+    
+    if (topMarker.GetCode() != GetMarker(FaceName::TOP_FACE).GetCode()) {
+      LOG_WARNING("Block.GetCornerClosestToXY.IgnoringBecauseBlockOnSide", "");
+      return WhichCubeLEDs::FRONT_LEFT;
+    }
+    
+    LOG_INFO("Block.GetCornerClosestToXY",
+             "Block %d's TopMarker is = %s, angle = %.3f deg",
+             GetID().GetValue(),
+             topMarker.GetCodeName(),
+             topMarkerPose.GetRotation().GetAngleAroundZaxis().getDegrees());
+    
+    Radians angle = std::atan2(v.y(), v.x());
+    angle -= topMarkerPose.GetRotationAngle<'Z'>();
+    //assert(angle >= -M_PI && angle <= M_PI); // No longer needed: Radians class handles this
+    
+    WhichCubeLEDs whichLEDs = WhichCubeLEDs::NONE;
+    if(angle > 0.f) {
+      if(angle < M_PI_2) {
+        // Between 0 and 90 degrees: Upper Right Corner
+        whichLEDs = WhichCubeLEDs::BACK_LEFT;
+      } else {
+        // Between 90 and 180: Upper Left Corner
+        //assert(angle<=M_PI);
+        whichLEDs = WhichCubeLEDs::FRONT_LEFT;
+      }
+    } else {
+      //assert(angle >= -M_PI);
+      if(angle > -M_PI_2_F) {
+        // Between -90 and 0: Lower Right Corner
+        whichLEDs = WhichCubeLEDs::BACK_RIGHT;
+      } else {
+        // Between -90 and -180: Lower Left Corner
+        //assert(angle >= -M_PI);
+        whichLEDs = WhichCubeLEDs::FRONT_RIGHT;
+      }
+    }
+    
+    if (whichLEDs != WhichCubeLEDs::NONE) {
+      LOG_INFO("Block.GetCornerClosestToXY",
+               "Angle = %.3f deg, Closest corner to (%.2f, %.2f): %s",
+               angle.getDegrees(),
+               xyPosition.x(),
+               xyPosition.y(),
+               EnumToString(whichLEDs));
+    }
+    
+    return whichLEDs;
+  } // GetCornerClosestToXY()
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  WhichCubeLEDs Block::GetFaceClosestToXY(const Point2f& xyPosition) const
+  {
+    // Get a vector from center of marker in its current pose to given xyPosition
+    Pose3d topMarkerPose;
+    const Vision::KnownMarker& topMarker = GetTopMarker(topMarkerPose);
+    const Vec3f topMarkerCenter(topMarkerPose.GetTranslation());
+    
+    
+    const Vec2f v(xyPosition.x()-topMarkerCenter.x(), xyPosition.y()-topMarkerCenter.y());
+    
+    if (topMarker.GetCode() != GetMarker(FaceName::TOP_FACE).GetCode()) {
+      LOG_WARNING("Block.GetFaceClosestToXY.IgnoringBecauseBlockOnSide", "");
+      return WhichCubeLEDs::FRONT;
+    }
+    
+    LOG_INFO("Block.GetFaceClosestToXY",
+             "Block %d's TopMarker is = %s, angle = %.3f deg",
+             GetID().GetValue(),
+             Vision::MarkerTypeStrings[topMarker.GetCode()],
+             topMarkerPose.GetRotation().GetAngleAroundZaxis().getDegrees());
+    
+    Radians angle = std::atan2(v.y(), v.x());
+    angle = -(topMarkerPose.GetRotationAngle<'Z'>() - angle);
+    
+    
+    WhichCubeLEDs whichLEDs = WhichCubeLEDs::NONE;
+    if(angle < M_PI_4_F && angle >= -M_PI_4_F) {
+      // Between -45 and 45 degrees: Back Face
+      whichLEDs = WhichCubeLEDs::BACK;
+    }
+    else if(angle < 3*M_PI_4_F && angle >= M_PI_4_F) {
+      // Between 45 and 135 degrees: Left Face
+      whichLEDs = WhichCubeLEDs::LEFT;
+    }
+    else if(angle < -M_PI_4_F && angle >= -3*M_PI_4_F) {
+      // Between -45 and -135: Right Face
+      whichLEDs = WhichCubeLEDs::RIGHT;
+    }
+    else {
+      // Between -135 && +135: Front Face
+      assert(angle < -3*M_PI_4_F || angle > 3*M_PI_4_F);
+      whichLEDs = WhichCubeLEDs::FRONT;
+    }
+    
+    if (whichLEDs != WhichCubeLEDs::NONE) {
+      LOG_INFO("Block.GetFaceClosestToXY",
+               "Angle = %.3f deg, Closest face to (%.2f, %.2f): %s",
+               angle.getDegrees(),
+               xyPosition.x(),
+               xyPosition.y(),
+               EnumToString(whichLEDs));
+    }
+    
+    return whichLEDs;
+  } // GetFaceClosestToXY()
+  
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  inline const u8* GetRotationLUT(bool clockwise)
+  {
+    static const u8 cwRotatedPosition[Block::NUM_LEDS] = {
+      3, 0, 1, 2
+    };
+    static const u8 ccwRotatedPosition[Block::NUM_LEDS] = {
+      1, 2, 3, 0
+    };
+    
+    // Choose the appropriate LUT
+    const u8* rotatedPosition = (clockwise ? cwRotatedPosition : ccwRotatedPosition);
+    
+    return rotatedPosition;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void Block::RotatePatternAroundTopFace(bool clockwise)
+  {
+    const u8* rotatedPosition = GetRotationLUT(clockwise);
+    
+    // Create the new state array
+    std::array<LEDstate,NUM_LEDS> newState;
+    for(u8 iLED=0; iLED<NUM_LEDS; ++iLED) {
+      newState[rotatedPosition[iLED]] = _ledState[iLED];
+    }
+    
+    // Swap new state into place
+    std::swap(newState, _ledState);
+    
+  } // RotatePatternAroundTopFace()
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  WhichCubeLEDs Block::RotateWhichLEDsAroundTopFace(WhichCubeLEDs whichLEDs, bool clockwise)
+  {
+    const u8* rotatedPosition = GetRotationLUT(clockwise);
+    
+    u8 rotatedWhichLEDs = 0;
+    u8 currentBit = 1;
+    for(u8 iLED=0; iLED<NUM_LEDS; ++iLED) {
+      // Set the corresponding rotated bit if the current bit is set
+      rotatedWhichLEDs |= ((currentBit & (u8)whichLEDs)>0) << rotatedPosition[iLED];
+      currentBit = (u8)(currentBit << 1);
+    }
+    
+    return (WhichCubeLEDs)rotatedWhichLEDs;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  const Block::LEDstate& Block::GetLEDState(s32 whichLED) const
+  {
+    if(whichLED >= NUM_LEDS) {
+      LOG_WARNING("Block.GetLEDState.IndexTooLarge",
+                  "Requested LED index is too large (%d > %d). Returning %d.",
+                  whichLED, NUM_LEDS-1, NUM_LEDS-1);
+      whichLED = NUM_LEDS-1;
+    } else if(whichLED < 0) {
+      LOG_WARNING("Block.GetLEDState.NegativeIndex",
+                  "LED index should be >= 0, not %d. Using 0.", whichLED);
+      whichLED = 0;
+    }
+    return _ledState[whichLED];
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool Block::CanBeUsedForLocalization() const
+  {
+    if (IsPoseStateKnown() && IsMoving()) {
+      // This shouldn't happen!
+      LOG_WARNING("Block.CanBeUsedForLocalization.PoseStateKnownButMoving", "");
+      return false;
+    }
+    
+    return (GetPoseState() == PoseState::Known &&
+            GetActiveID() >= 0 &&
+            GetLastPoseUpdateDistance() >= 0.f &&
+            IsRestingFlat(DEG_TO_RAD(GetRestingFlatTolForLocalization_deg())));
   }
 
 

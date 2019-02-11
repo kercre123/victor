@@ -57,8 +57,8 @@ namespace Anki {
     } // GetCanonicalCorners()
     
     
-    Charger::Charger(ObjectType type)
-    : ObservableObject(type), ActionableObject()
+    Charger::Charger()
+    : ActionableObject(ObjectType::Charger_Basic)
     , _size(kLength, kWidth, kHeight)
     , _vizHandle(VizManager::INVALID_HANDLE)
     {

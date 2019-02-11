@@ -1,5 +1,5 @@
 /**
- * File: cozmoObservableObject.pp
+ * File: cozmoObservableObject.cpp
  *
  * Author: Andrew Stein
  * Date:   2/21/2017

@@ -17,8 +17,7 @@
 #pragma once
 
 #include "coretech/common/engine/utils/timer.h"
-#include "engine/activeObject.h"
-#include "engine/activeObjectHelpers.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "util/logging/logging.h"
@@ -34,13 +33,8 @@ public:
   // Helpers can't have TEST assertions
   static ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ObjectType objectType)
   {
-    // matching activeID happens through objectID automatically on addition
-    const ActiveID activeID = -1;
-    const FactoryID factoryID = "";
-
     BlockWorld& blockWorld = robot.GetBlockWorld();
-    ObservableObject* objectPtr = CreateActiveObjectByType(objectType, activeID, factoryID);
-    DEV_ASSERT(nullptr != objectPtr, "CreateObjectLocatedAtOrigin.CreatedNull");
+    ObservableObject* objectPtr = new Block(objectType);
     objectPtr->SetLastObservedTime( (TimeStamp_t)robot.GetLastMsgTimestamp() );
     
     // check it currently doesn't exist in BlockWorld

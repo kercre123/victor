@@ -21,8 +21,6 @@
 #include "coretech/common/shared/math/rect_impl.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/shared/utilities_shared.h"
-#include "engine/activeCube.h"
-#include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/ankiEventUtil.h"
@@ -78,16 +76,16 @@ namespace Vector {
   {
     _robot = robot;
     DEV_ASSERT(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");
-
+    
     //////////////////////////////////////////////////////////////////////////
     // 1x1 Light Cubes
     //
-    DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE1));
+    DefineObject(std::make_unique<Block>(ObjectType::Block_LIGHTCUBE1));
 #ifdef SIMULATOR
     // VIC-12886 These object types are only used in Webots tests (not in the real world), so only define them if this
     // is sim. The physical robot can sometimes hallucinate these objects, which causes issues.
-    DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE2));
-    DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE3));
+    DefineObject(std::make_unique<Block>(ObjectType::Block_LIGHTCUBE2));
+    DefineObject(std::make_unique<Block>(ObjectType::Block_LIGHTCUBE3));
 #endif
 
     //////////////////////////////////////////////////////////////////////////
@@ -351,11 +349,11 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ActiveObject* BlockWorld::FindConnectedObjectHelper(const BlockWorldFilter& filter,
-                                                      const ModifierFcn& modifierFcn,
-                                                      bool returnFirstFound) const
+  Block* BlockWorld::FindConnectedObjectHelper(const BlockWorldFilter& filter,
+                                               const ModifierFcn& modifierFcn,
+                                               bool returnFirstFound) const
   {
-    ActiveObject* matchingObject = nullptr;
+    Block* matchingObject = nullptr;
 
     DEV_ASSERT(!filter.IsOnlyConsideringLatestUpdate(), "BlockWorld.FindConnectedObjectHelper.InvalidFlag");
 
@@ -393,19 +391,19 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ActiveObject* BlockWorld::GetConnectedActiveObjectByIdHelper(const ObjectID& objectID) const
+  Block* BlockWorld::GetConnectedBlockByIdHelper(const ObjectID& objectID) const
   {
     // Find the object with the given ID
     BlockWorldFilter filter;
     filter.AddAllowedID(objectID);
 
     // Find and return among ConnectedObjects
-    ActiveObject* object = FindConnectedObjectHelper(filter, nullptr, true);
+    Block* object = FindConnectedObjectHelper(filter, nullptr, true);
     return object;
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ActiveObject* BlockWorld::GetConnectedActiveObjectByActiveIdHelper(const ActiveID& activeID) const
+  Block* BlockWorld::GetConnectedBlockByActiveIdHelper(const ActiveID& activeID) const
   {
     // Find object that matches given activeID
     BlockWorldFilter filter;
@@ -414,7 +412,7 @@ namespace Vector {
     });
 
     // Find and return among ConnectedObjects
-    ActiveObject* object = FindConnectedObjectHelper(filter, nullptr, true);
+    Block* object = FindConnectedObjectHelper(filter, nullptr, true);
     return object;
   }
 
@@ -535,7 +533,7 @@ namespace Vector {
     if(observedObject->IsActive()) {
       if (IsValidLightCube(observedObject->GetType(), false))
       {
-        const ActiveCube* activeCube = dynamic_cast<const ActiveCube*>(observedObject);
+        const auto* activeCube = dynamic_cast<const Block*>(observedObject);
 
         if(activeCube == nullptr) {
           PRINT_NAMED_ERROR("BlockWorld.BroadcastObjectObservation.NullActiveCube",
@@ -1350,15 +1348,15 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ObjectID BlockWorld::AddConnectedActiveObject(const ActiveID& activeID,
+  ObjectID BlockWorld::AddConnectedBlock(const ActiveID& activeID,
                                                 const FactoryID& factoryID,
                                                 const ObjectType& objType)
   {
     // only connected objects should be added through this method, so a required activeID is a must
-    DEV_ASSERT(activeID != ObservableObject::InvalidActiveID, "BlockWorld.AddConnectedActiveObject.CantAddInvalidActiveID");
+    DEV_ASSERT(activeID != ObservableObject::InvalidActiveID, "BlockWorld.AddConnectedBlock.CantAddInvalidActiveID");
 
     // Validate that ActiveID is not already referring to a connected object
-    const auto* conObjWithActiveID = GetConnectedActiveObjectByActiveID( activeID );
+    const auto* conObjWithActiveID = GetConnectedBlockByActiveID( activeID );
     if ( nullptr != conObjWithActiveID)
     {
       // Verify here that factoryID and objectType match, and if they do, simply ignore the message, since we already
@@ -1366,7 +1364,7 @@ namespace Vector {
       const bool isSameObject = (factoryID == conObjWithActiveID->GetFactoryID()) &&
                                 (objType == conObjWithActiveID->GetType());
       if ( isSameObject ) {
-        LOG_INFO("BlockWorld.AddConnectedActiveObject.FoundExistingObject",
+        LOG_INFO("BlockWorld.AddConnectedBlock.FoundExistingObject",
                  "objectID %d, activeID %d, factoryID %s, type %s",
                  conObjWithActiveID->GetID().GetValue(),
                  conObjWithActiveID->GetActiveID(),
@@ -1376,13 +1374,13 @@ namespace Vector {
       }
 
       // if it's not the same, then what the hell, we are currently using that activeID for other object!
-      LOG_ERROR("BlockWorld.AddConnectedActiveObject.ConflictingActiveID",
+      LOG_ERROR("BlockWorld.AddConnectedBlock.ConflictingActiveID",
                 "ActiveID:%d found when we tried to add that activeID as connected object. Removing previous.",
                 activeID);
 
       // clear the pointer and destroy it
       conObjWithActiveID = nullptr;
-      RemoveConnectedActiveObject(activeID);
+      RemoveConnectedBlock(activeID);
     }
 
     // Validate that factoryId is not currently a connected object
@@ -1390,15 +1388,15 @@ namespace Vector {
     filter.SetFilterFcn([factoryID](const ObservableObject* object) {
       return object->GetFactoryID() == factoryID;
     });
-    const ActiveObject* const conObjectWithFactoryID = FindConnectedObjectHelper(filter, nullptr, true);
-    ANKI_VERIFY( nullptr == conObjectWithFactoryID, "BlockWorld.AddConnectedActiveObject.FactoryIDAlreadyUsed", "%s", factoryID.c_str() );
+    const auto* const conObjectWithFactoryID = FindConnectedObjectHelper(filter, nullptr, true);
+    ANKI_VERIFY( nullptr == conObjectWithFactoryID, "BlockWorld.AddConnectedBlock.FactoryIDAlreadyUsed", "%s", factoryID.c_str() );
 
     // This is the new object we are going to create. We can't insert it in _connectedObjects until
     // we know the objectID, so we create it first, and then we look for unconnected matches (we have seen the
     // object but we had not connected to it.) If we find one, we will inherit the objectID from that match; if
     // we don't find a match, we will assign it a new objectID. Then we can add to the container of _connectedObjects.
-    std::shared_ptr<ActiveObject> newActiveObjectPtr;
-    newActiveObjectPtr.reset(CreateActiveObjectByType(objType, activeID, factoryID));
+    std::shared_ptr<Block> newActiveObjectPtr;
+    newActiveObjectPtr.reset(new Block(objType, activeID, factoryID));
     if ( nullptr == newActiveObjectPtr ) {
       // failed to create the object (that function should print the error, exit here with unSet ID)
       return ObjectID();
@@ -1433,7 +1431,7 @@ namespace Vector {
         {
           if ( matchObjectID.IsSet() ) {
             // check they all have the same objectID across frames
-            DEV_ASSERT( matchObjectID == sameTypeObject->GetID(), "BlockWorld.AddConnectedActiveObject.NotSameObjectID");
+            DEV_ASSERT( matchObjectID == sameTypeObject->GetID(), "BlockWorld.AddConnectedBlock.NotSameObjectID");
           } else {
             // set once
             matchObjectID = sameTypeObject->GetID();
@@ -1448,7 +1446,7 @@ namespace Vector {
             // it doesn't have an activeID, we are connecting to it, set
             sameTypeObject->SetActiveID(activeID);
             sameTypeObject->SetFactoryID(factoryID);
-            LOG_INFO("BlockWorld.AddConnectedActiveObject.FoundMatchingObjectWithNoActiveID",
+            LOG_INFO("BlockWorld.AddConnectedBlock.FoundMatchingObjectWithNoActiveID",
                      "objectID %d, activeID %d, type %s",
                      sameTypeObject->GetID().GetValue(), sameTypeObject->GetActiveID(), EnumToString(objType));
           } else {
@@ -1472,7 +1470,7 @@ namespace Vector {
                 sameTypeObject->SetFactoryID(factoryID);
               }
             } else {
-              LOG_INFO("BlockWorld.AddConnectedActiveObject.FoundIdenticalObjectOnDifferentSlot",
+              LOG_INFO("BlockWorld.AddConnectedBlock.FoundIdenticalObjectOnDifferentSlot",
                        "Updating activeID of block with factoryID %s from %d to %d",
                        sameTypeObject->GetFactoryID().c_str(), sameTypeObject->GetActiveID(), activeID);
               // same object, somehow in different activeID now
@@ -1493,7 +1491,7 @@ namespace Vector {
     else
     {
       // We can't find more than one object of the same type in a single origin. Otherwise something went really bad
-      DEV_ASSERT(matchingObjects.size() <= 1,"BlockWorld.AddConnectedActiveObject.TooManyMatchingObjects" );
+      DEV_ASSERT(matchingObjects.size() <= 1,"BlockWorld.AddConnectedBlock.TooManyMatchingObjects" );
 
       // NOTE: [MAM] This error has not happened for some time, so I removed a lot of logic from this else block.
       // Find it again here if it is needed: https://github.com/anki/victor/blob/319a692ed2fc7cd85aa9009e415809cce827689a/engine/blockWorld/blockWorld.cpp#L1699
@@ -1501,13 +1499,13 @@ namespace Vector {
       // not disconnected properly. If there's a timing issue with connecting an object to an activeID before
       // disconnecting a previous object, we would like to know, so we can act accordingly. Add this error here
       // to detect that situation.
-      LOG_ERROR("BlockWorld.AddConnectedActiveObject.ConflictingActiveID",
+      LOG_ERROR("BlockWorld.AddConnectedBlock.ConflictingActiveID",
                 "Objects with ActiveID:%d were found when we tried to add that activeID as connected object.",
                 activeID);
     }
 
     // at this point the new active connected object has a valid objectID, we can finally add it to the world
-    DEV_ASSERT( newActiveObjectPtr->GetID().IsSet(), "BlockWorld.AddConnectedActiveObject.ObjectIDWasNeverSet" );
+    DEV_ASSERT( newActiveObjectPtr->GetID().IsSet(), "BlockWorld.AddConnectedBlock.ObjectIDWasNeverSet" );
     _connectedObjects.push_back(newActiveObjectPtr);
 
     // return the assigned objectID
@@ -1515,18 +1513,18 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ObjectID BlockWorld::RemoveConnectedActiveObject(const ActiveID& activeID)
+  ObjectID BlockWorld::RemoveConnectedBlock(const ActiveID& activeID)
   {
     ObjectID removedObjectID;
     
     for (auto it = _connectedObjects.begin() ; it != _connectedObjects.end() ; ) {
       const auto& objPtr = *it;
       if (objPtr == nullptr) {
-        LOG_ERROR("BlockWorld.RemoveConnectedActiveObject.NullEntryInConnectedObjects", "");
+        LOG_ERROR("BlockWorld.RemoveConnectedBlock.NullEntryInConnectedObjects", "");
         it = _connectedObjects.erase(it);
       } else if (objPtr->GetActiveID() == activeID) {
         if (removedObjectID.IsSet()) {
-          LOG_ERROR("BlockWorld.RemoveConnectedActiveObject.DuplicateEntry",
+          LOG_ERROR("BlockWorld.RemoveConnectedBlock.DuplicateEntry",
                     "Duplicate entry found in _connectedObjects for object with activeID %d. "
                     "Existing object ID %d, this object ID %d. Removing this entry as well",
                     activeID, removedObjectID.GetValue(), objPtr->GetID().GetValue());
@@ -1577,7 +1575,7 @@ namespace Vector {
                  "BlockWorld.AddLocatedObject.AlreadyHadFactoryID");
 
       // find by ObjectID. The objectID should match, since observations search for objectID even in connected
-      ActiveObject* connectedObj = GetConnectedActiveObjectByID(object->GetID());
+      auto* connectedObj = GetConnectedBlockByID(object->GetID());
       if ( nullptr != connectedObj ) {
         object->SetActiveID( connectedObj->GetActiveID() );
         object->SetFactoryID( connectedObj->GetFactoryID() );
@@ -1985,13 +1983,13 @@ namespace Vector {
 
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::FindConnectedActiveMatchingObjects(const BlockWorldFilter& filter, std::vector<const ActiveObject*>& result) const
+  void BlockWorld::FindConnectedMatchingBlocks(const BlockWorldFilter& filter, std::vector<const Block*>& result) const
   {
     // slight abuse of the FindObjectHelper, I just use it for filtering, then I add everything that passes
     // the filter to the result vector
     ModifierFcn addToResult = [&result](ObservableObject* candidateObject) {
       // TODO this could be a checked_cast (dynamic in dev, static in shipping)
-      const ActiveObject* candidateActiveObject = dynamic_cast<ActiveObject*>(candidateObject);
+      const auto* candidateActiveObject = dynamic_cast<Block*>(candidateObject);
       result.push_back(candidateActiveObject);
     };
 
@@ -2000,12 +1998,12 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::FindConnectedActiveMatchingObjects(const BlockWorldFilter& filter, std::vector<ActiveObject*>& result)
+  void BlockWorld::FindConnectedMatchingBlocks(const BlockWorldFilter& filter, std::vector<Block*>& result)
   {
     // slight abuse of the FindObjectHelper, I just use it for filtering, then I add everything that passes
     // the filter to the result vector
     ModifierFcn addToResult = [&result](ObservableObject* candidateObject) {
-      ActiveObject* candidateActiveObject = dynamic_cast<ActiveObject*>(candidateObject);
+      auto* candidateActiveObject = dynamic_cast<Block*>(candidateObject);
       result.push_back(candidateActiveObject);
     };
 

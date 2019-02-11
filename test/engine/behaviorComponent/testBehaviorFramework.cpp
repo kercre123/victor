@@ -38,7 +38,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorStack.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
-#include "engine/activeCube.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/battery/batteryComponent.h"
@@ -898,7 +898,7 @@ void TestBehaviorFramework::AddFakeFirstObject( ObjectType objectType, Pose3d* p
     case ObjectType::Block_LIGHTCUBE1:
     case ObjectType::Block_LIGHTCUBE2:
     case ObjectType::Block_LIGHTCUBE3:
-      objectPtr = new ActiveCube( objectType );
+      objectPtr = new Block( objectType );
       break;
     default:
       // unsupported

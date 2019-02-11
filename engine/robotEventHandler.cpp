@@ -11,7 +11,6 @@
  **/
 #include "engine/robotEventHandler.h"
 
-#include "engine/activeObject.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"

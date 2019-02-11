@@ -18,6 +18,8 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#include "clad/robotInterface/messageEngineToRobot.h"
+
 namespace Anki {
 namespace Vector {
 

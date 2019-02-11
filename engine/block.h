@@ -9,30 +9,18 @@
 #ifndef __Products_Cozmo__block__
 #define __Products_Cozmo__block__
 
+#include "clad/types/ledTypes.h"
+
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/math/quad.h"
-
-#include "coretech/vision/engine/observableObject.h"
-
-#include "clad/robotInterface/messageEngineToRobot.h"
-
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "engine/actionableObject.h"
 #include "engine/viz/vizManager.h"
 
-
 namespace Anki {
-  
-  // Forward Declarations:
-  class Camera;
-  
   namespace Vector {
-   
-    // Forward Declarations:
-    class Robot;
-
-    using FaceType = u8;
     
     //
     // Block Class
@@ -42,6 +30,16 @@ namespace Anki {
     class Block : public ActionableObject 
     {
     public:
+      
+      Block(const ObjectType& type,
+            const ActiveID& activeID = -1,
+            const FactoryID& factoryID = "");
+      
+      virtual ~Block();
+      
+      virtual Block* CloneType() const override {
+        return new Block(this->_type);
+      }
       
 #include "engine/BlockDefinitions.h"
       
@@ -60,9 +58,6 @@ namespace Anki {
         BOTTOM_FACE = 5,
         NUM_FACES
       };
-      
-      // "Safe" conversion from FaceType to enum FaceName (at least in Debug mode)
-      //static FaceName FaceType_to_FaceName(FaceType type);
       
       enum Corners {
         LEFT_FRONT_TOP =     0,
@@ -85,15 +80,12 @@ namespace Anki {
         ALL   = UP | LEFT | DOWN | RIGHT
       };
       
-      virtual ~Block();
+      static const s32 NUM_LEDS = 4;
+      
+      static const int kInvalidTapCnt = -1;
       
       // Accessors:
-      virtual const Point3f& GetSize() const override;
-      
-      // TODO: Promote this to ObservableObject
-      const std::string& GetName()  const {return _name;}
-      
-      void SetName(const std::string name);
+      virtual const Point3f& GetSize() const override { return _size; }
       
       void AddFace(const FaceName whichFace,
                    const Vision::MarkerType& code,
@@ -116,55 +108,121 @@ namespace Anki {
       // are as shown in activeBlockTypes.h
       Radians GetTopMarkerOrientation() const;
       
-      /* Defined in ObservableObject class
-      // Get the block's corners at its current pose
-      void GetCorners(std::array<Point3f,8>& corners) const;
-      */
       // Get the block's corners at a specified pose
       virtual void GetCorners(const Pose3d& atPose, std::vector<Point3f>& corners) const override;
-      
-      /*
-      // Get possible poses to start docking/tracking procedure. These will be
-      // a point a given distance away from each vertical face that has the
-      // specified code, in the direction orthogonal to that face.  The points
-      // will be w.r.t. same parent as the block, with the Z coordinate at the
-      // height of the center of the block. The poses will be paired with
-      // references to the corresponding marker. Optionally, only poses/markers
-      // with the specified code can be returned.
-      virtual void GetPreDockPoses(const float distance_mm,
-                                   std::vector<PoseMarkerPair_t>& poseMarkerPairs,
-                                   const Vision::Marker::Code withCode = Vision::Marker::ANY_CODE) const override;
-      
-      // Return the default distance from which to start docking
-      virtual f32  GetDefaultPreDockDistance() const override;
-      */
       
       // Projects the box in its current 3D pose (or a given 3D pose) onto the
       // XY plane and returns the corresponding 2D quadrilateral. Pads the
       // quadrilateral (around its center) by the optional padding if desired.
       virtual Quad2f GetBoundingQuadXY(const Pose3d& atPose, const f32 padding_mm = 0.f) const override;
       
-      // Projects the box in its current 3D pose (or a given 3D pose) onto the
-      // XY plane and returns the corresponding quadrilateral. Adds optional
-      // padding if desired.
-      Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const f32 padding_mm) const;
-      Quad3f GetBoundingQuadInPlane(const Point3f& planeNormal, const Pose3d& atPose, const f32 padding_mm) const;
-      
       // Visualize using VizManager.
       virtual void Visualize(const ColorRGBA& color) const override;
       virtual void EraseVisualization() const override;
       
-    protected:
+      virtual bool IsActive() const override  { return true; }
       
-      Block(const ObjectType type);
+      // NOTE: This prevents us from having multiple active objects in the world at the same time: this means we
+      //  match to existing objects based solely on type. If we ever do anything like COZMO-23 to get around that, then
+      //  this would need to be changed.
+      virtual bool IsUnique() const override { return true; }
+      
+      // Set the same color and flashing frequency of one or more LEDs on the block
+      // If turnOffUnspecifiedLEDs is true, any LEDs that were not indicated by
+      // whichLEDs will be turned off. Otherwise, they will be left in their current
+      // state.
+      // NOTE: Alpha is ignored.
+      void SetLEDs(const WhichCubeLEDs whichLEDs,
+                   const ColorRGBA& onColor,        const ColorRGBA& offColor,
+                   const u32 onPeriod_ms,           const u32 offPeriod_ms,
+                   const u32 transitionOnPeriod_ms, const u32 transitionOffPeriod_ms,
+                   const s32 offset,
+                   const bool turnOffUnspecifiedLEDs);
+      
+      // Specify individual colors and flash frequencies for all the LEDS of the block
+      // The index of the arrays matches the diagram above.
+      // NOTE: Alpha is ignored
+      void SetLEDs(const std::array<u32,NUM_LEDS>& onColors,
+                   const std::array<u32,NUM_LEDS>& offColors,
+                   const std::array<u32,NUM_LEDS>& onPeriods_ms,
+                   const std::array<u32,NUM_LEDS>& offPeriods_ms,
+                   const std::array<u32,NUM_LEDS>& transitionOnPeriods_ms,
+                   const std::array<u32,NUM_LEDS>& transitionOffPeriods_ms,
+                   const std::array<s32,NUM_LEDS>& offsets);
+      
+      // Make whatever state has been set on the block relative to a given (x,y)
+      //  location.
+      // When byUpperLeftCorner=true, "relative" means that the pattern is rotated
+      //  so that whatever is currently specified for LED 0 is applied to the LED
+      //  currently closest to the given position
+      // When byUpperLeftCorner=false, "relative" means that the pattern is rotated
+      //  so that whatever is specified for the side with LEDs 0 and 4 is applied
+      //  to the face currently closest to the given position
+      void MakeStateRelativeToXY(const Point2f& xyPosition, MakeRelativeMode mode);
+      
+      // Similar to above, but returns rotated WhichCubeLEDs rather than changing
+      // the block's current state.
+      WhichCubeLEDs MakeWhichLEDsRelativeToXY(const WhichCubeLEDs whichLEDs,
+                                              const Point2f& xyPosition,
+                                              MakeRelativeMode mode) const;
+      
+      // Get the LED specification for the top (and bottom) LEDs on the corner closest
+      // to the specified (x,y) position, using the ActiveCube's current pose.
+      WhichCubeLEDs GetCornerClosestToXY(const Point2f& xyPosition) const;
+      
+      // Get the LED specification for the four LEDs on the face closest
+      // to the specified (x,y) position, using the ActiveCube's current pose.
+      WhichCubeLEDs GetFaceClosestToXY(const Point2f& xyPosition) const;
+      
+      // Rotate the currently specified pattern of colors/flashing once slot in
+      // the specified direction (assuming you are looking down at the top face)
+      void RotatePatternAroundTopFace(bool clockwise);
+      
+      // Helper for figuring out which LEDs will be selected after rotating
+      // a given pattern of LEDs one slot in the specified direction
+      static WhichCubeLEDs RotateWhichLEDsAroundTopFace(WhichCubeLEDs whichLEDs, bool clockwise);
+      
+      
+      // If object is moving, returns true and the time that it started moving in t.
+      // If not moving, returns false and the time that it stopped moving in t.
+      
+      virtual bool IsMoving(RobotTimeStamp_t* t = nullptr) const override { if (t) *t=_movingTime; return _isMoving; }
+      
+      // Set the moving state of the object and when it either started or stopped moving.
+      virtual void SetIsMoving(bool isMoving, RobotTimeStamp_t t) override { _isMoving = isMoving; _movingTime = t;}
+      
+      virtual bool CanBeUsedForLocalization() const override;
+      
+      struct LEDstate {
+        ColorRGBA onColor;
+        ColorRGBA offColor;
+        u32       onPeriod_ms;
+        u32       offPeriod_ms;
+        u32       transitionOnPeriod_ms;
+        u32       transitionOffPeriod_ms;
+        s32       offset;
+        
+        LEDstate()
+        : onColor(0), offColor(0), onPeriod_ms(0), offPeriod_ms(0)
+        , transitionOnPeriod_ms(0), transitionOffPeriod_ms(0)
+        , offset(0)
+        {
+          
+        }
+      };
+      const LEDstate& GetLEDState(s32 whichLED) const;
+      
+      // Current tapCount, which is just an incrementing counter in the raw cube messaging
+      int GetTapCount() const { return _tapCount; }
+      void SetTapCount(const int cnt) { _tapCount = cnt; }
+      
+    protected:
       
       virtual void GeneratePreActionPoses(const PreActionPose::ActionType type,
                                           std::vector<PreActionPose>& preActionPoses) const override;
       
       // Make this protected so we have to use public AddFace() method
       using ActionableObject::AddMarker;
-      
-      //std::map<Vision::Marker::Code, std::vector<FaceName> > facesWithCode;
       
       // LUT of the marker on each face, NULL if none specified.
 
@@ -191,17 +249,22 @@ namespace Anki {
       virtual const std::vector<Point3f>& GetCanonicalCorners() const override;
       
       static const BlockInfoTableEntry_t& LookupBlockInfo(const ObjectType type);
-            
-      static const std::array<Point3f,NUM_FACES> CanonicalDockingPoints;
       
       constexpr static const f32 PreDockDistance = 100.f;
 
       Point3f     _size;
-      std::string _name;
       
       mutable VizManager::Handle_t _vizHandle;
       
-      //std::vector<Point3f> blockCorners_;
+      bool        _isMoving = false;
+      RobotTimeStamp_t _movingTime = 0;
+      
+      // Keep track of flash rate and color of each LED
+      std::array<LEDstate,NUM_LEDS> _ledState;
+      
+      // Keep track of the current tapCount, which is just an
+      // incrementing counter in the raw cube messaging
+      int _tapCount = kInvalidTapCnt;
       
     }; // class Block
     
@@ -212,42 +275,6 @@ namespace Anki {
     // postfix operator (fname++)
     Block::FaceName operator++(Block::FaceName& fname, int);
     
-    
-    
-    // A cubical block with the same marker on all sides.
-    class Block_Cube1x1 : public Block
-    {
-    public:
-      
-      Block_Cube1x1(Type type)
-      : ObservableObject(type)
-      , Block(type)
-      {
-        // The sizes specified by the block definitions should
-        // agree with this being a cube (all dimensions the same)
-        DEV_ASSERT(_size.x() == _size.y(), "Block_Cube1x1.Constructor.InvalidXY");
-        DEV_ASSERT(_size.y() == _size.z(), "Block_Cube1x1.Constructor.InvalidYZ");
-      }
-      
-      virtual RotationAmbiguities const& GetRotationAmbiguities() const override;
-      
-      virtual Block_Cube1x1* CloneType() const override
-      {
-        return new Block_Cube1x1(this->_type);
-      }
-      
-
-    };
-    
-#pragma mark --- Inline Accessors Implementations ---
-    
-    inline Point3f const& Block::GetSize() const
-    { return _size; }
-    
-    inline void Block::SetName(const std::string name)
-    {
-      _name = name;
-    }
 
   } // namespace Vector
 } // namespace Anki

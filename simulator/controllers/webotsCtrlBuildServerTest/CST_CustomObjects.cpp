@@ -20,7 +20,7 @@
 */
 
 #include "engine/actions/basicActions.h"
-#include "engine/activeCube.h"
+#include "engine/block.h"
 #include "engine/customObject.h"
 #include "engine/robot.h"
 #include "simulator/game/cozmoSimTestController.h"
@@ -533,8 +533,8 @@ void CST_CustomObjects::CheckPoses()
     auto lightcubeIDs = GetAllLightCubeObjectIDs();
     CST_ASSERT(lightcubeIDs.size() == 1, "CST_CustomObjects.CheckPoses.ExpectingOneLightCube");
     
-    ActiveCube* activeCube = new ActiveCube(ObjectType::Block_LIGHTCUBE1);
-    activeCube->InitPose(_lightCubePose, PoseState::Known);
+    auto* block = new Block(ObjectType::Block_LIGHTCUBE1);
+    block->InitPose(_lightCubePose, PoseState::Known);
     
     if(_lightCubeID.IsUnknown())
     {
@@ -547,8 +547,8 @@ void CST_CustomObjects::CheckPoses()
       CST_ASSERT(_lightCubeID == lightcubeIDs.front(), "CST_CustomObject.CheckPoses.LightCubeIDChanged");
     }
     
-    CheckPoseHelper(activeCube, _lightCubeID);
-    Util::SafeDelete(activeCube);
+    CheckPoseHelper(block, _lightCubeID);
+    Util::SafeDelete(block);
   }
 }
 

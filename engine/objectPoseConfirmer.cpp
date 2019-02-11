@@ -16,7 +16,7 @@
 #include "objectPoseConfirmer.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "engine/activeObject.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/components/carryingComponent.h"
@@ -104,7 +104,7 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
   // In order to ask for moved status, we need to query either the connected instance or the confirmedMatch (if
   // they exist)
   const ObjectID& objectID = object->GetID();
-  const ActiveObject* const connectedMatch = _robot->GetBlockWorld().GetConnectedActiveObjectByID( objectID );
+  const auto* const connectedMatch = _robot->GetBlockWorld().GetConnectedBlockByID( objectID );
   RobotTimeStamp_t stoppedMovingTime = 0;
   // ask both instances
   bool objectIsMoving = false;
@@ -393,7 +393,7 @@ void ObjectPoseConfirmer::FindObjectMatchForObservation(const std::shared_ptr<Ob
       filter.SetOriginMode(BlockWorldFilter::OriginMode::NotInRobotFrame);
       objectToCopyIDFrom = _robot->GetBlockWorld().FindLocatedMatchingObject(filter);
       if ( nullptr == objectToCopyIDFrom ) {
-        objectToCopyIDFrom = _robot->GetBlockWorld().FindConnectedActiveMatchingObject(filter);
+        objectToCopyIDFrom = _robot->GetBlockWorld().FindConnectedMatchingBlock(filter);
       }
       
       return;
