@@ -1,5 +1,5 @@
 {
-  "behaviorID" : "OnboardingTeachMeetVictor1p2",
+  "behaviorID" : "OnboardingTeachMeetVictor",
   "behaviorClass" : "DispatcherStrictPriority",
 
   "interruptActiveBehavior": true,
@@ -10,7 +10,7 @@
     "OnboardingMeetVictorTriggerWordDetected",
     "ComeHereVoiceCommand",
     "MeetVictor",
-    "OnboardingLookAtUser1p2"
+    "OnboardingLookAtUser"
   ],
 
   "anonymousBehaviors" : [

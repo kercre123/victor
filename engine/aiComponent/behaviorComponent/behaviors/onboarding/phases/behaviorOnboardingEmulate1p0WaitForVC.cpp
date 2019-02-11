@@ -11,7 +11,7 @@
  **/
 
 
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingEmulate1p0WaitForVC.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/phases/behaviorOnboardingEmulate1p0WaitForVC.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
@@ -44,7 +44,7 @@ BehaviorOnboardingEmulate1p0WaitForVC::~BehaviorOnboardingEmulate1p0WaitForVC()
 void BehaviorOnboardingEmulate1p0WaitForVC::InitBehavior()
 {
   auto& BC = GetBEI().GetBehaviorContainer();
-  _iConfig.lookAtUserBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(OnboardingLookAtUser1p2) );
+  _iConfig.lookAtUserBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(OnboardingLookAtUser) );
   _iConfig.reactToTriggerWordBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(TriggerWordDetected) );
 }
 

@@ -15,7 +15,7 @@
 #pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/iOnboardingPhaseWithProgress.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/phases/iOnboardingPhaseWithProgress.h"
 
 namespace Anki {
 namespace Vector {

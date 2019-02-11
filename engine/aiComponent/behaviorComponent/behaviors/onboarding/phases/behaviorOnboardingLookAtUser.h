@@ -1,5 +1,5 @@
 /**
- * File: BehaviorOnboardingLookAtUser1p2.h
+ * File: BehaviorOnboardingLookAtUser.h
  *
  * Author: Sam Russell
  * Created: 2018-11-05
@@ -10,8 +10,8 @@
  *
  **/
 
-#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingLookAtUser1p2__
-#define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingLookAtUser1p2__
+#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingLookAtUser__
+#define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingLookAtUser__
 #pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
@@ -19,16 +19,16 @@
 namespace Anki {
 namespace Vector {
 
-class BehaviorOnboardingLookAtUser1p2 : public ICozmoBehavior
+class BehaviorOnboardingLookAtUser : public ICozmoBehavior
 {
 public: 
-  virtual ~BehaviorOnboardingLookAtUser1p2();
+  virtual ~BehaviorOnboardingLookAtUser();
 
 protected:
 
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorOnboardingLookAtUser1p2(const Json::Value& config);  
+  explicit BehaviorOnboardingLookAtUser(const Json::Value& config);  
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
@@ -70,4 +70,4 @@ private:
 } // namespace Vector
 } // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingLookAtUser1p2__
+#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingLookAtUser__

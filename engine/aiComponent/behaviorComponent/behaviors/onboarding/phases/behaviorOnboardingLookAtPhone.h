@@ -1,5 +1,5 @@
 /**
- * File: BehaviorOnboardingLookAtPhone1p2.h
+ * File: BehaviorOnboardingLookAtPhone.h
  *
  * Author: Sam
  * Created: 2018-06-27
@@ -10,8 +10,8 @@
  *
  **/
 
-#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingLookAtPhone1p2__
-#define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingLookAtPhone1p2__
+#ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingLookAtPhone__
+#define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingLookAtPhone__
 #pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
@@ -24,16 +24,16 @@ namespace Util {
 
 namespace Vector {
 
-class BehaviorOnboardingLookAtPhone1p2 : public ICozmoBehavior
+class BehaviorOnboardingLookAtPhone : public ICozmoBehavior
 {
 public:
-  virtual ~BehaviorOnboardingLookAtPhone1p2() = default;
+  virtual ~BehaviorOnboardingLookAtPhone() = default;
 
 protected:
 
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorOnboardingLookAtPhone1p2(const Json::Value& config);
+  explicit BehaviorOnboardingLookAtPhone(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
@@ -71,4 +71,4 @@ private:
 } // namespace Vector
 } // namespace Anki
 
-#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingLookAtPhone1p2__
+#endif // __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorOnboardingLookAtPhone__

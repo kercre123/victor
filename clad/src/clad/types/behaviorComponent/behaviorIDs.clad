@@ -350,24 +350,19 @@ enum uint_16 BehaviorID {
   NoWifi,
   NormalWakeUp,
 
-  // victorBehaviorTree/onboarding1p0
+  // victorBehaviorTree/onboarding
   Onboarding,
-  OnboardingLookAtPhone,
-  OnboardingLookAtUser,
-  OnboardingLookAtUserOnCharger,
-  OnboardingPowerOff,
-  OnboardingTriggerWord,
-
-  // victorBehaviorTree/onboarding1p2
-  Onboarding1p2,
   OnboardingComeHere,
   OnboardingEmulate1p0WaitForVC,
-  OnboardingLookAtPhone1p2,
-  OnboardingLookAtUser1p2,
-  OnboardingTeachComeHere1p2,
-  OnboardingTeachMeetVictor1p2,
-  OnboardingTeachWakeWord1p2,
-  OnboardingWakeUp1p2,
+  OnboardingLookAtPhone,
+  OnboardingLookAtUser,
+  OnboardingLookAtUserOffCharger,
+  OnboardingLookAtUserOnCharger,
+  OnboardingPowerOff,
+  OnboardingTeachComeHere,
+  OnboardingTeachMeetVictor,
+  OnboardingTeachWakeWord,
+  OnboardingWakeUp,
 
   // victorBehaviorTree/prDemo
   PRDemoBigGreeting,

@@ -125,14 +125,12 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/messaging/behaviorPlaybackMessage.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingLookAtFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/observing/behaviorObservingWithoutTurn.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p0/behaviorOnboarding1p0.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p0/behaviorOnboardingLookAtPhone.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/behaviorOnboardingCoordinator.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingEmulate1p0WaitForVC.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingLookAtPhone1p2.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingLookAtUser1p2.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingTeachWakeWord.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingWakeUp.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingCoordinator.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/phases/behaviorOnboardingEmulate1p0WaitForVC.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/phases/behaviorOnboardingLookAtPhone.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/phases/behaviorOnboardingLookAtUser.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/phases/behaviorOnboardingTeachWakeWord.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/phases/behaviorOnboardingWakeUp.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/photoTaking/behaviorAestheticallyCenterFaces.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/photoTaking/behaviorTakeAPhotoCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/prDemo/behaviorPRDemo.h"
@@ -900,18 +898,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::Onboarding1p0:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboarding1p0(config));
-      break;
-    }
-    
-    case BehaviorClass::OnboardingLookAtPhone:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingLookAtPhone(config));
-      break;
-    }
-    
     case BehaviorClass::OnboardingCoordinator:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingCoordinator(config));
@@ -924,15 +910,15 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::OnboardingLookAtPhone1p2:
+    case BehaviorClass::OnboardingLookAtPhone:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingLookAtPhone1p2(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingLookAtPhone(config));
       break;
     }
     
-    case BehaviorClass::OnboardingLookAtUser1p2:
+    case BehaviorClass::OnboardingLookAtUser:
     {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingLookAtUser1p2(config));
+      newBehavior = ICozmoBehaviorPtr(new BehaviorOnboardingLookAtUser(config));
       break;
     }
     
