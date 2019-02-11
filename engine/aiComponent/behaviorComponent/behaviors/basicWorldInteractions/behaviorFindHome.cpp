@@ -208,8 +208,8 @@ void BehaviorFindHome::AlwaysHandleInScope(const EngineToGameEvent& event)
         // If we've gotten off of our treads, our "visited locations" will no longer be valid
         _dVars.persistent.searchedLocations.clear();
       }
+      break;
     }
-    break;
     default:
       break;
   }
