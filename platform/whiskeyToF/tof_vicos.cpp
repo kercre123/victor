@@ -192,6 +192,7 @@ int ReadDataFromSensor(RangeDataRaw& rangeData)
   int rc = 0;  
   VL53L1_MultiRangingData_t mz_data;
   rc = get_mz_data(&_dev, 1, &mz_data);
+  //rc = get_mz_data(&_dev, 0, &mz_data);
   if(rc == 0)
   {
     ParseData(mz_data, rangeData);
@@ -199,6 +200,7 @@ int ReadDataFromSensor(RangeDataRaw& rangeData)
   else
   {
     PRINT_NAMED_ERROR("ReadDataFromSensor", "Failed to get mz data %d", rc);
+    std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }
   
   return rc;
@@ -216,12 +218,12 @@ int ToFSensor::StopRanging(const CommandCallback& callback)
   // There is currently an issue with bringing the sensor back online after stopping it.
   // I think calibration or some initial setting must be changing when the sensor is stopped
   // so for now StopRanging is not supported.
-  PRINT_NAMED_INFO("ToFSensor.StopRanging.NotImplemented","");
-  if(callback != nullptr)
-  {
-    callback(CommandResult::Success);
-  }
-  return 0;
+  // PRINT_NAMED_INFO("ToFSensor.StopRanging.NotImplemented","");
+  // if(callback != nullptr)
+  // {
+  //   callback(CommandResult::Success);
+  // }
+  // return 0;
       
   
   std::lock_guard<std::mutex> lock(_commandLock);
@@ -302,6 +304,8 @@ void ProcessLoop()
               res = ToFSensor::CommandResult::SetupFailed;
               PRINT_NAMED_ERROR("ToF.ProcessLoop.SetupFailed","Failed to setup sensor");
             }
+
+            usleep(2000);
           }
           break;
         case Command::PerformCalibration:

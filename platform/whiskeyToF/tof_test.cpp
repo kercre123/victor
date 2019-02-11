@@ -9,6 +9,7 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <chrono>
+#include <csignal>
 
 #ifdef PRINT_NAMED_ERROR
 #undef PRINT_NAMED_ERROR
@@ -33,12 +34,32 @@ uint32_t GetTimeStamp(void)
   return static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(currTime.time_since_epoch()).count());
 }
 
+namespace
+{
+int shutdown = 0;
+}
+
+static void Shutdown(int signum)
+{
+  printf("shutdown\n");
+  shutdown = signum;
+}
 
 int main(int argc, char** argv)
 {
+  signal(SIGTERM, Shutdown);
+  signal(SIGINT, Shutdown);
+  
   bool pause = false;
   
-  ToFSensor::getInstance()->SetupSensors(nullptr);
+  ToFSensor::getInstance()->SetupSensors([](ToFSensor::CommandResult res)
+                                         {
+                                           if((int)res < 0)
+                                           {
+                                             printf("Failed to setup\n");
+                                             exit(1);
+                                           }
+                                         });
 
   if(argc > 1)
   {
@@ -73,9 +94,16 @@ int main(int argc, char** argv)
     }
   }
 
-  ToFSensor::getInstance()->StartRanging(nullptr);
+  ToFSensor::getInstance()->StartRanging([](ToFSensor::CommandResult res)
+                                         {
+                                           if((int)res < 0)
+                                           {
+                                             printf("Failed to start ranging\n");
+                                             exit(1);
+                                           }
+                                         });
 
-  while(true)
+  while(shutdown == 0)
   {
     bool isUpdated = false;
 
@@ -143,6 +171,7 @@ int main(int argc, char** argv)
     printf("%s\n", ss.str().c_str());    
   }
 
+  printf("stopping\n");
   ToFSensor::getInstance()->StopRanging(nullptr);
 
   ToFSensor::removeInstance();

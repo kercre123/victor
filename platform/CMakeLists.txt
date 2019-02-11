@@ -29,6 +29,8 @@ add_subdirectory(vic-log-upload)
 
 add_subdirectory(ion-sample)
 
+add_subdirectory(gpio)
+
 #
 # Macro command to create build rules for full symbol files
 #

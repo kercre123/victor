@@ -18,6 +18,7 @@ if (VICOS)
     set(PLATFORM_LIBS
         vl53l1
         log
+        gpio
     )
 elseif (MACOSX)
     include(webots)
@@ -52,7 +53,7 @@ target_include_directories(whiskeyToF
 )
 
 
-if (VICOS AND ANKI_DEV_CHEATS)
+if (VICOS)
 
 project(tof_test)
 

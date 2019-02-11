@@ -15,6 +15,7 @@
 #include "whiskeyToF/tofError_vicos.h"
 
 #include "whiskeyToF/vicos/vl53l1/core/inc/vl53l1_api.h"
+#include "whiskeyToF/vicos/vl53l1/core/inc/vl53l1_api_core.h"
 #include "whiskeyToF/vicos/vl53l1/core/inc/vl53l1_error_codes.h"
 #include "whiskeyToF/vicos/vl53l1/platform/inc/vl53l1_platform_user_config.h"
 #include "whiskeyToF/vicos/vl53l1/platform/inc/vl53l1_platform_init.h"
@@ -23,7 +24,10 @@
 
 #include "util/logging/logging.h"
 
+#include "platform/gpio/gpio.h"
+
 #include <fcntl.h>
+#include <unistd.h>
 
 #define SPAD_COLS (16)  ///< What's in the sensor
 #define SPAD_ROWS (16)  ///< What's in the sensor
@@ -31,8 +35,24 @@
 #define MAX_ROWS (SPAD_ROWS / SPAD_MIN_ROI)
 #define MAX_COLS (SPAD_COLS / SPAD_MIN_ROI)
 
+#define POWER_GPIO 0
+
+namespace {
+  GPIO _powerGPIO = nullptr;
+}
+
 int open_dev(VL53L1_Dev_t* dev)
 {
+  int res = gpio_create(POWER_GPIO, gpio_DIR_OUTPUT, gpio_HIGH, &_powerGPIO);
+  if(res < 0)
+  {
+    PRINT_NAMED_ERROR("ToF.open_dev", "Failed to open gpio %d", POWER_GPIO);
+    return VL53L1_ERROR_GPIO_NOT_EXISTING;
+  }
+
+  // Wait for FW boot coming out of HW Standby
+  usleep(2000);
+
   VL53L1_Error status = VL53L1_ERROR_NONE;
 
 #ifdef VL53L1_LOG_ENABLE
@@ -66,6 +86,13 @@ int open_dev(VL53L1_Dev_t* dev)
   status = VL53L1_WaitDeviceBooted(dev);
   return_if_error(status, "WaitDeviceBooted failed");
 
+  // status = VL53L1_software_reset(dev);
+  // return_if_error(status, "software reset failed");
+  VL53L1_State state;
+  status = VL53L1_GetPalState(dev, &state);
+  return_if_error(status, "GetPalState failed");
+  printf("STATE %d\n", state);
+
   //  Initialise Dev data structure
   status = VL53L1_DataInit(dev);
   return_if_error(status, "DataInit failed");
@@ -91,18 +118,27 @@ int open_dev(VL53L1_Dev_t* dev)
   status = VL53L1_StaticInit(dev);
   return_if_error(status, "StaticInit failed");
 
-  PRINT_NAMED_ERROR("","loading calibration");
-  load_calibration(dev);
+  
 
   return status;
 }
 
 int close_dev(VL53L1_Dev_t* dev)
 {
-  const int rc = VL53L1_platform_terminate(dev);
+  int rc = VL53L1_StopMeasurement(dev);
+  
+  rc = VL53L1_platform_terminate(dev);
   if(rc == VL53L1_ERROR_NONE)
   {
     dev->platform_data.i2c_file_handle = -1;
+  }
+
+  if(_powerGPIO != nullptr)
+  {
+    gpio_set_value(_powerGPIO, gpio_LOW);
+    
+    gpio_close(_powerGPIO);
+    _powerGPIO = nullptr;
   }
   
   return rc;
@@ -201,11 +237,6 @@ int setup(VL53L1_Dev_t* dev)
   rc = setup_roi_grid(dev, 4, 4);
   return_if_error(rc, "ioctl error setting up preset grid");
 
-  // Setup timing budget
-  PRINT_NAMED_ERROR("","set timing budget\n");
-  rc = VL53L1_SetMeasurementTimingBudgetMicroSeconds(dev, 16000);
-  return_if_error(rc, "ioctl error setting timing budged");
-
   // Set distance mode
   PRINT_NAMED_ERROR("","set distance mode\n");
   rc = VL53L1_SetDistanceMode(dev, VL53L1_DISTANCEMODE_SHORT);
@@ -224,6 +255,11 @@ int setup(VL53L1_Dev_t* dev)
   rc = VL53L1_SetOffsetCorrectionMode(dev, VL53L1_OFFSETCORRECTIONMODE_PERZONE);
   return_if_error(rc, "ioctl error setting offset correction mode");
 
+  // Setup timing budget
+  PRINT_NAMED_ERROR("","set timing budget\n");
+  rc = VL53L1_SetMeasurementTimingBudgetMicroSeconds(dev, 16000);
+  return_if_error(rc, "ioctl error setting timing budged");
+
   return rc;
 }
 
@@ -235,6 +271,17 @@ int get_mz_data(VL53L1_Dev_t* dev, const int blocking, VL53L1_MultiRangingData_t
   {
     rc = VL53L1_WaitMeasurementDataReady(dev);
     return_if_error(rc, "get_mz_data WaitMeasurementDataReady Failed");
+  }
+  else
+  {
+    uint8_t dataReady = 0;
+    rc = VL53L1_GetMeasurementDataReady(dev, &dataReady);
+    return_if_error(rc, "get_mz_data GetMeasurementDataReady failed");
+
+    if(!dataReady)
+    {
+      return -1;
+    }
   }
 
   rc = VL53L1_GetMultiRangingData(dev, data);
@@ -248,7 +295,11 @@ int get_mz_data(VL53L1_Dev_t* dev, const int blocking, VL53L1_MultiRangingData_t
 
 int start_ranging(VL53L1_Dev_t* dev)
 {
-  const int rc = VL53L1_StartMeasurement(dev);
+  PRINT_NAMED_ERROR("","loading calibration");
+  int rc = load_calibration(dev);
+  return_if_error(rc, "load_calibration failed");
+  
+  rc = VL53L1_StartMeasurement(dev);
   return_if_error(rc, "start_ranging failed");
   return 0;
 }
