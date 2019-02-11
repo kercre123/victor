@@ -616,15 +616,12 @@ bool DropBreadcrumb(bool result, const char* file, int line)
   static int lines[BUFFER_SIZE] = {0};
   static int counts[BUFFER_SIZE] = {0};
   static struct timeval time[BUFFER_SIZE];
-  static std::mutex mutex;
 
   // ptr - 1 is the last written entry
   // ptr +/- 0 is the oldest
   // ptr + 1 is the next oldest
   static int ptr = 0;
   static bool crashed = false;
-
-  std::lock_guard<std::mutex> lock(mutex);
 
   if (line == -1 && !crashed) {
     printf("breadcrumbs (not a stack trace)...\n");

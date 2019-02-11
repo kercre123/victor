@@ -10,7 +10,7 @@
  *
  **/
 
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/behaviorOnboardingCoordinator.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingCoordinator.h"
 
 #include "clad/types/onboardingPhase.h"
 #include "clad/types/onboardingPhaseState.h"
@@ -18,7 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/iOnboardingPhaseWithProgress.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/phases/iOnboardingPhaseWithProgress.h"
 #include "engine/aiComponent/behaviorComponent/onboardingMessageHandler.h"
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
@@ -87,7 +87,7 @@ BehaviorOnboardingCoordinator::InstanceConfig::InstanceConfig(const Json::Value&
   auto iter = OnboardingPhaseMap.find(OnboardingPhase::Default);
   if(OnboardingPhaseMap.end() == iter){
     LOG_ERROR("BehaviorOnboardingCoordinator.InvalidDefaultPhase",
-              "A valid 'Default' phase must be specified in Onboarding1p2.json!");
+              "A valid 'Default' phase must be specified in Onboarding.json!");
   }
 
   startTimeout_s           = JsonTools::ParseFloat(config, kStartTimeoutKey,   kDebugLabel);
@@ -343,9 +343,13 @@ void BehaviorOnboardingCoordinator::HandleOnboardingMessageFromApp(const AppToEn
       // lost connection, just let the emulation behavior finish up onboarding naturally on a 60 sec timeout
       // or the first voice command
       if( !_dVars.emulate1p0Onboarding || !_dVars.started1p0WakeUp ){
-        const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-        const bool appDisconnectTimeOutSet = _iConfig.appDisconnectTimeout_s > 0.0f;
-        _dVars.appDisconnectExitTime_s = appDisconnectTimeOutSet ? (currTime_s + _iConfig.appDisconnectTimeout_s) : 0.0f;
+        // Don't timeout based on AppDisconnected messages if we haven't yet started onboarding
+        if( _dVars.onboardingStarted ){
+          const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+          const bool appDisconnectTimeOutSet = _iConfig.appDisconnectTimeout_s > 0.0f;
+          _dVars.appDisconnectExitTime_s = appDisconnectTimeOutSet ?
+            (currTime_s + _iConfig.appDisconnectTimeout_s) : 0.0f;
+        }
       }
       // This particular message should NOT reset appDisconnect params; return early
       return;

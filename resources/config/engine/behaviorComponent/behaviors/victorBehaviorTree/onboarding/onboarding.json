@@ -1,5 +1,5 @@
 {
-  "behaviorID": "Onboarding1p2",
+  "behaviorID": "Onboarding",
   "behaviorClass": "OnboardingCoordinator",
 
   "associatedActiveFeature": "Onboarding",
@@ -8,42 +8,42 @@
     {
       // The Default phase is the one we initialize to and return to if the app disconnects
       "phaseName" : "Default",
-      "phaseBehaviorID" : "OnboardingLookAtPhone1p2",
+      "phaseBehaviorID" : "OnboardingLookAtPhone",
       // Note that the Default phase doesn't time out, global and AppDisconnect timeouts still apply
       "phaseTimeout_s" : 0.0
     },
     {
       "phaseName" : "LookAtPhone",
-      "phaseBehaviorID" : "OnboardingLookAtPhone1p2",
+      "phaseBehaviorID" : "OnboardingLookAtPhone",
       "phaseTimeout_s" : 60.0
     }, 
     {
       "phaseName" : "WakeUp",
-      "phaseBehaviorID" : "OnboardingWakeUp1p2",
+      "phaseBehaviorID" : "OnboardingWakeUp",
       "phaseTimeout_s" : 60.0,
       "allowCoordinatorPowerOff" : true
     },
     {
       "phaseName" : "LookAtUser",
-      "phaseBehaviorID" : "OnboardingLookAtUser1p2",
+      "phaseBehaviorID" : "OnboardingLookAtUser",
       "phaseTimeout_s" : 120.0,
       "allowCoordinatorPowerOff" : true
     },
     {
       "phaseName" : "TeachWakeWord",
-      "phaseBehaviorID" : "OnboardingTeachWakeWord1p2",
+      "phaseBehaviorID" : "OnboardingTeachWakeWord",
       "phaseTimeout_s" : 300.0,
       "allowCoordinatorPowerOff" : true
     },
     {
       "phaseName" : "TeachComeHere",
-      "phaseBehaviorID" : "OnboardingTeachComeHere1p2",
+      "phaseBehaviorID" : "OnboardingTeachComeHere",
       "phaseTimeout_s" : 300.0,
       "allowCoordinatorPowerOff" : true
     },
     {
       "phaseName" : "TeachMeetVictor",
-      "phaseBehaviorID" : "OnboardingTeachMeetVictor1p2",
+      "phaseBehaviorID" : "OnboardingTeachMeetVictor",
       "phaseTimeout_s" : 300.0,
       "allowCoordinatorPowerOff" : true
     },

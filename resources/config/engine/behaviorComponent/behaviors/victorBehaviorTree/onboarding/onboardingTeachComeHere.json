@@ -1,5 +1,5 @@
 {
-  "behaviorID" : "OnboardingTeachComeHere1p2",
+  "behaviorID" : "OnboardingTeachComeHere",
   "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
 
   "interruptActiveBehavior": true,
@@ -24,7 +24,7 @@
       "cooldown_s" : 0.0
     },
     {
-      "behavior" : "OnboardingLookAtUser1p2",
+      "behavior" : "OnboardingLookAtUser",
       "cooldown_s" : 0.0
     }
   ],

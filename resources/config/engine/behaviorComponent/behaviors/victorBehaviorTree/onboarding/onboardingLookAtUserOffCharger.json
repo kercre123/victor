@@ -1,6 +1,6 @@
 {
   // onboarding death stare
-  "behaviorID": "OnboardingLookAtUser",
+  "behaviorID": "OnboardingLookAtUserOffCharger",
   "behaviorClass": "FindFaceAndThen",
   
   // look for face/body in startup direction for 15-45 seconds

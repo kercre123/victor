@@ -179,17 +179,13 @@ enum uint_8 BehaviorClass {
   ObservingLookAtFaces,
   ObservingWithoutTurn,
 
-  // onboarding_1p0
-  Onboarding1p0,
-  OnboardingLookAtPhone,
-
-  // onboarding_1p2
+  // onboarding
   OnboardingCoordinator,
 
-  // onboarding_1p2/phases
+  // onboarding/phases
   OnboardingEmulate1p0WaitForVC,
-  OnboardingLookAtPhone1p2,
-  OnboardingLookAtUser1p2,
+  OnboardingLookAtPhone,
+  OnboardingLookAtUser,
   OnboardingTeachWakeWord,
   OnboardingWakeUp,
 
@@ -207,6 +203,7 @@ enum uint_8 BehaviorClass {
   // reactions
   AskForHelp,
   CheckForAndReactToSalientPoint,
+  ReactToBatteryTooHotToCharge,
   ReactToCliff,
   ReactToCubeTap,
   ReactToDarkness,

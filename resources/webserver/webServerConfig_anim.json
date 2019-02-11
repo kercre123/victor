@@ -3,6 +3,7 @@
   "title0": "Victor Web Server (Anim process)",
   "title1": "This web server is running in the Anim process",
   "whichWebServer": 2,
+  "tickBudget_ms": 33,
   "startPage": "page_consolevars",
   "allowPerfPage": false,
   "allowPerfMetricPage": true,

@@ -12,7 +12,7 @@
  **/
 
 
-#include "engine/aiComponent/behaviorComponent/behaviors/onboarding_1p2/phases/behaviorOnboardingTeachWakeWord.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/onboarding/phases/behaviorOnboardingTeachWakeWord.h"
 
 #include "audioEngine/multiplexer/audioCladMessageHelper.h"
 #include "engine/actions/animActions.h"
@@ -81,7 +81,7 @@ BehaviorOnboardingTeachWakeWord::~BehaviorOnboardingTeachWakeWord()
 void BehaviorOnboardingTeachWakeWord::InitBehavior()
 {
   auto& BC = GetBEI().GetBehaviorContainer();
-  _iConfig.lookAtUserBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(OnboardingLookAtUser1p2) );
+  _iConfig.lookAtUserBehavior = BC.FindBehaviorByID( BEHAVIOR_ID(OnboardingLookAtUser) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
