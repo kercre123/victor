@@ -69,6 +69,9 @@ namespace {
   // When generating new locations from which to search for the charger, new
   // locations should be at least this far from previously-searched locations.
   const float kMinDistFromPreviousSearch_mm = 200.f;
+
+  // Max allowed age of charger object to be considered recently seen
+  const RobotTimeStamp_t kMaxAgeForChargerSeenRecently_ms = 5000;
   
   constexpr MemoryMapTypes::FullContentArray kTypesToBlockSampling =
   {
@@ -249,9 +252,9 @@ void BehaviorFindHome::OnBehaviorDeactivated()
   // This can happen under certain situations when getting a "negative-observation" (not seeing it when it was expected).
   bool chargerSeen = false;
   if(charger != nullptr) {
-    TimeStamp_t chrgObsTime = charger->GetLastObservedTime();
-    TimeSTamp_t now = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
-    bool chargerSeen = (now-chrgObsTime) < kMaxAgeForChargerSeenRecently;
+    RobotTimeStamp_t chrgObsTime = charger->GetLastObservedTime();
+    RobotTimeStamp_t now = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
+    chargerSeen = (now-chrgObsTime) < kMaxAgeForChargerSeenRecently_ms;
   }
 
   DASMSG(find_home_result, "find_home.result", "Whether the FindHome behavior succeeded in locating the object");
