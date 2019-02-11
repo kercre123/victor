@@ -1403,11 +1403,6 @@ namespace Vector {
                        EnumToString(procResult.imageQuality), (TimeStamp_t)timeWithThisQuality_ms,
                        (TimeStamp_t)_waitForNextAlert_ms, EnumToString(errorCode));
 
-        DASMSG(image_quality_measurement_change, "vision_component.update_camera_params", "image quality measurement changed from before");
-        DASMSG_SET(s1, Vision::ImageQualityToString(_lastImageQuality), "current image quality");
-        DASMSG_SET(s2, Vision::ImageQualityToString(_lastBroadcastImageQuality), "previous image quality");
-        DASMSG_SEND();
-
         using namespace ExternalInterface;
         _robot->Broadcast(MessageEngineToGame(EngineErrorCodeMessage(errorCode)));
         _lastBroadcastImageQuality = _lastImageQuality;
