@@ -70,7 +70,7 @@ namespace {
   constexpr const double kBiasNoise_radps     = .00003; // 2 * bias stability
 
   // extra tuning param for how much we distribute the sigma points
-  const double kWsigma =  1/(2*9); // 1 / (2N) := equal weight for all sigma points
+  const double kWsigma =  1./(2*9.); // 1 / (2N) := equal weight for all sigma points
   const double kCholScale = sqrt(1./(2*kWsigma));
 
   // Gravity constants
