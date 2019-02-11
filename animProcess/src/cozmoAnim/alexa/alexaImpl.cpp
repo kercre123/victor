@@ -127,6 +127,10 @@ namespace {
   // every this many seconds (in basestation time), grab the wall time (system clock) and see if it looks like
   // it may have jumped. If so, refresh the alexa timers
   CONSOLE_VAR(float, kAlexaHackCheckForSystemClockSyncPeriod_s, "Alexa", 5.0f);
+  
+  // dont bubble up server errors unless the user has interacted within the last 1 min
+  // (1 minute because sometimes it can take 30 secs for the sdk to respond with an error)
+  constexpr uint64_t kMillisConsideredRecentInteraction = 1000*60*1;
 
 #if ANKI_DEV_CHEATS
 
@@ -220,6 +224,7 @@ AlexaImpl::AlexaImpl()
   , _notificationsIndicator{ avsCommon::avs::IndicatorState::UNDEFINED }
   , _initState{ InitState::Uninitialized }
   , _runSetNetworkConnectionError{ false }
+  , _lastInteractionTime_ms{ 0 }
 {
   static_assert( std::is_same<SourceId, avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId>::value,
                  "Our shorthand SourceId type differs" );
@@ -1173,6 +1178,9 @@ void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserver
   DASMSG(send_complete, "alexa.response_to_request", "SDK responded to a sent message");
   DASMSG_SET(s1, MessageStatusToString(status).c_str(), "AVS-provided message status (e.g. SUCCESS, TIMEDOUT, ...)");
   DASMSG_SEND();
+  
+  // for most cases, only consider a non-success as an error if the user interacted recently, because sometimes
+  // the sdk sends things behind the scenes, and we dont want the robot to suddenly start speaking.
 
   using Status = avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status;
   switch( status ) {
@@ -1190,15 +1198,18 @@ void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserver
       if( _internetConnected ) {
         OnInternetConnectionChanged(false);
       }
-
-      SetNetworkConnectionError();
+      if( InteractedRecently() ) {
+        SetNetworkConnectionError();
+      }
       break;
     }
 
     case Status::CANCELED: // The send failed due to server canceling it before the transmission completed.
     {
       // may have lost connection, or may be a server-side issue (I think...)
-      SetNetworkConnectionError();
+      if( InteractedRecently() ) {
+        SetNetworkConnectionError();
+      }
       break;
     }
 
@@ -1212,14 +1223,18 @@ void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserver
     case Status::SERVER_OTHER_ERROR: // The send failed due to unknown server error.
     {
       // sending the last request ended in failure. show the error face and play audio
-      SetNetworkError( AlexaNetworkErrorType::HavingTroubleThinking );
+      if( InteractedRecently() ) {
+        SetNetworkError( AlexaNetworkErrorType::HavingTroubleThinking );
+      }
       break;
     }
       
     case Status::INVALID_AUTH: // The access credentials provided to ACL were invalid.
     {
       // sending the last request failed because auth was revoke. show the error face and play audio
-      SetNetworkError( AlexaNetworkErrorType::AuthRevoked );
+      if( InteractedRecently() ) {
+        SetNetworkError( AlexaNetworkErrorType::AuthRevoked );
+      }
       break;
     }
   }
@@ -1363,6 +1378,9 @@ void AlexaImpl::SetAuthState( AlexaAuthState state, const std::string& url, cons
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::NotifyOfTapToTalk()
 {
+  using namespace std::chrono;
+  _lastInteractionTime_ms = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
+  
   if( _client != nullptr ) {
     if( !_isTapOccurring ) {
       _client->StopForegroundActivity();
@@ -1387,6 +1405,8 @@ void AlexaImpl::NotifyOfTapToTalk()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::NotifyOfWakeWord( uint64_t fromIndex, uint64_t toIndex )
 {
+  using namespace std::chrono;
+  _lastInteractionTime_ms = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
   
   if( !_client->IsAVSConnected() ) {
     // run SetNetworkConnectionError on main thread
@@ -1528,6 +1548,15 @@ void AlexaImpl::SetNetworkError( AlexaNetworkErrorType errorType )
   if( _onNetworkError != nullptr ) {
     _onNetworkError( errorType );
   }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AlexaImpl::InteractedRecently() const
+{
+  using namespace std::chrono;
+  const uint64_t currTime = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
+  const bool recent = (currTime <= kMillisConsideredRecentInteraction + _lastInteractionTime_ms);
+  return recent;
 }
   
 #if ANKI_DEV_CHEATS
