@@ -974,6 +974,9 @@ namespace Vector {
                                                                    std::move(visionModesList),
                                                                    imageMean)));
         }
+
+        // Trigger all registered callbacks on the image processing result
+        _visionResultSignal.emit(result);
       }
     }
 
@@ -2978,6 +2981,11 @@ namespace Vector {
       sTimeSinceValidImg_ms = 0;
       _restartingCameraTime_ms = 0;
     }
+  }
+
+  Signal::SmartHandle VisionComponent::RegisterVisionResultCallback(const std::function<VisionResultCallback>& callback)
+  {
+    return _visionResultSignal.ScopedSubscribe(callback);
   }
 
 } // namespace Vector

@@ -28,6 +28,7 @@ namespace RobotPointSamplerHelper {
   class RejectIfWouldCrossCliff;
   class RejectIfCollidesWithMemoryMap;
 }
+struct VisionProcessingResult;
   
 enum class AnimationTrigger : int32_t;
 class BlockWorldFilter;
@@ -51,6 +52,9 @@ protected:
   virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
+
+  // Helper method used as the callback for when the VisionProcessingResult is ready
+  void CheckVisionProcessingResult(const VisionProcessingResult& result);
 
 private:
   struct InstanceConfig {
@@ -100,6 +104,19 @@ private:
     // Cumulative angle swept while searching in place for
     // the charger
     float angleSwept_deg = 0.f;
+
+    // Count of the frames of marker detection being run
+    //  while this behavior is activated.
+    u32 numFramesOfDetectingMarkers = 0;
+
+    // Count of the frames where the image quality was TooDark.
+    // NOTE: only counted while marker detection is being run.
+    u32 numFramesOfImageTooDark = 0; 
+
+    // Handle provided by VisionComponent when registering a 
+    //  callback to its VisionProcessingResult signal. When
+    //  destroyed, the callback is automatically unregistered.
+    Signal::SmartHandle visionResultSignalHandle = nullptr;
     
     struct Persistent {
       // Map of basestation time to locations at which we have executed
