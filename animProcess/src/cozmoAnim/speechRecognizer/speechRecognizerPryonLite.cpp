@@ -181,8 +181,13 @@ bool SpeechRecognizerPryonLite::IsReady() const
 #if PRYON_ENABLED
   std::lock_guard<std::recursive_mutex> lock(_impl->recogMutex);
   return _impl->ready;
-#endif
+#elif defined(ANKI_PLATFORM_OSX)
+  // since we keep the wake word engine samples coupled to those samples passed to alexa's mic input,
+  // pretend this wake word engine is initialized on mac so that alexa receives any mic input at all
+  return true;
+#else
   return false;
+#endif
 }
 
 bool SpeechRecognizerPryonLite::LoadPryonModel(const std::string& filePath, SpeechRecognizerPryonLiteData& data)
