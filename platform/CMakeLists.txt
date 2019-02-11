@@ -12,3 +12,5 @@ add_subdirectory(switchboard)
 add_subdirectory(update-engine)
 
 add_subdirectory(diagnostics-logger)
+
+add_subdirectory(gpio)

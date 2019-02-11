@@ -1,5 +1,7 @@
 /************* GPIO Interface ***************/
 
+#include "platform/gpio/gpio.h"
+
 #include <fcntl.h>
 #include <stdlib.h>
 #include <unistd.h>
@@ -8,10 +10,8 @@
 #include <ctype.h>
 #include <errno.h>
 #include <string.h>
-
-#include "core/gpio.h"
-#include "core/common.h"
-
+#include <stdio.h>
+#include <stdarg.h>
 
 static int GPIO_BASE_OFFSET = -1;
 
@@ -21,6 +21,34 @@ struct GPIO_t
   int fd;
   bool isOpenDrain;
 };
+
+typedef enum CoreAppErrorCode_t {
+  app_SUCCESS = 0,
+  app_USAGE = -1,
+  app_FILE_OPEN_ERROR = -2,
+  app_FILE_READ_ERROR = -3,
+  app_SEND_DATA_ERROR = -4,
+  app_INIT_ERROR = -5,
+  app_FLASH_ERASE_ERROR = -6,
+  app_VALIDATION_ERROR = -7,
+  app_FILE_SIZE_ERROR = -8,
+  app_MEMORY_ERROR = -9,
+  app_IO_ERROR = -10,
+  app_DEVICE_OPEN_ERROR = -11,
+} CoreAppErrorCode;
+
+
+void gpio_error_exit(CoreAppErrorCode code, const char* msg, ...)
+{
+  va_list args;
+
+  printf("ERROR %d: ", code);
+  va_start(args, msg);
+  vprintf(msg, args);
+  va_end(args);
+  printf("\n\n");
+  exit(code);
+}
 
 int gpio_get_base_offset()
 {
@@ -37,18 +65,18 @@ int gpio_get_base_offset()
     }
 
     if (fd < 0) {
-      error_exit(app_DEVICE_OPEN_ERROR, "can't access gpiochip base [%d]", errno);
+      gpio_error_exit(app_DEVICE_OPEN_ERROR, "can't access gpiochip base [%d]", errno);
     }
 
     char base_buf[5] = {0};
     int r = read(fd, base_buf, sizeof(base_buf));
     if (r < 0) {
-      error_exit(app_IO_ERROR, "can't read gpiopchip base property");
+      gpio_error_exit(app_IO_ERROR, "can't read gpiopchip base property");
     }
 
     if (isdigit(base_buf[0]) == 0)
     {
-      error_exit(app_VALIDATION_ERROR, "can't parse gpiochip base property");
+      gpio_error_exit(app_VALIDATION_ERROR, "can't parse gpiochip base property");
     }
 
     GPIO_BASE_OFFSET = atoi(base_buf);
@@ -60,14 +88,14 @@ int gpio_get_base_offset()
 GPIO gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initial_value) {
    char ioname[32];
    GPIO gp  = malloc(sizeof(struct GPIO_t));
-   if (!gp) error_exit(app_MEMORY_ERROR, "can't alloc memory for gpio %d", gpio_number);
+   if (!gp) gpio_error_exit(app_MEMORY_ERROR, "can't alloc memory for gpio %d", gpio_number);
 
    //create io
    int fd = open("/sys/class/gpio/export", O_WRONLY);
    snprintf(ioname, 32, "%d\n", gpio_number+gpio_get_base_offset());
    if (fd<0) {
      free(gp);
-     error_exit(app_DEVICE_OPEN_ERROR, "Can't create exporter %d- %s\n", errno, strerror(errno));
+     gpio_error_exit(app_DEVICE_OPEN_ERROR, "Can't create exporter %d- %s\n", errno, strerror(errno));
    }
    (void)write(fd, ioname, strlen(ioname));
    close(fd);
@@ -85,7 +113,7 @@ GPIO gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initi
 
    if (fd <0) {
      free(gp);
-     error_exit(app_IO_ERROR, "can't create gpio %d value control %d - %s", gpio_number, errno, strerror(errno));
+     gpio_error_exit(app_IO_ERROR, "can't create gpio %d value control %d - %s", gpio_number, errno, strerror(errno));
    }
    gp->fd = fd;
    if  (fd>0) {

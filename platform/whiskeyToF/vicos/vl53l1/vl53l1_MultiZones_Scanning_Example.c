@@ -265,10 +265,10 @@ int main(int argc, char **argv)
 	/*
 	* Run reference SPAD characterisation
 	*/
-	if (Status == VL53L1_ERROR_NONE) {
-		printf("Perform spad management\n");
-		Status = VL53L1_PerformRefSpadManagement(Dev);
-	}
+	/* if (Status == VL53L1_ERROR_NONE) { */
+	/* 	printf("Perform spad management\n"); */
+	/* 	Status = VL53L1_PerformRefSpadManagement(Dev); */
+	/* } */
 
 	/*
 	* Run Xtalk calibration
@@ -293,8 +293,8 @@ int main(int argc, char **argv)
 		printf("set distance mode\n");
 //		Status = VL53L1_SetDistanceMode(Dev, VL53L1_DISTANCEMODE_AUTO);
 //		Status = VL53L1_SetDistanceMode(Dev, VL53L1_DISTANCEMODE_MEDIUM);
-//		Status = VL53L1_SetDistanceMode(Dev, VL53L1_DISTANCEMODE_SHORT);
-		Status = VL53L1_SetDistanceMode(Dev, VL53L1_DISTANCEMODE_LONG);
+		Status = VL53L1_SetDistanceMode(Dev, VL53L1_DISTANCEMODE_SHORT);
+//		Status = VL53L1_SetDistanceMode(Dev, VL53L1_DISTANCEMODE_LONG);
 	}
 
 	/*

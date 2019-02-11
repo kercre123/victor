@@ -23,7 +23,10 @@
 
 #include "util/logging/logging.h"
 
+#include "platform/gpio/gpio.h"
+
 #include <fcntl.h>
+#include <unistd.h>
 
 #define SPAD_COLS (16)  ///< What's in the sensor
 #define SPAD_ROWS (16)  ///< What's in the sensor
@@ -31,8 +34,23 @@
 #define MAX_ROWS (SPAD_ROWS / SPAD_MIN_ROI)
 #define MAX_COLS (SPAD_COLS / SPAD_MIN_ROI)
 
+#define POWER_GPIO 0
+
+namespace {
+  GPIO _powerGPIO = nullptr;
+}
+
 int open_dev(VL53L1_Dev_t* dev)
 {
+  _powerGPIO = gpio_create(POWER_GPIO, gpio_DIR_OUTPUT, gpio_HIGH);
+  if(_powerGPIO == nullptr)
+  {
+    PRINT_NAMED_ERROR("ToF.open_dev", "Failed to open gpio %d", POWER_GPIO);
+    return VL53L1_ERROR_GPIO_NOT_EXISTING;
+  }
+
+  usleep(2000);
+  
   VL53L1_Error status = VL53L1_ERROR_NONE;
 
 #ifdef VL53L1_LOG_ENABLE
@@ -103,6 +121,14 @@ int close_dev(VL53L1_Dev_t* dev)
   if(rc == VL53L1_ERROR_NONE)
   {
     dev->platform_data.i2c_file_handle = -1;
+  }
+
+  if(_powerGPIO != nullptr)
+  {
+    gpio_set_value(_powerGPIO, gpio_LOW);
+    
+    gpio_close(_powerGPIO);
+    _powerGPIO = nullptr;
   }
   
   return rc;

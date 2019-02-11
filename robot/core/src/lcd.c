@@ -8,7 +8,7 @@
 
 #include "core/common.h"
 #include "core/clock.h"
-#include "core/gpio.h"
+#include "platform/gpio/gpio.h"
 
 #include "core/lcd.h"
 
