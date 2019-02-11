@@ -71,7 +71,6 @@ target_link_libraries(cozmo_engine
   DAS
   util
   PRIVATE
-  ble_cozmo
   cameraService
   canned_anim_lib_engine
   victor_web_library
@@ -98,7 +97,7 @@ target_link_libraries(cozmo_engine
 target_compile_options(cozmo_engine PRIVATE
   ${SYMBOL_VISIBILITY_FLAGS}
   "${PLATFORM_FLAGS}"
-  ${ASAN_CXX_FLAGS} 
+  ${ASAN_CXX_FLAGS}
 )
 
 anki_build_strip(TARGET cozmo_engine)
