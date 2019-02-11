@@ -470,22 +470,24 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
   //  charger, we can message up the stats on the number of frames
   //  we attempted to detect, and how many frames were too dark,
   //  via DAS
-  u32 numImagesDetectingMarkers = 0;
-  u32 numImagesTooDark = 0;
-  const auto func = [&](const VisionProcessingResult& result) {
+  _dVars.numImagesDetectingMarkers = 0;
+  _dVars.numImagesTooDark = 0;
+  const auto func = [this](const VisionProcessingResult& result) {
     if(result.modesProcessed.Contains(VisionMode::DetectingMarkers)) {
-      numImagesDetectingMarkers++;
+      _dVars.numImagesDetectingMarkers++;
       if(result.imageQuality == Vision::ImageQuality::TooDark) {
-        numImagesTooDark++;
+        _dVars.numImagesTooDark++;
       }
     }
   };
   // note: When TransitionToCheckPreTurnPosition() returns, the handle will be destroyed.
   //  This will trigger the un-registration of the callback.
-  Signal::SmartHandle signalHandle = GetBEI().GetVisionComponent().RegisterVisionResultCallback(func);
+  _dVars.visionProcessingResultHandle = GetBEI().GetVisionComponent().RegisterVisionResultCallback(func);
   
   DelegateIfInControl(compoundAction,
-                      [checkPoseFunc, this, &numImagesDetectingMarkers, &numImagesTooDark](ActionResult result) {
+                      [checkPoseFunc, this](ActionResult result) {
+                        // Destroy the signal handle so we don't get unnecessary callbacks
+                        _dVars.visionProcessingResultHandle.reset();
                         const auto resultCategory = IActionRunner::GetActionResultCategory(result);
                         const bool poseOk = checkPoseFunc();
                         if ((resultCategory == ActionResultCategory::SUCCESS) && poseOk) {
@@ -498,8 +500,8 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
                                               _dVars.chargerID.GetValue());
                           const bool removeChargerFromBlockworld = true;
                           DASMSG(go_home_charger_not_visible, "go_home.charger_not_visible", "GoHome behavior failure because the charger is not seen when should be.");
-                          DASMSG_SET(i1, numImagesDetectingMarkers, "Count of total number of processed image frames searching for Markers");
-                          DASMSG_SET(i2, numImagesTooDark, "Count of number of processed image frames (searching for Markers) that are TooDark");
+                          DASMSG_SET(i1, _dVars.numImagesDetectingMarkers, "Count of total number of processed image frames searching for Markers");
+                          DASMSG_SET(i2, _dVars.numImagesTooDark, "Count of number of processed image frames (searching for Markers) that are TooDark");
                           DASMSG_SEND();
                           ActionFailure(removeChargerFromBlockworld);
                         } else if (_dVars.turnToDockRetryCount++ < _iConfig.turnToDockRetryCount) {
