@@ -39,6 +39,7 @@ namespace Anki {
     static_assert(N>0, "Cannot create an empty Point.");
 
   public:
+    static constexpr size_t Size = N;
     using std::array<T,N>::operator[];
     
     // Constructors

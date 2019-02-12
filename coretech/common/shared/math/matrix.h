@@ -193,10 +193,13 @@ namespace Anki {
     
     using SmallMatrix<DIM,DIM,T>::operator();
     using SmallMatrix<DIM,DIM,T>::operator*;
-    using SmallMatrix<DIM,DIM,T>::operator+;
-    using SmallMatrix<DIM,DIM,T>::operator+=;
-    using SmallMatrix<DIM,DIM,T>::operator-;
-    using SmallMatrix<DIM,DIM,T>::operator-=;
+
+    // use inline function to force type checker to keep the derived type
+    inline SmallSquareMatrix<DIM,T> operator* (T value)                             const { return SmallMatrix<DIM,DIM,T>::operator* (value); }
+    inline SmallSquareMatrix<DIM,T> operator+ (const SmallMatrix<DIM,DIM,T> &other) const { return SmallMatrix<DIM,DIM,T>::operator+ (other); }
+    inline SmallSquareMatrix<DIM,T> operator- (const SmallMatrix<DIM,DIM,T> &other) const { return SmallMatrix<DIM,DIM,T>::operator- (other); }
+    inline SmallSquareMatrix<DIM,T> operator+=(const SmallMatrix<DIM,DIM,T> &other)       { return SmallMatrix<DIM,DIM,T>::operator+=(other); }
+    inline SmallSquareMatrix<DIM,T> operator-=(const SmallMatrix<DIM,DIM,T> &other)       { return SmallMatrix<DIM,DIM,T>::operator-=(other); }
     
     // Matrix multiplication in place...
     // ... this = this * other;
