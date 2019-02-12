@@ -91,7 +91,7 @@ private:
   f32 _wallMarkerWidth_mm   = 0.f;
   f32 _wallMarkerHeight_mm  = 0.f;
   
-  static constexpr const f32 kDefaultTimeout_sec   = 3.f;
+  static constexpr const f32 kDefaultTimeout_sec   = 6.f;
   static constexpr const f32 kRobotAngleTol_deg    = 5.f;
   static constexpr const f32 kDistTolerance_mm     = 15.f;
   static constexpr const f32 kAngleTolerance_deg   = 10.f;
@@ -172,6 +172,10 @@ s32 CST_CustomObjects::UpdateSimInternal()
       // Define the custom objects
       DefineObjects();
       
+      // Request a cube connection so that we will localize to the cube
+      SendForgetPreferredCube();
+      SendConnectToCube();
+      
       SendMoveHeadToAngle(0, 100.f, 100.f);
       SET_TEST_STATE(LookAtObjects);
       break;
@@ -235,8 +239,9 @@ s32 CST_CustomObjects::UpdateSimInternal()
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(kDefaultTimeout_sec,
                                             !IsRobotStatus(RobotStatusFlag::IS_MOVING),
                                             NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
-                                            GetNumObjects() == 4, // Note: not 5! Only one wall exists
-                                            IsLocalizedToObject())
+                                            GetNumObjects() == 5,
+                                            IsLocalizedToObject(),
+                                            HasXSecondsPassedYet(2.0)) // Allow some time to observe the wall in its new pose
       {
         CheckPoses();
         
