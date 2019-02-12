@@ -36,6 +36,7 @@
 #include "coretech/common/robot/imuUKF.h"
 #include "coretech/common/shared/math/point.h"
 #include "coretech/common/shared/math/rotation.h"
+#include "coretech/common/shared/math/matrix_impl.h"
 
 #include "util/container/minMaxQueue.h"
 #include "util/logging/logging.h"
@@ -968,8 +969,8 @@ namespace Anki {
         // VECTOR: Correct for observed sensitivity error on z axis of gyro (VIC-285)
         // It has been observed that the z axis gyro usually reports about a 1.03% higher
         // rate than it is actually experiencing, so simply scale it here.
-        gyro_[2] *= 0.989f;
         const float z_gyro_scale = .989f;
+        gyro_[2] *= z_gyro_scale;
 #else 
         const float z_gyro_scale = 1.f;
 #endif
