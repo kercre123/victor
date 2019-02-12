@@ -49,6 +49,10 @@ private:
       const external_interface::GatewayWrapper& proto_message,
       ExternalInterface::MessageGameToEngine& clad_message);
 
+  static void ProtoPlayAnimationTriggerRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
   //
   // Clad-to-Proto interpreters
   //
