@@ -15,4 +15,4 @@ robot/include/anki/cozmo/shared/factory/* @alchaussee
 platform/update-engine/update-engine.py @seichert
 
 # Proto files
-/tools/protobuf/gateway/ @anki/cozmo-sdk-admins
+/tools/protobuf/gateway/ @msintov @BruceVonK @rakeshr4
