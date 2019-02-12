@@ -916,12 +916,12 @@ namespace Anki {
         const bool isMoving = WheelController::AreWheelsPowered() || WheelController::AreWheelsMoving() || HeadController::IsMoving();
         const f32 coeff = isMoving ? ROLL_FILT_COEFF_MOVING : ROLL_FILT_COEFF;
         roll_ = (coeff * gyroBasedRoll) + ((1.f - coeff) * accelBasedRoll);
-        AnkiDebugPeriodic(250, "IMUFilter.UpdateRoll",
-                         "Filtered, accel-based, gyro-based: %f %f %f, (In motion: %d)",
-                         RAD_TO_DEG_F32(roll_),
-                         RAD_TO_DEG_F32(accelBasedRoll),
-                         RAD_TO_DEG_F32(gyroBasedRoll),
-                         isMoving);
+        // AnkiDebugPeriodic(250, "IMUFilter.UpdateRoll",
+        //                  "Filtered, accel-based, gyro-based: %f %f %f, (In motion: %d)",
+        //                  RAD_TO_DEG_F32(roll_),
+        //                  RAD_TO_DEG_F32(accelBasedRoll),
+        //                  RAD_TO_DEG_F32(gyroBasedRoll),
+        //                  isMoving);
       }
 
       Result Update()
