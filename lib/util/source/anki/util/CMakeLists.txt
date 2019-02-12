@@ -25,9 +25,15 @@ if (ANDROID)
   set(PLATFORM_LIBS log)
 elseif (VICOS)
   set(PLATFORM_LIBS log)
+  target_include_directories(util
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>)
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
   set(PLATFORM_LIBS ${FOUNDATION})
+  target_include_directories(util
+    PUBLIC
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}>)
 endif()
 
 target_link_libraries(util
