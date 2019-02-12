@@ -982,8 +982,8 @@ namespace Anki {
 
         // Don't do any other IMU updates until head is calibrated
         if (!HeadController::IsCalibrated()) {
-          // pitch_ = 0.f;
-          // prevHeadAngle_ = UNINIT_HEAD_ANGLE;
+          pitch_ = 0.f;
+          prevHeadAngle_ = UNINIT_HEAD_ANGLE;
           ResetPickupVars();
           return retVal;
         }
@@ -1068,20 +1068,17 @@ namespace Anki {
                        accel_robot_frame_filt[0],
                        accel_robot_frame_filt[1],
                        accel_robot_frame_filt[2]);
-        
-#endif
-static int i = 0;
-if (++i > 100) {
-        // const auto bias = ukf_.GetBias();
-        // printf("ukf bias: {X %.5f, Y %.5f, Z %.5f}   old bias: {X %.5f, Y %.5f, Z %.5f}\n", 
-        //       bias[0], bias[1], bias[2], 
-        //       gyro_bias_filt[0], gyro_bias_filt[1], gyro_bias_filt[2]);
-        printf("ukf eul: {Z %.2f, Y %.2f, X %.2f}\n", 
+
+        const auto bias = ukf_.GetBias();
+        AnkiDebugPeriodic(200, "ukf bias: {X %.5f, Y %.5f, Z %.5f}   old bias: {X %.5f, Y %.5f, Z %.5f}\n", 
+              bias[0], bias[1], bias[2], 
+              gyro_bias_filt[0], gyro_bias_filt[1], gyro_bias_filt[2]);
+        pAnkiDebugPeriodic(200, "ukf eul: {Z %.2f, Y %.2f, X %.2f}\n", 
                           RAD_TO_DEG( GetRotation() ), 
                           RAD_TO_DEG( GetPitch() ), 
                           RAD_TO_DEG( GetRoll() ));
-i = 0;
-}
+
+#endif
 
         if (useUKF) {
           // Update orientation
