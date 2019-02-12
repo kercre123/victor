@@ -22,7 +22,7 @@ namespace Anki {
 namespace AudioUtil {
   
 struct SpeechRecognizerCallbackInfo {
-  const char* result;
+  std::string result;
   int startTime_ms;
   int endTime_ms;
   uint64_t startSampleIndex;
@@ -30,6 +30,13 @@ struct SpeechRecognizerCallbackInfo {
   float score;
   
   const std::string Description() const;
+};
+
+struct SpeechRecognizerIgnoreReason {
+  bool playback = false;
+  bool notch = false;
+  
+  operator bool() const { return playback || notch; }
 };
     
 class SpeechRecognizer

@@ -10,11 +10,11 @@
   var tableDirty = true;
   var entryCount = 0;
 
-  var dataColumns = ['result', 'score', 'startTime_ms', 'endTime_ms', 'startSampleIndex', 'endSampleIndex', 'ignore'];
+  var dataColumns = ['result', 'score', 'startTime_ms', 'endTime_ms', 'startSampleIndex', 'endSampleIndex', 'notch', 'playback'];
   // pretty versions of that
-  var prettyColumns = ["TriggerCount", 'Result', 'Score', 'StartTime ms', 'EndTime ms', 'StartSampleIdx', 'EndSampleIdx', 'TriggerIgnored'];
+  var prettyColumns = ["TriggerCount", 'Result', 'Score', 'StartTime ms', 'EndTime ms', 'StartSampleIdx', 'EndSampleIdx', 'Notch', 'PlaybackRecog'];
   // should it be displayed by default
-  var enabledColumns = [true, true, true, true, true, true, true, true];
+  var enabledColumns = [true, true, true, true, true, true, true, true, true];
 
   function CreateTable( elem ) {
     // create the DataTable with prettyColumns as headers
@@ -122,7 +122,13 @@
 
 
   myMethods.onData = function( data, elem ) {
-    AddTableEntry( data );
+    if( Array.isArray(data) ) {
+      data.forEach(function(entry) {
+        AddTableEntry( entry );
+      });
+    } else {
+      AddTableEntry( data );
+    }
     tableDirty = true;
   };
 

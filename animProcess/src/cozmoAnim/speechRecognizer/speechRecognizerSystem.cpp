@@ -432,7 +432,7 @@ void SpeechRecognizerSystem::ActivateAlexa(const Util::Locale& locale, AlexaTrig
   const auto playbackRecognizerCallback = [this](const AudioUtil::SpeechRecognizerCallbackInfo& info)
   {
     // LOG_WARNING("SpeechRecognizerSystem.SetAlexaActive.playbackRecCallback","Info %s", info.Description().c_str());
-    _playbackTrigerSampleIdx = _alexaComponent->GetMichrophoneSampleIndex();
+    _playbackTrigerSampleIdx = _alexaComponent->GetMicrophoneSampleIndex();
   };
   InitAlexaPlayback(locale, playbackRecognizerCallback);
 
@@ -490,22 +490,21 @@ void SpeechRecognizerSystem::InitAlexa(const Util::Locale& locale,
   // wrap callback with another check for whether the input signal contains a notch
   const auto wrappedCallback = [callback=std::move(callback), this](const AudioUtil::SpeechRecognizerCallbackInfo& info)
   {
-    bool notchDetected = false;
+    AudioUtil::SpeechRecognizerIgnoreReason ignoreReason;
     if (_notchDetectorActive || kForceRunNotchDetector) {
       std::lock_guard<std::mutex> lg{_notchMutex};
-      notchDetected = _notchDetector->HasNotch();
+      ignoreReason.notch = _notchDetector->HasNotch();
     }
     const auto diff = info.endSampleIndex - _playbackTrigerSampleIdx;
-    const bool playbackRecognizerDetected = (diff <= kPlaybackRecognizerSampleCountThreshold);
-    const bool ignore = notchDetected || playbackRecognizerDetected;
+    ignoreReason.playback = (diff <= kPlaybackRecognizerSampleCountThreshold);
     
-    if (ignore) {
+    if (ignoreReason) {
       LOG_INFO("SpeechRecognizerSystem.InitAlexaCallback.Ignored",
                "Alexa wake word contained a notch '%c' or playback recognizer '%c'"
                " samples between playback and user recognizers %llu samples | %llu ms",
-               notchDetected ? 'Y' : 'N', playbackRecognizerDetected ? 'Y' : 'N', diff, (diff/16));
+               ignoreReason.notch ? 'Y' : 'N', ignoreReason.playback ? 'Y' : 'N', diff, (diff/16));
     }
-    callback(info, ignore);
+    callback(info, ignoreReason);
   };
   
   _alexaComponent = _context->GetAlexa();
@@ -677,7 +676,7 @@ bool SpeechRecognizerSystem::UpdateRecognizerModel(TriggerContext<SpeechRecogniz
     const std::string netFilePath = currentTrigPathRef.GenerateNetFilePath( _triggerWordDataDir );
     success = recognizer->InitRecognizer( netFilePath );
     if ( success && (_alexaComponent != nullptr) ) {
-      recognizer->SetAlexaMicrophoneOffset( _alexaComponent->GetMichrophoneSampleIndex() );
+      recognizer->SetAlexaMicrophoneOffset( _alexaComponent->GetMicrophoneSampleIndex() );
       recognizer->Start();
     }
   }

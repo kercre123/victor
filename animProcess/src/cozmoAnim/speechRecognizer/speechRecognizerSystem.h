@@ -25,6 +25,7 @@ namespace Anki {
   namespace AudioUtil {
     class SpeechRecognizer;
     struct SpeechRecognizerCallbackInfo;
+    struct SpeechRecognizerIgnoreReason;
   }
   namespace Vector {
     class Alexa;
@@ -65,7 +66,8 @@ public:
   SpeechRecognizerSystem& operator=(const SpeechRecognizerSystem& other) = delete;
   
   using TriggerWordDetectedCallback = std::function<void(const AudioUtil::SpeechRecognizerCallbackInfo& info)>;
-  using AlexaTriggerWordDetectedCallback = std::function<void(const AudioUtil::SpeechRecognizerCallbackInfo& info, bool ignore)>;
+  using AlexaTriggerWordDetectedCallback = std::function<void(const AudioUtil::SpeechRecognizerCallbackInfo& info,
+                                                              const AudioUtil::SpeechRecognizerIgnoreReason& reason)>;
   
   // Init Vector trigger detector
   // Note: This always happens at boot

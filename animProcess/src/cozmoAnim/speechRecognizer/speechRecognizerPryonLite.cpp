@@ -240,7 +240,7 @@ void SpeechRecognizerPryonLite::DetectionCallback(PryonLiteDecoderHandle handle,
   const auto endSampleIdx   = result->endSampleIndex + recContext->_alexaMicrophoneOffset;
   
   const AudioUtil::SpeechRecognizerCallbackInfo info {
-    .result           = result->keyword,
+    .result           = (result->keyword ? result->keyword : ""),
     .startTime_ms     = static_cast<int>( beginSampleIdx / 16 ), // 16 samples per ms
     .endTime_ms       = static_cast<int>( endSampleIdx / 16 ),
     .startSampleIndex = static_cast<unsigned long long>( beginSampleIdx ),

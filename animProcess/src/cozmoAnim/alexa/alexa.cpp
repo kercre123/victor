@@ -857,7 +857,7 @@ void Alexa::UpdateLocale( const Util::Locale& locale )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint64_t Alexa::GetMichrophoneSampleIndex() const
+uint64_t Alexa::GetMicrophoneSampleIndex() const
 {
   std::lock_guard<std::mutex> lg{ _implMutex };
   if( HasInitializedImpl() ) {
