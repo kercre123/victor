@@ -263,10 +263,8 @@ void BehaviorFindHome::CheckVisionProcessingResult(const VisionProcessingResult&
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::OnBehaviorDeactivated()
 {
-  BlockWorldFilter chargerFilter;
-  chargerFilter.AddAllowedType(ObjectType::Charger_Basic);
   const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
-  const ObservableObject* charger = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, chargerFilter);
+  const ObservableObject* charger = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_iConfig.homeFilter);
 
   // NOTE: The charger is considered not seen, if it was deleted from Blockworld (i.e. the charger object is null).
   // This can happen under certain situations when getting a "negative-observation" (not seeing it when it was expected).
