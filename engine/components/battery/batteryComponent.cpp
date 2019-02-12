@@ -58,11 +58,11 @@ namespace {
 
   // Max time to wait after kSaturationChargingThresholdVolts is reached
   // before battery is considered "fully charged".
-  const float kMaxSaturationTime_sec = 1.f;
+  const float kMaxSaturationTime_sec = 1.5 * 60.f;
 
   // Voltage below which battery is considered in a low charge state
   // At 3.6V, there is about 7 minutes of battery life left (if stationary, minimal processing, no wifi transmission, no sound)
-  const float kLowBatteryThresholdVolts = 3.6f;
+  const float kLowBatteryThresholdVolts = 3.55f;
 
   // We apply a small hysteresis band when transitioning between Nominal and Low battery
   const float kLowBatteryHysteresisVolts = 0.05f;
@@ -72,10 +72,6 @@ namespace {
   // 4.0V was chosen because it takes about 5 minutes for the battery to reach 4.0V when placed on the charger at 3.6V
   // (the 'off-charger' low battery threshold).
   const float kOnChargerLowBatteryThresholdVolts = 4.0f;
-
-  // The amount of time that the robot must be off charger before
-  // battery charging will be re-enabled. (Only matters if it was previously disabled of course).
-  const float kOffChargerReEnableBatteryChargingTimeout_sec = 10.f;
 
   const float kInvalidPitchAngle = std::numeric_limits<float>::max();
 
@@ -89,7 +85,7 @@ namespace {
   CONSOLE_VAR(bool, kForceChargeUntilSysconDisconnect, CONSOLE_GROUP, false);
 
   // If non-zero, a low battery status is faked after this many seconds off charger
-  CONSOLE_VAR(uint32_t, kFakeLowBatteryAfterOffChargerTimeout_sec, CONSOLE_GROUP, 220);
+  CONSOLE_VAR(uint32_t, kFakeLowBatteryAfterOffChargerTimeout_sec, CONSOLE_GROUP, 0);
   float _fakeLowBatteryTime_sec = 0.f;
 
 #if ANKI_DEV_CHEATS
@@ -224,11 +220,17 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     }
   }
 
-  // Check if saturation charging
-  bool isSaturationCharging = _isCharging && !_battDisconnected && _batteryVoltsFilt > kSaturationChargingThresholdVolts;
+  // Check if saturation charging should begin
+  bool shouldSaturationChargingStart = _isCharging && !_battDisconnected && _batteryVoltsFilt > kSaturationChargingThresholdVolts;
+  if (shouldSaturationChargingStart) {
+    _saturationChargingStarted = true;
+  } else if (!IsOnChargerContacts()) {
+    _saturationChargingStarted = false;
+  }
+
   bool isFullyCharged = false;
   bool saturationChargingStateChanged = false;
-  if (isSaturationCharging && !kForceChargeUntilSysconDisconnect) {
+  if (_saturationChargingStarted && !kForceChargeUntilSysconDisconnect) {
     if (_saturationChargingStartTime_sec <= 0.f) {
       // Saturation charging has started
       _saturationChargingStartTime_sec = now_sec;
@@ -374,10 +376,8 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     _batteryLevel = level;
   }
 
-  // Re-enable battery charging if was off charger for more than a certain amount
-  if (!_enableBatteryCharging && 
-      !_isOnChargerContacts && 
-      (now_sec - _lastOnChargerContactsChange_sec) > kOffChargerReEnableBatteryChargingTimeout_sec) {
+  // Re-enable battery charging if the battery is not full
+  if (!IsBatteryFull() && !_enableBatteryCharging) {
     LOG_INFO("BatteryComponent.EnableBatteryCharging", "");
     _enableBatteryCharging = true;
     RobotInterface::EnableBatteryCharging msg;
