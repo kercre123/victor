@@ -70,11 +70,11 @@ namespace {
   constexpr const double kBiasNoise_radps     = .00003; // 2 * bias stability
 
   // extra tuning param for how much we distribute the sigma points
-  const double kWsigma =  1./(2*9.); // 1 / (2N) := equal weight for all sigma points
-  const double kCholScale = sqrt(1./(2*kWsigma));
+  const double kWsigma    =  1./(2*9.);            // 1 / (2N) := equal weight for all sigma points
+  const double kCholScale = sqrt(1./(2*kWsigma));  // we use sqrt here since the covariance calculation is in units squared
 
   // Gravity constants
-  constexpr const Point<3,double> kGravity_G = {0., 0., 1.};
+  constexpr const Point<3,double> kGravity_G     = {0., 0., 1.};
   constexpr const double          kG_over_mmps2  = 1./9810.;
 }
 
@@ -143,7 +143,12 @@ void ImuUKF::ProcessUpdate(double dt_s)
     const auto  b1 = _state.GetGyroBias() + Si.GetGyroBias();
     const auto  b2 = _state.GetGyroBias() - Si.GetGyroBias();
 
-    // current process model assumes we continue moving at constant velocity
+    // Current process model assumes we continue moving at constant velocity. The velocity and bias
+    // remain constant, however, the rotation needs to be rotated by its local rotational velocity.
+    // If we assume a small Δt, the we can assume a linear model for ⍵, then apply the rotation to the
+    // current state: 
+    //      q(t+1) = q(t)*𝜹
+    //      𝜹 := ToQuat( (⍵-b)·Δt )
     _Y.SetColumn(2*i,     State{r1 * ToQuat((w1-b1) * dt_s), w1, b1} );
     _Y.SetColumn((2*i)+1, State{r2 * ToQuat((w2-b2) * dt_s), w2, b2} );
   }
@@ -206,10 +211,9 @@ void ImuUKF::MeasurementUpdate(const Measurement& z)
   const Error residual = K*(z - meanZ);
     
   // Add the residual to the current state. 
-  _state = State{ _state.GetRotation() * ToQuat(residual.GetRotation()),
-                  _state.GetVelocity() + residual.GetVelocity(),
-                  _state.GetGyroBias() + residual.GetGyroBias()
-                };
+  _state.SetRotation( _state.GetRotation() * ToQuat(residual.GetRotation()) );
+  _state.SetVelocity( _state.GetVelocity() + residual.GetVelocity() );
+  _state.SetGyroBias( _state.GetGyroBias() + residual.GetGyroBias() );
 }
       
 } // namespace Anki

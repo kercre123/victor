@@ -70,15 +70,19 @@ private:
   //   [q0,q1,q2,q3,⍵1,⍵2,⍵3,b0,b2,b2]
   class State : public Point<10,double> {
   public:
-    State() { (*this)[0] = 1.; }
+    State() : Point<Size,double>(0.) { SetRotation( UnitQuaternion() ); }
     State(Point<Size,double>&& p) : Point<Size,double>(p) {}
 
     State(const UnitQuaternion& q, const Point<3,double>& w, const Point<3,double> b) 
     : Point<Size,double>( Join(Join(q,w),b) ) {}
 
-    UnitQuaternion GetRotation() const { return this->Slice<0,3>(); }
-    Point3<double> GetVelocity() const { return this->Slice<4,6>(); }
-    Point3<double> GetGyroBias() const { return this->Slice<7,9>(); }
+    UnitQuaternion GetRotation() const   { return this->Slice<0,3>(); }
+    Point3<double> GetVelocity() const   { return this->Slice<4,6>(); }
+    Point3<double> GetGyroBias() const   { return this->Slice<7,9>(); }
+
+    void SetRotation(UnitQuaternion&& q) { std::move( &q[0], &q[4], &(*this)[0] ); }
+    void SetVelocity(Point3<double>&& w) { std::move( &w[0], &w[3], &(*this)[4] ); }
+    void SetGyroBias(Point3<double>&& b) { std::move( &b[0], &b[3], &(*this)[7] ); }
   };
     
   // Error is 1 less dimension than the State, since the rotation quaternion only has 3 DoF (4 Dims and 1 constraint)
