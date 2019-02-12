@@ -480,7 +480,7 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
       }
     }
   };
-  // note: When TransitionToCheckPreTurnPosition() returns, the handle will be destroyed.
+  // note: When the ActionCompletedCallback returns, the handle will be reset.
   //  This will trigger the un-registration of the callback.
   _dVars.visionProcessingResultHandle = GetBEI().GetVisionComponent().RegisterVisionResultCallback(func);
   
