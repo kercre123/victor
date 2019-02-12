@@ -177,7 +177,8 @@ private:
   float _lastBatteryLevelChange_sec = 0;
   float _lastOnChargerContactsChange_sec = 0;
   float _lastDisconnectedChange_sec = 0;
-  
+
+  bool  _saturationChargingStarted = false;
   float _saturationChargingStartTime_sec = 0.f;
   float _saturationChargeTimeRemaining_sec = 0.f;
   float _lastSaturationChargingEndTime_sec = 0.f;
