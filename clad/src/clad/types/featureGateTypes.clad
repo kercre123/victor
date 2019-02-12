@@ -22,6 +22,8 @@ enum uint_8 FeatureType {
   PopAWheelie,
   ActiveIntentFeedback,
   Alexa,
+  Alexa_UK,
+  Alexa_AU,
   HeldInPalm,
   Volume,
   HandDetection,

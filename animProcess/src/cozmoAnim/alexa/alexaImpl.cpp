@@ -80,6 +80,10 @@ namespace Vector {
   
 using namespace alexaClientSDK;
   
+// VIC-13319 remove
+CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInUK);
+CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInAU);
+  
 namespace {
   #define CRITICAL_SDK(event) ACSDK_CRITICAL(avsCommon::utils::logger::LogEntry(__FILE__, event))
   #define LOG_CHANNEL "Alexa"
@@ -208,6 +212,19 @@ namespace {
       }
       default:
         return "";
+    }
+  }
+  
+  bool AlexaLocaleEnabled(const Util::Locale& locale)
+  {
+    if( locale.GetCountry() == Util::Locale::CountryISO2::US ) {
+      return true;
+    } else if( locale.GetCountry() == Util::Locale::CountryISO2::GB ) {
+      return kAlexaEnabledInUK;
+    } else if( locale.GetCountry() == Util::Locale::CountryISO2::AU ) {
+      return kAlexaEnabledInAU;
+    } else {
+      return false;
     }
   }
 }
@@ -915,7 +932,10 @@ std::vector<std::shared_ptr<std::istream>> AlexaImpl::GetConfigs() const
   }
   
   const Util::Locale* locale = _context->GetLocale();
-  const std::string localeStr = (locale == nullptr) ? kDefaultLocale : LocaleToString( *locale );
+  std::string localeStr = kDefaultLocale;
+  if( (locale != nullptr) && AlexaLocaleEnabled(*locale) ) {
+    localeStr = LocaleToString( *locale );
+  }
   
   std::string configJson = dataLoader->GetAlexaConfig();
   auto* osState = OSState::getInstance();

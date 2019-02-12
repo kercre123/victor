@@ -43,6 +43,10 @@
 namespace Anki {
 namespace Vector {
   
+// VIC-13319 remove
+CONSOLE_VAR(bool, kAlexaEnabledInUK, "Alexa", true);
+CONSOLE_VAR(bool, kAlexaEnabledInAU, "Alexa", true);
+  
 namespace {
   const std::string kAlexaPath = "alexa";
   const std::string kOptedInFile = "optedIn";
@@ -57,6 +61,19 @@ namespace {
   const bool kPlayErrorIfSignedOut = false;
   
   const float kAlexaErrorTimeout_s = 15.0f; // max duration for error audio
+  
+  bool AlexaLocaleEnabled(const Util::Locale& locale)
+  {
+    if( locale.GetCountry() == Util::Locale::CountryISO2::US ) {
+      return true;
+    } else if( locale.GetCountry() == Util::Locale::CountryISO2::GB ) {
+      return kAlexaEnabledInUK;
+    } else if( locale.GetCountry() == Util::Locale::CountryISO2::AU ) {
+      return kAlexaEnabledInAU;
+    } else {
+      return false;
+    }
+  }
 }
 
 CONSOLE_VAR(bool, kAllowAudioOnCharger, "Alexa", true);
@@ -810,6 +827,10 @@ void Alexa::NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::UpdateLocale( const Util::Locale& locale )
 {
+  if( !AlexaLocaleEnabled(locale) ) {
+    return;
+  }
+  
   _locale.reset( new Util::Locale{locale} );
   if( HasInitializedImpl() ) {
     _impl->SetLocale( locale );

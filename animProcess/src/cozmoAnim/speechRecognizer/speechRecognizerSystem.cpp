@@ -36,6 +36,10 @@
 namespace Anki {
 namespace Vector {
 
+// VIC-13319 remove
+CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInUK);
+CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInAU);
+  
 namespace {
 #define LOG_CHANNEL "SpeechRecognizer"
 
@@ -154,6 +158,23 @@ CONSOLE_VAR(bool, kSaveRawMicInput, CONSOLE_GROUP_ALEXA, false);
 CONSOLE_VAR_RANGED(unsigned int, kForceRunNotchDetector, CONSOLE_GROUP_ALEXA, 0, 0, 2);
   
 CONSOLE_VAR_RANGED(uint, kPlaybackRecognizerSampleCountThreshold, CONSOLE_GROUP_ALEXA_PLAYBACK, 5000, 1000, 10000);
+  
+bool AlexaLocaleEnabled(const Util::Locale& locale)
+{
+  if (locale.GetCountry() == Util::Locale::CountryISO2::US) {
+    return true;
+  }
+  else if (locale.GetCountry() == Util::Locale::CountryISO2::GB) {
+    return kAlexaEnabledInUK;
+  }
+  else if (locale.GetCountry() == Util::Locale::CountryISO2::AU) {
+    return kAlexaEnabledInAU;
+  }
+  else {
+    return false;
+  }
+}
+
 } // namespace
 
 void SpeechRecognizerSystem::SetupConsoleFuncs()
@@ -389,21 +410,24 @@ bool SpeechRecognizerSystem::UpdateTriggerForLocale(const Util::Locale& newLocal
     success = UpdateTriggerForLocale(*_victorTrigger.get(), newLocale, MicData::MicTriggerConfig::ModelType::Count, -1);
   }
   
-  if (_alexaTrigger &&
-      ((RecognizerTypeFlag::AlexaMic & recognizerFlags) == RecognizerTypeFlag::AlexaMic)) {
-    success &= UpdateTriggerForLocale(*_alexaTrigger.get(), newLocale, MicData::MicTriggerConfig::ModelType::Count, -1);
-  }
-  
-  if (_alexaPlaybackTrigger &&
-      ((RecognizerTypeFlag::AlexaPlayback & recognizerFlags) == RecognizerTypeFlag::AlexaPlayback)) {
-    success &= UpdateTriggerForLocale(*_alexaPlaybackTrigger.get(), newLocale,
-                                      MicData::MicTriggerConfig::ModelType::Count, -1);
-    if (_alexaPlaybackRecognizerComponent) {
-      // Notify Component to update locale on it's thread
-      _alexaPlaybackRecognizerComponent->PendingLocaleUpdate();
+  if (AlexaLocaleEnabled(newLocale)) {
+    
+    if (_alexaTrigger &&
+        ((RecognizerTypeFlag::AlexaMic & recognizerFlags) == RecognizerTypeFlag::AlexaMic)) {
+      success &= UpdateTriggerForLocale(*_alexaTrigger.get(), newLocale, MicData::MicTriggerConfig::ModelType::Count, -1);
     }
-    else {
-      LOG_ERROR("SpeechRecognizerSystem.UpdateTriggerForLocale._alexaPlaybackRecognizerComponent.isNull", "");
+    
+    if (_alexaPlaybackTrigger &&
+        ((RecognizerTypeFlag::AlexaPlayback & recognizerFlags) == RecognizerTypeFlag::AlexaPlayback)) {
+      success &= UpdateTriggerForLocale(*_alexaPlaybackTrigger.get(), newLocale,
+                                        MicData::MicTriggerConfig::ModelType::Count, -1);
+      if (_alexaPlaybackRecognizerComponent) {
+        // Notify Component to update locale on it's thread
+        _alexaPlaybackRecognizerComponent->PendingLocaleUpdate();
+      }
+      else {
+        LOG_ERROR("SpeechRecognizerSystem.UpdateTriggerForLocale._alexaPlaybackRecognizerComponent.isNull", "");
+      }
     }
   }
   
