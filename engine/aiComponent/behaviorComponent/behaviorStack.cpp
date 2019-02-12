@@ -161,9 +161,25 @@ void BehaviorStack::UpdateBehaviorStack(BehaviorExternalInterface& behaviorExter
   }
 
 
-  if( _behaviorStackDirty ) {
+  const bool behaviorStackDirty = (_behaviorPopped || _behaviorPushed);
+  if( behaviorStackDirty ) {
+    // if a behavior was popped from the stack, allow the new top of the stack to do something in this same tick
+    // now that it has regained control atop of the stack
+    // * to guard against an infinite loop of pushing/popping from the stack in this tick, we will stop as soon
+    //   as a behavior is pushed onto the stack.  We do not allow a behavior to cancel itself from within the
+    //   OnActivate() call.
+    // note: we also guard against this with an assert in ICozmoBehavior::OnActivatedInternal()
+    while( _behaviorPopped && !_behaviorPushed ) {
+      _behaviorPushed = false;
+      _behaviorPopped = false;
+      if( !_behaviorStack.empty() ) {
+        _behaviorStack.back()->OnRegainedControl();
+      }
+    }
+
     NotifyOfChange( behaviorExternalInterface );
-    _behaviorStackDirty = false;
+    _behaviorPushed = false;
+    _behaviorPopped = false;
   }
 
 }
@@ -207,7 +223,7 @@ void BehaviorStack::PushOntoStack(IBehavior* behavior)
   BroadcastAudioBranch(true);
   behavior->OnActivated();
 
-  _behaviorStackDirty = true;
+  _behaviorPushed = true;
 }
 
 
@@ -222,7 +238,7 @@ void BehaviorStack::PopStack()
   _stackMetadataMap.erase(_behaviorStack.back());
   _behaviorStack.pop_back();
 
-  _behaviorStackDirty = true;
+  _behaviorPopped = true;
 }
 
 

@@ -60,6 +60,14 @@ public:
   // the behavior should stop any processes it started on entering selectable scope
   void OnLeftActivatableScope();
 
+  // Called whenever the immediate delegated behavior has been popped from the stack, leaving this behavior
+  // to be on the top of the stack
+  // note: this function is called immediately after the stack has been "Update()'d"
+  //       (in the same tick as IBehavior::Update())
+  //       + intended to be used when you want to immediately delegate to another behavior in the same tick that your
+  //         previous delegate canceled itself
+  void OnRegainedControl();
+
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const = 0;
 
   // Sometimes behaviors (like dispatchers) want to maintain the same scope as one of their delegates
@@ -92,6 +100,8 @@ protected:
 
   // Called when this behavior is deactivated (it no longer has control)
   virtual void OnDeactivatedInternal() { }
+
+  virtual void OnRegainedControlInternal() { }
 
   // Allow all behavior functions access to the bei after initialization
   BehaviorExternalInterface& GetBEI() const {assert(_beiWrapper); return _beiWrapper->_bei;}

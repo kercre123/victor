@@ -916,6 +916,11 @@ void ICozmoBehavior::OnActivatedInternal()
   }
   
   OnBehaviorActivated();
+
+  // behaviors should NEVER cancel themselves during OnBehaviorActivated()
+  DEV_ASSERT_MSG(IsActivated(), "ICozmoBehavior.OnActivatedInternal",
+                                "Behavior (%s) is canceling itself during OnBehaviorActivated()",
+                                 GetDebugLabel().c_str());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1104,6 +1109,18 @@ bool ICozmoBehavior::WantsToBeActivatedBase() const
   }
 
   return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::OnRegainedControlInternal()
+{
+  // only consider ourselves to have "regained control" if we are currently active
+  // this is never the case in production as it's only called when a behavior is popped from the stack, buuuut,
+  // some unit tests directly call OnDeactivated() without popping the behavior from the stack meaning it's out of
+  // scope but still top of stack
+  if(IsActivated()){
+    OnBehaviorRegainedControl();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

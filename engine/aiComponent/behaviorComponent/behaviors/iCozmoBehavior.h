@@ -322,6 +322,9 @@ protected:
   virtual void OnBehaviorLeftActivatableScope() { }
 
   virtual void OnBehaviorActivated() = 0;
+
+  virtual void OnRegainedControlInternal() final override;
+  virtual void OnBehaviorRegainedControl() { }
   
   void InitInternal() override final;
   virtual void InitBehavior() {};

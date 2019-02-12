@@ -101,7 +101,8 @@ private:
   std::unordered_map<const IBehavior*, StackMetadataEntry> _stackMetadataMap;
   IExternalInterface* _externalInterface = nullptr;
   
-  bool _behaviorStackDirty = false;
+  bool _behaviorPopped = false;
+  bool _behaviorPushed = false;
   std::list<std::unique_ptr<IStackMonitor>> _stackMonitors;
 
   // Let the audio system know that a branch has been activated/deactivated

@@ -173,6 +173,13 @@ void IBehavior::OnLeftActivatableScope()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IBehavior::OnRegainedControl()
+{
+  OnRegainedControlInternal();
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehavior::SetActivationState_DevOnly(ActivationState state, const std::string& debugStr)
 {
   if (kDebugActivationState) {
