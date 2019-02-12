@@ -897,6 +897,11 @@ namespace Anki {
     {
     }
 
+    bool HAL::IsLowVoltageShutdownImminent()
+    {
+      // Low voltage shutdown not implemented in sim
+      return false;
+    }
 
     f32 HAL::ChargerGetVoltage()
     {

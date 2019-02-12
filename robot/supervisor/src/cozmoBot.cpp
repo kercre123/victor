@@ -205,33 +205,22 @@ namespace Anki {
       }
 
       void CheckForCriticalBatteryShutdown()
-      {        
-        static const int   CRITICAL_BATTERY_THRESH_TICS = 66;
-        static const float CRITICAL_BATTERY_THRESH_VOLTS = 3.45f;
-        static const float HAL_SHUTDOWN_DELAY_MS = 2000;
+      {    
+        static const float HAL_SHUTDOWN_DELAY_MS = 3000;
         static TimeStamp_t shutdownTime_ms = 0;
-        static int         numTicsBelowThresh = 0;
-
-        const f32 battVoltage = HAL::BatteryGetVoltage();
-        if (shutdownTime_ms == 0) {
-          if (battVoltage < CRITICAL_BATTERY_THRESH_VOLTS) {
-            ++numTicsBelowThresh;
-            if (numTicsBelowThresh > CRITICAL_BATTERY_THRESH_TICS) {
-              // Send a shutdown message to anim/engine
-              AnkiInfo("CozmoBot.CheckForCriticalBattery.Shutdown", "Sending PrepForShutdown");
-              SendPrepForShutdown(ShutdownReason::SHUTDOWN_BATTERY_CRITICAL_VOLT);
-
-              shutdownTime_ms = HAL::GetTimeStamp() + HAL_SHUTDOWN_DELAY_MS;
-              shutdownInProgress_ = true;
-            }
-          } else {
-            numTicsBelowThresh = 0;
+        if (HAL::IsLowVoltageShutdownImminent()) {
+          if (shutdownTime_ms == 0) {
+            AnkiInfo("CozmoBot.CheckForCriticalBattery.Shutdown", "Sending PrepForShutdown");
+            SendPrepForShutdown(ShutdownReason::SHUTDOWN_BATTERY_CRITICAL_VOLT);
+            shutdownTime_ms = HAL::GetTimeStamp() + HAL_SHUTDOWN_DELAY_MS;
+            shutdownInProgress_ = true;
+          } else if (HAL::GetTimeStamp() > shutdownTime_ms) {
+             AnkiInfo("CozmoBot.CheckForCriticalBattery.HALShutdown","");
+             HAL::Shutdown();
           }
-        } else if (HAL::GetTimeStamp() > shutdownTime_ms) {
-          AnkiInfo("CozmoBot.CheckForCriticalBattery.HALShutdown","");
-          HAL::Shutdown();
         }
-      }
+         
+      }  
 
       void CheckForShutdown()
       {

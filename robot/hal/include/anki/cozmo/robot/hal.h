@@ -65,8 +65,6 @@ Result Init(const int * shutdownSignal);
 Result Step(void);
 void Stop(void);
 
-void Shutdown();
-
 /************************************************************************
  * \section Time
  */
@@ -296,6 +294,13 @@ PowerState PowerGetMode();
 /** Get syscon's current power state
  */
 PowerState PowerGetMode();
+
+// Returns true if syscon says it's going to shutoff power soon
+// because of low battery.
+bool IsLowVoltageShutdownImminent();
+
+// Shutoff robot power completely
+void Shutdown();
 
 /************************************************************************
  * \section "Radio" comms to/from engine

@@ -990,6 +990,11 @@ void HAL::EnableBatteryCharging(bool enable)
   }
 }
 
+bool HAL::IsLowVoltageShutdownImminent()
+{
+  return (bodyData_->battery.flags & POWER_CUTOFF_IMMINENT);
+}
+
 u8 HAL::GetWatchdogResetCounter()
 {
   // not (yet) implemented in HAL in V2
