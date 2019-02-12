@@ -20,8 +20,7 @@ static const int SELECTED_CHANNELS = 0
   ;
 
 static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.5);
-static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT_WHEN_ENCODERS_ENABLED = ADC_VOLTS(3.46);
-static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 10 * 200;  // 10s
+static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 45 * 200;  // 45s
 static const int      LOW_VOLTAGE_POWER_DOWN_DELAY_TIME = 5 * 200;  // 5s
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(3.50), ~0);
@@ -317,16 +316,7 @@ static void handleLowBattery() {
     if (++power_down_delay_timer >= LOW_VOLTAGE_POWER_DOWN_DELAY_TIME) {
       Power::setMode(POWER_STOP);
     }  
-  } 
-  // Decrement power down timer if voltage is below threshold.
-  // Use high treshold if encoders are disabled and low threshold otherwise.
-  // (Measured battery voltage dips when motors are being driven so we use 
-  // Encoders::disabled as a proxy for motors not being driven. It'd probably
-  // be more accurate to make the threshold a linear cominbation of commanded
-  // motor powers but that's also more complicated.)
-  else if ( ( Encoders::disabled && (EXACT_ADC(ADC_VMAIN) < LOW_VOLTAGE_POWER_DOWN_POINT)) ||
-            (!Encoders::disabled && (EXACT_ADC(ADC_VMAIN) < LOW_VOLTAGE_POWER_DOWN_POINT_WHEN_ENCODERS_ENABLED)) 
-            ) {
+  } else if (EXACT_ADC(ADC_VMAIN) < LOW_VOLTAGE_POWER_DOWN_POINT) {
     if (--power_down_timer <= 0) {
       // Shutdown will happen. Start delay counter.
       power_down_delay_timer = 1;
