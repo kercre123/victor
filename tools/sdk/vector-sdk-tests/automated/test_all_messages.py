@@ -269,16 +269,17 @@ MESSAGES_TO_TEST = [
                                                       result=protocol.ActionResult(code=protocol.ActionResult.ACTION_RESULT_SUCCESS)))),  # pylint: disable=no-member
 
     # ConnectCube message
-    (client.ExternalInterfaceServicer.ConnectCube,
-     protocol.ConnectCubeRequest(),
-     TestResultIsTypeWithStatusAndFieldNames(protocol.ConnectCubeResponse,
-                                             protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
-                                             ["success", "object_id", "factory_id"])),
+    # Note that if the cube connection fails, this test fails.
+    # (client.ExternalInterfaceServicer.ConnectCube,
+    #  protocol.ConnectCubeRequest(),
+    #  TestResultIsTypeWithStatusAndFieldNames(protocol.ConnectCubeResponse,
+    #                                          protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
+    #                                          ["success", "object_id", "factory_id"])),
 
     # DisconnectCube message
-    (client.ExternalInterfaceServicer.DisconnectCube,
-     protocol.DisconnectCubeRequest(),
-     TestResultMatches(protocol.DisconnectCubeResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+    # (client.ExternalInterfaceServicer.DisconnectCube,
+    #  protocol.DisconnectCubeRequest(),
+    #  TestResultMatches(protocol.DisconnectCubeResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
     # FlashCubeLights message
     (client.ExternalInterfaceServicer.FlashCubeLights,
