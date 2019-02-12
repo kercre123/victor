@@ -23,9 +23,9 @@
             },
             "avs-device-sdk": {
                 "checksums": {
-                    "sha256": "63a00aa1c1e111f794d81338279b94343ae72976fa328cefa923f0855c827beb"
+                    "sha256": "ce79dec7280f734df5b54c1ed4f13b422dbbf19b85d8dd24f84e960be7b0f400"
                 },
-                "version": "30e278a"
+                "version": "v1.10-anki-r2"
             },
             "flatbuffers": {
                 "checksums": {
