@@ -62,10 +62,13 @@ public:
 
   // Called whenever the immediate delegated behavior has been popped from the stack, leaving this behavior
   // to be on the top of the stack
-  // note: this function is called immediately after the stack has been "Update()'d"
-  //       (in the same tick as IBehavior::Update())
+  // note: this function is called immediately after the stack has been "Update()'d" in the same tick as IBehavior::Update()
   //       + intended to be used when you want to immediately delegate to another behavior in the same tick that your
-  //         previous delegate canceled itself
+  //       previous delegate canceled itself
+  //       + it should be noted that any "on finished" callbacks that were set when delegating will be called in the NEXT tick
+  //       + specifically, this is used for Dispatcher behaviors to re-dispatch to another behavior when one finishes
+  //       ** if we decide to add more use cases for this function, we should have a deeper discussion about handling
+  //          these edge cases
   void OnRegainedControl();
 
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const = 0;
@@ -139,6 +142,9 @@ private:
   #if ANKI_DEV_CHEATS
     ActivationState _currentActivationState;
   #endif
+
+public:
+  const char* GetActivationStateString() const { return ActivationStateToString(_currentActivationState); }
 };
 
 } // namespace Vector

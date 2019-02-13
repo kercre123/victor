@@ -142,18 +142,7 @@ ICozmoBehaviorPtr BehaviorDispatcherStrictPriorityWithCooldown::GetDesiredBehavi
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherStrictPriorityWithCooldown::DispatcherUpdate()
 {
-  if( IsActivated() &&
-      _dVars.lastDesiredBehaviorIdx < _iConfig.cooldownInfo.size() &&
-      !IsControlDelegated() ) {
-    // the last behavior must have stopped, so start its cooldown now
-    PRINT_CH_INFO("Behaviors",
-                  "BehaviorDispatcherStrictPriorityWithCooldown.LastBehaviorStopped.StartCooldown",
-                  "Behavior idx %zu '%s' seems to have stopped, start cooldown",
-                  _dVars.lastDesiredBehaviorIdx,
-                  IBehaviorDispatcher::GetAllPossibleDispatches()[_dVars.lastDesiredBehaviorIdx]->GetDebugLabel().c_str());
-    _iConfig.cooldownInfo[ _dVars.lastDesiredBehaviorIdx ].StartCooldown(GetRNG());
-    _dVars.lastDesiredBehaviorIdx = _iConfig.cooldownInfo.size();
-  }  
+  PreparePossibleBehaviors();
 }
 
 
@@ -178,6 +167,31 @@ void BehaviorDispatcherStrictPriorityWithCooldown::BehaviorDispatcher_OnDeactiva
     for( auto& cooldown : _iConfig.cooldownInfo ) {
       cooldown.ResetCooldown();
     }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherStrictPriorityWithCooldown::OnBehaviorRegainedControl()
+{
+  PreparePossibleBehaviors();
+  BaseClass::OnBehaviorRegainedControl();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherStrictPriorityWithCooldown::PreparePossibleBehaviors()
+{
+  // reset our cooldown if we just finished with a delegated behavior
+  if( IsActivated() &&
+     _dVars.lastDesiredBehaviorIdx < _iConfig.cooldownInfo.size() &&
+     !IsControlDelegated() ) {
+    // the last behavior must have stopped, so start its cooldown now
+    PRINT_CH_INFO("Behaviors",
+                  "BehaviorDispatcherStrictPriorityWithCooldown.LastBehaviorStopped.StartCooldown",
+                  "Behavior idx %zu '%s' seems to have stopped, start cooldown",
+                  _dVars.lastDesiredBehaviorIdx,
+                  IBehaviorDispatcher::GetAllPossibleDispatches()[_dVars.lastDesiredBehaviorIdx]->GetDebugLabel().c_str());
+    _iConfig.cooldownInfo[ _dVars.lastDesiredBehaviorIdx ].StartCooldown(GetRNG());
+    _dVars.lastDesiredBehaviorIdx = _iConfig.cooldownInfo.size();
   }
 }
 

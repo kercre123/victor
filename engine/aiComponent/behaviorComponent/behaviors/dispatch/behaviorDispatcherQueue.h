@@ -21,6 +21,8 @@ namespace Vector {
 
 class BehaviorDispatcherQueue : public IBehaviorDispatcher
 {
+  using BaseClass = IBehaviorDispatcher;
+  
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;  
   BehaviorDispatcherQueue(const Json::Value& config);
@@ -31,6 +33,7 @@ protected:
   virtual ICozmoBehaviorPtr GetDesiredBehavior() override;
   virtual void BehaviorDispatcher_OnActivated() override;
   virtual void DispatcherUpdate() override;
+  virtual void OnBehaviorRegainedControl() override;
 
 private:
   struct InstanceConfig {

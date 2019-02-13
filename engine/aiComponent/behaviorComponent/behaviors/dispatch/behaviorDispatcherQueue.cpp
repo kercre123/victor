@@ -76,6 +76,20 @@ void BehaviorDispatcherQueue::DispatcherUpdate()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherQueue::OnBehaviorRegainedControl()
+{
+  // if we're done, cancel ourselves right now in case our delegating behavior wants to delegate to another this tick
+  if(_dVars.currIdx >= GetAllPossibleDispatches().size() ) {
+    // we're past the end of the queue and control isn't delegated, so stop ourselves
+    CancelSelf();
+  }
+  else {
+    // else allow ourselves to delegate to another behavior this tick
+    BaseClass::OnBehaviorRegainedControl();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ICozmoBehaviorPtr BehaviorDispatcherQueue::GetDesiredBehavior()
 {
   // This should only be callable when the behavior isn't running anymore

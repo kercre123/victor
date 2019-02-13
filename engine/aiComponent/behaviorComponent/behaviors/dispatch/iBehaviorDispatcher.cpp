@@ -204,5 +204,21 @@ void IBehaviorDispatcher::BehaviorUpdate()
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void IBehaviorDispatcher::OnBehaviorRegainedControl()
+{
+  // we should be the top of the stack at this point
+  DEV_ASSERT(!IsControlDelegated(), "IBehaviorDispatcher.OnBehaviorRegainedControl.ControlNotDelegated");
+  ICozmoBehaviorPtr desiredBehavior = GetDesiredBehavior();
+
+  if( desiredBehavior != nullptr ) {
+
+    const bool delegated = DelegateNow(desiredBehavior.get());
+    DEV_ASSERT_MSG(delegated, "IBehaviorDispatcher.OnBehaviorRegainedControl.DelegateFailed",
+                   "Failed to delegate to behavior '%s'",
+                   desiredBehavior->GetDebugLabel().c_str());
+  }
+}
+
 }
 }

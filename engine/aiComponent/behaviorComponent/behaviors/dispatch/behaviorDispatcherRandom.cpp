@@ -179,16 +179,28 @@ ICozmoBehaviorPtr BehaviorDispatcherRandom::GetDesiredBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDispatcherRandom::DispatcherUpdate()
 {
+  PreparePossibleBehaviors();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherRandom::OnBehaviorRegainedControl()
+{
+  PreparePossibleBehaviors();
+  BaseClass::OnBehaviorRegainedControl();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDispatcherRandom::PreparePossibleBehaviors()
+{
   if( _dVars.shouldEndAfterBehavior &&
       ! IsControlDelegated() &&
       IsActivated() )
   {
     CancelSelf();
   }
-  
-  if( IsActivated()
-      && (_dVars.lastDesiredBehaviorIdx < _iConfig.cooldownInfo.size())
-      && !IsControlDelegated() )
+  else if( IsActivated()
+           && (_dVars.lastDesiredBehaviorIdx < _iConfig.cooldownInfo.size())
+           && !IsControlDelegated() )
   {
     // the last behavior must have stopped, so start its cooldown now
     PRINT_CH_INFO("Behaviors",
@@ -200,7 +212,6 @@ void BehaviorDispatcherRandom::DispatcherUpdate()
     _dVars.lastDesiredBehaviorIdx = _iConfig.cooldownInfo.size();
   }
 }
-
 
 } // namespace Vector
 } // namespace Anki

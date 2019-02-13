@@ -39,6 +39,10 @@ protected:
   virtual void BehaviorDispatcher_OnDeactivated() override;
 
   virtual void DispatcherUpdate() override;
+  virtual void OnBehaviorRegainedControl() override;
+
+  // preps any data required for GetDesiredBehavior()
+  void PreparePossibleBehaviors();
 
 private:
   struct InstanceConfig {

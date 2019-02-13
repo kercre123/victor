@@ -64,6 +64,7 @@ protected:
   virtual void BehaviorUpdate() final override;
   virtual void DispatcherUpdate() {};
   virtual bool CanBeGentlyInterruptedNow() const final override;
+  virtual void OnBehaviorRegainedControl() override;
 
 private:
   struct InstanceConfig {
