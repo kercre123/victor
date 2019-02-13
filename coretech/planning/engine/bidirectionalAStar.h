@@ -45,8 +45,10 @@ private:
   friend Impl;
 };
 
-template<class T, class ConfigT>
+template<class ConfigT>
 class BidirectionalAStar {
+  using T = std::decay_t< std::result_of_t<decltype(&ConfigT::GetStart)(ConfigT)> >;
+
 public:
 
   // Construct A* planner
@@ -58,11 +60,11 @@ public:
   , _closedReverse(kSearchQueueInitialSize, StateHasher, StateEqual) {}
 
   // initialization, search loop, and plan construction of classical A* implementation
-  std::vector<T> Search();
+  auto Search();
 
 private:  
   // given a state in the closed list, follow the backpointers to the start state for that branch
-  std::vector<T> GetPlan(const T& currState);
+  auto GetPlan(const T& currState);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Data Containers
@@ -124,8 +126,8 @@ private:
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<class T, class ConfigT>
-inline std::vector<T> BidirectionalAStar<T, ConfigT>::Search()
+template<class ConfigT>
+auto BidirectionalAStar<ConfigT>::Search()
 {
   // clear search sets if we already ran the planner
   _openForward.clear();
@@ -175,8 +177,8 @@ inline std::vector<T> BidirectionalAStar<T, ConfigT>::Search()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-template<class T, class ConfigT>
-inline std::vector<T> BidirectionalAStar<T, ConfigT>::GetPlan(const T& currState)
+template<class ConfigT>
+auto BidirectionalAStar<ConfigT>::GetPlan(const T& currState)
 {
   std::vector<T> out;
 

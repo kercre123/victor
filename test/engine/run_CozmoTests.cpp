@@ -11,9 +11,7 @@
 #include "osState/osState.h"
 #include "cubeBleClient/cubeBleClient.h"
 
-#include "engine/activeObject.h"
-#include "engine/activeCube.h"
-#include "engine/activeObjectHelpers.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
@@ -137,8 +135,8 @@ TEST(BlockWorld, DISABLED_AddAndRemoveObject)
   {
     // no connected objects either
     BlockWorldFilter filter;
-    std::vector<ActiveObject*> activeObjects;
-    blockWorld.FindConnectedActiveMatchingObjects(filter, activeObjects);
+    std::vector<Block*> activeObjects;
+    blockWorld.FindConnectedMatchingBlocks(filter, activeObjects);
     ASSERT_TRUE(activeObjects.empty());
   }
 
@@ -150,7 +148,7 @@ TEST(BlockWorld, DISABLED_AddAndRemoveObject)
 
   // Fake an observation of a block:
   const ObjectType testType = ObjectType::Block_LIGHTCUBE1;
-  Block_Cube1x1 testCube(testType);
+  Block testCube(testType);
   Vision::Marker::Code testCode = testCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
 
 
@@ -221,8 +219,8 @@ TEST(BlockWorld, DISABLED_AddAndRemoveObject)
   {
     // still no connected objects
     BlockWorldFilter filter;
-    std::vector<ActiveObject*> activeObjects;
-    blockWorld.FindConnectedActiveMatchingObjects(filter, activeObjects);
+    std::vector<Block*> activeObjects;
+    blockWorld.FindConnectedMatchingBlocks(filter, activeObjects);
     ASSERT_TRUE(activeObjects.empty());
   }
 
@@ -302,8 +300,7 @@ TEST(BlockWorld, DISABLED_AddAndRemoveObject)
 
     // Now fake an object moved message
     object->SetIsMoving(true, 0);
-    const bool propagateStack = false;
-    robot.GetObjectPoseConfirmer().MarkObjectDirty(object, propagateStack);
+    robot.GetObjectPoseConfirmer().MarkObjectDirty(object);
   }
 
   // Now after not seeing the object three times, it should be Unknown
@@ -460,8 +457,8 @@ TEST(BlockWorld, UpdateObjectOrigins)
 
   {
     // no connected objects either
-    std::vector<ActiveObject*> activeObjects;
-    blockWorld.FindConnectedActiveMatchingObjects(BlockWorldFilter(), activeObjects);
+    std::vector<Block*> activeObjects;
+    blockWorld.FindConnectedMatchingBlocks(BlockWorldFilter(), activeObjects);
     ASSERT_TRUE(activeObjects.empty());
   }
 
@@ -474,8 +471,8 @@ TEST(BlockWorld, UpdateObjectOrigins)
   // For faking observations of two blocks, one closer, one far
   const ObjectType farType = ObjectType::Block_LIGHTCUBE1;
   const ObjectType closeType = ObjectType::Block_LIGHTCUBE2;
-  const Block_Cube1x1 farCube(farType);
-  const Block_Cube1x1 closeCube(closeType);
+  const Block farCube(farType);
+  const Block closeCube(closeType);
   const Vision::Marker::Code farCode   = farCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
   const Vision::Marker::Code closeCode = closeCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
 
@@ -487,10 +484,10 @@ TEST(BlockWorld, UpdateObjectOrigins)
     Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
   };
 
-  const ObjectID farID = robot.GetBlockWorld().AddConnectedActiveObject(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
+  const ObjectID farID = robot.GetBlockWorld().AddConnectedBlock(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
   ASSERT_TRUE(farID.IsSet());
 
-  const ObjectID closeID = robot.GetBlockWorld().AddConnectedActiveObject(1, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE2);
+  const ObjectID closeID = robot.GetBlockWorld().AddConnectedBlock(1, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE2);
   ASSERT_TRUE(closeID.IsSet());
 
   // Camera calibration
@@ -532,7 +529,7 @@ TEST(BlockWorld, UpdateObjectOrigins)
   ASSERT_EQ(farID, obsFarID);
 
   // active match
-  ActiveObject* connectedFar = robot.GetBlockWorld().GetConnectedActiveObjectByID(farID);
+  auto* connectedFar = robot.GetBlockWorld().GetConnectedBlockByID(farID);
   ASSERT_NE(nullptr, connectedFar);
   ASSERT_EQ(connectedFar->GetActiveID(), matchingObject->GetActiveID());
 
@@ -557,7 +554,7 @@ TEST(BlockWorld, UpdateObjectOrigins)
   ASSERT_EQ(closeID, obsCloseID);
 
   // active match
-  ActiveObject* connectedClose = robot.GetBlockWorld().GetConnectedActiveObjectByID(closeID);
+  auto* connectedClose = robot.GetBlockWorld().GetConnectedBlockByID(closeID);
   ASSERT_NE(nullptr, connectedClose);
   ASSERT_EQ(connectedClose->GetActiveID(), matchingObject->GetActiveID());
 
@@ -605,9 +602,9 @@ void FakeRecvConnectionMessage(Robot& robot, uint32_t activeID, std::string fact
   DEV_ASSERT(IsValidLightCube(objectType, false), "FaceRecvConnectionMessage.UnsupportedObjectType");
 
   if (connected) {
-    robot.GetBlockWorld().AddConnectedActiveObject(activeID, factoryID, objectType);
+    robot.GetBlockWorld().AddConnectedBlock(activeID, factoryID, objectType);
   } else {
-    robot.GetBlockWorld().RemoveConnectedActiveObject(activeID);
+    robot.GetBlockWorld().RemoveConnectedBlock(activeID);
   }
 }
 
@@ -640,8 +637,8 @@ TEST(BlockWorld, PoseUpdates)
 
   {
     // no connected objects either
-    std::vector<ActiveObject*> activeObjects;
-    blockWorld.FindConnectedActiveMatchingObjects(BlockWorldFilter(), activeObjects);
+    std::vector<Block*> activeObjects;
+    blockWorld.FindConnectedMatchingBlocks(BlockWorldFilter(), activeObjects);
     ASSERT_TRUE(activeObjects.empty());
   }
 
@@ -688,9 +685,9 @@ TEST(BlockWorld, PoseUpdates)
   const ObjectType obj1Type = ObjectType::Block_LIGHTCUBE1;
   const ObjectType obj2Type = ObjectType::Block_LIGHTCUBE2;
   const ObjectType obj3Type = ObjectType::Block_LIGHTCUBE3;
-  const Block_Cube1x1 obj1Cube(obj1Type);
-  const Block_Cube1x1 obj2Cube(obj2Type);
-  const Block_Cube1x1 obj3Cube(obj3Type);
+  const Block obj1Cube(obj1Type);
+  const Block obj2Cube(obj2Type);
+  const Block obj3Cube(obj3Type);
   const Vision::Marker::Code obj1Code = obj1Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
   const Vision::Marker::Code obj2Code = obj2Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
   const Vision::Marker::Code obj3Code = obj3Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
@@ -718,13 +715,13 @@ TEST(BlockWorld, PoseUpdates)
   // - - - Connect to some cubes
 
   // Do not connect object1
-  //  const ObjectID connObj1 = robot.GetBlockWorld().AddConnectedActiveObject(0, 100, ObjectType::Block_LIGHTCUBE1);
+  //  const ObjectID connObj1 = robot.GetBlockWorld().AddConnectedBlock(0, 100, ObjectType::Block_LIGHTCUBE1);
   //  ASSERT_TRUE(connObj1.IsSet());
 
-  const ObjectID connObj2 = robot.GetBlockWorld().AddConnectedActiveObject(1, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE2);
+  const ObjectID connObj2 = robot.GetBlockWorld().AddConnectedBlock(1, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE2);
   ASSERT_TRUE(connObj2.IsSet());
 
-  const ObjectID connObj3 = robot.GetBlockWorld().AddConnectedActiveObject(2, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE3);
+  const ObjectID connObj3 = robot.GetBlockWorld().AddConnectedBlock(2, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE3);
   ASSERT_TRUE(connObj3.IsSet());
 
   // - - - See all objects from close so that their poses are Known
@@ -818,7 +815,7 @@ TEST(BlockWorld, PoseUpdates)
 
   // DISCONNECT object3
   {
-    const ActiveObject* con3 = robot.GetBlockWorld().GetConnectedActiveObjectByID( connObj3 );
+    const auto* con3 = robot.GetBlockWorld().GetConnectedBlockByID( connObj3 );
     FakeRecvConnectionMessage(robot, con3->GetActiveID(), "BB:BB:BB:BB:BB:BB", Anki::Vector::ObjectType::Block_LIGHTCUBE2, false);
     ++fakeTime;
   }
@@ -870,8 +867,8 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
 
   {
     // no connected objects either
-    std::vector<ActiveObject*> activeObjects;
-    blockWorld.FindConnectedActiveMatchingObjects(BlockWorldFilter(), activeObjects);
+    std::vector<Block*> activeObjects;
+    blockWorld.FindConnectedMatchingBlocks(BlockWorldFilter(), activeObjects);
     ASSERT_TRUE(activeObjects.empty());
   }
 
@@ -900,9 +897,9 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
   robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   // For faking observations of blocks
-  const Block_Cube1x1 obj1Cube(ObjectType::Block_LIGHTCUBE1);
-  const Block_Cube1x1 obj2Cube(ObjectType::Block_LIGHTCUBE2);
-  const Block_Cube1x1 obj3Cube(ObjectType::Block_LIGHTCUBE3);
+  const Block obj1Cube(ObjectType::Block_LIGHTCUBE1);
+  const Block obj2Cube(ObjectType::Block_LIGHTCUBE2);
+  const Block obj3Cube(ObjectType::Block_LIGHTCUBE3);
   const Vision::Marker::Code obj1Code = obj1Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
   const Vision::Marker::Code obj2Code = obj2Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
   const Vision::Marker::Code obj3Code = obj3Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
@@ -913,13 +910,13 @@ TEST(BlockWorld, RejiggerAndObserveAtSameTick)
 
   // - - - Connect to some cubes
 
-  const ObjectID connObj1 = robot.GetBlockWorld().AddConnectedActiveObject(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
+  const ObjectID connObj1 = robot.GetBlockWorld().AddConnectedBlock(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
   ASSERT_TRUE(connObj1.IsSet());
 
-  const ObjectID connObj2 = robot.GetBlockWorld().AddConnectedActiveObject(1, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE2);
+  const ObjectID connObj2 = robot.GetBlockWorld().AddConnectedBlock(1, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE2);
   ASSERT_TRUE(connObj2.IsSet());
 
-  const ObjectID connObj3 = robot.GetBlockWorld().AddConnectedActiveObject(2, "CC:CC:CC:CC:CC:CC", ObjectType::Block_LIGHTCUBE3);
+  const ObjectID connObj3 = robot.GetBlockWorld().AddConnectedBlock(2, "CC:CC:CC:CC:CC:CC", ObjectType::Block_LIGHTCUBE3);
   ASSERT_TRUE(connObj3.IsSet());
 
   // - - - See all objects from close so that their poses are Known
@@ -1076,8 +1073,8 @@ TEST(BlockWorld, RejiggerAndFlatten)
 
   {
     // no connected objects either
-    std::vector<ActiveObject*> activeObjects;
-    blockWorld.FindConnectedActiveMatchingObjects(BlockWorldFilter(), activeObjects);
+    std::vector<Block*> activeObjects;
+    blockWorld.FindConnectedMatchingBlocks(BlockWorldFilter(), activeObjects);
     ASSERT_TRUE(activeObjects.empty());
   }
 
@@ -1106,18 +1103,18 @@ TEST(BlockWorld, RejiggerAndFlatten)
   robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
 
   // For faking observations of blocks
-  const Block_Cube1x1 obj1Cube(ObjectType::Block_LIGHTCUBE1);
-  const Block_Cube1x1 obj2Cube(ObjectType::Block_LIGHTCUBE2);
+  const Block obj1Cube(ObjectType::Block_LIGHTCUBE1);
+  const Block obj2Cube(ObjectType::Block_LIGHTCUBE2);
 
   const Vision::Marker::Code obj1Code = obj1Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
   const Vision::Marker::Code obj2Code = obj2Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
 
   // Connect to some cubes
 
-  const ObjectID connObj1 = robot.GetBlockWorld().AddConnectedActiveObject(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
+  const ObjectID connObj1 = robot.GetBlockWorld().AddConnectedBlock(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
   ASSERT_TRUE(connObj1.IsSet());
 
-  const ObjectID connObj2 = robot.GetBlockWorld().AddConnectedActiveObject(1, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE2);
+  const ObjectID connObj2 = robot.GetBlockWorld().AddConnectedBlock(1, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE2);
   ASSERT_TRUE(connObj2.IsSet());
 
   // - - - See all objects from close so that their poses are Known and we can localize to them
@@ -1256,7 +1253,7 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   const ActiveID closeActiveID = 1;
   const FactoryID& closeFactoryID = "AA:AA:AA:AA:AA:AA";
   const ObjectType closeType = ObjectType::Block_LIGHTCUBE2;
-  const Block_Cube1x1 closeCube(closeType);
+  const Block closeCube(closeType);
   const Vision::Marker::Code closeCode = closeCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
 
   const Quad2f closeCorners{
@@ -1272,7 +1269,7 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
   // Should have a "close" object connected
   filter.SetAllowedTypes({closeType});
   filter.SetFilterFcn(&BlockWorldFilter::ActiveObjectsFilter);
-  const ObservableObject* matchingObject = robot.GetBlockWorld().FindConnectedActiveMatchingObject(filter);
+  const ObservableObject* matchingObject = robot.GetBlockWorld().FindConnectedMatchingBlock(filter);
   ASSERT_NE(nullptr, matchingObject);
   ASSERT_TRUE(matchingObject->GetID().IsSet());
   ASSERT_FALSE(matchingObject->HasValidPose());
@@ -1362,300 +1359,6 @@ TEST(BlockWorld, LocalizedObjectDisconnect)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TEST(BlockWorld, CubeStacks)
-{
-  using namespace Anki;
-  using namespace Vector;
-
-  Result lastResult;
-
-  Robot robot(1, cozmoContext);
-  robot.FakeSyncRobotAck();
-
-  BlockWorld& blockWorld = robot.GetBlockWorld();
-
-  // There should be nothing in BlockWorld yet
-  BlockWorldFilter filter;
-  std::vector<ObservableObject*> objects;
-  blockWorld.FindLocatedMatchingObjects(filter, objects);
-  ASSERT_TRUE(objects.empty());
-
-  {
-    // no connected objects either
-    BlockWorldFilter filter;
-    std::vector<ActiveObject*> activeObjects;
-    blockWorld.FindConnectedActiveMatchingObjects(filter, activeObjects);
-    ASSERT_TRUE(activeObjects.empty());
-  }
-
-  // Create three objects
-  ObservableObject* object1 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
-  ObservableObject* object2 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE2);
-  ObservableObject* object3 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE3);
-
-  {
-    // verify they are there now
-    BlockWorldFilter filter;
-    objects.clear();
-    blockWorld.FindLocatedMatchingObjects(filter, objects);
-    ASSERT_EQ(3, objects.size());
-  }
-
-  // Put object 2 on top of object 1 and check that FindOnTopOf and FindUnderneath
-  // return the right things. We use ObjectPoseConfirmer because we can't set
-  // poses of the objects directly. This should work for lots of combinations of
-  // rotations and shifts.
-  // Object 3 will be next to the object on bottom and it should never be returned
-  // as on top of or underneath.
-  const std::vector<RotationVector3d> TestInPlaneRotations{
-    {DEG_TO_RAD(0),  Z_AXIS_3D()},
-    {DEG_TO_RAD(10), Z_AXIS_3D()},
-    {DEG_TO_RAD(45), Z_AXIS_3D()},
-    {DEG_TO_RAD(90), Z_AXIS_3D()},
-  };
-
-  const std::vector<RotationVector3d> TestOutOfPlaneRotations{
-    {DEG_TO_RAD(0),   X_AXIS_3D()},  // None
-    {DEG_TO_RAD(5),   X_AXIS_3D()},  // Slightly rotated around X
-    {DEG_TO_RAD(7.5f), Y_AXIS_3D()},  // Slightly rotated around Y
-    {DEG_TO_RAD(88),  X_AXIS_3D()},  // Z not pointing up
-    {DEG_TO_RAD(182), Y_AXIS_3D()},  // Z pointing down
-  };
-
-  const std::vector<Vec3f> TestBottomTranslations{
-    {100.f,  0.f, 22.f},
-    {106.f, -8.f, 21.f},
-    {98.f, -2.3f, 18.f},
-  };
-
-  const std::vector<Vec3f> TestTopTranslations{
-    {100.f, 0.f,  66.f},                             // Centered, right on top
-    {105.f, -5.f, 66.f+.25f*STACKED_HEIGHT_TOL_MM},  // Slightly displaced, a little high
-    {90.f, -8.3f, 66.f-.25f*STACKED_HEIGHT_TOL_MM},  // Significantly displaced, a little low
-  };
-
-  const std::vector<Vec3f> TestNextToTranslations{
-    {144.f,   0.f, 21.f},  // On one side in X direction
-    {66.f,    0.f, 20.f},  // On other side in X direction
-    {100.f,  44.f, 23.f},  // On one side in Y direction
-    {100.f, -44.f, 24.f},  // On other side in Y direction
-  };
-
-  // rsam found a test case in which 2 cubes would find the other one to be on top, potentially causing
-  // a loop trying to build stacks. The poses below are a a set that caused the issue.
-  {
-    Vec3f trans1{100,0,0};
-    Rotation3d rotZ1 = {DEG_TO_RAD(0),  Z_AXIS_3D()};
-    Rotation3d rotX1 = {DEG_TO_RAD(-45),  X_AXIS_3D()};
-    const Pose3d object1Pose(rotZ1 * rotX1, trans1, robot.GetPose() );
-    lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, object1Pose, PoseState::Known);
-    ASSERT_EQ(RESULT_OK, lastResult);
-
-    Vec3f trans2{100,0,0};
-    Rotation3d rotZ2 = {DEG_TO_RAD(0),  Z_AXIS_3D()};
-    Rotation3d rotX2 = {DEG_TO_RAD(-45),  X_AXIS_3D()};
-    const Pose3d object2Pose(rotZ2 * rotX2, trans2, robot.GetPose() );
-    lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object2, object2Pose, PoseState::Known);
-    ASSERT_EQ(RESULT_OK, lastResult);
-
-    ObservableObject* foundObject1 = blockWorld.FindLocatedObjectOnTopOf(*object1, 2*STACKED_HEIGHT_TOL_MM);
-    ASSERT_EQ(nullptr, foundObject1);
-    ASSERT_NE(object2, foundObject1);
-
-    ObservableObject* foundObject2 = blockWorld.FindLocatedObjectOnTopOf(*object2, 2*STACKED_HEIGHT_TOL_MM);
-
-    ASSERT_EQ(nullptr, foundObject2);
-    ASSERT_NE(object1, foundObject2);
-  }
-
-  for(auto & btmRot1 : TestInPlaneRotations)
-  {
-    for(auto & btmRot2 : TestOutOfPlaneRotations)
-    {
-      for(auto & btmTrans : TestBottomTranslations)
-      {
-        const Pose3d bottomPose(Rotation3d(btmRot1) * Rotation3d(btmRot2), btmTrans, robot.GetPose() );
-
-        lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, bottomPose, PoseState::Known);
-        ASSERT_EQ(RESULT_OK, lastResult);
-
-        for(auto & topRot1 : TestInPlaneRotations)
-        {
-          for(auto & topRot2 : TestOutOfPlaneRotations)
-          {
-            for(auto & topTrans : TestTopTranslations)
-            {
-              const Pose3d topPose(Rotation3d(topRot1) * Rotation3d(topRot2), topTrans, robot.GetPose() );
-
-              // For help debugging when there are failures:
-              //bottomPose.Print("Unnamed", "Bottom");
-              //topPose.Print("Unnamed", "Top");
-
-              lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, topPose, object1);
-              ASSERT_EQ(RESULT_OK, lastResult);
-
-              ObservableObject* foundObject = blockWorld.FindLocatedObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
-              ASSERT_NE(nullptr, foundObject);
-              ASSERT_EQ(object2, foundObject);
-
-              foundObject = blockWorld.FindLocatedObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
-              ASSERT_NE(nullptr, foundObject);
-              ASSERT_EQ(object1, foundObject);
-            }
-
-            for(auto & nextToTrans : TestNextToTranslations)
-            {
-              const Pose3d nextToPose(Rotation3d(topRot1) * Rotation3d(topRot2), nextToTrans, robot.GetPose());
-
-              lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, nextToPose, object1);
-              ASSERT_EQ(RESULT_OK, lastResult);
-
-              ObservableObject* foundObject = blockWorld.FindLocatedObjectOnTopOf(*object3, STACKED_HEIGHT_TOL_MM);
-              ASSERT_EQ(nullptr, foundObject);
-
-              foundObject = blockWorld.FindLocatedObjectUnderneath(*object3, STACKED_HEIGHT_TOL_MM);
-              ASSERT_EQ(nullptr, foundObject);
-            }
-          }
-        }
-      }
-    }
-  }
-
-
-  // Put Object 2 above Object 1, but too high, so this Find should fail:
-  const Pose3d bottomPose(0, Z_AXIS_3D(), {100.f, 0.f, 22.f}, robot.GetPose(), "BottomPose" );
-  lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, bottomPose, PoseState::Known);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  const Pose3d tooHighPose(0, Z_AXIS_3D(), {100.f, 0.f, 66.f + 1.5f*STACKED_HEIGHT_TOL_MM}, robot.GetPose(), "TooHighPose" );
-  lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, tooHighPose, object1);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  ObservableObject* foundObject = blockWorld.FindLocatedObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
-  ASSERT_EQ(nullptr, foundObject);
-
-  foundObject = blockWorld.FindLocatedObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
-  ASSERT_EQ(nullptr, foundObject);
-
-  // Two objects in roughly the same place should also fail
-  lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, bottomPose, object1);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  foundObject = blockWorld.FindLocatedObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
-  ASSERT_EQ(nullptr, foundObject);
-
-  foundObject = blockWorld.FindLocatedObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
-  ASSERT_EQ(nullptr, foundObject);
-
-
-  // Put Object 2 at the right height to be on top of Object 1,
-  // but move it off to the side so that the quads don't intersect
-  const Pose3d notAbovePose(0, Z_AXIS_3D(), {130.f, -45.f, 66.f}, robot.GetPose(), "NotAbovePose");
-  lastResult = robot.GetObjectPoseConfirmer().AddObjectRelativeObservation(object2, notAbovePose, object1);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  foundObject = blockWorld.FindLocatedObjectOnTopOf(*object1, STACKED_HEIGHT_TOL_MM);
-  ASSERT_EQ(nullptr, foundObject);
-
-  foundObject = blockWorld.FindLocatedObjectUnderneath(*object2, STACKED_HEIGHT_TOL_MM);
-  ASSERT_EQ(nullptr, foundObject);
-
-} // BlockWorld.CubeStacks
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-//
-// VIC-12: Disabled because test does not pass reliably
-//
-TEST(BlockWorld, DISABLED_UnobserveCubeStack)
-{
-  using namespace Anki;
-  using namespace Vector;
-
-  Result lastResult;
-
-  Robot robot(1, cozmoContext);
-  robot.FakeSyncRobotAck();
-
-  // Camera calibration
-  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
-  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
-  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
-  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
-
-  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
-
-  robot.GetVisionComponent().SetCameraCalibration(camCalib);
-
-  BlockWorld& blockWorld = robot.GetBlockWorld();
-  std::vector<ObservableObject*> objects;
-
-  // Create objects
-  ObservableObject* object1 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE1);
-  ObservableObject* object2 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE2);
-
-  {
-    // verify they are there now
-    BlockWorldFilter filter;
-    objects.clear();
-    blockWorld.FindLocatedMatchingObjects(filter, objects);
-    ASSERT_EQ(2, objects.size());
-  }
-
-  Vec3f testBottomTranslation{175.f,  0.f, 22.f};
-  Vec3f testTopTranslation{175.f, 0.f,  66.f};
-
-  Rotation3d rotZ1 = {DEG_TO_RAD(0),  Z_AXIS_3D()};
-  const Pose3d object1Pose(rotZ1, testBottomTranslation, robot.GetPose() );
-  lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, object1Pose, PoseState::Known);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  const Pose3d object2Pose(rotZ1, testTopTranslation, robot.GetPose() );
-  lastResult = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object2, object2Pose, PoseState::Known);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  ObservableObject* foundObject1 = blockWorld.FindLocatedObjectOnTopOf(*object1, 2*STACKED_HEIGHT_TOL_MM);
-  ASSERT_NE(nullptr, foundObject1);
-  ASSERT_EQ(object2, foundObject1);
-
-  ObservableObject* foundObject2 = blockWorld.FindLocatedObjectOnTopOf(*object2, 2*STACKED_HEIGHT_TOL_MM);
-  ASSERT_EQ(nullptr, foundObject2);
-  ASSERT_NE(object1, foundObject2);
-
-  // mark bottom as dirty, propagating up
-  robot.GetObjectPoseConfirmer().MarkObjectDirty(object1, true);
-
-  // unobserve objects, expecting them to be deleted
-  std::list<Vision::ObservedMarker> emptyMarkersList;
-  RobotState stateMsg( Robot::GetDefaultRobotState() );
-  for(s32 i=0; i<5; ++i)
-  {
-    // udpate robot
-    stateMsg.timestamp+=10;
-    lastResult = robot.UpdateFullRobotState(stateMsg);
-    ASSERT_EQ(RESULT_OK, lastResult);
-
-    // fake an image
-    robot.GetVisionComponent().FakeImageProcessed(stateMsg.timestamp);
-
-    lastResult = robot.GetBlockWorld().UpdateObservedMarkers(emptyMarkersList);
-    ASSERT_EQ(lastResult, RESULT_OK);
-  }
-
-  {
-    // verify they are gone
-    BlockWorldFilter filter;
-    objects.clear();
-    blockWorld.FindLocatedMatchingObjects(filter, objects);
-    ASSERT_EQ(0, objects.size());
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(BlockWorld, CopyObjectsFromZombieOrigins)
 {
   using namespace Anki;
@@ -1674,13 +1377,13 @@ TEST(BlockWorld, CopyObjectsFromZombieOrigins)
   ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 0);
 
   // Only connected objects can localize, so add connected
-  const ObjectID objID1 = blockWorld.AddConnectedActiveObject(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
-  const ObjectID objID2 = blockWorld.AddConnectedActiveObject(1, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE2);
+  const ObjectID objID1 = blockWorld.AddConnectedBlock(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
+  const ObjectID objID2 = blockWorld.AddConnectedBlock(1, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE2);
 
   // make object2 localizable in the current world by adding visual observations
   {
     // Add observation (note observations now require to be shared pointers)
-    ActiveObject* object2 = blockWorld.GetConnectedActiveObjectByID(objID2);
+    auto* object2 = blockWorld.GetConnectedBlockByID(objID2);
     ASSERT_NE(nullptr, object2);
 
     Pose3d fakePose;
@@ -1746,8 +1449,7 @@ TEST(BlockWorld, CopyObjectsFromZombieOrigins)
   ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 2);
 
   // Mark object2 in previous frame as Dirty so that frame will become a zombie (not localizable anymore)
-  const bool propagateStack = false;
-  robot.GetObjectPoseConfirmer().MarkObjectDirty(locatedObj2, propagateStack);
+  robot.GetObjectPoseConfirmer().MarkObjectDirty(locatedObj2);
 
   // Delocalizing will create a new frame and delete our 2 zombie frames
   // One of the frames has object1 and 2 the other has object3
@@ -1765,9 +1467,9 @@ TEST(BlockWorld, CopyObjectsFromZombieOrigins)
   object3 = blockWorld.GetLocatedObjectByID(objID3);
   ASSERT_EQ(nullptr, object3);
 
-  ActiveObject* active1 = blockWorld.GetConnectedActiveObjectByID(objID1);
+  auto* active1 = blockWorld.GetConnectedBlockByID(objID1);
   ASSERT_NE(nullptr, active1);
-  ActiveObject* active2 = blockWorld.GetConnectedActiveObjectByID(objID1);
+  auto* active2 = blockWorld.GetConnectedBlockByID(objID1);
   ASSERT_NE(nullptr, active2);
 } // BlockWorld.CopyObjectsFromZombieOrigins
 
@@ -1809,8 +1511,8 @@ TEST(Localization, LocalizationDistance)
   // For faking observations of two blocks, one closer, one far
   const ObjectType firstType = ObjectType::Block_LIGHTCUBE1;
   const ObjectType secondType = ObjectType::Block_LIGHTCUBE2;
-  const Block_Cube1x1 firstCube(firstType);
-  const Block_Cube1x1 secondCube(secondType);
+  const Block firstCube(firstType);
+  const Block secondCube(secondType);
   const Vision::Marker::Code firstCode  = firstCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
   const Vision::Marker::Code secondCode = secondCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
 
@@ -1826,10 +1528,10 @@ TEST(Localization, LocalizationDistance)
     Point2f( 167,117),  Point2f( 170,185),  Point2f(236,116),  Point2f(237,184)
   };
 
-  const ObjectID firstID = robot.GetBlockWorld().AddConnectedActiveObject(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
+  const ObjectID firstID = robot.GetBlockWorld().AddConnectedBlock(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
   ASSERT_TRUE(firstID.IsSet());
 
-  const ObjectID secondID = robot.GetBlockWorld().AddConnectedActiveObject(1, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE2);
+  const ObjectID secondID = robot.GetBlockWorld().AddConnectedBlock(1, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE2);
   ASSERT_TRUE(secondID.IsSet());
 
   // Camera calibration
@@ -2150,7 +1852,7 @@ TEST(ActionableObject, PreActionPoseCaching)
   const Pose3d cubePose1(Rotation3d(0, {0,0,1}), {10,10,0}, origin);
   const Pose3d cubePose2(Rotation3d(0, {0,0,1}), {20,20,0}, origin);
 
-  ActiveCube cube(ObjectType::Block_LIGHTCUBE1);
+  Block cube(ObjectType::Block_LIGHTCUBE1);
   cube.InitPose(cubePose1, PoseState::Known);
 
   std::vector<PreActionPose> preActionPoses;
@@ -2292,14 +1994,14 @@ TEST(Localization, UnexpectedMovement)
 
   // For faking observations of a block
   const ObjectType firstType = ObjectType::Block_LIGHTCUBE1;
-  const Block_Cube1x1 firstCube(firstType);
+  const Block firstCube(firstType);
   const Vision::Marker::Code firstCode  = firstCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
 
   const Quad2f closeCorners1{
     Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
   };
 
-  const ObjectID firstID = robot.GetBlockWorld().AddConnectedActiveObject(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
+  const ObjectID firstID = robot.GetBlockWorld().AddConnectedBlock(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
   ASSERT_TRUE(firstID.IsSet());
 
   // Camera calibration

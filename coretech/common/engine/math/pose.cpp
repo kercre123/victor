@@ -1,7 +1,7 @@
 
 #include "coretech/common/engine/math/pose.h"
 
-#include "coretech/common/engine/math/matrix_impl.h"
+#include "coretech/common/shared/math/matrix_impl.h"
 #include "coretech/common/engine/math/poseBase_impl.h"
 #include "coretech/common/engine/math/poseOriginList.h"
 #include "coretech/common/engine/math/quad_impl.h"

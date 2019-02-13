@@ -38,12 +38,20 @@ resource "aws_security_group" "ecs_tasks" {
   name        = "ecs-tasks"
   vpc_id      = "${aws_vpc.main.id}"
 
-  description = "Allow Redis access only (used for Fargate cluster)"
+  description = "Allow Redis & WaveFront access only (used for Fargate cluster)"
 
   // Allow access to Redis
   ingress {
     from_port   = 6379
     to_port     = 6379
+    protocol    = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+
+  // Allow access to WaveFront
+  ingress {
+    from_port   = 2878
+    to_port     = 2878
     protocol    = "tcp"
     cidr_blocks = ["0.0.0.0/0"]
   }

@@ -114,9 +114,6 @@ namespace Anki {
       // By default this is false (the action is looking for a specific marker)
       void SetShouldVisuallyVerifyObjectOnly(const bool b) { _visuallyVerifyObjectOnly = b; }
       
-      // Whether or not we should look up to check if there is an object above the dockObject
-      void SetShouldCheckForObjectOnTopOf(const bool b) { _checkForObjectOnTopOf = b; }
-      
       // Whether or not we should first turn towards and visually verify the dockObject
       void SetShouldFirstTurnTowardsObject(const bool b) { _firstTurnTowardsObject = b; }
 
@@ -235,8 +232,8 @@ namespace Anki {
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
         // TODO: Annoying we have to copy this out, bet the Get_() method is const...
         ObjectInteractionCompleted interactionCompleted;
-        interactionCompleted.numObjects = 1;
         interactionCompleted.objectIDs[0] = _dockObjectID;
+        interactionCompleted.numObjects = 1;
         completionUnion.Set_objectInteractionCompleted(interactionCompleted);
       }
       
@@ -267,7 +264,6 @@ namespace Anki {
       u8                         _numDockingRetries              = 0;
       DockingMethod              _dockingMethod                  = DockingMethod::BLIND_DOCKING;
       f32                        _preDockPoseDistOffsetX_mm      = 0;
-      bool                       _checkForObjectOnTopOf          = false;
       bool                       _doLiftLoadCheck                = false;
       bool                       _backUpWhileLiftingCube         = false;
       LiftLoadState              _liftLoadState                  = LiftLoadState::UNKNOWN;

@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_BehaviorSystem_PuzzleComponent_H__
 #define __Cozmo_Basestation_BehaviorSystem_PuzzleComponent_H__
 
-#include "coretech/common/engine/math/point_fwd.h"
+#include "coretech/common/shared/math/point_fwd.h"
 #include "coretech/common/shared/types.h"
 #include "engine/aiComponent/aiComponents_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"

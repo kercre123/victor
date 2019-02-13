@@ -11,6 +11,9 @@
     <link rel="stylesheet" href="style.css">
     <script src="jquery-1.12.4.js"></script>
     <script src="jquery-ui.js"></script>
+    <script src="jquery.flot.min.js"></script>
+    <script src="jquery.dataTables.min.js"></script>
+    <script src="jquery.flot.orderBars.js"></script>
 
     <script>
     // NOTE these enums must match those in WebService.cpp
@@ -24,6 +27,7 @@
     var mainPageInitialized = false;
     var connectedToWebotsSim = false;
     var whichWebServer = whichWebServerEnum.UNKNOWN;
+    var tickBudget_ms = 0;
     var curPageName = "";
 
     var allowConsoleVarsPage = true;
@@ -128,6 +132,56 @@
     var pmRequestInProgress = false;
     var pmRequestQueued = false;
     var pmSavedTriggeredByTimer = false;
+    var pmChart = null;
+    var chartOptions = {
+      series: {
+        bars: {
+          show: true,
+          order: 1  // For side-by-side bars instead of overlaying on top of each other
+        }
+      },
+      bars: {
+        align: "center",
+        barWidth: 0.4
+      },
+      legend: {
+        show: true,
+        position: "sw"
+      },
+      yaxis: {
+        min: 0.0,
+        tickFormatter: function(val, axis) { return pmShowMsInYAxis ? val.toString()+"ms" : val.toString(); }
+      },
+      xaxis: {
+        ticks: 10,
+        tickLength: 10,
+        tickDecimals: 0
+      },
+      grid: {
+        show: true,
+        markings: setMarkings
+      }
+    }
+    var pmTickData = [];
+    var pmXModeEnum = {
+        ALL:0,
+        LAST_N:1,
+        RANGE:2,
+    };
+    var pmXMode = pmXModeEnum.ALL;
+    var pmXModeLastN = 100;
+    var pmXModeFirst = 50;
+    var pmXModeLast = 150;
+    var pmDataSelectorDescriptions = [];
+    var pmDataSelectorInitialized = false;
+    const pmNumDataSelectors = 3;
+    var pmShowMsInYAxis = false;
+
+    function setMarkings(axes) {
+        var markings = [];
+        markings.push({ yaxis: { from: tickBudget_ms, to: tickBudget_ms }, color: "#bb0000"});
+        return markings;
+    }
 
     var dialogOKFunction = undefined;
 
@@ -282,6 +336,8 @@
                 // When entering perf metric page and auto-update is on, do the first update immediately
                 pmAutoUpdateTimerId = setTimeout(SendPerfMetricUpdateRequest, 0, true);
             }
+            UpdatePMWidgets();
+            DrawPerfMetricChart();
           }
           else {
             $("#perfmetric_main_section").hide();
@@ -626,6 +682,74 @@
         $('#pm_update_freq_value').val(pmAutoUpdatePeriod_ms);
     }
 
+    function AddSeries(elementIndex, firstTick, lastTick) {
+        var series = [];
+        for (var tickIndex = firstTick; tickIndex <= lastTick; tickIndex++) {
+            var data = [];
+            data.push(tickIndex);
+            data.push(pmTickData[tickIndex][elementIndex]);
+            series.push(data);
+        }
+        return series;
+    }
+
+    function DrawPerfMetricChart() {
+        var ticksInData = pmTickData.length;
+        if (ticksInData == 0) {
+            return;
+        }
+        var firstTick = 0;
+        var lastTick = ticksInData - 1;
+        switch (pmXMode) {
+            case pmXModeEnum.ALL:
+                break;
+            case pmXModeEnum.LAST_N:
+                firstTick = lastTick - pmXModeLastN + 1;
+                if (firstTick < 0) {
+                    firstTick = 0;
+                }
+                break;
+            case pmXModeEnum.RANGE:
+                firstTick = pmXModeFirst;
+                lastTick = pmXModeLast;
+                if (firstTick >= ticksInData) {
+                    firstTick = ticksInData - 1;
+                }
+                if (lastTick >= ticksInData) {
+                    lastTick = ticksInData - 1;
+                }
+                if (lastTick < firstTick) {
+                    lastTick = firstTick;
+                }
+                break;
+        }
+
+        var plotData = [];
+        pmShowMsInYAxis = false;
+        for (var i = 0; i < pmNumDataSelectors; i++) {
+            var elementIndex = parseInt($('#menu_pm_data_' + i).val());
+            if (elementIndex >= 0) {
+                // If it's one of the 'duration' data, we want to show 'ms' in the y axis
+                if (elementIndex < 5) {
+                    pmShowMsInYAxis = true;
+                }
+                elementIndex += 2;  // Offset to get to the first real data
+                plotData.push(AddSeries(elementIndex, firstTick, lastTick));
+            }
+        }
+        if (pmChart == null) {
+            $('#pm_chart_container').html("");
+            pmChart = $.plot($('#pm_chart_container'), plotData, chartOptions);
+        }
+
+        pmChart.getAxes().xaxis.options.min = firstTick;
+        pmChart.getAxes().xaxis.options.max = lastTick;
+
+        pmChart.setData(plotData);
+        pmChart.setupGrid();
+        pmChart.draw();
+    }   
+
     function ButtonHandler_PerfMetricToggleAutoUpdate() {
         pmAutoUpdate = !pmAutoUpdate;
         UpdatePerfMetricHeader();
@@ -681,8 +805,39 @@
         });
     }
     function ButtonHandler_PerfMetricDumpAll() {
+        $("#id_pm_dump_result").html("Loading...");
         $.post("perfmetric?dumpresponseall", {}, function(result){
+            // Fill in the dump area
             $("#id_pm_dump_result").html(preserveSpaces(result));
+            var lines = result.split("\n");
+            if (!pmDataSelectorInitialized) {
+                pmDataSelectorInitialized = true;
+                // Parse the header lines to auto-construct data series selectors:
+                var headingsLine1 = lines[0].match(/\S+/g);
+                var headingsLine2 = lines[1].match(/\S+/g);
+                pmDataSelectorDescriptions = [];
+                for (var i = 0; i < headingsLine1.length; i++) {
+                    pmDataSelectorDescriptions[i] = headingsLine1[i] + ' ' + headingsLine2[i];
+                    for (var j = 0; j < pmNumDataSelectors; j++) {
+                        $('#menu_pm_data_' + j).append($('<option>', {
+                            value: i,
+                            text: pmDataSelectorDescriptions[i]
+                        }));
+                    }
+                }
+            }
+            // Parse into data we can use in a graph
+            const numHeaderLines = 2;
+            var ticks = lines.length - (numHeaderLines + 9);
+            if (ticks < 0) {
+                ticks = 0;
+            }
+            pmTickData = [];
+            var lineIndex = numHeaderLines;
+            for (var i = 0; i < ticks; i++, lineIndex++) {
+                var tickData = lines[lineIndex].trim().replace(/\s\s+/g, ' ').split(' ');
+                pmTickData.push(tickData);
+            }
         });
     }
     function ButtonHandler_PerfMetricDumpLog() {
@@ -694,6 +849,33 @@
     function ButtonHandler_PerfMetricFiles() {
         $.post("perfmetric?dumpfiles", {}, function(result){});
     }
+    function ButtonHandler_PerfMetricRender() {
+        DrawPerfMetricChart();
+    }
+    function ButtonHandler_PMSetNumTicks() {
+        pmXModeLastN = $("#pm_num_ticks").val();
+        UpdatePMWidgets();
+    }
+    function ButtonHandler_PMSetFirstTick() {
+        pmXModeFirst = $('#pm_first_tick').val();
+        UpdatePMWidgets();
+    }
+    function ButtonHandler_PMSetLastTick() {
+        pmXModeLast = $('#pm_last_tick').val();
+        UpdatePMWidgets();
+    }
+    function UpdatePMWidgets() {
+        $('span_all').visible = (pmXMode == pmXModeEnum.ALL);
+        $('span_last_n').visible = (pmXMode == pmXModeEnum.LAST_N);
+        $('span_range').visible = (pmXMode == pmXModeEnum.RANGE);
+        $("#pm_cur_num_ticks").html("Num ticks: " + pmXModeLastN);
+        $('#pm_num_ticks').val(pmXModeLastN);
+        $("#pm_cur_first_tick").html("First: " + pmXModeFirst);
+        $('#pm_first_tick').val(pmXModeFirst);
+        $("#pm_cur_last_tick").html("Last: " + pmXModeLast);
+        $('#pm_last_tick').val(pmXModeLast);
+    }
+
 
     $(document).ready(function() {
         ClearAllPages();
@@ -721,6 +903,18 @@
         $("#btn_pm_dump_log").click(ButtonHandler_PerfMetricDumpLog);
         $("#btn_pm_dump_log_all").click(ButtonHandler_PerfMetricDumpLogAll);
         $("#btn_pm_dump_files").click(ButtonHandler_PerfMetricFiles);
+        $("#btn_pm_render").click(ButtonHandler_PerfMetricRender);
+        $("#btn_num_ticks_set").click(ButtonHandler_PMSetNumTicks);
+        $("#btn_first_tick_set").click(ButtonHandler_PMSetFirstTick);
+        $("#btn_last_tick_set").click(ButtonHandler_PMSetLastTick);
+        $("#menu_pm_xmode").selectmenu({
+            width: 150
+        });
+        for (var i = 0; i < pmNumDataSelectors; i++) {
+            $("#menu_pm_data_" + i).selectmenu({
+                width: 200
+            });
+        }
         InitConfirmDialog();
 
         $.post("getinitialconfig", function(data) {
@@ -734,6 +928,7 @@
             whichWebServer = payload[5];
             allowConsoleVarsPage = (payload[6] === "true");
             allowPerfMetricPage = (payload[7] === "true");
+            tickBudget_ms = payload[8];
             SetPage(startPage);
         });
         // Initialize the perf table
@@ -781,6 +976,14 @@
             });
             event.preventDefault();
         });
+        $(".pmxmodelistbox").each(function() {
+            $(this).selectmenu({
+                change: function(event, data) {
+                    pmXMode = data.item.index;
+                    UpdatePMWidgets();
+                }
+            });
+        })
     });
     </script>
 </head>
@@ -1009,10 +1212,43 @@
             <button class='perfmetricbutton' id='btn_pm_dump_log'>Dump summary to log</button>&nbsp&nbsp&nbsp&nbsp
             <button class='perfmetricbutton' id='btn_pm_dump_log_all'>Dump all to log</button>&nbsp&nbsp&nbsp&nbsp
             <button class='perfmetricbutton' id='btn_pm_dump_files'>Dump to files</button>&nbsp&nbsp&nbsp&nbsp
+            <br><br>Data Selectors:
+            <select id='menu_pm_data_0'>
+                <option selected='selected' value=-1>(NONE)</option>
+            </select>&nbsp&nbsp&nbsp&nbsp
+            <select id='menu_pm_data_1'>
+                <option selected='selected' value=-1>(NONE)</option>
+            </select>&nbsp&nbsp&nbsp&nbsp
+            <select id='menu_pm_data_2'>
+                <option selected='selected' value=-1>(NONE)</option>
+            </select>&nbsp&nbsp&nbsp&nbsp
+            <br><br>
+            <button class='perfmetricbutton2' id='btn_pm_render'>Render Graph</button>&nbsp&nbsp&nbsp&nbsp
+            <select class='pmxmodelistbox' id='menu_pm_xmode'>
+                <option selected='selected'>All Ticks!</option>
+                <option>Last N Ticks</option>
+                <option>Tick Range</option>
+            </select>&nbsp&nbsp&nbsp&nbsp
+            <span id='span_all'></span>
+            <span id='span_last_n'>
+                <input  id='pm_num_ticks' type='number' max='10000' class='perfmetricinput'"></input>
+                <button id='btn_num_ticks_set'>Set</button>
+                <span   id='pm_cur_num_ticks'></span>&nbsp&nbsp&nbsp&nbsp
+            </span>
+            <span id='span_range'>
+                <input  id='pm_first_tick' type='number' max='10000' class='perfmetricinput'></input>
+                <button id='btn_first_tick_set'>Set</button>
+                <span   id='pm_cur_first_tick'></span>&nbsp&nbsp&nbsp&nbsp
+                <input  id='pm_last_tick' type='number' max='10000' class='perfmetricinput'></input>
+                <button id='btn_last_tick_set'>Set</button>
+                <span   id='pm_cur_last_tick'></span>&nbsp&nbsp&nbsp&nbsp
+            </span>
+            <br><br>
+            <div id='pm_chart_container' style="width:1000px;height:300px">To get a graph, first click 'Dump all', then select one or more data selectors, then click 'Render Graph'</div>
             <br><br>
             <div id='id_pm_dump_result' class='consoleoutput'></div>
           </div>
-          <div id='perfmetric_page_disabled'>The PerfMetric page is disabled in the Anim and standalone webservers.  Use the Engine webserver instead.</div>
+          <div id='perfmetric_page_disabled'>The PerfMetric page is disabled in the standalone webserver.  Use the Engine or Anim webserver instead.</div>
         </div>
 
         <div id="confirm_dialog" title="">

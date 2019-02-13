@@ -615,9 +615,9 @@ namespace Anki {
     }
     
     Result RobotStateHistory::ComputeAndInsertStateAt(const RobotTimeStamp_t t_request,
-                                                    RobotTimeStamp_t& t, HistRobotState** state,
-                                                    HistStateKey* key,
-                                                    bool withInterpolation)
+                                                      RobotTimeStamp_t& t, HistRobotState** state,
+                                                      HistStateKey* key,
+                                                      bool withInterpolation)
     {
       HistRobotState state_computed;
       //printf("COMPUTE+INSERT\n");

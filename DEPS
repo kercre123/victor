@@ -23,9 +23,9 @@
             },
             "avs-device-sdk": {
                 "checksums": {
-                    "sha256": "052ad8307236e262b64839ec427a33c9c18e7567e57c5175a65fc4f661f8181d"
+                    "sha256": "ce79dec7280f734df5b54c1ed4f13b422dbbf19b85d8dd24f84e960be7b0f400"
                 },
-                "version": "v1.10-anki"
+                "version": "v1.10-anki-r2"
             },
             "flatbuffers": {
                 "checksums": {
@@ -84,7 +84,7 @@
         "repo_names": {
             "anki-thirdparty": {
                 "branch": "branches/victor",
-                "version": "202"
+                "version": "203"
             },
             "victor-animation-assets": {
                 "additional_files": [
@@ -101,11 +101,11 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "4832"
+                "version": "4862"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "162"
+                "version": "168"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

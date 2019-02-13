@@ -12,7 +12,7 @@
 
 #include "engine/components/cubes/cubeAccelListeners/upAxisChangedListener.h"
 
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/shared/math/point.h"
 
 #include "util/logging/logging.h"
 

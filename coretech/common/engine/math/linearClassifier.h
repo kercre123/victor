@@ -10,7 +10,7 @@
  **/
 
 #include "coretech/common/shared/types.h"
-#include "coretech/common/engine/math/matrix.h"
+#include "coretech/common/shared/math/matrix.h"
 #include "json/json-forwards.h"
 
 #include <vector>

@@ -19,7 +19,7 @@
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/robotDataLoader.h"
 
-#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/shared/array2d_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/data/dataScope.h"
 #include "coretech/vision/engine/image.h"

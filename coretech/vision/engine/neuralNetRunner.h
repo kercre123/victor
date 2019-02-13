@@ -18,7 +18,7 @@
 #define __Anki_Vision_NeuralNetRunner_H__
 
 #include "coretech/common/shared/types.h"
-#include "coretech/common/engine/math/rect.h"
+#include "coretech/common/shared/math/rect.h"
 
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/profiler.h"

@@ -1288,6 +1288,30 @@
     "AnimName": "ag_reacttocliff_wheelie_01"
   },
   {
+    "CladEvent": "ReactToCliffTurnLeft60",
+    "AnimName": "ag_reacttocliff_turnleft_60"
+  },
+  {
+    "CladEvent": "ReactToCliffTurnLeft120",
+    "AnimName": "ag_reacttocliff_turnleft_120"
+  },
+  {
+    "CladEvent": "ReactToCliffTurnLeft180",
+    "AnimName": "ag_reacttocliff_turnleft_180"
+  },
+  {
+    "CladEvent": "ReactToCliffTurnRight60",
+    "AnimName": "ag_reacttocliff_turnright_60"
+  },
+  {
+    "CladEvent": "ReactToCliffTurnRight120",
+    "AnimName": "ag_reacttocliff_turnright_120"
+  },
+  {
+    "CladEvent": "ReactToCliffTurnRight180",
+    "AnimName": "ag_reacttocliff_turnright_180"
+  },
+  {
     "CladEvent": "TakeAPictureFocusing",
     "AnimName": "ag_takepicture_focusing"
   },
@@ -1642,7 +1666,11 @@
   },
   {
     "CladEvent": "ReactToUnclaimedIntent",
-    "AnimName": "ag_pounceonmotionfail"
+    "AnimName": "ag_communication_cantdothat"
+  },
+  {
+    "CladEvent": "ReactToUnclaimedIntentInAir",
+    "AnimName": "ag_communication_pickup_cantdothat"
   },
   {
     "CladEvent": "Feedback_GoodRobot",
@@ -1979,11 +2007,63 @@
     "AnimName": "ag_movement_turnaround_01"
   },
   {
-   "CladEvent": "SeasonalHappyHolidays",
-   "AnimName": "ag_holiday_hh_lights"
+    "CladEvent": "SeasonalHappyHolidays",
+    "AnimName": "ag_holiday_hh_lights"
   },
   {
-   "CladEvent": "SeasonalHappyNewYear",
-   "AnimName": "ag_holiday_hny"
+    "CladEvent": "SeasonalHappyNewYear",
+    "AnimName": "ag_holiday_hny"
+  },
+  {
+    "CladEvent": "HeldOnPalmEdgeNervous",
+    "AnimName": "ag_heldonpalm_edge_nervous"
+  },
+  {
+    "CladEvent": "HeldOnPalmEdgeRelaxed",
+    "AnimName": "ag_heldonpalm_edge_relaxed"
+  },
+  {
+    "CladEvent": "HeldOnPalmGetInNervous",
+    "AnimName": "ag_heldonpalm_getin_nervous"
+  },
+  {
+    "CladEvent": "HeldOnPalmGetInRelaxed",
+    "AnimName": "ag_heldonpalm_getin_relaxed"
+  },
+  {
+    "CladEvent": "HeldOnPalmLookingNervous",
+    "AnimName": "ag_heldonpalm_looking_nervous"
+  },
+  {
+    "CladEvent": "HeldOnPalmNestling",
+    "AnimName": "ag_heldonpalm_nestling"
+  },
+  {
+    "CladEvent": "HeldOnPalmPickupNervous",
+    "AnimName": "ag_heldonpalm_pickup_nervous"
+  },
+  {
+    "CladEvent": "HeldOnPalmPickupRelaxed",
+    "AnimName": "ag_heldonpalm_pickup_relaxed"
+  },
+  {
+    "CladEvent": "HeldOnPalmPutDownNervous",
+    "AnimName": "ag_heldonpalm_putdown_nervous"
+  },
+  {
+    "CladEvent": "HeldOnPalmPutDownRelaxed",
+    "AnimName": "ag_heldonpalm_putdown_relaxed"
+  },
+  {
+    "CladEvent": "HeldOnPalmReactToJolt",
+    "AnimName": "ag_heldonpalm_jolt"
+  },
+  {
+    "CladEvent": "HeldOnPalmRollOff",
+    "AnimName": "ag_heldonpalm_rolloff"
+  },
+  {
+    "CladEvent": "HeldOnPalmTransitionToRelaxed",
+    "AnimName": "ag_heldonpalm_transition2relaxed"
   }
 ]

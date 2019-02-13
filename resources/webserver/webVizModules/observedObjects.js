@@ -82,7 +82,7 @@
       }
       cubeElem.append('<p>id: ' + data["objectID"] + '</p>')
               .append('<p>t: ' + data["timestamp"] + '</p>')
-              .append('<p>type: ' + data["objectFamily"] + ' ' + data["objectType"] + '</p>')
+              .append('<p>type: ' + data["objectType"] + '</p>')
               .append('<p>active: ' + data["isActive"] + '</p>');
       if( shouldSort ) {
         sortListById( cubeList );

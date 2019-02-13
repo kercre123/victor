@@ -20,7 +20,7 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/colorRGBA.h"
-#include "coretech/common/engine/math/point_fwd.h"
+#include "coretech/common/shared/math/point_fwd.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenTypes.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/cloud/mic.h"
@@ -204,13 +204,17 @@ private:
                         f32 textScale = kDefaultTextScale);
 
   struct ColoredText {
-    ColoredText(const std::string& text, const ColorRGBA& color = NamedColors::WHITE)
+    ColoredText(const std::string& text,
+                const ColorRGBA& color = NamedColors::WHITE,
+                bool leftAlign = true)
     : text(text)
     , color(color)
+    , leftAlign(leftAlign)
     {}
 
     const std::string text;
     const ColorRGBA color;
+    const bool leftAlign;
   };
 
   using ColoredTextLines = std::vector<std::vector<ColoredText> >;

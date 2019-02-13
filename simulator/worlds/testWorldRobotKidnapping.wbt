@@ -32,9 +32,13 @@ LightCube {
   translation 0.150 0 0.022
   objectType "Block_LIGHTCUBE1"
 }
-LightCube {
-  translation 0.300 -0.150 0.022
-  objectType "Block_LIGHTCUBE2"
+VictorCharger {
+  translation 0.400 -0.150 0.0
+  rotation 0 0 1 1.57
+}
+RubberDuck {
+  translation 0.225 -0.050 0.020
+  rotation -1 0 0 4.712
 }
 %COZMOBOT% {
   name "CozmoBot_1"

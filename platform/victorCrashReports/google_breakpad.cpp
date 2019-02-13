@@ -46,6 +46,8 @@ std::string tmpDumpPath;
 static int fd = -1;
 static google_breakpad::ExceptionHandler* exceptionHandler;
 
+sighandler_t gSavedQuitHandler = nullptr;
+
 constexpr const char* kRobotVersionFile = "/anki/etc/version";
 constexpr const char* kDigits = "0123456789";
 
@@ -132,6 +134,14 @@ bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor,
 
 } // anon namespace
 
+static void QuitHandler(int signum)
+{
+  if (exceptionHandler != nullptr) {
+    exceptionHandler->WriteMinidump();
+  }
+  signal(signum, gSavedQuitHandler);
+  raise(signum);
+}
 
 void InstallGoogleBreakpad(const char* filenamePrefix)
 {
@@ -159,10 +169,14 @@ void InstallGoogleBreakpad(const char* filenamePrefix)
   google_breakpad::MinidumpDescriptor descriptor(fd);
   descriptor.set_sanitize_stacks(true);
   exceptionHandler = new google_breakpad::ExceptionHandler(descriptor, NULL, DumpCallback, NULL, true, -1);
+
+  gSavedQuitHandler = signal(SIGQUIT, QuitHandler);
 }
 
 void UnInstallGoogleBreakpad()
 {
+  signal(SIGQUIT, gSavedQuitHandler);
+
   delete exceptionHandler;
   exceptionHandler = nullptr;
   if (fd >= 0) {

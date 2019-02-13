@@ -156,7 +156,6 @@ include(speexdsp)
 include(pffft)
 
 import(util "lib/util")
-import(ble_cozmo "lib/BLECozmo")
 import(DAS "lib/das-client")
 
 # BRC-TODO: Make this top-level include into an "interface"

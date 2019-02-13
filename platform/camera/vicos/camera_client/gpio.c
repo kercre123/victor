@@ -10,6 +10,8 @@
 #include <string.h>
 #include <stdarg.h>
 #include <stdio.h>
+#include <sys/types.h>
+#include <sys/stat.h>
 
 #include "gpio.h"
 
@@ -98,21 +100,44 @@ int gpio_get_base_offset()
   return GPIO_BASE_OFFSET;
 }
 
+int patiently_wait_for_path_to_appear(const char* path) {
+  struct stat info = {};
+  int retries = 10;
+  while (retries > 0) {
+    printf("Waiting for %s to appear...\n", path);
+    int rc = stat(path, &info);
+    if (!rc) {
+      return 0;
+    }
+    // Sleep 100 milliseconds and try again
+    (void) usleep((useconds_t) 100000);
+    retries--;
+  }
+
+  return -1;
+}
+
 int gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initial_value, GPIO* gpPtr) {
    char ioname[32];
    GPIO gp  = malloc(sizeof(struct GPIO_t));
    if (!gp) error_return(app_MEMORY_ERROR, "can't alloc memory for gpio %d", gpio_number);
+   int fd;
 
-   //create io
-   int fd = open_patiently("/sys/class/gpio/export", O_WRONLY);
-   snprintf(ioname, 32, "%d\n", gpio_number+gpio_get_base_offset());
-   if (fd<0) {
-     free(gp);
-     *gpPtr = NULL;
-     error_return(app_DEVICE_OPEN_ERROR, "Can't create exporter %d- %s\n", errno, strerror(errno));
+   snprintf(ioname, sizeof(ioname), "/sys/class/gpio/gpio%d", gpio_number+gpio_get_base_offset());
+   if (patiently_wait_for_path_to_appear(ioname)) {
+     // If the pin hasn't already been exported, try to export it here.  This will fail, if
+     // the process does not have permission to write to /sys/class/gpio/export
+     // create io
+     fd = open_patiently("/sys/class/gpio/export", O_WRONLY);
+     snprintf(ioname, 32, "%d\n", gpio_number+gpio_get_base_offset());
+     if (fd<0) {
+       free(gp);
+       *gpPtr = NULL;
+       error_return(app_DEVICE_OPEN_ERROR, "Can't create exporter %d- %s\n", errno, strerror(errno));
+     }
+     (void)write(fd, ioname, strlen(ioname));
+     close(fd);
    }
-   (void)write(fd, ioname, strlen(ioname));
-   close(fd);
 
 
    gp->pin = gpio_number;

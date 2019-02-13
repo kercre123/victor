@@ -21,7 +21,7 @@
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "anki/common/constantsAndMacros.h"
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/radians.h"
 
 namespace Anki {
 namespace Vector {

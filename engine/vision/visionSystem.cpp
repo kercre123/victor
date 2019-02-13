@@ -16,7 +16,7 @@
 #include "coretech/common/engine/math/linearAlgebra_impl.h"
 #include "coretech/common/engine/math/linearClassifier.h"
 #include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/shared/math/rect_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "engine/cozmoContext.h"
@@ -769,12 +769,13 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
     //_currentResult.debugImages.push_back({"MaskedFaceImage", maskedImage});
 #     endif
     
-    _faceTracker->Update(maskedImage, cropFactor, _currentResult.faces, _currentResult.updatedFaceIDs);
+    _faceTracker->Update(maskedImage, cropFactor, _currentResult.faces, _currentResult.updatedFaceIDs,
+                         _currentResult.debugImages);
   }
   else
   {
     // Nothing already detected, so nothing to black out before looking for faces
-    _faceTracker->Update(grayImage, cropFactor, _currentResult.faces, _currentResult.updatedFaceIDs);
+    _faceTracker->Update(grayImage, cropFactor, _currentResult.faces, _currentResult.updatedFaceIDs, _currentResult.debugImages);
   }
   
   for(auto faceIter = _currentResult.faces.begin(); faceIter != _currentResult.faces.end(); ++faceIter)

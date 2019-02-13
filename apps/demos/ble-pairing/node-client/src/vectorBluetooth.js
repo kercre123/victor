@@ -16,6 +16,10 @@ class VectorBluetooth {
     this.initializeBleProtocol();
   }
 
+  stop() {
+    this.onReceiveEvent = [];
+  }
+
   initializeBleProtocol() {
     let self = this;
     this.bleMsgProtocol = new _bleProtocol.BleMessageProtocol(this.maxPacketSize);

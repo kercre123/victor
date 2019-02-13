@@ -19,6 +19,10 @@
 
 #include "coretech/vision/engine/image.h"
 
+namespace {
+  const char* const kTimerName = "upsideDown";
+}
+
 namespace Anki {
 namespace Vector {
 
@@ -60,9 +64,11 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPickup::SelfTestUpdateInternal
         _upsideDownTimerAdded = true;
 
         // Once turned upside down must complete rest of checks within this time
-        AddTimer(SelfTestConfig::kUpsideDownTimeout_ms, [this]() {
-          SELFTEST_SET_RESULT(SelfTestResultCode::UPSIDE_DOWN_TIMEOUT);
-        });
+        AddTimer(SelfTestConfig::kUpsideDownTimeout_ms,
+                 [this]() {
+                   SELFTEST_SET_RESULT(SelfTestResultCode::UPSIDE_DOWN_TIMEOUT);
+                 },
+                 kTimerName);
       }
 
       const auto now = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
@@ -115,6 +121,10 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPickup::SelfTestUpdateInternal
       }
       
       _upsideDownStartTime_ms = 0;
+
+      // Remove upside timer
+      _upsideDownTimerAdded = false;
+      RemoveTimer(kTimerName);
     }
   }
   

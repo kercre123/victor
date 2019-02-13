@@ -14,7 +14,7 @@
 
 #include "clad/types/activeObjectAccel.h"
 
-#include "coretech/common/engine/math/matrix_impl.h"
+#include "coretech/common/shared/math/matrix_impl.h"
 
 #include "util/logging/logging.h"
 

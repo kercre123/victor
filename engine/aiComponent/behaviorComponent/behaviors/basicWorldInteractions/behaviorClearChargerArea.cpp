@@ -52,10 +52,9 @@ BehaviorClearChargerArea::InstanceConfig::InstanceConfig(const Json::Value& conf
 { 
   DEV_ASSERT(maxNumAttempts > 0, "BehaviorClearChargerArea.InstanceConfig.InvalidMaxNumAttempts");
   
-  chargerFilter->AddAllowedFamily(ObjectFamily::Charger);
   chargerFilter->AddAllowedType(ObjectType::Charger_Basic);
   
-  cubesFilter->AddAllowedFamily(ObjectFamily::LightCube);
+  cubesFilter->AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
 }
 
 
@@ -221,7 +220,7 @@ void BehaviorClearChargerArea::TransitionToPositionForRamming()
   const float extDistance_mm = 1000.f;
   RotatedRectangle rect(p1.x(), p1.y(), p2.x(), p2.y(), extDistance_mm);
   
-  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID, ObjectFamily::Charger);
+  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
   if (charger == nullptr) {
     PRINT_NAMED_ERROR("BehaviorClearChargerArea.TransitionToPositionForRamming.NullCharger", "Null charger!");
     return;
@@ -273,7 +272,7 @@ void BehaviorClearChargerArea::TransitionToRamCube()
     return;
   }
   
-  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID, ObjectFamily::Charger);
+  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
   if (charger == nullptr) {
     PRINT_NAMED_ERROR("BehaviorClearChargerArea.TransitionToRamCube.NullCharger", "Null charger!");
     return;
@@ -315,7 +314,7 @@ void BehaviorClearChargerArea::TransitionToPlacingCubeOnGround()
 {
   LOG_FUNCTION_NAME();
   
-  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID, ObjectFamily::Charger);
+  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
   if (charger == nullptr) {
     PRINT_NAMED_ERROR("BehaviorClearChargerArea.TransitionToPlacingCubeOnGround.NullCharger", "Null charger!");
     return;
@@ -341,7 +340,7 @@ void BehaviorClearChargerArea::TransitionToPlacingCubeOnGround()
                           // Still carrying an object. Simply turn away from the charger
                           // and place it on the ground right there. This will hopefully
                           // get it out of the way.
-                          const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID, ObjectFamily::Charger);
+                          const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
                           if (charger == nullptr) {
                             PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToPlacingCubeOnGroundCallback.NullCharger", "Null charger!");
                             return;

@@ -12,7 +12,7 @@
  **/
 
 #include "coretech/common/engine/math/bresenhamLine2d.h"
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/shared/math/point.h"
 
 namespace Anki {
 

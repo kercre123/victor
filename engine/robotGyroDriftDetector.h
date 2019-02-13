@@ -8,9 +8,9 @@
 #ifndef __Anki_Cozmo_RobotGyroDriftDetector_H__
 #define __Anki_Cozmo_RobotGyroDriftDetector_H__
 
-#include "coretech/common/engine/math/point_fwd.h"
+#include "coretech/common/shared/math/point_fwd.h"
 #include "coretech/common/engine/robotTimeStamp.h"
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/radians.h"
 
 #include "engine/robotComponents_fwd.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"

@@ -23,7 +23,7 @@ using namespace alexaClientSDK;
 AlexaCapabilityWrapper::AlexaCapabilityWrapper( const std::string& nameSpace,
                                                 std::shared_ptr<avsCommon::avs::CapabilityAgent> capabilityAgent,
                                                 std::shared_ptr<avsCommon::sdkInterfaces::ExceptionEncounteredSenderInterface> exceptionEncounteredSender,
-                                                const std::function<void(const std::string&,const std::string&)>& onDirective )
+                                                const OnDirectiveFunc& onDirective )
 : CapabilityAgent( nameSpace, exceptionEncounteredSender)
 , _capabilityAgent( capabilityAgent )
 , _onDirective( onDirective )
@@ -77,7 +77,8 @@ void AlexaCapabilityWrapper::RunDirectiveCallback( const std::shared_ptr<avsComm
   if( _onDirective != nullptr && directive != nullptr ) {
     const auto& name = directive->getName();
     const auto& payload = directive->getPayload();
-    _onDirective( name, payload );
+    const auto& unparsed = directive->getUnparsedDirective();
+    _onDirective( name, payload, unparsed );
   }
 }
   

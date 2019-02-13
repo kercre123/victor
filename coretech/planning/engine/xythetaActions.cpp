@@ -16,7 +16,7 @@
 #include "util/console/consoleInterface.h"
 #include "util/jsonWriter/jsonWriter.h"
 
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/radians.h"
 #include "coretech/common/engine/jsonTools.h"
 
 #include "json/json.h"

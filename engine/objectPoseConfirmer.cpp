@@ -16,7 +16,7 @@
 #include "objectPoseConfirmer.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
-#include "engine/activeObject.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/components/carryingComponent.h"
@@ -104,7 +104,7 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
   // In order to ask for moved status, we need to query either the connected instance or the confirmedMatch (if
   // they exist)
   const ObjectID& objectID = object->GetID();
-  const ActiveObject* const connectedMatch = _robot->GetBlockWorld().GetConnectedActiveObjectByID( objectID );
+  const auto* const connectedMatch = _robot->GetBlockWorld().GetConnectedBlockByID( objectID );
   RobotTimeStamp_t stoppedMovingTime = 0;
   // ask both instances
   bool objectIsMoving = false;
@@ -174,7 +174,7 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
         PRINT_CH_INFO("PoseConfirmer", "ObjectPoseConfirmer.UpdatePoseInInstance.SeeingCarriedObject",
                       "We changed the pose of %d, we must not be carrying it anymore. Unsetting as carried object.",
                       object->GetID().GetValue());
-        _robot->GetCarryingComponent().UnSetCarryObject(object->GetID());
+        _robot->GetCarryingComponent().UnSetCarryingObject();
       }
     }
     else
@@ -187,7 +187,7 @@ void ObjectPoseConfirmer::UpdatePoseInInstance(ObservableObject* object,
       object->SetPose(newPose, obsDistance_mm, newPoseState);
     }
     
-    // udpate the timestamp at which we are actually setting the pose
+    // update the timestamp at which we are actually setting the pose
     DEV_ASSERT(_poseConfirmations.find(objectID) != _poseConfirmations.end(),
                 "ObjectPoseConfirmer.UpdatePoseInInstace.EntryShouldExist");
     PoseConfirmation& poseConf = _poseConfirmations[objectID];
@@ -244,8 +244,7 @@ inline void ObjectPoseConfirmer::SetPoseHelper(ObservableObject*& object, const 
   else
   {
     // delegate on marking unknown
-    const bool propagateStack = true; // if we unobserve an object, we should unobserve objects on top. They should not float
-    MarkObjectUnknown(object, propagateStack);
+    MarkObjectUnknown(object);
   }
 }
 
@@ -352,13 +351,12 @@ void ObjectPoseConfirmer::FindObjectMatchForObservation(const std::shared_ptr<Ob
   objectToCopyIDFrom = nullptr;
 
   BlockWorldFilter filter;
-  filter.AddAllowedFamily(objSeen->GetFamily());
   filter.AddAllowedType(objSeen->GetType());
 
   // find confirmed object or unconfirmed
   if ( objSeen->IsUnique() )
   {
-    // ask blockworld to find matches by type/family in the current origin, since we assume only one instance per type
+    // ask blockworld to find matches by type in the current origin, since we assume only one instance per type
     std::vector<ObservableObject*> confirmedMatches;
     _robot->GetBlockWorld().FindLocatedMatchingObjects(filter, confirmedMatches);
     
@@ -373,16 +371,15 @@ void ObjectPoseConfirmer::FindObjectMatchForObservation(const std::shared_ptr<Ob
     }
     else
     {
-      // did not find a confirmed match, is there an unconfirmed match by family and type?
+      // did not find a confirmed match, is there an unconfirmed match by  type?
       for( const auto& confirmationInfoPair : _poseConfirmations )
       {
         const PoseConfirmation& confirmationInfo = confirmationInfoPair.second;
         // check only entries that have an unconfirmed object
         if ( confirmationInfo.unconfirmedObject )
         {
-          // compare family and type
-          const bool matchOk = (confirmationInfo.unconfirmedObject->GetFamily() == objSeen->GetFamily()) &&
-                               (confirmationInfo.unconfirmedObject->GetType()   == objSeen->GetType()  );
+          // compare type
+          const bool matchOk = (confirmationInfo.unconfirmedObject->GetType() == objSeen->GetType());
           if ( matchOk ) {
             DEV_ASSERT(confirmationInfo.unconfirmedObject->GetID() == confirmationInfoPair.first,
                        "ObjectPoseConfirmer.IsObjectConfirmed.KeyNotMatchingID");
@@ -396,7 +393,7 @@ void ObjectPoseConfirmer::FindObjectMatchForObservation(const std::shared_ptr<Ob
       filter.SetOriginMode(BlockWorldFilter::OriginMode::NotInRobotFrame);
       objectToCopyIDFrom = _robot->GetBlockWorld().FindLocatedMatchingObject(filter);
       if ( nullptr == objectToCopyIDFrom ) {
-        objectToCopyIDFrom = _robot->GetBlockWorld().FindConnectedActiveMatchingObject(filter);
+        objectToCopyIDFrom = _robot->GetBlockWorld().FindConnectedMatchingBlock(filter);
       }
       
       return;
@@ -405,9 +402,9 @@ void ObjectPoseConfirmer::FindObjectMatchForObservation(const std::shared_ptr<Ob
   }
   else
   {
-    // For passive objects, match based on pose (considering only objects in current frame)
+    // For non-unique objects, match based on pose (considering only objects in current frame)
     // Ignore objects we're carrying
-    const ObjectID& carryingObjectID = _robot->GetCarryingComponent().GetCarryingObject();
+    const ObjectID& carryingObjectID = _robot->GetCarryingComponent().GetCarryingObjectID();
     filter.AddFilterFcn([&carryingObjectID](const ObservableObject* candidate) {
       const bool isObjectBeingCarried = (candidate->GetID() == carryingObjectID);
       return !isObjectBeingCarried;
@@ -441,9 +438,8 @@ void ObjectPoseConfirmer::FindObjectMatchForObservation(const std::shared_ptr<Ob
           // should not be possible to carry unconfirmed objects
           DEV_ASSERT( carryingObjectID != confirmationInfo.unconfirmedObject->GetID(),
                       "ObjectPoseConfirmer.IsObjectConfirmed.CarryingUnconfirmed");
-          // unconfirmed objects are not applied the filter, check for family/type now
-          const bool isSameType = (confirmationInfo.unconfirmedObject->GetFamily() == objSeen->GetFamily()) &&
-                                  (confirmationInfo.unconfirmedObject->GetType()   == objSeen->GetType()  );
+          // unconfirmed objects are not applied the filter, check for type now
+          const bool isSameType = (confirmationInfo.unconfirmedObject->GetType() == objSeen->GetType());
           if ( isSameType )
           {
             // compare location
@@ -551,7 +547,7 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
           const bool isCurrentlyConfirmed = (nullptr == unconfirmedObjectPtr);
           if( !isCurrentlyConfirmed )
           {
-            // udpate pose in unconfirmed instance before passing onto world
+            // update pose in unconfirmed instance before passing onto world
             UpdatePoseInInstance(unconfirmedObjectPtr, observation.get(), confirmedMatch, newPose, robotWasMoving, obsDistance_mm);
           
             // This is first confirmation, we have to give blockWorld ownership of the unconfirmed object
@@ -597,7 +593,7 @@ bool ObjectPoseConfirmer::AddVisualObservation(const std::shared_ptr<ObservableO
     }
   }
   
-  // Make sure we always update the lastVisuallMatchedTime
+  // Make sure we always update the lastVisuallyMatchedTime
   DEV_ASSERT_MSG(_poseConfirmations.at(objectID).lastVisuallyMatchedTime == observation->GetLastObservedTime(),
                  "ObjectPoseConfirmer.AddVisualObservation.WrongLastVisuallyMatchedTime",
                  "PoseConf t=%u, Observation t=%u",
@@ -651,74 +647,6 @@ Result ObjectPoseConfirmer::AddRobotRelativeObservation(ObservableObject* object
   // in order for it to be localized to.
   auto & poseConf = _poseConfirmations[objectID]; // insert or find existing
   poseConf.UpdatePose(poseWrtOrigin, object->GetLastObservedTime());
-  
-  return RESULT_OK;
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectPoseConfirmer::AddObjectRelativeObservation(ObservableObject* objectToUpdate, const Pose3d& newPose,
-                                                         const ObservableObject* observedObject)
-{
-  DEV_ASSERT(nullptr != objectToUpdate, "ObjectPoseConfirmer.AddObjectRelativeObservation.NullObjectToUpdate");
-  DEV_ASSERT(nullptr != observedObject, "ObjectPoseConfirmer.AddObjectRelativeObservation.NullObservedObject");
-  
-  const ObjectID& objectID = objectToUpdate->GetID();
-  
-  // Sanity checks
-  DEV_ASSERT(objectID.IsSet(),
-             "ObjectPoseConfirmer.AddObjectRelativeObservation.UnSetObjectID");
-  DEV_ASSERT(observedObject->HasValidPose(),
-             "ObjectPoseConfirmer.AddObjectRelativeObservation.ReferenceNotValid");
-  
-  // if the object is in blockWorld, we need to notify of changes, use the helper for that
-  const ObservableObject* objectInBlockWorld = _robot->GetBlockWorld().GetLocatedObjectByID(objectID);
-  if ( nullptr != objectInBlockWorld )
-  {
-    // if the ID retrieved something from BlockWorld, it has to be the objectToUpdate, otherwise are we updating
-    // an unconfirmed observation based on relative observations?
-    DEV_ASSERT( objectToUpdate == objectInBlockWorld,
-               "ObjectPoseConfirmer.AddObjectRelativeObservation.NotTheObjectInBlockWorldForID");
-    // the object to update should have an entry in poseConfirmations, otherwise how did it become an
-    // object that can be grabbed to add a relative observation?
-    DEV_ASSERT(_poseConfirmations.find(objectID) != _poseConfirmations.end(),
-              "ObjectPoseConfirmer.AddObjectRelativeObservation.NoPreviousObservationsForObjectToUpdate");
-
-    // update pose
-    const PoseState newPoseState = PoseState::Dirty; // do not inherit the pose state from the observed object
-    SetPoseHelper(objectToUpdate, newPose, -1.f, newPoseState, "AddObjectRelativeObservation");
-  }
-  else
-  {
-    // here we should set the pose and then add the BlockWorld. We can definitely support it, but I don't have
-    // a use case for it, and don't want to support it yet if it's not a thing
-    PRINT_NAMED_ERROR("ObjectPoseConfirmer.AddObjectRelativeObservation.NotABlockWorldObject",
-                      "Object %d is not in the blockWorld. We could add it, but we don't support it at the moment.",
-                      objectID.GetValue());
-  }
-
-  // in any case, add to objects tracked by PoseConfirmer
-  _poseConfirmations[objectID].referencePose = newPose;
-  _poseConfirmations[objectID].lastPoseUpdatedTime = observedObject->GetLastObservedTime();
-  
-  return RESULT_OK;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ObjectPoseConfirmer::SetGhostObjectPose(ObservableObject* ghostObject, const Pose3d& newPose, PoseState newPoseState)
-{
-  DEV_ASSERT(nullptr != ghostObject, "ObjectPoseConfirmer.AddGhostObjectRelativeObservation.NullGhostObjectToUpdate");
-  
-  // Sanity checks
-  DEV_ASSERT(ghostObject->GetID().IsSet(),
-             "ObjectPoseConfirmer.AddGhostObjectRelativeObservation.UnSetObjectID");
-  DEV_ASSERT(nullptr == _robot->GetBlockWorld().GetLocatedObjectByID(ghostObject->GetID()),
-             "ObjectPoseConfirmer.AddGhostObjectRelativeObservation.ObjectInBlockWorld");
-
-  // simply update the object directly, since it's a ghost and doesn't need confirmations
-  ghostObject->SetPose(newPose, -1.0f, newPoseState);
-
-  // I don't think we need to add ghost objects to PoseConfirmer
-  // _poseConfirmations[objectID] = ???;
   
   return RESULT_OK;
 }
@@ -898,59 +826,13 @@ Result ObjectPoseConfirmer::MarkObjectUnobserved(ObservableObject*& object)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ObjectPoseConfirmer::MarkObjectUnknown(ObservableObject*& object, bool propagateStack)
+void ObjectPoseConfirmer::MarkObjectUnknown(ObservableObject*& object)
 {
   DEV_ASSERT( object == _robot->GetBlockWorld().GetLocatedObjectByID(object->GetID()),
              "ObjectPoseConfirmer.MarkObjectUnknown.ShouldOnlyBeUsedForBlockWorldObjects");
   
   std::set<ObjectID> affectedObjectIDs;
   affectedObjectIDs.insert(object->GetID());
-  
-  // first iterate stacks because we will be flagging all those objects
-  if ( propagateStack )
-  {
-    // TODO Consider using ConfigurationManager. I think now it would be worse, since I would have to check Stacks or
-    // pyramids. Maybe configuration manager could cache BlocksOnTopOfOtherBlocks?
-    const ObservableObject* curObject = object;
-    
-    while( nullptr != curObject )
-    {
-      BlockWorldFilter filterOnTop;
-      // Ignore the object we are looking on top off so that we don't consider it as on top of itself
-      filterOnTop.AddIgnoreID(curObject->GetID());
-  
-      // some objects should not be updated
-      filterOnTop.AddIgnoreFamily(Anki::Vector::ObjectFamily::MarkerlessObject);
-      filterOnTop.AddIgnoreFamily(Anki::Vector::ObjectFamily::CustomObject);
-
-      // find object on top
-      ObservableObject* objectOnTop = _robot->GetBlockWorld().FindLocatedObjectOnTopOf(*curObject, STACKED_HEIGHT_TOL_MM, filterOnTop);
-      if ( nullptr != objectOnTop )
-      {
-        // we found an object currently on top
-        const ObjectID& topID = objectOnTop->GetID();
-      
-        // if this is not an object we are carrying (rsam: I copied this from BlockWorld, not sure if it would even
-        // happen, but sounds like a good check, since detaching from lift may require additional bookkeeping)
-        if ( !_robot->GetCarryingComponent().IsCarryingObject(topID) )
-        {
-          // add to objects to delete
-          affectedObjectIDs.insert(topID);
-        }
-        else
-        {
-          // warn
-          PRINT_NAMED_WARNING("ObjectPoseConfirmer.MarkObjectUnknown",
-                              "Found object %d on top, but we are carrying it, so we don't want to mess with that.",
-                              topID.GetValue());
-        }
-      }
-      
-      // advance stack
-      curObject = objectOnTop;
-      
-    } // while: curObject
-  } // propagate stack
 
   BlockWorldFilter filterOfObjectsToDelete;
   for( const auto& objID : affectedObjectIDs )
@@ -971,39 +853,9 @@ void ObjectPoseConfirmer::MarkObjectUnknown(ObservableObject*& object, bool prop
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ObjectPoseConfirmer::MarkObjectDirty(ObservableObject* object, bool propagateStack)
+void ObjectPoseConfirmer::MarkObjectDirty(ObservableObject* object)
 {
   SetPoseStateHelper(object, PoseState::Dirty);
-  
-  // we changed the pose, propagate if needed
-  if ( propagateStack )
-  {
-    BlockWorldFilter filterOnTop;
-    // Ignore the object we are looking on top off so that we don't consider it as on top of itself
-    filterOnTop.AddIgnoreID(object->GetID());
-    // some objects should not be updated
-    filterOnTop.AddIgnoreFamily(Anki::Vector::ObjectFamily::MarkerlessObject);
-    filterOnTop.AddIgnoreFamily(Anki::Vector::ObjectFamily::CustomObject);
-
-    // find object on top
-    ObservableObject* objectOnTop = _robot->GetBlockWorld().FindLocatedObjectOnTopOf(*object, STACKED_HEIGHT_TOL_MM, filterOnTop);
-    if ( nullptr != objectOnTop )
-    {
-      // if this is not an object we are carrying (rsam: I copied this from BlockWorld, not sure if it would even
-      // happen, but sounds like a good check, since cubes on lift are considered Known at the moment
-      if ( !_robot->GetCarryingComponent().IsCarryingObject(objectOnTop->GetID()) )
-      {
-        // can call recursively
-        MarkObjectDirty(objectOnTop, propagateStack);
-      }
-      else
-      {
-        PRINT_CH_INFO("PoseConfirmer", "ObjectPoseConfirmer.MarkObjectDirty.TryingToChangeCarriedObject",
-                      "Carrying %d, considered part of a Dirty stack. Ignoring propagation",
-                      objectOnTop->GetID().GetValue());
-      }
-    }
-  }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -2,7 +2,7 @@
 #define __Anki_Cozmo_ProceduralFaceDrawer_H__
 
 #include "coretech/common/shared/types.h"
-#include "coretech/common/engine/math/matrix.h"
+#include "coretech/common/shared/math/matrix.h"
 #include "cannedAnimLib/proceduralFace/proceduralFace.h"
 #include "cannedAnimLib/proceduralFace/proceduralFaceModifierTypes.h"
 #include "coretech/vision/engine/image.h"

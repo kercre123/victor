@@ -1,8 +1,8 @@
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 
-#include "coretech/common/engine/math/rotation.h"
+#include "coretech/common/shared/math/rotation.h"
 #include "coretech/common/engine/math/pose.h"
-#include "coretech/common/engine/math/matrix_impl.h"
+#include "coretech/common/shared/math/matrix_impl.h"
 
 #include <iostream>
 

@@ -10,7 +10,7 @@ The tests then run the SDK script on this simulated robot and logs the results f
 
 1. Create an SDK python script that runs the required tests on the robot.
 
-2. Save this SDK script in `victor/tools/sdk/vector-python-sdk-private/sdk/tests/automated/`
+2. Save this SDK script in `victor/tools/sdk/vector-sdk-tests/automated/`
 
 3. Once this is saved, open `victor/project/build-scripts/webots/sdkNightlyTests.cfg`
 

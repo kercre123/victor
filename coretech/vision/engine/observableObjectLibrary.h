@@ -48,8 +48,7 @@ namespace Anki {
       bool RemoveObjectWithMarker(const Marker::Code& code);
       
       // Groups markers referring to the same object type, and clusters them into
-      // observed objects, returned in objectsSeen (which is keyed and sorted by
-      // distance from the camera to the object).
+      // observed objects, returned in objectsSeen
       // - If seenOnlyBy is not ANY_CAMERA, only markers
       //   seen by that camera will be considered and objectSeen poses will be returned
       //   wrt to that camera.
@@ -57,7 +56,7 @@ namespace Anki {
       // - If clampPosesToFlatIfWithinLocalizableTol=true, poses of active objects that are within
       //   their angular tolerance of "flat" for localization will be clamped to be exactly flat.
       Result CreateObjectsFromMarkers(const std::list<ObservedMarker>& markers,
-                                      std::multimap<f32, ObsObjectType*>& objectsSeen,
+                                      std::vector<ObsObjectType*>& objectsSeen,
                                       const CameraID_t seenOnlyBy = ANY_CAMERA,
                                       bool clampPosesToFlatIfWithinLocalizableTol = true) const;
       

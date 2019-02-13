@@ -13,11 +13,11 @@
 #ifndef __Anki_Vision_TrackedFace_H__
 #define __Anki_Vision_TrackedFace_H__
 
-#include "coretech/common/engine/math/point_fwd.h"
-#include "coretech/common/engine/math/rect.h"
-#include "coretech/common/engine/math/rect_impl.h"
+#include "coretech/common/shared/math/point_fwd.h"
+#include "coretech/common/shared/math/rect.h"
+#include "coretech/common/shared/math/rect_impl.h"
 #include "coretech/common/engine/math/pose.h"
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/radians.h"
 
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/faceIdTypes.h"
@@ -81,15 +81,17 @@ namespace Vision {
     };
     
     using Feature = std::vector<Point2f>;
+    using FeatureConfidence = std::vector<int>;
     
     const Feature& GetFeature(FeatureName whichFeature) const;
+    const FeatureConfidence& GetFeatureConfidence(FeatureName whichFeature) const;
     void  ClearFature(FeatureName whichFeature);
 
     // Shift both the detection rectangle and features
     void Shift(const Point2f& shift);
     
     void AddPointToFeature(FeatureName whichFeature, Point2f&& point);
-    void SetFeature(FeatureName whichFeature, Feature&& points);
+    void SetFeature(FeatureName whichFeature, Feature&& points, FeatureConfidence&& confidences);
     
     void SetEyeCenters(Point2f&& leftCen, Point2f&& rightCen);
     
@@ -190,6 +192,7 @@ namespace Vision {
     Point2f _leftEyeCen, _rightEyeCen;
     
     std::array<Feature, NumFeatures> _features;
+    std::array<FeatureConfidence, NumFeatures> _featureConfidences;
     FacialExpressionValues _expression{};
     
     // "Metadata" about the face
@@ -258,12 +261,18 @@ namespace Vision {
     _features[whichFeature].clear();
   }
   
-  inline void TrackedFace::SetFeature(FeatureName whichFeature, Feature&& points) {
+  inline void TrackedFace::SetFeature(FeatureName whichFeature, Feature&& points, FeatureConfidence&& confs) {
+    DEV_ASSERT(points.size() == confs.size(), "TrackedFace.SetFeature.MisMatchedPointsAndConfidences");
     _features[whichFeature] = points;
+    _featureConfidences[whichFeature] = confs;
   }
   
   inline const TrackedFace::Feature& TrackedFace::GetFeature(TrackedFace::FeatureName whichFeature) const {
     return _features[whichFeature];
+  }
+  
+  inline const TrackedFace::FeatureConfidence& TrackedFace::GetFeatureConfidence(FeatureName whichFeature) const {
+    return _featureConfidences[whichFeature];
   }
   
   inline void TrackedFace::AddPointToFeature(FeatureName whichFeature, Point2f &&point)

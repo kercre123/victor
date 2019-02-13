@@ -36,23 +36,38 @@ namespace Anki {
     
     // ======== Message handler callbacks =======
     
-    void UiGameController::AddOrUpdateObject(s32 objID, ObjectType objType, ObjectFamily objFamily,
-                                             const PoseStruct3d& poseStruct)
+    void UiGameController::AddOrUpdateObject(s32 objID,
+                                             ObjectType objType,
+                                             const PoseStruct3d& poseStruct,
+                                             const uint32_t observedTimestamp,
+                                             const bool isActive)
     {
-      // If an object with the same ID already exists in the map, make sure that it's type hasn't changed
-      auto it = _objectIDToFamilyTypeMap.find(objID);
-      if (it != _objectIDToFamilyTypeMap.end()) {
-        if (it->second.first != objFamily || it->second.second != objType) {
-          PRINT_NAMED_WARNING("UiGameController.HandleRobotObservedObjectBase.ObjectChangedFamilyOrType", "");
+      // If an object with the same ID already exists in the map, make sure that its type hasn't changed and update its
+      // observed time
+      auto it = std::find_if(_observedObjects.begin(),
+                             _observedObjects.end(),
+                             [&objID](const ObservedObject& obj) {
+                               return (obj.id == objID);
+                             });
+      if (it != _observedObjects.end()) {
+        if (it->type != objType) {
+          PRINT_NAMED_WARNING("UiGameController.HandleRobotObservedObjectBase.ObjectChangedType", "");
         }
+        // Update the observedTimestamp if it is nonzero
+        if (observedTimestamp != 0) {
+          it->observedTimestamp = observedTimestamp;
+        }
+        it->pose = CreatePoseHelper(poseStruct);
       } else {
-        // Insert new object into maps
-        _objectIDToFamilyTypeMap.insert(std::make_pair(objID, std::make_pair(objFamily, objType)));
-        _objectFamilyToTypeToIDMap[objFamily][objType].push_back(objID);
+        // Insert new object into container
+        ObservedObject obj;
+        obj.type = objType;
+        obj.id = objID;
+        obj.isActive = isActive;
+        obj.observedTimestamp = observedTimestamp;
+        obj.pose = CreatePoseHelper(poseStruct);
+        _observedObjects.push_back(obj);
       }
-      
-      // Update pose
-      _objectIDToPoseMap[objID] = CreatePoseHelper(poseStruct);
     }
     
     Pose3d UiGameController::CreatePoseHelper(const PoseStruct3d& poseStruct)
@@ -99,15 +114,7 @@ namespace Anki {
 
     void UiGameController::HandleRobotObservedObjectBase(const ExternalInterface::RobotObservedObject& msg)
     {
-      AddOrUpdateObject(msg.objectID, msg.objectType, msg.objectFamily, msg.pose);
-      
-      // TODO: Move this to WebotsKeyboardController?
-      const f32 area = msg.img_rect.width * msg.img_rect.height;
-      _lastObservedObject.family = msg.objectFamily;
-      _lastObservedObject.type   = msg.objectType;
-      _lastObservedObject.id     = msg.objectID;
-      _lastObservedObject.isActive = msg.isActive;
-      _lastObservedObject.area   = area;
+      AddOrUpdateObject(msg.objectID, msg.objectType, msg.pose, msg.timestamp, msg.isActive);
       
       HandleRobotObservedObject(msg);
     }
@@ -153,17 +160,12 @@ namespace Anki {
     {
       PRINT_NAMED_INFO("UiGameController.HandleRobotDeletedObjectBase", "Robot reported deleting object %d", msg.objectID);
       
-      _objectIDToPoseMap.erase(msg.objectID);
-      _objectIDToFamilyTypeMap.erase(msg.objectID);
-      
-      for (auto famIt = _objectFamilyToTypeToIDMap.begin(); famIt != _objectFamilyToTypeToIDMap.end(); ++famIt) {
-        for (auto typeIt = famIt->second.begin(); typeIt != famIt->second.end(); ++typeIt) {
-          auto objIt = std::find(typeIt->second.begin(), typeIt->second.end(), msg.objectID);
-          if (objIt != typeIt->second.end()) {
-            typeIt->second.erase(objIt);
-          }
-        }
-      }
+      _observedObjects.erase(std::remove_if(_observedObjects.begin(),
+                                            _observedObjects.end(),
+                                            [&msg](const ObservedObject& obj) {
+                                              return (obj.id == msg.objectID);
+                                            }),
+                             _observedObjects.end());
       
       HandleRobotDeletedLocatedObject(msg);
     }
@@ -227,12 +229,9 @@ namespace Anki {
         case RobotActionType::PICKUP_OBJECT_LOW:
         {
           const ObjectInteractionCompleted info = msg.completionInfo.Get_objectInteractionCompleted();
-          printf("Robot %s picking up stack of %d objects with IDs: ",
+          printf("Robot %s picking up object with ID: %d ",
                  ActionResultToString(msg.result),
-                 info.numObjects);
-          for(int i=0; i<info.numObjects; ++i) {
-            printf("%d ", info.objectIDs[i]);
-          }
+                 info.objectIDs[0]);
           printf("[Tag=%d]\n", msg.idTag);
         }
           break;
@@ -241,12 +240,9 @@ namespace Anki {
         case RobotActionType::PLACE_OBJECT_LOW:
         {
           const ObjectInteractionCompleted info = msg.completionInfo.Get_objectInteractionCompleted();
-          printf("Robot %s placing stack of %d objects with IDs: ",
+          printf("Robot %s placing object with ID: %d ",
                  ActionResultToString(msg.result),
-                 info.numObjects);
-          for(int i=0; i<info.numObjects; ++i) {
-            printf("%d ", info.objectIDs[i]);
-          }
+                 info.objectIDs[0]);
           printf("[Tag=%d]\n", msg.idTag);
         }
           break;
@@ -347,11 +343,9 @@ namespace Anki {
       PRINT_NAMED_INFO("HandleObjectStates", "Clearing all objects before updating with %zu new objects",
                        msg.objects.size());
       
-      _objectIDToPoseMap.clear();
-      _objectIDToFamilyTypeMap.clear();
-      _objectFamilyToTypeToIDMap.clear();
+      _observedObjects.clear();
       
-      for(auto & objectState : msg.objects)
+      for(const auto & objectState : msg.objects)
       {
         PRINT_NAMED_INFO("HandleLocatedObjectStates",
                          "Received message about known object %d (type: %s, poseState: %hhu)",
@@ -359,10 +353,14 @@ namespace Anki {
                          EnumToString(objectState.objectType),
                          objectState.poseState);
         
+        // observed timestamp of 0 indicates that we are not actually observing it here
+        const uint32_t observedTimestamp = 0;
+        
         AddOrUpdateObject(objectState.objectID,
                           objectState.objectType,
-                          objectState.objectFamily,
-                          objectState.pose);
+                          objectState.pose,
+                          observedTimestamp,
+                          objectState.isConnected);
       }
       
       HandleLocatedObjectStates(msg);
@@ -450,8 +448,6 @@ namespace Anki {
       _robotPoseActual.SetTranslation({0.f, 0.f, 0.f});
       _robotPoseActual.SetRotation(0, Z_AXIS_3D());
       _robotPoseActual.SetParent(_webotsOrigin);
-      
-      _lastObservedObject.Reset();
     }
     
     UiGameController::~UiGameController()
@@ -769,7 +765,7 @@ namespace Anki {
                    "Aligning viz to match next known LightCube to object %d",
                    _robotStateMsg.localizedToObjectID);
           
-          correctionPose = GetPose3dOfNode(*_lightCubeOriginIter)  * _objectIDToPoseMap[_robotStateMsg.localizedToObjectID].GetInverse();
+          correctionPose = GetPose3dOfNode(*_lightCubeOriginIter)  * GetObjectPoseMap()[_robotStateMsg.localizedToObjectID].GetInverse();
           UpdateVizOrigin(correctionPose);
         } else {
           // We have cycled through all the available light cubes, so localize to robot now.
@@ -1755,11 +1751,6 @@ namespace Anki {
       return _robotStateMsg.carryingObjectID;
     }
     
-    s32 UiGameController::GetCarryingObjectOnTopID() const
-    {
-      return _robotStateMsg.carryingObjectOnTopID;
-    }
-    
     bool UiGameController::IsRobotStatus(RobotStatusFlag mask) const
     {
       return _robotStateMsg.status & (uint16_t)mask;
@@ -1768,52 +1759,43 @@ namespace Anki {
     std::vector<s32> UiGameController::GetAllObjectIDs() const
     {
       std::vector<s32> v;
-      for(auto it = _objectIDToPoseMap.begin(); it != _objectIDToPoseMap.end(); ++it) {
-        v.push_back(it->first);
+      for (const auto& obj : _observedObjects) {
+        v.push_back(obj.id);
       }
       return v;
     }
     
-    std::vector<s32> UiGameController::GetAllObjectIDsByFamily(ObjectFamily family) const
+    std::vector<s32> UiGameController::GetAllLightCubeObjectIDs() const
     {
       std::vector<s32> v;
-      auto typeToIDMapIter = _objectFamilyToTypeToIDMap.find(family);
-      if (typeToIDMapIter != _objectFamilyToTypeToIDMap.end()) {
-        for (auto it = typeToIDMapIter->second.begin(); it != typeToIDMapIter->second.end(); ++it) {
-          v.insert(v.end(), it->second.begin(), it->second.end());
+      for (const auto& obj : _observedObjects) {
+        if (IsValidLightCube(obj.type, false)) {
+          v.push_back(obj.id);
         }
       }
       return v;
     }
     
-    std::vector<s32> UiGameController::GetAllObjectIDsByFamilyAndType(ObjectFamily family, ObjectType type) const
+    std::vector<s32> UiGameController::GetAllObjectIDsByType(const ObjectType& type) const
     {
       std::vector<s32> v;
-      auto typeToIDMapIter = _objectFamilyToTypeToIDMap.find(family);
-      if (typeToIDMapIter != _objectFamilyToTypeToIDMap.end()) {
-        auto it = typeToIDMapIter->second.find(type);
-        if (it != typeToIDMapIter->second.end()) {
-          v.insert(v.end(), it->second.begin(), it->second.end());
+      for (const auto& obj : _observedObjects) {
+        if (obj.type == type) {
+          v.push_back(obj.id);
         }
       }
       return v;
-    }
-    
-    Result UiGameController::GetObjectFamily(s32 objectID, ObjectFamily& family) const
-    {
-      auto it = _objectIDToFamilyTypeMap.find(objectID);
-      if (it != _objectIDToFamilyTypeMap.end()) {
-        family = it->second.first;
-        return RESULT_OK;
-      }
-      return RESULT_FAIL;
     }
     
     Result UiGameController::GetObjectType(s32 objectID, ObjectType& type) const
     {
-      auto it = _objectIDToFamilyTypeMap.find(objectID);
-      if (it != _objectIDToFamilyTypeMap.end()) {
-        type = it->second.second;
+      auto it = std::find_if(_observedObjects.begin(),
+                             _observedObjects.end(),
+                             [&objectID](const ObservedObject& obj) {
+                               return (obj.id == objectID);
+                             });
+      if (it != _observedObjects.end()) {
+        type = it->type;
         return RESULT_OK;
       }
       return RESULT_FAIL;
@@ -1821,55 +1803,48 @@ namespace Anki {
     
     Result UiGameController::GetObjectPose(s32 objectID, Pose3d& pose) const
     {
-      auto it = _objectIDToPoseMap.find(objectID);
-      if (it != _objectIDToPoseMap.end()) {
-        pose = it->second;
+      auto it = std::find_if(_observedObjects.begin(),
+                             _observedObjects.end(),
+                             [&objectID](const ObservedObject& obj) {
+                               return (obj.id == objectID);
+                             });
+      if (it != _observedObjects.end()) {
+        pose = it->pose;
         return RESULT_OK;
       }
       return RESULT_FAIL;
     }
-    
-    u32 UiGameController::GetNumObjectsInFamily(ObjectFamily family) const
-    {
-      u32 numObjects = 0;
-      auto typeToIDMapIter = _objectFamilyToTypeToIDMap.find(family);
-      if (typeToIDMapIter != _objectFamilyToTypeToIDMap.end()) {
-        for (auto it = typeToIDMapIter->second.begin(); it != typeToIDMapIter->second.end(); ++it) {
-          numObjects += it->second.size();
-        }
-      }
-      return numObjects;
-    }
-    
-    u32 UiGameController::GetNumObjectsInFamilyAndType(ObjectFamily family, ObjectType type) const
-    {
-      auto typeToIDMapIter = _objectFamilyToTypeToIDMap.find(family);
-      if (typeToIDMapIter != _objectFamilyToTypeToIDMap.end()) {
-        auto it = typeToIDMapIter->second.find(type);
-        return (u32)it->second.size();
-      }
-      return 0;
-    }
-    
+
     u32 UiGameController::GetNumObjects() const
     {
-      return (u32)_objectIDToPoseMap.size();
+      return (u32)_observedObjects.size();
     }
     
     void UiGameController::ClearAllKnownObjects()
     {
-      _objectIDToFamilyTypeMap.clear();
-      _objectFamilyToTypeToIDMap.clear();
-      _objectIDToPoseMap.clear();
+      _observedObjects.clear();
     }
     
-    const std::map<s32, Pose3d>& UiGameController::GetObjectPoseMap() {
-      return _objectIDToPoseMap;
+    std::map<s32, Pose3d> UiGameController::GetObjectPoseMap() {
+      std::map<s32, Pose3d> map;
+      for (const auto& obj : _observedObjects) {
+        map[obj.id] = obj.pose;
+      }
+      return map;
     }
     
-    const UiGameController::ObservedObject& UiGameController::GetLastObservedObject() const
+    UiGameController::ObservedObject UiGameController::GetLastObservedObject() const
     {
-      return _lastObservedObject;
+      auto it = std::max_element(_observedObjects.begin(),
+                                 _observedObjects.end(),
+                                 [](const ObservedObject& obj1, const ObservedObject& obj2) {
+                                   return (obj1.observedTimestamp < obj2.observedTimestamp);
+                                 });
+      if (it == _observedObjects.end()) {
+        return ObservedObject();
+      } else {
+        return *it;
+      }
     }
     
     const Vision::FaceID_t UiGameController::GetLastObservedFaceID() const

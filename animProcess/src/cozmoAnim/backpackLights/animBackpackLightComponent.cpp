@@ -99,8 +99,18 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
   {
     trigger = BackpackAnimationTrigger::Streaming;
   }
-  else if(_isBatteryLow && !_isBatteryCharging)
+  else if( _isBatteryLow && !_isOnChargerContacts )
   {
+    // we use _isOnChargerContacts as a proxy for the only case where
+    // we need to show the low battery lights, since we can only be
+    // off the charger contacts if we are !charging and !disconnected
+    // (and still be turned on)
+    //
+    // charging | disconnected | show low battery lights?
+    // Y        | Y            | N (faking charging bc disconnected)
+    // Y        | N            | N (actually charging)
+    // N        | Y            | N (happens after charging for too long (>25min))
+    // N        | N            | Y (no charging taking place)
     trigger = BackpackAnimationTrigger::LowBattery;
   }
   else if(isMicMuted)
@@ -120,7 +130,8 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
   // If we are on the charger and charging
   else if(_isOnChargerContacts &&
           _isBatteryCharging &&
-          !_isBatteryFull)
+          !_isBatteryFull &&
+          !_isBatteryDisconnected)
   {
     trigger = BackpackAnimationTrigger::Charging;
   }
@@ -485,6 +496,7 @@ void BackpackLightComponent::UpdateBatteryStatus(const RobotInterface::BatterySt
   _isBatteryCharging = msg.isCharging;
   _isOnChargerContacts = msg.onChargerContacts;
   _isBatteryFull = msg.isBatteryFull;
+  _isBatteryDisconnected = msg.isBatteryDisconnected;
 }
 
 

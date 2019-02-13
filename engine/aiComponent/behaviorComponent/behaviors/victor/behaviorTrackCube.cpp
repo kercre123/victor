@@ -94,8 +94,7 @@ void BehaviorTrackCube::OnBehaviorActivated()
 ObjectID BehaviorTrackCube::GetVisibleCube() const
 {
   BlockWorldFilter filter;
-  filter.AddAllowedFamily(ObjectFamily::LightCube);
-  filter.SetFilterFcn(nullptr);
+  filter.AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
   
   // list of visible cubes, sorted by how close they are in asc order
   std::map<float, const ObservableObject*> objectsByDist;

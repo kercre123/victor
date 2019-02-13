@@ -9,9 +9,10 @@ clad/src/clad/types/behaviorComponent/activeFeatures.clad @dstulic
 
 robot/hal/* @ashelly @DanielCasner
 robot/syscon/* @bryon
+robot/include/anki/cozmo/shared/factory/* @alchaussee
 
 # The OTA client
 platform/update-engine/update-engine.py @seichert
 
 # Proto files
-tools/protobuf/gateway/* @anki/cozmo-sdk-admins
+/tools/protobuf/gateway/ @msintov @BruceVonK @rakeshr4

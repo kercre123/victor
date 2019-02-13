@@ -40,6 +40,7 @@
 #include "coretech/common/engine/math/polygon_impl.h"
 #include "coretech/common/engine/utils/timer.h"
 
+#define LOG_CHANNEL "Behaviors"
 
 namespace Anki {
 namespace Vector {
@@ -110,7 +111,6 @@ BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, cons
   numImagesToWaitFor      = JsonTools::ParseInt32(config, kNumImagesToWaitForKey, debugName);
   
   // Set up block world filter for finding charger object
-  homeFilter->AddAllowedFamily(ObjectFamily::Charger);
   homeFilter->AddAllowedType(ObjectType::Charger_Basic);
 }
 
@@ -233,20 +233,8 @@ void BehaviorFindHome::OnBehaviorActivated()
     DelegateIfInControl(new PlaceObjectOnGroundAction(),
                         &BehaviorFindHome::TransitionToStartSearch);
   } else {
-    TransitionToHeadStraight();
+    TransitionToStartSearch();
   }
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindHome::TransitionToHeadStraight()
-{
-  // Move head to look straight ahead in case charger is right in
-  // front of us.
-  DelegateIfInControl(new MoveHeadToAngleAction(0.f),
-                      [this]() {
-                        TransitionToStartSearch();
-                      });
 }
 
 
@@ -259,12 +247,50 @@ void BehaviorFindHome::TransitionToStartSearch()
   _iConfig.condHandleNearPrevSearch->SetOtherPositions(GetRecentlySearchedLocations());
   const bool nearPreviousSearch = !_iConfig.condHandleNearPrevSearch->operator()(robotPosition);
   if (nearPreviousSearch) {
-    PRINT_CH_INFO("Behaviors", "BehaviorFindHome.TransitionToStartSearch.TooCloseToPreviousSearch",
-                  "We are too close to a previously-searched location, so driving to a new search pose");
+    LOG_INFO("BehaviorFindHome.TransitionToStartSearch.TooCloseToPreviousSearch",
+             "We are too close to a previously-searched location, so driving to a new search pose");
     TransitionToRandomDrive();
   } else {
-    TransitionToSearchTurn();
+    TransitionToLookInPlace();
   }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindHome::TransitionToLookInPlace()
+{
+  auto* action = new CompoundActionSequential();
+  
+  // First move the head to look forward, which will maximize the chance of seeing the charger
+  action->AddAction(new MoveHeadToAngleAction(0.f));
+  
+  auto* waitForImagesAction = new WaitForImagesAction(_iConfig.numImagesToWaitFor,
+                                                      VisionMode::DetectingMarkers);
+  if(kFindHome_SaveImages)
+  {
+    const std::string path = GetBEI().GetRobotInfo().GetDataPlatform()->pathToResource(Util::Data::Scope::Cache,
+                                                                                       "findHomeImages");
+    ImageSaverParams params(path,
+                            ImageSaverParams::Mode::Stream,
+                            -1);  // Quality: save PNGs
+    
+    waitForImagesAction->SetSaveParams(params);
+  }
+  
+  const auto currMood = GetBEI().GetMoodManager().GetSimpleMood();
+  const bool isHighStim = (currMood == SimpleMoodType::HighStim);
+  
+  if (isHighStim) {
+    action->AddAction(waitForImagesAction);
+  } else {
+    // In non-high-stim, play a "waiting for images" animation in parallel with the wait for
+    // images action, and play a "search turn end" animation after the "wait for images" anim.
+    action->AddAction(new LoopAnimWhileAction(waitForImagesAction,
+                                              _iConfig.waitForImagesAnimTrigger));
+    action->AddAction(new TriggerAnimationAction(_iConfig.searchTurnEndAnimTrigger));
+  }
+  
+  DelegateIfInControl(action, &BehaviorFindHome::TransitionToSearchTurn);
 }
 
 
@@ -277,12 +303,12 @@ void BehaviorFindHome::TransitionToSearchTurn()
   const bool exceededMaxTurns = (_dVars.numTurnsCompleted >= _iConfig.maxSearchTurns);
   
   if (sweptEnough || exceededMaxTurns) {
-    PRINT_CH_INFO("Behaviors", "BehaviorFindHome.TransitionToSearchTurn.CompletedSearch",
-                  "We have completed a full search. Played %d turn animations (max is %d), and swept an angle of %.2f deg (min required sweep angle %.2f deg)",
-                  _dVars.numTurnsCompleted,
-                  _iConfig.maxSearchTurns,
-                  _dVars.angleSwept_deg,
-                  _iConfig.minSearchAngleSweep_deg);
+    LOG_INFO("BehaviorFindHome.TransitionToSearchTurn.CompletedSearch",
+             "We have completed a full search. Played %d turn animations (max is %d), and swept an angle of %.2f deg (min required sweep angle %.2f deg)",
+             _dVars.numTurnsCompleted,
+             _iConfig.maxSearchTurns,
+             _dVars.angleSwept_deg,
+             _iConfig.minSearchAngleSweep_deg);
     ++_dVars.numSearchesCompleted;
     // Record this as a 'searched' location
     const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -300,38 +326,8 @@ void BehaviorFindHome::TransitionToSearchTurn()
       TransitionToRandomDrive();
     }
   } else {
-    // In high stimulation, just play the search turn animations, but not the
-    // "waiting for images" or "search turn end" animations
-    const auto currMood = GetBEI().GetMoodManager().GetSimpleMood();
-    const bool isHighStim = (currMood == SimpleMoodType::HighStim);
-
-    auto* action = new CompoundActionSequential();
-    
-    // Always do the "search turn"
-    action->AddAction(new TriggerAnimationAction(_iConfig.searchTurnAnimTrigger));
-    
-    WaitForImagesAction* waitForImagesAction = new WaitForImagesAction(_iConfig.numImagesToWaitFor,
-                                                                       VisionMode::DetectingMarkers);
-    if(kFindHome_SaveImages)
-    {
-      const std::string path = GetBEI().GetRobotInfo().GetDataPlatform()->pathToResource(Util::Data::Scope::Cache,
-                                                                                         "findHomeImages");
-      ImageSaverParams params(path,
-                              ImageSaverParams::Mode::Stream,
-                              -1);  // Quality: save PNGs
-      
-      waitForImagesAction->SetSaveParams(params);
-    }
-    
-    if (isHighStim) {
-      action->AddAction(waitForImagesAction);
-    } else {
-      // In non-high-stim, play a "waiting for images" animation in parallel with the wait for
-      // images action, and play a "search turn end" animation after the "wait for images" anim.
-      action->AddAction(new LoopAnimWhileAction(waitForImagesAction,
-                                                _iConfig.waitForImagesAnimTrigger));
-      action->AddAction(new TriggerAnimationAction(_iConfig.searchTurnEndAnimTrigger));
-    }
+    // Queue the "search turn" animation
+    auto* action = new TriggerAnimationAction(_iConfig.searchTurnAnimTrigger);
     
     // Keep track of the pose before the robot starts turning
     const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
@@ -351,7 +347,7 @@ void BehaviorFindHome::TransitionToSearchTurn()
                             DASMSG_SEND_WARNING();
                           }
                           _dVars.angleSwept_deg += std::abs(angleSwept_deg);
-                          TransitionToSearchTurn();
+                          TransitionToLookInPlace();
                         });
   }
 }
@@ -385,7 +381,7 @@ void BehaviorFindHome::TransitionToRandomDrive()
   const Radians angleTol = M_PI_F;    // basically don't care about the angle of arrival
   auto driveToAction = new DriveToPoseAction(potentialSearchPoses);
   driveToAction->SetGoalThresholds(DEFAULT_POSE_EQUAL_DIST_THRESOLD_MM, angleTol);
-  DelegateIfInControl(driveToAction, &BehaviorFindHome::TransitionToSearchTurn);
+  DelegateIfInControl(driveToAction, &BehaviorFindHome::TransitionToLookInPlace);
 }
 
 
@@ -474,8 +470,8 @@ void BehaviorFindHome::GenerateSearchPoses(std::vector<Pose3d>& outPoses)
     }
     
     if( numAcceptedPoses >= kNumPositionsForSearch ) {
-      PRINT_CH_INFO("Behaviors", "BehaviorFindHome.GenerateSearchPoses.Completed",
-                    "Met required sampling of %d points, cnt=%d", numAcceptedPoses, cnt);
+      LOG_INFO("BehaviorFindHome.GenerateSearchPoses.Completed",
+               "Met required sampling of %d points, cnt=%d", numAcceptedPoses, cnt);
       break;
     }
   }

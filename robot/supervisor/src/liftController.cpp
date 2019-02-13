@@ -6,7 +6,7 @@
 #include "velocityProfileGenerator.h"
 
 #include "anki/common/constantsAndMacros.h"
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/radians.h"
 #include "anki/cozmo/robot/hal.h"
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/robot/DAS.h"

@@ -24,7 +24,7 @@ function usage() {
 : ${PLATFORM:=mac}
 : ${CONFIGURATION:=Debug}
 
-while getopts "hc:p" opt; do
+while getopts "hc:p:" opt; do
   case $opt in
     h)
       usage

@@ -19,6 +19,7 @@
 #include "cozmoAnim/speechRecognizer/speechRecognizerSystem.h"
 #include "util/global/globalDefinitions.h"
 #include "util/environment/locale.h"
+#include "util/signals/signalHolder.h"
 
 #include "clad/cloud/mic.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
@@ -35,6 +36,7 @@
 namespace Anki {
   namespace AudioUtil {
     struct SpeechRecognizerCallbackInfo;
+    struct SpeechRecognizerIgnoreReason;
   }
   namespace Vector {
     namespace CloudMic {
@@ -65,7 +67,7 @@ namespace Anki {
 namespace Vector {
 namespace MicData {
 
-class MicDataSystem {
+class MicDataSystem : private Util::SignalHolder {
 public:
   MicDataSystem(Util::Data::DataPlatform* dataPlatform,
                 const AnimContext* context);
@@ -202,6 +204,10 @@ private:
   // name is becuase we hardcode the "reason" that we are leaving the pairing screen based on the assumption
   // that this is triggered via a "hey vector" wakeword
   std::atomic<bool> _abortAlexaScreenDueToHeyVector;
+  
+#if ANKI_DEV_CHEATS
+  std::vector<Json::Value> _devTriggerResults;
+#endif
 
   void SetWillStream(bool willStream) const;
 
@@ -210,7 +216,10 @@ private:
   float GetIncomingMicDataPercentUsed();
   void SendUdpMessage(const CloudMic::Message& msg);
   
-  void SendTriggerDetectionToWebViz(const AudioUtil::SpeechRecognizerCallbackInfo& info);
+  void SendTriggerDetectionToWebViz(const AudioUtil::SpeechRecognizerCallbackInfo& info,
+                                    const AudioUtil::SpeechRecognizerIgnoreReason& ignoreReason);
+  
+  void SendRecentTriggerDetectionToWebViz(const std::function<void(const Json::Value&)>& sendFunc);
 
   void SendRecognizerDasLog(const AudioUtil::SpeechRecognizerCallbackInfo& info,
                             const char* stateStr) const;

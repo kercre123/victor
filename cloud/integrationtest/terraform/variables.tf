@@ -10,19 +10,19 @@ variable "az_count" {
 
 variable "robots_per_process" {
   description = "Number of robot instances per load test Docker container"
-  default = 10
+  default = 100
 }
 
 // Note: number of container instances per cluster: 1000
 variable "instance_count" {
-  description = "Number of load test Docker containers running per task"
-  default = 2
+  description = "Number of load test Docker containers per Fargate cluster"
+  default = 998
 }
 
 // Note: number of tasks using the Fargate launch type, per region, per account: 20 (ECS=1000)
 variable "service_count" {
-  description = "Number of load test services running in cluster"
-  default = 2
+  description = "Number of load test services running per Fargate cluster"
+  default = 1
 }
 
 variable "app_image" {
@@ -38,6 +38,21 @@ variable "logging" {
     index = "sai_loadtest"
     type = "kinesis"
     source_type = "sai_go_general"
+  }
+}
+
+// reporting_interval -> Metrics reporting interval for Wavefront (in Go's time.Duration string format)
+// reporting_tasks -> Number of metrics reporting load test Docker containers per Fargate cluster (can be used to subsample metrics)
+// Estimated steady state datapoint rate (i.e. excluding setup/teardown):
+//    = (instance_count + (reporting_tasks * num_periodic_actions * datapoints_per_action)) / reporting_interval
+//    = (998 + 3 * 5 * 15) / 30 = 40 datapoints per second
+variable "wavefront" {
+  type    = "map"
+  default = {
+    token = "DUMMY_WF_URL_API_TOKEN"
+    url = "https://metrics.wavefront.com/api"
+    reporting_tasks = 3
+    reporting_interval = "30s"
   }
 }
 
