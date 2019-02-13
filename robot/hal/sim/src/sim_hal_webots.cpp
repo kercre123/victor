@@ -1,5 +1,5 @@
 /**
- * File: sim_hal.cpp
+ * File: sim_hal_webots.cpp
  *
  * Author: Andrew Stein (andrew)
  * Created: 10/10/2013
@@ -27,6 +27,7 @@
  *
  **/
 
+#ifdef WEBOTS
 
 // System Includes
 #include <array>
@@ -49,7 +50,6 @@
 #include "simulator/robot/sim_overlayDisplay.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 
-#ifdef WEBOTS
 // Webots Includes
 #include <webots/Robot.hpp>
 #include <webots/Supervisor.hpp>
@@ -64,7 +64,6 @@
 #include <webots/Receiver.hpp>
 #include <webots/Connector.hpp>
 #include <webots/LED.hpp>
-#endif
 
 #define DEBUG_GRIPPER 0
 
@@ -72,7 +71,7 @@
 static const bool kSimulateGyroBias = false;
 
 #ifndef MACOSX
-#error MACOSX should be defined by any target using sim_hal.cpp
+#error MACOSX should be defined by any target using sim_hal_webots.cpp
 #endif
 
 namespace Anki {
@@ -83,7 +82,6 @@ namespace Anki {
       // Const paramters / settings
       // TODO: some of these should be defined elsewhere (e.g. comms)
 
-#ifdef WEBOTS
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
 
       constexpr auto MOTOR_LEFT_WHEEL = EnumToUnderlyingType(MotorID::MOTOR_LEFT_WHEEL);
@@ -93,7 +91,6 @@ namespace Anki {
       constexpr auto MOTOR_COUNT = EnumToUnderlyingType(MotorID::MOTOR_COUNT);
 
       constexpr auto NUM_BACKPACK_LEDS = EnumToUnderlyingType(LEDId::NUM_BACKPACK_LEDS);
-#endif
 
 #pragma mark --- Simulated HardwareInterface "Member Variables" ---
 
@@ -101,21 +98,14 @@ namespace Anki {
 
       u32 tickCnt_ = 0; // increments each robot step (ROBOT_TIME_STEP_MS)
 
-#ifdef WEBOTS
       webots::Supervisor webotRobot_;
-#endif
 
-#ifdef WEBOTS
       s32 robotID_ = -1;
-#else
-      s32 robotID_ = 0;
-#endif
 
       // Power
       HAL::PowerState powerState_ = HAL::POWER_MODE_ACTIVE;
 
       // Motors
-#ifdef WEBOTS
       webots::Motor* leftWheelMotor_;
       webots::Motor* rightWheelMotor_;
 
@@ -149,10 +139,8 @@ namespace Anki {
 
       // Charge contact
       webots::Connector* chargeContact_;
-#endif
       bool wasOnCharger_ = false;
 
-#ifdef WEBOTS
       // Backpack button
       webots::Field* backpackButtonPressedField_ = nullptr;
 
@@ -174,7 +162,6 @@ namespace Anki {
       webots::Field *batteryVoltsField_ = nullptr;
       const webots::Field *batteryChargeRateField_ = nullptr;
       const webots::Field *batteryDischargeRateField_ = nullptr;
-#endif
 
       const u32 batteryUpdateRate_tics_ = 50; // How often to update the simulated battery voltage (in robot ticks)
 
@@ -203,7 +190,6 @@ namespace Anki {
       //void GetGlobalPose(f32 &x, f32 &y, f32& rad);
 
 
-#ifdef WEBOTS
       // Approximate open-loop conversion of wheel power to angular wheel speed
       float WheelPowerToAngSpeed(float power)
       {
@@ -227,11 +213,9 @@ namespace Anki {
       {
         return power * 2*M_PI_F;
       }
-#endif
 
       void MotorUpdate()
       {
-#ifdef WEBOTS
         // Update position and speed info
         f32 posDelta = 0;
         for(int i = 0; i < MOTOR_COUNT; i++)
@@ -253,12 +237,10 @@ namespace Anki {
             motorPrevPositions_[i] = pos;
           }
         }
-#endif
       }
 
       void UpdateSimBatteryVolts()
       {
-#ifdef WEBOTS
         // Grab the charge rate
         const auto* chargeRateField = HAL::BatteryIsCharging() ?
                                       batteryChargeRateField_ :
@@ -278,7 +260,6 @@ namespace Anki {
                                    maxBatteryVolts);
 
         batteryVoltsField_->setSFFloat(batteryVolts);
-#endif
       }
 
       void AudioInputCallback(const AudioUtil::AudioSample* data, uint32_t numSamples)
@@ -317,9 +298,7 @@ namespace Anki {
       // a Simulator namespace so that other Simulation-specific code
       // can talk to it.  This avoids there being a global gCozmoBot
       // running around, accessible in non-simulator code.
-#ifdef WEBOTS
       webots::Supervisor* CozmoBot = &webotRobot_;
-#endif
     }
 
 #pragma mark --- Simulated Hardware Method Implementations ---
@@ -329,7 +308,6 @@ namespace Anki {
 
     Result HAL::Init(const int * shutdownSignal)
     {
-#ifdef WEBOTS
       assert(ROBOT_TIME_STEP_MS >= webotRobot_.getBasicTimeStep());
 
       leftWheelMotor_  = webotRobot_.getMotor("LeftWheelMotor");
@@ -426,10 +404,8 @@ namespace Anki {
       // Charge contact
       chargeContact_ = webotRobot_.getConnector("ChargeContact");
       chargeContact_->enablePresence(ROBOT_TIME_STEP_MS);
-#endif
       wasOnCharger_ = false;
 
-#ifdef WEBOTS
       // Backpack button
       backpackButtonPressedField_ =  webotRobot_.getSelf()->getField("backpackButtonPressed");
       if (backpackButtonPressedField_ == nullptr) {
@@ -443,14 +419,12 @@ namespace Anki {
         AnkiError("sim_hal.Init.NoTouchSensorTouchedField", "");
         return RESULT_FAIL;
       }
-#endif
 
       if (InitRadio() != RESULT_OK) {
         AnkiError("sim_hal.Init.InitRadioFailed", "");
         return RESULT_FAIL;
       }
 
-#ifdef WEBOTS
       // Lights
       leds_[LED_BACKPACK_FRONT] = webotRobot_.getLED("backpackLED1");
       leds_[LED_BACKPACK_MIDDLE] = webotRobot_.getLED("backpackLED2");
@@ -467,7 +441,6 @@ namespace Anki {
 
       batteryDischargeRateField_ = webotRobot_.getSelf()->getField("batteryDischargeRate_voltsPerMin");
       DEV_ASSERT(batteryDischargeRateField_ != nullptr, "simHAL.Init.MissingBatteryDischargeRateField");
-#endif
 
       // Audio Input
       audioCaptureSystem_.SetCallback(std::bind(&AudioInputCallback, std::placeholders::_1, std::placeholders::_2));
@@ -494,10 +467,8 @@ namespace Anki {
 
     void HAL::Destroy()
     {
-#ifdef WEBOTS
       gps_->disable();
       compass_->disable();
-#endif
     } // Destroy()
 
     bool HAL::IsInitialized(void)
@@ -508,7 +479,6 @@ namespace Anki {
 
     void HAL::GetGroundTruthPose(f32 &x, f32 &y, f32& rad)
     {
-#ifdef WEBOTS
       const double* position = gps_->getValues();
       const double* northVector = compass_->getValues();
 
@@ -519,21 +489,15 @@ namespace Anki {
 
       //PRINT("GroundTruth:  pos %f %f %f   rad %f %f %f\n", position[0], position[1], position[2],
       //      northVector[0], northVector[1], northVector[2]);
-#endif
     } // GetGroundTruthPose()
 
 
     bool HAL::IsGripperEngaged() {
-#ifdef WEBOTS
       return isGripperEnabled_ && con_->getPresence()==1;
-#else
-      return false;
-#endif
     }
 
     void HAL::UpdateDisplay(void)
     {
-#ifdef WEBOTS
       using namespace Sim::OverlayDisplay;
      /*
       PRINT("speedDes: %d, speedCur: %d, speedCtrl: %d, speedMeas: %d\n",
@@ -542,13 +506,11 @@ namespace Anki {
               GetControllerCommandedVehicleSpeed(),
               GetCurrentMeasuredVehicleSpeed());
       */
-#endif
     } // HAL::UpdateDisplay()
 
 
     bool HAL::IMUReadData(HAL::IMU_DataStructure &IMUData)
     {
-#ifdef WEBOTS
       const double* gyroVals = gyro_->getValues();  // rad/s
       const double* accelVals = accel_->getValues();   // m/s^2
 
@@ -556,17 +518,6 @@ namespace Anki {
         IMUData.gyro[i]  = (f32)(gyroVals[i]);
         IMUData.accel[i] = (f32)(accelVals[i] * 1000);
       }
-#else
-      float gyroVals[3];
-      float accelVals[3];
-      for (int i=0 ; i<3 ; i++) {
-        gyroVals[i] = (rand() / (float)RAND_MAX) * 0.006f - 0.003f;
-        accelVals[i] = (rand() / (float)RAND_MAX) * 0.006f - 0.003f;
-        IMUData.gyro[i]  = (f32)(gyroVals[i]);
-        IMUData.accel[i] = (f32)(accelVals[i]);// * 1000);
-      }
-#endif
-
 
       // Compute estimated IMU temperature based on measured data from Victor prototype
 
@@ -619,7 +570,6 @@ namespace Anki {
     // Set the motor power in the unitless range [-1.0, 1.0]
     void HAL::MotorSetPower(MotorID motor, f32 power)
     {
-#ifdef WEBOTS
       switch(motor) {
         case MotorID::MOTOR_LEFT_WHEEL:
           leftWheelMotor_->setVelocity(WheelPowerToAngSpeed(power));
@@ -638,13 +588,11 @@ namespace Anki {
           PRINT_NAMED_ERROR("simHAL.MotorSetPower.UndefinedType", "%d", EnumToUnderlyingType(motor));
           return;
       }
-#endif
     }
 
     // Reset the internal position of the specified motor to 0
     void HAL::MotorResetPosition(MotorID motor)
     {
-#ifdef WEBOTS
       if (motor >= MotorID::MOTOR_COUNT) {
         PRINT_NAMED_ERROR("simHAL.MotorResetPosition.UndefinedType", "%d", EnumToUnderlyingType(motor));
         return;
@@ -652,14 +600,12 @@ namespace Anki {
 
       motorPositions_[EnumToUnderlyingType(motor)] = 0;
       //motorPrevPositions_[motor] = 0;
-#endif
     }
 
     // Returns units based on the specified motor type:
     // Wheels are in mm/s, everything else is in degrees/s.
     f32 HAL::MotorGetSpeed(MotorID motor)
     {
-#ifdef WEBOTS
       switch(motor) {
         case MotorID::MOTOR_LEFT_WHEEL:
         case MotorID::MOTOR_RIGHT_WHEEL:
@@ -674,7 +620,6 @@ namespace Anki {
           PRINT_NAMED_ERROR("simHAL.MotorGetSpeed.UndefinedType", "%d", EnumToUnderlyingType(motor));
           break;
       }
-#endif
       return 0;
     }
 
@@ -682,7 +627,6 @@ namespace Anki {
     // Wheels are in mm since reset, everything else is in degrees.
     f32 HAL::MotorGetPosition(MotorID motor)
     {
-#ifdef WEBOTS
       switch(motor) {
         case MotorID::MOTOR_RIGHT_WHEEL:
         case MotorID::MOTOR_LEFT_WHEEL:
@@ -697,7 +641,6 @@ namespace Anki {
           PRINT_NAMED_ERROR("simHAL.MotorGetPosition.UndefinedType", "%d", EnumToUnderlyingType(motor));
           return 0;
       }
-#endif
 
       return 0;
     }
@@ -705,26 +648,22 @@ namespace Anki {
 
     void HAL::EngageGripper()
     {
-#ifdef WEBOTS
       con_->lock();
       con_->enablePresence(ROBOT_TIME_STEP_MS);
       isGripperEnabled_ = true;
 #     if DEBUG_GRIPPER
       PRINT_NAMED_DEBUG("simHAL.EngageGripper.Locked", "");
 #     endif
-#endif
     }
 
     void HAL::DisengageGripper()
     {
-#ifdef WEBOTS
       con_->unlock();
       con_->disablePresence();
       isGripperEnabled_ = false;
 #     if DEBUG_GRIPPER
       PRINT_NAMED_DEBUG("simHAL.DisengageGripper.Unlocked", "");
 #     endif
-#endif
     }
 
     // Forward declaration
@@ -732,11 +671,9 @@ namespace Anki {
 
     Result HAL::Step(void)
     {
-#ifdef WEBOTS
       if(webotRobot_.step(Vector::ROBOT_TIME_STEP_MS) == -1) {
         return RESULT_FAIL;
       } else {
-#endif
         MotorUpdate();
         AudioInputUpdate();
 
@@ -775,10 +712,7 @@ namespace Anki {
 
         ++tickCnt_;
         return RESULT_OK;
-#ifdef WEBOTS
       }
-#endif
-
     } // step()
 
 
@@ -786,13 +720,7 @@ namespace Anki {
     // Get the number of microseconds since boot
     u32 HAL::GetMicroCounter(void)
     {
-#ifdef WEBOTS
       return static_cast<u32>(webotRobot_.getTime() * 1000000.0);
-#else
-      static u32 tick = 0;
-      ++tick;
-      return static_cast<u32>(tick);
-#endif
     }
 
     void HAL::MicroWait(u32 microseconds)
@@ -804,29 +732,20 @@ namespace Anki {
 
     TimeStamp_t HAL::GetTimeStamp(void)
     {
-#ifdef WEBOTS
       return static_cast<TimeStamp_t>(webotRobot_.getTime() * 1000.0);
       //return timeStamp_;
-#else
-      static u32 tick = 0;
-      ++tick;
-      return static_cast<TimeStamp_t>(tick);
-#endif
     }
 
     void HAL::SetLED(LEDId led_id, u32 color) {
-#ifdef WEBOTS
       if (leds_[led_id]) {
         leds_[led_id]->set( color >> 8 ); // RGBA -> 0RGB
       } else {
         PRINT_NAMED_ERROR("simHAL.SetLED.UnhandledLED", "%d", led_id);
       }
-#endif
     }
 
     void HAL::SetSystemLED(u32 color)
     {
-#ifdef WEBOTS
       if(sysLed_ != nullptr)
       {
         sysLed_->set(color >> 8);
@@ -835,7 +754,6 @@ namespace Anki {
       {
         PRINT_NAMED_ERROR("simHAL.SetSystemLED.Nullptr", "");
       }
-#endif
     }
 
     u32 HAL::GetID()
@@ -852,7 +770,6 @@ namespace Anki {
         return proxData;
       }
       
-#ifdef WEBOTS
       if (PowerGetMode() == POWER_MODE_ACTIVE) {
         proxData.distance_mm = static_cast<u16>( proxCenter_->getValue() );
         // Note: These fields are spoofed with simple defaults for now, but should be computed
@@ -871,14 +788,12 @@ namespace Anki {
         proxData.timestamp_ms     = HAL::GetTimeStamp();
         proxData.rangeStatus      = RangeStatus::RANGE_VALID;
       }
-#endif
 
       return proxData;
     }
 
     u16 HAL::GetButtonState(const ButtonID button_id)
     {
-#ifdef WEBOTS
       switch(button_id) {
         case BUTTON_CAPACITIVE:
         {        
@@ -900,7 +815,6 @@ namespace Anki {
           return 0;
         }
       }
-#endif
 
       return 0;
     }
@@ -908,11 +822,9 @@ namespace Anki {
     u16 HAL::GetRawCliffData(const CliffID cliff_id)
     {
       assert(cliff_id < HAL::CLIFF_COUNT);
-#ifdef WEBOTS
       if (PowerGetMode() == POWER_MODE_ACTIVE) {
         return static_cast<u16>(cliffSensors_[cliff_id]->getValue());
       }
-#endif
 
       return CLIFF_CALM_MODE_VAL;
     }
@@ -948,20 +860,12 @@ namespace Anki {
 
     f32 HAL::BatteryGetVoltage()
     {
-#ifdef WEBOTS
       return batteryVoltsField_->getSFFloat();
-#else
-      return 3.45f;
-#endif
     }
 
     bool HAL::BatteryIsCharging()
     {
-#ifdef WEBOTS
       return (chargeContact_->getPresence() == 1);
-#else
-      return true;
-#endif
     }
 
     bool HAL::BatteryIsOnCharger()
@@ -1071,3 +975,5 @@ namespace Anki {
   
   } // namespace Vector
 } // namespace Anki
+
+#endif // WEBOTS

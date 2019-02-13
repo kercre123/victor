@@ -1,5 +1,5 @@
 /**
-* File: util/logging/victorLogger_vicos.h
+* File: util/logging/victorLogger_macos.h
 *
 * Description: Implements ILoggerProvider for Victor
 *

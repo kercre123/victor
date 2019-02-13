@@ -9,9 +9,6 @@
 #include <termios.h>
 #include <string.h>
 
-#ifdef MACOSX
-#include "anki/cozmo/robot/ctassert.h"
-#endif
 #include "schema/messages.h"
 #include "spine_crc.h"
 #include "spine_hal.h"
@@ -120,7 +117,7 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
 int hal_serial_read(uint8_t* buffer, int len)   //->bytes_received
 {
 
-  int result = (int)read(gHal.fd, buffer, len);
+  int result = read(gHal.fd, buffer, len);
   if (result < 0) {
     if (errno == EAGAIN) { //nonblocking no-data
       usleep(HAL_SERIAL_POLL_INTERVAL_US); //wait a bit.
@@ -134,7 +131,7 @@ int hal_serial_read(uint8_t* buffer, int len)   //->bytes_received
 int hal_serial_send(const uint8_t* buffer, int len)
 {
   if (len) {
-    return (int)write(gHal.fd, buffer, len);
+    return write(gHal.fd, buffer, len);
   }
   return 0;
 }

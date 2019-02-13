@@ -30,12 +30,13 @@ cxx_project(
 cxx_project(
     name = 'spine',
     srcs = cxx_src_glob(['hal/spine'],
-                        excludes = ['*_android.*', 'android/**/*','imu.c','cc_commander.c']),
+                        excludes = ['*_android.*', 'android/**/*','imu.c','cc_commander.c','spine_hal.c']),
     platform_srcs = [
         ('vicos', glob(['hal/spine/**/android/**/*.c',
                           'hal/spine/**/*_android.c',
                           'hal/spine/cc_commander.c',
-                          'hal/spine/imu.c']))
+                          'hal/spine/imu.c',
+                          'hal/spine_hal.c']))
     ],
     headers = cxx_header_glob(['hal/spine/**/*.h']),
     platform_headers = [

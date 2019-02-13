@@ -27,15 +27,13 @@ if (VICOS)
         log
         robot_core)
 elseif (MACOSX)
+    set(PLATFORM_LIBS
+        ${OPENCV_LIBS}
+    )
     if (WEBOTS)
         include(webots)
-        set(PLATFORM_LIBS
-            ${OPENCV_LIBS}
+        list(APPEND PLATFORM_LIBS
             ${WEBOTS_LIBS}
-        )
-    else()
-        set(PLATFORM_LIBS
-            ${OPENCV_LIBS}
         )
     endif()
 endif()

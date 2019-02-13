@@ -14,13 +14,12 @@ if (VICOS)
         log
         libcutils.so.0)
 elseif (MACOSX)
+    set(PLATFORM_LIBS
+    )
     if (WEBOTS)
         include(webots)
-        set(PLATFORM_LIBS
+        list(APPEND PLATFORM_LIBS
             ${WEBOTS_LIBS}
-        )
-    else()
-        set(PLATFORM_LIBS
         )
     endif()
 endif()

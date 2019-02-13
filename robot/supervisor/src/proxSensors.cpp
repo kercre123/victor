@@ -109,7 +109,6 @@ namespace Anki {
       ProxSensorDataRaw GetProxData()
       {
         auto proxData = HAL::GetRawProxData();
-<<<<<<< HEAD
 
         if(IsWhiskey())
         {
@@ -117,10 +116,7 @@ namespace Anki {
           return proxData;
         }
         
-#ifndef SIMULATOR
-=======
 #ifndef MACOSX
->>>>>>> VIC-13174 Add ability to build OSX without webots and run as native vic-* processes
         // Apply look-up table to convert from raw distance reading
         // to corrected reading. Piecewise linear interpolation.
         // Assumes kProxSensorRawDistLUT_mm is sorted on 'first' elements.

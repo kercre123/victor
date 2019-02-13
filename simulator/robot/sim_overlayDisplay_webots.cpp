@@ -1,23 +1,19 @@
+#ifdef WEBOTS
+
 #include "simulator/robot/sim_overlayDisplay.h"
 
-#ifdef WEBOTS
-// Webots Includes
 #include <webots/Display.hpp>
 #include <webots/Supervisor.hpp>
-#endif
 
 namespace Anki {
   namespace Vector {
     
     namespace Sim {
-#ifdef WEBOTS
       extern webots::Supervisor* CozmoBot;
-#endif
       namespace OverlayDisplay {
         
         namespace { // "Private members"
           
-#ifdef WEBOTS
           // For Webots Display:
           const f32 OVERLAY_TEXT_SIZE = 0.08f;
           const u32 OVERLAY_TEXT_COLOR = 0xff0000;
@@ -28,23 +24,19 @@ namespace Anki {
           webots::Node* estPose_      = NULL;
           webots::Field* translation_ = NULL;
           webots::Field* rotation_    = NULL;
-#endif
         }
         
         void Init(void)
         {
-#ifdef WEBOTS
           estPose_ = CozmoBot->getFromDef("CozmoBotPose");
           if(estPose_ != NULL) {
             translation_ = estPose_->getField("translation");
             rotation_    = estPose_->getField("rotation");
           }
-#endif
         }
         
         void SetText(TextID ot_id, const char* formatStr, ...)
         {
-#ifdef WEBOTS
           va_list argptr;
           va_start(argptr, formatStr);
           vsnprintf(displayText_, MAX_TEXT_DISPLAY_LENGTH, formatStr, argptr);
@@ -53,12 +45,10 @@ namespace Anki {
           CozmoBot->setLabel(ot_id, displayText_, 0.6f,
                              0.05f + static_cast<f32>(ot_id) * (OVERLAY_TEXT_SIZE/3.f),
                              OVERLAY_TEXT_SIZE, OVERLAY_TEXT_COLOR, 0);
-#endif
         } // SetText()
         
         void UpdateEstimatedPose(const f32 x, const f32 y, const f32 angle)
         {
-#ifdef WEBOTS
           if(translation_ != NULL) {
             const double estTrans[3] = {x, 0, y};
             translation_->setSFVec3f(estTrans);
@@ -68,7 +58,6 @@ namespace Anki {
             const double estRot[4] = {0, 1, 0, angle};
             rotation_->setSFRotation(estRot);
           }
-#endif
         }
         
       } // namespace OverlayDisplay
@@ -77,3 +66,4 @@ namespace Anki {
 } // namespace Anki
 
 
+#endif // WEBOTS

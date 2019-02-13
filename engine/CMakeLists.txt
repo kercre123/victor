@@ -47,18 +47,16 @@ if (VICOS)
   set(PLATFORM_LIBS log)
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
+  set(PLATFORM_LIBS
+      ${FOUNDATION}
+      ${OPENCV_LIBS}
+  )
   if (WEBOTS)
     include(webots)
-    set(PLATFORM_LIBS
-        ${FOUNDATION}
-        ${OPENCV_LIBS}
+    list(APPEND PLATFORM_LIBS
         ${WEBOTS_LIBS}
     )
   else()
-    set(PLATFORM_LIBS
-        ${FOUNDATION}
-        ${OPENCV_LIBS}
-    )
   endif()
 endif()
 

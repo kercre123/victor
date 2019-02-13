@@ -97,20 +97,15 @@ if (VICOS)
     robot_hal
   )
 elseif (MACOSX)
+  set(PLATFORM_LIBS
+      util
+      util_audio
+      cti_messaging
+  )
   if (WEBOTS)
     include(webots)
-
-    set(PLATFORM_LIBS
-        util
-        util_audio
-        cti_messaging
+    list(APPEND PLATFORM_LIBS
         ${WEBOTS_LIBS}
-    )
-  else()
-    set(PLATFORM_LIBS
-        util
-        util_audio
-        cti_messaging
     )
   endif()
   set(PLATFORM_INCLUDES
@@ -121,9 +116,11 @@ elseif (MACOSX)
   )
   set(PLATFORM_SRCS
       ${CMAKE_SOURCE_DIR}/robot/hal/sim/src/sim_DAS.cpp
-      ${CMAKE_SOURCE_DIR}/robot/hal/sim/src/sim_hal.cpp
+      ${CMAKE_SOURCE_DIR}/robot/hal/sim/src/sim_hal_mac.cpp
+      ${CMAKE_SOURCE_DIR}/robot/hal/sim/src/sim_hal_webots.cpp
       ${CMAKE_SOURCE_DIR}/robot/hal/src/radio.cpp
-      ${CMAKE_SOURCE_DIR}/simulator/robot/sim_overlayDisplay.cpp
+      ${CMAKE_SOURCE_DIR}/simulator/robot/sim_overlayDisplay_mac.cpp
+      ${CMAKE_SOURCE_DIR}/simulator/robot/sim_overlayDisplay_webots.cpp
   )
 endif()
 

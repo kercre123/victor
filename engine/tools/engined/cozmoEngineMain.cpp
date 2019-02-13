@@ -343,6 +343,7 @@ int main(int argc, char* argv[])
     printf("failed to start engine\n");
 #ifdef VICOS
     Anki::Vector::UninstallCrashReporter();
+#endif
     return 1;
   }
 
