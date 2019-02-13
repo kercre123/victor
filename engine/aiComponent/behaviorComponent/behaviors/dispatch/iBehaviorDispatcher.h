@@ -52,6 +52,8 @@ protected:
   // optional override for activated
   virtual void BehaviorDispatcher_OnActivated() {}
   virtual void BehaviorDispatcher_OnDeactivated() {}
+
+  virtual bool TryDispatchDesiredBehavior();
   
   // behaviors will be returned in the order they were added
   const std::vector<ICozmoBehaviorPtr>& GetAllPossibleDispatches() const { return _iConfig.behaviors; }

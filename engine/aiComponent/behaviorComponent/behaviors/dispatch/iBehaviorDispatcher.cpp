@@ -134,6 +134,9 @@ void IBehaviorDispatcher::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
   BehaviorDispatcher_OnActivated();
+
+  // go ahead and dispatch our behavior direction from activation since we know we aren't currently delegating
+  TryDispatchDesiredBehavior();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -196,10 +199,7 @@ void IBehaviorDispatcher::BehaviorUpdate()
     if( desiredBehavior != nullptr &&
         static_cast<IBehavior*>( desiredBehavior.get() ) != currBehavior ) {
 
-      const bool delegated = DelegateNow(desiredBehavior.get());
-      DEV_ASSERT_MSG(delegated, "IBehaviorDispatcher.BehaviorUpdate.DelegateFailed",
-                     "Failed to delegate to behavior '%s'",
-                     desiredBehavior->GetDebugLabel().c_str());
+      TryDispatchDesiredBehavior();
     }
   }
 }
@@ -207,17 +207,29 @@ void IBehaviorDispatcher::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehaviorDispatcher::OnBehaviorRegainedControl()
 {
+  // try to dispatch our next behavior since we've just regained control from our previous delegation
+  TryDispatchDesiredBehavior();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IBehaviorDispatcher::TryDispatchDesiredBehavior()
+{
+  bool dispatched = false;
+
   // we should be the top of the stack at this point
-  DEV_ASSERT(!IsControlDelegated(), "IBehaviorDispatcher.OnBehaviorRegainedControl.ControlNotDelegated");
+  DEV_ASSERT(!IsControlDelegated(), "IBehaviorDispatcher.TryDispatchDesiredBehavior.ControlNotDelegated");
+  DEV_ASSERT(GetBEI().HasDelegationComponent(), "IBehaviorDispatcher.TryDispatchDesiredBehavior.HasDelegationComponent");
+
   ICozmoBehaviorPtr desiredBehavior = GetDesiredBehavior();
 
   if( desiredBehavior != nullptr ) {
-
-    const bool delegated = DelegateNow(desiredBehavior.get());
-    DEV_ASSERT_MSG(delegated, "IBehaviorDispatcher.OnBehaviorRegainedControl.DelegateFailed",
+    dispatched = DelegateNow(desiredBehavior.get());
+    DEV_ASSERT_MSG(dispatched, "IBehaviorDispatcher.TryDispatchDesiredBehavior.DelegateFailed",
                    "Failed to delegate to behavior '%s'",
                    desiredBehavior->GetDebugLabel().c_str());
   }
+
+  return dispatched;
 }
 
 }
