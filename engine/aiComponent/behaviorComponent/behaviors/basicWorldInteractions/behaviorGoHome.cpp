@@ -27,6 +27,8 @@
 #include "engine/charger.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/robotStatsTracker.h"
+#include "engine/components/visionComponent.h"
+#include "engine/vision/visionProcessingResult.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/navMap/mapComponent.h"
 
@@ -401,7 +403,7 @@ void BehaviorGoHome::TransitionToDriveToCharger()
                           }
                         } else {
                           // Either out of retries or we got another failure type
-                          ActionFailure();
+                          ActionFailure(false);
                         }
                       });
 }
@@ -460,9 +462,32 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
     
     return poseOk;
   };
+
+  // Temporarily subscribe to the VisionProcessingResult signal
+  //  in order to collect stats about the images seen during this
+  //  period of time where we try to detect the charger's marker.
+  // When the action callback ends, then if we failed to see the
+  //  charger, we can message up the stats on the number of frames
+  //  we attempted to detect, and how many frames were too dark,
+  //  via DAS
+  _dVars.numImagesDetectingMarkers = 0;
+  _dVars.numImagesTooDark = 0;
+  const auto func = [this](const VisionProcessingResult& result) {
+    if(result.modesProcessed.Contains(VisionMode::DetectingMarkers)) {
+      _dVars.numImagesDetectingMarkers++;
+      if(result.imageQuality == Vision::ImageQuality::TooDark) {
+        _dVars.numImagesTooDark++;
+      }
+    }
+  };
+  // note: When the ActionCompletedCallback returns, the handle will be reset.
+  //  This will trigger the un-registration of the callback.
+  _dVars.visionProcessingResultHandle = GetBEI().GetVisionComponent().RegisterVisionResultCallback(func);
   
   DelegateIfInControl(compoundAction,
                       [checkPoseFunc, this](ActionResult result) {
+                        // Destroy the signal handle so we don't get unnecessary callbacks
+                        _dVars.visionProcessingResultHandle.reset();
                         const auto resultCategory = IActionRunner::GetActionResultCategory(result);
                         const bool poseOk = checkPoseFunc();
                         if ((resultCategory == ActionResultCategory::SUCCESS) && poseOk) {
@@ -474,6 +499,10 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
                                               "Deleting charger with ID %d since visual verification failed",
                                               _dVars.chargerID.GetValue());
                           const bool removeChargerFromBlockworld = true;
+                          DASMSG(go_home_charger_not_visible, "go_home.charger_not_visible", "GoHome behavior failure because the charger is not seen when should be.");
+                          DASMSG_SET(i1, _dVars.numImagesDetectingMarkers, "Count of total number of processed image frames searching for Markers");
+                          DASMSG_SET(i2, _dVars.numImagesTooDark, "Count of number of processed image frames (searching for Markers) that are TooDark");
+                          DASMSG_SEND();
                           ActionFailure(removeChargerFromBlockworld);
                         } else if (_dVars.turnToDockRetryCount++ < _iConfig.turnToDockRetryCount) {
                           // Simply go back to the starting pose, which will allow visual
@@ -481,7 +510,7 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
                           TransitionToDriveToCharger();
                         } else {
                           // Out of retries
-                          ActionFailure();
+                          ActionFailure(false);
                         }
                       });
 }
@@ -508,7 +537,7 @@ void BehaviorGoHome::TransitionToTurn()
                           TransitionToDriveToCharger();
                         } else {
                           // Either out of retries or we got another failure type
-                          ActionFailure();
+                          ActionFailure(false);
                         }
                       });
 }
