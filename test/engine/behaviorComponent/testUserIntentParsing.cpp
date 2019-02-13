@@ -135,6 +135,13 @@ TEST(UserIntentsParsing, CloudSampleFileParses)
   UserIntentMap intentMap( cozmoContext->GetDataLoader()->GetUserIntentConfig(), cozmoContext );
   std::vector<std::string> cloudIntentsList = intentMap.DevGetCloudIntentsList();
   for( const auto& cloudName : cloudIntentsList ) {
+    // if this cloud intent has "test_parsing" set to false in user_intent_map, then
+    // skip it and do not check if it exists in Dialogflow sample file
+    if( !intentMap.GetTestParsingBoolFromCloudIntent(cloudName) ) {
+      continue;
+    }
+    //PRINT_NAMED_INFO("UserIntentsParsing.CloudSampleFileParses.CheckingDialogflowSamples",
+    //                 "Looking for Dialogflow sample that matches '%s'", cloudName.c_str());
     bool found = false;
     for( const auto& elem : config ) {
       if( elem["intent"] == cloudName ) {

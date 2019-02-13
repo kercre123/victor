@@ -95,9 +95,6 @@
       "user_intent": "greeting_hello"
     },
     {
-      "user_intent": "status_feeling"
-    },
-    {
       "cloud_intent": "intent_clock_checktimer",
       "user_intent": "check_timer"
     },
@@ -229,7 +226,9 @@
       "app_intent": "intent_names_ask"
     },
     {
-      "user_intent": "silence"
+      "user_intent": "silence",
+      "cloud_intent": "intent_system_noaudio",
+      "test_parsing": false
     },
     {
       "user_intent": "imperative_volumelevel",
