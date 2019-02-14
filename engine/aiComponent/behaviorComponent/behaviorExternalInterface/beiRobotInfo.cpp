@@ -281,6 +281,11 @@ bool BEIRobotInfo::IsCharging() const
   return _robot.GetBatteryComponent().IsCharging();
 }
 
+float BEIRobotInfo::GetOnChargerDurationSec() const
+{
+  return _robot.GetBatteryComponent().GetOnChargerDurationSec();
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsHeadCalibrated() const
 {

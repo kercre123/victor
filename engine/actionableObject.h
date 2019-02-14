@@ -23,26 +23,14 @@
 #include "engine/viz/vizManager.h"
 
 #include "clad/types/objectTypes.h"
-#include "clad/types/objectFamilies.h"
 
 namespace Anki {
   namespace Vector {
     
-    // TODO: Move to separate file
-    class ActiveLED
+    class ActionableObject : public Vector::ObservableObject
     {
     public:
-      ActiveLED();
-      
-    private:
-      ColorRGBA _currentColor;
-      
-    };
-    
-    class ActionableObject : public virtual ObservableObject // NOTE: Vector::ObservableObject, not Vision::
-    {
-    public:
-      ActionableObject();
+      ActionableObject(const ObjectType& type);
       
       // Return only those pre-action poses that are "valid" (See protected
       // IsPreActionPoseValid() method below.)
@@ -65,9 +53,6 @@ namespace Anki {
       // call this from their virtual EraseVisualization() implementations.
       virtual void EraseVisualization() const override;
       
-      // For defining Active Objects (which are powered and have, e.g., LEDs they can flash)
-      std::list<ActiveLED> const& GetLEDs() const { return _activeLEDs; }
-      
     protected:
  
       // Only "valid" poses are returned by GetCurrenPreActionPoses
@@ -81,17 +66,12 @@ namespace Anki {
                                           std::vector<PreActionPose>& preActionPoses) const = 0;
       
       virtual void SetPose(const Pose3d& newPose, f32 fromDistance, PoseState newPoseState) override;
-
-      // TODO: Define a method for adding LEDs to active objects
-      //void AddActiveLED(const Pose3d& poseWrtObject);
       
     private:      
       mutable std::set<VizManager::Handle_t> _vizPreActionPoseHandles;
       
       // Set of pathIDs for visualizing the preActionLines
       mutable std::set<u32> _vizPreActionLineIDs;
-      
-      std::list<ActiveLED> _activeLEDs;
       
       mutable std::array<std::vector<PreActionPose>, PreActionPose::ActionType::NONE> _cachedPreActionPoses;
       

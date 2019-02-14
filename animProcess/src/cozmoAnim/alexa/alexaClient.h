@@ -173,7 +173,7 @@ public:
 
   void AddAudioPlayerObserver( std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::AudioPlayerObserverInterface> observer );
 
-  using OnDirectiveFunc = std::function<void(const std::string&,const std::string&)>;
+  using OnDirectiveFunc = std::function<void(const std::string&,const std::string&,const std::string&)>;
   void SetDirectiveCallback(const OnDirectiveFunc& onDirective) { _onDirectiveFunc = onDirective; }
   
   bool IsAVSConnected() const;

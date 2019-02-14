@@ -55,7 +55,7 @@ namespace Anki {
         }
         case TestState::RollObject:
         {
-          std::vector<s32> objIds = GetAllObjectIDsByFamily(ObjectFamily::LightCube);
+          std::vector<s32> objIds = GetAllLightCubeObjectIDs();
           IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
                                                 !IsRobotStatus(RobotStatusFlag::IS_MOVING),
                                                 NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),

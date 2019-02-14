@@ -97,7 +97,6 @@ set(VICOS_LINKER_FLAGS_EXE)
 
 # Generic flags.
 list(APPEND VICOS_COMPILER_FLAGS
-	-gsplit-dwarf
     -DVICOS
 	-ffunction-sections
 	-fdata-sections

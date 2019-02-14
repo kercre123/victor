@@ -461,7 +461,6 @@ bool BehaviorExploring::IsChargerPositionKnown() const
 const ObservableObject* BehaviorExploring::GetCharger() const
 {
   BlockWorldFilter chargerFilter;
-  chargerFilter.AddAllowedFamily(ObjectFamily::Charger);
   chargerFilter.AddAllowedType(ObjectType::Charger_Basic);
   
   std::vector<const ObservableObject*> locatedChargers;
@@ -479,7 +478,7 @@ bool BehaviorExploring::IsCubeNearCharger() const
 {
   bool retClose = false;
   BlockWorldFilter cubeFilter;
-  cubeFilter.AddAllowedFamily(ObjectFamily::LightCube);
+  cubeFilter.AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
   
   const auto* charger = GetCharger();
   if( charger != nullptr ) {

@@ -73,6 +73,8 @@ CONSOLE_FUNC(ClearMicData, "zHiddenForSafety");
 # undef CONSOLE_GROUP
 
   const std::string kMicSettingsFile = "micMuted";
+  
+  const std::string kSpeechRecognizerWebvizName = "speechrecognizersys";
 }
 
 namespace Anki {
@@ -137,7 +139,7 @@ void MicDataSystem::Init(const RobotDataLoader& dataLoader)
   SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info) {
     
  #if ANKI_DEV_CHEATS
-    SendTriggerDetectionToWebViz(info);
+    SendTriggerDetectionToWebViz(info, {});
     if (kSuppressTriggerResponse) {
       return;
     }
@@ -161,6 +163,15 @@ void MicDataSystem::Init(const RobotDataLoader& dataLoader)
   if( Util::FileUtils::FileExists(_persistentFolder + kMicSettingsFile) ) {
     ToggleMicMute();
   }
+  
+#if ANKI_DEV_CHEATS
+  auto* webService = _context->GetWebService();
+  if( webService ) {
+    AddSignalHandle(webService->OnWebVizSubscribed(kSpeechRecognizerWebvizName).ScopedSubscribe(
+      [this] (const auto& sendFunc) { SendRecentTriggerDetectionToWebViz(sendFunc); }
+    ));
+  }
+#endif
 }
 
 MicDataSystem::~MicDataSystem()
@@ -758,19 +769,23 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
   const bool enabled = (_alexaState != AlexaSimpleState::Disabled);
   
   if ((oldState == AlexaSimpleState::Disabled) && enabled) {
-    const auto callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info)
+    const auto callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info,
+                                  const AudioUtil::SpeechRecognizerIgnoreReason& ignore)
     {
       LOG_INFO("MicDataSystem.SetAlexaState.TriggerWordDetectCallback", "info - %s", info.Description().c_str());
       
 #if ANKI_DEV_CHEATS
-      SendTriggerDetectionToWebViz(info);
+      SendTriggerDetectionToWebViz(info, ignore);
       if (kSuppressTriggerResponse) {
         return;
       }
 #endif
       
-      if( HasStreamingJob() ) {
-        // don't run alexa wakeword if there's a "hey vector" streaming job or if the mic is muted
+      if( ignore || HasStreamingJob() ) {
+        // Don't run alexa wakeword if
+        // 1. there's a "hey vector" streaming job
+        // 2. if the mic is muted
+        // 3. ignore flag is ture, either playback recognizer triggered positive or there is a "notch"
         return;
       }
       Alexa* alexa = _context->GetAlexa();
@@ -788,7 +803,13 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
   }
   
   const bool active = (_alexaState == AlexaSimpleState::Active);
-  _speechRecognizerSystem->ToggleNotchDetector( active );
+  if (_locale.GetCountry() == Util::Locale::CountryISO2::AU) {
+    _speechRecognizerSystem->ToggleNotchDetector( active );
+  }
+  else {
+    // results in some unnecessary method calls but this method does little
+    _speechRecognizerSystem->ToggleNotchDetector( false );
+  }
 }
   
 void MicDataSystem::ToggleMicMute()
@@ -913,23 +934,51 @@ void MicDataSystem::RequestConnectionStatus()
   }
 }
   
-void MicDataSystem::SendTriggerDetectionToWebViz(const AudioUtil::SpeechRecognizerCallbackInfo& info)
+void MicDataSystem::SendTriggerDetectionToWebViz(const AudioUtil::SpeechRecognizerCallbackInfo& info,
+                                                 const AudioUtil::SpeechRecognizerIgnoreReason& ignoreReason)
 {
+#if ANKI_DEV_CHEATS
   if ( _context != nullptr ) {
+    Json::Value data;
+    data["result"] = info.result;
+    data["startTime_ms"] = info.startTime_ms;
+    data["endTime_ms"] = info.endTime_ms;
+    data["startSampleIndex"] = info.startSampleIndex;
+    data["endSampleIndex"] = info.endSampleIndex;
+    data["score"] = info.score;
+    data["notch"] = ignoreReason.notch;
+    data["playback"] = ignoreReason.playback;
+    
+    // don't let result buffer grow infinitely
+    if (_devTriggerResults.size() > 8 && _devTriggerResults.size() == _devTriggerResults.capacity()) {
+      for (int i = 0; i < _devTriggerResults.size() - 1; i++) {
+        _devTriggerResults[i] = std::move(_devTriggerResults[i+1]);
+      }
+      _devTriggerResults[_devTriggerResults.size()-1] = std::move(data);
+    }
+    else {
+      _devTriggerResults.emplace_back(std::move(data));
+    }
+    
     auto* webService = _context->GetWebService();
-    const std::string kModuleName = "speechrecognizersys";
-    if( webService != nullptr && webService->IsWebVizClientSubscribed( kModuleName ) ) {
-      Json::Value data;
-      data["result"] = info.result;
-      data["startTime_ms"] = info.startTime_ms;
-      data["endTime_ms"] = info.endTime_ms;
-      data["startSampleIndex"] = info.startSampleIndex;
-      data["endSampleIndex"] = info.endSampleIndex;
-      data["score"] = info.score;
-      webService->SendToWebViz( kModuleName, data );
+    if( webService != nullptr && webService->IsWebVizClientSubscribed( kSpeechRecognizerWebvizName ) ) {
+      webService->SendToWebViz( kSpeechRecognizerWebvizName, _devTriggerResults.back() );
     }
   }
+#endif
 }
+  
+void MicDataSystem::SendRecentTriggerDetectionToWebViz(const std::function<void(const Json::Value&)>& sendFunc)
+{
+#if ANKI_DEV_CHEATS
+  Json::Value value{Json::arrayValue};
+  for (const auto& val : _devTriggerResults) {
+    value.append(val);
+  }
+  sendFunc(value);
+#endif
+}
+
 
 void MicDataSystem::SendRecognizerDasLog(const AudioUtil::SpeechRecognizerCallbackInfo& info,
                                          const char* stateStr) const
@@ -938,7 +987,7 @@ void MicDataSystem::SendRecognizerDasLog(const AudioUtil::SpeechRecognizerCallba
   MicData::DirectionIndex dominantDirection;
   _micDataProcessor->GetLatestMicDirectionData(directionData, dominantDirection);
   DASMSG( speech_recognized, "mic_data_system.speech_trigger_recognized", "Voice trigger recognized" );
-  DASMSG_SET( s1, (info.result != nullptr) ? info.result : "", "Recognized result" );
+  DASMSG_SET( s1, info.result.c_str(), "Recognized result" );
   DASMSG_SET( s2, (stateStr != nullptr) ? stateStr : "", "Current Alexa UX State");
   DASMSG_SET( s3, std::to_string(info.score).c_str(), "Recognizer Score");
   DASMSG_SET( i1, dominantDirection, "Dominant Direction Index [0, 11], 12 is Unknown Direction" );

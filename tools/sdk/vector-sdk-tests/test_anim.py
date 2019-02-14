@@ -17,11 +17,11 @@ def main():
 
     print("------ begin testing animations ------")
 
-    with anki_vector.Robot(args.serial, cache_animation_list=False) as robot:
+    with anki_vector.Robot(args.serial, cache_animation_lists=False) as robot:
         print("playing animation by name: anim_pounce_success_02")
         robot.anim.play_animation("anim_pounce_success_02")
 
-    with anki_vector.AsyncRobot(args.serial, cache_animation_list=False) as robot:
+    with anki_vector.AsyncRobot(args.serial, cache_animation_lists=False) as robot:
         print("------ testing load async animations ------")
 
         print("receiving all loaded animations")

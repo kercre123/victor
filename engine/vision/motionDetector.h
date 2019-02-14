@@ -16,9 +16,8 @@
 #include "coretech/common/engine/robotTimeStamp.h"
 
 #include "coretech/vision/engine/compressedImage.h"
+#include "coretech/vision/engine/debugImageList.h"
 #include "coretech/vision/engine/image.h"
-
-#include "engine/debugImageList.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 
@@ -73,7 +72,7 @@ public:
                 const VisionPoseData& crntPoseData,
                 const VisionPoseData& prevPoseData,
                 std::list<ExternalInterface::RobotObservedMotion>& observedMotions,
-                DebugImageList<Vision::CompressedImage>& debugImages);
+                Vision::DebugImageList<Vision::CompressedImage>& debugImages);
 
   ~MotionDetector();
 
@@ -85,13 +84,13 @@ private:
                       const VisionPoseData &crntPoseData,
                       const VisionPoseData &prevPoseData,
                       std::list<ExternalInterface::RobotObservedMotion> &observedMotions,
-                      DebugImageList<Vision::CompressedImage> &debugImages);
+                      Vision::DebugImageList<Vision::CompressedImage> &debugImages);
 
   // To detect peripheral motion, a simple impulse-decay model is used. The longer motion is detected in a
   // specific area, the higher its activation will be. When it reaches a max value motion is activated in
   // that specific area.
   bool DetectPeripheralMotionHelper(Vision::Image &ratioImage,
-                                    DebugImageList<Vision::CompressedImage> &debugImages,
+                                    Vision::DebugImageList<Vision::CompressedImage> &debugImages,
                                     ExternalInterface::RobotObservedMotion &msg, f32 scaleMultiplier);
 
   bool DetectGroundAndImageHelper(Vision::Image &foregroundMotion, int numAboveThresh, s32 origNumRows,
@@ -99,7 +98,7 @@ private:
                                   const VisionPoseData &crntPoseData,
                                   const VisionPoseData &prevPoseData,
                                   std::list<ExternalInterface::RobotObservedMotion> &observedMotions,
-                                  DebugImageList<Vision::CompressedImage> &debugImages,
+                                  Vision::DebugImageList<Vision::CompressedImage> &debugImages,
                                   ExternalInterface::RobotObservedMotion &msg);
 
   template <class ImageType>

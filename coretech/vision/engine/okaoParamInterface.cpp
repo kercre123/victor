@@ -59,6 +59,7 @@ typename ParamTraits<RollAngle>::EnumArray ParamTraits<RollAngle>::GetEnums()
     {RollAngle::All,                ROLL_ANGLE_ALL,   "All"},
     {RollAngle::None,               ROLL_ANGLE_NONE,  "None"},
     {RollAngle::UpperPm45,          ROLL_ANGLE_U45,   "Upper +- 45"},
+    {RollAngle::UpperPm60,          ROLL_ANGLE_U45|ROLL_ANGLE_2|ROLL_ANGLE_10, "Upper +- 60"},
     {RollAngle::UpperLeftRightPm15, ROLL_ANGLE_ULR15, "Upper Left Right +- 15"},
     {RollAngle::UpperLeftRightPm45, ROLL_ANGLE_ULR45, "Upper Left Right +- 45"}
   }};

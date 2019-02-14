@@ -215,15 +215,19 @@ enum int_32 AnimationTrigger
   
   HighTemperatureWarningFace,
   
+  HeldOnPalmEdgeNervous,
+  HeldOnPalmEdgeRelaxed,
   HeldOnPalmGetInNervous,
   HeldOnPalmGetInRelaxed,
   HeldOnPalmReactToJolt,
+  HeldOnPalmLookingNervous,
   HeldOnPalmNestling,
   HeldOnPalmPickupNervous,
   HeldOnPalmPickupRelaxed,
   HeldOnPalmPutDownNervous,
   HeldOnPalmPutDownRelaxed,
   HeldOnPalmRollOff,
+  HeldOnPalmTransitionToRelaxed,
 
   SeasonalHappyHolidays,
   SeasonalHappyNewYear,
@@ -496,6 +500,7 @@ enum int_32 AnimationTrigger
   ReactToTriggerWordOffChargerBehindLeft,
   ReactToTriggerWordOffChargerBehindRight,
   ReactToUnclaimedIntent,
+  ReactToUnclaimedIntentInAir,
   ReactToUnexpectedMovement,
   RollBlockRealign,
   RollBlockRetry,

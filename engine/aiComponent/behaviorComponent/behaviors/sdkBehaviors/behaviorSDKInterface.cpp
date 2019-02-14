@@ -182,7 +182,7 @@ void BehaviorSDKInterface::HandleDriveOnChargerComplete() {
 }
 
 // Reports back to gateway that requested actions have been completed.
-// E.g., the Python SDK ran play_anim and wants to know when the animation
+// E.g., the Python SDK ran play_animation and wants to know when the animation
 // action was completed.
 void BehaviorSDKInterface::HandleWhileActivated(const EngineToGameEvent& event)
 {

@@ -40,6 +40,7 @@ void BehaviorReactToUnclaimedIntent::GetBehaviorOperationModifiers( BehaviorOper
   modifiers.wantsToBeActivatedWhenCarryingObject  = true;
   modifiers.behaviorAlwaysDelegates               = true;
   modifiers.wantsToBeActivatedWhenOnCharger       = true;
+  modifiers.wantsToBeActivatedWhenOffTreads       = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -55,12 +56,15 @@ void BehaviorReactToUnclaimedIntent::OnBehaviorActivated()
 {
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   uic.ResetUserIntentUnclaimed();
-  
-  const AnimationTrigger animTrigger = AnimationTrigger::ReactToUnclaimedIntent;
+
+  const auto& robotInfo = GetBEI().GetRobotInfo();
+
+  const bool offTreads = ( robotInfo.GetOffTreadsState() != OffTreadsState::OnTreads );
+  const AnimationTrigger animTrigger = offTreads ? AnimationTrigger::ReactToUnclaimedIntentInAir :
+                                                   AnimationTrigger::ReactToUnclaimedIntent;
   const bool interruptRunning = true;
   const u32 numLoops = 1;
   
-  const auto& robotInfo = GetBEI().GetRobotInfo();
   const auto tracksToLock = robotInfo.IsOnChargerPlatform()
                             ? (u8)AnimTrackFlag::BODY_TRACK
                             : (u8)AnimTrackFlag::NO_TRACKS;

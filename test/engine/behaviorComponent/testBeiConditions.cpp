@@ -1470,7 +1470,7 @@ TEST(BeiConditions, ObjectKnown)
   EXPECT_FALSE( cond1000Ms->AreConditionsMet(bei) );
 
   // put a cube in front of the robot
-  Block_Cube1x1 testCube(testType);
+  Block testCube(testType);
   ObservableObject* object1 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, testType);
   ASSERT_TRUE(nullptr != object1);
 

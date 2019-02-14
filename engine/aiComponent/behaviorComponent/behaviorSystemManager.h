@@ -60,6 +60,11 @@ public:
     dependencies.insert(BCComponentID::AsyncMessageComponent);
   }
 
+  virtual void GetUpdateDependencies(BCCompIDSet& dependencies) const override
+  {
+    dependencies.insert(BCComponentID::UserIntentComponent);
+  }
+
   virtual void AdditionalUpdateAccessibleComponents(BCCompIDSet& components) const override
   {
     components.insert(BCComponentID::BehaviorExternalInterface);

@@ -90,6 +90,7 @@ private:
   void DisableMirrorMode();
   void SayText(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void SetEyeColor(const AnkiEvent<external_interface::GatewayWrapper>& event);
+  void ListAnimationTriggers(const AnkiEvent<external_interface::GatewayWrapper>& event);
 };
 
 } // namespace Vector

@@ -23,7 +23,7 @@
     "databaseFilePath":"<ALEXA_STORAGE_PATH>/settings.db",
     "defaultAVSClientSettings":{
       // See https://developer.amazon.com/docs/alexa-voice-service/settings.html#settingsupdated for valid values.
-      "locale":"en-US"
+      "locale":"<INITIAL_LOCALE>"
     }
   },
   "miscDatabase": {

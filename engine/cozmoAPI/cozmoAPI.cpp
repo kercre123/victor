@@ -59,38 +59,8 @@ namespace Vector {
 #pragma mark --- CozmoAPI Methods ---
 
 #if ANKI_CPU_PROFILER_ENABLED
-  CONSOLE_VAR_ENUM(u8, kCozmoEngineWebots_Logging, ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
   CONSOLE_VAR_ENUM(u8, kCozmoEngine_Logging,       ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
 #endif
-
-bool CozmoAPI::StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Value& config)
-{
-  // If there's already a thread running, we'll kill and restart
-  if (_cozmoRunnerThread.joinable())
-  {
-    Clear();
-  }
-  else if (_cozmoRunner)
-  {
-    PRINT_NAMED_ERROR("CozmoAPI.StartRun", "Non-threaded Cozmo already created!");
-    return Result::RESULT_FAIL;
-  }
-
-  // Init the InstanceRunner
-  bool gameInitResult = false;
-  _cozmoRunner.reset(new CozmoInstanceRunner(dataPlatform, config, gameInitResult));
-
-  if (!gameInitResult)
-  {
-    PRINT_NAMED_ERROR("CozmoAPI.StartRun", "Error initializing new api instance!");
-    return Result::RESULT_FAIL;
-  }
-
-  // Start the thread
-  _cozmoRunnerThread = std::thread(&CozmoInstanceRunner::Run, _cozmoRunner.get());
-
-  return gameInitResult;
-}
 
 bool CozmoAPI::IsRunning() const
 {
@@ -100,20 +70,19 @@ bool CozmoAPI::IsRunning() const
   return false;
 }
 
+
 bool CozmoAPI::Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& config)
 {
-  // If we have a joinable thread already, we can't start
-  if (_cozmoRunnerThread.joinable())
-  {
-    PRINT_NAMED_ERROR("CozmoAPI.Start", "Cozmo already running in thread!");
-    return Result::RESULT_FAIL;
-  }
-
   // Game init happens in CozmoInstanceRunner construction, so we get the result
   // If we already had an instance, kill it and start again
   bool gameInitResult = false;
   _cozmoRunner.reset();
   _cozmoRunner.reset(new CozmoInstanceRunner(dataPlatform, config, gameInitResult));
+
+  if (!gameInitResult)
+  {
+    PRINT_NAMED_ERROR("CozmoAPI.StartRun", "Error initializing new api instance!");
+  }
 
   return gameInitResult;
 }
@@ -124,13 +93,6 @@ ANKI_CPU_PROFILER_ENABLED_ONLY(const float kMaxDesiredEngineDuration = 60.0f); /
 
 bool CozmoAPI::Update(const BaseStationTime_t currentTime_nanosec)
 {
-  // If we have a joinable thread already, shouldn't be updating
-  if (_cozmoRunnerThread.joinable())
-  {
-    PRINT_NAMED_ERROR("CozmoAPI.Update", "Cozmo running in thread - can not be externally updated!");
-    return false;
-  }
-
   if (!_cozmoRunner)
   {
     PRINT_NAMED_ERROR("CozmoAPI.Update", "Cozmo has not been started!");
@@ -139,7 +101,7 @@ bool CozmoAPI::Update(const BaseStationTime_t currentTime_nanosec)
 
   // Replace Util::CpuThreadProfiler::kLogFrequencyNever with a small value to output logging,
   // can be used with Chrome Tracing format
-  ANKI_CPU_TICK("CozmoEngineWebots", kMaxDesiredEngineDuration, Util::CpuProfiler::CpuProfilerLoggingTime(kCozmoEngineWebots_Logging));
+  ANKI_CPU_TICK("CozmoEngine", kMaxDesiredEngineDuration, Util::CpuProfiler::CpuProfilerLoggingTime(kCozmoEngine_Logging));
 
   return _cozmoRunner->Update(currentTime_nanosec);
 }
@@ -198,25 +160,15 @@ CozmoAPI::~CozmoAPI()
 
 void CozmoAPI::Clear()
 {
-  // If there is a thread running, kill it first
-  if (_cozmoRunnerThread.joinable())
+  if (_cozmoRunner)
   {
-    if (_cozmoRunner)
-    {
-      _cozmoRunner->Stop();
-    }
-    else
-    {
-      PRINT_NAMED_ERROR("CozmoAPI.Clear", "Running thread has null object... what?");
-    }
-    _cozmoRunnerThread.join();
-    _cozmoRunnerThread = std::thread();
-
+    _cozmoRunner->Stop();
     // We are now "owning thread" for engine updates
-    if (_cozmoRunner)
-    {
-      _cozmoRunner->SetEngineThread();
-    }
+    _cozmoRunner->SetEngineThread();
+  }
+  else
+  {
+    PRINT_NAMED_ERROR("CozmoAPI.Clear", "Called Clear but there was no cozmo instance runner");
   }
 
   _cozmoRunner.reset();
@@ -241,91 +193,6 @@ CozmoAPI::CozmoInstanceRunner::~CozmoInstanceRunner()
 {
 }
 
-void CozmoAPI::CozmoInstanceRunner::Run()
-{
-  using namespace std::chrono;
-  using TimeClock = steady_clock;
-
-  const auto runStart = TimeClock::now();
-  auto prevTickStart  = runStart;
-  auto tickStart      = runStart;
-
-  // Set the target time for the end of the first frame
-  auto targetEndFrameTime = runStart + (microseconds)(BS_TIME_STEP_MICROSECONDS);
-  Anki::Util::SetThreadName(pthread_self(), "CozmoRunner");
-
-  while(_isRunning)
-  {
-    {
-      ANKI_CPU_TICK("CozmoEngine", kMaxDesiredEngineDuration, Util::CpuProfiler::CpuProfilerLoggingTime(kCozmoEngine_Logging));
-
-      const duration<double> curTimeSeconds = tickStart - runStart;
-      const double curTimeNanoseconds = Util::SecToNanoSec(curTimeSeconds.count());
-
-      const bool tickSuccess = Update(Util::numeric_cast<BaseStationTime_t>(curTimeNanoseconds));
-      if (!tickSuccess)
-      {
-        // If we fail to update properly, stop running
-        Stop();
-      }
-    }
-
-    const auto tickAfterEngineExecution = TimeClock::now();
-    const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickAfterEngineExecution);
-    const auto tickDuration_us = duration_cast<microseconds>(tickAfterEngineExecution - tickStart);
-
-    tracepoint(anki_ust, vic_engine_loop_duration, tickDuration_us.count());
-#if ENABLE_TICK_TIME_WARNINGS
-    // Only complain if we're more than 10ms behind
-    if (remaining_us < microseconds(-10000))
-    {
-      PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.overtime", "Update() (%dms max) is behind by %.3fms",
-                          BS_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
-    }
-#endif
-    // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
-    // allows other threads to run
-    static const auto minimumSleepTime_us = microseconds((long)0);
-    const auto sleepTime_us = std::max(minimumSleepTime_us, remaining_us);
-    {
-      ANKI_CPU_PROFILE("CozmoApi.Runner.Sleep");
-
-      std::this_thread::sleep_for(sleepTime_us);
-    }
-
-    // Set the target end time for the next frame
-    targetEndFrameTime += (microseconds)(BS_TIME_STEP_MICROSECONDS);
-
-    // See if we've fallen very far behind (this happens e.g. after a 5-second blocking
-    // load operation); if so, compensate by catching the target frame end time up somewhat.
-    // This is so that we don't spend the next SEVERAL frames catching up.
-    const auto timeBehind_us = -remaining_us;
-    static const auto kusPerFrame = ((microseconds)(BS_TIME_STEP_MICROSECONDS)).count();
-    static const int kTooFarBehindFramesThreshold = 2;
-    static const auto kTooFarBehindThreshold = (microseconds)(kTooFarBehindFramesThreshold * kusPerFrame);
-    if (timeBehind_us >= kTooFarBehindThreshold)
-    {
-      const int framesBehind = (int)(timeBehind_us.count() / kusPerFrame);
-      const auto forwardJumpDuration = kusPerFrame * framesBehind;
-      targetEndFrameTime += (microseconds)forwardJumpDuration;
-#if ENABLE_TICK_TIME_WARNINGS
-      PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.catchup",
-                          "Update was too far behind so moving target end frame time forward by an additional %.3fms",
-                          (float)(forwardJumpDuration * 0.001f));
-#endif
-    }
-    tickStart = TimeClock::now();
-
-    const auto timeSinceLastTick_us = duration_cast<microseconds>(tickStart - prevTickStart);
-    prevTickStart = tickStart;
-
-    const auto sleepTimeActual_us = duration_cast<microseconds>(tickStart - tickAfterEngineExecution);
-    GetEngine()->RegisterEngineTickPerformance(tickDuration_us.count() * 0.001f,
-                                               timeSinceLastTick_us.count() * 0.001f,
-                                               sleepTime_us.count() * 0.001f,
-                                               sleepTimeActual_us.count() * 0.001f);
-  }
-}
 
 bool CozmoAPI::CozmoInstanceRunner::Update(const BaseStationTime_t currentTime_nanosec)
 {

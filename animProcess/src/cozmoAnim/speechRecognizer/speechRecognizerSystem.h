@@ -25,6 +25,7 @@ namespace Anki {
   namespace AudioUtil {
     class SpeechRecognizer;
     struct SpeechRecognizerCallbackInfo;
+    struct SpeechRecognizerIgnoreReason;
   }
   namespace Vector {
     class Alexa;
@@ -65,6 +66,8 @@ public:
   SpeechRecognizerSystem& operator=(const SpeechRecognizerSystem& other) = delete;
   
   using TriggerWordDetectedCallback = std::function<void(const AudioUtil::SpeechRecognizerCallbackInfo& info)>;
+  using AlexaTriggerWordDetectedCallback = std::function<void(const AudioUtil::SpeechRecognizerCallbackInfo& info,
+                                                              const AudioUtil::SpeechRecognizerIgnoreReason& reason)>;
   
   // Init Vector trigger detector
   // Note: This always happens at boot
@@ -84,14 +87,24 @@ public:
   void Update(const AudioUtil::AudioSample * audioData, unsigned int audioDataLen, bool vadActive);
   
   // Set Default models for locale
+  // Use flag to describe what recognizer(s) to updated
   // Return true when locale file was found and is different then current locale
   // NOTE: Locale is not updated until the next Update() call
-  bool UpdateTriggerForLocale(const Util::Locale& newLocale);
+  enum RecognizerTypeFlag {
+    None          = 0,
+    VectorMic     = 1 << 0,
+    AlexaMic      = 1 << 1,
+    AlexaPlayback = 1 << 2,
+    All           = VectorMic | AlexaMic | AlexaPlayback
+  };
+  
+  bool UpdateTriggerForLocale(const Util::Locale& newLocale,
+                              RecognizerTypeFlag recognizerFlags = RecognizerTypeFlag::All);
   
   // Alexa Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Alexa has been set active set current locale and callback for Alexa trigger recognitions
-  void ActivateAlexa(const Util::Locale& locale, TriggerWordDetectedCallback callback);
+  void ActivateAlexa(const Util::Locale& locale, AlexaTriggerWordDetectedCallback callback);
   
   // Alexa has been disabled, turn off the "Alexa" recognizer
   void DisableAlexa();
@@ -106,6 +119,7 @@ private:
   // Trigger context
   template <class SpeechRecognizerType>
   struct TriggerContext {
+    std::string                                 name;
     std::unique_ptr<SpeechRecognizerType>       recognizer;
     std::unique_ptr<MicData::MicTriggerConfig>  micTriggerConfig;
 
@@ -113,8 +127,9 @@ private:
     MicData::MicTriggerConfig::TriggerDataPaths currentTriggerPaths;
     MicData::MicTriggerConfig::TriggerDataPaths nextTriggerPaths;
 
-    TriggerContext()
-    : recognizer(std::make_unique<SpeechRecognizerType>())
+    TriggerContext(const std::string& name)
+    : name(name)
+    , recognizer(std::make_unique<SpeechRecognizerType>())
     , micTriggerConfig(std::make_unique<MicData::MicTriggerConfig>())
     { }
   };
@@ -149,7 +164,7 @@ private:
   // Init Alexa trigger detector
   // Note: This is done after Alex user has been authicated
   void InitAlexa(const Util::Locale& locale,
-                 const TriggerWordDetectedCallback callback);
+                 const AlexaTriggerWordDetectedCallback callback);
   
   // Init Alex playback trigger detector
   void InitAlexaPlayback(const Util::Locale& locale,

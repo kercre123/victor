@@ -55,6 +55,11 @@ bool ProtoCladInterpreter::Redirect(
       ProtoListAnimationsRequestToClad(proto_message, clad_message);
       break;
     }
+    case external_interface::GatewayWrapper::kPlayAnimationTriggerRequest:
+    {
+      ProtoPlayAnimationTriggerRequestToClad(proto_message, clad_message);
+      break;
+    }
     default:
     {
       return false;
@@ -148,6 +153,18 @@ void ProtoCladInterpreter::ProtoListAnimationsRequestToClad(
   clad_message.Set_RequestAvailableAnimations(request_available_animations);
 }
 
+void ProtoCladInterpreter::ProtoPlayAnimationTriggerRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+  Anki::Vector::ExternalInterface::PlayAnimationTrigger play_animation_trigger;
+  play_animation_trigger.trigger = AnimationTriggerFromString( proto_message.play_animation_trigger_request().animation_trigger().name() );
+  play_animation_trigger.useLiftSafe = proto_message.play_animation_trigger_request().use_lift_safe();
+  play_animation_trigger.ignoreBodyTrack = proto_message.play_animation_trigger_request().ignore_body_track();
+  play_animation_trigger.ignoreHeadTrack = proto_message.play_animation_trigger_request().ignore_head_track();
+  play_animation_trigger.ignoreLiftTrack = proto_message.play_animation_trigger_request().ignore_lift_track();
+  play_animation_trigger.numLoops = proto_message.play_animation_trigger_request().loops();
+  clad_message.Set_PlayAnimationTrigger(play_animation_trigger);
+}
 
 void ProtoCladInterpreter::CladDriveWheelsToProto(
     const ExternalInterface::MessageGameToEngine& clad_message,
@@ -177,7 +194,7 @@ void ProtoCladInterpreter::CladEndOfMessageToProto(
     external_interface::GatewayWrapper& proto_message) {
   external_interface::ListAnimationsResponse* end_of_list_animations_response = 
       new external_interface::ListAnimationsResponse;
-  // Don't change "EndOfListAnimationsResponses" - The .go recipient depends upon it.
+  // Don't change "EndOfListAnimationsResponses" - vic-gateway depends upon it.
   end_of_list_animations_response->add_animation_names()->set_name("EndOfListAnimationsResponses");
   proto_message = ExternalMessageRouter::WrapResponse(end_of_list_animations_response);
 }

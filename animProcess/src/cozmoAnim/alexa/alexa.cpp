@@ -43,6 +43,10 @@
 namespace Anki {
 namespace Vector {
   
+// VIC-13319 remove
+CONSOLE_VAR(bool, kAlexaEnabledInUK, "Alexa", true);
+CONSOLE_VAR(bool, kAlexaEnabledInAU, "Alexa", true);
+  
 namespace {
   const std::string kAlexaPath = "alexa";
   const std::string kOptedInFile = "optedIn";
@@ -57,6 +61,19 @@ namespace {
   const bool kPlayErrorIfSignedOut = false;
   
   const float kAlexaErrorTimeout_s = 15.0f; // max duration for error audio
+  
+  bool AlexaLocaleEnabled(const Util::Locale& locale)
+  {
+    if( locale.GetCountry() == Util::Locale::CountryISO2::US ) {
+      return true;
+    } else if( locale.GetCountry() == Util::Locale::CountryISO2::GB ) {
+      return kAlexaEnabledInUK;
+    } else if( locale.GetCountry() == Util::Locale::CountryISO2::AU ) {
+      return kAlexaEnabledInAU;
+    } else {
+      return false;
+    }
+  }
 }
 
 CONSOLE_VAR(bool, kAllowAudioOnCharger, "Alexa", true);
@@ -69,16 +86,16 @@ AudioEngine::AudioEventId GetErrorAudioEvent( AlexaNetworkErrorType errorType )
   switch( errorType ) {
     case AlexaNetworkErrorType::NoInitialConnection:
       // "I'm having trouble connecting to the internet. For help, go to your device's companion app"
-      return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__En_Us_Avs_System_Prompt_Error_Offline_Not_Connected_To_Internet );
+      return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Avs_System_Prompt_Error_Offline_Not_Connected_To_Internet );
     case AlexaNetworkErrorType::LostConnection:
       // "Sorry, your device lost its connection."
-      return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__En_Us_Avs_System_Prompt_Error_Offline_Lost_Connection );
+      return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Avs_System_Prompt_Error_Offline_Lost_Connection );
     case AlexaNetworkErrorType::HavingTroubleThinking:
       // "Sorry, I'm having trouble understanding right now. please try a little later"
-      return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__En_Us_Avs_System_Prompt_Error_Offline_Not_Connected_To_Service_Else );
+      return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Avs_System_Prompt_Error_Offline_Not_Connected_To_Service_Else );
     case AlexaNetworkErrorType::AuthRevoked:
       // "Your device isnt registered. For help, go it its companion app"
-      return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__En_Us_Avs_System_Prompt_Error_Offline_Not_Registered );
+      return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Avs_System_Prompt_Error_Offline_Not_Registered );
     case AlexaNetworkErrorType::NoError:
     default:
       return AudioEngine::kInvalidAudioEventId;
@@ -155,8 +172,8 @@ void Alexa::Update()
   }
   
   if( _pendingLocale && HasInitializedImpl() ) {
-    _impl->SetLocale( *_pendingLocale );
-    _pendingLocale.reset();
+    _impl->SetLocale( *_locale );
+    _pendingLocale = false;
   }
   
   if( _impl != nullptr) {
@@ -253,6 +270,11 @@ void Alexa::SetAlexaActive( bool active, bool deleteUserData )
     // this is also set in other ways, but just to be sure
     SetAuthState( AlexaAuthState::Uninitialized );
     OnAlexaUXStateChanged( AlexaUXState::Idle );
+    
+    // If the user signs in again without rebooting, use the old locale
+    if( _locale != nullptr ) {
+      _pendingLocale = true;
+    }
   }
 }
   
@@ -805,16 +827,58 @@ void Alexa::NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Alexa::UpdateLocale( const Util::Locale& locale )
 {
+  if( !AlexaLocaleEnabled(locale) ) {
+    return;
+  }
+  
+  _locale.reset( new Util::Locale{locale} );
   if( HasInitializedImpl() ) {
     _impl->SetLocale( locale );
-    _pendingLocale.reset();
+    _pendingLocale = false;
   } else {
-    _pendingLocale.reset( new Util::Locale{locale} );
+    _pendingLocale = true;
+  }
+  // tell audio about the new locale for its baked in assets
+
+  auto* audioController = _context->GetAudioController();
+  if ( audioController != nullptr ) {
+    using namespace AudioEngine;
+    const auto gameObject = ToAudioGameObject( AudioMetaData::GameObjectType::Alexa );
+    bool matched = true;
+    AudioMetaData::SwitchState::Robot_Alexa_Locale newState = AudioMetaData::SwitchState::Robot_Alexa_Locale::En_Us;
+    switch( locale.GetCountry() ) {
+      case Util::Locale::CountryISO2::US:
+      case Util::Locale::CountryISO2::CA:
+      {
+        newState = AudioMetaData::SwitchState::Robot_Alexa_Locale::En_Us;
+      }
+        break;
+      case Util::Locale::CountryISO2::GB:
+      {
+        newState = AudioMetaData::SwitchState::Robot_Alexa_Locale::En_Uk;
+      }
+        break;
+      case Util::Locale::CountryISO2::AU:
+      {
+        newState = AudioMetaData::SwitchState::Robot_Alexa_Locale::En_Au;
+      }
+        break;
+      default:
+      {
+        matched = false;
+      }
+        break;
+    }
+    if( matched ) {
+      audioController->SetSwitchState( ToAudioSwitchGroupId( AudioMetaData::SwitchState::SwitchGroupType::Robot_Alexa_Locale ),
+                                       ToAudioSwitchStateId( (AudioMetaData::SwitchState::GenericSwitch) newState ),
+                                       gameObject );
+    }
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint64_t Alexa::GetMichrophoneSampleIndex() const
+uint64_t Alexa::GetMicrophoneSampleIndex() const
 {
   std::lock_guard<std::mutex> lg{ _implMutex };
   if( HasInitializedImpl() ) {

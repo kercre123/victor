@@ -26,7 +26,7 @@ function usage() {
 : ${CONFIGURATION:=Debug}
 : ${VERBOSE:=0}
 
-while getopts "hvc:p" opt; do
+while getopts "hvc:p:" opt; do
   case $opt in
     h)
       usage

@@ -334,7 +334,7 @@ void BehaviorDriveOffCharger::TransitionToDrivingFace()
 void BehaviorDriveOffCharger::TransitionToDrivingCube()
 {
   BlockWorldFilter filter;
-  filter.SetAllowedFamilies( {ObjectFamily::LightCube} );
+  filter.AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
   
   const ObservableObject* obj = GetBEI().GetBlockWorld().FindMostRecentlyObservedObject( filter );
   if( obj != nullptr ) {

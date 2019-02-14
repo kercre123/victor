@@ -8,69 +8,26 @@ namespace Vector {
 
   // TODO: change to int_16 or uint_8
   enum int_32 ObjectType {
-    InvalidObject = -1,
     UnknownObject = 0,
     
-    //////////////////////////////////////////////////////////////////////////
-    // Regular (Passive) Blocks ("1x1 Cubes")
-    //
-    //    Block_ANGRYFACE,
-
-    //    Block_BULLSEYE2_INVERTED,
-    //    Block_SQTARGET,
-    //    Block_FIRE,
-    //    Block_ANKILOGO,
-
-    //    Block_FLAG,
-    //    Block_FLAG2,
-    //    Block_FLAG_INVERTED,
-    //    Block_SPIDER,
-    //    Block_KITTY,
-    //    Block_BEE,
-    //    Block_DICE,
-
-    // 2x1 Blocks?
-    //    Block_BANGBANGBANG,
-
     //////////////////////////////////////////////////////////////////////////
     // Light Cubes (a.k.a. Active Blocks)
     //
     
-    Block_LIGHTCUBE1,
+    Block_LIGHTCUBE1 = 1, // value is specified here for SDK backward compatibility
     Block_LIGHTCUBE2,
     Block_LIGHTCUBE3,
 
     Block_LIGHTCUBE_GHOST,
-    
-    //////////////////////////////////////////////////////////////////////////
-    // Mat Pieces
-    //
-    
-    // Flat mats:
-    FlatMat_GEARS_4x4,
-    FlatMat_LETTERS_4x4,
-    FlatMat_ANKI_LOGO_8BIT,
-    FlatMat_LAVA_PLAYTEST,
-
-    // Platform piece:
-    Platform_LARGE,
 
     //////////////////////////////////////////////////////////////////////////
     // Charger
     //
-    Charger_Basic,
-    
-    
-    //////////////////////////////////////////////////////////////////////////
-    // Markerless Objects (e.g. obstacles)
-    //
-    ProxObstacle,
-    CliffDetection,
-    CollisionObstacle,
+    Charger_Basic = 5, // value is specified here for SDK backward compatibility
 
     //////////////////////////////////////////////////////////////////////////
     // Custom Objects defined via DefineCustomObject
-    CustomType00,
+    CustomType00 = 14, // value is specified here for SDK backward compatibility
     CustomType01,
     CustomType02,
     CustomType03,
@@ -98,31 +55,18 @@ namespace Vector {
     // Custom "fixed" object (i.e. obstacle)
     CustomFixedObstacle,
 
-    Block_STAR5,
-    Block_ARROW,
-    Block_BULLSEYE2,
-
   } // enum class ObjectType
   
   
 // Enum Concepts for ObjectType:
 
   enum_concept bool IsValidLightCube[ObjectType] {
-    InvalidObject          = 0,
     UnknownObject          = 0,
     Block_LIGHTCUBE1       = 1,
     Block_LIGHTCUBE2       = 1,
     Block_LIGHTCUBE3       = 1,
     Block_LIGHTCUBE_GHOST  = 0,
-    FlatMat_GEARS_4x4      = 0,
-    FlatMat_LETTERS_4x4    = 0,
-    FlatMat_ANKI_LOGO_8BIT = 0,
-    FlatMat_LAVA_PLAYTEST  = 0,
-    Platform_LARGE         = 0,
     Charger_Basic          = 0,
-    ProxObstacle           = 0,
-    CliffDetection         = 0,
-    CollisionObstacle      = 0,
     CustomType00           = 0,
     CustomType01           = 0,
     CustomType02           = 0,
@@ -143,28 +87,46 @@ namespace Vector {
     CustomType17           = 0,
     CustomType18           = 0,
     CustomType19           = 0,
-    CustomFixedObstacle    = 0,
-    Block_BULLSEYE2        = 0,
-    Block_STAR5            = 0,
-    Block_ARROW            = 0
+    CustomFixedObstacle    = 0
   }
-
-  enum_concept bool IsCharger[ObjectType] {
-    InvalidObject          = 0,
+  
+  enum_concept bool IsBlockType[ObjectType] {
+    UnknownObject          = 0,
+    Block_LIGHTCUBE1       = 1,
+    Block_LIGHTCUBE2       = 1,
+    Block_LIGHTCUBE3       = 1,
+    Block_LIGHTCUBE_GHOST  = 1,
+    Charger_Basic          = 0,
+    CustomType00           = 0,
+    CustomType01           = 0,
+    CustomType02           = 0,
+    CustomType03           = 0,
+    CustomType04           = 0,
+    CustomType05           = 0,
+    CustomType06           = 0,
+    CustomType07           = 0,
+    CustomType08           = 0,
+    CustomType09           = 0,
+    CustomType10           = 0,
+    CustomType11           = 0,
+    CustomType12           = 0,
+    CustomType13           = 0,
+    CustomType14           = 0,
+    CustomType15           = 0,
+    CustomType16           = 0,
+    CustomType17           = 0,
+    CustomType18           = 0,
+    CustomType19           = 0,
+    CustomFixedObstacle    = 0
+  }
+  
+  enum_concept bool IsChargerType[ObjectType] {
     UnknownObject          = 0,
     Block_LIGHTCUBE1       = 0,
     Block_LIGHTCUBE2       = 0,
     Block_LIGHTCUBE3       = 0,
     Block_LIGHTCUBE_GHOST  = 0,
-    FlatMat_GEARS_4x4      = 0,
-    FlatMat_LETTERS_4x4    = 0,
-    FlatMat_ANKI_LOGO_8BIT = 0,
-    FlatMat_LAVA_PLAYTEST  = 0,
-    Platform_LARGE         = 0,
     Charger_Basic          = 1,
-    ProxObstacle           = 0,
-    CliffDetection         = 0,
-    CollisionObstacle      = 0,
     CustomType00           = 0,
     CustomType01           = 0,
     CustomType02           = 0,
@@ -185,11 +147,51 @@ namespace Vector {
     CustomType17           = 0,
     CustomType18           = 0,
     CustomType19           = 0,
-    CustomFixedObstacle    = 0,
-    Block_BULLSEYE2        = 0,
-    Block_STAR5            = 0,
-    Block_ARROW            = 0
+    CustomFixedObstacle    = 0
   }
+  
+  enum_concept bool IsCustomType[ObjectType] {
+    UnknownObject          = 0,
+    Block_LIGHTCUBE1       = 0,
+    Block_LIGHTCUBE2       = 0,
+    Block_LIGHTCUBE3       = 0,
+    Block_LIGHTCUBE_GHOST  = 0,
+    Charger_Basic          = 0,
+    CustomType00           = 1,
+    CustomType01           = 1,
+    CustomType02           = 1,
+    CustomType03           = 1,
+    CustomType04           = 1,
+    CustomType05           = 1,
+    CustomType06           = 1,
+    CustomType07           = 1,
+    CustomType08           = 1,
+    CustomType09           = 1,
+    CustomType10           = 1,
+    CustomType11           = 1,
+    CustomType12           = 1,
+    CustomType13           = 1,
+    CustomType14           = 1,
+    CustomType15           = 1,
+    CustomType16           = 1,
+    CustomType17           = 1,
+    CustomType18           = 1,
+    CustomType19           = 1,
+    CustomFixedObstacle    = 1
+  }
+  
+  // Note: ObjectFamily is deprecated and is only still here for compatiblity with SDK version 0.5.1 and earlier.
+  //       This should eventually be removed when we no longer care about maintaining compatibility with that version.
+  // DO NOT change the values for these enum entries!
+  enum int_32 ObjectFamily {
+    Invalid      = -1,
+    Unknown      = 0,
+    Block        = 1,
+    LightCube    = 2,
+    Charger      = 3,
+    CustomObject = 6,
+  }
+
   
 } // namespace Vector
 } // namespace Anki

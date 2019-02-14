@@ -391,11 +391,16 @@ ConsoleFuncCall(struct mg_connection *conn, void *cbdata)
       args = func.substr(amp+6);  // skip over "args="
       func = func.substr(5, amp-5);
 
-      // unescape '+' => ' '
+      // unescape '+' => ' ',  except if it follows a '\', in which case keep the '+' and drop the '\'
 
       size_t plus = args.find("+");
       while (plus != std::string::npos) {
-        args = args.replace(plus, 1, " ");
+        if( (plus > 0) && (args[plus-1] == '\\') ) {
+          args.erase(plus-1, 1);
+          --plus;
+        } else {
+          args = args.replace(plus, 1, " ");
+        }
         plus = args.find("+", plus+1);
       }
 
@@ -528,10 +533,12 @@ static int GetInitialConfig(struct mg_connection *conn, void *cbdata)
   const std::string& whichWebServer       = std::to_string(that->GetConfig()["whichWebServer"].asInt());
   const std::string& allowConsoleVarsPage = that->GetConfig()["allowConsoleVarsPage"].asString();
   const std::string& allowPerfMetricPage  = that->GetConfig()["allowPerfMetricPage"].asString();
+  const int tickBudget_ms                 = that->GetConfig()["tickBudget_ms"].asInt();
 
-  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n", title0.c_str(), title1.c_str(),
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n%s\n%s\n%d\n", title0.c_str(), title1.c_str(),
             startPage.c_str(), webotsSim.c_str(), allowPerfPage.c_str(),
-            whichWebServer.c_str(), allowConsoleVarsPage.c_str(), allowPerfMetricPage.c_str());
+            whichWebServer.c_str(), allowConsoleVarsPage.c_str(), allowPerfMetricPage.c_str(),
+            tickBudget_ms);
   return 1;
 }
 
@@ -1225,7 +1232,12 @@ void WebService::Update()
 void WebService::Stop()
 {
   if (_ctx) {
+#ifdef VICOS
+    // shutdown nicely on the robot but let the OS handle it for the simulator, mg_stop triggers
+    // the thread sanitizer and execution stops here, by removing this line in SIMULATOR builds
+    // it allows the thread sanitizier to continue to do useful work.
     mg_stop(_ctx);
+#endif
   }
   _ctx = nullptr;
 }

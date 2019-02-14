@@ -21,7 +21,7 @@
 namespace {
 
   // Which signals do we hook for intercept?
-  const std::list<int> gHookSignals = { SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGSEGV };
+  const std::list<int> gHookSignals = { SIGILL, SIGABRT, SIGBUS, SIGFPE, SIGSEGV, SIGQUIT };
 
   // Keep a stash of original signal actions so they can be restored
   std::unordered_map<int, struct sigaction> gHookStash;

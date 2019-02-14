@@ -66,7 +66,7 @@ CameraCalibrator::~CameraCalibrator()
 }
 
 Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::CameraCalibration>& calibration_out,
-                                                            DebugImageList<Vision::CompressedImage>& debugImages_out)
+                                                            Vision::DebugImageList<Vision::CompressedImage>& debugImages_out)
 {
   std::unique_ptr<Vision::CameraCalibration> calibration;
   _isCalibrating = true;
@@ -226,7 +226,7 @@ Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::Ca
 Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targetType,
                                                             const std::list<Vision::ObservedMarker>& observedMarkers,
                                                             std::list<Vision::CameraCalibration>& calibration_out,
-                                                            DebugImageList<Vision::CompressedImage>& debugImages_out)
+                                                            Vision::DebugImageList<Vision::CompressedImage>& debugImages_out)
 {
   std::unique_ptr<Vision::CameraCalibration> calibration;
   _isCalibrating = true;
