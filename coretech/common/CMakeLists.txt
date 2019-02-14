@@ -77,7 +77,6 @@ anki_build_target_license(cti_common_robot "ANKI")
 target_link_libraries(cti_common_robot
   PUBLIC
   util
-  cti_common_shared
   cti_common_clad_cpplite
   PRIVATE
   opencv_interface
@@ -109,9 +108,8 @@ anki_build_target_license(cti_common_shared "ANKI")
 target_link_libraries(cti_common_shared
   PUBLIC
   util
-  opencv_interface
-  ${OPENCV_LIBS}
   PRIVATE
+  opencv_interface
   ${ASAN_LINKER_FLAGS}
 )
 

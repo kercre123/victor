@@ -16,7 +16,6 @@
 
 #include "trig_fast.h"
 #include "imuFilter.h"
-
 #include <math.h>
 #include "headController.h"
 #include "liftController.h"
@@ -33,13 +32,8 @@
 
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/types/motorTypes.h"
-#include "coretech/common/robot/imuUKF.h"
-#include "coretech/common/shared/math/point.h"
-#include "coretech/common/shared/math/rotation.h"
-#include "coretech/common/shared/math/matrix_impl.h"
 
 #include "util/container/minMaxQueue.h"
-#include "util/logging/logging.h"
 
 #include <array>
 #include <cmath>
@@ -62,21 +56,19 @@ namespace Anki {
         // Last read IMU data
         HAL::IMU_DataStructure imu_data_;
 
-        // Unscented Kalman Filter for orientation tracking
-        const bool useUKF = true;
-        ImuUKF ukf_;
-        Point3f rotSpeed_ = Point3f(); // rad/s
-        f32     pitch_    = 0.;        // radians
-        f32     roll_     = 0.;        // radians
-        f32     yaw_      = 0.;        // radians
+        // Orientation and speed in XY-plane (i.e. horizontal plane) of robot
+        Radians rot_ = 0;   // radians
+        f32 rotSpeed_ = 0; // rad/s
 
         // Roll angle:
+        f32 roll_                        = 0.f;
         const f32 ROLL_FILT_COEFF        = 0.75f; // Filter to combine gyro and accel for smooth roll estimation
                                                   // The higher this value, the slower it approaches accel-based roll,
                                                   // but the less noisy it is.
         const f32 ROLL_FILT_COEFF_MOVING = 0.9f;  // Same as above, but used when the robot's wheels are moving
 
         // Pitch angle: Approaches angle of accelerometer wrt gravity horizontal
+        f32 pitch_                      = 0;
         const f32 PITCH_FILT_COEFF      = 0.98f;  // Filter to combine gyro and accel for smooth pitch estimation
                                                   // The higher this value, the slower it approaches accel-based pitch,
                                                   // but the less noisy it is.
@@ -917,12 +909,12 @@ namespace Anki {
         const bool isMoving = WheelController::AreWheelsPowered() || WheelController::AreWheelsMoving() || HeadController::IsMoving();
         const f32 coeff = isMoving ? ROLL_FILT_COEFF_MOVING : ROLL_FILT_COEFF;
         roll_ = (coeff * gyroBasedRoll) + ((1.f - coeff) * accelBasedRoll);
-        // AnkiDebugPeriodic(250, "IMUFilter.UpdateRoll",
-        //                  "Filtered, accel-based, gyro-based: %f %f %f, (In motion: %d)",
-        //                  RAD_TO_DEG_F32(roll_),
-        //                  RAD_TO_DEG_F32(accelBasedRoll),
-        //                  RAD_TO_DEG_F32(gyroBasedRoll),
-        //                  isMoving);
+//        AnkiDebugPeriodic(250, "IMUFilter.UpdateRoll",
+//                         "Filtered, accel-based, gyro-based: %f %f %f, (In motion: %d)",
+//                         RAD_TO_DEG_F32(roll_),
+//                         RAD_TO_DEG_F32(accelBasedRoll),
+//                         RAD_TO_DEG_F32(gyroBasedRoll),
+//                         isMoving);
       }
 
       Result Update()
@@ -969,10 +961,7 @@ namespace Anki {
         // VECTOR: Correct for observed sensitivity error on z axis of gyro (VIC-285)
         // It has been observed that the z axis gyro usually reports about a 1.03% higher
         // rate than it is actually experiencing, so simply scale it here.
-        const float z_gyro_scale = .989f;
-        gyro_[2] *= z_gyro_scale;
-#else 
-        const float z_gyro_scale = 1.f;
+         gyro_[2] *= 0.989f;
 #endif
 
 
@@ -1056,55 +1045,23 @@ namespace Anki {
           accelMagnitudeSqrd_ += (imu_data_.accel[i] * imu_data_.accel[i]);
         }
 
-        ukf_.Update(
-          {imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]},
-          {imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2] * z_gyro_scale},
-          CONTROL_DT,
-          isMotionDetected_
-        );
-
 #if(DEBUG_IMU_FILTER)
-        AnkiDebugPeriodic(200, "Accel angle %f %f", accel_angle_imu_frame, accel_angle_robot_frame);
-        AnkiDebugPeriodic(200, "Accel (robot frame): %f %f %f",
+        PERIODIC_PRINT(200, "Accel angle %f %f\n", accel_angle_imu_frame, accel_angle_robot_frame);
+        PERIODIC_PRINT(200, "Accel (robot frame): %f %f %f\n",
                        accel_robot_frame_filt[0],
                        accel_robot_frame_filt[1],
                        accel_robot_frame_filt[2]);
-
-        const auto bias = ukf_.GetBias();
-        AnkiDebugPeriodic(200, "ukf bias: {X %.5f, Y %.5f, Z %.5f}   old bias: {X %.5f, Y %.5f, Z %.5f}\n", 
-              bias[0], bias[1], bias[2], 
-              gyro_bias_filt[0], gyro_bias_filt[1], gyro_bias_filt[2]);
-        pAnkiDebugPeriodic(200, "ukf eul: {Z %.2f, Y %.2f, X %.2f}\n", 
-                          RAD_TO_DEG( GetRotation() ), 
-                          RAD_TO_DEG( GetPitch() ), 
-                          RAD_TO_DEG( GetRoll() ));
-
 #endif
 
-        if (useUKF) {
-          // Update orientation
-          const Rotation3d headRot(HeadController::GetAngleRad(), Y_AXIS_3D());
-          const Rotation3d bodyRot = ukf_.GetRotation() * headRot;
-          rotSpeed_ = headRot * ukf_.GetRotationSpeed(); // RotationSpeed is a point, not a rotation, so post-multiply
+        UpdatePitch();
+        UpdateRoll();
 
-          // NOTE: Maybe account for when the robot is upside down here? we use projection vector projects to get 
-          //   smooth transitions for roll/pitch/yaw when moving, but these do not result in proper Euler or
-          //   Tait-Bryan angles. If we use either of those, we can get gymbal lock, and accidentally trigger
-          //   a delocalization event
-          const auto robotX = bodyRot * X_AXIS_3D();
-          yaw_   = atan2f( robotX.y(), robotX.x() );
-          pitch_ = asinf( (bodyRot * X_AXIS_3D()).z() );
-          roll_  = asinf( (bodyRot * Y_AXIS_3D()).z() );
-        } else {
-          UpdatePitch();
-          UpdateRoll();
-          rotSpeed_ = Point3f(gyro_robot_frame_filt);	
-          f32 dAngle = rotSpeed_.z() * CONTROL_DT;
-          Radians rot = yaw_;
-          rot += dAngle;
-          yaw_ = rot.ToFloat();
-        }
+        // XY-plane rotation rate is robot frame z-axis rotation rate
+        rotSpeed_ = gyro_robot_frame_filt[2];
 
+        // Update orientation
+        f32 dAngle = rotSpeed_ * CONTROL_DT;
+        rot_ += dAngle;
 
         //MadgwickAHRSupdateIMU(gyro_[0], gyro_[1], gyro_[2],
         //                      imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]);
@@ -1196,12 +1153,13 @@ namespace Anki {
 
       f32 GetRotation()
       {
-        return yaw_;
+        //return _zAngle;  // Computed from 3D orientation tracker (Madgwick filter)
+        return rot_.ToFloat();     // Computed from simplified yaw-only tracker
       }
 
       f32 GetRotationSpeed()
       {
-        return rotSpeed_.z();
+        return rotSpeed_;
       }
 
       f32 GetPitch()
