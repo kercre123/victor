@@ -12,26 +12,18 @@
 
 #include "cozmoAnim/animEngine.h"
 
-#include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "util/console/consoleSystem.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
-#include "util/logging/DAS.h"
 #include "util/logging/channelFilter.h"
 #include "util/logging/victorLogger.h"
-#include "util/string/stringUtils.h"
-#include "platform/anki-trace/tracing.h"
 
 #include "platform/common/diagnosticDefines.h"
 #include "platform/victorCrashReports/victorCrashReporter.h"
 
-#include <stdio.h>
-#include <chrono>
-#include <fstream>
 #include <thread>
 #include <unistd.h>
 #include <csignal>
@@ -54,8 +46,8 @@ static void Shutdown(int signum)
 }
 
 Anki::Util::Data::DataPlatform* createPlatform(const std::string& persistentPath,
-                                         const std::string& cachePath,
-                                         const std::string& resourcesPath)
+                                               const std::string& cachePath,
+                                               const std::string& resourcesPath)
 {
   Anki::Util::FileUtils::CreateDirectory(persistentPath);
   Anki::Util::FileUtils::CreateDirectory(cachePath);
@@ -75,17 +67,17 @@ Anki::Util::Data::DataPlatform* createPlatform()
   Json::Value config;
 
   printf("config_file: %s\n", config_file_path);
-  if (strlen(config_file_path)) {
+  if (strlen(config_file_path) > 0) {
     std::string config_file{config_file_path};
     if (!Anki::Util::FileUtils::FileExists(config_file)) {
       fprintf(stderr, "config file not found: %s\n", config_file_path);
     }
 
     std::string jsonContents = Anki::Util::FileUtils::ReadFile(config_file);
-    printf("jsonContents: %s\n", jsonContents.c_str());
+    printf("jsonContents: %s", jsonContents.c_str());
     Json::Reader reader;
     if (!reader.parse(jsonContents, config)) {
-      PRINT_STREAM_ERROR("cozmo_startup",
+      PRINT_STREAM_ERROR("CozmoAnimMain.createPlatform",
         "json configuration parsing error: " << reader.getFormattedErrorMessages());
     }
   }
@@ -97,19 +89,19 @@ Anki::Util::Data::DataPlatform* createPlatform()
   if (config.isMember("DataPlatformPersistentPath")) {
     persistentPath = config["DataPlatformPersistentPath"].asCString();
   } else {
-    PRINT_NAMED_ERROR("cozmoAnimMain.createPlatform.DataPlatformPersistentPathUndefined", "");
+    LOG_ERROR("cozmoAnimMain.createPlatform.DataPlatformPersistentPathUndefined", "");
   }
 
   if (config.isMember("DataPlatformCachePath")) {
     cachePath = config["DataPlatformCachePath"].asCString();
   } else {
-    PRINT_NAMED_ERROR("cozmoAnimMain.createPlatform.DataPlatformCachePathUndefined", "");
+    LOG_ERROR("cozmoAnimMain.createPlatform.DataPlatformCachePathUndefined", "");
   }
 
   if (config.isMember("DataPlatformResourcesPath")) {
     resourcesPath = config["DataPlatformResourcesPath"].asCString();
   } else {
-    PRINT_NAMED_ERROR("cozmoAnimMain.createPlatform.DataPlatformResourcesPathUndefined", "");
+    LOG_ERROR("cozmoAnimMain.createPlatform.DataPlatformResourcesPathUndefined", "");
   }
 
   return createPlatform(persistentPath, cachePath, resourcesPath);
@@ -137,20 +129,20 @@ int main(void)
   {
     using namespace Anki::Util;
     ChannelFilter* consoleFilter = new ChannelFilter();
-    
+
     // load file config
     Json::Value consoleFilterConfig;
     const std::string& consoleFilterConfigPath = "config/engine/console_filter_config.json";
     if (!dataPlatform->readAsJson(Anki::Util::Data::Scope::Resources, consoleFilterConfigPath, consoleFilterConfig))
     {
-      LOG_ERROR("cozmo_start", "Failed to parse Json file '%s'", consoleFilterConfigPath.c_str());
+      LOG_ERROR("CozmoAnimMain.main", "Failed to parse json file '%s'", consoleFilterConfigPath.c_str());
     }
-    
+  
     // initialize console filter for this platform
     const std::string& platformOS = dataPlatform->GetOSPlatformString();
     const Json::Value& consoleFilterConfigOnPlatform = consoleFilterConfig[platformOS];
     consoleFilter->Initialize(consoleFilterConfigOnPlatform);
-    
+
     // set filter in the loggers
     std::shared_ptr<const IChannelFilter> filterPtr( consoleFilter );
 
@@ -189,7 +181,7 @@ int main(void)
 
     result = animEngine->Update(curTime_ns);
     if (RESULT_OK != result) {
-      PRINT_NAMED_WARNING("CozmoAnimMain.main.UpdateFailed", "Unable to update (result %d)", result);
+      LOG_WARNING("CozmoAnimMain.main.UpdateFailed", "Unable to update (result %d)", result);
 
       // Don't exit with error code so as not to trigger
       // fault code 800 on what is actually a clean shutdown.
@@ -208,11 +200,11 @@ int main(void)
     // Complain if we're going overtime
     if (remaining_us < microseconds(-ANIM_OVERTIME_WARNING_THRESH_US))
     {
-      PRINT_NAMED_WARNING("CozmoAnimMain.overtime", "Update() (%dms max) is behind by %.3fms",
-                          ANIM_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
+      LOG_WARNING("CozmoAnimMain.overtime", "Update() (%dms max) is behind by %.3fms",
+                  ANIM_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
     }
 #endif
-    // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
+    // We ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
     // allows other threads to run
     static const auto minimumSleepTime_us = microseconds((long)0);
     const auto sleepTime_us = std::max(minimumSleepTime_us, remaining_us);
@@ -234,9 +226,9 @@ int main(void)
       const auto forwardJumpDuration = kusPerFrame * framesBehind;
       targetEndFrameTime += (microseconds)forwardJumpDuration;
 #if ENABLE_TICK_TIME_WARNINGS
-      PRINT_NAMED_WARNING("CozmoAnimMain.catchup",
-                          "Update was too far behind so moving target end frame time forward by an additional %.3fms",
-                          (float)(forwardJumpDuration * 0.001f));
+      LOG_WARNING("CozmoAnimMain.catchup",
+                  "Update was too far behind so moving target end frame time forward by an additional %.3fms",
+                  (float)(forwardJumpDuration * 0.001f));
 #endif
     }
     tickStart = TimeClock::now();

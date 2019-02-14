@@ -95,21 +95,12 @@ public:
 
   void SetRandomSeed(uint32_t seed);
 
-  // Tell the context that this is the main thread
-  void SetMainThread();
-
-  // Returns true if the current thread is the "main" one. Requires SetMainThread to have been called
-  bool IsMainThread() const;
-
   void SetLocale(const std::string & locale);
 
 private:
   // This is passed in and held onto, but not owned by the context (yet.
   // It really should be, and that refactoring will have to happen soon).
   Util::Data::DataPlatform*                      _dataPlatform = nullptr;
-
-  // for holding the thread id (and avoiding need to include cpuThreadId.h here)
-  std::unique_ptr<ThreadIDInternal> _threadIdHolder;
 
   // Context holds onto these things for everybody.
   //

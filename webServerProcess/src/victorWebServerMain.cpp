@@ -11,7 +11,6 @@
 */
 #include "webService.h"
 
-#include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -22,9 +21,6 @@
 
 #include "platform/victorCrashReports/victorCrashReporter.h"
 
-#include <stdio.h>
-#include <chrono>
-#include <fstream>
 #include <thread>
 #include <csignal>
 
@@ -45,8 +41,8 @@ static void Shutdown(int signum)
 }
 
 Anki::Util::Data::DataPlatform* createPlatform(const std::string& persistentPath,
-                                         const std::string& cachePath,
-                                         const std::string& resourcesPath)
+                                               const std::string& cachePath,
+                                               const std::string& resourcesPath)
 {
   Anki::Util::FileUtils::CreateDirectory(persistentPath);
   Anki::Util::FileUtils::CreateDirectory(cachePath);
@@ -73,7 +69,7 @@ Anki::Util::Data::DataPlatform* createPlatform()
     }
 
     std::string jsonContents = Anki::Util::FileUtils::ReadFile(config_file);
-    //printf("jsonContents: %s\n", jsonContents.c_str());
+    //printf("jsonContents: %s", jsonContents.c_str());
     Json::Reader reader;
     if (!reader.parse(jsonContents, config)) {
       PRINT_STREAM_ERROR("victorWebServerMain.createPlatform.JsonConfigParseError",
@@ -88,19 +84,19 @@ Anki::Util::Data::DataPlatform* createPlatform()
   if (config.isMember("DataPlatformPersistentPath")) {
     persistentPath = config["DataPlatformPersistentPath"].asCString();
   } else {
-    PRINT_NAMED_ERROR("VictorWebServerictorWebServerMain.createPlatform.DataPlatformPersistentPathUndefined", "");
+    LOG_ERROR("VictorWebServerictorWebServerMain.createPlatform.DataPlatformPersistentPathUndefined", "");
   }
 
   if (config.isMember("DataPlatformCachePath")) {
     cachePath = config["DataPlatformCachePath"].asCString();
   } else {
-    PRINT_NAMED_ERROR("victorWebServerMain.createPlatform.DataPlatformCachePathUndefined", "");
+    LOG_ERROR("victorWebServerMain.createPlatform.DataPlatformCachePathUndefined", "");
   }
 
   if (config.isMember("DataPlatformResourcesPath")) {
     resourcesPath = config["DataPlatformResourcesPath"].asCString();
   } else {
-    PRINT_NAMED_ERROR("victorWebServerMain.createPlatform.DataPlatformResourcesPathUndefined", "");
+    LOG_ERROR("victorWebServerMain.createPlatform.DataPlatformResourcesPathUndefined", "");
   }
 
   Util::Data::DataPlatform* dataPlatform =
@@ -156,11 +152,11 @@ int main(void)
     // Complain if we're going overtime
     if (remaining_us < microseconds(-WEB_SERVER_OVERTIME_WARNING_THRESH_US))
     {
-      PRINT_NAMED_WARNING("victorWebServer.overtime", "Update() (%dms max) is behind by %.3fms",
-                          WEB_SERVER_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
+      LOG_WARNING("victorWebServer.overtime", "Update() (%dms max) is behind by %.3fms",
+                  WEB_SERVER_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
     }
 
-    // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
+    // We ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
     // allows other threads to run
     static const auto minimumSleepTime_us = microseconds((long)0);
     std::this_thread::sleep_for(std::max(minimumSleepTime_us, remaining_us));
@@ -180,16 +176,15 @@ int main(void)
       const int framesBehind = (int)(timeBehind_us.count() / kusPerFrame);
       const auto forwardJumpDuration = kusPerFrame * framesBehind;
       targetEndFrameTime += (microseconds)forwardJumpDuration;
-      PRINT_NAMED_WARNING("victorWebServer.catchup",
-                          "Update was too far behind so moving target end frame time forward by an additional %.3fms",
-                          (float)(forwardJumpDuration * 0.001f));
+      LOG_WARNING("victorWebServer.catchup",
+                  "Update was too far behind so moving target end frame time forward by an additional %.3fms",
+                  (float)(forwardJumpDuration * 0.001f));
     }
   }
 
   LOG_INFO("victorWebServerMain", "Stopping web server");
   victorWebServer.reset();
 
-  LOG_INFO("victorWebServerMain", "exit(0)");
   Util::gLoggerProvider = nullptr;
   UninstallCrashReporter();
   sync();
