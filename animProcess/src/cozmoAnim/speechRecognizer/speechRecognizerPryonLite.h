@@ -74,6 +74,8 @@ private:
   std::unique_ptr<SpeechRecognizerPryonLiteData> _impl;
   uint64_t _alexaMicrophoneOffset = 0;
   
+  unsigned int _detectThreshold;
+  
   static bool LoadPryonModel(const std::string& filePath, SpeechRecognizerPryonLiteData& data);
   
   // Pryon recognizer callbacks

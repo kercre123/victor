@@ -567,6 +567,7 @@ void SpeechRecognizerSystem::InitAlexaPlayback(const Util::Locale& locale,
   const auto dataLoader = _context->GetDataLoader();
   _alexaPlaybackTrigger = std::make_unique<TriggerContextPryon>("AlexaPlayback");
   _alexaPlaybackTrigger->recognizer->SetCallback(callback);
+  _alexaPlaybackTrigger->recognizer->SetDetectionThreshold(1); // playback recognizer should be extremely permissive
   _alexaPlaybackTrigger->micTriggerConfig->Init("alexa_pryon", dataLoader->GetMicTriggerConfig());
   
   UpdateTriggerForLocale(locale, RecognizerTypeFlag::AlexaPlayback);

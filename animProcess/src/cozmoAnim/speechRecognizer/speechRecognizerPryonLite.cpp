@@ -43,9 +43,7 @@ namespace Anki {
 namespace Vector {
 
 namespace {
-#if PRYON_ENABLED
   const int kDefaultDetectThreshold = 10;
-#endif
 }
 
 // Local definition of data used internally for more strict encapsulation
@@ -65,6 +63,7 @@ struct SpeechRecognizerPryonLite::SpeechRecognizerPryonLiteData
   
 SpeechRecognizerPryonLite::SpeechRecognizerPryonLite()
 : _impl(new SpeechRecognizerPryonLiteData())
+, _detectThreshold(kDefaultDetectThreshold)
 {
 }
 
@@ -114,6 +113,7 @@ bool SpeechRecognizerPryonLite::InitRecognizer(const std::string& modlePath)
   _impl->config.vadCallback       = SpeechRecognizerPryonLite::VadCallback;
   _impl->config.useVad            = 1;  // enable voice activity detector
   _impl->config.userData          = this;
+  _impl->config.detectThreshold   = _detectThreshold;
   
   err = PryonLiteDecoder_Initialize(&_impl->config, &sessionInfo, &_impl->decoder);
   if (err != PRYON_LITE_ERROR_OK) {
@@ -122,7 +122,7 @@ bool SpeechRecognizerPryonLite::InitRecognizer(const std::string& modlePath)
     return false;
   }
   
-  success = SetDetectionThreshold(kDefaultDetectThreshold);
+  success = SetDetectionThreshold(_detectThreshold);
   if (!success) {
     LOG_ERROR("SpeechRecognizerPryonLite.Init.SetDetectionThreshold", "PryonLite error %d", err);
     Cleanup();
@@ -153,10 +153,10 @@ void SpeechRecognizerPryonLite::Update(const AudioUtil::AudioSample* audioData, 
 
 bool SpeechRecognizerPryonLite::SetDetectionThreshold(int threshold)
 {
+  _detectThreshold = Util::Clamp(threshold, 1, 1000);
 #if PRYON_ENABLED
   std::lock_guard<std::recursive_mutex> lock(_impl->recogMutex);
-  threshold = Util::Clamp(threshold, 1, 1000);
-  _impl->config.detectThreshold = threshold;
+  _impl->config.detectThreshold = _detectThreshold;
   const PryonLiteError err = PryonLiteDecoder_SetDetectionThreshold(_impl->decoder, NULL, _impl->config.detectThreshold);
   if (err != PRYON_LITE_ERROR_OK) {
     LOG_ERROR("SpeechRecognizerPryonLite.SetDetectionThreshold", "PryonLite error %d", err);
