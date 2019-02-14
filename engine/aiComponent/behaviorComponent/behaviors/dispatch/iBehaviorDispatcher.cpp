@@ -68,12 +68,16 @@ IBehaviorDispatcher::IBehaviorDispatcher(const Json::Value& config, bool shouldI
               GetDebugLabel().c_str(),
               kInterruptBehaviorKey,
               config.get(kInterruptBehaviorKey, false).asBool() ? "true" : "false");
+
+  // optional argument to delegate on activation (vs on update)
+  JsonTools::GetValueOptional(config, kActivateDelegateKey, _iConfig.shouldDelegateOnActivate);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehaviorDispatcher::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   expectedKeys.insert( kInterruptBehaviorKey );
+  expectedKeys.insert( kActivateDelegateKey );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
