@@ -77,6 +77,8 @@ namespace {
 
   // If this is set to -1 the turns will loop
   CONSOLE_VAR(s32,  kEyeGazeDirectionMaxNumberOfTurns,   "Vision.GazeDirection",   20);
+
+  CONSOLE_VAR(bool,  kEyeGazeDirectionLooping,           "Vision.GazeDirection",   true);
 }
 
 namespace {
@@ -133,11 +135,17 @@ void BehaviorReactToGazeDirection::GetBehaviorJsonKeys(std::set<const char*>& ex
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToGazeDirection::WantsToBeActivatedBehavior() const
 {
-  return GetBEI().GetFaceWorld().AnyStableGazeDirection(kMaxTimeSinceTrackedFaceUpdated_ms);
+  if (kEyeGazeDirectionLooping) {
+    return true;
+  } else {
+    return GetBEI().GetFaceWorld().AnyStableGazeDirection(kMaxTimeSinceTrackedFaceUpdated_ms);
+  }
 }
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToGazeDirection::OnBehaviorActivated()
