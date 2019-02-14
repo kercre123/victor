@@ -214,6 +214,9 @@ void IBehaviorDispatcher::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void IBehaviorDispatcher::OnBehaviorRegainedControl()
 {
+  // we should be the top of the stack at this point
+  DEV_ASSERT(!IsControlDelegated(), "IBehaviorDispatcher.TryDispatchDesiredBehavior.ControlNotDelegated");
+  
   // try to dispatch our next behavior since we've just regained control from our previous delegation
   TryDispatchDesiredBehavior();
 }
@@ -223,8 +226,6 @@ bool IBehaviorDispatcher::TryDispatchDesiredBehavior()
 {
   bool dispatched = false;
 
-  // we should be the top of the stack at this point
-  DEV_ASSERT(!IsControlDelegated(), "IBehaviorDispatcher.TryDispatchDesiredBehavior.ControlNotDelegated");
   DEV_ASSERT(GetBEI().HasDelegationComponent(), "IBehaviorDispatcher.TryDispatchDesiredBehavior.HasDelegationComponent");
 
   ICozmoBehaviorPtr desiredBehavior = GetDesiredBehavior();
