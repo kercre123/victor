@@ -51,7 +51,7 @@ namespace {
   CONSOLE_VAR(u32,  kMaxTimeSinceTrackedFaceUpdated_ms,      "Vision.GazeDirection",  500);
   CONSOLE_VAR(bool, kUseEyeGazeToLookAtSurfaceorFaces,       "Vision.GazeDirection",  false);
   // TODO disable this use -1
-  CONSOLE_VAR(f32,  kMaxDriveToSurfacePointDistance_mm2,     "Vision.GazeDirection",  30000.f*30000.f);
+  CONSOLE_VAR(f32,  kMaxDriveToSurfacePointDistance_mm2,     "Vision.GazeDirection", -1.f);
   CONSOLE_VAR(bool, kUseDriveStraightActionForDriveTo,       "Vision.GazeDirection", false);
   CONSOLE_VAR(f32,  kDriveStraightDistance_mm,               "Vision.GazeDirection", 200);
   CONSOLE_VAR(f32,  kMaxDriveStraightDistance_mm,            "Vision.GazeDirection", 300);
@@ -76,9 +76,10 @@ namespace {
   CONSOLE_VAR(bool,  kEyeGazeDirectionUseGaussianCorrection,   "Vision.GazeDirection",   true);
 
   // If this is set to -1 the turns will loop
-  CONSOLE_VAR(s32,  kEyeGazeDirectionMaxNumberOfTurns,   "Vision.GazeDirection",   20);
+  CONSOLE_VAR(s32,  kEyeGazeDirectionMaxNumberOfTurns,   "Vision.GazeDirection",   100000);
 
   CONSOLE_VAR(bool,  kEyeGazeDirectionLooping,           "Vision.GazeDirection",   true);
+  CONSOLE_VAR(bool,  kEnableLookAtRobot,                 "Vision.GazeDirection",   false);
 }
 
 namespace {
@@ -333,7 +334,8 @@ void BehaviorReactToGazeDirection::TransitionToCheckForPointOnSurface(const Pose
                                                     kFaceDirectedAtRobotMaxXThres_mm) );
   const bool isWithinYConstarints = ( Util::InRange(translation.y(), kFaceDirectedAtRobotMinYThres_mm,
                                                     kFaceDirectedAtRobotMaxYThres_mm) );
-  if ( ( isWithinXConstraints && isWithinYConstarints ) || ( makingEyeContact && kUseEyeContact) ) {
+  if ( ( ( isWithinXConstraints && isWithinYConstarints ) || ( makingEyeContact && kUseEyeContact) ) &&
+       kEnableLookAtRobot) {
 
     // If we're making eye contact with the robot or looking at the robot, react to that.
     CompoundActionSequential* turnAction = new CompoundActionSequential();
