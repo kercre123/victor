@@ -110,7 +110,6 @@ target_link_libraries(cti_common_shared
   PUBLIC
   util
   opencv_interface
-  ${OPENCV_LIBS}
   PRIVATE
   ${ASAN_LINKER_FLAGS}
 )

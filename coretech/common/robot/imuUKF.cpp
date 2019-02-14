@@ -29,15 +29,35 @@ namespace {
     SmallSquareMatrix<N,double> L;
     for (size_t i = 0; i < N; ++i) {
       for (size_t j = 0; j <= i; ++j) {
-          double s = 0;
+          double s = A(i, j);
           for (size_t k = 0; k < j; ++k) {
-              s += L(j, k) * L(i, k);
+              s -= L(j, k) * L(i, k);
           }
-          L(i, j) = (i == j) ? sqrt(A(i, i) - s) : (A(i, j) - s) / L(j, j);
+          L(i, j) = (i == j) ? sqrt(s) : s / L(j, j);
       }
     }
     return L;
   }
+    
+  template<MatDimType N>
+  SmallSquareMatrix<N,double> InvertLower(const SmallSquareMatrix<N,double>& L) {
+    SmallSquareMatrix<N,double> Linv;
+    for (int i = 0; i < N; ++i) {
+      for (int j = i; j >= 0; --j) {
+        if (i == j) {
+          Linv(i,j) = 1. / L(i,j);
+        } else {
+          double s = 0;
+          for (int k = j; k < i; ++k) {
+            s -= L(i, k) * Linv(k,j);
+          }
+          Linv(i,j) = s * Linv(i,i);
+        }
+      }
+    }
+    return Linv;
+  }
+
 
   // Fast mean calculation for rows of a matrix
   template <MatDimType M, MatDimType N>
@@ -202,9 +222,10 @@ void ImuUKF::MeasurementUpdate(const Measurement& z)
   }
 
   // get Kalman gain and update covariance after removing Sigma point scaling
-  const auto Pvv = GetCovariance(Z) * kWsigma + _R;
+  const SmallSquareMatrix<9,double> Pvv = GetCovariance(Z) * kWsigma + _R;
   const auto Pxz = GetCovariance(_W, Z) * kWsigma;
-  const auto K = Pxz * Pvv.GetInverse();
+  const auto Linv = InvertLower( Cholesky(Pvv) );
+  const auto K = Pxz * Linv.GetTranspose() * Linv;
   _P -= K * Pvv * K.GetTranspose();
 
   // get measurement residual
