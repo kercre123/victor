@@ -843,24 +843,25 @@ void Alexa::UpdateLocale( const Util::Locale& locale )
   auto* audioController = _context->GetAudioController();
   if ( audioController != nullptr ) {
     using namespace AudioEngine;
-    const auto gameObject = ToAudioGameObject( AudioMetaData::GameObjectType::Alexa );
+    using namespace AudioMetaData;
+    const auto stateGroup = ToAudioStateGroupId( GameState::StateGroupType::Robot_Alexa_Locale );
+    GameState::Robot_Alexa_Locale newState = GameState::Robot_Alexa_Locale::En_Us;
     bool matched = true;
-    AudioMetaData::SwitchState::Robot_Alexa_Locale newState = AudioMetaData::SwitchState::Robot_Alexa_Locale::En_Us;
     switch( locale.GetCountry() ) {
       case Util::Locale::CountryISO2::US:
       case Util::Locale::CountryISO2::CA:
       {
-        newState = AudioMetaData::SwitchState::Robot_Alexa_Locale::En_Us;
+        newState = GameState::Robot_Alexa_Locale::En_Us;
       }
         break;
       case Util::Locale::CountryISO2::GB:
       {
-        newState = AudioMetaData::SwitchState::Robot_Alexa_Locale::En_Uk;
+        newState = GameState::Robot_Alexa_Locale::En_Uk;
       }
         break;
       case Util::Locale::CountryISO2::AU:
       {
-        newState = AudioMetaData::SwitchState::Robot_Alexa_Locale::En_Au;
+        newState = GameState::Robot_Alexa_Locale::En_Au;
       }
         break;
       default:
@@ -870,9 +871,7 @@ void Alexa::UpdateLocale( const Util::Locale& locale )
         break;
     }
     if( matched ) {
-      audioController->SetSwitchState( ToAudioSwitchGroupId( AudioMetaData::SwitchState::SwitchGroupType::Robot_Alexa_Locale ),
-                                       ToAudioSwitchStateId( (AudioMetaData::SwitchState::GenericSwitch) newState ),
-                                       gameObject );
+      audioController->SetState( stateGroup, ToAudioStateId((AudioMetaData::GameState::GenericState)newState) );
     }
   }
 }
