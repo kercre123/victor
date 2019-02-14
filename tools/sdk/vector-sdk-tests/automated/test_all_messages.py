@@ -13,6 +13,9 @@ requested pose due to a wall, etc.):
  - DockWithCube
  - ConnectCube/DisconnectCube
  - SayText (TODO Figure out why this is causing problems)
+
+ **When run by automated nightly tests, this script is run by the released version of the SDK, not the internal build.**
+ So proto messages that are not yet in a public SDK build should not yet be added to this test.
 """
 
 # TODO Add missing messages. Also this script is supposed to print out missing messages; why isn't it?
@@ -151,15 +154,21 @@ MESSAGES_TO_TEST = [
      protocol.MoveLiftRequest(speed_rad_per_sec=0.0),
      TestResultMatches(protocol.MoveLiftResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
+    # SetEyeColor message
+    (client.ExternalInterfaceServicer.SetEyeColor,
+     protocol.SetEyeColorRequest(hue=1.0, saturation=1.0),
+     TestResultMatches(protocol.SetEyeColorResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+
     # PlayAnimation message
     (Interface.PlayAnimation,
      protocol.PlayAnimationRequest(animation=protocol.Animation(name='anim_blackjack_victorwin_01'), loops=1),
      TestResultMatches(protocol.PlayAnimationResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
 
     # PlayAnimationTrigger message
-    (Interface.PlayAnimationTrigger,
-     protocol.PlayAnimationTriggerRequest(animation_trigger=protocol.AnimationTrigger(name='GreetAfterLongTime'), loops=1),
-     TestResultMatches(protocol.PlayAnimationResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
+    # TODO Turn on when is available in public SDK proto
+    # (Interface.PlayAnimationTrigger,
+    #  protocol.PlayAnimationTriggerRequest(animation_trigger=protocol.AnimationTrigger(name='GreetAfterLongTime'), loops=1),
+    #  TestResultMatches(protocol.PlayAnimationResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
 
     # ListAnimations message
     (Interface.ListAnimations,
@@ -167,9 +176,10 @@ MESSAGES_TO_TEST = [
      TestResultIsTypeWithStatusAndFieldNames(protocol.ListAnimationsResponse, protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), ['animation_names'])),  # pylint: disable=no-member
 
     # ListAnimationTriggers message
-    (Interface.ListAnimationTriggers,
-     protocol.ListAnimationTriggersRequest(),
-     TestResultIsTypeWithStatusAndFieldNames(protocol.ListAnimationTriggersResponse, protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), ['animation_trigger_names'])),  # pylint: disable=no-member
+    # TODO Turn on when is available in public SDK proto
+    # (Interface.ListAnimationTriggers,
+    #  protocol.ListAnimationTriggersRequest(),
+    #  TestResultIsTypeWithStatusAndFieldNames(protocol.ListAnimationTriggersResponse, protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), ['animation_trigger_names'])),  # pylint: disable=no-member
 
     # DisplayFaceImageRGB message
     (Interface.DisplayFaceImageRGB,
@@ -210,6 +220,18 @@ MESSAGES_TO_TEST = [
     (client.ExternalInterfaceServicer.EnableFaceDetection,
      protocol.EnableFaceDetectionRequest(),
      TestResultMatches(protocol.EnableFaceDetectionResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
+
+    # EnableImageStreaming message
+    # TODO Turn on when is available in public SDK proto
+    # (client.ExternalInterfaceServicer.EnableImageStreaming,
+    #  protocol.EnableImageStreamingRequest(enable=1),
+    #  TestResultMatches(protocol.EnableImageStreamingResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
+
+    # IsImageStreamingEnabled message
+    # TODO Turn on when is available in public SDK proto
+    # (client.ExternalInterfaceServicer.IsImageStreamingEnabled,
+    #  protocol.IsImageStreamingEnabledRequest(),
+    #  TestResultMatches(protocol.IsImageStreamingEnabledResponse(is_image_streaming_enabled=1))),  # pylint: disable=no-member
 
     # EnableMarkerDetection message
     # 12/4/2018 thanhlelgg's Note: This usually failed with error: 
@@ -446,7 +468,7 @@ def main():
 
     loop = asyncio.get_event_loop()
 
-    with anki_vector.Robot(args.serial, default_logging=False, cache_animation_lists=False) as robot:
+    with anki_vector.Robot(args.serial, default_logging=False) as robot:
         # Since some requests fail on charger, such as DriveStraight and TurnInPlace, drive off charger first.
         robot.behavior.drive_off_charger()
 
