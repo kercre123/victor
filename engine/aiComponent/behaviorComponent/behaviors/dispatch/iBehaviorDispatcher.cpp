@@ -25,10 +25,12 @@ namespace Vector {
 
 namespace {
 static const char* kInterruptBehaviorKey = "interruptActiveBehavior";
+static const char* kActivateDelegateKey = "delegateOnActivation";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehaviorDispatcher::InstanceConfig::InstanceConfig()
+  : shouldDelegateOnActivate(true)
 {
 
 }
@@ -47,6 +49,9 @@ IBehaviorDispatcher::IBehaviorDispatcher(const Json::Value& config)
   _iConfig.shouldInterruptActiveBehavior = JsonTools::ParseBool(config,
                                                         kInterruptBehaviorKey,
                                                         "IBehaviorDispatcher.ShouldInterrupt.ConfigError");
+
+  // optional argument to delegate on activation (vs on update)
+  JsonTools::GetValueOptional(config, kActivateDelegateKey, _iConfig.shouldDelegateOnActivate);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -136,7 +141,9 @@ void IBehaviorDispatcher::OnBehaviorActivated()
   BehaviorDispatcher_OnActivated();
 
   // go ahead and dispatch our behavior direction from activation since we know we aren't currently delegating
-  TryDispatchDesiredBehavior();
+  if( _iConfig.shouldDelegateOnActivate ) {
+    TryDispatchDesiredBehavior();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

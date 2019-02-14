@@ -3,6 +3,7 @@
   "behaviorClass": "DispatcherStrictPriorityWithCooldown",
 
   "interruptActiveBehavior": false, // meaningless here
+  "delegateOnActivation" : false, // to preserve unit tests (no practical affect)
   
   "behaviors": [
     {

@@ -75,6 +75,7 @@ private:
     std::vector<ICozmoBehaviorPtr> behaviors;
 
     bool shouldInterruptActiveBehavior;
+    bool shouldDelegateOnActivate;
   };
 
   struct DynamicVariables {
