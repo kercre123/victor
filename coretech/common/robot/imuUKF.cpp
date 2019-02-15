@@ -222,7 +222,7 @@ void ImuUKF::MeasurementUpdate(const Measurement& z)
   }
 
   // get Kalman gain and update covariance after removing Sigma point scaling
-  const SmallSquareMatrix<9,double> Pvv = GetCovariance(Z) * kWsigma + _R;
+  const auto Pvv = GetCovariance(Z) * kWsigma + _R;
   const auto Pxz = GetCovariance(_W, Z) * kWsigma;
 
   // We get a fast pseudo-inverse for a covariance since we know it is symmetric and positive definite
