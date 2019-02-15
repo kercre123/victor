@@ -30,7 +30,7 @@ static const char* kActivateDelegateKey = "delegateOnActivation";
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehaviorDispatcher::InstanceConfig::InstanceConfig()
-  : shouldDelegateOnActivate(true)
+  : shouldDelegateOnActivate(false)
 {
 
 }

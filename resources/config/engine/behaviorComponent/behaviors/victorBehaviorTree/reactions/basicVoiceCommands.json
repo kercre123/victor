@@ -4,6 +4,7 @@
 
   "linkScope": true,
   "interruptActiveBehavior": true,
+  "delegateOnActivation": true,
 
   // all behaviors below this count as "greetings"
   "associatedActiveFeature": "BasicVoiceCommand",

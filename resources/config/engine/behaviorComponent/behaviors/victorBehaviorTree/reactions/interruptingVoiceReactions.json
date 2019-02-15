@@ -4,6 +4,7 @@
 
   "linkScope": true,
   "interruptActiveBehavior": true,
+  "delegateOnActivation": true,
 
   "behaviors": [
     "DoATrickVoiceCommand",

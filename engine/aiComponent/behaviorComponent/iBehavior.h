@@ -143,8 +143,6 @@ private:
     ActivationState _currentActivationState;
   #endif
 
-public:
-  const char* GetActivationStateString() const { return ActivationStateToString(_currentActivationState); }
 };
 
 } // namespace Vector
