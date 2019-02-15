@@ -19,7 +19,7 @@ static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL17
   ;
 
-static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.5);
+static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.6);
 static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 45 * 200;  // 45s
 static const int      LOW_VOLTAGE_POWER_DOWN_DELAY_TIME = 5 * 200;  // 5s
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);

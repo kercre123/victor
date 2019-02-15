@@ -58,7 +58,7 @@ namespace {
 
   // Max time to wait after kSaturationChargingThresholdVolts is reached
   // before battery is considered "fully charged".
-  const float kMaxSaturationTime_sec = 1.5 * 60.f;
+  const float kMaxSaturationTime_sec = 8 * 60.f;
 
   // Voltage below which battery is considered in a low charge state
   // At 3.6V, there is about 7 minutes of battery life left (if stationary, minimal processing, no wifi transmission, no sound)
