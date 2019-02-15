@@ -44,8 +44,8 @@ namespace Anki {
 namespace Vector {
   
 // VIC-13319 remove
-CONSOLE_VAR(bool, kAlexaEnabledInUK, "Alexa", true);
-CONSOLE_VAR(bool, kAlexaEnabledInAU, "Alexa", true);
+CONSOLE_VAR(bool, kAlexaEnabledInUK, "Alexa", false);
+CONSOLE_VAR(bool, kAlexaEnabledInAU, "Alexa", false);
   
 namespace {
   const std::string kAlexaPath = "alexa";
