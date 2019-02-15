@@ -117,8 +117,8 @@ if [[ ${VOICE_INTENT_DIR:+x} ]]; then
   rm -f $ANKI_TEST_INTENT_SAMPLE_FILE
   ${TOPLEVEL}/tools/ai/makeSampleIntents.py $VOICE_INTENT_DATA_DIR $ANKI_TEST_INTENT_SAMPLE_FILE
 
-  # Restore the submodule directory for the primary voice intent resolution data back to its original
-  # state (before we merged in the secondary data)
+  # Restore the directory for the primary voice intent resolution data back to its original
+  # state before we merged in the secondary data (assuming it is a git repo directory)
   pushd ${VOICE_INTENT_DIR}
   git reset --hard
   git clean -f
