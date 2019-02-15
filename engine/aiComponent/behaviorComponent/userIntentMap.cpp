@@ -33,6 +33,7 @@ const char* kCloudIntentKey = "cloud_intent";
 const char* kAppIntentKey = "app_intent";
 const char* kUserIntentKey = "user_intent";
 const char* kUnmatchedKey = "unmatched_intent";
+const char* kTestUserIntentParsingKey = "test_parsing";
 const char* kCloudVariableSubstitutionsKey = "cloud_substitutions";
 const char* kCloudVariableNumericsKey = "cloud_numerics";
 const char* kAppVariableSubstitutionsKey = "app_substitutions";
@@ -94,10 +95,13 @@ UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
                                        const char* intentKey,
                                        const char* subsKey,
                                        const char* numericsKey,
+                                       const char* testKey,
                                        const char* debugName)
     {
       const std::string& intentName = input.get(intentKey, "").asString();
       if( !intentName.empty() ) {
+        const bool doTest = input.get(testKey, true).asBool();
+
         VarSubstitutionList varSubstitutions;
         
         const auto& subs = input[subsKey];
@@ -106,7 +110,6 @@ UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
             const auto& to = subs[fromStr];
             if( ANKI_VERIFY( !to.isNull(), "UserIntentMap.Ctor.WTF", "Missing value") ) {
               const auto& toStr = to.asString();
-              
               varSubstitutions.emplace_back( SanitationActions{fromStr, toStr, false} );
             }
           }
@@ -136,19 +139,19 @@ UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
                      intentName.c_str(),
                      UserIntentTagToString( container.find(intentName)->second.userIntent ) );
 
-        container.emplace(intentName, IntentInfo{intentTag, varSubstitutions});
+        container.emplace(intentName, IntentInfo{intentTag, varSubstitutions, doTest});
       }
     };
     
-    processMapping( mapping, _cloudToUserMap, kCloudIntentKey, kCloudVariableSubstitutionsKey, kCloudVariableNumericsKey, "cloud" );
-    processMapping( mapping, _appToUserMap, kAppIntentKey, kAppVariableSubstitutionsKey, kAppVariableNumericsKey, "app" );
+    processMapping( mapping, _cloudToUserMap, kCloudIntentKey, kCloudVariableSubstitutionsKey, kCloudVariableNumericsKey, kTestUserIntentParsingKey, "cloud" );
+    processMapping( mapping, _appToUserMap, kAppIntentKey, kAppVariableSubstitutionsKey, kAppVariableNumericsKey, kTestUserIntentParsingKey, "app" );
     
     if( ANKI_DEVELOPER_CODE ) {
       // prevent typos
       std::vector<const char*> validKeys = {
         kCloudIntentKey, kCloudVariableSubstitutionsKey, kCloudVariableNumericsKey,
         kAppIntentKey, kAppVariableSubstitutionsKey, kAppVariableNumericsKey,
-        kUserIntentKey, kFeatureGateKey,
+        kUserIntentKey, kFeatureGateKey, kTestUserIntentParsingKey,
       };
       std::vector<std::string> badKeys;
       const bool hasBadKeys = JsonTools::HasUnexpectedKeys( mapping, validKeys, badKeys );
@@ -218,7 +221,21 @@ bool UserIntentMap::IsValidCloudIntent(const std::string& cloudIntent) const
   const bool found = ( _cloudToUserMap.find(cloudIntent) != _cloudToUserMap.end() );
   return found;
 }
-  
+
+bool UserIntentMap::GetTestParsingBoolFromCloudIntent(const std::string& cloudIntent) const
+{
+  auto it = _cloudToUserMap.find(cloudIntent);
+  if( it != _cloudToUserMap.end() ) {
+    return it->second.testParsing;
+  }
+  else {
+    PRINT_NAMED_WARNING("UserIntentMap.NoCloudIntentMatch",
+                        "No match for cloud intent '%s', returning default value of true to test user intent parsing",
+                        cloudIntent.c_str());
+    return true;
+  }
+}
+
 UserIntentTag UserIntentMap::GetUserIntentFromAppIntent(const std::string& appIntent) const
 {
   using Tag = std::underlying_type<UserIntentTag>::type;
