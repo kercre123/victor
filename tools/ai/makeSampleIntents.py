@@ -71,7 +71,7 @@ def GetIntents(path):
   for file in os.listdir( path ):
     if file.endswith( '.json' ):
       filename = os.path.join( path, file )
-      if 'usersays' not in filename:
+      if 'usersays_en' not in filename:
         files.append( filename )
 
   for file in files:
