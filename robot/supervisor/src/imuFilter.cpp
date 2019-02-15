@@ -64,7 +64,7 @@ namespace Anki {
 
         // Unscented Kalman Filter for orientation tracking
         const bool useUKF = true;
-        ImuUKF ukf_;
+        ImuUKF  ukf_;
         Point3f rotSpeed_ = Point3f(); // rad/s
         f32     pitch_    = 0.;        // radians
         f32     roll_     = 0.;        // radians

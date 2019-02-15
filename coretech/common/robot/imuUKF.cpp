@@ -224,6 +224,11 @@ void ImuUKF::MeasurementUpdate(const Measurement& z)
   // get Kalman gain and update covariance after removing Sigma point scaling
   const SmallSquareMatrix<9,double> Pvv = GetCovariance(Z) * kWsigma + _R;
   const auto Pxz = GetCovariance(_W, Z) * kWsigma;
+
+  // We get a fast pseudo-inverse for a covariance since we know it is symmetric and positive definite
+  // with Cholesky decomposition:
+  //    P = L * L'
+  //    pinv(P) = (inv(L))' * (inv(L))
   const auto Linv = InvertLower( Cholesky(Pvv) );
   const auto K = Pxz * Linv.GetTranspose() * Linv;
   _P -= K * Pvv * K.GetTranspose();
