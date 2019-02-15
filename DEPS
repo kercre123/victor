@@ -17,9 +17,9 @@
         "deps": {
             "aubio": {
                 "checksums": {
-                    "sha256": "4e27b985dfb02ce8ffc61e9a24c0bdc93ca82a917adfbfd8de802168ece62b44"
+                    "sha256": "74b8350acfffc1b13f31cadafb5979c0db85b543b90fe596b819229ed20a742e"
                 },
-                "version": "d4a1d0fb"
+                "version": "0.4.9"
             },
             "avs-device-sdk": {
                 "checksums": {
