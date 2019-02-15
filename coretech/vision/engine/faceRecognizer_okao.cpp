@@ -1047,6 +1047,7 @@ namespace Vision {
           mostRecentTime = albumEntryIter->second;
           mostRecentAlbumeEntryID = albumEntryIter->first;
         }
+        ++albumEntryIter;
       }
       
       enrollDataIter->second.RemoveAlbumEntry(mostRecentAlbumeEntryID);
