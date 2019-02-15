@@ -1037,7 +1037,7 @@ namespace Vision {
       // Figure out which album entry we were in the process of adding/updating for the current enrollment ID
       // and erase it. We'll use the most recently seen one.
       auto albumEntryIter = albumEntries.begin();
-      AlbumEntryID_t mostRecentAlbumeEntryID = albumEntryIter->first;
+      AlbumEntryID_t mostRecentAlbumEntryID = albumEntryIter->first;
       EnrolledFaceEntry::Time mostRecentTime = albumEntryIter->second;
       ++albumEntryIter;
       while(albumEntryIter != albumEntries.end())
@@ -1045,13 +1045,13 @@ namespace Vision {
         if(albumEntryIter->second > mostRecentTime)
         {
           mostRecentTime = albumEntryIter->second;
-          mostRecentAlbumeEntryID = albumEntryIter->first;
+          mostRecentAlbumEntryID = albumEntryIter->first;
         }
         ++albumEntryIter;
       }
       
-      enrollDataIter->second.RemoveAlbumEntry(mostRecentAlbumeEntryID);
-      _albumEntryToFaceID.erase(mostRecentAlbumeEntryID);
+      enrollDataIter->second.RemoveAlbumEntry(mostRecentAlbumEntryID);
+      _albumEntryToFaceID.erase(mostRecentAlbumEntryID);
       
       LOG_INFO("FaceRecognizer.CancelExistingEnrollment.RemoveAlbumEntry",
                "Removed AlbumEntry %d from Face %d, %zu entries remain",
