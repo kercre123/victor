@@ -111,9 +111,7 @@ target_link_libraries(cti_common_shared
   util
   opencv_interface
   PRIVATE
-  # ${OPENCV_LIBS} - leaving OPENCV_LIBS commented out for the moment. There appears to be some kind of 
-  #                  build conflict on the robot thread that can cause it to crash intermittently, even 
-  #                  when you don't appear to be calling any OPENCV functions
+  core # only include OPENCV_CORE since some other openCV libraries have dynamic allocation
   ${ASAN_LINKER_FLAGS}
 )
 
