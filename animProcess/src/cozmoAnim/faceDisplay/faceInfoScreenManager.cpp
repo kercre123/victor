@@ -77,7 +77,7 @@
 #define FORCE_TRANSITION_TO_PAIRING 0
 #endif
 
-#define ENABLE_SELF_TEST 1
+#define ENABLE_SELF_TEST 0
 
 #if !FACTORY_TEST
 
