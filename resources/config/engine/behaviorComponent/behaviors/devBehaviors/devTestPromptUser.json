@@ -2,15 +2,15 @@
   "behaviorID" : "DevTestPromptUser",
   "behaviorClass" : "PromptUserForVoiceCommand",
 
-  "streamType"                          : "Blackjack",
+  "streamType"                          : "Normal",
   "earConAudioEventSuccess"             : "Play__Robot_Vic_Sfx__Wake_Word_Success",
   "earConAudioEventNeutral"             : "Play__Robot_Vic_Sfx__Wake_Word_Off",
   "vocalPromptKey"                      : "DevTestPromptUser.VocalPrompt",
   "vocalResponseToIntentKey"            : "DevTestPromptUser.VocalResponseToIntent",
   "vocalResponseToBadIntentKey"         : "DevTestPromptUser.VocalResponseToBadIntent",
   "vocalRepromptKey"                    : "DevTestPromptUser.VocalReprompt",
-  "maxNumberOfReprompts"                : 1,
+  "maxNumberOfReprompts"                : 0,
   "stopListeningOnIntents"              : true,
-  "playListeningGetIn"                  : true,
-  "playListeningGetOut"                 : true
+  "playListeningGetIn"                  : false,
+  "playListeningGetOut"                 : false
 }

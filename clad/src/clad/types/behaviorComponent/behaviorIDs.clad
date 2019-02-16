@@ -36,6 +36,7 @@ enum uint_16 BehaviorID {
   DevTouchDataCollection,
   DevTurnInPlaceTest,
   DevViewCubeBackpackLights,
+  DevVisualWakeWord,
   DockingTestSimple,
   FactoryCentroidExtractor,
   LiftLoadTest,
