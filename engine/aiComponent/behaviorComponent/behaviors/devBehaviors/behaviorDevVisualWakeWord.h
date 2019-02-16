@@ -20,6 +20,9 @@
 namespace Anki {
 namespace Vector {
 
+// Forward Declarations
+class BehaviorPromptUserForVoiceCommand;
+
 class BehaviorDevVisualWakeWord : public ICozmoBehavior
 {
 public: 
@@ -33,6 +36,7 @@ protected:
 
   void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   bool WantsToBeActivatedBehavior() const override;
   void OnBehaviorActivated() override;
   void BehaviorUpdate() override;
@@ -41,18 +45,30 @@ protected:
 
 private:
 
+  enum class EState {
+    CheckingForVisualWakeWord,
+    DetectedVisualWakeWord,
+    Listening,
+    Responding
+  };
+
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config);
+
+    std::shared_ptr<BehaviorPromptUserForVoiceCommand> yeaOrNayBehavior;
   };
 
   struct DynamicVariables {
     DynamicVariables();
 
+    EState                state;
     Pose3d                gazeDirectionPose;
     SmartFaceID           faceIDToTurnBackTo;
   };
 
   void TransitionToCheckForVisualWakeWord();
+  void TransitionToListening();
+  void TransitionToResponding(const int response);
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
