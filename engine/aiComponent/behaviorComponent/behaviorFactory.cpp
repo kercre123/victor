@@ -68,6 +68,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTouchDataCollection.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTurnInPlaceTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevViewCubeBackpackLights.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevVisualWakeWord.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDispatchAfterShake.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDockingTestSimple.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorFactoryCentroidExtractor.h"
@@ -553,6 +554,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::DevViewCubeBackpackLights:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDevViewCubeBackpackLights(config));
+      break;
+    }
+
+    case BehaviorClass::DevVisualWakeWord:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDevVisualWakeWord(config));
       break;
     }
     
