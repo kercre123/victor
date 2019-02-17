@@ -711,7 +711,7 @@ func (service *rpcService) ListAnimationTriggers(ctx context.Context, in *extint
 					animTriggers = append(animTriggers, &newAnimTrigger)
 				}
 			}
-		case <-time.After(5 * time.Second):
+		case <-time.After(10 * time.Second):
 			return nil, grpc.Errorf(codes.DeadlineExceeded, "ListAnimationTriggers request timed out")
 		}
 	}
