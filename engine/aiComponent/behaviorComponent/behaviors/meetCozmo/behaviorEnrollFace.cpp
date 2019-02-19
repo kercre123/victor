@@ -488,7 +488,6 @@ void BehaviorEnrollFace::InitBehavior()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::OnBehaviorActivated()
 {
-  LOG_WARNING("ron_proto", "BehaviorEnrollFace::OnBehaviorActivated()");
   CheckForIntentData();
 
   // reset dynamic variables
@@ -635,7 +634,6 @@ void BehaviorEnrollFace::BehaviorUpdate()
     return;
   }
 
-  LOG_WARNING("ron_proto", "BehaviorEnrollFace::BehaviorUpdate()");
 
   // See if we were in the midst of finding or enrolling a face but the enrollment is
   // no longer requested, then we've been cancelled
@@ -882,8 +880,6 @@ void BehaviorEnrollFace::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::OnBehaviorDeactivated()
 {
-  LOG_WARNING("ron_proto", "BehaviorEnrollFace::OnBehaviorDeactivated()");
-
   // Leave general-purpose / session-only enrollment enabled (i.e. not for a specific face)
   GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
   _dVars->persistent.lastDeactivationTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
