@@ -53,9 +53,9 @@
             },
             "opus": {
                 "checksums": {
-                    "sha256": "6b046a65a9c79fc2c096246760b9dbc504bd0a9901be0b8da76d926ea943a886"
+                    "sha256": "4ad513125a5377372a1639ca571af6bd5c2771148a440b13d5ac154789b48f9f"
                 },
-                "version": "e04e86e0"
+                "version": "v1.3"
             },
             "pffft": {
                 "checksums": {
