@@ -97,6 +97,8 @@ namespace Vector {
   static ProceduralFace s_faceDataBaseline; // baseline to compare against, differences mean override the incoming animation
   static bool s_faceDataReset = false;
 
+  uint16_t AnimationStreamer::_numLayersRendered = 0;
+
 #if ANKI_DEV_CHEATS
   static const AnimContext* s_context; // copy of AnimContext in first constructed AnimationStreamer, needed for GetDataPlatform
   static bool s_faceDataOverrideRegistered = false;
@@ -1725,10 +1727,10 @@ namespace Vector {
           auto& compImg = faceKeyFrame.GetCompositeImage();
           InsertStreamableFaceIntoCompImg(stateToSend.faceImg, compImg);
         }
-
+        
         // Render and display the face
         Vision::SpriteHandle handle;
-        const bool gotImage = faceKeyFrame.GetFaceImageHandle(timeSinceAnimStart_ms, handle);
+        const bool gotImage = faceKeyFrame.GetFaceImageHandle(timeSinceAnimStart_ms, handle, _numLayersRendered);
         if(gotImage){
           Vision::HSImageHandle hsHandle = std::make_shared<Vision::HueSatWrapper>(0,0);
           if(handle->IsContentCached(hsHandle).rgba){
@@ -1752,7 +1754,7 @@ namespace Vector {
 
   Result AnimationStreamer::ExtractAnimationMessages(AnimationMessageWrapper& stateToSend)
   {
-    ANKI_CPU_PROFILE("AnimationStreamer::Update");
+    ANKI_CPU_PROFILE("AnimationStreamer::ExtractAnimationMessages");
     Result lastResult = RESULT_OK;
 
     bool streamUpdated = false;
@@ -1875,6 +1877,8 @@ namespace Vector {
 
   Result AnimationStreamer::Update()
   {
+    _numLayersRendered = 0;
+
     {
       std::lock_guard<std::mutex> lock(_pendingAnimationMutex);
       if (!_pendingAnimation.empty()) {

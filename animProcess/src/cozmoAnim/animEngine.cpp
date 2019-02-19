@@ -141,6 +141,7 @@ Result AnimEngine::Init()
 
   const auto pm = _context->GetPerfMetric();
   pm->Init(_context->GetDataPlatform(), _context->GetWebService());
+  pm->SetAnimationStreamer(_animationStreamer.get());
   if (pm->GetAutoRecord())
   {
     pm->Start();
