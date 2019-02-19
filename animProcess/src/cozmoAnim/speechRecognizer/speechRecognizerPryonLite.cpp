@@ -12,6 +12,7 @@
 */
 
 #include "speechRecognizerPryonLite.h"
+#include "util/console/consoleInterface.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
@@ -43,7 +44,9 @@ namespace Anki {
 namespace Vector {
 
 namespace {
-  const int kDefaultDetectThreshold = 10;
+  // must be saved + reboot
+  CONSOLE_VAR_RANGED(int, kDefaultDetectThreshold, "SpeechRecognizer.Alexa", 10, 0, 1000);
+  
   #define LOG_CHANNEL "SpeechRecognizer"
 }
 
