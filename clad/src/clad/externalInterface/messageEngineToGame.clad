@@ -381,14 +381,6 @@ message ConnectedObjectStates {
     ConnectedObjectState objects[uint_8]
 }
 
-// RobotEnrolledFace - Broadcast by BehaviorEnrollFace when it completes
-message FaceEnrollmentCompleted
-{
-  FaceEnrollmentResult result,
-  int_32               faceID,
-  string               name
-}
-
 // Status messages that will be superceded by some sort of generic status message (VIC-1423)
 
 message MeetVictorStarted

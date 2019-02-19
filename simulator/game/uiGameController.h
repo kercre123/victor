@@ -112,7 +112,6 @@ protected:
   virtual void HandleFactoryTestResultEntry(const FactoryTestResultEntry& msg){};
   virtual void HandleRobotErasedAllEnrolledFaces(const ExternalInterface::RobotErasedAllEnrolledFaces& msg){};
   virtual void HandleLoadedKnownFace(const Vision::LoadedKnownFace& msg){};
-  virtual void HandleFaceEnrollmentCompleted(const ExternalInterface::FaceEnrollmentCompleted &msg) {};
   virtual void HandleCliffEvent(const CliffEvent& msg){};
   virtual void HandleSetCliffDetectThresholds(const SetCliffDetectThresholds& msg){};
   
@@ -490,7 +489,6 @@ private:
   void HandleEndOfMessageBase(const ExternalInterface::EndOfMessage& msg);
   void HandleFactoryTestResultEntryBase(const FactoryTestResultEntry& msg);
   void HandleLoadedKnownFaceBase(const Vision::LoadedKnownFace& msg);
-  void HandleFaceEnrollmentCompletedBase(const ExternalInterface::FaceEnrollmentCompleted &msg);
   void HandleCliffEventBase(const CliffEvent& msg);
   void HandleSetCliffDetectThresholdsBase(const SetCliffDetectThresholds& msg);
   void HandleEngineErrorCodeBase(const ExternalInterface::EngineErrorCodeMessage& msg);

@@ -136,11 +136,6 @@ namespace Anki {
       HandleLoadedKnownFace(msg);
     }
     
-    void UiGameController::HandleFaceEnrollmentCompletedBase(const ExternalInterface::FaceEnrollmentCompleted &msg)
-    {
-      HandleFaceEnrollmentCompleted(msg);
-    }
-    
     void UiGameController::HandleCliffEventBase(const CliffEvent& msg)
     {
       HandleCliffEvent(msg);
@@ -607,9 +602,6 @@ namespace Anki {
             break;
           case ExternalInterface::MessageEngineToGameTag::EngineErrorCodeMessage:
             HandleEngineErrorCodeBase(message.Get_EngineErrorCodeMessage());
-            break;
-          case ExternalInterface::MessageEngineToGameTag::FaceEnrollmentCompleted:
-            HandleFaceEnrollmentCompletedBase(message.Get_FaceEnrollmentCompleted());
             break;
           case ExternalInterface::MessageEngineToGameTag::CliffEvent:
             HandleCliffEventBase(message.Get_CliffEvent());

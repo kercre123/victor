@@ -171,7 +171,6 @@ protected:
   virtual void HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg) override;
   virtual void HandleRobotObservedFace(const ExternalInterface::RobotObservedFace& msg) override;
   virtual void HandleRobotObservedPet(const ExternalInterface::RobotObservedPet& msg) override;
-  virtual void HandleFaceEnrollmentCompleted(const ExternalInterface::FaceEnrollmentCompleted& msg) override;
   virtual void HandleLoadedKnownFace(const Vision::LoadedKnownFace& msg) override;
   virtual void HandleEngineErrorCode(const ExternalInterface::EngineErrorCodeMessage& msg) override;
   virtual void HandleRobotConnected(const ExternalInterface::RobotConnectionResponse& msg) override;
