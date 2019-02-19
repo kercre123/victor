@@ -12,7 +12,10 @@ include(sensory)
 include(robot_core)
 
 anki_build_cxx_library(victor_anim ${ANKI_SRCLIST_DIR} STATIC)
-anki_build_target_license(victor_anim "ANKI" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/gif-h/LICENSE" "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/jo_gif/jo_gif.h" "CC0,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/minimp3/LICENSE" "FFTPACK5,${CMAKE_SOURCE_DIR}/licenses/pffft.license")
+anki_build_target_license(victor_anim "ANKI" 
+                          "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/gif-h/LICENSE" 
+                          "Public Domain,${CMAKE_SOURCE_DIR}/lib/util/source/3rd/jo_gif/jo_gif.h" 
+                          "FFTPACK5,${CMAKE_SOURCE_DIR}/licenses/pffft.license")
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
@@ -63,6 +66,7 @@ target_link_libraries(victor_anim
   ${AUBIO_LIBS}
   ${AVS_LIBS}
   ${PFFFT_LIBS}
+  ${MPG123_LIBS}
   PUBLIC
   victor_web_library
   robot_interface  # Needs to be public for cozmoConfig.h
