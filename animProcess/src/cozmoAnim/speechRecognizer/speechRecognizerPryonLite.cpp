@@ -44,6 +44,7 @@ namespace Vector {
 
 namespace {
   const int kDefaultDetectThreshold = 10;
+  #define LOG_CHANNEL "SpeechRecognizer"
 }
 
 // Local definition of data used internally for more strict encapsulation
@@ -85,7 +86,7 @@ SpeechRecognizerPryonLite& SpeechRecognizerPryonLite::operator=(SpeechRecognizer
   return *this;
 }
 
-bool SpeechRecognizerPryonLite::InitRecognizer(const std::string& modlePath)
+bool SpeechRecognizerPryonLite::InitRecognizer(const std::string& modlePath, bool useVad)
 {
 #if PRYON_ENABLED
   // Destroy current recognizer before loading new model
@@ -110,10 +111,12 @@ bool SpeechRecognizerPryonLite::InitRecognizer(const std::string& modlePath)
   _impl->config.decoderMem        = new char[modelAttributes.requiredDecoderMem];
   _impl->config.sizeofDecoderMem  = modelAttributes.requiredDecoderMem;
   _impl->config.resultCallback    = SpeechRecognizerPryonLite::DetectionCallback;
-  _impl->config.vadCallback       = SpeechRecognizerPryonLite::VadCallback;
-  _impl->config.useVad            = 1;  // enable voice activity detector
   _impl->config.userData          = this;
   _impl->config.detectThreshold   = _detectThreshold;
+  _impl->config.useVad            = useVad;
+  if (useVad) {
+    _impl->config.vadCallback     = SpeechRecognizerPryonLite::VadCallback;
+  }
   
   err = PryonLiteDecoder_Initialize(&_impl->config, &sessionInfo, &_impl->decoder);
   if (err != PRYON_LITE_ERROR_OK) {
@@ -156,8 +159,12 @@ bool SpeechRecognizerPryonLite::SetDetectionThreshold(int threshold)
   _detectThreshold = Util::Clamp(threshold, 1, 1000);
 #if PRYON_ENABLED
   std::lock_guard<std::recursive_mutex> lock(_impl->recogMutex);
+  if (!PryonLiteDecoder_IsDecoderInitialized(_impl->decoder)) {
+    LOG_INFO("SpeechRecognizerPryonLite.SetDetectionThreshold.NotInitialized", "Detect threshold will be set on init");
+    return true;
+  }
   _impl->config.detectThreshold = _detectThreshold;
-  const PryonLiteError err = PryonLiteDecoder_SetDetectionThreshold(_impl->decoder, NULL, _impl->config.detectThreshold);
+  const PryonLiteError err = PryonLiteDecoder_SetDetectionThreshold(_impl->decoder, "ALEXA", _impl->config.detectThreshold);
   if (err != PRYON_LITE_ERROR_OK) {
     LOG_ERROR("SpeechRecognizerPryonLite.SetDetectionThreshold", "PryonLite error %d", err);
     return false;
@@ -289,6 +296,8 @@ void SpeechRecognizerPryonLite::Cleanup()
   Util::SafeDeleteArray(_impl->modelBuffer);
   _impl->config.sizeofModel = 0;
   _impl->decoder = nullptr;
+  _impl->config = PryonLiteDecoderConfig_Default;
+  _impl->vadState = PryonLiteVadState::PRYON_LITE_VAD_INACTIVE;
   Util::SafeDeleteArray(_impl->config.decoderMem);
 #endif
 }

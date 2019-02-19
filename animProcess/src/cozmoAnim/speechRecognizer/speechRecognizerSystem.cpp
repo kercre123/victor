@@ -174,6 +174,21 @@ bool AlexaLocaleEnabled(const Util::Locale& locale)
     return false;
   }
 }
+bool AlexaLocaleUsesVad(const Util::Locale& locale)
+{
+  
+  if ((locale.GetCountry() == Util::Locale::CountryISO2::GB) || (locale.GetCountry() == Util::Locale::CountryISO2::AU)) {
+    // the smaller model we currently use for GB and AU has a problematic VAD. For certain utterances, after alexa
+    // finishes responding, the VAD indicator flickers on, off, and back on. If you then play a new alexa wake word,
+    // the VAD indicator switches off, and the wake word is ignored. There's no evidence of this happening for the
+    // larger US model.
+    // TODO (VIC-13413): Have amazon fix the VAD. Maybe a larger model would help too.
+    return false;
+  }
+  else {
+    return true;
+  }
+}
 
 } // namespace
 
@@ -301,7 +316,8 @@ void SpeechRecognizerSystem::InitVector(const RobotDataLoader& dataLoader,
     return;
   }
   
-  _victorTrigger = std::make_unique<TriggerContextThf>("Vector");
+  const bool useVad = true;
+  _victorTrigger = std::make_unique<TriggerContextThf>("Vector", useVad);
   _victorTrigger->recognizer->Init("");
   _victorTrigger->recognizer->SetCallback(callback);
   _victorTrigger->recognizer->Start();
@@ -383,7 +399,7 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample * audioData, un
     ApplyLocaleUpdate();
   }
   // Update recognizer
-  if (vadActive) {
+  if (vadActive || !_victorTrigger->useVad) {
     _victorTrigger->recognizer->Update(audioData, audioDataLen);
   }
   
@@ -414,6 +430,7 @@ bool SpeechRecognizerSystem::UpdateTriggerForLocale(const Util::Locale& newLocal
     
     if (_alexaTrigger &&
         ((RecognizerTypeFlag::AlexaMic & recognizerFlags) == RecognizerTypeFlag::AlexaMic)) {
+      _alexaTrigger->useVad = AlexaLocaleUsesVad(newLocale);
       success &= UpdateTriggerForLocale(*_alexaTrigger.get(), newLocale, MicData::MicTriggerConfig::ModelType::Count, -1);
     }
     
@@ -535,7 +552,8 @@ void SpeechRecognizerSystem::InitAlexa(const Util::Locale& locale,
   const auto dataLoader = _context->GetDataLoader();
   ASSERT_NAMED(_alexaComponent != nullptr, "SpeechRecognizerSystem.InitAlexa._context.GetAlexa.IsNull");
   
-  _alexaTrigger = std::make_unique<TriggerContextPryon>("Alexa");
+  const bool useVad = AlexaLocaleUsesVad(locale);
+  _alexaTrigger = std::make_unique<TriggerContextPryon>("Alexa", useVad);
   _alexaTrigger->recognizer->SetCallback(wrappedCallback);
   _alexaTrigger->micTriggerConfig->Init("alexa_pryon", dataLoader->GetMicTriggerConfig());
   _alexaTrigger->recognizer->Start();
@@ -564,8 +582,12 @@ void SpeechRecognizerSystem::InitAlexaPlayback(const Util::Locale& locale,
     return;
   }
   
+  // Save some CPU by using the VAD on the playback recognizer. This may be something to consider disabling if self-loops
+  // are occurring.
+  const bool useVad = true;
+  
   const auto dataLoader = _context->GetDataLoader();
-  _alexaPlaybackTrigger = std::make_unique<TriggerContextPryon>("AlexaPlayback");
+  _alexaPlaybackTrigger = std::make_unique<TriggerContextPryon>("AlexaPlayback", useVad);
   _alexaPlaybackTrigger->recognizer->SetCallback(callback);
   _alexaPlaybackTrigger->recognizer->SetDetectionThreshold(1); // playback recognizer should be extremely permissive
   _alexaPlaybackTrigger->micTriggerConfig->Init("alexa_pryon", dataLoader->GetMicTriggerConfig());
@@ -699,7 +721,7 @@ bool SpeechRecognizerSystem::UpdateRecognizerModel(TriggerContext<SpeechRecogniz
   if ( currentTrigPathRef.IsValid() ) {
     // Unload & Load
     const std::string netFilePath = currentTrigPathRef.GenerateNetFilePath( _triggerWordDataDir );
-    success = recognizer->InitRecognizer( netFilePath );
+    success = recognizer->InitRecognizer( netFilePath, aTrigger.useVad );
     if ( success && (_alexaComponent != nullptr) ) {
       recognizer->SetAlexaMicrophoneOffset( _alexaComponent->GetMicrophoneSampleIndex() );
       recognizer->Start();

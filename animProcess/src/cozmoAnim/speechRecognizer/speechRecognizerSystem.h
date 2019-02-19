@@ -126,11 +126,14 @@ private:
     // For tracking and altering the trigger model being used
     MicData::MicTriggerConfig::TriggerDataPaths currentTriggerPaths;
     MicData::MicTriggerConfig::TriggerDataPaths nextTriggerPaths;
+    
+    bool                                        useVad;
 
-    TriggerContext(const std::string& name)
+    TriggerContext(const std::string& name, bool useVad)
     : name(name)
     , recognizer(std::make_unique<SpeechRecognizerType>())
     , micTriggerConfig(std::make_unique<MicData::MicTriggerConfig>())
+    , useVad(useVad)
     { }
   };
   

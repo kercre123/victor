@@ -41,7 +41,7 @@ public:
   // Create recognizer with model file
   // Can recall method to change model
   // Note: When changing the model file the recognizer will be destroyed and re-created.
-  bool InitRecognizer(const std::string& modelFilePath);
+  bool InitRecognizer(const std::string& modelFilePath, bool useVad);
   
   // Stream audio data to recognizer
   // Note: Stream all data to recognizer to keep stream's time in sync with Alexa component, there is an internal VAD
