@@ -357,6 +357,12 @@ bool BEIRobotInfo::IsBeingHeld() const
 {
   return _robot.IsBeingHeld();
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+EngineTimeStamp_t BEIRobotInfo::GetBeingHeldLastChangedTime_ms() const
+{
+  return _robot.GetBeingHeldLastChangedTime_ms();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsPoseInWorldOrigin(const Pose3d& pose) const

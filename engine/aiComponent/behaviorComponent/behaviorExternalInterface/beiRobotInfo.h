@@ -144,8 +144,11 @@ public:
   bool IsOnChargerPlatform() const;
   bool IsPhysical() const;
   bool IsPickedUp() const;
-  bool IsPowerButtonPressed() const;  
+  bool IsPowerButtonPressed() const;
+  
   bool IsBeingHeld() const;
+  EngineTimeStamp_t GetBeingHeldLastChangedTime_ms() const;
+  
   bool IsPoseInWorldOrigin(const Pose3d& pose) const;
   
   bool IsCarryingObject() const;
