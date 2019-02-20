@@ -1357,7 +1357,7 @@ Result Robot::Update()
   if (kDebugPossibleBlockInteraction) {
     // print a bunch of info helpful for debugging block states
     BlockWorldFilter filter;
-    filter.SetAllowedFamilies({ObjectFamily::LightCube});
+    filter.SetFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
     std::vector<ObservableObject*> matchingObjects;
     GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects); // note this doesn't retrieve unknowns anymore
     for( const auto obj : matchingObjects ) {

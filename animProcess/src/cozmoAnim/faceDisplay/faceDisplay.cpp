@@ -70,7 +70,8 @@ namespace {
 }
   
 FaceDisplay::FaceDisplay()
-: _stopBootAnim(false)
+: _stopDrawFace(false)
+, _stopBootAnim(false)
 {
   // Don't try to stop the boot anim in sim
   // or if we are not supposed to manunually stop it

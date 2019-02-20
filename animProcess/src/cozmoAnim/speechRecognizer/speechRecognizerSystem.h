@@ -25,6 +25,7 @@ namespace Anki {
   namespace AudioUtil {
     class SpeechRecognizer;
     struct SpeechRecognizerCallbackInfo;
+    struct SpeechRecognizerIgnoreReason;
   }
   namespace Vector {
     class Alexa;
@@ -65,6 +66,8 @@ public:
   SpeechRecognizerSystem& operator=(const SpeechRecognizerSystem& other) = delete;
   
   using TriggerWordDetectedCallback = std::function<void(const AudioUtil::SpeechRecognizerCallbackInfo& info)>;
+  using AlexaTriggerWordDetectedCallback = std::function<void(const AudioUtil::SpeechRecognizerCallbackInfo& info,
+                                                              const AudioUtil::SpeechRecognizerIgnoreReason& reason)>;
   
   // Init Vector trigger detector
   // Note: This always happens at boot
@@ -101,7 +104,7 @@ public:
   // Alexa Methods
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Alexa has been set active set current locale and callback for Alexa trigger recognitions
-  void ActivateAlexa(const Util::Locale& locale, TriggerWordDetectedCallback callback);
+  void ActivateAlexa(const Util::Locale& locale, AlexaTriggerWordDetectedCallback callback);
   
   // Alexa has been disabled, turn off the "Alexa" recognizer
   void DisableAlexa();
@@ -123,11 +126,14 @@ private:
     // For tracking and altering the trigger model being used
     MicData::MicTriggerConfig::TriggerDataPaths currentTriggerPaths;
     MicData::MicTriggerConfig::TriggerDataPaths nextTriggerPaths;
+    
+    bool                                        useVad;
 
-    TriggerContext(const std::string& name)
+    TriggerContext(const std::string& name, bool useVad)
     : name(name)
     , recognizer(std::make_unique<SpeechRecognizerType>())
     , micTriggerConfig(std::make_unique<MicData::MicTriggerConfig>())
+    , useVad(useVad)
     { }
   };
   
@@ -161,7 +167,7 @@ private:
   // Init Alexa trigger detector
   // Note: This is done after Alex user has been authicated
   void InitAlexa(const Util::Locale& locale,
-                 const TriggerWordDetectedCallback callback);
+                 const AlexaTriggerWordDetectedCallback callback);
   
   // Init Alex playback trigger detector
   void InitAlexaPlayback(const Util::Locale& locale,

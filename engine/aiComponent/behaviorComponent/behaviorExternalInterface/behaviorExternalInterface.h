@@ -53,6 +53,7 @@ class DataAccessorComponent;
 class DelegationComponent;
 class FaceWorld;
 class HabitatDetectorComponent;
+class HeldInPalmTracker;
 class ICozmoBehavior;
 class IExternalInterface;
 class MapComponent;
@@ -124,6 +125,7 @@ public:
     components.insert(BCComponentID::BehaviorTimerManager);
     components.insert(BCComponentID::BlockWorld);
     components.insert(BCComponentID::FaceWorld);
+    components.insert(BCComponentID::HeldInPalmTracker);
     components.insert(BCComponentID::RobotInfo);
     components.insert(BCComponentID::SleepTracker);
   }
@@ -148,6 +150,7 @@ public:
             DelegationComponent*           delegationComponent,
             FaceWorld*                     faceWorld,
             HabitatDetectorComponent*      habitatDetectorComponent,
+            HeldInPalmTracker*             heldInPalmTracker,
             MapComponent*                  mapComponent,
             MicComponent*                  micComponent,
             MoodManager*                   moodManager,
@@ -279,6 +282,9 @@ public:
 
   inline bool HasSleepTracker() const { return GetComponentWrapper(BEIComponentID::SleepTracker).IsComponentValid();}
   SleepTracker& GetSleepTracker() const {return GetComponentWrapper(BEIComponentID::SleepTracker).GetComponent<SleepTracker>();}
+  
+  inline bool HasHeldInPalmTracker() const { return GetComponentWrapper(BEIComponentID::HeldInPalmTracker).IsComponentValid();}
+  HeldInPalmTracker& GetHeldInPalmTracker() const {return GetComponentWrapper(BEIComponentID::HeldInPalmTracker).GetComponent<HeldInPalmTracker>();}
 
   inline bool HasVariableSnapshotComponent() const { return GetComponentWrapper(BEIComponentID::VariableSnapshotComponent).IsComponentValid();}
   VariableSnapshotComponent& GetVariableSnapshotComponent() const {return GetComponentWrapper(BEIComponentID::VariableSnapshotComponent).GetComponent<VariableSnapshotComponent>();}
@@ -307,6 +313,7 @@ private:
                        DelegationComponent*           delegationComponent,
                        FaceWorld*                     faceWorld,
                        HabitatDetectorComponent*      habitatDetectorComponent,
+                       HeldInPalmTracker*             heldInPalmTracker,
                        MapComponent*                  mapComponent,
                        MicComponent*                  micComponent,
                        MoodManager*                   moodManager,

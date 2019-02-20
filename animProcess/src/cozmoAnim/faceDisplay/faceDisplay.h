@@ -67,7 +67,7 @@ private:
   Vision::ImageRGB565*                  _faceDrawCurImg = nullptr;
   std::thread                           _faceDrawThread;
   std::mutex                            _faceDrawMutex;
-  bool                                  _stopDrawFace = false;
+  std::atomic<bool>                     _stopDrawFace;
 
   // Whether or not the boot animation process has been stopped
   // Atomic because it is checked by the face drawing thread

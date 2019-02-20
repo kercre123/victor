@@ -92,14 +92,14 @@ s32 CST_PickUpBlockThenSeeDropped::UpdateSimInternal()
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(DEFAULT_TIMEOUT,
                                             !IsRobotStatus(RobotStatusFlag::IS_MOVING),
                                             NEAR(GetRobotHeadAngle_rad(), 0, HEAD_ANGLE_TOL),
-                                            GetNumObjectsInFamily(ObjectFamily::LightCube) == 1)
+                                            GetAllLightCubeObjectIDs().size() == 1)
       {
         ExternalInterface::QueueSingleAction m;
         m.position = QueueActionPosition::NOW;
         m.idTag = 1;
         
         // Pickup first lightcube object
-        std::vector<s32> cubeIds = GetAllObjectIDsByFamily(ObjectFamily::LightCube);
+        std::vector<s32> cubeIds = GetAllLightCubeObjectIDs();
         CST_ASSERT(!cubeIds.empty(), "No lightcubes found!");
         _cubeId = cubeIds[0];
         

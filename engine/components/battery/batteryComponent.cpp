@@ -27,6 +27,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
 
 #include "osState/osState.h"
@@ -115,7 +116,6 @@ BatteryComponent::BatteryComponent()
                                                                     kBatteryVoltsFilterTimeConstant_sec);
 
   // setup block world filter to find chargers:
-  _chargerFilter->AddAllowedFamily(ObjectFamily::Charger);
   _chargerFilter->AddAllowedType(ObjectType::Charger_Basic);
 
   _lastOnChargerContactsPitchAngle.performRescaling(false);
@@ -208,8 +208,21 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   if (_battDisconnected != _wasBattDisconnected) {
     _lastDisconnectedChange_sec = now_sec;
 
-    // DAS message for when battery is disconnected for cooldown
+    // The battery becomes disconnected for one of two reasons:
+    //
+    // - Once when, on being put on the charger, the battery is too hot and needs to cool down.
+    //   By disconnecting here, the battery will have a chance to cool down (given time).
+    //   The IS_CHARGING bit is set to true by syscon even though it is not actually charging.
+    //   After the battery cools down, it will be reconnected and charging will resume.
+    //   During this cooldown period, the IS_CHARGING bit is kept true to hide the fact
+    //   that it is disconnected from users. This ensures the robot is left alone, on 
+    //   the charger, so that it may naturally cool down and eventually resume charging.
+    //
+    // - When the battery has been charging for 25 minutes (considered the maximum time needed), 
+    //   there is no need to keep drawing power. So, the battery is disconnected to prolong its life.
+    //   The IS_CHARGING bit is set to false here, because no more charging takes place.
     if (IsCharging()) {
+      // DAS message for when battery is disconnected for cooldown
       DASMSG(battery_cooldown, "battery.cooldown", "Indicates that the battery was disconnected/reconnected in order to cool down the battery");
       DASMSG_SET(i1, _battDisconnected, "Whether we have started or stopped cooldown (1 if we have started, 0 if we have stopped)");
       DASMSG_SET(i2, now_sec - _lastOnChargerContactsChange_sec, "Time since placed on charger (sec)");

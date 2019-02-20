@@ -342,7 +342,7 @@ namespace Anki {
             m.idTag = 8;
             
             // Face first matching light cube
-            std::vector<s32> lightCubeIDs = GetAllObjectIDsByFamily(ObjectFamily::LightCube);
+            std::vector<s32> lightCubeIDs = GetAllLightCubeObjectIDs();
             if (!lightCubeIDs.empty()) {
               m.action.Set_turnTowardsObject(ExternalInterface::TurnTowardsObject(lightCubeIDs[0], M_PI_F, 0, 0, 0, 0, 0, 0, true, false));
               ExternalInterface::MessageGameToEngine message;

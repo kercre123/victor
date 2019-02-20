@@ -31,7 +31,7 @@ class ObjectID;
 namespace Vector{
 
 // Forward Declarations
-class ActiveObject;
+class Block;
 template <typename Type>
 class AnkiEvent;
 class BehaviorKeepaway;
@@ -48,7 +48,7 @@ namespace ExternalInterface {
 
 struct TargetStatus {
   TargetStatus();
-  const  ActiveObject* activeObject; // valid only if connected
+  const  Block* activeObject; // valid only if connected
   const  ObservableObject* observableObject; // valid only if located in blockWorld
   Pose3d prevPose; // Pose on last update
   float  distance_mm;

@@ -34,7 +34,7 @@
     // state 2 - wait at that location (times unused since we specify an anim trigger)
     "s2_WaitMin_sec": 0.0,
     "s2_WaitMax_sec": 0.0,
-    "s2_WaitAnimTrigger": "LookInPlaceForFacesBodyPause",
+    "s2_WaitAnimTrigger": "HeldOnPalmEdgeRelaxed",
 
     // state 3 - body turn in fwd direction (#1/2)
     "s3_BodyAngleRangeMin_deg": 10.0,
@@ -51,7 +51,7 @@
     "s4_HeadAngleChangesMax":  2,
     "s4_WaitBetweenChangesMin_sec" : 0.0, // (times unused since we specify an anim trigger)
     "s4_WaitBetweenChangesMax_sec" : 0.0,
-    "s4_WaitAnimTrigger": "LookInPlaceForFacesHeadMovePause",
+    "s4_WaitAnimTrigger": "HeldOnPalmEdgeRelaxed",
 
     // state 5 - head angle change (can have body mini-turn), here to undo what state 4 does randomly, resetting head angle before 6
     "s5_BodyAngleRelativeRangeMin_deg" :  1.0, // +- body mini-turn from [min,max]

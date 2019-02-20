@@ -11,7 +11,6 @@
  **/
 #include "engine/robotEventHandler.h"
 
-#include "engine/activeObject.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
@@ -1948,7 +1947,7 @@ void RobotEventHandler::HandleMessage(const AnkiEvent<external_interface::Gatewa
   if( handlerMap.count(tag) == 0 )
   {
     PRINT_NAMED_WARNING("RobotEventHandler.HandleMessage.NoGatewayHandler",
-                        "Gateway message recieved with no handler for tag %i", (int)tag);
+                        "Gateway message received with no handler for tag %i", (int)tag);
     return;
   }
 

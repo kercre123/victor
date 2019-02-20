@@ -105,7 +105,6 @@ class RobotStateHistory;
 class HistRobotState;
 class IExternalInterface;
 struct RobotState;
-class ActiveCube;
 class CubeLightComponent;
 class BackpackLightComponent;
 class RobotToEngineImplMessaging;

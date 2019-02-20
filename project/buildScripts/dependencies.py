@@ -691,18 +691,16 @@ def deptool_package(deptool_dict):
       if checksums:
          sha256_checksum = checksums.get("sha256", sha256_checksum)
       dst = os.path.join(DEPENDENCY_LOCATION, dep)
-      if os.path.exists(dst):
-         version = ankibuild.deptool.get_version_from_dir(dst)
-         if version == required_version:
-            continue
+      if ankibuild.deptool.is_valid_dep_dir_for_version_and_sha256(dst, required_version, sha256_checksum):
+         continue
       if os.path.islink(dst):
          os.unlink(dst)
       else:
          ankibuild.util.File.rm_rf(dst)
       src = ankibuild.deptool.find_or_install_dep(project, dep, required_version, url_prefix, sha256_checksum)
       if not src:
-         raise RuntimeError('Could not find or install {0}/{1} at version {2} under {3}'
-                            .format(project, dep, required_version, url_prefix))
+         raise RuntimeError('Could not find or install {0}/{1} (version = {2}, sha256 = {3}, url_prefix = {4})'
+                            .format(project, dep, required_version, sha256_checksum, url_prefix))
       os.symlink(src, dst)
       deps_retrieved.append(dep)
 

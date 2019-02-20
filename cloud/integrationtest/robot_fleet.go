@@ -6,6 +6,8 @@ import (
 	"os/signal"
 	"sync"
 	"syscall"
+
+	metrics "github.com/rcrowley/go-metrics"
 )
 
 var waitChannel chan struct{}
@@ -30,17 +32,24 @@ type robotFleet struct {
 
 	mutex  sync.Mutex
 	robots []*robotSimulator
+
+	sizeGauge      metrics.Gauge
+	actionRegistry *actionMetricRegistry
 }
 
 func newRobotFleet(options *options) *robotFleet {
-	return &robotFleet{distributedController: newDistributedController(*options.redisAddress)}
+	return &robotFleet{
+		distributedController: newDistributedController(*options.redisAddress),
+		actionRegistry:        newActionMetricRegistry(),
+	}
 }
 
-func (r *robotFleet) runSingleRobot(options *options, robotIndex, taskID int) {
+func (r *robotFleet) runSingleRobot(options *options, taskID, robotIndex int) {
 	instanceOptions := options.createIdentity(r.distributedController, robotIndex, taskID)
 
-	simulator, err := newRobotSimulator(options, instanceOptions)
-	simulator.logIfNoError(err, "framework", "New robot (id=%d) inside task (id=%d) created (start delay %v)",
+	simulator, err := newRobotSimulator(r.actionRegistry, options, instanceOptions)
+
+	simulator.logIfNoError(err, "framework", "new_robot", "New robot (id=%d) inside task (id=%d) created (start delay %v)",
 		instanceOptions.robotID, taskID, instanceOptions.rampupDelay)
 	if err != nil {
 		return
@@ -51,8 +60,8 @@ func (r *robotFleet) runSingleRobot(options *options, robotIndex, taskID int) {
 	r.mutex.Unlock()
 
 	// At startup we go through the primary pairing sequence action
-	simulator.addSetupAction(instanceOptions.rampupDelay, simulator.testPrimaryPairingSequence)
-	simulator.addTearDownAction(instanceOptions.rampdownDelay, simulator.tearDownAction)
+	simulator.addSetupAction("primary_association", instanceOptions.rampupDelay, simulator.testPrimaryPairingSequence)
+	simulator.addTearDownAction("nop", instanceOptions.rampdownDelay, simulator.tearDownAction)
 
 	// After that we periodically run the following actions
 	simulator.addPeriodicAction("heart_beat", options.heartBeatInterval, options.heartBeatStdDev, simulator.heartBeat)
@@ -68,11 +77,11 @@ func (r *robotFleet) runSingleRobot(options *options, robotIndex, taskID int) {
 	// wait for stop signal
 	<-waitChannel
 
-	simulator.logIfNoError(err, "framework", "Stopping robot (id=%d)", instanceOptions.robotID)
+	simulator.logIfNoError(err, "framework", "stopping_robot", "Stopping robot (id=%d)", instanceOptions.robotID)
 
 	simulator.stop()
 
-	simulator.logIfNoError(err, "framework", "Robot (id=%d) stopped", instanceOptions.robotID)
+	simulator.logIfNoError(err, "framework", "robot_stopped", "Robot (id=%d) stopped", instanceOptions.robotID)
 }
 
 func (r *robotFleet) runRobots(options *options) {
@@ -84,6 +93,18 @@ func (r *robotFleet) runRobots(options *options) {
 		// We default to zero in case of error
 		taskID = 0
 	}
+
+	setupMetrics(*options.wavefrontAddress, taskID, options.reportingInterval)
+
+	r.sizeGauge = metrics.NewRegisteredFunctionalGauge("fleet_size", metrics.DefaultRegistry, func() int64 {
+		var fleetSize int64 = 0
+		for _, robot := range r.robots {
+			if robot.state == SimulatorStarted {
+				fleetSize++
+			}
+		}
+		return fleetSize
+	})
 
 	if *options.enableDistributedControl {
 		fmt.Printf("Task %d listening for external simulation commands\n", taskID)
@@ -98,7 +119,7 @@ func (r *robotFleet) runRobots(options *options) {
 		go func(robotIndex int) {
 			defer wg.Done()
 
-			r.runSingleRobot(options, robotIndex, taskID)
+			r.runSingleRobot(options, taskID, robotIndex)
 		}(i)
 	}
 

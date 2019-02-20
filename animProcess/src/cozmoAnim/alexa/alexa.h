@@ -74,7 +74,7 @@ public:
   void UpdateLocale( const Util::Locale& locale );
   
   // Get the number of audio samples that have been added to Alexa "Microphone" component
-  uint64_t GetMichrophoneSampleIndex() const;
+  uint64_t GetMicrophoneSampleIndex() const;
 
   // Whether there is a session that is active or in the process of initializing.
   // Assumes that the existence of the impl is still tied to opt-in state (which may change)
@@ -176,7 +176,8 @@ private:
   
   NotifyType _notifyType = NotifyType::None;
   
-  std::unique_ptr<Util::Locale> _pendingLocale;
+  std::unique_ptr<Util::Locale> _locale;
+  bool _pendingLocale = false;
 
   // whether a message was received from engine saying to opt in. this gets reset after auth completes
   bool _authStartedByUser = false;

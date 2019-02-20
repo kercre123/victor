@@ -87,7 +87,7 @@ private:
   std::condition_variable _syncTaskCondition;
   std::shared_ptr<void> _heartbeat;
   bool _syncTaskDone;
-  bool _executing;
+  std::atomic<bool> _executing;
   const std::string _queueName;
   std::atomic_int _idCounter;
   size_t _cachedDeferredSize;

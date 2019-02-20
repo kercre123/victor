@@ -67,8 +67,8 @@ func (s *SimulatorTestSuite) TestStartStop() {
 
 	simulator := newTestSimulator()
 
-	simulator.addSetupAction(0, simulator.setupAction)
-	simulator.addTearDownAction(0, simulator.tearDownAction)
+	simulator.addSetupAction("setup", 0, simulator.setupAction)
+	simulator.addTearDownAction("teardown", 0, simulator.tearDownAction)
 	simulator.addPeriodicAction("action1", time.Millisecond*50, 0, simulator.periodicAction1)
 	simulator.addPeriodicAction("action2", time.Millisecond*100, 0, simulator.periodicAction2)
 
@@ -123,7 +123,7 @@ func (s *SimulatorTestSuite) TestDelayedStart() {
 
 	simulator := newTestSimulator()
 
-	simulator.addSetupAction(time.Millisecond*50, simulator.setupAction)
+	simulator.addSetupAction("setup", time.Millisecond*50, simulator.setupAction)
 
 	err := simulator.start()
 	require.NoError(err)
@@ -146,7 +146,7 @@ func (s *SimulatorTestSuite) TestQuitBeforeStartDelay() {
 
 	simulator := newTestSimulator()
 
-	simulator.addSetupAction(time.Hour, simulator.setupAction)
+	simulator.addSetupAction("setup", time.Hour, simulator.setupAction)
 
 	err := simulator.start()
 	require.NoError(err)

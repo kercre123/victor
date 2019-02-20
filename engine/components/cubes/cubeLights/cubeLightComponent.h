@@ -47,7 +47,7 @@
 namespace Anki {
 namespace Vector {
 
-class ActiveObject;
+class Block;
 class CozmoContext;
 class CubeAnimation;
 class CubeLightAnimationContainer;
@@ -268,9 +268,6 @@ private:
   // Whether or not to play connection/status lights
   // Default to true so that status lights are driven from the CubeConnectionCoordinator
   bool _cubeConnectedInBackground = true;
-  
-  // The last cube light gamma that was sent to the robot (global across all cubes)
-  u32 _prevGamma = 0;
 
   AnimationHandle _nextAnimationHandle = 0;
   std::unordered_map<CubeAnimationTrigger, AnimationHandle> _triggerToHandleMap;
@@ -363,7 +360,7 @@ private:
   
   const char* LayerToString(const AnimLayerEnum& layer) const;
   
-  Result SetLights(const ActiveObject* object, const bool rotate);
+  Result SetLights(const Block* object, const bool rotate);
   
   // Applies white balancing to a color
   ColorRGBA WhiteBalanceColor(const ColorRGBA& color) const;

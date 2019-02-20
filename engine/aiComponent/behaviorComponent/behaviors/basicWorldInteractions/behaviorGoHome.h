@@ -79,10 +79,15 @@ private:
   struct DynamicVariables {
     DynamicVariables() {};
     ObjectID chargerID;
-    bool     drivingAnimsPushed = false;;
+    bool     drivingAnimsPushed = false;
     int      driveToRetryCount = 0;
     int      turnToDockRetryCount = 0;
     int      mountChargerRetryCount = 0;
+    u32      numImagesDetectingMarkers = 0;
+    u32      numImagesTooDark = 0;
+    
+    // Handle to the callback function registered in the VisionComponent
+    Signal::SmartHandle visionProcessingResultHandle;
     
     // For logging/DAS, keep track of whether we succeeded at getting onto the charger. Note that it's possible for the
     // behavior to end without a definite result (e.g. if it was interrupted). The result of HasSucceeded() is only
@@ -117,7 +122,7 @@ private:
   // we're out of retries for action failures.
   // Optionally remove the charger from BlockWorld if we failed in
   // such a way that we definitely don't know where the charger is
-  void ActionFailure(bool removeChargerFromBlockWorld = false);
+  void ActionFailure(bool removeChargerFromBlockWorld);
   
   void PushDrivingAnims();
   void PopDrivingAnims();

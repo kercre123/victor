@@ -57,7 +57,7 @@ ActionResult MountChargerAction::Init()
   _driveForRetryAction.reset();
   
   // Verify that we have a charger in the world that matches _chargerID
-  const auto* charger = GetRobot().GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
+  const auto* charger = GetRobot().GetBlockWorld().GetLocatedObjectByID(_chargerID);
   if ((charger == nullptr) ||
       (charger->GetType() != ObjectType::Charger_Basic)) {
     PRINT_NAMED_WARNING("MountChargerAction.Init.InvalidCharger",
@@ -87,7 +87,7 @@ ActionResult MountChargerAction::CheckIfDone()
     // turned away from the charger, then position for a retry
     if (IActionRunner::GetActionResultCategory(result) == ActionResultCategory::RETRY) {
       bool isFacingAwayFromCharger = true;
-      const auto* charger = GetRobot().GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
+      const auto* charger = GetRobot().GetBlockWorld().GetLocatedObjectByID(_chargerID);
       if (charger != nullptr) {
         const auto& chargerAngle = charger->GetPose().GetRotation().GetAngleAroundZaxis();
         const auto& robotAngle = GetRobot().GetPose().GetRotation().GetAngleAroundZaxis();
@@ -199,7 +199,7 @@ ActionResult TurnToAlignWithChargerAction::Init()
   _compoundAction->ShouldSuppressTrackLocking(true);
   _compoundAction->SetRobot(&GetRobot());
   
-  const auto* charger = GetRobot().GetBlockWorld().GetLocatedObjectByID(_chargerID, ObjectFamily::Charger);
+  const auto* charger = GetRobot().GetBlockWorld().GetLocatedObjectByID(_chargerID);
   if ((charger == nullptr) ||
       (charger->GetType() != ObjectType::Charger_Basic)) {
     PRINT_NAMED_WARNING("TurnToAlignWithChargerAction.Init.InvalidCharger",
@@ -369,7 +369,8 @@ ActionResult BackupOntoChargerAction::Verify()
   
 DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objectID,
                                                            const bool useCliffSensorCorrection,
-                                                           const bool enableDockingAnims)
+                                                           const bool enableDockingAnims,
+                                                           const bool doPositionCheckOnPathCompletion)
 : CompoundActionSequential()
 {
   // Get DriveToObjectAction
@@ -379,6 +380,7 @@ DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objec
                                                false,
                                                0);
   driveToAction->SetPreActionPoseAngleTolerance(DEG_TO_RAD(15.f));
+  driveToAction->DoPositionCheckOnPathCompletion(doPositionCheckOnPathCompletion);
   AddAction(driveToAction);
   AddAction(new TurnToAlignWithChargerAction(objectID));
 

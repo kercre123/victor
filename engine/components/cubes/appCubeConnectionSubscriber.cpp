@@ -13,7 +13,7 @@
 
 #include "engine/components/cubes/appCubeConnectionSubscriber.h"
 
-#include "engine/activeObject.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubes/cubeConnectionCoordinator.h"
@@ -94,7 +94,7 @@ void AppCubeConnectionSubscriber::ConnectedCallback(CubeConnectionType connectio
       connectResultMsg->set_success(true);
 
       const auto& activeId = _robot->GetCubeCommsComponent().GetConnectedCubeActiveId();
-      const auto* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeId);
+      const auto* object = _robot->GetBlockWorld().GetConnectedBlockByActiveID(activeId);
       connectResultMsg->set_object_id(object->GetID());
       connectResultMsg->set_factory_id(object->GetFactoryID().c_str());
       _gi->Broadcast(ExternalMessageRouter::WrapResponse(connectResultMsg));
@@ -175,7 +175,7 @@ void AppCubeConnectionSubscriber::HandleAppRequest(const AppToEngineEvent& event
         ccc.SubscribeToCubeConnection(this, background, kCubeConnectionTimeout_s);
 
         const auto& activeId = _robot->GetCubeCommsComponent().GetConnectedCubeActiveId();
-        const auto* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeId);
+        const auto* object = _robot->GetBlockWorld().GetConnectedBlockByActiveID(activeId);
         if (object != nullptr) {
           _robot->GetCubeLightComponent().PlayLightAnimByTrigger(object->GetID(), CubeAnimationTrigger::Flash);
         }

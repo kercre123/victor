@@ -13,7 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevViewCubeBackpackLights.h"
 
-#include "engine/activeObject.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
@@ -131,8 +131,8 @@ void BehaviorDevViewCubeBackpackLights::BehaviorUpdate()
   // cube lights
   if(!_dVars.objectID.IsSet()){
     BlockWorldFilter filter;
-    filter.AddAllowedFamily(ObjectFamily::LightCube);
-    const ActiveObject* obj = GetBEI().GetBlockWorld().FindConnectedActiveMatchingObject(filter);
+    filter.AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
+    const auto* obj = GetBEI().GetBlockWorld().FindConnectedMatchingBlock(filter);
 
     if(obj != nullptr){
       _dVars.objectID = obj->GetID();

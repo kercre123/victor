@@ -24,9 +24,9 @@
 namespace Anki {
   namespace Vector {
         
-    ActionableObject::ActionableObject()
+    ActionableObject::ActionableObject(const ObjectType& type)
+    : Vector::ObservableObject(type)
     {
-      
     }
     
     bool ActionableObject::IsPreActionPoseValid(const PreActionPose& preActionPose,

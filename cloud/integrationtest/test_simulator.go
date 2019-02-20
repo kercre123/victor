@@ -17,34 +17,39 @@ type testSimulator struct {
 }
 
 func newTestSimulator() *testSimulator {
+	reportingTasks := 0
+	options := &options{reportingTasks: &reportingTasks}
+
+	instanceOptions := &instanceOptions{taskID: 0, robotID: 0, testUserName: "test"}
+
 	return &testSimulator{
 		pollingInterval: time.Millisecond * 20,
 		numRetries:      5,
-		simulator:       newSimulator(),
+		simulator:       newSimulator(newActionMetricRegistry(), options, instanceOptions),
 	}
 }
 
-func (s *testSimulator) setupAction() error {
+func (s *testSimulator) setupAction(action action) error {
 	s.setupDone = true
 	return nil
 }
 
-func (s *testSimulator) tearDownAction() error {
+func (s *testSimulator) tearDownAction(action action) error {
 	s.tearDownDone = true
 	return nil
 }
 
-func (s *testSimulator) periodicAction1() error {
+func (s *testSimulator) periodicAction1(action action) error {
 	s.actionCount1++
 	return nil
 }
 
-func (s *testSimulator) periodicAction2() error {
+func (s *testSimulator) periodicAction2(action action) error {
 	s.actionCount2++
 	return nil
 }
 
-func (s *testSimulator) periodicAction3() error {
+func (s *testSimulator) periodicAction3(action action) error {
 	return nil
 }
 

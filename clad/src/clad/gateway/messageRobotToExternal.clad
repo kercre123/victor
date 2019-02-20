@@ -26,16 +26,17 @@ enum uint_32 ActionResult {
   CANCELLED_WHILE_RUNNING = 33554432,
 }
 
+// Note: ObjectFamily is deprecated and is only still here for compatiblity with SDK version 0.5.1 and earlier.
+//       This should eventually be removed when we no longer care about maintaining compatibility with that version.
+// DO NOT change the values for these enum entries!
 enum int_32 ObjectFamily {
-  Invalid = -1,
-  Unknown = 0,
-  Block,
-  LightCube,
-  Charger,
-  Mat,
-  MarkerlessObject,
-  CustomObject,
-} // enum class ObjectFamily
+  Invalid      = -1,
+  Unknown      = 0,
+  Block        = 1,
+  LightCube    = 2,
+  Charger      = 3,
+  CustomObject = 6,
+}
 
 structure ActiveAccel
 {

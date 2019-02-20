@@ -22,6 +22,9 @@ def test_protocol_version(vector_connection):
 def test_list_animations(vector_connection):
     vector_connection.send("v1/list_animations", p.ListAnimationsRequest(), p.ListAnimationsResponse())
 
+def test_list_animation_triggers(vector_connection):
+    vector_connection.send("v1/list_animation_triggers", p.ListAnimationTriggersRequest(), p.ListAnimationTriggersResponse())
+
 @pytest.mark.parametrize("data", [
     '{"intent":"intent_meet_victor","param":"Bobert"}'
 ])

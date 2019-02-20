@@ -129,10 +129,7 @@ void RobotDataLoader::LoadNonConfigData()
 
   Anki::Util::SetThreadName(pthread_self(), "RbtDataLoader");
 
-  // Uncomment this line to enable the profiling of loading data
-  //ANKI_CPU_TICK_ONE_TIME("RobotDataLoader::LoadNonConfigData");
-
-  ANKI_VERIFY( !_context->IsEngineThread(), "RobotDataLoadingShouldNotBeOnEngineThread", "" );
+  ANKI_CPU_TICK_ONE_TIME("RobotDataLoader::LoadNonConfigData");
 
   if( kStressTestThreadedPrintsDuringLoad ) {
     REMOTE_CONSOLE_ENABLED_ONLY( stressTester.Start() );

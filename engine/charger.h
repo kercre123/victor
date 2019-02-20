@@ -22,7 +22,6 @@
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "engine/actionableObject.h"
-#include "engine/activeObject.h"
 #include "engine/viz/vizManager.h"
 
 namespace Anki {
@@ -51,7 +50,7 @@ namespace Anki {
     {
     public:
       
-      Charger(ObjectType type = ObjectType::Charger_Basic);
+      Charger();
       
       virtual const Point3f& GetSize() const override { return _size; }
       

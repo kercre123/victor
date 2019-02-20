@@ -161,6 +161,7 @@ private:
 
   void SetNetworkConnectionError();
   void SetNetworkError( AlexaNetworkErrorType errorType );
+  bool InteractedRecently() const;
   
   // things we care about called by AlexaObserver
   void OnDialogUXStateChanged( DialogUXState state );
@@ -273,6 +274,7 @@ private:
   std::thread _initThread;
   
   std::atomic<bool> _runSetNetworkConnectionError;
+  std::atomic<uint64_t> _lastInteractionTime_ms;
 
 #if ANKI_DEV_CHEATS
   static DevShutdownChecker _shutdownChecker;

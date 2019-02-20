@@ -52,13 +52,13 @@ int main(int argc, const char * argv[])
   using namespace Anki::Util;
   using namespace Anki::Vector;
 
-  // Set up crash reporter
-  InstallCrashReporter(LOG_PROCNAME);
-
   // Set up logging
   auto logger = std::make_unique<VictorLogger>(LOG_PROCNAME);
   gLoggerProvider = logger.get();
   gEventProvider = logger.get();
+
+  // Set up crash reporter
+  CrashReporter crashReporter(LOG_PROCNAME);
 
   // Process arguments
   std::list<std::string> paths;

@@ -23,6 +23,7 @@ import (
 )
 
 const faceImagePixelsPerChunk = 600
+const endOfAnimationList = "EndOfListAnimationsResponses"
 
 var (
 	connectionIdLock sync.Mutex
@@ -563,6 +564,33 @@ func (service *rpcService) DriveWheels(ctx context.Context, in *extint.DriveWhee
 	}, nil
 }
 
+// PlayAnimationTrigger intentionally waits for PlayAnimationResponse (not something like PlayAnimationTriggerResponse), because
+// in the end, the engine is playing an animation.
+func (service *rpcService) PlayAnimationTrigger(ctx context.Context, in *extint.PlayAnimationTriggerRequest) (*extint.PlayAnimationResponse, error) {
+	f, animResponseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PlayAnimationResponse{}, 1)
+	defer f()
+
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_PlayAnimationTriggerRequest{
+			PlayAnimationTriggerRequest: in,
+		},
+	}
+	_, err := engineProtoManager.Write(message)
+	if err != nil {
+		return nil, err
+	}
+
+	setPlayAnimationResponse, ok := <-animResponseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := setPlayAnimationResponse.GetPlayAnimationResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
 func (service *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAnimationRequest) (*extint.PlayAnimationResponse, error) {
 	f, animResponseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PlayAnimationResponse{}, 1)
 	defer f()
@@ -615,8 +643,8 @@ func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAn
 			}
 			for _, anim := range chanResponse.GetListAnimationsResponse().AnimationNames {
 				animName := anim.GetName()
-				// Don't change "EndOfListAnimationsResponses" - it's what we'll receive from the .cpp sender.
-				if animName == "EndOfListAnimationsResponses" {
+				// Don't change endOfAnimationList - it's what we'll receive from the .cpp sender.
+				if animName == endOfAnimationList {
 					done = true
 				} else {
 					if strings.Contains(animName, "_avs_") {
@@ -639,6 +667,60 @@ func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAn
 			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 		},
 		AnimationNames: anims,
+	}, nil
+}
+
+func (service *rpcService) ListAnimationTriggers(ctx context.Context, in *extint.ListAnimationTriggersRequest) (*extint.ListAnimationTriggersResponse, error) {
+	delete_listener_callback, animationTriggerAvailableResponse := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ListAnimationTriggersResponse{}, 500)
+	defer delete_listener_callback()
+
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_ListAnimationTriggersRequest{
+			ListAnimationTriggersRequest: in,
+		},
+	}
+
+	_, err := engineProtoManager.Write(message)
+	if err != nil {
+		return nil, err
+	}
+
+	var animTriggers []*extint.AnimationTrigger
+
+	done := false
+	for done == false {
+		select {			
+		case chanResponse, ok := <-animationTriggerAvailableResponse:
+			if !ok {
+				return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+			}
+			for _, animTrigger := range chanResponse.GetListAnimationTriggersResponse().AnimationTriggerNames {
+				animTriggerName := animTrigger.GetName()
+				// Don't change endOfAnimationList - it's what we'll receive from the .cpp sender.
+				if animTriggerName == endOfAnimationList {
+					done = true
+				} else {
+					animTriggerNameLower := strings.ToLower(animTriggerName)
+					if strings.Contains(animTriggerNameLower, "deprecated") || strings.Contains(animTriggerNameLower, "alexa") {
+						// Prevent animation triggers that are deprecated or are for alexa from reaching the SDK
+						continue
+					}
+					newAnimTrigger := extint.AnimationTrigger{
+						Name: animTriggerName,
+					}
+					animTriggers = append(animTriggers, &newAnimTrigger)
+				}
+			}
+		case <-time.After(10 * time.Second):
+			return nil, grpc.Errorf(codes.DeadlineExceeded, "ListAnimationTriggers request timed out")
+		}
+	}
+
+	return &extint.ListAnimationTriggersResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+		},
+		AnimationTriggerNames: animTriggers,
 	}, nil
 }
 
@@ -2730,7 +2812,7 @@ func (service *rpcService) NavMapFeed(in *extint.NavMapFeedRequest, stream extin
 				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
 			}
 			if pendingMap != nil {
-				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapBegin recieved from engine while still processing a pending memory map; discarding pending map.")
+				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapBegin received from engine while still processing a pending memory map; discarding pending map.")
 			}
 
 			response := chanResponse.GetMemoryMapMessageBegin()
@@ -2745,7 +2827,7 @@ func (service *rpcService) NavMapFeed(in *extint.NavMapFeedRequest, stream extin
 				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
 			}
 			if pendingMap == nil {
-				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapData recieved from engine with no pending content to add to.")
+				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapData received from engine with no pending content to add to.")
 			} else {
 				response := chanResponse.GetMemoryMapMessage()
 				for i := 0; i < len(response.QuadInfos); i++ {
@@ -2760,7 +2842,7 @@ func (service *rpcService) NavMapFeed(in *extint.NavMapFeedRequest, stream extin
 			}
 
 			if pendingMap == nil {
-				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapEnd recieved from engine with no pending content to send.")
+				log.Println("MessageHandler.NavMapFeed.Error: MemoryMapEnd received from engine with no pending content to send.")
 			} else if err := stream.Send(pendingMap); err != nil {
 				return err
 			} else if err = stream.Context().Err(); err != nil {

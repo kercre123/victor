@@ -429,7 +429,7 @@ void BehaviorDockingTestSimple::BehaviorUpdate()
           // Delete the old obstacles we added
           BlockWorldFilter filter;
           filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-          filter.AddAllowedFamily(ObjectFamily::CustomObject);
+          filter.AddFilterFcn(&BlockWorldFilter::IsCustomObjectFilter);
           robot.GetBlockWorld().DeleteLocatedObjects(filter);
         
           // Add new obstacles at random poses around the preDock pose corresponding with _dVars.initialVisionMarker
@@ -1019,7 +1019,7 @@ void BehaviorDockingTestSimple::HandleObservedObject(Robot& robot,
     return;
   }
   
-  if(oObject->GetFamily() == ObjectFamily::LightCube)
+  if(IsValidLightCube(oObject->GetType(), false))
   {
     if(_dVars.blockObjectIDPickup.IsSet() && _dVars.blockObjectIDPickup == objectID)
     {

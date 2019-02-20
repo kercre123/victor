@@ -23,14 +23,20 @@ $ cd build-tools
 $ git checkout -b add-whizbang-build-script --track origin/master
 $ emacs -nw deps/victor/build-whizbang.sh
 ```
+As you will see in the other example scripts, like `build-aubio.sh`, you
+should reference an environment variable like `WHIZBANG_REVISION_TO_BUILD`, for
+deciding which git commit sha or tag you check out and build.  If that
+variable is unset, your script you should give an error message and exit.
+
 2. Create a build for `whizbang` on TeamCity under the
 [Dependencies/Victor](https://build.ankicore.com/project.html?projectId=Dependencies_Victor&tab=projectOverview)
 project.  Follow the same pattern as the other projects and name the
 build configuration `whizbang`.  Base it on the
-`Build Victor Dependency Template`.  This build template has 2 steps.
-The first calls your build script and the second uploads artifacts to S3.
-If you want, you can test your build without uploading to S3 by disabling
-step 2.  If you get stuck, ask for help.
+`Build Victor Dependency Template`.  Add an environment variable parameter like
+`WHIZBANG_REVISION_TO_BUILD` with the current git commit sha or tag that you will
+want to build.  This build template has 2 steps.  The first calls your build
+script and the second uploads artifacts to S3.  If you want, you can test your
+build without uploading to S3 by disabling step 2.  If you get stuck, ask for help.
 3. Merge your PR for the `build-tools` repo that you created above.
 4. Run the `whizbang` build on TeamCity and the `whizbang-v1.4.tar.bz2` and
 `whizbang-v1.4-SHA-256.txt` artifacts will be uploaded to S3.
@@ -62,13 +68,14 @@ libs.
 Following the above example, let's assume that `whizbang` `v1.5` comes
 out and you decide that we should upgrade to it.  Do the following:
 
-1. Go to your check out of `git@github.com:anki/build-tools.git`
-2. Edit `deps/victor/build-whizbang.sh`.  If you followed the pattern
-of the other scripts, you will have a variable at the top like
-`WHIZBANG_REVISION_TO_BUILD`.  Update this to `v1.5`.
-3. Go to the `whizbang` build on TeamCity and run it.  This will
-upload `whizbang-v1.5.tar.bz2` to S3 and give you a new SHA256.
-Update `DEPS` with the new SHA256.
+1. Go to the build on TeamCity and update the `WHIZBANG_REVISION_TO_BUILD`
+parameter to `v1.5`.
+2. Run a new build and `whizbang-v1.5.tar.bz2` will be uploaded to S3
+and give you a new SHA256.
+3. Go to the `DEPS` file and update the `version` field to `v1.5`
+and the `sha256` field to the new SHA256 value.
+4. Write up a commit message that explains why you upgraded to `v1.5`
+from `v1.4`.
 
 ## Dependencies from Artifactory
 

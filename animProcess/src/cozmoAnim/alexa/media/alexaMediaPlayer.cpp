@@ -63,14 +63,7 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include <AVSCommon/AVS/SpeakerConstants/SpeakerConstants.h>
 #include <AVSCommon/Utils/SDS/ReaderPolicy.h>
 
-
-// include minimp3
-// TODO: minimp3 should be able to convert directly to float by adding a flag. this would save a copy.
-#define MINIMP3_IMPLEMENTATION
-#if defined(VICOS)
-#  define HAVE_SSE 0
-#endif
-#include "minimp3/minimp3.h"
+#include <mpg123.h>
 
 // for saving PCM to disk
 #include <fcntl.h>
@@ -102,9 +95,6 @@ struct AudioInfo {
 namespace {
   constexpr int kAudioBufferSize = 1 << 16;
 
-  // max read size for _mp3Buffer
-  constexpr size_t kMaxReadSize = 16384;
-  constexpr size_t kMinAudioToDecode = 8192;
   constexpr size_t kDownloadSize = 8192;
   constexpr float  kIdealBufferSize_sec = 2.0f;
   constexpr float  kMinBufferSize_sec = 2.5f;
@@ -113,7 +103,8 @@ namespace {
   // processed. this is arbitrary based on how much header info you'd actually expect in an mp3. Sometimes
   // sources may provide large headers with their copyright blurbs, but probably not even this much.
   // Note that if the stream ends prior to downloading this many bytes, we already exit cleanly.
-  constexpr size_t kMaxInvalidDataBeforeAbort = 512*1024; // 512 kB
+  constexpr size_t kMaxInvalidBytesBeforeAbort = 512*1024; // 512 kB
+  constexpr size_t kMaxInvalidFramesBeforeAbort = 5;
 
   constexpr int kMaxPlayTries = 20;
 
@@ -168,9 +159,8 @@ namespace {
   #define LOG_CHANNEL "Alexa"
   #define LOG(x, ...) LOG_INFO("AlexaMediaPlayer.SpeakerInfo", "%s: " x, _audioInfo.name.c_str(), ##__VA_ARGS__)
 #if ANKI_DEV_CHEATS
-  const bool kSaveDebugAudio = false; // FIXME we probably don't want to be shiping this!!
+  const bool kSaveDebugAudio = false;
 #endif
-  const bool kSaveResampledPCM = false; // if true, kSaveDebugAudio will save resampled pcm instead of decoded pcm
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -199,6 +189,11 @@ AlexaMediaPlayer::~AlexaMediaPlayer()
 {
   Util::Dispatch::Stop(_dispatchQueue);
   Util::Dispatch::Release(_dispatchQueue);
+  
+  if( _decoderHandle != nullptr ) {
+    mpg123_delete( _decoderHandle );
+  }
+  mpg123_exit();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -210,8 +205,20 @@ void AlexaMediaPlayer::Init( const AnimContext* context )
   _audioController  = context->GetAudioController();
   DEV_ASSERT_MSG( _audioController != nullptr, "AudioMediaPlayer.Init.InvalidAudioController", "" );
 
-  mp3dec_init( &_mp3decoder );
-
+  mpg123_init();
+  int initRet;
+  _decoderHandle = mpg123_new(NULL, &initRet);
+  if( _decoderHandle == nullptr ) {
+    LOG_ERROR( "AlexaMediaPlayer.Init.DecoderFail", "Unable to create mpg123 handle: %s", mpg123_plain_strerror(initRet));
+    return;
+  }
+  
+  // resync all the way up to the end of the stream
+  mpg123_param( _decoderHandle, MPG123_RESYNC_LIMIT, -1, 0 );
+  // use a small read-ahead buffer for frame syncing
+  mpg123_param( _decoderHandle, MPG123_ADD_FLAGS, MPG123_SEEKBUFFER, 0 );
+  // Note: call mpg123_param( _decoderHandle, MPG123_VERBOSE, 2, 0) to enable verbose logging
+  
   // in dev, remove any debug audio files from last time
   const Util::Data::DataPlatform* platform = context->GetDataPlatform();
   if( platform != nullptr ) {
@@ -542,7 +549,14 @@ bool AlexaMediaPlayer::play( SourceId id )
     _firstPass = true;
     _dataValidity = DataValidity::Unknown;
     _attemptedDecodeBytes = 0;
+    _invalidFrames = 0;
     _mp3Buffer->Reset();
+    
+    mpg123_open_feed( _decoderHandle );
+    if( _decoderHandle == nullptr ) {
+      LOG_ERROR( "AlexaMediaPlayer.Init.DecoderFeedFail", "Unable to reset decoder feed" );
+      return;
+    }
 
     // new waveData instance to hold data passed to wwise
     _waveData = AudioEngine::PlugIns::StreamingWavePortalPlugIn::CreateDataInstance();
@@ -660,14 +674,24 @@ bool AlexaMediaPlayer::play( SourceId id )
         std::this_thread::sleep_for( std::chrono::milliseconds(sleepFor_ms) );
       }
 
-      if( (_dataValidity == DataValidity::Unknown) && (_attemptedDecodeBytes > kMaxInvalidDataBeforeAbort) ) {
-        LOG_WARNING("AlexaMediaPlayer.Play.InvalidData.DecodeError",
-                    "%s: source %llu Attempted to decode %zu bytes (> limit of %zu), setting data invalid",
-                    _audioInfo.name.c_str(),
-                    id,
-                    _attemptedDecodeBytes,
-                    kMaxInvalidDataBeforeAbort);
-        invalidData = true; // this will cause a break further down
+      if( _dataValidity == DataValidity::Unknown ) {
+        if( _attemptedDecodeBytes > kMaxInvalidBytesBeforeAbort ) {
+          LOG_WARNING("AlexaMediaPlayer.Play.InvalidData.DecodeError",
+                      "%s: source %llu Attempted to decode %zu bytes (> limit of %zu), setting data invalid",
+                      _audioInfo.name.c_str(),
+                      id,
+                      _attemptedDecodeBytes,
+                      kMaxInvalidBytesBeforeAbort);
+          invalidData = true; // this will cause a break further down
+        } else if( _invalidFrames > kMaxInvalidFramesBeforeAbort ) {
+          LOG_WARNING("AlexaMediaPlayer.Play.InvalidData.FrameError",
+                      "%s: source %llu Attempted to decode %d frames (> limit of %zu), setting data invalid",
+                      _audioInfo.name.c_str(),
+                      id,
+                      _invalidFrames,
+                      kMaxInvalidFramesBeforeAbort);
+          invalidData = true; // this will cause a break further down
+        }
       }
 
       if( flush || invalidData || _shuttingDown ) {
@@ -699,7 +723,7 @@ bool AlexaMediaPlayer::play( SourceId id )
       _dataValidity = DataValidity::Invalid;
       using namespace AudioEngine;
       using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
-      _playableClip = ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__En_Us_Avs_System_Prompt_Error_Cannot_Play_Song );
+      _playableClip = ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Avs_System_Prompt_Error_Cannot_Play_Song );
       SetState( State::ClipPlayable );
       // to be determined is whether the sdk will do something unexpected if we close the readers
       // below when switching to playing a clip.
@@ -752,7 +776,9 @@ bool AlexaMediaPlayer::StopInternal( SourceId id, bool runOnCaller )
       if( _playingSource == id ||
           _nextSourceToPlay == id) {
         SetState(State::Idle);
-        _nextSourceToPlay = 0;
+        if( (_playingSource == id) && (_nextSourceToPlay <= id) ) {
+          _nextSourceToPlay = 0;
+        }
         _offset_ms = 0;
       }
       else {
@@ -932,96 +958,170 @@ void AlexaMediaPlayer::SetPlayerVolume() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int AlexaMediaPlayer::Decode( const StreamingWaveDataPtr& data, bool flush )
 {
-  using namespace AudioEngine;
-
-  mp3dec_frame_info_t info {0};
   float decoded_ms = 0.0f;
 
-  while( !_shuttingDown ) {
-
-    // unless we're flushing, don't bother decoding without a minimum amount of data in buffer
-    if( !flush && (_mp3Buffer->Size() < kMinAudioToDecode) ) {
-      break;
-    }
-
-    // it may also make sense to exit this loop if not flush and Size() < kMaxReadSize
-    size_t buffSize = _mp3Buffer->GetContiguousSize(); // guaranteed to be at least min{Size(), kMaxReadSize}
-    const unsigned char* inputBuff = (buffSize == 0) ? nullptr : _mp3Buffer->ReadData( (int)buffSize );
-
-    if( inputBuff == nullptr ) {
-      // need to wait for more data
-      break;
-    }
-
-    int samples = mp3dec_decode_frame(&_mp3decoder, inputBuff, (int)buffSize, _decodedPcm, &info);
-
-    int consumed = info.frame_bytes;
-    if( info.frame_bytes > 0 ) {
-      _attemptedDecodeBytes += info.frame_bytes;
-
-      SaveMP3( inputBuff, consumed );
-
-      bool success = _mp3Buffer->AdvanceCursor( consumed );
-      if( !success ) {
-        LOG_ERROR( "AlexaMediaPlayer.Decode.ReadPtr", "Could not move read pointer by %d (size=%zu)",
-                   consumed, _mp3Buffer->Size() );
-      }
-
-      if( samples > 0 ) {
-        // valid wav data!
-        _dataValidity = DataValidity::Valid;
-        if( _firstPass ) {
-          _firstPass = false;
-          _idealBufferSampleSize = static_cast<size_t>( info.hz * kIdealBufferSize_sec);
-          _minPlaybackBufferSize = static_cast<size_t>( info.hz * kMinBufferSize_sec );
-          LOG( "DECODING: channels=%d, hz=%d, layer=%d, bitrate=%d - _minPlaybackBufferSize=%zu,_idealBufferSampleSize=%zu ",
-              info.channels, info.hz, info.layer, info.bitrate_kbps,
-              _minPlaybackBufferSize, _idealBufferSampleSize );
-        }
-
-        decoded_ms += 1000 * float(samples) / info.hz;
-
-        // the lib provides # samples as per channel
-        samples *= info.channels;
-
-        if( info.channels == 2 ) {
-          // audio engine only supports mono
-          int j = 0;
-          for( int i=0; i<samples; i += 2, j += 1) {
-            short left = _decodedPcm[i];
-            short right = _decodedPcm[i + 1];
-            short monoSample = (int(left) + right) / 2;
-            _decodedPcm[j] = monoSample;
-          }
-          samples = samples/2;
-          info.channels = 1;
-        }
-        
-        
-        if( (samples > 0) && !kSaveResampledPCM ) {
-          SavePCM( _decodedPcm, samples );
-        }
-
-        // todo: minimp3 should be able to output in float to avoid this allocation and copy, but it
-        // seems to clip for me when in float
-        StandardWaveDataContainer waveContainer(info.hz, info.channels, samples);
-        waveContainer.CopyWaveData( _decodedPcm, samples );
-
-        data->AppendStandardWaveData( std::move(waveContainer) );
-
-        const auto numFrames = data->GetNumberOfFramesReceived();
-        if( (_state == State::Preparing) && ((numFrames >= _minPlaybackBufferSize) || flush) ) {
-         // LOG("Now Playable, numFrames %d minFrames %zu flush %d", numFrames, _minPlaybackBufferSize, flush );
-          ExchangeState(State::Preparing, State::Playable);
-        }
-      }
-    } else {
-      // no frame bytes
-      break;
-    }
+  // it may also make sense to exit this loop if not flush and Size() < kMaxReadSize
+  size_t buffSize = _mp3Buffer->GetContiguousSize(); // guaranteed to be at least min{Size(), kMaxReadSize}
+  const unsigned char* inputBuff = nullptr;
+  if( buffSize != 0) {
+    inputBuff = _mp3Buffer->ReadData( (int)buffSize );
   }
 
+  if( inputBuff == nullptr ) {
+    // need to wait for more data
+    return 0;
+  }
+  
+  SaveMP3( inputBuff, buffSize );
+  
+  // mpg123 keeps its own buffer, so even if it needs more data, it will hold on to a partial frame, and we
+  // can advance the read cursor here
+  bool success = _mp3Buffer->AdvanceCursor( (int)buffSize );
+  if( !success ) {
+    LOG_ERROR( "AlexaMediaPlayer.Decode.ReadPtr", "Could not move read pointer by %zu (size=%zu)",
+               buffSize, _mp3Buffer->Size() );
+  }
+  
+  _attemptedDecodeBytes += buffSize;
+
+  size_t decodedSize = 0;
+  unsigned char* outBuff = (unsigned char*) _decodedPcm.data();
+  const int outBuffSize = (int)_decodedPcm.size() * sizeof(short);
+  
+  int decodeRes = mpg123_feed ( _decoderHandle, inputBuff, buffSize );
+  if( decodeRes == MPG123_ERR ) {
+    LOG_ERROR( "AlexaMediaPlayer.Decode.FeedError", "decoder error: %s", mpg123_strerror(_decoderHandle) );
+  } else if( decodeRes == MPG123_NEED_MORE ) {
+    return 0;
+  }
+  
+  decodeRes = mpg123_framebyframe_next( _decoderHandle );
+  while( !_shuttingDown && (decodeRes != MPG123_ERR) && (decodeRes != MPG123_NEED_MORE) ) {
+    
+    if( decodeRes == MPG123_NEW_FORMAT ) {
+      int enc = 0;
+      mpg123_getformat( _decoderHandle, &_mediaInfo.sampleRate, &_mediaInfo.channels, &enc );
+      
+      _idealBufferSampleSize = static_cast<size_t>( _mediaInfo.sampleRate * kIdealBufferSize_sec );
+      _minPlaybackBufferSize = static_cast<size_t>( _mediaInfo.sampleRate * kMinBufferSize_sec );
+      LOG( "DECODING: channels=%d, hz=%ld, encoding=%d, _minPlaybackBufferSize=%zu, _idealBufferSampleSize=%zu",
+          _mediaInfo.channels, _mediaInfo.sampleRate, enc, _minPlaybackBufferSize, _idealBufferSampleSize );
+    }
+    
+    
+    
+    unsigned long header = 0;
+    unsigned char* body = nullptr;
+    size_t bodySize = 0;
+    decodeRes = mpg123_framedata( _decoderHandle, &header, &body, &bodySize );
+    if( decodeRes == MPG123_OK ) {
+      
+      bool validHeader = true;
+      if( header != 0 ) {
+        // this decoder does a poor job at differentiating between MP3 and AAC. Check the "reserved" fields
+        // https://www.mp3-tech.org/programmer/frame_header.html
+        const int byte2 = (header >> 16) & 0xFF;
+        const bool reserved1 = (byte2 & 0b00011000) == 0b00001000;
+        const bool reserved2 = (byte2 & 0b00000110) == 0;
+        if( reserved1 || reserved2 ) {
+          validHeader = false;
+          ++_invalidFrames;
+          if( _invalidFrames >= kMaxInvalidFramesBeforeAbort ) {
+            _dataValidity = DataValidity::Unknown;
+            return decoded_ms;
+          }
+        }
+      }
+      
+      if( validHeader && (bodySize > 0) && (body != nullptr) ) {
+        off_t offset = 0;
+        unsigned char* decodedAudio = nullptr;
+        size_t frameBytes = 0;
+        decodeRes = mpg123_framebyframe_decode( _decoderHandle, &offset, &decodedAudio, &frameBytes );
+        if( decodedSize + frameBytes >= outBuffSize ) {
+          // there's no room in our output buffer. pass it on and start over
+          if( decodedSize > 0 ) {
+            DEV_ASSERT( (decodedSize & 1) == 0, "Should have decoded full shorts" );
+            const size_t shortBytes = decodedSize / sizeof(short); // decoder uses bytes, we use shorts
+            decoded_ms += CopyToWaveData( shortBytes, data, flush );
+          }
+          decodedSize = 0;
+        }
+        // there should be space now
+        DEV_ASSERT( decodedSize + frameBytes < outBuffSize, "AlexaMediaPlayer.Decode.NoOutputSpace" );
+        std::copy( decodedAudio, decodedAudio + frameBytes, outBuff + decodedSize );
+        decodedSize += frameBytes;
+      }
+        
+    } else if( decodeRes == MPG123_ERR ) {
+      LOG_ERROR( "AlexaMediaPlayer.Decode.DataError", "decoder error: %s", mpg123_strerror(_decoderHandle) );
+    }
+    
+    decodeRes = mpg123_framebyframe_next( _decoderHandle );
+    if( decodeRes == MPG123_ERR ) {
+      LOG_ERROR( "AlexaMediaPlayer.Decode.NextError", "decoder error: %s", mpg123_strerror(_decoderHandle) );
+    }
+  }
+  
+  if( decodeRes == MPG123_ERR ) {
+    LOG_ERROR( "AlexaMediaPlayer.Decode.DataError", "decoder error: %s", mpg123_strerror(_decoderHandle) );
+  }
+  
+  if( decodedSize > 0 || flush ) {
+    DEV_ASSERT( (decodedSize & 1) == 0, "Should have decoded full shorts" );
+    const size_t shortBytes = decodedSize / sizeof(short); // decoder uses bytes, we use shorts
+    decoded_ms += CopyToWaveData( shortBytes, data, flush );
+  }
+  
+
   return int(decoded_ms);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float AlexaMediaPlayer::CopyToWaveData( size_t samples, const StreamingWaveDataPtr& waveData, bool flush )
+{
+  using namespace AudioEngine;
+  
+  if( samples == 0 ) {
+    return 0;
+  }
+  
+  // valid wav data!
+  _dataValidity = DataValidity::Valid;
+  
+  uint16_t channels = static_cast<uint16_t>( _mediaInfo.channels );
+  
+  if( channels == 2 ) {
+    // audio engine only supports mono. loop through samples and rewrite in the same buffer
+    int j = 0;
+    for( int i=0; i<samples; i += 2, j += 1) {
+      short left = _decodedPcm[i];
+      short right = _decodedPcm[i + 1];
+      short monoSample = (int(left) + right) / 2;
+      _decodedPcm[j] = monoSample;
+    }
+    samples = samples/2;
+    channels = 1;
+  }
+  
+  float decoded_ms = 1000 * float(samples) / _mediaInfo.sampleRate;
+  
+  if( samples > 0 ) {
+    SavePCM( _decodedPcm.data(), samples );
+  }
+  
+  StandardWaveDataContainer waveContainer{ static_cast<uint32_t>(_mediaInfo.sampleRate), channels, samples };
+  waveContainer.CopyWaveData( _decodedPcm.data(), samples );
+  
+  waveData->AppendStandardWaveData( std::move(waveContainer) );
+  
+  const auto numFrames = waveData->GetNumberOfFramesReceived();
+  if( (_state == State::Preparing) && ((numFrames >= _minPlaybackBufferSize) || flush) ) {
+    // LOG("Now Playable, numFrames %d minFrames %zu flush %d", numFrames, _minPlaybackBufferSize, flush );
+    ExchangeState(State::Preparing, State::Playable);
+  }
+  
+  return decoded_ms;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

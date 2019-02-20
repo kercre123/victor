@@ -14,7 +14,6 @@
 #include "engine/robotComponents_fwd.h"
 #include "engine/components/textToSpeech/textToSpeechCoordinator.h"
 #include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
-
 #include "clad/types/visionModes.h"
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
@@ -60,6 +59,7 @@ public:
   void HandleProtoMessage(const AnkiEvent<external_interface::GatewayWrapper>& event);
 
   bool SDKWantsControl();
+  int SDKControlLevel();
   void SDKBehaviorActivation(bool enabled);
 
   void OnActionCompleted(ExternalInterface::RobotCompletedAction msg);
@@ -72,6 +72,7 @@ private:
   Robot* _robot = nullptr;  
   bool _sdkWantsControl = false;
   bool _sdkBehaviorActivated = false;
+  int _sdkControlLevel;
 
   bool _captureSingleImage = false;
   
@@ -90,6 +91,7 @@ private:
   void DisableMirrorMode();
   void SayText(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void SetEyeColor(const AnkiEvent<external_interface::GatewayWrapper>& event);
+  void ListAnimationTriggers(const AnkiEvent<external_interface::GatewayWrapper>& event);
 };
 
 } // namespace Vector
