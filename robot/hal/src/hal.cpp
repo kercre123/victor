@@ -130,7 +130,10 @@ extern "C" {
   ssize_t spine_write_frame(spine_ctx_t spine, PayloadId type, const void* data, int len);
   void record_body_version( const struct VersionInfo* info);
   void request_version(void) {
-    spine_write_frame(&spine_, PAYLOAD_VERSION, NULL, 0);
+    if(_sysconVersionInfo.hw_revision == 0)
+    {
+      spine_write_frame(&spine_, PAYLOAD_VERSION, NULL, 0);
+    }
   }
 }
 
@@ -236,7 +239,16 @@ void das_log_version_info(const VersionInfo* versionInfo)
   DASMSG_SET(s2, app_version,              "Application version");
   DASMSG_SET(s3, ANKI_BUILD_SHA,           "Build SHA")
   DASMSG_SEND();
+}
 
+void handle_syscon_version(const VersionInfo* versionInfo)
+{
+  if(memcmp(&_sysconVersionInfo, versionInfo, sizeof(_sysconVersionInfo)) != 0)
+  {
+    _sysconVersionInfo = *versionInfo;
+    record_body_version(versionInfo);
+    das_log_version_info(versionInfo);
+  }
 }
 
 Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
@@ -274,9 +286,7 @@ Result spine_wait_for_first_frame(spine_ctx_t spine, const int * shutdownSignal)
       }
       else if (hdr->payload_type == PAYLOAD_VERSION) {
         const VersionInfo* versionInfo = (VersionInfo*)(hdr+1);
-        _sysconVersionInfo = *versionInfo;
-        record_body_version(versionInfo);
-        das_log_version_info(versionInfo);
+        handle_syscon_version(versionInfo);
       }
       else if (hdr->payload_type == PAYLOAD_BOOT_FRAME) {
 
@@ -327,6 +337,8 @@ Result HAL::Init(const int * shutdownSignal)
   robotID_ = Anki::Vector::DEFAULT_ROBOT_ID;
 
   shutdownSignal_ = shutdownSignal;
+
+  memset(&_sysconVersionInfo, 0, sizeof(_sysconVersionInfo));
 
   InitIMU();
 
@@ -424,9 +436,7 @@ Result spine_get_frame() {
       else if (hdr->payload_type == PAYLOAD_VERSION) {
         LOGD("Handling VR payload type %x\n", hdr->payload_type);
         const VersionInfo* versionInfo = (VersionInfo*)(hdr+1);
-        _sysconVersionInfo = *versionInfo;
-        record_body_version(versionInfo);
-        das_log_version_info(versionInfo);
+        handle_syscon_version(versionInfo);
       }
       else if (hdr->payload_type == PAYLOAD_BOOT_FRAME) {
         populate_boot_body_data(hdr);
@@ -524,6 +534,14 @@ Result HAL::Step(void)
     if(haveValidSyscon_)
     {
       EventStart(EventType::WRITE_SPINE);
+
+      // Repeatedly request syscon version until we get it
+      // Sometimes the initial request in HAL::Init is lost due to
+      // an "RX Buffer Overrun Detected" or an invalid crc error
+      // This may end up sending some unneccessary requests (2 or 3 of them) as
+      // the response is not immediate
+      request_version();
+      
       if (desiredPowerMode_ == POWER_MODE_CALM && !commander_is_active) {
         if (++calmModeSkipFrameCount_ > NUM_CALM_MODE_SKIP_FRAMES) {
           spine_set_lights(&spine_, &(h2bp->lightState));
