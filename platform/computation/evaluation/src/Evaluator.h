@@ -128,6 +128,7 @@ public:
       std::string name;
       bool enable;
       int repetitions;
+      int copies;
 
       struct {
         int width;
@@ -145,6 +146,7 @@ public:
       std::string name;
       bool enable;
       int repetitions;
+      int copies;
 
       struct {
         int width;

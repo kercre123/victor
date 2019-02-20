@@ -327,7 +327,8 @@ int main(int argc, char** argv)
   // NEON
   config.power_neon.name = "power_neon";
   config.power_neon.enable = true;
-  config.power_neon.repetitions = 10000;
+  config.power_neon.repetitions = 1000;
+  config.power_neon.copies = 5;
   config.power_neon.input.width = 1600;
   config.power_neon.input.height  = 720;
   config.power_neon.input.path = "resources/images/debayer/image0000.raw";
@@ -338,7 +339,8 @@ int main(int argc, char** argv)
   // ZCP
   config.power_zcp.name = "power_zcp";
   config.power_zcp.enable = true;
-  config.power_zcp.repetitions = 10000;
+  config.power_zcp.repetitions = 1000;
+  config.power_zcp.copies = 5;
   config.power_zcp.input.width = 1600;
   config.power_zcp.input.height  = 720;
   config.power_zcp.input.path = "resources/images/debayer/image0000.raw";

@@ -1686,6 +1686,12 @@ void Evaluator::power_neon()
   std::vector<unsigned char> out_bytes(3 * _config.power_neon.output.width * _config.power_neon.output.height);
   size_t out_size = 3 * sizeof(unsigned char) * _config.power_neon.output.width * _config.power_neon.output.height;
 
+  // We make a number of copies to try to make sure we're accessing different parts of memory and clearing any caching.
+  std::vector<std::vector<unsigned char>> input_copies;
+  for (int i = 0; i < _config.power_neon.copies; ++i){
+    input_copies.push_back(in_bytes);
+  }
+
   const uint8_t* bayer_in = in_bytes.data();
   int32_t rows = _config.power_neon.output.height;
   int32_t cols = _config.power_neon.output.width;
@@ -1701,7 +1707,7 @@ void Evaluator::power_neon()
   {
     auto tStart = std::chrono::steady_clock::now();
 
-    const uint8_t* bufferPtr = bayer_in;
+    const uint8_t* bufferPtr = input_copies[repetition % input_copies.size()].data();
     uint8_t* bayerPtr = static_cast<uint8_t*>(bayer.ptr());
     for(int ii = 0; ii < (cols*rows); ii+=8)
     {
@@ -1728,21 +1734,13 @@ void Evaluator::power_neon()
 //======================================================================================================================
 void Evaluator::power_zcp()
 {
-  std::string in_path = _config.power_neon.input.path;
+  Profile profile(_config.power_zcp.name);
+  profile.append("debayer");
+
+  std::string in_path = _config.power_zcp.input.path;
   std::ifstream ifs(in_path, std::ios::binary);
   std::vector<unsigned char> in_bytes(std::istreambuf_iterator<char>(ifs), {});
   std::vector<unsigned char> out_bytes(3 * _config.power_zcp.output.width * _config.power_zcp.output.height);
-
-  ZCPImage in_image2D;
-  zcp_allocate(in_image2D,
-    _config.power_zcp.input.width,
-    _config.power_zcp.input.height,
-    cl::ImageFormat(CL_R, CL_UNORM_INT8));
-  ZCPImage out_image2D;
-  zcp_allocate(out_image2D,
-    _config.power_zcp.output.width,
-    _config.power_zcp.output.height,
-    cl::ImageFormat(CL_RGB, CL_UNORM_INT8));
 
   cl::size_t<3> in_origin;
   in_origin[0] = 0;
@@ -1753,16 +1751,6 @@ void Evaluator::power_zcp()
   in_region[1] = _config.power_zcp.input.height;
   in_region[2] = 1;
 
-  // Copy the bayer image into the buffer. Do this once just to set up the input
-  in_image2D.ocl_mapping = _queue.enqueueMapImage(in_image2D.ocl_image, CL_TRUE, CL_MAP_WRITE,
-    in_origin, in_region, &in_image2D.ocl_row_pitch, NULL, NULL, NULL, NULL);
-
-  zcp_copy(in_bytes, in_image2D);
-
-  _queue.enqueueUnmapMemObject(in_image2D.ocl_image, in_image2D.ocl_mapping, NULL, NULL);
-
-  _queue.finish();
-
   cl::size_t<3> out_origin;
   out_origin[0] = 0;
   out_origin[1] = 0;
@@ -1772,13 +1760,38 @@ void Evaluator::power_zcp()
   out_region[1] = _config.power_zcp.output.height;
   out_region[2] = 1;
 
-  Profile profile(_config.power_zcp.name);
-  profile.append("debayer");
+  // Copy the bayer image into the buffer. Do this once just to set up the input. We make a number of copies to try
+  // to make sure we're accessing different parts of memory and clearing any caching.
+  std::vector<ZCPImage> in_images(_config.power_zcp.copies);
+  for (int i = 0; i < _config.power_zcp.copies; ++i){
+    ZCPImage& in_image2D = in_images[i];
+    zcp_allocate(in_image2D,
+      _config.power_zcp.input.width,
+      _config.power_zcp.input.height,
+      cl::ImageFormat(CL_R, CL_UNORM_INT8));
+
+    in_image2D.ocl_mapping = _queue.enqueueMapImage(in_image2D.ocl_image, CL_TRUE, CL_MAP_WRITE,
+      in_origin, in_region, &in_image2D.ocl_row_pitch, NULL, NULL, NULL, NULL);
+
+    zcp_copy(in_bytes, in_image2D);
+
+    _queue.enqueueUnmapMemObject(in_image2D.ocl_image, in_image2D.ocl_mapping, NULL, NULL);
+
+    _queue.finish();
+  }
+
+  ZCPImage out_image2D;
+  zcp_allocate(out_image2D,
+    _config.power_zcp.output.width,
+    _config.power_zcp.output.height,
+    cl::ImageFormat(CL_RGB, CL_UNORM_INT8));
 
   // Code to test power - look at multimeter while this is running
   for (int repetition = 0; repetition < _config.power_zcp.repetitions; ++repetition)
   {
     auto tStart = std::chrono::steady_clock::now();
+
+    ZCPImage& in_image2D = in_images[repetition % in_images.size()];
 
     in_image2D.ocl_mapping = _queue.enqueueMapImage(in_image2D.ocl_image, CL_TRUE, CL_MAP_WRITE,
       in_origin, in_region, &in_image2D.ocl_row_pitch, NULL, NULL, NULL, NULL);
