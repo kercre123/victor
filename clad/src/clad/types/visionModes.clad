@@ -59,6 +59,8 @@ namespace Vector {
     CyclingExposure,             // Cycles through a list of AE target values to aid search in extreme lighting
     MinGainAutoExposure,         // Vs. min-exposure-time mode. Useful for less grainy images when TakingPhotos
 
+    CompositingImages,
+
     Count
   }
 

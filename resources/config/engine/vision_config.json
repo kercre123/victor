@@ -97,6 +97,11 @@
     "FileOrDirName"       : "config/engine/vision/groundClassifier/deskClassifier.yaml"
   },
 
+  "ImageCompositing" :
+  {
+    "MaxImageCount" : 8
+  },
+
   "NeuralNets" :
   {
     // How frequently to print or log events about timing

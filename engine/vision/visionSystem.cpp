@@ -32,6 +32,7 @@
 #include "engine/vision/overheadMap.h"
 #include "engine/vision/visionModesHelpers.h"
 #include "engine/utils/cozmoFeatureGate.h"
+#include "engine/vision/imageCompositor.h"
 
 #include "coretech/neuralnets/iNeuralNetMain.h"
 #include "coretech/neuralnets/neuralNetJsonKeys.h"
@@ -270,6 +271,9 @@ Result VisionSystem::Init(const Json::Value& config)
     return RESULT_FAIL;
   }
   _overheadMap.reset(new OverheadMap(config["OverheadMap"], _context));
+
+  const Json::Value& imageCompositeCfg = config["ImageCompositing"];
+  _imageCompositor.reset(new ImageCompositor(imageCompositeCfg));
 
   // TODO check config entry here
   _groundPlaneClassifier.reset(new GroundPlaneClassifier(config["GroundPlaneClassifier"], _context));
@@ -1542,6 +1546,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
     Toc("TotalDetectingMotion");
   }
+
   if(IsModeEnabled(VisionMode::DetectingBrightColors)){
     if (imageCache.HasColor()){
       Tic("TotalDetectingBrightColors");
@@ -1605,6 +1610,72 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       visionModesProcessed.Insert(VisionMode::DetectingOverheadEdges);
     }
     Toc("TotalDetectingOverheadEdges");
+  }
+
+  if(IsModeEnabled(VisionMode::CompositingImages)) {
+    Tic("CompositingImagesAndDetectingMarkers");
+    
+    const auto whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier);
+    _imageCompositor->ComposeWith(imageCache.GetGray(whichSize));
+
+    visionModesProcessed.Insert(VisionMode::CompositingImages); // ^ cannot fail
+
+    if(_imageCompositor->GetNumImagesComposited() == 4 ||
+       _imageCompositor->GetNumImagesComposited() == 8) {
+      
+      Vision::Image meanImage = _imageCompositor->GetCompositeImage();
+      meanImage.SetTimestamp(imageCache.GetTimeStamp());
+
+      std::list<Vision::ObservedMarker> observedMarkers;
+      lastResult = _markerDetector->Detect(meanImage, observedMarkers);
+
+      PRINT_CH_INFO(kLogChannelName, "VisionSystem.DetectMarkers", "%zu", observedMarkers.size());
+
+      // Markers are detected in a scaled version of the original image.
+      //  Rescale their corner coordinates to reflect their pose in the
+      //  original image coordinates.
+      for(auto& marker : observedMarkers) {
+        Quad2f scaledCorners(marker.GetImageCorners());
+        for(auto & corner : scaledCorners)
+        {
+          const f32 scaleMultiplier = ImageCacheSizeToScaleFactor(Vision::ImageCache::GetSize(kMarkerDetector_ScaleMultiplier));
+          const f32 defaultScaleMultiplier = ImageCacheSizeToScaleFactor(Vision::ImageCache::GetDefaultImageCacheSize());
+          corner *= (defaultScaleMultiplier / scaleMultiplier);
+        }
+      }
+
+      // We have observed markers in two locations (here, and earlier when
+      //  running marker detection normally).
+      // We don't know which one to trust more, however since this mode
+      //  is specifically for LowLight Charger search, then we want to trust
+      //  the detection from earlier more (since compositing and contrasting)
+      //  will add noise to the final image.
+      for(auto& marker : observedMarkers) {
+        if(marker.GetCode() != Vision::MARKER_CHARGER_HOME) {
+          continue;
+        }
+
+        auto got = std::find_if(_currentResult.observedMarkers.begin(),
+                              _currentResult.observedMarkers.end(),
+                              [](const Vision::ObservedMarker& item) -> bool {
+                                return item.GetCode() == Vision::MARKER_CHARGER_HOME;
+                              });
+        if(got == _currentResult.observedMarkers.end()) {
+          _currentResult.observedMarkers.push_back(marker);
+        } else {
+          // Already found a charger marker, from running normal detection
+          break;
+        }
+      }
+
+      if(lastResult != RESULT_OK) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.CompositeImages", "");
+        anyModeFailures = true;
+      } else {
+        visionModesProcessed.Insert(VisionMode::DetectingMarkers);
+      }
+    }
+    Toc("CompositingImagesAndDetectingMarkers");
   }
   
   if(IsModeEnabled(VisionMode::ComputingCalibration))

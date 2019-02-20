@@ -79,6 +79,7 @@ namespace Vector {
   class LaserPointDetector;
   class MirrorModeManager;
   class MotionDetector;
+  class ImageCompositor;
   class OverheadEdgesDetector;
   class OverheadMap;
   class Robot;
@@ -226,6 +227,7 @@ namespace Vector {
     std::unique_ptr<Vision::BrightColorDetector>    _brightColorDetector;
     std::unique_ptr<LaserPointDetector>             _laserPointDetector;
     std::unique_ptr<MotionDetector>                 _motionDetector;
+    std::unique_ptr<ImageCompositor>                _imageCompositor;
     std::unique_ptr<OverheadEdgesDetector>          _overheadEdgeDetector;
     std::unique_ptr<CameraCalibrator>               _cameraCalibrator;
     std::unique_ptr<OverheadMap>                    _overheadMap;
