@@ -2,15 +2,13 @@
   "behaviorID" : "DevTestPromptUser",
   "behaviorClass" : "PromptUserForVoiceCommand",
 
-  "streamType"                          : "Blackjack",
+  "streamType"                          : "Normal",
   "earConAudioEventSuccess"             : "Play__Robot_Vic_Sfx__Wake_Word_Success",
   "earConAudioEventNeutral"             : "Play__Robot_Vic_Sfx__Wake_Word_Off",
-  "vocalPromptString"                   : "Test Prompt: say a command",
-  "vocalResponseToIntentString"         : "Got an intent",
-  "vocalResponseToBadIntentString"      : "Didn't get an intent",
-  "vocalRepromptString"                 : "Try again",
+  "textToSpeechBehaviorID"              : "DefaultTextToSpeechLoop",
+  "vocalPromptString"                   : "Question?",
   "maxNumberOfReprompts"                : 1,
   "stopListeningOnIntents"              : true,
-  "playListeningGetIn"                  : true,
-  "playListeningGetOut"                 : true
+  "playListeningGetIn"                  : false,
+  "playListeningGetOut"                 : false
 }

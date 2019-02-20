@@ -105,7 +105,7 @@
   },
   {
     "feature": "GazeDirection",
-    "enabled": false
+    "enabled": true
   },
   {
     "feature": "HowOldAreYou",
