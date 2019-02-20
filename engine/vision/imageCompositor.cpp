@@ -33,6 +33,9 @@ ImageCompositor::ImageCompositor(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ImageCompositor::ComposeWith(const Vision::Image& img)
 {
+  // We don't know what image dimensions we're compositing at the time of construction.
+  // This is controlled by the scale factor applied to input images prior to Marker Detection.
+  // Read the dimensions from the input image, and determine the dimensions of the accumulator.
   if(_sumImage.GetNumRows() == 0) {
     _sumImage.Allocate(img.GetNumRows(), img.GetNumCols());
     Reset();
@@ -48,8 +51,7 @@ void ImageCompositor::ComposeWith(const Vision::Image& img)
     Reset(); // zeros all elements in the sum image
   }
 
-  typedef u32(AddPixelsFuncType)(const u32&, const u8&);
-  std::function<AddPixelsFuncType> addPixels = [](const u32& accPixel, const u8& pixel) -> u32 {
+  std::function<u32(const u32&, const u8&)> addPixels = [](const u32& accPixel, const u8& pixel) -> u32 {
     return accPixel + (u32)pixel;
   };
   _sumImage.ApplyScalarFunction(addPixels, img, _sumImage);
@@ -59,8 +61,7 @@ void ImageCompositor::ComposeWith(const Vision::Image& img)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ImageCompositor::Reset()
 {
-  typedef u32(ZeroPixelFuncType)(const u32&);
-  std::function<ZeroPixelFuncType> zeroPixels = [](const u32& accPixel) -> u32 {
+  std::function<u32(const u32&)> zeroPixels = [](const u32& accPixel) -> u32 {
     return 0;
   };
   _sumImage.ApplyScalarFunction(zeroPixels);
@@ -72,24 +73,22 @@ Vision::Image ImageCompositor::GetCompositeImage() const
 {
   // A composite image is the average of the sum image, with contrast boosting
   Vision::Image outImg(_sumImage.GetNumRows(), _sumImage.GetNumCols());
+  std::vector<u8> pixels; // used to compute percentiles
   typedef u8(MeanPixelFuncType)(const u32&);
   std::function<MeanPixelFuncType> meanPixel = [&](const u32& accPixel) -> u8 {
-    return (u8)(accPixel/_numImagesComposited);
+    const u8 pixel = (u8)(accPixel/_numImagesComposited);
+    pixels.push_back(pixel);
+    return pixel;
   };
   _sumImage.ApplyScalarFunction(meanPixel, outImg);
 
-  // Helper method to compute the percentiles for contrast operation
-  std::vector<u8> pixels;
-  std::function<u8(const u8&)> getPixels = [&](const u8& p) -> u8 {
-    pixels.push_back(p);
-    return p;
-  };
-  outImg.ApplyScalarFunction(getPixels);
+  // Threshold of pixel values above which to be set to Max Brightness.
+  // Computed by finding the 99th percentile intensity value.
   std::sort(pixels.begin(), pixels.end());
-
-  // Threshold of pixel values to be turned into Max Values
   u8 pct99 = pixels[ std::max((int)std::floor(pixels.size() * .99f), 0) ];
 
+  // Increase constrast by scaling pixel values so that 99th percentile
+  //  and above is set to 90% of Max Brightness (255), with clamping.
   std::function<u8(const u8&)> contrastFunc = [&](const u8& p) -> u8 {
     return std::min((u8)std::floor((0.9f * 255 * p)/pct99), (u8)255);
   };

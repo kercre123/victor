@@ -1629,8 +1629,6 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       std::list<Vision::ObservedMarker> observedMarkers;
       lastResult = _markerDetector->Detect(meanImage, observedMarkers);
 
-      PRINT_CH_INFO(kLogChannelName, "VisionSystem.DetectMarkers", "%zu", observedMarkers.size());
-
       // Markers are detected in a scaled version of the original image.
       //  Rescale their corner coordinates to reflect their pose in the
       //  original image coordinates.
