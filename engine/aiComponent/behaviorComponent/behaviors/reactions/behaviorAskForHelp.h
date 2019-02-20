@@ -39,6 +39,7 @@ protected:
   // and are constructed, init'd, and checked by the base `ICozmoBehavior` class.
   virtual bool WantsToBeActivatedBehavior() const override { return true; }
   virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
 private:
