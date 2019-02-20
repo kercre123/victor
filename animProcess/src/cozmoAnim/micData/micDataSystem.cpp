@@ -206,9 +206,25 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
 {
   if(HasStreamingJob())
   {
-    LOG_WARNING("MicDataSystem.StartWakeWordlessStreaming.OverlappingStreamRequests",
-                "Received StartWakeWorldlessStreaming message from engine, but micDataSystem is already streaming");
-    return;
+    // We "fake" having a streaming job in order to achieve the "feel" of a minimum streaming time for UX
+    // reasons (I think?). This means that HasStreamingJob() may actually lie, so if we have a job, but have
+    // completed streaming, and the engine is requesting a wakewordless stream (e.g. knowledge graph), we
+    // should clear it now. This is a workaround to fix VIC-13402 (a blocker for R1.4.1)
+
+    // TODO:(bn) VIC-13438 this is tech debt and should be cleaned up
+
+    if( _currentlyStreaming &&
+        _streamingComplete ) {
+
+      LOG_INFO("MicDataSystem.StartWakeWordlessStreaming.OverlappingWithFakeStream.Opening",
+               "Request came in overlapping with a 'fake' extended request, so cancel it before starting a new one");
+      ClearCurrentStreamingJob();
+    }
+    else {
+      LOG_WARNING("MicDataSystem.StartWakeWordlessStreaming.OverlappingStreamRequests",
+                  "Received StartWakeWorldlessStreaming message from engine, but micDataSystem is already streaming (not faking to extend the stream)");
+      return;
+    }
   }
 
   // we want to start the stream AFTER the audio is complete so that it is not captured in the stream
@@ -527,6 +543,8 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       // we want to extend the streaming state so that it at least appears to be streaming for a minimum duration
       // here we hold onto the streaming job until we've reached that minimum duration
       // note: the streaming job will not actually be recording, we're simply holding it so we don't start a new job
+
+      // TODO:(bn) VIC-13438 this is tech debt and has caused bugs and confusion and should be cleaned up
       if (_streamingComplete)
       {
         // our stream is complete, so clear out the current stream as long as our minimum streaming time has elapsed
@@ -535,6 +553,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         const BaseStationTime_t minStreamEnd_ns = _streamBeginTime_ns + minStreamDuration_ns;
         if (currTime_nanosec >= minStreamEnd_ns)
         {
+          LOG_INFO("MicDataSystem.Update.StreamingComplete.ClearJob", "Clearing streaming job now that enough time has elapsed");
           ClearCurrentStreamingJob();
         }
       }
