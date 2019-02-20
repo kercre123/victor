@@ -16,6 +16,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/sayTextAction.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "osState/osState.h"
@@ -24,7 +25,7 @@
 namespace Anki {
 namespace Vector {
 
-CONSOLE_VAR_EXTERN(bool, kTheBox_TTSForDescription);
+CONSOLE_VAR(bool, kTheBox_TTSForIP, "TheBox.Audio", false);
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -67,12 +68,17 @@ void BehaviorBoxDemoShowNetworkInfo::OnBehaviorActivated()
       robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::EnableNetworkScreen( enable )));
       _messageSent = true;
 
-      if( kTheBox_TTSForDescription ) {
+      if( kTheBox_TTSForIP ) {
         const bool updateIP = true;
         const std::string& ip = OSState::getInstance()->GetIPAddress(updateIP);
         if( !ip.empty() ) {
           DelegateIfInControl(new SayTextAction(ip, SayTextAction::AudioTtsProcessingStyle::Unprocessed));
         }
+      }
+      else {
+        // instead, play a sound effect
+        const auto dingEvent = AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Scan_Face_Success;
+        GetBEI().GetRobotAudioClient().PostEvent( dingEvent, AudioMetaData::GameObjectType::Behavior );
       }
     });
 }
