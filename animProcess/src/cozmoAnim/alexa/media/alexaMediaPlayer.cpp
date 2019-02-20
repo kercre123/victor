@@ -776,7 +776,9 @@ bool AlexaMediaPlayer::StopInternal( SourceId id, bool runOnCaller )
       if( _playingSource == id ||
           _nextSourceToPlay == id) {
         SetState(State::Idle);
-        if( (_playingSource == id) && (_nextSourceToPlay <= id) ) {
+        const bool stoppingPlaying = (_playingSource == id) && (_nextSourceToPlay <= id);
+        const bool stoppingBeforePlay = (id > _playingSource) && (_nextSourceToPlay == id);
+        if( stoppingBeforePlay || stoppingPlaying ) {
           _nextSourceToPlay = 0;
         }
         _offset_ms = 0;
