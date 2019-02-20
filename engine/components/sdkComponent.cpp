@@ -5,7 +5,7 @@
  * Created: 05/25/2018
  *
  * Description: Component that serves as a mediator between external SDK requests and any instances of SDK behaviors,
- * such as SDK0.
+ * such as SDKDefault.
  * 
  * The sdkComponent does the following, in this order:
  *     - The sdkComponent will receive a message from the external SDK, requesting that the SDK behavior be activated,
@@ -36,6 +36,7 @@
 #include "engine/externalInterface/gatewayInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "proto/external_interface/shared.pb.h"
 
 #include "util/logging/logging.h"
 
@@ -47,6 +48,7 @@ namespace Vector {
 SDKComponent::SDKComponent()
 : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::SDK)
 {
+  _sdkControlLevel = external_interface::ControlRequest_Priority_UNKNOWN;
 }
 
 
@@ -240,8 +242,9 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
   switch(event.GetData().GetTag()) {
     // Receives a message that external SDK wants an SDK behavior to be activated.
     case external_interface::GatewayWrapperTag::kControlRequest:
-      LOG_INFO("SDKComponent.HandleMessageRequest", "SDK requested control");
       _sdkWantsControl = true;
+      _sdkControlLevel = event.GetData().control_request().priority();
+      LOG_INFO("SDKComponent::HandleProtoMessage","SDK requested control priority %u", _sdkControlLevel);
 
       if (_sdkBehaviorActivated) {
         LOG_INFO("SDKComponent.HandleMessageBehaviorActivated", "SDK already has control");
@@ -500,8 +503,14 @@ void SDKComponent::HandleMessage(const ExternalInterface::RobotProcessedImage& m
 
 bool SDKComponent::SDKWantsControl()
 {
-  // TODO What slot does the SDK want to run at? Currently only requesting at one slot, SDK0.
   return _sdkWantsControl;
+}
+
+int SDKComponent::SDKControlLevel()
+{
+  DEV_ASSERT(_sdkWantsControl, "SDKComponent::SDKControlLevel.sdkWantsControl");
+    
+  return _sdkControlLevel;
 }
 
 void SDKComponent::SDKBehaviorActivation(bool enabled)

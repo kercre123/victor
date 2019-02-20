@@ -62,6 +62,8 @@ private:
     std::string driveOffChargerBehaviorStr;
     ICozmoBehaviorPtr driveOffChargerBehavior;
 
+    int behaviorControlLevel;
+    bool disableCliffDetection;
     std::string findAndGoToHomeBehaviorStr;
     ICozmoBehaviorPtr findAndGoToHomeBehavior;
   };
