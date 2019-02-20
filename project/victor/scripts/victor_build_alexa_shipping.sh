@@ -3,7 +3,6 @@
 export GIT_PROJ_ROOT=`git rev-parse --show-toplevel`
 ${GIT_PROJ_ROOT}/project/victor/build-victor.sh \
                 -c Release \
-		-I \
                 -DANKI_PRIVACY_GUARD=1 \
                 -DANKI_NO_WEBSERVER_ENABLED=1 \
                 -DANKI_DEV_CHEATS=0 \

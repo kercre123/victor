@@ -85,7 +85,7 @@ else()
 
   if (ANKI_USER_DEV)
     set(BASE_URL "https://ota.global.anki-dev-services.com/vic/master-userdev/lo8awreh23498sf/")
-    configure_file(platform/config/userdev/etc-template/update-engine.env.in ${CMAKE_BINARY_DIR}/etc/update-engine.env)
+    configure_file(userdev/etc-template/update-engine.env.in ${CMAKE_BINARY_DIR}/etc/update-engine.env)
     set(platform_config_etc_extra platform_config_etc_userdev)
   endif()
 
