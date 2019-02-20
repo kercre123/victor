@@ -150,6 +150,7 @@ private:
   
   std::unique_ptr<TriggerContextPryon>        _alexaPlaybackTrigger;
   std::atomic_uint64_t                        _playbackTrigerSampleIdx{ 0 };
+  std::atomic_bool                            _isDisableAlexaPending{ false };
   
   std::string                                 _triggerWordDataDir;
   

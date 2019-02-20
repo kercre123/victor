@@ -404,14 +404,27 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample * audioData, un
   }
   
   if (_isAlexaActive) {
-    // Update both the alexa SDK and the trigger word at the same time with the same data. This is critical so
-    // that their internal sample counters line up
-    _alexaComponent->AddMicrophoneSamples(audioData, audioDataLen);
-    _alexaTrigger->recognizer->Update(audioData, audioDataLen);
-    
-    // NOTE: for the listed reason above, I'm not running the VAD in front of the alexa trigger. If we want to
-    // turn that back on, it should be possible, we'd just need to count how many samples were skipped so we
-    // could reconcile the sample counters
+    if (!_isDisableAlexaPending) {
+      // Update both the alexa SDK and the trigger word at the same time with the same data. This is critical so
+      // that their internal sample counters line up
+      _alexaComponent->AddMicrophoneSamples(audioData, audioDataLen);
+      _alexaTrigger->recognizer->Update(audioData, audioDataLen);
+      
+      // NOTE: for the listed reason above, I'm not running the VAD in front of the alexa trigger. If we want to
+      // turn that back on, it should be possible, we'd just need to count how many samples were skipped so we
+      // could reconcile the sample counters
+    }
+    else {
+      // Disable Alexa flag has been set, destroy recognizer
+      if (_alexaTrigger) {
+        _alexaTrigger->recognizer->Stop();
+        _alexaTrigger.reset();
+      }
+      UpdateAlexaActiveState();
+      ASSERT_NAMED(!_isAlexaActive, "SpeechRecognizerSystem.DisableAlexa._isAlexaActive.IsTrue");
+      _isDisableAlexaPending = false;
+      LOG_INFO("SpeechRecognizerSystem.Update", "Alexa mic recognizer has been disabled");
+    }
   }
 }
 
@@ -490,10 +503,8 @@ void SpeechRecognizerSystem::ActivateAlexa(const Util::Locale& locale, AlexaTrig
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpeechRecognizerSystem::DisableAlexa()
 {
-  if (_alexaTrigger) {
-    _alexaTrigger->recognizer->Stop();
-    _alexaTrigger.reset();
-  }
+  // Set flag to disable Alexa's recognizer in Update()
+  _isDisableAlexaPending = true;
   
   // Destroy component before recognizer so the treads are stopped
   if (_alexaPlaybackRecognizerComponent) {
@@ -504,8 +515,6 @@ void SpeechRecognizerSystem::DisableAlexa()
     _alexaPlaybackTrigger->recognizer->Stop();
     _alexaPlaybackTrigger.reset();
   }
-  
-  UpdateAlexaActiveState();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
