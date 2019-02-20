@@ -13,6 +13,7 @@
 #include "engine/vision/imageCompositor.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/shared/array2d_impl.h"
+#include <algorithm>
 
 namespace Anki {
 namespace Vector {
@@ -69,12 +70,31 @@ void ImageCompositor::Reset()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Vision::Image ImageCompositor::GetCompositeImage() const
 {
+  // A composite image is the average of the sum image, with contrast boosting
   Vision::Image outImg(_sumImage.GetNumRows(), _sumImage.GetNumCols());
   typedef u8(MeanPixelFuncType)(const u32&);
   std::function<MeanPixelFuncType> meanPixel = [&](const u32& accPixel) -> u8 {
     return (u8)(accPixel/_numImagesComposited);
   };
   _sumImage.ApplyScalarFunction(meanPixel, outImg);
+
+  // Helper method to compute the percentiles for contrast operation
+  std::vector<u8> pixels;
+  std::function<u8(const u8&)> getPixels = [&](const u8& p) -> u8 {
+    pixels.push_back(p);
+    return p;
+  };
+  outImg.ApplyScalarFunction(getPixels);
+  std::sort(pixels.begin(), pixels.end());
+
+  // Threshold of pixel values to be turned into Max Values
+  u8 pct99 = pixels[ std::max((int)std::floor(pixels.size() * .99f), 0) ];
+
+  std::function<u8(const u8&)> contrastFunc = [&](const u8& p) -> u8 {
+    return std::min((u8)std::floor((0.9f * 255 * p)/pct99), (u8)255);
+  };
+  outImg.ApplyScalarFunction(contrastFunc);
+
   return outImg;
 }
 

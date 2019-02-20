@@ -1648,7 +1648,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       //  running marker detection normally).
       // We don't know which one to trust more, however since this mode
       //  is specifically for LowLight Charger search, then we want to trust
-      //  the detection from earlier more (since compositing and contrasting)
+      //  the detection from earlier more, since compositing and contrasting
       //  will add noise to the final image.
       for(auto& marker : observedMarkers) {
         if(marker.GetCode() != Vision::MARKER_CHARGER_HOME) {
@@ -1656,10 +1656,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
         }
 
         auto got = std::find_if(_currentResult.observedMarkers.begin(),
-                              _currentResult.observedMarkers.end(),
-                              [](const Vision::ObservedMarker& item) -> bool {
-                                return item.GetCode() == Vision::MARKER_CHARGER_HOME;
-                              });
+                                _currentResult.observedMarkers.end(),
+                                [](const Vision::ObservedMarker& item) -> bool {
+                                  return item.GetCode() == Vision::MARKER_CHARGER_HOME;
+                                });
         if(got == _currentResult.observedMarkers.end()) {
           _currentResult.observedMarkers.push_back(marker);
         } else {
@@ -1668,6 +1668,18 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
         }
       }
 
+      #define DEBUG_IMAGE_COMPOSITING 0
+      #if(DEBUG_IMAGE_COMPOSITING)
+      // Debug image display
+      Vision::ImageRGB dispImg;
+      dispImg.SetFromGray(meanImage);
+      for(auto const& marker : observedMarkers) {
+        dispImg.DrawQuad(marker.GetImageCorners(), NamedColors::RED);
+      }
+      _currentResult.debugImages.emplace_back("ImageCompositing", dispImg);
+      #endif
+
+      // We ran marker detection once in this image, so it was processed here
       if(lastResult != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.CompositeImages", "");
         anyModeFailures = true;
