@@ -21,7 +21,6 @@
 #include "messages.h"
 #include "pathFollower.h"
 #include "pickAndPlaceController.h"
-#include "powerModeManager.h"
 #include "proxSensors.h"
 #include "speedController.h"
 #include "steeringController.h"
@@ -82,10 +81,6 @@ namespace Anki {
         // Whether or not Init() was called.
         // Only reset by Destroy().
         bool initialized_ = false;
-
-        // For only sending robot state messages every STATE_MESSAGE_FREQUENCY
-        // times through the main loop
-        u32 robotStateMessageCounter_ = 0;
 
         // Main cycle time errors
         u32 mainTooLongCnt_ = 0;
@@ -154,8 +149,6 @@ namespace Anki {
         const auto reason = MotorCalibrationReason::Startup;
         LiftController::StartCalibrationRoutine(autoStarted, reason);
         HeadController::StartCalibrationRoutine(autoStarted, reason);
-
-        robotStateMessageCounter_ = 0;
 
         return RESULT_OK;
 
@@ -512,22 +505,10 @@ namespace Anki {
         WheelController::Manage();
 
         //////////////////////////////////////////////////////////////
-        // Power management
-        //////////////////////////////////////////////////////////////
-        PowerModeManager::Update();
-
-        //////////////////////////////////////////////////////////////
         // Feedback / Display
         //////////////////////////////////////////////////////////////
 
         Messages::UpdateRobotStateMsg();
-        ++robotStateMessageCounter_;
-        const s32 messagePeriod = ( HAL::PowerGetMode() == HAL::POWER_MODE_CALM ) ? STATE_MESSAGE_FREQUENCY_CALM
-                                                                                  : STATE_MESSAGE_FREQUENCY;
-        if(robotStateMessageCounter_ >= messagePeriod) {
-          Messages::SendRobotStateMsg();
-          robotStateMessageCounter_ = 0;
-        }
 
         // Now that the robot state msg has been updated, send mic data (which uses some of robot state)
         Messages::SendMicDataMsgs();

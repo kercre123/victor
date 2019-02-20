@@ -548,7 +548,7 @@ void RobotToEngineImplMessaging::HandleSyncRobotAck(const AnkiEvent<RobotInterfa
 
     // Set calm mode
     auto setCalmFunc = [](Robot& robot) {
-      robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(true, false)));
+      robot.SendMessage(RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(true)));
       return true;
     };
     auto setCalmModeAction = new WaitForLambdaAction(setCalmFunc);

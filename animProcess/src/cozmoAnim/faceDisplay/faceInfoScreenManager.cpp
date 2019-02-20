@@ -146,7 +146,6 @@ FaceInfoScreenManager::FaceInfoScreenManager()
   _scratchDrawingImg->Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
 
   _calmModeMsgOnNone.enable = false;
-  _calmModeMsgOnNone.calibOnDisable = false;
 
   memset(&_customText, 0, sizeof(_customText));
 }
@@ -250,7 +249,6 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
     // Disable calm mode
     RobotInterface::CalmPowerMode msg;
     msg.enable = false;
-    msg.calibOnDisable = false;
     SendAnimToRobot(std::move(msg));
   };
   SET_ENTER_ACTION(None, noneEnterFcn);

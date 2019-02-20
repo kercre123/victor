@@ -46,6 +46,8 @@ CONSOLE_VAR( bool, kPowerSave_LCDBacklight, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_ThrottleCPU, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_ProxSensorMap, CONSOLE_GROUP, true);
 
+CONSOLE_VAR( bool, kForceCalmMode, CONSOLE_GROUP, false);
+
 static constexpr const LCDBrightness kLCDBrightnessLow = LCDBrightness::LCDLevel_5mA;
 static constexpr const LCDBrightness kLCDBrightnessNormal = LCDBrightness::LCDLevel_10mA;
 
@@ -97,6 +99,13 @@ void PowerStateManager::UpdateDependent(const RobotCompMap& dependentComps)
 {
   if( !ANKI_VERIFY( _context != nullptr, "PowerStateManager.Update.NoContext", "" ) ) {
     return;
+  }
+
+  static bool wasForceCalmMode = false;
+  if (kForceCalmMode != wasForceCalmMode) {
+    _context->GetRobotManager()->GetMsgHandler()->SendMessage(
+        RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(kForceCalmMode)));
+    wasForceCalmMode = kForceCalmMode;
   }
 
   // Check if power save mode needs to be toggled
@@ -266,10 +275,11 @@ void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
 
   switch( setting ) {
     case PowerSaveSetting::CalmMode: {
-      const bool calibOnDisable = true;
-      Result sendResult = _context->GetRobotManager()->GetMsgHandler()->SendMessage(
-        RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(savePower, calibOnDisable)));
-      result = (sendResult == RESULT_OK);
+      if (!kForceCalmMode) {
+        Result sendResult = _context->GetRobotManager()->GetMsgHandler()->SendMessage(
+          RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(savePower)));
+        result = (sendResult == RESULT_OK);
+      }
       break;
     }
 
