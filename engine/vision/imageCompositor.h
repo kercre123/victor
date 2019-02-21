@@ -46,7 +46,7 @@ class ImageCompositor
     // Clears the buffer of images to create the composite with
     void Reset();
 
-    Vision::Image GetCompositeImage() const;
+    void GetCompositeImage(Vision::Image& outImg) const;
 
   private:
 

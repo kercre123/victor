@@ -67,14 +67,11 @@ void ImageCompositor::Reset()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Vision::Image ImageCompositor::GetCompositeImage() const
+void ImageCompositor::GetCompositeImage(Vision::Image& outImg) const
 {
-  Vision::Image outImg(_sumImage.GetNumRows(), _sumImage.GetNumCols());
-
   // A composite image is the average of the sum image, with contrast boosting
   #if(ANKICORETECH_USE_OPENCV)
   Array2d<f32> avgImage(_sumImage);
-  avgImage.get_CvMat_() *= invNumImageComposited;
 
   // Threshold of pixel values above which to be set to Max Brightness.
   // Computed by finding the 99th percentile intensity value.

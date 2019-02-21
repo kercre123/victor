@@ -1623,7 +1623,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     if(_imageCompositor->GetNumImagesComposited() == 4 ||
        _imageCompositor->GetNumImagesComposited() == 8) {
       
-      Vision::Image meanImage = _imageCompositor->GetCompositeImage();
+      Vision::Image meanImage;
+      _imageCompositor->GetCompositeImage(meanImage);
       meanImage.SetTimestamp(imageCache.GetTimeStamp());
 
       std::list<Vision::ObservedMarker> observedMarkers;
