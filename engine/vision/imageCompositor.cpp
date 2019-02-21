@@ -76,8 +76,12 @@ void ImageCompositor::GetCompositeImage(Vision::Image& outImg) const
   // Threshold of pixel values above which to be set to Max Brightness.
   // Computed by finding the 99th percentile intensity value.
   std::vector<f32> pixels(_sumImage.get_CvMat_().begin(), _sumImage.get_CvMat_().end());
-  std::sort(pixels.begin(), pixels.end());
-  f32 sum99pct = pixels[ std::max((int)std::floor(pixels.size() * .99f), 0) ];
+  int pct99Idx = std::min(std::ceil(pixels.size() * .01f), pixels.size());
+  std::nth_element(pixels.begin(),
+                   pixels.begin() + pct99Idx,
+                   pixels.end(),
+                   std::greater<f32>());
+  f32 sum99pct = pixels[pct99Idx];
 
   // Note: we don't need to divide out the number of images
   //  since the arithmetic works out that numImagesComposited
@@ -86,8 +90,6 @@ void ImageCompositor::GetCompositeImage(Vision::Image& outImg) const
 
   avgImage.get_CvMat_().convertTo(outImg.get_CvMat_(), CV_8UC1, scaling, 0);
   #endif
-
-  return outImg;
 }
 
 } // end namespace Vector
