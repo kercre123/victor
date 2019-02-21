@@ -278,6 +278,9 @@ func main() {
 		},
 	}
 
+	// Test cloud skill fetch
+	go fetchCloudSkill(dcreds)
+
 	go engineCladManager.ProcessMessages()
 	go engineProtoManager.ProcessMessages()
 	if IsOnRobot {
