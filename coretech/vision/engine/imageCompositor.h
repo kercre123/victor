@@ -10,23 +10,17 @@
  * Copyright: Anki, Inc. 2019
  **/
 
-#ifndef __Anki_Cozmo_Basestation_ImageCompositor_H__
-#define __Anki_Cozmo_Basestation_ImageCompositor_H__
+#ifndef __Anki_Coretech_Vision_Engine_ImageCompositor_H__
+#define __Anki_Coretech_Vision_Engine_ImageCompositor_H__
 
-#include "coretech/common/engine/robotTimeStamp.h"
-
-#include "coretech/vision/engine/compressedImage.h"
-#include "coretech/vision/engine/debugImageList.h"
-#include "coretech/vision/engine/image.h"
 #include "coretech/common/shared/array2d.h"
-
-#include "clad/externalInterface/messageEngineToGame.h"
-
-#include <list>
-#include <string>
+#include "json/json-forwards.h"
 
 namespace Anki {
-namespace Vector {
+namespace Vision {
+
+// forward declarations
+class Image;
 
 class ImageCompositor
 {
@@ -67,4 +61,4 @@ class ImageCompositor
 } // end namespace Vector
 } // end namespace Anki
 
-#endif /* __Anki_Cozmo_Basestation_imageCompositor_H__ */
+#endif /* __Anki_Coretech_Vision_Engine_ImageCompositor_H__ */

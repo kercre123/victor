@@ -10,14 +10,18 @@
  * Copyright: Anki, Inc. 2019
  **/
 
-#include "engine/vision/imageCompositor.h"
+#include "coretech/vision/engine/imageCompositor.h"
+
+#include "coretech/vision/engine/image.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/shared/array2d_impl.h"
 #include "util/console/consoleInterface.h"
 #include <algorithm>
+#include <limits>
+#include <string>
 
 namespace Anki {
-namespace Vector {
+namespace Vision {
 
 namespace {
   const char* percentileForMaxIntensity = "percentileForMaxIntensity";

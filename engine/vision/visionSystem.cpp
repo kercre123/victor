@@ -18,6 +18,7 @@
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/shared/math/rect_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/vision/engine/imageCompositor.h"
 
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -32,7 +33,6 @@
 #include "engine/vision/overheadMap.h"
 #include "engine/vision/visionModesHelpers.h"
 #include "engine/utils/cozmoFeatureGate.h"
-#include "engine/vision/imageCompositor.h"
 
 #include "coretech/neuralnets/iNeuralNetMain.h"
 #include "coretech/neuralnets/neuralNetJsonKeys.h"
@@ -273,7 +273,7 @@ Result VisionSystem::Init(const Json::Value& config)
   _overheadMap.reset(new OverheadMap(config["OverheadMap"], _context));
 
   const Json::Value& imageCompositeCfg = config["ImageCompositing"];
-  _imageCompositor.reset(new ImageCompositor(imageCompositeCfg));
+  _imageCompositor.reset(new Vision::ImageCompositor(imageCompositeCfg));
 
   // TODO check config entry here
   _groundPlaneClassifier.reset(new GroundPlaneClassifier(config["GroundPlaneClassifier"], _context));
