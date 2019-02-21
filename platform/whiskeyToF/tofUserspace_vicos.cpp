@@ -19,6 +19,7 @@
 #include "whiskeyToF/vicos/vl53l1/core/inc/vl53l1_error_codes.h"
 #include "whiskeyToF/vicos/vl53l1/platform/inc/vl53l1_platform_user_config.h"
 #include "whiskeyToF/vicos/vl53l1/platform/inc/vl53l1_platform_init.h"
+#include "whiskeyToF/vicos/vl53l1/platform/inc/vl53l1_platform_log.h"
 
 #include "clad/types/tofTypes.h"
 
@@ -35,7 +36,9 @@
 #define MAX_ROWS (SPAD_ROWS / SPAD_MIN_ROI)
 #define MAX_COLS (SPAD_COLS / SPAD_MIN_ROI)
 
-#define POWER_GPIO 0
+#define POWER_GPIO 0 // XSHUT1
+
+#define LOG_CHANNEL "ToF"
 
 namespace {
   GPIO _powerGPIO = nullptr;
@@ -46,32 +49,23 @@ int open_dev(VL53L1_Dev_t* dev)
   int res = gpio_create(POWER_GPIO, gpio_DIR_OUTPUT, gpio_HIGH, &_powerGPIO);
   if(res < 0)
   {
-    PRINT_NAMED_ERROR("ToF.open_dev", "Failed to open gpio %d", POWER_GPIO);
+    LOG_ERROR("ToF.open_dev", "Failed to open gpio %d", POWER_GPIO);
     return VL53L1_ERROR_GPIO_NOT_EXISTING;
   }
 
-  // Wait for FW boot coming out of HW Standby
-  usleep(2000);
+  // Wait for FW boot coming out of HW standby
+  usleep(100000);
 
   VL53L1_Error status = VL53L1_ERROR_NONE;
 
-#ifdef VL53L1_LOG_ENABLE
-  if (0)
-    status = VL53L1_trace_config(NULL,
-                                 VL53L1_TRACE_MODULE_ALL,
-                                 VL53L1_TRACE_LEVEL_ALL,
-                                 VL53L1_TRACE_FUNCTION_ALL);
-  else
-    status = VL53L1_trace_config(NULL,
-                                 VL53L1_TRACE_MODULE_NONE,
-                                 VL53L1_TRACE_LEVEL_NONE,
-                                 VL53L1_TRACE_FUNCTION_NONE);
-
-#endif
-  return_if_error(status, "Set trace config failed");
-
   // Initialize the platform interface
   dev->platform_data.i2c_file_handle = open("/dev/i2c-6", O_RDWR);
+  if(dev->platform_data.i2c_file_handle < 0)
+  {
+    LOG_ERROR("ToF.open_dev", "Failed to open /dev/i2c-6 %d", errno);
+    return VL53L1_ERROR_INVALID_PARAMS;
+  }
+  
   status = VL53L1_platform_init(dev,
                                 0x29,
                                 1, /* comms_type  I2C*/
@@ -86,14 +80,7 @@ int open_dev(VL53L1_Dev_t* dev)
   status = VL53L1_WaitDeviceBooted(dev);
   return_if_error(status, "WaitDeviceBooted failed");
 
-  // status = VL53L1_software_reset(dev);
-  // return_if_error(status, "software reset failed");
-  VL53L1_State state;
-  status = VL53L1_GetPalState(dev, &state);
-  return_if_error(status, "GetPalState failed");
-  printf("STATE %d\n", state);
-
-  //  Initialise Dev data structure
+  // Initialise Dev data structure
   status = VL53L1_DataInit(dev);
   return_if_error(status, "DataInit failed");
 
@@ -101,24 +88,24 @@ int open_dev(VL53L1_Dev_t* dev)
   status = VL53L1_GetDeviceInfo(dev, &deviceInfo);
   return_if_error(status, "GetDeviceInfo failed");
 
-  printf("VL53L1_GetdeviceInfo:\n");
-  printf("Device Name : %s\n", deviceInfo.Name);
-  printf("Device Type : %s\n", deviceInfo.Type);
-  printf("Device ID : %s\n", deviceInfo.ProductId);
-  printf("ProductRevisionMajor : %d\n", deviceInfo.ProductRevisionMajor);
-  printf("ProductRevisionMinor : %d\n", deviceInfo.ProductRevisionMinor);
-  
-  if ((deviceInfo.ProductRevisionMajor != 1) || (deviceInfo.ProductRevisionMinor != 1))
-  {
-    printf("Warning expected cut 1.1 but found cut %d.%d\n",
+  LOG_INFO("ToF.open_dev",
+           "Name: %s Type: %s ID: %s Ver: %d.%d",
+           deviceInfo.Name,
+           deviceInfo.Type,
+           deviceInfo.ProductId,
            deviceInfo.ProductRevisionMajor,
            deviceInfo.ProductRevisionMinor);
+
+  if ((deviceInfo.ProductRevisionMajor != 1) || (deviceInfo.ProductRevisionMinor != 1))
+  {
+    LOG_ERROR("ToF.open_dev.UnexpecedVersion",
+              "Warning expected cut 1.1 but found cut %d.%d",
+              deviceInfo.ProductRevisionMajor,
+              deviceInfo.ProductRevisionMinor);
   }
 
   status = VL53L1_StaticInit(dev);
-  return_if_error(status, "StaticInit failed");
-
-  
+  return_if_error(status, "StaticInit failed");  
 
   return status;
 }
@@ -211,21 +198,6 @@ int setup(VL53L1_Dev_t* dev)
   PRINT_NAMED_ERROR("","stop ranging\n");
   rc = VL53L1_StopMeasurement(dev);
   return_if_error(rc, "ioctl error stopping ranging");
-
-  // auto* origCalib = (which == LEFT ? &_origCalib_left : &_origCalib_right);
-  // memset(origCalib, 0, sizeof(*origCalib));
-  // rc = get_calibration_data(fd, *origCalib);
-  // return_if_not(rc == 0, -1, "ioctl error getting calibration: %d", errno);
-
-  // rc = load_calibration(dev);
-  // #if !FACTORY_TEST
-  // return_if_error(rc, "failed to load calibration");
-  // #endif
-  
-  // Have the device reset when ranging is stopped
-  // PRINT_NAMED_ERROR("","reset on stop\n");
-  // rc = reset_on_stop_set(fd, 1);
-  // return_if_not(rc == 0, -1, "ioctl error reset on stop: %d", errno);
 
   // Switch to multi-zone scanning mode
   PRINT_NAMED_ERROR("","Switch to multi-zone scanning\n");

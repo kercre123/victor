@@ -52,8 +52,12 @@ target_include_directories(whiskeyToF
   ${PLATFORM_INCLUDES}
 )
 
+anki_build_target_license(whiskeyToF "ANKI")
 
-if (VICOS)
+
+# tof_test is a standalone program to test output of tof sensor
+# Don't build by default
+if (VICOS AND FALSE)
 
 project(tof_test)
 
@@ -82,5 +86,7 @@ target_compile_definitions(tof_test
   PRIVATE
   ${PLATFORM_COMPILE_DEFS}
 )
+
+anki_build_target_license(tof_test "ANKI")
 
 endif()

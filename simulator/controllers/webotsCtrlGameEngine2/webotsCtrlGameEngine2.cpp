@@ -57,7 +57,7 @@ using namespace Anki::Vector;
 
 int main(int argc, char **argv)
 {
-  // Instantiate supervisor and pass to AndroidHAL and cubeBleClient
+  // Instantiate supervisor and pass to various singletons
   webots::Supervisor engineSupervisor;
 
   CameraService::SetSupervisor(&engineSupervisor);

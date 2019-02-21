@@ -133,8 +133,6 @@ int load_calibration(VL53L1_Dev_t* dev)
     }
   }
 
-  //calib.gain_cal.histogram_ranging_gain_factor = (uint16_t)(0.87f * (float)(2 << 11));
-  
   rc = VL53L1_SetCalibrationData(dev, &calib);
   if(rc < 0)
   {

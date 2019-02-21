@@ -437,7 +437,6 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
                                                    RobotInterface::SendAnimToEngine(std::move(msg));
                                                  };
     SET_EXIT_ACTION(ToF, exitToFScreen);
-    //DISABLE_TIMEOUT(ToF);
   }
 
   

@@ -10,6 +10,7 @@
 #include <unistd.h>
 #include <chrono>
 #include <csignal>
+#include <thread>
 
 #ifdef PRINT_NAMED_ERROR
 #undef PRINT_NAMED_ERROR
@@ -80,9 +81,10 @@ int main(int argc, char** argv)
         reflectance = strtof(argv[3], &end);
       }
 
-      PRINT_NAMED_ERROR("", "Calibrating at %u with reflectance %f",
-                        dist,
-                        reflectance);
+      PRINT_NAMED_INFO("ToFTest",
+                       "Calibrating at %u with reflectance %f",
+                       dist,
+                       reflectance);
       
       ToFSensor::getInstance()->PerformCalibration(dist, reflectance, nullptr);
 
@@ -106,25 +108,36 @@ int main(int argc, char** argv)
   while(shutdown == 0)
   {
     bool isUpdated = false;
-
     RangeDataRaw data = ToFSensor::getInstance()->GetData(isUpdated);
 
-
-
     static uint32_t s = GetTimeStamp();
-    if(pause && GetTimeStamp() - s > 10000)
+    if(pause && GetTimeStamp() - s > 3000)
     {
       s = GetTimeStamp();
       static bool b = false;
       if(b)
       {
         printf("STARTING\n");
-        ToFSensor::getInstance()->StartRanging(nullptr);
+        ToFSensor::getInstance()->StartRanging([](ToFSensor::CommandResult res)
+                                         {
+                                           if((int)res < 0)
+                                           {
+                                             printf("Failed to start ranging\n");
+                                             exit(1);
+                                           }
+                                         });
       }
       else
       {
         printf("STOPPING\n");
-        ToFSensor::getInstance()->StopRanging(nullptr);
+        ToFSensor::getInstance()->StopRanging([](ToFSensor::CommandResult res)
+                                         {
+                                           if((int)res < 0)
+                                           {
+                                             printf("Failed to stop ranging\n");
+                                             exit(1);
+                                           }
+                                         });
       }
       b = !b;
     }
@@ -132,9 +145,9 @@ int main(int argc, char** argv)
     
     if(!isUpdated)
     {
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
       continue;
     }
-
 
     static RangeDataRaw lastValid = data;
       
@@ -172,7 +185,14 @@ int main(int argc, char** argv)
   }
 
   printf("stopping\n");
-  ToFSensor::getInstance()->StopRanging(nullptr);
+  ToFSensor::getInstance()->StopRanging([](ToFSensor::CommandResult res)
+                                         {
+                                           if((int)res < 0)
+                                           {
+                                             printf("Failed to stop ranging\n");
+                                             exit(1);
+                                           }
+                                         });
 
   ToFSensor::removeInstance();
   

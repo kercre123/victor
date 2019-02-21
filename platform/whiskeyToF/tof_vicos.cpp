@@ -19,6 +19,7 @@
 #include "util/console/consoleSystem.h"
 #include "util/logging/logging.h"
 
+#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include <thread>
@@ -139,6 +140,8 @@ int ToFSensor::PerformCalibration(uint32_t distanceToTarget_mm,
 }
 
 
+#define CONVERT_1616_TO_FLOAT(fixed) ((float)(fixed) * (float)(1/(2<<16))) 
+
 // Parses and converts VL53L1_MultiRangingData_t into RangeDataRaw
 void ParseData(VL53L1_MultiRangingData_t& mz_data,
                RangeDataRaw& rangeData)
@@ -164,9 +167,9 @@ void ParseData(VL53L1_MultiRangingData_t& mz_data,
       reading.status = mz_data.RangeData[r].RangeStatus;
 
       // The following three readings come up in 16.16 fixed point so convert
-      reading.signalRate_mcps = ((float)mz_data.RangeData[r].SignalRateRtnMegaCps * (float)(1/(2 << 16)));
-      reading.ambientRate_mcps = ((float)mz_data.RangeData[r].AmbientRateRtnMegaCps * (float)(1/(2 << 16)));
-      reading.sigma_mm = ((float)mz_data.RangeData[r].SigmaMilliMeter * (float)(1/(2 << 16)));
+      reading.signalRate_mcps = CONVERT_1616_TO_FLOAT(mz_data.RangeData[r].SignalRateRtnMegaCps);
+      reading.ambientRate_mcps = CONVERT_1616_TO_FLOAT(mz_data.RangeData[r].AmbientRateRtnMegaCps);
+      reading.sigma_mm = CONVERT_1616_TO_FLOAT(mz_data.RangeData[r].SigmaMilliMeter);
       reading.rawRange_mm = mz_data.RangeData[r].RangeMilliMeter;
 
       // For all valid detected objects in this ROI keep track of which one was the closest and
@@ -192,7 +195,6 @@ int ReadDataFromSensor(RangeDataRaw& rangeData)
   int rc = 0;  
   VL53L1_MultiRangingData_t mz_data;
   rc = get_mz_data(&_dev, 1, &mz_data);
-  //rc = get_mz_data(&_dev, 0, &mz_data);
   if(rc == 0)
   {
     ParseData(mz_data, rangeData);
@@ -206,6 +208,16 @@ int ReadDataFromSensor(RangeDataRaw& rangeData)
   return rc;
 }
 
+// There are currently two issues with Start/StopRanging
+// 1) Sometimes when starting ranging, we only ever get back invalid range readings.
+//    You can stop and start ranging again and sometimes the sensor will recover.
+//    It is also possible to go from valid readings to invalid readings after calling
+//    stop and start.
+// 2) It appears that calibration or some initial setting is changing when the sensor
+//    is stopped/started. If you calibrate and then look at the readings, they look
+//    very good. They are accurate within a couple of millimeters. However, if you stop
+//    then stop ranging and start it up again, all of the readings will have a ~30mm offset.
+//    Most of calibration is still good as the readings are indifferent towards the target/material.
 int ToFSensor::StartRanging(const CommandCallback& callback)
 {
   std::lock_guard<std::mutex> lock(_commandLock);
@@ -215,17 +227,6 @@ int ToFSensor::StartRanging(const CommandCallback& callback)
 
 int ToFSensor::StopRanging(const CommandCallback& callback)
 {
-  // There is currently an issue with bringing the sensor back online after stopping it.
-  // I think calibration or some initial setting must be changing when the sensor is stopped
-  // so for now StopRanging is not supported.
-  // PRINT_NAMED_INFO("ToFSensor.StopRanging.NotImplemented","");
-  // if(callback != nullptr)
-  // {
-  //   callback(CommandResult::Success);
-  // }
-  // return 0;
-      
-  
   std::lock_guard<std::mutex> lock(_commandLock);
   _commandQueue.push({Command::StopRanging, callback});
   return 0;
@@ -305,7 +306,6 @@ void ProcessLoop()
               PRINT_NAMED_ERROR("ToF.ProcessLoop.SetupFailed","Failed to setup sensor");
             }
 
-            usleep(2000);
           }
           break;
         case Command::PerformCalibration:
@@ -368,7 +368,9 @@ void ProcessLoop()
     // Ranging is not enabled so sleep
     else
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(32));
+      // Sleep for half an engine tick so we can process commands by the time
+      // the next engine tick happens
+      std::this_thread::sleep_for(std::chrono::milliseconds(BS_TIME_STEP_MS/2));
     }
   }
 
@@ -391,6 +393,7 @@ ToFSensor::ToFSensor()
   _rangingEnabled = false;
   _isCalibrating = false;
   _stopProcessing = false;
+  memset(&_dev, sizeof(_dev), 0);
   _processor = std::thread(ProcessLoop);
 }
 

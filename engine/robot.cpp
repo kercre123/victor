@@ -395,7 +395,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
   _thisRobot = this;
 #endif
 
-  // This will create the AndroidHAL instance if it doesn't yet exist
+  // These will create the instances if they don't yet exist
   CameraService::getInstance();
   ToFSensor::getInstance();
 

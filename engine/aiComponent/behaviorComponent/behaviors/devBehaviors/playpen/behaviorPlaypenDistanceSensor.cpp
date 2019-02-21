@@ -107,19 +107,8 @@ Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal()
   _calibrationComplete = false;
   _calibrationRunning = false;
 
-  // if(_performCalibration)
-  // {
-    // Add an extra 30 seconds to timeout time if we are calibrating since it is slow
-    IncreaseTimeoutTimer(30000);
-  // }
-
-  // ToFSensor::getInstance()->SetupSensors([this](ToFSensor::CommandResult res)
-  //                                        {
-  //                                          if(res != ToFSensor::CommandResult::Success)
-  //                                          {
-  //                                            PLAYPEN_SET_RESULT(FactoryTestResultCode::SETUP_TOF_FAILED);
-  //                                          }
-  //                                        });
+  // Add an extra 30 seconds to timeout time if we are calibrating since it is slow
+  IncreaseTimeoutTimer(30000);
 
   // Move head and lift to be able to see target marker and turn towards the target
   MoveHeadToAngleAction* head = new MoveHeadToAngleAction(DEG_TO_RAD(0));
@@ -157,32 +146,17 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
     if(isNewData)
     {
       --_numRecordedReadingsLeft;
-      PRINT_NAMED_WARNING("","RECORDING %u MORE", _numRecordedReadingsLeft);
+      PRINT_NAMED_INFO("BehaviorPlaypenDistanceSensor.PlaypenUpdateInternal.Recording",
+                       "Recording %u more",
+                       _numRecordedReadingsLeft);
     
       RangeSensorData data;
       data.rangeData = rangeData;
       data.visualDistanceToTarget_mm = 0;
       data.visualAngleAwayFromTarget_rad = 0;
       data.headAngle_rad = robot.GetComponent<FullRobotPose>().GetHeadAngle();
-
-      // Pose3d markerPose;
-      // const bool res = GetExpectedObjectMarkerPoseWrtRobot(markerPose);
-      // if(res)
-      // {
-        // data.visualDistanceToTarget_mm = markerPose.GetTranslation().x();
       data.visualDistanceToTarget_mm = _visualDistanceToTarget_mm;
-
-        // markerPose = markerPose.GetWithRespectToRoot();
-        // // Marker pose rotation is kind of wonky, compared to the robot's rotation they are 
-        // // rotated 90 degrees. So when the robot is looking at a marker, you have to add
-        // // 90 degrees to get its rotation to match that of the robot
-        // // Taking the difference of these two angles tells us how much the robot needs to turn
-        // // to be perpendicular with the marker
-        // const auto angle = ((markerPose.GetRotation().GetAngleAroundZaxis() + DEG_TO_RAD(90)) - 
-        //                     robot.GetPose().GetRotation().GetAngleAroundZaxis());
-        // data.visualAngleAwayFromTarget_rad = angle.ToFloat();
       data.visualAngleAwayFromTarget_rad = _visualAngleToTarget_rad;
-      //}
     
       if(!GetLogger().Append(GetDebugLabel(), data))
       {
@@ -303,11 +277,6 @@ void BehaviorPlaypenDistanceSensor::TransitionToRecordSensor()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  // static int i = 0;
-  // robot.GetVisionComponent().SetSaveImageParameters(ImageSendMode::SingleShot,
-  //                                                   "/data/misc/camera/test/" + std::to_string(i++) + ".png",
-  //                                                   100);
-
   Pose3d markerPose;
   const bool res = GetExpectedObjectMarkerPoseWrtRobot(markerPose);
   float visualDistanceToTarget_mm = _expectedDistanceToObject_mm;
@@ -316,9 +285,11 @@ void BehaviorPlaypenDistanceSensor::TransitionToRecordSensor()
     visualDistanceToTarget_mm = markerPose.GetTranslation().x();
     _visualDistanceToTarget_mm = visualDistanceToTarget_mm;
             
-    if(visualDistanceToTarget_mm == 0)
+    if(visualDistanceToTarget_mm <= 0)
     {
-      PRINT_NAMED_WARNING("","VISUAL DIST 0 USING EXPECTED");
+      PRINT_NAMED_WARNING("BehaviorPlaypenDistanceSensor.TransitionToRecordSensor.ZeroDist",
+                          "Visual distance to target is 0, using expected distance %f",
+                          _expectedDistanceToObject_mm);
       visualDistanceToTarget_mm = _expectedDistanceToObject_mm;
     }
 
@@ -355,7 +326,6 @@ void BehaviorPlaypenDistanceSensor::TransitionToRecordSensor()
 
         if(!isCalibrating && !_calibrationComplete)
         {
-          PRINT_NAMED_WARNING("","STARTING CALIBRATION %f", visualDistanceToTarget_mm);
           ToFSensor::getInstance()->PerformCalibration(visualDistanceToTarget_mm,
                                                        PlaypenConfig::kDistanceSensorTargetReflectance,
                                                        [this](ToFSensor::CommandResult res)
@@ -369,7 +339,6 @@ void BehaviorPlaypenDistanceSensor::TransitionToRecordSensor()
         
         if(_calibrationComplete)
         {
-          PRINT_NAMED_ERROR("","CALIBRATION COMPLETE");
           ToFSensor::getInstance()->StartRanging([this](ToFSensor::CommandResult res)
                                                  {
                                                    if(res != ToFSensor::CommandResult::Success)
