@@ -236,12 +236,9 @@ MESSAGES_TO_TEST = [
     #  TestResultMatches(protocol.IsImageStreamingEnabledResponse(is_image_streaming_enabled=1))),  # pylint: disable=no-member
 
     # EnableMarkerDetection message
-    # 12/4/2018 thanhlelgg's Note: This usually failed with error: 
-    # `grpc._channel._Rendezvous: <_Rendezvous of RPC that terminated with (StatusCode.UNAVAILABLE, Connect Failed)>`
-    # Probably related to VIC-12762
-    # (Interface.EnableMarkerDetection,
-    #  protocol.EnableMarkerDetectionRequest(),
-    #  TestResultMatches(protocol.EnableMarkerDetectionResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
+    (Interface.EnableMarkerDetection,
+     protocol.EnableMarkerDetectionRequest(enable=True),
+     TestResultMatches(protocol.EnableMarkerDetectionResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
 
     # EnableMotionDetection message
     (Interface.EnableMotionDetection,
@@ -520,7 +517,7 @@ def main():
 
     loop = asyncio.get_event_loop()
 
-    with anki_vector.Robot(args.serial, default_logging=False) as robot:
+    with anki_vector.Robot(args.serial, default_logging=False, cache_animation_lists=False) as robot:
         # Since some requests fail on charger, such as DriveStraight and TurnInPlace, drive off charger first.
         robot.behavior.drive_off_charger()
 
