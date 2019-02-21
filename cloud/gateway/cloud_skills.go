@@ -44,6 +44,10 @@ type Command struct {
 	} `json:"ResponseMetadata"`
 }
 
+type TriggerLambdaMessageBody struct {
+	TotalMessageCount int
+}
+
 type Storage struct {
 	AwsApiKey string
 	RpcCallToken string
@@ -64,17 +68,28 @@ func (tok *Token) RequireTransportSecurity() bool {
 	return true
 }
 
-// TODO: Get total number of messages
-func launchSkill(AwsApiGwyBaseUrl string, AwsApiKey string) {
+func launchSkill(AwsApiGwyBaseUrl string, AwsApiKey string) int {
 	url := AwsApiGwyBaseUrl + "/CloudSkills-Trigger"
 	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Add("x-api-key", AwsApiKey)
+	query := req.URL.Query()
+	query.Add("skill_key", "skills/skill_1.py")
+	req.URL.RawQuery = query.Encode()
 	client := &http.Client{}
     response, err := client.Do(req)
     if err != nil {
         panic(err)
     }
     defer response.Body.Close()
+
+    body, err := ioutil.ReadAll(response.Body)
+
+	var jsonMessageBody TriggerLambdaMessageBody
+    if err := json.Unmarshal(body, &jsonMessageBody); err != nil {
+        panic(err)
+    }
+
+    return jsonMessageBody.TotalMessageCount
 }
 
 func fetchCloudSkill(creds credentials.TransportCredentials) {
@@ -114,11 +129,9 @@ func fetchCloudSkill(creds credentials.TransportCredentials) {
 	behaviorControlClient.Send(&extint.BehaviorControlRequest{RequestType: &extint.BehaviorControlRequest_ControlRequest{ControlRequest: &extint.ControlRequest{Priority: 20}}})
 
 	// Trigger skill
-	launchSkill(cloudSkillConstants.AwsApiGwyBaseUrl, cloudSkillConstants.AwsApiKey)
+	numberOfCommands := launchSkill(cloudSkillConstants.AwsApiGwyBaseUrl, cloudSkillConstants.AwsApiKey)
 	client := &http.Client{}
 
-	//TODO: Find better way to get the total number of commands to run
-	numberOfCommands := 2
 	commandId := 1
  
 	for {
