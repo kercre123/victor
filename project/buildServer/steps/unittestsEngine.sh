@@ -92,37 +92,43 @@ export ANKI_TEST_BEHAVIOR_FEATURES="behavior_active_features.txt"
 if [[ ${VOICE_INTENT_DIR:+x} ]]; then
   set +e
 
+  DATA_DIR="dialogflow-en-us"
+
   if [[ ! "$VOICE_INTENT_DIR" = /* ]]; then
     VOICE_INTENT_DIR="${TOPLEVEL}/${VOICE_INTENT_DIR}"
   fi
-  VOICE_INTENT_DATA_DIR="${VOICE_INTENT_DIR}/dialogflow-en-us"
+  VOICE_INTENT_DATA_DIR="${VOICE_INTENT_DIR}/${DATA_DIR}"
   echo "Source of primary voice intent resolution data: ${VOICE_INTENT_DATA_DIR}"
+
+  # Backup the directory for the primary voice intent resolution data before merging in the secondary data
+  PRIMARY_BACKUP_DIR=$(mktemp -d)
+  cp -pR $VOICE_INTENT_DATA_DIR $PRIMARY_BACKUP_DIR/
 
   OTHER_DIALOGFLOW_PROJECT="victor-games-dev-en-us"
   # The $DIALOGFLOW_PRIVATE_KEY environment variable should be set to a private key for ^ project
 
   # Grab the secondary voice intent resolution data directly from Dialogflow and merge it with the primary data
   DIALOGFLOW_PULL_SCRIPT=${VOICE_INTENT_DIR}/lib/util/tools/dialogflow/dialogflow_download.py
-  TMPDIR=$(mktemp -d)
+  SECONDARY_DATA_DIR=$(mktemp -d)
   ZIP_FILE=$(mktemp).zip
-  python2 $DIALOGFLOW_PULL_SCRIPT --project_id $OTHER_DIALOGFLOW_PROJECT --unpack_dir $TMPDIR --zip_file $ZIP_FILE
-  cp $TMPDIR/intents/*.json ${VOICE_INTENT_DATA_DIR}/intents/
-  cp $TMPDIR/entities/*.json ${VOICE_INTENT_DATA_DIR}/entities/
-  rm -rf $TMPDIR $ZIP_FILE
+  python2 $DIALOGFLOW_PULL_SCRIPT --project_id $OTHER_DIALOGFLOW_PROJECT --unpack_dir $SECONDARY_DATA_DIR --zip_file $ZIP_FILE
+  cp ${SECONDARY_DATA_DIR}/intents/*.json ${VOICE_INTENT_DATA_DIR}/intents/
+  cp ${SECONDARY_DATA_DIR}/entities/*.json ${VOICE_INTENT_DATA_DIR}/entities/
+  rm -rf $SECONDARY_DATA_DIR $ZIP_FILE
 
-  # Engine unit test(s) look for this file to run cloud intent tests
-  export ANKI_TEST_INTENT_SAMPLE_FILE="/tmp/intent_samples_for_test.json"
+  # The UserIntentsParsing.CloudSampleFileParses engine unit test looks for this file to run cloud intent tests
+  export ANKI_TEST_INTENT_SAMPLE_FILE="${TMPDIR}/intent_samples_for_test.json"
+  echo "Intent sample file: ${ANKI_TEST_INTENT_SAMPLE_FILE}"
 
   # Generate the json file of Dialogflow sample intents that will be used for the UserIntentsParsing.CloudSampleFileParses test
   rm -f $ANKI_TEST_INTENT_SAMPLE_FILE
   ${TOPLEVEL}/tools/ai/makeSampleIntents.py $VOICE_INTENT_DATA_DIR $ANKI_TEST_INTENT_SAMPLE_FILE
 
   # Restore the directory for the primary voice intent resolution data back to its original
-  # state before we merged in the secondary data (assuming it is a git repo directory)
-  pushd ${VOICE_INTENT_DIR}
-  git reset --hard
-  git clean -f
-  popd
+  # state before the secondary data was merged in
+  rm -rf $VOICE_INTENT_DATA_DIR
+  mv "${PRIMARY_BACKUP_DIR}/${DATA_DIR}" $VOICE_INTENT_DIR/
+  rmdir $PRIMARY_BACKUP_DIR
 
   set -e
 fi
