@@ -10,7 +10,7 @@ The tests then run the SDK script on this simulated robot and logs the results f
 
 1. Create an SDK python script that runs the required tests on the robot.
 
-2. Save this SDK script in `victor/tools/sdk/vector-python-sdk-private/sdk/tests/automated/`
+2. Save this SDK script in `victor/tools/sdk/vector-sdk-tests/automated/`
 
 3. Once this is saved, open `victor/project/build-scripts/webots/sdkNightlyTests.cfg`
 
@@ -47,19 +47,14 @@ The tests then run the SDK script on this simulated robot and logs the results f
 
 3. Do a debug build for mac by running `./project/victor/build-victor.sh -p mac -f -c Debug`
 
-4. Make GRPC tools by running the following command:
-  ```
-  ./tools/sdk/scripts/update_proto.sh
-  ```
-
-5. Install Vector-SDK by running the following commands:
+4. Install Vector-SDK by running the following commands:
   ```
   pushd ./tools/sdk/vector-python-sdk-private/sdk
   python3 -m pip install -e .
   popd
   ```
 
-6. Export the necessary environment varibles for running the SDK with webots by running:
+5. Export the necessary environment varibles for running the SDK with webots by running:
   ```
   export VECTOR_ROOT=$(pwd)
   export VECTOR_ROBOT_NAME_MAC=Vector-Local
@@ -67,9 +62,9 @@ The tests then run the SDK script on this simulated robot and logs the results f
   export VECTOR_ROBOT_CERT_MAC=/tmp/anki/gateway/trust.cert
   ```
 
-7. Run `sdkTest.py` by running `./project/build-scripts/webots/sdkTest.py --password your_password`
+6. Run `sdkTest.py` by running `./project/build-scripts/webots/sdkTest.py --password your_password`
 
    where `your_password` is replaced with the admin password for your computer.
 
-8. Check the output to verify that the new test is being run.
+7. Check the output to verify that the new test is being run.
 

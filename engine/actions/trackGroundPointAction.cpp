@@ -13,7 +13,6 @@
 
 #include "engine/actions/trackGroundPointAction.h"
 
-#include "engine/blockWorld/blockWorld.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/externalInterface/externalInterface.h"

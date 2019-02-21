@@ -388,7 +388,7 @@ void SpeechRecognizerTHF::Update(const AudioUtil::AudioSample * audioData, unsig
       std::string foundString{foundStringRaw};
       std::replace(foundString.begin(), foundString.end(), '_', ' ');
       AudioUtil::SpeechRecognizerCallbackInfo info {
-        .result       = foundString.c_str(),
+        .result       = foundString,
         .startTime_ms = 0,
         .endTime_ms   = 0,
         .score        = score

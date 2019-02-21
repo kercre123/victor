@@ -33,6 +33,7 @@ class BehaviorTimerManager;
 class BlockWorld;
 class DelegationComponent;
 class FaceWorld;
+class HeldInPalmTracker;
 class BEIRobotInfo;
 class UserIntentComponent;
 class UserDefinedBehaviorTreeComponent;
@@ -63,6 +64,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(BehaviorTimerManager,               BCComponentID, B
 LINK_COMPONENT_TYPE_TO_ENUM(BlockWorld,                         BCComponentID, BlockWorld)
 LINK_COMPONENT_TYPE_TO_ENUM(DelegationComponent,                BCComponentID, DelegationComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(FaceWorld,                          BCComponentID, FaceWorld)
+LINK_COMPONENT_TYPE_TO_ENUM(HeldInPalmTracker,                  BCComponentID, HeldInPalmTracker)
 LINK_COMPONENT_TYPE_TO_ENUM(BEIRobotInfo,                       BCComponentID, RobotInfo)
 LINK_COMPONENT_TYPE_TO_ENUM(UserDefinedBehaviorTreeComponent,   BCComponentID, UserDefinedBehaviorTreeComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(UserIntentComponent,                BCComponentID, UserIntentComponent)
@@ -102,6 +104,7 @@ std::string GetComponentStringForID<Vector::BCComponentID>(Vector::BCComponentID
     CASE(BlockWorld)
     CASE(DelegationComponent)
     CASE(FaceWorld)
+    CASE(HeldInPalmTracker)
     CASE(MoodManager)
     CASE(PowerStateManager)
     CASE(RobotInfo)

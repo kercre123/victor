@@ -104,7 +104,7 @@ void BehaviorPlannerTest::BehaviorUpdate()
 bool BehaviorPlannerTest::FindPoseFromCube()
 {
   BlockWorldFilter filter;
-  filter.SetAllowedFamilies( {ObjectFamily::LightCube} );
+  filter.SetFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
   
   std::vector<const ObservableObject*> objects;
   GetBEI().GetBlockWorld().FindLocatedMatchingObjects( filter, objects );

@@ -16,7 +16,6 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
-#include "engine/markerlessObject.h"
 #include "engine/robot.h"
 #include "engine/robotStateHistory.h"
 
@@ -334,10 +333,9 @@ bool CliffSensorComponent::ComputeCliffPose(uint32_t timestampOfCliff, uint8_t c
   const auto& robotPoseAtCliff = histState.GetPose();
   
   Pose3d cliffWrtRobot;
-  bool isValidPose = GetCliffPoseRelativeToRobot(cliffDetectedFlags, cliffWrtRobot);
+  const bool isValidPose = GetCliffPoseRelativeToRobot(cliffDetectedFlags, cliffWrtRobot);
   if(!isValidPose) {
-    LOG_ERROR("CliffSensorComponent.ComputeCliffPose.NoPoseForCliffFlags",
-              "flags=%hhu", cliffDetectedFlags);
+    LOG_INFO("CliffSensorComponent.ComputeCliffPose.NoPoseForCliffFlags", "flags=%hhu", cliffDetectedFlags);
     return false;
   }
 
@@ -354,7 +352,7 @@ bool CliffSensorComponent::ComputeCliffPose(uint32_t timestampOfCliff, uint8_t c
 
 void CliffSensorComponent::UpdateNavMapWithCliffAt(const Pose3d& pose, const uint32_t timestamp) const
 {
-  Point2f cliffSize = MarkerlessObject(ObjectType::CliffDetection).GetSize();
+  Point2f cliffSize{10.f, ROBOT_BOUNDING_Y};
   Quad2f cliffquad {
     { +cliffSize.x(), +cliffSize.y() * .5f },  // up L
     { 0.f,            +cliffSize.y() * .5f },  // lo L

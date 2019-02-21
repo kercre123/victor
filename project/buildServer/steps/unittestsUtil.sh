@@ -26,7 +26,7 @@ function usage() {
 : ${CONFIGURATION:=Debug}
 : ${VERBOSE:=0}
 
-while getopts "hvc:p" opt; do
+while getopts "hvc:p:" opt; do
   case $opt in
     h)
       usage
@@ -52,7 +52,7 @@ echo "Entering directory \`${SCRIPTDIR}'"
 cd $SCRIPTDIR
 
 : ${TOPLEVEL:=`$GIT rev-parse --show-toplevel`}
-BUILDPATH=${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}/lib/util
+BUILDPATH=${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}/util
 
 XML="*GoogleTest.xml"
 LOG=utilUnitGoogleTest.log

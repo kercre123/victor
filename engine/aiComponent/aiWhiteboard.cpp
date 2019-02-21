@@ -14,7 +14,6 @@
 #include "coretech/common/engine/math/poseOriginList.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/activeObject.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
@@ -30,7 +29,7 @@
 #include "engine/robot.h"
 #include "engine/sayNameProbabilityTable.h"
 
-#include "coretech/common/engine/math/rotation.h"
+#include "coretech/common/shared/math/rotation.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"

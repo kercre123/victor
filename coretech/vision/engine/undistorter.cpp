@@ -12,7 +12,7 @@
  **/
 
 
-#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/shared/math/matrix_impl.h"
 #include "coretech/vision/engine/cameraCalibration.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/undistorter.h"

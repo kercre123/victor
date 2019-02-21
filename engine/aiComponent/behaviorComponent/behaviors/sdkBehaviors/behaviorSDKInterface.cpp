@@ -27,6 +27,8 @@ namespace Anki {
 namespace Vector {
 
 namespace {
+const char* const kBehaviorControlLevelKey = "behaviorControlLevel";
+const char* const kDisableCliffDetection = "disableCliffDetection";
 const char* const kDriveOffChargerBehaviorKey = "driveOffChargerBehavior";
 const char* const kFindAndGoToHomeBehaviorKey = "findAndGoToHomeBehavior";
 }
@@ -46,6 +48,10 @@ BehaviorSDKInterface::BehaviorSDKInterface(const Json::Value& config)
  : ICozmoBehavior(config)
 {
   const std::string& debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
+  _iConfig.behaviorControlLevel = JsonTools::ParseInt32(config, kBehaviorControlLevelKey, debugName);
+  ANKI_VERIFY(external_interface::ControlRequest_Priority_IsValid(_iConfig.behaviorControlLevel),
+              "BehaviorSDKInterface::BehaviorSDKInterface", "Invalid behaviorControlLevel %u", _iConfig.behaviorControlLevel);
+  _iConfig.disableCliffDetection = JsonTools::ParseBool(config, kDisableCliffDetection, debugName);
   _iConfig.driveOffChargerBehaviorStr = JsonTools::ParseString(config, kDriveOffChargerBehaviorKey, debugName);
   _iConfig.findAndGoToHomeBehaviorStr = JsonTools::ParseString(config, kFindAndGoToHomeBehaviorKey, debugName);
 
@@ -62,10 +68,10 @@ BehaviorSDKInterface::BehaviorSDKInterface(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorSDKInterface::WantsToBeActivatedBehavior() const
 {
-  // TODO Check whether the SDK wants the behavior slot that this behavior instance is for. Currently just using SDK0.
+  // Check whether the SDK wants control for the control level that this behavior instance is for.
   auto& robotInfo = GetBEI().GetRobotInfo();
   auto& sdkComponent = robotInfo.GetSDKComponent();
-  return sdkComponent.SDKWantsControl();
+  return sdkComponent.SDKWantsControl() && (sdkComponent.SDKControlLevel()==_iConfig.behaviorControlLevel);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -101,6 +107,8 @@ void BehaviorSDKInterface::InitBehavior()
 void BehaviorSDKInterface::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   const char* list[] = {
+    kBehaviorControlLevelKey,
+    kDisableCliffDetection,
     kDriveOffChargerBehaviorKey,
     kFindAndGoToHomeBehaviorKey,
   };
@@ -117,6 +125,10 @@ void BehaviorSDKInterface::OnBehaviorActivated()
   
   // Permit low level movement commands/actions to run since SDK behavior is now active.
   SetAllowExternalMovementCommands(true);
+
+  if (_iConfig.disableCliffDetection) {
+    robotInfo.EnableStopOnCliff(false);
+  }
 
   // Tell the robot component that the SDK has been activated
   auto& sdkComponent = robotInfo.GetSDKComponent();
@@ -139,6 +151,10 @@ void BehaviorSDKInterface::OnBehaviorDeactivated()
   robotInfo.GetMoveComponent().UnlockAllTracks();
   // Do not permit low level movement commands/actions to run since SDK behavior is no longer active.
   SetAllowExternalMovementCommands(false);
+  // Re-enable cliff detection that SDK may have disabled
+  if (_iConfig.disableCliffDetection) {
+    robotInfo.EnableStopOnCliff(true);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -182,7 +198,7 @@ void BehaviorSDKInterface::HandleDriveOnChargerComplete() {
 }
 
 // Reports back to gateway that requested actions have been completed.
-// E.g., the Python SDK ran play_anim and wants to know when the animation
+// E.g., the Python SDK ran play_animation and wants to know when the animation
 // action was completed.
 void BehaviorSDKInterface::HandleWhileActivated(const EngineToGameEvent& event)
 {

@@ -15,7 +15,7 @@
 
 #include "engine/components/cubes/cubeAccelListeners/iCubeAccelListener.h"
 
-#include "coretech/common/engine/math/point_fwd.h"
+#include "coretech/common/shared/math/point_fwd.h"
 
 namespace Anki {
 namespace Vector {

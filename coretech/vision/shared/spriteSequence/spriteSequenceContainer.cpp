@@ -12,7 +12,7 @@
 #include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/data/dataScope.h"
-#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/shared/array2d_impl.h"
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "util/fileUtils/fileUtils.h"

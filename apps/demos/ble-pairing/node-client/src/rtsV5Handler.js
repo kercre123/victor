@@ -3,6 +3,7 @@ var program = require('commander');
 var stringArgv = require('string-argv');
 var fs = require('fs');
 
+const { Sessions } = require('./sessions.js');
 const { RtsCliUtil } = require('./rtsCliUtil.js');
 
 const { Anki
@@ -283,12 +284,27 @@ class RtsV5Handler {
     this.remoteKeys = {}
     this.remoteKeys.publicKey = msg.publicKey;
 
-    // generate keys
-    this.keys = this.sodium.crypto_kx_keypair();
+    // get keys
+    let keys = Sessions.GetKeys();
+    this.keys = {};
+    if(keys == null) {
+      this.keys = this.sodium.crypto_kx_keypair();
+      Sessions.SaveKeys(this.keys.publicKey, this.keys.privateKey);
+    } else {
+      this.keys.publicKey = keys.publicKey;
+      this.keys.privateKey = keys.privateKey;
+    }
 
-    this.send(Rts.RtsConnection_5.NewRtsConnection_5WithRtsConnResponse(
-      new Rts.RtsConnResponse(Rts.RtsConnType.FirstTimePair, this.keys.publicKey)
-    ));
+    // check if we should first time pair
+    if(Sessions.GetSession(this.remoteKeys.publicKey)) {
+      this.send(Rts.RtsConnection_5.NewRtsConnection_5WithRtsConnResponse(
+        new Rts.RtsConnResponse(Rts.RtsConnType.Reconnection, this.keys.publicKey)
+      ));
+    } else {
+      this.send(Rts.RtsConnection_5.NewRtsConnection_5WithRtsConnResponse(
+        new Rts.RtsConnResponse(Rts.RtsConnType.FirstTimePair, this.keys.publicKey)
+      ));
+    }
   }
 
   onRtsNonceMessage(msg) {
@@ -302,25 +318,40 @@ class RtsV5Handler {
       completer:this.completer
     });
 
-    this.isReading = true;
-    this.rl.question("pin> ", function(pin) {
-      self.isReading = false;
-      let clientKeys = self.sodium.crypto_kx_client_session_keys(self.keys.publicKey, self.keys.privateKey, self.remoteKeys.publicKey);
-      let sharedRx = self.sodium.crypto_generichash(32, clientKeys.sharedRx, pin);
-      let sharedTx = self.sodium.crypto_generichash(32, clientKeys.sharedTx, pin);
-
-      self.cryptoKeys.decrypt = sharedRx;
-      self.cryptoKeys.encrypt = sharedTx;
-
-      self.nonces.decrypt = msg.toDeviceNonce;
-      self.nonces.encrypt = msg.toRobotNonce;
+    let session = Sessions.GetSession(this.remoteKeys.publicKey); 
+    if(session) {
+      this.cryptoKeys.encrypt = session.tx;
+      this.cryptoKeys.decrypt = session.rx;
+      this.nonces.encrypt = msg.toRobotNonce;
+      this.nonces.decrypt = msg.toDeviceNonce;
 
       self.send(Rts.RtsConnection_5.NewRtsConnection_5WithRtsAck(
         new Rts.RtsAck(Rts.RtsConnection_5Tag.RtsNonceMessage)
       ));
-      
-      self.encrypted = true;
-    });
+
+      this.encrypted = true;
+    } else {
+      this.isReading = true;
+      this.rl.question("pin> ", function(pin) {
+        self.isReading = false;
+        let clientKeys = self.sodium.crypto_kx_client_session_keys(self.keys.publicKey, self.keys.privateKey, self.remoteKeys.publicKey);
+        let sharedRx = self.sodium.crypto_generichash(32, clientKeys.sharedRx, pin);
+        let sharedTx = self.sodium.crypto_generichash(32, clientKeys.sharedTx, pin);
+        Sessions.SaveSession(self.remoteKeys.publicKey, sharedTx, sharedRx);
+
+        self.cryptoKeys.decrypt = sharedRx;
+        self.cryptoKeys.encrypt = sharedTx;
+
+        self.nonces.decrypt = msg.toDeviceNonce;
+        self.nonces.encrypt = msg.toRobotNonce;
+
+        self.send(Rts.RtsConnection_5.NewRtsConnection_5WithRtsAck(
+          new Rts.RtsAck(Rts.RtsConnection_5Tag.RtsNonceMessage)
+        ));
+        
+        self.encrypted = true;
+      });
+    }
   }
 
   onRtsChallengeMessage(msg) {
@@ -546,8 +577,12 @@ class RtsV5Handler {
       switch(cmd) {
         case "quit":
         case "exit":
+          self.vectorBle.stop();
           self.rl.close();
           process.exit();
+          break;
+        case "help":
+          RtsCliUtil.printHelp(self.helpArgs);
           break;
         case "wifi-scan":
           self.waitForResponse = 'wifi-scan';

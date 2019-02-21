@@ -6,7 +6,6 @@
 #include "clad/audio/audioSwitchTypes.clad"
 #include "clad/types/actionTypes.clad"
 #include "clad/types/visionModes.clad"
-#include "clad/types/objectFamilies.clad"
 #include "clad/types/pathMotionProfile.clad"
 #include "clad/types/proceduralFaceTypes.clad"
 #include "clad/types/animationTrigger.clad"
@@ -101,8 +100,7 @@ message PickupObject {
     PathMotionProfile  motionProf,
     float_32           approachAngle_rad,
     bool               useApproachAngle,
-    bool               usePreDockPose,
-    bool               checkForObjectOnTop = 0,
+    bool               usePreDockPose
 }
 
 // PlaceObjectOnGround
@@ -137,8 +135,7 @@ message PlaceOnObject {
     PathMotionProfile motionProf,
     float_32 approachAngle_rad,
     bool   useApproachAngle,
-    bool usePreDockPose,
-    bool checkForObjectOnTop = 0
+    bool usePreDockPose
 }
 
 // PlaceRelObject
@@ -223,7 +220,6 @@ message RollObject {
   bool doDeepRoll,
   bool useApproachAngle,
   bool usePreDockPose,
-  bool checkForObjectOnTop = 0,
   bool rollWithoutDocking = 0
 }
 

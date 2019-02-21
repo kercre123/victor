@@ -3,6 +3,7 @@
   "title0": "Victor Web Server (Engine process)",
   "title1": "This web server is running in the Engine process",
   "whichWebServer": 1,
+  "tickBudget_ms": 60,
   "startPage": "page_consolevars",
   "allowPerfPage": true,
   "allowPerfMetricPage": true,

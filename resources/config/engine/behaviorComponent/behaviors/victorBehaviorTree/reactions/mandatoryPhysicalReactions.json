@@ -14,6 +14,7 @@
     "ReactToUncalibratedHeadAndLift",
     "ReactToMotorCalibration",
     "ReactToPlacedOnSlope",
-    "ReactToUnexpectedMovement"
+    "ReactToUnexpectedMovement",
+    "ReactToBatteryTooHotToCharge"
   ]
 }

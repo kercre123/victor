@@ -23,6 +23,7 @@ enum class BEIComponentID{
   Delegation,
   FaceWorld,
   HabitatDetector,
+  HeldInPalmTracker,
   Map,
   MicComponent,
   MoodManager,

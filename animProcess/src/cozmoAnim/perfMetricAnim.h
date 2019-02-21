@@ -23,6 +23,8 @@
 namespace Anki {
 namespace Vector {
 
+class AnimationStreamer;
+
 
 class PerfMetricAnim : public PerfMetric
 {
@@ -37,6 +39,8 @@ public:
                       const float sleepDurationIntended_ms,
                       const float sleepDurationActual_ms) override final;
 
+  void SetAnimationStreamer(AnimationStreamer* animationStreamer) { _animationStreamer = animationStreamer; };
+
 private:
 
   virtual void InitDumpAccumulators() override final;
@@ -48,23 +52,31 @@ private:
                                 const int dumpBufferOffset,
                                 const int lineIndex) override final;
 
-  // Frame size:  Base struct is 16 bytes; here is 4 words * 4 (16 bytes) = 32 bytes
-  // x 4000 frames is 125 KB
+  // Frame size:  Base struct is 16 bytes; plus this struct is 20 bytes = 36 bytes total
+  // x 1000 frames is roughly 35 KB
   struct FrameMetricAnim : public FrameMetric
   {
     uint32_t _messageCountAnimToRobot;
     uint32_t _messageCountAnimToEngine;
     uint32_t _messageCountRobotToAnim;
     uint32_t _messageCountEngineToAnim;
+    uint16_t _relativeStreamTime_ms;
+    uint16_t _numLayersRendered;
   };
 
-  FrameMetricAnim*  _frameBuffer = nullptr;
-//  const AnimContext* _context;
+  FrameMetricAnim*              _frameBuffer = nullptr;
+
   Util::Stats::StatsAccumulator _accMessageCountRtA;
   Util::Stats::StatsAccumulator _accMessageCountAtR;
   Util::Stats::StatsAccumulator _accMessageCountEtA;
   Util::Stats::StatsAccumulator _accMessageCountAtE;
+  Util::Stats::StatsAccumulator _accRelativeStreamTime_ms;
+  Util::Stats::StatsAccumulator _accNumLayersRendered;
+
+  AnimationStreamer*            _animationStreamer = nullptr;
 };
+
+static const int kNumFramesInBuffer = 2000;
 
 } // namespace Vector
 } // namespace Anki

@@ -12,8 +12,8 @@
 
 #include "engine/components/cubes/cubeAccelComponent.h"
 
-#include "engine/activeObject.h"
 #include "engine/ankiEventUtil.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/blockTapFilterComponent.h"
 #include "engine/components/carryingComponent.h"
@@ -77,7 +77,7 @@ void CubeAccelComponent::UpdateDependent(const RobotCompMap& dependentComps)
 bool CubeAccelComponent::AddListener(const ObjectID& objectID,
                                      const std::shared_ptr<CubeAccelListeners::ICubeAccelListener>& listener)
 {
-  const ActiveObject* obj = _robot->GetBlockWorld().GetConnectedActiveObjectByID(objectID);
+  const auto* obj = _robot->GetBlockWorld().GetConnectedBlockByID(objectID);
   if (obj == nullptr) {
     PRINT_NAMED_WARNING("CubeAccelComponent.AddListener.InvalidObject",
                         "Object id %d is not connected",
@@ -101,7 +101,7 @@ bool CubeAccelComponent::AddListener(const ObjectID& objectID,
 void CubeAccelComponent::HandleCubeAccelData(const ActiveID& activeID,
                                              const CubeAccelData& accelData)
 {
-  ActiveObject* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeID);
+  auto* object = _robot->GetBlockWorld().GetConnectedBlockByActiveID(activeID);
   if (object == nullptr) {
     DEV_ASSERT(false, "CubeAccelComponent.HandleCubeAccelData.NoConnectedObject");
     return;
@@ -115,7 +115,7 @@ void CubeAccelComponent::HandleCubeAccelData(const ActiveID& activeID,
   if (prevTapCnt != currTapCnt) {
     object->SetTapCount(currTapCnt);
     
-    if (prevTapCnt != ActiveObject::kInvalidTapCnt) {
+    if (prevTapCnt != Block::kInvalidTapCnt) {
       ExternalInterface::ObjectTapped objectTapped;
       objectTapped.timestamp = (TimeStamp_t)_robot->GetLastMsgTimestamp();
       objectTapped.objectID  = objectID;
@@ -190,7 +190,7 @@ void CubeAccelComponent::ObjectMovedOrStoppedCallback(const ObjectID objectId, c
   const RobotTimeStamp_t timestamp = _robot->GetLastMsgTimestamp();
   
   // find active object by objectId
-  auto* connectedObj = _robot->GetBlockWorld().GetConnectedActiveObjectByID(objectId);
+  auto* connectedObj = _robot->GetBlockWorld().GetConnectedBlockByID(objectId);
   if (nullptr == connectedObj) {
     LOG_WARNING("CubeAccelComponent.ObjectMovedOrStoppedCallback.NullObject",
                 "Could not find match for object ID %d", objectId.GetValue());
@@ -235,8 +235,7 @@ void CubeAccelComponent::ObjectMovedOrStoppedCallback(const ObjectID objectId, c
       // we don't know where it is anymore. Next time we see it, relocalize it
       // relative to robot's pose estimate. Then we can use it for localization
       // again.
-      const bool propagateStack = false;
-      _robot->GetObjectPoseConfirmer().MarkObjectDirty(locatedObject, propagateStack);
+      _robot->GetObjectPoseConfirmer().MarkObjectDirty(locatedObject);
     }
     
     const bool wasMoving = locatedObject->IsMoving();

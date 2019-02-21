@@ -20,7 +20,6 @@
 #include "engine/actions/actionContainers.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/activeObjectHelpers.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
@@ -416,22 +415,25 @@ void RobotToEngineImplMessaging::HandleCliffEvent(const AnkiEvent<RobotInterface
   ANKI_CPU_PROFILE("Robot::HandleCliffEvent");
 
   CliffEvent cliffEvent = message.GetData().Get_cliffEvent();
+  const auto& cliffComp = robot->GetCliffSensorComponent();
   // always listen to events which say we aren't on a cliff, but ignore ones which say we are (so we don't
   // get "stuck" on a cliff
-  if (!robot->GetCliffSensorComponent().IsCliffSensorEnabled() && (cliffEvent.detectedFlags != 0)) {
+  if (!cliffComp.IsCliffSensorEnabled() && (cliffEvent.detectedFlags != 0)) {
     return;
   }
 
   if (cliffEvent.detectedFlags != 0) {
     Pose3d cliffPose;
-    if (robot->GetCliffSensorComponent().ComputeCliffPose(cliffEvent.timestamp, cliffEvent.detectedFlags, cliffPose)) {
-      robot->GetCliffSensorComponent().UpdateNavMapWithCliffAt(cliffPose, cliffEvent.timestamp);
-      LOG_INFO("RobotImplMessaging.HandleCliffEvent.Detected", "at %.3f,%.3f. DetectedFlags = 0x%02X",
-               cliffPose.GetTranslation().x(), cliffPose.GetTranslation().y(), cliffEvent.detectedFlags);
-    } else {
-      LOG_ERROR("RobotImplMessaging.HandleCliffEvent.ComputeCliffPoseFailed",
-                "Failed computing cliff pose!");
+    const bool isValidPose = cliffComp.ComputeCliffPose(cliffEvent.timestamp, cliffEvent.detectedFlags, cliffPose);
+    if (isValidPose) {
+      cliffComp.UpdateNavMapWithCliffAt(cliffPose, cliffEvent.timestamp);
     }
+    LOG_INFO("RobotImplMessaging.HandleCliffEvent.Detected",
+             "at %.3f,%.3f. DetectedFlags = 0x%02X. %s cliff into nav map",
+             cliffPose.GetTranslation().x(),
+             cliffPose.GetTranslation().y(),
+             cliffEvent.detectedFlags,
+             isValidPose ? "Inserting" : "NOT inserting");
   } else {
     LOG_INFO("RobotImplMessaging.HandleCliffEvent.Undetected", "");
   }
@@ -443,7 +445,7 @@ void RobotToEngineImplMessaging::HandleCliffEvent(const AnkiEvent<RobotInterface
 // For processing imu data chunks arriving from robot.
 // Writes the entire log of 3-axis accelerometer and 3-axis
 // gyro readings to a .m file in kP_IMU_LOGS_DIR so they
-// can be read in from Matlab. (See robot/util/imuLogsTool.m)
+// can be read in from Matlab.
 void RobotToEngineImplMessaging::HandleImuData(const AnkiEvent<RobotInterface::RobotToEngine>& message, Robot* const robot)
 {
   ANKI_CPU_PROFILE("Robot::HandleImuData");

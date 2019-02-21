@@ -14,11 +14,11 @@
 #ifndef _ANKICORETECH_MATH_POSEBASE_IMPL_H_
 #define _ANKICORETECH_MATH_POSEBASE_IMPL_H_
 
-#include "coretech/common/engine/math/matrix.h"
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/shared/math/matrix.h"
+#include "coretech/common/shared/math/point.h"
 #include "coretech/common/engine/math/quad.h"
-#include "coretech/common/engine/math/rotation.h"
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/rotation.h"
+#include "coretech/common/shared/math/radians.h"
 
 #include "coretech/common/engine/math/poseBase.h"
 #include "coretech/common/engine/math/poseTreeNode.h"

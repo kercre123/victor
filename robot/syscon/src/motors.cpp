@@ -221,6 +221,14 @@ void Motors::stop() {
   LTN2::mode(MODE_OUTPUT);
 }
 
+// Reset hysteresis values to Vector factory settings
+// so that debug screen cursors work
+void Motors::resetEncoderHysteresis() {
+  motorStatus[MOTOR_LEFT].hysteresis_direction = DIRECTION_BACKWARD;
+  motorStatus[MOTOR_RIGHT].hysteresis_direction = DIRECTION_BACKWARD;
+}
+
+
 static MotorDirection motorDirection(int power) {
   if (power > 0) {
     return DIRECTION_FORWARD;

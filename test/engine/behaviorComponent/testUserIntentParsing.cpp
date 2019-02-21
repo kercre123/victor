@@ -88,7 +88,10 @@ TEST(UserIntentsParsing, CloudSampleFileParses)
     
     if( intent.GetTag() != UserIntentTag::unmatched_intent ) {
       const auto& label = tih.GetLabelForIntent( intent );
-      if( !label.empty() ) {
+      if(label.empty() ) {
+        PRINT_NAMED_INFO("UserIntentsParsing.TestIntentSampleFile.SampleLabel",
+                         "The label for %s is empty", ss.str().c_str());
+      } else {
         PRINT_NAMED_INFO("UserIntentsParsing.TestIntentSampleFile.SampleLabel",
                          "The label for %s is %s", ss.str().c_str(), label.c_str());
         sampleLabels.insert( label );
@@ -96,9 +99,22 @@ TEST(UserIntentsParsing, CloudSampleFileParses)
     }
   }
   
-  // check that all labels we consider completed have a sample cloud intent
+  // before we check that all labels we consider completed have a sample cloud
+  // intent, display those labels for debugging
   auto itSamples = sampleLabels.begin();
+  while( itSamples != sampleLabels.end() ) {
+    PRINT_NAMED_INFO("UserIntentsParsing.CloudSampleFileParses.SampleLabels", "[ %s ]", itSamples->c_str());
+    ++itSamples;
+  }
   auto itCompleted = completedLabels.begin();
+  while( itCompleted != completedLabels.end() ) {
+    PRINT_NAMED_INFO("UserIntentsParsing.CloudSampleFileParses.CompletedLabels", "[ %s ]", itCompleted->c_str());
+    ++itCompleted;
+  }
+
+  // check that all labels we consider completed have a sample cloud intent
+  itSamples = sampleLabels.begin();
+  itCompleted = completedLabels.begin();
   while( itSamples != sampleLabels.end() && itCompleted != completedLabels.end() ) {
     while( itSamples != sampleLabels.end() ) {
       if( *itSamples == *itCompleted ) {
@@ -119,6 +135,13 @@ TEST(UserIntentsParsing, CloudSampleFileParses)
   UserIntentMap intentMap( cozmoContext->GetDataLoader()->GetUserIntentConfig(), cozmoContext );
   std::vector<std::string> cloudIntentsList = intentMap.DevGetCloudIntentsList();
   for( const auto& cloudName : cloudIntentsList ) {
+    // if this cloud intent has "test_parsing" set to false in user_intent_map, then
+    // skip it and do not check if it exists in Dialogflow sample file
+    if( !intentMap.GetTestParsingBoolFromCloudIntent(cloudName) ) {
+      continue;
+    }
+    //PRINT_NAMED_INFO("UserIntentsParsing.CloudSampleFileParses.CheckingDialogflowSamples",
+    //                 "Looking for Dialogflow sample that matches '%s'", cloudName.c_str());
     bool found = false;
     for( const auto& elem : config ) {
       if( elem["intent"] == cloudName ) {

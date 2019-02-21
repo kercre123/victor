@@ -609,29 +609,51 @@ void sPopErrG()
 #if ANKI_BREADCRUMBS
 bool DropBreadcrumb(bool result, const char* file, int line)
 {
+  static const int MAX_THREADS = 32; // max threads per process
   static const int BUFFER_SIZE = 16; // number of entries for file/line
   static const int LOOP_DEPTH = 3; // amount of history to check for dupe file/line
 
-  static const char* files[BUFFER_SIZE] = {0};
-  static int lines[BUFFER_SIZE] = {0};
-  static int counts[BUFFER_SIZE] = {0};
-  static struct timeval time[BUFFER_SIZE];
+  // single statically allocated buffer for each process shared between threads
 
-  // ptr - 1 is the last written entry
-  // ptr +/- 0 is the oldest
-  // ptr + 1 is the next oldest
-  static int ptr = 0;
-  static bool crashed = false;
+  static const char* files[BUFFER_SIZE * MAX_THREADS] = {0};
+  static int lines[BUFFER_SIZE * MAX_THREADS] = {0};
+  static int counts[BUFFER_SIZE * MAX_THREADS] = {0};
+  static struct timeval time[BUFFER_SIZE * MAX_THREADS];
+
+  // thread local storage, store a baseptr into statically allocated buffers above, plus
+  // running round-robin offset
+
+  // offset - 1 is the last written entry
+  // offset +/- 0 is the oldest
+  // offset + 1 is the next oldest
+
+  static __thread int base = -1;
+  static __thread int offset = 0;
+  static __thread bool crashed = false;
+
+  static std::atomic<int> alloc(0);
+
+  if (base == -1) {
+    // in release, keep wrapping around the internal buffer, corrupts some state but doesn't crash
+    // assert in debug
+    base = alloc++;
+    base %= MAX_THREADS;
+    base *= BUFFER_SIZE;
+  }
 
   if (line == -1 && !crashed) {
-    printf("breadcrumbs (not a stack trace)...\n");
-    const int oldestPtr = ((ptr + 0) + BUFFER_SIZE) % BUFFER_SIZE;
+    static std::mutex mutex;
+    std::lock_guard<std::mutex> lock(mutex);
+    pthread_t tid = pthread_self();
+
+    printf("breadcrumbs for thread %p (not a stack trace)...\n", (void*)tid);
+    const int oldestOffset = ((offset + 0) + BUFFER_SIZE) % BUFFER_SIZE;
     for(int i = 0; i < BUFFER_SIZE; ++i) {
-      const int cursor = ((ptr + i) + BUFFER_SIZE) % BUFFER_SIZE;
-      if (files[cursor]) {
-          const int64_t delta_sec = time[cursor].tv_sec - time[oldestPtr].tv_sec;
-          const int64_t delta_usec = (delta_sec * 1000000) + (int64_t)(time[cursor].tv_usec - time[oldestPtr].tv_usec);
-          printf("%d)  %s:%d cnt %d %lld usec\n", i, files[cursor], lines[cursor], counts[cursor], delta_usec);
+      const int currentOffset = ((offset + i) + BUFFER_SIZE) % BUFFER_SIZE;
+      if (files[currentOffset]) {
+          const int64_t delta_sec = time[base + currentOffset].tv_sec - time[base + oldestOffset].tv_sec;
+          const int64_t delta_usec = (delta_sec * 1000000) + (int64_t)(time[base + currentOffset].tv_usec - time[base + oldestOffset].tv_usec);
+          printf("%d)  %s:%d cnt %d %lld usec\n", i, files[base + currentOffset], lines[base + currentOffset], counts[base + currentOffset], delta_usec);
       }
     }
 
@@ -642,10 +664,10 @@ bool DropBreadcrumb(bool result, const char* file, int line)
     bool loop = false;
 
     for(int i = 1; i <= LOOP_DEPTH; ++i) {
-      // ptr is one past the last entry
-      const int prevPtr = ((ptr - i) + BUFFER_SIZE) % BUFFER_SIZE;
-      if (files[prevPtr] == file && lines[prevPtr] == line) {
-        ++counts[prevPtr];
+      // offset is one past the last entry
+      const int prevOffset = ((offset - i) + BUFFER_SIZE) % BUFFER_SIZE;
+      if (files[base + prevOffset] == file && lines[base + prevOffset] == line) {
+        ++counts[base + prevOffset];
         loop = true;
         break;
       }
@@ -653,12 +675,12 @@ bool DropBreadcrumb(bool result, const char* file, int line)
 
     if (!loop) {
       // not in a loop
-      files[ptr] = file;
-      lines[ptr] = line;
-      counts[ptr] = 0;
-      gettimeofday(&time[ptr], NULL);
+      files[base + offset] = file;
+      lines[base + offset] = line;
+      counts[base + offset] = 0;
+      gettimeofday(&time[base + offset], NULL);
 
-      ptr = (ptr + 1) % BUFFER_SIZE;
+      offset = (offset + 1) % BUFFER_SIZE;
     }
   }
 

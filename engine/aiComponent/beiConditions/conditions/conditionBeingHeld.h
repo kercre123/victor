@@ -28,6 +28,8 @@ public:
 
 private:
   bool _shouldBeHeld;
+  int _minTimeSinceChange_ms;
+  int _maxTimeSinceChange_ms;
   
 };
 

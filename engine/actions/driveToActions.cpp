@@ -403,7 +403,9 @@ namespace Anki {
     
     void DriveToObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
-      ObjectInteractionCompleted interactionCompleted({{_objectID.GetValue(), -1, -1, -1, -1}}, 1, false);
+      ObjectInteractionCompleted interactionCompleted;
+      interactionCompleted.objectIDs[0] = _objectID.GetValue();
+      interactionCompleted.numObjects = 1;
       completionUnion.Set_objectInteractionCompleted(interactionCompleted);
     }
     
@@ -430,7 +432,7 @@ namespace Anki {
 
     void DriveToPlaceCarriedObjectAction::OnRobotSetInternalDriveToObj()
     {
-      _objectID = GetRobot().GetCarryingComponent().GetCarryingObject();
+      _objectID = GetRobot().GetCarryingComponent().GetCarryingObjectID();
     }
     
     ActionResult DriveToPlaceCarriedObjectAction::Init()
@@ -442,7 +444,7 @@ namespace Anki {
                             "Robot cannot place an object because it is not carrying anything.");
         result = ActionResult::NOT_CARRYING_OBJECT_ABORT;
       } else {
-        _objectID = GetRobot().GetCarryingComponent().GetCarryingObject();
+        _objectID = GetRobot().GetCarryingComponent().GetCarryingObjectID();
         
         ActionableObject* object = dynamic_cast<ActionableObject*>(GetRobot().GetBlockWorld().GetLocatedObjectByID(_objectID));
         if(object == nullptr) {
@@ -510,7 +512,7 @@ namespace Anki {
     // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     bool DriveToPlaceCarriedObjectAction::IsPlacementGoalFree() const
     {
-      ObservableObject* object = GetRobot().GetBlockWorld().GetLocatedObjectByID(GetRobot().GetCarryingComponent().GetCarryingObject());
+      ObservableObject* object = GetRobot().GetBlockWorld().GetLocatedObjectByID(GetRobot().GetCarryingComponent().GetCarryingObjectID());
       if ( nullptr != object )
       {
         BlockWorldFilter ignoreSelfFilter;
@@ -1084,7 +1086,7 @@ namespace Anki {
 
     void IDriveToInteractWithObject::OnRobotSetInternalCompound()
     {
-      if(_objectID == GetRobot().GetCarryingComponent().GetCarryingObject())
+      if(_objectID == GetRobot().GetCarryingComponent().GetCarryingObjectID())
       {
         PRINT_NAMED_WARNING("IDriveToInteractWithObject.Constructor",
                             "Robot is currently carrying action object with ID=%d",
@@ -1250,18 +1252,6 @@ namespace Anki {
         return static_cast<DriveToObjectAction*>(_driveToObjectAction.lock().get())->GetUseApproachAngle();
       }
       return false;
-    }
-        
-    void IDriveToInteractWithObject::SetShouldCheckForObjectOnTopOf(const bool b)
-    {
-      if(!_dockAction.expired())
-      {
-        static_cast<IDockAction*>(_dockAction.lock().get())->SetShouldCheckForObjectOnTopOf(b);
-      }
-      else
-      {
-        PRINT_NAMED_ERROR("IDriveToInteractWithObject.SetShouldCheckForObjectOnTopOf.NoDockAction", "");
-      }
     }
 
     Result IDriveToInteractWithObject::UpdateDerived()
@@ -1518,9 +1508,8 @@ namespace Anki {
         return false;
       }
 
-      if( observableObject->GetFamily() != ObjectFamily::LightCube &&
-          observableObject->GetFamily() != ObjectFamily::Block ) {
-        LOG_INFO("DriveToRollObjectAction.RollToUpright.WrongFamily",
+      if( !IsBlockType(observableObject->GetType(), false) ) {
+        LOG_INFO("DriveToRollObjectAction.RollToUpright.WrongType",
                  "Can only use this function on blocks or light cubes, ignoring call");
         return false;
       }

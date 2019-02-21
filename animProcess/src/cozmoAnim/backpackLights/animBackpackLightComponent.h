@@ -148,6 +148,7 @@ private:
   bool _isBatteryCharging = false;
   bool _isOnChargerContacts = false;
   bool _isBatteryFull = false;
+  bool _isBatteryDisconnected = false;
 
   // State for streaming lights
   bool _willStreamOpen = false;

@@ -29,10 +29,6 @@ namespace Anki {
 namespace Vector {
 
 namespace{
-std::set<ObjectFamily> _objectFamilies = {{
-  ObjectFamily::LightCube,
-  ObjectFamily::Block
-}};
 const bool kDebugAcknowledgements = false;
 }
   
@@ -93,9 +89,8 @@ void ConditionObjectPositionUpdated::HandleEvent(const EngineToGameEvent& event,
 void ConditionObjectPositionUpdated::HandleObjectObserved(BehaviorExternalInterface& behaviorExternalInterface,
   const ExternalInterface::RobotObservedObject& msg)
 {
-  // Object must be in one of the families this behavior cares about
-  const bool hasValidFamily = _objectFamilies.count(msg.objectFamily) > 0;
-  if(!hasValidFamily) {
+  // Only care about light cubes (see VIC-13208)
+  if (!IsValidLightCube(msg.objectType, false)) {
     return;
   }
 
@@ -105,7 +100,7 @@ void ConditionObjectPositionUpdated::HandleObjectObserved(BehaviorExternalInterf
   Pose3d obsPose( msg.pose, robotInfo.GetPoseOriginList() );
 
   // ignore cubes we are carrying or docking to (don't react to them)
-  if(msg.objectID == robotInfo.GetCarryingComponent().GetCarryingObject() ||
+  if(msg.objectID == robotInfo.GetCarryingComponent().GetCarryingObjectID() ||
      msg.objectID == robotInfo.GetDockingComponent().GetDockObject())
   {
     const bool considerReaction = false;

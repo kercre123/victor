@@ -249,7 +249,7 @@ namespace Anki {
         const float batteryIncreaseRate_voltsPerMin = chargeRateField->getSFFloat();
 
         // Compute delta volts
-        const float updateTime_sec = Util::MilliSecToSec((float) batteryUpdateRate_tics_ * ROBOT_TIME_STEP_MS);;
+        const float updateTime_sec = Util::MilliSecToSec((float) batteryUpdateRate_tics_ * ROBOT_TIME_STEP_MS);
         const float batteryDeltaVolts = (batteryIncreaseRate_voltsPerMin / 60.f) * updateTime_sec;
         float batteryVolts = batteryVoltsField_->getSFFloat() + batteryDeltaVolts;
 

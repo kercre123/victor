@@ -1,15 +1,15 @@
 /*
- * File:          cozmoAnim/animEngine.h
+ * File:          animEngine.h
  * Date:          6/26/2017
  * Author:        Kevin Yoon
  *
  * Description:   A platform-independent container for spinning up all the pieces
- *                required to run Cozmo Animation Process.
+ *                required to run Vector Animation Process.
  *
  */
 
-#ifndef ANKI_COZMO_ANIM_ENGINE_H
-#define ANKI_COZMO_ANIM_ENGINE_H
+#ifndef ANKI_VECTOR_ANIM_ENGINE_H
+#define ANKI_VECTOR_ANIM_ENGINE_H
 
 #include "json/json.h"
 
@@ -33,7 +33,7 @@ namespace Anki {
       struct TextToSpeechPlay;
       struct TextToSpeechCancel;
     } // RobotInterface
-  } // Cozmo
+  } // Vector
   namespace Util {
     namespace Data {
       class DataPlatform;
@@ -54,7 +54,7 @@ public:
   Result Init();
 
   // Hook this up to whatever is ticking the game "heartbeat"
-  Result Update(BaseStationTime_t currTime_nanosec);
+  Result Update(const BaseStationTime_t currTime_nanosec);
 
   void RegisterTickPerformance(const float tickDuration_ms,
                                const float tickFrequency_ms,
@@ -83,4 +83,4 @@ protected:
 } // namespace Vector
 } // namespace Anki
 
-#endif // ANKI_COZMO_ANIM_ENGINE_H
+#endif // ANKI_VECTOR_ANIM_ENGINE_H

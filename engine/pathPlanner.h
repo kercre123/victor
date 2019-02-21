@@ -15,7 +15,6 @@
 #include "coretech/common/engine/objectIDs.h"
 #include "coretech/planning/shared/path.h"
 #include "coretech/planning/shared/goalDefs.h"
-#include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
 #include "clad/types/pathMotionProfile.h"
 #include <set>
@@ -116,24 +115,8 @@ public:
 
   // return a test path
   virtual void GetTestPath(const Pose3d& startPose, Planning::Path &path, const PathMotionProfile* motionProfile = nullptr) {}
-      
-  void AddIgnoreFamily(const ObjectFamily objFamily)    { _ignoreFamilies.insert(objFamily); }
-  void RemoveIgnoreFamily(const ObjectFamily objFamily) { _ignoreFamilies.erase(objFamily); }
-  void ClearIgnoreFamilies()                                          { _ignoreFamilies.clear(); }
-      
-  void AddIgnoreType(const ObjectType objType)    { _ignoreTypes.insert(objType); }
-  void RemoveIgnoreType(const ObjectType objType) { _ignoreTypes.erase(objType); }
-  void ClearIgnoreTypes()                           { _ignoreTypes.clear(); }
-      
-  void AddIgnoreID(const ObjectID objID)          { _ignoreIDs.insert(objID); }
-  void RemoveIgnoreID(const ObjectID objID)       { _ignoreIDs.erase(objID); }
-  void ClearIgnoreIDs()                             { _ignoreIDs.clear(); }
   
 protected:
-      
-  std::set<ObjectFamily>             _ignoreFamilies;
-  std::set<ObjectType>               _ignoreTypes;
-  std::set<ObjectID>                 _ignoreIDs;
 
   bool _hasValidPath;
   bool _planningError;

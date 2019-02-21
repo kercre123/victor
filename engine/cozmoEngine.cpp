@@ -212,17 +212,7 @@ CozmoEngine::CozmoEngine(Util::Data::DataPlatform* dataPlatform)
     Anki::Util::gTickTimeProvider = BaseStationTimer::getInstance();
   }
 
-  //
-  // The "engine thread" is meant to be the one Update is run on. However, on some systems, some messaging
-  // happens during Init which is on one thread, then later, a different thread runs the updates. This will
-  // trigger asserts because more than one thread is sending messages. To work around this, we consider the
-  // "engine thread" to be whatever thread Init is called from, until the first call of Update, at which point
-  // we switch our notion of "engine thread" to the updating thread.
-  //
-  // During shutdown, the "engine thread" may switch again so messages can be sent by the thread performing shutdown.
-  // This happens AFTER stopping the update thread, so we can still guarantee that no other threads are allowed
-  // to send messages.
-  //
+  // Designate this thread as the one from which the engine can broadcast messages
   _context->SetEngineThread();
 
   DASMSG(engine_language_locale, "engine.language_locale", "Prints out the language locale of the robot");
@@ -369,29 +359,25 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
 {
   ANKI_CPU_PROFILE("CozmoEngine::Update");
 
-  if(!_isInitialized) {
+  if (!_isInitialized) {
     PRINT_NAMED_ERROR("CozmoEngine.Update", "Cannot update CozmoEngine before it is initialized.");
     return RESULT_FAIL;
   }
 
-  // This is a bit of a hack, but on some systems the thread that calls Update is different from the thread
-  // that does all of the setup. This flag assures that we set the "main" thread to be the one that's going to
-  // be doing the updating.
-  if( !_hasRunFirstUpdate ) {
+  if (!_hasRunFirstUpdate) {
+    _hasRunFirstUpdate = true;
+
+    // Designate this as the thread from which engine can broadcast messages
     _context->SetEngineThread();
 
     // Controls OpenCV's built-in multithreading for the calling thread, so we have to do this on the first
     // call to update due to the threading quirk
     Result cvResult = SetNumOpencvThreads(NUM_OPENCV_THREADS, "CozmoEngine.Init");
-    if( RESULT_OK != cvResult )
+    if (RESULT_OK != cvResult)
     {
       return cvResult;
     }
-
-    _hasRunFirstUpdate = true;
   }
-
-  DEV_ASSERT(_context->IsEngineThread(), "CozmoEngine.UpdateOnWrongThread" );
 
   _uiMsgHandler->ResetMessageCounts();
   _protoMsgHandler->ResetMessageCounts();

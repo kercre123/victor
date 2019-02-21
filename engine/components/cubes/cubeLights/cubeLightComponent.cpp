@@ -19,13 +19,11 @@
 
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 
-#include "engine/activeCube.h"
-#include "engine/activeObject.h"
-#include "engine/activeObjectHelpers.h"
 #include "engine/actions/actionInterface.h"
 #include "engine/components/cubes/cubeLights/cubeLightAnimationContainer.h"
 #include "engine/components/cubes/cubeLights/cubeLightAnimationHelpers.h"
 #include "engine/ankiEventUtil.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
@@ -746,7 +744,7 @@ bool CubeLightComponent::BlendAnimWithCurLights(const ObjectID& objectID,
                                                 const CubeLightAnimation::Animation& anim,
                                                 CubeLightAnimation::Animation& blendedAnim)
 {
-  ActiveObject* activeObject = _robot->GetBlockWorld().GetConnectedActiveObjectByID(objectID);
+  auto* activeObject = _robot->GetBlockWorld().GetConnectedBlockByID(objectID);
   if(activeObject == nullptr)
   {
     PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.BlendAnimWithCurLights.NullActiveObject",
@@ -767,7 +765,7 @@ bool CubeLightComponent::BlendAnimWithCurLights(const ObjectID& objectID,
   {
     for(int i = 0; i < CubeLightAnimation::kNumCubeLEDs; ++i)
     {
-      const ActiveObject::LEDstate& ledState = activeObject->GetLEDState(i);
+      const Block::LEDstate& ledState = activeObject->GetLEDState(i);
       if(pattern.lights.onColors[i] == 0)
       {
         pattern.lights.onColors[i] = ledState.onColor.AsRGBA();
@@ -890,7 +888,7 @@ void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
     }
   }
   
-  if(_robot->GetCarryingComponent().GetCarryingObject() == objectID)
+  if(_robot->GetCarryingComponent().GetCarryingObjectID() == objectID)
   {
     animTrigger = CubeAnimationTrigger::Carrying;
   }
@@ -1121,16 +1119,16 @@ void CubeLightComponent::HandleMessage(const ExternalInterface::EnableLightState
 
 Result CubeLightComponent::SetCubeLightAnimation(const ObjectID& objectID, const CubeLightAnimation::ObjectLights& values)
 {
-  ActiveCube* activeObject = nullptr;
+  Block* activeObject = nullptr;
   if ( values.makeRelative == MakeRelativeMode::RELATIVE_LED_MODE_OFF )
   {
     // note this could be a checked_cast
-    activeObject = dynamic_cast<ActiveCube*>( _robot->GetBlockWorld().GetConnectedActiveObjectByID(objectID) );
+    activeObject = dynamic_cast<Block*>( _robot->GetBlockWorld().GetConnectedBlockByID(objectID) );
   }
   else
   {
     // note this could be a checked_cast
-    activeObject = dynamic_cast<ActiveCube*>( _robot->GetBlockWorld().GetLocatedObjectByID(objectID) );
+    activeObject = dynamic_cast<Block*>( _robot->GetBlockWorld().GetLocatedObjectByID(objectID) );
   }
   
   if(activeObject == nullptr)
@@ -1149,7 +1147,7 @@ Result CubeLightComponent::SetCubeLightAnimation(const ObjectID& objectID, const
                         values.transitionOffPeriod_ms,
                         values.offset);
   
-  ActiveCube* activeCube = dynamic_cast<ActiveCube*>(activeObject);
+  auto* activeCube = dynamic_cast<Block*>(activeObject);
   if(activeCube == nullptr)
   {
     PRINT_CH_INFO("CubeLightController",
@@ -1177,16 +1175,16 @@ Result CubeLightComponent::SetCubeLightAnimation(const ObjectID& objectID,
                                             const Point2f& relativeToPoint,
                                             const bool rotate)
 {
-  ActiveCube* activeCube = nullptr;
+  Block* activeCube = nullptr;
   if ( makeRelative == MakeRelativeMode::RELATIVE_LED_MODE_OFF )
   {
     // note this could be a checked_cast
-    activeCube = dynamic_cast<ActiveCube*>( _robot->GetBlockWorld().GetConnectedActiveObjectByID(objectID) );
+    activeCube = dynamic_cast<Block*>( _robot->GetBlockWorld().GetConnectedBlockByID(objectID) );
   }
   else
   {
     // note this could be a checked_cast
-    activeCube = dynamic_cast<ActiveCube*>( _robot->GetBlockWorld().GetLocatedObjectByID(objectID) );
+    activeCube = dynamic_cast<Block*>( _robot->GetBlockWorld().GetLocatedObjectByID(objectID) );
   }
   
   // trying to do relative mode in an object that is not located in the current origin, will fail, since its
@@ -1221,14 +1219,14 @@ bool CubeLightComponent::CanEngineSetLightsOnCube(const ObjectID& objectID)
 }
 
 
-Result CubeLightComponent::SetLights(const ActiveObject* object, const bool rotate)
+Result CubeLightComponent::SetLights(const Block* object, const bool rotate)
 {
   CubeLights cubeLights;
   cubeLights.rotate = rotate;
   for(int i = 0; i < CubeLightAnimation::kNumCubeLEDs; ++i)
   {
     // Apply white balancing and encode colors
-    const ActiveObject::LEDstate ledState = object->GetLEDState(i);
+    const Block::LEDstate ledState = object->GetLEDState(i);
     cubeLights.lights[i].onColor  = WhiteBalanceColor(ledState.onColor);
     cubeLights.lights[i].offColor = WhiteBalanceColor(ledState.offColor);
     cubeLights.lights[i].onFrames  = MS_TO_LED_FRAMES(ledState.onPeriod_ms);
@@ -1257,16 +1255,6 @@ Result CubeLightComponent::SetLights(const ActiveObject* object, const bool rota
     PRINT_CH_DEBUG("CubeLightComponent", "CubeLightComponent.SetLights",
                    "Setting lights for object %d (activeID %d)",
                    object->GetID().GetValue(), object->GetActiveID());
-  }
-  
-  // Only send gamma when it changes since it is global across all cubes
-  // (Currently never changes)
-  const u32 gamma = object->GetLEDGamma();
-  if(gamma != _prevGamma)
-  {
-    // TODO: do we need this?
-    //_robot->SendMessage(RobotInterface::EngineToRobot(SetCubeGamma(gamma)));
-    _prevGamma = gamma;
   }
 
   bool result = false;

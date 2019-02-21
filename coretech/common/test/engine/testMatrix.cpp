@@ -1,6 +1,6 @@
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 
-#include "coretech/common/engine/math/matrix_impl.h"
+#include "coretech/common/shared/math/matrix_impl.h"
 #include "util/math/math.h"
 #include <iostream>
 
@@ -60,7 +60,7 @@ GTEST_TEST(TestMatrix, MatrixConstructorsAndAccessors)
   
   
   // Try to access invalid inded
-  ASSERT_ANY_THROW(A(3,0));
+  ASSERT_DEATH(A(3,0),"");
   
   
   /////////////  Non-square matrix ///////////////////
@@ -108,8 +108,8 @@ GTEST_TEST(TestMatrix, MatrixConstructorsAndAccessors)
 #endif
   
   /////////////// Empty matrix ///////////////
-  ASSERT_ANY_THROW(Matrix<float> C(0,3,(float*)NULL));
-  ASSERT_ANY_THROW(Matrix<float> C(1,0,(float*)NULL));
+  ASSERT_DEATH(Matrix<float> C(0,3,(float*)NULL),"");
+  ASSERT_DEATH(Matrix<float> C(1,0,(float*)NULL),"");
 }
 
 GTEST_TEST(TestMatrix, MatrixAssignFromStdVector)
@@ -175,7 +175,7 @@ GTEST_TEST(TestMatrix, SmallMatrixConstructorsAndAccessors)
 #endif
   
   // Try to access invalid index
-  ASSERT_ANY_THROW(M(2,2));
+  ASSERT_DEATH(M(2,2),"");
   
   
   // Contstructor with initial value array
@@ -247,7 +247,7 @@ GTEST_TEST(TestMatrix, MatrixMultiplication2)
   Matrix<float> A(3,3,0.f), B(4,3,0.f);
   Matrix<float> C;
   
-  ASSERT_ANY_THROW(C = A*B);
+  ASSERT_DEATH(C = A*B,"");
   
   
 #ifdef DEBUG_TEST_MATRIX
@@ -393,7 +393,7 @@ GTEST_TEST(TestMatrix, SmallMatrixMultiplication)
   
   // This results in compile time error if using OpenCV
   // Invalid multiplication
-  //ASSERT_ANY_THROW(C = B*A);
+  // ASSERT_DEATH(C = B*A,"");
 }
 
 
@@ -444,8 +444,8 @@ GTEST_TEST(TestMatrix, MatrixInverse)
   // Invert non-square matrix
   Matrix<float> B(3,4,0.f), Binv;
   
-  ASSERT_ANY_THROW(B.GetInverse(Binv));
-  ASSERT_ANY_THROW(B.Invert());
+  ASSERT_DEATH(B.GetInverse(Binv),"");
+  ASSERT_DEATH(B.Invert(),"");
 }
 
 
@@ -501,8 +501,8 @@ GTEST_TEST(TestMatrix, SmallMatrixInverse)
 //                       0, 0, 1, 0};
 //  Matrix_3x4f B(initValsB);
 //  
-//  ASSERT_ANY_THROW(B.GetInverse());
-//  ASSERT_ANY_THROW(B.Invert());
+//  ASSERT_DEATH(B.GetInverse(),"");
+//  ASSERT_DEATH(B.Invert(),"");
 
   
 }
@@ -659,5 +659,4 @@ GTEST_TEST(TestMatrix, SmallSquareMatrixMultiplicationByPoint)
 #endif
   
 } // TestMatrix:SmallSquareMatrixMultiplicationByPoint()
-
 

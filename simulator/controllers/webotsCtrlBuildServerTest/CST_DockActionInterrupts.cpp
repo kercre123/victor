@@ -82,10 +82,10 @@ s32 CST_DockActionInterrupts::UpdateSimInternal()
         m.idTag = 10;
         m.numRetries = 3;
         // Pickup object with type LIGHTCUBE1, whatever its ID happens to be
-        auto objectsWithType = GetAllObjectIDsByFamilyAndType(ObjectFamily::LightCube, ObjectType::Block_LIGHTCUBE1);
+        auto objectsWithType = GetAllObjectIDsByType(ObjectType::Block_LIGHTCUBE1);
         CST_ASSERT(objectsWithType.size()==1, "Expecting 1 object of type LIGHTCUBE1");
         _id = objectsWithType.front();
-        m.action.Set_pickupObject(ExternalInterface::PickupObject(_id, DEFAULT_PATH_MOTION_PROFILE, 0, false, false, false));
+        m.action.Set_pickupObject(ExternalInterface::PickupObject(_id, DEFAULT_PATH_MOTION_PROFILE, 0, false, false));
         ExternalInterface::MessageGameToEngine message;
         message.Set_QueueSingleAction(m);
         SendMessage(message);

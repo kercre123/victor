@@ -15,7 +15,6 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/driveToActions.h"
-#include "engine/activeObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -283,7 +282,7 @@ void BehaviorReactToCubeTap::TransitionToFindCube()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToCubeTap::IsCubeLocated() const
 {
-  const ObservableObject* locatedCube = GetBEI().GetBlockWorld().GetLocatedObjectByID( _iVars.targetCube.id, ObjectFamily::LightCube );
+  const ObservableObject* locatedCube = GetBEI().GetBlockWorld().GetLocatedObjectByID( _iVars.targetCube.id );
   return ( nullptr != locatedCube );
 }
 

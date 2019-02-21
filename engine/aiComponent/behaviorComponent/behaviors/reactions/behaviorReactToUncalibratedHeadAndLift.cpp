@@ -66,11 +66,12 @@ bool BehaviorReactToUncalibratedHeadAndLift::WantsToBeActivatedBehavior() const
   // onboarding to normal operation with a pending intent, when it happens constantly... could be my robot is kinda
   // borked... but this shouldn't hurt anything.
   const bool userIntentPending = GetBehaviorComp<UserIntentComponent>().IsAnyUserIntentPending();
+  const bool userIntentActive  = GetBehaviorComp<UserIntentComponent>().IsAnyUserIntentActive();
   const bool inPowerSaveMode = GetBEI().GetPowerStateManager().InPowerSaveMode();
   const bool isAnimating = GetBEI().GetAnimationComponent().IsPlayingAnimation();
   bool shouldActivate = !inPowerSaveMode &&
                         !isAnimating &&
-                        !userIntentPending &&
+                        !userIntentPending && !userIntentActive &&
                         (GetBEI().GetRobotInfo().IsHeadMotorOutOfBounds() ||
                          GetBEI().GetRobotInfo().IsLiftMotorOutOfBounds() ||
                          GetBEI().GetRobotInfo().IsHeadEncoderInvalid()   ||

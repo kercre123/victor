@@ -13,7 +13,7 @@
 
 #include "engine/components/cubes/cubeLights/cubeLightAnimationHelpers.h"
 
-#include "coretech/common/engine/math/point.h"
+#include "coretech/common/shared/math/point.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "util/logging/logging.h"
 
@@ -85,7 +85,7 @@ bool ParseCubeAnimationFromJson(const std::string& animName, const Json::Value& 
     if(lightPattern.isMember(kPatternDebugNameKey)){
       pattern.name = lightPattern[kPatternDebugNameKey].asString();
     }else{
-      pattern.name = animName + std::to_string(patternNum);;
+      pattern.name = animName + std::to_string(patternNum);
     }
     
     outAnimation.push_back(std::move(pattern));

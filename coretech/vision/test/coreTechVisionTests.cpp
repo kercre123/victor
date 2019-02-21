@@ -3,7 +3,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/quoteMacro.h"
 
-#include "coretech/common/shared/radians.h"
+#include "coretech/common/shared/math/radians.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/pose.h"
 

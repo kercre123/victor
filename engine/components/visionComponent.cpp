@@ -828,10 +828,13 @@ namespace Vector {
 
     // Block Markers
     BlockWorldFilter filter;
-    filter.SetAllowedFamilies(std::set<ObjectFamily>{
-      ObjectFamily::Block, ObjectFamily::Mat, ObjectFamily::LightCube, ObjectFamily::Charger
-    });
 
+    filter.AddFilterFcn([](const ObservableObject* object)
+    {
+      const auto& objType = object->GetType();
+      return (IsBlockType(objType, false) || IsChargerType(objType, false));
+    });
+    
     filter.AddFilterFcn([&marker,&quadID,this](const ObservableObject* object)
     {
       // When requesting the markers' 3D corners below, we want them
@@ -971,6 +974,9 @@ namespace Vector {
                                                                    std::move(visionModesList),
                                                                    imageMean)));
         }
+
+        // Trigger all registered callbacks on the image processing result
+        _visionResultSignal.emit(result);
       }
     }
 
@@ -1482,9 +1488,9 @@ namespace Vector {
         {
           // Put eye contact indicator right in the middle
           const f32 x = .5f * (f32)procResult.mirrorModeImg.GetNumCols();
-          const f32 y = .5f * (f32)procResult.mirrorModeImg.GetNumRows();;
+          const f32 y = .5f * (f32)procResult.mirrorModeImg.GetNumRows();
           const f32 width = .2f * (f32)procResult.mirrorModeImg.GetNumCols();
-          const f32 height = .2f * (f32)procResult.mirrorModeImg.GetNumRows();;
+          const f32 height = .2f * (f32)procResult.mirrorModeImg.GetNumRows();
           
           mirrorModeImg.DrawFilledRect(Rectangle<f32>(x, y, width, height), NamedColors::YELLOW);
         }
@@ -1522,7 +1528,7 @@ namespace Vector {
     }
 
     const Transform3d& liftPoseWrtCamera = _robot->GetLiftTransformWrtCamera(histState.GetLiftAngle_rad(),
-                                                                            histState.GetHeadAngle_rad());
+                                                                             histState.GetHeadAngle_rad());
 
     std::vector<Point3f> liftCrossBar;
     liftPoseWrtCamera.ApplyTo(_liftCrossBarSource, liftCrossBar);
@@ -2970,6 +2976,11 @@ namespace Vector {
       sTimeSinceValidImg_ms = 0;
       _restartingCameraTime_ms = 0;
     }
+  }
+
+  Signal::SmartHandle VisionComponent::RegisterVisionResultCallback(const std::function<VisionResultCallback>& callback)
+  {
+    return _visionResultSignal.ScopedSubscribe(callback);
   }
 
 } // namespace Vector

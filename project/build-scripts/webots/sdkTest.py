@@ -16,6 +16,28 @@ from datetime import datetime
 import json
 from enum import Enum, unique
 from functools import lru_cache
+import requests
+
+try:
+    ANKI_BUILD_VERSION = os.environ['ANKI_BUILD_VERSION']
+except KeyError:
+    print("Please set the environment variable ANKI_BUILD_VERSION")
+    sys.exit(1)
+
+try:
+    SLACK_TOKEN_URL =  os.environ['SLACK_TOKEN_URL']
+except KeyError:
+    print("Please set the environment variable SLACK_TOKEN_URL")
+    sys.exit(1)
+
+try:
+    SLACK_CHANNEL =  os.environ['SLACK_CHANNEL']
+except KeyError:
+    print("Please set the environment variable SLACK_CHANNEL")
+    sys.exit(1)
+
+TEAMCITY_SERVER_URL = "https://build.ankicore.com"
+VICTOR_WEBOTS_NIGHTLY_SDK_TESTS = "Victor_Dev_VictorWebotsNightlySdkTests"
 
 # Root folder path of victor repo
 VECTOR_ENGINE_ROOT = subprocess.check_output(['git', 'rev-parse', '--show-toplevel']).rstrip(b"\r\n").decode("utf-8")
@@ -23,6 +45,10 @@ VECTOR_ENGINE_ROOT = subprocess.check_output(['git', 'rev-parse', '--show-toplev
 BUILD_TOOLS_ROOT = os.path.join(VECTOR_ENGINE_ROOT, 'tools', 'build', 'tools')
 
 VICTOR_SDK_PORT = 8443
+POST_ACTION     = "POST"
+HEADERS         = {
+                      'content-type': "application/json"
+                  }
 
 #TODO:Remove the condition which ignores LocalUDPServer errors
 #https://ankiinc.atlassian.net/browse/VIC-5814
@@ -904,27 +930,33 @@ def main(args):
 
     UtilLog.info('results_passed_msg:\n{}'.format(results_passed_msg))
     UtilLog.info('results_failed_msg:\n{}'.format(results_failed_msg))
-    payload = {
-               "text":"*SDK Nightly Test Results:*\n",
-               "mrkdwn": True,
-               "channel":"{}".format(os.environ['SLACK_CHANNEL']),
-               "username":"buildbot",
-               "attachments":[
-                 {
-                 "text":"{}".format(results_failed_msg),
-                 "fallback":"{}".format(results_failed_msg),
-                 "color":"danger"
-                 },{
-                 "text": "{}".format(results_passed_msg),
-                 "fallback": "{}".format(results_passed_msg),
-                 "color": "good"
-                 }
-               ]
-             }
-    slack_url = '{}'.format(os.environ['SLACK_TOKEN_URL'])
-    cmd = ['curl', '-X', 'POST', '-d', 'payload={}'.format(payload), slack_url]
-    process = subprocess.Popen(cmd, shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = process.communicate()
+
+    build_url = "{}/viewLog.html?buildId={}&tab=artifacts&buildTypeId={}"\
+                .format(TEAMCITY_SERVER_URL, ANKI_BUILD_VERSION, VICTOR_WEBOTS_NIGHTLY_SDK_TESTS)
+
+    payload = '{{\
+                "text": "<{}|*SDK Nightly Test Results:*>\n",\
+                "mrkdwn": true,\
+                "channel": "{}",\
+                "username": "buildbot",\
+                "attachments": [\
+                    {{\
+                        "text": "{}",\
+                        "fallback": "{}",\
+                        "color": "danger"\
+                    }},\
+                    {{\
+                        "text": "{}",\
+                        "fallback": "{}",\
+                        "color": "good"\
+                    }}\
+                ]\
+            }}'.format(build_url, SLACK_CHANNEL, results_failed_msg,
+                       results_failed_msg, results_passed_msg, results_passed_msg)
+    
+    response = requests.request(POST_ACTION, SLACK_TOKEN_URL, data=payload, headers=HEADERS)
+    UtilLog.info('payload info :\n{}'.format(str(payload)))
+    UtilLog.info(response.text)
 
   return return_value
 

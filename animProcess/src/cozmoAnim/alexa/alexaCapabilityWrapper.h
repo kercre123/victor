@@ -23,7 +23,7 @@ namespace Vector {
 class AlexaCapabilityWrapper : public alexaClientSDK::avsCommon::avs::CapabilityAgent
 {
 public:
-  using OnDirectiveFunc = std::function<void(const std::string&,const std::string&)>;
+  using OnDirectiveFunc = std::function<void(const std::string&,const std::string&,const std::string&)>;
   AlexaCapabilityWrapper( const std::string& nameSpace,
                           std::shared_ptr<alexaClientSDK::avsCommon::avs::CapabilityAgent> capabilityAgent,
                           std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ExceptionEncounteredSenderInterface> exceptionEncounteredSender,

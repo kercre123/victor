@@ -1,0 +1,97 @@
+{
+  "behaviorID" : "HeldInPalmResponses",
+  "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
+
+  "associatedActiveFeature": "HeldInPalm",
+
+  "interruptActiveBehavior": true,
+
+  "behaviors": [
+    {
+      "behavior": "ReactToJoltInPalm",
+      "cooldown_s": 0.0
+    },
+    {
+      "behavior": "SleepInAirAnimLoopInternal",
+      "cooldown_s": 0.0
+    },
+    {
+      "behavior": "NestleAnimLoopInternal",
+      "cooldown_s": 0.0
+    },
+    {
+      "behavior": "ObservingLookAtFacesInAir",
+      "cooldown_s": 60.0
+    },
+    {
+      "behavior": "LookInPlaceHeadDownInAir",
+      "cooldown_s": 0.0
+    }
+  ],
+
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "NestleAnimLoopInternal",
+      "behaviorClass"    : "AnimGetInLoop",
+
+      // TODO(GB): Change to corresponding "nestle" animations
+      // and add corresponding tracks to lock for those animations
+      "getIn"            : "NeutralFace",
+      "loopAnimation"    : "HeldOnPalmNestling",
+      "getOut"           : "NeutralFace",
+      "loopInterval_s"   : 10,
+      "shouldCheckEndCondDuringAnim": false,
+      "lockTreads"       : false,
+
+      "wantsToBeActivatedCondition": {
+        "conditionType": "OffTreadsState",
+        "targetState": "InAir",
+        "minTimeSinceChange_ms": 180000 // Nestle in the user's palm after 3 minutes
+      }
+    },
+    {
+      "behaviorName"  : "SleepInAirAnimLoopInternal",
+      "behaviorClass" : "AnimSequence",
+      "tracksToLock"     : ["HEAD_TRACK", "LIFT_TRACK", "BODY_TRACK"],
+      "num_loops"        : 0, // Loop forever
+
+      "animTriggers": [
+        "GoToSleepGetIn",
+        "GoToSleepSleeping"
+      ],
+
+      "wantsToBeActivatedCondition": {
+        "conditionType": "OffTreadsState",
+        "targetState": "InAir",
+        "minTimeSinceChange_ms": 300000 // Go to "sleep" after 5 minutes
+      }
+    }
+  ],
+
+  "wantsToCancelSelfCondition": {
+    "conditionType": "Compound",
+    "or": [
+      {
+        "conditionType": "Compound",
+        "not": {
+          "conditionType": "OffTreadsState",
+          "targetState": "InAir"
+        }
+      },
+      {
+        // The turn in place actions commanded by ObservingLookAtFacesInAir or
+        // LookInPlaceHeadDownInAir might cause the robot to rotate into a position where
+        // it could almost fall off the user's hand, so for now, stop all responses if more
+        // than a single cliff is detected.
+        "conditionType": "CliffDetected",
+        "numCliffDetectionsToTrigger": 2
+      },
+      {
+        // The user is trying to tilt the robot to get it to drive off their palm.
+        "conditionType": "RobotPitchInRange",
+        "minPitchThreshold_deg": -80.0,
+        "maxPitchThreshold_deg": -30.0
+      }
+    ]
+  }
+}

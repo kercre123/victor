@@ -14,7 +14,7 @@
  **/
 
 
-#include "coretech/common/engine/array2d_impl.h"
+#include "coretech/common/shared/array2d_impl.h"
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -486,7 +486,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     }
 
     
-    bool SpriteSequenceKeyFrame::GetFaceImageHandle(const TimeStamp_t timeSinceAnimStart_ms, Vision::SpriteHandle& handle)
+    bool SpriteSequenceKeyFrame::GetFaceImageHandle(const TimeStamp_t timeSinceAnimStart_ms,
+                                                    Vision::SpriteHandle& handle,
+                                                    uint16_t& numLayers)
     {
       if(GetTimestampActionComplete_ms() <= timeSinceAnimStart_ms) {
         return false;
@@ -506,11 +508,12 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           break;
         }
       }
-      
+
       u32 curFrame = GetFrameNumberForTime(timeSinceAnimStart_ms);
 
       if((HaveKeyframeForTimeStamp(timeSinceAnimStart_ms)) ||
          _compositeImageUpdated){
+        numLayers = _compositeImage->GetLayerLayoutMap().size();
         auto* img = new Vision::ImageRGBA(_compositeImage->GetHeight(),
                                           _compositeImage->GetWidth());
         img->FillWith(Vision::PixelRGBA());

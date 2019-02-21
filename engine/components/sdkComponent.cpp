@@ -5,7 +5,7 @@
  * Created: 05/25/2018
  *
  * Description: Component that serves as a mediator between external SDK requests and any instances of SDK behaviors,
- * such as SDK0.
+ * such as SDKDefault.
  * 
  * The sdkComponent does the following, in this order:
  *     - The sdkComponent will receive a message from the external SDK, requesting that the SDK behavior be activated,
@@ -36,6 +36,7 @@
 #include "engine/externalInterface/gatewayInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "proto/external_interface/shared.pb.h"
 
 #include "util/logging/logging.h"
 
@@ -47,6 +48,7 @@ namespace Vector {
 SDKComponent::SDKComponent()
 : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::SDK)
 {
+  _sdkControlLevel = external_interface::ControlRequest_Priority_UNKNOWN;
 }
 
 
@@ -92,6 +94,7 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kIsImageStreamingEnabledRequest, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSayTextRequest, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetEyeColorRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kListAnimationTriggersRequest, callback));
   }
 
   auto* context = _robot->GetContext();
@@ -239,8 +242,9 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
   switch(event.GetData().GetTag()) {
     // Receives a message that external SDK wants an SDK behavior to be activated.
     case external_interface::GatewayWrapperTag::kControlRequest:
-      LOG_INFO("SDKComponent.HandleMessageRequest", "SDK requested control");
       _sdkWantsControl = true;
+      _sdkControlLevel = event.GetData().control_request().priority();
+      LOG_INFO("SDKComponent::HandleProtoMessage","SDK requested control priority %u", _sdkControlLevel);
 
       if (_sdkBehaviorActivated) {
         LOG_INFO("SDKComponent.HandleMessageBehaviorActivated", "SDK already has control");
@@ -386,6 +390,12 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
       }
       break;
 
+    case external_interface::GatewayWrapperTag::kListAnimationTriggersRequest:
+      {
+        ListAnimationTriggers(event);
+      }
+      break;
+
     default:
       _robot->GetRobotEventHandler().HandleMessage(event);
       break;
@@ -493,8 +503,14 @@ void SDKComponent::HandleMessage(const ExternalInterface::RobotProcessedImage& m
 
 bool SDKComponent::SDKWantsControl()
 {
-  // TODO What slot does the SDK want to run at? Currently only requesting at one slot, SDK0.
   return _sdkWantsControl;
+}
+
+int SDKComponent::SDKControlLevel()
+{
+  DEV_ASSERT(_sdkWantsControl, "SDKComponent::SDKControlLevel.sdkWantsControl");
+    
+  return _sdkControlLevel;
 }
 
 void SDKComponent::SDKBehaviorActivation(bool enabled)
@@ -659,6 +675,27 @@ void SDKComponent::SetEyeColor(const AnkiEvent<external_interface::GatewayWrappe
   _robot->SendRobotMessage<RobotInterface::SetFaceSaturation>(saturation);
 }
 
+void SDKComponent::ListAnimationTriggers(const AnkiEvent<external_interface::GatewayWrapper>& event) 
+{
+  auto* gi = _robot->GetGatewayInterface();
+  if (gi == nullptr) return;
+
+  external_interface::ListAnimationTriggersRequest request = event.GetData().list_animation_triggers_request();
+
+  // Note that the last item in AnimationTriggerNumEntries is a Count value, so -1 to not include that (pre-existing hackiness).
+  for( size_t i=0; i < AnimationTriggerNumEntries - 1; ++i ) {
+    const char* result = EnumToString( static_cast<AnimationTrigger>(i) );
+    external_interface::ListAnimationTriggersResponse* list_animation_triggers_response = new external_interface::ListAnimationTriggersResponse;
+    std::string animTriggerName = result;
+    list_animation_triggers_response->add_animation_trigger_names()->set_name(animTriggerName);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(list_animation_triggers_response));
+  }
+
+  // Send "EndOfListAnimationTriggersResponses". vic-gateway recipient depends upon it.
+  external_interface::ListAnimationTriggersResponse* end_of_list_animation_triggers_response = new external_interface::ListAnimationTriggersResponse;
+  end_of_list_animation_triggers_response->add_animation_trigger_names()->set_name("EndOfListAnimationsResponses");
+  gi->Broadcast( ExternalMessageRouter::WrapResponse(end_of_list_animation_triggers_response));
+}
 
 } // namespace Vector
 } // namespace Anki

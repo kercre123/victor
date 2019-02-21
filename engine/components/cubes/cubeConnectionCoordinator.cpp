@@ -17,7 +17,7 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 
-#include "engine/activeObject.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
@@ -92,7 +92,7 @@ CubeConnectionCoordinator::CubeConnectionCoordinator()
 , _timeToSwitchToBackground_s(0)
 , _timeToDisconnect_s(0)
 , _connectedCubeActiveID(ObservableObject::InvalidActiveID)
-, _connectedActiveObject(nullptr)
+, _connectedBlock(nullptr)
 {
 }
 
@@ -320,7 +320,7 @@ void CubeConnectionCoordinator::CheckForConnectionLoss(const RobotCompMap& depen
     _timeToDisconnect_s = 0;
     _connectionLostUnexpectedly = true;
     _connectedCubeActiveID = ObservableObject::InvalidActiveID;
-    _connectedActiveObject = nullptr;
+    _connectedBlock = nullptr;
 
     // Set Status lights back to default state
     bool connectedInBackground = true;
@@ -361,8 +361,8 @@ void CubeConnectionCoordinator::TransitionToConnectedInteractable(const RobotCom
   bool connectedInBackground = false;
   cubeLights.SetCubeBackgroundState(connectedInBackground);
 
-  if(nullptr != _connectedActiveObject){
-    cubeLights.PlayConnectionLights(_connectedActiveObject->GetID());
+  if(nullptr != _connectedBlock){
+    cubeLights.PlayConnectionLights(_connectedBlock->GetID());
   }
 
   // Notify subscribers
@@ -394,8 +394,8 @@ void CubeConnectionCoordinator::TransitionToSwitchingToBackground(const RobotCom
     }
   };
 
-  if(nullptr != _connectedActiveObject){
-    if(!cubeLights.PlayDisconnectionLights(_connectedActiveObject->GetID(), animCompletedCallback)){
+  if(nullptr != _connectedBlock){
+    if(!cubeLights.PlayDisconnectionLights(_connectedBlock->GetID(), animCompletedCallback)){
       // If the lights didn't play, the callback will never come from the light component. Invoke it now.
       animCompletedCallback();
     }
@@ -416,7 +416,7 @@ void CubeConnectionCoordinator::CancelSwitchToBackground(const RobotCompMap& dep
 
   // Stop the disconnection lights if they're playing
   auto& clc = dependentComps.GetComponent<CubeLightComponent>();
-  clc.CancelDisconnectionLights(_connectedActiveObject->GetID());
+  clc.CancelDisconnectionLights(_connectedBlock->GetID());
 
   _cancelSwitchToBackground = false;
 }
@@ -496,7 +496,7 @@ void CubeConnectionCoordinator::RequestDisconnect(const RobotCompMap& dependentC
   {
     SET_STATE(UnConnected);
     _connectedCubeActiveID = ObservableObject::InvalidActiveID;
-    _connectedActiveObject = nullptr;
+    _connectedBlock = nullptr;
   };
   cubeComms.RequestDisconnectFromCube(kDisconnectGracePeriodSec, disconnectCallback);
 }
@@ -530,8 +530,8 @@ void CubeConnectionCoordinator::HandleConnectionAttemptResult(const RobotCompMap
     auto& cubeComms = dependentComps.GetComponent<CubeCommsComponent>();
     auto& bw = dependentComps.GetComponent<BlockWorld>();
     _connectedCubeActiveID = cubeComms.GetConnectedCubeActiveId();
-    _connectedActiveObject = bw.GetConnectedActiveObjectByActiveID(_connectedCubeActiveID);
-    ANKI_VERIFY(nullptr != _connectedActiveObject,
+    _connectedBlock = bw.GetConnectedBlockByActiveID(_connectedCubeActiveID);
+    ANKI_VERIFY(nullptr != _connectedBlock,
                 "CubeConnectionCoordinator.NoObjectFoundForActiveID",
                 "Block world did not have a connected active object for CubeComms connected cube activeID");
     if(_nonBackgroundSubscriberCount == 0){

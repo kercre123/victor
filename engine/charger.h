@@ -22,7 +22,6 @@
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "engine/actionableObject.h"
-#include "engine/activeObject.h"
 #include "engine/viz/vizManager.h"
 
 namespace Anki {
@@ -51,7 +50,7 @@ namespace Anki {
     {
     public:
       
-      Charger(ObjectType type = ObjectType::Charger_Basic);
+      Charger();
       
       virtual const Point3f& GetSize() const override { return _size; }
       
@@ -128,12 +127,7 @@ namespace Anki {
       const Vision::KnownMarker* _marker;
       
       mutable VizManager::Handle_t _vizHandle;
-      
-      virtual bool IsPreActionPoseValid(const PreActionPose& preActionPose,
-                                        const Pose3d* reachableFromPose,
-                                        const std::vector<std::pair<Quad2f,ObjectID> >& obstacles) const override;
-      
-      
+
     }; // class Charger
     
   } // namespace Vector

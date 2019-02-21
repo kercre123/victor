@@ -154,9 +154,9 @@ include(avs-device-sdk)
 
 include(speexdsp)
 include(pffft)
+include(mpg123)
 
 import(util "lib/util")
-import(ble_cozmo "lib/BLECozmo")
 import(DAS "lib/das-client")
 
 # BRC-TODO: Make this top-level include into an "interface"
