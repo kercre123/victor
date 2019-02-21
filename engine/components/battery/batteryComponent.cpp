@@ -378,6 +378,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     DASMSG(battery_level_changed, "battery.battery_level_changed", "The battery level has changed");
     DASMSG_SET(s1, BatteryLevelToString(level), "New battery level");
     DASMSG_SET(s2, BatteryLevelToString(_batteryLevel), "Previous battery level");
+    DASMSG_SET(s3, now_sec - _lastOnChargerContactsChange_sec, "Time since last on charger (sec)");
     DASMSG_SET(i1, IsCharging(), "Is the battery currently charging? 1 if charging, 0 if not");
     DASMSG_SET(i2, now_sec - _lastBatteryLevelChange_sec, "Time spent at previous battery level (sec)");
     DASMSG_SET(i3, GetBatteryVolts_mV(), "Current filtered battery voltage (mV)");
@@ -511,10 +512,12 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
     _robot->Broadcast(MessageEngineToGame(ChargerEvent(onChargeContacts)));
     // Broadcast to DAS
     DASMSG(battery_on_charger_changed, "battery.on_charger_changed", "The robot onChargerContacts state has changed");
-    DASMSG_SET(i1, onChargeContacts, "On or off charge contacts (1 if on contacts, 0 if not)");
+    DASMSG_SET(i1, onChargeContacts, "New on charger contacts state (1: on contacts, 0: off contacts)");
     DASMSG_SET(i2, now_sec - _lastOnChargerContactsChange_sec, "Time since previous change (sec)");
-    DASMSG_SET(i3, GetBatteryVolts_mV(), "Current filtered battery voltage (mV)");
-    DASMSG_SET(i4, _battDisconnected, "Battery is (1) disconnected or (0) connected");
+    DASMSG_SET(i3, _battDisconnected ? GetBatteryVolts_mV() : GetBatteryVoltsRaw_mV(), 
+               "If battery disconnected, last filtered battery voltage. If not disconnected, current raw battery voltage (mV)");
+    DASMSG_SET(i4, onChargeContacts ? _battDisconnected : _wasBattDisconnected, 
+               "If on charger, current battery disconnected state. If off charger, battery disconnected state when it was on charger.");
     DASMSG_SEND();
     _lastOnChargerContactsChange_sec = now_sec;
   }
