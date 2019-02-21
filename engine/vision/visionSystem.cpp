@@ -1616,6 +1616,9 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     Tic("CompositingImagesAndDetectingMarkers");
     
     const auto whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier);
+    if(_imageCompositor->GetNumImagesComposited() == 8) {
+      _imageCompositor->Reset();
+    }
     _imageCompositor->ComposeWith(imageCache.GetGray(whichSize));
 
     visionModesProcessed.Insert(VisionMode::CompositingImages);

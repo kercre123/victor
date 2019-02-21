@@ -13,21 +13,25 @@
 #include "engine/vision/imageCompositor.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/shared/array2d_impl.h"
+#include "util/console/consoleInterface.h"
 #include <algorithm>
 
 namespace Anki {
 namespace Vector {
 
 namespace {
-  const char* kMaxImageCountKey = "MaxImageCount";
+  const char* percentileForMaxIntensity = "percentileForMaxIntensity";
+  const std::string debugName = "Vision.ImageCompositor";
+
+  CONSOLE_VAR(f32, kBaseIntensityForMaxBrightness, "Vision.ImageCompositor", 0.9f);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ImageCompositor::ImageCompositor(const Json::Value& config)
-: _sumImage(0,0)
+: _kPercentileForMaxIntensity(JsonTools::ParseFloat(config, percentileForMaxIntensity, debugName + ".Ctor"))
+, _sumImage(0,0)
 , _numImagesComposited(0)
 {
-  _maxImageCount = JsonTools::ParseUInt32(config, kMaxImageCountKey, "Vision.ImageCompositor.Ctor");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -45,10 +49,6 @@ void ImageCompositor::ComposeWith(const Vision::Image& img)
                   "ImageCompositor.ComposeWith.DifferingImageSizes",
                   "Trying to compose images of different sizes not allowed.")) {
     return;
-  }
-
-  if(_numImagesComposited >= _maxImageCount) {
-    Reset(); // zeros all elements in the sum image
   }
 
   #if(ANKICORETECH_USE_OPENCV)
@@ -71,12 +71,16 @@ void ImageCompositor::GetCompositeImage(Vision::Image& outImg) const
 {
   // A composite image is the average of the sum image, with contrast boosting
   #if(ANKICORETECH_USE_OPENCV)
-  Array2d<f32> avgImage(_sumImage);
-
   // Threshold of pixel values above which to be set to Max Brightness.
   // Computed by finding the 99th percentile intensity value.
-  std::vector<f32> pixels(_sumImage.get_CvMat_().begin(), _sumImage.get_CvMat_().end());
-  int pct99Idx = std::min(std::ceil(pixels.size() * .01f), pixels.size());
+  std::vector<f32> pixels(_sumImage.GetNumCols() * _sumImage.GetNumRows(), 0.f);
+  size_t i = 0;
+  for(auto& pixel : _sumImage.get_CvMat_()) {
+    pixels[i++] = pixel;
+  }
+  // TODO: Test if below is faster than above way of setting `pixels`
+  //  std::vector<f32> pixels(_sumImage.get_CvMat_().begin(), _sumImage.get_CvMat_().end());
+  size_t pct99Idx = std::min((size_t)std::ceil(pixels.size() * (1-_kPercentileForMaxIntensity)), pixels.size());
   std::nth_element(pixels.begin(),
                    pixels.begin() + pct99Idx,
                    pixels.end(),
@@ -85,10 +89,10 @@ void ImageCompositor::GetCompositeImage(Vision::Image& outImg) const
 
   // Note: we don't need to divide out the number of images
   //  since the arithmetic works out that numImagesComposited
-  //  cancels out in the scaling factor.
-  const f32 scaling = 0.9f * 255 / sum99pct;
+  //  cancels out in this scaling factor.
+  const f32 scaling = kBaseIntensityForMaxBrightness * std::numeric_limits<u8>::max() / sum99pct;
 
-  avgImage.get_CvMat_().convertTo(outImg.get_CvMat_(), CV_8UC1, scaling, 0);
+  _sumImage.get_CvMat_().convertTo(outImg.get_CvMat_(), CV_8UC1, scaling, 0);
   #endif
 }
 

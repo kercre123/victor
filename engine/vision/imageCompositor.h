@@ -40,22 +40,25 @@ class ImageCompositor
 
     // Users of the ImageCompositor can query how many images are composited
     //  and subsequently decide the schedule of when to perform further work
-    //  (i.e. every 4 or 8 images)
     size_t GetNumImagesComposited() const { return _numImagesComposited; }
 
-    // Clears the buffer of images to create the composite with
+    // Clears the buffer of images to create the composite with.
+    // This is externally called by users of ImageCompositor.
     void Reset();
 
+    // Computes the average image from the buffered images so far.
+    // Additionally performs a contrast boosting adjustment.
     void GetCompositeImage(Vision::Image& outImg) const;
 
   private:
 
+    // When adjusting the constrast of the average image,
+    //  we set all pixels whose intensity is above the
+    //  percentile (specified below) to the max brightness.
+    const f32 _kPercentileForMaxIntensity;
+
     // Accumulator sum image for creating the average image
     Array2d<f32> _sumImage;
-
-    // Adding another image beyond this count will first Reset()
-    //  the accumulated image so far
-    u32 _maxImageCount;
 
     u32 _numImagesComposited;
 };

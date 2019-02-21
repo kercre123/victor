@@ -99,7 +99,7 @@
 
   "ImageCompositing" :
   {
-    "MaxImageCount" : 8
+    "percentileForMaxIntensity" : 0.99
   },
 
   "NeuralNets" :
