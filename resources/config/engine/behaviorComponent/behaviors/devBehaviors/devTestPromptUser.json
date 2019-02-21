@@ -6,8 +6,8 @@
   "earConAudioEventSuccess"             : "Play__Robot_Vic_Sfx__Wake_Word_Success",
   "earConAudioEventNeutral"             : "Play__Robot_Vic_Sfx__Wake_Word_Off",
   "textToSpeechBehaviorID"              : "DefaultTextToSpeechLoop",
-  "vocalPromptString"                   : "Question?",
-  "maxNumberOfReprompts"                : 1,
+  "vocalPromptString"                   : "Hmmm?",
+  "maxNumberOfReprompts"                : 0,
   "stopListeningOnIntents"              : true,
   "playListeningGetIn"                  : false,
   "playListeningGetOut"                 : false

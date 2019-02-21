@@ -41,12 +41,14 @@ namespace {
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinYThres_mm,        "Vision.VisualWakeWord", -100.f);
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxYThres_mm,        "Vision.VisualWakeWord",  100.f);
   CONSOLE_VAR(f32,  kMinTimeBetweenWakeWordTriggers_ms,      "Vision.VisualWakeWord",  5000.f);
+  CONSOLE_VAR(bool, kDisableStateMachineToKeyCheckForGaze,   "Vision.VisualWakeWord",  true);
 }
 
 namespace {
   static const UserIntentTag affirmativeIntent = USER_INTENT(imperative_affirmative);
   static const UserIntentTag negativeIntent = USER_INTENT(imperative_negative);
   static const UserIntentTag goodRobotIntent = USER_INTENT(imperative_praise);
+  static const UserIntentTag badRobotIntent = USER_INTENT(imperative_scold);
 }
 
 #define LOG_CHANNEL "Behaviors"
@@ -132,7 +134,7 @@ void BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord()
 {
   // This check should prevent us from trying to trigger a audio stream
   // when we have already trigger the visual wake word
-  if (_dVars.state == EState::CheckingForVisualWakeWord) {
+  if (_dVars.state == EState::CheckingForVisualWakeWord || kDisableStateMachineToKeyCheckForGaze) {
     if(GetBEI().GetFaceWorld().GetGazeDirectionPose(kMaxTimeSinceTrackedFaceUpdated_ms,
                                                     _dVars.gazeDirectionPose, _dVars.faceIDToTurnBackTo)) {
       LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToCheckForVisualWakeWord",
@@ -155,8 +157,8 @@ void BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord()
         const bool isWithinYConstarints = ( Util::InRange(translation.y(), kFaceDirectedAtRobotMinYThres_mm,
                                                           kFaceDirectedAtRobotMaxYThres_mm) );
         if ( ( isWithinXConstraints && isWithinYConstarints ) || makingEyeContact ) {
-        // Open up audio stream
-        SET_STATE(DetectedVisualWakeWord);
+          // Open up audio stream
+          SET_STATE(DetectedVisualWakeWord);
           if (_iConfig.yeaOrNayBehavior->WantsToBeActivated()) {
             DelegateIfInControl(_iConfig.yeaOrNayBehavior.get(), &BehaviorDevVisualWakeWord::TransitionToListening);
           }
@@ -178,31 +180,59 @@ void BehaviorDevVisualWakeWord::TransitionToListening()
     TransitionToResponding(1);
   } else if ( uic.IsUserIntentPending(goodRobotIntent) ) {
     TransitionToResponding(2);
+  } else if (uic.IsUserIntentPending(badRobotIntent) ) {
+    TransitionToResponding(3);
   }
-  TransitionToResponding(3);
+  TransitionToResponding(4);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevVisualWakeWord::TransitionToResponding(const int response)
 {
   SET_STATE(Responding);
+  CompoundActionSequential* reaction = new CompoundActionSequential();
   if (response == 0) {
     SET_STATE(CheckingForVisualWakeWord);
     LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToResponding.GotAffirmativeResponse", "");
-    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::Feedback_GoodRobot),
-                        &BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord);
+
+    reaction->AddAction(new TriggerAnimationAction(AnimationTrigger::Feedback_GoodRobot));
+
+    TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo, M_PI);
+    turnTowardsFace->SetRequireFaceConfirmation(true);
+    reaction->AddAction(turnTowardsFace);
+
+    DelegateIfInControl(reaction, &BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord);
   } else if (response == 1) {
+    SET_STATE(CheckingForVisualWakeWord);
     LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToResponding.GotNegativeResponse", "");
+    reaction->AddAction(new TriggerAnimationAction(AnimationTrigger::Feedback_BadRobot));
+
+    TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo, M_PI);
+    turnTowardsFace->SetRequireFaceConfirmation(true);
+    reaction->AddAction(turnTowardsFace);
+    DelegateIfInControl(reaction, &BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord);
   } else if (response == 2) {
     SET_STATE(CheckingForVisualWakeWord);
     LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToResponding.GotGoodRobotResponse", "");
-    DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::Feedback_GoodRobot),
-                        &BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord);
+    reaction->AddAction(new TriggerAnimationAction(AnimationTrigger::Feedback_GoodRobot));
+
+    TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo, M_PI);
+    turnTowardsFace->SetRequireFaceConfirmation(true);
+    reaction->AddAction(turnTowardsFace);
+    DelegateIfInControl(reaction, &BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord);
+  } else if (response == 3) {
+    SET_STATE(CheckingForVisualWakeWord);
+    LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToResponding.GotBadRobotResponse", "");
+    reaction->AddAction(new TriggerAnimationAction(AnimationTrigger::Feedback_BadRobot));
+
+    TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsFaceAction(_dVars.faceIDToTurnBackTo, M_PI);
+    turnTowardsFace->SetRequireFaceConfirmation(true);
+    reaction->AddAction(turnTowardsFace);
+    DelegateIfInControl(reaction, &BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord);
   } else {
+    SET_STATE(CheckingForVisualWakeWord);
     LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToResponding.GotNeitherPositiveOrNegative", "");
   }
-  // This should allow us to loop again
-  SET_STATE(CheckingForVisualWakeWord);
 }
 
 } // namespace Vector
