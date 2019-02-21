@@ -1618,7 +1618,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     const auto whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier);
     _imageCompositor->ComposeWith(imageCache.GetGray(whichSize));
 
-    visionModesProcessed.Insert(VisionMode::CompositingImages); // ^ cannot fail
+    visionModesProcessed.Insert(VisionMode::CompositingImages);
 
     if(_imageCompositor->GetNumImagesComposited() == 4 ||
        _imageCompositor->GetNumImagesComposited() == 8) {
@@ -1629,40 +1629,30 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       std::list<Vision::ObservedMarker> observedMarkers;
       lastResult = _markerDetector->Detect(meanImage, observedMarkers);
 
-      // Markers are detected in a scaled version of the original image.
-      //  Rescale their corner coordinates to reflect their pose in the
-      //  original image coordinates.
-      for(auto& marker : observedMarkers) {
-        Quad2f scaledCorners(marker.GetImageCorners());
-        for(auto & corner : scaledCorners)
-        {
-          const f32 scaleMultiplier = ImageCacheSizeToScaleFactor(Vision::ImageCache::GetSize(kMarkerDetector_ScaleMultiplier));
-          const f32 defaultScaleMultiplier = ImageCacheSizeToScaleFactor(Vision::ImageCache::GetDefaultImageCacheSize());
-          corner *= (defaultScaleMultiplier / scaleMultiplier);
-        }
-      }
-
       // We have observed markers in two locations (here, and earlier when
       //  running marker detection normally).
       // We don't know which one to trust more, however since this mode
       //  is specifically for LowLight Charger search, then we want to trust
       //  the detection from earlier more, since compositing and contrasting
       //  will add noise to the final image.
-      for(auto& marker : observedMarkers) {
-        if(marker.GetCode() != Vision::MARKER_CHARGER_HOME) {
-          continue;
-        }
-
-        auto got = std::find_if(_currentResult.observedMarkers.begin(),
-                                _currentResult.observedMarkers.end(),
-                                [](const Vision::ObservedMarker& item) -> bool {
-                                  return item.GetCode() == Vision::MARKER_CHARGER_HOME;
-                                });
-        if(got == _currentResult.observedMarkers.end()) {
-          _currentResult.observedMarkers.push_back(marker);
-        } else {
-          // Already found a charger marker, from running normal detection
-          break;
+      const auto isChargerFun = [](const Vision::ObservedMarker& item) -> bool {
+                                    return item.GetCode() == Vision::MARKER_CHARGER_HOME;
+                                  };
+      auto got = std::find_if(_currentResult.observedMarkers.begin(), _currentResult.observedMarkers.end(), isChargerFun);
+      if(got == _currentResult.observedMarkers.end()) {
+        auto chargerMarker = std::find_if(observedMarkers.begin(), observedMarkers.end(), isChargerFun);
+        if(chargerMarker != observedMarkers.end()) {
+          // Markers are detected in a scaled version of the original image.
+          //  Rescale their corner coordinates to reflect their pose in the
+          //  original image coordinates
+          Quad2f scaledCorners(chargerMarker->GetImageCorners());
+          for(auto & corner : scaledCorners) {
+            const f32 scaleMultiplier = ImageCacheSizeToScaleFactor(Vision::ImageCache::GetSize(kMarkerDetector_ScaleMultiplier));
+            const f32 defaultScaleMultiplier = ImageCacheSizeToScaleFactor(Vision::ImageCache::GetDefaultImageCacheSize());
+            corner *= (defaultScaleMultiplier / scaleMultiplier);
+          }
+          chargerMarker->SetImageCorners(scaledCorners);
+          _currentResult.observedMarkers.push_back(*chargerMarker);
         }
       }
 

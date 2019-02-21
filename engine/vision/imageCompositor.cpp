@@ -51,48 +51,44 @@ void ImageCompositor::ComposeWith(const Vision::Image& img)
     Reset(); // zeros all elements in the sum image
   }
 
-  std::function<u32(const u32&, const u8&)> addPixels = [](const u32& accPixel, const u8& pixel) -> u32 {
-    return accPixel + (u32)pixel;
-  };
-  _sumImage.ApplyScalarFunction(addPixels, img, _sumImage);
+  #if(ANKICORETECH_USE_OPENCV)
+  Array2d<f32> imgAsFloat;
+  img.get_CvMat_().convertTo(imgAsFloat.get_CvMat_(), CV_32FC1);
+  _sumImage += imgAsFloat;
   _numImagesComposited++;
+  #endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ImageCompositor::Reset()
 {
-  std::function<u32(const u32&)> zeroPixels = [](const u32& accPixel) -> u32 {
-    return 0;
-  };
-  _sumImage.ApplyScalarFunction(zeroPixels);
+  _sumImage.FillWith(0.f);
   _numImagesComposited = 0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Vision::Image ImageCompositor::GetCompositeImage() const
 {
-  // A composite image is the average of the sum image, with contrast boosting
   Vision::Image outImg(_sumImage.GetNumRows(), _sumImage.GetNumCols());
-  std::vector<u8> pixels; // used to compute percentiles
-  typedef u8(MeanPixelFuncType)(const u32&);
-  std::function<MeanPixelFuncType> meanPixel = [&](const u32& accPixel) -> u8 {
-    const u8 pixel = (u8)(accPixel/_numImagesComposited);
-    pixels.push_back(pixel);
-    return pixel;
-  };
-  _sumImage.ApplyScalarFunction(meanPixel, outImg);
+
+  // A composite image is the average of the sum image, with contrast boosting
+  #if(ANKICORETECH_USE_OPENCV)
+  Array2d<f32> avgImage(_sumImage);
+  avgImage.get_CvMat_() *= invNumImageComposited;
 
   // Threshold of pixel values above which to be set to Max Brightness.
   // Computed by finding the 99th percentile intensity value.
+  std::vector<f32> pixels(_sumImage.get_CvMat_().begin(), _sumImage.get_CvMat_().end());
   std::sort(pixels.begin(), pixels.end());
-  u8 pct99 = pixels[ std::max((int)std::floor(pixels.size() * .99f), 0) ];
+  f32 sum99pct = pixels[ std::max((int)std::floor(pixels.size() * .99f), 0) ];
 
-  // Increase constrast by scaling pixel values so that 99th percentile
-  //  and above is set to 90% of Max Brightness (255), with clamping.
-  std::function<u8(const u8&)> contrastFunc = [&](const u8& p) -> u8 {
-    return std::min((u8)std::floor((0.9f * 255 * p)/pct99), (u8)255);
-  };
-  outImg.ApplyScalarFunction(contrastFunc);
+  // Note: we don't need to divide out the number of images
+  //  since the arithmetic works out that numImagesComposited
+  //  cancels out in the scaling factor.
+  const f32 scaling = 0.9f * 255 / sum99pct;
+
+  avgImage.get_CvMat_().convertTo(outImg.get_CvMat_(), CV_8UC1, scaling, 0);
+  #endif
 
   return outImg;
 }

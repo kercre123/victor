@@ -26,17 +26,7 @@
 #include <string>
 
 namespace Anki {
-
-// Forward declaration
-namespace Vision {
-class Camera;
-class ImageCache;
-}
-
 namespace Vector {
-
-// Forward declaration:
-struct VisionPoseData;
 
 class ImageCompositor
 {
@@ -58,12 +48,10 @@ class ImageCompositor
 
     Vision::Image GetCompositeImage() const;
 
-  protected:
-
   private:
 
     // Accumulator sum image for creating the average image
-    Array2d<u32> _sumImage;
+    Array2d<f32> _sumImage;
 
     // Adding another image beyond this count will first Reset()
     //  the accumulated image so far
