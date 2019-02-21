@@ -18,6 +18,7 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/components/visionComponent.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/carryingComponent.h"
@@ -26,6 +27,7 @@
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
 #include "engine/utils/robotPointSamplerHelper.h"
 #include "engine/vision/imageSaver.h"
+#include "engine/vision/visionProcessingResult.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 #include "util/console/consoleInterface.h"
 #include "util/logging/DAS.h"
@@ -69,6 +71,9 @@ namespace {
   // When generating new locations from which to search for the charger, new
   // locations should be at least this far from previously-searched locations.
   const float kMinDistFromPreviousSearch_mm = 200.f;
+
+  // Max allowed age of charger object to be considered recently seen
+  const RobotTimeStamp_t kMaxAgeForChargerSeenRecently_ms = 5000;
   
   constexpr MemoryMapTypes::FullContentArray kTypesToBlockSampling =
   {
@@ -111,7 +116,6 @@ BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, cons
   numImagesToWaitFor      = JsonTools::ParseInt32(config, kNumImagesToWaitForKey, debugName);
   
   // Set up block world filter for finding charger object
-  homeFilter->AddAllowedFamily(ObjectFamily::Charger);
   homeFilter->AddAllowedType(ObjectType::Charger_Basic);
 }
 
@@ -209,8 +213,8 @@ void BehaviorFindHome::AlwaysHandleInScope(const EngineToGameEvent& event)
         // If we've gotten off of our treads, our "visited locations" will no longer be valid
         _dVars.persistent.searchedLocations.clear();
       }
+      break;
     }
-    break;
     default:
       break;
   }
@@ -236,8 +240,54 @@ void BehaviorFindHome::OnBehaviorActivated()
   } else {
     TransitionToStartSearch();
   }
+
+  // Subscribe to vision processing result callbacks
+  // - use this callback to track DetectingMarker frames where the image quality was TooDark
+  if(GetBEI().HasVisionComponent()) {
+    std::function<VisionComponent::VisionResultCallback> func = std::bind(&BehaviorFindHome::CheckVisionProcessingResult, this, std::placeholders::_1);
+    _dVars.visionResultSignalHandle = GetBEI().GetVisionComponent().RegisterVisionResultCallback(func);
+  }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindHome::CheckVisionProcessingResult(const VisionProcessingResult& result)
+{
+  if(result.modesProcessed.Contains(VisionMode::DetectingMarkers)) {
+    _dVars.numFramesOfDetectingMarkers++;
+    if(result.imageQuality == Vision::ImageQuality::TooDark) {
+      _dVars.numFramesOfImageTooDark++;
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindHome::OnBehaviorDeactivated()
+{
+  const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
+  const ObservableObject* charger = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_iConfig.homeFilter);
+
+  // NOTE: The charger is considered not seen, if it was deleted from Blockworld (i.e. the charger object is null).
+  // This can happen under certain situations when getting a "negative-observation" (not seeing it when it was expected).
+  bool chargerSeen = false;
+  if(charger != nullptr) {
+    RobotTimeStamp_t chrgObsTime = charger->GetLastObservedTime();
+    RobotTimeStamp_t now = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
+    chargerSeen = (now-chrgObsTime) < kMaxAgeForChargerSeenRecently_ms;
+  }
+
+  // Destroy signal handle for the vision processing result.
+  //  This ensures that we do not get any more callbacks
+  //  while the behavior is not activated.
+  // NOTE: We do not reset the stats variables in _dVars here
+  //  since that is already taken care of in OnBehaviorActivated()
+  _dVars.visionResultSignalHandle.reset();
+
+  DASMSG(find_home_result, "find_home.result", "Whether the FindHome behavior succeeded in locating the object");
+  DASMSG_SET(i1, chargerSeen, "Success/failure on locating the charger. 1=success 0=failuire");
+  DASMSG_SET(i2, _dVars.numFramesOfDetectingMarkers, "Count of total number of processed image frames searching for Markers");
+  DASMSG_SET(i3, _dVars.numFramesOfImageTooDark, "Count of number of processed image frames (searching for Markers) that are TooDark");
+  DASMSG_SEND();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::TransitionToStartSearch()

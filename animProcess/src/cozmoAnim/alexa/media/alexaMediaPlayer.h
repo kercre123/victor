@@ -48,20 +48,18 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include <PlaylistParser/UrlContentToAttachmentConverter.h>
 #include <AVSCommon/SDKInterfaces/HTTPContentFetcherInterfaceFactoryInterface.h>
 #include <AVSCommon/Utils/RequiresShutdown.h>
-#include "minimp3/minimp3.h"
 
-#include <memory>
-#include <sstream>
-#include <unordered_set>
+#include <array>
 #include <atomic>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <queue>
+#include <sstream>
+#include <unordered_set>
 
-// TEMP
-struct SpeexResamplerState_;
-typedef struct SpeexResamplerState_ SpeexResamplerState;
 
+struct mpg123_handle_struct;
 
 namespace Anki {
   
@@ -167,6 +165,9 @@ private:
 
   // decodes from _mp3Buffer into data, returns millisec decoded
   int Decode( const StreamingWaveDataPtr& data, bool flush );
+  
+  // copied size shorts in _decodedPcm into waveData, returning the number of milliseconds
+  float CopyToWaveData( size_t size, const StreamingWaveDataPtr& waveData, bool flush );
 
   void CallOnPlaybackFinished( SourceId id, bool runOnCaller = false );
   void CallOnPlaybackError( SourceId id );
@@ -183,8 +184,8 @@ private:
   void OnNewSourceSet();
 
   void LogPlayingSourceMismatchEvent(const std::string& func, SourceId id, SourceId playingId);
-
-  mp3dec_t _mp3decoder;
+  
+  mpg123_handle_struct* _decoderHandle = nullptr;
   
   enum class State {
     Idle=0,
@@ -216,7 +217,15 @@ private:
   volatile SourceId _nextSourceToPlay = 0;
 
   std::map<SourceId, std::unique_ptr< AlexaReader >> _readers;
-  short _decodedPcm[MINIMP3_MAX_SAMPLES_PER_FRAME];
+  static constexpr size_t kMaxReadSize = 16384; // 16k
+  std::array<short,kMaxReadSize> _decodedPcm;
+  
+  struct MediaInfo {
+    int channels;
+    long sampleRate;
+  };
+  MediaInfo _mediaInfo;
+  
   
   // A baked in wwise event that should play once state is ClipPlayable
   AudioEngine::AudioEventId _playableClip;
@@ -284,17 +293,10 @@ private:
 
   // held the entire time the play loop is active
   std::mutex _playLoopMutex;
+  
+  // frames our mp3 decoder tried to decode, but are actually not valid mp3
+  unsigned int _invalidFrames = 0;
 
-  // TEMP
-  SpeechRecognizerTHF*            _recognizer = nullptr;
-  SpeexResamplerState*            _speexState = nullptr;
-  SpeechRecognizerSystem*         _speechRegSys = nullptr;
-  static constexpr size_t         _kResampleMaxSize = 2000;
-  short                           _resampledPcm[_kResampleMaxSize];
-  std::queue<std::pair<int, int>> _detectedTriggers_ms;
-  
-  void UpdateDetectorState(float& inout_lastPlayedMs);
-  
 };
 
 } // namespace Vector

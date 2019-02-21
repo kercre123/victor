@@ -28,7 +28,7 @@ namespace Vector{
 
 // Fwd Delarations
 class CozmoContext;
-class ActiveObject;
+class Block;
 
 class CubeConnectionCoordinator : public IDependencyManagedComponent<RobotComponentID>, public Anki::Util::noncopyable
 {
@@ -65,7 +65,7 @@ public:
 
   // Returns the ActiveObject corresponding to the _connectedCubeActiveID returned from the CubeCommsComponent,
   // or nullptr if there is no such object
-  ActiveObject* GetConnectedActiveObject() const { return _connectedActiveObject; }
+  Block* GetConnectedBlock() const { return _connectedBlock; }
   
 private:
   // Private data structures
@@ -147,7 +147,7 @@ private:
   float _timeToDisconnect_s;
 
   ActiveID _connectedCubeActiveID;
-  ActiveObject* _connectedActiveObject;
+  Block* _connectedBlock;
 
   // for webviz
 #if ANKI_DEV_CHEATS

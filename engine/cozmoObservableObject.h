@@ -6,7 +6,7 @@
  *
  *
  * Description: Extends Vision::ObservableObject to add some Cozmo-specific
- *              stuff, like object families and types.
+ *              stuff, like object types.
  *
  * Copyright: Anki, Inc. 2015
  *
@@ -21,7 +21,6 @@
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/observableObject.h"
 
-#include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
 
 #include "util/helpers/noncopyable.h"
@@ -43,9 +42,8 @@ public:
   static const ActiveID InvalidActiveID = -1;
   static const FactoryID InvalidFactoryID;
   
-  ObservableObject(ObjectFamily family, ObjectType type)
-  : _family(family)
-  , _type(type)
+  ObservableObject(ObjectType type)
+  : _type(type)
   {
     
   }
@@ -59,10 +57,9 @@ public:
   // Override base class SetID to use unique ID for each type (base class has no concept of ObjectType)
   virtual void SetID() override;
   
-  ObjectFamily  GetFamily()  const { return _family; }
   ObjectType    GetType()    const { return _type; }
   
-  // Overload base IsSameAs() to first compare type and family
+  // Overload base IsSameAs() to first compare type
   // (Note that we have to overload all if we overload one)
   bool IsSameAs(const ObservableObject& otherObject,
                 const Point3f& distThreshold,
@@ -114,7 +111,6 @@ protected:
   ActiveID _activeID = -1;
   FactoryID _factoryID = "";
   
-  ObjectFamily  _family = ObjectFamily::Unknown;
   ObjectType    _type   = ObjectType::UnknownObject;
   
   bool _poseHasBeenSet = false;
@@ -134,7 +130,7 @@ inline bool ObservableObject::IsSameAs(const ObservableObject& otherObject,
                                        Radians& angleDiff) const
 {
   // The two objects can't be the same if they aren't the same type!
-  bool isSame = this->GetType() == otherObject.GetType() && this->GetFamily() == otherObject.GetFamily();
+  bool isSame = this->GetType() == otherObject.GetType();
   
   if(isSame) {
     isSame = Vision::ObservableObject::IsSameAs(otherObject, distThreshold, angleThreshold, Tdiff, angleDiff);

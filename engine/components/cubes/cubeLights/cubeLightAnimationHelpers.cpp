@@ -85,7 +85,7 @@ bool ParseCubeAnimationFromJson(const std::string& animName, const Json::Value& 
     if(lightPattern.isMember(kPatternDebugNameKey)){
       pattern.name = lightPattern[kPatternDebugNameKey].asString();
     }else{
-      pattern.name = animName + std::to_string(patternNum);;
+      pattern.name = animName + std::to_string(patternNum);
     }
     
     outAnimation.push_back(std::move(pattern));

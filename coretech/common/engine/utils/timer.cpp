@@ -50,6 +50,7 @@ BaseStationTimer::BaseStationTimer()
 , currTimeSecondsFloat_(0.0f)
 , currTimeNanoSeconds_(0)
 , currTimeStamp_(0)
+, tickCount_(0)
 {
 }
 

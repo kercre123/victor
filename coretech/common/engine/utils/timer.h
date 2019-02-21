@@ -78,7 +78,7 @@ private:
   BaseStationTime_t currTimeNanoSeconds_;
   TimeStamp_t currTimeStamp_;
 
-  size_t tickCount_ = 0;
+  std::atomic<size_t> tickCount_;
 };
 
   /* Not used by Cozmo

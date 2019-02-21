@@ -17,7 +17,7 @@
 #include "engine/components/cubes/cubeBatteryComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/cubes/ledAnimation.h"
-#include "engine/activeObject.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -616,7 +616,7 @@ void CubeCommsComponent::OnCubeConnected(const BleFactoryId& factoryId)
   const auto& activeId = _factoryIdToActiveIdMap[factoryId];
   
   // Add active object to blockworld
-  const ObjectID objID = _robot->GetBlockWorld().AddConnectedActiveObject(activeId, factoryId, kValidCubeType);
+  const ObjectID objID = _robot->GetBlockWorld().AddConnectedBlock(activeId, factoryId, kValidCubeType);
   if (objID.IsSet()) {
     LOG_INFO("CubeCommsComponent.OnCubeConnected.Connected",
                      "Object %d (activeID %d, factoryID %s)",
@@ -660,7 +660,7 @@ void CubeCommsComponent::OnCubeDisconnected(const BleFactoryId& factoryId)
   }
   
   // Remove active object from blockworld if it exists, and remove all instances in all origins
-  const ObjectID objID = _robot->GetBlockWorld().RemoveConnectedActiveObject(activeId);
+  const ObjectID objID = _robot->GetBlockWorld().RemoveConnectedBlock(activeId);
   
   // TODO: arguably blockworld should do this, because when do we want to remove/add objects and not notify?
   if (objID.IsSet()) {
@@ -817,7 +817,7 @@ void CubeCommsComponent::SubscribeToWebViz()
         if(shouldFlashCubeLights && IsConnectedToCube()) {
           // flash lights on connected cube
           const auto& activeId = GetActiveId(GetCurrentCube());
-          const auto* object = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID(activeId);
+          const auto* object = _robot->GetBlockWorld().GetConnectedBlockByActiveID(activeId);
           if (object != nullptr) {
             _robot->GetCubeLightComponent().PlayLightAnimByTrigger(object->GetID(), CubeAnimationTrigger::Flash);
           }

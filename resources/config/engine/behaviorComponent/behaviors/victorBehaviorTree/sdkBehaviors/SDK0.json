@@ -1,9 +1,0 @@
-{
-  "behaviorClass": "SDKInterface",
-  "behaviorID": "SDK0",
-
-  "associatedActiveFeature": "SDK",
-
-  "driveOffChargerBehavior": "DriveOffChargerStraight",
-  "findAndGoToHomeBehavior": "FindAndGoToHome"
-}

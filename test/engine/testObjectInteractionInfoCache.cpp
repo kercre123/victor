@@ -17,10 +17,9 @@
 
 #include "coretech/common/engine/utils/timer.h"
 
-#include "engine/activeObject.h"
-#include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/objectInteractionInfoCache.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -37,19 +36,14 @@ namespace {
 // TODO refactor this because it's also in blockworld unit tests. This should be a helper
 ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ObjectType objectType)
 {
-  // matching activeID happens through objectID automatically on addition
-  const ActiveID activeID = -1;
-  const FactoryID factoryID = "";
-  
   BlockWorld& blockWorld = robot.GetBlockWorld();
-  Anki::Vector::ObservableObject* objectPtr = CreateActiveObjectByType(objectType, activeID, factoryID);
+  Anki::Vector::ObservableObject* objectPtr = new Block(objectType);
   ANKI_VERIFY(nullptr != objectPtr, "CreateObjectLocatedAtOrigin.CreatedNull", "");
   
   // check it currently doesn't exist in BlockWorld
   {
     BlockWorldFilter filter;
     filter.SetAllowedTypes( {objectPtr->GetType()} );
-    filter.SetAllowedFamilies( {objectPtr->GetFamily()} );
     ObservableObject* sameBlock = blockWorld.FindLocatedMatchingObject(filter);
     ANKI_VERIFY(nullptr == sameBlock, "CreateObjectLocatedAtOrigin.TypeAlreadyInUse", "");
   }

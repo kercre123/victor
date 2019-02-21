@@ -11,8 +11,13 @@ requested pose due to a wall, etc.):
  - DriveOnCharger/DriveOffCharger
  - GoToPose
  - DockWithCube
- - ConnectCube/DisconnectCube
- - SayText (TODO Figure out why this is causing problems)
+ - ConnectCube/DisconnectCube/CubesAvailable
+ - CameraFeed
+ - AudioFeed
+ - NavMapFeed
+
+ **When run by automated nightly tests, this script is run by the released version of the SDK, not the internal build.**
+ So proto messages that are not yet in a public SDK build should not yet be added to this test.
 """
 
 # TODO Add missing messages. Also this script is supposed to print out missing messages; why isn't it?
@@ -151,15 +156,32 @@ MESSAGES_TO_TEST = [
      protocol.MoveLiftRequest(speed_rad_per_sec=0.0),
      TestResultMatches(protocol.MoveLiftResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
+    # SetEyeColor message
+    (Interface.SetEyeColor,
+     protocol.SetEyeColorRequest(hue=1.0, saturation=1.0),
+     TestResultMatches(protocol.SetEyeColorResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+
     # PlayAnimation message
     (Interface.PlayAnimation,
      protocol.PlayAnimationRequest(animation=protocol.Animation(name='anim_blackjack_victorwin_01'), loops=1),
      TestResultMatches(protocol.PlayAnimationResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
 
+    # PlayAnimationTrigger message
+    # TODO Turn on when is available in public SDK proto
+    # (Interface.PlayAnimationTrigger,
+    #  protocol.PlayAnimationTriggerRequest(animation_trigger=protocol.AnimationTrigger(name='GreetAfterLongTime'), loops=1),
+    #  TestResultMatches(protocol.PlayAnimationResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), result=1))),  # pylint: disable=no-member
+
     # ListAnimations message
     (Interface.ListAnimations,
      protocol.ListAnimationsRequest(),
      TestResultIsTypeWithStatusAndFieldNames(protocol.ListAnimationsResponse, protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), ['animation_names'])),  # pylint: disable=no-member
+
+    # ListAnimationTriggers message
+    # TODO Turn on when is available in public SDK proto
+    # (Interface.ListAnimationTriggers,
+    #  protocol.ListAnimationTriggersRequest(),
+    #  TestResultIsTypeWithStatusAndFieldNames(protocol.ListAnimationTriggersResponse, protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), ['animation_trigger_names'])),  # pylint: disable=no-member
 
     # DisplayFaceImageRGB message
     (Interface.DisplayFaceImageRGB,
@@ -197,29 +219,42 @@ MESSAGES_TO_TEST = [
      TestResultMatches(protocol.RequestEnrolledNamesResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), faces=[]))),  # pylint: disable=no-member
 
     # EnableFaceDetection message
-    (client.ExternalInterfaceServicer.EnableFaceDetection,
+    (Interface.EnableFaceDetection,
      protocol.EnableFaceDetectionRequest(),
      TestResultMatches(protocol.EnableFaceDetectionResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
+
+    # EnableImageStreaming message
+    # TODO Turn on when is available in public SDK proto
+    # (Interface.EnableImageStreaming,
+    #  protocol.EnableImageStreamingRequest(enable=1),
+    #  TestResultMatches(protocol.EnableImageStreamingResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
+
+    # IsImageStreamingEnabled message
+    # TODO Turn on when is available in public SDK proto
+    # (Interface.IsImageStreamingEnabled,
+    #  protocol.IsImageStreamingEnabledRequest(),
+    #  TestResultMatches(protocol.IsImageStreamingEnabledResponse(is_image_streaming_enabled=1))),  # pylint: disable=no-member
 
     # EnableMarkerDetection message
     # 12/4/2018 thanhlelgg's Note: This usually failed with error: 
     # `grpc._channel._Rendezvous: <_Rendezvous of RPC that terminated with (StatusCode.UNAVAILABLE, Connect Failed)>`
-    # (client.ExternalInterfaceServicer.EnableMarkerDetection,
+    # Probably related to VIC-12762
+    # (Interface.EnableMarkerDetection,
     #  protocol.EnableMarkerDetectionRequest(),
     #  TestResultMatches(protocol.EnableMarkerDetectionResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
 
     # EnableMotionDetection message
-    (client.ExternalInterfaceServicer.EnableMotionDetection,
+    (Interface.EnableMotionDetection,
      protocol.EnableMotionDetectionRequest(),
      TestResultMatches(protocol.EnableMotionDetectionResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
 
     # EnableMirrorMode message
-    (client.ExternalInterfaceServicer.EnableMirrorMode,
+    (Interface.EnableMirrorMode,
      protocol.EnableMirrorModeRequest(),
      TestResultMatches(protocol.EnableMirrorModeResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
 
     # DriveStraight message
-    (client.ExternalInterfaceServicer.DriveStraight,
+    (Interface.DriveStraight,
      protocol.DriveStraightRequest(speed_mmps=0.0,
                                    dist_mm=0.0,
                                    should_play_animation=False,
@@ -228,7 +263,7 @@ MESSAGES_TO_TEST = [
                                                       result=protocol.ActionResult(code=protocol.ActionResult.ACTION_RESULT_SUCCESS)))),  # pylint: disable=no-member
 
     # TurnInPlace message
-    (client.ExternalInterfaceServicer.TurnInPlace,
+    (Interface.TurnInPlace,
      protocol.TurnInPlaceRequest(angle_rad=0.0,
                                  speed_rad_per_sec=0.0,
                                  accel_rad_per_sec2=0.0,
@@ -239,7 +274,7 @@ MESSAGES_TO_TEST = [
                                                     result=protocol.ActionResult(code=protocol.ActionResult.ACTION_RESULT_SUCCESS)))),  # pylint: disable=no-member
 
     # SetHeadAngle message
-    (client.ExternalInterfaceServicer.SetHeadAngle,
+    (Interface.SetHeadAngle,
      protocol.SetHeadAngleRequest(angle_rad=0.0,
                                   max_speed_rad_per_sec=0.0,
                                   accel_rad_per_sec2=0.0,
@@ -249,7 +284,7 @@ MESSAGES_TO_TEST = [
                                                      result=protocol.ActionResult(code=protocol.ActionResult.ACTION_RESULT_SUCCESS)))),  # pylint: disable=no-member
 
     # SetLiftHeight message
-    (client.ExternalInterfaceServicer.SetLiftHeight,
+    (Interface.SetLiftHeight,
      protocol.SetLiftHeightRequest(height_mm=0.0,
                                    max_speed_rad_per_sec=0.0,
                                    accel_rad_per_sec2=0.0,
@@ -259,35 +294,36 @@ MESSAGES_TO_TEST = [
                                                       result=protocol.ActionResult(code=protocol.ActionResult.ACTION_RESULT_SUCCESS)))),  # pylint: disable=no-member
 
     # ConnectCube message
-    (client.ExternalInterfaceServicer.ConnectCube,
-     protocol.ConnectCubeRequest(),
-     TestResultIsTypeWithStatusAndFieldNames(protocol.ConnectCubeResponse,
-                                             protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
-                                             ["success", "object_id", "factory_id"])),
+    # Note that if the cube connection fails, this test fails.
+    # (Interface.ConnectCube,
+    #  protocol.ConnectCubeRequest(),
+    #  TestResultIsTypeWithStatusAndFieldNames(protocol.ConnectCubeResponse,
+    #                                          protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
+    #                                          ["success", "object_id", "factory_id"])),
 
     # DisconnectCube message
-    (client.ExternalInterfaceServicer.DisconnectCube,
-     protocol.DisconnectCubeRequest(),
-     TestResultMatches(protocol.DisconnectCubeResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+    # (Interface.DisconnectCube,
+    #  protocol.DisconnectCubeRequest(),
+    #  TestResultMatches(protocol.DisconnectCubeResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
     # FlashCubeLights message
-    (client.ExternalInterfaceServicer.FlashCubeLights,
+    (Interface.FlashCubeLights,
      protocol.FlashCubeLightsRequest(),
      TestResultMatches(protocol.FlashCubeLightsResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
     # SetPreferredCube message
-    (client.ExternalInterfaceServicer.SetPreferredCube,
+    (Interface.SetPreferredCube,
      protocol.SetPreferredCubeRequest(factory_id="11:11:11:11:11:11"),
      TestResultMatches(protocol.SetPreferredCubeResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
     # ForgetPreferredCube message
-    (client.ExternalInterfaceServicer.ForgetPreferredCube,
+    (Interface.ForgetPreferredCube,
      protocol.ForgetPreferredCubeRequest(),
      TestResultMatches(protocol.ForgetPreferredCubeResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
     # SetCubeLights message
     # Note: We don't have the proper object id from the ConnectCube response, but we can test that the message is properly sent
-    (client.ExternalInterfaceServicer.SetCubeLights,
+    (Interface.SetCubeLights,
      protocol.SetCubeLightsRequest(
          object_id=1,
          on_color=[anki_vector.color.green.int_color] * 4,
@@ -308,27 +344,76 @@ MESSAGES_TO_TEST = [
     # to check the number of fields retrieved does not account for default fields and thus causes a mismatch.
     # 12/4/2018 thanhlelgg's note : new field added but problem with default fields unresolved, so I added new field and left it disabled
     # # BatteryState message
-    # (client.ExternalInterfaceServicer.BatteryState,
+    # (Interface.BatteryState,
     #  protocol.BatteryStateRequest(),
     #  TestResultIsTypeWithStatusAndFieldNames(protocol.BatteryStateResponse,
     #                                          protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
     #                                          ["battery_level", "battery_volts", "is_charging", "is_on_charger_platform", "suggested_charger_sec"])),
 
     # VersionState message
-    (client.ExternalInterfaceServicer.VersionState,
+    (Interface.VersionState,
      protocol.VersionStateRequest(),
      TestResultIsTypeWithStatusAndFieldNames(protocol.VersionStateResponse,
                                              protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
                                              ["os_version", "engine_build_id"])),
 
-    # SayText message
-    # 12/4/2018 thanhlelgg's Note: This usually fails because somehow webots failed to say text with below error:
-    # `grpc._channel._Rendezvous: <_Rendezvous of RPC that terminated with (StatusCode.INTERNAL, Failed to say text)>`
-    # (client.ExternalInterfaceServicer.SayText,
-    #  protocol.SayTextRequest(text="hello", use_vector_voice=True),
-    #  TestResultIsTypeWithStatusAndFieldNames(protocol.SayTextResponse,
-    #                                          protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
-    #                                          ["state"])),
+    (Interface.SayText,
+     protocol.SayTextRequest(text="hello", use_vector_voice=True),
+     TestResultIsTypeWithStatusAndFieldNames(protocol.SayTextResponse,
+                                             protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
+                                             ["state"])),
+
+    # PhotosInfo message
+    (Interface.PhotosInfo,
+     protocol.PhotosInfoRequest(),
+     TestResultMatches(protocol.PhotosInfoResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
+
+    # Photo message
+    (Interface.Photo,
+     protocol.PhotoRequest(photo_id=1),
+     TestResultMatches(protocol.PhotoResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.NOT_FOUND)))),  # pylint: disable=no-member
+
+    # Thumbnail message
+    (Interface.Thumbnail,
+     protocol.ThumbnailRequest(photo_id=0),
+     TestResultMatches(protocol.ThumbnailResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.NOT_FOUND)))),  # pylint: disable=no-member
+
+    # DeletePhoto message
+    (Interface.DeletePhoto,
+     protocol.DeletePhotoRequest(photo_id=2),
+     TestResultMatches(protocol.DeletePhotoResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
+
+    # CreateFixedCustomObject message
+    (Interface.CreateFixedCustomObject,
+     protocol.CreateFixedCustomObjectRequest(pose=protocol.PoseStruct(x=1, y=1, z=1, q0=1, q1=1, q2=1, q3=1, origin_id=1),
+                                                x_size_mm = 1.0, y_size_mm = 1.0, z_size_mm = 1.0),
+     TestResultIsTypeWithStatusAndFieldNames(protocol.CreateFixedCustomObjectResponse,
+                                                protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), # pylint: disable=no-member
+                                                ["object_id"])),
+
+    # DefineCustomObject message
+    (Interface.DefineCustomObject,
+     protocol.DefineCustomObjectRequest(custom_type=1,
+                                 is_unique=1,
+                                 custom_box=protocol.CustomBoxDefinition(marker_front=1,
+                                                  marker_back=2,
+                                                  marker_top=3,
+                                                  marker_bottom=4,
+                                                  marker_left=5,
+                                                  marker_right=6,
+                                                  x_size_mm=1,
+                                                  y_size_mm=1,
+                                                  z_size_mm=1,
+                                                  marker_width_mm=1,
+                                                  marker_height_mm=1)),
+     TestResultIsTypeWithStatusAndFieldNames(protocol.DefineCustomObjectResponse,
+                                                protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), # pylint: disable=no-member
+                                                ["success"])),
+
+    # DeleteCustomObjects message
+    (Interface.DeleteCustomObjects,
+     protocol.DeleteCustomObjectsRequest(mode=protocol.CustomObjectDeletionMode.Value("DELETION_MASK_FIXED_CUSTOM_OBJECTS")),
+     TestResultMatches(protocol.DeleteCustomObjectsResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
 
     # NOTE: Add additional messages here
 ]
@@ -435,7 +520,7 @@ def main():
 
     loop = asyncio.get_event_loop()
 
-    with anki_vector.Robot(args.serial, default_logging=False, cache_animation_list=False) as robot:
+    with anki_vector.Robot(args.serial, default_logging=False) as robot:
         # Since some requests fail on charger, such as DriveStraight and TurnInPlace, drive off charger first.
         robot.behavior.drive_off_charger()
 

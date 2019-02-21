@@ -38,7 +38,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorStack.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
-#include "engine/activeCube.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/battery/batteryComponent.h"
@@ -101,6 +101,7 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
            GetFromMap<DelegationComponent>(map, BEIComponentID::Delegation),
            GetFromMap<FaceWorld>(map, BEIComponentID::FaceWorld),
            GetFromMap<HabitatDetectorComponent>(map, BEIComponentID::HabitatDetector),
+           GetFromMap<HeldInPalmTracker>(map, BEIComponentID::HeldInPalmTracker),
            GetFromMap<MapComponent>(map, BEIComponentID::Map),
            GetFromMap<MicComponent>(map, BEIComponentID::MicComponent),
            GetFromMap<MoodManager>(map, BEIComponentID::MoodManager),
@@ -890,18 +891,15 @@ void TestBehaviorFramework::AddFakeFirstObject( ObjectType objectType, Pose3d* p
     pose = &originPose;
   }
   
-  ObjectFamily objectFamily;
   ObservableObject* objectPtr;
   switch( objectType ) {
     case ObjectType::Charger_Basic:
-      objectFamily = ObjectFamily::Charger;
       objectPtr = new Charger();
       break;
     case ObjectType::Block_LIGHTCUBE1:
     case ObjectType::Block_LIGHTCUBE2:
     case ObjectType::Block_LIGHTCUBE3:
-      objectFamily = ObjectFamily::Block;
-      objectPtr = new ActiveCube( objectType );
+      objectPtr = new Block( objectType );
       break;
     default:
       // unsupported

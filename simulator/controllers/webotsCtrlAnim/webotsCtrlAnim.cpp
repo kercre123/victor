@@ -1,7 +1,7 @@
 /*
  * File:          webotsCtrlAnim.cpp
  * Date:
- * Description:   Cozmo 2.0 animation process for Webots simulation
+ * Description:   Vector animation process for Webots simulation
  * Author:
  * Modifications:
  */
@@ -10,23 +10,14 @@
 
 #include "../shared/ctrlCommonInitialization.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "coretech/common/engine/utils/data/dataPlatform.h"
-#include "coretech/common/engine/jsonTools.h"
 
 #include "osState/osState.h"
 
-#include "json/json.h"
-
-#include "util/console/consoleInterface.h"
-#include "util/console/consoleSystem.h"
-#include "util/global/globalDefinitions.h"
 #include "util/logging/channelFilter.h"
 #include "util/logging/printfLoggerProvider.h"
 #include "util/logging/logging.h"
 #include "util/logging/multiFormattedLoggerProvider.h"
 #include "util/time/stopWatch.h"
-
-#include <fstream>
 
 #include <webots/Supervisor.hpp>
 
@@ -71,7 +62,7 @@ int main(int argc, char **argv)
   Util::sSetGlobal(DPHYS, "0xdeadffff00000001");
 
   // - console filter for logs
-  if ( params.filterLog )
+  if (params.filterLog)
   {
     using namespace Anki::Util;
     ChannelFilter* consoleFilter = new ChannelFilter();
@@ -108,37 +99,41 @@ int main(int argc, char **argv)
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT("consoleVarsAnim.ini");
 
-  // Initialize the API
+  // Initialize the anim engine
   AnimEngine animEngine(&dataPlatform);
-  animEngine.Init();
+  const auto result = animEngine.Init();
+  if (result != RESULT_OK) {
+    LOG_ERROR("webotsCtrlAnim.main", "Failed in creation/initialization of AnimEngine");
+  }
+  else {
+    LOG_INFO("webotsCtrlAnim.main", "AnimEngine created and initialized.");
 
-  LOG_INFO("webotsCtrlAnim.main", "AnimEngine created and initialized.");
+    Anki::Util::Time::StopWatch stopWatch("tick");
 
-  Anki::Util::Time::StopWatch stopWatch("tick");
-  
-  //
-  // Main Execution loop: step the world forward forever
-  //
-  while (animSupervisor.step(ANIM_TIME_STEP_MS) != -1)
-  {
-    stopWatch.Start();
-    
-    const double currTimeNanoseconds = Util::SecToNanoSec(animSupervisor.getTime());
-    animEngine.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
+    //
+    // Main Execution loop: step the world forward
+    //
+    while (animSupervisor.step(ANIM_TIME_STEP_MS) != -1)
+    {
+      stopWatch.Start();
 
-    const float time_ms = Util::numeric_cast<float>(stopWatch.Stop());
+      const double currTimeNanoseconds = Util::SecToNanoSec(animSupervisor.getTime());
+      animEngine.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
 
-    // Record tick performance; this includes a call to PerfMetric.
-    // For webots, we 'fake' the sleep time here.  Unlike in Cozmo webots,
-    // we don't actually sleep in this loop
-    static const float kTargetDuration_ms = Util::numeric_cast<float>(ANIM_TIME_STEP_MS);
-    const float animFreq_ms  = std::max(time_ms, kTargetDuration_ms);
-    const float sleepTime_ms = std::max(0.0f, kTargetDuration_ms - time_ms);
-    const float sleepTimeActual_ms = sleepTime_ms;
-    animEngine.RegisterTickPerformance(time_ms,
-                                       animFreq_ms,
-                                       sleepTime_ms,
-                                       sleepTimeActual_ms);
+      const float time_ms = Util::numeric_cast<float>(stopWatch.Stop());
+
+      // Record tick performance; this includes a call to PerfMetric.
+      // For webots, we 'fake' the sleep time here.  Unlike in Cozmo webots,
+      // we don't actually sleep in this loop
+      static const float kTargetDuration_ms = Util::numeric_cast<float>(ANIM_TIME_STEP_MS);
+      const float animFreq_ms  = std::max(time_ms, kTargetDuration_ms);
+      const float sleepTime_ms = std::max(0.0f, kTargetDuration_ms - time_ms);
+      const float sleepTimeActual_ms = sleepTime_ms;
+      animEngine.RegisterTickPerformance(time_ms,
+                                         animFreq_ms,
+                                         sleepTime_ms,
+                                         sleepTimeActual_ms);
+    } // End tick loop
   }
 
   Util::gLoggerProvider = nullptr;

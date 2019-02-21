@@ -164,9 +164,13 @@ void XYPlanner::StartPlanner()
 
   // convert targets to planner states
   std::vector<Point2f> plannerGoals;
+  std::map<Point2i, Point2f> goalLookup; // we need to map grid-aligned planner goals to true targets
   if (_allowGoalChange || (_path.GetNumSegments() == 0)) {
     for (const auto& g : _targets) {
-      plannerGoals.push_back( g.GetTranslation() );
+      Point2f grid_g = GetNearestGridPoint(g.GetTranslation(), kPlanningResolution_mm);
+      plannerGoals.push_back( grid_g );
+      // grid_g should be a whole number, so cast to int here to prevent weird floating point precision issues
+      goalLookup[grid_g.CastTo<int>()] = g.GetTranslation();
     }
   } else {
     // no goal change, so use the end point of the last computed path
@@ -182,7 +186,7 @@ void XYPlanner::StartPlanner()
   // NOTE2: there seems to be a bug in the planner where using Point::IsNear is not a sufficient check for determining
   //        that the goal is safe, even if we use a known safe point for the goal. The work around, for now, is
   //        to find the nearest safe -grid- point, and then insert the true goal state after a plan has been made.
-  const Point2f plannerStart = FindNearestSafePoint( GetNearestGridPoint(_start.GetTranslation()) );
+  const Point2f plannerStart = FindNearestSafePoint( GetNearestGridPoint(_start.GetTranslation(), kPlanningResolution_mm) );
 
 #if !defined(NDEBUG)
   for (const auto& s : plannerGoals) {
@@ -196,24 +200,19 @@ void XYPlanner::StartPlanner()
   high_resolution_clock::time_point startTime = high_resolution_clock::now();
 
   PlannerConfig config(plannerStart, plannerGoals, _map, _stopPlanner);
-  BidirectionalAStar<Point2f, PlannerConfig> planner( config );
-  std::vector<Point2f> plan = planner.Search();
-  
-  high_resolution_clock::time_point planTime = high_resolution_clock::now();
-
-  if(kArtificialPlanningDelay_ms>0) {
-    static const int kMaxNumToBlock_ms = 10;
-    int msBlocked = 0;
-    while((msBlocked < kArtificialPlanningDelay_ms) && !_stopPlanner) {
-      const int thisBlock_ms = std::min( kMaxNumToBlock_ms, kArtificialPlanningDelay_ms - msBlocked );
-      std::this_thread::sleep_for( std::chrono::milliseconds(thisBlock_ms) );
-      msBlocked += thisBlock_ms;
-    }
-  }
+  BidirectionalAStar<PlannerConfig> planner( config );
+  auto planS = planner.Search();
+  std::vector<Point2f> plan(planS.begin(), planS.end());
 
   if(!plan.empty()) {
-    // planner will only go to the nearest safe grid point, so add the real start to shortcut escape obstacle path
+    // planner will only go to the nearest safe grid point, so add the real start and goal points
     plan.insert(plan.begin(), _start.GetTranslation()); 
+    const Point2i& plannerGoal = plan.back().CastTo<int>();
+    if (goalLookup.find(plannerGoal) != goalLookup.end()) {
+      plan.insert(plan.end(), goalLookup[plannerGoal]);
+    } else {
+      LOG_WARNING("XYPlanner.StartPlanner", "Could not match planner goal point to requested goal point, planning to nearest Planner Point" );
+    }
 
     _path = BuildPath( plan );
     _collisionPenalty = GetPathCollisionPenalty( _path );
@@ -223,13 +222,12 @@ void XYPlanner::StartPlanner()
     _status = EPlannerStatus::CompleteNoPlan;
   }
 
-  // profile time it takes to smooth a plan into a valid robot path
-  auto smoothTime_ms = duration_cast<std::chrono::milliseconds>(high_resolution_clock::now() - planTime);
-  auto planTime_ms = duration_cast<std::chrono::milliseconds>(planTime - startTime);
-  LOG_INFO("XYPlanner.StartPlanner", "planning took %s ms, smoothing took %s ms (%zu expansions)",
+  // grab performance metrics
+  auto planTime_ms = duration_cast<std::chrono::milliseconds>(high_resolution_clock::now() - startTime);
+  LOG_INFO("XYPlanner.StartPlanner", "planning took %s ms (%zu expansions at %.2f exp/sec)",
            std::to_string(planTime_ms.count()).c_str(),
-           std::to_string(smoothTime_ms.count()).c_str(),
-           config.GetNumExpansions() );
+           config.GetNumExpansions(),
+           ((float) config.GetNumExpansions() * 1000) / (planTime_ms.count()) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

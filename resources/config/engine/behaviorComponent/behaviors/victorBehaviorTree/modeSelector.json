@@ -8,6 +8,7 @@
     "SingletonPoweringRobotOff",
     "AlexaSignInOut",
     "Alexa",
+    "SDKOverrideAll",
     "EmergencyMode",
     "ShutUpMode",
     "QuietMode",

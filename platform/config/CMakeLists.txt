@@ -38,21 +38,62 @@ anki_build_copy_assets(
 # Choose extra config files from shipping or development,
 # then copy them into etc
 #
-if (ANKI_RESOURCE_SHIPPING)
-  set(platform_config_etc_extra platform_config_etc_shipping)
+
+if (ANKI_AMAZON_ENDPOINTS_ENABLED)
+
+  if(ANKI_RESOURCE_SHIPPING)
+    set(BASE_URL "https://ota.global.anki-services.com/vic/am736/")
+    set(ANKIDEV_BASE_URL "https://ota.global.anki-dev-services.com/vic/am736/lo8awreh23498sf/")
+    configure_file(shipping/etc-template/update-engine.env.in ${CMAKE_BINARY_DIR}/etc/update-engine.env)
+    set(platform_config_etc_extra platform_config_etc_shipping)
+  else()
+    set(BASE_URL "https://ota.global.anki-dev-services.com/vic/am736-dev/lo8awreh23498sf/")
+    set(BASE_URL_LATEST "")
+    configure_file(development/etc-template/update-engine.env.in ${CMAKE_BINARY_DIR}/etc/update-engine.env)
+    set(platform_config_etc_extra platform_config_etc_development)
+    set(platform_config_bin_extra platform_config_bin_development)
+  endif()
+
+  if (ANKI_USER_DEV)
+    # If this is the special "userdev" build then use its etc files
+    set(BASE_URL "https://ota.global.anki-dev-services.com/vic/am736-userdev/lo8awreh23498sf/")
+    configure_file(userdev/etc-template/update-engine.env.in ${CMAKE_BINARY_DIR}/etc/update-engine.env)
+    set(platform_config_etc_extra platform_config_etc_userdev)
+  endif()
+
+  # If this is the special "beta" build then use its etc files
+  if (ANKI_BETA)
+    set(BASE_URL "https://ota.global.anki-dev-services.com/vic/am736-beta/lo8awreh23498sf/")
+    configure_file(beta/etc-template/update-engine.env.in ${CMAKE_BINARY_DIR}/etc/update-engine.env)
+    set(platform_config_etc_extra platform_config_etc_beta)
+  endif()
+
 else()
-  set(platform_config_etc_extra platform_config_etc_development)
-  set(platform_config_bin_extra platform_config_bin_development)
-endif()
 
-# If this is the special "userdev" build then use its etc files
-if (ANKI_USER_DEV)
-  set(platform_config_etc_extra platform_config_etc_userdev)
-endif()
+  if(ANKI_RESOURCE_SHIPPING)
+    set(BASE_URL "https://ota.global.anki-services.com/vic/prod/")
+    set(ANKIDEV_BASE_URL "https://ota.global.anki-dev-services.com/vic/master/lo8awreh23498sf/")
+    configure_file(shipping/etc-template/update-engine.env.in ${CMAKE_BINARY_DIR}/etc/update-engine.env)
+    set(platform_config_etc_extra platform_config_etc_shipping)
+  else()
+    set(BASE_URL "https://ota.global.anki-dev-services.com/vic/master-dev/lo8awreh23498sf/")
+    set(BASE_URL_LATEST "https://ota.global.anki-dev-services.com/vic/master-dev-latest/lo8awreh23498sf/")
+    configure_file(development/etc-template/update-engine.env.in ${CMAKE_BINARY_DIR}/etc/update-engine.env)
+    set(platform_config_etc_extra platform_config_etc_development)
+    set(platform_config_bin_extra platform_config_bin_development)
+  endif()
 
-# If this is the special "beta" build then use its etc files
-if (ANKI_BETA)
-  set(platform_config_etc_extra platform_config_etc_beta)
+  if (ANKI_USER_DEV)
+    set(BASE_URL "https://ota.global.anki-dev-services.com/vic/master-userdev/lo8awreh23498sf/")
+    configure_file(userdev/etc-template/update-engine.env.in ${CMAKE_BINARY_DIR}/etc/update-engine.env)
+    set(platform_config_etc_extra platform_config_etc_userdev)
+  endif()
+
+  if (ANKI_BETA)
+    set(BASE_URL "https://ota.global.anki-dev-services.com/vic/beta/lo8awreh23498sf/")
+    configure_file(beta/etc-template/update-engine.env.in ${CMAKE_BINARY_DIR}/etc/update-engine.env)
+    set(platform_config_etc_extra platform_config_etc_beta)
+  endif()
 endif()
 
 anki_build_copy_assets(

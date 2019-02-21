@@ -30,7 +30,7 @@ func (c *tokenClient) requestResponse(request *cloud.TokenRequest) (*cloud.Token
 }
 
 func (c *tokenClient) Auth(sessionToken string) (*cloud.AuthResponse, error) {
-	responseMessage, err := c.requestResponse(cloud.NewTokenRequestWithAuth(&cloud.AuthRequest{sessionToken}))
+	responseMessage, err := c.requestResponse(cloud.NewTokenRequestWithAuth(&cloud.AuthRequest{SessionToken: sessionToken}))
 	if err != nil {
 		return nil, err
 	}

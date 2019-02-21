@@ -604,7 +604,7 @@ namespace Anki {
       _liftLoadState = LiftLoadState::UNKNOWN;
       auto liftLoadLambda = [this](const AnkiEvent<RobotToEngine>& event)
       {
-        _liftLoadState = event.GetData().Get_liftLoad().hasLoad ? LiftLoadState::HAS_LOAD : LiftLoadState::HAS_NO_LOAD;;
+        _liftLoadState = event.GetData().Get_liftLoad().hasLoad ? LiftLoadState::HAS_LOAD : LiftLoadState::HAS_NO_LOAD;
       };
 
       _liftMovingSignalHandle = GetRobot().GetRobotMessageHandler()->Subscribe(RobotToEngineTag::movingLiftPostDock,

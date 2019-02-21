@@ -20,7 +20,6 @@
 #include "coretech/common/engine/objectIDs.h"
 #include "coretech/vision/engine/faceIdTypes.h"
 
-#include "clad/types/objectFamilies.h"
 #include "clad/types/objectTypes.h"
 #include "clad/types/behaviorComponent/postBehaviorSuggestions.h"
 
@@ -70,14 +69,6 @@ public:
   };
   using PossibleObjectList = std::list<PossibleObject>;
   using PossibleObjectVector = std::vector<PossibleObject>;
-  
-  // info for objects we search from the whiteboard and return as result of the search
-  struct ObjectInfo {
-    ObjectInfo(const ObjectID& objId, ObjectFamily fam) : id(objId), family(fam) {}
-    ObjectID id;
-    ObjectFamily family;
-  };
-  using ObjectInfoList = std::vector<ObjectInfo>;
   
   // object usage reason for failure
   enum class ObjectActionFailure {

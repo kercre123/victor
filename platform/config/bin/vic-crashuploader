@@ -75,6 +75,9 @@ do
     fi
 done
 
+# Signal the service is ready
+/bin/systemd-notify --ready
+
 while :
 do
     cd $VIC_CRASH_FOLDER > /dev/null

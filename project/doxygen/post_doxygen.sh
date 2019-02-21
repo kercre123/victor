@@ -44,6 +44,8 @@ fi
 echo "Check and install dependency libs for running DAS doxygen"
 install_dependency_libs
 
+./detect_all_das_msgs.py
+
 $DOXYGEN Doxyfile
 
 #Generate the cpp files that contain new/remove das messages

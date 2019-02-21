@@ -82,7 +82,7 @@ void ApplyTestDelegationRequirements<BehaviorClass::VectorPlaysCubeSpinner>( ICo
                                                                              TestBehaviorFramework& tbf )
 {
   auto* blockWorld = tbf._robot->GetComponentPtr<BlockWorld>();
-  blockWorld->AddConnectedActiveObject(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
+  blockWorld->AddConnectedBlock(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
 }
   
 template <>

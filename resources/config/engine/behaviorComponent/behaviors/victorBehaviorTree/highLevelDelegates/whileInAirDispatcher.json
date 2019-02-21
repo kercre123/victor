@@ -8,8 +8,8 @@
     "conditionType": "Compound",
     "and": [
       {
-        "conditionType": "OffTreadsState",
-        "targetState": "InAir",
+        "conditionType": "BeingHeld",
+        "shouldBeHeld": true,
         "minTimeSinceChange_ms": 500
       },
       {
@@ -25,20 +25,8 @@
     "conditionType": "Compound",
     "or": [
       {
-        "conditionType": "Compound",
-        "and": [
-          {
-            "conditionType": "Compound",
-            "not": {
-              "conditionType": "OffTreadsState",
-              "targetState": "InAir"
-            }
-          },
-          {
-            "conditionType": "BeingHeld",
-            "shouldBeHeld": false
-          }
-        ]
+        "conditionType": "BeingHeld",
+        "shouldBeHeld": false
       },
       {
         "conditionType": "OnCharger"

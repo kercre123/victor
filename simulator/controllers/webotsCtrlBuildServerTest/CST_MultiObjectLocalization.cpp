@@ -204,7 +204,7 @@ namespace Vector {
           SetActualRobotPose(_kidnappedPose2);
           _turnAngle_deg = -90;
           _headAngle_deg = -5;
-          _nextState = TestState::LocalizeToObjectC;;
+          _nextState = TestState::LocalizeToObjectC;
           SET_TEST_STATE(NotifyKidnap);
         }
         break;

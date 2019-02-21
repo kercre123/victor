@@ -41,6 +41,10 @@ public:
 
   // returns true if the specified intent exists in the map
   bool IsValidCloudIntent(const std::string& cloudIntent) const;
+
+  // looks up the given cloud intent and returns a bool that indicates if the engine's user
+  // intent parsing test should look for that cloud intent in the Dialogflow sample file
+  bool GetTestParsingBoolFromCloudIntent(const std::string& cloudIntent) const;
   
   UserIntentTag GetUserIntentFromAppIntent(const std::string& appIntent) const;
   
@@ -69,6 +73,7 @@ private:
   struct IntentInfo {
     UserIntentTag userIntent;
     VarSubstitutionList varSubstitutions;
+    bool testParsing;
   };
   
   using MapType = std::map<std::string, IntentInfo>;

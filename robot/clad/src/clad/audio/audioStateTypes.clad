@@ -20,6 +20,16 @@ enum uint_32 Mood
   Surprised = 2662801688,
 }
 
+enum uint_32 Robot_Alexa_Locale
+{
+  En_Au = 1906015505,
+  En_De = 1855682766,
+  En_Fr = 1889237923,
+  En_Uk = 2107346979,
+  En_Us = 2107347003,
+  Invalid = 0,
+}
+
 enum uint_32 Robot_Vic_External_Language
 {
   English = 3383237639,
@@ -89,6 +99,7 @@ enum uint_32 StateGroupType
 {
   Invalid = 0,
   Mood = 3128647864,
+  Robot_Alexa_Locale = 1812603720,
   Robot_Vic_External_Language = 2984487667,
   Robot_Vic_External_Processing = 475135532,
   Robot_Vic_Low_Power_Mode = 1633231277,

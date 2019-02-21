@@ -1023,7 +1023,11 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   //robot->SetCarryingBlock( isCarryingObject ); // Still needed?
   GetDockingComponent().SetPickingOrPlacing(IS_STATUS_FLAG_SET(IS_PICKING_OR_PLACING));
   _isPickedUp = IS_STATUS_FLAG_SET(IS_PICKED_UP);
+  const bool wasBeingHeld = _isBeingHeld;
   _isBeingHeld = IS_STATUS_FLAG_SET(IS_BEING_HELD);
+  if ( wasBeingHeld != _isBeingHeld ) {
+    _timeHeldStateChanged_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  }
   _powerButtonPressed = IS_STATUS_FLAG_SET(IS_BUTTON_PRESSED);
 
   const bool isHeadMoving = !IS_STATUS_FLAG_SET(HEAD_IN_POS);
@@ -1357,7 +1361,7 @@ Result Robot::Update()
   if (kDebugPossibleBlockInteraction) {
     // print a bunch of info helpful for debugging block states
     BlockWorldFilter filter;
-    filter.SetAllowedFamilies({ObjectFamily::LightCube});
+    filter.SetFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
     std::vector<ObservableObject*> matchingObjects;
     GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects); // note this doesn't retrieve unknowns anymore
     for( const auto obj : matchingObjects ) {

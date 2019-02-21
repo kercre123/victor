@@ -317,7 +317,7 @@ void ProxSensorComponent::UpdateNavMap()
 
     // sensor points
     const float sensorBeamHalfWidth_mm = offsetx_mm.x() * kSensorAperture *.5f;
-    const float obstacleHalfWidth_mm = std::fmin(sensorBeamHalfWidth_mm, ROBOT_BOUNDING_Y *.25);
+    const float obstacleHalfWidth_mm = std::fmin(sensorBeamHalfWidth_mm, ROBOT_BOUNDING_Y *.15);
 
     // use a slightly larger padding for clear than for obstacle to clean up floating point rounding errors
     const Vec3f sensorOffset1(-kObsPadding_x_mm,  -sensorBeamHalfWidth_mm - kObsPadding_y_mm - .5, 0);   

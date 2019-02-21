@@ -769,12 +769,13 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
     //_currentResult.debugImages.push_back({"MaskedFaceImage", maskedImage});
 #     endif
     
-    _faceTracker->Update(maskedImage, cropFactor, _currentResult.faces, _currentResult.updatedFaceIDs);
+    _faceTracker->Update(maskedImage, cropFactor, _currentResult.faces, _currentResult.updatedFaceIDs,
+                         _currentResult.debugImages);
   }
   else
   {
     // Nothing already detected, so nothing to black out before looking for faces
-    _faceTracker->Update(grayImage, cropFactor, _currentResult.faces, _currentResult.updatedFaceIDs);
+    _faceTracker->Update(grayImage, cropFactor, _currentResult.faces, _currentResult.updatedFaceIDs, _currentResult.debugImages);
   }
   
   for(auto faceIter = _currentResult.faces.begin(); faceIter != _currentResult.faces.end(); ++faceIter)

@@ -13,7 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevDesignCubeLights.h"
 
-#include "engine/activeObject.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "osState/wallTime.h"
 #include "util/console/consoleInterface.h"
@@ -189,8 +189,8 @@ void BehaviorDevDesignCubeLights::BehaviorUpdate()
     }
 
     BlockWorldFilter filter;
-    filter.AddAllowedFamily(ObjectFamily::LightCube);
-    const ActiveObject* obj = GetBEI().GetBlockWorld().FindConnectedActiveMatchingObject(filter);
+    filter.AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
+    const auto* obj = GetBEI().GetBlockWorld().FindConnectedMatchingBlock(filter);
 
     if((newLights != _dVars.currentLights) &&
        (obj != nullptr)){

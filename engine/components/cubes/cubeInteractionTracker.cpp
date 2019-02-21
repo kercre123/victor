@@ -16,7 +16,7 @@
 
 #include "engine/components/cubes/cubeInteractionTracker.h"
 
-#include "engine/activeObject.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeConnectionCoordinator.h"
@@ -136,7 +136,7 @@ CubeInteractionTracker::CubeInteractionTracker()
 , _debugStateString("Idle")
 {
   _targetFilter = std::make_unique<BlockWorldFilter>();
-  _targetFilter->AddAllowedFamily(ObjectFamily::LightCube);
+  _targetFilter->AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -211,7 +211,7 @@ void CubeInteractionTracker::UpdateDependent(const RobotCompMap& dependentComps)
           // in the process of disconnecting
           ccc.SubscribeToCubeConnection(this, false, kTapSubscribeTimeout_s);
           auto& clc = dependentComps.GetComponent<CubeLightComponent>();
-          clc.PlayTapResponseLights(ccc.GetConnectedActiveObject()->GetID());
+          clc.PlayTapResponseLights(ccc.GetConnectedBlock()->GetID());
           _targetStatus.lastTappedTime_s = _currentTimeThisTick_s;
         }
       }
@@ -381,7 +381,7 @@ bool CubeInteractionTracker::SelectTarget(const RobotCompMap& dependentComps)
 
   // First check if we're connected, we should always use our connected cube
   if(ccc.IsConnectedToCube()){
-    _targetStatus.activeObject = ccc.GetConnectedActiveObject();
+    _targetStatus.activeObject = ccc.GetConnectedBlock();
     ANKI_VERIFY(nullptr != _targetStatus.activeObject,
                 "CubeInteractionTracker.InvalidActiveObject",
                 "CubeConnectionCoordinator reported connected to cube, but had no valid active object");

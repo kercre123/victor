@@ -29,7 +29,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/markerlessObject.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
 #include "engine/robotStateHistory.h"
@@ -313,9 +312,9 @@ void MovementComponent::CheckForUnexpectedMovement(const Vector::RobotState& rob
   if (_unexpectedMovement.IsDetected() &&
       !wasUnexpectedMovementDetected)
   {
-    LOG_WARNING("MovementComponent.CheckForUnexpectedMovement",
-                "Unexpected movement detected %s",
-                EnumToString(unexpectedMovementType));
+    LOG_INFO("MovementComponent.CheckForUnexpectedMovement.Detected",
+             "Unexpected movement detected %s",
+             EnumToString(unexpectedMovementType));
     
     // Only create obstacles for certain types of unexpected movement, and only when
     // enabled by the console var and when ReactToUnexpectedMovement is enabled
@@ -362,8 +361,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Vector::RobotState& rob
       {
         Pose3d obstaclePoseWrtRobot;
         
-        const f32 extraPad_mm = 5.f; // fudge factor
-        const f32 obstaclePositionPad_mm = MarkerlessObject::GetSizeByType(ObjectType::CollisionObstacle).x() + extraPad_mm;
+        const f32 obstaclePositionPad_mm = 25.f;
         
         const char *debugStr = "";
         

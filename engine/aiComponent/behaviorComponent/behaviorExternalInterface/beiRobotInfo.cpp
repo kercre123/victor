@@ -281,6 +281,11 @@ bool BEIRobotInfo::IsCharging() const
   return _robot.GetBatteryComponent().IsCharging();
 }
 
+float BEIRobotInfo::GetOnChargerDurationSec() const
+{
+  return _robot.GetBatteryComponent().GetOnChargerDurationSec();
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsHeadCalibrated() const
 {
@@ -351,6 +356,12 @@ u32 BEIRobotInfo::GetTimeSinceLastPoke_ms() const
 bool BEIRobotInfo::IsBeingHeld() const
 {
   return _robot.IsBeingHeld();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+EngineTimeStamp_t BEIRobotInfo::GetBeingHeldLastChangedTime_ms() const
+{
+  return _robot.GetBeingHeldLastChangedTime_ms();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

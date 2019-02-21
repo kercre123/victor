@@ -40,7 +40,7 @@ public:
 
 private:
   // params
-  float _cooldown_s = 0.0f;;
+  float _cooldown_s = 0.0f;
   float _randomCooldownFactor = 0.0f;
 
   // members

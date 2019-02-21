@@ -13,8 +13,8 @@
 
 #include "engine/components/blockTapFilterComponent.h"
 
-#include "engine/activeObject.h"
 #include "engine/ankiEventUtil.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -98,7 +98,7 @@ void BlockTapFilterComponent::UpdateDependent(const RobotCompMap& dependentComps
       std::vector<ObservableObject *> matchingObjects;
       _robot->GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
       
-      const ActiveObject* tappedObject = _robot->GetBlockWorld().GetConnectedActiveObjectByActiveID( doubleTapInfo.first );
+      const auto* tappedObject = _robot->GetBlockWorld().GetConnectedBlockByActiveID( doubleTapInfo.first );
       if ( nullptr != tappedObject ) {
         PRINT_CH_DEBUG("BlockTapFilterComponent", "BlockTapFilterComponent.Update.ExpiredTap",
                        "Marking object %d as dirty due to tap timeout",
@@ -119,7 +119,7 @@ void BlockTapFilterComponent::UpdateDependent(const RobotCompMap& dependentComps
 void BlockTapFilterComponent::HandleObjectTapped(const ExternalInterface::ObjectTapped& payload)
 {
   // find connected object by objectID
-  const ActiveObject* tappedObject = _robot->GetBlockWorld().GetConnectedActiveObjectByID( payload.objectID );
+  const auto* tappedObject = _robot->GetBlockWorld().GetConnectedBlockByID( payload.objectID );
 
   if(nullptr == tappedObject)
   {
@@ -160,7 +160,7 @@ void BlockTapFilterComponent::HandleObjectTapped(const ExternalInterface::Object
 template<>
 void BlockTapFilterComponent::HandleMessage(const ExternalInterface::ObjectMoved& payload)
 {
-  const ObservableObject* object = _robot->GetBlockWorld().GetConnectedActiveObjectByID(payload.objectID);
+  const auto* object = _robot->GetBlockWorld().GetConnectedBlockByID(payload.objectID);
   if( object == nullptr )
   {
     PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectMoved.ObjectIDNull",
@@ -192,7 +192,7 @@ void BlockTapFilterComponent::HandleMessage(const ExternalInterface::ObjectStopp
 {
   // In the message coming from the robot, the objectID is the slot the object is connected on which is its
   // engine activeID
-  const ObservableObject* object = _robot->GetBlockWorld().GetConnectedActiveObjectByID(payload.objectID);
+  const auto* object = _robot->GetBlockWorld().GetConnectedBlockByID(payload.objectID);
   if( object == nullptr )
   {
     PRINT_NAMED_WARNING("BlockTapFilterComponent.HandleActiveObjectStopped.ObjectIDNull",

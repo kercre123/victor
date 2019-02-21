@@ -29,11 +29,7 @@ class Robot;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
-// rsam note: I tweaked this to Initial=160mm, maxDepth=8 to get 256cm max area. With old the 200 I had to choose
-// between 160cm (too small) or 320cm (too big). Incidentally we have gained 2mm per leaf node. I think performance-wise
-// it will barely impact even slowest devices, but we need to keep an eye an all these numbers as we get data from
-// real users
-constexpr float kQuadTreeInitialRootSideLength = 160.0f;
+constexpr float kQuadTreeInitialRootSideLength = 128.0f;
 constexpr uint8_t kQuadTreeInitialMaxDepth = 4;
 constexpr uint8_t kQuadTreeMaxRootDepth = 8;
 };

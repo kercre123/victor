@@ -98,7 +98,7 @@ int main(int argc, char **argv)
   }
 
   // Start with a step so that we can attach to the process here for debugging
-  webserverSupervisor.step(WEB_SERVER_TIME_STEP_MS);
+  webserverSupervisor.step(1);  // Just 1 ms step duration
 
   // Create the standalone web server
   Json::Value wsConfig;
@@ -115,11 +115,11 @@ int main(int argc, char **argv)
   LOG_INFO("webotsCtrlWebServer.main", "cozmoWebServer created and initialized");
 
   //
-  // Main Execution loop: step the world forward forever
+  // Main Execution loop: step the world forward
   //
-  while (webserverSupervisor.step(WEB_SERVER_TIME_STEP_MS) != -1)
+  static const u32 kWebotsWebServerTimeStep_ms = 100;
+  while (webserverSupervisor.step(kWebotsWebServerTimeStep_ms) != -1)
   {
-    cozmoWebServer.Update();
   }
 
   Util::gLoggerProvider = nullptr;

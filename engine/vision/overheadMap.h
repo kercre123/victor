@@ -16,8 +16,8 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/compressedImage.h"
+#include "coretech/vision/engine/debugImageList.h"
 #include "coretech/vision/engine/image.h"
-#include "engine/debugImageList.h"
 #include "engine/vision/visionPoseData.h"
 
 #include <unordered_set>
@@ -39,7 +39,7 @@ public:
   OverheadMap(const Json::Value& config, const CozmoContext *context);
 
   Result Update(const Vision::ImageRGB& image, const VisionPoseData& poseData,
-                DebugImageList<Vision::CompressedImage>& debugImages);
+                Vision::DebugImageList<Vision::CompressedImage>& debugImages);
 
   const Vision::ImageRGB& GetOverheadMap() const;
   const Vision::Image& GetFootprintMask() const;
@@ -82,7 +82,7 @@ private:
   // Set the overhead map to be all black
   void ResetMaps();
   // Paint all the _footprintMask pixels underneath the robot footprint with white
-  void UpdateFootprintMask(const Pose3d& robotPose, DebugImageList<Vision::CompressedImage>& debugImages);
+  void UpdateFootprintMask(const Pose3d& robotPose, Vision::DebugImageList<Vision::CompressedImage>& debugImages);
 
   // TODO in the future these could be sparse matrices for optimized iteration over non-black pixels
   Vision::ImageRGB _overheadMap;
@@ -95,7 +95,7 @@ private:
   cv::RotatedRect GetFootprintRotatedRect(const Pose3d& robotPose) const;
 
   Vision::ImageRGB GetImageCenteredOnRobot(const Pose3d& robotPose,
-                                           DebugImageList<Vision::CompressedImage>& debugImages) const;
+                                           Vision::DebugImageList<Vision::CompressedImage>& debugImages) const;
 };
 
 } // namespace Vector
