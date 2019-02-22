@@ -689,7 +689,10 @@ def generate_combined_webots_devLog(log_folder, log_file_name, didFail, test_con
 
   try:
     print(dev_log_folder + " does not exist, creating directory.")
+    current_mask = os.umask(0) #temporarily force umask 000 -> (new dirs will be created with 777)
     os.makedirs(dev_log_folder, mode=0o777, exist_ok=True)
+    os.chmod(dev_log_folder, mode=0o777) #not really necessary, but just in case
+    os.umask(current_mask) 
   except OSError:
     if not os.path.isdir(dev_log_folder):
       raise
