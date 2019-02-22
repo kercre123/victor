@@ -13,6 +13,8 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
+#include "osState/osState.h"
 
 #include "engine/cozmoAPI/cozmoAPI.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
@@ -433,4 +435,21 @@ int main(int argc, char* argv[])
   Anki::Vector::UninstallCrashReporter();
 
   return 0;
+}
+
+// entry point for vic-engine running as a thread
+
+struct argcv {
+  int argc;
+  char **argv;
+};
+
+extern "C" void* threadmain(struct argcv* p)
+{
+  int argc = p->argc;
+  char **argv = p->argv;
+
+  main(argc, argv);
+
+  return NULL;
 }

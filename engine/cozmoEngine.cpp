@@ -457,11 +457,15 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
     }
     case EngineState::Running:
     {
-      // Update time
-      BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
+#if !USE_ENGINEANIM_COMBINED
+      // Only anim updates this singleton when combined
 
-      // Update OSState
-      OSState::getInstance()->Update(currTime_nanosec);
+      // Update time  
+      BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);  
+
+       // Update OSState  
+      OSState::getInstance()->Update(currTime_nanosec);  
+#endif
 
       Result result = _context->GetRobotManager()->UpdateRobotConnection();
       if (RESULT_OK != result) {

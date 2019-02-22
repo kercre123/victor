@@ -1,0 +1,25 @@
+[Unit]
+Description=Victor engine-anim daemon
+SourcePath=/anki/bin/vic-engine-anim
+PartOf=anki-robot.target
+
+Wants=vic-robot.service
+Requires=anki-audio-init.service
+After=vic-robot.service anki-audio-init.service
+
+[Service]
+PermissionsStartOnly=true
+EnvironmentFile=/anki/etc/vic-engine.env
+ExecStartPre=-/bin/systemctl stop vic-bootAnim.service
+ExecStartPre=/bin/chown engine:root /sys/devices/system/cpu/cpu0/cpufreq/scaling_governor
+ExecStartPre=/bin/chown engine:root /sys/devices/system/cpu/cpu0/cpufreq/scaling_setspeed
+ExecStartPre=/bin/chown engine:root /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_cur_freq
+ExecStartPre=/bin/chgrp anki /dev/block/bootdevice/by-name/emr
+ExecStart=/usr/bin/logwrapper /anki/bin/vic-engine-anim $VIC_ENGINE_OPTS
+ExecStopPost=/anki/bin/vic-on-exit
+Restart=no
+Group=anki
+UMask=0002
+
+[Install]                   
+WantedBy=anki-robot.target

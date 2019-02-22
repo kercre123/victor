@@ -207,6 +207,13 @@ list(APPEND VICOS_LINKER_FLAGS
 list(APPEND VICOS_COMPILER_FLAGS
     -Wformat -Werror=format-security)
 
+option(USE_ENGINEANIM_COMBINED "Build for a combined engine-anim runtime" ON)
+if (USE_ENGINEANIM_COMBINED)
+  list(APPEND VICOS_COMPILER_FLAGS -DUSE_ENGINEANIM_COMBINED=1)
+else()
+  list(APPEND VICOS_COMPILER_FLAGS -DUSE_ENGINEANIM_COMBINED=0)
+endif()
+
 # Convert these lists into strings.
 string(REPLACE ";" " " VICOS_COMPILER_FLAGS         "${VICOS_COMPILER_FLAGS}")
 string(REPLACE ";" " " VICOS_COMPILER_FLAGS_CXX     "${VICOS_COMPILER_FLAGS_CXX}")
@@ -309,3 +316,5 @@ if (USE_ANKIASAN)
                                -l${VICOS_SDK}/prebuilt/lib/clang/5.0.1/lib/linux/libclang_rt.asan-arm.a
   )
 endif()
+
+option(USE_ENGINEANIM_COMBINED "Build for a combined engine-anim runtime" OFF)

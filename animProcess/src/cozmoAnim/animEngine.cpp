@@ -188,7 +188,10 @@ Result AnimEngine::Update(const BaseStationTime_t currTime_nanosec)
   }
 #endif
 
+// #if !USE_ENGINEANIM_COMBINED
+//  // Only engine updates this singleton when combined
   BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
+// #endif
 
   _context->GetWebService()->Update();
 
@@ -198,7 +201,10 @@ Result AnimEngine::Update(const BaseStationTime_t currTime_nanosec)
     return result;
   }
 
+//#if !USE_ENGINEANIM_COMBINED
+//  // Only engine updates this singleton when combined
   OSState::getInstance()->Update(currTime_nanosec);
+// #endif
 
   _ttsComponent->Update();
 
