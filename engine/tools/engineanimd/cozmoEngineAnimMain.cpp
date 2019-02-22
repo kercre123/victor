@@ -1,4 +1,4 @@
-/**
+/** 
 * File: cozmoEngineMain.cpp
 *
 * Author: Various Artists
@@ -56,6 +56,25 @@
 #include <csignal>
 
 
+#include "cozmoAnim/animEngine.h"
+
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+
+#include "anki/cozmo/shared/cozmoConfig.h"
+
+#include "util/fileUtils/fileUtils.h"
+#include "util/logging/logging.h"
+#include "util/logging/channelFilter.h"
+#include "util/logging/victorLogger.h"
+
+#include "platform/common/diagnosticDefines.h"
+#include "platform/victorCrashReports/victorCrashReporter.h"
+
+#include <thread>
+#include <unistd.h>
+#include <csignal>
+
+
 // What IP do we use for advertisement?
 constexpr const char * ROBOT_ADVERTISING_HOST_IP = "127.0.0.1";
 
@@ -65,8 +84,12 @@ constexpr const char * LOG_PROCNAME = "vic-engine";
 // What channel name do we use for logging?
 #define LOG_CHANNEL "CozmoEngineMain"
 
+using namespace Anki;
+using namespace Anki::Vector;
+
 // Global singletons
 Anki::Vector::CozmoAPI* gEngineAPI = nullptr;
+Anki::Vector::Anim::AnimEngine* gAnimEngine = nullptr;
 Anki::Util::Data::DataPlatform* gDataPlatform = nullptr;
 
 
@@ -88,7 +111,7 @@ namespace {
 static void sigterm(int signum)
 {
   Anki::Util::DropBreadcrumb(false, nullptr, -1);
-  LOG_INFO("CozmoEngineMain.SIGTERM", "Shutting down on signal %d", signum);
+  LOG_INFO("CozmoEngineAnimMain.SIGTERM", "Shutting down on signal %d", signum);
   gShutdown = true;
 }
 
@@ -113,7 +136,62 @@ static Anki::Util::Data::DataPlatform* createPlatform(const std::string& persist
   return new Anki::Util::Data::DataPlatform(persistentPath, cachePath, resourcesPath);
 }
 
-static bool cozmo_start(const Json::Value& configuration)
+Anki::Util::Data::DataPlatform* createPlatform()
+{
+  char config_file_path[PATH_MAX] = { 0 };
+  const char* engine_env_config = getenv("VIC_ENGINE_CONFIG");
+  if (engine_env_config != NULL) {
+    strncpy(config_file_path, engine_env_config, sizeof(config_file_path));
+  }
+  const char* anim_env_config = getenv("VIC_ANIM_CONFIG");
+  if (anim_env_config != NULL) {
+    strncpy(config_file_path, anim_env_config, sizeof(config_file_path));
+  }
+
+  Json::Value config;
+
+  printf("config_file: %s\n", config_file_path);
+  if (strlen(config_file_path) > 0) {
+    std::string config_file{config_file_path};
+    if (!Anki::Util::FileUtils::FileExists(config_file)) {
+      fprintf(stderr, "config file not found: %s\n", config_file_path);
+    }
+
+    std::string jsonContents = Anki::Util::FileUtils::ReadFile(config_file);
+    printf("jsonContents: %s", jsonContents.c_str());
+    Json::Reader reader;
+    if (!reader.parse(jsonContents, config)) {
+      PRINT_STREAM_ERROR("CozmoAnimMain.createPlatform",
+        "json configuration parsing error: " << reader.getFormattedErrorMessages());
+    }
+  }
+
+  std::string persistentPath;
+  std::string cachePath;
+  std::string resourcesPath;
+
+  if (config.isMember("DataPlatformPersistentPath")) {
+    persistentPath = config["DataPlatformPersistentPath"].asCString();
+  } else {
+    LOG_ERROR("cozmoAnimMain.createPlatform.DataPlatformPersistentPathUndefined", "");
+  }
+
+  if (config.isMember("DataPlatformCachePath")) {
+    cachePath = config["DataPlatformCachePath"].asCString();
+  } else {
+    LOG_ERROR("cozmoAnimMain.createPlatform.DataPlatformCachePathUndefined", "");
+  }
+
+  if (config.isMember("DataPlatformResourcesPath")) {
+    resourcesPath = config["DataPlatformResourcesPath"].asCString();
+  } else {
+    LOG_ERROR("cozmoAnimMain.createPlatform.DataPlatformResourcesPathUndefined", "");
+  }
+
+  return createPlatform(persistentPath, cachePath, resourcesPath);
+}
+
+static bool common_start(const Json::Value& configuration)
 {
   //
   // In normal usage, private singleton owns the logger until application exits.
@@ -126,34 +204,7 @@ static bool cozmo_start(const Json::Value& configuration)
   Anki::Util::gEventProvider = gVictorLogger.get();
   LOG_INFO("cozmo_start", "Initializing engine");
 
-  std::string persistentPath;
-  std::string cachePath;
-  std::string resourcesPath;
-
-  // copy existing configuration data
-  Json::Value config(configuration);
-
-  if (config.isMember("DataPlatformPersistentPath")) {
-    persistentPath = config["DataPlatformPersistentPath"].asCString();
-  } else {
-    LOG_ERROR("cozmoEngineMain.DataPlatformPersistentPathUndefined", "");
-  }
-
-  if (config.isMember("DataPlatformCachePath")) {
-    cachePath = config["DataPlatformCachePath"].asCString();
-  } else {
-    LOG_ERROR("cozmoEngineMain.DataPlatformCachePathUndefined", "");
-  }
-
-  if (config.isMember("DataPlatformResourcesPath")) {
-    resourcesPath = config["DataPlatformResourcesPath"].asCString();
-  } else {
-    LOG_ERROR("cozmoEngineMain.DataPlatformResourcesPathUndefined", "");
-  }
-
-  gDataPlatform = createPlatform(persistentPath, cachePath, resourcesPath);
-
-  LOG_DEBUG("CozmoStart.ResourcesPath", "%s", resourcesPath.c_str());
+  gDataPlatform = createPlatform();
 
 #if (USE_DAS || DEV_LOGGER_ENABLED)
   const std::string& appRunId = Anki::Util::GetUUIDString();
@@ -203,11 +254,26 @@ static bool cozmo_start(const Json::Value& configuration)
     Anki::Util::gLoggerProvider = gMultiLogger.get();
   }
 #endif
+  return true;
+}
 
-  LOG_INFO("cozmo_start",
-            "Creating engine; Initialized data platform with persistentPath = %s, cachePath = %s, resourcesPath = %s",
-            persistentPath.c_str(), cachePath.c_str(), resourcesPath.c_str());
+static void common_stop()
+{
+  Anki::Util::SafeDelete(gDataPlatform);
 
+  Anki::Util::gEventProvider = nullptr;
+  Anki::Util::gLoggerProvider = nullptr;
+
+#if DEV_LOGGER_ENABLED
+  Anki::Vector::DevLoggingSystem::DestroyInstance();
+#endif
+
+  sync();
+}
+
+static bool cozmo_start(const Json::Value& configuration)
+{
+  Json::Value config = configuration;
   configure_engine_advertising(config);
 
   // Set up the console vars to load from file, if it exists
@@ -226,21 +292,120 @@ static bool cozmo_start(const Json::Value& configuration)
   return true;
 }
 
-static void cozmo_stop()
-{
+static void cozmo_stop() {
+  LOG_INFO("CozmoEngineMain.main", "Stopping engine");
+
   Anki::Util::SafeDelete(gEngineAPI);
-  Anki::Util::SafeDelete(gDataPlatform);
-
-  Anki::Util::gEventProvider = nullptr;
-  Anki::Util::gLoggerProvider = nullptr;
-
-#if DEV_LOGGER_ENABLED
-  Anki::Vector::DevLoggingSystem::DestroyInstance();
-#endif
-
-  sync();
 }
 
+static bool anim_start()
+{
+  // Set up the console vars to load from file, if it exists
+  ANKI_CONSOLE_SYSTEM_INIT(gDataPlatform->GetCachePath("consoleVarsAnim.ini").c_str());
+
+  // Create and init AnimEngine
+  gAnimEngine = new Anim::AnimEngine(gDataPlatform);
+
+  Result result = gAnimEngine->Init();
+  if (RESULT_OK != result) {
+    LOG_ERROR("CozmoAnimMain.main.InitFailed", "Unable to initialize (exit %d)", result);
+    delete gAnimEngine;
+    return false;
+  }
+
+  return true;
+}
+
+static void* anim_main(void*)
+{
+  using namespace std::chrono;
+  using TimeClock = steady_clock;
+
+  const auto runStart = TimeClock::now();
+  auto prevTickStart  = runStart;
+  auto tickStart      = runStart;
+
+  // Set the target time for the end of the first frame
+  auto targetEndFrameTime = runStart + (microseconds)(ANIM_TIME_STEP_US);
+
+  // Loop until shutdown or error
+  while (!gShutdown) {
+
+    const duration<double> curTime_s = tickStart - runStart;
+    const BaseStationTime_t curTime_ns = Util::numeric_cast<BaseStationTime_t>(Util::SecToNanoSec(curTime_s.count()));
+
+    Result result = gAnimEngine->Update(curTime_ns);
+    if (RESULT_OK != result) {
+      LOG_WARNING("CozmoAnimMain.main.UpdateFailed", "Unable to update (result %d)", result);
+
+      // Don't exit with error code so as not to trigger
+      // fault code 800 on what is actually a clean shutdown.
+      if (result == RESULT_SHUTDOWN) {
+        result = RESULT_OK;
+      }
+      break;
+    }
+
+    const auto tickAfterAnimExecution = TimeClock::now();
+    const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickAfterAnimExecution);
+    const auto tickDuration_us = duration_cast<microseconds>(tickAfterAnimExecution - tickStart);
+
+    tracepoint(anki_ust, vic_anim_loop_duration, tickDuration_us.count());
+#if ENABLE_TICK_TIME_WARNINGS
+    // Complain if we're going overtime
+    if (remaining_us < microseconds(-ANIM_OVERTIME_WARNING_THRESH_US))
+    {
+      LOG_WARNING("CozmoAnimMain.overtime", "Update() (%dms max) is behind by %.3fms",
+                  ANIM_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
+    }
+#endif
+    // We ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
+    // allows other threads to run
+    static const auto minimumSleepTime_us = microseconds((long)0);
+    const auto sleepTime_us = std::max(minimumSleepTime_us, remaining_us);
+    std::this_thread::sleep_for(sleepTime_us);
+
+    // Set the target end time for the next frame
+    targetEndFrameTime += (microseconds)(ANIM_TIME_STEP_US);
+
+    // See if we've fallen very far behind (this happens e.g. after a 5-second blocking
+    // load operation); if so, compensate by catching the target frame end time up somewhat.
+    // This is so that we don't spend the next SEVERAL frames catching up.
+    const auto timeBehind_us = -remaining_us;
+    static const auto kusPerFrame = ((microseconds)(ANIM_TIME_STEP_US)).count();
+    static const int kTooFarBehindFramesThreshold = 2;
+    static const auto kTooFarBehindThreshold = (microseconds)(kTooFarBehindFramesThreshold * kusPerFrame);
+    if (timeBehind_us >= kTooFarBehindThreshold)
+    {
+      const int framesBehind = (int)(timeBehind_us.count() / kusPerFrame);
+      const auto forwardJumpDuration = kusPerFrame * framesBehind;
+      targetEndFrameTime += (microseconds)forwardJumpDuration;
+#if ENABLE_TICK_TIME_WARNINGS
+      LOG_WARNING("CozmoAnimMain.catchup",
+                  "Update was too far behind so moving target end frame time forward by an additional %.3fms",
+                  (float)(forwardJumpDuration * 0.001f));
+#endif
+    }
+    tickStart = TimeClock::now();
+
+    const auto timeSinceLastTick_us = duration_cast<microseconds>(tickStart - prevTickStart);
+    prevTickStart = tickStart;
+
+    const auto sleepTimeActual_us = duration_cast<microseconds>(tickStart - tickAfterAnimExecution);
+    gAnimEngine->RegisterTickPerformance(tickDuration_us.count() * 0.001f,
+                                        timeSinceLastTick_us.count() * 0.001f,
+                                        sleepTime_us.count() * 0.001f,
+                                        sleepTimeActual_us.count() * 0.001f);
+  }
+
+  return NULL;
+}
+
+static void anim_stop() {
+  LOG_INFO("CozmoAnimMain.main.Shutdown", "Shutting down.");
+
+  delete gAnimEngine;
+}
 
 int main(int argc, char* argv[])
 {
@@ -338,14 +503,33 @@ int main(int argc, char* argv[])
     }
   }
 
-  const bool started = cozmo_start(config);
-  if (!started) {
+  const bool started1 = common_start(config);
+  if (!started1) {
+    printf("failed to common\n");
+    Anki::Vector::UninstallCrashReporter();
+    return 1;
+  }
+  const bool started2 = cozmo_start(config);
+  if (!started2) {
     printf("failed to start engine\n");
+    Anki::Vector::UninstallCrashReporter();
+    return 1;
+  }
+  const bool started3 = anim_start();
+  if (!started3) {
+    printf("failed to start anim\n");
     Anki::Vector::UninstallCrashReporter();
     return 1;
   }
 
   LOG_INFO("CozmoEngineMain.main", "Engine started");
+
+  pthread_t vicanim_thread;
+  pthread_attr_t vicanim_attr;
+  pthread_attr_init(&vicanim_attr);
+  pthread_create(&vicanim_thread, &vicanim_attr, anim_main, NULL);
+
+  // engine has started, plus it's shared stuff, now start anim
 
   using namespace std::chrono;
   using TimeClock = steady_clock;
@@ -429,27 +613,84 @@ int main(int argc, char* argv[])
     }
   } // End of tick loop
 
-  LOG_INFO("CozmoEngineMain.main", "Stopping engine");
   cozmo_stop();
+  anim_stop();
+  common_stop();
 
   Anki::Vector::UninstallCrashReporter();
+  sync();
 
   return 0;
 }
 
-// entry point for vic-engine running as a thread
+#if 0
+/**
+* File: cozmoEngineAnimMain.cpp
+*
+* Author: Richard Gale
+* Created: 2/6/19
+*
+* Description: Combine Engine+Anim Process on Victor
+*
+* Copyright: Anki, inc. 2019
+*
+*/
 
-struct argcv {
-  int argc;
-  char **argv;
-};
+#include <dlfcn.h>
+#include <pthread.h>
+#include <stdio.h>
+#include <stdlib.h>
 
-extern "C" void* threadmain(struct argcv* p)
+int main(int argc, char* argv[])
 {
-  int argc = p->argc;
-  char **argv = p->argv;
+  typedef void *(threadPtr)(void *);
 
-  main(argc, argv);
+  char *error;
 
-  return NULL;
+  void *vicanim_handle = dlopen("libvic-anim.so", RTLD_LAZY);
+  if (!vicanim_handle) {
+    fprintf(stderr, "%s\n", dlerror());
+    exit(1);
+  }
+
+  threadPtr* vicanim_fn = (threadPtr*)dlsym(vicanim_handle, "threadmain");
+  if ((error = dlerror()) != NULL)  {
+    fprintf(stderr, "%s\n", error);
+    exit(1);
+  }
+
+  void *vicengine_handle = dlopen("libvic-engine.so", RTLD_LAZY);
+  if (!vicengine_handle) {
+    fprintf(stderr, "%s\n", dlerror());
+    exit(1);
+  }
+
+  threadPtr* vicengine_fn = (threadPtr*)dlsym(vicengine_handle, "threadmain");
+  if ((error = dlerror()) != NULL)  {
+    fprintf(stderr, "%s\n", error);
+    exit(1);
+  }
+
+  struct argcv {
+    int argc;
+    char **argv;
+  } p;
+
+  p.argc = argc;
+  p.argv = argv;
+
+  pthread_t vicanim_thread;
+  pthread_attr_t vicanim_attr;
+  pthread_attr_init(&vicanim_attr);
+  pthread_create(&vicanim_thread, &vicanim_attr, vicanim_fn, &p);
+
+  pthread_t vicengine_thread;
+  pthread_attr_t vicengine_attr;
+  pthread_attr_init(&vicengine_attr);
+  pthread_create(&vicengine_thread, &vicengine_attr, vicengine_fn, &p);
+
+  pthread_join(vicengine_thread, NULL);
+
+  return 1;
 }
+#endif

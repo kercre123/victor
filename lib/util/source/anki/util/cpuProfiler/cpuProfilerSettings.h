@@ -35,7 +35,7 @@
 
 // Max number of threads that can be simultaneously profiled by CpuProfiler
 // Beware raising this too high - we linear search for threadId (so OK for N <= ~16)
-const uint32_t kCpuProfilerMaxThreads = 4;
+const uint32_t kCpuProfilerMaxThreads = 16;
 
 
 #endif // __Util_CpuProfiler_CpuProfilerSettings_H__

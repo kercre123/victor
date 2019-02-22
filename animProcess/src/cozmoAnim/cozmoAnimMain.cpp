@@ -254,3 +254,12 @@ int main(void)
   sync();
   exit(result);
 }
+
+// entry point for vic-anim running as a thread
+
+extern "C" void* threadmain(void*)
+{
+  main();
+
+  return NULL;
+}

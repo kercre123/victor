@@ -133,29 +133,26 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
      {
      }
     
-    #if CAN_STREAM
-      RobotInterface::EngineToRobot* HeadAngleKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
-      {
-        if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
-          return nullptr;
-        }
-        
-        RobotInterface::SetHeadAngle streamHeadMsg;
-        streamHeadMsg.actionID = 0;
-        streamHeadMsg.duration_sec = 0.001 * _keyframeActiveDuration_ms;
-        
-        // Add variability:
-        if(_angleVariability_deg > 0) {
-          streamHeadMsg.angle_rad = DEG_TO_RAD(static_cast<s8>(GetRNG().RandIntInRange(_angle_deg - _angleVariability_deg,
-                                                                                        _angle_deg + _angleVariability_deg)));
-        } else {
-          streamHeadMsg.angle_rad = DEG_TO_RAD(_angle_deg);
-        }
-        
-        return new RobotInterface::EngineToRobot(streamHeadMsg);
+    RobotInterface::EngineToRobot* HeadAngleKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
+    {
+      if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
+        return nullptr;
       }
-
-    #endif
+      
+      RobotInterface::SetHeadAngle streamHeadMsg;
+      streamHeadMsg.actionID = 0;
+      streamHeadMsg.duration_sec = 0.001 * _keyframeActiveDuration_ms;
+      
+      // Add variability:
+      if(_angleVariability_deg > 0) {
+        streamHeadMsg.angle_rad = DEG_TO_RAD(static_cast<s8>(GetRNG().RandIntInRange(_angle_deg - _angleVariability_deg,
+                                                                                      _angle_deg + _angleVariability_deg)));
+      } else {
+        streamHeadMsg.angle_rad = DEG_TO_RAD(_angle_deg);
+      }
+      
+      return new RobotInterface::EngineToRobot(streamHeadMsg);
+    }
 
     Result HeadAngleKeyFrame::DefineFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug)
     {
@@ -193,28 +190,26 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     {
     }
     
-    #if CAN_STREAM
-      RobotInterface::EngineToRobot* LiftHeightKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
-      {
-        if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
-          return nullptr;
-        }
-        
-        RobotInterface::SetLiftHeight streamLiftMsg;
-        streamLiftMsg.actionID = 0;
-        streamLiftMsg.duration_sec = Util::MilliSecToSec(static_cast<float>(_keyframeActiveDuration_ms));
-        
-        // Add variability:
-        if(_heightVariability_mm > 0) {
-          streamLiftMsg.height_mm = (uint8_t)static_cast<s8>(GetRNG().RandIntInRange(_height_mm - _heightVariability_mm,
-                                                                                     _height_mm + _heightVariability_mm));
-        } else {
-          streamLiftMsg.height_mm = _height_mm;
-        }
-
-        return new RobotInterface::EngineToRobot(streamLiftMsg);
+    RobotInterface::EngineToRobot* LiftHeightKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
+    {
+      if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
+        return nullptr;
       }
-    #endif
+      
+      RobotInterface::SetLiftHeight streamLiftMsg;
+      streamLiftMsg.actionID = 0;
+      streamLiftMsg.duration_sec = Util::MilliSecToSec(static_cast<float>(_keyframeActiveDuration_ms));
+      
+      // Add variability:
+      if(_heightVariability_mm > 0) {
+        streamLiftMsg.height_mm = (uint8_t)static_cast<s8>(GetRNG().RandIntInRange(_height_mm - _heightVariability_mm,
+                                                                                   _height_mm + _heightVariability_mm));
+      } else {
+        streamLiftMsg.height_mm = _height_mm;
+      }
+
+      return new RobotInterface::EngineToRobot(streamLiftMsg);
+    }
 
     Result LiftHeightKeyFrame::DefineFromFlatBuf(const CozmoAnim::LiftHeight* liftHeightKeyframe, const std::string& animNameDebug)
     {
@@ -961,14 +956,12 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     // EventKeyFrame
     //
     
-    #if CAN_STREAM
-      RobotInterface::EngineToRobot* EventKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
-      {
-        // This function isn't actually used. Instead GetAnimEvent() is used by animationStreamer.
-        DEV_ASSERT(false, "EventKeyFrame.GetStreamMessage.ShouldntCallThis");
-        return nullptr;
-      }
-    #endif
+    RobotInterface::EngineToRobot* EventKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
+    {
+      // This function isn't actually used. Instead GetAnimEvent() is used by animationStreamer.
+      DEV_ASSERT(false, "EventKeyFrame.GetStreamMessage.ShouldntCallThis");
+      return nullptr;
+    }
 
     Result EventKeyFrame::DefineFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug)
     {
@@ -1042,6 +1035,14 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       return RESULT_OK;
     }
 
+    RobotInterface::EngineToRobot* BackpackLightsKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
+    {
+      if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
+        return nullptr;
+      }
+      return new RobotInterface::EngineToRobot(_streamMsg);
+    }
+
     Result BackpackLightsKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
       ColorRGBA color;
@@ -1071,17 +1072,7 @@ _streamMsg.lights[__LED_NAME__].offset_ms = 0; } while(0)
 
       return RESULT_OK;
     }
-  
-    #if CAN_STREAM
-      RobotInterface::EngineToRobot* BackpackLightsKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
-      {
-        if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
-          return nullptr;
-        }
-        return new RobotInterface::EngineToRobot(_streamMsg);
-      }
-    #endif
-    
+
 #pragma mark -
 #pragma mark BodyMotionKeyFrame
     
@@ -1225,23 +1216,21 @@ _streamMsg.lights[__LED_NAME__].offset_ms = 0; } while(0)
       return RESULT_OK;
     }
 
-    #if CAN_STREAM
-      RobotInterface::EngineToRobot* BodyMotionKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
-      {
-        //PRINT_NAMED_INFO("BodyMotionKeyFrame.GetStreamMessage",
-        //                 "currentTime=%d, duration=%d\n", timeSinceAnimStart_ms, _keyframeActiveDuration_ms);
-        if(IsFirstKeyframeTick(timeSinceAnimStart_ms)) {
-          // Send the motion command at the beginning
-          return new RobotInterface::EngineToRobot(_streamMsg);
-        } else if(_enableStopMessage && GetTimeSinceTrigger(timeSinceAnimStart_ms) >= _keyframeActiveDuration_ms) {
-          // Send a stop command when the duration has passed
-          return new RobotInterface::EngineToRobot(_stopMsg);
-        } else {
-          // Do nothing in the middle or if no done message is required.
-          return nullptr;
-        }
+    RobotInterface::EngineToRobot* BodyMotionKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
+    {
+      //PRINT_NAMED_INFO("BodyMotionKeyFrame.GetStreamMessage",
+      //                 "currentTime=%d, duration=%d\n", timeSinceAnimStart_ms, _keyframeActiveDuration_ms);
+      if(IsFirstKeyframeTick(timeSinceAnimStart_ms)) {
+        // Send the motion command at the beginning
+        return new RobotInterface::EngineToRobot(_streamMsg);
+      } else if(_enableStopMessage && GetTimeSinceTrigger(timeSinceAnimStart_ms) >= _keyframeActiveDuration_ms) {
+        // Send a stop command when the duration has passed
+        return new RobotInterface::EngineToRobot(_stopMsg);
+      } else {
+        // Do nothing in the middle or if no done message is required.
+        return nullptr;
       }
-    #endif
+    }
     
     TimeStamp_t BodyMotionKeyFrame::GetKeyframeDuration_ms() const 
     {
@@ -1278,15 +1267,13 @@ _streamMsg.lights[__LED_NAME__].offset_ms = 0; } while(0)
       return RESULT_OK;
     }
     
-    #if CAN_STREAM
-      RobotInterface::EngineToRobot* RecordHeadingKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
-      {
-        if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
-          return nullptr;
-        }
-        return new RobotInterface::EngineToRobot(_streamMsg);
+    RobotInterface::EngineToRobot* RecordHeadingKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
+    {
+      if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
+        return nullptr;
       }
-    #endif
+      return new RobotInterface::EngineToRobot(_streamMsg);
+    }
     
     
 #pragma mark -
@@ -1393,15 +1380,13 @@ _streamMsg.lights[__LED_NAME__].offset_ms = 0; } while(0)
       return RESULT_OK;
     }
     
-    #if CAN_STREAM
-      RobotInterface::EngineToRobot* TurnToRecordedHeadingKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
-      {
-        if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
-          return nullptr;
-        }
-        return new RobotInterface::EngineToRobot(_streamMsg);
+    RobotInterface::EngineToRobot* TurnToRecordedHeadingKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
+    {
+      if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
+        return nullptr;
       }
-    #endif
+      return new RobotInterface::EngineToRobot(_streamMsg);
+    }
 
   } // namespace Vector
 } // namespace Anki

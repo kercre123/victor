@@ -32,13 +32,22 @@ namespace Anki {
 using namespace Anki;
 using namespace Anki::Vector;
 
-
+#if !USE_ENGINEANIM_COMBINED
 // Instantiate supervisor and pass to AndroidHAL
 webots::Supervisor animSupervisor;
-
+#endif
 
 int main(int argc, char **argv)
 {
+#if USE_ENGINEANIM_COMBINED
+  webots::Supervisor animSupervisor;
+  animSupervisor.step(ANIM_TIME_STEP_MS);
+  while (animSupervisor.step(ANIM_TIME_STEP_MS) != -1) {
+    // do nothing, it's all done in webotsCtrlGameEngine2
+  }
+
+  return 0;
+#else
   // Start with a step so that we can attach to the process here for debugging
   animSupervisor.step(ANIM_TIME_STEP_MS);
 
@@ -137,4 +146,5 @@ int main(int argc, char **argv)
 
   Util::gLoggerProvider = nullptr;
   return 0;
+#endif
 }

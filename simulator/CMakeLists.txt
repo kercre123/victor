@@ -284,20 +284,33 @@ webots_build_cxx_executable(webotsCtrlGameEngine2 ${ANKI_SRCLIST_DIR})
 anki_build_target_license(webotsCtrlGameEngine2 "ANKI")
 
 target_link_libraries(webotsCtrlGameEngine2
+  # engine
+
   PRIVATE
-  util
-  kazmath
   cameraService
-  whiskeyToF
-  cti_common
   cti_common_robot
-  cti_vision
   cti_messaging
   cti_planning
   cozmo_engine
   cubeBleClient
-  osState
   webotsCtrlCommon
+
+  # anim
+
+  PRIVATE
+  robot_interface
+  webotsCtrlCommon
+  victor_anim
+  robot_clad_cpplite
+
+  # shared
+
+  util
+  kazmath
+  whiskeyToF
+  cti_common
+  cti_vision
+  osState
   ${OPENCV_LIBS}
   ${PLATFORM_LIBS}
 )

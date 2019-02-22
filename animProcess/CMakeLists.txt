@@ -42,7 +42,7 @@ target_link_libraries(victor_anim
   PRIVATE
   util
   util_audio
-  canned_anim_lib_anim
+  canned_anim_lib
   # cti
   cti_common_robot
   cti_vision
@@ -94,7 +94,11 @@ target_include_directories(victor_anim
 # mac implementation uses (webotsCtrlAnim)
 if (VICOS)
 
-  anki_build_cxx_executable(vic-anim ${ANKI_SRCLIST_DIR})
+  if (USE_ENGINEANIM_COMBINED)
+    add_library(vic-anim SHARED src/cozmoAnim/cozmoAnimMain.cpp)
+  else ()
+    anki_build_cxx_executable(vic-anim ${ANKI_SRCLIST_DIR})
+  endif()
   anki_build_target_license(vic-anim "ANKI" "Commercial,${CMAKE_SOURCE_DIR}/licenses/acapela.license")
 
   target_link_libraries(vic-anim

@@ -14,10 +14,15 @@
 #include "osState/osState.h"
 #include "whiskeyToF/tof.h"
 
+#if USE_ENGINEANIM_COMBINED
+#include "cozmoAnim/animEngine.h"
+#endif
+
 #include "json/json.h"
 
 #include "engine/cozmoAPI/cozmoAPI.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
+#include "coretech/common/engine/utils/timer.h"
 
 #include "util/logging/channelFilter.h"
 #include "util/logging/eventProviderLoggingAdapter.h"
@@ -46,19 +51,40 @@ namespace Anki {
 using namespace Anki;
 using namespace Anki::Vector;
 
+#if USE_ENGINEANIM_COMBINED
+// Instantiate supervisor and pass to AndroidHAL and cubeBleClient
+webots::Supervisor animSupervisor;
+#endif
 
 int main(int argc, char **argv)
 {
   // Instantiate supervisor and pass to various singletons
+#if USE_ENGINEANIM_COMBINED
+  CameraService::SetSupervisor(&animSupervisor);
+  CubeBleClient::SetSupervisor(&animSupervisor);
+  ToFSensor::SetSupervisor(&animSupervisor);
+
+  // Set RobotID
+  OSState::getInstance()->SetRobotID(animSupervisor.getSelf()->getField("robotID")->getSFInt32());
+#else
   webots::Supervisor engineSupervisor;
 
   CameraService::SetSupervisor(&engineSupervisor);
   CubeBleClient::SetSupervisor(&engineSupervisor);
   ToFSensor::SetSupervisor(&engineSupervisor);
+
+  // Set RobotID
+  OSState::getInstance()->SetRobotID(engineSupervisor.getSelf()->getField("robotID")->getSFInt32());
+#endif
   
+#if USE_ENGINEANIM_COMBINED
+  const u32 ANIM_TIME_STEP_MS = 33;
+  animSupervisor.step(ANIM_TIME_STEP_MS);
+#else
   // Start with a step so that we can attach to the process here for debugging
   engineSupervisor.step(BS_TIME_STEP_MS);
-  
+#endif
+
   // parse commands
   WebotsCtrlShared::ParsedCommandLine params = WebotsCtrlShared::ParseCommandLine(argc, argv);
 
@@ -67,9 +93,6 @@ int main(int argc, char **argv)
   // is too big of a change, since it involves changing down to the context, so create a non-const platform
   //const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
   Anki::Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlGameEngine2");
-
-  // Set RobotID
-  OSState::getInstance()->SetRobotID(engineSupervisor.getSelf()->getField("robotID")->getSFInt32());
 
   // Get robotID to determine if devlogger should be created
   // Only create devLogs for robot with DEFAULT_ROBOT_ID.
@@ -170,7 +193,11 @@ int main(int argc, char **argv)
   }
 
   int numUIDevicesToWaitFor = 1;
+#if USE_ENGINEANIM_COMBINED
+  webots::Field* numUIsField = animSupervisor.getSelf()->getField("numUIDevicesToWaitFor");
+#else
   webots::Field* numUIsField = engineSupervisor.getSelf()->getField("numUIDevicesToWaitFor");
+#endif
   if (numUIsField) {
     numUIDevicesToWaitFor = numUIsField->getSFInt32();
   } else {
@@ -190,22 +217,103 @@ int main(int argc, char **argv)
     LOG_ERROR("webotsCtrlGameEngine.main", "Failed in creation/initialization of CozmoAPI");
   }
   else {
+#if USE_ENGINEANIM_COMBINED
+    // Initialize the anim engine
+    Anim::AnimEngine animEngine(&dataPlatform);
+    const auto animSuccess = animEngine.Init();
+    if (animSuccess != RESULT_OK) {
+      LOG_ERROR("webotsCtrlGameEngine.main", "Failed in creation/initialization of AnimEngine");
+    } else {
+      LOG_INFO("webotsCtrlGameEngine.main", "CozmoAPI and AnimEngine created and initialized.");
+
+      Anki::Util::Time::StopWatch stopWatch("tick");
+
+      //
+      // Main Execution loop: step the world forward
+      //
+//      double last_time_step = Util::SecToNanoSec(animSupervisor.getTime());;
+      while (animSupervisor.step(ANIM_TIME_STEP_MS) != -1)
+      { 
+        stopWatch.Start();
+        
+        const double currTimeNanoseconds = Util::SecToNanoSec(animSupervisor.getTime());
+
+        // Update time
+        BaseStationTimer::getInstance()->UpdateTime(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
+
+        // Update OSState
+        OSState::getInstance()->Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
+
+        const bool tickSuccess = myVictor.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
+        if (!tickSuccess) {
+          break;
+        }
+
+        animEngine.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
+
+//        const double diff = currTimeNanoseconds - last_time_step;
+//        if (diff >= BS_TIME_STEP_MS * 1000) {
+//          const bool tickSuccess = myVictor.Update(Util::numeric_cast<BaseStationTime_t>(BS_TIME_STEP_MS * 1000));
+//          if (!tickSuccess) {
+//            break;
+//          }
+//
+//          last_time_step += BS_TIME_STEP_MS * 1000;
+//        }
+
+        const float time_ms = Util::numeric_cast<float>(stopWatch.Stop());
+
+        // Record engine tick performance; this includes a call to PerfMetric.
+        // For webots, we 'fake' the sleep time here.  Unlike in Cozmo webots,
+        // we don't actually sleep in this loop
+        static const float kTargetDuration_ms = Util::numeric_cast<float>(BS_TIME_STEP_MS);
+        const float engineFreq_ms = std::max(time_ms, kTargetDuration_ms);
+        const float sleepTime_ms = std::max(0.0f, kTargetDuration_ms - time_ms);
+        const float sleepTimeActual_ms = sleepTime_ms;
+        myVictor.RegisterEngineTickPerformance(time_ms,
+                                               engineFreq_ms,
+                                               sleepTime_ms,
+                                               sleepTimeActual_ms);
+
+//        const float time_ms = Util::numeric_cast<float>(stopWatch.Stop());
+
+        // Record tick performance; this includes a call to PerfMetric.
+        // For webots, we 'fake' the sleep time here.  Unlike in Cozmo webots,
+        // we don't actually sleep in this loop
+//        static const float kTargetDuration_ms = Util::numeric_cast<float>(ANIM_TIME_STEP_MS);
+        const float animFreq_ms  = std::max(time_ms, kTargetDuration_ms);
+//        const float sleepTime_ms = std::max(0.0f, kTargetDuration_ms - time_ms);
+//        const float sleepTimeActual_ms = sleepTime_ms;
+        animEngine.RegisterTickPerformance(time_ms,
+                                           animFreq_ms,
+                                           sleepTime_ms,
+                                           sleepTimeActual_ms);
+      } // end tick loop
+    }
+#else
     LOG_INFO("webotsCtrlGameEngine.main", "CozmoAPI created and initialized.");
-    
+
     Anki::Util::Time::StopWatch stopWatch("tick");
-    
+
     //
     // Main Execution loop: step the world forward
     //
     while (engineSupervisor.step(BS_TIME_STEP_MS) != -1)
-    {
+    { 
       stopWatch.Start();
       
       const double currTimeNanoseconds = Util::SecToNanoSec(engineSupervisor.getTime());
+
+      // Update time
+      BaseStationTimer::getInstance()->UpdateTime(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
+
+      // Update OSState
+      OSState::getInstance()->Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
+
       const bool tickSuccess = myVictor.Update(Util::numeric_cast<BaseStationTime_t>(currTimeNanoseconds));
-      
+
       const float time_ms = Util::numeric_cast<float>(stopWatch.Stop());
-      
+
       // Record engine tick performance; this includes a call to PerfMetric.
       // For webots, we 'fake' the sleep time here.  Unlike in Cozmo webots,
       // we don't actually sleep in this loop
@@ -217,11 +325,12 @@ int main(int argc, char **argv)
                                              engineFreq_ms,
                                              sleepTime_ms,
                                              sleepTimeActual_ms);
-      
+
       if (!tickSuccess) {
         break;
       }
     } // end tick loop
+#endif
   }
 
 #if ANKI_DEV_CHEATS

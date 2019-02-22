@@ -44,6 +44,10 @@
 #define LOG_CHANNEL    "AnimEngine"
 #define NUM_ANIM_OPENCV_THREADS 0
 
+#ifndef VICOS
+#define VICOS 0
+#endif
+
 namespace Anki {
 namespace Vector {
 namespace Anim {
@@ -190,7 +194,9 @@ Result AnimEngine::Update(const BaseStationTime_t currTime_nanosec)
   }
 #endif
 
+#if VICOS || SIMULATOR
   BaseStationTimer::getInstance()->UpdateTime(currTime_nanosec);
+#endif
 
   _context->GetWebService()->Update();
 
@@ -200,7 +206,9 @@ Result AnimEngine::Update(const BaseStationTime_t currTime_nanosec)
     return result;
   }
 
+#if VICOS || SIMULATOR
   OSState::getInstance()->Update(currTime_nanosec);
+#endif
 
   _ttsComponent->Update();
 

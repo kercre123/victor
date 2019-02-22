@@ -90,12 +90,14 @@ void IBehavior::Update()
 
   // Ensure update is ticked every tick while in activatable scope
   const size_t tickCount = BaseStationTimer::getInstance()->GetTickCount();
+#if !USE_ENGINEANIM_COMBINED
   DEV_ASSERT_MSG(_lastTickOfUpdate == (tickCount - kBSTickInterval),
                 "IBehavior.Update.TickCountMismatch",
                 "Behavior '%s' is receiving tick on %zu, but hasn't been ticked since %zu",
                 _debugLabel.c_str(),
                 tickCount,
                 _lastTickOfUpdate);
+#endif
   _lastTickOfUpdate = tickCount;
 
   UpdateInternal();
