@@ -131,6 +131,11 @@ namespace Vector {
     void SetFaceEnrollmentMode(Vision::FaceID_t forFaceID = Vision::UnknownFaceID,
                                s32 numEnrollments = -1,
                                bool forceNewID = false);
+
+    // TODO put these behind anki dev cheats
+    void SetFilePathPrefix(const std::string filePathPrefix);
+    void SaveAllRecognitionImages();
+    void DeleteAllRecognitionImages();
     
     void SetFaceRecognitionIsSynchronous(bool isSynchronous);
     

@@ -1541,7 +1541,23 @@ namespace Vision {
     return _recognizer.DevComputePairwiseMatchScore(faceID1, img2, face2);
   }
 #endif /* ANKI_DEVELOPER_CODE */
-  
+
+  // TODO wrap this in anki dev cheats
+  void FaceTracker::Impl::SetFilePathPrefix(const std::string& filePathPrefix)
+  {
+    _recognizer.SetFilePathPrefix(filePathPrefix);
+  }
+
+  void FaceTracker::Impl::SaveAllRecognitionImages()
+  {
+    _recognizer.SaveAllRecognitionImages();
+  }
+
+  void FaceTracker::Impl::DeleteAllRecognitionImages()
+  {
+    _recognizer.DeleteAllRecognitionImages();
+  }
+
 } // namespace Vision
 } // namespace Anki
 

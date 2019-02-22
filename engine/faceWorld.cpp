@@ -1078,6 +1078,25 @@ namespace Vector {
     Enroll(faceID.GetID(), forceNewID);
   }
 
+  // TODO add anki dev cheats
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void FaceWorld::SetFilePathPrefix(const std::string& filePathPrefix)
+  {
+    _robot->GetVisionComponent().SetFilePathPrefix(filePathPrefix);
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void FaceWorld::SaveAllRecognitionImages()
+  {
+    _robot->GetVisionComponent().SaveAllRecognitionImages();
+  }
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void FaceWorld::DeleteAllRecognitionImages()
+  {
+    _robot->GetVisionComponent().DeleteAllRecognitionImages();
+  }
+
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void FaceWorld::SendObjectUpdateToWebViz( const ExternalInterface::RobotDeletedFace& msg ) const
   {

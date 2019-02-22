@@ -57,6 +57,8 @@
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/enrolledFaceStorage.h"
 
+#include "osState/osState.h"
+
 #include "util/console/consoleInterface.h"
 
 #include "util/logging/logging.h"
@@ -161,6 +163,10 @@ struct BehaviorEnrollFace::InstanceConfig
   FaceSelectionComponent::FaceSelectionFactorMap faceSelectionCriteria;
   
   BackpackAnimationTrigger backpackAnim = BackpackAnimationTrigger::MeetVictor;
+
+  // TODO put in anki dev cheats
+  std::string            serialNumber;
+  std::string            buildSha;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -300,6 +306,11 @@ BehaviorEnrollFace::BehaviorEnrollFace(const Json::Value& config)
                 "behavior '%s' has invalid config",
                 GetDebugLabel().c_str());
   }
+
+  // TODO add anki dev cheats
+  auto *osstate = OSState::getInstance();
+  _iConfig->serialNumber = osstate->GetSerialNumberAsString();
+  _iConfig->buildSha = osstate->GetBuildSha();
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -590,6 +601,12 @@ void BehaviorEnrollFace::OnBehaviorActivated()
   // "tracking only" face.
   GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
 
+  // TODO add anki dev cheats
+  const std::string& cachePath = GetBEI().GetRobotInfo().GetContext()->GetDataPlatform()->GetCachePath("camera");
+  const std::string path = Util::FileUtils::FullFilePath({cachePath, "images", "recognition_data"});
+  const std::string filePathPrefix = path + _iConfig->serialNumber + "_" + _iConfig->buildSha + "_";
+  GetBEI().GetFaceWorldMutable().SetFilePathPrefix(path);
+
   PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal",
                 "Initialize with ID=%d and name '%s', to be saved to ID=%d",
                 _dVars->faceID, Util::HidePersonallyIdentifiableInfo(_dVars->faceName.c_str()), _dVars->saveID);
@@ -869,6 +886,10 @@ void BehaviorEnrollFace::BehaviorUpdate()
           DASMSG_SET(i3, numNamedFacesSeen, "Number of named faces seen during scanning");
           DASMSG_SEND();
         }
+
+        // TODO add anki dev cheats
+        GetBEI().GetFaceWorldMutable().SaveAllRecognitionImages();
+        GetBEI().GetFaceWorldMutable().DeleteAllRecognitionImages();
       }
 
       break;

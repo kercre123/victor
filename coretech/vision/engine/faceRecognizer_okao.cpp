@@ -34,7 +34,7 @@
 
 #define LOG_CHANNEL "FaceRecognizer"
 
-#define DEBUG_ENROLLMENT_IMAGES 0
+#define DEBUG_ENROLLMENT_IMAGES 1
 
 namespace Anki {
 namespace Vision {
@@ -1749,7 +1749,7 @@ namespace Vision {
 
     if(DEBUG_ENROLLMENT_IMAGES && kFaceRecognitionExtraDebug)
     {
-      DisplayMatchImages(resultNum, matchingAlbumEntries, scores, debugImages);
+      // DisplayMatchImages(resultNum, matchingAlbumEntries, scores, debugImages);
     }
     
     const bool foundMatchAboveThreshold = (resultNum > 0) && (scores[0] > kFaceRecognitionThreshold);
@@ -3337,6 +3337,29 @@ namespace Vision {
   }
   
 #endif /* ANKI_DEVELOPER_CODE */
+
+  // TODO put around anki dev cheats
+  void FaceRecognizer::SetFilePathPrefix(const std::string& filePathPrefix)
+  {
+    _filePathPrefix = filePathPrefix;
+  }
+
+  void FaceRecognizer::SaveAllRecognitionImages()
+  {
+    for (const auto& albumEntry: _enrollmentImages) {
+      const AlbumEntryID_t entryId = albumEntry.first;
+      for (const auto& enrollmentImage: albumEntry.second) {
+        const std::string fullFilename = _filePathPrefix + std::to_string(entryId) + "_" +
+          std::to_string(enrollmentImage.GetTimestamp()) + ".jpg";
+        enrollmentImage.Save(fullFilename);
+      }
+    }
+  }
+
+  void FaceRecognizer::DeleteAllRecognitionImages()
+  {
+    // Should I erase this?
+  }
   
   //
   // This may prove useful later if we ever want to try to do more complicated / smarter

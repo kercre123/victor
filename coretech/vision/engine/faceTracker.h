@@ -126,6 +126,11 @@ namespace Vision {
     float DevComputePairwiseMatchScore(int faceID1, int faceID2) const;
     float DevComputePairwiseMatchScore(int faceID1, const Image& img2, const TrackedFace& face2) const;
 #endif
+
+    // TODO add anki dev cheats
+    void SetFilePathPrefix(const std::string& filePathPrefix);
+    void SaveAllRecognitionImages();
+    void DeleteAllRecognitionImages();
     
   private:
     

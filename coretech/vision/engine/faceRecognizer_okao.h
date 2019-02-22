@@ -144,6 +144,11 @@ namespace Vision {
                                        const Image& img2, const TrackedFace& face2);
     
 #endif
+
+    // TODO put behind anki dev cheats
+    void SetFilePathPrefix(const std::string& filePathPrefix);
+    void SaveAllRecognitionImages();
+    void DeleteAllRecognitionImages();
     
   private:
     
@@ -300,7 +305,14 @@ namespace Vision {
                             DebugImageList<CompressedImage>& debugImages);
     
     static Result ComputeFeaturesFromFace(const Image& img, const TrackedFace& face, HFEATURE featureHandle);
-    
+
+    // TODO this should only be available in ANKI_DEV_CHEATS
+    // std::vector<Image> _enrollmentImagesToSave;
+
+    // This holds the path where we want to save our images as well as
+    // the prefix that is unique to the build and the robot, because
+    // we don't have easy access to either here.
+    std::string _filePathPrefix;
   }; // class FaceRecognizer
   
 
