@@ -1056,12 +1056,7 @@ namespace Anki {
           accelMagnitudeSqrd_ += (imu_data_.accel[i] * imu_data_.accel[i]);
         }
 
-        ukf_.Update(
-          {imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]},
-          {imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2] * z_gyro_scale},
-          CONTROL_DT,
-          isMotionDetected_
-        );
+
 
 #if(DEBUG_IMU_FILTER)
         AnkiDebugPeriodic(200, "Accel angle %f %f", accel_angle_imu_frame, accel_angle_robot_frame);
@@ -1074,7 +1069,7 @@ namespace Anki {
         AnkiDebugPeriodic(200, "ukf bias: {X %.5f, Y %.5f, Z %.5f}   old bias: {X %.5f, Y %.5f, Z %.5f}\n", 
               bias[0], bias[1], bias[2], 
               gyro_bias_filt[0], gyro_bias_filt[1], gyro_bias_filt[2]);
-        pAnkiDebugPeriodic(200, "ukf eul: {Z %.2f, Y %.2f, X %.2f}\n", 
+        AnkiDebugPeriodic(200, "ukf eul: {Z %.2f, Y %.2f, X %.2f}\n", 
                           RAD_TO_DEG( GetRotation() ), 
                           RAD_TO_DEG( GetPitch() ), 
                           RAD_TO_DEG( GetRoll() ));
@@ -1082,6 +1077,13 @@ namespace Anki {
 #endif
 
         if (useUKF) {
+          ukf_.Update(
+            {imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]},
+            {imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2] * z_gyro_scale},
+            CONTROL_DT,
+            isMotionDetected_
+          );
+
           // Update orientation
           const Rotation3d headRot(HeadController::GetAngleRad(), Y_AXIS_3D());
           const Rotation3d bodyRot = ukf_.GetRotation() * headRot;
