@@ -238,19 +238,27 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
 {
   using namespace external_interface;
   auto* gi = _robot->GetGatewayInterface();
-    
+   
   switch(event.GetData().GetTag()) {
     // Receives a message that external SDK wants an SDK behavior to be activated.
     case external_interface::GatewayWrapperTag::kControlRequest:
-      _sdkWantsControl = true;
-      _sdkControlLevel = event.GetData().control_request().priority();
-      LOG_INFO("SDKComponent::HandleProtoMessage","SDK requested control priority %u", _sdkControlLevel);
+      {
+        auto & control_req = event.GetData().control_request(); 
+        _sdkControlLevel = control_req.priority();
+        if (!ANKI_VERIFY(_sdkControlLevel, "SDKComponent::HandleProtoMessage", "Invalid _sdkControlLevel 0 (UNKNOWN)")) {
+          return;
+        }
 
-      if (_sdkBehaviorActivated) {
-        LOG_INFO("SDKComponent.HandleMessageBehaviorActivated", "SDK already has control");
-        // SDK wants control and and the SDK Behavior is already running. Send response that SDK behavior is activated.
-        DispatchSDKActivationResult(_sdkBehaviorActivated);
-        return;
+        _sdkWantsControl = true;
+        LOG_INFO("SDKComponent::HandleProtoMessage","SDK requested control priority %s (%u)", 
+                  control_req.Priority_Name(control_req.priority()).c_str(), _sdkControlLevel); 
+
+        if (_sdkBehaviorActivated) {
+          LOG_INFO("SDKComponent.HandleMessageBehaviorActivated", "SDK already has control");
+          // SDK wants control and and the SDK Behavior is already running. Send response that SDK behavior is activated.
+          DispatchSDKActivationResult(_sdkBehaviorActivated);
+          return;
+        }
       }
       break;
 
@@ -508,7 +516,7 @@ bool SDKComponent::SDKWantsControl()
 
 int SDKComponent::SDKControlLevel()
 {
-  DEV_ASSERT(_sdkWantsControl, "SDKComponent::SDKControlLevel.sdkWantsControl");
+  ANKI_VERIFY(_sdkWantsControl, "SDKComponent::SDKControlLevel", "_sdkWantsControl not set when accessing _sdkControlLevel");  
     
   return _sdkControlLevel;
 }
