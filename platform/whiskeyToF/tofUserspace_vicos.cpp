@@ -142,32 +142,32 @@ int setup_roi_grid(VL53L1_Dev_t* dev, const int rows, const int cols)
 
   if (rows > MAX_ROWS)
   {
-    PRINT_NAMED_ERROR("", "Cannot set %d rows (max %d)", rows, MAX_ROWS);
+    LOG_ERROR("ToF.setup_roi_grid", "Cannot set %d rows (max %d)", rows, MAX_ROWS);
     return -1;
   }
   
   if (rows < 1)
   {
-    PRINT_NAMED_ERROR("", "Cannot set %d rows, min 1", rows);
+    LOG_ERROR("ToF.setup_roi_grid", "Cannot set %d rows, min 1", rows);
     return -1;
   }
   
   if (cols > MAX_COLS)
   {
-    PRINT_NAMED_ERROR("", "Cannot set %d cols (max %d)", cols, MAX_ROWS);
+    LOG_ERROR("ToF.setup_roi_grid", "Cannot set %d cols (max %d)", cols, MAX_ROWS);
     return -1;
   }
   
   if (cols < 1)
   {
-    PRINT_NAMED_ERROR("", "Cannot set %d cols, min 1", cols);
+    LOG_ERROR("ToF.setup_roi_grid", "Cannot set %d cols, min 1", cols);
     return -1;
   }
   
   if (n_roi > VL53L1_MAX_USER_ZONES)
   {
-    PRINT_NAMED_ERROR("", "%drows * %dcols = %d > %d max user zones",
-                      rows, cols, n_roi, VL53L1_MAX_USER_ZONES);
+    LOG_ERROR("ToF.setup_roi_grid", "%drows * %dcols = %d > %d max user zones",
+              rows, cols, n_roi, VL53L1_MAX_USER_ZONES);
     return -1;
   }
 
@@ -195,40 +195,32 @@ int setup(VL53L1_Dev_t* dev)
   VL53L1_Error rc = 0;
 
   // Stop all ranging so we can change settings
-  PRINT_NAMED_ERROR("","stop ranging\n");
   rc = VL53L1_StopMeasurement(dev);
   return_if_error(rc, "ioctl error stopping ranging");
 
   // Switch to multi-zone scanning mode
-  PRINT_NAMED_ERROR("","Switch to multi-zone scanning\n");
   rc = VL53L1_SetPresetMode(dev, VL53L1_PRESETMODE_MULTIZONES_SCANNING);
   return_if_error(rc, "ioctl error setting preset_mode");
 
   // Setup ROIs
-  PRINT_NAMED_ERROR("","Setup ROI grid\n");
   rc = setup_roi_grid(dev, 4, 4);
   return_if_error(rc, "ioctl error setting up preset grid");
 
   // Set distance mode
-  PRINT_NAMED_ERROR("","set distance mode\n");
   rc = VL53L1_SetDistanceMode(dev, VL53L1_DISTANCEMODE_SHORT);
   return_if_error(rc, "ioctl error setting distance mode");
 
   // Set output mode
-  PRINT_NAMED_ERROR("","set output mode\n");
   rc = VL53L1_SetOutputMode(dev, VL53L1_OUTPUTMODE_STRONGEST);
   return_if_error(rc, "ioctl error setting distance mode");
 
-  PRINT_NAMED_ERROR("","Enable live xtalk\n");
   rc = VL53L1_SetXTalkCompensationEnable(dev, 0);
   return_if_error(rc, "ioctl error setting live xtalk");
 
-  PRINT_NAMED_ERROR("","set offset correction mode\n");
   rc = VL53L1_SetOffsetCorrectionMode(dev, VL53L1_OFFSETCORRECTIONMODE_PERZONE);
   return_if_error(rc, "ioctl error setting offset correction mode");
 
   // Setup timing budget
-  PRINT_NAMED_ERROR("","set timing budget\n");
   rc = VL53L1_SetMeasurementTimingBudgetMicroSeconds(dev, 16000);
   return_if_error(rc, "ioctl error setting timing budged");
 
@@ -267,7 +259,6 @@ int get_mz_data(VL53L1_Dev_t* dev, const int blocking, VL53L1_MultiRangingData_t
 
 int start_ranging(VL53L1_Dev_t* dev)
 {
-  PRINT_NAMED_ERROR("","loading calibration");
   int rc = load_calibration(dev);
   return_if_error(rc, "load_calibration failed");
   
