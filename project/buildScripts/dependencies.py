@@ -165,7 +165,7 @@ def is_tool(name):
 def is_up(url_string):
     import urllib2
     try:
-        response = urllib2.urlopen(url_string)
+        response = urllib2.urlopen(url_string, None, 10)
         response.read()
         return True
     except urllib2.HTTPError, e:
@@ -445,6 +445,9 @@ def svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
     # Try to import an svn tarball from the cache before contacting the server
     need_to_cache_svn_checkout = not extract_svn_cache_tarball_to_directory(url, r_rev, loc)
     if need_to_cache_svn_checkout:
+       if not is_up(url):
+          raise RuntimeError('Could not contact svn server at {0}.  This URL may require VPN or local LAN access.'.format(url))
+
        pipe = subprocess.Popen(checkout, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, close_fds=True)
        successful, err = pipe.communicate()
@@ -497,13 +500,6 @@ def svn_package(svn_dict):
     repos = svn_dict.get("repo_names", "")
     user = svn_dict.get("default_usr", "undefined")
     cred = SVN_CRED % (user, password)
-    stale_warning = "WARNING: If this build succeeds, it may contain stale external data"
-
-    have_internet = is_up(root_url)
-    if not have_internet:
-        print "WARNING: {0} is not available.  Please check your internet connection.".format(root_url)
-        print(stale_warning)
-        # Continue anyway in case manifest file needs to be regenerated
 
     for repo in repos:
         r_rev = repos[repo].get("version", "head")
@@ -530,7 +526,7 @@ def svn_package(svn_dict):
         if l_rev != 0 and os.path.isdir(loc):
             l_rev = get_svn_file_rev(loc, cred)
             #print("The version of [%s] is [%s]" % (loc, l_rev))
-            if have_internet and l_rev is None:
+            if l_rev is None:
                 l_rev = 0
                 msg = "Clearing out [%s] directory before getting a fresh copy."
                 if subdirs:
@@ -553,7 +549,7 @@ def svn_package(svn_dict):
         no_update_msg += "Current {0} revision at {1}".format(tool, l_rev)
 
         # Do dependencies need to be checked out?
-        need_to_checkout = have_internet and (r_rev == "head" or l_rev != r_rev)
+        need_to_checkout = (r_rev == "head" or l_rev != r_rev)
 
         # Check if manifest file exists
         manifest_file_path = os.path.join(loc, MANIFEST_FILE_NAME)
@@ -656,8 +652,8 @@ def files_package(files):
            continue
 
         if not is_up(url):
-            print "WARNING File {0} is not available. Please check your internet connection.".format(url)
-            return pulled_files
+           raise RuntimeError("Failed to reach {0}. Check your network connection.  This URL may require VPN or local LAN access".format(url))
+
 
         pull_file = [tool, '-s', url]
         pipe = subprocess.Popen(pull_file, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -727,10 +723,6 @@ def teamcity_package(tc_dict):
         # These artifacts are stored on artifactory.
         teamcity=False
 
-    if not is_up(root_url):
-        print "WARNING {0} is not available.  Please check your internet connection.".format(root_url)
-        return downloaded_builds
-
     for build in builds:
         required_version = builds[build].get("version", None)
         unpack_path = os.path.join(DEPENDENCY_LOCATION, build)
@@ -767,6 +759,9 @@ def teamcity_package(tc_dict):
 
         # If we don't already have a cached copy of the package, download it
         if not os.path.isfile(dist):
+           if not is_up(root_url):
+              raise RuntimeError("Failed to reach {0}. Check your network connection.  This URL may require VPN or local LAN access.".format(root_url))
+
            if teamcity:
               combined_url = "{0}/repository/download/{1}/{2}/{3}_{4}.{5}".format(root_url,
                                                                                   build_type_id,
