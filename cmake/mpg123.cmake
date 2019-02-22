@@ -19,7 +19,7 @@ set(MPG123_LIBS
 )
 
 foreach(LIB ${MPG123_LIBS})
-  add_library(${LIB} STATIC IMPORTED)
+  add_library(${LIB} SHARED IMPORTED)
   set_target_properties(${LIB} PROPERTIES
     IMPORTED_LOCATION
     "${LIBMPG123_LIB_PATH}/lib${LIB}.${LIBMPG123_EXT}"
