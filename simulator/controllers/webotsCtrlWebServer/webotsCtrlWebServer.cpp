@@ -48,13 +48,12 @@ int main(int argc, char **argv)
   //const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
   Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlWebServer");
 
-  // Set Webots supervisor
-  OSState::SetSupervisor(&webserverSupervisor);
-
   // Create the OSState singleton now, while we're in the main thread.
   // If we don't, subsequent calls from the webservice threads will
   // create it in the wrong thread and things won't work right
   (void)OSState::getInstance();
+
+  OSState::getInstance()->SetRobotID(webserverSupervisor.getSelf()->getField("robotID")->getSFInt32());
 
   // - create and set logger
   Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::LOG_LEVEL_WARN,

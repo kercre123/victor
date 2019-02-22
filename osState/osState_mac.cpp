@@ -68,10 +68,6 @@ namespace {
 
   uint32_t kPeriodEnumToMS[] = {0, 10, 100, 1000, 10000};
 
-  // Whether or not SetSupervisor() was called
-  bool _supervisorIsSet = false;
-  webots::Supervisor *_supervisor = nullptr;
-
   RobotID_t _robotID = DEFAULT_ROBOT_ID;
 
   // System vars
@@ -117,15 +113,6 @@ std::string GetSerialNumberInternal()
 
 OSState::OSState()
 {
-  DEV_ASSERT(_supervisorIsSet, "OSState.Ctor.SupervisorNotSet");
-
-  if (_supervisor != nullptr) {
-    // Set RobotID
-    const auto* robotIDField = _supervisor->getSelf()->getField("robotID");
-    DEV_ASSERT(robotIDField != nullptr, "OSState.Ctor.MissingRobotIDField");
-    _robotID = robotIDField->getSFInt32();
-  }
-
   // Set simulated attributes
   _serialNumString = GetSerialNumberInternal();
   _osBuildVersion = "12345";
@@ -145,12 +132,6 @@ OSState::OSState()
 
 OSState::~OSState()
 {
-}
-
-void OSState::SetSupervisor(webots::Supervisor *sup)
-{
-  _supervisor = sup;
-  _supervisorIsSet = true;
 }
 
 void OSState::Update(BaseStationTime_t currTime_nanosec)
@@ -191,6 +172,12 @@ RobotID_t OSState::GetRobotID() const
 {
   return _robotID;
 }
+
+void OSState::SetRobotID(RobotID_t robotID)
+{
+  _robotID = robotID;
+}
+
 
 void OSState::UpdateCPUFreq_kHz() const
 {

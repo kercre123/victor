@@ -48,9 +48,6 @@ int main(int argc, char **argv)
   //const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
   Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlAnim");
 
-  // Set Webots supervisor
-  OSState::SetSupervisor(&animSupervisor);
-
   // - create and set logger
   Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::LOG_LEVEL_WARN,
                                                                                         params.colorizeStderrOutput);
@@ -107,6 +104,8 @@ int main(int argc, char **argv)
   }
   else {
     LOG_INFO("webotsCtrlAnim.main", "AnimEngine created and initialized.");
+
+    OSState::getInstance()->SetRobotID(animSupervisor.getSelf()->getField("robotID")->getSFInt32());
 
     Anki::Util::Time::StopWatch stopWatch("tick");
 
