@@ -206,7 +206,14 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
 {
   if(!_isInitialized)
   {
-    LOG_ERROR("NeuralNetRunner.StartProcessingIfIdle.NotInitialized", "");
+    // This will spam the log, but only in the NeuralNets channel, plus it helps make it more obvious to a
+    // developer that something is wrong since it's easy to miss a model load failure (and associated error
+    // in the log) at startup.
+    //
+    // If you do see this error, it is likely one of two things:
+    //  1. Your model configuration in vision_config.json is wrong (look for other errors on load)
+    //  2. Git LFS has failed you. See: https://ankiinc.atlassian.net/browse/VIC-13455
+    LOG_INFO("NeuralNetRunner.StartProcessingIfIdle.NotInitialized", "t:%ums", imageCache.GetTimeStamp());
     return false;
   }
   

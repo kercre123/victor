@@ -368,8 +368,10 @@ namespace Vector {
     // Empty frames are expected for animations that have a duration longer than ANIM_TIME_STEP_MS, and hence
     // this function may return false even though there are frames remaining. To check if the keyframe is done,
     // check the final keyframe timestamp rather than the return value of this function.
-    bool GetFaceImageHandle(const TimeStamp_t timeSinceAnimStart_ms, Vision::SpriteHandle& handle);
-    
+    bool GetFaceImageHandle(const TimeStamp_t timeSinceAnimStart_ms,
+                            Vision::SpriteHandle& handle,
+                            uint16_t& numLayers);
+
     Vision::CompositeImage& GetCompositeImage() { assert(_compositeImage != nullptr); return *_compositeImage; }
     
     void OverrideShouldRenderInEyeHue(bool shouldRenderInEyeHue);

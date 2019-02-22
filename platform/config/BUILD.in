@@ -60,4 +60,3 @@ asset_project(
                 prefix = 'etc'
             ),
 )
-

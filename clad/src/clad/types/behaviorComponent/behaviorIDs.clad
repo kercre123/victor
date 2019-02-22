@@ -430,7 +430,8 @@ enum uint_16 BehaviorID {
   ResetSafely,
 
   // victorBehaviorTree/sdkBehaviors
-  SDK0,
+  SDKDefault,
+  SDKOverrideAll,
 
   // victorBehaviorTree/seasonal
   SeasonalHappyHolidays,

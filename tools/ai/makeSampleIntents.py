@@ -22,12 +22,6 @@ import itertools
 
 USAGE_MSG = 'USAGE: {0} <dialogFlowDataDir> <outputFile.json>'.format( sys.argv[0] )
 
-ANKI_ENTITIES = [ "entity_anki_words", "entity_bad_words", "entity_behavior",
-                  "entity_behavior_deletable", "entity_behavior_stoppable",
-                  "entity_charger_words", "entity_clothes_words", "entity_cube_words",
-                  "entity_exploring_words", "entity_forecast_words", "entity_photo_selfie",
-                  "entity_robotnames", "entity_topic", "entity_weather_words" ]
-
 # These are from https://dialogflow.com/docs/reference/system-entities
 SYSTEM_ENTITIES = { "sys.any": ["flower"],
                     "sys.date-time": ["2017-07-12T16:30:00Z"],
@@ -71,7 +65,7 @@ def GetIntents(path):
   for file in os.listdir( path ):
     if file.endswith( '.json' ):
       filename = os.path.join( path, file )
-      if 'usersays_en' not in filename:
+      if 'usersays' not in filename:
         files.append( filename )
 
   for file in files:
@@ -86,14 +80,14 @@ def GetIntents(path):
   return intents
 
 # - - - - - - - - - - - - - - - - - - - - - -
-def GetSamplesForDataType(paramName, dataType, entities):
+def GetSamplesForDataType(paramName, dataType, entities, ankiEntities):
   """ Map from dataType to a sample, either from entities or system types """
 
   dataType = dataType[1:] # drop the "@"
 
   paramSamples = []
 
-  if dataType in ANKI_ENTITIES:
+  if dataType in ankiEntities:
     paramSamples = entities[dataType]["values"]
   # the rest from https://dialogflow.com/docs/reference/system-entities
   elif dataType in SYSTEM_ENTITIES:
@@ -118,17 +112,25 @@ def GetSamplesForDataType(paramName, dataType, entities):
   return sampleList
 
 # - - - - - - - - - - - - - - - - - - - - - -
+def GetEntityFiles(path, fullPath=True):
+  files = []
+  for file in os.listdir( path ):
+    if file.endswith( '.json' ):
+      if 'entries_en' in file:
+        continue
+      if fullPath:
+        files.append( os.path.join( path, file ) )
+      else:
+        files.append( file )
+  return files
+
+# - - - - - - - - - - - - - - - - - - - - - -
 def GetEntities(path):
   """ Loads and returns a list of entities """
 
   entities = {}
 
-  files = []
-  for file in os.listdir( path ):
-    if file.endswith( '.json' ):
-      filename = os.path.join( path, file )
-      if 'entries_en' not in filename:
-        files.append( filename )
+  files = GetEntityFiles(path)
 
   for file in files:
     entity = {}
@@ -146,7 +148,7 @@ def GetEntities(path):
   return entities
 
 # - - - - - - - - - - - - - - - - - - - - - -
-def MakeSamples( intents, entities ):
+def MakeSamples( intents, entities, ankiEntities ):
   """ Merges intents, entities, and samples of system data types to
       generate and return a list of sample cloud intents """
 
@@ -155,7 +157,7 @@ def MakeSamples( intents, entities ):
   for intent in intents:
     paramSamples = []
     for param in intent["params"]:
-      paramSamples.append( GetSamplesForDataType( param["name"], param["dataType"], entities ) )
+      paramSamples.append( GetSamplesForDataType( param["name"], param["dataType"], entities, ankiEntities ) )
     if len( paramSamples ) == 0:
       sample = {}
       sample["intent"] = intent["name"]
@@ -208,7 +210,11 @@ def main():
   intents = GetIntents( intentsDir )
   entities = GetEntities( entitiesDir )
 
-  sampleList = MakeSamples( intents, entities )
+  ankiEntities = GetEntityFiles( entitiesDir, False )
+  ankiEntities = map(lambda x: os.path.splitext(x)[0], ankiEntities)
+  ankiEntities.sort()
+
+  sampleList = MakeSamples( intents, entities, ankiEntities )
 
   SaveSamples( sampleList, outputFilename )
 

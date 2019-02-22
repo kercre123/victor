@@ -24,7 +24,20 @@ void InstallCrashReporter(const char * filenamePrefix);
 //
 void UninstallCrashReporter();
 
+//
+// Stub class to manage lifetime of crash report handlers
+// Handlers are automatically installed when object is constructed.
+// Handlers are automatically removed when object is destroyed.
+//
+class CrashReporter
+{
+public:
+  CrashReporter(const char * filenamePrefix);
+  ~CrashReporter();
+};
+
 } // end namespace Vector
 } // end namespace Anki
+
 
 #endif // __victorCrashReporter_h

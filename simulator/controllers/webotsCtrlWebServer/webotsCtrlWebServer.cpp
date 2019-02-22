@@ -48,13 +48,12 @@ int main(int argc, char **argv)
   //const Anki::Util::Data::DataPlatform& dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0]);
   Util::Data::DataPlatform dataPlatform = WebotsCtrlShared::CreateDataPlatformBS(argv[0], "webotsCtrlWebServer");
 
-  // Set Webots supervisor
-  OSState::SetSupervisor(&webserverSupervisor);
-
   // Create the OSState singleton now, while we're in the main thread.
   // If we don't, subsequent calls from the webservice threads will
   // create it in the wrong thread and things won't work right
   (void)OSState::getInstance();
+
+  OSState::getInstance()->SetRobotID(webserverSupervisor.getSelf()->getField("robotID")->getSFInt32());
 
   // - create and set logger
   Util::IFormattedLoggerProvider* printfLoggerProvider = new Util::PrintfLoggerProvider(Anki::Util::LOG_LEVEL_WARN,
@@ -98,7 +97,7 @@ int main(int argc, char **argv)
   }
 
   // Start with a step so that we can attach to the process here for debugging
-  webserverSupervisor.step(WEB_SERVER_TIME_STEP_MS);
+  webserverSupervisor.step(1);  // Just 1 ms step duration
 
   // Create the standalone web server
   Json::Value wsConfig;
@@ -115,11 +114,11 @@ int main(int argc, char **argv)
   LOG_INFO("webotsCtrlWebServer.main", "cozmoWebServer created and initialized");
 
   //
-  // Main Execution loop: step the world forward forever
+  // Main Execution loop: step the world forward
   //
-  while (webserverSupervisor.step(WEB_SERVER_TIME_STEP_MS) != -1)
+  static const u32 kWebotsWebServerTimeStep_ms = 100;
+  while (webserverSupervisor.step(kWebotsWebServerTimeStep_ms) != -1)
   {
-    cozmoWebServer.Update();
   }
 
   Util::gLoggerProvider = nullptr;

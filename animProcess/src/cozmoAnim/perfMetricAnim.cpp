@@ -11,6 +11,7 @@
  **/
 
 
+#include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/perfMetricAnim.h"
@@ -29,13 +30,12 @@ namespace Vector {
 
 PerfMetricAnim::PerfMetricAnim(const AnimContext* context)
   : _frameBuffer(nullptr)
-  //, _context(context)
 {
-  _headingLine1 = "                       Anim     Anim    Sleep    Sleep     Over      RtA   AtR   EtA   AtE";
-  _headingLine2 = "                   Duration     Freq Intended   Actual    Sleep    Count Count Count Count";
+  _headingLine1 = "                       Anim     Anim    Sleep    Sleep     Over      RtA   AtR   EtA   AtE  Anim Layer";
+  _headingLine2 = "                   Duration     Freq Intended   Actual    Sleep    Count Count Count Count  Time Count";
   _headingLine2Extra = "";
-  _headingLine1CSV = ",,Anim,Anim,Sleep,Sleep,Over,RtA,AtR,EtA,AtE";
-  _headingLine2CSV = ",,Duration,Freq,Intended,Actual,Sleep,Count,Count,Count,Count,Count";
+  _headingLine1CSV = ",,Anim,Anim,Sleep,Sleep,Over,RtA,AtR,EtA,AtE,Anim,Layer";
+  _headingLine2CSV = ",,Duration,Freq,Intended,Actual,Sleep,Count,Count,Count,Count,Count,Time,Count";
   _headingLine2ExtraCSV = "";
 }
 
@@ -90,6 +90,8 @@ void PerfMetricAnim::Update(const float tickDuration_ms,
     frame._messageCountAnimToEngine = AnimProcessMessages::GetMessageCountAtE();
     frame._messageCountRobotToAnim  = AnimProcessMessages::GetMessageCountRtA();
     frame._messageCountEngineToAnim = AnimProcessMessages::GetMessageCountEtA();
+    frame._relativeStreamTime_ms    = _animationStreamer->GetRelativeStreamTime_ms();
+    frame._numLayersRendered        = _animationStreamer->GetNumLayersRendered();
 
     if (++_nextFrameIndex >= kNumFramesInBuffer)
     {
@@ -119,6 +121,8 @@ const PerfMetric::FrameMetric& PerfMetricAnim::UpdateDumpAccumulators(const int 
   _accMessageCountAtR += frame._messageCountAnimToRobot;
   _accMessageCountEtA += frame._messageCountEngineToAnim;
   _accMessageCountAtE += frame._messageCountAnimToEngine;
+  _accRelativeStreamTime_ms += frame._relativeStreamTime_ms;
+  _accNumLayersRendered     += frame._numLayersRendered;
 
   return _frameBuffer[frameBufferIndex];  // Return the base class data
 }
@@ -131,10 +135,11 @@ int PerfMetricAnim::AppendFrameData(const DumpType dumpType,
   const FrameMetricAnim& frame = _frameBuffer[frameBufferIndex];
 #define ANIM_LINE_DATA_VARS \
   frame._messageCountRobotToAnim, frame._messageCountAnimToRobot,\
-  frame._messageCountEngineToAnim, frame._messageCountAnimToEngine
+  frame._messageCountEngineToAnim, frame._messageCountAnimToEngine,\
+  frame._relativeStreamTime_ms, frame._numLayersRendered
 
-  static const char* kFormatLine = "    %5i %5i %5i %5i\n";
-  static const char* kFormatLineCSV = ",%5i,%5i,%5i,%5i\n";
+  static const char* kFormatLine = "    %5i %5i %5i %5i %5i %5i\n";
+  static const char* kFormatLineCSV = ",%5i,%5i,%5i,%5i,%5i,%5i\n";
 
   const int lenOut = snprintf(&_dumpBuffer[dumpBufferOffset], kSizeDumpBuffer - dumpBufferOffset,
                               dumpType == DT_FILE_CSV ? kFormatLineCSV : kFormatLine,
@@ -152,10 +157,11 @@ int PerfMetricAnim::AppendSummaryData(const DumpType dumpType,
 
 #define ANIM_SUMMARY_LINE_VARS(StatCall)\
   _accMessageCountRtA.StatCall(), _accMessageCountAtR.StatCall(),\
-  _accMessageCountEtA.StatCall(), _accMessageCountAtE.StatCall()
+  _accMessageCountEtA.StatCall(), _accMessageCountAtE.StatCall(),\
+  _accRelativeStreamTime_ms.StatCall(), _accNumLayersRendered.StatCall()
 
-  static const char* kFormatLine = "    %5.1f %5.1f %5.1f %5.1f\n";
-  static const char* kFormatLineCSV = ",%5.1f,%5.1f,%5.1f,%5.1f\n";
+  static const char* kFormatLine = "    %5.1f %5.1f %5.1f %5.1f %5.0f %5.0f\n";
+  static const char* kFormatLineCSV = ",%5.1f,%5.1f,%5.1f,%5.1f,%5.0f,%5.0f\n";
 
 #define APPEND_SUMMARY_LINE(StatCall)\
   lenOut = snprintf(&_dumpBuffer[dumpBufferOffset],    - dumpBufferOffset,\

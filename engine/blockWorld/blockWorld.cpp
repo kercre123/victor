@@ -67,7 +67,6 @@ namespace Vector {
   BlockWorld::BlockWorld()
   : UnreliableComponent<BCComponentID>(this, BCComponentID::BlockWorld)
   , IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::BlockWorld)
-  , _trackPoseChanges(false)
   {
   } // BlockWorld() Constructor
 
@@ -1067,15 +1066,7 @@ namespace Vector {
       else
       {
         // For non-unique objects, match based on pose (considering only objects in current frame)
-        // Ignore objects we're carrying
-        const ObjectID& carryingObjectID = _robot->GetCarryingComponent().GetCarryingObjectID();
-        filter.AddFilterFcn([&carryingObjectID](const ObservableObject* candidate) {
-          const bool isObjectBeingCarried = (candidate->GetID() == carryingObjectID);
-          return !isObjectBeingCarried;
-        });
-
-
-        // the observation has matched by pose, otherwise it would not be confirmed at this pose. We don't need
+        // The observation has already matched by pose, otherwise it would not be confirmed at this pose. We don't need
         // to match by pose here, we can just used the ID we found as part of the observation confirmation
         ObservableObject* matchingObject = GetLocatedObjectByID( objSeen->GetID() );
 
@@ -1153,25 +1144,6 @@ namespace Vector {
 
       const ObjectID obsID = observedObject->GetID();
       DEV_ASSERT(obsID.IsSet(), "BlockWorld.AddAndUpdateObjects.IDNotSet");
-
-
-      // Safe to remove this? Haven't seen this warning being printed...
-      //
-      //      // Sanity check: this should not happen, but we're seeing situations where
-      //      // objects think they are being carried when the robot doesn't think it
-      //      // is carrying that object
-      //      // TODO: Eventually, we should be able to remove this check
-      //      ActionableObject* actionObject = dynamic_cast<ActionableObject*>(observedObject);
-      //      if(actionObject != nullptr) {
-      //        if(actionObject->IsBeingCarried() && _robot->GetCarryingObjectID() != obsID) {
-      //          PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObject.CarryStateMismatch",
-      //                              "Object %d thinks it is being carried, but does not match "
-      //                              "robot %d's carried object ID (%d). Setting as uncarried.",
-      //                              obsID.GetValue(), _robot->GetID(),
-      //                              _robot->GetCarryingObjectID().GetValue());
-      //          actionObject->SetBeingCarried(false);
-      //        }
-      //      }
 
       // Tell the world about the observed object. NOTE: it is guaranteed to be in the current frame.
       BroadcastObjectObservation(observedObject);
@@ -1630,50 +1602,6 @@ namespace Vector {
     }
   }
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::OnObjectPoseChanged(const ObservableObject& object, const Pose3d* oldPose, PoseState oldPoseState)
-  {
-    const ObjectID& objectID = object.GetID();
-    DEV_ASSERT(objectID.IsSet(), "BlockWorld.OnObjectPoseChanged.InvalidObjectID");
-
-    // - - - - -
-    // update the container that keeps track of changes per Update
-    // - - - - -
-    if ( _trackPoseChanges )
-    {
-      // find this object in the list of changes
-      auto matchIDlambda = [&objectID](const PoseChange& a) { return a._id == objectID; };
-      auto const matchIter = std::find_if(_objectPoseChangeList.begin(), _objectPoseChangeList.end(), matchIDlambda);
-      const bool alreadyChanged = (matchIter != _objectPoseChangeList.end());
-      if ( alreadyChanged ) {
-        // this can happen if an object on top of a stack changes its pose. The bottom one can upon updating the
-        // stack also try to change the top one, but that relative change will be ignored here because we
-        // already knew the top object moved (that's one example of multiple pose changes that are valid.)
-        PRINT_CH_INFO("BlockWorld", "BlockWorld.OnObjectPoseChanged.MultipleChanges",
-                      "Object '%d' is changing its pose again this tick. Ignoring second change",
-                      objectID.GetValue());
-        // do not update old pose, conserve the original pose it had when it changed the first time
-      }
-      else
-      {
-        // if the old pose was valid add to the list of the changes. Otherwise this is the first time that
-        // we see the object, so we don't need to update anything. Also oldPose will be nullptr in that case, useless.
-        if ( ObservableObject::IsValidPoseState(oldPoseState) )
-        {
-          DEV_ASSERT(nullptr!=oldPose, "BlockWorld.OnObjectPoseChanged.ValidPoseStateNullPose");
-          // add an entry at the end (this does not invalidate iterators or references to the current elements)
-          _objectPoseChangeList.emplace_back( objectID, *oldPose, oldPoseState );
-        }
-        else
-        {
-          PRINT_CH_INFO("BlockWorld", "BlockWorld.OnObjectPoseChanged.FirstPoseForObject",
-                        "Object '%d' is setting its first pose. Not queueing change.",
-                        objectID.GetValue());
-        }
-      }
-    }
-  }
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::OnRobotDelocalized(PoseOriginID_t newWorldOriginID)
   {
@@ -1726,10 +1654,6 @@ namespace Vector {
   Result BlockWorld::UpdateObservedMarkers(const std::list<Vision::ObservedMarker>& currentObsMarkers)
   {
     ANKI_CPU_PROFILE("BlockWorld::UpdateObservedMarkers");
-
-    // clear the change list and start tracking them
-    _objectPoseChangeList.clear();
-    _trackPoseChanges = true;
 
     if(!currentObsMarkers.empty())
     {
@@ -1805,9 +1729,6 @@ namespace Vector {
         CheckForUnobservedObjects(lastImgTimestamp);
       }
     }
-
-    // do not track changes anymore, since we only use them to update stacks
-    _trackPoseChanges = false;
 
 #   define DISPLAY_ALL_OCCLUDERS 0
     if(DISPLAY_ALL_OCCLUDERS)

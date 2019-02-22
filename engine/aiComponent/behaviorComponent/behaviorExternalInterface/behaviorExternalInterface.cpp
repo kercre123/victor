@@ -57,6 +57,7 @@ void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dep
   auto* blockWorld             = dependentComps.GetComponentPtr<BlockWorld>();
   auto* delegationComponent    = dependentComps.GetComponentPtr<DelegationComponent>();
   auto* faceWorld              = dependentComps.GetComponentPtr<FaceWorld>();
+  auto* heldInPalmTracker      = dependentComps.GetComponentPtr<HeldInPalmTracker>();
   auto* robotInfo              = dependentComps.GetComponentPtr<BEIRobotInfo>();
   auto* sleepTracker           = dependentComps.GetComponentPtr<SleepTracker>();
 
@@ -77,6 +78,7 @@ void BehaviorExternalInterface::InitDependent(Robot* robot, const BCCompMap& dep
        delegationComponent,
        faceWorld,
        robot->GetComponentPtr<HabitatDetectorComponent>(),
+       heldInPalmTracker,
        robot->GetComponentPtr<MapComponent>(),
        robot->GetComponentPtr<MicComponent>(),
        robot->GetComponentPtr<MoodManager>(),
@@ -120,6 +122,7 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                      DelegationComponent*           delegationComponent,
                                      FaceWorld*                     faceWorld,
                                      HabitatDetectorComponent*      habitatDetectorComponent,
+                                     HeldInPalmTracker*             heldInPalmTracker,
                                      MapComponent*                  mapComponent,
                                      MicComponent*                  micComponent,
                                      MoodManager*                   moodManager,
@@ -160,6 +163,7 @@ void BehaviorExternalInterface::Init(AIComponent*                   aiComponent,
                                                      delegationComponent,
                                                      faceWorld,
                                                      habitatDetectorComponent,
+                                                     heldInPalmTracker,
                                                      mapComponent,
                                                      micComponent,
                                                      moodManager,
@@ -214,6 +218,7 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
                                                               DelegationComponent*           delegationComponent,
                                                               FaceWorld*                     faceWorld,
                                                               HabitatDetectorComponent*      habitatDetectorComponent,
+                                                              HeldInPalmTracker*             heldInPalmTracker,
                                                               MapComponent*                  mapComponent,
                                                               MicComponent*                  micComponent,
                                                               MoodManager*                   moodManager,
@@ -255,6 +260,7 @@ BehaviorExternalInterface::CompArrayWrapper::CompArrayWrapper(AIComponent*      
     {BEIComponentID::Delegation,                BEIComponentWrapper(delegationComponent)},
     {BEIComponentID::FaceWorld,                 BEIComponentWrapper(faceWorld)},
     {BEIComponentID::HabitatDetector,           BEIComponentWrapper(habitatDetectorComponent)},
+    {BEIComponentID::HeldInPalmTracker,         BEIComponentWrapper(heldInPalmTracker)},
     {BEIComponentID::Map,                       BEIComponentWrapper(mapComponent)},
     {BEIComponentID::MicComponent,              BEIComponentWrapper(micComponent)},
     {BEIComponentID::MoodManager,               BEIComponentWrapper(moodManager)},

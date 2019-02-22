@@ -103,8 +103,6 @@ protected:
   void RemoveOldFiles() const;
   bool FrameBufferEmpty() const { return _nextFrameIndex == 0 && !_bufferFilled; }
 
-  static const int kNumFramesInBuffer = 1000;
-
   int                 _nextFrameIndex = 0;
   bool                _bufferFilled = false;
   bool                _isRecording = false;

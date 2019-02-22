@@ -753,7 +753,6 @@ void ObjectPoseConfirmer::BroadcastObjectPoseChanged(const ObservableObject& obj
   // this Broadcast
 
   // listeners
-  _robot->GetBlockWorld().OnObjectPoseChanged(object, oldPose, oldPoseState);
   _robot->GetMapComponent().UpdateObjectPose(object, oldPose, oldPoseState); 
   
   // notify poseState changes if it changed

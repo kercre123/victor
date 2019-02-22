@@ -143,7 +143,7 @@ void BehaviorOnboardingLookAtPhone::MoveHeadUp()
     });
   } else {
     MoveHeadToAngleAction* action = new MoveHeadToAngleAction(MAX_HEAD_ANGLE);
-    DelegateIfInControl(action);
+    DelegateNow(action);
     GetBehaviorComp<OnboardingMessageHandler>().ShowUrlFace(true);
   }
 }

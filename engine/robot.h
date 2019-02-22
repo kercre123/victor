@@ -436,6 +436,7 @@ public:
   // Returns true if being moved enough to believe robot is being held by a person.
   // Note: Can only be true if IsPickedUp() is also true.
   bool IsBeingHeld() const { return _isBeingHeld; }
+  EngineTimeStamp_t GetBeingHeldLastChangedTime_ms() const { return _timeHeldStateChanged_ms; }
 
   // =========== IMU Data =============
 
@@ -653,6 +654,7 @@ protected:
   bool               _isPickedUp                = false;
   EngineTimeStamp_t  _timeLastPoked             = 0;
   bool               _isBeingHeld               = false;
+  EngineTimeStamp_t  _timeHeldStateChanged_ms   = 0;
   bool               _isCliffReactionDisabled   = false;
   bool               _gotStateMsgAfterRobotSync = false;
   u32                _lastStatusFlags           = 0;

@@ -44,5 +44,15 @@ void UninstallCrashReporter()
 
 }
 
+CrashReporter::CrashReporter(const char * filenamePrefix)
+{
+  InstallCrashReporter(filenamePrefix);
+}
+
+CrashReporter::~CrashReporter()
+{
+  UninstallCrashReporter();
+}
+
 } // end namespace Vector
 } // end namespace Anki

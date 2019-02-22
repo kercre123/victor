@@ -1,9 +1,9 @@
 /*
- * File:          cozmoAnim/animEngine.cpp
+ * File:          animEngine.cpp
  * Date:          6/26/2017
  *
  * Description:   A platform-independent container for spinning up all the pieces
- *                required to run Cozmo Animation Process.
+ *                required to run Vector Animation Process.
  *
  * Author: Kevin Yoon
  *
@@ -22,7 +22,6 @@
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/animation/streamingAnimationModifier.h"
 #include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
-#include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micData/micDataSystem.h"
 #include "cozmoAnim/perfMetricAnim.h"
@@ -31,26 +30,15 @@
 #include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
 
 #include "coretech/common/engine/opencvThreading.h"
-#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
-#include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "webServerProcess/src/webService.h"
 
 #include "osState/osState.h"
 
-#include "platform/common/diagnosticDefines.h"
-
-#include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/logging/logging.h"
-#include "util/time/universalTime.h"
-
-#include <cstdlib>
-#include <ctime>
-#include <iomanip>
-#include <sstream>
 
 #define LOG_CHANNEL    "AnimEngine"
 #define NUM_ANIM_OPENCV_THREADS 0
@@ -90,7 +78,6 @@ AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
 
 AnimEngine::~AnimEngine()
 {
-
 #if ANKI_PROFILE_ANIMCOMMS_SOCKET_BUFFER_STATS
   AnimComms::ReportSocketBufferStats();
 #endif
@@ -154,6 +141,7 @@ Result AnimEngine::Init()
 
   const auto pm = _context->GetPerfMetric();
   pm->Init(_context->GetDataPlatform(), _context->GetWebService());
+  pm->SetAnimationStreamer(_animationStreamer.get());
   if (pm->GetAutoRecord())
   {
     pm->Start();
@@ -172,7 +160,7 @@ Result AnimEngine::Init()
   return RESULT_OK;
 }
 
-Result AnimEngine::Update(BaseStationTime_t currTime_nanosec)
+Result AnimEngine::Update(const BaseStationTime_t currTime_nanosec)
 {
   ANKI_CPU_TICK("AnimEngine::Update", kAnimEngine_TimeMax_ms, Util::CpuProfiler::CpuProfilerLoggingTime(kAnimEngine_TimeLogging));
   if (!_isInitialized) {

@@ -110,9 +110,6 @@ bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor,
     (void) close(fd); fd = -1;
   }
 
-  // Move dump file to upload path
-  rename(tmpDumpPath.c_str(), dumpPath.c_str());
-
   // Report the crash to DAS
   DASMSG(robot_crash, "robot.crash", "Robot service crash");
   DASMSG_SET(s1, dumpTag.c_str(), "Service name");
@@ -124,6 +121,9 @@ bool DumpCallback(const google_breakpad::MinidumpDescriptor& descriptor,
   // guarantee that latest messages will appear in log files. :(
   //
   sync();
+
+  // Move dump file to upload path
+  rename(tmpDumpPath.c_str(), dumpPath.c_str());
 
   // Capture recent log messages
   DumpLogMessages(dumpPath);

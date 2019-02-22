@@ -4,7 +4,7 @@
  * Author: Lee Crippen
  * Created: 08/19/15
  *
- * Description: Point of entry for anything needing to interact with Cozmo.
+ * Description: Point of entry for anything needing to interact with Vector.
  *
  * Copyright: Anki, Inc. 2015
  *
@@ -13,19 +13,13 @@
 
 #include "engine/cozmoAPI/cozmoAPI.h"
 #include "engine/cozmoEngine.h"
-#include "engine/viz/vizManager.h"
-#include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "clad/externalInterface/messageShared.h"
-#include "platform/common/diagnosticDefines.h"
 #include "platform/robotLogUploader/robotLogUploader.h"
 #include "util/ankiLab/ankiLabDef.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
-#include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
-#include "util/threading/threadPriority.h"
-#include "platform/anki-trace/tracing.h"
-#include <chrono>
+
+#define LOG_CHANNEL "CozmoAPI"
 
 #if REMOTE_CONSOLE_ENABLED
 namespace {
@@ -62,26 +56,18 @@ namespace Vector {
   CONSOLE_VAR_ENUM(u8, kCozmoEngine_Logging,       ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
 #endif
 
-bool CozmoAPI::IsRunning() const
-{
-  if (_cozmoRunner) {
-    return _cozmoRunner->IsRunning();
-  }
-  return false;
-}
-
 
 bool CozmoAPI::Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& config)
 {
-  // Game init happens in CozmoInstanceRunner construction, so we get the result
+  // Game init happens in EngineInstanceRunner construction, so we get the result
   // If we already had an instance, kill it and start again
   bool gameInitResult = false;
-  _cozmoRunner.reset();
-  _cozmoRunner.reset(new CozmoInstanceRunner(dataPlatform, config, gameInitResult));
+  _engineRunner.reset();
+  _engineRunner.reset(new EngineInstanceRunner(dataPlatform, config, gameInitResult));
 
   if (!gameInitResult)
   {
-    PRINT_NAMED_ERROR("CozmoAPI.StartRun", "Error initializing new api instance!");
+    LOG_ERROR("CozmoAPI.Start", "Error initializing new api instance!");
   }
 
   return gameInitResult;
@@ -93,9 +79,9 @@ ANKI_CPU_PROFILER_ENABLED_ONLY(const float kMaxDesiredEngineDuration = 60.0f); /
 
 bool CozmoAPI::Update(const BaseStationTime_t currentTime_nanosec)
 {
-  if (!_cozmoRunner)
+  if (!_engineRunner)
   {
-    PRINT_NAMED_ERROR("CozmoAPI.Update", "Cozmo has not been started!");
+    LOG_ERROR("CozmoAPI.Update", "Engine has not been started!");
     return false;
   }
 
@@ -103,7 +89,7 @@ bool CozmoAPI::Update(const BaseStationTime_t currentTime_nanosec)
   // can be used with Chrome Tracing format
   ANKI_CPU_TICK("CozmoEngine", kMaxDesiredEngineDuration, Util::CpuProfiler::CpuProfilerLoggingTime(kCozmoEngine_Logging));
 
-  return _cozmoRunner->Update(currentTime_nanosec);
+  return _engineRunner->Update(currentTime_nanosec);
 }
 
 uint32_t CozmoAPI::ActivateExperiment(const uint8_t* requestBuffer, size_t requestLen,
@@ -121,13 +107,13 @@ uint32_t CozmoAPI::ActivateExperiment(const uint8_t* requestBuffer, size_t reque
   ASSERT_NAMED((nullptr != responseBuffer) && (responseLen >= minResponseBufferLen),
                "Must provide a valid responseBuffer/responseBufferLen to activate experiment");
 
-  if (!_cozmoRunner) {
+  if (!_engineRunner) {
     return 0;
   }
 
-  _cozmoRunner->SyncWithEngineUpdate([this, &res, requestBuffer, requestLen] {
+  _engineRunner->SyncWithEngineUpdate([this, &res, requestBuffer, requestLen] {
 
-    auto* engine = _cozmoRunner->GetEngine();
+    auto* engine = _engineRunner->GetEngine();
     if (engine == nullptr) {
       return;
     }
@@ -147,7 +133,7 @@ void CozmoAPI::RegisterEngineTickPerformance(const float tickDuration_ms,
                                              const float sleepDurationIntended_ms,
                                              const float sleepDurationActual_ms) const
 {
-  _cozmoRunner->GetEngine()->RegisterEngineTickPerformance(tickDuration_ms,
+  _engineRunner->GetEngine()->RegisterEngineTickPerformance(tickDuration_ms,
                                                            tickFrequency_ms,
                                                            sleepDurationIntended_ms,
                                                            sleepDurationActual_ms);
@@ -155,70 +141,59 @@ void CozmoAPI::RegisterEngineTickPerformance(const float tickDuration_ms,
 
 CozmoAPI::~CozmoAPI()
 {
-  Clear();
+  if (_engineRunner)
+  {
+    // We are now "owning thread" for engine message sending; this is here in case
+    // messages are sent during destruction
+    _engineRunner->SetEngineThread();
+    _engineRunner.reset();
+  }
 }
 
-void CozmoAPI::Clear()
-{
-  if (_cozmoRunner)
-  {
-    _cozmoRunner->Stop();
-    // We are now "owning thread" for engine updates
-    _cozmoRunner->SetEngineThread();
-  }
-  else
-  {
-    PRINT_NAMED_ERROR("CozmoAPI.Clear", "Called Clear but there was no cozmo instance runner");
-  }
+#pragma mark --- EngineInstanceRunner Methods ---
 
-  _cozmoRunner.reset();
-}
-
-#pragma mark --- CozmoInstanceRunner Methods ---
-
-CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dataPlatform,
+CozmoAPI::EngineInstanceRunner::EngineInstanceRunner(Util::Data::DataPlatform* dataPlatform,
                                                    const Json::Value& config, bool& initResult)
-: _cozmoInstance(new CozmoEngine(dataPlatform))
-, _isRunning(true)
+: _engineInstance(new CozmoEngine(dataPlatform))
 {
-  Result initResultReturn = _cozmoInstance->Init(config);
+  const Result initResultReturn = _engineInstance->Init(config);
   if (initResultReturn != RESULT_OK) {
-    PRINT_NAMED_ERROR("CozmoAPI.CozmoInstanceRunner", "cozmo init failed with error %d", initResultReturn);
+    LOG_ERROR("CozmoAPI.EngineInstanceRunner", "cozmo init failed with error %d", initResultReturn);
   }
   initResult = initResultReturn == RESULT_OK;
 }
 
 // Destructor must exist in cpp (even though it's empty) in order for CozmoGame unique_ptr to be defined and deletable
-CozmoAPI::CozmoInstanceRunner::~CozmoInstanceRunner()
+CozmoAPI::EngineInstanceRunner::~EngineInstanceRunner()
 {
 }
 
 
-bool CozmoAPI::CozmoInstanceRunner::Update(const BaseStationTime_t currentTime_nanosec)
+bool CozmoAPI::EngineInstanceRunner::Update(const BaseStationTime_t currentTime_nanosec)
 {
   Result updateResult;
   {
     std::lock_guard<std::mutex> lock{_updateMutex};
-    updateResult = _cozmoInstance->Update(currentTime_nanosec);
+    updateResult = _engineInstance->Update(currentTime_nanosec);
   }
   if (updateResult != RESULT_OK) {
-    PRINT_NAMED_ERROR("CozmoAPI.CozmoInstanceRunner.Update", "Cozmo update failed with error %d", updateResult);
+    LOG_ERROR("CozmoAPI.EngineInstanceRunner.Update", "Cozmo update failed with error %d", updateResult);
   }
   return updateResult == RESULT_OK;
 }
 
-void CozmoAPI::CozmoInstanceRunner::SyncWithEngineUpdate(const std::function<void ()>& func) const
+void CozmoAPI::EngineInstanceRunner::SyncWithEngineUpdate(const std::function<void ()>& func) const
 {
   std::lock_guard<std::mutex> lock{_updateMutex};
   func();
 }
 
-void CozmoAPI::CozmoInstanceRunner::SetEngineThread()
+void CozmoAPI::EngineInstanceRunner::SetEngineThread()
 {
   // Instance is valid for lifetime of instance runner
-  DEV_ASSERT(_cozmoInstance, "CozmoAPI.CozmoInstanceRunner.InvalidCozmoInstance");
+  DEV_ASSERT(_engineInstance, "CozmoAPI.EngineInstanceRunner.InvalidEngineInstance");
   std::lock_guard<std::mutex> lock{_updateMutex};
-  _cozmoInstance->SetEngineThread();
+  _engineInstance->SetEngineThread();
 }
 
 } // namespace Vector

@@ -112,11 +112,6 @@ namespace Anki
       // to be set, and not be currently in use in the BlockWorld. Otherwise it's a sign that something went
       // wrong matching the current BlockWorld objects
       void AddLocatedObject(const std::shared_ptr<ObservableObject>& object);
-      
-      // notify the blockWorld that someone changed the pose of an object. Note the object may have been destroyed,
-      // if the poseState changes to PoseState::Invalid. In that case, the object received by parameter is a copy
-      // of the object with its pose set Invalid and not accessible
-      void OnObjectPoseChanged(const ObservableObject& object, const Pose3d* oldPose, PoseState oldPoseState);
 
       // Called when robot gets delocalized in order to do internal bookkeeping and broadcast updated object states
       void OnRobotDelocalized(PoseOriginID_t newWorldOriginID);
@@ -447,17 +442,6 @@ namespace Anki
       ObjectsByOrigin_t _locatedObjects;
       
       ObjectID _selectedObjectID;
-
-      // changes in poses in the current frame to keep stacks aligned
-      struct PoseChange {
-        PoseChange(const ObjectID& id, const Pose3d& oldPose, const PoseState oldPoseState) :
-          _id(id), _oldPose(oldPose), _oldPoseState(oldPoseState) {}
-        const ObjectID _id;
-        const Pose3d _oldPose;
-        const PoseState _oldPoseState;
-      };
-      std::list<PoseChange> _objectPoseChangeList;  // changes registered (within an update tick)
-      bool _trackPoseChanges;               // whether we want to register pose changes
       
       std::vector<Signal::SmartHandle> _eventHandles;
             

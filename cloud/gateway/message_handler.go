@@ -711,7 +711,7 @@ func (service *rpcService) ListAnimationTriggers(ctx context.Context, in *extint
 					animTriggers = append(animTriggers, &newAnimTrigger)
 				}
 			}
-		case <-time.After(5 * time.Second):
+		case <-time.After(10 * time.Second):
 			return nil, grpc.Errorf(codes.DeadlineExceeded, "ListAnimationTriggers request timed out")
 		}
 	}
@@ -2192,17 +2192,38 @@ func (service *rpcService) EnableMarkerDetection(ctx context.Context, request *e
 		return nil, err
 	}
 
-	payload, ok := <-responseChan
-	if !ok {
-		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
-	}
 
-	response := payload.GetEnableMarkerDetectionResponse()
-	response.Status = &extint.ResponseStatus{
-		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
-	}
+	if (request.Enable == false) {
+		// VIC-12762 EnableMarkerDetectionRequest is requesting that the marker detection vision mode be turned off.
+		// There are cases when there is another subscriber on the robot (not affiliated with the SDK)
+		// that wants to keep this vision mode on. So this request to turn it off is more of a suggestion.
+		// Don't wait for the response to come back from the vision system via sdkComponent to confirm that
+		// this request was successful.
+		//
+		// This fixes the problem where the SDK either hangs or waits ~50 seconds intermittently for confirmation
+		// that the vision mode was turned off.
+		//
+		// TODO Do other vision modes encounter the same problem?
+		//
+		// Create response, send it and return early.
+		return &extint.EnableMarkerDetectionResponse{
+			Status: &extint.ResponseStatus{
+				Code: extint.ResponseStatus_REQUEST_PROCESSING,
+			},
+		}, nil
+	} else {
+		payload, ok := <-responseChan
+		if !ok {
+			return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+		}
 
-	return response, nil
+		response := payload.GetEnableMarkerDetectionResponse()
+		response.Status = &extint.ResponseStatus{
+			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+		}
+
+		return response, nil
+	}
 }
 
 func (service *rpcService) EnableFaceDetection(ctx context.Context, request *extint.EnableFaceDetectionRequest) (*extint.EnableFaceDetectionResponse, error) {
