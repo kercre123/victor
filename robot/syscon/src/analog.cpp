@@ -19,8 +19,12 @@ static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL17
   ;
 
-static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.4);
-static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 200;  // 1s
+static const uint16_t BATTERY_FULL_VOLTAGE = ADC_VOLTS(4.2);
+static const int      CHARGE_FULL_TIME = 200 * 60 * 5;           // 5 minutes
+
+static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.6);
+static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 5*60*200;  // 5 minutes
+static const int      POWER_DOWN_WARNING_TIME = 10*200; // 10 seconds
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(3.50), ~0);
 static const int      MINIMUM_ON_CHARGER = 5;
@@ -36,7 +40,6 @@ static const int OVERHEAT_SHUTDOWN = 200 * 30;
 
 static const int POWER_DOWN_TIME = 200 * 5.5;               // Shutdown
 static const int POWER_WIPE_TIME = 200 * 12;                // Enter recovery mode
-static const int MAX_CHARGE_TIME = 200 * 60 * 25;           // 25 minutes
 static const int ON_CHARGER_RESET = 200 * 60;               // 1 Minute
 static const int TOP_OFF_TIME    = 200 * 60 * 60 * 24 * 90; // 90 Days
 
@@ -48,6 +51,7 @@ static bool is_charging = false;
 bool Analog::on_charger = false;
 static bool charge_cutoff = false;
 static bool too_hot = false;
+static bool power_low = false;
 static int heat_counter = 0;
 static TemperatureAlarm temp_alarm = TEMP_ALARM_SAFE;
 
@@ -166,6 +170,7 @@ void Analog::transmit(BodyToHead* data) {
   data->battery.charger = EXACT_ADC(ADC_VEXT);
   data->battery.temperature = (int16_t) temperature;
   data->battery.flags = 0
+                      | (power_low ? POWER_IS_TOO_LOW : 0)
                       | (is_charging ? POWER_IS_CHARGING : 0)
                       | (on_charger ? POWER_ON_CHARGER : 0)
                       | (too_hot ? POWER_CHARGER_OVERHEAT : 0)
@@ -302,9 +307,15 @@ static void handleLowBattery() {
 
   // Low voltage shutdown
   static int power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
-  if (EXACT_ADC(ADC_VMAIN) < LOW_VOLTAGE_POWER_DOWN_POINT) {
-    if (--power_down_timer <= 0) {
+  static int power_down_limit = POWER_DOWN_WARNING_TIME;
+
+  if (power_low) {
+    if (--power_down_limit < 0) {
       Power::setMode(POWER_STOP);
+    }
+  } else if (EXACT_ADC(ADC_VMAIN) < LOW_VOLTAGE_POWER_DOWN_POINT) {
+    if (--power_down_timer <= 0) {
+      power_low = true;
     }
   } else {
     power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
@@ -345,6 +356,7 @@ void Analog::tick(void) {
   static bool delay_disable = true;
   static int on_charger_time = 0;
   static int off_charger_time = 0;
+  static int charging_time = 0;
 
   updateADCCompensate();
   debounceVEXT();
@@ -365,13 +377,25 @@ void Analog::tick(void) {
     // This holds the on_charger_time at zero if charging is disabled
     if (!prevent_charge && on_charger_time++ >= TOP_OFF_TIME) {
       on_charger_time = 0;
+      charging_time = 0;
+    }
+
+    uint16_t vmain_adc = EXACT_ADC(ADC_VMAIN);
+
+    if (vmain_adc > BATTERY_FULL_VOLTAGE) {
+      if (on_charger_time < 200) {
+        charging_time = CHARGE_FULL_TIME;
+      } else {
+        charging_time++;
+      }
     }
   } else if (++off_charger_time >= ON_CHARGER_RESET) {
     on_charger_time = 0;
+    charging_time = 0;
   }
 
   // 30 minute charge cut-off
-  bool max_charge_time_expired = on_charger_time >= MAX_CHARGE_TIME;
+  bool max_charge_time_expired = charging_time >= CHARGE_FULL_TIME;
   charge_cutoff = prevent_charge || max_charge_time_expired;
 
   // Charger / Battery logic
