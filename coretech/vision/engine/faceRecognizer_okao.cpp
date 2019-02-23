@@ -34,8 +34,6 @@
 
 #define LOG_CHANNEL "FaceRecognizer"
 
-#define DEBUG_ENROLLMENT_IMAGES 1
-
 namespace Anki {
 namespace Vision {
 
@@ -93,6 +91,9 @@ namespace Vision {
   CONSOLE_VAR(u32, kFaceRecognitionSimulatedDelay_ms, "Vision.FaceRecognition", 0);
 
   CONSOLE_VAR(s32, kEnrollmentThumbnailSize, "Vision.FaceRecognition", 64);
+
+  CONSOLE_VAR(bool, kGatherDebugEnrollmentImages, "Vision.FaceRecognition", false);
+  CONSOLE_VAR(bool, kDisplayDebugEnrollmentImages, "Vision.FaceRecognition", false);
   
   namespace JsonKey
   {
@@ -634,7 +635,7 @@ namespace Vision {
           LOG_ERROR("FaceRecognizer.GetRecognitionData.RecognizeFaceFailed", "");
         }
 
-        if(DEBUG_ENROLLMENT_IMAGES)
+        if(kDisplayDebugEnrollmentImages)
         {
           //DisplayEnrollmentImages(debugImages);
         }
@@ -985,7 +986,7 @@ namespace Vision {
 
     _enrollmentData.emplace(faceID, std::move(enrollData));
 
-    if(DEBUG_ENROLLMENT_IMAGES) {
+    if(kGatherDebugEnrollmentImages) {
       SetEnrollmentImage(albumEntry, 0);
     }
 
@@ -1324,7 +1325,7 @@ namespace Vision {
       const bool isSessionOnly = (_enrollmentID != enrollData.GetFaceID());
       enrollData.AddOrUpdateAlbumEntry(albumEntry, updateTime, isSessionOnly);
 
-      if(DEBUG_ENROLLMENT_IMAGES && entryToReplace != EnrolledFaceEntry::UnknownAlbumEntryID) {
+      if(kGatherDebugEnrollmentImages && entryToReplace != EnrolledFaceEntry::UnknownAlbumEntryID) {
         // Update the enrollment image _after_ we update the lastUpdateTime so it shows
         // up in the display
         SetEnrollmentImage(albumEntry, entryToReplace);
@@ -1359,7 +1360,15 @@ namespace Vision {
                                  ptRightBottom.x-ptLeftTop.x,
                                  ptRightBottom.y-ptLeftTop.y);
 
-    _enrollmentImages[albumEntry][dataEntry].Allocate(kEnrollmentThumbnailSize,kEnrollmentThumbnailSize);
+    LOG_WARNING("FaceRecognizer.SetEnrollmentImage.RectangleSize",
+                "for albumEntry %d the rectangle has height: %d and width: %d",
+                albumEntry, detectionRect.GetHeight(), detectionRect.GetWidth());
+
+    if (kGatherDebugEnrollmentImages) {
+      _enrollmentImages[albumEntry][dataEntry].Allocate(detectionRect.GetHeight(), detectionRect.GetWidth());
+    } else {
+      _enrollmentImages[albumEntry][dataEntry].Allocate(kEnrollmentThumbnailSize, kEnrollmentThumbnailSize);
+    }
     _img.GetROI(detectionRect).Resize(_enrollmentImages[albumEntry][dataEntry]);
   }
 
@@ -1544,13 +1553,13 @@ namespace Vision {
                     albumEntry, faceID, okaoResult);
       }
       
-      if(DEBUG_ENROLLMENT_IMAGES)
+      if(kGatherDebugEnrollmentImages)
       {
         _enrollmentImages.erase(albumEntry);
       }
     }
     
-    if(DEBUG_ENROLLMENT_IMAGES)
+    if(kDisplayDebugEnrollmentImages)
     {
       Vision::Image::CloseDisplayWindow(GetDisplayName(userIter->second).c_str());
     }
@@ -1747,9 +1756,9 @@ namespace Vision {
 
     //const f32   RelativeRecognitionThreshold = 1.5; // Score of top result must be this times the score of the second best result
 
-    if(DEBUG_ENROLLMENT_IMAGES && kFaceRecognitionExtraDebug)
+    if(kDisplayDebugEnrollmentImages && kFaceRecognitionExtraDebug)
     {
-      // DisplayMatchImages(resultNum, matchingAlbumEntries, scores, debugImages);
+      DisplayMatchImages(resultNum, matchingAlbumEntries, scores, debugImages);
     }
     
     const bool foundMatchAboveThreshold = (resultNum > 0) && (scores[0] > kFaceRecognitionThreshold);
@@ -2429,7 +2438,7 @@ namespace Vision {
 
     if(iterToRename != _enrollmentData.end())
     {
-      if(DEBUG_ENROLLMENT_IMAGES)
+      if(kDisplayDebugEnrollmentImages)
       {
         // Close old display window before we rename, since it's matched by name
         Vision::Image::CloseDisplayWindow(GetDisplayName(iterToRename->second).c_str());
@@ -3338,7 +3347,7 @@ namespace Vision {
   
 #endif /* ANKI_DEVELOPER_CODE */
 
-  // TODO put around anki dev cheats
+#if ANKI_DEV_CHEATS
   void FaceRecognizer::SetFilePathPrefix(const std::string& filePathPrefix)
   {
     _filePathPrefix = filePathPrefix;
@@ -3358,8 +3367,9 @@ namespace Vision {
 
   void FaceRecognizer::DeleteAllRecognitionImages()
   {
-    // Should I erase this?
+    _enrollmentImages.clear();
   }
+#endif // ANKI_DEV_CHEATS
   
   //
   // This may prove useful later if we ever want to try to do more complicated / smarter

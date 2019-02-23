@@ -57,7 +57,9 @@
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/enrolledFaceStorage.h"
 
+#if ANKI_DEV_CHEATS
 #include "osState/osState.h"
+#endif
 
 #include "util/console/consoleInterface.h"
 
@@ -164,9 +166,10 @@ struct BehaviorEnrollFace::InstanceConfig
   
   BackpackAnimationTrigger backpackAnim = BackpackAnimationTrigger::MeetVictor;
 
-  // TODO put in anki dev cheats
+#if ANKI_DEV_CHEATS
   std::string            serialNumber;
   std::string            buildSha;
+#endif
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -307,10 +310,11 @@ BehaviorEnrollFace::BehaviorEnrollFace(const Json::Value& config)
                 GetDebugLabel().c_str());
   }
 
-  // TODO add anki dev cheats
+#if ANKI_DEV_CHEATS
   auto *osstate = OSState::getInstance();
   _iConfig->serialNumber = osstate->GetSerialNumberAsString();
   _iConfig->buildSha = osstate->GetBuildSha();
+#endif
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -601,11 +605,19 @@ void BehaviorEnrollFace::OnBehaviorActivated()
   // "tracking only" face.
   GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
 
-  // TODO add anki dev cheats
+#if ANKI_DEV_CHEATS
   const std::string& cachePath = GetBEI().GetRobotInfo().GetContext()->GetDataPlatform()->GetCachePath("camera");
-  const std::string path = Util::FileUtils::FullFilePath({cachePath, "images", "recognition_data"});
-  const std::string filePathPrefix = path + _iConfig->serialNumber + "_" + _iConfig->buildSha + "_";
-  GetBEI().GetFaceWorldMutable().SetFilePathPrefix(path);
+  const std::string dataType = "recognition_data";
+  const std::string path = Util::FileUtils::FullFilePath({cachePath, "images", dataType});
+  const bool result = Util::FileUtils::CreateDirectory(path);
+  if (result) {
+    LOG_ERROR("BehaviorEnrollFace.OnBehaviorActivated.FailedToCreateRecognitionImageSavePath",
+              "Path %s failed to be created.", path.c_str());
+  }
+  const std::string filePathPrefix = Util::FileUtils::FullFilePath({path,
+      dataType + "_" + _iConfig->serialNumber + "_" + _iConfig->buildSha + "_"});
+  GetBEI().GetFaceWorldMutable().SetFilePathPrefix(filePathPrefix);
+#endif
 
   PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal",
                 "Initialize with ID=%d and name '%s', to be saved to ID=%d",
@@ -887,9 +899,10 @@ void BehaviorEnrollFace::BehaviorUpdate()
           DASMSG_SEND();
         }
 
-        // TODO add anki dev cheats
+#if ANKI_DEV_CHEATS
         GetBEI().GetFaceWorldMutable().SaveAllRecognitionImages();
         GetBEI().GetFaceWorldMutable().DeleteAllRecognitionImages();
+#endif
       }
 
       break;

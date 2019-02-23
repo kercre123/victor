@@ -679,7 +679,7 @@ void VisionSystem::SetFaceEnrollmentMode(Vision::FaceID_t forFaceID,  s32 numEnr
   _faceTracker->SetFaceEnrollmentMode(forFaceID, numEnrollments, forceNewID);
 }
 
-// TODO add behind anki dev cheats
+#if ANKI_DEV_CHEATS
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::SetFilePathPrefix(const std::string filePathPrefix)
 {
@@ -697,6 +697,7 @@ void VisionSystem::DeleteAllRecognitionImages()
 {
   _faceTracker->DeleteAllRecognitionImages();
 }
+#endif
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::EraseAllFaces()

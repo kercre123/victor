@@ -153,10 +153,11 @@ namespace Vector {
     void Enroll(Vision::FaceID_t faceID, bool forceNewID = false);
     void Enroll(const SmartFaceID& faceID, bool forceNewID = false);
 
-    // TODO add anki dev cheats
+#if ANKI_DEV_CHEATS
     void SetFilePathPrefix(const std::string& filePathPrefix);
     void SaveAllRecognitionImages();
     void DeleteAllRecognitionImages();
+#endif
     
     bool IsFaceEnrollmentComplete() const { return _lastEnrollmentCompleted; }
     void SetFaceEnrollmentComplete(bool complete) { _lastEnrollmentCompleted = complete; }

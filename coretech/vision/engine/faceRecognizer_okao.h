@@ -143,12 +143,13 @@ namespace Vision {
     float DevComputePairwiseMatchScore(const Image& img1, const TrackedFace& face1,
                                        const Image& img2, const TrackedFace& face2);
     
-#endif
+#endif // ANKI_DEVELOPER_CODE
 
-    // TODO put behind anki dev cheats
+#if ANKI_DEV_CHEATS
     void SetFilePathPrefix(const std::string& filePathPrefix);
     void SaveAllRecognitionImages();
     void DeleteAllRecognitionImages();
+#endif // ANKI_DEV_CHEATS
     
   private:
     
@@ -306,13 +307,12 @@ namespace Vision {
     
     static Result ComputeFeaturesFromFace(const Image& img, const TrackedFace& face, HFEATURE featureHandle);
 
-    // TODO this should only be available in ANKI_DEV_CHEATS
-    // std::vector<Image> _enrollmentImagesToSave;
-
+#if ANKI_DEV_CHEATS
     // This holds the path where we want to save our images as well as
     // the prefix that is unique to the build and the robot, because
     // we don't have easy access to either here.
     std::string _filePathPrefix;
+#endif // ANKI_DEV_CHEATS
   }; // class FaceRecognizer
   
 
