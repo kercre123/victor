@@ -1158,7 +1158,7 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
 
       // This mode is considered processed if a composite image was produced
       //  to run marker detection on.
-      _currentResult.modesProcessed.Insert(VisionMode::CompositingImages));
+      _currentResult.modesProcessed.Insert(VisionMode::CompositingImages);
 
       #define DEBUG_IMAGE_COMPOSITING 1
       #if(DEBUG_IMAGE_COMPOSITING)
