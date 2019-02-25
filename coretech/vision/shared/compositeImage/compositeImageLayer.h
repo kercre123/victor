@@ -142,11 +142,14 @@ struct CompositeImageLayer::SpriteBox{
   // indicates that the sprite box should be rendered the color of the robot's eyes
   SpriteRenderConfig     renderConfig;
 
-  private:
-    std::unique_ptr<CompositeImageLayoutModifier> layoutModifier;
-    Point2i       topLeftCorner;
-    int           width;
-    int           height;
+  int GetWidth() const { return width; }
+  int GetHeight() const { return height; }
+
+private:
+  std::unique_ptr<CompositeImageLayoutModifier> layoutModifier;
+  Point2i       topLeftCorner;
+  int           width;
+  int           height;
 };
 
 // TODO: VIC-2414 - currently composite images can only be sent

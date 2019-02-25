@@ -66,7 +66,7 @@ namespace Vector {
     virtual ~IKeyFrame();
     
     // Returns true if the animation's time has reached frame's "trigger" time
-    bool IsTimeToPlay(TimeStamp_t timeSinceAnimStart_ms) const;
+    bool IsTimeToPlay(const TimeStamp_t timeSinceAnimStart_ms) const;
     
     // Returns the time to trigger whatever change is implied by the KeyFrame
     TimeStamp_t GetTriggerTime_ms() const { return _triggerTime_ms; }
@@ -100,12 +100,12 @@ namespace Vector {
       // if not available.
       virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const = 0;
     #endif
-    
+
     bool IsFirstKeyframeTick(const TimeStamp_t timeSinceAnimStart_ms) const
     {
       return GetTimeSinceTrigger(timeSinceAnimStart_ms) < ANIM_TIME_STEP_MS;
     }
-    
+
   protected:
     // Populate members from Json
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") = 0;

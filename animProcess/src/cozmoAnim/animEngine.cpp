@@ -47,7 +47,7 @@ namespace Anki {
 namespace Vector {
 
 #if ANKI_CPU_PROFILER_ENABLED
-  CONSOLE_VAR_RANGED(float, kAnimEngine_TimeMax_ms,     ANKI_CPU_CONSOLEVARGROUP, 2, 2, 32);
+  CONSOLE_VAR_RANGED(float, kAnimEngine_TimeMax_ms,     ANKI_CPU_CONSOLEVARGROUP, 33, 2, 33);
   CONSOLE_VAR_ENUM(u8,      kAnimEngine_TimeLogging,    ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
 #endif
 
