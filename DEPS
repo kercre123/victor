@@ -77,6 +77,11 @@
             }
         },
         "project": "victor",
+        "s3": {
+           "bucket": "sai-general",
+           "key-prefix": "build-assets/deps/victor/sha256/",
+           "profile_name": "deps-victor"
+        },
         "url_prefix": "https://sai-general.s3.amazonaws.com/build-assets/deps/victor/"
     },
     "files": {

@@ -677,15 +677,14 @@ def files_package(files):
 
 def deptool_package(deptool_dict):
    deps_retrieved = []
-   deps = deptool_dict.get("deps")
-   project = deptool_dict.get("project")
-   url_prefix = deptool_dict.get("url_prefix")
+   deps = deptool_dict.get("deps", None)
+   project = deptool_dict.get("project", None)
+   url_prefix = deptool_dict.get("url_prefix", None)
+   s3_params = deptool_dict.get("s3", {})
+
    for dep in deps:
       required_version = deps[dep].get("version", None)
-      sha256_checksum = None
-      checksums = deps[dep].get("checksums", None)
-      if checksums:
-         sha256_checksum = checksums.get("sha256", sha256_checksum)
+      sha256_checksum = deps[dep].get("checksums").get("sha256")
       dst = os.path.join(DEPENDENCY_LOCATION, dep)
       if ankibuild.deptool.is_valid_dep_dir_for_version_and_sha256(dst, required_version, sha256_checksum):
          continue
@@ -693,10 +692,10 @@ def deptool_package(deptool_dict):
          os.unlink(dst)
       else:
          ankibuild.util.File.rm_rf(dst)
-      src = ankibuild.deptool.find_or_install_dep(project, dep, required_version, url_prefix, sha256_checksum)
+      src = ankibuild.deptool.find_or_install_dep(project, dep, required_version, s3_params, sha256_checksum)
       if not src:
-         raise RuntimeError('Could not find or install {0}/{1} (version = {2}, sha256 = {3}, url_prefix = {4})'
-                            .format(project, dep, required_version, sha256_checksum, url_prefix))
+         raise RuntimeError('Could not find or install {0}/{1} from s3 (version = {2}, sha256 = {3})'
+                            .format(project, dep, required_version, sha256_checksum))
       os.symlink(src, dst)
       deps_retrieved.append(dep)
 

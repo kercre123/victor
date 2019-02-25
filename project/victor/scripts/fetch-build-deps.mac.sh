@@ -34,7 +34,9 @@ vlog "Check homebrew dependencies"
     libsndfile \
     node \
     rsync \
-    curl-openssl
+    curl-openssl \
+    --pip2 boto3
+
 
 vlog "vicos sdk"
 ./tools/build/tools/ankibuild/vicos.py --install 1.1.0-r04

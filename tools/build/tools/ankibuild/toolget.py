@@ -10,6 +10,7 @@ import string
 import sys
 import urllib
 import tarfile
+import boto3
 
 # ankibuild
 import util
@@ -57,6 +58,59 @@ def safe_rmdir(path):
 def safe_rmfile(path):
     if os.path.isfile(path):
         os.remove(path)
+
+def download_and_install_from_s3(s3_params,
+                                 sha256,
+                                 downloads_path,
+                                 dist_path,
+                                 base_name,
+                                 extracted_dir_name,
+                                 version,
+                                 title):
+    tmp_extract_path = os.path.join(downloads_path, extracted_dir_name)
+    final_extract_path = os.path.join(dist_path, version)
+    safe_rmdir(tmp_extract_path)
+    safe_rmdir(final_extract_path)
+
+    archive_file = sha256
+
+    final_path = os.path.join(downloads_path, archive_file)
+    download_path = final_path + ".tmp"
+    safe_rmfile(final_path)
+    safe_rmfile(download_path)
+
+    session = boto3.Session(profile_name = s3_params.get('profile_name', None))
+    client = session.client('s3')
+
+    response = client.get_object(Bucket=s3_params['bucket'],
+                                 Key=s3_params['key'])
+    handle = response['Body']
+    download_file = open(download_path, 'w')
+    block_size = 1024 * 1024
+    sys.stdout.write("\nDownloading {0} {1} from s3:\nbucket = {2}\nkey    = {3}\ndst    = {4}\n"
+                     .format(title, version, s3_params['bucket'], s3_params['key'], final_path))
+    for chunk in iter(lambda: handle.read(block_size), b''):
+        download_file.write(chunk)
+
+    download_file.close()
+    sys.stdout.write("\n")
+    sys.stdout.write("Verifying that SHA256 hash matches {0}\n".format(sha256))
+    download_sha256 = sha256sum(download_path)
+    if download_sha256 == sha256:
+        os.rename(download_path, final_path)
+        tar_ref = tarfile.open(final_path, 'r')
+        sys.stdout.write("Extracting {0} from {1}.  This could take several minutes.\n"
+                         .format(title, final_path))
+        print("extractall %s" % downloads_path)
+        tar_ref.extractall(downloads_path)
+        print("rename {} -> {}".format(tmp_extract_path, final_extract_path))
+        os.rename(tmp_extract_path, final_extract_path)
+    else:
+        sys.stderr.write("Failed to validate {0} downloaded from s3 (bucket = {1} , key = {2})\n"
+                         .format(download_path, s3_params['bucket'], s3_params['key']))
+
+    safe_rmfile(final_path)
+    safe_rmfile(download_path)
 
 def download_and_install(archive_url,
                          hash_url,

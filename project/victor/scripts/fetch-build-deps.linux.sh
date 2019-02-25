@@ -42,6 +42,10 @@ check_dep which python3
 check_dep which ninja
 check_dep which git-lfs
 
+# Make sure boto3 python module is installed
+PIP_REQUIRE_VIRTUALENV="" pip --disable-pip-version-check show -q boto3 || \
+PIP_REQUIRE_VIRTUALENV="" pip --disable-pip-version-check install -q boto3
+
 
 echo `pwd`
 
