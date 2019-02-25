@@ -72,6 +72,11 @@
 
 namespace Anki {
 namespace Vector {
+
+namespace {
+  const char* kImageCompositorReadyPeriodKey = "imageReadyPeriod";
+  const char* kImageCompositorResetPeriodKey = "imageResetPeriod";
+}
   
 CONSOLE_VAR_RANGED(u8,  kUseCLAHE_u8,     "Vision.PreProcessing", 0, 0, 4);  // One of MarkerDetectionCLAHE enum
 CONSOLE_VAR(s32, kClaheClipLimit,         "Vision.PreProcessing", 32);
@@ -273,6 +278,10 @@ Result VisionSystem::Init(const Json::Value& config)
   _overheadMap.reset(new OverheadMap(config["OverheadMap"], _context));
 
   const Json::Value& imageCompositeCfg = config["ImageCompositing"];
+  {
+    _imageCompositorReadyPeriod = JsonTools::ParseUInt32(imageCompositeCfg, kImageCompositorReadyPeriodKey, "VisionSystem.Ctor");
+    _imageCompositorResetPeriod = JsonTools::ParseUInt32(imageCompositeCfg, kImageCompositorResetPeriodKey, "VisionSystem.Ctor");
+  }
   _imageCompositor.reset(new Vision::ImageCompositor(imageCompositeCfg));
 
   // TODO check config entry here
@@ -1040,10 +1049,11 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
 } // ApplyCLAHE()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
+Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
                                             const Vision::Image& claheImage,
                                             std::vector<Anki::Rectangle<s32>>& detectionRects,
                                             MarkerDetectionCLAHE useCLAHE,
+                                            bool useImageCompositing,
                                             const VisionPoseData& poseData)
 {
   // Currently assuming we detect markers first, so we won't make use of anything already detected
@@ -1052,6 +1062,14 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
   const auto whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier);
   
   std::vector<const Vision::Image*> imagePtrs;
+
+  // Default to using the non-CLAHE image for compositing.
+  // If we are detecting under MarkerDetectionCLAHE::Both, it is arbitrary 
+  //  which one to use.
+  // Ideally we would be able to separately composite both, but it is not
+  //  known whether that is needed, pending experimentation. For now we opt
+  //  for just using the non-CLAHE image.
+  const Vision::Image* imageToCompositeWith = &imageCache.GetGray(whichSize);
   
   switch(useCLAHE)
   {
@@ -1065,6 +1083,7 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
     {
       DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useOn.ImageIsEmpty");
       imagePtrs.push_back(&claheImage);
+      imageToCompositeWith = &claheImage;
       break;
     }
       
@@ -1090,6 +1109,10 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
       else {
         imagePtrs.push_back(&imageCache.GetGray(whichSize));
       }
+
+      // We composite interchangeably with both types since they
+      //  are chosen alternatingly
+      imageToCompositeWith = imagePtrs.back();
       
       break;
     }
@@ -1107,12 +1130,40 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
         imagePtrs.push_back(&imageCache.GetGray(whichSize));
       }
       
+      // We composite interchangeably with both types since they
+      //  are dynamically chosen based on lighting conditions.
+      imageToCompositeWith = imagePtrs.back();
+      
       break;
     }
       
     case MarkerDetectionCLAHE::Count:
       assert(false); // should never get here
       break;
+  }
+  
+  Vision::Image compositeImage;
+  if(IsModeEnabled(VisionMode::CompositingImages)) {
+    const size_t numImgComposed = _imageCompositor->GetNumImagesComposited();
+    const bool shouldReset = numImgComposed == _imageCompositorResetPeriod;
+    if(shouldReset) {
+      _imageCompositor->Reset();
+    }
+    _imageCompositor->ComposeWith(*imageToCompositeWith);
+    const bool shouldRunOnComposite = (numImgComposed % _imageCompositorReadyPeriod) == 0;
+    if(shouldRunOnComposite) {
+      _imageCompositor->GetCompositeImage(compositeImage);
+      compositeImage.SetTimestamp(imageCache.GetTimeStamp());
+      imagePtrs.push_back(&compositeImage);
+
+      #define DEBUG_IMAGE_COMPOSITING 1
+      #if(DEBUG_IMAGE_COMPOSITING)
+      // Debug image display
+      Vision::ImageRGB dispImg;
+      dispImg.SetFromGray(compositeImage);
+      _currentResult.debugImages.emplace_back("ImageCompositing", dispImg);
+      #endif
+    }
   }
   
   // Set up cropping rectangles to cycle through each time DetectMarkers is called
@@ -1261,7 +1312,7 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
   
   return lastResult;
   
-} // DetectMarkersWithCLAHE()
+} // DetectMarkers
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::CheckForNeuralNetResults()
@@ -1476,7 +1527,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       UpdateRollingShutter(poseData, imageCache);
       
       Tic("TotalDetectingMarkers");
-      lastResult = DetectMarkersWithCLAHE(imageCache, claheImage, detectionsByMode[VisionMode::DetectingMarkers], useCLAHE, poseData);
+      lastResult = DetectMarkers(imageCache, claheImage, detectionsByMode[VisionMode::DetectingMarkers], useCLAHE, true, poseData);
       
       if(RESULT_OK != lastResult) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
@@ -1612,7 +1663,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     Toc("TotalDetectingOverheadEdges");
   }
 
-  if(IsModeEnabled(VisionMode::CompositingImages)) {
+  if(false) {
     Tic("CompositingImagesAndDetectingMarkers");
     
     const auto whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier);
@@ -1660,7 +1711,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
         }
       }
 
-      #define DEBUG_IMAGE_COMPOSITING 0
+      #define DEBUG_IMAGE_COMPOSITING 1
       #if(DEBUG_IMAGE_COMPOSITING)
       // Debug image display
       Vision::ImageRGB dispImg;

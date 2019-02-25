@@ -24,7 +24,7 @@ namespace Anki {
 namespace Vision {
 
 namespace {
-  const char* percentileForMaxIntensity = "percentileForMaxIntensity";
+  const char* kPercentileForMaxIntensityKey = "percentileForMaxIntensity";
   const std::string debugName = "Vision.ImageCompositor";
 
   CONSOLE_VAR(f32, kBaseIntensityForMaxBrightness, "Vision.ImageCompositor", 0.9f);
@@ -32,7 +32,7 @@ namespace {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ImageCompositor::ImageCompositor(const Json::Value& config)
-: _kPercentileForMaxIntensity(JsonTools::ParseFloat(config, percentileForMaxIntensity, debugName + ".Ctor"))
+: _kPercentileForMaxIntensity(JsonTools::ParseFloat(config, kPercentileForMaxIntensityKey, debugName + ".Ctor"))
 , _sumImage(0,0)
 , _numImagesComposited(0)
 {

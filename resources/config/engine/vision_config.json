@@ -99,7 +99,9 @@
 
   "ImageCompositing" :
   {
-    "percentileForMaxIntensity" : 0.99
+    "percentileForMaxIntensity" : 0.99,
+    "imageReadyPeriod" : 4,
+    "imageResetPeriod" : 8
   },
 
   "NeuralNets" :

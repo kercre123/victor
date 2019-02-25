@@ -265,11 +265,12 @@ namespace Vector {
     // Uses grayscale
     Result ApplyCLAHE(Vision::ImageCache& imageCache, const MarkerDetectionCLAHE useCLAHE, Vision::Image& claheImage);
     
-    Result DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
-                                  const Vision::Image& claheImage,
-                                  std::vector<Anki::Rectangle<s32>>& detectionRects,
-                                  MarkerDetectionCLAHE useCLAHE,
-                                  const VisionPoseData& poseData);
+    Result DetectMarkers(Vision::ImageCache& imageCache,
+                         const Vision::Image& claheImage,
+                         std::vector<Anki::Rectangle<s32>>& detectionRects,
+                         MarkerDetectionCLAHE useCLAHE,
+                         bool useImageCompositing,
+                         const VisionPoseData& poseData);
     
     // Uses grayscale
     static u8 ComputeMean(Vision::ImageCache& imageCache, const s32 sampleInc);
@@ -328,6 +329,18 @@ namespace Vector {
     std::mutex _mutex;
     std::queue<VisionProcessingResult> _results;
     VisionProcessingResult _currentResult;
+
+    // Image compositor settings, 
+    // Used to manage the cycles of Reset()
+    //  and MarkerDetection runs
+
+    // Number of frames composited in order to mark the image
+    //  as ready to be used in MarkerDetection.
+    u32 _imageCompositorReadyPeriod = 0;
+
+    // Number of frames composited after which the image is Reset
+    // Note: if set to zero, the image is never reset
+    u32 _imageCompositorResetPeriod = 0;
 
 }; // class VisionSystem
   
