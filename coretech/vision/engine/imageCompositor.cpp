@@ -13,6 +13,7 @@
 #include "coretech/vision/engine/imageCompositor.h"
 
 #include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/imageBrightnessHistogram.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/shared/array2d_impl.h"
 #include "util/console/consoleInterface.h"
@@ -27,6 +28,7 @@ namespace {
   const char* kPercentileForMaxIntensityKey = "percentileForMaxIntensity";
   const std::string debugName = "Vision.ImageCompositor";
 
+  CONSOLE_VAR(u32, kImageHistogramSubsample, "Vision.ImageCompositor", 2);
   CONSOLE_VAR(f32, kBaseIntensityForMaxBrightness, "Vision.ImageCompositor", 0.9f);
 }
 
@@ -75,29 +77,17 @@ void ImageCompositor::GetCompositeImage(Vision::Image& outImg) const
 {
   // A composite image is the average of the sum image, with contrast boosting
   #if(ANKICORETECH_USE_OPENCV)
-  // Threshold of pixel values above which to be set to Max Brightness.
-  // Computed by finding the 99th percentile intensity value.
-  std::vector<f32> pixels(_sumImage.GetNumCols() * _sumImage.GetNumRows(), 0.f);
-  size_t i = 0;
-  for(auto& pixel : _sumImage.get_CvMat_()) {
-    pixels[i++] = pixel;
-  }
-  // TODO: Test if below is faster than above way of setting `pixels`
-  //  std::vector<f32> pixels(_sumImage.get_CvMat_().begin(), _sumImage.get_CvMat_().end());
-  size_t pct99Idx = std::min((size_t)std::ceil(pixels.size() * (1-_kPercentileForMaxIntensity)), pixels.size());
-  std::nth_element(pixels.begin(),
-                   pixels.begin() + pct99Idx,
-                   pixels.end(),
-                   std::greater<f32>());
-  f32 sum99pct = pixels[pct99Idx];
+  // Computes the average image, as a grayscale
+  const f32 averageFactor = 1.f / GetNumImagesComposited();
+  _sumImage.get_CvMat_().convertTo(outImg.get_CvMat_(), CV_8UC1, averageFactor, 0);
 
-  // Note: we don't need to divide out the number of images
-  //  since the arithmetic works out that numImagesComposited
-  //  cancels out in this scaling factor.
-  const f32 scaling = kBaseIntensityForMaxBrightness * std::numeric_limits<u8>::max() / sum99pct;
-
-  _sumImage.get_CvMat_().convertTo(outImg.get_CvMat_(), CV_8UC1, scaling, 0);
-  #endif
+  // Rescale the pixels in the top percentile to be kBaseIntensityForMaxBrightness (or higher)
+  ImageBrightnessHistogram hist;
+  hist.FillFromImage(outImg, kImageHistogramSubsample);
+  u8 intensity99pct = hist.ComputePercentile(_kPercentileForMaxIntensity);
+  const f32 scalingFactor = (f32)kBaseIntensityForMaxBrightness * std::numeric_limits<u8>::max() / intensity99pct;
+  outImg.get_CvMat_().convertTo(outImg.get_CvMat_(), CV_8UC1, scalingFactor, 0);
+  #endif // ANKICORETECH_USE_OPENCV
 }
 
 } // end namespace Vector
