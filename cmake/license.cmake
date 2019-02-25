@@ -19,6 +19,11 @@ file(STRINGS ${CMAKE_SOURCE_DIR}/VERSION license_version ENCODING UTF-8)
 file(STRINGS ${CMAKE_SOURCE_DIR}/docs/development/licenses.md license_file ENCODING UTF-8)
 list(REMOVE_AT license_file 0)
 foreach(line ${license_file})
+    string(FIND ${line} "overrides_table" override_comment)
+    if(override_comment GREATER -1)
+      set(overrides_table 1)
+    endif()
+
     string(SUBSTRING "${line}" 0 1 firstchar)
     if(NOT firstchar STREQUAL "|")
       continue()
@@ -27,26 +32,39 @@ foreach(line ${license_file})
     string(REPLACE "|" ";" columns "${line}")
 
     list(LENGTH columns columns_count)
-    if(NOT columns_count EQUAL 6)
+    if(columns_count EQUAL 6)
+      # main table of licenses
+      list(GET columns 1 license)
+      list(GET columns 2 approval)
+
+      string(STRIP "${license}" license)
+      string(STRIP "${approval}" approval)
+
+      if(approval STREQUAL "Go")
+          list(APPEND GO_LICENSES ${license})
+      elseif(approval STREQUAL "Stop")
+          list(APPEND STOP_LICENSES ${license})
+      elseif(approval STREQUAL "Caution")
+          list(APPEND CAUTION_LICENSES ${license})
+      elseif(approval STREQUAL "Reviewing")
+          list(APPEND REVIEWING_LICENSES ${license})
+      endif()
+      list(APPEND ALL_LICENSES ${license})
+    elseif(columns_count EQUAL 5 AND overrides_table EQUAL 1)
+      # override table
+      list(GET columns 1 target)
+      list(GET columns 2 license)
+
+      string(STRIP "${license}" license)
+      string(STRIP "${target}" target)
+
+      list(APPEND OVERRIDDEN_TARGETS ${target}@${license})
+
+    else()
       message(FATAL_ERROR "Malformed license table, with ${columns_count} columns instead of 6 for '${line}'")
     endif()
 
-    list(GET columns 1 license)
-    list(GET columns 2 approval)
-
-    string(STRIP "${license}" license)
-    string(STRIP "${approval}" approval)
-
-    if(approval STREQUAL "Go")
-        list(APPEND GO_LICENSES ${license})
-    elseif(approval STREQUAL "Stop")
-        list(APPEND STOP_LICENSES ${license})
-    elseif(approval STREQUAL "Caution")
-        list(APPEND CAUTION_LICENSES ${license})
-    elseif(approval STREQUAL "Reviewing")
-        list(APPEND REVIEWING_LICENSES ${license})
-    endif()
-    list(APPEND ALL_LICENSES ${license})
+    
 endforeach()
 
 function(anki_build_target_license target)
@@ -100,34 +118,37 @@ function(anki_build_target_license target)
       return()
     endif()
 
-    list(FIND REVIEWING_LICENSES ${license} found)
-    if(found GREATER_EQUAL 0)
-      message(${MESSAGE_STATUS} "WARNING: license ${license} for ${target} target is under review")
+    list(FIND OVERRIDDEN_TARGETS ${target}@${license} found)
+    if(found EQUAL -1)
+      list(FIND REVIEWING_LICENSES ${license} found)
+      if(found GREATER_EQUAL 0)
+        message(${MESSAGE_STATUS} "WARNING: license ${license} for ${target} target is under review")
 
-      # override previous licensing information
-      set_property(TARGET ${target} PROPERTY APPROVED_LICENSE 0)
+        # override previous licensing information
+        set_property(TARGET ${target} PROPERTY APPROVED_LICENSE 0)
 
-      return()
-    endif()
+        return()
+      endif()
 
-    list(FIND CAUTION_LICENSES ${license} found)
-    if(found GREATER_EQUAL 0)
-      message(${MESSAGE_STATUS} "CAUTION: license ${license} for ${target} target needs approval")
+      list(FIND CAUTION_LICENSES ${license} found)
+      if(found GREATER_EQUAL 0)
+        message(${MESSAGE_STATUS} "CAUTION: license ${license} for ${target} target needs approval")
 
-      # override previous licensing information
-      set_property(TARGET ${target} PROPERTY APPROVED_LICENSE 0)
+        # override previous licensing information
+        set_property(TARGET ${target} PROPERTY APPROVED_LICENSE 0)
 
-      return()
-    endif()
+        return()
+      endif()
 
-    list(FIND STOP_LICENSES ${license} found)
-    if(found GREATER_EQUAL 0)
-      message(${MESSAGE_STATUS} "STOP: license ${license} for ${target} target needs approval")
+      list(FIND STOP_LICENSES ${license} found)
+      if(found GREATER_EQUAL 0)
+        message(${MESSAGE_STATUS} "STOP: license ${license} for ${target} target needs approval")
 
-      # override previous licensing information
-      set_property(TARGET ${target} PROPERTY APPROVED_LICENSE 0)
+        # override previous licensing information
+        set_property(TARGET ${target} PROPERTY APPROVED_LICENSE 0)
 
-      return()
+        return()
+      endif()
     endif()
 
     if(file)
