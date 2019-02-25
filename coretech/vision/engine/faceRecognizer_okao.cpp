@@ -3360,7 +3360,7 @@ namespace Vision {
         const std::string fullFilename = _imagePathPrefix + "_" + std::to_string(_albumEntryToFaceID[entryId])
                                          + "_" + std::to_string(entryId) + "_" +
                                          std::to_string(enrollmentImage.GetTimestamp()) + ".jpg";
-        Result result = enrollmentImage.Save(fullFilename);
+        const Result result = enrollmentImage.Save(fullFilename);
         if (result != RESULT_OK) {
           LOG_ERROR("FaceRecognizer.SaveAllRecognitionImages.FailedToSave",
                     "Failed to save file:%s.", fullFilename.c_str());
