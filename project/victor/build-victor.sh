@@ -133,6 +133,29 @@ shift $(($OPTIND - 1))
 cd ${TOPLEVEL}
 
 #
+# Verify tflite files were downloaded correctly via git lfs
+#
+
+function usage_fix_lfs() {
+    echo "$1 is not a valid .tflite file!!!"
+    echo "Probably a problem with your git lfs setup.  Try the following to fix it...."
+    echo ""
+    echo "git lfs uninstall  # Remove Git LFS hooks and filters"
+    echo "rm $f              # Delete borked file"
+    echo "git stash          # Save your work in progress"
+    echo "git reset --hard   # This will wipe out your work in progress, hope you stashed"
+    echo "git lfs install    # Install Git LFS configuration"
+    echo "git lfs pull       # Fetch Git LFS changes from remote & checkout required files"
+    echo "git stash apply    # This will grab changes from your stash"
+    exit 1
+}
+
+for f in `git ls-files *.tflite`; do
+    egrep -q TFL3 $f || usage_fix_lfs $f
+done
+
+
+#
 # settings
 #
 
