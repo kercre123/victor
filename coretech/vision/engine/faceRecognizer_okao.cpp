@@ -85,7 +85,7 @@ namespace Vision {
 
   CONSOLE_VAR_RANGED(u8, kFaceRecMaxDebugResults, "Vision.FaceRecognition", 3, 2, 10);
 
-  CONSOLE_VAR(bool, kFaceRecognitionExtraDebug, "Vision.FaceRecognition", false);
+  CONSOLE_VAR(bool, kFaceRecognitionExtraDebug, "Vision.FaceRecognition", true);
 
   // For simulating slow processing (e.g. on a device)
   CONSOLE_VAR(u32, kFaceRecognitionSimulatedDelay_ms, "Vision.FaceRecognition", 0);
@@ -3348,9 +3348,9 @@ namespace Vision {
 #endif /* ANKI_DEVELOPER_CODE */
 
 #if ANKI_DEV_CHEATS
-  void FaceRecognizer::SetFilePathPrefix(const std::string& filePathPrefix)
+  void FaceRecognizer::SetRecognitionImagePathPrefix(const std::string& imagePathPrefix)
   {
-    _filePathPrefix = filePathPrefix;
+    _imagePathPrefix = imagePathPrefix;
   }
 
   void FaceRecognizer::SaveAllRecognitionImages()
@@ -3358,7 +3358,7 @@ namespace Vision {
     for (const auto& albumEntry: _enrollmentImages) {
       const AlbumEntryID_t entryId = albumEntry.first;
       for (const auto& enrollmentImage: albumEntry.second) {
-        const std::string fullFilename = _filePathPrefix + std::to_string(entryId) + "_" +
+        const std::string fullFilename = _imagePathPrefix + std::to_string(entryId) + "_" +
           std::to_string(enrollmentImage.GetTimestamp()) + ".jpg";
         enrollmentImage.Save(fullFilename);
       }

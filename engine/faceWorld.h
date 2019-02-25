@@ -154,7 +154,7 @@ namespace Vector {
     void Enroll(const SmartFaceID& faceID, bool forceNewID = false);
 
 #if ANKI_DEV_CHEATS
-    void SetFilePathPrefix(const std::string& filePathPrefix);
+    void SetRecognitionImagePathPrefix(const std::string& imagePathPrefix);
     void SaveAllRecognitionImages();
     void DeleteAllRecognitionImages();
 #endif

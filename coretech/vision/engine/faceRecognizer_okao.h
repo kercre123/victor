@@ -146,7 +146,7 @@ namespace Vision {
 #endif // ANKI_DEVELOPER_CODE
 
 #if ANKI_DEV_CHEATS
-    void SetFilePathPrefix(const std::string& filePathPrefix);
+    void SetRecognitionImagePathPrefix(const std::string& imagePathPrefix);
     void SaveAllRecognitionImages();
     void DeleteAllRecognitionImages();
 #endif // ANKI_DEV_CHEATS
@@ -311,7 +311,7 @@ namespace Vision {
     // This holds the path where we want to save our images as well as
     // the prefix that is unique to the build and the robot, because
     // we don't have easy access to either here.
-    std::string _filePathPrefix;
+    std::string _imagePathPrefix;
 #endif // ANKI_DEV_CHEATS
   }; // class FaceRecognizer
   

@@ -681,9 +681,9 @@ void VisionSystem::SetFaceEnrollmentMode(Vision::FaceID_t forFaceID,  s32 numEnr
 
 #if ANKI_DEV_CHEATS
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void VisionSystem::SetFilePathPrefix(const std::string filePathPrefix)
+void VisionSystem::SetRecognitionImagePathPrefix(const std::string imagePathPrefix)
 {
-  _faceTracker->SetFilePathPrefix(filePathPrefix);
+  _faceTracker->SetRecognitionImagePathPrefix(imagePathPrefix);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

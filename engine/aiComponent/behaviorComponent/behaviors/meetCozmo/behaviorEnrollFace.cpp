@@ -614,9 +614,9 @@ void BehaviorEnrollFace::OnBehaviorActivated()
     LOG_ERROR("BehaviorEnrollFace.OnBehaviorActivated.FailedToCreateRecognitionImageSavePath",
               "Path %s failed to be created.", path.c_str());
   }
-  const std::string filePathPrefix = Util::FileUtils::FullFilePath({path,
+  const std::string imagePathPrefix = Util::FileUtils::FullFilePath({path,
       dataType + "_" + _iConfig->serialNumber + "_" + _iConfig->buildSha + "_"});
-  GetBEI().GetFaceWorldMutable().SetFilePathPrefix(filePathPrefix);
+  GetBEI().GetFaceWorldMutable().SetRecognitionImagePathPrefix(imagePathPrefix);
 #endif
 
   PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal",
