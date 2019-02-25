@@ -57,7 +57,7 @@
   },
   {
     "feature": "AttentionTransfer",
-    "enabled": true
+    "enabled": false
   },
   {
     "feature": "PopAWheelie",
