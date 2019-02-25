@@ -63,21 +63,6 @@ if [ -f /anki/etc/version ]; then
   anki_version="`/bin/cat /anki/etc/version`"
 fi
 
-# Remove empty crash files else rename
-for i in $VIC_CRASH_FOLDER/*.dmp~
-do
-    if [[ -s ${i} ]]; then
-        echo "Found crash $i renaming"
-        /bin/mv ${i} ${i%?}
-    else
-        /bin/echo "Removing empty crash file $i"
-        /bin/rm -f ${i}
-    fi
-done
-
-# Signal the service is ready
-/bin/systemd-notify --ready
-
 while :
 do
     cd $VIC_CRASH_FOLDER > /dev/null
