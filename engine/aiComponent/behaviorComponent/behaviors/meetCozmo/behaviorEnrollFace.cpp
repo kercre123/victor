@@ -615,7 +615,8 @@ void BehaviorEnrollFace::OnBehaviorActivated()
               "Path %s failed to be created.", path.c_str());
   }
   const std::string imagePathPrefix = Util::FileUtils::FullFilePath({path,
-      dataType + "_" + _iConfig->serialNumber + "_" + _iConfig->buildSha + "_"});
+                                      dataType + "_" + _iConfig->serialNumber +
+                                      "_" + _iConfig->buildSha + "_"});
   GetBEI().GetFaceWorldMutable().SetRecognitionImagePathPrefix(imagePathPrefix);
 #endif
 

@@ -146,8 +146,19 @@ namespace Vision {
 #endif // ANKI_DEVELOPER_CODE
 
 #if ANKI_DEV_CHEATS
+    // Sets the path and file name prefix to be used when saving
+    // the debug enrollment images
     void SetRecognitionImagePathPrefix(const std::string& imagePathPrefix);
+    // Saves all the debug enrollment images in the dierctory set above,
+    // and appending the face id, album id, and the image timestamp.
+    // The filename has the form /path/<filename_prefix>_<face_id>_<album_entry_id>_<timestamp>.jpg.
+    // Currently the debug images are cropped to only contain the region of the image
+    // where there was a face detection. The container of images is populated
+    // by enabling kGatherDebugEnrollmentImages which by default saves the croppped
+    // images at the same resolution that recognition occurs at. If kDisplayDebugEnrollmentImages
+    // is enabled the cropped images with be saved at kEnrollmentThumbnailSize.
     void SaveAllRecognitionImages();
+    // This deletes all the debug recognition images for all users.
     void DeleteAllRecognitionImages();
 #endif // ANKI_DEV_CHEATS
     
