@@ -1360,10 +1360,13 @@ namespace Vision {
                                  ptRightBottom.x-ptLeftTop.x,
                                  ptRightBottom.y-ptLeftTop.y);
 
-    if (kGatherDebugEnrollmentImages) {
-      _enrollmentImages[albumEntry][dataEntry].Allocate(detectionRect.GetHeight(), detectionRect.GetWidth());
-    } else {
+    if (kDisplayDebugEnrollmentImages) {
+      // If we're going to display the images resize them to be thumbnails
       _enrollmentImages[albumEntry][dataEntry].Allocate(kEnrollmentThumbnailSize, kEnrollmentThumbnailSize);
+    } else {
+      // If we're not displaying images don't resize them so we can use them for
+      // testing if we would like.
+      _enrollmentImages[albumEntry][dataEntry].Allocate(detectionRect.GetHeight(), detectionRect.GetWidth());
     }
     _img.GetROI(detectionRect).Resize(_enrollmentImages[albumEntry][dataEntry]);
   }
