@@ -75,7 +75,7 @@ namespace Vector {
 
 namespace {
   const char* kImageCompositorReadyPeriodKey = "imageReadyPeriod";
-  const char* kImageCompositorResetPeriodKey = "imageResetPeriod";
+  const char* kImageCompositorReadyCycleResetKey = "numImageReadyCyclesBeforeReset";
 }
   
 CONSOLE_VAR_RANGED(u8,  kUseCLAHE_u8,     "Vision.PreProcessing", 0, 0, 4);  // One of MarkerDetectionCLAHE enum
@@ -279,8 +279,15 @@ Result VisionSystem::Init(const Json::Value& config)
 
   const Json::Value& imageCompositeCfg = config["ImageCompositing"];
   {
-    _imageCompositorReadyPeriod = JsonTools::ParseUInt32(imageCompositeCfg, kImageCompositorReadyPeriodKey, "VisionSystem.Ctor");
-    _imageCompositorResetPeriod = JsonTools::ParseUInt32(imageCompositeCfg, kImageCompositorResetPeriodKey, "VisionSystem.Ctor");
+    _imageCompositorReadyPeriod = JsonTools::ParseUInt32(imageCompositeCfg, 
+                                    kImageCompositorReadyPeriodKey, 
+                                    "VisionSystem.Ctor");
+
+    // The Reset Period is an integer multiple of the Ready Period
+    _imageCompositorResetPeriod = _imageCompositorReadyPeriod * 
+                                    JsonTools::ParseUInt32(imageCompositeCfg, 
+                                    kImageCompositorReadyCycleResetKey, 
+                                    "VisionSystem.Ctor");
   }
   _imageCompositor.reset(new Vision::ImageCompositor(imageCompositeCfg));
 
@@ -1050,11 +1057,10 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
-                                            const Vision::Image& claheImage,
-                                            std::vector<Anki::Rectangle<s32>>& detectionRects,
-                                            MarkerDetectionCLAHE useCLAHE,
-                                            bool useImageCompositing,
-                                            const VisionPoseData& poseData)
+                                  const Vision::Image& claheImage,
+                                  std::vector<Anki::Rectangle<s32>>& detectionRects,
+                                  MarkerDetectionCLAHE useCLAHE,
+                                  const VisionPoseData& poseData)
 {
   // Currently assuming we detect markers first, so we won't make use of anything already detected
   DEV_ASSERT(detectionRects.empty(), "VisionSystem.DetectMarkersWithCLAHE.ExpectingEmptyDetectionRects");
@@ -1062,14 +1068,6 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
   const auto whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier);
   
   std::vector<const Vision::Image*> imagePtrs;
-
-  // Default to using the non-CLAHE image for compositing.
-  // If we are detecting under MarkerDetectionCLAHE::Both, it is arbitrary 
-  //  which one to use.
-  // Ideally we would be able to separately composite both, but it is not
-  //  known whether that is needed, pending experimentation. For now we opt
-  //  for just using the non-CLAHE image.
-  const Vision::Image* imageToCompositeWith = &imageCache.GetGray(whichSize);
   
   switch(useCLAHE)
   {
@@ -1083,7 +1081,6 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
     {
       DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useOn.ImageIsEmpty");
       imagePtrs.push_back(&claheImage);
-      imageToCompositeWith = &claheImage;
       break;
     }
       
@@ -1109,11 +1106,6 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
       else {
         imagePtrs.push_back(&imageCache.GetGray(whichSize));
       }
-
-      // We composite interchangeably with both types since they
-      //  are chosen alternatingly
-      imageToCompositeWith = imagePtrs.back();
-      
       break;
     }
       
@@ -1129,11 +1121,6 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
       else {
         imagePtrs.push_back(&imageCache.GetGray(whichSize));
       }
-      
-      // We composite interchangeably with both types since they
-      //  are dynamically chosen based on lighting conditions.
-      imageToCompositeWith = imagePtrs.back();
-      
       break;
     }
       
@@ -1144,16 +1131,18 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
   
   Vision::Image compositeImage;
   if(IsModeEnabled(VisionMode::CompositingImages)) {
-    const size_t numImgComposed = _imageCompositor->GetNumImagesComposited();
-    const bool shouldReset = numImgComposed == _imageCompositorResetPeriod;
+    const bool shouldReset = (_imageCompositor->GetNumImagesComposited() 
+                                == _imageCompositorResetPeriod);
     if(shouldReset) {
       _imageCompositor->Reset();
     }
-    _imageCompositor->ComposeWith(*imageToCompositeWith);
-    const bool shouldRunOnComposite = (numImgComposed % _imageCompositorReadyPeriod) == 0;
+
+    _imageCompositor->ComposeWith(imageCache.GetGray(whichSize));
+
+    const bool shouldRunOnComposite = (_imageCompositor->GetNumImagesComposited() 
+                                        % _imageCompositorReadyPeriod) == 0;
     if(shouldRunOnComposite) {
       _imageCompositor->GetCompositeImage(compositeImage);
-      compositeImage.SetTimestamp(imageCache.GetTimeStamp());
       imagePtrs.push_back(&compositeImage);
 
       // This mode is considered processed if a composite image was produced
@@ -1531,7 +1520,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       UpdateRollingShutter(poseData, imageCache);
       
       Tic("TotalDetectingMarkers");
-      lastResult = DetectMarkers(imageCache, claheImage, detectionsByMode[VisionMode::DetectingMarkers], useCLAHE, true, poseData);
+      lastResult = DetectMarkers(imageCache, claheImage, detectionsByMode[VisionMode::DetectingMarkers], useCLAHE, poseData);
       
       if(RESULT_OK != lastResult) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");

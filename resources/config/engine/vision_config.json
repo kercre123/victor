@@ -101,7 +101,7 @@
   {
     "percentileForMaxIntensity" : 0.99,
     "imageReadyPeriod" : 4,
-    "imageResetPeriod" : 8
+    "numImageReadyCyclesBeforeReset" : 2
   },
 
   "NeuralNets" :

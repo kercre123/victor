@@ -55,6 +55,9 @@ class ImageCompositor
     Array2d<f32> _sumImage;
 
     u32 _numImagesComposited;
+
+    // Timestamp of the last image incorporated into the image buffer
+    TimeStamp_t _lastImageTimestamp;
 };
 
 

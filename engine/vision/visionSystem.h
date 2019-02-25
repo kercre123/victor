@@ -269,7 +269,6 @@ namespace Vector {
                          const Vision::Image& claheImage,
                          std::vector<Anki::Rectangle<s32>>& detectionRects,
                          MarkerDetectionCLAHE useCLAHE,
-                         bool useImageCompositing,
                          const VisionPoseData& poseData);
     
     // Uses grayscale

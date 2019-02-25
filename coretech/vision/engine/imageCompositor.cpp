@@ -28,8 +28,8 @@ namespace {
   const char* kPercentileForMaxIntensityKey = "percentileForMaxIntensity";
   const std::string debugName = "Vision.ImageCompositor";
 
-  CONSOLE_VAR(u32, kImageHistogramSubsample, "Vision.ImageCompositor", 2);
-  CONSOLE_VAR(f32, kBaseIntensityForMaxBrightness, "Vision.ImageCompositor", 0.9f);
+  CONSOLE_VAR(u32, kImageHistogramSubsample, "Vision.ImageCompositor", 4);
+  CONSOLE_VAR_RANGED(f32, kBaseIntensityForMaxBrightness, "Vision.ImageCompositor", 0.9f, 0.f, 1.f);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -57,12 +57,11 @@ void ImageCompositor::ComposeWith(const Vision::Image& img)
     return;
   }
 
-  #if(ANKICORETECH_USE_OPENCV)
   Array2d<f32> imgAsFloat;
   img.get_CvMat_().convertTo(imgAsFloat.get_CvMat_(), CV_32FC1);
   _sumImage += imgAsFloat;
   _numImagesComposited++;
-  #endif
+  _lastImageTimestamp = img.GetTimestamp();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -70,13 +69,14 @@ void ImageCompositor::Reset()
 {
   _sumImage.FillWith(0.f);
   _numImagesComposited = 0;
+  _lastImageTimestamp = 0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ImageCompositor::GetCompositeImage(Vision::Image& outImg) const
 {
   // A composite image is the average of the sum image, with contrast boosting
-  #if(ANKICORETECH_USE_OPENCV)
+  
   // Computes the average image, as a grayscale
   const f32 averageFactor = 1.f / GetNumImagesComposited();
   _sumImage.get_CvMat_().convertTo(outImg.get_CvMat_(), CV_8UC1, averageFactor, 0);
@@ -84,10 +84,11 @@ void ImageCompositor::GetCompositeImage(Vision::Image& outImg) const
   // Rescale the pixels in the top percentile to be kBaseIntensityForMaxBrightness (or higher)
   ImageBrightnessHistogram hist;
   hist.FillFromImage(outImg, kImageHistogramSubsample);
-  u8 intensity99pct = hist.ComputePercentile(_kPercentileForMaxIntensity);
-  const f32 scalingFactor = (f32)kBaseIntensityForMaxBrightness * std::numeric_limits<u8>::max() / intensity99pct;
+  const u8 brightIntensityVal = hist.ComputePercentile(_kPercentileForMaxIntensity);
+  const f32 scalingFactor = (f32)kBaseIntensityForMaxBrightness * std::numeric_limits<u8>::max() / brightIntensityVal;
   outImg.get_CvMat_().convertTo(outImg.get_CvMat_(), CV_8UC1, scalingFactor, 0);
-  #endif // ANKICORETECH_USE_OPENCV
+
+  outImg.SetTimestamp(_lastImageTimestamp);
 }
 
 } // end namespace Vector
