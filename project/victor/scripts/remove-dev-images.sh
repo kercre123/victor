@@ -1,10 +1,5 @@
 #!/bin/bash
 
-# Get the current date of the local system which we know is accurate.
-# We are going to use this along with other information to indentify
-# the person collecting data.
-DATE=`date +%Y-%m-%d`
-
 # Get the directory of this script
 SCRIPT_PATH=$(dirname $([ -L $0 ] && echo "$(dirname $0)/$(readlink -n $0)" || echo $0))
 SCRIPT_NAME=$(basename ${0})
