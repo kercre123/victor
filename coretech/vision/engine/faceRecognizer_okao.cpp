@@ -85,7 +85,7 @@ namespace Vision {
 
   CONSOLE_VAR_RANGED(u8, kFaceRecMaxDebugResults, "Vision.FaceRecognition", 3, 2, 10);
 
-  CONSOLE_VAR(bool, kFaceRecognitionExtraDebug, "Vision.FaceRecognition", true);
+  CONSOLE_VAR(bool, kFaceRecognitionExtraDebug, "Vision.FaceRecognition", false);
 
   // For simulating slow processing (e.g. on a device)
   CONSOLE_VAR(u32, kFaceRecognitionSimulatedDelay_ms, "Vision.FaceRecognition", 0);
