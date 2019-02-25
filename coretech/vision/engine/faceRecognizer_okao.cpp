@@ -1360,10 +1360,6 @@ namespace Vision {
                                  ptRightBottom.x-ptLeftTop.x,
                                  ptRightBottom.y-ptLeftTop.y);
 
-    LOG_WARNING("FaceRecognizer.SetEnrollmentImage.RectangleSize",
-                "for albumEntry %d the rectangle has height: %d and width: %d",
-                albumEntry, detectionRect.GetHeight(), detectionRect.GetWidth());
-
     if (kGatherDebugEnrollmentImages) {
       _enrollmentImages[albumEntry][dataEntry].Allocate(detectionRect.GetHeight(), detectionRect.GetWidth());
     } else {
@@ -3361,7 +3357,11 @@ namespace Vision {
         const std::string fullFilename = _imagePathPrefix + "_" + std::to_string(_albumEntryToFaceID[entryId])
                                          + "_" + std::to_string(entryId) + "_" +
                                          std::to_string(enrollmentImage.GetTimestamp()) + ".jpg";
-        enrollmentImage.Save(fullFilename);
+        Result result = enrollmentImage.Save(fullFilename);
+        if (result != RESULT_OK) {
+          LOG_ERROR("FaceRecognizer.SaveAllRecognitionImages.FailedToSave",
+                    "Failed to save file:%s.", fullFilename.c_str());
+        }
       }
     }
   }
