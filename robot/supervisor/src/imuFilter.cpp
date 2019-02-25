@@ -33,7 +33,7 @@
 
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/types/motorTypes.h"
-#include "coretech/common/robot/imuUKF.h"
+#include "coretech/common/robot/imuESKF.h"
 #include "coretech/common/shared/math/point.h"
 #include "coretech/common/shared/math/rotation.h"
 #include "coretech/common/shared/math/matrix_impl.h"
@@ -62,9 +62,9 @@ namespace Anki {
         // Last read IMU data
         HAL::IMU_DataStructure imu_data_;
 
-        // Unscented Kalman Filter for orientation tracking
-        const bool useUKF = true;
-        ImuUKF  ukf_;
+        // Kalman Filter for orientation tracking
+        const bool useKF = true;
+        ImuESKF kalmanFilter_;
         Point3f rotSpeed_ = Point3f(); // rad/s
         f32     pitch_    = 0.;        // radians
         f32     roll_     = 0.;        // radians
@@ -1065,7 +1065,7 @@ namespace Anki {
                        accel_robot_frame_filt[1],
                        accel_robot_frame_filt[2]);
 
-        const auto bias = ukf_.GetBias();
+        const auto bias = kalmanFilter_.GetBias();
         AnkiDebugPeriodic(200, "ukf bias: {X %.5f, Y %.5f, Z %.5f}   old bias: {X %.5f, Y %.5f, Z %.5f}\n", 
               bias[0], bias[1], bias[2], 
               gyro_bias_filt[0], gyro_bias_filt[1], gyro_bias_filt[2]);
@@ -1076,8 +1076,8 @@ namespace Anki {
 
 #endif
 
-        if (useUKF) {
-          ukf_.Update(
+        if (useKF) {
+          kalmanFilter_.Update(
             {imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]},
             {imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2] * z_gyro_scale},
             CONTROL_DT,
@@ -1086,10 +1086,10 @@ namespace Anki {
 
           // Update orientation
           const Rotation3d headRot(HeadController::GetAngleRad(), Y_AXIS_3D());
-          const Rotation3d bodyRot = ukf_.GetRotation() * headRot;
-          rotSpeed_ = headRot * ukf_.GetRotationSpeed(); // RotationSpeed is a point, not a rotation, so post-multiply
+          const Rotation3d bodyRot = kalmanFilter_.GetRotation() * headRot;
+          rotSpeed_ = headRot * kalmanFilter_.GetRotationSpeed(); // RotationSpeed is a point, not a rotation, so post-multiply
 
-          // NOTE: Maybe account for when the robot is upside down here? we use projection vector projects to get 
+          // NOTE: Maybe account for when the robot is upside down here? we use vector projections to get 
           //   smooth transitions for roll/pitch/yaw when moving, but these do not result in proper Euler or
           //   Tait-Bryan angles. If we use either of those, we can get gymbal lock, and accidentally trigger
           //   a delocalization event
@@ -1100,7 +1100,7 @@ namespace Anki {
         } else {
           UpdatePitch();
           UpdateRoll();
-          rotSpeed_ = Point3f(gyro_robot_frame_filt);	
+          rotSpeed_ = Point3f(gyro_robot_frame_filt[0], gyro_robot_frame_filt[1], gyro_robot_frame_filt[2]);	
           f32 dAngle = rotSpeed_.z() * CONTROL_DT;
           Radians rot = yaw_;
           rot += dAngle;

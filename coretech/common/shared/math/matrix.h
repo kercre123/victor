@@ -192,15 +192,16 @@ namespace Anki {
     explicit SmallSquareMatrix(std::initializer_list<Point<DIM,T> > colsList); // list of columns
     
     using SmallMatrix<DIM,DIM,T>::operator();
-    using SmallMatrix<DIM,DIM,T>::operator*;
+    using SmallMatrix<DIM,DIM,T>::operator*;   // for multiplying by a non-square matrix
     using SmallMatrix<DIM,DIM,T>::operator+=;
     using SmallMatrix<DIM,DIM,T>::operator-=;
 
     // use inline function to force type checker to keep the derived type
-    inline SmallSquareMatrix<DIM,T> operator*(T value)                             const { return SmallMatrix<DIM,DIM,T>::operator*(value); }
-    inline SmallSquareMatrix<DIM,T> operator+(const SmallMatrix<DIM,DIM,T> &other) const { return SmallMatrix<DIM,DIM,T>::operator+(other); }
-    inline SmallSquareMatrix<DIM,T> operator-(const SmallMatrix<DIM,DIM,T> &other) const { return SmallMatrix<DIM,DIM,T>::operator-(other); }
-    
+    inline SmallSquareMatrix<DIM,T> operator*(T value)                               const { return SmallMatrix<DIM,DIM,T>::operator*(value); }
+    inline SmallSquareMatrix<DIM,T> operator*(const SmallSquareMatrix<DIM,T> &other) const { return SmallMatrix<DIM,DIM,T>::operator*(other); }
+    inline SmallSquareMatrix<DIM,T> operator+(const SmallMatrix<DIM,DIM,T> &other)   const { return SmallMatrix<DIM,DIM,T>::operator+(other); }
+    inline SmallSquareMatrix<DIM,T> operator-(const SmallMatrix<DIM,DIM,T> &other)   const { return SmallMatrix<DIM,DIM,T>::operator-(other); }
+
     // Matrix multiplication in place...
     // ... this = this * other;
     template<typename T_other>
@@ -210,7 +211,7 @@ namespace Anki {
     SmallSquareMatrix<DIM,T>& PreMultiplyBy(const SmallSquareMatrix<DIM,T_other> &other);
        
     // Transpose: (Note that we can transpose square matrices in place)
-    using SmallMatrix<DIM,DIM,T>::GetTranspose;
+    inline SmallSquareMatrix<DIM,T> GetTranspose() const { return SmallMatrix<DIM,DIM,T>::GetTranspose(); }
     SmallSquareMatrix<DIM,T>& Transpose(void);
     
     // Matrix inversion:
