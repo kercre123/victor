@@ -32,7 +32,6 @@ public:
   }
   
 protected:
-  using base = ICozmoBehavior;
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorRollBlock(const Json::Value& config);

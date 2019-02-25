@@ -77,9 +77,6 @@ namespace Anki {
         f32 Ki_ = 0.f; // integral control constant
         f32 angleErrorSum_ = 0.f;
         f32 MAX_ERROR_SUM = 10.f;
-
-        // Constant power bias to counter gravity
-        const f32 ANTI_GRAVITY_POWER_BIAS = 0.0f;
 #else // ifdef SIMULATOR
 
         f32 Kp_ = 3.f;     // proportional control constant
@@ -87,9 +84,6 @@ namespace Anki {
         f32 Ki_ = 0.1f;    // integral control constant
         f32 angleErrorSum_ = 0.f;
         f32 MAX_ERROR_SUM = 5.f;
-
-        // Constant power bias to counter gravity
-        const f32 ANTI_GRAVITY_POWER_BIAS = 0.15f;
 #endif // ifdef SIMULATOR
 
         // Amount by which angleErrorSum decays to MAX_ANGLE_ERROR_SUM_IN_POSITION
@@ -188,6 +182,13 @@ namespace Anki {
         bool bracing_ = false;
         const f32 BRACING_POWER = -0.8;
 
+        // Unbracing
+        // The time during which the motor has zero power applied and is allowed to
+        // adjust into a relaxed state.        
+        // Note: bracing_ is still true during the unbracing period
+        u32 unbracingStartTime_ms_ = 0;
+        const u32 UNBRACE_PERIOD_MS = 200;
+
         // Checking for cube on lift by lowering power and seeing if there's lift movement
         bool checkForLoadWhenInPosition_ = false;
         u32  checkingForLoadStartTime_ = 0;
@@ -213,6 +214,12 @@ namespace Anki {
         currentAngle_rad_ = currAngle;
         desiredAngle_rad_ = currentAngle_rad_;
         currDesiredAngle_rad_ = currentAngle_rad_;
+      }
+
+      void SetPower(f32 power)
+      {
+        power_ = power;
+        HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
       }
 
       void EnableInternal()
@@ -245,8 +252,7 @@ namespace Anki {
           angleErrorSum_ = 0.f;
 
           if (!IsCalibrating()) {
-            power_ = 0;
-            HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
+            SetPower(0.f);
           }
 
           potentialBurnoutStartTime_ms_ = 0;
@@ -330,8 +336,7 @@ namespace Anki {
               break;
 
             case LCS_LOWER_LIFT:
-              power_ = HAL::MotorGetCalibPower(MotorID::MOTOR_LIFT);
-              HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
+              SetPower(HAL::MotorGetCalibPower(MotorID::MOTOR_LIFT));
               lastLiftMovedTime_ms = HAL::GetTimeStamp();
               lowLiftAngleDuringCalib_rad_ = currentAngle_rad_;
               liftAngleHigherThanCalibAbortAngleCount_ = 0;
@@ -344,9 +349,8 @@ namespace Anki {
 
                 if (HAL::GetTimeStamp() - lastLiftMovedTime_ms > LIFT_STOP_TIME_MS) {
                   // Turn off motor
-                  power_ = 0;  // Not strong enough to lift motor, but just enough to unwind backlash. Not sure if this is actually helping.
-                  HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
-
+                  SetPower(0.f);  // Not strong enough to lift motor, but just enough to unwind backlash. Not sure if this is actually helping.
+                  
                   // Set timestamp to be used in next state to wait for motor to "relax"
                   lastLiftMovedTime_ms = HAL::GetTimeStamp();
 
@@ -373,8 +377,7 @@ namespace Anki {
             case LCS_COMPLETE:
             {
               // Turn off motor
-              power_ = 0;
-              HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
+              SetPower(0.f);
 
               Messages::SendMotorCalibrationMsg(MotorID::MOTOR_LIFT, false);
 
@@ -671,7 +674,7 @@ namespace Anki {
       // Returns true if a protection action was triggered.
       bool MotorBurnoutProtection() {
 
-        if (fabsf(power_ - ANTI_GRAVITY_POWER_BIAS) < BURNOUT_POWER_THRESH) {
+        if (fabsf(power_) < BURNOUT_POWER_THRESH) {
           potentialBurnoutStartTime_ms_ = 0;
           return false;
         }
@@ -698,15 +701,15 @@ namespace Anki {
 
       void Brace() {
         AnkiInfo("LiftController.Brace", "");
-        HAL::MotorSetPower(MotorID::MOTOR_LIFT, BRACING_POWER);
+        SetPower(BRACING_POWER);
         bracing_ = true;
+        unbracingStartTime_ms_ = 0;
       }
 
       void Unbrace() {
         AnkiInfo("LiftController.Unbrace", "");
-        HAL::MotorSetPower(MotorID::MOTOR_LIFT, 0.f);
-        ResetAnglePosition(currentAngle_rad_);
-        bracing_ = false;
+        SetPower(0.f);
+        unbracingStartTime_ms_ = HAL::GetTimeStamp();
       }
 
       bool IsBracing() {
@@ -764,6 +767,16 @@ namespace Anki {
         }
 
         if (bracing_ || MotorBurnoutProtection()) {
+          // Check for end of unbracing period
+          if ((unbracingStartTime_ms_ > 0) &&
+              (currTime - unbracingStartTime_ms_ > UNBRACE_PERIOD_MS)) {
+            AnkiInfo("LiftController.Update.UnbracingComplete", "");
+            unbracingStartTime_ms_ = 0;
+            ResetAnglePosition(currentAngle_rad_);
+            prevAngleError_ = 0.f;
+            angleErrorSum_ = 0.f;
+            bracing_ = false;
+          }
           return RESULT_OK;
         }
 
@@ -791,8 +804,7 @@ namespace Anki {
             }
           } else {
             // Make sure motor is unpowered while checking for load
-            power_ = 0;
-            HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
+            SetPower(0.f);
             return RESULT_OK;
           }
         }
@@ -817,7 +829,7 @@ namespace Anki {
         const f32 powerP = Kp_ * angleError;
         const f32 powerD = Kd_ * (angleError - prevAngleError_) * CONTROL_DT;
         const f32 powerI = Ki_ * angleErrorSum_;
-        power_ = ANTI_GRAVITY_POWER_BIAS + powerP + powerD + powerI;
+        power_ = powerP + powerD + powerI;
 
         // Remove D term if lift is near limits
         if ((currentAngle_rad_ < USE_PI_CONTROL_LIFT_ANGLE_LOW_THRESH_RAD &&
@@ -883,8 +895,7 @@ namespace Anki {
                           power_);
 #endif
 
-        power_ = CLIP(power_, -1.0, 1.0);
-        HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
+        SetPower(CLIP(power_, -1.0, 1.0));
 
         return RESULT_OK;
       }
