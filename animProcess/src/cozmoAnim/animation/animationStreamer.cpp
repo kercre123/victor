@@ -70,14 +70,15 @@ namespace Vector {
 
   enum class FaceDisplayType {
     Normal,
-    Test,
+    Test,                 // Displays pattern showcasing RGB at different intensities
+    FullWhite,            // Displays a completely white image
     OverrideIndividually, // each eyes parameters operate on their respective eye
     OverrideTogether      // left eye parameters drive both left and right eyes
   };
 
   // Overrides whatever faces we're sending with a 3-stripe test pattern
   // (seems more related to the other ProceduralFace console vars, so putting it in that group instead)
-  CONSOLE_VAR_ENUM(int, kProcFace_Display,              CONSOLE_GROUP, 0, "Normal,Test,Override individually,Override together"); // Override procedural face with ConsoleVars edited version
+  CONSOLE_VAR_ENUM(int, kProcFace_Display,              CONSOLE_GROUP, 0, "Normal,Test,FullWhite,Override individually,Override together"); // Override procedural face with ConsoleVars edited version
 #if PROCEDURALFACE_NOISE_FEATURE
   CONSOLE_VAR_EXTERN(s32, kProcFace_NoiseNumFrames);
 #endif
@@ -1157,6 +1158,22 @@ namespace Vector {
           red_i[j]   = Vision::PixelRGB565(value, 0, 0);
           green_i[j] = Vision::PixelRGB565(0, value, 0);
           blue_i[j]  = Vision::PixelRGB565(0, 0, value);
+        }
+      }
+    }
+    else if(kProcFace_Display == (int)FaceDisplayType::FullWhite)
+    {
+      const Vision::PixelRGB565 white(255,255,255);
+      for(int i=0; i<FACE_DISPLAY_HEIGHT/3; ++i)
+      {
+        Vision::PixelRGB565* red_i   = outImage.GetRow(i);
+        Vision::PixelRGB565* green_i = outImage.GetRow(i + FACE_DISPLAY_HEIGHT/3);
+        Vision::PixelRGB565* blue_i  = outImage.GetRow(i + 2*FACE_DISPLAY_HEIGHT/3);
+        for(int j=0; j<FACE_DISPLAY_WIDTH; ++j)
+        {
+          red_i[j]   = white;
+          green_i[j] = white;
+          blue_i[j]  = white;
         }
       }
     }
