@@ -3358,8 +3358,9 @@ namespace Vision {
     for (const auto& albumEntry: _enrollmentImages) {
       const AlbumEntryID_t entryId = albumEntry.first;
       for (const auto& enrollmentImage: albumEntry.second) {
-        const std::string fullFilename = _imagePathPrefix + std::to_string(entryId) + "_" +
-          std::to_string(enrollmentImage.GetTimestamp()) + ".jpg";
+        const std::string fullFilename = _imagePathPrefix + "_" + std::to_string(_albumEntryToFaceID[entryId])
+                                         + "_" + std::to_string(entryId) + "_" +
+                                         std::to_string(enrollmentImage.GetTimestamp()) + ".jpg";
         enrollmentImage.Save(fullFilename);
       }
     }
