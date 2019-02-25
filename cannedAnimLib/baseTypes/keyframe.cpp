@@ -23,6 +23,7 @@
 #include "cannedAnimLib/baseTypes/keyframe.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/quoteMacro.h"
 #include "util/logging/logging.h"
 
@@ -57,7 +58,7 @@ namespace Anki {
       
     }
     
-    bool IKeyFrame::IsTimeToPlay(TimeStamp_t timeSinceAnimStart_ms) const
+    bool IKeyFrame::IsTimeToPlay(const TimeStamp_t timeSinceAnimStart_ms) const
     {
       return GetTriggerTime_ms() <= timeSinceAnimStart_ms;
     }
@@ -474,20 +475,31 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
 
     bool SpriteSequenceKeyFrame::NewImageContentAvailable(const TimeStamp_t timeSinceAnimStart_ms) const
     {
-      if(IsFirstKeyframeTick(timeSinceAnimStart_ms)){
+      if (_compositeImageUpdated) {
         return true;
       }
 
-      const bool timeToAdvanceFrame = (_compositeImage->GetFullLoopLength() > 1) && 
-                                      ((timeSinceAnimStart_ms % _internalUpdateInterval_ms) == 0);
+      if (IsFirstKeyframeTick(timeSinceAnimStart_ms)) {
+        return true;
+      }
+
+      const bool timeToAdvanceFrame = ((timeSinceAnimStart_ms % _internalUpdateInterval_ms) == 0) &&
+                                      (_compositeImage->GetFullLoopLength() > 1);
+      if (timeToAdvanceFrame) {
+        return true;
+      }
+
       const bool updatesForCurrentFrame = !_compositeImageUpdateMap.empty() &&
                                           (_compositeImageUpdateMap.begin()->first <= timeSinceAnimStart_ms);
-      return _compositeImageUpdated ||timeToAdvanceFrame || updatesForCurrentFrame;      
+      return updatesForCurrentFrame;
     }
 
-    
-    bool SpriteSequenceKeyFrame::GetFaceImageHandle(const TimeStamp_t timeSinceAnimStart_ms, Vision::SpriteHandle& handle)
+
+    bool SpriteSequenceKeyFrame::GetFaceImageHandle(const TimeStamp_t timeSinceAnimStart_ms,
+                                                    Vision::SpriteHandle& handle,
+                                                    uint16_t& numLayers)
     {
+      ANKI_CPU_PROFILE("SpriteSequenceKeyFrame::GetFaceImageHandle");
       if(GetTimestampActionComplete_ms() <= timeSinceAnimStart_ms) {
         return false;
       }
@@ -506,14 +518,33 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           break;
         }
       }
-      
-      u32 curFrame = GetFrameNumberForTime(timeSinceAnimStart_ms);
 
-      if((HaveKeyframeForTimeStamp(timeSinceAnimStart_ms)) ||
-         _compositeImageUpdated){
-        auto* img = new Vision::ImageRGBA(_compositeImage->GetHeight(),
-                                          _compositeImage->GetWidth());
-        img->FillWith(Vision::PixelRGBA());
+      if (HaveKeyframeForTimeStamp(timeSinceAnimStart_ms) || _compositeImageUpdated)
+      {
+        const auto& layerLayoutMap = _compositeImage->GetLayerLayoutMap();
+        numLayers = layerLayoutMap.size();
+
+        const auto height = _compositeImage->GetHeight();
+        const auto width  = _compositeImage->GetWidth();
+        auto* img = new Vision::ImageRGBA(height, width);
+
+        bool needToClearBuffer = (numLayers == 0);
+        if (!needToClearBuffer)
+        {
+          const auto& firstCompositeImageLayer = layerLayoutMap.begin()->second;
+          const auto& firstSpriteBox = firstCompositeImageLayer.GetLayoutMap().begin()->second;
+          if (firstSpriteBox.GetWidth() != width || firstSpriteBox.GetHeight() != height)
+          {
+            needToClearBuffer = true;
+          }
+        }
+        if (needToClearBuffer)
+        {
+          ANKI_CPU_PROFILE("img->FillWith"); // This takes roughly 0.205 ms on robot.
+          img->FillWith(Vision::PixelRGBA());
+        }
+
+        const u32 curFrame = GetFrameNumberForTime(timeSinceAnimStart_ms);
         _compositeImage->OverlayImageWithFrame(*img, curFrame);
         handle = std::make_shared<Vision::SpriteWrapper>(img);
         _compositeImageUpdated = false;

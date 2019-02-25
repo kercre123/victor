@@ -60,14 +60,17 @@ int main(int argc, char **argv)
   // Instantiate supervisor and pass to AndroidHAL and cubeBleClient
   webots::Supervisor engineSupervisor;
   CameraService::SetSupervisor(&engineSupervisor);
-  OSState::SetSupervisor(&engineSupervisor);
   CubeBleClient::SetSupervisor(&engineSupervisor);
+
+  // Set RobotID
+  OSState::getInstance()->SetRobotID(engineSupervisor.getSelf()->getField("robotID")->getSFInt32());
 
   // Get robotID to determine if devlogger should be created
   // Only create devLogs for robot with DEFAULT_ROBOT_ID.
   // The only time it shouldn't create a log is for sim robots
   // with non-DEFAULT_ROBOT_ID so as to avoid multiple devLogs
   // recording to the same folder.
+
   RobotID_t robotID = OSState::getInstance()->GetRobotID();
   const bool createDevLoggers = robotID == DEFAULT_ROBOT_ID;
 

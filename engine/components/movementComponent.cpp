@@ -312,9 +312,9 @@ void MovementComponent::CheckForUnexpectedMovement(const Vector::RobotState& rob
   if (_unexpectedMovement.IsDetected() &&
       !wasUnexpectedMovementDetected)
   {
-    LOG_WARNING("MovementComponent.CheckForUnexpectedMovement",
-                "Unexpected movement detected %s",
-                EnumToString(unexpectedMovementType));
+    LOG_INFO("MovementComponent.CheckForUnexpectedMovement.Detected",
+             "Unexpected movement detected %s",
+             EnumToString(unexpectedMovementType));
     
     // Only create obstacles for certain types of unexpected movement, and only when
     // enabled by the console var and when ReactToUnexpectedMovement is enabled

@@ -187,3 +187,14 @@ Note: license identifier should be plain names as some characters have special m
 |Xnet          |          |The X.Net, Inc. License                                     |https://opensource.org/licenses/Xnet                                     |
 |Zlib          |Go        |The zlib/libpng License (Zlib)                              |https://opensource.org/licenses/Zlib                                     |
 |ZPL-2.0       |          |The Zope Public License, Version 2.0                        |https://opensource.org/licenses/ZPL-2.0                                  |
+
+
+## Target overrides
+
+**DO NOT ADD TO THIS LIST UNLESS INSTRUCTED BY A DIRECTOR.**
+
+[//]: # (overrides_table)
+
+|Target        |License   |Notes                                                            |
+|:------------:|:--------:| --------------------------------------------------------------- |
+|mpg123        |LGPL-2.1  | Dynamic linkage only! Source must be included in engine tarball |

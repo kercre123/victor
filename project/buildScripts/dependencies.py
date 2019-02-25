@@ -165,7 +165,7 @@ def is_tool(name):
 def is_up(url_string):
     import urllib2
     try:
-        response = urllib2.urlopen(url_string)
+        response = urllib2.urlopen(url_string, None, 10)
         response.read()
         return True
     except urllib2.HTTPError, e:
@@ -182,6 +182,8 @@ def is_up(url_string):
 
 
 def sha256sum(filename):
+    if not os.path.isfile(filename):
+       return None
     import hashlib
     sha256 = hashlib.sha256()
     with open(filename, 'rb') as f:
@@ -445,6 +447,9 @@ def svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
     # Try to import an svn tarball from the cache before contacting the server
     need_to_cache_svn_checkout = not extract_svn_cache_tarball_to_directory(url, r_rev, loc)
     if need_to_cache_svn_checkout:
+       if not is_up(url):
+          raise RuntimeError('Could not contact svn server at {0}.  This URL may require VPN or local LAN access.'.format(url))
+
        pipe = subprocess.Popen(checkout, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, close_fds=True)
        successful, err = pipe.communicate()
@@ -497,13 +502,6 @@ def svn_package(svn_dict):
     repos = svn_dict.get("repo_names", "")
     user = svn_dict.get("default_usr", "undefined")
     cred = SVN_CRED % (user, password)
-    stale_warning = "WARNING: If this build succeeds, it may contain stale external data"
-
-    have_internet = is_up(root_url)
-    if not have_internet:
-        print "WARNING: {0} is not available.  Please check your internet connection.".format(root_url)
-        print(stale_warning)
-        # Continue anyway in case manifest file needs to be regenerated
 
     for repo in repos:
         r_rev = repos[repo].get("version", "head")
@@ -530,7 +528,7 @@ def svn_package(svn_dict):
         if l_rev != 0 and os.path.isdir(loc):
             l_rev = get_svn_file_rev(loc, cred)
             #print("The version of [%s] is [%s]" % (loc, l_rev))
-            if have_internet and l_rev is None:
+            if l_rev is None:
                 l_rev = 0
                 msg = "Clearing out [%s] directory before getting a fresh copy."
                 if subdirs:
@@ -553,7 +551,7 @@ def svn_package(svn_dict):
         no_update_msg += "Current {0} revision at {1}".format(tool, l_rev)
 
         # Do dependencies need to be checked out?
-        need_to_checkout = have_internet and (r_rev == "head" or l_rev != r_rev)
+        need_to_checkout = (r_rev == "head" or l_rev != r_rev)
 
         # Check if manifest file exists
         manifest_file_path = os.path.join(loc, MANIFEST_FILE_NAME)
@@ -643,38 +641,40 @@ def git_package(git_dict):
 
 def files_package(files):
     pulled_files = []
-
-    tool = "curl"
-    assert is_tool(tool)
-    assert isinstance(files, dict)
     for file in files:
-        url = files[file].get("url", "undefined")
+        url = files[file].get("url", None)
+        sha256 = files[file].get("sha256", None)
         cached_file = os.path.join(get_anki_file_cache_directory(url), file)
         outfile = os.path.join(DEPENDENCY_LOCATION, file)
-        if os.path.isfile(cached_file):
+        if os.path.isfile(cached_file) and sha256 == sha256sum(cached_file):
            ankibuild.util.File.cp(cached_file, outfile)
            continue
 
-        if not is_up(url):
-            print "WARNING File {0} is not available. Please check your internet connection.".format(url)
-            return pulled_files
+        if os.path.isfile(outfile) and sha256 == sha256sum(outfile):
+           ankibuild.util.File.cp(outfile, cached_file)
+           continue
 
-        pull_file = [tool, '-s', url]
-        pipe = subprocess.Popen(pull_file, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = pipe.communicate()
-        status = pipe.poll()
-        if status != 0:
-            print "Curl exited with non-zero status: {0}".format(stderr)
-            return pulled_files
-        stdout = stdout.strip()
-        if (not os.path.exists(outfile)) or open(outfile).read() != stdout:
-            with open(outfile, 'w') as output:
-                output.write(stdout)
-                print "Updated {0} from {1}".format(file, url)
-                pulled_files.append(outfile)
-            ankibuild.util.File.cp(outfile, cached_file)
-        else:
-            print "File {0} does not need to be updated".format(file)
+        import urllib2
+        handle = urllib2.urlopen(url, None, 10)
+        code = handle.getcode()
+        if code < 200 or code >= 300:
+           raise RuntimeError("Failed to download {0}. Check your network connection.  This URL may require VPN or local LAN access".format(url))
+
+        tmpfile = outfile + ".tmp"
+        download_file = open(tmpfile, 'w')
+        block_size = 1024 * 1024
+        for chunk in iter(lambda: handle.read(block_size), b''):
+           download_file.write(chunk)
+
+        download_file.close()
+
+        download_hash = sha256sum(tmpfile)
+        if sha256 != download_hash:
+           ankibuild.util.File.rm_rf(tmpfile)
+           raise RuntimeError("SHA256 Checksum mismatch.\nExpected: {0}\nActual:   {1}\nURL:      {2}".format(sha256, download_hash, url))
+
+        os.rename(tmpfile, outfile)
+        ankibuild.util.File.cp(outfile, cached_file)
 
     return pulled_files
 
@@ -727,10 +727,6 @@ def teamcity_package(tc_dict):
         # These artifacts are stored on artifactory.
         teamcity=False
 
-    if not is_up(root_url):
-        print "WARNING {0} is not available.  Please check your internet connection.".format(root_url)
-        return downloaded_builds
-
     for build in builds:
         required_version = builds[build].get("version", None)
         unpack_path = os.path.join(DEPENDENCY_LOCATION, build)
@@ -767,6 +763,9 @@ def teamcity_package(tc_dict):
 
         # If we don't already have a cached copy of the package, download it
         if not os.path.isfile(dist):
+           if not is_up(root_url):
+              raise RuntimeError("Failed to reach {0}. Check your network connection.  This URL may require VPN or local LAN access.".format(root_url))
+
            if teamcity:
               combined_url = "{0}/repository/download/{1}/{2}/{3}_{4}.{5}".format(root_url,
                                                                                   build_type_id,

@@ -2138,9 +2138,6 @@ int main(int argc, char ** argv)
   // Initialize CameraService singleton without supervisor
   CameraService::SetSupervisor(nullptr);
 
-  // Initialize OSState singleton without supervisor
-  OSState::SetSupervisor(nullptr);
-
   // Initialize CubeBleClient singleton without supervisor
   CubeBleClient::SetSupervisor(nullptr);
 

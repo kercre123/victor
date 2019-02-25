@@ -174,6 +174,21 @@ bool AlexaLocaleEnabled(const Util::Locale& locale)
     return false;
   }
 }
+bool AlexaLocaleUsesVad(const Util::Locale& locale)
+{
+  
+  if ((locale.GetCountry() == Util::Locale::CountryISO2::GB) || (locale.GetCountry() == Util::Locale::CountryISO2::AU)) {
+    // the smaller model we currently use for GB and AU has a problematic VAD. For certain utterances, after alexa
+    // finishes responding, the VAD indicator flickers on, off, and back on. If you then play a new alexa wake word,
+    // the VAD indicator switches off, and the wake word is ignored. There's no evidence of this happening for the
+    // larger US model.
+    // TODO (VIC-13413): Have amazon fix the VAD. Maybe a larger model would help too.
+    return false;
+  }
+  else {
+    return true;
+  }
+}
 
 } // namespace
 
@@ -301,7 +316,8 @@ void SpeechRecognizerSystem::InitVector(const RobotDataLoader& dataLoader,
     return;
   }
   
-  _victorTrigger = std::make_unique<TriggerContextThf>("Vector");
+  const bool useVad = true;
+  _victorTrigger = std::make_unique<TriggerContextThf>("Vector", useVad);
   _victorTrigger->recognizer->Init("");
   _victorTrigger->recognizer->SetCallback(callback);
   _victorTrigger->recognizer->Start();
@@ -383,19 +399,32 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample * audioData, un
     ApplyLocaleUpdate();
   }
   // Update recognizer
-  if (vadActive) {
+  if (vadActive || !_victorTrigger->useVad) {
     _victorTrigger->recognizer->Update(audioData, audioDataLen);
   }
   
   if (_isAlexaActive) {
-    // Update both the alexa SDK and the trigger word at the same time with the same data. This is critical so
-    // that their internal sample counters line up
-    _alexaComponent->AddMicrophoneSamples(audioData, audioDataLen);
-    _alexaTrigger->recognizer->Update(audioData, audioDataLen);
-    
-    // NOTE: for the listed reason above, I'm not running the VAD in front of the alexa trigger. If we want to
-    // turn that back on, it should be possible, we'd just need to count how many samples were skipped so we
-    // could reconcile the sample counters
+    if (!_isDisableAlexaPending) {
+      // Update both the alexa SDK and the trigger word at the same time with the same data. This is critical so
+      // that their internal sample counters line up
+      _alexaComponent->AddMicrophoneSamples(audioData, audioDataLen);
+      _alexaTrigger->recognizer->Update(audioData, audioDataLen);
+      
+      // NOTE: for the listed reason above, I'm not running the VAD in front of the alexa trigger. If we want to
+      // turn that back on, it should be possible, we'd just need to count how many samples were skipped so we
+      // could reconcile the sample counters
+    }
+    else {
+      // Disable Alexa flag has been set, destroy recognizer
+      if (_alexaTrigger) {
+        _alexaTrigger->recognizer->Stop();
+        _alexaTrigger.reset();
+      }
+      UpdateAlexaActiveState();
+      ASSERT_NAMED(!_isAlexaActive, "SpeechRecognizerSystem.DisableAlexa._isAlexaActive.IsTrue");
+      _isDisableAlexaPending = false;
+      LOG_INFO("SpeechRecognizerSystem.Update", "Alexa mic recognizer has been disabled");
+    }
   }
 }
 
@@ -414,6 +443,7 @@ bool SpeechRecognizerSystem::UpdateTriggerForLocale(const Util::Locale& newLocal
     
     if (_alexaTrigger &&
         ((RecognizerTypeFlag::AlexaMic & recognizerFlags) == RecognizerTypeFlag::AlexaMic)) {
+      _alexaTrigger->useVad = AlexaLocaleUsesVad(newLocale);
       success &= UpdateTriggerForLocale(*_alexaTrigger.get(), newLocale, MicData::MicTriggerConfig::ModelType::Count, -1);
     }
     
@@ -473,10 +503,8 @@ void SpeechRecognizerSystem::ActivateAlexa(const Util::Locale& locale, AlexaTrig
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpeechRecognizerSystem::DisableAlexa()
 {
-  if (_alexaTrigger) {
-    _alexaTrigger->recognizer->Stop();
-    _alexaTrigger.reset();
-  }
+  // Set flag to disable Alexa's recognizer in Update()
+  _isDisableAlexaPending = true;
   
   // Destroy component before recognizer so the treads are stopped
   if (_alexaPlaybackRecognizerComponent) {
@@ -487,8 +515,6 @@ void SpeechRecognizerSystem::DisableAlexa()
     _alexaPlaybackTrigger->recognizer->Stop();
     _alexaPlaybackTrigger.reset();
   }
-  
-  UpdateAlexaActiveState();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -535,7 +561,8 @@ void SpeechRecognizerSystem::InitAlexa(const Util::Locale& locale,
   const auto dataLoader = _context->GetDataLoader();
   ASSERT_NAMED(_alexaComponent != nullptr, "SpeechRecognizerSystem.InitAlexa._context.GetAlexa.IsNull");
   
-  _alexaTrigger = std::make_unique<TriggerContextPryon>("Alexa");
+  const bool useVad = AlexaLocaleUsesVad(locale);
+  _alexaTrigger = std::make_unique<TriggerContextPryon>("Alexa", useVad);
   _alexaTrigger->recognizer->SetCallback(wrappedCallback);
   _alexaTrigger->micTriggerConfig->Init("alexa_pryon", dataLoader->GetMicTriggerConfig());
   _alexaTrigger->recognizer->Start();
@@ -564,8 +591,12 @@ void SpeechRecognizerSystem::InitAlexaPlayback(const Util::Locale& locale,
     return;
   }
   
+  // Save some CPU by using the VAD on the playback recognizer. This may be something to consider disabling if self-loops
+  // are occurring.
+  const bool useVad = true;
+  
   const auto dataLoader = _context->GetDataLoader();
-  _alexaPlaybackTrigger = std::make_unique<TriggerContextPryon>("AlexaPlayback");
+  _alexaPlaybackTrigger = std::make_unique<TriggerContextPryon>("AlexaPlayback", useVad);
   _alexaPlaybackTrigger->recognizer->SetCallback(callback);
   _alexaPlaybackTrigger->recognizer->SetDetectionThreshold(1); // playback recognizer should be extremely permissive
   _alexaPlaybackTrigger->micTriggerConfig->Init("alexa_pryon", dataLoader->GetMicTriggerConfig());
@@ -699,7 +730,7 @@ bool SpeechRecognizerSystem::UpdateRecognizerModel(TriggerContext<SpeechRecogniz
   if ( currentTrigPathRef.IsValid() ) {
     // Unload & Load
     const std::string netFilePath = currentTrigPathRef.GenerateNetFilePath( _triggerWordDataDir );
-    success = recognizer->InitRecognizer( netFilePath );
+    success = recognizer->InitRecognizer( netFilePath, aTrigger.useVad );
     if ( success && (_alexaComponent != nullptr) ) {
       recognizer->SetAlexaMicrophoneOffset( _alexaComponent->GetMicrophoneSampleIndex() );
       recognizer->Start();

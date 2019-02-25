@@ -53,7 +53,7 @@ public:
 
   virtual bool GetFullSpritePath(std::string& fullSpritePath) override;
 
-  // cacheGrayscale defines what compbination of Grayscale/RGBA to load into memory
+  // cacheGrayscale defines what combination of Grayscale/RGBA to load into memory
   void CacheSprite(const ImgTypeCacheSpec& typesToCache = {false, false}, const HSImageHandle& hsImage = {});
   void ClearCachedSprite();
 
@@ -65,7 +65,7 @@ private:
   void ApplyHS(const Image& grayImg, const HSImageHandle& hsImage, ImageRGBA* outImg) const;
 
   const std::string _fullSpritePath;
-  // Keep track of what hue/satruation have been applied to the image if appropriate
+  // Keep track of what hue/saturation have been applied to the image if appropriate
   uint16_t _hsID = 0;
 
   std::unique_ptr<ImageRGBA> _spriteRGBA;

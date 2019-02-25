@@ -533,8 +533,8 @@ void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFa
       else if(paramInfo.canBeUnset) {
         // Special linear blend taking into account whether values are "set"
         SetParameter(whichEye, param, LinearBlendHelper(face1.GetParameter(whichEye, param),
-                                                                 face2.GetParameter(whichEye, param),
-                                                                 blendFraction));
+                                                        face2.GetParameter(whichEye, param),
+                                                        blendFraction));
       }
       else {
         SetParameter(whichEye, param, LinearBlendHelper(face1.GetParameter(whichEye, param),

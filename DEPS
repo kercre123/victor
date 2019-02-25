@@ -17,9 +17,9 @@
         "deps": {
             "aubio": {
                 "checksums": {
-                    "sha256": "4e27b985dfb02ce8ffc61e9a24c0bdc93ca82a917adfbfd8de802168ece62b44"
+                    "sha256": "74b8350acfffc1b13f31cadafb5979c0db85b543b90fe596b819229ed20a742e"
                 },
-                "version": "d4a1d0fb"
+                "version": "0.4.9"
             },
             "avs-device-sdk": {
                 "checksums": {
@@ -39,6 +39,12 @@
                 },
                 "version": "1.0.16"
             },
+            "mpg123": {
+                "checksums": {
+                    "sha256": "377e3c0299f601b788da28c75ec893761f2e3ad2678dc37180914f0e632f10ad"
+                },
+                "version": "1.25.10"
+            },
             "opencv": {
                 "checksums": {
                     "sha256": "0f3263df69448fe9d9fe9ab655f9d9b1c16b616f4208399fbe9f17758807f420"
@@ -47,9 +53,9 @@
             },
             "opus": {
                 "checksums": {
-                    "sha256": "6b046a65a9c79fc2c096246760b9dbc504bd0a9901be0b8da76d926ea943a886"
+                    "sha256": "4ad513125a5377372a1639ca571af6bd5c2771148a440b13d5ac154789b48f9f"
                 },
-                "version": "e04e86e0"
+                "version": "v1.3"
             },
             "pffft": {
                 "checksums": {
@@ -75,7 +81,8 @@
     },
     "files": {
         "victor-blobstore-qalogs-key": {
-            "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-blobstore-qalogs-client-key/victor-blobstore-qalogs-key"
+            "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-blobstore-qalogs-client-key/victor-blobstore-qalogs-key",
+            "sha256": "579ee035e4aea9be4678fbc440375eba47608ce2e127deab0dd49efb148db39d"
         }
     },
     "svn": {
@@ -101,7 +108,7 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "4872"
+                "version": "4911"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",

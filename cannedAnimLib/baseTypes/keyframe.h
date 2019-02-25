@@ -66,7 +66,7 @@ namespace Vector {
     virtual ~IKeyFrame();
     
     // Returns true if the animation's time has reached frame's "trigger" time
-    bool IsTimeToPlay(TimeStamp_t timeSinceAnimStart_ms) const;
+    bool IsTimeToPlay(const TimeStamp_t timeSinceAnimStart_ms) const;
     
     // Returns the time to trigger whatever change is implied by the KeyFrame
     TimeStamp_t GetTriggerTime_ms() const { return _triggerTime_ms; }
@@ -100,12 +100,12 @@ namespace Vector {
       // if not available.
       virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const = 0;
     #endif
-    
+
     bool IsFirstKeyframeTick(const TimeStamp_t timeSinceAnimStart_ms) const
     {
       return GetTimeSinceTrigger(timeSinceAnimStart_ms) < ANIM_TIME_STEP_MS;
     }
-    
+
   protected:
     // Populate members from Json
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") = 0;
@@ -368,8 +368,10 @@ namespace Vector {
     // Empty frames are expected for animations that have a duration longer than ANIM_TIME_STEP_MS, and hence
     // this function may return false even though there are frames remaining. To check if the keyframe is done,
     // check the final keyframe timestamp rather than the return value of this function.
-    bool GetFaceImageHandle(const TimeStamp_t timeSinceAnimStart_ms, Vision::SpriteHandle& handle);
-    
+    bool GetFaceImageHandle(const TimeStamp_t timeSinceAnimStart_ms,
+                            Vision::SpriteHandle& handle,
+                            uint16_t& numLayers);
+
     Vision::CompositeImage& GetCompositeImage() { assert(_compositeImage != nullptr); return *_compositeImage; }
     
     void OverrideShouldRenderInEyeHue(bool shouldRenderInEyeHue);

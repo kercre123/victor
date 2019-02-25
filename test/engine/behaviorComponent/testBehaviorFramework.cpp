@@ -101,6 +101,7 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
            GetFromMap<DelegationComponent>(map, BEIComponentID::Delegation),
            GetFromMap<FaceWorld>(map, BEIComponentID::FaceWorld),
            GetFromMap<HabitatDetectorComponent>(map, BEIComponentID::HabitatDetector),
+           GetFromMap<HeldInPalmTracker>(map, BEIComponentID::HeldInPalmTracker),
            GetFromMap<MapComponent>(map, BEIComponentID::Map),
            GetFromMap<MicComponent>(map, BEIComponentID::MicComponent),
            GetFromMap<MoodManager>(map, BEIComponentID::MoodManager),

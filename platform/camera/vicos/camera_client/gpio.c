@@ -12,6 +12,8 @@
 #include <stdio.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/wait.h>
+#include <utils/Compat.h>
 
 #include "gpio.h"
 
@@ -47,6 +49,34 @@ struct GPIO_t
   int fd;
   bool isOpenDrain;
 };
+
+static int fork_and_exec(char *argv[]) {
+  pid_t pid;
+  int rc;
+
+  pid = fork();
+  if (pid < 0) {
+    return -1;
+  } else if (!pid) {
+    rc = execvp(argv[0], argv);
+    fprintf(stderr, "%s: %s\n", argv[0], strerror(errno));
+    _exit(-1);
+  } else {
+     int status;
+     pid_t w = TEMP_FAILURE_RETRY(waitpid(pid, &status, 0));
+     if (w == -1) {
+        return errno;
+     }
+     if (WIFEXITED(status)) {
+        rc = WEXITSTATUS(status);
+     } else if (WIFSIGNALED(status)) {
+        rc = -(WTERMSIG(status));
+     } else {
+        rc = -ECHILD;
+     }
+  }
+  return rc;
+}
 
 static int open_patiently(const char *pathname, int flags)
 {
@@ -100,45 +130,37 @@ int gpio_get_base_offset()
   return GPIO_BASE_OFFSET;
 }
 
-int patiently_wait_for_path_to_appear(const char* path) {
+static bool path_exists(const char* path) {
   struct stat info = {};
-  int retries = 10;
-  while (retries > 0) {
-    printf("Waiting for %s to appear...\n", path);
-    int rc = stat(path, &info);
-    if (!rc) {
-      return 0;
-    }
-    // Sleep 100 milliseconds and try again
-    (void) usleep((useconds_t) 100000);
-    retries--;
-  }
-
-  return -1;
+  return (stat(path, &info) == 0);
 }
 
 int gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initial_value, GPIO* gpPtr) {
-   char ioname[32];
-   GPIO gp  = malloc(sizeof(struct GPIO_t));
-   if (!gp) error_return(app_MEMORY_ERROR, "can't alloc memory for gpio %d", gpio_number);
-   int fd;
+   *gpPtr = NULL;
 
-   snprintf(ioname, sizeof(ioname), "/sys/class/gpio/gpio%d", gpio_number+gpio_get_base_offset());
-   if (patiently_wait_for_path_to_appear(ioname)) {
-     // If the pin hasn't already been exported, try to export it here.  This will fail, if
-     // the process does not have permission to write to /sys/class/gpio/export
-     // create io
-     fd = open_patiently("/sys/class/gpio/export", O_WRONLY);
-     snprintf(ioname, 32, "%d\n", gpio_number+gpio_get_base_offset());
-     if (fd<0) {
-       free(gp);
-       *gpPtr = NULL;
-       error_return(app_DEVICE_OPEN_ERROR, "Can't create exporter %d- %s\n", errno, strerror(errno));
-     }
-     (void)write(fd, ioname, strlen(ioname));
-     close(fd);
+   struct GPIO_t* gp = malloc(sizeof(*gp));
+   if (!gp) {
+      error_return(app_MEMORY_ERROR, "can't allocate memory for gpio %d\n", gpio_number);
    }
+   (void) memset(gp, 0, sizeof(*gp));
 
+   int pin_number = gpio_number + gpio_get_base_offset();
+   char gpio_path[32] = {0};
+   (void) snprintf(gpio_path, sizeof(gpio_path), "/sys/class/gpio/gpio%d", pin_number);
+
+   // If the gpio has not already been exported, try to do it with /sbin/export-gpio
+   if (!path_exists(gpio_path)) {
+      char pin_arg[16] = {0};
+      (void) snprintf(pin_arg, sizeof(pin_arg), "%d", pin_number);
+      char *argv[] = {"sudo", "-n", "/sbin/export-gpio", pin_arg, NULL};
+      int rc = fork_and_exec(argv);
+      if (rc || !path_exists(gpio_path)) {
+         free(gp); gp = NULL;
+         error_return(app_DEVICE_OPEN_ERROR,
+                      "/sbin/export-gpio %s failed. rc = %d, errno = %d (%s)\n",
+                      pin_arg, rc, errno, strerror(errno));
+      }
+   }
 
    gp->pin = gpio_number;
    gp->isOpenDrain = false;
@@ -147,18 +169,16 @@ int gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initia
    gpio_set_direction(gp, direction);
 
    //open value fd
-   snprintf(ioname, 32, "/sys/class/gpio/gpio%d/value", gpio_number+gpio_get_base_offset());
-   fd = open_patiently(ioname, O_WRONLY | O_CREAT );
-
-   if (fd <0) {
-     free(gp);
-     *gpPtr = NULL;
-     error_return(app_IO_ERROR, "can't create gpio %d value control %d - %s", gpio_number, errno, strerror(errno));
+   char ioname[32] = {0};
+   (void) snprintf(ioname, sizeof(ioname), "%s/value", gpio_path);
+   gp->fd = open_patiently(ioname, O_WRONLY | O_CREAT );
+   if (gp->fd == -1) {
+      free(gp); gp = NULL;
+      error_return(app_IO_ERROR,
+                   "Failed to create gpio %d value control. errno = %d (%s)",
+                   gpio_number, errno, strerror(errno));
    }
-   gp->fd = fd;
-   if  (fd>0) {
-     gpio_set_value(gp, initial_value);
-   }
+   (void) gpio_set_value(gp, initial_value);
    gp->isOpenDrain = false;
 
    *gpPtr = gp;

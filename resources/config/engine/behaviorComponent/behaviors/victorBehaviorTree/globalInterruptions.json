@@ -6,13 +6,13 @@
 
   "behaviors": [
     "MandatoryPhysicalReactions",
-    "SDK0",
+    "SDKDefault",
     "TriggerWordDetected",
     "SingletonWallTimeCoordinator",
     "TimerUtilityCoordinator",
     "WeatherResponses",
     "TakeAPhotoCoordinator",
-    "ReactToRobotShakenSnowGlobe",
+    "ReactToRobotShaken",
     "ReactToTouchPetting",
     "BasicVoiceCommands", // these are simple voice commands that we want to ignore obstacles
     "ReactToObstacle",

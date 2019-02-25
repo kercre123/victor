@@ -68,10 +68,6 @@ namespace {
 
   uint32_t kPeriodEnumToMS[] = {0, 10, 100, 1000, 10000};
 
-  // Whether or not SetSupervisor() was called
-  bool _supervisorIsSet = false;
-  webots::Supervisor *_supervisor = nullptr;
-
   RobotID_t _robotID = DEFAULT_ROBOT_ID;
 
   // System vars
@@ -117,15 +113,6 @@ std::string GetSerialNumberInternal()
 
 OSState::OSState()
 {
-  DEV_ASSERT(_supervisorIsSet, "OSState.Ctor.SupervisorNotSet");
-
-  if (_supervisor != nullptr) {
-    // Set RobotID
-    const auto* robotIDField = _supervisor->getSelf()->getField("robotID");
-    DEV_ASSERT(robotIDField != nullptr, "OSState.Ctor.MissingRobotIDField");
-    _robotID = robotIDField->getSFInt32();
-  }
-
   // Set simulated attributes
   _serialNumString = GetSerialNumberInternal();
   _osBuildVersion = "12345";
@@ -145,12 +132,6 @@ OSState::OSState()
 
 OSState::~OSState()
 {
-}
-
-void OSState::SetSupervisor(webots::Supervisor *sup)
-{
-  _supervisor = sup;
-  _supervisorIsSet = true;
 }
 
 void OSState::Update(BaseStationTime_t currTime_nanosec)
@@ -191,6 +172,12 @@ RobotID_t OSState::GetRobotID() const
 {
   return _robotID;
 }
+
+void OSState::SetRobotID(RobotID_t robotID)
+{
+  _robotID = robotID;
+}
+
 
 void OSState::UpdateCPUFreq_kHz() const
 {
@@ -243,27 +230,22 @@ void OSState::UpdateMemoryInfo() const
 {
   // Update total and free memory
   _totalMem_kB = 0;
+  _availMem_kB = 0;
   _freeMem_kB = 0;
-
-  struct task_basic_info info;
-  mach_msg_type_number_t sizeOfInfo = sizeof(info);
-
-  kern_return_t kerr = task_info(mach_task_self(), TASK_BASIC_INFO, (task_info_t)&info, &sizeOfInfo);
-  if (kerr == KERN_SUCCESS) {
-    _totalMem_kB = static_cast<uint32_t>(info.resident_size / 1024);
-  }
 
   mach_msg_type_number_t count = HOST_VM_INFO_COUNT;
   vm_statistics_data_t vmstat;
 
-  kerr = host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vmstat, &count);
+  const auto kerr = host_statistics(mach_host_self(), HOST_VM_INFO, (host_info_t)&vmstat, &count);
   if (kerr == KERN_SUCCESS)
   {
-    _freeMem_kB = static_cast<uint32_t>(vmstat.free_count / 1024);
+    const auto totalPages = vmstat.active_count + vmstat.inactive_count + vmstat.free_count + vmstat.wire_count;
+    const auto availPages = vmstat.active_count + vmstat.inactive_count + vmstat.free_count;
+    const auto freePages = vmstat.free_count;
+    _totalMem_kB = (uint32_t) (totalPages * (PAGE_SIZE / 1024));
+    _availMem_kB = (uint32_t) (availPages * (PAGE_SIZE / 1024));
+    _freeMem_kB = (uint32_t) (freePages * (PAGE_SIZE / 1024));
   }
-
-  // TODO: differentiate available and free
-  _availMem_kB = _freeMem_kB;
 }
 
 void OSState::UpdateCPUTimeStats() const

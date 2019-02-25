@@ -37,6 +37,7 @@ size_t AttachmentReader::Read(uint8_t* buf, size_t toRead, Status& status)
   auto ret = _reader->read(buf, toRead, &avsStatus);
   switch (avsStatus) {
     case AVSReadStatus::OK:
+    case AVSReadStatus::OK_OVERRUN_RESET:
       status = Status::Ok;
       break;
     case AVSReadStatus::OK_WOULDBLOCK:

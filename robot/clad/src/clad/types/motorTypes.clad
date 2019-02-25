@@ -37,7 +37,6 @@ enum uint_8 MotorCalibrationReason
   Game,
   LiftMotorBurnoutProtection,
   HeadMotorBurnoutProtection,
-  UnbraceAfterImpact,
   PowerSaveEnteringActiveMode,
   BehaviorReactToUncalibratedHeadAndLift,
   BehaviorReactToOnFace,

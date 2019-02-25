@@ -29,6 +29,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/behaviorsBootLoader.h"
+#include "engine/aiComponent/behaviorComponent/heldInPalmTracker.h"
 #include "engine/aiComponent/behaviorComponent/onboardingMessageHandler.h"
 #include "engine/aiComponent/behaviorComponent/sleepTracker.h"
 #include "engine/aiComponent/behaviorComponent/userDefinedBehaviorTreeComponent/userDefinedBehaviorTreeComponent.h"
@@ -210,6 +211,10 @@ void BehaviorComponent::GenerateManagedComponents(Robot& robot,
 
   if(!entity->HasComponent<OnboardingMessageHandler>()) {
     entity->AddDependentComponent(BCComponentID::OnboardingMessageHandler, new OnboardingMessageHandler);
+  }
+  
+  if(!entity->HasComponent<HeldInPalmTracker>()) {
+    entity->AddDependentComponent(BCComponentID::HeldInPalmTracker, new HeldInPalmTracker);
   }
 
   if(!entity->HasComponent<BehaviorsBootLoader>()) {

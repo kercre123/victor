@@ -34,16 +34,12 @@ using namespace Anki::Vector;
 namespace
 {
   volatile bool _running = true;
-  std::condition_variable _shutdownCondition;
-  std::mutex _shutdownMutex;
 }
 
 static void Shutdown(int signum)
 {
   LOG_INFO("VictorWebServer.Shutdown", "Shutdown on signal %d", signum);
-  std::unique_lock<std::mutex> lk{_shutdownMutex};
   _running = false;
-  _shutdownCondition.notify_all();
 }
 
 Anki::Util::Data::DataPlatform* createPlatform(const std::string& persistentPath,
@@ -140,9 +136,13 @@ int main(void)
   auto victorWebServer = std::make_unique<WebService::WebService>();
   victorWebServer->Start(dataPlatform, wsConfig);
 
-  // Wait for shutdown
-  std::unique_lock<std::mutex> lk{_shutdownMutex};
-  _shutdownCondition.wait(lk, []{ return !_running; });
+  // Wait for shutdown signal
+  while (_running) {
+    sigset_t mask;
+    sigprocmask(SIG_BLOCK, nullptr, &mask);
+    sigsuspend(&mask);
+  }
+
 
   LOG_INFO("victorWebServerMain.main", "Shutting down webserver");
 

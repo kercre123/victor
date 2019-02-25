@@ -5,7 +5,7 @@
  * Created: 05/25/2018
  *
  * Description: Component that serves as a mediator between external SDK requests and any instances of SDK behaviors,
- * such as SDK0.
+ * such as SDKDefault.
  * 
  * The sdkComponent does the following, in this order:
  *     - The sdkComponent will receive a message from the external SDK, requesting that the SDK behavior be activated,
@@ -36,6 +36,7 @@
 #include "engine/externalInterface/gatewayInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "proto/external_interface/shared.pb.h"
 
 #include "util/logging/logging.h"
 
@@ -47,6 +48,7 @@ namespace Vector {
 SDKComponent::SDKComponent()
 : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::SDK)
 {
+  _sdkControlLevel = external_interface::ControlRequest_Priority_UNKNOWN;
 }
 
 
@@ -236,18 +238,27 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
 {
   using namespace external_interface;
   auto* gi = _robot->GetGatewayInterface();
-    
+   
   switch(event.GetData().GetTag()) {
     // Receives a message that external SDK wants an SDK behavior to be activated.
     case external_interface::GatewayWrapperTag::kControlRequest:
-      LOG_INFO("SDKComponent.HandleMessageRequest", "SDK requested control");
-      _sdkWantsControl = true;
+      {
+        auto & control_req = event.GetData().control_request(); 
+        _sdkControlLevel = control_req.priority();
+        if (!ANKI_VERIFY(_sdkControlLevel, "SDKComponent::HandleProtoMessage", "Invalid _sdkControlLevel 0 (UNKNOWN)")) {
+          return;
+        }
 
-      if (_sdkBehaviorActivated) {
-        LOG_INFO("SDKComponent.HandleMessageBehaviorActivated", "SDK already has control");
-        // SDK wants control and and the SDK Behavior is already running. Send response that SDK behavior is activated.
-        DispatchSDKActivationResult(_sdkBehaviorActivated);
-        return;
+        _sdkWantsControl = true;
+        LOG_INFO("SDKComponent::HandleProtoMessage","SDK requested control priority %s (%u)", 
+                  control_req.Priority_Name(control_req.priority()).c_str(), _sdkControlLevel); 
+
+        if (_sdkBehaviorActivated) {
+          LOG_INFO("SDKComponent.HandleMessageBehaviorActivated", "SDK already has control");
+          // SDK wants control and and the SDK Behavior is already running. Send response that SDK behavior is activated.
+          DispatchSDKActivationResult(_sdkBehaviorActivated);
+          return;
+        }
       }
       break;
 
@@ -500,8 +511,14 @@ void SDKComponent::HandleMessage(const ExternalInterface::RobotProcessedImage& m
 
 bool SDKComponent::SDKWantsControl()
 {
-  // TODO What slot does the SDK want to run at? Currently only requesting at one slot, SDK0.
   return _sdkWantsControl;
+}
+
+int SDKComponent::SDKControlLevel()
+{
+  ANKI_VERIFY(_sdkWantsControl, "SDKComponent::SDKControlLevel", "_sdkWantsControl not set when accessing _sdkControlLevel");  
+    
+  return _sdkControlLevel;
 }
 
 void SDKComponent::SDKBehaviorActivation(bool enabled)
@@ -566,6 +583,12 @@ void SDKComponent::OnActionCompleted(ExternalInterface::RobotCompletedAction msg
     {
       auto* response = new external_interface::PlayAnimationResponse;
       response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+
+      ActionCompletedUnion completionInfo = (ActionCompletedUnion)msg.completionInfo;
+      AnimationCompleted animationCompleted = completionInfo.Get_animationCompleted();
+      external_interface::Animation* animation = new external_interface::Animation(animationCompleted.animationName);
+      response->set_allocated_animation(animation);
+
       gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
     }
     break;
