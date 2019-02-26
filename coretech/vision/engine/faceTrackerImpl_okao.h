@@ -124,7 +124,12 @@ namespace Vision {
     float DevComputePairwiseMatchScore(int faceID1, int faceID2) const;
     float DevComputePairwiseMatchScore(int faceID1, const Image& img2, const TrackedFace& face2) const;
 #endif
-    
+
+#if ANKI_DEV_CHEATS
+    void SaveAllRecognitionImages(const std::string& imagePathPrefix);
+    void DeleteAllRecognitionImages();
+#endif // ANKI_DEV_CHEATS
+
   private:
     
     // Creates new face detectors using current parameters

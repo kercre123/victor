@@ -2059,6 +2059,18 @@ namespace Vector {
     _visionSystem->SetFaceEnrollmentMode(forFaceID, numEnrollments, forceNewID);
   }
 
+#if ANKI_DEV_CHEATS
+  void VisionComponent::SaveAllRecognitionImages(const std::string& imagePathPrefix)
+  {
+    _visionSystem->SaveAllRecognitionImages(imagePathPrefix);
+  }
+
+  void VisionComponent::DeleteAllRecognitionImages()
+  {
+    _visionSystem->DeleteAllRecognitionImages();
+  }
+#endif
+
   Result VisionComponent::EraseFace(Vision::FaceID_t faceID)
   {
     Lock();
