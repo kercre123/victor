@@ -245,6 +245,11 @@ struct DockingErrorSignal;
                                s32 numEnrollments = -1,
                                bool forceNewID = false);
 
+#if ANKI_DEV_CHEATS
+    void SaveAllRecognitionImages(const std::string& imagePathPrefix);
+    void DeleteAllRecognitionImages();
+#endif
+
     // Erase faces
     Result EraseFace(Vision::FaceID_t faceID);
     void   EraseAllFaces();
