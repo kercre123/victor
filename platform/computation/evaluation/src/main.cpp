@@ -53,7 +53,7 @@ int main(int argc, char** argv)
   //==================
   // Debayer config
   config.gpu.debayer.name = "gpu_debayer";
-  config.gpu.debayer.enable = true;
+  config.gpu.debayer.enable = false;
   config.gpu.debayer.repetitions = 100;
   config.gpu.debayer.input.width = 1600; // 1280*5/4, RAW10 format
   config.gpu.debayer.input.height = 720;
@@ -73,7 +73,7 @@ int main(int argc, char** argv)
   //==================
   // Debayer_half config
   config.gpu.debayer_half.name = "gpu_debayer_half";
-  config.gpu.debayer_half.enable = true;
+  config.gpu.debayer_half.enable = false;
   config.gpu.debayer_half.repetitions = 100;
   config.gpu.debayer_half.input.width = 1600; // 1280*5/4, RAW10 format
   config.gpu.debayer_half.input.height = 720;
@@ -93,7 +93,7 @@ int main(int argc, char** argv)
   //==================
   // debayer_img
   config.gpu.debayer_img.name = "gpu_debayer_img";
-  config.gpu.debayer_img.enable = true;
+  config.gpu.debayer_img.enable = false;
   config.gpu.debayer_img.repetitions = 100;
   config.gpu.debayer_img.input.width = 1600; // 1280*5/4, RAW10 format
   config.gpu.debayer_img.input.height = 720;
@@ -113,7 +113,7 @@ int main(int argc, char** argv)
   //==================
   // debayer_img_half
   config.gpu.debayer_img_half.name = "gpu_debayer_img_half";
-  config.gpu.debayer_img_half.enable = true;
+  config.gpu.debayer_img_half.enable = false;
   config.gpu.debayer_img_half.repetitions = 100;
   config.gpu.debayer_img_half.input.width = 1600; // 1280*5/4, RAW10 format
   config.gpu.debayer_img_half.input.height = 720;
@@ -133,7 +133,7 @@ int main(int argc, char** argv)
   //==================
   // debayer_zcp
   config.gpu.debayer_zcp.name = "gpu_debayer_zcp";
-  config.gpu.debayer_zcp.enable = true;
+  config.gpu.debayer_zcp.enable = false;
   config.gpu.debayer_zcp.repetitions = 100;
   config.gpu.debayer_zcp.input.width = 1600; // 1280*5/4, RAW10 format
   config.gpu.debayer_zcp.input.height = 720;
@@ -154,7 +154,7 @@ int main(int argc, char** argv)
   //==================
   // debayer_zcp_half
   config.gpu.debayer_zcp_half.name = "gpu_debayer_zcp_half";
-  config.gpu.debayer_zcp_half.enable = true;
+  config.gpu.debayer_zcp_half.enable = false;
   config.gpu.debayer_zcp_half.repetitions = 100;
   config.gpu.debayer_zcp_half.input.width = 1600; // 1280*5/4, RAW10 format
   config.gpu.debayer_zcp_half.input.height = 720;
@@ -175,7 +175,7 @@ int main(int argc, char** argv)
   //=====================
   // squash_zcp
   config.gpu.squash_zcp.name = "gpu_squash_zcp";
-  config.gpu.squash_zcp.enable = true;
+  config.gpu.squash_zcp.enable = false;
   config.gpu.squash_zcp.repetitions = 100;
   config.gpu.squash_zcp.input.width = 1600; // 1280*5/4, RAW10 format
   config.gpu.squash_zcp.input.height = 720;
@@ -199,7 +199,7 @@ int main(int argc, char** argv)
   //==================
   // Debayer config
   config.neon.debayer.name = "neon_debayer";
-  config.neon.debayer.enable = true;
+  config.neon.debayer.enable = false;
   config.neon.debayer.repetitions = 100;
   config.neon.debayer.input.width = 1600; // 1280*5/4, RAW10 format
   config.neon.debayer.input.height = 720;
@@ -216,7 +216,7 @@ int main(int argc, char** argv)
   //==================
   // Debayer_half config
   config.neon.debayer_half.name = "neon_debayer_half";
-  config.neon.debayer_half.enable = true;
+  config.neon.debayer_half.enable = false;
   config.neon.debayer_half.repetitions = 100;
   config.neon.debayer_half.input.width = 1280;
   config.neon.debayer_half.input.height = 720;
@@ -234,7 +234,7 @@ int main(int argc, char** argv)
   // Pipeline Config
 
   config.pipeline.name = "pipeline";
-  config.pipeline.enable = true;
+  config.pipeline.enable = false;
   config.pipeline.repetitions = 100;
   config.pipeline.input.width = 1600; // 1280*5/4, RAW10 format
   config.pipeline.input.height = 720;
@@ -281,7 +281,7 @@ int main(int argc, char** argv)
   // Pipeline Kernel Config
 
   config.pipeline_kernel.name = "pipeline_kernel";
-  config.pipeline_kernel.enable = true;
+  config.pipeline_kernel.enable = false;
   config.pipeline_kernel.repetitions = 100;
   config.pipeline_kernel.input.width = 1600; // 1280*5/4, RAW10 format
   config.pipeline_kernel.input.height = 720;
@@ -326,7 +326,7 @@ int main(int argc, char** argv)
 
   // NEON
   config.power_neon.name = "power_neon";
-  config.power_neon.enable = true;
+  config.power_neon.enable = false;
   config.power_neon.repetitions = 1000;
   config.power_neon.copies = 5;
   config.power_neon.input.width = 1600;
@@ -338,7 +338,7 @@ int main(int argc, char** argv)
 
   // ZCP
   config.power_zcp.name = "power_zcp";
-  config.power_zcp.enable = true;
+  config.power_zcp.enable = false;
   config.power_zcp.repetitions = 1000;
   config.power_zcp.copies = 5;
   config.power_zcp.input.width = 1600;
@@ -352,6 +352,37 @@ int main(int argc, char** argv)
   config.power_zcp.kernel.name = "debayer_img";
   config.power_zcp.kernel.width = 320;
   config.power_zcp.kernel.height = 360;
+
+
+  //====================================================================================================================
+  // Longevity Config
+
+  // NEON
+  config.longevity_neon.name = "longevity_neon";
+  config.longevity_neon.enable = true;
+  config.longevity_neon.copies = 5;
+  config.longevity_neon.fps = 5;
+  config.longevity_neon.seconds = 300;
+  config.longevity_neon.input.width = 1600;
+  config.longevity_neon.input.height  = 720;
+  config.longevity_neon.input.path = "resources/images/debayer/image0000.raw";
+  config.longevity_neon.output.width = 1280;
+  config.longevity_neon.output.height = 720;
+
+  // ZCP
+  config.longevity_zcp.name = "longevity_zcp";
+  config.longevity_zcp.enable = true;
+  config.longevity_zcp.copies = 5;
+  config.longevity_zcp.fps = 5;
+  config.longevity_zcp.seconds = 300;
+  config.longevity_zcp.input.width = 1600;
+  config.longevity_zcp.input.height  = 720;
+  config.longevity_zcp.input.path = "resources/images/debayer/image0000.raw";
+  config.longevity_zcp.output.width = 1280;
+  config.longevity_zcp.output.height = 720;
+  config.longevity_zcp.kernel.name = "debayer_img";
+  config.longevity_zcp.kernel.width = 320;
+  config.longevity_zcp.kernel.height = 360;
 
   //====================================================================================================================
 

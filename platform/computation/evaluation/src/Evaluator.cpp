@@ -20,6 +20,7 @@
 #include <memory>
 #include <chrono>
 #include <tuple>
+#include <thread>
 #include <functional>
 
 namespace Anki
@@ -59,7 +60,9 @@ void Evaluator::run()
     std::make_tuple(_config.pipeline.name,                std::bind(&Evaluator::pipeline, this)),
     std::make_tuple(_config.pipeline_kernel.name,         std::bind(&Evaluator::pipeline_kernel, this)),
     std::make_tuple(_config.power_neon.name,              std::bind(&Evaluator::power_neon, this)),
-    std::make_tuple(_config.power_zcp.name,               std::bind(&Evaluator::power_zcp, this))
+    std::make_tuple(_config.power_zcp.name,               std::bind(&Evaluator::power_zcp, this)),
+    std::make_tuple(_config.longevity_neon.name,          std::bind(&Evaluator::longevity_neon, this)),
+    std::make_tuple(_config.longevity_zcp.name,          std::bind(&Evaluator::longevity_zcp, this)),
   };
 
   for (auto& test : tests) {
@@ -1680,6 +1683,9 @@ void Evaluator::pipeline_kernel()
 //======================================================================================================================
 void Evaluator::power_neon()
 {
+  if (!_config.power_neon.enable){
+    return;
+  }
   std::string in_path = _config.power_neon.input.path;
   std::ifstream ifs(in_path, std::ios::binary);
   std::vector<unsigned char> in_bytes(std::istreambuf_iterator<char>(ifs), {});
@@ -1734,6 +1740,9 @@ void Evaluator::power_neon()
 //======================================================================================================================
 void Evaluator::power_zcp()
 {
+  if (!_config.power_zcp.enable){
+    return;
+  }
   Profile profile(_config.power_zcp.name);
   profile.append("debayer");
 
@@ -1832,4 +1841,195 @@ void Evaluator::power_zcp()
   _profiles.push_back(profile);
 }
 
+void Evaluator::longevity_neon()
+{
+  if (!_config.longevity_neon.enable){
+    return;
+  }
+
+  Profile profile(_config.longevity_neon.name);
+  profile.append("debayer");
+  profile.append("sleep");
+
+  std::string in_path = _config.longevity_neon.input.path;
+  std::ifstream ifs(in_path, std::ios::binary);
+  std::vector<unsigned char> in_bytes(std::istreambuf_iterator<char>(ifs), {});
+  std::vector<unsigned char> out_bytes(3 * _config.longevity_neon.output.width * _config.longevity_neon.output.height);
+  size_t out_size = 3 * sizeof(unsigned char) * _config.longevity_neon.output.width * _config.longevity_neon.output.height;
+
+  // We make a number of copies to try to make sure we're accessing different parts of memory and clearing any caching.
+  std::vector<std::vector<unsigned char>> input_copies;
+  for (int i = 0; i < _config.longevity_neon.copies; ++i){
+    input_copies.push_back(in_bytes);
+  }
+
+  const uint8_t* bayer_in = in_bytes.data();
+  int32_t rows = _config.longevity_neon.output.height;
+  int32_t cols = _config.longevity_neon.output.width;
+  cv::Mat_<cv::Vec<uint8_t,3>> rgb(rows,cols);
+
+  cv::Mat bayer(rows, cols, CV_8UC1);
+
+  std::chrono::nanoseconds interval(static_cast<int64_t>((1.0 / _config.longevity_neon.fps)*1000000000.0));
+
+  // Code to test power - look at multimeter while this is running
+  bool should_stop = false;
+  auto tStart = std::chrono::steady_clock::now();
+  uint64_t count = 0;
+  while(!should_stop)
+  {
+    auto tic = std::chrono::steady_clock::now();
+
+    const uint8_t* bufferPtr = input_copies[count % input_copies.size()].data();
+    uint8_t* bayerPtr = static_cast<uint8_t*>(bayer.ptr());
+    for(int ii = 0; ii < (cols*rows); ii+=8)
+    {
+      uint8x8_t data = vld1_u8(bufferPtr);
+      bufferPtr += 5;
+      uint8x8_t data2 = vld1_u8(bufferPtr);
+      bufferPtr += 5;
+      data = vreinterpret_u8_u64(vshl_n_u64(vreinterpret_u64_u8(data), 32));
+      data = vext_u8(data, data2, 4);
+      data = vqshl_n_u8(data, 2);
+      vst1_u8(bayerPtr, data);
+      bayerPtr += 8;
+    }
+    cv::cvtColor(bayer, rgb, cv::COLOR_BayerRG2BGR);
+
+
+    auto toc = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(toc - tic);
+    profile.add(0, elapsed.count());
+    
+    // Stop if more than _config.longevitiy.seconds have elapsed
+    should_stop = (std::chrono::duration_cast<std::chrono::nanoseconds>(toc - tStart).count()/1000000000.0) >= _config.longevity_neon.seconds;
+
+    // Sleep for the remainder
+    std::chrono::nanoseconds difference = interval - elapsed;
+    if (difference.count() > 0){
+      std::this_thread::sleep_for(difference);
+      profile.add(1, difference.count());
+    }
+  }
+
+  _profiles.push_back(profile);
 }
+
+void Evaluator::longevity_zcp()
+{
+  if (!_config.longevity_zcp.enable){
+    return;
+  }
+
+  Profile profile(_config.longevity_zcp.name);
+  profile.append("debayer");
+  profile.append("sleep");
+
+  std::string in_path = _config.longevity_zcp.input.path;
+  std::ifstream ifs(in_path, std::ios::binary);
+  std::vector<unsigned char> in_bytes(std::istreambuf_iterator<char>(ifs), {});
+  std::vector<unsigned char> out_bytes(3 * _config.longevity_zcp.output.width * _config.longevity_zcp.output.height);
+
+  cl::size_t<3> in_origin;
+  in_origin[0] = 0;
+  in_origin[1] = 0;
+  in_origin[2] = 0;
+  cl::size_t<3> in_region;
+  in_region[0] = _config.longevity_zcp.input.width;
+  in_region[1] = _config.longevity_zcp.input.height;
+  in_region[2] = 1;
+
+  cl::size_t<3> out_origin;
+  out_origin[0] = 0;
+  out_origin[1] = 0;
+  out_origin[2] = 0;
+  cl::size_t<3> out_region;
+  out_region[0] = _config.longevity_zcp.output.width;
+  out_region[1] = _config.longevity_zcp.output.height;
+  out_region[2] = 1;
+
+  // Copy the bayer image into the buffer. Do this once just to set up the input. We make a number of copies to try
+  // to make sure we're accessing different parts of memory and clearing any caching.
+  std::vector<ZCPImage> in_images(_config.longevity_zcp.copies);
+  for (int i = 0; i < _config.longevity_zcp.copies; ++i){
+    ZCPImage& in_image2D = in_images[i];
+    zcp_allocate(in_image2D,
+      _config.longevity_zcp.input.width,
+      _config.longevity_zcp.input.height,
+      cl::ImageFormat(CL_R, CL_UNORM_INT8));
+
+    in_image2D.ocl_mapping = _queue.enqueueMapImage(in_image2D.ocl_image, CL_TRUE, CL_MAP_WRITE,
+      in_origin, in_region, &in_image2D.ocl_row_pitch, NULL, NULL, NULL, NULL);
+
+    zcp_copy(in_bytes, in_image2D);
+
+    _queue.enqueueUnmapMemObject(in_image2D.ocl_image, in_image2D.ocl_mapping, NULL, NULL);
+
+    _queue.finish();
+  }
+
+  ZCPImage out_image2D;
+  zcp_allocate(out_image2D,
+    _config.longevity_zcp.output.width,
+    _config.longevity_zcp.output.height,
+    cl::ImageFormat(CL_RGB, CL_UNORM_INT8));
+
+  std::chrono::nanoseconds interval(static_cast<int64_t>((1.0 / _config.longevity_neon.fps)*1000000000.0));
+
+  // Code to test power - look at multimeter while this is running
+  bool should_stop = false;
+  auto tStart = std::chrono::steady_clock::now();
+  uint64_t count = 0;
+  while(!should_stop)
+  {
+    auto tic = std::chrono::steady_clock::now();
+
+    ZCPImage& in_image2D = in_images[count % in_images.size()];
+
+    in_image2D.ocl_mapping = _queue.enqueueMapImage(in_image2D.ocl_image, CL_TRUE, CL_MAP_WRITE,
+      in_origin, in_region, &in_image2D.ocl_row_pitch, NULL, NULL, NULL, NULL);
+
+    // Don't actually do anything, we're not measuring writing data into the buffer; assume it's already done. However,
+    // we have to do the map/unmap because those are relevant operations.
+
+    _queue.enqueueUnmapMemObject(in_image2D.ocl_image, in_image2D.ocl_mapping, NULL, NULL);
+
+    // Not sure if we have to make a new on each time or just set the args.
+    cl::Kernel kernel(_program, _config.longevity_zcp.kernel.name.c_str());
+    kernel.setArg(0, in_image2D.ocl_image);
+    kernel.setArg(1, out_image2D.ocl_image);
+
+    _queue.enqueueNDRangeKernel(kernel,
+      cl::NullRange,
+      cl::NDRange(_config.longevity_zcp.kernel.width, _config.longevity_zcp.kernel.height),
+      cl::NullRange,
+      NULL, NULL);
+
+    _queue.finish();
+
+    out_image2D.ocl_mapping = _queue.enqueueMapImage(out_image2D.ocl_image, CL_TRUE, CL_MAP_READ,
+      out_origin, out_region, &out_image2D.ocl_row_pitch, NULL, NULL, NULL, NULL);
+
+    // Don't actually do anything, we don't care about this when measuring power. The data is usable outside of 
+    // debayering at this point.
+
+
+    auto toc = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(toc - tic);
+    profile.add(0, elapsed.count());
+    
+    // Stop if more than _config.longevitiy.seconds have elapsed
+    should_stop = (std::chrono::duration_cast<std::chrono::nanoseconds>(toc - tStart).count()/1000000000.0) >= _config.longevity_neon.seconds;
+
+    // Sleep for the remainder
+    std::chrono::nanoseconds difference = interval - elapsed;
+    if (difference.count() > 0){
+      std::this_thread::sleep_for(difference);
+      profile.add(1, difference.count());
+    }
+  }
+
+  _profiles.push_back(profile);
+}
+
+} /* namepsace Anki */

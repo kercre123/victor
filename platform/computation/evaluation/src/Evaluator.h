@@ -165,10 +165,65 @@ public:
         int height;
       } kernel;
     } power_zcp;
+
+    struct 
+    {
+      std::string name;
+      bool enable;
+      int copies;           //! Number of copies of the input to make
+      int fps;              //! Target frames per second (e.g. 30, 15, 10, 5)
+      double seconds;       //! Number of seconds to run the test
+
+      struct {
+        int width;
+        int height;
+        std::string path;
+      } input;
+
+      struct {
+        int width;
+        int height;
+      } output;
+
+      struct {
+        std::string name;
+        int width;
+        int height;
+      } kernel;
+      
+    } longevity_neon;
+
+    struct 
+    {
+      std::string name;
+      bool enable;
+      int copies;           //! Number of copies of the input to make
+      int fps;              //! Target frames per second (e.g. 30, 15, 10, 5)
+      double seconds;       //! Number of seconds to run the test
+
+      struct {
+        int width;
+        int height;
+        std::string path;
+      } input;
+
+      struct {
+        int width;
+        int height;
+      } output;
+
+      struct {
+        std::string name;
+        int width;
+        int height;
+      } kernel;
+      
+    } longevity_zcp;
   };
 
   Evaluator(const Config& config);
   ~Evaluator();
+
   void run();
   void print();
 
@@ -212,6 +267,9 @@ private:
 
   void power_neon();
   void power_zcp();
+
+  void longevity_neon();
+  void longevity_zcp();
 
   void zcp_allocate(ZCPImage& image, size_t width, size_t height, cl::ImageFormat format);
   /**
