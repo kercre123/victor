@@ -1,67 +1,66 @@
 
-/*
-* Copyright (c) 2016, STMicroelectronics - All Rights Reserved
-*
-* This file is part of VL53L1 Core and is dual licensed,
-* either 'STMicroelectronics
-* Proprietary license'
-* or 'BSD 3-clause "New" or "Revised" License' , at your option.
-*
-********************************************************************************
-*
-* 'STMicroelectronics Proprietary license'
-*
-********************************************************************************
-*
-* License terms: STMicroelectronics Proprietary in accordance with licensing
-* terms at www.st.com/sla0044
-*
-* STMicroelectronics confidential
-* Reproduction and Communication of this document is strictly prohibited unless
-* specifically authorized in writing by STMicroelectronics.
-*
-*
-********************************************************************************
-*
-* Alternatively, VL53L1 Core may be distributed under the terms of
-* 'BSD 3-clause "New" or "Revised" License', in which case the following
-* provisions apply instead of the ones
-* mentioned above :
-*
-********************************************************************************
-*
-* License terms: BSD 3-clause "New" or "Revised" License.
-*
-* Redistribution and use in source and binary forms, with or without
-* modification, are permitted provided that the following conditions are met:
-*
-* 1. Redistributions of source code must retain the above copyright notice, this
-* list of conditions and the following disclaimer.
-*
-* 2. Redistributions in binary form must reproduce the above copyright notice,
-* this list of conditions and the following disclaimer in the documentation
-* and/or other materials provided with the distribution.
-*
-* 3. Neither the name of the copyright holder nor the names of its contributors
-* may be used to endorse or promote products derived from this software
-* without specific prior written permission.
-*
-* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
-* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
-* FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
-* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
-* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
-* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
-* OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-*
-*
-********************************************************************************
-*
-*/
+/*******************************************************************************
+ * Copyright (c) 2017, STMicroelectronics - All Rights Reserved
 
+ This file is part of VL53L1 Core and is dual licensed,
+ either 'STMicroelectronics
+ Proprietary license'
+ or 'BSD 3-clause "New" or "Revised" License' , at your option.
+
+********************************************************************************
+
+ 'STMicroelectronics Proprietary license'
+
+********************************************************************************
+
+ License terms: STMicroelectronics Proprietary in accordance with licensing
+ terms at www.st.com/sla0081
+
+ STMicroelectronics confidential
+ Reproduction and Communication of this document is strictly prohibited unless
+ specifically authorized in writing by STMicroelectronics.
+
+
+********************************************************************************
+
+ Alternatively, VL53L1 Core may be distributed under the terms of
+ 'BSD 3-clause "New" or "Revised" License', in which case the following
+ provisions apply instead of the ones
+ mentioned above :
+
+********************************************************************************
+
+ License terms: BSD 3-clause "New" or "Revised" License.
+
+ Redistribution and use in source and binary forms, with or without
+ modification, are permitted provided that the following conditions are met:
+
+ 1. Redistributions of source code must retain the above copyright notice, this
+ list of conditions and the following disclaimer.
+
+ 2. Redistributions in binary form must reproduce the above copyright notice,
+ this list of conditions and the following disclaimer in the documentation
+ and/or other materials provided with the distribution.
+
+ 3. Neither the name of the copyright holder nor the names of its contributors
+ may be used to endorse or promote products derived from this software
+ without specific prior written permission.
+
+ THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+ AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+ IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+ DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+ FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+ SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+ CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+ OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+
+
+********************************************************************************
+
+*/
 
 
 
@@ -136,10 +135,11 @@
 #include "vl53l1_api_core.h"
 #include "vl53l1_nvm.h"
 
-#if defined(SMALL_FOOTPRINT)
 
 
-#elif VL53L1_MAX_USER_ZONES < 5
+#define ZONE_CHECK VL53L1_MAX_USER_ZONES
+
+#if ZONE_CHECK < 5
 #error Must define at least 5 zones in MAX_USER_ZONES constant
 #endif
 
@@ -176,21 +176,6 @@
 #define LOWPOWER_AUTO_OVERHEAD_BEFORE_A_RANGING 1448
 #define LOWPOWER_AUTO_OVERHEAD_BETWEEN_A_B_RANGING 2100
 
-#define TUNING_PROXY_MIN -30
-
-#define TUNING_SINGLE_TARGET_XTALK_TARGET_DISTANCE_MM 600
-
-
-#define TUNING_SINGLE_TARGET_XTALK_SAMPLE_NUMBER 50
-
-
-#define TUNING_MIN_AMBIENT_DMAX_VALID 8
-
-
-#define TUNING_MAX_SIMPLE_OFFSET_CALIBRATION_RANGES 50
-
-
-
 #define FDA_MAX_TIMING_BUDGET_US 550000
 
 
@@ -207,16 +192,19 @@ static int32_t BDTable[VL53L1_TUNING_MAX_TUNABLE_KEY] = {
 		TUNING_SINGLE_TARGET_XTALK_TARGET_DISTANCE_MM,
 		TUNING_SINGLE_TARGET_XTALK_SAMPLE_NUMBER,
 		TUNING_MIN_AMBIENT_DMAX_VALID,
-		TUNING_MAX_SIMPLE_OFFSET_CALIBRATION_RANGES
+		TUNING_MAX_SIMPLE_OFFSET_CALIBRATION_SAMPLE_NUMBER,
+		TUNING_XTALK_FULL_ROI_TARGET_DISTANCE_MM,
+		TUNING_SIMPLE_OFFSET_CALIBRATION_REPEAT
 };
+
 
 
 static VL53L1_Error SingleTargetXTalkCalibration(VL53L1_DEV Dev)
 {
 	VL53L1_Error Status = VL53L1_ERROR_NONE;
 
-	uint16_t sum_ranging = 0;
-	uint16_t sum_spads = 0;
+	uint32_t sum_ranging = 0;
+	uint32_t sum_spads = 0;
 	FixPoint1616_t sum_signalRate = 0;
 	FixPoint1616_t total_count = 0;
 	uint8_t xtalk_meas = 0;
@@ -243,7 +231,7 @@ static VL53L1_Error SingleTargetXTalkCalibration(VL53L1_DEV Dev)
 
 
 
-	PresetMode = PALDevDataGet(Dev, CurrentParameters.PresetMode);
+	PresetMode = VL53L1DevDataGet(Dev, CurrentParameters.PresetMode);
 
 	if ((PresetMode != VL53L1_PRESETMODE_AUTONOMOUS) &&
 		(PresetMode != VL53L1_PRESETMODE_LOWPOWER_AUTONOMOUS) &&
@@ -255,10 +243,20 @@ static VL53L1_Error SingleTargetXTalkCalibration(VL53L1_DEV Dev)
 
 
 	Status = VL53L1_disable_xtalk_compensation(Dev);
-	CHECK_ERROR_GO_ENDFUNC;
+
+	if (Status != VL53L1_ERROR_NONE)
+		goto ENDFUNC;
 
 	Status = VL53L1_StartMeasurement(Dev);
-	CHECK_ERROR_GO_ENDFUNC;
+
+	if (Status != VL53L1_ERROR_NONE)
+		goto ENDFUNC;
+
+
+
+	VL53L1_WaitMeasurementDataReady(Dev);
+	VL53L1_GetRangingMeasurementData(Dev, &RMData);
+	VL53L1_ClearInterruptAndStartMeasurement(Dev);
 
 	sum_ranging = 0;
 	sum_spads = 0;
@@ -281,10 +279,10 @@ static VL53L1_Error SingleTargetXTalkCalibration(VL53L1_DEV Dev)
 
 
 		xTalkStoredMeanSignalRate = sum_signalRate / total_count;
-		xTalkStoredMeanRange = (FixPoint1616_t)((uint32_t)(
-			sum_ranging << 16) / total_count);
-		xTalkStoredMeanRtnSpads = (FixPoint1616_t)((uint32_t)(
-			sum_spads << 16) / total_count);
+		xTalkStoredMeanRange = (FixPoint1616_t)(sum_ranging << 16);
+		xTalkStoredMeanRange /= total_count;
+		xTalkStoredMeanRtnSpads = (FixPoint1616_t)(sum_spads << 16);
+		xTalkStoredMeanRtnSpads /= total_count;
 
 
 
@@ -319,17 +317,6 @@ static VL53L1_Error SingleTargetXTalkCalibration(VL53L1_DEV Dev)
 
 
 
-
-
-
-
-
-
-
-
-
-
-
 			signalXTalkTotalPerSpad = (xTalkStoredMeanSignalRate) /
 				xTalkStoredMeanRtnSpadsAsInt;
 
@@ -339,7 +326,7 @@ static VL53L1_Error SingleTargetXTalkCalibration(VL53L1_DEV Dev)
 
 
 
-			signalXTalkTotalPerSpad *= ((1 << 16) -
+			signalXTalkTotalPerSpad *= (((uint32_t)1 << 16) -
 				(xTalkStoredMeanRange / xTalkCalDistanceAsInt));
 
 
@@ -350,16 +337,20 @@ static VL53L1_Error SingleTargetXTalkCalibration(VL53L1_DEV Dev)
 
 
 		Status = VL53L1_GetCalibrationData(Dev, &CalibrationData);
-		CHECK_ERROR_GO_ENDFUNC;
+
+		if (Status != VL53L1_ERROR_NONE)
+			goto ENDFUNC;
 
 		pC = &CalibrationData.customer;
 
 		pC->algo__crosstalk_compensation_plane_offset_kcps =
 			(uint32_t)(1000 * ((XTalkCompensationRateMegaCps  +
-				(1<<6)) >> (16-9)));
+				((uint32_t)1<<6)) >> (16-9)));
 
 		Status = VL53L1_SetCalibrationData(Dev, &CalibrationData);
-		CHECK_ERROR_GO_ENDFUNC;
+
+		if (Status != VL53L1_ERROR_NONE)
+			goto ENDFUNC;
 
 		Status = VL53L1_enable_xtalk_compensation(Dev);
 
@@ -526,6 +517,12 @@ VL53L1_Error VL53L1_GetDeviceInfo(VL53L1_DEV Dev,
 	strncpy(pVL53L1_DeviceInfo->Type,
 			VL53L1_STRING_DEVICE_INFO_TYPE,
 			VL53L1_DEVINFO_STRLEN-1);
+
+
+	if (pVL53L1_DeviceInfo->ProductType == 0xAA) {
+		pVL53L1_DeviceInfo->Name[5] = '3';
+		pVL53L1_DeviceInfo->Type[5] = '3';
+	}
 #else
 	pVL53L1_DeviceInfo->Name[0] = 0;
 	pVL53L1_DeviceInfo->Type[0] = 0;
@@ -582,7 +579,7 @@ VL53L1_Error VL53L1_GetPalState(VL53L1_DEV Dev, VL53L1_State *pPalState)
 
 	LOG_FUNCTION_START("");
 
-	*pPalState = PALDevDataGet(Dev, PalState);
+	*pPalState = VL53L1DevDataGet(Dev, PalState);
 
 	LOG_FUNCTION_END(Status);
 	return Status;
@@ -600,7 +597,7 @@ VL53L1_Error VL53L1_SetDeviceAddress(VL53L1_DEV Dev, uint8_t DeviceAddress)
 	LOG_FUNCTION_START("");
 
 	Status = VL53L1_WrByte(Dev, VL53L1_I2C_SLAVE__DEVICE_ADDRESS,
-		DeviceAddress);
+			DeviceAddress / 2);
 
 	LOG_FUNCTION_END(Status);
 	return Status;
@@ -628,8 +625,8 @@ VL53L1_Error VL53L1_DataInit(VL53L1_DEV Dev)
 		Status = VL53L1_data_init(Dev, 1);
 
 	if (Status == VL53L1_ERROR_NONE) {
-		PALDevDataSet(Dev, PalState, VL53L1_STATE_WAIT_STATICINIT);
-		PALDevDataSet(Dev, CurrentParameters.PresetMode,
+		VL53L1DevDataSet(Dev, PalState, VL53L1_STATE_WAIT_STATICINIT);
+		VL53L1DevDataSet(Dev, CurrentParameters.PresetMode,
 				VL53L1_PRESETMODE_RANGING);
 	}
 
@@ -658,6 +655,16 @@ VL53L1_Error VL53L1_DataInit(VL53L1_DEV Dev)
 
 	}
 
+
+
+
+	if (Status == VL53L1_ERROR_NONE) {
+		Status = VL53L1_set_dmax_mode(Dev,
+				VL53L1_DEVICEDMAXMODE__CUST_CAL_DATA);
+	}
+
+
+
 	LOG_FUNCTION_END(Status);
 	return Status;
 }
@@ -670,22 +677,15 @@ VL53L1_Error VL53L1_StaticInit(VL53L1_DEV Dev)
 
 	LOG_FUNCTION_START("");
 
-	if (Status == VL53L1_ERROR_NONE)
-		PALDevDataSet(Dev, PalState, VL53L1_STATE_IDLE);
+	VL53L1DevDataSet(Dev, PalState, VL53L1_STATE_IDLE);
 
 	measurement_mode  = VL53L1_DEVICEMEASUREMENTMODE_BACKTOBACK;
-	PALDevDataSet(Dev, LLData.measurement_mode, measurement_mode);
+	VL53L1DevDataSet(Dev, LLData.measurement_mode, measurement_mode);
 
-	PALDevDataSet(Dev, CurrentParameters.NewDistanceMode,
+	VL53L1DevDataSet(Dev, CurrentParameters.DistanceMode,
 			VL53L1_DISTANCEMODE_LONG);
 
-	PALDevDataSet(Dev, CurrentParameters.InternalDistanceMode,
-			VL53L1_DISTANCEMODE_LONG);
-
-	PALDevDataSet(Dev, CurrentParameters.DistanceMode,
-			VL53L1_DISTANCEMODE_LONG);
-
-	PALDevDataSet(Dev, CurrentParameters.OutputMode,
+	VL53L1DevDataSet(Dev, CurrentParameters.OutputMode,
 			VL53L1_OUTPUTMODE_NEAREST);
 	LOG_FUNCTION_END(Status);
 	return Status;
@@ -800,10 +800,10 @@ static VL53L1_Error SetPresetMode(VL53L1_DEV Dev,
 	VL53L1_Error Status = VL53L1_ERROR_NONE;
 	VL53L1_DevicePresetModes   device_preset_mode;
 	uint8_t measurement_mode;
-	uint16_t dss_config__target_total_rate_mcps = 0;
-	uint32_t phasecal_config_timeout_us = 0;
-	uint32_t mm_config_timeout_us = 0;
-	uint32_t lld_range_config_timeout_us = 0;
+	uint16_t dss_config__target_total_rate_mcps;
+	uint32_t phasecal_config_timeout_us;
+	uint32_t mm_config_timeout_us;
+	uint32_t lld_range_config_timeout_us;
 
 	LOG_FUNCTION_START("%d", (int)PresetMode);
 
@@ -836,12 +836,13 @@ static VL53L1_Error SetPresetMode(VL53L1_DEV Dev,
 				inter_measurement_period_ms);
 
 	if (Status == VL53L1_ERROR_NONE)
-		PALDevDataSet(Dev, LLData.measurement_mode, measurement_mode);
+		VL53L1DevDataSet(Dev, LLData.measurement_mode,
+				measurement_mode);
 
 	if (Status == VL53L1_ERROR_NONE)
-		PALDevDataSet(Dev, CurrentParameters.PresetMode, PresetMode);
+		VL53L1DevDataSet(Dev, CurrentParameters.PresetMode, PresetMode);
 
-	PALDevDataSet(Dev, CurrentParameters.OutputMode,
+	VL53L1DevDataSet(Dev, CurrentParameters.OutputMode,
 			VL53L1_OUTPUTMODE_NEAREST);
 	LOG_FUNCTION_END(Status);
 	return Status;
@@ -854,6 +855,10 @@ VL53L1_Error VL53L1_SetPresetMode(VL53L1_DEV Dev, VL53L1_PresetModes PresetMode)
 
 	LOG_FUNCTION_START("%d", (int)PresetMode);
 
+
+
+	Status = VL53L1_low_power_auto_data_init(Dev);
+
 	if (PresetMode == VL53L1_PRESETMODE_PROXY_RANGING_MODE)
 		DistanceMode = VL53L1_DISTANCEMODE_SHORT;
 	Status = SetPresetMode(Dev,
@@ -862,12 +867,6 @@ VL53L1_Error VL53L1_SetPresetMode(VL53L1_DEV Dev, VL53L1_PresetModes PresetMode)
 			1000);
 
 	if (Status == VL53L1_ERROR_NONE) {
-		PALDevDataSet(Dev, CurrentParameters.InternalDistanceMode,
-				DistanceMode);
-
-		PALDevDataSet(Dev, CurrentParameters.NewDistanceMode,
-				DistanceMode);
-
 		if ((PresetMode == VL53L1_PRESETMODE_LITE_RANGING) ||
 			(PresetMode == VL53L1_PRESETMODE_AUTONOMOUS) ||
 			(PresetMode == VL53L1_PRESETMODE_LOWPOWER_AUTONOMOUS))
@@ -899,7 +898,7 @@ VL53L1_Error VL53L1_GetPresetMode(VL53L1_DEV Dev,
 
 	LOG_FUNCTION_START("");
 
-	*pPresetMode = PALDevDataGet(Dev, CurrentParameters.PresetMode);
+	*pPresetMode = VL53L1DevDataGet(Dev, CurrentParameters.PresetMode);
 
 	LOG_FUNCTION_END(Status);
 	return Status;
@@ -909,17 +908,16 @@ VL53L1_Error VL53L1_SetDistanceMode(VL53L1_DEV Dev,
 		VL53L1_DistanceModes DistanceMode)
 {
 	VL53L1_Error Status = VL53L1_ERROR_NONE;
-	VL53L1_PresetModes PresetMode = 0;
-	VL53L1_DistanceModes InternalDistanceMode = 0;
-	uint32_t inter_measurement_period_ms = 0;
-	uint32_t TimingBudget = 0;
-	uint32_t MmTimeoutUs = 0;
-	uint32_t PhaseCalTimeoutUs = 0;
+	VL53L1_PresetModes PresetMode;
+	uint32_t inter_measurement_period_ms;
+	uint32_t TimingBudget;
+	uint32_t MmTimeoutUs;
+	uint32_t PhaseCalTimeoutUs;
 	VL53L1_zone_config_t zone_config;
 
 	LOG_FUNCTION_START("%d", (int)DistanceMode);
 
-	PresetMode = PALDevDataGet(Dev, CurrentParameters.PresetMode);
+	PresetMode = VL53L1DevDataGet(Dev, CurrentParameters.PresetMode);
 
 
 
@@ -935,23 +933,10 @@ VL53L1_Error VL53L1_SetDistanceMode(VL53L1_DEV Dev,
 		(DistanceMode != VL53L1_DISTANCEMODE_LONG))
 		return VL53L1_ERROR_INVALID_PARAMS;
 
-
-
-
-
-	if (Status == VL53L1_ERROR_NONE) {
-		if ((DistanceMode == VL53L1_DISTANCEMODE_SHORT) ||
-			(DistanceMode == VL53L1_DISTANCEMODE_MEDIUM))
-			InternalDistanceMode = DistanceMode;
-		else
-
-			InternalDistanceMode = VL53L1_DISTANCEMODE_LONG;
-	}
-
 	if (Status == VL53L1_ERROR_NONE)
 		Status = VL53L1_get_zone_config(Dev, &zone_config);
 
-	inter_measurement_period_ms =  PALDevDataGet(Dev,
+	inter_measurement_period_ms =  VL53L1DevDataGet(Dev,
 				LLData.inter_measurement_period_ms);
 
 	if (Status == VL53L1_ERROR_NONE)
@@ -961,15 +946,11 @@ VL53L1_Error VL53L1_SetDistanceMode(VL53L1_DEV Dev,
 	if (Status == VL53L1_ERROR_NONE)
 		Status = SetPresetMode(Dev,
 				PresetMode,
-				InternalDistanceMode,
+				DistanceMode,
 				inter_measurement_period_ms);
 
 	if (Status == VL53L1_ERROR_NONE) {
-		PALDevDataSet(Dev, CurrentParameters.InternalDistanceMode,
-				InternalDistanceMode);
-		PALDevDataSet(Dev, CurrentParameters.NewDistanceMode,
-				InternalDistanceMode);
-		PALDevDataSet(Dev, CurrentParameters.DistanceMode,
+		VL53L1DevDataSet(Dev, CurrentParameters.DistanceMode,
 				DistanceMode);
 	}
 
@@ -978,7 +959,7 @@ VL53L1_Error VL53L1_SetDistanceMode(VL53L1_DEV Dev,
 			MmTimeoutUs, TimingBudget);
 
 		if (Status == VL53L1_ERROR_NONE)
-			PALDevDataSet(Dev, LLData.range_config_timeout_us,
+			VL53L1DevDataSet(Dev, LLData.range_config_timeout_us,
 				TimingBudget);
 	}
 
@@ -996,7 +977,7 @@ VL53L1_Error VL53L1_GetDistanceMode(VL53L1_DEV Dev,
 
 	LOG_FUNCTION_START("");
 
-	*pDistanceMode = PALDevDataGet(Dev, CurrentParameters.DistanceMode);
+	*pDistanceMode = VL53L1DevDataGet(Dev, CurrentParameters.DistanceMode);
 
 	LOG_FUNCTION_END(Status);
 	return Status;
@@ -1013,7 +994,7 @@ VL53L1_Error VL53L1_SetOutputMode(VL53L1_DEV Dev,
 		(OutputMode != VL53L1_OUTPUTMODE_STRONGEST))
 		Status = VL53L1_ERROR_MODE_NOT_SUPPORTED;
 	else
-		PALDevDataSet(Dev, CurrentParameters.OutputMode, OutputMode);
+		VL53L1DevDataSet(Dev, CurrentParameters.OutputMode, OutputMode);
 
 	LOG_FUNCTION_END(Status);
 	return Status;
@@ -1026,7 +1007,7 @@ VL53L1_Error VL53L1_GetOutputMode(VL53L1_DEV Dev,
 
 	LOG_FUNCTION_START("");
 
-	*pOutputMode = PALDevDataGet(Dev, CurrentParameters.OutputMode);
+	*pOutputMode = VL53L1DevDataGet(Dev, CurrentParameters.OutputMode);
 
 	LOG_FUNCTION_END(Status);
 	return Status;
@@ -1038,18 +1019,17 @@ VL53L1_Error VL53L1_SetMeasurementTimingBudgetMicroSeconds(VL53L1_DEV Dev,
 	uint32_t MeasurementTimingBudgetMicroSeconds)
 {
 	VL53L1_Error Status = VL53L1_ERROR_NONE;
-	uint8_t Mm1Enabled = 0;
-	uint8_t Mm2Enabled = 0;
-	uint32_t TimingGuard = 0;
-	uint32_t divisor = 0;
-	uint32_t TimingBudget = 0;
-	uint32_t MmTimeoutUs = 0;
-	VL53L1_PresetModes PresetMode = 0;
-	uint32_t PhaseCalTimeoutUs = 0;
-	uint32_t vhv = 0;
-	int32_t vhv_loops = 0;
+	uint8_t Mm1Enabled;
+	uint8_t Mm2Enabled;
+	uint32_t TimingGuard;
+	uint32_t divisor;
+	uint32_t TimingBudget;
+	uint32_t MmTimeoutUs;
+	VL53L1_PresetModes PresetMode;
+	uint32_t PhaseCalTimeoutUs;
+	uint32_t vhv;
+	int32_t vhv_loops;
 	uint32_t FDAMaxTimingBudgetUs = FDA_MAX_TIMING_BUDGET_US;
-
 
 	LOG_FUNCTION_START("");
 
@@ -1075,7 +1055,8 @@ VL53L1_Error VL53L1_SetMeasurementTimingBudgetMicroSeconds(VL53L1_DEV Dev,
 			&TimingBudget);
 
 	if (Status == VL53L1_ERROR_NONE) {
-		PresetMode = PALDevDataGet(Dev, CurrentParameters.PresetMode);
+		PresetMode = VL53L1DevDataGet(Dev,
+				CurrentParameters.PresetMode);
 
 		TimingGuard = 0;
 		divisor = 1;
@@ -1148,13 +1129,13 @@ VL53L1_Error VL53L1_SetMeasurementTimingBudgetMicroSeconds(VL53L1_DEV Dev,
 			}
 
 			if (Status == VL53L1_ERROR_NONE)
-				PALDevDataSet(Dev,
+				VL53L1DevDataSet(Dev,
 					LLData.range_config_timeout_us,
 					TimingBudget);
 		}
 	}
 	if (Status == VL53L1_ERROR_NONE) {
-		PALDevDataSet(Dev,
+		VL53L1DevDataSet(Dev,
 			CurrentParameters.MeasurementTimingBudgetMicroSeconds,
 			MeasurementTimingBudgetMicroSeconds);
 	}
@@ -1198,7 +1179,8 @@ VL53L1_Error VL53L1_GetMeasurementTimingBudgetMicroSeconds(VL53L1_DEV Dev,
 			&RangeTimeoutUs);
 
 	if (Status == VL53L1_ERROR_NONE) {
-		PresetMode = PALDevDataGet(Dev, CurrentParameters.PresetMode);
+		PresetMode = VL53L1DevDataGet(Dev,
+				CurrentParameters.PresetMode);
 
 		switch (PresetMode) {
 		case VL53L1_PRESETMODE_LITE_RANGING:
@@ -1260,11 +1242,18 @@ VL53L1_Error VL53L1_SetInterMeasurementPeriodMilliSeconds(VL53L1_DEV Dev,
 	uint32_t InterMeasurementPeriodMilliSeconds)
 {
 	VL53L1_Error Status = VL53L1_ERROR_NONE;
+	uint32_t adjustedIMP;
 
 	LOG_FUNCTION_START("");
 
+
+
+	adjustedIMP = InterMeasurementPeriodMilliSeconds;
+	adjustedIMP += (adjustedIMP * 64) / 1000;
+
+
 	Status = VL53L1_set_inter_measurement_period_ms(Dev,
-			InterMeasurementPeriodMilliSeconds);
+			adjustedIMP);
 
 	LOG_FUNCTION_END(Status);
 	return Status;
@@ -1274,11 +1263,17 @@ VL53L1_Error VL53L1_GetInterMeasurementPeriodMilliSeconds(VL53L1_DEV Dev,
 	uint32_t *pInterMeasurementPeriodMilliSeconds)
 {
 	VL53L1_Error Status = VL53L1_ERROR_NONE;
+	uint32_t adjustedIMP;
 
 	LOG_FUNCTION_START("");
 
-	Status = VL53L1_get_inter_measurement_period_ms(Dev,
-			pInterMeasurementPeriodMilliSeconds);
+	Status = VL53L1_get_inter_measurement_period_ms(Dev, &adjustedIMP);
+
+
+	adjustedIMP -= (adjustedIMP * 64) / 1000;
+	*pInterMeasurementPeriodMilliSeconds = adjustedIMP;
+
+
 
 	LOG_FUNCTION_END(Status);
 	return Status;
@@ -1336,7 +1331,7 @@ VL53L1_Error VL53L1_SetDmaxMode(VL53L1_DEV Dev,
 {
 
 	VL53L1_Error  Status = VL53L1_ERROR_NONE;
-	VL53L1_DeviceDmaxMode dmax_mode = 0;
+	VL53L1_DeviceDmaxMode dmax_mode;
 
 	LOG_FUNCTION_START("");
 
@@ -1366,7 +1361,7 @@ VL53L1_Error VL53L1_GetDmaxMode(VL53L1_DEV Dev,
 	VL53L1_DeviceDmaxModes *pDmaxMode)
 {
 	VL53L1_Error  Status = VL53L1_ERROR_NONE;
-	VL53L1_DeviceDmaxMode dmax_mode = 0;
+	VL53L1_DeviceDmaxMode dmax_mode;
 
 	LOG_FUNCTION_START("");
 
@@ -1573,9 +1568,9 @@ VL53L1_Error VL53L1_GetLimitCheckValue(VL53L1_DEV Dev, uint16_t LimitCheckId,
 	FixPoint1616_t *pLimitCheckValue)
 {
 	VL53L1_Error Status = VL53L1_ERROR_NONE;
-	uint16_t MinCountRate = 0;
-	FixPoint1616_t TempFix1616 = 0;
-	uint16_t SigmaThresh = 0;
+	uint16_t MinCountRate;
+	FixPoint1616_t TempFix1616;
+	uint16_t SigmaThresh;
 
 	LOG_FUNCTION_START("");
 
@@ -1655,7 +1650,7 @@ VL53L1_Error VL53L1_GetMaxNumberOfROI(VL53L1_DEV Dev,
 
 	LOG_FUNCTION_START("");
 
-	PresetMode = PALDevDataGet(Dev, CurrentParameters.PresetMode);
+	PresetMode = VL53L1DevDataGet(Dev, CurrentParameters.PresetMode);
 
 
 
@@ -1685,7 +1680,7 @@ VL53L1_Error VL53L1_SetROI(VL53L1_DEV Dev,
 
 
 
-	PresetMode = PALDevDataGet(Dev, CurrentParameters.PresetMode);
+	PresetMode = VL53L1DevDataGet(Dev, CurrentParameters.PresetMode);
 
 
 
@@ -1840,7 +1835,7 @@ VL53L1_Error VL53L1_SetSequenceStepEnable(VL53L1_DEV Dev,
 
 
 
-		MeasurementTimingBudgetMicroSeconds = PALDevDataGet(Dev,
+		MeasurementTimingBudgetMicroSeconds = VL53L1DevDataGet(Dev,
 			CurrentParameters.MeasurementTimingBudgetMicroSeconds);
 
 		VL53L1_SetMeasurementTimingBudgetMicroSeconds(Dev,
@@ -1881,13 +1876,16 @@ VL53L1_Error VL53L1_GetSequenceStepEnable(VL53L1_DEV Dev,
 
 VL53L1_Error VL53L1_StartMeasurement(VL53L1_DEV Dev)
 {
+#define TIMED_MODE_TIMING_GUARD_MILLISECONDS 4
 	VL53L1_Error Status = VL53L1_ERROR_NONE;
 	uint8_t DeviceMeasurementMode;
 	VL53L1_State CurrPalState;
+	VL53L1_Error lStatus;
+	uint32_t MTBus, IMPms;
 
 	LOG_FUNCTION_START("");
 
-	CurrPalState = PALDevDataGet(Dev, PalState);
+	CurrPalState = VL53L1DevDataGet(Dev, PalState);
 	switch (CurrPalState) {
 	case VL53L1_STATE_IDLE:
 		Status = VL53L1_ERROR_NONE;
@@ -1905,7 +1903,26 @@ VL53L1_Error VL53L1_StartMeasurement(VL53L1_DEV Dev)
 		Status = VL53L1_ERROR_UNDEFINED;
 	}
 
-	DeviceMeasurementMode = PALDevDataGet(Dev, LLData.measurement_mode);
+	DeviceMeasurementMode = VL53L1DevDataGet(Dev, LLData.measurement_mode);
+
+
+
+
+	if ((Status == VL53L1_ERROR_NONE) &&
+		(DeviceMeasurementMode == VL53L1_DEVICEMEASUREMENTMODE_TIMED)) {
+		lStatus = VL53L1_GetMeasurementTimingBudgetMicroSeconds(Dev,
+				&MTBus);
+
+
+		MTBus /= 1000;
+		lStatus = VL53L1_GetInterMeasurementPeriodMilliSeconds(Dev,
+				&IMPms);
+
+
+		SUPPRESS_UNUSED_WARNING(lStatus);
+		if (IMPms < MTBus + TIMED_MODE_TIMING_GUARD_MILLISECONDS)
+			Status = VL53L1_ERROR_INVALID_PARAMS;
+	}
 
 	if (Status == VL53L1_ERROR_NONE)
 		Status = VL53L1_init_and_start_range(
@@ -1916,7 +1933,7 @@ VL53L1_Error VL53L1_StartMeasurement(VL53L1_DEV Dev)
 
 
 	if (Status == VL53L1_ERROR_NONE)
-		PALDevDataSet(Dev, PalState, VL53L1_STATE_RUNNING);
+		VL53L1DevDataSet(Dev, PalState, VL53L1_STATE_RUNNING);
 
 
 	LOG_FUNCTION_END(Status);
@@ -1934,77 +1951,7 @@ VL53L1_Error VL53L1_StopMeasurement(VL53L1_DEV Dev)
 
 
 	if (Status == VL53L1_ERROR_NONE)
-		PALDevDataSet(Dev, PalState, VL53L1_STATE_IDLE);
-
-	LOG_FUNCTION_END(Status);
-	return Status;
-}
-
-static VL53L1_Error ChangePresetMode(VL53L1_DEV Dev)
-{
-	VL53L1_Error Status = VL53L1_ERROR_NONE;
-	VL53L1_PresetModes PresetMode = 0;
-	VL53L1_DistanceModes NewDistanceMode = 0;
-	VL53L1_zone_config_t     zone_config;
-	uint32_t TimingBudget = 0;
-	uint32_t MmTimeoutUs = 0;
-	uint32_t PhaseCalTimeoutUs = 0;
-	uint8_t DeviceMeasurementMode = 0;
-	uint32_t inter_measurement_period_ms = 0;
-
-	LOG_FUNCTION_START("");
-
-	Status = VL53L1_get_zone_config(Dev, &zone_config);
-	if (Status == VL53L1_ERROR_NONE)
-		Status = VL53L1_get_timeouts_us(Dev, &PhaseCalTimeoutUs,
-			&MmTimeoutUs, &TimingBudget);
-
-	if (Status == VL53L1_ERROR_NONE)
-		Status = VL53L1_stop_range(Dev);
-
-	if (Status == VL53L1_ERROR_NONE)
-		Status = VL53L1_WaitUs(Dev, 500);
-
-	if (Status == VL53L1_ERROR_NONE) {
-		PresetMode = PALDevDataGet(Dev,
-				CurrentParameters.PresetMode);
-		NewDistanceMode = PALDevDataGet(Dev,
-				CurrentParameters.NewDistanceMode);
-		inter_measurement_period_ms =  PALDevDataGet(Dev,
-					LLData.inter_measurement_period_ms);
-
-		Status = SetPresetMode(Dev,
-				PresetMode,
-				NewDistanceMode,
-				inter_measurement_period_ms);
-	}
-
-	if (Status == VL53L1_ERROR_NONE) {
-		Status = VL53L1_set_timeouts_us(Dev, PhaseCalTimeoutUs,
-			MmTimeoutUs, TimingBudget);
-
-		if (Status == VL53L1_ERROR_NONE)
-			PALDevDataSet(Dev, LLData.range_config_timeout_us,
-				TimingBudget);
-	}
-
-	if (Status == VL53L1_ERROR_NONE)
-		Status = VL53L1_set_zone_config(Dev, &zone_config);
-
-	if (Status == VL53L1_ERROR_NONE) {
-		DeviceMeasurementMode = PALDevDataGet(Dev,
-				LLData.measurement_mode);
-
-		Status = VL53L1_init_and_start_range(
-				Dev,
-				DeviceMeasurementMode,
-				VL53L1_DEVICECONFIGLEVEL_FULL);
-	}
-
-	if (Status == VL53L1_ERROR_NONE)
-		PALDevDataSet(Dev,
-			CurrentParameters.InternalDistanceMode,
-			NewDistanceMode);
+		VL53L1DevDataSet(Dev, PalState, VL53L1_STATE_IDLE);
 
 	LOG_FUNCTION_END(Status);
 	return Status;
@@ -2015,23 +1962,13 @@ VL53L1_Error VL53L1_ClearInterruptAndStartMeasurement(VL53L1_DEV Dev)
 {
 	VL53L1_Error Status = VL53L1_ERROR_NONE;
 	uint8_t DeviceMeasurementMode;
-	VL53L1_DistanceModes InternalDistanceMode;
-	VL53L1_DistanceModes NewDistanceMode;
 
 	LOG_FUNCTION_START("");
 
-	DeviceMeasurementMode = PALDevDataGet(Dev, LLData.measurement_mode);
-	InternalDistanceMode = PALDevDataGet(Dev,
-			CurrentParameters.InternalDistanceMode);
-	NewDistanceMode = PALDevDataGet(Dev,
-			CurrentParameters.NewDistanceMode);
+	DeviceMeasurementMode = VL53L1DevDataGet(Dev, LLData.measurement_mode);
 
-	if (NewDistanceMode != InternalDistanceMode)
-		Status = ChangePresetMode(Dev);
-	else
-		Status = VL53L1_clear_interrupt_and_enable_next_range(
-						Dev,
-						DeviceMeasurementMode);
+	Status = VL53L1_clear_interrupt_and_enable_next_range(Dev,
+			DeviceMeasurementMode);
 
 	LOG_FUNCTION_END(Status);
 	return Status;
@@ -2122,7 +2059,7 @@ static void CheckAndChangeDistanceMode(VL53L1_DEV Dev,
 		VL53L1_DistanceModes *pNewDistanceMode
 )
 {
-	VL53L1_DistanceModes InternalDistanceMode;
+	VL53L1_DistanceModes DistanceMode;
 	uint8_t RangeStatus = pRangeData->RangeStatus;
 	uint8_t DmaxValid;
 	int32_t MinAmbient = BDTable[VL53L1_TUNING_MIN_AMBIENT_DMAX_VALID];
@@ -2146,22 +2083,22 @@ static void CheckAndChangeDistanceMode(VL53L1_DEV Dev,
 	}
 
 	DmaxValid = 1;
-	tmpint32 = pdev->hist_data.VL53L1_PRM_00028;
-	if (tmpint32 < MinAmbient)
+	tmpint32 = pdev->hist_data.VL53L1_p_004;
+	if ((tmpint32 < MinAmbient) || (Ambient100DmaxMm == 0))
 		DmaxValid = 0;
 
-	InternalDistanceMode = PALDevDataGet(Dev,
-			CurrentParameters.InternalDistanceMode);
+	DistanceMode = VL53L1DevDataGet(Dev,
+			CurrentParameters.DistanceMode);
 
-	*pNewDistanceMode = InternalDistanceMode;
+	*pNewDistanceMode = DistanceMode;
 
 	if (RangeStatus == VL53L1_RANGESTATUS_RANGE_VALID)
 		GenNewPresetMode(pRangeData->RangeMilliMeter,
-				InternalDistanceMode, pNewDistanceMode);
+				DistanceMode, pNewDistanceMode);
 	else {
 		if (DmaxValid)
 			GenNewPresetMode(Ambient100DmaxMm,
-				InternalDistanceMode, pNewDistanceMode);
+					DistanceMode, pNewDistanceMode);
 		else
 			*pNewDistanceMode = VL53L1_DISTANCEMODE_LONG;
 	}
@@ -2176,9 +2113,12 @@ static uint8_t ComputeRQL(uint8_t active_results,
 	uint16_t SRAS = 30;
 	FixPoint1616_t RAS;
 	FixPoint1616_t SRQL;
-	FixPoint1616_t GI = 117.7 * 65536;
-	FixPoint1616_t GGm = 48.8 * 65536;
-	FixPoint1616_t LRAP = 0.1 * 65536;
+	FixPoint1616_t GI =   7713587;
+
+	FixPoint1616_t GGm =  3198157;
+
+	FixPoint1616_t LRAP = 6554;
+
 	FixPoint1616_t partial;
 	uint8_t finalvalue;
 	uint8_t returnvalue;
@@ -2198,7 +2138,7 @@ static uint8_t ComputeRQL(uint8_t active_results,
 
 
 		if (RAS != 0) {
-			partial = (GGm * presults_data->VL53L1_PRM_00003);
+			partial = (GGm * presults_data->VL53L1_p_005);
 			partial = partial + (RAS >> 1);
 			partial = partial / RAS;
 			partial = partial * 65536;
@@ -2329,10 +2269,10 @@ static VL53L1_Error SetSimpleData(VL53L1_DEV Dev,
 	pRangeData->AmbientRateRtnMegaCps = AmbientRate;
 
 	pRangeData->EffectiveSpadRtnCount =
-		presults_data->VL53L1_PRM_00004;
+		presults_data->VL53L1_p_006;
 
 	TempFix1616 = VL53L1_FIXPOINT97TOFIXPOINT1616(
-			presults_data->VL53L1_PRM_00003);
+			presults_data->VL53L1_p_005);
 
 	pRangeData->SigmaMilliMeter = TempFix1616;
 
@@ -2359,7 +2299,8 @@ static VL53L1_Error SetSimpleData(VL53L1_DEV Dev,
 
 
 	if (pRangeData->RangeStatus == VL53L1_RANGESTATUS_RANGE_VALID) {
-		PresetMode = PALDevDataGet(Dev, CurrentParameters.PresetMode);
+		PresetMode = VL53L1DevDataGet(Dev,
+				CurrentParameters.PresetMode);
 		if ((PresetMode == VL53L1_PRESETMODE_MULTIZONES_SCANNING) ||
 			(PresetMode == VL53L1_PRESETMODE_RANGING) ||
 			(PresetMode == VL53L1_PRESETMODE_PROXY_RANGING_MODE))
@@ -2373,7 +2314,7 @@ static VL53L1_Error SetSimpleData(VL53L1_DEV Dev,
 
 
 	TempFix1616 = VL53L1_FIXPOINT97TOFIXPOINT1616(
-			presults_data->VL53L1_PRM_00003);
+			presults_data->VL53L1_p_005);
 	VL53L1_SETARRAYPARAMETERFIELD(Dev,
 		LimitChecksCurrent, VL53L1_CHECKENABLE_SIGMA_FINAL_RANGE,
 		TempFix1616);
@@ -2469,7 +2410,7 @@ static VL53L1_Error SetTargetData(VL53L1_DEV Dev,
 	pRangeData->AmbientRateRtnMegaCps = AmbientRate;
 
 	TempFix1616 = VL53L1_FIXPOINT97TOFIXPOINT1616(
-			presults_data->VL53L1_PRM_00003);
+			presults_data->VL53L1_p_005);
 
 	pRangeData->SigmaMilliMeter = TempFix1616;
 
@@ -2497,8 +2438,21 @@ static VL53L1_Error SetTargetData(VL53L1_DEV Dev,
 
 
 
+	if ((pRangeData->RangeStatus == VL53L1_RANGESTATUS_RANGE_VALID) &&
+		(active_results == 0)) {
+		pRangeData->RangeStatus = VL53L1_RANGESTATUS_NONE;
+		pRangeData->SignalRateRtnMegaCps = 0;
+		pRangeData->SigmaMilliMeter = 0;
+		pRangeData->RangeMilliMeter = 8191;
+		pRangeData->RangeMaxMilliMeter = 8191;
+		pRangeData->RangeMinMilliMeter = 8191;
+	}
+
+
+
 	if (pRangeData->RangeStatus == VL53L1_RANGESTATUS_RANGE_VALID) {
-		PresetMode = PALDevDataGet(Dev, CurrentParameters.PresetMode);
+		PresetMode = VL53L1DevDataGet(Dev,
+				CurrentParameters.PresetMode);
 		if ((PresetMode == VL53L1_PRESETMODE_MULTIZONES_SCANNING) ||
 			(PresetMode == VL53L1_PRESETMODE_RANGING) ||
 			(PresetMode == VL53L1_PRESETMODE_PROXY_RANGING_MODE))
@@ -2512,7 +2466,7 @@ static VL53L1_Error SetTargetData(VL53L1_DEV Dev,
 
 
 	TempFix1616 = VL53L1_FIXPOINT97TOFIXPOINT1616(
-			presults_data->VL53L1_PRM_00003);
+			presults_data->VL53L1_p_005);
 	VL53L1_SETARRAYPARAMETERFIELD(Dev,
 		LimitChecksCurrent, VL53L1_CHECKENABLE_SIGMA_FINAL_RANGE,
 		TempFix1616);
@@ -2581,7 +2535,7 @@ static uint8_t GetOutputDataIndex(VL53L1_DEV Dev,
 	uint8_t index = 0;
 	VL53L1_OutputModes OutputMode;
 
-	OutputMode = PALDevDataGet(Dev, CurrentParameters.OutputMode);
+	OutputMode = VL53L1DevDataGet(Dev, CurrentParameters.OutputMode);
 
 
 
@@ -2594,8 +2548,8 @@ static uint8_t GetOutputDataIndex(VL53L1_DEV Dev,
 
 
 	for (i = 1; i < presults->active_results; i++) {
-		if (presults->VL53L1_PRM_00005[i].peak_signal_count_rate_mcps >
-			presults->VL53L1_PRM_00005[index].peak_signal_count_rate_mcps)
+		if (presults->VL53L1_p_002[i].peak_signal_count_rate_mcps >
+		presults->VL53L1_p_002[index].peak_signal_count_rate_mcps)
 			index = i;
 	}
 
@@ -2616,7 +2570,7 @@ VL53L1_Error VL53L1_GetRangingMeasurementData(VL53L1_DEV Dev,
 
 
 
-	PresetMode = PALDevDataGet(Dev, CurrentParameters.PresetMode);
+	PresetMode = VL53L1DevDataGet(Dev, CurrentParameters.PresetMode);
 
 	if (PresetMode == VL53L1_PRESETMODE_MULTIZONES_SCANNING) {
 		Status = VL53L1_ERROR_MODE_NOT_SUPPORTED;
@@ -2644,7 +2598,7 @@ VL53L1_Error VL53L1_GetRangingMeasurementData(VL53L1_DEV Dev,
 
 
 		index = GetOutputDataIndex(Dev, presults);
-		presults_data = &(presults->VL53L1_PRM_00005[index]);
+		presults_data = &(presults->VL53L1_p_002[index]);
 		Status = SetSimpleData(Dev, presults->active_results,
 				presults->device_status,
 				presults_data,
@@ -2674,7 +2628,7 @@ static VL53L1_Error SetMeasurementData(VL53L1_DEV Dev,
 	pMultiRangingData->HasXtalkValueChanged =
 			presults->smudge_corrector_data.new_xtalk_applied_flag;
 	dmax_min = MIN(presults->wrap_dmax_mm,
-			presults->VL53L1_PRM_00006[DMAX_REFLECTANCE_IDX]);
+			presults->VL53L1_p_007[DMAX_REFLECTANCE_IDX]);
 	pMultiRangingData->DmaxMilliMeter = dmax_min;
 
 
@@ -2686,7 +2640,7 @@ static VL53L1_Error SetMeasurementData(VL53L1_DEV Dev,
 	pMultiRangingData->StreamCount = presults->stream_count;
 
 	pMultiRangingData->RecommendedDistanceMode =
-		PALDevDataGet(Dev, CurrentParameters.DistanceMode);
+		VL53L1DevDataGet(Dev, CurrentParameters.DistanceMode);
 	ActiveResults = presults->active_results;
 	if (ActiveResults < 1)
 
@@ -2699,7 +2653,7 @@ static VL53L1_Error SetMeasurementData(VL53L1_DEV Dev,
 	for (i = 0; i < iteration; i++) {
 		pRangeData = &(pMultiRangingData->RangeData[i]);
 
-		presults_data = &(presults->VL53L1_PRM_00005[i]);
+		presults_data = &(presults->VL53L1_p_002[i]);
 		if (Status == VL53L1_ERROR_NONE)
 			Status = SetTargetData(Dev, ActiveResults,
 					presults->device_status,
@@ -2707,7 +2661,7 @@ static VL53L1_Error SetMeasurementData(VL53L1_DEV Dev,
 					pRangeData);
 
 		pMultiRangingData->EffectiveSpadRtnCount =
-				presults_data->VL53L1_PRM_00004;
+				presults_data->VL53L1_p_006;
 
 		if ((pRangeData->RangeStatus == VL53L1_RANGESTATUS_RANGE_VALID)
 			&& (pRangeData->RangeMilliMeter > Furthest_range)) {
@@ -2721,7 +2675,7 @@ static VL53L1_Error SetMeasurementData(VL53L1_DEV Dev,
 	if ((Status == VL53L1_ERROR_NONE) && (ActiveResults > 0)) {
 		pRangeData = &(pMultiRangingData->RangeData[Furthest_idx]);
 		CheckAndChangeDistanceMode(Dev, pRangeData,
-		  presults->VL53L1_PRM_00006[VL53L1_MAX_AMBIENT_DMAX_VALUES-1],
+		  presults->VL53L1_p_007[VL53L1_MAX_AMBIENT_DMAX_VALUES-1],
 		  &pMultiRangingData->RecommendedDistanceMode);
 	}
 
@@ -2804,6 +2758,12 @@ VL53L1_Error VL53L1_SetTuningParameter(VL53L1_DEV Dev,
 
 	LOG_FUNCTION_START("");
 
+
+	if (TuningParameterId ==
+		VL53L1_TUNINGPARM_DYNXTALK_NODETECT_XTALK_OFFSET_KCPS)
+		return VL53L1_ERROR_INVALID_PARAMS;
+
+
 	if (TuningParameterId >= 32768)
 		Status = VL53L1_set_tuning_parm(Dev,
 			TuningParameterId,
@@ -2854,18 +2814,28 @@ VL53L1_Error VL53L1_PerformRefSpadManagement(VL53L1_DEV Dev)
 	VL53L1_Error Status = VL53L1_ERROR_NONE;
 	VL53L1_Error RawStatus;
 	uint8_t dcrbuffer[24];
-	uint8_t *comms_buffer = NULL;
-	uint8_t numloc[2] = {5,3};
+	uint8_t *commbuf;
+	uint8_t numloc[2] = {5, 3};
 	VL53L1_LLDriverData_t *pdev;
 	VL53L1_customer_nvm_managed_t *pc;
+	VL53L1_PresetModes PresetMode;
 
 	LOG_FUNCTION_START("");
 
 	pdev = VL53L1DevStructGetLLDriverHandle(Dev);
 	pc = &pdev->customer;
 
-	if (Status == VL53L1_ERROR_NONE)
+	if (Status == VL53L1_ERROR_NONE) {
+		PresetMode = VL53L1DevDataGet(Dev,
+				CurrentParameters.PresetMode);
 		Status = VL53L1_run_ref_spad_char(Dev, &RawStatus);
+
+
+
+
+		if (Status == VL53L1_ERROR_NONE)
+			Status = VL53L1_SetPresetMode(Dev, PresetMode);
+	}
 
 	if (Status == VL53L1_WARNING_REF_SPAD_CHAR_RATE_TOO_HIGH) {
 
@@ -2878,7 +2848,7 @@ VL53L1_Error VL53L1_PerformRefSpadManagement(VL53L1_DEV Dev)
 				dcrbuffer);
 
 		if (Status == VL53L1_ERROR_NONE)
-			Status = VL53L1_WriteMulti( Dev,
+			Status = VL53L1_WriteMulti(Dev,
 				VL53L1_REF_SPAD_MAN__NUM_REQUESTED_REF_SPADS,
 				numloc, 2);
 
@@ -2888,7 +2858,7 @@ VL53L1_Error VL53L1_PerformRefSpadManagement(VL53L1_DEV Dev)
 		}
 
 		if (Status == VL53L1_ERROR_NONE)
-			comms_buffer = &dcrbuffer[16];
+			commbuf = &dcrbuffer[16];
 
 
 
@@ -2898,15 +2868,15 @@ VL53L1_Error VL53L1_PerformRefSpadManagement(VL53L1_DEV Dev)
 		if (Status == VL53L1_ERROR_NONE)
 			Status = VL53L1_WriteMulti(Dev,
 				VL53L1_GLOBAL_CONFIG__SPAD_ENABLES_REF_0,
-				comms_buffer, 6);
+				commbuf, 6);
 
 		if (Status == VL53L1_ERROR_NONE) {
-			pc->global_config__spad_enables_ref_0 = comms_buffer[0];
-			pc->global_config__spad_enables_ref_1 = comms_buffer[1];
-			pc->global_config__spad_enables_ref_2 = comms_buffer[2];
-			pc->global_config__spad_enables_ref_3 = comms_buffer[3];
-			pc->global_config__spad_enables_ref_4 = comms_buffer[4];
-			pc->global_config__spad_enables_ref_5 = comms_buffer[5];
+			pc->global_config__spad_enables_ref_0 = commbuf[0];
+			pc->global_config__spad_enables_ref_1 = commbuf[1];
+			pc->global_config__spad_enables_ref_2 = commbuf[2];
+			pc->global_config__spad_enables_ref_3 = commbuf[3];
+			pc->global_config__spad_enables_ref_4 = commbuf[4];
+			pc->global_config__spad_enables_ref_5 = commbuf[5];
 		}
 
 
@@ -2999,43 +2969,43 @@ VL53L1_Error VL53L1_GetXTalkCompensationEnable(VL53L1_DEV Dev,
 }
 
 
-
 VL53L1_Error VL53L1_PerformXTalkCalibration(VL53L1_DEV Dev,
 		uint8_t CalibrationOption)
 {
 	VL53L1_Error Status = VL53L1_ERROR_NONE;
 	VL53L1_Error UnfilteredStatus;
-	int16_t max_valid_range_mm;
-	int16_t min_valid_range_mm;
-	uint16_t max_valid_rate_kcps;
-	uint16_t max_sigma_mm;
+	int16_t CalDistanceMm;
+	VL53L1_xtalk_calibration_results_t xtalk;
 
 	LOG_FUNCTION_START("");
 
-	if (CalibrationOption == VL53L1_XTALKCALIBRATIONMODE_SINGLE_TARGET) {
-		Status = SingleTargetXTalkCalibration(Dev);
-	} else {
-		VL53L1_get_xtalk_detect_config(Dev, &max_valid_range_mm,
-		&min_valid_range_mm, &max_valid_rate_kcps, &max_sigma_mm);
-
-		max_valid_range_mm = 70;
-		min_valid_range_mm = -70;
-
-		VL53L1_set_xtalk_detect_config(Dev, max_valid_range_mm,
-		min_valid_range_mm, max_valid_rate_kcps, max_sigma_mm);
-
-
-
-
-
-
+	switch (CalibrationOption) {
+	case VL53L1_XTALKCALIBRATIONMODE_NO_TARGET:
 		Status = VL53L1_run_xtalk_extraction(Dev, &UnfilteredStatus);
-
 
 
 		if (Status == VL53L1_ERROR_XTALK_EXTRACTION_NO_SAMPLE_FAIL)
 			VL53L1_xtalk_cal_data_init(Dev);
+		break;
+	case VL53L1_XTALKCALIBRATIONMODE_SINGLE_TARGET:
+		Status = SingleTargetXTalkCalibration(Dev);
+		break;
+	case VL53L1_XTALKCALIBRATIONMODE_FULL_ROI:
+		CalDistanceMm = (int16_t)
+		BDTable[VL53L1_TUNING_XTALK_FULL_ROI_TARGET_DISTANCE_MM];
+		Status = VL53L1_run_hist_xtalk_extraction(Dev, CalDistanceMm,
+				&UnfilteredStatus);
+		break;
+	default:
+		Status = VL53L1_ERROR_INVALID_PARAMS;
+	}
 
+
+	if (Status == VL53L1_ERROR_NONE) {
+		Status = VL53L1_get_current_xtalk_settings(Dev, &xtalk);
+		Status = VL53L1_set_tuning_parm(Dev,
+			VL53L1_TUNINGPARM_DYNXTALK_NODETECT_XTALK_OFFSET_KCPS,
+			xtalk.algo__crosstalk_compensation_plane_offset_kcps);
 	}
 
 
@@ -3043,12 +3013,11 @@ VL53L1_Error VL53L1_PerformXTalkCalibration(VL53L1_DEV Dev,
 	return Status;
 }
 
-
 VL53L1_Error VL53L1_SetOffsetCalibrationMode(VL53L1_DEV Dev,
 		VL53L1_OffsetCalibrationModes OffsetCalibrationMode)
 {
 	VL53L1_Error Status = VL53L1_ERROR_NONE;
-	VL53L1_OffsetCalibrationMode   offset_cal_mode = 0;
+	VL53L1_OffsetCalibrationMode   offset_cal_mode;
 
 	LOG_FUNCTION_START("");
 
@@ -3075,12 +3044,11 @@ VL53L1_Error VL53L1_SetOffsetCalibrationMode(VL53L1_DEV Dev,
 	return Status;
 }
 
-
 VL53L1_Error VL53L1_SetOffsetCorrectionMode(VL53L1_DEV Dev,
 		VL53L1_OffsetCorrectionModes OffsetCorrectionMode)
 {
 	VL53L1_Error Status = VL53L1_ERROR_NONE;
-	VL53L1_OffsetCorrectionMode   offset_cor_mode = 0;
+	VL53L1_OffsetCorrectionMode   offset_cor_mode;
 
 	LOG_FUNCTION_START("");
 
@@ -3103,13 +3071,12 @@ VL53L1_Error VL53L1_SetOffsetCorrectionMode(VL53L1_DEV Dev,
 	return Status;
 }
 
-
 VL53L1_Error VL53L1_PerformOffsetCalibration(VL53L1_DEV Dev,
 	int32_t CalDistanceMilliMeter, FixPoint1616_t CalReflectancePercent)
 {
 	VL53L1_Error Status = VL53L1_ERROR_NONE;
 	VL53L1_Error UnfilteredStatus;
-	VL53L1_OffsetCalibrationMode   offset_cal_mode = 0;
+	VL53L1_OffsetCalibrationMode   offset_cal_mode;
 	uint16_t CalReflectancePercent_int;
 
 
@@ -3168,114 +3135,91 @@ VL53L1_Error VL53L1_PerformOffsetCalibration(VL53L1_DEV Dev,
 	return Status;
 }
 
-
-#if defined(VL53L1_NOCALIB) && defined(SMALL_FOOTPRINT)
-VL53L1_Error VL53L1_PerformOffsetCalibration(VL53L1_DEV Dev,
-	int32_t CalDistanceMilliMeter)
-{
-	VL53L1_Error Status = VL53L1_ERROR_NOT_SUPPORTED;
-
-	SUPPRESS_UNUSED_WARNING(Dev);
-	SUPPRESS_UNUSED_WARNING(CalDistanceMilliMeter);
-
-	return Status;
-}
-#endif
-
-#if defined(SMALL_FOOTPRINT) && !defined(VL53L1_NOCALIB)
-VL53L1_Error VL53L1_PerformOffsetCalibration(VL53L1_DEV Dev,
-	int32_t CalDistanceMilliMeter)
-{
-	VL53L1_Error Status = VL53L1_ERROR_NONE;
-	VL53L1_Error UnfilteredStatus;
-	VL53L1_OffsetCalibrationMode   offset_cal_mode;
-
-	LOG_FUNCTION_START("");
-
-	if (Status == VL53L1_ERROR_NONE)
-		Status =  VL53L1_get_offset_calibration_mode(Dev,
-				&offset_cal_mode);
-
-	if (Status != VL53L1_ERROR_NONE) {
-		LOG_FUNCTION_END(Status);
-		return Status;
-	}
-
-	if ((offset_cal_mode ==
-		VL53L1_OFFSETCALIBRATIONMODE__MM1_MM2__STANDARD) ||
-		(offset_cal_mode ==
-		VL53L1_OFFSETCALIBRATIONMODE__MM1_MM2__STANDARD_PRE_RANGE_ONLY
-		)) {
-		if (Status == VL53L1_ERROR_NONE)
-		Status = VL53L1_run_offset_calibration(
-				Dev,
-				(int16_t)CalDistanceMilliMeter,
-				&UnfilteredStatus);
-	} else {
-		Status = VL53L1_ERROR_INVALID_PARAMS;
-	}
-	LOG_FUNCTION_END(Status);
-	return Status;
-}
-#endif
-
 VL53L1_Error VL53L1_PerformOffsetSimpleCalibration(VL53L1_DEV Dev,
 	int32_t CalDistanceMilliMeter)
 {
 	VL53L1_Error Status = VL53L1_ERROR_NONE;
 	int32_t sum_ranging;
 	uint8_t offset_meas;
-	uint8_t Max;
-	uint8_t total_count;
+	int16_t Max, UnderMax, OverMax, Repeat;
+	int32_t total_count, inloopcount;
+	int32_t IncRounding;
 	int16_t meanDistance_mm;
 	int16_t offset;
 	VL53L1_RangingMeasurementData_t RangingMeasurementData;
 	VL53L1_LLDriverData_t *pdev;
+	uint8_t goodmeas;
+	VL53L1_Error SmudgeStatus = VL53L1_ERROR_NONE;
+	uint8_t smudge_corr_en;
 
 	LOG_FUNCTION_START("");
 
 	pdev = VL53L1DevStructGetLLDriverHandle(Dev);
 
 
+	smudge_corr_en = pdev->smudge_correct_config.smudge_corr_enabled;
+	SmudgeStatus = VL53L1_dynamic_xtalk_correction_disable(Dev);
+
+
 	pdev->customer.algo__part_to_part_range_offset_mm = 0;
 	pdev->customer.mm_config__inner_offset_mm = 0;
 	pdev->customer.mm_config__outer_offset_mm = 0;
 
-	Max = BDTable[VL53L1_TUNING_MAX_SIMPLE_OFFSET_CALIBRATION_RANGES];
-
-	Status = VL53L1_StartMeasurement(Dev);
+	Repeat = BDTable[VL53L1_TUNING_SIMPLE_OFFSET_CALIBRATION_REPEAT];
+	Max = BDTable[
+		VL53L1_TUNING_MAX_SIMPLE_OFFSET_CALIBRATION_SAMPLE_NUMBER];
+	UnderMax = 1 + (Max / 2);
+	OverMax = Max + (Max / 2);
 	sum_ranging = 0;
-	offset_meas = 0;
 	total_count = 0;
-	while ((Status == VL53L1_ERROR_NONE) && (offset_meas < Max)) {
-		Status = VL53L1_WaitMeasurementDataReady(Dev);
-		if (Status == VL53L1_ERROR_NONE) {
+
+	while ((Repeat > 0) && (Status == VL53L1_ERROR_NONE)) {
+		Status = VL53L1_StartMeasurement(Dev);
+
+
+		if (Status == VL53L1_ERROR_NONE)
+			Status = VL53L1_WaitMeasurementDataReady(Dev);
+		if (Status == VL53L1_ERROR_NONE)
 			Status = VL53L1_GetRangingMeasurementData(Dev,
-					&RangingMeasurementData);
-		}
-		if (Status == VL53L1_ERROR_NONE) {
-			if (RangingMeasurementData.RangeStatus ==
-					VL53L1_RANGESTATUS_RANGE_VALID) {
+						&RangingMeasurementData);
+		if (Status == VL53L1_ERROR_NONE)
+			Status = VL53L1_ClearInterruptAndStartMeasurement(Dev);
+
+
+		inloopcount = 0;
+		offset_meas = 0;
+		while ((Status == VL53L1_ERROR_NONE) && (inloopcount < Max) &&
+				(offset_meas < OverMax)) {
+			Status = VL53L1_WaitMeasurementDataReady(Dev);
+			if (Status == VL53L1_ERROR_NONE)
+				Status = VL53L1_GetRangingMeasurementData(Dev,
+						&RangingMeasurementData);
+			goodmeas = (RangingMeasurementData.RangeStatus ==
+					VL53L1_RANGESTATUS_RANGE_VALID);
+			if ((Status == VL53L1_ERROR_NONE) && goodmeas) {
 				sum_ranging = sum_ranging +
 					RangingMeasurementData.RangeMilliMeter;
-				total_count++;
+				inloopcount++;
 			}
+			Status = VL53L1_ClearInterruptAndStartMeasurement(Dev);
+			offset_meas++;
 		}
-		if (Status == VL53L1_ERROR_NONE) {
-			Status = VL53L1_ClearInterruptAndStartMeasurement(
-				Dev);
-		}
-		offset_meas++;
+		total_count += inloopcount;
+
+
+
+		if (inloopcount < UnderMax)
+			Status = VL53L1_ERROR_OFFSET_CAL_NO_SAMPLE_FAIL;
+
+		VL53L1_StopMeasurement(Dev);
+
+		Repeat--;
+
 	}
 
-	VL53L1_StopMeasurement(Dev);
 
-
-
-	if (total_count == 0) {
-		Status = VL53L1_ERROR_OFFSET_CAL_NO_SAMPLE_FAIL;
-	}
-
+	if ((SmudgeStatus == VL53L1_ERROR_NONE) && (smudge_corr_en == 1))
+		SmudgeStatus = VL53L1_dynamic_xtalk_correction_enable(Dev);
 
 
 	if ((sum_ranging < 0) ||
@@ -3283,8 +3227,10 @@ VL53L1_Error VL53L1_PerformOffsetSimpleCalibration(VL53L1_DEV Dev,
 		Status = VL53L1_WARNING_OFFSET_CAL_SIGMA_TOO_HIGH;
 	}
 
-	if (Status == VL53L1_ERROR_NONE) {
-		meanDistance_mm = (int16_t)(sum_ranging / total_count);
+	if ((Status == VL53L1_ERROR_NONE) && (total_count > 0)) {
+		IncRounding = total_count / 2;
+		meanDistance_mm = (int16_t)((sum_ranging + IncRounding)
+				/ total_count);
 		offset = (int16_t)CalDistanceMilliMeter - meanDistance_mm;
 		pdev->customer.algo__part_to_part_range_offset_mm = 0;
 		pdev->customer.mm_config__inner_offset_mm = offset;
@@ -3311,6 +3257,7 @@ VL53L1_Error VL53L1_SetCalibrationData(VL53L1_DEV Dev,
 
 	cal_data.struct_version = pCalibrationData->struct_version -
 			VL53L1_ADDITIONAL_CALIBRATION_DATA_STRUCT_VERSION;
+
 
 
 
@@ -3401,12 +3348,22 @@ VL53L1_Error VL53L1_SetCalibrationData(VL53L1_DEV Dev,
 		pC->mm_config__outer_offset_mm;
 
 	Status = VL53L1_set_part_to_part_data(Dev, &cal_data);
-	CHECK_ERROR_GO_ENDFUNC;
+	if (Status != VL53L1_ERROR_NONE)
+		goto ENDFUNC;
 
 	Status = VL53L1_get_current_xtalk_settings(Dev, &xtalk);
-	CHECK_ERROR_GO_ENDFUNC;
+
+	if (Status != VL53L1_ERROR_NONE)
+		goto ENDFUNC;
 
 	xtalk.algo__crosstalk_compensation_plane_offset_kcps = x;
+
+
+	Status = VL53L1_set_tuning_parm(Dev,
+			VL53L1_TUNINGPARM_DYNXTALK_NODETECT_XTALK_OFFSET_KCPS,
+			x);
+
+
 
 	Status = VL53L1_set_current_xtalk_settings(Dev, &xtalk);
 
@@ -3523,7 +3480,7 @@ VL53L1_Error VL53L1_GetCalibrationData(VL53L1_DEV Dev,
 			pC2->algo__crosstalk_compensation_plane_offset_kcps);
 
 
-	PresetMode = PALDevDataGet(Dev, CurrentParameters.PresetMode);
+	PresetMode = VL53L1DevDataGet(Dev, CurrentParameters.PresetMode);
 
 	if ((PresetMode == VL53L1_PRESETMODE_RANGING) ||
 		(PresetMode == VL53L1_PRESETMODE_MULTIZONES_SCANNING) ||
@@ -3531,7 +3488,9 @@ VL53L1_Error VL53L1_GetCalibrationData(VL53L1_DEV Dev,
 		) {
 
 		Status = VL53L1_get_current_xtalk_settings(Dev, &xtalk);
-		CHECK_ERROR_GO_ENDFUNC;
+
+		if (Status != VL53L1_ERROR_NONE)
+			goto ENDFUNC;
 
 		tmp = xtalk.algo__crosstalk_compensation_plane_offset_kcps;
 		pC->algo__crosstalk_compensation_plane_offset_kcps = tmp;
@@ -3641,11 +3600,11 @@ VL53L1_Error VL53L1_SetThresholdConfig(VL53L1_DEV Dev,
 				g = pdev->gain_cal.standard_ranging_gain_factor;
 
 
-				gain = (FixPoint1616_t) (g << 5);
-				high1616 = (FixPoint1616_t)
-						(pConfig->Distance.High << 16);
-				low1616 = (FixPoint1616_t)
-						(pConfig->Distance.Low << 16);
+				gain = (FixPoint1616_t) ((uint32_t)g << 5);
+				high1616 = (FixPoint1616_t) ((uint32_t)
+						pConfig->Distance.High << 16);
+				low1616 = (FixPoint1616_t) ((uint32_t)
+						pConfig->Distance.Low << 16);
 
 
 				high1616 = (high1616 + 32768) / gain;
@@ -3769,6 +3728,7 @@ VL53L1_Error VL53L1_GetThresholdConfig(VL53L1_DEV Dev,
 	LOG_FUNCTION_END(Status);
 	return Status;
 }
+
 
 
 

@@ -1,16 +1,16 @@
 
-/*
-* This file is part of VL53L1 Protected
-*
-* Copyright (C) 2016, STMicroelectronics - All Rights Reserved
-*
-* License terms: STMicroelectronics Proprietary in accordance with licensing
-* terms at www.st.com/sla0044
-*
-* STMicroelectronics confidential
-* Reproduction and Communication of this document is strictly prohibited unless
-* specifically authorized in writing by STMicroelectronics.
-*
+/*******************************************************************************
+ This file is part of VL53L1 Protected
+
+ Copyright (c) 2017, STMicroelectronics - All Rights Reserved
+
+ License terms: STMicroelectronics Proprietary in accordance with licensing
+ terms at www.st.com/sla0081
+
+ STMicroelectronics confidential
+ Reproduction and Communication of this document is strictly prohibited unless
+ specifically authorized in writing by STMicroelectronics.
+
 */
 
 
@@ -57,7 +57,7 @@
 #include "vl53l1_types.h"
 #include "vl53l1_hist_structs.h"
 
-#define VL53L1_DEF_00001         8
+#define VL53L1_D_001         8
 
 #ifdef __cplusplus
 extern "C" {
@@ -74,35 +74,35 @@ extern "C" {
 
 typedef struct {
 
-	uint8_t  VL53L1_PRM_00019;
+	uint8_t  VL53L1_p_022;
 
 
-	uint8_t  VL53L1_PRM_00020;
+	uint8_t  VL53L1_p_023;
 
 
-	uint8_t  VL53L1_PRM_00021;
+	uint8_t  VL53L1_p_024;
 
 
-	uint8_t  VL53L1_PRM_00029;
+	uint8_t  VL53L1_p_030;
 
 
-	int32_t  VL53L1_PRM_00017;
+	int32_t  VL53L1_p_020;
 
 
 
-	int32_t   VL53L1_PRM_00048[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	int32_t   VL53L1_p_048[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
-	int32_t   VL53L1_PRM_00069[VL53L1_HISTOGRAM_BUFFER_SIZE];
-
-
-	uint8_t   VL53L1_PRM_00043[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	int32_t   VL53L1_p_069[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
 
-	int32_t   VL53L1_PRM_00007[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	uint8_t   VL53L1_p_043[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
-	uint16_t  VL53L1_PRM_00016[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
-	uint16_t  VL53L1_PRM_00010[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	int32_t   VL53L1_p_008[VL53L1_HISTOGRAM_BUFFER_SIZE];
+
+	uint16_t  VL53L1_p_017[VL53L1_HISTOGRAM_BUFFER_SIZE];
+
+	uint16_t  VL53L1_p_011[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
 
 } VL53L1_hist_gen1_algo_private_data_t;
@@ -118,51 +118,51 @@ typedef struct {
 
 typedef struct {
 
-	uint8_t  VL53L1_PRM_00019;
+	uint8_t  VL53L1_p_022;
 
 
-	uint8_t  VL53L1_PRM_00020;
+	uint8_t  VL53L1_p_023;
 
 
-	uint8_t  VL53L1_PRM_00021;
+	uint8_t  VL53L1_p_024;
 
 
-	uint16_t VL53L1_PRM_00022;
+	uint16_t VL53L1_p_019;
 
 
-	uint8_t  VL53L1_PRM_00008;
+	uint8_t  VL53L1_p_009;
 
 
-	uint8_t  VL53L1_PRM_00029;
+	uint8_t  VL53L1_p_030;
 
 
-	int32_t  VL53L1_PRM_00028;
+	int32_t  VL53L1_p_004;
 
 
-	int32_t  VL53L1_PRM_00017;
-
-
-
-	int32_t   VL53L1_PRM_00002[VL53L1_HISTOGRAM_BUFFER_SIZE];
-
-
-	int32_t   VL53L1_PRM_00032[VL53L1_HISTOGRAM_BUFFER_SIZE];
-
-
-	int32_t   VL53L1_PRM_00001[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	int32_t  VL53L1_p_020;
 
 
 
-	int32_t   VL53L1_PRM_00007[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	int32_t   VL53L1_p_003[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
 
-	int32_t   VL53L1_PRM_00041[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	int32_t   VL53L1_p_018[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
 
-	int32_t   VL53L1_PRM_00039[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	int32_t   VL53L1_p_001[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
 
-	int32_t   VL53L1_PRM_00040[VL53L1_HISTOGRAM_BUFFER_SIZE];
+
+	int32_t   VL53L1_p_008[VL53L1_HISTOGRAM_BUFFER_SIZE];
+
+
+	int32_t   VL53L1_p_041[VL53L1_HISTOGRAM_BUFFER_SIZE];
+
+
+	int32_t   VL53L1_p_039[VL53L1_HISTOGRAM_BUFFER_SIZE];
+
+
+	int32_t   VL53L1_p_040[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
 
 
@@ -179,34 +179,34 @@ typedef struct {
 
 typedef struct {
 
-	uint8_t  VL53L1_PRM_00019;
+	uint8_t  VL53L1_p_022;
 
 
-	uint8_t  VL53L1_PRM_00020;
+	uint8_t  VL53L1_p_023;
 
 
-	uint8_t  VL53L1_PRM_00021;
+	uint8_t  VL53L1_p_024;
 
 
-	int32_t  VL53L1_PRM_00031;
-
-
-
-	uint8_t   VL53L1_PRM_00042[VL53L1_HISTOGRAM_BUFFER_SIZE];
-
-
-	uint8_t   VL53L1_PRM_00044[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	int32_t  VL53L1_p_032;
 
 
 
-	uint32_t  VL53L1_PRM_00016[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	uint8_t   VL53L1_p_042[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
 
-	uint16_t  VL53L1_PRM_00010[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	uint8_t   VL53L1_p_044[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
 
 
-	uint8_t   VL53L1_PRM_00043[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	uint32_t  VL53L1_p_017[VL53L1_HISTOGRAM_BUFFER_SIZE];
+
+
+	uint16_t  VL53L1_p_011[VL53L1_HISTOGRAM_BUFFER_SIZE];
+
+
+
+	uint8_t   VL53L1_p_043[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
 
 
@@ -223,50 +223,50 @@ typedef struct {
 
 typedef struct {
 
-	uint8_t  VL53L1_PRM_00014;
+	uint8_t  VL53L1_p_015;
 
 
-	uint8_t  VL53L1_PRM_00019;
+	uint8_t  VL53L1_p_022;
 
 
-	uint8_t  VL53L1_PRM_00023;
+	uint8_t  VL53L1_p_025;
 
 
-	uint8_t  VL53L1_PRM_00024;
+	uint8_t  VL53L1_p_026;
 
 
-	uint8_t  VL53L1_PRM_00015;
-
-
-
-	uint8_t  VL53L1_PRM_00025;
-
-
-	uint8_t  VL53L1_PRM_00055;
+	uint8_t  VL53L1_p_016;
 
 
 
-	int32_t  VL53L1_PRM_00017;
+	uint8_t  VL53L1_p_027;
 
 
-	int32_t  VL53L1_PRM_00018;
-
-
-	int32_t  VL53L1_PRM_00012;
+	uint8_t  VL53L1_p_055;
 
 
 
-	uint32_t VL53L1_PRM_00026;
+	int32_t  VL53L1_p_020;
 
 
-	uint32_t VL53L1_PRM_00013;
+	int32_t  VL53L1_p_021;
 
 
-	uint32_t VL53L1_PRM_00027;
+	int32_t  VL53L1_p_013;
 
 
 
-	uint16_t VL53L1_PRM_00003;
+	uint32_t VL53L1_p_028;
+
+
+	uint32_t VL53L1_p_014;
+
+
+	uint32_t VL53L1_p_029;
+
+
+
+	uint16_t VL53L1_p_005;
 
 
 
@@ -283,78 +283,78 @@ typedef struct {
 
 typedef struct {
 
-	uint8_t  VL53L1_PRM_00019;
+	uint8_t  VL53L1_p_022;
 
 
-	uint8_t  VL53L1_PRM_00020;
+	uint8_t  VL53L1_p_023;
 
 
-	uint8_t  VL53L1_PRM_00021;
+	uint8_t  VL53L1_p_024;
 
 
-	uint8_t  VL53L1_PRM_00030;
+	uint8_t  VL53L1_p_031;
 
 
-	uint8_t  VL53L1_PRM_00045;
+	uint8_t  VL53L1_p_045;
 
 
-	int32_t  VL53L1_PRM_00028;
+	int32_t  VL53L1_p_004;
 
 
-	int32_t  VL53L1_PRM_00031;
-
-
-
-	uint8_t  VL53L1_PRM_00043[VL53L1_HISTOGRAM_BUFFER_SIZE];
-
-
-	uint8_t  VL53L1_PRM_00046[VL53L1_HISTOGRAM_BUFFER_SIZE];
-
-
-	uint8_t  VL53L1_PRM_00047[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	int32_t  VL53L1_p_032;
 
 
 
-	int32_t  VL53L1_PRM_00056[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	uint8_t  VL53L1_p_043[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
 
-	int32_t  VL53L1_PRM_00048[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	uint8_t  VL53L1_p_046[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
 
-	int32_t  VL53L1_PRM_00007[VL53L1_HISTOGRAM_BUFFER_SIZE];
-
-
-
-	uint8_t  VL53L1_PRM_00049;
-
-
-	uint8_t  VL53L1_PRM_00050;
-
-
-	uint8_t  VL53L1_PRM_00051;
+	uint8_t  VL53L1_p_047[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
 
 
-	VL53L1_hist_pulse_data_t  VL53L1_PRM_00005[VL53L1_DEF_00001];
+	int32_t  VL53L1_p_056[VL53L1_HISTOGRAM_BUFFER_SIZE];
+
+
+	int32_t  VL53L1_p_048[VL53L1_HISTOGRAM_BUFFER_SIZE];
+
+
+	int32_t  VL53L1_p_008[VL53L1_HISTOGRAM_BUFFER_SIZE];
+
+
+
+	uint8_t  VL53L1_p_049;
+
+
+	uint8_t  VL53L1_p_050;
+
+
+	uint8_t  VL53L1_p_051;
+
+
+
+	VL53L1_hist_pulse_data_t  VL53L1_p_002[VL53L1_D_001];
 
 
 
 
 
 
-	VL53L1_histogram_bin_data_t   VL53L1_PRM_00009;
+	VL53L1_histogram_bin_data_t   VL53L1_p_010;
 
 
-	VL53L1_histogram_bin_data_t   VL53L1_PRM_00038;
+	VL53L1_histogram_bin_data_t   VL53L1_p_038;
 
 
-	VL53L1_histogram_bin_data_t   VL53L1_PRM_00052;
+	VL53L1_histogram_bin_data_t   VL53L1_p_052;
 
 
-	VL53L1_histogram_bin_data_t   VL53L1_PRM_00053;
+	VL53L1_histogram_bin_data_t   VL53L1_p_053;
 
 
-	VL53L1_histogram_bin_data_t   VL53L1_PRM_00054;
+	VL53L1_histogram_bin_data_t   VL53L1_p_054;
 
 
 
@@ -374,34 +374,34 @@ typedef struct {
 
 typedef struct {
 
-	uint8_t  VL53L1_PRM_00019;
+	uint8_t  VL53L1_p_022;
 
 
-	uint8_t  VL53L1_PRM_00020;
+	uint8_t  VL53L1_p_023;
 
 
-	uint8_t  VL53L1_PRM_00021;
-
-
-
-	int32_t   VL53L1_PRM_00002[VL53L1_HISTOGRAM_BUFFER_SIZE];
-
-
-	int32_t   VL53L1_PRM_00032[VL53L1_HISTOGRAM_BUFFER_SIZE];
-
-
-	int32_t   VL53L1_PRM_00001[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	uint8_t  VL53L1_p_024;
 
 
 
-	int32_t   VL53L1_PRM_00039[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	int32_t   VL53L1_p_003[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
 
-	int32_t   VL53L1_PRM_00040[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	int32_t   VL53L1_p_018[VL53L1_HISTOGRAM_BUFFER_SIZE];
+
+
+	int32_t   VL53L1_p_001[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
 
 
-	uint8_t  VL53L1_PRM_00043[VL53L1_HISTOGRAM_BUFFER_SIZE];
+	int32_t   VL53L1_p_039[VL53L1_HISTOGRAM_BUFFER_SIZE];
+
+
+	int32_t   VL53L1_p_040[VL53L1_HISTOGRAM_BUFFER_SIZE];
+
+
+
+	uint8_t  VL53L1_p_043[VL53L1_HISTOGRAM_BUFFER_SIZE];
 
 
 

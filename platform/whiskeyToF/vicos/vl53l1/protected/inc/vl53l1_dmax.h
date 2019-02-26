@@ -1,16 +1,16 @@
 
-/*
-* This file is part of VL53L1 Protected
-*
-* Copyright (C) 2016, STMicroelectronics - All Rights Reserved
-*
-* License terms: STMicroelectronics Proprietary in accordance with licensing
-* terms at www.st.com/sla0044
-*
-* STMicroelectronics confidential
-* Reproduction and Communication of this document is strictly prohibited unless
-* specifically authorized in writing by STMicroelectronics.
-*
+/*******************************************************************************
+ This file is part of VL53L1 Protected
+
+ Copyright (c) 2017, STMicroelectronics - All Rights Reserved
+
+ License terms: STMicroelectronics Proprietary in accordance with licensing
+ terms at www.st.com/sla0081
+
+ STMicroelectronics confidential
+ Reproduction and Communication of this document is strictly prohibited unless
+ specifically authorized in writing by STMicroelectronics.
+
 */
 
 
@@ -85,7 +85,7 @@ extern "C" {
 
 
 
-VL53L1_Error VL53L1_FCTN_00001(
+VL53L1_Error VL53L1_f_001(
 	uint16_t                              target_reflectance,
 	VL53L1_dmax_calibration_data_t	     *pcal,
 	VL53L1_hist_gen3_dmax_config_t	     *pcfg,
@@ -108,7 +108,7 @@ VL53L1_Error VL53L1_FCTN_00001(
 
 
 
-uint32_t VL53L1_FCTN_00002(
+uint32_t VL53L1_f_002(
 	uint32_t     events_threshold,
 	uint32_t     ref_signal_events,
 	uint32_t	 ref_distance_mm,
