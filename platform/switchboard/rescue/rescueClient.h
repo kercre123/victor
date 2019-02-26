@@ -26,9 +26,19 @@ public:
   EngineMessageSignal& OnReceiveEngineMessage() {
     return _engineMessageSignal;
   }
+
+  void StartPairing();
+  bool IsConnected() const { return _isConnected; }
 private:
   EngineMessageSignal _pairingStatusSignal;
   EngineMessageSignal _engineMessageSignal;
+
+  bool _isConnected;
+
+  std::string _robotName;
+  std::string _pin;
+  uint16_t _faultCode;
+  bool _faultCodeRestart;
 };
 
 } // namespace Switchboard

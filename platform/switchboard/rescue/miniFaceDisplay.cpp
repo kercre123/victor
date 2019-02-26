@@ -14,7 +14,7 @@
 #include "core/lcd.h"
 #include "coretech/common/shared/array2d_impl.h"
 #include "coretech/vision/engine/image.h"
-
+#include "rescue/pairing_icon_key.h"
 #include "opencv2/highgui.hpp"
 
 #include <getopt.h>
@@ -34,7 +34,13 @@ namespace {
 
   const f32 kRobotNameScale = 0.6f;
   const std::string kURL = "anki.com/v";
-  const ColorRGBA   kColor(0.9f, 0.9f, 0.9f, 1.f);
+  // const ColorRGBA   kColor(0.9f, 0.9f, 0.9f, 1.f);
+  const ColorRGBA     kColor(0.9f, 0.f, 0.f, 1.f);
+}
+
+extern "C" void core_common_on_exit(void)
+{
+  lcd_shutdown();
 }
 
 void DrawFaultCode(uint16_t fault, bool willRestart)

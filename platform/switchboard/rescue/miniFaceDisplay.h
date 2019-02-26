@@ -9,6 +9,7 @@
 *
 * Copyright: Anki, Inc. 2019
 **/
+#pragma once
 
 #include <cstdint>
 #include <string>
