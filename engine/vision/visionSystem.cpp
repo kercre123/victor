@@ -1149,7 +1149,7 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
       //  to run marker detection on.
       _currentResult.modesProcessed.Insert(VisionMode::CompositingImages);
 
-      #define DEBUG_IMAGE_COMPOSITING 1
+      #define DEBUG_IMAGE_COMPOSITING 0
       #if(DEBUG_IMAGE_COMPOSITING)
       // Debug image display
       Vision::ImageRGB dispImg;
