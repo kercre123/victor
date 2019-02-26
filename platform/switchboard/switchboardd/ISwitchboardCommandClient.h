@@ -1,4 +1,4 @@
-#include <signals/simpleSignal_fwd.h>
+#include <signals/simpleSignal.hpp>
 #include <string>
 
 namespace Anki {
@@ -7,6 +7,8 @@ namespace Anki {
 namespace Vector {
 namespace ExternalInterface {
 class MessageEngineToGame;
+class MessageGameToEngine;
+
 }
 
 namespace SwitchboardInterface {

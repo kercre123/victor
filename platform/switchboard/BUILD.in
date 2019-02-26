@@ -14,7 +14,7 @@ cxx_project(
 )
 
 cxx_project(
-    name = 'vic-rescue'
-    srcs = cxx_src_glob(['rescue'])
+    name = 'vic-rescue',
+    srcs = cxx_src_glob(['rescue']),
     headers = cxx_header_glob(['rescue'])
-}
+)
