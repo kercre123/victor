@@ -24,7 +24,7 @@ static const int      CHARGE_FULL_TIME = 200 * 60 * 5;           // 5 minutes
 
 static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.6);
 static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 5*60*200;  // 5 minutes
-static const int      POWER_DOWN_WARNING_TIME = 10*200; // 10 seconds
+static const int      POWER_DOWN_WARNING_TIME = 45*200; // 45 seconds
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(3.50), ~0);
 static const int      MINIMUM_ON_CHARGER = 5;
@@ -303,11 +303,14 @@ static void handleTemperature() {
 }
 
 static void handleLowBattery() {
-  if (Analog::on_charger) return ;
-
   // Low voltage shutdown
   static int power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
   static int power_down_limit = POWER_DOWN_WARNING_TIME;
+
+  if (Analog::on_charger) {
+    power_low = false;
+    return ;
+  }
 
   if (power_low) {
     if (--power_down_limit < 0) {
