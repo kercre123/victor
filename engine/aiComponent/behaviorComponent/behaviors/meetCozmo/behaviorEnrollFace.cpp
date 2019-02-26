@@ -165,11 +165,6 @@ struct BehaviorEnrollFace::InstanceConfig
   FaceSelectionComponent::FaceSelectionFactorMap faceSelectionCriteria;
   
   BackpackAnimationTrigger backpackAnim = BackpackAnimationTrigger::MeetVictor;
-
-#if ANKI_DEV_CHEATS
-  std::string            serialNumber;
-  std::string            buildSha;
-#endif
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -309,12 +304,6 @@ BehaviorEnrollFace::BehaviorEnrollFace(const Json::Value& config)
                 "behavior '%s' has invalid config",
                 GetDebugLabel().c_str());
   }
-
-#if ANKI_DEV_CHEATS
-  auto *osstate = OSState::getInstance();
-  _iConfig->serialNumber = osstate->GetSerialNumberAsString();
-  _iConfig->buildSha = osstate->GetBuildSha();
-#endif
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -605,21 +594,6 @@ void BehaviorEnrollFace::OnBehaviorActivated()
   // "tracking only" face.
   GetBEI().GetFaceWorldMutable().Enroll(Vision::UnknownFaceID);
 
-#if ANKI_DEV_CHEATS
-  const std::string& cachePath = GetBEI().GetRobotInfo().GetContext()->GetDataPlatform()->GetCachePath("camera");
-  const std::string dataType = "recognition_data";
-  const std::string path = Util::FileUtils::FullFilePath({cachePath, "images", dataType});
-  const bool result = Util::FileUtils::CreateDirectory(path);
-  if (result) {
-    LOG_ERROR("BehaviorEnrollFace.OnBehaviorActivated.FailedToCreateRecognitionImageSavePath",
-              "Path %s failed to be created.", path.c_str());
-  }
-  const std::string imagePathPrefix = Util::FileUtils::FullFilePath({path,
-                                      dataType + "_" + _iConfig->serialNumber +
-                                      "_" + _iConfig->buildSha + "_"});
-  GetBEI().GetFaceWorldMutable().SetRecognitionImagePathPrefix(imagePathPrefix);
-#endif
-
   PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.InitInternal",
                 "Initialize with ID=%d and name '%s', to be saved to ID=%d",
                 _dVars->faceID, Util::HidePersonallyIdentifiableInfo(_dVars->faceName.c_str()), _dVars->saveID);
@@ -901,7 +875,22 @@ void BehaviorEnrollFace::BehaviorUpdate()
         }
 
 #if ANKI_DEV_CHEATS
-        GetBEI().GetFaceWorldMutable().SaveAllRecognitionImages();
+        auto *osstate = OSState::getInstance();
+        const std::string serialNumber = osstate->GetSerialNumberAsString();
+        const std::string buildSha = osstate->GetBuildSha();
+
+        const std::string& cachePath = GetBEI().GetRobotInfo().GetContext()->GetDataPlatform()->GetCachePath("camera");
+        const std::string dataType = "recognition_data";
+        const std::string path = Util::FileUtils::FullFilePath({cachePath, "images", dataType});
+        const bool result = Util::FileUtils::CreateDirectory(path);
+        if (result) {
+          LOG_ERROR("BehaviorEnrollFace.OnBehaviorActivated.FailedToCreateRecognitionImageSavePath",
+                    "Path %s failed to be created.", path.c_str());
+        }
+        const std::string imagePathPrefix = Util::FileUtils::FullFilePath({path, dataType + "_" + serialNumber +
+                                            "_" + buildSha + "_"});
+
+        GetBEI().GetFaceWorldMutable().SaveAllRecognitionImages(imagePathPrefix);
         GetBEI().GetFaceWorldMutable().DeleteAllRecognitionImages();
 #endif
       }

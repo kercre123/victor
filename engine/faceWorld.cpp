@@ -1080,15 +1080,9 @@ namespace Vector {
 
 #if ANKI_DEV_CHEATS
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void FaceWorld::SetRecognitionImagePathPrefix(const std::string& imagePathPrefix)
+  void FaceWorld::SaveAllRecognitionImages(const std::string& imagePathPrefix)
   {
-    _robot->GetVisionComponent().SetRecognitionImagePathPrefix(imagePathPrefix);
-  }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void FaceWorld::SaveAllRecognitionImages()
-  {
-    _robot->GetVisionComponent().SaveAllRecognitionImages();
+    _robot->GetVisionComponent().SaveAllRecognitionImages(imagePathPrefix);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

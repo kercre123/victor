@@ -229,14 +229,9 @@ namespace Vision {
 #endif /* ANKI_DEVELOPER_CODE */
 
 #if ANKI_DEV_CHEATS
-  void FaceTracker::SetRecognitionImagePathPrefix(const std::string& imagePathPrefix)
+  void FaceTracker::SaveAllRecognitionImages(const std::string& imagePathPrefix)
   {
-    _pImpl->SetRecognitionImagePathPrefix(imagePathPrefix);
-  }
-
-  void FaceTracker::SaveAllRecognitionImages()
-  {
-    _pImpl->SaveAllRecognitionImages();
+    _pImpl->SaveAllRecognitionImages(imagePathPrefix);
   }
 
   void FaceTracker::DeleteAllRecognitionImages()

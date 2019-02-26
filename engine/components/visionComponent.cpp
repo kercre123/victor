@@ -2060,14 +2060,9 @@ namespace Vector {
   }
 
 #if ANKI_DEV_CHEATS
-  void VisionComponent::SetRecognitionImagePathPrefix(const std::string imagePathPrefix)
+  void VisionComponent::SaveAllRecognitionImages(const std::string& imagePathPrefix)
   {
-    _visionSystem->SetRecognitionImagePathPrefix(imagePathPrefix);
-  }
-
-  void VisionComponent::SaveAllRecognitionImages()
-  {
-    _visionSystem->SaveAllRecognitionImages();
+    _visionSystem->SaveAllRecognitionImages(imagePathPrefix);
   }
 
   void VisionComponent::DeleteAllRecognitionImages()

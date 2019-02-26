@@ -133,8 +133,7 @@ namespace Vector {
                                bool forceNewID = false);
 
 #if ANKI_DEV_CHEATS
-    void SetRecognitionImagePathPrefix(const std::string imagePathPrefix);
-    void SaveAllRecognitionImages();
+    void SaveAllRecognitionImages(const std::string& imagePathPrefix);
     void DeleteAllRecognitionImages();
 #endif
     

@@ -146,9 +146,6 @@ namespace Vision {
 #endif // ANKI_DEVELOPER_CODE
 
 #if ANKI_DEV_CHEATS
-    // Sets the path and file name prefix to be used when saving
-    // the debug enrollment images
-    void SetRecognitionImagePathPrefix(const std::string& imagePathPrefix);
     // Saves all the debug enrollment images in the dierctory set above,
     // and appending the face id, album id, and the image timestamp.
     // The filename has the form /path/<filename_prefix>_<face_id>_<album_entry_id>_<timestamp>.jpg.
@@ -157,7 +154,7 @@ namespace Vision {
     // by enabling kGatherDebugEnrollmentImages which by default saves the croppped
     // images at the same resolution that recognition occurs at. If kDisplayDebugEnrollmentImages
     // is enabled the cropped images with be saved at kEnrollmentThumbnailSize.
-    void SaveAllRecognitionImages();
+    void SaveAllRecognitionImages(const std::string& imagePathPrefix);
     // This deletes all the debug recognition images for all users.
     void DeleteAllRecognitionImages();
 #endif // ANKI_DEV_CHEATS
@@ -318,12 +315,6 @@ namespace Vision {
     
     static Result ComputeFeaturesFromFace(const Image& img, const TrackedFace& face, HFEATURE featureHandle);
 
-#if ANKI_DEV_CHEATS
-    // This holds the path where we want to save our images as well as
-    // the prefix that is unique to the build and the robot, because
-    // we don't have easy access to either here.
-    std::string _imagePathPrefix;
-#endif // ANKI_DEV_CHEATS
   }; // class FaceRecognizer
   
 

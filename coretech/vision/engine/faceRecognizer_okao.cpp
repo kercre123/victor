@@ -3347,17 +3347,12 @@ namespace Vision {
 #endif /* ANKI_DEVELOPER_CODE */
 
 #if ANKI_DEV_CHEATS
-  void FaceRecognizer::SetRecognitionImagePathPrefix(const std::string& imagePathPrefix)
-  {
-    _imagePathPrefix = imagePathPrefix;
-  }
-
-  void FaceRecognizer::SaveAllRecognitionImages()
+  void FaceRecognizer::SaveAllRecognitionImages(const std::string& imagePathPrefix)
   {
     for (const auto& albumEntry: _enrollmentImages) {
       const AlbumEntryID_t entryId = albumEntry.first;
       for (const auto& enrollmentImage: albumEntry.second) {
-        const std::string fullFilename = _imagePathPrefix + "_" + std::to_string(_albumEntryToFaceID[entryId])
+        const std::string fullFilename = imagePathPrefix + "_" + std::to_string(_albumEntryToFaceID[entryId])
                                          + "_" + std::to_string(entryId) + "_" +
                                          std::to_string(enrollmentImage.GetTimestamp()) + ".jpg";
         const Result result = enrollmentImage.Save(fullFilename);
