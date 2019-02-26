@@ -63,6 +63,7 @@ extern "C"
 
 VL53L1_Error VL53L1_CommsInitialise(
 	VL53L1_Dev_t *pdev,
+        int16_t       address,
 	uint8_t       comms_type,
 	uint16_t      comms_speed_khz);
 

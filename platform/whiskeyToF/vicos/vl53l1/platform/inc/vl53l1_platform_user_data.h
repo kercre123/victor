@@ -33,35 +33,6 @@
 
 */
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 #ifndef _VL53L1_PLATFORM_USER_DATA_H_
 #define _VL53L1_PLATFORM_USER_DATA_H_
 
@@ -76,90 +47,27 @@ extern "C"
 {
 #endif
 
-
-
-
-
-
-
-
-
-
-
+/// I2C driver handle etc.
+typedef struct {
+  int i2c_file_handle;
+  uint16_t slave_address;
+} PlatformDevData;
 
 typedef struct {
-
-	VL53L1_DevData_t   Data;
-
-
-
-	uint8_t   i2c_slave_address;
-
-
-	uint8_t   comms_type;
-
-
-	uint16_t  comms_speed_khz;
-
-
-
-	uint32_t  new_data_ready_poll_duration_ms;
-
-
+  VL53L1_DevData_t   Data;
+  uint8_t   i2c_slave_address;
+  uint8_t   comms_type;
+  uint16_t  comms_speed_khz;
+  uint32_t  new_data_ready_poll_duration_ms;
+  PlatformDevData platform_data;
 } VL53L1_Dev_t;
-
-
-
-
-
-
 
 typedef VL53L1_Dev_t *VL53L1_DEV;
 
-
-
-
-
-
-
-
-
-
-
-
 #define VL53L1DevDataGet(Dev, field) (Dev->Data.field)
-
-
-
-
-
-
-
-
-
-
 #define VL53L1DevDataSet(Dev, field, VL53L1_p_002) ((Dev->Data.field) = (VL53L1_p_002))
-
-
-
-
-
-
-
-
-
 #define VL53L1DevStructGetLLDriverHandle(Dev) (&Dev->Data.LLData)
-
-
-
-
-
-
-
-
 #define VL53L1DevStructGetLLResultsHandle(Dev) (&Dev->Data.llresults)
-
-
 
 #ifdef __cplusplus
 }

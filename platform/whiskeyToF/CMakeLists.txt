@@ -57,7 +57,7 @@ anki_build_target_license(whiskeyToF "ANKI")
 
 # tof_test is a standalone program to test output of tof sensor
 # Don't build by default
-if (VICOS AND FALSE)
+if (VICOS)
 
 project(tof_test)
 

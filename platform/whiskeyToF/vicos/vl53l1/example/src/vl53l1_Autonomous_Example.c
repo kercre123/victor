@@ -126,6 +126,7 @@ VL53L1_Error  RunRangingLoop1(VL53L1_DEV Dev, uint16_t no_of_measurements) {
 	VL53L1_Error Status = VL53L1_ERROR_NONE;
 	uint8_t i;
 	VL53L1_RangingMeasurementData_t RangingMeasurementData;
+        memset(&RangingMeasurementData, 0, sizeof(RangingMeasurementData));
 
 	if (Status == VL53L1_ERROR_NONE) {
 		printf("run VL53L1_StartMeasurement\n");
