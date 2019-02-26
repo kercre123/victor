@@ -47,6 +47,8 @@ enum buildConfig {
 
 def server = Artifactory.server 'artifactory-dev'
 library 'victor-helpers@master'
+@Library('static-libs')
+import com.anki.*
 
 primaryStageName = ''
 def vSphereServer = 'ankicore'
@@ -211,17 +213,24 @@ if (env.CHANGE_ID) {
 
 stage("${primaryStageName} Build") {
     agent = new EphemeralAgent()
+    gatekeeper = new Gatekeeper(this)
     node('master') {
+        while( true ) {
+            echo "Checking if resources are available on vSphere..."
+            gatekeeper.checkCPULimit()
+            if (gatekeeper.canProvision) break
+            sleep(time:30, unit:"SECONDS")
+        }
         stage('Spin up ephemeral VM') {
             try {
                 uuid = agent.getMachineName()
                 vSphere buildStep: [$class: 'Clone', clone: uuid, cluster: 'sjc-vm-cluster',
                     customizationSpec: '', datastore: 'sjc-vm-04-localssd', folder: 'sjc/build',
-                    linkedClone: true, powerOn: false, resourcePool: 'vic-os',
+                    linkedClone: true, powerOn: false, resourcePool: 'jenkins-build-slaves',
                     sourceName: 'js-photon-os-template', timeoutInSeconds: 60], serverName: vSphereServer
-
+                
                 vSphere buildStep: [$class: 'Reconfigure', reconfigureSteps: [[$class: 'ReconfigureCpu',
-                    coresPerSocket: '1', cpuCores: '2']], vm: uuid], serverName: vSphereServer // Max overcommit is 4:1 vCPU to pCPU
+                    coresPerSocket: '1', cpuCores: '2', cpuLimitMHz: '6600']], vm: uuid], serverName: vSphereServer // Max overcommit is 4:1 vCPU to pCPU
 
                 vSphere buildStep: [$class: 'PowerOn', timeoutInSeconds: 60, vm: uuid], serverName: vSphereServer
 
