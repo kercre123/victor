@@ -85,7 +85,7 @@ void ImageCompositor::GetCompositeImage(Vision::Image& outImg) const
   ImageBrightnessHistogram hist;
   hist.FillFromImage(outImg, kImageHistogramSubsample);
   const u8 brightIntensityVal = hist.ComputePercentile(_kPercentileForMaxIntensity);
-  const f32 scalingFactor = (f32)kBaseIntensityForMaxBrightness * std::numeric_limits<u8>::max() / brightIntensityVal;
+  const f32 scalingFactor = (kBaseIntensityForMaxBrightness * std::numeric_limits<u8>::max()) / brightIntensityVal;
   outImg.get_CvMat_().convertTo(outImg.get_CvMat_(), CV_8UC1, scalingFactor, 0);
 
   outImg.SetTimestamp(_lastImageTimestamp);

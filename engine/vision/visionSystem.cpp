@@ -1131,14 +1131,10 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
   
   Vision::Image compositeImage;
   if(IsModeEnabled(VisionMode::CompositingImages)) {
-    const bool shouldReset = (_imageCompositor->GetNumImagesComposited() == _imageCompositorResetPeriod);
-    if(shouldReset) {
-      _imageCompositor->Reset();
-    }
-
     _imageCompositor->ComposeWith(imageCache.GetGray(whichSize));
+    size_t numImagesComposited = _imageCompositor->GetNumImagesComposited();
 
-    const bool shouldRunOnComposite = (_imageCompositor->GetNumImagesComposited() % _imageCompositorReadyPeriod) == 0;
+    const bool shouldRunOnComposite = (numImagesComposited % _imageCompositorReadyPeriod) == 0;
     if(shouldRunOnComposite) {
       _imageCompositor->GetCompositeImage(compositeImage);
       imagePtrs.push_back(&compositeImage);
@@ -1154,6 +1150,11 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
       dispImg.SetFromGray(compositeImage);
       _currentResult.debugImages.emplace_back("ImageCompositing", dispImg);
       #endif
+    }
+
+    const bool shouldReset = (numImagesComposited == _imageCompositorResetPeriod);
+    if(shouldReset) {
+      _imageCompositor->Reset();
     }
   }
   
