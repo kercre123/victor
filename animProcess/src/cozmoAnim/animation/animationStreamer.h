@@ -208,6 +208,7 @@ namespace Vector {
     void ProcessAddSquint(const RobotInterface::AddSquint& msg);
     void ProcessRemoveSquint(const RobotInterface::RemoveSquint& msg);
 
+    uint16_t GetNumLayersRendered() { return _numLayersRendered; }
 
   private:
     const AnimContext* _context = nullptr;
@@ -332,6 +333,8 @@ namespace Vector {
     bool _onCharger = false;
     
     bool _frozenOnCharger = false;
+    
+    static uint16_t _numLayersRendered;
 
     static bool IsTrackLocked(u8 lockedTracks, u8 trackFlagToCheck) {
       return ((lockedTracks & trackFlagToCheck) == trackFlagToCheck);
@@ -369,7 +372,7 @@ namespace Vector {
                                                                    TrackLayerComponent* trackComp,
                                                                    const u8 tracksCurrentlyLocked,
                                                                    const TimeStamp_t timeSinceAnimStart_ms,
-                                                                   bool storeFace,
+                                                                   const bool storeFace,
                                                                    AnimationMessageWrapper& stateToSend);
 
 
@@ -423,10 +426,10 @@ namespace Vector {
     // eyes are needed this tick
     static bool ShouldRenderProceduralFace(const Animations::Track<SpriteSequenceKeyFrame>& spriteTrack,
                                            const u8 tracksCurrentlyLocked,
-                                           TimeStamp_t relativeStreamTime_ms);
+                                           const TimeStamp_t relativeStreamTime_ms);
     static bool ShouldRenderSpriteTrack(const Animations::Track<SpriteSequenceKeyFrame>& spriteTrack,
                                         const u8 tracksCurrentlyLocked,
-                                        TimeStamp_t relativeStreamTime_ms,
+                                        const TimeStamp_t relativeStreamTime_ms,
                                         const bool proceduralFaceRendered);
 
     static void GetStreamableFace(const AnimContext* context, const ProceduralFace& procFace, Vision::ImageRGB565& outImage);

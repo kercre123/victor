@@ -18,7 +18,6 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "engine/debugImageList.h"
 #include "engine/overheadEdge.h"
 #include "engine/robotStateHistory.h"
 #include "engine/rollingShutterCorrector.h"
@@ -35,6 +34,7 @@
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/cameraCalibration.h"
 #include "coretech/vision/engine/compressedImage.h"
+#include "coretech/vision/engine/debugImageList.h"
 #include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/profiler.h"
 #include "coretech/vision/engine/trackedFace.h"
@@ -131,6 +131,11 @@ namespace Vector {
     void SetFaceEnrollmentMode(Vision::FaceID_t forFaceID = Vision::UnknownFaceID,
                                s32 numEnrollments = -1,
                                bool forceNewID = false);
+
+#if ANKI_DEV_CHEATS
+    void SaveAllRecognitionImages(const std::string& imagePathPrefix);
+    void DeleteAllRecognitionImages();
+#endif
     
     void SetFaceRecognitionIsSynchronous(bool isSynchronous);
     

@@ -27,6 +27,7 @@
 #include "coretech/common/engine/utils/timer.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/types/robotStatusAndActions.h"
 
 #include "osState/osState.h"
@@ -92,6 +93,11 @@ namespace {
   CONSOLE_VAR_RANGED(float, kRequiredChargeTime_s, CONSOLE_GROUP, 5*60.0f, 10.0f, 9999.0f ); // must be set before low battery and then not changed
   const float kExtraChargingTimePerDischargePeriod_s = 1.0f; // if off the charger for 1 min, must charge an additional 1*X mins
 
+#if ANKI_DEV_CHEATS
+  // General periodic battery logging (for battery life testing)
+  CONSOLE_VAR(bool, kPeriodicDebugDASLogging, CONSOLE_GROUP, false);
+#endif  
+
   #undef CONSOLE_GROUP
 }
 
@@ -106,7 +112,6 @@ BatteryComponent::BatteryComponent()
                                                                     kBatteryVoltsFilterTimeConstant_sec);
 
   // setup block world filter to find chargers:
-  _chargerFilter->AddAllowedFamily(ObjectFamily::Charger);
   _chargerFilter->AddAllowedType(ObjectType::Charger_Basic);
 
   _lastOnChargerContactsPitchAngle.performRescaling(false);
@@ -157,7 +162,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   // If in calm mode, RobotState messages are expected to come in at a slower rate
   // and we therefore need to adjust the sampling rate of the filter.
   static bool prevSysconCalmMode = false;
-  bool currSysconCalmMode = msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE;
+  const bool currSysconCalmMode = msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE;
   if (currSysconCalmMode && !prevSysconCalmMode) {
     _batteryVoltsFilter->SetSamplePeriod(kCalmModeBatteryVoltsUpdatePeriod_sec);
   } else if (!currSysconCalmMode && prevSysconCalmMode) {
@@ -194,8 +199,21 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   if (_battDisconnected != wasDisconnected) {
     _lastDisconnectedChange_sec = now_sec;
 
-    // DAS message for when battery is disconnected for cooldown
+    // The battery becomes disconnected for one of two reasons:
+    //
+    // - Once when, on being put on the charger, the battery is too hot and needs to cool down.
+    //   By disconnecting here, the battery will have a chance to cool down (given time).
+    //   The IS_CHARGING bit is set to true by syscon even though it is not actually charging.
+    //   After the battery cools down, it will be reconnected and charging will resume.
+    //   During this cooldown period, the IS_CHARGING bit is kept true to hide the fact
+    //   that it is disconnected from users. This ensures the robot is left alone, on 
+    //   the charger, so that it may naturally cool down and eventually resume charging.
+    //
+    // - When the battery has been charging for 25 minutes (considered the maximum time needed), 
+    //   there is no need to keep drawing power. So, the battery is disconnected to prolong its life.
+    //   The IS_CHARGING bit is set to false here, because no more charging takes place.
     if (IsCharging()) {
+      // DAS message for when battery is disconnected for cooldown
       DASMSG(battery_cooldown, "battery.cooldown", "Indicates that the battery was disconnected/reconnected in order to cool down the battery");
       DASMSG_SET(i1, _battDisconnected, "Whether we have started or stopped cooldown (1 if we have started, 0 if we have stopped)");
       DASMSG_SET(i2, now_sec - _lastOnChargerContactsChange_sec, "Time since placed on charger (sec)");
@@ -361,9 +379,31 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   // (Encoders should normally be off while on charger)
   if (!IsOnChargerContacts()) {
     bool encodersDisabled = msg.status & (uint32_t)RobotStatusFlag::ENCODERS_DISABLED;
-    bool calmMode         = msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE;
-    _batteryStatsAccumulator->UpdateEncoderStats(encodersDisabled, calmMode);
+    _batteryStatsAccumulator->UpdateEncoderStats(encodersDisabled, currSysconCalmMode);
   }
+
+#if ANKI_DEV_CHEATS
+  // General periodic debug battery logging
+  static int s_nextReportTime_sec = now_sec;
+  static const int kReportPeriod_sec = 5;
+  if (kPeriodicDebugDASLogging) {
+    if (now_sec > s_nextReportTime_sec) {
+      s_nextReportTime_sec += kReportPeriod_sec;
+      DASMSG(battery_periodic_log, "battery.periodic_log", "For battery life debug logging");
+      DASMSG_SET(i1, GetBatteryVoltsRaw_mV(), "Raw voltage (mV)");
+      DASMSG_SET(i2, GetBatteryVolts_mV(), "Filtered voltage (mV)");
+      DASMSG_SET(i3, GetBatteryTemperature_C(), "Temperature (C)");
+      DASMSG_SET(i4, IsOnChargerContacts(), "On charge contacts");
+      DASMSG_SET(s1, IsBatteryDisconnectedFromCharger() ? "1" : "0", "Battery disconnected state");
+      DASMSG_SET(s2, IsCharging() ? "1" : "0", "Battery charging state");
+      DASMSG_SET(s3, currSysconCalmMode ? "1" : "0", "Calm mode enabled");
+      DASMSG_SET(s4, std::to_string( OSState::getInstance()->GetTemperature_C() ), "CPU temperature (C)");
+      DASMSG_SEND();
+    }
+  } else {
+    s_nextReportTime_sec = now_sec;
+  }
+#endif  
 }
 
 

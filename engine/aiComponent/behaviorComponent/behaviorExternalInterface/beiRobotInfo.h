@@ -133,6 +133,7 @@ public:
   Result ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, f32 yTolFrac) const;
 
   bool IsCharging() const;
+  float GetOnChargerDurationSec() const;
   bool IsHeadCalibrated() const;
   bool IsLiftCalibrated() const;
   bool IsHeadMotorOutOfBounds() const;
@@ -143,8 +144,11 @@ public:
   bool IsOnChargerPlatform() const;
   bool IsPhysical() const;
   bool IsPickedUp() const;
-  bool IsPowerButtonPressed() const;  
+  bool IsPowerButtonPressed() const;
+  
   bool IsBeingHeld() const;
+  EngineTimeStamp_t GetBeingHeldLastChangedTime_ms() const;
+  
   bool IsPoseInWorldOrigin(const Pose3d& pose) const;
   
   bool IsCarryingObject() const;

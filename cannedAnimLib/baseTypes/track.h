@@ -159,7 +159,7 @@ public:
   bool HasFramesLeft() const { return _frameIter != _frames.end(); }
 
   // Check to see whether the return value of GetCurrentKeyFrame is valid
-  bool CurrentFrameIsValid (const TimeStamp_t relativeStreamingTime_ms) const {  
+  bool CurrentFrameIsValid(const TimeStamp_t relativeStreamingTime_ms) const {
     return HasFramesLeft() && 
            GetCurrentKeyFrame().IsTimeToPlay(relativeStreamingTime_ms);
   }
@@ -169,10 +169,10 @@ public:
 
 
   void Clear() { _frames.clear(); _frameIter = _frames.end(); }
-  
+
   // Clear all frames up to, but not including, the current one.
   void ClearUpToCurrent();
-  
+
   // Append Track to current track
   void AppendTrack(const Track& appendTrack, const TimeStamp_t appendStartTime_ms);
 
@@ -185,24 +185,24 @@ public:
   std::list<FRAME_TYPE>& GetAllFrames() { return _frames;}
 
 private:
-  
+
   using FrameList = std::list<FRAME_TYPE>;
   using FrameListIter = typename std::list<FRAME_TYPE>::iterator;
-  
+
   // List of frames
   FrameList _frames;
-  
+
   // Pointer to current position
   FrameListIter _frameIter = _frames.begin();
-  
+
   Result AddKeyFrameToBackHelper(const FRAME_TYPE& keyFrame, FRAME_TYPE* &prevKeyFrame);
   Result AddKeyFrameByTimeHelper(const FRAME_TYPE& keyFrame, FRAME_TYPE* &prevKeyFrame);
-  
+
   // Use to setup keyframe duration for specific keyframe types
   void SetKeyFrameDurationHelper();
   void AdvanceTrackHelper(const TimeStamp_t toTime_ms);
 
-  
+
 }; // class Track
   
 template<typename FRAME_TYPE>

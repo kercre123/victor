@@ -1508,9 +1508,8 @@ namespace Anki {
         return false;
       }
 
-      if( observableObject->GetFamily() != ObjectFamily::LightCube &&
-          observableObject->GetFamily() != ObjectFamily::Block ) {
-        LOG_INFO("DriveToRollObjectAction.RollToUpright.WrongFamily",
+      if( !IsBlockType(observableObject->GetType(), false) ) {
+        LOG_INFO("DriveToRollObjectAction.RollToUpright.WrongType",
                  "Can only use this function on blocks or light cubes, ignoring call");
         return false;
       }

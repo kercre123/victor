@@ -187,7 +187,7 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
         [](BehaviorExternalInterface& bei) {
           BlockWorldFilter filter;
           filter.SetFilterFcn( [](const ObservableObject* obj){
-              return IsCharger(obj->GetType(), false) && obj->IsPoseStateKnown();
+              return IsChargerType(obj->GetType(), false) && obj->IsPoseStateKnown();
             });
           const auto& blockWorld = bei.GetBlockWorld();
           const auto* block = blockWorld.FindLocatedMatchingObject(filter);

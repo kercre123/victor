@@ -135,7 +135,6 @@ private:
   std::unique_ptr<CozmoExperiments>                     _cozmoExperiments;
   std::unique_ptr<PerfMetricEngine>                     _perfMetric;
   std::unique_ptr<WebService::WebService>               _webService;
-
 };
 
 

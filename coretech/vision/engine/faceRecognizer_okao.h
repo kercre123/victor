@@ -14,6 +14,7 @@
  * Copyright: Anki, Inc. 2016
  **/
 
+#include "coretech/vision/engine/debugImageList.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/trackedFace.h"
 #include "coretech/vision/engine/profiler.h"
@@ -42,6 +43,8 @@ namespace Json {
 
 namespace Anki {
 namespace Vision {
+  
+  class CompressedImage;
 
   class FaceRecognizer : public Profiler
   {
@@ -94,7 +97,8 @@ namespace Vision {
     // If a specific enrollment ID and count are in use, and the enrollment just
     // completed (the count was just reached), then that count is returned in
     // 'enrollmentCountReached'. Otherwise 0 is returned.
-    EnrolledFaceEntry GetRecognitionData(TrackingID_t forTrackingID, s32& enrollmentCountReached);
+    EnrolledFaceEntry GetRecognitionData(TrackingID_t forTrackingID, s32& enrollmentCountReached,
+                                         DebugImageList<CompressedImage>& debugImages);
     
     bool HasRecognitionData(TrackingID_t forTrackingID) const;
     bool HasName(TrackingID_t forTrackingID) const;
@@ -113,6 +117,47 @@ namespace Vision {
     bool GetFaceIDFromTrackingID(const TrackingID_t trackingID, FaceID_t& faceID) const;
    
     std::string GetBestGuessNameForTrackingID(const TrackingID_t trackingID) const;
+
+#if ANKI_DEVELOPER_CODE
+    //
+    // For testing:
+    //
+    
+    // Adds a face to the album using its already-extracted features/confidences, using the
+    // next available slot for the given album entry. Fails if album or specific entry is full.
+    Result DevAddFaceToAlbum(const Image& img, const TrackedFace& face, int albumEntry);
+    
+    // Identify the given face, using enrollments present in the album and puts matched ID and score
+    // in 'albumEntry' and 'score'. Note: will always find a match (in the event of RESULT_OK); it's the
+    // caller's job to compare to a threshold.
+    Result DevFindFaceInAlbum(const Image& img, const TrackedFace& face, int& albumEntry, float& score) const;
+    
+    // Same as above, but returns up to maxMatches pairs of album entries and corresponding scores, in decreasing
+    // score order
+    Result DevFindFaceInAlbum(const Image& img, const TrackedFace& face, const int maxMatches,
+                              std::vector<std::pair<int, float>>& matches) const;
+    
+    // Computes recognition score for two faces added using AddFaceToAlbum
+    float DevComputePairwiseMatchScore(int faceID1, int faceID2) const;
+    float DevComputePairwiseMatchScore(int faceID1, const Image& img, const TrackedFace& face) const;
+    float DevComputePairwiseMatchScore(const Image& img1, const TrackedFace& face1,
+                                       const Image& img2, const TrackedFace& face2);
+    
+#endif // ANKI_DEVELOPER_CODE
+
+#if ANKI_DEV_CHEATS
+    // Saves all the debug enrollment images in the dierctory set above,
+    // and appending the face id, album id, and the image timestamp.
+    // The filename has the form /path/<filename_prefix>_<face_id>_<album_entry_id>_<timestamp>.jpg.
+    // Currently the debug images are cropped to only contain the region of the image
+    // where there was a face detection. The container of images is populated
+    // by enabling kGatherDebugEnrollmentImages which by default saves the croppped
+    // images at the same resolution that recognition occurs at. If kDisplayDebugEnrollmentImages
+    // is enabled the cropped images with be saved at kEnrollmentThumbnailSize.
+    void SaveAllRecognitionImages(const std::string& imagePathPrefix);
+    // This deletes all the debug recognition images for all users.
+    void DeleteAllRecognitionImages();
+#endif // ANKI_DEV_CHEATS
     
   private:
     
@@ -138,7 +183,8 @@ namespace Vision {
     Result UpdateExistingAlbumEntry(AlbumEntryID_t albumEntry, HFEATURE& hFeature, RecognitionScore score);
     
     // Matches features to known faces, when features are done being computed
-    Result RecognizeFace(FaceID_t& faceID, RecognitionScore& recognitionScore);
+    Result RecognizeFace(FaceID_t& faceID, RecognitionScore& recognitionScore,
+                         DebugImageList<CompressedImage>& debugImages);
     
     // Uses the ID and score from RecognizeFace to update the data. Also checks
     // for merge opportunities.
@@ -259,10 +305,16 @@ namespace Vision {
     EnrollmentData _enrollmentData;
     
     // For debugging what is in current enrollment images
-    std::map<AlbumEntryID_t,std::array<Vision::ImageRGB, kMaxEnrollDataPerAlbumEntry>> _enrollmentImages;
+    std::map<AlbumEntryID_t,std::array<Vision::Image, kMaxEnrollDataPerAlbumEntry>> _enrollmentImages;
     void SetEnrollmentImage(AlbumEntryID_t albumEntry, s32 dataEntry);
-    void DisplayEnrollmentImages() const;
+    void DisplayEnrollmentImages(DebugImageList<CompressedImage>& debugImages) const;
+    void DisplayMatchImages(const INT32 resultNum,
+                            const std::vector<AlbumEntryID_t>& matchingAlbumEntries,
+                            const std::vector<RecognitionScore>& scores,
+                            DebugImageList<CompressedImage>& debugImages);
     
+    static Result ComputeFeaturesFromFace(const Image& img, const TrackedFace& face, HFEATURE featureHandle);
+
   }; // class FaceRecognizer
   
 

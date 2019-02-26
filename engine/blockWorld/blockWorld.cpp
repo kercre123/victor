@@ -21,8 +21,6 @@
 #include "coretech/common/shared/math/rect_impl.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/shared/utilities_shared.h"
-#include "engine/activeCube.h"
-#include "engine/activeObjectHelpers.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/ankiEventUtil.h"
@@ -37,8 +35,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/customObject.h"
 #include "engine/externalInterface/externalInterface.h"
-#include "engine/humanHead.h"
-#include "engine/markerlessObject.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
 #include "engine/objectPoseConfirmer.h"
@@ -62,20 +58,15 @@
 // Giving this its own local define, in case we want to control it independently of DEV_CHEATS / SHIPPING, etc.
 #define ENABLE_DRAWING ANKI_DEV_CHEATS
 
+#define LOG_CHANNEL "BlockWorld"
+
 namespace Anki {
 namespace Vector {
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// CONSOLE VARS
-
-// How long to wait until deleting non-cliff Markerless objects
-CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   BlockWorld::BlockWorld()
   : UnreliableComponent<BCComponentID>(this, BCComponentID::BlockWorld)
   , IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::BlockWorld)
-  , _trackPoseChanges(false)
   {
   } // BlockWorld() Constructor
 
@@ -84,16 +75,16 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
   {
     _robot = robot;
     DEV_ASSERT(_robot != nullptr, "BlockWorld.Constructor.InvalidRobot");
-
+    
     //////////////////////////////////////////////////////////////////////////
     // 1x1 Light Cubes
     //
-    DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE1));
+    DefineObject(std::make_unique<Block>(ObjectType::Block_LIGHTCUBE1));
 #ifdef SIMULATOR
     // VIC-12886 These object types are only used in Webots tests (not in the real world), so only define them if this
     // is sim. The physical robot can sometimes hallucinate these objects, which causes issues.
-    DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE2));
-    DefineObject(std::make_unique<ActiveCube>(ObjectType::Block_LIGHTCUBE3));
+    DefineObject(std::make_unique<Block>(ObjectType::Block_LIGHTCUBE2));
+    DefineObject(std::make_unique<Block>(ObjectType::Block_LIGHTCUBE3));
 #endif
 
     //////////////////////////////////////////////////////////////////////////
@@ -175,7 +166,7 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
   {
     BlockWorldFilter filter;
     filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-    filter.AddAllowedFamily(ObjectFamily::CustomObject);
+    filter.AddFilterFcn(&BlockWorldFilter::IsCustomObjectFilter);
     filter.AddAllowedType(ObjectType::CustomFixedObstacle);
     DeleteLocatedObjects(filter);
     _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotDeletedFixedCustomObjects>();
@@ -186,7 +177,7 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
   {
     BlockWorldFilter filter;
     filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-    filter.AddAllowedFamily(ObjectFamily::CustomObject);
+    filter.AddFilterFcn(&BlockWorldFilter::IsCustomObjectFilter);
     filter.AddIgnoreType(ObjectType::CustomFixedObstacle); // everything custom _except_ fixed obstacles
     DeleteLocatedObjects(filter);
     _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotDeletedCustomMarkerObjects>();
@@ -197,7 +188,7 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
   {
     BlockWorldFilter filter;
     filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-    filter.AddAllowedFamily(ObjectFamily::CustomObject);
+    filter.AddFilterFcn(&BlockWorldFilter::IsCustomObjectFilter);
     DeleteLocatedObjects(filter);
     _robot->GetContext()->GetExternalInterface()->BroadcastToGame<ExternalInterface::RobotDeletedAllCustomObjects>();
   };
@@ -327,40 +318,27 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
                           });
     }
 
+    const auto& currRobotOriginId = _robot->GetPoseOriginList().GetCurrentOriginID();
+    
     for(const auto & objectsByOrigin : _locatedObjects) {
-      if(filter.ConsiderOrigin(objectsByOrigin.first, _robot->GetPoseOriginList().GetCurrentOriginID())) {
-        for(const auto & objectsByFamily : objectsByOrigin.second) {
-          if(filter.ConsiderFamily(objectsByFamily.first)) {
-            for(const auto & objectsByType : objectsByFamily.second) {
-              if(filter.ConsiderType(objectsByType.first)) {
-                for(const auto & objectsByID : objectsByType.second) {
-                  ObservableObject* object_nonconst = objectsByID.second.get();
-                  const ObservableObject* object = object_nonconst;
-
-                  if(nullptr == object)
-                  {
-                    PRINT_NAMED_WARNING("BlockWorld.FindObjectHelper.NullExistingObject",
-                                        "Origin:%s Family:%s Type:%s ID:%d is NULL",
-                                        _robot->GetPoseOriginList().GetOriginByID(objectsByOrigin.first).GetName().c_str(),
-                                        EnumToString(objectsByFamily.first),
-                                        EnumToString(objectsByType.first),
-                                        objectsByID.first.GetValue());
-                    continue;
-                  }
-
-                  if(filter.ConsiderObject(object))
-                  {
-                    matchingObject = object_nonconst;
-                    if(nullptr != modifierFcn) {
-                      modifierFcn(matchingObject);
-                    }
-                    if(returnFirstFound) {
-                      return matchingObject;
-                    }
-                  }
-                }
-              }
-            }
+      const auto& originID = objectsByOrigin.first;
+      if (!filter.ConsiderOrigin(originID, currRobotOriginId)) {
+        continue;
+      }
+      for (const auto& object : objectsByOrigin.second) {
+        if (nullptr == object) {
+          LOG_ERROR("BlockWorld.FindLocatedObjectHelper.NullObject", "origin %d", originID);
+          continue;
+        }
+        const bool objectMatches = filter.ConsiderType(object->GetType()) &&
+                                   filter.ConsiderObject(object.get());
+        if (objectMatches) {
+          matchingObject = object.get();
+          if(nullptr != modifierFcn) {
+            modifierFcn(matchingObject);
+          }
+          if(returnFirstFound) {
+            return matchingObject;
           }
         }
       }
@@ -370,51 +348,28 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ActiveObject* BlockWorld::FindConnectedObjectHelper(const BlockWorldFilter& filterIn,
-                                                      const ModifierFcn& modifierFcn,
-                                                      bool returnFirstFound) const
+  Block* BlockWorld::FindConnectedObjectHelper(const BlockWorldFilter& filter,
+                                               const ModifierFcn& modifierFcn,
+                                               bool returnFirstFound) const
   {
-    ActiveObject* matchingObject = nullptr;
+    Block* matchingObject = nullptr;
 
-    // TODO COZMO-7848:  create BlockWorldActiveObjetFilter vs BlockWorldFilter because some of the parameters
-    //                   Or at least assert on filter unused flags
-    // in BlockWorldFilter do not apply to connected objects. Eg: IsOnlyConsideringLatestUpdate, OriginMode, etc.
-    // Moreover, additional fields could be available like `allowedActiveID`
-    BlockWorldFilter filter(filterIn);
     DEV_ASSERT(!filter.IsOnlyConsideringLatestUpdate(), "BlockWorld.FindConnectedObjectHelper.InvalidFlag");
 
-    for(auto & objectsByFamily : _connectedObjects) {
-      if(filter.ConsiderFamily(objectsByFamily.first)) {
-        for(auto & objectsByType : objectsByFamily.second) {
-          if(filter.ConsiderType(objectsByType.first)) {
-            for(auto & objectsByID : objectsByType.second)
-            {
-              ActiveObject* object_nonconst = objectsByID.second.get();
-              const ActiveObject* object = object_nonconst;
-
-              if(nullptr == object)
-              {
-                PRINT_NAMED_WARNING("BlockWorld.FindConnectedObjectHelper.NullObject",
-                                    "Family:%s Type:%s ID:%d is NULL",
-                                    EnumToString(objectsByFamily.first),
-                                    EnumToString(objectsByType.first),
-                                    objectsByID.first.GetValue());
-                continue;
-              }
-
-              const bool considerObject = filter.ConsiderObject(object);
-              if(considerObject)
-              {
-                matchingObject = object_nonconst;
-                if(nullptr != modifierFcn) {
-                  modifierFcn(matchingObject);
-                }
-                if(returnFirstFound) {
-                  return matchingObject;
-                }
-              }
-            }
-          }
+    for (auto& connectedObject : _connectedObjects) {
+      if(nullptr == connectedObject) {
+        LOG_ERROR("BlockWorld.FindConnectedObjectHelper.NullObject", "");
+        continue;
+      }
+      const bool objectMatches = filter.ConsiderType(connectedObject->GetType()) &&
+                                 filter.ConsiderObject(connectedObject.get());
+      if (objectMatches) {
+        matchingObject = connectedObject.get();
+        if(nullptr != modifierFcn) {
+          modifierFcn(matchingObject);
+        }
+        if(returnFirstFound) {
+          return matchingObject;
         }
       }
     }
@@ -423,16 +378,11 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ObservableObject* BlockWorld::GetLocatedObjectByIdHelper(const ObjectID& objectID, ObjectFamily family) const
+  ObservableObject* BlockWorld::GetLocatedObjectByIdHelper(const ObjectID& objectID) const
   {
     // Find the object with the given ID with any pose state, in the current world origin
     BlockWorldFilter filter;
     filter.AddAllowedID(objectID);
-
-    // Restrict family if specified
-    if ( ObjectFamily::Invalid != family ) {
-      filter.AddAllowedFamily(family);
-    }
 
     // Find and return match
     ObservableObject* match = FindLocatedObjectHelper(filter, nullptr, true);
@@ -440,19 +390,19 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ActiveObject* BlockWorld::GetConnectedActiveObjectByIdHelper(const ObjectID& objectID) const
+  Block* BlockWorld::GetConnectedBlockByIdHelper(const ObjectID& objectID) const
   {
     // Find the object with the given ID
     BlockWorldFilter filter;
     filter.AddAllowedID(objectID);
 
     // Find and return among ConnectedObjects
-    ActiveObject* object = FindConnectedObjectHelper(filter, nullptr, true);
+    Block* object = FindConnectedObjectHelper(filter, nullptr, true);
     return object;
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ActiveObject* BlockWorld::GetConnectedActiveObjectByActiveIdHelper(const ActiveID& activeID) const
+  Block* BlockWorld::GetConnectedBlockByActiveIdHelper(const ActiveID& activeID) const
   {
     // Find object that matches given activeID
     BlockWorldFilter filter;
@@ -461,7 +411,7 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
     });
 
     // Find and return among ConnectedObjects
-    ActiveObject* object = FindConnectedObjectHelper(filter, nullptr, true);
+    Block* object = FindConnectedObjectHelper(filter, nullptr, true);
     return object;
   }
 
@@ -556,56 +506,18 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
     return closestObject;
   }
 
-
-    void CheckForOverlapHelper(const ObservableObject* objectToMatch,
-                               ObservableObject* objectToCheck,
-                               std::vector<ObservableObject*>& overlappingObjects)
-    {
-
-      // TODO: smarter block pose comparison
-      //const float minDist = 5.f; // TODO: make parameter ... 0.5f*std::min(minDimSeen, objExist->GetMinDim());
-
-      //const float distToExist_mm = (objExist.second->GetPose().GetTranslation() -
-      //                              <robotThatSawMe???>->GetPose().GetTranslation()).length();
-
-      //const float distThresh_mm = distThresholdFraction * distToExist_mm;
-
-      //Pose3d P_diff;
-      if( objectToCheck->IsSameAs(*objectToMatch) ) {
-        overlappingObjects.push_back(objectToCheck);
-      } /*else {
-         fprintf(stdout, "Not merging: Tdiff = %.1fmm, Angle_diff=%.1fdeg\n",
-         P_diff.GetTranslation().length(), P_diff.GetRotationAngle().getDegrees());
-         objExist.second->IsSameAs(*objectSeen, distThresh_mm, angleThresh, P_diff);
-         }*/
-
-    } // CheckForOverlapHelper()
-
-
-    void BlockWorld::FindOverlappingObjects(const ObservableObject* objectSeen,
-                                            const ObjectsMapByType_t& objectsExisting,
-                                            std::vector<ObservableObject*>& overlappingExistingObjects) const
-    {
-      auto objectsExistingIter = objectsExisting.find(objectSeen->GetType());
-      if(objectsExistingIter != objectsExisting.end()) {
-        for(const auto& objectToCheck : objectsExistingIter->second) {
-          CheckForOverlapHelper(objectSeen, objectToCheck.second.get(), overlappingExistingObjects);
-        }
-      }
-
-    } // FindOverlappingObjects()
-
-
-    void BlockWorld::FindOverlappingObjects(const ObservableObject* objectExisting,
-                                            const std::vector<ObservableObject*>& objectsSeen,
-                                            std::vector<ObservableObject*>& overlappingSeenObjects) const
-    {
-      for(const auto& objectToCheck : objectsSeen) {
-        CheckForOverlapHelper(objectExisting, objectToCheck, overlappingSeenObjects);
-      }
-    }
-
-
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  BlockWorld::ObjectsContainer_t::const_iterator BlockWorld::FindInContainerWithID(const ObjectsContainer_t& container,
+                                                                                   const ObjectID& objectID)
+  {
+    return std::find_if(container.begin(),
+                        container.end(),
+                        [&objectID](const ObjectsContainer_t::value_type& existingObj){
+                          return (existingObj != nullptr) && (existingObj->GetID() == objectID);
+                        });
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result BlockWorld::BroadcastObjectObservation(const ObservableObject* observedObject) const
   {
     // Project the observed object into the robot's camera to get the bounding box
@@ -618,9 +530,9 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
     // Compute the orientation of the top marker
     Radians topMarkerOrientation(0);
     if(observedObject->IsActive()) {
-      if (observedObject->GetFamily() == ObjectFamily::LightCube)
+      if (IsValidLightCube(observedObject->GetType(), false))
       {
-        const ActiveCube* activeCube = dynamic_cast<const ActiveCube*>(observedObject);
+        const auto* activeCube = dynamic_cast<const Block*>(observedObject);
 
         if(activeCube == nullptr) {
           PRINT_NAMED_ERROR("BlockWorld.BroadcastObjectObservation.NullActiveCube",
@@ -636,7 +548,7 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
     using namespace ExternalInterface;
 
     RobotObservedObject observation(observedObject->GetLastObservedTime(),
-                                    observedObject->GetFamily(),
+                                    LegacyGetObjectFamily(observedObject),
                                     observedObject->GetType(),
                                     observedObject->GetID(),
                                     CladRect(boundingBox.GetX(),
@@ -671,7 +583,6 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
                           const bool isConnected = obj->GetActiveID() >= 0;
                           LocatedObjectState objectState(obj->GetID(),
                                                   obj->GetLastObservedTime(),
-                                                  obj->GetFamily(),
                                                   obj->GetType(),
                                                   obj->GetPose().ToPoseStruct3d(_robot->GetPoseOriginList()),
                                                   obj->GetPoseState(),
@@ -699,7 +610,6 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
     filter.SetFilterFcn([&objectStates](const ObservableObject* obj)
                         {
                           ConnectedObjectState objectState(obj->GetID(),
-                                                  obj->GetFamily(),
                                                   obj->GetType());
 
                           objectStates.objects.push_back(std::move(objectState));
@@ -730,70 +640,60 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
 
     const Pose3d& oldOrigin = _robot->GetPoseOriginList().GetOriginByID(oldOriginID);
 
-    for(auto & objectsByFamily : originIter->second)
-    {
-      for(auto & objectsByType : objectsByFamily.second)
+    auto& objectsInOldOrigin = originIter->second;
+
+    auto objectIt = FindInContainerWithID(objectsInOldOrigin, objectID);
+    
+    if (objectIt == objectsInOldOrigin.end()) {
+      LOG_INFO("BlockWorld.UpdateObjectOrigin.ObjectNotFound",
+               "Object %d not found in origin %s",
+               objectID.GetValue(), oldOrigin.GetName().c_str());
+      return RESULT_FAIL;
+    }
+    
+    const auto& object = *objectIt;
+    if (!object->GetPose().HasSameRootAs(oldOrigin)) {
+      const Pose3d& newOrigin = object->GetPose().FindRoot();
+      
+      LOG_INFO("BlockWorld.UpdateObjectOrigin.ObjectFound",
+               "Updating ObjectID %d from origin %s to %s",
+               objectID.GetValue(),
+               oldOrigin.GetName().c_str(),
+               newOrigin.GetName().c_str());
+      
+      const PoseOriginID_t newOriginID = newOrigin.GetID();
+      DEV_ASSERT_MSG(_robot->GetPoseOriginList().ContainsOriginID(newOriginID),
+                     "BlockWorld.UpdateObjectOrigin.ObjectOriginNotInOriginList",
+                     "Name:%s", object->GetPose().FindRoot().GetName().c_str());
+      
+      // Add to object's current origin (if it's there already, issue a warning and remove the duplicate first)
+      auto& objectsInNewOrigin = _locatedObjects[newOriginID];
+      auto existingIt = FindInContainerWithID(objectsInNewOrigin, object->GetID());
+      if (existingIt != objectsInNewOrigin.end()) {
+        LOG_WARNING("BlockWorld.UpdateObjectOrigin.ObjectAlreadyInNewOrigin",
+                    "Removing existing object. ObjectID %d, old origin %s, new origin %s",
+                    objectID.GetValue(),
+                    oldOrigin.GetName().c_str(),
+                    newOrigin.GetName().c_str());
+        objectsInNewOrigin.erase(existingIt);
+      }
+
+      _locatedObjects[newOriginID].push_back(object);
+      
+      // Notify pose confirmer
+      _robot->GetObjectPoseConfirmer().AddInExistingPose(object.get());
+      
+      // Delete from old origin
+      objectsInOldOrigin.erase(objectIt);
+      
+      // Clean up if we just deleted the last object from this origin
+      if(objectsInOldOrigin.empty())
       {
-        auto objectIter = objectsByType.second.find(objectID);
-        if(objectIter != objectsByType.second.end())
-        {
-          std::shared_ptr<ObservableObject> object = objectIter->second;
-          if(!object->GetPose().HasSameRootAs(oldOrigin))
-          {
-            const ObjectFamily family  = object->GetFamily();
-            const ObjectType   objType = object->GetType();
-
-            DEV_ASSERT(family == objectsByFamily.first, "BlockWorld.UpdateObjectOrigin.FamilyMismatch");
-            DEV_ASSERT(objType == objectsByType.first,  "BlockWorld.UpdateObjectOrigin.TypeMismatch");
-            DEV_ASSERT(objectID == object->GetID(),     "BlockWorld.UpdateObjectOrigin.IdMismatch");
-
-            const Pose3d& newOrigin = object->GetPose().FindRoot();
-
-            PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigin.ObjectFound",
-                          "Updating ObjectID %d from origin %s to %s",
-                          objectID.GetValue(),
-                          oldOrigin.GetName().c_str(),
-                          newOrigin.GetName().c_str());
-
-            const PoseOriginID_t newOriginID = newOrigin.GetID();
-            DEV_ASSERT_MSG(_robot->GetPoseOriginList().ContainsOriginID(newOriginID),
-                           "BlockWorld.UpdateObjectOrigin.ObjectOriginNotInOriginList",
-                           "Name:%s", object->GetPose().FindRoot().GetName().c_str());
-
-            // Add to object's current origin
-            _locatedObjects[newOriginID][family][objType][objectID] = object;
-
-            // Notify pose confirmer
-            _robot->GetObjectPoseConfirmer().AddInExistingPose(object.get());
-
-            // Delete from old origin
-            objectsByType.second.erase(objectIter);
-
-            // Clean up if we just deleted the last object from this type/family/origin
-            if(objectsByType.second.empty())
-            {
-              objectsByFamily.second.erase(objectsByType.first);
-              if(objectsByFamily.second.empty())
-              {
-                originIter->second.erase(objectsByFamily.first);
-                if(originIter->second.empty())
-                {
-                  _locatedObjects.erase(originIter);
-                }
-              }
-            }
-          }
-
-          return RESULT_OK;
-        }
+        _locatedObjects.erase(originIter);
       }
     }
-
-    PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigin.ObjectNotFound",
-                  "Object %d not found in origin %s",
-                  objectID.GetValue(), oldOrigin.GetName().c_str());
-
-    return RESULT_FAIL;
+    
+    return RESULT_OK;
   }
 
   Result BlockWorld::UpdateObjectOrigins(PoseOriginID_t oldOriginID, PoseOriginID_t newOriginID)
@@ -860,12 +760,11 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
       const Vec3f& T_old = oldObject->GetPose().GetTranslation();
       const Vec3f& T_new = newPose.GetTranslation();
 
-      // Look for a matching object in the new origin. Should have same family and type. If unique, should also have
+      // Look for a matching object in the new origin. Should have same type. If unique, should also have
       // same ID, or if not unique, the poses should match.
       BlockWorldFilter filterNew;
       filterNew.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
       filterNew.AddAllowedOrigin(newOriginID);
-      filterNew.AddAllowedFamily(oldObject->GetFamily());
       filterNew.AddAllowedType(oldObject->GetType());
 
       ObservableObject* newObject = nullptr;
@@ -916,32 +815,11 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
                       T_old.x(), T_old.y(), T_old.z(),
                       T_new.x(), T_new.y(), T_new.z());
 
-        // if the ID changes, re-add in the origin
-        const ObjectID& newIDInNewOrigin = oldObject->GetID();
-        const ObjectID prevIDInNewOrigin = newObject->GetID(); // make copy because we are going to change its value
-
         // we also want to keep the MOST recent objectID, rather than the one we used to have for this object, because
         // if clients are bookkeeping IDs, the know about the new one (for example, if an action is already going
         // to pick up that objectID, it should not change by virtue of rejiggering)
         // Note: despite the name, oldObject is the most recent instance of this match. Thanks, Andrew.
         newObject->CopyID( oldObject );
-
-        // update parent container to match the inherited ID to the key we use to store it
-        if ( newIDInNewOrigin != prevIDInNewOrigin )
-        {
-          const ObjectFamily inFamily = oldObject->GetFamily();
-          const ObjectType withType   = oldObject->GetType();
-          ObjectsMapByID_t& mapByID = _locatedObjects.at(newOriginID).at(inFamily).at(withType);
-          // copy smart pointer to increment reference
-          mapByID[newIDInNewOrigin] = mapByID.at(prevIDInNewOrigin);
-          mapByID.erase(prevIDInNewOrigin);
-          // log this crazyness
-          PRINT_CH_INFO("BlockWorld", "BlockWorld.UpdateObjectOrigins.MovedSharedPointerDueToIDChange",
-                        "Object with ID %d in new origin (%s) has inherited ID %d",
-                        prevIDInNewOrigin.GetValue(),
-                        newOrigin.GetName().c_str(),
-                        newIDInNewOrigin.GetValue());
-        }
       }
 
       // Use all of oldObject's time bookkeeping, then update the pose and pose state
@@ -974,7 +852,6 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
       // override their pose. For that reason, directly remove the origin rather than calling DeleteLocatedObjectsByOrigin
       // Note that we decide to not notify of objects that merge (passive matched by pose), because the old ID in the
       // old origin is not in the current one.
-      // DeleteLocatedObjectsByOrigin(oldOrigin);
       _locatedObjects.erase(oldOriginID);
     }
 
@@ -1124,9 +1001,8 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
       std::map<PoseOriginID_t, ObservableObject*> matchingObjects;
 
       // Match unique objects by type and nonunique objects by pose. Regardless,
-      // only look at objects in the same family with the same type.
+      // only look at objects with the same type.
       BlockWorldFilter filter;
-      filter.AddAllowedFamily(objSeen->GetFamily());
       filter.AddAllowedType(objSeen->GetType());
 
       if (objSeen->IsUnique())
@@ -1190,15 +1066,7 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
       else
       {
         // For non-unique objects, match based on pose (considering only objects in current frame)
-        // Ignore objects we're carrying
-        const ObjectID& carryingObjectID = _robot->GetCarryingComponent().GetCarryingObjectID();
-        filter.AddFilterFcn([&carryingObjectID](const ObservableObject* candidate) {
-          const bool isObjectBeingCarried = (candidate->GetID() == carryingObjectID);
-          return !isObjectBeingCarried;
-        });
-
-
-        // the observation has matched by pose, otherwise it would not be confirmed at this pose. We don't need
+        // The observation has already matched by pose, otherwise it would not be confirmed at this pose. We don't need
         // to match by pose here, we can just used the ID we found as part of the observation confirmation
         ObservableObject* matchingObject = GetLocatedObjectByID( objSeen->GetID() );
 
@@ -1277,25 +1145,6 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
       const ObjectID obsID = observedObject->GetID();
       DEV_ASSERT(obsID.IsSet(), "BlockWorld.AddAndUpdateObjects.IDNotSet");
 
-
-      // Safe to remove this? Haven't seen this warning being printed...
-      //
-      //      // Sanity check: this should not happen, but we're seeing situations where
-      //      // objects think they are being carried when the robot doesn't think it
-      //      // is carrying that object
-      //      // TODO: Eventually, we should be able to remove this check
-      //      ActionableObject* actionObject = dynamic_cast<ActionableObject*>(observedObject);
-      //      if(actionObject != nullptr) {
-      //        if(actionObject->IsBeingCarried() && _robot->GetCarryingObjectID() != obsID) {
-      //          PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObject.CarryStateMismatch",
-      //                              "Object %d thinks it is being carried, but does not match "
-      //                              "robot %d's carried object ID (%d). Setting as uncarried.",
-      //                              obsID.GetValue(), _robot->GetID(),
-      //                              _robot->GetCarryingObjectID().GetValue());
-      //          actionObject->SetBeingCarried(false);
-      //        }
-      //      }
-
       // Tell the world about the observed object. NOTE: it is guaranteed to be in the current frame.
       BroadcastObjectObservation(observedObject);
     } // for each object seen
@@ -1329,43 +1178,24 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
     // Create a list of unobserved object IDs (IDs since we can remove several of them while iterating)
     std::vector<ObjectID> unobservedObjectIDs;
 
-    for(auto & objectFamily : originIter->second)
-    {
-      for(auto & objectsByType : objectFamily.second)
+    for (const auto& object : originIter->second) {
+      if (nullptr == object) {
+        LOG_ERROR("BlockWorld.CheckForUnobservedObjects.NullObject", "");
+        continue;
+      }
+      
+      // Look for "unobserved" objects not seen atTimestamp -- but skip objects:
+      //    - that are currently being carried
+      //    - that we are currently docking to
+      const RobotTimeStamp_t lastVisuallyMatchedTime = _robot->GetObjectPoseConfirmer().GetLastVisuallyMatchedTime(object->GetID());
+      const bool isUnobserved = ( (lastVisuallyMatchedTime < atTimestamp) &&
+                                 (_robot->GetCarryingComponent().GetCarryingObjectID() != object->GetID()) &&
+                                 (_robot->GetDockingComponent().GetDockObject() != object->GetID()) );
+      if ( isUnobserved )
       {
-        ObjectsMapByID_t& objectIdMap = objectsByType.second;
-        auto objectIter = objectIdMap.begin();
-        while(objectIter != objectIdMap.end())
-        {
-          ObservableObject* object = objectIter->second.get();
-          if(nullptr == object)
-          {
-            PRINT_NAMED_WARNING("BlockWorld.CheckForUnobservedObjects.NullObject",
-                                "Family:%s Type:%s ID:%d is NULL. Deleting entry.",
-                                EnumToString(objectFamily.first),
-                                EnumToString(objectsByType.first),
-                                objectIter->first.GetValue());
-            objectIter = objectIdMap.erase(objectIter);
-            continue;
-          }
-
-          // Look for "unobserved" objects not seen atTimestamp -- but skip objects:
-          //    - that are currently being carried
-          //    - that we are currently docking to
-          const RobotTimeStamp_t lastVisuallyMatchedTime = _robot->GetObjectPoseConfirmer().GetLastVisuallyMatchedTime(object->GetID());
-          const bool isUnobserved = ( (lastVisuallyMatchedTime < atTimestamp) &&
-                                      (_robot->GetCarryingComponent().GetCarryingObjectID() != object->GetID()) &&
-                                      (_robot->GetDockingComponent().GetDockObject() != object->GetID()) );
-          if ( isUnobserved )
-          {
-            unobservedObjectIDs.push_back(object->GetID());
-          }
-
-          ++objectIter;
-
-        } // for object IDs of this type
-      } // for each object type
-    } // for each object family
+        unobservedObjectIDs.push_back(object->GetID());
+      }
+    }
 
     // TODO: Don't bother with this if the robot is docking? (picking/placing)??
     // Now that the occlusion maps are complete, check each unobserved object's
@@ -1463,63 +1293,6 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
 
   } // CheckForUnobservedObjects()
 
-  Result BlockWorld::AddMarkerlessObject(const Pose3d& p, ObjectType type)
-  {
-    RobotTimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
-
-    // Create an instance of the detected object
-    auto markerlessObject = std::make_shared<MarkerlessObject>(type);
-    markerlessObject->SetLastObservedTime((TimeStamp_t)lastTimestamp);
-
-    // Raise origin of object above ground.
-    // NOTE: Assuming detected obstacle is at ground level no matter what angle the head is at.
-    Pose3d raiseObject(0, Z_AXIS_3D(), Vec3f(0,0,0.5f*markerlessObject->GetSize().z()));
-    Pose3d obsPose = p * raiseObject;
-    obsPose.SetParent(_robot->GetPose().GetParent());
-
-    // Initialize with Known pose so it won't delete immediately because it isn't re-seen
-    markerlessObject->InitPose(obsPose, PoseState::Known);
-
-    // Check if this prox obstacle already exists
-    std::vector<ObservableObject*> existingObjects;
-    const auto originIter = _locatedObjects.find(_robot->GetPoseOriginList().GetCurrentOriginID());
-    if(originIter != _locatedObjects.end())
-    {
-      FindOverlappingObjects(markerlessObject.get(), originIter->second[ObjectFamily::MarkerlessObject], existingObjects);
-    }
-
-    // Update the last observed time of existing overlapping obstacles
-    for(auto obj : existingObjects) {
-      obj->SetLastObservedTime((TimeStamp_t)lastTimestamp);
-    }
-
-    // No need to add the obstacle again if it already exists
-    if (!existingObjects.empty()) {
-      return RESULT_OK;
-    }
-
-
-    // Check if the obstacle intersects with any other existing objects in the scene.
-    BlockWorldFilter filter;
-    if(_robot->GetLocalizedTo().IsSet()) {
-      filter.AddAllowedFamily(ObjectFamily::LightCube);
-      filter.AddAllowedFamily(ObjectFamily::MarkerlessObject);
-    }
-
-    FindLocatedIntersectingObjects(markerlessObject.get(), existingObjects, 0, filter);
-    if (!existingObjects.empty()) {
-      return RESULT_OK;
-    }
-
-    // set new ID before adding to the world, since this is a new object
-    DEV_ASSERT( !markerlessObject->GetID().IsSet(), "BlockWorld.AddMarkerlessObject.NewObjectHasID" );
-    markerlessObject->SetID();
-
-    AddLocatedObject(markerlessObject);
-    
-    return RESULT_OK;
-  }
-
   ObjectID BlockWorld::CreateFixedCustomObject(const Pose3d& p, const f32 xSize_mm, const f32 ySize_mm, const f32 zSize_mm)
   {
     // Create an instance of the custom obstacle
@@ -1547,58 +1320,55 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ObjectID BlockWorld::AddConnectedActiveObject(ActiveID activeID, FactoryID factoryID, ObjectType objType)
+  ObjectID BlockWorld::AddConnectedBlock(const ActiveID& activeID,
+                                                const FactoryID& factoryID,
+                                                const ObjectType& objType)
   {
     // only connected objects should be added through this method, so a required activeID is a must
-    DEV_ASSERT(activeID != ObservableObject::InvalidActiveID, "BlockWorld.AddConnectedActiveObject.CantAddInvalidActiveID");
+    DEV_ASSERT(activeID != ObservableObject::InvalidActiveID, "BlockWorld.AddConnectedBlock.CantAddInvalidActiveID");
 
-    // NOTE: If you hit any of the following VERIFY, please notify Raul and Al.
-    // rsam: Al and I have made assumptions about when this gets called. Checking here that the assumptions are correct,
-    // and if they are not, we need to re-evaluate this code, for example due to robot timing issues.
-
-    // Validate that ActiveID is not currently a connected object. We assume that if the robot is reporting
-    // an activeID, it should not be still used here (should have reported a disconnection)
-    const ActiveObject* conObjWithActiveID = GetConnectedActiveObjectByActiveID( activeID );
+    // Validate that ActiveID is not already referring to a connected object
+    const auto* conObjWithActiveID = GetConnectedBlockByActiveID( activeID );
     if ( nullptr != conObjWithActiveID)
     {
-      // Al/rsam: it is possible to receive multiple connection messages for the same cube. Verify here that factoryID
-      // and activeType match, and if they do, simply ignore the message, since we already have a valid instance
+      // Verify here that factoryID and objectType match, and if they do, simply ignore the message, since we already
+      // have a valid instance
       const bool isSameObject = (factoryID == conObjWithActiveID->GetFactoryID()) &&
                                 (objType == conObjWithActiveID->GetType());
       if ( isSameObject ) {
-        PRINT_CH_INFO("BlockWorld", "BlockWorld.AddConnectedActiveObject.FoundMatchingObjectAtSameSlot",
-                      "objectID %d, activeID %d, factoryID %s, type %s",
-                      conObjWithActiveID->GetID().GetValue(),
-                      conObjWithActiveID->GetActiveID(),
-                      conObjWithActiveID->GetFactoryID().c_str(),
-                      EnumToString(conObjWithActiveID->GetType()));
+        LOG_INFO("BlockWorld.AddConnectedBlock.FoundExistingObject",
+                 "objectID %d, activeID %d, factoryID %s, type %s",
+                 conObjWithActiveID->GetID().GetValue(),
+                 conObjWithActiveID->GetActiveID(),
+                 conObjWithActiveID->GetFactoryID().c_str(),
+                 EnumToString(conObjWithActiveID->GetType()));
         return conObjWithActiveID->GetID();
       }
 
       // if it's not the same, then what the hell, we are currently using that activeID for other object!
-      PRINT_NAMED_ERROR("BlockWorld.AddConnectedActiveObject.ConflictingActiveID",
-                        "ActiveID:%d found when we tried to add that activeID as connected object. Disconnecting previous.",
-                        activeID);
+      LOG_ERROR("BlockWorld.AddConnectedBlock.ConflictingActiveID",
+                "ActiveID:%d found when we tried to add that activeID as connected object. Removing previous.",
+                activeID);
 
       // clear the pointer and destroy it
       conObjWithActiveID = nullptr;
-      RemoveConnectedActiveObject(activeID);
+      RemoveConnectedBlock(activeID);
     }
 
-    // Validate that factoryId is not currently a connected object. We assume that if the robot is reporting
-    // a factoryID, the same object should not be in any current activeIDs.
+    // Validate that factoryId is not currently a connected object
     BlockWorldFilter filter;
     filter.SetFilterFcn([factoryID](const ObservableObject* object) {
       return object->GetFactoryID() == factoryID;
     });
-    const ActiveObject* const conObjectWithFactoryID = FindConnectedObjectHelper(filter, nullptr, true);
-    ANKI_VERIFY( nullptr == conObjectWithFactoryID, "BlockWorld.AddConnectedActiveObject.FactoryIDAlreadyUsed", "%s", factoryID.c_str() );
+    const auto* const conObjectWithFactoryID = FindConnectedObjectHelper(filter, nullptr, true);
+    ANKI_VERIFY( nullptr == conObjectWithFactoryID, "BlockWorld.AddConnectedBlock.FactoryIDAlreadyUsed", "%s", factoryID.c_str() );
 
     // This is the new object we are going to create. We can't insert it in _connectedObjects until
     // we know the objectID, so we create it first, and then we look for unconnected matches (we have seen the
     // object but we had not connected to it.) If we find one, we will inherit the objectID from that match; if
     // we don't find a match, we will assign it a new objectID. Then we can add to the container of _connectedObjects.
-    ActiveObject* newActiveObjectPtr = CreateActiveObjectByType(objType, activeID, factoryID);
+    std::shared_ptr<Block> newActiveObjectPtr;
+    newActiveObjectPtr.reset(new Block(objType, activeID, factoryID));
     if ( nullptr == newActiveObjectPtr ) {
       // failed to create the object (that function should print the error, exit here with unSet ID)
       return ObjectID();
@@ -1633,7 +1403,7 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
         {
           if ( matchObjectID.IsSet() ) {
             // check they all have the same objectID across frames
-            DEV_ASSERT( matchObjectID == sameTypeObject->GetID(), "BlockWorld.AddConnectedActiveObject.NotSAmeObjectID");
+            DEV_ASSERT( matchObjectID == sameTypeObject->GetID(), "BlockWorld.AddConnectedBlock.NotSameObjectID");
           } else {
             // set once
             matchObjectID = sameTypeObject->GetID();
@@ -1648,23 +1418,22 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
             // it doesn't have an activeID, we are connecting to it, set
             sameTypeObject->SetActiveID(activeID);
             sameTypeObject->SetFactoryID(factoryID);
-            PRINT_CH_INFO("BlockWorld", "BlockWorld.AddConnectedActiveObject.FoundMatchingObjectWithNoActiveID",
-                          "objectID %d, activeID %d, type %s",
-                          sameTypeObject->GetID().GetValue(), sameTypeObject->GetActiveID(), EnumToString(objType));
+            LOG_INFO("BlockWorld.AddConnectedBlock.FoundMatchingObjectWithNoActiveID",
+                     "objectID %d, activeID %d, type %s",
+                     sameTypeObject->GetID().GetValue(), sameTypeObject->GetActiveID(), EnumToString(objType));
           } else {
             // it has an activeID, we were connected. Is it the same object?
             if ( sameTypeObject->GetFactoryID() != factoryID )
             {
               // uhm, this is a different object (or factoryID was not set)
-              PRINT_CH_INFO("BlockWorld",
-                            "AddActiveObject.FoundOtherActiveObjectOfSameType",
-                            "ActiveID %d (factoryID %s) is same type as another existing object (objectID %d, activeID %d, factoryID %s, type %s) updating ids to match",
-                            activeID,
-                            factoryID.c_str(),
-                            sameTypeObject->GetID().GetValue(),
-                            sameTypeObject->GetActiveID(),
-                            sameTypeObject->GetFactoryID().c_str(),
-                            EnumToString(objType));
+              LOG_INFO("AddActiveObject.FoundOtherActiveObjectOfSameType",
+                       "ActiveID %d (factoryID %s) is same type as another existing object (objectID %d, activeID %d, factoryID %s, type %s) updating ids to match",
+                       activeID,
+                       factoryID.c_str(),
+                       sameTypeObject->GetID().GetValue(),
+                       sameTypeObject->GetActiveID(),
+                       sameTypeObject->GetFactoryID().c_str(),
+                       EnumToString(objType));
 
               // if we have a new factoryID, override the old instances with the new one we connected to
               if(!factoryID.empty())
@@ -1673,9 +1442,9 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
                 sameTypeObject->SetFactoryID(factoryID);
               }
             } else {
-              PRINT_CH_INFO("BlockWorld", "BlockWorld.AddConnectedActiveObject.FoundIdenticalObjectOnDifferentSlot",
-                            "Updating activeID of block with factoryID %s from %d to %d",
-                            sameTypeObject->GetFactoryID().c_str(), sameTypeObject->GetActiveID(), activeID);
+              LOG_INFO("BlockWorld.AddConnectedBlock.FoundIdenticalObjectOnDifferentSlot",
+                       "Updating activeID of block with factoryID %s from %d to %d",
+                       sameTypeObject->GetFactoryID().c_str(), sameTypeObject->GetActiveID(), activeID);
               // same object, somehow in different activeID now
               sameTypeObject->SetActiveID(activeID);
             }
@@ -1694,159 +1463,54 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
     else
     {
       // We can't find more than one object of the same type in a single origin. Otherwise something went really bad
-      DEV_ASSERT(matchingObjects.size() <= 1,"BlockWorld.AddConnectedActiveObject.TooManyMatchingObjects" );
+      DEV_ASSERT(matchingObjects.size() <= 1,"BlockWorld.AddConnectedBlock.TooManyMatchingObjects" );
 
-      // NOTE: If this error does not happen for some time, we should remove this `else` block to simplify code.
+      // NOTE: [MAM] This error has not happened for some time, so I removed a lot of logic from this else block.
+      // Find it again here if it is needed: https://github.com/anki/victor/blob/319a692ed2fc7cd85aa9009e415809cce827689a/engine/blockWorld/blockWorld.cpp#L1699
       // We should not find any objects in any origins that have this activeID. Otherwise that means they have
       // not disconnected properly. If there's a timing issue with connecting an object to an activeID before
       // disconnecting a previous object, we would like to know, so we can act accordingly. Add this error here
       // to detect that situation.
-      PRINT_NAMED_ERROR("BlockWorld.AddConnectedActiveObject.ConflictingActiveID",
-                        "Objects with ActiveID:%d were found when we tried to add that activeID as connected object.",
-                        activeID);
-
-      // In case there is a timing issue, see how we would fix it:
-      // 1) if the match has the same factoryID, we must not have cleaned it up on disconnection, inherit objectID
-      // 2) if the match has an invalid factoryID, we did not clean up activeID properly, bind again any origin
-      // 3) if the match has a different factoryID, we missed that object's disconnection, delete it and do not bind
-
-      ObservableObject* matchingObject = matchingObjects.front();
-
-      // A match was found but does it have the same factory ID?
-      if (matchingObject->GetFactoryID() == factoryID)
-      {
-        // somehow (error) we did not have an active connected object for it despite having activeID
-        PRINT_CH_INFO("BlockWorld", "BlockWorld.AddConnectedActiveObject.FoundMatchingActiveObject",
-                      "objectID %d, activeID %d, type %s, factoryID %s",
-                      matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), EnumToString(objType), matchingObject->GetFactoryID().c_str());
-
-        // inherit objectID in the activeObject we created
-        newActiveObjectPtr->CopyID(matchingObject);
-      }
-      else if (matchingObject->GetFactoryID().empty())
-      {
-        // somehow (error) it never connected before (it shouldn't have had activeID)
-        PRINT_NAMED_WARNING("BlockWorld.AddConnectedActiveObject.FoundMatchingActiveObjectThatWasNeverConnected",
-                         "objectID %d, activeID %d, type %s, factoryID %s",
-                         matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), EnumToString(objType), matchingObject->GetFactoryID().c_str());
-
-        // if now we have a factoryID, go fix all located instances of the new object setting their factoryID
-        if(!factoryID.empty())
-        {
-          // Need to check existing objects in other frames and update to match new object
-          std::vector<ObservableObject*> matchingObjectsInAllFrames;
-          BlockWorldFilter filterInAnyByID;
-          filterInAnyByID.AddFilterFcn([activeID](const ObservableObject* object) { return object->GetActiveID() == activeID;} );
-          filterInAnyByID.SetAllowedTypes({objType});
-          filterInAnyByID.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-          FindLocatedMatchingObjects(filterInAnyByID, matchingObjectsInAllFrames);
-
-          PRINT_CH_INFO("BlockWorld", "BlockWorld.AddConnectedActiveObject.UpdateExistingObjectsFactoryID",
-                           "Updating %zu existing objects in other frames to match object with factoryID %s and activeID %d",
-                           matchingObjectsInAllFrames.size(),
-                           factoryID.c_str(),
-                           activeID);
-
-          ObjectID idPrev;
-          if(!matchingObjectsInAllFrames.empty())
-          {
-            idPrev = matchingObjectsInAllFrames.front()->GetID();
-          }
-          for(ObservableObject* obj : matchingObjectsInAllFrames)
-          {
-            DEV_ASSERT(obj->GetID() == idPrev, "Matching objects in different frames don't have same ObjectId");
-            obj->SetFactoryID(factoryID);
-            obj->SetActiveID(activeID); // should not be necessary
-            idPrev = obj->GetID();
-          }
-        }
-
-        // we updated all located instances of the new connected object, so we can inherit the objectID
-        newActiveObjectPtr->CopyID(matchingObject);
-      }
-      else
-      {
-        // ActiveID matched, but FactoryID did not, delete the located instance of this object
-        PRINT_NAMED_ERROR("BlockWorld.AddConnectedActiveObject.MismatchedFactoryID",
-                          "objectID %d, activeID %d, type %s, factoryID %s (expected %s)",
-                          matchingObject->GetID().GetValue(), matchingObject->GetActiveID(), EnumToString(objType), factoryID.c_str(), matchingObject->GetFactoryID().c_str());
-
-        BlockWorldFilter filter;
-        filter.AddAllowedID(matchingObject->GetID());
-        DeleteLocatedObjects(filter);
-
-        // do not inherit the objectID we just removed
-        DEV_ASSERT( !newActiveObjectPtr->GetID().IsSet(), "BlockWorld.AddConnectedActiveObject.UnexpectedObjectID" );
-        newActiveObjectPtr->SetID();
-      }
+      LOG_ERROR("BlockWorld.AddConnectedBlock.ConflictingActiveID",
+                "Objects with ActiveID:%d were found when we tried to add that activeID as connected object.",
+                activeID);
     }
 
     // at this point the new active connected object has a valid objectID, we can finally add it to the world
-    DEV_ASSERT( newActiveObjectPtr->GetID().IsSet(), "BlockWorld.AddConnectedActiveObject.ObjectIDWasNeverSet" );
-    _connectedObjects[newActiveObjectPtr->GetFamily()][newActiveObjectPtr->GetType()][newActiveObjectPtr->GetID()].reset( newActiveObjectPtr );
+    DEV_ASSERT( newActiveObjectPtr->GetID().IsSet(), "BlockWorld.AddConnectedBlock.ObjectIDWasNeverSet" );
+    _connectedObjects.push_back(newActiveObjectPtr);
 
     // return the assigned objectID
     return newActiveObjectPtr->GetID();
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ObjectID BlockWorld::RemoveConnectedActiveObject(ActiveID activeID)
+  ObjectID BlockWorld::RemoveConnectedBlock(const ActiveID& activeID)
   {
     ObjectID removedObjectID;
-
-    // search in each family
-    ActiveObjectsMapByFamily_t::iterator familyIt = _connectedObjects.begin();
-    const ActiveObjectsMapByFamily_t::iterator familyEnd = _connectedObjects.end();
-    while( familyIt != familyEnd )
-    {
-      // search in each objectType
-      ActiveObjectsMapByType_t& objectTypeMap = familyIt->second;
-      ActiveObjectsMapByType_t::iterator objectTypeIt = objectTypeMap.begin();
-      const ActiveObjectsMapByType_t::iterator objectTypeEnd = objectTypeMap.end();
-      while( objectTypeIt != objectTypeEnd )
-      {
-        // search in every object (indexed byID)
-        ActiveObjectsMapByID_t& objectIDMap = objectTypeIt->second;
-        ActiveObjectsMapByID_t::iterator objectIt = objectIDMap.begin();
-        const ActiveObjectsMapByID_t::iterator objectEnd = objectIDMap.end();
-        while( objectIt != objectEnd )
-        {
-          // grab reference to the smartptr
-          std::shared_ptr<ActiveObject>& object = objectIt->second;
-          if( object->GetActiveID() == activeID )
-          {
-            // found the object, set objectID so we can flag located instances
-            removedObjectID = object->GetID();
-            // now reset the shared_ptr (via reference), and erase the entry (to prevent using nullptr later)
-            object.reset();
-            objectIt = objectIDMap.erase( objectIt );
-            break;
-          } else {
-            ++objectIt;
-          }
-        } // - objects
-
-        // if found, finish loop, otherwise go to next object type
-        if ( removedObjectID.IsSet() ) {
-          break;
-        } else {
-          ++objectTypeIt;
+    
+    for (auto it = _connectedObjects.begin() ; it != _connectedObjects.end() ; ) {
+      const auto& objPtr = *it;
+      if (objPtr == nullptr) {
+        LOG_ERROR("BlockWorld.RemoveConnectedBlock.NullEntryInConnectedObjects", "");
+        it = _connectedObjects.erase(it);
+      } else if (objPtr->GetActiveID() == activeID) {
+        if (removedObjectID.IsSet()) {
+          LOG_ERROR("BlockWorld.RemoveConnectedBlock.DuplicateEntry",
+                    "Duplicate entry found in _connectedObjects for object with activeID %d. "
+                    "Existing object ID %d, this object ID %d. Removing this entry as well",
+                    activeID, removedObjectID.GetValue(), objPtr->GetID().GetValue());
         }
-      } // - object types
-
-      // if found, finish loop, otherwise go to next family
-      if ( removedObjectID.IsSet() ) {
-        break;
+        removedObjectID = objPtr->GetID();
+        it = _connectedObjects.erase(it);
       } else {
-        ++familyIt;
+        ++it;
       }
-    } // - families
+    }
 
-    // We can't localize to the instances of this object anymore. We can do so by removing their activeID, which
-    // we need to do anyway. Flagging as Dirty would be optional, but see COZMO-9663
+    // Clear the activeID from any located instances of the removed object
     if ( removedObjectID.IsSet() )
     {
-      // COZMO-9663: Separate localizable property from poseState
       BlockWorldFilter matchingIDInAnyOrigin;
       matchingIDInAnyOrigin.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
       matchingIDInAnyOrigin.SetAllowedIDs({removedObjectID});
@@ -1883,7 +1547,7 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
                  "BlockWorld.AddLocatedObject.AlreadyHadFactoryID");
 
       // find by ObjectID. The objectID should match, since observations search for objectID even in connected
-      ActiveObject* connectedObj = GetConnectedActiveObjectByID(object->GetID());
+      auto* connectedObj = GetConnectedBlockByID(object->GetID());
       if ( nullptr != connectedObj ) {
         object->SetActiveID( connectedObj->GetActiveID() );
         object->SetFactoryID( connectedObj->GetFactoryID() );
@@ -1898,17 +1562,15 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
       return;
     }
 
-    // Check if the object intersects with any other existing prox objects in the scene, then delete them
-    BlockWorldFilter filter;
-    filter.AddAllowedType(ObjectType::ProxObstacle);
-    DeleteIntersectingObjects(object, 0, filter);
-
-
     // grab the current pointer and check it's empty (do not expect overwriting)
-    std::shared_ptr<ObservableObject>& objectLocation =
-      _locatedObjects[objectOriginID][object->GetFamily()][object->GetType()][object->GetID()];
-    DEV_ASSERT(objectLocation == nullptr, "BlockWorld.AddLocatedObject.ObjectIDInUseInOrigin");
-    objectLocation = object; // store the new object, this increments refcount
+    auto& objectsInThisOrigin = _locatedObjects[objectOriginID];
+    auto existingIt = FindInContainerWithID(objectsInThisOrigin, object->GetID());
+    if (existingIt != objectsInThisOrigin.end()) {
+      DEV_ASSERT(false, "BlockWorld.AddLocatedObject.ObjectIDInUseInOrigin");
+      objectsInThisOrigin.erase(existingIt);
+    }
+    
+    objectsInThisOrigin.push_back(object); // store the new object, this increments refcount
 
     // set the viz manager on this new object
     object->SetVizManager(_robot->GetContext()->GetVizManager());
@@ -1940,50 +1602,6 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
     }
   }
 
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::OnObjectPoseChanged(const ObservableObject& object, const Pose3d* oldPose, PoseState oldPoseState)
-  {
-    const ObjectID& objectID = object.GetID();
-    DEV_ASSERT(objectID.IsSet(), "BlockWorld.OnObjectPoseChanged.InvalidObjectID");
-
-    // - - - - -
-    // update the container that keeps track of changes per Update
-    // - - - - -
-    if ( _trackPoseChanges )
-    {
-      // find this object in the list of changes
-      auto matchIDlambda = [&objectID](const PoseChange& a) { return a._id == objectID; };
-      auto const matchIter = std::find_if(_objectPoseChangeList.begin(), _objectPoseChangeList.end(), matchIDlambda);
-      const bool alreadyChanged = (matchIter != _objectPoseChangeList.end());
-      if ( alreadyChanged ) {
-        // this can happen if an object on top of a stack changes its pose. The bottom one can upon updating the
-        // stack also try to change the top one, but that relative change will be ignored here because we
-        // already knew the top object moved (that's one example of multiple pose changes that are valid.)
-        PRINT_CH_INFO("BlockWorld", "BlockWorld.OnObjectPoseChanged.MultipleChanges",
-                      "Object '%d' is changing its pose again this tick. Ignoring second change",
-                      objectID.GetValue());
-        // do not update old pose, conserve the original pose it had when it changed the first time
-      }
-      else
-      {
-        // if the old pose was valid add to the list of the changes. Otherwise this is the first time that
-        // we see the object, so we don't need to update anything. Also oldPose will be nullptr in that case, useless.
-        if ( ObservableObject::IsValidPoseState(oldPoseState) )
-        {
-          DEV_ASSERT(nullptr!=oldPose, "BlockWorld.OnObjectPoseChanged.ValidPoseStateNullPose");
-          // add an entry at the end (this does not invalidate iterators or references to the current elements)
-          _objectPoseChangeList.emplace_back( objectID, *oldPose, oldPoseState );
-        }
-        else
-        {
-          PRINT_CH_INFO("BlockWorld", "BlockWorld.OnObjectPoseChanged.FirstPoseForObject",
-                        "Object '%d' is setting its first pose. Not queueing change.",
-                        objectID.GetValue());
-        }
-      }
-    }
-  }
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::OnRobotDelocalized(PoseOriginID_t newWorldOriginID)
   {
@@ -2001,65 +1619,41 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  Result BlockWorld::SanityCheckBookkeeping() const
+  void BlockWorld::SanityCheckBookkeeping() const
   {
     // Sanity check our containers to make sure each located object's properties
     // match the keys of the containers within which it is stored
     for(auto const& objectsByOrigin : _locatedObjects)
     {
-      for(auto const& objectsByFamily : objectsByOrigin.second)
-      {
-        for(auto const& objectsByType : objectsByFamily.second)
-        {
-          for(auto const& objectsByID : objectsByType.second)
-          {
-            auto const& object = objectsByID.second;
-
-            ANKI_VERIFY(objectsByID.first == object->GetID(),
-                        "BlockWorld.SanityCheckBookkeeping.MismatchedID",
-                        "%s Object has ID:%d but is keyed by ID:%d",
-                        EnumToString(object->GetType()),
-                        object->GetID().GetValue(), objectsByID.first.GetValue());
-
-            ANKI_VERIFY(objectsByType.first == object->GetType(),
-                        "BlockWorld.SanityCheckBookkeeping.MismatchedType",
-                        "Object %d has Type:%s but is keyed by Type:%s",
-                        object->GetID().GetValue(),
-                        EnumToString(object->GetType()), EnumToString(objectsByType.first));
-
-            ANKI_VERIFY(objectsByFamily.first == object->GetFamily(),
-                        "BlockWorld.SanityCheckBookkeeping.MismatchedFamily",
-                        "%s Object %d has Family:%s but is keyed by Family:%s",
-                        EnumToString(object->GetType()), object->GetID().GetValue(),
-                        EnumToString(object->GetFamily()), EnumToString(objectsByFamily.first));
-
-            const Pose3d& origin = object->GetPose().FindRoot();
-            const PoseOriginID_t originID = origin.GetID();
-            ANKI_VERIFY(PoseOriginList::UnknownOriginID != originID,
-                        "BlockWorld.SanityCheckBookkeeping.ObjectWithUnknownOriginID",
-                        "Origin: %s", origin.GetName().c_str());
-            ANKI_VERIFY(objectsByOrigin.first == originID,
-                        "BlockWorld.SanityCheckBookkeeping.MismatchedOrigin",
-                        "%s Object %d is in Origin:%d but is keyed by Origin:%d",
-                        EnumToString(object->GetType()), object->GetID().GetValue(),
-                        originID, objectsByOrigin.first);
-
-          }
+      const auto& objects = objectsByOrigin.second;
+      
+      ANKI_VERIFY(!objects.empty(),
+                  "BlockWorld.SanityCheckBookkeeping.NoObjectsInOrigin",
+                  "OriginId: %d", objectsByOrigin.first);
+      
+      for(auto const& object : objects) {
+        if (object == nullptr) {
+          ANKI_VERIFY(false, "BlockWorld.SanityCheckBookkeeping.NullObject", "");
+          continue;
         }
+        const Pose3d& origin = object->GetPose().FindRoot();
+        const PoseOriginID_t originID = origin.GetID();
+        ANKI_VERIFY(PoseOriginList::UnknownOriginID != originID,
+                    "BlockWorld.SanityCheckBookkeeping.ObjectWithUnknownOriginID",
+                    "Origin: %s", origin.GetName().c_str());
+        ANKI_VERIFY(objectsByOrigin.first == originID,
+                    "BlockWorld.SanityCheckBookkeeping.MismatchedOrigin",
+                    "%s Object %d is in Origin:%d but is keyed by Origin:%d",
+                    EnumToString(object->GetType()), object->GetID().GetValue(),
+                    originID, objectsByOrigin.first);
       }
     }
-
-    return RESULT_OK;
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   Result BlockWorld::UpdateObservedMarkers(const std::list<Vision::ObservedMarker>& currentObsMarkers)
   {
     ANKI_CPU_PROFILE("BlockWorld::UpdateObservedMarkers");
-
-    // clear the change list and start tracking them
-    _objectPoseChangeList.clear();
-    _trackPoseChanges = true;
 
     if(!currentObsMarkers.empty())
     {
@@ -2136,9 +1730,6 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
       }
     }
 
-    // do not track changes anymore, since we only use them to update stacks
-    _trackPoseChanges = false;
-
 #   define DISPLAY_ALL_OCCLUDERS 0
     if(DISPLAY_ALL_OCCLUDERS)
     {
@@ -2184,14 +1775,12 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
       ModifyLocatedObjects(markAsDirty, unobservedCollidingObjectFilter);
     }
 
-    Result lastResult = UpdateMarkerlessObjects(_robot->GetLastImageTimeStamp());
-
     if(ANKI_DEVELOPER_CODE)
     {
-      DEV_ASSERT(RESULT_OK == SanityCheckBookkeeping(), "BlockWorld.UpdateObservedMarkers.SanityCheckBookkeepingFailed");
+      SanityCheckBookkeeping();
     }
 
-    return lastResult;
+    return RESULT_OK;
 
   } // UpdateObservedMarkers()
 
@@ -2275,65 +1864,6 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
     return false;
   }
 
-  Result BlockWorld::UpdateMarkerlessObjects(RobotTimeStamp_t atTimestamp)
-  {
-    // Remove old obstacles or ones intersecting with robot (except cliffs)
-    BlockWorldFilter filter;
-    filter.AddAllowedFamily(ObjectFamily::MarkerlessObject);
-    filter.AddIgnoreType(ObjectType::CliffDetection);
-
-    const f32 robotBottom  = _robot->GetPose().GetTranslation().z();
-    const f32 robotTop     = robotBottom + ROBOT_BOUNDING_Z;
-    const Quad2f robotBBox = _robot->GetBoundingQuadXY(_robot->GetPose().GetWithRespectToRoot());
-
-    filter.AddFilterFcn([this, atTimestamp, robotBottom, robotTop, &robotBBox](const ObservableObject* object) -> bool
-                        {
-                          if(object->GetLastObservedTime() + kMarkerlessObjectExpirationTime_ms < atTimestamp)
-                          {
-                            // Object has expired
-                            PRINT_CH_DEBUG("BlockWorld", "BlockWorld.UpdateMarkerlessObjects.RemovingExpired",
-                                           "%s %d not seen since %d. Current time=%d",
-                                           EnumToString(object->GetType()), object->GetID().GetValue(),
-                                           object->GetLastObservedTime(), (TimeStamp_t)atTimestamp);
-                            return true;
-                          }
-
-                          if(object->GetLastObservedTime() >= atTimestamp)
-                          {
-                            // Don't remove by collision markerless objects that were _just_
-                            // created/observed
-                            return false;
-                          }
-
-                          Pose3d objectPoseWrtRobotOrigin;
-                          if(true == object->GetPose().GetWithRespectTo(_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin))
-                          {
-                            const f32  objectHeight = objectPoseWrtRobotOrigin.GetTranslation().z();
-                            const bool inSamePlane = (objectHeight >= robotBottom && objectHeight <= robotTop);
-
-                            if( inSamePlane )
-                            {
-                              const Quad2f objectBBox = object->GetBoundingQuadXY(objectPoseWrtRobotOrigin);
-
-                              if( robotBBox.Intersects(objectBBox) )
-                              {
-                                // Object intersects robot's position
-                                PRINT_CH_DEBUG("BlockWorld", "BlockWorld.UpdateMarkerlessObjects.RemovingIntersectWithRobot",
-                                               "%s %d",
-                                               EnumToString(object->GetType()), object->GetID().GetValue());
-                                return true;
-                              }
-                            }
-                          }
-
-                          return false;
-                        });
-
-    DeleteLocatedObjects(filter);
-
-    return RESULT_OK;
-  }
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::ClearLocatedObjectHelper(ObservableObject* object)
   {
@@ -2374,13 +1904,13 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
 
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::FindConnectedActiveMatchingObjects(const BlockWorldFilter& filter, std::vector<const ActiveObject*>& result) const
+  void BlockWorld::FindConnectedMatchingBlocks(const BlockWorldFilter& filter, std::vector<const Block*>& result) const
   {
     // slight abuse of the FindObjectHelper, I just use it for filtering, then I add everything that passes
     // the filter to the result vector
     ModifierFcn addToResult = [&result](ObservableObject* candidateObject) {
       // TODO this could be a checked_cast (dynamic in dev, static in shipping)
-      const ActiveObject* candidateActiveObject = dynamic_cast<ActiveObject*>(candidateObject);
+      const auto* candidateActiveObject = dynamic_cast<Block*>(candidateObject);
       result.push_back(candidateActiveObject);
     };
 
@@ -2389,12 +1919,12 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::FindConnectedActiveMatchingObjects(const BlockWorldFilter& filter, std::vector<ActiveObject*>& result)
+  void BlockWorld::FindConnectedMatchingBlocks(const BlockWorldFilter& filter, std::vector<Block*>& result)
   {
     // slight abuse of the FindObjectHelper, I just use it for filtering, then I add everything that passes
     // the filter to the result vector
     ModifierFcn addToResult = [&result](ObservableObject* candidateObject) {
-      ActiveObject* candidateActiveObject = dynamic_cast<ActiveObject*>(candidateObject);
+      auto* candidateActiveObject = dynamic_cast<Block*>(candidateObject);
       result.push_back(candidateActiveObject);
     };
 
@@ -2509,24 +2039,6 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::DeleteIntersectingObjects(const Quad2f& quad,
-                                           f32 padding_mm,
-                                           const BlockWorldFilter& filter)
-  {
-    DeleteLocatedObjects(GetIntersectingObjectsFilter(quad, padding_mm, filter));
-  }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::DeleteIntersectingObjects(const std::shared_ptr<ObservableObject>& object,
-                                             f32 padding_mm,
-                                             const BlockWorldFilter& filter)
-  {
-    Quad2f quadSeen = object->GetBoundingQuadXY(object->GetPose(), padding_mm);
-    DeleteLocatedObjects(GetIntersectingObjectsFilter(quadSeen, padding_mm, filter));
-  }
-
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::GetLocatedObjectBoundingBoxesXY(const f32 minHeight, const f32 maxHeight, const f32 padding,
                                                    std::vector<std::pair<Quad2f,ObjectID> >& rectangles,
                                                    const BlockWorldFilter& filterIn) const
@@ -2638,99 +2150,50 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
     while(originIter != _locatedObjects.end())
     {
       const PoseOriginID_t crntOriginID = originIter->first;
-      auto& familyContainer = originIter->second;
+      auto& objectContainer = originIter->second;
 
       if(filter.ConsiderOrigin(crntOriginID, _robot->GetPoseOriginList().GetCurrentOriginID()))
       {
-        auto familyIter = familyContainer.begin();
-        while(familyIter != familyContainer.end())
-        {
-          const ObjectFamily crntFamily = familyIter->first;
-          auto& typeContainer = familyIter->second;
-
-          if(filter.ConsiderFamily(crntFamily))
-          {
-            auto typeIter = typeContainer.begin();
-            while(typeIter != typeContainer.end())
+        for (auto objectIter = objectContainer.begin() ; objectIter != objectContainer.end() ; ) {
+          auto* object = objectIter->get();
+          if (object == nullptr) {
+            LOG_ERROR("BlockWorld.DeleteLocatedObjects.NullObject", "origin %d", crntOriginID);
+            objectIter = objectContainer.erase(objectIter);
+          } else if (filter.ConsiderType(object->GetType()) &&
+                     filter.ConsiderObject(object)) {
+            // clear objects in current origin (others should not be needed)
+            const bool isCurrentOrigin = (crntOriginID == _robot->GetPoseOriginList().GetCurrentOriginID());
+            if ( isCurrentOrigin )
             {
-              const ObjectType crntType = typeIter->first;
-              auto& idContainer = typeIter->second;
+              ClearLocatedObjectHelper(object);
 
-              if(filter.ConsiderType(crntType))
+              // Create a copy of the object so we can notify listeners
               {
-                auto idIter = idContainer.begin();
-                while(idIter != idContainer.end())
-                {
-                  const ObjectID crntID = idIter->first;
-
-                  ObservableObject* object = idIter->second.get();
-                  if(nullptr == object)
-                  {
-                    // This shouldn't happen, but warn if we encounter it (for debugging) and remove it from the container
-                    PRINT_NAMED_WARNING("BlockWorld.DeleteLocatedObjects.NullObject",
-                                        "Deleting null object in origin %d with Family:%s Type:%s ID:%d",
-                                        crntOriginID,
-                                        EnumToString(crntFamily),
-                                        EnumToString(crntType),
-                                        crntID.GetValue());
-
-                    idIter = idContainer.erase(idIter);
-                  }
-                  else if(filter.ConsiderObject(object))
-                  {
-                    // clear objects in current origin (others should not be needed)
-                    const bool isCurrentOrigin = (crntOriginID == _robot->GetPoseOriginList().GetCurrentOriginID());
-                    if ( isCurrentOrigin )
-                    {
-                      ClearLocatedObjectHelper(object);
-
-                      // Create a copy of the object so we can notify listeners
-                      {
-                        DEV_ASSERT(object->HasValidPose(), "BlockWorld.DeleteLocatedObjects.InvalidPoseState");
-                        ObservableObject* objCopy = object->CloneType();
-                        objCopy->CopyID(object);
-                        if (objCopy->IsActive()) {
-                          objCopy->SetActiveID(object->GetActiveID()); // manually having to copy all IDs is fishy design
-                          objCopy->SetFactoryID(object->GetFactoryID());
-                        }
-                        objectsToBroadcast.emplace_back( object->GetPose(), object->GetPoseState(), objCopy );
-                      }
-                    }
-
-                    idIter = idContainer.erase(idIter);
-                  }
-                  else
-                  {
-                    ++idIter;
-                  }
-                } // while(id)
-              } // if(ConsiderType)
-
-              if(idContainer.empty()) {
-                // All IDs removed from this type, erase it
-                typeIter = typeContainer.erase(typeIter);
-              } else {
-                ++typeIter;
+                DEV_ASSERT(object->HasValidPose(), "BlockWorld.DeleteLocatedObjects.InvalidPoseState");
+                ObservableObject* objCopy = object->CloneType();
+                objCopy->CopyID(object);
+                if (objCopy->IsActive()) {
+                  objCopy->SetActiveID(object->GetActiveID()); // manually having to copy all IDs is fishy design
+                  objCopy->SetFactoryID(object->GetFactoryID());
+                }
+                objectsToBroadcast.emplace_back( object->GetPose(), object->GetPoseState(), objCopy );
               }
-            } // while(type)
-          } // if(ConsiderFamily)
+            }
 
-          if(typeContainer.empty()) {
-            // All types removed from this family, erase it
-            familyIter = familyContainer.erase(familyIter);
+            objectIter = objectContainer.erase(objectIter);
           } else {
-            ++familyIter;
+            ++objectIter;
           }
-        } // while(family)
-      } // if(ConsiderOrigin)
-
-      if(familyContainer.empty()) {
-        // All families removed from this origin, erase it
+        }
+      }
+      
+      if(objectContainer.empty()) {
+        // All objects removed from this origin, erase it
         originIter = _locatedObjects.erase(originIter);
       } else {
         ++originIter;
       }
-    } // while(origin)
+    }
 
     // notify of the deleted objects
     for(auto& objectDeletedInfo : objectsToBroadcast)
@@ -2829,8 +2292,6 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
 
     // Iterate through all the objects
     BlockWorldFilter filter;
-    // Markerless objects are not Actionable, so ignore them for selection
-    filter.SetIgnoreFamilies({ObjectFamily::MarkerlessObject, ObjectFamily::CustomObject});
     std::vector<ObservableObject*> allObjects;
     FindLocatedMatchingObjects(filter, allObjects);
     for(auto const & obj : allObjects)
@@ -2879,7 +2340,7 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
           firstObject = obj->GetID();
           break;
         }
-      } // for each family
+      }
 
 
       if (firstObject == _selectedObjectID || !firstObject.IsSet()){
@@ -2954,7 +2415,7 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
       }
 
       if( webSender ) {
-        if( object->GetFamily() == ObjectFamily::LightCube ) {
+        if( IsValidLightCube(object->GetType(), false) ) {
           Json::Value cubeInfo;
           const auto& pose = object->GetPose();
           cubeInfo["x"] = pose.GetTranslation().x();
@@ -2992,7 +2453,6 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
                                                                       _robot->GetContext()->GetWebService()) ) {
       webSender->Data()["type"] = "RobotObservedObject";
       webSender->Data()["objectID"] = msg.objectID;
-      webSender->Data()["objectFamily"] = ObjectFamilyToString(msg.objectFamily);
       webSender->Data()["objectType"] = ObjectTypeToString(msg.objectType);
       webSender->Data()["isActive"] = msg.isActive;
       webSender->Data()["timestamp"] = msg.timestamp;
@@ -3000,5 +2460,22 @@ CONSOLE_VAR(u32, kMarkerlessObjectExpirationTime_ms, "BlockWorld", 30000);
 
   } // SendObjectUpdateToWebViz()
 
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  ObjectFamily BlockWorld::LegacyGetObjectFamily(const ObservableObject* const object) const
+  {
+    auto fam = ObjectFamily::Unknown;
+    const auto& type = object->GetType();
+    if (IsValidLightCube(type, false)) {
+      fam = ObjectFamily::LightCube;
+    } else if (IsBlockType(type, false)) {
+      fam = ObjectFamily::Block;
+    } else if (IsChargerType(type, false)) {
+      fam = ObjectFamily::Charger;
+    } else if (IsCustomType(type, false)) {
+      fam = ObjectFamily::CustomObject;
+    }
+    return fam;
+  }
+  
 } // namespace Vector
 } // namespace Anki

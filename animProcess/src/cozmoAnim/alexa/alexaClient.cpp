@@ -88,6 +88,7 @@ namespace {
   
 #if ANKI_DEV_CHEATS
   DevShutdownChecker AlexaClient::_shutdownChecker;
+  std::list<Anki::Util::IConsoleFunction> sConsoleFuncs;
 #endif
   
   
@@ -680,6 +681,21 @@ bool AlexaClient::Init( std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo
       return false;
     }
   }
+  
+  // create console func(s)
+  auto sendDirective = [&](ConsoleFunctionContextRef context ) {
+    const char* unparsedDirective = ConsoleArg_Get_String( context, "directive" );
+    if( _directiveSequencer ) {
+      // if whatever responds to the directive needs to parse an attachment, that will be undefined behavior.
+      // for other things like alerts, this should work. Set LogAlexaDirectives to true, note the
+      // full directive printed to logs, and then modify it as needed and re-send it here
+      const std::string attachmentContextId;
+      auto directive = avsCommon::avs::AVSDirective::create( unparsedDirective, attachmentManager, attachmentContextId );
+      _directiveSequencer->onDirective( std::move(directive.first) );
+    }
+  };
+  sConsoleFuncs.emplace_front( "SendAlexaDirective", std::move(sendDirective), "Alexa", "const char* directive" );
+  
 #endif
   
 #if ANKI_DEV_CHEATS

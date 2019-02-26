@@ -15,6 +15,8 @@
 
 #include "faceRecognizer_okao.h"
 
+#include "coretech/vision/engine/compressedImage.h"
+
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 #include "util/fileUtils/fileUtils.h"
@@ -31,8 +33,6 @@
 #include <fstream>
 
 #define LOG_CHANNEL "FaceRecognizer"
-
-#define DEBUG_ENROLLMENT_IMAGES 0 // Everything will need to be running synchronously!
 
 namespace Anki {
 namespace Vision {
@@ -90,6 +90,11 @@ namespace Vision {
   // For simulating slow processing (e.g. on a device)
   CONSOLE_VAR(u32, kFaceRecognitionSimulatedDelay_ms, "Vision.FaceRecognition", 0);
 
+  CONSOLE_VAR(s32, kEnrollmentThumbnailSize, "Vision.FaceRecognition", 64);
+
+  CONSOLE_VAR(bool, kGatherDebugEnrollmentImages, "Vision.FaceRecognition", false);
+  CONSOLE_VAR(bool, kDisplayDebugEnrollmentImages, "Vision.FaceRecognition", false);
+  
   namespace JsonKey
   {
     const char* FaceRecognitionGroup = "FaceRecognition";
@@ -146,23 +151,15 @@ namespace Vision {
     {
       const Json::Value& recognitionConfig = config[JsonKey::FaceRecognitionGroup];
 
-      if(DEBUG_ENROLLMENT_IMAGES)
-      {
-        // Have to run synchronously
-        _isRunningAsync = false;
-      }
-      else
-      {
-        // TODO: Make this a console var too? (Not sure about switching it _while_ running though.
-        std::string runModeStr;
-        if(JsonTools::GetValueOptional(recognitionConfig, JsonKey::RunMode, runModeStr)) {
-          if(runModeStr == JsonKey::Asynchronous) {
-            _isRunningAsync = true;
-          } else if(runModeStr == JsonKey::Synchronous) {
-            _isRunningAsync = false;
-          } else {
-            DEV_ASSERT(false, "FaceRecognizer.Constructor.BadRunMode");
-          }
+      // TODO: Make this a console var too? (Not sure about switching it _while_ running though.
+      std::string runModeStr;
+      if(JsonTools::GetValueOptional(recognitionConfig, JsonKey::RunMode, runModeStr)) {
+        if(runModeStr == JsonKey::Asynchronous) {
+          _isRunningAsync = true;
+        } else if(runModeStr == JsonKey::Synchronous) {
+          _isRunningAsync = false;
+        } else {
+          DEV_ASSERT(false, "FaceRecognizer.Constructor.BadRunMode");
         }
       }
     } else {
@@ -217,6 +214,16 @@ namespace Vision {
       LOG_ERROR("FaceRecognizer.Init.NullCommonHandle", "");
       return RESULT_FAIL;
     }
+    
+    UINT8 okaoVersionMajor=0, okaoVersionMinor = 0;
+    OkaoResult okaoResult = OKAO_FR_GetVersion(&okaoVersionMajor, &okaoVersionMinor);
+    if(okaoResult != OKAO_NORMAL) {
+      LOG_ERROR("FaceRecognizer.Init.VersionFail", "");
+      return RESULT_FAIL;
+    }
+    PRINT_NAMED_INFO("FaceRecognizer.Init.Version",
+                     "Initializing with Recognizer version %d.%d",
+                     okaoVersionMajor, okaoVersionMinor);
 
     _okaoCommonHandle = okaoCommonHandle;
 
@@ -577,7 +584,8 @@ namespace Vision {
     return !enrollIter->second.IsForThisSessionOnly();
   }
 
-  EnrolledFaceEntry FaceRecognizer::GetRecognitionData(INT32 forTrackingID, s32& enrollmentCountReached)
+  EnrolledFaceEntry FaceRecognizer::GetRecognitionData(INT32 forTrackingID, s32& enrollmentCountReached,
+                                                       DebugImageList<CompressedImage>& debugImages)
   {
     if(_shouldClearAllTrackingData)
     {
@@ -612,7 +620,7 @@ namespace Vision {
         // process so we can start accepting new requests to recognize
         FaceID_t recognizedID = UnknownFaceID;
         RecognitionScore score = 0;
-        Result result = RecognizeFace(recognizedID, score);
+        Result result = RecognizeFace(recognizedID, score, debugImages);
 
         if(RESULT_OK == result)
         {
@@ -627,9 +635,9 @@ namespace Vision {
           LOG_ERROR("FaceRecognizer.GetRecognitionData.RecognizeFaceFailed", "");
         }
 
-        if(DEBUG_ENROLLMENT_IMAGES)
+        if(kDisplayDebugEnrollmentImages)
         {
-          DisplayEnrollmentImages();
+          //DisplayEnrollmentImages(debugImages);
         }
 
         if(ANKI_DEVELOPER_CODE)
@@ -978,7 +986,7 @@ namespace Vision {
 
     _enrollmentData.emplace(faceID, std::move(enrollData));
 
-    if(DEBUG_ENROLLMENT_IMAGES) {
+    if(kGatherDebugEnrollmentImages) {
       SetEnrollmentImage(albumEntry, 0);
     }
 
@@ -1030,7 +1038,7 @@ namespace Vision {
       // Figure out which album entry we were in the process of adding/updating for the current enrollment ID
       // and erase it. We'll use the most recently seen one.
       auto albumEntryIter = albumEntries.begin();
-      AlbumEntryID_t mostRecentAlbumeEntryID = albumEntryIter->first;
+      AlbumEntryID_t mostRecentAlbumEntryID = albumEntryIter->first;
       EnrolledFaceEntry::Time mostRecentTime = albumEntryIter->second;
       ++albumEntryIter;
       while(albumEntryIter != albumEntries.end())
@@ -1038,12 +1046,13 @@ namespace Vision {
         if(albumEntryIter->second > mostRecentTime)
         {
           mostRecentTime = albumEntryIter->second;
-          mostRecentAlbumeEntryID = albumEntryIter->first;
+          mostRecentAlbumEntryID = albumEntryIter->first;
         }
+        ++albumEntryIter;
       }
       
-      enrollDataIter->second.RemoveAlbumEntry(mostRecentAlbumeEntryID);
-      _albumEntryToFaceID.erase(mostRecentAlbumeEntryID);
+      enrollDataIter->second.RemoveAlbumEntry(mostRecentAlbumEntryID);
+      _albumEntryToFaceID.erase(mostRecentAlbumEntryID);
       
       LOG_INFO("FaceRecognizer.CancelExistingEnrollment.RemoveAlbumEntry",
                "Removed AlbumEntry %d from Face %d, %zu entries remain",
@@ -1316,7 +1325,7 @@ namespace Vision {
       const bool isSessionOnly = (_enrollmentID != enrollData.GetFaceID());
       enrollData.AddOrUpdateAlbumEntry(albumEntry, updateTime, isSessionOnly);
 
-      if(DEBUG_ENROLLMENT_IMAGES && entryToReplace != EnrolledFaceEntry::UnknownAlbumEntryID) {
+      if(kGatherDebugEnrollmentImages && entryToReplace != EnrolledFaceEntry::UnknownAlbumEntryID) {
         // Update the enrollment image _after_ we update the lastUpdateTime so it shows
         // up in the display
         SetEnrollmentImage(albumEntry, entryToReplace);
@@ -1340,8 +1349,6 @@ namespace Vision {
 
   void FaceRecognizer::SetEnrollmentImage(AlbumEntryID_t albumEntry, s32 dataEntry)
   {
-    ImageRGB enrollmentImg(_img); // copy!
-
     POINT ptLeftTop, ptRightTop, ptLeftBottom, ptRightBottom;
     OkaoResult okaoResult = OKAO_CO_ConvertCenterToSquare(_detectionInfo.ptCenter,
                                                      _detectionInfo.nHeight,
@@ -1349,13 +1356,19 @@ namespace Vision {
                                                      &ptLeftBottom, &ptRightBottom);
     DEV_ASSERT(OKAO_NORMAL == okaoResult, "FaceRecognizer.SetEnrollmentImage.GetDetectionSquareFail");
 
-    const Rectangle<f32> detectionRect(ptLeftTop.x, ptLeftTop.y,
-                                       ptRightBottom.x-ptLeftTop.x,
-                                       ptRightBottom.y-ptLeftTop.y);
+    Rectangle<s32> detectionRect(ptLeftTop.x, ptLeftTop.y,
+                                 ptRightBottom.x-ptLeftTop.x,
+                                 ptRightBottom.y-ptLeftTop.y);
 
-    enrollmentImg.DrawRect(detectionRect, NamedColors::RED, 3);
-
-    _enrollmentImages[albumEntry][dataEntry] = enrollmentImg;
+    if (kDisplayDebugEnrollmentImages) {
+      // If we're going to display the images resize them to be thumbnails
+      _enrollmentImages[albumEntry][dataEntry].Allocate(kEnrollmentThumbnailSize, kEnrollmentThumbnailSize);
+    } else {
+      // If we're not displaying images don't resize them so we can use them for
+      // testing if we would like.
+      _enrollmentImages[albumEntry][dataEntry].Allocate(detectionRect.GetHeight(), detectionRect.GetWidth());
+    }
+    _img.GetROI(detectionRect).Resize(_enrollmentImages[albumEntry][dataEntry]);
   }
 
   // Helper to create the title for the dislay window. Either "UserN" or "UserN:<name>"
@@ -1370,7 +1383,7 @@ namespace Vision {
     return dispName;
   }
 
-  void FaceRecognizer::DisplayEnrollmentImages() const
+  void FaceRecognizer::DisplayEnrollmentImages(DebugImageList<CompressedImage>& debugImages) const
   {
     // Parameters for creating tiled display of enrollment images
     const s32 numDispRows = kMaxAlbumEntriesPerFace, numDispCols = kMaxEnrollDataPerAlbumEntry;
@@ -1385,9 +1398,9 @@ namespace Vision {
         dispCols.push_back(jCol);
       }
     }
-    const s32 dispResDownsample = 3;
-    const s32 dispWidth  = _img.GetNumCols() / dispResDownsample;
-    const s32 dispHeight = _img.GetNumRows() / dispResDownsample;
+    const s32 dispResDownsample = 1;
+    const s32 dispWidth  = kEnrollmentThumbnailSize / dispResDownsample;
+    const s32 dispHeight = kEnrollmentThumbnailSize / dispResDownsample;
 
     ImageRGB dispImg(dispHeight*numDispRows, dispWidth*numDispCols);
 
@@ -1474,10 +1487,52 @@ namespace Vision {
                          NamedColors::YELLOW, 4);
       }
 
-      dispImg.Display(GetDisplayName(enrollData.second).c_str());
+      //dispImg.Display(GetDisplayName(enrollData.second).c_str());
+      debugImages.emplace_back(GetDisplayName(enrollData.second).c_str(), CompressedImage(std::move(dispImg), 75));
     }
   }
 
+  void FaceRecognizer::DisplayMatchImages(const INT32 resultNum,
+                                          const std::vector<AlbumEntryID_t>& matchingAlbumEntries,
+                                          const std::vector<RecognitionScore>& scores,
+                                          DebugImageList<CompressedImage>& debugImages)
+  {
+    const s32 numRows = (resultNum < 5 ? 1 : 2);
+    const s32 numCols = (resultNum < 5 ? resultNum : (resultNum+1)/2);
+    ImageRGB matchImg(numRows*kEnrollmentThumbnailSize, numCols*kEnrollmentThumbnailSize);
+    s32 row=0, col=0;
+    for(s32 iResult=0; iResult < resultNum; ++iResult)
+    {
+      Rectangle<s32> roiRect(col*kEnrollmentThumbnailSize, row*kEnrollmentThumbnailSize,
+                             kEnrollmentThumbnailSize, kEnrollmentThumbnailSize);
+      
+      ImageRGB matchROI = matchImg.GetROI(roiRect);
+      auto iter = _enrollmentImages.find(matchingAlbumEntries[iResult]);
+      if(iter != _enrollmentImages.end())
+      {
+        matchROI.SetFromGray(iter->second.front());
+      }
+      else
+      {
+        matchROI.FillWith(PixelRGB(128,128,128));
+      }
+      
+      const FaceID_t faceID = _albumEntryToFaceID[matchingAlbumEntries[iResult]];
+      const std::string dispStr = std::to_string(faceID) + ":" + std::to_string(scores[iResult]);
+      matchROI.DrawText(Point2f{1, matchROI.GetNumRows()-1},
+                        dispStr, NamedColors::RED, 0.5);
+      ++col;
+      if(col >= numCols)
+      {
+        col=0;
+        ++row;
+      }
+    }
+    
+    debugImages.emplace_back("FaceRecognitionMatches",
+                             CompressedImage(std::move(matchImg), 80));
+  }
+  
   FaceRecognizer::EnrollmentData::iterator FaceRecognizer::RemoveUser(EnrollmentData::iterator userIter)
   {
     _trackingToFaceID.erase(userIter->second.GetTrackingID());
@@ -1497,13 +1552,13 @@ namespace Vision {
                     albumEntry, faceID, okaoResult);
       }
       
-      if(DEBUG_ENROLLMENT_IMAGES)
+      if(kGatherDebugEnrollmentImages)
       {
         _enrollmentImages.erase(albumEntry);
       }
     }
     
-    if(DEBUG_ENROLLMENT_IMAGES)
+    if(kDisplayDebugEnrollmentImages)
     {
       Vision::Image::CloseDisplayWindow(GetDisplayName(userIter->second).c_str());
     }
@@ -1578,7 +1633,8 @@ namespace Vision {
     });
   }
 
-  Result FaceRecognizer::RecognizeFace(FaceID_t& faceID, RecognitionScore& recognitionScore)
+  Result FaceRecognizer::RecognizeFace(FaceID_t& faceID, RecognitionScore& recognitionScore,
+                                       DebugImageList<CompressedImage>& debugImages)
   {
     // In case something goes wrong, make sure return values are sane
     faceID = UnknownFaceID;
@@ -1695,6 +1751,14 @@ namespace Vision {
     }
     
     UpdateBestGuessName(matchingAlbumEntries, scores, resultNum);
+    
+
+    //const f32   RelativeRecognitionThreshold = 1.5; // Score of top result must be this times the score of the second best result
+
+    if(kDisplayDebugEnrollmentImages && kFaceRecognitionExtraDebug)
+    {
+      DisplayMatchImages(resultNum, matchingAlbumEntries, scores, debugImages);
+    }
     
     const bool foundMatchAboveThreshold = (resultNum > 0) && (scores[0] > kFaceRecognitionThreshold);
     if(foundMatchAboveThreshold)
@@ -2373,7 +2437,7 @@ namespace Vision {
 
     if(iterToRename != _enrollmentData.end())
     {
-      if(DEBUG_ENROLLMENT_IMAGES)
+      if(kDisplayDebugEnrollmentImages)
       {
         // Close old display window before we rename, since it's matched by name
         Vision::Image::CloseDisplayWindow(GetDisplayName(iterToRename->second).c_str());
@@ -2987,6 +3051,528 @@ namespace Vision {
     }
   }
   
+  Result FaceRecognizer::ComputeFeaturesFromFace(const Image& img, const TrackedFace& face,
+                                                 HFEATURE featureHandle)
+  {
+    if(!face.HasEyes())
+    {
+      PRINT_NAMED_WARNING("FaceRecognizer.ComputeFeaturesFromFace.NoFeatures", "");
+      return RESULT_FAIL;
+    }
+    
+    INT32 nWidth  = img.GetNumCols();
+    INT32 nHeight = img.GetNumRows();
+    RAWIMAGE* dataPtr = const_cast<RAWIMAGE*>(img.GetDataPointer());
+    
+    POINT aptPoint[FR_PTPOINT_KIND_MAX];
+    INT32 anConfidence[FR_PTPOINT_KIND_MAX];
+   
+    {
+      const auto& leftEye = face.GetFeature(TrackedFace::FeatureName::LeftEye);
+      const auto& leftEyeConf = face.GetFeatureConfidence(TrackedFace::FeatureName::LeftEye);
+      aptPoint[FR_PTPOINT_LEFT_EYE_OUT].x = leftEye[0].x();
+      aptPoint[FR_PTPOINT_LEFT_EYE_OUT].y = leftEye[0].y();
+      anConfidence[FR_PTPOINT_LEFT_EYE_OUT] = leftEyeConf[0];
+      
+      aptPoint[FR_PTPOINT_LEFT_EYE].x = leftEye[1].x();
+      aptPoint[FR_PTPOINT_LEFT_EYE].y = leftEye[1].y();
+      anConfidence[FR_PTPOINT_LEFT_EYE] = leftEyeConf[1];
+      
+      aptPoint[FR_PTPOINT_LEFT_EYE_IN].x = leftEye[2].x();
+      aptPoint[FR_PTPOINT_LEFT_EYE_IN].y = leftEye[2].y();
+      anConfidence[FR_PTPOINT_LEFT_EYE_IN] = leftEyeConf[2];
+    }
+    
+    {
+      const auto& rightEye = face.GetFeature(TrackedFace::FeatureName::RightEye);
+      const auto& rightEyeConf = face.GetFeatureConfidence(TrackedFace::FeatureName::RightEye);
+      aptPoint[FR_PTPOINT_RIGHT_EYE_IN].x = rightEye[0].x();
+      aptPoint[FR_PTPOINT_RIGHT_EYE_IN].y = rightEye[0].y();
+      anConfidence[FR_PTPOINT_RIGHT_EYE_IN] = rightEyeConf[0];
+      
+      aptPoint[FR_PTPOINT_RIGHT_EYE].x = rightEye[1].x();
+      aptPoint[FR_PTPOINT_RIGHT_EYE].y = rightEye[1].y();
+      anConfidence[FR_PTPOINT_RIGHT_EYE] = rightEyeConf[1];
+      
+      aptPoint[FR_PTPOINT_RIGHT_EYE_OUT].x = rightEye[2].x();
+      aptPoint[FR_PTPOINT_RIGHT_EYE_OUT].y = rightEye[2].y();
+      anConfidence[FR_PTPOINT_RIGHT_EYE_OUT] = rightEyeConf[2];
+    }
+    
+    {
+      const auto& nose = face.GetFeature(TrackedFace::FeatureName::Nose);
+      const auto& noseConf = face.GetFeatureConfidence(TrackedFace::FeatureName::Nose);
+      aptPoint[FR_PTPOINT_NOSE_LEFT].x = nose[0].x();
+      aptPoint[FR_PTPOINT_NOSE_LEFT].y = nose[0].y();
+      anConfidence[FR_PTPOINT_NOSE_LEFT] = noseConf[0];
+      
+      aptPoint[PT_POINT_NOSE_RIGHT].x = nose[1].x();
+      aptPoint[PT_POINT_NOSE_RIGHT].y = nose[1].y();
+      anConfidence[PT_POINT_NOSE_RIGHT] = noseConf[1];
+    }
+    
+    {
+      const auto& mouth = face.GetFeature(TrackedFace::FeatureName::UpperLip);
+      const auto& mouthConf = face.GetFeatureConfidence(TrackedFace::FeatureName::UpperLip);
+      aptPoint[PT_POINT_MOUTH_LEFT].x = mouth[0].x();
+      aptPoint[PT_POINT_MOUTH_LEFT].y = mouth[0].y();
+      anConfidence[PT_POINT_MOUTH_LEFT] = mouthConf[0];
+      
+      aptPoint[PT_POINT_MOUTH_UP].x = mouth[1].x();
+      aptPoint[PT_POINT_MOUTH_UP].y = mouth[1].y();
+      anConfidence[PT_POINT_MOUTH_UP] = mouthConf[1];
+      
+      aptPoint[PT_POINT_MOUTH_RIGHT].x = mouth[2].x();
+      aptPoint[PT_POINT_MOUTH_RIGHT].y = mouth[2].y();
+      anConfidence[PT_POINT_MOUTH_RIGHT] = mouthConf[2];
+      
+      aptPoint[PT_POINT_MOUTH].x = mouth[3].x();
+      aptPoint[PT_POINT_MOUTH].y = mouth[3].y();
+      anConfidence[PT_POINT_MOUTH] = mouthConf[3];
+    }
+    
+    OkaoResult okaoResult = OKAO_FR_ExtractPoints_GRAY(featureHandle, dataPtr, nWidth, nHeight, GRAY_ORDER_Y0Y1Y2Y3, FR_PTPOINT_KIND_MAX, aptPoint, anConfidence);
+    if(OKAO_NORMAL != okaoResult)
+    {
+      LOG_ERROR("FaceRecognizer.ComputeFeaturesFromFace.ExtractPointsFailed",
+                        "Error Code: %d", okaoResult);
+      return RESULT_FAIL;
+    }
+    
+    return RESULT_OK;
+  }
+  
+#if ANKI_DEVELOPER_CODE
+  Result FaceRecognizer::DevAddFaceToAlbum(const Image& img, const TrackedFace& face, int albumEntry)
+  {
+    const Result result = ComputeFeaturesFromFace(img, face, _okaoRecognitionFeatureHandle);
+    if(RESULT_OK != result)
+    {
+      LOG_ERROR("FaceRecognizer.DevAddFaceToAlbum.ComputeFeaturesFailed", "");
+      return RESULT_FAIL;
+    }
+    
+    INT32 maxUserNum=0;
+    INT32 maxUserDataNum=0;
+    OkaoResult okaoResult = OKAO_FR_GetAlbumMaxNum(_okaoFaceAlbum, &maxUserNum, &maxUserDataNum);
+    if(OKAO_NORMAL != okaoResult)
+    {
+      LOG_ERROR("FaceRecognizer.DevAddFaceToAlbum.GetAlbumMaxFailed", "");
+      return RESULT_FAIL;
+    }
+    if(albumEntry >= maxUserNum)
+    {
+      LOG_ERROR("FaceRecognizer.DevAddFaceToAlbum.AlbumFull", "MaxUsers:%d AlbumEntry:%d",
+                maxUserNum, albumEntry);
+      return RESULT_FAIL;
+    }
+    
+    INT32 numUserData = 0;
+    okaoResult = OKAO_FR_GetRegisteredUsrDataNum(_okaoFaceAlbum, albumEntry, &numUserData);
+    if(OKAO_NORMAL != okaoResult)
+    {
+      LOG_ERROR("FaceRecognizer.DevAddFaceToAlbum.GetRegisteredUsrDataFailed", "");
+      return RESULT_FAIL;
+    }
+    if(numUserData >= maxUserDataNum)
+    {
+      LOG_ERROR("FaceRecognizer.DevAddFaceToAlbum.UserFull", "AlbumEntry:%d MaxData:%d UserData:%d",
+                albumEntry, maxUserDataNum, numUserData);
+      return RESULT_FAIL;
+    }
+    
+    okaoResult = OKAO_FR_RegisterData(_okaoFaceAlbum, _okaoRecognitionFeatureHandle,
+                                      albumEntry, numUserData);
+    if(OKAO_NORMAL != okaoResult)
+    {
+      LOG_ERROR("FaceRecognizer.DevAddFaceToAlbum.RegisterDataFailed",
+                "AlbumEntry:%d Data:%d Error Code: %d", albumEntry, numUserData, okaoResult);
+      return RESULT_FAIL;
+    }
+    
+    return RESULT_OK;
+  }
+  
+  Result FaceRecognizer::DevFindFaceInAlbum(const Image& img, const TrackedFace& face, int& albumEntry, float& score) const
+  {
+    std::vector<std::pair<int,float>> matches;
+    const Result result = DevFindFaceInAlbum(img, face, 1, matches);
+    if(RESULT_OK == result && !matches.empty())
+    {
+      const auto& firstMatch = matches.front();
+      albumEntry = firstMatch.first;
+      score = firstMatch.second;
+    }
+    
+    return result;
+  }
+  
+  Result FaceRecognizer::DevFindFaceInAlbum(const Image& img, const TrackedFace& face, const int maxMatches,
+                                            std::vector<std::pair<int, float>>& matches) const
+  {
+    const Result result = ComputeFeaturesFromFace(img, face, _okaoRecognitionFeatureHandle);
+    if(RESULT_OK != result)
+    {
+      LOG_ERROR("FaceRecognizer.FindFaceInAlbum.ComputeFeaturesFailed", "");
+      return RESULT_FAIL;
+    }
+    
+    std::vector<INT32> userIDs(maxMatches);
+    std::vector<INT32> rawScores(maxMatches);
+    INT32 resultNum=0;
+    OkaoResult okaoResult = OKAO_FR_Identify(_okaoRecognitionFeatureHandle, _okaoFaceAlbum, maxMatches,
+                                             userIDs.data(), rawScores.data(), &resultNum);
+    if(OKAO_NORMAL != okaoResult)
+    {
+      LOG_ERROR("FaceRecognizer.FindFaceInAlbum.ComputeFeaturesFailed", "");
+      return RESULT_FAIL;
+    }
+    
+    matches.clear();
+    matches.reserve(resultNum);
+    for(INT32 i=0; i<resultNum; ++i)
+    {
+      matches.emplace_back(userIDs[i], (float)rawScores[i] * 0.001f);
+    }
+    
+    return RESULT_OK;
+  }
+  
+  float FaceRecognizer::DevComputePairwiseMatchScore(int faceID1, int faceID2) const
+  {
+    OkaoResult okaoResult = OKAO_FR_GetFeatureFromAlbum(_okaoFaceAlbum, faceID1, 0, _okaoRecognitionFeatureHandle);
+    if(OKAO_NORMAL != okaoResult)
+    {
+      LOG_ERROR("FaceRecognizer.DevComputePairwiseMatchScore.GetFeatureFail",
+                "Error Code: %d", okaoResult);
+      return -1.f;
+    }
+    
+    INT32 scoreInt=0;
+    okaoResult = OKAO_FR_Verify(_okaoRecognitionFeatureHandle, _okaoFaceAlbum, faceID2, &scoreInt);
+    if(OKAO_NORMAL != okaoResult)
+    {
+      LOG_ERROR("FaceRecognizer.DevComputePairwiseMatchScore.VerifyFail",
+                "Error Code: %d", okaoResult);
+      return -1.f;
+    }
+    
+    return (float)scoreInt * 0.001f;
+  }
+  
+  float FaceRecognizer::DevComputePairwiseMatchScore(int faceID1, const Image& img2, const TrackedFace& face2) const
+  {
+    HFEATURE features2 = OKAO_FR_CreateFeatureHandle(_okaoCommonHandle);
+    if(NULL == features2) {
+      LOG_ERROR("FaceRecognizer.DevComputePairwiseMatchScore.FaceLibFeatureHandle1AllocFail", "");
+      return -1.f;
+    }
+    
+    INT32 score=0;
+    const Result result = ComputeFeaturesFromFace(img2, face2, features2);
+    if(result != RESULT_OK)
+    {
+      LOG_ERROR("FaceRecognizer.DevComputePairwiseMatchScore.ComputeFeaturesFailed", "");
+      return -1.f;
+    }
+    else
+    {
+      const OkaoResult okaoResult = OKAO_FR_Verify(features2, _okaoFaceAlbum, faceID1, &score);
+      if(OKAO_NORMAL != okaoResult)
+      {
+        LOG_ERROR("FaceRecognizer.DevComputePairwiseMatchScore.VerifyFailed",
+                  "Result=%d", okaoResult);
+        return -1.f;
+      }
+    }
+    
+    OKAO_FR_DeleteFeatureHandle(features2);
+    return (float)score * 0.001f;
+  }
+  
+  float FaceRecognizer::DevComputePairwiseMatchScore(const Image& img1, const TrackedFace& face1,
+                                                     const Image& img2, const TrackedFace& face2)
+  {
+    HFEATURE features1 = OKAO_FR_CreateFeatureHandle(_okaoCommonHandle);
+    if(NULL == features1) {
+      LOG_ERROR("FaceRecognizer.DevComputePairwiseMatchScore.FaceLibFeatureHandle1AllocFail", "");
+      return 0.f;
+    }
+    
+    HFEATURE features2 = OKAO_FR_CreateFeatureHandle(_okaoCommonHandle);
+    if(NULL == features2) {
+      LOG_ERROR("FaceRecognizer.DevComputePairwiseMatchScore.FaceLibFeatureHandle2AllocFail", "");
+      OKAO_FR_DeleteFeatureHandle(features1);
+      return 0.f;
+    }
+    
+    const Result result1 = ComputeFeaturesFromFace(img1, face1, features1);
+    const Result result2 = ComputeFeaturesFromFace(img2, face2, features2);
+    
+    INT32 score=0;
+    if(result1!=RESULT_OK || result2!=RESULT_OK)
+    {
+      LOG_ERROR("FaceRecognizer.DevComputePairwiseMatchScore.ComputeFeaturesFailed", "");
+    }
+    else
+    {
+      HALBUM album = OKAO_FR_CreateAlbumHandle(_okaoCommonHandle, 1, 1);
+      if(NULL != album)
+      {
+        OkaoResult okaoResult = OKAO_FR_RegisterData(album, features1, 0, 0);
+        if(OKAO_NORMAL != okaoResult)
+        {
+          LOG_ERROR("FaceRecognizer.DevComputePairwiseMatchScore.RegisterFailed",
+                    "Result=%d", okaoResult);
+        }
+        else
+        {
+          okaoResult = OKAO_FR_Verify(features2, album, 0, &score);
+          if(OKAO_NORMAL != okaoResult)
+          {
+            LOG_ERROR("FaceRecognizer.DevComputePairwiseMatchScore.VerifyFailed",
+                      "Result=%d", okaoResult);
+          }
+        }
+        OKAO_FR_ClearAlbum(album);
+      }
+    }
+    
+    OKAO_FR_DeleteFeatureHandle(features1);
+    OKAO_FR_DeleteFeatureHandle(features2);
+    
+    return (float)score * 0.001f;
+  }
+  
+#endif /* ANKI_DEVELOPER_CODE */
+
+#if ANKI_DEV_CHEATS
+  void FaceRecognizer::SaveAllRecognitionImages(const std::string& imagePathPrefix)
+  {
+    for (const auto& albumEntry: _enrollmentImages) {
+      const AlbumEntryID_t entryId = albumEntry.first;
+      for (const auto& enrollmentImage: albumEntry.second) {
+        const std::string fullFilename = imagePathPrefix + "_" + std::to_string(_albumEntryToFaceID[entryId])
+                                         + "_" + std::to_string(entryId) + "_" +
+                                         std::to_string(enrollmentImage.GetTimestamp()) + ".jpg";
+        const Result result = enrollmentImage.Save(fullFilename);
+        if (result != RESULT_OK) {
+          LOG_ERROR("FaceRecognizer.SaveAllRecognitionImages.FailedToSave",
+                    "Failed to save file:%s.", fullFilename.c_str());
+        }
+      }
+    }
+  }
+
+  void FaceRecognizer::DeleteAllRecognitionImages()
+  {
+    _enrollmentImages.clear();
+  }
+#endif // ANKI_DEV_CHEATS
+  
+  //
+  // This may prove useful later if we ever want to try to do more complicated / smarter
+  // merging of records based on cluster similarity / dissimilarity. I ran out of
+  // time and steam working on this, but rather than it getting totally lost in git
+  // history, I'm going to deliberately leave it here for now.
+  //
+  //  Result FaceRecognizer::SelectiveMergeHelper(EnrollmentData::iterator keepIter,
+  //                                              EnrollmentData::iterator mergeIter)
+  //  {
+  //    // - Create one big list of all the album entries from both mergeID and keepID
+  //    // - Compute pairwise comparison of all the entries
+  //    // - Start with everything in the "remove" set
+  //    // - First choose the two entries that are furthest apart and move to the "keep" set
+  //    // - Incrementally move entries from "remove" to "keep" according to which one
+  //    //    has the nearest neighbor in the current "keep" set that's furthest away (this
+  //    //    will be the one with the lowest maximum score)
+  //    // - The goal here is to get a diverse set of album entries
+  //
+  //    OkaoResult okaoResult = OKAO_NORMAL;
+  //
+  //    std::vector<AlbumEntryID_t> combinedEntries;
+  //
+  //    std::copy(keepIter->second.GetAlbumEntries().begin(),
+  //              keepIter->second.GetAlbumEntries().end(),
+  //              std::back_inserter(combinedEntries));
+  //
+  //    std::copy(mergeIter->second.GetAlbumEntries().begin(),
+  //              mergeIter->second.GetAlbumEntries().end(),
+  //              std::back_inserter(combinedEntries));
+  //
+  //    const size_t numKeepEntries  = keepIter->second.GetAlbumEntries().size();
+  //    const size_t numMergeEntries = mergeIter->second.GetAlbumEntries().size();
+  //
+  //    // Start with everything in the "remove" set. We will shift things from this
+  //    // set to the "keep" set below.
+  //    std::set<s32> indicesToRemove;
+  //    for(s32 index=0; index<numKeepEntries+numMergeEntries; ++index)
+  //    {
+  //      indicesToRemove.insert(index);
+  //    }
+  //
+  //    const s32 matrixSize = Util::numeric_cast<s32>(combinedEntries.size());
+  //    Matrix<f32> pairwiseScores(matrixSize, matrixSize);
+  //    pairwiseScores.FillWith(0);
+  //
+  //    // Pre-store row pointers for the matrix:
+  //    std::vector<f32*> pairwiseScoresRow(pairwiseScores.GetNumRows());
+  //    for(s32 i=0; i<pairwiseScores.GetNumRows(); ++i)
+  //    {
+  //      pairwiseScoresRow[i] = pairwiseScores.GetRow(i);
+  //    }
+  //
+  //    for(s32 iComp=0; iComp < combinedEntries.size(); ++iComp)
+  //    {
+  //      // Since Okao does not offer a way to do albumEntry to albumEntry (i.e. "userID" to "userID")
+  //      // comparisons (??), I'm using the maximum score of any one of entry_i's features
+  //      // to entry_j as a proxy. So I have to loop over each data entry in albumEntry i
+  //      // and compare it to albumEntry j using the "Verify" function to get a score.
+  //      for(s32 iData=0; iData < kMaxEnrollDataPerAlbumEntry; ++iData)
+  //      {
+  //        BOOL isRegistered = false;
+  //        okaoResult = OKAO_FR_IsRegistered(_okaoFaceAlbum, combinedEntries[iComp], iData, &isRegistered);
+  //        if(OKAO_NORMAL != okaoResult) {
+  //          LOG_ERROR("FaceRecognizer.SelectiveMergeHelper.IsRegisteredCheckFailed",
+  //                            "FaceLib result=%d", okaoResult);
+  //          return RESULT_FAIL;
+  //        }
+  //
+  //        if(!isRegistered) {
+  //          continue;
+  //        }
+  //
+  //        okaoResult = OKAO_FR_GetFeatureFromAlbum(_okaoFaceAlbum, combinedEntries[iComp], iData, _okaoRecogMergeFeatureHandle);
+  //        if(OKAO_NORMAL != okaoResult) {
+  //          LOG_ERROR("FaceRecognizer.SelectiveMergeHelper.GetFeatureFromMergeAlbumFailed",
+  //                            "AlbumEntry:%d Data:%d FaceLib result=%d", combinedEntries[iComp], iData, okaoResult);
+  //          return RESULT_FAIL;
+  //        }
+  //
+  //        // Make sure we never choose diagonal entry
+  //        pairwiseScoresRow[iComp][iComp] = std::numeric_limits<f32>::max();
+  //
+  //        // Note we start jComp at iComp+1 because (a) comparisons are symmetric so we can
+  //        // update two entries at once, and (b) there's no reason to compare an entry to itself
+  //        for(s32 jComp=iComp+1; jComp<combinedEntries.size(); ++jComp)
+  //        {
+  //          RecognitionScore currentScore = 0;
+  //          okaoResult = OKAO_FR_Verify(_okaoRecogMergeFeatureHandle, _okaoFaceAlbum,
+  //                                      combinedEntries[jComp], &currentScore);
+  //          if(OKAO_NORMAL != okaoResult) {
+  //            LOG_ERROR("FaceRecognizer.SelectiveMergeHelper.VerifyFailed",
+  //                              "Comparing AlbumEntry %d and %d. FaceLib result=%d",
+  //                              combinedEntries[iComp], combinedEntries[jComp], okaoResult);
+  //            return RESULT_FAIL;
+  //          }
+  //
+  //          // Store highest score over all the data entries, as discussed above
+  //          if(currentScore > pairwiseScoresRow[iComp][jComp])
+  //          {
+  //            pairwiseScoresRow[iComp][jComp] = currentScore;
+  //            pairwiseScoresRow[jComp][iComp] = currentScore;
+  //          }
+  //        }
+  //      }
+  //    }
+  //
+  //    // Find the minimum scoring entry in the matrix and keep both corresponding AlbumEntries
+  //    double minScore=0;
+  //    cv::Point minLoc;
+  //    cv::minMaxLoc(pairwiseScores.get_CvMat_(), &minScore, nullptr, &minLoc, nullptr);
+  //
+  //    s32 firstToKeep  = minLoc.x;
+  //    s32 secondToKeep = minLoc.y;
+  //    std::set<s32> indicesToKeep;
+  //    indicesToKeep.insert(firstToKeep);
+  //    indicesToKeep.insert(secondToKeep);
+  //    indicesToRemove.erase(firstToKeep);
+  //    indicesToRemove.erase(secondToKeep);
+  //    PRINT_CH_INFO("FaceRecognizerDebug", "SelectiveMergeHelper.FirstTwoEntriesToKeep",
+  //                  "Keeping indices %d and %d (albumEntries %d and %d, from FaceIDs %d and %d) "
+  //                  "with pairwise score %d",
+  //                  firstToKeep, secondToKeep,
+  //                  combinedEntries[firstToKeep], combinedEntries[secondToKeep],
+  //                  _albumEntryToFaceID.at(combinedEntries[firstToKeep]),
+  //                  _albumEntryToFaceID.at(combinedEntries[secondToKeep]),
+  //                  static_cast<RecognitionScore>(minScore));
+  //
+  //    // Now repeatedly find the entry not yet selected to keep (i.e. still in the "remove"
+  //    // set) that has the lowest max score to whatever is currently in the set of keepers.
+  //    // This will be the entry who is furthest away from its closest neighbor in the keeper set.
+  //    while(indicesToKeep.size() < kMaxAlbumEntriesPerFace && !indicesToRemove.empty())
+  //    {
+  //      RecognitionScore minMaxScore = std::numeric_limits<RecognitionScore>::max();
+  //      s32 nextToAdd = -1;
+  //      for(s32 iComp : indicesToRemove)
+  //      {
+  //        RecognitionScore maxScore = 0;
+  //        for(s32 jComp : indicesToKeep)
+  //        {
+  //          RecognitionScore currentScore = pairwiseScoresRow[iComp][jComp];
+  //          if(currentScore > maxScore)
+  //          {
+  //            maxScore = currentScore;
+  //          }
+  //        }
+  //
+  //        if(maxScore < minMaxScore)
+  //        {
+  //          minMaxScore = maxScore;
+  //          nextToAdd = iComp;
+  //        }
+  //      }
+  //
+  //      // Switch entry from "remove" to "keep"
+  //      indicesToKeep.insert(nextToAdd);
+  //      indicesToRemove.erase(nextToAdd);
+  //
+  //      PRINT_CH_INFO("FaceRecognizerDebug", "SelectiveMergeHelper.KeepingAlbumEntry",
+  //                    "Index:%d AlbumEntry:%d from FaceID:%d with minimum maxScore:%d",
+  //                    nextToAdd, combinedEntries.at(nextToAdd),
+  //                    _albumEntryToFaceID.at(combinedEntries.at(nextToAdd)), minMaxScore);
+  //    }
+  //
+  //    // Update those to keep
+  //    for(auto index : indicesToKeep)
+  //    {
+  //      const AlbumEntryID_t albumEntry = combinedEntries.at(index);
+  //      EnrolledFaceEntry::Time origTime = keepIter->second.GetAlbumEntries().at(albumEntry);
+  //      keepIter->second.AddOrUpdateAlbumEntry( albumEntry, origTime ); // NOTE: Does nothing if already an entry
+  //      _albumEntryToFaceID[albumEntry] = keepIter->first;
+  //    }
+  //
+  //    // Update those to remove
+  //    for(auto index : indicesToRemove)
+  //    {
+  //      const AlbumEntryID_t albumEntry = combinedEntries.at(index);
+  //      keepIter->second.RemoveAlbumEntry( albumEntry );
+  //
+  //      PRINT_CH_INFO("FaceRecognizerDebug", "SelectiveMergeHelper.RemovingAlbumEntry",
+  //                    "Index:%d AlbumEntry:%d from FaceID:%d",
+  //                    index, albumEntry, _albumEntryToFaceID.at(albumEntry));
+  //
+  //      _albumEntryToFaceID.erase(albumEntry);
+  //
+  //      okaoResult = OKAO_FR_ClearUser(_okaoFaceAlbum, albumEntry);
+  //      if(OKAO_NORMAL != okaoResult) {
+  //        LOG_ERROR("FaceRecognizer.SelectiveMergeHelper.ClearFailed",
+  //                          "Clearing AlbumEntry:%d. FaceLib result=%d",
+  //                          albumEntry, okaoResult);
+  //        return RESULT_FAIL;
+  //      }
+  //    }
+  //
+  //    ASSERT_NAMED_EVENT(keepIter->second.GetAlbumEntries().size() == kMaxAlbumEntriesPerFace,
+  //                       "FaceRecognizer.SelectiveMergeHelper.UnexpectedNumAlbumEntries",
+  //                       "NumAlbumEntries=%zu not %d",
+  //                       keepIter->second.GetAlbumEntries().size(),
+  //                       kMaxAlbumEntriesPerFace);
+  //
+  //    return RESULT_OK;
+  //
+  //  } // SelectiveMergeHelper()
+
 } // namespace Vision
 } // namespace Anki
 

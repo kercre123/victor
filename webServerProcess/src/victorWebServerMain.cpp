@@ -11,7 +11,6 @@
 */
 #include "webService.h"
 
-#include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -22,10 +21,8 @@
 
 #include "platform/victorCrashReports/victorCrashReporter.h"
 
-#include <stdio.h>
-#include <chrono>
-#include <fstream>
 #include <thread>
+#include <condition_variable>
 #include <csignal>
 
 using namespace Anki;
@@ -34,19 +31,20 @@ using namespace Anki::Vector;
 #define LOG_PROCNAME "vic-webserver"
 #define LOG_CHANNEL "VictorWebServer"
 
-namespace {
-  bool gShutdown = false;
+namespace
+{
+  volatile bool _running = true;
 }
 
 static void Shutdown(int signum)
 {
   LOG_INFO("VictorWebServer.Shutdown", "Shutdown on signal %d", signum);
-  gShutdown = true;
+  _running = false;
 }
 
 Anki::Util::Data::DataPlatform* createPlatform(const std::string& persistentPath,
-                                         const std::string& cachePath,
-                                         const std::string& resourcesPath)
+                                               const std::string& cachePath,
+                                               const std::string& resourcesPath)
 {
   Anki::Util::FileUtils::CreateDirectory(persistentPath);
   Anki::Util::FileUtils::CreateDirectory(cachePath);
@@ -73,7 +71,7 @@ Anki::Util::Data::DataPlatform* createPlatform()
     }
 
     std::string jsonContents = Anki::Util::FileUtils::ReadFile(config_file);
-    //printf("jsonContents: %s\n", jsonContents.c_str());
+    //printf("jsonContents: %s", jsonContents.c_str());
     Json::Reader reader;
     if (!reader.parse(jsonContents, config)) {
       PRINT_STREAM_ERROR("victorWebServerMain.createPlatform.JsonConfigParseError",
@@ -88,19 +86,19 @@ Anki::Util::Data::DataPlatform* createPlatform()
   if (config.isMember("DataPlatformPersistentPath")) {
     persistentPath = config["DataPlatformPersistentPath"].asCString();
   } else {
-    PRINT_NAMED_ERROR("VictorWebServerictorWebServerMain.createPlatform.DataPlatformPersistentPathUndefined", "");
+    LOG_ERROR("victorWebServerMain.createPlatform.DataPlatformPersistentPathUndefined", "");
   }
 
   if (config.isMember("DataPlatformCachePath")) {
     cachePath = config["DataPlatformCachePath"].asCString();
   } else {
-    PRINT_NAMED_ERROR("victorWebServerMain.createPlatform.DataPlatformCachePathUndefined", "");
+    LOG_ERROR("victorWebServerMain.createPlatform.DataPlatformCachePathUndefined", "");
   }
 
   if (config.isMember("DataPlatformResourcesPath")) {
     resourcesPath = config["DataPlatformResourcesPath"].asCString();
   } else {
-    PRINT_NAMED_ERROR("victorWebServerMain.createPlatform.DataPlatformResourcesPathUndefined", "");
+    LOG_ERROR("victorWebServerMain.createPlatform.DataPlatformResourcesPathUndefined", "");
   }
 
   Util::Data::DataPlatform* dataPlatform =
@@ -138,58 +136,16 @@ int main(void)
   auto victorWebServer = std::make_unique<WebService::WebService>();
   victorWebServer->Start(dataPlatform, wsConfig);
 
-  using namespace std::chrono;
-  using TimeClock = steady_clock;
-
-  const auto runStart = TimeClock::now();
-
-  // Set the target time for the end of the first frame
-  auto targetEndFrameTime = runStart + (microseconds)(WEB_SERVER_TIME_STEP_US);
-
-  while (!gShutdown)
-  {
-    victorWebServer->Update();
-
-    const auto tickNow = TimeClock::now();
-    const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickNow);
-
-    // Complain if we're going overtime
-    if (remaining_us < microseconds(-WEB_SERVER_OVERTIME_WARNING_THRESH_US))
-    {
-      PRINT_NAMED_WARNING("victorWebServer.overtime", "Update() (%dms max) is behind by %.3fms",
-                          WEB_SERVER_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
-    }
-
-    // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
-    // allows other threads to run
-    static const auto minimumSleepTime_us = microseconds((long)0);
-    std::this_thread::sleep_for(std::max(minimumSleepTime_us, remaining_us));
-
-    // Set the target end time for the next frame
-    targetEndFrameTime += (microseconds)(WEB_SERVER_TIME_STEP_US);
-
-    // See if we've fallen very far behind (this happens e.g. after a 5-second blocking
-    // load operation); if so, compensate by catching the target frame end time up somewhat.
-    // This is so that we don't spend the next SEVERAL frames catching up.
-    const auto timeBehind_us = -remaining_us;
-    static const auto kusPerFrame = ((microseconds)(WEB_SERVER_TIME_STEP_US)).count();
-    static const int kTooFarBehindFramesThreshold = 2;
-    static const auto kTooFarBehindThreshold = (microseconds)(kTooFarBehindFramesThreshold * kusPerFrame);
-    if (timeBehind_us >= kTooFarBehindThreshold)
-    {
-      const int framesBehind = (int)(timeBehind_us.count() / kusPerFrame);
-      const auto forwardJumpDuration = kusPerFrame * framesBehind;
-      targetEndFrameTime += (microseconds)forwardJumpDuration;
-      PRINT_NAMED_WARNING("victorWebServer.catchup",
-                          "Update was too far behind so moving target end frame time forward by an additional %.3fms",
-                          (float)(forwardJumpDuration * 0.001f));
-    }
+  // Wait for shutdown signal
+  while (_running) {
+    sigset_t mask;
+    sigprocmask(SIG_BLOCK, nullptr, &mask);
+    sigsuspend(&mask);
   }
 
-  LOG_INFO("victorWebServerMain", "Stopping web server");
-  victorWebServer.reset();
 
-  LOG_INFO("victorWebServerMain", "exit(0)");
+  LOG_INFO("victorWebServerMain.main", "Shutting down webserver");
+
   Util::gLoggerProvider = nullptr;
   UninstallCrashReporter();
   sync();

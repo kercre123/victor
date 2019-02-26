@@ -13,12 +13,12 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorQuietModeCoordinator.h"
 #include "engine/actions/dockActions.h"
-#include "engine/activeObject.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/timer/behaviorTimerUtilityCoordinator.h"
+#include "engine/block.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "clad/types/animationTrigger.h"
 #include "coretech/common/engine/jsonTools.h"
@@ -236,9 +236,9 @@ void BehaviorQuietModeCoordinator::SimmerDownNow()
   
   GetBEI().GetCubeLightComponent().StopAllAnims();
   BlockWorldFilter filter;
-  filter.AddAllowedFamily(ObjectFamily::LightCube);
-  std::vector<const ActiveObject*> connectedCubes;
-  GetBEI().GetBlockWorld().FindConnectedActiveMatchingObjects(filter, connectedCubes);
+  filter.AddFilterFcn(&BlockWorldFilter::IsLightCubeFilter);
+  std::vector<const Block*> connectedCubes;
+  GetBEI().GetBlockWorld().FindConnectedMatchingBlocks(filter, connectedCubes);
   for( const auto* obj : connectedCubes ) {
     GetBEI().GetCubeLightComponent().PlayLightAnimByTrigger( obj->GetID(), CubeAnimationTrigger::SleepNoFade );
   }

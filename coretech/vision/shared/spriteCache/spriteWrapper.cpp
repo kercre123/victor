@@ -81,15 +81,8 @@ ISpriteWrapper::ImgTypeCacheSpec SpriteWrapper::IsContentCached(const HSImageHan
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 ImageRGBA SpriteWrapper::GetSpriteContentsRGBA(const HSImageHandle& hsImage)
 {
-  // Return cahed RGBA if possible
-  if((_spriteRGBA != nullptr) &&
-     (hsImage != nullptr) &&
-     (hsImage->GetHSID() == _hsID)){
-    return *_spriteRGBA;
-  }
-  
-  // See if the value channel from the SpriteRGBA can be re-used
-  if(_spriteRGBA != nullptr){
+  // Return cached RGBA if possible
+  if (_spriteRGBA != nullptr) {
     return *_spriteRGBA;
   }
 
@@ -101,7 +94,6 @@ ImageRGBA SpriteWrapper::GetSpriteContentsRGBA(const HSImageHandle& hsImage)
     ApplyHS(*_spriteGrayscale, hsImage, &outImage);
     return outImage;
   }
-  
 
   // Last resort - load from disk and apply hue/saturation directly
   ImageRGBA outImage;

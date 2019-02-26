@@ -180,6 +180,9 @@ message GatewayWrapper {
     DriveWheelsResponse           drive_wheels_response              = 515;
     ListAnimationsRequest         list_animations_request            = 516;
     ListAnimationsResponse        list_animations_response           = 517;
+    PlayAnimationTriggerRequest   play_animation_trigger_request     = 518;
+    ListAnimationTriggersRequest  list_animation_triggers_request    = 519;
+    ListAnimationTriggersResponse list_animation_triggers_response   = 520;
     
     // ------------ status history --------------------
     RobotHistoryRequest           robot_history_request              = 600;

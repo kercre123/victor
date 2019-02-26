@@ -20,7 +20,6 @@
 #include "engine/actions/actionContainers.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
-#include "engine/activeObjectHelpers.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"

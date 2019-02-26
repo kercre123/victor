@@ -19,48 +19,26 @@ structure PoseStruct3d
 }
 
 enum int_32 ObjectType {
-  InvalidObject = -1,
   UnknownObject = 0,
-
+    
   //////////////////////////////////////////////////////////////////////////
   // Light Cubes (a.k.a. Active Blocks)
   //
-
-  Block_LIGHTCUBE1,
+  
+  Block_LIGHTCUBE1 = 1, // value is specified here for SDK backward compatibility
   Block_LIGHTCUBE2,
   Block_LIGHTCUBE3,
 
   Block_LIGHTCUBE_GHOST,
 
   //////////////////////////////////////////////////////////////////////////
-  // Mat Pieces
-  //
-
-  // Flat mats:
-  FlatMat_GEARS_4x4,
-  FlatMat_LETTERS_4x4,
-  FlatMat_ANKI_LOGO_8BIT,
-  FlatMat_LAVA_PLAYTEST,
-
-  // Platform piece:
-  Platform_LARGE,
-
-  //////////////////////////////////////////////////////////////////////////
   // Charger
   //
-  Charger_Basic,
-
-
-  //////////////////////////////////////////////////////////////////////////
-  // Markerless Objects (e.g. obstacles)
-  //
-  ProxObstacle,
-  CliffDetection,
-  CollisionObstacle,
+  Charger_Basic = 5, // value is specified here for SDK backward compatibility
 
   //////////////////////////////////////////////////////////////////////////
   // Custom Objects defined via DefineCustomObject
-  CustomType00,
+  CustomType00 = 14, // value is specified here for SDK backward compatibility
   CustomType01,
   CustomType02,
   CustomType03,
@@ -87,10 +65,6 @@ enum int_32 ObjectType {
 
   // Custom "fixed" object (i.e. obstacle)
   CustomFixedObstacle,
-
-  Block_STAR5,
-  Block_ARROW,
-  Block_BULLSEYE2,
 
 } // enum class ObjectType
 

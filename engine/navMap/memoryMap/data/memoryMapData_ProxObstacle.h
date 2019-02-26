@@ -38,7 +38,7 @@ public:
   virtual MemoryMapDataPtr Clone() const override;
   
   // return true if this type collides with the robot
-  virtual bool IsCollisionType() const override { return _collidable; }
+  virtual bool IsCollisionType() const override { return IsConfirmedObstacle(); }
 
   // disable collisions with this prox obstacle (eg, if in the habitat)
   void SetCollidable(bool enable) { _collidable = enable; }
@@ -61,7 +61,7 @@ public:
   void MarkClear()    { _belief = (_belief <= 6 ) ? 0   : _belief - 6; }
 
   bool IsExplored()          const { return (_explored == ExploredType::EXPLORED); }
-  bool IsConfirmedObstacle() const { return (_belief > 50); }
+  bool IsConfirmedObstacle() const { return (_belief > 40); }
   bool IsConfirmedClear()    const { return (_belief == 0); }
 
   const Pose2d& GetObservationPose() const    { return _pose; }

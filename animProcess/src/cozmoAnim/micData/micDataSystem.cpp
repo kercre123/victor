@@ -73,10 +73,17 @@ CONSOLE_FUNC(ClearMicData, "zHiddenForSafety");
 # undef CONSOLE_GROUP
 
   const std::string kMicSettingsFile = "micMuted";
+  
+  const std::string kSpeechRecognizerWebvizName = "speechrecognizersys";
 }
 
 namespace Anki {
 namespace Vector {
+  
+// VIC-13319 remove
+CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInUK);
+CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInAU);
+  
 namespace MicData {
 
 constexpr auto kCladMicDataTypeSize = sizeof(RobotInterface::MicData::data)/sizeof(RobotInterface::MicData::data[0]);
@@ -137,7 +144,7 @@ void MicDataSystem::Init(const RobotDataLoader& dataLoader)
   SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info) {
     
  #if ANKI_DEV_CHEATS
-    SendTriggerDetectionToWebViz(info);
+    SendTriggerDetectionToWebViz(info, {});
     if (kSuppressTriggerResponse) {
       return;
     }
@@ -161,6 +168,15 @@ void MicDataSystem::Init(const RobotDataLoader& dataLoader)
   if( Util::FileUtils::FileExists(_persistentFolder + kMicSettingsFile) ) {
     ToggleMicMute();
   }
+  
+#if ANKI_DEV_CHEATS
+  auto* webService = _context->GetWebService();
+  if( webService ) {
+    AddSignalHandle(webService->OnWebVizSubscribed(kSpeechRecognizerWebvizName).ScopedSubscribe(
+      [this] (const auto& sendFunc) { SendRecentTriggerDetectionToWebViz(sendFunc); }
+    ));
+  }
+#endif
 }
 
 MicDataSystem::~MicDataSystem()
@@ -190,9 +206,25 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
 {
   if(HasStreamingJob())
   {
-    LOG_WARNING("MicDataSystem.StartWakeWordlessStreaming.OverlappingStreamRequests",
-                "Received StartWakeWorldlessStreaming message from engine, but micDataSystem is already streaming");
-    return;
+    // We "fake" having a streaming job in order to achieve the "feel" of a minimum streaming time for UX
+    // reasons (I think?). This means that HasStreamingJob() may actually lie, so if we have a job, but have
+    // completed streaming, and the engine is requesting a wakewordless stream (e.g. knowledge graph), we
+    // should clear it now. This is a workaround to fix VIC-13402 (a blocker for R1.4.1)
+
+    // TODO:(bn) VIC-13438 this is tech debt and should be cleaned up
+
+    if( _currentlyStreaming &&
+        _streamingComplete ) {
+
+      LOG_INFO("MicDataSystem.StartWakeWordlessStreaming.OverlappingWithFakeStream.Opening",
+               "Request came in overlapping with a 'fake' extended request, so cancel it before starting a new one");
+      ClearCurrentStreamingJob();
+    }
+    else {
+      LOG_WARNING("MicDataSystem.StartWakeWordlessStreaming.OverlappingStreamRequests",
+                  "Received StartWakeWorldlessStreaming message from engine, but micDataSystem is already streaming (not faking to extend the stream)");
+      return;
+    }
   }
 
   // we want to start the stream AFTER the audio is complete so that it is not captured in the stream
@@ -511,6 +543,8 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       // we want to extend the streaming state so that it at least appears to be streaming for a minimum duration
       // here we hold onto the streaming job until we've reached that minimum duration
       // note: the streaming job will not actually be recording, we're simply holding it so we don't start a new job
+
+      // TODO:(bn) VIC-13438 this is tech debt and has caused bugs and confusion and should be cleaned up
       if (_streamingComplete)
       {
         // our stream is complete, so clear out the current stream as long as our minimum streaming time has elapsed
@@ -519,6 +553,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         const BaseStationTime_t minStreamEnd_ns = _streamBeginTime_ns + minStreamDuration_ns;
         if (currTime_nanosec >= minStreamEnd_ns)
         {
+          LOG_INFO("MicDataSystem.Update.StreamingComplete.ClearJob", "Clearing streaming job now that enough time has elapsed");
           ClearCurrentStreamingJob();
         }
       }
@@ -758,19 +793,23 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
   const bool enabled = (_alexaState != AlexaSimpleState::Disabled);
   
   if ((oldState == AlexaSimpleState::Disabled) && enabled) {
-    const auto callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info)
+    const auto callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info,
+                                  const AudioUtil::SpeechRecognizerIgnoreReason& ignore)
     {
       LOG_INFO("MicDataSystem.SetAlexaState.TriggerWordDetectCallback", "info - %s", info.Description().c_str());
       
 #if ANKI_DEV_CHEATS
-      SendTriggerDetectionToWebViz(info);
+      SendTriggerDetectionToWebViz(info, ignore);
       if (kSuppressTriggerResponse) {
         return;
       }
 #endif
       
-      if( HasStreamingJob() ) {
-        // don't run alexa wakeword if there's a "hey vector" streaming job or if the mic is muted
+      if( ignore || HasStreamingJob() ) {
+        // Don't run alexa wakeword if
+        // 1. there's a "hey vector" streaming job
+        // 2. if the mic is muted
+        // 3. ignore flag is ture, either playback recognizer triggered positive or there is a "notch"
         return;
       }
       Alexa* alexa = _context->GetAlexa();
@@ -788,7 +827,15 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
   }
   
   const bool active = (_alexaState == AlexaSimpleState::Active);
-  _speechRecognizerSystem->ToggleNotchDetector( active );
+  // UK/AU seem to be worse at handling self-loops
+  if (((_locale.GetCountry() == Util::Locale::CountryISO2::GB) && kAlexaEnabledInUK)
+      || ((_locale.GetCountry() == Util::Locale::CountryISO2::AU) && kAlexaEnabledInAU)) {
+    _speechRecognizerSystem->ToggleNotchDetector( active );
+  }
+  else {
+    // results in some unnecessary method calls but this method does little
+    _speechRecognizerSystem->ToggleNotchDetector( false );
+  }
 }
   
 void MicDataSystem::ToggleMicMute()
@@ -913,23 +960,51 @@ void MicDataSystem::RequestConnectionStatus()
   }
 }
   
-void MicDataSystem::SendTriggerDetectionToWebViz(const AudioUtil::SpeechRecognizerCallbackInfo& info)
+void MicDataSystem::SendTriggerDetectionToWebViz(const AudioUtil::SpeechRecognizerCallbackInfo& info,
+                                                 const AudioUtil::SpeechRecognizerIgnoreReason& ignoreReason)
 {
+#if ANKI_DEV_CHEATS
   if ( _context != nullptr ) {
+    Json::Value data;
+    data["result"] = info.result;
+    data["startTime_ms"] = info.startTime_ms;
+    data["endTime_ms"] = info.endTime_ms;
+    data["startSampleIndex"] = info.startSampleIndex;
+    data["endSampleIndex"] = info.endSampleIndex;
+    data["score"] = info.score;
+    data["notch"] = ignoreReason.notch;
+    data["playback"] = ignoreReason.playback;
+    
+    // don't let result buffer grow infinitely
+    if (_devTriggerResults.size() > 8 && _devTriggerResults.size() == _devTriggerResults.capacity()) {
+      for (int i = 0; i < _devTriggerResults.size() - 1; i++) {
+        _devTriggerResults[i] = std::move(_devTriggerResults[i+1]);
+      }
+      _devTriggerResults[_devTriggerResults.size()-1] = std::move(data);
+    }
+    else {
+      _devTriggerResults.emplace_back(std::move(data));
+    }
+    
     auto* webService = _context->GetWebService();
-    const std::string kModuleName = "speechrecognizersys";
-    if( webService != nullptr && webService->IsWebVizClientSubscribed( kModuleName ) ) {
-      Json::Value data;
-      data["result"] = info.result;
-      data["startTime_ms"] = info.startTime_ms;
-      data["endTime_ms"] = info.endTime_ms;
-      data["startSampleIndex"] = info.startSampleIndex;
-      data["endSampleIndex"] = info.endSampleIndex;
-      data["score"] = info.score;
-      webService->SendToWebViz( kModuleName, data );
+    if( webService != nullptr && webService->IsWebVizClientSubscribed( kSpeechRecognizerWebvizName ) ) {
+      webService->SendToWebViz( kSpeechRecognizerWebvizName, _devTriggerResults.back() );
     }
   }
+#endif
 }
+  
+void MicDataSystem::SendRecentTriggerDetectionToWebViz(const std::function<void(const Json::Value&)>& sendFunc)
+{
+#if ANKI_DEV_CHEATS
+  Json::Value value{Json::arrayValue};
+  for (const auto& val : _devTriggerResults) {
+    value.append(val);
+  }
+  sendFunc(value);
+#endif
+}
+
 
 void MicDataSystem::SendRecognizerDasLog(const AudioUtil::SpeechRecognizerCallbackInfo& info,
                                          const char* stateStr) const
@@ -938,7 +1013,7 @@ void MicDataSystem::SendRecognizerDasLog(const AudioUtil::SpeechRecognizerCallba
   MicData::DirectionIndex dominantDirection;
   _micDataProcessor->GetLatestMicDirectionData(directionData, dominantDirection);
   DASMSG( speech_recognized, "mic_data_system.speech_trigger_recognized", "Voice trigger recognized" );
-  DASMSG_SET( s1, (info.result != nullptr) ? info.result : "", "Recognized result" );
+  DASMSG_SET( s1, info.result.c_str(), "Recognized result" );
   DASMSG_SET( s2, (stateStr != nullptr) ? stateStr : "", "Current Alexa UX State");
   DASMSG_SET( s3, std::to_string(info.score).c_str(), "Recognizer Score");
   DASMSG_SET( i1, dominantDirection, "Dominant Direction Index [0, 11], 12 is Unknown Direction" );

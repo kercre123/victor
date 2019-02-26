@@ -1,6 +1,8 @@
 {
   "behaviorClass": "FindHome",
   "behaviorID": "FindHome",
+
+  "associatedActiveFeature": "FindHome",
   
   // Cannot be activated if we already know where a charger is and have seen it recently enough
   "wantsToBeActivatedCondition": {

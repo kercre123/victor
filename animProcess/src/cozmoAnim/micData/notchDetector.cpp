@@ -30,12 +30,16 @@ namespace Vector {
 namespace {
   // saves PSDs that dont contain a notch to a file
   CONSOLE_VAR(bool, kSaveNotches, "MicData", false);
-  // Computes things to output
-  CONSOLE_VAR(bool, kDebugNotch, "MicData", false);
   
-  const float kNotchPower = -5.1f;
+  const unsigned int kNotchIndex1 = 3;
+  const unsigned int kNotchIndex2 = 8;
   
-  #define LOG_CHANNEL "NotchDetector"
+  const unsigned int kNotchIndex3 = 8;
+  const unsigned int kNotchIndex4 = 16;
+  
+  CONSOLE_VAR_RANGED(float, kNotchPower, "Alexa", -0.41f, -1.f, 0.f);
+  
+  #define LOG_CHANNEL "Alexa"
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -100,21 +104,34 @@ bool NotchDetector::HasNotch()
     fout.close();
   }
   
-  float sumPower = 0.0f;
-  for( int i=3; i<=10; ++i ) {
+  // compare power in a range where our speaker can't output (A) to a range where our speaker can output (B)
+  
+  float sumPowerA = 0.0f;
+  for( int i=kNotchIndex1; i<=kNotchIndex2; ++i ) {
     for( int j=0; j<kNumToAvg; ++j ) {
-      sumPower += _powers[j][i];
+      sumPowerA += _powers[j][i];
     }
   }
-  static const float minPower = powf(10, kNotchPower);
-  const bool powerful = (sumPower >= minPower); // i.e., log10(sumPower) >= kNotchPower;
-  
-  if( kDebugNotch ) {
-    // if kSaveNotches, useful to go check sIdx for why it did or didn't work
-    LOG_INFO( "NotchDetector.HasNotch.Debug",
-              "Idx=%d, Power=%f, HUMAN=%d",
-              sIdx, log10(sumPower), powerful );
+
+  float sumPowerB = 0.0f;
+  for( int i=kNotchIndex3; i<=kNotchIndex4; ++i ) {
+    for( int j=0; j<kNumToAvg; ++j ) {
+      sumPowerB += _powers[j][i];
+    }
   }
+
+  // If I had tuned this using log(sumPower/ |range| ) rather than log(sumPower)/|range|, this would
+  // reduce to something efficient. But I didn't
+  const float diff = log10(sumPowerA)/(kNotchIndex2 - kNotchIndex1+1) - log10(sumPowerB)/(kNotchIndex4 - kNotchIndex3+1);
+  
+  const bool powerful = (diff >= kNotchPower);
+
+#if ANKI_DEV_CHEATS
+  LOG_INFO( "NotchDetector.HasNotch.Debug",
+            "Idx=%d, PowerA=%f (%f) PowerB=%f (%f), diff=%f, HUMAN=%d",
+            sIdx, log10(sumPowerA), log10(sumPowerA)/(kNotchIndex2 - kNotchIndex1+1), log10(sumPowerB),
+            log10(sumPowerB)/(kNotchIndex4 - kNotchIndex3+1), diff, powerful );
+#endif
   
   return !powerful;
 }

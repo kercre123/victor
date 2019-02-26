@@ -370,7 +370,7 @@ void BehaviorTextToSpeechLoop::Interrupt( bool immediate )
     // + cancel TTS immediately so it feels responsive
     // + transition into the get out anim after the next looping anim so that the anims transition properly
     ClearTextToSay();
-    _dVars.cancelOnNextLoop = true;;
+    _dVars.cancelOnNextLoop = true;
   }
 }
 

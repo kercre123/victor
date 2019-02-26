@@ -39,7 +39,7 @@
 
 #include "util/console/consoleInterface.h"
 #include "util/helpers/noncopyable.h"
-#include "util/signals/simpleSignal_fwd.h"
+#include "util/signals/simpleSignal.hpp"
 
 #include <thread>
 #include <mutex>
@@ -82,6 +82,8 @@ struct DockingErrorSignal;
                           public IVisionModeSubscriber
   {
   public:
+
+    typedef void(VisionResultCallback)(const VisionProcessingResult& result);
   
     VisionComponent();
     virtual ~VisionComponent();
@@ -243,6 +245,11 @@ struct DockingErrorSignal;
                                s32 numEnrollments = -1,
                                bool forceNewID = false);
 
+#if ANKI_DEV_CHEATS
+    void SaveAllRecognitionImages(const std::string& imagePathPrefix);
+    void DeleteAllRecognitionImages();
+#endif
+
     // Erase faces
     Result EraseFace(Vision::FaceID_t faceID);
     void   EraseAllFaces();
@@ -328,6 +335,10 @@ struct DockingErrorSignal;
 
     void EnableSendingSDKImageChunks(bool enable) { _sendProtoImageChunks = enable; }
     bool IsSendingSDKImageChunks() { return _sendProtoImageChunks; }
+
+    // Method to register external callbacks when a vision processing result is ready.
+    // Callbacks must check whether the required vision modes were completed.
+    Signal::SmartHandle RegisterVisionResultCallback(const std::function<VisionResultCallback>& callback);
 
   protected:
     
@@ -433,6 +444,9 @@ struct DockingErrorSignal;
     // Time at which we attempted to restart the camera as we had not received a valid image for
     // some amount of time
     EngineTimeStamp_t _restartingCameraTime_ms = 0;
+
+    // Container of all the callback handles to call
+    Signal::Signal<VisionResultCallback> _visionResultSignal;
 
     #if REMOTE_CONSOLE_ENABLED
     // Array of pairs of ConsoleVars and their associated values used for toggling VisionModes

@@ -14,8 +14,9 @@
 #define __Anki_Vision_FaceTracker_H__
 
 #include "coretech/common/shared/types.h"
-#include "coretech/vision/engine/trackedFace.h"
+#include "coretech/vision/engine/debugImageList.h"
 #include "coretech/vision/engine/faceIdTypes.h"
+#include "coretech/vision/engine/trackedFace.h"
 #include "clad/types/loadedKnownFace.h"
 
 #include <list>
@@ -29,6 +30,7 @@ namespace Anki {
 namespace Vision {
   
   class Camera;
+  class CompressedImage;
   class Image;
   
   class FaceTracker
@@ -47,7 +49,8 @@ namespace Vision {
     Result Update(const Vision::Image&        frameOrig,
                   const float                 cropFactor,
                   std::list<TrackedFace>&     faces,
-                  std::list<UpdatedFaceID>&   updatedIDs);
+                  std::list<UpdatedFaceID>&   updatedIDs,
+                  DebugImageList<CompressedImage>& debugImages);
     
     // These methods control which faces we are going to track, the rest
     // of the faces will be discarded. Also if there are any allowed
@@ -80,6 +83,11 @@ namespace Vision {
     // Will return false if the private implementation does not support face recognition
     static bool IsRecognitionSupported();
     
+    // Enable/Disable automatic recognition/enrollment of faces that are detected (i.e. if disabled, just
+    // detect and track faces)
+    void EnableRecognition(bool enable);
+    bool IsRecognitionEnabled() const;
+    
     // returns the minimum distance between eyes a face has to have in order to be enrollable
     static float GetMinEyeDistanceForEnrollment();
     
@@ -108,6 +116,21 @@ namespace Vision {
                              std::list<LoadedKnownFace>& loadedFaces);
 
     void PrintTiming();
+
+#if ANKI_DEVELOPER_CODE
+    // For testing/evaluation:
+    Result DevAddFaceToAlbum(const Image& img, const TrackedFace& face, int albumEntry);
+    Result DevFindFaceInAlbum(const Image& img, const TrackedFace& face, int& albumEntry, float& score) const;
+    Result DevFindFaceInAlbum(const Image& img, const TrackedFace& face, const int maxMatches,
+                              std::vector<std::pair<int, float>>& matches) const;
+    float DevComputePairwiseMatchScore(int faceID1, int faceID2) const;
+    float DevComputePairwiseMatchScore(int faceID1, const Image& img2, const TrackedFace& face2) const;
+#endif
+
+#if ANKI_DEV_CHEATS
+    void SaveAllRecognitionImages(const std::string& imagePathPrefix);
+    void DeleteAllRecognitionImages();
+#endif // ANKI_DEV_CHEATS
     
   private:
     

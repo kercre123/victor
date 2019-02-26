@@ -35,6 +35,7 @@ namespace {
   CONSOLE_VAR_RANGED(float, kHeadMovementDuration_s, CONSOLE_NAME, 0.5f, 0.1f, 2.5f);
   CONSOLE_VAR_RANGED(float, kTreadMovementSpeed_mmps, CONSOLE_NAME, 200.0f, 20.0f, MAX_WHEEL_SPEED_MMPS);
   CONSOLE_VAR_ENUM(uint8_t, kLoopingAnimationState, CONSOLE_NAME, 0, "NONE, Move Head, Move Lift");
+  CONSOLE_VAR(bool, kUseRestrictedMotionAnim, CONSOLE_NAME, true);
   
   #define MOTOR_ACTION_ASSERT ASSERT_NAMED(_robot != nullptr, "BehaviorDevSquawkBoxTest._robot.IsNull")
   #define CONSOLE_FUNC_IS_ACTIVE_CHECK() \
@@ -306,11 +307,11 @@ std::string BehaviorDevSquawkBoxTest::SetLoopingAnimationState()
   std::string animName;
   switch (kLoopingAnimationState) {
     case 1:
-      animName = "anim_qa_head_updown";
+      animName = kUseRestrictedMotionAnim ? "anim_qa_head_updown_alt" : "anim_qa_head_updown";
       break;
       
     case 2:
-      animName = "anim_qa_lift_updown";
+      animName = kUseRestrictedMotionAnim ? "anim_qa_lift_updown_alt" : "anim_qa_lift_updown";
       break;
       
     default:

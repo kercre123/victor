@@ -57,6 +57,10 @@
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/enrolledFaceStorage.h"
 
+#if ANKI_DEV_CHEATS
+#include "osState/osState.h"
+#endif
+
 #include "util/console/consoleInterface.h"
 
 #include "util/logging/logging.h"
@@ -634,6 +638,7 @@ void BehaviorEnrollFace::BehaviorUpdate()
     return;
   }
 
+
   // See if we were in the midst of finding or enrolling a face but the enrollment is
   // no longer requested, then we've been cancelled
   if((State::LookingForFace == _dVars->persistent.state || State::Enrolling == _dVars->persistent.state) && !IsEnrollmentRequested())
@@ -868,6 +873,26 @@ void BehaviorEnrollFace::BehaviorUpdate()
           DASMSG_SET(i3, numNamedFacesSeen, "Number of named faces seen during scanning");
           DASMSG_SEND();
         }
+
+#if ANKI_DEV_CHEATS
+        auto *osstate = OSState::getInstance();
+        const std::string serialNumber = osstate->GetSerialNumberAsString();
+        const std::string buildSha = osstate->GetBuildSha();
+
+        const std::string& cachePath = GetBEI().GetRobotInfo().GetContext()->GetDataPlatform()->GetCachePath("camera");
+        const std::string dataType = "recognition_data";
+        const std::string path = Util::FileUtils::FullFilePath({cachePath, "images", dataType});
+        const bool result = Util::FileUtils::CreateDirectory(path);
+        if (result) {
+          LOG_ERROR("BehaviorEnrollFace.OnBehaviorActivated.FailedToCreateRecognitionImageSavePath",
+                    "Path %s failed to be created.", path.c_str());
+        }
+        const std::string imagePathPrefix = Util::FileUtils::FullFilePath({path, dataType + "_" + serialNumber +
+                                            "_" + buildSha + "_"});
+
+        GetBEI().GetFaceWorldMutable().SaveAllRecognitionImages(imagePathPrefix);
+        GetBEI().GetFaceWorldMutable().DeleteAllRecognitionImages();
+#endif
       }
 
       break;
@@ -875,7 +900,7 @@ void BehaviorEnrollFace::BehaviorUpdate()
 
   } // switch(_state)
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::OnBehaviorDeactivated()
 {
@@ -901,7 +926,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
     SET_STATE(Cancelled);
   }
 
-  ExternalInterface::FaceEnrollmentCompleted info;
+  external_interface::FaceEnrollmentCompleted info;
 
   if( _dVars->persistent.state == State::EmotingConfusion ) {
     // interrupted while in a transient animation state. Replace with the reason for being
@@ -928,9 +953,9 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
                                                              !wasSeeingMultipleFaces &&
                                                              observedUnusableFace))
   {
-    info.faceID = _dVars->observedUnusableID;
-    info.name   = _dVars->observedUnusableName;
-    info.result = FaceEnrollmentResult::SawWrongFace;
+    info.set_face_id(_dVars->observedUnusableID);
+    info.set_name(_dVars->observedUnusableName);
+    info.set_result(external_interface::FaceEnrollmentResult::SAW_WRONG_FACE);
   }
   else
   {
@@ -938,14 +963,14 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
     {
       // We just merged the enrolled ID (faceID) into saveID, so report saveID as
       // "who" was enrolled
-      info.faceID = _dVars->saveID;
+      info.set_face_id(_dVars->saveID);
     }
     else
     {
-      info.faceID = _dVars->faceID;
+      info.set_face_id(_dVars->faceID);
     }
 
-    info.name   = _dVars->faceName;
+    info.set_name(_dVars->faceName);
 
     switch(_dVars->persistent.state)
     {
@@ -953,17 +978,17 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
       {
         if(wasSeeingMultipleFaces)
         {
-          info.result = FaceEnrollmentResult::SawMultipleFaces;
+          info.set_result(external_interface::FaceEnrollmentResult::SAW_MULTIPLE_FACES);
         }
         else
         {
-          info.result = FaceEnrollmentResult::TimedOut;
+          info.set_result(external_interface::FaceEnrollmentResult::TIMED_OUT);
         }
         break;
       }
 
       case State::Cancelled:
-        info.result = FaceEnrollmentResult::Cancelled;
+        info.set_result(external_interface::FaceEnrollmentResult::CANCELLED);
         break;
 
       case State::StartEnrolling:
@@ -971,7 +996,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
         // If deactivating while enrolling, make sure we play the interruption animation so
         // we don't leave the face with "scanning" eyes
         PlayEmergencyGetOut(AnimationTrigger::MeetVictorLookFaceInterrupt);
-        info.result = FaceEnrollmentResult::Incomplete;
+        info.set_result(external_interface::FaceEnrollmentResult::INCOMPLETE);
         break;
         
       case State::DriveOffCharger:
@@ -988,28 +1013,28 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
         // If we're stopping in any of these states without having timed out
         // then something else is keeping us from completing and the assumption
         // is that we'll resume and finish shortly
-        info.result = FaceEnrollmentResult::Incomplete;
+        info.set_result(external_interface::FaceEnrollmentResult::INCOMPLETE);
         break;
         
       case State::SaveFailed:
-        info.result = FaceEnrollmentResult::SaveFailed;
+        info.set_result(external_interface::FaceEnrollmentResult::SAVE_FAILED);
         break;
 
       case State::Success:
-        info.result = FaceEnrollmentResult::Success;
+        info.set_result(external_interface::FaceEnrollmentResult::SUCCESS);
         break;
 
       case State::Failed_NameInUse:
-        info.result = FaceEnrollmentResult::NameInUse;
+        info.set_result(external_interface::FaceEnrollmentResult::NAME_IN_USE);
         break;
         
       case State::Failed_NamedStorageFull:
-        info.result = FaceEnrollmentResult::NamedStorageFull;
+        info.set_result(external_interface::FaceEnrollmentResult::NAMED_STORAGE_FULL);
         break;
 
       case State::NotStarted:
       case State::Failed_UnknownReason:
-        info.result = FaceEnrollmentResult::UnknownFailure;
+        info.set_result(external_interface::FaceEnrollmentResult::UNKNOWN_FAILURE);
         break;
 
       case State::Failed_WrongFace:
@@ -1026,7 +1051,7 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
 
   // If incomplete, we are being interrupted by something. Don't broadcast completion
   // and don't disable face enrollment.
-  if(info.result != FaceEnrollmentResult::Incomplete)
+  if(info.result() != external_interface::FaceEnrollmentResult::INCOMPLETE)
   {
     // If enrollment did not succeed (but is complete) and we're enrolling a *new* face:
     // It is possible that the vision system (on its own thread!) actually finished enrolling internally. Therefore we
@@ -1034,32 +1059,25 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
     // enrollment result as successfully enrolled, and thus would mean the engine's known faces would be out of sync
     // with the external world. This is largely precautionary.
     const bool isNewEnrollment = (Vision::UnknownFaceID != _dVars->faceID) && (Vision::UnknownFaceID == _dVars->saveID);
-    if(info.result != FaceEnrollmentResult::Success && isNewEnrollment)
+    if(info.result() != external_interface::FaceEnrollmentResult::SUCCESS && isNewEnrollment)
     {
       PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.StopInternal.ErasingNewlyEnrolledFace",
                     "Erasing new face %d as a precaution because we are about to report failure result: %s",
-                    _dVars->faceID, EnumToString(info.result));
+                    _dVars->faceID, external_interface::FaceEnrollmentResult_Name(info.result()).c_str());
       GetBEI().GetVisionComponent().EraseFace(_dVars->faceID);
     }
 
-    if(info.result == FaceEnrollmentResult::Success)
+    if(info.result() == external_interface::FaceEnrollmentResult::SUCCESS)
     {
       GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::EnrolledFace);
     }
 
     PRINT_CH_INFO(kLogChannelName, "BehaviorEnrollFace.StopInternal.BroadcastCompletion",
                   "In state:%hhu, FaceEnrollmentResult=%s",
-                  _dVars->persistent.state, EnumToString(info.result));
+                  _dVars->persistent.state, external_interface::FaceEnrollmentResult_Name(info.result()).c_str());
 
-    if( GetBEI().GetRobotInfo().HasExternalInterface() ) {
-      const auto& msgRef = info;
-      ExternalInterface::FaceEnrollmentCompleted msgCopy{msgRef};
-      GetBEI().GetRobotInfo().GetExternalInterface()->Broadcast( ExternalInterface::MessageEngineToGame{std::move(msgCopy)} );
-    }
     if( GetBEI().GetRobotInfo().HasGatewayInterface() ) {
-      auto* msg = new external_interface::FaceEnrollmentCompleted{ CladProtoTypeTranslator::ToProtoEnum(info.result),
-                                                                   info.faceID,
-                                                                   info.name };
+      auto* msg = new external_interface::FaceEnrollmentCompleted(info);
       GetBEI().GetRobotInfo().GetGatewayInterface()->Broadcast( ExternalMessageRouter::Wrap(msg) );
     }
 
@@ -1074,16 +1092,16 @@ void BehaviorEnrollFace::OnBehaviorDeactivated()
     DeactivateUserIntentHelper( USER_INTENT(meet_victor) );
   }
 
-  if( info.result == FaceEnrollmentResult::Success ) {
+  if( info.result() == external_interface::FaceEnrollmentResult::SUCCESS ) {
     GetAIComp<AIWhiteboard>().OfferPostBehaviorSuggestion( PostBehaviorSuggestions::Socialize );
   }
 
   {
     DASMSG(behavior_meet_victor_end, "behavior.meet_victor.end", "Meet victor completed");
     DASMSG_SET(s1,
-               FaceEnrollmentResultToString(info.result),
+               external_interface::FaceEnrollmentResult_Name(info.result()).c_str(),
                "Completion status (Success,SawWrongFace,SawMultipleFaces,TimedOut,SaveFailed,Incomplete,Cancelled,NameInUse,NamedStorageFull,UnknownFailure)");
-    DASMSG_SET(i1, info.faceID, "faceID, if applicable");
+    DASMSG_SET(i1, info.face_id(), "faceID, if applicable");
     DASMSG_SET(i2, numInterruptions, "number of interruptions (so far [if Incomplete], or total otherwise])");
     DASMSG_SEND();
   }

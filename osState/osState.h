@@ -94,16 +94,10 @@ public:
 // Public destructor
 ~OSState();
 
-#ifdef SIMULATOR
-  // Assign Webots supervisor
-  // Webots processes must do this before creating OSState for the first time.
-  // Unit test processes must call SetSupervisor(nullptr) to run without a supervisor.
-  static void SetSupervisor(webots::Supervisor *sup);
-#endif
-
   void Update(BaseStationTime_t currTime_nanosec);
 
   RobotID_t GetRobotID() const;
+  void SetRobotID(RobotID_t robotID);
 
   // Set how often state should be updated.
   // Affects how often the freq and temperature is updated.

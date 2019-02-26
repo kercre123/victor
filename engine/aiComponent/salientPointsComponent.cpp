@@ -84,9 +84,7 @@ void SalientPointsComponent::GetSalientPointSinceTime(std::list<Vision::SalientP
                                                       const RobotTimeStamp_t timestamp) const
 {
 
-#if ANKI_DEVELOPER_CODE || defined(USE_ANKITRACE)
   const size_t previousSize = salientPoints.size();
-#endif
 
   auto it = _salientPoints.find(type);
   if (it != _salientPoints.end()) {

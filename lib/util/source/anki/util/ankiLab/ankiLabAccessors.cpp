@@ -132,9 +132,7 @@ const ExperimentVariation* GetExperimentVariation(const Experiment* experiment,
   for (const ExperimentVariation& v : variations) {
     uint8_t maxBucketSize = v.GetPop_frac_pct();
     if (maxBucketSize > 0) {
-#if ALLOW_DEBUG_LOGGING || defined(USE_ANKITRACE)
       uint8_t maxBucketEnd = bucketStart + (maxBucketSize - 1);
-#endif
       uint8_t bucketSize = (experiment->GetPop_frac_pct() * v.GetPop_frac_pct()) / 100.f;
       if (bucketSize > 0) {
         uint8_t bucketEnd = bucketStart + bucketSize - 1;

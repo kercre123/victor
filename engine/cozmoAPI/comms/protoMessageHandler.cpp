@@ -135,7 +135,7 @@ void ProtoMessageHandler::Broadcast(const external_interface::GatewayWrapper& me
   ANKI_CPU_PROFILE("ProtoMH::Broadcast_GatewayWrapper");
 
   DEV_ASSERT(nullptr == _context || _context->IsEngineThread(),
-              "UiMessageHandler.GameToEngineRef.BroadcastOffEngineThread");
+             "UiMessageHandler.GameToEngineRef.BroadcastOffEngineThread");
 
   DeliverToExternal(message);
   _eventMgr.Broadcast(AnkiEvent<external_interface::GatewayWrapper>(
@@ -148,7 +148,7 @@ void ProtoMessageHandler::Broadcast(external_interface::GatewayWrapper&& message
   ANKI_CPU_PROFILE("ProtoMH::BroadcastMove_GatewayWrapper");
 
   DEV_ASSERT(nullptr == _context || _context->IsEngineThread(),
-              "UiMessageHandler.GameToEngineRef.BroadcastOffEngineThread");
+             "UiMessageHandler.GameToEngineRef.BroadcastOffEngineThread");
 
   DeliverToExternal(message);
   _eventMgr.Broadcast(AnkiEvent<external_interface::GatewayWrapper>(

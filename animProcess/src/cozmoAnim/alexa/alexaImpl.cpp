@@ -48,6 +48,7 @@
 #include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "util/string/stringUtils.h"
+#include "webServerProcess/src/webService.h"
 
 #include <ACL/Transport/HTTP2TransportFactory.h>
 #include <AVSCommon/AVS/Initialization/AlexaClientSDKInit.h>
@@ -79,6 +80,10 @@ namespace Vector {
   
 using namespace alexaClientSDK;
   
+// VIC-13319 remove
+CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInUK);
+CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInAU);
+  
 namespace {
   #define CRITICAL_SDK(event) ACSDK_CRITICAL(avsCommon::utils::logger::LogEntry(__FILE__, event))
   #define LOG_CHANNEL "Alexa"
@@ -101,6 +106,8 @@ namespace {
   
   const std::string kDirectivesFile = "directives.txt";
   const std::string kAlexaFolder = "alexa";
+  
+  const std::string kDefaultLocale = "en-US";
 
   static const float kTimeToHoldSpeakingBetweenAudioPlays_s = 1.0f;
   static const float kAlexaImplWatchdogFailTime_s = 5.0f;
@@ -124,6 +131,10 @@ namespace {
   // every this many seconds (in basestation time), grab the wall time (system clock) and see if it looks like
   // it may have jumped. If so, refresh the alexa timers
   CONSOLE_VAR(float, kAlexaHackCheckForSystemClockSyncPeriod_s, "Alexa", 5.0f);
+  
+  // dont bubble up server errors unless the user has interacted within the last 1 min
+  // (1 minute because sometimes it can take 30 secs for the sdk to respond with an error)
+  constexpr uint64_t kMillisConsideredRecentInteraction = 1000*60*1;
 
 #if ANKI_DEV_CHEATS
 
@@ -173,6 +184,49 @@ namespace {
     ss << error;
     return ss.str();
   }
+  
+  std::string LocaleToString( const Util::Locale& locale ) {
+    // possible values: de-DE, en-AU, en-CA, en-GB, en-IN, en-US, es-ES, es-MX, fr-FR, ja-JP
+    // ( https://developer.amazon.com/docs/alexa-voice-service/settings.html )
+    // obtain the en-COUNTRY locale string from the passed-in locale's country. Note that if a
+    // user goes into their alexa app and changes locale to something like fr-CA, then goes into chewie
+    // and selects CA, we send to amazon en-CA, and they'll have to go back into the alexa app if they
+    // need to reselect french.
+    std::string settingValue;
+    switch( locale.GetCountry() ) {
+      case Util::Locale::CountryISO2::US:
+      {
+        return "en-US";
+      }
+      case Util::Locale::CountryISO2::CA:
+      {
+        return "en-CA";
+      }
+      case Util::Locale::CountryISO2::GB:
+      {
+        return "en-GB";
+      }
+      case Util::Locale::CountryISO2::AU:
+      {
+        return "en-AU";
+      }
+      default:
+        return "";
+    }
+  }
+  
+  bool AlexaLocaleEnabled(const Util::Locale& locale)
+  {
+    if( locale.GetCountry() == Util::Locale::CountryISO2::US ) {
+      return true;
+    } else if( locale.GetCountry() == Util::Locale::CountryISO2::GB ) {
+      return kAlexaEnabledInUK;
+    } else if( locale.GetCountry() == Util::Locale::CountryISO2::AU ) {
+      return kAlexaEnabledInAU;
+    } else {
+      return false;
+    }
+  }
 }
   
 #if ANKI_DEV_CHEATS
@@ -187,6 +241,7 @@ AlexaImpl::AlexaImpl()
   , _notificationsIndicator{ avsCommon::avs::IndicatorState::UNDEFINED }
   , _initState{ InitState::Uninitialized }
   , _runSetNetworkConnectionError{ false }
+  , _lastInteractionTime_ms{ 0 }
 {
   static_assert( std::is_same<SourceId, avsCommon::utils::mediaPlayer::MediaPlayerInterface::SourceId>::value,
                  "Our shorthand SourceId type differs" );
@@ -429,7 +484,7 @@ void AlexaImpl::InitThread()
     return;
   }
   
-  _client->SetDirectiveCallback( std::bind(&AlexaImpl::OnDirective, this, std::placeholders::_1, std::placeholders::_2) );
+  _client->SetDirectiveCallback( std::bind(&AlexaImpl::OnDirective, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3) );
   
   _client->AddSpeakerManagerObserver( _observer );
   _client->AddInternetConnectionObserver( _observer );
@@ -804,37 +859,7 @@ void AlexaImpl::SetLocale( const Util::Locale& locale )
   {
     const std::string kSettingKey = "locale";
     
-    // possible values: de-DE, en-AU, en-CA, en-GB, en-IN, en-US, es-ES, es-MX, fr-FR, ja-JP
-    // ( https://developer.amazon.com/docs/alexa-voice-service/settings.html )
-    // obtain the en-COUNTRY locale string from the passed-in locale's country. Note that if a
-    // user goes into their alexa app and changes locale to something like fr-CA, then goes into chewie
-    // and selects CA, we send to amazon en-CA, and they'll have to go back into the alexa app if they
-    // need to reselect french.
-    std::string settingValue;
-    switch( locale.GetCountry() ) {
-      case Util::Locale::CountryISO2::US:
-      {
-        settingValue = "en-US";
-        break;
-      }
-      case Util::Locale::CountryISO2::CA:
-      {
-        settingValue = "en-CA";
-        break;
-      }
-      case Util::Locale::CountryISO2::GB:
-      {
-        settingValue = "en-GB";
-        break;
-      }
-      case Util::Locale::CountryISO2::AU:
-      {
-        settingValue = "en-AU";
-        break;
-      }
-      default:
-        break;
-    }
+    const std::string settingValue = LocaleToString( locale );
     
     // Only notify the client if the user selected a country we expect (i.e., those listed in chewie)
     if( !settingValue.empty() ) {
@@ -906,6 +931,12 @@ std::vector<std::shared_ptr<std::istream>> AlexaImpl::GetConfigs() const
     return configJsonStreams;
   }
   
+  const Util::Locale* locale = _context->GetLocale();
+  std::string localeStr = kDefaultLocale;
+  if( (locale != nullptr) && AlexaLocaleEnabled(*locale) ) {
+    localeStr = LocaleToString( *locale );
+  }
+  
   std::string configJson = dataLoader->GetAlexaConfig();
   auto* osState = OSState::getInstance();
   const uint32_t esn = osState->GetSerialNumber();
@@ -914,12 +945,14 @@ std::vector<std::shared_ptr<std::istream>> AlexaImpl::GetConfigs() const
   const std::string pathToPersistent = _alexaPersistentFolder;
   Util::StringReplace( configJson, "<ALEXA_STORAGE_PATH>", pathToPersistent );
   
+  Util::StringReplace( configJson, "<INITIAL_LOCALE>", localeStr );
+  
   configJsonStreams.push_back( std::shared_ptr<std::istringstream>( new std::istringstream( configJson ) ) );
   return configJsonStreams;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaImpl::OnDirective(const std::string& directive, const std::string& payload)
+void AlexaImpl::OnDirective(const std::string& directive, const std::string& payload, const std::string& fullUnparsed)
 {
   if( directive == "Play" || directive == "Speak" || directive == "SetAlert" || directive == "DeleteAlert" ) {
     _lastPlayDirective_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -928,6 +961,8 @@ void AlexaImpl::OnDirective(const std::string& directive, const std::string& pay
   // "StopCapture" might be it. needs further investigation to see how it overlaps with music audio
   
   if( kLogAlexaDirectives ) {
+    LOG_INFO( "AlexaImpl.OnDirective.Full", "%s", fullUnparsed.c_str() );
+    
     Json::Value json;
     Json::Reader reader;
     const float bsTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -937,6 +972,16 @@ void AlexaImpl::OnDirective(const std::string& directive, const std::string& pay
       Util::FileUtils::WriteFile( _alexaCacheFolder + kDirectivesFile,
                                   std::to_string(bsTime) + " " + directive + ": " + json.toStyledString(),
                                   append );
+      
+      // send to webviz, if a client is connected
+      auto* webService = _context->GetWebService();
+      static const std::string kWebVizModuleName = "alexa";
+      if( (webService != nullptr) && webService->IsWebVizClientSubscribed( kWebVizModuleName ) ) {
+        Json::Value data;
+        data["type"] = "directive";
+        data["data"] = json;
+        webService->SendToWebViz( kWebVizModuleName, data );
+      }
     }
   }
 }
@@ -1153,6 +1198,9 @@ void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserver
   DASMSG(send_complete, "alexa.response_to_request", "SDK responded to a sent message");
   DASMSG_SET(s1, MessageStatusToString(status).c_str(), "AVS-provided message status (e.g. SUCCESS, TIMEDOUT, ...)");
   DASMSG_SEND();
+  
+  // for most cases, only consider a non-success as an error if the user interacted recently, because sometimes
+  // the sdk sends things behind the scenes, and we dont want the robot to suddenly start speaking.
 
   using Status = avsCommon::sdkInterfaces::MessageRequestObserverInterface::Status;
   switch( status ) {
@@ -1170,15 +1218,18 @@ void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserver
       if( _internetConnected ) {
         OnInternetConnectionChanged(false);
       }
-
-      SetNetworkConnectionError();
+      if( InteractedRecently() ) {
+        SetNetworkConnectionError();
+      }
       break;
     }
 
     case Status::CANCELED: // The send failed due to server canceling it before the transmission completed.
     {
       // may have lost connection, or may be a server-side issue (I think...)
-      SetNetworkConnectionError();
+      if( InteractedRecently() ) {
+        SetNetworkConnectionError();
+      }
       break;
     }
 
@@ -1192,14 +1243,18 @@ void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserver
     case Status::SERVER_OTHER_ERROR: // The send failed due to unknown server error.
     {
       // sending the last request ended in failure. show the error face and play audio
-      SetNetworkError( AlexaNetworkErrorType::HavingTroubleThinking );
+      if( InteractedRecently() ) {
+        SetNetworkError( AlexaNetworkErrorType::HavingTroubleThinking );
+      }
       break;
     }
       
     case Status::INVALID_AUTH: // The access credentials provided to ACL were invalid.
     {
       // sending the last request failed because auth was revoke. show the error face and play audio
-      SetNetworkError( AlexaNetworkErrorType::AuthRevoked );
+      if( InteractedRecently() ) {
+        SetNetworkError( AlexaNetworkErrorType::AuthRevoked );
+      }
       break;
     }
   }
@@ -1343,6 +1398,9 @@ void AlexaImpl::SetAuthState( AlexaAuthState state, const std::string& url, cons
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::NotifyOfTapToTalk()
 {
+  using namespace std::chrono;
+  _lastInteractionTime_ms = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
+  
   if( _client != nullptr ) {
     if( !_isTapOccurring ) {
       _client->StopForegroundActivity();
@@ -1367,6 +1425,8 @@ void AlexaImpl::NotifyOfTapToTalk()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaImpl::NotifyOfWakeWord( uint64_t fromIndex, uint64_t toIndex )
 {
+  using namespace std::chrono;
+  _lastInteractionTime_ms = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
   
   if( !_client->IsAVSConnected() ) {
     // run SetNetworkConnectionError on main thread
@@ -1508,6 +1568,15 @@ void AlexaImpl::SetNetworkError( AlexaNetworkErrorType errorType )
   if( _onNetworkError != nullptr ) {
     _onNetworkError( errorType );
   }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool AlexaImpl::InteractedRecently() const
+{
+  using namespace std::chrono;
+  const uint64_t currTime = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
+  const bool recent = (currTime <= kMillisConsideredRecentInteraction + _lastInteractionTime_ms);
+  return recent;
 }
   
 #if ANKI_DEV_CHEATS

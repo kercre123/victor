@@ -25,8 +25,6 @@ class ICompoundAction;
 class BehaviorReactToCliff : public ICozmoBehavior
 {
 private:
-  using super = ICozmoBehavior;
-  
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorReactToCliff(const Json::Value& config);
@@ -50,9 +48,7 @@ protected:
   
   virtual void BehaviorUpdate() override;
 
-private:
-  using base = ICozmoBehavior;
-  
+private:  
   void TransitionToWaitForNoMotion();
   void TransitionToStuckOnEdge();
   void TransitionToPlayingCliffReaction();

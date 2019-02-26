@@ -24,6 +24,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorStack.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/dispatch/iBehaviorDispatcher.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -31,6 +33,7 @@
 #include "test/engine/behaviorComponent/testBehaviorFramework.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/boundedWhile.h"
+
 
 
 using namespace Anki::Vector;
@@ -157,6 +160,176 @@ TEST(DelegationTree, DumpBehaviorTreeBranchesToFile)
   auto res = Anki::Util::FileUtils::WriteFile( outFilename, ss.str() );	
   EXPECT_EQ(res, true) << "Error writing file " << outFilename;	
 }
+
+namespace {
+  struct DelegationTreeNode {
+    IBehavior* behavior;
+    std::vector< std::shared_ptr<DelegationTreeNode> > children;
+    DelegationTreeNode* parent;
+
+    std::string indentString;
+    std::string entryString;
+    std::string continueString;
+
+    DelegationTreeNode(IBehavior* behavior,
+        std::vector< std::shared_ptr<DelegationTreeNode> > children,
+        DelegationTreeNode* parent = nullptr)
+    : indentString("  "),
+      entryString("* "),
+      continueString("| ")
+    {
+      this->behavior = behavior;
+      this->children = children;
+      this->parent = parent;
+    }
+
+    void FormatAsList(std::stringstream &ss, std::string prefix = "", bool isLastOfDepth = true)
+    {
+      // depth-first through the tree, maintaining a tab depth, output behavior names
+      // note that this will be called recursively!
+
+      std::string outID = behavior->GetDebugLabel(); // TODO: can trim unique-making digits as above if desired
+      // let's see if we can output the behavior's class name.
+      // IBehavior doesn't let us do that, but ICozmoBehavior does...
+      // this is dangerous, of course, but in practice we can be reasonably sure we have ICozmoBehaviors
+      ICozmoBehavior* cozmoBehavior = static_cast<ICozmoBehavior*>(behavior);
+      BehaviorClass behaviorClass = cozmoBehavior->GetClass();
+      std::string behaviorClassStr = BehaviorTypesWrapper::BehaviorClassToString(behaviorClass);
+      ss << prefix << entryString << outID << " : " << behaviorClassStr << "\n";
+      // compute ongoing prefix
+      // if no children, can stop now
+      if (children.size() < 1) {
+        return;
+      }
+      std::string newPrefix;
+      // if is last of depth, we don't use continuation
+      // TODO: is there a clever way to do a "min rows for connector" like Brad does is the Python version?
+      // (the brute force version is to do a pass through the tree to determine the size of each node)
+      // number of children as cheap proxy for size
+      if (isLastOfDepth || (children.size() < 4) ) {
+        newPrefix = prefix + indentString;
+      } else {
+        newPrefix = prefix + continueString;
+      }
+      for (int i = 0; i < children.size()-1; i++) {
+        children[i]->FormatAsList(ss, newPrefix, false);
+      }
+      // for the last one we tell it it's last of depth, so it doesn't do a continuation marker
+      children[children.size() - 1]->FormatAsList(ss, newPrefix, true);
+    }
+
+    void FormatAsHTML(std::stringstream &ss)
+    {
+      // depth-first through the tree, called recursively
+      std::string outID = behavior->GetDebugLabel(); // TODO: can trim unique-making digits as above if desired
+      // let's see if we can output the behavior's class name.
+      // IBehavior doesn't let us do that, but ICozmoBehavior does...
+      // this is dangerous, of course, but in practice we can be reasonably sure we have ICozmoBehaviors
+      ICozmoBehavior* cozmoBehavior = static_cast<ICozmoBehavior*>(behavior);
+      BehaviorClass behaviorClass = cozmoBehavior->GetClass();
+      std::string behaviorClassStr = BehaviorTypesWrapper::BehaviorClassToString(behaviorClass);
+      std::string line = outID + " : " + behaviorClassStr;
+      if (children.size() < 1) {
+        // just a line if this is a leaf
+        ss << line << "\n";
+      } else {
+        // otherwise a details structure, with line as summary and list of children in details
+        ss << "<details>\n";
+        ss << "<summary>" << line << "</summary>\n";
+        ss << "<ul>\n";
+        // recurse
+        for (const auto c : children) {
+          ss << "<li>\n";
+          c->FormatAsHTML(ss);
+          ss << "</li>\n";
+        }
+        ss << "</ul>\n";
+        ss << "</details>\n";
+      }
+    }
+  };
+}
+
+std::shared_ptr<DelegationTreeNode> DelegationTreeFromMap(
+    std::map<IBehavior*,std::set<IBehavior*>> delegateMap,
+    IBehavior* base,
+    DelegationTreeNode* parent = nullptr)
+{
+  std::shared_ptr<DelegationTreeNode> root(new DelegationTreeNode(base,
+                                            std::vector< std::shared_ptr<DelegationTreeNode> >(),
+                                            parent) );
+
+  // figure out if this is a dispatcher that needs its delegates in the correct order
+  // behaviorContainter's FindBehaviorByIDAndDownCast only works for the ultimate class, I believe--can't check in the
+  // middle of the class hierarchy. We'll try dynamic_cast
+  IBehaviorDispatcher* base_dispatcher = dynamic_cast<IBehaviorDispatcher*>(base);
+  // check if that worked
+  if (base_dispatcher != nullptr) {
+    // this is a dispatcher
+
+    // NOTE this method is protected; the "#define protected public" hack at the top of this file is necessary for this to work
+    std::vector<ICozmoBehaviorPtr> delegates_vcp = base_dispatcher->GetAllPossibleDispatches();
+
+    for (ICozmoBehaviorPtr b : delegates_vcp) {
+      root->children.push_back( DelegationTreeFromMap(delegateMap, b.get(), root.get()) );
+    }
+  } else {
+    // this is not a dispatcher
+    std::set< IBehavior* > delegates_sbs;
+    base->GetAllDelegates(delegates_sbs);
+    for (IBehavior* b : delegates_sbs){
+      root->children.push_back( DelegationTreeFromMap(delegateMap, b, root.get()) );
+    }
+  }
+
+
+  return root;
+}
+
+TEST(DelegationTree, CreateBehaviorTreeHTML)
+{
+  // This test outputs an HTML representation of the Behavior Tree, with type annotations and correct
+  // ordering for priority dispatchers and the like.
+
+  std::string outFilename;
+  char* szFilename = getenv("ANKI_TEST_DELEGATION_TREE_HTML");
+  if( szFilename != nullptr ) {
+    outFilename = szFilename;
+  } else {
+    return;
+  }
+
+  // Get the base behavior for default stack
+  TestBehaviorFramework tbf;
+  tbf.InitializeStandardBehaviorComponent();
+  tbf.SetDefaultBaseBehavior();
+  auto currentStack = tbf.GetCurrentBehaviorStack();
+  DEV_ASSERT(1 == currentStack.size(), "CanStackOccurDuringFreeplay.SizeMismatch");
+  IBehavior* base = currentStack.front();
+
+  // Get ready for a full tree walk to compare stacks
+  std::map<IBehavior*,std::set<IBehavior*>> delegateMap;
+  std::set<IBehavior*> tmpDelegates;
+  base->GetAllDelegates(tmpDelegates);
+  delegateMap.insert(std::make_pair(base, tmpDelegates));
+
+  tbf.FullTreeWalk(delegateMap);
+
+  // after the full tree walk, delegate map will be populated. just process that.
+  std::shared_ptr<DelegationTreeNode> delegationTreePtr = DelegationTreeFromMap(delegateMap, base, nullptr);
+
+  // output
+  std::stringstream ss;
+  // front matter for HTML
+  ss << "<!DOCTYPE html>\n<html>\n<body>\n<ul>\n<li>\n";
+  delegationTreePtr->FormatAsHTML(ss);
+  // back matter for HTML
+  ss << "</li>\n</ul>\n</body>\n</html>\n";
+
+  auto res = Anki::Util::FileUtils::WriteFile( outFilename, ss.str() );
+  EXPECT_EQ(res, true) << "Error writing file " << outFilename;
+}
+
 
 TEST(DelegationTree, CheckActiveFeatures)
 {

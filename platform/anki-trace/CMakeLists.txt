@@ -1,9 +1,11 @@
+#
+# platform/anki-trace/CMakeLists.txt
+#
+include (anki_build_cxx)
+
 if(USE_ANKITRACE AND VICOS)
-  set(SRC
-    anki_ust.c)
 
-  add_library(ankitrace ${SRC})
-
+  anki_build_cxx_library(ankitrace ${ANKI_SRCLIST_DIR})
 
   target_include_directories(ankitrace
     PUBLIC

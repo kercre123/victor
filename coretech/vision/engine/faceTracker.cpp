@@ -61,9 +61,10 @@ namespace Vision {
   Result FaceTracker::Update(const Vision::Image&        frameOrig,
                              const float                 cropFactor,
                              std::list<TrackedFace>&     faces,
-                             std::list<UpdatedFaceID>&   updatedIDs)
+                             std::list<UpdatedFaceID>&   updatedIDs,
+                             DebugImageList<CompressedImage>& debugImages)
   {
-    return _pImpl->Update(frameOrig, cropFactor, faces, updatedIDs);
+    return _pImpl->Update(frameOrig, cropFactor, faces, updatedIDs, debugImages);
   }
   
   void FaceTracker::AddAllowedTrackedFace(const FaceID_t faceID)
@@ -97,6 +98,16 @@ namespace Vision {
   bool FaceTracker::IsRecognitionSupported()
   {
     return Impl::IsRecognitionSupported();
+  }
+  
+  void FaceTracker::EnableRecognition(bool enable)
+  {
+    _pImpl->EnableRecognition(enable);
+  }
+  
+  bool FaceTracker::IsRecognitionEnabled() const
+  {
+    return _pImpl->IsRecognitionEnabled();
   }
   
   float FaceTracker::GetMinEyeDistanceForEnrollment()
@@ -175,7 +186,6 @@ namespace Vision {
     _pImpl->EnableBlinkDetection(enable);
   }
   
-  
   Result FaceTracker::GetSerializedData(std::vector<u8>& albumData,
                                         std::vector<u8>& enrollData)
   {
@@ -188,6 +198,47 @@ namespace Vision {
   {
     return _pImpl->SetSerializedData(albumData, enrollData, loadedFaces);
   }
+  
+#if ANKI_DEVELOPER_CODE
+  Result FaceTracker::DevAddFaceToAlbum(const Image& img, const TrackedFace& face, int albumEntry)
+  {
+    return _pImpl->DevAddFaceToAlbum(img, face, albumEntry);
+  }
+  
+  Result FaceTracker::DevFindFaceInAlbum(const Image& img, const TrackedFace& face,
+                                         int& albumEntry, float& score) const
+  {
+    return _pImpl->DevFindFaceInAlbum(img, face, albumEntry, score);
+  }
+  
+  Result FaceTracker::DevFindFaceInAlbum(const Image& img, const TrackedFace& face, const int maxMatches,
+                                         std::vector<std::pair<int, float>>& matches) const
+  {
+    return _pImpl->DevFindFaceInAlbum(img, face, maxMatches, matches);
+  }
+  
+  float FaceTracker::DevComputePairwiseMatchScore(FaceID_t faceID1, FaceID_t faceID2) const
+  {
+    return _pImpl->DevComputePairwiseMatchScore(faceID1, faceID2);
+  }
+  
+  float FaceTracker::DevComputePairwiseMatchScore(int faceID1, const Image& img2, const TrackedFace& face2) const
+  {
+    return _pImpl->DevComputePairwiseMatchScore(faceID1, img2, face2);
+  }
+#endif /* ANKI_DEVELOPER_CODE */
+
+#if ANKI_DEV_CHEATS
+  void FaceTracker::SaveAllRecognitionImages(const std::string& imagePathPrefix)
+  {
+    _pImpl->SaveAllRecognitionImages(imagePathPrefix);
+  }
+
+  void FaceTracker::DeleteAllRecognitionImages()
+  {
+    _pImpl->DeleteAllRecognitionImages();
+  }
+#endif // ANKI_DEV_CHEATS
   
   /*
   void FaceTracker::EnableDisplay(bool enabled) {

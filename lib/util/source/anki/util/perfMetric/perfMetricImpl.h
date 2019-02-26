@@ -159,7 +159,7 @@ void PerfMetric::UpdateWaitMode()
 void PerfMetric::Status(std::string* resultStr) const
 {
   *resultStr += _isRecording ? "Recording" : "Stopped";
-  const int numFrames  = _bufferFilled ? kNumFramesInBuffer : _nextFrameIndex;
+  const int numFrames = _bufferFilled ? kNumFramesInBuffer : _nextFrameIndex;
   *resultStr += ",";
   *resultStr += std::to_string(numFrames);
   *resultStr += "\n";
@@ -234,7 +234,7 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
   }
 
   int frameBufferIndex = _bufferFilled ? _nextFrameIndex : 0;
-  const int numFrames  = _bufferFilled ? kNumFramesInBuffer : _nextFrameIndex;
+  const int numFrames = _bufferFilled ? kNumFramesInBuffer : _nextFrameIndex;
   float timeAtStartOfFrame = _firstFrameTime;
   Util::Stats::StatsAccumulator accTickDuration;
   Util::Stats::StatsAccumulator accTickTotal;

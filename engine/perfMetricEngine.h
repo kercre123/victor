@@ -84,6 +84,8 @@ private:
   Util::Stats::StatsAccumulator _accCPUFreq;
 };
 
+static const int kNumFramesInBuffer = 1000;
+  
 } // namespace Vector
 } // namespace Anki
 

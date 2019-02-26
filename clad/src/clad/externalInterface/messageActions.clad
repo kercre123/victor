@@ -6,7 +6,6 @@
 #include "clad/audio/audioSwitchTypes.clad"
 #include "clad/types/actionTypes.clad"
 #include "clad/types/visionModes.clad"
-#include "clad/types/objectFamilies.clad"
 #include "clad/types/pathMotionProfile.clad"
 #include "clad/types/proceduralFaceTypes.clad"
 #include "clad/types/animationTrigger.clad"

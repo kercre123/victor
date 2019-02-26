@@ -1,6 +1,7 @@
 package logcollector
 
 import (
+	"anki/token/identity"
 	"context"
 	"fmt"
 	"io/ioutil"
@@ -45,6 +46,10 @@ func (t TestTokener) GetStsCredentials() (*ac.Credentials, error) {
 		AccessKeyID:     accessKey,
 		SecretAccessKey: secretKey,
 	}), nil
+}
+
+func (t TestTokener) IdentityProvider() identity.Provider {
+	return nil
 }
 
 func newTestLogCollector(endpoint, bucketName string) (*logCollector, error) {

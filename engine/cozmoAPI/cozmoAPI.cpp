@@ -4,7 +4,7 @@
  * Author: Lee Crippen
  * Created: 08/19/15
  *
- * Description: Point of entry for anything needing to interact with Cozmo.
+ * Description: Point of entry for anything needing to interact with Vector.
  *
  * Copyright: Anki, Inc. 2015
  *
@@ -13,19 +13,13 @@
 
 #include "engine/cozmoAPI/cozmoAPI.h"
 #include "engine/cozmoEngine.h"
-#include "engine/viz/vizManager.h"
-#include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "clad/externalInterface/messageShared.h"
-#include "platform/common/diagnosticDefines.h"
 #include "platform/robotLogUploader/robotLogUploader.h"
 #include "util/ankiLab/ankiLabDef.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
-#include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
-#include "util/threading/threadPriority.h"
-#include "platform/anki-trace/tracing.h"
-#include <chrono>
+
+#define LOG_CHANNEL "CozmoAPI"
 
 #if REMOTE_CONSOLE_ENABLED
 namespace {
@@ -59,61 +53,22 @@ namespace Vector {
 #pragma mark --- CozmoAPI Methods ---
 
 #if ANKI_CPU_PROFILER_ENABLED
-  CONSOLE_VAR_ENUM(u8, kCozmoEngineWebots_Logging, ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
   CONSOLE_VAR_ENUM(u8, kCozmoEngine_Logging,       ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
 #endif
 
-bool CozmoAPI::StartRun(Util::Data::DataPlatform* dataPlatform, const Json::Value& config)
-{
-  // If there's already a thread running, we'll kill and restart
-  if (_cozmoRunnerThread.joinable())
-  {
-    Clear();
-  }
-  else if (_cozmoRunner)
-  {
-    PRINT_NAMED_ERROR("CozmoAPI.StartRun", "Non-threaded Cozmo already created!");
-    return Result::RESULT_FAIL;
-  }
-
-  // Init the InstanceRunner
-  bool gameInitResult = false;
-  _cozmoRunner.reset(new CozmoInstanceRunner(dataPlatform, config, gameInitResult));
-
-  if (!gameInitResult)
-  {
-    PRINT_NAMED_ERROR("CozmoAPI.StartRun", "Error initializing new api instance!");
-    return Result::RESULT_FAIL;
-  }
-
-  // Start the thread
-  _cozmoRunnerThread = std::thread(&CozmoInstanceRunner::Run, _cozmoRunner.get());
-
-  return gameInitResult;
-}
-
-bool CozmoAPI::IsRunning() const
-{
-  if (_cozmoRunner) {
-    return _cozmoRunner->IsRunning();
-  }
-  return false;
-}
 
 bool CozmoAPI::Start(Util::Data::DataPlatform* dataPlatform, const Json::Value& config)
 {
-  // If we have a joinable thread already, we can't start
-  if (_cozmoRunnerThread.joinable())
-  {
-    PRINT_NAMED_ERROR("CozmoAPI.Start", "Cozmo already running in thread!");
-    return Result::RESULT_FAIL;
-  }
-
-  // Game init happens in CozmoInstanceRunner construction, so we get the result
+  // Game init happens in EngineInstanceRunner construction, so we get the result
   // If we already had an instance, kill it and start again
   bool gameInitResult = false;
-  _cozmoRunner.reset();
-  _cozmoRunner.reset(new CozmoInstanceRunner(dataPlatform, config, gameInitResult));
+  _engineRunner.reset();
+  _engineRunner.reset(new EngineInstanceRunner(dataPlatform, config, gameInitResult));
+
+  if (!gameInitResult)
+  {
+    LOG_ERROR("CozmoAPI.Start", "Error initializing new api instance!");
+  }
 
   return gameInitResult;
 }
@@ -124,24 +79,17 @@ ANKI_CPU_PROFILER_ENABLED_ONLY(const float kMaxDesiredEngineDuration = 60.0f); /
 
 bool CozmoAPI::Update(const BaseStationTime_t currentTime_nanosec)
 {
-  // If we have a joinable thread already, shouldn't be updating
-  if (_cozmoRunnerThread.joinable())
+  if (!_engineRunner)
   {
-    PRINT_NAMED_ERROR("CozmoAPI.Update", "Cozmo running in thread - can not be externally updated!");
-    return false;
-  }
-
-  if (!_cozmoRunner)
-  {
-    PRINT_NAMED_ERROR("CozmoAPI.Update", "Cozmo has not been started!");
+    LOG_ERROR("CozmoAPI.Update", "Engine has not been started!");
     return false;
   }
 
   // Replace Util::CpuThreadProfiler::kLogFrequencyNever with a small value to output logging,
   // can be used with Chrome Tracing format
-  ANKI_CPU_TICK("CozmoEngineWebots", kMaxDesiredEngineDuration, Util::CpuProfiler::CpuProfilerLoggingTime(kCozmoEngineWebots_Logging));
+  ANKI_CPU_TICK("CozmoEngine", kMaxDesiredEngineDuration, Util::CpuProfiler::CpuProfilerLoggingTime(kCozmoEngine_Logging));
 
-  return _cozmoRunner->Update(currentTime_nanosec);
+  return _engineRunner->Update(currentTime_nanosec);
 }
 
 uint32_t CozmoAPI::ActivateExperiment(const uint8_t* requestBuffer, size_t requestLen,
@@ -159,13 +107,13 @@ uint32_t CozmoAPI::ActivateExperiment(const uint8_t* requestBuffer, size_t reque
   ASSERT_NAMED((nullptr != responseBuffer) && (responseLen >= minResponseBufferLen),
                "Must provide a valid responseBuffer/responseBufferLen to activate experiment");
 
-  if (!_cozmoRunner) {
+  if (!_engineRunner) {
     return 0;
   }
 
-  _cozmoRunner->SyncWithEngineUpdate([this, &res, requestBuffer, requestLen] {
+  _engineRunner->SyncWithEngineUpdate([this, &res, requestBuffer, requestLen] {
 
-    auto* engine = _cozmoRunner->GetEngine();
+    auto* engine = _engineRunner->GetEngine();
     if (engine == nullptr) {
       return;
     }
@@ -185,7 +133,7 @@ void CozmoAPI::RegisterEngineTickPerformance(const float tickDuration_ms,
                                              const float sleepDurationIntended_ms,
                                              const float sleepDurationActual_ms) const
 {
-  _cozmoRunner->GetEngine()->RegisterEngineTickPerformance(tickDuration_ms,
+  _engineRunner->GetEngine()->RegisterEngineTickPerformance(tickDuration_ms,
                                                            tickFrequency_ms,
                                                            sleepDurationIntended_ms,
                                                            sleepDurationActual_ms);
@@ -193,165 +141,59 @@ void CozmoAPI::RegisterEngineTickPerformance(const float tickDuration_ms,
 
 CozmoAPI::~CozmoAPI()
 {
-  Clear();
-}
-
-void CozmoAPI::Clear()
-{
-  // If there is a thread running, kill it first
-  if (_cozmoRunnerThread.joinable())
+  if (_engineRunner)
   {
-    if (_cozmoRunner)
-    {
-      _cozmoRunner->Stop();
-    }
-    else
-    {
-      PRINT_NAMED_ERROR("CozmoAPI.Clear", "Running thread has null object... what?");
-    }
-    _cozmoRunnerThread.join();
-    _cozmoRunnerThread = std::thread();
-
-    // We are now "owning thread" for engine updates
-    if (_cozmoRunner)
-    {
-      _cozmoRunner->SetEngineThread();
-    }
+    // We are now "owning thread" for engine message sending; this is here in case
+    // messages are sent during destruction
+    _engineRunner->SetEngineThread();
+    _engineRunner.reset();
   }
-
-  _cozmoRunner.reset();
 }
 
-#pragma mark --- CozmoInstanceRunner Methods ---
+#pragma mark --- EngineInstanceRunner Methods ---
 
-CozmoAPI::CozmoInstanceRunner::CozmoInstanceRunner(Util::Data::DataPlatform* dataPlatform,
+CozmoAPI::EngineInstanceRunner::EngineInstanceRunner(Util::Data::DataPlatform* dataPlatform,
                                                    const Json::Value& config, bool& initResult)
-: _cozmoInstance(new CozmoEngine(dataPlatform))
-, _isRunning(true)
+: _engineInstance(new CozmoEngine(dataPlatform))
 {
-  Result initResultReturn = _cozmoInstance->Init(config);
+  const Result initResultReturn = _engineInstance->Init(config);
   if (initResultReturn != RESULT_OK) {
-    PRINT_NAMED_ERROR("CozmoAPI.CozmoInstanceRunner", "cozmo init failed with error %d", initResultReturn);
+    LOG_ERROR("CozmoAPI.EngineInstanceRunner", "cozmo init failed with error %d", initResultReturn);
   }
   initResult = initResultReturn == RESULT_OK;
 }
 
 // Destructor must exist in cpp (even though it's empty) in order for CozmoGame unique_ptr to be defined and deletable
-CozmoAPI::CozmoInstanceRunner::~CozmoInstanceRunner()
+CozmoAPI::EngineInstanceRunner::~EngineInstanceRunner()
 {
 }
 
-void CozmoAPI::CozmoInstanceRunner::Run()
-{
-  using namespace std::chrono;
-  using TimeClock = steady_clock;
 
-  const auto runStart = TimeClock::now();
-  auto prevTickStart  = runStart;
-  auto tickStart      = runStart;
-
-  // Set the target time for the end of the first frame
-  auto targetEndFrameTime = runStart + (microseconds)(BS_TIME_STEP_MICROSECONDS);
-  Anki::Util::SetThreadName(pthread_self(), "CozmoRunner");
-
-  while(_isRunning)
-  {
-    {
-      ANKI_CPU_TICK("CozmoEngine", kMaxDesiredEngineDuration, Util::CpuProfiler::CpuProfilerLoggingTime(kCozmoEngine_Logging));
-
-      const duration<double> curTimeSeconds = tickStart - runStart;
-      const double curTimeNanoseconds = Util::SecToNanoSec(curTimeSeconds.count());
-
-      const bool tickSuccess = Update(Util::numeric_cast<BaseStationTime_t>(curTimeNanoseconds));
-      if (!tickSuccess)
-      {
-        // If we fail to update properly, stop running
-        Stop();
-      }
-    }
-
-    const auto tickAfterEngineExecution = TimeClock::now();
-    const auto remaining_us = duration_cast<microseconds>(targetEndFrameTime - tickAfterEngineExecution);
-    const auto tickDuration_us = duration_cast<microseconds>(tickAfterEngineExecution - tickStart);
-
-    tracepoint(anki_ust, vic_engine_loop_duration, tickDuration_us.count());
-#if ENABLE_TICK_TIME_WARNINGS
-    // Only complain if we're more than 10ms behind
-    if (remaining_us < microseconds(-10000))
-    {
-      PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.overtime", "Update() (%dms max) is behind by %.3fms",
-                          BS_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
-    }
-#endif
-    // Now we ALWAYS sleep, but if we're overtime, we 'sleep zero' which still
-    // allows other threads to run
-    static const auto minimumSleepTime_us = microseconds((long)0);
-    const auto sleepTime_us = std::max(minimumSleepTime_us, remaining_us);
-    {
-      ANKI_CPU_PROFILE("CozmoApi.Runner.Sleep");
-
-      std::this_thread::sleep_for(sleepTime_us);
-    }
-
-    // Set the target end time for the next frame
-    targetEndFrameTime += (microseconds)(BS_TIME_STEP_MICROSECONDS);
-
-    // See if we've fallen very far behind (this happens e.g. after a 5-second blocking
-    // load operation); if so, compensate by catching the target frame end time up somewhat.
-    // This is so that we don't spend the next SEVERAL frames catching up.
-    const auto timeBehind_us = -remaining_us;
-    static const auto kusPerFrame = ((microseconds)(BS_TIME_STEP_MICROSECONDS)).count();
-    static const int kTooFarBehindFramesThreshold = 2;
-    static const auto kTooFarBehindThreshold = (microseconds)(kTooFarBehindFramesThreshold * kusPerFrame);
-    if (timeBehind_us >= kTooFarBehindThreshold)
-    {
-      const int framesBehind = (int)(timeBehind_us.count() / kusPerFrame);
-      const auto forwardJumpDuration = kusPerFrame * framesBehind;
-      targetEndFrameTime += (microseconds)forwardJumpDuration;
-#if ENABLE_TICK_TIME_WARNINGS
-      PRINT_NAMED_WARNING("CozmoAPI.CozmoInstanceRunner.catchup",
-                          "Update was too far behind so moving target end frame time forward by an additional %.3fms",
-                          (float)(forwardJumpDuration * 0.001f));
-#endif
-    }
-    tickStart = TimeClock::now();
-
-    const auto timeSinceLastTick_us = duration_cast<microseconds>(tickStart - prevTickStart);
-    prevTickStart = tickStart;
-
-    const auto sleepTimeActual_us = duration_cast<microseconds>(tickStart - tickAfterEngineExecution);
-    GetEngine()->RegisterEngineTickPerformance(tickDuration_us.count() * 0.001f,
-                                               timeSinceLastTick_us.count() * 0.001f,
-                                               sleepTime_us.count() * 0.001f,
-                                               sleepTimeActual_us.count() * 0.001f);
-  }
-}
-
-bool CozmoAPI::CozmoInstanceRunner::Update(const BaseStationTime_t currentTime_nanosec)
+bool CozmoAPI::EngineInstanceRunner::Update(const BaseStationTime_t currentTime_nanosec)
 {
   Result updateResult;
   {
     std::lock_guard<std::mutex> lock{_updateMutex};
-    updateResult = _cozmoInstance->Update(currentTime_nanosec);
+    updateResult = _engineInstance->Update(currentTime_nanosec);
   }
   if (updateResult != RESULT_OK) {
-    PRINT_NAMED_ERROR("CozmoAPI.CozmoInstanceRunner.Update", "Cozmo update failed with error %d", updateResult);
+    LOG_ERROR("CozmoAPI.EngineInstanceRunner.Update", "Cozmo update failed with error %d", updateResult);
   }
   return updateResult == RESULT_OK;
 }
 
-void CozmoAPI::CozmoInstanceRunner::SyncWithEngineUpdate(const std::function<void ()>& func) const
+void CozmoAPI::EngineInstanceRunner::SyncWithEngineUpdate(const std::function<void ()>& func) const
 {
   std::lock_guard<std::mutex> lock{_updateMutex};
   func();
 }
 
-void CozmoAPI::CozmoInstanceRunner::SetEngineThread()
+void CozmoAPI::EngineInstanceRunner::SetEngineThread()
 {
   // Instance is valid for lifetime of instance runner
-  DEV_ASSERT(_cozmoInstance, "CozmoAPI.CozmoInstanceRunner.InvalidCozmoInstance");
+  DEV_ASSERT(_engineInstance, "CozmoAPI.EngineInstanceRunner.InvalidEngineInstance");
   std::lock_guard<std::mutex> lock{_updateMutex};
-  _cozmoInstance->SetEngineThread();
+  _engineInstance->SetEngineThread();
 }
 
 } // namespace Vector

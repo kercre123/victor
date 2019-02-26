@@ -18,7 +18,7 @@ namespace Anki {
 namespace Vector {
   
   enum class TestState {
-    MoveHead,            // Move head so it can see block
+    Init,                // Request cube connection
     WaitForCubeConnections,      // Wait for all 2 cubes to be connected
     InitialLocalization, // Localize to Object A
     NotifyKidnap,        // Move robot to new position and delocalize
@@ -43,7 +43,7 @@ namespace Vector {
     
     virtual s32 UpdateSimInternal() override;
     
-    TestState _testState = TestState::MoveHead;
+    TestState _testState = TestState::Init;
     
     ExternalInterface::RobotState _robotState;
     
@@ -72,18 +72,22 @@ namespace Vector {
   s32 CST_RobotKidnapping::UpdateSimInternal()
   {
     switch (_testState) {
-      case TestState::MoveHead:
+      case TestState::Init:
       {
         // TakeScreenshotsAtInterval("Robot Kidnapping", 1.f);
 
-        SendMoveHeadToAngle(DEG_TO_RAD(-5), DEG_TO_RAD(360), DEG_TO_RAD(1000));
+        // Request a cube connection so that we will localize to the cube
+        SendForgetPreferredCube();
+        SendConnectToCube();
+        
         SET_TEST_STATE(WaitForCubeConnections);
         break;
       }
         
       case TestState::WaitForCubeConnections:
       {
-        IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectsConnected == 2, 5) {
+        IF_CONDITION_WITH_TIMEOUT_ASSERT(_numObjectsConnected == 1, 5) {
+          SendMoveHeadToAngle(DEG_TO_RAD(-5), DEG_TO_RAD(360), DEG_TO_RAD(1000));
           SET_TEST_STATE(InitialLocalization);
         }
         break;
@@ -159,7 +163,7 @@ namespace Vector {
                      "Failed to get second object's pose.");
           
           const Pose3d poseA_actual(0, Z_AXIS_3D(), {150.f, 0.f, 22.f}, poseA.GetParent());
-          const Pose3d poseB_actual(0, Z_AXIS_3D(), {300.f, -150.f, 22.f}, poseB.GetParent());
+          const Pose3d poseB_actual(0, Z_AXIS_3D(), {300.f, -150.f, 0.f}, poseB.GetParent());
           CST_ASSERT(poseA.IsSameAs(poseA_actual, _poseDistThresh_mm, _poseAngleThresh),
                      "First object's pose incorrect after re-localization.");
           

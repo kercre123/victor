@@ -8,8 +8,18 @@ services:
     build: .
     depends_on:
       - redis
+      # - wavefront
 
   redis:
     image: "redis:alpine"
     ports:
       - "6379:6379"
+
+  # wavefront:
+  #   image: "wavefronthq/proxy"
+  #   ports:
+  #     - "2878:2878"
+  #   environment:
+  #     - WAVEFRONT_URL="https://metrics.wavefront.com/api"
+  #     - WAVEFRONT_TOKEN="DUMMY_WF_URL_API_TOKEN"
+  #     - JAVA_HEAP_USAGE=1g
