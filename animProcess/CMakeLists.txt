@@ -20,6 +20,8 @@ set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
+option(ALEXA_ACOUSTIC_TEST "Enable alexa acoustic testing (no movement mode)" OFF)
+
 if (VICOS)
     set(PLATFORM_LIBS
         log
@@ -78,6 +80,7 @@ anki_build_strip(TARGET victor_anim)
 target_compile_definitions(victor_anim
   PRIVATE
   ${PLATFORM_COMPILE_DEFS}
+  ALEXA_ACOUSTIC_TEST=$<BOOL:${ALEXA_ACOUSTIC_TEST}>
 )
 
 target_include_directories(victor_anim
