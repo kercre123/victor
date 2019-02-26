@@ -15,6 +15,7 @@
 
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 
+#include "util/logging/logging.h"
 #include "util/math/math.h"
 
 namespace Anki {
@@ -25,7 +26,7 @@ namespace{
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SpriteCache::SpriteCache(const Vision::SpritePathMap* spriteMap)
-: _spriteMap(spriteMap)
+: _spritePathMap(spriteMap)
 {
 
 }
@@ -39,38 +40,29 @@ SpriteCache::~SpriteCache()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SpriteHandle SpriteCache::GetSpriteHandle(SpriteName spriteName, 
-                                          const HSImageHandle& hueAndSaturation)
+SpriteHandle SpriteCache::GetSpriteHandleForNamedSprite(const std::string& spriteName, 
+                                                        const HSImageHandle& hueAndSaturation)
 {
-  return GetSpriteHandleInternal(spriteName, hueAndSaturation);
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SpriteHandle SpriteCache::GetSpriteHandle(const std::string& fullSpritePath, 
-                                          const HSImageHandle& hueAndSaturation)
-{
+  std::string fullSpritePath;
+  if(_spritePathMap->IsSpriteSequence(spriteName)){
+    LOG_ERROR("SpriteCache.GetSpriteHandleForNamedSprite.InvalidSpriteName",
+              "Asset name: %s refers to a SpriteSequence, not a sprite. Returning missing sprite asset",
+              spriteName.c_str());
+    fullSpritePath = _spritePathMap->GetPlaceholderAssetPath();
+  }else{
+    // NOTE: If there is no sprite for this spriteName, the SpritePathMap will return a path to the 
+    //       default missing_sprite asset and it will render in place of the desired sprite
+    fullSpritePath = _spritePathMap->GetAssetPath(spriteName);
+  }
   return GetSpriteHandleInternal(fullSpritePath, hueAndSaturation);
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SpriteCache::InternalHandle SpriteCache::GetSpriteHandleInternal(SpriteName spriteName, 
-                                                                 const HSImageHandle& hueAndSaturation)
+SpriteHandle SpriteCache::GetSpriteHandleForSpritePath(const std::string& fullSpritePath, 
+                                                       const HSImageHandle& hueAndSaturation)
 {
-  std::lock_guard<std::mutex> guard(_hueSaturationMapMutex);
-
-  auto& wrapperMap = GetHandleMapForHue(hueAndSaturation)._wrapperMap;
-  // See if handle can be returned from the cache
-  auto iter = wrapperMap.find(spriteName);
-  if(iter != wrapperMap.end()){
-    return iter->second;
-  }
-
-  // If not, create a new handle
-  InternalHandle handle = std::make_shared<SpriteWrapper>(_spriteMap, spriteName);
-  wrapperMap.emplace(spriteName, handle);
-  return handle;
+  return GetSpriteHandleInternal(fullSpritePath, hueAndSaturation);
 }
 
 
@@ -80,14 +72,16 @@ SpriteCache::InternalHandle SpriteCache::GetSpriteHandleInternal(const std::stri
 {
   std::lock_guard<std::mutex> guard(_hueSaturationMapMutex);
 
-  auto& filePathMap = GetHandleMapForHue(hueAndSaturation)._filePathMap;
-  // See if handle can be returned from the cache
-  auto iter = filePathMap.find(fullSpritePath);
-  if(iter != filePathMap.end()){
-    return iter->second;
+  auto& filePathMap = GetHandleMapForHue(hueAndSaturation);
+
+  {
+    // See if handle can be returned from the cache
+    auto iter = filePathMap.find(fullSpritePath);
+    if(iter != filePathMap.end()){
+      return iter->second;
+    }
   }
 
-  // If not, create a new handle
   InternalHandle handle = std::make_shared<SpriteWrapper>(fullSpritePath);
   filePathMap.emplace(fullSpritePath, handle);
 
@@ -104,23 +98,14 @@ SpriteCache::InternalHandle SpriteCache::ConvertToInternalHandle(SpriteHandle ha
     std::lock_guard<std::mutex> guard(_hueSaturationMapMutex);
     auto& handleMap = GetHandleMapForHue(hueAndSaturation);
 
-    for(auto& pair : handleMap._wrapperMap){
+    for(auto& pair : handleMap){
       if(pair.second.get() == handle.get()){
         internalHandle = pair.second;
         break;
       }
     }
 
-    if(internalHandle == nullptr){
-      for(auto& pair : handleMap._filePathMap){
-        if(pair.second.get() == handle.get()){
-          internalHandle = pair.second;
-          break;
-        }
-      }
-    }
   } // guard falls out of scope to allow call to GetSpriteHandleInternal
-  
   
   if(internalHandle == nullptr){
     std::string fullSpritePath;
@@ -128,19 +113,18 @@ SpriteCache::InternalHandle SpriteCache::ConvertToInternalHandle(SpriteHandle ha
       internalHandle = GetSpriteHandleInternal(fullSpritePath, hueAndSaturation);
     }
   }
-  
 
   return internalHandle;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-auto SpriteCache::GetHandleMapForHue(const HSImageHandle& hueAndSaturation) -> HandleMaps&
+SpriteCache::SpriteNameToHandleMap& SpriteCache::GetHandleMapForHue(const HSImageHandle& hueAndSaturation)
 {
   const uint16_t compressedKey = hueAndSaturation != nullptr ? hueAndSaturation->GetHSID() : 0;
   auto iter = _hueSaturationMap.find(compressedKey);
   if(iter == _hueSaturationMap.end()){
-    iter = _hueSaturationMap.emplace(compressedKey, HandleMaps()).first;
+    iter = _hueSaturationMap.emplace(compressedKey, SpriteNameToHandleMap()).first;
   }
 
   return iter->second;

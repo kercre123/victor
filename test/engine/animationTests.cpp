@@ -18,6 +18,9 @@
 #include "cannedAnimLib/cannedAnims/animation.h"
 #include "cannedAnimLib/cannedAnims/cannedAnimationLoader.h"
 
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+
+#include "util/fileUtils/fileUtils.h"
 
 using namespace Anki;
 using namespace Vector;
@@ -34,7 +37,6 @@ TEST(AnimationTest, AnimationLoading)
 
   Robot robot(0, cozmoContext);
   auto platform = cozmoContext->GetDataPlatform();
-  auto spritePaths = robot.GetComponent<DataAccessorComponent>().GetSpritePaths();
   auto spriteSequenceContainer = robot.GetComponent<DataAccessorComponent>().GetSpriteSequenceContainer();
   std::atomic<float> loadingCompleteRatio(0);
   std::atomic<bool>  abortLoad(false);
@@ -46,7 +48,7 @@ TEST(AnimationTest, AnimationLoading)
     auto jsonFilePaths = Util::FileUtils::FilesInDirectory(fullPath, useFullPath, jsonExt, shouldRecurse);
 
     CannedAnimationLoader animLoader(platform,
-                                     spritePaths, spriteSequenceContainer, 
+                                     spriteSequenceContainer, 
                                      loadingCompleteRatio, abortLoad);
     for(const auto& fullPath : jsonFilePaths){
       animLoader.LoadAnimationIntoContainer(fullPath, &jsonAnimContainer);
@@ -60,7 +62,7 @@ TEST(AnimationTest, AnimationLoading)
     auto binaryFilePaths = Util::FileUtils::FilesInDirectory(fullPath, useFullPath, binExt, shouldRecurse);
 
     CannedAnimationLoader animLoader(platform,
-                                     spritePaths, spriteSequenceContainer, 
+                                     spriteSequenceContainer, 
                                      loadingCompleteRatio, abortLoad);
     for(const auto& fullPath : binaryFilePaths){
       animLoader.LoadAnimationIntoContainer(fullPath, &binaryAnimContainer);
@@ -132,7 +134,6 @@ TEST(AnimationTest, AnimationCopying)
   
   Robot robot(0, cozmoContext);
   auto platform = cozmoContext->GetDataPlatform();
-  auto spritePaths = robot.GetComponent<DataAccessorComponent>().GetSpritePaths();
   auto spriteSequenceContainer = robot.GetComponent<DataAccessorComponent>().GetSpriteSequenceContainer();
   std::atomic<float> loadingCompleteRatio(0);
   std::atomic<bool>  abortLoad(false);
@@ -145,7 +146,7 @@ TEST(AnimationTest, AnimationCopying)
     auto binaryFilePaths = Util::FileUtils::FilesInDirectory(fullPath, useFullPath, binExt, shouldRecurse);
     
     CannedAnimationLoader animLoader(platform,
-                                     spritePaths, spriteSequenceContainer,
+                                     spriteSequenceContainer,
                                      loadingCompleteRatio, abortLoad);
     for(const auto& fullPath : binaryFilePaths){
       animLoader.LoadAnimationIntoContainer(fullPath, &binaryAnimContainer);

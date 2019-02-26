@@ -1,8 +1,6 @@
 /** Clad types related to composite images
  */
 
-#include "clad/types/spriteNames.clad"
-
 namespace Anki {
 namespace Vision {
 
@@ -144,6 +142,8 @@ structure CompositeImageChunk
   uint_32 imageWidth,
   uint_32 imageHeight,
 
+  uint_16 assetID,
+
   // Information for re-building the composite images from its chunks
   uint_8 layerIndex,
   uint_8 layerMax,
@@ -151,12 +151,12 @@ structure CompositeImageChunk
   uint_8 spriteBoxIndex,
   uint_8 spriteBoxMax,
 
+  uint_16 padding = 0,
+
   // Implementation details
   SerializedSpriteBox  spriteBox,
 
   LayerName         layerName,
-  Vision::SpriteName spriteName,
-
 
 }
       

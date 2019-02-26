@@ -169,10 +169,11 @@ public:
                           u32 frameInterval_ms, u32 duration_ms, 
                           bool interruptRunning = false, bool emptySpriteBoxesAreValid = false);
   
-  // Calling this function provides no gaurentee that the assets will actually be displayed
+  // Calling this function provides no guarantee that the assets will actually be displayed
   // If a compositeFaceImage is currently displayed on the face all layers/image maps within
-  // the compositeImage argument will be updated to their new values - set Count in the sprite map
-  // for any sprite boxes that should no longer be displayed
+  // the compositeImage argument will be updated to their new values 
+  // - Set SpriteBoxName::Count in the layerMap to clear layers by name
+  // - Default construct a SpriteEntry into the imageMap for any SpriteBox you wish to clear
   void UpdateCompositeImage(const Vision::CompositeImage& compositeImage, u32 applyAt_ms = 0);
   
   // Helper function that clears composite image layer - can be accomplished through UpdateCompositeImage

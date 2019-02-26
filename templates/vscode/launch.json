@@ -226,6 +226,7 @@
             "name": "webotsCtrlAnim:attach",
             "type": "lldb",
             "request": "attach",
+            "waitFor": true,
             "program": "${workspaceRoot}/simulator/controllers/webotsCtrlAnim/webotsCtrlAnim"
         },
         {

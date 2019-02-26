@@ -536,7 +536,7 @@ message PlayCompositeAnimation
 {
   uint_32 compositeImageID, // Link to composite image chunks
   uint_8  tag,
-  string  animName,
+  string  animName
 }
 
 message DisplayCompositeImageChunk
@@ -551,8 +551,8 @@ message UpdateCompositeImage
 {
   Vision::SerializedSpriteBox serializedSpriteBox, // SpriteBox named count indicates clear the whole layer
   uint_32                     applyAt_ms, // specify the time in ms from the start of the animation that the update should be applied
+  uint_16                     assetID,
   Vision::LayerName           layerName,
-  Vision::SpriteName          spriteName // Use Count to indicate erase sprite
 }
 
 

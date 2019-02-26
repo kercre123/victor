@@ -134,11 +134,10 @@ static void AddAnimation(ConsoleFunctionContextRef context)
         if (animContainer != nullptr) {
 
           auto platform = _thisRobot->GetContextDataPlatform();
-          auto spritePaths = _thisRobot->GetComponent<DataAccessorComponent>().GetSpritePaths();
           auto spriteSequenceContainer = _thisRobot->GetComponent<DataAccessorComponent>().GetSpriteSequenceContainer();
           std::atomic<float> loadingCompleteRatio(0);
           std::atomic<bool> abortLoad(false);
-          CannedAnimationLoader animLoader(platform, spritePaths, spriteSequenceContainer, loadingCompleteRatio, abortLoad);
+          CannedAnimationLoader animLoader(platform, spriteSequenceContainer, loadingCompleteRatio, abortLoad);
 
           animLoader.LoadAnimationIntoContainer(animationPath.c_str(), animContainer);
           LOG_INFO("Robot.AddAnimation", "Loaded animation from %s", animationPath.c_str());

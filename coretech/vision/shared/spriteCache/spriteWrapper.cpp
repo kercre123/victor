@@ -22,19 +22,11 @@
 namespace Anki {
 namespace Vision {
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SpriteWrapper::SpriteWrapper(const Util::CladEnumToStringMap<SpriteName>* spriteMap,
-                             SpriteName spriteName)
-: _fullSpritePath(spriteMap->GetValue(spriteName))
-{
-}
-
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SpriteWrapper::SpriteWrapper(const std::string& fullSpritePath)
 : _fullSpritePath(fullSpritePath)
 {
-  
 }
 
 

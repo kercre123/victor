@@ -9,7 +9,7 @@ cxx_project(
 
 cxx_project(
     name = 'cti_composite_image_clad',
-    srcs = glob(["clad/types/spriteNames.clad", "clad/types/compositeImageTypes.clad"]),
+    srcs = glob(["clad/types/compositeImageTypes.clad"]),
     platform_srcs = [],
     headers = [],
     platform_headers = [],

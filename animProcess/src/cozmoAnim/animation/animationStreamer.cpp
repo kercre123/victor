@@ -826,7 +826,7 @@ namespace Vector {
   void AnimationStreamer::Process_updateCompositeImage(const RobotInterface::UpdateCompositeImage& msg)
   {
     Vision::CompositeImageLayer::SpriteBox sb(msg.serializedSpriteBox);
-    UpdateCompositeImage(msg.layerName, sb, msg.spriteName, msg.applyAt_ms);
+    UpdateCompositeImage(msg.layerName, sb, msg.assetID, msg.applyAt_ms);
   }
 
   void AnimationStreamer::Process_playCompositeAnimation(const std::string& name, Tag tag)
@@ -950,7 +950,7 @@ namespace Vector {
 
   Result AnimationStreamer::UpdateCompositeImage(Vision::LayerName layerName,
                                                  const Vision::CompositeImageLayer::SpriteBox& spriteBox,
-                                                 Vision::SpriteName spriteName,
+                                                 uint16_t assetID,
                                                  u32 applyAt_ms)
   {
     if (_streamingAnimation != _proceduralAnimation) {
@@ -967,7 +967,7 @@ namespace Vector {
                                                             spriteSeqContainer,
                                                             layerName,
                                                             spriteBox,
-                                                            spriteName);
+                                                            assetID);
 
       keyframe.QueueCompositeImageUpdate(std::move(spec), applyAt_ms);
     }else{
@@ -975,8 +975,7 @@ namespace Vector {
                   "Keyframe does not have a composite image to update");
     }
 
-
-    return Result::RESULT_FAIL;
+    return Result::RESULT_OK;
   }
 
   void AnimationStreamer::Abort(Tag tag, bool shouldClearProceduralAnim)

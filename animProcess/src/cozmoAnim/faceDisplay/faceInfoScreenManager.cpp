@@ -119,6 +119,9 @@ namespace {
   const u32 kIPCheckPeriod_sec = 20;
   
   const f32 kAlexaTimeout_s = 5.0f;
+
+  const char* kAlexaIconSpriteName = "face_alexa_icon";
+
   // TODO (VIC-11606): don't use timeout for mute
   CONSOLE_VAR_RANGED(f32, kToggleMuteTimeout_s, "FaceInfoScreenManager", 1.2f, 0.001f, 3.0f);
   CONSOLE_VAR_RANGED(f32, kAlexaNotificationTimeout_s, "FaceInfoScreenManager", 2.0f, 0.001f, 3.0f);
@@ -1503,7 +1506,7 @@ void FaceInfoScreenManager::DrawAlexaFace()
   // draw the alexa icon ...
 
   Vision::ImageRGBA alexaIcon;
-  alexaIcon.Load( _context->GetDataLoader()->GetSpritePaths()->GetValue( Vision::SpriteName::Face_Alexa_Icon ) );
+  alexaIcon.Load(_context->GetDataLoader()->GetSpritePaths()->GetAssetPath(kAlexaIconSpriteName));
 
   const int kIconTop  = kScreenTop;
   const int iconLeft  = ( FACE_DISPLAY_WIDTH - alexaIcon.GetNumCols() )  / 2.0f;

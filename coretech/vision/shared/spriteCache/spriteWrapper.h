@@ -14,16 +14,11 @@
 #ifndef __Vision_Shared_SpriteWrapper_H__
 #define __Vision_Shared_SpriteWrapper_H__
 
-#include "clad/types/spriteNames.h"
 #include "coretech/vision/shared/spriteCache/iSpriteWrapper.h"
 
-namespace Anki {
-// Forward declaration
-namespace Util{
-template<class CladEnum>
-class CladEnumToStringMap;
-}
+#include <string>
 
+namespace Anki {
 namespace Vision {
 
 // forward declaration
@@ -33,8 +28,6 @@ class Image;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class SpriteWrapper : public ISpriteWrapper {
 public:
-  SpriteWrapper(const Util::CladEnumToStringMap<SpriteName>* spriteMap,
-                SpriteName spriteName);
   SpriteWrapper(const std::string& fullSpritePath);
   
   // Transfers ownership of the ptr to the SpriteWrapper

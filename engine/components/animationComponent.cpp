@@ -618,10 +618,11 @@ void AnimationComponent::UpdateCompositeImage(const Vision::CompositeImage& comp
       Vision::SerializedSpriteBox serializedSpriteBox = spritePair.second.Serialize();
       Vision::CompositeImageLayer::SpriteEntry entry;
       layoutPair.second.GetSpriteEntry(spritePair.second, entry);
+
       _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(serializedSpriteBox, 
                                                                      applyAt_ms, 
-                                                                     layerName, 
-                                                                     entry.GetSpriteName());
+                                                                     entry.GetAssetID(),
+                                                                     layerName);
     }
   }
 }
@@ -640,8 +641,8 @@ void AnimationComponent::ClearCompositeImageLayer(Vision::LayerName layerName, u
   
   _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(sb.Serialize(), 
                                                                  applyAt_ms, 
-                                                                 layerName, 
-                                                                 entry.GetSpriteName());
+                                                                 entry.GetAssetID(),
+                                                                 layerName); 
 }
 
 void AnimationComponent::AddKeepFaceAliveDisableLock(const std::string& lockName)

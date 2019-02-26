@@ -15,11 +15,7 @@
 #include <string>
 #include <unordered_map>
 
-#include "coretech/vision/shared/spritePathMap.h"
 #include "coretech/vision/shared/spriteSequence/spriteSequence.h"
-#include "clad/types/spriteNames.h"
-#include "coretech/common/shared/types.h"
-#include "coretech/vision/engine/image.h"
 #include "util/helpers/noncopyable.h"
 
 namespace Anki {
@@ -31,23 +27,14 @@ class SpriteSequence;
 class SpriteSequenceContainer : private Util::noncopyable
 {
 public:
-  using MappedSequenceContainer = std::unordered_map<Vision::SpriteName, const Vision::SpriteSequence, Util::EnumHasher>;
-  using UnmappedSequenceContainer = std::unordered_map<std::string, const Vision::SpriteSequence>;
-  SpriteSequenceContainer(MappedSequenceContainer&& mappedSequences,
-                          UnmappedSequenceContainer&& unmappedSequences);
+  using SpriteSequenceMap = std::unordered_map<std::string, const Vision::SpriteSequence>;
+  SpriteSequenceContainer(SpriteSequenceMap&& spriteSequences);
   
-  
-  const Vision::SpriteSequence* const GetSequenceByName(Vision::SpriteName sequenceName) const;
-  // stored as file name without extension, not absolute/full file path
-  const Vision::SpriteSequence* const GetUnmappedSequenceByFileName(const std::string& fileName) const;
-
-  // If unsure which map the sequence might be in, but need to access it no matter what
-  const Vision::SpriteSequence* const GetSequenceAgnostic(Vision::SpriteName sequenceName,
-                                                          const std::string& fileName) const;
+  bool IsValidSpriteSequenceName(const std::string& spriteSeqName) const;
+  const Vision::SpriteSequence* const GetSpriteSequence(const std::string& spriteSeqName) const;
 
 protected:  
-  MappedSequenceContainer   _mappedSequences;
-  UnmappedSequenceContainer _unmappedSequences;
+  SpriteSequenceMap _spriteSequenceMap;
 
 }; // class SpriteSequenceContainer
 

@@ -109,7 +109,7 @@ namespace Vector {
     Result SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms, u32 duration_ms);
     Result UpdateCompositeImage(Vision::LayerName layerName,
                                 const Vision::CompositeImageLayer::SpriteBox& spriteBox,
-                                Vision::SpriteName spriteName,
+                                uint16_t assetID,
                                 u32 applyAt_ms);
 
     Audio::ProceduralAudioClient* GetProceduralAudioClient() const { return _proceduralAudioClient.get(); }
