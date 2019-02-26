@@ -16,12 +16,15 @@
 #include "switchboardd/rtsHandlerV5.h"
 #include "switchboardd/rtsComms.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+
 namespace Anki {
 namespace Switchboard {
 
 RtsComms::RtsComms(INetworkStream* stream, 
     struct ev_loop* evloop,
-    std::shared_ptr<EngineMessagingClient> engineClient,
+    std::shared_ptr<ISwitchboardCommandClient> engineClient,
     std::shared_ptr<GatewayMessagingServer> gatewayServer,
     std::shared_ptr<TokenClient> tokenClient,
     std::shared_ptr<ConnectionIdManager> connectionIdManager,

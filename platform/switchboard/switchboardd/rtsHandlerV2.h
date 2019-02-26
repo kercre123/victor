@@ -13,8 +13,8 @@
 #pragma once
 
 #include "switchboardd/IRtsHandler.h"
-#include "switchboardd/engineMessagingClient.h"
 #include "switchboardd/INetworkStream.h"
+#include "switchboardd/ISwitchboardCommandClient.h"
 #include "switchboardd/wifiWatcher.h"
 #include "switchboardd/taskExecutor.h"
 #include "switchboardd/externalCommsCladHandlerV2.h"
@@ -27,7 +27,7 @@ class RtsHandlerV2 : public IRtsHandler {
 public:
   RtsHandlerV2(INetworkStream* stream, 
     struct ev_loop* evloop,
-    std::shared_ptr<EngineMessagingClient> engineClient,
+    std::shared_ptr<ISwitchboardCommandClient> engineClient,
     std::shared_ptr<TokenClient> tokenClient,
     std::shared_ptr<TaskExecutor> taskExecutor,
     std::shared_ptr<WifiWatcher> wifiWatcher,
@@ -90,7 +90,7 @@ private:
 
   INetworkStream* _stream;
   struct ev_loop* _loop;
-  std::shared_ptr<EngineMessagingClient> _engineClient;
+  std::shared_ptr<ISwitchboardCommandClient> _engineClient;
   std::shared_ptr<TaskExecutor> _taskExecutor;
   std::shared_ptr<WifiWatcher> _wifiWatcher;
   std::unique_ptr<ExternalCommsCladHandlerV2> _cladHandler;

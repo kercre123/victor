@@ -11,8 +11,12 @@
  **/
 
 #include "exec_command.h"
-#include "util/fileUtils/fileUtils.h"
 #include "switchboardd/rtsHandlerV3.h"
+
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "util/fileUtils/fileUtils.h"
+
 #include <sstream>
 #include <cutils/properties.h>
 
@@ -24,7 +28,7 @@ long long RtsHandlerV3::sTimeStarted;
 
 RtsHandlerV3::RtsHandlerV3(INetworkStream* stream,
     struct ev_loop* evloop,
-    std::shared_ptr<EngineMessagingClient> engineClient,
+    std::shared_ptr<ISwitchboardCommandClient> engineClient,
     std::shared_ptr<TokenClient> tokenClient,
     std::shared_ptr<TaskExecutor> taskExecutor,
     std::shared_ptr<WifiWatcher> wifiWatcher,
