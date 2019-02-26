@@ -19,7 +19,7 @@ static const int AUDIO_DECIMATION = 96;
 
 // This calculates the main execution timing to fit audio into even chunks
 static const uint16_t MAIN_EXEC_PRESCALE = 4; // Timer prescale
-static const uint16_t MAIN_EXEC_OVERFLOW = AUDIO_SAMPLES_PER_FRAME * AUDIO_DECIMATION * 2 * AUDIO_PRESCALE / MAIN_EXEC_PRESCALE;
+static const uint16_t MAIN_EXEC_OVERFLOW = 80 * 96 * 2 * AUDIO_PRESCALE / MAIN_EXEC_PRESCALE;
 
 namespace Timer {
   extern uint32_t clock;
