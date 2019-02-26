@@ -18,6 +18,8 @@
  * Copyright: Anki, Inc. 2018
  *
  **/
+#pragma once
+
 #include <stdlib.h>
 #include "ev++.h"
 #include "bleClient/bleClient.h"
@@ -27,6 +29,7 @@
 #include "switchboardd/tokenClient.h"
 #include "switchboardd/connectionIdManager.h"
 #include "switchboardd/engineMessagingClient.h"
+#include "switchboardd/ISwitchboardCommandClient.h"
 #include "switchboardd/wifiWatcher.h"
 #include "switchboardd/gatewayMessagingServer.h"
 
@@ -42,30 +45,27 @@ namespace Switchboard {
 
   class Daemon {
     public:
-      Daemon(struct ev_loop* loop) :
-        _loop(loop),
-        _isPairing(false),
-        _isOtaUpdating(false),
-        _connectionFailureCounter(kFailureCountToLog),
-        _tokenConnectionFailureCounter(kFailureCountToLog),
-        _taskExecutor(nullptr),
-        _bleClient(nullptr),
-        _securePairing(nullptr),
-        _engineMessagingClient(nullptr),
-        _gatewayMessagingServer(nullptr),
-        _isUpdateEngineServiceRunning(false),
-        _shouldRestartPairing(false),
-        _isTokenClientFullyInitialized(false),
-        _hasCloudOwner(false)
-      {}
+      struct Params {
+        std::shared_ptr<TaskExecutor> taskExecutor;
+        std::shared_ptr<ConnectionIdManager> connectionIdManager;
+        std::shared_ptr<ISwitchboardCommandClient> commandClient;
+        std::shared_ptr<TokenClient> tokenClient;
+        std::shared_ptr<GatewayMessagingServer> gatewayMessagingServer;
+      };
+
+      Daemon(struct ev_loop* loop, const Params& params);
 
       void Start();
       void Stop();
 
-      bool IsTokenClientFullyInitialized() {
+      bool IsTokenClientFullyInitialized() const {
         return _isTokenClientFullyInitialized;
       }
     
+      bool IsBLEReady() const {
+        return (_bleClient != nullptr) && (_bleClient->IsConnected());
+      }
+
     private:
       const std::string kSwitchboardRunPath = "/run/vic-switchboard";
       const std::string kUpdateEngineEnvPath = "/run/vic-switchboard/update-engine.env";
@@ -151,12 +151,12 @@ namespace Switchboard {
       struct ev_TimerStruct _pairingTimer;
 
       std::shared_ptr<TaskExecutor> _taskExecutor;
+      std::shared_ptr<ConnectionIdManager> _connectionIdManager;
       std::unique_ptr<BleClient> _bleClient;
       std::unique_ptr<RtsComms> _securePairing;
-      std::shared_ptr<EngineMessagingClient> _engineMessagingClient;
-      std::shared_ptr<GatewayMessagingServer> _gatewayMessagingServer;
+      std::shared_ptr<ISwitchboardCommandClient> _engineMessagingClient;
       std::shared_ptr<TokenClient> _tokenClient;
-      std::shared_ptr<ConnectionIdManager> _connectionIdManager;
+      std::shared_ptr<GatewayMessagingServer> _gatewayMessagingServer;
       bool _isUpdateEngineServiceRunning;
       bool _shouldRestartPairing;
       bool _isTokenClientFullyInitialized;

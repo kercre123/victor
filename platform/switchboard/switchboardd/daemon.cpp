@@ -53,14 +53,27 @@
 namespace Anki {
 namespace Switchboard {
 
+Daemon::Daemon(struct ev_loop* loop, const Params& params) :
+  _loop(loop),
+  _isPairing(false),
+  _isOtaUpdating(false),
+  _connectionFailureCounter(kFailureCountToLog),
+  _tokenConnectionFailureCounter(kFailureCountToLog),
+  _taskExecutor(params.taskExecutor),
+  _connectionIdManager(params.connectionIdManager),
+  _bleClient(nullptr),
+  _securePairing(nullptr),
+  _engineMessagingClient(params.commandClient),
+  _tokenClient(params.tokenClient),
+  _gatewayMessagingServer(params.gatewayMessagingServer),
+  _isUpdateEngineServiceRunning(false),
+  _shouldRestartPairing(false),
+  _isTokenClientFullyInitialized(_tokenClient == nullptr),
+  _hasCloudOwner(false)
+{}
+
 void Daemon::Start() {
-  setAndroidLoggingTag("vic-switchboard");
   Log::Write("Loading up Switchboard Daemon");
-
-  _loop = ev_default_loop(0);
-
-  _taskExecutor = std::make_shared<Anki::TaskExecutor>(_loop);
-  _connectionIdManager = std::make_shared<ConnectionIdManager>();
 
   // Saved session manager
   int rc = SavedSessionManager::MigrateKeys();
@@ -150,7 +163,6 @@ void Daemon::LogWifiState() {
 }
 
 void Daemon::InitializeEngineComms() {
-  _engineMessagingClient = std::make_shared<EngineMessagingClient>(_loop);
   _engineMessagingClient->Init();
   _engineMessagingClient->OnReceivePairingStatus().SubscribeForever(std::bind(&Daemon::OnPairingStatus, this, std::placeholders::_1));
   _engineTimer.data = this;
@@ -159,17 +171,19 @@ void Daemon::InitializeEngineComms() {
 }
 
 void Daemon::InitializeGatewayComms() {
-  _gatewayMessagingServer = std::make_shared<GatewayMessagingServer>(_loop, _taskExecutor, _tokenClient, _connectionIdManager);
-  _gatewayMessagingServer->Init();
+  if (_gatewayMessagingServer != nullptr) {
+    _gatewayMessagingServer->Init();
+  }
 }
 
 void Daemon::InitializeCloudComms() {
-  _tokenClient = std::make_shared<TokenClient>(_loop, _taskExecutor);
-  _tokenClient->Init();
+  if (_tokenClient != nullptr) {
+    _tokenClient->Init();
 
-  _tokenTimer.data = this;
-  ev_timer_init(&_tokenTimer, HandleTokenTimer, kRetryInterval_s, kRetryInterval_s);
-  ev_timer_start(_loop, &_tokenTimer);
+    _tokenTimer.data = this;
+    ev_timer_init(&_tokenTimer, HandleTokenTimer, kRetryInterval_s, kRetryInterval_s);
+    ev_timer_start(_loop, &_tokenTimer);
+  }
 }
 
 bool Daemon::TryConnectToEngineServer() {
@@ -290,20 +304,26 @@ void Daemon::OnConnected(int connId, INetworkStream* stream) {
       _completedPairingHandle = _securePairing->OnCompletedPairingEvent().ScopedSubscribe(std::bind(&Daemon::OnCompletedPairing, this));
     }
 
-    (void)_tokenClient->SendJwtRequest([this](Anki::Vector::TokenError error, std::string jwt){
-      if(_securePairing == nullptr) {
-        return;
-      }
+    if (_tokenClient != nullptr) {
+      (void)_tokenClient->SendJwtRequest([this](Anki::Vector::TokenError error, std::string jwt){
+        if(_securePairing == nullptr) {
+          return;
+        }
 
-      // there is owner if JWT is not null
-      // (this might need to be modified for re-associate case
-      // to include invalid token)
-      _hasCloudOwner = error != Anki::Vector::TokenError::NullToken;
+        // there is owner if JWT is not null
+        // (this might need to be modified for re-associate case
+        // to include invalid token)
+        _hasCloudOwner = error != Anki::Vector::TokenError::NullToken;
 
-      // Initiate pairing process
-      _securePairing->SetHasOwner(_hasCloudOwner);
+        // Initiate pairing process
+        _securePairing->SetHasOwner(_hasCloudOwner);
+        _securePairing->BeginPairing();
+      });
+    } else {
+      _hasCloudOwner = true;
+      _securePairing->SetHasOwner(true);
       _securePairing->BeginPairing();
-    });
+    }
 
     // tell engine that we have BLE connection
     _engineMessagingClient->SendBLEConnectionStatus(true);
@@ -735,12 +755,14 @@ void Daemon::sEvTimerHandler(struct ev_loop* loop, struct ev_timer* w, int reven
 // ####################################################################################################################
 // Entry Point
 // ####################################################################################################################
-static struct ev_signal sIntSig;
-static struct ev_signal sTermSig;
-static ev_timer sTimer;
-static struct ev_loop* sLoop;
-const static uint32_t kTick_s = 30;
-std::unique_ptr<Anki::Switchboard::Daemon> _daemon;
+namespace { // private members
+  static struct ev_signal sIntSig;
+  static struct ev_signal sTermSig;
+  static ev_timer sTimer;
+  static struct ev_loop* sLoop;
+  const static uint32_t kTick_s = 30;
+  std::unique_ptr<Anki::Switchboard::Daemon> _daemon;
+}
 
 static void ExitHandler(int status = 0) {
   // todo: smoothly handle termination
@@ -771,6 +793,7 @@ static void Tick(struct ev_loop* loop, struct ev_timer* w, int revents) {
 }
 
 int SwitchboardMain() {
+  setAndroidLoggingTag("vic-switchboard");
 
   Anki::Vector::InstallCrashReporter(LOG_PROCNAME);
 
@@ -790,8 +813,21 @@ int SwitchboardMain() {
   ev_signal_init(&sTermSig, SignalCallback, SIGTERM);
   ev_signal_start(sLoop, &sTermSig);
 
+  // create control/messaging classes
+  using namespace Anki::Switchboard;
+  Daemon::Params params;
+  params.taskExecutor = std::make_shared<Anki::TaskExecutor>(sLoop);
+  params.connectionIdManager = std::make_shared<ConnectionIdManager>();
+  params.commandClient = std::make_shared<EngineMessagingClient>(sLoop);
+  params.tokenClient = std::make_shared<TokenClient>(sLoop, params.taskExecutor);
+  params.gatewayMessagingServer = 
+    std::make_shared<GatewayMessagingServer>(sLoop,
+                                             params.taskExecutor,
+                                             params.tokenClient,
+                                             params.connectionIdManager);
+
   // initialize daemon
-  _daemon = std::make_unique<Anki::Switchboard::Daemon>(sLoop);
+  _daemon = std::make_unique<Anki::Switchboard::Daemon>(sLoop, params);
   _daemon->Start();
 
   // exit

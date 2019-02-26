@@ -1,3 +1,5 @@
+#pragma once
+
 #include <signals/simpleSignal.hpp>
 #include <string>
 
