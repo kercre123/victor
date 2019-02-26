@@ -166,7 +166,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   // If in calm mode, RobotState messages are expected to come in at a slower rate
   // and we therefore need to adjust the sampling rate of the filter.
   static bool prevSysconCalmMode = false;
-  bool currSysconCalmMode = msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE;
+  const bool currSysconCalmMode = msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE;
   if (currSysconCalmMode && !prevSysconCalmMode) {
     _batteryVoltsFilter->SetSamplePeriod(kCalmModeBatteryVoltsUpdatePeriod_sec);
   } else if (!currSysconCalmMode && prevSysconCalmMode) {
@@ -421,8 +421,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   // (Encoders should normally be off while on charger)
   if (!IsOnChargerContacts()) {
     bool encodersDisabled = msg.status & (uint32_t)RobotStatusFlag::ENCODERS_DISABLED;
-    bool calmMode         = msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE;
-    _batteryStatsAccumulator->UpdateEncoderStats(encodersDisabled, calmMode);
+    _batteryStatsAccumulator->UpdateEncoderStats(encodersDisabled, currSysconCalmMode);
   }
 
 #if ANKI_DEV_CHEATS
@@ -436,8 +435,10 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     DASMSG_SET(i2, GetBatteryVolts_mV(), "Filtered voltage (mV)");
     DASMSG_SET(i3, GetBatteryTemperature_C(), "Temperature (C)");
     DASMSG_SET(i4, IsOnChargerContacts(), "On charge contacts");
-    DASMSG_SET(s1, IsBatteryDisconnectedFromCharger() ? "D" : "", "Battery disconnected state");
-    DASMSG_SET(s2, IsCharging() ? "C" : "", "Battery charging state");
+    DASMSG_SET(s1, IsBatteryDisconnectedFromCharger() ? "1" : "0", "Battery disconnected state");
+    DASMSG_SET(s2, IsCharging() ? "1" : "0", "Battery charging state");
+    DASMSG_SET(s3, currSysconCalmMode ? "1" : "0", "Calm mode enabled");
+    DASMSG_SET(s4, std::to_string( OSState::getInstance()->GetTemperature_C() ), "CPU temperature (C)");
     DASMSG_SEND();
   }
 #endif  
