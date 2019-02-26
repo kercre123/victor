@@ -1132,16 +1132,12 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
   Vision::Image compositeImage;
   if(IsModeEnabled(VisionMode::CompositingImages)) {
     _imageCompositor->ComposeWith(imageCache.GetGray(whichSize));
-    size_t numImagesComposited = _imageCompositor->GetNumImagesComposited();
+    const size_t numImagesComposited = _imageCompositor->GetNumImagesComposited();
 
     const bool shouldRunOnComposite = (numImagesComposited % _imageCompositorReadyPeriod) == 0;
     if(shouldRunOnComposite) {
       _imageCompositor->GetCompositeImage(compositeImage);
       imagePtrs.push_back(&compositeImage);
-
-      // This mode is considered processed if a composite image was produced
-      //  to run marker detection on.
-      _currentResult.modesProcessed.Insert(VisionMode::CompositingImages);
 
       #define DEBUG_IMAGE_COMPOSITING 0
       #if(DEBUG_IMAGE_COMPOSITING)
@@ -1155,6 +1151,13 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
     const bool shouldReset = (numImagesComposited == _imageCompositorResetPeriod);
     if(shouldReset) {
       _imageCompositor->Reset();
+
+      // This mode is considered processed if a composite image was produced
+      //  to run marker detection on.
+      // NOTE: by definition of the Ready and Reset periods, we're guaranteed
+      //  to have run MarkerDetection in the same frame we trigger a Reset
+      DEV_ASSERT_MSG(shouldRunOnComposite, "VisionSystem.DetectMarkers.InvalidResetCallBeforeImageUsed","");
+      _currentResult.modesProcessed.Insert(VisionMode::CompositingImages);
     }
   }
   

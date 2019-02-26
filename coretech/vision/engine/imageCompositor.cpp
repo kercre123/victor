@@ -29,7 +29,6 @@ namespace {
   const std::string debugName = "Vision.ImageCompositor";
 
   CONSOLE_VAR(u32, kImageHistogramSubsample, "Vision.ImageCompositor", 4);
-  CONSOLE_VAR_RANGED(f32, kBaseIntensityForMaxBrightness, "Vision.ImageCompositor", 0.9f, 0.f, 1.f);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -85,7 +84,7 @@ void ImageCompositor::GetCompositeImage(Vision::Image& outImg) const
   ImageBrightnessHistogram hist;
   hist.FillFromImage(outImg, kImageHistogramSubsample);
   const u8 brightIntensityVal = hist.ComputePercentile(_kPercentileForMaxIntensity);
-  const f32 scalingFactor = (kBaseIntensityForMaxBrightness * std::numeric_limits<u8>::max()) / brightIntensityVal;
+  const f32 scalingFactor = ((f32)std::numeric_limits<u8>::max()) / brightIntensityVal;
   outImg.get_CvMat_().convertTo(outImg.get_CvMat_(), CV_8UC1, scalingFactor, 0);
 
   outImg.SetTimestamp(_lastImageTimestamp);
