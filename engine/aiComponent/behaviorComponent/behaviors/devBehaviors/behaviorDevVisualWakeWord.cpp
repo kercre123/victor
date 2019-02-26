@@ -41,7 +41,10 @@ namespace {
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinYThres_mm,        "Vision.VisualWakeWord", -100.f);
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxYThres_mm,        "Vision.VisualWakeWord",  100.f);
   CONSOLE_VAR(f32,  kMinTimeBetweenWakeWordTriggers_ms,      "Vision.VisualWakeWord",  5000.f);
-  CONSOLE_VAR(bool, kDisableStateMachineToKeyCheckForGaze,   "Vision.VisualWakeWord",  true);
+  CONSOLE_VAR(bool, kDisableStateMachineToKeyCheckForGaze,   "Vision.VisualWakeWord",  false);
+  CONSOLE_VAR(f32,  kGazeStimulationThreshold_ms,            "Vision.VisualWakeWord",  3000.f);
+  CONSOLE_VAR(f32,  kGazeBreakThreshold_ms,                  "Vision.VisualWakeWord",  300.f);
+  CONSOLE_VAR(f32,  kGazeDecrementMultiplier,                "Vision.VisualWakeWord",  1.2f);
 }
 
 namespace {
@@ -134,37 +137,58 @@ void BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord()
 {
   // This check should prevent us from trying to trigger a audio stream
   // when we have already trigger the visual wake word
-  if (_dVars.state == EState::CheckingForVisualWakeWord || kDisableStateMachineToKeyCheckForGaze) {
-    if(GetBEI().GetFaceWorld().GetGazeDirectionPose(kMaxTimeSinceTrackedFaceUpdated_ms,
-                                                    _dVars.gazeDirectionPose, _dVars.faceIDToTurnBackTo)) {
-      LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToCheckForVisualWakeWord",
-                  "Got stable gaze direciton, now see if it's at the robot ... this"
-                  "might be wrapped out side of a behavior ... who fucking knows");
-      const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
-      Pose3d gazeDirectionPoseWRTRobot;
-      if (_dVars.gazeDirectionPose.GetWithRespectTo(robotPose, gazeDirectionPoseWRTRobot)) {
+  if(GetBEI().GetFaceWorld().GetGazeDirectionPose(kMaxTimeSinceTrackedFaceUpdated_ms,
+                                                  _dVars.gazeDirectionPose, _dVars.faceIDToTurnBackTo)) {
+    LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToCheckForVisualWakeWord",
+                "Got stable gaze direciton, now see if it's at the robot ... this"
+                "might be wrapped out side of a behavior ... who fucking knows");
+    const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
+    Pose3d gazeDirectionPoseWRTRobot;
+    if (_dVars.gazeDirectionPose.GetWithRespectTo(robotPose, gazeDirectionPoseWRTRobot)) {
 
-        // Now that we know we are going to turn clear the history
-        GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
+      const auto& translation = gazeDirectionPoseWRTRobot.GetTranslation();
+      auto makingEyeContact = GetBEI().GetFaceWorld().IsMakingEyeContact(kMaxTimeSinceTrackedFaceUpdated_ms);
 
-        const auto& translation = gazeDirectionPoseWRTRobot.GetTranslation();
-        auto makingEyeContact = GetBEI().GetFaceWorld().IsMakingEyeContact(kMaxTimeSinceTrackedFaceUpdated_ms);
+      // Check to see if our gaze points is within constraints to be considered
+      // "looking" at vector.
+      const bool isWithinXConstraints = ( Util::InRange(translation.x(), kFaceDirectedAtRobotMinXThres_mm,
+                                                        kFaceDirectedAtRobotMaxXThres_mm) );
+      const bool isWithinYConstarints = ( Util::InRange(translation.y(), kFaceDirectedAtRobotMinYThres_mm,
+                                                        kFaceDirectedAtRobotMaxYThres_mm) );
+      if ( ( isWithinXConstraints && isWithinYConstarints ) || makingEyeContact ) {
+        // TODO there is probably a more accurate way get the actual timestamp of when
+        // gaze happened ... because of the "slack" variable pasted into the original
+        // get gaze direction pose, but alas this whole state machine is fucking retarded and this
+        // isn't the reason why.
+        const RobotTimeStamp_t currentTimeStamp = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+        if (_dVars.state == EState::DecreasingGazeStimulation) {
+          SET_STATE(IncreasingGazeStimulation);
+          _dVars.lastGazeAtRobot = currentTimeStamp;
+        } else {
+          IncrementGazeStimulation(currentTimeStamp);
+        }
 
-        // Check to see if our gaze points is within constraints to be considered
-        // "looking" at vector.
-        const bool isWithinXConstraints = ( Util::InRange(translation.x(), kFaceDirectedAtRobotMinXThres_mm,
-                                                          kFaceDirectedAtRobotMaxXThres_mm) );
-        const bool isWithinYConstarints = ( Util::InRange(translation.y(), kFaceDirectedAtRobotMinYThres_mm,
-                                                          kFaceDirectedAtRobotMaxYThres_mm) );
-        if ( ( isWithinXConstraints && isWithinYConstarints ) || makingEyeContact ) {
+        if (_dVars.gazeStimulation > kGazeStimulationThreshold_ms) {
           // Open up audio stream
-          SET_STATE(DetectedVisualWakeWord);
+          LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToCheckForVisualWakeWord.HitGazeStimulationThreshold",
+                      "Gaze stimulation is now %.3f and above the threshold %.3f.",
+                      _dVars.gazeStimulation, kGazeStimulationThreshold_ms);
           if (_iConfig.yeaOrNayBehavior->WantsToBeActivated()) {
+            // This isn't entirely correct but whatever, fuck it, i think it's reduce some bugs so...
+            SET_STATE(DetectedVisualWakeWord);
+            // Now that we know we are going open up the audio stream clear the history and reset
+            // the gazing stim
+            GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
+            ResetGazeStimulation();
             DelegateIfInControl(_iConfig.yeaOrNayBehavior.get(), &BehaviorDevVisualWakeWord::TransitionToListening);
           }
         }
+      } else {
+        DecrementStimIfGazeHasBroken();
       }
-    }
+    } // this case is for whatever reason we fail to get a pose ... not sure how we want to handle this
+  } else {
+    DecrementStimIfGazeHasBroken();
   }
 }
 
@@ -232,6 +256,37 @@ void BehaviorDevVisualWakeWord::TransitionToResponding(const int response)
   } else {
     SET_STATE(CheckingForVisualWakeWord);
     LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToResponding.GotNeitherPositiveOrNegative", "");
+  }
+}
+
+void BehaviorDevVisualWakeWord::IncrementGazeStimulation(const RobotTimeStamp_t currentTimeStamp) {
+  _dVars.gazeStimulation += static_cast<float>(currentTimeStamp - _dVars.lastGazeAtRobot);
+  _dVars.lastGazeAtRobot = currentTimeStamp;
+  LOG_WARNING("BehaviorDevVisualWakeWord.IncrementGazeStimulation.UpdatedGazeStimulation",
+              "Gaze stimulation is now %.3f.", _dVars.gazeStimulation);
+}
+
+void BehaviorDevVisualWakeWord::DecrementGazeStimulation(const RobotTimeStamp_t currentTimeStamp) {
+  // TODO need a multiplier so this happens faster than incrementing
+  _dVars.gazeStimulation -= kGazeDecrementMultiplier * static_cast<float>(
+                            currentTimeStamp - _dVars.lastGazeAtRobot);
+  if (_dVars.gazeStimulation < 0.f) {
+    ResetGazeStimulation();
+  }
+  LOG_WARNING("BehaviorDevVisualWakeWord.DecrementGazeStimulation.UpdatedGazeStimulation",
+              "Gaze stimulation is now %.3f.", _dVars.gazeStimulation);
+}
+
+void BehaviorDevVisualWakeWord::ResetGazeStimulation() {
+  _dVars.gazeStimulation = 0.f;
+  LOG_WARNING("BehaviorDevVisualWakeWord.ResetGazeStimulation.UpdatedGazeStimulation", "");
+}
+
+void BehaviorDevVisualWakeWord::DecrementStimIfGazeHasBroken() {
+  const RobotTimeStamp_t currentTimeStamp = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+  if (currentTimeStamp > _dVars.lastGazeAtRobot + (kGazeStimulationThreshold_ms/1000.f)) {
+    SET_STATE(DecreasingGazeStimulation);
+    DecrementGazeStimulation(currentTimeStamp);
   }
 }
 
