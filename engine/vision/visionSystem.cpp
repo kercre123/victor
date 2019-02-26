@@ -1131,16 +1131,14 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
   
   Vision::Image compositeImage;
   if(IsModeEnabled(VisionMode::CompositingImages)) {
-    const bool shouldReset = (_imageCompositor->GetNumImagesComposited() 
-                                == _imageCompositorResetPeriod);
+    const bool shouldReset = (_imageCompositor->GetNumImagesComposited() == _imageCompositorResetPeriod);
     if(shouldReset) {
       _imageCompositor->Reset();
     }
 
     _imageCompositor->ComposeWith(imageCache.GetGray(whichSize));
 
-    const bool shouldRunOnComposite = (_imageCompositor->GetNumImagesComposited() 
-                                        % _imageCompositorReadyPeriod) == 0;
+    const bool shouldRunOnComposite = (_imageCompositor->GetNumImagesComposited() % _imageCompositorReadyPeriod) == 0;
     if(shouldRunOnComposite) {
       _imageCompositor->GetCompositeImage(compositeImage);
       imagePtrs.push_back(&compositeImage);

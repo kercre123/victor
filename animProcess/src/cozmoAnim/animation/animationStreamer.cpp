@@ -1164,18 +1164,7 @@ namespace Vector {
     else if(kProcFace_Display == (int)FaceDisplayType::FullWhite)
     {
       const Vision::PixelRGB565 white(255,255,255);
-      for(int i=0; i<FACE_DISPLAY_HEIGHT/3; ++i)
-      {
-        Vision::PixelRGB565* red_i   = outImage.GetRow(i);
-        Vision::PixelRGB565* green_i = outImage.GetRow(i + FACE_DISPLAY_HEIGHT/3);
-        Vision::PixelRGB565* blue_i  = outImage.GetRow(i + 2*FACE_DISPLAY_HEIGHT/3);
-        for(int j=0; j<FACE_DISPLAY_WIDTH; ++j)
-        {
-          red_i[j]   = white;
-          green_i[j] = white;
-          blue_i[j]  = white;
-        }
-      }
+      outImage.FillWith(white);
     }
     else
     {
