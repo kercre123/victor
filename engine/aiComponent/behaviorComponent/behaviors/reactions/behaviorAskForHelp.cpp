@@ -57,17 +57,6 @@ void BehaviorAskForHelp::OnBehaviorActivated()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAskForHelp::OnBehaviorDeactivated()
-{
-  ICozmoBehavior::SmartRemovePowerSaveModeRequest();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorAskForHelp::BehaviorUpdate()
-{
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAskForHelp::SetAnimTriggers()
 {
   const auto& powerSaveManager = GetBehaviorComp<PowerStateManager>();
