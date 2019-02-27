@@ -219,7 +219,7 @@ void Comms::tick(void) {
   Mics::transmit(outboundPacket.sync.payload.audio);
   //Mics::errorCode(outboundPacket.sync.payload.micError);
 #endif
-  Touch::transmit(outboundPacket.sync.payload.touchLevel);
+  //Touch::transmit(outboundPacket.sync.payload.touchLevel);
 
   outboundPacket.sync.payload.framecounter++;
   outboundPacket.sync.footer.checksum = crc(&outboundPacket.sync.payload, sizeof(outboundPacket.sync.payload) / sizeof(uint32_t));
