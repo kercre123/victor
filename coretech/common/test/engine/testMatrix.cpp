@@ -324,7 +324,7 @@ GTEST_TEST(TestMatrix, SmallMatrixAddition)
     1.f, 1.f, 10.f
   }};
 
-  // Normal SmallMatrix multiplication
+  // Normal SmallMatrix addition
   Matrix_3x3f C = A+B;
   
 #ifdef DEBUG_TEST_MATRIX
@@ -656,6 +656,58 @@ GTEST_TEST(TestMatrix, SmallSquareMatrixMultiplicationByPoint)
   cout << "Point q_true: " << q_true << "\n";
   cout << "Point q1: " << q1 << "\n";
   cout << "Point q2: " << q2 << "\n";
+#endif
+  
+} // TestMatrix:SmallSquareMatrixMultiplicationByPoint()
+
+
+GTEST_TEST(TestMatrix, SmallSquareMatrixMultiplication)
+{
+  SmallSquareMatrix<3,float> A, B;
+  A(0,0) = 1.f;
+  A(1,1) = 2.f;
+  A(2,2) = 3.f;
+  
+  B(0,0) = 10.f;
+  B(1,1) = 10.f;
+  B(2,2) = 10.f;
+  
+  SmallSquareMatrix<3,float> C = A*B;
+  
+  ASSERT_EQ(C.GetNumRows(), 3);
+  ASSERT_EQ(C.GetNumCols(), 3);
+  
+  ASSERT_EQ(C(0,0), 10.f);
+  ASSERT_EQ(C(1,1), 20.f);
+  ASSERT_EQ(C(2,2), 30.f);
+  
+  
+#ifdef DEBUG_TEST_MATRIX
+  cout << "Matrix A: \n" << A << "\n";
+  cout << "Matrix B: \n" << B << "\n";
+  cout << "Matrix C = A*B: \n" << C << "\n";
+#endif
+
+  // Check Identity Multiplication
+  float initValsM[] = {1, 2, 3,
+                       4, 5, 6,
+                       7, 8, 9};
+  
+  SmallSquareMatrix<3,float> M(initValsM);
+  SmallSquareMatrix<3,float> I = Eye<3,float>();
+  SmallSquareMatrix<3,float> MI = M * I;
+  SmallSquareMatrix<3,float> IM = I * M;
+
+  
+  ASSERT_TRUE(IsNearlyEqual(M, MI));
+  ASSERT_TRUE(IsNearlyEqual(M, IM));
+
+  
+#ifdef DEBUG_TEST_MATRIX
+  cout << "SmallSquareMatrix M: \n" << M << "\n";
+  cout << "SmallSquareMatrix I: \n" << I << "\n";
+  cout << "SmallSquareMatrix M * I: \n" << MI << "\n";
+  cout << "SmallSquareMatrix I * M: \n" << IM << "\n";
 #endif
   
 } // TestMatrix:SmallSquareMatrixMultiplicationByPoint()

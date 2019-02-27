@@ -222,7 +222,10 @@ namespace Anki {
     T Trace(void) const;
     
   }; // class SmallSquareMatrix
-  
+
+  // constructor for square Identity Matrix
+  template<MatDimType DIM, typename T>
+  SmallSquareMatrix<DIM,T> Eye();
     
   // Alias some common small matrix sizes, like 3x3
   using Matrix_2x2f = SmallSquareMatrix<2,float>;

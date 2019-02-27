@@ -36,8 +36,6 @@ namespace {
   constexpr const double kGyroNoise_radps     = .003;     // see note
   constexpr const double kBiasNoise_radps     = .0000145; // bias stability
 
-  constexpr const double kVelocityUncertainty_radps  = .1;
-
   // Measurement Uncertainty
   const SmallSquareMatrix<9,double> MeasurementUncertainty{{  
     Util::Square(kAccelNoise_rad), 0., 0., 0., 0., 0., 0., 0., 0.,
@@ -54,19 +52,6 @@ namespace {
   // Gravity constants
   constexpr const Point<3,double> kGravity_G     = {0., 0., 1.};
   constexpr const double          kG_over_mmps2  = 1./9810.;
-
-  // Identity matrix
-  const SmallSquareMatrix<9,double> I{{
-    1., 0., 0., 0., 0., 0., 0., 0., 0.,
-    0., 1., 0., 0., 0., 0., 0., 0., 0.,
-    0., 0., 1., 0., 0., 0., 0., 0., 0.,
-    0., 0., 0., 1., 0., 0., 0., 0., 0., 
-    0., 0., 0., 0., 1., 0., 0., 0., 0., 
-    0., 0., 0., 0., 0., 1., 0., 0., 0., 
-    0., 0., 0., 0., 0., 0., 1., 0., 0., 
-    0., 0., 0., 0., 0., 0., 0., 1., 0., 
-    0., 0., 0., 0., 0., 0., 0., 0., 1. 
-  }};
     
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Matrix Operations
@@ -107,7 +92,12 @@ namespace {
   // EKF Jacobian Matrices
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  // Process uncertainty as a function of just time and velocity uncertainty
+  // The process uncertainty as a rate of change in rotation - this can be tuned to get best performance
+  constexpr const double kVelocityUncertainty_radps  = .1;
+
+  // Process uncertainty as a function of just time and velocity uncertainty. Typically this is a 
+  //   tunable diagonal matrix, but the linked paper provides a derivation for a highly performant
+  //   implementation specific for IMUs
   SmallSquareMatrix<9,double> ProcessUncertaintyMatrix(double dt) {
     const double d3 = Util::Square( kVelocityUncertainty_radps ) * dt * dt * dt / 3;
     const double d2 = Util::Square( kVelocityUncertainty_radps ) * dt * dt / 2;
@@ -236,17 +226,21 @@ void ImuESKF::Reset(const Rotation3d& rot) {
 void ImuESKF::Update(const Point<3,double>& accel, const Point<3,double>& gyro, const float dt_s, bool isMoving)
 {
   ProcessUpdate( dt_s );
+
+  // if we don't believe we are moving use the gyro as a bias measurement,
+  //   otherwise just assume the bias is constant 
   MeasurementUpdate( { accel * kG_over_mmps2, gyro, (isMoving ? _state.GetGyroBias() : gyro) } );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ImuESKF::ProcessUpdate(double dt_s)
 { 
-  const auto q = ToQuat((_state.GetVelocity() - _state.GetGyroBias()) * dt_s);
-  const auto F = ProcessTransformationMatrix(q, dt_s);
-  const auto Q = ProcessUncertaintyMatrix(dt_s);
+  const auto dq = ToQuat((_state.GetVelocity() - _state.GetGyroBias()) * dt_s);
+  const auto F  = ProcessTransformationMatrix(dq, dt_s);
+  const auto Q  = ProcessUncertaintyMatrix(dt_s);
 
-  _state.SetRotation(_state.GetRotation() * q); // only project the rotation forward in time, velocity and bias are assumed constant
+  // only project the rotation forward in time, velocity and bias are assumed constant
+  _state.SetRotation(_state.GetRotation() * dq); 
   _P = F * (_P + Q) * F.GetTranspose();
 }
 
@@ -254,7 +248,8 @@ void ImuESKF::ProcessUpdate(double dt_s)
 void ImuESKF::MeasurementUpdate(const Measurement& z)
 {
   // Calculate Predicted measurement given the current state estimate
-  const auto zt = Join(Join( _state.GetRotation().GetConj() * kGravity_G, _state.GetVelocity() ), _state.GetGyroBias());
+  const auto g_Local = _state.GetRotation().GetConj() * kGravity_G;
+  const auto zt = Join(Join( g_Local, _state.GetVelocity() ), _state.GetGyroBias());
 
   // Calculate Kalman gain K and the residual
   const auto R    = MeasurementUncertainty;
@@ -271,7 +266,7 @@ void ImuESKF::MeasurementUpdate(const Measurement& z)
   _state.SetGyroBias( _state.GetGyroBias() + res.Slice<6,8>() );
 
   // Update the covariance
-  const auto  IKH = I - K * H;
+  const auto  IKH = Eye<9,double>() - K * H;
   const auto  T   = TransitionJacobianMatrix(res.Slice<0,2>());
   _P = T * (IKH * _P * IKH.GetTranspose() + K * R * K.GetTranspose() ) * T.GetTranspose();
 }
