@@ -20,19 +20,18 @@ typedef struct GPIO_t* GPIO;
 
 /************* GPIO Interface ***************/
 
-GPIO gpio_create(int gpio_number, enum Gpio_Dir isOutput, enum Gpio_Level initial_value);
+int gpio_create(int gpio_number, enum Gpio_Dir isOutput, enum Gpio_Level initial_value, GPIO* gpPtr);
 
-GPIO gpio_create_open_drain_output(int gpio_number, enum Gpio_Level initial_value);
+int gpio_create_open_drain_output(int gpio_number, enum Gpio_Level initial_value, GPIO* gpPtr);
 
 void gpio_set_direction(GPIO gp, enum Gpio_Dir isOutput);
 
-void gpio_set_value(GPIO gp, enum Gpio_Level value);
+int  gpio_set_value(GPIO gp, enum Gpio_Level value);
 
 void gpio_close(GPIO gp);
 
 #ifdef __cplusplus
 }
 #endif
-
 
 #endif//CORE_GPIO_H

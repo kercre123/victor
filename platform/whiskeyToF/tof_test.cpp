@@ -9,6 +9,8 @@
 #include <inttypes.h>
 #include <unistd.h>
 #include <chrono>
+#include <csignal>
+#include <thread>
 
 #ifdef PRINT_NAMED_ERROR
 #undef PRINT_NAMED_ERROR
@@ -33,12 +35,32 @@ uint32_t GetTimeStamp(void)
   return static_cast<uint32_t>(std::chrono::duration_cast<std::chrono::milliseconds>(currTime.time_since_epoch()).count());
 }
 
+namespace
+{
+int shutdown = 0;
+}
+
+static void Shutdown(int signum)
+{
+  printf("shutdown\n");
+  shutdown = signum;
+}
 
 int main(int argc, char** argv)
 {
+  signal(SIGTERM, Shutdown);
+  signal(SIGINT, Shutdown);
+  
   bool pause = false;
   
-  ToFSensor::getInstance()->SetupSensors(nullptr);
+  ToFSensor::getInstance()->SetupSensors([](ToFSensor::CommandResult res)
+                                         {
+                                           if((int)res < 0)
+                                           {
+                                             printf("Failed to setup\n");
+                                             exit(1);
+                                           }
+                                         });
 
   if(argc > 1)
   {
@@ -59,9 +81,10 @@ int main(int argc, char** argv)
         reflectance = strtof(argv[3], &end);
       }
 
-      PRINT_NAMED_ERROR("", "Calibrating at %u with reflectance %f",
-                        dist,
-                        reflectance);
+      PRINT_NAMED_INFO("ToFTest",
+                       "Calibrating at %u with reflectance %f",
+                       dist,
+                       reflectance);
       
       ToFSensor::getInstance()->PerformCalibration(dist, reflectance, nullptr);
 
@@ -73,30 +96,48 @@ int main(int argc, char** argv)
     }
   }
 
-  ToFSensor::getInstance()->StartRanging(nullptr);
+  ToFSensor::getInstance()->StartRanging([](ToFSensor::CommandResult res)
+                                         {
+                                           if((int)res < 0)
+                                           {
+                                             printf("Failed to start ranging\n");
+                                             exit(1);
+                                           }
+                                         });
 
-  while(true)
+  while(shutdown == 0)
   {
     bool isUpdated = false;
-
     RangeDataRaw data = ToFSensor::getInstance()->GetData(isUpdated);
 
-
-
     static uint32_t s = GetTimeStamp();
-    if(pause && GetTimeStamp() - s > 10000)
+    if(pause && GetTimeStamp() - s > 3000)
     {
       s = GetTimeStamp();
       static bool b = false;
       if(b)
       {
         printf("STARTING\n");
-        ToFSensor::getInstance()->StartRanging(nullptr);
+        ToFSensor::getInstance()->StartRanging([](ToFSensor::CommandResult res)
+                                         {
+                                           if((int)res < 0)
+                                           {
+                                             printf("Failed to start ranging\n");
+                                             exit(1);
+                                           }
+                                         });
       }
       else
       {
         printf("STOPPING\n");
-        ToFSensor::getInstance()->StopRanging(nullptr);
+        ToFSensor::getInstance()->StopRanging([](ToFSensor::CommandResult res)
+                                         {
+                                           if((int)res < 0)
+                                           {
+                                             printf("Failed to stop ranging\n");
+                                             exit(1);
+                                           }
+                                         });
       }
       b = !b;
     }
@@ -104,9 +145,9 @@ int main(int argc, char** argv)
     
     if(!isUpdated)
     {
+      std::this_thread::sleep_for(std::chrono::milliseconds(5));
       continue;
     }
-
 
     static RangeDataRaw lastValid = data;
       
@@ -143,7 +184,15 @@ int main(int argc, char** argv)
     printf("%s\n", ss.str().c_str());    
   }
 
-  ToFSensor::getInstance()->StopRanging(nullptr);
+  printf("stopping\n");
+  ToFSensor::getInstance()->StopRanging([](ToFSensor::CommandResult res)
+                                         {
+                                           if((int)res < 0)
+                                           {
+                                             printf("Failed to stop ranging\n");
+                                             exit(1);
+                                           }
+                                         });
 
   ToFSensor::removeInstance();
   

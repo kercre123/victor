@@ -1,17 +1,18 @@
 
-/*
-* This file is part of VL53L1 Protected
-*
-* Copyright (C) 2016, STMicroelectronics - All Rights Reserved
-*
-* License terms: STMicroelectronics Proprietary in accordance with licensing
-* terms at www.st.com/sla0044
-*
-* STMicroelectronics confidential
-* Reproduction and Communication of this document is strictly prohibited unless
-* specifically authorized in writing by STMicroelectronics.
-*
+/*******************************************************************************
+ This file is part of VL53L1 Protected
+
+ Copyright (c) 2017, STMicroelectronics - All Rights Reserved
+
+ License terms: STMicroelectronics Proprietary in accordance with licensing
+ terms at www.st.com/sla0081
+
+ STMicroelectronics confidential
+ Reproduction and Communication of this document is strictly prohibited unless
+ specifically authorized in writing by STMicroelectronics.
+
 */
+
 
 
 
@@ -75,52 +76,56 @@ extern "C"
 
 typedef struct {
 
-	uint32_t  VL53L1_PRM_00036;
+	uint32_t  VL53L1_p_036;
 
 
 
-	uint8_t   VL53L1_PRM_00064;
+	uint8_t   VL53L1_p_064;
 
 
-	uint8_t   VL53L1_PRM_00065;
-
-
-
-	uint16_t   VL53L1_PRM_00066;
-
-
-	uint16_t   VL53L1_PRM_00067;
-
-
-	uint16_t   VL53L1_PRM_00068;
-
-
-	uint16_t   VL53L1_PRM_00037;
+	uint8_t   VL53L1_p_065;
 
 
 
-	uint32_t   VL53L1_PRM_00011;
+	uint16_t   VL53L1_p_066;
 
 
-	uint32_t   VL53L1_PRM_00033;
+	uint16_t   VL53L1_p_067;
 
 
-
-	uint16_t   VL53L1_PRM_00004;
-
+	uint16_t   VL53L1_p_068;
 
 
-	uint32_t   VL53L1_PRM_00028;
-
-
-	uint32_t   VL53L1_PRM_00034;
+	uint16_t   VL53L1_p_037;
 
 
 
-	int16_t    VL53L1_PRM_00035;
+	uint32_t   VL53L1_p_012;
 
 
-	int16_t    VL53L1_PRM_00006;
+	uint32_t   VL53L1_p_033;
+
+
+
+	uint16_t   VL53L1_p_001;
+
+
+
+	uint16_t   VL53L1_p_006;
+
+
+
+	uint32_t   VL53L1_p_004;
+
+
+	uint32_t   VL53L1_p_034;
+
+
+
+	int16_t    VL53L1_p_035;
+
+
+	int16_t    VL53L1_p_007;
 
 
 

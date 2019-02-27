@@ -1,11 +1,5 @@
 if (VICOS)
-  file(GLOB GPIO_SRCS ${CMAKE_CURRENT_SOURCE_DIR}/*.c)
-  file(GLOB GPIO_INCS ${CMAKE_CURRENT_SOURCE_DIR}/*.h)
-
-  add_library(gpio STATIC
-    ${GPIO_SRCS}
-    ${GPIO_INCS}
-  )
+  anki_build_cxx_library(gpio ${ANKI_SRCLIST_DIR} STATIC)
 
   target_include_directories(gpio 
     PRIVATE
@@ -18,6 +12,10 @@ if (VICOS)
   )
 
   set_target_properties(gpio PROPERTIES LINKER_LANGUAGE C)
+
+  anki_build_strip(TARGET gpio)
+
+  #anki_build_target_license(gpio "ANKI")
 
 endif()
 

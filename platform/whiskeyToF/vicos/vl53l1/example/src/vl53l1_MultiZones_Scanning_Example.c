@@ -1,3 +1,64 @@
+/*
+* Copyright (c) 2017, STMicroelectronics - All Rights Reserved
+*
+* This file is part of VL53L1 Core and is dual licensed, either
+* 'STMicroelectronics Proprietary license'
+* or 'BSD 3-clause "New" or "Revised" License' , at your option.
+*
+********************************************************************************
+*
+* 'STMicroelectronics Proprietary license'
+*
+********************************************************************************
+*
+* License terms: STMicroelectronics Proprietary in accordance with licensing
+* terms at www.st.com/sla0044
+*
+* STMicroelectronics confidential
+* Reproduction and Communication of this document is strictly prohibited unless
+* specifically authorized in writing by STMicroelectronics.
+*
+*
+********************************************************************************
+*
+* Alternatively, VL53L1 Core may be distributed under the terms of
+* 'BSD 3-clause "New" or "Revised" License', in which case the following
+* provisions apply instead of the ones
+* mentioned above :
+*
+********************************************************************************
+*
+* License terms: BSD 3-clause "New" or "Revised" License.
+*
+* Redistribution and use in source and binary forms, with or without
+* modification, are permitted provided that the following conditions are met:
+*
+* 1. Redistributions of source code must retain the above copyright notice, this
+* list of conditions and the following disclaimer.
+*
+* 2. Redistributions in binary form must reproduce the above copyright notice,
+* this list of conditions and the following disclaimer in the documentation
+* and/or other materials provided with the distribution.
+*
+* 3. Neither the name of the copyright holder nor the names of its contributors
+* may be used to endorse or promote products derived from this software
+* without specific prior written permission.
+*
+* THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
+* AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+* IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE
+* DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE
+* FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+* DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR
+* SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER
+* CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+* OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
+* OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+*
+*
+********************************************************************************
+*
+*/
 #include <malloc.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -170,6 +231,8 @@ int main(int argc, char **argv)
 	VL53L1_DEV                     Dev = &dev;
 	VL53L1_PresetModes             PresetMode;
 	VL53L1_DeviceInfo_t            DeviceInfo;
+	VL53L1_Version_t               Version;
+	VL53L1_ll_version_t            llVersion;
 
 	setvbuf(stdout, NULL, _IONBF, 0);
 	setvbuf(stderr, NULL, _IONBF, 0);
@@ -180,67 +243,65 @@ int main(int argc, char **argv)
 //	printf ("Press a Key to continue!\n\n");
 //	getchar();
 
+	VL53L1_GetVersion(&Version);
+	printf("driver version\t %d.%d.%d rev %d\n",
+			Version.major, Version.minor, Version.build, Version.revision);
+	VL53L1_get_version(Dev, &llVersion);
+	printf("lld    version\t %d.%d.%d rev %d\n",
+			llVersion.ll_major, llVersion.ll_minor, llVersion.ll_build, llVersion.ll_revision);
+	printf("\n");
 	/*
 	* Configure logging - turn everything on
 	*/
 
-#ifdef VL53L1_LOG_ENABLE
-	if (0)
+#if defined(VL53L1_LOG_ENABLE) && defined(_WIN64)
 		Status = VL53L1_trace_config(
-			NULL,
+			filename,
 			VL53L1_TRACE_MODULE_ALL,
 			VL53L1_TRACE_LEVEL_ALL,
 			VL53L1_TRACE_FUNCTION_ALL);
-	else
+#elif defined(VL53L1_LOG_ENABLE) && !defined(_WIN64)
 		Status = VL53L1_trace_config(
 			NULL,
 			VL53L1_TRACE_MODULE_NONE,
 			VL53L1_TRACE_LEVEL_NONE,
 			VL53L1_TRACE_FUNCTION_NONE);
-
 #endif
+
+        dev.platform_data.i2c_file_handle = open("/dev/i2c-6", O_RDWR);
 
 	/*
 	* Initialize the platform interface
 	*/
-
-	dev.platform_data.i2c_file_handle = open("/dev/i2c-6", O_RDWR);
-
-	if (Status == VL53L1_ERROR_NONE) {
-		printf("Platform init\n");
-		Status = VL53L1_platform_init(
-			Dev,
-			0x29,
-			1, /* comms_type  I2C*/
-			400);       /* comms_speed_khz - 400kHz recommended */
-	}
+	if (Status == VL53L1_ERROR_NONE)
+	Status = VL53L1_platform_init(
+		Dev,
+		0x29, /* EVK requires 8-bit I2C */
+		1, /* comms_type  I2C*/
+		400);       /* comms_speed_khz - 400kHz recommended */
 
 	/*
 	* Wait 2 sec for supplies to stabilize
 	*/
 
-	if (Status == VL53L1_ERROR_NONE) {
-		printf("WaitMs\n");
+	if (Status == VL53L1_ERROR_NONE)
 		Status = VL53L1_WaitMs(Dev, 2000);
-	}
+
 	/*
 	*  Wait for firmware to finish booting
 	*/
-	if (Status == VL53L1_ERROR_NONE) {
-		printf("Wait device booted\n");
+	if (Status == VL53L1_ERROR_NONE)
 		Status = VL53L1_WaitDeviceBooted(Dev);
-	}
+
 	/*
 	* Initialise Dev data structure
 	*/
-	if (Status == VL53L1_ERROR_NONE) {
-		printf("Data init\n");
+	if (Status == VL53L1_ERROR_NONE)
 		Status = VL53L1_DataInit(Dev);
-	}
+
 	if(Status == VL53L1_ERROR_NONE)
 	{
 		Status = VL53L1_GetDeviceInfo(Dev, &DeviceInfo);
-		printf("Get device info\n");
 		if(Status == VL53L1_ERROR_NONE)
 		{
 		    printf("VL53L1_GetDeviceInfo:\n");
@@ -258,17 +319,14 @@ int main(int argc, char **argv)
 		print_pal_error(Status);
 	}
 
-	if (Status == VL53L1_ERROR_NONE) {
-		printf("Static init\n");
+	if (Status == VL53L1_ERROR_NONE)
 		Status = VL53L1_StaticInit(Dev);
-	}
+
 	/*
 	* Run reference SPAD characterisation
 	*/
-	/* if (Status == VL53L1_ERROR_NONE) { */
-	/* 	printf("Perform spad management\n"); */
-	/* 	Status = VL53L1_PerformRefSpadManagement(Dev); */
-	/* } */
+	if (Status == VL53L1_ERROR_NONE)
+	Status = VL53L1_PerformRefSpadManagement(Dev);
 
 	/*
 	* Run Xtalk calibration
@@ -284,33 +342,29 @@ int main(int argc, char **argv)
 	*/
 
 	if (Status == VL53L1_ERROR_NONE) {
-		printf("Set Preset mode\n");
 		PresetMode = VL53L1_PRESETMODE_MULTIZONES_SCANNING;
 		Status = VL53L1_SetPresetMode(Dev, PresetMode);
 	}
 
 	if (Status == VL53L1_ERROR_NONE) {
-		printf("set distance mode\n");
 //		Status = VL53L1_SetDistanceMode(Dev, VL53L1_DISTANCEMODE_AUTO);
 //		Status = VL53L1_SetDistanceMode(Dev, VL53L1_DISTANCEMODE_MEDIUM);
-		Status = VL53L1_SetDistanceMode(Dev, VL53L1_DISTANCEMODE_SHORT);
-//		Status = VL53L1_SetDistanceMode(Dev, VL53L1_DISTANCEMODE_LONG);
+//		Status = VL53L1_SetDistanceMode(Dev, VL53L1_DISTANCEMODE_SHORT);
+		Status = VL53L1_SetDistanceMode(Dev, VL53L1_DISTANCEMODE_LONG);
 	}
 
 	/*
 	 * Set ROI before start
 	*
 	*/
-	if (Status == VL53L1_ERROR_NONE) {
-		printf("Set ROI\n");
+	if (Status == VL53L1_ERROR_NONE)
 		Status = SetROIExample(Dev);
-	}
+
 
 	/* Example for timing budget before start */
-	if (Status == VL53L1_ERROR_NONE) {
-		printf("Set timing budget\n");
+	if (Status == VL53L1_ERROR_NONE)
 		Status = TimingBudgetExample(Dev);
-	}
+
 	/*
 	 * Ranging LOOP
 	 *
@@ -333,10 +387,9 @@ int main(int argc, char **argv)
 	}
 
 
-	if (Status == VL53L1_ERROR_NONE) {
-		printf("Platform terminate\n");
+	if (Status == VL53L1_ERROR_NONE)
 		Status = VL53L1_platform_terminate(Dev);
-	}
+
 
 	print_pal_error(Status);
 
@@ -345,3 +398,4 @@ int main(int argc, char **argv)
 
 	return (Status);
 }
+

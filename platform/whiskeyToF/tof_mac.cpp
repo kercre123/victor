@@ -15,6 +15,11 @@
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 
+#include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
+#include "simulator/controllers/shared/webotsHelpers.h"
+
 #include <webots/Supervisor.hpp>
 #include <webots/RangeFinder.hpp>
 
@@ -23,20 +28,23 @@
 #endif
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
 
 namespace {
   bool _engineSupervisorSet = false;
   webots::Supervisor* _engineSupervisor = nullptr;
-  
   webots::RangeFinder* leftSensor_;
-  webots::RangeFinder* rightSensor_;
 }
 
 ToFSensor* ToFSensor::_instance = nullptr;
 
 ToFSensor* ToFSensor::getInstance()
 {
+  if(!IsWhiskey())
+  {
+    return nullptr;
+  }
+  
   DEV_ASSERT(_engineSupervisorSet, "tof_mac.NoSupervisorSet");
   if(nullptr == _instance)
   {
@@ -63,10 +71,29 @@ ToFSensor::ToFSensor()
     DEV_ASSERT(ROBOT_TIME_STEP_MS >= _engineSupervisor->getBasicTimeStep(), "tof_mac.UnexpectedTimeStep");
 
     leftSensor_ = _engineSupervisor->getRangeFinder("leftRangeSensor");
-    rightSensor_ = _engineSupervisor->getRangeFinder("rightRangeSensor");
-
     leftSensor_->enable(ROBOT_TIME_STEP_MS);
-    rightSensor_->enable(ROBOT_TIME_STEP_MS);
+
+    // Make the CozmoVizDisplay (which includes the nav map, etc.) invisible to the Rangefinder. Note that the call to
+    // setVisibility() requires a pointer to the Rangefinder NODE, _not_ the Rangefinder device (which is of type
+    // webots::Rangefinder*). There seems to be no good way to get the underlying node pointer of the Rangefinder, so we
+    // have to do this somewhat hacky iteration over all of the nodes in the world to find the Rangefinder node.
+    const auto& vizNodes = WebotsHelpers::GetMatchingSceneTreeNodes(*_engineSupervisor, "CozmoVizDisplay");
+          
+    webots::Node* tofNode = nullptr;
+    const int maxNodesToSearch = 10000;
+    for (int i=0 ; i < maxNodesToSearch ; i++) {
+      auto* node = _engineSupervisor->getFromId(i);
+      if ((node != nullptr) && (node->getTypeName() == "RangeFinder")) {
+        tofNode = node;
+        break;
+      }
+    }
+    DEV_ASSERT(tofNode != nullptr, "ToF.NoWebotsRangeFinderFound");
+          
+    for (const auto& vizNode : vizNodes) {
+      vizNode.nodePtr->setVisibility(tofNode, false);
+    }
+
   }
 }
 
@@ -77,11 +104,6 @@ ToFSensor::~ToFSensor()
 
 Result ToFSensor::Update()
 {
-  if (nullptr != _engineSupervisor) {
-    if (_engineSupervisor->step(ROBOT_TIME_STEP_MS) == -1) {
-      return RESULT_FAIL;
-    }
-  }
   return RESULT_OK;
 }
 
@@ -91,27 +113,22 @@ RangeDataRaw ToFSensor::GetData(bool& dataUpdated)
   
   RangeDataRaw rangeData;
 
-  const float* rightImage = rightSensor_->getRangeImage();
   const float* leftImage = leftSensor_->getRangeImage();
 
   for(int i = 0; i < leftSensor_->getWidth(); i++)
   {
     for(int j = 0; j < 4; j++)
     {
-      int index = i*8 + j;
-      RangingData& lData = rangeData.data[index];
-      RangingData& rData = rangeData.data[index + 4];
+      int index = i*4 + j;
+      RangingData& rData = rangeData.data[index];
 
-      lData.numObjects = 1;
-      lData.roiStatus = 0;
-      lData.spadCount = 90.f;
-      rData = lData;
+      rData.numObjects = 1;
+      rData.roiStatus = 0;
+      rData.spadCount = 90.f;
+
+      rData.roi = index;
       
-      lData.roi = index;
-      rData.roi = index + 4;
-      
-      lData.processedRange_mm = leftImage[i*4 + j];
-      rData.processedRange_mm = rightImage[i*4 + j];
+      rData.processedRange_mm = leftImage[i*4 + j] * 1000;
 
       RangeReading reading;
       reading.signalRate_mcps = 25.f;
@@ -120,14 +137,69 @@ RangeDataRaw ToFSensor::GetData(bool& dataUpdated)
       reading.status = 0;
 
       reading.rawRange_mm = leftImage[i*4 + j] * 1000;
-      lData.readings.push_back(reading);
-
-      reading.rawRange_mm = rightImage[i*4 + j] * 1000;
       rData.readings.push_back(reading);
     }
   }
   
   return rangeData;
+}
+
+int ToFSensor::SetupSensors(const CommandCallback& callback)
+{
+  if(callback != nullptr)
+  {
+    callback(CommandResult::Success);
+  }
+  return 0;
+}
+
+int ToFSensor::StartRanging(const CommandCallback& callback)
+{
+  if(callback != nullptr)
+  {
+    callback(CommandResult::Success);
+  }
+  return 0;
+}
+
+int ToFSensor::StopRanging(const CommandCallback& callback)
+{
+  if(callback != nullptr)
+  {
+    callback(CommandResult::Success);
+  }
+  return 0;
+}
+
+bool ToFSensor::IsRanging() const
+{
+  return true;
+}
+
+bool ToFSensor::IsValidRoiStatus(uint8_t status) const
+{
+  return true;
+}
+  
+int ToFSensor::PerformCalibration(uint32_t distanceToTarget_mm,
+                                  float targetReflectance,
+                                  const CommandCallback& callback)
+{
+  if(callback != nullptr)
+  {
+    callback(CommandResult::Success);
+  }
+  return 0;
+}
+
+bool ToFSensor::IsCalibrating() const
+{
+  return false;
+}
+
+void ToFSensor::SetLogPath(const std::string& path)
+{
+  return;
 }
   
 }
