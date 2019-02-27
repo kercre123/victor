@@ -10,7 +10,7 @@
 
 #include <spine_crc.h>
 
-
+FILE *pdm,*raw;
 
 void handle_incoming_frame(struct BodyToHead* data)
 {
@@ -35,6 +35,21 @@ void handle_incoming_frame(struct BodyToHead* data)
    lastfc = data->framecounter;
    static uint8_t printcount=0;
    if (1 || ( ++printcount & RATEMASK ) == 0) {
+      short out[MICDATA_SAMPLES_COUNT*16];
+      int i = 0, j = 0, k = 0;
+
+      for (i = 0; i < MICDATA_SAMPLES_COUNT; i++)
+      {
+        unsigned short xi = data->audio[i];
+        for (k = 14; k >= 0; k-=2)  // lo
+          out[j++] = (xi>>k) & 1 ? -32768 : 32767;
+        for (k = 15; k >= 1; k-=2)  // hi
+          out[j++] = (xi>>k) & 1 ? -32768 : 32767;
+      }
+
+      fwrite(out, 1, sizeof(out), raw);
+      fwrite(data->audio, 1, sizeof(data->audio), pdm);
+
       printf("%d: %d %d\n",
              data->framecounter,
              data->touchLevel[0],
@@ -63,6 +78,15 @@ int main(int argc, const char* argv[]) {
    
    printf("Starting loop\n");
    LOGD("Starting loop");
+   
+   pdm = fopen("/tmp/audio.pdm", "wb");
+   raw = fopen("/tmp/audio.raw", "wb");
+   
+   if (pdm && raw)
+    printf("Opened /tmp/audio.*\n");
+   else
+    exit(1);
+   
    while (1) {
       fill_outgoing_frame(&headData);
       const struct SpineMessageHeader* hdr = hal_get_frame(PAYLOAD_DATA_FRAME, 10);

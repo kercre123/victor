@@ -13,11 +13,9 @@
 #include "spine_crc.h"
 #include "spine_hal.h"
 
-
-
 #define SKIP_CRC_CHECK 0
 
-#define SPINE_MAX_BYTES 1280
+#define SPINE_MAX_BYTES 3000
 
 #define BODY_TAG_PREFIX ((uint8_t*)&SyncKey)
 #define SPINE_TAG_LEN sizeof(SpineSync)
@@ -43,19 +41,9 @@ static struct HalGlobals {
 
 
 /************* Error Handling *****************/
-#define spine_error(code, fmt, args...)   (LOGE( fmt, ##args)?(code):(code))
-#ifdef CONSOLE_DEBUG_PRINTF
-#define spine_debug(fmt, args...)  printf(fmt, ##args)
-#else
-#define spine_debug(fmt, args...)  (LOGD( fmt, ##args))
-#endif
-
-#define EXTENDED_SPINE_DEBUG 0
-#if EXTENDED_SPINE_DEBUG
+#define spine_error(code, fmt, args...)  (LOGE( fmt, ##args)?(code):(code))
+#define spine_debug(fmt, args...) // printf(fmt, ##args)
 #define spine_debug_x spine_debug
-#else
-#define spine_debug_x(fmt, args...)
-#endif
 
 /************* SERIAL INTERFACE ***************/
 
@@ -113,7 +101,7 @@ SpineErr hal_serial_open(const char* devicename, long baudrate)
   return err_OK;
 }
 
-
+int gtotal = 0;
 int hal_serial_read(uint8_t* buffer, int len)   //->bytes_received
 {
 
@@ -123,7 +111,8 @@ int hal_serial_read(uint8_t* buffer, int len)   //->bytes_received
       usleep(HAL_SERIAL_POLL_INTERVAL_US); //wait a bit.
       result = 0; //not an error
     }
-  }
+  } else
+    gtotal+=result;
   return result;
 }
 
@@ -294,7 +283,7 @@ int hal_resync_partial(int start_offset, int len) {
     if (index) {
        memmove(gHal.inbuffer, gHal.inbuffer+i, index);
     }
-    spine_debug("\n%u dropped bytes\n", start_offset+i-index);
+    printf("\n%u dropped bytes\n", start_offset+i-index);
 
     return index;
 }
@@ -323,7 +312,8 @@ const struct SpineMessageHeader* hal_read_frame()
        return NULL; //wait a bit more
     }
   } //endwhile
-
+  //printf("\nFound at %d - gtotal=%d, body=%d\n", index, gtotal, SPINE_HEADER_LEN + sizeof(struct BodyToHead) + SPINE_CRC_LEN);
+  gtotal = 0;
 
   //At this point we have a valid message header. (spine_sync rejects bad lengths and payloadTypes)
   // Collect the right number of bytes.
@@ -357,7 +347,6 @@ const struct SpineMessageHeader* hal_read_frame()
   if (expected_crc != true_crc && !SKIP_CRC_CHECK) {
     spine_debug("\nspine_crc_error: calc %08x vs data %08x\n", true_crc, expected_crc);
     LOGI("spine_crc_error %08x != %08x", true_crc, expected_crc);
-
 
     // Scan the whole payload for sync, to recover after dropped bytes,
     index = hal_resync_partial(SPINE_HEADER_LEN, total_message_length);

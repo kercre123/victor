@@ -1,4 +1,4 @@
-VICOS_BUILD_TOOL_VER:=1.1.0-r04
+VICOS_BUILD_TOOL_VER:=0.9-r03
 
 VICOS_ARM_TOOLS_ROOT:=~/.anki/vicos-sdk/dist/$(VICOS_BUILD_TOOL_VER)
 
@@ -94,7 +94,6 @@ stupid:
 	echo $(PLATFORMj)
 #	$(CC) -v $(DEFINES) $(LOCAL_LDLIBS) -gcc-toolchain -L../spine -lspine stupid_hal.c
 	$(ARMCC) $(DEFINES) $(LOCAL_LDLIBS) -I../hal/spine -I../syscon -llog ../hal/spine/spine_hal.c ../hal/spine/spine_crc.c stupid_hal.c
-	adb push ./a.out /data/local/tmp
 
 spinal_tap:
 	$(CC) $(DEFINES) $(LOCAL_LDLIBS) -I../hal/spine -I../syscon  ../hal/spine/spine_hal.c ../hal/spine/spine_crc.c spinal_tap.c -o spinal_tap
