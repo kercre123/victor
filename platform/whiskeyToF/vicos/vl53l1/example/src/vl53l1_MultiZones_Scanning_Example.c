@@ -60,6 +60,9 @@
 *
 */
 #include <malloc.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
 
 #include "vl53l1_api.h"
 #include "vl53l1_platform_init.h"
@@ -265,13 +268,15 @@ int main(int argc, char **argv)
 			VL53L1_TRACE_FUNCTION_NONE);
 #endif
 
+        dev.platform_data.i2c_file_handle = open("/dev/i2c-6", O_RDWR);
+
 	/*
 	* Initialize the platform interface
 	*/
 	if (Status == VL53L1_ERROR_NONE)
 	Status = VL53L1_platform_init(
 		Dev,
-		(0x29 << 1), /* EVK requires 8-bit I2C */
+		0x29, /* EVK requires 8-bit I2C */
 		1, /* comms_type  I2C*/
 		400);       /* comms_speed_khz - 400kHz recommended */
 

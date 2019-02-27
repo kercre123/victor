@@ -55,9 +55,10 @@ target_include_directories(whiskeyToF
 anki_build_target_license(whiskeyToF "ANKI")
 
 
-# tof_test is a standalone program to test output of tof sensor
+# Below are two different tof test programs, tof_test and multizone
+# tof_test uses the whiskyToF library while multizone uses an ST provided test program
 # Don't build by default
-if (VICOS)
+if (VICOS AND FALSE)
 
 project(tof_test)
 
@@ -88,5 +89,29 @@ target_compile_definitions(tof_test
 )
 
 anki_build_target_license(tof_test "ANKI")
+
+
+project(multizone)
+
+add_executable(multizone
+  ${CMAKE_SOURCE_DIR}/platform/whiskeyToF/vicos/vl53l1/example/src/vl53l1_MultiZones_Scanning_Example.c)
+
+target_include_directories(multizone
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..> # allow "vicos/" prefix
+  ${PLATFORM_INCLUDES}
+)
+
+target_link_libraries(multizone
+PRIVATE
+  vl53l1
+  ${PLATFORM_LIBS}
+)
+
+target_compile_definitions(multizone
+  PRIVATE
+  ${PLATFORM_COMPILE_DEFS}
+)
 
 endif()
