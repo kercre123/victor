@@ -185,6 +185,8 @@ private:
   // if the watchdog fires, this function attempts to remedy the situation
   void AttemptToFixStuckInSpeakingBug();
   
+  void FailInitialization( const std::string& reason );
+  
   // readable version int
   alexaClientSDK::avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion GetFirmwareVersion() const;
   

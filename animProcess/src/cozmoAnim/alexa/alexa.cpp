@@ -371,8 +371,9 @@ void Alexa::CreateImpl()
         _timeEnableWakeWord_s = kTimeUntilWakeWord_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
     } else {
-      // initialization was unsuccessful
-      SetAlexaActive( false );
+      // initialization was unsuccessful. in case this means the alexa databases were corrupt, delete everything
+      const bool deleteUserData = true;
+      SetAlexaActive( false, deleteUserData );
     }
   };
   _impl->Init( _context, std::move(initCallback) );
