@@ -80,7 +80,7 @@ void ImageCompositor::GetCompositeImage(Vision::Image& outImg) const
   const f32 averageFactor = 1.f / GetNumImagesComposited();
   _sumImage.get_CvMat_().convertTo(outImg.get_CvMat_(), CV_8UC1, averageFactor, 0);
 
-  // Rescale the pixels in the top percentile to be kBaseIntensityForMaxBrightness (or higher)
+  // Rescale the pixels in the specified percentile to be maximum brightness
   ImageBrightnessHistogram hist;
   hist.FillFromImage(outImg, kImageHistogramSubsample);
   const u8 brightIntensityVal = hist.ComputePercentile(_kPercentileForMaxIntensity);

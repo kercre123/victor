@@ -253,25 +253,28 @@ TEST(VisionSystem, ImageCompositing_MarkerDetection)
 {
   using namespace Anki;
 
-  // Construct a vision system
-  // NOTE: We don't just use a MarkerDetector here because the VisionSystem also does CLAHE preprocessing which
-  //       is part of this test (e.g. for low light performance)
+  const char* kDebugName = "Test.VisionSystem.ImageCompositing_MarkerDetection";
+
   Vector::VisionSystem visionSystem(cozmoContext);
   Result result = visionSystem.Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
+  Json::Value cfg = cozmoContext->GetDataLoader()->GetRobotVisionConfig();
+  const u32 imageReadyPeriod = JsonTools::ParseUInt32(cfg["ImageCompositing"],"imageReadyPeriod", kDebugName);
+  const u32 imageResetPeriod = imageReadyPeriod * JsonTools::ParseUInt32(cfg["ImageCompositing"],"numImageReadyCyclesBeforeReset", kDebugName);
   ASSERT_EQ(RESULT_OK, result);
 
   // Don't really need a valid camera calibration, so just pass a dummy one in
-  // to make vision system happy. All that matters is the image dimensions be correct.
-  auto calib = std::make_shared<Vision::CameraCalibration>(240,320,290.f,290.f,160.f,120.f,0.f);
+  // to make vision system happy.
+  auto calib = std::make_shared<Vision::CameraCalibration>(360,640,290.f,290.f,160.f,120.f,0.f);
   result = visionSystem.UpdateCameraCalibration(calib);
   ASSERT_EQ(RESULT_OK, result);
 
   const std::string testImageDir = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
-                                                                                   "test/markerDetectionTests");
+                                                                                   "test/markerDetectionTests/ImageCompositing");
   
   // we only care about detecting the charger in the dark
   const auto isChargerDetected = [](const std::list<Vision::ObservedMarker>& markers) -> bool {
-    return strncmp("MARKER_CHARGER_HOME", markers.front().GetCodeName(), 19)==0;
+    return !markers.empty() && 
+           strncmp("MARKER_CHARGER_HOME", markers.front().GetCodeName(), 19)==0;
   };
 
   // Each test case is a collection of images at a given ambient lighting level (given by 2nd folder name),
@@ -280,27 +283,30 @@ TEST(VisionSystem, ImageCompositing_MarkerDetection)
   //  "light1p75" is at light level 1.75 (using an arbitrary scale marked on a hardware dimmer switch).
   //  "1" refers to LCD brightness level =20. Other values this can be are "0" which maps to LCD=1
   std::vector<std::string> testCaseSubDirs = {
-    "ImageCompositing/light1p75/0",
-    "ImageCompositing/light1p75/1",
+    "light1p75/1",
 
-    "ImageCompositing/light2p0/0",
-    "ImageCompositing/light2p0/1",
+    "light2p0/0",
+    "light2p0/1",
 
-    "ImageCompositing/light2p25/0",
-    "ImageCompositing/light2p25/1",
+    "light2p25/0",
+    "light2p25/1",
 
-    "ImageCompositing/light2p5/0",
-    "ImageCompositing/light2p5/1",
+    "light2p5/0",
+    "light2p5/1",
   };
 
   for(const auto& subdir : testCaseSubDirs) {
     const std::vector<std::string> testFiles = Util::FileUtils::FilesInDirectory(Util::FileUtils::FullFilePath({testImageDir, subdir}), false, ".jpg");
-    PRINT_CH_DEBUG("VisionSystem", "Test.VisionSystem.ImageCompositing_MarkerDetection", "Loaded %zu images", testFiles.size());
-
+    PRINT_CH_DEBUG("VisionSystem", kDebugName, "Loaded %zu images (%s)", testFiles.size(), subdir.c_str());
+    
+    DEV_ASSERT_MSG((testFiles.size()>=imageResetPeriod), kDebugName, "Not enough images for one reset period.");
+    
     Vision::ImageCache imageCache;
     size_t countCompositeImagesProcessed = 0;
     bool foundMarker = false;
-    for(auto & filename : testFiles) {
+    for(size_t index = 0; index < testFiles.size(); ++index) {
+      std::string filename = testFiles[index];
+
       Vision::Image img;
       result = img.Load(Util::FileUtils::FullFilePath({testImageDir, subdir, filename}));
       ASSERT_EQ(RESULT_OK, result);
@@ -321,12 +327,16 @@ TEST(VisionSystem, ImageCompositing_MarkerDetection)
       ASSERT_EQ(RESULT_OK, result);
 
       Vector::VisionProcessingResult processingResult;
+      processingResult.observedMarkers.clear();
       bool resultAvailable = visionSystem.CheckMailbox(processingResult);
       EXPECT_TRUE(resultAvailable);
 
       foundMarker |= isChargerDetected(processingResult.observedMarkers);
-
       countCompositeImagesProcessed += processingResult.modesProcessed.Contains(Vector::VisionMode::CompositingImages);
+      if( index == 0 ) { // first image 
+        // Ensure no images are found in a base image (thus requiring compositing to detect a marker)
+        EXPECT_FALSE(foundMarker);
+      }
     }
 
     EXPECT_TRUE(foundMarker);

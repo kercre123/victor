@@ -1152,8 +1152,9 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
     if(shouldReset) {
       _imageCompositor->Reset();
 
-      // This mode is considered processed if a composite image was produced
-      //  to run marker detection on.
+      // This mode is considered processed iff:
+      // - a composite image was produced for marker detection
+      // - a reset occurs simultaneously
       // NOTE: by definition of the Ready and Reset periods, we're guaranteed
       //  to have run MarkerDetection in the same frame we trigger a Reset
       DEV_ASSERT_MSG(shouldRunOnComposite, "VisionSystem.DetectMarkers.InvalidResetCallBeforeImageUsed","");
