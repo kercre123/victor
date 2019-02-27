@@ -16,7 +16,7 @@ extern "C" {
 
 const int SAMPLES_PER_IRQ = 20;
 static const int IRQS_PER_FRAME = 80 / SAMPLES_PER_IRQ;
-static const int PDM_BYTES_PER_IRQ = 30 * AUDIO_DECIMATION * 2 / 8;
+static const int PDM_BYTES_PER_IRQ = 20 * AUDIO_DECIMATION * 2 / 8;
   
 static int16_t audio_data[2][AUDIO_SAMPLES_PER_FRAME * 4];
 static uint16_t pdm_data[1][2][PDM_BYTES_PER_IRQ / 2];
@@ -124,7 +124,7 @@ void Mics::transmit(int16_t* payload) {
   memcpy(payload, audio_data[sample_index < IRQS_PER_FRAME ? 1 : 0], sizeof(audio_data[0]));
 }
 
-void deinterlace(const uint16_t* input, int16_t* output) {
+void deinterlace(const uint16_t* input, int16_t*& output) {
   for (int i = 0; i < PDM_BYTES_PER_IRQ; i += 4) {
     uint16_t lo = *(input++) & 0x5555;
     uint16_t hi = *(input++) & 0x5555;
@@ -142,13 +142,11 @@ extern "C" void DMA1_Channel2_3_IRQHandler(void) {
   // Note: if this falls behind, it will drop a bunch of samples
   if (isr & DMA_ISR_HTIF2) {
     deinterlace(pdm_data[0][0], output);
-    output += SAMPLES_PER_IRQ * 4;
     sample_index++;
   }
 
   if (isr & DMA_ISR_TCIF2) {
     deinterlace(pdm_data[0][1], output);
-    output += SAMPLES_PER_IRQ * 4;
     sample_index++;
   }
 
