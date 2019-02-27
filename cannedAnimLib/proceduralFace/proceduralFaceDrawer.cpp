@@ -363,7 +363,7 @@ namespace Vector {
       }
     }
 
-    //ANKI_CPU_PROFILE_START(prof_getMat, "GetMatrices");
+    ANKI_CPU_PROFILE_START(prof_getMat, "GetMatrices");
     Point<2, Value> eyeCenter = (whichEye == WhichEye::Left) ?
                                  Point<2, Value>(ProceduralFace::GetNominalLeftEyeX(), ProceduralFace::GetNominalEyeY()) :
                                  Point<2, Value>(ProceduralFace::GetNominalRightEyeX(), ProceduralFace::GetNominalEyeY());
@@ -403,7 +403,7 @@ namespace Vector {
     Point2f upperLeft(ProceduralFace::WIDTH, ProceduralFace::HEIGHT);
     Point2f bottomRight(0.f,0.f);
 
-    //ANKI_CPU_PROFILE_START(prof_applyMat, "ApplyMatrices");
+    ANKI_CPU_PROFILE_START(prof_applyMat, "ApplyMatrices");
     // Warp the poly and the glow. Use the warped glow (which is a larger shape) to compute
     // the overall eye bounding box
     for(auto & point : eyePoly)

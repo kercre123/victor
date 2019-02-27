@@ -17,10 +17,8 @@
  * Copyright: Anki, Inc. 2013
  **/
 
-#ifndef ANKI_COZMO_BASESTATION_ROBOT_H
-#define ANKI_COZMO_BASESTATION_ROBOT_H
-
-#include "anki/cozmo/shared/animationTag.h"
+#ifndef ANKI_VECTOR_BASESTATION_ROBOT_H
+#define ANKI_VECTOR_BASESTATION_ROBOT_H
 
 #include "engine/actionableObject.h"
 #include "engine/contextWrapper.h"
@@ -31,27 +29,9 @@
 #include "engine/fullRobotPose.h"
 #include "engine/robotComponents_fwd.h"
 
-#include "coretech/common/engine/math/pose.h"
-#include "coretech/common/shared/types.h"
-#include "coretech/vision/engine/camera.h"
-#include "coretech/vision/engine/image.h"
-#include "coretech/common/engine/robotTimeStamp.h"
-#include "coretech/vision/engine/visionMarker.h"
-
-#include "clad/types/animationTypes.h"
-#include "clad/types/imageTypes.h"
-#include "clad/types/ledTypes.h"
-#include "clad/types/robotStatusAndActions.h"
-
 #include "util/entityComponent/dependencyManagedEntity.h"
 #include "util/entityComponent/entity.h"
 #include "util/helpers/noncopyable.h"
-#include "util/signals/simpleSignal.hpp"
-
-#include <queue>
-#include <time.h>
-#include <unordered_map>
-#include <utility>
 
 
 namespace Anki {
@@ -150,7 +130,7 @@ namespace external_interface {
 class RobotState;
 }
 
-// indent 2 spaces << that way !!!! coding standards !!!!
+
 class Robot : private Util::noncopyable
 {
 public:
@@ -779,4 +759,4 @@ inline bool Robot::IsLocalized() const {
 } // namespace Vector
 } // namespace Anki
 
-#endif // ANKI_COZMO_BASESTATION_ROBOT_H
+#endif // ANKI_VECTOR_BASESTATION_ROBOT_H

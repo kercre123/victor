@@ -83,6 +83,9 @@
 
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
+// Giving this its own local define, in case we want to control it independently of DEV_CHEATS / SHIPPING, etc.
+#define ENABLE_DRAWING ANKI_DEV_CHEATS
+
 #define LOG_CHANNEL "Robot"
 
 #define IS_STATUS_FLAG_SET(x) ((msg.status & (uint32_t)RobotStatusFlag::x) != 0)
@@ -1319,7 +1322,10 @@ Result Robot::Update()
     _needToSendLocalizationUpdate = false;
   }
 
+#if ENABLE_DRAWING
   /////////// Update visualization ////////////
+  ANKI_CPU_PROFILE_START(prof_UpdateVis, "UpdateVisualization");
+
   // Draw All Objects by calling their Visualize() methods.
   GetBlockWorld().DrawAllObjects();
 
@@ -1395,6 +1401,8 @@ Result Robot::Update()
                   GetDockingComponent().CanPickUpObjectFromGround(*obj));
     }
   }
+  ANKI_CPU_PROFILE_STOP(prof_UpdateVis);
+#endif  // ENABLE_DRAWING
 
   // Send a message indicating we are fully loaded and capable of running
   // after the first tick
@@ -1423,11 +1431,11 @@ Result Robot::Update()
 static f32 ClipHeadAngle(f32 head_angle)
 {
   if (head_angle < MIN_HEAD_ANGLE - HEAD_ANGLE_LIMIT_MARGIN) {
-    //PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Head angle (%f rad) too small.\n", head_angle);
+    //LOG_WARNING("Robot.HeadAngleOOB", "Head angle (%f rad) too small.\n", head_angle);
     return MIN_HEAD_ANGLE;
   }
   else if (head_angle > MAX_HEAD_ANGLE + HEAD_ANGLE_LIMIT_MARGIN) {
-    //PRINT_NAMED_WARNING("Robot.HeadAngleOOB", "Head angle (%f rad) too large.\n", head_angle);
+    //LOG_WARNING("Robot.HeadAngleOOB", "Head angle (%f rad) too large.\n", head_angle);
     return MAX_HEAD_ANGLE;
   }
 
@@ -1830,9 +1838,9 @@ Result Robot::SetPosePostRollOffCharger()
 {
   auto* charger = dynamic_cast<Charger*>(GetBlockWorld().GetLocatedObjectByID(_chargerID));
   if (charger == nullptr) {
-    PRINT_NAMED_WARNING("Robot.SetPosePostRollOffCharger.NoChargerWithID",
-                        "Charger object with ID %d not found in the world.",
-                        _chargerID.GetValue());
+    LOG_WARNING("Robot.SetPosePostRollOffCharger.NoChargerWithID",
+                "Charger object with ID %d not found in the world.",
+                _chargerID.GetValue());
     return RESULT_FAIL;
   }
 
@@ -1840,7 +1848,7 @@ Result Robot::SetPosePostRollOffCharger()
   // where we "know" he should be when he finishes rolling off the charger.
   Result lastResult = SetNewPose(charger->GetRobotPostRollOffPose().GetWithRespectToRoot());
   if (lastResult != RESULT_OK) {
-    PRINT_NAMED_WARNING("Robot.SetPosePostRollOffCharger.SetNewPose", "Failed to set new pose");
+    LOG_WARNING("Robot.SetPosePostRollOffCharger.SetNewPose", "Failed to set new pose");
     return lastResult;
   }
 
