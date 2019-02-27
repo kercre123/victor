@@ -16,10 +16,10 @@ extern "C" {
 
 const int SAMPLES_PER_IRQ = 20;
 static const int IRQS_PER_FRAME = 80 / SAMPLES_PER_IRQ;
-static const int PDM_BYTES_PER_IRQ = 20 * AUDIO_DECIMATION * 2 / 8;
+static const int PDM_BYTES_PER_IRQ = 30 * AUDIO_DECIMATION * 2 / 8;
   
 static int16_t audio_data[2][AUDIO_SAMPLES_PER_FRAME * 4];
-static uint16_t pdm_data[2][2][PDM_BYTES_PER_IRQ / 2];
+static uint16_t pdm_data[1][2][PDM_BYTES_PER_IRQ / 2];
 static int sample_index;
 static bool reduced;
 
@@ -87,7 +87,7 @@ void Mics::init(void) {
 
   // Configure PERFs (but don't start them)
   configurePerf(SPI1, DMA1_Channel2, 0);
-  configurePerf(SPI2, DMA1_Channel4, 1);
+  //configurePerf(SPI2, DMA1_Channel4, 1);
 
   // Enable IRQs on channel 2 only, it will do double duty
   DMA1_Channel2->CCR |= 0

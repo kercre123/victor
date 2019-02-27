@@ -217,7 +217,7 @@ void Comms::tick(void) {
   Opto::transmit(&outboundPacket.sync.payload);
 #if MICDATA_ENABLED
   Mics::transmit(outboundPacket.sync.payload.audio);
-  Mics::errorCode(outboundPacket.sync.payload.micError);
+  //Mics::errorCode(outboundPacket.sync.payload.micError);
 #endif
   Touch::transmit(outboundPacket.sync.payload.touchLevel);
 
