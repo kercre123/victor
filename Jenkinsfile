@@ -217,7 +217,7 @@ stage("${primaryStageName} Build") {
     node('master') {
         while( true ) {
             echo "Checking if resources are available on vSphere..."
-            gatekeeper.checkCPULimit()
+            gatekeeper.checkLimits()
             if (gatekeeper.canProvision) break
             sleep(time:30, unit:"SECONDS")
         }
@@ -239,7 +239,7 @@ stage("${primaryStageName} Build") {
             } catch (Exception exc) {
                 def jobName = "${env.JOB_NAME}"
                 jobName = jobName.getAt(0..(jobName.indexOf('/') - 1))
-                def reason = exc.getMessage()
+                def reason = exc.getCause()
                 notifySlack("", slackNotificationChannel,
                     [
                         title: "${jobName} ${primaryStageName} ${env.CHANGE_ID}, build #${env.BUILD_NUMBER}",
@@ -259,8 +259,7 @@ stage("${primaryStageName} Build") {
                         vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
                     }
                 }
-                currentBuild.rawBuild.result = Result.ABORTED
-                throw new hudson.AbortException('vSphere Exception!')
+                throw exc
             }
         }
         stage('Attach ephemeral build agent VM to Jenkins') {
