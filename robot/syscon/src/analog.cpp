@@ -23,8 +23,8 @@ static const uint16_t BATTERY_FULL_VOLTAGE = ADC_VOLTS(4.2);
 static const int      CHARGE_FULL_TIME = 200 * 60 * 5;           // 5 minutes
 
 static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.6);
-static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 4*60*200;  // 4 minutes
-static const int      POWER_DOWN_WARNING_TIME = 10*200; // 10 seconds
+static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 45*200;  // 45 seconds
+static const int      POWER_DOWN_WARNING_TIME = 4*60*200; // 4 minutes
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(3.50), ~0);
 static const int      MINIMUM_ON_CHARGER = 5;
@@ -254,7 +254,7 @@ static inline bool alarmTimer(uint16_t temp, const int target) {
 
   temp_alarm = alert;
   heat_counter += increment;
-  
+
   return heat_counter > MAX_HEAT_COUNTDOWN;
 }
 
@@ -294,7 +294,7 @@ static void handleTemperature() {
     if (overheated == 0 && disable_vmain) {
       overheated = OVERHEAT_SHUTDOWN;
     }
-  } 
+  }
 
   // NOTE: This counter cannot be reset until it fires
   if (overheated > 0 && --overheated == 0) {
@@ -437,7 +437,7 @@ void Analog::tick(void) {
     if (!delay_disable) {
       ADC1->ISR = ADC_ISR_AWD;
       NVIC_EnableIRQ(ADC1_IRQn);
-      
+
       POWER_EN::pull(PULL_NONE);
       POWER_EN::mode(MODE_INPUT);
     } else {
@@ -448,7 +448,7 @@ void Analog::tick(void) {
     // continue to report that we are charging.
     is_charging = !max_charge_time_expired && !disable_charger;
   } else {
-    // Battery connected, on charger (charging)  
+    // Battery connected, on charger (charging)
     nCHG_PWR::reset();
 
     POWER_EN::pull(PULL_UP);
