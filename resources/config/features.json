@@ -113,7 +113,7 @@
   },
   {
     "feature": "StayOnChargerUntilCharged",
-    "enabled": false
+    "enabled": true
   }
 ]
 
