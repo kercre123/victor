@@ -147,6 +147,15 @@ void Alexa::Init(const AnimContext* context)
       SetSimpleState( AlexaSimpleState::Idle );
     }
   }
+  
+# if ALEXA_ACOUSTIC_TEST
+  {
+    // Prevent automatic reboots. (/run is ramdisk)
+    // This works (for now) since vicAnim runs as root. A better place would be vic-init.sh, but
+    // that doesnt have access to build flags yet.
+    Util::FileUtils::TouchFile( "/run/inhibit_reboot" );
+  }
+# endif
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
