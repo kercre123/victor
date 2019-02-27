@@ -308,7 +308,7 @@ static void handleLowBattery() {
   static int power_down_limit = POWER_DOWN_WARNING_TIME;
 
   if (Analog::on_charger) {
-    power_down_limit = POWER_DOWN_WARNING_TIME
+    power_down_limit = POWER_DOWN_WARNING_TIME;
     power_low = false;
     return ;
   }
