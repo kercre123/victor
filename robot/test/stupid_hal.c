@@ -41,9 +41,9 @@ void handle_incoming_frame(struct BodyToHead* data)
       for (i = 0; i < MICDATA_SAMPLES_COUNT; i++)
       {
         unsigned short xi = data->audio[i];
-        for (k = 14; k >= 0; k-=2)  // lo
+        for (k = 0; k < 16; k+=2)  // lo
           out[j++] = (xi>>k) & 1 ? -32768 : 32767;
-        for (k = 15; k >= 1; k-=2)  // hi
+        for (k = 1; k < 16; k+=2)  // hi
           out[j++] = (xi>>k) & 1 ? -32768 : 32767;
       }
 
