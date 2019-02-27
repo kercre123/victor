@@ -46,12 +46,16 @@ namespace {
 
 int open_dev(VL53L1_Dev_t* dev)
 {
-  int res = gpio_create(POWER_GPIO, gpio_DIR_OUTPUT, gpio_HIGH, &_powerGPIO);
+  int res = gpio_create(POWER_GPIO, gpio_DIR_OUTPUT, gpio_LOW, &_powerGPIO);
   if(res < 0)
   {
     LOG_ERROR("ToF.open_dev", "Failed to open gpio %d", POWER_GPIO);
     return VL53L1_ERROR_GPIO_NOT_EXISTING;
   }
+
+  usleep(100000);
+
+  gpio_set_value(_powerGPIO, gpio_HIGH);
 
   // Wait for FW boot coming out of HW standby
   usleep(100000);
@@ -105,7 +109,10 @@ int open_dev(VL53L1_Dev_t* dev)
   }
 
   status = VL53L1_StaticInit(dev);
-  return_if_error(status, "StaticInit failed");  
+  return_if_error(status, "StaticInit failed");
+
+  const int rc = load_calibration(dev);
+  return_if_error(rc, "load_calibration failed");
 
   return status;
 }
@@ -194,9 +201,9 @@ int setup(VL53L1_Dev_t* dev)
 {
   VL53L1_Error rc = 0;
 
-  // Stop all ranging so we can change settings
-  rc = VL53L1_StopMeasurement(dev);
-  return_if_error(rc, "ioctl error stopping ranging");
+  // // Stop all ranging so we can change settings
+  // rc = VL53L1_StopMeasurement(dev);
+  // return_if_error(rc, "ioctl error stopping ranging");
 
   // Switch to multi-zone scanning mode
   rc = VL53L1_SetPresetMode(dev, VL53L1_PRESETMODE_MULTIZONES_SCANNING);
@@ -234,6 +241,10 @@ int get_mz_data(VL53L1_Dev_t* dev, const int blocking, VL53L1_MultiRangingData_t
   if(blocking)
   {
     rc = VL53L1_WaitMeasurementDataReady(dev);
+    if(rc < 0)
+    {
+      VL53L1_ClearInterruptAndStartMeasurement(dev);
+    }
     return_if_error(rc, "get_mz_data WaitMeasurementDataReady Failed");
   }
   else
@@ -259,10 +270,7 @@ int get_mz_data(VL53L1_Dev_t* dev, const int blocking, VL53L1_MultiRangingData_t
 
 int start_ranging(VL53L1_Dev_t* dev)
 {
-  int rc = load_calibration(dev);
-  return_if_error(rc, "load_calibration failed");
-  
-  rc = VL53L1_StartMeasurement(dev);
+  const int rc = VL53L1_StartMeasurement(dev);
   return_if_error(rc, "start_ranging failed");
   return 0;
 }

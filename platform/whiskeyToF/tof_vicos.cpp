@@ -393,7 +393,7 @@ ToFSensor::ToFSensor()
   _rangingEnabled = false;
   _isCalibrating = false;
   _stopProcessing = false;
-  memset(&_dev, sizeof(_dev), 0);
+  memset(&_dev, 0, sizeof(_dev));
   _processor = std::thread(ProcessLoop);
 }
 
