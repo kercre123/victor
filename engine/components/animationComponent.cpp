@@ -49,6 +49,8 @@ namespace {
 
   static const u32 kNumImagePixels     = FACE_DISPLAY_HEIGHT * FACE_DISPLAY_WIDTH;
   static const u32 kNumHalfImagePixels = kNumImagePixels / 2;
+
+  static const int kMaxAnimGroupRecursionDepth = 100;
 }
   
 CONSOLE_VAR(f32, kEyeDartFocusValue_pix, "Animation", 1.0f);
@@ -250,14 +252,38 @@ void AnimationComponent::DoleAvailableAnimations()
 }
 
 
-const std::string& AnimationComponent::GetAnimationNameFromGroup(const std::string& name, bool strictCooldown) const
+const std::string& AnimationComponent::GetAnimationNameFromGroup(const std::string& name,
+                                                                 bool strictCooldown,
+                                                                 int recursionCount) const
 {
+  static const std::string empty("");
+
+  if( !ANKI_VERIFY( recursionCount < kMaxAnimGroupRecursionDepth,
+                    "AnimationComponent.GetAnimationNameFromGroup.ExceededMaxREcursionDepth",
+                    "Recursion loop! Recursed %d times to group name '%s'",
+                    recursionCount,
+                    name.c_str()) ) {
+    // just give up after max recursion depth
+    return empty;
+  }
+
   const AnimationGroup* group = _animationGroups->_container.GetAnimationGroup(name);
   if(group != nullptr && !group->IsEmpty()) {
-    return group->GetAnimationName(_robot->GetMoodManager(),  _animationGroups->_container, 
-                                   _robot->GetComponent<FullRobotPose>().GetHeadAngle(), strictCooldown);
+    const std::string& selectedAnim = group->GetAnimationName(_robot->GetMoodManager(),
+                                                              _animationGroups->_container,
+                                                              _robot->GetComponent<FullRobotPose>().GetHeadAngle(),
+                                                              strictCooldown);
+    if( _animationGroups->_container.HasGroup( selectedAnim ) ) {
+      LOG_INFO("GetAnimationName.SubGroupSelected",
+               "Group %s returned sub-group %s, going deeper",
+               name.c_str(),
+               selectedAnim.c_str());
+      return GetAnimationNameFromGroup(selectedAnim, strictCooldown, recursionCount+1);
+    }
+    else {
+      return selectedAnim;
+    }
   }
-  static const std::string empty("");
   return empty;
 }
   
