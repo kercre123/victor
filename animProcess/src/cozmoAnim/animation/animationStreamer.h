@@ -24,7 +24,6 @@
 #include "cannedAnimLib/cannedAnims/animation.h"
 #include "cannedAnimLib/cannedAnims/animationMessageWrapper.h"
 #include "cannedAnimLib/baseTypes/track.h"
-#include "clad/types/keepFaceAliveParameters.h"
 
 #include <list>
 #include <memory>
@@ -125,10 +124,7 @@ namespace Vector {
     const Animation* GetStreamingAnimation() const { return _streamingAnimation; }
 
     void EnableKeepFaceAlive(bool enable, u32 disableTimeout_ms);
-
-    void SetDefaultKeepFaceAliveParams();
-    void SetParamToDefault(KeepFaceAliveParameter whichParam);
-    void SetParam(KeepFaceAliveParameter whichParam, float newValue);
+    void SetKeepFaceAliveFocus(bool enable);
 
     // Functions passed in here will be called each time a new animation is set to streaming
     void AddNewAnimationCallback(NewAnimationCallback callback) {
@@ -282,9 +278,6 @@ namespace Vector {
 
     // Which tracks are currently playing
     u8 _tracksInUse;
-
-    // For keep face alive animations
-    std::map<KeepFaceAliveParameter, f32> _keepFaceAliveParams;
 
     std::unique_ptr<Audio::AnimationAudioClient> _animAudioClient;
     std::unique_ptr<Audio::ProceduralAudioClient> _proceduralAudioClient;
