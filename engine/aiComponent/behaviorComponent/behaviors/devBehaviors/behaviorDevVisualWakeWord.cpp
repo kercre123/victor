@@ -43,7 +43,7 @@ namespace {
   CONSOLE_VAR(f32,  kMinTimeBetweenWakeWordTriggers_ms,      "Vision.VisualWakeWord",  5000.f);
   CONSOLE_VAR(bool, kDisableStateMachineToKeyCheckForGaze,   "Vision.VisualWakeWord",  false);
   CONSOLE_VAR(f32,  kGazeStimulationThreshold_ms,            "Vision.VisualWakeWord",  3000.f);
-  CONSOLE_VAR(f32,  kGazeBreakThreshold_ms,                  "Vision.VisualWakeWord",  300.f);
+  CONSOLE_VAR(f32,  kGazeBreakThreshold_ms,                  "Vision.VisualWakeWord",  600.f);
   CONSOLE_VAR(f32,  kGazeDecrementMultiplier,                "Vision.VisualWakeWord",  1.0f);
   CONSOLE_VAR(f32,  kLiftIndicatorMaxHeight_mm,              "Vision.VisualWakeWord",  40.0f);
   // TODO I might not need this but who knows
