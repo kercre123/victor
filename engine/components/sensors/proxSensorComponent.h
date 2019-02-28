@@ -27,17 +27,16 @@ namespace Vector {
 // Storage for processed prox sensor reading with useful metadata
 struct ProxSensorData
 {
-  // Convenience function to see if all validity conditions are met
-  bool IsValid() const { 
-    return isInValidRange && isValidSignalQuality && !isLiftInFOV && !isTooPitched && hasValidRangeStatus;
-  }
-
   u16  distance_mm;
   f32  signalQuality;
 
+  bool unobstructed;          // The we know the sensor has not detected anything up to its max range
+  bool foundObject;           // The sensor detected an object in the valid operating range
+  bool isLiftInFOV;           // Lift (or object on lift) is occluding the sensor
+
+  // TODO: the following should probably not be included in this object in favor of checking the above conditions
   bool isInValidRange;        // Distance is within valid range
   bool isValidSignalQuality;  // Signal quality is sufficiently strong to trust that something was detected
-  bool isLiftInFOV;           // Lift (or object on lift) is occluding the sensor
   bool isTooPitched;          // Robot is too far pitched up or down
   bool hasValidRangeStatus;   // RangeStatus reported internally by sensor is valid
 };
@@ -75,7 +74,7 @@ public:
   
   // Returns true if the latest distance sensor reading is valid,
   // same as what GetLatestDistance_mm() would return only you don't get distance also.
-  bool IsLatestReadingValid() const { return _latestData.IsValid(); }
+  bool IsLatestReadingValid() const { return _latestData.foundObject; }
   
   // Note: If you just need distance data, prefer to use GetLatestDistance_mm() and
   // check its return value rather than calling this method.
@@ -83,12 +82,6 @@ public:
 
   const ProxSensorData& GetLatestProxData() const { return _latestData; }
   
-  // Returns true if the latest sensor reading was of sufficiently
-  // high signal strength as to be trusted that something was 
-  // actually detected. Distance may not be accurate, but it
-  // should be in the ballpark.
-  bool IsValidSignalQuality() const { return _latestData.isValidSignalQuality; }
-
   // Returns the current pose of the prox sensor w.r.t. robot. Computed on-the-fly
   // since it depends on the robot's pose.
   Pose3d GetPose() const;
@@ -99,9 +92,6 @@ public:
   // Returns true if any part of the lift (or object that it's carrying)
   // falls within the sensor's field of view
   bool IsLiftInFOV() const { return _latestData.isLiftInFOV; }
-
-  // Returns true if the robot is too pitched for the reading to be considered valid
-  bool IsTooPitched() const {return _latestData.isTooPitched; }
 
   // calculate the pose directly in front of the robot where the prox sensor is indicating an object
   // returns false if sensor reading isn't valid
@@ -114,23 +104,13 @@ private:
 
   void UpdateNavMap();
   
-  // Updates the flags indicating whether or not the 
-  // latest sensor reading is valid. 
-  //   1) Is within a reliable obstacle detection range
-  //   2) Is not being obstructed by the lift
-  //   3) Has a reasonable signal quality
-  void UpdateReadingValidity();
-  
-  // Returns a unitless metric of "signal quality", which is computed as the
-  // signal intensity (which is the total signal intensity of the reading)
-  // divided by the number of active SPADs (which are the actual imaging sensors)
-  static float GetSignalQuality(const ProxSensorDataRaw& proxData) {
-    return proxData.signalIntensity / proxData.spadCount;
-  }
+  // Checks the raw sensor data and updates current component state
+  void ProcessRawSensorData();
   
   ProxSensorDataRaw _latestDataRaw;
   ProxSensorData    _latestData;
   Pose3d            _previousRobotPose;
+  Pose3d            _currentRobotPose;
   float             _previousMeasurement;
   u8                _measurementsAtPose;
 

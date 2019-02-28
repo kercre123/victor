@@ -1905,7 +1905,7 @@ Result VisionSystem::SaveSensorData() const {
 
     const HistRobotState& state = _poseData.histState;
     // prox sensor
-    if (state.WasProxSensorValid()) {
+    if (state.ProxSensorFoundObject()) {
       config["proxSensor"] = state.GetProxSensorVal_mm();
     }
     else {

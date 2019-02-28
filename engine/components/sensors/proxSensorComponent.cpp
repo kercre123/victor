@@ -57,10 +57,15 @@ namespace {
   const float   kMeasurementTolerance = .05f;  // percentage based tolerance
   const Radians kRobotRotationTolerance_rad = 0.01f;
   const u8      kNumMeasurementsAtPose = 32;
-} // end anonymous namespace
 
-// enable/disable prox sensor data
-CONSOLE_VAR(bool, kProxSensorEnabled, "ProxSensorComponent", true);
+  // Returns a unitless metric of "signal quality", which is computed as the
+  // signal intensity (which is the total signal intensity of the reading)
+  // divided by the number of active SPADs (which are the actual imaging sensors)
+  inline float GetSignalQuality(const ProxSensorDataRaw& proxData) {
+    return proxData.signalIntensity / proxData.spadCount;
+  }
+  
+} // end anonymous namespace
 
 // extra padding to add to prox obstacle
 CONSOLE_VAR(float, kObsPadding_x_mm, "ProxSensorComponent", 6.f);
@@ -70,14 +75,14 @@ CONSOLE_VAR(float, kObsPadding_y_mm, "ProxSensorComponent", 0.f);
 CONSOLE_VAR(u16, kMinObsThreshold_mm, "ProxSensorComponent", 30);
 CONSOLE_VAR(u16, kMaxObsThreshold_mm, "ProxSensorComponent", 400);
 
-// max forward tilt of the robot to still consider a valid reading
-CONSOLE_VAR(float, kMaxForwardTilt_rad, "ProxSensorComponent", -.08);
-
 // Minimum sensor reading strength before trying to use sensor data
 CONSOLE_VAR(float, kMinQualityThreshold, "ProxSensorComponent", 0.01f);
 
 // angle for calculating obstacle width, ~tan(22.5)
 CONSOLE_VAR(float, kSensorAperture, "ProxSensorComponent", 0.4f);
+
+// maximum width for a prox obstacle
+CONSOLE_VAR(float, kMaxObstacleWidth_mm, "ProxSensorComponent", 18.f);
 
 ProxSensorComponent::ProxSensorComponent() 
 : ISensorComponent(kLogDirName)
@@ -85,32 +90,29 @@ ProxSensorComponent::ProxSensorComponent()
 {
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ProxSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
 {
-  if (kProxSensorEnabled)
-  {
-    _lastMsgTimestamp = msg.timestamp;
-    _lastMsgPoseFrameID = msg.pose_frame_id;
-    _latestDataRaw = msg.proxData;
+  _lastMsgTimestamp = msg.timestamp;
+  _lastMsgPoseFrameID = msg.pose_frame_id;
+  _latestDataRaw = msg.proxData;
 
-    UpdateReadingValidity();
+  ProcessRawSensorData();
 
-    // Reading is meaningless in calm mode so just skip map update
-    const bool isCalmPowerMode = static_cast<bool>(msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE);
-    if (_enabled && !isCalmPowerMode) {
-      UpdateNavMap();
-    }
+  // Reading is meaningless in calm mode so just skip map update
+  const bool isCalmPowerMode = static_cast<bool>(msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE);
+  if (_enabled && !isCalmPowerMode) {
+    UpdateNavMap();
   }
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string ProxSensorComponent::GetLogHeader()
 {
   return std::string("timestamp_ms, distance_mm, signalIntensity, ambientIntensity, spadCount, rangeStatus");
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::string ProxSensorComponent::GetLogRow()
 {
   const auto& d = _latestDataRaw;
@@ -125,13 +127,14 @@ std::string ProxSensorComponent::GetLogRow()
   return ss.str();
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ProxSensorComponent::GetLatestDistance_mm(u16& distance_mm) const
 {
   distance_mm = _latestDataRaw.distance_mm;
   return IsLatestReadingValid();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Pose3d ProxSensorComponent::GetPose() const
 {
   Pose3d sensorPose;
@@ -141,7 +144,7 @@ Pose3d ProxSensorComponent::GetPose() const
   return sensorPose;
 }
 
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ProxSensorComponent::IsInFOV(const Pose3d& inPose, bool& isInFOV) const
 {
   isInFOV = false;
@@ -172,9 +175,41 @@ Result ProxSensorComponent::IsInFOV(const Pose3d& inPose, bool& isInFOV) const
   
   return Result::RESULT_OK;
 }
-  
-void ProxSensorComponent::UpdateReadingValidity() 
+ 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+void ProxSensorComponent::ProcessRawSensorData() 
 {
+  // check if the measurement was delayed, otherwise use the current robot pose.
+  if (_latestDataRaw.timestamp_ms < _lastMsgTimestamp) {
+    HistRobotState histState;
+    RobotTimeStamp_t histTimestamp;
+    const bool kUseInterp = true;
+    const auto& res = _robot->GetStateHistory()->ComputeStateAt(_latestDataRaw.timestamp_ms, histTimestamp, histState, kUseInterp);
+    if (res != RESULT_OK) {
+      // If robot is localized and there are at least 3 RobotState messages in history
+      // which span 60ms (i.e. the slowest rate expected of the prox sensor) then
+      // report warning since a historical state should've been found.
+      const u32 numRawStatesInSameFrame = _robot->GetStateHistory()->GetNumRawStatesWithFrameID(_lastMsgPoseFrameID);
+      if (numRawStatesInSameFrame >= 3 && _robot->IsLocalized()) {
+        LOG_WARNING("ProxSensorComponent.ProcessRawSensorData.NoHistoricalPose",
+                    "Could not retrieve historical pose for timestamp %u (msg time %u)",
+                    _latestDataRaw.timestamp_ms, _lastMsgTimestamp);
+      }
+      return;
+    }
+    if (histState.GetFrameId() != _robot->GetPoseFrameID()) {
+      // Don't update nav map since this could've been from before
+      // we cleared the map due to delocalization. 
+      // It could also be from a localization but it's not a big deal
+      // to drop a few readings when this happens.
+      return;
+    }
+    _currentRobotPose = histState.GetPose();
+  } else {
+    _currentRobotPose = _robot->GetPose();
+  }
+
+  // TODO: use historical pose for lift checks
   bool isInFOV = false;
   if (_robot->IsLiftCalibrated()) {
     // Check if lift or carried object may be occluding the sensor
@@ -198,7 +233,7 @@ void ProxSensorComponent::UpdateReadingValidity()
 
   } else {
     // Lift might not be calibrated if bracing while falling
-    PRINT_NAMED_INFO("ProxSensorComponent.UpdateReadingValidity.LiftNotCalibrated",
+    PRINT_NAMED_INFO("ProxSensorComponent.ProcessRawSensorData.LiftNotCalibrated",
                      "Lift is not calibrated! Considering it not in FOV.");
   }
   _latestData.isLiftInFOV = isInFOV;
@@ -208,18 +243,43 @@ void ProxSensorComponent::UpdateReadingValidity()
   _latestData.isTooPitched = pitchAngle < kMinPitch || pitchAngle > kMaxPitch;
 
   // Check if the reading is within the valid range  
-  _latestData.distance_mm = std::max(_latestDataRaw.distance_mm, kMinObsThreshold_mm);
-  _latestData.isInValidRange = _latestData.distance_mm < kMaxObsThreshold_mm;
+  _latestData.distance_mm = Util::Clamp(_latestDataRaw.distance_mm, kMinObsThreshold_mm, kMaxObsThreshold_mm);
+  _latestData.isInValidRange = _latestDataRaw.distance_mm < kMaxObsThreshold_mm;
   
   // Check that the signal strength is high enough
-  _latestData.signalQuality = GetSignalQuality(_latestDataRaw);
+  const bool validSpadCount = (_latestDataRaw.spadCount > 0);
+  if (!validSpadCount) {
+    PRINT_NAMED_WARNING("ProxSensorComponent.ProcessRawSensorData.BadSpadCount", "Invalid sensor reading, SpadCount <= 0");
+  }
+
+  _latestData.signalQuality = validSpadCount ? GetSignalQuality(_latestDataRaw) : 0.f;
   _latestData.isValidSignalQuality = _latestData.signalQuality > kMinQualityThreshold;
   
   // Check that the RangeStatus is valid
   _latestData.hasValidRangeStatus = _latestDataRaw.rangeStatus == RangeStatus::RANGE_VALID;
+
+  // check if either we found an object, or we know the sensor is unobstructed
+  _latestData.unobstructed = (_latestData.signalQuality <= kMinQualityThreshold) || !_latestData.isInValidRange;
+  _latestData.foundObject  = _latestData.isInValidRange && 
+                             _latestData.isValidSignalQuality && 
+                            !_latestData.isLiftInFOV && 
+                            !_latestData.isTooPitched && 
+                             _latestData.hasValidRangeStatus;
+
+  // check if the robot has moved or the sensor reading has changed significantly
+  const float changePct = fabs(_latestData.distance_mm - _previousMeasurement) / _previousMeasurement;
+  const bool noObject   = (_latestData.signalQuality <= kMinQualityThreshold);  // sensor is pointed at free space
+  if ( !_currentRobotPose.IsSameAs(_previousRobotPose, kRobotTranslationTolerance_mm, kRobotRotationTolerance_rad ) ||
+      (!noObject && FLT_GT(changePct, kMeasurementTolerance)) ) { 
+    _measurementsAtPose  = 0; 
+    _previousRobotPose   = _currentRobotPose; 
+    _previousMeasurement = _latestData.distance_mm;
+  }
+  ++_measurementsAtPose;
 }
 
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ProxSensorComponent::CalculateSensedObjectPose(Pose3d& sensedObjectPose) const
 {
   u16 proxDist_mm = 0;
@@ -233,138 +293,104 @@ bool ProxSensorComponent::CalculateSensedObjectPose(Pose3d& sensedObjectPose) co
   return sensorIsValid;
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// Map Update Methods
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+namespace {
+  // we would like to clear the whole sensor cone as defined by the aperture, but it creates really large
+  // obstacles if it detects something far away. To prevent planning failures, we would like to clamp
+  // the max obstacle width to one half robot width, but that can result in stretching of the clear region
+  // cone, which causes some map artifacts. To get around this, define the clear region as the intersection
+  // of the sensor cone and a straight beam with obstacle width (which is clamped to robot width).
 
-void ProxSensorComponent::UpdateNavMap()
-{
-  if (_latestDataRaw.spadCount == 0)
+  //           +-------------+
+  //           |             |    ....-----------------------p1--p4
+  //           |    robot    |::::                            |xx| (obstacle)
+  //           |             |    ''''-----------------------p2--p3
+  //           +-------------+
+
+  inline float SensorBeamWidth(float measurement) 
   {
-    PRINT_NAMED_WARNING("ProxSensorComponent.UpdateNavMap", "Invalid sensor reading, SpadCount == 0");
-    return;
+    return measurement * kSensorAperture;
   }
 
-  const float quality       = _latestData.signalQuality;
-  const bool noObject       = quality <= kMinQualityThreshold;                      // sensor is pointed at free space
-  const bool objectDetected = (quality >= kMinQualityThreshold &&                   // sensor is getting some reading
-                               !_latestData.isLiftInFOV);                           // the sensor is not seeing the lift
-  const bool tiltedForward  = _robot->GetPitchAngle() < kMaxForwardTilt_rad;        // if the robot is titled too far forward (- rad) 
+  inline float ObstacleWidth(float measurement) 
+  {
+    return std::fmin( SensorBeamWidth(measurement), kMaxObstacleWidth_mm);
+  }
 
-  if ((objectDetected || noObject) && !tiltedForward)
-  {  
-    // check if the measurement was delayed, otherwise use the current robot pose.
-    Pose3d robotPose;
-    if (_latestDataRaw.timestamp_ms < _lastMsgTimestamp) {
-      HistRobotState histState;
-      RobotTimeStamp_t histTimestamp;
-      const bool kUseInterp = true;
-      const auto& res = _robot->GetStateHistory()->ComputeStateAt(_latestDataRaw.timestamp_ms, histTimestamp, histState, kUseInterp);
-      if (res != RESULT_OK) {
-        // If robot is localized and there are at least 3 RobotState messages in history
-        // which span 60ms (i.e. the slowest rate expected of the prox sensor) then
-        // report warning since a historical state should've been found.
-        const u32 numRawStatesInSameFrame = _robot->GetStateHistory()->GetNumRawStatesWithFrameID(_lastMsgPoseFrameID);
-        if (numRawStatesInSameFrame >= 3 && _robot->IsLocalized()) {
-          LOG_WARNING("ProxSensorComponent.UpdateNavMap.NoHistoricalPose",
-                      "Could not retrieve historical pose for timestamp %u (msg time %u)",
-                      _latestDataRaw.timestamp_ms, _lastMsgTimestamp);
-        }
-        return;
-      }
-      if (histState.GetFrameId() != _robot->GetPoseFrameID()) {
-        // Don't update nav map since this could've been from before
-        // we cleared the map due to delocalization. 
-        // It could also be from a localization but it's not a big deal
-        // to drop a few readings when this happens.
-        return;
-      }
-      robotPose = histState.GetPose();
-    } else {
-      robotPose = _robot->GetPose();
-    }
-
-    // check if the robot has moved or the sensor reading has changed significantly
-    const float changePct = fabs(_latestData.distance_mm - _previousMeasurement) / _previousMeasurement;
-    if ( !robotPose.IsSameAs(_previousRobotPose, kRobotTranslationTolerance_mm, kRobotRotationTolerance_rad ) ||
-        (!noObject && FLT_GT(changePct, kMeasurementTolerance)) ) { 
-      _measurementsAtPose = 0; 
-      _previousRobotPose = robotPose; 
-      _previousMeasurement = _latestData.distance_mm;
-    }
- 
-    if (++_measurementsAtPose >= kNumMeasurementsAtPose) { return; }
-
-    // Clear out any obstacles between the robot and ray if we have good signal strength 
-    RobotTimeStamp_t lastTimestamp = _robot->GetLastMsgTimestamp();
-
-    // build line for ray cast by getting the robot pose, casting forward by sensor reading
-    const Vec3f offsetx_mm( (noObject) ? kMaxObsThreshold_mm 
-                                       : fmin(_latestData.distance_mm, kMaxObsThreshold_mm), 0, 0);   
-
-    // just assume robot center rather the actual sensor pose
-    const Pose3d  objectPos = robotPose * Pose3d(0, Z_AXIS_3D(), offsetx_mm);    
-    const Rotation3d id = Rotation3d(0.f, Z_AXIS_3D());
-
-    // we would like to clear the whole sensor cone as defined by the aperture, but it creates really large
-    // obstacles if it detects something far away. To prevent planning failures, we would like to clamp
-    // the max obstacle width to one half robot width, but that can result in stretching the of the clear region
-    // cone, which causes some map artifacts. To get around this, define the clear region as the intersection
-    // of the sensor cone and a straight beam with obstacle width (which is clamped to robot width).
-
-    //           +-------------+
-    //           |             |    ....-----------------------p1--p4
-    //           |    robot    |::::                            |xx| (obstacle)
-    //           |             |    ''''-----------------------p2--p3
-    //           +-------------+
-
+  std::unique_ptr<BoundedConvexSet2f> GetClearRegion(const Pose2d& robotPose, const Pose2d& objectPose, float measurement) 
+  {
     // sensor points
-    const float sensorBeamHalfWidth_mm = offsetx_mm.x() * kSensorAperture *.5f;
-    const float obstacleHalfWidth_mm = std::fmin(sensorBeamHalfWidth_mm, ROBOT_BOUNDING_Y *.15);
+    const float sensorBeamHalfWidth_mm = SensorBeamWidth(measurement) * .5f;
+    const float obstacleHalfWidth_mm   = ObstacleWidth(measurement) * .5;
 
     // use a slightly larger padding for clear than for obstacle to clean up floating point rounding errors
-    const Vec3f sensorOffset1(-kObsPadding_x_mm,  -sensorBeamHalfWidth_mm - kObsPadding_y_mm - .5, 0);   
-    const Vec3f sensorOffset2(-kObsPadding_x_mm,   sensorBeamHalfWidth_mm + kObsPadding_y_mm + .5, 0);
+    const Vec2f sensorOffset1(-kObsPadding_x_mm,  -sensorBeamHalfWidth_mm - kObsPadding_y_mm - .5); 
+    const Vec2f sensorOffset2(-kObsPadding_x_mm,   sensorBeamHalfWidth_mm + kObsPadding_y_mm + .5);
 
-    const Vec3f clampOffset1(-offsetx_mm.x(),  -obstacleHalfWidth_mm - kObsPadding_y_mm, 0);   
-    const Vec3f clampOffset2(-offsetx_mm.x(),   obstacleHalfWidth_mm + kObsPadding_y_mm, 0);
-
-    const Point2f sensorCorner1 = (objectPos.GetTransform() * Transform3d(id, sensorOffset1)).GetTranslation();
-    const Point2f sensorCorner2 = (objectPos.GetTransform() * Transform3d(id, sensorOffset2)).GetTranslation(); 
-
-    const Point2f clampCorner1  = (objectPos.GetTransform() * Transform3d(id, clampOffset1)).GetTranslation();
-    const Point2f clampCorner2  = (objectPos.GetTransform() * Transform3d(id, clampOffset2)).GetTranslation(); 
-
-    // obstacle points
-    const Vec3f obstacleOffset1(-kObsPadding_x_mm,  -obstacleHalfWidth_mm - kObsPadding_y_mm, 0);   
-    const Vec3f obstacleOffset2(-kObsPadding_x_mm,   obstacleHalfWidth_mm + kObsPadding_y_mm, 0);
-    const Vec3f obstacleOffset3(kObsPadding_x_mm * 2, 0, 0);
-
-    const Point2f obstacleP1 = (objectPos.GetTransform() * Transform3d(id, obstacleOffset1)).GetTranslation();
-    const Point2f obstacleP2 = (objectPos.GetTransform() * Transform3d(id, obstacleOffset2)).GetTranslation(); 
-    const Point2f obstacleP3 = (objectPos.GetTransform() * Transform3d(id, obstacleOffset2 + obstacleOffset3)).GetTranslation();
-    const Point2f obstacleP4 = (objectPos.GetTransform() * Transform3d(id, obstacleOffset1 + obstacleOffset3)).GetTranslation();
+    const Point2f sensorCorner1 = objectPose.GetTransform() * sensorOffset1;
+    const Point2f sensorCorner2 = objectPose.GetTransform() * sensorOffset2; 
 
     // clear sensor beam
     // NOTE: making an intersection of a quad and a triangle here results in a 50%-100% speedup over using a
     //       five sided polygon, so use that if we can't insert a triangle FP.
-    FastPolygon sensorCone({sensorCorner1, sensorCorner2, robotPose.GetTranslation()});
-
-    if (sensorBeamHalfWidth_mm < ROBOT_BOUNDING_Y *.25) {
-      // if the sensorBeamHalfWidth_mm is less than the max obstacle size, we can just use the sensorCone
-      _robot->GetMapComponent().ClearRegion( sensorCone,  lastTimestamp);
+    FastPolygon sensorCone{{sensorCorner1, sensorCorner2, robotPose.GetTranslation()}};
+    if ( FLT_LT(sensorBeamHalfWidth_mm, kMaxObstacleWidth_mm * .5) ) {
+      // the sensor beam width is smaller than the max obstacle size, we don't need to clamp the sides
+      return std::make_unique<FastPolygon>(sensorCone);
     } else {
-      _robot->GetMapComponent().ClearRegion( 
-        MakeIntersection2f( sensorCone, FastPolygon({clampCorner1, clampCorner2, obstacleP2, obstacleP1}) ),  
-        lastTimestamp);
-    }
+      const Point2f clampOffset1(-measurement,  -obstacleHalfWidth_mm - kObsPadding_y_mm);   
+      const Point2f clampOffset2(-measurement,   obstacleHalfWidth_mm + kObsPadding_y_mm);
 
-    // Add proxObstacle if detected and close to robot, and lift is not interfering
-    if (_latestData.distance_mm <= kMaxObsThreshold_mm && !noObject && !IsLiftInFOV()) {
-      const FastPolygon quad({obstacleP1, obstacleP2, obstacleP3, obstacleP4});
-      Radians angle = _robot->GetPose().GetRotationAngle<'Z'>();
-      
-      MemoryMapData_ProxObstacle proxData(MemoryMapData_ProxObstacle::NOT_EXPLORED,
-                                          Pose2d{angle, objectPos.GetWithRespectToRoot().GetTranslation().x(), objectPos.GetWithRespectToRoot().GetTranslation().y()},
-                                          lastTimestamp);
-      _robot->GetMapComponent().AddProxData(quad, proxData);
+      const Point2f clampCorner1  = objectPose.GetTransform() * clampOffset1;
+      const Point2f clampCorner2  = objectPose.GetTransform() * clampOffset2; 
+
+      // obstacle points
+      const Point2f obstacleOffset1(-kObsPadding_x_mm,  -obstacleHalfWidth_mm - kObsPadding_y_mm);   
+      const Point2f obstacleOffset2(-kObsPadding_x_mm,   obstacleHalfWidth_mm + kObsPadding_y_mm);
+
+      const Point2f obstacleP1 = objectPose.GetTransform() * obstacleOffset1;
+      const Point2f obstacleP2 = objectPose.GetTransform() * obstacleOffset2; 
+
+      auto retv = MakeIntersection2f( sensorCone, FastPolygon{{clampCorner1, clampCorner2, obstacleP2, obstacleP1}} );
+      return std::make_unique<decltype(retv)>(retv);
+    }
+  }
+
+  FastPolygon GetObstacleRegion(const Pose2d& objectPose, u16 measurement) 
+  {
+    const float obstacleHalfWidth_mm = ObstacleWidth(measurement) * .5;
+
+    const Point2f obstacleLeft( 0,  -obstacleHalfWidth_mm - kObsPadding_y_mm);   
+    const Point2f obstacleRight(0,   obstacleHalfWidth_mm + kObsPadding_y_mm);
+    const Point2f obstacleDepth( kObsPadding_x_mm * 2, 0);
+
+    const Point2f obstacleP1 = objectPose.GetTransform() * obstacleLeft;
+    const Point2f obstacleP2 = objectPose.GetTransform() * obstacleRight; 
+    const Point2f obstacleP3 = objectPose.GetTransform() * (obstacleRight + obstacleDepth);
+    const Point2f obstacleP4 = objectPose.GetTransform() * (obstacleLeft  + obstacleDepth);
+
+    return FastPolygon{{obstacleP1, obstacleP2, obstacleP3, obstacleP4}};
+  }
+}
+
+void ProxSensorComponent::UpdateNavMap()
+{
+  const bool stillUpdating  = _measurementsAtPose < kNumMeasurementsAtPose;         // if the robot hasn't moved but we still need to update the belief state
+
+  // If we know there is no object we can clear the region in front of us.
+  // If there is an object, we can clear up to that object
+  if ( (_latestData.unobstructed || _latestData.foundObject ) && stillUpdating ) {  
+    const float measurement = _latestData.distance_mm;
+    const Pose2d objectPose = static_cast<Pose2d>(_currentRobotPose) * Pose2d(0, {measurement, 0});
+    const auto clearRegion  = GetClearRegion(_currentRobotPose, objectPose, measurement);
+
+    _robot->GetMapComponent().ClearRegion(*clearRegion, _lastMsgTimestamp );
+
+    if ( _latestData.foundObject ) {
+      MemoryMapData_ProxObstacle proxData(MemoryMapData_ProxObstacle::NOT_EXPLORED, objectPose, _lastMsgTimestamp);
+      _robot->GetMapComponent().AddProxData( GetObstacleRegion(objectPose, measurement), proxData );
     }
   }
 }
