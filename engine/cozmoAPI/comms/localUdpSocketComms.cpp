@@ -115,7 +115,7 @@ bool LocalUdpSocketComms::SendMessageInternal(const Comms::MsgPacket& msgPacket)
   if (IsConnected()) {
     const ssize_t res = _udpServer->Send((const char*)&msgPacket.dataLen, sizeof(msgPacket.dataLen) + msgPacket.dataLen);
     if (res < 0) {
-      LOG_ERROR("LocalUdpSocketComms.SendMessageInternal.FailedSend", "Failed to send message from %d to %d",
+      LOG_WARNING("LocalUdpSocketComms.SendMessageInternal.FailedSend", "Failed to send message from %d to %d",
         msgPacket.sourceId, msgPacket.destId);
       _udpServer->Disconnect();
       return false;
