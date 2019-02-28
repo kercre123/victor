@@ -156,48 +156,43 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
       data.visualDistanceToTarget_mm = 0;
       data.visualAngleAwayFromTarget_rad = 0;
       data.headAngle_rad = robot.GetHeadAngle();
-
-      // Pose3d markerPose;
-      // const bool res = GetExpectedObjectMarkerPoseWrtRobot(markerPose);
-      // if(res)
-      // {
-        // data.visualDistanceToTarget_mm = markerPose.GetTranslation().x();
       data.visualDistanceToTarget_mm = _visualDistanceToTarget_mm;
-
-        // markerPose = markerPose.GetWithRespectToRoot();
-        // // Marker pose rotation is kind of wonky, compared to the robot's rotation they are 
-        // // rotated 90 degrees. So when the robot is looking at a marker, you have to add
-        // // 90 degrees to get its rotation to match that of the robot
-        // // Taking the difference of these two angles tells us how much the robot needs to turn
-        // // to be perpendicular with the marker
-        // const auto angle = ((markerPose.GetRotation().GetAngleAroundZaxis() + DEG_TO_RAD(90)) - 
-        //                     robot.GetPose().GetRotation().GetAngleAroundZaxis());
-        // data.visualAngleAwayFromTarget_rad = angle.ToFloat();
       data.visualAngleAwayFromTarget_rad = _visualAngleToTarget_rad;
-      //}
     
       if(!GetLogger().Append(GetDebugLabel(), std::move(data)))
       {
         PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::WRITE_TO_LOG_FAILED, PlaypenStatus::Running);
       }
+
+      for(const auto& iter : rangeData.data)
+      {
+        const bool distValid = Util::IsNear(iter.processedRange_mm - PlaypenConfig::kDistanceSensorBiasAdjustment_mm, 
+                                            data.visualDistanceToTarget_mm,
+                                            PlaypenConfig::kDistanceSensorReadingThresh_mm);
+      
+        const bool oneObject = (iter.numObjects == 1);
+        bool statusValid = false;
+        if(oneObject)
+        {
+          statusValid = (iter.readings[0].status == 0);
+        }
+
+        if(!statusValid || !distValid)
+        {
+          PRINT_NAMED_WARNING("BehaviorPlaypenDistanceSensor.PlaypenUpdateInternal.ReadingOutsideThresh",
+                              "Roi %u %u Dist: %f - %f Visual: %f Thresh: %f",
+
+                              (iter.numObjects > 0 ? iter.readings[0].status : 255), 
+                              iter.processedRange_mm,
+                              PlaypenConfig::kDistanceSensorBiasAdjustment_mm,
+                              data.visualDistanceToTarget_mm,
+                              PlaypenConfig::kDistanceSensorReadingThresh_mm);
+
+          PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::DISTANCE_SENSOR_OOR, PlaypenStatus::Running);
+        }
+      }
     }
 
-    // TODO NEED TO REWRITE TO CHECK ALL ROIs
-    // if(robot.IsPhysical() &&
-    //    !Util::IsNear(data.proxSensorData.distance_mm - PlaypenConfig::kDistanceSensorBiasAdjustment_mm, 
-    //                  data.visualDistanceToTarget_mm,
-    //                  PlaypenConfig::kDistanceSensorReadingThresh_mm))
-    // {
-    //   PRINT_NAMED_WARNING("BehaviorPlaypenDistanceSensor.PlaypenUpdateInternal.ReadingOutsideThresh",
-    //                       "Sensor reading %u - %f not near visual reading %f with threshold %f",
-    //                       data.proxSensorData.distance_mm,
-    //                       PlaypenConfig::kDistanceSensorBiasAdjustment_mm,
-    //                       data.visualDistanceToTarget_mm,
-    //                       PlaypenConfig::kDistanceSensorReadingThresh_mm);
-
-    //   PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::DISTANCE_SENSOR_OOR, PlaypenStatus::Running);
-    // }
-    
     return PlaypenStatus::Running;
   }
   // We've recorded all distance readings we need to

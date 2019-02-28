@@ -142,7 +142,7 @@ static f32 kVisualDistanceToDistanceSensorObjectThresh_mm = 30;
 static f32 kDistanceSensorReadingThresh_mm = 20;
 
 // Bias adjustment for raw distance sensor reading when comparing to visual distance
-static f32 kDistanceSensorBiasAdjustment_mm = 30;
+static f32 kDistanceSensorBiasAdjustment_mm = 0;
 
 // Angle to move the head to when doing the distance sensor check
 // Whiskey ToF is angled 11 degrees down so move head to 11 degrees so ToF is looking forwards
