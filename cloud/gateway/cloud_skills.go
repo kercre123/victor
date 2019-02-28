@@ -45,7 +45,7 @@ type Command struct {
 }
 
 type TriggerLambdaMessageBody struct {
-	TotalMessageCount int
+	TotalMessageCount int `json:"totalMessageCount"`
 }
 
 type Storage struct {
@@ -68,12 +68,12 @@ func (tok *Token) RequireTransportSecurity() bool {
 	return true
 }
 
-func launchSkill(AwsApiGwyBaseUrl string, AwsApiKey string) int {
+func launchSkill(AwsApiGwyBaseUrl string, AwsApiKey string) {
 	url := AwsApiGwyBaseUrl + "/CloudSkills-Trigger"
 	req, err := http.NewRequest("GET", url, nil)
 	req.Header.Add("x-api-key", AwsApiKey)
 	query := req.URL.Query()
-	query.Add("skill_key", "skills/skill_1.py")
+	query.Add("skill_key", "skills/skill_2.py")
 	req.URL.RawQuery = query.Encode()
 	client := &http.Client{}
     response, err := client.Do(req)
@@ -81,15 +81,6 @@ func launchSkill(AwsApiGwyBaseUrl string, AwsApiKey string) int {
         panic(err)
     }
     defer response.Body.Close()
-
-    body, err := ioutil.ReadAll(response.Body)
-
-	var jsonMessageBody TriggerLambdaMessageBody
-    if err := json.Unmarshal(body, &jsonMessageBody); err != nil {
-        panic(err)
-    }
-
-    return jsonMessageBody.TotalMessageCount
 }
 
 func fetchCloudSkill(creds credentials.TransportCredentials) {
@@ -128,22 +119,29 @@ func fetchCloudSkill(creds credentials.TransportCredentials) {
     // Gain SDK behavior control
 	behaviorControlClient.Send(&extint.BehaviorControlRequest{RequestType: &extint.BehaviorControlRequest_ControlRequest{ControlRequest: &extint.ControlRequest{Priority: 20}}})
 
-	// Trigger skill
-	numberOfCommands := launchSkill(cloudSkillConstants.AwsApiGwyBaseUrl, cloudSkillConstants.AwsApiKey)
+	startTime := time.Now()
+	// Trigger the skill
+	go launchSkill(cloudSkillConstants.AwsApiGwyBaseUrl, cloudSkillConstants.AwsApiKey)
+	elapsedTime := time.Since(startTime)
+	log.Println("Elapsed time [trigger] = ", elapsedTime)
+	
 	client := &http.Client{}
 
-	commandId := 1
- 
+	commandId := 0
+	numRetries := 0
+	url := cloudSkillConstants.AwsApiGwyBaseUrl + "/CloudSkills-GetCommand"
+
 	for {
+		startTime = time.Now()
 
 		// All commands run, release SDK behavior control
-		if commandId > numberOfCommands {
+		if numRetries >= 10 {
 			time.Sleep(5 * time.Second)
 			behaviorControlClient.Send(&extint.BehaviorControlRequest{RequestType: &extint.BehaviorControlRequest_ControlRelease{ControlRelease: &extint.ControlRelease{}}})
 			return
 		}
 
-		url := cloudSkillConstants.AwsApiGwyBaseUrl + "/CloudSkills-GetCommand"
+		
 		req, err := http.NewRequest("GET", url, nil)
 		
 		// Add API key to header
@@ -160,29 +158,41 @@ func fetchCloudSkill(creds credentials.TransportCredentials) {
 	    defer response.Body.Close()
 
 	    body, err := ioutil.ReadAll(response.Body)
+	    log.Println(len(body))
+
+	    // Check if the fetch failed or if the command has not been queued in yet
+	    if len(body) == 0 {
+	    	numRetries += 1
+	    	time.Sleep(1 * time.Second)
+	    	continue
+	    }
 
 	 	var jsonCommand Command
 	    if err := json.Unmarshal(body, &jsonCommand); err != nil {
 	        panic(err)
 	    }
 
+	    // Decode the message received
 	    encodedMessage := jsonCommand.Item.Message.S
 	 	decodedMessage, err := base64.StdEncoding.DecodeString(encodedMessage)
 
 	 	// TODO: Find a better way to handle incoming serialized proto messages
 	 	switch messageType := jsonCommand.Item.Type.S; messageType {
-	 	case "/Anki.Vector.external_interface.ExternalInterface/SayText": {
+	 	case "say_text": {
 	 		var sayTextReq extint.SayTextRequest
 	    	sayTextReq.XXX_Unmarshal(decodedMessage)
 	    	c.SayText(ctx, &sayTextReq)
 	 	}
-	 	case "/Anki.Vector.external_interface.ExternalInterface/MoveLift": {
+	 	case "set_lift": {
 	 		var moveLiftReq extint.MoveLiftRequest
 	    	moveLiftReq.XXX_Unmarshal(decodedMessage)
 	    	c.MoveLift(ctx, &moveLiftReq)
 	 	}
 
 	 	}
+
+	 	elapsedTime = time.Since(startTime)
+	 	log.Println("Elapsed time [fetch command] = ", elapsedTime)
 
 	    commandId += 1
 
