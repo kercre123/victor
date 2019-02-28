@@ -174,8 +174,7 @@ void BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord()
   if(GetBEI().GetFaceWorld().GetGazeDirectionPose(kMaxTimeSinceTrackedFaceUpdated_ms,
                                                   _dVars.gazeDirectionPose, _dVars.faceIDToTurnBackTo)) {
     LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToCheckForVisualWakeWord",
-                "Got stable gaze direciton, now see if it's at the robot ... this"
-                "might be wrapped out side of a behavior ... who fucking knows");
+                "Got stable gaze direciton, now see if it's at the robot");
     const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
     Pose3d gazeDirectionPoseWRTRobot;
     if (_dVars.gazeDirectionPose.GetWithRespectTo(robotPose, gazeDirectionPoseWRTRobot)) {
@@ -192,8 +191,7 @@ void BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord()
       if ( ( isWithinXConstraints && isWithinYConstarints ) || makingEyeContact ) {
         // TODO there is probably a more accurate way get the actual timestamp of when
         // gaze happened ... because of the "slack" variable pasted into the original
-        // get gaze direction pose, but alas this whole state machine is fucking retarded and this
-        // isn't the reason why.
+        // get gaze direction pose.
         const RobotTimeStamp_t currentTimeStamp = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
         if (_dVars.state == EState::DecreasingGazeStimulation) {
           SET_STATE(IncreasingGazeStimulation);
@@ -338,6 +336,7 @@ void BehaviorDevVisualWakeWord::ComputeRobotLiftHeight() {
   } // Should I just set the rest to zero?
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevVisualWakeWord::ReturnToOrigState() {
   _dVars.state = _dVars.origState;
   if (_dVars.gazeStimulation > kGazeStimulationThreshold_ms) {
@@ -346,7 +345,6 @@ void BehaviorDevVisualWakeWord::ReturnToOrigState() {
                 "Gaze stimulation is now %.3f and above the threshold %.3f.",
                 _dVars.gazeStimulation, kGazeStimulationThreshold_ms);
     if (_iConfig.yeaOrNayBehavior->WantsToBeActivated()) {
-      // This isn't entirely correct but whatever, fuck it, i think it's reduce some bugs so...
       LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToCheckForVisualWakeWord.GoingToOpenTheAudioStream",
                   "");
       SET_STATE(DetectedVisualWakeWord);
