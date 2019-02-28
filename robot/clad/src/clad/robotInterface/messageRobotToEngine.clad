@@ -95,9 +95,15 @@ message MicData
   float_32 robotRotationAngle,
 }
 
+structure FFTResult
+{
+  uint_32 freq_hz,
+  float_32 loudness
+}
+
 message AudioFFTResult
 {
-  uint_32 result[4]
+  FFTResult result[4]
 }
 
 message SendRangeData

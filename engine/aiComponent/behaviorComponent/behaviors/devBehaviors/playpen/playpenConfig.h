@@ -226,6 +226,11 @@ static u32 kFFTExpectedFreq_hz         = 1024;
 // The allowed +/- deviation of the FFT frequency from the expected value
 static u32 kFFTFreqTolerance_hz        = 20;
 
+// The minimum loudness/amplitude of the most prominent frequency found
+// by the FFT. Unknown units, value acquired through testing good robots
+// compared to a robot without mic holes
+static f32 kFFTMinLoudnessThresh       = 1000000000000.f;
+
 // ----------Tool Code----------
 // Number of tool codes we should be seeing
 static const u32 kNumToolCodes = 2;

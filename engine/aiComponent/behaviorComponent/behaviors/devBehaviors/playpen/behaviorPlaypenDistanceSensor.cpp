@@ -181,7 +181,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
         {
           PRINT_NAMED_WARNING("BehaviorPlaypenDistanceSensor.PlaypenUpdateInternal.ReadingOutsideThresh",
                               "Roi %u %u Dist: %f - %f Visual: %f Thresh: %f",
-
+                              iter.roi,
                               (iter.numObjects > 0 ? iter.readings[0].status : 255), 
                               iter.processedRange_mm,
                               PlaypenConfig::kDistanceSensorBiasAdjustment_mm,

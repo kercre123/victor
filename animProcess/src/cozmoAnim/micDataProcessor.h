@@ -17,6 +17,7 @@
 #include "svad.h"
 
 #include "cozmoAnim/micDataTypes.h"
+#include "cozmoAnim/fftTypes.h"
 #include "coretech/common/shared/types.h"
 #include "util/container/fixedCircularBuffer.h"
 #include "util/global/globalDefinitions.h"
@@ -102,8 +103,7 @@ private:
   bool _processThreadStop = false;
   bool _robotWasMoving = false;
   
-  // Members for managing the results of async FFT processing
-  std::deque<std::vector<uint32_t>> _fftResultList;
+  std::deque<FFTResultList> _fftResultList;
   std::mutex _fftResultMutex;
 
   // Internal buffer used to add to the streaming audio once a trigger is detected

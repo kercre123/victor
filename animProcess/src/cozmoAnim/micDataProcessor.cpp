@@ -526,7 +526,7 @@ void MicDataProcessor::RecordRawAudio(uint32_t duration_ms, const std::string& p
   newJob->_doFFTProcess = runFFT;
   if (runFFT)
   {
-    newJob->_rawAudioFFTCallback = [this] (std::vector<uint32>&& result) {
+    newJob->_rawAudioFFTCallback = [this] (FFTResultList&& result) {
       std::lock_guard<std::mutex> _lock(_fftResultMutex);
       _fftResultList.push_back(std::move(result));
     };
@@ -552,7 +552,8 @@ void MicDataProcessor::Update(BaseStationTime_t currTime_nanosec)
 
     for(uint8_t i = 0; i < result.size(); ++i)
     {
-      msg.result[i] = result[i];
+      msg.result[i].freq_hz = result[i].mostProminentFreq_hz;
+      msg.result[i].loudness = result[i].loudness;
     }
     RobotInterface::SendAnimToEngine(std::move(msg));
 

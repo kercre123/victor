@@ -176,8 +176,14 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
         const float length_s = Util::numeric_cast<float>(length_ms / 1000.0f);
         if (!Util::IsNearZero(length_s))
         {
-          std::vector<uint32_t> result = GetFFTResultFromRaw(data, length_s);
-          LOG_INFO("MicDataInfo.FFTResultFromRaw", "%d %d %d %d", result[0], result[1], result[2], result[3]);
+          FFTResultList result = GetFFTResultFromRaw(data, length_s);
+          LOG_INFO("MicDataInfo.FFTResultFromRaw",
+                   "%d %d %d %d",
+                   result[0].mostProminentFreq_hz,
+                   result[1].mostProminentFreq_hz,
+                   result[2].mostProminentFreq_hz,
+                   result[3].mostProminentFreq_hz);
+          
           if (fftCallback)
           {
             fftCallback(std::move(result));
@@ -266,9 +272,9 @@ std::string MicDataInfo::ChooseNextFileNameBase(std::string& out_dirToDelete)
   return newNameStream.str();
 }
   
-std::vector<uint32_t> MicDataInfo::GetFFTResultFromRaw(const AudioUtil::AudioChunkList& data, float length_s)
+FFTResultList MicDataInfo::GetFFTResultFromRaw(const AudioUtil::AudioChunkList& data, float length_s)
 {
-  std::vector<uint32_t> perChannelFFT;
+  FFTResultList perChannelFFT;
   
   // Run a seperate fft for each of the channels/mics
   for(auto i = 0; i < kNumInputChannels; ++i)
@@ -297,17 +303,19 @@ std::vector<uint32_t> MicDataInfo::GetFFTResultFromRaw(const AudioUtil::AudioChu
     // Skip the first one since it is garbage and often really large
     // Only look at the first half since the second half is just the inverse of the first
     // Only look at every other element to save processing time
-    for(int i = 1; i < fftArray.size()/2; i += 2)
+    for(int k = 1; k < fftArray.size()/2; k += 2)
     {
-      const auto& e = fftArray[i];
+      const auto& e = fftArray[k];
       float magSq = e.real()*e.real() + e.imag()*e.imag();
       if(magSq > largestValue)
       {
         largestValue = magSq;
-        largestValueIdx = i;
+        largestValueIdx = k;
       }
     }
-    perChannelFFT.push_back((uint32_t)(largestValueIdx/length_s));
+                      
+    perChannelFFT.push_back({.mostProminentFreq_hz = (uint32_t)(largestValueIdx/length_s),
+                             .loudness = largestValue});
   }
   
   return perChannelFFT;
