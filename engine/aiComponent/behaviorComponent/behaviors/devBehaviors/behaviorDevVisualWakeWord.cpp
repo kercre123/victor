@@ -44,7 +44,13 @@ namespace {
   CONSOLE_VAR(bool, kDisableStateMachineToKeyCheckForGaze,   "Vision.VisualWakeWord",  false);
   CONSOLE_VAR(f32,  kGazeStimulationThreshold_ms,            "Vision.VisualWakeWord",  3000.f);
   CONSOLE_VAR(f32,  kGazeBreakThreshold_ms,                  "Vision.VisualWakeWord",  300.f);
-  CONSOLE_VAR(f32,  kGazeDecrementMultiplier,                "Vision.VisualWakeWord",  1.2f);
+  CONSOLE_VAR(f32,  kGazeDecrementMultiplier,                "Vision.VisualWakeWord",  1.0f);
+  CONSOLE_VAR(f32,  kLiftIndicatorMaxHeight_mm,              "Vision.VisualWakeWord",  40.0f);
+  // TODO I might not need this but who knows
+  CONSOLE_VAR(f32,  kLiftIndicatorMinHeight_mm,              "Vision.VisualWakeWord",  27.0f);
+  CONSOLE_VAR(bool, kUseHandReaction,                        "Vision.VisualWakeWord",  true);
+  CONSOLE_VAR(f32,  kTimeToWaitAfterInitialReaction,         "Vision.VisualWakeWord",  1.0f);
+  CONSOLE_VAR(bool, kTurnLeftAfterInitialAnimation,          "Vision.VisualWakeWord",  true);
 }
 
 namespace {
@@ -108,7 +114,7 @@ BehaviorDevVisualWakeWord::InstanceConfig::InstanceConfig(const Json::Value& con
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorDevVisualWakeWord::DynamicVariables::DynamicVariables()
-: state(EState::CheckingForVisualWakeWord)
+: state(EState::InitialAnimation)
 {
 }
 
@@ -128,8 +134,32 @@ bool BehaviorDevVisualWakeWord::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevVisualWakeWord::OnBehaviorActivated()
 {
+  // Turn to the angle, pick the correct (left or right) animation, and then search for a face.
+  CompoundActionSequential* turnAction = new CompoundActionSequential();
+  if (kUseHandReaction) {
+    turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::ExploringReactToHandReaction));
+  } else {
+    turnAction->AddAction(new TriggerAnimationAction(AnimationTrigger::ExploringHuhClose));
+  }
+
+  // TODO wait and add head action
+  turnAction->AddAction(new WaitAction(kTimeToWaitAfterInitialReaction));
+  turnAction->AddAction(new MoveHeadToAngleAction(MAX_HEAD_ANGLE));
+  if (kTurnLeftAfterInitialAnimation) {
+    turnAction->AddAction(new TurnInPlaceAction(M_PI_2_F, false));
+  } else {
+    turnAction->AddAction(new TurnInPlaceAction(-M_PI_2_F, false));
+  }
+
+  DelegateIfInControl(turnAction, &BehaviorDevVisualWakeWord::FinishedInitialAnimation);
   // TODO not sure if I need this here
   TransitionToCheckForVisualWakeWord();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevVisualWakeWord::FinishedInitialAnimation()
+{
+  SET_STATE(CheckingForVisualWakeWord);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -137,6 +167,10 @@ void BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord()
 {
   // This check should prevent us from trying to trigger a audio stream
   // when we have already trigger the visual wake word
+  if (_dVars.state == EState::MovingLift || _dVars.state == EState::InitialAnimation) {
+    return;
+  }
+
   if(GetBEI().GetFaceWorld().GetGazeDirectionPose(kMaxTimeSinceTrackedFaceUpdated_ms,
                                                   _dVars.gazeDirectionPose, _dVars.faceIDToTurnBackTo)) {
     LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToCheckForVisualWakeWord",
@@ -166,29 +200,17 @@ void BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord()
           _dVars.lastGazeAtRobot = currentTimeStamp;
         } else {
           IncrementGazeStimulation(currentTimeStamp);
+          ComputeRobotLiftHeight();
         }
 
-        if (_dVars.gazeStimulation > kGazeStimulationThreshold_ms) {
-          // Open up audio stream
-          LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToCheckForVisualWakeWord.HitGazeStimulationThreshold",
-                      "Gaze stimulation is now %.3f and above the threshold %.3f.",
-                      _dVars.gazeStimulation, kGazeStimulationThreshold_ms);
-          if (_iConfig.yeaOrNayBehavior->WantsToBeActivated()) {
-            // This isn't entirely correct but whatever, fuck it, i think it's reduce some bugs so...
-            SET_STATE(DetectedVisualWakeWord);
-            // Now that we know we are going open up the audio stream clear the history and reset
-            // the gazing stim
-            GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
-            ResetGazeStimulation();
-            DelegateIfInControl(_iConfig.yeaOrNayBehavior.get(), &BehaviorDevVisualWakeWord::TransitionToListening);
-          }
-        }
       } else {
         DecrementStimIfGazeHasBroken();
+        ComputeRobotLiftHeight();
       }
     } // this case is for whatever reason we fail to get a pose ... not sure how we want to handle this
   } else {
     DecrementStimIfGazeHasBroken();
+    ComputeRobotLiftHeight();
   }
 }
 
@@ -259,6 +281,7 @@ void BehaviorDevVisualWakeWord::TransitionToResponding(const int response)
   }
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevVisualWakeWord::IncrementGazeStimulation(const RobotTimeStamp_t currentTimeStamp) {
   _dVars.gazeStimulation += static_cast<float>(currentTimeStamp - _dVars.lastGazeAtRobot);
   _dVars.lastGazeAtRobot = currentTimeStamp;
@@ -266,6 +289,7 @@ void BehaviorDevVisualWakeWord::IncrementGazeStimulation(const RobotTimeStamp_t 
               "Gaze stimulation is now %.3f.", _dVars.gazeStimulation);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevVisualWakeWord::DecrementGazeStimulation(const RobotTimeStamp_t currentTimeStamp) {
   // TODO need a multiplier so this happens faster than incrementing
   _dVars.gazeStimulation -= kGazeDecrementMultiplier * static_cast<float>(
@@ -277,16 +301,62 @@ void BehaviorDevVisualWakeWord::DecrementGazeStimulation(const RobotTimeStamp_t 
               "Gaze stimulation is now %.3f.", _dVars.gazeStimulation);
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevVisualWakeWord::ResetGazeStimulation() {
   _dVars.gazeStimulation = 0.f;
   LOG_WARNING("BehaviorDevVisualWakeWord.ResetGazeStimulation.UpdatedGazeStimulation", "");
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevVisualWakeWord::DecrementStimIfGazeHasBroken() {
   const RobotTimeStamp_t currentTimeStamp = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
   if (currentTimeStamp > _dVars.lastGazeAtRobot + (kGazeStimulationThreshold_ms/1000.f)) {
     SET_STATE(DecreasingGazeStimulation);
     DecrementGazeStimulation(currentTimeStamp);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevVisualWakeWord::ComputeRobotLiftHeight() {
+
+  if (_dVars.state == EState::IncreasingGazeStimulation || _dVars.state == EState::DecreasingGazeStimulation) {
+    // Linearly interpolate between the max/min stimulation and the max/min lift height for indication
+    float liftHeight_mm = (_dVars.gazeStimulation / kGazeStimulationThreshold_ms) *
+                          kLiftIndicatorMaxHeight_mm + kLiftIndicatorMinHeight_mm;
+    LOG_WARNING("BehaviorDevVisualWakeWord.ComputeRobotLiftHeight.TryingToMoveTheLift",
+                "Trying to move the lift to height %.3f.", liftHeight_mm);
+    _dVars.origState = _dVars.state;
+    SET_STATE(MovingLift)
+    DelegateIfInControl(new MoveLiftToHeightAction(liftHeight_mm), &BehaviorDevVisualWakeWord::ReturnToOrigState);
+  } else if (_dVars.state == EState::DetectedVisualWakeWord) {
+    // Set the lift to zero here
+    _dVars.origState = _dVars.state;
+    SET_STATE(MovingLift)
+    DelegateIfInControl(new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK), &BehaviorDevVisualWakeWord::ReturnToOrigState);
+    LOG_WARNING("BehaviorDevVisualWakeWord.ComputeRobotLiftHeight.TryingToMoveTheLift",
+                "Trying to move the lift to height low dock.");
+  } // Should I just set the rest to zero?
+}
+
+void BehaviorDevVisualWakeWord::ReturnToOrigState() {
+  _dVars.state = _dVars.origState;
+  if (_dVars.gazeStimulation > kGazeStimulationThreshold_ms) {
+    // Open up audio stream
+    LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToCheckForVisualWakeWord.HitGazeStimulationThreshold",
+                "Gaze stimulation is now %.3f and above the threshold %.3f.",
+                _dVars.gazeStimulation, kGazeStimulationThreshold_ms);
+    if (_iConfig.yeaOrNayBehavior->WantsToBeActivated()) {
+      // This isn't entirely correct but whatever, fuck it, i think it's reduce some bugs so...
+      LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToCheckForVisualWakeWord.GoingToOpenTheAudioStream",
+                  "");
+      SET_STATE(DetectedVisualWakeWord);
+      // Now that we know we are going open up the audio stream clear the history and reset
+      // the gazing stim
+      GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
+      ResetGazeStimulation();
+      //ComputeRobotLiftHeight();
+      DelegateIfInControl(_iConfig.yeaOrNayBehavior.get(), &BehaviorDevVisualWakeWord::TransitionToListening);
+    }
   }
 }
 

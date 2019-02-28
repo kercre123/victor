@@ -48,6 +48,8 @@ protected:
 private:
 
   enum class EState {
+    InitialAnimation,
+    MovingLift,
     IncreasingGazeStimulation,
     DecreasingGazeStimulation,
     CheckingForVisualWakeWord,
@@ -66,6 +68,7 @@ private:
     DynamicVariables();
 
     EState                state;
+    EState                origState;
     Pose3d                gazeDirectionPose;
     SmartFaceID           faceIDToTurnBackTo;
 
@@ -81,7 +84,11 @@ private:
   void DecrementGazeStimulation(const RobotTimeStamp_t currentTimeStamp);
   void DecrementStimIfGazeHasBroken();
   void ResetGazeStimulation();
+  void ReturnToOrigState();
 
+  void ComputeRobotLiftHeight();
+
+  void FinishedInitialAnimation();
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
