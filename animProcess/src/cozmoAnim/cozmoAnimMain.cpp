@@ -122,9 +122,6 @@ int main(void)
 
   auto dataPlatform = createPlatform();
 
-  // Set up the console vars to load from file, if it exists
-  ANKI_CONSOLE_SYSTEM_INIT(dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "consoleVarsAnim.ini").c_str());
-
   // - console filter for logs
   {
     using namespace Anki::Util;
@@ -148,6 +145,9 @@ int main(void)
 
     Anki::Util::gLoggerProvider->SetFilter(filterPtr);
   }
+
+  // Set up the console vars to load from file, if it exists
+  ANKI_CONSOLE_SYSTEM_INIT(dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "consoleVarsAnim.ini").c_str());
 
   // Create and init AnimEngine
   AnimEngine * animEngine = new AnimEngine(dataPlatform);

@@ -45,7 +45,8 @@ void ChannelFilter::Initialize(const Json::Value& config)
       // parse value
       DEV_ASSERT(channel[kChannelEnabledKey].isBool(), "ChannelFilter.Initialize.BadEnableFlag");
       const bool channelEnabled = channel[kChannelEnabledKey].asBool();
-      _channelEnableList.emplace(channelName, new ChannelVar(channelName, channelEnabled, true));
+      static const bool kUnregisterInDestructor = true;
+      _channelEnableList.emplace(channelName, new ChannelVar(channelName, channelEnabled, kUnregisterInDestructor));
     }
   }
   
@@ -85,7 +86,8 @@ void ChannelFilter::EnableChannel(const std::string& channelName)
   if(it != _channelEnableList.end()) {
     it->second->enable = true;
   } else {
-    _channelEnableList.emplace(channelName, new ChannelVar(channelName, true, true));
+    static const bool kUnregisterInDestructor = true;
+    _channelEnableList.emplace(channelName, new ChannelVar(channelName, true, kUnregisterInDestructor));
   }
 }
 
@@ -96,7 +98,8 @@ void ChannelFilter::DisableChannel(const std::string& channelName)
   if(it != _channelEnableList.end()) {
     it->second->enable = false;
   } else {
-    _channelEnableList.emplace(channelName, new ChannelVar(channelName, false, true));
+    static const bool kUnregisterInDestructor = true;
+    _channelEnableList.emplace(channelName, new ChannelVar(channelName, false, kUnregisterInDestructor));
   }
 }
 
