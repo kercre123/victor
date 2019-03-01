@@ -123,9 +123,9 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestLookAtCharger::SelfTestUpdateI
   {
     --_numRecordedReadingsLeft;
     
-    const auto& proxData = robot.GetProxSensorComponent().GetLatestProxDataRaw();
+    const auto& proxData = robot.GetProxSensorComponent().GetLatestProxData();
     DistanceSensorData data;
-    data.proxSensorData = proxData;
+    data.proxDistanceToTarget_mm = proxData.distance_mm;
     data.visualDistanceToTarget_mm = 0;
     data.visualAngleAwayFromTarget_rad = 0;
     
@@ -153,13 +153,13 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestLookAtCharger::SelfTestUpdateI
       bias = 0;
     }
     
-    if(!Util::IsNear(data.proxSensorData.distance_mm - bias, 
+    if(!Util::IsNear(data.proxDistanceToTarget_mm - bias, 
                      data.visualDistanceToTarget_mm,
                      SelfTestConfig::kDistanceSensorReadingThresh_mm))
     {
       PRINT_NAMED_WARNING("BehaviorSelfTestLookAtCharger.SelfTestUpdateInternal.ReadingOutsideThresh",
-                          "Sensor reading %u - %f not near visual reading %f with threshold %f",
-                          data.proxSensorData.distance_mm,
+                          "Sensor reading %f - %f not near visual reading %f with threshold %f",
+                          data.proxDistanceToTarget_mm,
                           SelfTestConfig::kDistanceSensorBiasAdjustment_mm,
                           data.visualDistanceToTarget_mm,
                           SelfTestConfig::kDistanceSensorReadingThresh_mm);

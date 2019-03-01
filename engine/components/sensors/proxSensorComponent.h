@@ -60,13 +60,6 @@ public:
   // end IDependencyManagedComponent functions
   //////
 
-protected:
-  virtual void NotifyOfRobotStateInternal(const RobotState& msg) override;
-  
-  virtual std::string GetLogHeader() override;
-  virtual std::string GetLogRow() override;
-  
-public:
   // Populates distance_mm with the latest distance value.
   // Returns true if the sensor reading is considered valid (see UpdateReadingValidity()). 
   // Returns false if not valid.
@@ -78,8 +71,6 @@ public:
   
   // Note: If you just need distance data, prefer to use GetLatestDistance_mm() and
   // check its return value rather than calling this method.
-  const ProxSensorDataRaw& GetLatestProxDataRaw() const { return _latestDataRaw; }
-
   const ProxSensorData& GetLatestProxData() const { return _latestData; }
   
   // Returns the current pose of the prox sensor w.r.t. robot. Computed on-the-fly
@@ -99,6 +90,16 @@ public:
 
   // enable or disable this entire component's ability to update the nav map
   void SetNavMapUpdateEnabled(bool enabled) { _enabled = enabled; }
+  
+  // loads raw prox sensor data to a string for different logging systems
+  std::string GetDebugString(const std::string& delimeter = "\n");
+
+protected:
+  virtual void NotifyOfRobotStateInternal(const RobotState& msg) override;
+  
+  virtual std::string GetLogHeader() override;
+  virtual std::string GetLogRow() override { return GetDebugString(", "); }
+  
 
 private:
 

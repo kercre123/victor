@@ -25,6 +25,8 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleInterface.h"
 
+#include <iomanip>
+
 namespace Anki {
 namespace Vector {
   
@@ -113,15 +115,15 @@ std::string ProxSensorComponent::GetLogHeader()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string ProxSensorComponent::GetLogRow()
+std::string ProxSensorComponent::GetDebugString(const std::string& delimeter)
 {
   const auto& d = _latestDataRaw;
   std::stringstream ss;
-  ss << _lastMsgTimestamp  << ", ";
-  ss << d.distance_mm      << ", ";
-  ss << d.signalIntensity  << ", ";
-  ss << d.ambientIntensity << ", ";
-  ss << d.spadCount        << ", ";
+  ss << _lastMsgTimestamp  << delimeter;
+  ss << d.distance_mm      << delimeter;
+  ss << std::fixed << std::setprecision(3) << d.signalIntensity  << delimeter;
+  ss << std::fixed << std::setprecision(3) << d.ambientIntensity << delimeter;
+  ss << std::fixed << std::setprecision(3) << d.spadCount        << delimeter;
   ss << RangeStatusToString(d.rangeStatus);
 
   return ss.str();
