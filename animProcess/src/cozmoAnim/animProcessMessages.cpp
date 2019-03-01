@@ -512,6 +512,26 @@ void Process_runDebugConsoleFuncMessage(const Anki::Vector::RobotInterface::RunD
   }
 }
 
+void Process_externalAudioChunk(const RobotInterface::ExternalAudioChunk& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
+void Process_externalAudioPrepare(const RobotInterface::ExternalAudioPrepare& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
+void Process_externalAudioComplete(const RobotInterface::ExternalAudioComplete& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
+void Process_externalAudioCancel(const RobotInterface::ExternalAudioCancel& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
 void Process_textToSpeechPrepare(const RobotInterface::TextToSpeechPrepare& msg)
 {
   _animEngine->HandleMessage(msg);

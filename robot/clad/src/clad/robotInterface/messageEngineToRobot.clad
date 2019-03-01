@@ -22,6 +22,7 @@
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/switchboardToRobot.clad"
 #include "clad/types/textToSpeechTypes.clad"
+#include "clad/types/sdkAudioTypes.clad"
 
 namespace Anki {
 namespace Vector {
@@ -680,6 +681,34 @@ message AcousticTestEnabled {
   bool enabled,
 }
 
+//
+// Sent from engine to robot (anim process) to prepare for streaming audio data to the robot speaker
+//
+message ExternalAudioPrepare {
+  uint_16 audio_volume,
+  uint_16 audio_rate
+}
+
+//
+// Sent from engine to robot (anim process) to stream audio data to the robot speaker
+//
+message ExternalAudioChunk {
+  uint_16 audio_chunk_size,       //size in bytes
+  uint_16 audio_chunk_data[512]   //16-bit little-endian data
+}
+
+//
+// Sent from engine to robot (anim process) to signal end of streaming data
+//
+message ExternalAudioComplete {
+}
+
+//
+// Sent from engine to robot (anim process) to cancel streaming audio playback
+//
+message ExternalAudioCancel {
+}
+
 // Because we're running low on message tags, expand this enum and message as we add more settings
 // that we want to send to anim/robot.  To expand, update the Process_updatedSettings() method.
 // We're not using the proto enums for the settings here, because it's proto, not clad, and because
@@ -826,6 +855,11 @@ union EngineToRobot
   AudioEngine::Multiplexer::PostAudioGameState    postAudioGameState   = 0x72,
   AudioEngine::Multiplexer::PostAudioSwitchState  postAudioSwitchState = 0x73,
   AudioEngine::Multiplexer::PostAudioParameter    postAudioParameter   = 0x74,
+  
+  ExternalAudioPrepare          externalAudioPrepare        = 0x75,
+  ExternalAudioChunk            externalAudioChunk          = 0x76,
+  ExternalAudioComplete         externalAudioComplete       = 0x77,
+  ExternalAudioCancel           externalAudioCancel         = 0x78,
 
   FakeWakeWordFromExternalInterface fakeWakeWordFromExternalInterface = 0x80,
   ShowUrlFace                   showUrlFace                 = 0x81,

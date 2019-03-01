@@ -258,6 +258,13 @@ message GatewayWrapper {
     SetEyeColorRequest            set_eye_color_request              = 1700;
     SetEyeColorResponse           set_eye_color_response             = 1701;
 
+    // ------------ Streaming audio playback (SDK only) ------------
+    ExternalAudioStreamPrepare    external_audio_stream_prepare      = 1800;
+    ExternalAudioStreamChunk      external_audio_stream_chunk        = 1801;
+    ExternalAudioStreamCancel     external_audio_stream_cancel       = 1802;
+    ExternalAudioStreamComplete   external_audio_stream_complete     = 1803;
+    ExternalAudioStreamResponse   external_audio_stream_response     = 1804;
+  
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------
   }
