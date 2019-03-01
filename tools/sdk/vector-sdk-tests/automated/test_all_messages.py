@@ -546,6 +546,7 @@ def main():
         if not errors:
             print("------ all tests finished successfully! ------")
             print('\n')
+            sys.exit(0)
         else:
             print("------ tests finished with {0} errors! ------".format(len(errors)))
             for err in errors:
