@@ -10,11 +10,12 @@ import (
 	"anki/log"
 
 	extint "proto/external_interface"
-	grpcRuntime "github.com/grpc-ecosystem/grpc-gateway/runtime"
 	"golang.org/x/net/context"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
+
+const maxRetries = 10
 
 var skillExecuting = false
 	
@@ -106,8 +107,7 @@ func startCloudSkill(c extint.ExternalInterfaceClient, ctx context.Context, clou
 		startTime = time.Now()
 
 		// All commands run, release SDK behavior control
-		if numRetries >= 5 {
-			// time.Sleep(5 * time.Second)
+		if numRetries >= maxRetries {
 			behaviorControlClient.Send(&extint.BehaviorControlRequest{RequestType: &extint.BehaviorControlRequest_ControlRelease{ControlRelease: &extint.ControlRelease{}}})
 			skillExecuting = false
 			return
@@ -136,6 +136,9 @@ func startCloudSkill(c extint.ExternalInterfaceClient, ctx context.Context, clou
 	    	time.Sleep(1 * time.Second)
 	    	continue
 	    }
+
+	    // Reset retry count
+	    numRetries = 0
 
 	 	var jsonCommand Command
 	    if err := json.Unmarshal(body, &jsonCommand); err != nil {
@@ -209,13 +212,11 @@ func fetchCloudSkill(creds credentials.TransportCredentials) {
 	
 	ctx := context.Background()
 	c := extint.NewExternalInterfaceClient(conn)
-	gwmux := grpcRuntime.NewServeMux(grpcRuntime.WithMarshalerOption(grpcRuntime.MIMEWildcard, &grpcRuntime.JSONPb{EmitDefaults: true, OrigName: true, EnumsAsInts: true}))
-	extint.RegisterExternalInterfaceHandlerClient(ctx, gwmux, c)
-	time.Sleep(5 * time.Second)
 
 	f, eventsChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_Event{}, 10)
 	defer f()
 
+	// Listen for petting events and trigger skill if robot it pet
 	for {
 		response, ok := <-eventsChannel
 		if !ok {
