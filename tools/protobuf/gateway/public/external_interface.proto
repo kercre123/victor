@@ -108,6 +108,10 @@ service ExternalInterface {
     };
   }
 
+  // Play audio using Vector's speaker
+  rpc ExternalAudioStreamPlayback(stream ExternalAudioStreamRequest) returns (stream ExternalAudioStreamResponse) {
+  }
+
   // Integrate with and acquire control of Vector's AI system.
   rpc BehaviorControl(stream BehaviorControlRequest) returns (stream BehaviorControlResponse) {
   }
@@ -428,7 +432,7 @@ service ExternalInterface {
       post: "/v1/nav_map_feed",
       body: "*"
     };
-  }  
+  }
 
   // *** App only proto below ***
 

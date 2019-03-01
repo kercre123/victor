@@ -689,7 +689,7 @@ func (service *rpcService) ListAnimationTriggers(ctx context.Context, in *extint
 
 	done := false
 	for done == false {
-		select {			
+		select {
 		case chanResponse, ok := <-animationTriggerAvailableResponse:
 			if !ok {
 				return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
@@ -835,8 +835,8 @@ func (service *rpcService) RequestEnrolledNames(ctx context.Context, in *extint.
 			SecondsSinceLastUpdated:   element.SecondsSinceLastUpdated,
 			SecondsSinceLastSeen:      element.SecondsSinceLastSeen,
 			LastSeenSecondsSinceEpoch: element.LastSeenSecondsSinceEpoch,
-			FaceId: element.FaceID,
-			Name:   element.Name,
+			FaceId:                    element.FaceID,
+			Name:                      element.Name,
 		}
 		faces = append(faces, &newFace)
 	}
@@ -2192,8 +2192,7 @@ func (service *rpcService) EnableMarkerDetection(ctx context.Context, request *e
 		return nil, err
 	}
 
-
-	if (request.Enable == false) {
+	if request.Enable == false {
 		// VIC-12762 EnableMarkerDetectionRequest is requesting that the marker detection vision mode be turned off.
 		// There are cases when there is another subscriber on the robot (not affiliated with the SDK)
 		// that wants to keep this vision mode on. So this request to turn it off is more of a suggestion.
@@ -2901,4 +2900,97 @@ func (service *rpcService) SetEyeColor(ctx context.Context, in *extint.SetEyeCol
 			Code: extint.ResponseStatus_REQUEST_PROCESSING,
 		},
 	}, nil
+}
+
+func (service *rpcService) ExternalAudioStreamRequestToGatewayWrapper(request *extint.ExternalAudioStreamRequest) (*extint.GatewayWrapper, error) {
+	msg := &extint.GatewayWrapper{}
+	switch x := request.AudioRequestType.(type) {
+	case *extint.ExternalAudioStreamRequest_AudioStreamPrepare:
+		msg.OneofMessageType = &extint.GatewayWrapper_ExternalAudioStreamPrepare{
+			ExternalAudioStreamPrepare: request.GetAudioStreamPrepare(),
+		}
+	case *extint.ExternalAudioStreamRequest_AudioStreamChunk:
+		msg.OneofMessageType = &extint.GatewayWrapper_ExternalAudioStreamChunk{
+			ExternalAudioStreamChunk: request.GetAudioStreamChunk(),
+		}
+	case *extint.ExternalAudioStreamRequest_AudioStreamComplete:
+		msg.OneofMessageType = &extint.GatewayWrapper_ExternalAudioStreamComplete{
+			ExternalAudioStreamComplete: request.GetAudioStreamComplete(),
+		}
+	case *extint.ExternalAudioStreamRequest_AudioStreamCancel:
+		msg.OneofMessageType = &extint.GatewayWrapper_ExternalAudioStreamCancel{
+			ExternalAudioStreamCancel: request.GetAudioStreamCancel(),
+		}
+	default:
+		return nil, grpc.Errorf(codes.InvalidArgument, "ExternalAudioStreamRequest.AudioStreamControlRequest has unexpected type %T", x)
+	}
+
+	return msg, nil
+}
+
+func (service *rpcService) ExternalAudioStreamRequestHandler(in extint.ExternalInterface_ExternalAudioStreamPlaybackServer, done chan struct{}) {
+	defer close(done)
+	for {
+		request, err := in.Recv()
+		if err != nil {
+			log.Printf("AudioStreamRequestHandler.close: %s\n", err.Error())
+			return
+		}
+		log.Println("External AudioStream playback incoming request") //not printing message, lengthy sample data too busy for logs
+
+		msg, err := service.ExternalAudioStreamRequestToGatewayWrapper(request)
+		if err != nil {
+			log.Println(err)
+			return
+		}
+
+		_, err = engineProtoManager.Write(msg)
+		if err != nil {
+			log.Printf("Could not write GatewayWrapper_AudioStreamRequest\n")
+		}
+	}
+}
+
+func (service *rpcService) ExternalAudioStreamResponseHandler(out extint.ExternalInterface_ExternalAudioStreamPlaybackServer, responses chan extint.GatewayWrapper, done chan struct{}) error {
+	for {
+		select {
+		case <-done:
+			return nil
+		case response, ok := <-responses:
+			if !ok {
+				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
+			}
+			msg := response.GetExternalAudioStreamResponse()
+			if err := out.Send(msg); err != nil {
+				log.Println("Closing AudioStream (on send):", err)
+				return err
+			} else if err = out.Context().Err(); err != nil {
+				// This is the case where the user disconnects the stream
+				// We should still return the err in case the user doesn't think they disconnected
+				log.Println("Closing AudioStream stream:", err)
+				return err
+			}
+		}
+	}
+	return nil
+}
+
+// Stream audio to the robot, stream audio playback status back
+func (service *rpcService) ExternalAudioStreamPlayback(bidirectionalStream extint.ExternalInterface_ExternalAudioStreamPlaybackServer) error {
+	audioStartTime := time.Now()
+
+	log.Println("sdk.audiostream_started")
+
+	defer func() {
+		sdkElapsedSeconds := time.Since(audioStartTime)
+		log.Printf("sdk.audiostream_ended %s\n", sdkElapsedSeconds.String())
+	}()
+
+	done := make(chan struct{})
+
+	f, audioStreamStatus := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ExternalAudioStreamResponse{}, 1)
+	defer f()
+
+	go service.ExternalAudioStreamRequestHandler(bidirectionalStream, done)
+	return service.ExternalAudioStreamResponseHandler(bidirectionalStream, audioStreamStatus, done)
 }

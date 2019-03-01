@@ -792,7 +792,7 @@ message AudioSendModeChanged {
   AudioProcessingMode mode = 1;
 }
 
-// One frame of audio data and associated metadata
+// One frame of robot audio data and associated metadata
 message AudioChunk {
   uint32 robot_time_stamp    = 1; // robot time at the final chunk of this audio sample group transmission
   uint32 group_id            = 2; // the id of this sample transmission group
@@ -821,6 +821,58 @@ message AudioFeedResponse {
   uint32 noise_floor_power   = 7; // power value, convert to db with log_10(value)
 }
 
+// Preflight and initialization for audio streaming to robot
+message ExternalAudioStreamPrepare {
+  uint32 audio_frame_rate = 1;    // 8000 - 16025
+  uint32 audio_volume = 2;        // 0 - 100
+}
+
+// Send chunk of audio data to stream on robot
+message ExternalAudioStreamChunk {
+  uint32 audio_chunk_size_bytes = 1;  //current engine maximum of 1024 bytes
+  bytes audio_chunk_samples = 2;      //16-bit little-endian PCM audio data
+}
+
+// Send notification of last chunk of audio sent to robot
+message ExternalAudioStreamComplete {
+}
+
+// Cancel a playing external robot audio stream
+message ExternalAudioStreamCancel {
+}
+
+// Request to stream audio to the robot
+message ExternalAudioStreamRequest {
+  oneof audio_request_type {
+    ExternalAudioStreamPrepare audio_stream_prepare = 1;
+    ExternalAudioStreamChunk audio_stream_chunk = 2;
+    ExternalAudioStreamComplete audio_stream_complete = 3;
+    ExternalAudioStreamCancel audio_stream_cancel = 4;
+  }
+}
+
+// Audio has been played on the Robot
+message ExternalAudioStreamPlaybackComplete {
+}
+
+// Audio playback failure
+message ExternalAudioStreamPlaybackFailure {
+}
+
+// Audio has been sent to robot that would overrun the memory buffer
+message ExternalAudioStreamBufferOverrun {
+  uint32 audio_samples_sent = 1;
+  uint32 audio_samples_played = 2;
+}
+
+// Response from streaming audio to robot
+message ExternalAudioStreamResponse {
+  oneof audio_response_type {
+    ExternalAudioStreamPlaybackComplete audio_stream_playback_complete = 1;
+    ExternalAudioStreamBufferOverrun audio_stream_buffer_overrun = 2;
+    ExternalAudioStreamPlaybackFailure audio_stream_playback_failyer = 3;
+  }
+}
 
 // When enabled, RobotObservedObject messages will be produced
 message EnableMarkerDetectionRequest

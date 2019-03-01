@@ -15,6 +15,7 @@
 #include "engine/components/textToSpeech/textToSpeechCoordinator.h"
 #include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
 #include "clad/types/visionModes.h"
+#include "clad/types/sdkAudioTypes.h"
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/signals/simpleSignal_fwd.h"
@@ -86,12 +87,18 @@ private:
   void OnSendAudioModeRequest(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void IsImageStreamingEnabledRequest(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void DispatchSDKActivationResult(bool enabled);
+  void DispatchAudioStreamResult();
   // Returns true if the subscription was actually updated
   bool SubscribeToVisionMode(bool subscribe, VisionMode mode, bool updateWaitingToChangeSet = true);
   void DisableMirrorMode();
   void SayText(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void SetEyeColor(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void ListAnimationTriggers(const AnkiEvent<external_interface::GatewayWrapper>& event);
+  void HandleAudioStreamPrepareRequest(const AnkiEvent<external_interface::GatewayWrapper>& event);
+  void HandleAudioStreamChunkRequest(const AnkiEvent<external_interface::GatewayWrapper>& event);
+  void HandleAudioStreamCompleteRequest(const AnkiEvent<external_interface::GatewayWrapper>& event);
+  void HandleAudioStreamCancelRequest(const AnkiEvent<external_interface::GatewayWrapper>& event);
+  void HandleStreamStatusEvent(SDKAudioStreamingState streamStatusId, int audioFramesReceived, int audioFramesPlayed);
 };
 
 } // namespace Vector
