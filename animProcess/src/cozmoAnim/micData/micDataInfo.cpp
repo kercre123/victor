@@ -129,7 +129,7 @@ void MicDataInfo::SetAudioFadeInTime(uint32_t fadeInTime_ms)
 void MicDataInfo::UpdateForNextChunk()
 {
   std::lock_guard<std::mutex> lock(_dataMutex);
-  _timeRecorded_ms += kTimePerChunk_ms;
+  _timeRecorded_ms += kTimePerChunk_ms * 2;
   if (_timeRecorded_ms >= _timeToRecord_ms)
   {
     std::string dirToReplace;
