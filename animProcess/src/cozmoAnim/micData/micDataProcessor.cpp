@@ -367,7 +367,6 @@ MicDataProcessor::~MicDataProcessor()
   MMIfDestroy();
 }
 
-
 void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
                                        const AudioUtil::AudioSample* audioChunk,
                                        uint32_t robotStatus,
