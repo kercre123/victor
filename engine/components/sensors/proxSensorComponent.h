@@ -30,7 +30,7 @@ struct ProxSensorData
   u16  distance_mm;
   f32  signalQuality;
 
-  bool unobstructed;          // The we know the sensor has not detected anything up to its max range
+  bool unobstructed;          // The sensor has not detected anything up to its max range
   bool foundObject;           // The sensor detected an object in the valid operating range
   bool isLiftInFOV;           // Lift (or object on lift) is occluding the sensor
 
