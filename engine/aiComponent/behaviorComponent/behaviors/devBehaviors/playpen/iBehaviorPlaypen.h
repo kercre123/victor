@@ -85,6 +85,9 @@ public:
 
   static const std::set<ExternalInterface::MessageEngineToGameTag>& GetFailureTags();
 
+  // Add the result to the static list of playpen behavior results
+  void AddToResultList(FactoryTestResultCode result);
+
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override final {
     modifiers.behaviorAlwaysDelegates = false;
@@ -153,9 +156,6 @@ protected:
   // Use the macro PLAYPEN_SET_RESULT if you can instead of directly calling this function
   void SetResult(FactoryTestResultCode result);
 
-  // Add the result to the static list of playpen behavior results
-  void AddToResultList(FactoryTestResultCode result);
-  
   // Adds a timer that will call the callback when time_ms has passed
   void AddTimer(TimeStamp_t time_ms, std::function<void(void)> callback, const std::string& name = "")
     { _timers.push_back(Timer(time_ms, callback, name)); }

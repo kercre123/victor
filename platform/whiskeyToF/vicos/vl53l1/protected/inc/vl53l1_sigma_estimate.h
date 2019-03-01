@@ -1,16 +1,16 @@
 
-/*
-* This file is part of VL53L1 Protected
-*
-* Copyright (C) 2016, STMicroelectronics - All Rights Reserved
-*
-* License terms: STMicroelectronics Proprietary in accordance with licensing
-* terms at www.st.com/sla0044
-*
-* STMicroelectronics confidential
-* Reproduction and Communication of this document is strictly prohibited unless
-* specifically authorized in writing by STMicroelectronics.
-*
+/*******************************************************************************
+ This file is part of VL53L1 Protected
+
+ Copyright (c) 2017, STMicroelectronics - All Rights Reserved
+
+ License terms: STMicroelectronics Proprietary in accordance with licensing
+ terms at www.st.com/sla0081
+
+ STMicroelectronics confidential
+ Reproduction and Communication of this document is strictly prohibited unless
+ specifically authorized in writing by STMicroelectronics.
+
 */
 
 
@@ -60,23 +60,19 @@
 extern "C" {
 #endif
 
-#define  VL53L1_DEF_00002  0xFFFF
+#define  VL53L1_D_002  0xFFFF
 
 
 
-#define VL53L1_DEF_00008	0xFFFF
-#define VL53L1_DEF_00003	0xFFFFFF
-#define VL53L1_DEF_00007	0xFFFFFFFF
-#define VL53L1_DEF_00005	0x7FFFFFFFFF
-#define VL53L1_DEF_00009	0xFFFFFFFFFF
-#define VL53L1_DEF_00010	0xFFFFFFFFFFFF
-#define VL53L1_DEF_00004	0xFFFFFFFFFFFFFF
-#define VL53L1_DEF_00006	0x7FFFFFFFFFFFFFFF
-#define VL53L1_DEF_00011	0xFFFFFFFFFFFFFFFF
-
-
-
-
+#define VL53L1_D_008	0xFFFF
+#define VL53L1_D_003	0xFFFFFF
+#define VL53L1_D_007	0xFFFFFFFF
+#define VL53L1_D_005	0x7FFFFFFFFF
+#define VL53L1_D_009	0xFFFFFFFFFF
+#define VL53L1_D_010	0xFFFFFFFFFFFF
+#define VL53L1_D_004	0xFFFFFFFFFFFFFF
+#define VL53L1_D_006	0x7FFFFFFFFFFFFFFF
+#define VL53L1_D_011	0xFFFFFFFFFFFFFFFF
 
 
 
@@ -92,7 +88,11 @@ extern "C" {
 
 
 
-uint16_t VL53L1_FCTN_00042(
+
+
+
+
+uint16_t VL53L1_f_042(
 	uint8_t	 sigma_estimator__effective_pulse_width_ns,
 	uint8_t  sigma_estimator__effective_ambient_width_ns,
 	uint8_t	 sigma_estimator__sigma_ref_mm,
@@ -116,7 +116,7 @@ uint16_t VL53L1_FCTN_00042(
 
 
 
-uint16_t VL53L1_FCTN_00044(
+uint16_t VL53L1_f_044(
 	uint8_t	 sigma_estimator__effective_pulse_width_ns,
 	uint8_t  sigma_estimator__effective_ambient_width_ns,
 	uint8_t	 sigma_estimator__sigma_ref_mm,
@@ -150,17 +150,17 @@ uint16_t VL53L1_FCTN_00044(
 
 
 
-VL53L1_Error  VL53L1_FCTN_00045(
+VL53L1_Error  VL53L1_f_045(
 	uint8_t	      sigma_estimator__sigma_ref_mm,
-	uint32_t      VL53L1_PRM_00002,
-	uint32_t      VL53L1_PRM_00032,
-	uint32_t      VL53L1_PRM_00001,
+	uint32_t      VL53L1_p_003,
+	uint32_t      VL53L1_p_018,
+	uint32_t      VL53L1_p_001,
 	uint32_t      a_zp,
 	uint32_t      c_zp,
 	uint32_t      bx,
 	uint32_t      ax_zp,
 	uint32_t      cx_zp,
-	uint32_t      VL53L1_PRM_00028,
+	uint32_t      VL53L1_p_004,
 	uint16_t      fast_osc_frequency,
 	uint16_t      *psigma_est);
 
@@ -192,17 +192,17 @@ VL53L1_Error  VL53L1_FCTN_00045(
 
 
 
-VL53L1_Error  VL53L1_FCTN_00014(
+VL53L1_Error  VL53L1_f_014(
 	uint8_t	      sigma_estimator__sigma_ref_mm,
-	uint32_t      VL53L1_PRM_00002,
-	uint32_t      VL53L1_PRM_00032,
-	uint32_t      VL53L1_PRM_00001,
+	uint32_t      VL53L1_p_003,
+	uint32_t      VL53L1_p_018,
+	uint32_t      VL53L1_p_001,
 	uint32_t      a_zp,
 	uint32_t      c_zp,
 	uint32_t      bx,
 	uint32_t      ax_zp,
 	uint32_t      cx_zp,
-	uint32_t      VL53L1_PRM_00028,
+	uint32_t      VL53L1_p_004,
 	uint16_t      fast_osc_frequency,
 	uint16_t      *psigma_est);
 
@@ -217,8 +217,8 @@ VL53L1_Error  VL53L1_FCTN_00014(
 
 
 
-uint32_t VL53L1_FCTN_00046(
-	uint64_t VL53L1_PRM_00002,
+uint32_t VL53L1_f_046(
+	uint64_t VL53L1_p_003,
 	uint32_t size
 	);
 
@@ -237,9 +237,9 @@ uint32_t VL53L1_FCTN_00046(
 
 
 
-uint32_t VL53L1_FCTN_00043(
-	uint32_t  VL53L1_PRM_00002,
-	uint32_t  VL53L1_PRM_00032);
+uint32_t VL53L1_f_043(
+	uint32_t  VL53L1_p_003,
+	uint32_t  VL53L1_p_018);
 
 
 #ifdef __cplusplus

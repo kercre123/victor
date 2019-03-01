@@ -1,15 +1,9 @@
 cxx_project(
     name = 'whiskeyToF',
-    srcs = cxx_src_glob(['.'],
-                        excludes = ['*_vicos.*',
-                                    'vicos/**/*',
-                                    '**/test/*',
-                                    '*_mac.*',
-                                    '*test.cpp']),
+    srcs = [],
     platform_srcs = [
-        ('vicos', glob(['vicos/**/*.cpp',
-                          '**/*_vicos.cpp'],
-                          excludes = ['*test.*'])),
+        ('vicos', glob(['**/*_vicos.cpp'],
+                        excludes = ['*test.*'])),
         ('mac', glob(['**/*_mac.cpp']))
     ],
     headers = cxx_header_glob(['.']),

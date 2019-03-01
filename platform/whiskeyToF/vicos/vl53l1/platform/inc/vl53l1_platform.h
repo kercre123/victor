@@ -54,7 +54,6 @@ extern "C"
  * @brief  Initialise platform comms.
  *
  * @param[in]   pdev            : pointer to device structure (device handle)
- * @param[in]   address         : Device address (for I2C)
  * @param[in]   comms_type      : selects between I2C and SPI
  * @param[in]   comms_speed_khz : unsigned short containing the I2C speed in kHz
  *
@@ -64,7 +63,7 @@ extern "C"
 
 VL53L1_Error VL53L1_CommsInitialise(
 	VL53L1_Dev_t *pdev,
-	int16_t       address,
+        int16_t       address,
 	uint8_t       comms_type,
 	uint16_t      comms_speed_khz);
 
@@ -430,3 +429,4 @@ VL53L1_Error VL53L1_WaitValueMaskEx(
 #endif
 
 #endif
+

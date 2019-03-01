@@ -367,6 +367,9 @@ void BehaviorPlaypenDistanceSensor::TransitionToRecordSensor()
         return _calibrationComplete;
       });
     action->AddAction(wait);
+
+    action->AddAction(new WaitAction(3.f));
+    
     DelegateIfInControl(action, [this]() { _numRecordedReadingsLeft = PlaypenConfig::kNumDistanceSensorReadingsToRecord; });
   }
   else

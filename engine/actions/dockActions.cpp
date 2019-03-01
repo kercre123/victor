@@ -1389,7 +1389,9 @@ namespace Anki {
       
       if(_verifyAction == nullptr)
       {
-        _verifyAction.reset(new TurnTowardsPoseAction(_dockObjectOrigPose, 0));
+        TurnTowardsPoseAction* turn = new TurnTowardsPoseAction(_dockObjectOrigPose, 0);
+        WaitForImagesAction* wait = new WaitForImagesAction(3, VisionMode::DetectingMarkers);
+        _verifyAction.reset(new CompoundActionSequential({turn, wait}));
         _verifyAction->ShouldSuppressTrackLocking(true);
         _verifyAction->SetRobot(&GetRobot());
         _verifyActionDone = false;

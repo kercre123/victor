@@ -50,7 +50,7 @@ public:
 
   void Update();
 
-  using RangeData = std::array<Vec3f, 32>;
+  using RangeData = std::array<Vec3f, 16>;
   const RangeData& GetLatestRangeData() const { return _latestRangeData; }
   const RangeDataRaw& GetLatestRawRangeData(bool& isNew) const { isNew = _rawDataIsNew; return _latestRawRangeData; }
   
