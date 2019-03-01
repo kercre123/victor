@@ -17,6 +17,8 @@
 #include <string>
 #include <map>
 
+#define LOG_CHANNEL "LOG"
+
 namespace Anki {
 namespace Util {
 
@@ -37,7 +39,7 @@ void ChannelFilter::Initialize(const Json::Value& config)
   // parse config
   if (!config.isNull()) {
     for (const auto& channel : config[kChannelListKey]) {
-    
+
       // parse channel name
       DEV_ASSERT(channel[kChannelNameKey].isString(), "ChannelFilter.Initialize.BadName");
       const std::string& channelName = channel[kChannelNameKey].asString();
@@ -71,17 +73,17 @@ void ChannelFilter::Initialize(const Json::Value& config)
     if ( disCount == 0 ) {
       disabledStr << "(None were disabled)";
     }
-    PRINT_CH_INFO("LOG", "ChannelFilter.Channels", ": Enabled [%s]; Disabled [%s]",
+    LOG_INFO("ChannelFilter.Channels", ": Enabled [%s]; Disabled [%s]",
       enabledStr.str().c_str(),
       disabledStr.str().c_str());
   }
-  
+
   _initialized = true;
 }
 
 void ChannelFilter::EnableChannel(const std::string& channelName)
 {
-  // if found, set as true (do not register if not found)
+  // if found, set as true
   auto it = _channelEnableList.find(channelName);
   if(it != _channelEnableList.end()) {
     it->second->enable = true;
@@ -93,7 +95,7 @@ void ChannelFilter::EnableChannel(const std::string& channelName)
 
 void ChannelFilter::DisableChannel(const std::string& channelName)
 {
-  // registerif found, set as false
+  // if found, set as false
   auto it = _channelEnableList.find(channelName);
   if(it != _channelEnableList.end()) {
     it->second->enable = false;
