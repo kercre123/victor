@@ -16,6 +16,7 @@
     "behavior_AngleOfFocus_deg": 0,
     "behavior_NumberOfScansBeforeStop": 1,
     "behavior_TrackTurnProgress": true,
+    "behavior_LockTreadsDuringWaitAnims": true,
 
     // shared speeds
     "sx_BodyTurnSpeed_degPerSec":  40.0,  // turn speed (reduced since treads probably aren't on solid surface)

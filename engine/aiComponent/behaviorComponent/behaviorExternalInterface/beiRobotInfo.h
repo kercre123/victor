@@ -113,6 +113,7 @@ public:
   EngineTimeStamp_t           GetOffTreadsStateLastChangedTime_ms()   const;
   PathComponent&              GetPathComponent()                      const;
   Radians                     GetPitchAngle()                         const;
+  Radians                     GetRollAngle()                          const;
   const Pose3d&               GetPose()                               const;
   const PoseOriginList&       GetPoseOriginList()                     const;
   const ProxSensorComponent&  GetProxSensorComponent()                const;

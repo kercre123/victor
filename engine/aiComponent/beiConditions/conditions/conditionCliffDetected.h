@@ -35,6 +35,10 @@ protected:
 private:
   
   uint8_t _numCliffDetectionsToTrigger;
+  bool _shouldDetectNoCliffs;
+  
+  int _minDuration_ms;
+  int _maxDuration_ms;
 
 };
 

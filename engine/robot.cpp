@@ -969,6 +969,9 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
 
   // Update robot pitch angle
   GetComponent<FullRobotPose>().SetPitchAngle(Radians(msg.pose.pitch_angle));
+  
+  // Update robot roll angle
+  GetComponent<FullRobotPose>().SetRollAngle(Radians(msg.pose.roll_angle));
 
   // Update IMU data
   _robotAccel = msg.accel;
@@ -1565,6 +1568,11 @@ void Robot::SetLiftAngle(const f32& angle)
 Radians Robot::GetPitchAngle() const
 {
   return GetComponent<FullRobotPose>().GetPitchAngle();
+}
+  
+Radians Robot::GetRollAngle() const
+{
+  return GetComponent<FullRobotPose>().GetRollAngle();
 }
 
 bool Robot::WasObjectTappedRecently(const ObjectID& objectID) const

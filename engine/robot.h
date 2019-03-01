@@ -389,6 +389,9 @@ public:
 
   // Get pitch angle of robot
   Radians GetPitchAngle() const;
+  
+  // Get roll angle of robot
+  Radians GetRollAngle() const;
 
   // Return current bounding height of the robot, taking into account whether lift
   // is raised

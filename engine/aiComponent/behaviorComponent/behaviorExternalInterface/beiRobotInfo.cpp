@@ -183,6 +183,12 @@ Radians BEIRobotInfo::GetPitchAngle() const
 {
   return _robot.GetPitchAngle();
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Radians BEIRobotInfo::GetRollAngle() const
+{
+  return _robot.GetRollAngle();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const Pose3d& BEIRobotInfo::GetPose() const

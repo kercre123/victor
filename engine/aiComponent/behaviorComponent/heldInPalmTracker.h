@@ -60,6 +60,7 @@ public:
   
   float GetTrustLevel() const { return _trustLevel; }
   
+  bool IsHeldInPalm() const { return _isHeldInPalm; }
 
 private:
   
