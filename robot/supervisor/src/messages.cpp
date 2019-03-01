@@ -673,14 +673,47 @@ namespace Anki {
         return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;
       }
 
-      Result SendMicDataFunction(const s16* latestMicData, uint32_t numSamples)
+      Result SendMicDataFunction(const s16* latestMicData, uint32_t numSamples) 
       {
+        static int chunkID = 0;
+        static const int numChannels=4;
+        static const int samplesPerChunk=80;
+        static int16_t sampleBuffer[numChannels * samplesPerChunk * 2];
         RobotInterface::MicData micData{};
         micData.timestamp = HAL::GetTimeStamp();
         micData.robotStatusFlags = robotState_.status;
         micData.robotRotationAngle = robotState_.pose.angle;
-        std::copy(latestMicData, latestMicData + numSamples, micData.data);
-        return RobotInterface::SendMessage(micData) ? RESULT_OK : RESULT_FAIL;
+
+        /*
+        Deinterlace the audio before sending it to Engine/Anim. Coming into this method, we
+        have chunks of 80 samples each, but the data for 4 mics are interleaved;
+        
+            m0, m1, m2, m3, m0, m1, m2, m3....
+        
+        What we need is;
+
+            m0 (80x), m1 (80x), ....
+
+        Since the recipient doesn't process data any more frequently than every 10ms, we're
+        minimizing the message overhead by doing the deinterlacing here and sending the 10ms
+        message instead of 2 5ms messages.
+        */
+
+        int chunkOffset = chunkID * samplesPerChunk;
+        for (int channel=0; channel<numChannels; channel++) {
+          for (int sample=0; sample<samplesPerChunk; sample++) {
+            auto sampleBufferIndex = channel*samplesPerChunk*2 + chunkOffset + sample;
+            auto latestMicDataIndex = sample*numChannels + channel;
+            sampleBuffer[sampleBufferIndex] = latestMicData[latestMicDataIndex];
+          }
+        }
+
+        if (chunkID) {
+          memcpy(micData.data, sampleBuffer, numChannels * samplesPerChunk * 2 * sizeof (s16));
+          return RobotInterface::SendMessage(micData) ? RESULT_OK : RESULT_FAIL;
+        }
+        chunkID = !chunkID;
+        return RESULT_OK;
       }
 
       Result SendMicDataMsgs()

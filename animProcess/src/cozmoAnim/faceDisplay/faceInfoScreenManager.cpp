@@ -1439,6 +1439,8 @@ void FaceInfoScreenManager::DrawMicInfo(const RobotInterface::MicData& micData)
     return;
   }
 
+  //Get the intensity of the first sample in each channel and print them to a debug string.
+  //(Should we instead use the max intensity of the first n samples per channel?)
   char temp[32] = "";
   sprintf(temp,
           "%d",
@@ -1447,17 +1449,17 @@ void FaceInfoScreenManager::DrawMicInfo(const RobotInterface::MicData& micData)
 
   sprintf(temp,
           "%d",
-          micData.data[1]);
+          micData.data[MicData::kSamplesPerChunkIncoming*2]);
   const std::string micData1 = temp;
 
   sprintf(temp,
           "%d",
-          micData.data[2]);
+          micData.data[MicData::kSamplesPerChunkIncoming*4]);
   const std::string micData2 = temp;
 
   sprintf(temp,
           "%d",
-          micData.data[3]);
+          micData.data[MicData::kSamplesPerChunkIncoming*6]);
   const std::string micData3 = temp;
 
   DrawTextOnScreen({"MICS", micData0, micData1, micData2, micData3});

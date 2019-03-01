@@ -114,8 +114,6 @@ private:
   int _policyFallbackFlag = 0;
 
   // Members for general purpose processing and state
-  std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> _inProcessAudioBlock;
-  bool _inProcessAudioBlockFirstHalf = true;
   std::unique_ptr<SVadConfig_t> _sVadConfig;
   std::unique_ptr<SVadObject_t> _sVadObject;
   uint32_t _vadCountdown = 0;
@@ -155,7 +153,6 @@ private:
 
   using RawAudioChunk = std::array<AudioUtil::AudioSample, kRawAudioChunkSize>;
   static constexpr uint32_t kImmediateBufferRawSize = kTriggerAudioLength_ms / kTimePerChunk_ms;
-  Util::FixedCircularBuffer<RawAudioChunk, kImmediateBufferRawSize> _immediateAudioBufferRaw;
   
   std::mutex _procAudioXferMutex;
   std::condition_variable _dataReadyCondition;

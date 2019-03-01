@@ -87,7 +87,8 @@ CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInAU);
 namespace MicData {
 
 constexpr auto kCladMicDataTypeSize = sizeof(RobotInterface::MicData::data)/sizeof(RobotInterface::MicData::data[0]);
-static_assert(kCladMicDataTypeSize == kRawAudioChunkSize, "Expecting size of MicData::data to match RawAudioChunk");
+static_assert(kCladMicDataTypeSize == kDeinterlacedAudioChunkSize, 
+              "Expecting size of MicData::data to match DeinterlacedAudioChunk");
 
 static_assert(
   std::is_same<std::remove_reference<decltype(RobotInterface::MicDirection::confidenceList[0])>::type,

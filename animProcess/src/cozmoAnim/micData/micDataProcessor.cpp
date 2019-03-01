@@ -91,7 +91,8 @@ CONSOLE_VAR_ENUM(u8,      kMicDataProcessorTrigger_Logging, ANKI_CPU_CONSOLEVARG
 #endif
 
 constexpr auto kCladMicDataTypeSize = sizeof(RobotInterface::MicData::data)/sizeof(RobotInterface::MicData::data[0]);
-static_assert(kCladMicDataTypeSize == kRawAudioChunkSize, "Expecting size of MicData::data to match RawAudioChunk");
+static_assert(kCladMicDataTypeSize == kDeinterlacedAudioChunkSize,
+              "Expecting size of MicData::data to match DeinterlacedAudioChunkSize");
 
 
 
@@ -297,13 +298,6 @@ RobotTimeStamp_t MicDataProcessor::CreateStreamJob(CloudMic::StreamType streamTy
       const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
       newJob->CollectProcessedAudio(audioBlock.data(), audioBlock.size());
     }
-    
-    // Copy the current audio chunks in the trigger overlap buffer
-    for (size_t i=0; i<_immediateAudioBufferRaw.size(); ++i)
-    {
-      const auto& audioBlock = _immediateAudioBufferRaw[i];
-      newJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
-    }
   }
 
   const bool isStreamingJob = true;
@@ -355,11 +349,6 @@ RobotTimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs(bool shouldStre
       const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
       triggerJob->CollectProcessedAudio(audioBlock.data(), audioBlock.size());
     }
-    for (size_t i=0; i<_immediateAudioBufferRaw.size(); ++i)
-    {
-      const auto& audioBlock = _immediateAudioBufferRaw[i];
-      triggerJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
-    }
     const auto notStreamingJob = false;
     _micDataSystem->AddMicDataJob(triggerJob, notStreamingJob);
   }
@@ -378,103 +367,79 @@ MicDataProcessor::~MicDataProcessor()
   MMIfDestroy();
 }
 
+
 void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
                                        const AudioUtil::AudioSample* audioChunk,
                                        uint32_t robotStatus,
                                        float robotAngle)
 {
   ANKI_CPU_PROFILE("MicDataProcessor::ProcessRawAudio");
-  
+  TimedMicData* nextSampleSpot = nullptr;
   {
-    ANKI_CPU_PROFILE("UninterleaveAudioForSE");
-    // Uninterleave the chunks when copying out of the payload, since that's what SE wants
-    for (uint32_t sampleIdx = 0; sampleIdx < kSamplesPerChunkIncoming; ++sampleIdx)
-    {
-      const uint32_t interleaveBase = (sampleIdx * kNumInputChannels);
-      for (uint32_t channelIdx = 0; channelIdx < kNumInputChannels; ++channelIdx)
-      {
-        uint32_t dataOffset = _inProcessAudioBlockFirstHalf ? 0 : kSamplesPerChunkIncoming;
-        const uint32_t uninterleaveBase = (channelIdx * kSamplesPerBlock) + dataOffset;
-        _inProcessAudioBlock[sampleIdx + uninterleaveBase] = audioChunk[channelIdx + interleaveBase];
-      }
+    // Note we don't bother to free any slots here that have been consumed (by comparing size to _procAudioXferCount)
+    // because it's unnecessary with the circular buffer.
+
+    std::unique_lock<std::mutex> lock(_procAudioXferMutex);
+    auto xferAvailableCheck = [this] () {
+      return _processThreadStop || _procAudioXferCount < _immediateAudioBuffer.capacity();
+    };
+    _xferAvailableCondition.wait(lock, xferAvailableCheck);
+
+    if (_processThreadStop) {
+      return;
     }
+
+    // Now we can be sure we have a free slot, so go ahead and grab it
+    if (_immediateAudioBuffer.size() < _immediateAudioBuffer.capacity()) {
+        _procAudioRawComplete = _immediateAudioBuffer.size();
+    } else {
+        _procAudioRawComplete = _immediateAudioBuffer.size() - 1;
+    }
+    nextSampleSpot = &_immediateAudioBuffer.push_back();
   }
+
+  TimedMicData& nextSample = *nextSampleSpot;
+  nextSample.timestamp = timestamp;
+  MicDirectionData directionResult = ProcessMicrophonesSE(
+    audioChunk,
+    nextSample.audioBlock.data(),
+    robotStatus,
+    robotAngle);
+
+  // Feed the samples to the beat detector. Optionally either use a raw single channel (the first quarter of the
+  // un-interleaved audio block) or the processed audio block
+  auto* audioSource = kBeatDetectorUseProcessedAudio ? nextSample.audioBlock.data() : audioChunk;
   
-  // If we aren't starting a block, we're finishing it - time to convert to a single channel
-  if (!_inProcessAudioBlockFirstHalf)
+  UpdateBeatDetector(audioSource, kSamplesPerBlock);
+  
+  // Now we're done filling out this slot, update the count so it can be consumed
   {
-    TimedMicData* nextSampleSpot = nullptr;
-    {
-      // Note we don't bother to free any slots here that have been consumed (by comparing size to _procAudioXferCount)
-      // because it's unnecessary with the circular buffer.
-
-      std::unique_lock<std::mutex> lock(_procAudioXferMutex);
-      auto xferAvailableCheck = [this] () {
-        return _processThreadStop || _procAudioXferCount < _immediateAudioBuffer.capacity();
-      };
-      _xferAvailableCondition.wait(lock, xferAvailableCheck);
-
-      if (_processThreadStop)
-      {
-        return;
-      }
-
-      // Now we can be sure we have a free slot, so go ahead and grab it
-      if (_immediateAudioBuffer.size() < _immediateAudioBuffer.capacity())
-      {
-         _procAudioRawComplete = _immediateAudioBuffer.size();
-      }
-      else
-      {
-         _procAudioRawComplete = _immediateAudioBuffer.size() - 1;
-      }
-      nextSampleSpot = &_immediateAudioBuffer.push_back();
-    }
-
-    TimedMicData& nextSample = *nextSampleSpot;
-    nextSample.timestamp = timestamp;
-    MicDirectionData directionResult = ProcessMicrophonesSE(
-      _inProcessAudioBlock.data(),
-      nextSample.audioBlock.data(),
-      robotStatus,
-      robotAngle);
-
-    // Feed the samples to the beat detector. Optionally either use a raw single channel (the first quarter of the
-    // un-interleaved audio block) or the processed audio block
-    auto* audioSource = kBeatDetectorUseProcessedAudio ? nextSample.audioBlock.data() : _inProcessAudioBlock.data();
-    UpdateBeatDetector(audioSource, kSamplesPerBlock);
-    
-    // Now we're done filling out this slot, update the count so it can be consumed
-    {
-      std::lock_guard<std::mutex> lock(_procAudioXferMutex);
-      ++_procAudioXferCount;
-      _procAudioRawComplete = _immediateAudioBuffer.size();
-    }
-    _dataReadyCondition.notify_all();
-
-    // Store off this most recent result in our immedate direction tracking
-    _micImmediateDirection->AddDirectionSample(directionResult);
-
-    // Set up a message to send out about the direction
-    RobotInterface::MicDirection newMessage;
-    newMessage.timestamp = (TimeStamp_t)timestamp;
-    newMessage.direction = directionResult.winningDirection;
-    newMessage.confidence = directionResult.winningConfidence;
-    newMessage.selectedDirection = directionResult.selectedDirection;
-    newMessage.selectedConfidence = directionResult.selectedConfidence;
-    newMessage.activeState = directionResult.activeState;
-    newMessage.latestPowerValue = directionResult.latestPowerValue;
-    newMessage.latestNoiseFloor = directionResult.latestNoiseFloor;
-    std::copy(
-      directionResult.confidenceList.begin(),
-      directionResult.confidenceList.end(),
-      newMessage.confidenceList);
-    
-    auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(newMessage));
-    _micDataSystem->SendMessageToEngine(std::move(engineMessage));
+    std::lock_guard<std::mutex> lock(_procAudioXferMutex);
+    ++_procAudioXferCount;
+    _procAudioRawComplete = _immediateAudioBuffer.size();
   }
+  _dataReadyCondition.notify_all();
+
+  // Store off this most recent result in our immedate direction tracking
+  _micImmediateDirection->AddDirectionSample(directionResult);
+
+  // Set up a message to send out about the direction
+  RobotInterface::MicDirection newMessage;
+  newMessage.timestamp = (TimeStamp_t)timestamp;
+  newMessage.direction = directionResult.winningDirection;
+  newMessage.confidence = directionResult.winningConfidence;
+  newMessage.selectedDirection = directionResult.selectedDirection;
+  newMessage.selectedConfidence = directionResult.selectedConfidence;
+  newMessage.activeState = directionResult.activeState;
+  newMessage.latestPowerValue = directionResult.latestPowerValue;
+  newMessage.latestNoiseFloor = directionResult.latestNoiseFloor;
+  std::copy(
+    directionResult.confidenceList.begin(),
+    directionResult.confidenceList.end(),
+    newMessage.confidenceList);
   
-  _inProcessAudioBlockFirstHalf = !_inProcessAudioBlockFirstHalf;
+  auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(newMessage));
+  _micDataSystem->SendMessageToEngine(std::move(engineMessage));
 }
 
 MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSample* audioChunk,
@@ -718,6 +683,7 @@ void MicDataProcessor::ProcessRawLoop()
       }
     }
 
+
     auto& rawAudioToProcess = _rawAudioBuffers[_rawAudioProcessingIndex];
     while (rawAudioToProcess.size() > 0)
     {
@@ -725,18 +691,8 @@ void MicDataProcessor::ProcessRawLoop()
 
       const auto& nextData = rawAudioToProcess.front();
       const auto* audioChunk = nextData.data;
-      std::copy(audioChunk, audioChunk + kCladMicDataTypeSize, _immediateAudioBufferRaw.push_back().data());
       
-      // Copy the current set of jobs we have for recording audio, so the list can be added to while processing
-      // continues
-      std::deque<std::shared_ptr<MicDataInfo>> jobs = _micDataSystem->GetMicDataJobs();
-      // Collect the raw audio if desired
-      for (auto& job : jobs)
-      {
-        job->CollectRawAudio(audioChunk, kRawAudioChunkSize);
-      }
-      
-      _speechRecognizerSystem->UpdateRaw(audioChunk, kRawAudioChunkSize);
+      _speechRecognizerSystem->Update(audioChunk, kDeinterlacedAudioChunkSize);
       
       // Factory test doesn't need to do any mic processing, it just uses raw data
       if(!FACTORY_TEST)

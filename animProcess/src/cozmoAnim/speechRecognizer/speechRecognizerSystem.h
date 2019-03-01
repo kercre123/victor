@@ -80,10 +80,10 @@ public:
   void ToggleNotchDetector(bool active);
   
   // add raw audio samples
-  void UpdateRaw(const AudioUtil::AudioSample* audioChunk, unsigned int audioDataLen);
+  void Update(const AudioUtil::AudioSample* audioChunk, unsigned int audioDataLen);
 
   // Update recognizer audio
-  // NOTE: Always call from tne same thread
+  // NOTE: Always call from the same thread
   void Update(const AudioUtil::AudioSample * audioData, unsigned int audioDataLen, bool vadActive);
   
   // Set Default models for locale
