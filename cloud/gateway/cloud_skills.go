@@ -15,6 +15,8 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials"
 )
+
+var skillExecuting = false
 	
 type Command struct {
 	Item struct {
@@ -42,10 +44,6 @@ type Command struct {
 		} `json:"HTTPHeaders"`
 		RetryAttempts int `json:"RetryAttempts"`
 	} `json:"ResponseMetadata"`
-}
-
-type TriggerLambdaMessageBody struct {
-	TotalMessageCount int `json:"totalMessageCount"`
 }
 
 type Storage struct {
@@ -83,34 +81,7 @@ func launchSkill(AwsApiGwyBaseUrl string, AwsApiKey string) {
     defer response.Body.Close()
 }
 
-func fetchCloudSkill(creds credentials.TransportCredentials) {
-	// TODO: Identify an ideal secure storage mechanism on the robot to store these keys
-	data, err := ioutil.ReadFile("/data/vic-gateway/cloud-skills-data.json")
-	if err != nil {
-        panic(err)
-    }
-	var cloudSkillConstants Storage
-	if err := json.Unmarshal(data, &cloudSkillConstants); err != nil {
-        panic(err)
-    }
-
-	perRPCCreds := Token{
-		AuthorizationToken: cloudSkillConstants.RpcCallToken,
-	}
-	conn, err := grpc.Dial("localhost:443", 
-							grpc.WithTransportCredentials(creds),
-							grpc.WithPerRPCCredentials(&perRPCCreds))
-	if err != nil {
-		log.Println("CloudSkill: did not connect: %v", err)
-	}
-	defer conn.Close()
-	
-	ctx := context.Background()
-	c := extint.NewExternalInterfaceClient(conn)
-	gwmux := grpcRuntime.NewServeMux(grpcRuntime.WithMarshalerOption(grpcRuntime.MIMEWildcard, &grpcRuntime.JSONPb{EmitDefaults: true, OrigName: true, EnumsAsInts: true}))
-	extint.RegisterExternalInterfaceHandlerClient(ctx, gwmux, c)
-	time.Sleep(5 * time.Second)
-
+func startCloudSkill(c extint.ExternalInterfaceClient, ctx context.Context, cloudSkillConstants Storage) {
 	behaviorControlClient, err := c.BehaviorControl(ctx)
 	if err != nil {
         panic(err)
@@ -135,13 +106,13 @@ func fetchCloudSkill(creds credentials.TransportCredentials) {
 		startTime = time.Now()
 
 		// All commands run, release SDK behavior control
-		if numRetries >= 10 {
-			time.Sleep(5 * time.Second)
+		if numRetries >= 5 {
+			// time.Sleep(5 * time.Second)
 			behaviorControlClient.Send(&extint.BehaviorControlRequest{RequestType: &extint.BehaviorControlRequest_ControlRelease{ControlRelease: &extint.ControlRelease{}}})
+			skillExecuting = false
 			return
 		}
 
-		
 		req, err := http.NewRequest("GET", url, nil)
 		
 		// Add API key to header
@@ -158,7 +129,6 @@ func fetchCloudSkill(creds credentials.TransportCredentials) {
 	    defer response.Body.Close()
 
 	    body, err := ioutil.ReadAll(response.Body)
-	    log.Println(len(body))
 
 	    // Check if the fetch failed or if the command has not been queued in yet
 	    if len(body) == 0 {
@@ -188,6 +158,21 @@ func fetchCloudSkill(creds credentials.TransportCredentials) {
 	    	moveLiftReq.XXX_Unmarshal(decodedMessage)
 	    	c.MoveLift(ctx, &moveLiftReq)
 	 	}
+	 	case "set_head": {
+	 		var moveHeadReq extint.MoveHeadRequest
+	    	moveHeadReq.XXX_Unmarshal(decodedMessage)
+	    	c.MoveHead(ctx, &moveHeadReq)
+	 	}
+	 	case "set_wheel_motors": {
+	 		var driveWheelsReq extint.DriveWheelsRequest
+	    	driveWheelsReq.XXX_Unmarshal(decodedMessage)
+	    	c.DriveWheels(ctx, &driveWheelsReq)
+	 	}
+	 	case "play_animation": {
+	 		var playAnimationReq extint.PlayAnimationRequest
+	    	playAnimationReq.XXX_Unmarshal(decodedMessage)
+	    	c.PlayAnimation(ctx, &playAnimationReq)
+	 	}
 
 	 	}
 
@@ -196,5 +181,54 @@ func fetchCloudSkill(creds credentials.TransportCredentials) {
 
 	    commandId += 1
 
+	}
+}
+
+
+func fetchCloudSkill(creds credentials.TransportCredentials) {
+	// TODO: Identify an ideal secure storage mechanism on the robot to store these keys
+	data, err := ioutil.ReadFile("/data/vic-gateway/cloud-skills-data.json")
+	if err != nil {
+        panic(err)
+    }
+	var cloudSkillConstants Storage
+	if err := json.Unmarshal(data, &cloudSkillConstants); err != nil {
+        panic(err)
+    }
+
+	perRPCCreds := Token{
+		AuthorizationToken: cloudSkillConstants.RpcCallToken,
+	}
+	conn, err := grpc.Dial("localhost:443", 
+							grpc.WithTransportCredentials(creds),
+							grpc.WithPerRPCCredentials(&perRPCCreds))
+	if err != nil {
+		log.Println("CloudSkill: did not connect: %v", err)
+	}
+	defer conn.Close()
+	
+	ctx := context.Background()
+	c := extint.NewExternalInterfaceClient(conn)
+	gwmux := grpcRuntime.NewServeMux(grpcRuntime.WithMarshalerOption(grpcRuntime.MIMEWildcard, &grpcRuntime.JSONPb{EmitDefaults: true, OrigName: true, EnumsAsInts: true}))
+	extint.RegisterExternalInterfaceHandlerClient(ctx, gwmux, c)
+	time.Sleep(5 * time.Second)
+
+	f, eventsChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_Event{}, 10)
+	defer f()
+
+	for {
+		response, ok := <-eventsChannel
+		if !ok {
+			log.Println("EventStream: event channel closed")
+		}
+		event := response.GetEvent()
+		robotState := event.GetRobotState()
+    	if robotState != nil {
+    		touchData := robotState.GetTouchData()
+    		if touchData != nil && touchData.GetIsBeingTouched() && !skillExecuting {
+    			skillExecuting = true
+    			go startCloudSkill(c, ctx, cloudSkillConstants)
+    		}
+    	}
 	}
 }
