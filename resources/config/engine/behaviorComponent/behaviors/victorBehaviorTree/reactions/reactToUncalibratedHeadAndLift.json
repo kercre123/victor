@@ -5,6 +5,6 @@
   "wantsToBeActivatedCondition": {
     "conditionType": "OffTreadsState",
     "targetState": "OnTreads",
-    "minTimeSinceChange_ms": 15000
+    "minTimeSinceChange_ms": 5000
   }
 }

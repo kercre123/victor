@@ -36,6 +36,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 
 
 #define LOG_CHANNEL    "Movement"
@@ -115,11 +116,32 @@ void MovementComponent::OnRobotDelocalized()
   
 void MovementComponent::NotifyOfRobotState(const Vector::RobotState& robotState)
 {
-  _isMoving     =  static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::IS_MOVING);
-  _isHeadMoving = !static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::HEAD_IN_POS);
-  _isLiftMoving = !static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::LIFT_IN_POS);
-  _areWheelsMoving = static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::ARE_WHEELS_MOVING);
+  #define IS_STATUS_FLAG_SET(x) ((robotState.status & (uint32_t)RobotStatusFlag::x) != 0)
+
+  _isMoving            =  IS_STATUS_FLAG_SET(IS_MOVING);
+  _isHeadMoving        = !IS_STATUS_FLAG_SET(HEAD_IN_POS);
+  _isLiftMoving        = !IS_STATUS_FLAG_SET(LIFT_IN_POS);
+  _areWheelsMoving     =  IS_STATUS_FLAG_SET(ARE_WHEELS_MOVING);
+  _areEncodersDisabled =  IS_STATUS_FLAG_SET(ENCODERS_DISABLED);
+
+  const bool isHeadEncoderInvalid = IS_STATUS_FLAG_SET(ENCODER_HEAD_INVALID);
+  const bool isLiftEncoderInvalid = IS_STATUS_FLAG_SET(ENCODER_LIFT_INVALID);
   
+  // Print DAS message when head or lift go out of calibration according to syscon
+  if (isHeadEncoderInvalid && !_isHeadEncoderInvalid) {
+    DASMSG(head_motor_uncalibrated, "head_motor_uncalibrated", "Head is uncalibrated. (Inverse msg: head_motor_calibrated)");
+    DASMSG_SEND();
+  }
+  if (isLiftEncoderInvalid && !_isLiftEncoderInvalid) {
+    DASMSG(lift_motor_uncalibrated, "lift_motor_uncalibrated", "Lift is uncalibrated. (Inverse msg: lift_motor_calibrated)");
+    DASMSG_SEND();
+  }
+
+  _isHeadEncoderInvalid =  isHeadEncoderInvalid;
+  _isLiftEncoderInvalid =  isLiftEncoderInvalid;
+
+
+
   // NOTE(GB): In the future, the meaning of `_isMoving` may change, and may not be coupled to
   // _isHeadMoving, _isLiftMoving, or _areWheelsMoving, so check if we can set each timestamp individually.
   if (_isMoving) {

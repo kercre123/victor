@@ -17,6 +17,7 @@
 #include "engine/robot.h"
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/components/carryingComponent.h"
+#include "engine/components/movementComponent.h"
 
 #include "osState/osState.h"
 
@@ -319,13 +320,13 @@ bool BEIRobotInfo::IsLiftMotorOutOfBounds() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsHeadEncoderInvalid() const
 {
-  return _robot.IsHeadEncoderInvalid();
+  return _robot.GetMoveComponent().IsHeadEncoderInvalid();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsLiftEncoderInvalid() const
 {
-  return _robot.IsLiftEncoderInvalid();
+  return _robot.GetMoveComponent().IsLiftEncoderInvalid();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
