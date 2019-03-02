@@ -1,0 +1,12 @@
+cxx_project(
+  name = 'arf',
+  srcs = cxx_src_glob(['.']),
+  headers = cxx_header_glob(['.'])
+)
+
+cxx_project(
+  name = 'subscriber',
+  srcs = cxx_src_glob(['test']),
+  headers = cxx_header_glob(['test'])
+)
+

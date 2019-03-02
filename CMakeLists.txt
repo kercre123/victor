@@ -151,6 +151,7 @@ include(wwise) # for Wwise targets
 include(protobuf) # for protobuf target
 include(breakpad) # for breakpad targets
 include(avs-device-sdk)
+include(nng)
 
 include(speexdsp)
 include(pffft)
