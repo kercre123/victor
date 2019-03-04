@@ -16,7 +16,11 @@
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "coretech/vision/engine/image_impl.h"
 #include "util/cladHelpers/cladEnumToStringMap.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
+#include "util/logging/logging.h"
+
+#define LOG_CHANNEL "CompositeImage"
 
 namespace Anki {
 namespace Vision {
@@ -117,7 +121,7 @@ CompositeImage::CompositeImage(ConstHSImageHandle faceHSImageHandle,
   Vision::SpriteHandle handle;
   const bool success = spriteSeq->GetFrame(0, handle);
   if(!success){
-    PRINT_NAMED_ERROR("CompositeImage.Constructor.FailedToGetFrameZero","");
+    LOG_ERROR("CompositeImage.Constructor.FailedToGetFrameZero","");
     return;
   }
   auto img = handle->GetSpriteContentsGrayscale();
@@ -191,8 +195,8 @@ std::vector<CompositeImageChunk> CompositeImage::GetImageChunks(bool emptySprite
            _spriteCache->GetSpritePathMap()->GetKeyForValueConst(fullSpritePath, spriteName)){
           baseChunk.spriteName = spriteName;
         }else if(!emptySpriteBoxesAreValid){
-          PRINT_NAMED_ERROR("CompositeImage.GetImageChunks.SerializingInvalidCompositeImage",
-                            "Currently only composite images composed solely of sprite names can be serialized");
+          LOG_ERROR("CompositeImage.GetImageChunks.SerializingInvalidCompositeImage",
+                    "Currently only composite images composed solely of sprite names can be serialized");
         }
       }
       chunks.push_back(baseChunk);
@@ -252,9 +256,9 @@ void CompositeImage::ClearLayerByName(LayerName name)
 {
   const auto numRemoved = _layerMap.erase(name);
   if(numRemoved == 0){
-    PRINT_NAMED_WARNING("CompositeImage.ClearLayerByName.LayerNotFound",
-                        "Layer %s not found in composite image",
-                        LayerNameToString(name));
+    LOG_WARNING("CompositeImage.ClearLayerByName.LayerNotFound",
+                "Layer %s not found in composite image",
+                LayerNameToString(name));
   }
 }
 
@@ -272,25 +276,15 @@ CompositeImageLayer* CompositeImage::GetLayerByName(LayerName name)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ImageRGBA CompositeImage::RenderFrame(const u32 frameIdx, std::set<Vision::LayerName> layersToIgnore) const
-{
-  ANKI_VERIFY((_height != 0) && (_width != 0),
-              "CompositeImage.RenderFrame.InvalidSize",
-              "Attempting to render an image with height %d and width %d",
-              _height, _width);
-  ImageRGBA outImage(_height, _width);
-  outImage.FillWith(Vision::PixelRGBA());
-  OverlayImageWithFrame(outImage, frameIdx, layersToIgnore);
-  return outImage;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
                                            const u32 frameIdx,
                                            std::set<Vision::LayerName> layersToIgnore) const
 {
-  auto callback = [this, &baseImage, &frameIdx, &layersToIgnore]
+  ANKI_CPU_PROFILE("CompositeImage::OverlayImageWithFrame");
+
+  bool firstImage = true;
+
+  auto callback = [this, &baseImage, &frameIdx, &layersToIgnore, &firstImage]
                      (Vision::LayerName layerName, SpriteBoxName spriteBoxName, 
                       const SpriteBox& spriteBox, const SpriteEntry& spriteEntry){
     if(layersToIgnore.find(layerName) != layersToIgnore.end()){
@@ -298,7 +292,7 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
     }
     // If implementation quad was found, draw it into the image at the point
     // specified by the layout quad def
-    Vision::SpriteHandle  handle;
+    Vision::SpriteHandle handle;
     if(spriteEntry.ContentIsValid() &&
        spriteEntry.GetFrame(frameIdx, handle)){
       Point2i topCornerInt = {};
@@ -306,20 +300,23 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
       int height = 0;
       spriteBox.GetPositionForFrame(frameIdx, topCornerInt, width, height);
       Point2f topCorner = {static_cast<float>(topCornerInt.x()), static_cast<float>(topCornerInt.y())};
-      const static bool kDrawBlankPixels = false;
+      // Always use the faster 'draw blank pixels' rendering on the first
+      // image, since it's always drawn over the initial blank image
+      const bool drawBlankPixels = firstImage;
+      firstImage = false;
       switch(spriteBox.renderConfig.renderMethod){
         case SpriteRenderMethod::RGBA:
         {
           // Check to see if the RGBA image is cached
           if(handle->IsContentCached().rgba){
             const ImageRGBA& subImage = handle->GetCachedSpriteContentsRGBA();
-            baseImage.DrawSubImage(subImage, topCorner, kDrawBlankPixels);
+            baseImage.DrawSubImage(subImage, topCorner, drawBlankPixels);
             if(ANKI_DEV_CHEATS){
               VerifySubImageProperties(subImage, spriteBox, frameIdx);
             }
           }else{
             const ImageRGBA& subImage = handle->GetSpriteContentsRGBA();
-            baseImage.DrawSubImage(subImage, topCorner, kDrawBlankPixels);
+            baseImage.DrawSubImage(subImage, topCorner, drawBlankPixels);
             if(ANKI_DEV_CHEATS){
               VerifySubImageProperties(subImage, spriteBox, frameIdx);
             }
@@ -328,7 +325,6 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
         }
         case SpriteRenderMethod::CustomHue:
         {
-          
           Vision::HueSatWrapper::ImageSize imageSize(static_cast<uint32_t>(height),
                                                      static_cast<uint32_t>(width));
           std::shared_ptr<Vision::HueSatWrapper> hsImageHandle;
@@ -338,8 +334,8 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
           const bool canRenderInEyeHue = _faceHSImageHandle != nullptr;
           // Print error if should but cant render in eye hue
           if(shouldRenderInEyeHue && !canRenderInEyeHue){
-            PRINT_NAMED_ERROR("CompositeImage.OverlayImageWithFrame.ShouldRenderInEyeHueButCant",
-                              "HS Image handle missing - image will be renderd with 0,0 hue saturation");
+            LOG_ERROR("CompositeImage.OverlayImageWithFrame.ShouldRenderInEyeHueButCant",
+                      "HS Image handle missing - image will be renderd with 0,0 hue saturation");
           }
           
           if(shouldRenderInEyeHue && canRenderInEyeHue){
@@ -360,13 +356,13 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
           // Render the sprite - use the cached RGBA image if possible
           if(handle->IsContentCached(hsImageHandle).rgba){
             const ImageRGBA& subImage = handle->GetCachedSpriteContentsRGBA(hsImageHandle);
-            baseImage.DrawSubImage(subImage, topCorner, kDrawBlankPixels);
+            baseImage.DrawSubImage(subImage, topCorner, drawBlankPixels);
             if(ANKI_DEV_CHEATS){
               VerifySubImageProperties(subImage, spriteBox, frameIdx);
             }
           }else{
             const ImageRGBA& subImage = handle->GetSpriteContentsRGBA(hsImageHandle);
-            baseImage.DrawSubImage(subImage, topCorner, kDrawBlankPixels);
+            baseImage.DrawSubImage(subImage, topCorner, drawBlankPixels);
             if(ANKI_DEV_CHEATS){
               VerifySubImageProperties(subImage, spriteBox, frameIdx);
             }
@@ -375,18 +371,18 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
         }
         default:
         {
-          PRINT_NAMED_ERROR("CompositeImage.OverlayImageWithFrame.InvalidRenderMethod",
-                            "Layer %s Sprite Box %s does not have a valid render method",
-                            LayerNameToString(layerName),
-                            SpriteBoxNameToString(spriteBoxName));
+          LOG_ERROR("CompositeImage.OverlayImageWithFrame.InvalidRenderMethod",
+                    "Layer %s Sprite Box %s does not have a valid render method",
+                    LayerNameToString(layerName),
+                    SpriteBoxNameToString(spriteBoxName));
           break;
         }
       } // end switch
 
     }else{
-      PRINT_NAMED_DEBUG("CompositeImage.OverlayImageWithFrame.NoImageForSpriteBox", 
-                        "Sprite Box %s will not be rendered - no valid image found",
-                        SpriteBoxNameToString(spriteBoxName));
+      LOG_DEBUG("CompositeImage.OverlayImageWithFrame.NoImageForSpriteBox",
+                "Sprite Box %s will not be rendered - no valid image found",
+                SpriteBoxNameToString(spriteBoxName));
     }
   };
   ProcessAllSpriteBoxes(callback);
@@ -394,7 +390,8 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint CompositeImage::GetFullLoopLength(){
+uint CompositeImage::GetFullLoopLength()
+{
   uint maxSequenceLength = 0;
   auto callback = [&maxSequenceLength](Vision::LayerName layerName, SpriteBoxName spriteBoxName, 
                                        const SpriteBox& spriteBox, const SpriteEntry& spriteEntry){
@@ -474,18 +471,18 @@ void CompositeImage::AddEmptyLayer(SpriteSequenceContainer* seqContainer, Vision
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CompositeImage::ProcessAllSpriteBoxes(UseSpriteBoxDataFunc processCallback) const
 {
-    for(const auto& layerPair : _layerMap){
-      auto& layoutMap = layerPair.second.GetLayoutMap();
-      auto& imageMap  = layerPair.second.GetImageMap();
-      for(const auto& imagePair : imageMap){
-        auto layoutIter = layoutMap.find(imagePair.first);
-        if(layoutIter == layoutMap.end()){
-          return;
-        }
+  for(const auto& layerPair : _layerMap){
+    auto& layoutMap = layerPair.second.GetLayoutMap();
+    auto& imageMap  = layerPair.second.GetImageMap();
+    for(const auto& imagePair : imageMap){
+      auto layoutIter = layoutMap.find(imagePair.first);
+      if(layoutIter == layoutMap.end()){
+        return;
+      }
 
-        auto& spriteBox = layoutIter->second;
-        processCallback(layerPair.first, imagePair.first, spriteBox, imagePair.second);
-      } // end for(imageMap)
+      auto& spriteBox = layoutIter->second;
+      processCallback(layerPair.first, imagePair.first, spriteBox, imagePair.second);
+    } // end for(imageMap)
   } // end for(_layerMap)
 }
 
@@ -525,8 +522,8 @@ HSImageHandle CompositeImage::HowToRenderRGBA(const SpriteRenderConfig& config) 
       const bool canRenderInEyeHue = _faceHSImageHandle != nullptr;
       // Print error if should but cant render in eye hue
       if(shouldRenderInEyeHue && !canRenderInEyeHue){
-        PRINT_NAMED_ERROR("CompositeImage.OverlayImageWithFrame.ShouldRenderInEyeHueButCant",
-                          "HS Image handle missing - image will be renderd with 0,0 hue saturation");
+        LOG_ERROR("CompositeImage.OverlayImageWithFrame.ShouldRenderInEyeHueButCant",
+                  "HS Image handle missing - image will be renderd with 0,0 hue saturation");
       }
       
       if(shouldRenderInEyeHue && canRenderInEyeHue){
@@ -543,8 +540,8 @@ HSImageHandle CompositeImage::HowToRenderRGBA(const SpriteRenderConfig& config) 
     }
     default:
     {
-      PRINT_NAMED_ERROR("CompositeImage.HowToRenderRGBA.InvalidRenderMethod",
-                        "Do not have a valid render method");
+      LOG_ERROR("CompositeImage.HowToRenderRGBA.InvalidRenderMethod",
+                "Do not have a valid render method");
       break;
     }
   }

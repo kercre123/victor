@@ -25,7 +25,7 @@ foreach(LIB ${MPG123_LIBS})
     "${LIBMPG123_LIB_PATH}/lib${LIB}.${LIBMPG123_EXT}"
     INTERFACE_INCLUDE_DIRECTORIES
     "${LIBMPG123_INCLUDE_PATH}")
-  anki_build_target_license(${LIB} "LGPL2.1,${CMAKE_SOURCE_DIR}/licenses/mpg123.license")
+  anki_build_target_license(${LIB} "LGPL-2.1,${CMAKE_SOURCE_DIR}/licenses/mpg123.license")
 endforeach()
 
 if (TARGET copy_mpg123_libs)

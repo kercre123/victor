@@ -17,6 +17,7 @@ enum uint_8 ConnectionStatus
   UPDATING_OS,
   UPDATING_OS_ERROR,
   WAITING_FOR_APP,
+  SHOW_URL_FACE,
   END_PAIRING,
 
   COUNT

@@ -183,7 +183,11 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
   // isPairing is a proxy for "switchboard is doing something and needs to display something on face"
   const bool isPairing = msg.status != ConnectionStatus::NONE &&
                          msg.status != ConnectionStatus::COUNT &&
+                         msg.status != ConnectionStatus::SHOW_URL_FACE &&
                          msg.status != ConnectionStatus::END_PAIRING;
+
+  const bool shouldControlFace = isPairing || 
+    (msg.status == ConnectionStatus::SHOW_URL_FACE);
 
   // Enable pairing screen if status is anything besides NONE, COUNT, and END_PAIRING
   // Should do nothing if called multiple times with same argument such as when transitioning from
@@ -192,7 +196,7 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
 
   // Disable face keepalive, but don't re-enable it when ending pairing. The engine will send a message
   // when it's ready to re-enable it, since it needs time to send its first animation upon resuming
-  if (isPairing) {
+  if (shouldControlFace) {
     animStreamer->Abort();
     animStreamer->EnableKeepFaceAlive(false, 0);
 
@@ -214,6 +218,7 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
 
     }
     break;
+    case ConnectionStatus::SHOW_URL_FACE:
     case ConnectionStatus::START_PAIRING:
     {
       DrawStartPairingScreen(animStreamer);

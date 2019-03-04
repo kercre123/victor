@@ -332,7 +332,7 @@
             <v6WtE>0</v6WtE>
             <VariousControls>
               <MiscControls>--gnu</MiscControls>
-              <Define>STM32F030X8,BOOTLOADER</Define>
+              <Define>STM32F030X8,BOOTLOADER,WHISKEY</Define>
               <Undefine></Undefine>
               <IncludePath>boot;common;schema;crypto;build</IncludePath>
             </VariousControls>
@@ -349,7 +349,7 @@
             <useXO>0</useXO>
             <VariousControls>
               <MiscControls></MiscControls>
-              <Define></Define>
+              <Define>WHISKEY</Define>
               <Undefine></Undefine>
               <IncludePath></IncludePath>
             </VariousControls>

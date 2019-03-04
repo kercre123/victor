@@ -372,7 +372,7 @@ namespace Vector {
                                                                    TrackLayerComponent* trackComp,
                                                                    const u8 tracksCurrentlyLocked,
                                                                    const TimeStamp_t timeSinceAnimStart_ms,
-                                                                   bool storeFace,
+                                                                   const bool storeFace,
                                                                    AnimationMessageWrapper& stateToSend);
 
 
@@ -426,10 +426,10 @@ namespace Vector {
     // eyes are needed this tick
     static bool ShouldRenderProceduralFace(const Animations::Track<SpriteSequenceKeyFrame>& spriteTrack,
                                            const u8 tracksCurrentlyLocked,
-                                           TimeStamp_t relativeStreamTime_ms);
+                                           const TimeStamp_t relativeStreamTime_ms);
     static bool ShouldRenderSpriteTrack(const Animations::Track<SpriteSequenceKeyFrame>& spriteTrack,
                                         const u8 tracksCurrentlyLocked,
-                                        TimeStamp_t relativeStreamTime_ms,
+                                        const TimeStamp_t relativeStreamTime_ms,
                                         const bool proceduralFaceRendered);
 
     static void GetStreamableFace(const AnimContext* context, const ProceduralFace& procFace, Vision::ImageRGB565& outImage);

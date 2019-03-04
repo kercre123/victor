@@ -54,13 +54,21 @@ void Power::signalRecovery() {
 }
 
 static inline void enableHead(void) {
-  MAIN_EN::set();
+  if (IS_WHISKEY) {
+    MAIN_EN_WIS::set();
+  } else {
+    MAIN_EN_VIC::set();
+  }
   Mics::start();
   Lights::enable();
 }
 
 static inline void disableHead(void) {
-  MAIN_EN::reset();
+  if (IS_WHISKEY) {
+    MAIN_EN_WIS::reset();
+  } else {
+    MAIN_EN_VIC::reset();
+  }
   Mics::stop();
   Lights::disable();
   Comms::reset();

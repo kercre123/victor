@@ -1,6 +1,6 @@
 def generate(data, color, group):
 	print "// {0:08b}".format(data)
-	print "static void led_%ix%i(void) {" % (color, group)
+	print "static void vic_led_%ix%i(void) {" % (color, group)
 
 	last_bit = None # Forces first bit to be set
 	for i in range(8):

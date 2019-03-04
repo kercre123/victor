@@ -80,6 +80,7 @@ ${TOPLEVEL}/tools/animationScripts/copy_anims_for_test.py
 export ANKI_TEST_BEHAVIOR_FILE="behavior_transitions.txt"
 export ANKI_TEST_BEHAVIOR_BRANCHES="behavior_branches.txt"
 export ANKI_TEST_BEHAVIOR_FEATURES="behavior_active_features.txt"
+export ANKI_TEXT_DELEGATION_TREE_HTML="delegation_tree.html"
 
 
 # If the $VOICE_INTENT_DIR environment variable is set, then assume it is a version of the data

@@ -552,7 +552,7 @@ void Process_showUrlFace(const RobotInterface::ShowUrlFace& msg)
   if(msg.show) {
     using namespace SwitchboardInterface;
     Anki::Vector::SwitchboardInterface::SetConnectionStatus connMsg;
-    connMsg.status = ConnectionStatus::START_PAIRING;
+    connMsg.status = ConnectionStatus::SHOW_URL_FACE;
 
     UpdateConnectionFlow(std::move(connMsg), _animStreamer, _context);
   }

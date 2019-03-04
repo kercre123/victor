@@ -81,7 +81,8 @@
     },
     "files": {
         "victor-blobstore-qalogs-key": {
-            "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-blobstore-qalogs-client-key/victor-blobstore-qalogs-key"
+            "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-blobstore-qalogs-client-key/victor-blobstore-qalogs-key",
+            "sha256": "579ee035e4aea9be4678fbc440375eba47608ce2e127deab0dd49efb148db39d"
         }
     },
     "svn": {
@@ -107,7 +108,7 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "4906"
+                "version": "4911"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",

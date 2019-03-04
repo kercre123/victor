@@ -13,6 +13,7 @@
 
 static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL2
+  | ADC_CHSELR_CHSEL3
   | ADC_CHSELR_CHSEL4
   | ADC_CHSELR_CHSEL6
   | ADC_CHSELR_CHSEL16
@@ -259,14 +260,19 @@ static inline bool alarmTimer(uint16_t temp, const int target) {
 }
 
 static void handleTemperature() {
+  int32_t temp_now;
   // Temperature logic
-  int32_t temp_now = *TEMP30_CAL_ADDR - ((EXACT_ADC(ADC_TEMP) * TEMP_VOLT_ADJ) >> 16);
-  temp_now = ((temp_now * TEMP_SCALE_ADJ) >> 16) + 30;
+  if (IS_WHISKEY) {
+    temp_now = (adc_values[ADC_THERMISTOR] * 4) / 112 - 53;
+  } else {
+    temp_now = *TEMP30_CAL_ADDR - ((EXACT_ADC(ADC_TEMP) * TEMP_VOLT_ADJ) >> 16);
+    temp_now = ((temp_now * TEMP_SCALE_ADJ) >> 16) + 30;
 
-  // We are running way too hot, have a bowl of boot loops.
-  if (temp_now >= 70) {
-    Power::setMode(POWER_STOP);
-    return ;
+    // We are running way too hot, have a bowl of boot loops.
+    if (temp_now >= 70) {
+      Power::setMode(POWER_STOP);
+      return ;
+    }
   }
 
   static int samples = 0;

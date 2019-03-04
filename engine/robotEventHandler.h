@@ -65,9 +65,6 @@ private:
   std::map<ExternalInterface::MessageGameToEngineTag, std::pair<GameToEngineFcn,s32> >  _gameToEngineHandlerLUT;
 
   static u32 _gameActionTagCounter;
-
-  // Helper function allowing for proto messages to be wrapped similar to the clad QueueSingleAction
-  void QueueActionWithIdTag(IActionRunner* action, int numRetries, int idTag) const;
 };
 
   

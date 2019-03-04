@@ -583,6 +583,12 @@ void SDKComponent::OnActionCompleted(ExternalInterface::RobotCompletedAction msg
     {
       auto* response = new external_interface::PlayAnimationResponse;
       response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+
+      ActionCompletedUnion completionInfo = (ActionCompletedUnion)msg.completionInfo;
+      AnimationCompleted animationCompleted = completionInfo.Get_animationCompleted();
+      external_interface::Animation* animation = new external_interface::Animation(animationCompleted.animationName);
+      response->set_allocated_animation(animation);
+
       gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
     }
     break;

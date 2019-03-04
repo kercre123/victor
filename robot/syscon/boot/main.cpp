@@ -42,6 +42,11 @@ static bool boot_test(void) {
     return false;
   }
 
+  // This is not a whiskey compatible APPLICATIOn
+  if (APP->whiskeyCompatible != WHISKEY_COMPATIBLE) {
+    return false;
+  }
+
   // Evil flag not set
   if (APP->fingerPrint != COZMO_APPLICATION_FINGERPRINT) {
     return false;

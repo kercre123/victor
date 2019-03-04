@@ -182,6 +182,8 @@ def is_up(url_string):
 
 
 def sha256sum(filename):
+    if not os.path.isfile(filename):
+       return None
     import hashlib
     sha256 = hashlib.sha256()
     with open(filename, 'rb') as f:
@@ -639,38 +641,40 @@ def git_package(git_dict):
 
 def files_package(files):
     pulled_files = []
-
-    tool = "curl"
-    assert is_tool(tool)
-    assert isinstance(files, dict)
     for file in files:
-        url = files[file].get("url", "undefined")
+        url = files[file].get("url", None)
+        sha256 = files[file].get("sha256", None)
         cached_file = os.path.join(get_anki_file_cache_directory(url), file)
         outfile = os.path.join(DEPENDENCY_LOCATION, file)
-        if os.path.isfile(cached_file):
+        if os.path.isfile(cached_file) and sha256 == sha256sum(cached_file):
            ankibuild.util.File.cp(cached_file, outfile)
            continue
 
-        if not is_up(url):
-           raise RuntimeError("Failed to reach {0}. Check your network connection.  This URL may require VPN or local LAN access".format(url))
+        if os.path.isfile(outfile) and sha256 == sha256sum(outfile):
+           ankibuild.util.File.cp(outfile, cached_file)
+           continue
 
+        import urllib2
+        handle = urllib2.urlopen(url, None, 10)
+        code = handle.getcode()
+        if code < 200 or code >= 300:
+           raise RuntimeError("Failed to download {0}. Check your network connection.  This URL may require VPN or local LAN access".format(url))
 
-        pull_file = [tool, '-s', url]
-        pipe = subprocess.Popen(pull_file, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = pipe.communicate()
-        status = pipe.poll()
-        if status != 0:
-            print "Curl exited with non-zero status: {0}".format(stderr)
-            return pulled_files
-        stdout = stdout.strip()
-        if (not os.path.exists(outfile)) or open(outfile).read() != stdout:
-            with open(outfile, 'w') as output:
-                output.write(stdout)
-                print "Updated {0} from {1}".format(file, url)
-                pulled_files.append(outfile)
-            ankibuild.util.File.cp(outfile, cached_file)
-        else:
-            print "File {0} does not need to be updated".format(file)
+        tmpfile = outfile + ".tmp"
+        download_file = open(tmpfile, 'w')
+        block_size = 1024 * 1024
+        for chunk in iter(lambda: handle.read(block_size), b''):
+           download_file.write(chunk)
+
+        download_file.close()
+
+        download_hash = sha256sum(tmpfile)
+        if sha256 != download_hash:
+           ankibuild.util.File.rm_rf(tmpfile)
+           raise RuntimeError("SHA256 Checksum mismatch.\nExpected: {0}\nActual:   {1}\nURL:      {2}".format(sha256, download_hash, url))
+
+        os.rename(tmpfile, outfile)
+        ankibuild.util.File.cp(outfile, cached_file)
 
     return pulled_files
 

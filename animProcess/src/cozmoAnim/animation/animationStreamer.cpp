@@ -1143,6 +1143,7 @@ namespace Vector {
 
   void AnimationStreamer::GetStreamableFace(const AnimContext* context, const ProceduralFace& procFace, Vision::ImageRGB565& outImage)
   {
+    ANKI_CPU_PROFILE("AnimationStreamer::GetStreamableFace");
     if(kProcFace_Display == (int)FaceDisplayType::Test)
     {
       // Display three color strips increasing in brightness from left to right
@@ -1599,6 +1600,7 @@ namespace Vector {
 
   Result AnimationStreamer::ExtractMessagesFromStreamingAnim(AnimationMessageWrapper& stateToSend)
   {
+    ANKI_CPU_PROFILE("AnimationStreamer::ExtractMessagesFromStreamingAnim");
     Result lastResult = RESULT_OK;
 
     if(!_streamingAnimation->IsInitialized()) {
@@ -1660,9 +1662,9 @@ namespace Vector {
     }
 
     // Apply any track layers to the animation
-    const bool storeFace = true;
+    static const bool kStoreFace = true;
     ExtractMessagesRelatedToProceduralTrackComponent(_context, _streamingAnimation, _proceduralTrackComponent.get(),
-                                                     _lockedTracks, _relativeStreamTime_ms, storeFace, stateToSend);
+                                                     _lockedTracks, _relativeStreamTime_ms, kStoreFace, stateToSend);
 
 
     auto & spriteSeqTrack    = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>();
@@ -1680,9 +1682,10 @@ namespace Vector {
                                                                              TrackLayerComponent* trackComp,
                                                                              const u8 tracksCurrentlyLocked,
                                                                              const TimeStamp_t timeSinceAnimStart_ms,
-                                                                             bool storeFace,
+                                                                             const bool storeFace,
                                                                              AnimationMessageWrapper& stateToSend)
   {
+    ANKI_CPU_PROFILE("AnimationStreamer::ExtractMessagesRelatedToProceduralTrackComponent");
     TrackLayerComponent::LayeredKeyFrames layeredKeyFrames;
     trackComp->ApplyLayersToAnim(anim,
                                  timeSinceAnimStart_ms,
@@ -1754,7 +1757,6 @@ namespace Vector {
 
   Result AnimationStreamer::ExtractAnimationMessages(AnimationMessageWrapper& stateToSend)
   {
-    ANKI_CPU_PROFILE("AnimationStreamer::ExtractAnimationMessages");
     Result lastResult = RESULT_OK;
 
     bool streamUpdated = false;
@@ -1926,13 +1928,13 @@ namespace Vector {
       // TODO: Move this render process into the interpolator - should not be part of
       // Animation streaming, but too large a change to make right now
 
-      const bool storeFace = true;
+      static const bool kStoreFace = true;
       ExtractMessagesRelatedToProceduralTrackComponent(_context,
                                                        _streamingAnimation,
                                                        _proceduralTrackComponent.get(),
                                                        _lockedTracks,
                                                        _relativeStreamTime_ms,
-                                                       storeFace,
+                                                       kStoreFace,
                                                        messageWrapper);
 
       AnimationInterpolator::GetInterpolationMessages(_streamingAnimation,
@@ -2131,6 +2133,7 @@ namespace Vector {
   void AnimationStreamer::InsertStreamableFaceIntoCompImg(Vision::ImageRGB565& streamableFace,
                                                           Vision::CompositeImage& image)
   {
+    ANKI_CPU_PROFILE("AnimationStreamer::InsertStreamableFaceIntoCompImg");
     auto* rgbaImg = new Vision::ImageRGBA(streamableFace.GetNumRows(), streamableFace.GetNumCols());
     rgbaImg->SetFromRGB565(streamableFace);
     auto handle = std::make_shared<Vision::SpriteWrapper>(rgbaImg);
@@ -2161,7 +2164,7 @@ namespace Vector {
 
   bool AnimationStreamer::ShouldRenderProceduralFace(const Animations::Track<SpriteSequenceKeyFrame>& spriteTrack,
                                                      const u8 tracksCurrentlyLocked,
-                                                     TimeStamp_t relativeStreamTime_ms)
+                                                     const TimeStamp_t relativeStreamTime_ms)
   {
     const bool spriteSeqHasData = !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::FACE_TRACK) &&
                                   spriteTrack.HasFramesLeft() &&
@@ -2180,7 +2183,7 @@ namespace Vector {
 
   bool AnimationStreamer::ShouldRenderSpriteTrack(const Animations::Track<SpriteSequenceKeyFrame>& spriteTrack,
                                                   const u8 tracksCurrentlyLocked,
-                                                  TimeStamp_t relativeStreamTime_ms,
+                                                  const TimeStamp_t relativeStreamTime_ms,
                                                   const bool proceduralFaceRendered)
   {
     // Non-procedural faces (raw pixel data/images) take precedence over procedural faces (parameterized faces

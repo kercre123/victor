@@ -143,7 +143,21 @@ namespace Vision {
     float DevComputePairwiseMatchScore(const Image& img1, const TrackedFace& face1,
                                        const Image& img2, const TrackedFace& face2);
     
-#endif
+#endif // ANKI_DEVELOPER_CODE
+
+#if ANKI_DEV_CHEATS
+    // Saves all the debug enrollment images in the dierctory set above,
+    // and appending the face id, album id, and the image timestamp.
+    // The filename has the form /path/<filename_prefix>_<face_id>_<album_entry_id>_<timestamp>.jpg.
+    // Currently the debug images are cropped to only contain the region of the image
+    // where there was a face detection. The container of images is populated
+    // by enabling kGatherDebugEnrollmentImages which by default saves the croppped
+    // images at the same resolution that recognition occurs at. If kDisplayDebugEnrollmentImages
+    // is enabled the cropped images with be saved at kEnrollmentThumbnailSize.
+    void SaveAllRecognitionImages(const std::string& imagePathPrefix);
+    // This deletes all the debug recognition images for all users.
+    void DeleteAllRecognitionImages();
+#endif // ANKI_DEV_CHEATS
     
   private:
     
@@ -300,7 +314,7 @@ namespace Vision {
                             DebugImageList<CompressedImage>& debugImages);
     
     static Result ComputeFeaturesFromFace(const Image& img, const TrackedFace& face, HFEATURE featureHandle);
-    
+
   }; // class FaceRecognizer
   
 

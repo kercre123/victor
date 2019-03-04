@@ -517,7 +517,7 @@ def main():
 
     loop = asyncio.get_event_loop()
 
-    with anki_vector.Robot(args.serial, default_logging=False, cache_animation_lists=False) as robot:
+    with anki_vector.Robot(args.serial, default_logging=False, cache_animation_list=False) as robot:
         # Since some requests fail on charger, such as DriveStraight and TurnInPlace, drive off charger first.
         robot.behavior.drive_off_charger()
 

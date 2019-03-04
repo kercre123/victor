@@ -642,6 +642,7 @@ void Daemon::OnPairingStatus(Anki::Vector::ExternalInterface::MessageEngineToGam
     }
     case Anki::Vector::ExternalInterface::MessageEngineToGameTag::ExitPairing: {
       printf("Exit pairing: %hhu\n", tag);
+      ev_timer_stop(_loop, &_pairingTimer.timer);
       UpdateAdvertisement(false);
       if(_securePairing != nullptr && _isPairing) {
         _securePairing->StopPairing();

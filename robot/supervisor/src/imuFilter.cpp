@@ -394,10 +394,6 @@ namespace Anki {
         if (bracingEnabled_) {
           LiftController::Unbrace();
           HeadController::Unbrace();
-          const bool autoStarted = true;
-          const auto reason = MotorCalibrationReason::UnbraceAfterImpact;
-          LiftController::StartCalibrationRoutine(autoStarted, reason);
-          HeadController::StartCalibrationRoutine(autoStarted, reason);
         }
       }
 
