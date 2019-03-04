@@ -861,11 +861,8 @@ void BehaviorConfirmHabitat::HandleWhileActivated(const EngineToGameEvent& event
         // - backup, turn in a direction
         // - if there is no prox obstacle within the minimum gap => continue
         // - else turn some more, and stop
-        auto proxData = GetBEI().GetRobotInfo().GetProxSensorComponent().GetLatestProxData();
-        const bool valid = !proxData.isLiftInFOV &&
-                            !proxData.isTooPitched &&
-                            proxData.isValidSignalQuality;
-        if(valid && proxData.distance_mm <= HabitatDetectorComponent::kConfirmationConfigProxMaxReading) {
+        const auto& proxData = GetBEI().GetRobotInfo().GetProxSensorComponent().GetLatestProxData();
+        if(proxData.foundObject && proxData.distance_mm <= HabitatDetectorComponent::kConfirmationConfigProxMaxReading) {
           _dVars._randomWalkTooCloseObstacle = true;
         }
       }
@@ -920,14 +917,10 @@ void BehaviorConfirmHabitat::AlwaysHandleInScope(const EngineToGameEvent& event)
   
 bool BehaviorConfirmHabitat::UpdateProxSensorFilter()
 {
-  auto proxData = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>().GetLatestProxData();
+  const auto& proxData = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>().GetLatestProxData();
   // ignore the normal range spec since we are trying to perceive
   // very close obstacles and react to them
-  const bool reliable = !proxData.isLiftInFOV &&
-                        !proxData.isTooPitched &&
-                        proxData.isValidSignalQuality;
-  
-  if(reliable) {
+  if(proxData.foundObject) {
     _dVars._validProxDistances.push_back(proxData.distance_mm);
     // don't reset numTicksWaitingForProx here, we want the timeout to be hard
   }
