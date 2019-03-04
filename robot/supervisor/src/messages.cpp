@@ -708,11 +708,11 @@ namespace Anki {
           }
         }
 
-        if (chunkID) {
+        chunkID = chunkID ? 0 : 1;
+        if (!chunkID) {
           memcpy(micData.data, sampleBuffer, numChannels * samplesPerChunk * 2 * sizeof (s16));
           return RobotInterface::SendMessage(micData) ? RESULT_OK : RESULT_FAIL;
         }
-        chunkID = !chunkID;
         return RESULT_OK;
       }
 

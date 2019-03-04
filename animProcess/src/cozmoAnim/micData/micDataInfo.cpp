@@ -42,6 +42,13 @@ void MicDataInfo::CollectRawAudio(const AudioUtil::AudioSample* audioChunk, size
     AudioUtil::AudioChunk newChunk;
     newChunk.resize(kRawAudioChunkSize);
     std::copy(audioChunk, audioChunk + size, newChunk.begin());
+    newChunk.resize(kDeinterlacedAudioChunkSize);
+    // Re-interlace the audio data, for the sake of the 4-channel .wav that'll be written out.
+    for (int sample=0; sample<kSamplesPerBlock; sample++) {
+      for (int channel=0; channel<kNumInputChannels; channel++) {
+        newChunk[kNumInputChannels*sample + channel] = audioChunk[channel*kSamplesPerBlock + sample];
+      }
+    }
     _rawAudioData.push_back(std::move(newChunk));
   }
 }
@@ -129,7 +136,7 @@ void MicDataInfo::SetAudioFadeInTime(uint32_t fadeInTime_ms)
 void MicDataInfo::UpdateForNextChunk()
 {
   std::lock_guard<std::mutex> lock(_dataMutex);
-  _timeRecorded_ms += kDeinterlacedAudioChunkSize;
+  _timeRecorded_ms += kTimePerDeinterlacedChunk_ms;
   if (_timeRecorded_ms >= _timeToRecord_ms)
   {
     std::string dirToReplace;

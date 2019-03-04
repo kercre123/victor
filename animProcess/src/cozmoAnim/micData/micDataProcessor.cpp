@@ -298,6 +298,13 @@ RobotTimeStamp_t MicDataProcessor::CreateStreamJob(CloudMic::StreamType streamTy
       const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
       newJob->CollectProcessedAudio(audioBlock.data(), audioBlock.size());
     }
+
+    // Copy the current audio chunks in the trigger overlap buffer
+    for (size_t i=0; i<_immediateAudioBuffer.size(); ++i)
+    {
+      const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
+      newJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
+    }
   }
 
   const bool isStreamingJob = true;
@@ -310,7 +317,6 @@ RobotTimeStamp_t MicDataProcessor::CreateStreamJob(CloudMic::StreamType streamTy
 RobotTimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs(bool shouldStream)
 {
   RobotTimeStamp_t mostRecentTimestamp = 0;
-  
   if (shouldStream)
   {
     // First we create the job responsible for streaming the intent after the trigger
@@ -348,6 +354,11 @@ RobotTimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs(bool shouldStre
     {
       const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
       triggerJob->CollectProcessedAudio(audioBlock.data(), audioBlock.size());
+    }
+    for (size_t i=0; i<_immediateAudioBuffer.size(); ++i)
+    {
+      const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
+      triggerJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
     }
     const auto notStreamingJob = false;
     _micDataSystem->AddMicDataJob(triggerJob, notStreamingJob);
@@ -682,7 +693,6 @@ void MicDataProcessor::ProcessRawLoop()
       }
     }
 
-
     auto& rawAudioToProcess = _rawAudioBuffers[_rawAudioProcessingIndex];
     while (rawAudioToProcess.size() > 0)
     {
@@ -691,6 +701,15 @@ void MicDataProcessor::ProcessRawLoop()
       const auto& nextData = rawAudioToProcess.front();
       const auto* audioChunk = nextData.data;
       
+      // Copy the current set of jobs we have for recording audio, so the list can be added to while processing
+      // continues
+      std::deque<std::shared_ptr<MicDataInfo>> jobs = _micDataSystem->GetMicDataJobs();
+      // Collect the raw audio if desired
+      for (auto& job : jobs)
+      {
+        job->CollectRawAudio(audioChunk, kRawAudioChunkSize);
+      }
+
       _speechRecognizerSystem->Update(audioChunk, kDeinterlacedAudioChunkSize);
       
       // Factory test doesn't need to do any mic processing, it just uses raw data

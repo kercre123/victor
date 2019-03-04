@@ -205,6 +205,7 @@ void MicDataSystem::RecordProcessedAudio(uint32_t duration_ms, const std::string
 
 void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool playGetInFromAnimProcess)
 {
+  
   if(HasStreamingJob())
   {
     // We "fake" having a streaming job in order to achieve the "feel" of a minimum streaming time for UX

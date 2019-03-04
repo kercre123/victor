@@ -29,6 +29,7 @@ namespace MicData {
   static constexpr uint32_t kSamplesPerChunkIncoming        = 80;
   static constexpr uint32_t kSampleRateIncoming_hz          = 16000;
   static constexpr uint32_t kTimePerChunk_ms                = 5;
+  static constexpr uint32_t kTimePerDeinterlacedChunk_ms    = 10;
   static constexpr uint32_t kChunksPerSEBlock               = 2;
   static constexpr uint32_t kSamplesPerBlock                = kSamplesPerChunkIncoming * kChunksPerSEBlock;
   static constexpr uint32_t kTimePerSEBlock_ms              = kTimePerChunk_ms * kChunksPerSEBlock;
