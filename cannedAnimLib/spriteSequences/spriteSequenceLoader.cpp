@@ -12,11 +12,17 @@
 *
 **/
 
-#include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
-#include "cannedAnimLib/proceduralFace/proceduralFace.h"
 #include "cannedAnimLib/spriteSequences/spriteSequenceLoader.h"
+#include "cannedAnimLib/proceduralFace/proceduralFace.h"
+
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/data/dataScope.h"
 #include "coretech/vision/engine/image_impl.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
+#include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
+
+#include "util/fileUtils/fileUtils.h"
 #include "util/dispatchWorker/dispatchWorker.h"
 
 #include <set>
@@ -36,7 +42,7 @@ static const char* kFileListKey    = "fileList";
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Vision::SpriteSequenceContainer* SpriteSequenceLoader::LoadSpriteSequences(const Util::Data::DataPlatform* dataPlatform,
-                                                                           Vision::SpritePathMap* spriteMap,
+                                                                           Vision::SpritePathMap* spritePathMap,
                                                                            Vision::SpriteCache* cache,
                                                                            const std::vector<std::string>& spriteSequenceDirs)
 {
@@ -47,10 +53,9 @@ Vision::SpriteSequenceContainer* SpriteSequenceLoader::LoadSpriteSequences(const
 
   // Set up the worker that will process all the image frame folders
   
-  using MyDispatchWorker = Util::DispatchWorker<3, Vision::SpriteCache*, std::string, Vision::SpriteName>;
+  using MyDispatchWorker = Util::DispatchWorker<3, Vision::SpriteCache*, std::string>;
   MyDispatchWorker::FunctionType workerFunction = std::bind(&SpriteSequenceLoader::LoadSequence, 
-                                                            this, std::placeholders::_1, std::placeholders::_2,
-                                                                  std::placeholders::_3);
+                                                            this, std::placeholders::_1, std::placeholders::_2);
   MyDispatchWorker worker(workerFunction);
   for(const auto& path : spriteSequenceDirs){
     const std::string spriteSeqFolder = dataPlatform->pathToResource(resourceScope, path);
@@ -66,16 +71,10 @@ Vision::SpriteSequenceContainer* SpriteSequenceLoader::LoadSpriteSequences(const
       const std::string& folderName = *nameIter;
       std::string fullDirPath = Util::FileUtils::FullFilePath({spriteSeqFolder, folderName});
 
-      Vision::SpriteName sequenceName = Vision::SpriteName::Count;
-      const bool res = spriteMap->GetKeyForValue(fullDirPath, sequenceName);
-      if(!res){
-        PRINT_NAMED_WARNING("SpriteSequenceLoader.LoadSpriteSequences.NoSpritenameForPath",
-                            "Path %s not found in spritemap - adding it to the tmp map",
-                            fullDirPath.c_str());
-      }
-            
+      spritePathMap->AddAsset(folderName, fullDirPath, true);
+
       // Now we can start looking at the next name, this one is ok to load
-      worker.PushJob(cache, fullDirPath, sequenceName);
+      worker.PushJob(cache, fullDirPath);
       ++nameIter;
     }
     
@@ -83,18 +82,15 @@ Vision::SpriteSequenceContainer* SpriteSequenceLoader::LoadSpriteSequences(const
     worker.Process();
   }
 
-  auto* container = new Vision::SpriteSequenceContainer(std::move(_mappedSequences), std::move(_unmappedSequences));
-  _mappedSequences.clear();
-  _unmappedSequences.clear();
+  auto* container = new Vision::SpriteSequenceContainer(std::move(_spriteSequences));
+  _spriteSequences.clear();
   
   return container;
 } // LoadSpriteSequences()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SpriteSequenceLoader::LoadSequence(Vision::SpriteCache* cache,
-                                        const std::string& fullDirectoryPath, 
-                                        Vision::SpriteName sequenceName)
+void SpriteSequenceLoader::LoadSequence(Vision::SpriteCache* cache, const std::string& fullDirectoryPath)
 {
 
   // Even though files *might* be sorted alphabetically by the readdir call inside FilesInDirectory,
@@ -130,16 +126,10 @@ void SpriteSequenceLoader::LoadSequence(Vision::SpriteCache* cache,
       LoadSequenceFromSpec(cache, fullDirectoryPath, spec, fileNames, seq);
     }
   }
- 
-  
 
   // Place the sequence in the appropriate map
   std::lock_guard<std::mutex> guard(_mapMutex);
-  if(sequenceName != Vision::SpriteName::Count){   
-    _mappedSequences.emplace(sequenceName, seq);
-  }else{
-    _unmappedSequences.emplace(Util::FileUtils::GetFileName(fullDirectoryPath), seq);
-  }
+  _spriteSequences.emplace(Util::FileUtils::GetFileName(fullDirectoryPath), seq);
 }
 
 
@@ -200,10 +190,10 @@ void SpriteSequenceLoader::LoadSequenceLegacy(Vision::SpriteCache* cache,
     }
     
     // Load the image
-    const std::string fullFilename = Util::FileUtils::FullFilePath({fullDirectoryPath, filename});
+    const std::string fullFilePath = Util::FileUtils::FullFilePath({fullDirectoryPath, filename});
     Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
     Vision::SpriteHandle handle;
-    handle = cache->GetSpriteHandle(fullFilename, faceHueAndSaturation);
+    handle = cache->GetSpriteHandleForSpritePath(fullFilePath, faceHueAndSaturation);
     
     if(frameNum != outSeq.GetNumFrames()){
       PRINT_NAMED_ERROR("SpriteSequenceLoader.LoadSequenceLegacy.MissingFrameNumbers",
@@ -251,10 +241,10 @@ void SpriteSequenceLoader::LoadSequenceFromSpec(Vision::SpriteCache* cache,
 
           auto iter = std::find (relativeImgNames.begin(), relativeImgNames.end(), fileName);
           if(iter != relativeImgNames.end()){
-            const std::string fullFilename = Util::FileUtils::FullFilePath({fullDirectoryPath, fileName});
+            const std::string& fullFilePath = Util::FileUtils::FullFilePath({fullDirectoryPath, fileName});
             Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
             Vision::SpriteHandle handle;
-            handle = cache->GetSpriteHandle(fullFilename, faceHueAndSaturation);
+            handle = cache->GetSpriteHandleForSpritePath(fullFilePath, faceHueAndSaturation);
             outSeq.AddFrame(handle);
           }else{
             PRINT_NAMED_ERROR("SpriteSequenceLoader.LoadSequenceFromSpec.FileNotInFolder",

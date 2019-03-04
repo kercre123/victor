@@ -11,6 +11,9 @@
 **/
 
 #include "coretech/vision/engine/imageCache.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/shared/types.h"
 
 #include "engine/components/photographyManager.h"
 #include "engine/components/visionComponent.h"
@@ -27,6 +30,7 @@
 #include "proto/external_interface/shared.pb.h"
 
 #include "util/console/consoleInterface.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/logging/DAS.h"
 
 #include <sstream>

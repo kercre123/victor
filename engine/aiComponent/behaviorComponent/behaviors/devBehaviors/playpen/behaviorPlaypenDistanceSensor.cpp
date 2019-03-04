@@ -126,9 +126,9 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
   {
     --_numRecordedReadingsLeft;
     
-    const auto& proxData = robot.GetProxSensorComponent().GetLatestProxDataRaw();
+    const auto& proxData = robot.GetProxSensorComponent().GetLatestProxData();
     DistanceSensorData data;
-    data.proxSensorData = proxData;
+    data.proxDistanceToTarget_mm = proxData.distance_mm;
     data.visualDistanceToTarget_mm = 0;
     data.visualAngleAwayFromTarget_rad = 0;
     
@@ -155,13 +155,13 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
     }
 
     if(robot.IsPhysical() &&
-       !Util::IsNear(data.proxSensorData.distance_mm - PlaypenConfig::kDistanceSensorBiasAdjustment_mm, 
+       !Util::IsNear(data.proxDistanceToTarget_mm - PlaypenConfig::kDistanceSensorBiasAdjustment_mm, 
                      data.visualDistanceToTarget_mm,
                      PlaypenConfig::kDistanceSensorReadingThresh_mm))
     {
       PRINT_NAMED_WARNING("BehaviorPlaypenDistanceSensor.PlaypenUpdateInternal.ReadingOutsideThresh",
-                          "Sensor reading %u - %f not near visual reading %f with threshold %f",
-                          data.proxSensorData.distance_mm,
+                          "Sensor reading %f - %f not near visual reading %f with threshold %f",
+                          data.proxDistanceToTarget_mm,
                           PlaypenConfig::kDistanceSensorBiasAdjustment_mm,
                           data.visualDistanceToTarget_mm,
                           PlaypenConfig::kDistanceSensorReadingThresh_mm);

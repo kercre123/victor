@@ -123,7 +123,7 @@ TEST(RobotStateHistory, AddGetPose)
   
   // since interpolation is in the middle it should be the newest
   ASSERT_TRUE(histState.WasCarryingObject() == WasStateCarrying(state2));
-  ASSERT_TRUE(histState.WasProxSensorValid() == histState2.WasProxSensorValid());
+  ASSERT_TRUE(histState.ProxSensorFoundObject() == histState2.ProxSensorFoundObject());
   for (int i=0; i<Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT); ++i) {
     CliffSensor sensor = static_cast<CliffSensor>(i);
     ASSERT_TRUE(histState.WasCliffDetected(sensor) == histState2.WasCliffDetected(sensor));

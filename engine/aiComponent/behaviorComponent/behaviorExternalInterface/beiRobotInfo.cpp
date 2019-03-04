@@ -17,6 +17,7 @@
 #include "engine/robot.h"
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/components/carryingComponent.h"
+#include "engine/components/movementComponent.h"
 
 #include "osState/osState.h"
 
@@ -183,6 +184,12 @@ Radians BEIRobotInfo::GetPitchAngle() const
 {
   return _robot.GetPitchAngle();
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Radians BEIRobotInfo::GetRollAngle() const
+{
+  return _robot.GetRollAngle();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const Pose3d& BEIRobotInfo::GetPose() const
@@ -313,13 +320,13 @@ bool BEIRobotInfo::IsLiftMotorOutOfBounds() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsHeadEncoderInvalid() const
 {
-  return _robot.IsHeadEncoderInvalid();
+  return _robot.GetMoveComponent().IsHeadEncoderInvalid();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsLiftEncoderInvalid() const
 {
-  return _robot.IsLiftEncoderInvalid();
+  return _robot.GetMoveComponent().IsLiftEncoderInvalid();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

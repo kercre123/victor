@@ -48,6 +48,8 @@ const f32 kRobotNameScale = 0.6f;
 const std::string kURL = "anki.com/v";
 const ColorRGBA   kColor(0.9f, 0.9f, 0.9f, 1.f);
 
+const char* kShowPinScreenSpriteName = "pairing_icon_key";
+
 bool s_enteredAnyScreen = false;
 }
 
@@ -86,7 +88,7 @@ void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* conte
   s_enteredAnyScreen = true;
   
   Vision::ImageRGB key;
-  key.Load(context->GetDataLoader()->GetSpritePaths()->GetValue(Vision::SpriteName::Pairing_Icon_Key));
+  key.Load(context->GetDataLoader()->GetSpritePaths()->GetAssetPath(kShowPinScreenSpriteName));
 
   auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
   img->FillWith(Vision::PixelRGBA(0, 0));

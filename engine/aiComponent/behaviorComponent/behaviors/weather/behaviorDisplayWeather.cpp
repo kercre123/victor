@@ -46,19 +46,23 @@ const char* kImageLayoutListKey = "imageLayouts";
 const char* kImageMapListKey    = "imageMaps";
 const char* kAnimationNameKey   = "animationName";
 
+const char* kFahrenheitIndicatorSpriteName = "weather_fahrenheit_indicator";
+const char* kCelsiusIndicatorSpriteName = "weather_celsius_indicator";
+const char* kNegativeTemmpIndicatorSpriteName = "weather_negative_indicator";
+
 // staticly defined for now - can be moved into JSON easily if
 // we need to support different asset designs
-const std::vector<Vision::SpriteName> kTemperatureAssets = {
-  Vision::SpriteName::Weather_Temp_0,
-  Vision::SpriteName::Weather_Temp_1,
-  Vision::SpriteName::Weather_Temp_2,
-  Vision::SpriteName::Weather_Temp_3,
-  Vision::SpriteName::Weather_Temp_4,
-  Vision::SpriteName::Weather_Temp_5,
-  Vision::SpriteName::Weather_Temp_6,
-  Vision::SpriteName::Weather_Temp_7,
-  Vision::SpriteName::Weather_Temp_8,
-  Vision::SpriteName::Weather_Temp_9,
+const std::vector<std::string> kTemperatureAssets = {
+  "weather_temp_0",
+  "weather_temp_1",
+  "weather_temp_2",
+  "weather_temp_3",
+  "weather_temp_4",
+  "weather_temp_5",
+  "weather_temp_6",
+  "weather_temp_7",
+  "weather_temp_8",
+  "weather_temp_9",
 };
 // Positive temperature layouts
 const std::vector<Vision::CompositeImageLayout> kPosTemperatureLayouts  = {
@@ -428,7 +432,9 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
 
   // Add sprite boxes as appropriate to the layer
   {
-    const auto& tempIndicator = isFahrenheit ? Vision::SpriteName::Weather_Fahrenheit_Indicator : Vision::SpriteName::Weather_Celsius_Indicator;
+    const std::string tempIndicator = isFahrenheit ? 
+                                      kFahrenheitIndicatorSpriteName :
+                                      kCelsiusIndicatorSpriteName;
     layer.AddToImageMap(spriteCache, seqContainer,
                         Vision::SpriteBoxName::TemperatureDegreeIndicator,
                         tempIndicator);
@@ -436,7 +442,7 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
   if(temp < 0){
     layer.AddToImageMap(spriteCache, seqContainer,
                         Vision::SpriteBoxName::TemperatureNegativeIndicator,
-                        Vision::SpriteName::Weather_Negative_Indicator);
+                        kNegativeTemmpIndicatorSpriteName);
   }
 
   const auto absTemp = std::abs(temp);

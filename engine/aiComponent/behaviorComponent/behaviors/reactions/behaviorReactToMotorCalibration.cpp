@@ -13,6 +13,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToMotorCalibration.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 
 #define LOG_CHANNEL "Behaviors"
 
@@ -41,6 +42,14 @@ void BehaviorReactToMotorCalibration::OnBehaviorActivated()
 {
   auto& robotInfo = GetBEI().GetRobotInfo();
 
+  // motor calibration currently can interrupt streaming and listening behaviors. If this happens an
+  // in-opportune time, we could drop a voice command (intent) and respond with "can't do that" even though
+  // the robot should be able to do it. This is a bit of a complex issue and requires more thought, but for
+  // now just disable the intent timeout while calibration is active to allow us to respond to the voice
+  // command after calibrating. Note that if no intent is pending (now or later while this behavior is
+  // active), this will have no effect
+  GetBehaviorComp<UserIntentComponent>().SetUserIntentTimeoutEnabled( false );
+
   // Start a hang action just to keep this behavior alive until the calibration complete message is received
   auto waitLambda = [&robotInfo](Robot& robot) {
     return robotInfo.IsHeadCalibrated() && robotInfo.IsLiftCalibrated();
@@ -60,6 +69,9 @@ void BehaviorReactToMotorCalibration::OnBehaviorDeactivated()
   // for the calibration finished messages from the robot
   _headMotorCalibrationStarted = false;
   _liftMotorCalibrationStarted = false;
+
+  // re-enable user intent (voice command) timeout. See comment in OnBehaviorActivated
+  GetBehaviorComp<UserIntentComponent>().SetUserIntentTimeoutEnabled( true );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

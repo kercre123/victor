@@ -397,6 +397,7 @@ namespace Anki {
         u32 cycleStartTime = HAL::GetMicroCounter();
         if (lastCycleStartTime_usec_ != 0) {
           u32 timeBetweenCycles = cycleStartTime - lastCycleStartTime_usec_;
+          tracepoint(anki_ust, vic_robot_robot_loop_period, timeBetweenCycles);
           if (timeBetweenCycles > MAIN_TOO_LATE_TIME_THRESH_USEC) {
             EventStart(EventType::MAIN_CYCLE_TOO_LATE);
             ++mainTooLateCnt_;

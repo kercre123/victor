@@ -18,20 +18,16 @@
 #include "coretech/vision/shared/spriteCache/iSpriteWrapper.h"
 #include "coretech/vision/shared/spriteCache/spriteWrapper.h"
 #include "coretech/vision/shared/spritePathMap.h"
+#include "coretech/common/shared/types.h"
 
-#include "clad/types/spriteNames.h"
 #include "util/helpers/templateHelpers.h"
 
+#include <map>
+#include <mutex>
 #include <unordered_map>
 #include <set>
 
 namespace Anki {
-// Forward declaration
-namespace Util{
-template<class CladEnum>
-class CladEnumToStringMap;
-}
-
 namespace Vision {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -42,11 +38,15 @@ public:
   SpriteCache(const Vision::SpritePathMap* spriteMap);
   virtual ~SpriteCache();
 
-  const Vision::SpritePathMap* GetSpritePathMap(){ return _spriteMap;}  
-  SpriteHandle GetSpriteHandle(SpriteName spriteName, 
-                               const HSImageHandle& hueAndSaturation = {});
-  SpriteHandle GetSpriteHandle(const std::string& fullSpritePath, 
-                               const HSImageHandle& hueAndSaturation = {});
+  const Vision::SpritePathMap* GetSpritePathMap(){ return _spritePathMap;}  
+
+  // Returns a SpriteHandle for an independent sprite given the filename
+  SpriteHandle GetSpriteHandleForNamedSprite(const std::string& spriteName, 
+                                             const HSImageHandle& hueAndSaturation = {});
+
+  // Returns a SpriteHandle for a Sprite given the full path to the sprite
+  SpriteHandle GetSpriteHandleForSpritePath(const std::string& fullSpritePath,
+                                            const HSImageHandle& hueAndSaturation = {});
 
   void Update(BaseStationTime_t currTime_nanosec);
 
@@ -63,27 +63,22 @@ public:
 private:
   using InternalHandle = std::shared_ptr<SpriteWrapper>;
 
-  const Vision::SpritePathMap* _spriteMap;
+  const Vision::SpritePathMap* _spritePathMap;
   std::mutex _hueSaturationMapMutex;
 
   BaseStationTime_t _lastUpdateTime_nanosec;
 
-  struct HandleMaps{
-    std::unordered_map<SpriteName, InternalHandle,  Util::EnumHasher> _wrapperMap;
-    std::unordered_map<std::string, InternalHandle> _filePathMap;
-  };
+  using SpriteNameToHandleMap = std::unordered_map<std::string, InternalHandle>;
 
-  std::unordered_map<uint16_t, HandleMaps> _hueSaturationMap;
+  std::unordered_map<uint16_t, SpriteNameToHandleMap> _hueSaturationMap;
 
   // Map of expiration time -> Internal Handle
   // This ordering allows the update loop to efficiently clear stale entries
   // since they are stored in time order
   std::multimap<BaseStationTime_t, InternalHandle> _cacheTimeoutMap;
 
-  HandleMaps& GetHandleMapForHue(const HSImageHandle& hueAndSaturation);
+  SpriteNameToHandleMap& GetHandleMapForHue(const HSImageHandle& hueAndSaturation);
 
-  InternalHandle GetSpriteHandleInternal(SpriteName spriteName, 
-                                         const HSImageHandle& hueAndSaturation = {});
   InternalHandle GetSpriteHandleInternal(const std::string& fullSpritePath, 
                                          const HSImageHandle& hueAndSaturation = {});
 

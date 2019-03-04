@@ -20,7 +20,6 @@
 #include "clad/types/imageTypes.clad"
 #include "clad/types/imu.clad"
 #include "clad/types/ledTypes.clad"
-#include "clad/types/keepFaceAliveParameters.clad"
 #include "clad/types/objectTypes.clad"
 #include "clad/types/onboardingStages.clad"
 #include "clad/types/pathMotionProfile.clad"
@@ -540,12 +539,6 @@ message RequestAvailableAnimations{
 // RequestAvailableAnimationGroups
 message RequestAvailableAnimationGroups{
   
-}
-
-message SetKeepFaceAliveParameters {
-  KeepFaceAliveParameter       paramNames[uint_8],
-  float_32                     paramValues[uint_8], // must be same length as paramNames
-  bool                         setUnspecifiedToDefault = 0
 }
 
 // PushDrivingAnimations

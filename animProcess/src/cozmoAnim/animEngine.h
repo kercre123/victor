@@ -22,6 +22,7 @@ namespace Anki {
     class AnimationStreamer;
     class StreamingAnimationModifier;
     class TextToSpeechComponent;
+    class SdkAudioComponent;
     
     namespace Audio {
       class CozmoAudioController;
@@ -29,6 +30,10 @@ namespace Anki {
     } // Audio
     namespace RobotInterface {
       struct SetLocale;
+      struct ExternalAudioChunk;
+      struct ExternalAudioPrepare;
+      struct ExternalAudioComplete;
+      struct ExternalAudioCancel;
       struct TextToSpeechPrepare;
       struct TextToSpeechPlay;
       struct TextToSpeechCancel;
@@ -63,6 +68,10 @@ public:
 
   // Message handlers
   void HandleMessage(const RobotInterface::SetLocale& msg);
+  void HandleMessage(const RobotInterface::ExternalAudioPrepare& msg);
+  void HandleMessage(const RobotInterface::ExternalAudioChunk& msg);
+  void HandleMessage(const RobotInterface::ExternalAudioComplete& msg);
+  void HandleMessage(const RobotInterface::ExternalAudioCancel& msg);
   void HandleMessage(const RobotInterface::TextToSpeechPrepare& msg);
   void HandleMessage(const RobotInterface::TextToSpeechPlay& msg);
   void HandleMessage(const RobotInterface::TextToSpeechCancel& msg);
@@ -75,6 +84,7 @@ protected:
   std::unique_ptr<StreamingAnimationModifier>   _streamingAnimationModifier;
   std::unique_ptr<TextToSpeechComponent>        _ttsComponent;
   std::unique_ptr<Audio::MicrophoneAudioClient> _microphoneAudioClient;
+  std::unique_ptr<SdkAudioComponent>            _sdkAudioComponent;
   Audio::CozmoAudioController*                  _audioControllerPtr = nullptr;
   
 }; // class AnimEngine

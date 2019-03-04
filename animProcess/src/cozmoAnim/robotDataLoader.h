@@ -14,7 +14,6 @@
 #define ANKI_COZMO_ANIM_DATA_LOADER_H
 
 #include "cannedAnimLib/cannedAnims/cannedAnimationLoader.h"
-#include "clad/types/spriteNames.h"
 #include "clad/types/backpackAnimationTriggers.h"
 #include "cozmoAnim/backpackLights/animBackpackLightComponentTypes.h"
 #include "util/cladHelpers/cladEnumToStringMap.h"
@@ -79,7 +78,7 @@ public:
   const std::string& GetAlexaConfig() const { return _alexaConfig; }
 
   // images are stored as a map of stripped file name (no file extension) to full path
-  const Vision::SpritePathMap* GetSpritePaths() const { assert(_spritePaths != nullptr); return _spritePaths.get(); }
+  const Vision::SpritePathMap* GetSpritePaths() const { assert(_spritePathMap != nullptr); return _spritePathMap.get(); }
   Vision::SpriteCache* GetSpriteCache() const { assert(_spriteCache != nullptr); return _spriteCache.get();  }
 
   Vision::SpriteSequenceContainer* GetSpriteSequenceContainer() { return _spriteSequenceContainer.get();}
@@ -90,7 +89,7 @@ public:
   BackpackAnimationTriggerMap* GetBackpackAnimationTriggerMap() { return _backpackAnimationTriggerMap.get();}
   
 private:
-  void LoadSpritePaths();
+  void LoadIndependentSpritePaths();
 
   void NotifyAnimAdded(const std::string& animName, uint32_t animLength);
   
@@ -106,7 +105,7 @@ private:
   // animation data
   std::unique_ptr<CannedAnimationContainer>              _cannedAnimations;
   std::unique_ptr<Vision::SpriteSequenceContainer>       _spriteSequenceContainer;
-  std::unique_ptr<Vision::SpritePathMap>                 _spritePaths;
+  std::unique_ptr<Vision::SpritePathMap>                 _spritePathMap;
   std::unique_ptr<Vision::SpriteCache>                   _spriteCache;
 
 

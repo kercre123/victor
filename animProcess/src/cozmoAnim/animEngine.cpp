@@ -19,6 +19,7 @@
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/audio/microphoneAudioClient.h"
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
+#include "cozmoAnim/audio/sdkAudioComponent.h"
 #include "cozmoAnim/animation/animationStreamer.h"
 #include "cozmoAnim/animation/streamingAnimationModifier.h"
 #include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
@@ -154,6 +155,8 @@ Result AnimEngine::Init()
     return cvResult;
   }
 
+  _sdkAudioComponent = std::make_unique<SdkAudioComponent>(_context.get());
+
   LOG_INFO("AnimEngine.Init.Success","Success");
   _isInitialized = true;
 
@@ -175,6 +178,7 @@ Result AnimEngine::Update(const BaseStationTime_t currTime_nanosec)
   DEV_ASSERT(_ttsComponent, "AnimEngine.Update.InvalidTTSComponent");
   DEV_ASSERT(_animationStreamer, "AnimEngine.Update.InvalidAnimationStreamer");
   DEV_ASSERT(_streamingAnimationModifier, "AnimEngine.Update.InvalidStreamingAnimationModifier");
+  DEV_ASSERT(_sdkAudioComponent, "AnimEngine.Update.InvalidSdkComponent");
 
 #if ANKI_PROFILE_ANIMCOMMS_SOCKET_BUFFER_STATS
   {
@@ -270,5 +274,31 @@ void AnimEngine::HandleMessage(const RobotInterface::SetLocale & msg)
     _ttsComponent->SetLocale(locale);
   }
 }
+
+void AnimEngine::HandleMessage(const RobotInterface::ExternalAudioChunk & msg)
+{
+  DEV_ASSERT(_sdkAudioComponent, "AnimEngine.ExternalAudioChunk.InvalidSDKAudioComponent");
+  _sdkAudioComponent->HandleMessage(msg);
+}
+
+void AnimEngine::HandleMessage(const RobotInterface::ExternalAudioComplete & msg)
+{
+  DEV_ASSERT(_sdkAudioComponent, "AnimEngine.ExternalAudioComplete.InvalidSDKAudioComponent");
+  _sdkAudioComponent->HandleMessage(msg);
+}
+
+void AnimEngine::HandleMessage(const RobotInterface::ExternalAudioCancel & msg)
+{
+  DEV_ASSERT(_sdkAudioComponent, "AnimEngine.ExternalAudioCancel.InvalidSDKAudioComponent");
+  _sdkAudioComponent->HandleMessage(msg);
+}
+
+void AnimEngine::HandleMessage(const RobotInterface::ExternalAudioPrepare & msg)
+{
+  DEV_ASSERT(_sdkAudioComponent, "AnimEngine.ExternalAudioPrepare.InvalidSDKAudioComponent");
+  _sdkAudioComponent->HandleMessage(msg);
+}
+
+
 } // namespace Vector
 } // namespace Anki

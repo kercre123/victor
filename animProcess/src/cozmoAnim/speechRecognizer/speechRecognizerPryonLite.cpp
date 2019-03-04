@@ -45,7 +45,7 @@ namespace Vector {
 
 namespace {
   // must be saved + reboot
-  CONSOLE_VAR_RANGED(int, kDefaultDetectThreshold, "SpeechRecognizer.Alexa", 10, 0, 1000);
+  CONSOLE_VAR_RANGED(int, kDefaultDetectThreshold, "SpeechRecognizer.Alexa", 250, 0, 1000);
   
   #define LOG_CHANNEL "SpeechRecognizer"
 }

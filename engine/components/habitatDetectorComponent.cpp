@@ -218,14 +218,8 @@ void HabitatDetectorComponent::SetBelief(HabitatBeliefState state, std::string d
 
 bool HabitatDetectorComponent::UpdateProxObservations()
 {
-  auto proxData = _robot->GetProxSensorComponent().GetLatestProxData();
-  // ignore the normal range spec, since we need to be very close to the wall
-  // in order to be observing it
-  const bool reliable = !proxData.isLiftInFOV &&
-                        !proxData.isTooPitched &&
-                        proxData.isValidSignalQuality;
-  
-  if(reliable && _proxReadingBuffer.size() < kMinProxReadingsRequired) {
+  const auto proxData = _robot->GetProxSensorComponent().GetLatestProxData();
+  if(proxData.foundObject && _proxReadingBuffer.size() < kMinProxReadingsRequired) {
     _proxReadingBuffer.push_back(proxData.distance_mm);
   }
   _numTicksWaitingForProx++;

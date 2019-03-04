@@ -97,6 +97,13 @@
     "FileOrDirName"       : "config/engine/vision/groundClassifier/deskClassifier.yaml"
   },
 
+  "ImageCompositing" :
+  {
+    "percentileForMaxIntensity" : 0.99,
+    "imageReadyPeriod" : 4,
+    "numImageReadyCyclesBeforeReset" : 2
+  },
+
   "NeuralNets" :
   {
     // How frequently to print or log events about timing

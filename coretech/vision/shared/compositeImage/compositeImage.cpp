@@ -27,6 +27,8 @@ namespace Vision {
 
 namespace{
 
+const char* kEmptySpriteName = "empty_sprite";
+
 const std::string kEmptyBoxLayout = R"json(
   {
     "layerName" : "EmptyBoxLayer",
@@ -164,6 +166,7 @@ std::vector<CompositeImageChunk> CompositeImage::GetImageChunks(bool emptySprite
   // chunks vector
   std::vector<CompositeImageChunk> chunks;
   int layerIdx = 0;
+  // For each Layer in the CompositeImage
   for(auto& layerPair : _layerMap){
     // stable per layer
     baseChunk.layerName = layerPair.first;
@@ -172,33 +175,12 @@ std::vector<CompositeImageChunk> CompositeImage::GetImageChunks(bool emptySprite
     baseChunk.spriteBoxMax = layerPair.second.GetLayoutMap().size();
 
     int spriteBoxIdx = 0;
+    // For each SpriteBox in the layer
     for(auto& spriteBoxPair : layerPair.second.GetLayoutMap()){
       baseChunk.spriteBoxIndex = spriteBoxIdx;
       spriteBoxIdx++;
       baseChunk.spriteBox = spriteBoxPair.second.Serialize();
-      baseChunk.spriteName = SpriteName::Count;
-      
-
-      Vision::SpriteName spriteName = SpriteName::Count;
-      if(layerPair.second.GetSpriteSequenceName(spriteBoxPair.first, spriteName) &&
-        Vision::IsSpriteSequence(spriteName, false)){
-        baseChunk.spriteName = spriteName;
-      }else{
-        // perform a reverse lookup on the sprite 
-        std::string fullSpritePath;
-        Vision::SpriteHandle handle;
-        // Get Handle -> Sprite Path -> Sprite name that maps to that path
-        // Each step is reliant on the previous one's value being set
-        if(layerPair.second.GetFrame(spriteBoxPair.first, 0, handle) &&
-           handle->GetFullSpritePath(fullSpritePath) &&
-           _spriteCache &&
-           _spriteCache->GetSpritePathMap()->GetKeyForValueConst(fullSpritePath, spriteName)){
-          baseChunk.spriteName = spriteName;
-        }else if(!emptySpriteBoxesAreValid){
-          LOG_ERROR("CompositeImage.GetImageChunks.SerializingInvalidCompositeImage",
-                    "Currently only composite images composed solely of sprite names can be serialized");
-        }
-      }
+      baseChunk.assetID = layerPair.second.GetAssetID(spriteBoxPair.first);
       chunks.push_back(baseChunk);
     } // end for(spriteBoxPair)
   } // end for(layerPair)
@@ -380,7 +362,14 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
       } // end switch
 
     }else{
-      LOG_DEBUG("CompositeImage.OverlayImageWithFrame.NoImageForSpriteBox",
+#if ANKI_DEV_CHEATS
+      // Draw a "missing_asset" indicator into the base image 
+      Rectangle<f32> spriteBoxRect = spriteBox.GetRect();
+      baseImage.DrawRect(spriteBoxRect, Anki::NamedColors::RED);
+      baseImage.DrawLine(spriteBoxRect.GetTopLeft(), spriteBoxRect.GetBottomRight(), Anki::NamedColors::RED);
+      baseImage.DrawLine(spriteBoxRect.GetBottomLeft(), spriteBoxRect.GetTopRight(), Anki::NamedColors::RED);
+#endif
+      LOG_ERROR("CompositeImage.OverlayImageWithFrame.NoImageForSpriteBox",
                 "Sprite Box %s will not be rendered - no valid image found",
                 SpriteBoxNameToString(spriteBoxName));
     }
@@ -459,7 +448,7 @@ void CompositeImage::AddEmptyLayer(SpriteSequenceContainer* seqContainer, Vision
   config[CompositeImageConfigKeys::kLayerNameKey] =  LayerNameToString(layerName);
   static CompositeImageLayer layer(config);
   if(layer.GetImageMap().size() == 0){
-    CompositeImageLayer::SpriteEntry entry(_spriteCache, seqContainer, SpriteName::Empty_Sprite);
+    CompositeImageLayer::SpriteEntry entry(_spriteCache, seqContainer, kEmptySpriteName);
     layer.AddToImageMap(SpriteBoxName::EmptyBox, entry);
   }
   auto intentionalCopy = layer;

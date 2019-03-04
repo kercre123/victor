@@ -41,9 +41,9 @@ public:
 
   // For reading canned animations from files
   Result DefineFromFlatBuf(const std::string& name, const CozmoAnim::AnimClip* animClip, 
-                           const Vision::SpritePathMap* spriteMap, Vision::SpriteSequenceContainer* seqContainer);
+                           Vision::SpriteSequenceContainer* seqContainer);
   Result DefineFromJson(const std::string& name, const Json::Value& json,
-                        const Vision::SpritePathMap* spriteMap, Vision::SpriteSequenceContainer* seqContainer);
+                        Vision::SpriteSequenceContainer* seqContainer);
 
   // For defining animations at runtime (e.g. live animation)
   template<class KeyFrameType>

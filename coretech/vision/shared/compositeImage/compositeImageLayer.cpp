@@ -85,14 +85,13 @@ bool CompositeImageLayer::operator==(const CompositeImageLayer& other) const{
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool CompositeImageLayer::GetSpriteSequenceName(SpriteBoxName sbName, Vision::SpriteName& sequenceName)  const
+uint16_t CompositeImageLayer::GetAssetID(SpriteBoxName sbName)  const
 {
   auto imageMapIter = _imageMap.find(sbName);
   if(imageMapIter != _imageMap.end()){
-    sequenceName = imageMapIter->second.GetSpriteName();
-    return true;
+    return imageMapIter->second.GetAssetID();
   }
-  return false;
+  return Vision::SpritePathMap::kEmptySpriteBoxID;
 }
 
 
@@ -136,12 +135,12 @@ void CompositeImageLayer::AddToLayout(SpriteBoxName sbName, const SpriteBox& spr
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CompositeImageLayer::AddToImageMap(SpriteCache* cache, SpriteSequenceContainer* seqContainer,
-                                        SpriteBoxName sbName, const Vision::SpriteName& spriteName)
+                                        SpriteBoxName sbName, const std::string& assetName)
 {
-  auto resultPair = _imageMap.emplace(sbName, SpriteEntry(cache, seqContainer, spriteName));
+  auto resultPair = _imageMap.emplace(sbName, SpriteEntry(cache, seqContainer, assetName));
   // If map entry already exists, just update existing iterator
   if(!resultPair.second){
-    resultPair.first->second = SpriteEntry(cache, seqContainer, spriteName);
+    resultPair.first->second = SpriteEntry(cache, seqContainer, assetName);
   }
 }
 
@@ -152,6 +151,29 @@ void CompositeImageLayer::AddToImageMap(SpriteBoxName sbName, const SpriteEntry&
   // If map entry already exists, just update existing iterator
   if(!resultPair.second){
     resultPair.first->second = spriteEntry;
+  }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImageLayer::AddOrUpdateSpriteBoxWithEntry(const SpriteBox& spriteBox, const SpriteEntry& spriteEntry)
+{
+  AddToLayout(spriteBox.spriteBoxName, spriteBox);
+  AddToImageMap(spriteBox.spriteBoxName, spriteEntry);
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImageLayer::ClearSpriteBoxByName(const SpriteBoxName& sbName)
+{
+  auto iter = _imageMap.find(sbName);
+  if(iter != _imageMap.end()){
+    _imageMap.erase(iter);
+  }else{
+    LOG_ERROR("CompositeImageLayer.ClearSpriteBoxByName.SpriteBoxNotFound",
+              "Attempted to clear SB: %s, which is not present on layer: %s",
+              EnumToString(sbName),
+              EnumToString(GetLayerName()));
   }
 }
 
@@ -178,13 +200,12 @@ void CompositeImageLayer::SetImageMap(const Json::Value& imageMapSpec,
   _imageMap.clear();
   const std::string implDebugStr = "CompositeImageBuilder.BuildCompositeImage.SpecKey";
   for(auto& entry: imageMapSpec){
-    const std::string sbString     = JsonTools::ParseString(entry, kSpriteBoxNameKey, implDebugStr);
-    SpriteBoxName sbName           = SpriteBoxNameFromString(sbString);
-    const std::string spriteString = JsonTools::ParseString(entry, kSpriteNameKey, implDebugStr);
-    Vision::SpriteName spriteName   = Vision::SpriteNameFromString(spriteString);
+    const std::string sbString  = JsonTools::ParseString(entry, kSpriteBoxNameKey, implDebugStr);
+    SpriteBoxName sbName        = SpriteBoxNameFromString(sbString);
+    const std::string assetName = JsonTools::ParseString(entry, kAssetNameKey, implDebugStr);
     auto spriteEntry = Vision::CompositeImageLayer::SpriteEntry(cache,
                                                                 seqContainer,
-                                                                spriteName);
+                                                                assetName);
 
     _imageMap.emplace(std::make_pair(sbName,  std::move(spriteEntry)));
   }
@@ -366,22 +387,33 @@ void CompositeImageLayer::SpriteBox::SetLayoutModifier(CompositeImageLayoutModif
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImageLayer::SpriteEntry::SpriteEntry(SpriteCache* cache,
                                               SpriteSequenceContainer* seqContainer,
-                                              Vision::SpriteName spriteName,
+                                              const std::string& assetName,
                                               uint frameStartOffset)
 : _frameStartOffset(frameStartOffset)
-, _spriteName(spriteName)
+, _serializable(true)
 {
-  if(Vision::IsSpriteSequence(spriteName, false)){
-    auto* seq = seqContainer->GetSequenceByName(spriteName);
-    if(seq != nullptr){
-      _spriteSequence = *seq;
-    }else{
-      PRINT_NAMED_ERROR("CompositeImageLayer.SpriteEntry.SequenceNotInContainer",
-                        "Could not find sequence for SpriteName %s",
-                        SpriteNameToString(spriteName));
+  auto* spritePathMap = cache->GetSpritePathMap();
+  if(ANKI_VERIFY(nullptr != spritePathMap,
+                 "SpriteEntry.Ctor.NullSpritePathMap",
+                 "SpritePathMap must not be null to construct SpriteEntry's")){
+    if(!spritePathMap->IsValidAssetName(assetName)){
+      // SpriteEntries will handle missing assets internally since we have SpriteBox info when
+      // we try to render them. That way we get the benefit of size information that we would lose
+      // if we rendered the "missing" asset offered by the SpritePathMap
+      _assetID = Vision::SpritePathMap::kInvalidSpriteID;
+      PRINT_NAMED_WARNING("SpriteEntry.Ctor.InvalidAssetName",
+                          "No asset named %s could be found. Target spriteBox will render an X",
+                          assetName.c_str());
+    } else {
+      _assetID = spritePathMap->GetAssetID(assetName);
+      if(spritePathMap->IsSpriteSequence(assetName)){
+        _spriteSequence = *seqContainer->GetSpriteSequence(assetName);
+      } else {
+        _spriteSequence.AddFrame(cache->GetSpriteHandleForNamedSprite(assetName));
+      }
     }
-  }else if(spriteName != SpriteName::Count){
-    _spriteSequence.AddFrame(cache->GetSpriteHandle(spriteName));
+  } else {
+    _assetID = Vision::SpritePathMap::kInvalidSpriteID;
   }
 }
 
@@ -398,6 +430,20 @@ CompositeImageLayer::SpriteEntry::SpriteEntry(Vision::SpriteHandle spriteHandle)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+uint16_t CompositeImageLayer::SpriteEntry::GetAssetID() const
+{
+  if(_serializable){
+    return _assetID;
+  }
+
+  LOG_ERROR("CompositeImageLayer.SpriteEntry.GetAssetID.NotSerializable",
+            "Attempted to serialize SpriteEntry with non-serializable assets. Target SpriteBox will render an X.");
+  // If you're here for the above error message, you tried to use hand constructed Sprites/SpriteSequences in a
+  // CompositeImage. This is unsupported for now due to inter-process messaging constraints.
+  return SpritePathMap::kInvalidSpriteID;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CompositeImageLayer::SpriteEntry::GetFrame(const u32 index, Vision::SpriteHandle& handle) const
 {
   if(index < _frameStartOffset){
@@ -409,7 +455,7 @@ bool CompositeImageLayer::SpriteEntry::GetFrame(const u32 index, Vision::SpriteH
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CompositeImageLayer::SpriteEntry::operator == (const SpriteEntry& other) const {
-  return (_spriteName == other._spriteName) &&
+  return (_assetID == other._assetID) &&
          (_frameStartOffset == other._frameStartOffset);
 }
 

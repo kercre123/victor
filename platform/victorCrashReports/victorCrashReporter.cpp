@@ -44,6 +44,15 @@ void UninstallCrashReporter()
 
 }
 
+bool WriteMinidump(const std::string & prefix, std::string & out_dump_path)
+{
+  #ifdef USE_GOOGLE_BREAKPAD
+  return GoogleBreakpad::WriteMinidump(prefix, out_dump_path);
+  #else
+  return false;
+  #endif
+}
+
 CrashReporter::CrashReporter(const char * filenamePrefix)
 {
   InstallCrashReporter(filenamePrefix);

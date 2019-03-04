@@ -164,18 +164,6 @@ PROTO WebotsKeyboardController [
   field SFFloat steerDistOffsetCap_mm 20
   field SFFloat steerAngOffsetCap_rad 0.5
 
-  # KeepFaceAliveParameters to send
-  field SFFloat BlinkSpacingMinTime_ms 29999
-  field SFFloat BlinkSpacingMaxTime_ms 30000
-  field SFFloat EyeDartSpacingMinTime_ms 1000000000
-  field SFFloat EyeDartSpacingMaxTime_ms 1000000001
-  field SFFloat EyeDartMaxDistance_pix 6
-  field SFFloat EyeDartMinDuration_ms 50
-  field SFFloat EyeDartMaxDuration_ms 200
-  field SFFloat EyeDartOuterEyeScaleIncrease 0.1
-  field SFFloat EyeDartUpMaxScale 1.1
-  field SFFloat EyeDartDownMinScale 0.85
-
   # Camera display params
   # Note that camera display is OFF by default.
   # Width and height must be > 0 to enable.

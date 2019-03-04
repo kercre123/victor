@@ -320,8 +320,7 @@ void AlexaImpl::InitThread()
   }
   
   if( !avsCommon::avs::initialization::AlexaClientSDKInit::initialize( configs ) ) {
-    CRITICAL_SDK("Failed to initialize SDK!");
-    _initState = InitState::ThreadFailed;
+    FailInitialization( "Failed to initialize SDK!" );
     return;
   }
   
@@ -355,8 +354,7 @@ void AlexaImpl::InitThread()
   // Creating the deviceInfo object
   std::shared_ptr<avsCommon::utils::DeviceInfo> deviceInfo = avsCommon::utils::DeviceInfo::create( rootConfig );
   if( !deviceInfo ) {
-    CRITICAL_SDK("Creation of DeviceInfo failed!");
-    _initState = InitState::ThreadFailed;
+    FailInitialization( "Creation of DeviceInfo failed!" );
     return;
   }
   else {
@@ -378,8 +376,7 @@ void AlexaImpl::InitThread()
   // Creating the misc DB object to be used by various components.
   std::shared_ptr<storage::sqliteStorage::SQLiteMiscStorage> miscStorage = storage::sqliteStorage::SQLiteMiscStorage::create(rootConfig);
   if( !miscStorage ) {
-    CRITICAL_SDK("Creation of miscStorage failed!");
-    _initState = InitState::ThreadFailed;
+    FailInitialization( "Creation of miscStorage failed!" );
     return;
   }
   
@@ -387,8 +384,7 @@ void AlexaImpl::InitThread()
   std::shared_ptr<avsCommon::utils::libcurlUtils::HttpPut> httpPut = avsCommon::utils::libcurlUtils::HttpPut::create();
   
   if( !authDelegate ) {
-    CRITICAL_SDK("Creation of AuthDelegate failed!");
-    _initState = InitState::ThreadFailed;
+    FailInitialization( "Creation of AuthDelegate failed!" );
     return;
   }
   authDelegate->addAuthObserver( _observer );
@@ -403,8 +399,7 @@ void AlexaImpl::InitThread()
                                                           rootConfig,
                                                           deviceInfo );
   if( !_capabilitiesDelegate ) {
-    CRITICAL_SDK("Creation of CapabilitiesDelegate failed!");
-    _initState = InitState::ThreadFailed;
+    FailInitialization( "Creation of CapabilitiesDelegate failed!" );
     return;
   }
   _capabilitiesDelegate->addCapabilitiesObserver( _observer );
@@ -447,8 +442,7 @@ void AlexaImpl::InitThread()
   // does provide an accurate internet status on init
   auto internetConnectionMonitor = avsCommon::utils::network::InternetConnectionMonitor::create(httpContentFetcherFactory);
   if( !internetConnectionMonitor ) {
-    CRITICAL_SDK("Failed to create InternetConnectionMonitor");
-    _initState = InitState::ThreadFailed;
+    FailInitialization( "Failed to create InternetConnectionMonitor" );
     return;
   }
   
@@ -479,8 +473,7 @@ void AlexaImpl::InitThread()
                                  firmwareVersion );
   
   if( !_client ) {
-    CRITICAL_SDK("Failed to create SDK client!");
-    _initState = InitState::ThreadFailed;
+    FailInitialization( "Failed to create SDK client!" );
     return;
   }
   
@@ -505,8 +498,7 @@ void AlexaImpl::InitThread()
     = avsCommon::avs::AudioInputStream::create( buffer, kWordSize, kMaxReaders );
 
   if( !sharedDataStream ) {
-    CRITICAL_SDK("Failed to create shared data stream!");
-    _initState = InitState::ThreadFailed;
+    FailInitialization( "Failed to create shared data stream!" );
     return;
   }
 
@@ -1577,6 +1569,17 @@ bool AlexaImpl::InteractedRecently() const
   const uint64_t currTime = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
   const bool recent = (currTime <= kMillisConsideredRecentInteraction + _lastInteractionTime_ms);
   return recent;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void AlexaImpl::FailInitialization( const std::string& reason )
+{
+  CRITICAL_SDK( reason.c_str() );
+  _initState = InitState::ThreadFailed;
+  
+  DASMSG(alexa_initialization_fail, "alexa.initialization_failed", "we failed to fully initialize the sdk");
+  DASMSG_SET(s1, reason.c_str(), "Reason");
+  DASMSG_SEND();
 }
   
 #if ANKI_DEV_CHEATS

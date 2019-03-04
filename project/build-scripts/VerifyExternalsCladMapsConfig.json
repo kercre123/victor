@@ -76,30 +76,5 @@
         "resourcesAreFiles"   : true
       }
     ]
-  },
-  {
-    "mapPath"       : "/resources/assets/cladToFileMaps/spriteMap.json",
-    "resourceKey" : "SpriteName",
-
-    "cladPath"      : "/coretech/vision/clad_src/clad/types/spriteNames.clad",
-
-    "resources": [
-      {
-        "basePath" : "/animation-assets/sprites/independentSprites",
-        "resourcesAreFiles"   : true
-      },
-      {
-        "basePath" : "/animation-assets/sprites/spriteSequences",
-        "resourcesAreFiles"   : false
-      },
-      {
-        "basePath" : "/../resources/config/devOnlySprites/independentSprites",
-        "resourcesAreFiles"   : true
-      },
-      {
-        "basePath" : "/../resources/config/devOnlySprites/spriteSequences",
-        "resourcesAreFiles"   : false
-      }
-    ]
   }
 ]

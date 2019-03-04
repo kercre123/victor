@@ -16,3 +16,6 @@ platform/update-engine/update-engine.py @seichert
 
 # Proto files
 /tools/protobuf/gateway/ @msintov @BruceVonK @rakeshr4
+
+# The compatibility version of the os
+VICTOR_COMPAT_VERSION @CodeForCoffee @chapados

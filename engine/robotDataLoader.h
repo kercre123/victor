@@ -20,12 +20,12 @@
 #include "clad/types/compositeImageMaps.h"
 #include "clad/types/cubeAnimationTrigger.h"
 #include "clad/types/variableSnapshotIds.h"
-#include "clad/types/spriteNames.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
 #include "coretech/vision/shared/spritePathMap.h"
 
+#include "util/cladHelpers/cladEnumToStringMap.h"
 #include "util/helpers/noncopyable.h"
 #include <json/json.h>
 #include <atomic>
@@ -41,8 +41,6 @@
 namespace Anki {
 
 namespace Util {
-template<class CladEnum>
-class CladEnumToStringMap;
 
 namespace Data {
 class DataPlatform;

@@ -514,10 +514,7 @@ namespace Vector {
     {
       Json::Value& node = _json[name];
       Json::Value newNode;
-      newNode["SignalIntensity"] = data.proxSensorData.signalIntensity;
-      newNode["AmbientIntensity"] = data.proxSensorData.ambientIntensity;
-      newNode["SpadCount"] = data.proxSensorData.spadCount;
-      newNode["SensorDistanceRaw_mm"] = data.proxSensorData.distance_mm;
+      newNode["SensorDistance_mm"] = data.proxDistanceToTarget_mm;
       newNode["VisualDistance_mm"] = data.visualDistanceToTarget_mm;
       newNode["VisualAngleAway_rad"] = data.visualAngleAwayFromTarget_rad;
       node.append(newNode);
@@ -526,10 +523,7 @@ namespace Vector {
     else
     {
       ss << "\n[" << name << "]" << std::fixed
-      << "\nSignalIntensity: " << data.proxSensorData.signalIntensity
-      << "\nAmbientIntensity: " << data.proxSensorData.ambientIntensity
-      << "\nSpadCount: " << data.proxSensorData.spadCount
-      << "\nSensorDistanceRaw_mm: " << data.proxSensorData.distance_mm
+      << "\nSensorDistance_mm: " << data.proxDistanceToTarget_mm
       << "\nVisualDistance_mm: " << data.visualDistanceToTarget_mm
       << "\nVisualAngleAway_rad: " << data.visualAngleAwayFromTarget_rad;
     }

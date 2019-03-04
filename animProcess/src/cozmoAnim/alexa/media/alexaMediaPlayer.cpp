@@ -159,7 +159,7 @@ namespace {
   #define LOG_CHANNEL "Alexa"
   #define LOG(x, ...) LOG_INFO("AlexaMediaPlayer.SpeakerInfo", "%s: " x, _audioInfo.name.c_str(), ##__VA_ARGS__)
 #if ANKI_DEV_CHEATS
-  const bool kSaveDebugAudio = false;
+  CONSOLE_VAR(bool, kSaveAlexaAudio, "Alexa", false);
 #endif
 }
 
@@ -439,6 +439,9 @@ SourceId AlexaMediaPlayer::setSource( const std::string &url, std::chrono::milli
   if( _urlConverter != nullptr ) {
     _urlConverter->shutdown();
   }
+  // Note: calling UrlContentToAttachmentConverter::create() can lead to an SDK thread to call this class's onError(), so
+  // clear the relevant flag here instead of at the beginning of the play loop
+  _errorDownloading = false;
   _urlConverter = playlistParser::UrlContentToAttachmentConverter::create(_contentFetcherFactory, url, shared_from_this(), offset);
   if (!_urlConverter) {
     return 0;
@@ -694,12 +697,13 @@ bool AlexaMediaPlayer::play( SourceId id )
         }
       }
 
-      if( flush || invalidData || _shuttingDown ) {
-        LOG( "done producing data on waveData %p for source %llu (flush:%d invalid:%d)",
+      if( flush || invalidData || _shuttingDown || _errorDownloading ) {
+        LOG( "done producing data on waveData %p for source %llu (flush:%d invalid:%d 404:%d)",
              _waveData.get(),
              id,
              flush,
-             invalidData );
+             invalidData,
+             (int)_errorDownloading );
         _waveData->DoneProducingData();
         break;
       }
@@ -708,8 +712,10 @@ bool AlexaMediaPlayer::play( SourceId id )
     // flush debug dumps
     SavePCM( nullptr );
     SaveMP3( nullptr );
+    
+    invalidData |= _errorDownloading;
 
-    if( (_state == State::Preparing) && (_dataValidity == DataValidity::Valid) ) {
+    if( !invalidData && (_state == State::Preparing) && (_dataValidity == DataValidity::Valid) ) {
       // if the above loop exits and the decoder has prepared valid data (it decoded at least 1 sample),
       // then switch the state to Playable. normally this happens when enough samples have been decoded,
       // but sometimes downloading finishes before that
@@ -727,10 +733,18 @@ bool AlexaMediaPlayer::play( SourceId id )
       SetState( State::ClipPlayable );
       // to be determined is whether the sdk will do something unexpected if we close the readers
       // below when switching to playing a clip.
-      DASMSG(alexa_unsupported_audio_format,
-             "alexa.unsupported_audio_format",
-             "The audio decoder had trouble with the given media");
-      DASMSG_SEND();
+      if( _errorDownloading ) {
+        DASMSG(alexa_unavailable_audio,
+               "alexa.unavailable_audio",
+               "404 error when trying to download audio");
+        DASMSG_SEND();
+      } else {
+        DASMSG(alexa_unsupported_audio_format,
+               "alexa.unsupported_audio_format",
+               "The audio decoder had trouble with the given media");
+        DASMSG_SEND();
+      }
+      _errorDownloading = false;
     }
 
     _readers[id]->Close();
@@ -1150,7 +1164,7 @@ const char* const AlexaMediaPlayer::StateToString() const
 void AlexaMediaPlayer::SavePCM( short* buff, size_t size ) const
 {
 #if ANKI_DEV_CHEATS
-  if( !kSaveDebugAudio ) {
+  if( !kSaveAlexaAudio ) {
     return;
   }
   static int pcmfd = -1;
@@ -1172,7 +1186,7 @@ void AlexaMediaPlayer::SavePCM( short* buff, size_t size ) const
 void AlexaMediaPlayer::SaveMP3( const unsigned char* buff, size_t size ) const
 {
 #if ANKI_DEV_CHEATS
-  if( !kSaveDebugAudio ) {
+  if( !kSaveAlexaAudio ) {
     return;
   }
   static int mp3fd = -1;
@@ -1292,7 +1306,14 @@ bool AlexaMediaPlayer::setMute( bool mute )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaMediaPlayer::onError()
 {
-  LOG( "An error occurred in the streaming of content UNIMPLEMENTED" );
+  // Usually this means the _urlConverter experienced a 404 error when trying to make an attachment reader
+  LOG( "An error occurred in the streaming of content" );
+  
+  // Instead of dealing the the play/stop thread loops, just set a flag that is handled in the play loop. The API here
+  // unfortunately doesn't tell us what sourceID we're dealing with, so we don't know whether the error is with
+  // the current play loop or another. We also don't know if the play loop will have started before or after this
+  // flag is set. Set the flag and hope for the best. TODO: delete this whole class
+  _errorDownloading = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

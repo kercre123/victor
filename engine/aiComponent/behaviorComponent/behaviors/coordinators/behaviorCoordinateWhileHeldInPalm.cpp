@@ -18,6 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/behaviorComponent/heldInPalmTracker.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/movementComponent.h"
 
@@ -99,6 +100,8 @@ void BehaviorCoordinateWhileHeldInPalm::PassThroughUpdate()
   }
 
   const bool heldInPalmWantsToActivate = _iConfig.heldInPalmDispatcher->WantsToBeActivated();
+  
+  GetBEI().GetHeldInPalmTracker().SetIsHeldInPalm(heldInPalmWantsToActivate);
   
   if( !heldInPalmWantsToActivate ){
     _dVars.persistent.lastTimeNotHeldInPalm_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();

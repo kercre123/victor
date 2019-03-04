@@ -15,12 +15,14 @@
 #ifndef __Cozmo_Basestation_Components_JdocsManager_H__
 #define __Cozmo_Basestation_Components_JdocsManager_H__
 
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/recentOccurrenceTracker.h"
 #include "coretech/messaging/shared/LocalUdpClient.h"
 #include "engine/cozmoContext.h"
 #include "engine/robotComponents_fwd.h"
 
 #include "util/entityComponent/iDependencyManagedComponent.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/signalHolder.h"
 #include "util/signals/simpleSignal_fwd.h"

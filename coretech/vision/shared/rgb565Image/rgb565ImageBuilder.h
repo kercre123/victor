@@ -12,7 +12,6 @@
 #ifndef __RGB565_Image_Builder_H__
 #define __RGB565_Image_Builder_H__
 
-#include "clad/types/spriteNames.h"
 #include "util/cladHelpers/cladEnumToStringMap.h"
 
 namespace Anki {

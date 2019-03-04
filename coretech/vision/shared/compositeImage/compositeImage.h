@@ -19,17 +19,10 @@
 #include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
 
 #include "clad/types/compositeImageTypes.h"
-#include "clad/types/spriteNames.h"
 #include "coretech/vision/engine/image.h"
 #include <set>
 
 namespace Anki {
-// Forward declaration
-namespace Util{
-template<class CladEnum>
-class CladEnumToStringMap;
-}
-
 namespace Vision {
 
 class SpriteCache;

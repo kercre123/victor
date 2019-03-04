@@ -13,6 +13,7 @@
 #define __Vision_Shared_SpriteSequence_H__
 
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
+#include "coretech/common/shared/types.h"
 
 #include <string>
 #include <deque>
@@ -42,7 +43,7 @@ public:
   SpriteSequence(LoopConfig config = LoopConfig::Hold);
   virtual ~SpriteSequence();
   
-  uint GetNumFrames() const { return static_cast<uint>(_frames.size()); }
+  uint16_t GetNumFrames() const { return static_cast<uint16_t>(_frames.size()); }
   
   void AddFrame(Vision::SpriteHandle spriteHandle);
   

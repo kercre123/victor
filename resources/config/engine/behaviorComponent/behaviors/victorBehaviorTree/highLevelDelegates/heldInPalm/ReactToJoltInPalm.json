@@ -12,7 +12,6 @@
   //  "joltThresholdMedium"  : 15000,
   //  "joltThresholdHard"    : 20000,
 
-  // TODO(GB): Change to corresponding "jolt" animation(s)
   "animTriggers": ["HeldOnPalmReactToJolt"],
   "wantsToBeActivatedCondition": {
     "conditionType": "RobotShaken",

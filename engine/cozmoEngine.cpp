@@ -149,13 +149,7 @@ static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
      << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(2)) << ' '
      << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(3)) << '\n';
 
-  const auto& proxSensorComponent = robot->GetProxSensorComponent();
-  const auto& proxDataRaw = proxSensorComponent.GetLatestProxDataRaw();
-  ss << std::fixed << std::setprecision(3) << proxDataRaw.signalIntensity << '\n';
-  ss << std::fixed << std::setprecision(3) << proxDataRaw.ambientIntensity << '\n';
-  ss << std::fixed << std::setprecision(3) << proxDataRaw.spadCount << '\n';
-  ss << proxDataRaw.distance_mm << '\n';
-  ss << RangeStatusToString(proxDataRaw.rangeStatus) << '\n';
+  ss << robot->GetProxSensorComponent().GetDebugString();
 
   ss << robotState.carryingObjectID << '\n';
   ss << robotState.carryingObjectOnTopID << '\n';

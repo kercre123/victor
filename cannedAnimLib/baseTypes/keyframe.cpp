@@ -329,36 +329,6 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       return RESULT_FAIL;
     }
 
-
-    bool SpriteSequenceKeyFrame::ParseSequenceNameFromString(const Vision::SpritePathMap* spriteMap,
-                                                             const std::string& sequenceName, 
-                                                             Vision::SpriteName& outName)
-    {
-      // sequenceName is only the folder name - manually check all entries in sprite map
-      // so that just the folder name is pulled out of the full path to try and find a match
-      bool foundMatch = false;
-      for(const auto& key : spriteMap->GetAllKeys()){
-        const auto& fullPath = spriteMap->GetValue(key);
-        const auto& fileName = Util::FileUtils::GetFileName(fullPath);
-        if(fileName == sequenceName){
-          foundMatch = true;
-          outName = key;
-          break;
-        }
-      }
-
-      if(foundMatch){
-        const bool isValidSequence = Vision::IsSpriteSequence(outName, false);
-        ANKI_VERIFY(isValidSequence,
-                    "SpriteSequenceKeyFrame.SetMembersFromJson.InvalidSequence",
-                    "Sprite %s is not marked as a sprite sequence",
-                    SpriteNameToString(outName));
-      }
-
-      return foundMatch;
-    }
-
-
     TimeStamp_t SpriteSequenceKeyFrame::GetKeyframeDuration_ms() const
     {
       if(!SequenceShouldAdvance() ){
@@ -380,58 +350,53 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     void SpriteSequenceKeyFrame::ApplyCompositeImageUpdate(const TimeStamp_t timeSinceAnimStart_ms,
                                                            CompositeImageUpdateSpec&& updateSpec)
     {
+      
       auto& compImg = GetCompositeImage();
       auto* layer = compImg.GetLayerByName(updateSpec.layerName);
       const auto currentFrameNumber = GetFrameNumberForTime(timeSinceAnimStart_ms);
-      Vision::CompositeImageLayer::SpriteEntry entry(updateSpec.spriteCache, updateSpec.seqContainer, 
-                                                      updateSpec.spriteName, currentFrameNumber);
-      if(layer != nullptr){
-        // clear the whole layer if no sprite box name specified
-        if(updateSpec.spriteBox.spriteBoxName == Vision::SpriteBoxName::Count){
-          compImg.ClearLayerByName(updateSpec.layerName);
-          PRINT_NAMED_INFO("AnimationStreamer.UpdateCompositeImage.ClearingLayer", 
-                           "Layer %s cleared from image because spriteBox with count value received",
-                           LayerNameToString(updateSpec.layerName));
-        }else{
-          layer->AddToLayout(updateSpec.spriteBox.spriteBoxName, updateSpec.spriteBox);
-          layer->AddToImageMap(updateSpec.spriteBox.spriteBoxName, entry);
+
+      // Handle the layer/SpriteBox clearing cases first
+      if(updateSpec.spriteBox.spriteBoxName == Vision::SpriteBoxName::Count){
+        compImg.ClearLayerByName(updateSpec.layerName);
+      }else if(Vision::SpritePathMap::kEmptySpriteBoxID == updateSpec.assetID){
+        if(ANKI_VERIFY(layer, "AnimationStreamer.UpdateCompositeImage.LayerNotFound",
+                       "Attempted to clear SB: %s on Layer: %s, but layer isn't present in image",
+                       EnumToString(updateSpec.spriteBox.spriteBoxName),
+                       EnumToString(updateSpec.layerName))){
+          layer->ClearSpriteBoxByName(updateSpec.spriteBox.spriteBoxName);
         }
       }else{
-
-        Vision::CompositeImageLayer layer(updateSpec.layerName);
-        layer.AddToLayout(updateSpec.spriteBox.spriteBoxName, updateSpec.spriteBox);
-
-        layer.AddToImageMap(updateSpec.spriteBox.spriteBoxName, entry);
-        compImg.AddLayer(std::move(layer));
-        PRINT_NAMED_INFO("AnimationStreamer.UpdateCompositeImage.AddingLayer",
-                         "Layer %s added to composite image",
-                         LayerNameToString(updateSpec.layerName));
+        // If it wasn't a clearing case, add or update as appropriate
+        const std::string& assetName = updateSpec.spriteCache->GetSpritePathMap()->GetAssetName(updateSpec.assetID);
+        Vision::CompositeImageLayer::SpriteEntry entry(updateSpec.spriteCache, updateSpec.seqContainer, 
+                                                       assetName, currentFrameNumber);
+        if(nullptr != layer){
+          // Update/Add SB to layer
+          layer->AddOrUpdateSpriteBoxWithEntry(updateSpec.spriteBox, entry);
+        }else{
+          // Add layer and SB to the image
+          Vision::CompositeImageLayer layer(updateSpec.layerName);
+          layer.AddOrUpdateSpriteBoxWithEntry(updateSpec.spriteBox, entry);
+          compImg.AddLayer(std::move(layer));
+        }
       }
     }
 
 
     bool SpriteSequenceKeyFrame::ExtractDataFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe,
-                                                        const Vision::SpritePathMap* spriteMap,
                                                         Vision::SpriteSequenceContainer* seqContainer,
                                                         const Vision::SpriteSequence*& outSeq,
                                                         TimeStamp_t& triggerTime_ms)
     {
       DEV_ASSERT(faceAnimKeyframe != nullptr, "SpriteSequenceKeyFrame.DefineFromFlatBuf.NullAnim");
       auto seqNameStr = faceAnimKeyframe->animName()->str();
-      Vision::SpriteName seqName = Vision::SpriteName::Count;
-      const bool success = ParseSequenceNameFromString(spriteMap, seqNameStr, seqName);
-      if(success){
-        outSeq = seqContainer->GetSequenceAgnostic(seqName, seqNameStr);
-      }else{
-        outSeq = seqContainer->GetUnmappedSequenceByFileName(seqNameStr);
-      }
+      outSeq = seqContainer->GetSpriteSequence(seqNameStr);
 
       SafeNumericCast(faceAnimKeyframe->triggerTime_ms(),  triggerTime_ms, seqNameStr.c_str());
-      return success;
+      return nullptr != outSeq;
     }
 
     bool SpriteSequenceKeyFrame::ExtractDataFromJson(const Json::Value &jsonRoot,
-                                                     const Vision::SpritePathMap* spriteMap,
                                                      Vision::SpriteSequenceContainer* seqContainer,
                                                      const Vision::SpriteSequence*& outSeq,
                                                      TimeStamp_t& triggerTime_ms, 
@@ -450,13 +415,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           strSeqName = strSeqName.substr(lastSlash+1, std::string::npos);
         }
         
-        Vision::SpriteName seqName = Vision::SpriteName::Count;
-        const bool success = ParseSequenceNameFromString(spriteMap, strSeqName, seqName);
-        if(success){
-          outSeq = seqContainer->GetSequenceAgnostic(seqName, strSeqName);
-        }else{
-          outSeq = seqContainer->GetUnmappedSequenceByFileName(strSeqName);
-        }
+        outSeq = seqContainer->GetSpriteSequence(strSeqName);
       }
 
       JsonTools::GetValueOptional(jsonRoot, "frameDuration_ms", frameUpdateInterval);

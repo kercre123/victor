@@ -70,14 +70,15 @@ namespace Vector {
 
   enum class FaceDisplayType {
     Normal,
-    Test,
+    Test,                 // Displays pattern showcasing RGB at different intensities
+    FullWhite,            // Displays a completely white image
     OverrideIndividually, // each eyes parameters operate on their respective eye
     OverrideTogether      // left eye parameters drive both left and right eyes
   };
 
   // Overrides whatever faces we're sending with a 3-stripe test pattern
   // (seems more related to the other ProceduralFace console vars, so putting it in that group instead)
-  CONSOLE_VAR_ENUM(int, kProcFace_Display,              CONSOLE_GROUP, 0, "Normal,Test,Override individually,Override together"); // Override procedural face with ConsoleVars edited version
+  CONSOLE_VAR_ENUM(int, kProcFace_Display,              CONSOLE_GROUP, 0, "Normal,Test,FullWhite,Override individually,Override together"); // Override procedural face with ConsoleVars edited version
 #if PROCEDURALFACE_NOISE_FEATURE
   CONSOLE_VAR_EXTERN(s32, kProcFace_NoiseNumFrames);
 #endif
@@ -187,22 +188,6 @@ namespace Vector {
 
   // Default time to wait before forcing KeepFaceAlive() after the latest stream has stopped
   const f32 kDefaultLongEnoughSinceLastStreamTimeout_s = 0.5f;
-
-  // Default KeepFaceAliveParams
-  #define SET_DEFAULT(param, value) {KeepFaceAliveParameter::param, static_cast<f32>(value)}
-  const std::unordered_map<KeepFaceAliveParameter, f32> _kDefaultKeepFaceAliveParams = {
-    SET_DEFAULT(BlinkSpacingMinTime_ms, 3000),
-    SET_DEFAULT(BlinkSpacingMaxTime_ms, 4000),
-    SET_DEFAULT(EyeDartSpacingMinTime_ms, 250),
-    SET_DEFAULT(EyeDartSpacingMaxTime_ms, 1000),
-    SET_DEFAULT(EyeDartMaxDistance_pix, 6),
-    SET_DEFAULT(EyeDartMinDuration_ms, 50),
-    SET_DEFAULT(EyeDartMaxDuration_ms, 200),
-    SET_DEFAULT(EyeDartOuterEyeScaleIncrease, 0.1f),
-    SET_DEFAULT(EyeDartUpMaxScale, 1.1f),
-    SET_DEFAULT(EyeDartDownMinScale, 0.85f)
-  };
-  #undef SET_DEFAULT
 
   bool kIsInManualUpdateMode    = false;
   u32 kCurrentManualFrameNumber = 0;
@@ -423,9 +408,6 @@ namespace Vector {
 
   Result AnimationStreamer::Init(TextToSpeechComponent* ttsComponent)
   {
-
-    SetDefaultKeepFaceAliveParams();
-
     // TODO: Restore ability to subscribe to messages here?
     //       It's currently hard to do with CPPlite messages.
     // SetupHandlers(_context->GetExternalInterface());
@@ -826,7 +808,7 @@ namespace Vector {
   void AnimationStreamer::Process_updateCompositeImage(const RobotInterface::UpdateCompositeImage& msg)
   {
     Vision::CompositeImageLayer::SpriteBox sb(msg.serializedSpriteBox);
-    UpdateCompositeImage(msg.layerName, sb, msg.spriteName, msg.applyAt_ms);
+    UpdateCompositeImage(msg.layerName, sb, msg.assetID, msg.applyAt_ms);
   }
 
   void AnimationStreamer::Process_playCompositeAnimation(const std::string& name, Tag tag)
@@ -950,7 +932,7 @@ namespace Vector {
 
   Result AnimationStreamer::UpdateCompositeImage(Vision::LayerName layerName,
                                                  const Vision::CompositeImageLayer::SpriteBox& spriteBox,
-                                                 Vision::SpriteName spriteName,
+                                                 uint16_t assetID,
                                                  u32 applyAt_ms)
   {
     if (_streamingAnimation != _proceduralAnimation) {
@@ -967,7 +949,7 @@ namespace Vector {
                                                             spriteSeqContainer,
                                                             layerName,
                                                             spriteBox,
-                                                            spriteName);
+                                                            assetID);
 
       keyframe.QueueCompositeImageUpdate(std::move(spec), applyAt_ms);
     }else{
@@ -975,8 +957,7 @@ namespace Vector {
                   "Keyframe does not have a composite image to update");
     }
 
-
-    return Result::RESULT_FAIL;
+    return Result::RESULT_OK;
   }
 
   void AnimationStreamer::Abort(Tag tag, bool shouldClearProceduralAnim)
@@ -1103,44 +1084,6 @@ namespace Vector {
     return res;
   }
 
-  void AnimationStreamer::SetParam(KeepFaceAliveParameter whichParam, float newValue)
-  {
-    switch(whichParam) {
-      case KeepFaceAliveParameter::BlinkSpacingMaxTime_ms:
-      {
-        const auto maxSpacing_ms = _proceduralTrackComponent->GetMaxBlinkSpacingTimeForScreenProtection_ms();
-        if( newValue > maxSpacing_ms)
-        {
-          LOG_WARNING("AnimationStreamer.SetParam.MaxBlinkSpacingTooLong",
-                      "Clamping max blink spacing to %dms to avoid screen burn-in",
-                      maxSpacing_ms);
-
-          newValue = maxSpacing_ms;
-        }
-        // intentional fall through
-      }
-      case KeepFaceAliveParameter::BlinkSpacingMinTime_ms:
-      case KeepFaceAliveParameter::EyeDartMinDuration_ms:
-      case KeepFaceAliveParameter::EyeDartMaxDuration_ms:
-      case KeepFaceAliveParameter::EyeDartSpacingMinTime_ms:
-      case KeepFaceAliveParameter::EyeDartSpacingMaxTime_ms:
-      {
-        if ((_keepFaceAliveParams[whichParam] != newValue) &&
-            IsKeepAlivePlaying()) {
-          _relativeStreamTime_ms = 0;
-        }
-        break;
-      }
-      default:
-        break;
-    }
-
-    _keepFaceAliveParams[whichParam] = newValue;
-    LOG_DEBUG("AnimationStreamer.SetParam", "%s : %f",
-              EnumToString(whichParam), newValue);
-  }
-
-
   void AnimationStreamer::GetStreamableFace(const AnimContext* context, const ProceduralFace& procFace, Vision::ImageRGB565& outImage)
   {
     ANKI_CPU_PROFILE("AnimationStreamer::GetStreamableFace");
@@ -1160,6 +1103,11 @@ namespace Vector {
           blue_i[j]  = Vision::PixelRGB565(0, 0, value);
         }
       }
+    }
+    else if(kProcFace_Display == (int)FaceDisplayType::FullWhite)
+    {
+      const Vision::PixelRGB565 white(255,255,255);
+      outImage.FillWith(white);
     }
     else
     {
@@ -1853,7 +1801,7 @@ namespace Vector {
             _wasAnimationInterruptedWithNothing = false;
           }
 
-          _proceduralTrackComponent->KeepFaceAlive(_keepFaceAliveParams, _relativeStreamTime_ms);
+          _proceduralTrackComponent->KeepFaceAlive(_relativeStreamTime_ms);
         }
         else
         {
@@ -1994,20 +1942,10 @@ namespace Vector {
     }
     s_enableKeepFaceAlive = enable;
   }
-
-  void AnimationStreamer::SetDefaultKeepFaceAliveParams()
+  
+  void AnimationStreamer::SetKeepFaceAliveFocus(bool enable)
   {
-    LOG_DEBUG("AnimationStreamer.SetDefaultKeepFaceAliveParams", "");
-
-    for(auto param = Util::EnumToUnderlying(KeepFaceAliveParameter::BlinkSpacingMinTime_ms);
-        param != Util::EnumToUnderlying(KeepFaceAliveParameter::NumParameters); ++param) {
-      SetParamToDefault(static_cast<KeepFaceAliveParameter>(param));
-    }
-  } // SetDefaultKeepFaceAliveParams()
-
-  void AnimationStreamer::SetParamToDefault(KeepFaceAliveParameter whichParam)
-  {
-    SetParam(whichParam, _kDefaultKeepFaceAliveParams.at(whichParam));
+    _proceduralTrackComponent->SetKeepFaceAliveFocus(enable);
   }
 
   const std::string AnimationStreamer::GetStreamingAnimationName() const

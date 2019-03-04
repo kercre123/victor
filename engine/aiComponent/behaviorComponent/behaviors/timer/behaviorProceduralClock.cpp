@@ -41,6 +41,8 @@ const char* kStaticElementsKey      = "staticElements";
 const char* kShouldTurnToFaceKey    = "shouldTurnToFace";
 const char* kShouldPlayAudioKey     = "shouldPlayAudioOnClockUpdates";
 
+const char* kClockEmptyGridSpriteName = "clock_empty_grid";
+
 }
 const std::vector<Vision::SpriteBoxName> BehaviorProceduralClock::DigitDisplayList = 
 {
@@ -58,7 +60,7 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
   {
     int i = 0;
     for(auto& digit: config[kDigitMapKey]){
-      _instanceParams.intsToImages[i] = Vision::SpriteNameFromString(digit.asString());
+      _instanceParams.intsToSpriteNames[i] = digit.asString();
       i++;
     }
     ANKI_VERIFY(i == 10, 
@@ -79,8 +81,7 @@ BehaviorProceduralClock::BehaviorProceduralClock(const Json::Value& config)
   if(config.isMember(kStaticElementsKey)){
     for(auto& key: config[kStaticElementsKey].getMemberNames()){
       Vision::SpriteBoxName sbName = Vision::SpriteBoxNameFromString(key);
-      const std::string spriteName =  config[kStaticElementsKey][key].asString();
-      _instanceParams.staticElements[sbName] = Vision::SpriteNameFromString(spriteName);
+      _instanceParams.staticElements[sbName] = config[kStaticElementsKey][key].asString();
     }
   }
 
@@ -273,10 +274,10 @@ void BehaviorProceduralClock::BuildAndDisplayProceduralClock(const int clockOffs
   for(auto& pair : digitMap){
     isLeadingZero &= (pair.second == 0);
     if(isLeadingZero){
-      auto mapEntry = Entry(spriteCache, seqContainer, Vision::SpriteName::Clock_Empty_Grid);
+      auto mapEntry = Entry(spriteCache, seqContainer, kClockEmptyGridSpriteName);
       imageMap.emplace(pair.first, std::move(mapEntry));
     }else{
-      auto mapEntry = Entry(spriteCache, seqContainer, _instanceParams.intsToImages[pair.second]);
+      auto mapEntry = Entry(spriteCache, seqContainer, _instanceParams.intsToSpriteNames[pair.second]);
       imageMap.emplace(pair.first, std::move(mapEntry));
     }
   }

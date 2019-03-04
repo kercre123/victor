@@ -57,7 +57,7 @@
   },
   {
     "feature": "AttentionTransfer",
-    "enabled": true
+    "enabled": false
   },
   {
     "feature": "PopAWheelie",
@@ -113,7 +113,7 @@
   },
   {
     "feature": "StayOnChargerUntilCharged",
-    "enabled": false
+    "enabled": true
   }
 ]
 
