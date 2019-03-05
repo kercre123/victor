@@ -182,7 +182,6 @@ namespace Vision {
     HDTRESULT   _okaoDetectionResultHandle      = NULL;
     HPOINTER    _okaoPartDetectorHandle         = NULL;
     HPTRESULT   _okaoPartDetectionResultHandle  = NULL;
-    HPTRESULT   _okaoPartDetectionResultHandle2 = NULL;
     HEXPRESSION _okaoEstimateExpressionHandle   = NULL;
     HEXPRESSION _okaoExpressionResultHandle     = NULL;
     HSMILE      _okaoSmileDetectHandle          = NULL;
