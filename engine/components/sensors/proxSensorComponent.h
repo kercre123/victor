@@ -73,20 +73,9 @@ public:
   // check its return value rather than calling this method.
   const ProxSensorData& GetLatestProxData() const { return _latestData; }
   
-  // Returns the current pose of the prox sensor w.r.t. robot. Computed on-the-fly
-  // since it depends on the robot's pose.
-  Pose3d GetPose() const;
-  
-  // Outputs true if the given pose falls within the sensor's field of view
-  Result IsInFOV(const Pose3d&, bool& isInFOV) const;
-  
   // Returns true if any part of the lift (or object that it's carrying)
   // falls within the sensor's field of view
   bool IsLiftInFOV() const { return _latestData.isLiftInFOV; }
-
-  // calculate the pose directly in front of the robot where the prox sensor is indicating an object
-  // returns false if sensor reading isn't valid
-  bool CalculateSensedObjectPose(Pose3d& sensedObjectPose) const;
 
   // enable or disable this entire component's ability to update the nav map
   void SetNavMapUpdateEnabled(bool enabled) { _enabled = enabled; }

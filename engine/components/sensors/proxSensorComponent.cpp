@@ -52,8 +52,6 @@ namespace {
   const f32 kMinPitch = DEG_TO_RAD(-8);
   const f32 kMaxPitch = DEG_TO_RAD(8);
 
-  const Vec3f kProxSensorPositionVec_mm{kProxSensorPosition_mm[0], kProxSensorPosition_mm[1], kProxSensorPosition_mm[2]};
-
   // for checking if the state has changed since the last measurement
   const Point3f kRobotTranslationTolerance_mm{0.1f, 0.1f, 0.1f};
   const float   kMeasurementTolerance = .05f;  // percentage based tolerance
@@ -134,48 +132,6 @@ bool ProxSensorComponent::GetLatestDistance_mm(u16& distance_mm) const
 {
   distance_mm = _latestDataRaw.distance_mm;
   return IsLatestReadingValid();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Pose3d ProxSensorComponent::GetPose() const
-{
-  Pose3d sensorPose;
-  sensorPose.SetTranslation(kProxSensorPositionVec_mm);
-  sensorPose.SetRotation(-kProxSensorTiltAngle_rad, Y_AXIS_3D()); // negative since tilt angle is upward
-  sensorPose.SetParent(_robot->GetPose());
-  return sensorPose;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ProxSensorComponent::IsInFOV(const Pose3d& inPose, bool& isInFOV) const
-{
-  isInFOV = false;
-
-  const auto& sensorPose = GetPose();
-  Pose3d inPoseWrtSensor("inPoseWrtSensor");
-  if (!inPose.GetWithRespectTo(sensorPose, inPoseWrtSensor)) {
-    return Result::RESULT_FAIL;
-  }
-  
-  // Sensor beam goes along its x axis, so the distance away is simply the pose's x value
-  const auto dist = inPoseWrtSensor.GetTranslation().x();
-  if (dist < 0) {
-    // Not in field of view if behind the sensor
-    isInFOV = false;
-    return Result::RESULT_OK;
-  }
-  
-  // Compute r (which is the radial distance from the beam's center to the pose in question)
-  const float r = std::hypot(inPoseWrtSensor.GetTranslation().y(),
-                             inPoseWrtSensor.GetTranslation().z());
-
-  // The sensor beam is a cone, and the cone's radius at a given distance is
-  // given by distance * tan(fullFOV / 2)
-  const float beamRadiusAtDist = dist * std::tan(kProxSensorFullFOV_rad / 2.f);
-  
-  isInFOV = (r <= beamRadiusAtDist);
-  
-  return Result::RESULT_OK;
 }
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -278,21 +234,6 @@ void ProxSensorComponent::ProcessRawSensorData()
     _previousMeasurement = _latestData.distance_mm;
   }
   ++_measurementsAtPose;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ProxSensorComponent::CalculateSensedObjectPose(Pose3d& sensedObjectPose) const
-{
-  u16 proxDist_mm = 0;
-  const bool sensorIsValid = GetLatestDistance_mm(proxDist_mm);
-  if(sensorIsValid){
-    const Pose3d proxPose = GetPose();
-    Transform3d transformToSensed(Rotation3d(0.f, Z_AXIS_3D()), {0.f, proxDist_mm, 0.f});
-    // Since prox pose is destroyed when it falls out of scope, don't want parent invalidated
-    sensedObjectPose = Pose3d(transformToSensed, proxPose).GetWithRespectToRoot();
-  }
-  return sensorIsValid;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
