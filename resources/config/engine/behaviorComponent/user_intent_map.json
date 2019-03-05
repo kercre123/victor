@@ -17,6 +17,31 @@
       "user_intent": "play_anygame"
     },
     {
+      "cloud_intent": "intent_play_specific_extend",
+      "app_intent": "intent_play_specific",
+      "user_intent": "play_specific"
+    },
+    {
+      "cloud_intent": "intent_play_blackjack",
+      "user_intent": "play_blackjack"
+    },
+    {
+      "cloud_intent": "intent_play_fistbump",
+      "user_intent": "play_fistbump"
+    },
+    {
+      "cloud_intent": "intent_play_pickupcube",
+      "user_intent": "play_pickupcube"
+    },
+    {
+      "cloud_intent": "intent_play_popawheelie",
+      "user_intent": "play_popawheelie"
+    },
+    {
+      "cloud_intent": "intent_play_rollcube",
+      "user_intent": "play_rollcube"
+    },
+    {
       "cloud_intent": "intent_imperative_quiet",
       "app_intent": "intent_imperative_quiet",
       "user_intent": "imperative_quiet"
@@ -142,11 +167,6 @@
       "cloud_intent": "intent_system_sleep",
       "app_intent": "intent_system_sleep",
       "user_intent": "system_sleep"
-    },
-    {
-      "cloud_intent": "intent_play_specific_extend",
-      "app_intent": "intent_play_specific",
-      "user_intent": "play_specific"
     },
     {
       "user_intent": "meet_victor",

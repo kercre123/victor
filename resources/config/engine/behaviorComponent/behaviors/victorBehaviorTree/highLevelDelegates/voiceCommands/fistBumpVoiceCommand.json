@@ -8,6 +8,9 @@
     {
       "type": "play_specific",
       "entity_behavior": "fist_bump"
+    },
+    {
+      "type" : "play_fistbump"
     }
   ],
 
