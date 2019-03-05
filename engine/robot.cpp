@@ -2365,10 +2365,9 @@ external_interface::RobotState* Robot::GenerateRobotStateProto() const
   auto* dstProxData = new external_interface::ProxData(
     srcProxData.distance_mm,
     srcProxData.signalQuality,
-    srcProxData.isInValidRange,
-    srcProxData.isValidSignalQuality,
-    srcProxData.isLiftInFOV,
-    srcProxData.isTooPitched);
+    srcProxData.unobstructed,
+    srcProxData.foundObject,
+    srcProxData.isLiftInFOV);
   msg->set_allocated_prox_data(dstProxData);
 
   auto* dstTouchData = new external_interface::TouchData(
