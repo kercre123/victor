@@ -25,7 +25,8 @@ static const int      CHARGE_FULL_TIME = 200 * 60 * 5;           // 5 minutes
 
 static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.6);
 static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 45*200;  // 45 seconds
-static const int      POWER_DOWN_WARNING_TIME = 4*60*200; // 4 minutes
+static const int      POWER_DOWN_WARNING_TIME = 3*60*200; // 4 minutes
+static const int      POWER_DOWN_BATTERY_TIME = 10*200; // 10 seconds
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(3.50), ~0);
 static const int      MINIMUM_ON_CHARGER = 5;
@@ -53,6 +54,7 @@ bool Analog::on_charger = false;
 static bool charge_cutoff = false;
 static bool too_hot = false;
 static bool power_low = false;
+static int shutting_down_timer = 0;
 static int heat_counter = 0;
 static TemperatureAlarm temp_alarm = TEMP_ALARM_SAFE;
 
@@ -171,6 +173,7 @@ void Analog::transmit(BodyToHead* data) {
   data->battery.charger = EXACT_ADC(ADC_VEXT);
   data->battery.temperature = (int16_t) temperature;
   data->battery.flags = 0
+                      | (shutting_down_timer ? POWER_BATTERY_SHUTDOWN : 0)
                       | (power_low ? POWER_IS_TOO_LOW : 0)
                       | (is_charging ? POWER_IS_CHARGING : 0)
                       | (on_charger ? POWER_ON_CHARGER : 0)
@@ -312,18 +315,29 @@ static void handleLowBattery() {
   // Low voltage shutdown
   static int power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
   static int power_down_limit = POWER_DOWN_WARNING_TIME;
+  static int count_up = 0;
+  static const int count_up_limit = 200;
 
-  if (Analog::on_charger) {
-    power_down_limit = POWER_DOWN_WARNING_TIME;
-    power_low = false;
-    return ;
-  }
-
-  if (power_low) {
-    if (--power_down_limit < 0) {
+  if (count_up < count_up_limit) {
+    if (EXACT_ADC(ADC_VMAIN) < LOW_VOLTAGE_POWER_DOWN_POINT) {
       Power::setMode(POWER_STOP);
     }
+    count_up++;
+  } else if (Analog::on_charger) {
+    power_down_limit = POWER_DOWN_WARNING_TIME;
+    power_low = false;
+  } else if (shutting_down_timer > 0 && --shutting_down_timer == 0) {
+    Power::setMode(POWER_STOP);
+  } else if (power_low) {
+    if (--power_down_limit < 0) {
+      shutting_down_timer = POWER_DOWN_BATTERY_TIME;
+    }
   } else if (EXACT_ADC(ADC_VMAIN) < LOW_VOLTAGE_POWER_DOWN_POINT) {
+    // We do not 
+    if (count_up < count_up_limit) {
+      Power::setMode(POWER_STOP);
+    }
+
     if (--power_down_timer <= 0) {
       power_low = true;
     }
