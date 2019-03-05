@@ -1149,7 +1149,7 @@
   },
   {
     "CladEvent": "ReactToObstacle",
-    "AnimName": "ag_rtobstacle_react_01"
+    "AnimName": "ag_sudden_object_react"
   },
   {
     "CladEvent": "ReactToOnLeftSideGetIn",
