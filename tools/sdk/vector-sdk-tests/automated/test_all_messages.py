@@ -394,30 +394,30 @@ MESSAGES_TO_TEST = [
     # DefineCustomObject message
     # This tests sometimes results in a delay or hang, causing the test script to fail.
     #
-    # (Interface.DefineCustomObject,
-    #  protocol.DefineCustomObjectRequest(custom_type=1,
-    #                              is_unique=1,
-    #                              custom_box=protocol.CustomBoxDefinition(marker_front=1,
-    #                                               marker_back=2,
-    #                                               marker_top=3,
-    #                                               marker_bottom=4,
-    #                                               marker_left=5,
-    #                                               marker_right=6,
-    #                                               x_size_mm=1,
-    #                                               y_size_mm=1,
-    #                                               z_size_mm=1,
-    #                                               marker_width_mm=1,
-    #                                               marker_height_mm=1)),
-    #  TestResultIsTypeWithStatusAndFieldNames(protocol.DefineCustomObjectResponse,
-    #                                             protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), # pylint: disable=no-member
-    #                                             ["success"])),
+    (Interface.DefineCustomObject,
+     protocol.DefineCustomObjectRequest(custom_type=1,
+                                 is_unique=1,
+                                 custom_box=protocol.CustomBoxDefinition(marker_front=1,
+                                                  marker_back=2,
+                                                  marker_top=3,
+                                                  marker_bottom=4,
+                                                  marker_left=5,
+                                                  marker_right=6,
+                                                  x_size_mm=1,
+                                                  y_size_mm=1,
+                                                  z_size_mm=1,
+                                                  marker_width_mm=1,
+                                                  marker_height_mm=1)),
+     TestResultIsTypeWithStatusAndFieldNames(protocol.DefineCustomObjectResponse,
+                                                protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED), # pylint: disable=no-member
+                                                ["success"])),
 
     # DeleteCustomObjects message
     # This tests sometimes results in a delay or hang, causing the test script to fail.
-    #
-    # (Interface.DeleteCustomObjects,
-    #  protocol.DeleteCustomObjectsRequest(mode=protocol.CustomObjectDeletionMode.Value("DELETION_MASK_FIXED_CUSTOM_OBJECTS")),
-    #  TestResultMatches(protocol.DeleteCustomObjectsResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
+
+    (Interface.DeleteCustomObjects,
+     protocol.DeleteCustomObjectsRequest(mode=protocol.CustomObjectDeletionMode.Value("DELETION_MASK_FIXED_CUSTOM_OBJECTS")),
+     TestResultMatches(protocol.DeleteCustomObjectsResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
 
     # NOTE: Add additional messages here
 ]
