@@ -127,6 +127,8 @@ public:
     std::string _result;
     bool        _resultReady; // Result is ready for use by the webservice thread
     bool        _done;        // Result has been used and now it's OK for main thread to delete this item
+    std::mutex  _readyMutex;
+    std::condition_variable _readyCondition;
   };
 
   void AddRequest(Request* requestPtr);
