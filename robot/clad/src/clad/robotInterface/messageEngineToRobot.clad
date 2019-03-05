@@ -212,7 +212,6 @@ message EngineFullyLoaded
 message CalmPowerMode
 {
   bool enable,
-  bool calibOnDisable,
 }
 
 // Tells syscon to pull the plug

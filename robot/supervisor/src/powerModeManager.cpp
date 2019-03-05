@@ -17,16 +17,12 @@ namespace {
   // Whether or not active mode (i.e. opposite of calm mdoe) is enabled
   bool enable_        = false;
 
-  // Whether or not motors should be calibrated when transitioning from calm to active
-  bool calibOnEnable_ = false;
-
 } // "private" members
 
 
-void EnableActiveMode(bool enable, bool calibOnEnable)
+void EnableActiveMode(bool enable)
 {
   enable_ = enable;
-  calibOnEnable_ = calibOnEnable;
 }
 
 bool IsActiveModeEnabled()
@@ -50,22 +46,19 @@ void Update()
     // Active mode should be enabled, but it's not.
     // Enable it!
     AnkiInfo("PowerModeManager.EnableActiveMode", 
-             "enable: %d (%d), calib: %d", 
-             enable_, shouldEnableInternally, calibOnEnable_);
+             "enable: %d (%d)", 
+             enable_, shouldEnableInternally);
     DASMSG(power_mode_manager_enable_active_mode, "PowerModeManager.EnableActiveMode", "Enabling syscon active mode");
     DASMSG_SET(i1, enable_, "Enable (external)");
     DASMSG_SET(i2, shouldEnableInternally, "Should enable internally because of commanded motors");
-    //DASMSG_SET(i3, autoDisable_, "Auto calm mode");
-    DASMSG_SET(i4, calibOnEnable_, "Calibrate on enable");
     DASMSG_SEND();
     
     HAL::PowerSetDesiredMode(HAL::POWER_MODE_ACTIVE);
 
-    if (calibOnEnable_ && enable_) {
-      AnkiInfo("PowerModeManager.CalibrateOnActiveMode", "");
-      const bool autoStarted = true;
-      LiftController::StartCalibrationRoutine(autoStarted, MotorCalibrationReason::PowerSaveEnteringActiveMode);
-      HeadController::StartCalibrationRoutine(autoStarted, MotorCalibrationReason::PowerSaveEnteringActiveMode);
+    if (enable_) {
+      AnkiInfo("PowerModeManager.SetMotorsUncalibrated", "");
+      LiftController::SetEncoderInvalid();
+      HeadController::SetEncoderInvalid();
     }
   } else if (!shouldEnable && isHALActiveModeEnabled) {
 
@@ -75,8 +68,6 @@ void Update()
     DASMSG(power_mode_manager_disable_active_mode, "PowerModeManager.DisableActiveMode", "Disabling syscon active mode");
     DASMSG_SET(i1, enable_, "Enable (external)");
     DASMSG_SET(i2, shouldEnableInternally, "Should enable internally because of commanded motors");
-    //DASMSG_SET(i3, autoDisable_, "Auto calm mode");
-    DASMSG_SET(i4, calibOnEnable_, "Calibrate on enable");
     DASMSG_SEND();
     HAL::PowerSetDesiredMode(HAL::POWER_MODE_CALM);
   }

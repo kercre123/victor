@@ -688,6 +688,11 @@ namespace HeadController {
       return encoderInvalidStartTime_ms_ > 0;
     }
 
+    void SetEncoderInvalid() 
+    {
+      encoderInvalidStartTime_ms_ = HAL::GetTimeStamp();
+    }
+
   } // namespace HeadController
   } // namespace Vector
 } // namespace Anki

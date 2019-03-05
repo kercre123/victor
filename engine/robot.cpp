@@ -222,18 +222,6 @@ void SayText(ConsoleFunctionContextRef context)
 
 CONSOLE_FUNC(SayText, kTtsCoordinatorPath, const char* text);
 
-
-static void EnableCalmPowerMode(ConsoleFunctionContextRef context)
-{
-  if (_thisRobot != nullptr) {
-    const bool enableCalm = ConsoleArg_Get_Bool(context, "enable");
-    const bool calibOnDisable = ConsoleArg_GetOptional_Bool(context, "calibOnDisable", false);
-    _thisRobot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(enableCalm, calibOnDisable)));
-  }
-}
-
-CONSOLE_FUNC(EnableCalmPowerMode, "EnableCalmPowerMode", bool enable, optional bool calibOnDisable);
-
 } // end namespace
 
 #endif

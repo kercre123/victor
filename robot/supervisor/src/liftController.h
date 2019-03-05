@@ -113,6 +113,10 @@ namespace Anki {
       // sycon reported that the encoder is invalid
       bool IsEncoderInvalid();
 
+      // Force encoder to be considered invalid, signalling to engine that
+      // calibration is required
+      void SetEncoderInvalid();
+
     } // namespace LiftController
   } // namespace Vector
 } // namespace Anki
