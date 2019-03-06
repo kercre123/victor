@@ -50,7 +50,6 @@ namespace Vector {
 
 namespace {
   const char* kSearchTurnAnimKey                 = "searchTurnAnimTrigger";
-  const char* kSearchTurnWaitingForImagesAnimKey = "searchTurnWaitingForImagesAnimTrigger";
   const char* kSearchTurnEndAnimKey              = "searchTurnEndAnimTrigger";
   const char* kPostSearchAnimTrigger             = "postSearchAnimTrigger";
   const char* kMinSearchAngleSweepKey            = "minSearchAngleSweep_deg";
@@ -60,14 +59,9 @@ namespace {
   const char* kNumSearchesBeforePlayingPostSearchAnim = "numSearchesBeforePlayingPostSearchAnim";
   const char* kMinDrivingDistKey                 = "minDrivingDist_mm";
   const char* kMaxDrivingDistKey                 = "maxDrivingDist_mm";
-  const char* kUseExposureCyclingKey             = "useExposureCycling";
-  const char* kNumImagesToWaitForKey             = "numImagesToWaitFor";
 
   const float kMinCliffPenaltyDist_mm = 100.0f;
   const float kMaxCliffPenaltyDist_mm = 600.0f;
-  
-  // Enable for debug, to save images during WaitForImageAction
-  CONSOLE_VAR(bool, kFindHome_SaveImages, "Behaviors.FindHome", false);
   
   // When generating new locations from which to search for the charger, new
   // locations should be at least this far from previously-searched locations.
@@ -96,11 +90,9 @@ BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, cons
 {
   searchTurnAnimTrigger = AnimationTrigger::Count;
   searchTurnEndAnimTrigger = AnimationTrigger::Count;
-  waitForImagesAnimTrigger = AnimationTrigger::Count;
   postSearchAnimTrigger = AnimationTrigger::Count;
   
   JsonTools::GetCladEnumFromJSON(config, kSearchTurnAnimKey, searchTurnAnimTrigger, debugName);
-  JsonTools::GetCladEnumFromJSON(config, kSearchTurnWaitingForImagesAnimKey, waitForImagesAnimTrigger, debugName);
   JsonTools::GetCladEnumFromJSON(config, kSearchTurnEndAnimKey, searchTurnEndAnimTrigger, debugName);
   JsonTools::GetCladEnumFromJSON(config, kPostSearchAnimTrigger, postSearchAnimTrigger, debugName);
   minSearchAngleSweep_deg = JsonTools::ParseFloat(config, kMinSearchAngleSweepKey, debugName);
@@ -113,8 +105,6 @@ BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, cons
   homeFilter              = std::make_unique<BlockWorldFilter>();
   searchSpacePointEvaluator = std::make_unique<Util::RejectionSamplerHelper<Point2f>>();
   searchSpacePolyEvaluator  = std::make_unique<Util::RejectionSamplerHelper<Poly2f>>();
-  useExposureCycling      = JsonTools::ParseBool(config, kUseExposureCyclingKey, debugName);
-  numImagesToWaitFor      = JsonTools::ParseInt32(config, kNumImagesToWaitForKey, debugName);
   
   // Set up block world filter for finding charger object
   homeFilter->AddAllowedType(ObjectType::Charger_Basic);
@@ -151,7 +141,6 @@ void BehaviorFindHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) 
 {
   const char* list[] = {
     kSearchTurnAnimKey,
-    kSearchTurnWaitingForImagesAnimKey,
     kSearchTurnEndAnimKey,
     kPostSearchAnimTrigger,
     kMinSearchAngleSweepKey,
@@ -161,8 +150,6 @@ void BehaviorFindHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) 
     kNumSearchesBeforePlayingPostSearchAnim,
     kMinDrivingDistKey,
     kMaxDrivingDistKey,
-    kUseExposureCyclingKey,
-    kNumImagesToWaitForKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 } 
@@ -196,8 +183,18 @@ void BehaviorFindHome::InitBehavior()
   _iConfig.condHandleCollisions = _iConfig.searchSpacePolyEvaluator->AddCondition(
     std::make_shared<RejectIfCollidesWithMemoryMap>(kTypesToBlockSampling)
   );
+
+  _iConfig.observeChargerBehavior = FindBehavior("RobustObserveCharger");
+  DEV_ASSERT(_iConfig.observeChargerBehavior != nullptr, "BehaviorFindHome.InitBehavior.NullObserveChargerBehavior");
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindHome::GetAllDelegates(std::set<IBehavior*>& delegates) const
+{
+  if( _iConfig.observeChargerBehavior ) {
+    delegates.insert( _iConfig.observeChargerBehavior.get() );
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::AlwaysHandleInScope(const EngineToGameEvent& event)
@@ -313,10 +310,7 @@ void BehaviorFindHome::TransitionToStartSearch()
              "We are too close to a previously-searched location, so driving to a new search pose");
     TransitionToRandomDrive();
   } else {
-    // Before beginning the search, we attempt to detect Darkness
-    //  since this decides what the low-light vision strategy is.
-    WaitForImagesAction* waitForIllumState = new WaitForImagesAction(2, VisionMode::DetectingIllumination);
-    DelegateIfInControl(waitForIllumState, &BehaviorFindHome::TransitionToLookInPlace);
+    TransitionToLookInPlace();
   }
 }
 
@@ -324,67 +318,10 @@ void BehaviorFindHome::TransitionToStartSearch()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::TransitionToLookInPlace()
 {
-  auto* action = new CompoundActionSequential();
-  
-  // First move the head to look forward, which will maximize the chance of seeing the charger
-  action->AddAction(new MoveHeadToAngleAction(0.f));
-
-  // Decide whether we want to use:
-  // - exposure cycling
-  // - image compositing
-  WaitForImagesAction* waitForImagesAction = nullptr;
-
-  if(_dVars.useImageCompositing) {
-    GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, {
-      {VisionMode::CompositingImages,        EVisionUpdateFrequency::High},
-      {VisionMode::FullFrameMarkerDetection, EVisionUpdateFrequency::High},
-      {VisionMode::MeteringFromChargerOnly,  EVisionUpdateFrequency::High},
-    });
-    waitForImagesAction = new WaitForImagesAction(_iConfig.numImagesToWaitFor, VisionMode::DetectingMarkers);
-  } else {
-    GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, {
-      {VisionMode::CyclingExposure,          EVisionUpdateFrequency::High},
-      {VisionMode::FullFrameMarkerDetection, EVisionUpdateFrequency::High},
-      {VisionMode::MeteringFromChargerOnly,  EVisionUpdateFrequency::High},
-    });
-    waitForImagesAction = new WaitForImagesAction(_iConfig.numImagesToWaitFor, VisionMode::DetectingMarkers);
+  if(ANKI_VERIFY(_iConfig.observeChargerBehavior->WantsToBeActivated(), 
+                 "BehaviorFindHome.TransitionToLookInPlace.ObserveChargerBehaviorDWTA", "" )) {
+    DelegateIfInControl(_iConfig.observeChargerBehavior.get(), &BehaviorFindHome::TransitionToSearchTurn);
   }
-
-  if(kFindHome_SaveImages)
-  {
-    const std::string path = GetBEI().GetRobotInfo().GetDataPlatform()->pathToResource(Util::Data::Scope::Cache,
-                                                                                       "findHomeImages");
-    ImageSaverParams params(path,
-                            ImageSaverParams::Mode::Stream,
-                            -1);  // Quality: save PNGs
-    
-    waitForImagesAction->SetSaveParams(params);
-  }
-  
-  const auto currMood = GetBEI().GetMoodManager().GetSimpleMood();
-  const bool isHighStim = (currMood == SimpleMoodType::HighStim);
-  
-  if (isHighStim) {
-    action->AddAction(waitForImagesAction);
-  } else {
-    // In non-high-stim, play a "waiting for images" animation in parallel with the wait for
-    // images action, and play a "search turn end" animation after the "wait for images" anim.
-    action->AddAction(new LoopAnimWhileAction(waitForImagesAction,
-                                              _iConfig.waitForImagesAnimTrigger));
-    action->AddAction(new TriggerAnimationAction(_iConfig.searchTurnEndAnimTrigger));
-  }
-  
-  DelegateIfInControl(action, [this](){
-    // Unsubscribe from these vision modes since we enabled them specifically for Look
-    GetBEI().GetVisionScheduleMediator().RemoveVisionModeSubscriptions(this, {
-      VisionMode::CyclingExposure, 
-      VisionMode::CompositingImages,
-      VisionMode::FullFrameMarkerDetection,
-      VisionMode::MeteringFromChargerOnly,
-    });
-
-    TransitionToSearchTurn();
-  });
 }
 
 

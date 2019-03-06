@@ -52,6 +52,7 @@ protected:
   virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
+  virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
 
   // Helper method used as the callback for when the VisionProcessingResult is ready
   void CheckVisionProcessingResult(const VisionProcessingResult& result);
@@ -67,15 +68,6 @@ private:
     float       minDrivingDist_mm = 0.f;
     float       maxDrivingDist_mm = 0.f;
     
-    // Enable to use exposure cycling while waiting for searching for charger to improve chances
-    // of seeing it in difficult illumination (backlight, harsh sunlight). NumImagesToWaitFor (below)
-    // also should be increased
-    bool        useExposureCycling = true;
-    
-    // If using cycling exposure to find charger (above), we need to wait at least cycle_length * auto_exp_period frames
-    // Default is auto exposure every 5 frames and cycle length 3, meaning 15 frames
-    int         numImagesToWaitFor = 15;
-    
     AnimationTrigger searchTurnAnimTrigger;
     AnimationTrigger searchTurnEndAnimTrigger;
     AnimationTrigger waitForImagesAnimTrigger;
@@ -88,6 +80,8 @@ private:
     std::shared_ptr<RobotPointSamplerHelper::RejectIfInRange> condHandleNearPrevSearch;
     std::shared_ptr<RobotPointSamplerHelper::RejectIfWouldCrossCliff> condHandleCliffs;
     std::shared_ptr<RobotPointSamplerHelper::RejectIfCollidesWithMemoryMap> condHandleCollisions;
+
+    ICozmoBehaviorPtr observeChargerBehavior = nullptr;
   };
 
   struct DynamicVariables {
