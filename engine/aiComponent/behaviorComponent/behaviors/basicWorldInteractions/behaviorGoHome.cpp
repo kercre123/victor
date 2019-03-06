@@ -16,7 +16,6 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/chargerActions.h"
 #include "engine/actions/driveToActions.h"
-#include "engine/actions/visuallyVerifyActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -142,6 +141,7 @@ void BehaviorGoHome::GetAllDelegates(std::set<IBehavior*>& delegates) const
   delegates.insert(_iConfig.clearChargerAreaBehavior.get());
   delegates.insert(_iConfig.requestHomeBehavior.get());
   delegates.insert(_iConfig.wiggleOntoChargerBehavior.get());
+  delegates.insert(_iConfig.observeChargerBehavior.get());
 }
 
 
@@ -164,6 +164,9 @@ void BehaviorGoHome::InitBehavior()
                                                                     _iConfig.wiggleOntoChargerBehavior);
   DEV_ASSERT(_iConfig.wiggleOntoChargerBehavior != nullptr,
              "BehaviorGoHome.InitBehavior.NullWiggleOntoChargerBehavior");
+
+  _iConfig.observeChargerBehavior = FindBehavior("RobustObserveCharger");
+  DEV_ASSERT(_iConfig.observeChargerBehavior != nullptr, "BehaviorGoHome.InitBehavior.NullObserveChargerBehavior");
 }
 
 
@@ -265,8 +268,8 @@ void BehaviorGoHome::TransitionToObserveCharger()
     }
     const auto& robotInfo = GetBEI().GetRobotInfo();
     
-    auto afterObservationCallback = [&, this]() {
-      if (robotInfo.GetCarryingComponent().IsCarryingObject()) {
+    auto afterObservationCallback = [this]() {
+      if (GetBEI().GetRobotInfo().GetCarryingComponent().IsCarryingObject()) {
         TransitionToPlacingCubeOnGround();
       } else {
         TransitionToCheckDockingArea();
@@ -281,14 +284,20 @@ void BehaviorGoHome::TransitionToObserveCharger()
     const bool farFromCharger = (robotToChargerDist_mm > kFarFromChargerThreshold_mm);
     const bool observedRecently = robotInfo.GetLastMsgTimestamp() - charger->GetLastObservedTime() < kRecentlyObservedChargerThreshold_ms;
     if (farFromCharger || !observedRecently) {
-      auto* action = new CompoundActionSequential();
-      action->AddAction(new DriveToPoseAction(charger->GenerateObservationPoses(GetRNG())));
-      
-      auto* visuallyVerifyAction = new VisuallyVerifyObjectAction(charger->GetID());
-      visuallyVerifyAction->SetUseCyclingExposure();
-      action->AddAction(visuallyVerifyAction);
-      
-      DelegateIfInControl(action, afterObservationCallback);
+      // Note: nested delegate calls will perform the following actions
+      // - drive to a random pose
+      // - look for the charger
+      // - transition to the next behavior sub-state
+      // It will not check if the charger was seen during the observation action
+      auto* driveAction = new DriveToPoseAction(charger->GenerateObservationPoses(GetRNG()));
+      DelegateIfInControl(driveAction, [this,afterObservationCallback](){
+        const bool observeChargerWantsToRun = _iConfig.observeChargerBehavior->WantsToBeActivated();
+        if(observeChargerWantsToRun) {
+          DelegateIfInControl(_iConfig.observeChargerBehavior.get(), afterObservationCallback);
+        } else {
+          PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToObserveCharger", "Visual verify behavior does not want to be activated.");
+        }
+      });
     } else {
       afterObservationCallback();
     }
@@ -418,16 +427,9 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
   // degree turn. We could have been bumped, or the charger could
   // have moved. This is the last chance to verify that we're in a
   // good position to start the docking sequence.
-  
-  // Verify that we're seeing the charger, then wait for additional images to ensure we have an accurate pose.
-  auto* compoundAction = new CompoundActionSequential();
-  auto* visuallyVerifyAction = new VisuallyVerifyObjectAction(_dVars.chargerID);
-  visuallyVerifyAction->SetUseCyclingExposure();
-  compoundAction->AddAction(visuallyVerifyAction);
-  
-  const int kNumAdditionalImagesToWaitFor = 3;
-  compoundAction->AddAction(new WaitForImagesAction(kNumAdditionalImagesToWaitFor, VisionMode::DetectingMarkers));
 
+  // Helper lambda --- verifies the observed charger pose is within tolerance
+  //  for any open loop turning, repositioning, and backwards driving actions
   auto checkPoseFunc = [this]() -> bool {
     const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
     if (charger == nullptr) {
@@ -480,39 +482,56 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
       }
     }
   };
-  // note: When the ActionCompletedCallback returns, the handle will be reset.
-  //  This will trigger the un-registration of the callback.
+  // Note: we destroy this handle at the end of visual-verification action
+  // It's destruction triggers the unsubscribe of the callback, preventing
+  //  any unnecesary callbacks while it is not needed.
   _dVars.visionProcessingResultHandle = GetBEI().GetVisionComponent().RegisterVisionResultCallback(func);
   
-  DelegateIfInControl(compoundAction,
-                      [checkPoseFunc, this](ActionResult result) {
-                        // Destroy the signal handle so we don't get unnecessary callbacks
-                        _dVars.visionProcessingResultHandle.reset();
-                        const auto resultCategory = IActionRunner::GetActionResultCategory(result);
-                        const bool poseOk = checkPoseFunc();
-                        if ((resultCategory == ActionResultCategory::SUCCESS) && poseOk) {
-                          TransitionToTurn();
-                        } else if (result == ActionResult::VISUAL_OBSERVATION_FAILED) {
-                          // If visual observation failed, then we've successfully gotten to the charger
-                          // pre-action pose, but it is no longer there. Delete the charger from the map.
-                          PRINT_NAMED_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.DeletingCharger",
-                                              "Deleting charger with ID %d since visual verification failed",
-                                              _dVars.chargerID.GetValue());
-                          const bool removeChargerFromBlockworld = true;
-                          DASMSG(go_home_charger_not_visible, "go_home.charger_not_visible", "GoHome behavior failure because the charger is not seen when should be.");
-                          DASMSG_SET(i1, _dVars.numImagesDetectingMarkers, "Count of total number of processed image frames searching for Markers");
-                          DASMSG_SET(i2, _dVars.numImagesTooDark, "Count of number of processed image frames (searching for Markers) that are TooDark");
-                          DASMSG_SEND();
-                          ActionFailure(removeChargerFromBlockworld);
-                        } else if (_dVars.turnToDockRetryCount++ < _iConfig.turnToDockRetryCount) {
-                          // Simply go back to the starting pose, which will allow visual
-                          // verification to happen again, etc.
-                          TransitionToDriveToCharger();
-                        } else {
-                          // Out of retries
-                          ActionFailure(false);
-                        }
-                      });
+  const bool observeChargerWantsToRun = _iConfig.observeChargerBehavior->WantsToBeActivated();
+  if(observeChargerWantsToRun) {
+
+    const RobotTimeStamp_t verifyStartTime = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
+    const auto checkChargerSeenFunc = [this, verifyStartTime]()->bool{
+      ObservableObject* object = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
+      if(object == nullptr) {
+        return false;
+      }
+      // Has to be seen sometime after the observe action
+      const RobotTimeStamp_t obsTime = object->GetLastObservedTime();
+      return (obsTime >= verifyStartTime);
+    };
+
+    DelegateIfInControl(_iConfig.observeChargerBehavior.get(), [this, checkPoseFunc, checkChargerSeenFunc](){
+      // Destroy the signal handle so we don't get unnecessary callbacks
+      _dVars.visionProcessingResultHandle.reset();
+      const bool poseOk = checkPoseFunc();
+      const bool chargerSeen = checkChargerSeenFunc();
+      if (poseOk && chargerSeen) {
+        TransitionToTurn();
+      } else if (!chargerSeen) {
+        // If visual observation failed, then we've successfully gotten to the charger
+        // pre-action pose, but it is no longer there. Delete the charger from the map.
+        PRINT_NAMED_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.DeletingCharger",
+                            "Deleting charger with ID %d since visual verification failed",
+                            _dVars.chargerID.GetValue());
+        const bool removeChargerFromBlockworld = true;
+        DASMSG(go_home_charger_not_visible, "go_home.charger_not_visible", "GoHome behavior failure because the charger is not seen when should be.");
+        DASMSG_SET(i1, _dVars.numImagesDetectingMarkers, "Count of total number of processed image frames searching for Markers");
+        DASMSG_SET(i2, _dVars.numImagesTooDark, "Count of number of processed image frames (searching for Markers) that are TooDark");
+        DASMSG_SEND();
+        ActionFailure(removeChargerFromBlockworld);
+      } else if (_dVars.turnToDockRetryCount++ < _iConfig.turnToDockRetryCount) {
+        // Simply go back to the starting pose, which will allow visual
+        // verification to happen again, etc.
+        TransitionToDriveToCharger();
+      } else {
+        // Out of retries
+        ActionFailure(false);
+      }
+    });
+  } else {
+    PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToCheckPreTurnPosition.ObserveChargerBehaviorDWTA","");
+  }
 }
   
 

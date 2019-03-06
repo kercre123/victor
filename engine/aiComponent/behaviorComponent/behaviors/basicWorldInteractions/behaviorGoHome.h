@@ -74,6 +74,7 @@ private:
     std::shared_ptr<BehaviorClearChargerArea> clearChargerAreaBehavior;
     std::shared_ptr<BehaviorRequestToGoHome> requestHomeBehavior;
     std::shared_ptr<BehaviorWiggleOntoChargerContacts> wiggleOntoChargerBehavior;
+    ICozmoBehaviorPtr observeChargerBehavior;
   };
 
   struct DynamicVariables {
