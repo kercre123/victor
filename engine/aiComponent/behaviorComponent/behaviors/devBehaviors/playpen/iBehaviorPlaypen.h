@@ -137,8 +137,12 @@ protected:
   virtual void InitBehaviorInternal() {}; 
   
   virtual Result OnBehaviorActivatedInternal() = 0;
-  
+
+  // Called every tick while this behavior is active
   virtual PlaypenStatus PlaypenUpdateInternal() { return PlaypenStatus::Running; }
+
+  // Called every tick while the behavior is in scope
+  virtual void PlaypenTick() { };
   
   virtual void HandleWhileActivatedInternal(const EngineToGameEvent& event) { }
   

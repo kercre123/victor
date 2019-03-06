@@ -69,7 +69,7 @@ int open_dev(VL53L1_Dev_t* dev)
     LOG_ERROR("ToF.open_dev", "Failed to open /dev/i2c-6 %d", errno);
     return VL53L1_ERROR_INVALID_PARAMS;
   }
-  
+
   status = VL53L1_platform_init(dev,
                                 0x29,
                                 1, /* comms_type  I2C*/
@@ -79,7 +79,7 @@ int open_dev(VL53L1_Dev_t* dev)
   // Wait 2 sec for supplies to stabilize
   status = VL53L1_WaitMs(dev, 2000);
   return_if_error(status, "WaitMS failed");
-  
+
   // Wait for firmware to finish booting
   status = VL53L1_WaitDeviceBooted(dev);
   return_if_error(status, "WaitDeviceBooted failed");
@@ -120,7 +120,7 @@ int open_dev(VL53L1_Dev_t* dev)
 int close_dev(VL53L1_Dev_t* dev)
 {
   int rc = VL53L1_StopMeasurement(dev);
-  
+
   rc = VL53L1_platform_terminate(dev);
   if(rc == VL53L1_ERROR_NONE)
   {
@@ -130,11 +130,11 @@ int close_dev(VL53L1_Dev_t* dev)
   if(_powerGPIO != nullptr)
   {
     gpio_set_value(_powerGPIO, gpio_LOW);
-    
+
     gpio_close(_powerGPIO);
     _powerGPIO = nullptr;
   }
-  
+
   return rc;
 }
 
@@ -152,25 +152,25 @@ int setup_roi_grid(VL53L1_Dev_t* dev, const int rows, const int cols)
     LOG_ERROR("ToF.setup_roi_grid", "Cannot set %d rows (max %d)", rows, MAX_ROWS);
     return -1;
   }
-  
+
   if (rows < 1)
   {
     LOG_ERROR("ToF.setup_roi_grid", "Cannot set %d rows, min 1", rows);
     return -1;
   }
-  
+
   if (cols > MAX_COLS)
   {
     LOG_ERROR("ToF.setup_roi_grid", "Cannot set %d cols (max %d)", cols, MAX_ROWS);
     return -1;
   }
-  
+
   if (cols < 1)
   {
     LOG_ERROR("ToF.setup_roi_grid", "Cannot set %d cols, min 1", cols);
     return -1;
   }
-  
+
   if (n_roi > VL53L1_MAX_USER_ZONES)
   {
     LOG_ERROR("ToF.setup_roi_grid", "%drows * %dcols = %d > %d max user zones",
@@ -192,7 +192,7 @@ int setup_roi_grid(VL53L1_Dev_t* dev, const int rows, const int cols)
   }
 
   roiConfig.NumberOfRoi = n_roi;
-  
+
   return VL53L1_SetROI(dev, &roiConfig);
 }
 
@@ -264,7 +264,7 @@ int get_mz_data(VL53L1_Dev_t* dev, const int blocking, VL53L1_MultiRangingData_t
   {
     VL53L1_ClearInterruptAndStartMeasurement(dev);
   }
- 
+
   return rc;
 }
 

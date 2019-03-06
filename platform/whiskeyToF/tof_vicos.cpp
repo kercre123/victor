@@ -71,6 +71,13 @@ namespace {
   // Settings for calibration
   uint32_t _distanceToCalibTarget_mm = 0;
   float _calibTargetReflectance = 0;
+
+  // Variables for the background test check
+  std::mutex _backgroundTestLock;
+  bool _backgroundTestEnabled = false;
+  bool _backgroundTestRanging = false;
+  u16 _backgroundTestErrorCounts[16] = {0};
+  ToFSensor::CommandCallback _backgroundTestCallback = nullptr;
 }
 
 ToFSensor* ToFSensor::_instance = nullptr;
@@ -92,6 +99,9 @@ void ToFSensor::removeInstance()
     _instance = nullptr;
   }
 }
+
+// Forward declaration of some internal functions
+bool BackgroundTestUpdate(bool alreadyHaveData, RangeDataRaw& data);
 
 void ToFSensor::SetLogPath(const std::string& path)
 {
@@ -130,12 +140,12 @@ int ToFSensor::PerformCalibration(uint32_t distanceToTarget_mm,
   _commandQueue.push({Command::PerformCalibration, callback});
   _isCalibrating = true;
   #endif
-  
+
   return 0;
 }
 
 
-#define CONVERT_1616_TO_FLOAT(fixed) ((float)(fixed) * (float)(1/(2<<16))) 
+#define CONVERT_1616_TO_FLOAT(fixed) ((float)(fixed) * (float)(1/(2<<16)))
 
 // Parses and converts VL53L1_MultiRangingData_t into RangeDataRaw
 void ParseData(VL53L1_MultiRangingData_t& mz_data,
@@ -187,7 +197,7 @@ void ParseData(VL53L1_MultiRangingData_t& mz_data,
 // Get the most recent ranging data and parse it to a useable format
 int ReadDataFromSensor(RangeDataRaw& rangeData)
 {
-  int rc = 0;  
+  int rc = 0;
   VL53L1_MultiRangingData_t mz_data;
   rc = get_mz_data(&_dev, 1, &mz_data);
   if(rc == 0)
@@ -199,7 +209,7 @@ int ReadDataFromSensor(RangeDataRaw& rangeData)
     PRINT_NAMED_ERROR("ReadDataFromSensor", "Failed to get mz data %d", rc);
     std::this_thread::sleep_for(std::chrono::milliseconds(5));
   }
-  
+
   return rc;
 }
 
@@ -251,6 +261,14 @@ void ProcessLoop()
       {
         case Command::StartRanging:
           {
+            // If background test is enabled and is already ranging
+            // then nothing to do
+            if(_backgroundTestEnabled && _backgroundTestRanging)
+            {
+              _rangingEnabled = true;
+              break;
+            }
+
             PRINT_NAMED_INFO("ToF.ProcessLoop.StartRanging", "");
             int rc = start_ranging(&_dev);
             if(rc < 0)
@@ -264,6 +282,12 @@ void ProcessLoop()
           break;
         case Command::StopRanging:
           {
+            // Don't stop ranging if the background test is running
+            if(_backgroundTestEnabled)
+            {
+              break;
+            }
+
             PRINT_NAMED_INFO("ToF.ProcessLoop.StopRanging","");
             int rc = stop_ranging(&_dev);
             if(rc < 0)
@@ -271,7 +295,7 @@ void ProcessLoop()
               res = ToFSensor::CommandResult::StopRangingFailed;
               break;
             }
-            
+
             _rangingEnabled = false;
           }
           break;
@@ -323,34 +347,14 @@ void ProcessLoop()
       _commandLock.unlock();
     }
 
+    // Note: static is important here in order to preserve previous readings
+    // as, typically, only one ROI is read at a time
+    static RangeDataRaw data;
+
     // As long as ranging is enabled, try to read data from the sensor
     if(_rangingEnabled)
     {
-      // Note: static is important here in order to preserve previous readings
-      // as, typically, only one ROI is read at a time
-      static RangeDataRaw data;
       const int rc = ReadDataFromSensor(data);
-
-      // static RangeDataRaw lastValid = data;
-      // std::stringstream ss;
-      // for(int i = 0; i < 4; i++)
-      // {
-      //   for(int j = 0; j < 4; j++)
-      //   {
-      //     if(data.data[i*4 + j].numObjects > 0 && data.data[i*4 + j].readings[0].status == 0)
-      //     {
-      //       ss << std::setw(7) << (uint32_t)(data.data[i*4 + j].processedRange_mm);
-      //       lastValid.data[i*4 + j] = data.data[i*4 + j];
-      //     }
-      //     else
-      //     {
-      //       ss << std::setw(7) << (uint32_t)(lastValid.data[i*4 + j].processedRange_mm);
-      //     }
-      //   }
-      //   ss << "\n";
-      // }
-      // //PRINT_NAMED_ERROR("","%s", ss.str().c_str());
-      // printf("Data\n%s\n", ss.str().c_str());
 
       // Got a valid reading so update our latest data
       if(rc >= 0)
@@ -360,8 +364,10 @@ void ProcessLoop()
         _latestData = data;
       }
     }
-    // Ranging is not enabled so sleep
-    else
+
+    const bool backgroundTestUpdated = BackgroundTestUpdate(_rangingEnabled, data);
+    // If there aren't any updates then sleep
+    if(!backgroundTestUpdated)
     {
       // Sleep for half an engine tick so we can process commands by the time
       // the next engine tick happens
@@ -417,6 +423,201 @@ RangeDataRaw ToFSensor::GetData(bool& hasDataUpdatedSinceLastCall)
 bool ToFSensor::IsValidRoiStatus(uint8_t status) const
 {
   return (status != VL53L1_ROISTATUS_NOT_VALID);
+}
+
+void ToFSensor::EnableBackgroundTest(bool enable, const CommandCallback& callback)
+{
+  std::lock_guard<std::mutex> lock(_backgroundTestLock);
+  _backgroundTestEnabled = enable;
+  _backgroundTestCallback = callback;
+}
+
+void BackgroundTestCallback()
+{
+  // Call callback
+  if(_backgroundTestCallback != nullptr)
+  {
+    _backgroundTestCallback(ToFSensor::CommandResult::BackgroundTestFailed);
+    _backgroundTestCallback = nullptr;
+  }
+
+  // Stop test
+  _backgroundTestEnabled = false;
+
+  // Stop ranging if neccessary
+  if(_backgroundTestRanging)
+  {
+    (void)stop_ranging(&_dev);
+
+    _backgroundTestRanging = false;
+  }
+}
+
+u32 GetTimeStamp(void)
+{
+  auto currTime = std::chrono::steady_clock::now();
+  return static_cast<u32>(std::chrono::duration_cast<std::chrono::milliseconds>(currTime.time_since_epoch()).count());
+}
+
+// Manages cycling ranging every kCycleTime_ms
+void BackgroundTestCycleRanging()
+{
+  static const u32 kCycleTime_ms = 5000;
+  static u32 timeOfNextCycle_ms = 0;
+  const u32 now_ms = GetTimeStamp();
+
+  if(!_rangingEnabled && now_ms > timeOfNextCycle_ms)
+  {
+    timeOfNextCycle_ms = now_ms + kCycleTime_ms;
+
+    if(_backgroundTestRanging)
+    {
+      printf("bgt stop cycle\n");
+      const int rc = stop_ranging(&_dev);
+      if(rc >= 0)
+      {
+        _backgroundTestRanging = false;
+      }
+    }
+    else
+    {
+      printf("bgt start cycle\n");
+      const int rc = start_ranging(&_dev);
+      if(rc >= 0)
+      {
+        _backgroundTestRanging = true;
+      }
+    }
+
+    memset(_backgroundTestErrorCounts, 0, sizeof(_backgroundTestErrorCounts));
+  }
+}
+
+// Parses range data and keeps track of which ROIs are reporting consistant range errors
+bool BackgroundTestParseData(const RangeDataRaw& data)
+{
+  // Check that range data and error array are same size
+  constexpr size_t RangeDataRawSize = (sizeof(RangeDataRaw::data)/sizeof(RangeDataRaw::data[0]));
+  constexpr size_t ErrorCountSize = (sizeof(_backgroundTestErrorCounts)/sizeof(_backgroundTestErrorCounts[0]));
+  static_assert(ErrorCountSize == RangeDataRawSize, "ToFSensor.RangeDataAndErrorCountsSizeMismatch");
+
+  // Once an ROI has this many consistant errors, the test will fail
+  const u16 kMaxErrorCount = 255;
+
+  bool failure = false;
+  for(int i = 0; i < RangeDataRawSize; i++)
+  {
+    const auto& rangeData = data.data[i];
+    const u8 numObjects = rangeData.numObjects;
+    u8 status = 99;
+    if(numObjects > 0)
+    {
+      const u8 rangeStatus = rangeData.readings[0].status;
+      status = rangeStatus;
+      if(rangeStatus != 0)
+      {
+        // Range status isn't valid, increment error count for this ROI
+        _backgroundTestErrorCounts[i]++;
+
+        if(_backgroundTestErrorCounts[i] >= kMaxErrorCount)
+        {
+          failure = true;
+          break;
+        }
+      }
+      else
+      {
+        // ROI saw had valid range, reset error count
+        _backgroundTestErrorCounts[i] = 0;
+      }
+    }
+    // Need to check that we see some kind of object too?
+  }
+
+  // On failure print the error array
+  if(failure)
+  {
+    std::stringstream ss;
+    ss << "Background Test Results\n";
+    for(int i = 0; i < RangeDataRawSize; i++)
+    {
+      const auto& rangeData = data.data[i];
+      const u8 numObjects = rangeData.numObjects;
+      u8 status = 99;
+      if(numObjects > 0)
+      {
+        const u8 rangeStatus = rangeData.readings[0].status;
+        status = rangeStatus;
+      }
+
+      ss << std::setw(7) << (int)_backgroundTestErrorCounts[i];
+      ss << "[" <<  std::setw(2) << (int)status << "]";
+      if(i % 4 == 3)
+      {
+        ss << "\n";
+      }
+    }
+
+    printf("%s\n", ss.str().c_str());
+  }
+
+  return !failure;
+}
+
+// Main update for the background test
+// If something else has already gotten the latest range data
+// then that can be passed as an argument, otherwise this will
+// get the latest range data.
+bool BackgroundTestUpdate(bool alreadyHaveData, RangeDataRaw& data)
+{
+  // Guard against some other thread enabling/disabling the test
+  std::lock_guard<std::mutex> lock(_backgroundTestLock);
+
+  if(!_backgroundTestEnabled)
+  {
+    return false;
+  }
+
+  if(_backgroundTestRanging)
+  {
+    // Background test is ranging but we don't yet have
+    // the latest sensor data
+    if(!alreadyHaveData)
+    {
+      static u8 readFailure = 0;
+
+      const int rc = ReadDataFromSensor(data);
+      if(rc < 0)
+      {
+        // We are supposedly ranging but failed to get data from the sensor
+        const u8 kMaxReadFailures = 50;
+        if(readFailure++ > kMaxReadFailures)
+        {
+          // Failed to read data too many times something must be broken
+          // fail test
+          printf("bgt failed to read\n");
+          BackgroundTestCallback();
+          return false;
+        }
+      }
+      else
+      {
+        readFailure = 0;
+      }
+    }
+
+    const bool res = BackgroundTestParseData(data);
+    if(!res)
+    {
+      printf("bgt failed parse\n");
+      BackgroundTestCallback();
+      return false;
+    }
+  }
+
+  BackgroundTestCycleRanging();
+
+  return true;
 }
 
 }

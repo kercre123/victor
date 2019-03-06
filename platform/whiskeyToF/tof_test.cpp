@@ -52,6 +52,7 @@ int main(int argc, char** argv)
   signal(SIGINT, Shutdown);
   
   bool pause = false;
+  bool testMode = false;
   
   ToFSensor::getInstance()->SetupSensors([](ToFSensor::CommandResult res)
                                          {
@@ -62,21 +63,23 @@ int main(int argc, char** argv)
                                            }
                                          });
 
-  if(argc > 1)
+  for(u8 i = 1; i < argc; i++)
   {
-    if(argv[1][0] == 'c')
+    if(argv[i][0] == 'c')
     {
       uint32_t dist = 0;
       float reflectance = 0.f;
       
       if(argc > 2)
       {
+        i++;
         char* end;
         dist = (uint32_t)strtoimax(argv[2], &end, 10);
       }
       
       if(argc > 3)
       {
+        i++;
         char* end;
         reflectance = strtof(argv[3], &end);
       }
@@ -90,21 +93,36 @@ int main(int argc, char** argv)
 
       ToFSensor::getInstance()->SetupSensors(nullptr);
     }
-    else if(argv[1][0] == 'p')
+    else if(argv[i][0] == 'p')
     {
       pause = true;
     }
+    else if(argv[i][0] == 't')
+    {
+      testMode = true;
+    }
   }
 
-  ToFSensor::getInstance()->StartRanging([](ToFSensor::CommandResult res)
-                                         {
-                                           if((int)res < 0)
+  if(!testMode)
+  {
+    ToFSensor::getInstance()->StartRanging([](ToFSensor::CommandResult res)
                                            {
-                                             printf("Failed to start ranging\n");
-                                             exit(1);
-                                           }
-                                         });
-
+                                             if((int)res < 0)
+                                             {
+                                               printf("Failed to start ranging\n");
+                                               exit(1);
+                                             }
+                                           });
+  }
+  else
+  {
+    ToFSensor::getInstance()->EnableBackgroundTest(true, [](ToFSensor::CommandResult res)
+                                                         {
+                                                           printf("BACKGROUND TEST FOUND PROBLEM\n");
+                                                           exit(1);
+                                                         });
+  }
+  
   while(shutdown == 0)
   {
     bool isUpdated = false;

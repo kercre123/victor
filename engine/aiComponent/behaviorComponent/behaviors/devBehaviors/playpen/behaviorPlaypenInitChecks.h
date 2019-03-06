@@ -32,6 +32,10 @@ protected:
     modifiers.wantsToBeActivatedWhenOnCharger = true;
   }  
   virtual Result OnBehaviorActivatedInternal() override;
+  virtual void PlaypenTick() override;
+
+private:
+  std::atomic<bool> _tofCheckFailed;
   
 };
 
