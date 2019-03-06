@@ -18,6 +18,7 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/components/visionComponent.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
@@ -139,12 +140,8 @@ BehaviorFindHome::~BehaviorFindHome()
 void BehaviorFindHome::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
   modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers,        EVisionUpdateFrequency::High });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::FullWidthMarkerDetection,EVisionUpdateFrequency::High });
-  if(_iConfig.useExposureCycling)
-  {
-    modifiers.visionModesForActiveScope->insert({ VisionMode::CyclingExposure,         EVisionUpdateFrequency::High });
-    modifiers.visionModesForActiveScope->insert({ VisionMode::MeteringFromChargerOnly, EVisionUpdateFrequency::High });
-  }
+  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingIllumination,   EVisionUpdateFrequency::High });
+  
   modifiers.wantsToBeActivatedWhenOnCharger = false;
   modifiers.wantsToBeActivatedWhenCarryingObject = true;
 }
@@ -252,10 +249,24 @@ void BehaviorFindHome::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::CheckVisionProcessingResult(const VisionProcessingResult& result)
 {
+  if(result.modesProcessed.Contains(VisionMode::DetectingIllumination) && 
+     result.illumination.state != IlluminationState::Unknown) {
+    // We only use the Illumination detector if it has a definite response to the current scene illumination
+    _dVars.useImageCompositing = (result.illumination.state == IlluminationState::Darkened);
+  }
+
   if(result.modesProcessed.Contains(VisionMode::DetectingMarkers)) {
     _dVars.numFramesOfDetectingMarkers++;
     if(result.imageQuality == Vision::ImageQuality::TooDark) {
       _dVars.numFramesOfImageTooDark++;
+
+      // Redundant check here for turning on ImageCompositing
+      // Some scenarios are IllumState::Unknown but we have a
+      //  definite reading from ImageQuality measurement that
+      //  indicates we may want to use ImageCompositing
+      if(!_dVars.useImageCompositing) {
+        _dVars.useImageCompositing = true;
+      }
     }
   }
 }
@@ -302,7 +313,10 @@ void BehaviorFindHome::TransitionToStartSearch()
              "We are too close to a previously-searched location, so driving to a new search pose");
     TransitionToRandomDrive();
   } else {
-    TransitionToLookInPlace();
+    // Before beginning the search, we attempt to detect Darkness
+    //  since this decides what the low-light vision strategy is.
+    WaitForImagesAction* waitForIllumState = new WaitForImagesAction(2, VisionMode::DetectingIllumination);
+    DelegateIfInControl(waitForIllumState, &BehaviorFindHome::TransitionToLookInPlace);
   }
 }
 
@@ -314,9 +328,28 @@ void BehaviorFindHome::TransitionToLookInPlace()
   
   // First move the head to look forward, which will maximize the chance of seeing the charger
   action->AddAction(new MoveHeadToAngleAction(0.f));
-  
-  auto* waitForImagesAction = new WaitForImagesAction(_iConfig.numImagesToWaitFor,
-                                                      VisionMode::DetectingMarkers);
+
+  // Decide whether we want to use:
+  // - exposure cycling
+  // - image compositing
+  WaitForImagesAction* waitForImagesAction = nullptr;
+
+  if(_dVars.useImageCompositing) {
+    GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, {
+      {VisionMode::CompositingImages,        EVisionUpdateFrequency::High},
+      {VisionMode::FullFrameMarkerDetection, EVisionUpdateFrequency::High},
+      {VisionMode::MeteringFromChargerOnly,  EVisionUpdateFrequency::High},
+    });
+    waitForImagesAction = new WaitForImagesAction(_iConfig.numImagesToWaitFor, VisionMode::DetectingMarkers);
+  } else {
+    GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, {
+      {VisionMode::CyclingExposure,          EVisionUpdateFrequency::High},
+      {VisionMode::FullFrameMarkerDetection, EVisionUpdateFrequency::High},
+      {VisionMode::MeteringFromChargerOnly,  EVisionUpdateFrequency::High},
+    });
+    waitForImagesAction = new WaitForImagesAction(_iConfig.numImagesToWaitFor, VisionMode::DetectingMarkers);
+  }
+
   if(kFindHome_SaveImages)
   {
     const std::string path = GetBEI().GetRobotInfo().GetDataPlatform()->pathToResource(Util::Data::Scope::Cache,
@@ -341,7 +374,17 @@ void BehaviorFindHome::TransitionToLookInPlace()
     action->AddAction(new TriggerAnimationAction(_iConfig.searchTurnEndAnimTrigger));
   }
   
-  DelegateIfInControl(action, &BehaviorFindHome::TransitionToSearchTurn);
+  DelegateIfInControl(action, [this](){
+    // Unsubscribe from these vision modes since we enabled them specifically for Look
+    GetBEI().GetVisionScheduleMediator().RemoveVisionModeSubscriptions(this, {
+      VisionMode::CyclingExposure, 
+      VisionMode::CompositingImages,
+      VisionMode::FullFrameMarkerDetection,
+      VisionMode::MeteringFromChargerOnly,
+    });
+
+    TransitionToSearchTurn();
+  });
 }
 
 
