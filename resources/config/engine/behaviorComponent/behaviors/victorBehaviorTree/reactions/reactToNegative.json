@@ -2,7 +2,7 @@
   "behaviorID": "ReactToNegative",
   "behaviorClass": "AnimSequence",
 
-  "emotionEventOnActivated": "RespondToShortVoiceCommand",
+  "emotionEventOnActivated": "RespondToAbuseVoiceCommand",
   "associatedActiveFeature": "ReactToNegative",
 
   "respondToUserIntents":
