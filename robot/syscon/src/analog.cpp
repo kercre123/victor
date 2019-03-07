@@ -23,6 +23,7 @@ static const int SELECTED_CHANNELS = 0
 static const uint16_t BATTERY_FULL_VOLTAGE = ADC_VOLTS(4.2);
 static const int      CHARGE_FULL_TIME = 200 * 60 * 5;           // 5 minutes
 
+static const uint16_t EMERGENCY_POWER_DOWN_POINT = ADC_VOLTS(3.4);
 static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.6);
 static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 45*200;  // 45 seconds
 static const int      POWER_DOWN_WARNING_TIME = 3*60*200; // 3 minutes
@@ -318,8 +319,12 @@ static void handleLowBattery() {
   static int power_down_limit = POWER_DOWN_WARNING_TIME;
   static const int count_up_limit = 200;
 
-  if (low_power_count_up < count_up_limit) {
-    if (EXACT_ADC(ADC_VMAIN) < LOW_VOLTAGE_POWER_DOWN_POINT) {
+  uint32_t vmain = EXACT_ADC(ADC_VMAIN);
+
+  if (vmain < EMERGENCY_POWER_DOWN_POINT) {
+      Power::setMode(POWER_STOP);
+  } if (low_power_count_up < count_up_limit) {
+    if (vmain < LOW_VOLTAGE_POWER_DOWN_POINT) {
       Power::setMode(POWER_STOP);
     }
     low_power_count_up++;
@@ -332,7 +337,7 @@ static void handleLowBattery() {
     if (--power_down_limit < 0) {
       shutting_down_timer = POWER_DOWN_BATTERY_TIME;
     }
-  } else if (EXACT_ADC(ADC_VMAIN) < LOW_VOLTAGE_POWER_DOWN_POINT) {
+  } else if (vmain < LOW_VOLTAGE_POWER_DOWN_POINT) {
     if (--power_down_timer <= 0) {
       power_low = true;
     }
