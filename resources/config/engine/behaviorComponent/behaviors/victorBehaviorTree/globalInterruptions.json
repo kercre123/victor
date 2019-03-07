@@ -16,9 +16,9 @@
     "ReactToTouchPetting",
     "BasicVoiceCommands", // these are simple voice commands that we want to ignore obstacles
     "ReactToObstacle",
+    "Volume",
     "InterruptingVoiceReactions",
     "ChangeEyeColor",
-    "Volume",
     "ReactToUnclaimedIntent",
     "HeldInPalmDispatcher",
     "WhileInAirDispatcher",
