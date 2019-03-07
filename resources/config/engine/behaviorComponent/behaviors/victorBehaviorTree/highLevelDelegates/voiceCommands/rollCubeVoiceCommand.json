@@ -6,10 +6,6 @@
   
   "respondToUserIntents" : [
     {
-      "type": "play_specific",
-      "entity_behavior": "roll_cube"
-    },
-    {
       "type" : "play_rollcube"
     }
   ],

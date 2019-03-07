@@ -313,7 +313,6 @@ enum uint_16 BehaviorID {
   FindYourCubeVoiceCommand,
   FistBumpVoiceCommand,
   GoHomeVoiceCommand,
-  KeepawayVoiceCommand,
   LookAtMeVoiceCommand,
   LookOverThereVoiceCommand,
   PickUpCubeVoiceCommand,

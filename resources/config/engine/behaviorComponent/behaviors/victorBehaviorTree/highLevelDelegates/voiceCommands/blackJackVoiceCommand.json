@@ -4,10 +4,6 @@
 
   "respondToUserIntents" : [
     {
-      "type" : "play_specific",
-      "entity_behavior" : "blackjack"
-    },
-    {
       "type" : "play_blackjack"
     }
   ],
