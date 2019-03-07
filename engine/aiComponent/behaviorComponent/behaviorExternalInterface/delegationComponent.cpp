@@ -140,12 +140,11 @@ void DelegationComponent::CancelActionIfRunning(IBehavior* delegatingBehavior)
   if(_delegator->_behaviorThatDelegatedAction != nullptr &&
      (delegatingBehavior == nullptr ||
      _delegator->_behaviorThatDelegatedAction == delegatingBehavior) ){
-    bool ret = false;
     u32 tagToCancel = _delegator->_lastActionTag;
     if(_delegator->_behaviorThatDelegatedAction == delegatingBehavior ||
        delegatingBehavior == nullptr){
       _delegator->_behaviorThatDelegatedAction = nullptr; // TEMP:  // TODO:(bn) redundant checks now
-      ret = _continuityComp->GetOutOfAction(tagToCancel);
+      _continuityComp->GetOutOfAction(tagToCancel);
     }
     // note that the callback, if there was one (and it was allowed to run), should have already been called
     // at this point, so it's safe to clear the tag. Also, if the cancel itself failed, that is probably a

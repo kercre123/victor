@@ -63,6 +63,7 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorVolume::DynamicVariables::DynamicVariables()
   : lastVolumeChangeNotification_s(0.0)
+  , volumeChangeReactorId(0)
 {}
 
 

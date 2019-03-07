@@ -53,8 +53,6 @@ protected:
 
 private:
   
-  bool IsBehaviorActive( BehaviorID behaviorID ) const;
-  
   struct {
     float socializeKnownFaceCooldown_s;
     float playWithCubeCooldown_s;
