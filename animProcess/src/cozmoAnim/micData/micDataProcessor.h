@@ -144,14 +144,14 @@ private:
 #endif
 
   // Internal buffer used to add to the streaming audio once a trigger is detected
-  static constexpr uint32_t kImmediateBufferSize = kTriggerAudioLength_ms / kTimePerSEBlock_ms;
+  static constexpr uint32_t kImmediateBufferSize = kTriggerAudioLength_ms / kTimePerChunk_ms;
   struct TimedMicData {
-    std::array<AudioUtil::AudioSample, kSamplesPerBlock> audioBlock;
+    std::array<AudioUtil::AudioSample, kSamplesPerBlockPerChannel> audioBlock;
     RobotTimeStamp_t timestamp;
   };
   Util::FixedCircularBuffer<TimedMicData, kImmediateBufferSize> _immediateAudioBuffer;
 
-  using RawAudioChunk = std::array<AudioUtil::AudioSample, kRawAudioChunkSize>;
+  using RawAudioChunk = std::array<AudioUtil::AudioSample, kIncomingAudioChunkSize>;
   static constexpr uint32_t kImmediateBufferRawSize = kTriggerAudioLength_ms / kTimePerChunk_ms;
   
   std::mutex _procAudioXferMutex;

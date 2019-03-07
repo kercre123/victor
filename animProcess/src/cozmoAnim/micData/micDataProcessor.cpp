@@ -91,8 +91,8 @@ CONSOLE_VAR_ENUM(u8,      kMicDataProcessorTrigger_Logging, ANKI_CPU_CONSOLEVARG
 #endif
 
 constexpr auto kCladMicDataTypeSize = sizeof(RobotInterface::MicData::data)/sizeof(RobotInterface::MicData::data[0]);
-static_assert(kCladMicDataTypeSize == kDeinterlacedAudioChunkSize,
-              "Expecting size of MicData::data to match DeinterlacedAudioChunkSize");
+static_assert(kCladMicDataTypeSize == kIncomingAudioChunkSize,
+              "Expecting size of MicData::data to match kIncomingAudioChunkSize");
 
 
 
@@ -152,7 +152,7 @@ void MicDataProcessor::InitVAD()
   _sVadObject.reset(new SVadObject_t());
 
   /* set up VAD */
-  SVadSetDefaultConfig(_sVadConfig.get(), kSamplesPerBlock, (float)AudioUtil::kSampleRate_hz);
+  SVadSetDefaultConfig(_sVadConfig.get(), kSamplesPerBlockPerChannel, (float)AudioUtil::kSampleRate_hz);
   _sVadConfig->AbsThreshold = 250.0f; // was 400
   _sVadConfig->HangoverCountDownStart = 10;  // was 25, make 25 blocks (1/4 second) to see it actually end a couple times
   SVadInit(_sVadObject.get(), _sVadConfig.get());
@@ -289,7 +289,7 @@ RobotTimeStamp_t MicDataProcessor::CreateStreamJob(CloudMic::StreamType streamTy
              "MicDataProcessor.CreateStreamJob.AudioProcIdx");
   
   if (overlapLength_ms > 0) {
-    const auto overlapCount = overlapLength_ms / kTimePerSEBlock_ms;
+    const auto overlapCount = overlapLength_ms / kTimePerChunk_ms;
     const auto maxIndex = _procAudioRawComplete - _procAudioXferCount;
     size_t triggerOverlapStartIdx = (maxIndex > overlapCount) ? (maxIndex - overlapCount) : 0;
     
@@ -420,7 +420,7 @@ void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
   // un-interleaved audio block) or the processed audio block
   auto* audioSource = kBeatDetectorUseProcessedAudio ? nextSample.audioBlock.data() : audioChunk;
   
-  UpdateBeatDetector(audioSource, kSamplesPerBlock);
+  UpdateBeatDetector(audioSource, kSamplesPerBlockPerChannel);
   
   // Now we're done filling out this slot, update the count so it can be consumed
   {
@@ -470,7 +470,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   // stops 'playing', since it's possible that the speaker is still actually playing stuff
   // for a small time after this starts to return false.
   const auto speakerCooldown_ms = _micDataSystem->GetSpeakerLatency_ms();
-  const auto speakerCooldownLimit = speakerCooldown_ms / kTimePerSEBlock_ms;
+  const auto speakerCooldownLimit = speakerCooldown_ms / kTimePerChunk_ms;
   if (_micDataSystem->IsSpeakerPlayingAudio()) {
     _isSpeakerActive = true;
     _speakerCooldownCnt = speakerCooldownLimit;
@@ -518,7 +518,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
     // Keep a counter from the last active vad flag. When it hits 0 don't bother doing
     // the trigger recognition, then reset the counter when the flag is active again
     const auto vadCountdown_ms = kMicData_QuietTimeCooldown_ms;
-    const auto vadCountdownLimit = vadCountdown_ms / kTimePerSEBlock_ms;
+    const auto vadCountdownLimit = vadCountdown_ms / kTimePerChunk_ms;
     if (activityFlag != 0)
     {
       _vadCountdown = vadCountdownLimit;
@@ -593,7 +593,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
     {
       // Use raw mic data from single source
       ANKI_CPU_PROFILE("ProcessRawSingleMicrophoneCopy");
-      memcpy(bufferOut, audioChunk, sizeof(AudioUtil::AudioSample) * kSamplesPerBlock);
+      memcpy(bufferOut, audioChunk, sizeof(AudioUtil::AudioSample) * kSamplesPerBlockPerChannel);
       break;
     }
     case ProcessingState::NoProcessingSingleMic:
@@ -605,7 +605,7 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
       constexpr int iirCoefPower = 10;
       constexpr int iirMult = 1023; // (2 ^ iirCoefPower) - 1
       static int bias = audioChunk[0] << iirCoefPower;
-      for (int i=0; i<kSamplesPerBlock; ++i)
+      for (int i=0; i<kSamplesPerBlockPerChannel; ++i)
       {
         // First update our bias with the latest audio sample
         bias = ((bias * iirMult) >> iirCoefPower) + audioChunk[i];
@@ -620,7 +620,9 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
     case ProcessingState::SigEsBeamformingOn:
     {
       // Signal Essense Processing
-      static const std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> dummySpeakerOut{};
+      static const std::array<
+          AudioUtil::AudioSample, 
+          kSamplesPerBlockPerChannel * kNumInputChannels> dummySpeakerOut{};
       {
         ANKI_CPU_PROFILE("ProcessMicrophonesSE");
         // Process the current audio block with SE software
@@ -707,10 +709,10 @@ void MicDataProcessor::ProcessRawLoop()
       // Collect the raw audio if desired
       for (auto& job : jobs)
       {
-        job->CollectRawAudio(audioChunk, kRawAudioChunkSize);
+        job->CollectRawAudio(audioChunk, kIncomingAudioChunkSize);
       }
 
-      _speechRecognizerSystem->UpdateNotch(audioChunk, kDeinterlacedAudioChunkSize);
+      _speechRecognizerSystem->UpdateNotch(audioChunk, kIncomingAudioChunkSize);
       
       // Factory test doesn't need to do any mic processing, it just uses raw data
       if(!FACTORY_TEST)

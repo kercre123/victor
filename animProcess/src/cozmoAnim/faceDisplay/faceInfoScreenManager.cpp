@@ -1449,17 +1449,17 @@ void FaceInfoScreenManager::DrawMicInfo(const RobotInterface::MicData& micData)
 
   sprintf(temp,
           "%d",
-          micData.data[MicData::kSamplesPerBlock]);
+          micData.data[MicData::kSamplesPerBlockPerChannel]);
   const std::string micData1 = temp;
 
   sprintf(temp,
           "%d",
-          micData.data[MicData::kSamplesPerBlock*2]);
+          micData.data[MicData::kSamplesPerBlockPerChannel*2]);
   const std::string micData2 = temp;
 
   sprintf(temp,
           "%d",
-          micData.data[MicData::kSamplesPerBlock*3]);
+          micData.data[MicData::kSamplesPerBlockPerChannel*3]);
   const std::string micData3 = temp;
 
   DrawTextOnScreen({"MICS", micData0, micData1, micData2, micData3});

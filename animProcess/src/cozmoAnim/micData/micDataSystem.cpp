@@ -87,7 +87,7 @@ CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInAU);
 namespace MicData {
 
 constexpr auto kCladMicDataTypeSize = sizeof(RobotInterface::MicData::data)/sizeof(RobotInterface::MicData::data[0]);
-static_assert(kCladMicDataTypeSize == kDeinterlacedAudioChunkSize, 
+static_assert(kCladMicDataTypeSize == kIncomingAudioChunkSize, 
               "Expecting size of MicData::data to match DeinterlacedAudioChunk");
 
 static_assert(
@@ -506,7 +506,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       // Are we done with what we want to stream?
       if (!_streamingComplete)
       {
-        static constexpr size_t kMaxRecordNumChunks = (kStreamingTimeout_ms / kTimePerSEBlock_ms) + 1;
+        static constexpr size_t kMaxRecordNumChunks = (kStreamingTimeout_ms / kTimePerChunk_ms) + 1;
         const bool didTimeout = _streamingAudioIndex >= kMaxRecordNumChunks;
         if (receivedStopMessage || didTimeout)
         {
@@ -515,7 +515,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
           {
             SendUdpMessage(CloudMic::Message::CreateaudioDone({}));
           }
-          LOG_INFO("MicDataSystem.Update.StreamingEnd", "%zu ms", _streamingAudioIndex * kTimePerSEBlock_ms);
+          LOG_INFO("MicDataSystem.Update.StreamingEnd", "%zu ms", _streamingAudioIndex * kTimePerChunk_ms);
           #if ANKI_DEV_CHEATS
             _fakeStreamingState = false;
           #endif
