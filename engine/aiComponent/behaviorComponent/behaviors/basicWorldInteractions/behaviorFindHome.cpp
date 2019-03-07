@@ -18,6 +18,7 @@
 #include "engine/actions/driveToActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/components/visionComponent.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -129,7 +130,7 @@ BehaviorFindHome::~BehaviorFindHome()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers,        EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
   
   modifiers.wantsToBeActivatedWhenOnCharger = false;
   modifiers.wantsToBeActivatedWhenCarryingObject = true;
@@ -183,7 +184,7 @@ void BehaviorFindHome::InitBehavior()
     std::make_shared<RejectIfCollidesWithMemoryMap>(kTypesToBlockSampling)
   );
 
-  _iConfig.observeChargerBehavior = FindBehavior("RobustObserveCharger");
+  _iConfig.observeChargerBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(RobustObserveCharger));
   DEV_ASSERT(_iConfig.observeChargerBehavior != nullptr, "BehaviorFindHome.InitBehavior.NullObserveChargerBehavior");
 }
 
@@ -233,24 +234,6 @@ void BehaviorFindHome::OnBehaviorActivated()
   } else {
     TransitionToStartSearch();
   }
-
-  // Subscribe to vision processing result callbacks
-  // - use this callback to track DetectingMarker frames where the image quality was TooDark
-  if(GetBEI().HasVisionComponent()) {
-    std::function<VisionComponent::VisionResultCallback> func = std::bind(&BehaviorFindHome::CheckVisionProcessingResult, this, std::placeholders::_1);
-    _dVars.visionResultSignalHandle = GetBEI().GetVisionComponent().RegisterVisionResultCallback(func);
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindHome::CheckVisionProcessingResult(const VisionProcessingResult& result)
-{
-  if(result.modesProcessed.Contains(VisionMode::DetectingMarkers)) {
-    _dVars.numFramesOfDetectingMarkers++;
-    if(result.imageQuality == Vision::ImageQuality::TooDark) {
-      _dVars.numFramesOfImageTooDark++;
-    }
-  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -267,13 +250,6 @@ void BehaviorFindHome::OnBehaviorDeactivated()
     RobotTimeStamp_t now = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
     chargerSeen = (now-chrgObsTime) < kMaxAgeForChargerSeenRecently_ms;
   }
-
-  // Destroy signal handle for the vision processing result.
-  //  This ensures that we do not get any more callbacks
-  //  while the behavior is not activated.
-  // NOTE: We do not reset the stats variables in _dVars here
-  //  since that is already taken care of in OnBehaviorActivated()
-  _dVars.visionResultSignalHandle.reset();
 
   DASMSG(find_home_result, "find_home.result", "Whether the FindHome behavior succeeded in locating the object");
   DASMSG_SET(i1, chargerSeen, "Success/failure on locating the charger. 1=success 0=failuire");
@@ -530,6 +506,26 @@ std::vector<Point2f> BehaviorFindHome::GetRecentlySearchedLocations()
   std::transform(prevSearchMap.begin(), prevSearchMap.end(), std::back_inserter(prevSearchPositions),
                  [](const std::pair<float, Point2f>& mapEntry) { return mapEntry.second; });
   return prevSearchPositions;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorFindHome::BehaviorUpdate() 
+{
+  if(IsActivated()) {
+    // Note: this gets called at the same rate as engine
+    // We do not have to worry about missed frames of
+    //  marker detection (because of engine ticks taking 
+    //  too long) because engine is the driver of frames
+    //  being processed ultimately.
+    // For this behavior we are also running MarkerDetection
+    //  every frame (high frequency).
+    if(GetBEI().HasVisionComponent()) {
+      _dVars.numFramesOfDetectingMarkers++;
+      if(GetBEI().GetVisionComponent().GetLastImageQuality() == Vision::ImageQuality::TooDark) {
+        _dVars.numFramesOfImageTooDark++;
+      }
+    }
+  }
 }
 
 } // namespace Vector

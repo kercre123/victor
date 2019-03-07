@@ -27,7 +27,6 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/visionComponent.h"
-#include "engine/vision/visionProcessingResult.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/navMap/mapComponent.h"
 
@@ -165,7 +164,7 @@ void BehaviorGoHome::InitBehavior()
   DEV_ASSERT(_iConfig.wiggleOntoChargerBehavior != nullptr,
              "BehaviorGoHome.InitBehavior.NullWiggleOntoChargerBehavior");
 
-  _iConfig.observeChargerBehavior = FindBehavior("RobustObserveCharger");
+  _iConfig.observeChargerBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(RobustObserveCharger));
   DEV_ASSERT(_iConfig.observeChargerBehavior != nullptr, "BehaviorGoHome.InitBehavior.NullObserveChargerBehavior");
 }
 
@@ -295,7 +294,7 @@ void BehaviorGoHome::TransitionToObserveCharger()
         if(observeChargerWantsToRun) {
           DelegateIfInControl(_iConfig.observeChargerBehavior.get(), afterObservationCallback);
         } else {
-          PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToObserveCharger", "Visual verify behavior does not want to be activated.");
+          PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToObserveCharger.ObserveChargerNotActivating", "Visual verify behavior does not want to be activated.");
         }
       });
     } else {
@@ -423,114 +422,77 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
 {
   LOG_FUNCTION_NAME();
   
+  const bool observeChargerWantsToRun = _iConfig.observeChargerBehavior->WantsToBeActivated();
+  if(!observeChargerWantsToRun) {
+    PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToCheckPreTurnPosition.ObserveChargerBehaviorDWTA","");
+    return;
+  }
+
+  RobotTimeStamp_t verifyStartTime = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
+  DelegateIfInControl(_iConfig.observeChargerBehavior.get(), [this,verifyStartTime](){
+    TransitionToPostVisualVerification(verifyStartTime);
+  });
+}
+
+void BehaviorGoHome::TransitionToPostVisualVerification(const RobotTimeStamp_t verifyStartTime)
+{
   // Check to make sure we are in a safe position to begin the 180
   // degree turn. We could have been bumped, or the charger could
   // have moved. This is the last chance to verify that we're in a
   // good position to start the docking sequence.
-
-  // Helper lambda --- verifies the observed charger pose is within tolerance
-  //  for any open loop turning, repositioning, and backwards driving actions
-  auto checkPoseFunc = [this]() -> bool {
-    const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
-    if (charger == nullptr) {
-      return false;
-    }
+  bool poseOk = false;
+  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
+  if (charger != nullptr) {
     const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
     Pose3d robotPoseWrtCharger;
-    if (!robotPose.GetWithRespectTo(charger->GetPose(), robotPoseWrtCharger)) {
-      return false;
-    }
-    const auto& xWrtCharger = robotPoseWrtCharger.GetTranslation().x();
-    const auto& yWrtCharger = robotPoseWrtCharger.GetTranslation().y();
-    const auto& angleWrtCharger = robotPoseWrtCharger.GetRotation().GetAngleAroundZaxis();
-    
-    const float kIdealXWrtCharger_mm = -40.f;
-    const float kIdealYWrtCharger_mm = 0.f;
-    const float kIdealAngleWrtCharger_rad = 0.f;
-    
-    const float kMaxXError_mm = 20.f;
-    const float kMaxYError_mm = 25.f;
-    const float kMaxAngularError_rad = DEG_TO_RAD(20.f);
-    
-    const bool poseOk = Util::IsNear(xWrtCharger, kIdealXWrtCharger_mm, kMaxXError_mm) &&
-                        Util::IsNear(yWrtCharger, kIdealYWrtCharger_mm, kMaxYError_mm) &&
-                        angleWrtCharger.IsNear(kIdealAngleWrtCharger_rad, kMaxAngularError_rad);
-    
-    if (!poseOk) {
-      PRINT_NAMED_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.NotInPosition",
-                          "Ended up not in a good position to commence the turn to begin docking. RobotPoseWrtCharger {%.1f, %.1f, %.1f deg}",
-                          xWrtCharger, yWrtCharger, angleWrtCharger.getDegrees());
-    }
-    
-    return poseOk;
-  };
-
-  // Temporarily subscribe to the VisionProcessingResult signal
-  //  in order to collect stats about the images seen during this
-  //  period of time where we try to detect the charger's marker.
-  // When the action callback ends, then if we failed to see the
-  //  charger, we can message up the stats on the number of frames
-  //  we attempted to detect, and how many frames were too dark,
-  //  via DAS
-  _dVars.numImagesDetectingMarkers = 0;
-  _dVars.numImagesTooDark = 0;
-  const auto func = [this](const VisionProcessingResult& result) {
-    if(result.modesProcessed.Contains(VisionMode::DetectingMarkers)) {
-      _dVars.numImagesDetectingMarkers++;
-      if(result.imageQuality == Vision::ImageQuality::TooDark) {
-        _dVars.numImagesTooDark++;
+    if (robotPose.GetWithRespectTo(charger->GetPose(), robotPoseWrtCharger)) {
+      const auto& xWrtCharger = robotPoseWrtCharger.GetTranslation().x();
+      const auto& yWrtCharger = robotPoseWrtCharger.GetTranslation().y();
+      const auto& angleWrtCharger = robotPoseWrtCharger.GetRotation().GetAngleAroundZaxis();
+      
+      const float kIdealXWrtCharger_mm = -40.f;
+      const float kIdealYWrtCharger_mm = 0.f;
+      const float kIdealAngleWrtCharger_rad = 0.f;
+      
+      const float kMaxXError_mm = 20.f;
+      const float kMaxYError_mm = 25.f;
+      const float kMaxAngularError_rad = DEG_TO_RAD(20.f);
+      
+      poseOk = Util::IsNear(xWrtCharger, kIdealXWrtCharger_mm, kMaxXError_mm) &&
+               Util::IsNear(yWrtCharger, kIdealYWrtCharger_mm, kMaxYError_mm) &&
+               angleWrtCharger.IsNear(kIdealAngleWrtCharger_rad, kMaxAngularError_rad);
+      
+      if (!poseOk) {
+        PRINT_NAMED_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.NotInPosition",
+                            "Ended up not in a good position to commence the turn to begin docking. RobotPoseWrtCharger {%.1f, %.1f, %.1f deg}",
+                            xWrtCharger, yWrtCharger, angleWrtCharger.getDegrees());
       }
     }
-  };
-  // Note: we destroy this handle at the end of visual-verification action
-  // It's destruction triggers the unsubscribe of the callback, preventing
-  //  any unnecesary callbacks while it is not needed.
-  _dVars.visionProcessingResultHandle = GetBEI().GetVisionComponent().RegisterVisionResultCallback(func);
-  
-  const bool observeChargerWantsToRun = _iConfig.observeChargerBehavior->WantsToBeActivated();
-  if(observeChargerWantsToRun) {
+  }
 
-    const RobotTimeStamp_t verifyStartTime = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
-    const auto checkChargerSeenFunc = [this, verifyStartTime]()->bool{
-      ObservableObject* object = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
-      if(object == nullptr) {
-        return false;
-      }
-      // Has to be seen sometime after the observe action
-      const RobotTimeStamp_t obsTime = object->GetLastObservedTime();
-      return (obsTime >= verifyStartTime);
-    };
+  // Has to be seen sometime after the observe action
+  ObservableObject* object = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
+  const bool chargerSeen = (object != nullptr) && (object->GetLastObservedTime() >= verifyStartTime);
 
-    DelegateIfInControl(_iConfig.observeChargerBehavior.get(), [this, checkPoseFunc, checkChargerSeenFunc](){
-      // Destroy the signal handle so we don't get unnecessary callbacks
-      _dVars.visionProcessingResultHandle.reset();
-      const bool poseOk = checkPoseFunc();
-      const bool chargerSeen = checkChargerSeenFunc();
-      if (poseOk && chargerSeen) {
-        TransitionToTurn();
-      } else if (!chargerSeen) {
-        // If visual observation failed, then we've successfully gotten to the charger
-        // pre-action pose, but it is no longer there. Delete the charger from the map.
-        PRINT_NAMED_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.DeletingCharger",
-                            "Deleting charger with ID %d since visual verification failed",
-                            _dVars.chargerID.GetValue());
-        const bool removeChargerFromBlockworld = true;
-        DASMSG(go_home_charger_not_visible, "go_home.charger_not_visible", "GoHome behavior failure because the charger is not seen when should be.");
-        DASMSG_SET(i1, _dVars.numImagesDetectingMarkers, "Count of total number of processed image frames searching for Markers");
-        DASMSG_SET(i2, _dVars.numImagesTooDark, "Count of number of processed image frames (searching for Markers) that are TooDark");
-        DASMSG_SEND();
-        ActionFailure(removeChargerFromBlockworld);
-      } else if (_dVars.turnToDockRetryCount++ < _iConfig.turnToDockRetryCount) {
-        // Simply go back to the starting pose, which will allow visual
-        // verification to happen again, etc.
-        TransitionToDriveToCharger();
-      } else {
-        // Out of retries
-        ActionFailure(false);
-      }
-    });
+  if (poseOk && chargerSeen) {
+    TransitionToTurn();
+  } else if (!chargerSeen) {
+    // If visual observation failed, then we've successfully gotten to the charger
+    // pre-action pose, but it is no longer there. Delete the charger from the map.
+    PRINT_NAMED_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.DeletingCharger",
+                        "Deleting charger with ID %d since visual verification failed",
+                        _dVars.chargerID.GetValue());
+    const bool removeChargerFromBlockworld = true;
+    DASMSG(go_home_charger_not_visible, "go_home.charger_not_visible", "GoHome behavior failure because the charger is not seen when should be.");
+    DASMSG_SEND();
+    ActionFailure(removeChargerFromBlockworld);
+  } else if (_dVars.turnToDockRetryCount++ < _iConfig.turnToDockRetryCount) {
+    // Simply go back to the starting pose, which will allow visual
+    // verification to happen again, etc.
+    TransitionToDriveToCharger();
   } else {
-    PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToCheckPreTurnPosition.ObserveChargerBehaviorDWTA","");
+    // Out of retries
+    ActionFailure(false);
   }
 }
   

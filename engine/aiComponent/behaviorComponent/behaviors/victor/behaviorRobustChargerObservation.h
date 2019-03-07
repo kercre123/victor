@@ -21,8 +21,6 @@
 namespace Anki {
 namespace Vector {
 
-struct VisionProcessingResult;
-
 class BehaviorRobustChargerObservation : public ICozmoBehavior
 {
 public: 
@@ -40,13 +38,12 @@ protected:
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
-
+  virtual void BehaviorUpdate() override;
 
   void TransitionToIlluminationCheck();
   void TransitionToObserveCharger();
 
-  // Helper method to evaluate which vision mode modifier is needed here
-  void CheckVisionProcessingResult(const VisionProcessingResult& result);
+  bool IsLowLightVision() const;
 
 private:
 
@@ -60,14 +57,14 @@ private:
 
   struct DynamicVariables {
     DynamicVariables();
-    
-    // Whether image compositing is expected to be used here
-    bool useImageCompositing = false;
 
-    // Handle provided by VisionComponent when registering a 
-    //  callback to its VisionProcessingResult signal. When
-    //  destroyed, the callback is automatically unregistered.
-    Signal::SmartHandle visionResultSignalHandle = nullptr;
+    // Count of the frames of marker detection being run
+    //  while this behavior is activated.
+    u32 numFramesOfDetectingMarkers = 0;
+
+    // Count of the frames where the image quality was TooDark.
+    // NOTE: only counted while marker detection is being run.
+    u32 numFramesOfImageTooDark = 0; 
   };
 
   InstanceConfig _iConfig;
