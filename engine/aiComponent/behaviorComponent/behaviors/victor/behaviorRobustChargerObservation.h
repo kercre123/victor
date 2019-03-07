@@ -54,6 +54,8 @@ private:
     InstanceConfig();
 
     int numImagesToWaitFor = 15;
+
+    int numImageCompositesToWaitFor = 3;
   };
 
   struct DynamicVariables {
