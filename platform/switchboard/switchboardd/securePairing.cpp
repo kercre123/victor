@@ -376,6 +376,45 @@ void SecurePairing::SendWifiAccessPointResponse(bool success, std::string ssid, 
   SendRtsMessage<RtsWifiAccessPointResponse>(success, ssid, pw);
 }
 
+static bool sIsAnkiDevRobot = false;
+static bool IsAnkiDevRobot()
+{
+  static bool read = false;
+  if(!read)
+  {
+    read = true;
+    std::ifstream infile("/proc/cmdline");
+    std::string line;
+    while(std::getline(infile, line))
+    {
+      static const char* kKey = "anki.dev";
+      size_t index = line.find(kKey);
+      if(index != std::string::npos)
+      {
+        sIsAnkiDevRobot = true;
+        break;
+      }
+    }
+    infile.close();
+  }
+
+  return sIsAnkiDevRobot;
+}
+
+const std::string& SecurePairing::GetBuildIdString() {
+  if (_buildIdString.empty()) {
+    char buildNo[PROPERTY_VALUE_MAX] = {0};
+    (void)property_get("ro.build.id", buildNo, "");
+
+    _buildIdString = std::string(buildNo);
+    if(IsAnkiDevRobot()) {
+      _buildIdString += "-ankidev";
+    }
+  }
+
+  return _buildIdString;
+}
+
 void SecurePairing::SendStatusResponse() {
   if(!AssertState(CommsState::SecureClad)) {
     return;
@@ -387,10 +426,7 @@ void SecurePairing::SendStatusResponse() {
   bool isApMode = Anki::IsAccessPointMode();
 
   // Send challenge and update state
-  char buildNo[PROPERTY_VALUE_MAX] = {0};
-  (void)property_get("ro.build.id", buildNo, "");
-
-  std::string buildNoString(buildNo);
+  std::string buildNoString = GetBuildIdString();
 
   SendRtsMessage<RtsStatusResponse_2>(state.ssid, state.connState, isApMode, bleState, batteryState, buildNoString, _isOtaUpdating);
 
