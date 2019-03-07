@@ -748,6 +748,23 @@ func (service *rpcService) MoveLift(ctx context.Context, in *extint.MoveLiftRequ
 	}, nil
 }
 
+func (service *rpcService) CancelActionByIdTag(ctx context.Context, in *extint.CancelActionByIdTagRequest) (*extint.CancelActionByIdTagResponse, error) {
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_CancelActionByIdTagRequest{
+			CancelActionByIdTagRequest: in,
+		},
+	}
+	_, err := engineProtoManager.Write(message)	
+	if err != nil {
+		return nil, err
+	}
+	return &extint.CancelActionByIdTagResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+	}, nil
+}
+
 func SendFaceDataAsChunks(in *extint.DisplayFaceImageRGBRequest, chunkCount int, pixelsPerChunk int, totalPixels int) error {
 	var convertedUint16Data [faceImagePixelsPerChunk]uint16
 

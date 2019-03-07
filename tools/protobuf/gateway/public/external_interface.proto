@@ -212,6 +212,14 @@ service ExternalInterface {
     };
   }
 
+  // Cancel action by id
+  rpc CancelActionByIdTag(CancelActionByIdTagRequest) returns (CancelActionByIdTagResponse) {
+    option (google.api.http) = {
+      post: "/v1/cancel_action_by_id_tag",
+      body: "*"
+    };
+  }
+
   // Tells Vector to drive to the specified pose and orientation.
   rpc GoToPose(GoToPoseRequest) returns (GoToPoseResponse) {
     option (google.api.http) = {
