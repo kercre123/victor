@@ -333,11 +333,6 @@ static void handleLowBattery() {
       shutting_down_timer = POWER_DOWN_BATTERY_TIME;
     }
   } else if (EXACT_ADC(ADC_VMAIN) < LOW_VOLTAGE_POWER_DOWN_POINT) {
-    // We do not 
-    if (count_up < count_up_limit) {
-      Power::setMode(POWER_STOP);
-    }
-
     if (--power_down_timer <= 0) {
       power_low = true;
     }
