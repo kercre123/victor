@@ -1,0 +1,10 @@
+syntax = "proto2";
+
+package arf_proto;
+
+import "DoubleMatrix.proto";
+
+message MessageHeader {
+  required double time = 1;
+  optional DoubleMatrix transform = 2;
+}

@@ -1,0 +1,9 @@
+syntax = "proto2";
+
+package arf_proto;
+
+message DoubleMatrix {
+  required uint32 rows = 1;
+  required uint32 cols = 2;
+  repeated double data = 3;  // col-major
+}

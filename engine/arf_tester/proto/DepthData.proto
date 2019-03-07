@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+package arf_proto;
+
+import "MessageHeader.proto";
+import "FloatVector3.proto";
+
+message DepthData {
+  required MessageHeader header = 1;
+  required int32 width = 2;
+  required int32 height = 3;
+  repeated FloatVector3 data = 4;  // col major
+}
