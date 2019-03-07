@@ -32,6 +32,7 @@ namespace Vector {
   
 namespace {
   const char* kNumImagesToWaitForKey = "numImagesToWaitFor";
+  const char* kNumImageCompositesToWaitFor = "numImageCompositesToWaitFor";
 
   // Enable for debug, to save images during WaitForImageAction
   CONSOLE_VAR(bool, kRobustChargerObservation_SaveImages, "Behaviors.RobustChargerObservation", false);
@@ -53,6 +54,7 @@ BehaviorRobustChargerObservation::BehaviorRobustChargerObservation(const Json::V
 {
   std::string debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
   _iConfig.numImagesToWaitFor = JsonTools::ParseInt32(config, kNumImagesToWaitForKey, debugName);
+  _iConfig.numImageCompositesToWaitFor = JsonTools::ParseInt32(config, kNumImageCompositesToWaitFor, debugName);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -158,6 +160,7 @@ void BehaviorRobustChargerObservation::TransitionToIlluminationCheck()
         {VisionMode::MeteringFromChargerOnly,  EVisionUpdateFrequency::High},
       });
     }
+    PRINT_CH_INFO("Behaviors", "BehaviorRobustChargerObservation.TransitionToIlluminationCheck", "Mode = %s", _dVars.useImageCompositing ? "Compositing" : "CyclingExposure");
 
     TransitionToObserveCharger();
   });
@@ -172,7 +175,12 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
   const auto currMood = GetBEI().GetMoodManager().GetSimpleMood();
   const bool isHighStim = (currMood == SimpleMoodType::HighStim);
   
-  auto* waitAction = new WaitForImagesAction(_iConfig.numImagesToWaitFor, VisionMode::DetectingMarkers);
+  WaitForImagesAction* waitAction;
+  if(_dVars.useImageCompositing) {
+    waitAction = new WaitForImagesAction(_iConfig.numImageCompositesToWaitFor, VisionMode::CompositingImages);
+  } else {
+    waitAction = new WaitForImagesAction(_iConfig.numImagesToWaitFor, VisionMode::DetectingMarkers);
+  }
 
   if(kRobustChargerObservation_SaveImages) {
     const std::string path = GetBEI().GetRobotInfo().GetDataPlatform()->pathToResource(
