@@ -192,23 +192,44 @@ void BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord()
         // TODO there is probably a more accurate way get the actual timestamp of when
         // gaze happened ... because of the "slack" variable pasted into the original
         // get gaze direction pose.
-        const RobotTimeStamp_t currentTimeStamp = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
-        if (_dVars.state == EState::DecreasingGazeStimulation) {
-          SET_STATE(IncreasingGazeStimulation);
-          _dVars.lastGazeAtRobot = currentTimeStamp;
+        if (!kDisableStateMachineToKeyCheckForGaze) {
+          const RobotTimeStamp_t currentTimeStamp = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+          if (_dVars.state == EState::DecreasingGazeStimulation) {
+            SET_STATE(IncreasingGazeStimulation);
+            _dVars.lastGazeAtRobot = currentTimeStamp;
+          } else {
+            IncrementGazeStimulation(currentTimeStamp);
+            ComputeRobotLiftHeight();
+          }
         } else {
-          IncrementGazeStimulation(currentTimeStamp);
+          // Open up audio stream
+          LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToCheckForVisualWakeWord.HitGazeStimulationThreshold",
+                      "Gaze stimulation is now %.3f and above the threshold %.3f.",
+                      _dVars.gazeStimulation, kGazeStimulationThreshold_ms);
+          if (_iConfig.yeaOrNayBehavior->WantsToBeActivated()) {
+            LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToCheckForVisualWakeWord.GoingToOpenTheAudioStream",
+                        "");
+            SET_STATE(DetectedVisualWakeWord);
+            // Now that we know we are going open up the audio stream clear the history and reset
+            // the gazing stim
+            GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
+            ResetGazeStimulation();
+            //ComputeRobotLiftHeight();
+            DelegateIfInControl(_iConfig.yeaOrNayBehavior.get(), &BehaviorDevVisualWakeWord::TransitionToListening);
+          }
+        }
+      } else {
+        if (!kDisableStateMachineToKeyCheckForGaze) {
+          DecrementStimIfGazeHasBroken();
           ComputeRobotLiftHeight();
         }
-
-      } else {
-        DecrementStimIfGazeHasBroken();
-        ComputeRobotLiftHeight();
       }
     } // this case is for whatever reason we fail to get a pose ... not sure how we want to handle this
   } else {
-    DecrementStimIfGazeHasBroken();
-    ComputeRobotLiftHeight();
+    if (!kDisableStateMachineToKeyCheckForGaze) {
+      DecrementStimIfGazeHasBroken();
+      ComputeRobotLiftHeight();
+    }
   }
 }
 
