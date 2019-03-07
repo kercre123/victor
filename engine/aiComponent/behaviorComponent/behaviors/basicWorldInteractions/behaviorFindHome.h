@@ -107,8 +107,6 @@ private:
     // NOTE: only counted while marker detection is being run.
     u32 numFramesOfImageTooDark = 0; 
 
-    bool useImageCompositing = false;
-
     // Handle provided by VisionComponent when registering a 
     //  callback to its VisionProcessingResult signal. When
     //  destroyed, the callback is automatically unregistered.

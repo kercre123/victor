@@ -130,7 +130,6 @@ BehaviorFindHome::~BehaviorFindHome()
 void BehaviorFindHome::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
   modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers,        EVisionUpdateFrequency::High });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingIllumination,   EVisionUpdateFrequency::High });
   
   modifiers.wantsToBeActivatedWhenOnCharger = false;
   modifiers.wantsToBeActivatedWhenCarryingObject = true;
@@ -246,24 +245,10 @@ void BehaviorFindHome::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::CheckVisionProcessingResult(const VisionProcessingResult& result)
 {
-  if(result.modesProcessed.Contains(VisionMode::DetectingIllumination) && 
-     result.illumination.state != IlluminationState::Unknown) {
-    // We only use the Illumination detector if it has a definite response to the current scene illumination
-    _dVars.useImageCompositing = (result.illumination.state == IlluminationState::Darkened);
-  }
-
   if(result.modesProcessed.Contains(VisionMode::DetectingMarkers)) {
     _dVars.numFramesOfDetectingMarkers++;
     if(result.imageQuality == Vision::ImageQuality::TooDark) {
       _dVars.numFramesOfImageTooDark++;
-
-      // Redundant check here for turning on ImageCompositing
-      // Some scenarios are IllumState::Unknown but we have a
-      //  definite reading from ImageQuality measurement that
-      //  indicates we may want to use ImageCompositing
-      if(!_dVars.useImageCompositing) {
-        _dVars.useImageCompositing = true;
-      }
     }
   }
 }
