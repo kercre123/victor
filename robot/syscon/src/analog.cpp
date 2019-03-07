@@ -56,6 +56,7 @@ static bool too_hot = false;
 static bool power_low = false;
 static int shutting_down_timer = 0;
 static int heat_counter = 0;
+static int low_power_count_up = 0;
 static TemperatureAlarm temp_alarm = TEMP_ALARM_SAFE;
 
 // Assume we started on the charger
@@ -315,14 +316,13 @@ static void handleLowBattery() {
   // Low voltage shutdown
   static int power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
   static int power_down_limit = POWER_DOWN_WARNING_TIME;
-  static int count_up = 0;
   static const int count_up_limit = 200;
 
-  if (count_up < count_up_limit) {
+  if (low_power_count_up < count_up_limit) {
     if (EXACT_ADC(ADC_VMAIN) < LOW_VOLTAGE_POWER_DOWN_POINT) {
       Power::setMode(POWER_STOP);
     }
-    count_up++;
+    low_power_count_up++;
   } else if (Analog::on_charger) {
     power_down_limit = POWER_DOWN_WARNING_TIME;
     power_low = false;
@@ -431,6 +431,7 @@ void Analog::tick(void) {
       delay_disable = false;
     }
 
+    low_power_count_up = 0;
     overheated = 0;
     heat_counter = 0;
     is_charging = false;
