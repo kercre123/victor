@@ -44,8 +44,8 @@ void MicDataInfo::CollectRawAudio(const AudioUtil::AudioSample* audioChunk, size
     std::copy(audioChunk, audioChunk + size, newChunk.begin());
     newChunk.resize(kDeinterlacedAudioChunkSize);
     // Re-interlace the audio data, for the sake of the 4-channel .wav that'll be written out.
-    for (int sample=0; sample<kSamplesPerBlock; sample++) {
-      for (int channel=0; channel<kNumInputChannels; channel++) {
+    for (size_t sample=0; sample<kSamplesPerBlock; ++sample) {
+      for (size_t channel=0; channel<kNumInputChannels; ++channel) {
         newChunk[kNumInputChannels*sample + channel] = audioChunk[channel*kSamplesPerBlock + sample];
       }
     }

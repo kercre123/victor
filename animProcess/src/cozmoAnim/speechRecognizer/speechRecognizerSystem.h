@@ -79,8 +79,8 @@ public:
   // alexa triggers get dropped if we detect a notch.
   void ToggleNotchDetector(bool active);
   
-  // add raw audio samples
-  void Update(const AudioUtil::AudioSample* audioChunk, unsigned int audioDataLen);
+  // add 'raw' audio samples
+  void UpdateNotch(const AudioUtil::AudioSample* audioChunk, unsigned int audioDataLen);
 
   // Update recognizer audio
   // NOTE: Always call from the same thread

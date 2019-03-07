@@ -710,7 +710,7 @@ void MicDataProcessor::ProcessRawLoop()
         job->CollectRawAudio(audioChunk, kRawAudioChunkSize);
       }
 
-      _speechRecognizerSystem->Update(audioChunk, kDeinterlacedAudioChunkSize);
+      _speechRecognizerSystem->UpdateNotch(audioChunk, kDeinterlacedAudioChunkSize);
       
       // Factory test doesn't need to do any mic processing, it just uses raw data
       if(!FACTORY_TEST)

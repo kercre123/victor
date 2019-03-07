@@ -346,7 +346,7 @@ void SpeechRecognizerSystem::ToggleNotchDetector(bool active)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample* audioChunk, unsigned int audioDataLen)
+void SpeechRecognizerSystem::UpdateNotch(const AudioUtil::AudioSample* audioChunk, unsigned int audioDataLen)
 {
   {
     std::lock_guard<std::mutex> lg{_notchMutex};

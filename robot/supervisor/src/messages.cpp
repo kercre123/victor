@@ -676,9 +676,10 @@ namespace Anki {
       Result SendMicDataFunction(const s16* latestMicData, uint32_t numSamples) 
       {
         static int chunkID = 0;
-        static const int numChannels=4;
-        static const int samplesPerChunk=80;
-        static int16_t sampleBuffer[numChannels * samplesPerChunk * 2];
+        static const int numChannels = 4;
+        static const int samplesPerChunk = 80;
+        static const int samplesPerDeinterlacedChunk = 160;
+        static int16_t sampleBuffer[numChannels * samplesPerDeinterlacedChunk];
         RobotInterface::MicData micData{};
         micData.timestamp = HAL::GetTimeStamp();
         micData.robotStatusFlags = robotState_.status;
@@ -700,17 +701,17 @@ namespace Anki {
         */
 
         int chunkOffset = chunkID * samplesPerChunk;
-        for (int channel=0; channel<numChannels; channel++) {
-          for (int sample=0; sample<samplesPerChunk; sample++) {
-            auto sampleBufferIndex = channel*samplesPerChunk*2 + chunkOffset + sample;
-            auto latestMicDataIndex = sample*numChannels + channel;
+        for (size_t channel=0; channel<numChannels; ++channel) {
+          for (size_t sample=0; sample<samplesPerChunk; ++sample) {
+            const auto sampleBufferIndex = channel*samplesPerDeinterlacedChunk + chunkOffset + sample;
+            const auto latestMicDataIndex = sample*numChannels + channel;
             sampleBuffer[sampleBufferIndex] = latestMicData[latestMicDataIndex];
           }
         }
 
         chunkID = chunkID ? 0 : 1;
-        if (!chunkID) {
-          memcpy(micData.data, sampleBuffer, numChannels * samplesPerChunk * 2 * sizeof (s16));
+        if (chunkID == 0) {
+          memcpy(micData.data, sampleBuffer, numChannels * samplesPerDeinterlacedChunk * sizeof(s16));
           return RobotInterface::SendMessage(micData) ? RESULT_OK : RESULT_FAIL;
         }
         return RESULT_OK;
