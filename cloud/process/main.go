@@ -182,6 +182,8 @@ func signalHandler() {
 	go func() {
 		<-ch
 		fmt.Println("Received SIGTERM, shutting down immediately")
+		fmt.Println("Uninstall crash reporter")
+		robot.UninstallCrashReporter()
 		os.Exit(0)
 	}()
 }
