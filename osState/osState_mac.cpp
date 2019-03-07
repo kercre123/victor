@@ -508,5 +508,10 @@ bool OSState::IsUserSpaceSecure()
   return true;
 }
 
+bool OSState::IsAnkiDevRobot()
+{
+  return false;
+}
+
 } // namespace Vector
 } // namespace Anki

@@ -41,6 +41,7 @@ PRIVATE
   util
   victorCrashReports
   anki-ble
+  osState
 )
 
 target_compile_options(switchboard

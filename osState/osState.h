@@ -207,6 +207,9 @@ public:
   // True if user space is secure
   bool IsUserSpaceSecure();
 
+  // True if this is a disclaimer bot for internal Anki Dev use
+  bool IsAnkiDevRobot();
+
 protected:
    // Return true if robot has a valid EMR.
    // This function is "off limits" to normal robot services
@@ -249,6 +252,7 @@ private:
   std::string _bootID          = "";
   bool        _isUserSpaceSecure = false;
   bool        _hasValidIPAddress = false;
+  bool        _isAnkiDevRobot = false;
 
   inline uint32_t GetPressure(uint32_t avail, uint32_t total) const
   {
