@@ -53,9 +53,7 @@ protected:
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-
-  // Helper method used as the callback for when the VisionProcessingResult is ready
-  void CheckVisionProcessingResult(const VisionProcessingResult& result);
+  virtual void BehaviorUpdate() override;
 
 private:
   struct InstanceConfig {
@@ -106,11 +104,6 @@ private:
     // Count of the frames where the image quality was TooDark.
     // NOTE: only counted while marker detection is being run.
     u32 numFramesOfImageTooDark = 0; 
-
-    // Handle provided by VisionComponent when registering a 
-    //  callback to its VisionProcessingResult signal. When
-    //  destroyed, the callback is automatically unregistered.
-    Signal::SmartHandle visionResultSignalHandle = nullptr;
     
     struct Persistent {
       // Map of basestation time to locations at which we have executed
@@ -142,7 +135,6 @@ private:
   // Cull the list of searched locations to the recent window and return
   // a vector of recently searched locations.
   std::vector<Point2f> GetRecentlySearchedLocations();
-  
 };
   
 
