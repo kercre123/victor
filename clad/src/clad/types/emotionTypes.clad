@@ -13,6 +13,7 @@ enum uint_8 EmotionType {
     Confident,
     Social,
     Stimulated,
+    Trust,
 
     Count
 }

@@ -188,11 +188,12 @@ void BehaviorReactToTouchPetting::OnBehaviorActivated()
   // set internal state to speed up entry into Level1 animations
   _numPressesAtCurrentBlissLevel = 1;
   
-  GetBEI().GetMoodManager().TriggerEmotionEvent("PettingStarted");
+  auto& moodManager = GetBEI().GetMoodManager();
+  moodManager.TriggerEmotionEvent("PettingStarted");
   
   auto& heldInPalmTracker = GetBEI().GetHeldInPalmTracker();
   if (heldInPalmTracker.IsHeldInPalm()) {
-    heldInPalmTracker.UpdateTrustLevelForEvent(HeldInPalmTrustEventType::RobotPetted);
+    moodManager.TriggerEmotionEvent("PettingStartedOnPalm");
   }
   
   GetBEI().GetBehaviorTimerManager().GetTimer(BehaviorTimerTypes::ReactToTouchPetting).Reset();

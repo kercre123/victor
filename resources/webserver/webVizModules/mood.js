@@ -5,7 +5,7 @@
   var yLabelPose = -1.0;
   var overlappingWidth_s = 1.3;
 
-  var defaultDisplayedEmotions = ['Stimulated'];
+  var defaultDisplayedEmotions = ['Stimulated', 'Trust'];
 
   var gridMarkings = []
   var gridMarkingLabels = []
@@ -476,7 +476,7 @@
         margin-left:40px;
       }
       #bottomContainer {
-        height:160px;
+        height:200px;
         padding-top:10px;
       }
       #bottomContainer > div {

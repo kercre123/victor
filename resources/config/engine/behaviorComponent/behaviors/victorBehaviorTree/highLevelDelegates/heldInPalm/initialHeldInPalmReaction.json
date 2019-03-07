@@ -1,7 +1,35 @@
 {
-  "behaviorClass": "AnimSequence",
   "behaviorID": "InitialHeldInPalmReaction",
+  "behaviorClass": "DispatcherStrictPriority",
+  "emotionEventOnActivated" : "InitialHeldInPalmReaction",
+  "associatedActiveFeature": "HeldInPalm",
+
+  "interruptActiveBehavior": true,
+  "actAsSelector": true,
   
-  "animTriggers": ["HeldOnPalmGetInRelaxed"]
+  "behaviors": [
+    "RelaxedInitialHeldInPalmReactionInternal",
+    "NervousInitialHeldInPalmReactionInternal"
+  ],
+  
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "RelaxedInitialHeldInPalmReactionInternal",
+      "behaviorClass" : "AnimSequence",
+      
+      "animTriggers": ["HeldOnPalmGetInRelaxed"],
+      "wantsToBeActivatedCondition": {
+        "conditionType": "Emotion",
+        "emotion": "Trust",
+        "min": 0.5
+      }
+    },
+    {
+      "behaviorName": "NervousInitialHeldInPalmReactionInternal",
+      "behaviorClass" : "AnimSequence",
+      
+      "animTriggers": ["HeldOnPalmGetInNervous"]
+    }
+  ]
 
 }

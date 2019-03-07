@@ -190,13 +190,19 @@ enum uint_16 BehaviorID {
   WiggleBackOntoChargerFromPlatform,
 
   // victorBehaviorTree/highLevelDelegates/heldInPalm
-  ReactToJoltInPalm,
   HeldInPalmDispatcher,
   HeldInPalmResponses,
   InitialHeldInPalmReaction,
+  LookInPlaceAtEdgeOfPalm,
+  LookInPlaceHeadDownNervous,
+  LookInPlaceHeadDownRelaxed,
+  LookInPlaceHeadUpInPalm,
+  NestleWhileHeldInPalmAnim,
+  ReactToJoltInPalm,
   ReactToPalmTilt,
   ReactToPickupFromPalm,
   ReactToPutDownFromPalm,
+  ReactToPutDownFromPalmAnimSelector,
 
   // victorBehaviorTree/highLevelDelegates
   InitialPickupAnimation,
@@ -219,9 +225,7 @@ enum uint_16 BehaviorID {
   KnowledgeGraphTTS,
 
   // victorBehaviorTree/highLevelDelegates
-  LookInPlaceHeadDownInAir,
   LookInPlaceHeadUp,
-  LookInPlaceHeadUpInAir,
 
   // victorBehaviorTree/highLevelDelegates/meetVictor
   MeetVictor,

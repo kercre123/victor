@@ -1,23 +1,51 @@
 {
   "behaviorID": "ReactToPickupFromPalm",
-  "behaviorClass" : "AnimGetInLoop",
+  "behaviorClass" : "DispatcherStrictPriority",
   
-  // TODO(GB): Change to corresponding held-on-palm pickup anim
-  "getIn"            : "HeldOnPalmPickupRelaxed",
-  // Maybe make some animation that keeps asking the user to put them
-  // back in the palm of their hand
-  "loopAnimation"    : "NeutralFace",
-  "getOut"           : "ReactToPutDown",
-  "loopEndCondition" : {
-    // If the robot is put down on its treads prior to any of the cancellation
-    // conditions below, play the get-out anim and then cancel the entire behavior
-    // to allow the ReactToPutDownFromPalm to be activated by the HeldInPalmDispatcher
-    "conditionType": "OffTreadsState",
-    "targetState": "OnTreads"
-  },
+  "interruptActiveBehavior": true,
+  "actAsSelector": true,
   
-  "shouldCheckEndCondDuringAnim": true,
-  "lockTreads"       : false,
+  "behaviors": [
+    "RelaxedReactToPickupFromPalmInternal",
+    "NervousReactToPickupFromPalmInternal"
+  ],
+  
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "RelaxedReactToPickupFromPalmInternal",
+      "behaviorClass" : "AnimGetInLoop",
+      
+      // TODO(GB): Change to corresponding held-on-palm pickup anim
+      "getIn"            : "HeldOnPalmPickupRelaxed",
+      // Maybe make some animation that keeps asking the user to put them
+      // back in the palm of their hand
+      "loopAnimation"    : "NeutralFace",
+      "getOut"           : "NeutralFace",
+      
+      "shouldCheckEndCondDuringAnim": false,
+      "lockTreads"       : false,
+      
+      "wantsToBeActivatedCondition": {
+        "conditionType": "Emotion",
+        "emotion": "Trust",
+        "min": 0.5
+      }
+    },
+    {
+      "behaviorName": "NervousReactToPickupFromPalmInternal",
+      "behaviorClass" : "AnimGetInLoop",
+      
+      // TODO(GB): Change to corresponding held-on-palm pickup anim
+      "getIn"            : "HeldOnPalmPickupNervous",
+      // Maybe make some animation that keeps asking the user to put them
+      // back in the palm of their hand
+      "loopAnimation"    : "NeutralFace",
+      "getOut"           : "NeutralFace",
+      
+      "shouldCheckEndCondDuringAnim": false,
+      "lockTreads"       : false
+    }
+  ],
   
   "wantsToBeActivatedCondition": {
     "conditionType": "Compound",
@@ -59,6 +87,13 @@
         // HeldInPalmResponses due to a false-positive detection of being put back
         // into a palm again.
         "minDuration_ms": 1500
+      },
+      {
+        // If the robot is sure that it has been put down on its treads prior to any
+        // of the other cancellation conditions above, cancel the behavior to allow the
+        // ReactToPutDownFromPalm to be activated by the HeldInPalmDispatcher
+        "conditionType": "OffTreadsState",
+        "targetState": "OnTreads"
       }
     ]
   }

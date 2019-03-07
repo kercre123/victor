@@ -22,7 +22,7 @@
       "cooldown_s": 0.0
     },
     {
-      "behavior": "NestleAnimLoopInternal",
+      "behavior": "NestleWhileHeldInPalmAnim",
       "cooldown_s": 10.0
     },
     {
@@ -30,32 +30,12 @@
       "cooldown_s": 60.0
     },
     {
-      "behavior": "LookInPlaceHeadDownInAir",
+      "behavior": "LookInPlaceAtEdgeOfPalm",
       "cooldown_s": 0.0
     }
   ],
 
   "anonymousBehaviors": [
-    {
-      "behaviorName": "NestleAnimLoopInternal",
-      "behaviorClass" : "AnimSequence",
-      // Cooldown will handle how often the nestling animation repeats once
-      // it wants to be activated.
-      "num_loops"        : 1,
-      "animTriggers": ["HeldOnPalmNestling"],
-
-      "wantsToBeActivatedCondition": {
-        "conditionType": "BehaviorTimer",
-        "timerName": "ReactToJoltInPalm",
-        // Nestle in the user's palm after 3 minutes of held-in-palm
-        // activity with no jolts or shocks experienced.
-        "cooldown_s": 180.0
-      }
-      // NOTE(GB): Petting does not prevent the robot from continuing
-      // to nestle in the user's palm, that way when a robot is woken
-      // from sleep by a user petting, they will default back to nestling,
-      // since the robot is still "comfortable".
-    },
     {
       "behaviorName"     : "SleepInAirAnimLoopInternal",
       "behaviorClass"    : "AnimGetInLoop",
