@@ -131,7 +131,7 @@ std::string ProxSensorComponent::GetDebugString(const std::string& delimeter)
 bool ProxSensorComponent::GetLatestDistance_mm(u16& distance_mm) const
 {
   distance_mm = _latestDataRaw.distance_mm;
-  return IsLatestReadingValid();
+  return _latestData.foundObject;
 }
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -198,11 +198,11 @@ void ProxSensorComponent::ProcessRawSensorData()
 
   // Check if robot is too pitched for reading to be valid
   const f32 pitchAngle = _robot->GetPitchAngle().ToFloat();
-  _latestData.isTooPitched = pitchAngle < kMinPitch || pitchAngle > kMaxPitch;
+  const bool isTooPitched = pitchAngle < kMinPitch || pitchAngle > kMaxPitch;
 
   // Check if the reading is within the valid range  
   _latestData.distance_mm = Util::Clamp(_latestDataRaw.distance_mm, kMinObsThreshold_mm, kMaxObsThreshold_mm);
-  _latestData.isInValidRange = _latestDataRaw.distance_mm < kMaxObsThreshold_mm;
+  const bool isInValidRange = _latestDataRaw.distance_mm < kMaxObsThreshold_mm;
   
   // Check that the signal strength is high enough
   const bool validSpadCount = (_latestDataRaw.spadCount > 0);
@@ -211,18 +211,18 @@ void ProxSensorComponent::ProcessRawSensorData()
   }
 
   _latestData.signalQuality = validSpadCount ? GetSignalQuality(_latestDataRaw) : 0.f;
-  _latestData.isValidSignalQuality = _latestData.signalQuality > kMinQualityThreshold;
+  const bool isValidSignalQuality = _latestData.signalQuality > kMinQualityThreshold;
   
   // Check that the RangeStatus is valid
-  _latestData.hasValidRangeStatus = _latestDataRaw.rangeStatus == RangeStatus::RANGE_VALID;
+  const bool hasValidRangeStatus = _latestDataRaw.rangeStatus == RangeStatus::RANGE_VALID;
 
   // check if either we found an object, or we know the sensor is unobstructed
-  _latestData.unobstructed = (_latestData.signalQuality <= kMinQualityThreshold) || !_latestData.isInValidRange;
-  _latestData.foundObject  = _latestData.isInValidRange && 
-                             _latestData.isValidSignalQuality && 
+  _latestData.unobstructed = (_latestData.signalQuality <= kMinQualityThreshold) || !isInValidRange;
+  _latestData.foundObject  = isInValidRange && 
+                             isValidSignalQuality && 
                             !_latestData.isLiftInFOV && 
-                            !_latestData.isTooPitched && 
-                             _latestData.hasValidRangeStatus;
+                            !isTooPitched && 
+                             hasValidRangeStatus;
 
   // check if the robot has moved or the sensor reading has changed significantly
   const float changePct = fabs(_latestData.distance_mm - _previousMeasurement) / _previousMeasurement;

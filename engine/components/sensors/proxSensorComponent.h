@@ -33,12 +33,6 @@ struct ProxSensorData
   bool unobstructed;          // The sensor has not detected anything up to its max range
   bool foundObject;           // The sensor detected an object in the valid operating range
   bool isLiftInFOV;           // Lift (or object on lift) is occluding the sensor
-
-  // TODO: the following should probably not be included in this object in favor of checking the above conditions
-  bool isInValidRange;        // Distance is within valid range
-  bool isValidSignalQuality;  // Signal quality is sufficiently strong to trust that something was detected
-  bool isTooPitched;          // Robot is too far pitched up or down
-  bool hasValidRangeStatus;   // RangeStatus reported internally by sensor is valid
 };
 
 
@@ -64,11 +58,7 @@ public:
   // Returns true if the sensor reading is considered valid (see UpdateReadingValidity()). 
   // Returns false if not valid.
   bool GetLatestDistance_mm(u16& distance_mm) const;
-  
-  // Returns true if the latest distance sensor reading is valid,
-  // same as what GetLatestDistance_mm() would return only you don't get distance also.
-  bool IsLatestReadingValid() const { return _latestData.foundObject; }
-  
+    
   // Note: If you just need distance data, prefer to use GetLatestDistance_mm() and
   // check its return value rather than calling this method.
   const ProxSensorData& GetLatestProxData() const { return _latestData; }
