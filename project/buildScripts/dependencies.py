@@ -502,6 +502,7 @@ def svn_package(svn_dict):
     repos = svn_dict.get("repo_names", "")
     user = svn_dict.get("default_usr", "undefined")
     cred = SVN_CRED % (user, password)
+    stale_warning = "WARNING: If this build succeeds, it may contain stale external data"
 
     for repo in repos:
         r_rev = repos[repo].get("version", "head")

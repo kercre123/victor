@@ -144,16 +144,8 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
     anim_dict[ANIM_NAME_ATTR] = anim_name
     anim_dict[KEYFRAMES_ATTR] = {}
 
-    for track in ALL_TRACKS:
-        # When converting to binary, we need ALL animation tracks to exist, even if
-        # some of those don't have any keyframes, so we create those empty lists here.
-        anim_dict[KEYFRAMES_ATTR][track] = []
-
     for keyframe in keyframes:
-        track = keyframe[KEYFRAME_TYPE_ATTR]
-        if track not in anim_dict[KEYFRAMES_ATTR]:
-            anim_dict[KEYFRAMES_ATTR][track] = []
-        keyframe.pop(KEYFRAME_TYPE_ATTR)
+        track = keyframe.pop(KEYFRAME_TYPE_ATTR)
 
         # All keyframes are required to have a trigger time.
         try:
@@ -169,14 +161,9 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
             except KeyError:
                 pass
 
+        # Ignore BackpackLightsKeyFrames for Victor
         if track == BACKPACK_LIGHT_TRACK:
-            # Many old anim files will have "Left" and "Right" backpack lights,
-            # but we need to strip those out for Victor
-            for old_attr in OLD_BACKPACK_LIGHT_ATTRS:
-                try:
-                    keyframe.pop(old_attr)
-                except KeyError:
-                    pass
+            continue
 
         if track == ROBOT_AUDIO_TRACK:
             # There are so many migration changes audio gets its own method
@@ -210,6 +197,8 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
                 int_val = int(round(orig_val))
                 keyframe[int_attr] = int_val
 
+        if track not in anim_dict[KEYFRAMES_ATTR]:
+            anim_dict[KEYFRAMES_ATTR][track] = []
         anim_dict[KEYFRAMES_ATTR][track].append(keyframe)
 
     return anim_dict
