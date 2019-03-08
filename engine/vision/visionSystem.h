@@ -74,6 +74,7 @@ namespace Vector {
   // Forward declaration:
   class CameraCalibrator;
   class CozmoContext;
+  class FaceMetaDataStorage;
   class IlluminationDetector;
   class ImageSaver;
   struct ImageSaverParams;
@@ -227,6 +228,7 @@ namespace Vector {
 
     // Sub-components for detection/tracking/etc:
     std::unique_ptr<Vision::FaceTracker>            _faceTracker;
+    std::unique_ptr<FaceMetaDataStorage>            _faceMetaDataStorage;
     std::unique_ptr<Vision::PetTracker>             _petTracker;
     std::unique_ptr<Vision::MarkerDetector>         _markerDetector;
     std::unique_ptr<Vision::BrightColorDetector>    _brightColorDetector;
@@ -244,8 +246,6 @@ namespace Vector {
     
     std::map<std::string, std::unique_ptr<Vision::NeuralNetRunner>> _neuralNetRunners;
     
-    Vision::ImageRGB                                _neuralNetRunnerImage;
-
     Vision::CompressedImage _compressedDisplayImg;
     s32 _imageCompressQuality = 0;
     
@@ -319,7 +319,7 @@ namespace Vector {
     Result UpdateGroundPlaneClassifier(Vision::ImageCache& image);
     
     void CheckForNeuralNetResults();
-    void AddFakeDetections(const std::set<VisionMode>& modes); // For debugging
+    void AddFakeDetections(const TimeStamp_t atTimestamp, const std::set<VisionMode>& modes); // For debugging
     
     Result SaveSensorData() const;
 
@@ -333,6 +333,7 @@ namespace Vector {
     std::mutex _mutex;
     std::queue<VisionProcessingResult> _results;
     VisionProcessingResult _currentResult;
+    std::list<VisionProcessingResult> _neuralNetResults;
 
     // Image compositor settings, 
     // Used to manage the cycles of Reset()

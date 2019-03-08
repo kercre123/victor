@@ -23,6 +23,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/vision/cropScheduler.h"
+#include "engine/vision/faceMetaDataStorage.h"
 #include "engine/vision/groundPlaneClassifier.h"
 #include "engine/vision/illuminationDetector.h"
 #include "engine/vision/imageSaver.h"
@@ -122,8 +123,13 @@ CONSOLE_VAR_RANGED(f32, kFaceTrackingCropWidthFraction, "Vision.FaceDetection", 
 CONSOLE_VAR_RANGED(f32, kFakeHandDetectionProbability, "Vision.NeuralNets", 0.f, 0.f, 1.f);
 CONSOLE_VAR_RANGED(f32, kFakeCatDetectionProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
 CONSOLE_VAR_RANGED(f32, kFakeDogDetectionProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
+CONSOLE_VAR_RANGED(f32, kFakePersonClassificationProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
 
 CONSOLE_VAR(bool, kDisplayUndistortedImages,"Vision.General", false);
+
+// Distance within which to rotate MirrorMode display. Near/Far used for hysteresis. Set either to 0 to disable.
+CONSOLE_VAR_RANGED(s32, kTheBox_FaceDistanceToRotateScreenNear_mm, "TheBox.Screen", 300, 0, 1000);
+CONSOLE_VAR_RANGED(s32, kTheBox_FaceDistanceToRotateScreenFar_mm,  "TheBox.Screen", 400, 0, 1000);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
@@ -138,6 +144,8 @@ namespace {
 
 static const char * const kLogChannelName = "VisionSystem";
 
+static const char * const kOffboardFaceRecognitionNetworkName = "offboard_face_recognition";
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 VisionSystem::VisionSystem(const CozmoContext* context)
 : _rollingShutterCorrector()
@@ -153,6 +161,7 @@ VisionSystem::VisionSystem(const CozmoContext* context)
                                                              _currentCameraParams))
 , _poseOrigin("VisionSystemOrigin")
 , _vizManager(context == nullptr ? nullptr : context->GetVizManager())
+, _faceMetaDataStorage(new FaceMetaDataStorage())
 , _petTracker(new Vision::PetTracker())
 , _markerDetector(new Vision::MarkerDetector(_camera))
 , _laserPointDetector(new LaserPointDetector(_vizManager))
@@ -1327,65 +1336,104 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::CheckForNeuralNetResults()
 {
-  for(const auto& neuralNetRunner : _neuralNetRunners)
+  _neuralNetResults.clear();
+  
+  for(const auto& neuralNetRunnerEntry : _neuralNetRunners)
   {
-    const bool resultReady = neuralNetRunner.second->GetDetections(_currentResult.salientPoints);
+    const std::string& networkName = neuralNetRunnerEntry.first;
+    const auto& neuralNetRunner = neuralNetRunnerEntry.second;
+    
+    std::list<Vision::SalientPoint> salientPoints;
+    const bool resultReady = neuralNetRunner->GetDetections(salientPoints);
     if(resultReady)
     {
+      VisionProcessingResult neuralNetResult;
+      std::swap(neuralNetResult.salientPoints, salientPoints);
+      neuralNetResult.timestamp = neuralNetRunner->GetOrigImg().GetTimestamp();
+      
       PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.CheckForNeuralNetResults.GotDetections",
                      "Network:%s NumSalientPoints:%zu",
-                     neuralNetRunner.first.c_str(), _currentResult.salientPoints.size());
+                     networkName.c_str(), neuralNetResult.salientPoints.size());
       
-      std::set<VisionMode> modes;
-      const bool success = GetVisionModesForNeuralNet(neuralNetRunner.first, modes);
-      if(ANKI_VERIFY(success, "VisionSystem.CheckForNeuralNetResults.NoModeForNetworkName", "Name: %s",
-                     neuralNetRunner.first.c_str()))
+      if(THEBOX && (networkName == kOffboardFaceRecognitionNetworkName))
       {
-        
-        for(auto & mode : modes)
+        if(!neuralNetResult.salientPoints.empty())
         {
-          _currentResult.modesProcessed.Insert(mode);
+          PRINT_CH_INFO("NeuralNets", "VisionSystem.CheckForNeuralNetResults.GotFaceRecognitionResult",
+                        "First SalientPoint: %s", neuralNetResult.salientPoints.front().description.c_str());
+          
+          _faceMetaDataStorage->Update(neuralNetResult.salientPoints,
+                                       neuralNetRunner->GetProcessingHeight(),
+                                       neuralNetRunner->GetProcessingWidth());
         }
-        
-        if(IsModeEnabled(VisionMode::SavingImages) &&
-           !_neuralNetRunnerImage.IsEmpty() &&
-           _imageSaver->WantsToSave(_currentResult, _neuralNetRunnerImage.GetTimestamp()))
+        neuralNetResult.modesProcessed.Insert(VisionMode::OffboardFaceRecognition);
+      }
+      else
+      {
+        std::set<VisionMode> modes;
+        const bool success = GetVisionModesForNeuralNet(networkName, modes);
+        if(ANKI_VERIFY(success, "VisionSystem.CheckForNeuralNetResults.NoModeForNetworkName", "Name: %s",
+                       networkName.c_str()))
         {
-          const Result saveResult = _imageSaver->Save(_neuralNetRunnerImage, _frameNumber);
-          if(RESULT_OK == saveResult)
+          
+          for(auto & mode : modes)
           {
-            _currentResult.modesProcessed.Insert(VisionMode::SavingImages);
+            neuralNetResult.modesProcessed.Insert(mode);
           }
           
-          const std::string jsonFilename = _imageSaver->GetFullFilename(_frameNumber, "json");
-          Json::Value jsonSalientPoints;
-          NeuralNets::INeuralNetMain::ConvertSalientPointsToJson(_currentResult.salientPoints, false,
-                                                                 jsonSalientPoints);
-          const bool success = NeuralNets::INeuralNetMain::WriteResults(jsonFilename, jsonSalientPoints);
-          if(!success)
+          if(IsModeEnabled(VisionMode::SavingImages))
           {
-            LOG_WARNING("VisionSystem.CheckForNeuralNets.WriteJsonSalientPointsFailed",
-                        "Writing %zu salient points to %s",
-                        _currentResult.salientPoints.size(), jsonFilename.c_str());
+            const Vision::ImageRGB& neuralNetRunnerImage = neuralNetRunner->GetOrigImg();
+            
+            if(!neuralNetRunnerImage.IsEmpty() &&
+               _imageSaver->WantsToSave(neuralNetResult, neuralNetRunnerImage.GetTimestamp()))
+            {
+              const Result saveResult = _imageSaver->Save(neuralNetRunnerImage, _frameNumber);
+              if(RESULT_OK == saveResult)
+              {
+                neuralNetResult.modesProcessed.Insert(VisionMode::SavingImages);
+              }
+              
+              const std::string jsonFilename = _imageSaver->GetFullFilename(_frameNumber, "json");
+              Json::Value jsonSalientPoints;
+              NeuralNets::INeuralNetMain::ConvertSalientPointsToJson(neuralNetResult.salientPoints, false,
+                                                                     jsonSalientPoints);
+              const bool success = NeuralNets::INeuralNetMain::WriteResults(jsonFilename, jsonSalientPoints);
+              if(!success)
+              {
+                LOG_WARNING("VisionSystem.CheckForNeuralNets.WriteJsonSalientPointsFailed",
+                            "Writing %zu salient points to %s",
+                            neuralNetResult.salientPoints.size(), jsonFilename.c_str());
+              }
+            }
+          }
+          
+          if(ANKI_DEV_CHEATS)
+          {
+            const Vision::ImageRGB& neuralNetRunnerImage = neuralNetRunner->GetOrigImg();
+            if(!neuralNetRunnerImage.IsEmpty())
+            {
+              AddFakeDetections(neuralNetRunnerImage.GetTimestamp(), modes);
+            }
           }
         }
-        
-        if(ANKI_DEV_CHEATS)
-        {
-          AddFakeDetections(modes);
-        }
       }
-    }
+      
+      _neuralNetResults.emplace_back(std::move(neuralNetResult));
+      
+    } // if(resultReady)
+    
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void VisionSystem::AddFakeDetections(const std::set<VisionMode>& modes)
+void VisionSystem::AddFakeDetections(const TimeStamp_t atTimestamp, const std::set<VisionMode>& modes)
 {
   // DEBUG: Randomly fake detections of hands and pets if this network was registered to those modes
   if(Util::IsFltGTZero(kFakeHandDetectionProbability) ||
      Util::IsFltGTZero(kFakeCatDetectionProbability) ||
-     Util::IsFltGTZero(kFakeDogDetectionProbability))
+     Util::IsFltGTZero(kFakeDogDetectionProbability) ||
+     Util::IsFltGTZero(kFakePersonClassificationProbability))
   {
     std::vector<Vision::SalientPointType> fakeDetectionsToAdd;
     for(auto & mode : modes)
@@ -1405,11 +1453,15 @@ void VisionSystem::AddFakeDetections(const std::set<VisionMode>& modes)
       {
         fakeDetectionsToAdd.emplace_back(Vision::SalientPointType::Dog);
       }
+      if((VisionMode::ClassifyingPeople == mode) && (rng.RandDbl() < kFakePersonClassificationProbability))
+      {
+        fakeDetectionsToAdd.emplace_back(Vision::SalientPointType::PersonPresent);
+      }
     }
     for(const auto& type : fakeDetectionsToAdd)
     {
       // Simple full-image "classification" SalientPoint
-      Vision::SalientPoint salientPoint(u32(_neuralNetRunnerImage.GetTimestamp()),
+      Vision::SalientPoint salientPoint(atTimestamp,
                                         0.5f, 0.5f, 1.f, 1.f,
                                         type, EnumToString(type),
                                         {CladPoint2d{0.f,0.f}, CladPoint2d{0.f,1.f}, CladPoint2d{1.f,1.f}, CladPoint2d{1.f,0.f}},
@@ -1446,7 +1498,6 @@ Result VisionSystem::Update(const VisionSystemInput& input)
   
   return Update(input.poseData, *_imageCache);
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // This is the regular Update() call
@@ -1542,10 +1593,11 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       if(RESULT_OK != lastResult) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
         anyModeFailures = true;
-      } else {
-        visionModesProcessed.Insert(VisionMode::DetectingMarkers);
-        visionModesProcessed.Enable(VisionMode::MarkerDetectionWhileRotatingFast, allowWhileRotatingFast);
       }
+      
+      visionModesProcessed.Insert(VisionMode::DetectingMarkers);
+      visionModesProcessed.Enable(VisionMode::MarkerDetectionWhileRotatingFast, allowWhileRotatingFast);
+      
       Toc("TotalDetectingMarkers");
     }
   }
@@ -1580,6 +1632,34 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       visionModesProcessed.Enable(VisionMode::DetectingSmileAmount,          detectingSmile);
       visionModesProcessed.Enable(VisionMode::DetectingGaze,                 detectingGaze);
       visionModesProcessed.Enable(VisionMode::DetectingBlinkAmount,          detectingBlink);
+      
+      // The Box Demo: If face is close and mirror mode is enabled, rotate the mirror mode image by 180 degrees
+      if(IsModeEnabled(VisionMode::MirrorMode) &&
+         IsModeEnabled(VisionMode::FlipScreenOnCloseFace) &&
+         kTheBox_FaceDistanceToRotateScreenFar_mm>0 &&
+         kTheBox_FaceDistanceToRotateScreenNear_mm>0)
+      {
+        static bool faceCloseEnough = false;
+        const s32 currentTreshold = (faceCloseEnough ?
+                                     kTheBox_FaceDistanceToRotateScreenFar_mm :
+                                     kTheBox_FaceDistanceToRotateScreenNear_mm);
+        
+        faceCloseEnough = false;
+        for(const auto& face : _currentResult.faces)
+        {
+          if(face.GetHeadPose().GetTranslation().LengthSq() < (currentTreshold*currentTreshold))
+          {
+            faceCloseEnough = true;
+            break;
+          }
+        }
+        
+        if(faceCloseEnough)
+        {
+          visionModesProcessed.Insert(VisionMode::MirrorModeRotate180);
+          visionModesProcessed.Insert(VisionMode::MirrorModeUnmirrored);
+        }
+      }
     }
     Toc("TotalDetectingFaces");
   }
@@ -1723,47 +1803,119 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
   }
 
-  // Check for any objects from the detector. It runs asynchronously, so these objects
-  // will be from a different image than the one in the cache and will use their own
-  // VisionProcessingResult.
+  // Check for any results from any neural nets thave have been running (asynchronously).
+  // Note that any SalientPoints found will be from a different image than the one in the cache and
+  // will have their own timestamp which does not match the current VisionProcessingResult.
   CheckForNeuralNetResults();
   
   // Figure out if any modes requiring neural nets are enabled and keep up with the
   // set of networks needed to satisfy those modes (multiple modes could use the same
-  // network!)
-  std::set<std::string> networksToRun;
+  // network!). For each, store the timestamp of the image we're supposed to run on,
+  // based on the result of ShouldVisionModeRun.
+  std::map<std::string, TimeStamp_t> networksToRun;
   for(const auto& mode : GetVisionModesUsingNeuralNets())
   {
-    if(IsModeEnabled(mode))
+    TimeStamp_t usingTimestamp = 0;
+    // NOTE: ShouldVisionModeRun also checks that mode is enabled (in _modes)
+    if(ShouldVisionModeRun(mode, _currentResult, _modes, usingTimestamp))
     {
       std::set<std::string> networkNames;
       const bool success = GetNeuralNetsForVisionMode(mode, networkNames);
       if(ANKI_VERIFY(success, "VisionSystem.Update.NoNetworkForMode", "%s", EnumToString(mode)))
       {
-        networksToRun.insert(networkNames.begin(), networkNames.end());
+        for(const auto& networkName : networkNames)
+        {
+          networksToRun.emplace(networkName, usingTimestamp);
+        }
       }
     }
   }
   
-  // Run the set of required networks
-  for(const auto& networkName : networksToRun)
+  if(THEBOX && IsModeEnabled(VisionMode::OffboardFaceRecognition))
   {
-    const bool started = _neuralNetRunners.at(networkName)->StartProcessingIfIdle(imageCache);
-    if(started)
+    // Update the ID data for the FaceMetaDataStorage if anything changed
+    for(const auto& updatedID : _currentResult.updatedFaceIDs)
     {
-      // Remember the timestamp of the image used to do object detection, or the entire image
-      // if saving is enabled
-      if(IsModeEnabled(VisionMode::SavingImages))
+      _faceMetaDataStorage->OnUpdatedID(updatedID.oldID, updatedID.newID);
+    }
+   
+    // If there are any faces with no metadata in the image, pass them to the offboard face recognizer to get metadata
+    std::list<Vision::TrackedFace> facesToUpdate;
+    for(auto& face : _currentResult.faces)
+    {
+      // Wait until faces are locally "enrolled", not just tracked
+      if(face.GetID() > 0)
       {
-        _neuralNetRunnerImage = imageCache.GetRGB(_imageSaver->GetParams().size);
+        // NOTE: this will update "face" with meta data if available
+        const bool hasMetaData = _faceMetaDataStorage->GetMetaData(face);
+        //PRINT_CH_DEBUG("NeuralNets", "VisionSystem.Update.FaceMetaDataCheck", "ID:%d", face.GetID()); // Very verbose
+        if(!hasMetaData)
+        {
+          facesToUpdate.emplace_back(face);
+        }
+        else
+        {
+          PRINT_CH_DEBUG("NeuralNets", "VisionSystem.Update.GotFaceMetaData", "ID:%d Name:%s Age:%u",
+                         face.GetID(), face.GetName().c_str(), face.GetAge());
+        }
       }
-      else
+    }
+    
+    if(!facesToUpdate.empty())
+    {
+      // There are faces in this image that we have no metadata for. Run them through the neural net.
+      const bool started = _neuralNetRunners.at(kOffboardFaceRecognitionNetworkName)->StartProcessingIfIdle(imageCache);
+      if(started)
       {
-        // This is just a tiny optimization that doesn't bother storing all the image data if saving is
-        // not enabled (which is the normal case). So we just store the timestamp like the old code this replaces.
-        _neuralNetRunnerImage.Clear();
-        _neuralNetRunnerImage.SetTimestamp(imageCache.GetTimeStamp());
+        // If the neural net wasn't already waiting for a response, let the FaceMetaDataStorage know
+        // that these are the faces being processed so we can establish correspondence once any
+        // results come back from the neural net
+        for(const auto& face : facesToUpdate)
+        {
+          PRINT_CH_DEBUG("NeuralNets", "VisionSystem.Update.WillUpdateMetaData", "ForFace:%d", face.GetID());
+          _faceMetaDataStorage->SetFaceBeingProcessed(face);
+        }
       }
+    }
+  }
+  
+  // Run the set of required networks, using an image with the right timestamp.
+  for(const auto& networkToRun : networksToRun)
+  {
+    const std::string& networkName = networkToRun.first;
+    const TimeStamp_t usingTimestamp = networkToRun.second;
+    bool startedNetwork = false;
+    if(usingTimestamp == imageCache.GetTimeStamp())
+    {
+      // Just use the image cache's image to run the network
+      startedNetwork = _neuralNetRunners.at(networkName)->StartProcessingIfIdle(imageCache);
+    }
+    else
+    {
+      // Look for a neural net runner with an image containing the image matching
+      // the timestamp we are supposed to use
+      bool imageFound = false;
+      for(auto& neuralNetRunner : _neuralNetRunners)
+      {
+        const Vision::ImageRGB& img = neuralNetRunner.second->GetOrigImg();
+        if(usingTimestamp == img.GetTimestamp())
+        {
+          startedNetwork = _neuralNetRunners.at(networkName)->StartProcessingIfIdle(img);
+          imageFound = true;
+          break;
+        }
+      }
+      
+      if(!imageFound)
+      {
+        LOG_ERROR("VisionSystem.Update.NoNetworkFoundWithMatchingTimeStamp", "t:%u", usingTimestamp);
+      }
+    }
+    
+    if(startedNetwork)
+    {
+      PRINT_CH_INFO("NeuralNets", "VisionSystem.Update.StartedNeuralNet", "Running %s on image at time t:%u",
+                    networkName.c_str(), usingTimestamp);
     }
   }
   
@@ -1863,23 +2015,41 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   }
 
   // NOTE: This should come at the end because it relies on elements of the current VisionProcessingResult
-  //       (i.e. _currentResult) to be populated for the purposes of drawing them.
+  //       (i.e. _currentResult) to be populated, as well as any _neuralNetResults, for the purposes of drawing them.
+  //       Note that neural net results get drawn on whatever image is current when they complete, for better or worse,
+  //       so they are not actually in sync.
   if(IsModeEnabled(VisionMode::MirrorMode))
   {
     // TODO: Add an ImageCache::Size for MirrorMode directly
-    const Result result = _mirrorModeManager->CreateMirrorModeImage(imageCache.GetRGB(), _currentResult);
+    const Result result = _mirrorModeManager->CreateMirrorModeImage(imageCache.GetRGB(),
+                                                                    _currentResult,
+                                                                    _neuralNetResults);
     if(RESULT_OK != result)
     {
       PRINT_NAMED_ERROR("VisionSystem.Update.MirrorModeFailed", "");
     } else {
       visionModesProcessed.Insert(VisionMode::MirrorMode);
+      
+      const std::vector<VisionMode> kMirrorModeModifiers{
+        VisionMode::MirrorModeUnmirrored,
+        VisionMode::MirrorModeRotate180,
+        VisionMode::MirrorModeCacheToWhiteboard,
+      };
+      for(const VisionMode mode : kMirrorModeModifiers)
+      {
+        visionModesProcessed.Enable(mode, IsModeEnabled(mode));
+      }
     }
   }
   
   // We've computed everything from this image that we're gonna compute.
-  // Push it onto the queue of results all together.
+  // Push the result, along with any neural net results, onto the queue of results all together.
   _mutex.lock();
   _results.push(_currentResult);
+  for(auto & result : _neuralNetResults)
+  {
+    _results.push(result);
+  }
   _mutex.unlock();
   
   return (anyModeFailures ? RESULT_FAIL : RESULT_OK);

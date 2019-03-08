@@ -14,7 +14,9 @@
 
 #include "engine/aiComponent/salientPointsComponent.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/actions/basicActions.h"
+#include "engine/audio/engineRobotAudioClient.h"
 #include "camera/cameraService.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
@@ -66,6 +68,9 @@
 #include "util/threading/threadPriority.h"
 #include "util/bitFlags/bitFlags.h"
 
+#include "webServerProcess/src/webService.h"
+#include "webServerProcess/src/webVizSender.h"
+
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
 #include "proto/external_interface/shared.pb.h"
@@ -96,7 +101,7 @@ namespace Vector {
   CONSOLE_VAR(bool, kSendUndistortedImages, "Vision.General", false);
   
   // Whether or not to do rolling shutter correction for physical robots
-  CONSOLE_VAR(bool, kRollingShutterCorrectionEnabled, "Vision.PreProcessing", true);
+  CONSOLE_VAR(bool, kRollingShutterCorrectionEnabled, "Vision.PreProcessing", false);
   CONSOLE_VAR(f32,  kMinCameraGain,                   "Vision.PreProcessing", 0.1f);
 
   // Amount of time we sleep when paused, waiting for next image, and after processing each image
@@ -121,6 +126,8 @@ namespace Vector {
   // Prints warning if haven't captured valid frame in this amount of time.
   // This is dependent on how fast we can process an image
   CONSOLE_VAR(u32, kMaxExpectedTimeBetweenCapturedFrames_ms, "Vision.General", 500);
+  
+  CONSOLE_VAR(bool, kTheBox_PlaySoundForCloudVision, "TheBox", true);
   
   void DebugEraseAllEnrolledFaces(ConsoleFunctionContextRef context)
   {
@@ -171,6 +178,9 @@ namespace Vector {
     u16 kInitialExposureTime_ms = 16;
     
     const char* const kDefaultFaceAlbumName = "default";
+
+    static const char* kWebVizModuleName = "vision";
+    static const float kWebVizStatsSendPeriod_s = 1.0f;
   }
 
   VisionComponent::VisionComponent()
@@ -245,6 +255,29 @@ namespace Vector {
     SetLiftCrossBar();
 
     SetupVisionModeConsoleVars();
+
+    if( context != nullptr ) {
+      auto* webService = context->GetWebService();
+      if( webService != nullptr ) {
+        auto onWebVizSubscribed = [this](const std::function<void(const Json::Value&)>& sendToClient) {
+          // just got a subscription, send now
+          Json::Value data;
+          PopulateWebVizJson(data);
+          sendToClient(data);
+        };
+        _signalHandles.emplace_back( webService->OnWebVizSubscribed( kWebVizModuleName ).ScopedSubscribe(
+                                       onWebVizSubscribed ));
+      }
+    }
+  }
+
+  void VisionComponent::PopulateWebVizJson(Json::Value& data) const
+  {
+    data["local_images"] = _processingStats.numFramesProcessed;
+    data["cloud_images"] = _processingStats.numFramesSentToCloud;
+    if( _processingStats.avgFaceAge.GetNum() > 0 ) {
+      data["avg_face_age"] = _processingStats.avgFaceAge.GetMean();
+    }
   }
 
   void VisionComponent::ReadVisionConfig(const Json::Value& config)
@@ -642,9 +675,8 @@ namespace Vector {
     {
       _visionSystemInput.modesToProcess.Enable(mode, schedule.IsTimeToProcess(mode, scheduleCount));
       _visionSystemInput.futureModesToProcess.Enable(mode, schedule.GetScheduleForMode(mode).WillEverRun());
-    } 
-    const bool kResetSingleShotModes = true;
-    _robot->GetVisionScheduleMediator().AddSingleShotModesToSet(_visionSystemInput.modesToProcess, kResetSingleShotModes);
+    }
+    _robot->GetVisionScheduleMediator().AddSingleShotModesToSet(_visionSystemInput.modesToProcess);
     scheduleCount++;
 
     // We are all set to process this image so lock input
@@ -875,13 +907,19 @@ namespace Vector {
     ANKI_CPU_PROFILE("VC::UpdateAllResults");
 
     bool anyFailures = false;
-
+    
+    bool anyResults = false;
+    bool cacheMirrorMode = false;
+    Vision::ImageRGB565 mirrorModeImg;
+    
     if(_visionSystem != nullptr)
     {
       VisionProcessingResult result;
 
       while(true == _visionSystem->CheckMailbox(result))
       {
+        anyResults = true;
+        
         if((_vizManager != nullptr) &&
            _vizManager->IsConnected())
         {
@@ -941,11 +979,34 @@ namespace Vector {
         tryAndReport(&VisionComponent::UpdateVisualObstacles,      {VisionMode::DetectingVisualObstacles});
         tryAndReport(&VisionComponent::UpdatePhotoManager,         {VisionMode::SavingImages});
         tryAndReport(&VisionComponent::UpdateDetectedIllumination, {VisionMode::DetectingIllumination});
-
-        // Note: we always run this because it handles switching to the mirror mode debug screen
-        // It internally checks whether the MirrorMode flag is set in modesProcessed
-        tryAndReport(&VisionComponent::UpdateMirrorMode,           {}); // Use empty set to always run
-                
+        tryAndReport(&VisionComponent::UpdateProcessingStats,      {});
+        
+        
+        // Keep track of the first result that has MirrorMode enabled this tick of checking for results from
+        // VisionSystem.
+        if(result.modesProcessed.Contains(VisionMode::MirrorMode))
+        {
+          if(!mirrorModeImg.IsEmpty())
+          {
+            PRINT_NAMED_WARNING("VisionComponent.UpdateAllResults.MultipleMirrorModeImages",
+                                "Got a MirrorMode image with t:%ums at tick %zu but already have "
+                                "one with t:%ums",
+                                result.mirrorModeImg.GetTimestamp(),
+                                BaseStationTimer::getInstance()->GetTickCount(),
+                                mirrorModeImg.GetTimestamp());
+          }
+          else
+          {
+            // NOTE: This creates a non-const image "header" around the same data as is in result.mirrorModeImg.
+            // Due to a bug / design flaw in OpenCV, this actually allows us to draw on that image later in
+            // UpdateMirrorMode(), even though it's technically const. Since this is a debug mode, we're using
+            // this to avoid a copy in the case that we have eye contact or a display string, since performance
+            // is the higher priority here.
+            mirrorModeImg = result.mirrorModeImg;
+            cacheMirrorMode = result.modesProcessed.Contains(VisionMode::MirrorModeCacheToWhiteboard);
+          }
+        }
+        
 #       undef ToVisionModeMask
                 
         // Store frame rate and last image processed time. Time should only move forward.
@@ -974,12 +1035,17 @@ namespace Vector {
                                                                    std::move(visionModesList),
                                                                    imageMean)));
         }
-
-        // Trigger all registered callbacks on the image processing result
-        _visionResultSignal.emit(result);
+        
+      }
+      
+      if(anyResults)
+      {
+        // Note: we always run this when results were found (whether or not MirrorMode was present in 
+        // any individual result) because it handles switching to the mirror mode debug screen.
+        anyFailures |= (RESULT_OK != UpdateMirrorMode(mirrorModeImg, cacheMirrorMode));
       }
     }
-
+    
     if(anyFailures) {
       return RESULT_FAIL;
     } else {
@@ -1133,6 +1199,7 @@ namespace Vector {
 
         _robot->GetFaceWorld().SetFaceEnrollmentComplete(true);
       }
+      
     }
 
     lastResult = _robot->GetFaceWorld().Update(procResult.faces);
@@ -1200,6 +1267,7 @@ namespace Vector {
     
     const auto& visionModesUsingNeuralNets = GetVisionModesUsingNeuralNets();
     if(procResult.modesProcessed.ContainsAnyOf(visionModesUsingNeuralNets)
+       || procResult.modesProcessed.Contains(VisionMode::OffboardOCR) // Hacked special case because it runs specially
        || procResult.modesProcessed.Contains(VisionMode::DetectingBrightColors))
     {
       if(!usingFixedDrawTime)
@@ -1252,7 +1320,10 @@ namespace Vector {
           break;
         }
       }
-      _vizManager->DrawCameraPoly(poly, color);
+      if(poly.size() > 0)
+      {
+        _vizManager->DrawCameraPoly(poly, color);
+      }
       _vizManager->DrawCameraText(Point2f(object.x_img, object.y_img), caption, color);
     }
 
@@ -1436,11 +1507,11 @@ namespace Vector {
     return RESULT_OK;
   }
   
-  Result VisionComponent::UpdateMirrorMode(const VisionProcessingResult& procResult)
+  Result VisionComponent::UpdateMirrorMode(Vision::ImageRGB565& mirrorModeImg, bool cacheToWhiteboard)
   {
     // Handle switching the debug screen on/off when mirror mode changes
     static bool wasMirrorModeEnabled = false;
-    const bool isMirrorModeEnabled = procResult.modesProcessed.Contains(VisionMode::MirrorMode);
+    const bool isMirrorModeEnabled = !mirrorModeImg.IsEmpty();
     if(wasMirrorModeEnabled != isMirrorModeEnabled)
     {
       PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateMirrorMode.TogglingMirrorMode",
@@ -1469,12 +1540,6 @@ namespace Vector {
     auto & animComponent = _robot->GetAnimationComponent();
     if(isMirrorModeEnabled && animComponent.GetAnimState_NumProcAnimFaceKeyframes() < 5) // Don't get too far ahead
     {
-      // NOTE: This creates a non-const image "header" around the same data as is in procResult.mirrorModeImg.
-      // Due to a bug / design flaw in OpenCV, this actually allows us to draw on that image, even though
-      // it's technically const. Since this is a debug mode, we're using this to avoid a copy in the case
-      // that we have eye contact or a display string, since performance is the higher priority here.
-      Vision::ImageRGB565 mirrorModeImg = procResult.mirrorModeImg;
-      
       if(!_mirrorModeDisplayString.empty())
       {
         mirrorModeImg.DrawText({1,14}, _mirrorModeDisplayString, _mirrorModeStringColor, 0.6f, true);
@@ -1487,24 +1552,99 @@ namespace Vector {
         if(making_eye_contact)
         {
           // Put eye contact indicator right in the middle
-          const f32 x = .5f * (f32)procResult.mirrorModeImg.GetNumCols();
-          const f32 y = .5f * (f32)procResult.mirrorModeImg.GetNumRows();
-          const f32 width = .2f * (f32)procResult.mirrorModeImg.GetNumCols();
-          const f32 height = .2f * (f32)procResult.mirrorModeImg.GetNumRows();
+          const f32 x = .5f * (f32)mirrorModeImg.GetNumCols();
+          const f32 y = .5f * (f32)mirrorModeImg.GetNumRows();;
+          const f32 width = .2f * (f32)mirrorModeImg.GetNumCols();
+          const f32 height = .2f * (f32)mirrorModeImg.GetNumRows();;
           
           mirrorModeImg.DrawFilledRect(Rectangle<f32>(x, y, width, height), NamedColors::YELLOW);
         }
       }
       
       // Just display the mirror mode image as is, from the processing result
-      const bool kInterruptRunning = false;
-      animComponent.DisplayFaceImage(mirrorModeImg, 
-				     AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS, 
-				     kInterruptRunning);
+      if(cacheToWhiteboard)
+      {
+        _robot->GetComponent<AIComponent>().GetComponent<AIWhiteboard>().AddMirrorModeImage(mirrorModeImg);
+      }
+      else
+      {
+        const bool kInterruptRunning = (THEBOX ? true : false);
+        animComponent.DisplayFaceImage(mirrorModeImg,
+                                       AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS,
+                                       kInterruptRunning);
+      }
     }
     return RESULT_OK;
   }
 
+  Result VisionComponent::UpdateProcessingStats(const VisionProcessingResult& procResult)
+  {
+    // TODO: Define the const lists below elsewhere or use enum_concept
+
+    // See if we did anything other than "non-processing" modes
+    const std::list<VisionMode> kNonProcessingModes{
+      VisionMode::WhiteBalance,
+      VisionMode::AutoExposure,
+      VisionMode::MirrorMode,
+    };
+    
+    VisionModeSet modesProcessed(procResult.modesProcessed);
+    modesProcessed.Remove(kNonProcessingModes);
+    if(!modesProcessed.IsEmpty())
+    {
+      _processingStats.numFramesProcessed++;
+      _processingStatsDirty = true;
+    }
+    
+    // See if we did any cloud processing
+    const std::list<VisionMode> kCloudModes{
+      VisionMode::OffboardFaceRecognition,
+      VisionMode::OffboardPersonDetection,
+      VisionMode::OffboardSceneDescription,
+      VisionMode::OffboardOCR,
+    };
+    
+    if(modesProcessed.ContainsAnyOf(kCloudModes))
+    {
+      _processingStats.numFramesSentToCloud++;
+      _processingStatsDirty = true;
+      
+      if(kTheBox_PlaySoundForCloudVision)
+      {
+        // Trigger a sound anytime we process an image in the Cloud
+        // NOTE: Calling this a "Behavior" GameObject type because not sure what else to call it
+        using GE = AudioMetaData::GameEvent::GenericEvent;
+        using GO = AudioMetaData::GameObjectType;
+        _robot->GetAudioClient()->PostEvent(GE::Play__Robot_Vic_Sfx__Cube_Search_Ping, GO::Behavior);
+      }
+    }
+
+    for( const auto& face : procResult.faces ) {
+      const u32 age = face.GetAge();
+      if( age > 0 & age < 120 ) {
+        // average over each detection (face per frame)
+        _processingStats.avgFaceAge += age;
+        _processingStatsDirty = true;
+      }
+    }
+
+    if( _processingStatsDirty ) {
+      const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if( currTime_s > _lastWebvizSendTime + kWebVizStatsSendPeriod_s ) {
+        if( _context ) {
+          if( auto webSender = WebService::WebVizSender::CreateWebVizSender(kWebVizModuleName,
+                                                                            _context->GetWebService()) ) {
+            PopulateWebVizJson(webSender->Data());
+            _processingStatsDirty = false;
+            _lastWebvizSendTime = currTime_s;
+          }
+        }
+      }
+    }
+    
+    return RESULT_OK;
+  }
+  
   void VisionComponent::AddLiftOccluder(const RobotTimeStamp_t t_request)
   {
     // TODO: More precise check for position of lift in FOV given head angle
