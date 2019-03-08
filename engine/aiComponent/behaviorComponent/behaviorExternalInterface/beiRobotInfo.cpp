@@ -288,6 +288,13 @@ bool BEIRobotInfo::IsCharging() const
   return _robot.GetBatteryComponent().IsCharging();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float BEIRobotInfo::GetTimeAtBatteryLevelSec(BatteryLevel level) const
+{
+  return _robot.GetBatteryComponent().GetTimeAtLevelSec(level);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float BEIRobotInfo::GetOnChargerDurationSec() const
 {
   return _robot.GetBatteryComponent().GetOnChargerDurationSec();

@@ -116,13 +116,8 @@ public:
   // A power shutdown is imminent 30 seconds from when this first becomes true.
   bool IsBatteryOverheated() const { return _battOverheated; }
 
-  // Returns how long the "fully charged" state has been active. Returns 0
-  // if not currently fully charged.
-  float GetFullyChargedTimeSec() const;
-  
-  // Returns how long the "low battery" state has been active. Returns 0
-  // if not currently in a low battery state.
-  float GetLowBatteryTimeSec() const;
+  // Returns how long the provided state has been active. Returns 0 if not in that state
+  float GetTimeAtLevelSec(BatteryLevel level) const;
 
   // Get the amount of time that we've been on charger.
   // Returns 0.f if not on charger.

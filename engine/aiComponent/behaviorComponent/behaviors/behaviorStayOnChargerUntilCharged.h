@@ -18,6 +18,8 @@
 
 namespace Anki {
 namespace Vector {
+  
+enum class BatteryLevel : int8_t;
 
 class BehaviorStayOnChargerUntilCharged : public ICozmoBehavior
 {
@@ -50,6 +52,12 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     float lastTimeCancelled_s;
+    
+    struct Persistent {
+      BatteryLevel batteryLevel;
+      BatteryLevel prevBatteryLevel;
+    };
+    Persistent persistent;
   };
 
   InstanceConfig _iConfig;

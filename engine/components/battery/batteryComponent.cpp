@@ -407,27 +407,15 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 }
 
 
-float BatteryComponent::GetFullyChargedTimeSec() const
+float BatteryComponent::GetTimeAtLevelSec(BatteryLevel level) const
 {
-  float timeSinceFullyCharged_sec = 0.f;
-  if (_batteryLevel == BatteryLevel::Full) {
+  float timeSinceLevelChange_sec = 0.f;
+  if (_batteryLevel == level) {
     const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    timeSinceFullyCharged_sec = now_sec - _lastBatteryLevelChange_sec;
+    timeSinceLevelChange_sec = now_sec - _lastBatteryLevelChange_sec;
   }
-  return timeSinceFullyCharged_sec;
+  return timeSinceLevelChange_sec;
 }
-
-
-float BatteryComponent::GetLowBatteryTimeSec() const
-{
-  float timeSinceLowBattery_sec = 0.f;
-  if (_batteryLevel == BatteryLevel::Low) {
-    const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    timeSinceLowBattery_sec = now_sec - _lastBatteryLevelChange_sec;
-  }
-  return timeSinceLowBattery_sec;
-}
-
 
 void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
 {

@@ -26,6 +26,7 @@
 
 CONSOLE_VAR(float, kSafeguardTimeout_s, CONSOLE_GROUP, 30*60.0f); // TODO: get better intuition for reasonable defaults
 CONSOLE_VAR(float, kCooldown_s, CONSOLE_GROUP, 20*60.0f);
+CONSOLE_VAR(float, kMinTimeAtNominal_s, CONSOLE_GROUP, 4.0f); // >= time for any drive-off-charger anim to clear charger platform
 
 namespace Anki {
 namespace Vector {
@@ -43,6 +44,8 @@ BehaviorStayOnChargerUntilCharged::InstanceConfig::InstanceConfig()
 BehaviorStayOnChargerUntilCharged::DynamicVariables::DynamicVariables():
   lastTimeCancelled_s(-1.0*kCooldown_s)
 {
+  persistent.batteryLevel = BatteryLevel::Unknown;
+  persistent.prevBatteryLevel = BatteryLevel::Unknown;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -71,7 +74,7 @@ bool BehaviorStayOnChargerUntilCharged::WantsToBeActivatedBehavior() const
 {
   const auto& robotInfo = GetBEI().GetRobotInfo();
   const bool isOnCharger = robotInfo.IsOnChargerPlatform();
-  const bool isBatteryFull = (robotInfo.GetBatteryLevel() == BatteryLevel::Full);
+  const bool isBatteryFull = (_dVars.persistent.batteryLevel == BatteryLevel::Full);
   const bool needsToCharge = (isOnCharger && !isBatteryFull);
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -81,7 +84,13 @@ bool BehaviorStayOnChargerUntilCharged::WantsToBeActivatedBehavior() const
   const float onChargerDuration_s = robotInfo.GetOnChargerDurationSec();
   const bool safeguard = (onChargerDuration_s > kSafeguardTimeout_s);
   
-  return (needsToCharge && !onCooldown && !safeguard);
+  // The battery level can drop from Full to Nominal the moment the robot leaves the contacts, so enfore a minimum time
+  const bool droppedToNominal = (_dVars.persistent.batteryLevel == BatteryLevel::Nominal)
+                                && (_dVars.persistent.prevBatteryLevel == BatteryLevel::Full);
+  const float levelDuration_s = robotInfo.GetTimeAtBatteryLevelSec(_dVars.persistent.batteryLevel);
+  const bool briefDropToNominal = droppedToNominal && (levelDuration_s < kMinTimeAtNominal_s);
+  
+  return (needsToCharge && !onCooldown && !safeguard && !briefDropToNominal);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -108,7 +117,9 @@ void BehaviorStayOnChargerUntilCharged::GetBehaviorJsonKeys(std::set<const char*
 void BehaviorStayOnChargerUntilCharged::OnBehaviorActivated() 
 {
   // reset dynamic variables
+  auto persistent = std::move(_dVars.persistent);
   _dVars = DynamicVariables();
+  _dVars.persistent = std::move(persistent);
 
   LOG_INFO("StayOnChargerUntilCharged.OnBehaviorActivated.Activated", "Vector is charging, staying on charger.");
 
@@ -121,13 +132,20 @@ void BehaviorStayOnChargerUntilCharged::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStayOnChargerUntilCharged::BehaviorUpdate() 
 {
+  const auto& robotInfo = GetBEI().GetRobotInfo();
+  BatteryLevel batteryLevel = robotInfo.GetBatteryLevel();
+  if (batteryLevel != _dVars.persistent.batteryLevel) {
+    _dVars.persistent.prevBatteryLevel = _dVars.persistent.batteryLevel;
+    _dVars.persistent.batteryLevel = batteryLevel;
+  }
+  
   if( IsActivated() ) {
     // monitor battery status; if full, cancel delegate and cancel self
-    const auto& robotInfo = GetBEI().GetRobotInfo();
-    const bool isBatteryFull = (robotInfo.GetBatteryLevel() == BatteryLevel::Full);
+    const bool isBatteryFull = (_dVars.persistent.batteryLevel == BatteryLevel::Full);
+    bool cancel = false;
     if (isBatteryFull) {
       LOG_INFO("StayOnChargerUntilCharged.BehaviorUpdate.BatteryFull", "Battery is full, canceling self.");
-      CancelSelf(); // (also cancels delegates)
+      cancel = true;
       // TODO: opinions wanted: should we do a cooldown in this case?
     }
 
@@ -139,6 +157,10 @@ void BehaviorStayOnChargerUntilCharged::BehaviorUpdate()
       // set the cooldown
       const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       _dVars.lastTimeCancelled_s = currTime_s;
+      cancel = true;
+    }
+    
+    if (cancel) {
       CancelSelf();
     }
   }
