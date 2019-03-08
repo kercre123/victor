@@ -14,10 +14,11 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorStayOnChargerUntilCharged.h"
 
 #include "coretech/common/engine/utils/timer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "util/console/consoleInterface.h"
 
 #define LOG_CHANNEL "Behaviors.StayOnChargerUntilCharged"
@@ -89,8 +90,13 @@ bool BehaviorStayOnChargerUntilCharged::WantsToBeActivatedBehavior() const
                                 && (_dVars.persistent.prevBatteryLevel == BatteryLevel::Full);
   const float levelDuration_s = robotInfo.GetTimeAtBatteryLevelSec(_dVars.persistent.batteryLevel);
   const bool briefDropToNominal = droppedToNominal && (levelDuration_s < kMinTimeAtNominal_s);
+
+  // if a voice command is pending or active, it may be handled at a lower priority level than this behavior,
+  // so don't activate this one (e.g. exploring)
+  const auto& uic = GetBehaviorComp<UserIntentComponent>();
+  const bool hasIntent = uic.IsAnyUserIntentPending() || uic.IsAnyUserIntentActive();
   
-  return (needsToCharge && !onCooldown && !safeguard && !briefDropToNominal);
+  return (needsToCharge && !onCooldown && !safeguard && !briefDropToNominal && !hasIntent);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -140,9 +146,24 @@ void BehaviorStayOnChargerUntilCharged::BehaviorUpdate()
   }
   
   if( IsActivated() ) {
+
+    // if nay condition wants to cancel, set this bool instead of directly cancelling so that all checks will
+    // be performed (and the cooldown dVar can be set, if needed)
+    bool cancel = false;
+
+    // if we have a pending or active voice intent, voice commands should take priority, so cancel this NOTE:
+    // as of this writing, the usage of this behavior is such that most voice commands are higher priority,
+    // but "exploring" is handled lower down in HLAI, hence the need for this
+    const auto& uic = GetBehaviorComp<UserIntentComponent>();
+    const bool hasIntent = uic.IsAnyUserIntentPending() || uic.IsAnyUserIntentActive();
+    if( hasIntent ) {
+      LOG_INFO("StayOnChargerUntilCharged.BehaviorUpdate.CancelDueToIntent",
+               "Cancelling because of a voice intent");
+      cancel = true;
+    }
+
     // monitor battery status; if full, cancel delegate and cancel self
     const bool isBatteryFull = (_dVars.persistent.batteryLevel == BatteryLevel::Full);
-    bool cancel = false;
     if (isBatteryFull) {
       LOG_INFO("StayOnChargerUntilCharged.BehaviorUpdate.BatteryFull", "Battery is full, canceling self.");
       cancel = true;
