@@ -20,6 +20,10 @@
 // Forward declaration
 class LocalUdpClient;
 
+namespace Json {
+  class Value;
+}
+
 namespace Anki {
 namespace NeuralNets {
 
@@ -45,22 +49,6 @@ private:
   
   bool WaitForResultFile(const std::string& resultFilename, std::list<Vision::SalientPoint>& salientPoints);
   bool WaitForResultCLAD(std::list<Vision::SalientPoint>& salientPoints);
-  
-  Result ParseSalientPointsFromJson(const Json::Value& jsonSalientPoints,
-                                    const Vision::OffboardProcType procType,
-                                    std::list<Vision::SalientPoint>& salientPoints);
-  
-  Result ParseSceneDescriptionFromJson(const Json::Value& jsonSalientPoints,
-                                       std::list<Vision::SalientPoint>& salientPoints);
-  
-  Result ParseObjectDetectionsFromJson(const Json::Value& jsonSalientPoints,
-                                       std::list<Vision::SalientPoint>& salientPoints);
-  
-  Result ParseFaceDataFromJson(const Json::Value& jsonSalientPoints,
-                               std::list<Vision::SalientPoint>& salientPoints);
-  
-  Result ParseTextDetectionsFromJson(const Json::Value& detectionResult,
-                                     std::list<Vision::SalientPoint>& salientPoints);
   
   std::string _cachePath;
   int         _pollPeriod_ms;

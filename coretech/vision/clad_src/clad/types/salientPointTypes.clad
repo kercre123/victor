@@ -8,17 +8,16 @@ namespace Vision {
 
 enum uint_8 SalientPointType 
 {
-  Unknown, // Generally means something is wrong
-  Object,  // For general "objectness" (vs. specific known object types)
-  Person,
-  Hand,
+  BrightColors,     // For brightly colored areas
   Cat,
   Dog,
-  BrightColors  // For brightly colored areas
-
-  // TODO:
-  // Text,
-
+  Face,
+  Hand,
+  Object,           // For general "objectness" (vs. specific known object types)
+  Person,
+  SceneDescription,
+  Text,
+  Unknown           // Generally means something is wrong
 }
 
 structure SalientPoint {
