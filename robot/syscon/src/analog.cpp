@@ -316,7 +316,7 @@ static void handleLowBattery() {
   static const int      EARLY_POWER_COUNT_TIME = 200; // 1 second
 
   static const int      POWER_DOWN_BATTERY_TIME = 10*200; // 10 seconds
-  static const int      POWER_DOWN_WARNING_TIME = 3*60*200 + POWER_DOWN_BATTERY_TIME; // 3 minutes
+  static const int      POWER_DOWN_WARNING_TIME = 4*60*200 + POWER_DOWN_BATTERY_TIME; // 3 minutes
 
   // Low voltage shutdown
   static int power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
