@@ -29,7 +29,9 @@ namespace {
   // If > 0, displays detected marker names in Viz Camera Display (still at fixed scale) and
   // and in mirror mode (at specified scale)
   CONSOLE_VAR_RANGED(f32,  kDisplayMarkerNamesScale,           "Vision.MirrorMode", 0.f, 0.f, 1.f);
-  CONSOLE_VAR(bool,        kDisplayDetectionsInMirrorMode,     "Vision.MirrorMode", true); // objects, faces, markers
+  CONSOLE_VAR(bool,        kDisplayMarkersInMirrorMode,        "Vision.MirrorMode", true);
+  CONSOLE_VAR(bool,        kDisplayFacesInMirrorMode,          "Vision.MirrorMode", true);
+  CONSOLE_VAR(bool,        kDisplaySalientPointsInMirrorMode,  "Vision.MirrorMode", true);
   CONSOLE_VAR(bool,        kDisplayExposureInMirrorMode,       "Vision.MirrorMode", true);
   CONSOLE_VAR(f32,         kMirrorModeGamma,                   "Vision.MirrorMode", 1.f);
   CONSOLE_VAR(s32,         kDrawMirrorModeSalientPointsFor_ms, "Vision.MirrorMode", 0);
@@ -260,18 +262,19 @@ void MirrorModeManager::DrawSalientPoints(const VisionProcessingResult& procResu
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result MirrorModeManager::CreateMirrorModeImage(const Vision::ImageRGB& cameraImg,
-                                                VisionProcessingResult& visionProcResult)
+                                                VisionProcessingResult& visionProcResult,
+                                                const std::list<VisionProcessingResult>& additionalDetectionResults)
 {
   cameraImg.Resize(_screenImg, Vision::ResizeMethod::NearestNeighbor);
 
   // Flip image around the y axis (before we draw anything on it)
   cv::flip(_screenImg.get_CvMat_(), _screenImg.get_CvMat_(), 1);
 
-  if(kDisplayDetectionsInMirrorMode)
+  DrawAllDetections(visionProcResult);
+  
+  for(const auto& additionalDetectionResult : additionalDetectionResults)
   {
-    DrawVisionMarkers(visionProcResult.observedMarkers);
-    DrawFaces(visionProcResult.faces);
-    DrawSalientPoints(visionProcResult);
+    DrawAllDetections(additionalDetectionResult);
   }
   
   if(kDisplayExposureInMirrorMode)
@@ -293,6 +296,28 @@ Result MirrorModeManager::CreateMirrorModeImage(const Vision::ImageRGB& cameraIm
   visionProcResult.mirrorModeImg.SetFromImageRGB(_screenImg, _gammaLUT);
 
   return RESULT_OK;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MirrorModeManager::DrawAllDetections(const VisionProcessingResult& visionProcResult)
+{
+  if(kDisplayMarkersInMirrorMode)
+  {
+    DrawVisionMarkers(visionProcResult.observedMarkers);
+  }
+  
+  if( kDisplayFacesInMirrorMode ) {
+    DrawFaces(visionProcResult.faces);
+  }
+  
+  if( kDisplaySalientPointsInMirrorMode ) {
+    DrawSalientPoints(visionProcResult);
+  }
+  
+  if(kDisplayExposureInMirrorMode)
+  {
+    DrawAutoExposure(visionProcResult);
+  }
 }
   
 } // namespace Vector

@@ -28,79 +28,8 @@ namespace {
   
 CONSOLE_VAR_RANGED(s32, kNeuralNets_MaxNumSceneDescriptionTags, "NeuralNets", 5, 3, 10);
   
-Result ParseSceneDescriptionFromJson(const Json::Value& jsonSalientPoints,
-                                     const TimeStamp_t timestamp,
-                                     std::list<Vision::SalientPoint>& salientPoints);
-
-Result ParseObjectDetectionsFromJson(const Json::Value& jsonSalientPoints,
-                                     const TimeStamp_t timestamp,
-                                     std::list<Vision::SalientPoint>& salientPoints);
-
-Result ParseFaceDataFromJson(const Json::Value& jsonSalientPoints,
-                             const int imageRows, const int imageCols, const TimeStamp_t timestamp,
-                             std::list<Vision::SalientPoint>& salientPoints);
-
-Result ParseTextDetectionsFromJson(const Json::Value& detectionResult,
-                                   const int imageRows, const int imageCols, const TimeStamp_t timestamp,
-                                   std::list<Vision::SalientPoint>& salientPoints);
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ParseSalientPointsFromJson(const Json::Value& detectionResult,
-                                  const Vision::OffboardProcType procType,
-                                  const int imageRows, const int imageCols, const TimeStamp_t timestamp,
-                                  std::list<Vision::SalientPoint>& salientPoints)
-{
-  switch(procType)
-  {
-    case Vision::OffboardProcType::SceneDescription:
-      return ParseSceneDescriptionFromJson(detectionResult, timestamp, salientPoints);
-      
-    case Vision::OffboardProcType::ObjectDetection:
-      return ParseObjectDetectionsFromJson(detectionResult, timestamp, salientPoints);
-      
-    case Vision::OffboardProcType::FaceRecognition:
-      return ParseFaceDataFromJson(detectionResult, imageRows, imageCols, timestamp, salientPoints);
-      
-    case Vision::OffboardProcType::OCR:
-      return ParseTextDetectionsFromJson(detectionResult, imageRows, imageCols, timestamp, salientPoints);
-      
-    default:
-    {
-      // Assume the detectionResult just contains an array of SalientPoints in Json format
-      if(!detectionResult.isMember(NeuralNets::JsonKeys::SalientPoints))
-      {
-        LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.MissingSalientPointsArray",
-                  "%s", NeuralNets::JsonKeys::SalientPoints);
-        return RESULT_FAIL;
-      }
-      
-      const Json::Value& salientPointsJson = detectionResult[NeuralNets::JsonKeys::SalientPoints];
-      if(!salientPointsJson.isArray())
-      {
-        LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.ExpectingArray", "");
-        return RESULT_FAIL;
-      }
-      
-      for(auto const& salientPointJson : salientPointsJson)
-      {
-        Vision::SalientPoint salientPoint;
-        const bool success = salientPoint.SetFromJSON(salientPointJson);
-        if(!success)
-        {
-          LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.FailedToSetFromJSON", "");
-          continue;
-        }
-        
-        salientPoints.emplace_back(std::move(salientPoint));
-      }
-      break;
-    }
-  } // switch(procType)
-  
-  return RESULT_OK;
-}
-
+ 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ParseSceneDescriptionFromJson(const Json::Value& jsonSalientPoints,
                                      const TimeStamp_t timestamp,
@@ -503,6 +432,62 @@ Result ParseTextDetectionsFromJson(const Json::Value& detectionResult,
               "Expecting 'text' or 'recognitionResult' fields.");
     return RESULT_FAIL;
   }
+  
+  return RESULT_OK;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result ParseSalientPointsFromJson(const Json::Value& detectionResult,
+                                  const Vision::OffboardProcType procType,
+                                  const int imageRows, const int imageCols, const TimeStamp_t timestamp,
+                                  std::list<Vision::SalientPoint>& salientPoints)
+{
+  switch(procType)
+  {
+    case Vision::OffboardProcType::SceneDescription:
+      return ParseSceneDescriptionFromJson(detectionResult, timestamp, salientPoints);
+      
+    case Vision::OffboardProcType::ObjectDetection:
+      return ParseObjectDetectionsFromJson(detectionResult, timestamp, salientPoints);
+      
+    case Vision::OffboardProcType::FaceRecognition:
+      return ParseFaceDataFromJson(detectionResult, imageRows, imageCols, timestamp, salientPoints);
+      
+    case Vision::OffboardProcType::OCR:
+      return ParseTextDetectionsFromJson(detectionResult, imageRows, imageCols, timestamp, salientPoints);
+      
+    default:
+    {
+      // Assume the detectionResult just contains an array of SalientPoints in Json format
+      if(!detectionResult.isMember(NeuralNets::JsonKeys::SalientPoints))
+      {
+        LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.MissingSalientPointsArray",
+                  "%s", NeuralNets::JsonKeys::SalientPoints);
+        return RESULT_FAIL;
+      }
+      
+      const Json::Value& salientPointsJson = detectionResult[NeuralNets::JsonKeys::SalientPoints];
+      if(!salientPointsJson.isArray())
+      {
+        LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.ExpectingArray", "");
+        return RESULT_FAIL;
+      }
+      
+      for(auto const& salientPointJson : salientPointsJson)
+      {
+        Vision::SalientPoint salientPoint;
+        const bool success = salientPoint.SetFromJSON(salientPointJson);
+        if(!success)
+        {
+          LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.FailedToSetFromJSON", "");
+          continue;
+        }
+        
+        salientPoints.emplace_back(std::move(salientPoint));
+      }
+      break;
+    }
+  } // switch(procType)
   
   return RESULT_OK;
 }
