@@ -1,11 +1,13 @@
 cmake_minimum_required(VERSION 3.6)
 
-project(engine_tools)
+project(arf_tester)
 
 include(anki_build_cxx)
 include(anki_build_strip)
 include(protobuf)
+include(nng_ext)
 
+set(PROTOBUF_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/proto/arf")
 set(PROTOBUF_CPP_PLUGIN "protocCppPlugin")
 set(PROTOBUF_CPP_PLUGIN_PATH "${CMAKE_SOURCE_DIR}/tools/protobuf/plugin/${PROTOBUF_CPP_PLUGIN}")
 
@@ -24,7 +26,7 @@ string(REPLACE ".proto" ".pb.cc" ARF_PROTO_CPP_GEN_SRCS "${ARF_PROTO_SRCS_NO_DIR
 PREPEND(ARF_PROTO_CPP_GEN_HEADERS "${PROTOBUF_OUTPUT_DIR}/" "${ARF_PROTO_CPP_GEN_HEADERS}")
 PREPEND(ARF_PROTO_CPP_GEN_SRCS "${PROTOBUF_OUTPUT_DIR}/" "${ARF_PROTO_CPP_GEN_SRCS}")
 
-set(ARF_PROTO_HOME_DIR "${CMAKE_SOURCE_DIR}/engine/arf_tester/proto")
+set(ARF_PROTO_HOME_DIR "${CMAKE_SOURCE_DIR}/platform/arf_tester/proto")
 
 add_custom_command(
   OUTPUT ${ARF_PROTO_CPP_GEN_HEADERS} ${ARF_PROTO_CPP_GEN_SRCS}
@@ -57,6 +59,7 @@ anki_build_target_license(arf-tester "ANKI")
 target_link_libraries(arf-tester
   PRIVATE
   # anki libs
+  arf
   util
   cti_common
   cti_vision
@@ -70,9 +73,15 @@ target_link_libraries(arf-tester
   ${ASAN_EXE_LINKER_FLAGS}
 )
 
-#target_include_directories(arf-tester
-#  PUBLIC  
-#  $<BUILD_INTERFACE:${PROTOBUF_OUTPUT_DIR}>
-#)
+target_include_directories(arf-tester
+  PUBLIC  
+  $<BUILD_INTERFACE:${PROTOBUF_OUTPUT_DIR}>
+)
+
+target_compile_definitions(arf-tester
+  PRIVATE
+  ANKICORETECH_USE_OPENCV=1
+  ${PLATFORM_COMPILE_DEFS}
+)
 
 anki_build_strip(TARGET arf-tester)

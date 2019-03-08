@@ -6,8 +6,14 @@
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "coretech/vision/engine/compressedImage.h"
+#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/vision/engine/image.h"
+#include "platform/arf/arf.h"
 #include "util/logging/logging.h"
 #include "json/json.h"
+
+#include "generated/proto/arf/ArfMessage.pb.h"
+#include "generated/proto/arf/RGBImage.pb.h"
 
 bool g_run = true;
 
@@ -17,6 +23,10 @@ void intHandler(int /*dummy*/) {
 
 int main(int argc, char **argv)
 {
+    ARF::Init(argc, argv, "vector");
+    ARF::NodeHandle n;
+    ARF::PubHandle<std::string> pub_handle = n.RegisterPublisher<std::string>("rgb");
+
     Anki::Vector::CameraService *camera_service = Anki::Vector::CameraService::getInstance();
 
     Anki::Vision::Camera camera;
@@ -67,12 +77,14 @@ int main(int argc, char **argv)
             printf("Failed to get frame.\n");
             continue;
         }
+
         Anki::Vision::Image image;
         bool convert_to_gray = image_buffer.GetGray(image, Anki::Vision::ImageCacheSize::Full);
         if (!convert_to_gray) {
             printf("Couldn't convert to gray");
             camera_service->CameraReleaseFrame(image_buffer.GetImageId());
         }
+        
         std::list<Anki::Vision::TrackedFace> face_list;
         std::list<Anki::Vision::UpdatedFaceID> updated_ids_list;
         Anki::Vision::DebugImageList<Anki::Vision::CompressedImage> debug_images;
@@ -82,6 +94,22 @@ int main(int argc, char **argv)
         } else {
             printf("Result not ok: %d", result);
         }
+
+        Anki::Vision::ImageRGB image_rgb;
+        bool convert_to_rgb = image_buffer.GetRGB(image_rgb, Anki::Vision::ImageCacheSize::Full);
+        if (!convert_to_rgb) {
+            printf("Couldn't convert to rgb");
+            camera_service->CameraReleaseFrame(image_buffer.GetImageId());
+        }
+
+        arf_proto::ArfMessage arf_message;
+        arf_proto::RGBImage* arf_image = arf_message.mutable_image_rgb();
+        arf_image->mutable_header()->set_time(image_rgb.GetTimestamp());
+        arf_image->set_rows(image_rgb.GetNumRows());
+        arf_image->set_cols(image_rgb.GetNumCols());
+        arf_image->set_data(image_rgb.GetDataPointer(), 3 * image_rgb.GetNumRows() * image_rgb.GetNumCols());
+
+        pub_handle.publish_string(arf_message.SerializeAsString());
         camera_service->CameraReleaseFrame(image_buffer.GetImageId());
     }
 }

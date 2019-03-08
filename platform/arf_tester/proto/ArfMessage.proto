@@ -3,12 +3,14 @@ syntax = "proto2";
 package arf_proto;
 
 import "DepthData.proto";
+import "RGBImage.proto";
 
 message ArfMessage {
 
   oneof arf_message {
       string arf_string = 1;
       DepthData depth_data = 2;
+      RGBImage image_rgb = 3;
   }
 
 }

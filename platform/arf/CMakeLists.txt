@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.6)
 
 project(engine_tools)
 
+include(nng_ext)
+
 include(anki_build_cxx)
 include(anki_build_strip)
 
@@ -23,9 +25,9 @@ anki_build_target_license(arf "ANKI")
 
 target_link_libraries(arf
   PUBLIC
-  nng
-  pthread # Hack to get pthread to appear on linker line after nng
   # platform
+  ${NNG_LIBS}
+  pthread # Hack to get pthread to appear on linker line after nng
   ${PLATFORM_LIBS}
   ${ASAN_EXE_LINKER_FLAGS}
 )
@@ -35,7 +37,7 @@ anki_build_strip(TARGET arf)
 target_include_directories(arf
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
-  ${PLATFORM_INCLUDES}
+  $<BUILD_INTERFACE:${NNG_INCLUDE_PATH}>
 )
 
 anki_build_cxx_executable(subscriber ${ANKI_SRCLIST_DIR})

@@ -2,6 +2,7 @@ cxx_project(
     name = 'cozmo_engine',
     srcs = cxx_src_glob(['.'],
                         excludes = [
+                            '**/arf_tester/*',
                             '**/vicos/*',
                             'tools/**/*',
                         ]),

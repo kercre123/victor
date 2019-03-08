@@ -29,17 +29,18 @@ namespace ARF
       {"kobuki_arf/scan", 11003},
       {"kobuki_arf/map", 11004},
       {"kobuki_arf/slam_pose", 11005},
+      {"vector/rgb", 999}
     };
 
     std::string full_name = node_name.empty() ? topic_name : (node_name + "/" + topic_name);
     auto it = portMap.find(full_name);
     if(it != portMap.end()) {
       static char buf[64];
-      sprintf(buf, "tcp://192.168.34.35:%i", it->second);
+      sprintf(buf, "tcp://192.168.34.128:%i", it->second);
       return buf;
     }
     
-    return "tcp://192.168.34.35:10999";
+    return "tcp://192.168.34.128:10999";
   }
   
   void Init(int argc, char** argv, const char* name)

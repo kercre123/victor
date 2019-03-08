@@ -122,7 +122,6 @@ target_include_directories(cozmo_engine
 if (VICOS)
   # TODO: support tools on mac
   add_subdirectory(tools)
-  add_subdirectory(arf_tester)
 
   # Placeholder install task for cozmo_engine. We will eventually transition to using
   # install for all libs & binaries in order to assign appropriate permissions.

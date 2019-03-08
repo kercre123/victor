@@ -29,6 +29,8 @@ add_subdirectory(ion-sample)
 
 add_subdirectory(arf)
 
+add_subdirectory(arf_tester)
+
 #
 # Macro command to create build rules for full symbol files
 #
