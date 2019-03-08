@@ -119,7 +119,7 @@ Alexa::~Alexa()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::Init(const AnimContext* context)
+void Alexa::Init(const Anim::AnimContext* context)
 {
   _context = context;
 

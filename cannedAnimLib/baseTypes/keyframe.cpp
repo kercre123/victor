@@ -41,7 +41,6 @@ bool has_any_digits(const std::string& s)
 
 namespace Anki {
   namespace Vector {
-    
 #pragma mark -
 #pragma mark IKeyFrame
     
@@ -1443,6 +1442,6 @@ _streamMsg.lights[__LED_NAME__].offset_ms = 0; } while(0)
         return new RobotInterface::EngineToRobot(_streamMsg);
       }
     #endif
-    
+
   } // namespace Vector
 } // namespace Anki

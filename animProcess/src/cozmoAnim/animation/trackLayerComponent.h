@@ -28,13 +28,13 @@
 
 namespace Anki {
 namespace Vector {
-
+namespace Anim {
 class AnimContext;
 class AnimationStreamer;
 class AudioLayerManager;
 class BackpackLayerManager;
 class FaceLayerManager;
- 
+
 class TrackLayerComponent
 {
 public:
@@ -53,7 +53,7 @@ public:
   };
   
   
-  TrackLayerComponent(const AnimContext* context);
+  TrackLayerComponent(const Anim::AnimContext* context);
   ~TrackLayerComponent();
   
   void Init(AnimationStreamer& animStreamer);
@@ -158,11 +158,11 @@ private:
   };
 
 
-  std::unique_ptr<AudioLayerManager>    _audioLayerManager;
-  std::unique_ptr<BackpackLayerManager> _backpackLayerManager;
-  std::unique_ptr<FaceLayerManager>     _faceLayerManager;
-  std::unique_ptr<ProceduralFace>       _lastProceduralFace;
-  std::vector<KeepAliveModifier>        _keepAliveModifiers;
+  std::unique_ptr<AudioLayerManager>            _audioLayerManager;
+  std::unique_ptr<BackpackLayerManager>         _backpackLayerManager;
+  std::unique_ptr<FaceLayerManager>             _faceLayerManager;
+  std::unique_ptr<ProceduralFace> _lastProceduralFace;
+  std::vector<KeepAliveModifier>                _keepAliveModifiers;
 
   // Audio letancy offset tracking vars
   mutable bool _validAudioKeyframeIt = false;
@@ -188,6 +188,7 @@ private:
 
 };
   
+}
 }
 }
 

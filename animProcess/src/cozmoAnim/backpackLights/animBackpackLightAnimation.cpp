@@ -15,6 +15,7 @@
 
 namespace Anki {
 namespace Vector {
+namespace Anim {
 namespace BackpackLightAnimation {
 
 bool DefineFromJSON(const Json::Value& jsonDef, BackpackAnimation& outAnim)
@@ -58,5 +59,6 @@ bool DefineFromJSON(const Json::Value& jsonDef, BackpackAnimation& outAnim)
 }
 
 } // namespace BackpackLightAnimation
+} // namespace Anim
 } // namespace Vector
 } // namespace Anki

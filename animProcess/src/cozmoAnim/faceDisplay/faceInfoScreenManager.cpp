@@ -154,7 +154,7 @@ FaceInfoScreenManager::FaceInfoScreenManager()
 }
 
 
-void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animStreamer)
+void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStreamer* animStreamer)
 {
   DEV_ASSERT(context != nullptr, "FaceInfoScreenManager.Init.NullContext");
 
@@ -1938,7 +1938,7 @@ bool FaceInfoScreenManager::ScreenNeedsWait(const ScreenName& screenName) const
   }
 }
 
-void FaceInfoScreenManager::SelfTestEnd(AnimationStreamer* animStreamer)
+void FaceInfoScreenManager::SelfTestEnd(Anim::AnimationStreamer* animStreamer)
 {
   const ScreenName curScreen = FaceInfoScreenManager::getInstance()->GetCurrScreenName();
   if(curScreen != ScreenName::SelfTestRunning)

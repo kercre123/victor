@@ -25,6 +25,8 @@ namespace Json {
 
 namespace Anki {
 namespace Vector {
+namespace Anim {
+
 namespace BackpackLightAnimation {
 
   // BackpackAnimation is just a container for the SetBackpackLights message
@@ -35,6 +37,8 @@ namespace BackpackLightAnimation {
   bool DefineFromJSON(const Json::Value& jsonDef, BackpackAnimation& outAnim);
 
 } // namespace BackpackLightAnimation
+
+} // namespace Anim
 } // namespace Vector
 } // namespace Anki
 

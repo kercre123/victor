@@ -18,9 +18,11 @@
 // Forward declarations
 namespace Anki {
   namespace Vector {
-    class AnimContext;
-    class AnimationStreamer;
-    class StreamingAnimationModifier;
+    namespace Anim {
+      class AnimContext;
+      class AnimationStreamer;
+      class StreamingAnimationModifier;
+    }
     class TextToSpeechComponent;
     class SdkAudioComponent;
     
@@ -48,6 +50,7 @@ namespace Anki {
 
 namespace Anki {
 namespace Vector {
+namespace Anim {
 
 class AnimEngine
 {
@@ -89,7 +92,7 @@ protected:
   
 }; // class AnimEngine
 
-
+} // namespace Anim
 } // namespace Vector
 } // namespace Anki
 

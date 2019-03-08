@@ -41,7 +41,6 @@ namespace Vector {
 
 // forward declaration
 class Animation;
-class AnimContext;
 
 class CannedAnimationLoader : private Util::noncopyable
 {

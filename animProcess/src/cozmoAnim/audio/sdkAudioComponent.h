@@ -19,7 +19,9 @@
 // Forward declarations
 namespace Anki {
   namespace Vector {
-    class AnimContext;
+    namespace Anim {
+      class AnimContext;
+    }
     namespace Audio {
       class CozmoAudioController;
     }
@@ -40,7 +42,7 @@ class SdkAudioComponent
 {
 public:
   //Constructor, destructor
-  SdkAudioComponent(const AnimContext* context);
+  SdkAudioComponent(const Anim::AnimContext* context);
   ~SdkAudioComponent();
 
   //

@@ -104,7 +104,7 @@ void MicDataProcessor::SetupConsoleFuncs()
 # undef CONSOLE_GROUP
 
 
-MicDataProcessor::MicDataProcessor(const AnimContext* context, MicDataSystem* micDataSystem, 
+MicDataProcessor::MicDataProcessor(const Anim::AnimContext* context, MicDataSystem* micDataSystem,
                                    const std::string& writeLocation)
 : _context(context)
 , _micDataSystem(micDataSystem)
