@@ -351,7 +351,9 @@ bool OffboardModel::WaitForResultCLAD(std::list<Vision::SalientPoint>& salientPo
             }
           }
           LOG_INFO("OffboardModel.WaitForResultCLAD.ParsedMessageJson", "Keys:%s", keys.c_str());
-          const Result parseResult = ParseSalientPointsFromJson(detectionResult, resultReadyMsg.procType, salientPoints);
+          const Result parseResult = ParseSalientPointsFromJson(detectionResult, resultReadyMsg.procType,
+                                                                _imageRows, _imageCols, _imageTimestamp,
+                                                                salientPoints);
           resultAvailable |= (parseResult == RESULT_OK);
         }
       }

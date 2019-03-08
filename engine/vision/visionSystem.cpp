@@ -123,7 +123,6 @@ CONSOLE_VAR_RANGED(f32, kFaceTrackingCropWidthFraction, "Vision.FaceDetection", 
 CONSOLE_VAR_RANGED(f32, kFakeHandDetectionProbability, "Vision.NeuralNets", 0.f, 0.f, 1.f);
 CONSOLE_VAR_RANGED(f32, kFakeCatDetectionProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
 CONSOLE_VAR_RANGED(f32, kFakeDogDetectionProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
-CONSOLE_VAR_RANGED(f32, kFakePersonClassificationProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
 
 CONSOLE_VAR(bool, kDisplayUndistortedImages,"Vision.General", false);
 
@@ -1349,7 +1348,7 @@ void VisionSystem::CheckForNeuralNetResults()
     {
       VisionProcessingResult neuralNetResult;
       std::swap(neuralNetResult.salientPoints, salientPoints);
-      neuralNetResult.timestamp = neuralNetRunner->GetOrigImg().GetTimestamp();
+      neuralNetResult.timestamp = neuralNetRunner->GetProcessingTimeStamp();
       
       PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.CheckForNeuralNetResults.GotDetections",
                      "Network:%s NumSalientPoints:%zu",
@@ -1359,63 +1358,12 @@ void VisionSystem::CheckForNeuralNetResults()
       {
         if(!neuralNetResult.salientPoints.empty())
         {
-          PRINT_CH_INFO("NeuralNets", "VisionSystem.CheckForNeuralNetResults.GotFaceRecognitionResult",
-                        "First SalientPoint: %s", neuralNetResult.salientPoints.front().description.c_str());
-          
-          _faceMetaDataStorage->Update(neuralNetResult.salientPoints,
-                                       neuralNetRunner->GetProcessingHeight(),
-                                       neuralNetRunner->GetProcessingWidth());
+          neuralNetResult.modesProcessed.Insert(mode);
         }
-        neuralNetResult.modesProcessed.Insert(VisionMode::OffboardFaceRecognition);
-      }
-      else
-      {
-        std::set<VisionMode> modes;
-        const bool success = GetVisionModesForNeuralNet(networkName, modes);
-        if(ANKI_VERIFY(success, "VisionSystem.CheckForNeuralNetResults.NoModeForNetworkName", "Name: %s",
-                       networkName.c_str()))
+        
+        if(ANKI_DEV_CHEATS)
         {
-          
-          for(auto & mode : modes)
-          {
-            neuralNetResult.modesProcessed.Insert(mode);
-          }
-          
-          if(IsModeEnabled(VisionMode::SavingImages))
-          {
-            const Vision::ImageRGB& neuralNetRunnerImage = neuralNetRunner->GetOrigImg();
-            
-            if(!neuralNetRunnerImage.IsEmpty() &&
-               _imageSaver->WantsToSave(neuralNetResult, neuralNetRunnerImage.GetTimestamp()))
-            {
-              const Result saveResult = _imageSaver->Save(neuralNetRunnerImage, _frameNumber);
-              if(RESULT_OK == saveResult)
-              {
-                neuralNetResult.modesProcessed.Insert(VisionMode::SavingImages);
-              }
-              
-              const std::string jsonFilename = _imageSaver->GetFullFilename(_frameNumber, "json");
-              Json::Value jsonSalientPoints;
-              NeuralNets::INeuralNetMain::ConvertSalientPointsToJson(neuralNetResult.salientPoints, false,
-                                                                     jsonSalientPoints);
-              const bool success = NeuralNets::INeuralNetMain::WriteResults(jsonFilename, jsonSalientPoints);
-              if(!success)
-              {
-                LOG_WARNING("VisionSystem.CheckForNeuralNets.WriteJsonSalientPointsFailed",
-                            "Writing %zu salient points to %s",
-                            neuralNetResult.salientPoints.size(), jsonFilename.c_str());
-              }
-            }
-          }
-          
-          if(ANKI_DEV_CHEATS)
-          {
-            const Vision::ImageRGB& neuralNetRunnerImage = neuralNetRunner->GetOrigImg();
-            if(!neuralNetRunnerImage.IsEmpty())
-            {
-              AddFakeDetections(neuralNetRunnerImage.GetTimestamp(), modes);
-            }
-          }
+          AddFakeDetections((TimeStamp_t)neuralNetResult.timestamp, modes);
         }
       }
       
@@ -1432,8 +1380,7 @@ void VisionSystem::AddFakeDetections(const TimeStamp_t atTimestamp, const std::s
   // DEBUG: Randomly fake detections of hands and pets if this network was registered to those modes
   if(Util::IsFltGTZero(kFakeHandDetectionProbability) ||
      Util::IsFltGTZero(kFakeCatDetectionProbability) ||
-     Util::IsFltGTZero(kFakeDogDetectionProbability) ||
-     Util::IsFltGTZero(kFakePersonClassificationProbability))
+     Util::IsFltGTZero(kFakeDogDetectionProbability))
   {
     std::vector<Vision::SalientPointType> fakeDetectionsToAdd;
     for(auto & mode : modes)
@@ -1452,10 +1399,6 @@ void VisionSystem::AddFakeDetections(const TimeStamp_t atTimestamp, const std::s
       if((VisionMode::DetectingPets == mode) && (rng.RandDbl() < kFakeDogDetectionProbability))
       {
         fakeDetectionsToAdd.emplace_back(Vision::SalientPointType::Dog);
-      }
-      if((VisionMode::ClassifyingPeople == mode) && (rng.RandDbl() < kFakePersonClassificationProbability))
-      {
-        fakeDetectionsToAdd.emplace_back(Vision::SalientPointType::PersonPresent);
       }
     }
     for(const auto& type : fakeDetectionsToAdd)
@@ -1836,6 +1779,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     // Update the ID data for the FaceMetaDataStorage if anything changed
     for(const auto& updatedID : _currentResult.updatedFaceIDs)
     {
+<<<<<<< HEAD
       _faceMetaDataStorage->OnUpdatedID(updatedID.oldID, updatedID.newID);
     }
    
@@ -1876,6 +1820,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
           _faceMetaDataStorage->SetFaceBeingProcessed(face);
         }
       }
+=======
+      PRINT_CH_DEBUG("NeuralNets", "VisionSystem.Update.StartedNeuralNet", "Running %s on image at time t:%u",
+                     networkName.c_str(), imageCache.GetTimeStamp());
+>>>>>>> cf4fe3905e... It compiles!
     }
   }
   

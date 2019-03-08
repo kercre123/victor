@@ -34,6 +34,5 @@ Result ParseSalientPointsFromJson(const Json::Value& jsonSalientPoints,
 
 }
 }
-}
 
 #endif /* __Anki_NeuralNets_ParseSalientPointsFromJson_H__ */
