@@ -68,7 +68,6 @@ private:
     
     AnimationTrigger searchTurnAnimTrigger;
     AnimationTrigger searchTurnEndAnimTrigger;
-    AnimationTrigger waitForImagesAnimTrigger;
     AnimationTrigger postSearchAnimTrigger;
     std::unique_ptr<BlockWorldFilter> homeFilter;
     

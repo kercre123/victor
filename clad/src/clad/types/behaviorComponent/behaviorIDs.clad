@@ -187,7 +187,7 @@ enum uint_16 BehaviorID {
   GoHome,
   RequestHomeBecauseStuck,
   RequestToGoHome,
-  RobustObserveCharger,
+  RobustChargerObservation,
   WiggleBackOntoChargerFromPlatform,
 
   // victorBehaviorTree/highLevelDelegates/heldInPalm

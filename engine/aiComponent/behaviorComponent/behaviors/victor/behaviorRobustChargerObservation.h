@@ -50,9 +50,9 @@ private:
   struct InstanceConfig {
     InstanceConfig();
 
-    int numImagesToWaitFor = 15;
-
-    int numImageCompositesToWaitFor = 3;
+    // Note: these frame counts are not image frames
+    int numImageCompositingFramesToWaitFor = 2;
+    int numCyclingExposureFramesToWaitFor = 3;
   };
 
   struct DynamicVariables {

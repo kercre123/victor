@@ -164,7 +164,7 @@ void BehaviorGoHome::InitBehavior()
   DEV_ASSERT(_iConfig.wiggleOntoChargerBehavior != nullptr,
              "BehaviorGoHome.InitBehavior.NullWiggleOntoChargerBehavior");
 
-  _iConfig.observeChargerBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(RobustObserveCharger));
+  _iConfig.observeChargerBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(RobustChargerObservation));
   DEV_ASSERT(_iConfig.observeChargerBehavior != nullptr, "BehaviorGoHome.InitBehavior.NullObserveChargerBehavior");
 }
 
