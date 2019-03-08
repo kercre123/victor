@@ -127,13 +127,6 @@ std::string ProxSensorComponent::GetDebugString(const std::string& delimeter)
   return ss.str();
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool ProxSensorComponent::GetLatestDistance_mm(u16& distance_mm) const
-{
-  distance_mm = _latestDataRaw.distance_mm;
-  return _latestData.foundObject;
-}
- 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 void ProxSensorComponent::ProcessRawSensorData() 
 {

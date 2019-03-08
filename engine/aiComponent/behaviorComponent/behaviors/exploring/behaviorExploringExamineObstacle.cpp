@@ -182,12 +182,11 @@ void BehaviorExploringExamineObstacle::OnBehaviorActivated()
                            "Should be facing an obstacle now" );
     }
     
-    auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
-    u16 distance_mm = 0;
-    // ignore return value (sensor validity). this is only used to select an animation so isnt vital
-    proxSensor.GetLatestDistance_mm( distance_mm );
+    const auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
+    const auto& proxData = proxSensor.GetLatestProxData();
     
-    const bool obstacleIsFar = (distance_mm >= kMinDistForFarReaction_mm);
+    // ignore if we actually found an object. this is only used to select an animation so isnt vital
+    const bool obstacleIsFar = (proxData.distance_mm >= kMinDistForFarReaction_mm);
     const AnimationTrigger huhAnim = obstacleIsFar ? AnimationTrigger::ExploringHuhFar : AnimationTrigger::ExploringHuhClose;
     auto* huhAction = new TriggerLiftSafeAnimationAction{ huhAnim };
     DelegateIfInControl(huhAction, [this](ActionResult res){

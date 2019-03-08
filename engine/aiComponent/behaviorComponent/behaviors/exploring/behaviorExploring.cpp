@@ -929,12 +929,10 @@ void BehaviorExploring::SampleVisitLocationsFacingObstacle( std::shared_ptr<cons
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorExploring::PrepRobotForProx()
 {
-  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
-  u16 distance_mm = 0;
-  const bool isSensorReadingValid = proxSensor.GetLatestDistance_mm(distance_mm);
-  if( !isSensorReadingValid ) {
-    const bool liftBlocking = proxSensor.IsLiftInFOV();
-    if( !IsControlDelegated() && liftBlocking ) {
+  const auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
+  const auto& proxData = proxSensor.GetLatestProxData();
+  if( !proxData.foundObject ) {
+    if( !IsControlDelegated() && proxData.isLiftInFOV ) {
       auto preset = kMoveLiftAboveProx ? MoveLiftToHeightAction::Preset::JUST_ABOVE_PROX : MoveLiftToHeightAction::Preset::LOW_DOCK;
       DelegateIfInControl( new MoveLiftToHeightAction(preset) );
     }

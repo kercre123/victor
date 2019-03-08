@@ -54,19 +54,9 @@ public:
   // end IDependencyManagedComponent functions
   //////
 
-  // Populates distance_mm with the latest distance value.
-  // Returns true if the sensor reading is considered valid (see UpdateReadingValidity()). 
-  // Returns false if not valid.
-  bool GetLatestDistance_mm(u16& distance_mm) const;
-    
-  // Note: If you just need distance data, prefer to use GetLatestDistance_mm() and
   // check its return value rather than calling this method.
   const ProxSensorData& GetLatestProxData() const { return _latestData; }
   
-  // Returns true if any part of the lift (or object that it's carrying)
-  // falls within the sensor's field of view
-  bool IsLiftInFOV() const { return _latestData.isLiftInFOV; }
-
   // enable or disable this entire component's ability to update the nav map
   void SetNavMapUpdateEnabled(bool enabled) { _enabled = enabled; }
   
