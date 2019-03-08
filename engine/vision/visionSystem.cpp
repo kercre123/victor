@@ -662,6 +662,10 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
   // Put the new values in the output result:
   std::swap(_currentResult.cameraParams, nextParams);
   _currentResult.imageQuality = _cameraParamsController->GetImageQuality();
+  if(_cameraParamsController->IsCurrentCyclingExposureReset()) {
+    // We have completed one full pass through the list of exposures to cycle
+    _currentResult.modesProcessed.Insert(VisionMode::CyclingExposure);
+  }
   
   return RESULT_OK;
 }

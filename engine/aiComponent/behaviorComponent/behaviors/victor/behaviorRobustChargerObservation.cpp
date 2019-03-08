@@ -32,8 +32,8 @@ namespace Vector {
 #define LOG_CHANNEL "Behaviors"
   
 namespace {
-  const char* kNumImagesToWaitForKey = "numImagesToWaitFor";
-  const char* kNumImageCompositesToWaitFor = "numImageCompositesToWaitFor";
+  const char* kNumImageCompositingFramesToWaitForKey = "numImageCompositingFramesToWaitFor";
+  const char* kNumCyclingExposureFramesToWaitForKey = "numCyclingExposureFramesToWaitFor";
 
   // Enable for debug, to save images during WaitForImageAction
   CONSOLE_VAR(bool, kRobustChargerObservation_SaveImages, "Behaviors.RobustChargerObservation", false);
@@ -54,8 +54,8 @@ BehaviorRobustChargerObservation::BehaviorRobustChargerObservation(const Json::V
  : ICozmoBehavior(config)
 {
   std::string debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
-  _iConfig.numImagesToWaitFor = JsonTools::ParseInt32(config, kNumImagesToWaitForKey, debugName);
-  _iConfig.numImageCompositesToWaitFor = JsonTools::ParseInt32(config, kNumImageCompositesToWaitFor, debugName);
+  _iConfig.numImageCompositingFramesToWaitFor = JsonTools::ParseInt32(config, kNumImageCompositingFramesToWaitForKey, debugName);
+  _iConfig.numCyclingExposureFramesToWaitFor = JsonTools::ParseInt32(config, kNumCyclingExposureFramesToWaitForKey, debugName);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -98,7 +98,7 @@ void BehaviorRobustChargerObservation::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRobustChargerObservation::OnBehaviorDeactivated()
 {
-  DASMSG(robust_observe_charger_stats, "robust_observe_charger.stats", "Vision stats for RobustObserveCharger behavior");
+  DASMSG(robust_observe_charger_stats, "robust_observe_charger.stats", "Vision stats for RobustChargerObservation behavior");
   DASMSG_SET(i1, _dVars.numFramesOfDetectingMarkers, "Count of total number of processed image frames searching for Markers");
   DASMSG_SET(i2, _dVars.numFramesOfImageTooDark, "Count of number of processed image frames (searching for Markers) that are TooDark");
   DASMSG_SEND();
@@ -152,9 +152,9 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
   
   WaitForImagesAction* waitAction;
   if(isLowlight) {
-    waitAction = new WaitForImagesAction(_iConfig.numImageCompositesToWaitFor, VisionMode::CompositingImages);
+    waitAction = new WaitForImagesAction(_iConfig.numImageCompositingFramesToWaitFor, VisionMode::CompositingImages);
   } else {
-    waitAction = new WaitForImagesAction(_iConfig.numImagesToWaitFor, VisionMode::CyclingExposure);
+    waitAction = new WaitForImagesAction(_iConfig.numCyclingExposureFramesToWaitFor, VisionMode::CyclingExposure);
   }
 
   if(kRobustChargerObservation_SaveImages) {
@@ -172,7 +172,7 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
     compoundAction->AddAction(new LoopAnimWhileAction(waitAction, AnimationTrigger::ChargerDockingSearchWaitForImages));
   }
 
-  DelegateIfInControl(compoundAction); // terminal action after this the behavior exits
+  DelegateIfInControl(compoundAction); // terminal action, after this the behavior exits
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

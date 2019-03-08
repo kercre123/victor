@@ -1,0 +1,7 @@
+{
+  "behaviorID": "RobustChargerObservation",
+  "behaviorClass": "RobustChargerObservation",
+
+  "numImageCompositingFramesToWaitFor": 2,
+  "numCyclingExposureFramesToWaitFor": 3
+}

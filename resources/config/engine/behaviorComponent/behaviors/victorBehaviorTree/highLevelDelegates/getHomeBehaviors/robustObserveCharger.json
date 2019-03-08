@@ -1,7 +1,0 @@
-{
-  "behaviorID": "RobustObserveCharger",
-  "behaviorClass": "RobustChargerObservation",
-
-  "numImageCompositesToWaitFor": 3,
-  "numImagesToWaitFor": 15
-}

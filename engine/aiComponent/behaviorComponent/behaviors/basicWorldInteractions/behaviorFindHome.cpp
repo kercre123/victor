@@ -184,7 +184,7 @@ void BehaviorFindHome::InitBehavior()
     std::make_shared<RejectIfCollidesWithMemoryMap>(kTypesToBlockSampling)
   );
 
-  _iConfig.observeChargerBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(RobustObserveCharger));
+  _iConfig.observeChargerBehavior = GetBEI().GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(RobustChargerObservation));
   DEV_ASSERT(_iConfig.observeChargerBehavior != nullptr, "BehaviorFindHome.InitBehavior.NullObserveChargerBehavior");
 }
 
