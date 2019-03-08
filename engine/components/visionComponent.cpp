@@ -14,6 +14,7 @@
 
 #include "engine/aiComponent/salientPointsComponent.h"
 #include "engine/aiComponent/aiComponent.h"
+#include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/actions/basicActions.h"
 #include "camera/cameraService.h"
 #include "engine/ankiEventUtil.h"
@@ -65,6 +66,9 @@
 #include "util/string/stringUtils.h"
 #include "util/threading/threadPriority.h"
 #include "util/bitFlags/bitFlags.h"
+
+#include "webServerProcess/src/webService.h"
+#include "webServerProcess/src/webVizSender.h"
 
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
@@ -1252,7 +1256,10 @@ namespace Vector {
           break;
         }
       }
-      _vizManager->DrawCameraPoly(poly, color);
+      if(poly.size() > 0)
+      {
+        _vizManager->DrawCameraPoly(poly, color);
+      }
       _vizManager->DrawCameraText(Point2f(object.x_img, object.y_img), caption, color);
     }
 

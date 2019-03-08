@@ -122,6 +122,7 @@ CONSOLE_VAR_RANGED(f32, kFaceTrackingCropWidthFraction, "Vision.FaceDetection", 
 CONSOLE_VAR_RANGED(f32, kFakeHandDetectionProbability, "Vision.NeuralNets", 0.f, 0.f, 1.f);
 CONSOLE_VAR_RANGED(f32, kFakeCatDetectionProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
 CONSOLE_VAR_RANGED(f32, kFakeDogDetectionProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
+CONSOLE_VAR_RANGED(f32, kFakePersonClassificationProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
 
 CONSOLE_VAR(bool, kDisplayUndistortedImages,"Vision.General", false);
   
@@ -1327,65 +1328,88 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::CheckForNeuralNetResults()
 {
-  for(const auto& neuralNetRunner : _neuralNetRunners)
+  _neuralNetResults.clear();
+  
+  for(const auto& neuralNetRunnerEntry : _neuralNetRunners)
   {
-    const bool resultReady = neuralNetRunner.second->GetDetections(_currentResult.salientPoints);
+    const std::string& networkName = neuralNetRunnerEntry.first;
+    const auto& neuralNetRunner = neuralNetRunnerEntry.second;
+    
+    std::list<Vision::SalientPoint> salientPoints;
+    const bool resultReady = neuralNetRunner->GetDetections(salientPoints);
     if(resultReady)
     {
+      VisionProcessingResult neuralNetResult;
+      std::swap(neuralNetResult.salientPoints, salientPoints);
+      neuralNetResult.timestamp = neuralNetRunner->GetOrigImg().GetTimestamp();
+      
       PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.CheckForNeuralNetResults.GotDetections",
                      "Network:%s NumSalientPoints:%zu",
-                     neuralNetRunner.first.c_str(), _currentResult.salientPoints.size());
+                     networkName.c_str(), neuralNetResult.salientPoints.size());
       
       std::set<VisionMode> modes;
-      const bool success = GetVisionModesForNeuralNet(neuralNetRunner.first, modes);
+      const bool success = GetVisionModesForNeuralNet(networkName, modes);
       if(ANKI_VERIFY(success, "VisionSystem.CheckForNeuralNetResults.NoModeForNetworkName", "Name: %s",
-                     neuralNetRunner.first.c_str()))
+                     networkName.c_str()))
       {
-        
+          
         for(auto & mode : modes)
         {
-          _currentResult.modesProcessed.Insert(mode);
+          neuralNetResult.modesProcessed.Insert(mode);
         }
-        
-        if(IsModeEnabled(VisionMode::SavingImages) &&
-           !_neuralNetRunnerImage.IsEmpty() &&
-           _imageSaver->WantsToSave(_currentResult, _neuralNetRunnerImage.GetTimestamp()))
-        {
-          const Result saveResult = _imageSaver->Save(_neuralNetRunnerImage, _frameNumber);
-          if(RESULT_OK == saveResult)
-          {
-            _currentResult.modesProcessed.Insert(VisionMode::SavingImages);
-          }
           
-          const std::string jsonFilename = _imageSaver->GetFullFilename(_frameNumber, "json");
-          Json::Value jsonSalientPoints;
-          NeuralNets::INeuralNetMain::ConvertSalientPointsToJson(_currentResult.salientPoints, false,
-                                                                 jsonSalientPoints);
-          const bool success = NeuralNets::INeuralNetMain::WriteResults(jsonFilename, jsonSalientPoints);
-          if(!success)
+        if(IsModeEnabled(VisionMode::SavingImages))
+        {
+          const Vision::ImageRGB& neuralNetRunnerImage = neuralNetRunner->GetOrigImg();
+            
+          if(!neuralNetRunnerImage.IsEmpty() &&
+             _imageSaver->WantsToSave(neuralNetResult, neuralNetRunnerImage.GetTimestamp()))
           {
-            LOG_WARNING("VisionSystem.CheckForNeuralNets.WriteJsonSalientPointsFailed",
-                        "Writing %zu salient points to %s",
-                        _currentResult.salientPoints.size(), jsonFilename.c_str());
+            const Result saveResult = _imageSaver->Save(neuralNetRunnerImage, _frameNumber);
+            if(RESULT_OK == saveResult)
+            {
+              neuralNetResult.modesProcessed.Insert(VisionMode::SavingImages);
+            }
+              
+            const std::string jsonFilename = _imageSaver->GetFullFilename(_frameNumber, "json");
+            Json::Value jsonSalientPoints;
+            NeuralNets::INeuralNetMain::ConvertSalientPointsToJson(neuralNetResult.salientPoints, false,
+                                                                     jsonSalientPoints);
+            const bool success = NeuralNets::INeuralNetMain::WriteResults(jsonFilename, jsonSalientPoints);
+            if(!success)
+            {
+              LOG_WARNING("VisionSystem.CheckForNeuralNets.WriteJsonSalientPointsFailed",
+                          "Writing %zu salient points to %s",
+                          neuralNetResult.salientPoints.size(), jsonFilename.c_str());
+            }
           }
         }
-        
+          
         if(ANKI_DEV_CHEATS)
         {
-          AddFakeDetections(modes);
+          const Vision::ImageRGB& neuralNetRunnerImage = neuralNetRunner->GetOrigImg();
+          if(!neuralNetRunnerImage.IsEmpty())
+          {
+            AddFakeDetections(neuralNetRunnerImage.GetTimestamp(), modes);
+          }
         }
       }
-    }
+      
+      _neuralNetResults.emplace_back(std::move(neuralNetResult));
+      
+    } // if(resultReady)
+    
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void VisionSystem::AddFakeDetections(const std::set<VisionMode>& modes)
+void VisionSystem::AddFakeDetections(const TimeStamp_t atTimestamp, const std::set<VisionMode>& modes)
 {
   // DEBUG: Randomly fake detections of hands and pets if this network was registered to those modes
   if(Util::IsFltGTZero(kFakeHandDetectionProbability) ||
      Util::IsFltGTZero(kFakeCatDetectionProbability) ||
-     Util::IsFltGTZero(kFakeDogDetectionProbability))
+     Util::IsFltGTZero(kFakeDogDetectionProbability) ||
+     Util::IsFltGTZero(kFakePersonClassificationProbability))
   {
     std::vector<Vision::SalientPointType> fakeDetectionsToAdd;
     for(auto & mode : modes)
@@ -1405,11 +1429,15 @@ void VisionSystem::AddFakeDetections(const std::set<VisionMode>& modes)
       {
         fakeDetectionsToAdd.emplace_back(Vision::SalientPointType::Dog);
       }
+      if((VisionMode::ClassifyingPeople == mode) && (rng.RandDbl() < kFakePersonClassificationProbability))
+      {
+        fakeDetectionsToAdd.emplace_back(Vision::SalientPointType::PersonPresent);
+      }
     }
     for(const auto& type : fakeDetectionsToAdd)
     {
       // Simple full-image "classification" SalientPoint
-      Vision::SalientPoint salientPoint(u32(_neuralNetRunnerImage.GetTimestamp()),
+      Vision::SalientPoint salientPoint(atTimestamp,
                                         0.5f, 0.5f, 1.f, 1.f,
                                         type, EnumToString(type),
                                         {CladPoint2d{0.f,0.f}, CladPoint2d{0.f,1.f}, CladPoint2d{1.f,1.f}, CladPoint2d{1.f,0.f}},
@@ -1446,7 +1474,6 @@ Result VisionSystem::Update(const VisionSystemInput& input)
   
   return Update(input.poseData, *_imageCache);
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // This is the regular Update() call
@@ -1723,9 +1750,9 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
   }
 
-  // Check for any objects from the detector. It runs asynchronously, so these objects
-  // will be from a different image than the one in the cache and will use their own
-  // VisionProcessingResult.
+  // Check for any results from any neural nets thave have been running (asynchronously).
+  // Note that any SalientPoints found will be from a different image than the one in the cache and
+  // will have their own timestamp which does not match the current VisionProcessingResult.
   CheckForNeuralNetResults();
   
   // Figure out if any modes requiring neural nets are enabled and keep up with the
@@ -1863,11 +1890,15 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   }
 
   // NOTE: This should come at the end because it relies on elements of the current VisionProcessingResult
-  //       (i.e. _currentResult) to be populated for the purposes of drawing them.
+  //       (i.e. _currentResult) to be populated, as well as any _neuralNetResults, for the purposes of drawing them.
+  //       Note that neural net results get drawn on whatever image is current when they complete, for better or worse,
+  //       so they are not actually in sync.
   if(IsModeEnabled(VisionMode::MirrorMode))
   {
     // TODO: Add an ImageCache::Size for MirrorMode directly
-    const Result result = _mirrorModeManager->CreateMirrorModeImage(imageCache.GetRGB(), _currentResult);
+    const Result result = _mirrorModeManager->CreateMirrorModeImage(imageCache.GetRGB(),
+                                                                    _currentResult,
+                                                                    _neuralNetResults);
     if(RESULT_OK != result)
     {
       PRINT_NAMED_ERROR("VisionSystem.Update.MirrorModeFailed", "");
@@ -1877,9 +1908,13 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   }
   
   // We've computed everything from this image that we're gonna compute.
-  // Push it onto the queue of results all together.
+  // Push the result, along with any neural net results, onto the queue of results all together.
   _mutex.lock();
   _results.push(_currentResult);
+  for(auto & result : _neuralNetResults)
+  {
+    _results.push(result);
+  }
   _mutex.unlock();
   
   return (anyModeFailures ? RESULT_FAIL : RESULT_OK);

@@ -2,7 +2,7 @@
   // VisionModes that need to be scheduled by default go here
   // Basically things that are always running
   "InitialModeSchedules" :
-  {  
+  {
     // If a vision mode is not listed, it is scheduled to never run (might still be enabled)
     // Specify either an array of bools indicating a specific schedule, or an integer
     // value to process every Nth frame
@@ -159,7 +159,29 @@
         "pollPeriod_ms"       : 10,
         "timeoutDuration_sec" : 10.0,
         "benchmarkRuns"       : 0
+      },
+      {
+        "modelType"           : "offboard",
+        "networkName"         : "offboard_person_detection",
+        "graphFile"           : "ObjectDetection", // One of OffboardProcType (TODO: Support multiple)
+                "commsType"           : "CLAD",
+                "labelsFile"          : "hand-labels.txt",
+                "architecture"        : "custom",
+                "inputLayerName"      : "input",
+                "outputLayerNames"    : "probabilities",
+                "outputType"          : "classification",
+                "useFloatInput"       : 0,
+                "useGrayscale"        : 0,
+                "inputWidth"          : 640,
+                "inputHeight"         : 360,
+                "minScore"            : 0.5,
+                "verbose"             : 0,
+                "pollPeriod_ms"       : 10,
+                "timeoutDuration_sec" : 10.0,
+                "benchmarkRuns"       : 0
+                },
       }
+     
     ]
     
     // // OBJECTNESS MODEL
