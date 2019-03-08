@@ -60,6 +60,8 @@ private:
     Persistent persistent;
   };
 
+  bool HasVoiceCommandInterruption() const;
+
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
   
