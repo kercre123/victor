@@ -23,7 +23,6 @@
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/vision/cropScheduler.h"
-#include "engine/vision/faceMetaDataStorage.h"
 #include "engine/vision/groundPlaneClassifier.h"
 #include "engine/vision/illuminationDetector.h"
 #include "engine/vision/imageSaver.h"
@@ -125,10 +124,6 @@ CONSOLE_VAR_RANGED(f32, kFakeCatDetectionProbability,  "Vision.NeuralNets", 0.f,
 CONSOLE_VAR_RANGED(f32, kFakeDogDetectionProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
 
 CONSOLE_VAR(bool, kDisplayUndistortedImages,"Vision.General", false);
-
-// Distance within which to rotate MirrorMode display. Near/Far used for hysteresis. Set either to 0 to disable.
-CONSOLE_VAR_RANGED(s32, kTheBox_FaceDistanceToRotateScreenNear_mm, "TheBox.Screen", 300, 0, 1000);
-CONSOLE_VAR_RANGED(s32, kTheBox_FaceDistanceToRotateScreenFar_mm,  "TheBox.Screen", 400, 0, 1000);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
@@ -143,8 +138,6 @@ namespace {
 
 static const char * const kLogChannelName = "VisionSystem";
 
-static const char * const kOffboardFaceRecognitionNetworkName = "offboard_face_recognition";
-  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 VisionSystem::VisionSystem(const CozmoContext* context)
 : _rollingShutterCorrector()
@@ -160,7 +153,6 @@ VisionSystem::VisionSystem(const CozmoContext* context)
                                                              _currentCameraParams))
 , _poseOrigin("VisionSystemOrigin")
 , _vizManager(context == nullptr ? nullptr : context->GetVizManager())
-, _faceMetaDataStorage(new FaceMetaDataStorage())
 , _petTracker(new Vision::PetTracker())
 , _markerDetector(new Vision::MarkerDetector(_camera))
 , _laserPointDetector(new LaserPointDetector(_vizManager))
@@ -1354,9 +1346,13 @@ void VisionSystem::CheckForNeuralNetResults()
                      "Network:%s NumSalientPoints:%zu",
                      networkName.c_str(), neuralNetResult.salientPoints.size());
       
-      if(THEBOX && (networkName == kOffboardFaceRecognitionNetworkName))
+      std::set<VisionMode> modes;
+      const bool success = GetVisionModesForNeuralNet(networkName, modes);
+      if(ANKI_VERIFY(success, "VisionSystem.CheckForNeuralNetResults.NoModeForNetworkName", "Name: %s",
+                     networkName.c_str()))
       {
-        if(!neuralNetResult.salientPoints.empty())
+          
+        for(auto & mode : modes)
         {
           neuralNetResult.modesProcessed.Insert(mode);
         }
@@ -1536,11 +1532,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       if(RESULT_OK != lastResult) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
         anyModeFailures = true;
+      } else {
+        visionModesProcessed.Insert(VisionMode::DetectingMarkers);
+        visionModesProcessed.Enable(VisionMode::MarkerDetectionWhileRotatingFast, allowWhileRotatingFast);
       }
-      
-      visionModesProcessed.Insert(VisionMode::DetectingMarkers);
-      visionModesProcessed.Enable(VisionMode::MarkerDetectionWhileRotatingFast, allowWhileRotatingFast);
-      
       Toc("TotalDetectingMarkers");
     }
   }
@@ -1575,34 +1570,6 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       visionModesProcessed.Enable(VisionMode::DetectingSmileAmount,          detectingSmile);
       visionModesProcessed.Enable(VisionMode::DetectingGaze,                 detectingGaze);
       visionModesProcessed.Enable(VisionMode::DetectingBlinkAmount,          detectingBlink);
-      
-      // The Box Demo: If face is close and mirror mode is enabled, rotate the mirror mode image by 180 degrees
-      if(IsModeEnabled(VisionMode::MirrorMode) &&
-         IsModeEnabled(VisionMode::FlipScreenOnCloseFace) &&
-         kTheBox_FaceDistanceToRotateScreenFar_mm>0 &&
-         kTheBox_FaceDistanceToRotateScreenNear_mm>0)
-      {
-        static bool faceCloseEnough = false;
-        const s32 currentTreshold = (faceCloseEnough ?
-                                     kTheBox_FaceDistanceToRotateScreenFar_mm :
-                                     kTheBox_FaceDistanceToRotateScreenNear_mm);
-        
-        faceCloseEnough = false;
-        for(const auto& face : _currentResult.faces)
-        {
-          if(face.GetHeadPose().GetTranslation().LengthSq() < (currentTreshold*currentTreshold))
-          {
-            faceCloseEnough = true;
-            break;
-          }
-        }
-        
-        if(faceCloseEnough)
-        {
-          visionModesProcessed.Insert(VisionMode::MirrorModeRotate180);
-          visionModesProcessed.Insert(VisionMode::MirrorModeUnmirrored);
-        }
-      }
     }
     Toc("TotalDetectingFaces");
   }
@@ -1753,117 +1720,29 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   
   // Figure out if any modes requiring neural nets are enabled and keep up with the
   // set of networks needed to satisfy those modes (multiple modes could use the same
-  // network!). For each, store the timestamp of the image we're supposed to run on,
-  // based on the result of ShouldVisionModeRun.
-  std::map<std::string, TimeStamp_t> networksToRun;
+  // network!)
+  std::set<std::string> networksToRun;
   for(const auto& mode : GetVisionModesUsingNeuralNets())
   {
-    TimeStamp_t usingTimestamp = 0;
-    // NOTE: ShouldVisionModeRun also checks that mode is enabled (in _modes)
-    if(ShouldVisionModeRun(mode, _currentResult, _modes, usingTimestamp))
+    if(IsModeEnabled(mode))
     {
       std::set<std::string> networkNames;
       const bool success = GetNeuralNetsForVisionMode(mode, networkNames);
       if(ANKI_VERIFY(success, "VisionSystem.Update.NoNetworkForMode", "%s", EnumToString(mode)))
       {
-        for(const auto& networkName : networkNames)
-        {
-          networksToRun.emplace(networkName, usingTimestamp);
-        }
+        networksToRun.insert(networkNames.begin(), networkNames.end());
       }
     }
   }
   
-  if(THEBOX && IsModeEnabled(VisionMode::OffboardFaceRecognition))
+  // Run the set of required networks
+  for(const auto& networkName : networksToRun)
   {
-    // Update the ID data for the FaceMetaDataStorage if anything changed
-    for(const auto& updatedID : _currentResult.updatedFaceIDs)
+    const bool started = _neuralNetRunners.at(networkName)->StartProcessingIfIdle(imageCache);
+    if(started)
     {
-<<<<<<< HEAD
-      _faceMetaDataStorage->OnUpdatedID(updatedID.oldID, updatedID.newID);
-    }
-   
-    // If there are any faces with no metadata in the image, pass them to the offboard face recognizer to get metadata
-    std::list<Vision::TrackedFace> facesToUpdate;
-    for(auto& face : _currentResult.faces)
-    {
-      // Wait until faces are locally "enrolled", not just tracked
-      if(face.GetID() > 0)
-      {
-        // NOTE: this will update "face" with meta data if available
-        const bool hasMetaData = _faceMetaDataStorage->GetMetaData(face);
-        //PRINT_CH_DEBUG("NeuralNets", "VisionSystem.Update.FaceMetaDataCheck", "ID:%d", face.GetID()); // Very verbose
-        if(!hasMetaData)
-        {
-          facesToUpdate.emplace_back(face);
-        }
-        else
-        {
-          PRINT_CH_DEBUG("NeuralNets", "VisionSystem.Update.GotFaceMetaData", "ID:%d Name:%s Age:%u",
-                         face.GetID(), face.GetName().c_str(), face.GetAge());
-        }
-      }
-    }
-    
-    if(!facesToUpdate.empty())
-    {
-      // There are faces in this image that we have no metadata for. Run them through the neural net.
-      const bool started = _neuralNetRunners.at(kOffboardFaceRecognitionNetworkName)->StartProcessingIfIdle(imageCache);
-      if(started)
-      {
-        // If the neural net wasn't already waiting for a response, let the FaceMetaDataStorage know
-        // that these are the faces being processed so we can establish correspondence once any
-        // results come back from the neural net
-        for(const auto& face : facesToUpdate)
-        {
-          PRINT_CH_DEBUG("NeuralNets", "VisionSystem.Update.WillUpdateMetaData", "ForFace:%d", face.GetID());
-          _faceMetaDataStorage->SetFaceBeingProcessed(face);
-        }
-      }
-=======
       PRINT_CH_DEBUG("NeuralNets", "VisionSystem.Update.StartedNeuralNet", "Running %s on image at time t:%u",
                      networkName.c_str(), imageCache.GetTimeStamp());
->>>>>>> cf4fe3905e... It compiles!
-    }
-  }
-  
-  // Run the set of required networks, using an image with the right timestamp.
-  for(const auto& networkToRun : networksToRun)
-  {
-    const std::string& networkName = networkToRun.first;
-    const TimeStamp_t usingTimestamp = networkToRun.second;
-    bool startedNetwork = false;
-    if(usingTimestamp == imageCache.GetTimeStamp())
-    {
-      // Just use the image cache's image to run the network
-      startedNetwork = _neuralNetRunners.at(networkName)->StartProcessingIfIdle(imageCache);
-    }
-    else
-    {
-      // Look for a neural net runner with an image containing the image matching
-      // the timestamp we are supposed to use
-      bool imageFound = false;
-      for(auto& neuralNetRunner : _neuralNetRunners)
-      {
-        const Vision::ImageRGB& img = neuralNetRunner.second->GetOrigImg();
-        if(usingTimestamp == img.GetTimestamp())
-        {
-          startedNetwork = _neuralNetRunners.at(networkName)->StartProcessingIfIdle(img);
-          imageFound = true;
-          break;
-        }
-      }
-      
-      if(!imageFound)
-      {
-        LOG_ERROR("VisionSystem.Update.NoNetworkFoundWithMatchingTimeStamp", "t:%u", usingTimestamp);
-      }
-    }
-    
-    if(startedNetwork)
-    {
-      PRINT_CH_INFO("NeuralNets", "VisionSystem.Update.StartedNeuralNet", "Running %s on image at time t:%u",
-                    networkName.c_str(), usingTimestamp);
     }
   }
   
@@ -1977,16 +1856,6 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       PRINT_NAMED_ERROR("VisionSystem.Update.MirrorModeFailed", "");
     } else {
       visionModesProcessed.Insert(VisionMode::MirrorMode);
-      
-      const std::vector<VisionMode> kMirrorModeModifiers{
-        VisionMode::MirrorModeUnmirrored,
-        VisionMode::MirrorModeRotate180,
-        VisionMode::MirrorModeCacheToWhiteboard,
-      };
-      for(const VisionMode mode : kMirrorModeModifiers)
-      {
-        visionModesProcessed.Enable(mode, IsModeEnabled(mode));
-      }
     }
   }
   
