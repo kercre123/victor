@@ -101,13 +101,26 @@ int main(int argc, char **argv)
             printf("Couldn't convert to rgb");
             camera_service->CameraReleaseFrame(image_buffer.GetImageId());
         }
+        constexpr double size_factor = .5; 
+        image_rgb.Resize(size_factor);
 
         arf_proto::ArfMessage arf_message;
-        arf_proto::RGBImage* arf_image = arf_message.mutable_image_rgb();
+        arf_proto::TrackedFacesAndImage* tracked_faces_and_image = arf_message.mutable_tracked_faces_and_image();
+
+        arf_proto::RGBImage* arf_image = tracked_faces_and_image->mutable_image();
         arf_image->mutable_header()->set_time(image_rgb.GetTimestamp());
         arf_image->set_rows(image_rgb.GetNumRows());
         arf_image->set_cols(image_rgb.GetNumCols());
         arf_image->set_data(image_rgb.GetDataPointer(), 3 * image_rgb.GetNumRows() * image_rgb.GetNumCols());
+
+        for (const auto& face : face_list) {
+            arf_proto::TrackedFace* face_proto = tracked_faces_and_image->add_face();
+            face_proto->mutable_header()->set_time(image_rgb.GetTimestamp());
+            face_proto->set_x(face.GetRect().GetX() * size_factor); 
+            face_proto->set_y(face.GetRect().GetY() * size_factor); 
+            face_proto->set_width(face.GetRect().GetWidth() * size_factor); 
+            face_proto->set_height(face.GetRect().GetHeight() * size_factor); 
+        }
 
         pub_handle.publish_string(arf_message.SerializeAsString());
         camera_service->CameraReleaseFrame(image_buffer.GetImageId());

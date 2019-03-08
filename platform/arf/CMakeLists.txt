@@ -50,3 +50,14 @@ target_link_libraries(subscriber
   ${PLATFORM_LIBS}
   ${ASAN_EXE_LINKER_FLAGS}
 )
+
+anki_build_cxx_executable(publisher ${ANKI_SRCLIST_DIR})
+anki_build_target_license(publisher "ANKI")
+
+target_link_libraries(publisher
+  PRIVATE
+  arf
+  # platform
+  ${PLATFORM_LIBS}
+  ${ASAN_EXE_LINKER_FLAGS}
+)

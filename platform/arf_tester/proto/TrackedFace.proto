@@ -1,0 +1,13 @@
+syntax = "proto2";
+
+package arf_proto;
+
+import "MessageHeader.proto";
+
+message TrackedFace {
+    required MessageHeader header = 1;
+    required float x = 2;
+    required float y = 3;
+    required float width = 4;
+    required float height = 5;
+}

@@ -4,6 +4,7 @@ package arf_proto;
 
 import "DepthData.proto";
 import "RGBImage.proto";
+import "TrackedFacesAndImage.proto";
 
 message ArfMessage {
 
@@ -11,6 +12,7 @@ message ArfMessage {
       string arf_string = 1;
       DepthData depth_data = 2;
       RGBImage image_rgb = 3;
+      TrackedFacesAndImage tracked_faces_and_image = 4;
   }
 
 }
