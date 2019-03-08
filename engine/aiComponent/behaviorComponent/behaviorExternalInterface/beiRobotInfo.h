@@ -134,6 +134,7 @@ public:
   Result ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, f32 yTolFrac) const;
 
   bool IsCharging() const;
+  float GetTimeAtBatteryLevelSec(BatteryLevel level) const;
   float GetOnChargerDurationSec() const;
   bool IsHeadCalibrated() const;
   bool IsLiftCalibrated() const;
