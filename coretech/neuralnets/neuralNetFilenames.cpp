@@ -19,7 +19,7 @@ namespace NeuralNets {
 namespace Filenames {
 
   const char* const Timestamp = "timestamp.txt";
-  const char* const Image     = "neuralNetImage.png";
+  const char* const Image     = "neuralNetImage.jpg";
   const char* const Result    = "neuralNetResults.json";
   
 }

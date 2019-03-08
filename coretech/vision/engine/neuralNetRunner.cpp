@@ -67,6 +67,9 @@ namespace {
   // 1: save resized images
   // 2: save full images
   CONSOLE_VAR_ENUM(s32,   kNeuralNetRunner_SaveImages,  CONSOLE_GROUP, 0, "Off,Save Resized,Save Original Size");
+  
+  // 1: Full size, 2: Half size
+  CONSOLE_VAR_RANGED(s32, kTheBox_NeuralNetOrigImageSubsample, "TheBox", 1, 1, 2);
 
 #undef CONSOLE_GROUP
 }
@@ -202,11 +205,55 @@ void NeuralNetRunner::ApplyGamma(ImageRGB& img)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NeuralNetRunner::StartProcessingHelper()
+{
+  DEV_ASSERT(!_imgOrig.IsEmpty(), "NeuralNetRunner.StartProcessingHelper.EmptyImage");
+  
+  if(kNeuralNetRunner_SaveImages == 2)
+  {
+    const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "half",
+      std::to_string(_imgOrig.GetTimestamp()) + ".png"});
+    _imgOrig.Save(saveFilename);
+  }
+  
+  // Resize to processing size
+  _imgBeingProcessed.Allocate(_processingHeight, _processingWidth);
+  const Vision::ResizeMethod kResizeMethod = Vision::ResizeMethod::Linear;
+  _imgOrig.Resize(_imgBeingProcessed, kResizeMethod);
+  
+  // Apply gamma (no-op if gamma is set to 1.0)
+  ApplyGamma(_imgBeingProcessed);
+  
+  if(kNeuralNetRunner_SaveImages == 1)
+  {
+    const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "resized",
+      std::to_string(_imgBeingProcessed.GetTimestamp()) + ".png"});
+    _imgBeingProcessed.Save(saveFilename);
+  }
+  
+  // Store its size relative to original size so we can rescale object detections later
+  _heightScale = (f32)_imgOrig.GetNumRows();
+  _widthScale  = (f32)_imgOrig.GetNumCols();
+  
+  if(_model->IsVerbose())
+  {
+    LOG_INFO("NeuralNetRunner.StartProcessingIfIdle.ProcessingImage",
+             "Detecting salient points in %dx%d image t=%u",
+             _imgBeingProcessed.GetNumCols(), _imgBeingProcessed.GetNumRows(), _imgBeingProcessed.GetTimestamp());
+  }
+  
+  _future = std::async(std::launch::async, [this]() { return RunModel(); });
+  
+  // We did start processing the given image
+  return true;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
 {
   if(!_isInitialized)
   {
-    LOG_ERROR("NeuralNetRunner.StartProcessingIfIdle.NotInitialized", "");
+    LOG_ERROR("NeuralNetRunner.StartProcessingIfIdle.FromCache.NotInitialized", "");
     return false;
   }
   
@@ -219,47 +266,33 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
       LOG_PERIODIC_DEBUG(30, "NeuralNetRunner.StartProcessingIfIdle.NeedColorData", "");
       return false;
     }
+    
+    const ImageCacheSize kOrigImageSize = imageCache.GetSize(kTheBox_NeuralNetOrigImageSubsample);
+    
+    imageCache.GetRGB(kOrigImageSize).CopyTo(_imgOrig);
+    
+    return StartProcessingHelper();
+  }
   
-    if(kNeuralNetRunner_SaveImages == 2)
-    {
-      const Vision::ImageRGB& img = imageCache.GetRGB(ImageCacheSize::Half);
-      const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "half",
-        std::to_string(img.GetTimestamp()) + ".png"});
-      img.Save(saveFilename);
-    }
-
-    // Resize to processing size
-    _imgBeingProcessed.Allocate(_processingHeight, _processingWidth);
-    const ImageCacheSize kImageSize = ImageCacheSize::Half;
-    const Vision::ResizeMethod kResizeMethod = Vision::ResizeMethod::Linear;
-    const Vision::ImageRGB& imgOrig = imageCache.GetRGB(kImageSize);
-    imgOrig.Resize(_imgBeingProcessed, kResizeMethod);
+  // We were not idle, so did not start processing the new image
+  return false;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool NeuralNetRunner::StartProcessingIfIdle(const Vision::ImageRGB& img)
+{
+  if(!_isInitialized)
+  {
+    LOG_ERROR("NeuralNetRunner.StartProcessingIfIdle.FromImage.NotInitialized", "");
+    return false;
+  }
+  
+  // If we're not already processing an image with a "future", create one to process this image asynchronously.
+  if(!_future.valid())
+  {
+    img.CopyTo(_imgOrig);
     
-    // Apply gamma (no-op if gamma is set to 1.0)
-    ApplyGamma(_imgBeingProcessed);
-    
-    if(kNeuralNetRunner_SaveImages == 1)
-    {
-      const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "resized",
-        std::to_string(_imgBeingProcessed.GetTimestamp()) + ".png"});
-      _imgBeingProcessed.Save(saveFilename);
-    }
-
-    // Store its size relative to original size so we can rescale object detections later
-    _heightScale = (f32)imgOrig.GetNumRows();
-    _widthScale  = (f32)imgOrig.GetNumCols();
-    
-    if(_model->IsVerbose())
-    {
-      LOG_INFO("NeuralNetRunner.StartProcessingIfIdle.ProcessingImage",
-               "Detecting salient points in %dx%d image t=%u",
-               _imgBeingProcessed.GetNumCols(), _imgBeingProcessed.GetNumRows(), _imgBeingProcessed.GetTimestamp());
-    }
-    
-    _future = std::async(std::launch::async, [this]() { return RunModel(); });
-    
-    // We did start processing the given image
-    return true;
+    return StartProcessingHelper();
   }
   
   // We were not idle, so did not start processing the new image
