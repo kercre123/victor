@@ -1738,7 +1738,19 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   // Run the set of required networks
   for(const auto& networkName : networksToRun)
   {
-    const bool started = _neuralNetRunners.at(networkName)->StartProcessingIfIdle(imageCache);
+    auto iter = _neuralNetRunners.find(networkName);
+    if(iter == _neuralNetRunners.end())
+    {
+      // If the network does not exist, something has been configured / set up wrong in vision_config.json or
+      // perhaps in registering network names and VisionModes in visionModeHelpers.cpp. Die immediately.
+      // Don't waste time sifting through logs trying to figure out why the associated features isn't working.
+      LOG_ERROR("VisionSystem.Update.MissingNeuralNet",
+                "Requested to run network named %s but no runner for it exists",
+                networkName.c_str());
+      exit(-1);
+    }
+    
+    const bool started = iter->second->StartProcessingIfIdle(imageCache);
     if(started)
     {
       PRINT_CH_DEBUG("NeuralNets", "VisionSystem.Update.StartedNeuralNet", "Running %s on image at time t:%u",
