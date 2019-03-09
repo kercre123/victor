@@ -101,9 +101,6 @@ func main() {
 	// var test bool
 	// flag.BoolVar(&test, "test", false, "enable test channel")
 
-	ms := flag.Bool("ms", false, "force microsoft handling on the server end")
-	lex := flag.Bool("lex", false, "force amazon handling on the server end")
-
 	awsRegion := flag.String("region", "us-west-2", "AWS Region")
 
 	flag.Parse()
