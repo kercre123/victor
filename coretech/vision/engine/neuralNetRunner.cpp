@@ -209,21 +209,21 @@ void NeuralNetRunner::ApplyGamma(ImageRGB& img)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NeuralNetRunner::StartProcessingHelper(const ImageRGB& imgOrig)
+bool NeuralNetRunner::StartProcessingHelper()
 {
-  DEV_ASSERT(!imgOrig.IsEmpty(), "NeuralNetRunner.StartProcessingHelper.EmptyImage");
+  DEV_ASSERT(!_imgOrig.IsEmpty(), "NeuralNetRunner.StartProcessingHelper.EmptyImage");
   
   if(kNeuralNetRunner_SaveImages == 2)
   {
-    const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "original",
-      std::to_string(imgOrig.GetTimestamp()) + ".png"});
-    imgOrig.Save(saveFilename);
+    const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "half",
+      std::to_string(_imgOrig.GetTimestamp()) + ".png"});
+    _imgOrig.Save(saveFilename);
   }
   
   // Resize to processing size
   _imgBeingProcessed.Allocate(_processingHeight, _processingWidth);
   const Vision::ResizeMethod kResizeMethod = Vision::ResizeMethod::Linear;
-  imgOrig.Resize(_imgBeingProcessed, kResizeMethod);
+  _imgOrig.Resize(_imgBeingProcessed, kResizeMethod);
   
   // Apply gamma (no-op if gamma is set to 1.0)
   ApplyGamma(_imgBeingProcessed);
@@ -236,8 +236,8 @@ bool NeuralNetRunner::StartProcessingHelper(const ImageRGB& imgOrig)
   }
   
   // Store its size relative to original size so we can rescale object detections later
-  _heightScale = (f32)imgOrig.GetNumRows();
-  _widthScale  = (f32)imgOrig.GetNumCols();
+  _heightScale = (f32)_imgOrig.GetNumRows();
+  _widthScale  = (f32)_imgOrig.GetNumCols();
   
   if(_model->IsVerbose())
   {
@@ -264,7 +264,7 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
     // If you do see this error, it is likely one of two things:
     //  1. Your model configuration in vision_config.json is wrong (look for other errors on load)
     //  2. Git LFS has failed you. See: https://ankiinc.atlassian.net/browse/VIC-13455
-    LOG_INFO("NeuralNetRunner.StartProcessingIfIdle.FromCache.NotInitialized", "t:%ums", imageCache.GetTimeStamp());
+    LOG_INFO("NeuralNetRunner.StartProcessingIfIdle.NotInitialized", "t:%ums", imageCache.GetTimeStamp());
     return false;
   }
   
@@ -279,9 +279,10 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
     }
     
     const ImageCacheSize kOrigImageSize = imageCache.GetSize(kNeuralNetRunner_OrigImageSubsample);
-    const ImageRGB& imgOrig = imageCache.GetRGB(kOrigImageSize);
     
-    return StartProcessingHelper(imgOrig);
+    imageCache.GetRGB(kOrigImageSize).CopyTo(_imgOrig);
+    
+    return StartProcessingHelper();
   }
   
   // We were not idle, so did not start processing the new image
@@ -301,7 +302,9 @@ bool NeuralNetRunner::StartProcessingIfIdle(const Vision::ImageRGB& img)
   // If we're not already processing an image with a "future", create one to process this image asynchronously.
   if(!_future.valid())
   {
-    return StartProcessingHelper(img);
+    img.CopyTo(_imgOrig);
+    
+    return StartProcessingHelper();
   }
   
   // We were not idle, so did not start processing the new image

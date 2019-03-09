@@ -1327,24 +1327,17 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::CheckForNeuralNetResults()
 {
-  _neuralNetResults.clear();
-  
   for(const auto& neuralNetRunnerEntry : _neuralNetRunners)
   {
     const std::string& networkName = neuralNetRunnerEntry.first;
     const auto& neuralNetRunner = neuralNetRunnerEntry.second;
     
-    std::list<Vision::SalientPoint> salientPoints;
-    const bool resultReady = neuralNetRunner->GetDetections(salientPoints);
+    const bool resultReady = neuralNetRunner->GetDetections(_currentResult.salientPoints);
     if(resultReady)
     {
-      VisionProcessingResult neuralNetResult;
-      std::swap(neuralNetResult.salientPoints, salientPoints);
-      neuralNetResult.timestamp = neuralNetRunner->GetProcessingTimeStamp();
-      
       PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.CheckForNeuralNetResults.GotDetections",
                      "Network:%s NumSalientPoints:%zu",
-                     networkName.c_str(), neuralNetResult.salientPoints.size());
+                     networkName.c_str(), _currentResult.salientPoints.size());
       
       std::set<VisionMode> modes;
       const bool success = GetVisionModesForNeuralNet(networkName, modes);
@@ -1354,17 +1347,45 @@ void VisionSystem::CheckForNeuralNetResults()
           
         for(auto & mode : modes)
         {
-          neuralNetResult.modesProcessed.Insert(mode);
+          _currentResult.modesProcessed.Insert(mode);
         }
         
+        if(IsModeEnabled(VisionMode::SavingImages))
+        {
+          const Vision::ImageRGB& neuralNetRunnerImage = neuralNetRunner->GetOrigImg();
+          
+          if(!neuralNetRunnerImage.IsEmpty() &&
+             _imageSaver->WantsToSave(_currentResult, neuralNetRunnerImage.GetTimestamp()))
+          {
+            const Result saveResult = _imageSaver->Save(neuralNetRunnerImage, _frameNumber);
+            if(RESULT_OK == saveResult)
+            {
+              _currentResult.modesProcessed.Insert(VisionMode::SavingImages);
+            }
+            
+            const std::string jsonFilename = _imageSaver->GetFullFilename(_frameNumber, "json");
+            Json::Value jsonSalientPoints;
+            NeuralNets::INeuralNetMain::ConvertSalientPointsToJson(_currentResult.salientPoints, false,
+                                                                   jsonSalientPoints);
+            const bool success = NeuralNets::INeuralNetMain::WriteResults(jsonFilename, jsonSalientPoints);
+            if(!success)
+            {
+              LOG_WARNING("VisionSystem.CheckForNeuralNets.WriteJsonSalientPointsFailed",
+                          "Writing %zu salient points to %s",
+                          _currentResult.salientPoints.size(), jsonFilename.c_str());
+            }
+          }
+        }
+          
         if(ANKI_DEV_CHEATS)
         {
-          AddFakeDetections((TimeStamp_t)neuralNetResult.timestamp, modes);
+          const Vision::ImageRGB& neuralNetRunnerImage = neuralNetRunner->GetOrigImg();
+          if(!neuralNetRunnerImage.IsEmpty())
+          {
+            AddFakeDetections(neuralNetRunnerImage.GetTimestamp(), modes);
+          }
         }
       }
-      
-      _neuralNetResults.emplace_back(std::move(neuralNetResult));
-      
     } // if(resultReady)
     
   }
@@ -1860,9 +1881,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   if(IsModeEnabled(VisionMode::MirrorMode))
   {
     // TODO: Add an ImageCache::Size for MirrorMode directly
-    const Result result = _mirrorModeManager->CreateMirrorModeImage(imageCache.GetRGB(),
-                                                                    _currentResult,
-                                                                    _neuralNetResults);
+    const Result result = _mirrorModeManager->CreateMirrorModeImage(imageCache.GetRGB(), _currentResult);
     if(RESULT_OK != result)
     {
       PRINT_NAMED_ERROR("VisionSystem.Update.MirrorModeFailed", "");
