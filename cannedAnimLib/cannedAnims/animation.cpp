@@ -44,7 +44,8 @@ bool Animation::operator==(const Animation &other) const {
          (_spriteSequenceTrack == other._spriteSequenceTrack) &&
          (_proceduralFaceTrack == other._proceduralFaceTrack) &&
          (_eventTrack == other._eventTrack) &&
-         (_backpackLightsTrack == other._backpackLightsTrack) &&
+         // Uncomment the following line if we ever restore support for animated backpack lights
+         //(_backpackLightsTrack == other._backpackLightsTrack) &&
          (_bodyPosTrack == other._bodyPosTrack) &&
          (_recordHeadingTrack == other._recordHeadingTrack) &&
          (_turnToRecordedHeadingTrack == other._turnToRecordedHeadingTrack) &&
