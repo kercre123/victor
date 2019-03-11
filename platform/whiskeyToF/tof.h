@@ -49,8 +49,8 @@ public:
 
   enum class CommandResult
   {
-    Success = 0,
-    Failure = -1,
+    Success              =  0,
+    Failure              = -1,
     OpenDevFailed,
     SetupFailed,
     StartRangingFailed,
@@ -75,7 +75,7 @@ public:
 
   // Whether or not the RoiStatus is considered valid
   bool IsValidRoiStatus(uint8_t status) const;
-  
+
   // Run the calibration procedure at the given distance and target reflectance percentage
   // There are 3 calibration steps, each has certain requirements
   // - Reference SPAD calibration
@@ -115,14 +115,14 @@ public:
   // This test stems from issues with the decoupling capacitor on the ToF flex cable
   // and potential interference issues.
   void EnableBackgroundTest(bool enable, const CommandCallback& callback);
-  
+
 private:
-  
+
   ToFSensor();
-  
+
   static ToFSensor* _instance;
 };
-  
+
 }
 }
 

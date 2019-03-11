@@ -50,10 +50,10 @@ int main(int argc, char** argv)
 {
   signal(SIGTERM, Shutdown);
   signal(SIGINT, Shutdown);
-  
+
   bool pause = false;
   bool testMode = false;
-  
+
   ToFSensor::getInstance()->SetupSensors([](ToFSensor::CommandResult res)
                                          {
                                            if((int)res < 0)
@@ -69,14 +69,14 @@ int main(int argc, char** argv)
     {
       uint32_t dist = 0;
       float reflectance = 0.f;
-      
+
       if(argc > 2)
       {
         i++;
         char* end;
         dist = (uint32_t)strtoimax(argv[2], &end, 10);
       }
-      
+
       if(argc > 3)
       {
         i++;
@@ -88,7 +88,7 @@ int main(int argc, char** argv)
                        "Calibrating at %u with reflectance %f",
                        dist,
                        reflectance);
-      
+
       ToFSensor::getInstance()->PerformCalibration(dist, reflectance, nullptr);
 
       ToFSensor::getInstance()->SetupSensors(nullptr);
@@ -101,7 +101,7 @@ int main(int argc, char** argv)
     {
       testMode = true;
     }
-  }
+                                           }
 
   if(!testMode)
   {
@@ -122,7 +122,7 @@ int main(int argc, char** argv)
                                                            exit(1);
                                                          });
   }
-  
+
   while(shutdown == 0)
   {
     bool isUpdated = false;
@@ -160,7 +160,7 @@ int main(int argc, char** argv)
       b = !b;
     }
 
-    
+
     if(!isUpdated)
     {
       std::this_thread::sleep_for(std::chrono::milliseconds(5));
@@ -168,7 +168,7 @@ int main(int argc, char** argv)
     }
 
     static RangeDataRaw lastValid = data;
-      
+
     std::stringstream ss;
     for(int i = 0; i < 4; i++)
     {
@@ -194,12 +194,12 @@ int main(int argc, char** argv)
           ss << std::setw(7) << (uint32_t)(lastValid.data[i*4 + j].processedRange_mm);
           status = -1;
         }
-        
+
         ss << "[" << std::setw(2) << (int)status << "]";
       }
       ss << "\n";
     }
-    printf("%s\n", ss.str().c_str());    
+    printf("%s\n", ss.str().c_str());
   }
 
   printf("stopping\n");
@@ -213,7 +213,7 @@ int main(int argc, char** argv)
                                          });
 
   ToFSensor::removeInstance();
-  
+
   return 0;
 }
 

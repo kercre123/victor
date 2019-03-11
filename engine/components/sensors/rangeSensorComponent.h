@@ -39,8 +39,8 @@ public:
   //////
   virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComps) override;
 
-  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override { }  
-  
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override { }
+
   virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override { }
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override { }
 
@@ -53,13 +53,13 @@ public:
   using RangeData = std::array<Vec3f, 16>;
   const RangeData& GetLatestRangeData() const { return _latestRangeData; }
   const RangeDataRaw& GetLatestRawRangeData(bool& isNew) const { isNew = _rawDataIsNew; return _latestRawRangeData; }
-  
+
 private:
 
   Robot* _robot = nullptr;
 
   Signal::SmartHandle _signalHandle;
-  
+
   RangeDataRaw _latestRawRangeData;
   RangeData _latestRangeData;
   bool _rawDataIsNew = false;

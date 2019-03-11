@@ -39,10 +39,10 @@ namespace Factory {
       uint32_t playpen[8];
       uint32_t fixture[192];
     } fields;
-    
+
     uint32_t data[256];
   };
-  
+
   #ifdef __GNUC__
   static_assert(sizeof(EMR) == 1024);
   #else

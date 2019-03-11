@@ -28,8 +28,8 @@
 
 namespace Anki {
 namespace Cozmo {
-  
-RangeSensorComponent::RangeSensorComponent() 
+
+RangeSensorComponent::RangeSensorComponent()
 : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::RangeSensor)
 {
 }
@@ -51,12 +51,12 @@ void RangeSensorComponent::InitDependent(Robot* robot, const RobotCompMap& depen
                                  ToFSensor::getInstance()->StopRanging(nullptr);
                                }
                              };
-  
+
   _signalHandle = _robot->GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::sendRangeData,
                                                               sendRangeDataLambda);
 
 }
-  
+
 
 
 void RangeSensorComponent::Update()
@@ -71,7 +71,7 @@ void RangeSensorComponent::Update()
     RangeDataToDisplay msg;
     auto& disp = msg.data.data;
     memset(&disp, 0, sizeof(disp));
-    
+
     for(const auto& e : _latestRawRangeData.data)
     {
       disp[e.roi].signalRate_mcps = -1;
@@ -94,7 +94,7 @@ void RangeSensorComponent::Update()
 
     _robot->SendRobotMessage<RangeDataToDisplay>(msg);
   }
-  
+
   Pose3d co = _robot->GetCameraPose(_robot->GetHeadAngle());
   // Parent a pose to the camera so we can rotate our current camera axis (Z out of camera) to match world axis (Z up)
   // also account for angle tof sensor is relative to camera
@@ -105,7 +105,7 @@ void RangeSensorComponent::Update()
 #if TOF_CONFIGURATION ==TOF_SIDE_BY_SIDE
   const auto leftAngle = TOF_LEFT_ROT_Z_REL_CAMERA_RAD;
   const auto rightAngle = TOF_RIGHT_ROT_Z_REL_CAMERA_RAD;
-  const auto axis = Z_AXIS_3D();  
+  const auto axis = Z_AXIS_3D();
 #elif TOF_CONFIGURATION == TOF_ABOVE_BELOW || TOF_CONFIGURATION == TOF_CENTER_OF_FACE
   const auto leftAngle = TOF_LEFT_ROT_Y_REL_CAMERA_RAD;
   const auto rightAngle = TOF_RIGHT_ROT_Y_REL_CAMERA_RAD;
@@ -132,8 +132,8 @@ void RangeSensorComponent::Update()
   //rp.RotateBy(Rotation3d(DEG_TO_RAD(180), X_AXIS_3D()));
   //lp.RotateBy(Rotation3d(DEG_TO_RAD(180), X_AXIS_3D()));
   #endif
-  
-  // 
+
+  //
   // const f32 kInnerAngle_rad = TOF_FOV_RAD / 8.f;
   // const f32 kOuterAngle_rad = kInnerAngle_rad * 3.f;
   // const f32 kPixToAngle[] = {kOuterAngle_rad,
@@ -142,7 +142,7 @@ void RangeSensorComponent::Update()
   //                            -kOuterAngle_rad};
 
   // std::vector<RangeData> navMapData;
-  
+
   // for(int r = 0; r < TOF_RESOLUTION; r++)
   // {
   //   const f32 pitch = sin(kPixToAngle[r]);
@@ -151,7 +151,7 @@ void RangeSensorComponent::Update()
   //   {
   //     const f32 yaw = sin(kPixToAngle[c]);
 
-  //     const f32 leftDist_mm = _latestRawRangeData.data[c + (r*8)].processedRange_mm; 
+  //     const f32 leftDist_mm = _latestRawRangeData.data[c + (r*8)].processedRange_mm;
 
   //     const f32 yl = yaw * leftDist_mm;
   //     const f32 zl = pitch * leftDist_mm;
@@ -161,7 +161,7 @@ void RangeSensorComponent::Update()
   //     _robot->GetContext()->GetVizManager()->DrawCuboid(r*8 + c + 1,
   //                                                       {3, 3, 3},
   //                                                       rootl);
-  //     _latestRangeData[r*8 + c] = pl.GetTranslation();      
+  //     _latestRangeData[r*8 + c] = pl.GetTranslation();
   //   }
   // }
 }

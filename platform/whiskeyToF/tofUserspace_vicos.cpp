@@ -111,8 +111,8 @@ int open_dev(VL53L1_Dev_t* dev)
   status = VL53L1_StaticInit(dev);
   return_if_error(status, "StaticInit failed");
 
-  const int rc = load_calibration(dev);
-  return_if_error(rc, "load_calibration failed");
+    const int rc = load_calibration(dev);
+    return_if_error(rc, "load_calibration failed");
 
   return status;
 }
