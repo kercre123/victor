@@ -103,13 +103,13 @@ Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal()
     IncreaseTimeoutTimer(30000);
   // }
 
-  ToFSensor::getInstance()->SetupSensors([this](ToFSensor::CommandResult res)
-                                         {
-                                           if(res != ToFSensor::CommandResult::Success)
-                                           {
-                                             PLAYPEN_SET_RESULT(FactoryTestResultCode::SETUP_TOF_FAILED);
-                                           }
-                                         });
+  // ToFSensor::getInstance()->SetupSensors([this](ToFSensor::CommandResult res)
+  //                                        {
+  //                                          if(res != ToFSensor::CommandResult::Success)
+  //                                          {
+  //                                            PLAYPEN_SET_RESULT(FactoryTestResultCode::SETUP_TOF_FAILED);
+  //                                          }
+  //                                        });
 
   // Move head and lift to be able to see target marker and turn towards the target
   MoveHeadToAngleAction* head = new MoveHeadToAngleAction(DEG_TO_RAD(0));
@@ -486,5 +486,3 @@ bool BehaviorPlaypenDistanceSensor::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& 
 
 }
 }
-
-

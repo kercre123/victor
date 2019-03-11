@@ -100,15 +100,15 @@ void ToFSensor::removeInstance()
   }
 }
 
-// Forward declaration of some internal functions
-bool BackgroundTestUpdate(bool alreadyHaveData, RangeDataRaw& data);
-
-void ToFSensor::SetLogPath(const std::string& path)
+void ToFSensor::LoadCalibOnStartUp(bool load)
 {
   #if FACTORY_TEST
-  set_calibration_save_path(path);
+  set_load_calibration_on_startup(load);
   #endif
 }
+
+// Forward declaration of some internal functions
+bool BackgroundTestUpdate(bool alreadyHaveData, RangeDataRaw& data);
 
 ToFSensor::CommandResult run_calibration(uint32_t distanceToTarget_mm,
                                          float targetReflectance)
@@ -303,6 +303,7 @@ void ProcessLoop()
           {
             PRINT_NAMED_INFO("ToF.ProcessLoop.SetupSensors","");
             _rangingEnabled = false;
+            _backgroundTestRanging = false;
 
             int rc = 0;
             // Only attempt to open the device if the file handle is invalid
@@ -312,10 +313,26 @@ void ProcessLoop()
               if(rc < 0)
               {
                 res = ToFSensor::CommandResult::OpenDevFailed;
-                PRINT_NAMED_ERROR("ToF.ProcessLoop.SetupSensors","Failed to open sensor");
-                break;
+
+                // Pre-packout it is ok if open_dev fails with a calibration
+                // error. It is expected on first startup before we have been able
+                // to calibrate the sensor
+                BEGIN_DONT_RUN_AFTER_PACKOUT
+                if(rc == VL53L1_ERROR_CALIBRATION_WARNING)
+                {
+                  res = ToFSensor::CommandResult::Success;
+                }
+                END_DONT_RUN_AFTER_PACKOUT
+                else
+                {
+                  PRINT_NAMED_ERROR("ToF.ProcessLoop.SetupSensors","Failed to open sensor");
+                  printf("open dev failed\n");
+                  break;
+                }
               }
             }
+
+            printf("starting setup\n");
 
             // Device is open so set it up for multizone ranging
             rc = setup(&_dev);
@@ -323,6 +340,7 @@ void ProcessLoop()
             {
               res = ToFSensor::CommandResult::SetupFailed;
               PRINT_NAMED_ERROR("ToF.ProcessLoop.SetupFailed","Failed to setup sensor");
+              printf("setup failed\n");
             }
 
           }
@@ -450,6 +468,7 @@ void BackgroundTestCallback()
     (void)stop_ranging(&_dev);
 
     _backgroundTestRanging = false;
+    _rangingEnabled = false;
   }
 }
 

@@ -37,4 +37,6 @@ int start_ranging(VL53L1_Dev_t* dev);
 // Stop ranging
 int stop_ranging(VL53L1_Dev_t* dev);
 
+void set_load_calibration_on_startup(bool load);
+
 #endif

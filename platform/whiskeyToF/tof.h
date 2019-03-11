@@ -51,12 +51,12 @@ public:
   {
     Success              =  0,
     Failure              = -1,
-    OpenDevFailed,
-    SetupFailed,
-    StartRangingFailed,
-    StopRangingFailed,
-    CalibrateFailed,
-    BackgroundTestFailed,
+    OpenDevFailed        = -2,
+    SetupFailed          = -3,
+    StartRangingFailed   = -4,
+    StopRangingFailed    = -5,
+    CalibrateFailed      = -6,
+    BackgroundTestFailed = -7,
   };
   // All CommandCallbacks are called from a thread
   using CommandCallback = std::function<void(CommandResult)>;
@@ -105,9 +105,6 @@ public:
   // Whether or not the device is currently calibrating
   bool IsCalibrating() const;
 
-  // Set where to save calibration
-  void SetLogPath(const std::string& path);
-
   // Enables a continously running test of the tof sensor to check for
   // inconsistencies when starting a range measurement. The test constantly
   // stops and starts ranging checking for instances of consistent range errors
@@ -115,6 +112,8 @@ public:
   // This test stems from issues with the decoupling capacitor on the ToF flex cable
   // and potential interference issues.
   void EnableBackgroundTest(bool enable, const CommandCallback& callback);
+
+  void LoadCalibOnStartUp(bool load);
 
 private:
 

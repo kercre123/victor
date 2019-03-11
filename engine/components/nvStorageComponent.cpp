@@ -930,8 +930,7 @@ int NVStorageComponent::OpenCameraCalibFile(int openFlags)
   }
 
   // Camera calibration is offest by 4mb in the block device
-  const off_t kCalibOffset = 4194304;
-  const off_t seek = lseek(fd, kCalibOffset, SEEK_SET);
+  const off_t seek = lseek(fd, Factory::kCameraCalibOffset, SEEK_SET);
   if(seek == -1)
   {
     PRINT_NAMED_ERROR("NVStorageComponent.OpenCameraCalibFile.FailedToSeek",

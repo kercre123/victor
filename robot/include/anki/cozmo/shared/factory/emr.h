@@ -48,6 +48,9 @@ namespace Factory {
   #else
   typedef char static_assertion_emr_size_check[(sizeof(EMR) == 1024) ? 1 : -1];
   #endif
+
+  const off_t kCameraCalibOffset = 4194304;
+  const off_t kToFCalibOffset = 8388608;
 }
 }
 }

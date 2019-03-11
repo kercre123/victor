@@ -42,6 +42,15 @@
 
 namespace {
   GPIO _powerGPIO = nullptr;
+
+  bool _loadCalibOnStartUp = true;
+
+bool _isRanging = false;
+}
+
+void set_load_calibration_on_startup(bool load)
+{
+  _loadCalibOnStartUp = load;
 }
 
 int open_dev(VL53L1_Dev_t* dev)
@@ -53,7 +62,8 @@ int open_dev(VL53L1_Dev_t* dev)
     return VL53L1_ERROR_GPIO_NOT_EXISTING;
   }
 
-  usleep(100000);
+  // TODO: Figure out actual HW reset time, 3 seconds seems to work
+  usleep(3000000);
 
   gpio_set_value(_powerGPIO, gpio_HIGH);
 
@@ -111,8 +121,17 @@ int open_dev(VL53L1_Dev_t* dev)
   status = VL53L1_StaticInit(dev);
   return_if_error(status, "StaticInit failed");
 
+  if(_loadCalibOnStartUp)
+  {
     const int rc = load_calibration(dev);
+    if(rc < 0)
+    {
+      printf("load calibration failed\n");
+      status = VL53L1_ERROR_CALIBRATION_WARNING;
+    }
+
     return_if_error(rc, "load_calibration failed");
+  }
 
   return status;
 }
@@ -201,9 +220,9 @@ int setup(VL53L1_Dev_t* dev)
 {
   VL53L1_Error rc = 0;
 
-  // // Stop all ranging so we can change settings
-  // rc = VL53L1_StopMeasurement(dev);
-  // return_if_error(rc, "ioctl error stopping ranging");
+  // Stop all ranging so we can change settings
+  rc = VL53L1_StopMeasurement(dev);
+  return_if_error(rc, "ioctl error stopping ranging");
 
   // Switch to multi-zone scanning mode
   rc = VL53L1_SetPresetMode(dev, VL53L1_PRESETMODE_MULTIZONES_SCANNING);
@@ -237,6 +256,12 @@ int setup(VL53L1_Dev_t* dev)
 /// Get multi-zone ranging data measurements.
 int get_mz_data(VL53L1_Dev_t* dev, const int blocking, VL53L1_MultiRangingData_t *data)
 {
+  if(!_isRanging)
+  {
+    PRINT_NAMED_ERROR("","get_mz_data but is not ranging");
+  }
+
+
   VL53L1_Error rc = 0;
   if(blocking)
   {
@@ -270,6 +295,9 @@ int get_mz_data(VL53L1_Dev_t* dev, const int blocking, VL53L1_MultiRangingData_t
 
 int start_ranging(VL53L1_Dev_t* dev)
 {
+  _isRanging = true;
+
+  PRINT_NAMED_INFO("","start_ranging");
   const int rc = VL53L1_StartMeasurement(dev);
   return_if_error(rc, "start_ranging failed");
   return 0;
@@ -277,6 +305,9 @@ int start_ranging(VL53L1_Dev_t* dev)
 
 int stop_ranging(VL53L1_Dev_t* dev)
 {
+  _isRanging = false;
+
+  PRINT_NAMED_INFO("","stop_ranging");
   const int rc = VL53L1_StopMeasurement(dev);
   return_if_error(rc, "stop_ranging failed");
   return 0;

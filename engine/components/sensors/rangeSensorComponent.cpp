@@ -34,6 +34,11 @@ RangeSensorComponent::RangeSensorComponent()
 {
 }
 
+RangeSensorComponent::~RangeSensorComponent()
+{
+  ToFSensor::removeInstance();
+}
+
 void RangeSensorComponent::InitDependent(Robot* robot, const RobotCompMap& dependentComps)
 {
   _robot = robot;

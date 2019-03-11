@@ -54,15 +54,6 @@ int main(int argc, char** argv)
   bool pause = false;
   bool testMode = false;
 
-  ToFSensor::getInstance()->SetupSensors([](ToFSensor::CommandResult res)
-                                         {
-                                           if((int)res < 0)
-                                           {
-                                             printf("Failed to setup\n");
-                                             exit(1);
-                                           }
-                                         });
-
   for(u8 i = 1; i < argc; i++)
   {
     if(argv[i][0] == 'c')
@@ -89,9 +80,26 @@ int main(int argc, char** argv)
                        dist,
                        reflectance);
 
-      ToFSensor::getInstance()->PerformCalibration(dist, reflectance, nullptr);
+      ToFSensor::getInstance()->LoadCalibOnStartUp(false);
 
-      ToFSensor::getInstance()->SetupSensors(nullptr);
+      ToFSensor::getInstance()->SetupSensors([](ToFSensor::CommandResult res)
+                                             {
+                                               if((int)res < 0)
+                                               {
+                                                 printf("Failed to setup\n");
+                                                 exit(1);
+                                               }
+                                             });
+
+      ToFSensor::getInstance()->PerformCalibration(dist, reflectance,
+                                                   [](ToFSensor::CommandResult res)
+                                                   {
+                                                     if((int)res < 0)
+                                                     {
+                                                       printf("Calibration failed\n");
+                                                       exit(1);
+                                                     }
+                                                   });
     }
     else if(argv[i][0] == 'p')
     {
@@ -101,7 +109,21 @@ int main(int argc, char** argv)
     {
       testMode = true;
     }
+    else if(argv[i][0] == 'l')
+    {
+      ToFSensor::getInstance()->LoadCalibOnStartUp(false);
+    }
+  }
+
+  ToFSensor::getInstance()->SetupSensors([](ToFSensor::CommandResult res)
+                                         {
+                                           printf("setup res %d\n", res);
+                                           if((int)res < 0)
+                                           {
+                                             printf("Failed to setup\n");
+                                             exit(1);
                                            }
+                                         });
 
   if(!testMode)
   {
@@ -216,5 +238,3 @@ int main(int argc, char** argv)
 
   return 0;
 }
-
-

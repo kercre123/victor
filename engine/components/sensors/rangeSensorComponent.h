@@ -32,7 +32,7 @@ class RangeSensorComponent : public IDependencyManagedComponent<RobotComponentID
 {
 public:
   RangeSensorComponent();
-  ~RangeSensorComponent() = default;
+  ~RangeSensorComponent();
 
   //////
   // IDependencyManagedComponent functions

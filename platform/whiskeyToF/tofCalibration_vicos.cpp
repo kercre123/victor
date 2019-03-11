@@ -18,100 +18,184 @@
 
 #include "util/logging/logging.h"
 
+#include "anki/cozmo/shared/factory/emr.h"
+
+#include <unistd.h>
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
 #include <errno.h>
 
 namespace
 {
-  // Where to save calibration data
-  std::string _savePath = "";
+  const char* const kEMRPath = "/dev/block/bootdevice/by-name/emr";
+  const uint32_t kCalibMagic1 = 0x746F6673;
+  const uint32_t kCalibMagic2 = 0x77736b79;
+  const uint32_t kZoneCalibOffset = sizeof(kCalibMagic1) + sizeof(VL53L1_CalibrationData_t);
 }
 
 // --------------------Save/Load Calibration Data--------------------
-void set_calibration_save_path(const std::string& path)
+
+int open_calib_file(int openFlags, off_t offset)
+{
+  int fd = open(kEMRPath, openFlags);
+  if(fd == -1)
   {
-  _savePath = path;
+    PRINT_NAMED_ERROR("ToFCalibration.open_calib_faile.FailedToOpenBlockDevice",
+                      "%d", errno);
+    return -1;
+  }
+
+  // ToF calibration is offset by 8mb in the block device
+  printf("writing start %ld\n", Anki::Cozmo::Factory::kToFCalibOffset + offset);
+  const off_t seek = lseek(fd, Anki::Cozmo::Factory::kToFCalibOffset + offset, SEEK_SET);
+  if(seek == -1)
+  {
+    printf("seek fail\n");
+    PRINT_NAMED_ERROR("NVStorageComponent.OpenCameraCalibFile.FailedToSeek",
+                      "%d", errno);
+    return -1;
+  }
+
+  return fd;
 }
 
-// Path is expected to end in "/"
 int save_calibration_to_disk(void* calib,
                              ssize_t size,
-                             const std::string& path,
-                             const std::string& filename)
+                             off_t offset,
+                             const uint32_t magic)
 {
-  PRINT_NAMED_INFO("save_calibration_to_disk","saving to %s%s", path.c_str(), filename.c_str());
-
-  char buf[128] = {0};
-  sprintf(buf, "%s%s", path.c_str(), filename.c_str());
-
-  int rc = -1;
-  FILE* f = fopen(buf, "w+");
-  if(f != nullptr)
+  int rc = 0;
+  int fd = open_calib_file(O_WRONLY, offset);
+  if(fd < 0)
   {
-    const size_t count = 1;
-    rc = fwrite(calib, size, count, f);
-    if(rc != count)
-    {
-      PRINT_NAMED_ERROR("save_calibration_to_disk","fwrite to %s failed with %d", buf, ferror(f));
+    printf("fail to open %d\n", errno);
+    PRINT_NAMED_ERROR("save_calibration_to_disk", "Failed to open emr %d %d", fd, errno);
+    return -1;
+  }
+
+  const size_t kNumBytesForCalib = sizeof(magic) + size;
+  uint8_t buf[kNumBytesForCalib];
+  *((uint32_t*)buf) = magic;
+  memcpy(buf+sizeof(magic), calib, size);
+
+  ssize_t numBytesWritten = write(fd, buf, kNumBytesForCalib);
+  if(numBytesWritten == -1)
+  {
+    printf("write faill\n");
+    PRINT_NAMED_ERROR("ToFCalibration.save_calibration_to_disk.FailedToWriteBlockDevice",
+                      "%d", errno);
+
     rc = -1;
   }
-    else
+  else if(numBytesWritten != kNumBytesForCalib)
   {
-      rc = 0;
-    }
-    (void)fclose(f);
+    printf("not enough write\n");
+    PRINT_NAMED_ERROR("ToFCalibration.save_calibration_to_disk.FailedToWriteBlockDevice",
+                      "Only wrote %zd bytes instead of %d",
+                      numBytesWritten,
+                      kNumBytesForCalib);
+    rc = -1;
   }
-  else
+
+  int res = close(fd);
+  if(res == -1)
   {
-    PRINT_NAMED_ERROR("save_calibration_to_disk","failed to open file %s with %d", buf, errno);
+    printf("seek fail\n");
+    PRINT_NAMED_ERROR("ToFCalibration.save_calibration_to_disk.FailedToCloseBlockDevice",
+                      "%d", errno);
+    rc = -1;
   }
+
+  sync();
+
   return rc;
-
 }
 
-int save_calibration_to_disk(VL53L1_CalibrationData_t& data,
-                             const std::string& meta = "")
+int save_calibration_to_disk(VL53L1_CalibrationData_t& data)
 {
-  const std::string name = "tof" + meta + ".bin";
-  (void)save_calibration_to_disk(&data, sizeof(data), _savePath, name);
-  return save_calibration_to_disk(&data, sizeof(data), "/factory/", name);
+  return save_calibration_to_disk(&data, sizeof(data), 0, kCalibMagic1);
 }
 
-int save_calibration_to_disk(VL53L1_ZoneCalibrationData_t& data,
-                             const std::string& meta = "")
+int save_calibration_to_disk(VL53L1_ZoneCalibrationData_t& data)
 {
-  const std::string name = "tofZone" + meta + ".bin";
-  (void)save_calibration_to_disk(&data, sizeof(data), _savePath, name);
-  return save_calibration_to_disk(&data, sizeof(data), "/factory/", name);
+  // Zone calibration comes after regular calibration data so it must be offset
+  return save_calibration_to_disk(&data,
+                                  sizeof(data),
+                                  kZoneCalibOffset,
+                                  kCalibMagic2);
 }
 
-int load_calibration_from_disk(void* calib,
-                               ssize_t size,
-                               const std::string& path)
+int load_calibration_from_disk(VL53L1_CalibrationData_t& calibData,
+                               VL53L1_ZoneCalibrationData_t& zoneCalibData)
 {
-  int rc = -1;
-  FILE* f = fopen(path.c_str(), "r");
-  if(f != nullptr)
+  int fd = open_calib_file(O_RDONLY, 0);
+  if(fd < 0)
   {
-    const size_t count = 1;
-    rc = fread(calib, size, count, f);
-    if(rc != count)
+    PRINT_NAMED_ERROR("ToFCalibration.load_calibration_from_disk.CalibOpenFail",
+                      "%d",
+                      errno);
+    return -1;
+  }
+
+  static_assert(sizeof(kCalibMagic1) == sizeof(kCalibMagic2),
+                "Magic1 and Magic2 have different sizes");
+  const uint32_t kSizeOfMagic = sizeof(kCalibMagic1);
+  const uint32_t kNumBytesForCalib = kSizeOfMagic + sizeof(calibData) + kSizeOfMagic + sizeof(zoneCalibData);
+  const uint32_t kNumBytesToRead = 4096; // Read a whole page due to this being a block device
+  static_assert(kNumBytesToRead >= kNumBytesForCalib, "Bytes to read smaller than size of camera calibration");
+
+  uint8_t buf[kNumBytesToRead];
+  uint8_t* bufPtr = (uint8_t*)(&buf);
+  ssize_t numBytesRead = 0;
+  do
+  {
+    numBytesRead += read(fd, buf + numBytesRead, kNumBytesToRead - numBytesRead);
+    if(numBytesRead == -1)
     {
-      PRINT_NAMED_ERROR("load_calibration_from_disk","fread failed %d", ferror(f));
-      rc = -1;
-  }
-    else
-  {
-      rc = 0;
+      printf("read\n");
+      PRINT_NAMED_ERROR("ToFCalibration.load_calibration_from_disk.FailedToReadCalibration",
+                      "%d", errno);
+      (void)close(fd);
+      return -1;
     }
-    (void)fclose(f);
   }
-  else
+  while(numBytesRead < kNumBytesToRead);
+
+  (void)close(fd);
+
+  static_assert(std::is_same<decltype(kCalibMagic1), const uint32_t>::value,
+                "CalibMagic1 must be const uint32_t");
+  static_assert(std::is_same<decltype(kCalibMagic2), const uint32_t>::value,
+                "CalibMagic2 must be const uint32_t");
+  const uint32_t dataMagic = (uint32_t)(*(uint32_t*)buf);
+  if(dataMagic != kCalibMagic1)
   {
-    PRINT_NAMED_ERROR("load_calibration_from_disk", "failed to open %s with %d", path.c_str(), errno);
+    printf("magic 1 0x%x\n", dataMagic);
+    PRINT_NAMED_ERROR("ToFCalibration.load_calibration_from_disk.CalibMagicMismatch",
+                      "Read magic 0x%x and expected magic 0x%x do not match",
+                      dataMagic,
+                      kCalibMagic1);
+    return -1;
   }
 
-  return rc;
+  memcpy(&calibData, bufPtr + sizeof(dataMagic), sizeof(calibData));
+  bufPtr += (sizeof(dataMagic) + sizeof(calibData));
+
+  const uint32_t zoneMagic = (uint32_t)(*(uint32_t*)bufPtr);
+  if(zoneMagic != kCalibMagic2)
+  {
+    printf("magic 2 0%x\n", zoneMagic);
+    PRINT_NAMED_ERROR("ToFCalibration.load_calibration_from_disk.CalibZoneMagicMismatch",
+                      "Read magic 0x%x and expected magic 0x%x do not match",
+                      zoneMagic,
+                      kCalibMagic2);
+    return -1;
+  }
+
+  memcpy(&zoneCalibData, bufPtr + sizeof(zoneMagic), sizeof(zoneCalibData));
+
+  return 0;
 }
 
 int load_calibration(VL53L1_Dev_t* dev)
@@ -121,62 +205,22 @@ int load_calibration(VL53L1_Dev_t* dev)
   VL53L1_CalibrationData_t calib;
   memset(&calib, 0, sizeof(calib));
 
-  int rc = load_calibration_from_disk(&calib, sizeof(calib), "/factory/tof.bin");
-  if(rc < 0)
-  {
-    PRINT_NAMED_INFO("load_calibration", "Attempting to load old calib format");
-
-    rc = load_calibration_from_disk(&calib, sizeof(calib), "/factory/tof_right.bin");
-  if(rc < 0)
-  {
-      PRINT_NAMED_ERROR("load_calibration", "Failed to load old tof calibration");
-    }
-  }
-
-  rc = VL53L1_SetCalibrationData(dev, &calib);
-  if(rc < 0)
-  {
-    PRINT_NAMED_ERROR("load_calibration", "Failed to set tof calibration");
-  }
-
   VL53L1_ZoneCalibrationData_t calibZone;
   memset(&calibZone, 0, sizeof(calibZone));
 
-  // Check if the old format zone calibration exists
-  struct stat st;
-  rc = stat("/factory/tofZone_right.bin", &st);
-  if(rc == 0)
-  {
-    // DVT1 zone calibration was saved as the "stmvl531_zone_calibration_data_t" structure
-    // from the kernel driver. This structure contains a u32 id field before the VL53L1_ZoneCalibrationData_t.
-    // So we need to recreate the layout of that struct in order to properly load the saved calibration data.
-    struct {
-      uint32_t garbage;
-      VL53L1_ZoneCalibrationData_t data;
-    } buf;
-
-    PRINT_NAMED_INFO("load_calibration","Loading zone data as old format");
-    rc = load_calibration_from_disk(&buf, sizeof(buf), "/factory/tofZone_right.bin");
-    if(rc == 0)
-    {
-      calibZone = buf.data;
-    }
-  }
-  else
-  {
-    PRINT_NAMED_INFO("load_calibration","Loading zone data");
-    rc = load_calibration_from_disk(&calibZone, sizeof(calibZone), "/factory/tofZone.bin");
-  }
-
+  int rc = load_calibration_from_disk(calib, calibZone);
   if(rc < 0)
   {
-    PRINT_NAMED_ERROR("load_calibration","Failed to load tof zone calibration");
+    PRINT_NAMED_ERROR("ToFCalibration.load_calibration.Fail",
+                      "Failed to load calibration from disk");
+    return rc;
   }
-  else
-  {
+
+  rc = VL53L1_SetCalibrationData(dev, &calib);
+  return_if_error(rc, "Failed to set tof calibration");
+
   rc = VL53L1_SetZoneCalibrationData(dev, &calibZone);
   return_if_error(rc, "Failed to set tof zone calibration");
-  }
 
   return rc;
 }
@@ -348,8 +392,8 @@ int perform_calibration(VL53L1_Dev_t* dev, uint32_t dist_mm, float reflectance)
   rc = VL53L1_GetCalibrationData(dev, &calib);
   return_if_error(rc, "perform_calibration: Get calibration data failed");
 
-  rc = save_calibration_to_disk(calib, "Orig");
-  return_if_error(rc, "perform_calibration: Save calibration to disk failed");
+  // rc = save_calibration_to_disk(calib);
+  // return_if_error(rc, "perform_calibration: Save calibration to disk failed");
 
   rc = run_refspad_calibration(dev);
   return_if_error(rc, "perform_calibration: run_refspad_calibration");
@@ -362,8 +406,3 @@ int perform_calibration(VL53L1_Dev_t* dev, uint32_t dist_mm, float reflectance)
 
   return rc;
 }
-
-
-
-
-
