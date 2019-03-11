@@ -129,5 +129,9 @@
   "golang.org/x/time": {
     "commit": "fbb02b2291d28baffd63558aa44b4b56f178d650",
     "branch": "master"
+  },
+  "github.com/gorilla/websocket": {
+    "commit": "0ec3d1bd7fe50c503d6df98ee649d81f4857c564",
+    "branch": "master"
   }
 }
