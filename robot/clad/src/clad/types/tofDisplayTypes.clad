@@ -1,0 +1,22 @@
+namespace Anki {
+namespace Vector {
+
+// Data from each ROI to be displayed
+structure RangingDataDisplay {
+  float_32 signalRate_mcps,
+  float_32 spadCount,
+  float_32 processedRange_mm,
+  uint_8 roi,
+  uint_8 roiStatus,
+  uint_8 status,
+
+  uint_8 padding
+}
+
+// Contains all 16 ROIs worth of ranging data to be displayed
+structure RangeDataDisplay {
+  RangingDataDisplay data[16]
+}
+
+} // namespace Vector
+} // namespace Anki

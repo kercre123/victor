@@ -17,6 +17,7 @@
 #include "anki/cozmo/robot/logEvent.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/factory/faultCodes.h"
+#include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include "../spine/spine.h"
 #include "../spine/cc_commander.h"
@@ -868,6 +869,12 @@ ProxSensorDataRaw HAL::GetRawProxData()
 
 void ProcessProxData()
 {
+  // No body prox sensor on Whiskey
+  if(IsWhiskey())
+  {
+    return;
+  }
+  
   if (HAL::PowerGetMode() == POWER_MODE_CALM) {
     proxData_.distance_mm      = PROX_CALM_MODE_DIST_MM;
     proxData_.signalIntensity  = 0.f;

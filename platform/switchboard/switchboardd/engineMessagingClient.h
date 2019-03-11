@@ -55,6 +55,8 @@ public:
 
 private:
 
+  void HandleWifiConnectRequest(const std::string& ssid);
+  
   LocalUdpClient _client;
   EngineMessageSignal _pairingStatusSignal;
   EngineMessageSignal _engineMessageSignal;

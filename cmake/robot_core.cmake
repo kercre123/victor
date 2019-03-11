@@ -19,6 +19,11 @@ if (VICOS)
       $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/core/inc>
     )
 
+    target_link_libraries(${LIB}
+      PRIVATE
+      gpio
+    )
+
     set_target_properties(${LIB} PROPERTIES
       INTERFACE_INCLUDE_DIRECTORIES
       "${CMAKE_SOURCE_DIR}/robot/core/inc"

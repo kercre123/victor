@@ -1437,7 +1437,7 @@ namespace Anki {
 
       if(_verifyAction == nullptr)
       {
-        _verifyAction.reset(new TurnTowardsPoseAction(_dockObjectOrigPose, 0));
+        _verifyAction.reset(new VisuallyVerifyNoObjectAtPoseAction(_dockObjectOrigPose));
         _verifyAction->ShouldSuppressTrackLocking(true);
         _verifyAction->SetRobot(&GetRobot());
         _verifyActionDone = false;

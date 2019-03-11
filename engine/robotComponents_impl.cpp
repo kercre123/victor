@@ -50,6 +50,7 @@ class CarryingComponent;
 class CliffSensorComponent;
 class ProxSensorComponent;
 class ImuComponent;
+class RangeSensorComponent;
 class TouchSensorComponent;
 class AnimationComponent;
 class RobotStateHistory;
@@ -76,8 +77,7 @@ class JdocsManager;
 class RobotExternalRequestComponent;
 class AccountSettingsManager;
 class UserEntitlementsManager;
-
-
+class RangeSensorComponent;
 } // namespace Vector
 
 // Template specializations mapping enums from the _fwd.h file to the class forward declarations above
@@ -137,6 +137,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(JdocsManager,                  RobotComponentID, Jdo
 LINK_COMPONENT_TYPE_TO_ENUM(RobotExternalRequestComponent, RobotComponentID, RobotExternalRequestComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(AccountSettingsManager,        RobotComponentID, AccountSettingsManager)
 LINK_COMPONENT_TYPE_TO_ENUM(UserEntitlementsManager,       RobotComponentID, UserEntitlementsManager)
+LINK_COMPONENT_TYPE_TO_ENUM(RangeSensorComponent,          RobotComponentID, RangeSensor)
 
 // Translate entity into string
 template<>
@@ -191,6 +192,7 @@ std::string GetComponentStringForID<Vector::RobotComponentID>(Vector::RobotCompo
     CASE(PowerStateManager)
     CASE(ProxSensor)
     CASE(PublicStateBroadcaster)
+    CASE(RangeSensor)
     CASE(RobotExternalRequestComponent)
     CASE(RobotHealthReporter)
     CASE(RobotStatsTracker)

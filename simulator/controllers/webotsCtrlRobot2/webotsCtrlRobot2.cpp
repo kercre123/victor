@@ -11,6 +11,7 @@
 #include "anki/cozmo/robot/cozmoBot.h"
 #include "simulator/robot/sim_overlayDisplay.h"
 #include "anki/cozmo/robot/hal.h"
+#include "anki/cozmo/shared/factory/emrHelper.h"
 #include <cstdio>
 #include <sstream>
 
@@ -35,6 +36,8 @@ int main(int argc, char **argv)
 {
   using namespace Anki;
   using namespace Anki::Vector;
+
+  Factory::CreateFakeEMR();
 
   // Placeholder for SIGTERM flag
   int shutdownSignal = 0;

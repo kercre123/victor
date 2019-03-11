@@ -2,6 +2,7 @@
 PROTO CozmoBot2 [
   field SFString name "CozmoBot2"
   field SFInt32 robotID 0
+  field SFBool isWhiskey FALSE
 
   field SFVec3f translation 0 0 0
   field SFRotation rotation 0 0 1 0
@@ -60,16 +61,15 @@ Supervisor {
   %{ if not fields.vizMode.value then }%
 
     # append optional command line parameters
-    %{ autoArgs=fields.controllerArgs.value }%
-    %{ if fields.filterLogs.value then }%
-      %{ autoArgs = autoArgs .. " --applyLogFilter"}%
-    %{ end }%
-    %{ if fields.colorizeStderrOutput.value then }%
-      %{ autoArgs = autoArgs .. " --colorizeStderrOutput"}%
-    %{ end }%
+    %{
+      protoHelper = require(context.project_path .. "protos/lua/protoHelper")
+      ctrlArgs = protoHelper.setCtrlOptArgs(fields)
+    }%
+
+    controllerArgs "%{=ctrlArgs}%"
 
     controller IS controller
-    controllerArgs "%{=autoArgs}%"
+
   %{ else }%
     controller ""
     controllerArgs ""
@@ -264,6 +264,7 @@ Supervisor {
                   robotID IS robotID
                   filterLogs IS filterLogs
                   colorizeStderrOutput IS colorizeStderrOutput
+                  isWhiskey IS isWhiskey
                 }
                 
                 # Web server process:
@@ -278,6 +279,7 @@ Supervisor {
                   robotID IS robotID
                   filterLogs IS filterLogs
                   colorizeStderrOutput IS colorizeStderrOutput
+                  isWhiskey IS isWhiskey
                 }
                 
                 # Vic-gateway process:

@@ -46,6 +46,7 @@ class PowerStateManager;
 class MoodManager;
 class SleepTracker;
 class OnboardingMessageHandler;
+class RangeSensorComponent;
 
 } // namespace Vector
 
