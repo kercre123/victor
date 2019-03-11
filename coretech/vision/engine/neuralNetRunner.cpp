@@ -73,7 +73,7 @@ namespace {
   CONSOLE_VAR_ENUM(s32,   kNeuralNetRunner_SaveImages,  CONSOLE_GROUP, 0, "Off,Save Resized,Save Original Size");
   
   // 1: Full size, 2: Half size
-  CONSOLE_VAR_RANGED(s32, kNeuralNetRunner_OrigImageSubsample, "TheBox", 1, 1, 2);
+  CONSOLE_VAR_RANGED(s32, kNeuralNetRunner_OrigImageSubsample, CONSOLE_GROUP, 1, 1, 2);
 
 #undef CONSOLE_GROUP
 }
