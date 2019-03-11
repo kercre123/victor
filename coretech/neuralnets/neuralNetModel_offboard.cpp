@@ -376,7 +376,7 @@ bool OffboardModel::Connect()
 {
   static s32 numTries = 0;
   
-  const char* serverPath = LOCAL_SOCKET_PATH "box_server";
+  const char* serverPath = LOCAL_SOCKET_PATH "offboard_vision_server";
   const std::string clientPath = std::string(LOCAL_SOCKET_PATH) + "_" + GetName();
   
   const bool udpSuccess = _udpClient->Connect(clientPath.c_str(), serverPath);
