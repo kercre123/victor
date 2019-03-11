@@ -353,6 +353,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     DASMSG_SEND();
 
     _lastBatteryLevelChange_sec = now_sec;
+    _prevBatteryLevel = _batteryLevel;
     _batteryLevel = level;
   }
 

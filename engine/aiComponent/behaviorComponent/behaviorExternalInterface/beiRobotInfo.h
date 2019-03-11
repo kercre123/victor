@@ -87,6 +87,7 @@ public:
   ActionList&                 GetActionList();
   BatteryComponent&           GetBatteryComponent()                   const;
   BatteryLevel                GetBatteryLevel()                       const;
+  BatteryLevel                GetPrevBatteryLevel()                   const;
   Quad2f                      GetBoundingQuadXY(const Pose3d& atPose) const;
   CarryingComponent&          GetCarryingComponent()                  const;
   const CliffSensorComponent& GetCliffSensorComponent()               const;
