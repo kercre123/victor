@@ -157,9 +157,12 @@ namespace Anki {
         u32 lastMotionDetectedTime_ms = 0;
         const u32 MOTION_DETECT_TIMEOUT_MS = 200;
         const f32 ACCEL_MOTION_THRESH = 10;  // mm/s^2
-        const f32 GYRO_MOTION_THRESHOLD = DEG_TO_RAD_F32(0.5f);           // Gyro motion threshold post-calibration
+        constexpr f32 BIAS_UPDATE_THRESHOLD = DEG_TO_RAD_F32(0.2f);       // Gyro motion threshold post-calibration
+        constexpr f32 GYRO_MOTION_THRESHOLD = DEG_TO_RAD_F32(0.5f);       // Gyro motion threshold post-calibration
         const f32 GYRO_MOTION_PRECALIB_THRESHOLD = DEG_TO_RAD_F32(10.f);  // Gyro motion threshold pre-calibration
                                                                           // (Max bias according to BMI160 datasheet is +/- 10 deg/s)
+
+        static_assert(BIAS_UPDATE_THRESHOLD < GYRO_MOTION_THRESHOLD, "bias update threshold must be lower than motion threshold")
 
         // Poke detection
         TimeStamp_t _lastPokeDetectTime = 0;
@@ -1077,12 +1080,26 @@ namespace Anki {
 #endif
 
         if (useKF) {
-          kalmanFilter_.Update(
-            {imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]},
-            {imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2] * z_gyro_scale},
-            CONTROL_DT,
-            isMotionDetected_
-          );
+          // NOTE: kalman filter covariance updates can be a relatively expensive operation. In normal operating
+          // conditions, it is currently taking on average about .6 ms, with a worst case of 2 ms. With 
+          // current cpu throttling in low power mode, average time goes up to about 1.5 ms, with worst case 
+          // being as much as 4 ms. Since we try to limit the robot tic to be under 5 ms, this can be problamatic
+          // in low power. However, in low power mode, we are not expecting the robot to be driving or being moved
+          // frequently, so we can limit the update calls to only when we think the bias may have drifted significantly.
+
+          // When in normal operating mode and constantly being moved, only about .05% of tics are over 2ms.
+          // When in low power mode and constantly being moved, about 25% of tics are over 2ms.
+          // When in low power mode and idle on the charger, about 1% of tics are over 2ms.
+          
+          const Point3<double> correctedRawGyro = {imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2] * z_gyro_scale};
+          const bool updateBias = !IsNearlyEqual(kalmanFilter_.GetBias(), correctedRawGyro.CastTo<float>(), BIAS_UPDATE_THRESHOLD);
+          if ( isMotionDetected_ || updateBias ) {
+            kalmanFilter_.Update(
+              {imu_data_.accel[0], imu_data_.accel[1], imu_data_.accel[2]},
+              correctedRawGyro,
+              CONTROL_DT,
+              isMotionDetected_
+            );
 
           // Update orientation
           const Rotation3d headRot(HeadController::GetAngleRad(), Y_AXIS_3D());
