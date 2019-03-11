@@ -162,7 +162,7 @@ namespace Anki {
         const f32 GYRO_MOTION_PRECALIB_THRESHOLD = DEG_TO_RAD_F32(10.f);  // Gyro motion threshold pre-calibration
                                                                           // (Max bias according to BMI160 datasheet is +/- 10 deg/s)
 
-        static_assert(BIAS_UPDATE_THRESHOLD < GYRO_MOTION_THRESHOLD, "bias update threshold must be lower than motion threshold")
+        static_assert(BIAS_UPDATE_THRESHOLD < GYRO_MOTION_THRESHOLD, "bias update threshold must be lower than motion threshold");
 
         // Poke detection
         TimeStamp_t _lastPokeDetectTime = 0;
@@ -1086,7 +1086,7 @@ namespace Anki {
           // When in normal operating mode and constantly being moved, only about .05% of tics are over 2ms.
           // When in low power mode and constantly being moved, about 25% of tics are over 2ms.
           // When in low power mode and idle on the charger, about 1% of tics are over 2ms.
-          
+
           const Point3<double> correctedRawGyro = {imu_data_.gyro[0], imu_data_.gyro[1], imu_data_.gyro[2] * z_gyro_scale};
           const bool updateBias = !IsNearlyEqual(kalmanFilter_.GetBias(), correctedRawGyro.CastTo<float>(), BIAS_UPDATE_THRESHOLD);
           if ( isMotionDetected_ || updateBias ) {
@@ -1096,6 +1096,7 @@ namespace Anki {
               CONTROL_DT,
               isMotionDetected_
             );
+          }
 
           // Update orientation
           const Rotation3d headRot(HeadController::GetAngleRad(), Y_AXIS_3D());
