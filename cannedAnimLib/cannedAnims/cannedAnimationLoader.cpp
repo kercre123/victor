@@ -274,8 +274,7 @@ Result CannedAnimationLoader::DefineFromFlatBuf(const CozmoAnim::AnimClip* animC
 {
   Animation animation(animName);
 
-  Result lastResult = animation.DefineFromFlatBuf(animName, animClip, 
-                                                  _spriteMap, _spriteSequenceContainer);
+  Result lastResult = animation.DefineFromFlatBuf(animName, animClip, _spriteSequenceContainer);
 
   const Result res = SanityCheck(lastResult, animation, animName);
   if(res == Result::RESULT_OK){
@@ -324,8 +323,7 @@ Result CannedAnimationLoader::DefineFromJson(const Json::Value& jsonRoot, std::s
   PRINT_CH_DEBUG(LOG_CHANNEL, "CannedAnimationLoader::DefineFromJson", "Loading '%s'", animationName.c_str());
 
   Animation animation(animationName);
-  Result lastResult = animation.DefineFromJson(animationName, jsonRoot[animationName],
-                                               _spriteMap, _spriteSequenceContainer);
+  Result lastResult = animation.DefineFromJson(animationName, jsonRoot[animationName], _spriteSequenceContainer);
 
   const Result res = SanityCheck(lastResult, animation, animationName);
   if(res == Result::RESULT_OK){

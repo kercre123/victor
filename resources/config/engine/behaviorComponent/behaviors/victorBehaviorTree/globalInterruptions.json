@@ -12,19 +12,20 @@
     "TimerUtilityCoordinator",
     "WeatherResponses",
     "TakeAPhotoCoordinator",
-    "ReactToRobotShakenSnowGlobe",
+    "ReactToRobotShaken",
     "ReactToTouchPetting",
     "BasicVoiceCommands", // these are simple voice commands that we want to ignore obstacles
     "ReactToObstacle",
+    "Volume",
     "InterruptingVoiceReactions",
     "ChangeEyeColor",
-    "Volume",
     "ReactToUnclaimedIntent",
     "HeldInPalmDispatcher",
     "WhileInAirDispatcher",
     "ReactToPutDown",
     "ReactToDarkness",
     "GreetAfterLongTime", // autonomous - I think this should be higher priority than StayOnCharger--the magic moment is worth it (?)
+    "ReactToUncalibratedHeadAndLift",
     "StayOnChargerUntilCharged", // delegate includes ReactToSoundAwake
     "ReactToSoundAwake",
     "DanceToTheBeatCoordinator", 

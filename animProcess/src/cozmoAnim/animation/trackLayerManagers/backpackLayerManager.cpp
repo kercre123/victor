@@ -17,6 +17,7 @@
 
 namespace Anki {
 namespace Vector {
+namespace Anim {
 
 // How long to wait before the lights should start glitching
 CONSOLE_VAR(u32, kGlitchLightDelay_ms,    "GlitchLights", 200);
@@ -87,6 +88,7 @@ void BackpackLayerManager::GenerateGlitchLights(Animations::Track<BackpackLights
   track.AddKeyFrameToBack(frame);
    */
 }
-  
+
+}  
 }
 }

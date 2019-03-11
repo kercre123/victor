@@ -35,7 +35,9 @@ namespace Util {
 namespace Vector {
   
 class AlexaImpl;
-class AnimContext;
+namespace Anim {
+  class AnimContext;
+}
 enum class AlexaAuthState : uint8_t;
 enum class AlexaNetworkErrorType : uint8_t;
 enum class AlexaSimpleState : uint8_t;
@@ -49,7 +51,7 @@ public:
   Alexa();
   ~Alexa();
   
-  void Init(const AnimContext* context);
+  void Init(const Anim::AnimContext* context);
   
   void Update();
   
@@ -151,7 +153,7 @@ private:
   AlexaImpl* _implToBeDeleted = nullptr;
   std::future<void> _implDtorResult;
   
-  const AnimContext* _context = nullptr;
+  const Anim::AnimContext* _context = nullptr;
   
   AlexaAuthState _authState;
   std::string _authExtra;

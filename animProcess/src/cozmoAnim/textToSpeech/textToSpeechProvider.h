@@ -20,7 +20,9 @@
 // Forward declarations
 namespace Anki {
   namespace Vector {
-    class AnimContext;
+    namespace Anim {
+      class AnimContext;
+    }
     namespace TextToSpeech {
       class TextToSpeechProviderImpl;
     }
@@ -88,7 +90,7 @@ private:
 class TextToSpeechProvider
 {
 public:
-  TextToSpeechProvider(const AnimContext* ctx, const Json::Value& tts_config);
+  TextToSpeechProvider(const Anim::AnimContext* ctx, const Json::Value& tts_config);
   ~TextToSpeechProvider();
 
   Result SetLocale(const std::string & locale);

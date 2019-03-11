@@ -31,6 +31,77 @@ Once Webots is installed, test it out by trying opening `simulator/worlds/cozmo2
 
     This disables some default logging settings that can be problematic.
 
+### Building webots
+
+You don't have to, but if you want to...
+
+The source code to webots is available here: https://github.com/omichel/webots
+
+And setup instructions here: https://github.com/omichel/webots/wiki/macOS-installation
+with some optional setup that is not optional for Mac here: https://github.com/omichel/webots/wiki/macOS-Optional-Dependencies
+
+To build:
+
+```
+make debug -j4
+```
+
+which takes less than 10 minutes, an internet connection is required as additional dependencies are downloaded.
+
+I had difficulties building for anything other than Python 2.7 and needed to make the following changes for it to succeed:
+
+```
+diff --git a/projects/default/Makefile b/projects/default/Makefile
+index 77b59f79..7ac48f88 100644
+--- a/projects/default/Makefile
++++ b/projects/default/Makefile
+@@ -28,11 +28,11 @@ else
+ ifeq ($(MAKECMDGOALS),clean)
+ TARGETS += $(ROS_MAKEFILE)
+ else
+-ifneq (,$(wildcard /mingw64/include/boost))
+-TARGETS += $(ROS_MAKEFILE)
+-else
+-MESSAGE = '\043 \033[0;33mboost not installed, skipping ros controller\033[0m'
+-endif
++# ifneq (,$(wildcard /mingw64/include/boost))
++# TARGETS += $(ROS_MAKEFILE)
++# else
++# MESSAGE = '\043 \033[0;33mboost not installed, skipping ros controller\033[0m'
++# endif
+ endif
+ endif
+ 
+diff --git a/projects/default/libraries/vehicle/Makefile b/projects/default/libraries/vehicle/Makefile
+index d8017bca..77431a72 100644
+--- a/projects/default/libraries/vehicle/Makefile
++++ b/projects/default/libraries/vehicle/Makefile
+@@ -43,8 +43,8 @@ ifeq ($(UBUNTU_VERSION), 16.04)
+ endif
+ endif
+ ifeq ($(OSTYPE),darwin)
+-       +@echo "# make" $(MAKECMDGOALS) python 3.7
+-       +@PYTHON_COMMAND=python3.7 make -s -C python $(MAKECMDGOALS)
++       # +@echo "# make" $(MAKECMDGOALS) python 3.7
++       # +@PYTHON_COMMAND=python3.7 make -s -C python $(MAKECMDGOALS)
+        @echo "# make" $(MAKECMDGOALS) python 2.7;
+        +@PYTHON_COMMAND=python2.7 make -s -C python $(MAKECMDGOALS)
+ endif
+diff --git a/resources/languages/Makefile b/resources/languages/Makefile
+index 30e1cfa4..8e14c0af 100644
+--- a/resources/languages/Makefile
++++ b/resources/languages/Makefile
+@@ -41,6 +41,6 @@ endif
+ ifeq ($(OSTYPE),darwin)
+        @echo "# make" $@ python2.7;
+        +make -s -C python $@
+-       @echo "# make" $@ python3.7;
+-       +PYTHON_COMMAND=python3.7 make -s -C python $@
++       # @echo "# make" $@ python3.7;
++       # +PYTHON_COMMAND=python3.7 make -s -C python $@
+ endif
+```
+
 ## Overview
 
 Webots runs concurrent processes for each active simulation object via "controllers". Cozmo simulations consist of the following controllers which can be found in [simulator/controllers](./controllers). In order to debug with breakpoints you'll need to first attach to the appropriate process (In Xcode, go to Debug > Attach To Process).

@@ -1,0 +1,37 @@
+// SDK Audio Type Declarations
+//  for the C-Like Abstract Data language
+//
+// Copyright: Anki Inc (c) 2019
+
+namespace Anki {
+namespace Vector {
+
+  //
+  // SDK audio streaming processing states
+  //
+  // During the normal streaming process, ChunkAdded state will be signalled for
+  // each newly added audio buffer that is queued for playback.  Completed will
+  // signify a normal completion of audio playback.
+  // 
+  // Cancelled will be set when users cancel the operation.
+  //
+  // PrepareFailed, PostFailed, and AddAudioFailed are used for failures of the 
+  // audio system interactions.
+  //
+  // BufferOverflow is for situations where data is streaming in too fast for the 
+  // playback to consume it, creating the potential for buffer overrun.
+  //
+  enum uint_8 SDKAudioStreamingState
+  {
+    Invalid = 0,    // Initial state
+    ChunkAdded,     // Audio chunk added to streaming audio playback buffer
+    Completed,      // Streaming audio playback complete
+    Cancelled,      // Streaming audio cancelled by user
+    PrepareFailed,  //
+    PostFailed,     // Audio message post failed
+    AddAudioFailed, // Adding audio chunk to buffer failed
+    BufferOverflow  // audio buffers not being exhausted fast enough
+  }
+
+} // namespace Vector
+} // namespace Anki

@@ -32,10 +32,10 @@
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
+#include "engine/robotInterface/messageHandler.h"
 #include "engine/robotEventHandler.h"
 #include "engine/externalInterface/gatewayInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
-#include "clad/robotInterface/messageEngineToRobot.h"
 #include "proto/external_interface/shared.pb.h"
 
 #include "util/logging/logging.h"
@@ -95,6 +95,10 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSayTextRequest, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetEyeColorRequest, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kListAnimationTriggersRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamPrepare, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamChunk, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamComplete, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamCancel, callback));
   }
 
   auto* context = _robot->GetContext();
@@ -120,6 +124,50 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
 
   _signalHandles.push_back(_robot->GetExternalInterface()->Subscribe(GameToEngineTag::SetConnectionStatus,
                                                                      setConnectionStatusCallback));
+
+  //subscribe to messages back from audio playback
+  auto* messageHandler = robot->GetRobotMessageHandler();
+  _signalHandles.push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::audioStreamStatusEvent, [this](const AnkiEvent<RobotInterface::RobotToEngine>& event) {
+      auto streamEvent = event.GetData().Get_audioStreamStatusEvent();
+      HandleStreamStatusEvent(streamEvent.streamResultID, streamEvent.audioReceived,
+                  streamEvent.audioPlayed);
+  }));                                                                     
+}
+
+void SDKComponent::HandleStreamStatusEvent(SDKAudioStreamingState streamStatusId, int audioFramesReceived, int audioFramesPlayed) {
+  auto* gi = _robot->GetGatewayInterface();
+  LOG_INFO("SDKComponent::HandleStreamStatusEvent","Received audio playback stream state %u received %u, played %u", 
+            (int)streamStatusId, audioFramesReceived, audioFramesPlayed);
+  switch (streamStatusId) {
+    case SDKAudioStreamingState::Completed:
+    {
+      //we're done, send message back to Gateway
+      auto* msg = new external_interface::ExternalAudioStreamResponse(new external_interface::ExternalAudioStreamPlaybackComplete());
+      gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+    }
+    break;
+
+    case SDKAudioStreamingState::BufferOverflow:
+    {
+      //failed due to potential buffer overrun situation (sending audio too fast) send message back to Gateway
+      auto* msg = new external_interface::ExternalAudioStreamResponse(new external_interface::ExternalAudioStreamBufferOverrun());
+      gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+    }
+    break;
+
+    case SDKAudioStreamingState::PrepareFailed:
+    case SDKAudioStreamingState::PostFailed:
+    case SDKAudioStreamingState::AddAudioFailed:
+    {
+      //failed due to potential buffer overrun situation (sending audio too fast) send message back to Gateway
+      auto* msg = new external_interface::ExternalAudioStreamResponse(new external_interface::ExternalAudioStreamPlaybackFailure());
+      gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+    }
+    break;
+
+    default:
+      break;
+  } 
 }
 
 // @TODO: JMRivas - Delete this static and replace with a better way to store whether the audio processing mode on the
@@ -404,6 +452,30 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
       }
       break;
 
+    case external_interface::GatewayWrapperTag::kExternalAudioStreamPrepare:
+      {
+        HandleAudioStreamPrepareRequest(event);
+      }
+      break;
+
+    case external_interface::GatewayWrapperTag::kExternalAudioStreamChunk:
+      {
+        HandleAudioStreamChunkRequest(event);
+      }
+      break;
+
+    case external_interface::GatewayWrapperTag::kExternalAudioStreamComplete:
+      {
+        HandleAudioStreamCompleteRequest(event);
+      }
+      break;
+
+    case external_interface::GatewayWrapperTag::kExternalAudioStreamCancel:
+      {
+        HandleAudioStreamCancelRequest(event);
+      }
+      break;
+
     default:
       _robot->GetRobotEventHandler().HandleMessage(event);
       break;
@@ -547,6 +619,84 @@ void SDKComponent::SDKBehaviorActivation(bool enabled)
   }
 }
 
+void SDKComponent::HandleAudioStreamPrepareRequest(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  u32 rate, volume;
+  RobotInterface::ExternalAudioPrepare msg;
+
+  rate = event.GetData().external_audio_stream_prepare().audio_frame_rate();
+  volume = event.GetData().external_audio_stream_prepare().audio_volume();
+
+  msg.audio_volume = (u16) volume;
+  msg.audio_rate = (u16) rate;
+  LOG_INFO("SDKComponent.HandleAudioStreamPrepareRequest", "SDK Passing prepare audio stream frame rate %d volume %d", rate, volume); 
+
+  // Send request to animation process
+  const Result result = _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+  if (RESULT_OK != result) {
+    LOG_ERROR("SDKComponent.HandleAudioStreamPrepareRequest", "SDK Send Prepare Audio Streaming Message to Robot failed");
+    return;
+  }
+}
+
+void SDKComponent::HandleAudioStreamChunkRequest(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  const std::string samplesStr = event.GetData().external_audio_stream_chunk().audio_chunk_samples();
+  RobotInterface::ExternalAudioChunk msg;
+  msg.audio_chunk_size = (u16)event.GetData().external_audio_stream_chunk().audio_chunk_size_bytes();
+  LOG_INFO("SDKComponent.HandleAudioStreamChunkRequest", "SDKPassing audio_chunk_size %d", msg.audio_chunk_size);
+
+  if (!ANKI_VERIFY(msg.audio_chunk_size <= 1024, 
+          "SDKComponent.HandleAudioStreamChunkRequest","Invalid audio playback chunk size %u sent", msg.audio_chunk_size)) {
+      auto* gi = _robot->GetGatewayInterface();
+      auto* msg = new external_interface::ExternalAudioStreamResponse(new external_interface::ExternalAudioStreamPlaybackFailure());
+      gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+      return;
+  }
+
+  if (!ANKI_VERIFY(samplesStr.length() >= msg.audio_chunk_size, 
+          "SDKComponent.HandleAudioStreamChunkRequest","Invalid audio chunk data size %lu, message specified %u", 
+          (long)samplesStr.length(), msg.audio_chunk_size)) {
+      auto* gi = _robot->GetGatewayInterface();
+      auto* msg = new external_interface::ExternalAudioStreamResponse(new external_interface::ExternalAudioStreamPlaybackFailure());
+      gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+      return;
+  }
+
+  std::memcpy( msg.audio_chunk_data.data(), samplesStr.c_str(), msg.audio_chunk_size ); //TODO:  do we have to copy?
+
+  // Send request to animation process
+  const Result result = _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+  if (RESULT_OK != result) {
+    LOG_ERROR("SDKComponent.HandleAudioStreamChunkRequest", "SDK Send Audio Stream Chunk Message to Robot failed");
+    return;
+  }
+}
+
+void SDKComponent::HandleAudioStreamCompleteRequest(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  RobotInterface::ExternalAudioComplete msg;
+
+  // Send request to animation process
+  const Result result = _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+  if (RESULT_OK != result) {
+    LOG_ERROR("SDKComponent.HandleAudioStreamCompleteRequest", "SDK Send Audio Stream Complete Message to Robot failed");
+    return;
+  }
+}
+
+void SDKComponent::HandleAudioStreamCancelRequest(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  RobotInterface::ExternalAudioCancel msg;
+
+  // Send request to animation process
+  const Result result = _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+  if (RESULT_OK != result) {
+    LOG_ERROR("SDKComponent.HandleAudioStreamCancelRequest", "SDK Send Audio Stream Cancel Message to Robot failed");
+    return;
+  }
+}
+
 void SDKComponent::DispatchSDKActivationResult(bool enabled) {
   auto* gi = _robot->GetGatewayInterface();
   if (enabled) {
@@ -583,6 +733,12 @@ void SDKComponent::OnActionCompleted(ExternalInterface::RobotCompletedAction msg
     {
       auto* response = new external_interface::PlayAnimationResponse;
       response->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+
+      ActionCompletedUnion completionInfo = (ActionCompletedUnion)msg.completionInfo;
+      AnimationCompleted animationCompleted = completionInfo.Get_animationCompleted();
+      external_interface::Animation* animation = new external_interface::Animation(animationCompleted.animationName);
+      response->set_allocated_animation(animation);
+
       gi->Broadcast( ExternalMessageRouter::WrapResponse(response) );
     }
     break;

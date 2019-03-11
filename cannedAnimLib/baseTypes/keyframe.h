@@ -66,7 +66,7 @@ namespace Vector {
     virtual ~IKeyFrame();
     
     // Returns true if the animation's time has reached frame's "trigger" time
-    bool IsTimeToPlay(TimeStamp_t timeSinceAnimStart_ms) const;
+    bool IsTimeToPlay(const TimeStamp_t timeSinceAnimStart_ms) const;
     
     // Returns the time to trigger whatever change is implied by the KeyFrame
     TimeStamp_t GetTriggerTime_ms() const { return _triggerTime_ms; }
@@ -100,12 +100,12 @@ namespace Vector {
       // if not available.
       virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const = 0;
     #endif
-    
+
     bool IsFirstKeyframeTick(const TimeStamp_t timeSinceAnimStart_ms) const
     {
       return GetTimeSinceTrigger(timeSinceAnimStart_ms) < ANIM_TIME_STEP_MS;
     }
-    
+
   protected:
     // Populate members from Json
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") = 0;
@@ -310,13 +310,11 @@ namespace Vector {
     bool operator ==(const SpriteSequenceKeyFrame& other) const;
     
     static bool ExtractDataFromFlatBuf(const CozmoAnim::FaceAnimation* faceAnimKeyframe,
-                                       const Vision::SpritePathMap* spriteMap,
                                        Vision::SpriteSequenceContainer* seqContainer,
                                        const Vision::SpriteSequence*& outSeq,
                                        TimeStamp_t& triggerTime_ms);
     
     static bool ExtractDataFromJson(const Json::Value &jsonRoot,
-                                    const Vision::SpritePathMap* spriteMap,
                                     Vision::SpriteSequenceContainer* seqContainer,
                                     const Vision::SpriteSequence*& outSeq,
                                     TimeStamp_t& triggerTime_ms, 
@@ -344,18 +342,18 @@ namespace Vector {
                                Vision::SpriteSequenceContainer* sContainer,
                                Vision::LayerName lName, 
                                Vision::CompositeImageLayer::SpriteBox sBox,
-                               Vision::SpriteName sName)
+                               uint16_t assetID)
       : spriteCache(sCache)
       , seqContainer(sContainer)
       , layerName(lName)
       , spriteBox(sBox)
-      , spriteName(sName){}
+      , assetID(assetID){}
 
       Vision::SpriteCache* spriteCache; 
       Vision::SpriteSequenceContainer* seqContainer;
       Vision::LayerName layerName;
       Vision::CompositeImageLayer::SpriteBox spriteBox;
-      Vision::SpriteName spriteName;
+      uint16_t assetID;
     };
 
     void QueueCompositeImageUpdate(CompositeImageUpdateSpec&& updateSpec, u32 applyAt_ms);
@@ -397,11 +395,6 @@ namespace Vector {
     }
     bool HaveKeyframeForTimeStamp(const TimeStamp_t timeSinceAnimStart_ms) const;
 
-    static bool ParseSequenceNameFromString(const Vision::SpritePathMap* spriteMap,
-                                            const std::string& sequenceName, 
-                                            Vision::SpriteName& outName);
-    
- 
     // Apply the update to the composite image
     void ApplyCompositeImageUpdate(const TimeStamp_t timeSinceAnimStart_ms, 
                                    CompositeImageUpdateSpec&& updateSpec);
@@ -690,7 +683,6 @@ namespace Vector {
     RobotInterface::TurnToRecordedHeading _streamMsg;
     
   }; // class TurnToRecordedHeadingKeyFrame
-  
   
 } // namespace Vector
 } // namespace Anki

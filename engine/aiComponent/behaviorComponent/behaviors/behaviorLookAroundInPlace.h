@@ -146,6 +146,9 @@ protected:
     
     // Tracking and cancelling of point-turns that have stalled and are not making progress towards goal pose
     bool behavior_TrackTurnProgress;
+    
+    // Locks treads during animations to prevent unwanted forward/backward motion during pauses
+    bool behavior_LockTreadsDuringWaitAnims;
 
     // instead of turn speeds, the user can optionally specify a motion profile (must specify this XOR turn
     // speeds above)
@@ -218,6 +221,9 @@ private:
 
   // decide which direction to turn
   void DecideTurnDirection();
+  
+  // Creates the proper waiting/pause action to be executed in between turns
+  IAction* CreatePauseAction(const AnimationTrigger& trigger, const float waitMin_sec, const float waitMax_sec);
   
   // request the proper action given the parameters so that the robot turns and moves head
   IAction* CreateBodyAndHeadTurnAction(

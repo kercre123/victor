@@ -45,9 +45,7 @@ protected:
   
   virtual bool WantsToBeActivatedBehavior() const override;
   
-private:
-  using base = ICozmoBehavior;
-  
+private:  
   struct InstanceConfig {
     InstanceConfig(const Json::Value& config, const std::string& debugName);
 

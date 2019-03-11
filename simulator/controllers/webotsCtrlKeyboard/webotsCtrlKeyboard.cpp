@@ -815,50 +815,6 @@ namespace Vector {
     }
   }
     
-  void WebotsKeyboardController::SetDefaultKeepFaceAliveParams()
-  {
-    PRINT_NAMED_INFO("WebotsKeyboardController.SetDefaultKeepFaceAliveParams", "");
-    
-    ExternalInterface::SetKeepFaceAliveParameters msg;
-    msg.setUnspecifiedToDefault = true;
-
-    ExternalInterface::MessageGameToEngine msgWrapper;
-    msgWrapper.Set_SetKeepFaceAliveParameters(msg);
-    SendMessage(msgWrapper);    
-  }
-
-  void WebotsKeyboardController::SetKeepFaceAliveParams()
-  {
-    PRINT_NAMED_INFO("WebotsKeyboardController.SetKeepFaceAliveParams", "");
-    
-    // Get values from fields
-    #define SET_KFA_PARAM(param) { \
-      const auto* paramField = root_->getField(#param); \
-      DEV_ASSERT(paramField != nullptr, "WebotsKeyboardController.SetKeepFaceAliveParams.paramNotFound"); \
-      msg.paramNames.push_back(KeepFaceAliveParameter::param); \
-      msg.paramValues.push_back(paramField->getSFFloat()); \
-    }
-
-    ExternalInterface::SetKeepFaceAliveParameters msg;
-    SET_KFA_PARAM(BlinkSpacingMinTime_ms);
-    SET_KFA_PARAM(BlinkSpacingMaxTime_ms);
-    SET_KFA_PARAM(EyeDartSpacingMinTime_ms);
-    SET_KFA_PARAM(EyeDartSpacingMaxTime_ms);
-    SET_KFA_PARAM(EyeDartMaxDistance_pix);
-    SET_KFA_PARAM(EyeDartMinDuration_ms);
-    SET_KFA_PARAM(EyeDartMaxDuration_ms);
-    SET_KFA_PARAM(EyeDartOuterEyeScaleIncrease);
-    SET_KFA_PARAM(EyeDartUpMaxScale);
-    SET_KFA_PARAM(EyeDartDownMinScale);
-    msg.setUnspecifiedToDefault = false;
-
-    #undef SET_KFA_PARAM
-
-    ExternalInterface::MessageGameToEngine msgWrapper;
-    msgWrapper.Set_SetKeepFaceAliveParameters(msg);
-    SendMessage(msgWrapper);
-  }
-
   void WebotsKeyboardController::ToggleVisionWhileMoving()
   {
     static bool visionWhileMovingEnabled = false;
@@ -1983,9 +1939,8 @@ namespace Vector {
 //      REGISTER_KEY_FCN('X', MOD_ALT,       , "");
     REGISTER_KEY_FCN('X', MOD_ALT_SHIFT, QuitKeyboardController, "Quit keyboard controller");
     
-    // REGISTER_KEY_FCN('Y', MOD_NONE,      ToggleKeepFaceAliveEnable,     "Toggle keep face alive enable"); // TODO:(bn) new way to do this
-    REGISTER_KEY_FCN('Y', MOD_SHIFT,     SetDefaultKeepFaceAliveParams, "Sets default KeepFaceAlive parameters");
-    REGISTER_KEY_FCN('Y', MOD_ALT,       SetKeepFaceAliveParams,        "Sets KeepFaceAlive parameters from keyboard node's params (starting at 'BlinkSpacingMinTime_ms')");
+// REGISTER_KEY_FCN('Y', MOD_NONE,      ToggleKeepFaceAliveEnable,     "Toggle keep face alive enable"); // TODO:(bn) new way to do this
+    
 //    REGISTER_KEY_FCN('Y', MOD_ALT_SHIFT, , "");
     
     REGISTER_KEY_FCN('Z', MOD_NONE,      MoveLiftDown,    "Move lift down");

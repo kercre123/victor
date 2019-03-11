@@ -36,7 +36,7 @@ enum ProtocolVersion {
   option allow_alias = true;
   PROTOCOL_VERSION_UNKNOWN = 0; // Required zero value for enums
   PROTOCOL_VERSION_MINIMUM = 0; // Minimum supported version
-  PROTOCOL_VERSION_CURRENT = 3; // Current version
+  PROTOCOL_VERSION_CURRENT = 4; // Current version (incremented post-1.4.1 on 2/22/19 by msintov)
 }
 
 // The grpc-defined connection between the SDK and Anki's Vector robot.
@@ -106,6 +106,10 @@ service ExternalInterface {
       },
       body: "*"
     };
+  }
+
+  // Play audio using Vector's speaker
+  rpc ExternalAudioStreamPlayback(stream ExternalAudioStreamRequest) returns (stream ExternalAudioStreamResponse) {
   }
 
   // Integrate with and acquire control of Vector's AI system.
@@ -204,6 +208,14 @@ service ExternalInterface {
   rpc IsImageStreamingEnabled(IsImageStreamingEnabledRequest) returns (IsImageStreamingEnabledResponse) {
     option (google.api.http) = {
       post: "/v1/is_image_streaming_enabled",
+      body: "*"
+    };
+  }
+
+  // Cancel action by id
+  rpc CancelActionByIdTag(CancelActionByIdTagRequest) returns (CancelActionByIdTagResponse) {
+    option (google.api.http) = {
+      post: "/v1/cancel_action_by_id_tag",
       body: "*"
     };
   }
@@ -428,7 +440,7 @@ service ExternalInterface {
       post: "/v1/nav_map_feed",
       body: "*"
     };
-  }  
+  }
 
   // *** App only proto below ***
 

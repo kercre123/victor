@@ -152,6 +152,11 @@ namespace Vector {
     // Use UnknownFaceID to enable (or return to) ongoing "enrollment" of session-only / unnamed faces.
     void Enroll(Vision::FaceID_t faceID, bool forceNewID = false);
     void Enroll(const SmartFaceID& faceID, bool forceNewID = false);
+
+#if ANKI_DEV_CHEATS
+    void SaveAllRecognitionImages(const std::string& imagePathPrefix);
+    void DeleteAllRecognitionImages();
+#endif
     
     bool IsFaceEnrollmentComplete() const { return _lastEnrollmentCompleted; }
     void SetFaceEnrollmentComplete(bool complete) { _lastEnrollmentCompleted = complete; }

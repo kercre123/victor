@@ -48,11 +48,13 @@ const f32 kRobotNameScale = 0.6f;
 const std::string kURL = "anki.com/v";
 const ColorRGBA   kColor(0.9f, 0.9f, 0.9f, 1.f);
 
+const char* kShowPinScreenSpriteName = "pairing_icon_key";
+
 bool s_enteredAnyScreen = false;
 }
 
 // Draws BLE name and url to screen
-bool DrawStartPairingScreen(AnimationStreamer* animStreamer)
+bool DrawStartPairingScreen(Anim::AnimationStreamer* animStreamer)
 {
   // Robot name will be empty until switchboard has set the property
   std::string robotName = OSState::getInstance()->GetRobotName();
@@ -81,12 +83,12 @@ bool DrawStartPairingScreen(AnimationStreamer* animStreamer)
 }
 
 // Draws BLE name, key icon, and BLE pin to screen
-void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* context, const std::string& pin)
+void DrawShowPinScreen(Anim::AnimationStreamer* animStreamer, const Anim::AnimContext* context, const std::string& pin)
 {
   s_enteredAnyScreen = true;
   
   Vision::ImageRGB key;
-  key.Load(context->GetDataLoader()->GetSpritePaths()->GetValue(Vision::SpriteName::Pairing_Icon_Key));
+  key.Load(context->GetDataLoader()->GetSpritePaths()->GetAssetPath(kShowPinScreenSpriteName));
 
   auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
   img->FillWith(Vision::PixelRGBA(0, 0));
@@ -105,7 +107,7 @@ void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* conte
 }
 
 // Uses a png sequence animation to draw wifi icon to screen
-void DrawWifiScreen(AnimationStreamer* animStreamer)
+void DrawWifiScreen(Anim::AnimationStreamer* animStreamer)
 {
   s_enteredAnyScreen = true;
   
@@ -117,7 +119,7 @@ void DrawWifiScreen(AnimationStreamer* animStreamer)
 }
 
 // Uses a png sequence animation to draw os updating icon to screen
-void DrawUpdatingOSScreen(AnimationStreamer* animStreamer)
+void DrawUpdatingOSScreen(Anim::AnimationStreamer* animStreamer)
 {
   s_enteredAnyScreen = true;
   
@@ -129,7 +131,7 @@ void DrawUpdatingOSScreen(AnimationStreamer* animStreamer)
 }
 
 // Uses a png sequence animation to draw os updating error icon to screen
-void DrawUpdatingOSErrorScreen(AnimationStreamer* animStreamer)
+void DrawUpdatingOSErrorScreen(Anim::AnimationStreamer* animStreamer)
 {
   s_enteredAnyScreen = true;
   
@@ -141,7 +143,7 @@ void DrawUpdatingOSErrorScreen(AnimationStreamer* animStreamer)
 }
 
 // Uses a png sequence animation to draw waiting for app icon to screen
-void DrawWaitingForAppScreen(AnimationStreamer* animStreamer)
+void DrawWaitingForAppScreen(Anim::AnimationStreamer* animStreamer)
 {
   s_enteredAnyScreen = true;
   
@@ -157,7 +159,7 @@ void SetBLEPin(uint32_t pin)
   _pin = pin;
 }
 
-bool InitConnectionFlow(AnimationStreamer* animStreamer)
+bool InitConnectionFlow(Anim::AnimationStreamer* animStreamer)
 {
   if(FACTORY_TEST)
   {
@@ -173,8 +175,8 @@ bool InitConnectionFlow(AnimationStreamer* animStreamer)
 }
 
 void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
-                          AnimationStreamer* animStreamer,
-                          const AnimContext* context)
+                          Anim::AnimationStreamer* animStreamer,
+                          const Anim::AnimContext* context)
 {
   using namespace SwitchboardInterface;
 
@@ -183,7 +185,11 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
   // isPairing is a proxy for "switchboard is doing something and needs to display something on face"
   const bool isPairing = msg.status != ConnectionStatus::NONE &&
                          msg.status != ConnectionStatus::COUNT &&
+                         msg.status != ConnectionStatus::SHOW_URL_FACE &&
                          msg.status != ConnectionStatus::END_PAIRING;
+
+  const bool shouldControlFace = isPairing || 
+    (msg.status == ConnectionStatus::SHOW_URL_FACE);
 
   // Enable pairing screen if status is anything besides NONE, COUNT, and END_PAIRING
   // Should do nothing if called multiple times with same argument such as when transitioning from
@@ -192,7 +198,7 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
 
   // Disable face keepalive, but don't re-enable it when ending pairing. The engine will send a message
   // when it's ready to re-enable it, since it needs time to send its first animation upon resuming
-  if (isPairing) {
+  if (shouldControlFace) {
     animStreamer->Abort();
     animStreamer->EnableKeepFaceAlive(false, 0);
 
@@ -214,6 +220,7 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
 
     }
     break;
+    case ConnectionStatus::SHOW_URL_FACE:
     case ConnectionStatus::START_PAIRING:
     {
       DrawStartPairingScreen(animStreamer);

@@ -57,6 +57,7 @@ static const float kRecentlyMovedLimit_s       = 2.0f;
 static const float kRecentlyMovedFarLimit_s    = 2.0f;
 static const float kTapSubscribeTimeout_s      = 5.0f;
 
+static const float kMaxProxTrackingRange_mm    = 300.f;
 static const float kTargetUnmovedDist_mm       = 4.0f;
 static const float kTargetUnmovedAngle_deg     = 5.0f;
 
@@ -534,17 +535,29 @@ void CubeInteractionTracker::UpdateTargetDistance(const RobotCompMap& dependentC
   }
 
   bool usingProx = false;
-  bool proxReadingValid = false;
-  bool targetIsInProxFOV = false;
+  bool targetPotentiallyObservable = true;
+  const Pose3d& robotPose = _robot->GetPose();
+  
   if(kUseProxForDistance){
-    auto& proxSensor = dependentComps.GetComponent<ProxSensorComponent>();
-    proxSensor.IsInFOV(_targetStatus.observableObject->GetPose(), targetIsInProxFOV);
-    u16 proxDist_mm = 0;
+    const auto& proxSensor = dependentComps.GetComponent<ProxSensorComponent>();
+    Pose3d cubePoseWrtRobot("cubeWrtRobot");
+    if (!_targetStatus.observableObject->GetPose().GetWithRespectTo(robotPose, cubePoseWrtRobot)) {
+      targetPotentiallyObservable = false;
+    }
+
+    // Sensor beam goes along its x axis, so the distance away is simply the pose's x value
+    // For the the cube to have some chance of being reliably picked up by the prox sensor, some
+    // part of it should should cross the sensor beam, so we can check the Y value of cubePoseWrtRobot
+    const f32 cubeHalfWidth_mm = _targetStatus.observableObject->GetSize().y() * .5f;
+    if (!IN_RANGE(cubePoseWrtRobot.GetTranslation().x(), 0.f, kMaxProxTrackingRange_mm) || 
+        abs( cubePoseWrtRobot.GetTranslation().y() ) > cubeHalfWidth_mm) {
+      targetPotentiallyObservable = false;
+    }
 
     // If we can see the cube (or have seen it recently enough) to verify its in prox range, use prox
-    proxReadingValid = proxSensor.GetLatestDistance_mm(proxDist_mm);
-    if(targetIsInProxFOV && proxReadingValid){
-      _targetStatus.distance_mm = proxDist_mm;
+    const auto& data = proxSensor.GetLatestProxData();
+    if(targetPotentiallyObservable && data.foundObject){
+      _targetStatus.distance_mm = data.distance_mm;
       _targetStatus.distMeasuredWithProx = true;
       usingProx = true;
     }
@@ -554,7 +567,7 @@ void CubeInteractionTracker::UpdateTargetDistance(const RobotCompMap& dependentC
   if(!usingProx && _targetStatus.visibleThisFrame){
     // Otherwise, use ClosestMarker for VisionBased distance checks
     Pose3d closestMarkerPose;
-    _targetStatus.observableObject->GetClosestMarkerPose(_robot->GetPose(), true, closestMarkerPose);
+    _targetStatus.observableObject->GetClosestMarkerPose(robotPose, true, closestMarkerPose);
     _targetStatus.distance_mm = Point2f(closestMarkerPose.GetTranslation()).Length();
   }
 

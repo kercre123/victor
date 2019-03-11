@@ -85,6 +85,8 @@ namespace {
     struct { ProceduralFace::Value min; ProceduralFace::Value max; } clipLimits;
   };
 
+  // NOTE: HotSpotCenters are marked as canBeUnset=true, but (a) -1 is a valid value, and (b) we aren't doing anything
+  //       special when we combine/interpolate them later despite this setting (VIC-13592)
   constexpr static const Util::FullEnumToValueArrayChecker::FullEnumToValueArray<ProceduralFace::Parameter, EyeParamInfo,
   ProceduralFace::Parameter::NumParameters> kEyeParamInfoLUT {
     {ProceduralFace::Parameter::EyeCenterX,        { false, false,  0.f,  0.f, EyeParamCombineMethod::Add,      {-FACE_DISPLAY_WIDTH/2, FACE_DISPLAY_WIDTH/2 }    }     },
@@ -111,7 +113,7 @@ namespace {
     {ProceduralFace::Parameter::GlowSize,          { false, true,  -1.f, 0.0f, EyeParamCombineMethod::None,     {-1.f, 1.f}   }     },
     {ProceduralFace::Parameter::HotSpotCenterX,    { false, true,   0.f, 0.0f, EyeParamCombineMethod::Average,  {-1.f, 1.f}   }     },
     {ProceduralFace::Parameter::HotSpotCenterY,    { false, true,   0.f, 0.0f, EyeParamCombineMethod::Average,  {-1.f, 1.f}   }     },
-    {ProceduralFace::Parameter::GlowLightness,     { false, true,  0.f, 0.f,   EyeParamCombineMethod::None,     {0.f, 1.f}   }     },
+    {ProceduralFace::Parameter::GlowLightness,     { false, true,   0.f, 0.f,  EyeParamCombineMethod::None,     {0.f, 1.f}   }     },
   };
   
   static_assert( Util::FullEnumToValueArrayChecker::IsSequentialArray(kEyeParamInfoLUT),
@@ -281,30 +283,26 @@ void ProceduralFace::SetEyeArrayHelper(WhichEye eye, const std::vector<Value>& e
     SetParameter(eye, static_cast<ProceduralFace::Parameter>(i), eyeArray[i]);
   }
 
-  if (eyeArray.size() <= N_without_hotspots)
-  {
-    // upgrade from before hotspots to with hotspots (as default values) but not glowsize
-    for (std::underlying_type<Parameter>::type iParam=eyeArray.size(); iParam < N_without_glowlightness; ++iParam)
-    {
-      const auto& paramInfo = kEyeParamInfoLUT[iParam].Value();
-      if(paramInfo.canBeUnset)
-      {
-        _eyeParams[eye][iParam]  = paramInfo.defaultValueIfCombiningWithUnset;
-      }
-    }
-  }
+  // Upgrade old param arrays to add hotspots/glow as needed
+  static_assert(N_without_hotspots < N_without_glowlightness,
+                "Expecting hotspot parameters to come before glow");
   if (eyeArray.size() <= N_without_glowlightness)
   {
-    // upgrade from with hotspots to with glowsize (as default values)
-    for (std::underlying_type<Parameter>::type iParam=N_without_glowlightness; iParam < N; ++iParam)
+    // Start updating params beginning with hotspots or glow
+    const size_t N_upgrade_start = (eyeArray.size() <= N_without_hotspots ?
+                                    N_without_hotspots :
+                                    N_without_glowlightness);
+    
+    for (std::underlying_type<Parameter>::type iParam=N_upgrade_start; iParam < N; ++iParam)
     {
       const auto& paramInfo = kEyeParamInfoLUT[iParam].Value();
       if(paramInfo.canBeUnset)
       {
-        _eyeParams[eye][iParam]  = paramInfo.defaultValueIfCombiningWithUnset;
+        _eyeParams[eye][iParam] = paramInfo.defaultValueIfCombiningWithUnset;
       }
     }
   }
+  
 }
 
 void ProceduralFace::SetFromFlatBuf(const CozmoAnim::ProceduralFace* procFaceKeyframe)
@@ -532,9 +530,10 @@ void ProceduralFace::Interpolate(const ProceduralFace& face1, const ProceduralFa
       }
       else if(paramInfo.canBeUnset) {
         // Special linear blend taking into account whether values are "set"
+        // NOTE: Despite preceding comment, this is just a regular linear blend. Is that ok? (VIC-13592)
         SetParameter(whichEye, param, LinearBlendHelper(face1.GetParameter(whichEye, param),
-                                                                 face2.GetParameter(whichEye, param),
-                                                                 blendFraction));
+                                                        face2.GetParameter(whichEye, param),
+                                                        blendFraction));
       }
       else {
         SetParameter(whichEye, param, LinearBlendHelper(face1.GetParameter(whichEye, param),
@@ -623,7 +622,7 @@ void ProceduralFace::CombineEyeParams(EyeParamArray& eyeArray0, const EyeParamAr
         break;
         
       case EyeParamCombineMethod::Average:
-        LinearBlendHelper(eyeArray0[iParam], eyeArray1[iParam], 0.5f);
+        eyeArray0[iParam] = LinearBlendHelper(eyeArray0[iParam], eyeArray1[iParam], 0.5f);
         break;
     }
   }

@@ -63,26 +63,12 @@ if [ -f /anki/etc/version ]; then
   anki_version="`/bin/cat /anki/etc/version`"
 fi
 
-# Remove empty crash files else rename
-for i in $VIC_CRASH_FOLDER/*.dmp~
-do
-    if [[ -s ${i} ]]; then
-        echo "Found crash $i renaming"
-        /bin/mv ${i} ${i%?}
-    else
-        /bin/echo "Removing empty crash file $i"
-        /bin/rm -f ${i}
-    fi
-done
-
-# Signal the service is ready
-/bin/systemd-notify --ready
-
 while :
 do
     cd $VIC_CRASH_FOLDER > /dev/null
 
     # Go through all the crash files we haven't uploaded
+    shopt -s nullglob
     for i in ./*.dmp
     do
         if [[ -s ${i} ]]; then
@@ -151,6 +137,7 @@ do
             rm -f ${i} ${i}.log
         fi
     done
+    shopt -u nullglob
 
     # Now delete all but the oldest N crash files that have already been uploaded and/or renamed
     processed_files_total=$(ls -1 *.${UPLOADED_EXT} *.${LOCAL_EXT} 2>/dev/null | wc -l)

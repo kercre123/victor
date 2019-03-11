@@ -19,17 +19,10 @@
 #include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
 
 #include "clad/types/compositeImageTypes.h"
-#include "clad/types/spriteNames.h"
 #include "coretech/vision/engine/image.h"
 #include <set>
 
 namespace Anki {
-// Forward declaration
-namespace Util{
-template<class CladEnum>
-class CladEnumToStringMap;
-}
-
 namespace Vision {
 
 class SpriteCache;
@@ -103,10 +96,6 @@ public:
   // Returns nullptr if layer by that name does not exist
   CompositeImageLayer* GetLayerByName(LayerName name);
 
-  // Render the composite image to a newly allocated image
-  // Any layers specified in layersToIgnore will not be rendered
-  ImageRGBA RenderFrame(const u32 frameIdx = 0,
-                        std::set<Vision::LayerName> layersToIgnore = {}) const;
   // Overlay the composite image on top of the base image
   // The overlay offset will shift the composite image rendered relative to the base images (0,0)
   // Any layers specified in layersToIgnore will not be rendered
@@ -117,8 +106,8 @@ public:
   // Returns the length of the longest subsequence
   uint GetFullLoopLength();
   
-  s32 GetWidth(){ return _width;}
-  s32 GetHeight(){ return _height;}
+  s32 GetWidth() { return _width;}
+  s32 GetHeight() { return _height;}
   
   // Update all sprite boxes to use the new render method
   void OverrideRenderMethod(Anki::Vision::SpriteRenderMethod renderMethod);
@@ -165,7 +154,7 @@ private:
 
   s32 _width = 0;
   s32 _height = 0;
-  LayerLayoutMap  _layerMap;
+  LayerLayoutMap _layerMap;
 
 };
 

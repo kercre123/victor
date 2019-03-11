@@ -23,7 +23,8 @@
 
 namespace Anki {
 namespace Vector {
-  
+namespace Anim {
+
 namespace {
 // Keep Face Alive Layer Names
 const std::string kEyeBlinkLayerName  = "KeepAliveEyeBlink";
@@ -45,7 +46,7 @@ CONSOLE_VAR_RANGED(u32, kAudioAnimationOffset_ms, "Audio.AnimationStreamer", 200
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TrackLayerComponent::TrackLayerComponent(const AnimContext* context)
+TrackLayerComponent::TrackLayerComponent(const Anim::AnimContext* context)
 : _audioLayerManager(new AudioLayerManager(*context->GetRandom()))
 , _backpackLayerManager(new BackpackLayerManager(*context->GetRandom()))
 , _faceLayerManager(new FaceLayerManager(*context->GetRandom()))
@@ -104,8 +105,7 @@ void TrackLayerComponent::ApplyLayersToAnim(Animation* anim,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void TrackLayerComponent::KeepFaceAlive(const std::map<KeepFaceAliveParameter, f32>& params,
-                                        const TimeStamp_t timeSinceKeepAliveStart_ms)
+void TrackLayerComponent::KeepFaceAlive(const TimeStamp_t timeSinceKeepAliveStart_ms)
 {
   // Loop through keep alive activities and perform if timer expired
   bool hasFaceLayer = false;
@@ -113,11 +113,11 @@ void TrackLayerComponent::KeepFaceAlive(const std::map<KeepFaceAliveParameter, f
     keepAliveActivity.nextPerformanceTime_ms -= ANIM_TIME_STEP_MS;
     if (keepAliveActivity.nextPerformanceTime_ms <= 0) {
       // Run Activity
-      bool success = keepAliveActivity.performFunc(params, timeSinceKeepAliveStart_ms);
+      bool success = keepAliveActivity.performFunc(timeSinceKeepAliveStart_ms);
       if (success) {
         hasFaceLayer |= keepAliveActivity.hasFaceLayers;
       }
-      keepAliveActivity.UpdateNextPerformanceTime(params);
+      keepAliveActivity.UpdateNextPerformanceTime();
     }
   }
   
@@ -271,8 +271,7 @@ void TrackLayerComponent::SetupKeepFaceAliveActivities()
 {
   _keepAliveModifiers.clear();
   // Eye Blink
-  auto eyeBlinkPerform = [this](const KeepAliveModifier::ParameterMap& parameterMap,
-                                const TimeStamp_t streamTime_ms) {
+  auto eyeBlinkPerform = [this](const TimeStamp_t streamTime_ms) {
     BlinkEventList eventList;
     Result result = _faceLayerManager->AddBlinkToFaceTrack(kEyeBlinkLayerName, streamTime_ms, eventList);
     if (RESULT_OK == result) {
@@ -284,17 +283,16 @@ void TrackLayerComponent::SetupKeepFaceAliveActivities()
     }
     return (RESULT_OK == result);
   };
-  auto eyeBlinkTimeFunc = [this](const KeepAliveModifier::ParameterMap& parameterMap) {
-    return _faceLayerManager->GetNextBlinkTime_ms(parameterMap);
+  auto eyeBlinkTimeFunc = [this]() {
+    return _faceLayerManager->GetNextBlinkTime_ms();
   };
   _keepAliveModifiers.emplace_back( kEyeBlinkLayerName, eyeBlinkPerform, eyeBlinkTimeFunc, true );
 
   // Eye Dart
-  auto eyeDartPerform = [this](const KeepAliveModifier::ParameterMap& parameterMap,
-                               const TimeStamp_t streamTime_ms) {
+  auto eyeDartPerform = [this](const TimeStamp_t streamTime_ms) {
     TimeStamp_t interpolationTime_ms = 0;
     Result result = _faceLayerManager->AddEyeDartToFaceTrack(kEyeDartLayerName,
-                                                             parameterMap,
+                                                             _isKeepFaceAliveFocused,
                                                              streamTime_ms,
                                                              interpolationTime_ms);
     if (RESULT_OK == result) {
@@ -306,8 +304,8 @@ void TrackLayerComponent::SetupKeepFaceAliveActivities()
     }
     return (RESULT_OK == result);
   };
-  auto eyeDartTimeFunc = [this](const KeepAliveModifier::ParameterMap& parameterMap) {
-    return _faceLayerManager->GetNextEyeDartTime_ms(parameterMap);
+  auto eyeDartTimeFunc = [this]() {
+    return _faceLayerManager->GetNextEyeDartTime_ms();
   };
   _keepAliveModifiers.emplace_back( kEyeDartLayerName, eyeDartPerform, eyeDartTimeFunc, true );
 }
@@ -459,6 +457,6 @@ void TrackLayerComponent::EnableProceduralAudio(bool enabled)
   }
 }
 
-
+}
 }
 }

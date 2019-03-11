@@ -5,8 +5,7 @@
 
   "respondToUserIntents" : [
     {
-      "type" : "play_specific",
-      "entity_behavior": "pop_a_wheelie"
+      "type" : "play_popawheelie"
     }
   ],
 

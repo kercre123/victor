@@ -57,7 +57,6 @@ bool Animation::operator==(const Animation &other) const {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result Animation::DefineFromFlatBuf(const std::string& name,
                                     const CozmoAnim::AnimClip* animClip,
-                                    const Vision::SpritePathMap* spriteMap,
                                     Vision::SpriteSequenceContainer* seqContainer)
 {
   /*
@@ -132,12 +131,6 @@ Result Animation::DefineFromFlatBuf(const std::string& name,
   auto backpackData = keyframes->BackpackLightsKeyFrame();
   if (backpackData != nullptr) {
 
-    #if !ANKI_DEV_CHEATS
-    PRINT_NAMED_ERROR("Animation.DefineFromFlatBuf.AddBackpackLightKeyFrame.NotAllowed",
-                      "%s still has backpacklight keyframes",
-                      name.c_str());
-    #endif
-
     for (int bpIdx=0; bpIdx < backpackData->size(); bpIdx++) {
 
       // TODO: Update the processing of these keyframes to NOT use an intermediate
@@ -186,7 +179,7 @@ Result Animation::DefineFromFlatBuf(const std::string& name,
 
       // Note that ExtractDataFromFlatBuf() will return false for unmapped sprite sequences, even though spriteSeq
       // points to a valid sequence.
-      const bool success = SpriteSequenceKeyFrame::ExtractDataFromFlatBuf(faceAnimKeyframe, spriteMap, seqContainer,
+      const bool success = SpriteSequenceKeyFrame::ExtractDataFromFlatBuf(faceAnimKeyframe, seqContainer,
                                                                           spriteSeq, triggerTime_ms);
       if (spriteSeq == nullptr) {
         LOG_ERROR("Animation.DefineFromFlatBuf.ExtractDataFromFlatBuf",
@@ -265,7 +258,7 @@ Result Animation::DefineFromFlatBuf(const std::string& name,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result Animation::DefineFromJson(const std::string& name, const Json::Value &jsonRoot,
-                                 const Vision::SpritePathMap* spriteMap, Vision::SpriteSequenceContainer* seqContainer)
+                                 Vision::SpriteSequenceContainer* seqContainer)
 {
   _name = name;
 
@@ -306,7 +299,7 @@ Result Animation::DefineFromJson(const std::string& name, const Json::Value &jso
       const Vision::SpriteSequence* spriteSeq = nullptr;
       TimeStamp_t triggerTime_ms = 0;
       TimeStamp_t frameUpdateInterval = ANIM_TIME_STEP_MS;
-      const bool success = SpriteSequenceKeyFrame::ExtractDataFromJson(jsonFrame, spriteMap, seqContainer,
+      const bool success = SpriteSequenceKeyFrame::ExtractDataFromJson(jsonFrame, seqContainer,
                                                                        spriteSeq, triggerTime_ms,
                                                                        frameUpdateInterval);
       if(success){

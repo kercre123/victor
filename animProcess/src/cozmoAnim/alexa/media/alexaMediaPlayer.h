@@ -91,7 +91,9 @@ namespace Util {
 namespace Vector {
 
 class AlexaReader;
-class AnimContext;
+namespace Anim {
+  class AnimContext;
+}
 struct AudioInfo;
 namespace Audio {
   class CozmoAudioController;
@@ -120,7 +122,7 @@ public:
                     std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> contentFetcherFactory );
   ~AlexaMediaPlayer();
 
-  void Init( const AnimContext* context );
+  void Init( const Anim::AnimContext* context );
 
   void Update();
 
@@ -141,7 +143,7 @@ public:
   virtual bool setMute( bool mute ) override;
   virtual bool getSpeakerSettings( SpeakerSettings* settings ) override;
   virtual alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface::Type getSpeakerType() override;
-  virtual void onError() override;
+  virtual void onError() override; // a UrlContentToAttachmentConverter experienced an error
   virtual void doShutdown() override;
 
   // true if this player is or is about to become active (playing, decode, etc.)
@@ -273,6 +275,8 @@ private:
 
   // Used to stream urls into attachments
   std::shared_ptr<alexaClientSDK::playlistParser::UrlContentToAttachmentConverter> _urlConverter;
+  // _urlConverter generated an error
+  std::atomic_bool _errorDownloading{ false };
 
   const AudioInfo& _audioInfo;
   

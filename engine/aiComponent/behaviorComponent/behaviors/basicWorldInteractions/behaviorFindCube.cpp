@@ -145,9 +145,9 @@ void BehaviorFindCube::BehaviorUpdate()
 
   if( FindCubeState::CheckForCubeInFront == _dVars.state || 
       FindCubeState::QuickSearchForCube  == _dVars.state ){
-    auto& proxSensor = GetBEI().GetRobotInfo().GetProxSensorComponent();
-    uint16_t proxDist_mm = 0;
-    if( proxSensor.GetLatestDistance_mm(proxDist_mm) && ( proxDist_mm < kProxBackupThreshold_mm ) ){
+    const auto& proxSensor = GetBEI().GetRobotInfo().GetProxSensorComponent();
+    const auto& proxData = proxSensor.GetLatestProxData();
+    if( proxData.foundObject && ( proxData.distance_mm < kProxBackupThreshold_mm ) ){
       TransitionToBackUpAndCheck();
     }
 

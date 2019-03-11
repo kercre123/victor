@@ -114,6 +114,21 @@ function cleanup() {
 # trap ctrl-c and call ctrl_c()
 trap cleanup INT
 
+
+# echo 0  if versions are equal
+# echo -1 if $1 < $2
+# echo 1  if $1 > $2
+function compare_victor_compat_version() {
+    local A_VER=$1
+    local B_VER=$2
+    if [[ ${A_VER} -gt ${B_VER} ]]; then
+        echo 1 && return 0
+    elif [[ ${A_VER} -lt ${B_VER} ]]; then
+        echo -1 && return 0
+    fi
+    echo 0
+}
+
 # echo 0  if versions are equal
 # echo -1 if $1 < $2
 # echo 1  if $1 > $2
@@ -164,6 +179,27 @@ if [ ${VER_CMP} -ne 0 ]; then
     cleanup
     exit 1
   fi
+fi
+
+OS_COMPAT_VERSION=$(robot_sh "cat /etc/victor-compat-version || echo 0")
+DEPLOY_VERSION=$(cat ${STAGING_DIR}/anki/etc/victor-compat-version)
+
+VER_CMP=$(compare_victor_compat_version $DEPLOY_VERSION $OS_COMPAT_VERSION)
+
+if [[ ${VER_CMP} -gt 0 ]]; then
+    echo -e "Target deploy compatibility version (${DEPLOY_VERSION}) is newer than robot version (${OS_COMPAT_VERSION}).\nYou need to upgrade the OS version on your robot.  Try ./project/victor/scripts/robot_sh.sh update-os"
+elif [[ ${VER_CMP} -lt 0 ]]; then
+    echo -e "Target deploy compatibility version (${DEPLOY_VERSION}) is older than robot version (${OS_COMPAT_VERSION}).\nYou need to rebase your current branch to pick up required changes for compatibility with the robot."
+fi
+
+if [[ ${VER_CMP} -ne 0 ]]; then
+    if [[ $FORCE_DEPLOY -eq 1 ]]; then
+        echo "Ignoring compatibility version mismatch"
+    else
+        echo "Compatibility version mismatch.  Use -f to force."
+        cleanup
+        exit 1
+    fi
 fi
 
 set +e

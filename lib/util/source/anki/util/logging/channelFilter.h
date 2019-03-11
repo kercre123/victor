@@ -32,6 +32,10 @@ struct ChannelVar : public ConsoleVar<bool> {
   ChannelVar(const std::string& name, bool defaultEnable, bool unregisterInDestructor)
   : ConsoleVar<bool>(enable, name.c_str(), "Channels", unregisterInDestructor)
   , enable(defaultEnable) {
+    // We must re-set the default value here, after the call to ConsoleVar constructor,
+    // because that constructor uses a reference to "enable", but enable isn't set until
+    // after that constructor call.  VIC-13609
+    this->_defaultValue = enable;
   }
 
   virtual void ToggleValue() override {
@@ -51,7 +55,7 @@ public:
   ChannelFilter() : _initialized(false){}
   ~ChannelFilter();
   
-  // initialize with an optinal json configuration (can be empty)
+  // initialize with an optional json configuration (can be empty)
   void Initialize(const Json::Value& config = Json::Value());
   inline bool IsInitialized() const{ return _initialized; }
   

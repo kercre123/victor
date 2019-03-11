@@ -62,7 +62,7 @@ namespace MicData {
 
 class MicDataProcessor {
 public:
-  MicDataProcessor(const AnimContext* context, MicDataSystem* micDataSystem, const std::string& writeLocation);
+  MicDataProcessor(const Anim::AnimContext* context, MicDataSystem* micDataSystem, const std::string& writeLocation);
   ~MicDataProcessor();
   MicDataProcessor(const MicDataProcessor& other) = delete;
   MicDataProcessor& operator=(const MicDataProcessor& other) = delete;
@@ -100,7 +100,7 @@ public:
 
 
 private:
-  const AnimContext* _context = nullptr;
+  const Anim::AnimContext* _context = nullptr;
   MicDataSystem* _micDataSystem = nullptr;
   SpeechRecognizerSystem* _speechRecognizerSystem = nullptr;
   

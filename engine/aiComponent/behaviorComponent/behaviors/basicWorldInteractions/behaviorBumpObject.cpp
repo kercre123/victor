@@ -105,12 +105,11 @@ void BehaviorBumpObject::GetAllDelegates(std::set<IBehavior*>& delegates) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorBumpObject::WantsToBeActivatedBehavior() const
 {
-  auto& proxSensor = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>();
-  uint16_t proxDist_mm = 0;
-  const bool sensorReadingValid = proxSensor.GetLatestDistance_mm( proxDist_mm );
-  const bool closeEnough = (proxDist_mm <= _iConfig.maxDist_mm);
-  const bool notTooClose = (proxDist_mm >= _iConfig.minDist_mm);
-  return sensorReadingValid && closeEnough && notTooClose;
+  const auto& proxSensor = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>();
+  const auto& proxData = proxSensor.GetLatestProxData();
+  const bool closeEnough = (proxData.distance_mm <= _iConfig.maxDist_mm);
+  const bool notTooClose = (proxData.distance_mm >= _iConfig.minDist_mm);
+  return proxData.foundObject && closeEnough && notTooClose;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -147,9 +146,9 @@ void BehaviorBumpObject::OnBehaviorActivated()
 void BehaviorBumpObject::DoFirstBump()
 {
   _dVars.state = State::FirstBump;
-  auto& proxSensor = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>();
-  uint16_t proxDist_mm = 0;
-  if( !proxSensor.GetLatestDistance_mm( proxDist_mm ) ) {
+  const auto& proxSensor = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>();
+  const auto& proxData = proxSensor.GetLatestProxData();
+  if( !proxData.foundObject ) {
     PRINT_NAMED_WARNING( "BehaviorBumpObject.OnBehaviorActivated.InvalidProxReading",
                         "%s started but has an invalid sensor reading. Cancelling.",
                         GetDebugLabel().c_str() );
@@ -163,7 +162,7 @@ void BehaviorBumpObject::DoFirstBump()
   
   
   // bump
-  const float distForward_mm = kFirstBumpBuffer_mm + static_cast<float>(proxDist_mm);
+  const float distForward_mm = kFirstBumpBuffer_mm + static_cast<float>(proxData.distance_mm);
   const float speedForward_mmps = kFirstBumpSpeed_mmps;
   action->AddAction( new DriveStraightAction( distForward_mm, speedForward_mmps, true) );
   
@@ -190,19 +189,18 @@ void BehaviorBumpObject::DoSecondBumpIfDesired()
   
   // check if we still see the object
   
-  auto& proxSensor = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>();
-  uint16_t proxDist_mm = 0;
-  const bool sensorReadingValid = proxSensor.GetLatestDistance_mm( proxDist_mm );
-  const bool closeEnough = (proxDist_mm <= _iConfig.maxDist_mm);
+  const auto& proxSensor = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>();
+  const auto& proxData = proxSensor.GetLatestProxData();
+  const bool closeEnough = (proxData.distance_mm <= _iConfig.maxDist_mm);
   // don't bother checking if it's too close here, like in WantsToBeActivatedBehavior
   
-  if( !(sensorReadingValid && closeEnough) ) {
+  if( !(proxData.foundObject && closeEnough) ) {
     DoReferenceHumanIfDesired();
     return;
   }
   
-  const float niceDistForward_mm = static_cast<float>(proxDist_mm) + kSecondBumpBuffer_mm;
-  const float evilDistForward_mm = static_cast<float>(proxDist_mm) + kSecondBumpEvilBuffer_mm;
+  const float niceDistForward_mm = static_cast<float>(proxData.distance_mm) + kSecondBumpBuffer_mm;
+  const float evilDistForward_mm = static_cast<float>(proxData.distance_mm) + kSecondBumpEvilBuffer_mm;
   
   // todo: inform this choice based on MoodManager::GetEmotionValue( EmotionType::Evil );
   const bool evil = (GetRNG().RandDbl() <= _iConfig.pEvil);
@@ -285,9 +283,9 @@ void BehaviorBumpObject::BehaviorUpdate()
     _dVars.unexpectedMovement |= GetBEI().GetMovementComponent().IsUnexpectedMovementDetected();
     
     if( _dVars.state == State::SecondBump ) {
-      auto& proxSensor = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>();
-      uint16_t proxDist_mm = 0;
-      if( proxSensor.GetLatestDistance_mm( proxDist_mm ) && (proxDist_mm > 150) ) {
+      const auto& proxSensor = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>();
+      const auto& proxData = proxSensor.GetLatestProxData();
+      if( proxData.foundObject && (proxData.distance_mm > 150) ) {
         // robot lost sight of whatever it's pushing
         CancelDelegates(true); // run callbacks to play the retreat anim / reference behavior if desired
       }

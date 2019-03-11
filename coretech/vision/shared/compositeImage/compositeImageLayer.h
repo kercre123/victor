@@ -15,9 +15,9 @@
 #define __Vision_CompositeImageLayer_fwd_H__
 
 #include "clad/types/compositeImageTypes.h"
-#include "clad/types/spriteNames.h"
 
 #include "coretech/common/shared/math/point_fwd.h"
+#include "coretech/common/shared/math/rect.h"
 #include "coretech/vision/shared/compositeImage/compositeImageLayoutModifier.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "coretech/vision/shared/spriteSequence/spriteSequence.h"
@@ -40,7 +40,7 @@ static const char* kSpriteBoxNameKey   = "spriteBoxName";
 static const char* kRenderMethodKey    = "spriteRenderMethod";
 static const char* kHueKey             = "renderHue";
 static const char* kSaturationKey      = "renderSaturation";
-static const char* kSpriteNameKey      = "spriteName";
+static const char* kAssetNameKey       = "spriteName";
 static const char* kCornerXKey         = "x";
 static const char* kCornerYKey         = "y";
 static const char* kWidthKey           = "width";
@@ -75,8 +75,9 @@ public:
   const ImageMap&  GetImageMap()  const { return _imageMap;}
   ImageMap&  GetImageMap()              { return _imageMap;}
 
-  // Returns true if the spritebox maps to a sprite sequence and the name of that sequence has been set
-  bool GetSpriteSequenceName(SpriteBoxName sbName, Vision::SpriteName& sequenceName)  const;
+  // Returns the AssetID of the SpriteEntry associated with this SpriteBox, if any
+  // Used for transmission of assets Engine<->Anim without sprites or enums
+  uint16_t GetAssetID(SpriteBoxName sbName) const;
 
   // Merges all sprite boxes/image maps from other image into this image
   void MergeInLayer(const CompositeImageLayer& otherLayer);
@@ -84,9 +85,12 @@ public:
   // Functions which add on to the current layout
   void AddToLayout(SpriteBoxName sbName, const SpriteBox& spriteBox);
   void AddToImageMap(SpriteCache* cache, SpriteSequenceContainer* seqContainer,
-                     SpriteBoxName sbName, const Vision::SpriteName& spriteName);
+                     SpriteBoxName sbName, const std::string& assetName);
   void AddToImageMap(SpriteBoxName sbName, const SpriteEntry& spriteEntry);
-  
+  void AddOrUpdateSpriteBoxWithEntry(const SpriteBox& spriteBox, const SpriteEntry& spriteEntry);
+
+  void ClearSpriteBoxByName(const SpriteBoxName& sbName);
+
   // Returns true if composite image has an image map entry that matches the sprite box
   // Returns false if image is not set
   bool GetSpriteEntry(const SpriteBox& sb, SpriteEntry& outEntry) const;
@@ -132,6 +136,8 @@ struct CompositeImageLayer::SpriteBox{
   SerializedSpriteBox Serialize() const;
   bool ValidateRenderConfig() const;
 
+  Rectangle<f32> GetRect() const { return Rectangle<f32>(topLeftCorner.x(), topLeftCorner.y(), width, height); }
+
   void GetPositionForFrame(const u32 frameIdx, Point2i& outTopLeftCorner, 
                            int& outWidth, int& outHeight) const;
 
@@ -142,23 +148,31 @@ struct CompositeImageLayer::SpriteBox{
   // indicates that the sprite box should be rendered the color of the robot's eyes
   SpriteRenderConfig     renderConfig;
 
-  private:
-    std::unique_ptr<CompositeImageLayoutModifier> layoutModifier;
-    Point2i       topLeftCorner;
-    int           width;
-    int           height;
+  int GetWidth() const { return width; }
+  int GetHeight() const { return height; }
+
+private:
+  std::unique_ptr<CompositeImageLayoutModifier> layoutModifier;
+  Point2i       topLeftCorner;
+  int           width;
+  int           height;
 };
 
 // TODO: VIC-2414 - currently composite images can only be sent
-// via sprite names in the image map. Should be able to have  a serialized
+// via assetID's in the SpritePathMap. Should be able to have  a serialized
 // sprite handle fallback that sends file paths or image chunks when appropriate
 struct CompositeImageLayer::SpriteEntry{
-  SpriteEntry(){};
+  // Default constructed SpriteEntry's can be serialized and sent to indicate that
+  // a specific SpriteBox should be cleared
+  SpriteEntry() : _serializable(true) {};
+
   SpriteEntry(SpriteCache* cache,
               SpriteSequenceContainer* seqContainer,
-              Vision::SpriteName spriteName,
+              const std::string& assetName,
               uint frameStartOffset = 0);
 
+  // These constructors are used only within the anim process since the resulting
+  // SpriteEntry will not be serializable for inter-process messaging
   SpriteEntry(Vision::SpriteSequence&& sequence);
   SpriteEntry(Vision::SpriteHandle spriteHandle);
 
@@ -166,7 +180,7 @@ struct CompositeImageLayer::SpriteEntry{
   bool operator == (const SpriteEntry& other) const;
   bool operator != (const SpriteEntry& other) const{ return !(*this == other);}
 
-  Vision::SpriteName GetSpriteName() const { return _spriteName;}
+  uint16_t GetAssetID() const;
   bool GetFrame(const u32 index, Vision::SpriteHandle& handle) const;
   uint GetNumFrames() const { return _frameStartOffset + _spriteSequence.GetNumFrames(); }
   bool ContentIsValid() const { return _spriteSequence.GetNumFrames() > 0;}
@@ -176,7 +190,10 @@ private:
   uint _frameStartOffset = 0;
   Vision::SpriteSequence _spriteSequence;
   // For serialization only
-  Vision::SpriteName _spriteName = Vision::SpriteName::Count;
+  uint16_t _assetID = Vision::SpritePathMap::kEmptySpriteBoxID;
+  // SpriteEntry's initialized using hand built SpriteSequences/SpriteHandles are NOT serializable
+  // since the hand built definitions aren't synced between Anim<->Engine
+  bool     _serializable = false;
   
 };
 

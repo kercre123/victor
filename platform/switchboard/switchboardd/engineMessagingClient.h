@@ -23,11 +23,12 @@
 #include "coretech/messaging/shared/LocalUdpClient.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "switchboardd/ISwitchboardCommandClient.h"
 
 namespace Anki {
 namespace Switchboard {
 
-class EngineMessagingClient {
+class EngineMessagingClient : public ISwitchboardCommandClient {
 public:
   using EngineMessageSignal = Signal::Signal<void (Anki::Vector::ExternalInterface::MessageEngineToGame)>;
   explicit EngineMessagingClient(struct ev_loop* loop);

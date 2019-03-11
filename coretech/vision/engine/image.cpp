@@ -17,6 +17,7 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/helpers/boundedWhile.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/core.hpp"
@@ -2046,6 +2047,7 @@ namespace Vision {
 
   ImageRGB565& ImageRGB565::SetFromImageRGB(const ImageRGB& imageRGB)
   {
+    ANKI_CPU_PROFILE("ImageRGB565::SetFromImageRGB");
     // Similar to how COLOR_BGR5652BGR appears to be swapping R and B in ConvertToShowableFormat(),
     // COLOR_RGB2BGR565 here appears not to, which is what we want.
     cv::cvtColor(imageRGB.get_CvMat_(), this->get_CvMat_(), cv::COLOR_RGB2BGR565);

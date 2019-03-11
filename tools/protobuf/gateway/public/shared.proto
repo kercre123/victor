@@ -183,6 +183,8 @@ message GatewayWrapper {
     PlayAnimationTriggerRequest   play_animation_trigger_request     = 518;
     ListAnimationTriggersRequest  list_animation_triggers_request    = 519;
     ListAnimationTriggersResponse list_animation_triggers_response   = 520;
+    CancelActionByIdTagRequest    cancel_action_by_id_tag_request    = 521;
+    CancelActionByIdTagResponse   cancel_action_by_id_tag_response   = 522;
     
     // ------------ status history --------------------
     RobotHistoryRequest           robot_history_request              = 600;
@@ -258,6 +260,13 @@ message GatewayWrapper {
     SetEyeColorRequest            set_eye_color_request              = 1700;
     SetEyeColorResponse           set_eye_color_response             = 1701;
 
+    // ------------ Streaming audio playback (SDK only) ------------
+    ExternalAudioStreamPrepare    external_audio_stream_prepare      = 1800;
+    ExternalAudioStreamChunk      external_audio_stream_chunk        = 1801;
+    ExternalAudioStreamCancel     external_audio_stream_cancel       = 1802;
+    ExternalAudioStreamComplete   external_audio_stream_complete     = 1803;
+    ExternalAudioStreamResponse   external_audio_stream_response     = 1804;
+  
     // (when adding new categories, please create gaps between field numbers)
     // ------------  -------------------------
   }

@@ -57,10 +57,10 @@ CONSOLE_VAR(bool, kStressTestThreadedPrintsDuringLoad, "RobotDataLoader", false)
 static Anki::Vector::ThreadedPrintStressTester stressTester;
 #endif // REMOTE_CONSOLE_ENABLED
 
-const char* pathToExternalIndependentSprites = "assets/sprites/independentSprites/";
-const char* pathToEngineIndependentSprites = "config/devOnlySprites/independentSprites/";
-const char* pathToExternalSpriteSequences = "assets/sprites/spriteSequences/";
-const char* pathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequences/";
+const char* kPathToExternalIndependentSprites = "assets/sprites/independentSprites/";
+const char* kPathToEngineIndependentSprites = "config/devOnlySprites/independentSprites/";
+const char* kPathToExternalSpriteSequences = "assets/sprites/spriteSequences/";
+const char* kPathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequences/";
 
 const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
   // Dance to the beat:
@@ -183,10 +183,12 @@ void RobotDataLoader::LoadNonConfigData()
 
   {
     ANKI_CPU_PROFILE("RobotDataLoader::LoadSpriteSequences");
-    std::vector<std::string> spriteSequenceDirs = {pathToExternalSpriteSequences, pathToEngineSpriteSequences};
+    std::vector<std::string> spriteSequenceDirs = {kPathToExternalSpriteSequences, kPathToEngineSpriteSequences};
     SpriteSequenceLoader seqLoader;
-    auto* sContainer = seqLoader.LoadSpriteSequences(_platform, _spritePaths.get(), 
-                                                     _spriteCache.get(), spriteSequenceDirs);
+    auto* sContainer = seqLoader.LoadSpriteSequences(_platform,
+                                                     _spritePaths.get(),
+                                                     _spriteCache.get(),
+                                                     spriteSequenceDirs);
     _spriteSequenceContainer.reset(sContainer);
   }
 
@@ -235,7 +237,7 @@ void RobotDataLoader::LoadNonConfigData()
   
   {
     CannedAnimationLoader animLoader(_platform,
-                                     _spritePaths.get(), _spriteSequenceContainer.get(),
+                                     _spriteSequenceContainer.get(),
                                      _loadingCompleteRatio, _abortLoad);
 
     // Create the canned animation container, but don't load any data into it
@@ -472,47 +474,24 @@ void RobotDataLoader::LoadBehaviors()
 
 void RobotDataLoader::LoadSpritePaths()
 {
- // Creates a map of all sprite names to their file names
-  const bool reverseLookupAllowed = true;
-  _spritePaths->Load(_platform, "assets/cladToFileMaps/spriteMap.json", "SpriteName", reverseLookupAllowed);
-
-  auto spritePaths = {pathToExternalIndependentSprites,
-                      pathToEngineIndependentSprites};
-  auto fileNameToFullPath = CreateFileNameToFullPathMap(spritePaths, "png");
-  
-  // Get all sprite sequences with recursive directory search
+    // Get all independent sprites
   {
-    std::vector<std::string> directoriesToSearch = {
-       _platform->pathToResource(Util::Data::Scope::Resources, pathToExternalSpriteSequences),
-       _platform->pathToResource(Util::Data::Scope::Resources, pathToEngineSpriteSequences)};
+    auto spritePaths = {kPathToExternalIndependentSprites,
+                        kPathToEngineIndependentSprites};
     
-    auto searchIter = directoriesToSearch.begin();
-    while(searchIter != directoriesToSearch.end()){
-      // Get all directories at this level and add them to the file map
-      std::vector<std::string> outDirNames;
-      Util::FileUtils::ListAllDirectories(*searchIter, outDirNames);
-      for(auto& dirName: outDirNames){
-        // turn name into full path
-        dirName = Util::FileUtils::FullFilePath({*searchIter, dirName});
-        fileNameToFullPath.emplace(Util::FileUtils::GetFileName(dirName), dirName);
+    const bool useFullPath = true;
+    const char* extensions = "png";
+    const bool recurse = true;
+    for(const auto& path: spritePaths){
+      const std::string& fullPathFolder = _platform->pathToResource(Util::Data::Scope::Resources, path);
+
+      auto fullImagePaths = Util::FileUtils::FilesInDirectory(fullPathFolder, useFullPath, extensions, recurse);
+      for(const auto& fullImagePath : fullImagePaths){
+        const std::string& fileName = Util::FileUtils::GetFileName(fullImagePath, true, true);
+        _spritePaths->AddAsset(fileName, fullImagePath, false);
       }
-      directoriesToSearch.erase(searchIter);
-      
-      // Add directories for recursive search and advance to next directory
-      copy(outDirNames.begin(), outDirNames.end(), back_inserter(directoriesToSearch));
-      searchIter = directoriesToSearch.begin();
     }
-  }
-  
-  for (auto key : _spritePaths->GetAllKeys()) {
-    auto fullPath = fileNameToFullPath[_spritePaths->GetValue(key)];
-    if(fullPath.empty()){
-      PRINT_NAMED_ERROR("RobotDataLoader.LoadSpritePaths.EmptyPath",
-                        "No path found for %s",
-                        EnumToString(key));
-    }else{
-      _spritePaths->UpdateValue(key, std::move(fullPath));
-    }
+    _spritePaths->VerifyPlaceholderAsset();
   }
 }
 
@@ -586,7 +565,9 @@ void RobotDataLoader::LoadCompositeImageMaps()
           Vision::CompositeImage::LayerImageMap fullImageMap;
           for(auto& mapEntry: contents){
             // Extract Layer Name
-            const std::string strLayerName = JsonTools::ParseString(mapEntry, Vision::CompositeImageConfigKeys::kLayerNameKey, debugStr + "NoLayerName");
+            const std::string strLayerName = JsonTools::ParseString(mapEntry, 
+                                                                    Vision::CompositeImageConfigKeys::kLayerNameKey,
+                                                                    debugStr + "NoLayerName");
             const Vision::LayerName layerName = Vision::LayerNameFromString(strLayerName);
 
             // Extract all image entries for the layer
@@ -595,13 +576,24 @@ void RobotDataLoader::LoadCompositeImageMaps()
               Json::Value imageArray = mapEntry[Vision::CompositeImageConfigKeys::kImagesListKey];
               for(auto& imageEntry: imageArray){
                 // Extract Sprite Box Name
-                const std::string strSpriteBox = JsonTools::ParseString(imageEntry, Vision::CompositeImageConfigKeys::kSpriteBoxNameKey, debugStr + "NoSpriteBoxName");
+                const std::string strSpriteBox =
+                  JsonTools::ParseString(imageEntry,
+                                         Vision::CompositeImageConfigKeys::kSpriteBoxNameKey,
+                                         debugStr + "NoSpriteBoxName");
                 const Vision::SpriteBoxName sbName = Vision::SpriteBoxNameFromString(strSpriteBox);
-                // Extract Sprite Name
-                const std::string strSpriteName = JsonTools::ParseString(imageEntry, Vision::CompositeImageConfigKeys::kSpriteNameKey, debugStr + "NoSpriteName");
-                const Vision::SpriteName spriteName = Vision::SpriteNameFromString(strSpriteName);
 
-                auto spriteEntry = Vision::CompositeImageLayer::SpriteEntry(_spriteCache.get(), _spriteSequenceContainer.get(), spriteName);
+                // Extract Sprite Name
+                std::string assetName = JsonTools::ParseString(imageEntry,
+                                                               Vision::CompositeImageConfigKeys::kAssetNameKey,
+                                                               debugStr + "NoAssetName");
+                // TODO(str): HACK: convert existing assets to lower case to work with string spriteNames.
+                // This is only pertinent for a few weather assets, will fix if we end up overhauling
+                // that system to work with animation groups
+                std::transform(assetName.begin(), assetName.end(), assetName.begin(), ::tolower);
+
+                auto spriteEntry = Vision::CompositeImageLayer::SpriteEntry(_spriteCache.get(),
+                                                                            _spriteSequenceContainer.get(),
+                                                                            assetName);
                 partialMap.emplace(sbName, std::move(spriteEntry));
               }
               

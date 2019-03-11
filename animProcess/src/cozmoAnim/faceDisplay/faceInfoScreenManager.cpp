@@ -119,6 +119,9 @@ namespace {
   const u32 kIPCheckPeriod_sec = 20;
   
   const f32 kAlexaTimeout_s = 5.0f;
+
+  const char* kAlexaIconSpriteName = "face_alexa_icon";
+
   // TODO (VIC-11606): don't use timeout for mute
   CONSOLE_VAR_RANGED(f32, kToggleMuteTimeout_s, "FaceInfoScreenManager", 1.2f, 0.001f, 3.0f);
   CONSOLE_VAR_RANGED(f32, kAlexaNotificationTimeout_s, "FaceInfoScreenManager", 2.0f, 0.001f, 3.0f);
@@ -146,13 +149,12 @@ FaceInfoScreenManager::FaceInfoScreenManager()
   _scratchDrawingImg->Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
 
   _calmModeMsgOnNone.enable = false;
-  _calmModeMsgOnNone.calibOnDisable = false;
 
   memset(&_customText, 0, sizeof(_customText));
 }
 
 
-void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animStreamer)
+void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStreamer* animStreamer)
 {
   DEV_ASSERT(context != nullptr, "FaceInfoScreenManager.Init.NullContext");
 
@@ -250,7 +252,6 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
     // Disable calm mode
     RobotInterface::CalmPowerMode msg;
     msg.enable = false;
-    msg.calibOnDisable = false;
     SendAnimToRobot(std::move(msg));
   };
   SET_ENTER_ACTION(None, noneEnterFcn);
@@ -1503,7 +1504,7 @@ void FaceInfoScreenManager::DrawAlexaFace()
   // draw the alexa icon ...
 
   Vision::ImageRGBA alexaIcon;
-  alexaIcon.Load( _context->GetDataLoader()->GetSpritePaths()->GetValue( Vision::SpriteName::Face_Alexa_Icon ) );
+  alexaIcon.Load(_context->GetDataLoader()->GetSpritePaths()->GetAssetPath(kAlexaIconSpriteName));
 
   const int kIconTop  = kScreenTop;
   const int iconLeft  = ( FACE_DISPLAY_WIDTH - alexaIcon.GetNumCols() )  / 2.0f;
@@ -1937,7 +1938,7 @@ bool FaceInfoScreenManager::ScreenNeedsWait(const ScreenName& screenName) const
   }
 }
 
-void FaceInfoScreenManager::SelfTestEnd(AnimationStreamer* animStreamer)
+void FaceInfoScreenManager::SelfTestEnd(Anim::AnimationStreamer* animStreamer)
 {
   const ScreenName curScreen = FaceInfoScreenManager::getInstance()->GetCurrScreenName();
   if(curScreen != ScreenName::SelfTestRunning)

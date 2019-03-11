@@ -28,14 +28,14 @@ namespace Vector {
 
 
 
-PerfMetricAnim::PerfMetricAnim(const AnimContext* context)
+PerfMetricAnim::PerfMetricAnim(const Anim::AnimContext* context)
   : _frameBuffer(nullptr)
 {
   _headingLine1 = "                       Anim     Anim    Sleep    Sleep     Over      RtA   AtR   EtA   AtE  Anim Layer";
   _headingLine2 = "                   Duration     Freq Intended   Actual    Sleep    Count Count Count Count  Time Count";
   _headingLine2Extra = "";
   _headingLine1CSV = ",,Anim,Anim,Sleep,Sleep,Over,RtA,AtR,EtA,AtE,Anim,Layer";
-  _headingLine2CSV = ",,Duration,Freq,Intended,Actual,Sleep,Count,Count,Count,Count,Count,Time,Count";
+  _headingLine2CSV = ",,Duration,Freq,Intended,Actual,Sleep,Count,Count,Count,Count,Time,Count";
   _headingLine2ExtraCSV = "";
 }
 

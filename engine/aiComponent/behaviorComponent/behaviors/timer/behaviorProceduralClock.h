@@ -14,7 +14,6 @@
 #define __Engine_Behaviors_BehaviorProceduralClock_H__
 
 #include "clad/types/compositeImageTypes.h"
-#include "clad/types/spriteNames.h"
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/smartFaceId.h"
@@ -106,8 +105,8 @@ private:
 
     // Asset properties
     Vision::CompositeImageLayer::ImageMap staticImageMap;
-    std::map<Vision::SpriteBoxName, Vision::SpriteName> staticElements;
-    std::map<int, Vision::SpriteName> intsToImages;
+    std::map<Vision::SpriteBoxName, std::string> staticElements;
+    std::map<int, std::string> intsToSpriteNames;
 
     // Playback properties
     GetDigitsFunction getDigitFunction;

@@ -77,10 +77,14 @@ namespace Vision {
     // otherwise. If true, the caller must not modify the part detection handle
     // while processing is running (i.e. until false is returned).
     // If running synchronously, always returns true.
-    bool SetNextFaceToRecognize(const Image& img,
+    bool SetNextFaceToRecognize(const Vision::Image& img,
                                 const DETECTION_INFO& detectionInfo,
-                                HPTRESULT okaoPartDetectionResultHandle,
+                                const POINT* facialParts,     // PT_POINT_KIND_MAX in length
+                                const INT32* partConfidences, // PT_POINT_KIND_MAX in length
                                 bool enableEnrollment);
+    
+
+                                     
     
     // Use faceID = UnknownFaceID to allow enrollments for any face.
     // Use N = -1 to allow ongoing enrollment.
@@ -143,7 +147,21 @@ namespace Vision {
     float DevComputePairwiseMatchScore(const Image& img1, const TrackedFace& face1,
                                        const Image& img2, const TrackedFace& face2);
     
-#endif
+#endif // ANKI_DEVELOPER_CODE
+
+#if ANKI_DEV_CHEATS
+    // Saves all the debug enrollment images in the dierctory set above,
+    // and appending the face id, album id, and the image timestamp.
+    // The filename has the form /path/<filename_prefix>_<face_id>_<album_entry_id>_<timestamp>.jpg.
+    // Currently the debug images are cropped to only contain the region of the image
+    // where there was a face detection. The container of images is populated
+    // by enabling kGatherDebugEnrollmentImages which by default saves the croppped
+    // images at the same resolution that recognition occurs at. If kDisplayDebugEnrollmentImages
+    // is enabled the cropped images with be saved at kEnrollmentThumbnailSize.
+    void SaveAllRecognitionImages(const std::string& imagePathPrefix);
+    // This deletes all the debug recognition images for all users.
+    void DeleteAllRecognitionImages();
+#endif // ANKI_DEV_CHEATS
     
   private:
     
@@ -247,6 +265,9 @@ namespace Vision {
     HFEATURE    _okaoRecogMergeFeatureHandle   = NULL;
     HALBUM      _okaoFaceAlbum                 = NULL;
     
+    POINT       _aptPoint[PT_POINT_KIND_MAX];
+    INT32       _anConfidence[PT_POINT_KIND_MAX];
+
     // Threading
     enum class ProcessingState : u8 {
       Idle,
@@ -265,7 +286,6 @@ namespace Vision {
     
     // Passed-in state for processing
     Image          _img;
-    HPTRESULT      _okaoPartDetectionResultHandle = NULL;
     DETECTION_INFO _detectionInfo;
     
     // Internal bookkeeping and parameters
@@ -300,7 +320,7 @@ namespace Vision {
                             DebugImageList<CompressedImage>& debugImages);
     
     static Result ComputeFeaturesFromFace(const Image& img, const TrackedFace& face, HFEATURE featureHandle);
-    
+
   }; // class FaceRecognizer
   
 

@@ -235,6 +235,7 @@ fi
 if [ -f $OLD_DIR/$ANIM_TRIGGER_FILE ]; then
     ANIM_TRIGGERS_REMOVED=`comm -13i $ANIM_TRIGGER_FILE $OLD_DIR/$ANIM_TRIGGER_FILE`
     if [[ ! -z $ANIM_TRIGGERS_REMOVED ]]; then
+        # this will fail the build at the end of this script
         echo "Animation triggers REMOVED:"                  | tee -a $RESULTS_FILE
         echo "$ANIM_TRIGGERS_REMOVED" | sed 's/^/  /'       | tee -a $RESULTS_FILE
         ANYTHING_CHANGED=true
@@ -283,3 +284,11 @@ tar czf $ARCHIVE_FILE  \
 
 git checkout ${GIT_PROJ_ROOT}
 rm -rf ${GIT_PROJ_ROOT}/generated
+
+#######################################################################################################
+# 11) Fail the build one time if animation triggers were removed
+if [[ ! -z $ANIM_TRIGGERS_REMOVED ]]; then
+    echo "ERROR: Animation triggers were REMOVED. These are used by SDK users"
+    echo "$ANIM_TRIGGERS_REMOVED" | sed 's/^/  /'
+    exit 1
+fi

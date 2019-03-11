@@ -23,6 +23,7 @@
 
 namespace Anki {
 namespace Vector {
+namespace Anim {
 
 namespace{
 const uint8_t kOffsetForEndOfFrame = 1;
@@ -164,7 +165,7 @@ void StreamingAnimationModifier::AddToMapStreamMap(TimeStamp_t relativeStreamTim
 }
 
 
-  
+} // namespace Anim
 } // namespace Vector
 } // namespace Anki
 

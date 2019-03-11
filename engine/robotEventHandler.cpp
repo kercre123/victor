@@ -1903,7 +1903,7 @@ public:
     // Put the action in the given position of the specified queue.
     // The Queue will take responsibility for the memory management of this raw pointer - unless it fails
     //  in which case we clean up the memory ourselves.
-    if( robot.GetActionList().QueueAction(QueueActionPosition::NOW, dispatchAction, 0) != RESULT_OK )
+    if( robot.GetActionList().QueueAction(QueueActionPosition::IN_PARALLEL, dispatchAction, 0) != RESULT_OK )
     {
       PRINT_NAMED_WARNING("RobotEventHandler.GatewayActionRunner.Invoke.ActionCouldNotQueue", "%s", internalAction->GetName().c_str());
     }

@@ -14,16 +14,11 @@
 #ifndef __Vision_Shared_SpriteWrapper_H__
 #define __Vision_Shared_SpriteWrapper_H__
 
-#include "clad/types/spriteNames.h"
 #include "coretech/vision/shared/spriteCache/iSpriteWrapper.h"
 
-namespace Anki {
-// Forward declaration
-namespace Util{
-template<class CladEnum>
-class CladEnumToStringMap;
-}
+#include <string>
 
+namespace Anki {
 namespace Vision {
 
 // forward declaration
@@ -33,8 +28,6 @@ class Image;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class SpriteWrapper : public ISpriteWrapper {
 public:
-  SpriteWrapper(const Util::CladEnumToStringMap<SpriteName>* spriteMap,
-                SpriteName spriteName);
   SpriteWrapper(const std::string& fullSpritePath);
   
   // Transfers ownership of the ptr to the SpriteWrapper
@@ -53,7 +46,7 @@ public:
 
   virtual bool GetFullSpritePath(std::string& fullSpritePath) override;
 
-  // cacheGrayscale defines what compbination of Grayscale/RGBA to load into memory
+  // cacheGrayscale defines what combination of Grayscale/RGBA to load into memory
   void CacheSprite(const ImgTypeCacheSpec& typesToCache = {false, false}, const HSImageHandle& hsImage = {});
   void ClearCachedSprite();
 
@@ -65,7 +58,7 @@ private:
   void ApplyHS(const Image& grayImg, const HSImageHandle& hsImage, ImageRGBA* outImg) const;
 
   const std::string _fullSpritePath;
-  // Keep track of what hue/satruation have been applied to the image if appropriate
+  // Keep track of what hue/saturation have been applied to the image if appropriate
   uint16_t _hsID = 0;
 
   std::unique_ptr<ImageRGBA> _spriteRGBA;

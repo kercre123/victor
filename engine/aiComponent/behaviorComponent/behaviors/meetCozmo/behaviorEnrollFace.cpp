@@ -57,6 +57,10 @@
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/enrolledFaceStorage.h"
 
+#if ANKI_DEV_CHEATS
+#include "osState/osState.h"
+#endif
+
 #include "util/console/consoleInterface.h"
 
 #include "util/logging/logging.h"
@@ -869,6 +873,26 @@ void BehaviorEnrollFace::BehaviorUpdate()
           DASMSG_SET(i3, numNamedFacesSeen, "Number of named faces seen during scanning");
           DASMSG_SEND();
         }
+
+#if ANKI_DEV_CHEATS
+        auto *osstate = OSState::getInstance();
+        const std::string serialNumber = osstate->GetSerialNumberAsString();
+        const std::string buildSha = osstate->GetBuildSha();
+
+        const std::string& cachePath = GetBEI().GetRobotInfo().GetContext()->GetDataPlatform()->GetCachePath("camera");
+        const std::string dataType = "recognition_data";
+        const std::string path = Util::FileUtils::FullFilePath({cachePath, "images", dataType});
+        const bool result = Util::FileUtils::CreateDirectory(path);
+        if (!result) {
+          LOG_ERROR("BehaviorEnrollFace.OnBehaviorActivated.FailedToCreateRecognitionImageSavePath",
+                    "Path %s failed to be created.", path.c_str());
+        }
+        const std::string imagePathPrefix = Util::FileUtils::FullFilePath({path, dataType + "_" + serialNumber +
+                                            "_" + buildSha + "_"});
+
+        GetBEI().GetFaceWorldMutable().SaveAllRecognitionImages(imagePathPrefix);
+        GetBEI().GetFaceWorldMutable().DeleteAllRecognitionImages();
+#endif
       }
 
       break;

@@ -45,6 +45,10 @@ private:
       const external_interface::GatewayWrapper& proto_message,
       ExternalInterface::MessageGameToEngine& clad_message);
 
+  static void ProtoCancelActionByIdTagRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
   static void ProtoListAnimationsRequestToClad(
       const external_interface::GatewayWrapper& proto_message,
       ExternalInterface::MessageGameToEngine& clad_message);
@@ -62,6 +66,10 @@ private:
 
   static void CladPlayAnimationToProto(
       const ExternalInterface::MessageGameToEngine& clad_message,
+      external_interface::GatewayWrapper& proto_message);
+
+  static void CladCancelActionByIdTagToProto(
+      const ExternalInterface::MessageGameToEngine& clad_message, 
       external_interface::GatewayWrapper& proto_message);
 
   static void CladAnimationAvailableToProto(

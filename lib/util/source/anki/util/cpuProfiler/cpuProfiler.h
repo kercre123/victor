@@ -268,12 +268,12 @@
 } while(0)
 
 #define ANKI_CPU_PROFILE_START(varName, name) {    \
-  tracelog(TRACE_DEBUG, "CPU_PROFILE_START %s %s", varName, name);   \
+  tracelog(TRACE_DEBUG, "CPU_PROFILE_START %s %s", "varName", name);   \
   Util::DropBreadcrumb(false, __FILE__, __LINE__); \
 } while(0)
 
 #define ANKI_CPU_PROFILE_STOP(varName) do {        \
-  tracelog(TRACE_DEBUG, "CPU_PROFILE_STOP %s", varName); \
+  tracelog(TRACE_DEBUG, "CPU_PROFILE_STOP %s", "varName"); \
   Util::DropBreadcrumb(false, __FILE__, __LINE__); \
 } while(0)
 

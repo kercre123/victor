@@ -35,6 +35,8 @@ class BlackJackVisualizer{
 public:
   BlackJackVisualizer(const BlackJackGame* game);
 
+  void VerifySpriteAssets(BehaviorExternalInterface& bei);
+
   void Init(BehaviorExternalInterface& bei);
 
   // This should only be called by the BlackJack behavior from inside the BehaviorUpdate funtion
@@ -63,13 +65,13 @@ private:
   BlackJackVisualizer();
 
   void PlayCompositeCardAnimationAndLock(const BehaviorExternalInterface& bei,
-                                         const char*                      compAnimName,
-                                         const Vision::LayerName&         layerName,
-                                         const Vision::SpriteBoxName&     spriteBoxName,
-                                         const Vision::SpriteName&        cardImageName,
-                                         const uint                       showDealtCardAt_ms,
-                                         const Vision::SpriteName&        cardAnimSeqName = Vision::SpriteName::Count,
-                                         const uint                       applyCardSeqAt_ms = 0);
+                                         const char*                  compAnimName,
+                                         const Vision::LayerName&     layerName,
+                                         const Vision::SpriteBoxName& spriteBoxName,
+                                         const std::string&           cardImageName,
+                                         const uint                   showDealtCardAt_ms,
+                                         const std::string&           cardAnimSeqName = "",
+                                         const uint                   applyCardSeqAt_ms = 0);
 
   const BlackJackGame* _game;
   std::unique_ptr<Vision::CompositeImage> _compImg;

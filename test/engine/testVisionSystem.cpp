@@ -248,6 +248,115 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_Qbert)
   visionSystem = nullptr;
 }
 
+
+TEST(VisionSystem, ImageCompositing_MarkerDetection)
+{
+  using namespace Anki;
+
+  const char* kDebugName = "Test.VisionSystem.ImageCompositing_MarkerDetection";
+
+  Vector::VisionSystem visionSystem(cozmoContext);
+  Result result = visionSystem.Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
+  Json::Value cfg = cozmoContext->GetDataLoader()->GetRobotVisionConfig();
+  const u32 imageReadyPeriod = JsonTools::ParseUInt32(cfg["ImageCompositing"],"imageReadyPeriod", kDebugName);
+  const u32 imageResetPeriod = imageReadyPeriod * JsonTools::ParseUInt32(cfg["ImageCompositing"],"numImageReadyCyclesBeforeReset", kDebugName);
+  ASSERT_EQ(RESULT_OK, result);
+
+  // Don't really need a valid camera calibration, so just pass a dummy one in
+  // to make vision system happy.
+  auto calib = std::make_shared<Vision::CameraCalibration>(360,640,290.f,290.f,160.f,120.f,0.f);
+  result = visionSystem.UpdateCameraCalibration(calib);
+  ASSERT_EQ(RESULT_OK, result);
+
+  const std::string testImageDir = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                                                   "test/markerDetectionTests/ImageCompositing");
+  
+  // we only care about detecting the charger in the dark
+  const auto isChargerDetected = [](const std::list<Vision::ObservedMarker>& markers) -> bool {
+    return !markers.empty() && 
+           strncmp("MARKER_CHARGER_HOME", markers.front().GetCodeName(), 19)==0;
+  };
+
+  // Each test case is a collection of images at a given ambient lighting level (given by 2nd folder name),
+  //  and a given LCD brightness (given by the 3rd folder name).
+  // For example:
+  //  "light1p75" is at light level 1.75 (using an arbitrary scale marked on a hardware dimmer switch).
+  //  "1" refers to LCD brightness level =20. Other values this can be are "0" which maps to LCD=1
+  std::vector<std::string> testCaseSubDirs = {
+    "light1p75/1",
+
+    "light2p0/0",
+    "light2p0/1",
+
+    "light2p25/0",
+    "light2p25/1",
+
+    "light2p5/0",
+    "light2p5/1",
+  };
+
+  for(const auto& subdir : testCaseSubDirs) {
+    const std::vector<std::string> testFiles = Util::FileUtils::FilesInDirectory(Util::FileUtils::FullFilePath({testImageDir, subdir}), false, ".jpg");
+    PRINT_CH_DEBUG("VisionSystem", kDebugName, "Loaded %zu images (%s)", testFiles.size(), subdir.c_str());
+    
+    DEV_ASSERT_MSG((testFiles.size()>=imageResetPeriod), kDebugName, "Not enough images for one reset period.");
+    
+    Vision::ImageCache imageCache;
+    size_t countCompositeImagesProcessed = 0;
+    bool foundMarker = false;
+    for(size_t index = 0; index < testFiles.size(); ++index) {
+      std::string filename = testFiles[index];
+
+      Vision::Image img;
+      result = img.Load(Util::FileUtils::FullFilePath({testImageDir, subdir, filename}));
+      ASSERT_EQ(RESULT_OK, result);
+      imageCache.Reset(img);
+
+      Anki::Vector::VisionSystemInput input;
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::DetectingMarkers);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::FullFrameMarkerDetection);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::MarkerDetectionWhileRotatingFast);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::CompositingImages);
+      input.imageBuffer = imageCache.GetBuffer();
+
+      Vector::VisionPoseData robotState; // not needed just to detect markers
+      robotState.cameraPose.SetParent(robotState.histState.GetPose()); // just so we don't trigger an assert
+      input.poseData = robotState;
+      
+      result = visionSystem.Update(input);
+      ASSERT_EQ(RESULT_OK, result);
+
+      Vector::VisionProcessingResult processingResult;
+      processingResult.observedMarkers.clear();
+      bool resultAvailable = visionSystem.CheckMailbox(processingResult);
+      EXPECT_TRUE(resultAvailable);
+
+      foundMarker |= isChargerDetected(processingResult.observedMarkers);
+      countCompositeImagesProcessed += processingResult.modesProcessed.Contains(Vector::VisionMode::CompositingImages);
+      if( index == 0 ) { // first image 
+        // Ensure no images are found in a base image (thus requiring compositing to detect a marker)
+        EXPECT_FALSE(foundMarker);
+      }
+    }
+
+    EXPECT_TRUE(foundMarker);
+
+    // at the time of writing this test, we expect that:
+    // - image compositing incorporates a new image every frame 
+    //    that MarkerDetection is turned on while the mode is
+    //    enabled.
+    // - however, image composites are only considered PROCESSED 
+    //    if marker detection was run with its output AND
+    //    the buffer for compositing was reset.
+    // - for these tests, we will get at least one full cycle
+    //    including a reset.
+    // NOTE: if we fail on this line, likely we need to ensure
+    //  the configuration parameters in the vision_config.json
+    //  makes sense  
+    EXPECT_GE(countCompositeImagesProcessed, 1);
+  }
+}
+
 TEST(VisionSystem, MarkerDetectionTests)
 {
 # define DISABLED        0

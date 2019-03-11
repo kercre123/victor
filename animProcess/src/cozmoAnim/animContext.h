@@ -39,11 +39,15 @@ class AudioMultiplexer;
 namespace Vector {
 
 class Alexa;
-class BackpackLightComponent;
+namespace Anim {
+  class BackpackLightComponent;
+}
 namespace MicData {
   class MicDataSystem;
 }
-class RobotDataLoader;
+namespace Anim {
+  class RobotDataLoader;
+}
 class ShowAudioStreamStateManager;
 class ThreadIDInternal;
 class PerfMetricAnim;
@@ -69,6 +73,7 @@ class WebService;
 // Here begins the actual namespace and interface for AnimContext
 namespace Anki {
 namespace Vector {
+namespace Anim {
 
 class AnimContext : private Util::noncopyable
 {
@@ -82,7 +87,7 @@ public:
   Util::Data::DataPlatform*             GetDataPlatform() const { return _dataPlatform; }
   Util::Locale*                         GetLocale() const { return _locale.get(); }
   Util::RandomGenerator*                GetRandom() const { return _random.get(); }
-  RobotDataLoader*                      GetDataLoader() const { return _dataLoader.get(); }
+  Anim::RobotDataLoader*                GetDataLoader() const { return _dataLoader.get(); }
   Audio::CozmoAudioController*          GetAudioController() const; // Can return nullptr
   AudioMultiplexer*                     GetAudioMultiplexer() const { return _audioMux.get(); }
   MicData::MicDataSystem*               GetMicDataSystem() const { return _micDataSystem.get(); }
@@ -110,7 +115,7 @@ private:
   std::unique_ptr<Util::Locale>                  _locale;
   std::unique_ptr<AudioMultiplexer>              _audioMux;
   std::unique_ptr<Util::RandomGenerator>         _random;
-  std::unique_ptr<RobotDataLoader>               _dataLoader;
+  std::unique_ptr<Anim::RobotDataLoader>         _dataLoader;
   std::unique_ptr<Alexa>                         _alexa;
   std::unique_ptr<MicData::MicDataSystem>        _micDataSystem;
   std::unique_ptr<ShowAudioStreamStateManager>   _showStreamStateManager;
@@ -124,6 +129,7 @@ private:
 };
 
 
+} // namespace Anim
 } // namespace Vector
 } // namespace Anki
 

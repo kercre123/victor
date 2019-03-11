@@ -46,12 +46,13 @@
 
 namespace Anki {
 namespace Vector {
+namespace Anim {
 
 namespace{
-const char* pathToExternalIndependentSprites = "assets/sprites/independentSprites/";
-const char* pathToEngineIndependentSprites = "config/devOnlySprites/independentSprites/";
-const char* pathToExternalSpriteSequences = "assets/sprites/spriteSequences/";
-const char* pathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequences/";
+const char* kPathToExternalIndependentSprites = "assets/sprites/independentSprites/";
+const char* kPathToEngineIndependentSprites = "config/devOnlySprites/independentSprites/";
+const char* kPathToExternalSpriteSequences = "assets/sprites/spriteSequences/";
+const char* kPathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequences/";
 const char* kProceduralAnimName = "_PROCEDURAL_";
 }
 
@@ -61,8 +62,8 @@ RobotDataLoader::RobotDataLoader(const AnimContext* context)
 , _cannedAnimations(nullptr)
 , _backpackAnimationTriggerMap(new BackpackAnimationTriggerMap())
 {
-  _spritePaths = std::make_unique<Vision::SpritePathMap>();
-  _spriteCache = std::make_unique<Vision::SpriteCache>(_spritePaths.get());
+  _spritePathMap = std::make_unique<Vision::SpritePathMap>();
+  _spriteCache = std::make_unique<Vision::SpriteCache>(_spritePathMap.get());
 }
 
 RobotDataLoader::~RobotDataLoader()
@@ -130,15 +131,17 @@ void RobotDataLoader::LoadNonConfigData()
   }
   
   // Dependency Order:
-  //  1) SpritePaths load map of sprite name -> full file path
+  //  1) Load map of sprite filenames to asset paths
   //  2) SpriteSequences use sprite map to load sequenceName -> all images in sequence directory
   //  3) Canned animations use SpriteSequences for their FaceAnimation keyframe
-  LoadSpritePaths();
+  LoadIndependentSpritePaths();
   {
-    std::vector<std::string> spriteSequenceDirs = {pathToExternalSpriteSequences, pathToEngineSpriteSequences};
+    std::vector<std::string> spriteSequenceDirs = {kPathToExternalSpriteSequences, kPathToEngineSpriteSequences};
     SpriteSequenceLoader seqLoader;
-    auto* sContainer = seqLoader.LoadSpriteSequences(_platform, _spritePaths.get(), 
-                                                     _spriteCache.get(), spriteSequenceDirs);
+    auto* sContainer = seqLoader.LoadSpriteSequences(_platform,
+                                                     _spritePathMap.get(),
+                                                     _spriteCache.get(),
+                                                     spriteSequenceDirs);
     _spriteSequenceContainer.reset(sContainer);
   }
 
@@ -148,8 +151,8 @@ void RobotDataLoader::LoadNonConfigData()
 
     // Gather the files to load into the animation container
     CannedAnimationLoader animLoader(_platform,
-                                    _spritePaths.get(), _spriteSequenceContainer.get(), 
-                                    _loadingCompleteRatio, _abortLoad);
+                                     _spriteSequenceContainer.get(), 
+                                     _loadingCompleteRatio, _abortLoad);
 
     std::vector<std::string> paths;
     if(FACTORY_TEST)
@@ -171,7 +174,7 @@ void RobotDataLoader::LoadNonConfigData()
   {
     // Use the CannedAnimationLoader to collect the backpack light json files
     CannedAnimationLoader animLoader(_platform,
-                                     _spritePaths.get(), _spriteSequenceContainer.get(), 
+                                     _spriteSequenceContainer.get(), 
                                      _loadingCompleteRatio, _abortLoad);
 
     const auto& fileInfo = animLoader.CollectAnimFiles({"config/engine/lights/backpackLights"});
@@ -191,7 +194,7 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
     return;
   }
   CannedAnimationLoader animLoader(_platform,
-                                   _spritePaths.get(), _spriteSequenceContainer.get(),
+                                   _spriteSequenceContainer.get(),
                                    _loadingCompleteRatio, _abortLoad);
 
   animLoader.LoadAnimationIntoContainer(path, _cannedAnimations.get());
@@ -205,17 +208,12 @@ void RobotDataLoader::LoadAnimationFile(const std::string& path)
   NotifyAnimAdded(animName, anim->GetLastKeyFrameEndTime_ms());
 }
 
-void RobotDataLoader::LoadSpritePaths()
+void RobotDataLoader::LoadIndependentSpritePaths()
 {
-  // Creates a map of all sprite names to their file names
-  const bool reverseLookupAllowed = true;
-  _spritePaths->Load(_platform, "assets/cladToFileMaps/spriteMap.json", "SpriteName", reverseLookupAllowed);
-
-  std::map<std::string, std::string> fileNameToFullPath;
   // Get all independent sprites
   {
-    auto spritePaths = {pathToExternalIndependentSprites,
-                        pathToEngineIndependentSprites};
+    auto spritePaths = {kPathToExternalIndependentSprites,
+                        kPathToEngineIndependentSprites};
     
     const bool useFullPath = true;
     const char* extensions = "png";
@@ -226,38 +224,9 @@ void RobotDataLoader::LoadSpritePaths()
       auto fullImagePaths = Util::FileUtils::FilesInDirectory(fullPathFolder, useFullPath, extensions, recurse);
       for(auto& fullImagePath : fullImagePaths){
         const std::string fileName = Util::FileUtils::GetFileName(fullImagePath, true, true);
-        fileNameToFullPath.emplace(fileName, fullImagePath);
+        _spritePathMap->AddAsset(fileName, fullImagePath, false);
       }
     }
-  }
-  
-  // Get all sprite sequences with recursive directory search
-  {
-    std::vector<std::string> directoriesToSearch = {
-       _platform->pathToResource(Util::Data::Scope::Resources, pathToExternalSpriteSequences),
-       _platform->pathToResource(Util::Data::Scope::Resources, pathToEngineSpriteSequences)};
-    
-    auto searchIter = directoriesToSearch.begin();
-    while(searchIter != directoriesToSearch.end()){
-      // Get all directories at this level and add them to the file map
-      std::vector<std::string> outDirNames;
-      Util::FileUtils::ListAllDirectories(*searchIter, outDirNames);
-      for(auto& dirName: outDirNames){
-        // turn name into full path
-        dirName = Util::FileUtils::FullFilePath({*searchIter, dirName});
-        fileNameToFullPath.emplace(Util::FileUtils::GetFileName(dirName), dirName);
-      }
-      directoriesToSearch.erase(searchIter);
-      
-      // Add directories for recursive search and advance to next directory
-      copy(outDirNames.begin(), outDirNames.end(), back_inserter(directoriesToSearch));
-      searchIter = directoriesToSearch.begin();
-    }
-  }
-  
-  for (auto key : _spritePaths->GetAllKeys()) {
-    auto fullPath = fileNameToFullPath[_spritePaths->GetValue(key)];
-    _spritePaths->UpdateValue(key, std::move(fullPath));
   }
 }
 
@@ -364,6 +333,6 @@ void RobotDataLoader::LoadBackpackLightAnimationFile(const std::string& path)
   }
 }
 
-  
+}
 }
 }

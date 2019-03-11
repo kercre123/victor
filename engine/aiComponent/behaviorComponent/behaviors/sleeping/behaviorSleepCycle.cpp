@@ -138,11 +138,14 @@ void BehaviorSleepCycle::ParseWakeReasonConditions(const Json::Value& config)
 void BehaviorSleepCycle::CreateCustomWakeReasonConditions()
 {
 
-  _iConfig.wakeConditions.emplace( WakeReason::SDK, new ConditionLambda( [](BehaviorExternalInterface& bei) {
+  _iConfig.wakeConditions.emplace( WakeReason::SDK, new ConditionLambda( [this](BehaviorExternalInterface& bei) {
       auto& robotInfo = bei.GetRobotInfo();
       auto& sdkComponent = robotInfo.GetSDKComponent();
       const bool wantsControl = sdkComponent.SDKWantsControl();
-      return wantsControl;
+      const bool notEmergency = (_iConfig.emergencyCondition == nullptr) || !_iConfig.emergencyCondition->AreConditionsMet( bei );
+      const bool offCharger = !robotInfo.IsOnChargerPlatform();
+      // don't let SDK take control if the robot is on the charger during an emergency
+      return wantsControl && (notEmergency || offCharger);
     },
     GetDebugLabel() ) );
 

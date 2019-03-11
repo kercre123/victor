@@ -214,9 +214,6 @@ to get:
 ### I want to use Linux, instead of macOS.  Which version should I use?
   - Use Ubuntu 16.04
 
-### I see warnings in the log about sprite sequences
-  - Errors like `SpriteSequenceLoader.LoadSpriteSequences.NoSpritenameForPath` can be fixed by running `./tools/sprites/createSpriteMap.py` from the root directory. This will create CLAD types and a mapping for them. This is mostly required for referencing the sprite sequences in code, to ensure that the build will break if these assets are missing. If only used within other animations, though, this step is technically not required as strings can be used instead (to speed up iteration time)
-
 ### Why did I get a 915 error?
 
   - There is a client/server connection between `vic-engine` and `vic-anim` through [`LocalUdpServer.cpp`](/coretech/messaging/shared/LocalUdpServer.cpp) and [`LocalUdpClient.cpp`](/coretech/messaging/shared/LocalUdpClient.cpp) and sockets `/dev/socket/_engine_anim_server_0` and `/dev/socket/_engine_anim_client_0`

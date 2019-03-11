@@ -74,12 +74,12 @@ namespace {
   constexpr int MAX_PACKET_BUFFER_SIZE = 2048;
   u8 pktBuffer_[MAX_PACKET_BUFFER_SIZE];
 
-  Anki::Vector::AnimEngine*                   _animEngine = nullptr;
-  Anki::Vector::AnimationStreamer*            _animStreamer = nullptr;
-  Anki::Vector::StreamingAnimationModifier*   _streamingAnimationModifier = nullptr;
+  Anki::Vector::Anim::AnimEngine*             _animEngine = nullptr;
+  Anki::Vector::Anim::AnimationStreamer*            _animStreamer = nullptr;
+  Anki::Vector::Anim::StreamingAnimationModifier*   _streamingAnimationModifier = nullptr;
   Anki::Vector::Audio::EngineRobotAudioInput* _engAudioInput = nullptr;
   Anki::Vector::Audio::ProceduralAudioClient* _proceduralAudioClient = nullptr;
-  const Anki::Vector::AnimContext*            _context = nullptr;
+  const Anki::Vector::Anim::AnimContext*      _context = nullptr;
 
   bool _connectionFlowInited = false;
 
@@ -305,21 +305,12 @@ void Process_enableKeepFaceAlive(const Anki::Vector::RobotInterface::EnableKeepF
 {
   _animStreamer->EnableKeepFaceAlive(msg.enable, msg.disableTimeout_ms);
 }
-
-void Process_setDefaultKeepFaceAliveParameters(const Anki::Vector::RobotInterface::SetDefaultKeepFaceAliveParameters& msg)
+  
+void Process_setKeepFaceAliveFocus(const Anki::Vector::RobotInterface::SetKeepFaceAliveFocus& msg)
 {
-  _animStreamer->SetDefaultKeepFaceAliveParams();
+  _animStreamer->SetKeepFaceAliveFocus(msg.enable);
 }
-
-void Process_setKeepFaceAliveParameter(const Anki::Vector::RobotInterface::SetKeepFaceAliveParameter& msg)
-{
-  if (msg.setToDefault) {
-    _animStreamer->SetParamToDefault(msg.param);
-  } else {
-    _animStreamer->SetParam(msg.param, msg.value);
-  }
-}
-
+  
 void Process_addOrUpdateEyeShift(const Anki::Vector::RobotInterface::AddOrUpdateEyeShift& msg)
 {
   _animStreamer->ProcessAddOrUpdateEyeShift(msg);
@@ -521,6 +512,26 @@ void Process_runDebugConsoleFuncMessage(const Anki::Vector::RobotInterface::RunD
   }
 }
 
+void Process_externalAudioChunk(const RobotInterface::ExternalAudioChunk& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
+void Process_externalAudioPrepare(const RobotInterface::ExternalAudioPrepare& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
+void Process_externalAudioComplete(const RobotInterface::ExternalAudioComplete& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
+void Process_externalAudioCancel(const RobotInterface::ExternalAudioCancel& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
 void Process_textToSpeechPrepare(const RobotInterface::TextToSpeechPrepare& msg)
 {
   _animEngine->HandleMessage(msg);
@@ -552,7 +563,7 @@ void Process_showUrlFace(const RobotInterface::ShowUrlFace& msg)
   if(msg.show) {
     using namespace SwitchboardInterface;
     Anki::Vector::SwitchboardInterface::SetConnectionStatus connMsg;
-    connMsg.status = ConnectionStatus::START_PAIRING;
+    connMsg.status = ConnectionStatus::SHOW_URL_FACE;
 
     UpdateConnectionFlow(std::move(connMsg), _animStreamer, _context);
   }
@@ -801,11 +812,11 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
 // ========== START OF CLASS METHODS ==========
 // #pragma mark "Class methods"
 
-Result AnimProcessMessages::Init(AnimEngine* animEngine,
-                                 AnimationStreamer* animStreamer,
-                                 StreamingAnimationModifier* streamingAnimationModifier,
+Result AnimProcessMessages::Init(Anim::AnimEngine* animEngine,
+                                 Anim::AnimationStreamer* animStreamer,
+                                 Anim::StreamingAnimationModifier* streamingAnimationModifier,
                                  Audio::EngineRobotAudioInput* audioInput,
-                                 const AnimContext* context)
+                                 const Anim::AnimContext* context)
 {
   // Preconditions
   DEV_ASSERT(nullptr != animEngine, "AnimProcessMessages.Init.InvalidAnimEngine");

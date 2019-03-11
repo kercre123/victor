@@ -21,7 +21,6 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "engine/actions/actionInterface.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
-#include "clad/types/keepFaceAliveParameters.h"
 #include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/signalHolder.h"
@@ -105,7 +104,9 @@ public:
   
   // Set strictCooldown = true when we do NOT want to simply choose the animation closest
   // to being off cooldown when all animations in the group are on cooldown
-  const std::string& GetAnimationNameFromGroup(const std::string& name, bool strictCooldown = false) const;
+  const std::string& GetAnimationNameFromGroup(const std::string& name,
+                                               bool strictCooldown = false,
+                                               int recursionCount = 0) const;
   
   // Tell animation process to play the specified animation
   // If a non-empty callback is specified, the actionTag of the calling action must be specified
@@ -169,10 +170,11 @@ public:
                           u32 frameInterval_ms, u32 duration_ms, 
                           bool interruptRunning = false, bool emptySpriteBoxesAreValid = false);
   
-  // Calling this function provides no gaurentee that the assets will actually be displayed
+  // Calling this function provides no guarantee that the assets will actually be displayed
   // If a compositeFaceImage is currently displayed on the face all layers/image maps within
-  // the compositeImage argument will be updated to their new values - set Count in the sprite map
-  // for any sprite boxes that should no longer be displayed
+  // the compositeImage argument will be updated to their new values 
+  // - Set SpriteBoxName::Count in the layerMap to clear layers by name
+  // - Default construct a SpriteEntry into the imageMap for any SpriteBox you wish to clear
   void UpdateCompositeImage(const Vision::CompositeImage& compositeImage, u32 applyAt_ms = 0);
   
   // Helper function that clears composite image layer - can be accomplished through UpdateCompositeImage
@@ -184,16 +186,6 @@ public:
   // lock". If any disable locks are present, the keep alive will be disabled
   void AddKeepFaceAliveDisableLock(const std::string& lockName);
   void RemoveKeepFaceAliveDisableLock(const std::string& lockName);
-
-  // Restore all KeepFaceAlive parameters to defaults. Note that this does not enable or disable the keep
-  // alive
-  Result SetDefaultKeepFaceAliveParameters() const;
-  
-  // Set KeepFaceAliveParameterToDefault
-  Result SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter param) const;
-  
-  // Set KeepFaceAlive parameter to specified value
-  Result SetKeepFaceAliveParameter(KeepFaceAliveParameter param, f32 value) const;
 
   // Either start an eye shift or update an already existing eye shift with new params
   // Note: Eye shift will continue until removed so if eye shift with the same name

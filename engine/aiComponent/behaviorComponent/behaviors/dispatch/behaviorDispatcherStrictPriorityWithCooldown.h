@@ -15,6 +15,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/iBehaviorDispatcher.h"
 
+#include "clad/types/behaviorComponent/behaviorTimerTypes.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/helpers/behaviorCooldownInfo.h"
 
 namespace Anki {
@@ -43,14 +44,16 @@ protected:
 private:
   struct InstanceConfig {
     InstanceConfig();
-    // index here matches the index in IBehaviorDispatcher::GetAllPossibleDispatches()
+    // Index here matches the index in IBehaviorDispatcher::GetAllPossibleDispatches()
     std::vector< BehaviorCooldownInfo > cooldownInfo;
+    std::vector< std::pair<BehaviorTimerTypes, bool> > linkedBehaviorTimerInfo;
 
     // if true, links activation scope and WantsToBeActivated with it's delegates
     bool linkScope;
     
     // if true, this deactivating this behavior clears all cooldown info
     bool resetCooldownOnDeactivation;
+    
   };
 
   struct DynamicVariables {

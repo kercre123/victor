@@ -56,7 +56,6 @@ void BehaviorMoveHeadToAngle::GetBehaviorOperationModifiers(BehaviorOperationMod
   modifiers.wantsToBeActivatedWhenCarryingObject = true;
   modifiers.wantsToBeActivatedWhenOffTreads = true;
   modifiers.wantsToBeActivatedWhenOnCharger = true;
-  modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.behaviorAlwaysDelegates = true;
 }
 

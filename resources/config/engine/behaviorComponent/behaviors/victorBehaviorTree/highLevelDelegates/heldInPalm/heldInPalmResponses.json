@@ -5,65 +5,91 @@
   "associatedActiveFeature": "HeldInPalm",
 
   "interruptActiveBehavior": true,
-
+  
   "behaviors": [
     {
       "behavior": "ReactToJoltInPalm",
-      "cooldown_s": 0.0
+      "cooldown_s": 0.0,
+      "linkedBehaviorTimer": "ReactToJoltInPalm",
+      "resetLinkedTimerOnDispatcherActivation": true
     },
     {
       "behavior": "SleepInAirAnimLoopInternal",
       "cooldown_s": 0.0
     },
     {
-      "behavior": "NestleAnimLoopInternal",
+      "behavior": "LookingNervousAnimLoopInternal",
       "cooldown_s": 0.0
+    },
+    {
+      "behavior": "NestleWhileHeldInPalmAnim",
+      "cooldown_s": 10.0
     },
     {
       "behavior": "ObservingLookAtFacesInAir",
       "cooldown_s": 60.0
     },
     {
-      "behavior": "LookInPlaceHeadDownInAir",
+      "behavior": "LookInPlaceAtEdgeOfPalm",
       "cooldown_s": 0.0
     }
   ],
 
   "anonymousBehaviors": [
     {
-      "behaviorName": "NestleAnimLoopInternal",
+      "behaviorName"     : "SleepInAirAnimLoopInternal",
       "behaviorClass"    : "AnimGetInLoop",
+      
+      "getIn"            : "GoToSleepGetIn",
+      "loopAnimation"    : "GoToSleepSleeping",
+      "getOut"           : "WakeupGetout",
+      "loopEndCondition" : {
+        // Requires lower threshold than that of ReactToTouchPetting
+        // in order to trigger "gentle wake-up" animation
+        "conditionType" : "RobotTouched",
+        "minTouchTime" : 0.05
+      },
+      
+      // Force the get-out animation to play to completion, so that Vector
+      // continues playing the "WakeupGetout" animation even if
+      // ReactToTouchPetting wants to quickly force a deactivation.
+      "shouldForceLoopGetOutAnim"   : true,
+      "shouldCheckEndCondDuringAnim": true,
+      "lockTreads"                  : true,
 
-      // TODO(GB): Change to corresponding "nestle" animations
-      // and add corresponding tracks to lock for those animations
-      "getIn"            : "NeutralFace",
-      "loopAnimation"    : "HeldOnPalmNestling",
-      "getOut"           : "NeutralFace",
-      "loopInterval_s"   : 10,
-      "shouldCheckEndCondDuringAnim": false,
-      "lockTreads"       : false,
-
+      // Go to "sleep" in the user's palm after 5 minutes of held-in-palm
+      // activity with no jolts or shocks experienced.
       "wantsToBeActivatedCondition": {
-        "conditionType": "OffTreadsState",
-        "targetState": "InAir",
-        "minTimeSinceChange_ms": 180000 // Nestle in the user's palm after 3 minutes
+        "conditionType": "BehaviorTimer",
+        "timerName": "ReactToJoltInPalm",
+        "cooldown_s": 300.0
       }
     },
     {
-      "behaviorName"  : "SleepInAirAnimLoopInternal",
+      "behaviorName"  : "LookingNervousAnimLoopInternal",
       "behaviorClass" : "AnimSequence",
-      "tracksToLock"     : ["HEAD_TRACK", "LIFT_TRACK", "BODY_TRACK"],
-      "num_loops"        : 0, // Loop forever
-
-      "animTriggers": [
-        "GoToSleepGetIn",
-        "GoToSleepSleeping"
-      ],
-
+      // Cooldown will handle how often this nervous animation repeats once
+      // it wants to be activated.
+      "num_loops"        : 1,
+      "animTriggers"     : ["HeldOnPalmLookingNervous"],
+      
       "wantsToBeActivatedCondition": {
-        "conditionType": "OffTreadsState",
-        "targetState": "InAir",
-        "minTimeSinceChange_ms": 300000 // Go to "sleep" after 5 minutes
+        "conditionType": "Compound",
+        "not": {
+          "conditionType": "Compound",
+          "and": [
+            {
+              "conditionType": "RobotPitchInRange",
+              "minPitchThreshold_deg": -20.0,
+              "maxPitchThreshold_deg": 20.0
+            },
+            {
+              "conditionType": "RobotRollInRange",
+              "minRollThreshold_deg": -20.0,
+              "maxRollThreshold_deg": 20.0
+            }
+          ]
+        }
       }
     }
   ],
@@ -85,12 +111,6 @@
         // than a single cliff is detected.
         "conditionType": "CliffDetected",
         "numCliffDetectionsToTrigger": 2
-      },
-      {
-        // The user is trying to tilt the robot to get it to drive off their palm.
-        "conditionType": "RobotPitchInRange",
-        "minPitchThreshold_deg": -80.0,
-        "maxPitchThreshold_deg": -30.0
       }
     ]
   }

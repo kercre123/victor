@@ -17,7 +17,6 @@
 #define ANKI_COZMO_CANNED_ANIMATION_LOADER_H
 
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
-#include "coretech/vision/shared/spritePathMap.h"
 #include "util/helpers/noncopyable.h"
 #include <atomic>
 #include <memory>
@@ -42,7 +41,6 @@ namespace Vector {
 
 // forward declaration
 class Animation;
-class AnimContext;
 
 class CannedAnimationLoader : private Util::noncopyable
 {
@@ -55,12 +53,10 @@ public:
   };
 
   CannedAnimationLoader(const Util::Data::DataPlatform* platform,
-                        const Vision::SpritePathMap* spriteMap,
                         Vision::SpriteSequenceContainer* spriteSequenceContainer,
                         std::atomic<float>& loadingCompleteRatio,
                         std::atomic<bool>&  abortLoad)
   : _platform(platform)
-  , _spriteMap(spriteMap)
   , _spriteSequenceContainer(spriteSequenceContainer)
   , _loadingCompleteRatio(loadingCompleteRatio)
   , _abortLoad(abortLoad){}
@@ -74,7 +70,6 @@ private:
   
   // params passed in by data loader class
   const Util::Data::DataPlatform* _platform;
-  const Vision::SpritePathMap* _spriteMap;
   Vision::SpriteSequenceContainer* _spriteSequenceContainer = nullptr;
   std::atomic<float>& _loadingCompleteRatio;
   std::atomic<bool>&  _abortLoad;

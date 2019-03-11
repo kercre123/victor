@@ -97,7 +97,7 @@ int main(int argc, char **argv)
   ANKI_CONSOLE_SYSTEM_INIT("consoleVarsAnim.ini");
 
   // Initialize the anim engine
-  AnimEngine animEngine(&dataPlatform);
+  Anim::AnimEngine animEngine(&dataPlatform);
   const auto result = animEngine.Init();
   if (result != RESULT_OK) {
     LOG_ERROR("webotsCtrlAnim.main", "Failed in creation/initialization of AnimEngine");

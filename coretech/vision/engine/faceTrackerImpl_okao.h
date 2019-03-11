@@ -124,7 +124,12 @@ namespace Vision {
     float DevComputePairwiseMatchScore(int faceID1, int faceID2) const;
     float DevComputePairwiseMatchScore(int faceID1, const Image& img2, const TrackedFace& face2) const;
 #endif
-    
+
+#if ANKI_DEV_CHEATS
+    void SaveAllRecognitionImages(const std::string& imagePathPrefix);
+    void DeleteAllRecognitionImages();
+#endif // ANKI_DEV_CHEATS
+
   private:
     
     // Creates new face detectors using current parameters
@@ -177,7 +182,6 @@ namespace Vision {
     HDTRESULT   _okaoDetectionResultHandle      = NULL;
     HPOINTER    _okaoPartDetectorHandle         = NULL;
     HPTRESULT   _okaoPartDetectionResultHandle  = NULL;
-    HPTRESULT   _okaoPartDetectionResultHandle2 = NULL;
     HEXPRESSION _okaoEstimateExpressionHandle   = NULL;
     HEXPRESSION _okaoExpressionResultHandle     = NULL;
     HSMILE      _okaoSmileDetectHandle          = NULL;

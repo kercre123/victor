@@ -18,6 +18,7 @@
 
 namespace Anki {
 namespace Vector {
+namespace Anim {
 
 namespace
 {
@@ -144,5 +145,6 @@ void AudioLayerManager::GenerateGlitchAudio(u32 numFramesToGen,
    */
 }
 
+}
 }
 }

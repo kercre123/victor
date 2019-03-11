@@ -6,14 +6,15 @@
   "behaviorClass" : "AnimSequence",
   
   "associatedActiveFeature": "HeldInPalm",
+  "emotionEventOnActivated" : "ReactToJoltInPalm",
   
   // TODO(GB): To be used in a future implementation to decide
   // which animation to trigger upon activation.
   //  "joltThresholdMedium"  : 15000,
   //  "joltThresholdHard"    : 20000,
-
-  // TODO(GB): Change to corresponding "jolt" animation(s)
+  
   "animTriggers": ["HeldOnPalmReactToJolt"],
+  
   "wantsToBeActivatedCondition": {
     "conditionType": "RobotShaken",
     "minAccelMagnitudeThreshold": 10500

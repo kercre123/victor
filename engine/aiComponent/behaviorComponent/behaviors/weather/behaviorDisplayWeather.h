@@ -68,7 +68,7 @@ private:
     u32 timeTempShouldAppear_ms = 0;
     u32 timeTempShouldDisappear_ms = 0;
 
-    std::vector<Vision::SpriteName> temperatureAssets;
+    std::vector<std::string> temperatureAssets;
     // layouts stored least -> greatest pos followed by least -> greatest neg
     std::vector<Vision::CompositeImage> temperatureLayouts;
     std::unique_ptr<WeatherIntentParser> intentParser;

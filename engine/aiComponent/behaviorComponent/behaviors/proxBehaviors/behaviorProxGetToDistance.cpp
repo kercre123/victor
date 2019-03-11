@@ -25,7 +25,7 @@ const char* kDistToSpeedKey  = "distMM_speedMM_Graph";
 const char* kGoalDistanceKey = "goalDistance_mm";
 const char* kGoalTolerenceKey = "tolerence_mm";
 const char* kEndWhenGoalReachedKey = "endWhenGoalReached";
-const float kThresholdSensedMoved_mm = 25;
+// const float kThresholdSensedMoved_mm = 25;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -88,14 +88,17 @@ void BehaviorProxGetToDistance::BehaviorUpdate()
     return;
   }
 
-  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
+  // NOTE: (mrw) Removing prox code since it is going to break with the whiskey sensor. It is
+  //       not worth fixing now since we are not currently using this behavior
 
-  u16 proxDist_mm = 0;
-  const bool isReadingValid = proxSensor.GetLatestDistance_mm(proxDist_mm);
-  if(!isReadingValid){
-    CancelSelf();
-    return;
-  }
+  // auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
+
+  // u16 proxDist_mm = 0;
+  // const bool isReadingValid = proxSensor.GetLatestDistance_mm(proxDist_mm);
+  // if(!isReadingValid){
+  //   CancelSelf();
+  //   return;
+  // }
 
   if(_params.shouldEndWhenGoalReached && 
      IsWithinGoalTolerence()){
@@ -108,12 +111,12 @@ void BehaviorProxGetToDistance::BehaviorUpdate()
     CancelDelegates(false);
   }
 
-  if(!IsControlDelegated()){
-    const float speed_mm_s = _params.distMMToSpeedMMGraph.EvaluateY(proxDist_mm);
-    DelegateIfInControl(new DriveStraightAction(CalculateDistanceToDrive(), speed_mm_s));
-    const bool isSensorReadingValid = proxSensor.CalculateSensedObjectPose(_previousProxObjectPose);
-    DEV_ASSERT(isSensorReadingValid, "BehaviorProxGetToDistance.BehaviorUpdate.SensorReadingInvalid");
-  }
+  // if(!IsControlDelegated()){
+  //   const float speed_mm_s = _params.distMMToSpeedMMGraph.EvaluateY(proxDist_mm);
+  //   DelegateIfInControl(new DriveStraightAction(CalculateDistanceToDrive(), speed_mm_s));
+  //   const bool isSensorReadingValid = proxSensor.CalculateSensedObjectPose(_previousProxObjectPose);
+  //   DEV_ASSERT(isSensorReadingValid, "BehaviorProxGetToDistance.BehaviorUpdate.SensorReadingInvalid");
+  // }
 
   return;
 }
@@ -122,37 +125,42 @@ void BehaviorProxGetToDistance::BehaviorUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float BehaviorProxGetToDistance::CalculateDistanceToDrive() const
 {
-  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
+  // NOTE: (mrw) Removing prox code since it is going to break with the whiskey sensor. It is
+  //       not worth fixing now since we are not currently using this behavior
+
+
+  // auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
   
-  u16 proxDist_mm = 0;
-  const bool isReadingValid = proxSensor.GetLatestDistance_mm(proxDist_mm);
+  // u16 proxDist_mm = 0;
+  // const bool isReadingValid = proxSensor.GetLatestDistance_mm(proxDist_mm);
   
-  if (!isReadingValid) {
-    PRINT_NAMED_WARNING("BehaviorProxGetToDistance.CalculateDistanceToDrive.InvalidReading",
-                        "Invalid distance sensor reading received");
-    return 0.f;
-  }
+  // if (!isReadingValid) {
+  //   PRINT_NAMED_WARNING("BehaviorProxGetToDistance.CalculateDistanceToDrive.InvalidReading",
+  //                       "Invalid distance sensor reading received");
+  //   return 0.f;
+  // }
   
-  float distanceToDrive = proxDist_mm - _params.goalDistance_mm;
+  // float distanceToDrive = proxDist_mm - _params.goalDistance_mm;
   
-  // See if there's a distance at which we want to change speed that occurs before we
-  // make it all the way to our goal distance
-  {
-    const bool drivingForward = (distanceToDrive >= 0);
-    // make sure we get something that we can actually drive to
-    const float distOutsideDriveTolerence = drivingForward ? (proxDist_mm -  _params.tolarance_mm) : (proxDist_mm +  _params.tolarance_mm); 
-    const Util::GraphEvaluator2d::Node* closestNode = GetNodeClosestToDistance(distOutsideDriveTolerence, drivingForward);
+  // // See if there's a distance at which we want to change speed that occurs before we
+  // // make it all the way to our goal distance
+  // {
+  //   const bool drivingForward = (distanceToDrive >= 0);
+  //   // make sure we get something that we can actually drive to
+  //   const float distOutsideDriveTolerence = drivingForward ? (proxDist_mm -  _params.tolarance_mm) : (proxDist_mm +  _params.tolarance_mm); 
+  //   const Util::GraphEvaluator2d::Node* closestNode = GetNodeClosestToDistance(distOutsideDriveTolerence, drivingForward);
     
-    const bool isNodeCloser = drivingForward
-          ? (closestNode != nullptr) && (closestNode->_x >  _params.goalDistance_mm)
-          : (closestNode != nullptr) && (closestNode->_x < _params.goalDistance_mm);
+  //   const bool isNodeCloser = drivingForward
+  //         ? (closestNode != nullptr) && (closestNode->_x >  _params.goalDistance_mm)
+  //         : (closestNode != nullptr) && (closestNode->_x < _params.goalDistance_mm);
     
-    if(isNodeCloser){
-      distanceToDrive = proxDist_mm - closestNode->_x;
-    }
-  }
+  //   if(isNodeCloser){
+  //     distanceToDrive = proxDist_mm - closestNode->_x;
+  //   }
+  // }
   
-  return distanceToDrive;
+  // return distanceToDrive;
+  return 0.f;
 }
 
 
@@ -179,28 +187,36 @@ const Util::GraphEvaluator2d::Node* BehaviorProxGetToDistance::GetNodeClosestToD
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorProxGetToDistance::ShouldRecalculateDrive()
 {
-  Pose3d sensedObjectPose;
-  f32 distSqrSensedChanged_mm = 0.f;
-  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
-  const bool recalculate = proxSensor.CalculateSensedObjectPose(sensedObjectPose) &&
-         ComputeDistanceSQBetween(_previousProxObjectPose, sensedObjectPose, distSqrSensedChanged_mm) &&
-         distSqrSensedChanged_mm > (kThresholdSensedMoved_mm * kThresholdSensedMoved_mm);
-  if(recalculate){
-    _previousProxObjectPose = sensedObjectPose;
-  }
-  return recalculate;
+  // NOTE: (mrw) Removing prox code since it is going to break with the whiskey sensor. It is
+  //       not worth fixing now since we are not currently using this behavior
+
+  // Pose3d sensedObjectPose;
+  // f32 distSqrSensedChanged_mm = 0.f;
+  // auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
+  // const bool recalculate = proxSensor.CalculateSensedObjectPose(sensedObjectPose) &&
+  //        ComputeDistanceSQBetween(_previousProxObjectPose, sensedObjectPose, distSqrSensedChanged_mm) &&
+  //        distSqrSensedChanged_mm > (kThresholdSensedMoved_mm * kThresholdSensedMoved_mm);
+  // if(recalculate){
+  //   _previousProxObjectPose = sensedObjectPose;
+  // }
+  // return recalculate;
+
+  return false;
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorProxGetToDistance::IsWithinGoalTolerence() const
 {
-  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
-  u16 proxDist_mm = 0;
-  const bool isReadingValid = proxSensor.GetLatestDistance_mm(proxDist_mm);
-  if(isReadingValid){
-    return Util::IsNear(proxDist_mm, _params.goalDistance_mm, _params.tolarance_mm);
-  }
+  // NOTE: (mrw) Removing prox code since it is going to break with the whiskey sensor. It is
+  //       not worth fixing now since we are not currently using this behavior
+
+  // auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
+  // u16 proxDist_mm = 0;
+  // const bool isReadingValid = proxSensor.GetLatestDistance_mm(proxDist_mm);
+  // if(isReadingValid){
+  //   return Util::IsNear(proxDist_mm, _params.goalDistance_mm, _params.tolarance_mm);
+  // }
   return false;
 }
 

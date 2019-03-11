@@ -93,6 +93,11 @@ namespace {
   CONSOLE_VAR_RANGED(float, kRequiredChargeTime_s, CONSOLE_GROUP, 5*60.0f, 10.0f, 9999.0f ); // must be set before low battery and then not changed
   const float kExtraChargingTimePerDischargePeriod_s = 1.0f; // if off the charger for 1 min, must charge an additional 1*X mins
 
+#if ANKI_DEV_CHEATS
+  // General periodic battery logging (for battery life testing)
+  CONSOLE_VAR(bool, kPeriodicDebugDASLogging, CONSOLE_GROUP, false);
+#endif  
+
   #undef CONSOLE_GROUP
 }
 
@@ -157,7 +162,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   // If in calm mode, RobotState messages are expected to come in at a slower rate
   // and we therefore need to adjust the sampling rate of the filter.
   static bool prevSysconCalmMode = false;
-  bool currSysconCalmMode = msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE;
+  const bool currSysconCalmMode = msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE;
   if (currSysconCalmMode && !prevSysconCalmMode) {
     _batteryVoltsFilter->SetSamplePeriod(kCalmModeBatteryVoltsUpdatePeriod_sec);
   } else if (!currSysconCalmMode && prevSysconCalmMode) {
@@ -374,33 +379,43 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   // (Encoders should normally be off while on charger)
   if (!IsOnChargerContacts()) {
     bool encodersDisabled = msg.status & (uint32_t)RobotStatusFlag::ENCODERS_DISABLED;
-    bool calmMode         = msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE;
-    _batteryStatsAccumulator->UpdateEncoderStats(encodersDisabled, calmMode);
+    _batteryStatsAccumulator->UpdateEncoderStats(encodersDisabled, currSysconCalmMode);
   }
+
+#if ANKI_DEV_CHEATS
+  // General periodic debug battery logging
+  static int s_nextReportTime_sec = now_sec;
+  static const int kReportPeriod_sec = 5;
+  if (kPeriodicDebugDASLogging) {
+    if (now_sec > s_nextReportTime_sec) {
+      s_nextReportTime_sec += kReportPeriod_sec;
+      DASMSG(battery_periodic_log, "battery.periodic_log", "For battery life debug logging");
+      DASMSG_SET(i1, GetBatteryVoltsRaw_mV(), "Raw voltage (mV)");
+      DASMSG_SET(i2, GetBatteryVolts_mV(), "Filtered voltage (mV)");
+      DASMSG_SET(i3, GetBatteryTemperature_C(), "Temperature (C)");
+      DASMSG_SET(i4, IsOnChargerContacts(), "On charge contacts");
+      DASMSG_SET(s1, IsBatteryDisconnectedFromCharger() ? "1" : "0", "Battery disconnected state");
+      DASMSG_SET(s2, IsCharging() ? "1" : "0", "Battery charging state");
+      DASMSG_SET(s3, currSysconCalmMode ? "1" : "0", "Calm mode enabled");
+      DASMSG_SET(s4, std::to_string( OSState::getInstance()->GetTemperature_C() ), "CPU temperature (C)");
+      DASMSG_SEND();
+    }
+  } else {
+    s_nextReportTime_sec = now_sec;
+  }
+#endif  
 }
 
 
-float BatteryComponent::GetFullyChargedTimeSec() const
+float BatteryComponent::GetTimeAtLevelSec(BatteryLevel level) const
 {
-  float timeSinceFullyCharged_sec = 0.f;
-  if (_batteryLevel == BatteryLevel::Full) {
+  float timeSinceLevelChange_sec = 0.f;
+  if (_batteryLevel == level) {
     const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    timeSinceFullyCharged_sec = now_sec - _lastBatteryLevelChange_sec;
+    timeSinceLevelChange_sec = now_sec - _lastBatteryLevelChange_sec;
   }
-  return timeSinceFullyCharged_sec;
+  return timeSinceLevelChange_sec;
 }
-
-
-float BatteryComponent::GetLowBatteryTimeSec() const
-{
-  float timeSinceLowBattery_sec = 0.f;
-  if (_batteryLevel == BatteryLevel::Low) {
-    const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-    timeSinceLowBattery_sec = now_sec - _lastBatteryLevelChange_sec;
-  }
-  return timeSinceLowBattery_sec;
-}
-
 
 void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
 {

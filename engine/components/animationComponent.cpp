@@ -49,6 +49,8 @@ namespace {
 
   static const u32 kNumImagePixels     = FACE_DISPLAY_HEIGHT * FACE_DISPLAY_WIDTH;
   static const u32 kNumHalfImagePixels = kNumImagePixels / 2;
+
+  static const int kMaxAnimGroupRecursionDepth = 100;
 }
   
 CONSOLE_VAR(f32, kEyeDartFocusValue_pix, "Animation", 1.0f);
@@ -81,24 +83,21 @@ void AnimationComponent::InitDependent(Vector::Robot* robot, const RobotCompMap&
   _movementComponent = dependentComps.GetComponentPtr<MovementComponent>();
   const CozmoContext* context = _robot->GetContext();
   _animationGroups = std::make_unique<AnimationGroupWrapper>(*(context->GetDataLoader()->GetAnimationGroups()));
-  if (context) {
-    // Setup game message handlers
-    IExternalInterface *extInterface = context->GetExternalInterface();
-    if (extInterface != nullptr) {
-      
-      auto helper = MakeAnkiEventUtil(*extInterface, *this, GetSignalHandles());
-  
-      using namespace ExternalInterface;
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableAnimations>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableAnimationGroups>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayProceduralFace>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceHue>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageBinaryChunk>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageRGBChunk>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::SetKeepFaceAliveParameters>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
 
-    }
+  // Setup game message handlers
+  IExternalInterface *extInterface = context->GetExternalInterface();
+  if (extInterface != nullptr) {
+    
+    auto helper = MakeAnkiEventUtil(*extInterface, *this, GetSignalHandles());
+
+    using namespace ExternalInterface;
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableAnimations>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableAnimationGroups>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayProceduralFace>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceHue>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageBinaryChunk>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageRGBChunk>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
   }
   
   // Setup robot message handlers
@@ -250,14 +249,38 @@ void AnimationComponent::DoleAvailableAnimations()
 }
 
 
-const std::string& AnimationComponent::GetAnimationNameFromGroup(const std::string& name, bool strictCooldown) const
+const std::string& AnimationComponent::GetAnimationNameFromGroup(const std::string& name,
+                                                                 bool strictCooldown,
+                                                                 int recursionCount) const
 {
+  static const std::string empty("");
+
+  if( !ANKI_VERIFY( recursionCount < kMaxAnimGroupRecursionDepth,
+                    "AnimationComponent.GetAnimationNameFromGroup.ExceededMaxREcursionDepth",
+                    "Recursion loop! Recursed %d times to group name '%s'",
+                    recursionCount,
+                    name.c_str()) ) {
+    // just give up after max recursion depth
+    return empty;
+  }
+
   const AnimationGroup* group = _animationGroups->_container.GetAnimationGroup(name);
   if(group != nullptr && !group->IsEmpty()) {
-    return group->GetAnimationName(_robot->GetMoodManager(),  _animationGroups->_container, 
-                                   _robot->GetComponent<FullRobotPose>().GetHeadAngle(), strictCooldown);
+    const std::string& selectedAnim = group->GetAnimationName(_robot->GetMoodManager(),
+                                                              _animationGroups->_container,
+                                                              _robot->GetComponent<FullRobotPose>().GetHeadAngle(),
+                                                              strictCooldown);
+    if( _animationGroups->_container.HasGroup( selectedAnim ) ) {
+      LOG_INFO("GetAnimationName.SubGroupSelected",
+               "Group %s returned sub-group %s, going deeper",
+               name.c_str(),
+               selectedAnim.c_str());
+      return GetAnimationNameFromGroup(selectedAnim, strictCooldown, recursionCount+1);
+    }
+    else {
+      return selectedAnim;
+    }
   }
-  static const std::string empty("");
   return empty;
 }
   
@@ -618,10 +641,11 @@ void AnimationComponent::UpdateCompositeImage(const Vision::CompositeImage& comp
       Vision::SerializedSpriteBox serializedSpriteBox = spritePair.second.Serialize();
       Vision::CompositeImageLayer::SpriteEntry entry;
       layoutPair.second.GetSpriteEntry(spritePair.second, entry);
+
       _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(serializedSpriteBox, 
                                                                      applyAt_ms, 
-                                                                     layerName, 
-                                                                     entry.GetSpriteName());
+                                                                     entry.GetAssetID(),
+                                                                     layerName);
     }
   }
 }
@@ -640,8 +664,8 @@ void AnimationComponent::ClearCompositeImageLayer(Vision::LayerName layerName, u
   
   _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(sb.Serialize(), 
                                                                  applyAt_ms, 
-                                                                 layerName, 
-                                                                 entry.GetSpriteName());
+                                                                 entry.GetAssetID(),
+                                                                 layerName); 
 }
 
 void AnimationComponent::AddKeepFaceAliveDisableLock(const std::string& lockName)
@@ -693,21 +717,6 @@ Result AnimationComponent::SendEnableKeepFaceAlive(bool enable, u32 disableTimeo
   }
   
   return res;
-}
-
-Result AnimationComponent::SetDefaultKeepFaceAliveParameters() const
-{
-  return _robot->SendRobotMessage<RobotInterface::SetDefaultKeepFaceAliveParameters>();
-}
-
-Result AnimationComponent::SetKeepFaceAliveParameter(KeepFaceAliveParameter param, f32 value) const
-{
-  return _robot->SendRobotMessage<RobotInterface::SetKeepFaceAliveParameter>(value, param, false);
-}
-  
-Result AnimationComponent::SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter param) const
-{
-  return _robot->SendRobotMessage<RobotInterface::SetKeepFaceAliveParameter>(0.f, param, true);
 }
 
 Result AnimationComponent::AddOrUpdateEyeShift(const std::string& name, 
@@ -881,21 +890,6 @@ void AnimationComponent::HandleMessage(const ExternalInterface::DisplayFaceImage
 }
 
 template<>
-void AnimationComponent::HandleMessage(const ExternalInterface::SetKeepFaceAliveParameters& msg)
-{
-  if (msg.setUnspecifiedToDefault) {
-    SetDefaultKeepFaceAliveParameters();
-  }
-  
-  if(ANKI_VERIFY(msg.paramNames.size() == msg.paramValues.size(), "AnimationComponent.HandleSetKeepFaceAliveParameters.NameValuePairMismatch", ""))
-  {
-    for (int i=0; i<msg.paramNames.size(); ++i) {
-      SetKeepFaceAliveParameter( msg.paramNames.at(i), msg.paramValues.at(i) );
-    }
-  }
-}
-
-template<>
 void AnimationComponent::HandleMessage(const ExternalInterface::ReadAnimationFile& msg)
 {
   _robot->SendRobotMessage<RobotInterface::AddAnim>(msg.full_path);
@@ -1015,8 +1009,7 @@ void AnimationComponent::AddKeepFaceAliveFocus(const std::string& name)
 {
   if (_focusRequests.empty())
   {
-    SetKeepFaceAliveParameter(KeepFaceAliveParameter::EyeDartMaxDistance_pix,
-                              kEyeDartFocusValue_pix);
+    _robot->SendRobotMessage<RobotInterface::SetKeepFaceAliveFocus>(true);
   }
   _focusRequests.insert(name);
 }
@@ -1026,7 +1019,7 @@ void AnimationComponent::RemoveKeepFaceAliveFocus(const std::string& name)
   _focusRequests.erase(name);
   if (_focusRequests.empty())
   {
-    SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter::EyeDartMaxDistance_pix); 
+    _robot->SendRobotMessage<RobotInterface::SetKeepFaceAliveFocus>(false);
   }
 }
 

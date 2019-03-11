@@ -81,9 +81,6 @@ namespace Anki {
           StartMovieConditional("BasicActions");
           // TakeScreenshotsAtInterval("BasicActions", 1.f);
           
-          // Request a cube connection
-          SendConnectToCube();
-          
           StartingAction(RobotActionType::MOVE_LIFT_TO_HEIGHT);
           SendMoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, 100, 100);
           SET_TEST_STATE(MoveLiftDown);
@@ -341,19 +338,16 @@ namespace Anki {
             m.position = QueueActionPosition::NOW;
             m.idTag = 8;
             
-            // Face first matching light cube
-            std::vector<s32> lightCubeIDs = GetAllLightCubeObjectIDs();
-            if (!lightCubeIDs.empty()) {
-              m.action.Set_turnTowardsObject(ExternalInterface::TurnTowardsObject(lightCubeIDs[0], M_PI_F, 0, 0, 0, 0, 0, 0, true, false));
-              ExternalInterface::MessageGameToEngine message;
-              message.Set_QueueSingleAction(m);
-              SendMessage(message);
-              SET_TEST_STATE(TurnRightRelative_540);
-            } else {
-              PRINT_NAMED_ERROR("CST_BasicActions.FaceObjectHasNoTargets",
-                                "lightCubeIDs is empty, FaceObject test will fail on timeout");
-            }
+            // Face the Block_LIGHTCUBE1
+            std::vector<s32> lightCubeIDs = GetAllObjectIDsByType(ObjectType::Block_LIGHTCUBE1);
+            CST_ASSERT(!lightCubeIDs.empty(), "Found no cubes of type Block_LIGHTCUBE1");
+            CST_ASSERT(lightCubeIDs.size() == 1, "Found too many cubes of type Block_LIGHTCUBE1");
 
+            m.action.Set_turnTowardsObject(ExternalInterface::TurnTowardsObject(lightCubeIDs[0], M_PI_F, 0, 0, 0, 0, 0, 0, true, false));
+            ExternalInterface::MessageGameToEngine message;
+            message.Set_QueueSingleAction(m);
+            SendMessage(message);
+            SET_TEST_STATE(TurnRightRelative_540);
           }
           break;
         }

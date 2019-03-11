@@ -47,6 +47,7 @@ namespace Vector {
     FullHeightMarkerDetection,        // Still does horizontal crop scheduling, but does not consider head angle / height
     FullWidthMarkerDetection,         // Considers head angle to search only near ground, but no horizontal crop scheduling
     MarkerDetectionWhileRotatingFast, // Mostly for unit tests: allow markers to be detected when rotating fast (or without IMU data)
+    CompositingImages,                // Averages a buffer of images, periodically detecting markers in the image
 
     // Require DetectingFaces:
     EstimatingFacialExpression,

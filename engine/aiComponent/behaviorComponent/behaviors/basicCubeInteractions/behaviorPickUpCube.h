@@ -44,8 +44,6 @@ public:
   }
 
 protected:  
-  using super = ICozmoBehavior;
-
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorPickUpCube(const Json::Value& config);

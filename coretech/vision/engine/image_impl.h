@@ -25,10 +25,10 @@ void ImageBase<T>::DrawSubImage(const DerivedType& subImage, const Point2f& topL
   // If the subimage wants to be placed with a negative position 
   // copy it starting wherever it would become visible in the image
   // rect will be clamped to 0,0 on intersect below
-  if(topLeftCorner.x() < 0){
+  if (topLeftCorner.x() < 0) {
     subImageColOffset = -topLeftCorner.x();
   }
-  if(topLeftCorner.y() < 0){
+  if (topLeftCorner.y() < 0) {
     subImageRowOffset = -topLeftCorner.y();
   }
 
@@ -39,25 +39,36 @@ void ImageBase<T>::DrawSubImage(const DerivedType& subImage, const Point2f& topL
   rect = GetBoundingRect().Intersect(rect);
 
   // named variables for readability
-  const s32 numColsToCopy = rect.GetWidth();
-  const s32 numRowsToCopy = rect.GetHeight();
   const s32 destColOffset = rect.GetX();
   const s32 destRowOffset = rect.GetY();
+  s32 numColsToCopy = rect.GetWidth();
+  s32 numRowsToCopy = rect.GetHeight();
 
-  if(drawBlankPixels){
-    for(s32 relRowIdx = 0; relRowIdx < numRowsToCopy; ++relRowIdx){
+  if (this->IsContinuous() && numColsToCopy == GetNumCols()) {
+    // If we're rendering all the way across the image, then optimize
+    // by making a single 'row' loop iteration for all pixels:
+    numColsToCopy = numColsToCopy * numRowsToCopy;
+    numRowsToCopy = 1;
+  }
+
+  if (drawBlankPixels) {
+    // Faster render that copies all pixels
+    const auto numBytesToCopy = sizeof(T) * numColsToCopy;
+    for(s32 relRowIdx = 0; relRowIdx < numRowsToCopy; ++relRowIdx) {
       const T* source_row = subImage.GetRow(relRowIdx + subImageRowOffset) + subImageColOffset;
       T* dest_row = Array2d<T>::GetRow(relRowIdx + destRowOffset) + destColOffset;
-      std::memcpy(dest_row, source_row, sizeof(T) * numColsToCopy);
+      std::memcpy(dest_row, source_row, numBytesToCopy);
     }
-  }else{
-    for(s32 relRowIdx = 0; relRowIdx < numRowsToCopy; ++relRowIdx){
+  } else {
+    // Slower render that copies only non-blank pixels
+    for (s32 relRowIdx = 0; relRowIdx < numRowsToCopy; ++relRowIdx) {
       const T* source_row = subImage.GetRow(relRowIdx + subImageRowOffset) + subImageColOffset;
       T* dest_row = Array2d<T>::GetRow(relRowIdx + destRowOffset) + destColOffset;
-      for(s32 relColIdx = 0; relColIdx < numColsToCopy; ++relColIdx){
-        if(source_row[relColIdx] != blankPixelValue){
+      
+      for (s32 relColIdx = 0; relColIdx < numColsToCopy; ++relColIdx) {
+        if (source_row[relColIdx] != blankPixelValue) {
           dest_row[relColIdx] = source_row[relColIdx];
-        } 
+        }
       }
     }
   }

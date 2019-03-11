@@ -18,6 +18,7 @@
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/shared/math/rect_impl.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/vision/engine/imageCompositor.h"
 
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -71,6 +72,11 @@
 
 namespace Anki {
 namespace Vector {
+
+namespace {
+  const char* kImageCompositorReadyPeriodKey = "imageReadyPeriod";
+  const char* kImageCompositorReadyCycleResetKey = "numImageReadyCyclesBeforeReset";
+}
   
 CONSOLE_VAR_RANGED(u8,  kUseCLAHE_u8,     "Vision.PreProcessing", 0, 0, 4);  // One of MarkerDetectionCLAHE enum
 CONSOLE_VAR(s32, kClaheClipLimit,         "Vision.PreProcessing", 32);
@@ -270,6 +276,20 @@ Result VisionSystem::Init(const Json::Value& config)
     return RESULT_FAIL;
   }
   _overheadMap.reset(new OverheadMap(config["OverheadMap"], _context));
+
+  const Json::Value& imageCompositeCfg = config["ImageCompositing"];
+  {
+    _imageCompositorReadyPeriod = JsonTools::ParseUInt32(imageCompositeCfg, 
+                                    kImageCompositorReadyPeriodKey, 
+                                    "VisionSystem.Ctor");
+
+    // The Reset Period is an integer multiple of the Ready Period
+    _imageCompositorResetPeriod = _imageCompositorReadyPeriod * 
+                                    JsonTools::ParseUInt32(imageCompositeCfg, 
+                                    kImageCompositorReadyCycleResetKey, 
+                                    "VisionSystem.Ctor");
+  }
+  _imageCompositor.reset(new Vision::ImageCompositor(imageCompositeCfg));
 
   // TODO check config entry here
   _groundPlaneClassifier.reset(new GroundPlaneClassifier(config["GroundPlaneClassifier"], _context));
@@ -679,6 +699,20 @@ void VisionSystem::SetFaceEnrollmentMode(Vision::FaceID_t forFaceID,  s32 numEnr
   _faceTracker->SetFaceEnrollmentMode(forFaceID, numEnrollments, forceNewID);
 }
 
+#if ANKI_DEV_CHEATS
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void VisionSystem::SaveAllRecognitionImages(const std::string& imagePathPrefix)
+{
+  _faceTracker->SaveAllRecognitionImages(imagePathPrefix);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void VisionSystem::DeleteAllRecognitionImages()
+{
+  _faceTracker->DeleteAllRecognitionImages();
+}
+#endif
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::EraseAllFaces()
 {
@@ -1036,11 +1070,11 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
 } // ApplyCLAHE()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
-                                            const Vision::Image& claheImage,
-                                            std::vector<Anki::Rectangle<s32>>& detectionRects,
-                                            MarkerDetectionCLAHE useCLAHE,
-                                            const VisionPoseData& poseData)
+Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
+                                  const Vision::Image& claheImage,
+                                  std::vector<Anki::Rectangle<s32>>& detectionRects,
+                                  MarkerDetectionCLAHE useCLAHE,
+                                  const VisionPoseData& poseData)
 {
   // Currently assuming we detect markers first, so we won't make use of anything already detected
   DEV_ASSERT(detectionRects.empty(), "VisionSystem.DetectMarkersWithCLAHE.ExpectingEmptyDetectionRects");
@@ -1086,7 +1120,6 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
       else {
         imagePtrs.push_back(&imageCache.GetGray(whichSize));
       }
-      
       break;
     }
       
@@ -1102,13 +1135,45 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
       else {
         imagePtrs.push_back(&imageCache.GetGray(whichSize));
       }
-      
       break;
     }
       
     case MarkerDetectionCLAHE::Count:
       assert(false); // should never get here
       break;
+  }
+  
+  Vision::Image compositeImage;
+  if(IsModeEnabled(VisionMode::CompositingImages)) {
+    _imageCompositor->ComposeWith(imageCache.GetGray(whichSize));
+    const size_t numImagesComposited = _imageCompositor->GetNumImagesComposited();
+
+    const bool shouldRunOnComposite = (numImagesComposited % _imageCompositorReadyPeriod) == 0;
+    if(shouldRunOnComposite) {
+      _imageCompositor->GetCompositeImage(compositeImage);
+      imagePtrs.push_back(&compositeImage);
+
+      #define DEBUG_IMAGE_COMPOSITING 0
+      #if(DEBUG_IMAGE_COMPOSITING)
+      // Debug image display
+      Vision::ImageRGB dispImg;
+      dispImg.SetFromGray(compositeImage);
+      _currentResult.debugImages.emplace_back("ImageCompositing", dispImg);
+      #endif
+    }
+
+    const bool shouldReset = (numImagesComposited == _imageCompositorResetPeriod);
+    if(shouldReset) {
+      _imageCompositor->Reset();
+
+      // This mode is considered processed iff:
+      // - a composite image was produced for marker detection
+      // - a reset occurs simultaneously
+      // NOTE: by definition of the Ready and Reset periods, we're guaranteed
+      //  to have run MarkerDetection in the same frame we trigger a Reset
+      DEV_ASSERT_MSG(shouldRunOnComposite, "VisionSystem.DetectMarkers.InvalidResetCallBeforeImageUsed","");
+      _currentResult.modesProcessed.Insert(VisionMode::CompositingImages);
+    }
   }
   
   // Set up cropping rectangles to cycle through each time DetectMarkers is called
@@ -1257,7 +1322,7 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
   
   return lastResult;
   
-} // DetectMarkersWithCLAHE()
+} // DetectMarkers
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::CheckForNeuralNetResults()
@@ -1472,7 +1537,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       UpdateRollingShutter(poseData, imageCache);
       
       Tic("TotalDetectingMarkers");
-      lastResult = DetectMarkersWithCLAHE(imageCache, claheImage, detectionsByMode[VisionMode::DetectingMarkers], useCLAHE, poseData);
+      lastResult = DetectMarkers(imageCache, claheImage, detectionsByMode[VisionMode::DetectingMarkers], useCLAHE, poseData);
       
       if(RESULT_OK != lastResult) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
@@ -1542,6 +1607,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
     Toc("TotalDetectingMotion");
   }
+
   if(IsModeEnabled(VisionMode::DetectingBrightColors)){
     if (imageCache.HasColor()){
       Tic("TotalDetectingBrightColors");
@@ -1839,8 +1905,9 @@ Result VisionSystem::SaveSensorData() const {
 
     const HistRobotState& state = _poseData.histState;
     // prox sensor
-    if (state.WasProxSensorValid()) {
-      config["proxSensor"] = state.GetProxSensorVal_mm();
+    const auto& proxData = state.GetProxSensorData();
+    if (proxData.foundObject) {
+      config["proxSensor"] = proxData.distance_mm;
     }
     else {
       config["proxSensor"] = -1;

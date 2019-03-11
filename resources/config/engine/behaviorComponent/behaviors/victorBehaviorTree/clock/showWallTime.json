@@ -55,19 +55,19 @@
   // allows template elements which have a static image to be specified once
   "staticElements":
   {
-    "Colon": "Clock_Colon"
+    "Colon": "clock_colon"
   },
 
   "digitImageMap": [
-    "Clock_00",
-    "Clock_01",
-    "Clock_02",
-    "Clock_03",
-    "Clock_04",
-    "Clock_05",
-    "Clock_06",
-    "Clock_07",
-    "Clock_08",
-    "Clock_09"
+    "clock_00",
+    "clock_01",
+    "clock_02",
+    "clock_03",
+    "clock_04",
+    "clock_05",
+    "clock_06",
+    "clock_07",
+    "clock_08",
+    "clock_09"
   ]
 }

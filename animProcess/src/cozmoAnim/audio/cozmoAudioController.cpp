@@ -243,7 +243,7 @@ CONSOLE_FUNC( StopAllAudioEvents, CONSOLE_PATH, optional uint64 gameObjectId );
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // CozmoAudioController
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CozmoAudioController::CozmoAudioController( const AnimContext* context )
+CozmoAudioController::CozmoAudioController( const Anim::AnimContext* context )
 : _animContext( context )
 {
 #if USE_AUDIO_ENGINE

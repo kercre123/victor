@@ -121,7 +121,7 @@ namespace HeadController {
       const f32 BRACING_POWER = -0.65;
 
       // True if encoder was reported as invalid by HAL and has not been calibrated since
-      bool encoderInvalid_ = false;
+      u32 encoderInvalidStartTime_ms_ = 0;
 
     } // "private" members
 
@@ -219,12 +219,14 @@ namespace HeadController {
                angleError_deg);
       
       // Log DAS, but not if this is a calibration due to normal startup
+      const u32 timeUncalibrated_ms = encoderInvalidStartTime_ms_ > 0 ? HAL::GetTimeStamp() - encoderInvalidStartTime_ms_ : 0;
       if (calibrationReason_ != MotorCalibrationReason::Startup) {
-        DASMSG(head_controller_motor_calib_reason,
+        DASMSG(head_motor_calibrated,
                "head_motor_calibrated",
                "The robot's head motor has just completed a calibration");
         DASMSG_SET(s1, EnumToString(calibrationReason_), "Reason for triggering calibration");
         DASMSG_SET(i1, 1000.f * angleError_deg, "Angular error (millidegrees). This represents how far out of calibration the motor was.");
+        DASMSG_SET(i2, timeUncalibrated_ms, "Amount of time motor was uncalibrated according to syscon (ms). If syscon didn't know then 0.")
         DASMSG_SEND();
       }
     }
@@ -293,7 +295,7 @@ namespace HeadController {
             isCalibrated_     = true;
             calState_         = HCS_IDLE;
             inPosition_       = true;
-            encoderInvalid_   = false;
+            encoderInvalidStartTime_ms_   = 0;
             break;
           }
         } // end switch(calState_)
@@ -580,8 +582,8 @@ namespace HeadController {
       PoseAndSpeedFilterUpdate();
 
       // Check encoder validity
-      if (HAL::IsHeadEncoderInvalid()) {
-        encoderInvalid_ = true;
+      if (HAL::IsHeadEncoderInvalid() && encoderInvalidStartTime_ms_ == 0) {
+        encoderInvalidStartTime_ms_ = HAL::GetTimeStamp();
       }
 
       // If disabled, do not activate motors
@@ -683,7 +685,12 @@ namespace HeadController {
 
     bool IsEncoderInvalid()
     {
-      return encoderInvalid_;
+      return encoderInvalidStartTime_ms_ > 0;
+    }
+
+    void SetEncoderInvalid() 
+    {
+      encoderInvalidStartTime_ms_ = HAL::GetTimeStamp();
     }
 
   } // namespace HeadController
