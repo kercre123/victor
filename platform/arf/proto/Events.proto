@@ -1,0 +1,46 @@
+syntax = "proto2";
+
+package arf_proto;
+
+import "Time.proto";
+import "UUID.proto";
+
+message DataEvent {
+    enum Type {
+        CREATION = 0;
+        PASS_THROUGH = 1;
+        FORK = 2;
+        DESTRUCTION = 3;
+    }
+
+    required Type type = 1;
+    required UUID data_id = 2;
+    repeated UUID parent_ids = 3;
+    required Time mono_time = 4;
+    required Time wall_time = 5;
+}
+
+message TaskLog {
+    enum Status {
+        PENDING = 0;
+        FINISHED = 1;
+        CANCELLED = 2;
+        ERRORED = 3;
+    }
+
+    required UUID task_id = 1;
+    optional UUID source_id = 2;
+    optional UUID thread_id = 3;
+    repeated UUID data_ids = 4;
+    required Time queue_time_mono = 5;
+    optional Time start_time_mono = 6;
+    optional Time end_time_mono = 7;
+    required Status status = 8; 
+}
+
+message ArfLogItem {
+    oneof entry {
+        DataEvent data_event = 1;
+        TaskLog task_log = 2;
+    }
+}

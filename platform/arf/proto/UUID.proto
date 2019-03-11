@@ -1,0 +1,7 @@
+syntax = "proto2";
+
+package arf_proto;
+
+message UUID {
+    required bytes uuid = 1;
+}

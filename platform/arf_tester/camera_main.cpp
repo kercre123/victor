@@ -8,7 +8,7 @@
 #include "coretech/vision/engine/compressedImage.h"
 #include "coretech/common/shared/array2d_impl.h"
 #include "coretech/vision/engine/image.h"
-#include "platform/arf/arf.h"
+#include "arf/arf.h"
 #include "util/logging/logging.h"
 #include "json/json.h"
 

@@ -1,0 +1,8 @@
+syntax = "proto2";
+
+package arf_proto;
+
+message Time {
+    required int64 seconds = 1;
+    required int32 nanoseconds = 2;
+}

@@ -1,4 +1,4 @@
-#include "arf.h"
+#include "arf/arf.h"
 #include <stdio.h>
 #include <unistd.h>
 #include <unordered_map>
@@ -14,9 +14,9 @@ namespace ARF
   {
     std::string folder = "/tmp/arf/" + node_name;
     int ret = system(("mkdir -p '" + folder + "'").c_str());
-    if (ret < 0) {
-      printf("Problem with system call.\n");
-    }
+    if (ret != 0) {
+      return "";
+    } 
     return "ipc://" + folder + "/" + topic_name;
   }
   
@@ -43,7 +43,7 @@ namespace ARF
     return "tcp://192.168.34.128:40000";
   }
   
-  void Init(int argc, char** argv, const char* name)
+  void Init(int /*argc*/, char** /*argv*/, const char* name)
   {
     printf("[%s] Initializing ARF...\n", name);
     gARFName = name;
@@ -141,7 +141,7 @@ namespace ARF
       if(buf && sz > 0) {
         OnMsg(buf, sz);
         nng_free(buf, sz);
-      }      
+      }
     }
   }
   

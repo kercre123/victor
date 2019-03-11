@@ -1,7 +1,12 @@
 cxx_project(
   name = 'arf',
-  srcs = ['arf.cpp'],
-  headers = ['arf.h']
+  srcs = cxx_src_glob(['src']),
+  headers = cxx_header_glob(['include'])
+)
+
+cxx_project(
+    name = 'arf_proto',
+    srcs = glob(['proto/*.proto'])
 )
 
 cxx_project(
@@ -13,4 +18,3 @@ cxx_project(
   name = 'publisher',
   srcs = ['test/publisher.cpp']
 )
-

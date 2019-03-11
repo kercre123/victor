@@ -59,7 +59,7 @@ namespace ARF
     SubHandle(const std::string& topic_name, const tCallback& callback) : SubHandleBase(topic_name) , _callback(callback) { }
 
   private:
-    virtual void OnMsg(void* bytes, size_t size) override {
+    virtual void OnMsg(void* bytes, size_t /*size*/) override {
         T* msg = static_cast<T*>(bytes);
         _callback(*msg);
     }
