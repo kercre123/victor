@@ -187,7 +187,7 @@ class EphemeralAgent {
                 "/home/build/jenkins",
                 launcher)
         agent.nodeDescription = "dynamic build agent"
-        agent.numExecutors = 1
+        agent.numExecutors = 2
         agent.labelString = "reserved"
         agent.mode = Node.Mode.EXCLUSIVE
         agent.retentionStrategy = new RetentionStrategy.Always()
@@ -264,36 +264,50 @@ stage("${primaryStageName} Build") {
         }
         if (gatekeeper.nodeProvisioned) break
     }
-    node(uuid) {
-        try {
-            withDockerEnv {
-                buildPRStepsVicOS type: buildConfig.SHIPPING.getBuildType()
-                //deployArtifacts type: buildConfig.SHIPPING.getArtifactType(), artifactoryServer: server
+    try {
+        parallel shipping: {
+            node(uuid) {
+                gitCheckout(true)
+                withDockerEnv {
+                    buildPRStepsVicOS type: buildConfig.SHIPPING.getBuildType()
+                }
             }
+        },
+        debug: {
+            node(uuid) {
+                gitCheckout(true)
+                withDockerEnv {
+                    buildPRStepsVicOS type: buildConfig.DEBUG.getBuildType()
+                }
+            }
+        }
+        node('master') {
             notifyBuildStatus('Success')
-        } catch (FlowInterruptedException ae) {
+        }
+    } catch (FlowInterruptedException ae) {
+        node('master') {
             notifyBuildStatus('Aborted')
-            throw ae
-        } catch (exc) {
+        }
+        throw ae
+    } catch (exc) {
+        node('master') {
             notifyBuildStatus('Failure')
-            throw exc
-        } finally {
-            stage('Cleaning slave workspace') {
+        }
+        throw exc
+    } finally {
+        node('master') {
+            stage('Cleaning master workspace') {
                 cleanWs()
+                def workspace = pwd()
+                dir("${workspace}@script") {
+                    deleteDir()
+                }
             }
-            node('master') {
-                stage('Cleaning master workspace') {
-                    def workspace = pwd()
-                    dir("${workspace}@script") {
-                        deleteDir()
-                    }
-                }
-                stage('Destroy ephemeral VM') {
-                    vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
-                }
-                stage('Detach ephemeral build agent from Jenkins') {
-                    agent.Detach()
-                }
+            stage('Destroy ephemeral VM') {
+                vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
+            }
+            stage('Detach ephemeral build agent from Jenkins') {
+                agent.Detach()
             }
         }
     }
