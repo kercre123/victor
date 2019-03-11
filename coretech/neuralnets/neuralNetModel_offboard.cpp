@@ -85,6 +85,12 @@ Result OffboardModel::LoadModelInternal(const std::string& modelPath, const Json
   // Anything not talking over FileIO is assumed to be talking over UDP
   if(Vision::OffboardCommsType::FileIO != _commsType && _udpClient == nullptr)
   {
+    if(!ANKI_DEV_CHEATS)
+    {
+      LOG_ERROR("OffboardModel.LoadModelInternal.UDPCommsNotAllowedToShip", "");
+      return RESULT_FAIL;
+    }
+    
     _udpClient.reset(new LocalUdpClient());
     
     const bool connected = Connect();
