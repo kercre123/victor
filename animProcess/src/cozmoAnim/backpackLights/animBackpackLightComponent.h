@@ -108,6 +108,12 @@ private:
 
   // Updates the offline connectivity check if neccessary
   void UpdateOfflineCheck(bool force = false);
+
+  // is there a current request for a light that's associated with an active behavior?
+  bool IsBehaviorLightActive() const;
+
+  
+  /// member variables ...
   
   const AnimContext* _context = nullptr;
 
@@ -126,6 +132,8 @@ private:
   // Locator handles for the private backpack light sources
   BackpackLightDataLocator _engineLightConfig{};
   BackpackLightDataLocator _criticalLightConfig{};
+
+  BackpackAnimationTrigger _mostRecentTrigger = BackpackAnimationTrigger::Off;
   
   // Note: this variable does NOT track the current trigger playing, it tracks internal state for 
   // UpdateChargingLightConfig and should not be used for any other decision making

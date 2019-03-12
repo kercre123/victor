@@ -93,7 +93,6 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
   // Check which, if any, backpack lights should be displayed
   // Streaming, Low Battery, Offline, Charging, or Nothing
   BackpackAnimationTrigger trigger = BackpackAnimationTrigger::Off;
-
   
   // If we are currently streaming to the cloud
   if(isCloudStreamOpen)
@@ -114,15 +113,22 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
     // N        | N            | Y (no charging taking place)
     trigger = BackpackAnimationTrigger::LowBattery;
   }
-  else if(isMicMuted)
-  {
-    trigger = BackpackAnimationTrigger::Muted;
-  }
   // If we have been offline for long enough
   else if(_offlineAtTime_ms > 0 &&
           ((TimeStamp_t)curTime_ms - _offlineAtTime_ms > kOfflineTimeBeforeLights_ms))
   {
     trigger = BackpackAnimationTrigger::Offline; 
+  }
+  else if(isMicMuted)
+  {
+    trigger = BackpackAnimationTrigger::Muted;
+  }
+  else if ( IsBehaviorLightActive() )
+  {
+    // if the engine is playing a "behavior light", then we want to slide that priority in right here
+    // turn off the critical lights since the engine light will take priority over everything after this point
+    // once it stops, critical lights will be re-started
+    trigger = BackpackAnimationTrigger::Off;
   }
   else if(isNotificationPending)
   {
@@ -215,8 +221,49 @@ void BackpackLightComponent::Update()
   }
 }
 
+// backpack lights that originate from the engine process are kept seperately from the critical lights
+// which are determined by anim level properties.  we've had a request to have specific behavior lights take priority
+// over certain critical lights, and since there's currently no way to categorize different light sources I decided
+// to hack in this error prone way to specificy specific lights as "behavior lights".
+// a more robust solution will follow when we refactor the (many) light components once anim/engine processes are merged
+bool BackpackLightComponent::IsBehaviorLightActive() const
+{
+  bool isAnyBehaviorLightActive = false;
+
+  switch ( _mostRecentTrigger )
+  {
+    case BackpackAnimationTrigger::WorkingOnIt:
+    case BackpackAnimationTrigger::SpinnerBlueCelebration:
+    case BackpackAnimationTrigger::SpinnerBlueHoldTarget:
+    case BackpackAnimationTrigger::SpinnerBlueSelectTarget:
+    case BackpackAnimationTrigger::SpinnerGreenCelebration:
+    case BackpackAnimationTrigger::SpinnerGreenHoldTarget:
+    case BackpackAnimationTrigger::SpinnerGreenSelectTarget:
+    case BackpackAnimationTrigger::SpinnerPurpleCelebration:
+    case BackpackAnimationTrigger::SpinnerPurpleHoldTarget:
+    case BackpackAnimationTrigger::SpinnerPurpleSelectTarget:
+    case BackpackAnimationTrigger::SpinnerRedCelebration:
+    case BackpackAnimationTrigger::SpinnerRedHoldTarget:
+    case BackpackAnimationTrigger::SpinnerRedSelectTarget:
+    case BackpackAnimationTrigger::SpinnerYellowCelebration:
+    case BackpackAnimationTrigger::SpinnerYellowHoldTarget:
+    case BackpackAnimationTrigger::SpinnerYellowSelectTarget:
+    case BackpackAnimationTrigger::DanceToTheBeat:
+    case BackpackAnimationTrigger::MeetVictor:
+      isAnyBehaviorLightActive = true;
+      break;
+
+    default:
+      break;
+  }
+
+  return isAnyBehaviorLightActive;
+}
+
 void BackpackLightComponent::SetBackpackAnimation(const BackpackLightAnimation::BackpackAnimation& lights)
 {
+  // if we're forcing a manual light, reset our most recent trigger
+  _mostRecentTrigger = BackpackAnimationTrigger::Off;
   StartBackpackAnimationInternal(lights,
                                  Util::EnumToUnderlying(BackpackLightSourcePrivate::Engine),
                                  _engineLightConfig);
@@ -234,7 +281,9 @@ void BackpackLightComponent::SetBackpackAnimation(const BackpackAnimationTrigger
                       EnumToString(trigger), animName.c_str());
     return;
   }
-  
+
+  // keep track of what trigger is currently active (from the engine)
+  _mostRecentTrigger = trigger;
   StartBackpackAnimationInternal(*anim,
                                  Util::EnumToUnderlying(BackpackLightSourcePrivate::Engine),
                                  _engineLightConfig);
