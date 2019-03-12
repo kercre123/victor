@@ -25,7 +25,7 @@ PROTO WhiskeyBot [
 
   # Set to TRUE if you just want to use the model for visualization.
   field SFBool vizMode FALSE
-  
+
   # Tread wheel parameters
   field SFFloat frontWheelRadiusM   0.0145
   field SFFloat rearWheelRadiusM    0.01075
@@ -45,7 +45,7 @@ PROTO WhiskeyBot [
 
   # Robot battery voltage
   field SFFloat batteryVolts  4.2
-  
+
   # Rates at which battery voltage changes while on/off the charger
   field SFFloat batteryChargeRate_voltsPerMin     0.09
   field SFFloat batteryDischargeRate_voltsPerMin -0.02
@@ -61,6 +61,10 @@ Supervisor {
 
     # append optional command line parameters
     %{
+      if fields.filterLogs.value then end
+      if fields.colorizeStderrOutput.value then end
+      if fields.isWhiskey.value then end
+
       protoHelper = require(context.project_path .. "protos/lua/protoHelper")
       ctrlArgs = protoHelper.setCtrlOptArgs(fields)
     }%
@@ -112,8 +116,8 @@ Supervisor {
         CozmoCliffSensor {
           name "cliffSensorBR"
           translation -0.045 -0.015 -0.013
-        }        
-        
+        }
+
 
         # if you modify the length, you need to update FORWARD_RANGE_SENSOR_MIN/MAX_DISTANCE_MM
         DistanceSensor {
@@ -256,7 +260,7 @@ Supervisor {
                   }
 
                 %{ if not fields.vizMode.value then }%
-                
+
                 # Anim process:
                 CozmoAnim {
                   robotID IS robotID
@@ -264,14 +268,14 @@ Supervisor {
                   colorizeStderrOutput IS colorizeStderrOutput
                   isWhiskey IS isWhiskey
                 }
-                
+
                 # Web server process:
                 CozmoWebServer {
                   robotID IS robotID
                   filterLogs IS filterLogs
                   colorizeStderrOutput IS colorizeStderrOutput
                 }
-                
+
                 # Engine process:
                 WhiskeyEngine {
                   robotID IS robotID
@@ -281,7 +285,7 @@ Supervisor {
                 }
 
                 # This IMU is positioned in the same place as the one in CozmoEngine2.proto
-                # as way to simulate access to the same IMU from both the robot and engine processes 
+                # as way to simulate access to the same IMU from both the robot and engine processes
                 # which we might in theory be able to eventually do via AndroidHAL.
                 CozmoIMU {
                   translation 0.0058 -0.0135 0

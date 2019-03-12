@@ -2,10 +2,10 @@ PROTO CozmoAnim [
   field SFString name "CozmoAnim"
   field SFInt32 robotID 0
   field SFBool isWhiskey FALSE
-  
+
   field SFVec3f translation 0 0 0
   field SFRotation rotation 0 0 1 0
-  
+
   field SFBool filterLogs FALSE
   field SFBool colorizeStderrOutput FALSE
 ]
@@ -18,6 +18,10 @@ Supervisor {
 
   # append optional command line parameters
   %{
+    if fields.filterLogs.value then end
+    if fields.colorizeStderrOutput.value then end
+    if fields.isWhiskey.value then end
+
     protoHelper = require(context.project_path .. "protos/lua/protoHelper")
     ctrlArgs = protoHelper.setCtrlOptArgs(fields)
   }%
