@@ -393,15 +393,6 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
       }
       break;
 
-    // TODO VIC-11579 Support CaptureSingleImage
-    // case external_interface::GatewayWrapperTag::kCaptureSingleImageRequest:
-    //   {
-    //     SubscribeToVisionMode(true, VisionMode::ImageViz);
-    //     _robot->GetVisionComponent().EnableSendingSDKImageChunks(true);
-    //     _captureSingleImage = true;
-    //   }
-    //   break;
-
     case external_interface::GatewayWrapperTag::kEnableImageStreamingRequest:
       {
         // Allowed to be controlled even when the behavior is not active
@@ -539,23 +530,9 @@ void SDKComponent::HandleMessage(const ExternalInterface::RobotProcessedImage& m
           break;
         case VisionMode::ImageViz:
           {
-            // if(_captureSingleImage)
-            // {
-            //   auto* msg = new CaptureSingleImageResponse();
-            //   msg->set_allocated_status(status);
-            //   gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
-
-            //   const bool updateWaitingSet = false;
-            //   SubscribeToVisionMode(false, VisionMode::ImageViz, updateWaitingSet);
-            //   _robot->GetVisionComponent().EnableSendingSDKImageChunks(false);
-            //   _captureSingleImage = false;
-            // }
-            // else
-            {
-              auto* msg = new EnableImageStreamingResponse();
-              msg->set_allocated_status(status);
-              gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
-            }
+            auto* msg = new EnableImageStreamingResponse();
+            msg->set_allocated_status(status);
+            gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
           }
           break;
         

@@ -426,6 +426,14 @@ service ExternalInterface {
     };
   }
 
+  // Request a single image to be captured and sent from the robot.
+  rpc CaptureSingleImage(CaptureSingleImageRequest) returns (CaptureSingleImageResponse) {
+    option (google.api.http) = {
+      post: "/v1/capture_single_image",
+      body: "*"
+    };
+  }
+
   // Set Vector's eye color.
   rpc SetEyeColor(SetEyeColorRequest) returns (SetEyeColorResponse) {
     option (google.api.http) = {

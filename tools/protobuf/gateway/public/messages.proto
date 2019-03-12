@@ -1006,6 +1006,15 @@ message CameraFeedResponse {
   bytes                    data = 4;
 }
 
+message CaptureSingleImageRequest {}
+
+message CaptureSingleImageResponse {
+  uint32                   frame_time_stamp = 1;
+  uint32                   image_id = 2;
+  ImageChunk.ImageEncoding image_encoding = 3;
+  bytes                    data = 4;
+}
+
 message SetEyeColorRequest {
   float hue = 1;
   float saturation = 2;
