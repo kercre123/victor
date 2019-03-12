@@ -398,11 +398,13 @@ void BehaviorPlaypenDistanceSensor::TransitionToTurnBack()
   DriveStraightAction* forw = new DriveStraightAction(30);
   TurnInPlaceAction* turn = new TurnInPlaceAction(_startingAngle.ToFloat(), true);
   DriveStraightAction* drive = new DriveStraightAction((_distToDrive_mm < 0 ? _distToDrive_mm : 0));
+  DriveStraightAction* drive2 = new DriveStraightAction((_performCalibration ? -60 : 0));
   CompoundActionSequential* action = new CompoundActionSequential();
   action->AddAction(unturn);
   action->AddAction(forw);
   action->AddAction(turn);
   action->AddAction(drive);
+  action->AddAction(drive2);
   DelegateIfInControl(action, [this]() { PLAYPEN_SET_RESULT(FactoryTestResultCode::SUCCESS); });
 }
 
