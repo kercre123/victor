@@ -117,9 +117,10 @@ BehaviorFindHome::BehaviorFindHome(const Json::Value& config)
 : ICozmoBehavior(config)
 , _iConfig(config, "Behavior" + GetDebugLabel() + ".LoadConfig")
 {
-  SubscribeToTags({
+  SubscribeToTags({{
     EngineToGameTag::RobotOffTreadsStateChanged,
-  });
+    EngineToGameTag::RobotProcessedImage,
+  }});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -206,6 +207,17 @@ void BehaviorFindHome::AlwaysHandleInScope(const EngineToGameEvent& event)
       if (currTreadState != OffTreadsState::OnTreads) {
         // If we've gotten off of our treads, our "visited locations" will no longer be valid
         _dVars.persistent.searchedLocations.clear();
+      }
+      break;
+    }
+    case EngineToGameTag::RobotProcessedImage:
+    {
+      //   
+      if(IsActivated() && GetBEI().HasVisionComponent()) {
+        _dVars.numFramesOfDetectingMarkers++;
+        if(GetBEI().GetVisionComponent().GetLastImageQuality() == Vision::ImageQuality::TooDark) {
+          _dVars.numFramesOfImageTooDark++;
+        }
       }
       break;
     }
@@ -506,26 +518,6 @@ std::vector<Point2f> BehaviorFindHome::GetRecentlySearchedLocations()
   std::transform(prevSearchMap.begin(), prevSearchMap.end(), std::back_inserter(prevSearchPositions),
                  [](const std::pair<float, Point2f>& mapEntry) { return mapEntry.second; });
   return prevSearchPositions;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorFindHome::BehaviorUpdate() 
-{
-  if(IsActivated()) {
-    // Note: this gets called at the same rate as engine
-    // We do not have to worry about missed frames of
-    //  marker detection (because of engine ticks taking 
-    //  too long) because engine is the driver of frames
-    //  being processed ultimately.
-    // For this behavior we are also running MarkerDetection
-    //  every frame (high frequency).
-    if(GetBEI().HasVisionComponent()) {
-      _dVars.numFramesOfDetectingMarkers++;
-      if(GetBEI().GetVisionComponent().GetLastImageQuality() == Vision::ImageQuality::TooDark) {
-        _dVars.numFramesOfImageTooDark++;
-      }
-    }
-  }
 }
 
 } // namespace Vector

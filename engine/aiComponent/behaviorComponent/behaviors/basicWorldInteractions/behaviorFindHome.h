@@ -53,7 +53,6 @@ protected:
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
-  virtual void BehaviorUpdate() override;
 
 private:
   struct InstanceConfig {
