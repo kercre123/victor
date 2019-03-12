@@ -58,7 +58,7 @@ public:
   const ProxSensorData& GetLatestProxData() const { return _latestData; }
   
   // enable or disable this entire component's ability to update the nav map
-  void SetNavMapUpdateEnabled(bool enabled) { _enabled = enabled; }
+  void SetNavMapUpdateEnabled(bool enabled) { _mapEnabled = enabled; }
   
   // loads raw prox sensor data to a string for different logging systems
   std::string GetDebugString(const std::string& delimeter = "\n");
@@ -72,30 +72,18 @@ protected:
 
 private:
 
-  void UpdateNavMap();
+  // Pushes processed prox data into the NavMap
+  void UpdateNavMap(uint32_t timestamp);
   
-  // Checks the raw sensor data and updates current component state
-  void ProcessRawSensorData();
+  // Checks if the lift is currently blocking any sensor regions
+  bool CheckLiftOcclusion();
   
-  ProxSensorDataRaw _latestDataRaw;
-  ProxSensorData    _latestData;
-  Pose3d            _previousRobotPose;
-  Pose3d            _currentRobotPose;
-  float             _previousMeasurement;
-  u8                _measurementsAtPose;
-
-  // The timestamp of the RobotState message with the
-  // latest distance sensor data
-  uint32_t _lastMsgTimestamp = 0;
-
-  // The pose frame ID of the RobotState message with the
-  // latest distance sensor data
-  uint32_t _lastMsgPoseFrameID = 0;
-
-  uint32_t _numTicsLiftOutOfFOV = 0;
-
-  // Whether or not navmap updates are enabled
-  bool _enabled = true;
+  ProxSensorDataRaw _latestDataRaw;           // raw data sent from robot process - should only be used for debugging purposes
+  ProxSensorData    _latestData;              // processed data that has additional cleanup and state
+  Pose3d            _currentRobotPose;        // robot pose at current sensor reading
+  uint32_t          _measurementsAtPose = 0;  // counter to limit number of map updates while not moving
+  uint32_t          _numTicsLiftOutOfFOV = 0; // counter for lift FOV checks to account for sensor delay
+  bool              _mapEnabled = true;       // disable map updates entirely (currently for low-power mode)
   
 };
 

@@ -277,7 +277,7 @@ AlexaImpl::~AlexaImpl()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaImpl::Init( const AnimContext* context, InitCompleteCallback&& completionCallback )
+void AlexaImpl::Init( const Anim::AnimContext* context, InitCompleteCallback&& completionCallback )
 {
   _context = context;
   _initCompleteCallback = std::move(completionCallback);

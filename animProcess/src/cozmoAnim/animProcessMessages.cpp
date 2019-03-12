@@ -40,6 +40,7 @@
 #include "clad/robotInterface/messageEngineToRobotTag.h"
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
+#include "clad/types/tofTypes.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/factory/emrHelper.h"
@@ -74,12 +75,12 @@ namespace {
   constexpr int MAX_PACKET_BUFFER_SIZE = 2048;
   u8 pktBuffer_[MAX_PACKET_BUFFER_SIZE];
 
-  Anki::Vector::AnimEngine*                   _animEngine = nullptr;
-  Anki::Vector::AnimationStreamer*            _animStreamer = nullptr;
-  Anki::Vector::StreamingAnimationModifier*   _streamingAnimationModifier = nullptr;
+  Anki::Vector::Anim::AnimEngine*             _animEngine = nullptr;
+  Anki::Vector::Anim::AnimationStreamer*            _animStreamer = nullptr;
+  Anki::Vector::Anim::StreamingAnimationModifier*   _streamingAnimationModifier = nullptr;
   Anki::Vector::Audio::EngineRobotAudioInput* _engAudioInput = nullptr;
   Anki::Vector::Audio::ProceduralAudioClient* _proceduralAudioClient = nullptr;
-  const Anki::Vector::AnimContext*            _context = nullptr;
+  const Anki::Vector::Anim::AnimContext*      _context = nullptr;
 
   bool _connectionFlowInited = false;
 
@@ -574,6 +575,11 @@ void Process_setBLEPin(const Anki::Vector::SwitchboardInterface::SetBLEPin& msg)
   SetBLEPin(msg.pin);
 }
 
+void Process_rangeDataToDisplay(const Anki::Vector::RobotInterface::RangeDataToDisplay& msg)
+{
+  FaceInfoScreenManager::getInstance()->DrawToF(msg.data);
+}
+
 void Process_sendBLEConnectionStatus(const Anki::Vector::SwitchboardInterface::SendBLEConnectionStatus& msg)
 {
   // todo
@@ -812,11 +818,11 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
 // ========== START OF CLASS METHODS ==========
 // #pragma mark "Class methods"
 
-Result AnimProcessMessages::Init(AnimEngine* animEngine,
-                                 AnimationStreamer* animStreamer,
-                                 StreamingAnimationModifier* streamingAnimationModifier,
+Result AnimProcessMessages::Init(Anim::AnimEngine* animEngine,
+                                 Anim::AnimationStreamer* animStreamer,
+                                 Anim::StreamingAnimationModifier* streamingAnimationModifier,
                                  Audio::EngineRobotAudioInput* audioInput,
-                                 const AnimContext* context)
+                                 const Anim::AnimContext* context)
 {
   // Preconditions
   DEV_ASSERT(nullptr != animEngine, "AnimProcessMessages.Init.InvalidAnimEngine");

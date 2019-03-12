@@ -58,6 +58,9 @@ namespace Anki {
       const f32           GetLeftWheelSpeed_mmps()         const {return _state.lwheel_speed_mmps;}
       const f32           GetRightWheelSpeed_mmps()        const {return _state.rwheel_speed_mmps;}
 
+      // TODO: remove this once `_pose` actually contains full 3d orientation (currently it only includes yaw)
+      const f32           GetPitch_rad()                   const {return _state.pose.pitch_angle;}
+
       const ProxSensorData& GetProxSensorData()            const {return _proxData;}
 
       // Only meant to be used by RobotStateHistory::UpdateProxSensorData()

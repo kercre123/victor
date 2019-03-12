@@ -65,7 +65,7 @@
 
 namespace Anki {
 namespace Vector {
-
+namespace Anim {
 #define CONSOLE_GROUP "Face.ParameterizedFace"
 
   enum class FaceDisplayType {
@@ -101,7 +101,7 @@ namespace Vector {
   uint16_t AnimationStreamer::_numLayersRendered = 0;
 
 #if ANKI_DEV_CHEATS
-  static const AnimContext* s_context; // copy of AnimContext in first constructed AnimationStreamer, needed for GetDataPlatform
+  static const Anim::AnimContext* s_context; // copy of AnimContext in first constructed AnimationStreamer, needed for GetDataPlatform
   static bool s_faceDataOverrideRegistered = false;
   static uint8_t s_gammaLUT[3][256];// RGB x 256 entries
 
@@ -379,7 +379,7 @@ namespace Vector {
 
 #undef CONSOLE_GROUP
 
-  AnimationStreamer::AnimationStreamer(const AnimContext* context)
+  AnimationStreamer::AnimationStreamer(const Anim::AnimContext* context)
   : _context(context)
   , _proceduralTrackComponent(new TrackLayerComponent(context))
   , _lockedTracks((u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK)
@@ -1084,7 +1084,7 @@ namespace Vector {
     return res;
   }
 
-  void AnimationStreamer::GetStreamableFace(const AnimContext* context, const ProceduralFace& procFace, Vision::ImageRGB565& outImage)
+  void AnimationStreamer::GetStreamableFace(const Anim::AnimContext* context, const ProceduralFace& procFace, Vision::ImageRGB565& outImage)
   {
     ANKI_CPU_PROFILE("AnimationStreamer::GetStreamableFace");
     if(kProcFace_Display == (int)FaceDisplayType::Test)
@@ -1625,7 +1625,7 @@ namespace Vector {
   } // ExtractMessagesFromStreamingAnim()
 
 
-  Result AnimationStreamer::ExtractMessagesRelatedToProceduralTrackComponent(const AnimContext* context,
+  Result AnimationStreamer::ExtractMessagesRelatedToProceduralTrackComponent(const Anim::AnimContext* context,
                                                                              Animation* anim,
                                                                              TrackLayerComponent* trackComp,
                                                                              const u8 tracksCurrentlyLocked,
@@ -2223,6 +2223,6 @@ namespace Vector {
     }
   }
 
-
+} // namespace Anim
 } // namespace Vector
 } // namespace Anki

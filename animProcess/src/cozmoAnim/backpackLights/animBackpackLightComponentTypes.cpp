@@ -29,6 +29,6 @@ bool EnumFromString(const std::string& string, BackpackAnimationTrigger& trigger
   }
   return false;
 }
- 
+
 }
 }

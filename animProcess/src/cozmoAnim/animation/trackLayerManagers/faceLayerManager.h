@@ -27,6 +27,7 @@ namespace Vector {
 // Forward declaration
 class ProceduralFace;
 
+namespace Anim {
 class FaceLayerManager : public ITrackLayerManager<ProceduralFaceKeyFrame>
 {
 public:
@@ -106,6 +107,7 @@ private:
   
 };
 
+} // namespace Anim
 } // namespace Vector
 } // namespace Anki
 

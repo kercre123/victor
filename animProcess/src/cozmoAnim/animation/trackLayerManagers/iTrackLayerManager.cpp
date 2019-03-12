@@ -19,6 +19,7 @@
 
 namespace Anki {
 namespace Vector {
+namespace Anim {
 
 template<class FRAME_TYPE>
 ITrackLayerManager<FRAME_TYPE>::ITrackLayerManager(const Util::RandomGenerator& rng)
@@ -297,5 +298,6 @@ template class ITrackLayerManager<RobotAudioKeyFrame>;        // AudioLayerManag
 template class ITrackLayerManager<BackpackLightsKeyFrame>;    // BackpackLayerManager
 template class ITrackLayerManager<ProceduralFaceKeyFrame>;    // FaceLayerManager
 
+}
 }
 }

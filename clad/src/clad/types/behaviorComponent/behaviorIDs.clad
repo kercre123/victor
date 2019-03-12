@@ -44,6 +44,7 @@ enum uint_16 BehaviorID {
   PlaypenDistanceSensor100mm,
   PlaypenDistanceSensor300mm,
   PlaypenDistanceSensor80mm,
+  PlaypenDistanceSensorCalib80mm,
   PlaypenDriftCheck,
   PlaypenDriveForwards,
   PlaypenEndChecks,

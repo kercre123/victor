@@ -66,6 +66,8 @@ public:
   
   BatteryLevel GetBatteryLevel() const { return _batteryLevel; }
   
+  BatteryLevel GetPrevBatteryLevel() const { return _prevBatteryLevel; }
+  
   // Returns the low-pass filtered battery voltage
   float GetBatteryVolts() const { return _batteryVoltsFilt; }
   
@@ -116,13 +118,8 @@ public:
   // A power shutdown is imminent 30 seconds from when this first becomes true.
   bool IsBatteryOverheated() const { return _battOverheated; }
 
-  // Returns how long the "fully charged" state has been active. Returns 0
-  // if not currently fully charged.
-  float GetFullyChargedTimeSec() const;
-  
-  // Returns how long the "low battery" state has been active. Returns 0
-  // if not currently in a low battery state.
-  float GetLowBatteryTimeSec() const;
+  // Returns how long the provided state has been active. Returns 0 if not in that state
+  float GetTimeAtLevelSec(BatteryLevel level) const;
 
   // Get the amount of time that we've been on charger.
   // Returns 0.f if not on charger.
@@ -165,6 +162,7 @@ private:
   uint8_t _battTemperature_C = 0;
 
   BatteryLevel _batteryLevel = BatteryLevel::Unknown;
+  BatteryLevel _prevBatteryLevel = BatteryLevel::Unknown;
   
   bool _battOverheated = false;
   bool _battDisconnected = false;

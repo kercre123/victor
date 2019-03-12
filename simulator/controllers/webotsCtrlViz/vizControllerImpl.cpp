@@ -211,16 +211,38 @@ void VizControllerImpl::Init()
       // all of the nodes in the world to find the camera node's ID.
       const int maxNodesToSearch = 10000;
       webots::Node* cameraNode = nullptr;
+      webots::Node* tofNode = nullptr;
       for (int i=0 ; i < maxNodesToSearch ; i++) {
         auto* node = _vizSupervisor.getFromId(i);
-        if ((node != nullptr) && (node->getTypeName() == "CozmoCamera")) {
-          cameraNode = node;
+        if (node != nullptr)
+        {
+          if(node->getTypeName() == "CozmoCamera")
+          {
+            cameraNode = node;
+          }
+          else if(node->getTypeName() == "RangeFinder")
+          {
+            tofNode = node;
+          }
+        }
+
+        if(cameraNode != nullptr && tofNode != nullptr)
+        {
           break;
         }
       }
+      
       DEV_ASSERT(cameraNode != nullptr, "No camera found");
-      _vizSupervisor.getSelf()->setVisibility(cameraNode, false);
       _cozmoCameraNodeId = cameraNode->getId();
+
+      // A RangeFinder node may or may not exist depending on whether or not the simulated robot
+      // is Whiskey or Vector
+      if(tofNode != nullptr)
+      {
+        _cozmoToFNodeId = tofNode->getId();
+      }
+
+      SetNodeVisibility(_vizSupervisor.getSelf());
     }
   }
 }
@@ -1301,11 +1323,7 @@ void VizControllerImpl::DrawObjects()
     WebotsHelpers::SetNodePose(*nodePtr, pose);
     WebotsHelpers::SetNodeColor(*nodePtr, d.color);
     
-    // Hide this node from the robot's camera (if any)
-    if (_cozmoCameraNodeId >= 0) {
-      auto* cameraNode = _vizSupervisor.getFromId(_cozmoCameraNodeId);
-      nodePtr->setVisibility(cameraNode, false);
-    }
+    SetNodeVisibility(nodePtr);
     
     // Apply object-specific parameters (if any)
     switch (objectType) {
@@ -1344,11 +1362,7 @@ void VizControllerImpl::DrawLineSegments()
       }
       auto* nodePtr = _vizSupervisor.getFromId(segment.webotsNodeId);
       
-      // Hide this node from the robot's camera (if any)
-      if (_cozmoCameraNodeId >= 0) {
-        auto* cameraNode = _vizSupervisor.getFromId(_cozmoCameraNodeId);
-        nodePtr->setVisibility(cameraNode, false);
-      }
+      SetNodeVisibility(nodePtr);
       
       WebotsHelpers::SetNodePose(*nodePtr, _vizControllerPose);
       WebotsHelpers::SetNodeColor(*nodePtr, segment.data.color);
@@ -1376,11 +1390,7 @@ void VizControllerImpl::DrawQuads()
       
       auto* nodePtr = _vizSupervisor.getFromId(quadInfo.webotsNodeId);
       
-      // Hide this node from the robot's camera (if any)
-      if (_cozmoCameraNodeId >= 0) {
-        auto* cameraNode = _vizSupervisor.getFromId(_cozmoCameraNodeId);
-        nodePtr->setVisibility(cameraNode, false);
-      }
+      SetNodeVisibility(nodePtr);
       
       WebotsHelpers::SetNodePose(*nodePtr, _vizControllerPose);
       WebotsHelpers::SetNodeColor(*nodePtr, data.color);
@@ -1414,11 +1424,7 @@ void VizControllerImpl::DrawPaths()
       }
       auto* nodePtr = _vizSupervisor.getFromId(line.webotsNodeId);
       
-      // Hide this node from the robot's camera (if any)
-      if (_cozmoCameraNodeId >= 0) {
-        auto* cameraNode = _vizSupervisor.getFromId(_cozmoCameraNodeId);
-        nodePtr->setVisibility(cameraNode, false);
-      }
+      SetNodeVisibility(nodePtr);
       
       WebotsHelpers::SetNodePose(*nodePtr, _vizControllerPose);
       WebotsHelpers::SetNodeColor(*nodePtr, pathInfo.second.color);
@@ -1440,11 +1446,7 @@ void VizControllerImpl::DrawPaths()
       }
       auto* nodePtr = _vizSupervisor.getFromId(arc.webotsNodeId);
       
-      // Hide this node from the robot's camera (if any)
-      if (_cozmoCameraNodeId >= 0) {
-        auto* cameraNode = _vizSupervisor.getFromId(_cozmoCameraNodeId);
-        nodePtr->setVisibility(cameraNode, false);
-      }
+      SetNodeVisibility(nodePtr);
       
       WebotsHelpers::SetNodePose(*nodePtr, _vizControllerPose);
       WebotsHelpers::SetNodeColor(*nodePtr, pathInfo.second.color);
@@ -1456,6 +1458,20 @@ void VizControllerImpl::DrawPaths()
       nodePtr->getField("startAngle")->setSFFloat(data.start_rad);
       nodePtr->getField("sweepAngle")->setSFFloat(data.sweep_rad);
     }
+  }
+}
+
+void VizControllerImpl::SetNodeVisibility(webots::Node* node)
+{
+  // Hide this node from the robot's camera (if any)
+  if (_cozmoCameraNodeId >= 0) {
+    auto* cameraNode = _vizSupervisor.getFromId(_cozmoCameraNodeId);
+    node->setVisibility(cameraNode, false);
+  }
+
+  if(_cozmoToFNodeId >= 0) {
+    auto* tofNode = _vizSupervisor.getFromId(_cozmoToFNodeId);
+    node->setVisibility(tofNode, false);
   }
 }
 

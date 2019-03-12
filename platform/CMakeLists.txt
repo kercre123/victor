@@ -7,6 +7,8 @@ add_subdirectory(config)
 
 add_subdirectory(camera)
 
+add_subdirectory(whiskeyToF)
+
 add_subdirectory(switchboard)
 
 add_subdirectory(update-engine)
@@ -28,6 +30,8 @@ add_subdirectory(vic-log-kernel-panic)
 add_subdirectory(vic-log-upload)
 
 add_subdirectory(ion-sample)
+
+add_subdirectory(gpio)
 
 #
 # Macro command to create build rules for full symbol files

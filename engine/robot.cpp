@@ -1,4 +1,3 @@
-
 //
 //  robot.cpp
 //  Products_Cozmo
@@ -9,6 +8,7 @@
 
 #include "engine/robot.h"
 #include "camera/cameraService.h"
+#include "whiskeyToF/tof.h"
 
 #include "coretech/common/engine/math/poseOriginList.h"
 
@@ -52,6 +52,7 @@
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/imuComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
+#include "engine/components/sensors/rangeSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/textToSpeech/textToSpeechCoordinator.h"
 #include "engine/components/userEntitlementsManager.h"
@@ -330,6 +331,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::CliffSensor,                new CliffSensorComponent());
     _components->AddDependentComponent(RobotComponentID::ProxSensor,                 new ProxSensorComponent());
     _components->AddDependentComponent(RobotComponentID::ImuSensor,                  new ImuComponent());
+    _components->AddDependentComponent(RobotComponentID::RangeSensor,                new RangeSensorComponent());
     _components->AddDependentComponent(RobotComponentID::TouchSensor,                new TouchSensorComponent());
     _components->AddDependentComponent(RobotComponentID::Animation,                  new AnimationComponent());
     _components->AddDependentComponent(RobotComponentID::StateHistory,               new RobotStateHistory());
@@ -383,8 +385,9 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
   _thisRobot = this;
 #endif
 
-  // This will create the AndroidHAL instance if it doesn't yet exist
+  // These will create the instances if they don't yet exist
   CameraService::getInstance();
+  ToFSensor::getInstance();
 
 } // Constructor: Robot
 
@@ -1273,6 +1276,12 @@ Result Robot::Update()
 
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
+
+  auto* tof = ToFSensor::getInstance();
+  if(tof != nullptr)
+  {
+    tof->Update();
+  }
 
   Result factoryRes;
   const bool checkDone = UpdateStartupChecks(factoryRes);
@@ -2603,6 +2612,124 @@ bool Robot::UpdateCameraStartupChecks(Result& res)
   return (state != State::WAITING);
 }
 
+bool Robot::UpdateToFStartupChecks(Result& res)
+{
+  static bool isDone = false;
+  
+  enum class State
+  {
+   WaitingForCallback,
+   Setup,
+   StartRanging,
+   EndRanging,
+   Success,
+   Failure,
+  };
+  static State state = State::Setup;
+
+  auto* tof = ToFSensor::getInstance();
+  if(tof == nullptr)
+  {
+    res = RESULT_OK;
+    return true;
+  }
+
+#define HANDLE_RESULT(res, nextState) {                                 \
+    if(res != ToFSensor::CommandResult::Success) {                      \
+      PRINT_NAMED_ERROR("Robot.UpdateToFStartupChecks.Fail", "State: %u", state); \
+      FaultCode::DisplayFaultCode(FaultCode::TOF_FAILURE);              \
+      state = State::Failure;                                           \
+    } else {                                                            \
+      state = nextState;                                                \
+    }                                                                   \
+  } 
+
+  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  static float startTime_sec = currentTime_sec;
+  
+  // If the ToF check has been running for more than 10 seconds assume failure
+  // This will handle failing should we not get any valid ROIs or for some reason
+  // one of the command callbacks is not called (never seen it happen but who knows...)
+  if((state != State::Failure && state != State::Success) &&
+     currentTime_sec - startTime_sec > 10.f)
+  {
+    HANDLE_RESULT(ToFSensor::CommandResult::Failure, State::Failure);
+  }
+  
+  switch(state)
+  {
+    case State::Setup:
+      {
+        state = State::WaitingForCallback;
+        tof->SetupSensors([](ToFSensor::CommandResult res)
+                          {
+                            HANDLE_RESULT(res, State::StartRanging);
+                          });
+      }
+      break;
+
+    case State::StartRanging:
+      {
+        state = State::WaitingForCallback;
+        tof->StartRanging([](ToFSensor::CommandResult res)
+                          {
+                            HANDLE_RESULT(res, State::EndRanging);
+                          });
+      }
+      break;
+
+    case State::EndRanging:
+      {
+        bool isDataNew = false;
+        RangeDataRaw data = tof->GetData(isDataNew);
+        if(isDataNew)
+        {
+          bool atLeastOneValidRoi = false;
+          for(const auto& roiReading : data.data)
+          {
+            if(tof->IsValidRoiStatus(roiReading.roiStatus))
+            {
+              atLeastOneValidRoi = true;
+            }
+          }
+
+          if(atLeastOneValidRoi)
+          {
+            state = State::WaitingForCallback;
+            tof->StopRanging([](ToFSensor::CommandResult res)
+                             {
+                               PRINT_NAMED_INFO("Robot.UpdateToFStartupChecks.Success","");
+                               HANDLE_RESULT(res, State::Success);
+                             });
+          }
+        }
+      }
+      break;
+
+    case State::Success:
+      {
+        isDone = true;
+      }
+      // Intentional fallthrough
+    case State::WaitingForCallback:
+      {
+        res =  RESULT_OK;
+      }
+      break;
+
+    case State::Failure:
+      {
+        isDone = true;
+        res =  RESULT_FAIL;
+      }
+      break;
+  }
+
+  return isDone;
+  
+  #undef HANDLE_RESULT
+}
+
 bool Robot::UpdateGyroCalibChecks(Result& res)
 {
   // Wait this much time after sending sync to robot before checking if we
@@ -2663,6 +2790,8 @@ bool Robot::UpdateStartupChecks(Result& res)
   res = RESULT_OK;
   RUN_CHECK(UpdateGyroCalibChecks);
   RUN_CHECK(UpdateCameraStartupChecks);
+  RUN_CHECK(UpdateToFStartupChecks);
+  RUN_CHECK(UpdateRampostErrorChecks);
   return checkDone;
 
 #undef RUN_CHECK
@@ -2685,7 +2814,6 @@ bool Robot::SetLocale(const std::string & locale)
   return true;
 }
 
-
 void Robot::Shutdown(ShutdownReason reason)
 {
   if (_toldToShutdown) {
@@ -2694,6 +2822,58 @@ void Robot::Shutdown(ShutdownReason reason)
   }
   _toldToShutdown = true;
   _shutdownReason = reason;
+}
+
+bool Robot::UpdateRampostErrorChecks(Result& res)
+{
+  static bool rampostFileRead = false;
+  static bool rampostError = false;
+  
+  if(!rampostFileRead)
+  {
+    rampostFileRead = true;
+
+    const std::string path = "/dev/rampost_error";
+    struct stat buffer;
+    int rc = stat(path.c_str(), &buffer);
+    if(rc == 0)
+    {
+      FILE* f = fopen(path.c_str(), "r");
+      if(f != nullptr)
+      {
+        char data[32] = {0};
+        rc = (int)fread(data, sizeof(data), 1, f);
+        (void)fclose(f);
+        if(rc < 0)
+        {
+          PRINT_NAMED_ERROR("Robot.UpdateRampostErrorChecks.ReadFail",
+                            "Failed to read from rampost_error file %u %u",
+                            rc,
+                            errno);
+        }
+        else
+        {
+          PRINT_NAMED_WARNING("Robot.UpdateRampostErrorChecks", "%s", data);
+        }
+      }
+      else
+      {
+        PRINT_NAMED_ERROR("Robot.UpdateRampostErrorCheck.FileExistsButReadFailed",
+                          "%d",
+                          rc);
+      }
+
+      res = RESULT_FAIL;
+    }
+    
+    if(res != RESULT_OK)
+    {
+      rampostError = true;
+      FaultCode::DisplayFaultCode(FaultCode::RAMPOST_ERROR);    
+    }
+  }
+
+  return rampostFileRead;  
 }
 
 } // namespace Vector

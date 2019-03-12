@@ -46,6 +46,7 @@
 
 namespace Anki {
 namespace Vector {
+namespace Anim {
 
 #if ANKI_CPU_PROFILER_ENABLED
   CONSOLE_VAR_RANGED(float, kAnimEngine_TimeMax_ms,     ANKI_CPU_CONSOLEVARGROUP, 33, 2, 33);
@@ -300,5 +301,6 @@ void AnimEngine::HandleMessage(const RobotInterface::ExternalAudioPrepare & msg)
 }
 
 
+} // namespace Anim
 } // namespace Vector
 } // namespace Anki

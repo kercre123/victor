@@ -37,7 +37,9 @@ namespace Vector {
 
   // Forward declaration
   class ProceduralFace;
-  class AnimContext;
+  namespace Anim {
+    class AnimContext;
+  }
   class TextToSpeechComponent;
   class TrackLayerComponent;
 
@@ -53,7 +55,7 @@ namespace Vector {
     struct RemoveSquint;
   }
 
-
+namespace Anim {
   class AnimationStreamer
   {
   public:
@@ -65,7 +67,7 @@ namespace Vector {
     // TODO: This could be removed in favor of just referring to ::Anki::Cozmo, but avoiding touching too much code now.
     static const Tag kNotAnimatingTag = ::Anki::Vector::kNotAnimatingTag;
 
-    AnimationStreamer(const AnimContext* context);
+    AnimationStreamer(const Anim::AnimContext* context);
 
     ~AnimationStreamer();
 
@@ -207,7 +209,7 @@ namespace Vector {
     uint16_t GetNumLayersRendered() { return _numLayersRendered; }
 
   private:
-    const AnimContext* _context = nullptr;
+    const Anim::AnimContext* _context = nullptr;
 
     Animation*  _streamingAnimation = nullptr;
     Animation*  _neutralFaceAnimation = nullptr;
@@ -360,7 +362,7 @@ namespace Vector {
 
     // Combine the tracks inside of the specified animations with the tracks in the track layer component
     // specified, and then assign the output to stateToSend
-    static Result ExtractMessagesRelatedToProceduralTrackComponent(const AnimContext* context,
+    static Result ExtractMessagesRelatedToProceduralTrackComponent(const Anim::AnimContext* context,
                                                                    Animation* anim,
                                                                    TrackLayerComponent* trackComp,
                                                                    const u8 tracksCurrentlyLocked,
@@ -425,7 +427,7 @@ namespace Vector {
                                         const TimeStamp_t relativeStreamTime_ms,
                                         const bool proceduralFaceRendered);
 
-    static void GetStreamableFace(const AnimContext* context, const ProceduralFace& procFace, Vision::ImageRGB565& outImage);
+    static void GetStreamableFace(const Anim::AnimContext* context, const ProceduralFace& procFace, Vision::ImageRGB565& outImage);
     void BufferFaceToSend(Vision::ImageRGB565& image);
 
   #if ANKI_DEV_CHEATS
@@ -437,6 +439,7 @@ namespace Vector {
 
   }; // class AnimationStreamer
 
+} // namespace Anim
 } // namespace Vector
 } // namespace Anki
 

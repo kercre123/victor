@@ -684,7 +684,6 @@ namespace Vector {
     
   }; // class TurnToRecordedHeadingKeyFrame
   
-  
 } // namespace Vector
 } // namespace Anki
 

@@ -39,6 +39,12 @@
                 },
                 "version": "1.0.16"
             },
+            "lldb-server": {
+                "checksums": {
+                    "sha256": "8c4f3798fbceb23d26e1faf79bb0e90d205d335bae32b0955d10869d65ad79e9"
+                },
+                "version": "8.0"
+            },
             "mpg123": {
                 "checksums": {
                     "sha256": "377e3c0299f601b788da28c75ec893761f2e3ad2678dc37180914f0e632f10ad"
@@ -108,7 +114,7 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "4934"
+                "version": "4940"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
