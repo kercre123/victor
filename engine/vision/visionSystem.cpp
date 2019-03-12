@@ -662,7 +662,7 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
   // Put the new values in the output result:
   std::swap(_currentResult.cameraParams, nextParams);
   _currentResult.imageQuality = _cameraParamsController->GetImageQuality();
-  if(_cameraParamsController->IsCurrentCyclingExposureReset()) {
+  if(_cameraParamsController->IsCurrentCyclingExposureReset() && IsModeEnabled(VisionMode::CyclingExposure)) {
     // We have completed one full pass through the list of exposures to cycle
     _currentResult.modesProcessed.Insert(VisionMode::CyclingExposure);
   }
@@ -1146,6 +1146,11 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
       assert(false); // should never get here
       break;
   }
+
+  #define DEBUG_IMAGE_COMPOSITING 1
+  #if(DEBUG_IMAGE_COMPOSITING)
+  static Vision::Image dispImg;
+  #endif
   
   Vision::Image compositeImage;
   if(IsModeEnabled(VisionMode::CompositingImages)) {
@@ -1156,13 +1161,11 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
     if(shouldRunOnComposite) {
       _imageCompositor->GetCompositeImage(compositeImage);
       imagePtrs.push_back(&compositeImage);
-
-      #define DEBUG_IMAGE_COMPOSITING 0
       #if(DEBUG_IMAGE_COMPOSITING)
-      // Debug image display
-      Vision::ImageRGB dispImg;
-      dispImg.SetFromGray(compositeImage);
-      _currentResult.debugImages.emplace_back("ImageCompositing", dispImg);
+      if(dispImg.GetNumRows() == 0) {
+        dispImg.Allocate(compositeImage.GetNumRows(), compositeImage.GetNumCols());
+      }
+      compositeImage.CopyTo(dispImg);
       #endif
     }
 
@@ -1178,7 +1181,17 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
       DEV_ASSERT_MSG(shouldRunOnComposite, "VisionSystem.DetectMarkers.InvalidResetCallBeforeImageUsed","");
       _currentResult.modesProcessed.Insert(VisionMode::CompositingImages);
     }
+  } else if(!IsModeEnabled(VisionMode::CompositingImages) && 
+            _imageCompositor->GetNumImagesComposited() != 0) {
+    // Clears any leftover artifacts from prematurely cancelled ImageCompositing
+    _imageCompositor->Reset();
   }
+
+  #if(DEBUG_IMAGE_COMPOSITING)
+  if(dispImg.GetNumRows() != 0) {
+    _currentResult.debugImages.emplace_back("ImageCompositing", dispImg);
+  }
+  #endif
   
   // Set up cropping rectangles to cycle through each time DetectMarkers is called
   DEV_ASSERT(!imagePtrs.empty(), "VisionSystem.DetectMarkersWithCLAHE.NoImagePointers");

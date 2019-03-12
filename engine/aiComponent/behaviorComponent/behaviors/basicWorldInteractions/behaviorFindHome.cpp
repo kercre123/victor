@@ -280,7 +280,7 @@ void BehaviorFindHome::TransitionToStartSearch()
 void BehaviorFindHome::TransitionToLookInPlace()
 {
   if(ANKI_VERIFY(_iConfig.observeChargerBehavior->WantsToBeActivated(), 
-                 "BehaviorFindHome.TransitionToLookInPlace.ObserveChargerBehaviorDWTA", "" )) {
+                 "BehaviorFindHome.TransitionToLookInPlace.ObserveChargerBehavior.NotActivatable", "" )) {
     DelegateIfInControl(_iConfig.observeChargerBehavior.get(), &BehaviorFindHome::TransitionToSearchTurn);
   }
 }

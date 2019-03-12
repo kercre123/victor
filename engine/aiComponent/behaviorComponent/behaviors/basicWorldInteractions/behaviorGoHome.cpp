@@ -467,6 +467,11 @@ void BehaviorGoHome::TransitionToPostVisualVerification(const RobotTimeStamp_t v
                             "Ended up not in a good position to commence the turn to begin docking. RobotPoseWrtCharger {%.1f, %.1f, %.1f deg}",
                             xWrtCharger, yWrtCharger, angleWrtCharger.getDegrees());
       }
+    } else {
+      PRINT_NAMED_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.GetPoseWithRespectToFailed",
+                          "Robot Pose (%s) and Charger Pose (%s) not connected in pose tree",
+                          robotPose.GetNamedPathToRoot(true).c_str(), 
+                          charger->GetPose().GetNamedPathToRoot(true).c_str());
     }
   }
 

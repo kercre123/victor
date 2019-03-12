@@ -84,7 +84,8 @@ void BehaviorRobustChargerObservation::GetBehaviorOperationModifiers(BehaviorOpe
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRobustChargerObservation::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
-  expectedKeys.insert(kNumImagesToWaitForKey);
+  expectedKeys.insert(kNumImageCompositingFramesToWaitForKey);
+  expectedKeys.insert(kNumCyclingExposureFramesToWaitForKey);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -112,19 +113,15 @@ bool BehaviorRobustChargerObservation::IsLowLightVision() const
   if(GetBEI().HasVisionComponent()) {
     const auto& visionComponent = GetBEI().GetVisionComponent();
     
-    // We only use the Illumination detector if it has a definite response to the current scene illumination
     auto illumState = visionComponent.GetLastIlluminationState();
-    if(illumState != IlluminationState::Unknown) {
-      isLowlight = (illumState == IlluminationState::Darkened);
-    }
-
+    
     // Redundant check here for turning on ImageCompositing
     // Some scenarios are IllumState::Unknown but we have a
     //  definite reading from ImageQuality measurement that
     //  indicates we may want to use ImageCompositing
-    if(!isLowlight) {
-      isLowlight = visionComponent.GetLastImageQuality() == Vision::ImageQuality::TooDark;
-    }
+    isLowlight = (illumState == IlluminationState::Darkened) || 
+                 (illumState == IlluminationState::Unknown && 
+                 (visionComponent.GetLastImageQuality() == Vision::ImageQuality::TooDark));
   }
 
   return isLowlight;
