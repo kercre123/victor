@@ -2,10 +2,10 @@ syntax = "proto2";
 
 package arf_proto;
 
-import "RGBImage.proto";
+import "Image.proto";
 import "TrackedFace.proto";
 
 message TrackedFacesAndImage {
-    required RGBImage image = 1;
+    required Image image = 1;
     repeated TrackedFace face = 2;
 }

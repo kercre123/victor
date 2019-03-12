@@ -52,6 +52,8 @@
 
 #include "util/bitFlags/bitFlags.h"
 
+#include "arf/arf.h"
+
 #include <mutex>
 #include <queue>
 
@@ -192,6 +194,9 @@ namespace Vector {
     
   protected:
   
+    std::shared_ptr<ARF::NodeHandle> _nodeHandle;
+    std::shared_ptr<ARF::PubHandle<std::string> > _pubHandle;
+
     RollingShutterCorrector _rollingShutterCorrector;
     bool _doRollingShutterCorrection = false;
     RobotTimeStamp_t _lastRollingShutterCorrectionTime;

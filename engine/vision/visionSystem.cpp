@@ -58,6 +58,9 @@
 #include <thread>
 #include <fstream>
 
+#include "arf/arf.h"
+#include "generated/proto/arf/ArfMessage.pb.h"
+
 #include "opencv2/calib3d/calib3d.hpp"
 
 // Cozmo-Specific Library Includes
@@ -164,6 +167,9 @@ VisionSystem::VisionSystem(const CozmoContext* context)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::Init(const Json::Value& config)
 {
+  ARF::Init(0, nullptr, "vector");
+  _nodeHandle = std::make_shared<ARF::NodeHandle>();
+  _pubHandle = std::make_shared<ARF::PubHandle<std::string> >(_nodeHandle->RegisterPublisher<std::string>("rgb"));
   _isInitialized = false;
   
   std::string dataPath("");
@@ -772,13 +778,23 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
     _faceTracker->AccountForRobotMove();
   }
 
+  arf_proto::ArfMessage arf_message;
+  arf_proto::TrackedFacesAndImage* tracked_faces_and_image = arf_message.mutable_tracked_faces_and_image();
+
+  arf_proto::Image* arf_image = tracked_faces_and_image->mutable_image();
+  arf_image->mutable_header()->set_time(grayImage.GetTimestamp());
+  arf_image->set_rows(grayImage.GetNumRows());
+  arf_image->set_cols(grayImage.GetNumCols());
+  arf_image->set_encoding("gray");
+
   const f32 cropFactor = (useCropping ? kFaceTrackingCropWidthFraction : 1.f);
 
   if(!detectionRects.empty())
   {
     // Black out previous detections so we don't find faces in them
     Vision::Image maskedImage = BlackOutRects(grayImage, detectionRects);
-    
+    arf_image->set_data(maskedImage.GetDataPointer(), 
+                        maskedImage.GetNumRows() * maskedImage.GetNumCols());
 #     if DEBUG_FACE_DETECTION
     //_currentResult.debugImages.push_back({"MaskedFaceImage", maskedImage});
 #     endif
@@ -790,6 +806,8 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
   {
     // Nothing already detected, so nothing to black out before looking for faces
     _faceTracker->Update(grayImage, cropFactor, _currentResult.faces, _currentResult.updatedFaceIDs, _currentResult.debugImages);
+    arf_image->set_data(grayImage.GetDataPointer(), 
+                        grayImage.GetNumRows() * grayImage.GetNumCols());
   }
   
   for(auto faceIter = _currentResult.faces.begin(); faceIter != _currentResult.faces.end(); ++faceIter)
@@ -797,6 +815,13 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
     auto & currentFace = *faceIter;
     
     DEV_ASSERT(currentFace.GetTimeStamp() == grayImage.GetTimestamp(), "VisionSystem.DetectFaces.BadFaceTimestamp");
+
+    arf_proto::TrackedFace* face_proto = tracked_faces_and_image->add_face();
+    face_proto->mutable_header()->set_time(grayImage.GetTimestamp());
+    face_proto->set_x(currentFace.GetRect().GetX()); 
+    face_proto->set_y(currentFace.GetRect().GetY()); 
+    face_proto->set_width(currentFace.GetRect().GetWidth()); 
+    face_proto->set_height(currentFace.GetRect().GetHeight()); 
 
     detectionRects.emplace_back((s32)std::round(faceIter->GetRect().GetX()),
                                 (s32)std::round(faceIter->GetRect().GetY()),
@@ -823,7 +848,9 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
     currentFace.SetHeadPose(headPose);
     currentFace.SetEyePose(eyePose);
   }
-  
+
+  _pubHandle->publish_string(arf_message.SerializeAsString());
+         
   return RESULT_OK;
 } // DetectFaces()
 

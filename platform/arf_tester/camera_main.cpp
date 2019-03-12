@@ -13,7 +13,7 @@
 #include "json/json.h"
 
 #include "generated/proto/arf/ArfMessage.pb.h"
-#include "generated/proto/arf/RGBImage.pb.h"
+#include "generated/proto/arf/Image.pb.h"
 
 bool g_run = true;
 
@@ -107,10 +107,11 @@ int main(int argc, char **argv)
         arf_proto::ArfMessage arf_message;
         arf_proto::TrackedFacesAndImage* tracked_faces_and_image = arf_message.mutable_tracked_faces_and_image();
 
-        arf_proto::RGBImage* arf_image = tracked_faces_and_image->mutable_image();
+        arf_proto::Image* arf_image = tracked_faces_and_image->mutable_image();
         arf_image->mutable_header()->set_time(image_rgb.GetTimestamp());
         arf_image->set_rows(image_rgb.GetNumRows());
         arf_image->set_cols(image_rgb.GetNumCols());
+        arf_image->set_encoding("rgb");
         arf_image->set_data(image_rgb.GetDataPointer(), 3 * image_rgb.GetNumRows() * image_rgb.GetNumCols());
 
         for (const auto& face : face_list) {

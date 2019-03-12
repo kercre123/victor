@@ -29,7 +29,7 @@ namespace ARF
       {"kobuki_arf/scan", 11003},
       {"kobuki_arf/map", 11004},
       {"kobuki_arf/slam_pose", 11005},
-      {"vector/rgb", 999}
+      {"vector/rgb", 5103}
     };
 
     std::string full_name = node_name.empty() ? topic_name : (node_name + "/" + topic_name);

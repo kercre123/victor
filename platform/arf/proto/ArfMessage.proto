@@ -3,7 +3,7 @@ syntax = "proto2";
 package arf_proto;
 
 import "DepthData.proto";
-import "RGBImage.proto";
+import "Image.proto";
 import "TrackedFacesAndImage.proto";
 
 message ArfMessage {
@@ -11,7 +11,7 @@ message ArfMessage {
   oneof arf_message {
       string arf_string = 1;
       DepthData depth_data = 2;
-      RGBImage image_rgb = 3;
+      Image image = 3;
       TrackedFacesAndImage tracked_faces_and_image = 4;
   }
 

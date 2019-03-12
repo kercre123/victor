@@ -4,9 +4,10 @@ package arf_proto;
 
 import "MessageHeader.proto";
 
-message RGBImage {
+message Image {
     required MessageHeader header = 1;
     required int32 rows = 2;
     required int32 cols = 3;
-    required bytes data = 4;
+    required string encoding = 4;
+    required bytes data = 5;
 }
