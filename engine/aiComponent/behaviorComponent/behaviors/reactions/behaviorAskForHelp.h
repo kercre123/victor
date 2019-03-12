@@ -45,6 +45,7 @@ private:
   void SetAnimTriggers();
   void TriggerGetInAnim();
   void TriggerIdleAnim();
+  void UpdatePowerSaveRequests();
 
   struct InstanceConfig {
     // Not used currently since there are no config variables to initialize.

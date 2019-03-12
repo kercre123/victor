@@ -66,6 +66,8 @@ public:
   
   BatteryLevel GetBatteryLevel() const { return _batteryLevel; }
   
+  BatteryLevel GetPrevBatteryLevel() const { return _prevBatteryLevel; }
+  
   // Returns the low-pass filtered battery voltage
   float GetBatteryVolts() const { return _batteryVoltsFilt; }
   
@@ -160,6 +162,7 @@ private:
   uint8_t _battTemperature_C = 0;
 
   BatteryLevel _batteryLevel = BatteryLevel::Unknown;
+  BatteryLevel _prevBatteryLevel = BatteryLevel::Unknown;
   
   bool _battOverheated = false;
   bool _battDisconnected = false;

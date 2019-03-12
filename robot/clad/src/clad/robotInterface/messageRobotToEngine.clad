@@ -159,6 +159,11 @@ message StartSelfTest
 
 }
 
+message SendRangeData
+{
+  bool enable
+}
+
 /// *************** Overall message pipe ******************************* ///
 
 /** Pipe from robot to engine.
@@ -250,8 +255,11 @@ union RobotToEngine {
   MicRecordingComplete       micRecordingComplete   = 0xE8,
   MicDataState               micDataState           = 0xE9,
 
+  SendRangeData              sendRangeData          = 0xEA,
+
   // SDK Streaming Audio Playback
-  AudioStreamStatusEvent     audioStreamStatusEvent = 0xEA,
+  AudioStreamStatusEvent     audioStreamStatusEvent = 0xEB,
+
 
   // ====== 0xF0 to 0x FE: Unreliable message to the Engine =====
   // From robot process

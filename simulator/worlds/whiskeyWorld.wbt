@@ -2,8 +2,8 @@
 CozmoWorldInfo {
 }
 Viewpoint {
-  orientation -0.23013514393218407 0.46228201236631994 0.8563487353700352 3.947560634368608
-  position -1.8245716775419583 1.2809454025876654 1.5771613409945828
+  orientation 0.11226864348575369 0.27460808006111237 0.9549796615923392 2.397151604531407
+  position 0.19588307373415997 0.2461122645802919 0.5862254873643808
 }
 Background {
   skyColor [
@@ -38,8 +38,6 @@ LightCube {
   name "LightCube1"
   translation 0.0884345 0.0833803 0.022
   rotation 0 0 1 0.523599
-  objectType "Block_LIGHTCUBE1"
-  filterLogs FALSE
   colorizeStderrOutput TRUE
 }
 WhiskeyBot {
@@ -47,7 +45,6 @@ WhiskeyBot {
   colorizeStderrOutput TRUE
 }
 WebotsKeyboardController {
-  translation 0.288125 0.0208444 0.08
   filterLogs FALSE
   colorizeStderrOutput TRUE
 }

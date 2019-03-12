@@ -45,8 +45,6 @@ BehaviorStayOnChargerUntilCharged::InstanceConfig::InstanceConfig()
 BehaviorStayOnChargerUntilCharged::DynamicVariables::DynamicVariables():
   lastTimeCancelled_s(-1.0*kCooldown_s)
 {
-  persistent.batteryLevel = BatteryLevel::Unknown;
-  persistent.prevBatteryLevel = BatteryLevel::Unknown;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -74,8 +72,11 @@ BehaviorStayOnChargerUntilCharged::~BehaviorStayOnChargerUntilCharged()
 bool BehaviorStayOnChargerUntilCharged::WantsToBeActivatedBehavior() const
 {
   const auto& robotInfo = GetBEI().GetRobotInfo();
+  const BatteryLevel batteryLevel = robotInfo.GetBatteryLevel();
+  const BatteryLevel prevBatteryLevel = robotInfo.GetPrevBatteryLevel();
+  
   const bool isOnCharger = robotInfo.IsOnChargerPlatform();
-  const bool isBatteryFull = (_dVars.persistent.batteryLevel == BatteryLevel::Full);
+  const bool isBatteryFull = (batteryLevel == BatteryLevel::Full);
   const bool needsToCharge = (isOnCharger && !isBatteryFull);
 
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -85,10 +86,9 @@ bool BehaviorStayOnChargerUntilCharged::WantsToBeActivatedBehavior() const
   const float onChargerDuration_s = robotInfo.GetOnChargerDurationSec();
   const bool safeguard = (onChargerDuration_s > kSafeguardTimeout_s);
   
-  // The battery level can drop from Full to Nominal the moment the robot leaves the contacts, so enfore a minimum time
-  const bool droppedToNominal = (_dVars.persistent.batteryLevel == BatteryLevel::Nominal)
-                                && (_dVars.persistent.prevBatteryLevel == BatteryLevel::Full);
-  const float levelDuration_s = robotInfo.GetTimeAtBatteryLevelSec(_dVars.persistent.batteryLevel);
+  // the battery level can drop from Full to Nominal the moment the robot leaves the contacts, so enfore a minimum time
+  const bool droppedToNominal = (batteryLevel == BatteryLevel::Nominal) && (prevBatteryLevel == BatteryLevel::Full);
+  const float levelDuration_s = robotInfo.GetTimeAtBatteryLevelSec(batteryLevel);
   const bool briefDropToNominal = droppedToNominal && (levelDuration_s < kMinTimeAtNominal_s);
 
   // if a voice command is pending or active, it may be handled at a lower priority level than this behavior,
@@ -123,9 +123,7 @@ void BehaviorStayOnChargerUntilCharged::GetBehaviorJsonKeys(std::set<const char*
 void BehaviorStayOnChargerUntilCharged::OnBehaviorActivated() 
 {
   // reset dynamic variables
-  auto persistent = std::move(_dVars.persistent);
   _dVars = DynamicVariables();
-  _dVars.persistent = std::move(persistent);
 
   LOG_INFO("StayOnChargerUntilCharged.OnBehaviorActivated.Activated", "Vector is charging, staying on charger.");
 
@@ -138,13 +136,6 @@ void BehaviorStayOnChargerUntilCharged::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorStayOnChargerUntilCharged::BehaviorUpdate() 
 {
-  const auto& robotInfo = GetBEI().GetRobotInfo();
-  BatteryLevel batteryLevel = robotInfo.GetBatteryLevel();
-  if (batteryLevel != _dVars.persistent.batteryLevel) {
-    _dVars.persistent.prevBatteryLevel = _dVars.persistent.batteryLevel;
-    _dVars.persistent.batteryLevel = batteryLevel;
-  }
-  
   if( IsActivated() ) {
 
     // if nay condition wants to cancel, set this bool instead of directly cancelling so that all checks will
@@ -163,7 +154,8 @@ void BehaviorStayOnChargerUntilCharged::BehaviorUpdate()
     }
 
     // monitor battery status; if full, cancel delegate and cancel self
-    const bool isBatteryFull = (_dVars.persistent.batteryLevel == BatteryLevel::Full);
+    const auto& robotInfo = GetBEI().GetRobotInfo();
+    const bool isBatteryFull = (robotInfo.GetBatteryLevel() == BatteryLevel::Full);
     if (isBatteryFull) {
       LOG_INFO("StayOnChargerUntilCharged.BehaviorUpdate.BatteryFull", "Battery is full, canceling self.");
       cancel = true;

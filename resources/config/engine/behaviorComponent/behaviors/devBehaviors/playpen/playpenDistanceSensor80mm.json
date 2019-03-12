@@ -2,7 +2,8 @@
   "behaviorClass": "PlaypenDistanceSensor",
   "behaviorID": "PlaypenDistanceSensor80mm",
   "AngleToTurnToSeeTarget_deg": -90,
-  "DistanceToDriveToSeeTarget_mm": 100,
+  "DistanceToDriveToSeeTarget_mm": 160,
   "ExpectedObjectType": "Block_LIGHTCUBE3",
-  "ExpectedDistance_mm": 80
+  "ExpectedDistance_mm": 120,
+  "PerformCalibration": false
 }

@@ -12,6 +12,7 @@
 #include "localization.h"
 #include "anki/cozmo/robot/logging.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include <array>
 
@@ -108,6 +109,13 @@ namespace Anki {
       ProxSensorDataRaw GetProxData()
       {
         auto proxData = HAL::GetRawProxData();
+
+        if(IsWhiskey())
+        {
+          proxData.distance_mm = 0;
+          return proxData;
+        }
+        
 #ifndef SIMULATOR
         // Apply look-up table to convert from raw distance reading
         // to corrected reading. Piecewise linear interpolation.

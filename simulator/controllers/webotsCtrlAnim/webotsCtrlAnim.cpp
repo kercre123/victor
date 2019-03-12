@@ -39,6 +39,9 @@ webots::Supervisor animSupervisor;
 
 int main(int argc, char **argv)
 {
+  // Start with a step so that we can attach to the process here for debugging
+  animSupervisor.step(ANIM_TIME_STEP_MS);
+
   // parse commands
   WebotsCtrlShared::ParsedCommandLine params = WebotsCtrlShared::ParseCommandLine(argc, argv);
 
@@ -89,9 +92,6 @@ int main(int argc, char **argv)
   {
     LOG_INFO("webotsCtrlAnim.main.noFilter", "Console will not be filtered due to program args");
   }
-
-  // Start with a step so that we can attach to the process here for debugging
-  animSupervisor.step(ANIM_TIME_STEP_MS);
 
   // Set up the console vars to load from file, if it exists
   ANKI_CONSOLE_SYSTEM_INIT("consoleVarsAnim.ini");

@@ -22,6 +22,8 @@
 
 #include "coretech/common/engine/utils/timer.h"
 
+#include "util/console/consoleInterface.h"
+
 namespace Anki {
 namespace Vector {
 
@@ -31,6 +33,8 @@ namespace {
   const float kMotionDetectGyroThresh_radps         = DEG_TO_RAD(5.f);
   const float kMotionDetectDurationThresh_sec       = 0.15f;
   const float kDisablePowerSaveOnMotionDuration_sec = 2.f;
+
+  CONSOLE_VAR(bool, kAskForHelp_PowerSave, "Behaviors.AskForHelp", false);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -67,6 +71,14 @@ void BehaviorAskForHelp::BehaviorUpdate()
     return;
   }
 
+  if( kAskForHelp_PowerSave ) {
+    UpdatePowerSaveRequests();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorAskForHelp::UpdatePowerSaveRequests()
+{
   // Check if gyro motion detected this tick
   const GyroData gyroData = GetBEI().GetRobotInfo().GetHeadGyroData();
   const bool gyroMotionDetected = std::fabs(gyroData.x) > kMotionDetectGyroThresh_radps ||
