@@ -349,6 +349,12 @@ void ProcessLoop()
           {
             PRINT_NAMED_INFO("ToF.ProcessLoop.PerformCalibration","");
             _rangingEnabled = false;
+
+            _backgroundTestRanging = false;
+            memset(_backgroundTestErrorCounts, 0, sizeof(_backgroundTestErrorCounts));
+
+            (void)stop_ranging(&_dev);
+
             res = run_calibration(_distanceToCalibTarget_mm, _calibTargetReflectance);
           }
           break;
