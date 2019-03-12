@@ -283,7 +283,7 @@ std::string result;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // SpeechRecognizerSystem
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SpeechRecognizerSystem::SpeechRecognizerSystem(const AnimContext* context,
+SpeechRecognizerSystem::SpeechRecognizerSystem(const Anim::AnimContext* context,
                                                MicData::MicDataSystem* micDataSystem,
                                                const std::string& triggerWordDataDir)
 : _context(context)
@@ -307,7 +307,7 @@ SpeechRecognizerSystem::~SpeechRecognizerSystem()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SpeechRecognizerSystem::InitVector(const RobotDataLoader& dataLoader,
+void SpeechRecognizerSystem::InitVector(const Anim::RobotDataLoader& dataLoader,
                                         const Util::Locale& locale,
                                         TriggerWordDetectedCallback callback)
 {

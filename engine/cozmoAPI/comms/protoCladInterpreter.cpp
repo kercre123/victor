@@ -60,6 +60,11 @@ bool ProtoCladInterpreter::Redirect(
       ProtoPlayAnimationTriggerRequestToClad(proto_message, clad_message);
       break;
     }
+    case external_interface::GatewayWrapper::kCancelActionByIdTagRequest:
+    {
+      ProtoCancelActionByIdTagRequestToClad(proto_message, clad_message);
+      break;
+    }
     default:
     {
       return false;
@@ -113,6 +118,11 @@ bool ProtoCladInterpreter::Redirect(
       CladPlayAnimationToProto(message, proto_message);
       break;
     }
+    case ExternalInterface::MessageGameToEngineTag::CancelActionByIdTag:
+    {
+      CladCancelActionByIdTagToProto(message, proto_message);
+      break;
+    }
     default:
     {
       return false;
@@ -144,6 +154,14 @@ void ProtoCladInterpreter::ProtoPlayAnimationRequestToClad(
   play_animation.ignoreLiftTrack = proto_message.play_animation_request().ignore_lift_track();
   play_animation.numLoops =        proto_message.play_animation_request().loops();
   clad_message.Set_PlayAnimation(play_animation);
+}
+
+void ProtoCladInterpreter::ProtoCancelActionByIdTagRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+  Anki::Vector::ExternalInterface::CancelActionByIdTag cancel_action_by_id_tag;
+  cancel_action_by_id_tag.idTag =  proto_message.cancel_action_by_id_tag_request().id_tag();
+  clad_message.Set_CancelActionByIdTag(cancel_action_by_id_tag);
 }
 
 void ProtoCladInterpreter::ProtoListAnimationsRequestToClad(
@@ -178,6 +196,13 @@ void ProtoCladInterpreter::CladPlayAnimationToProto(
     external_interface::GatewayWrapper& proto_message) { 
   external_interface::PlayAnimationResponse* play_animation_response = new external_interface::PlayAnimationResponse;
   proto_message = ExternalMessageRouter::WrapResponse(play_animation_response);
+}
+
+void ProtoCladInterpreter::CladCancelActionByIdTagToProto(
+    const ExternalInterface::MessageGameToEngine& clad_message,
+    external_interface::GatewayWrapper& proto_message) { 
+  external_interface::CancelActionByIdTagResponse* cancel_action_by_id_tag_response = new external_interface::CancelActionByIdTagResponse;
+  proto_message = ExternalMessageRouter::WrapResponse(cancel_action_by_id_tag_response);
 }
 
 void ProtoCladInterpreter::CladAnimationAvailableToProto(

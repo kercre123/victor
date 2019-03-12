@@ -20,7 +20,7 @@ namespace Anki {
   namespace Vector {
     namespace PowerModeManager {
       
-      void EnableActiveMode(bool enable, bool calibOnEnable);
+      void EnableActiveMode(bool enable);
       bool IsActiveModeEnabled();
 
       void Update();

@@ -117,7 +117,20 @@ public:
   // Returns latest timestamp in seconds of a stop due to a cliff detection
   TimeStamp_t GetLatestStopDueToCliffTime_ms() const { return _lastStopDueToCliffTime_ms; }
   
-  const CliffSensorDataArray& GetCliffDataRawAtLastStop() const { return _cliffDataRawAtLastStop; };
+  const CliffSensorDataArray& GetCliffDataRawAtLastStop() const { return _cliffDataRawAtLastStop; }
+  
+  // Retrieves the number of milliseconds that the cliff sensors have reported @param numCliffs
+  // being detected.
+  //
+  // If @param numCliffs is a positive value, this assumes that reports of N cliff detections
+  // from the sensors, where N is greater than @param numCliffs, also counts as valid time to
+  // include in the reported duration.
+  //
+  // If @param numCliffs is 0, then this assumes that the user wants only the duration of time
+  // that the cliff sensors have currently been reporting _exactly_ zero cliffs detections.
+  u32 GetDurationForNCliffDetections_ms(const int minNumCliffs) const;
+    
+  int GetNumCliffsDetected() const { return _latestNumCliffsDetected; }
   
 private:
   
@@ -127,13 +140,19 @@ private:
   
   void SetCliffDetectThreshold(unsigned int ind, uint16_t newThresh);
   
+  void UpdateLatestCliffDetectionDuration();
+  
   bool _isPaused = false;
   
   bool _enableCliffSensor = true;
   Util::BitFlags8<CliffSensor> _cliffDetectedFlags;
   Util::BitFlags8<CliffSensor> _whiteDetectedFlags;
   
-  uint32_t _lastMsgTimestamp = 0;
+  int _latestNumCliffsDetected = -1;
+    
+  std::array<u32, kNumCliffSensors + 1> _cliffDetectionTimes_ms;
+  
+  uint32_t _latestMsgTimestamp = 0;
   
   std::list<Signal::SmartHandle> _eventHandles;
   

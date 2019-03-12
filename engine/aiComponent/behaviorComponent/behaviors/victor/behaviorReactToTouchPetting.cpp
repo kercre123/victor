@@ -16,12 +16,15 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/behaviorReactToTouchPetting.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/types/behaviorComponent/behaviorTimerTypes.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/engine/jsonTools.h"
 
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
+#include "engine/aiComponent/behaviorComponent/heldInPalmTracker.h"
 #include "engine/aiComponent/beiConditions/beiConditionFactory.h"
 #include "engine/aiComponent/beiConditions/iBEICondition.h"
 #include "engine/audio/engineRobotAudioClient.h"
@@ -184,8 +187,16 @@ void BehaviorReactToTouchPetting::OnBehaviorActivated()
 
   // set internal state to speed up entry into Level1 animations
   _numPressesAtCurrentBlissLevel = 1;
-
-  GetBEI().GetMoodManager().TriggerEmotionEvent("PettingStarted");
+  
+  auto& moodManager = GetBEI().GetMoodManager();
+  moodManager.TriggerEmotionEvent("PettingStarted");
+  
+  auto& heldInPalmTracker = GetBEI().GetHeldInPalmTracker();
+  if (heldInPalmTracker.IsHeldInPalm()) {
+    moodManager.TriggerEmotionEvent("PettingStartedOnPalm");
+  }
+  
+  GetBEI().GetBehaviorTimerManager().GetTimer(BehaviorTimerTypes::ReactToTouchPetting).Reset();
   
   // starts the state machine to check for updates
   _currResponseState = PettingResponseState::PlayTransitionToLevel;

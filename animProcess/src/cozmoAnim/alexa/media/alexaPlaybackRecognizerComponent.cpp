@@ -31,7 +31,7 @@
 namespace Anki {
 namespace Vector {
   
-AlexaPlaybackRecognizerComponent::AlexaPlaybackRecognizerComponent( const AnimContext* context,
+AlexaPlaybackRecognizerComponent::AlexaPlaybackRecognizerComponent( const Anim::AnimContext* context,
                                                                     SpeechRecognizerSystem& speechRecognizerSystem )
 : _context( context )
 , _speechRecSys( speechRecognizerSystem )

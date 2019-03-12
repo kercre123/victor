@@ -1358,7 +1358,6 @@ namespace Anki {
     {
       ActionResult result = ActionResult::ABORT;
       const RobotTimeStamp_t currentTime = GetRobot().GetLastMsgTimestamp();
-      bool checkObjectMotion = false;
 
       if (_firstVerifyCallTime == 0) {
         _firstVerifyCallTime = currentTime;
@@ -1367,6 +1366,8 @@ namespace Anki {
       if (VerifyDockingComponentValid() &&
           _dockingComponentPtr->GetLastPickOrPlaceSucceeded()) {
 
+        bool checkObjectMotion = false;
+        
         // Determine whether or not we should do a SearchForNearbyObject instead of TurnTowardsPose
         // depending on if the liftLoad test resulted in HAS_NO_LOAD since this could be due to sticky lift.
         if (_doLiftLoadCheck) {
@@ -1374,13 +1375,15 @@ namespace Anki {
             // If liftLoad message hasn't come back yet, wait a little longer
             if (_liftLoadWaitTime_ms == 0) {
               _liftLoadWaitTime_ms = currentTime + kLiftLoadTimeout_ms;
+              return ActionResult::RUNNING;
             } else if (currentTime > _liftLoadWaitTime_ms) {
               // If LiftLoadCheck times out for some reason -- lift probably just couldn't get into
               // position fast enough -- then just proceed to motion check.
               PRINT_NAMED_WARNING("PickupObjectAction.Verify.LiftLoadTimeout", "");
               checkObjectMotion = true;
+            } else {
+              return ActionResult::RUNNING;
             }
-            return ActionResult::RUNNING;
           } else if (_liftLoadState == LiftLoadState::HAS_NO_LOAD) {
             checkObjectMotion = true;
           }
@@ -1434,7 +1437,7 @@ namespace Anki {
 
       if(_verifyAction == nullptr)
       {
-        _verifyAction.reset(new TurnTowardsPoseAction(_dockObjectOrigPose, 0));
+        _verifyAction.reset(new VisuallyVerifyNoObjectAtPoseAction(_dockObjectOrigPose));
         _verifyAction->ShouldSuppressTrackLocking(true);
         _verifyAction->SetRobot(&GetRobot());
         _verifyActionDone = false;

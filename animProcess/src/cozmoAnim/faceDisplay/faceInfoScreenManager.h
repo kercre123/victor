@@ -24,6 +24,7 @@
 #include "cozmoAnim/faceDisplay/faceInfoScreenTypes.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/cloud/mic.h"
+#include "clad/types/tofDisplayTypes.h"
 
 #include "util/singleton/dynamicSingleton.h"
 
@@ -40,8 +41,10 @@ namespace Vision {
 
 namespace Vector {
 
-class AnimContext;
-class AnimationStreamer;
+namespace Anim {
+  class AnimContext;
+  class AnimationStreamer;
+}
 class FaceInfoScreen;
   
 namespace RobotInterface {
@@ -61,7 +64,7 @@ class FaceInfoScreenManager : public Util::DynamicSingleton<FaceInfoScreenManage
 public:
   FaceInfoScreenManager();
 
-  void Init(AnimContext* context, AnimationStreamer* animStreamer);
+  void Init(Anim::AnimContext* context, Anim::AnimationStreamer* animStreamer);
   void Update(const RobotState& state);
   
   // Debug drawing is expected from only one thread
@@ -105,11 +108,13 @@ public:
                            bool triggerRecognized);
   void DrawMicInfo(const RobotInterface::MicData& micData);
   void DrawCameraImage(const Vision::ImageRGB565& img);
+
+  void DrawToF(const RangeDataDisplay& data);
   
   // Sets the power mode message to send when returning to none screen
   void SetCalmPowerModeOnReturnToNone(const RobotInterface::CalmPowerMode& msg) { _calmModeMsgOnNone = msg; }
 
-  void SelfTestEnd(AnimationStreamer* animStreamer);
+  void SelfTestEnd(Anim::AnimationStreamer* animStreamer);
 
   // Note when the engine has finished loading for internal use
   void OnEngineLoaded() {_engineLoaded = true;}
@@ -117,7 +122,7 @@ public:
   void SetSysconVersion(const std::string& version) { _sysconVersion = version; }
 
 private:
-  const AnimContext* _context = nullptr;
+  const Anim::AnimContext* _context = nullptr;
   
   std::unique_ptr<Vision::ImageRGB565> _scratchDrawingImg;
 
@@ -227,7 +232,7 @@ private:
   RobotInterface::DrawTextOnScreen _customText;
   WebService::WebService* _webService;
   
-  AnimationStreamer* _animationStreamer = nullptr;
+  Anim::AnimationStreamer* _animationStreamer = nullptr;
   
   std::string _alexaCode;
   std::string _alexaUrl;

@@ -30,6 +30,7 @@
 
 namespace Anki {
 namespace Vector {
+namespace Anim {
 
 CONSOLE_VAR(u32, kOfflineTimeBeforeLights_ms, "Backpacklights", (1000*60*2));
 CONSOLE_VAR(u32, kOfflineCheckFreq_ms,        "Backpacklights", 5000);
@@ -499,6 +500,6 @@ void BackpackLightComponent::UpdateBatteryStatus(const RobotInterface::BatterySt
   _isBatteryDisconnected = msg.isBatteryDisconnected;
 }
 
-
+}
 }
 }

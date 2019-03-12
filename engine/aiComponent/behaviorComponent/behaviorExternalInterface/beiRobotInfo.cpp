@@ -17,6 +17,7 @@
 #include "engine/robot.h"
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/components/carryingComponent.h"
+#include "engine/components/movementComponent.h"
 
 #include "osState/osState.h"
 
@@ -39,6 +40,12 @@ ActionList& BEIRobotInfo::GetActionList()
 BatteryLevel BEIRobotInfo::GetBatteryLevel() const
 {
   return _robot.GetBatteryComponent().GetBatteryLevel();
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BatteryLevel BEIRobotInfo::GetPrevBatteryLevel() const
+{
+  return _robot.GetBatteryComponent().GetPrevBatteryLevel();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -183,6 +190,12 @@ Radians BEIRobotInfo::GetPitchAngle() const
 {
   return _robot.GetPitchAngle();
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Radians BEIRobotInfo::GetRollAngle() const
+{
+  return _robot.GetRollAngle();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const Pose3d& BEIRobotInfo::GetPose() const
@@ -281,6 +294,13 @@ bool BEIRobotInfo::IsCharging() const
   return _robot.GetBatteryComponent().IsCharging();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float BEIRobotInfo::GetTimeAtBatteryLevelSec(BatteryLevel level) const
+{
+  return _robot.GetBatteryComponent().GetTimeAtLevelSec(level);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float BEIRobotInfo::GetOnChargerDurationSec() const
 {
   return _robot.GetBatteryComponent().GetOnChargerDurationSec();
@@ -313,13 +333,13 @@ bool BEIRobotInfo::IsLiftMotorOutOfBounds() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsHeadEncoderInvalid() const
 {
-  return _robot.IsHeadEncoderInvalid();
+  return _robot.GetMoveComponent().IsHeadEncoderInvalid();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsLiftEncoderInvalid() const
 {
-  return _robot.IsLiftEncoderInvalid();
+  return _robot.GetMoveComponent().IsLiftEncoderInvalid();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

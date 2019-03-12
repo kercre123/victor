@@ -15,6 +15,9 @@
 #include "util/logging/channelFilter.h"
 #include "util/logging/logging.h"
 #include "util/logging/printfLoggerProvider.h"
+
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 #include <cstdio>
 #include <string>
 
@@ -34,11 +37,14 @@ ParsedCommandLine ParseCommandLine(int argc, char** argv)
   {
     const std::string kFilterParam = "--applyLogFilter";
     const std::string kColorizeParam = "--colorizeStderrOutput";
+    const std::string kWhiskeyParam = "--whiskey";
     for( int i=1; i<argc; ++i) {
       if ( kFilterParam == argv[i] ) {
         ret.filterLog = true;
       } else if ( kColorizeParam == argv[i] ) {
         ret.colorizeStderrOutput = true;
+      } else if ( kWhiskeyParam == argv[i] ) {
+        Vector::Factory::SetWhiskey(true);
       }
     }
   }

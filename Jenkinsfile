@@ -187,7 +187,7 @@ class EphemeralAgent {
                 "/home/build/jenkins",
                 launcher)
         agent.nodeDescription = "dynamic build agent"
-        agent.numExecutors = 1
+        agent.numExecutors = 2
         agent.labelString = "reserved"
         agent.mode = Node.Mode.EXCLUSIVE
         agent.retentionStrategy = new RetentionStrategy.Always()
@@ -212,90 +212,102 @@ if (env.CHANGE_ID) {
 }
 
 stage("${primaryStageName} Build") {
-    agent = new EphemeralAgent()
-    gatekeeper = new Gatekeeper(this)
-    node('master') {
-        while( true ) {
+    while ( true ) {
+        agent = new EphemeralAgent()
+        gatekeeper = new Gatekeeper(this)
+        node('master') {
             echo "Checking if resources are available on vSphere..."
             gatekeeper.checkLimits()
-            if (gatekeeper.canProvision) break
-            sleep(time:30, unit:"SECONDS")
-        }
-        stage('Spin up ephemeral VM') {
-            try {
-                uuid = agent.getMachineName()
-                vSphere buildStep: [$class: 'Clone', clone: uuid, cluster: 'sjc-vm-cluster',
-                    customizationSpec: '', datastore: 'sjc-vm-04-localssd', folder: 'sjc/build',
-                    linkedClone: true, powerOn: false, resourcePool: 'jenkins-build-slaves',
-                    sourceName: 'js-photon-os-template', timeoutInSeconds: 60], serverName: vSphereServer
-                
-                vSphere buildStep: [$class: 'Reconfigure', reconfigureSteps: [[$class: 'ReconfigureCpu',
-                    coresPerSocket: '1', cpuCores: '2', cpuLimitMHz: '6600']], vm: uuid], serverName: vSphereServer // Max overcommit is 4:1 vCPU to pCPU
+            if (gatekeeper.canProvision) {
+                stage('Spin up ephemeral VM') {
+                    try {
+                        uuid = agent.getMachineName()
+                        vSphere buildStep: [$class: 'Clone', clone: uuid, cluster: 'sjc-vm-cluster',
+                            customizationSpec: '', datastore: 'sjc-vm-04-localssd', folder: 'sjc/build',
+                            linkedClone: true, powerOn: false, resourcePool: 'jenkins-build-slaves',
+                            sourceName: 'js-photon-os-template', timeoutInSeconds: 60], serverName: vSphereServer
 
-                vSphere buildStep: [$class: 'PowerOn', timeoutInSeconds: 60, vm: uuid], serverName: vSphereServer
+                        vSphere buildStep: [$class: 'Reconfigure', reconfigureSteps: [[$class: 'ReconfigureCpu',
+                            coresPerSocket: '1', cpuCores: '2', cpuLimitMHz: '6600']], vm: uuid], serverName: vSphereServer // Max overcommit is 4:1 vCPU to pCPU
 
-                def buildAgentIP = vSphere buildStep: [$class: 'ExposeGuestInfo', envVariablePrefix: 'VSPHERE', vm: uuid, waitForIp4: true], serverName: vSphereServer
-                agent.setIPAddress(buildAgentIP)
-            } catch (Exception exc) {
-                def jobName = "${env.JOB_NAME}"
-                jobName = jobName.getAt(0..(jobName.indexOf('/') - 1))
-                def reason = exc.getCause()
-                notifySlack("", slackNotificationChannel,
-                    [
-                        title: "${jobName} ${primaryStageName} ${env.CHANGE_ID}, build #${env.BUILD_NUMBER}",
-                        title_link: "${env.BUILD_URL}",
-                        color: "warning",
-                        text: "${reason}",
-                    ]
-                )
-                node('master') {
-                    stage('Cleaning master workspace') {
-                        def workspace = pwd()
-                        dir("${workspace}@script") {
-                            deleteDir()
+                        vSphere buildStep: [$class: 'PowerOn', timeoutInSeconds: 60, vm: uuid], serverName: vSphereServer
+
+                        def buildAgentIP = vSphere buildStep: [$class: 'ExposeGuestInfo',
+                            envVariablePrefix: 'VSPHERE', vm: uuid, waitForIp4: true], serverName: vSphereServer
+
+                        agent.setIPAddress(buildAgentIP)
+                        agent.Attach()
+                        gatekeeper.provisioningDone()
+                    } catch (Exception exc) {
+                        def jobName = "${env.JOB_NAME}"
+                        jobName = jobName.getAt(0..(jobName.indexOf('/') - 1))
+                        def reason = "Could not provision VM, retrying..."
+                        notifySlack("", slackNotificationChannel,
+                            [
+                                title: "${jobName} ${primaryStageName} ${env.CHANGE_ID}, build #${env.BUILD_NUMBER}",
+                                title_link: "${env.BUILD_URL}",
+                                color: "warning",
+                                text: "${reason}",
+                            ]
+                        )
+                        node('master') {
+                            stage('Destroy ephemeral VM') {
+                                vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
+                            }
                         }
                     }
-                    stage('Destroy ephemeral VM') {
-                        vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
-                    }
                 }
-                throw exc
+            } else {
+                echo "Not enough resources, retrying VM provisioning in 30 seconds..."
+                sleep(time:30, unit:"SECONDS")
             }
         }
-        stage('Attach ephemeral build agent VM to Jenkins') {
-            agent.Attach()
-        }
+        if (gatekeeper.nodeProvisioned) break
     }
-    node(uuid) {
-        try {
-            withDockerEnv {
-                buildPRStepsVicOS type: buildConfig.SHIPPING.getBuildType()
-                //deployArtifacts type: buildConfig.SHIPPING.getArtifactType(), artifactoryServer: server
+    try {
+        parallel shipping: {
+            node(uuid) {
+                gitCheckout(true)
+                withDockerEnv {
+                    buildPRStepsVicOS type: buildConfig.SHIPPING.getBuildType()
+                }
             }
+        },
+        debug: {
+            node(uuid) {
+                gitCheckout(true)
+                withDockerEnv {
+                    buildPRStepsVicOS type: buildConfig.DEBUG.getBuildType()
+                }
+            }
+        }
+        node('master') {
             notifyBuildStatus('Success')
-        } catch (FlowInterruptedException ae) {
+        }
+    } catch (FlowInterruptedException ae) {
+        node('master') {
             notifyBuildStatus('Aborted')
-            throw ae
-        } catch (exc) {
+        }
+        throw ae
+    } catch (exc) {
+        node('master') {
             notifyBuildStatus('Failure')
-            throw exc
-        } finally {
-            stage('Cleaning slave workspace') {
+        }
+        throw exc
+    } finally {
+        node('master') {
+            stage('Cleaning master workspace') {
                 cleanWs()
+                def workspace = pwd()
+                dir("${workspace}@script") {
+                    deleteDir()
+                }
             }
-            node('master') {
-                stage('Cleaning master workspace') {
-                    def workspace = pwd()
-                    dir("${workspace}@script") {
-                        deleteDir()
-                    }
-                }
-                stage('Destroy ephemeral VM') {
-                    vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
-                }
-                stage('Detach ephemeral build agent from Jenkins') {
-                    agent.Detach()
-                }
+            stage('Destroy ephemeral VM') {
+                vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
+            }
+            stage('Detach ephemeral build agent from Jenkins') {
+                agent.Detach()
             }
         }
     }

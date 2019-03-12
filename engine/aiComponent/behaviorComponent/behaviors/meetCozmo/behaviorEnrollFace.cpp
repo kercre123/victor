@@ -883,7 +883,7 @@ void BehaviorEnrollFace::BehaviorUpdate()
         const std::string dataType = "recognition_data";
         const std::string path = Util::FileUtils::FullFilePath({cachePath, "images", dataType});
         const bool result = Util::FileUtils::CreateDirectory(path);
-        if (result) {
+        if (!result) {
           LOG_ERROR("BehaviorEnrollFace.OnBehaviorActivated.FailedToCreateRecognitionImageSavePath",
                     "Path %s failed to be created.", path.c_str());
         }

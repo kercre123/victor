@@ -58,7 +58,7 @@ def test_event(vector_connection, request_params):
 
 @pytest.mark.parametrize("request_params", [
     {"control_request": p.ControlRequest(priority=p.ControlRequest.UNKNOWN)},
-    {"control_request": p.ControlRequest(priority=p.ControlRequest.TOP_PRIORITY_AI)},
+    {"control_request": p.ControlRequest(priority=p.ControlRequest.DEFAULT)},
     {"control_request": p.ControlRequest()},
     {"control_release": p.ControlRelease()}
 ])

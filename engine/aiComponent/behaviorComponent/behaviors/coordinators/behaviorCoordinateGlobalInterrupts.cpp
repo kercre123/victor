@@ -218,13 +218,6 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
     return;
   }
 
-  bool shouldSuppressTriggerWordBehavior = false;
-
-  if ( shouldSuppressTriggerWordBehavior )
-  {
-    _iConfig.wakeWordBehavior->SetDontActivateThisTick(GetDebugLabel());
-  }
-
   // todo: generalize "if X is running then suppress Y"
 
   // suppress during meet victor
@@ -265,12 +258,7 @@ void BehaviorCoordinateGlobalInterrupts::PassThroughUpdate()
 
   // this will suppress the streaming POST-wakeword pending
   // the "do a fist bump" part of "hey victor"
-  const bool shouldSuppressStreaming = shouldSuppressTriggerWordBehavior;
-  if(shouldSuppressStreaming){
-    SmartAlterStreamStateForCurrentResponse(StreamAndLightEffect::StreamingDisabledButWithLight);
-  }else{
-    SmartPopResponseToTriggerWord();
-  }
+  SmartPopResponseToTriggerWord();
 
   {
     auto& uic = GetBehaviorComp<UserIntentComponent>();

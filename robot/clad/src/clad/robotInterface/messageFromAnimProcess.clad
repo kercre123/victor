@@ -3,6 +3,7 @@
 
 #include "clad/types/animationEvents.clad"
 #include "clad/types/textToSpeechTypes.clad"
+#include "clad/types/sdkAudioTypes.clad"
 
 namespace Anki {
 namespace Vector {
@@ -89,6 +90,14 @@ message DebugScreenMode
 
 message RobotAvailable
 {
+}
+
+// Results/status of AudioStreamPlayback added for SDK
+message AudioStreamStatusEvent
+{
+  uint_32 audioReceived,
+  uint_32 audioPlayed,
+  SDKAudioStreamingState streamResultID
 }
 
 } // Cozmo

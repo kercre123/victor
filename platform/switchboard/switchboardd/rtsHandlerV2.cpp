@@ -11,8 +11,12 @@
  **/
 
 #include "exec_command.h"
-#include "util/fileUtils/fileUtils.h"
 #include "switchboardd/rtsHandlerV2.h"
+
+#include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/externalInterface/messageGameToEngine.h"
+#include "util/fileUtils/fileUtils.h"
+
 #include <sstream>
 #include <cutils/properties.h>
 
@@ -24,7 +28,7 @@ long long RtsHandlerV2::sTimeStarted;
 
 RtsHandlerV2::RtsHandlerV2(INetworkStream* stream, 
     struct ev_loop* evloop,
-    std::shared_ptr<EngineMessagingClient> engineClient,
+    std::shared_ptr<ISwitchboardCommandClient> engineClient,
     std::shared_ptr<TokenClient> tokenClient,
     std::shared_ptr<TaskExecutor> taskExecutor,
     std::shared_ptr<WifiWatcher> wifiWatcher,
@@ -234,7 +238,9 @@ void RtsHandlerV2::HandleRtsWifiConnectRequest(const Vector::ExternalComms::RtsC
     UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStatus::SETTING_WIFI);
 
     // Disable autoconnect before connecting manually
-    _wifiWatcher->Disable();
+    if(_wifiWatcher != nullptr) {
+      _wifiWatcher->Disable();
+    }
 
     Wifi::ConnectWifiResult connected = Wifi::ConnectWiFiBySsid(wifiConnectMessage.wifiSsidHex,
       wifiConnectMessage.password,
@@ -597,10 +603,7 @@ void RtsHandlerV2::SendStatusResponse() {
   bool isApMode = Wifi::IsAccessPointMode();
 
   // Send challenge and update state
-  char buildNo[PROPERTY_VALUE_MAX] = {0};
-  (void)property_get("ro.build.id", buildNo, "");
-
-  std::string buildNoString(buildNo);
+  std::string buildNoString = GetBuildIdString();
 
   SendRtsMessage<RtsStatusResponse_2>(state.ssid, state.connState, isApMode, bleState, batteryState, buildNoString, _isOtaUpdating);
 
@@ -647,7 +650,9 @@ void RtsHandlerV2::SendWifiConnectResult(Wifi::ConnectWifiResult result) {
   }
 
   // Re-enable autoconnect
-  _wifiWatcher->Enable();
+  if(_wifiWatcher != nullptr) {
+    _wifiWatcher->Enable();
+  }
 
   // Send challenge and update state
   Wifi::WiFiState wifiState = Wifi::GetWiFiState();

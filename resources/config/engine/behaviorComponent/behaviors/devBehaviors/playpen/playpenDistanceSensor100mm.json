@@ -4,5 +4,6 @@
   "AngleToTurnToSeeTarget_deg": 0,
   "DistanceToDriveToSeeTarget_mm": 200,
   "ExpectedObjectType": "Charger_Basic",
-  "ExpectedDistance_mm": 100
+  "ExpectedDistance_mm": 100,
+  "PerformCalibration": true    
 }

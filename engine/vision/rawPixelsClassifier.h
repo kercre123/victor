@@ -226,7 +226,7 @@ protected:
 
   float FindThreshold(std::vector<float>& distances) const;
 
-  float _threshold;
+  float _threshold = -1.f;
   float _medianMultiplier = 5.0; // This value might be changed by the Json config
 };
 

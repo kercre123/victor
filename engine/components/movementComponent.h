@@ -251,6 +251,20 @@ public:
   double GetLeftWheelOdometer_mm()  const { return _lWheel_odom_mm; }
   double GetRightWheelOdometer_mm() const { return _rWheel_odom_mm; }
 
+
+  // Whether or not the encoders have been "disabled". 
+  // (In reality they are operating at a lower frequency so that motion can be detected.)
+  // This happens normally if the motors are not actively being driven.
+  bool AreEncodersDisabled() const { return _areEncodersDisabled; }
+
+  // Whether or not the head was detected to have moved while the encoders were "disabled"
+  // i.e. Calibration is necessary!
+  bool IsHeadEncoderInvalid() const { return _isHeadEncoderInvalid; }
+
+  // Whether or not the lift was detected to have moved while the encoders were "disabled"
+  // i.e. Calibration is necessary!
+  bool IsLiftEncoderInvalid() const { return _isLiftEncoderInvalid; }
+
 private:
   
   void InitEventHandlers(IExternalInterface& interface);
@@ -286,6 +300,9 @@ private:
   bool _isHeadMoving = false;
   bool _isLiftMoving = false;
   bool _areWheelsMoving = false;
+  bool _areEncodersDisabled = false;
+  bool _isHeadEncoderInvalid = false;
+  bool _isLiftEncoderInvalid = false;
   bool _enableRotatedWithoutMotors = false;
 
   // True if we are currently allowed to handle raw motion commands from the outside world

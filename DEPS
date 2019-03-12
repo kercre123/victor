@@ -39,6 +39,12 @@
                 },
                 "version": "1.0.16"
             },
+            "lldb-server": {
+                "checksums": {
+                    "sha256": "8c4f3798fbceb23d26e1faf79bb0e90d205d335bae32b0955d10869d65ad79e9"
+                },
+                "version": "8.0"
+            },
             "mpg123": {
                 "checksums": {
                     "sha256": "377e3c0299f601b788da28c75ec893761f2e3ad2678dc37180914f0e632f10ad"
@@ -81,8 +87,8 @@
     },
     "files": {
         "victor-blobstore-qalogs-key": {
-            "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-blobstore-qalogs-client-key/victor-blobstore-qalogs-key",
-            "sha256": "579ee035e4aea9be4678fbc440375eba47608ce2e127deab0dd49efb148db39d"
+            "sha256": "579ee035e4aea9be4678fbc440375eba47608ce2e127deab0dd49efb148db39d",
+            "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-blobstore-qalogs-client-key/victor-blobstore-qalogs-key"
         }
     },
     "svn": {
@@ -108,11 +114,11 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "4911"
+                "version": "4940"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "169"
+                "version": "170"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

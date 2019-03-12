@@ -28,7 +28,7 @@ namespace Vector {
 
 
 
-PerfMetricAnim::PerfMetricAnim(const AnimContext* context)
+PerfMetricAnim::PerfMetricAnim(const Anim::AnimContext* context)
   : _frameBuffer(nullptr)
 {
   _headingLine1 = "                       Anim     Anim    Sleep    Sleep     Over      RtA   AtR   EtA   AtE  Anim Layer";

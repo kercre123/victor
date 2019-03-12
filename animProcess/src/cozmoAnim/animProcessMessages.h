@@ -23,10 +23,12 @@ namespace Anki {
 namespace Vector {
 
 // Forward declarations
-class AnimationStreamer;
-class StreamingAnimationModifier;
-class AnimContext;
-class AnimEngine;
+namespace Anim {
+  class AnimationStreamer;
+  class StreamingAnimationModifier;
+  class AnimContext;
+  class AnimEngine;
+}
 
 namespace Audio {
 class EngineRobotAudioInput;
@@ -38,11 +40,11 @@ public:
 
   // Initialize message handlers.
   // Arguments may not be null.
-  static Result Init(AnimEngine* animEngine,
-                     AnimationStreamer* animStreamer,
-                     StreamingAnimationModifier* streamingAnimationModifier,
+  static Result Init(Anim::AnimEngine* animEngine,
+                     Anim::AnimationStreamer* animStreamer,
+                     Anim::StreamingAnimationModifier* streamingAnimationModifier,
                      Audio::EngineRobotAudioInput* audioInput,
-                     const AnimContext* context);
+                     const Anim::AnimContext* context);
 
   // Process message traffic
   static Result Update(BaseStationTime_t currTime_nanosec);

@@ -52,8 +52,10 @@ using namespace Anki::Vector;
 
 namespace {
 #ifndef SIMULATOR
-  bool s_WaitingForProcessStatus = false;
+  bool                     s_WaitingForProcessStatus = false;
   std::vector<std::string> s_ProcessStatuses;
+  std::mutex               s_ProcessStatusMutex;
+  std::condition_variable  s_ProcessStatusCondition;
 #endif
 }
 
@@ -236,28 +238,20 @@ ProcessRequest(struct mg_connection *conn, WebService::WebService::RequestType r
 
   that->AddRequest(requestPtr);
 
-  if( waitAndSendResponse ) {
-
-    // Now wait until the main thread processes the request
+  if (waitAndSendResponse)
+  {
+    // Wait until the main thread processes the request
     using namespace std::chrono;
-    static const double kTimeoutDuration_s = 10.0;
-    const auto startTime = steady_clock::now();
-    bool timedOut = false;
-    do
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds(5));
-      const auto now = steady_clock::now();
-      const auto elapsed_s = duration_cast<seconds>(now - startTime).count();
-      if (elapsed_s > kTimeoutDuration_s)
-      {
-        timedOut = true;
-        break;
-      }
-    } while (!requestPtr->_resultReady);
+    static const long long kTimeoutDuration_s = 10;
 
-    // We check if result is there because we just slept and it may have come in
-    // just before the timeout
-    if (timedOut && !requestPtr->_resultReady)
+    {
+      std::unique_lock<std::mutex> lk{requestPtr->_readyMutex};
+      requestPtr->_readyCondition.wait_for(lk,
+                                           seconds(kTimeoutDuration_s),
+                                           [requestPtr]{ return requestPtr->_resultReady; });
+    }
+
+    if (!requestPtr->_resultReady)
     {
       std::lock_guard<std::mutex> lock(that->_requestMutex);
       requestPtr->_result = "Timed out after " + std::to_string(kTimeoutDuration_s) + " seconds";
@@ -801,40 +795,33 @@ static int GetProcessStatus(struct mg_connection *conn, void *cbdata)
       }
     }
 
-    s_WaitingForProcessStatus = true;
     ExecCommand(args);
 
-    static const double kTimeoutDuration_s = 10.0;
-    const auto startWaitTime = steady_clock::now();
-    bool timedOut = false;
-    do
+    static const long long kTimeoutDuration_s = 10;
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      const auto now = steady_clock::now();
-      const auto elapsed_s = duration_cast<seconds>(now - startWaitTime).count();
-      if (elapsed_s > kTimeoutDuration_s)
+      std::unique_lock<std::mutex> lk{s_ProcessStatusMutex};
+      s_WaitingForProcessStatus = true;
+      s_ProcessStatusCondition.wait_for(lk,
+                                        seconds(kTimeoutDuration_s),
+                                        []{ return !s_WaitingForProcessStatus; });
+
+      if (s_WaitingForProcessStatus)
       {
-        timedOut = true;
-        break;
+        LOG_INFO("WebService.GetProcessStatus", "GetProcessStatus timed out after %lld seconds",
+                 kTimeoutDuration_s);
       }
-    } while (s_WaitingForProcessStatus);
 
-    // We check if result is there because we just slept and it may have come in
-    // just before the timeout
-    if (timedOut && s_WaitingForProcessStatus)
-    {
-      LOG_INFO("WebService.GetProcessStatus", "GetProcessStatus timed out after %f seconds", kTimeoutDuration_s);
-    }
-
-    bool firstDone = false;
-    for (const auto& result : s_ProcessStatuses) {
-      if (firstDone) {
-        resultsString += "\n";
+      bool firstDone = false;
+      for (const auto& result : s_ProcessStatuses) {
+        if (firstDone) {
+          resultsString += "\n";
+        }
+        resultsString += result;
+        firstDone = true;
       }
-      resultsString += result;
-      firstDone = true;
     }
   }
+
   mg_printf(conn,
             "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
             "close\r\n\r\n");
@@ -853,20 +840,26 @@ static int ProcessStatus(struct mg_connection *conn, void *cbdata)
   const mg_request_info* info = mg_get_request_info(conn);
   std::string results = info->query_string ? info->query_string : "";
 
-  s_ProcessStatuses.clear();
-  while (!results.empty()) {
-    const size_t amp = results.find('&');
-    if (amp != std::string::npos) {
-      s_ProcessStatuses.push_back(results.substr(0, amp));
-      results = results.substr(amp + 1);
-    }
-    else {
-      s_ProcessStatuses.push_back(results);
-      break;
-    }
-  }
+  {
+    std::unique_lock<std::mutex> lk{s_ProcessStatusMutex};
 
-  s_WaitingForProcessStatus = false;
+    s_ProcessStatuses.clear();
+    while (!results.empty()) {
+      const size_t amp = results.find('&');
+      if (amp != std::string::npos) {
+        s_ProcessStatuses.push_back(results.substr(0, amp));
+        results = results.substr(amp + 1);
+      }
+      else {
+        s_ProcessStatuses.push_back(results);
+        break;
+      }
+    }
+
+    // Notify the requesting thread that the result is now ready
+    s_WaitingForProcessStatus = false;
+  }
+  s_ProcessStatusCondition.notify_all();
 
   mg_printf(conn,
             "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
@@ -1224,7 +1217,11 @@ void WebService::Update()
       }
 
       // Notify the requesting thread that the result is now ready
-      requestPtr->_resultReady = true;
+      {
+        std::unique_lock<std::mutex> lk{requestPtr->_readyMutex};
+        requestPtr->_resultReady = true;
+      }
+      requestPtr->_readyCondition.notify_all();
     }
   }
 }

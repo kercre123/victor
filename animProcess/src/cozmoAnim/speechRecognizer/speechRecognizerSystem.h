@@ -30,12 +30,16 @@ namespace Anki {
   namespace Vector {
     class Alexa;
     class AlexaPlaybackRecognizerComponent;
-    class AnimContext;
+    namespace Anim {
+      class AnimContext;
+    }
     namespace MicData {
       class MicDataSystem;
     }
     class NotchDetector;
-    class RobotDataLoader;
+    namespace Anim {
+      class RobotDataLoader;
+    }
     class SpeechRecognizerTHF;
     class SpeechRecognizerPryonLite;
     namespace {
@@ -56,7 +60,7 @@ public:
 
   friend class AlexaPlaybackRecognizerComponent;
 
-  SpeechRecognizerSystem(const AnimContext* context,
+  SpeechRecognizerSystem(const Anim::AnimContext* context,
                          MicData::MicDataSystem* micDataSystem,
                          const std::string& triggerWordDataDir);
   
@@ -71,7 +75,7 @@ public:
   
   // Init Vector trigger detector
   // Note: This always happens at boot
-  void InitVector(const RobotDataLoader& dataLoader,
+  void InitVector(const Anim::RobotDataLoader& dataLoader,
                   const Util::Locale& locale,
                   TriggerWordDetectedCallback callback);
 
@@ -140,7 +144,7 @@ private:
   using TriggerContextThf = TriggerContext<SpeechRecognizerTHF>;
   using TriggerContextPryon = TriggerContext<SpeechRecognizerPryonLite>;
   
-  const AnimContext*                          _context = nullptr;
+  const Anim::AnimContext*                    _context = nullptr;
   MicData::MicDataSystem*                     _micDataSystem = nullptr;
   std::unique_ptr<TriggerContextThf>          _victorTrigger;
   

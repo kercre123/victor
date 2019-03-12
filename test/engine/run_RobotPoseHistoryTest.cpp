@@ -20,17 +20,11 @@ const Anki::Pose3d origin(0, Anki::Z_AXIS_3D(), {0,0,0}, "Origin");
 
 const Anki::Vector::ProxSensorData proxSensorValid = { .distance_mm = 100,
                                                       .signalQuality = 10,
-                                                      .isInValidRange = true,
-                                                      .isValidSignalQuality = true,
-                                                      .isLiftInFOV = false,
-                                                      .isTooPitched = false };
+                                                      .isLiftInFOV = false };
 
 const Anki::Vector::ProxSensorData proxSensorNotValid = { .distance_mm = 100,
                                                         .signalQuality = 10,
-                                                        .isInValidRange = true,
-                                                        .isValidSignalQuality = true,
-                                                        .isLiftInFOV = true,
-                                                        .isTooPitched = false };
+                                                        .isLiftInFOV = true };
 
 
 const uint8_t frontCliffDetectedFlags = (1<<Anki::Util::EnumToUnderlying(Anki::Vector::CliffSensor::CLIFF_FL)) | 
@@ -123,7 +117,7 @@ TEST(RobotStateHistory, AddGetPose)
   
   // since interpolation is in the middle it should be the newest
   ASSERT_TRUE(histState.WasCarryingObject() == WasStateCarrying(state2));
-  ASSERT_TRUE(histState.WasProxSensorValid() == histState2.WasProxSensorValid());
+  ASSERT_TRUE(histState.GetProxSensorData().foundObject == histState2.GetProxSensorData().foundObject);
   for (int i=0; i<Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT); ++i) {
     CliffSensor sensor = static_cast<CliffSensor>(i);
     ASSERT_TRUE(histState.WasCliffDetected(sensor) == histState2.WasCliffDetected(sensor));

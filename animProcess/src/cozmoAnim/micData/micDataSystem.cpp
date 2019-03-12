@@ -104,7 +104,7 @@ static_assert(
 
 
 MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
-                             const AnimContext* context)
+                             const Anim::AnimContext* context)
 : _context(context)
 , _udpServer(new LocalUdpServer())
 , _fftResultData(new FFTResultData())
@@ -138,7 +138,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
               sockName.c_str());
 }
 
-void MicDataSystem::Init(const RobotDataLoader& dataLoader)
+void MicDataSystem::Init(const Anim::RobotDataLoader& dataLoader)
 {
   // SpeechRecognizerSystem
   SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info) {

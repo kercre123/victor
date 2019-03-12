@@ -450,17 +450,6 @@ void BehaviorKnowledgeGraphQuestion::TransitionToNoResponse()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::TransitionToNoConnection()
-{
-  PRINT_DEBUG( "Knowledge Graph not connected" );
-
-  _dVars.state = EState::NoConnection;
-
-  // currently no distinction between "no response", but there will/may be at some point
-  TransitionToNoResponse();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKnowledgeGraphQuestion::OnResponseInterrupted()
 {
   DEV_ASSERT( EState::Responding == _dVars.state, "Should only allow interruptions during response state" );

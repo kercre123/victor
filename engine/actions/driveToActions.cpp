@@ -306,7 +306,6 @@ namespace Anki {
     
     ActionResult DriveToObjectAction::Init()
     {
-      ActionResult result = ActionResult::SUCCESS;
       ActionableObject* object = dynamic_cast<ActionableObject*>(GetRobot().GetBlockWorld().GetLocatedObjectByID(_objectID));
       if(object == nullptr)
       {
@@ -317,7 +316,7 @@ namespace Anki {
       }
 
       // Use a helper here so that it can be shared with DriveToPlaceCarriedObjectAction
-      result = InitHelper(object);
+      ActionResult result = InitHelper(object);
 
       // Only set cube lights if the dock object is a light cube
       _shouldSetCubeLights = IsValidLightCube(object->GetType(), false);

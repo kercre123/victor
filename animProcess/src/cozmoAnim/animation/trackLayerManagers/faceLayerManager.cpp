@@ -27,7 +27,8 @@
 
 namespace Anki {
 namespace Vector {
-    
+namespace Anim {
+
 namespace {
 
 // Eye dart params
@@ -466,6 +467,7 @@ u32 FaceLayerManager::GetMaxBlinkSpacingTimeForScreenProtection_ms() const
   return kMaxBlinkSpacingTimeForScreenProtection_ms;
 }
 
+} // namespace Anim
 } // namespace Vector
 } // namespace Anki
 

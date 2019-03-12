@@ -25,10 +25,13 @@
       {
         // No point in trying to look around if being held by body, rather than
         // held in hand.
-        "conditionType": "Compound",
-        "not": {
-          "conditionType": "CliffDetected"
-        }
+        "conditionType": "CliffDetected",
+        "shouldDetectNoCliffs": true,
+        // Just before the robot is put back down on the ground (OnTreads), the
+        // robot sees no cliffs briefly while InAir, so to prevent a false positive
+        // triggering of this dispatcher, set a minimum duration for no cliffs to
+        // be detected WHILE the robot is InAir.
+        "minDuration_ms" : 3000
       },
       {
         "conditionType": "FeatureGate",
@@ -48,7 +51,6 @@
   "behaviors": [
     "InitialHeldInPalmReaction",
     "HeldInPalmResponses",
-    "ReactToPalmTilt",
     // If the pick-up reaction times out, the entire dispatcher should as well. Therefore,
     // no other behavior after this one should be able to run while InAir. That way the
     // WhileInAirDispatcher can be allowed to [re-]activate, since the robot will still

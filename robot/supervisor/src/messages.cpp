@@ -106,6 +106,7 @@ namespace Anki {
         for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
           robotState_.cliffDataRaw[i] = ProxSensors::GetCliffValue(i);
         }
+        
         robotState_.proxData = ProxSensors::GetProxData();
 
         robotState_.backpackTouchSensorRaw = HAL::GetButtonState(HAL::BUTTON_CAPACITIVE);
@@ -183,8 +184,8 @@ namespace Anki {
 
       void Process_calmPowerMode(const RobotInterface::CalmPowerMode& msg)
       {
-        AnkiInfo("Messages.Process_calmPowerMode.enable", "enable: %d, calib: %d", msg.enable, msg.calibOnDisable);
-        PowerModeManager::EnableActiveMode(!msg.enable, msg.calibOnDisable);
+        AnkiInfo("Messages.Process_calmPowerMode.enable", "%d", msg.enable);
+        PowerModeManager::EnableActiveMode(!msg.enable);
       }
 
       void Process_absLocalizationUpdate(const RobotInterface::AbsoluteLocalizationUpdate& msg)

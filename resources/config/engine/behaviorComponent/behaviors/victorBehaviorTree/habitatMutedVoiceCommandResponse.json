@@ -8,7 +8,8 @@
     { "type" : "imperative_come" },
     { "type" : "imperative_findcube" },
     { "type" : "explore_start" },
-    { "type" : "play_specific", "_lambda" : "habitat_play_specific_filter" }
+    { "type" : "play_pickupcube"},
+    { "type" : "play_rollcube"}
   ],
 
   "wantsToBeActivatedCondition" : {

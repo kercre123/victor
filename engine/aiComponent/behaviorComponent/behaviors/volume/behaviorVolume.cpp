@@ -63,6 +63,7 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorVolume::DynamicVariables::DynamicVariables()
   : lastVolumeChangeNotification_s(0.0)
+  , volumeChangeReactorId(0)
 {}
 
 
@@ -86,7 +87,8 @@ bool BehaviorVolume::WantsToBeActivatedBehavior() const
   const bool volumeLevelPending = uic.IsUserIntentPending(USER_INTENT(imperative_volumelevel));
   const bool volumeUpPending = uic.IsUserIntentPending(USER_INTENT(imperative_volumeup));
   const bool volumeDownPending = uic.IsUserIntentPending(USER_INTENT(imperative_volumedown));
-  const bool externalNotificationPending = ExternalNotificationPending();
+  // we don't want to respond to an external notification if there's another user intent pending
+  const bool externalNotificationPending = ( ExternalNotificationPending() && !uic.IsAnyUserIntentPending() );
   
   return volumeLevelPending || volumeUpPending || volumeDownPending || externalNotificationPending;
 }
@@ -120,7 +122,7 @@ void BehaviorVolume::OnBehaviorActivated()
   SettingsManager& settings = GetBEI().GetSettingsManager();
   EVolumeLevel newVolumeLevel;
 
-  if (ExternalNotificationPending()) {
+  if ( ExternalNotificationPending()) {
     // a little quirk: we don't use the volume from the volume change notification.
     // instead, we read it again from settings, to get the most up to date volume
     // (one less piece of state to keep around in a potentially invalid state...)
