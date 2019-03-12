@@ -444,7 +444,7 @@ struct DockingErrorSignal;
     // some amount of time
     EngineTimeStamp_t _restartingCameraTime_ms = 0;
 
-    IlluminationState _lastIlluminationState;
+    IlluminationState _lastIlluminationState = IlluminationState::Unknown;
 
     #if REMOTE_CONSOLE_ENABLED
     // Array of pairs of ConsoleVars and their associated values used for toggling VisionModes
