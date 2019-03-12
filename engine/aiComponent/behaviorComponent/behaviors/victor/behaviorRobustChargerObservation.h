@@ -38,7 +38,7 @@ protected:
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
-  virtual void BehaviorUpdate() override;
+  virtual void AlwaysHandleInScope(const EngineToGameEvent& event) override;
 
   void TransitionToIlluminationCheck();
   void TransitionToObserveCharger();

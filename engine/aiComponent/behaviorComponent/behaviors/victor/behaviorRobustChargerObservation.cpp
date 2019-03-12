@@ -26,6 +26,8 @@
 
 #include "util/logging/DAS.h"
 
+#include "clad/externalInterface/messageEngineToGame.h"
+
 namespace Anki {
 namespace Vector {
 
@@ -56,6 +58,10 @@ BehaviorRobustChargerObservation::BehaviorRobustChargerObservation(const Json::V
   std::string debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
   _iConfig.numImageCompositingFramesToWaitFor = JsonTools::ParseInt32(config, kNumImageCompositingFramesToWaitForKey, debugName);
   _iConfig.numCyclingExposureFramesToWaitFor = JsonTools::ParseInt32(config, kNumCyclingExposureFramesToWaitForKey, debugName);
+
+  SubscribeToTags({
+    EngineToGameTag::RobotProcessedImage,
+  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -103,6 +109,25 @@ void BehaviorRobustChargerObservation::OnBehaviorDeactivated()
   DASMSG_SET(i1, _dVars.numFramesOfDetectingMarkers, "Count of total number of processed image frames searching for Markers");
   DASMSG_SET(i2, _dVars.numFramesOfImageTooDark, "Count of number of processed image frames (searching for Markers) that are TooDark");
   DASMSG_SEND();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorRobustChargerObservation::AlwaysHandleInScope(const EngineToGameEvent& event)
+{
+  switch(event.GetData().GetTag()) {
+    case EngineToGameTag::RobotProcessedImage:
+    {
+      if(IsActivated() && GetBEI().HasVisionComponent()) {
+        _dVars.numFramesOfDetectingMarkers++;
+        if(GetBEI().GetVisionComponent().GetLastImageQuality() == Vision::ImageQuality::TooDark) {
+          _dVars.numFramesOfImageTooDark++;
+        }
+      }
+      break;
+    }
+    default:
+      break;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -170,26 +195,6 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
   }
 
   DelegateIfInControl(compoundAction); // terminal action, after this the behavior exits
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorRobustChargerObservation::BehaviorUpdate() 
-{
-  if(IsActivated()) {
-    // Note: this gets called at the same rate as engine
-    // We do not have to worry about missed frames of
-    //  marker detection (because of engine ticks taking 
-    //  too long) because engine is the driver of frames
-    //  being processed ultimately.
-    // For this behavior we are also running MarkerDetection
-    //  every frame (high frequency).
-    if(GetBEI().HasVisionComponent()) {
-      _dVars.numFramesOfDetectingMarkers++;
-      if(GetBEI().GetVisionComponent().GetLastImageQuality() == Vision::ImageQuality::TooDark) {
-        _dVars.numFramesOfImageTooDark++;
-      }
-    }
-  }
 }
 
 }
