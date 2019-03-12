@@ -19,6 +19,8 @@
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
 #include "whiskeyToF/tof.h"
 
 #include <sys/stat.h>
@@ -48,11 +50,14 @@ Result BehaviorPlaypenInitChecks::OnBehaviorActivatedInternal()
 
   // Start the tof background test
   // This will repeatedly start and stop the sensor checking for issues with ranging (constant ranging errors)
-  ToFSensor::getInstance()->EnableBackgroundTest(true,
-                                                 [this](ToFSensor::CommandResult res)
-                                                 {
-                                                   _tofCheckFailed = true;
-                                                 });
+  if(!(Factory::GetEMR()->fields.playpenTestDisableMask & PlaypenTestMask::ToFBGTCheck))
+  {
+    ToFSensor::getInstance()->EnableBackgroundTest(true,
+                                                   [this](ToFSensor::CommandResult res)
+                                                   {
+                                                     _tofCheckFailed = true;
+                                                   });
+  }
 
   // Should not be seeing any cliffs
   if(robot.GetCliffSensorComponent().IsCliffDetectedStatusBitOn())

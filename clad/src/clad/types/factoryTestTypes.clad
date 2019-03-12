@@ -237,7 +237,9 @@ enum no_cpp_class uint_32 PlaypenTestMask {
   WifiScanError                = 0x00000010,
 
   CubePoseCheck                = 0x00000020,
-  
+
+  ToFBGTCheck                  = 0x00000040,
+
 }
 
 } // namespace Cozmo
