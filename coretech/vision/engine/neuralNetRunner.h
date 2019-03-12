@@ -70,9 +70,9 @@ public:
   //  StartProcessingIfIdle(imageCache);
   //
   
+  const ImageRGB& GetOrigImg() const { return _imgOrig; }
   s32 GetProcessingWidth()  const { return _processingWidth; }
   s32 GetProcessingHeight() const { return _processingHeight; }
-  TimeStamp_t GetProcessingTimeStamp() const { return _imgBeingProcessed.GetTimestamp(); }
   
 private:
   
@@ -81,6 +81,10 @@ private:
   std::unique_ptr<NeuralNets::INeuralNetModel> _model;
   std::future<std::list<SalientPoint>> _future; // for processing aysnchronously
 
+  // Stores a copy of the "original" image, from which the processed image is resized,
+  // which can be used for saving or chained processing
+  ImageRGB              _imgOrig;
+  
   // We process asynchronously, so need a copy of the image data (at processing resolution)
   ImageRGB              _imgBeingProcessed;
   
@@ -96,7 +100,7 @@ private:
   
   void ApplyGamma(ImageRGB& img);
   
-  bool StartProcessingHelper(const ImageRGB& img);
+  bool StartProcessingHelper();
   std::list<SalientPoint> RunModel();
   
 }; // class NeuralNetworkRunner
