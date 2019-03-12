@@ -2348,19 +2348,16 @@ func (service *rpcService) CaptureSingleImage(ctx context.Context, request *exti
 	}
 
 	for result := range cameraFeedChannel {
-
 		imageChunk := result.GetImageChunk()
 		readyToSend := UnpackCameraImageChunk(imageChunk, &cache)
 		if readyToSend {
-			singleImageResponse := &extint.CaptureSingleImageResponse{
+			capturedSingleImage := &extint.CaptureSingleImageResponse{
 				FrameTimeStamp: imageChunk.GetFrameTimeStamp(),
 				ImageId:        uint32(cache.ImageId),
 				ImageEncoding:  imageChunk.GetImageEncoding(),
 				Data:           cache.Data[0:cache.Size],
 			}
-			ResetCameraCache(&cache)
-
-			return singleImageResponse, nil
+			return capturedSingleImage, nil
 		}
 	}
 
