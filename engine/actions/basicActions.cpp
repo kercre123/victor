@@ -2668,9 +2668,12 @@ namespace Anki {
     , _numFramesToWaitFor(numFrames)
     , _afterTimeStamp(afterTimeStamp)
     , _visionMode(visionMode)
-    , _updateFrequency(_numFramesToWaitFor==1 ? EVisionUpdateFrequency::SingleShot : EVisionUpdateFrequency::High)
     {
-    
+      if(_numFramesToWaitFor==1 && CycleCompletesInOneFrame(mode, true)) {
+        _updateFrequency = EVisionUpdateFrequency::SingleShot;
+      } else {
+        _updateFrequency = EVisionUpdateFrequency::High;
+      }
     }
 
     WaitForImagesAction::WaitForImagesAction(WaitForImagesAction::UseDefaultNumImages_t, VisionMode visionMode)

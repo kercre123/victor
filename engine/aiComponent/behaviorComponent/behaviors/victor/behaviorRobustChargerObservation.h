@@ -51,8 +51,8 @@ private:
     InstanceConfig();
 
     // Note: these frame counts are not image frames
-    int numImageCompositingFramesToWaitFor = 2;
-    int numCyclingExposureFramesToWaitFor = 3;
+    int numImageCompositingFramesToWaitFor = 1;
+    int numCyclingExposureFramesToWaitFor = 1;
   };
 
   struct DynamicVariables {
@@ -65,10 +65,14 @@ private:
     // Count of the frames where the image quality was TooDark.
     // NOTE: only counted while marker detection is being run.
     u32 numFramesOfImageTooDark = 0; 
+
+    bool isLowlight = false;
   };
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
+
+  WaitForLambdaAction* GetLCDBrightnessChangeAction(const LCDBrightness level) const;
 };
 
 } // namespace Vector

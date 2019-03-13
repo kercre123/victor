@@ -64,5 +64,52 @@ namespace Vector {
     Count
   }
 
+  // For the given VisionMode, this map tells whether the mode
+  // can be completed in a single vision-processing frame.
+  // If it is true, then one frame of this mode turned on is enough
+  // to get a result from this mode.
+  // If it is false, then >1 frames of this mode turned on are
+  // needed to get a result from this mode.
+  enum_concept bool CycleCompletesInOneFrame[VisionMode]
+  {
+    DetectingMarkers                  = 1,
+    DetectingFaces                    = 1,
+    DetectingMotion                   = 1,
+    DetectingBrightColors             = 1,
+    DetectingOverheadEdges            = 1,
+    ComputingCalibration              = 1,
+    AutoExposure                      = 1,        
+    WhiteBalance                      = 1,
+    ComputingStatistics               = 1,
+    DetectingPets                     = 1,
+    DetectingLaserPoints              = 1,
+    BuildingOverheadMap               = 1,
+    DetectingVisualObstacles          = 1,
+    Benchmarking                      = 1,
+    SavingImages                      = 1,
+    DetectingPeople                   = 1,
+    DetectingHands                    = 1,
+    DetectingIllumination             = 1,
+    ImageViz                          = 1,
+    MirrorMode                        = 1,
+    DisableMarkerDetection            = 1,
+    MeteringFromChargerOnly           = 1,
+    FullFrameMarkerDetection          = 1,
+    FullHeightMarkerDetection         = 1,
+    FullWidthMarkerDetection          = 1,
+    MarkerDetectionWhileRotatingFast  = 1,
+    EstimatingFacialExpression        = 1,
+    DetectingSmileAmount              = 1,
+    DetectingGaze                     = 1,
+    DetectingBlinkAmount              = 1,
+    CroppedFaceDetection              = 1,
+    MinGainAutoExposure               = 1,
+
+    CyclingExposure                   = 0,
+    CompositingImages                 = 0,
+
+    Count                             = 1
+  }
+
 } // namespace Vector
 } // namespace Anki
