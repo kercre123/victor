@@ -2357,6 +2357,7 @@ func (service *rpcService) CaptureSingleImage(ctx context.Context, request *exti
 				ImageEncoding:  imageChunk.GetImageEncoding(),
 				Data:           cache.Data[0:cache.Size],
 			}
+			capturedSingleImage.Status = &extint.ResponseStatus{Code: extint.ResponseStatus_RESPONSE_RECEIVED}
 			return capturedSingleImage, nil
 		}
 	}

@@ -1009,10 +1009,11 @@ message CameraFeedResponse {
 message CaptureSingleImageRequest {}
 
 message CaptureSingleImageResponse {
-  uint32                   frame_time_stamp = 1;
-  uint32                   image_id = 2;
-  ImageChunk.ImageEncoding image_encoding = 3;
-  bytes                    data = 4;
+  ResponseStatus           status = 1;
+  uint32                   frame_time_stamp = 2;
+  uint32                   image_id = 3;
+  ImageChunk.ImageEncoding image_encoding = 4;
+  bytes                    data = 5;
 }
 
 message SetEyeColorRequest {
