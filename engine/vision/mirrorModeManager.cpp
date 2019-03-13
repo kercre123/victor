@@ -262,28 +262,36 @@ void MirrorModeManager::DrawSalientPoints(const VisionProcessingResult& procResu
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result MirrorModeManager::CreateMirrorModeImage(const Vision::ImageRGB& cameraImg,
-                                                VisionProcessingResult& visionProcResult,
-                                                const std::list<VisionProcessingResult>& additionalDetectionResults)
+                                                VisionProcessingResult& visionProcResult)
 {
   cameraImg.Resize(_screenImg, Vision::ResizeMethod::NearestNeighbor);
 
   // Flip image around the y axis (before we draw anything on it)
   cv::flip(_screenImg.get_CvMat_(), _screenImg.get_CvMat_(), 1);
 
-  DrawAllDetections(visionProcResult);
-  
-  for(const auto& additionalDetectionResult : additionalDetectionResults)
+  if( kDisplayMarkersInMirrorMode )
   {
-    DrawAllDetections(additionalDetectionResult);
+    DrawVisionMarkers(visionProcResult.observedMarkers);
   }
   
-  if(kDisplayExposureInMirrorMode)
+  if( kDisplayFacesInMirrorMode )
+  {
+    DrawFaces(visionProcResult.faces);
+  }
+  
+  if( kDisplaySalientPointsInMirrorMode )
+  {
+    DrawSalientPoints(visionProcResult);
+  }
+  
+  if( kDisplayExposureInMirrorMode )
   {
     DrawAutoExposure(visionProcResult);
   }
   
   // Use gamma to make it easier to see
-  if(!Util::IsFltNear(_currentGamma, kMirrorModeGamma)) {
+  if(!Util::IsFltNear(_currentGamma, kMirrorModeGamma))
+  {
     _currentGamma = kMirrorModeGamma;
     const f32 invGamma = 1.f / _currentGamma;
     const f32 divisor = 1.f / 255.f;
@@ -296,28 +304,6 @@ Result MirrorModeManager::CreateMirrorModeImage(const Vision::ImageRGB& cameraIm
   visionProcResult.mirrorModeImg.SetFromImageRGB(_screenImg, _gammaLUT);
 
   return RESULT_OK;
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MirrorModeManager::DrawAllDetections(const VisionProcessingResult& visionProcResult)
-{
-  if(kDisplayMarkersInMirrorMode)
-  {
-    DrawVisionMarkers(visionProcResult.observedMarkers);
-  }
-  
-  if( kDisplayFacesInMirrorMode ) {
-    DrawFaces(visionProcResult.faces);
-  }
-  
-  if( kDisplaySalientPointsInMirrorMode ) {
-    DrawSalientPoints(visionProcResult);
-  }
-  
-  if(kDisplayExposureInMirrorMode)
-  {
-    DrawAutoExposure(visionProcResult);
-  }
 }
   
 } // namespace Vector

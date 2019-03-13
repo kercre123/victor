@@ -40,9 +40,7 @@ public:
   
   // Populates the mirrorModeImg field of the VisionProcessingResult with the given image and
   // any detections it can from the same result.
-  Result CreateMirrorModeImage(const Vision::ImageRGB& cameraImg,
-                               VisionProcessingResult& procResult,
-                               const std::list<VisionProcessingResult>& additionalDetectionResults);
+  Result CreateMirrorModeImage(const Vision::ImageRGB& cameraImg, VisionProcessingResult& procResult);
   
 private:
   
@@ -55,7 +53,6 @@ private:
   void DrawFaces(const std::list<Vision::TrackedFace>& faceDetections);
   void DrawSalientPoints(const VisionProcessingResult& procResult);
   void DrawAutoExposure(const VisionProcessingResult& procResult);
-  void DrawAllDetections(const VisionProcessingResult& visionProcResult);
   
 };
   
