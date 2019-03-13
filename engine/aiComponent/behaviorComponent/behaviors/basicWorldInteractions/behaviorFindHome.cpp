@@ -212,7 +212,6 @@ void BehaviorFindHome::AlwaysHandleInScope(const EngineToGameEvent& event)
     }
     case EngineToGameTag::RobotProcessedImage:
     {
-      //   
       if(IsActivated() && GetBEI().HasVisionComponent()) {
         _dVars.numFramesOfDetectingMarkers++;
         if(GetBEI().GetVisionComponent().GetLastImageQuality() == Vision::ImageQuality::TooDark) {

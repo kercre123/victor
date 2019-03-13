@@ -220,6 +220,7 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
   DelegateIfInControl(compoundAction); // Behavior exits after this point
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 WaitForLambdaAction* BehaviorRobustChargerObservation::GetLCDBrightnessChangeAction(const LCDBrightness level) const
 {
   return new WaitForLambdaAction([level](Robot& robot) {
