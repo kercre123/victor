@@ -39,8 +39,8 @@ namespace {
   const char* kNumImageCompositingFramesToWaitForKey = "numImageCompositingFramesToWaitFor";
   const char* kNumCyclingExposureFramesToWaitForKey = "numCyclingExposureFramesToWaitFor";
 
-  const LCDBrightness kNormalLCDBrightness = LCDBrightness::LCDLevel_5ma;
-  const LCDBrightness kMaxLCDBrightness = LCDBrightness::LCDLevel_20ma;
+  const LCDBrightness kNormalLCDBrightness = LCDBrightness::LCDLevel_5mA;
+  const LCDBrightness kMaxLCDBrightness = LCDBrightness::LCDLevel_20mA;
 
   // Enable for debug, to save images during WaitForImageAction
   CONSOLE_VAR(bool, kRobustChargerObservation_SaveImages, "Behaviors.RobustChargerObservation", false);
@@ -222,7 +222,7 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
 
 WaitForLambdaAction* BehaviorRobustChargerObservation::GetLCDBrightnessChangeAction(const LCDBrightness level) const
 {
-  return new WaitForLambdaAction([](Robot& robot) {
+  return new WaitForLambdaAction([level](Robot& robot) {
                                   robot.GetRobotMessageHandler()->SendMessage(
                                     RobotInterface::EngineToRobot(
                                       RobotInterface::SetLCDBrightnessLevel(level)));

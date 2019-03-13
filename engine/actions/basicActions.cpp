@@ -2669,7 +2669,7 @@ namespace Anki {
     , _afterTimeStamp(afterTimeStamp)
     , _visionMode(visionMode)
     {
-      if(_numFramesToWaitFor==1 && CycleCompletesInOneFrame(mode, true)) {
+      if(_numFramesToWaitFor==1 && CycleCompletesInOneFrame(visionMode, true)) {
         _updateFrequency = EVisionUpdateFrequency::SingleShot;
       } else {
         _updateFrequency = EVisionUpdateFrequency::High;
