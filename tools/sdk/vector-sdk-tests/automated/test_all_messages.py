@@ -419,6 +419,14 @@ MESSAGES_TO_TEST = [
     #  protocol.DeleteCustomObjectsRequest(mode=protocol.CustomObjectDeletionMode.Value("DELETION_MASK_FIXED_CUSTOM_OBJECTS")),
     #  TestResultMatches(protocol.DeleteCustomObjectsResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
 
+    # CaptureSingleImage message
+    # TODO Turn on when it is available in public SDK proto
+    # (Interface.CaptureSingleImage,
+    #  protocol.CaptureSingleImageRequest(),
+    #  TestResultIsTypeWithStatusAndFieldNames(protocol.CaptureSingleImageResponse,
+    #                                          protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
+    #                                          ["frame_time_stamp", "image_id", "image_encoding", "data"]))
+
     # NOTE: Add additional messages here
 ]
 
