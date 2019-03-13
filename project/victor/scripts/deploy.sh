@@ -20,6 +20,8 @@ source ${SCRIPT_PATH}/victor_env.sh
 : ${VERBOSE:=0}
 : ${FORCE_RSYNC_BIN:=0}
 : ${FORCE_DEPLOY:=0}
+: ${IGNORE_COMPATIBILITY_MISMATCH:=0}
+: ${IGNORE_VERSION_MISMATCH:=0}
 : ${ANKI_BUILD_TYPE:="Debug"}
 : ${INSTALL_ROOT:="/anki"}
 : ${DEVTOOLS_INSTALL_ROOT:="/anki-devtools"}
@@ -33,6 +35,8 @@ function usage() {
   echo "  -v                      print verbose output"
   echo "  -r                      force-install rsync binary on robot"
   echo "  -f                      force rsync to (re)deploy all files"
+  echo "  -i                      ignore compatibility mismatch. Do not use this. Update your robot/branch!"
+  echo "  -b                      ignore version mismatch.  Do not use this.  Update your robot/branch!"
   echo "  -c CONFIGURATION        build configuration {Debug,Release}"
   echo "  -s ANKI_ROBOT_HOST      hostname or ip address of robot"
   echo ""
@@ -50,7 +54,7 @@ function logv() {
   fi
 }
 
-while getopts "hvrfc:s:" opt; do
+while getopts "hvrfibc:s:" opt; do
   case $opt in
     h)
       usage && exit 0
@@ -63,6 +67,12 @@ while getopts "hvrfc:s:" opt; do
       ;;
     f)
       FORCE_DEPLOY=1
+      ;;
+    i)
+      IGNORE_COMPATIBILITY_MISMATCH=1
+      ;;
+    b)
+      IGNORE_VERSION_MISMATCH=1
       ;;
     c)
       ANKI_BUILD_TYPE="${OPTARG}"
@@ -172,10 +182,16 @@ elif [ ${VER_CMP} -eq -1 ]; then
 fi
 
 if [ ${VER_CMP} -ne 0 ]; then
-  if [ $FORCE_DEPLOY -eq 1 ]; then
-    echo "Ignoring OS version mismatch"
+  if [ $IGNORE_VERSION_MISMATCH -eq 1 ]; then
+      printf '%s%s%s%s\n' \
+             "$(tput setaf 9)" \
+             "$(tput blink)" \
+             "Ignoring OS version mismatch.  This is probably a really bad idea!!!" \
+             "$(tput sgr0)"
   else
-    echo "OS version mismatch. Use -f to force."
+    echo "OS version mismatch. Update your robot or your branch!"
+    echo "If you are certain you want to deploy anyway, use the -b option."
+    echo "When things don't work, please update your robot and/or your branch and try again!"
     cleanup
     exit 1
   fi
@@ -193,10 +209,16 @@ elif [[ ${VER_CMP} -lt 0 ]]; then
 fi
 
 if [[ ${VER_CMP} -ne 0 ]]; then
-    if [[ $FORCE_DEPLOY -eq 1 ]]; then
-        echo "Ignoring compatibility version mismatch"
+    if [[ $IGNORE_COMPATIBILITY_MISMATCH -eq 1 ]]; then
+        printf '%s%s%s%s\n' \
+               "$(tput setaf 9)" \
+               "$(tput blink)" \
+               "Ignoring compatibility version mismatch.  This is probably a really bad idea!!!" \
+               "$(tput sgr0)"
     else
-        echo "Compatibility version mismatch.  Use -f to force."
+        echo "Compatibility version mismatch.  Update your robot or your branch!"
+        echo "If you are certain that you want to deplay anyway, use the -i option."
+        echo "When things don't work, please update your robot and/or your branch and try again!"
         cleanup
         exit 1
     fi
