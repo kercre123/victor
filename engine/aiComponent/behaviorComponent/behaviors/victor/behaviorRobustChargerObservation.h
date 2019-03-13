@@ -21,6 +21,8 @@
 namespace Anki {
 namespace Vector {
 
+class WaitForLambdaAction;
+
 class BehaviorRobustChargerObservation : public ICozmoBehavior
 {
 public: 
