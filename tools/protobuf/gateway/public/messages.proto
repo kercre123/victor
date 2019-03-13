@@ -1027,6 +1027,7 @@ message SDKInitializationResponse {
   ResponseStatus status = 1;
 }
 
+
 // *** App only proto below ***
 
 message AppDisconnected{}
@@ -1249,23 +1250,29 @@ message LatestAttentionTransferResponse {
   LatestAttentionTransfer latest_attention_transfer = 2;
 }
 
-message CheckUpdateStatusRequest{}
-
-message CheckUpdateStatusResponse{
-  ResponseStatus status = 1;
-  enum UpdateStatus {
-    NO_UPDATE = 0;
-    READY_TO_INSTALL = 1;
-  }
-  UpdateStatus update_status = 2;
-}
-
 message UpdateAndRestartRequest{}
 
 message UpdateAndRestartResponse{
   ResponseStatus status = 1;
 }
 
+
+message CheckUpdateStatusRequest{}
+
+message CheckUpdateStatusResponse{
+  option(streamed) = true;
+
+  ResponseStatus status = 1;
+  enum UpdateStatus {
+    NO_UPDATE = 0;
+    READY_TO_INSTALL = 1;
+    IN_PROGRESS_DOWNLOAD = 2;
+  }
+  UpdateStatus update_status = 2;
+  int64 expected = 3;
+  int64 progress = 4;
+}
+  
 message UploadDebugLogsRequest{}
 
 message UploadDebugLogsResponse{
