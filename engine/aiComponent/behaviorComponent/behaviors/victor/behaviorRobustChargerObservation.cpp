@@ -23,10 +23,12 @@
 #include "engine/components/visionComponent.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/vision/imageSaver.h"
+#include "engine/robot.h"
 
 #include "util/logging/DAS.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
 
 namespace Anki {
 namespace Vector {
@@ -37,8 +39,12 @@ namespace {
   const char* kNumImageCompositingFramesToWaitForKey = "numImageCompositingFramesToWaitFor";
   const char* kNumCyclingExposureFramesToWaitForKey = "numCyclingExposureFramesToWaitFor";
 
+  const LCDBrightness kNormalLCDBrightness = LCDBrightness::LCDLevel_5ma;
+  const LCDBrightness kMaxLCDBrightness = LCDBrightness::LCDLevel_20ma;
+
   // Enable for debug, to save images during WaitForImageAction
   CONSOLE_VAR(bool, kRobustChargerObservation_SaveImages, "Behaviors.RobustChargerObservation", false);
+  CONSOLE_VAR(bool, kFakeLowlightCondition, "Behaviors.RobustChargerObservation", false);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -105,9 +111,19 @@ void BehaviorRobustChargerObservation::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRobustChargerObservation::OnBehaviorDeactivated()
 {
+  if(_dVars.isLowlight) {
+    // Previously played the special Getin and set LCD brightness
+    //  so now play the getout and restore the LCD brightness
+    CompoundActionSequential* resetAction = new CompoundActionSequential();
+    resetAction->AddAction(new TriggerAnimationAction(AnimationTrigger::LowlightChargerSearchGetout));
+    resetAction->AddAction(GetLCDBrightnessChangeAction(kNormalLCDBrightness));
+    DelegateNow(resetAction);
+  }
+
   DASMSG(robust_observe_charger_stats, "robust_observe_charger.stats", "Vision stats for RobustChargerObservation behavior");
   DASMSG_SET(i1, _dVars.numFramesOfDetectingMarkers, "Count of total number of processed image frames searching for Markers");
   DASMSG_SET(i2, _dVars.numFramesOfImageTooDark, "Count of number of processed image frames (searching for Markers) that are TooDark");
+  DASMSG_SET(i3, _dVars.isLowlight, "Whether image compositing or cycling exposure was used here (1=compositing, 0=cycling).");
   DASMSG_SEND();
 }
 
@@ -149,7 +165,7 @@ bool BehaviorRobustChargerObservation::IsLowLightVision() const
                  (visionComponent.GetLastImageQuality() == Vision::ImageQuality::TooDark));
   }
 
-  return isLowlight;
+  return isLowlight || kFakeLowlightCondition;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -162,21 +178,35 @@ void BehaviorRobustChargerObservation::TransitionToIlluminationCheck()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRobustChargerObservation::TransitionToObserveCharger()
 {
-  const bool isLowlight = IsLowLightVision();
+  _dVars.isLowlight = IsLowLightVision();
   LOG_INFO("BehaviorRobustChargerObservation.TransitionToObserveCharger", 
-           "Mode = %s", isLowlight ? "Compositing" : "CyclingExposure");
+           "Mode = %s", _dVars.isLowlight ? "Compositing" : "CyclingExposure");
   
   CompoundActionSequential* compoundAction = new CompoundActionSequential();
+
   compoundAction->AddAction(new MoveHeadToAngleAction(0.f));
 
-  const auto currMood = GetBEI().GetMoodManager().GetSimpleMood();
-  const bool isHighStim = (currMood == SimpleMoodType::HighStim);
-  
-  WaitForImagesAction* waitAction;
-  if(isLowlight) {
+  WaitForImagesAction* waitAction = nullptr;
+  if(_dVars.isLowlight) {
+    // Use image compositing
+    // - prepend a getin animation and set LCD brightness
+    // - wait for images with the appropriate looping animation
+    CompoundActionParallel* getinAndSetLcd = new CompoundActionParallel();
+    getinAndSetLcd->AddAction(new TriggerAnimationAction(AnimationTrigger::LowlightChargerSearchGetin));
+    getinAndSetLcd->AddAction(GetLCDBrightnessChangeAction(kMaxLCDBrightness));
+    compoundAction->AddAction(getinAndSetLcd);
     waitAction = new WaitForImagesAction(_iConfig.numImageCompositingFramesToWaitFor, VisionMode::CompositingImages);
+    compoundAction->AddAction(new LoopAnimWhileAction(waitAction, AnimationTrigger::LowlightChargerSearchLoop));
   } else {
+    // Use cycling exposure instead
     waitAction = new WaitForImagesAction(_iConfig.numCyclingExposureFramesToWaitFor, VisionMode::CyclingExposure);
+    const auto currMood = GetBEI().GetMoodManager().GetSimpleMood();
+    const bool isHighStim = (currMood == SimpleMoodType::HighStim);
+    if (isHighStim) {
+      compoundAction->AddAction(waitAction);
+    } else {
+      compoundAction->AddAction(new LoopAnimWhileAction(waitAction, AnimationTrigger::ChargerDockingSearchWaitForImages));
+    }
   }
 
   if(kRobustChargerObservation_SaveImages) {
@@ -187,14 +217,17 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
     waitAction->SetSaveParams(params);
   }
 
-  // Wrap the Look action with the appropriate animation, given the current mood
-  if (isHighStim) {
-    compoundAction->AddAction(waitAction);
-  } else {
-    compoundAction->AddAction(new LoopAnimWhileAction(waitAction, AnimationTrigger::ChargerDockingSearchWaitForImages));
-  }
+  DelegateIfInControl(compoundAction); // Behavior exits after this point
+}
 
-  DelegateIfInControl(compoundAction); // terminal action, after this the behavior exits
+WaitForLambdaAction* BehaviorRobustChargerObservation::GetLCDBrightnessChangeAction(const LCDBrightness level) const
+{
+  return new WaitForLambdaAction([](Robot& robot) {
+                                  robot.GetRobotMessageHandler()->SendMessage(
+                                    RobotInterface::EngineToRobot(
+                                      RobotInterface::SetLCDBrightnessLevel(level)));
+                                  return true;
+                                  });
 }
 
 }
