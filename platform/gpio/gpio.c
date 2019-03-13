@@ -148,18 +148,15 @@ int gpio_create(int gpio_number, enum Gpio_Dir direction, enum Gpio_Level initia
    char gpio_path[32] = {0};
    (void) snprintf(gpio_path, sizeof(gpio_path), "/sys/class/gpio/gpio%d", pin_number);
 
-   // If the gpio has not already been exported, try to do it with /sbin/export-gpio
+   // If the gpio has not already been exported, print error as GPIO export is not allowed
+   // If you need to export a new gpio, export it from the systemd service file for the
+   // correct process
    if (!path_exists(gpio_path)) {
-      char pin_arg[16] = {0};
-      (void) snprintf(pin_arg, sizeof(pin_arg), "%d", pin_number);
-      char *argv[] = {"sudo", "-n", "/sbin/export-gpio", pin_arg, NULL};
-      int rc = fork_and_exec(argv);
-      if (rc || !path_exists(gpio_path)) {
-         free(gp); gp = NULL;
-         error_return(app_DEVICE_OPEN_ERROR,
-                      "/sbin/export-gpio %s failed. rc = %d, errno = %d (%s)\n",
-                      pin_arg, rc, errno, strerror(errno));
-      }
+     free(gp);
+     gp = NULL;
+     error_return(app_DEVICE_OPEN_ERROR,
+                  "GPIO%d does not already exist, creation is not allowed\n",
+                  gpio_number);
    }
 
    gp->pin = gpio_number;
