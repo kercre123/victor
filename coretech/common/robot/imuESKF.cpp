@@ -52,44 +52,9 @@ namespace {
   // Gravity constants
   constexpr const Point<3,double> kGravity_G     = {0., 0., 1.};
   constexpr const double          kG_over_mmps2  = 1./9810.;
-    
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Matrix Operations
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  
-  // For covariance matrices, which are symmetric and positive definite, we can get invert
-  // by first performing a cholesky decomposition and then inverting the resulting lower
-  // triangle matrix, then multiplying the lower triangular matrix by its transpose
-  template<MatDimType N>
-  SmallSquareMatrix<N,double> InvertSymmetric(const SmallSquareMatrix<N,double>& A) {
-    SmallSquareMatrix<N,double> L, Linv;
-    for (int i = 0; i < N; ++i) {
-      for (int j = 0; j <= i; ++j) {
-          double s = A(i, j);
-          for (int k = 0; k < j; ++k) {
-            s -= L(j, k) * L(i, k);
-          }
-          L(i, j) = (i == j) ? sqrt(s) : s / L(j, j);
-      }
-
-      for (int j = i; j >= 0; --j) {
-        if (i == j) {
-          Linv(i,j) = 1. / L(i,j);
-        } else {
-          double s = 0;
-          for (int k = j; k < i; ++k) {
-            s -= L(i, k) * Linv(k,j);
-          }
-          Linv(i,j) = s * Linv(i,i);
-        }
-      }
-    }
-    return Linv.GetTranspose() * Linv;
-  }
-
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // EKF Jacobian Matrices
+  // ESKF Jacobian Matrices
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
   // The process uncertainty as a rate of change in rotation - this can be tuned to get best performance
@@ -206,7 +171,7 @@ namespace {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-// UKF Implementation
+// ESKF Implementation
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -250,15 +215,15 @@ void ImuESKF::MeasurementUpdate(const Measurement& z)
   // Calculate Predicted measurement given the current state estimate
   const auto g_Local = _state.GetRotation().GetConj() * kGravity_G;
   const auto zt = Join(Join( g_Local, _state.GetVelocity() ), _state.GetGyroBias());
-
+  
   // Calculate Kalman gain K and the residual
-  const auto R    = MeasurementUncertainty;
-  const auto H    = MeasurementJacobianMatrix(zt);
-  const auto Ht   = H.GetTranspose();
-  const auto S    = (H * _P * Ht) + R;
-  const auto Sinv = InvertSymmetric( S );
-  const auto K    = _P * Ht * Sinv;
-  const auto res  = K * (z - zt);
+  const auto R   = MeasurementUncertainty;
+  const auto H   = MeasurementJacobianMatrix(zt);
+  const auto Ht  = H.GetTranspose();
+  const auto S   = (H * _P * Ht) + R;
+  const auto K   = _P * Ht * S.GetInverse();
+  const auto res = K * (z - zt);
+  const auto T   = TransitionJacobianMatrix(res.Slice<0,2>());
 
   // Add the residual to the current state
   _state.SetRotation( _state.GetRotation() * ToQuat(res.Slice<0,2>()) );
@@ -266,9 +231,7 @@ void ImuESKF::MeasurementUpdate(const Measurement& z)
   _state.SetGyroBias( _state.GetGyroBias() + res.Slice<6,8>() );
 
   // Update the covariance
-  const auto  IKH = Eye<9,double>() - K * H;
-  const auto  T   = TransitionJacobianMatrix(res.Slice<0,2>());
-  _P = T * (IKH * _P * IKH.GetTranspose() + K * R * K.GetTranspose() ) * T.GetTranspose();
+  _P = T*(_P - K*H*_P)*T.GetTranspose();
 }
       
 } // namespace Anki
