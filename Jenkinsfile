@@ -293,16 +293,16 @@ stage("${primaryStageName} Build") {
                 }
             }
         }
-        node('master') {
+        node(uuid) {
             notifyBuildStatus('Success')
         }
     } catch (FlowInterruptedException ae) {
-        node('master') {
+        node(uuid) {
             notifyBuildStatus('Aborted')
         }
         throw ae
     } catch (exc) {
-        node('master') {
+        node(uuid) {
             notifyBuildStatus('Failure')
         }
         throw exc
