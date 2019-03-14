@@ -244,7 +244,7 @@ void BehaviorSelfTest::OnBehaviorDeactivated()
 
   robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetDebugLabel());
 
-  robot.GetCubeCommsComponent().RequestDisconnectFromCube(0);
+  robot.GetCubeCommsComponent().Disconnect();
 
   Reset();
 }
@@ -285,7 +285,7 @@ void BehaviorSelfTest::BehaviorUpdate()
   if(_radioScanState == RadioScanState::Passed &&
      robot.GetCubeCommsComponent().IsConnectedToCube())
   {
-    robot.GetCubeCommsComponent().RequestDisconnectFromCube(0);
+    robot.GetCubeCommsComponent().Disconnect();
   }
 
   if(_waitForButtonToEndTest)
@@ -655,11 +655,14 @@ void BehaviorSelfTest::StartCubeConnectionCheck()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  auto cubeConnectionCallback = [this](bool success)
-                                {
-                                  _radioScanState = (success ? RadioScanState::Passed : RadioScanState::Failed);
-                                };
-  robot.GetCubeCommsComponent().RequestConnectToCube(cubeConnectionCallback);
+  std::function<void(bool)> cubeConnectionCallback = [this](bool success)
+    {
+      _radioScanState = (success ? RadioScanState::Passed : RadioScanState::Failed);
+    };
+  robot.GetCubeCommsComponent().EnableDiscovery(false);
+  robot.GetCubeCommsComponent().SetBroadcastObjectAvailable(true);
+  robot.GetCubeCommsComponent().SetConnectionChangedCallback(cubeConnectionCallback);
+  robot.GetCubeCommsComponent().EnableDiscovery(true);
 
   _radioScanState = RadioScanState::WaitingForCubeResult;
 }
