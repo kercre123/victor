@@ -99,7 +99,7 @@ def jsonParsePayload(def json) {
     new groovy.json.JsonSlurperClassic().parseText(json)
 }
 
-def notifyBuildStatus(status) {
+def notifyBuildStatus(status, config) {
     def jobName = "${env.JOB_NAME}"
     jobName = jobName.getAt(0..(jobName.indexOf('/') - 1))
     def pullRequestURL = "https://github.com/anki/${jobName}/pull/${env.CHANGE_ID}"
@@ -117,7 +117,7 @@ def notifyBuildStatus(status) {
 
     notifySlack("", slackNotificationChannel, 
         [
-            title: "${jobName} ${primaryStageName} ${env.CHANGE_ID}, build #${env.BUILD_NUMBER}",
+            title: "${jobName} ${primaryStageName} ${env.CHANGE_ID} ${config}, build #${env.BUILD_NUMBER}",
             title_link: "${env.BUILD_URL}",
             color: slackColorMapping[status],
             text: "${status}\nAuthor: ${commitObj.commit.author.name} <${commitObj.commit.author.email}>",
@@ -141,18 +141,20 @@ def notifyBuildStatus(status) {
             ]
         ]
     )
-    def commitStatusMsg = "Jenkins ${jobName} ${env.CHANGE_ID} Shipping [build #${env.BUILD_NUMBER}](${env.BUILD_URL})"
-    setGHBuildStatus(commitStatusMsg, status.toUpperCase(), commitObj.sha)
+    def commitStatusMsg = "${env.CHANGE_ID} :: ${config}"
+    def statusMap = [msg: commitStatusMsg, result: status.toUpperCase(), sha: commitObj.sha, context: "ci/jenkins/pr/${config}"]
+    setGHBuildStatus(statusMap)
 }
 
-void setGHBuildStatus(String message, String state, String currentCommitSha) {
+void setGHBuildStatus(Map statusFields) {
+    "String message, String state, String currentCommitSha"
   step([
       $class: "GitHubCommitStatusSetter",
       reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/anki/victor"],
-      commitShaSource: [$class: "ManuallyEnteredShaSource", sha: currentCommitSha],
-      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: "jenkins-buildbot"],
+      commitShaSource: [$class: "ManuallyEnteredShaSource", sha: statusFields.sha],
+      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: statusFields.context],
       errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
-      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: message, state: state]] ]
+      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: statusFields.msg, state: statusFields.result]] ]
   ]);
 }
 
@@ -280,30 +282,34 @@ stage("${primaryStageName} Build") {
         parallel shipping: {
             node(uuid) {
                 gitCheckout(true)
+                /*
                 withDockerEnv {
                     buildPRStepsVicOS type: buildConfig.SHIPPING.getBuildType()
                 }
+                */
             }
         },
         debug: {
             node(uuid) {
                 gitCheckout(true)
+                /*
                 withDockerEnv {
                     buildPRStepsVicOS type: buildConfig.DEBUG.getBuildType()
                 }
+                */
             }
         }
         node(uuid) {
-            notifyBuildStatus('Success')
+            notifyBuildStatus('Success', 'shipping')
         }
     } catch (FlowInterruptedException ae) {
         node(uuid) {
-            notifyBuildStatus('Aborted')
+            notifyBuildStatus('Aborted', 'shipping')
         }
         throw ae
     } catch (exc) {
         node(uuid) {
-            notifyBuildStatus('Failure')
+            notifyBuildStatus('Failure', 'shipping')
         }
         throw exc
     } finally {
