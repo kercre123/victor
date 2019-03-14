@@ -8,29 +8,6 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurperClassic
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException
 
-@NonCPS
-def getListOfOnlineNodesForLabel(label) {
-  def nodes = []
-  jenkins.model.Jenkins.instance.computers.each { c ->
-    if (c.node.labelString.contains(label) && c.node.toComputer().isOnline()) {
-      nodes.add(c.node.selfLabel.name)
-    }
-  }
-  return nodes
-}
-
-@NonCPS
-def checkIfAgentsAreBusy() {
-    for (node in hudson.model.Hudson.instance.slaves) {
-        if (node.getLabelString() == 'victor-shipping') {
-            if (node.getComputer().countIdle() > 0) {
-                return false
-            }
-            return true
-        }
-    }
-}
-
 enum buildConfig {
     SHIPPING, DEBUG, RELEASE, MASTER
 
@@ -44,6 +21,9 @@ enum buildConfig {
         return firstChar + restOfStringLowerCased
     }
 }
+
+enabledBuildConfigs = [buildConfig.SHIPPING.getBuildType(), buildConfig.DEBUG.getBuildType()]
+buildConfigMap = [:]
 
 def server = Artifactory.server 'artifactory-dev'
 library 'victor-helpers@master'
@@ -147,7 +127,6 @@ def notifyBuildStatus(status, config) {
 }
 
 void setGHBuildStatus(Map statusFields) {
-    "String message, String state, String currentCommitSha"
   step([
       $class: "GitHubCommitStatusSetter",
       reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/anki/victor"],
@@ -279,29 +258,19 @@ stage("${primaryStageName} Build") {
         if (gatekeeper.nodeProvisioned) break
     }
     try {
-        parallel shipping: {
-            node(uuid) {
-                gitCheckout(true)
-                /*
-                withDockerEnv {
-                    buildPRStepsVicOS type: buildConfig.SHIPPING.getBuildType()
+        for (int i = 0; i < 2 ; i++) {
+            def buildFlavor = enabledBuildConfigs[i]
+            buildConfigMap[buildFlavor] = {
+                node(uuid) {
+                    gitCheckout(true)
+                    withDockerEnv {
+                        buildPRStepsVicOS type: buildFlavor
+                    }
+                    notifyBuildStatus('Success', buildFlavor)
                 }
-                */
-            }
-        },
-        debug: {
-            node(uuid) {
-                gitCheckout(true)
-                /*
-                withDockerEnv {
-                    buildPRStepsVicOS type: buildConfig.DEBUG.getBuildType()
-                }
-                */
             }
         }
-        node(uuid) {
-            notifyBuildStatus('Success', 'shipping')
-        }
+        parallel buildConfigMap
     } catch (FlowInterruptedException ae) {
         node(uuid) {
             notifyBuildStatus('Aborted', 'shipping')
