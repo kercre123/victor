@@ -54,7 +54,6 @@
 
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/behaviorStats.h"
-#include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/enrolledFaceStorage.h"
 
 #if ANKI_DEV_CHEATS
