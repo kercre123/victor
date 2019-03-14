@@ -147,6 +147,7 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 	for _, r := range resp.ImageResults {
 		var resp vision.OffboardResultReady
 		resp.JsonResult = r.RawResult
+		resp.Timestamp = msg.Timestamp
 		switch r.Mode {
 		case pb.ImageMode_DESCRIBE_SCENE:
 			resp.ProcType = vision.OffboardProcType_SceneDescription
