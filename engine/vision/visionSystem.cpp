@@ -1162,9 +1162,7 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
       _imageCompositor->GetCompositeImage(compositeImage);
       imagePtrs.push_back(&compositeImage);
       #if(DEBUG_IMAGE_COMPOSITING)
-      if(dispImg.IsEmpty()) {
-        dispImg.Allocate(compositeImage.GetNumRows(), compositeImage.GetNumCols());
-      }
+      dispImg.Allocate(compositeImage.GetNumRows(), compositeImage.GetNumCols());
       compositeImage.CopyTo(dispImg);
       #endif
     }
