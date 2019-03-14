@@ -26,13 +26,10 @@ namespace MicData {
   };
 
   static constexpr uint32_t kNumInputChannels               = 4;
-  static constexpr uint32_t kSamplesPerChunkIncoming        = 80;
+  static constexpr uint32_t kSamplesPerBlockPerChannel      = 160;
   static constexpr uint32_t kSampleRateIncoming_hz          = 16000;
-  static constexpr uint32_t kTimePerChunk_ms                = 5;
-  static constexpr uint32_t kChunksPerSEBlock               = 2;
-  static constexpr uint32_t kSamplesPerBlock                = kSamplesPerChunkIncoming * kChunksPerSEBlock;
-  static constexpr uint32_t kTimePerSEBlock_ms              = kTimePerChunk_ms * kChunksPerSEBlock;
-  static constexpr uint32_t kRawAudioChunkSize              = kSamplesPerChunkIncoming * kNumInputChannels;
+  static constexpr uint32_t kTimePerChunk_ms                = 10;
+  static constexpr uint32_t kIncomingAudioChunkSize         = kSamplesPerBlockPerChannel * kNumInputChannels;
   static constexpr uint32_t kTriggerOverlapSize_ms          = 50;
   static constexpr uint32_t kTriggerLessOverlapSize_ms      = 0;
   static constexpr uint32_t kTriggerAudioLengthDebug_ms     = 1500; // We only hold onto more audio for FP testing during development
