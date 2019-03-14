@@ -149,7 +149,7 @@ static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
      << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(2)) << ' '
      << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(3)) << '\n';
 
-  ss << robot->GetProxSensorComponent().GetDebugString();
+  ss << robot->GetProxSensorComponent().GetDebugString() << '\n';
 
   ss << robotState.carryingObjectID << '\n';
   ss << robotState.carryingObjectOnTopID << '\n';
