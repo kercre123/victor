@@ -439,8 +439,8 @@ def get_svn_file_rev(file_from_svn, cred=''):
       return rev
 
 
-def svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
-                 unpack, package, allow_extra_files, verbose=VERBOSE):
+def svn_checkout(url, r_rev, loc, cred, checkout, cleanup, unpack, package, allow_extra_files,
+                 stale_warning, skip_if_offline=False, verbose=VERBOSE):
     status = 0
     err = ''
     successful = ''
@@ -448,7 +448,13 @@ def svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
     need_to_cache_svn_checkout = not extract_svn_cache_tarball_to_directory(url, r_rev, loc)
     if need_to_cache_svn_checkout:
        if not is_up(url):
-          raise RuntimeError('Could not contact svn server at {0}.  This URL may require VPN or local LAN access.'.format(url))
+          msg = 'Could not contact svn server at {0}. This URL may require VPN or local LAN access.'.format(url)
+          if skip_if_offline:
+              print(msg)
+              print(stale_warning)
+              return ''
+          else:
+              raise RuntimeError(msg)
 
        pipe = subprocess.Popen(checkout, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, close_fds=True)
@@ -563,7 +569,7 @@ def svn_package(svn_dict):
                 print("Checking out '{0}'".format(repo))
                 checked_out_repos.append(repo)
                 err = svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
-                                   unpack, package, allow_extra_files)
+                                   unpack, package, allow_extra_files, stale_warning)
                 if err:
                     print("Error in checking out {0}: {1}".format(repo, err.strip()))
                     if DIFF_BRANCH_MSG in err:
@@ -571,7 +577,7 @@ def svn_package(svn_dict):
                         shutil.rmtree(loc)
                         print("Checking out '{0}' again".format(repo))
                         err = svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
-                                           unpack, package, allow_extra_files)
+                                           unpack, package, allow_extra_files, stale_warning)
                         if err:
                             print("Error in checking out {0}: {1}".format(repo, err.strip()))
                             print(stale_warning)
