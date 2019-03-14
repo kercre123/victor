@@ -9,7 +9,8 @@ namespace Vector {
 
 // note: if you add a new animation trigger that is deemed to be a "behavior light", please add it to the
 //       the list of "behavior lights" in BackpackLightComponent::IsBehaviorLightActive()
-//       this is our hack to give priority of certain engine lights over critical lights
+//       this is our workaround to give priority of these behavior state lights over some critical backpack lights
+//       eg. active feature lights take precedence over charging and notification lights
 enum int_32 BackpackAnimationTrigger
 {
   // Please keep alphabetical

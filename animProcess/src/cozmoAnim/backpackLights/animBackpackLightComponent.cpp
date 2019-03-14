@@ -93,7 +93,7 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
   // Check which, if any, backpack lights should be displayed
   // Streaming, Low Battery, Offline, Charging, or Nothing
   BackpackAnimationTrigger trigger = BackpackAnimationTrigger::Off;
-  
+
   // If we are currently streaming to the cloud
   if(isCloudStreamOpen)
   {
@@ -123,7 +123,7 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
   {
     trigger = BackpackAnimationTrigger::Muted;
   }
-  else if ( IsBehaviorLightActive() )
+  else if ( IsBehaviorBackpackLightActive() )
   {
     // if the engine is playing a "behavior light", then we want to slide that priority in right here
     // turn off the critical lights since the engine light will take priority over everything after this point
@@ -221,15 +221,17 @@ void BackpackLightComponent::Update()
   }
 }
 
-// backpack lights that originate from the engine process are kept seperately from the critical lights
-// which are determined by anim level properties.  we've had a request to have specific behavior lights take priority
-// over certain critical lights, and since there's currently no way to categorize different light sources I decided
-// to hack in this error prone way to specificy specific lights as "behavior lights".
-// a more robust solution will follow when we refactor the (many) light components once anim/engine processes are merged
-bool BackpackLightComponent::IsBehaviorLightActive() const
+// behavior lights are triggered from the engine and show the state for an active behavior.
+// we want these specific behavior lights to take precedence over some of the critical lights, but the way the system
+// was setup, all critical lights take precedence over all engine lights.  This is a little workaround for that so we
+// can determine if a higher priority "behavior light" (which is triggered from the engine) should take precedence
+// over the current critical light ... see UpdateCriticalBackpackLightConfig(...) for how this is used
+// ** a more robust solution will follow when we refactor the (many) light components once anim/engine processes are merged **
+bool BackpackLightComponent::IsBehaviorBackpackLightActive() const
 {
   bool isAnyBehaviorLightActive = false;
 
+  // _mostRecentTrigger tracks the last trigger that was requested from the engine
   switch ( _mostRecentTrigger )
   {
     case BackpackAnimationTrigger::WorkingOnIt:

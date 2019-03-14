@@ -110,7 +110,7 @@ private:
   void UpdateOfflineCheck(bool force = false);
 
   // is there a current request for a light that's associated with an active behavior?
-  bool IsBehaviorLightActive() const;
+  bool IsBehaviorBackpackLightActive() const;
 
   
   /// member variables ...
