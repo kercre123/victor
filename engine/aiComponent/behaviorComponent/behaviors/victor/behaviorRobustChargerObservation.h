@@ -53,8 +53,8 @@ private:
     InstanceConfig();
 
     // Note: these frame counts are not image frames
-    int numImageCompositingFramesToWaitFor = 1;
-    int numCyclingExposureFramesToWaitFor = 1;
+    int numImageCompositingCyclesToWaitFor = 1;
+    int numCyclingExposureCyclesToWaitFor = 1;
   };
 
   struct DynamicVariables {

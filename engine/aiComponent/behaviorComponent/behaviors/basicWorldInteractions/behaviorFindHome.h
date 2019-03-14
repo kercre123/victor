@@ -66,7 +66,6 @@ private:
     float       maxDrivingDist_mm = 0.f;
     
     AnimationTrigger searchTurnAnimTrigger;
-    AnimationTrigger searchTurnEndAnimTrigger;
     AnimationTrigger postSearchAnimTrigger;
     std::unique_ptr<BlockWorldFilter> homeFilter;
     
