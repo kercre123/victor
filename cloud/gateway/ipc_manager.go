@@ -194,7 +194,6 @@ func (manager *EngineProtoIpcManager) SafeClose(listener chan extint.GatewayWrap
 
 // SendToListeners propagates messages to all waiting listener channels.
 func (manager *EngineProtoIpcManager) SendToListeners(tag string, msg extint.GatewayWrapper) {
-	log.Println("ron_gateway SendToListeners ", tag)
 	markedForDelete := make(chan chan extint.GatewayWrapper, 5)
 	defer func() {
 		close(markedForDelete)
