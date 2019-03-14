@@ -51,7 +51,6 @@ namespace Vector {
 
 namespace {
   const char* kSearchTurnAnimKey                 = "searchTurnAnimTrigger";
-  const char* kSearchTurnEndAnimKey              = "searchTurnEndAnimTrigger";
   const char* kPostSearchAnimTrigger             = "postSearchAnimTrigger";
   const char* kMinSearchAngleSweepKey            = "minSearchAngleSweep_deg";
   const char* kMaxSearchTurnsKey                 = "maxSearchTurns";
@@ -90,11 +89,9 @@ namespace {
 BehaviorFindHome::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
 {
   searchTurnAnimTrigger = AnimationTrigger::Count;
-  searchTurnEndAnimTrigger = AnimationTrigger::Count;
   postSearchAnimTrigger = AnimationTrigger::Count;
   
   JsonTools::GetCladEnumFromJSON(config, kSearchTurnAnimKey, searchTurnAnimTrigger, debugName);
-  JsonTools::GetCladEnumFromJSON(config, kSearchTurnEndAnimKey, searchTurnEndAnimTrigger, debugName);
   JsonTools::GetCladEnumFromJSON(config, kPostSearchAnimTrigger, postSearchAnimTrigger, debugName);
   minSearchAngleSweep_deg = JsonTools::ParseFloat(config, kMinSearchAngleSweepKey, debugName);
   maxSearchTurns          = JsonTools::ParseUint8(config, kMaxSearchTurnsKey, debugName);
@@ -142,7 +139,6 @@ void BehaviorFindHome::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) 
 {
   const char* list[] = {
     kSearchTurnAnimKey,
-    kSearchTurnEndAnimKey,
     kPostSearchAnimTrigger,
     kMinSearchAngleSweepKey,
     kMaxSearchTurnsKey,
@@ -212,6 +208,9 @@ void BehaviorFindHome::AlwaysHandleInScope(const EngineToGameEvent& event)
     }
     case EngineToGameTag::RobotProcessedImage:
     {
+      // NOTE: This should be removed as per VIC-13815
+      // It is a duplicated set of stats that are tracked for the purpose of
+      //  analytics for robot's charger finding capability
       if(IsActivated() && GetBEI().HasVisionComponent()) {
         _dVars.numFramesOfDetectingMarkers++;
         if(GetBEI().GetVisionComponent().GetLastImageQuality() == Vision::ImageQuality::TooDark) {

@@ -17,13 +17,13 @@
 
 #include "engine/actions/basicActions.h"
 #include "engine/actions/animActions.h"
-#include "engine/blockWorld/blockWorld.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/blockWorld/blockWorld.h"
 #include "engine/components/visionComponent.h"
 #include "engine/moodSystem/moodManager.h"
-#include "engine/vision/imageSaver.h"
 #include "engine/robot.h"
+#include "engine/vision/imageSaver.h"
 
 #include "util/logging/DAS.h"
 
@@ -36,8 +36,8 @@ namespace Vector {
 #define LOG_CHANNEL "Behaviors"
   
 namespace {
-  const char* kNumImageCompositingFramesToWaitForKey = "numImageCompositingFramesToWaitFor";
-  const char* kNumCyclingExposureFramesToWaitForKey = "numCyclingExposureFramesToWaitFor";
+  const char* kNumImageCompositingCyclesToWaitForKey = "numImageCompositingCyclesToWaitFor";
+  const char* kNumCyclingExposureCyclesToWaitForKey = "numCyclingExposureCyclesToWaitFor";
 
   const LCDBrightness kNormalLCDBrightness = LCDBrightness::LCDLevel_5mA;
   const LCDBrightness kMaxLCDBrightness = LCDBrightness::LCDLevel_20mA;
@@ -62,8 +62,8 @@ BehaviorRobustChargerObservation::BehaviorRobustChargerObservation(const Json::V
  : ICozmoBehavior(config)
 {
   std::string debugName = "Behavior" + GetDebugLabel() + ".LoadConfig";
-  _iConfig.numImageCompositingFramesToWaitFor = JsonTools::ParseInt32(config, kNumImageCompositingFramesToWaitForKey, debugName);
-  _iConfig.numCyclingExposureFramesToWaitFor = JsonTools::ParseInt32(config, kNumCyclingExposureFramesToWaitForKey, debugName);
+  _iConfig.numImageCompositingCyclesToWaitFor = JsonTools::ParseInt32(config, kNumImageCompositingCyclesToWaitForKey, debugName);
+  _iConfig.numCyclingExposureCyclesToWaitFor = JsonTools::ParseInt32(config, kNumCyclingExposureCyclesToWaitForKey, debugName);
 
   SubscribeToTags({
     EngineToGameTag::RobotProcessedImage,
@@ -96,8 +96,8 @@ void BehaviorRobustChargerObservation::GetBehaviorOperationModifiers(BehaviorOpe
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRobustChargerObservation::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
-  expectedKeys.insert(kNumImageCompositingFramesToWaitForKey);
-  expectedKeys.insert(kNumCyclingExposureFramesToWaitForKey);
+  expectedKeys.insert(kNumImageCompositingCyclesToWaitForKey);
+  expectedKeys.insert(kNumCyclingExposureCyclesToWaitForKey);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -195,17 +195,18 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
     getinAndSetLcd->AddAction(new TriggerAnimationAction(AnimationTrigger::LowlightChargerSearchGetin));
     getinAndSetLcd->AddAction(GetLCDBrightnessChangeAction(kMaxLCDBrightness));
     compoundAction->AddAction(getinAndSetLcd);
-    waitAction = new WaitForImagesAction(_iConfig.numImageCompositingFramesToWaitFor, VisionMode::CompositingImages);
+    waitAction = new WaitForImagesAction(_iConfig.numImageCompositingCyclesToWaitFor, VisionMode::CompositingImages);
     compoundAction->AddAction(new LoopAnimWhileAction(waitAction, AnimationTrigger::LowlightChargerSearchLoop));
   } else {
     // Use cycling exposure instead
-    waitAction = new WaitForImagesAction(_iConfig.numCyclingExposureFramesToWaitFor, VisionMode::CyclingExposure);
+    waitAction = new WaitForImagesAction(_iConfig.numCyclingExposureCyclesToWaitFor, VisionMode::CyclingExposure);
     const auto currMood = GetBEI().GetMoodManager().GetSimpleMood();
     const bool isHighStim = (currMood == SimpleMoodType::HighStim);
     if (isHighStim) {
       compoundAction->AddAction(waitAction);
     } else {
       compoundAction->AddAction(new LoopAnimWhileAction(waitAction, AnimationTrigger::ChargerDockingSearchWaitForImages));
+      compoundAction->AddAction(new TriggerAnimationAction(AnimationTrigger::ChargerDockingSearchSingleTurnEnd));
     }
   }
 
@@ -217,7 +218,7 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
     waitAction->SetSaveParams(params);
   }
 
-  DelegateIfInControl(compoundAction); // Behavior exits after this point
+  DelegateIfInControl(compoundAction); // Behavior exits after this action completes
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -228,7 +229,7 @@ WaitForLambdaAction* BehaviorRobustChargerObservation::GetLCDBrightnessChangeAct
                                     RobotInterface::EngineToRobot(
                                       RobotInterface::SetLCDBrightnessLevel(level)));
                                   return true;
-                                  });
+                                });
 }
 
 }
