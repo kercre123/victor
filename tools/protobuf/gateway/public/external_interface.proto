@@ -471,6 +471,14 @@ service ExternalInterface {
     };
   }
 
+  // CheckUpdateStatus tells if the robot is ready to reboot and update.
+  rpc CheckUpdateStatus(CheckUpdateStatusRequest) returns (CheckUpdateStatusResponse) {
+    option (google.api.http) = {
+      post: "/v1/check_update_status",
+      body: "*"
+    };
+  }
+
   // *** App only proto below ***
 
   rpc AppIntent(AppIntentRequest) returns (AppIntentResponse) {
