@@ -47,6 +47,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionOnChargerPlatform.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionPetInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionProxInRange.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionRobotHeldInPalm.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotInHabitat.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPitchInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPickedUp.h"
@@ -338,6 +339,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::ProxInRange:
     {
       condition = std::make_shared<ConditionProxInRange>(config);
+      break;
+    }
+    case BEIConditionType::RobotHeldInPalm:
+    {
+      condition = std::make_shared<ConditionRobotHeldInPalm>(config);
       break;
     }
     case BEIConditionType::RobotInHabitat:

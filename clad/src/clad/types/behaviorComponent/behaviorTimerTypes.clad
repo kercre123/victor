@@ -20,7 +20,6 @@ enum uint_8 BehaviorTimerTypes {
   Socializing,
   ObservingOnCharger,
   ObservingOffCharger,
-  ReactToJoltInPalm,
   ReactToTouchPetting,
   
 }
