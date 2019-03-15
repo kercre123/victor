@@ -21,6 +21,8 @@
 
 #include "util/signals/simpleSignal_fwd.h"
 
+#include "clad/types/lcdTypes.h"
+
 #include <set>
 
 namespace Anki {
@@ -75,6 +77,8 @@ public:
   bool InPowerSaveMode() const { return _inPowerSaveMode; }
 
   bool InSysconCalmMode() const { return _inSysconCalmMode; }
+
+  void RequestLCDBrightnessChange(const LCDBrightness& level) const;
 
   // NOTE: In an ideal system, we'd work the opposite way, where specific behaviors or pieces of code could
   // request a higher power mode, and the _default_ would be power save. This would potentially allow better

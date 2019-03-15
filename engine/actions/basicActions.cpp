@@ -2668,9 +2668,20 @@ namespace Anki {
     , _numFramesToWaitFor(numFrames)
     , _afterTimeStamp(afterTimeStamp)
     , _visionMode(visionMode)
-    , _updateFrequency(_numFramesToWaitFor==1 ? EVisionUpdateFrequency::SingleShot : EVisionUpdateFrequency::High)
     {
-    
+      // If the caller requested to wait one frame and the specified VisionMode also completes 
+      //  in a single frame, then we can use the special SingleShot update frequency. This forcibly
+      //  disables the mode after a single camera frame. 
+      // If the VisionMode needs multiple frames to complete a "cycle" (as is the case for 
+      //  ImageCompositing or CyclingExposure), or multiple frames are requested, then we simply 
+      //  use High frequency. In this case, there may be one extra frame actually processed with the 
+      //  specified mode, because the VisionSystem runs asynchronously and may have already 
+      //  started on the next frame before this action unsubscribes from the mode.
+      if(_numFramesToWaitFor==1 && CycleCompletesInOneFrame(visionMode, true)) {
+        _updateFrequency = EVisionUpdateFrequency::SingleShot;
+      } else {
+        _updateFrequency = EVisionUpdateFrequency::High;
+      }
     }
 
     WaitForImagesAction::WaitForImagesAction(WaitForImagesAction::UseDefaultNumImages_t, VisionMode visionMode)
