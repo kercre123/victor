@@ -18,6 +18,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/charger.h"
 #include "engine/components/accountSettingsManager.h"
 #include "engine/components/animationComponent.h"
@@ -65,7 +66,6 @@
 #include "engine/moodSystem/moodManager.h"
 #include "engine/moodSystem/stimulationFaceDisplay.h"
 #include "engine/navMap/mapComponent.h"
-#include "engine/objectPoseConfirmer.h"
 #include "engine/petWorld.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotGyroDriftDetector.h"
@@ -316,7 +316,6 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::Map,                        new MapComponent());
     _components->AddDependentComponent(RobotComponentID::NVStorage,                  new NVStorageComponent());
     _components->AddDependentComponent(RobotComponentID::AIComponent,                new AIComponent());
-    _components->AddDependentComponent(RobotComponentID::ObjectPoseConfirmer,        new ObjectPoseConfirmer());
     _components->AddDependentComponent(RobotComponentID::CubeLights,                 new CubeLightComponent());
     _components->AddDependentComponent(RobotComponentID::BackpackLights,             new BackpackLightComponent());
     _components->AddDependentComponent(RobotComponentID::CubeAccel,                  new CubeAccelComponent());
@@ -412,7 +411,6 @@ Robot::~Robot()
   // and there's no guarantee on entity/component destruction order
   _components->RemoveComponent(RobotComponentID::Vision);
   _components->RemoveComponent(RobotComponentID::Map);
-  _components->RemoveComponent(RobotComponentID::ObjectPoseConfirmer);
   _components->RemoveComponent(RobotComponentID::PathPlanning);
 
   // Ensure JdocsManager destructor gets called before the destructors of the
@@ -566,10 +564,10 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
         GetVisionComponent().Pause(false);
       }
       
-      // If we are not localized and there is nothing else left in the world that
-      // we could localize to, then go ahead and mark us as localized (via
-      // odometry alone)
-      if (!IsLocalized() && !GetBlockWorld().AnyRemainingLocalizableObjects()) {
+      // If we are not localized and there is nothing else left in the world (in any origin) that we could localize to,
+      // then go ahead and mark us as localized (via odometry alone)
+      if (!IsLocalized() &&
+          !GetBlockWorld().AnyRemainingLocalizableObjects(PoseOriginList::UnknownOriginID)) {
         LOG_INFO("Robot.UpdateOfftreadsState.NoMoreRemainingLocalizableObjects",
                  "Marking previously-unlocalized robot as localized to odometry because "
                  "there are no more objects to localize to in the world.");
@@ -714,10 +712,6 @@ void Robot::Delocalize(bool isCarryingObject)
                                          GetPoseOriginList().GetSize(),
                                          worldOrigin.GetName().c_str());
   GetContext()->GetVizManager()->EraseAllVizObjects();
-
-
-  // clear the pose confirmer now that we've changed pose origins
-  GetObjectPoseConfirmer().Clear();
 
   // Sanity check carrying state
   if (isCarryingObject != GetCarryingComponent().IsCarryingObject())
@@ -1616,6 +1610,11 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     LOG_ERROR("Robot.LocalizeToObject.ExistingObjectPieceNullPointer", "");
     return RESULT_FAIL;
   }
+  
+  if (!IsChargerType(existingObject->GetType(), false)) {
+    LOG_ERROR("Robot.LocalizeToObject.CanOnlyLocalizeToCharger", "");
+    return RESULT_FAIL;
+  }
 
   if (existingObject->GetID() != GetLocalizedTo())
   {
@@ -1623,13 +1622,6 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
               "Robot attempting to localize to %s object %d",
               EnumToString(existingObject->GetType()),
               existingObject->GetID().GetValue());
-  }
-
-  if (!existingObject->CanBeUsedForLocalization() || WasObjectTappedRecently(existingObject->GetID())) {
-    LOG_ERROR("Robot.LocalizeToObject.UnlocalizedObject",
-              "Refusing to localize to object %d, which claims not to be localizable.",
-              existingObject->GetID().GetValue());
-    return RESULT_FAIL;
   }
 
   HistStateKey histStateKey;

@@ -60,7 +60,6 @@ class MapComponent;
 class MicComponent;
 class MoodManager;
 class MovementComponent;
-class ObjectPoseConfirmer;
 class PetWorld;
 class PhotographyManager;
 class PowerStateManager;
@@ -155,7 +154,6 @@ public:
             MicComponent*                  micComponent,
             MoodManager*                   moodManager,
             MovementComponent*             movementComponent,
-            ObjectPoseConfirmer*           objectPoseConfirmer,
             PetWorld*                      petWorld,
             PhotographyManager*            photographyManager,
             PowerStateManager*             powerStateManager,
@@ -237,9 +235,6 @@ public:
 
   inline bool HasCubeInteractionTracker() const { return GetComponentWrapper(BEIComponentID::CubeInteractionTracker).IsComponentValid();}
   CubeInteractionTracker& GetCubeInteractionTracker() const { return GetComponentWrapper(BEIComponentID::CubeInteractionTracker).GetComponent<CubeInteractionTracker>();}
-  
-  inline bool HasObjectPoseConfirmer() const { return GetComponentWrapper(BEIComponentID::ObjectPoseConfirmer).IsComponentValid();}
-  ObjectPoseConfirmer& GetObjectPoseConfirmer() const { return GetComponentWrapper(BEIComponentID::ObjectPoseConfirmer).GetComponent<ObjectPoseConfirmer>();}
 
   inline bool HasCliffSensorComponent() const { return GetComponentWrapper(BEIComponentID::CliffSensor).IsComponentValid();}
   CliffSensorComponent& GetCliffSensorComponent() const { return GetComponentWrapper(BEIComponentID::CliffSensor).GetComponent<CliffSensorComponent>();}
@@ -318,7 +313,6 @@ private:
                        MicComponent*                  micComponent,
                        MoodManager*                   moodManager,
                        MovementComponent*             movementComponent,
-                       ObjectPoseConfirmer*           objectPoseConfirmer,
                        PetWorld*                      petWorld,
                        PhotographyManager*            photographyManager,
                        PowerStateManager*             powerStateManager,

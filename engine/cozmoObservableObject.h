@@ -15,7 +15,8 @@
 #ifndef __Anki_Cozmo_ObservableObject_H__
 #define __Anki_Cozmo_ObservableObject_H__
 
-#include "engine/objectPoseConfirmer.h"
+#include "engine/blockWorld/blockWorld.h"
+
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
 #include "coretech/common/engine/robotTimeStamp.h"
@@ -50,9 +51,10 @@ public:
   
   virtual ObservableObject* CloneType() const override = 0;
   
-  // Can only be called once and only before SetPose is called. Will assert otherwise,
-  // since this indicates programmer error.
-  void InitPose(const Pose3d& pose, PoseState poseState);
+  // Can only be called once and only before SetPose is called. Will assert otherwise, since this indicates programmer
+  // error. The parameter fromDistance_mm is the distance from which the object was visually observed, if applicable.
+  // A value of -1 indicates that the pose is not being initiailized from a visual observation.
+  void InitPose(const Pose3d& pose, PoseState poseState, const float fromDistance_mm = -1.f);
   
   // Override base class SetID to use unique ID for each type (base class has no concept of ObjectType)
   virtual void SetID() override;
@@ -87,9 +89,9 @@ public:
   // Can we assume there is exactly one of these objects at a give time?
   virtual bool IsUnique()                     const   { return false; }
 
-  // Get the distance within which we are allowed to localize to objects
-  // (This will probably need to be updated with COZMO-9672)
-  static f32 GetMaxLocalizationDistance_mm();
+  // Defines the maximum distance from which we can observe the object and update its pose. In other words, if the
+  // camera observes the object from a distance greater than this, we will discard the observation as untrustworthy.
+  virtual f32 GetMaxObservationDistance_mm() const;
   
   // CTI SetIsMoving/IsMoving methods with TimeStamp_t are forwarded to cozmo methods and marked as
   // final to force child classes to use RobotTimeStamp_t
@@ -101,12 +103,11 @@ public:
   virtual void SetIsMoving(bool isMoving, RobotTimeStamp_t t) {}
   
 protected:
-  
-  // Make SetPose protected and friend ObjectPoseConfirmer so only it can
-  // update objects' poses
+
+  // Set the object's pose. newPose should be with respect to world origin. Note: we make SetPose protected and friend
+  // BlockWorld, so that only BlockWorld can update objects' poses
   virtual void SetPose(const Pose3d& newPose, f32 fromDistance, PoseState newPoseState) override;
-  using Vision::ObservableObject::SetPoseState;
-  friend ObjectPoseConfirmer;
+  friend class BlockWorld;
   
   ActiveID _activeID = -1;
   FactoryID _factoryID = "";

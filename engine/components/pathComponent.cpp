@@ -21,6 +21,7 @@
 #include "engine/faceAndApproachPlanner.h"
 #include "engine/xyPlanner.h"
 #include "engine/minimalAnglePlanner.h"
+#include "engine/namedColors/namedColors.h"
 #include "engine/pathDolerOuter.h"
 #include "engine/pathPlanner.h"
 #include "engine/robot.h"

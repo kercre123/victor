@@ -235,7 +235,7 @@ void CubeAccelComponent::ObjectMovedOrStoppedCallback(const ObjectID objectId, c
       // we don't know where it is anymore. Next time we see it, relocalize it
       // relative to robot's pose estimate. Then we can use it for localization
       // again.
-      _robot->GetObjectPoseConfirmer().MarkObjectDirty(locatedObject);
+      _robot->GetBlockWorld().MarkObjectDirty(locatedObject);
     }
     
     const bool wasMoving = locatedObject->IsMoving();

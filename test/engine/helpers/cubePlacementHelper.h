@@ -56,9 +56,6 @@ public:
     // now they can be added to the world
     blockWorld.AddLocatedObject(std::shared_ptr<ObservableObject>(objectPtr));
 
-    // need to pretend we observed this object
-    robot.GetObjectPoseConfirmer().AddInExistingPose(objectPtr); // this has to be called after AddLocated just because
-    
     // verify they are there now
     DEV_ASSERT(objectPtr->GetID().IsSet(), "CreateObjectLocatedAtOrigin.IDNotset");
     DEV_ASSERT(objectPtr->HasValidPose(), "CreateObjectLocatedAtOrigin.InvalidPose");

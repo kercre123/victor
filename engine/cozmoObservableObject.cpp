@@ -16,15 +16,14 @@
 namespace Anki {
 namespace Vector {
   
-// Only localize to / identify active objects within this distance
-CONSOLE_VAR_RANGED(f32, kMaxLocalizationDistance_mm, "PoseConfirmation", 500.f, 50.f, 1000.f);
+CONSOLE_VAR_RANGED(f32, kDefaultMaxObservationDistance_mm, "PoseConfirmation", 500.f, 50.f, 1000.f);
 
 const FactoryID ObservableObject::InvalidFactoryID = "";
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-f32 ObservableObject::GetMaxLocalizationDistance_mm()
+f32 ObservableObject::GetMaxObservationDistance_mm() const
 {
-  return kMaxLocalizationDistance_mm;
+  return kDefaultMaxObservationDistance_mm;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -57,7 +56,7 @@ void ObservableObject::SetID()
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ObservableObject::InitPose(const Pose3d& pose, PoseState poseState)
+void ObservableObject::InitPose(const Pose3d& pose, PoseState poseState, const float fromDistance_mm)
 {
   // This indicates programmer error: InitPose should only be called once on
   // an object and never once SetPose has been called
@@ -66,7 +65,7 @@ void ObservableObject::InitPose(const Pose3d& pose, PoseState poseState)
                  "%s Object %d",
                  EnumToString(GetType()), GetID().GetValue());
   
-  SetPose(pose, -1.f, poseState);
+  SetPose(pose, fromDistance_mm, poseState);
   _poseHasBeenSet = true;
 }
 

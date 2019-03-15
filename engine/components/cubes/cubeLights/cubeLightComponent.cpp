@@ -896,31 +896,6 @@ void CubeLightComponent::PickNextAnimForDefaultLayer(const ObjectID& objectID)
   PlayLightAnimByTrigger(objectID, animTrigger, AnimLayerEnum::State);
 }
 
-void CubeLightComponent::OnActiveObjectPoseStateChanged(const ObjectID& objectID,
-                                                        const PoseState oldPoseState,
-                                                        const PoseState newPoseState)
-{
-  if(oldPoseState == newPoseState)
-  {
-    return;
-  }
-
-  if(_cubeConnectedInBackground)
-  {
-    return;
-  }
-  
-  if(newPoseState != PoseState::Known) // TODO Change to use function
-  {
-    PlayLightAnimByTrigger(objectID, CubeAnimationTrigger::Connected, AnimLayerEnum::State);
-  }
-  else
-  {
-    // If going to Known change to Visible
-    PlayLightAnimByTrigger(objectID, CubeAnimationTrigger::Visible, AnimLayerEnum::State);
-  }
-}
-
 void CubeLightComponent::EnableGameLayerOnly(const ObjectID& objectID, bool enable)
 {
   PRINT_CH_INFO("CubeLightComponent", "CubeLightComponent.EnableGameLayerOnly",
