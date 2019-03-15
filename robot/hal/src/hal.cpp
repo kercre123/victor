@@ -17,6 +17,7 @@
 #include "anki/cozmo/robot/logEvent.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/factory/faultCodes.h"
+#include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include "../spine/spine.h"
 #include "../spine/cc_commander.h"
@@ -107,7 +108,9 @@ namespace { // "Private members"
 
   VersionInfo _sysconVersionInfo;
   
-  const u32 SPINE_GET_FRAME_TIMEOUT_MS = 1000;
+  const u32 SELECT_TIMEOUT_SEC = 1;
+  const u32 SELECT_TIMEOUT_ATTEMPTS = 5;
+  const u32 SPINE_GET_FRAME_TIMEOUT_MS = 1000 * SELECT_TIMEOUT_SEC * SELECT_TIMEOUT_ATTEMPTS;
   const int* shutdownSignal_ = 0;
 
 } // "private" namespace
@@ -146,7 +149,7 @@ bool check_select_timeout(spine_ctx_t spine)
   int fd = spine_get_fd(spine);
 
   static u8 selectTimeoutCount = 0;
-  if(selectTimeoutCount >= 5)
+  if(selectTimeoutCount >= SELECT_TIMEOUT_ATTEMPTS)
   {
     AnkiError("spine.check_select_timeout.timeoutCountReached","");
     FaultCode::DisplayFaultCode(FaultCode::SPINE_SELECT_TIMEOUT);
@@ -158,7 +161,7 @@ bool check_select_timeout(spine_ctx_t spine)
   FD_ZERO(&fdSet);
   FD_SET(fd, &fdSet);
   static timeval timeout;
-  timeout.tv_sec = 1;
+  timeout.tv_sec = SELECT_TIMEOUT_SEC;
   timeout.tv_usec = 0;
   ssize_t s = select(FD_SETSIZE, &fdSet, NULL, NULL, &timeout);
   if(s == 0)
@@ -868,6 +871,12 @@ ProxSensorDataRaw HAL::GetRawProxData()
 
 void ProcessProxData()
 {
+  // No body prox sensor on Whiskey
+  if(IsWhiskey())
+  {
+    return;
+  }
+  
   if (HAL::PowerGetMode() == POWER_MODE_CALM) {
     proxData_.distance_mm      = PROX_CALM_MODE_DIST_MM;
     proxData_.signalIntensity  = 0.f;

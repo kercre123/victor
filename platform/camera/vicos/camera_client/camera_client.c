@@ -33,7 +33,7 @@
 
 #include "camera_client.h"
 #include "log.h"
-#include "gpio.h"
+#include "platform/gpio/gpio.h"
 
 static char *cli_socket_path = "/dev/socket/vic-engine-cam_client0";
 static char *srv_socket_path = "/var/run/mm-anki-camera/camera-server";

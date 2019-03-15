@@ -15,13 +15,13 @@
 #include <stdlib.h>
 #include "ev++.h"
 #include "switchboardd/pairingMessages.h"
-#include "switchboardd/engineMessagingClient.h"
 #include "switchboardd/gatewayMessagingServer.h"
 #include "switchboardd/tokenClient.h"
 #include "switchboardd/connectionIdManager.h"
 #include "switchboardd/wifiWatcher.h"
 #include "switchboardd/INetworkStream.h"
 #include "switchboardd/IRtsHandler.h"
+#include "switchboardd/ISwitchboardCommandClient.h"
 #include "switchboardd/safeHandle.h"
 #include "switchboardd/taskExecutor.h"
 
@@ -33,7 +33,7 @@ public:
   // Constructors
   RtsComms(INetworkStream* stream, 
     struct ev_loop* evloop,
-    std::shared_ptr<EngineMessagingClient> engineClient,
+    std::shared_ptr<ISwitchboardCommandClient> engineClient,
     std::shared_ptr<GatewayMessagingServer> gatewayServer,
     std::shared_ptr<TokenClient> tokenClient,
     std::shared_ptr<ConnectionIdManager> connectionIdManager,
@@ -91,7 +91,7 @@ private:
   std::string _pin;
   INetworkStream* _stream;
   struct ev_loop* _loop;
-  std::shared_ptr<EngineMessagingClient> _engineClient;
+  std::shared_ptr<ISwitchboardCommandClient> _engineClient;
   std::shared_ptr<GatewayMessagingServer> _gatewayServer;
   std::shared_ptr<TokenClient> _tokenClient;
   std::shared_ptr<ConnectionIdManager> _connectionIdManager;

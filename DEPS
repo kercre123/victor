@@ -1,15 +1,6 @@
 {
     "artifactory": {
         "builds": {
-            "tensorflow": {
-                "build_type_id": "anki",
-                "checksums": {
-                    "sha256": "b9c50d1e18638d5cf827f946a3b2f79cf6569404929fcfcc1fbd8f1c98185859"
-                },
-                "extension": "tar.gz",
-                "package_name": "tensorflow",
-                "version": "28"
-            }
         },
         "root_url": "http://10.10.7.40:8081/artifactory"
     },
@@ -23,9 +14,9 @@
             },
             "avs-device-sdk": {
                 "checksums": {
-                    "sha256": "7e986c3e0a94f9155b1f983069857f74819ca17cbba565dd33470887ee4957b6"
+                    "sha256": "68abf4214fb726e22777ca6fb9f1bec601aad49013cd7ae9a32453f5b550e50e"
                 },
-                "version": "v1.10-anki-r3"
+                "version": "v1.11-anki-r1"
             },
             "flatbuffers": {
                 "checksums": {
@@ -38,6 +29,12 @@
                     "sha256": "18fefd8b70bfeab16fcb9ac87ed9b22bc376c7e316d46fec1ed71512edb18c11"
                 },
                 "version": "1.0.16"
+            },
+            "lldb-server": {
+                "checksums": {
+                    "sha256": "8c4f3798fbceb23d26e1faf79bb0e90d205d335bae32b0955d10869d65ad79e9"
+                },
+                "version": "8.0"
             },
             "mpg123": {
                 "checksums": {
@@ -74,6 +71,12 @@
                     "sha256": "cfcbcfe19fcce8868245997079beb5074c78688979e0e297a14731aa0de6d3cf"
                 },
                 "version": "SpeexDSP-1.2rc3"
+            },
+            "tensorflow": {
+                "checksums": {
+                    "sha256": "11f8230a3da52804ffbd2d5df4388b381164cdaca1f7d6836477f93f2df21c7e"
+                },
+                "version": "v1.9.0-anki"
             }
         },
         "project": "victor",
@@ -108,7 +111,7 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "4934"
+                "version": "4940"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",

@@ -57,8 +57,11 @@ public:
   virtual alexaClientSDK::avsCommon::avs::DirectiveHandlerConfiguration getConfiguration() const override
   {
     alexaClientSDK::avsCommon::avs::DirectiveHandlerConfiguration configuration;
-    configuration[TEMPLATE] = alexaClientSDK::avsCommon::avs::BlockingPolicy::HANDLE_IMMEDIATELY;
-    configuration[PLAYER_INFO] = alexaClientSDK::avsCommon::avs::BlockingPolicy::HANDLE_IMMEDIATELY;
+    auto visualNonBlockingPolicy
+      = alexaClientSDK::avsCommon::avs::BlockingPolicy(alexaClientSDK::avsCommon::avs::BlockingPolicy::MEDIUM_VISUAL, false);
+    
+    configuration[TEMPLATE] = visualNonBlockingPolicy;
+    configuration[PLAYER_INFO] = visualNonBlockingPolicy;
     return configuration;
   }
   

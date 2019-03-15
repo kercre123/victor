@@ -14,7 +14,6 @@
 
 #include "clad/types/behaviorComponent/activeFeatures.h"
 #include "clad/types/behaviorComponent/behaviorStats.h"
-#include "clad/types/behaviorComponent/userIntent.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/activeFeatureComponent.h"
 #include "engine/components/jdocsManager.h"

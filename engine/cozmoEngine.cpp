@@ -115,8 +115,8 @@ static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
   ss << (batteryComponent.IsCharging() ? "true" : "false") << '\n';
   ss << (batteryComponent.IsOnChargerContacts() ? "true" : "false") << '\n';
   ss << (batteryComponent.IsOnChargerPlatform() ? "true" : "false") << '\n';
-  ss << std::to_string(static_cast<int>(batteryComponent.GetFullyChargedTimeSec())) << '\n';
-  ss << std::to_string(static_cast<int>(batteryComponent.GetLowBatteryTimeSec())) << '\n';
+  ss << std::to_string(static_cast<int>(batteryComponent.GetTimeAtLevelSec(BatteryLevel::Full))) << '\n';
+  ss << std::to_string(static_cast<int>(batteryComponent.GetTimeAtLevelSec(BatteryLevel::Low))) << '\n';
 
   const auto& robotState = robot->GetRobotState();
 
@@ -149,7 +149,7 @@ static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
      << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(2)) << ' '
      << cliffSensorComponent.IsWhiteDetected(static_cast<CliffSensor>(3)) << '\n';
 
-  ss << robot->GetProxSensorComponent().GetDebugString();
+  ss << robot->GetProxSensorComponent().GetDebugString() << '\n';
 
   ss << robotState.carryingObjectID << '\n';
   ss << robotState.carryingObjectOnTopID << '\n';

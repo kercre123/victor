@@ -25,6 +25,7 @@ namespace Vector {
 // not CppLite such as EnumFromString so we need to write our own
 bool EnumFromString(const std::string& string, BackpackAnimationTrigger& trigger);
   
+namespace Anim {
 struct BackpackLightData;
 class BackpackLightComponent;
 
@@ -57,7 +58,8 @@ private:
   BackpackLightDataRefWeak            _dataPtr;
   
 }; // class LightDataLocator
-  
+
+} // namespace Anim
 } // namespace Vector
 } // namespace Anki
 

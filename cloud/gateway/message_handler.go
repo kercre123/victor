@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -754,7 +755,7 @@ func (service *rpcService) CancelActionByIdTag(ctx context.Context, in *extint.C
 			CancelActionByIdTagRequest: in,
 		},
 	}
-	_, err := engineProtoManager.Write(message)	
+	_, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -2508,21 +2509,56 @@ func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extin
 }
 
 // CheckUpdateStatus tells if the robot is ready to reboot and update.
-func (service *rpcService) CheckUpdateStatus(ctx context.Context, in *extint.CheckUpdateStatusRequest) (*extint.CheckUpdateStatusResponse, error) {
-	if _, err := os.Stat("/run/update-engine/done"); err == nil {
-		return &extint.CheckUpdateStatusResponse{
-			Status: &extint.ResponseStatus{
-				Code: extint.ResponseStatus_OK,
-			},
-			UpdateStatus: extint.CheckUpdateStatusResponse_READY_TO_INSTALL,
-		}, nil
-	}
-	return &extint.CheckUpdateStatusResponse{
+func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse, error) {
+	update_status := &extint.CheckUpdateStatusResponse{
 		Status: &extint.ResponseStatus{
 			Code: extint.ResponseStatus_OK,
 		},
-		UpdateStatus: extint.CheckUpdateStatusResponse_NO_UPDATE,
-	}, nil
+	}
+
+	update_status.Progress = -1
+	update_status.Expected = -1
+	if _, err := os.Stat("/run/update-engine/done"); err == nil {
+		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_READY_TO_INSTALL
+		return update_status, nil
+	}
+
+	update_status.UpdateStatus = extint.CheckUpdateStatusResponse_NO_UPDATE
+	if data, err := ioutil.ReadFile("/run/update-engine/progress"); err == nil {
+		update_status.Progress, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
+		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
+	}
+	if data, err := ioutil.ReadFile("/run/update-engine/expected-size"); err == nil {
+		update_status.Expected, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
+		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
+	}
+	return update_status, nil
+}
+
+// CheckUpdateStatus tells if the robot is ready to reboot and update.
+func (service *rpcService) CheckUpdateStatus(
+	ctx context.Context, in *extint.CheckUpdateStatusRequest) (*extint.CheckUpdateStatusResponse, error) {
+
+	return service.GetUpdateStatus()
+}
+
+// CheckUpdateStatusStream tells if the robot is ready to reboot and update.
+func (service *rpcService) CheckUpdateStatusStream(
+	in *extint.CheckUpdateStatusRequest,
+	stream extint.ExternalInterface_CheckUpdateStatusStreamServer) error {
+
+	for {
+		status, err := service.GetUpdateStatus()
+		//Keep streaming to the requestor until they disconnect. We don't stop streaming just because there's no update
+		//pending, because a requested update may be pending, but hasn't had a chance to update /run/update-engine/* yet.
+		if err != nil {
+			return err
+		}
+		if err := stream.Send(status); err != nil {
+			return err
+		}
+		time.Sleep(2000 * time.Millisecond)
+	}
 }
 
 // UpdateAndRestart reboots the robot when an update is available.

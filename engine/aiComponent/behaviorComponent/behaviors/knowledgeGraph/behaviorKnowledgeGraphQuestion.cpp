@@ -31,7 +31,6 @@
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 #include "clad/types/animationTrigger.h"
-#include "clad/types/behaviorComponent/userIntent.h"
 
 #define PRINT_DEBUG( format, ... ) \
   PRINT_CH_DEBUG( "KnowledgeGraph", "BehaviorKnowledgeGraphQuestion", format, ##__VA_ARGS__ )

@@ -112,7 +112,7 @@ message MotorActionAck
 
 message MicData
 {
-  int_16  data[320], // 80 samples of audio 4 channels
+  int_16  data[640], // one 10ms chunks of 160 samples, times 4 audio channels
   uint_32 timestamp,
   uint_32 robotStatusFlags, // RobotStatusFlag packs as a uint_32
   float_32 robotRotationAngle,
@@ -157,6 +157,11 @@ message BeatDetectorState
 message StartSelfTest
 {
 
+}
+
+message SendRangeData
+{
+  bool enable
 }
 
 /// *************** Overall message pipe ******************************* ///
@@ -250,8 +255,11 @@ union RobotToEngine {
   MicRecordingComplete       micRecordingComplete   = 0xE8,
   MicDataState               micDataState           = 0xE9,
 
+  SendRangeData              sendRangeData          = 0xEA,
+
   // SDK Streaming Audio Playback
-  AudioStreamStatusEvent     audioStreamStatusEvent = 0xEA,
+  AudioStreamStatusEvent     audioStreamStatusEvent = 0xEB,
+
 
   // ====== 0xF0 to 0x FE: Unreliable message to the Engine =====
   // From robot process

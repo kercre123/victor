@@ -63,10 +63,10 @@ bool BehaviorReactToHand::IsRobotLifted() const
 void BehaviorReactToHand::OnBehaviorActivated()
 {
   // Get distance to hand:
-  auto& proxSensor = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>();
-  uint16_t proxDist_mm = 0;
+  const auto& proxSensor = GetBEI().GetComponentWrapper( BEIComponentID::ProxSensor ).GetComponent<ProxSensorComponent>();
+  const auto& proxData = proxSensor.GetLatestProxData();
   float driveDist_mm = 0.f;
-  if( !proxSensor.GetLatestDistance_mm( proxDist_mm ) )
+  if( !proxData.foundObject )
   {
     PRINT_NAMED_WARNING("BehaviorReactToHand.OnBehaviorActivated.InvalidProxReadingToHand", "");
     
@@ -76,7 +76,7 @@ void BehaviorReactToHand::OnBehaviorActivated()
   }
   else
   {
-    driveDist_mm = kReactToHand_DriveDistanceFraction * (float)proxDist_mm;
+    driveDist_mm = kReactToHand_DriveDistanceFraction * (float)proxData.distance_mm;
   }
   
   CompoundActionParallel* driveAction = new CompoundActionParallel({

@@ -20,7 +20,9 @@
 namespace Anki {
 namespace Vector {
 
-class AnimationStreamer;
+namespace Anim {
+  class AnimationStreamer;
+}
 enum class AlexaUXState : uint8_t;
 
 namespace Audio {
@@ -30,12 +32,12 @@ class EngineRobotAudioInput;
 class ShowAudioStreamStateManager{
 public:
 
-  ShowAudioStreamStateManager(const AnimContext* context);
+  ShowAudioStreamStateManager(const Anim::AnimContext* context);
   virtual ~ShowAudioStreamStateManager();
 
   void Update();
   
-  void SetAnimationStreamer(AnimationStreamer* streamer)
+  void SetAnimationStreamer(Anim::AnimationStreamer* streamer)
   {
     _streamer = streamer;
   }
@@ -80,8 +82,8 @@ private:
   void StartTriggerResponseWithoutGetIn(OnTriggerAudioCompleteCallback = {});
 
 
-  const AnimContext* _context = nullptr;
-  AnimationStreamer* _streamer = nullptr;
+  const Anim::AnimContext* _context = nullptr;
+  Anim::AnimationStreamer* _streamer = nullptr;
 
   Anki::AudioEngine::Multiplexer::PostAudioEvent _postAudioEvent;
   int32_t _minStreamingDuration_ms;

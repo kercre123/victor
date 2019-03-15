@@ -118,6 +118,9 @@ namespace Anki {
       
       // Interp lift angle
       interpState.liftAngle = histState1.GetLiftAngle_rad() + fraction * (histState2.GetLiftAngle_rad() - histState1.GetLiftAngle_rad());
+
+      // Interp pitch
+      interpState.pose.pitch_angle = histState1.GetPitch_rad() + fraction * (histState2.GetPitch_rad() - histState1.GetPitch_rad());
       
       // Interp cliff data
       for (int i=0 ; i<interpState.cliffDataRaw.size() ; i++) {

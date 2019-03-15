@@ -175,7 +175,7 @@ typedef enum
   CLIFF_COUNT
 } CliffID; //TODO: assert matches DropSensor, or use directly
 
-/// Forward proximity sensor
+/// Face proximity sensor
 ProxSensorDataRaw GetRawProxData();
 
 /// Cliff sensors

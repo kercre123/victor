@@ -44,6 +44,7 @@ enum uint_16 BehaviorID {
   PlaypenDistanceSensor100mm,
   PlaypenDistanceSensor300mm,
   PlaypenDistanceSensor80mm,
+  PlaypenDistanceSensorCalib80mm,
   PlaypenDriftCheck,
   PlaypenDriveForwards,
   PlaypenEndChecks,
@@ -190,6 +191,7 @@ enum uint_16 BehaviorID {
   WiggleBackOntoChargerFromPlatform,
 
   // victorBehaviorTree/highLevelDelegates/heldInPalm
+  ReactToJoltInPalm,
   HeldInPalmDispatcher,
   HeldInPalmResponses,
   InitialHeldInPalmReaction,
@@ -198,7 +200,6 @@ enum uint_16 BehaviorID {
   LookInPlaceHeadDownRelaxed,
   LookInPlaceHeadUpInPalm,
   NestleWhileHeldInPalmAnim,
-  ReactToJoltInPalm,
   ReactToPalmTilt,
   ReactToPickupFromPalm,
   ReactToPutDownFromPalm,

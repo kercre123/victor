@@ -23,6 +23,8 @@ set(AVS_LIBS
   AudioResources
   AVSCommon
   AVSSystem
+  DeviceSettings
+  DoNotDisturbCA
   CapabilitiesDelegate
   CBLAuthDelegate
   CertifiedSender
@@ -35,6 +37,7 @@ set(AVS_LIBS
   RegistrationManager
   Settings
   SpeakerManager
+  SpeechEncoder
   SpeechSynthesizer
   SQLiteStorage
 )

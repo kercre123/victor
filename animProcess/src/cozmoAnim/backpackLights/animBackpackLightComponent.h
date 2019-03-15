@@ -42,6 +42,7 @@ namespace RobotInterface {
   struct BatteryStatus;
 }
  
+namespace Anim {
 class BackpackLightComponent : private Util::noncopyable
 {
 public:
@@ -161,6 +162,7 @@ private:
 
 };
 
+}
 }
 }
 

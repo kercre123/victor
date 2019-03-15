@@ -1,6 +1,11 @@
 # Copyright (c) 2018 Anki, Inc.
 # All rights reserved.
 
+option(ANKI_LICENSE_CSV_EXPORT "Export licensing information to .CSV file?" OFF)
+
+set(CSV_EXPORT_VERSION "v130")
+set(CSV_EXPORT_URL "https://anki-vic-pubfiles.anki.com/license/prod/1.0.0/licences/vectorEngineLicenseReport.${CSV_EXPORT_VERSION}")
+
 include(get_all_targets)
 include(target_dependencies)
 
@@ -185,7 +190,19 @@ function(anki_build_target_license target)
 
         endif()
 
+
         get_filename_component(filename ${file} NAME)
+
+        if (ANKI_LICENSE_CSV_EXPORT)
+          get_property(type TARGET ${target} PROPERTY TYPE)
+          if (${type} STREQUAL "SHARED_LIBRARY")
+            set(linkage "DYNAMIC")
+          else()
+            set(linkage "STATIC")
+          endif()
+          file(APPEND ${CMAKE_BINARY_DIR}/licences/vectorLicenseReport.csv "${dir},${CSV_EXPORT_URL}/${dir}-${license}/${filename}.txt,${license},${linkage}\n")
+        endif()
+
         if(NOT EXISTS "${CMAKE_BINARY_DIR}/licences/${dir}-${license}/${filename}.txt")
           # copy license to folder
           file(COPY ${file}
@@ -214,7 +231,17 @@ function(anki_build_target_license target)
 endfunction()
 
 function(write_license_html)
+  if (ANKI_LICENSE_CSV_EXPORT)
+    # Post-process, load strings, convert to list, sort, remove dupes, back to strings, write
 
+    file(READ ${CMAKE_BINARY_DIR}/licences/vectorLicenseReport.csv CSV)
+    string(REPLACE "\n" ";" CSV "${CSV}")
+    list(SORT CSV)
+    list(REMOVE_DUPLICATES CSV)
+    string(REPLACE ";" "\n" CSV "${CSV}")
+    file(WRITE ${CMAKE_BINARY_DIR}/licences/vectorLicenseReport.csv "${CSV}")
+  endif()
+  
   file(GLOB_RECURSE files "${CMAKE_BINARY_DIR}/licences/*.*")
 
   # TODO: VIC-5668 Add version numbers to licenses report and uploads
