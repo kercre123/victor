@@ -21,6 +21,8 @@
 
 #include "util/signals/simpleSignal_fwd.h"
 
+#include "clad/types/lcdTypes.h"
+
 #include <set>
 
 namespace Anki {

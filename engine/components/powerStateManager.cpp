@@ -30,8 +30,6 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "webServerProcess/src/webService.h"
 
-#include "clad/types/lcdTypes.h"
-
 namespace Anki {
 namespace Vector {
 

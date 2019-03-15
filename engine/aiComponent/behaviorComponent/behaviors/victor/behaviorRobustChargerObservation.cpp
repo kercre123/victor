@@ -20,6 +20,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/components/powerStateManager.h"
 #include "engine/components/visionComponent.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/robot.h"
@@ -114,7 +115,7 @@ void BehaviorRobustChargerObservation::OnBehaviorDeactivated()
   if(_dVars.isLowlight) {
     // Previously played the special Getin and set LCD brightness
     //  so now play the getout and restore the LCD brightness
-    PlayEmergencyGetout(AnimationTrigger::LowlightChargerSearchGetout);
+    PlayEmergencyGetOut(AnimationTrigger::LowlightChargerSearchGetout);
     GetBEI().GetPowerStateManager().RequestLCDBrightnessChange(kNormalLCDBrightness);
   }
 
