@@ -14,7 +14,7 @@ def _modify_path():
     searchpath = os.path.normpath(os.path.abspath(os.path.realpath(searchpath)))
     if searchpath not in sys.path:
         sys.path.insert(0, searchpath)
-    sys.path.insert(0, os.path.join('..', '..', 'tools', 'message-buffers'))
+    sys.path.insert(0, os.path.join(currentpath, '..', 'tools', 'message-buffers'))
 _modify_path()
 
 from clad import ast
@@ -71,25 +71,32 @@ if __name__ == '__main__':
     from emitters import CPP_emitter
 
     suffix = '_switch'
-    argv = []
 
-    for a in sys.argv:
-        if a.startswith('--group='):
-            arg, param = a.split('=')
-            UnionSwitchEmitter.groupSwitchPrefix = param
-            suffix += '_group_' + param
-        elif a.startswith('--start='):
-            arg, param = a.split('=')
-            UnionSwitchEmitter.startID = int(eval(param))
-            suffix += '_from_' + param
-        elif a.startswith('--end='):
-            arg, param = a.split('=')
-            UnionSwitchEmitter.endID = int(eval(param))
-            suffix += '_to_' + param
-        else:
-            argv.append(a)
-    sys.argv = argv
+    language = 'C++ Lite (embedded)'
 
-    emitterutil.c_main(language='C++', extension=suffix+'.def',
-        emitter_types=[UnionSwitchEmitter],
+    option_parser = emitterutil.StandardArgumentParser(language)
+    option_parser.add_argument('--group', metavar='group', help='Group name')
+    option_parser.add_argument('--start', metavar='start_idx', help='Start ID tag')
+    option_parser.add_argument('--end', metavar='end_idx', help='End ID tag')
+    
+    options = option_parser.parse_args()
+
+    if options.group:
+        UnionSwitchEmitter.groupSwitchPrefix = options.group
+        suffix += '_group_' + options.group
+    if options.start:
+        UnionSwitchEmitter.startID = int(options.start, 16)
+        suffix += '_from_' + options.start
+    if options.end:
+        UnionSwitchEmitter.endID = int(options.end, 16)
+        suffix += '_to_' + options.end
+
+    tree = emitterutil.parse(options)
+
+    def main_output_source_callback(output):
+        UnionSwitchEmitter(output).visit(tree)
+
+    main_output_source = emitterutil.get_output_file(options, suffix+'.def')
+    emitterutil.write_c_file(options.output_directory, main_output_source,
+        main_output_source_callback,
         use_inclusion_guards=False)

@@ -19,7 +19,6 @@
 
 #include "clad/types/behaviorComponent/behaviorTimerTypes.h"
 #include "clad/types/featureGateTypes.h"
-#include "clad/types/behaviorComponent/userIntent.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"

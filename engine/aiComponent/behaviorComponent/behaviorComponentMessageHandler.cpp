@@ -37,8 +37,6 @@
 
 #include "webServerProcess/src/webService.h"
 
-#include "clad/types/behaviorComponent/userIntent.h"
-
 #define LOG_CHANNEL "BehaviorSystem"
 
 namespace Anki {

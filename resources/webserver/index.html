@@ -111,10 +111,11 @@
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:1024,   desc:"Cliff sensor 2 (BL)",       units:"" },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:1024,   desc:"Cliff sensor 3 (BR)",       units:"" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Cliff sensor reads white",  units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Prox latest data timestamp",units:"" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:1000,   desc:"Prox distance",             units:"mm" },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:30,     desc:"Prox signal intensity",     units:"" },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:0.5,    desc:"Prox ambient intensity",    units:"" },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:196,    desc:"Prox SPAD count",           units:"" },
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:1000,   desc:"Prox distance",             units:"mm" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Prox range status",         units:"" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Carrying object ID",        units:"" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Carrying object on top ID", units:"" },
@@ -362,7 +363,7 @@
         }
     }
     function ButtonHandler_SetUpdatePeriod() {
-        var v = $("#update_freq_value").val();
+        var v = parseInt($("#update_freq_value").val());
         perfAutoUpdatePeriod_ms = Math.max(v, perfAutoUpdatePeriodMin_ms);
         UpdatePerfHeader();
     }
@@ -495,7 +496,7 @@
         }
     }
     function ButtonHandler_ProcSetUpdatePeriod() {
-        var v = $("#proc_update_freq_value").val();
+        var v = parseInt($("#proc_update_freq_value").val());
         procAutoUpdatePeriod_ms = Math.max(v, procAutoUpdatePeriodMin_ms);
         UpdateProcHeader();
     }
@@ -568,7 +569,7 @@
         }
     }
     function ButtonHandler_EngineSetUpdatePeriod() {
-        var v = $("#engine_update_freq_value").val();
+        var v = parseInt($("#engine_update_freq_value").val());
         engineAutoUpdatePeriod_ms = Math.max(v, engineAutoUpdatePeriodMin_ms);
         UpdateEngineHeader();
     }
@@ -760,7 +761,7 @@
         }
     }
     function ButtonHandler_PerfMetricSetUpdatePeriod() {
-        var v = $("#pm_update_freq_value").val();
+        var v = parseInt($("#pm_update_freq_value").val());
         pmAutoUpdatePeriod_ms = Math.max(v, pmAutoUpdatePeriodMin_ms);
         UpdatePerfMetricHeader();
     }
@@ -853,15 +854,15 @@
         DrawPerfMetricChart();
     }
     function ButtonHandler_PMSetNumTicks() {
-        pmXModeLastN = $("#pm_num_ticks").val();
+        pmXModeLastN = parseInt($("#pm_num_ticks").val());
         UpdatePMWidgets();
     }
     function ButtonHandler_PMSetFirstTick() {
-        pmXModeFirst = $('#pm_first_tick').val();
+        pmXModeFirst = parseInt($('#pm_first_tick').val());
         UpdatePMWidgets();
     }
     function ButtonHandler_PMSetLastTick() {
-        pmXModeLast = $('#pm_last_tick').val();
+        pmXModeLast = parseInt($('#pm_last_tick').val());
         UpdatePMWidgets();
     }
     function UpdatePMWidgets() {

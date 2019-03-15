@@ -192,6 +192,7 @@ enum uint_16 BehaviorID {
   WiggleBackOntoChargerFromPlatform,
 
   // victorBehaviorTree/highLevelDelegates/heldInPalm
+  ReactToJoltInPalm,
   HeldInPalmDispatcher,
   HeldInPalmResponses,
   InitialHeldInPalmReaction,
@@ -200,7 +201,6 @@ enum uint_16 BehaviorID {
   LookInPlaceHeadDownRelaxed,
   LookInPlaceHeadUpInPalm,
   NestleWhileHeldInPalmAnim,
-  ReactToJoltInPalm,
   ReactToPalmTilt,
   ReactToPickupFromPalm,
   ReactToPutDownFromPalm,

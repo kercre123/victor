@@ -29,7 +29,6 @@
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "clad/types/animationTrigger.h"
-#include "clad/types/behaviorComponent/userIntent.h"
 
 #include <cstdio>
 

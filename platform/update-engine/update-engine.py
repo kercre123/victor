@@ -5,6 +5,12 @@ Example implementation of Anki Victor Update engine.
 """
 __author__ = "Daniel Casner <daniel@anki.com>"
 
+#
+# DAS EVENTS Documentation Notice!!!!!
+# If you add / modify / remove DAS events from this file, you MUST
+# update the DAS macros in update-engine-das-event-documentation.cpp
+#
+
 import sys
 import os
 import urllib2

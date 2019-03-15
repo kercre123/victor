@@ -14,6 +14,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/coordinators/behaviorCoordinateWhileHeldInPalm.h"
 
 #include "coretech/common/engine/utils/timer.h"
+
 #include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -22,14 +23,16 @@
 #include "engine/components/animationComponent.h"
 #include "engine/components/movementComponent.h"
 
+#include "util/console/consoleInterface.h"
+
 namespace Anki {
 namespace Vector {
 
+CONSOLE_VAR_RANGED(u32, kMaxTimeForInitialHeldInPalmReaction_ms, "HeldInPalm.Coordinator", 1000, 0, 5000);
 
 namespace{
   const BehaviorID kHeldInPalmDispatcher = BEHAVIOR_ID(HeldInPalmDispatcher);
   const BehaviorID kInitialHeldInPalmReaction = BEHAVIOR_ID(InitialHeldInPalmReaction);
-  const TimeStamp_t kMaxTimeForInitialHeldInPalmReaction_ms = 1000;
 
   const char* const kBehaviorStatesToSuppressHeldInPalmReactionsKey = "suppressingBehaviors";
 }
@@ -99,26 +102,19 @@ void BehaviorCoordinateWhileHeldInPalm::PassThroughUpdate()
     return;
   }
 
-  const bool heldInPalmWantsToActivate = _iConfig.heldInPalmDispatcher->WantsToBeActivated();
-  
-  GetBEI().GetHeldInPalmTracker().SetIsHeldInPalm(heldInPalmWantsToActivate);
-  
-  if( !heldInPalmWantsToActivate ){
-    _dVars.persistent.lastTimeNotHeldInPalm_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  }
-
   const bool isHeldInPalmReactionPlaying = _iConfig.heldInPalmDispatcher->IsActivated();
-  
+  _dVars.persistent.hasInitialHIPReactionPlayed |= _iConfig.initialHeldInPalmReaction->IsActivated();
+
   // Block the activation of all "held-in-palm" behaviors if a supressing behavior is already activated,
   // or block only the initial get-in animation reaction if the robot never left the palm of the user's
   // hand while it was being supressed.
-  if(heldInPalmWantsToActivate && !isHeldInPalmReactionPlaying){
-    SuppressHeldInPalmReactionsIfAppropriate();
-    SuppressInitialHeldInPalmReactionIfAppropriate();
-  }
-  
-  if( !heldInPalmWantsToActivate && !isHeldInPalmReactionPlaying ){
-    _dVars.persistent.hasInitialReactionPlayed = false;
+  if(!isHeldInPalmReactionPlaying){
+    if (GetBEI().GetHeldInPalmTracker().IsHeldInPalm()) {
+      SuppressHeldInPalmReactionsIfAppropriate();
+      SuppressInitialHeldInPalmReactionIfAppropriate();
+    } else {
+      _dVars.persistent.hasInitialHIPReactionPlayed = false;
+    }
   }
 }
 
@@ -142,14 +138,13 @@ void BehaviorCoordinateWhileHeldInPalm::SuppressHeldInPalmReactionsIfAppropriate
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCoordinateWhileHeldInPalm::SuppressInitialHeldInPalmReactionIfAppropriate()
 {
-  const EngineTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  _dVars.persistent.hasInitialReactionPlayed |= (currTime_ms > (_dVars.persistent.lastTimeNotHeldInPalm_ms + kMaxTimeForInitialHeldInPalmReaction_ms));
+  const u32 currHeldInPalmDuration_ms = GetBEI().GetHeldInPalmTracker().GetHeldInPalmDuration_ms();
+  const bool shouldSuppressInitialReaction = currHeldInPalmDuration_ms > kMaxTimeForInitialHeldInPalmReaction_ms;
 
   // Only play the initial "get-in palm" animation if the robot has recently been put into a user's palm
-  if(_dVars.persistent.hasInitialReactionPlayed){
+  if( shouldSuppressInitialReaction || _dVars.persistent.hasInitialHIPReactionPlayed ){
     _iConfig.initialHeldInPalmReaction->SetDontActivateThisTick(GetDebugLabel());
-  } else if(_iConfig.initialHeldInPalmReaction->IsActivated()){
-    _dVars.persistent.hasInitialReactionPlayed = true;
+    _dVars.persistent.hasInitialHIPReactionPlayed = true;
   }
 }
   

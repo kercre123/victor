@@ -14,7 +14,6 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorCoordinateWeather__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/behaviorComponent/weatherConditionTypes.h"
 
 namespace Anki {

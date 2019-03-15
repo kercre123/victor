@@ -69,17 +69,19 @@
 #include <Bluetooth/BluetoothStorageInterface.h>
 #include <CertifiedSender/CertifiedSender.h>
 #include <CertifiedSender/SQLiteMessageStorage.h>
+#include <DoNotDisturbCA/DoNotDisturbCapabilityAgent.h>
 #include <ExternalMediaPlayer/ExternalMediaPlayer.h>
 #include <InteractionModel/InteractionModelCapabilityAgent.h>
-#include <MRM/MRMCapabilityAgent.h>
 #include <Notifications/NotificationsCapabilityAgent.h>
 #include <Notifications/NotificationRenderer.h>
 #include <PlaybackController/PlaybackController.h>
 #include <PlaybackController/PlaybackRouter.h>
 #include <RegistrationManager/RegistrationManager.h>
+#include <Settings/DeviceSettingsManager.h>
 #include <Settings/Settings.h>
 #include <Settings/SettingsStorageInterface.h>
 #include <Settings/SettingsUpdatedEventSender.h>
+#include <Settings/Storage/DeviceSettingStorageInterface.h>
 #include <SpeakerManager/SpeakerManager.h>
 #include <SpeechSynthesizer/SpeechSynthesizer.h>
 #include <System/SoftwareInfoSender.h>
@@ -113,6 +115,7 @@ public:
                                               std::shared_ptr<alexaClientSDK::capabilityAgents::alerts::storage::AlertStorageInterface>   alertStorage,
                                               std::shared_ptr<alexaClientSDK::capabilityAgents::notifications::NotificationsStorageInterface> notificationsStorage,
                                               std::shared_ptr<alexaClientSDK::capabilityAgents::settings::SettingsStorageInterface> settingsStorage,
+                                              std::shared_ptr<alexaClientSDK::settings::storage::DeviceSettingStorageInterface> deviceSettingStorage,
                                               std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
                                               std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface>> alexaDialogStateObservers,
                                               std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>> connectionObservers,
@@ -159,6 +162,8 @@ public:
   
   std::shared_ptr<alexaClientSDK::registrationManager::RegistrationManager> GetRegistrationManager();
   
+  std::shared_ptr<alexaClientSDK::settings::DeviceSettingsManager> GetSettingsManager();
+  
   void AddSpeakerManagerObserver( std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::SpeakerManagerObserverInterface> observer );
   
   void AddAlexaDialogStateObserver( std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface> observer );
@@ -196,6 +201,7 @@ private:
              std::shared_ptr<alexaClientSDK::capabilityAgents::alerts::storage::AlertStorageInterface> alertStorage,
              std::shared_ptr<alexaClientSDK::capabilityAgents::notifications::NotificationsStorageInterface> notificationsStorage,
              std::shared_ptr<alexaClientSDK::capabilityAgents::settings::SettingsStorageInterface> settingsStorage,
+             std::shared_ptr<alexaClientSDK::settings::storage::DeviceSettingStorageInterface> deviceSettingStorage,
              std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::audio::AudioFactoryInterface> audioFactory,
              std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::DialogUXStateObserverInterface>> alexaDialogStateObservers,
              std::unordered_set<std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface>> connectionObservers,
@@ -213,6 +219,7 @@ private:
              alexaClientSDK::avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion firmwareVersion );
   
   void AddConnectionObserver( std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface> observer );
+  void RemoveConnectionObserver( std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::ConnectionStatusObserverInterface> observer );
   
   OnDirectiveFunc _onDirectiveFunc;
   
@@ -265,11 +272,17 @@ private:
   std::shared_ptr<AlexaTemplateRuntimeStub> _templateRuntime;
 #endif
   
+  std::shared_ptr<alexaClientSDK::capabilityAgents::doNotDisturb::DoNotDisturbCapabilityAgent> _dndCapabilityAgent;
+  
   std::shared_ptr<alexaClientSDK::capabilityAgents::system::SoftwareInfoSender> _softwareInfoSender;
   
   std::shared_ptr<AlexaRevokeAuthHandler> _revokeAuthorizationHandler;
   
   std::shared_ptr<alexaClientSDK::registrationManager::RegistrationManager> _registrationManager;
+  
+  std::shared_ptr<alexaClientSDK::settings::DeviceSettingsManager> _deviceSettingsManager;
+  
+  std::shared_ptr<alexaClientSDK::settings::storage::DeviceSettingStorageInterface> _deviceSettingStorage;
   
   // IMPORTANT: Adding another shared_ptr? Keep the order of shared_ptrs of SDK objects in the same
   // order as in the SDK's DefaultClient.h. There could otherwise be a risk of circular refs among

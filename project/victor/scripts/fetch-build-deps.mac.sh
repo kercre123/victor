@@ -34,6 +34,7 @@ vlog "Check homebrew dependencies"
     libsndfile \
     node \
     rsync \
+    openssl \
     curl-openssl
 
 vlog "vicos sdk"

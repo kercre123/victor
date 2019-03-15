@@ -60,8 +60,7 @@ private:
     
     struct Persistent {
       // For tracking initial pickup reaction
-      bool hasInitialReactionPlayed = false;
-      EngineTimeStamp_t lastTimeNotHeldInPalm_ms = 0;
+      bool hasInitialHIPReactionPlayed = false;
     };
     Persistent persistent;
   };

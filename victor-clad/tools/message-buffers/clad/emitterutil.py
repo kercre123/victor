@@ -257,6 +257,8 @@ class SimpleArgumentParser(argparse.ArgumentParser):
         self.add_argument('-I', '--include-directory', default=(), metavar='dir',
             nargs='*', dest='include_directories',
             help='Additional directories in which to search for included files.')
+        self.add_argument('--namespace', metavar='emitter_namespace', type=str,
+            help="Global namespace prefixed in front of all specified namespaces.")
 
     def parse_known_args(self, *args, **kwargs):
         # add this argument last
@@ -310,11 +312,21 @@ def parse(options, yacc_optimize=False, debuglevel=0):
             yacc_debug=options.debug_yacc, input_directories=input_directories)
         text = input.read()
         try:
-            return clad_parser.parse(text, filename=options.input_file, directory=options.input_directory, debuglevel=debuglevel)
+            tree = clad_parser.parse(text,
+                filename=options.input_file,
+                directory=options.input_directory,
+                debuglevel=debuglevel)
         except clad.ParseError as e:
             msg = e.args[1]
             coord = e.args[0]
             exit_at_coord(coord, 'Syntax Error: {msg}'.format(msg=msg))
+
+        # if specified, inject wrapper namespace
+        if options.namespace:
+            nsw = ast.ASTNamespaceWrapper(wrapper_ns=options.namespace)
+            nsw.visit(tree)
+
+        return tree
 
 def exit_at_coord(coord, error_text=None):
     "Exits, specifying a coord as the cause."

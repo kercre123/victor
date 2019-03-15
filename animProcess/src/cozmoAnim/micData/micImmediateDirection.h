@@ -33,7 +33,7 @@ public:
 
 private:
   static constexpr uint32_t kMicDirectionBuffer_ms = 700 + kTriggerOverlapSize_ms;
-  static constexpr uint32_t kMicDirectionBufferLen = kMicDirectionBuffer_ms / kTimePerSEBlock_ms;
+  static constexpr uint32_t kMicDirectionBufferLen = kMicDirectionBuffer_ms / kTimePerChunk_ms;
 
   std::array<MicDirectionData, kMicDirectionBufferLen> _micDirectionBuffer{};
   uint32_t _micDirectionBufferIndex = 0;

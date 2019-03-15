@@ -478,6 +478,16 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
 
   return expectedKeys;
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const BehaviorOperationModifiers& ICozmoBehavior::GetBehaviorOperationModifiersPostInit() const
+{
+  ANKI_VERIFY(_initHasBeenCalled,
+              "ICozmoBehavior.GetBehaviorOperationModifiersPostInit",
+              "Behavior %s has not been initialized! Operation modifiers not yet finalized",
+              GetDebugLabel().c_str());
+  return _operationModifiers;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::InitInternal()

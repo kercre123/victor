@@ -66,6 +66,7 @@
 #include <CBLAuthDelegate/CBLAuthDelegate.h>
 #include <CBLAuthDelegate/SQLiteCBLAuthDelegateStorage.h>
 #include <Notifications/SQLiteNotificationsStorage.h>
+#include <Settings/Storage/SQLiteDeviceSettingStorage.h>
 #include <Settings/SQLiteSettingStorage.h>
 #include <CapabilitiesDelegate/CapabilitiesDelegate.h>
 #include <SQLiteStorage/SQLiteMiscStorage.h>
@@ -409,7 +410,10 @@ void AlexaImpl::InitThread()
   auto notificationsStorage
     = capabilityAgents::notifications::SQLiteNotificationsStorage::create( rootConfig );
   
+  // settings (DEPRECATED)
   auto settingsStorage = capabilityAgents::settings::SQLiteSettingStorage::create( rootConfig );
+  // settings
+  auto deviceSettingsStorage = settings::storage::SQLiteDeviceSettingStorage::create( rootConfig );
   
   // Creating the alert storage object to be used for rendering and storing alerts.
   auto audioFactory = std::make_shared<AlexaAudioFactory>();
@@ -456,6 +460,7 @@ void AlexaImpl::InitThread()
                                  std::move(alertStorage),
                                  std::move(notificationsStorage),
                                  std::move(settingsStorage),
+                                 std::move(deviceSettingsStorage),
                                  audioFactory,
                                  {_observer},
                                  {_observer},
@@ -488,6 +493,15 @@ void AlexaImpl::InitThread()
    // Creating the revoke authorization observer.
   auto revokeObserver = std::make_shared<AlexaRevokeAuthObserver>( _client->GetRegistrationManager() );
   _client->AddRevokeAuthorizationObserver( revokeObserver );
+  
+  _settingsCallbacks = settings::SettingCallbacks<settings::DeviceSettingsManager>::create( _client->GetSettingsManager() );
+  if( ANKI_VERIFY(_settingsCallbacks != nullptr, "AlexaImpl.InitThead.NoCallbacks","Could not create settings callbacks") ) {
+    _settingsCallbacks->add<settings::DeviceSettingsIndex::DO_NOT_DISTURB>( [](bool enable, settings::SettingNotifications notifications) {
+      // todo: handle do not disturb setting
+      LOG_INFO("AlexaImpl.InitThead.SettingsCallback", "Set DO_NOT_DISTURB=%d", enable);
+    });
+  }
+  
 
   // Creating the buffer (Shared Data Stream) that will hold user audio data. This is the main input into the SDK.
   size_t bufferSize = avsCommon::avs::AudioInputStream::calculateBufferSize( kBufferSize,

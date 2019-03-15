@@ -83,11 +83,11 @@ public:
   // alexa triggers get dropped if we detect a notch.
   void ToggleNotchDetector(bool active);
   
-  // add raw audio samples
-  void UpdateRaw(const AudioUtil::AudioSample* audioChunk, unsigned int audioDataLen);
+  // add 'raw' audio samples
+  void UpdateNotch(const AudioUtil::AudioSample* audioChunk, unsigned int audioDataLen);
 
   // Update recognizer audio
-  // NOTE: Always call from tne same thread
+  // NOTE: Always call from the same thread
   void Update(const AudioUtil::AudioSample * audioData, unsigned int audioDataLen, bool vadActive);
   
   // Set Default models for locale

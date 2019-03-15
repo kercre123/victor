@@ -36,7 +36,7 @@ enum ProtocolVersion {
   option allow_alias = true;
   PROTOCOL_VERSION_UNKNOWN = 0; // Required zero value for enums
   PROTOCOL_VERSION_MINIMUM = 0; // Minimum supported version
-  PROTOCOL_VERSION_CURRENT = 4; // Current version (incremented post-1.4.1 on 2/22/19 by msintov)
+  PROTOCOL_VERSION_CURRENT = 5; // Current version (incremented on 2019.03.12 for streaming update status support.)
 }
 
 // The grpc-defined connection between the SDK and Anki's Vector robot.
@@ -498,7 +498,16 @@ service ExternalInterface {
       post: "/v1/update_user_entitlements",
       body: "*"
     };
-  }  
+  }    
+
+  // CheckUpdateStatus tells the robot's current state regarding download, installation, and
+  // readiness to boot to, engine updates.
+  rpc CheckUpdateStatusStream(CheckUpdateStatusRequest) returns (stream CheckUpdateStatusResponse) {
+    option (google.api.http) = {
+      post: "/v1/check_update_status_stream",
+      body: "*"
+    };
+  }
 
   // CheckUpdateStatus tells if the robot is ready to reboot and update.
   rpc CheckUpdateStatus(CheckUpdateStatusRequest) returns (CheckUpdateStatusResponse) {
