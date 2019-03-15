@@ -121,7 +121,7 @@ def notifyBuildStatus(status, config) {
             ]
         ]
     )
-    def commitStatusMsg = "${env.CHANGE_ID} :: ${config}"
+    def commitStatusMsg = "PR #${env.CHANGE_ID} :: vicos ${config} :: Finished"
     def statusMap = [msg: commitStatusMsg, result: status.toUpperCase(), sha: commitObj.sha, context: "ci/jenkins/pr/${config}"]
     setGHBuildStatus(statusMap)
 }
@@ -258,7 +258,7 @@ stage("${primaryStageName} Build") {
         if (gatekeeper.nodeProvisioned) break
     }
     try {
-        for (int i = 0; i < 2 ; i++) {
+        for (int i = 0; i < enabledBuildConfigs.size() ; i++) {
             def buildFlavor = enabledBuildConfigs[i]
             buildConfigMap[buildFlavor] = {
                 node(uuid) {
