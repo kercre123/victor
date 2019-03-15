@@ -31,6 +31,7 @@
 #include "engine/actions/compoundActions.h"
 #include "engine/actions/animActions.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/cozmoContext.h"
 #include "engine/components/habitatDetectorComponent.h"
 #include "engine/components/visionComponent.h"

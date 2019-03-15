@@ -14,6 +14,7 @@
 
 #include "engine/actions/basicActions.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/sensors/rangeSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/factory/factoryTestLogger.h"

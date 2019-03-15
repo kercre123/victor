@@ -16,6 +16,7 @@
 #include "engine/aiComponent/aiComponent.h"
 
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/charger.h"
 #include "engine/components/battery/batteryStats.h"
 #include "engine/components/cubes/cubeBatteryComponent.h"
@@ -425,21 +426,8 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
   // match the robot. If we don't have an instance, we can add an instance now
   if (onChargeContacts)
   {
-    const Pose3d& poseWrtRobot = Charger::GetDockPoseRelativeToRobot(*_robot);
-
-    // find instance in current origin
-    ObservableObject* chargerInstance = _robot->GetBlockWorld().FindLocatedMatchingObject(*_chargerFilter);
-    if (nullptr == chargerInstance)
-    {
-      // there's currently no located instance, we need to create one.
-      chargerInstance = new Charger();
-      chargerInstance->SetID();
-    }
-
-    // pretend the instance we created was an observation
-    chargerInstance->SetLastObservedTime((TimeStamp_t)_robot->GetLastMsgTimestamp());
-    _robot->GetObjectPoseConfirmer().AddRobotRelativeObservation(chargerInstance, poseWrtRobot, PoseState::Known);
-
+    _robot->GetBlockWorld().SetRobotOnChargerContacts();
+    
     // Update the last OnChargeContacts pitch angle
     if (!_robot->GetMoveComponent().IsMoving()) {
       _lastOnChargerContactsPitchAngle = _robot->GetPitchAngle();

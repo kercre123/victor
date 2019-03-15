@@ -91,11 +91,11 @@ namespace Anki {
       virtual Point3f GetSameDistanceTolerance()  const override;
       
       
-      // Charger has no accelerometer so it should never be considered moving nor used for localization
+      // Charger has no accelerometer so it should never be considered moving
       virtual bool IsMoving(RobotTimeStamp_t* t = nullptr) const override { return false; }
       virtual void SetIsMoving(bool isMoving, RobotTimeStamp_t t) override { }
-      virtual bool CanBeUsedForLocalization() const override;
       
+      virtual f32 GetMaxObservationDistance_mm() const override;
       
       constexpr static f32 GetLength() { return kLength; }
       

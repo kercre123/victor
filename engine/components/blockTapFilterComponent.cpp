@@ -16,6 +16,7 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
@@ -108,7 +109,7 @@ void BlockTapFilterComponent::UpdateDependent(const RobotCompMap& dependentComps
       for(auto& object : matchingObjects)
       {
         if ( object->IsPoseStateKnown() ) {
-          _robot->GetObjectPoseConfirmer().MarkObjectDirty(object);
+          _robot->GetBlockWorld().MarkObjectDirty(object);
         }
       }
     }

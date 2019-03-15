@@ -24,6 +24,11 @@
 namespace Anki {
 namespace Vision {
   
+  namespace {
+    // After observing the charger, we clamp its pose to be 'flat' if it is within this tolerance of being flat already
+    constexpr float kClampChargerPoseAngleTol_rad = DEG_TO_RAD(5.f);
+  }
+  
   template<class ObsObjectType>
   const std::set<const ObsObjectType*> ObservableObjectLibrary<ObsObjectType>::sEmptyObjectVector;
   
@@ -159,41 +164,33 @@ namespace Vision {
   }
   
   template<class ObsObjectType>
-  Result ObservableObjectLibrary<ObsObjectType>::CreateObjectsFromMarkers(const std::list<ObservedMarker>& markers,
-                                                                          std::vector<ObsObjectType*>& objectsSeen,
-                                                                          const CameraID_t seenOnlyBy,
-                                                                          bool clampPosesToFlatIfWithinLocalizableTol) const
+  void ObservableObjectLibrary<ObsObjectType>::CreateObjectsFromMarkers(const std::list<ObservedMarker>& markers,
+                                                                        std::vector<std::shared_ptr<ObsObjectType>>& objectsSeen) const
   {
     std::map<const ObsObjectType*, std::vector<const ObservedMarker*>> markersByLibObject;
     
     for(auto &marker : markers)
     {
-      // If seenOnlyBy was specified, make sure this marker was seen by that
-      // camera
-      if(seenOnlyBy == ANY_CAMERA || marker.GetSeenBy().GetID() == seenOnlyBy)
-      {
-        // Find the object which uses this marker...
-        const ObsObjectType* objectWithMarker = GetObjectWithMarker(marker);
-        
-        // ...if there is one, add this marker to the list of observed markers
-        // that corresponds to this object type.
-        if(nullptr != objectWithMarker)
-        {
-          markersByLibObject[objectWithMarker].push_back(&marker);
-        }
-        else
-        {
-          auto result = _unknownMarkerWarningIssued.insert(marker.GetCode());
-          const bool didInsert = result.second;
-          if(didInsert) // i.e., new entry: no warning issued yet
-          {
-            PRINT_NAMED_WARNING("ObservableObjectLibrary.CreateObjectsFromMarkers.UnusedMarker",
-                                "No objects in library use observed '%s' marker",
-                                marker.GetCodeName());
-          }
-        }
-      } // IF seenOnlyBy
+      // Find the object which uses this marker...
+      const ObsObjectType* objectWithMarker = GetObjectWithMarker(marker);
       
+      // ...if there is one, add this marker to the list of observed markers
+      // that corresponds to this object type.
+      if(nullptr != objectWithMarker)
+      {
+        markersByLibObject[objectWithMarker].push_back(&marker);
+      }
+      else
+      {
+        auto result = _unknownMarkerWarningIssued.insert(marker.GetCode());
+        const bool didInsert = result.second;
+        if(didInsert) // i.e., new entry: no warning issued yet
+        {
+          PRINT_NAMED_WARNING("ObservableObjectLibrary.CreateObjectsFromMarkers.UnusedMarker",
+                              "No objects in library use observed '%s' marker",
+                              marker.GetCodeName());
+        }
+      }
     } // For each marker we saw
 
     
@@ -251,15 +248,20 @@ namespace Vision {
         // Create a new object of the observed type from the library, and set
         // its pose to the computed pose, in _historical_ world frame (since
         // it is computed w.r.t. a camera from a pose in history).
+        // We default the PoseState to `known` right away, since we are assuming that the caller wants to create an
+        // object based on a visual observation, and one observation is enough to 'confirm' the object's pose.
         ObsObjectType* newObject = libObject->CloneType();
         Pose3d newPose = poseCluster.GetPose().GetWithRespectToRoot();
         
-        if(clampPosesToFlatIfWithinLocalizableTol && newObject->CanBeUsedForLocalization())
-        {
-          ObservableObject::ClampPoseToFlat(newPose, DEG_TO_RAD(newObject->GetRestingFlatTolForLocalization_deg()));
+        // If this is a charger (and hence could be used for localization), we want to clamp the pose to flat in order
+        // to avoid weird localization updates. This implicitly assumes that the charger is indeed sitting flat on the
+        // table/surface.
+        if (IsChargerType(newObject->GetType(), false)) {
+          ObservableObject::ClampPoseToFlat(newPose, kClampChargerPoseAngleTol_rad);
         }
-
-        newObject->InitPose(newPose, PoseState::Dirty); // It's not invalid, and Dirty is the next lowest atm
+        
+        const float obsDistance_mm = poseCluster.GetPose().GetTranslation().Length();
+        newObject->InitPose(newPose, PoseState::Known, obsDistance_mm);
         
         // Set the markers in the object corresponding to those from the pose
         // cluster from which it was computed as "observed"
@@ -273,13 +275,12 @@ namespace Vision {
         newObject->SetLastObservedTime(observedTime);
         
         // Finally actually insert the object into the objectsSeen container
-        objectsSeen.push_back(newObject);
+        objectsSeen.emplace_back(newObject);
         
       } // FOR each pose cluster
       
     } // FOR each objectType
     
-    return RESULT_OK;
   } // CreateObjectsFromMarkers()
   
   template<class ObsObjectType>

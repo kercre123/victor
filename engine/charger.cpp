@@ -11,7 +11,6 @@
  **/
 #include "engine/charger.h"
 
-#include "engine/objectPoseConfirmer.h"
 #include "engine/robot.h"
 #include "engine/utils/robotPointSamplerHelper.h"
 
@@ -27,8 +26,8 @@
 namespace Anki {
   
   namespace Vector {
-    
-    CONSOLE_VAR(bool, kUseChargerForLocalization, "Charger", true);
+
+    CONSOLE_VAR(f32, kChargerMaxObservationDistance_mm, "Charger", 500.f);
     
     // === Charger predock pose params ===
     // {angle, x, y}
@@ -241,11 +240,10 @@ namespace Anki {
       return distTol;
     }
     
-    bool Charger::CanBeUsedForLocalization() const
+    f32 Charger::GetMaxObservationDistance_mm() const
     {
-      return kUseChargerForLocalization;
+      return kChargerMaxObservationDistance_mm;
     }
-
     
   } // namespace Vector
 } // namespace Anki

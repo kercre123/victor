@@ -153,11 +153,6 @@ public:
   template<typename T>
   void HandleMessage(const T& msg);
   
-  // Called whenever an active object's posestate changes in order to update the lights
-  void OnActiveObjectPoseStateChanged(const ObjectID& objectID,
-                                      const PoseState oldPoseState,
-                                      const PoseState newPoseState);
-  
   // We don't want to expose Animation layers outside of the cubeLightComponent
   // but there are scenarios where game takes over control of lights and clears
   // out engine lights, or new cubes connect while game is in control of lights
