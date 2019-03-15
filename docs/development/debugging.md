@@ -15,7 +15,7 @@ Code and function pointers are at: `0x7fxxxxxx`
 
 ## Running a process standalone
 
-```
+```bash
 systemctl stop victor.target
 systemctl restart vic-robot
 /anki/bin/vic-anim -c /anki/etc/config/platform_config.json
@@ -23,7 +23,7 @@ systemctl restart vic-robot
 
 ## Running a process with the address sanitizer
 
-```
+```bash
 systemctl stop victor.target
 systemctl restart vic-robot
 ASAN_OPTIONS=detect_container_overflow=0 /anki/bin/vic-anim -c /anki/etc/config/platform_config.json
@@ -33,7 +33,7 @@ ASAN_OPTIONS=detect_container_overflow=0:replace_intrin=0 /anki/bin/vic-anim -c 
 
 ## Running a process with the address sanitizer in gdb
 
-```
+```bash
 systemctl stop victor.target
 systemctl restart vic-robot
 ASAN_OPTIONS=detect_container_overflow=0:replace_intrin=0 VIC_ANIM_CONFIG=/anki/etc/config/platform_config.json gdb /anki/bin/vic-anim
@@ -41,10 +41,10 @@ ASAN_OPTIONS=detect_container_overflow=0:replace_intrin=0 VIC_ANIM_CONFIG=/anki/
 
 Note: setting arguments within `gdb` does not work, for example:
 
-```
+```bash
 (gdb) set args "-c" "/anki/etc/config/platform_config.json"
 (gdb) set args -c /anki/etc/config/platform_config.json
-(gdb) run "-c /anki/etc/config/platform_config.json" 
+(gdb) run "-c /anki/etc/config/platform_config.json"
 ```
 
 ## Useful gdb commands
@@ -57,23 +57,9 @@ Note: setting arguments within `gdb` does not work, for example:
 
 - modify the robot filesystem to allow writes
 
-```
+```bash
 ssh root@${ANKI_ROBOT_HOST}
 mount -o remount r,w /
-```
-
-- allow ADB over TCP
-
-```
-setprop service.adb.tcp.port 5555
-systemctl restart adbd
-```
-
-- and to make it permanent:
-
-```
-setprop persist.adb.tcp.port 5555
-systemctl restart adbd
 ```
 
 - check if lldb is running
@@ -84,40 +70,42 @@ ps | grep lldb
 
 and if you're having problems kill those processes
 
-```
+```bash
 kill -9 <process id>
 ```
 
-# Development setup
+## Development setup
 
-- connect to the robot
-
-```bash
-adb connect 192.168.1.43
-```
-
-- start lldb server
+- start lldb server on robot
 
 ```bash
 ./project/victor/scripts/start-lldb.sh
 ```
 
-- start lldb
+Note that `start-lldb.sh` will make changes to firewall settings on your robot!
+These changes will remain in effect until the robot is rebooted.
+
+- start lldb on build host
 
 ```bash
 lldb
-platform select remote-android
-platform connect connect://localhost:55001
-settings set target.exec-search-paths ~/projects/victor/_build/vicos/Debug/lib
 ```
 
-# Useful lldb commands
+- connect to lldb server on robot
+
+```lldb
+platform select remote-linux
+platform connect connect://victor:55001
+settings set target.exec-search-paths ~/projects/victor/_build/vicos/Debug/bin ~/projects/victor/_build/vicos/Debug/lib
+```
+
+## Useful lldb commands
 
 - attach -- Attach to a process
 
 (but first, ssh into robot and get a list of process ids with `ps | grep vic-`)
 
-```
+```bash
 process attach --pid 1905
 
 Process 1905 stopped
