@@ -2321,31 +2321,51 @@ func (service *rpcService) EnableMirrorMode(ctx context.Context, request *extint
 	return response, nil
 }
 
-// TODO support CaptureSingleImage
-// func (service *rpcService) CaptureSingleImage(ctx context.Context, request *extint.CaptureSingleImageRequest) (*extint.CaptureSingleImageResponse, error) {
-// 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_CaptureSingleImageResponse{}, 1)
-// 	defer f()
+// Capture a single image using the camera
+func (service *rpcService) CaptureSingleImage(ctx context.Context, request *extint.CaptureSingleImageRequest) (*extint.CaptureSingleImageResponse, error) {
+	// Enable image stream
+	_, err := service.EnableImageStreaming(nil, &extint.EnableImageStreamingRequest{
+		Enable: true,
+	})
 
-// 	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
-// 		OneofMessageType: &extint.GatewayWrapper_CaptureSingleImageRequest{
-// 			CaptureSingleImageRequest: request,
-// 		},
-// 	})
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	if err != nil {
+		return nil, err
+	}
 
-// 	payload, ok := <-responseChan
-// 	if !ok {
-// 		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
-// 	}
+	// Disable image stream
+	defer service.EnableImageStreaming(nil, &extint.EnableImageStreamingRequest{
+		Enable: false,
+	})
 
-// 	payload.GetCaptureSingleImageResponse().Status = &extint.ResponseStatus{
-// 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
-// 	}
+	f, cameraFeedChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ImageChunk{}, 1024)
+	defer f()
 
-// 	return payload.GetCaptureSingleImageResponse(), nil
-// }
+	cache := CameraFeedCache{
+		Data:    nil,
+		ImageId: -1,
+		Invalid: false,
+		Size:    0,
+	}
+
+	for result := range cameraFeedChannel {
+		imageChunk := result.GetImageChunk()
+		readyToSend := UnpackCameraImageChunk(imageChunk, &cache)
+		if readyToSend {
+			capturedSingleImage := &extint.CaptureSingleImageResponse{
+				FrameTimeStamp: imageChunk.GetFrameTimeStamp(),
+				ImageId:        uint32(cache.ImageId),
+				ImageEncoding:  imageChunk.GetImageEncoding(),
+				Data:           cache.Data[0:cache.Size],
+			}
+			capturedSingleImage.Status = &extint.ResponseStatus{Code: extint.ResponseStatus_RESPONSE_RECEIVED}
+			return capturedSingleImage, nil
+		}
+	}
+
+	errMsg := "ImageChunk engine stream died unexpectedly"
+	log.Errorln(errMsg)
+	return nil, grpc.Errorf(codes.Internal, errMsg)
+}
 
 // TODO VIC-11579 Support specifying streaming resolution
 func (service *rpcService) EnableImageStreaming(ctx context.Context, request *extint.EnableImageStreamingRequest) (*extint.EnableImageStreamingResponse, error) {
