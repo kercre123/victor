@@ -114,10 +114,8 @@ void BehaviorRobustChargerObservation::OnBehaviorDeactivated()
   if(_dVars.isLowlight) {
     // Previously played the special Getin and set LCD brightness
     //  so now play the getout and restore the LCD brightness
-    CompoundActionSequential* resetAction = new CompoundActionSequential();
-    resetAction->AddAction(new TriggerAnimationAction(AnimationTrigger::LowlightChargerSearchGetout));
-    resetAction->AddAction(GetLCDBrightnessChangeAction(kNormalLCDBrightness));
-    DelegateNow(resetAction);
+    PlayEmergencyGetout(AnimationTrigger::LowlightChargerSearchGetout);
+    GetBEI().GetPowerStateManager().RequestLCDBrightnessChange(kNormalLCDBrightness);
   }
 
   DASMSG(robust_observe_charger_stats, "robust_observe_charger.stats", "Vision stats for RobustChargerObservation behavior");
@@ -193,7 +191,10 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
     // - wait for images with the appropriate looping animation
     CompoundActionParallel* getinAndSetLcd = new CompoundActionParallel();
     getinAndSetLcd->AddAction(new TriggerAnimationAction(AnimationTrigger::LowlightChargerSearchGetin));
-    getinAndSetLcd->AddAction(GetLCDBrightnessChangeAction(kMaxLCDBrightness));
+    getinAndSetLcd->AddAction(new WaitForLambdaAction([this,level=kMaxLCDBrightness](Robot& robot) {
+                                GetBEI().GetPowerStateManager().RequestLCDBrightnessChange(level);
+                                return true;
+                              }));
     compoundAction->AddAction(getinAndSetLcd);
     waitAction = new WaitForImagesAction(_iConfig.numImageCompositingCyclesToWaitFor, VisionMode::CompositingImages);
     compoundAction->AddAction(new LoopAnimWhileAction(waitAction, AnimationTrigger::LowlightChargerSearchLoop));
@@ -219,17 +220,6 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
   }
 
   DelegateIfInControl(compoundAction); // Behavior exits after this action completes
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-WaitForLambdaAction* BehaviorRobustChargerObservation::GetLCDBrightnessChangeAction(const LCDBrightness level) const
-{
-  return new WaitForLambdaAction([level](Robot& robot) {
-                                  robot.GetRobotMessageHandler()->SendMessage(
-                                    RobotInterface::EngineToRobot(
-                                      RobotInterface::SetLCDBrightnessLevel(level)));
-                                  return true;
-                                });
 }
 
 }

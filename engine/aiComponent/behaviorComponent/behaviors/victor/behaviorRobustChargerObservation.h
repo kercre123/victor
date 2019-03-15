@@ -73,8 +73,6 @@ private:
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
-
-  WaitForLambdaAction* GetLCDBrightnessChangeAction(const LCDBrightness level) const;
 };
 
 } // namespace Vector

@@ -369,6 +369,15 @@ void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
   }
 }
 
+void PowerStateManager::RequestLCDBrightnessChange(const LCDBrightness& level) const
+{
+  // For now, we will honor all LCD brightness changes, but in the future
+  //  if powersaving concerns are relevant here, we may put logic that
+  //  decides the ultimate effected change in this method.
+  _context->GetRobotManager()->GetMsgHandler()->SendMessage(
+        RobotInterface::EngineToRobot( RobotInterface::SetLCDBrightnessLevel( level ) ) );
+}
+
 
 void PowerStateManager::EnterPowerSave(const RobotCompMap& components)
 {
