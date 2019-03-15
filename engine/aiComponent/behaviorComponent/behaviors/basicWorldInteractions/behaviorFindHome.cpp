@@ -368,7 +368,7 @@ void BehaviorFindHome::TransitionToRandomDrive()
   // if that's the case we don't want to just keep searching endlessly, so we need a persistent stopping condition.
   const auto& recentlySearchedLocations = GetRecentlySearchedLocations();
   if (recentlySearchedLocations.size() >= _iConfig.maxNumRecentSearches) {
-    PRINT_NAMED_WARNING("BehaviorFindHome.TransitionToRandomDrive.TooManyRecentSearches",
+    LOG_WARNING("BehaviorFindHome.TransitionToRandomDrive.TooManyRecentSearches",
                         "We have performed too many (%zu) searches in the past %.1f seconds - ending behavior",
                         recentlySearchedLocations.size(), _iConfig.recentSearchWindow_sec);
     // Clear our recent searches so we can start fresh next time
@@ -479,7 +479,7 @@ void BehaviorFindHome::GenerateSearchPoses(std::vector<Pose3d>& outPoses)
   }
 
   if (outPoses.empty()) {
-    PRINT_NAMED_WARNING("BehaviorFindHome.GenerateSearchPoses.NoPosesFound",
+    LOG_WARNING("BehaviorFindHome.GenerateSearchPoses.NoPosesFound",
                         "No poses that satisfy the sampling requirements were found - using naive random sampling method.");
     outPoses.emplace_back();
     GetRandomDrivingPose(outPoses.back());
