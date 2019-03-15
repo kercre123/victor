@@ -70,12 +70,13 @@ int run()
 
   // After Init, all memory we need has been initialized and the IMU thread (if used) has been
   // instantiated, lock our pages
-  int lock_r = mlockall(MCL_FUTURE);
+  int lock_r = mlockall(MCL_CURRENT);
   if (lock_r == -1) {
     AnkiError("robot.main", "Failed to lock pages");
   }
 
   auto start = std::chrono::steady_clock::now();
+
 #if FACTORY_TEST
   auto timeOfPowerOn = start;
   wasPackedOutAtBoot = Anki::Vector::Factory::GetEMR()->fields.PACKED_OUT_FLAG;

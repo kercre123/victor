@@ -6,6 +6,9 @@ project(robot)
 include(anki_build_cxx)
 include(anki_build_strip)
 
+#
+# TARGET robot_interface
+#
 add_library(robot_interface INTERFACE IMPORTED GLOBAL)
 set_property(TARGET robot_interface
              PROPERTY INTERFACE_INCLUDE_DIRECTORIES
@@ -24,6 +27,9 @@ if (MACOSX)
   )
 endif()
 
+#
+# TARGET robot_hal
+#
 if (VICOS)
 
 add_library(robot_hal STATIC
@@ -52,7 +58,7 @@ target_include_directories(robot_hal
 target_compile_options(robot_hal
   PRIVATE
   ${ANKI_BUILD_CXX_COMPILE_OPTIONS}
-  ${ASAN_CXX_FLAGS} 
+  ${ASAN_CXX_FLAGS}
 )
 
 target_compile_definitions(robot_hal
@@ -67,8 +73,12 @@ anki_build_target_license(robot_hal "ANKI")
 
 endif()
 
+#
+# TARGET cube_led_animator
+#
 # Create a lib for cube firmware led animation code, so
 # we can link into it from webotsCtrlLightCube
+#
 if (MACOSX)
 add_library(cube_led_animator STATIC
   ${CMAKE_SOURCE_DIR}/robot/cube_firmware/app/animation.c
@@ -104,6 +114,7 @@ elseif (MACOSX)
       util
       util_audio
       cti_messaging
+      libev
       ${WEBOTS_LIBS}
   )
   set(PLATFORM_INCLUDES
@@ -124,7 +135,7 @@ elseif (MACOSX)
 endif()
 
 #
-# displayFaultCode
+# TARGET displayFaultCode
 #
 add_executable(displayFaultCode
   ${CMAKE_SOURCE_DIR}/robot/include/anki/cozmo/shared/factory/faultCodeMain.cpp
@@ -153,7 +164,7 @@ anki_build_strip(TARGET displayFaultCode)
 anki_build_target_license(displayFaultCode "ANKI")
 
 #
-# supervisor
+# TARGET supervisor
 #
 anki_build_cxx_library(supervisor ${ANKI_SRCLIST_DIR} STATIC
   ${PLATFORM_SRCS}
@@ -203,7 +214,7 @@ elseif (MACOSX)
 endif()
 
 #
-# spine
+# TARGET spine
 #
 if (VICOS)
 
@@ -226,7 +237,7 @@ if (VICOS)
 endif()
 
 #
-# robot_supervisor
+# TARGET vic-robot
 #
 if (VICOS)
 
@@ -260,6 +271,7 @@ if (VICOS)
     cti_common_robot
     cti_messaging_robot
     victorCrashReports
+    libev
     ${ANKITRACE}
     ${PLATFORM_LIBS}
     ${ASAN_EXE_LINKER_FLAGS}
