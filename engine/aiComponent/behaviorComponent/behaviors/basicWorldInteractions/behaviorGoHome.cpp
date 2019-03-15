@@ -217,7 +217,7 @@ void BehaviorGoHome::OnBehaviorActivated()
   const auto* object = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_iConfig.homeFilter);
   
   if (object == nullptr) {
-    PRINT_NAMED_ERROR("BehaviorGoHome.OnBehaviorActivated", "No homes found!");
+    LOG_ERROR("BehaviorGoHome.OnBehaviorActivated", "No homes found!");
     return;
   }
   
@@ -262,7 +262,7 @@ void BehaviorGoHome::TransitionToObserveCharger()
     // observe the charger and confirm its pose.
     const auto* charger = dynamic_cast<const Charger*>(GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID));
     if (charger == nullptr) {
-      PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToObserveCharger", "Null charger!");
+      LOG_ERROR("BehaviorGoHome.TransitionToObserveCharger", "Null charger!");
       return;
     }
     const auto& robotInfo = GetBEI().GetRobotInfo();
@@ -294,7 +294,7 @@ void BehaviorGoHome::TransitionToObserveCharger()
         if(observeChargerWantsToRun) {
           DelegateIfInControl(_iConfig.observeChargerBehavior.get(), afterObservationCallback);
         } else {
-          PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToObserveCharger.ObserveChargerNotActivating", "Visual verify behavior does not want to be activated.");
+          LOG_ERROR("BehaviorGoHome.TransitionToObserveCharger.ObserveChargerNotActivating", "Visual verify behavior does not want to be activated.");
         }
       });
     } else {
@@ -328,7 +328,7 @@ void BehaviorGoHome::TransitionToPlacingCubeOnGround()
   
   const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
   if (charger == nullptr) {
-    PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToPlacingCubeOnGround", "Null charger!");
+    LOG_ERROR("BehaviorGoHome.TransitionToPlacingCubeOnGround", "Null charger!");
     return;
   }
   
@@ -345,7 +345,7 @@ void BehaviorGoHome::TransitionToPlacingCubeOnGround()
                           // get it out of the way.
                           const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
                           if (charger == nullptr) {
-                            PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToPlacingCubeOnGroundCallback.NullCharger", "Null charger!");
+                            LOG_ERROR("BehaviorGoHome.TransitionToPlacingCubeOnGroundCallback.NullCharger", "Null charger!");
                             return;
                           }
                           auto* compoundAction = new CompoundActionSequential();
@@ -369,7 +369,7 @@ void BehaviorGoHome::TransitionToDriveToCharger()
   
   const auto* charger = dynamic_cast<const Charger*>(GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID));
   if (charger == nullptr) {
-    PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToDriveToCharger.NullCharger", "Null charger!");
+    LOG_ERROR("BehaviorGoHome.TransitionToDriveToCharger.NullCharger", "Null charger!");
     return;
   }
 
@@ -424,7 +424,7 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
   
   const bool observeChargerWantsToRun = _iConfig.observeChargerBehavior->WantsToBeActivated();
   if(!observeChargerWantsToRun) {
-    PRINT_NAMED_ERROR("BehaviorGoHome.TransitionToCheckPreTurnPosition.ObserveChargerBehaviorDWTA","");
+    LOG_ERROR("BehaviorGoHome.TransitionToCheckPreTurnPosition.ObserveChargerBehaviorDWTA","");
     return;
   }
 
@@ -672,7 +672,7 @@ void BehaviorGoHome::ClearNavMapUpToCharger()
   // and clear a 'circular' area of radius slightly larger than the line.
   const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
   if (charger == nullptr) {
-    PRINT_NAMED_ERROR("BehaviorGoHome.ClearNavMapUpToCharger.NullCharger", "Null charger!");
+    LOG_ERROR("BehaviorGoHome.ClearNavMapUpToCharger.NullCharger", "Null charger!");
     return;
   }
 
