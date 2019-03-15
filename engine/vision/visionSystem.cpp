@@ -1179,10 +1179,6 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
       DEV_ASSERT_MSG(shouldRunOnComposite, "VisionSystem.DetectMarkers.InvalidResetCallBeforeImageUsed","");
       _currentResult.modesProcessed.Insert(VisionMode::CompositingImages);
     }
-  } else if(!IsModeEnabled(VisionMode::CompositingImages) && 
-            _imageCompositor->GetNumImagesComposited() != 0) {
-    // Clears any leftover artifacts from prematurely cancelled ImageCompositing
-    _imageCompositor->Reset();
   }
 
   #if(DEBUG_IMAGE_COMPOSITING)
@@ -1574,6 +1570,13 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       }
       Toc("TotalDetectingMarkers");
     }
+  }
+  
+  if(!IsModeEnabled(VisionMode::CompositingImages) && 
+     _imageCompositor->GetNumImagesComposited() > 0) {
+    // Clears any leftover artifacts from prematurely cancelled ImageCompositing
+    // Check this here to avoid gating it on whether or not DetectMarkers
+    _imageCompositor->Reset();
   }
   
   if(IsModeEnabled(VisionMode::DetectingFaces))

@@ -2669,18 +2669,14 @@ namespace Anki {
     , _afterTimeStamp(afterTimeStamp)
     , _visionMode(visionMode)
     {
-      // The difference between SingleShot and "Freq=High for 1 cycle" is that
-      //  in the first case, VisionSystem will enable the mode for one frame
-      //  and disable it immediately after that. This means exactly one frame
-      //  with that mode will be processed.
-      // This behavior doesn't occur with "High for 1 cycle" because vision system
-      //  is asynchronous and the processing for a second frame may be started
-      //  before the call to disable it is received.
-      // In the case of ImageCompositing and CyclingExposure, these modes take
-      //  more than one image frame for one cycle to complete. As a result 
-      //  SingleShot frequency is not applicable here. However, we also do not
-      //  care about the after effects of invoking an extra frame (since it is
-      //  guarded against in the VisionSystem)
+      // If the caller requested to wait one frame and the specified VisionMode also completes 
+      //  in a single frame, then we can use the special SingleShot update frequency. This forcibly
+      //  disables the mode after a single camera frame. 
+      // If the VisionMode needs multiple frames to complete a "cycle" (as is the case for 
+      //  ImageCompositing or CyclingExposure), or multiple frames are requested, then we simply 
+      //  use High frequency. In this case, there may be one extra frame actually processed with the 
+      //  specified mode, because the VisionSystem runs asynchronously and may have already 
+      //  started on the next frame before this action unsubscribes from the mode.
       if(_numFramesToWaitFor==1 && CycleCompletesInOneFrame(visionMode, true)) {
         _updateFrequency = EVisionUpdateFrequency::SingleShot;
       } else {
