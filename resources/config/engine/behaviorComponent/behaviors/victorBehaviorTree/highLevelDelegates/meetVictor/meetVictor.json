@@ -3,6 +3,10 @@
   "behaviorID": "MeetVictor",
 
   "associatedActiveFeature": "MeetVictor",
+  
+  "behaviorModifiers": {
+    "wantsToBeActivatedWhenOffTreads": true
+  },
 
   "showActiveIntentFeedback" : true,
 

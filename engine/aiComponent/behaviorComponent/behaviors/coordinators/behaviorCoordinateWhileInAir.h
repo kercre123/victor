@@ -52,7 +52,7 @@ private:
 
   std::unique_ptr<AreBehaviorsActivatedHelper> _inAirDispatcherBehaviorSet;
   std::unique_ptr<AreBehaviorsActivatedHelper> _suppressInAirBehaviorSet;
-  std::unique_ptr<AreBehaviorsActivatedHelper> _lockTracksBehaviorSet;
+  std::unique_ptr<AreBehaviorsActivatedHelper> _dontLockTracksBehaviorSet;
 
   bool IsInAirDispatcherActive() const;
 

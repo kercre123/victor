@@ -2,6 +2,10 @@
   "behaviorID": "SayName",
   "behaviorClass": "SayName",
   
+  "behaviorModifiers": {
+    "wantsToBeActivatedWhenOffTreads": true
+  },
+  
   "associatedActiveFeature": "WhatsMyName",
   
   // The animation to use while saying name. Must have special TTS keyframe!

@@ -3,6 +3,10 @@
   "behaviorClass": "FindFaceAndThen",
 
   "associatedActiveFeature": "WhatsMyName",
+  
+  "behaviorModifiers": {
+    "wantsToBeActivatedWhenOffTreads": true
+  },
 
   "respondToUserIntents" : [
     { "type": "names_ask" }

@@ -1,6 +1,10 @@
 {
   "behaviorID" :   "SearchWithinBoundingBox",
   "behaviorClass": "SearchWithinBoundingBox",
+  
+  "behaviorModifiers": {
+    "wantsToBeActivatedWhenOffTreads": true
+  },
 
   "howManySearches"        : 5,
   "waitBeforeTurning_s"    : 1
