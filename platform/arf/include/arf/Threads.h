@@ -131,7 +131,7 @@ public:
     // added prior to initialization
     // Returns success
     bool Initialize( unsigned int numStandardThreads,
-                     unsigned int numPriorityThreads );
+                     unsigned int numPriorityThreads = 0 );
 
     // Destroys all threads immediately and resets all task queues
     void HaltAndDeinitialize();

@@ -1,10 +1,12 @@
 #pragma once
 
-#include "arf/Types.h"
-#include "util/string/stringUtils.h"
 #include <vector>
 #include <fstream>
 #include <iostream>
+#include <set>
+
+#include "arf/Types.h"
+#include "util/string/stringUtils.h"
 
 namespace ARF
 {
@@ -26,30 +28,32 @@ namespace ARF
 // and passed through the system
 // "Events" describe the things happening to data, as well as
 // the relation of data to each other
-// "Tasks" describe computation involving "Data"
 
+// Events
+// ======
 // Describes things that happen to data as they flow through the system
+// Should be atomic "deltas" that can be aggregated to form complete
+// logs of object lifespans
 class DataEvent
 {
 public:
 
     enum Type
     {
-        CREATION = 0, // Data was created with no parents
-        FORK,         // Data was created/derived from parent data
-        PORT_WRITE,   // Data went from OutputPort to InputPort
-        PORT_READ,    // Data read from InputPort
+        CREATION = 0, // Data was created
+        MOVEMENT,     // Data moved between objects
         DESTRUCTION   // End of data lifespan
     };
 
     Type type;                   // Type of event
     UUID dataID;                 // ID of data in event
-    std::vector<UUID> parentIDs; // For FORK: {parent data ID}
-                                 // PORT_WRITE: {OutputPort ID, InputPort ID}
-                                 // PORT_READ: {InputPort ID}
-                                 // DESTRUCTION: {InputPort ID or Node ID}
+    std::vector<UUID> parentIDs; // For CREATION:    {parent ID(s)}
+                                 // For MOVEMENT:    {from ID, to ID}
+                                 // For DESTRUCTION: {sink ID}
     MonotonicTime monoTime;      // When this event happened (monotonic)
     WallTime wallTime;           // When this event happened (wall)
+
+    DataEvent();
 
     // Create a new event pertaining to a specific datum
     template <typename T>
@@ -60,7 +64,7 @@ public:
     template <typename T>
     void AddParent( const T& tagged )
     {
-        parentIDs.emplace_back( tagged.GetUUID() );
+        parentIDs.push_back( tagged.GetUUID() );
     }
 
     // Update the timestamps to current time
@@ -68,35 +72,91 @@ public:
 };
 
 // Describes the lifespan of a Task and its dependencies
-class TaskLog
+class TaskEvent
 {
 public:
 
-    enum Status
+    enum Type
     {
-        PENDING = 0,
-        FINISHED,
-        CANCELLED,
-        ERRORED,
+        PENDING = 0, // Task entered scheduling queue
+        CANCELLED,   // Task cancelled while in queue
+        STARTING,    // Task taken off queue and assigned to worker
+        RUNNING,     // Task running and using data
+        FINISHED,    // Task finished normally
+        ERRORED,     // Task finished with error
     };
 
-    // IDs of relevant... things
+    Type type;                   // The event type
     UUID taskID;                 // ID of task
-    UUID sourceID;               // ID of task originator
-    UUID threadID;               // ID of thread task ran on (nil if not run)
-    std::vector<UUID> dataIDs;   // IDs of data dependencies for this task
+    std::vector<UUID> parentIDs; // For PENDING: {source ID}
+                                 // For CANCELLED: {}
+                                 // For STARTING: {worker ID}
+                                 // For RUNNING: {data IDs}
+                                 // For FINISHED: {}
+                                 // For ERRORED: {}
 
-    // TODO Do we want wall times too?
-    MonotonicTime queueTimeMono; // When this task entered the scheduling queue
-    MonotonicTime startTimeMono; // When this task was assigned a thread and began
-    MonotonicTime endTimeMono;   // When/if this task finished/cancelled/errored (nil if pending)
-    Status status;               // The current status of the task
-
-    TaskLog(); // TODO
+    MonotonicTime monoTime;      // When this event happened (monotonic)
+    WallTime wallTime;           // When this event happened (wall)
 };
 
-// Convenience classes for ID'ing things
+// TODO Events declaring Port/Node IDs
 
+// Logs
+// ====
+// Complete data of object lifespans
+
+// Convenience object for comparing mono time members
+struct MonoTimeComparator
+{
+    template <typename T>
+    bool operator() ( const T& a, const T& b ) const
+    {
+        return a.monoTime < b.monoTime;
+    }
+};
+
+// Lifespan records for a single Data object
+class DataLog
+{
+public:
+
+    // Log representation of a Data's movement
+    struct MovementLog
+    {
+        UUID fromID;
+        UUID toID;
+        MonotonicTime monoTime;
+        WallTime wallTime;
+    };
+
+    UUID dataID;                           // ID of the data
+
+    std::vector<UUID> creationParentIDs;   // IDs of sources that created the data
+    MonotonicTime creationMonoTime;        // Time at which creation occurred
+    WallTime creationWallTime;
+
+    // Logs of all port read events ordered in time
+    // Have to use a multiset as multiple moves may happen instantaneously
+    std::multiset<MovementLog, MonoTimeComparator> movementLogs;
+
+    // TODO Need to think more about destruction, since data will
+    // commonly get copied when writing to multiple ports
+    UUID destructionParentID;              // ID of Task/Node that destructed the data
+    MonotonicTime destructionMonoTime;
+    WallTime destructionWallTime;
+
+    DataLog();
+
+    // Adds an event's contents to this log
+    // Returns false if the event does not match correctly
+    bool ProcessEvent( const DataEvent& event ); 
+};
+
+// TODO Logs for Tasks
+// TODO Logs declaring all Port, Node IDs
+
+// Convenience classes for ID'ing things
+// =====================================
 // SFINAE trait for tags
 template <typename T>
 struct HasUUID
@@ -148,6 +208,24 @@ public:
     }
 };
 
+// Logging
+// =======
+// TODO Move streaming/destreaming functionality to a different file
+
+template <typename T>
+int32_t stream_proto( const T& proto, std::ostream& os )
+{
+    int32_t size = proto.ByteSizeLong();
+    os.write( reinterpret_cast<char*>( &size ), sizeof( size ) );
+    proto.SerializeToOstream( &os );
+    return size;
+}
+
+std::string to_string( const UUID& uuid );
+std::ostream& operator<<( std::ostream& os, const UUID& uuid );
+
+// Logger singleton for event streaming
+// TODO Chunk logs into files
 // TODO Copy Vector's per-thread logger cache to minimize lock contention
 class Logger
 {
@@ -160,7 +238,7 @@ public:
     void Shutdown();
 
     void LogDataEvent( const DataEvent& event );
-    void LogTaskLog( const TaskLog& log );
+    void LogTaskEvent( const TaskEvent& log );
 
     size_t NumEventsLogged() const;
 
@@ -179,24 +257,32 @@ private:
 // Helper functions that overload for having/not having UUIDs
 // We assume that parents, when given, always have UUIDs
 // Version for UUID'd types
-template <typename P, typename T,
+template <typename T,
           typename std::enable_if<HasUUID<T>::value, int>::type  = 0>
-void CreateAndLogEvent( const T& t, const std::vector<P*>& parents, DataEvent::Type type )
+void CreateAndLogEvent( const T& t, const std::vector<const UUID*>& parents, DataEvent::Type type )
 {
     DataEvent event( t );
     event.type = type;
-    for( auto p : parents )
+    for( auto id : parents )
     {
-        event.AddParent( *p );
+        if( id )
+        {
+            event.parentIDs.emplace_back( *id );
+        }
+        else
+        {
+            event.parentIDs.emplace_back( UUID() );
+        }
+        
     }
     event.SetTimeToNow();
     Logger::Inst().LogDataEvent( event );
 }
 
 // Version for non-UUID'd types
-template <typename P, typename T,
-            typename std::enable_if<!HasUUID<T>::value, int>::type  = 0>
-void CreateAndLogEvent( const T&, const std::vector<P*>& /*parents*/, DataEvent::Type ) {}
+template <typename T,
+          typename std::enable_if<!HasUUID<T>::value, int>::type  = 0>
+void CreateAndLogEvent( const T&, const std::vector<const UUID*>&, DataEvent::Type ) {}
 
 // Mix-in to give IDs to objects
 class TaggedMixin

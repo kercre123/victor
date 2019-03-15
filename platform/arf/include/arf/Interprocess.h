@@ -77,7 +77,7 @@ public:
         TransceiveRegistration::Ptr& reg = _trxRegistry[ url ];
         if( reg )
         {
-            return Node::RetrieveOutputPort<T>( reg->portIndex );
+            return Node::RetrieveOutputPort<T>( url );
         }
 
         // First setup NNG socket
@@ -90,9 +90,8 @@ public:
 
         // Create port
         typename OutputPort<T>::Ptr port = std::make_shared<OutputPort<T>>();
-        reg->portIndex = _portCounter;
         reg->tracker = _taskTracker;
-        Node::RegisterPort( port, _portCounter++ );
+        Node::RegisterPort( port, url );
 
         // Create callbacks
         TransceiveRegistration* rawReg = reg.get();
@@ -148,7 +147,7 @@ public:
         TransceiveRegistration::Ptr& reg = _trxRegistry[ url ];
         if( reg )
         {
-            return Node::RetrieveInputPort<T>( reg->portIndex );
+            return Node::RetrieveInputPort<T>( url );
         }
 
         // First setup NNG socket
@@ -161,9 +160,8 @@ public:
 
         // Create port
         typename InputPort<T>::Ptr port = std::make_shared<InputPort<T>>( buffSize );
-        reg->portIndex = _portCounter;
         reg->tracker = _taskTracker;
-        Node::RegisterPort( port, _portCounter++ );
+        Node::RegisterPort( port, url );
 
         // Create callback
         TransceiveRegistration* rawReg = reg.get();
@@ -232,7 +230,6 @@ private:
         using Ptr = std::shared_ptr<TransceiveRegistration>;
 
         // Intraprocess/task use
-        int portIndex = -1;
         TaskTracker::Ptr tracker;
         
         Task txServiceTask;
@@ -256,7 +253,6 @@ private:
 
     Mutex _mutex;
     TaskTracker::Ptr _taskTracker;
-    int _portCounter = 0; // TODO Switch to string indices for ports
 
     using TransceiveRegistry = std::unordered_map<std::string, TransceiveRegistration::Ptr>;
     TransceiveRegistry _trxRegistry;

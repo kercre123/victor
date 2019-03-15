@@ -3,30 +3,26 @@
 namespace ARF {
 
 void ConvertWallTimeToProto(const WallTime& time,
-                            arf_proto::Time* proto)
-{
+                            arf_proto::Time* proto) {
   TimeParts parts = time_to_parts( time );
   proto->set_seconds( parts.secs );
   proto->set_nanoseconds( parts.nanosecs );
 }
 
 void ConvertProtoToWallTime(const arf_proto::Time& proto,
-                            WallTime* time)
-{
+                            WallTime* time) {
   *time = time_from_parts<WallTime>( proto.seconds(), proto.nanoseconds() );
 }
 
 void ConvertMonoTimeToProto(const MonotonicTime& time,
-                            arf_proto::Time* proto )
-{
+                            arf_proto::Time* proto ) {
   TimeParts parts = time_to_parts( time );
   proto->set_seconds( parts.secs );
   proto->set_nanoseconds( parts.nanosecs );
 }
 
 void ConvertProtoToMonoTime(const arf_proto::Time& proto,
-                            MonotonicTime* time)
-{
+                            MonotonicTime* time) {
   *time = time_from_parts<WallTime>( proto.seconds(), proto.nanoseconds() );
 
 }
@@ -44,13 +40,11 @@ void ConvertProtoToUUID(const arf_proto::UUID& proto,
 }
 
 void ConvertDataEventToProto(const DataEvent& event,
-                             arf_proto::DataEvent* proto)
-{
+                             arf_proto::DataEvent* proto) {
   proto->set_type( static_cast<arf_proto::DataEvent_Type>(event.type) );
   ConvertUUIDToProto( event.dataID, proto->mutable_data_id() );
   proto->clear_parent_ids();
-  for( const UUID& id : event.parentIDs )
-  {
+  for( const UUID& id : event.parentIDs ) {
     arf_proto::UUID* protoID = proto->add_parent_ids();
     ConvertUUIDToProto( id, protoID );
   }
@@ -59,86 +53,115 @@ void ConvertDataEventToProto(const DataEvent& event,
 }
 
 void ConvertProtoToDataEvent(const arf_proto::DataEvent& proto,
-                             DataEvent* event)
-{
+                             DataEvent* event) {
   event->type = static_cast<DataEvent::Type>( proto.type() );
   ConvertProtoToUUID( proto.data_id(), &event->dataID );
   event->parentIDs.resize( proto.parent_ids_size() );
-  for( int i = 0; i < proto.parent_ids_size(); ++i )
-  {
+  for( int i = 0; i < proto.parent_ids_size(); ++i ) {
     ConvertProtoToUUID( proto.parent_ids( i ), &event->parentIDs[i] );
   }
   ConvertProtoToMonoTime( proto.mono_time(), &event->monoTime );
   ConvertProtoToWallTime( proto.wall_time(), &event->wallTime );
 }
 
-void ConvertTaskLogToProto(const TaskLog& log,
-                           arf_proto::TaskLog* proto)
-{
+void ConvertTaskEventToProto(const TaskEvent& log,
+                             arf_proto::TaskEvent* proto) {
+  proto->set_type( static_cast<arf_proto::TaskEvent_Type>( log.type ) );
   ConvertUUIDToProto( log.taskID, proto->mutable_task_id() );
-  if( !log.sourceID.empty() )
-  {
-    ConvertUUIDToProto( log.sourceID, proto->mutable_source_id() );
-  }
-  else
-  {
-    proto->clear_source_id();
-  }
-  if( !log.threadID.empty() )
-  {
-    ConvertUUIDToProto( log.threadID, proto->mutable_thread_id() );
-  }
-  else
-  {
-    proto->clear_thread_id();
-  }
-  proto->clear_data_ids();
-  for( const UUID& id : log.dataIDs )
-  {
-    arf_proto::UUID* protoID = proto->add_data_ids();
+  proto->clear_parent_ids();
+  for( const UUID& id : log.parentIDs ) {
+    arf_proto::UUID* protoID = proto->add_parent_ids();
     ConvertUUIDToProto( id, protoID );
   }
-  ConvertMonoTimeToProto( log.queueTimeMono, proto->mutable_queue_time_mono() );
-  if( time_is_valid( log.startTimeMono ) )
-  {
-    ConvertMonoTimeToProto( log.startTimeMono, proto->mutable_start_time_mono() );
-  }
-  if( time_is_valid( log.endTimeMono ) )
-  {
-    ConvertMonoTimeToProto( log.endTimeMono, proto->mutable_end_time_mono() );
-  }
-  proto->set_status( static_cast<arf_proto::TaskLog_Status>( log.status ) );
+  ConvertMonoTimeToProto( log.monoTime, proto->mutable_mono_time() );
+  ConvertWallTimeToProto( log.wallTime, proto->mutable_wall_time() );
 }
 
-void ConvertProtoToTaskLog(const arf_proto::TaskLog& proto,
-                           TaskLog* log)
-{
+void ConvertProtoToTaskEvent(const arf_proto::TaskEvent& proto,
+                             TaskEvent* log) {
+  log->type = static_cast<TaskEvent::Type>( proto.type() );
   ConvertProtoToUUID( proto.task_id(), &log->taskID );
-  if( proto.has_source_id() )
-  {
-    ConvertProtoToUUID( proto.source_id(), &log->sourceID );
+  log->parentIDs.resize( proto.parent_ids_size() );
+  for( int i = 0; i < proto.parent_ids_size(); ++i ) {
+    ConvertProtoToUUID( proto.parent_ids(i), &log->parentIDs[i] );
   }
-  if( proto.has_thread_id() )
-  {
-    ConvertProtoToUUID( proto.thread_id(), &log->threadID );
+  ConvertProtoToMonoTime( proto.mono_time(), &log->monoTime );
+  ConvertProtoToWallTime( proto.wall_time(), &log->wallTime );
+}
+
+// Helper functions for DataLog hidden from users
+void ConvertMovementLogToProto(const DataLog::MovementLog& log,
+                               arf_proto::DataLog::MovementLog* proto) {
+  ConvertUUIDToProto( log.fromID, proto->mutable_from_id() );
+  ConvertUUIDToProto( log.toID, proto->mutable_to_id() );
+  ConvertMonoTimeToProto( log.monoTime, proto->mutable_mono_time() );
+  ConvertWallTimeToProto( log.wallTime, proto->mutable_wall_time() );
+}
+
+void ConvertProtoToMovementLog(const arf_proto::DataLog::MovementLog& proto,
+                               DataLog::MovementLog* log) {
+  ConvertProtoToUUID( proto.from_id(), &log->fromID );
+  ConvertProtoToUUID( proto.to_id(), &log->toID );
+  ConvertProtoToMonoTime( proto.mono_time(), &log->monoTime );
+  ConvertProtoToWallTime( proto.wall_time(), &log->wallTime );
+}
+
+void ConvertDataLogToProto(const DataLog& log,
+                           arf_proto::DataLog* proto) {
+  ConvertUUIDToProto( log.dataID, proto->mutable_data_id() );
+  for( const UUID& id : log.creationParentIDs ) {
+    arf_proto::UUID* pid = proto->add_creation_parent_ids();
+    ConvertUUIDToProto( id, pid );
   }
-  log->dataIDs.resize( proto.data_ids_size() );
-  for( int i = 0; i < proto.data_ids_size(); ++i )
-  {
-    ConvertProtoToUUID( proto.data_ids(i), &log->dataIDs[i] );
+  if( time_is_valid( log.creationMonoTime ) ) {
+    ConvertMonoTimeToProto( log.creationMonoTime, proto->mutable_creation_mono_time() );
   }
-  ConvertProtoToMonoTime( proto.queue_time_mono(), &log->queueTimeMono );
-  if( proto.has_start_time_mono() )
-  {
-    ConvertProtoToMonoTime( proto.start_time_mono(), &log->startTimeMono );
+  if( time_is_valid( log.creationWallTime ) ) {
+    ConvertWallTimeToProto( log.creationWallTime, proto->mutable_creation_wall_time() );
   }
-  if( proto.has_end_time_mono() )
-  {
-    ConvertProtoToMonoTime( proto.end_time_mono(), &log->endTimeMono );
+  for( const DataLog::MovementLog& l : log.movementLogs ) {
+    arf_proto::DataLog::MovementLog* plog = proto->add_movement_logs();
+    ConvertMovementLogToProto( l, plog );
   }
-  log->status = static_cast<TaskLog::Status>( proto.status() );
-  double t = time_to_float( log->startTimeMono );
-  log->startTimeMono = float_to_time<MonotonicTime>( t );
+  if( log.destructionParentID.empty() ) {
+    ConvertUUIDToProto( log.destructionParentID, proto->mutable_destruction_parent_id() );
+  }
+  if( time_is_valid( log.destructionMonoTime ) ) {
+    ConvertMonoTimeToProto( log.destructionMonoTime, proto->mutable_destruction_mono_time() );
+  }
+  if( time_is_valid( log.destructionWallTime ) ) {
+    ConvertWallTimeToProto( log.destructionWallTime, proto->mutable_destruction_wall_time() );
+  }
+}
+
+void ConvertProtoToDataLog(const arf_proto::DataLog& proto,
+                           DataLog* log) {
+  ConvertProtoToUUID( proto.data_id(), &log->dataID );
+  log->creationParentIDs.resize( proto.creation_parent_ids_size() );
+  for( int i = 0; i < proto.creation_parent_ids_size(); ++i ) {
+    ConvertProtoToUUID( proto.creation_parent_ids(i), &log->creationParentIDs[i] );
+  }
+  if( proto.has_creation_mono_time() ) {
+    ConvertProtoToMonoTime( proto.creation_mono_time(), &log->creationMonoTime );
+  }
+  if( proto.has_creation_wall_time() ) {
+    ConvertProtoToWallTime( proto.creation_wall_time(), &log->creationWallTime );
+  }
+  DataLog::MovementLog mlog;
+  log->movementLogs.clear();
+  for( int i = 0; i < proto.movement_logs_size(); ++i ) {
+    ConvertProtoToMovementLog( proto.movement_logs(i), &mlog );
+    log->movementLogs.insert( mlog );
+  }
+  if( proto.has_destruction_parent_id() ) {
+    ConvertProtoToUUID( proto.destruction_parent_id(), &log->destructionParentID );
+  }
+  if( proto.has_destruction_mono_time() ) {
+    ConvertProtoToMonoTime( proto.destruction_mono_time(), &log->destructionMonoTime );
+  }
+  if( proto.has_destruction_wall_time() ) {
+    ConvertProtoToWallTime( proto.destruction_wall_time(), &log->destructionWallTime );
+  }
 }
 
 }  // namespace ARF

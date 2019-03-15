@@ -43,11 +43,29 @@ public:
     // stay valid
     void Shutdown();
 
+    template <typename T>
+    InputPort<T>* CreateInputPort( size_t buffSize, const std::string& index )
+    {
+        using PortT = InputPort<T>;
+        typename PortT::Ptr port = std::make_shared<PortT>( buffSize );
+        if( !RegisterPort( port, index ) ) { return nullptr; }
+        return RetrieveInputPort<T>( index ).get();
+    }
+
+    template <typename T>
+    OutputPort<T>* CreateOutputPort( const std::string& index )
+    {
+        using PortT = OutputPort<T>;
+        typename PortT::Ptr port = std::make_shared<PortT>();
+        if( !RegisterPort( port, index ) ) { return nullptr; }
+        return RetrieveOutputPort<T>( index ).get();
+    }
+
     // Retrieve an indexed InputPort for this Node
     // Returns null if no Port has been registered at the index, or if
     // there is a type mismatch
     template <typename T>
-    std::shared_ptr<InputPort<T>> RetrieveInputPort( int index ) const
+    std::shared_ptr<InputPort<T>> RetrieveInputPort( const std::string& index ) const
     {
         Lock lock( _mutex );
         PortMap::const_iterator iter = _portMap.find( index );
@@ -62,7 +80,7 @@ public:
     // Returns null if no Port has been registered at the index, or if
     // there is a type mismatch
     template <typename T>
-    std::shared_ptr<OutputPort<T>> RetrieveOutputPort( int index ) const
+    std::shared_ptr<OutputPort<T>> RetrieveOutputPort( const std::string& index ) const
     {
         Lock lock( _mutex );
         PortMap::const_iterator iter = _portMap.find( index );
@@ -75,7 +93,7 @@ public:
 
     // Assigns a port to an index and gives management responsibility to this Node
     template <typename PortT>
-    bool RegisterPort( const PortT& p, int index )
+    bool RegisterPort( const PortT& p, const std::string& index )
     {
         Lock lock( _mutex );
         PortBase::Ptr upcastP = std::static_pointer_cast<PortBase>( p );
@@ -95,7 +113,7 @@ private:
 
     mutable Mutex _mutex;
     std::vector<std::shared_ptr<TaskTracker>> _taskTracks;
-    using PortMap = std::unordered_map<int, std::shared_ptr<PortBase>>;
+    using PortMap = std::unordered_map<std::string, std::shared_ptr<PortBase>>;
     PortMap _portMap;
 };
 

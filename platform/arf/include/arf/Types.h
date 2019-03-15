@@ -3,8 +3,6 @@
 #include <mutex>
 #include <condition_variable>
 
-#include "util/string/stringUtils.h"
-
 #include <chrono>
 
 // Common types and free functions are defined here
@@ -54,6 +52,8 @@ typename T::duration get_time()
     return T::now().time_since_epoch();
 }
 
+// Technically 0 just means epoch, but don't have
+// a better way to represent invalid time 
 template <typename T>
 bool time_is_valid( const T& t )
 {

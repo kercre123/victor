@@ -1,0 +1,29 @@
+syntax = "proto2";
+
+package arf_proto;
+
+import "Time.proto";
+import "UUID.proto";
+
+
+message DataLog {
+    
+    message MovementLog {
+        required UUID from_id = 1;
+        required UUID to_id = 2;
+        required Time mono_time = 3;
+        required Time wall_time = 4;
+    }
+
+    required UUID data_id = 1;
+    
+    repeated UUID creation_parent_ids = 2;
+    optional Time creation_mono_time = 3;
+    optional Time creation_wall_time = 4;
+
+    repeated MovementLog movement_logs = 5;
+
+    optional UUID destruction_parent_id = 6;
+    optional Time destruction_mono_time = 7;
+    optional Time destruction_wall_time = 8;
+}

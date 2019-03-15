@@ -74,6 +74,7 @@ anki_build_strip(TARGET arf)
 target_include_directories(arf
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+  $<BUILD_INTERFACE:${PROTOBUF_OUTPUT_DIR}>
   $<BUILD_INTERFACE:${NNG_INCLUDE_PATH}>
 )
 

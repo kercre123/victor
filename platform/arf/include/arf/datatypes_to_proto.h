@@ -3,9 +3,10 @@
 #include "arf/Types.h"
 #include "arf/Introspection.h"
 
-#include "generated/proto/arf/Time.pb.h"
-#include "generated/proto/arf/Events.pb.h"
-#include "generated/proto/arf/UUID.pb.h"
+#include "Time.pb.h"
+#include "Events.pb.h"
+#include "UUID.pb.h"
+#include "Logs.pb.h"
 
 namespace ARF {
 void ConvertWallTimeToProto(const WallTime& time,
@@ -26,8 +27,13 @@ void ConvertDataEventToProto(const DataEvent& event,
                              arf_proto::DataEvent* proto);
 void ConvertProtoToDataEvent(const arf_proto::DataEvent& proto,
                              DataEvent* event);
-void ConvertTaskLogToProto(const TaskLog& log,
-                           arf_proto::TaskLog* proto);
-void ConvertProtoToTaskLog(const arf_proto::TaskLog& proto,
-                           TaskLog* log);
+void ConvertTaskEventToProto(const TaskEvent& log,
+                           arf_proto::TaskEvent* proto);
+void ConvertProtoToTaskEvent(const arf_proto::TaskEvent& proto,
+                           TaskEvent* log);
+
+void ConvertDataLogToProto(const DataLog& log,
+                           arf_proto::DataLog* proto);
+void ConvertProtoToDataLog(const arf_proto::DataLog& proto,
+                           DataLog* log);
 }  // namespace ARF

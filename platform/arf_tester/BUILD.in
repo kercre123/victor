@@ -1,5 +1,9 @@
 cxx_project(
-  name = 'arf-tester',
-  srcs = cxx_src_glob(['.']),
-  headers = cxx_header_glob(['.'])
+  name = 'camera_main',
+  srcs = ['camera_main.cpp']
+)
+
+cxx_project(
+  name = 'camera_arf_main',
+  srcs = ['camera_arf_main.cpp'],
 )
