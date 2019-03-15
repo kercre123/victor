@@ -40,6 +40,8 @@
 
 #include "util/logging/DAS.h"
 
+#define LOG_CHANNEL "Behaviors"
+
 #define LOG_FUNCTION_NAME() PRINT_CH_INFO("Behaviors", "BehaviorGoHome", "BehaviorGoHome.%s", __func__);
 
 namespace Anki {
@@ -203,7 +205,7 @@ void BehaviorGoHome::OnBehaviorActivated()
   times.erase(times.begin(),
               times.lower_bound(now_sec - kRepeatedActivationCheckWindow_sec));
   if (times.size() > kNumRepeatedActivationsAllowed) {
-    PRINT_NAMED_WARNING("BehaviorGoHome.OnBehaviorActivated.RepeatedlyActivated",
+    LOG_WARNING("BehaviorGoHome.OnBehaviorActivated.RepeatedlyActivated",
                         "We have been activated %zu times in the past %.1f seconds, so instead of continuing "
                         "with this behavior, we are playing the failure anim and exiting.",
                         times.size(), kRepeatedActivationCheckWindow_sec);
@@ -393,7 +395,7 @@ void BehaviorGoHome::TransitionToDriveToCharger()
                                    ((resultCategory == ActionResultCategory::RETRY) ||
                                     (result == ActionResult::PATH_PLANNING_FAILED_ABORT))) {
                           if (result == ActionResult::PATH_PLANNING_FAILED_ABORT) {
-                            PRINT_NAMED_WARNING("BehaviorGoHome.TransitionToDriveToCharger.PathPlanningTimedOut",
+                            LOG_WARNING("BehaviorGoHome.TransitionToDriveToCharger.PathPlanningTimedOut",
                                                 "Path planning timed out possibly due to prox obstacles or there is no "
                                                 "valid path from our location. Clearing an area of the nav map, turning in "
                                                 "place a bit, then trying again.");
@@ -463,12 +465,12 @@ void BehaviorGoHome::TransitionToPostVisualVerification(const RobotTimeStamp_t v
                angleWrtCharger.IsNear(kIdealAngleWrtCharger_rad, kMaxAngularError_rad);
       
       if (!poseOk) {
-        PRINT_NAMED_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.NotInPosition",
+        LOG_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.NotInPosition",
                             "Ended up not in a good position to commence the turn to begin docking. RobotPoseWrtCharger {%.1f, %.1f, %.1f deg}",
                             xWrtCharger, yWrtCharger, angleWrtCharger.getDegrees());
       }
     } else {
-      PRINT_NAMED_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.GetPoseWithRespectToFailed",
+      LOG_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.GetPoseWithRespectToFailed",
                           "Robot Pose (%s) and Charger Pose (%s) not connected in pose tree",
                           robotPose.GetNamedPathToRoot(true).c_str(), 
                           charger->GetPose().GetNamedPathToRoot(true).c_str());
@@ -484,7 +486,7 @@ void BehaviorGoHome::TransitionToPostVisualVerification(const RobotTimeStamp_t v
   } else if (!chargerSeen) {
     // If visual observation failed, then we've successfully gotten to the charger
     // pre-action pose, but it is no longer there. Delete the charger from the map.
-    PRINT_NAMED_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.DeletingCharger",
+    LOG_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.DeletingCharger",
                         "Deleting charger with ID %d since visual verification failed",
                         _dVars.chargerID.GetValue());
     const bool removeChargerFromBlockworld = true;
@@ -621,7 +623,7 @@ void BehaviorGoHome::ActionFailure(bool removeChargerFromBlockWorld)
     removeChargerFromBlockWorld = true;
   }
   
-  PRINT_NAMED_WARNING("BehaviorGoHome.ActionFailure",
+  LOG_WARNING("BehaviorGoHome.ActionFailure",
                       "BehaviorGoHome had an action failure. Delegating to the request to go home. %s",
                       removeChargerFromBlockWorld ? "Removing charger from block world." : "");
   
