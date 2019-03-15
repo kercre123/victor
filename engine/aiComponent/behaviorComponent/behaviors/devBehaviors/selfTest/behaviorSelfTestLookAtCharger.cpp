@@ -44,7 +44,7 @@ BehaviorSelfTestLookAtCharger::BehaviorSelfTestLookAtCharger(const Json::Value& 
                       "Missing %s key from SelfTestLookAtCharger Config", kAngleToTurnKey.c_str());
   }
   _angleToTurn = DEG_TO_RAD(angle);
-  
+
   std::string objectType = "";
   res = JsonTools::GetValueOptional(config, kExpectedObjectKey, objectType);
   if(!res)
@@ -53,7 +53,7 @@ BehaviorSelfTestLookAtCharger::BehaviorSelfTestLookAtCharger(const Json::Value& 
                       "Missing %s key from SelfTestLookAtCharger Config", kExpectedObjectKey.c_str());
   }
   _expectedObjectType = ObjectTypeFromString(objectType);
-  
+
   res = JsonTools::GetValueOptional(config, kExpectedDistKey, _expectedDistanceToObject_mm);
   if(!res)
   {
@@ -62,7 +62,7 @@ BehaviorSelfTestLookAtCharger::BehaviorSelfTestLookAtCharger(const Json::Value& 
   }
 
   JsonTools::GetValueOptional(config, kDistToDriveKey, _distToDrive_mm);
-  
+
   SubscribeToTags({EngineToGameTag::RobotObservedObject});
 }
 
@@ -95,10 +95,10 @@ Result BehaviorSelfTestLookAtCharger::OnBehaviorActivatedInternal()
 
   // After turning wait to process 10 images before trying to refine the turn
   WaitForImagesAction* wait = new WaitForImagesAction(5, VisionMode::DetectingMarkers);
-  
+
   CompoundActionSequential* action = new CompoundActionSequential({liftHeadDrive, turn, wait});
   DelegateIfInControl(action, [this]() { TransitionToRefineTurn(); });
-  
+
   return RESULT_OK;
 }
 
@@ -117,13 +117,13 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestLookAtCharger::SelfTestUpdateI
   else if(_numRecordedReadingsLeft > 0)
   {
     --_numRecordedReadingsLeft;
-    
+
     const auto& proxData = robot.GetProxSensorComponent().GetLatestProxData();
     DistanceSensorData data;
     data.proxSensorData = proxData;
     data.visualDistanceToTarget_mm = 0;
     data.visualAngleAwayFromTarget_rad = 0;
-    
+
     Pose3d markerPose;
     ObjectID unused;
     const bool res = GetExpectedObjectMarkerPoseWrtRobot(markerPose, unused);
@@ -132,12 +132,12 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestLookAtCharger::SelfTestUpdateI
       data.visualDistanceToTarget_mm = markerPose.GetTranslation().x();
 
       markerPose = markerPose.GetWithRespectToRoot();
-      // Marker pose rotation is kind of wonky, compared to the robot's rotation they are 
+      // Marker pose rotation is kind of wonky, compared to the robot's rotation they are
       // rotated 90 degrees. So when the robot is looking at a marker, you have to add
       // 90 degrees to get its rotation to match that of the robot
       // Taking the difference of these two angles tells us how much the robot needs to turn
       // to be perpendicular with the marker
-      const auto angle = ((markerPose.GetRotation().GetAngleAroundZaxis() + DEG_TO_RAD(90)) - 
+      const auto angle = ((markerPose.GetRotation().GetAngleAroundZaxis() + DEG_TO_RAD(90)) -
                           robot.GetPose().GetRotation().GetAngleAroundZaxis());
       data.visualAngleAwayFromTarget_rad = angle.ToFloat();
     }
@@ -147,8 +147,8 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestLookAtCharger::SelfTestUpdateI
     {
       bias = 0;
     }
-    
-    if(!Util::IsNear(data.proxSensorData.distance_mm - bias, 
+
+    if(!Util::IsNear(data.proxSensorData.distance_mm - bias,
                      data.visualDistanceToTarget_mm,
                      SelfTestConfig::kDistanceSensorReadingThresh_mm))
     {
@@ -161,7 +161,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestLookAtCharger::SelfTestUpdateI
 
       SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::DISTANCE_SENSOR_OOR, SelfTestStatus::Running);
     }
-    
+
     return SelfTestStatus::Running;
   }
   // We've recorded all distance readings we need to
@@ -209,34 +209,33 @@ void BehaviorSelfTestLookAtCharger::TransitionToRefineTurn()
                           distToMarker_mm,
                           _expectedDistanceToObject_mm,
                           SelfTestConfig::kVisualDistanceToDistanceSensorObjectThresh_mm);
-      
+
       SELFTEST_SET_RESULT(SelfTestResultCode::DISTANCE_MARKER_VISUAL_OOR);
     }
     // We are within expected distance to update refined turn angle to put us perpendicular with the marker
     else
     {
       markerPose = markerPose.GetWithRespectToRoot();
-      // Marker pose rotation is kind of wonky, compared to the robot's rotation they are 
+      // Marker pose rotation is kind of wonky, compared to the robot's rotation they are
       // rotated 90 degrees. So when the robot is looking at a marker, you have to add
       // 90 degrees to get its rotation to match that of the robot
       // Taking the difference of these two angles tells us how much the robot needs to turn
       // to be perpendicular with the marker
-      angle = ((markerPose.GetRotation().GetAngleAroundZaxis() + DEG_TO_RAD(90)) - 
+      angle = ((markerPose.GetRotation().GetAngleAroundZaxis() + DEG_TO_RAD(90)) -
                robot.GetPose().GetRotation().GetAngleAroundZaxis());
     }
-    
+
     PRINT_NAMED_INFO("BehaviorSelfTestLookAtCharger.TransitionToRefineTurn.TurnAngle",
                      "Turning %f degrees to be perpendicular to marker",
                      angle.getDegrees());
-    
+
     turn->SetRequestedTurnAngle(angle.ToFloat());
   }
   action->AddAction(turn);
 
   VisuallyVerifyObjectAction* verify = new VisuallyVerifyObjectAction(objectID);
-  verify->SetUseCyclingExposure();
   action->AddAction(verify);
-  
+
   // Once we are perpendicular to the marker, start recording distance sensor readings
   DelegateIfInControl(action, [this]() { TransitionToRecordSensor(); });
 }
@@ -294,7 +293,7 @@ bool BehaviorSelfTestLookAtCharger::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& 
     objectID = object->GetID();
 
     const auto& markers = object->GetMarkers();
-    
+
     // Get the pose of the marker that was most recently observed
     Pose3d markerPose;
     TimeStamp_t lastObservedTime = 0;
@@ -315,7 +314,7 @@ bool BehaviorSelfTestLookAtCharger::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& 
       SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::DISTANCE_MARKER_NOT_FOUND, false);
       return false;
     }
-    
+
     if((u32)robot.GetLastImageTimeStamp() - lastObservedTime > SelfTestConfig::kChargerMarkerLastObservedTimeThresh_ms)
     {
       PRINT_NAMED_INFO("BehaviorSelfTestLookAtCharger.GetExpectedObjectMarkerPoseWrtRobot.MarkerTooOld",
@@ -325,7 +324,7 @@ bool BehaviorSelfTestLookAtCharger::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& 
                        SelfTestConfig::kChargerMarkerLastObservedTimeThresh_ms);
       return false;
     }
-    
+
     const bool res = markerPose.GetWithRespectTo(robot.GetPose(), markerPoseWrtRobot);
     if(!res)
     {
@@ -335,13 +334,10 @@ bool BehaviorSelfTestLookAtCharger::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& 
       SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::DISTANCE_MARKER_NOT_FOUND, false);
       return false;
     }
-    
+
     return true;
   }
 }
 
 }
 }
-
-
-
