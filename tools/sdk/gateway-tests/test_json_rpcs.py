@@ -302,3 +302,6 @@ def test_alexa_opt_out(vector_connection, data):
 
 def test_set_eye_color(vector_connection):
     vector_connection.send("v1/set_eye_color", p.SetEyeColorRequest(), p.SetEyeColorResponse())
+
+def test_capture_single_image(vector_connection):
+    vector_connection.send("v1/capture_single_image", p.CaptureSingleImageRequest(), p.CaptureSingleImageResponse())
