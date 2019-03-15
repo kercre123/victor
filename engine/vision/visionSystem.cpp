@@ -1149,7 +1149,7 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
 
   #define DEBUG_IMAGE_COMPOSITING 0
   #if(DEBUG_IMAGE_COMPOSITING)
-  static Vision::Image dispImg;
+  static Vision::Image dispCompositeImg;
   #endif
   
   Vision::Image compositeImage;
@@ -1162,8 +1162,8 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
       _imageCompositor->GetCompositeImage(compositeImage);
       imagePtrs.push_back(&compositeImage);
       #if(DEBUG_IMAGE_COMPOSITING)
-      dispImg.Allocate(compositeImage.GetNumRows(), compositeImage.GetNumCols());
-      compositeImage.CopyTo(dispImg);
+      dispCompositeImg.Allocate(compositeImage.GetNumRows(), compositeImage.GetNumCols());
+      compositeImage.CopyTo(dispCompositeImg);
       #endif
     }
 
@@ -1182,8 +1182,8 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
   }
 
   #if(DEBUG_IMAGE_COMPOSITING)
-  if(!dispImg.IsEmpty()) {
-    _currentResult.debugImages.emplace_back("ImageCompositing", dispImg);
+  if(!dispCompositeImg.IsEmpty()) {
+    _currentResult.debugImages.emplace_back("ImageCompositing", dispCompositeImg);
   }
   #endif
   
