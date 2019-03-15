@@ -82,6 +82,12 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kTurnInPlaceRequest,   callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetLiftHeightRequest, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetHeadAngleRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kTurnTowardsFaceRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kGoToObjectRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kRollObjectRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPopAWheelieRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPickupObjectRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPlaceObjectOnGroundHereRequest,  callback));
 
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kAudioSendModeRequest, callback));
 
@@ -729,7 +735,13 @@ void SDKComponent::OnActionCompleted(ExternalInterface::RobotCompletedAction msg
         { RobotActionType::MOVE_HEAD_TO_ANGLE,  ConstructActionResponseMessage<external_interface::SetHeadAngleResponse> },
         { RobotActionType::MOVE_LIFT_TO_HEIGHT, ConstructActionResponseMessage<external_interface::SetLiftHeightResponse> },
         { RobotActionType::DRIVE_TO_POSE,       ConstructActionResponseMessage<external_interface::GoToPoseResponse> },
-        { RobotActionType::ALIGN_WITH_OBJECT,   ConstructActionResponseMessage<external_interface::DockWithCubeResponse> }
+        { RobotActionType::ALIGN_WITH_OBJECT,   ConstructActionResponseMessage<external_interface::DockWithCubeResponse> },
+        { RobotActionType::TURN_TOWARDS_FACE,  ConstructActionResponseMessage<external_interface::TurnTowardsFaceResponse> },
+        { RobotActionType::DRIVE_TO_OBJECT,  ConstructActionResponseMessage<external_interface::GoToObjectResponse> },
+        { RobotActionType::ROLL_OBJECT_LOW,  ConstructActionResponseMessage<external_interface::RollObjectResponse> },
+        { RobotActionType::POP_A_WHEELIE,  ConstructActionResponseMessage<external_interface::PopAWheelieResponse> },
+        { RobotActionType::PICKUP_OBJECT_LOW,  ConstructActionResponseMessage<external_interface::PickupObjectResponse> },
+        { RobotActionType::PLACE_OBJECT_LOW,  ConstructActionResponseMessage<external_interface::PlaceObjectOnGroundHereResponse> }
       };
 
       if(actionResponseFactories.count((RobotActionType)msg.actionType) == 0) 

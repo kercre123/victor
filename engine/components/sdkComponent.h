@@ -34,6 +34,12 @@ namespace external_interface {
   class TurnInPlaceRequest;
   class SetLiftHeightRequest;
   class SetHeadAngleRequest;
+  class TurnTowardsFaceRequest;
+  class GoToObjectRequest;
+  class RollObjectRequest;
+  class PopAWheelieRequest;
+  class PickupObjectRequest;
+  class PlaceObjectOnGroundHereRequest;
 }
 
 class Robot;

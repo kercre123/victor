@@ -1982,6 +1982,180 @@ func (service *rpcService) SetLiftHeight(ctx context.Context, in *extint.SetLift
 	return response, nil
 }
 
+func (service *rpcService) TurnTowardsFace(ctx context.Context, in *extint.TurnTowardsFaceRequest) (*extint.TurnTowardsFaceResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_TurnTowardsFaceResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_TurnTowardsFaceRequest{
+			TurnTowardsFaceRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	turnTowardsFaceResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := turnTowardsFaceResponse.GetTurnTowardsFaceResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+func (service *rpcService) GoToObject(ctx context.Context, in *extint.GoToObjectRequest) (*extint.GoToObjectResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_GoToObjectResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_GoToObjectRequest{
+			GoToObjectRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	goToObjectResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := goToObjectResponse.GetGoToObjectResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+func (service *rpcService) RollObject(ctx context.Context, in *extint.RollObjectRequest) (*extint.RollObjectResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_RollObjectResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_RollObjectRequest{
+			RollObjectRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	rollObjectResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := rollObjectResponse.GetRollObjectResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+func (service *rpcService) PopAWheelie(ctx context.Context, in *extint.PopAWheelieRequest) (*extint.PopAWheelieResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PopAWheelieResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_PopAWheelieRequest{
+			PopAWheelieRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	popAWheelieResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := popAWheelieResponse.GetPopAWheelieResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+func (service *rpcService) PickupObject(ctx context.Context, in *extint.PickupObjectRequest) (*extint.PickupObjectResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PickupObjectResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_PickupObjectRequest{
+			PickupObjectRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	pickupObjectResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := pickupObjectResponse.GetPickupObjectResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+func (service *rpcService) PlaceObjectOnGroundHere(ctx context.Context, in *extint.PlaceObjectOnGroundHereRequest) (*extint.PlaceObjectOnGroundHereResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PlaceObjectOnGroundHereResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_PlaceObjectOnGroundHereRequest{
+			PlaceObjectOnGroundHereRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	placeObjectOnGroundResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := placeObjectOnGroundResponse.GetPlaceObjectOnGroundHereResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
 func (service *rpcService) BatteryState(ctx context.Context, in *extint.BatteryStateRequest) (*extint.BatteryStateResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_BatteryStateResponse{}, 1)
 	defer f()
