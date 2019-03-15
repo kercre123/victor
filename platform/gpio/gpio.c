@@ -99,11 +99,16 @@ int gpio_get_base_offset()
 {
   if (GPIO_BASE_OFFSET < 0) {
     // gpio pinctrl for msm8909:
+    // oe-linux/4.9:  /sys/devices/platform/soc/1000000.pinctrl/gpio/gpiochip0/base -> 0
     // oe-linux/3.18: /sys/devices/soc/1000000.pinctrl/gpio/gpiochip0/base     -> 0
     // android/3.10:  /sys/devices/soc.0/1000000.pinctrl/gpio/gpiochip911/base -> 911
 
-    // Assume we are on an OE-linux system
-    int fd = open_patiently("/sys/devices/soc/1000000.pinctrl/gpio/gpiochip0/base", O_RDONLY);
+    // Assume we are on an OE-linux with 4.9 kernel
+    int fd = open_patiently("/sys/devices/platform/soc/1000000.pinctrl/gpio/gpiochip0/base", O_RDONLY);
+    if (fd < 0) {
+      // Fallback to OE-linux 3.18 kernel
+      fd = open_patiently("/sys/devices/soc/1000000.pinctrl/gpio/gpiochip0/base", O_RDONLY);
+    }
     if (fd < 0) {
       // Fallback to Android
       fd = open_patiently("/sys/devices/soc.0/1000000.pinctrl/gpio/gpiochip911/base", O_RDONLY);
