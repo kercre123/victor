@@ -34,13 +34,26 @@ class SnapperServicer(chipperpb_pb2_grpc.ChipperGrpcServicer):
         {
           'bounding_poly':
             [
-              {'x': 0.01023531, u'y': 0.0017647222},
-              {u'x': 0.89, u'y': 0.0017647222},
+              {'x': 0.2, 'y': 0.25},
+              {'x': 0.4, 'y': 0.25},
+              {'x': 0.4, 'y': 0.75},
+              {'x': 0.2, 'y': 0.75}
             ],
-          'name': u'Person',
-          'score': 0.9962483,
-        },
-      ],
+          'name': 'Cat',
+          'score': 0.875
+        }, 
+        {
+          'bounding_poly':
+            [
+              {'x': 0.6, 'y': 0.25},
+              {'x': 0.8, 'y': 0.25},
+              {'x': 0.8, 'y': 0.75},
+              {'x': 0.6, 'y': 0.75}
+            ],
+          'name': 'Dog',
+          'score': 0.65
+        }
+      ]
     }
 
     image_response = chipperpb_pb2.ImageResponse()
