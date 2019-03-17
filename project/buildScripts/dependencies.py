@@ -440,7 +440,7 @@ def get_svn_file_rev(file_from_svn, cred=''):
 
 
 def svn_checkout(url, r_rev, loc, cred, checkout, cleanup, unpack, package, allow_extra_files,
-                 stale_warning, skip_if_offline=False, verbose=VERBOSE):
+                 stale_warning, abort_if_offline=True, verbose=VERBOSE):
     status = 0
     err = ''
     successful = ''
@@ -449,12 +449,12 @@ def svn_checkout(url, r_rev, loc, cred, checkout, cleanup, unpack, package, allo
     if need_to_cache_svn_checkout:
        if not is_up(url):
           msg = 'Could not contact svn server at {0}. This URL may require VPN or local LAN access.'.format(url)
-          if skip_if_offline:
+          if abort_if_offline:
+              raise RuntimeError(msg)
+          else:
               print(msg)
               print(stale_warning)
               return ''
-          else:
-              raise RuntimeError(msg)
 
        pipe = subprocess.Popen(checkout, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, close_fds=True)
