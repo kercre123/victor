@@ -120,6 +120,24 @@ def read_anim_file(anim_file):
     return (anim_clip, keyframes)
 
 
+def get_anim_end_by_type(keyframes):
+    anim_end_by_type = {}
+    for keyframe in keyframes:
+        type = keyframe[KEYFRAME_TYPE_ATTR]
+        trigger_time = keyframe[TRIGGER_TIME_ATTR]
+        try:
+            duration_time = keyframe[DURATION_TIME_ATTR]
+        except KeyError:
+            duration_time = 0
+        end_time = trigger_time + duration_time
+        if type in anim_end_by_type:
+            if end_time > anim_end_by_type[type]:
+                anim_end_by_type[type] = end_time
+        else:
+            anim_end_by_type[type] = end_time
+    return anim_end_by_type
+
+
 def prep_json_for_binary_conversion(anim_name, keyframes):
     """
     Given the name of the animation and a list of all keyframes for that
@@ -144,6 +162,19 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
     anim_dict[ANIM_NAME_ATTR] = anim_name
     anim_dict[KEYFRAMES_ATTR] = {}
 
+    # Keep track of what time the last animated track ends (which is when the entire animation has
+    # completed) and the number of tracks that end at that time. This info will be used below when
+    # processing backpack light keyframes.
+    try:
+        anim_end_by_type = get_anim_end_by_type(keyframes)
+    except KeyError:
+        last_end_time = 0
+        ending_tracks_count = 0
+    else:
+        end_times = anim_end_by_type.values()
+        last_end_time = max(end_times)
+        ending_tracks_count = end_times.count(last_end_time)
+
     for keyframe in keyframes:
         track = keyframe.pop(KEYFRAME_TYPE_ATTR)
 
@@ -161,9 +192,27 @@ def prep_json_for_binary_conversion(anim_name, keyframes):
             except KeyError:
                 pass
 
-        # Ignore BackpackLightsKeyFrames for Victor
+        # Ignore most BackpackLightsKeyFrames for Victor but preserve the last one
+        # if the entire animation will be shortened by its removal (see VIC-13802)
         if track == BACKPACK_LIGHT_TRACK:
-            continue
+            if ending_tracks_count > 1:
+                # ignore ALL backpack lights if the animation has multiple tracks keyed at the end
+                continue
+
+            duration_time = keyframe[DURATION_TIME_ATTR]
+            end_time = trigger_time + duration_time
+            if end_time < last_end_time:
+                # ignore this backpack lights unless it is the last keyframe for entire animation
+                continue
+            #print("Preserving %s with an end time of %s ms in %s" % (BACKPACK_LIGHT_TRACK, end_time, anim_name))
+
+            # Many old anim files will have "Left" and "Right" backpack lights,
+            # but we need to strip those out for Victor
+            for old_attr in OLD_BACKPACK_LIGHT_ATTRS:
+                try:
+                    keyframe.pop(old_attr)
+                except KeyError:
+                    pass
 
         if track == ROBOT_AUDIO_TRACK:
             # There are so many migration changes audio gets its own method
