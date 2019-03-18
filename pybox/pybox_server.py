@@ -29,6 +29,9 @@ class SnapperServicer(chipperpb_pb2_grpc.ChipperGrpcServicer):
 
     # Make the image response
     # One day this will be a real payload
+    # The color of the rectangle that will displayed
+    # on vector's face during mirror mode is determined
+    # by the order in this list.
     fake_payload = {
       'procType': 'ObjectDetection',
       'objects': [
