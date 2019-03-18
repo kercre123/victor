@@ -27,3 +27,33 @@ message DataLog {
     optional Time destruction_mono_time = 7;
     optional Time destruction_wall_time = 8;
 }
+
+message InitLog {
+
+    message NodeLog {
+        required UUID node_id = 1;
+        optional string name = 2;
+        required Time init_time_mono = 3;
+        required Time init_time_wall = 4; 
+    }
+    message PortLog {
+        required UUID port_id = 1;
+        optional UUID parent_id = 2;
+        repeated UUID connected_ids = 3;
+        optional string name = 4;
+        required string data_type = 5;
+        required Time init_time_mono = 6;
+        required Time init_time_wall = 7;
+    }
+
+    repeated NodeLog nodes = 1;
+    repeated PortLog input_ports = 2;
+    repeated PortLog output_ports = 3;
+}
+
+message ArfLogItem {
+    oneof log {
+        DataLog data_log = 1;
+        InitLog init_log = 2;
+    }
+}

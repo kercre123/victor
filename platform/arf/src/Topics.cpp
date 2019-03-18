@@ -5,18 +5,17 @@ namespace ARF
 
 size_t TopicRegistration::NumInputs() const
 {
-    Lock lock( _mutex );
+    Lock lock(_mutex);
     return _inputs.size();
 }
 
 size_t TopicRegistration::NumOutputs() const
 {
-    Lock lock( _mutex );
+    Lock lock(_mutex);
     return _outputs.size();
 }
 
-
-TopicDirectory* TopicDirectory::_inst = new TopicDirectory();
+TopicDirectory *TopicDirectory::_inst = nullptr;
 
 TopicDirectory::TopicDirectory() {}
 
@@ -25,14 +24,18 @@ TopicDirectory::~TopicDirectory()
     // TODO cleanup?
 }
 
-TopicDirectory& TopicDirectory::Inst()
+TopicDirectory &TopicDirectory::Inst()
 {
+    if (_inst)
+    {
+        _inst = new TopicDirectory();
+    }
     return *_inst;
 }
 
 void TopicDirectory::Destruct()
 {
-    if( _inst )
+    if (_inst)
     {
         delete _inst;
     }
@@ -45,18 +48,19 @@ void TopicDirectory::Clear()
 
 size_t TopicDirectory::NumTopics() const
 {
-    Lock lock( _mutex );
+    Lock lock(_mutex);
     return _topicRegistry.size();
 }
 
-TopicRegistration::ConstPtr TopicDirectory::GetTopic( const std::string& name ) const
+TopicRegistration::ConstPtr TopicDirectory::GetTopic(const std::string &name) const
 {
-    Lock lock( _mutex );
-    TopicRegistry::const_iterator item = _topicRegistry.find( name );
-    if( item == _topicRegistry.end() ) { return nullptr; }
-    return item->second; 
+    Lock lock(_mutex);
+    TopicRegistry::const_iterator item = _topicRegistry.find(name);
+    if (item == _topicRegistry.end())
+    {
+        return nullptr;
+    }
+    return item->second;
 }
 
-
-
-} // end namespace arf
+} // namespace ARF

@@ -3,6 +3,8 @@
 #include <mutex>
 #include <condition_variable>
 
+#include "util/string/stringUtils.h"
+
 #include <chrono>
 
 // Common types and free functions are defined here

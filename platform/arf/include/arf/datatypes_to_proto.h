@@ -31,9 +31,17 @@ void ConvertTaskEventToProto(const TaskEvent& log,
                            arf_proto::TaskEvent* proto);
 void ConvertProtoToTaskEvent(const arf_proto::TaskEvent& proto,
                            TaskEvent* log);
+void ConvertInitEventToProto(const InitEvent& event,
+                             arf_proto::InitEvent* proto);
+void ConvertProtoToInitEvent(const arf_proto::InitEvent& proto,
+                             InitEvent* event);
 
 void ConvertDataLogToProto(const DataLog& log,
                            arf_proto::DataLog* proto);
 void ConvertProtoToDataLog(const arf_proto::DataLog& proto,
                            DataLog* log);
+void ConvertInitLogToProto(const InitLog& log,
+                           arf_proto::InitLog* proto);
+void ConvertProtoToInitLog(const arf_proto::InitLog& proto,
+                           InitLog* log);
 }  // namespace ARF

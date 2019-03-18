@@ -12,6 +12,7 @@
 
 #include "util/container/circularBuffer.h"
 #include "arf/Types.h"
+#include "arf/TypeHelpers.h"
 #include "arf/Introspection.h"
 
 // Intraprocess communication ports
@@ -134,8 +135,20 @@ class InputPort : public PortBase
     using Ptr = std::shared_ptr<InputPort<T>>;
     using EventCallback = std::function<void(InputPort<T> *)>;
 
-    InputPort(size_t buffSize)
-        : _buffer(buffSize) {}
+    // Create an input port with specified buffer size
+    // Takes an optional name, which is used for introspection
+    InputPort(size_t buffSize, const std::string &name = "", const UUID &parentID = "")
+        : PortBase(), _buffer(buffSize)
+    {
+        InitEvent event;
+        event.type = InitEvent::Type::CREATE_INPUT_PORT;
+        event.objectID = PortBase::GetUUID();
+        event.objectName = name;
+        event.parentID = parentID;
+        event.dataType = get_type_name<T>();
+        event.SetTimeToNow();
+        Logger::Inst().LogInitEvent(event);
+    }
 
     // Cleans up an input port by disconnecting from all connected OutputPorts
     virtual ~InputPort()
@@ -164,7 +177,7 @@ class InputPort : public PortBase
 #ifdef ENABLE_PORT_LOGGING
         for (size_t i = 0; i < _buffer.size(); ++i)
         {
-            CreateAndLogEvent(_buffer[i], {&GetUUID()}, DataEvent::Type::DESTRUCTION);
+            CreateAndLogEvent(_buffer[i], {GetUUID()}, DataEvent::Type::DESTRUCTION);
         }
         _buffer.clear();
 #endif
@@ -173,7 +186,7 @@ class InputPort : public PortBase
     // Attempt to retrieve an item from the port
     // Returns true if an item is retrieved, or false if not
     // Takes an optional UUID for the sink reading the data
-    bool Read(T &item, const UUID *uuid = nullptr)
+    bool Read(T &item, const UUID &uuid = "")
     {
         Lock lock(_bufferMutex);
         if (_buffer.empty())
@@ -185,7 +198,7 @@ class InputPort : public PortBase
         _buffer.pop_front();
 
 #ifdef ENABLE_PORT_LOGGING
-        CreateAndLogEvent(item, {&GetUUID(), uuid}, DataEvent::Type::MOVEMENT);
+        CreateAndLogEvent(item, {GetUUID(), uuid}, DataEvent::Type::MOVEMENT);
 #endif
 
         return true;
@@ -222,7 +235,7 @@ class InputPort : public PortBase
 #ifdef ENABLE_PORT_LOGGING
         if (_buffer.capacity() == _buffer.size())
         {
-            CreateAndLogEvent(_buffer.front(), {&GetUUID()}, DataEvent::Type::DESTRUCTION);
+            CreateAndLogEvent(_buffer.front(), {GetUUID()}, DataEvent::Type::DESTRUCTION);
         }
 #endif
 
@@ -288,7 +301,20 @@ class OutputPort : public PortBase
     using DataType = T;
     using Ptr = std::shared_ptr<OutputPort<T>>;
 
-    OutputPort() {}
+    // Create an OutputPort
+    // Optionally takes a name used for introspection
+    OutputPort(const std::string &name = "", const std::string &parentID = "")
+    {
+        // TODO How to get parent name into here?
+        InitEvent event;
+        event.type = InitEvent::Type::CREATE_OUTPUT_PORT;
+        event.objectID = PortBase::GetUUID();
+        event.objectName = name;
+        event.parentID = parentID;
+        event.dataType = get_type_name<T>();
+        event.SetTimeToNow();
+        Logger::Inst().LogInitEvent(event);
+    }
 
     // Clean up the port by disconnecting from all connected InputPorts
     ~OutputPort()
@@ -316,10 +342,10 @@ class OutputPort : public PortBase
     // Passes an item by reference through the port
     // This will immediately push data to the connected InputPorts
     // Takes an optional source UUID, if not specified will use nil
-    void Write(const T &item, const UUID *source = nullptr)
+    void Write(const T &item, const UUID &source = "")
     {
 #ifdef ENABLE_PORT_LOGGING
-        CreateAndLogEvent(item, {source, &GetUUID()}, DataEvent::Type::MOVEMENT);
+        CreateAndLogEvent(item, {source, GetUUID()}, DataEvent::Type::MOVEMENT);
 #endif
 
         // Enqueue the data
@@ -330,7 +356,7 @@ class OutputPort : public PortBase
 // before the actual call, as we want to know the
 // entry point a potentially long trace
 #ifdef ENABLE_PORT_LOGGING
-            CreateAndLogEvent(item, {&GetUUID(), &s->GetUUID()}, DataEvent::Type::MOVEMENT);
+            CreateAndLogEvent(item, {GetUUID(), s->GetUUID()}, DataEvent::Type::MOVEMENT);
 #endif
 
             s->Enqueue(item, PortWriteKey<T>());
@@ -383,6 +409,12 @@ void connect_ports(const DerivedOutputT &out, const DerivedInputT &in)
     typename BaseOutput::Ptr upcastOut = std::static_pointer_cast<BaseOutput>(out);
     upcastOut->Connect(upcastIn, PortConnectionKey<DataType>());
     upcastIn->Connect(upcastOut, PortConnectionKey<DataType>());
+
+    InitEvent event;
+    event.type = InitEvent::Type::CONNECT_PORTS;
+    event.outputPortID = out->GetUUID();
+    event.inputPortID = in->GetUUID();
+    Logger::Inst().LogInitEvent(event);
 }
 
 template <typename DerivedOutputT, typename DerivedInputT>
@@ -396,6 +428,8 @@ void disconnect_ports(const DerivedOutputT &out, const DerivedInputT &in)
     typename BaseOutput::Ptr upcastOut = std::static_pointer_cast<BaseOutput>(out);
     upcastOut->Disconnect(upcastIn.get(), PortConnectionKey<DataType>());
     upcastIn->Disconnect(upcastOut.get(), PortConnectionKey<DataType>());
+
+    // TODO Log this event?
 }
 
 } // end namespace ARF

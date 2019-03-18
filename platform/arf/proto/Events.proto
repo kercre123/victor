@@ -36,9 +36,30 @@ message TaskEvent {
     required Time wall_time = 5;
 }
 
+message InitEvent {
+    enum Type {
+        CREATE_NODE = 0;
+        CREATE_INPUT_PORT = 1;
+        CREATE_OUTPUT_PORT = 2;
+        CREATE_WORKER_THREAD = 3;
+        CONNECT_PORTS = 4;
+    }
+
+    required Type type = 1;
+    optional UUID object_id = 2;
+    optional string object_name = 3;
+    optional UUID parent_id = 4;
+    optional string data_type = 5;
+    optional UUID output_port_id = 6;
+    optional UUID input_port_id = 7;
+    required Time mono_time = 8;
+    required Time wall_time = 9;
+}
+
 message ArfEventItem {
     oneof entry {
         DataEvent data_event = 1;
         TaskEvent task_event = 2;
+        InitEvent init_event = 3;
     }
 }

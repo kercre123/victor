@@ -1,12 +1,12 @@
 #pragma once
 
+#include "arf/Types.h"
+#include "util/string/stringUtils.h"
 #include <vector>
 #include <fstream>
 #include <iostream>
 #include <set>
-
-#include "arf/Types.h"
-#include "util/string/stringUtils.h"
+#include <unordered_map>
 
 namespace ARF
 {
@@ -34,7 +34,23 @@ namespace ARF
 // Describes things that happen to data as they flow through the system
 // Should be atomic "deltas" that can be aggregated to form complete
 // logs of object lifespans
-class DataEvent
+
+
+class EventBase
+{
+public:
+
+    EventBase();
+    virtual ~EventBase() = default;
+
+    MonotonicTime monoTime;      // When this event happened (monotonic)
+    WallTime wallTime;           // When this event happened (wall)
+
+    // Update the timestamps to current time
+    void SetTimeToNow();
+};
+
+class DataEvent : public EventBase
 {
 public:
 
@@ -45,15 +61,14 @@ public:
         DESTRUCTION   // End of data lifespan
     };
 
+
     Type type;                   // Type of event
     UUID dataID;                 // ID of data in event
     std::vector<UUID> parentIDs; // For CREATION:    {parent ID(s)}
                                  // For MOVEMENT:    {from ID, to ID}
                                  // For DESTRUCTION: {sink ID}
-    MonotonicTime monoTime;      // When this event happened (monotonic)
-    WallTime wallTime;           // When this event happened (wall)
 
-    DataEvent();
+    DataEvent() = default;
 
     // Create a new event pertaining to a specific datum
     template <typename T>
@@ -66,13 +81,12 @@ public:
     {
         parentIDs.push_back( tagged.GetUUID() );
     }
-
-    // Update the timestamps to current time
-    void SetTimeToNow();
 };
 
-// Describes the lifespan of a Task and its dependencies
-class TaskEvent
+std::ostream& operator<<( std::ostream& os, const DataEvent& event );
+
+// Describes events relating to Task lifespans and dependencies
+class TaskEvent : public EventBase
 {
 public:
 
@@ -94,12 +108,39 @@ public:
                                  // For RUNNING: {data IDs}
                                  // For FINISHED: {}
                                  // For ERRORED: {}
-
-    MonotonicTime monoTime;      // When this event happened (monotonic)
-    WallTime wallTime;           // When this event happened (wall)
 };
 
-// TODO Events declaring Port/Node IDs
+// Describes events concerning system initialization
+class InitEvent : public EventBase
+{
+public:
+
+    enum Type
+    {
+        CREATE_NODE = 0,      // Creating a Node
+        CREATE_INPUT_PORT,    // Creating an InputPort
+        CREATE_OUTPUT_PORT,   // Creating an OutputPort
+        CREATE_WORKER_THREAD, // Creating a worker thread in Threadpool
+        CONNECT_PORTS,        // Connecting two ports
+    };
+
+    Type type;              // Type of event
+
+    // For CREATE events
+    UUID objectID;          // Created object's UUID
+    std::string objectName; // For CREATE_NODE: User-specified Node name
+                            // For CREATE_PORTs: Port index/name
+                            // For CREATE_WORKER_THREAD: The system thread ID
+    
+    std::string dataType;   // For CREATE_PORT only, the type of data
+    UUID parentID;          // For CREATE_PORT only, the owning Node UUID, if any
+
+    // For CONNECT events
+    UUID outputPortID;      // For CONNECT_PORTS only, the connected output port ID
+    UUID inputPortID;       // For CONNECT_PORTS only, the connected input port ID
+};
+
+std::ostream& operator<<( std::ostream& os, const InitEvent& event );
 
 // Logs
 // ====
@@ -109,7 +150,7 @@ public:
 struct MonoTimeComparator
 {
     template <typename T>
-    bool operator() ( const T& a, const T& b ) const
+    bool operator()( const T& a, const T& b ) const
     {
         return a.monoTime < b.monoTime;
     }
@@ -153,7 +194,42 @@ public:
 };
 
 // TODO Logs for Tasks
-// TODO Logs declaring all Port, Node IDs
+
+// Log declaring all Port, Node IDs captured from InitEvents
+// TODO Capture connect events between ports?
+class InitLog
+{
+public:
+
+    struct NodeLog
+    {
+        UUID nodeID;
+        std::string name;
+        MonotonicTime initTimeMono;
+        WallTime initTimeWall;
+    };
+
+    struct PortLog
+    {
+        UUID portID;
+        UUID parentID;
+        std::vector<UUID> connectedIDs;
+        std::string name;
+        std::string dataType;
+        MonotonicTime initTimeMono;
+        WallTime initTimeWall;
+    };
+    // TODO Declaration for worker thread
+
+    std::vector<NodeLog> nodes;
+    using PortMap = std::unordered_map<UUID, PortLog>;
+    PortMap inputPorts;
+    PortMap outputPorts;
+
+    // Adds an event's contents to this log
+    // Returns false if the event cannot be processed
+    bool ProcessEvent( const InitEvent& event );
+};
 
 // Convenience classes for ID'ing things
 // =====================================
@@ -222,7 +298,7 @@ int32_t stream_proto( const T& proto, std::ostream& os )
 }
 
 std::string to_string( const UUID& uuid );
-std::ostream& operator<<( std::ostream& os, const UUID& uuid );
+// std::ostream& operator<<( std::ostream& os, const UUID& uuid );
 
 // Logger singleton for event streaming
 // TODO Chunk logs into files
@@ -239,6 +315,7 @@ public:
 
     void LogDataEvent( const DataEvent& event );
     void LogTaskEvent( const TaskEvent& log );
+    void LogInitEvent( const InitEvent& init );
 
     size_t NumEventsLogged() const;
 
@@ -259,22 +336,11 @@ private:
 // Version for UUID'd types
 template <typename T,
           typename std::enable_if<HasUUID<T>::value, int>::type  = 0>
-void CreateAndLogEvent( const T& t, const std::vector<const UUID*>& parents, DataEvent::Type type )
+void CreateAndLogEvent( const T& t, const std::vector<UUID>& parents, DataEvent::Type type )
 {
     DataEvent event( t );
     event.type = type;
-    for( auto id : parents )
-    {
-        if( id )
-        {
-            event.parentIDs.emplace_back( *id );
-        }
-        else
-        {
-            event.parentIDs.emplace_back( UUID() );
-        }
-        
-    }
+    event.parentIDs = parents;
     event.SetTimeToNow();
     Logger::Inst().LogDataEvent( event );
 }
@@ -282,7 +348,7 @@ void CreateAndLogEvent( const T& t, const std::vector<const UUID*>& parents, Dat
 // Version for non-UUID'd types
 template <typename T,
           typename std::enable_if<!HasUUID<T>::value, int>::type  = 0>
-void CreateAndLogEvent( const T&, const std::vector<const UUID*>&, DataEvent::Type ) {}
+void CreateAndLogEvent( const T&, const std::vector<UUID>&, DataEvent::Type ) {}
 
 // Mix-in to give IDs to objects
 class TaggedMixin

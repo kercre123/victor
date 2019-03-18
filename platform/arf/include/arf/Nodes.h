@@ -33,7 +33,7 @@ class Node : public TaggedMixin
 {
 public:
 
-    Node();
+    Node( const std::string& name = "" );
 
     ~Node();
 
@@ -47,7 +47,7 @@ public:
     InputPort<T>* CreateInputPort( size_t buffSize, const std::string& index )
     {
         using PortT = InputPort<T>;
-        typename PortT::Ptr port = std::make_shared<PortT>( buffSize );
+        typename PortT::Ptr port = std::make_shared<PortT>( buffSize, index, GetUUID() );
         if( !RegisterPort( port, index ) ) { return nullptr; }
         return RetrieveInputPort<T>( index ).get();
     }
@@ -56,7 +56,7 @@ public:
     OutputPort<T>* CreateOutputPort( const std::string& index )
     {
         using PortT = OutputPort<T>;
-        typename PortT::Ptr port = std::make_shared<PortT>();
+        typename PortT::Ptr port = std::make_shared<PortT>( index, GetUUID() );
         if( !RegisterPort( port, index ) ) { return nullptr; }
         return RetrieveOutputPort<T>( index ).get();
     }
@@ -111,6 +111,7 @@ public:
 
 private:
 
+    const std::string _name;
     mutable Mutex _mutex;
     std::vector<std::shared_ptr<TaskTracker>> _taskTracks;
     using PortMap = std::unordered_map<std::string, std::shared_ptr<PortBase>>;

@@ -4,7 +4,16 @@
 namespace ARF
 {
 
-Node::Node() {}
+Node::Node( const std::string& name ) 
+: _name( name )
+{
+    InitEvent event;
+    event.type = InitEvent::Type::CREATE_NODE;
+    event.objectID = GetUUID();
+    event.objectName = name;
+    event.SetTimeToNow();
+    Logger::Inst().LogInitEvent( event );
+}
 
 Node::~Node()
 {

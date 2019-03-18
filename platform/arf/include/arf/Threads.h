@@ -16,13 +16,14 @@
 // TODO Appropriate wrappers to make this cross-platform
 
 #ifdef __APPLE__
-typedef struct cpu_set {
-  uint32_t    count;
+typedef struct cpu_set
+{
+    uint32_t count;
 } cpu_set_t;
 
-void CPU_ZERO( cpu_set* );
-void CPU_SET( int, cpu_set* );
-int pthread_setaffinity_np( pthread_t, size_t, cpu_set* );
+void CPU_ZERO(cpu_set *);
+void CPU_SET(int, cpu_set *);
+int pthread_setaffinity_np(pthread_t, size_t, cpu_set *);
 
 #endif
 
@@ -46,25 +47,24 @@ enum class TaskPriority
 };
 
 // Passkey to protect Threadpool-specific accesses to TaskTracker
-class TaskTrackingKey 
+class TaskTrackingKey
 {
     friend class Threadpool;
 };
 
-// Provides methods for sychronization between the Threadpool 
+// Provides methods for sychronization between the Threadpool
 // and the Task requester
 class TaskTracker
 {
-public:
-
+  public:
     typedef std::shared_ptr<TaskTracker> Ptr;
 
     TaskTracker();
 
     // Blocks until N of the associated tasks are done
-    void WaitUntilNumDone( int N );
+    void WaitUntilNumDone(int N);
     // Blocks until N of the associated tasks are started/done
-    void WaitUntilNumActive( int N );
+    void WaitUntilNumActive(int N);
     // Blocks until all the associated tasks are done
     void WaitUntilAllDone();
     // Blocks until all the associated tasks are started/done
@@ -84,16 +84,15 @@ public:
     // Methods for Threadpool
     // ======================
     // Indicates that an associated task was accepted
-    void IndicateTaskReceived( TaskTrackingKey );
+    void IndicateTaskReceived(TaskTrackingKey);
     // Indicates that a single task has started
-    void IndicateOneTaskStarted( TaskTrackingKey );
+    void IndicateOneTaskStarted(TaskTrackingKey);
     // Indicates that a single task has been cancelled
-    void IndicateOneTaskCancelled( TaskTrackingKey );
+    void IndicateOneTaskCancelled(TaskTrackingKey);
     // Indicates that a single task is done
-    void IndicateOneTaskDone( TaskTrackingKey );
+    void IndicateOneTaskDone(TaskTrackingKey);
 
-private:
-
+  private:
     mutable Mutex _mutex;
     ConditionVariable _doneCondition;
     bool _isCancelled = false;
@@ -105,7 +104,6 @@ private:
     int TotalNumTasks() const;
 };
 
-
 // A threadpool supporting multiple types of Tasks
 // Uses pthread methods under the hood to manage scheduling
 //
@@ -115,11 +113,10 @@ private:
 // Priority : Threads for high-priority realtime tasks pinned to their own cores
 class Threadpool
 {
-public:
-
+  public:
     // Retrieve the singleton instance
     // If not yet initialized, instantiates the pool
-    static Threadpool& Inst();
+    static Threadpool &Inst();
 
     // Deallocates the singleton
     static void Destruct();
@@ -130,8 +127,8 @@ public:
     // Note that this does not clear the task queues, so tasks can be
     // added prior to initialization
     // Returns success
-    bool Initialize( unsigned int numStandardThreads,
-                     unsigned int numPriorityThreads = 0 );
+    bool Initialize(unsigned int numStandardThreads,
+                    unsigned int numPriorityThreads = 0);
 
     // Destroys all threads immediately and resets all task queues
     void HaltAndDeinitialize();
@@ -143,7 +140,7 @@ public:
     void StartAll();
 
     // Start a specified task queue and its threads
-    void Start( TaskPriority p );
+    void Start(TaskPriority p);
 
     // Block until all job queues and the threadpool terminate
     // This does not actually signal the pool to stop, so it should
@@ -154,28 +151,27 @@ public:
     // Does not clear the task queue, simply prevents threads from
     // fetching new tasks
     // This state can be reversed using Start() or StartAll()
-    void Pause( TaskPriority p );
+    void Pause(TaskPriority p);
 
     // Add a task that will be scheduled using the specified pool and optional
     // TaskTracker
     // TODO: Throw error when pushing to a queue with no threads
-    void EnqueueTask( const Task& t, 
-                      TaskPriority p = TaskPriority::Standard, 
-                      TaskTracker::Ptr tracker = nullptr );
+    void EnqueueTask(const Task &t,
+                     TaskPriority p = TaskPriority::Standard,
+                     TaskTracker::Ptr tracker = nullptr);
 
     // Returns the number of tasks not yet being worked on in the specified queue
-    size_t NumPendingTasks( TaskPriority p = TaskPriority::Standard ) const;
+    size_t NumPendingTasks(TaskPriority p = TaskPriority::Standard) const;
 
-private:
-
-    static Threadpool* _instance; // Singleton instance
+  private:
+    static Threadpool *_instance; // Singleton instance
 
     mutable Mutex _mutex;
     bool _isInitialized = false;
 
     typedef std::thread Thread;
     std::vector<Thread> _threadPool;
-    
+
     struct TaskRegistration
     {
         Task task;
@@ -185,14 +181,13 @@ private:
     // A synchronized queue with wait/halt mechanics for threads
     class TaskQueue
     {
-    public:
-
+      public:
         // Create a new queue in the "not running" state
         TaskQueue();
 
         // Signals all waiting threads to exit
         ~TaskQueue();
-        
+
         // Signals all waiting threads to begin fetching jobs
         void Start();
 
@@ -211,19 +206,18 @@ private:
         void Reset();
 
         // Adds a task to the back of the queue
-        void Enqueue( const TaskRegistration& t );
+        void Enqueue(const TaskRegistration &t);
 
         // Blocks until the queue is halted, or is running and has tasks
         // Note that the queue starts as not running by default, so threads
         // can immediately be assigned to wait for tasks
         // Returns true if a task is received, or false if halted
-        bool WaitForTask( TaskRegistration& t );
+        bool WaitForTask(TaskRegistration &t);
 
         // Returns the number of tasks in this queue
         size_t Size() const;
-        
-    private:
 
+      private:
         mutable Mutex _mutex;
         bool _isRunning = false;
         bool _isHalted = false;
@@ -235,9 +229,9 @@ private:
     TaskQueue _priorityQueue;
 
     // Constructor access restricted to enforce singleton
-    Threadpool();
+    Threadpool() {}
 
-    void ThreadSpin( TaskQueue& queue );
+    void ThreadSpin(TaskQueue &queue);
 };
 
-}
+} // namespace ARF

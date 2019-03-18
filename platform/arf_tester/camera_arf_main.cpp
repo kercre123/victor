@@ -44,7 +44,7 @@ class CameraNode : public Node
 {
   public:
     static constexpr const char *OUTPUT_CAMERA = "camera";
-    CameraNode() : camera_service_(Anki::Vector::CameraService::getInstance()) {}
+    CameraNode(const std::string &node_name) : Node(node_name), camera_service_(Anki::Vector::CameraService::getInstance()) {}
 
     bool Initialize()
     {
@@ -73,8 +73,8 @@ class CameraNode : public Node
                 return;
             }
             TaggedImageBuffer tagged_image_buffer(shared_buffer);
-            CreateAndLogEvent(tagged_image_buffer, {&GetUUID()}, DataEvent::Type::CREATION);
-            output->Write(tagged_image_buffer, &GetUUID());
+            CreateAndLogEvent(tagged_image_buffer, {GetUUID()}, DataEvent::Type::CREATION);
+            output->Write(tagged_image_buffer, GetUUID());
             Threadpool::Inst().EnqueueTask(camera_task_);
         };
 
@@ -100,7 +100,7 @@ class ImageNode : public Node
   public:
     static constexpr const char *INPUT_BUFFER = "buffer";
     static constexpr const char *OUTPUT_IMAGE = "image";
-    ImageNode() {}
+    ImageNode(const std::string &node_name) : Node(node_name) {}
 
     bool Initialize()
     {
@@ -109,7 +109,7 @@ class ImageNode : public Node
 
         InputPort<TaggedImageBuffer>::EventCallback cb = [input, output, this](InputPort<TaggedImageBuffer> *) {
             TaggedImageBuffer image_buffer;
-            if (!input->Read(image_buffer, &GetUUID()))
+            if (!input->Read(image_buffer, GetUUID()))
             {
                 printf("Bad read\n");
             }
@@ -128,7 +128,7 @@ class ImageNode : public Node
                 event.SetTimeToNow();
                 Logger::Inst().LogDataEvent(event);
 
-                output->Write(image, &GetUUID());
+                output->Write(image, GetUUID());
             };
 
             Threadpool::Inst().EnqueueTask(get_image_task);
@@ -143,7 +143,7 @@ class FaceTrackerNode : public Node
   public:
     static constexpr const char *INPUT_IMAGE = "image";
     static constexpr const char *OUTPUT_TRACKED_FACES_AND_IMAGE = "tracked_faces_and_image";
-    FaceTrackerNode()
+    FaceTrackerNode(const std::string &node_name) : Node(node_name)
     {
         // From factory test
         const std::array<f32, 8> distortionCoeffs = {{-0.03822904514363595, -0.2964213946476391, -0.00181089972406104, 0.001866070303033584, 0.1803429725181202,
@@ -178,17 +178,19 @@ class FaceTrackerNode : public Node
 
     bool Initialize()
     {
-        InputPort<TaggedImage> *input = Node::CreateInputPort<TaggedImage>(5, INPUT_IMAGE);
+        InputPort<TaggedImage> *input = Node::CreateInputPort<TaggedImage>(1, INPUT_IMAGE);
         OutputPort<TaggedTrackedFacesAndImage> *output =
             Node::CreateOutputPort<TaggedTrackedFacesAndImage>(OUTPUT_TRACKED_FACES_AND_IMAGE);
 
         InputPort<TaggedImage>::EventCallback cb = [input, output, this](InputPort<TaggedImage> *) {
-            TaggedImage image;
-            input->Read(image, &GetUUID());
-            Task get_faces_task = [image, output, this]() {
-                if (!image.item)
+            Task get_faces_task = [input, output, this]() {
+                std::lock_guard<ARF::Mutex> lock(mutex_);
+                TaggedImage image;
+                bool read_ok = input->Read(image, GetUUID());
+                if (!read_ok)
                 {
-                    printf("Shit's about to go south\n");
+                    printf("Read failed\n");
+                    return;
                 }
                 TaggedTrackedFacesAndImage faces_and_image;
                 faces_and_image.item.first = std::make_shared<std::list<Anki::Vision::TrackedFace>>();
@@ -210,7 +212,7 @@ class FaceTrackerNode : public Node
                 event.SetTimeToNow();
                 Logger::Inst().LogDataEvent(event);
 
-                output->Write(faces_and_image, &GetUUID());
+                output->Write(faces_and_image, GetUUID());
             };
 
             Threadpool::Inst().EnqueueTask(get_faces_task);
@@ -220,6 +222,7 @@ class FaceTrackerNode : public Node
     }
 
   private:
+    ARF::Mutex mutex_; // To guard face tracker.
     std::unique_ptr<Anki::Vision::FaceTracker> face_tracker_;
     Anki::Vision::Camera camera_;
 };
@@ -228,7 +231,7 @@ class FacePublishNode : public Node
 {
   public:
     static constexpr const char *INPUT_TRACKED_FACES_AND_IMAGE = "tracked_faces_and_image";
-    FacePublishNode()
+    FacePublishNode(const std::string &node_name) : Node(node_name)
     {
         pub_handle_.reset(new ARF::PubHandle<std::string>(node_handle_.RegisterPublisher<std::string>("rgb")));
     }
@@ -239,7 +242,7 @@ class FacePublishNode : public Node
 
         InputPort<TaggedTrackedFacesAndImage>::EventCallback cb = [input, this](InputPort<TaggedTrackedFacesAndImage> *) {
             TaggedTrackedFacesAndImage tagged_tracked_faces_and_image;
-            input->Read(tagged_tracked_faces_and_image, &GetUUID());
+            input->Read(tagged_tracked_faces_and_image, GetUUID());
             Task publish_faces_task = [tagged_tracked_faces_and_image, this]() {
                 const auto &face_list = *tagged_tracked_faces_and_image.item.first;
                 const auto &image = *tagged_tracked_faces_and_image.item.second;
@@ -278,11 +281,12 @@ class FacePublishNode : public Node
 
 int main(int argc, char **argv)
 {
+    Logger::Inst().Initialize("/data/arf/face_tracker.log");
     ARF::Init(argc, argv, "vector");
-    CameraNode camera_node;
-    ImageNode image_node;
-    FaceTrackerNode face_tracker_node;
-    FacePublishNode face_publish_node;
+    CameraNode camera_node("camera");
+    ImageNode image_node("image");
+    FaceTrackerNode face_tracker_node("face_tracker");
+    FacePublishNode face_publish_node("face_publish");
 
     camera_node.Initialize();
     image_node.Initialize();
@@ -296,9 +300,8 @@ int main(int argc, char **argv)
     ARF::connect_ports(face_tracker_node.RetrieveOutputPort<TaggedTrackedFacesAndImage>(FaceTrackerNode::OUTPUT_TRACKED_FACES_AND_IMAGE),
                        face_publish_node.RetrieveInputPort<TaggedTrackedFacesAndImage>(FacePublishNode::INPUT_TRACKED_FACES_AND_IMAGE));
 
-    Threadpool::Inst().Initialize(4);
+    Threadpool::Inst().Initialize(5); // Num cores plus one extra potentially blocked in face tracker.
     Threadpool::Inst().StartAll();
-    Logger::Inst().Initialize("/data/arf/face_tracker.log");
 
     camera_node.Start();
 
