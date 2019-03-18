@@ -13,9 +13,10 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestLookAtCharger.h"
 
 #include "engine/actions/basicActions.h"
+#include "engine/actions/driveToActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/components/sensors/proxSensorComponent.h"
+#include "engine/components/sensors/rangeSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
@@ -97,7 +98,7 @@ Result BehaviorSelfTestLookAtCharger::OnBehaviorActivatedInternal()
   WaitForImagesAction* wait = new WaitForImagesAction(5, VisionMode::DetectingMarkers);
 
   CompoundActionSequential* action = new CompoundActionSequential({liftHeadDrive, turn, wait});
-  DelegateIfInControl(action, [this]() { TransitionToRefineTurn(); });
+  DelegateIfInControl(action, [this]() { TransitionToRefineTurnBeforeApproach(); });
 
   return RESULT_OK;
 }
@@ -116,20 +117,14 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestLookAtCharger::SelfTestUpdateI
   // We have distance readings left to record
   else if(_numRecordedReadingsLeft > 0)
   {
-    --_numRecordedReadingsLeft;
-
-    const auto& proxData = robot.GetProxSensorComponent().GetLatestProxData();
-    DistanceSensorData data;
-    data.proxSensorData = proxData;
-    data.visualDistanceToTarget_mm = 0;
-    data.visualAngleAwayFromTarget_rad = 0;
-
+    float visualDistanceToTarget_mm = 0.f;
+    float visualAngleToTarget_rad = 0.f;
     Pose3d markerPose;
     ObjectID unused;
     const bool res = GetExpectedObjectMarkerPoseWrtRobot(markerPose, unused);
     if(res)
     {
-      data.visualDistanceToTarget_mm = markerPose.GetTranslation().x();
+      visualDistanceToTarget_mm = markerPose.GetTranslation().x();
 
       markerPose = markerPose.GetWithRespectToRoot();
       // Marker pose rotation is kind of wonky, compared to the robot's rotation they are
@@ -139,29 +134,55 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestLookAtCharger::SelfTestUpdateI
       // to be perpendicular with the marker
       const auto angle = ((markerPose.GetRotation().GetAngleAroundZaxis() + DEG_TO_RAD(90)) -
                           robot.GetPose().GetRotation().GetAngleAroundZaxis());
-      data.visualAngleAwayFromTarget_rad = angle.ToFloat();
+      visualAngleToTarget_rad = angle.ToFloat();
     }
 
-    f32 bias = SelfTestConfig::kDistanceSensorBiasAdjustment_mm;
-    if(!robot.IsPhysical())
+    bool isNewData = false;
+    const auto& rangeData = robot.GetRangeSensorComponent().GetLatestRawRangeData(isNewData);
+
+    PRINT_NAMED_WARNING("","%f %f %d", visualDistanceToTarget_mm, visualAngleToTarget_rad, isNewData);
+
+    if(isNewData && res)
     {
-      bias = 0;
+      --_numRecordedReadingsLeft;
+      PRINT_NAMED_WARNING("","RECORDING %u MORE", _numRecordedReadingsLeft);
+
+      RangeSensorData data;
+      data.rangeData = rangeData;
+      data.visualDistanceToTarget_mm = 0;
+      data.visualAngleAwayFromTarget_rad = 0;
+      data.headAngle_rad = robot.GetHeadAngle();
+      data.visualDistanceToTarget_mm = visualDistanceToTarget_mm;
+      data.visualAngleAwayFromTarget_rad = visualAngleToTarget_rad;
+
+      for(const auto& iter : rangeData.data)
+      {
+        const bool distValid = Util::IsNear(iter.processedRange_mm - SelfTestConfig::kDistanceSensorBiasAdjustment_mm,
+                                            data.visualDistanceToTarget_mm,
+                                            SelfTestConfig::kDistanceSensorReadingThresh_mm);
+
+        const bool oneObject = (iter.numObjects == 1);
+        bool statusValid = false;
+        if(oneObject)
+        {
+          statusValid = (iter.readings[0].status == 0);
+        }
+
+        if(!statusValid || !distValid)
+        {
+          PRINT_NAMED_WARNING("BehaviorSelfTestLookAtCharger.UpdateInternal.ReadingOutsideThresh",
+                              "Roi %u %u Dist: %f - %f Visual: %f Thresh: %f",
+                              iter.roi,
+                              (iter.numObjects > 0 ? iter.readings[0].status : 255),
+                              iter.processedRange_mm,
+                              SelfTestConfig::kDistanceSensorBiasAdjustment_mm,
+                              data.visualDistanceToTarget_mm,
+                              SelfTestConfig::kDistanceSensorReadingThresh_mm);
+
+          SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::DISTANCE_SENSOR_OOR, SelfTestStatus::Running);
+        }
+      }
     }
-
-    if(!Util::IsNear(data.proxSensorData.distance_mm - bias,
-                     data.visualDistanceToTarget_mm,
-                     SelfTestConfig::kDistanceSensorReadingThresh_mm))
-    {
-      PRINT_NAMED_WARNING("BehaviorSelfTestLookAtCharger.SelfTestUpdateInternal.ReadingOutsideThresh",
-                          "Sensor reading %u - %f not near visual reading %f with threshold %f",
-                          data.proxSensorData.distance_mm,
-                          SelfTestConfig::kDistanceSensorBiasAdjustment_mm,
-                          data.visualDistanceToTarget_mm,
-                          SelfTestConfig::kDistanceSensorReadingThresh_mm);
-
-      SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::DISTANCE_SENSOR_OOR, SelfTestStatus::Running);
-    }
-
     return SelfTestStatus::Running;
   }
   // We've recorded all distance readings we need to
@@ -182,7 +203,7 @@ void BehaviorSelfTestLookAtCharger::OnBehaviorDeactivated()
   _numRecordedReadingsLeft = -1;
 }
 
-void BehaviorSelfTestLookAtCharger::TransitionToRefineTurn()
+IActionRunner* BehaviorSelfTestLookAtCharger::CreateRefineTurn()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
@@ -210,7 +231,9 @@ void BehaviorSelfTestLookAtCharger::TransitionToRefineTurn()
                           _expectedDistanceToObject_mm,
                           SelfTestConfig::kVisualDistanceToDistanceSensorObjectThresh_mm);
 
-      SELFTEST_SET_RESULT(SelfTestResultCode::DISTANCE_MARKER_VISUAL_OOR);
+      Util::SafeDelete(action);
+      Util::SafeDelete(turn);
+      SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::DISTANCE_MARKER_VISUAL_OOR, nullptr);
     }
     // We are within expected distance to update refined turn angle to put us perpendicular with the marker
     else
@@ -236,8 +259,83 @@ void BehaviorSelfTestLookAtCharger::TransitionToRefineTurn()
   VisuallyVerifyObjectAction* verify = new VisuallyVerifyObjectAction(objectID);
   action->AddAction(verify);
 
+  return action;
+}
+
+void BehaviorSelfTestLookAtCharger::TransitionToRefineTurnBeforeApproach()
+{
+  IActionRunner* action = CreateRefineTurn();
+  if(action == nullptr)
+  {
+    return;
+  }
+
+  // Once we are perpendicular to the marker, start recording distance sensor readings
+  DelegateIfInControl(action, [this]() { TransitionToApproachMarker(); });
+}
+
+void BehaviorSelfTestLookAtCharger::TransitionToRefineTurnAfterApproach()
+{
+  IActionRunner* action = CreateRefineTurn();
+  if(action == nullptr)
+  {
+    return;
+  }
+
   // Once we are perpendicular to the marker, start recording distance sensor readings
   DelegateIfInControl(action, [this]() { TransitionToRecordSensor(); });
+}
+
+void BehaviorSelfTestLookAtCharger::TransitionToApproachMarker()
+{
+  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+  // be removed
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
+
+  // Check for the object in the world
+  BlockWorldFilter filter;
+  filter.AddAllowedType(ObjectType::Charger_Basic);
+  std::vector<ObservableObject*> objects;
+  robot.GetBlockWorld().FindLocatedMatchingObjects(filter, objects);
+
+  if(objects.empty())
+  {
+    PRINT_NAMED_WARNING("BehaviorSelfTestDockWithCharger.GetExpectedObjectMarkerPoseWrtRobot.NullObject",
+                        "Expected object of type %s does not exist or am not seeing it",
+                        ObjectTypeToString(ObjectType::Charger_Basic));
+    SELFTEST_SET_RESULT(SelfTestResultCode::CHARGER_NOT_FOUND);
+  }
+  else
+  {
+    // Get the most recently observed object of the expected object type
+    ObservableObject* object = nullptr;
+    TimeStamp_t t = 0;
+    for(const auto& obj : objects)
+    {
+      if(obj->GetLastObservedTime() > t)
+      {
+        object = obj;
+        t = obj->GetLastObservedTime();
+      }
+    }
+
+    if(object == nullptr)
+    {
+      PRINT_NAMED_INFO("BehaviorSelfTestLookAtCharger.GetExpectedObjectMarkerPoseWrtRobot.NullObject","");
+      SELFTEST_SET_RESULT(SelfTestResultCode::CHARGER_NOT_FOUND);
+    }
+
+    // Copied from DriveToAndMountChargerAction
+    DriveToObjectAction* action = new DriveToObjectAction(object->GetID(),
+                                                          PreActionPose::ActionType::DOCKING,
+                                                          0,
+                                                          false,
+                                                          0);
+    action->SetPreActionPoseAngleTolerance(DEG_TO_RAD(15.f));
+    action->DoPositionCheckOnPathCompletion(false);
+
+    DelegateIfInControl(action, [this](){ TransitionToRefineTurnAfterApproach(); });
+  }
 }
 
 void BehaviorSelfTestLookAtCharger::TransitionToRecordSensor()

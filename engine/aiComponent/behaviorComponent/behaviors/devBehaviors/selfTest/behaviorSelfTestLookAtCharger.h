@@ -14,6 +14,7 @@
 #define __Cozmo_Basestation_Behaviors_BehaviorSelfTestLookAtCharger_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/iBehaviorSelfTest.h"
+#include "engine/actions/actionInterface.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -21,11 +22,11 @@ namespace Cozmo {
 class BehaviorSelfTestLookAtCharger : public IBehaviorSelfTest
 {
 protected:
-  
+
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorSelfTestLookAtCharger(const Json::Value& config);
-  
+
 protected:
   virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOnCharger = true;
@@ -35,22 +36,26 @@ protected:
   virtual Result         OnBehaviorActivatedInternal()   override;
   virtual SelfTestStatus SelfTestUpdateInternal() override;
   virtual void           OnBehaviorDeactivated()           override;
-    
+
 private:
 
   // If seeing the expected marker/object, turns us to be perpendicular to it
-  void TransitionToRefineTurn();
+  IActionRunner* CreateRefineTurn();
+  void TransitionToRefineTurnBeforeApproach();
+  void TransitionToRefineTurnAfterApproach();
+
+  void TransitionToApproachMarker();
 
   // Starts recording distance sensor readings
   void TransitionToRecordSensor();
 
   // Turns back to the starting angle
   void TransitionToTurnBack();
-  
+
   // Gets the most recently observed marker pose (wrt robot) of the expected object
   // Returns true if markerPoseWrtRobot is valid
   bool GetExpectedObjectMarkerPoseWrtRobot(Pose3d& markerPoseWrtRobot, ObjectID& objectID);
-  
+
   // Initial starting angle when the behavior started
   Radians    _startingAngle               = 0;
 
