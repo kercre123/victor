@@ -26,6 +26,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/cubeSpinner/cubeSpinnerGame.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/dataAccessorComponent.h"
 
 #include "util/console/consoleInterface.h"
@@ -440,7 +441,7 @@ bool BehaviorVectorPlaysCubeSpinner::IsCubePositionKnown() const
     return obj != nullptr;
   }else{
     const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
-    const auto* obj = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose);
+    const auto* obj = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, BlockWorldFilter() );
     return obj != nullptr;
   }
 }
@@ -472,7 +473,7 @@ bool BehaviorVectorPlaysCubeSpinner::GetBestGuessObjectID(ObjectID& bestGuessID)
     return true;
   }else{
     const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
-    const auto* obj = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose);
+    const auto* obj = GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, BlockWorldFilter());
     if(obj != nullptr){
       bestGuessID = obj->GetID();
       return true;

@@ -801,21 +801,6 @@ namespace Vector {
     }
     return _ledState[whichLED];
   }
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool Block::CanBeUsedForLocalization() const
-  {
-    if (IsPoseStateKnown() && IsMoving()) {
-      // This shouldn't happen!
-      LOG_WARNING("Block.CanBeUsedForLocalization.PoseStateKnownButMoving", "");
-      return false;
-    }
-    
-    return (GetPoseState() == PoseState::Known &&
-            GetActiveID() >= 0 &&
-            GetLastPoseUpdateDistance() >= 0.f &&
-            IsRestingFlat(DEG_TO_RAD(GetRestingFlatTolForLocalization_deg())));
-  }
 
 
 } // namespace Vector

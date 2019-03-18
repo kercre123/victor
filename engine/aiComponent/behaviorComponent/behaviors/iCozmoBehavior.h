@@ -241,9 +241,15 @@ public:
                 { DEV_ASSERT(false, "AddListener.FistBumpListener.Unimplemented"); }
   virtual void AddListener(IFeedingListener* listener)
                 { DEV_ASSERT(false, "AddListener.FeedingListener.Unimplemented"); }
-
+  
   // Give derived behaviors the opportunity to override default behavior operations
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const = 0;
+  
+  // Give other behaviors access to a constant reference to the finalized operation modifiers,
+  // including the defaults set by the JSON configuration during the construction of the behavior.
+  // In the case of a dispatcher behavior, this also factors in the operation modifiers of all its
+  // possible dispatches. Should only be called after Init.
+  const BehaviorOperationModifiers& GetBehaviorOperationModifiersPostInit() const;
   
   // gets list of ICozmoBehavior's expected keys and the derived class's, through GetBehaviorJsonKeys
   std::vector<const char*> GetAllJsonKeys() const;
@@ -263,7 +269,6 @@ public:
   std::map<std::string,ICozmoBehaviorPtr> TESTONLY_GetAnonBehaviors( UnitTestKey key ) const;
 
 protected:
-
 
   // default is no delegates, but behaviors which delegate can overload this
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override { }

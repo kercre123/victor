@@ -36,7 +36,7 @@ enum ProtocolVersion {
   option allow_alias = true;
   PROTOCOL_VERSION_UNKNOWN = 0; // Required zero value for enums
   PROTOCOL_VERSION_MINIMUM = 0; // Minimum supported version
-  PROTOCOL_VERSION_CURRENT = 4; // Current version (incremented post-1.4.1 on 2/22/19 by msintov)
+  PROTOCOL_VERSION_CURRENT = 5; // Current version (incremented on 2019.03.12 for streaming update status support.)
 }
 
 // The grpc-defined connection between the SDK and Anki's Vector robot.
@@ -296,6 +296,24 @@ service ExternalInterface {
   // Tell Vector's lift to move to a given height.
   rpc SetLiftHeight(SetLiftHeightRequest) returns (SetLiftHeightResponse) {}
 
+  // Tell Vector to turn towards this face.
+  rpc TurnTowardsFace(TurnTowardsFaceRequest) returns (TurnTowardsFaceResponse) {}
+
+  // Tell Vector to drive to the specified object.
+  rpc GoToObject(GoToObjectRequest) returns (GoToObjectResponse) {}
+
+  // Tell Vector to roll his cube.
+  rpc RollObject(RollObjectRequest) returns (RollObjectResponse) {}
+
+  // Tell Vector to "pop a wheelie" using his cube.
+  rpc PopAWheelie(PopAWheelieRequest) returns (PopAWheelieResponse) {}
+
+  // Instruct the robot to pick up the supplied object.
+  rpc PickupObject(PickupObjectRequest) returns (PickupObjectResponse) {}
+
+  // Ask Vector to place the object he is carrying on the ground at the current location.
+  rpc PlaceObjectOnGroundHere(PlaceObjectOnGroundHereRequest) returns (PlaceObjectOnGroundHereResponse) {}
+
   rpc UserAuthentication(UserAuthenticationRequest) returns (UserAuthenticationResponse) {
     option (google.api.http) = {
       post: "/v1/user_authentication",
@@ -426,6 +444,14 @@ service ExternalInterface {
     };
   }
 
+  // Request a single image to be captured and sent from the robot.
+  rpc CaptureSingleImage(CaptureSingleImageRequest) returns (CaptureSingleImageResponse) {
+    option (google.api.http) = {
+      post: "/v1/capture_single_image",
+      body: "*"
+    };
+  }
+
   // Set Vector's eye color.
   rpc SetEyeColor(SetEyeColorRequest) returns (SetEyeColorResponse) {
     option (google.api.http) = {
@@ -498,7 +524,16 @@ service ExternalInterface {
       post: "/v1/update_user_entitlements",
       body: "*"
     };
-  }  
+  }    
+
+  // CheckUpdateStatus tells the robot's current state regarding download, installation, and
+  // readiness to boot to, engine updates.
+  rpc CheckUpdateStatusStream(CheckUpdateStatusRequest) returns (stream CheckUpdateStatusResponse) {
+    option (google.api.http) = {
+      post: "/v1/check_update_status_stream",
+      body: "*"
+    };
+  }
 
   // CheckUpdateStatus tells if the robot is ready to reboot and update.
   rpc CheckUpdateStatus(CheckUpdateStatusRequest) returns (CheckUpdateStatusResponse) {

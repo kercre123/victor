@@ -15,6 +15,7 @@
 
 #include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "osState/wallTime.h"
 #include "util/console/consoleInterface.h"
 

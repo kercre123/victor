@@ -82,6 +82,12 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kTurnInPlaceRequest,   callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetLiftHeightRequest, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetHeadAngleRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kTurnTowardsFaceRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kGoToObjectRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kRollObjectRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPopAWheelieRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPickupObjectRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPlaceObjectOnGroundHereRequest,  callback));
 
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kAudioSendModeRequest, callback));
 
@@ -393,15 +399,6 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
       }
       break;
 
-    // TODO VIC-11579 Support CaptureSingleImage
-    // case external_interface::GatewayWrapperTag::kCaptureSingleImageRequest:
-    //   {
-    //     SubscribeToVisionMode(true, VisionMode::ImageViz);
-    //     _robot->GetVisionComponent().EnableSendingSDKImageChunks(true);
-    //     _captureSingleImage = true;
-    //   }
-    //   break;
-
     case external_interface::GatewayWrapperTag::kEnableImageStreamingRequest:
       {
         // Allowed to be controlled even when the behavior is not active
@@ -539,23 +536,9 @@ void SDKComponent::HandleMessage(const ExternalInterface::RobotProcessedImage& m
           break;
         case VisionMode::ImageViz:
           {
-            // if(_captureSingleImage)
-            // {
-            //   auto* msg = new CaptureSingleImageResponse();
-            //   msg->set_allocated_status(status);
-            //   gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
-
-            //   const bool updateWaitingSet = false;
-            //   SubscribeToVisionMode(false, VisionMode::ImageViz, updateWaitingSet);
-            //   _robot->GetVisionComponent().EnableSendingSDKImageChunks(false);
-            //   _captureSingleImage = false;
-            // }
-            // else
-            {
-              auto* msg = new EnableImageStreamingResponse();
-              msg->set_allocated_status(status);
-              gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
-            }
+            auto* msg = new EnableImageStreamingResponse();
+            msg->set_allocated_status(status);
+            gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
           }
           break;
         
@@ -752,7 +735,13 @@ void SDKComponent::OnActionCompleted(ExternalInterface::RobotCompletedAction msg
         { RobotActionType::MOVE_HEAD_TO_ANGLE,  ConstructActionResponseMessage<external_interface::SetHeadAngleResponse> },
         { RobotActionType::MOVE_LIFT_TO_HEIGHT, ConstructActionResponseMessage<external_interface::SetLiftHeightResponse> },
         { RobotActionType::DRIVE_TO_POSE,       ConstructActionResponseMessage<external_interface::GoToPoseResponse> },
-        { RobotActionType::ALIGN_WITH_OBJECT,   ConstructActionResponseMessage<external_interface::DockWithCubeResponse> }
+        { RobotActionType::ALIGN_WITH_OBJECT,   ConstructActionResponseMessage<external_interface::DockWithCubeResponse> },
+        { RobotActionType::TURN_TOWARDS_FACE,  ConstructActionResponseMessage<external_interface::TurnTowardsFaceResponse> },
+        { RobotActionType::DRIVE_TO_OBJECT,  ConstructActionResponseMessage<external_interface::GoToObjectResponse> },
+        { RobotActionType::ROLL_OBJECT_LOW,  ConstructActionResponseMessage<external_interface::RollObjectResponse> },
+        { RobotActionType::POP_A_WHEELIE,  ConstructActionResponseMessage<external_interface::PopAWheelieResponse> },
+        { RobotActionType::PICKUP_OBJECT_LOW,  ConstructActionResponseMessage<external_interface::PickupObjectResponse> },
+        { RobotActionType::PLACE_OBJECT_LOW,  ConstructActionResponseMessage<external_interface::PlaceObjectOnGroundHereResponse> }
       };
 
       if(actionResponseFactories.count((RobotActionType)msg.actionType) == 0) 

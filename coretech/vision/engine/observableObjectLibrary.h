@@ -47,18 +47,10 @@ namespace Anki {
       // Returns true if an object is found and removed, false otherwise.
       bool RemoveObjectWithMarker(const Marker::Code& code);
       
-      // Groups markers referring to the same object type, and clusters them into
-      // observed objects, returned in objectsSeen
-      // - If seenOnlyBy is not ANY_CAMERA, only markers
-      //   seen by that camera will be considered and objectSeen poses will be returned
-      //   wrt to that camera.
-      // - If seenOnlyBy is ANY_CAMERA, the poses are returned wrt the world.
-      // - If clampPosesToFlatIfWithinLocalizableTol=true, poses of active objects that are within
-      //   their angular tolerance of "flat" for localization will be clamped to be exactly flat.
-      Result CreateObjectsFromMarkers(const std::list<ObservedMarker>& markers,
-                                      std::vector<ObsObjectType*>& objectsSeen,
-                                      const CameraID_t seenOnlyBy = ANY_CAMERA,
-                                      bool clampPosesToFlatIfWithinLocalizableTol = true) const;
+      // Groups markers referring to the same object type, and clusters them into observed objects, returned in
+      // objectsSeen. The object poses will be with respect to origin.
+      void CreateObjectsFromMarkers(const std::list<ObservedMarker>& markers,
+                                    std::vector<std::shared_ptr<ObsObjectType>>& objectsSeen) const;
       
       // Return a pointer to a known object with at least one of the specified marker or code on it. If there is no
       // object with that marker/code, a NULL pointer is returned.

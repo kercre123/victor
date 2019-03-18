@@ -192,7 +192,7 @@
       "emotionAffectors" : [
         {
           "emotionType" : "Trust",
-          "value" : -0.2
+          "value" : -1.0
         }
       ],
       "repetitionPenalty": {
@@ -206,6 +206,40 @@
     },
     {
       "name" : "PettingStartedOnPalm",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Trust",
+          "value" : 0.1
+        }
+      ],
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 1
+          }
+        ]
+      }
+    },
+    {
+      "name" : "PettingBlissLevelIncreaseOnPalm",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Trust",
+          "value" : 0.1
+        }
+      ],
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 1
+          }
+        ]
+      }
+    },
+    {
+      "name" : "PettingReachedMaxBlissOnPalm",
       "emotionAffectors" : [
         {
           "emotionType" : "Trust",

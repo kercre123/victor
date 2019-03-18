@@ -706,6 +706,93 @@ message SetLiftHeightResponse {
   ActionResult   result = 2;
 }
 
+// TurnTowardsFace
+message TurnTowardsFaceRequest {
+  int32              face_id                    = 1;
+  float              max_turn_angle_rad         = 2;
+  int32              id_tag                     = 3;
+  int32              num_retries                = 4;
+}
+
+message TurnTowardsFaceResponse {
+  ResponseStatus status = 1;
+  ActionResult   result = 2;
+}
+
+// GoToObject
+message GoToObjectRequest { 
+  int32             object_id                      = 1;
+  PathMotionProfile motion_prof                    = 2;
+  float             distance_from_object_origin_mm = 3;
+  bool              use_pre_dock_pose              = 4;
+  int32             id_tag                         = 5;
+  int32             num_retries                    = 6;
+}
+
+message GoToObjectResponse {
+  ResponseStatus status = 1;
+  ActionResult   result = 2;
+}
+
+// RollObject
+message RollObjectRequest {
+  int32             object_id            = 1; // negative value means "currently selected object"
+  PathMotionProfile motion_prof          = 2;
+  float             approach_angle_rad   = 3;
+  bool              use_approach_angle   = 4;
+  bool              use_pre_dock_pose    = 5;
+  int32             id_tag               = 6;
+  int32             num_retries          = 7;
+}
+
+message RollObjectResponse {
+  ResponseStatus status = 1;
+  ActionResult   result = 2;
+}
+
+// PopAWheelie
+message PopAWheelieRequest {
+  int32             object_id          = 1; // negative value means "currently selected object"
+  PathMotionProfile motion_prof        = 2;
+  float             approach_angle_rad = 3;
+  bool              use_approach_angle = 4;
+  bool              use_pre_dock_pose  = 5;
+  int32             id_tag             = 6;
+  int32             num_retries        = 7;
+}
+
+message PopAWheelieResponse {
+  ResponseStatus status = 1;
+  ActionResult   result = 2;
+}
+
+// PickupObject
+message PickupObjectRequest {
+  int32              object_id          = 1; // negative value means "currently selected object"
+  PathMotionProfile  motion_prof        = 2;
+  float              approach_angle_rad = 3;
+  bool               use_approach_angle = 4;
+  bool               use_pre_dock_pose  = 5;
+  int32              id_tag             = 6;
+  int32              num_retries        = 7;
+}
+
+message PickupObjectResponse {
+  ResponseStatus status = 1;
+  ActionResult   result = 2;
+}
+
+// PlaceObjectOnGroundHere
+message PlaceObjectOnGroundHereRequest {
+  int32 id_tag      = 1;
+  int32 num_retries = 2;
+}
+
+message PlaceObjectOnGroundHereResponse {
+  ResponseStatus status = 1;
+  ActionResult   result = 2;
+}
+
 enum BatteryLevel {
   BATTERY_LEVEL_UNKNOWN = 0;
   BATTERY_LEVEL_LOW     = 1;
@@ -1006,6 +1093,16 @@ message CameraFeedResponse {
   bytes                    data = 4;
 }
 
+message CaptureSingleImageRequest {}
+
+message CaptureSingleImageResponse {
+  ResponseStatus           status = 1;
+  uint32                   frame_time_stamp = 2;
+  uint32                   image_id = 3;
+  ImageChunk.ImageEncoding image_encoding = 4;
+  bytes                    data = 5;
+}
+
 message SetEyeColorRequest {
   float hue = 1;
   float saturation = 2;
@@ -1026,6 +1123,7 @@ message SDKInitializationRequest {
 message SDKInitializationResponse {
   ResponseStatus status = 1;
 }
+
 
 // *** App only proto below ***
 
@@ -1249,23 +1347,29 @@ message LatestAttentionTransferResponse {
   LatestAttentionTransfer latest_attention_transfer = 2;
 }
 
-message CheckUpdateStatusRequest{}
-
-message CheckUpdateStatusResponse{
-  ResponseStatus status = 1;
-  enum UpdateStatus {
-    NO_UPDATE = 0;
-    READY_TO_INSTALL = 1;
-  }
-  UpdateStatus update_status = 2;
-}
-
 message UpdateAndRestartRequest{}
 
 message UpdateAndRestartResponse{
   ResponseStatus status = 1;
 }
 
+
+message CheckUpdateStatusRequest{}
+
+message CheckUpdateStatusResponse{
+  option(streamed) = true;
+
+  ResponseStatus status = 1;
+  enum UpdateStatus {
+    NO_UPDATE = 0;
+    READY_TO_INSTALL = 1;
+    IN_PROGRESS_DOWNLOAD = 2;
+  }
+  UpdateStatus update_status = 2;
+  int64 expected = 3;
+  int64 progress = 4;
+}
+  
 message UploadDebugLogsRequest{}
 
 message UploadDebugLogsResponse{

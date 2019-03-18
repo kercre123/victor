@@ -13,7 +13,6 @@
 #ifndef __Engine_AiComponent_BehaviorComponent_WeatherIntentParser_H__
 #define __Engine_AiComponent_BehaviorComponent_WeatherIntentParser_H__
 
-#include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/behaviorComponent/weatherConditionTypes.h"
 
 #include "engine/aiComponent/behaviorComponent/weatherIntents/weatherConditionRemaps.h"

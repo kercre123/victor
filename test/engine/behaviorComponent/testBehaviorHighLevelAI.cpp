@@ -10,7 +10,6 @@
  *
  **/
 
-#include "clad/types/behaviorComponent/userIntent.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/cozmoContext.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"

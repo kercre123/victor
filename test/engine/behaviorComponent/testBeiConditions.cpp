@@ -19,7 +19,6 @@
 
 #include "clad/types/behaviorComponent/behaviorTimerTypes.h"
 #include "clad/types/featureGateTypes.h"
-#include "clad/types/behaviorComponent/userIntent.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
@@ -1470,36 +1469,29 @@ TEST(BeiConditions, ObjectKnown)
   EXPECT_FALSE( cond1000Ms->AreConditionsMet(bei) );
 
   // put a cube in front of the robot
-  Block testCube(testType);
   ObservableObject* object1 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, testType);
   ASSERT_TRUE(nullptr != object1);
 
   const Pose3d obj1Pose(0.0f, Z_AXIS_3D(), {100, 0, 0}, robot.GetPose());
   object1->_lastObservedTime = (TimeStamp_t)robot._lastMsgTimestamp;
-  auto result = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, obj1Pose, PoseState::Known);
+  auto result = robot.GetBlockWorld().SetObjectPose(object1->GetID(), obj1Pose, PoseState::Known);
   ASSERT_EQ(RESULT_OK, result);
-
-  // lazy man's marker observation
-  robot.GetBlockWorld()._currentObservedMarkerTimestamp = robot._lastMsgTimestamp;
 
   EXPECT_TRUE( condAnyAge->AreConditionsMet(bei) );
   EXPECT_TRUE( condInitialTick->AreConditionsMet(bei) );
   EXPECT_TRUE( cond1000Ms->AreConditionsMet(bei) );
 
   robot._lastMsgTimestamp = 1004; // 1004 ms (was first observed at 5ms)
-  robot.GetBlockWorld()._currentObservedMarkerTimestamp = robot._lastMsgTimestamp;
 
   EXPECT_TRUE( condAnyAge->AreConditionsMet(bei) );
   EXPECT_FALSE( condInitialTick->AreConditionsMet(bei) );
   EXPECT_TRUE( cond1000Ms->AreConditionsMet(bei) );
 
   robot._lastMsgTimestamp = 1006; // 1006 ms (was first observed at 5ms)
-  robot.GetBlockWorld()._currentObservedMarkerTimestamp = robot._lastMsgTimestamp;
 
   EXPECT_TRUE( condAnyAge->AreConditionsMet(bei) );
   EXPECT_FALSE( condInitialTick->AreConditionsMet(bei) );
   EXPECT_FALSE( cond1000Ms->AreConditionsMet(bei) );
-
 }
 
 

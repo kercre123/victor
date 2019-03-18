@@ -73,7 +73,6 @@ class IGatewayInterface;
 class MoodManager;
 class MovementComponent;
 class NVStorageComponent;
-class ObjectPoseConfirmer;
 enum class OffTreadsState : int8_t;
 class PetWorld;
 class PhotographyManager;
@@ -231,7 +230,6 @@ public:
   INLINE_GETTERS(MicComponent)
   INLINE_GETTERS(MoodManager)
   INLINE_GETTERS(NVStorageComponent)
-  INLINE_GETTERS(ObjectPoseConfirmer)
   INLINE_GETTERS(PathComponent)
   INLINE_GETTERS(PetWorld)
   INLINE_GETTERS(PhotographyManager)

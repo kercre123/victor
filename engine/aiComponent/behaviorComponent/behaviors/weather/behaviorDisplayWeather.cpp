@@ -34,7 +34,6 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
 
-#include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/featureGateTypes.h"
 
 

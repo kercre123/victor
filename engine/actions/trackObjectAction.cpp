@@ -13,6 +13,7 @@
 
 #include "engine/actions/trackObjectAction.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/movementComponent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
@@ -84,7 +85,9 @@ ITrackAction::UpdateResult TrackObjectAction::UpdateTracking(Radians& absPanAngl
   
   if(_trackByType) {
     BlockWorldFilter filter;
-    filter.OnlyConsiderLatestUpdate(true);
+    filter.AddFilterFcn([this](const ObservableObject* obj){
+      return (obj->GetLastObservedTime() == GetRobot().GetLastImageTimeStamp());
+    });
     
     matchingObject = GetRobot().GetBlockWorld().FindLocatedClosestMatchingObject(_objectType, _lastTrackToPose, 1000.f, DEG_TO_RAD(180), filter);
     

@@ -37,7 +37,7 @@ function usage() {
 
 KEEPARG=""
 
-while getopts "hkrfvc:s:" opt; do
+while getopts "hkrfibvc:s:" opt; do
   case $opt in
     h)
       usage && exit 0
@@ -54,6 +54,10 @@ while getopts "hkrfvc:s:" opt; do
     r)
       ;;
     f)
+      ;;
+    i)
+      ;;
+    b)
       ;;
     s)
       ;;

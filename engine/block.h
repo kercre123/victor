@@ -191,8 +191,6 @@ namespace Anki {
       // Set the moving state of the object and when it either started or stopped moving.
       virtual void SetIsMoving(bool isMoving, RobotTimeStamp_t t) override { _isMoving = isMoving; _movingTime = t;}
       
-      virtual bool CanBeUsedForLocalization() const override;
-      
       struct LEDstate {
         ColorRGBA onColor;
         ColorRGBA offColor;
