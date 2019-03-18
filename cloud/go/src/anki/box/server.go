@@ -12,7 +12,7 @@ func Run(ctx context.Context) {
 }
 
 func runServer(ctx context.Context) {
-	serv, err := ipc.NewUnixgramServer(ipc.GetSocketPath("box_server"))
+	serv, err := ipc.NewUnixgramServer(ipc.GetSocketPath("offboard_vision_server"))
 	if err != nil {
 		log.Println("Error creating box server:", err)
 		return

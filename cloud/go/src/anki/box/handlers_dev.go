@@ -72,7 +72,7 @@ func reqHandler(w http.ResponseWriter, r *http.Request) {
 	// initialize connection to ipc server
 	if boxClient == nil {
 		var err error
-		if boxClient, err = ipc.NewUnixgramClient(ipc.GetSocketPath("box_server"), "box_dev_client"); err != nil {
+		if boxClient, err = ipc.NewUnixgramClient(ipc.GetSocketPath("offboard_vision_server"), "offboard_vision_dev_client"); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, "Error connecting to server: ", err)
 			return
