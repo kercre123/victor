@@ -435,10 +435,14 @@ void Analog::tick(void) {
   } else if (++bouncy_count > BOUNCE_LENGTH) {
     button_pressed = bouncy_button;
   }
-
+  
   if (button_pressed) {
+    static bool shut_down = false;
+
     if (++hold_count >= POWER_WIPE_TIME) {
       // We will be signaling a recovery
+      shut_down = false;
+      BODY_TX::mode(MODE_OUTPUT);
       BODY_TX::reset();
 
       if (on_charger) {
@@ -450,8 +454,11 @@ void Analog::tick(void) {
       BODY_TX::set();
       BODY_TX::mode(MODE_INPUT);
 
+      shut_down = true;
       Power::setMode(POWER_STOP);
-    } else {
+    } else if (shut_down) {
+      shut_down = false;
+      BODY_TX::mode(MODE_OUTPUT);
       Power::setMode(POWER_ACTIVE);
     }
   } else {

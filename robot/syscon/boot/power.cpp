@@ -31,8 +31,6 @@ static inline void disableHead(void) {
 }
 
 static inline void enableHead(void) {
-  BODY_TX::mode(MODE_OUTPUT);
-
   MAIN_EN_WIS::mode(MODE_OUTPUT);
   MAIN_EN_WIS::set();
 }
