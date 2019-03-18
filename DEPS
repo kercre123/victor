@@ -1,7 +1,6 @@
 {
     "artifactory": {
-        "builds": {
-        },
+        "builds": {},
         "root_url": "http://10.10.7.40:8081/artifactory"
     },
     "deptool": {
@@ -115,7 +114,7 @@
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "170"
+                "version": "171"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"
