@@ -832,8 +832,8 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
     //       Consequently, moving the left wheel in any direction
     //       moves the menu cursor down and moving the right wheel
     //       in any direction moves it up.
-    const auto lWheelSpeed = state.lwheel_speed_mmps;
-    const auto rWheelSpeed = state.rwheel_speed_mmps;
+    const auto lWheelSpeed = std::fabsf(state.lwheel_speed_mmps);
+    const auto rWheelSpeed = std::fabsf(state.rwheel_speed_mmps);
     if (rWheelSpeed > kWheelMotionThresh_mmps) {
 
       ++_wheelMovingForwardsCount;
@@ -845,7 +845,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
         DrawScratch();
       }
 
-    } else if (lWheelSpeed < -kWheelMotionThresh_mmps) {
+    } else if (lWheelSpeed > kWheelMotionThresh_mmps) {
 
       ++_wheelMovingBackwardsCount;
       _wheelMovingForwardsCount = 0;
