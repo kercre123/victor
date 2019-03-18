@@ -149,9 +149,12 @@ pushd ${STAGING_DIR} > /dev/null 2>&1
 # Use --inplace to avoid consuming temp space & minimize number of writes
 # Use --delete to purge files that are no longer present in build tree
 #
+
 logv "rsync"
 set +e
 rsync -rlptD -uzvP \
+  --chmod=ug+rw \
+  --groupmap=*:2901 \
   --inplace \
   --delete \
   ./anki/ rsync://${ANKI_ROBOT_HOST}:1873/anki_root/

@@ -13,19 +13,18 @@ import tarfile
 import zlib
 import shutil
 import ConfigParser
+import socket
 from select import select
 from hashlib import sha256
 from collections import OrderedDict
 from fcntl import fcntl, F_GETFL, F_SETFL
+from distutils.version import LooseVersion
 
 sys.path.append("/usr/bin")
 import update_payload
 
 BOOT_DEVICE = "/dev/block/bootdevice/by-name"
 STATUS_DIR = "/run/update-engine"
-MOUNT_POINT = "/mnt/sdcard"
-ANKI_REV_FILE = "/anki/etc/revision"
-ANKI_VER_FILE = "/anki/etc/version"
 EXPECTED_DOWNLOAD_SIZE_FILE = os.path.join(STATUS_DIR, "expected-download-size")
 EXPECTED_WRITE_SIZE_FILE = os.path.join(STATUS_DIR, "expected-size")
 PROGRESS_FILE = os.path.join(STATUS_DIR, "progress")
@@ -38,11 +37,11 @@ DELTA_STAGING = os.path.join(STATUS_DIR, "delta.bin")
 OTA_PUB_KEY = "/anki/etc/ota.pub"
 OTA_ENC_PASSWORD = "/anki/etc/ota.pas"
 HTTP_BLOCK_SIZE = 1024*2  # Tuned to what seems to work best with DD_BLOCK_SIZE
+HTTP_TIMEOUT = 90 # Give up after 90 seconds on blocking operations
 DD_BLOCK_SIZE = HTTP_BLOCK_SIZE*1024
-SUPPORTED_MANIFEST_VERSIONS = ["0.9.2", "0.9.3", "0.9.4", "0.9.5"]
-
+SUPPORTED_MANIFEST_VERSIONS = ["1.0.0"]
+MINIMUM_OS_VERSION = "1.0.0.1741" # FIXME VIC-12256
 DEBUG = False
-
 
 def make_blocking(pipe, blocking):
     "Set a filehandle to blocking or not"
@@ -52,7 +51,6 @@ def make_blocking(pipe, blocking):
     else:
         fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~os.O_NONBLOCK)  # clear it
 
-
 def safe_delete(name):
     "Delete a filesystem path name without error"
     if os.path.isfile(name):
@@ -60,6 +58,11 @@ def safe_delete(name):
     elif os.path.isdir(name):
         shutil.rmtree(name)
 
+
+def safe_delete_staging_files():
+    "Delete staging files"
+    safe_delete(BOOT_STAGING)
+    safe_delete(DELTA_STAGING)
 
 def clear_status():
     "Clear everything out of the status directory"
@@ -81,6 +84,7 @@ def die(code, text):
     if DEBUG:
         sys.stderr.write(str(text))
         sys.stderr.write(os.linesep)
+    safe_delete_staging_files()
     exit(code)
 
 
@@ -114,7 +118,7 @@ def zero_slot(target_slot):
 
 
 def call(*args):
-    "Simple wrapper arround subprocess.call to make ret=0 -> True"
+    "Simple wrapper around subprocess.call to make ret=0 -> True"
     return subprocess.call(*args) == 0
 
 
@@ -142,6 +146,18 @@ def get_prop(property_name):
     if getprop.wait() == 0:
         return getprop.communicate()[0].strip()
     return None
+
+
+def is_dev_robot(cmdline):
+    "Returns true if this robot is a dev robot"
+    if "anki.dev" in cmdline:
+        return True
+    emrcat = subprocess.Popen(['/bin/emr-cat', 'v'], shell=False, stdout=subprocess.PIPE)
+    if emrcat.wait() == 0:
+        hw_ver = int(emrcat.communicate()[0], 16)
+        if hw_ver == 0x7:
+            return True # All whiskey DVT1s are dev even though cmdline doesn't indicate it
+    return False
 
 
 def get_cmdline():
@@ -173,7 +189,7 @@ def get_slot(kernel_command_line):
 
 def get_manifest(fileobj):
     "Returns config parsed from INI file in filelike object"
-    config = ConfigParser.ConfigParser({'encryption': '0'})
+    config = ConfigParser.ConfigParser()
     config.readfp(fileobj)
     return config
 
@@ -256,7 +272,7 @@ def open_url_stream(url):
         assert url.startswith("http")  # Accepts http and https but not ftp or file
         os_version = get_prop("ro.anki.version")
         victor_version = get_prop("ro.anki.victor.version")
-        if '?' in url:  # Already has a querry string
+        if '?' in url:  # Already has a query string
             if not url.endswith('?'):
                 url += '&'
         else:
@@ -267,8 +283,8 @@ def open_url_stream(url):
                 victor_version)
         request = urllib2.Request(url)
         opener = urllib2.build_opener()
-        opener.addheaders = opener.addheaders = [('User-Agent', 'Victor/{0:s}'.format(os_version))]
-        return opener.open(request)
+        opener.addheaders = [('User-Agent', 'Victor-OTA/{0:s}'.format(os_version))]
+        return opener.open(request, timeout=HTTP_TIMEOUT)
     except Exception as e:
         die(203, "Failed to open URL: " + str(e))
 
@@ -306,6 +322,23 @@ class ShaFile(object):
         return self.len
 
 
+def extract_ti(manifest, tar_stream, expected_name, section, dest_fh, progress_callback):
+    "Extract an image from a tar_info object"
+    tar_info = tar_stream.next()
+    if not tar_info.name.endswith(expected_name):
+        die(200, "Expected \"{0}\" to be next in tar but found \"{1}\"".format(expected_name, tar_info.name))
+    decompressor = StreamDecompressor(tar_stream.extractfile(tar_info),
+                                      manifest.getint(section, "encryption"),
+                                      manifest.get(section, "compression"),
+                                      manifest.getint(section, "bytes"),
+                                      True)
+    decompressor.read_to_file(dest_fh, DD_BLOCK_SIZE, progress_callback)
+    if decompressor.digest() != manifest.get(section, "sha256"):
+        return False
+    else:
+        return decompressor.tell()
+
+
 def handle_boot_system(target_slot, manifest, tar_stream):
     "Process 0.9.2 format manifest files"
     total_size = manifest.getint("BOOT", "bytes") + manifest.getint("SYSTEM", "bytes")
@@ -323,43 +356,30 @@ def handle_boot_system(target_slot, manifest, tar_stream):
     # Extract boot image
     if DEBUG:
         print("Boot")
-    boot_ti = tar_stream.next()
-    if not boot_ti.name.endswith("boot.img.gz"):
-        die(200, "Expected boot.img.gz to be next in tar but found \"{}\"".format(boot_ti.name))
-    with open(BOOT_STAGING, "wb") as boot_fh:
-        decompressor = StreamDecompressor(tar_stream.extractfile(boot_ti),
-                                          manifest.getint("BOOT", "encryption"),
-                                          manifest.get("BOOT", "compression"),
-                                          manifest.getint("BOOT", "bytes"),
-                                          True)
-        decompressor.read_to_file(boot_fh, DD_BLOCK_SIZE, progress_update)
-        # Verify boot hash
-        if decompressor.digest() != manifest.get("BOOT", "sha256"):
-            zero_slot(target_slot)
-            die(209, "Boot image hash doesn't match signed manifest")
-        written_size += decompressor.tell()
+    extract_result = extract_ti(manifest, tar_stream, "boot.img.gz", "BOOT", open(BOOT_STAGING, "wb"), progress_update)
+    if extract_result is False:
+        zero_slot(target_slot)
+        die(209, "Boot image hash doesn't match signed manifest")
+    written_size += extract_result
 
     # Extract system images
     if DEBUG:
         print("System")
-    system_ti = tar_stream.next()
-    if not system_ti.name.endswith("sysfs.img.gz"):
-        die(200, "Expected sysfs.img.gz to be next in tar but found \"{}\"".format(system_ti.name))
-    with open_slot("system", target_slot, "w") as system_slot:
-        decompressor = StreamDecompressor(tar_stream.extractfile(system_ti),
-                                          manifest.getint("SYSTEM", "encryption"),
-                                          manifest.get("SYSTEM", "compression"),
-                                          manifest.getint("SYSTEM", "bytes"),
-                                          True)
-        decompressor.read_to_file(system_slot, DD_BLOCK_SIZE, progress_update)
-        if decompressor.digest() != manifest.get("SYSTEM", "sha256"):
-            zero_slot(target_slot)
-            die(209, "System image hash doesn't match signed manifest")
-        written_size += decompressor.tell()
+    extract_result = extract_ti(manifest, tar_stream, "sysfs.img.gz", "SYSTEM",
+                                open_slot("system", target_slot, "w"),
+                                progress_update)
+    if extract_result is False:
+        zero_slot(target_slot)
+        die(209, "System image hash doesn't match signed manifest")
+    written_size += extract_result
+
     # Actually write the boot image now
     with open(BOOT_STAGING, "rb") as src:
         with open_slot("boot", target_slot, "w") as dst:
             dst.write(src.read())
+
+    # Delete the staged boot.img file
+    safe_delete(BOOT_STAGING)
 
 
 def copy_slot(partition, src_slot, dst_slot):
@@ -371,41 +391,6 @@ def copy_slot(partition, src_slot, dst_slot):
                 dst.write(buffer)
                 buffer = src.read(DD_BLOCK_SIZE)
             dst.write(buffer)
-
-
-def update_build_props(mount_point):
-    "Updates (or creates) a property in the build.prop file specified"
-    # Get the Anki Victor info
-    victor_build_ver = open(os.path.join(mount_point, ANKI_VER_FILE), "r").read().strip()
-    victor_build_rev = open(os.path.join(mount_point, ANKI_REV_FILE), "r").read().strip()
-    build_prop_path_name = os.path.join(mount_point, "build.prop")
-    # Get all the old OS properties
-    props = OrderedDict()
-    for key, value in [p.strip().split('=') for p in open(build_prop_path_name, "r").readlines()]:
-        props[key] = value
-    os_version = props['ro.anki.version']
-    os_build_timestamp = props['ro.build.version.release']
-    os_rev = ""  # TODO find this somewhere
-    props["ro.revision"] = "anki-{VICTOR_BUILD_REV}_os-{REV}".format(VICTOR_BUILD_REV=victor_build_rev, REV=os_rev)
-    props["ro.anki.victor.version"] = victor_build_ver
-    version_id = "v{VICTOR_BUILD_VERSION}_os{OS_VERSION}".format(
-        VICTOR_BUILD_VERSION=victor_build_ver,
-        OS_VERSION=os_version
-    )
-    build_id = "v{VICTOR_BUILD_VERSION}{VICTOR_REV_TAG}_os{OS_VERSION}{REV_TAG}-{BUILD_TIMESTAMP}".format(
-        VICTOR_BUILD_VERSION=victor_build_ver,
-        VICTOR_REV_TAG="-" + victor_build_rev if victor_build_rev else "",
-        OS_VERSION=os_version,
-        REV_TAG="-" + os_rev if os_rev else "",
-        BUILD_TIMESTAMP=os_build_timestamp
-    )
-    props["ro.build.fingerprint"] = build_id
-    props["ro.build.id"] = build_id
-    props["ro.build.display.id"] = version_id
-
-    with open(build_prop_path_name, "w") as propfile:
-        propfile.write("\n".join(["=".join(prop) for prop in props.items()]))
-        propfile.write("\n")
 
 
 def handle_delta(current_slot, target_slot, manifest, tar_stream):
@@ -429,20 +414,10 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
     # Extract delta file
     if DEBUG:
         print("Delta")
-    delta_ti = tar_stream.next()
-    if not delta_ti.name.endswith("delta.bin.gz"):
-        die(200,
-            "Expected delta.bin.gz to be next in tar but found \"{}\""
-            .format(delta_ti.name))
-    decompressor = StreamDecompressor(tar_stream.extractfile(delta_ti),
-                                      manifest.getint("DELTA", "encryption"),
-                                      manifest.get("DELTA", "compression"),
-                                      manifest.getint("DELTA", "bytes"),
-                                      True)
-    decompressor.read_to_file(open(DELTA_STAGING, "wb"), DD_BLOCK_SIZE, progress_update)
-    # Verify delta hash
-    if decompressor.digest() != manifest.get("DELTA", "sha256"):
-        safe_delete(DELTA_STAGING)
+    extract_result = extract_ti(manifest, tar_stream, "delta.bin.gz", "DELTA",
+                                open(DELTA_STAGING, "wb"),
+                                progress_update)
+    if extract_result is False:
         die(209, "delta.bin hash doesn't match manifest value")
     try:
         payload = update_payload.Payload(open(DELTA_STAGING, "rb"))
@@ -473,52 +448,19 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
                       get_slot_name("system", current_slot),
                       truncate_to_expected_size=False)
 
+        safe_delete(DELTA_STAGING)
+
     except update_payload.PayloadError as pay_err:
         zero_slot(target_slot)
         die(207, "Delta payload error: {!s}".format(pay_err))
 
 
-def handle_anki(current_slot, target_slot, manifest, tar_stream):
-    "Update the Anki folder only"
-    write_status(EXPECTED_WRITE_SIZE_FILE, 4)  # We're faking progress here with just stages 0-N
-    write_status(PROGRESS_FILE, 0)
-    if DEBUG:
-        print("Copying system from {} to {}".format(current_slot, target_slot))
-    copy_slot("system", current_slot, target_slot)
-    write_status(PROGRESS_FILE, 1)
-    if DEBUG:
-        print("Installing new Anki")
-    if not call(["mount", os.path.join(BOOT_DEVICE, "system" + "_" + target_slot), MOUNT_POINT]):
-        die(208, "Couldn't mount target system partition")
-    try:
-        anki_path = os.path.join(MOUNT_POINT, "anki")
-        shutil.rmtree(anki_path)
-        write_status(PROGRESS_FILE, 2)
-        anki_ti = tar_stream.next()
-        src_file = tar_stream.extractfile(anki_ti)
-        if manifest.getint("ANKI", "encryption") != 0:
-            die(210, "Encrypted Anki updates are not supported")
-        else:
-            sha_fh = ShaFile(src_file)
-        anki_tar = make_tar_stream(sha_fh, "r|" + manifest.get("ANKI", "compression"))
-        anki_tar.extractall(MOUNT_POINT)
-        update_build_props(MOUNT_POINT)
-    finally:
-        call(["umount", MOUNT_POINT])
-    write_status(PROGRESS_FILE, 3)
-    # Verify anki tar hash
-    if sha_fh.bytes() != manifest.getint("ANKI", "bytes"):
-        zero_slot(target_slot)
-        die(209, "Anki archive wrong size")
-    if sha_fh.digest() != manifest.get("ANKI", "sha256"):
-        zero_slot(target_slot)
-        die(209, "Anki archive didn't match signed manifest")
-    # Copy over the boot partition since we passed
-    if DEBUG:
-        print("Sig passed, installing kernel")
-    copy_slot("boot", current_slot, target_slot)
-    write_status(PROGRESS_FILE, 4)
-
+def validate_new_os_version(current_os_version, new_os_version, cmdline):
+    if LooseVersion(new_os_version) < LooseVersion(current_os_version):
+        die(216, "Downgrade from " + current_os_version + " to " + new_os_version + " not allowed")
+    if LooseVersion(new_os_version) < LooseVersion(MINIMUM_OS_VERSION):
+        die(216, new_os_version + " is less than the minimum allowed version: " + MINIMUM_OS_VERSION);
+    return
 
 def update_from_url(url):
     "Updates the inactive slot from the given URL"
@@ -557,8 +499,15 @@ def update_from_url(url):
         # Inspect the manifest
         if manifest.get("META", "manifest_version") not in SUPPORTED_MANIFEST_VERSIONS:
             die(201, "Unexpected manifest version")
+        next_boot_os_version = manifest.get("META", "update_version")
+        validate_new_os_version(get_prop("ro.anki.version"), next_boot_os_version, cmdline)
         if DEBUG:
-            print("Updating to version {}".format(manifest.get("META", "update_version")))
+            print("Updating to version {}".format(next_boot_os_version))
+        if is_dev_robot(cmdline):
+            if not manifest.getint("META", "ankidev"):
+                die(214, "Ankidev OS can't install non-ankidev OTA file")
+        elif manifest.getint("META", "ankidev"):
+            die(214, "Non-ankidev OS can't install ankidev OTA file")
         # Mark target unbootable
         if not call(['/bin/bootctl', current_slot, 'set_unbootable', target_slot]):
             die(202, "Could not mark target slot unbootable")
@@ -569,6 +518,11 @@ def update_from_url(url):
                 handle_boot_system(target_slot, manifest, tar_stream)
             else:
                 die(201, "Two images specified but couldn't find boot or system")
+        elif num_images == 1:
+            if manifest.has_section("DELTA"):
+                handle_delta(current_slot, target_slot, manifest, tar_stream)
+            else:
+                die(201, "One image specified but not DELTA")
         else:
             die(201, "Unexpected manifest configuration")
     stream.close()
@@ -578,25 +532,30 @@ def update_from_url(url):
     # Mark the slot bootable now
     if not call(["/bin/bootctl", current_slot, "set_active", target_slot]):
         die(202, "Could not set target slot as active")
+    safe_delete(ERROR_FILE)
     write_status(DONE_FILE, 1)
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 1:  # Clear the output directory
-        clear_status()
-        exit(0)
-    elif len(sys.argv) == 3 and sys.argv[2] == '-v':
+    clear_status()
+    url = ""
+    if len(sys.argv) > 1:
+        url = sys.argv[1]
+    if len(sys.argv) > 2 and sys.argv[2] == '-v':
         DEBUG = True
 
     if DEBUG:
-        update_from_url(sys.argv[1])
+        update_from_url(url)
     else:
         try:
-            update_from_url(sys.argv[1])
+            update_from_url(url)
         except zlib.error as decompressor_error:
             die(205, "Decompression error: " + str(decompressor_error))
+        except socket.timeout as timeout_error:
+            die(215, "Socket Timeout: " + str(timeout_error))
         except IOError as io_error:
             die(208, "IO Error: " + str(io_error))
         except Exception as e:
             die(219, e)
-        exit(0)
+    safe_delete_staging_files()
+    exit(0)

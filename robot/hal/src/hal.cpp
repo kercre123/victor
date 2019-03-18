@@ -107,7 +107,10 @@ namespace { // "Private members"
   BodyToHead BootBodyData_ = { //dummy data for boot stub frames
     .framecounter = 0
   };
+
   static const f32 kBatteryScale = 2.8f / 2048.f;
+
+  VersionInfo _sysconVersionInfo;
 } // "private" namespace
 
 // Forward Declarations
@@ -221,7 +224,9 @@ Result spine_wait_for_first_frame(spine_ctx_t spine)
         continue;
       }
       else if (hdr->payload_type == PAYLOAD_VERSION) {
-        record_body_version( (VersionInfo*)(hdr+1) );
+        const VersionInfo* versionInfo = (VersionInfo*)(hdr+1);
+        _sysconVersionInfo = *versionInfo;
+        record_body_version(versionInfo);
       }
       else if (hdr->payload_type == PAYLOAD_BOOT_FRAME) {
         initialized = true;
@@ -355,8 +360,10 @@ Result spine_get_frame() {
         result = RESULT_OK;
       }
       else if (hdr->payload_type == PAYLOAD_VERSION) {
-         LOGD("Handling VR payload type %x\n", hdr->payload_type);
-        record_body_version( (VersionInfo*)(hdr+1) );
+        LOGD("Handling VR payload type %x\n", hdr->payload_type);
+        const VersionInfo* versionInfo = (VersionInfo*)(hdr+1);
+        _sysconVersionInfo = *versionInfo;
+        record_body_version(versionInfo);
       }
       else if (hdr->payload_type == PAYLOAD_BOOT_FRAME) {
         //extract button data from stub packet and put in fake full packet
@@ -749,6 +756,10 @@ HAL::PowerState HAL::PowerGetMode()
   return (bodyData_->flags & RUNNING_FLAGS_SENSORS_VALID) ? POWER_MODE_ACTIVE : POWER_MODE_CALM;
 }
 
+const uint8_t* const HAL::GetSysconVersionInfo()
+{
+  return _sysconVersionInfo.app_version;
+}
 
 } // namespace Cozmo
 } // namespace Anki

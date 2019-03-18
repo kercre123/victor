@@ -187,6 +187,8 @@ namespace Switchboard {
 
     Signal::SmartHandle _rtsSshHandle;
     void HandleRtsSsh(const Victor::ExternalComms::RtsConnection_2& msg);
+
+    const std::string& GetBuildIdString();
     
     // Variables
     const uint8_t kMaxMatchAttempts = 5;
@@ -246,6 +248,7 @@ namespace Switchboard {
     OtaUpdateSignal _otaUpdateRequestSignal;
     PairingSignal _completedPairingSignal;
     PairingSignal _stopPairingSignal;
+    std::string _buildIdString;
   };
 } // Switchboard
 } // Anki

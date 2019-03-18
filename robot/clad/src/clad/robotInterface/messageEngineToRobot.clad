@@ -21,6 +21,7 @@
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/sayTextStyles.clad"
 #include "clad/types/switchboardToRobot.clad"
+#include "clad/types/tofDisplayTypes.clad"
 
 namespace Anki {
 namespace Cozmo {
@@ -482,6 +483,11 @@ message TextToSpeechStop {
   uint_8 ttsID  // ID of utterance
 }
 
+
+message RangeDataToDisplay
+{
+  RangeDataDisplay data
+}
 // ====================================================
 
 enum uint_32 ToRobotAddressSpace
@@ -614,6 +620,8 @@ union EngineToRobot
 
   SwitchboardInterface::SetConnectionStatus setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin           setBLEPin           = 0xA1,
+
+  RangeDataToDisplay                        rangeDataToDisplay  = 0xA2,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

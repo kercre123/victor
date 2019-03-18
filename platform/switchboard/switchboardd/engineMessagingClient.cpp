@@ -16,6 +16,7 @@
 #include <stdio.h>
 #include <chrono>
 #include <thread>
+#include <iomanip>
 #include "anki-ble/log.h"
 #include <iomanip>
 #include "anki-wifi/wifi.h"

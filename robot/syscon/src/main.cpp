@@ -25,7 +25,6 @@ void Main_Execution(void) {
   Opto::tick();
   Analog::tick();
   Lights::tick();
-  Touch::tick();
 
   // Kick watch dog when we enter our service routine
   if (reset_count++ < RESET_COUNT_MAX) {

@@ -91,21 +91,13 @@ Result BehaviorSystemManager::InitConfiguration(Robot& robot,
 
   // If this is the factory test forcibly set baseBehavior as playpen as long as the robot has not been through packout
   bool startInPlaypen = false;
-  bool startInSelfTest = false;
 #if FACTORY_TEST
   startInPlaypen = !Factory::GetEMR()->fields.PACKED_OUT_FLAG && !OSState::getInstance()->IsInRecoveryMode();
-  startInSelfTest = Factory::GetEMR()->fields.PACKED_OUT_FLAG && !OSState::getInstance()->IsInRecoveryMode();
 #endif
   if(startInPlaypen)
   {
     baseBehavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(PlaypenTest)).get();
     DEV_ASSERT(baseBehavior != nullptr, "BehaviorSystemManager.InitConfiguration.ForcingPlaypen.Null");
-  }
-  else if(startInSelfTest)
-  {
-    PRINT_NAMED_WARNING("","STARTING IN SELFTEST");
-    baseBehavior = behaviorExternalInterface.GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(SelfTest)).get();
-    DEV_ASSERT(baseBehavior != nullptr, "BehaviorSystemManager.InitConfiguration.ForcingSelfTest.Null");
   }
 
   // Assumes there's only one instance of the behavior external Intarfec
@@ -120,6 +112,24 @@ Result BehaviorSystemManager::InitConfiguration(Robot& robot,
                                                          "ICozmoBehavior.RobotCompletedAction.WrongEventTypeFromCallback");
                                               _actionsCompletedThisTick.push_back(event.GetData().Get_RobotCompletedAction());
                                             }));
+
+    _eventHandles.push_back(robot.GetRobotMessageHandler()->Subscribe(RobotInterface::RobotToEngineTag::startSelfTest,
+      [this](const AnkiEvent<RobotInterface::RobotToEngine>&event)
+      {
+        PRINT_NAMED_WARNING("","STARTING IN SELFTEST");
+        IBehavior* baseBehavior = _behaviorExternalInterface->GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(SelfTest)).get();
+        DEV_ASSERT(baseBehavior != nullptr, "BehaviorSystemManager.InitConfiguration.ForcingSelfTest.Null");
+        ResetBehaviorStack(baseBehavior);
+      }
+      ));
+
+    _eventHandles.push_back(robot.GetExternalInterface()->Subscribe(EngineToGameTag::SelfTestEnd,
+       [this](const EngineToGameEvent& event) {
+         IBehavior*  baseBehavior = _behaviorExternalInterface->GetBehaviorContainer().FindBehaviorByID(BEHAVIOR_ID(PlaypenTest)).get();
+         DEV_ASSERT(baseBehavior != nullptr, "BehaviorSystemManager.InitConfiguration.ForcingPlaypen.Null");
+         ResetBehaviorStack(baseBehavior);
+       }));
+
   }
 
   return RESULT_OK;

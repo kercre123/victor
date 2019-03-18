@@ -362,7 +362,7 @@
               <MiscControls>--exceptions --exceptions_unwind</MiscControls>
               <Define>FIXTURE,STM32F2XX,USE_STDPERIPH_DRIVER,DEBUG</Define>
               <Undefine></Undefine>
-              <IncludePath>.;app;common;hal;inc;lib;stm32f2xx;tests;xxx</IncludePath>
+              <IncludePath>.;app;common;hal;hal\VL53L0X;lib;stm32f2xx;tests</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -571,6 +571,11 @@
               <FileType>8</FileType>
               <FilePath>.\tests\TestDebugHeadprogram.cpp</FilePath>
             </File>
+            <File>
+              <FileName>TestAux.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\tests\TestAux.cpp</FilePath>
+            </File>
           </Files>
         </Group>
         <Group>
@@ -690,6 +695,56 @@
               <FileName>flexflow.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\hal\flexflow.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>dut_i2c.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\dut_i2c.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>opto.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\opto.cpp</FilePath>
+            </File>
+          </Files>
+        </Group>
+        <Group>
+          <GroupName>hal_vl53l0x</GroupName>
+          <Files>
+            <File>
+              <FileName>vl53l0x_api.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\VL53L0X\core\vl53l0x_api.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>vl53l0x_api_calibration.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\VL53L0X\core\vl53l0x_api_calibration.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>vl53l0x_api_core.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\VL53L0X\core\vl53l0x_api_core.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>vl53l0x_api_ranging.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\VL53L0X\core\vl53l0x_api_ranging.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>vl53l0x_api_strings.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\VL53L0X\core\vl53l0x_api_strings.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>vl53l0x_i2c_comms.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\VL53L0X\platform\vl53l0x_i2c_comms.cpp</FilePath>
+            </File>
+            <File>
+              <FileName>vl53l0x_platform.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\hal\VL53L0X\platform\vl53l0x_platform.cpp</FilePath>
             </File>
           </Files>
         </Group>

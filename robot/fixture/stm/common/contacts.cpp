@@ -186,6 +186,10 @@ void Contacts::echo(bool on)
   #endif
 }
 
+bool Contacts::echoIsOn(void) {
+  return m_console_echo;
+}
+
 void Contacts::setModeIdle(void)
 {
   if( mode == MODE_IDLE )
@@ -502,6 +506,13 @@ char* Contacts::getlinebuffer(int *out_len) {
   if(out_len)
     *out_len = line_len; //report length
   return m_line;
+}
+
+int Contacts::flushline(void) {
+  int n = line_len;
+  line_len = 0;
+  m_line[0] = '\0';
+  return n;
 }
 
 int Contacts::flushRx(void)

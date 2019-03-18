@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <string.h>
 #include "board.h" //hardware.h
 #include "cmd.h"
 #include "contacts.h"
@@ -11,12 +12,46 @@
 //    manage...stuff
 //------------------------------------------------
 
+#define CONSOLE_SUPPORT_RECALL    0
+
 void contacts_manage(void)
 {
   char* line = Contacts::getline(); //polls uart
-  if( line && cmd_process(line) < 0 ) { //valid line, not a command
-    //if( !CONSOLE_ECHO )
-    //Contacts::printf("%s\n", line); //echo random lines?
+  
+  #if CONSOLE_SUPPORT_RECALL
+  static struct { int len; char buf[32]; } recall = {0};
+  if( !line ) {
+    int linelen;
+    char* buf = Contacts::getlinebuffer(&linelen);
+    if( linelen==1 && buf[0]=='`' && recall.len>0 ) {
+      Contacts::flushline();
+      line = recall.buf;
+      
+      if( Contacts::echoIsOn() ) {
+        Contacts::putchar(0x08);
+        Contacts::write(line);
+        Contacts::putchar('\n');
+      }
+    }
+  }
+  #endif
+  
+  if( line )
+  {
+    if( cmd_process(line) < 0 ) {
+      //if( !CONSOLE_ECHO )
+      //Contacts::printf("%s\n", line); //echo random lines?
+    }
+    
+    #if CONSOLE_SUPPORT_RECALL
+    recall.len = 0;
+    int linelen = strlen(line);
+    if( linelen < sizeof(recall.buf) ) {
+      recall.len = linelen;
+      memcpy( recall.buf, line, linelen );
+      recall.buf[linelen] = '\0';
+    }
+    #endif
   }
 }
 

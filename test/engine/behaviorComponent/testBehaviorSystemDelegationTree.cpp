@@ -115,6 +115,7 @@ TEST(DelegationTree, DesignedControlTest)
   
 }
 
+#if ANKI_DEV_CHEATS
 TEST(DelegationTree, DumpBehaviorTransitionsToFile)
 {
   // the accompanying python script will be looking for this file
@@ -165,3 +166,4 @@ TEST(DelegationTree, DumpBehaviorTransitionsToFile)
   auto res = Anki::Util::FileUtils::WriteFile( outFilename, ss.str() );
   EXPECT_EQ(res, true) << "Error writing file " << outFilename;
 }
+#endif // ANKI_DEV_CHEATS

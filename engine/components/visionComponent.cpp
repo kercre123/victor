@@ -681,12 +681,14 @@ namespace Cozmo {
                                                              _robot->GetContext()->GetRandom()->RandDbl() < kSimulateDroppedFrameFraction);
         if(isDroppingFrame)
         {
+          #if !FACTORY_TEST
           PRINT_CH_DEBUG("VisionComponent",
                          "VisionComponent.SetNextImage.DroppedFrame",
                          "Setting next image with t=%u, but existing next image from t=%u not yet processed (currently on t=%u).",
                          image.GetTimestamp(),
                          _nextImg.GetTimestamp(),
                          _currentImg.GetTimestamp());
+          #endif
         }
         _dropStats.Update(isDroppingFrame);
 

@@ -91,4 +91,23 @@ if (VICOS)
 
   anki_build_strip(TARGET vic-anim)
 
+
+
+  project(vic-bootAnim)
+
+  add_executable(vic-bootAnim
+    ${CMAKE_SOURCE_DIR}/animProcess/src/bootAnim/bootAnim.cpp)
+
+  target_link_libraries(vic-bootAnim
+    PRIVATE
+    robot_core
+  )
+
+  anki_build_strip(TARGET vic-bootAnim)
+
+  target_compile_definitions(vic-bootAnim
+    PRIVATE
+    ${PLATFORM_COMPILE_DEFS}
+  )
+
 endif()

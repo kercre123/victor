@@ -187,8 +187,9 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   }
 
   ADD_SCREEN(MicDirectionClock, Camera);
-  ADD_SCREEN(Camera, Main);    // Last screen cycles back to Main
+  ADD_SCREEN(Camera, ToF);
   ADD_SCREEN(CameraMotorTest, Camera);
+  ADD_SCREEN(ToF, Main);    // Last screen cycles back to Main
 
   // Recovery screen
   FaceInfoScreen::MenuItemAction rebootAction = [this]() {
@@ -291,6 +292,23 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
     SendAnimToRobot(RobotInterface::StopAllMotors());
   };
   GetScreen(ScreenName::CameraMotorTest)->SetExitScreenAction(cameraMotorTestExitAction);
+
+  // ToF screen
+  FaceInfoScreen::ScreenAction enterToFScreen = []() {
+                                                 RobotInterface::SendRangeData msg;
+                                                 msg.enable = true;
+                                                 RobotInterface::SendAnimToEngine(std::move(msg));
+  };
+  GetScreen(ScreenName::ToF)->SetEnterScreenAction(enterToFScreen);
+
+  // ToF screen
+  FaceInfoScreen::ScreenAction exitToFScreen = []() {
+                                                 RobotInterface::SendRangeData msg;
+                                                 msg.enable = false;
+                                                 RobotInterface::SendAnimToEngine(std::move(msg));
+  };
+  GetScreen(ScreenName::ToF)->SetExitScreenAction(exitToFScreen);
+  DISABLE_TIMEOUT(ToF);
 
 
   // Check if we booted in recovery mode
@@ -951,10 +969,15 @@ void FaceInfoScreenManager::DrawMain()
      << Factory::GetEMR()->fields.ESN;
   const std::string serialNo = "ESN: "  + ss.str();
 
+
   auto *osstate = OSState::getInstance();
+
+  const std::string hwVer    = "HW: "   + std::to_string(Factory::GetEMR()->fields.HW_VER);
+
   const std::string osVer    = "OS: "   + osstate->GetOSBuildVersion() +
                                           (FACTORY_TEST ? " (V4)" : "") +
                                           (osstate->IsInRecoveryMode() ? " U" : "");
+
   const std::string ssid     = "SSID: " + osstate->GetSSID(true);
 
   std::string ip             = osstate->GetIPAddress();
@@ -966,8 +989,9 @@ void FaceInfoScreenManager::DrawMain()
   const bool hasInternet = HasInternet();
 #endif
 
-
-  ColoredTextLines lines = { {serialNo},
+  // ESN/serialNo and the HW version are drawn on the same line with serialNo default left aligned and
+  // HW version right aligned.
+  ColoredTextLines lines = { { {serialNo}, {hwVer, NamedColors::WHITE, false} },
                              {osVer},
                              {ssid},
 #if FACTORY_TEST
@@ -1033,26 +1057,18 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
 {
   char temp[32] = "";
   sprintf(temp,
-          "CLIFF: %4u %4u %4u %4u",
+          "SYS: %s",
+          _sysconVersion.c_str());
+  const std::string syscon = temp;
+
+
+  sprintf(temp,
+          "CLF: %4u %4u %4u %4u",
           state.cliffDataRaw[0],
           state.cliffDataRaw[1],
           state.cliffDataRaw[2],
           state.cliffDataRaw[3]);
   const std::string cliffs = temp;
-
-
-  sprintf(temp,
-          "DIST:   %3umm",
-          state.proxData.distance_mm);
-  const std::string prox1 = temp;
-
-  sprintf(temp,
-          "        (%2.1f %2.1f %3.f)",
-          state.proxData.signalIntensity,
-          state.proxData.ambientIntensity,
-          state.proxData.spadCount);
-  const std::string prox2 = temp;
-
 
   sprintf(temp,
           "TOUCH: %u",
@@ -1077,8 +1093,7 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
           state.battTemp_C);
   const std::string tempC = temp;
 
-
-  DrawTextOnScreen({cliffs, prox1, prox2, touch, batt, charger, tempC});
+  DrawTextOnScreen({syscon, cliffs, touch, batt, charger, tempC});
 }
 
 void FaceInfoScreenManager::DrawIMUInfo(const RobotState& state)
@@ -1187,11 +1202,11 @@ void FaceInfoScreenManager::DrawCustomText()
 // Draws each element of the textVec on a separate line (spacing determined by textSpacing_pix)
 // in textColor with a background of bgColor.
 void FaceInfoScreenManager::DrawTextOnScreen(const std::vector<std::string>& textVec,
-                                    const ColorRGBA& textColor,
-                                    const ColorRGBA& bgColor,
-                                    const Point2f& loc,
-                                    u32 textSpacing_pix,
-                                    f32 textScale)
+                                             const ColorRGBA& textColor,
+                                             const ColorRGBA& bgColor,
+                                             const Point2f& loc,
+                                             u32 textSpacing_pix,
+                                             f32 textScale)
 {
   _scratchDrawingImg->FillWith( {bgColor.r(), bgColor.g(), bgColor.b()} );
 
@@ -1228,21 +1243,116 @@ void FaceInfoScreenManager::DrawTextOnScreen(const ColoredTextLines& lines,
   f32 textLocY = loc.y();
   for(const auto& line : lines)
   {
-    f32 textLocX = loc.x();
+    f32 textOffsetX = loc.x();
+    f32 textOffsetXRight = loc.x();
     for(const auto& coloredText : line)
     {
-      _scratchDrawingImg->DrawText(
-        {textLocX, textLocY},
-        coloredText.text.c_str(),
-        coloredText.color,
-        textScale,
-        textLineThickness);
+      f32 textLocX = textOffsetX;
 
-      auto bbox = _scratchDrawingImg->GetTextSize(coloredText.text.c_str(), textScale, textLineThickness);
-      textLocX += bbox.x();
+      auto bbox = Vision::Image::GetTextSize(coloredText.text.c_str(), textScale, textLineThickness);
+      if(coloredText.leftAlign)
+      {
+        textOffsetX += bbox.x();
+      }
+      else
+      {
+        // Right align text, need to account for the width of the text as DrawText expects the bottom left corner
+        // location
+        textLocX = FACE_DISPLAY_WIDTH - bbox.x() - textOffsetXRight;
+        textOffsetXRight += bbox.x();
+      }
+
+      _scratchDrawingImg->DrawText({textLocX, textLocY},
+                                   coloredText.text.c_str(),
+                                   coloredText.color,
+                                   textScale,
+                                   textLineThickness);
+
+
     }
     textLocY += textSpacing_pix;
   }
+
+  DrawScratch();
+}
+
+void FaceInfoScreenManager::DrawToF(const RangeDataDisplay& data)
+{
+  if(GetCurrScreenName() != ScreenName::ToF)
+  {
+    return;
+  }
+
+  Vision::ImageRGB565& img = *_scratchDrawingImg;
+  const auto& clearColor = NamedColors::BLACK;
+  img.FillWith( {clearColor.r(), clearColor.g(), clearColor.b()} );
+
+  const u32 gridHeight = FACE_DISPLAY_HEIGHT / 4;
+  const u32 gridWidth = FACE_DISPLAY_WIDTH / 4;
+  for(const auto& rangeData : data.data)
+  {
+    if(rangeData.roi % 8 <= 3)
+    {
+      continue;
+    }
+
+    int roi = rangeData.roi - ((rangeData.roi / 8)*4) - 4;
+
+    const u32 x = (roi % 4) * gridWidth;
+    const u32 y = (roi / 4) * gridHeight;
+    const Rectangle<f32> rect(x, y, gridWidth-1, gridHeight-1); // -1 for 1 pixel borders
+
+    // Assuming max range is 1m
+    f32 temp = std::max(rangeData.processedRange_mm, 0.000001f); // Prevent divide by zero
+    temp = std::min(temp, 1000.f) / 1000.f;
+
+    u8 color = 255 * temp;
+
+    s8 status = rangeData.status;
+    float tempDiv = (rangeData.spadCount == 0 ? -1 : rangeData.spadCount);
+    float signalQuality = (f32)(rangeData.signalRate_mcps / tempDiv);
+
+    ColorRGBA bg(0, (u8)(255-color), 0);
+    if(status != 0)
+    {
+      bg = ColorRGBA((u8)255, (u8)0, (u8)0);
+      color = 255;
+    }
+
+    img.DrawFilledRect(rect, bg);
+
+    Point2f loc(x, y + 8);
+    const u8 textColor = (color > 128 ? 255 : 0);
+    img.DrawText(loc,
+                 std::to_string((u32)(rangeData.processedRange_mm)),
+                 {textColor, textColor, textColor},
+                 0.3f,
+                 false,
+                 1);
+
+    const f32 xPos = loc.x() + (Vision::Image::GetTextSize(std::to_string((u32)(rangeData.processedRange_mm)), 0.3f, 1).x() + kDefaultTextSpacing_pix);
+    img.DrawText({xPos, loc.y()},
+                 std::to_string(status),
+                 {textColor, textColor, textColor},
+                 0.3f,
+                 false,
+                 1);
+
+    const f32 yPos = loc.y() + (Vision::Image::GetTextSize(std::to_string((u32)(rangeData.processedRange_mm)), 0.3f, 1).y() + 1);
+    char t[8];
+    sprintf(t, "%2.1f", signalQuality);
+    img.DrawText({loc.x(), yPos},
+                 std::string(t),
+                 {textColor, textColor, textColor},
+                 0.3f,
+                 false,
+                 1);
+
+
+  }
+
+
+  //  img.Save("/test.png", 100);
 
   DrawScratch();
 }

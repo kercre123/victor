@@ -198,6 +198,49 @@ namespace Cozmo {
   
   /***************************************************************************
    *
+   *                          Range Sensor (whiskey)
+   *
+   **************************************************************************/
+
+  #define TOF_SIDE_BY_SIDE 0 // Angled inwards
+  #define TOF_ABOVE_BELOW 1
+  #define TOF_CENTER_OF_FACE 2
+  
+  #define TOF_CONFIGURATION TOF_SIDE_BY_SIDE
+  
+  const f32 TOF_FOV_RAD = DEG_TO_RAD(19);
+  const u32 TOF_RESOLUTION = 4;
+
+  #if TOF_CONFIGURATION == TOF_SIDE_BY_SIDE
+  
+  const f32 TOF_LEFT_TRANS_REL_CAMERA_MM[] = {0, -8, 0};
+  const f32 TOF_LEFT_ROT_Z_REL_CAMERA_RAD = DEG_TO_RAD(12);
+  const f32 TOF_RIGHT_TRANS_REL_CAMERA_MM[] = {0, 8, 0};
+  const f32 TOF_RIGHT_ROT_Z_REL_CAMERA_RAD = DEG_TO_RAD(-12);
+  const f32 TOF_ANGLE_DOWN_REL_CAMERA_RAD = DEG_TO_RAD(11);
+  
+  #elif TOF_CONFIGURATION == TOF_ABOVE_BELOW
+
+  const f32 TOF_LEFT_TRANS_REL_CAMERA_MM[] = {0, -5, 0};
+  const f32 TOF_LEFT_ROT_Y_REL_CAMERA_RAD = DEG_TO_RAD(-9.5);
+  const f32 TOF_RIGHT_TRANS_REL_CAMERA_MM[] = {0, 5, 0};
+  const f32 TOF_RIGHT_ROT_Y_REL_CAMERA_RAD = DEG_TO_RAD(9.5);
+  const f32 TOF_ANGLE_DOWN_REL_CAMERA_RAD = DEG_TO_RAD(-4);
+
+  #elif TOF_CONFIGURATION == TOF_CENTER_OF_FACE
+
+  const f32 TOF_LEFT_TRANS_REL_CAMERA_MM[] = {0, 0, 10};
+  const f32 TOF_LEFT_ROT_Y_REL_CAMERA_RAD = DEG_TO_RAD(0);
+  const f32 TOF_RIGHT_TRANS_REL_CAMERA_MM[] = {0, 0, 10};
+  const f32 TOF_RIGHT_ROT_Y_REL_CAMERA_RAD = DEG_TO_RAD(0);
+  const f32 TOF_ANGLE_DOWN_REL_CAMERA_RAD = DEG_TO_RAD(-4);
+
+  #else
+  #error Invalid TOF_CONFIGURATION
+  #endif
+
+  /***************************************************************************
+   *
    *                          Speeds and Accels
    *
    **************************************************************************/
@@ -317,24 +360,6 @@ namespace Cozmo {
   // Default robot ID
   // Do not change this! It affects which ports are binded to.
   const u32 DEFAULT_ROBOT_ID = 0;
-  
-  //
-  // Local (unix-domain) socket paths.
-  // RobotID will be appended to generate unique paths for each robot.
-  //
-  #ifdef SIMULATOR
-  constexpr char LOCAL_SOCKET_PATH[]  = "/tmp/";
-  constexpr char ANIM_ROBOT_SERVER_PATH[]  = "/tmp/_anim_robot_server_";
-  constexpr char ANIM_ROBOT_CLIENT_PATH[]  = "/tmp/_anim_robot_client_";
-  constexpr char ENGINE_ANIM_SERVER_PATH[] = "/tmp/_engine_anim_server_";
-  constexpr char ENGINE_ANIM_CLIENT_PATH[] = "/tmp/_engine_anim_client_";
-  #else
-  constexpr char LOCAL_SOCKET_PATH[]  = "/dev/";
-  constexpr char ANIM_ROBOT_SERVER_PATH[]  = "/dev/socket/_anim_robot_server_";
-  constexpr char ANIM_ROBOT_CLIENT_PATH[]  = "/dev/socket/_anim_robot_client_";
-  constexpr char ENGINE_ANIM_SERVER_PATH[] = "/dev/socket/_engine_anim_server_";
-  constexpr char ENGINE_ANIM_CLIENT_PATH[] = "/dev/socket/_engine_anim_client_";
-  #endif
   
 } // namespace Cozmo
 } // namespace Anki

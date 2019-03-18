@@ -23,6 +23,7 @@ namespace RobotInterface {
 
 message SyncTimeAck
 {
+  uint_8 sysconVersion[16] // Must match VersionInfo::app_version in schema/messages.h
 }
 
 message PrepForShutdown
@@ -101,7 +102,12 @@ message AudioFFTResult
 
 message StartSelfTest
 {
-  
+
+}
+
+message SendRangeData
+{
+  bool enable
 }
 
 /// *************** Overall message pipe ******************************* ///
@@ -171,21 +177,22 @@ union RobotToEngine {
   // Messages relating to trigger word detection
   TriggerWordDetected        triggerWordDetected    = 0xD9,
   MicDirection               micDirection           = 0xDA,
-  
+
   TextToSpeechEvent          textToSpeechEvent      = 0xDB,
 
   SwitchboardInterface::EnterPairing  enterPairing  = 0xDC,
-  SwitchboardInterface::ExitPairing   exitPairing   = 0xDD,  
+  SwitchboardInterface::ExitPairing   exitPairing   = 0xDD,
   StreamCameraImages         streamCameraImages     = 0xDE,
 
   StartSelfTest              startSelfTest          = 0xDF,
-  
+
   // Audio
   AudioEngine::Multiplexer::AudioCallbackDuration audioCallbackDuration = 0xE0,
   AudioEngine::Multiplexer::AudioCallbackMarker   audioCallbackMarker   = 0xE1,
   AudioEngine::Multiplexer::AudioCallbackComplete audioCallbackComplete = 0xE2,
   AudioEngine::Multiplexer::AudioCallbackError    audioCallbackError    = 0xE3,
 
+  SendRangeData                                   sendRangeData         = 0xE4,
 
   // ====== 0xF0 to 0x FE: Unreliable message to the Engine =====
   // From robot process

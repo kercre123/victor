@@ -25,7 +25,6 @@ typedef void (*void_funct)(void);
 
 namespace Timer {
   extern uint32_t clock;
-  extern void_funct LightHandler;
   void init();
 
   static inline uint32_t getTime(void) {

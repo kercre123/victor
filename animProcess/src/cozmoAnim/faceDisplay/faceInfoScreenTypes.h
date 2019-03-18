@@ -40,6 +40,7 @@ enum class ScreenName {
   MicInfo,
   MicDirectionClock,
   CustomText,
+  ToF,
   
   Count
 };

@@ -332,7 +332,7 @@
             <v6WtE>0</v6WtE>
             <VariousControls>
               <MiscControls>--gnu</MiscControls>
-              <Define>STM32F030X8,BOOTLOADER</Define>
+              <Define>STM32F030X8,BOOTLOADER,WHISKEY</Define>
               <Undefine></Undefine>
               <IncludePath>boot;common;schema;crypto;build</IncludePath>
             </VariousControls>
@@ -378,6 +378,11 @@
           <GroupName>boot</GroupName>
           <Files>
             <File>
+              <FileName>analog.cpp</FileName>
+              <FileType>8</FileType>
+              <FilePath>.\boot\analog.cpp</FilePath>
+            </File>
+            <File>
               <FileName>main.cpp</FileName>
               <FileType>8</FileType>
               <FilePath>.\boot\main.cpp</FilePath>
@@ -417,11 +422,6 @@
         <Group>
           <GroupName>common</GroupName>
           <Files>
-            <File>
-              <FileName>analog.cpp</FileName>
-              <FileType>8</FileType>
-              <FilePath>.\common\analog.cpp</FilePath>
-            </File>
             <File>
               <FileName>flash.cpp</FileName>
               <FileType>8</FileType>

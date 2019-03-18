@@ -351,7 +351,8 @@ CONSOLE_VAR(bool, kAllowBannedSdkMessages,  "Sdk", false); // can only be enable
           {
             if(message.GetTag() != ExternalInterface::MessageEngineToGameTag::EnterPairing &&
                message.GetTag() != ExternalInterface::MessageEngineToGameTag::ExitPairing && 
-               message.GetTag() != ExternalInterface::MessageEngineToGameTag::WifiScanRequest)
+               message.GetTag() != ExternalInterface::MessageEngineToGameTag::WifiScanRequest &&
+               message.GetTag() != ExternalInterface::MessageEngineToGameTag::WifiConnectRequest)
             {
               if(sendToEveryone)
               {

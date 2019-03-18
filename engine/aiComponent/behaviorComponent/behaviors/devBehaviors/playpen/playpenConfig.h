@@ -36,10 +36,10 @@ static bool kWriteToStorage       = true;
 // Whether or not to ignore any test failures
 // The playpen behaviors should be written in such a way so that they can continue running
 // even after something has gone wrong (basically no branching)
-static bool kIgnoreFailures       = false;
+static bool kIgnoreFailures       = true;
 
 // Default timeout to force a playpen behavior to end
-static f32  kDefaultTimeout_ms    = 20000;
+static f32  kDefaultTimeout_ms    = 30000;
 
 // How long to display the playpen result on Cozmo's face
 static f32  kTimeToDisplayResultOnFace_ms = 10000;
@@ -60,7 +60,7 @@ static u32  kTouchDurationToStart_ms      = 1000;
 static bool kUseButtonToStart             = true;
 
 // How long to record touch sensor data
-static u32  kDurationOfTouchToRecord_ms   = 0;
+static u32  kDurationOfTouchToRecord_ms   = 1000;
 
 // Whether or not to check for cloud cert
 static bool kCheckForCert                 = false;
@@ -86,6 +86,8 @@ static f32 kMaxMinTouchSensorFiltDiff = 11.f;
 // during playpen
 // NOTE: This value can be overridden by value stored in EMR
 static f32 kTouchSensorFiltStdDevThresh = 1.8f;
+
+static std::string kWifiSSID = "AnkiRobits";
  
 // ----------InitChecks----------
 // Whether or not to check firmware version
@@ -107,10 +109,10 @@ static u32       kMfgIDTimeout_ms      = 500;
 static BodyColor kMinBodyColor         = BodyColor::WHITE_v15;
 
 // Minimum expected raw touch sensor value
-static u16       kMinExpectedTouchValue= 400;
+static u16       kMinExpectedTouchValue= 500;
 
 // Maximum expected raw touch sensor value
-static u16       kMaxExpectedTouchValue= 800;
+static u16       kMaxExpectedTouchValue= 700;
 
 // ----------Motor Calibration----------
 // Timeout to wait for motor calibration to complete
@@ -128,7 +130,7 @@ static f32 kIMUDriftAngleThreshDeg     = 0.2f;
 
 // ----------Distance Sensor----------
 // Number of distance sensor readings to record
-static u32 kNumDistanceSensorReadingsToRecord       = 1;
+static u32 kNumDistanceSensorReadingsToRecord       = 40;
 
 // Threshold on calculated distance to distance sensor target (using detected marker)
 // +/- this from the expected distance to the object/marker defined in the distance sensor
@@ -141,6 +143,12 @@ static f32 kDistanceSensorReadingThresh_mm = 20;
 
 // Bias adjustment for raw distance sensor reading when comparing to visual distance
 static f32 kDistanceSensorBiasAdjustment_mm = 30;
+
+// Angle to move the head to when doing the distance sensor check
+// Whiskey ToF is angled 11 degrees down so move head to 11 degrees so ToF is looking forwards
+static f32 kDistanceSensorHeadAngle_rad = DEG_TO_RAD(11);
+
+static f32 kDistanceSensorTargetReflectance = 50;
 
 // ----------Camera Calibration----------
 // Exposure setting for playpen
@@ -230,7 +238,7 @@ static f32       kToolCodeDistThreshY_pix = 40.f;
 
 // ----------Pickup Cube----------
 // Expected cube pose x relative to playpen starting pose
-static f32 kExpectedCubePoseX_mm                = 420;
+static f32 kExpectedCubePoseX_mm                = 435;
 
 // Expected cube pose y relative to playpen starting pose
 static f32 kExpectedCubePoseY_mm                = 0;

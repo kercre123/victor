@@ -6,7 +6,7 @@
 *
 * Description: Handles navigation and drawing of the Customer Support Menu / Debug info screens.
 *
-* Usage: Add drawing functionality as needed from various components. 
+* Usage: Add drawing functionality as needed from various components.
 *        Add a corresponding ScreenName in faceInfoScreenTypes.h.
 *        In the new drawing functionality, return early if the ScreenName does not match appropriately.
 *
@@ -23,6 +23,7 @@
 #include "coretech/common/engine/math/point.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenTypes.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/types/tofDisplayTypes.h"
 
 #include "util/singleton/dynamicSingleton.h"
 
@@ -41,7 +42,7 @@ namespace Cozmo {
 class AnimContext;
 class AnimationStreamer;
 class FaceInfoScreen;
-  
+
 namespace RobotInterface {
   struct MicData;
   struct MicDirection;
@@ -50,18 +51,18 @@ namespace RobotInterface {
 namespace WebService {
   class WebService;
 }
-  
-  
+
+
 class FaceInfoScreenManager : public Util::DynamicSingleton<FaceInfoScreenManager> {
-  
+
   ANKIUTIL_FRIEND_SINGLETON(FaceInfoScreenManager); // Allows base class singleton access
-  
+
 public:
   FaceInfoScreenManager();
 
   void Init(AnimContext* context, AnimationStreamer* animStreamer);
   void Update(const RobotState& state);
-  
+
   // Debug drawing is expected from only one thread
   ScreenName GetCurrScreenName() const;
 
@@ -71,12 +72,12 @@ public:
   bool IsActivelyDrawingToScreen() const;
 
   void SetShouldDrawFAC(bool draw);
-  void SetCustomText(const RobotInterface::DrawTextOnScreen& text);  
+  void SetCustomText(const RobotInterface::DrawTextOnScreen& text);
 
   // When BLE pairing mode is enabled/disabled, this screen should
   // be called so that the physical inputs (head, lift, button) wheels
-  // are handled appropriately. 
-  // The FaceInfoScreenManager otherwise does nothing since drawing on 
+  // are handled appropriately.
+  // The FaceInfoScreenManager otherwise does nothing since drawing on
   // screen is handled by ConnectionFlow when in pairing mode.
   void EnablePairingScreen(bool enable);
 
@@ -88,21 +89,25 @@ public:
                            bool triggerRecognized);
   void DrawMicInfo(const RobotInterface::MicData& micData);
   void DrawCameraImage(const Vision::ImageRGB565& img);
-  
+
+  void DrawToF(const RangeDataDisplay& data);
+
   // Sets the power mode message to send when returning to none screen
   void SetCalmPowerModeOnReturnToNone(const RobotInterface::CalmPowerMode& msg) { _calmModeMsgOnNone = msg; }
 
   void SelfTestEnd(AnimationStreamer* animStreamer);
+
+  void SetSysconVersion(const std::string& version) { _sysconVersion = version; }
 
 private:
   std::unique_ptr<Vision::ImageRGB565> _scratchDrawingImg;
 
   // Sets the current screen
   void SetScreen(ScreenName screen);
-  
+
   // Gets the current screen
   FaceInfoScreen* GetScreen(ScreenName name);
-  
+
   // Resets the lift and head angles observed thus far.
   // Called everytime the screen changes.
   void ResetObservedHeadAndLiftAngles();
@@ -113,13 +118,13 @@ private:
   u32 _wheelMovingBackwardsCount;
   bool _liftTriggerReady;
   bool _headTriggerReady;
-  
+
   // Flag indicating when debug screens have been unlocked
   bool _debugInfoScreensUnlocked;
 
   // Power mode to set when returning to None screen
   RobotInterface::CalmPowerMode _calmModeMsgOnNone;
-  
+
   // Map of all screen names to their associated screen objects
   std::unordered_map<ScreenName, FaceInfoScreen> _screenMap;
   FaceInfoScreen* _currScreen;
@@ -140,13 +145,13 @@ private:
   void UpdateFAC();
 
   void UpdateCameraTestMode(uint32_t curTime_ms);
-  
+
   static const Point2f kDefaultTextStartingLoc_pix;
   static const u32 kDefaultTextSpacing_pix;
   static const f32 kDefaultTextScale;
 
   // Helper methods for drawing debug data to face
-  void DrawTextOnScreen(const std::vector<std::string>& textVec, 
+  void DrawTextOnScreen(const std::vector<std::string>& textVec,
                         const ColorRGBA& textColor = NamedColors::WHITE,
                         const ColorRGBA& bgColor = NamedColors::BLACK,
                         const Point2f& loc = kDefaultTextStartingLoc_pix,
@@ -154,17 +159,21 @@ private:
                         f32 textScale = kDefaultTextScale);
 
   struct ColoredText {
-    ColoredText(const std::string& text, const ColorRGBA& color = NamedColors::WHITE)
+    ColoredText(const std::string& text,
+                const ColorRGBA& color = NamedColors::WHITE,
+                bool leftAlign = true)
     : text(text)
     , color(color)
+    , leftAlign(leftAlign)
     {}
 
     const std::string text;
     const ColorRGBA color;
+    const bool leftAlign;
   };
 
   using ColoredTextLines = std::vector<std::vector<ColoredText> >;
-  void DrawTextOnScreen(const ColoredTextLines& lines, 
+  void DrawTextOnScreen(const ColoredTextLines& lines,
                         const ColorRGBA& bgColor = NamedColors::BLACK,
                         const Point2f& loc = kDefaultTextStartingLoc_pix,
                         u32 textSpacing_pix = kDefaultTextSpacing_pix,
@@ -172,9 +181,11 @@ private:
 
   RobotInterface::DrawTextOnScreen _customText;
   WebService::WebService* _webService;
-  
+
   bool _drawFAC = false;
-  
+
+  std::string _sysconVersion = "";
+
   // Reboot Linux
   void Reboot();
 

@@ -70,10 +70,10 @@ static f32 kMinBatteryVoltage     = 3.6;
 static f32 kMinChargerVoltage     = 4.f;
 
 // Minimum expected raw touch sensor value
-static u16 kMinExpectedTouchValue = 3000;
+static u16 kMinExpectedTouchValue = 400;
 
 // Maximum expected raw touch sensor value
-static u16 kMaxExpectedTouchValue = 7000;
+static u16 kMaxExpectedTouchValue = 800;
 
 // How long the touch sensor needs to be held
 static u16 kTouchSensorDuration_sec = 5;

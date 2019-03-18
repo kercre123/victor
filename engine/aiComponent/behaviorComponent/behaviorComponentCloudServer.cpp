@@ -14,6 +14,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponentCloudServer.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "coretech/messaging/shared/socketConstants.h"
 #include "util/threading/threadPriority.h"
 
 namespace Anki {
@@ -37,7 +38,7 @@ void BehaviorComponentCloudServer::RunThread(std::string sockName)
 {
   Anki::Util::SetThreadName(pthread_self(), "BehaviorServer");
   // Start UDP server
-  _server.StartListening(LOCAL_SOCKET_PATH + sockName);
+  _server.StartListening(Victor::AI_SERVER_BASE_PATH + sockName);
   char buf[512];
   while (!_shutdown) {
     const ssize_t received = _server.Recv(buf, sizeof(buf));

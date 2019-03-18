@@ -11,7 +11,8 @@
 
 #define DEFAULT_TEMP_ZONE 3
 
-void  helperLcdShow(bool solo, bool invert, char color_rgbw, const char* center_text);
+int   helperConsecutiveFailCnt(void); //incremented on failed helper cmd. reset on cmd success.
+int   helperLcdShow(bool solo, bool invert, char color_rgbw, const char* center_text); //return cmd status
 void  helperLcdSetLine(int n, const char* line);
 void  helperLcdClear(void);
 char* helperGetEmmcdlVersion(int timeout_ms = CMD_DEFAULT_TIMEOUT);
@@ -34,7 +35,7 @@ int   helperGetTempC(int zone = DEFAULT_TEMP_ZONE);
 #define RCOM_SENSOR_RSSI        9
 #define RCOM_SENSOR_RX_PKT      10
 #define RCOM_SENSOR_DEBUG_INC   11
-const int ccr_sr_cnt[12] = {0,2,4,2,2,2,2,4,2,1,1,4}; //number of CCC sensor fields per line for each type (internal:parsing & error checking)
+const int ccr_sr_cnt[12] = {0,3,4,2,2,2,2,4,2,1,1,4}; //number of CCC sensor fields per line for each type (internal:parsing & error checking)
 
 //FCC test modes
 //#define RCOM_FCC_MODE_TX_CARRIER    0
@@ -83,8 +84,9 @@ typedef struct {
 } robot_bsv_t;
 
 typedef union {
-  int32_t val[4];
-  struct { int32_t raw; int32_t temp; } bat; //battery: raw-adc, temperature (2x int16)
+  int32_t val[5];
+  struct { int32_t dat[4]; int32_t failureCode; } meta; //syscon-reported hw failures (1x uint16)
+  struct { int32_t raw; int32_t tempC; } bat; //battery: Vin[adc], temp[C] (vector=cpu, whiskey=NTC) (2x int16)
   struct { int32_t fL; int32_t fR; int32_t bL; int32_t bR; } cliff; //cliff sensors: front/back L/R (4x uint16)
   struct { int32_t pos; int32_t speed; int32_t delta; } enc; //encoder: position, speed, [delta,spine-only] (2[3]x int32)
   struct { int32_t rangeMM; int32_t spadCnt; int32_t signalRate; int32_t ambientRate; } prox; //proximity,TOF (4x uint16)

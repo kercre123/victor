@@ -14,12 +14,14 @@
 
 #include "engine/actions/basicActions.h"
 #include "engine/blockWorld/blockWorld.h"
-#include "engine/components/sensors/proxSensorComponent.h"
+#include "engine/components/sensors/rangeSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 
 #include "coretech/common/engine/jsonTools.h"
+
+#include "whiskeyToF/tof.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -29,6 +31,7 @@ static const std::string kAngleToTurnKey    = "AngleToTurnToSeeTarget_deg";
 static const std::string kDistToDriveKey    = "DistanceToDriveToSeeTarget_mm";
 static const std::string kExpectedObjectKey = "ExpectedObjectType";
 static const std::string kExpectedDistKey   = "ExpectedDistance_mm";
+static const std::string kPerformCalibrationKey   = "PerformCalibration";
 }
 
 BehaviorPlaypenDistanceSensor::BehaviorPlaypenDistanceSensor(const Json::Value& config)
@@ -60,6 +63,13 @@ BehaviorPlaypenDistanceSensor::BehaviorPlaypenDistanceSensor(const Json::Value& 
                       "Missing %s key from PlaypenDistanceSensor Config", kExpectedDistKey.c_str());
   }
 
+  res = JsonTools::GetValueOptional(config, kPerformCalibrationKey, _performCalibration);
+  if(!res)
+  {
+    PRINT_NAMED_ERROR("BehaviorPlaypenDistanceSensor.Constructor.MissingConfigKey",
+                      "Missing %s key from PlaypenDistanceSensor Config", kPerformCalibrationKey.c_str());
+  }
+  
   JsonTools::GetValueOptional(config, kDistToDriveKey, _distToDrive_mm);
   
   SubscribeToTags({EngineToGameTag::RobotObservedObject});
@@ -84,18 +94,37 @@ Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal()
   // Record starting angle
   _startingAngle = robot.GetPose().GetRotation().GetAngleAroundZaxis();
 
+  _calibrationComplete = false;
+  _calibrationRunning = false;
+
+  // if(_performCalibration)
+  // {
+    // Add an extra 30 seconds to timeout time if we are calibrating since it is slow
+    IncreaseTimeoutTimer(30000);
+  // }
+
+  ToFSensor::getInstance()->SetupSensors([this](ToFSensor::CommandResult res)
+                                         {
+                                           if(res != ToFSensor::CommandResult::Success)
+                                           {
+                                             PLAYPEN_SET_RESULT(FactoryTestResultCode::SETUP_TOF_FAILED);
+                                           }
+                                         });
+
   // Move head and lift to be able to see target marker and turn towards the target
   MoveHeadToAngleAction* head = new MoveHeadToAngleAction(DEG_TO_RAD(0));
   MoveLiftToHeightAction* lift = new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::LOW_DOCK);
-  DriveStraightAction* drive = new DriveStraightAction(_distToDrive_mm);
+  DriveStraightAction* drive = new DriveStraightAction((_distToDrive_mm > 0 ? _distToDrive_mm : 0));
   CompoundActionParallel* liftHeadDrive = new CompoundActionParallel({lift, head, drive});
 
   TurnInPlaceAction* turn = new TurnInPlaceAction(_angleToTurn.ToFloat(), false);
 
+  DriveStraightAction* driveBack = new DriveStraightAction(-30);
+
   // After turning wait to process 10 images before trying to refine the turn
   WaitForImagesAction* wait = new WaitForImagesAction(5, VisionMode::DetectingMarkers);
   
-  CompoundActionSequential* action = new CompoundActionSequential({liftHeadDrive, turn, wait});
+  CompoundActionSequential* action = new CompoundActionSequential({liftHeadDrive, turn, driveBack, wait});
   DelegateIfInControl(action, [this]() { TransitionToRefineTurn(); });
   
   return RESULT_OK;
@@ -115,50 +144,59 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
   // We have distance readings left to record
   else if(_numRecordedReadingsLeft > 0)
   {
-    --_numRecordedReadingsLeft;
-    
-    const auto& proxData = robot.GetProxSensorComponent().GetLatestProxData();
-    DistanceSensorData data;
-    data.proxSensorData = proxData;
-    data.visualDistanceToTarget_mm = 0;
-    data.visualAngleAwayFromTarget_rad = 0;
-    
-    Pose3d markerPose;
-    const bool res = GetExpectedObjectMarkerPoseWrtRobot(markerPose);
-    if(res)
+    bool isNewData = false;
+    const auto& rangeData = robot.GetRangeSensorComponent().GetLatestRawRangeData(isNewData);
+    if(isNewData)
     {
-      data.visualDistanceToTarget_mm = markerPose.GetTranslation().x();
-
-      markerPose = markerPose.GetWithRespectToRoot();
-      // Marker pose rotation is kind of wonky, compared to the robot's rotation they are 
-      // rotated 90 degrees. So when the robot is looking at a marker, you have to add
-      // 90 degrees to get its rotation to match that of the robot
-      // Taking the difference of these two angles tells us how much the robot needs to turn
-      // to be perpendicular with the marker
-      const auto angle = ((markerPose.GetRotation().GetAngleAroundZaxis() + DEG_TO_RAD(90)) - 
-                          robot.GetPose().GetRotation().GetAngleAroundZaxis());
-      data.visualAngleAwayFromTarget_rad = angle.ToFloat();
-    }
+      --_numRecordedReadingsLeft;
+      PRINT_NAMED_WARNING("","RECORDING %u MORE", _numRecordedReadingsLeft);
     
-    if(!GetLogger().Append(GetDebugLabel(), std::move(data)))
-    {
-      PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::WRITE_TO_LOG_FAILED, PlaypenStatus::Running);
+      RangeSensorData data;
+      data.rangeData = rangeData;
+      data.visualDistanceToTarget_mm = 0;
+      data.visualAngleAwayFromTarget_rad = 0;
+      data.headAngle_rad = robot.GetHeadAngle();
+
+      // Pose3d markerPose;
+      // const bool res = GetExpectedObjectMarkerPoseWrtRobot(markerPose);
+      // if(res)
+      // {
+        // data.visualDistanceToTarget_mm = markerPose.GetTranslation().x();
+      data.visualDistanceToTarget_mm = _visualDistanceToTarget_mm;
+
+        // markerPose = markerPose.GetWithRespectToRoot();
+        // // Marker pose rotation is kind of wonky, compared to the robot's rotation they are 
+        // // rotated 90 degrees. So when the robot is looking at a marker, you have to add
+        // // 90 degrees to get its rotation to match that of the robot
+        // // Taking the difference of these two angles tells us how much the robot needs to turn
+        // // to be perpendicular with the marker
+        // const auto angle = ((markerPose.GetRotation().GetAngleAroundZaxis() + DEG_TO_RAD(90)) - 
+        //                     robot.GetPose().GetRotation().GetAngleAroundZaxis());
+        // data.visualAngleAwayFromTarget_rad = angle.ToFloat();
+      data.visualAngleAwayFromTarget_rad = _visualAngleToTarget_rad;
+      //}
+    
+      if(!GetLogger().Append(GetDebugLabel(), std::move(data)))
+      {
+        PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::WRITE_TO_LOG_FAILED, PlaypenStatus::Running);
+      }
     }
 
-    if(robot.IsPhysical() &&
-       !Util::IsNear(data.proxSensorData.distance_mm - PlaypenConfig::kDistanceSensorBiasAdjustment_mm, 
-                     data.visualDistanceToTarget_mm,
-                     PlaypenConfig::kDistanceSensorReadingThresh_mm))
-    {
-      PRINT_NAMED_WARNING("BehaviorPlaypenDistanceSensor.PlaypenUpdateInternal.ReadingOutsideThresh",
-                          "Sensor reading %u - %f not near visual reading %f with threshold %f",
-                          data.proxSensorData.distance_mm,
-                          PlaypenConfig::kDistanceSensorBiasAdjustment_mm,
-                          data.visualDistanceToTarget_mm,
-                          PlaypenConfig::kDistanceSensorReadingThresh_mm);
+    // TODO NEED TO REWRITE TO CHECK ALL ROIs
+    // if(robot.IsPhysical() &&
+    //    !Util::IsNear(data.proxSensorData.distance_mm - PlaypenConfig::kDistanceSensorBiasAdjustment_mm, 
+    //                  data.visualDistanceToTarget_mm,
+    //                  PlaypenConfig::kDistanceSensorReadingThresh_mm))
+    // {
+    //   PRINT_NAMED_WARNING("BehaviorPlaypenDistanceSensor.PlaypenUpdateInternal.ReadingOutsideThresh",
+    //                       "Sensor reading %u - %f not near visual reading %f with threshold %f",
+    //                       data.proxSensorData.distance_mm,
+    //                       PlaypenConfig::kDistanceSensorBiasAdjustment_mm,
+    //                       data.visualDistanceToTarget_mm,
+    //                       PlaypenConfig::kDistanceSensorReadingThresh_mm);
 
-      PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::DISTANCE_SENSOR_OOR, PlaypenStatus::Running);
-    }
+    //   PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::DISTANCE_SENSOR_OOR, PlaypenStatus::Running);
+    // }
     
     return PlaypenStatus::Running;
   }
@@ -176,8 +214,20 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenDistanceSensor::PlaypenUpdateInte
 
 void BehaviorPlaypenDistanceSensor::OnBehaviorDeactivated()
 {
+  ToFSensor::getInstance()->StopRanging([this](ToFSensor::CommandResult res)
+                                        {
+                                          if(res != ToFSensor::CommandResult::Success)
+                                          {
+                                            PLAYPEN_SET_RESULT(FactoryTestResultCode::STOP_TOF_FAILED);
+                                          }
+                                        });
   _startingAngle = 0;
   _numRecordedReadingsLeft = -1;
+  _calibrationComplete = false;
+  _calibrationRunning = false;
+  _visualDistanceToTarget_mm = 0;
+  _visualAngleToTarget_rad = 0;
+
 }
 
 void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn()
@@ -186,7 +236,8 @@ void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  auto action = std::make_unique<TurnInPlaceAction>(0, false);
+  auto action = std::make_unique<CompoundActionSequential>();
+  TurnInPlaceAction* turn = new TurnInPlaceAction(0, false);
 
   // Get the pose of the marker we should be seeing
   Pose3d markerPose;
@@ -225,21 +276,135 @@ void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn()
                      "Turning %f degrees to be perpendicular to marker",
                      angle.getDegrees());
     
-    action->SetRequestedTurnAngle(angle.ToFloat());
+    turn->SetRequestedTurnAngle(angle.ToFloat());
   }
-  
+  action->AddAction(turn);
+
+  action->AddAction(new WaitForImagesAction(5, VisionMode::DetectingMarkers));
+
   // Once we are perpendicular to the marker, start recording distance sensor readings
   DelegateIfInControl(action.release(), [this]() { TransitionToRecordSensor(); });
 }
 
 void BehaviorPlaypenDistanceSensor::TransitionToRecordSensor()
 {
-  _numRecordedReadingsLeft = PlaypenConfig::kNumDistanceSensorReadingsToRecord;
+  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
+  // be removed
+  Robot& robot = GetBEI().GetRobotInfo()._robot;
+
+  static int i = 0;
+  robot.GetVisionComponent().SetSaveImageParameters(ImageSendMode::SingleShot,
+                                                    "/data/misc/camera/test/" + std::to_string(i++) + ".png",
+                                                    100);
+
+  Pose3d markerPose;
+  const bool res = GetExpectedObjectMarkerPoseWrtRobot(markerPose);
+  float visualDistanceToTarget_mm = _expectedDistanceToObject_mm;
+  if(res)
+  {
+    visualDistanceToTarget_mm = markerPose.GetTranslation().x();
+    _visualDistanceToTarget_mm = visualDistanceToTarget_mm;
+            
+    if(visualDistanceToTarget_mm == 0)
+    {
+      PRINT_NAMED_WARNING("","VISUAL DIST 0 USING EXPECTED");
+      visualDistanceToTarget_mm = _expectedDistanceToObject_mm;
+    }
+
+    markerPose = markerPose.GetWithRespectToRoot();
+    // Marker pose rotation is kind of wonky, compared to the robot's rotation they are 
+    // rotated 90 degrees. So when the robot is looking at a marker, you have to add
+    // 90 degrees to get its rotation to match that of the robot
+    // Taking the difference of these two angles tells us how much the robot needs to turn
+    // to be perpendicular with the marker
+    const auto angle = ((markerPose.GetRotation().GetAngleAroundZaxis() + DEG_TO_RAD(90)) - 
+                        robot.GetPose().GetRotation().GetAngleAroundZaxis());
+    _visualAngleToTarget_rad = angle.ToFloat();
+  }
+
+  if(_performCalibration)
+  {
+    CompoundActionSequential* action = new CompoundActionSequential();
+
+    action->AddAction(new TurnInPlaceAction(DEG_TO_RAD(12), false));
+
+    MoveHeadToAngleAction* head = new MoveHeadToAngleAction(PlaypenConfig::kDistanceSensorHeadAngle_rad);
+    action->AddAction(head);
+
+    action->AddAction(new WaitAction(3.f));
+
+
+    WaitForLambdaAction* wait = new WaitForLambdaAction([this, visualDistanceToTarget_mm](Robot& robot)
+      {
+        const bool isCalibrating = ToFSensor::getInstance()->IsCalibrating();
+        if(!_calibrationComplete)
+        {
+          _calibrationComplete = (!isCalibrating && _calibrationRunning);
+        }
+
+        if(!isCalibrating && !_calibrationComplete)
+        {
+          PRINT_NAMED_WARNING("","STARTING CALIBRATION %f", visualDistanceToTarget_mm);
+          ToFSensor::getInstance()->PerformCalibration(visualDistanceToTarget_mm,
+                                                       PlaypenConfig::kDistanceSensorTargetReflectance,
+                                                       [this](ToFSensor::CommandResult res)
+                                                       {
+                                                         if(res != ToFSensor::CommandResult::Success)
+                                                         {
+                                                           PLAYPEN_SET_RESULT(FactoryTestResultCode::CALIBRATE_TOF_FAILED);
+                                                         }
+                                                       });
+        }
+        
+        if(_calibrationComplete)
+        {
+          PRINT_NAMED_ERROR("","CALIBRATION COMPLETE");
+          ToFSensor::getInstance()->StartRanging([this](ToFSensor::CommandResult res)
+                                                 {
+                                                   if(res != ToFSensor::CommandResult::Success)
+                                                   {
+                                                     PLAYPEN_SET_RESULT(FactoryTestResultCode::START_TOF_FAILED);
+                                                   }
+                                                 });
+        }
+        _calibrationRunning = isCalibrating;
+        
+        return _calibrationComplete;
+      });
+    action->AddAction(wait);
+    DelegateIfInControl(action, [this]() { _numRecordedReadingsLeft = PlaypenConfig::kNumDistanceSensorReadingsToRecord; });
+  }
+  else
+  {
+    TurnInPlaceAction* turn = new TurnInPlaceAction(DEG_TO_RAD(12), false);
+    MoveHeadToAngleAction* head = new MoveHeadToAngleAction(PlaypenConfig::kDistanceSensorHeadAngle_rad);
+    CompoundActionSequential* action = new CompoundActionSequential({turn, head});
+
+    DelegateIfInControl(action, [this](){
+      ToFSensor::getInstance()->StartRanging([this](ToFSensor::CommandResult res)
+                                             {
+                                               if(res != ToFSensor::CommandResult::Success)
+                                               {
+                                                 PLAYPEN_SET_RESULT(FactoryTestResultCode::START_TOF_FAILED);
+                                               }
+                                             });
+
+      _numRecordedReadingsLeft = PlaypenConfig::kNumDistanceSensorReadingsToRecord;
+    });
+  }
 }
 
 void BehaviorPlaypenDistanceSensor::TransitionToTurnBack()
 {
-  TurnInPlaceAction* action = new TurnInPlaceAction(_startingAngle.ToFloat(), true);
+  TurnInPlaceAction* unturn = new TurnInPlaceAction(DEG_TO_RAD(-12), false);
+  DriveStraightAction* forw = new DriveStraightAction(30);
+  TurnInPlaceAction* turn = new TurnInPlaceAction(_startingAngle.ToFloat(), true);
+  DriveStraightAction* drive = new DriveStraightAction((_distToDrive_mm < 0 ? _distToDrive_mm : 0));
+  CompoundActionSequential* action = new CompoundActionSequential();
+  action->AddAction(unturn);
+  action->AddAction(forw);
+  action->AddAction(turn);
+  action->AddAction(drive);
   DelegateIfInControl(action, [this]() { PLAYPEN_SET_RESULT(FactoryTestResultCode::SUCCESS); });
 }
 
@@ -298,9 +463,12 @@ bool BehaviorPlaypenDistanceSensor::GetExpectedObjectMarkerPoseWrtRobot(Pose3d& 
       }
     }
 
-    if(lastObservedTime < robot.GetLastImageTimeStamp())
+    if(!Util::IsNear(lastObservedTime, robot.GetLastImageTimeStamp(), 500.f))
     {
-      PRINT_NAMED_INFO("BehaviorPlaypenDistanceSensor.GetExpectedObjectMarkerPoseWrtRobot.MarkerTooOld","");
+      PRINT_NAMED_INFO("BehaviorPlaypenDistanceSensor.GetExpectedObjectMarkerPoseWrtRobot.MarkerTooOld",
+                       "%u %u",
+                       lastObservedTime,
+                       robot.GetLastImageTimeStamp());
       return false;
     }
     

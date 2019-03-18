@@ -51,6 +51,8 @@ private:
                                 const std::string& pwd,
                                 bool disconnectAfterConnection);
 
+  void HandleWifiConnectRequest(const std::string& ssid);
+  
   LocalUdpClient _client;
   PairingStatusSignal _pairingStatusSignal;
   // anything that isn't pairing status should be attached to a different signal

@@ -58,7 +58,7 @@ private:
   Radians    _angleToTurn                 = 0;
 
   // The distance to drive forwards to see the target
-  u32        _distToDrive_mm              = 0;
+  s32        _distToDrive_mm              = 0;
 
   // The object type we expect to see after turning "_angleToTurn"
   ObjectType _expectedObjectType          = ObjectType::UnknownObject;
@@ -68,6 +68,13 @@ private:
 
   // The number of distance sensor readings left to record
   int        _numRecordedReadingsLeft     = -1;
+
+  bool _performCalibration = false;
+  bool _calibrationRunning = false;
+  bool _calibrationComplete = false;
+
+  float _visualDistanceToTarget_mm = 0;
+  float _visualAngleToTarget_rad = 0;
 };
 
 }

@@ -177,6 +177,17 @@ namespace TestCommon
         }
         else //use line buffering
         {
+          //grave accent, as 1st char: recall + enter
+          if( c == '`' && line_len==0 ) {
+            if( recall_len > 0 ) {
+              for(int x=0; x<recall_len; x++)
+                ConsolePutChar(line[x]); //re-print last command on the console
+              line_len = recall_len; //restore buffer point
+              recall_len = 0;
+            }
+            c = '\n';
+          }
+          
           if( c > 0 && c < 0x80 ) //ignore null and non-ascii
           {
             if( c == '\r' || c == '\n' ) { //enter or return
@@ -315,6 +326,32 @@ namespace TestCommon
       Board::ledOff(Board::LED_GREEN);
     }
     ConsolePrintf("Console restored\n");
+  }
+  
+  int waitForKeypress(int timeout, bool flush_rx, const char *printstr)
+  {
+    if( printstr )
+      ConsoleWrite((char*)printstr);
+    if( flush_rx )
+      while( ConsoleReadChar() > -1 );
+    
+    uint32_t Tstart = Timer::get();
+    do {
+      if( ConsoleReadChar() > -1 )
+        return 0;
+    } while( timeout==0 || (timeout>0 && Timer::elapsedUs(Tstart) < timeout) );
+    
+    return 1;
+  }
+  
+  int checkForKeypress(bool *ref_flush_rx)
+  {
+    bool flush = 0;
+    if( ref_flush_rx ) {
+      flush = *ref_flush_rx;
+      *ref_flush_rx = 0; //one-shot flush, for use in loops
+    }
+    return waitForKeypress(-1, flush, NULL); //single check for pending keypress
   }
 }
 
