@@ -30,6 +30,12 @@ message RobotServerDisconnect
 {
 }
 
+// Message for HAL to send to anim when it's taking 
+// a little too long to get data from spine
+message StillAlive
+{
+}
+
 message PrepForShutdown
 {
   ShutdownReason reason
@@ -212,9 +218,8 @@ union RobotToEngine {
 
   RobotServerDisconnect      robotServerDisconnect  = 0xCD,
 
-  AlexaAuthChanged           alexaAuthChanged       = 0xCE,
+  StillAlive                 stillAlive             = 0xCE,
 
-  AlexaUXChanged             alexaUXChanged         = 0xCF,
 
   // Messages from animation process to engine
   StartShutdownAnim          startShutdownAnim      = 0xD0,
@@ -259,6 +264,10 @@ union RobotToEngine {
 
   // SDK Streaming Audio Playback
   AudioStreamStatusEvent     audioStreamStatusEvent = 0xEB,
+
+  // Alexa
+  AlexaAuthChanged           alexaAuthChanged       = 0xEC,
+  AlexaUXChanged             alexaUXChanged         = 0xED,
 
 
   // ====== 0xF0 to 0x FE: Unreliable message to the Engine =====
