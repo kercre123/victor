@@ -7,6 +7,10 @@
 namespace Anki {
 namespace Vector {
 
+// note: if you add a new animation trigger that is deemed to be a "behavior light", please add it to the
+//       the list of "behavior lights" in BackpackLightComponent::IsBehaviorLightActive()
+//       this is our workaround to give priority of these behavior state lights over some critical backpack lights
+//       eg. active feature lights take precedence over charging and notification lights
 enum int_32 BackpackAnimationTrigger
 {
   // Please keep alphabetical
@@ -37,6 +41,7 @@ enum int_32 BackpackAnimationTrigger
   SpinnerYellowHoldTarget,
   SpinnerYellowSelectTarget,
   Streaming,
+  WorkingOnIt,
 
   Count
 }
@@ -69,6 +74,7 @@ enum_concept string EnumToString[BackpackAnimationTrigger] {
   SpinnerYellowHoldTarget   = verbatim "SpinnerYellowHoldTarget",
   SpinnerYellowSelectTarget = verbatim "SpinnerYellowSelectTarget",
   Streaming                 = verbatim "Streaming",
+  WorkingOnIt               = verbatim "WorkingOnIt",
 
   Count                     = verbatim "Count"
 }
