@@ -85,16 +85,6 @@ class SnapperServicer(chipperpb_pb2_grpc.ChipperGrpcServicer):
 
     return image_response
 
-  def CreatePerson(self, request, context):
-    raise NotImplementedError('Got CreatePerson request.')
-  def CreatePersonGroup(self, request, context):
-    raise NotImplementedError('Got CreatePersonGroup request.')
-  def ListPersonGroup(self, request, context):
-    raise NotImplementedError('Got ListPersonGroup request.')
-  def DeletePersonGroup(self, request, context):
-    raise NotImplementedError('Got DeletePersonGroup request.')
-  def TrainPersonGroup(self, request, context):
-    raise NotImplementedError('Got TrainPersonGroup request.')
 
 def serve():
   server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
