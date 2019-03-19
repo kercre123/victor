@@ -87,6 +87,8 @@ void IBehaviorPlaypen::OnBehaviorActivated()
   
 void IBehaviorPlaypen::BehaviorUpdate()
 {
+  PlaypenTick();
+  
   if(!IsActivated())
   {
     return;

@@ -75,8 +75,8 @@ enum uint_8 FactoryTestResultCode {
   TEST_TIMED_OUT,
   TEST_CANCELLED,
   ROBOT_PICKUP,
-  TOOL_CODE_IMAGES_WRITE_FAILED,
-
+  
+  TOF_ELECTRICAL_CHECK_FAILED,
   NOISY_TOUCH_SENSOR,
 
   CUBE_POSE_WRITE_FAILED,
@@ -237,7 +237,9 @@ enum no_cpp_class uint_32 PlaypenTestMask {
   WifiScanError                = 0x00000010,
 
   CubePoseCheck                = 0x00000020,
-  
+
+  ToFBGTCheck                  = 0x00000040,
+
 }
 
 } // namespace Cozmo

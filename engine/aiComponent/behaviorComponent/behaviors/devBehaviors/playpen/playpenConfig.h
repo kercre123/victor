@@ -142,7 +142,7 @@ static f32 kVisualDistanceToDistanceSensorObjectThresh_mm = 30;
 static f32 kDistanceSensorReadingThresh_mm = 20;
 
 // Bias adjustment for raw distance sensor reading when comparing to visual distance
-static f32 kDistanceSensorBiasAdjustment_mm = 30;
+static f32 kDistanceSensorBiasAdjustment_mm = 0;
 
 // Angle to move the head to when doing the distance sensor check
 // Whiskey ToF is angled 11 degrees down so move head to 11 degrees so ToF is looking forwards
@@ -225,6 +225,11 @@ static u32 kFFTExpectedFreq_hz         = 1024;
 
 // The allowed +/- deviation of the FFT frequency from the expected value
 static u32 kFFTFreqTolerance_hz        = 20;
+
+// The minimum loudness/amplitude of the most prominent frequency found
+// by the FFT. Unknown units, value acquired through testing good robots
+// compared to a robot without mic holes
+static f32 kFFTMinLoudnessThresh       = 1000000000000.f;
 
 // ----------Tool Code----------
 // Number of tool codes we should be seeing

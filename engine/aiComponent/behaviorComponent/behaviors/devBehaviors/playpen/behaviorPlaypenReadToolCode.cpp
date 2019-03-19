@@ -45,8 +45,8 @@ void BehaviorPlaypenReadToolCode::TransitionToToolCodeRead(const ExternalInterfa
   // Save tool code images to robot (whether it succeeded to read code or not)
   std::list<std::vector<u8> > rawJpegData = robot.GetVisionComponent().GetToolCodeImageJpegData();
   
-  static const NVStorage::NVEntryTag toolCodeImageTags[PlaypenConfig::kNumToolCodes] =
-    {NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft, NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight};
+  // static const NVStorage::NVEntryTag toolCodeImageTags[PlaypenConfig::kNumToolCodes] =
+  //   {NVStorage::NVEntryTag::NVEntry_ToolCodeImageLeft, NVStorage::NVEntryTag::NVEntry_ToolCodeImageRight};
   
   
   // Verify number of images
@@ -62,8 +62,11 @@ void BehaviorPlaypenReadToolCode::TransitionToToolCodeRead(const ExternalInterfa
   u32 imgIdx = 0;
   for(auto const& img : rawJpegData)
   {
-    WriteToStorage(robot, toolCodeImageTags[imgIdx], img.data(), img.size(),
-                   FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED);
+    // WriteToStorage(robot, toolCodeImageTags[imgIdx], img.data(), img.size(),
+    //                FactoryTestResultCode::TOOL_CODE_IMAGES_WRITE_FAILED);
+    PRINT_NAMED_ERROR("BehaviorPlaypenReadToolCode.NotSupported",
+                      "This is not supported anymore");
+    PLAYPEN_SET_RESULT(FactoryTestResultCode::TEST_CANCELLED);
     
     ++imgIdx;
     

@@ -14,6 +14,7 @@
 #define __AnimProcess_CozmoAnim_MicDataInfo_H_
 
 #include "cozmoAnim/micDataTypes.h"
+#include "cozmoAnim/fftTypes.h"
 #include "util/bitFlags/bitFlags.h"
 
 #include <cstdint>
@@ -39,7 +40,7 @@ public:
   static constexpr uint32_t kMaxRecordTime_ms = std::numeric_limits<uint32_t>::max();
   
   // Note this will be called from a separate processing thread
-  std::function<void(std::vector<uint32_t>&&)> _rawAudioFFTCallback;
+  std::function<void(FFTResultList&&)> _rawAudioFFTCallback;
   
   void SetTimeToRecord(uint32_t timeToRecord);
   void CollectRawAudio(const AudioUtil::AudioSample* audioChunk, size_t size);
@@ -62,7 +63,7 @@ private:
   void SaveCollectedAudio(const std::string& dataDirectory, const std::string& nameToUse, const std::string& nameToRemove);
   std::string ChooseNextFileNameBase(std::string& out_dirToDelete);
   
-  static std::vector<uint32_t> GetFFTResultFromRaw(const AudioUtil::AudioChunkList& data, float length_s);
+  static FFTResultList GetFFTResultFromRaw(const AudioUtil::AudioChunkList& data, float length_s);
 };
 
 } // namespace MicData

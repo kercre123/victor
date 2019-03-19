@@ -97,23 +97,37 @@ void BehaviorPlaypenSoundCheck::AlwaysHandleInScope(const RobotToEngineEvent& ev
     {
       const auto& fftResult = payload.result[i];
       PRINT_NAMED_INFO("BehaviorPlaypenDriftCheck.HandleAudioFFTResult.Result", 
-                       "FFT result for channel %u : %u",
-                       i, fftResult);
+                       "FFT result for channel %u : %uhz at %f loudness",
+                       i, fftResult.freq_hz, fftResult.loudness);
 
       // Check that the most prominent frequency heard by this mic is 
       // near the expected frequency
-      if(!Util::IsNear((float)fftResult, 
+      if(!Util::IsNear((float)fftResult.freq_hz, 
                        PlaypenConfig::kFFTExpectedFreq_hz, 
                        PlaypenConfig::kFFTFreqTolerance_hz))
       {
         ++count;
         res = channelToMic[i];
-        PRINT_NAMED_WARNING("BehaviorPlaypenDriftCheck.HandleAudioFFTResult.FFTFailed",
-                            "%s picked up freq %u which is outside %u +/- %u",
+        PRINT_NAMED_WARNING("BehaviorPlaypenDriftCheck.HandleAudioFFTResult.FFTFailedFreq",
+                            "%s picked up freq %u(%f) which is outside %u +/- %u",
                             EnumToString(res),
-                            fftResult,
+                            fftResult.freq_hz,
+                            fftResult.loudness,
                             PlaypenConfig::kFFTExpectedFreq_hz, 
                             PlaypenConfig::kFFTFreqTolerance_hz);
+      }
+
+      // Check that the most prominent frequency heard by this mic is "loud" enough
+      if(fftResult.loudness < PlaypenConfig::kFFTMinLoudnessThresh)
+      {
+        res = channelToMic[i];
+        PRINT_NAMED_WARNING("BehaviorPlaypenDriftCheck.HandleAudioFFTResult.FFTFailedLoudness",
+                            "%s picked up freq %u at loudness %f which is less than %f",
+                            EnumToString(res),
+                            fftResult.freq_hz,
+                            fftResult.loudness,
+                            PlaypenConfig::kFFTMinLoudnessThresh);
+        
       }
     }
 

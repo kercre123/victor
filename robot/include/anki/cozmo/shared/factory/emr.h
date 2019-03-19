@@ -39,15 +39,18 @@ namespace Factory {
       uint32_t playpen[8];
       uint32_t fixture[192];
     } fields;
-    
+
     uint32_t data[256];
   };
-  
+
   #ifdef __GNUC__
   static_assert(sizeof(EMR) == 1024);
   #else
   typedef char static_assertion_emr_size_check[(sizeof(EMR) == 1024) ? 1 : -1];
   #endif
+
+  const off_t kCameraCalibOffset = 4194304;
+  const off_t kToFCalibOffset = 8388608;
 }
 }
 }

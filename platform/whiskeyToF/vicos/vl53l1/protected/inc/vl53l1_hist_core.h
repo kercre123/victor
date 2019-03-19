@@ -1,16 +1,16 @@
 
-/*
-* This file is part of VL53L1 Protected
-*
-* Copyright (C) 2016, STMicroelectronics - All Rights Reserved
-*
-* License terms: STMicroelectronics Proprietary in accordance with licensing
-* terms at www.st.com/sla0044
-*
-* STMicroelectronics confidential
-* Reproduction and Communication of this document is strictly prohibited unless
-* specifically authorized in writing by STMicroelectronics.
-*
+/*******************************************************************************
+ This file is part of VL53L1 Protected
+
+ Copyright (c) 2017, STMicroelectronics - All Rights Reserved
+
+ License terms: STMicroelectronics Proprietary in accordance with licensing
+ terms at www.st.com/sla0081
+
+ STMicroelectronics confidential
+ Reproduction and Communication of this document is strictly prohibited unless
+ specifically authorized in writing by STMicroelectronics.
+
 */
 
 
@@ -79,8 +79,8 @@ extern "C"
 
 
 
-void  VL53L1_FCTN_00013(
-	uint8_t                         VL53L1_PRM_00032,
+void  VL53L1_f_013(
+	uint8_t                         VL53L1_p_018,
 	uint8_t                         filter_woi,
 	VL53L1_histogram_bin_data_t    *pbins,
 	int32_t                        *pa,
@@ -103,11 +103,11 @@ void  VL53L1_FCTN_00013(
 
 
 
-VL53L1_Error VL53L1_FCTN_00011(
+VL53L1_Error VL53L1_f_011(
 	uint16_t                        vcsel_width,
 	uint16_t                        fast_osc_frequency,
 	uint32_t                        total_periods_elapsed,
-	uint16_t                        VL53L1_PRM_00004,
+	uint16_t                        VL53L1_p_006,
 	VL53L1_range_data_t            *pdata);
 
 
@@ -130,7 +130,7 @@ VL53L1_Error VL53L1_FCTN_00011(
 
 
 
-void VL53L1_FCTN_00012(
+void VL53L1_f_012(
 	uint16_t             gain_factor,
 	int16_t              range_offset_mm,
 	VL53L1_range_data_t *pdata);
@@ -145,7 +145,7 @@ void VL53L1_FCTN_00012(
 
 
 
-void  VL53L1_FCTN_00037(
+void  VL53L1_f_037(
 	VL53L1_histogram_bin_data_t   *pdata,
 	int32_t                        ambient_estimate_counts_per_bin);
 
@@ -160,7 +160,7 @@ void  VL53L1_FCTN_00037(
 
 
 
-void  VL53L1_FCTN_00004(
+void  VL53L1_f_004(
 	VL53L1_histogram_bin_data_t   *pxtalk,
 	VL53L1_histogram_bin_data_t   *pbins,
 	VL53L1_histogram_bin_data_t   *pxtalk_realigned);
@@ -177,7 +177,7 @@ void  VL53L1_FCTN_00004(
 
 
 
-int8_t  VL53L1_FCTN_00038(
+int8_t  VL53L1_f_038(
 	VL53L1_histogram_bin_data_t   *pdata1,
 	VL53L1_histogram_bin_data_t   *pdata2);
 
@@ -193,7 +193,7 @@ int8_t  VL53L1_FCTN_00038(
 
 
 
-VL53L1_Error  VL53L1_FCTN_00039(
+VL53L1_Error  VL53L1_f_039(
 	VL53L1_histogram_bin_data_t   *pidata,
 	VL53L1_histogram_bin_data_t   *podata);
 

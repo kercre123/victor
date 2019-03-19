@@ -19,6 +19,10 @@
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 
+#include "anki/cozmo/shared/factory/emrHelper.h"
+
+#include "whiskeyToF/tof.h"
+
 #include <sys/stat.h>
 
 namespace Anki {
@@ -32,6 +36,8 @@ BehaviorPlaypenInitChecks::BehaviorPlaypenInitChecks(const Json::Value& config)
 
 Result BehaviorPlaypenInitChecks::OnBehaviorActivatedInternal()
 {
+  _tofCheckFailed = false;
+
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
@@ -41,7 +47,18 @@ Result BehaviorPlaypenInitChecks::OnBehaviorActivatedInternal()
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::RAMPOST_ERROR, RESULT_FAIL);
   }
-      
+
+  // Start the tof background test
+  // This will repeatedly start and stop the sensor checking for issues with ranging (constant ranging errors)
+  if(!(Factory::GetEMR()->fields.playpenTestDisableMask & PlaypenTestMask::ToFBGTCheck))
+  {
+    ToFSensor::getInstance()->EnableBackgroundTest(true,
+                                                   [this](ToFSensor::CommandResult res)
+                                                   {
+                                                     _tofCheckFailed = true;
+                                                   });
+  }
+
   // Should not be seeing any cliffs
   if(robot.GetCliffSensorComponent().IsCliffDetectedStatusBitOn())
   {
@@ -54,42 +71,57 @@ Result BehaviorPlaypenInitChecks::OnBehaviorActivatedInternal()
       PlaypenConfig::kMinExpectedTouchValue,
       PlaypenConfig::kMaxExpectedTouchValue))
   {
-    PRINT_NAMED_WARNING("BehaviorPlaypenWaitToStart.OnActivated.TouchOOR", 
+    PRINT_NAMED_WARNING("BehaviorPlaypenWaitToStart.OnActivated.TouchOOR",
                         "Min %u < Val %u < Max %u",
                         PlaypenConfig::kMinExpectedTouchValue,
                         rawTouchValue,
                         PlaypenConfig::kMaxExpectedTouchValue);
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::TOUCH_VALUES_OOR, RESULT_FAIL);
   }
-  
+
   // Battery voltage should be relatively high as we are on the charger
   if(robot.GetBatteryVoltage() < PlaypenConfig::kMinBatteryVoltage)
   {
     PRINT_NAMED_WARNING("BehaviorPlaypenInitChecks.OnActivated.BatteryTooLow", "%fv", robot.GetBatteryVoltage());
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::BATTERY_TOO_LOW, RESULT_FAIL);
   }
-  
+
   // Make sure we are considered on the charger and charging
   if(!(robot.IsOnCharger() && robot.IsCharging()))
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::CHARGER_UNDETECTED, RESULT_FAIL);
   }
-  
+
   // Erase all of playpen/factory related nvstorage
   if(!robot.GetNVStorageComponent().WipeFactory())
   {
     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::NVSTORAGE_ERASE_FAILED, RESULT_FAIL);
   }
-  
+
   // Force delocalize the robot to ensure consistent starting pose
   robot.Delocalize(false);
 
   PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, RESULT_OK);
-  
+
   return RESULT_OK;
 }
 
-}
+void BehaviorPlaypenInitChecks::PlaypenTick()
+{
+  // Every tick while in scope check if the tof check has failed
+  // If it has then broadcast a message
+  if(_tofCheckFailed)
+  {
+    using namespace ExternalInterface;
+
+    PRINT_NAMED_ERROR("BehaviorPlaypenInitChecks.ToFCheckFailed",
+                      "Detected constant errors from ToF sensor");
+
+    Robot& robot = GetBEI().GetRobotInfo()._robot;
+    robot.Broadcast(MessageEngineToGame(PlaypenBehaviorFailed(FactoryTestResultCode::TOF_ELECTRICAL_CHECK_FAILED)));
+    _tofCheckFailed = false;
+  }
 }
 
-
+}
+}

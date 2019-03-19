@@ -171,6 +171,17 @@ namespace Cozmo {
         // Use FastWriter to "compress" the json string (removes newlines, tabs, etc)
         Json::FastWriter writer;
         std::string json = writer.write(_json);
+
+        // Reinsert newlines every bytesBeforeNewline in order for robot3 (factory fixture)
+        // to be able to fit the log (line by line) in its line buffer.
+        const int bytesBeforeNewline = 1024;
+        const int numNewlines = json.length()/bytesBeforeNewline;
+        auto iter = json.begin();
+        for(int i = 1; i < numNewlines; i++)
+        {
+          iter = json.insert(iter+bytesBeforeNewline, '\n');
+        }
+
         _logFileHandle << json;
       }
       _logFileHandle.close();
