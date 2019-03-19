@@ -92,7 +92,7 @@ CONSOLE_VAR(f32, kBodyTurnSpeedThreshBlock_degs, "Vision.MarkerDetection",   30.
 CONSOLE_VAR_RANGED(f32, kMarkerDetector_CropWidthFraction, "Vision.MarkerDetection", 0.65f, 0.5f, 1.f);
   
 // Show the crops being used for MarkerDetection. Need to increase Viz debug windows if enabled.
-CONSOLE_VAR(bool, kMarkerDetector_VizCropScheduler, "Vision.MarkerDetection", true);
+CONSOLE_VAR(bool, kMarkerDetector_VizCropScheduler, "Vision.MarkerDetection", false);
   
 // How long to disable auto exposure after using detections to meter
 CONSOLE_VAR(u32, kMeteringHoldTime_ms,    "Vision.PreProcessing", 2000);
