@@ -59,7 +59,7 @@ typename T::duration get_time()
 template <typename T>
 bool time_is_valid( const T& t )
 {
-    return t == T::zero();
+    return t != T::zero();
 }
 
 template <typename T>

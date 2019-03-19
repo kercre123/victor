@@ -60,6 +60,9 @@ public:
     using SerializedMessageType = nng_msg*;
 
     // Singleton accessor
+    // Checks to initialize the singleton object
+    // Note that this is not thread-safe, and thus should be called from
+    // the main thread before any tasks are started
     static ExternalCommsRouter& Inst();
 
     // Deallocate the singleton

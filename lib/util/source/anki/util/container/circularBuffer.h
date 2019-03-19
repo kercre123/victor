@@ -216,6 +216,7 @@ public:
   
   size_t size() const     { return _numEntries; }
   size_t capacity() const { return _capacity; }
+  bool   full() const { return _numEntries == _capacity; }
   bool   empty() const    { return (_numEntries == 0); }
   
   TCRef operator[](size_t itemIndex) const

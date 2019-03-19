@@ -298,6 +298,7 @@ size_t stream_proto( const T& proto, std::ostream& os )
 }
 
 std::string to_string( const UUID& uuid );
+// Commented out for now since UUIDs are std::strings
 // std::ostream& operator<<( std::ostream& os, const UUID& uuid );
 
 // Logger singleton for event streaming
@@ -307,6 +308,9 @@ class Logger
 {
 public:
 
+    // Checks to initialize the singleton object
+    // Note that this is not thread-safe, and thus should be called from
+    // the main thread before any tasks are started
     static Logger& Inst();
 
     bool Initialize( const std::string& logPath );
