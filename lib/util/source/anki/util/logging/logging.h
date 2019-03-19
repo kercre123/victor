@@ -29,7 +29,6 @@
 
 #include <string>
 #include <vector>
-#include <stdio.h>
 
 #ifndef ALLOW_DEBUG_LOGGING
 #define ALLOW_DEBUG_LOGGING ANKI_DEVELOPER_CODE
@@ -71,7 +70,7 @@ void sPopErrG();            // Restores errG to its value before calling sPushEr
 
 // Global flag to control break-on-error behavior
 extern bool _errBreakOnError;
-
+  
 // If true, access to the global error flag uses a mutex device. Changing this value while logging could
 // lead to a mutex lock, so don't.
 extern bool _lockErrG;
@@ -478,6 +477,7 @@ __attribute__((noreturn)) void sAbort();
 #if ANKI_DEV_ASSERT_ENABLED
 
 #define DEV_ASSERT_MSG(expr, name, format, ...) do { \
+  ::Anki::Util::DropBreadcrumb(expr ? true : false, __FILE__, __LINE__); \
   if (!(expr)) { \
     PRINT_NAMED_ERROR(name, "ASSERT(%s): " format, #expr, ##__VA_ARGS__); \
     Anki::Util::sDumpCallstack("ASSERT"); \
@@ -495,6 +495,7 @@ __attribute__((noreturn)) void sAbort();
 // but the entire block will be discarded by the optimizer because it can't be executed.
 //
 #define DEV_ASSERT_MSG(expr, name, format, ...) do { \
+  ::Anki::Util::DropBreadcrumb(expr ? true : false, __FILE__, __LINE__); \
   if (false) { \
     if (!(expr)) { \
       PRINT_NAMED_ERROR(name, "ASSERT(%s): " format, #expr, ##__VA_ARGS__); \
