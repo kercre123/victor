@@ -90,10 +90,9 @@ target_link_libraries(robot_clad
 
 anki_build_target_license(robot_clad "ANKI")
 
-set(CLAD_CPPLITE_NS_FLAG "")
-
-# uncomment to set a global emiiter-namespace
-# set(CLAD_CPPLITE_NS_FLAG "--namespace" "CppLite")
+if (USE_CPPLITE_NAMESPACE)
+    set(CLAD_CPPLITE_NS_FLAG "--namespace" "CppLite")
+endif()
 
 set(CLAD_CPPLITE_FLAGS
     --max-message-size 1400
@@ -141,6 +140,7 @@ generate_clad(
     OUTPUT_DIR "${ROBOT_OUTPUT_DIR}"
     EMITTER ${CLAD_CPP_DECL}
     OUTPUT_EXTS ${CLAD_CPP_DECL_EXTS}
+    FLAGS ${CLAD_CPPLITE_NS_FLAG}
     INCLUDES "${CLAD_INCLUDES}"
     OUTPUT_SRCS CLAD_DECL_GEN_ROBOT_SRCS
 )
@@ -229,6 +229,7 @@ generate_clad(
     OUTPUT_DIR "${ROBOT_OUTPUT_DIR}"
     EMITTER ${CLAD_CPP_SEND_HELPER}
     OUTPUT_EXTS ${CLAD_CPP_SEND_HELPER_EXTS}
+    FLAGS ${CLAD_CPPLITE_NS_FLAG}
     INCLUDES "${CLAD_INCLUDES}"
     OUTPUT_SRCS CLAD_SEND_HELPER_GEN_ROBOT_SRCS
 )
@@ -267,6 +268,7 @@ generate_clad(
     OUTPUT_DIR "${ROBOT_OUTPUT_DIR}"
     EMITTER ${CLAD_CPP_A2E_HELPER}
     OUTPUT_EXTS ${CLAD_CPP_A2E_HELPER_EXTS}
+    FLAGS ${CLAD_CPPLITE_NS_FLAG}
     INCLUDES "${CLAD_INCLUDES}"
     OUTPUT_SRCS CLAD_A2E_HELPER_GEN_ROBOT_SRCS
 )
@@ -294,6 +296,17 @@ target_compile_definitions(robot_clad_cpplite
     USES_CPPLITE
 )
 
+if (USE_CPPLITE_NAMESPACE)
+    target_compile_definitions(robot_clad_cpplite
+        PUBLIC
+        USES_CPPLITE=1
+    )
+endif()
+
+target_link_libraries(robot_clad_cpplite
+    cti_vision_clad_cpplite)
+
 anki_build_target_license(robot_clad_cpplite "ANKI")
 
-add_dependencies(robot_clad_cpplite cti_vision_clad_cpplite)
+# add_dependencies(robot_clad_cpplite cti_vision_clad_cpplite)
+

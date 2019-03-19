@@ -284,7 +284,6 @@ class StandardArgumentParser(SimpleArgumentParser):
     def __init__(self, language, allow_override_output=False, *args, **kwargs):
         description = 'Generate {language} code from a .clad file.'.format(language=language)
         super(StandardArgumentParser, self).__init__(description=description, *args, **kwargs)
-
         self._allow_override_output = allow_override_output
         if allow_override_output:
             group = self.add_mutually_exclusive_group()

@@ -17,6 +17,18 @@
 #include "coretech/common/shared/types.h"
 #include "cozmoAnim/animContext.h"
 
+#include <functional>
+#include <mutex>
+#include <vector>
+
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::ns
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#define CLAD_VECTOR(ns) ns
+#endif
+
 namespace Anki {
 namespace Vector {
 
@@ -45,9 +57,9 @@ public:
   // Most functions here need to be thread safe due to them being called from trigger word detected
   // callbacks which happen on a separate thread
   
-  void SetTriggerWordResponse(const RobotInterface::SetTriggerWordResponse& msg);
+  void SetTriggerWordResponse(const CLAD_VECTOR(RobotInterface)::SetTriggerWordResponse& msg);
   
-  void SetAlexaUXResponses(const RobotInterface::SetAlexaUXResponses& msg);
+  void SetAlexaUXResponses(const CLAD_VECTOR(RobotInterface)::SetAlexaUXResponses& msg);
   
   // Start the robot's response to the trigger in order to indicate that the robot may be streaming audio
   // The GetInAnimation is optional, the earcon and backpack lights are not
@@ -85,7 +97,7 @@ private:
   const Anim::AnimContext* _context = nullptr;
   Anim::AnimationStreamer* _streamer = nullptr;
 
-  Anki::AudioEngine::Multiplexer::PostAudioEvent _postAudioEvent;
+  CLAD(Anki)::AudioEngine::Multiplexer::PostAudioEvent _postAudioEvent;
   int32_t _minStreamingDuration_ms;
   bool _shouldTriggerWordStartStream;
   bool _shouldTriggerWordSimulateStream;
@@ -106,7 +118,7 @@ private:
   struct AlexaInfo
   {
     AlexaUXState state; // a transition from Idle to this state will trigger the below response
-    Anki::AudioEngine::Multiplexer::PostAudioEvent audioEvent;
+    CLAD(Anki)::AudioEngine::Multiplexer::PostAudioEvent audioEvent;
     uint8_t getInAnimTag;
     std::string getInAnimName;
   };
@@ -117,5 +129,8 @@ private:
 
 } // namespace Vector
 } // namespace Anki
+
+#undef CLAD
+#undef CLAD_VECTOR
 
 #endif  // #ifndef COZMO_ANIM_SHOW_AUDIO_STREAM_STATE_MANAGER_H

@@ -16,6 +16,8 @@ project(victor)
 # Build options
 option(USE_DAS "Enable DAS reporting" OFF)
 
+option(USE_CPPLITE_NAMESPACE "Put CPP Lite in it's own namespace" ON)
+
 # Use ccache if it is installed
 include(ccache)
 

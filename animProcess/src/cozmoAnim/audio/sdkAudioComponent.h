@@ -16,6 +16,14 @@
 #include "audioEngine/audioTools/standardWaveDataContainer.h"
 #include "audioEngine/audioTools/streamingWaveDataInstance.h"
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::ns
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#define CLAD_VECTOR(ns) ns
+#endif
+
 // Forward declarations
 namespace Anki {
   namespace Vector {
@@ -88,10 +96,13 @@ private:
   void CleanupAudioEngine();    
   void ClearOperationData();
   bool SetPlayerVolume(float volume) const;
-  bool SendAnimToEngine(SDKAudioStreamingState audioState, uint32_t audioSent=0, uint32_t audioPlayed=0);
+  bool SendAnimToEngine(CLAD_VECTOR(SDKAudioStreamingState) audioState, uint32_t audioSent=0, uint32_t audioPlayed=0);
 };
 
 }   // end namespace Anki
 }   // end namespace Vector
+
+#undef CLAD
+#undef CLAD_VECTOR
 
 #endif // __Anki_cozmo_sdkAudioComponent_H__

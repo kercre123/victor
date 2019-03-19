@@ -36,6 +36,15 @@
 #include <set>
 #include <sstream>
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::ns
+#define CLAD_ANKI(ns) CppLite::Anki::ns
+#define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
+#else
+#define CLAD(ns) ns
+#define CLAD_ANKI(ns) ns
+#define CLAD_AUDIOMETADATA(ns) Anki::AudioMetaData::ns
+#endif
 
 // Allow the build to include/exclude the audio libs
 //#define EXCLUDE_ANKI_AUDIO_LIBS 0
@@ -59,16 +68,16 @@ const std::string kProfilerCaptureFileExtension     = "prof";
 const std::string kAudioOutputCaptureFileName       = "VictorOutputSession";
 const std::string kAudioOutputCaptureFileExtension  = "wav";
 
-using APT = Anki::AudioMetaData::GameParameter::ParameterType;
+using APT = CLAD_AUDIOMETADATA(GameParameter)::ParameterType;
 // Consumable Parameters
 const std::set<APT> kConsumableParameters =
   { APT::Robot_Vic_Meter_Bus_Sfx, APT::Robot_Vic_Meter_Bus_Tts, APT::Robot_Vic_Meter_Bus_Vo };
 const char* const kWebVizModuleName = "audioevents";
 
 // Null-safe wrapper for Anki::AudioMetaData::EnumToString()
-std::string ToString(Anki::AudioMetaData::GameObjectType v)
+std::string ToString(CLAD_AUDIOMETADATA(GameObjectType) v)
 {
-  const char * str = Anki::AudioMetaData::EnumToString(v);
+  const char * str = CLAD_AUDIOMETADATA(EnumToString)(v);
   if (str != nullptr) {
     return str;
   }
@@ -76,9 +85,9 @@ std::string ToString(Anki::AudioMetaData::GameObjectType v)
 }
 
 // Null-safe wrapper for Anki::AudioMetaData::GameEvent::EnumToString()
-std::string ToString(Anki::AudioMetaData::GameEvent::GenericEvent v)
+std::string ToString(CLAD_AUDIOMETADATA(GameEvent)::GenericEvent v)
 {
-  const char * str = Anki::AudioMetaData::GameEvent::EnumToString(v);
+  const char * str = CLAD_AUDIOMETADATA(GameEvent)::EnumToString(v);
   if (str != nullptr) {
     return str;
   }
@@ -86,9 +95,9 @@ std::string ToString(Anki::AudioMetaData::GameEvent::GenericEvent v)
 }
 
 // Null-safe wrapper for Anki::AudioMetaData::GameState::EnumToString()
-std::string ToString(Anki::AudioMetaData::GameState::StateGroupType v)
+std::string ToString(CLAD_AUDIOMETADATA(GameState)::StateGroupType v)
 {
-  const char * str = Anki::AudioMetaData::GameState::EnumToString(v);
+  const char * str = CLAD_AUDIOMETADATA(GameState)::EnumToString(v);
   if (str != nullptr) {
     return str;
   }
@@ -96,9 +105,9 @@ std::string ToString(Anki::AudioMetaData::GameState::StateGroupType v)
 }
 
 // Null-safe wrapper for Anki::AudioMetaData::SwitchState::EnumToString()
-std::string ToString(Anki::AudioMetaData::SwitchState::SwitchGroupType v)
+std::string ToString(CLAD_AUDIOMETADATA(SwitchState)::SwitchGroupType v)
 {
-  const char * str = Anki::AudioMetaData::SwitchState::EnumToString(v);
+  const char * str = CLAD_AUDIOMETADATA(SwitchState)::EnumToString(v);
   if (str != nullptr) {
     return str;
   }
@@ -168,8 +177,8 @@ void DeleteAudioOutputCaptures( ConsoleFunctionContextRef context )
 void TestAudio_PinkNoise( ConsoleFunctionContextRef context )
 {
   if ( sThis != nullptr ) {
-    sThis->PostAudioEvent( ToAudioEventId(AudioMetaData::GameEvent::GenericEvent::Play__Dev_Robot__Pink_1Sec),
-                           ToAudioGameObject(AudioMetaData::GameObjectType::Default) );
+    sThis->PostAudioEvent( ToAudioEventId(CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Play__Dev_Robot__Pink_1Sec),
+                           ToAudioGameObject(CLAD_AUDIOMETADATA(GameObjectType)::Default) );
   }
 }
 
@@ -178,7 +187,7 @@ void PostAudioEvent( ConsoleFunctionContextRef context )
 {
   if ( sThis != nullptr ) {
     const char* event = ConsoleArg_Get_String( context, "event" );
-    const auto defaultGameObj = static_cast<uint64_t>(AudioMetaData::GameObjectType::Default);
+    const auto defaultGameObj = static_cast<uint64_t>(CLAD_AUDIOMETADATA(GameObjectType)::Default);
     const uint64_t gameObjectId = ConsoleArg_GetOptional_UInt64( context,
                                                                  "gameObjectId",
                                                                  defaultGameObj );
@@ -359,18 +368,18 @@ CozmoAudioController::CozmoAudioController( const Anim::AnimContext* context )
     }
 
     RegisterCladGameObjectsWithAudioController();
-    SetDefaultListeners( { ToAudioGameObject( AudioMetaData::GameObjectType::Victor_Listener ) } );
+    SetDefaultListeners( { ToAudioGameObject( CLAD_AUDIOMETADATA(GameObjectType)::Victor_Listener ) } );
     SetupConsumableAudioParameters();
 
-    using namespace AudioMetaData::SwitchState;
+    using namespace CLAD_AUDIOMETADATA(SwitchState);
 
     SetSwitchState( ToAudioSwitchGroupId( SwitchGroupType::Robot_Vic_External_Input_Source ),
                     ToAudioSwitchStateId( (GenericSwitch) Robot_Vic_External_Input_Source::Streaming_Wave_Portal ),
-                    ToAudioGameObject(AudioMetaData::GameObjectType::TextToSpeech) );
+                    ToAudioGameObject(CLAD_AUDIOMETADATA(GameObjectType)::TextToSpeech) );
 
     SetSwitchState( ToAudioSwitchGroupId( SwitchGroupType::Robot_Vic_External_Input_Source ),
                     ToAudioSwitchStateId( (GenericSwitch) Robot_Vic_External_Input_Source::Streaming_Wave_Portal ),
-                    ToAudioGameObject(AudioMetaData::GameObjectType::Animation) );
+                    ToAudioGameObject(CLAD_AUDIOMETADATA(GameObjectType)::Animation) );
   }
   if (sThis == nullptr) {
     sThis = this;
@@ -527,7 +536,7 @@ bool CozmoAudioController::ActivateParameterValueUpdates( bool activate )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool CozmoAudioController::GetActivatedParameterValue( AudioMetaData::GameParameter::ParameterType parameter,
+bool CozmoAudioController::GetActivatedParameterValue( CLAD_AUDIOMETADATA(GameParameter)::ParameterType parameter,
                                                        AudioEngine::AudioRTPCValue& out_value )
 {
   bool success = false;
@@ -549,7 +558,7 @@ bool CozmoAudioController::GetActivatedParameterValue( AudioMetaData::GameParame
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CozmoAudioController::RegisterCladGameObjectsWithAudioController()
 {
-  using GameObjectType = AudioMetaData::GameObjectType;
+  using GameObjectType = CLAD_AUDIOMETADATA(GameObjectType);
 
   // Enumerate through GameObjectType Enums
   for ( uint32_t aGameObj = static_cast<AudioGameObject>(GameObjectType::Default);
@@ -590,7 +599,7 @@ AudioPlayingId CozmoAudioController::PostAudioEvent( const std::string& eventNam
       toSend["type"] = "PostAudioEvent";
       toSend["time"] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       toSend["eventName"] = eventName;
-      toSend["gameObjectId"] = ToString(static_cast<AudioMetaData::GameObjectType>(gameObjectId));
+      toSend["gameObjectId"] = ToString(static_cast<CLAD_AUDIOMETADATA(GameObjectType)>(gameObjectId));
       toSend["hasCallback"] = (callbackContext != nullptr);
       // Note: this hypothetically could flood wifi, but only if the webviz tab is open. Ideally there
       // would be an update call in this class to flush accumulated events. We can add one if this
@@ -616,8 +625,8 @@ AudioPlayingId CozmoAudioController::PostAudioEvent( AudioEventId eventId,
       Json::Value toSend;
       toSend["type"] = "PostAudioEvent";
       toSend["time"] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      toSend["eventName"] = ToString(static_cast<AudioMetaData::GameEvent::GenericEvent>(eventId));
-      toSend["gameObjectId"] = ToString(static_cast<AudioMetaData::GameObjectType>(gameObjectId));
+      toSend["eventName"] = ToString(static_cast<CLAD_AUDIOMETADATA(GameEvent)::GenericEvent>(eventId));
+      toSend["gameObjectId"] = ToString(static_cast<CLAD_AUDIOMETADATA(GameObjectType)>(gameObjectId));
       toSend["hasCallback"] = (callbackContext != nullptr);
       webservice->SendToWebViz( kWebVizModuleName, toSend );
     }
@@ -637,7 +646,7 @@ void CozmoAudioController::StopAllAudioEvents( AudioGameObject gameObjectId )
       Json::Value toSend;
       toSend["type"] = "StopAllAudioEvents";
       toSend["time"] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      toSend["gameObjectId"] = ToString(static_cast<AudioMetaData::GameObjectType>(gameObjectId));
+      toSend["gameObjectId"] = ToString(static_cast<CLAD_AUDIOMETADATA(GameObjectType)>(gameObjectId));
       webservice->SendToWebViz( kWebVizModuleName, toSend );
     }
   }
@@ -655,7 +664,7 @@ bool CozmoAudioController::SetState( AudioStateGroupId stateGroupId,
       Json::Value toSend;
       toSend["type"] = "SetState";
       toSend["time"] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      toSend["stateGroupId"] = ToString(static_cast<AudioMetaData::GameState::StateGroupType>(stateGroupId));
+      toSend["stateGroupId"] = ToString(static_cast<CLAD_AUDIOMETADATA(GameState)::StateGroupType>(stateGroupId));
       toSend["stateId"] = stateId; // no string mapping
       webservice->SendToWebViz( kWebVizModuleName, toSend );
     }
@@ -677,9 +686,9 @@ bool CozmoAudioController::SetSwitchState( AudioSwitchGroupId switchGroupId,
       Json::Value toSend;
       toSend["type"] = "SetSwitchState";
       toSend["time"] = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      toSend["switchGroupId"] = ToString(static_cast<AudioMetaData::SwitchState::SwitchGroupType>(switchGroupId));
+      toSend["switchGroupId"] = ToString(static_cast<CLAD_AUDIOMETADATA(SwitchState)::SwitchGroupType>(switchGroupId));
       toSend["switchStateId"] = switchStateId; // no string mapping
-      toSend["gameObjectId"] = ToString(static_cast<AudioMetaData::GameObjectType>(gameObjectId));
+      toSend["gameObjectId"] = ToString(static_cast<CLAD_AUDIOMETADATA(GameObjectType)>(gameObjectId));
       webservice->SendToWebViz( kWebVizModuleName, toSend );
     }
   }

@@ -30,6 +30,17 @@
 #include <opencv2/core.hpp>
 #include <cassert>
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::ns
+#define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#define CLAD_VISION(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD(ns) ns
+#define CLAD_AUDIOMETADATA(ns) AudioMetaData::ns
+#define CLAD_VECTOR(ns) ns
+#define CLAD_VISION(ns) Vision::ns
+#endif
 
 bool has_any_digits(const std::string& s)
 {
@@ -355,7 +366,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       const auto currentFrameNumber = GetFrameNumberForTime(timeSinceAnimStart_ms);
 
       // Handle the layer/SpriteBox clearing cases first
-      if(updateSpec.spriteBox.spriteBoxName == Vision::SpriteBoxName::Count){
+      if(updateSpec.spriteBox.spriteBoxName == CLAD_VISION(SpriteBoxName)::Count){
         compImg.ClearLayerByName(updateSpec.layerName);
       }else if(Vision::SpritePathMap::kEmptySpriteBoxID == updateSpec.assetID){
         if(ANKI_VERIFY(layer, "AnimationStreamer.UpdateCompositeImage.LayerNotFound",
@@ -514,7 +525,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
     void SpriteSequenceKeyFrame::OverrideShouldRenderInEyeHue(bool shouldRenderInEyeHue)
     {
-      auto renderMethod = shouldRenderInEyeHue ? Vision::SpriteRenderMethod::CustomHue : Vision::SpriteRenderMethod::RGBA;
+      auto renderMethod = shouldRenderInEyeHue ? CLAD_VISION(SpriteRenderMethod)::CustomHue : CLAD_VISION(SpriteRenderMethod)::RGBA;
       _compositeImage->OverrideRenderMethod(renderMethod);
     }
 
@@ -526,7 +537,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
 
     bool SpriteSequenceKeyFrame::AllowProceduralEyeOverlays() const
     {
-      return _compositeImage->GetLayerByName(Vision::LayerName::Procedural_Eyes) != nullptr;
+      return _compositeImage->GetLayerByName(CLAD_VISION(LayerName)::Procedural_Eyes) != nullptr;
     }
 
 
@@ -575,7 +586,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     //
     
     // By Default use "Animation" Audio Game Object
-    const auto kAnimationGameObject = AudioMetaData::GameObjectType::Animation;
+    const auto kAnimationGameObject = CLAD(AudioMetaData)::GameObjectType::Animation;
     
     Result RobotAudioKeyFrame::AddAudioRef(AudioKeyFrameType::AudioRef&& audioRef)
     {
@@ -628,10 +639,10 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     
     Result RobotAudioKeyFrame::SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug)
     {
-      using namespace AudioEngine;
+      using namespace CLAD(AudioEngine);
       using namespace AudioKeyFrameType;
-      using namespace AudioMetaData;
-      
+      using namespace CLAD(AudioMetaData);
+
       // Check for deprecated format
       if ( jsonRoot.isMember("audioEventId") ) {
         // Deprecated format
@@ -654,15 +665,15 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           auto stateId = static_cast<u32>(GameState::GenericState::Invalid);
           JsonTools::GetValueOptional(*stateIt, kKey_stateGroupId, groupId);
           JsonTools::GetValueOptional(*stateIt, kKey_stateId, stateId);
-          if (((u32)GameState::StateGroupType::Invalid == groupId) || ((u32)GameState::GenericState::Invalid == stateId)) {
+          if (((u32)CLAD_AUDIOMETADATA(GameState)::StateGroupType::Invalid == groupId) || ((u32)CLAD_AUDIOMETADATA(GameState)::GenericState::Invalid == stateId)) {
             PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.InvalidGameState",
                               "'%s' @ %i ms : Has an invalid stateGroupId (%i) or stateId (%i)",
                               animNameDebug.c_str(), _triggerTime_ms, groupId, stateId);
             // Move to next state
             continue;
           }
-          Result addResult = AddAudioRef(AudioStateRef(static_cast<GameState::StateGroupType>(groupId),
-                                                       static_cast<GameState::GenericState>(stateId)));
+          Result addResult = AddAudioRef(AudioStateRef(static_cast<CLAD_AUDIOMETADATA(GameState)::StateGroupType>(groupId),
+                                                       static_cast<CLAD_AUDIOMETADATA(GameState)::GenericState>(stateId)));
           if(addResult != RESULT_OK) {
             return addResult;
           }
@@ -675,12 +686,12 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         JSON_KEY(switchGroupId);
         JSON_KEY(stateId);
         for (auto switchIt = switches.begin(); switchIt != switches.end(); ++switchIt) {
-          auto groupId = static_cast<u32>(SwitchState::SwitchGroupType::Invalid);
-          auto stateId = static_cast<u32>(SwitchState::GenericSwitch::Invalid);
+          auto groupId = static_cast<u32>(CLAD_AUDIOMETADATA(SwitchState)::SwitchGroupType::Invalid);
+          auto stateId = static_cast<u32>(CLAD_AUDIOMETADATA(SwitchState)::GenericSwitch::Invalid);
           JsonTools::GetValueOptional(*switchIt, kKey_switchGroupId, groupId);
           JsonTools::GetValueOptional(*switchIt, kKey_stateId, stateId);
-          if (((u32)SwitchState::SwitchGroupType::Invalid == groupId) ||
-              ((u32)SwitchState::GenericSwitch::Invalid == stateId)) {
+          if (((u32)CLAD_AUDIOMETADATA(SwitchState)::SwitchGroupType::Invalid == groupId) ||
+              ((u32)CLAD_AUDIOMETADATA(SwitchState)::GenericSwitch::Invalid == stateId)) {
             PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.InvalidSwitchState",
                               "'%s' @ %i ms : Has an invalid switchGroupId (%i) or stateId (%i)",
                               animNameDebug.c_str(), _triggerTime_ms, groupId, stateId);
@@ -688,8 +699,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
             continue;
           }
           
-          Result addResult = AddAudioRef(AudioSwitchRef(static_cast<SwitchState::SwitchGroupType>(groupId),
-                                                        static_cast<SwitchState::GenericSwitch>(stateId),
+          Result addResult = AddAudioRef(AudioSwitchRef(static_cast<CLAD_AUDIOMETADATA(SwitchState)::SwitchGroupType>(groupId),
+                                                        static_cast<CLAD_AUDIOMETADATA(SwitchState)::GenericSwitch>(stateId),
                                                         kAnimationGameObject));
           if(addResult != RESULT_OK) {
             return addResult;
@@ -705,12 +716,12 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         JSON_KEY(time_ms);
         JSON_KEY(curveType);
         for (auto parameterIt = parameters.begin(); parameterIt != parameters.end(); ++parameterIt) {
-          auto parameterId = static_cast<u32>(GameParameter::ParameterType::Invalid);
+          auto parameterId = static_cast<u32>(CLAD_AUDIOMETADATA(GameParameter)::ParameterType::Invalid);
           float value = 0.0f;
           u32   time_ms = 0;
-          u8    curve = static_cast<u8>(AudioEngine::Multiplexer::CurveType::Linear);
+          u8    curve = static_cast<u8>(CLAD(AudioEngine)::Multiplexer::CurveType::Linear);
           JsonTools::GetValueOptional(*parameterIt, kKey_parameterID, parameterId);
-          if ((u32)GameParameter::ParameterType::Invalid == parameterId) {
+          if ((u32)CLAD_AUDIOMETADATA(GameParameter)::ParameterType::Invalid == parameterId) {
             PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.InvalidParameter",
                               "'%s' @ %i ms : Has an invalid parameterID", animNameDebug.c_str(), _triggerTime_ms);
             // Move to next parameter
@@ -720,10 +731,10 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           JsonTools::GetValueOptional(*parameterIt, kKey_time_ms, time_ms);
           JsonTools::GetValueOptional(*parameterIt, kKey_curveType, curve);
           
-          Result addResult = AddAudioRef(AudioParameterRef(static_cast<GameParameter::ParameterType>(parameterId),
+          Result addResult = AddAudioRef(AudioParameterRef(static_cast<CLAD_AUDIOMETADATA(GameParameter)::ParameterType>(parameterId),
                                                            value,
                                                            time_ms,
-                                                           static_cast<AudioEngine::Multiplexer::CurveType>(curve),
+                                                           static_cast<CLAD(AudioEngine)::Multiplexer::CurveType>(curve),
                                                            kAnimationGameObject));
           if(addResult != RESULT_OK) {
             return addResult;
@@ -764,10 +775,10 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           
           // Add events to group
           AudioEventGroupRef eventGroup(kAnimationGameObject);
-          GameEvent::GenericEvent eventId;
+          CLAD_AUDIOMETADATA(GameEvent)::GenericEvent eventId;
           for (int idx = 0; idx < eventIds.size(); ++idx) {
-            eventId = static_cast<GameEvent::GenericEvent>( eventIds[idx].asUInt() );
-            if (GameEvent::GenericEvent::Invalid == eventId) {
+            eventId = static_cast<CLAD_AUDIOMETADATA(GameEvent)::GenericEvent>( eventIds[idx].asUInt() );
+            if (CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Invalid == eventId) {
               PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromJson.InvalidGameEvent",
                                 "'%s' @ %i ms : Has an invalid audio event", animNameDebug.c_str(), _triggerTime_ms);
               // Move on to next event
@@ -794,7 +805,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
                                                             const std::string& animNameDebug)
     {
       using namespace AudioKeyFrameType;
-      using namespace AudioMetaData;
+      using namespace CLAD(AudioMetaData);
       
       JSON_KEY(audioEventId);
       JSON_KEY(volume);
@@ -846,8 +857,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         AudioEventGroupRef eventGroup(kAnimationGameObject);
         for (int idx = 0; idx < eventIds.size(); ++idx) {
           probability = probabilities[idx];
-          const auto eventId = static_cast<GameEvent::GenericEvent>( eventIds[idx].asUInt() );
-          if (GameEvent::GenericEvent::Invalid == eventId) {
+          const auto eventId = static_cast<CLAD_AUDIOMETADATA(GameEvent)::GenericEvent>( eventIds[idx].asUInt() );
+          if (CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Invalid == eventId) {
             PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromDeprecatedJson.InvalidGameEvent",
                               "'%s' @ %i ms : Has an invalid audio event", animNameDebug.c_str(), _triggerTime_ms);
             // Move on to next event
@@ -862,8 +873,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       }
       else {
         JsonTools::GetValueOptional(jsonRoot, kKey_probability, probability);
-        const auto eventId = static_cast<GameEvent::GenericEvent>( eventIds.asUInt() );
-        if (GameEvent::GenericEvent::Invalid == eventId) {
+        const auto eventId = static_cast<CLAD_AUDIOMETADATA(GameEvent)::GenericEvent>( eventIds.asUInt() );
+        if (CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Invalid == eventId) {
           PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromDeprecatedJson.InvalidGameEvent",
                             "'%s' @ %i ms : Has an invalid audio event", animNameDebug.c_str(), _triggerTime_ms);
           return RESULT_FAIL;
@@ -882,10 +893,13 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     Result RobotAudioKeyFrame::SetMembersFromFlatBuf(const CozmoAnim::RobotAudio* audioKeyframe,
                                                     const std::string& animNameDebug)
     {
-      using namespace AudioEngine;
+      using namespace CLAD(AudioEngine);
       using namespace AudioKeyFrameType;
-      using namespace AudioMetaData;
+      using namespace CLAD(AudioMetaData);
       
+
+
+
       // Add States
       const auto* states = audioKeyframe->states();
       if (nullptr != states) {
@@ -910,9 +924,9 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       const auto* switches = audioKeyframe->switches();
       if (nullptr != switches) {
         for (const auto& aSwitch : *switches) {
-          const auto groupId = static_cast<SwitchState::SwitchGroupType>(aSwitch->switchGroupId());
-          const auto stateId = static_cast<SwitchState::GenericSwitch>(aSwitch->stateId());
-          if ((SwitchState::SwitchGroupType::Invalid == groupId) || (SwitchState::GenericSwitch::Invalid == stateId)) {
+          const auto groupId = static_cast<CLAD_AUDIOMETADATA(SwitchState)::SwitchGroupType>(aSwitch->switchGroupId());
+          const auto stateId = static_cast<CLAD_AUDIOMETADATA(SwitchState)::GenericSwitch>(aSwitch->stateId());
+          if ((CLAD_AUDIOMETADATA(SwitchState)::SwitchGroupType::Invalid == groupId) || (CLAD_AUDIOMETADATA(SwitchState)::GenericSwitch::Invalid == stateId)) {
             PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromFlatBuf.InvalidSwitchState",
                               "'%s' @ %i ms : Has an invalid switchGroupId (%i) or stateId (%i)",
                               animNameDebug.c_str(), _triggerTime_ms, groupId, stateId);
@@ -930,8 +944,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       const auto* parameters = audioKeyframe->parameters();
       if (nullptr != parameters) {
         for (const auto& aParameter : *parameters) {
-          const auto parameterId = static_cast<GameParameter::ParameterType>(aParameter->parameterID());
-          if (GameParameter::ParameterType::Invalid == parameterId) {
+          const auto parameterId = static_cast<CLAD_AUDIOMETADATA(GameParameter)::ParameterType>(aParameter->parameterID());
+          if (CLAD_AUDIOMETADATA(GameParameter)::ParameterType::Invalid == parameterId) {
             PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromFlatBuf.InvalidParameter",
                               "'%s' @ %i ms : Has an invalid parameterID", animNameDebug.c_str(), _triggerTime_ms);
             // Move to next Parameter
@@ -971,8 +985,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           
           // Loop through events in group
           for (uint idx = 0; idx < eventIds->size();  ++idx) {
-            const auto& anEventId = static_cast<GameEvent::GenericEvent>(eventIds->Get(idx));
-            if (GameEvent::GenericEvent::Invalid == anEventId) {
+            const auto& anEventId = static_cast<CLAD_AUDIOMETADATA(GameEvent)::GenericEvent>(eventIds->Get(idx));
+            if (CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Invalid == anEventId) {
               PRINT_NAMED_ERROR("RobotAudioKeyFrame.SetMembersFromFlatBuf.InvalidGameEvent",
                                 "'%s' @ %i ms : Has an invalid audio event", animNameDebug.c_str(), _triggerTime_ms);
               // Move on to next Event
@@ -1022,8 +1036,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     {
       // Convert event_id string to AnimEvent enum
       const std::string& eventStr = eventKeyframe->event_id()->str();
-      AnimEvent e = AnimEventFromString(eventStr.c_str());
-      if (e == AnimEvent::Count) {
+      CLAD_VECTOR(AnimEvent) e = CLAD_VECTOR(AnimEventFromString)(eventStr.c_str());
+      if (e == CLAD_VECTOR(AnimEvent)::Count) {
         PRINT_NAMED_WARNING("EventKeyFrame.UnrecognizedEventName", "%s", eventStr.c_str());
         return RESULT_FAIL;
       }
@@ -1040,8 +1054,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       } else {
         if(jsonRoot["event_id"].isString()) {
           const std::string& eventStr = jsonRoot["event_id"].asString();
-          AnimEvent e = AnimEventFromString(eventStr.c_str());
-          if (e == AnimEvent::Count) {
+          CLAD_VECTOR(AnimEvent) e = CLAD_VECTOR(AnimEventFromString)(eventStr.c_str());
+          if (e == CLAD_VECTOR(AnimEvent)::Count) {
             PRINT_NAMED_WARNING("EventKeyFrame.UnrecognizedEventName", "%s", eventStr.c_str());
             return RESULT_FAIL;
           }
@@ -1103,9 +1117,9 @@ _streamMsg.lights[__LED_NAME__].transitionOnPeriod_ms = 0; \
 _streamMsg.lights[__LED_NAME__].transitionOffPeriod_ms = 0; \
 _streamMsg.lights[__LED_NAME__].offset_ms = 0; } while(0)
 
-      GET_COLOR_FROM_JSON(Front,  (int)LEDId::LED_BACKPACK_FRONT);
-      GET_COLOR_FROM_JSON(Middle, (int)LEDId::LED_BACKPACK_MIDDLE);
-      GET_COLOR_FROM_JSON(Back,   (int)LEDId::LED_BACKPACK_BACK);
+      GET_COLOR_FROM_JSON(Front,  (int)CLAD_VECTOR(LEDId)::LED_BACKPACK_FRONT);
+      GET_COLOR_FROM_JSON(Middle, (int)CLAD_VECTOR(LEDId)::LED_BACKPACK_MIDDLE);
+      GET_COLOR_FROM_JSON(Back,   (int)CLAD_VECTOR(LEDId)::LED_BACKPACK_BACK);
       
       GET_MEMBER_FROM_JSON_AND_STORE_IN(jsonRoot, durationTime_ms, keyframeActiveDuration_ms);
 

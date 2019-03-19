@@ -17,9 +17,15 @@
 
 #include <cassert>
 
-#define GET_RED(color) ((color & EnumToUnderlyingType(LEDColor::LED_RED)) >> EnumToUnderlyingType(LEDColorShift::LED_RED_SHIFT))
-#define GET_GRN(color) ((color & EnumToUnderlyingType(LEDColor::LED_GREEN)) >> EnumToUnderlyingType(LEDColorShift::LED_GRN_SHIFT))
-#define GET_BLU(color) ((color & EnumToUnderlyingType(LEDColor::LED_BLUE)) >> EnumToUnderlyingType(LEDColorShift::LED_BLU_SHIFT))
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
+#define GET_RED(color) ((color & EnumToUnderlyingType(CLAD_VECTOR(LEDColor)::LED_RED)) >> EnumToUnderlyingType(CLAD_VECTOR(LEDColorShift::LED_RED_SHIFT)))
+#define GET_GRN(color) ((color & EnumToUnderlyingType(CLAD_VECTOR(LEDColor)::LED_GREEN)) >> EnumToUnderlyingType(CLAD_VECTOR(LEDColorShift::LED_GRN_SHIFT)))
+#define GET_BLU(color) ((color & EnumToUnderlyingType(CLAD_VECTOR(LEDColor)::LED_BLUE)) >> EnumToUnderlyingType(CLAD_VECTOR(LEDColorShift::LED_BLU_SHIFT)))
 
 
 namespace Anki {
@@ -34,12 +40,12 @@ namespace Vector {
     const float offBlu = GET_BLU(offColor);
     const float invAlpha = 1.0f - alpha;
 
-    return (int(onRed * alpha + offRed * invAlpha)) << EnumToUnderlyingType(LEDColorShift::LED_RED_SHIFT) |
-           (int(onGrn * alpha + offGrn * invAlpha)) << EnumToUnderlyingType(LEDColorShift::LED_GRN_SHIFT) |
-           (int(onBlu * alpha + offBlu * invAlpha)) << EnumToUnderlyingType(LEDColorShift::LED_BLU_SHIFT);
+    return (int(onRed * alpha + offRed * invAlpha)) << EnumToUnderlyingType(CLAD_VECTOR(LEDColorShift::LED_RED_SHIFT)) |
+           (int(onGrn * alpha + offGrn * invAlpha)) << EnumToUnderlyingType(CLAD_VECTOR(LEDColorShift::LED_GRN_SHIFT)) |
+           (int(onBlu * alpha + offBlu * invAlpha)) << EnumToUnderlyingType(CLAD_VECTOR(LEDColorShift::LED_BLU_SHIFT));
   }
 
-  u32 GetCurrentLEDcolor(const LightState& ledParams,
+  u32 GetCurrentLEDcolor(const CLAD_VECTOR(LightState)& ledParams,
                          const TimeStamp_t currentTime,
                          const TimeStamp_t phaseTime,
                          const u32 msPerFrame)

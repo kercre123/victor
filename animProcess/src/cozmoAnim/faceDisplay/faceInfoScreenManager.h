@@ -23,7 +23,9 @@
 #include "coretech/common/shared/math/point_fwd.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenTypes.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+// #ifndef USES_CPPLITE
 #include "clad/cloud/mic.h"
+// #endif
 #include "clad/types/tofDisplayTypes.h"
 
 #include "util/singleton/dynamicSingleton.h"
@@ -32,6 +34,12 @@
 #include <memory>
 #include <unordered_map>
 #include <vector>
+
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
 
 namespace Anki {
 
@@ -47,11 +55,6 @@ namespace Anim {
 }
 class FaceInfoScreen;
   
-namespace RobotInterface {
-  struct MicData;
-  struct MicDirection;
-}
-
 namespace WebService {
   class WebService;
 }
@@ -65,7 +68,7 @@ public:
   FaceInfoScreenManager();
 
   void Init(Anim::AnimContext* context, Anim::AnimationStreamer* animStreamer);
-  void Update(const RobotState& state);
+  void Update(const CLAD_VECTOR(RobotState)& state);
   
   // Debug drawing is expected from only one thread
   ScreenName GetCurrScreenName() const;
@@ -76,7 +79,7 @@ public:
   bool IsActivelyDrawingToScreen() const;
 
   void SetShouldDrawFAC(bool draw);
-  void SetCustomText(const RobotInterface::DrawTextOnScreen& text);  
+  void SetCustomText(const CLAD_VECTOR(RobotInterface)::DrawTextOnScreen& text);  
   void SetNetworkStatus(const CloudMic::ConnectionCode& code);
 
   // When BLE pairing mode is enabled/disabled, this screen should
@@ -109,10 +112,10 @@ public:
   void DrawMicInfo(const RobotInterface::MicData& micData);
   void DrawCameraImage(const Vision::ImageRGB565& img);
 
-  void DrawToF(const RangeDataDisplay& data);
+  void DrawToF(const CLAD_VECTOR(RangeDataDisplay)& data);
   
   // Sets the power mode message to send when returning to none screen
-  void SetCalmPowerModeOnReturnToNone(const RobotInterface::CalmPowerMode& msg) { _calmModeMsgOnNone = msg; }
+  void SetCalmPowerModeOnReturnToNone(const CLAD_VECTOR(RobotInterface)::CalmPowerMode& msg) { _calmModeMsgOnNone = msg; }
 
   void SelfTestEnd(Anim::AnimationStreamer* animStreamer);
 
@@ -160,7 +163,7 @@ private:
   bool ScreenNeedsWait(const ScreenName& screenName) const;
 
   // Process wheel, head, lift, button motion for menu navigation
-  void ProcessMenuNavigation(const RobotState& state);
+  void ProcessMenuNavigation(const CLAD_VECTOR(RobotState)& state);
   u32 _wheelMovingForwardsCount;
   u32 _wheelMovingBackwardsCount;
   bool _liftTriggerReady;
@@ -170,7 +173,7 @@ private:
   bool _debugInfoScreensUnlocked;
 
   // Power mode to set when returning to None screen
-  RobotInterface::CalmPowerMode _calmModeMsgOnNone;
+  CLAD_VECTOR(RobotInterface)::CalmPowerMode _calmModeMsgOnNone;
   
   // Map of all screen names to their associated screen objects
   std::unordered_map<ScreenName, FaceInfoScreen> _screenMap;
@@ -180,9 +183,9 @@ private:
   void DrawFAC();
   void DrawMain();
   void DrawNetwork();
-  void DrawSensorInfo(const RobotState& state);
-  void DrawIMUInfo(const RobotState& state);
-  void DrawMotorInfo(const RobotState& state);
+  void DrawSensorInfo(const CLAD_VECTOR(RobotState)& state);
+  void DrawIMUInfo(const CLAD_VECTOR(RobotState)& state);
+  void DrawMotorInfo(const CLAD_VECTOR(RobotState)& state);
   void DrawCustomText();
   void DrawAlexaFace();
   void DrawMuteAnimation();
@@ -229,7 +232,7 @@ private:
                         u32 textSpacing_pix = kDefaultTextSpacing_pix,
                         f32 textScale = kDefaultTextScale);
 
-  RobotInterface::DrawTextOnScreen _customText;
+  CLAD_VECTOR(RobotInterface)::DrawTextOnScreen _customText;
   WebService::WebService* _webService;
   
   Anim::AnimationStreamer* _animationStreamer = nullptr;

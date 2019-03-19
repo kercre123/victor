@@ -19,6 +19,12 @@
 #include <iostream>
 #include <string>
 
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
 namespace Anki {
 namespace Vector {
 namespace Audio {
@@ -39,7 +45,7 @@ CONSOLE_VAR_RANGED(float, kLiftMovementThreshold_rpms, CONSOLE_PATH, 0.0f, 0.0f,
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AudioProceduralFrame::UpdateFrame(const RobotState& robotState)
+void AudioProceduralFrame::UpdateFrame(const CLAD_VECTOR(RobotState)& robotState)
 {
   _timestamp_ms = robotState.timestamp;
   _leftTreadSpeed_mmps = robotState.lwheel_speed_mmps;

@@ -7,6 +7,12 @@
 #include "cannedAnimLib/proceduralFace/proceduralFaceModifierTypes.h"
 #include "coretech/vision/engine/image.h"
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
   
   // Forward declaration:
@@ -78,7 +84,7 @@ namespace Vector {
 
   private:
 
-    using Parameter = ProceduralEyeParameter;
+    using Parameter = CLAD(ProceduralEyeParameter);
     using WhichEye = ProceduralFace::WhichEye;
     using Value = ProceduralFace::Value;
     
@@ -143,5 +149,7 @@ namespace Vector {
   
 } // namespace Vector
 } // namespace Anki
+
+#undef CLAD
 
 #endif // __Anki_Cozmo_ProceduralFaceDrawer_H__

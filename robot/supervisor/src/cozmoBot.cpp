@@ -5,10 +5,10 @@
 #include "anki/cozmo/robot/DAS.h"
 
 #include "clad/types/motorTypes.h"
-#include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/robotInterface/messageRobotToEngine.h"
-#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
-#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
+// #include "clad/robotInterface/messageEngineToRobot.h"
+// #include "clad/robotInterface/messageRobotToEngine.h"
+// #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+// #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 #include "platform/anki-trace/tracing.h"
 

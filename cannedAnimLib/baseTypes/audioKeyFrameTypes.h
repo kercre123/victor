@@ -18,6 +18,12 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include <vector>
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
 namespace Util {
 class RandomGenerator;
@@ -37,11 +43,11 @@ enum class AudioRefTag {
 struct AudioEventGroupRef {
   
   struct EventDef {
-    AudioMetaData::GameEvent::GenericEvent AudioEvent;
+    CLAD(AudioMetaData)::GameEvent::GenericEvent AudioEvent;
     float Volume;
     float Probability;  // random play weight
 
-    EventDef( AudioMetaData::GameEvent::GenericEvent audioEvent = AudioMetaData::GameEvent::GenericEvent::Invalid,
+    EventDef( CLAD(AudioMetaData)::GameEvent::GenericEvent audioEvent = CLAD(AudioMetaData)::GameEvent::GenericEvent::Invalid,
               float volume      = 1.0f,
               float probability = 1.0f )
     : AudioEvent( audioEvent )
@@ -50,16 +56,16 @@ struct AudioEventGroupRef {
     bool operator==( const EventDef& other ) const;
   };
   
-  AudioMetaData::GameObjectType GameObject;
+  CLAD(AudioMetaData)::GameObjectType GameObject;
   std::vector<EventDef> Events;
 
-  AudioEventGroupRef( AudioMetaData::GameObjectType gameObject = AudioMetaData::GameObjectType::Invalid )
+  AudioEventGroupRef( CLAD(AudioMetaData)::GameObjectType gameObject = CLAD(AudioMetaData)::GameObjectType::Invalid )
   : GameObject( gameObject ) {}
   
   AudioEventGroupRef& operator=( const AudioEventGroupRef& other );
   bool operator==( const AudioEventGroupRef& other ) const;
 
-  void AddEvent( AudioMetaData::GameEvent::GenericEvent audioEvent, float volume, float probability );
+  void AddEvent( CLAD(AudioMetaData)::GameEvent::GenericEvent audioEvent, float volume, float probability );
   
   // Get an event from the group using probability values. If 'useProbability' is false or if randGen is null
   // the first event in the group will be returned.
@@ -70,11 +76,11 @@ struct AudioEventGroupRef {
 
 
 struct AudioStateRef {
-  AudioMetaData::GameState::StateGroupType StateGroup;
-  AudioMetaData::GameState::GenericState State;
+  CLAD(AudioMetaData)::GameState::StateGroupType StateGroup;
+  CLAD(AudioMetaData)::GameState::GenericState State;
   
-  AudioStateRef( AudioMetaData::GameState::StateGroupType stateGroup = AudioMetaData::GameState::StateGroupType::Invalid,
-                 AudioMetaData::GameState::GenericState state = AudioMetaData::GameState::GenericState::Invalid )
+  AudioStateRef( CLAD(AudioMetaData)::GameState::StateGroupType stateGroup = CLAD(AudioMetaData)::GameState::StateGroupType::Invalid,
+                 CLAD(AudioMetaData)::GameState::GenericState state = CLAD(AudioMetaData)::GameState::GenericState::Invalid )
   : StateGroup( stateGroup )
   , State( state ) {}
   
@@ -86,13 +92,13 @@ struct AudioStateRef {
 
 
 struct AudioSwitchRef {
-  AudioMetaData::SwitchState::SwitchGroupType SwitchGroup;
-  AudioMetaData::SwitchState::GenericSwitch State;
-  AudioMetaData::GameObjectType GameObject;
+  CLAD(AudioMetaData)::SwitchState::SwitchGroupType SwitchGroup;
+  CLAD(AudioMetaData)::SwitchState::GenericSwitch State;
+  CLAD(AudioMetaData)::GameObjectType GameObject;
   
-  AudioSwitchRef( AudioMetaData::SwitchState::SwitchGroupType switchGroup = AudioMetaData::SwitchState::SwitchGroupType::Invalid,
-                  AudioMetaData::SwitchState::GenericSwitch state = AudioMetaData::SwitchState::GenericSwitch::Invalid,
-                  AudioMetaData::GameObjectType gameObject = AudioMetaData::GameObjectType::Invalid )
+  AudioSwitchRef( CLAD(AudioMetaData)::SwitchState::SwitchGroupType switchGroup = CLAD(AudioMetaData)::SwitchState::SwitchGroupType::Invalid,
+                  CLAD(AudioMetaData)::SwitchState::GenericSwitch state = CLAD(AudioMetaData)::SwitchState::GenericSwitch::Invalid,
+                  CLAD(AudioMetaData)::GameObjectType gameObject = CLAD(AudioMetaData)::GameObjectType::Invalid )
   : SwitchGroup( switchGroup )
   , State( state )
   , GameObject( gameObject ) {}
@@ -106,17 +112,17 @@ struct AudioSwitchRef {
 
 
 struct AudioParameterRef {
-  AudioMetaData::GameParameter::ParameterType Parameter;
+  CLAD(AudioMetaData)::GameParameter::ParameterType Parameter;
   float Value;
   uint32_t Time_ms;
-  Anki::AudioEngine::Multiplexer::CurveType Curve;
-  AudioMetaData::GameObjectType GameObject;
+  CLAD(AudioEngine)::Multiplexer::CurveType Curve;
+  CLAD(AudioMetaData)::GameObjectType GameObject;
   
-  AudioParameterRef( AudioMetaData::GameParameter::ParameterType parameter = AudioMetaData::GameParameter::ParameterType::Invalid,
+  AudioParameterRef( CLAD(AudioMetaData)::GameParameter::ParameterType parameter = CLAD(AudioMetaData)::GameParameter::ParameterType::Invalid,
                      float value = 0.0f,
                      uint32_t time_ms = 0,
-                     Anki::AudioEngine::Multiplexer::CurveType curve = Anki::AudioEngine::Multiplexer::CurveType::Linear,
-                     AudioMetaData::GameObjectType gameObject = AudioMetaData::GameObjectType::Invalid )
+                     CLAD(AudioEngine)::Multiplexer::CurveType curve = CLAD(AudioEngine)::Multiplexer::CurveType::Linear,
+                     CLAD(AudioMetaData)::GameObjectType gameObject = CLAD(AudioMetaData)::GameObjectType::Invalid )
   : Parameter( parameter )
   , Value( value )
   , Time_ms( time_ms )
@@ -170,5 +176,7 @@ struct AudioRef {
 } // namespace AudioKeyFrame
 } // namespace Vector
 } // namespace Anki
+
+#undef CLAD
 
 #endif // __Anki_Cozmo_AudioKeyFrameTypes_H__

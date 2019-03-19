@@ -13,6 +13,12 @@
 #include "coretech/vision/engine/trackedFace.h"
 #include "util/helpers/templateHelpers.h"
  
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD(ns) Anki::Vision::ns
+#endif
+
 namespace Anki {
 namespace Vision {
   

@@ -45,7 +45,7 @@ target_link_libraries(victor_anim
   canned_anim_lib_anim
   # cti
   cti_common_robot
-  cti_vision
+  cti_vision_clad_cpplite
   cti_messaging_robot
   robot_clad_cpplite
   cloud_clad_cpp

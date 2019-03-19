@@ -24,6 +24,12 @@
 #include <unordered_map>
 #include "util/helpers/templateHelpers.h"
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 // forward declaration
 namespace Json {
 class Value;
@@ -54,13 +60,13 @@ class CompositeImageLayer{
 public:
   struct SpriteBox;
   struct SpriteEntry;
-  using LayoutMap = std::map<SpriteBoxName, SpriteBox>;
-  using ImageMap  = std::unordered_map<SpriteBoxName, SpriteEntry, Anki::Util::EnumHasher>;
+  using LayoutMap = std::map<CLAD(SpriteBoxName), SpriteBox>;
+  using ImageMap  = std::unordered_map<CLAD(SpriteBoxName), SpriteEntry, Anki::Util::EnumHasher>;
 
-  CompositeImageLayer(LayerName layerName = LayerName::StaticBackground)
+  CompositeImageLayer(CLAD(LayerName) layerName = CLAD(LayerName)::StaticBackground)
   : _layerName(layerName){};
   CompositeImageLayer(const Json::Value& layoutSpec);
-  CompositeImageLayer(LayerName layerName,
+  CompositeImageLayer(CLAD(LayerName) layerName,
                       LayoutMap&& layoutSpec)
   : _layerName(layerName)
   , _layoutMap(std::move(layoutSpec)){}
@@ -69,7 +75,7 @@ public:
   bool operator ==(const CompositeImageLayer& other) const;
 
 
-  LayerName        GetLayerName() const { return _layerName;}
+  CLAD(LayerName)  GetLayerName() const { return _layerName;}
   const LayoutMap& GetLayoutMap() const { return _layoutMap;}
   LayoutMap& GetLayoutMap()             { return _layoutMap;}
   const ImageMap&  GetImageMap()  const { return _imageMap;}
@@ -77,25 +83,25 @@ public:
 
   // Returns the AssetID of the SpriteEntry associated with this SpriteBox, if any
   // Used for transmission of assets Engine<->Anim without sprites or enums
-  uint16_t GetAssetID(SpriteBoxName sbName) const;
+  uint16_t GetAssetID(CLAD(SpriteBoxName) sbName) const;
 
   // Merges all sprite boxes/image maps from other image into this image
   void MergeInLayer(const CompositeImageLayer& otherLayer);
 
   // Functions which add on to the current layout
-  void AddToLayout(SpriteBoxName sbName, const SpriteBox& spriteBox);
+  void AddToLayout(CLAD(SpriteBoxName) sbName, const SpriteBox& spriteBox);
   void AddToImageMap(SpriteCache* cache, SpriteSequenceContainer* seqContainer,
-                     SpriteBoxName sbName, const std::string& assetName);
-  void AddToImageMap(SpriteBoxName sbName, const SpriteEntry& spriteEntry);
+                     CLAD(SpriteBoxName) sbName, const std::string& assetName);
+  void AddToImageMap(CLAD(SpriteBoxName) sbName, const SpriteEntry& spriteEntry);
   void AddOrUpdateSpriteBoxWithEntry(const SpriteBox& spriteBox, const SpriteEntry& spriteEntry);
 
-  void ClearSpriteBoxByName(const SpriteBoxName& sbName);
+  void ClearSpriteBoxByName(const CLAD(SpriteBoxName)& sbName);
 
   // Returns true if composite image has an image map entry that matches the sprite box
   // Returns false if image is not set
   bool GetSpriteEntry(const SpriteBox& sb, SpriteEntry& outEntry) const;
   
-  bool GetFrame(SpriteBoxName sbName, const u32 index, 
+  bool GetFrame(CLAD(SpriteBoxName) sbName, const u32 index, 
                 Vision::SpriteHandle& handle) const;
 
   // Functions which replace existing map with a new map
@@ -106,16 +112,16 @@ public:
   bool IsValidImageMap(const ImageMap& imageMap, bool requireAllSpriteBoxes = false) const;
 
 private:
-  LayerName _layerName;
-  LayoutMap _layoutMap;
-  ImageMap  _imageMap;
+  CLAD(LayerName) _layerName;
+  LayoutMap       _layoutMap;
+  ImageMap        _imageMap;
 };
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 struct CompositeImageLayer::SpriteBox{
-  SpriteBox(SpriteBoxName spriteBoxName,
-            SpriteRenderConfig renderConfig,
+  SpriteBox(CLAD(SpriteBoxName) spriteBoxName,
+            CLAD(SpriteRenderConfig) renderConfig,
             const Point2i& topLeftCorner, 
             int width, int height)
   : spriteBoxName(spriteBoxName)
@@ -128,12 +134,12 @@ struct CompositeImageLayer::SpriteBox{
 
   SpriteBox(const SpriteBox& spriteBox);
 
-  SpriteBox(const SerializedSpriteBox& spriteBox);
+  SpriteBox(const CLAD(SerializedSpriteBox)& spriteBox);
   
   SpriteBox& operator=(SpriteBox other);
   bool operator ==(const SpriteBox& other) const;
 
-  SerializedSpriteBox Serialize() const;
+  CLAD(SerializedSpriteBox) Serialize() const;
   bool ValidateRenderConfig() const;
 
   Rectangle<f32> GetRect() const { return Rectangle<f32>(topLeftCorner.x(), topLeftCorner.y(), width, height); }
@@ -143,10 +149,10 @@ struct CompositeImageLayer::SpriteBox{
 
   void SetLayoutModifier(CompositeImageLayoutModifier*& modifier);
 
-  SpriteBoxName          spriteBoxName;
+  CLAD(SpriteBoxName)      spriteBoxName;
   // When the render method is custom hue a hue/saturation value of 0,0 
   // indicates that the sprite box should be rendered the color of the robot's eyes
-  SpriteRenderConfig     renderConfig;
+  CLAD(SpriteRenderConfig) renderConfig;
 
   int GetWidth() const { return width; }
   int GetHeight() const { return height; }
@@ -199,5 +205,7 @@ private:
 
 }; // namespace Vision
 }; // namespace Anki
+
+#undef CLAD
 
 #endif // __Vision_CompositeImageLayer_fwd_H__

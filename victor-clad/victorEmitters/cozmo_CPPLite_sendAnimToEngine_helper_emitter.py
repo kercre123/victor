@@ -27,10 +27,10 @@ class SendHelperHeaderEmitter(ast.NodeVisitor):
     def __init__(self, output=sys.stdout, include_extension=None):
         self.output = output
 
-    def visit_NamespaceDecl(self, node, *args, **kwargs):
-        self.output.write('namespace {namespace_name} {{\n\n'.format(namespace_name=node.name))
-        self.generic_visit(node, *args, **kwargs)
-        self.output.write('}} // namespace {namespace_name}\n\n'.format(namespace_name=node.name))
+    # def visit_NamespaceDecl(self, node, *args, **kwargs):
+    #     self.output.write('namespace {namespace_name} {{\n\n'.format(namespace_name=node.name))
+    #     self.generic_visit(node, *args, **kwargs)
+    #     self.output.write('}} // namespace {namespace_name}\n\n'.format(namespace_name=node.name))
 
     def visit_UnionDecl(self, node):
         for member in node.members():

@@ -22,6 +22,12 @@
 
 #include "clad/types/cladPoint.h"
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 #include <vector>
 
 namespace Anki {
@@ -64,12 +70,12 @@ public:
   explicit Polygon(const Quadrilateral<2, T>& quad);
 
   // Initialize 2D/3D polygons from a list of clad points. Assumes points are already in clockwise order!
-  Polygon(const std::vector<CladPoint2d>& cladPoints);
-  Polygon(const std::vector<CladPoint3d>& cladPoints);
+  Polygon(const std::vector<CLAD(CladPoint2d)>& cladPoints);
+  Polygon(const std::vector<CLAD(CladPoint3d)>& cladPoints);
 
   // Get a vector of CladPoints
-  std::vector<CladPoint2d> ToCladPoint2dVector() const;
-  std::vector<CladPoint3d> ToCladPoint3dVector() const;
+  std::vector<CLAD(CladPoint2d)> ToCladPoint2dVector() const;
+  std::vector<CLAD(CladPoint3d)> ToCladPoint3dVector() const;
 
   // Import from a 2D quad
   void ImportQuad2d(const Quadrilateral<2, T>& quad);
@@ -133,5 +139,7 @@ using Poly2i = Polygon<2, s32>;
 using Poly3i = Polygon<3, s32>;
 
 }
+
+#undef CLAD
 
 #endif

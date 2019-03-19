@@ -76,6 +76,14 @@
 #include <chrono>
 #include <fstream>
 
+#ifdef USES_CPPLITE
+#define CLAD(ns)        CppLite::ns
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns)        ns
+#define CLAD_VECTOR(ns) ns
+#endif
+
 namespace Anki {
 namespace Vector {
   
@@ -236,8 +244,8 @@ namespace {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AlexaImpl::AlexaImpl()
-  : _authState{ AlexaAuthState::Uninitialized }
-  , _uxState{ AlexaUXState::Idle }
+  : _authState{ CLAD_VECTOR(AlexaAuthState)::Uninitialized }
+  , _uxState{ CLAD_VECTOR(AlexaUXState)::Idle }
   , _dialogState{ DialogUXState::IDLE }
   , _notificationsIndicator{ avsCommon::avs::IndicatorState::UNDEFINED }
   , _initState{ InitState::Uninitialized }
@@ -716,7 +724,7 @@ void AlexaImpl::CheckStateWatchdog()
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   if( currTime_s > _lastWatchdogCheckTime_s + kAlexaImplWatchdogCheckTime_s ) {
 
-    if( _uxState == AlexaUXState::Speaking ) {
+    if( _uxState == CLAD_VECTOR(AlexaUXState)::Speaking ) {
       // attempt to detect "forever face" bugs that could happen if we get out of sync with one of the
       // speakers. If we think we're speaking, but nothing is playing, and this state persists for a while,
       // then we are likely "stuck"
@@ -802,7 +810,7 @@ void AlexaImpl::AttemptToFixStuckInSpeakingBug()
 
   CheckForUXStateChange();
 
-  const bool recovered = ANKI_VERIFY(_uxState == AlexaUXState::Idle,
+  const bool recovered = ANKI_VERIFY(_uxState == CLAD_VECTOR(AlexaUXState)::Idle,
                                      "AlexaImple.WatchdogFailFail",
                                      "Failed to reset state properly (still %s), force setting ux state....",
                                      EnumToString(_uxState) );
@@ -821,7 +829,7 @@ void AlexaImpl::AttemptToFixStuckInSpeakingBug()
     // uh oh, something went _really_ wrong, let's clear the dialog state, force the ux state and send it off
     // so we at least might be able to get vector back
     _dialogState = avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::IDLE;
-    _uxState = AlexaUXState::Idle;
+    _uxState = CLAD_VECTOR(AlexaUXState)::Idle;
     _audioActive = false;
     _audioActiveLastChangeTime_s = 0.0f;
     _onAlexaUXStateChanged( _uxState );
@@ -1016,11 +1024,11 @@ void AlexaImpl::OnAuthStateChange( avsCommon::sdkInterfaces::AuthObserverInterfa
     sendResultDas(false, error);
 
     const bool errFlag = true;
-    SetAuthState( AlexaAuthState::Uninitialized, "", "", errFlag );
+    SetAuthState( CLAD_VECTOR(AlexaAuthState)::Uninitialized, "", "", errFlag );
     return;
   }
 
-  if( _authState == AlexaAuthState::WaitingForCode ) {
+  if( _authState == CLAD_VECTOR(AlexaAuthState)::WaitingForCode ) {
     const bool success = (newState == State::REFRESHED);
 
     sendResultDas(success, error);
@@ -1030,20 +1038,20 @@ void AlexaImpl::OnAuthStateChange( avsCommon::sdkInterfaces::AuthObserverInterfa
     case State::UNINITIALIZED:
     {
       const bool errFlag = false;
-      SetAuthState( AlexaAuthState::Uninitialized, "", "", errFlag );
+      SetAuthState( CLAD_VECTOR(AlexaAuthState)::Uninitialized, "", "", errFlag );
     }
       break;
     case State::EXPIRED:
     case State::UNRECOVERABLE_ERROR:
     {
       const bool errFlag = true;
-      SetAuthState( AlexaAuthState::Uninitialized, "", "", errFlag );
+      SetAuthState( CLAD_VECTOR(AlexaAuthState)::Uninitialized, "", "", errFlag );
     }
       break;
     case State::REFRESHED:
     {
       const bool errFlag = false;
-      SetAuthState( AlexaAuthState::Authorized, "", "", errFlag );
+      SetAuthState( CLAD_VECTOR(AlexaAuthState)::Authorized, "", "", errFlag );
     }
       break;
   }
@@ -1053,7 +1061,7 @@ void AlexaImpl::OnAuthStateChange( avsCommon::sdkInterfaces::AuthObserverInterfa
 void AlexaImpl::OnRequestAuthorization( const std::string& url, const std::string& code )
 {
   const bool errFlag = false;
-  SetAuthState( AlexaAuthState::WaitingForCode, url, code, errFlag );
+  SetAuthState( CLAD_VECTOR(AlexaAuthState)::WaitingForCode, url, code, errFlag );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1103,38 +1111,38 @@ void AlexaImpl::CheckForUXStateChange()
       // directive is received, because we somtimes receive the alerts directive before the corresponding TTS
       // (e.g. "Alarm set for 5pm").
       if( anyPlaying ) {
-        _uxState = AlexaUXState::Speaking;
+        _uxState = CLAD_VECTOR(AlexaUXState)::Speaking;
       } else if( _lastPlayDirective_s < 0.0f || (currTime_s > _lastPlayDirective_s + kAlexaMaxIdleDelay_s) ) {
         // "Play" wasn't received within kAlexaMaxIdleDelay_s seconds ago. Set to Idle
-        _uxState = AlexaUXState::Idle;
+        _uxState = CLAD_VECTOR(AlexaUXState)::Idle;
       } else if( kAlexaIdleDelay_s > 0.0f ) {
         // wait kAlexaIdleDelay_s before setting to idle
         _timeToSetIdle_s = _lastPlayDirective_s + kAlexaIdleDelay_s;
       } else {
-        _uxState = AlexaUXState::Idle;
+        _uxState = CLAD_VECTOR(AlexaUXState)::Idle;
       }
     }
       break;
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::THINKING:
     {
-      _uxState = AlexaUXState::Thinking;
+      _uxState = CLAD_VECTOR(AlexaUXState)::Thinking;
     }
       break;
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::LISTENING:
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::EXPECTING:
     {
-      _uxState = AlexaUXState::Listening;
+      _uxState = CLAD_VECTOR(AlexaUXState)::Listening;
     }
       break;
     case avsCommon::sdkInterfaces::DialogUXStateObserverInterface::DialogUXState::SPEAKING:
     {
-      _uxState = AlexaUXState::Speaking;
+      _uxState = CLAD_VECTOR(AlexaUXState)::Speaking;
     }
       break;
   }
   
   if( (oldState != _uxState) && (_onAlexaUXStateChanged != nullptr) ) {
-    DEV_ASSERT( _uxState != AlexaUXState::Error, "AlexaImpl.CheckForUXStateChange.NoError" );
+    DEV_ASSERT( _uxState != CLAD_VECTOR(AlexaUXState)::Error, "AlexaImpl.CheckForUXStateChange.NoError" );
     _onAlexaUXStateChanged( _uxState );
   }
 }
@@ -1250,7 +1258,7 @@ void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserver
     {
       // sending the last request ended in failure. show the error face and play audio
       if( InteractedRecently() ) {
-        SetNetworkError( AlexaNetworkErrorType::HavingTroubleThinking );
+        SetNetworkError( CLAD_VECTOR(AlexaNetworkErrorType)::HavingTroubleThinking );
       }
       break;
     }
@@ -1259,7 +1267,7 @@ void AlexaImpl::OnSendComplete( avsCommon::sdkInterfaces::MessageRequestObserver
     {
       // sending the last request failed because auth was revoke. show the error face and play audio
       if( InteractedRecently() ) {
-        SetNetworkError( AlexaNetworkErrorType::AuthRevoked );
+        SetNetworkError( CLAD_VECTOR(AlexaNetworkErrorType)::AuthRevoked );
       }
       break;
     }
@@ -1391,10 +1399,10 @@ void AlexaImpl::OnPlayerActivity( avsCommon::avs::PlayerActivity state )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaImpl::SetAuthState( AlexaAuthState state, const std::string& url, const std::string& code, bool errFlag )
+void AlexaImpl::SetAuthState( CLAD_VECTOR(AlexaAuthState) state, const std::string& url, const std::string& code, bool errFlag )
 {
   // always send WaitingForCode in case url or code changed
-  const bool changed = (_authState != state) || (state == AlexaAuthState::WaitingForCode);
+  const bool changed = (_authState != state) || (state == CLAD_VECTOR(AlexaAuthState)::WaitingForCode);
   _authState = state;
   if( (_onAlexaAuthStateChanged != nullptr) && (changed || errFlag) ) {
     _onAlexaAuthStateChanged( state, url, code, errFlag );
@@ -1552,23 +1560,23 @@ void AlexaImpl::SetNetworkConnectionError()
   if( _internetConnected ) {
     LOG_INFO("AlexaImpl.SetNetworkConnectionError.Unconnected.HavingTrouble",
              "AVS not conntected, but internet reported as being connected");
-    SetNetworkError( AlexaNetworkErrorType::HavingTroubleThinking );
+    SetNetworkError( CLAD_VECTOR(AlexaNetworkErrorType)::HavingTroubleThinking );
   } else if( _avsEverConnected ) {
     LOG_INFO("AlexaImpl.SetNetworkConnectionError.Unconnected.LostConnection",
              "AVS not conntected, internet was but is no longer");
-    SetNetworkError( AlexaNetworkErrorType::LostConnection );
+    SetNetworkError( CLAD_VECTOR(AlexaNetworkErrorType)::LostConnection );
   } else {
     LOG_INFO("AlexaImpl.SetNetworkConnectionError.Unconnected.NoInitialConnection",
              "AVS not conntected, internet never was");
-    SetNetworkError( AlexaNetworkErrorType::NoInitialConnection );
+    SetNetworkError( CLAD_VECTOR(AlexaNetworkErrorType)::NoInitialConnection );
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaImpl::SetNetworkError( AlexaNetworkErrorType errorType )
+void AlexaImpl::SetNetworkError( CLAD_VECTOR(AlexaNetworkErrorType) errorType )
 {
   // NOTE: while a network error is a user-facing error, and it _should_ change the AlexaUXState, AlexaImpl is agnostic
-  // that that ux state. Instead, AlexaUXState::Error is considered only by the parent, Alexa. This is because we
+  // that that ux state. Instead, CLAD_VECTOR(AlexaUXState)::Error is considered only by the parent, Alexa. This is because we
   // need to play audio for the duration of that state, and AlexaImpl may get destroyed if the error involves
   // authentication.
   if( _onNetworkError != nullptr ) {

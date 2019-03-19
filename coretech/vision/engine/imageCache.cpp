@@ -17,6 +17,12 @@
 
 #include "util/math/math.h"
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 #define DEBUG_IMAGE_CACHE 0
 
 #if DEBUG_IMAGE_CACHE
@@ -320,7 +326,7 @@ void ImageCache::Reset(const Image& imgGray, ResizeMethod method)
   _buffer = ImageBuffer(const_cast<u8*>(imgGray.GetRawDataPointer()),
                         imgGray.GetNumRows(),
                         imgGray.GetNumCols(),
-                        ImageEncoding::RawGray,
+                        CLAD(ImageEncoding)::RawGray,
                         imgGray.GetTimestamp(),
                         imgGray.GetImageId());
   _buffer.SetResizeMethod(method);
@@ -348,7 +354,7 @@ void ImageCache::Reset(const ImageRGB& imgColor, ResizeMethod method)
   _buffer = ImageBuffer(const_cast<u8*>(reinterpret_cast<const u8*>(imgColor.GetDataPointer())),
                         imgColor.GetNumRows(),
                         imgColor.GetNumCols(),
-                        ImageEncoding::RawRGB,
+                        CLAD(ImageEncoding)::RawRGB,
                         imgColor.GetTimestamp(),
                         imgColor.GetImageId());
   _buffer.SetResizeMethod(method);

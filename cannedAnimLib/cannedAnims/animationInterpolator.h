@@ -23,6 +23,12 @@
 #include "cannedAnimLib/cannedAnims/animationMessageWrapper.h"
 #include "cannedAnimLib/baseTypes/keyframe.h"
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
 namespace Vector {
 
@@ -49,16 +55,16 @@ private:
   // To be implemented as time allows
   static void ExtractInterpolatedHeadMessage(const Animations::Track<HeadAngleKeyFrame>& headTrack,
                                              const int frameNum, 
-                                             RobotInterface::EngineToRobot* outMessage) {};
+                                             CLAD(RobotInterface)::EngineToRobot* outMessage) {};
   static void ExtractInterpolatedLiftMessage(const Animations::Track<LiftHeightKeyFrame>& liftHeightTrack,
                                              const int frameNum, 
-                                             RobotInterface::EngineToRobot* outMessage) {};
+                                             CLAD(RobotInterface)::EngineToRobot* outMessage) {};
   static void ExtractInterpolatedBodyMessage(const Animations::Track<BodyMotionKeyFrame>& bodyMotionTrack,
                                              const int frameNum, 
-                                             RobotInterface::EngineToRobot* outMessage) {};
+                                             CLAD(RobotInterface)::EngineToRobot* outMessage) {};
   static void ExtractInterpolatedBackpackMessage(const Animations::Track<BackpackLightsKeyFrame>& backpackTrack,
                                                  const int frameNum, 
-                                                 RobotInterface::EngineToRobot* outMessage) {};
+                                                 CLAD(RobotInterface)::EngineToRobot* outMessage) {};
 
 
 };
@@ -66,5 +72,7 @@ private:
 
 } // namespace Vector
 } // namespace Anki
+
+#undef CLAD
 
 #endif // ANKI_COZMO_ANIMATION_INTERPOLATOR_H

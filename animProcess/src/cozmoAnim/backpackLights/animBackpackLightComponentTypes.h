@@ -18,12 +18,18 @@
 #include <map>
 #include <memory>
 
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
 namespace Anki {
 namespace Vector {
 
 // Some of our Util functions use clad features that are only generated for regular Cpp
 // not CppLite such as EnumFromString so we need to write our own
-bool EnumFromString(const std::string& string, BackpackAnimationTrigger& trigger);
+bool EnumFromString(const std::string& string, CLAD_VECTOR(BackpackAnimationTrigger)& trigger);
   
 namespace Anim {
 struct BackpackLightData;
@@ -62,5 +68,7 @@ private:
 } // namespace Anim
 } // namespace Vector
 } // namespace Anki
+
+#undef CLAD_VECTOR
 
 #endif // __Anki_Cozmo_Basestation_Components_BackpackLightComponentTypes_H__

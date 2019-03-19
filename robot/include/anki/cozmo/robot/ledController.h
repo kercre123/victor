@@ -4,6 +4,12 @@
 #include "coretech/common/shared/types.h"
 #include "clad/types/ledTypes.h"
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
   namespace Vector {
   
@@ -12,7 +18,7 @@ namespace Anki {
     
     // Based on the current time and the current state of an LED (as indicated by
     // its LEDParams), returns the new RGBA color.
-    u32 GetCurrentLEDcolor(const LightState& ledParams,     // The ledParams struct for this LED
+    u32 GetCurrentLEDcolor(const CLAD(LightState)& ledParams,     // The ledParams struct for this LED
                            const TimeStamp_t currentTime,   // current timestamp
                            const TimeStamp_t phaseTime,     // timestamp indicating the 'beginning' of the light animation
                            const u32 msPerFrame = kDefaultMsPerFrame);
@@ -20,5 +26,6 @@ namespace Anki {
   } // namespace Vector
 } // namespace Anki
 
+#undef CLAD
 
 #endif // ANKI_COZMO_ROBOT_LED_CONTROLLER_H

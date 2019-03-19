@@ -21,6 +21,13 @@
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::ns
+#define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
+#else
+#define CLAD(ns) ns
+#define CLAD_AUDIOMETADATA(ns) AudioMetaData::ns
+#endif
 
 #define kEnableAudioEventProbability 1
 
@@ -36,10 +43,14 @@ namespace Vector {
 namespace Audio {
 
 using namespace AudioEngine;
+#ifdef USES_CPPLITE
+using namespace CppLite::Anki::AudioMetaData;
+#else
 using namespace AudioMetaData;
+#endif
 using namespace AudioKeyFrameType;
 
-static const AudioGameObject kAnimGameObj = ToAudioGameObject(GameObjectType::Animation);
+static const AudioGameObject kAnimGameObj = ToAudioGameObject(CLAD_AUDIOMETADATA(GameObjectType)::Animation);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 AnimationAudioClient::AnimationAudioClient( CozmoAudioController* audioController )
@@ -98,7 +109,7 @@ void AnimationAudioClient::HandleAudioRef( const AudioEventGroupRef& eventRef, U
   const auto playId = PostCozmoEvent( anEvent->AudioEvent, eventRef.GameObject );
   if ( playId != kInvalidAudioPlayingId ) {
     // Apply volume to event
-    SetCozmoEventParameter( playId, GameParameter::ParameterType::Event_Volume, anEvent->Volume );
+    SetCozmoEventParameter( playId, CLAD_AUDIOMETADATA(GameParameter)::ParameterType::Event_Volume, anEvent->Volume );
   }
   AUDIO_DEBUG_LOG("AnimationAudioClient.PlayAudioKeyFrame",
                   "Posted audio event '%s' volume %f)",
@@ -133,7 +144,7 @@ void AnimationAudioClient::HandleAudioRef( const AudioParameterRef& parameterRef
 void AnimationAudioClient::AbortAnimation()
 {
   if ( _audioController == nullptr ) { return; }
-  const auto event = ToAudioEventId( AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Scene__Anim_Abort );
+  const auto event = ToAudioEventId( CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Play__Robot_Vic_Scene__Anim_Abort );
   _audioController->PostAudioEvent( event, kAnimGameObj );
 }
 
@@ -145,10 +156,10 @@ bool AnimationAudioClient::HasActiveEvents() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngine::AudioPlayingId AnimationAudioClient::PostCozmoEvent( AudioMetaData::GameEvent::GenericEvent event,
-                                                                  AudioMetaData::GameObjectType gameObject )
+AudioEngine::AudioPlayingId AnimationAudioClient::PostCozmoEvent( CLAD_AUDIOMETADATA(GameEvent)::GenericEvent event,
+                                                                  CLAD_AUDIOMETADATA(GameObjectType) gameObject )
 {
-  using GenericEvent = Anki::AudioMetaData::GameEvent::GenericEvent;
+  using GenericEvent = CLAD_AUDIOMETADATA(GameEvent)::GenericEvent;
 
   if ( _audioController == nullptr ) {
     return kInvalidAudioPlayingId;
@@ -194,7 +205,7 @@ AudioEngine::AudioPlayingId AnimationAudioClient::PostCozmoEvent( AudioMetaData:
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool AnimationAudioClient::SetCozmoEventParameter( AudioEngine::AudioPlayingId playId,
-                                                   AudioMetaData::GameParameter::ParameterType parameter,
+                                                   CLAD_AUDIOMETADATA(GameParameter)::ParameterType parameter,
                                                    AudioEngine::AudioRTPCValue value ) const
 {
   if ( _audioController == nullptr ) { return false; }

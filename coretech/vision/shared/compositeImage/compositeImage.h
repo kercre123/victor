@@ -22,6 +22,12 @@
 #include "coretech/vision/engine/image.h"
 #include <set>
 
+#ifdef USES_CPPLITE
+#define CLAD_VISION(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD_VISION(ns) ns
+#endif
+
 namespace Anki {
 namespace Vision {
 
@@ -30,8 +36,8 @@ class SpriteCache;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class CompositeImage {
 public:
-  using LayerLayoutMap = std::map<Vision::LayerName, CompositeImageLayer>;
-  using LayerImageMap = std::map<Vision::LayerName, CompositeImageLayer::ImageMap>;
+  using LayerLayoutMap = std::map<CLAD_VISION(LayerName), CompositeImageLayer>;
+  using LayerImageMap = std::map<CLAD_VISION(LayerName), CompositeImageLayer::ImageMap>;
   CompositeImage(SpriteCache* spriteCache,   
                  ConstHSImageHandle faceHSImageHandle,
                  s32 imageWidth = 0,
@@ -75,7 +81,7 @@ public:
   }
   
 
-  std::vector<CompositeImageChunk> GetImageChunks(bool emptySpriteBoxesAreValid = false) const;
+  std::vector<CLAD_VISION(CompositeImageChunk)> GetImageChunks(bool emptySpriteBoxesAreValid = false) const;
 
   // Clear out the existing image and replace it with the new layer map 
   void ReplaceCompositeImage(const LayerLayoutMap&& layers,
@@ -88,20 +94,20 @@ public:
   // Returns true if layer added successfully
   // Returns false if the layer name already exists
   bool AddLayer(CompositeImageLayer&& layer);
-  void ClearLayerByName(LayerName name);
+  void ClearLayerByName(CLAD_VISION(LayerName) name);
 
   const LayerLayoutMap& GetLayerLayoutMap() const { return _layerMap;}
   LayerLayoutMap& GetLayerLayoutMap()             { return _layerMap;}
   // Returns a pointer to the layer within the composite image
   // Returns nullptr if layer by that name does not exist
-  CompositeImageLayer* GetLayerByName(LayerName name);
+  CompositeImageLayer* GetLayerByName(CLAD_VISION(LayerName) name);
 
   // Overlay the composite image on top of the base image
   // The overlay offset will shift the composite image rendered relative to the base images (0,0)
   // Any layers specified in layersToIgnore will not be rendered
   void OverlayImageWithFrame(ImageRGBA& baseImage,
                              const u32 frameIdx = 0,
-                             std::set<Vision::LayerName> layersToIgnore = {}) const;
+                             std::set<CLAD_VISION(LayerName)> layersToIgnore = {}) const;
   
   // Returns the length of the longest subsequence
   uint GetFullLoopLength();
@@ -110,7 +116,7 @@ public:
   s32 GetHeight() { return _height;}
   
   // Update all sprite boxes to use the new render method
-  void OverrideRenderMethod(Anki::Vision::SpriteRenderMethod renderMethod);
+  void OverrideRenderMethod(CLAD_VISION(SpriteRenderMethod) renderMethod);
 
   // The composite image should cache all of its sprites for the time specifed
   void CacheInternalSprites(Vision::SpriteCache* cache, const TimeStamp_t endTime_ms);
@@ -120,17 +126,17 @@ public:
   // where a blank composite image is needed at the start of an animation so that updates
   // can be applied at a non-zero time
   void AddEmptyLayer(SpriteSequenceContainer* seqContainer, 
-                     Vision::LayerName layerName = Vision::LayerName::EmptyBoxLayer);
+                     CLAD_VISION(LayerName) layerName = CLAD_VISION(LayerName)::EmptyBoxLayer);
 
 private:
   using SpriteBox = CompositeImageLayer::SpriteBox;
   using SpriteEntry = CompositeImageLayer::SpriteEntry;
   
-  using UseSpriteBoxDataFunc = std::function<void(Vision::LayerName,
-                                                  SpriteBoxName, const SpriteBox&, 
+  using UseSpriteBoxDataFunc = std::function<void(CLAD_VISION(LayerName),
+                                                  CLAD_VISION(SpriteBoxName), const SpriteBox&, 
                                                   const SpriteEntry&)>;
-  using UpdateSpriteBoxDataFunc = std::function<void(Vision::LayerName,
-                                                     SpriteBoxName, SpriteBox&,
+  using UpdateSpriteBoxDataFunc = std::function<void(CLAD_VISION(LayerName),
+                                                     CLAD_VISION(SpriteBoxName), SpriteBox&,
                                                      SpriteEntry&)>;
   // Call the callback with the data from every spritebox moving from lowest z-index to highest
   // Data is const so can only be used for making decisions
@@ -139,10 +145,10 @@ private:
   // Data is non-const so it can be updated (e.g. update sprite box render method
   void UpdateAllSpriteBoxes(UpdateSpriteBoxDataFunc updateCallback);
   
-  // Translates SpriteRenderConfig into a usable format for composite images
+  // Translates CLAD_VISION(SpriteRenderConfig) into a usable format for composite images
   // Returns nullptr if should render RGBA with no image handle
   // Othrewise, returns HSImage to use in render
-  HSImageHandle HowToRenderRGBA(const SpriteRenderConfig& config) const;
+  HSImageHandle HowToRenderRGBA(const CLAD_VISION(SpriteRenderConfig)& config) const;
 
   template<typename ImageType>
   void VerifySubImageProperties(const ImageType& image, const SpriteBox& sb, const int frameIdx) const;
@@ -160,5 +166,7 @@ private:
 
 }; // namespace Vision
 }; // namespace Anki
+
+#undef CLAD_VISION
 
 #endif // __Vision_CompositeImage_H__

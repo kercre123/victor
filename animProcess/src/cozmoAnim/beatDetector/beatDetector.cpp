@@ -17,6 +17,12 @@
 #include "util/math/math.h"
 #include "util/time/universalTime.h"
 
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
 namespace Anki {
 namespace Vector {
 
@@ -33,7 +39,7 @@ namespace {
   
   const char* const kAubioTempoMethod = "default";
   
-  BeatInfo kInvalidBeatInfo{
+  CLAD_VECTOR(BeatInfo) kInvalidBeatInfo{
     .tempo_bpm  = -1.f,
     .confidence = -1.f,
     .time_sec   = -1.f
@@ -109,7 +115,7 @@ bool BeatDetector::AddSamples(const AudioUtil::AudioSample* const samples, const
 }
 
 
-BeatInfo BeatDetector::GetLatestBeat()
+CLAD_VECTOR(BeatInfo) BeatDetector::GetLatestBeat()
 {
   std::lock_guard<std::mutex> lock(_latestBeatMutex);
   return _latestBeat;

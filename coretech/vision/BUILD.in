@@ -16,6 +16,23 @@ cxx_project(
 )
 
 cxx_project(
+  name = 'cti_vision_robot',
+  srcs = cxx_src_glob(
+    ['engine', 'robot', 'shared'],
+    excludes=['robot/mex/**']
+  ),
+  data = glob([
+                'clad_src/clad/**/*.clad',              
+              ]),
+  platform_srcs = [],
+  headers = cxx_header_glob(
+    ['engine', 'robot', 'shared'],
+    excludes=['robot/mex/**']
+  ),
+  platform_headers = []
+)
+
+cxx_project(
   name = 'cti_vision_test',
   srcs = cxx_src_glob(['test']),
   platform_srcs = [],

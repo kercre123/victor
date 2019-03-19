@@ -15,6 +15,11 @@
 #include "util/console/consoleInterface.h"
 #include <algorithm>
 
+#ifdef USES_CPPLITE
+#define CLAD_ANKI(ns) CppLite::Anki::ns
+#else
+#define CLAD_ANKI(ns) ns
+#endif
 
 namespace Anki {
 namespace Vector {
@@ -22,7 +27,7 @@ namespace Anim {
 
 namespace
 {
-  const auto kProceduralGameObject = AudioMetaData::GameObjectType::Procedural;
+  const auto kProceduralGameObject = CLAD_ANKI(AudioMetaData)::GameObjectType::Procedural;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -41,7 +46,7 @@ AudioLayerManager::AudioLayerManager(const Util::RandomGenerator& rng)
   }
   
   using namespace AudioKeyFrameType;
-  using namespace AudioMetaData;
+  using namespace CLAD_ANKI(AudioMetaData);
   Animations::Track<RobotAudioKeyFrame> audioTrack;
   
   const auto eventIt = std::find_if(eventList.begin(), eventList.end(), [](const BlinkEvent& event)
@@ -74,14 +79,14 @@ Result AudioLayerManager::AddEyeDartToAudioTrack(const std::string& layerName,
   }
   
   using namespace AudioKeyFrameType;
-  using namespace AudioMetaData;
+  using namespace CLAD_ANKI(AudioMetaData);
   RobotAudioKeyFrame frame;
   Animations::Track<RobotAudioKeyFrame> audioTrack;
   // Add parameter
   auto paramRef = AudioParameterRef(GameParameter::ParameterType::Robot_Vic_Screen_Shift_Interpolation_Time,
                                     interpolationTime_ms,
                                     0.0f,
-                                    AudioEngine::Multiplexer::CurveType::Linear,
+                                    CLAD_ANKI(AudioEngine)::Multiplexer::CurveType::Linear,
                                     kProceduralGameObject);
   frame.AddAudioRef(std::move(paramRef));
   // Add Event Group
@@ -103,7 +108,7 @@ Result AudioLayerManager::AddEyeSquintToAudioTrack(const std::string& layerName,
   }
   
   using namespace AudioKeyFrameType;
-  using namespace AudioMetaData;
+  using namespace CLAD_ANKI(AudioMetaData);
   Animations::Track<RobotAudioKeyFrame> audioTrack;
   RobotAudioKeyFrame frame;
   // Add Event Group

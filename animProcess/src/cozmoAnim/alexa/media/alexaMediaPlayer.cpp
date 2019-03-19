@@ -70,6 +70,12 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include <unistd.h>
 #include <array>
 
+#ifdef USES_CPPLITE
+#define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
+#else
+#define CLAD_AUDIOMETADATA(ns) AudioMetaData::ns
+#endif
+
 namespace Anki {
 namespace Vector {
 
@@ -86,10 +92,10 @@ struct AudioInfo {
   alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface::Type speakerType;
   std::string name;
 
-  AudioMetaData::GameEvent::GenericEvent playEvent;
-  AudioMetaData::GameEvent::GenericEvent pauseEvent;
-  AudioMetaData::GameEvent::GenericEvent resumeEvent;
-  AudioMetaData::GameParameter::ParameterType volumeParameter;
+  CLAD_AUDIOMETADATA(GameEvent)::GenericEvent playEvent;
+  CLAD_AUDIOMETADATA(GameEvent)::GenericEvent pauseEvent;
+  CLAD_AUDIOMETADATA(GameEvent)::GenericEvent resumeEvent;
+  CLAD_AUDIOMETADATA(GameParameter)::ParameterType volumeParameter;
 };
 
 namespace {
@@ -116,41 +122,41 @@ namespace {
 
   const std::unordered_map<AlexaMediaPlayer::Type, AudioInfo> sAudioInfo{
     {AlexaMediaPlayer::Type::TTS,
-      {AudioEngine::ToAudioGameObject(AudioMetaData::GameObjectType::AlexaVoice),
+      {AudioEngine::ToAudioGameObject(CLAD_AUDIOMETADATA(GameObjectType)::AlexaVoice),
       kPluginIdTTS,
       alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_SPEAKER_VOLUME,
       "TTS",
-      AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Alexa__External_Voice_Play,
-      AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Alexa__External_Voice_Pause,
-      AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Alexa__External_Voice_Resume,
-      AudioMetaData::GameParameter::ParameterType::Robot_Alexa_Volume_Master}},
+      CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Play__Robot_Vic_Alexa__External_Voice_Play,
+      CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Play__Robot_Vic_Alexa__External_Voice_Pause,
+      CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Play__Robot_Vic_Alexa__External_Voice_Resume,
+      CLAD_AUDIOMETADATA(GameParameter)::ParameterType::Robot_Alexa_Volume_Master}},
     {AlexaMediaPlayer::Type::Audio,
-      {AudioEngine::ToAudioGameObject(AudioMetaData::GameObjectType::AlexaMedia),
+      {AudioEngine::ToAudioGameObject(CLAD_AUDIOMETADATA(GameObjectType)::AlexaMedia),
       kPluginIdAudio,
       alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_SPEAKER_VOLUME,
       "Audio",
-      AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Alexa__External_Media_Play,
-      AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Alexa__External_Media_Pause,
-      AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Alexa__External_Media_Resume,
-      AudioMetaData::GameParameter::ParameterType::Robot_Alexa_Volume_Master}},
+      CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Play__Robot_Vic_Alexa__External_Media_Play,
+      CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Play__Robot_Vic_Alexa__External_Media_Pause,
+      CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Play__Robot_Vic_Alexa__External_Media_Resume,
+      CLAD_AUDIOMETADATA(GameParameter)::ParameterType::Robot_Alexa_Volume_Master}},
     {AlexaMediaPlayer::Type::Alerts,
-      {AudioEngine::ToAudioGameObject(AudioMetaData::GameObjectType::AlexaAlerts),
+      {AudioEngine::ToAudioGameObject(CLAD_AUDIOMETADATA(GameObjectType)::AlexaAlerts),
       kPluginIdAlerts,
       alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_ALERTS_VOLUME,
       "Alerts",
-      AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Alexa__External_Alerts_Play,
-      AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Alexa__External_Alerts_Pause,
-      AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Alexa__External_Alerts_Resume,
-      AudioMetaData::GameParameter::ParameterType::Robot_Alexa_Volume_Alerts}},
+      CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Play__Robot_Vic_Alexa__External_Alerts_Play,
+      CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Play__Robot_Vic_Alexa__External_Alerts_Pause,
+      CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Play__Robot_Vic_Alexa__External_Alerts_Resume,
+      CLAD_AUDIOMETADATA(GameParameter)::ParameterType::Robot_Alexa_Volume_Alerts}},
     {AlexaMediaPlayer::Type::Notifications,
-      {AudioEngine::ToAudioGameObject(AudioMetaData::GameObjectType::AlexaNotifications),
+      {AudioEngine::ToAudioGameObject(CLAD_AUDIOMETADATA(GameObjectType)::AlexaNotifications),
       kPluginIdNotifications,
       alexaClientSDK::avsCommon::sdkInterfaces::SpeakerInterface::Type::AVS_SPEAKER_VOLUME,
       "Notifications",
-      AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Alexa__External_Notifications_Play,
-      AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Alexa__External_Notifications_Pause,
-      AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Alexa__External_Notifications_Resume,
-      AudioMetaData::GameParameter::ParameterType::Robot_Alexa_Volume_Master}}
+      CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Play__Robot_Vic_Alexa__External_Notifications_Play,
+      CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Play__Robot_Vic_Alexa__External_Notifications_Pause,
+      CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Play__Robot_Vic_Alexa__External_Notifications_Resume,
+      CLAD_AUDIOMETADATA(GameParameter)::ParameterType::Robot_Alexa_Volume_Master}}
   };
 
   const char* kSaveSettings_VolumeKey     = "volume";
@@ -728,7 +734,7 @@ bool AlexaMediaPlayer::play( SourceId id )
       ASSERT_NAMED_EVENT( _state == State::Preparing, "AlexaMediaPlayer.play.InvalidButNotPreparing", "state='%s'", StateToString() );
       _dataValidity = DataValidity::Invalid;
       using namespace AudioEngine;
-      using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+      using GenericEvent = CLAD_AUDIOMETADATA(GameEvent)::GenericEvent;
       _playableClip = ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Avs_System_Prompt_Error_Cannot_Play_Song );
       SetState( State::ClipPlayable );
       // to be determined is whether the sdk will do something unexpected if we close the readers

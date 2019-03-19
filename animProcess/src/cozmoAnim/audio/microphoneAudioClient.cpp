@@ -22,6 +22,13 @@
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#define CLAD_AUDIOMETADATA(ns) AudioMetaData::ns
+#endif
 
 namespace Anki {
 namespace Vector {
@@ -47,14 +54,14 @@ MicrophoneAudioClient::~MicrophoneAudioClient()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicrophoneAudioClient::ProcessMessage( const RobotInterface::MicDirection& msg )
+void MicrophoneAudioClient::ProcessMessage( const CLAD_VECTOR(RobotInterface)::MicDirection& msg )
 {
   if ( nullptr != _audioController ) {
     const float noiseFloor = log10(msg.latestNoiseFloor);
     float normNoiseFloor = MAX((noiseFloor - kNoiseFloorMin), 0.0f); // Shift floor down
     normNoiseFloor = MIN((normNoiseFloor / kNoiseFloorRange), 1.0f); // Normalize and limit ceiling
     
-    using AudioParameter = AudioMetaData::GameParameter::ParameterType;
+    using AudioParameter = CLAD_AUDIOMETADATA(GameParameter)::ParameterType;
     const auto param = AudioEngine::ToAudioParameterId( AudioParameter::Robot_Vic_Environment_Ambient_Volume );
     _audioController->SetParameter( param,
                                     normNoiseFloor,

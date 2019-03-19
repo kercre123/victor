@@ -21,6 +21,11 @@
 #include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
 #include "clad/types/compositeImageTypes.h"
 
+#ifdef USES_CPPLITE
+#define CLAD_VISION(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD_VISION(ns) Vision::ns
+#endif
 
 namespace Anki {
 namespace Vision {
@@ -32,12 +37,12 @@ class CompositeImageBuilder {
 public:
   // The chunk passed into the constructor will be used to validate all future chunks
   // and determine when all chunks have been received
-  CompositeImageBuilder(SpriteCache* cache, SpriteSequenceContainer* seqContainer, const CompositeImageChunk& chunk);
+  CompositeImageBuilder(SpriteCache* cache, SpriteSequenceContainer* seqContainer, const CLAD_VISION(CompositeImageChunk)& chunk);
   virtual ~CompositeImageBuilder();
 
   // Add a new chunk to the internal image representation - returns true if
   // the new chunk matches the ID/properties of the constructor chunk
-  bool AddImageChunk(SpriteCache* cache, SpriteSequenceContainer* seqContainer, const CompositeImageChunk& chunk);
+  bool AddImageChunk(SpriteCache* cache, SpriteSequenceContainer* seqContainer, const CLAD_VISION(CompositeImageChunk)& chunk);
 
   // Returns true if all image chunks have been received
   bool CanBuildImage();
@@ -48,7 +53,7 @@ public:
 
 
 private:  
-  using SpriteBoxCountMap = std::map<Vision::LayerName, uint8_t>;
+  using SpriteBoxCountMap = std::map<CLAD_VISION(LayerName), uint8_t>;
 
   uint8_t           _expectedNumLayers;
   SpriteBoxCountMap _expectedSpriteBoxesPerLayer;
@@ -60,5 +65,7 @@ private:
 
 }; // namespace Vision
 }; // namespace Anki
+
+#undef CLAD_VISION
 
 #endif // __Vision_CompositeImageBuilder_H__

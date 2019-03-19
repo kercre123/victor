@@ -20,9 +20,26 @@
 #include "util/console/consoleInterface.h"
 #include "util/math/math.h"
 
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
+#ifdef USES_CPPLITE
+namespace CppLite {
+#endif
 namespace Anki {
 namespace Vector {
 struct RobotState;
+}
+}
+#ifdef USES_CPPLITE
+}
+#endif
+
+namespace Anki {
+namespace Vector {
 namespace Audio {
 
 
@@ -31,7 +48,7 @@ class AudioProceduralFrame {
 public:
 
   // Update frame's primary values
-  void UpdateFrame(const RobotState& robotState);
+  void UpdateFrame(const CLAD_VECTOR(RobotState)& robotState);
   
   // Compute frame's derived values
   void ComputeValues(const AudioProceduralFrame& previousFrame);
@@ -130,5 +147,7 @@ private:
 } // Audio
 } // Cozmo
 } // Anki
+
+#undef CLAD_VECTOR
 
 #endif // __Anki_Cozmo_AudioProceduralFrame_H__

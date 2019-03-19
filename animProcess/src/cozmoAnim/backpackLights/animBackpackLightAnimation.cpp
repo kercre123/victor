@@ -13,6 +13,12 @@
 #include "cozmoAnim/backpackLights/animBackpackLightAnimation.h"
 #include "coretech/common/engine/jsonTools.h"
 
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
 namespace Anki {
 namespace Vector {
 namespace Anim {
@@ -31,7 +37,7 @@ bool DefineFromJSON(const Json::Value& jsonDef, BackpackAnimation& outAnim)
   // we actually store it as a single array of a struct containing all fields
   // so we need to convert between the two
   bool res = true;
-  std::array<u32, (int)LEDId::NUM_BACKPACK_LEDS> arr;
+  std::array<u32, (int)CLAD_VECTOR(LEDId)::NUM_BACKPACK_LEDS> arr;
   res &= JsonTools::GetColorValuesToArrayOptional(jsonDef, "onColors", arr, true);
   ARRAY_TO_LIGHTSTATE(arr, outAnim.lights.lights, onColor);
   
