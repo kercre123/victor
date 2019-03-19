@@ -301,7 +301,7 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
 
   const float totalTime_sec = accTickTotal.GetVal() * 0.001f;
   const int strSize = snprintf(_dumpBuffer, kSizeDumpBuffer,
-           "Summary:  (%s build; %s; %i engine ticks; %.3f seconds total)\n",
+           "Summary:  (%s build; %s; %i ticks; %.3f seconds total)\n",
 #if defined(NDEBUG)
            "RELEASE"
 #else

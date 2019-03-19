@@ -21,12 +21,6 @@
 #include "util/threading/threadPriority.h"
 #include "cozmoAnim/execCommand/exec_command.h"
 
-#include "opencv2/highgui.hpp"
-
-#include <chrono>
-#include <errno.h>
-#include <unistd.h>
-
 #define LOG_CHANNEL "FaceDisplay"
 
 // Whether or not we need to manually stop the boot animation process, vic-bootAnim
@@ -41,10 +35,6 @@ namespace Vector {
 #endif
 
 namespace {
-  uint16_t _fault = FaultCode::NONE;
-
-  static const std::string kFaultURL = "support.anki.com";
-
 #if REMOTE_CONSOLE_ENABLED
   FaceDisplayImpl* sDisplayImpl = nullptr;
 
@@ -71,6 +61,7 @@ namespace {
   
 FaceDisplay::FaceDisplay()
 : _stopDrawFace(false)
+, _readyFace(false)
 , _stopBootAnim(false)
 {
   // Don't try to stop the boot anim in sim
@@ -99,6 +90,15 @@ FaceDisplay::~FaceDisplay()
 #endif
 
   _stopDrawFace = true;
+  {
+    // Since the face-drawing thread is often waiting for a signal that there is
+    // a new face to be drawn, send that signal now so that it will stop waiting
+    // (and end execution soon thereafter.)
+    std::unique_lock<std::mutex> lock{_readyMutex};
+    _readyFace = true;
+  }
+  _readyCondition.notify_all();
+
   _faceDrawThread.join();
 }
 
@@ -152,26 +152,33 @@ void FaceDisplay::DrawToFaceInternal(const Vision::ImageRGB565& img)
     return;
   }
 
-  std::lock_guard<std::mutex> lock(_faceDrawMutex);
-  // Prevent drawing if we have a fault code
-  if(_fault == 0)
   {
+    std::lock_guard<std::mutex> lock(_faceDrawMutex);
     UpdateNextImgPtr();
     img.CopyTo(*_faceDrawNextImg);
   }
+
+  // Notify the face-drawing thread that there is a face to draw
+  {
+    std::unique_lock<std::mutex> lock{_readyMutex};
+    _readyFace = true;
+  }
+  _readyCondition.notify_all();
 }
 
 void FaceDisplay::DrawFaceLoop()
 {
   Anki::Util::SetThreadName(pthread_self(), "DrawFaceLoop");
+
   while (!_stopDrawFace)
   {
+    // Note that this CPU profiler tag is less useful now that we are waiting on a condition variable in this loop
     ANKI_CPU_TICK("FaceDisplay::DrawFaceLoop", maxDrawTime_ms, Util::CpuProfiler::CpuProfilerLoggingTime(kDrawFace_Logging));
 
     // Lock because we're about to check and change pointers
     _faceDrawMutex.lock();
 
-    if(_stopBootAnim && _displayImpl == nullptr)
+    if(_displayImpl == nullptr && _stopBootAnim)
     {      
      // Actually create a FaceDisplay which will open a connection to the LCD
      // now that no other process is using it
@@ -179,16 +186,14 @@ void FaceDisplay::DrawFaceLoop()
 
 #if REMOTE_CONSOLE_ENABLED
      sDisplayImpl = _displayImpl.get();
- #endif
+#endif
     }
-    
+
     if (_faceDrawNextImg != nullptr)
     {
       _faceDrawCurImg = _faceDrawNextImg;
       _faceDrawNextImg = nullptr;
-    }
-    if (_faceDrawCurImg != nullptr)
-    {
+
       // Grab a reference to the image we're going to draw so we can release the mutex
       const auto& drawImage = *_faceDrawCurImg;
       _faceDrawMutex.unlock();
@@ -210,7 +215,6 @@ void FaceDisplay::DrawFaceLoop()
       // Done with this image, clear the pointer
       {
         std::lock_guard<std::mutex> lock(_faceDrawMutex);
-        _faceDrawLastImg = _faceDrawCurImg;
         _faceDrawCurImg = nullptr;
       }
     }
@@ -218,10 +222,23 @@ void FaceDisplay::DrawFaceLoop()
     {
       _faceDrawMutex.unlock();
 
-      // Sleep before checking again whether we've got an image to draw
-      std::this_thread::sleep_for(std::chrono::milliseconds(5));
+      if (_displayImpl == nullptr || !_stopBootAnim)
+      {
+        // If we haven't created the display implementation instance, or we're still
+        // waiting for the boot animation to complete, sleep for a bit and then check again
+        std::this_thread::sleep_for(std::chrono::milliseconds(5));
+      }
+      else
+      {
+        // Otherwise, we wait here for a signal that a face is ready to be drawn
+        std::unique_lock<std::mutex> lock{_readyMutex};
+        _readyCondition.wait(lock, [this]{ return _readyFace; });
+        _readyFace = false;
+      }
     }
-  }
+  } // End while loop
+
+  LOG_INFO("FaceDisplay.DrawFaceLoop", "DrawFaceLoop thread is exiting");
 }
 
 void FaceDisplay::StopBootAnim()
@@ -235,7 +252,7 @@ void FaceDisplay::StopBootAnim()
       {
         if(rc != 0)
         {
-          PRINT_NAMED_WARNING("FaceDisplay.StopBootAnim.StopFailed", "%d", rc);
+          LOG_WARNING("FaceDisplay.StopBootAnim.StopFailed", "%d", rc);
 
           // Asking nicely didn't work so try something more aggressive
           ExecCommandInBackground({"systemctl", "kill", "-s", "9", "vic-bootAnim"},
@@ -244,7 +261,7 @@ void FaceDisplay::StopBootAnim()
               // Killing didn't work for some reason so error and show fault code
               if(rc != 0)
               {
-                PRINT_NAMED_ERROR("FaceDisplay.StopBootAnim.KillFailed", "%d", rc);
+                LOG_ERROR("FaceDisplay.StopBootAnim.KillFailed", "%d", rc);
                 FaultCode::DisplayFaultCode(FaultCode::STOP_BOOT_ANIM_FAILED);
               }
               else
