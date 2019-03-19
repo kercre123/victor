@@ -30,6 +30,7 @@ class SnapperServicer(chipperpb_pb2_grpc.ChipperGrpcServicer):
     # Make the image response
     # One day this will be a real payload
     fake_payload = {
+      'procType': 'ObjectDetection',
       'objects': [
         {
           'bounding_poly':
@@ -76,10 +77,11 @@ class SnapperServicer(chipperpb_pb2_grpc.ChipperGrpcServicer):
     image_response.session = request.session
     image_response.device_id = request.device_id
     # TODO After going through the go client that
-    # sits inbetween this and OffboardModel. Afaik
-    # this isn't used we should probably not send
-    # it; leaving it here for the moment for completeness.
+    # sits between this and OffboardModel, it appears
+    # this isn't used. We should probably just remove
+    # it entirely (VIC-13955)
     image_response.raw_result = json.dumps(fake_payload)
+    image_response.raw_result = ""
 
     return image_response
 

@@ -60,8 +60,6 @@ Result OffboardModel::LoadModelInternal(const std::string& modelPath, const Json
   LOG_INFO("OffboardModel.LoadModelInternal.Success",
            "Polling period: %dms, Cache: %s", _pollPeriod_ms, _cachePath.c_str());
   
-  JsonTools::GetValueOptional(config, JsonKeys::Verbose, _isVerbose);
-
   // Overwrite timeout if it's in the neural net config. This is
   // primarily motivated by longer running models
   if (false == JsonTools::GetValueOptional(config, JsonKeys::TimeoutDuration, _timeoutDuration_sec))
@@ -97,14 +95,11 @@ Result OffboardModel::LoadModelInternal(const std::string& modelPath, const Json
     LOG_INFO("OffboardModel.LoadModelInternal.ConnectionStatus", "%d", connected);
   }
   
-  // Use the graphFile from params as the processing type
   // TODO: Support multiple procTypes (comma-delimited?)
   _procTypes.resize(1);
-  if(!Vision::OffboardProcTypeFromString(_params.graphFile, _procTypes[0]))
+  if(!JsonTools::GetValueOptional(config, JsonKeys::OffboardProcType, _procTypes[0]))
   {
-    LOG_ERROR("OffboardModel.LoadModelInternal.BadOffboardProcType",
-              "Could not get OffboardProcType(s) from graphFile: %s",
-              _params.graphFile.c_str());
+    LOG_ERROR("OffboardModel.LoadModelInternal.MissingOffboardProcType", "");
     return RESULT_FAIL;
   }
   
@@ -273,17 +268,7 @@ bool OffboardModel::WaitForResultFile(const std::string& resultFilename,
     file.close();
     if(parseSuccess)
     {
-      Vision::OffboardProcType procType = _procTypes[0];
-      std::string procTypeStr;
-      if(JsonTools::GetValueOptional(detectionResult, "processingType", procTypeStr))
-      {
-        if(!Vision::OffboardProcTypeFromString(procTypeStr, procType))
-        {
-          LOG_ERROR("OffboardModel.WaitForResultFile.BadProcessingType", "Could not parse %s. Assuming %s.",
-                    procTypeStr.c_str(), EnumToString(procType));
-        }
-      }
-      resultAvailable = ParseSalientPointsFromJson(detectionResult, procType,
+      resultAvailable = ParseSalientPointsFromJson(detectionResult,
                                                    _imageRows, _imageCols, _imageTimestamp,
                                                    salientPoints);
     }
@@ -357,7 +342,7 @@ bool OffboardModel::WaitForResultCLAD(std::list<Vision::SalientPoint>& salientPo
             }
           }
           LOG_INFO("OffboardModel.WaitForResultCLAD.ParsedMessageJson", "Keys:%s", keys.c_str());
-          const Result parseResult = ParseSalientPointsFromJson(detectionResult, resultReadyMsg.procType,
+          const Result parseResult = ParseSalientPointsFromJson(detectionResult,
                                                                 _imageRows, _imageCols, _imageTimestamp,
                                                                 salientPoints);
           resultAvailable |= (parseResult == RESULT_OK);

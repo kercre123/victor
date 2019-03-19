@@ -28,7 +28,6 @@ namespace Vision {
 namespace NeuralNets {
 
 Result ParseSalientPointsFromJson(const Json::Value& jsonSalientPoints,
-                                  const Vision::OffboardProcType procType,
                                   const int imageRows, const int imageCols, const TimeStamp_t timestamp,
                                   std::list<Vision::SalientPoint>& salientPoints);
 

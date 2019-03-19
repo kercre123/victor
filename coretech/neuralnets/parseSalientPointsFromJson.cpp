@@ -32,7 +32,7 @@ CONSOLE_VAR_RANGED(s32, kNeuralNets_MaxNumSceneDescriptionTags, "NeuralNets", 5,
  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ParseSceneDescriptionFromJson(const Json::Value& jsonSalientPoints,
-                                     const TimeStamp_t timestamp,
+                                     const int imageRows, const int imageCols, const TimeStamp_t timestamp,
                                      std::list<Vision::SalientPoint>& salientPoints)
 {
   // Assumes Json structure like this is present in detectionResult:
@@ -116,7 +116,7 @@ Result ParseSceneDescriptionFromJson(const Json::Value& jsonSalientPoints,
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ParseObjectDetectionsFromJson(const Json::Value& jsonSalientPoints,
-                                     const TimeStamp_t timestamp,
+                                     const int imageRows, const int imageCols, const TimeStamp_t timestamp,
                                      std::list<Vision::SalientPoint>& salientPoints)
 {
   // Assume this Json structure:
@@ -438,56 +438,67 @@ Result ParseTextDetectionsFromJson(const Json::Value& detectionResult,
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ParseSalientPointsFromJson(const Json::Value& detectionResult,
-                                  const Vision::OffboardProcType procType,
-                                  const int imageRows, const int imageCols, const TimeStamp_t timestamp,
+                                  const int  imageRows, const int imageCols, const TimeStamp_t timestamp,
                                   std::list<Vision::SalientPoint>& salientPoints)
 {
-  switch(procType)
+  using ParseFcn = std::function<Result(const Json::Value&,
+                                        const int imageRows, const int imageCols, const TimeStamp_t timestamp,
+                                        std::list<Vision::SalientPoint>& salientPoints)>;
+
+  const std::map<std::string, ParseFcn> kParserLUT{
+    {"SceneDescription",   &ParseSceneDescriptionFromJson},
+    {"ObjectDetection",    &ParseObjectDetectionsFromJson},
+    {"FaceRecognition",    &ParseFaceDataFromJson},
+    {"OCR",                &ParseTextDetectionsFromJson},
+  };
+
+  auto iter = kParserLUT.end();
+  std::string procType;
+  if(!JsonTools::GetValueOptional(detectionResult, JsonKeys::OffboardProcType, procType))
   {
-    case Vision::OffboardProcType::SceneDescription:
-      return ParseSceneDescriptionFromJson(detectionResult, timestamp, salientPoints);
-      
-    case Vision::OffboardProcType::ObjectDetection:
-      return ParseObjectDetectionsFromJson(detectionResult, timestamp, salientPoints);
-      
-    case Vision::OffboardProcType::FaceRecognition:
-      return ParseFaceDataFromJson(detectionResult, imageRows, imageCols, timestamp, salientPoints);
-      
-    case Vision::OffboardProcType::OCR:
-      return ParseTextDetectionsFromJson(detectionResult, imageRows, imageCols, timestamp, salientPoints);
-      
-    default:
+    LOG_WARNING("NeuralNets.ParseSalientPointsFromJson.MissingProcessingType",
+                "No %s field in Json result. Assuming raw SalientPoints.",
+                JsonKeys::OffboardProcType);
+  }
+  else
+  {
+    iter = kParserLUT.find(procType);
+  }
+  
+  if(iter == kParserLUT.end())
+  {
+    // No registered parser: Assume the detectionResult just contains an array of SalientPoints in Json format
+    if(!detectionResult.isMember(NeuralNets::JsonKeys::SalientPoints))
     {
-      // Assume the detectionResult just contains an array of SalientPoints in Json format
-      if(!detectionResult.isMember(NeuralNets::JsonKeys::SalientPoints))
-      {
-        LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.MissingSalientPointsArray",
-                  "%s", NeuralNets::JsonKeys::SalientPoints);
-        return RESULT_FAIL;
-      }
-      
-      const Json::Value& salientPointsJson = detectionResult[NeuralNets::JsonKeys::SalientPoints];
-      if(!salientPointsJson.isArray())
-      {
-        LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.ExpectingArray", "");
-        return RESULT_FAIL;
-      }
-      
-      for(auto const& salientPointJson : salientPointsJson)
-      {
-        Vision::SalientPoint salientPoint;
-        const bool success = salientPoint.SetFromJSON(salientPointJson);
-        if(!success)
-        {
-          LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.FailedToSetFromJSON", "");
-          continue;
-        }
-        
-        salientPoints.emplace_back(std::move(salientPoint));
-      }
-      break;
+      LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.MissingSalientPointsArray",
+                "%s", NeuralNets::JsonKeys::SalientPoints);
+      return RESULT_FAIL;
     }
-  } // switch(procType)
+    
+    const Json::Value& salientPointsJson = detectionResult[NeuralNets::JsonKeys::SalientPoints];
+    if(!salientPointsJson.isArray())
+    {
+      LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.ExpectingArray", "");
+      return RESULT_FAIL;
+    }
+    
+    for(auto const& salientPointJson : salientPointsJson)
+    {
+      Vision::SalientPoint salientPoint;
+      const bool success = salientPoint.SetFromJSON(salientPointJson);
+      if(!success)
+      {
+        LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.FailedToSetFromJSON", "");
+        continue;
+      }
+      
+      salientPoints.emplace_back(std::move(salientPoint));
+    }
+  }
+  else
+  {
+    return iter->second(detectionResult, imageRows, imageCols, timestamp, salientPoints);
+  }
   
   return RESULT_OK;
 }

@@ -86,19 +86,6 @@ func reqHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	reqTypeString := r.URL.Query().Get("type")
-	reqType := vision.OffboardProcType_SceneDescription
-	switch reqTypeString {
-	case "SceneDescription":
-		// default, no-op
-	case "ObjectDetection":
-		reqType = vision.OffboardProcType_ObjectDetection
-	case "FaceRecognition":
-		reqType = vision.OffboardProcType_FaceRecognition
-	case "OCR":
-		reqType = vision.OffboardProcType_OCR
-	}
-
 	var file string
 
 	var isURL bool
@@ -123,9 +110,12 @@ func reqHandler(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// NOTE: We are no longer strongly-typing this to ease development
+	reqTypeString := r.URL.Query().Get("type")
+
 	var msg vision.OffboardImageReady
 	msg.Filename = file
-	msg.ProcTypes = []vision.OffboardProcType{reqType}
+	msg.ProcTypes = append(msg.ProcTypes, reqTypeString)
 
 	var buf bytes.Buffer
 	if err := msg.Pack(&buf); err != nil {

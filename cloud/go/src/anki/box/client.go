@@ -113,15 +113,8 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 		return nil, err
 	}
 
+	// TODO: Planning to remove enumerated ImageModes and use raw strings to easy dev pain translating through the layers. (VIC-13955)
 	var modes []pb.ImageMode
-	for _, m := range msg.ProcTypes {
-		switch m {
-		case vision.OffboardProcType_SceneDescription:
-			modes = append(modes, pb.ImageMode_DESCRIBE_SCENE)
-		case vision.OffboardProcType_ObjectDetection:
-			modes = append(modes, pb.ImageMode_LOCATE_OBJECT)
-		}
-	}
 
 	sessionID := uuid.New().String()[:16]
 	r := &pb.ImageRequest{
@@ -143,19 +136,13 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 	}
 	log.Println("image analysis response: ", resp.String())
 
-	var resps []vision.OffboardResultReady
+	var resultsReady []vision.OffboardResultReady
 	for _, r := range resp.ImageResults {
-		var resp vision.OffboardResultReady
-		resp.JsonResult = r.RawResult
-		resp.Timestamp = msg.Timestamp
-		switch r.Mode {
-		case pb.ImageMode_DESCRIBE_SCENE:
-			resp.ProcType = vision.OffboardProcType_SceneDescription
-		case pb.ImageMode_LOCATE_OBJECT:
-			resp.ProcType = vision.OffboardProcType_ObjectDetection
-		}
-		resps = append(resps, resp)
+		var resultReady vision.OffboardResultReady
+		resultReady.JsonResult = r.RawResult
+		resultReady.Timestamp = msg.Timestamp
+		resultsReady = append(resultsReady, resultReady)
 	}
 
-	return resps, nil
+	return resultsReady, nil
 }

@@ -114,7 +114,7 @@ Result INeuralNetMain::Init(const std::string& configFilename,
     if(!success)
     {
       LOG_ERROR("INeuralNetMain.Init.ReadConfigFailed",
-                        "Could not read config file: %s", configFilename.c_str());
+                "Could not read config file: %s", configFilename.c_str());
       CleanupAndExit(RESULT_FAIL);
     }
     

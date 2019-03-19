@@ -27,6 +27,7 @@ namespace JsonKeys {
   extern const char* const ModelType;
   extern const char* const NetworkName;
   extern const char* const OffboardCommsType;
+  extern const char* const OffboardProcType;
   extern const char* const PollingPeriod;
   extern const char* const SalientPoints;
   extern const char* const TimeoutDuration;

@@ -9,6 +9,9 @@ enum uint_8 OffboardCommsType {
   CLAD
 }
 
+// For easing rapid development, we simply use raw strings for requesting/reporting Offboard processing
+// In a production setting, these should probably go back to enumerated types.
+/*
 enum uint_8 OffboardProcType {
   CelebrityFace,
   FaceRecognition,
@@ -18,6 +21,7 @@ enum uint_8 OffboardProcType {
   OCR,
   SceneDescription
 }
+*/
 
 structure OffboardImageReady {
   // Info about the image data
@@ -30,7 +34,7 @@ structure OffboardImageReady {
   
   // Array of processing types requested for this image
   // OffboardResultReady message below will be generated for each
-  OffboardProcType  procTypes[uint_8],
+  string            procTypes[uint_8],
   
   // Where to find the image
   string            filename
@@ -38,7 +42,7 @@ structure OffboardImageReady {
 
 structure OffboardResultReady {
   uint_32           timestamp,
-  OffboardProcType  procType,
+  // string            procType, // For ease of development, now storing this in the jsonResult
   string[uint_16]   jsonResult
 }
 
