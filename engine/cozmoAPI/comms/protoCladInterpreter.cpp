@@ -65,6 +65,11 @@ bool ProtoCladInterpreter::Redirect(
       ProtoCancelActionByIdTagRequestToClad(proto_message, clad_message);
       break;
     }
+    case external_interface::GatewayWrapper::kStopAllMotorsRequest:
+    {
+      ProtoStopAllMotorsRequestToClad(proto_message, clad_message);
+      break;
+    }
     default:
     {
       return false;
@@ -119,6 +124,11 @@ bool ProtoCladInterpreter::Redirect(
       break;
     }
     case ExternalInterface::MessageGameToEngineTag::CancelActionByIdTag:
+    {
+      CladCancelActionByIdTagToProto(message, proto_message);
+      break;
+    }
+    case ExternalInterface::MessageGameToEngineTag::StopAllMotors:
     {
       CladCancelActionByIdTagToProto(message, proto_message);
       break;
@@ -184,6 +194,14 @@ void ProtoCladInterpreter::ProtoPlayAnimationTriggerRequestToClad(
   clad_message.Set_PlayAnimationTrigger(play_animation_trigger);
 }
 
+void ProtoCladInterpreter::ProtoStopAllMotorsRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+  Anki::Vector::ExternalInterface::StopAllMotors stop_all_motors;
+  clad_message.Set_StopAllMotors(stop_all_motors);
+}
+
+
 void ProtoCladInterpreter::CladDriveWheelsToProto(
     const ExternalInterface::MessageGameToEngine& clad_message,
     external_interface::GatewayWrapper& proto_message) { 
@@ -213,6 +231,14 @@ void ProtoCladInterpreter::CladAnimationAvailableToProto(
   list_animations_response->add_animation_names()->set_name(animName);
   proto_message = ExternalMessageRouter::WrapResponse(list_animations_response);
 }
+
+void ProtoCladInterpreter::CladStopAllMotorsToProto(
+    const ExternalInterface::MessageGameToEngine& clad_message,
+    external_interface::GatewayWrapper& proto_message) { 
+  external_interface::StopAllMotorsResponse* stop_all_motors_response = new external_interface::StopAllMotorsResponse;
+  proto_message = ExternalMessageRouter::WrapResponse(stop_all_motors_response);
+}
+
 
 void ProtoCladInterpreter::CladEndOfMessageToProto(
     const ExternalInterface::MessageEngineToGame& clad_message, 

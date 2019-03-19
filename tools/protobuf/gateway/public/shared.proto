@@ -197,6 +197,8 @@ message GatewayWrapper {
     PickupObjectResponse            pickup_object_response               = 532;
     PlaceObjectOnGroundHereRequest  place_object_on_ground_here_request  = 533;
     PlaceObjectOnGroundHereResponse place_object_on_ground_here_response = 534;
+    StopAllMotorsRequest            stop_all_motors_request              = 535;
+    StopAllMotorsResponse           stop_all_motors_response             = 536;
 
 
     // ------------ status history --------------------
