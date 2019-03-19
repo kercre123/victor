@@ -162,6 +162,12 @@ MESSAGES_TO_TEST = [
      protocol.MoveLiftRequest(speed_rad_per_sec=0.0),
      TestResultMatches(protocol.MoveLiftResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
+    # Add StopAllMotors
+    # TODO Turn on when is available in public SDK proto
+    # (Interface.StopAllMotors,
+    #  protocol.StopAllMotorsRequest(),
+    #  TestResultMatches(protocol.StopAllMotorsResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+
     # SetEyeColor message
     (Interface.SetEyeColor,
      protocol.SetEyeColorRequest(hue=1.0, saturation=1.0),
