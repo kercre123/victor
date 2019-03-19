@@ -19,6 +19,12 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
 namespace Anki {
 namespace Vector {
 
@@ -51,17 +57,17 @@ public:
 
   // Send message to engine
   // Returns true on success, false on error
-  static bool SendAnimToEngine(const RobotInterface::RobotToEngine& msg);
+  static bool SendAnimToEngine(const CLAD_VECTOR(RobotInterface)::RobotToEngine& msg);
 
   // Send message to robot
   // Returns true on success, false on error
-  static bool SendAnimToRobot(const RobotInterface::EngineToRobot& msg);
+  static bool SendAnimToRobot(const CLAD_VECTOR(RobotInterface)::EngineToRobot& msg);
 
   // Dispatch message from engine
-  static void ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg);
+  static void ProcessMessageFromEngine(const CLAD_VECTOR(RobotInterface)::EngineToRobot& msg);
 
   // Dispatch message from robot
-  static void ProcessMessageFromRobot(const RobotInterface::RobotToEngine& msg);
+  static void ProcessMessageFromRobot(const CLAD_VECTOR(RobotInterface)::RobotToEngine& msg);
 
   static uint32_t GetMessageCountAtR() { return _messageCountAnimToRobot; }
   static uint32_t GetMessageCountAtE() { return _messageCountAnimToEngine; }
@@ -81,5 +87,6 @@ private:
 } // namespace Vector
 } // namespace Anki
 
+#undef CLAD_VECTOR
 
 #endif  // #ifndef ANIM_PROCESS_MESSAGES_H

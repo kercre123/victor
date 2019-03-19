@@ -23,7 +23,9 @@
 #include "util/environment/locale.h"
 #include "util/signals/signalHolder.h"
 
+// #ifndef USES_CPPLITE
 #include "clad/cloud/mic.h"
+// #endif
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/types/beatDetectorTypes.h"
 
@@ -34,6 +36,29 @@
 #include <mutex>
 #include <string>
 #include <vector>
+
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::ns
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#define CLAD_VECTOR(ns) ns
+#endif
+
+#ifdef USES_CPPLITE
+namespace CppLite {
+#endif
+namespace Anki {
+  namespace Vector {
+    namespace RobotInterface {
+      struct MicData;
+      struct RobotToEngine;
+    }
+  }
+}
+#ifdef USES_CPPLITE
+}
+#endif
 
 // Declarations
 namespace Anki {
@@ -51,10 +76,6 @@ namespace Anki {
     }
     namespace Anim {
       class RobotDataLoader;
-    }
-    namespace RobotInterface {
-      struct MicData;
-      struct RobotToEngine;
     }
     class SpeechRecognizerSystem;
     enum class AlexaSimpleState : uint8_t;
@@ -85,7 +106,7 @@ public:
   MicData::MicDataProcessor* GetMicDataProcessor() const { return _micDataProcessor.get(); }
   SpeechRecognizerSystem* GetSpeechRecognizerSystem() const { return _speechRecognizerSystem.get(); }
   
-  void ProcessMicDataPayload(const RobotInterface::MicData& payload);
+  void ProcessMicDataPayload(const CLAD_VECTOR(RobotInterface)::MicData& payload);
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
   void RecordProcessedAudio(uint32_t duration_ms, const std::string& path);
   void StartWakeWordlessStreaming(CloudMic::StreamType type, bool playGetInFromAnimProcess);
@@ -100,7 +121,7 @@ public:
 
   void ResetMicListenDirection();
 
-  void SendMessageToEngine(std::unique_ptr<RobotInterface::RobotToEngine> msgPtr);
+  void SendMessageToEngine(std::unique_ptr<CLAD_VECTOR(RobotInterface)::RobotToEngine> msgPtr);
 
   void AddMicDataJob(std::shared_ptr<MicDataInfo> newJob, bool isStreamingJob = false);
   bool HasStreamingJob() const;
@@ -108,8 +129,8 @@ public:
   void UpdateMicJobs();
   void AudioSaveCallback(const std::string& dest);
 
-  BeatInfo GetLatestBeatInfo();
-  const Anki::Vector::RobotInterface::MicDirection& GetLatestMicDirectionMsg() const { return _latestMicDirectionMsg; }
+  CLAD_VECTOR(BeatInfo) GetLatestBeatInfo();
+  const CLAD_VECTOR(RobotInterface)::MicDirection& GetLatestMicDirectionMsg() const { return _latestMicDirectionMsg; }
   
   void ResetBeatDetector();
   
@@ -187,7 +208,7 @@ private:
   
   std::atomic<uint32_t> _speakerLatency_ms{0};
   
-  RobotInterface::MicDirection _latestMicDirectionMsg;
+  CLAD_VECTOR(RobotInterface)::MicDirection _latestMicDirectionMsg;
   
   // Members for managing the results of async FFT processing
   struct FFTResultData {
@@ -197,7 +218,7 @@ private:
   std::shared_ptr<FFTResultData> _fftResultData;
 
   // Members for holding outgoing messages
-  std::vector<std::unique_ptr<RobotInterface::RobotToEngine>> _msgsToEngine;
+  std::vector<std::unique_ptr<CLAD_VECTOR(RobotInterface)::RobotToEngine>> _msgsToEngine;
   std::mutex _msgsMutex;
 
   std::vector<std::function<void(bool)>> _triggerWordDetectedCallbacks;
@@ -239,5 +260,8 @@ private:
 } // namespace MicData
 } // namespace Vector
 } // namespace Anki
+
+#undef CLAD
+#undef CLAD_VECTOR
 
 #endif // __AnimProcess_CozmoAnim_MicData_MicDataSystem_H_

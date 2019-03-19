@@ -20,16 +20,34 @@
 #include <memory>
 #include <map>
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::ns
+#define CLAD_ANKI(ns) CppLite::Anki::ns
+#define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
+#else
+#define CLAD(ns) ns
+#define CLAD_ANKI(ns) ns
+#define CLAD_AUDIOMETADATA(ns) AudioMetaData::ns
+#endif
 
+#ifdef USES_CPPLITE
+namespace CppLite {
+#endif
 namespace Anki {
-namespace AudioEngine {
-class SoundbankLoader;
-}
 namespace AudioMetaData {
 namespace GameParameter {
 // Forward declare audioParameterTypes.h
 enum class ParameterType : uint32_t;
 }
+}
+}
+#ifdef USES_CPPLITE
+}
+#endif
+
+namespace Anki {
+namespace AudioEngine {
+class SoundbankLoader;
 }
 namespace Vector {
 namespace Anim {
@@ -90,7 +108,7 @@ public:
   // See cozmoAudioController.cpp for "consumable parameters" list
   // Return true if successfully activated/deactivated
   bool ActivateParameterValueUpdates( bool activate );
-  bool GetActivatedParameterValue( AudioMetaData::GameParameter::ParameterType parameter,
+  bool GetActivatedParameterValue( CLAD_AUDIOMETADATA(GameParameter)::ParameterType parameter,
                                    AudioEngine::AudioRTPCValue& out_value );
 
 private:
@@ -99,7 +117,7 @@ private:
   std::unique_ptr<AudioEngine::SoundbankLoader> _soundbankLoader;
   // Parameter Value Update functionality
   AudioEngine::AudioEngineCallbackId _parameterUpdateCallbackId = AudioEngine::kInvalidAudioEngineCallbackId;
-  std::map<AudioMetaData::GameParameter::ParameterType,
+  std::map<CLAD_AUDIOMETADATA(GameParameter)::ParameterType,
            std::atomic<AudioEngine::AudioRTPCValue>> _consumableParameterValues;
   
   // Register CLAD Game Objects
@@ -116,5 +134,9 @@ private:
 }
 }
 }
+
+#undef CLAD
+#undef CLAD_ANKI
+#undef CLAD_AUDIOMETADATA
 
 #endif /* __Anki_Cozmo_CozmoAudioController_H__ */

@@ -25,6 +25,12 @@
 #include "clad/types/facialExpressions.h"
 #include "clad/types/faceDetectionMetaData.h"
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD(ns) Anki::Vision::ns
+#endif
+
 namespace Anki {
 namespace Vision {
 
@@ -144,15 +150,15 @@ namespace Vision {
     void SetExpressionValue(FacialExpression whichExpression, ExpressionValue newValue);
     
     // Smile information, if available
-    const SmileAmount& GetSmileAmount() const { return _smileAmount; }
+    const CLAD(SmileAmount)& GetSmileAmount() const { return _smileAmount; }
     void  SetSmileAmount(f32 degree, f32 confidence);
     
     // Gaze direction, if available
-    const Gaze& GetGaze() const { return _gaze; }
+    const CLAD(Gaze)& GetGaze() const { return _gaze; }
     void  SetGaze(f32 leftRight_deg, f32 upDown_deg);
     
     // Blink detection, if known.
-    const BlinkAmount& GetBlinkAmount() const { return _blinkAmount; }
+    const CLAD(BlinkAmount)& GetBlinkAmount() const { return _blinkAmount; }
     void  SetBlinkAmount(f32 leftAmount, f32 rightAmount);
     
     // Eye contact detection, if available
@@ -197,9 +203,9 @@ namespace Vision {
     ExpressionValues _expression{};
     
     // "Metadata" about the face
-    SmileAmount _smileAmount;
-    Gaze        _gaze;
-    BlinkAmount _blinkAmount;
+    CLAD(SmileAmount) _smileAmount;
+    CLAD(Gaze)        _gaze;
+    CLAD(BlinkAmount) _blinkAmount;
     
     Radians _roll, _pitch, _yaw;
     
@@ -411,5 +417,7 @@ namespace Vision {
 
 } // namespace Vision
 } // namespace Anki
+
+#undef CLAD
 
 #endif

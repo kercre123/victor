@@ -24,6 +24,11 @@
 #include <fstream>
 #include <string>
 
+#ifdef USES_CPPLITE
+#define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
+#else
+#define CLAD_AUDIOMETADATA(ns) AudioMetaData::ns
+#endif
 
 namespace Anki {
 namespace Vector {
@@ -62,7 +67,7 @@ namespace {
   CONSOLE_VAR_RANGED(uint32_t, kLiftCoolDown_ms, CONSOLE_PATH, 65, 0, 250);
   
   static const AudioEngine::AudioGameObject kProceduralGameObj =
-    AudioEngine::ToAudioGameObject(AudioMetaData::GameObjectType::Procedural);
+    AudioEngine::ToAudioGameObject(CLAD_AUDIOMETADATA(GameObjectType)::Procedural);
 
   static const uint kFrameCount = 2;
 
@@ -179,8 +184,8 @@ void ProceduralAudioClient::UpdateTreadState(const AudioProceduralFrame& previou
   if (!kEnableTreadProceduralMovement) { return; }
   
   using namespace AudioEngine;
-  using GE = AudioMetaData::GameEvent::GenericEvent;
-  using GP = AudioMetaData::GameParameter::ParameterType;
+  using GE = CLAD_AUDIOMETADATA(GameEvent)::GenericEvent;
+  using GP = CLAD_AUDIOMETADATA(GameParameter)::ParameterType;
 
   // If the spinSpeedRTPC is > 0 audio engine interprets it as a point turn, otherwise it uses tread speed
   static const float kDefaultSpinRtpc = -0.01f;
@@ -261,8 +266,8 @@ void ProceduralAudioClient::UpdateHeadState(const AudioProceduralFrame& previous
   if (!kEnableHeadProceduralMovement) { return; }
   
   using namespace AudioEngine;
-  using GE = AudioMetaData::GameEvent::GenericEvent;
-  using GP = AudioMetaData::GameParameter::ParameterType;
+  using GE = CLAD_AUDIOMETADATA(GameEvent)::GenericEvent;
+  using GP = CLAD_AUDIOMETADATA(GameParameter)::ParameterType;
   
   auto headEvent = GE::Invalid;
   bool setRTPC = false;
@@ -325,8 +330,8 @@ void ProceduralAudioClient::UpdateLiftState(const AudioProceduralFrame& previous
   if (!kEnableLiftProceduralMovement) { return; }
   
   using namespace AudioEngine;
-  using GE = AudioMetaData::GameEvent::GenericEvent;
-  using GP = AudioMetaData::GameParameter::ParameterType;
+  using GE = CLAD_AUDIOMETADATA(GameEvent)::GenericEvent;
+  using GP = CLAD_AUDIOMETADATA(GameParameter)::ParameterType;
   
   auto liftEvent = GE::Invalid;
   bool setRTPC = false;

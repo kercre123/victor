@@ -21,6 +21,13 @@
 #include <stdint.h>
 #include <list>
 
+
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace CozmoAnim {
   struct HeadAngle;
   struct LiftHeight;
@@ -115,7 +122,7 @@ public:
   // Return the Streaming message for the current KeyFrame if it is time,
   // nullptr otherwise. Also returns nullptr if there are no KeyFrames
   // left in the track.
-  RobotInterface::EngineToRobot* GetCurrentStreamingMessage(const TimeStamp_t relativeStreamingTime_ms) const;
+  CLAD(RobotInterface)::EngineToRobot* GetCurrentStreamingMessage(const TimeStamp_t relativeStreamingTime_ms) const;
   
   // Get a reference to the current KeyFrame in the track.
   FRAME_TYPE& GetCurrentKeyFrame() const {
@@ -399,9 +406,9 @@ Result Track<BackpackLightsKeyFrame>::AddKeyFrameByTime(const BackpackLightsKeyF
 
 
 template<typename FRAME_TYPE>
-RobotInterface::EngineToRobot* Track<FRAME_TYPE>::GetCurrentStreamingMessage(const TimeStamp_t relativeStreamingTime_ms) const
+CLAD(RobotInterface)::EngineToRobot* Track<FRAME_TYPE>::GetCurrentStreamingMessage(const TimeStamp_t relativeStreamingTime_ms) const
 {
-  RobotInterface::EngineToRobot* msg = nullptr;
+  CLAD(RobotInterface)::EngineToRobot* msg = nullptr;
   
   if(HasFramesLeft()) {
     FRAME_TYPE& currentKeyFrame = GetCurrentKeyFrame();
@@ -613,5 +620,6 @@ void Track<FRAME_TYPE>::AdvanceTrackHelper(const TimeStamp_t toTime_ms)
 } // end namespace Vector
 } // end namespace Anki
 
+#undef CLAD
 
 #endif //__Anki_Cozmo_Basestation_Animations_Track_H__

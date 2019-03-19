@@ -19,6 +19,12 @@
 #include "coretech/common/shared/types.h"
 #include <array>
 
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
 namespace Json {
   class Value;
 }
@@ -31,7 +37,7 @@ namespace BackpackLightAnimation {
 
   // BackpackAnimation is just a container for the SetBackpackLights message
   struct BackpackAnimation {
-    RobotInterface::SetBackpackLights lights;
+    CLAD_VECTOR(RobotInterface)::SetBackpackLights lights;
   };
   
   bool DefineFromJSON(const Json::Value& jsonDef, BackpackAnimation& outAnim);
@@ -42,5 +48,6 @@ namespace BackpackLightAnimation {
 } // namespace Vector
 } // namespace Anki
 
-#endif // __Anki_Cozmo_BackpackLights_BackpackLightAnimation_H__
+#undef CLAD_VECTOR
 
+#endif // __Anki_Cozmo_BackpackLights_BackpackLightAnimation_H__

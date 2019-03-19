@@ -18,6 +18,11 @@
 #include "audioEngine/multiplexer/audioMuxInput.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::ns
+#else
+#define CLAD(ns) ns
+#endif
 
 namespace Anki {
 namespace Vector {
@@ -27,17 +32,17 @@ class EngineRobotAudioInput : public AudioEngine::Multiplexer::AudioMuxInput {
   
 public:
   
-  virtual void PostCallback( AudioEngine::Multiplexer::AudioCallbackDuration&& callbackMessage ) const override;
-  virtual void PostCallback( AudioEngine::Multiplexer::AudioCallbackMarker&& callbackMessage ) const override;
-  virtual void PostCallback( AudioEngine::Multiplexer::AudioCallbackComplete&& callbackMessage ) const override;
-  virtual void PostCallback( AudioEngine::Multiplexer::AudioCallbackError&& callbackMessage ) const override;
+  virtual void PostCallback( CLAD(AudioEngine)::Multiplexer::AudioCallbackDuration&& callbackMessage ) const override;
+  virtual void PostCallback( CLAD(AudioEngine)::Multiplexer::AudioCallbackMarker&& callbackMessage ) const override;
+  virtual void PostCallback( CLAD(AudioEngine)::Multiplexer::AudioCallbackComplete&& callbackMessage ) const override;
+  virtual void PostCallback( CLAD(AudioEngine)::Multiplexer::AudioCallbackError&& callbackMessage ) const override;
   
-  virtual void HandleMessage( const AudioEngine::Multiplexer::PostAudioEvent& eventMessage ) override;
-  virtual void HandleMessage( const AudioEngine::Multiplexer::StopAllAudioEvents& stopEventMessage ) override;
-  virtual void HandleMessage( const AudioEngine::Multiplexer::PostAudioGameState& gameStateMessage ) override;
-  virtual void HandleMessage( const AudioEngine::Multiplexer::PostAudioSwitchState& switchStateMessage ) override;
-  virtual void HandleMessage( const AudioEngine::Multiplexer::PostAudioParameter& parameterMessage ) override;
-  virtual void HandleMessage( const AudioEngine::Multiplexer::PostAudioMusicState& musicStateMessage ) override;
+  virtual void HandleMessage( const CLAD(AudioEngine)::Multiplexer::PostAudioEvent& eventMessage ) override;
+  virtual void HandleMessage( const CLAD(AudioEngine)::Multiplexer::StopAllAudioEvents& stopEventMessage ) override;
+  virtual void HandleMessage( const CLAD(AudioEngine)::Multiplexer::PostAudioGameState& gameStateMessage ) override;
+  virtual void HandleMessage( const CLAD(AudioEngine)::Multiplexer::PostAudioSwitchState& switchStateMessage ) override;
+  virtual void HandleMessage( const CLAD(AudioEngine)::Multiplexer::PostAudioParameter& parameterMessage ) override;
+  virtual void HandleMessage( const CLAD(AudioEngine)::Multiplexer::PostAudioMusicState& musicStateMessage ) override;
 };
 
 
@@ -45,5 +50,6 @@ public:
 } // Cozmo
 } // Anki
 
+#undef CLAD
 
 #endif /* __Cozmo_Anim_Audio_EngineRobotAudioInput_H__ */

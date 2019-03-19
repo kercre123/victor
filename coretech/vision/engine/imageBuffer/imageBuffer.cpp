@@ -22,10 +22,16 @@
 
 #include <unistd.h>
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
 namespace Vision {
 
-ImageBuffer::ImageBuffer(u8* data, s32 numRows, s32 numCols, ImageEncoding format, TimeStamp_t timestamp, s32 id)
+ImageBuffer::ImageBuffer(u8* data, s32 numRows, s32 numCols, CLAD(ImageEncoding) format, TimeStamp_t timestamp, s32 id)
 : _rawData(data)
 , _rawNumRows(numRows)
 , _rawNumCols(numCols)
@@ -40,26 +46,26 @@ void ImageBuffer::GetNumRowsCols(s32& rows, s32& cols) const
 {
   switch(_format)
   {
-    case ImageEncoding::BAYER:
+    case CLAD(ImageEncoding)::BAYER:
       {
         rows = _rawNumRows;
         cols = _rawNumCols;
       }
       break;
-    case ImageEncoding::RawRGB:
+    case CLAD(ImageEncoding)::RawRGB:
       {
         rows = _rawNumRows;
         cols = _rawNumCols;
       }
       break;
-    case ImageEncoding::YUV420sp:
+    case CLAD(ImageEncoding)::YUV420sp:
       {
         // YUV420sp data is has extra rows for UV
         rows = (_rawNumRows * (2.f/3.f));
         cols = _rawNumCols;
       }
       break;
-    case ImageEncoding::RawGray:
+    case CLAD(ImageEncoding)::RawGray:
       {
         rows = _rawNumRows;
         cols = _rawNumCols;
@@ -103,22 +109,22 @@ bool ImageBuffer::GetRGB(ImageRGB& rgb, ImageCacheSize size) const
   
   switch(_format)
   {
-    case ImageEncoding::BAYER:
+    case CLAD(ImageEncoding)::BAYER:
       {
         res = GetRGBFromBAYER(rgb, size);
       }
       break;
-    case ImageEncoding::RawRGB:
+    case CLAD(ImageEncoding)::RawRGB:
       {
         res = GetRGBFromRawRGB(rgb, size);
       }
       break;
-    case ImageEncoding::YUV420sp:
+    case CLAD(ImageEncoding)::YUV420sp:
       {
         res = GetRGBFromYUV420sp(rgb, size);
       }
       break;
-    case ImageEncoding::RawGray:
+    case CLAD(ImageEncoding)::RawGray:
       {
         res = GetRGBFromRawGray(rgb, size);
       }
@@ -148,22 +154,22 @@ bool ImageBuffer::GetGray(Image& gray, ImageCacheSize size) const
   
   switch(_format)
   {
-    case ImageEncoding::BAYER:
+    case CLAD(ImageEncoding)::BAYER:
       {
         res = GetGrayFromBAYER(gray, size);
       }
       break;
-    case ImageEncoding::RawRGB:
+    case CLAD(ImageEncoding)::RawRGB:
       {
         res = GetGrayFromRawRGB(gray, size);
       }
       break;
-    case ImageEncoding::YUV420sp:
+    case CLAD(ImageEncoding)::YUV420sp:
       {
         res = GetGrayFromYUV420sp(gray, size);
       }
       break;
-    case ImageEncoding::RawGray:
+    case CLAD(ImageEncoding)::RawGray:
       {
         res = GetGrayFromRawGray(gray, size);
       }

@@ -19,6 +19,12 @@
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/helpers/templateHelpers.h"
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
 namespace Vector {
   
@@ -401,14 +407,14 @@ void ProceduralFace::SetFromValues(const std::vector<f32>& leftEyeData, const st
   SetScanlineOpacity(scanlineOpacity);
 }
 
-void ProceduralFace::SetFromMessage(const ProceduralFaceParameters& msg)
+void ProceduralFace::SetFromMessage(const CLAD(ProceduralFaceParameters)& msg)
 {
   SetFaceAngle(msg.faceAngle_deg);
   SetFacePosition({msg.faceCenX, msg.faceCenY});
   SetFaceScale({msg.faceScaleX, msg.faceScaleY});
   SetScanlineOpacity(msg.scanlineOpacity);
   
-  for(s32 i=0; i<(size_t)ProceduralEyeParameter::NumParameters; ++i)
+  for(s32 i=0; i<(size_t)CLAD(ProceduralEyeParameter)::NumParameters; ++i)
   {
     SetParameter(WhichEye::Left,  static_cast<ProceduralFace::Parameter>(i), msg.leftEye[i]);
     SetParameter(WhichEye::Right, static_cast<ProceduralFace::Parameter>(i), msg.rightEye[i]);
@@ -428,23 +434,23 @@ void ProceduralFace::LookAt(f32 xShift, f32 yShift, f32 xmax, f32 ymax,
   const f32 yscaleUD = (lookUpMaxScale-lookDownMinScale)*std::min(1.f, (1.f - (yShift + ymax)/(2.f*ymax))) + lookDownMinScale;
   
   if(xShift < 0) {
-    SetParameter(WhichEye::Left,  ProceduralEyeParameter::EyeScaleY, yscaleLR*yscaleUD);
-    SetParameter(WhichEye::Right, ProceduralEyeParameter::EyeScaleY, (2.f-yscaleLR)*yscaleUD);
+    SetParameter(WhichEye::Left,  CLAD(ProceduralEyeParameter)::EyeScaleY, yscaleLR*yscaleUD);
+    SetParameter(WhichEye::Right, CLAD(ProceduralEyeParameter)::EyeScaleY, (2.f-yscaleLR)*yscaleUD);
   } else {
-    SetParameter(WhichEye::Left,  ProceduralEyeParameter::EyeScaleY, (2.f-yscaleLR)*yscaleUD);
-    SetParameter(WhichEye::Right, ProceduralEyeParameter::EyeScaleY, yscaleLR*yscaleUD);
+    SetParameter(WhichEye::Left,  CLAD(ProceduralEyeParameter)::EyeScaleY, (2.f-yscaleLR)*yscaleUD);
+    SetParameter(WhichEye::Right, CLAD(ProceduralEyeParameter)::EyeScaleY, yscaleLR*yscaleUD);
   }
   
-  DEV_ASSERT_MSG(FLT_GT(GetParameter(WhichEye::Left,  ProceduralEyeParameter::EyeScaleY), 0.f),
+  DEV_ASSERT_MSG(FLT_GT(GetParameter(WhichEye::Left,  CLAD(ProceduralEyeParameter)::EyeScaleY), 0.f),
                  "ProceduralFace.LookAt.NegativeLeftEyeScaleY",
                  "yShift=%f yscaleLR=%f yscaleUD=%f ymax=%f",
                  yShift, yscaleLR, yscaleUD, ymax);
-  DEV_ASSERT_MSG(FLT_GT(GetParameter(WhichEye::Right, ProceduralEyeParameter::EyeScaleY), 0.f),
+  DEV_ASSERT_MSG(FLT_GT(GetParameter(WhichEye::Right, CLAD(ProceduralEyeParameter)::EyeScaleY), 0.f),
                  "ProceduralFace.LookAt.NegativeRightEyeScaleY",
                  "yShift=%f yscaleLR=%f yscaleUD=%f ymax=%f",
                  yShift, yscaleLR, yscaleUD, ymax);
   
-  //SetParameterBothEyes(ProceduralEyeParameter::EyeScaleX, xscale);
+  //SetParameterBothEyes(CLAD(ProceduralEyeParameter)::EyeScaleX, xscale);
   
   // If looking down (positive y), push eyes together (IOD=interocular distance)
   const f32 MaxIOD = 2.f;
@@ -452,8 +458,8 @@ void ProceduralFace::LookAt(f32 xShift, f32 yShift, f32 xmax, f32 ymax,
   if(yShift > 0) {
     reduceIOD = MaxIOD*std::min(1.f, yShift/ymax);
   }
-  SetParameter(WhichEye::Left,  ProceduralEyeParameter::EyeCenterX,  reduceIOD);
-  SetParameter(WhichEye::Right, ProceduralEyeParameter::EyeCenterX, -reduceIOD);
+  SetParameter(WhichEye::Left,  CLAD(ProceduralEyeParameter)::EyeCenterX,  reduceIOD);
+  SetParameter(WhichEye::Right, CLAD(ProceduralEyeParameter)::EyeCenterX, -reduceIOD);
   
   //PRINT_NAMED_DEBUG("ProceduralFace.LookAt",
   //                  "shift=(%.1f,%.1f), up/down scale=%.3f, left/right scale=%.3f), reduceIOD=%.3f",

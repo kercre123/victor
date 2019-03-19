@@ -34,13 +34,30 @@
 #include <future>
 #include <atomic>
 
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
+#ifdef USES_CPPLITE
+namespace CppLite {
+#endif
+namespace Anki {
+namespace Vector {
+namespace RobotInterface {
+  struct BatteryStatus;
+}
+}
+}
+#ifdef USES_CPPLITE
+}
+#endif
+
 namespace Anki {
 namespace Vector {
   
 class Robot;
-namespace RobotInterface {
-  struct BatteryStatus;
-}
  
 namespace Anim {
 class BackpackLightComponent : private Util::noncopyable
@@ -57,7 +74,7 @@ public:
   
   // Start the backpack lights associated with a trigger
   // Plays the lights on the Engine priority level
-  void SetBackpackAnimation(const BackpackAnimationTrigger& trigger);
+  void SetBackpackAnimation(const CLAD_VECTOR(BackpackAnimationTrigger)& trigger);
 
   // Turn the pairing light on/off
   // Pairing light is the highest priority system light
@@ -75,7 +92,7 @@ public:
 
   // Update battery status as we need to know when to play charging/low battery lights
   // Priority of battery related lights Low Battery > Charging > Fully Charged (Off)
-  void UpdateBatteryStatus(const RobotInterface::BatteryStatus& msg);
+  void UpdateBatteryStatus(const CLAD_VECTOR(RobotInterface)::BatteryStatus& msg);
   
 private:
 
@@ -91,7 +108,7 @@ private:
 
   // Constructs and sends the actual backpack light message to the robot
   Result SendBackpackLights(const BackpackLightAnimation::BackpackAnimation& lights);
-  Result SendBackpackLights(const BackpackAnimationTrigger& trigger);
+  Result SendBackpackLights(const CLAD_VECTOR(BackpackAnimationTrigger)& trigger);
   
   // Returns a sorted vector based on light source priority
   // with elements closer to the begining as having higher priorty
@@ -121,7 +138,7 @@ private:
   std::unique_ptr<BackpackLightAnimationContainer> _backpackLightContainer;
 
   // Contains the mapping of backpack triggers to actual animation file names
-  Util::CladEnumToStringMap<BackpackAnimationTrigger>* _backpackTriggerToNameMap = nullptr;
+  Util::CladEnumToStringMap<CLAD_VECTOR(BackpackAnimationTrigger)>* _backpackTriggerToNameMap = nullptr;
   
   // Contains overall mapping of light config sources to list of configurations
   BackpackLightMap _backpackLightMap;
@@ -133,11 +150,11 @@ private:
   BackpackLightDataLocator _engineLightConfig{};
   BackpackLightDataLocator _criticalLightConfig{};
 
-  BackpackAnimationTrigger _mostRecentTrigger = BackpackAnimationTrigger::Off;
+  CLAD_VECTOR(BackpackAnimationTrigger) _mostRecentTrigger = CLAD_VECTOR(BackpackAnimationTrigger)::Off;
   
   // Note: this variable does NOT track the current trigger playing, it tracks internal state for 
   // UpdateChargingLightConfig and should not be used for any other decision making
-  BackpackAnimationTrigger _internalCriticalLightsTrigger = BackpackAnimationTrigger::Off;
+  CLAD_VECTOR(BackpackAnimationTrigger) _internalCriticalLightsTrigger = CLAD_VECTOR(BackpackAnimationTrigger)::Off;
 
   enum class SystemLightState
   {
@@ -173,6 +190,8 @@ private:
 }
 }
 }
+
+#undef CLAD_VECTOR
 
 #endif
 

@@ -23,6 +23,12 @@
 #include <array>
 #include <vector>
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 #define PROCEDURALFACE_NOISE_FEATURE         1 // feature capable and enabled as num frames = 5
 #define PROCEDURALFACE_ANIMATED_SATURATION   0 // disable saturation in canned animations
 #define PROCEDURALFACE_PROCEDURAL_SATURATION 1 // only take saturation from the C++ API
@@ -76,7 +82,7 @@ public:
   static constexpr f32 DefaultSaturation = 1.0f;
 
   using Value = f32;
-  using Parameter = ProceduralEyeParameter;
+  using Parameter = CLAD(ProceduralEyeParameter);
   
   // Container for the parameters for both eyes
   using EyeParamArray = std::array<Value, static_cast<size_t>(Parameter::NumParameters)>;
@@ -109,7 +115,7 @@ public:
   void SetFromValues(const std::vector<f32>& leftEyeData, const std::vector<f32>& rightEyeData,
                      f32 faceAngle_deg, f32 faceCenterX, f32 faceCenterY, f32 faceScaleX, f32 faceScaleY,
                      f32 scanlineOpacity);
-  void SetFromMessage(const ProceduralFaceParameters& msg);
+  void SetFromMessage(const CLAD(ProceduralFaceParameters)& msg);
   
   static s32 GetNominalLeftEyeX();
   static s32 GetNominalRightEyeX();
@@ -375,5 +381,7 @@ inline Vision::Image* ProceduralFace::GetSaturationImagePtr() {
   
 } // namespace Vector
 } // namespace Anki
+
+#undef CLAD
 
 #endif // __Anki_Cozmo_ProceduralFace_H__

@@ -26,6 +26,14 @@
 
 #include <memory>
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::ns
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#define CLAD_VECTOR(ns) ns
+#endif
+
 // Log options
 #define LOG_CHANNEL "SDKAudio"
 
@@ -34,7 +42,7 @@
 #define AUDIO_TO_BEGIN_PLAYING_SEC (0.2)
 
 namespace {
-  constexpr Anki::AudioMetaData::GameObjectType kSdkGameObject = Anki::AudioMetaData::GameObjectType::TextToSpeech;
+  constexpr CLAD(Anki)::AudioMetaData::GameObjectType kSdkGameObject = CLAD(Anki)::AudioMetaData::GameObjectType::TextToSpeech;
   constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kSdkPluginId = 100;
 }
 
@@ -83,7 +91,7 @@ void SdkAudioComponent::HandleMessage(const RobotInterface::ExternalAudioCancel&
                     "SdkAudioComponent.HandleMessage.ExternalAudioCancel", 
                     "Audio stream cancel message received without start")) {
     CleanupAudioEngine();
-    SendAnimToEngine(SDKAudioStreamingState::Cancelled);
+    SendAnimToEngine(CLAD_VECTOR(SDKAudioStreamingState)::Cancelled);
   }
 }
 
@@ -97,7 +105,7 @@ void SdkAudioComponent::HandleMessage(const RobotInterface::ExternalAudioPrepare
 
   if (!PrepareAudioEngine(msg)) {
     LOG_DEBUG("SdkAudioComponent.HandleMessage.ExternalAudioPrepare", "Unable to prepare audio engine for streaming");
-    SendAnimToEngine(SDKAudioStreamingState::PrepareFailed);
+    SendAnimToEngine(CLAD_VECTOR(SDKAudioStreamingState)::PrepareFailed);
     ClearOperationData();
     return;
   }
@@ -127,7 +135,7 @@ void SdkAudioComponent::HandleMessage(const RobotInterface::ExternalAudioChunk& 
     // Post initial audio event for streaming
     if (!PostAudioEvent()) {
       LOG_ERROR("SdkAudioComponent.HandleMessage.ExternalAudioChunk", "Unable to post audio event Audio Streaming");
-      SendAnimToEngine(SDKAudioStreamingState::PostFailed);
+      SendAnimToEngine(CLAD_VECTOR(SDKAudioStreamingState)::PostFailed);
       CleanupAudioEngine();
       return;
     }
@@ -201,11 +209,11 @@ bool SdkAudioComponent::AddAudioChunk(const RobotInterface::ExternalAudioChunk& 
   const auto played = plugin->GetDataInstance(kSdkPluginId)->GetNumberOfFramesPlayed();
   const auto received = plugin->GetDataInstance(kSdkPluginId)->GetNumberOfFramesReceived();
   LOG_DEBUG("SdkAudioComponent::AddAudioChunk", "Played %u Received %u", played, received);
-  SendAnimToEngine(SDKAudioStreamingState::ChunkAdded, received, played);
+  SendAnimToEngine(CLAD_VECTOR(SDKAudioStreamingState)::ChunkAdded, received, played);
 
   if (received - played > MAX_BUFFERED_AUDIO) {
     LOG_ERROR("SdkAudioComponent::AddAudioChunk", "Buffer overflow %u played %u received", played, received);
-    SendAnimToEngine(SDKAudioStreamingState::BufferOverflow, received, played);
+    SendAnimToEngine(CLAD_VECTOR(SDKAudioStreamingState)::BufferOverflow, received, played);
     return false; 
   }
 
@@ -218,7 +226,7 @@ bool SdkAudioComponent::AddAudioChunk(const RobotInterface::ExternalAudioChunk& 
 
   if (!result) {
     LOG_ERROR("SdkAudioComponent::AddAudioChunk", "Failed to append audio data");
-    SendAnimToEngine(SDKAudioStreamingState::AddAudioFailed);
+    SendAnimToEngine(CLAD_VECTOR(SDKAudioStreamingState)::AddAudioFailed);
     return false;
   } 
 
@@ -320,13 +328,13 @@ void SdkAudioComponent::OnAudioCompleted()
 {
   LOG_DEBUG("SdkAudioComponent.OnAudioCompleted", "AudioStreaming completion callback received");
   ClearOperationData(); // Cleanup operation's memory
-  SendAnimToEngine(SDKAudioStreamingState::Completed, 0, 0);
+  SendAnimToEngine(CLAD_VECTOR(SDKAudioStreamingState)::Completed, 0, 0);
 }
 
 //
 // Send audio streaming status message to Engine process
 //
-bool SdkAudioComponent::SendAnimToEngine(SDKAudioStreamingState audioState, uint32_t audioSent, uint32_t audioPlayed)
+bool SdkAudioComponent::SendAnimToEngine(CLAD_VECTOR(SDKAudioStreamingState) audioState, uint32_t audioSent, uint32_t audioPlayed)
 {
   LOG_DEBUG("sdkAudioComponent.SendAnimToEngine", 
             "audioState %d audioSent %d audioPlayed %d", (int)audioState, audioSent, audioPlayed);

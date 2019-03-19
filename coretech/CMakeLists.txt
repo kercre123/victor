@@ -7,13 +7,8 @@ include(import)
 
 include(opencv)
 
-add_subdirectory(common/clad_src/clad)
+add_subdirectory(common/clad_src/)
 add_subdirectory(vision/clad_src/)
-
-set(CTI_GENERATED_LIBS
-    cti_common_clad
-    cti_vision_clad
-)
 
 import(cti_common common)
 import(cti_messaging messaging)

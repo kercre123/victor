@@ -165,6 +165,7 @@ target_link_libraries(supervisor
   robot_interface
   robot_clad_cpplite
   cti_common_robot
+  cti_vision_robot
   cti_planning_robot
   ${PLATFORM_LIBS}
 )

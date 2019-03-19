@@ -22,6 +22,12 @@
 
 #include <mutex>
 
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
 namespace Anki {
 namespace Vector {
 
@@ -38,7 +44,7 @@ public:
   bool AddSamples(const AudioUtil::AudioSample* const samples, const uint32_t nSamples);
   
   // Return info about the most recent detected beat
-  BeatInfo GetLatestBeat();
+  CLAD_VECTOR(BeatInfo) GetLatestBeat();
   
   // Is beat detection currently running?
   bool IsRunning();
@@ -70,7 +76,7 @@ private:
   // System time when the aubio tempo detector started running
   float _tempoDetectionStartedTime_sec = 0.f;
   
-  BeatInfo _latestBeat;
+  CLAD_VECTOR(BeatInfo) _latestBeat;
   std::mutex _latestBeatMutex;
   
   // Stages audio data to be piped into the aubio detector at the correct chunk size.

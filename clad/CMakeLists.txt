@@ -163,7 +163,6 @@ target_compile_definitions(cloud_clad_cpp
 target_link_libraries(cloud_clad_cpp
     clad
 )
-
 anki_build_target_license(cloud_clad_cpp "ANKI")
 
 add_custom_target(engine_clad_python_hash ALL DEPENDS ${CLAD_HASH_PY_GEN_SRCS})

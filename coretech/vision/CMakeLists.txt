@@ -28,6 +28,7 @@ set_target_properties(cti_vision
 target_link_libraries(cti_vision
   PUBLIC
   cti_common
+  cti_vision_clad
   jsoncpp
   util
   ${OPENCV_LIBS}

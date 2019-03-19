@@ -29,6 +29,12 @@
 #include <thread>
 #include <vector>
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
 
 namespace Util {
@@ -84,7 +90,7 @@ public:
 
   Vision::SpriteSequenceContainer* GetSpriteSequenceContainer() { return _spriteSequenceContainer.get();}
 
-  using BackpackAnimationTriggerMap = Util::CladEnumToStringMap<BackpackAnimationTrigger>;
+  using BackpackAnimationTriggerMap = Util::CladEnumToStringMap<CLAD(BackpackAnimationTrigger)>;
   using FileJsonMap = std::unordered_map<std::string, const Json::Value>;
   const FileJsonMap& GetBackpackLightAnimations() const { return _backpackLightAnimations; }
   BackpackAnimationTriggerMap* GetBackpackAnimationTriggerMap() { return _backpackAnimationTriggerMap.get();}
@@ -132,5 +138,7 @@ private:
 }
 }
 }
+
+#undef CLAD
 
 #endif

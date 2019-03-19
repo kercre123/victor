@@ -36,6 +36,12 @@
 #include "sim_hal.h"
 #endif
 
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
 // Whether or not to read/process imu data on a thread
 #define PROCESS_IMU_ON_THREAD 1
 
@@ -116,30 +122,30 @@ bool IMUReadData(IMU_DataStructure &imuData);
  * @param[in] Motor for which to retrieve calibration power
  * @return Calibration power in unitless range [-1.0, 1.0]
  */
-float MotorGetCalibPower(MotorID motor);
+float MotorGetCalibPower(CLAD_VECTOR(MotorID) motor);
 
 /** Set motor drive voltage and direction
  * Positive numbers move the motor forward or up, negative is back or down
  * @param[in] motor The motor to Update
  * @param[in] power unitless range [-1.0, 1.0]
  */
-void MotorSetPower(const MotorID motor, const f32 power);
+void MotorSetPower(const CLAD_VECTOR(MotorID) motor, const f32 power);
 
 /// Reset the internal position of the specified motor to 0
-void MotorResetPosition(const MotorID motor);
+void MotorResetPosition(const CLAD_VECTOR(MotorID) motor);
 
 /** Returns units based on the specified motor type:
  * Note: this function must be called once per tick for each motor
  * @param[in] Motor to retrieve
  * @return Wheels are in mm/s, everything else is in radians/s.
  */
-f32 MotorGetSpeed(const MotorID motor);
+f32 MotorGetSpeed(const CLAD_VECTOR(MotorID) motor);
 
 /** Returns units based on the specified motor type:
  * @param[in] Motor to retrieve
  * @return Wheels are in mm since reset, everything else is in radians.
  */
-f32 MotorGetPosition(const MotorID motor);
+f32 MotorGetPosition(const CLAD_VECTOR(MotorID) motor);
 
 /// Measures the unitless load on all motors
 s32 MotorGetLoad();
@@ -174,7 +180,7 @@ typedef enum
 } CliffID; //TODO: assert matches DropSensor, or use directly
 
 /// Face proximity sensor
-ProxSensorDataRaw GetRawProxData();
+CLAD_VECTOR(ProxSensorDataRaw) GetRawProxData();
 
 /// Cliff sensors
 u16 GetRawCliffData(const CliffID cliff_id);

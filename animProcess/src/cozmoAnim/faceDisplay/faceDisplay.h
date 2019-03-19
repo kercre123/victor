@@ -21,6 +21,14 @@
 
 #include <thread>
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::ns
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#define CLAD_VECTOR(ns) ns
+#endif
+
 namespace Anki {
 
 namespace Vision {
@@ -43,7 +51,7 @@ public:
   void DrawToFaceDebug(const Vision::ImageRGB565& img);
 
 
-  void SetFaceBrightness(LCDBrightness level);
+  void SetFaceBrightness(CLAD_VECTOR(LCDBrightness) level);
 
   // Stops the boot animation process if it is running
   void StopBootAnim();
@@ -79,5 +87,8 @@ private:
 
 } // namespace Vector
 } // namespace Anki
+
+#undef CLAD
+#undef CLAD_VECTOR
 
 #endif // ANKI_COZMOANIM_FACE_DISPLAY_H

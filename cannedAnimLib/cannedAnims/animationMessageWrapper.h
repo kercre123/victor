@@ -16,6 +16,11 @@
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
 
 namespace Anki {
 
@@ -32,7 +37,7 @@ struct AnimationEvent;
 struct AnimationMessageWrapper{
   AnimationMessageWrapper(Vision::ImageRGB565& img)
   : faceImg(img){}
-  using ETR = RobotInterface::EngineToRobot;
+  using ETR = CLAD(RobotInterface)::EngineToRobot;
 
   ETR* moveHeadMessage         = nullptr;
   ETR* moveLiftMessage         = nullptr;
@@ -50,5 +55,7 @@ struct AnimationMessageWrapper{
 
 } // namespace Vector
 } // namespace Anki
+
+#undef CLAD
 
 #endif // ANKI_COZMO_ANIMATION_MESSAGE_WRAPPER_H

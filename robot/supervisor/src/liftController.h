@@ -18,6 +18,12 @@
 #include "coretech/common/shared/types.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
 namespace Anki {
   namespace Vector {
     namespace LiftController {
@@ -34,7 +40,7 @@ namespace Anki {
       // Automatically enables motor if it was disabled
       // Note: if a non-empty calibration reason is provided,
       // this will also send up a DAS event for the calibration
-      void StartCalibrationRoutine(const bool autoStarted, const MotorCalibrationReason& reason);
+      void StartCalibrationRoutine(const bool autoStarted, const CLAD_VECTOR(MotorCalibrationReason)& reason);
       
       // Returns true if calibration has completed
       bool IsCalibrated();      
@@ -120,5 +126,7 @@ namespace Anki {
     } // namespace LiftController
   } // namespace Vector
 } // namespace Anki
+
+#undef CLAD_VECTOR
 
 #endif // COZMO_LIFT_CONTROLLER_H_

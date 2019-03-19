@@ -38,15 +38,23 @@
 #include <fcntl.h>
 #include <unistd.h>
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#define CLAD_VECTOR(ns) ns
+#endif
+
 // Log options
 #define LOG_CHANNEL "TextToSpeech"
 
 namespace {
 
   // TTS audio always plays on robot device
-  constexpr Anki::AudioMetaData::GameObjectType kTTSGameObject = Anki::AudioMetaData::GameObjectType::TextToSpeech;
+  constexpr CLAD(Anki)::AudioMetaData::GameObjectType kTTSGameObject = CLAD(Anki)::AudioMetaData::GameObjectType::TextToSpeech;
 
-  constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kTtsPluginId = 0;
+  constexpr CLAD(Anki)::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kTtsPluginId = 0;
 
    // How many frames do we need before utterance is playable?
   CONSOLE_VAR_RANGED(u32, kMinPlayableFrames, "TextToSpeech", 8192, 0, 65536);
@@ -181,7 +189,7 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
     Result result = GetFirstAudioData(ttsStr, durationScalar, waveData, done);
     if (RESULT_OK != result) {
       LOG_ERROR("TextToSpeechComponent.CreateSpeech", "Unable to get first audio data (error %d)", result);
-      PushEvent({ttsID, TextToSpeechState::Invalid, 0.f});
+      PushEvent({ttsID, CLAD_VECTOR(TextToSpeechState)::Invalid, 0.f});
       return;
     }
 
@@ -195,7 +203,7 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
       if (!sentPlayable && waveData->GetNumberOfFramesReceived() >= kMinPlayableFrames) {
           LOG_DEBUG("TextToSpeechComponent.CreateSpeech", "TTSID %d audio is ready to play", ttsID);
           const f32 duration_ms = GetEstimatedDuration_ms(ttsStr) * durationScalar;
-          PushEvent({ttsID, TextToSpeechState::Playable, duration_ms});
+          PushEvent({ttsID, CLAD_VECTOR(TextToSpeechState)::Playable, duration_ms});
           sentPlayable = true;
       }
     }
@@ -204,7 +212,7 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
       result = GetNextAudioData(waveData, done);
       if (RESULT_OK != result) {
         LOG_ERROR("TextToSpeechComponent.CreateSpeech", "Unable to get next audio data (error %d)", result);
-        PushEvent({ttsID, TextToSpeechState::Invalid, 0.f});
+        PushEvent({ttsID, CLAD_VECTOR(TextToSpeechState)::Invalid, 0.f});
         return;
       }
       {
@@ -218,7 +226,7 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
           LOG_DEBUG("TextToSpeechComponent.CreateSpeech", "TTSID %d audio is ready to play", ttsID);
           const f32 duration_ms = GetEstimatedDuration_ms(ttsStr) * durationScalar;
           bundle->state = AudioCreationState::Playable;
-          PushEvent({ttsID, TextToSpeechState::Playable, duration_ms});
+          PushEvent({ttsID, CLAD_VECTOR(TextToSpeechState)::Playable, duration_ms});
           sentPlayable = true;
         }
       }
@@ -238,13 +246,13 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
       if (!sentPlayable) {
         LOG_DEBUG("TextToSpeechComponent.CreateSpeech", "TTSID %d audio is ready to play", ttsID);
         bundle->state = AudioCreationState::Playable;
-        PushEvent({ttsID, TextToSpeechState::Playable, duration_ms});
+        PushEvent({ttsID, CLAD_VECTOR(TextToSpeechState)::Playable, duration_ms});
         sentPlayable = true;
       }
 
       LOG_DEBUG("TextToSpeechComponent.CreateSpeech", "TTSID %d audio is complete", ttsID);
       bundle->state = AudioCreationState::Prepared;
-      PushEvent({ttsID, TextToSpeechState::Prepared, duration_ms});
+      PushEvent({ttsID, CLAD_VECTOR(TextToSpeechState)::Prepared, duration_ms});
     }
   });
 
@@ -447,7 +455,7 @@ void TextToSpeechComponent::SetAudioProcessingStyle(AudioTtsProcessingStyle styl
 // Send a TextToSpeechEvent message from anim to engine.
 // This is called on main thread for thread-safe access to comms.
 //
-static bool SendAnimToEngine(uint8_t ttsID, TextToSpeechState state, float expectedDuration = 0.0f)
+static bool SendAnimToEngine(uint8_t ttsID, CLAD_VECTOR(TextToSpeechState) state, float expectedDuration = 0.0f)
 {
   LOG_DEBUG("TextToSpeechComponent.SendAnimToEngine", "ttsID %hhu state %hhu", ttsID, state);
   TextToSpeechEvent evt;
@@ -521,7 +529,7 @@ void TextToSpeechComponent::OnUtteranceCompleted(uint8_t ttsID)
   _activeTTSID = kInvalidTTSID;
 
   LOG_DEBUG("TextToSpeechComponent.UtteranceCompleted", "Completion callback received for ttsID %hhu", ttsID);
-  SendAnimToEngine(ttsID, TextToSpeechState::Finished);
+  SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Finished);
   ClearOperationData(ttsID); // Cleanup operation's memory
 }
 
@@ -530,7 +538,7 @@ void TextToSpeechComponent::OnUtteranceCompleted(uint8_t ttsID)
 //
 void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPrepare & msg)
 {
-  using Anki::Util::HidePersonallyIdentifiableInfo;
+  using CLAD(Anki)::Util::HidePersonallyIdentifiableInfo;
 
   // Unpack message fields
   const auto ttsID = msg.ttsID;
@@ -548,7 +556,7 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPrep
   const Result result = CreateSpeech(ttsID, triggerMode, text, style, durationScalar);
   if (RESULT_OK != result) {
     LOG_ERROR("TextToSpeechComponent.TextToSpeechPrepare", "Unable to create ttsID %d (result %d)", ttsID, result);
-    SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
+    SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Invalid);
     return;
   }
 
@@ -569,7 +577,7 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPlay
   const auto bundle = GetBundle(ttsID);
   if (!bundle) {
     LOG_ERROR("TextToSpeechComponent.TextToSpeechPlay", "ttsID %d not found", ttsID);
-    SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
+    SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Invalid);
     return;
   }
 
@@ -578,7 +586,7 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPlay
   if (triggerMode != TextToSpeechTriggerMode::Manual && triggerMode != TextToSpeechTriggerMode::Keyframe) {
     LOG_ERROR("TextToSpeechComponent.TextToSpeechPlay", "ttsID %d has unplayable trigger mode %s",
       ttsID, EnumToString(bundle->triggerMode));
-    SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
+    SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Invalid);
     ClearOperationData(ttsID);
     return;
   }
@@ -587,7 +595,7 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPlay
   float duration_ms = 0.f;
   if (!PrepareAudioEngine(ttsID, duration_ms)) {
     LOG_ERROR("TextToSpeechComponent.TextToSpeechDeliver", "Unable to prepare audio engine for ttsID %d", ttsID);
-    SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
+    SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Invalid);
     ClearOperationData(ttsID);
     return;
   }
@@ -600,11 +608,11 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPlay
   if (triggerMode == TextToSpeechTriggerMode::Manual) {
     if (!PostAudioEvent(ttsID)) {
       LOG_ERROR("TextToSpeechComponent.TextToSpeechPlay", "Unable to post audio event for ttsID %d", ttsID);
-      SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
+      SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Invalid);
       CleanupAudioEngine(ttsID);
       return;
     }
-    SendAnimToEngine(ttsID, TextToSpeechState::Playing, duration_ms);
+    SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Playing, duration_ms);
   }
 
 }
@@ -621,7 +629,7 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechCanc
   CleanupAudioEngine(ttsID);
 
   // Notify engine that request is now invalid
-  SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
+  SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Invalid);
 }
 
 //
@@ -632,7 +640,7 @@ void TextToSpeechComponent::OnStateInvalid(const TTSID_t ttsID)
   LOG_DEBUG("TextToSpeechComponent.OnStateInvalid", "ttsID %d", ttsID);
 
   // Notify engine that tts request has failed
-  SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
+  SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Invalid);
 
   // Clean up request state
   ClearOperationData(ttsID);
@@ -652,7 +660,7 @@ void TextToSpeechComponent::OnStatePreparing(const TTSID_t ttsID)
   }
 
   // Notify engine that tts request is being prepared.
-  SendAnimToEngine(ttsID, TextToSpeechState::Preparing);
+  SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Preparing);
 }
 
 //
@@ -669,7 +677,7 @@ void TextToSpeechComponent::OnStatePlayable(const TTSID_t ttsID, f32 duration_ms
   }
 
   // Notify engine that tts request is now playable.
-  SendAnimToEngine(ttsID, TextToSpeechState::Playable, duration_ms);
+  SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Playable, duration_ms);
 
   //
   // For immediate triggers, enqueue audio for playback and post trigger event
@@ -684,18 +692,18 @@ void TextToSpeechComponent::OnStatePlayable(const TTSID_t ttsID, f32 duration_ms
   if (bundle->triggerMode == TextToSpeechTriggerMode::Immediate) {
     if (!PrepareAudioEngine(ttsID, duration_ms)) {
       LOG_ERROR("TextToSpeechComponent.OnStatePlayable", "Unable to prepare audio for ttsID %d", ttsID);
-      SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
+      SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Invalid);
       ClearOperationData(ttsID);
       return;
     }
     if (!PostAudioEvent(ttsID)) {
       LOG_ERROR("TextToSpeechComponent.OnStatePlayable", "Unable to post audio event for ttsID %d", ttsID);
-      SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
+      SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Invalid);
       ClearOperationData(ttsID);
       return;
     }
     LOG_INFO("TextToSpeech.OnStatePlayable", "ttsID %d will play for at least %.2f ms", ttsID, duration_ms);
-    SendAnimToEngine(ttsID, TextToSpeechState::Playing, duration_ms);
+    SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Playing, duration_ms);
   }
 }
 
@@ -713,7 +721,7 @@ void TextToSpeechComponent::OnStatePrepared(const TTSID_t ttsID, f32 duration_ms
   }
 
   // Notify engine that tts request has been prepared
-  SendAnimToEngine(ttsID, TextToSpeechState::Prepared, duration_ms);
+  SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Prepared, duration_ms);
 
 }
 
@@ -733,16 +741,16 @@ void TextToSpeechComponent::Update()
     LOG_DEBUG("TextToSpeechComponent.Update", "Event ttsID %d state %hhu duration %f", ttsID, ttsState, duration_ms);
 
     switch (ttsState) {
-      case TextToSpeechState::Invalid:
+      case CLAD_VECTOR(TextToSpeechState)::Invalid:
         OnStateInvalid(ttsID);
         break;
-      case TextToSpeechState::Preparing:
+      case CLAD_VECTOR(TextToSpeechState)::Preparing:
         OnStatePreparing(ttsID);
         break;
-      case TextToSpeechState::Playable:
+      case CLAD_VECTOR(TextToSpeechState)::Playable:
         OnStatePlayable(ttsID, duration_ms);
         break;
-      case TextToSpeechState::Prepared:
+      case CLAD_VECTOR(TextToSpeechState)::Prepared:
         OnStatePrepared(ttsID, duration_ms);
         break;
       default:
@@ -792,7 +800,7 @@ void TextToSpeechComponent::OnAudioPlaying(const TTSID_t ttsID)
   }
 
   // Notify engine that TTS is now playing
-  SendAnimToEngine(ttsID, TextToSpeechState::Playing, GetDuration_ms(bundle));
+  SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Playing, GetDuration_ms(bundle));
 
 }
 
@@ -809,7 +817,7 @@ void TextToSpeechComponent::OnAudioComplete(const TTSID_t ttsID)
   }
 
   // Notify engine that TTS is complete
-  SendAnimToEngine(ttsID, TextToSpeechState::Finished);
+  SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Finished);
   ClearOperationData(ttsID);
 
 }
@@ -826,7 +834,7 @@ void TextToSpeechComponent::OnAudioError(const TTSID_t ttsID)
     return;
   }
 
-  SendAnimToEngine(ttsID, TextToSpeechState::Invalid);
+  SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Invalid);
   ClearOperationData(ttsID);
 
 }

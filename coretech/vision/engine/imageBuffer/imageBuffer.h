@@ -19,6 +19,12 @@
 #include "coretech/vision/engine/imageCacheSizes.h"
 #include "clad/types/imageFormats.h"
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
 namespace Vision {
 
@@ -30,7 +36,7 @@ public:
   ImageBuffer() {};
 
   // Expects data to be at size ImageCacheSize::Full for all formats
-  ImageBuffer(u8* data, s32 numRows, s32 numCols, ImageEncoding format, TimeStamp_t timestamp, s32 id);
+  ImageBuffer(u8* data, s32 numRows, s32 numCols, CLAD(ImageEncoding) format, TimeStamp_t timestamp, s32 id);
 
   void SetImageId(u32 id) { _imageId = id; }
 
@@ -55,10 +61,10 @@ public:
 
   u32 GetImageId() const { return _imageId; }
 
-  ImageEncoding GetFormat() const { return _format; }
+  CLAD(ImageEncoding) GetFormat() const { return _format; }
 
   // Depending on the format of the raw data there may either be 1 or 3 channels
-  u32 GetNumChannels() const { return (_format == ImageEncoding::RawGray ? 1 : 3); }
+  u32 GetNumChannels() const { return (_format == CLAD(ImageEncoding)::RawGray ? 1 : 3); }
 
   ResizeMethod GetResizeMethod() const { return _resizeMethod; }
 
@@ -94,19 +100,21 @@ private:
   bool GetGrayFromYUV420sp(Image& gray, ImageCacheSize size) const;
   bool GetGrayFromRawGray(Image& gray, ImageCacheSize size) const;
 
-  u8*           _rawData           = nullptr;
-  s32           _rawNumRows        = 0;
-  s32           _rawNumCols        = 0;
-  ImageEncoding _format            = ImageEncoding::NoneImageEncoding;
-  u32           _imageId           = 0;
-  TimeStamp_t   _timestamp         = 0;
-  s32           _sensorNumRows     = 0;
-  s32           _sensorNumCols     = 0;
-  ResizeMethod  _resizeMethod      = ResizeMethod::Linear;
+  u8*                 _rawData           = nullptr;
+  s32                 _rawNumRows        = 0;
+  s32                 _rawNumCols        = 0;
+  CLAD(ImageEncoding) _format            = CLAD(ImageEncoding)::NoneImageEncoding;
+  u32                 _imageId           = 0;
+  TimeStamp_t         _timestamp         = 0;
+  s32                 _sensorNumRows     = 0;
+  s32                 _sensorNumCols     = 0;
+  ResizeMethod        _resizeMethod      = ResizeMethod::Linear;
   
 };
   
 }
 }
+
+#undef CLAD
 
 #endif

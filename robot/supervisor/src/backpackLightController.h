@@ -15,6 +15,12 @@
 #include "coretech/common/shared/types.h"
 #include "clad/types/ledTypes.h"
 
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
 namespace Anki {
   namespace Vector {
     
@@ -37,7 +43,7 @@ namespace Anki {
       // If forceUpdate == false, then an updated light command is sent to body
       // only if the current layer is not the given layer.
       // If forceUpdate == true, then an updated light command is sent to body no matter what.
-      void EnableLayer(const BackpackLightLayer layer, bool forceUpdate = false);
+      void EnableLayer(const CLAD_VECTOR(BackpackLightLayer) layer, bool forceUpdate = false);
       
       // Set the parameters of an LED for a specified layer.
       // EnableLayer() must be called to actually apply changes if this is for the non-active layer.
@@ -50,3 +56,5 @@ namespace Anki {
     } // namespace BackpackLightController
   } // namespace Anki
 } // namespace Vector
+
+#undef CLAD_VECTOR

@@ -29,6 +29,13 @@
 
 #include <thread>
 
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#define CLAD_AUDIOMETADATA(ns) AudioMetaData::ns
+#endif
 
 namespace Anki {
 namespace Vector {
@@ -168,7 +175,11 @@ void AudioPlaybackSystem::BeginAudioPlayback()
 
   OnAudioPlaybackBegin();
 
+  #ifdef USES_CPPLITE
+  using namespace CppLite::Anki::AudioMetaData;
+  #else
   using namespace Anki::AudioMetaData;
+  #endif
   {
     AudioCallbackContext* callbackContext = new AudioCallbackContext();
     callbackContext->SetCallbackFlags( AudioCallbackFlag::Complete );
@@ -182,8 +193,8 @@ void AudioPlaybackSystem::BeginAudioPlayback()
     });
 
     // now post this message to the audio engine which tells it to play the chunk of memeory we just passed to the plugin
-    const AudioEventId audioId = ToAudioEventId( GameEvent::GenericEvent::Play__Robot_Vic__External_Voice_Message );
-    const AudioGameObject audioGameObject = ToAudioGameObject( GameObjectType::VoiceRecording );
+    const AudioEventId audioId = ToAudioEventId( CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Play__Robot_Vic__External_Voice_Message );
+    const AudioGameObject audioGameObject = ToAudioGameObject( CLAD_AUDIOMETADATA(GameObjectType)::VoiceRecording );
 
     audioController->PostAudioEvent( audioId, audioGameObject, callbackContext );
   }
@@ -194,7 +205,7 @@ void AudioPlaybackSystem::OnAudioPlaybackBegin()
 {
   if ( _currentJob )
   {
-    RobotInterface::AudioPlaybackBegin event;
+    CLAD_VECTOR(RobotInterface)::AudioPlaybackBegin event;
 
     const std::string& filename = _currentJob->GetFilename();
     memcpy( event.path, filename.c_str(), filename.length() );
@@ -209,7 +220,7 @@ void AudioPlaybackSystem::OnAudioPlaybackEnd()
 {
   if ( _currentJob )
   {
-    RobotInterface::AudioPlaybackEnd event;
+    CLAD_VECTOR(RobotInterface)::AudioPlaybackEnd event;
 
     const std::string& filename = _currentJob->GetFilename();
     memcpy( event.path, filename.c_str(), filename.length() );

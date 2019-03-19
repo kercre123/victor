@@ -24,6 +24,12 @@
 #include <utility>
 #include <limits>
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
 
 template <PolygonDimType N, typename T>
@@ -321,5 +327,6 @@ Point<N,T> Polygon<N,T>::ComputeWeightedAverage() const
 
 }
 
+#undef CLAD
 
 #endif

@@ -25,6 +25,14 @@
 #include <mutex>
 #include <map>
 
+#ifdef USES_CPPLITE
+#define CLAD_ANKI(ns) CppLite::Anki::ns
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_ANKI(ns) ns
+#define CLAD_VECTOR(ns) ns
+#endif
+
 // Forward declarations
 namespace Anki {
   namespace Vector {
@@ -98,10 +106,10 @@ private:
   // -------------------------------------------------------------------------------------------------------------------
   using AudioController = Vector::Audio::CozmoAudioController;
   using StreamingWaveDataPtr = std::shared_ptr<AudioEngine::StreamingWaveDataInstance>;
-  using AudioTtsProcessingStyle = AudioMetaData::SwitchState::Robot_Vic_External_Processing;
+  using AudioTtsProcessingStyle = CLAD_ANKI(AudioMetaData)::SwitchState::Robot_Vic_External_Processing;
   using TextToSpeechProvider = TextToSpeech::TextToSpeechProvider;
   using DispatchQueue = Util::Dispatch::Queue;
-  using EventTuple = std::tuple<TTSID_t, TextToSpeechState, f32>;
+  using EventTuple = std::tuple<TTSID_t, CLAD_VECTOR(TextToSpeechState), f32>;
   using EventQueue = std::deque<EventTuple>;
 
   // Audio creation state
@@ -116,7 +124,7 @@ private:
   struct TtsBundle
   {
     // TTS request context
-    TextToSpeechTriggerMode triggerMode = TextToSpeechTriggerMode::Invalid;
+    CLAD_VECTOR(TextToSpeechTriggerMode) triggerMode = CLAD_VECTOR(TextToSpeechTriggerMode)::Invalid;
     AudioCreationState state = AudioCreationState::None;
     AudioTtsProcessingStyle style = AudioTtsProcessingStyle::Unprocessed;
     StreamingWaveDataPtr waveData;
@@ -177,7 +185,7 @@ private:
   // Use GetOperationState() to check if wave data is Ready
   // Return RESULT_OK on success
   Result CreateSpeech(const TTSID_t ttsID,
-                      const TextToSpeechTriggerMode triggerMode,
+                      const CLAD_VECTOR(TextToSpeechTriggerMode) triggerMode,
                       const std::string& text,
                       const AudioTtsProcessingStyle style,
                       const float durationScalar);
@@ -225,5 +233,7 @@ private:
 } // end namespace Vector
 } // end namespace Anki
 
+#undef CLAD_ANKI
+#undef CLAD_VECTOR
 
 #endif //__Anki_cozmo_cozmoAnim_textToSpeech_textToSpeechComponent_H__

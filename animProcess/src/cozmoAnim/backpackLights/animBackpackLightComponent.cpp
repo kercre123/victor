@@ -26,6 +26,12 @@
 
 #include "osState/osState.h"
 
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
 #define DEBUG_LIGHTS 0
 
 namespace Anki {
@@ -52,7 +58,7 @@ BackpackLightComponent::BackpackLightComponent(const AnimContext* context)
 : _context(context)
 , _offlineAtTime_ms(0)
 {  
-  static_assert((int)LEDId::NUM_BACKPACK_LEDS == 3, "BackpackLightComponent.WrongNumBackpackLights");
+  static_assert((int)CLAD_VECTOR(LEDId)::NUM_BACKPACK_LEDS == 3, "BackpackLightComponent.WrongNumBackpackLights");
 
   // Add callbacks so we know when trigger word/audio stream are updated
   _context->GetMicDataSystem()->AddTriggerWordDetectedCallback([this](bool willStream)
@@ -92,12 +98,12 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
  
   // Check which, if any, backpack lights should be displayed
   // Streaming, Low Battery, Offline, Charging, or Nothing
-  BackpackAnimationTrigger trigger = BackpackAnimationTrigger::Off;
+  CLAD_VECTOR(BackpackAnimationTrigger) trigger = CLAD_VECTOR(BackpackAnimationTrigger)::Off;
 
   // If we are currently streaming to the cloud
   if(isCloudStreamOpen)
   {
-    trigger = BackpackAnimationTrigger::Streaming;
+    trigger = CLAD_VECTOR(BackpackAnimationTrigger)::Streaming;
   }
   else if( _isBatteryLow && !_isOnChargerContacts )
   {
@@ -111,28 +117,28 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
     // Y        | N            | N (actually charging)
     // N        | Y            | N (happens after charging for too long (>25min))
     // N        | N            | Y (no charging taking place)
-    trigger = BackpackAnimationTrigger::LowBattery;
+    trigger = CLAD_VECTOR(BackpackAnimationTrigger)::LowBattery;
   }
   // If we have been offline for long enough
   else if(_offlineAtTime_ms > 0 &&
           ((TimeStamp_t)curTime_ms - _offlineAtTime_ms > kOfflineTimeBeforeLights_ms))
   {
-    trigger = BackpackAnimationTrigger::Offline; 
+    trigger = CLAD_VECTOR(BackpackAnimationTrigger)::Offline; 
   }
   else if(isMicMuted)
   {
-    trigger = BackpackAnimationTrigger::Muted;
+    trigger = CLAD_VECTOR(BackpackAnimationTrigger)::Muted;
   }
   else if ( IsBehaviorBackpackLightActive() )
   {
     // if the engine is playing a "behavior light", then we want to slide that priority in right here
     // turn off the critical lights since the engine light will take priority over everything after this point
     // once it stops, critical lights will be re-started
-    trigger = BackpackAnimationTrigger::Off;
+    trigger = CLAD_VECTOR(BackpackAnimationTrigger)::Off;
   }
   else if(isNotificationPending)
   {
-    trigger = BackpackAnimationTrigger::AlexaNotification;
+    trigger = CLAD_VECTOR(BackpackAnimationTrigger)::AlexaNotification;
   }
   // If we are on the charger and charging
   else if(_isOnChargerContacts &&
@@ -140,7 +146,7 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
           !_isBatteryFull &&
           !_isBatteryDisconnected)
   {
-    trigger = BackpackAnimationTrigger::Charging;
+    trigger = CLAD_VECTOR(BackpackAnimationTrigger)::Charging;
   }
 
   if(trigger != _internalCriticalLightsTrigger)
@@ -163,7 +169,7 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
     // All of the backpack lights set by the above checks (except for Off)
     // take precedence over all other backpack lights so play them
     // under the "critical" backpack light source
-    if(trigger != BackpackAnimationTrigger::Off)
+    if(trigger != CLAD_VECTOR(BackpackAnimationTrigger)::Off)
     {
       StartBackpackAnimationInternal(*anim,
                                      Util::EnumToUnderlying(BackpackLightSourcePrivate::Critical),
@@ -207,7 +213,7 @@ void BackpackLightComponent::Update()
     }
     else
     {
-      SendBackpackLights(BackpackAnimationTrigger::Off);
+      SendBackpackLights(CLAD_VECTOR(BackpackAnimationTrigger)::Off);
     }
     
     _curBackpackLightConfig = bestNewConfig;
@@ -217,7 +223,7 @@ void BackpackLightComponent::Update()
           !sBothConfigsWereNull)
   {
     sBothConfigsWereNull = true;
-    SendBackpackLights(BackpackAnimationTrigger::Off);
+    SendBackpackLights(CLAD_VECTOR(BackpackAnimationTrigger)::Off);
   }
 }
 
@@ -234,24 +240,24 @@ bool BackpackLightComponent::IsBehaviorBackpackLightActive() const
   // _mostRecentTrigger tracks the last trigger that was requested from the engine
   switch ( _mostRecentTrigger )
   {
-    case BackpackAnimationTrigger::WorkingOnIt:
-    case BackpackAnimationTrigger::SpinnerBlueCelebration:
-    case BackpackAnimationTrigger::SpinnerBlueHoldTarget:
-    case BackpackAnimationTrigger::SpinnerBlueSelectTarget:
-    case BackpackAnimationTrigger::SpinnerGreenCelebration:
-    case BackpackAnimationTrigger::SpinnerGreenHoldTarget:
-    case BackpackAnimationTrigger::SpinnerGreenSelectTarget:
-    case BackpackAnimationTrigger::SpinnerPurpleCelebration:
-    case BackpackAnimationTrigger::SpinnerPurpleHoldTarget:
-    case BackpackAnimationTrigger::SpinnerPurpleSelectTarget:
-    case BackpackAnimationTrigger::SpinnerRedCelebration:
-    case BackpackAnimationTrigger::SpinnerRedHoldTarget:
-    case BackpackAnimationTrigger::SpinnerRedSelectTarget:
-    case BackpackAnimationTrigger::SpinnerYellowCelebration:
-    case BackpackAnimationTrigger::SpinnerYellowHoldTarget:
-    case BackpackAnimationTrigger::SpinnerYellowSelectTarget:
-    case BackpackAnimationTrigger::DanceToTheBeat:
-    case BackpackAnimationTrigger::MeetVictor:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::WorkingOnIt:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::SpinnerBlueCelebration:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::SpinnerBlueHoldTarget:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::SpinnerBlueSelectTarget:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::SpinnerGreenCelebration:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::SpinnerGreenHoldTarget:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::SpinnerGreenSelectTarget:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::SpinnerPurpleCelebration:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::SpinnerPurpleHoldTarget:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::SpinnerPurpleSelectTarget:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::SpinnerRedCelebration:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::SpinnerRedHoldTarget:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::SpinnerRedSelectTarget:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::SpinnerYellowCelebration:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::SpinnerYellowHoldTarget:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::SpinnerYellowSelectTarget:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::DanceToTheBeat:
+    case CLAD_VECTOR(BackpackAnimationTrigger)::MeetVictor:
       isAnyBehaviorLightActive = true;
       break;
 
@@ -265,13 +271,13 @@ bool BackpackLightComponent::IsBehaviorBackpackLightActive() const
 void BackpackLightComponent::SetBackpackAnimation(const BackpackLightAnimation::BackpackAnimation& lights)
 {
   // if we're forcing a manual light, reset our most recent trigger
-  _mostRecentTrigger = BackpackAnimationTrigger::Off;
+  _mostRecentTrigger = CLAD_VECTOR(BackpackAnimationTrigger)::Off;
   StartBackpackAnimationInternal(lights,
                                  Util::EnumToUnderlying(BackpackLightSourcePrivate::Engine),
                                  _engineLightConfig);
 }
 
-void BackpackLightComponent::SetBackpackAnimation(const BackpackAnimationTrigger& trigger)
+void BackpackLightComponent::SetBackpackAnimation(const CLAD_VECTOR(BackpackAnimationTrigger)& trigger)
 {
   auto animName = _backpackTriggerToNameMap->GetValue(trigger);
   auto anim = _backpackLightContainer->GetAnimation(animName);
@@ -338,15 +344,15 @@ bool BackpackLightComponent::StopBackpackAnimationInternal(const BackpackLightDa
 
 Result BackpackLightComponent::SendBackpackLights(const BackpackLightAnimation::BackpackAnimation& lights)
 {
-  RobotInterface::SetBackpackLights setBackpackLights = lights.lights;
-  setBackpackLights.layer = EnumToUnderlyingType(BackpackLightLayer::BPL_USER);
+  CLAD_VECTOR(RobotInterface)::SetBackpackLights setBackpackLights = lights.lights;
+  setBackpackLights.layer = EnumToUnderlyingType(CLAD_VECTOR(BackpackLightLayer)::BPL_USER);
 
-  const auto msg = RobotInterface::EngineToRobot(setBackpackLights);
+  const auto msg = CLAD_VECTOR(RobotInterface)::EngineToRobot(setBackpackLights);
   const bool res = AnimComms::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
   return (res ? RESULT_OK : RESULT_FAIL);
 }
 
-Result BackpackLightComponent::SendBackpackLights(const BackpackAnimationTrigger& trigger)
+Result BackpackLightComponent::SendBackpackLights(const CLAD_VECTOR(BackpackAnimationTrigger)& trigger)
 {
   auto animName = _backpackTriggerToNameMap->GetValue(trigger);
   auto anim = _backpackLightContainer->GetAnimation(animName);
@@ -441,7 +447,7 @@ void BackpackLightComponent::UpdateSystemLightState(bool isCloudStreamOpen)
   {
     prevState = _systemLightState;
 
-    LightState light;
+    CLAD_VECTOR(LightState) light;
     switch(_systemLightState)
     {
       case SystemLightState::Invalid:
@@ -515,7 +521,7 @@ void BackpackLightComponent::UpdateSystemLightState(bool isCloudStreamOpen)
       light.offset_ms = 0;
     }
 
-    const auto msg = RobotInterface::EngineToRobot(RobotInterface::SetSystemLight({light}));
+    const auto msg = CLAD_VECTOR(RobotInterface)::EngineToRobot(CLAD_VECTOR(RobotInterface)::SetSystemLight({light}));
     AnimComms::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
   }
 }
@@ -542,7 +548,7 @@ void BackpackLightComponent::UpdateOfflineCheck(bool force)
   }
 }
 
-void BackpackLightComponent::UpdateBatteryStatus(const RobotInterface::BatteryStatus& msg)
+void BackpackLightComponent::UpdateBatteryStatus(const CLAD_VECTOR(RobotInterface)::BatteryStatus& msg)
 {
   _isBatteryLow = msg.isLow;
   _isBatteryCharging = msg.isCharging;

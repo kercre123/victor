@@ -25,6 +25,16 @@
 #include "cannedAnimLib/cannedAnims/animationMessageWrapper.h"
 #include "cannedAnimLib/baseTypes/track.h"
 
+#ifdef USES_CPPLITE
+#define CLAD(ns)        CppLite::ns
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#define CLAD_VISION(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD(ns)        ns
+#define CLAD_VECTOR(ns) ns
+#define CLAD_VISION(ns) Vision::ns
+#endif
+
 namespace Anki {
 namespace Vision{
 class CompositeImageBuilder;
@@ -95,17 +105,17 @@ namespace Anim {
 
     Result SetProceduralFace(const ProceduralFace& face, u32 duration_ms);
 
-    void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageBinaryChunk& msg);
-    void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageGrayscaleChunk& msg);
-    void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageRGBChunk& msg);
-    void Process_displayCompositeImageChunk(const RobotInterface::DisplayCompositeImageChunk& msg);
-    void Process_updateCompositeImage(const RobotInterface::UpdateCompositeImage& msg);
+    void Process_displayFaceImageChunk(const CLAD_VECTOR(RobotInterface)::DisplayFaceImageBinaryChunk& msg);
+    void Process_displayFaceImageChunk(const CLAD_VECTOR(RobotInterface)::DisplayFaceImageGrayscaleChunk& msg);
+    void Process_displayFaceImageChunk(const CLAD_VECTOR(RobotInterface)::DisplayFaceImageRGBChunk& msg);
+    void Process_displayCompositeImageChunk(const CLAD_VECTOR(RobotInterface)::DisplayCompositeImageChunk& msg);
+    void Process_updateCompositeImage(const CLAD_VECTOR(RobotInterface)::UpdateCompositeImage& msg);
     void Process_playCompositeAnimation(const std::string& name, Tag tag);
 
 
     Result SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms);
     Result SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms, u32 duration_ms);
-    Result UpdateCompositeImage(Vision::LayerName layerName,
+    Result UpdateCompositeImage(CLAD_VISION(LayerName) layerName,
                                 const Vision::CompositeImageLayer::SpriteBox& spriteBox,
                                 uint16_t assetID,
                                 u32 applyAt_ms);
@@ -147,23 +157,23 @@ namespace Anim {
     // Sets all tracks that should be locked
     void SetLockedTracks(u8 whichTracks)
     {
-      if(whichTracks & (u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK)
+      if(whichTracks & (u8)CLAD_VECTOR(AnimTrackFlag)::BACKPACK_LIGHTS_TRACK)
       {
         PRINT_NAMED_ERROR("AnimationStreamer.SetLockedTracks.BackpackLightTrack",
                           "Backpack light track is always locked, why are you trying to lock it");
       }
       // Always keep the backpack light track locked in shipping
       #if !ANKI_DEV_CHEATS
-      whichTracks |= (u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK;
+      whichTracks |= (u8)CLAD_VECTOR(AnimTrackFlag)::BACKPACK_LIGHTS_TRACK;
       #endif
       _lockedTracks = whichTracks;
     }
 
 
     // Lock or unlock an individual track
-    void LockTrack(AnimTrackFlag track)
+    void LockTrack(CLAD_VECTOR(AnimTrackFlag) track)
     {
-      if(track == AnimTrackFlag::BACKPACK_LIGHTS_TRACK)
+      if(track == CLAD_VECTOR(AnimTrackFlag)::BACKPACK_LIGHTS_TRACK)
       {
         PRINT_NAMED_ERROR("AnimationStreamer.LockTrack.BackpackLightTrack",
                           "Backpack light track is always locked why are you trying to unlock it");
@@ -171,9 +181,9 @@ namespace Anim {
 
       _lockedTracks |= (u8)track;
     }
-    void UnlockTrack(AnimTrackFlag track)
+    void UnlockTrack(CLAD_VECTOR(AnimTrackFlag) track)
     {
-      if(track == AnimTrackFlag::BACKPACK_LIGHTS_TRACK)
+      if(track == CLAD_VECTOR(AnimTrackFlag)::BACKPACK_LIGHTS_TRACK)
       {
         PRINT_NAMED_ERROR("AnimationStreamer.UnlockTrack.BackpackLightTrack",
                           "Backpack light track is always locked why are you trying to unlock it");
@@ -182,7 +192,7 @@ namespace Anim {
       _lockedTracks &= ~(u8)track;
       // Always keep the backpack light track locked in shipping
       #if !ANKI_DEV_CHEATS
-      _lockedTracks |= (u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK;
+      _lockedTracks |= (u8)CLAD_VECTOR(AnimTrackFlag)::BACKPACK_LIGHTS_TRACK;
       #endif
     }
 
@@ -198,10 +208,10 @@ namespace Anim {
     void SetFrozenOnCharger(bool enabled);
 
     // Procedural Eye
-    void ProcessAddOrUpdateEyeShift(const RobotInterface::AddOrUpdateEyeShift& msg);
-    void ProcessRemoveEyeShift(const RobotInterface::RemoveEyeShift& msg);
-    void ProcessAddSquint(const RobotInterface::AddSquint& msg);
-    void ProcessRemoveSquint(const RobotInterface::RemoveSquint& msg);
+    void ProcessAddOrUpdateEyeShift(const CLAD_VECTOR(RobotInterface)::AddOrUpdateEyeShift& msg);
+    void ProcessRemoveEyeShift(const CLAD_VECTOR(RobotInterface)::RemoveEyeShift& msg);
+    void ProcessAddSquint(const CLAD_VECTOR(RobotInterface)::AddSquint& msg);
+    void ProcessRemoveSquint(const CLAD_VECTOR(RobotInterface)::RemoveSquint& msg);
 
     uint16_t GetNumLayersRendered() { return _numLayersRendered; }
 
@@ -433,12 +443,16 @@ namespace Anim {
   #endif // ANKI_DEV_CHEATS
 
     // Sends msg to appropriate destination as long as the specified track is unlocked
-    bool SendIfTrackUnlocked(RobotInterface::EngineToRobot*& msg, AnimTrackFlag track);
+    bool SendIfTrackUnlocked(CLAD_VECTOR(RobotInterface)::EngineToRobot*& msg, CLAD_VECTOR(AnimTrackFlag) track);
 
   }; // class AnimationStreamer
 
 } // namespace Anim
 } // namespace Vector
 } // namespace Anki
+
+#undef CLAD
+#undef CLAD_VECTOR
+#undef CLAD_VISION
 
 #endif /* __Anki_Vector_AnimationStreamer_H__ */

@@ -35,6 +35,7 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "clad/cloud/mic.h"
+
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobotTag.h"

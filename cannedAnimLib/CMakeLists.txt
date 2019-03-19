@@ -7,13 +7,18 @@ include(anki_build_cxx)
 anki_build_cxx_library(canned_anim_lib_anim ${ANKI_SRCLIST_DIR} STATIC)
 anki_build_target_license(canned_anim_lib_anim "ANKI")
 
+target_compile_definitions(canned_anim_lib_anim
+    PRIVATE
+    CAN_STREAM=false
+)
+
 include(flatbuffers)
 
 target_link_libraries(canned_anim_lib_anim
     PRIVATE
     # cti
     cti_common_robot
-    cti_vision
+    cti_vision_clad_cpplite
     cti_messaging_robot
     robot_clad_cpplite
     #vendor
@@ -26,7 +31,10 @@ target_link_libraries(canned_anim_lib_anim
 anki_build_cxx_library(canned_anim_lib_engine ${ANKI_SRCLIST_DIR} STATIC)
 anki_build_target_license(canned_anim_lib_engine "ANKI")
 
-target_compile_definitions(canned_anim_lib_engine PRIVATE CAN_STREAM=false)
+target_compile_definitions(canned_anim_lib_engine
+    PRIVATE
+    CAN_STREAM=false
+)
 
 target_link_libraries(canned_anim_lib_engine
     PRIVATE

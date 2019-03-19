@@ -44,7 +44,11 @@ const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 20.f;
 const f32 ORIGIN_TO_LOW_ROLL_DIST_MM = 13.f;
 
 
-
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
 
 namespace Anki {
 
@@ -57,7 +61,7 @@ namespace Anki {
 
       Result Update();
       
-      void SetDockingMethod(DockingMethod method);
+      void SetDockingMethod(CLAD_VECTOR(DockingMethod) method);
 
       // Returns true if robot is the process of looking for a block or docking to a block
       bool IsBusy();
@@ -67,7 +71,7 @@ namespace Anki {
       
       void SetMaxRetries(u8 numRetries);
       
-      Result SendDockingStatusMessage(Status status);
+      Result SendDockingStatusMessage(CLAD_VECTOR(Status) status);
 
       // Tells the docker what the relative position of the block is.
       // rel_x: Distance to center of block along robot's x-axis
@@ -80,7 +84,7 @@ namespace Anki {
 
       // Resets state machine and configures VisionSystem to track
       // appropriate block
-      void StopDocking(DockingResult result = DockingResult::DOCK_INTERRUPTED);
+      void StopDocking(CLAD_VECTOR(DockingResult) result = CLAD_VECTOR(DockingResult)::DOCK_INTERRUPTED);
 
       // The robot will follow a docking path generated from an error signal to a marker
       // that it expects to be receiving from cozmo-engine immediately after this is called.
@@ -110,9 +114,9 @@ namespace Anki {
       f32 GetDistToLastDockMarker();
       
       // Sets the latest docking error signal message coming from engine
-      void SetDockingErrorSignalMessage(const DockingErrorSignal& msg);
+      void SetDockingErrorSignalMessage(const CLAD_VECTOR(DockingErrorSignal)& msg);
       
-      DockingResult GetDockingResult();
+      CLAD_VECTOR(DockingResult) GetDockingResult();
       
       void SetCameraFieldOfView(f32 horizontalFOV, f32 verticalFOV);
 

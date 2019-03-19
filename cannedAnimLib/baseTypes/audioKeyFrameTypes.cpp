@@ -21,6 +21,12 @@
 #define ENABLE_AUDIO_PROBABILITY_LOG 0
 #define INVALID_EVENT_IDX std::numeric_limits<size_t>::max()
 
+#ifdef USES_CPPLITE
+#define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
+#else
+#define CLAD_AUDIOMETADATA(ns) AudioMetaData::ns
+#endif
+
 namespace Anki {
 namespace Vector {
 namespace AudioKeyFrameType {
@@ -55,7 +61,7 @@ bool AudioEventGroupRef::EventDef::operator==( const EventDef& other ) const
 }
 
   
-void AudioEventGroupRef::AddEvent( AudioMetaData::GameEvent::GenericEvent audioEvent, float volume, float probability )
+void AudioEventGroupRef::AddEvent( CLAD_AUDIOMETADATA(GameEvent)::GenericEvent audioEvent, float volume, float probability )
 {
   Events.emplace_back( audioEvent, volume, probability );
 }

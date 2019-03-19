@@ -56,6 +56,14 @@
 #include <unordered_map>
 #include <thread>
 
+#ifdef USES_CPPLITE
+#define CLAD(ns)        CppLite::ns
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns)        ns
+#define CLAD_VECTOR(ns) ns
+#endif
+
 namespace alexaClientSDK {
   namespace capabilitiesDelegate { class CapabilitiesDelegate; }
   namespace capabilityAgents { namespace aip { class AudioProvider; } }
@@ -64,6 +72,19 @@ namespace alexaClientSDK {
   }
 }
 
+#ifdef USES_CPPLITE
+namespace CppLite {
+#endif
+namespace Anki {
+namespace Vector {
+enum class AlexaAuthState : uint8_t;
+enum class AlexaNetworkErrorType : uint8_t;
+enum class AlexaUXState : uint8_t;
+}
+}
+#ifdef USES_CPPLITE
+}
+#endif
 
 namespace Anki {
   
@@ -74,9 +95,6 @@ namespace Util {
 namespace Vector {
 
 class AlexaAudioInput;
-enum class AlexaAuthState : uint8_t;
-enum class AlexaNetworkErrorType : uint8_t;
-enum class AlexaUXState : uint8_t;
 class AlexaClient;
 class AlexaKeywordObserver;
 class AlexaMediaPlayer;
@@ -123,17 +141,17 @@ public:
   // Callback setters. Callbacks will run on the same thread as Update()
   
   // this callback should not call AuthDelegate methods
-  using OnAlexaAuthStateChanged = std::function<void(AlexaAuthState, const std::string&, const std::string&, bool)>;
+  using OnAlexaAuthStateChanged = std::function<void(CLAD_VECTOR(AlexaAuthState), const std::string&, const std::string&, bool)>;
   void SetOnAlexaAuthStateChanged( const OnAlexaAuthStateChanged& callback ) { _onAlexaAuthStateChanged = callback; }
   
   // will never call back with ux state Error. see comment in method SetNetworkError.
-  using OnAlexaUXStateChanged = std::function<void(AlexaUXState)>;
+  using OnAlexaUXStateChanged = std::function<void(CLAD_VECTOR(AlexaUXState))>;
   void SetOnAlexaUXStateChanged( const OnAlexaUXStateChanged& callback ) { _onAlexaUXStateChanged = callback; }
   
   using OnLogout = std::function<void(void)>;
   void SetOnLogout( const OnLogout& callback ) { _onLogout = callback; }
   
-  using OnNetworkError = std::function<void(AlexaNetworkErrorType)>;
+  using OnNetworkError = std::function<void(CLAD_VECTOR(AlexaNetworkErrorType))>;
   void SetOnNetworkError( const OnNetworkError& callback ) { _onNetworkError = callback; }
   
   using OnNotificationsChanged = std::function<void(bool hasNotification)>;
@@ -158,13 +176,13 @@ private:
   
   void OnDirective(const std::string& directive, const std::string& payload, const std::string& fullUnparsed);
   
-  void SetAuthState( AlexaAuthState state, const std::string& url, const std::string& code, bool errFlag );
+  void SetAuthState( CLAD_VECTOR(AlexaAuthState) state, const std::string& url, const std::string& code, bool errFlag );
   
   // considers media player state and dialog state to determine _uxState
   void CheckForUXStateChange();
 
   void SetNetworkConnectionError();
-  void SetNetworkError( AlexaNetworkErrorType errorType );
+  void SetNetworkError( CLAD_VECTOR(AlexaNetworkErrorType) errorType );
   bool InteractedRecently() const;
   
   // things we care about called by AlexaObserver
@@ -199,9 +217,9 @@ private:
   std::string _alexaCacheFolder;
   
   // current auth state
-  AlexaAuthState _authState;
+  CLAD_VECTOR(AlexaAuthState) _authState;
   // current ux/media player state
-  AlexaUXState _uxState;
+  CLAD_VECTOR(AlexaUXState) _uxState;
   // ux state (may be IDLE when audio is playing)
   DialogUXState _dialogState;
   // if the sdk has been able to ping a specific amazon.com endpoint (not the AVS endpoint)
@@ -292,5 +310,8 @@ private:
 
 } // namespace Vector
 } // namespace Anki
+
+#undef CLAD
+#undef CLAD_VECTOR
 
 #endif // ANIMPROCESS_COZMO_ALEXAIMPL_H

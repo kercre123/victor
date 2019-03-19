@@ -16,12 +16,28 @@
 #ifndef __Anki_Victor_MicrophoneAudioClient_H__
 #define __Anki_Victor_MicrophoneAudioClient_H__
 
+#ifdef USES_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
 
+#ifdef USES_CPPLITE
+namespace CppLite {
+#endif
 namespace Anki {
 namespace Vector {
 namespace RobotInterface {
 struct MicDirection;
 }
+}
+}
+#ifdef USES_CPPLITE
+}
+#endif
+
+namespace Anki {
+namespace Vector {
 namespace Audio {
 class CozmoAudioController;
 
@@ -33,7 +49,7 @@ public:
   MicrophoneAudioClient( CozmoAudioController* audioController );
   ~MicrophoneAudioClient();
 
-  void ProcessMessage( const RobotInterface::MicDirection& msg );
+  void ProcessMessage( const CLAD_VECTOR(RobotInterface)::MicDirection& msg );
 
 
 private:

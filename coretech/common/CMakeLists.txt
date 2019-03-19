@@ -45,7 +45,7 @@ target_compile_options(cti_common
 
 target_link_libraries(cti_common
   PUBLIC
-  ${CTI_GENERATED_LIBS}
+  cti_common_clad
   util
   jsoncpp
   opencv_interface
@@ -76,10 +76,13 @@ anki_build_target_license(cti_common_robot "ANKI")
 
 target_link_libraries(cti_common_robot
   PUBLIC
-  util
   cti_common_clad_cpplite
-  PRIVATE
+  util
+  jsoncpp
   opencv_interface
+  ${OPENCV_LIBS}
+  PRIVATE
+  z
   ${ASAN_LINKER_FLAGS}
 )
 
@@ -99,6 +102,11 @@ target_include_directories(cti_common_robot
 )
 
 #
+# CLAD headers must be generated before building library
+#
+add_dependencies(cti_common_robot cti_common_clad_cpplite)
+
+#
 # cti_common_shared
 #
 
@@ -107,6 +115,7 @@ anki_build_target_license(cti_common_shared "ANKI")
 
 target_link_libraries(cti_common_shared
   PUBLIC
+  cti_common_clad
   util
   PRIVATE
   opencv_interface

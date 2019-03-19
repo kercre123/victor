@@ -32,6 +32,14 @@
 #define CAN_STREAM true
 #endif
 
+#ifdef USES_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#define CLAD_VISION(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD(ns) ns
+#define CLAD_VISION(ns) Vision::ns
+#endif
+
 namespace CozmoAnim {
   struct HeadAngle;
   struct LiftHeight;
@@ -98,7 +106,7 @@ namespace Vector {
     #if CAN_STREAM
       // Fill some kind of message for streaming and return it. Return nullptr
       // if not available.
-      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const = 0;
+      virtual CLAD(RobotInterface)::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const = 0;
     #endif
 
     bool IsFirstKeyframeTick(const TimeStamp_t timeSinceAnimStart_ms) const
@@ -155,7 +163,7 @@ namespace Vector {
     Result DefineFromFlatBuf(const CozmoAnim::HeadAngle* headAngleKeyframe, const std::string& animNameDebug);
 
     #if CAN_STREAM
-    virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override;
+    virtual CLAD(RobotInterface)::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override;
     #endif
 
     static const std::string& GetClassName() {
@@ -197,7 +205,7 @@ namespace Vector {
     Result DefineFromFlatBuf(const CozmoAnim::LiftHeight* liftHeightKeyframe, const std::string& animNameDebug);
 
     #if CAN_STREAM
-      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override;
+      virtual CLAD(RobotInterface)::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override;
     #endif
 
     static const std::string& GetClassName() {
@@ -243,7 +251,7 @@ namespace Vector {
 
     #if CAN_STREAM
       // NOTE: Always returns nullptr for RobotAudioKeyframe!
-      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override { return nullptr; };
+      virtual CLAD(RobotInterface)::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override { return nullptr; };
     #endif
 
     static const std::string& GetClassName() {
@@ -326,7 +334,7 @@ namespace Vector {
       // message does not go to robot process. Instead, images are grabbed via GetFaceImage().
       // TODO: Is it better to create a wrapper EngineToRobot message so that we don't have
       //       to duplicate keyframe checking logic in animationStreamer?
-      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override {return nullptr;}
+      virtual CLAD(RobotInterface)::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override {return nullptr;}
     #endif
     
     static const std::string& GetClassName() {
@@ -340,7 +348,7 @@ namespace Vector {
     struct CompositeImageUpdateSpec{
       CompositeImageUpdateSpec(Vision::SpriteCache* sCache, 
                                Vision::SpriteSequenceContainer* sContainer,
-                               Vision::LayerName lName, 
+                               CLAD_VISION(LayerName) lName, 
                                Vision::CompositeImageLayer::SpriteBox sBox,
                                uint16_t assetID)
       : spriteCache(sCache)
@@ -351,7 +359,7 @@ namespace Vector {
 
       Vision::SpriteCache* spriteCache; 
       Vision::SpriteSequenceContainer* seqContainer;
-      Vision::LayerName layerName;
+      CLAD_VISION(LayerName) layerName;
       Vision::CompositeImageLayer::SpriteBox spriteBox;
       uint16_t assetID;
     };
@@ -425,12 +433,12 @@ namespace Vector {
     #if CAN_STREAM
       // Always returns nullptr. Use GetInterpolatedFace() to get the face stored in this
       // keyframe.
-      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override { return nullptr; }
+      virtual CLAD(RobotInterface)::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override { return nullptr; }
     #endif
     
     // Returns message for the face interpolated between the stored face in this
     // keyframe and the one in the next keyframe.
-    RobotInterface::EngineToRobot* GetInterpolatedStreamMessage(const ProceduralFaceKeyFrame& nextFrame);
+    CLAD(RobotInterface)::EngineToRobot* GetInterpolatedStreamMessage(const ProceduralFaceKeyFrame& nextFrame);
     
     // Returns the interpolated face between the current keyframe and the next.
     // If the nextFrame is nullptr, then this frame's procedural face are returned.
@@ -489,7 +497,7 @@ namespace Vector {
     Result DefineFromFlatBuf(const CozmoAnim::Event* eventKeyframe, const std::string& animNameDebug);
     
     #if CAN_STREAM
-     virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override;
+     virtual CLAD(RobotInterface)::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override;
     #endif
 
     static const std::string& GetClassName() {
@@ -498,7 +506,7 @@ namespace Vector {
     }
     
     
-    Anki::Vector::AnimEvent GetAnimEvent() const { return _event_id; }
+    CLAD(AnimEvent) GetAnimEvent() const { return _event_id; }
     
   protected:
     virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
@@ -508,7 +516,7 @@ namespace Vector {
     
   private:
 
-    Anki::Vector::AnimEvent _event_id;
+    CLAD(AnimEvent) _event_id;
     
   }; // class EventKeyFrame
   
@@ -528,7 +536,7 @@ namespace Vector {
     Result DefineFromFlatBuf(CozmoAnim::BackpackLights* backpackKeyframe, const std::string& animNameDebug);
     
     #if CAN_STREAM
-      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override;
+      virtual CLAD(RobotInterface)::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override;
     #endif
     
     static const std::string& GetClassName() {
@@ -544,7 +552,7 @@ namespace Vector {
     
   private:
     TimeStamp_t _keyframeActiveDuration_ms;
-    RobotInterface::SetBackpackLights _streamMsg;
+    CLAD(RobotInterface)::SetBackpackLights _streamMsg;
     
   }; // class BackpackLightsKeyFrame
   
@@ -572,7 +580,7 @@ namespace Vector {
     Result ProcessRadiusString(const std::string& radiusStr, const std::string& animNameDebug);
 
     #if CAN_STREAM
-      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override;
+      virtual CLAD(RobotInterface)::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override;
     #endif
 
     static const std::string& GetClassName() {
@@ -593,8 +601,8 @@ namespace Vector {
     TimeStamp_t _keyframeActiveDuration_ms;
     bool _enableStopMessage = true;
     
-    RobotInterface::DriveWheelsCurvature _streamMsg;
-    RobotInterface::DriveWheelsCurvature _stopMsg;
+    CLAD(RobotInterface)::DriveWheelsCurvature _streamMsg;
+    CLAD(RobotInterface)::DriveWheelsCurvature _stopMsg;
     
   }; // class BodyMotionKeyFrame
   
@@ -614,7 +622,7 @@ namespace Vector {
     Result DefineFromFlatBuf(const CozmoAnim::RecordHeading* recordHeadingKeyframe, const std::string& animNameDebug);
     
     #if CAN_STREAM
-      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override;
+      virtual CLAD(RobotInterface)::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override;
     #endif
     
     static const std::string& GetClassName() {
@@ -631,7 +639,7 @@ namespace Vector {
   private:
     
     #if CAN_STREAM
-      RobotInterface::RecordHeading _streamMsg;
+      CLAD(RobotInterface)::RecordHeading _streamMsg;
     #endif
     
   }; // class RecordHeadingKeyFrame
@@ -663,7 +671,7 @@ namespace Vector {
     void CheckRotationSpeed(const std::string& animNameDebug);
     
     #if CAN_STREAM
-      virtual RobotInterface::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override;
+      virtual CLAD(RobotInterface)::EngineToRobot* GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const override;
     #endif
     
     static const std::string& GetClassName() {
@@ -679,11 +687,14 @@ namespace Vector {
     
   private:
     TimeStamp_t _keyframeActiveDuration_ms;
-    RobotInterface::TurnToRecordedHeading _streamMsg;
+    CLAD(RobotInterface)::TurnToRecordedHeading _streamMsg;
     
   }; // class TurnToRecordedHeadingKeyFrame
   
 } // namespace Vector
 } // namespace Anki
+
+#undef CLAD
+#undef CLAD_VISION
 
 #endif // ANKI_COZMO_CANNED_KEYFRAME_H

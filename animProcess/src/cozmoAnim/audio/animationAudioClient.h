@@ -20,6 +20,11 @@
 #include <set>
 #include <mutex>
 
+#ifdef USES_CPPLITE
+#define CLAD_ANKI(ns) CppLite::Anki::ns
+#else
+#define CLAD_ANKI(ns) ns
+#endif
 
 namespace Anki {
 namespace AudioEngine {
@@ -76,12 +81,12 @@ private:
   void HandleAudioRef( const AudioKeyFrameType::AudioParameterRef& parameterRef );
 
   // Perform an event
-  AudioEngine::AudioPlayingId PostCozmoEvent( AudioMetaData::GameEvent::GenericEvent event,
-                                              AudioMetaData::GameObjectType gameObject );
+  AudioEngine::AudioPlayingId PostCozmoEvent( CLAD_ANKI(AudioMetaData)::GameEvent::GenericEvent event,
+                                              CLAD_ANKI(AudioMetaData)::GameObjectType gameObject );
 
   // Update parameters for a event play id
   bool SetCozmoEventParameter( AudioEngine::AudioPlayingId playId,
-                               AudioMetaData::GameParameter::ParameterType parameter,
+                               CLAD_ANKI(AudioMetaData)::GameParameter::ParameterType parameter,
                                AudioEngine::AudioRTPCValue value ) const;
 
   // Perform Event callback, used by "PostCozmoEvent()"
@@ -97,5 +102,7 @@ private:
 }
 }
 }
+
+#undef CLAD_ANKI
 
 #endif /* __Anki_Cozmo_AnimationAudioClient_H__ */
