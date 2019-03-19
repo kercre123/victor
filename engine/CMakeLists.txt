@@ -70,11 +70,11 @@ target_link_libraries(cozmo_engine
   engine_clad
   DAS
   util
+  arf
   PRIVATE
   cameraService
   canned_anim_lib_engine
   victor_web_library
-  arf
   # cti
   cti_vision
   cti_planning

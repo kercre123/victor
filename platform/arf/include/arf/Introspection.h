@@ -289,9 +289,9 @@ public:
 // TODO Move streaming/destreaming functionality to a different file
 
 template <typename T>
-int32_t stream_proto( const T& proto, std::ostream& os )
+size_t stream_proto( const T& proto, std::ostream& os )
 {
-    int32_t size = proto.ByteSizeLong();
+    size_t size = proto.ByteSizeLong();
     os.write( reinterpret_cast<char*>( &size ), sizeof( size ) );
     proto.SerializeToOstream( &os );
     return size;

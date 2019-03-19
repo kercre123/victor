@@ -1,10 +1,15 @@
-set(NNG_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/lib/nng/vicos/include")
+
+if (VICOS)
+  set(NNG_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/lib/nng/vicos/include")
+  set(NNG_LIB_PATH "${CMAKE_SOURCE_DIR}/lib/nng/vicos/lib")
+elseif (MACOSX)
+  set(NNG_INCLUDE_PATH "${CMAKE_SOURCE_DIR}/lib/nng/macos/include")
+  set(NNG_LIB_PATH "${CMAKE_SOURCE_DIR}/lib/nng/macos/lib")
+endif()
 
 set(NNG_LIBS
   nng
 )
-
-set(NNG_LIB_PATH "${CMAKE_SOURCE_DIR}/lib/nng/vicos/lib")
 
 foreach(LIB ${NNG_LIBS})
   add_library(${LIB} STATIC IMPORTED)

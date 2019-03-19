@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.6)
 
-project(engine_tools)
+project(arf)
 
 include(protobuf)
 include(nng_ext)
