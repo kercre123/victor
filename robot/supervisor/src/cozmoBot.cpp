@@ -97,7 +97,7 @@ namespace Anki {
         u32 lastCycleStartTime_usec_ = 0;
         u32 nextMainCycleTimeErrorReportTime_usec_ = 0;
         const u32 MAIN_TOO_LATE_TIME_THRESH_USEC = ROBOT_TIME_STEP_MS * 1500;  // Normal cycle time plus 50% margin
-        const u32 MAIN_TOO_LONG_TIME_THRESH_USEC = 2500;
+        const u32 MAIN_TOO_LONG_TIME_THRESH_USEC = 4000;
         const u32 MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC = 1000000;
 
         // If there are more than this many TooLates in a reporting period
@@ -107,6 +107,14 @@ namespace Anki {
         // If a single tick is late by this amount in a reporting period
         // a warning is issued
         const u32 INSTANT_WARNING_TOO_LATE_TIME_THRESH_USEC = 15000;
+
+        // If there are more than this many TooLongs in a reporting period
+        // a warning is issued
+        const u32 MIN_TOO_LONG_COUNT_PER_REPORTING_PERIOD = 5;
+
+        // If a single tick takes this long in a reporting period
+        // a warning is issued
+        const u32 INSTANT_WARNING_TOO_LONG_TIME_THRESH_USEC = 10000;
 
         bool shutdownInProgress_ = false;
       } // Robot private namespace
@@ -555,11 +563,12 @@ namespace Anki {
         lastCycleStartTime_usec_ = cycleStartTime;          
 
         // Report main cycle time error
-        if (nextMainCycleTimeErrorReportTime_usec_ > cycleEndTime) {
+        if (nextMainCycleTimeErrorReportTime_usec_ < cycleEndTime) {
 
-          const bool reportTooLate = (mainTooLateCnt_ > MIN_TOO_LATE_COUNT_PER_REPORTING_PERIOD) || 
-                                     (maxMainTooLateTime_usec_ > INSTANT_WARNING_TOO_LATE_TIME_THRESH_USEC);
-          const bool reportTooLong = (mainTooLongCnt_ > 0);
+          const bool reportTooLate = (mainTooLateCnt_ >= MIN_TOO_LATE_COUNT_PER_REPORTING_PERIOD) || 
+                                     (maxMainTooLateTime_usec_ >= INSTANT_WARNING_TOO_LATE_TIME_THRESH_USEC);
+          const bool reportTooLong = (mainTooLongCnt_ >= MIN_TOO_LONG_COUNT_PER_REPORTING_PERIOD) || 
+                                     (maxMainTooLongTime_usec_ >= INSTANT_WARNING_TOO_LONG_TIME_THRESH_USEC);
           if (reportTooLate || reportTooLong) {
             AnkiWarn( "CozmoBot.MainCycleTimeError", 
                       "TooLate: %d tics, avg: %d us, max: %d us, TooLong: %d tics, avg: %d us, max: %d us",
@@ -594,7 +603,7 @@ namespace Anki {
           avgMainTooLongTime_usec_ = 0;
           maxMainTooLongTime_usec_ = 0;
 
-          nextMainCycleTimeErrorReportTime_usec_ += MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC;
+          nextMainCycleTimeErrorReportTime_usec_ = cycleEndTime + MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC;
         }
 
         EventStop(EventType::MAIN_STEP);
