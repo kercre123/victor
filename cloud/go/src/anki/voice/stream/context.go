@@ -102,7 +102,11 @@ func (strm *Streamer) responseRoutine() {
 			strm.receiver.OnError(errorReason(err), err)
 			return
 		}
-		log.Println("Intent response ->", resp)
+		if verbose {
+			log.Println("Intent response ->", resp)
+		} else {
+			log.Println("Intent response ->", fmt.Sprintf("%T", resp))
+		}
 		switch r := resp.(type) {
 		case *chipper.IntentResult:
 			sendIntentResponse(r, strm.receiver)
