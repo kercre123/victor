@@ -142,6 +142,8 @@ namespace Anki {
         SET_STATUS_BIT(HAL::BatteryIsOnCharger(),                   IS_ON_CHARGER);
         SET_STATUS_BIT(HAL::BatteryIsCharging(),                    IS_CHARGING);
         SET_STATUS_BIT(HAL::BatteryIsOverheated(),                  IS_BATTERY_OVERHEATED);
+        SET_STATUS_BIT(HAL::BatteryIsLow(),                         IS_BATTERY_LOW);
+        SET_STATUS_BIT(HAL::IsShutdownImminent(),                   IS_SHUTDOWN_IMMINENT);
         SET_STATUS_BIT(ProxSensors::IsAnyCliffDetected(),           CLIFF_DETECTED);
         SET_STATUS_BIT(IMUFilter::IsFalling(),                      IS_FALLING);
         SET_STATUS_BIT(HAL::AreEncodersDisabled(),                  ENCODERS_DISABLED);

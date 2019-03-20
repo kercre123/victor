@@ -23,6 +23,8 @@ static const uint32_t* COZMO_MODEL_NUMBER           = (uint32_t*)0x14;
 
 static const int FLASH_PAGE_SIZE = 0x400;
 
+static const uint16_t WHISKEY_COMPATIBLE = 0x0000574B;
+
 enum FaultType {
   FAULT_WATCHDOG = 0x0001,
   FAULT_USER_WIPE = 0x0002,
@@ -44,6 +46,9 @@ struct SystemHeader {
   };
   VectorPtr         resetVector;
   uint8_t           applicationVersion[16];
+
+  // Internally stored as a uint32, treat as uint16 for forward compatiblity
+  uint16_t          whiskeyCompatible;
 };
 
 static const SystemHeader* const APP = (SystemHeader*)COZMO_APPLICATION_ADDRESS;
