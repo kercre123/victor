@@ -8,8 +8,6 @@ import (
 
 func init() {
 	checkDataFunc = checkCloudDataFiles
-	// TODO: this is only for thebox, should not be done on master
-	//platformOpts = append(platformOpts, cloudproc.WithVoiceOptions(voice.WithRequireToken()))
 }
 
 func checkCloudDataFiles() error {
