@@ -13,7 +13,7 @@ type URLs struct {
 	Check    string `json:"check"`
 	LogFiles string `json:"logfiles"`
 	AppKey   string `json:"appkey"`
-	Box      string `json:"box"`
+	Box      string `json:"offboard_vision"`
 }
 
 // DefaultURLs provides a default, hard-coded configuration that can be used

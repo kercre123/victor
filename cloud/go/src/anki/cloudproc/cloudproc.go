@@ -1,7 +1,7 @@
 package cloudproc
 
 import (
-	"anki/box"
+	"anki/offboard_vision"
 	"anki/jdocs"
 	"anki/log"
 	"anki/logcollector"
