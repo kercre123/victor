@@ -42,10 +42,32 @@ namespace {
   PacketQueue _radio_write_queue;
   mutex _radio_write_mutex;
 
-  // Worker shutdown flag
-  bool _radio_stop = false;
+  // Worker status flags
+  std::atomic_bool _radio_stop(false);
+  std::atomic_bool _radio_read_error(false);
+  std::atomic_bool _radio_write_error(false);
 
+  //
   // Worker event loop
+  //
+  // I/O processing is done outside of the main tick by using a libev event loop:
+  //   https://linux.die.net/man/3/ev
+  //
+  // The main event loop runs on a worker thread.  It uses two io watchers
+  // (_radio_read and _radio_write) to perform callbacks when the radio socket
+  // is ready for read or write, plus an async watcher (_radio_break) to
+  // interrupt the event loop on demand.
+  //
+  // The read watcher is always running so incoming data will be read ASAP.
+  //
+  // The write watcher is started when we have outgoing data queued for write,
+  // then stopped when all outgoing data has been written.  This avoids the overhead
+  // of invoking the handler when the socket is writable but we have no data queued.
+  //
+  // The async watcher is used to signal the worker thread when outgoing data has been
+  // queued or when the thread has been signalled to stop. This breaks the event loop
+  // and returns control to the top-level caller.
+  //
   struct ev_loop * _radio_loop = nullptr;
   struct ev_io _radio_read;
   struct ev_io _radio_write;
@@ -68,32 +90,31 @@ static void RadioRead(struct ev_loop * loop, struct ev_io * w, int)
   static constexpr size_t RECV_BUFFER_SIZE = 1024 * 4;
   static u8 buf[RECV_BUFFER_SIZE];
 
-  while (!_radio_stop) {
+  // Read incoming message
+  ssize_t bytesRead = server.Recv((char *) buf, sizeof(buf));
 
-    // Read incoming message
-    ssize_t bytesRead = server.Recv((char *) buf, sizeof(buf));
-
-    if (bytesRead < 0) {
-      // TBD: How do we notify main thread?
-      AnkiError("RadioRead", "Read error (errno %d)", errno);
-      return;
-    }
-
-    if (bytesRead == 0) {
-      // Nothing to read at this time
-      return;
-    }
-
-    // Allocate temporary packet
-    PacketPtr packet = std::make_unique<Packet>(bytesRead);
-    memcpy(packet->data(), buf, bytesRead);
-
-    // Add incoming packet to incoming queue
-    {
-      lock_guard lock(_radio_read_mutex);
-      _radio_read_queue.push_back(std::move(packet));
-    }
+  if (bytesRead < 0) {
+    AnkiWarn("HAL.RadioRead.RecvError", "Recv error (errno %d)", errno);
+    _radio_read_error = true;
+    return;
   }
+
+  if (bytesRead == 0) {
+    // Nothing to read at this time - spurious wakeup?
+    AnkiWarn("HAL.RadioRead.RecvZero", "Nothing to read");
+    return;
+  }
+
+  // Allocate temporary packet
+  PacketPtr packet = std::make_unique<Packet>(bytesRead);
+  memcpy(packet->data(), buf, bytesRead);
+
+  // Add incoming packet to incoming queue
+  {
+    lock_guard lock(_radio_read_mutex);
+    _radio_read_queue.push_back(std::move(packet));
+  }
+
 }
 
 //
@@ -102,25 +123,22 @@ static void RadioRead(struct ev_loop * loop, struct ev_io * w, int)
 //
 static void RadioWrite(struct ev_loop * loop, struct ev_io * w, int)
 {
-  while (!_radio_stop)
+  PacketPtr packet;
   {
-    PacketPtr packet;
-    {
-      lock_guard lock(_radio_write_mutex);
-      if (_radio_write_queue.empty()) {
-        ev_io_stop(loop, w);
-        return;
-      }
-      packet = std::move(_radio_write_queue.front());
-      _radio_write_queue.pop_front();
+    lock_guard lock(_radio_write_mutex);
+    if (_radio_write_queue.empty()) {
+      ev_io_stop(loop, w);
+      return;
     }
+    packet = std::move(_radio_write_queue.front());
+    _radio_write_queue.pop_front();
+  }
 
-    // Write the packet we just popped
-    const ssize_t bytesSent = server.Send((const char *) packet->data(), packet->size());
-    if (bytesSent < packet->size()) {
-      // TBD: How do we notify main thread?
-      AnkiError("RadioWrite", "Failed to send packet (%zu/%zu)", bytesSent, packet->size());
-    }
+  // Write the packet we just popped
+  const ssize_t bytesSent = server.Send((const char *) packet->data(), packet->size());
+  if (bytesSent < packet->size()) {
+    AnkiWarn("HAL.RadioWrite.SendError", "Failed to send packet (%zu/%zu)", bytesSent, packet->size());
+    _radio_write_error = true;
   }
 }
 
@@ -151,6 +169,11 @@ static void RadioThread()
     // Run until interrupted
     ev_run(_radio_loop);
   }
+
+  ev_io_stop(_radio_loop, &_radio_read);
+  ev_io_stop(_radio_loop, &_radio_write);
+  ev_async_stop(_radio_loop, &_radio_break);
+
 }
 
 namespace Anki {
@@ -190,8 +213,10 @@ namespace Anki {
       }
 
       // Tear down event loop
-      ev_loop_destroy(_radio_loop);
-      _radio_loop = nullptr;
+      if (_radio_loop != nullptr) {
+        ev_loop_destroy(_radio_loop);
+        _radio_loop = nullptr;
+      }
 
       // Tear down the socket
       server.StopListening();
@@ -204,6 +229,7 @@ namespace Anki {
 
     void HAL::DisconnectRadio(bool sendDisconnectMsg)
     {
+      // TBD: How do we synchronize packet send with worker thread?
       if (sendDisconnectMsg && RadioIsConnected()) {
         RobotInterface::RobotServerDisconnect msg;
         RobotInterface::SendMessage(msg);
@@ -249,5 +275,16 @@ namespace Anki {
       return (u32) packet->size();
 
     } // RadioGetNextPacket()
+
+    bool HAL::GetRadioReadError()
+    {
+      return _radio_read_error;
+    }
+
+    bool HAL::GetRadioWriteError()
+    {
+      return _radio_write_error;
+    }
+
   } // namespace Vector
 } // namespace Anki

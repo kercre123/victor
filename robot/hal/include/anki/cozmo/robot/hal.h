@@ -75,7 +75,7 @@ u32 GetMicroCounter(void);
 /// Block main execution for specified number of microseconds
 void MicroWait(u32 microseconds);
 
-/// Retrieve current time (from steady_clock) in ms 
+/// Retrieve current time (from steady_clock) in ms
 extern "C" TimeStamp_t GetTimeStamp(void);
 
 /// Retrieve the number of times a hardware watchdog reset has occurred.
@@ -148,7 +148,7 @@ s32 MotorGetLoad();
  * \section Encoder state
  */
 
-// Whether or not the encoders have been "disabled". 
+// Whether or not the encoders have been "disabled".
 // (In reality they are operating at a lower frequency so that motion can be detected.)
 // This happens normally if the motors are not actively being driven.
 bool AreEncodersDisabled();
@@ -208,7 +208,7 @@ typedef enum
  * @return Mechanical buttons return 0 or 1. Capacitive buttons return an analog value
  */
 u16 GetButtonState(const ButtonID button_id);
- 
+
 /************************************************************************
  * \section Battery
  */
@@ -330,6 +330,15 @@ bool RadioSendPacket(const void *buffer, const size_t length);
  */
 bool RadioSendMessage(const void *buffer, const u16 size, const u8 msgID);
 
+/** Check for asynchronous read errors
+ * @return true if there has been a read error
+ */
+bool GetRadioReadError();
+
+/** Check for asynchronous write errors
+ * @return true if there has been a write error
+ */
+bool GetRadioWriteError();
 
 /************************************************************************
  * \section Hardware / Firmware Version information
