@@ -19,6 +19,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
+#include "engine/components/movementComponent.h"
 
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -65,14 +66,22 @@ namespace {
   // `HasDetectedEnoughCliffsSincePickup`.
   static const u32 kOffTreadsStateChangeDelay_ms = 250;
   
+  // Set a minimum time limit after all motors have stopped moving to confirm that the robot is
+  // actually moving because it is being held, and not because of some InAir animation tricking the
+  // IMU filter in the robot process into detecting "motion".
+  static const u32 kTimeToWaitAterMotorMovement_ms = 250;
+  
   // If no cliffs have been detected since the robot was picked up, but the robot has been
   // reporting that it has been picked up and held upright for this amount of time, go ahead and
-  // declare the robot to be held in a palm anyways.
-  static const u32 kTimeToConfirmRobotHeldInPalmDefault_ms = Util::SecToMilliSec(5.0f);
+  // declare the robot to be held in a palm anyways. This is essentially a fallback for the normal
+  // detection mechanism for the tracker.
+  static const u32 kTimeToConfirmRobotHeldInPalmDefault_ms = Util::SecToMilliSec(10.0f);
 }
 
+CONSOLE_VAR_RANGED(float, kCliffValHeldInPalmSurface, CONSOLE_GROUP, 400.0f, 0.0f, 1000.0f);
+
 CONSOLE_VAR_RANGED(u32, kMinTimeToConfirmRobotHeldInPalm_ms,
-                   CONSOLE_GROUP, 1000, 0, kTimeToConfirmRobotHeldInPalmDefault_ms);
+                   CONSOLE_GROUP, 500, 0, kTimeToConfirmRobotHeldInPalmDefault_ms);
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -201,26 +210,35 @@ void HeldInPalmTracker::CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo)
     
     if ( robotInfo.IsBeingHeld() && !onCharger ) {
       const u32 timeSinceOnTreads_ms = GetMillisecondsSince(_lastTimeOnTreadsOrCharger);
+      
+      // When the robot is playing an animation while InAir (e.g. from the WhileInAirDispatcher,
+      // or ReactToPickupFromPalm) the OffTreadsState will not update to OnTreads even if the
+      // robot really is put down, until the all motors stop moving and preventing the robot from
+      // from updating it's PickedUp status.
+      const bool wasMovingRecently = WasRobotMovingRecently(robotInfo);
+      
       if ( GetTimeSinceLastHeldInPalm_ms() > timeSinceOnTreads_ms ) {
         // Robot recently picked up from ground, hasn't been held in a palm since
         // the pickup occurred. Check condition #2 for scenario B above.
         _enoughCliffsDetectedSincePickup = _enoughCliffsDetectedSincePickup ||
                                             HasDetectedEnoughCliffsSincePickup(robotInfo);
         
-        // Check final conditions for scenarios A and B, to see if robot has been placed in palm
-        // Depending on whether _enougCliffsDetectedSincePickup is now true after the check above,
-        // we select a different time threshold for confirming that the robot is held in a palm.
-        
-        // We assume by default that Scenario B is occurring
-        u32 timeToConfirmRobotHeldInPalm_ms = kTimeToConfirmRobotHeldInPalmDefault_ms;
-        if (_enoughCliffsDetectedSincePickup) {
-          // If enough cliffs are detected, we can reduce the amount of time needed to confirm
-          // that the robot is being held on a user's palm (Scenario A).
-          timeToConfirmRobotHeldInPalm_ms = kMinTimeToConfirmRobotHeldInPalm_ms;
+        if (!wasMovingRecently) {
+          // Check final conditions for scenarios A and B, to see if robot has been placed in palm
+          // Depending on whether _enougCliffsDetectedSincePickup is now true after the check above,
+          // we select a different time threshold for confirming that the robot is held in a palm.
+          
+          // We assume by default that Scenario B is occurring
+          u32 timeToConfirmRobotHeldInPalm_ms = kTimeToConfirmRobotHeldInPalmDefault_ms;
+          if (_enoughCliffsDetectedSincePickup) {
+            // If enough cliffs are detected, we can reduce the amount of time needed to confirm
+            // that the robot is being held on a user's palm (Scenario A).
+            timeToConfirmRobotHeldInPalm_ms = kMinTimeToConfirmRobotHeldInPalm_ms;
+          }
+          
+          SetIsHeldInPalm(WasRobotPlacedInPalmWhileHeld(robotInfo, timeToConfirmRobotHeldInPalm_ms));
         }
-        
-        SetIsHeldInPalm(WasRobotPlacedInPalmWhileHeld(robotInfo, timeToConfirmRobotHeldInPalm_ms));
-#if REMOTE_CONSOLE_ENABLED
+  #if REMOTE_CONSOLE_ENABLED
         if (kEnableDebugTransitionPrintouts && _isHeldInPalm) {
           if (!_enoughCliffsDetectedSincePickup) {
             LOG_INFO("HIPTracker.CheckIfIsHeldInPalm",
@@ -233,9 +251,15 @@ void HeldInPalmTracker::CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo)
         }
 #endif
       } else {
-        // Robot has been held in a user's palm more recently than it was on the
-        // ground (OffTreadsState::OnTreads). Check final condition for scenario C.
-        SetIsHeldInPalm(WasRobotPlacedInPalmWhileHeld(robotInfo, kMinTimeToConfirmRobotHeldInPalm_ms));
+        // When the robot has recently been held in a palm and is still picked up, the WhileInAir
+        // or ReactToPickupFromPalm animations start playing and slamming the lift or moving the
+        // treads as someone is putting the robot back down on the ground, so wait for a short time
+        // period where the robot is not moving its motors before verifying held-on-palm status
+        if (!wasMovingRecently) {
+          // Robot has been held in a user's palm more recently than it was on the
+          // ground (OffTreadsState::OnTreads). Check final condition for scenario C.
+          SetIsHeldInPalm(WasRobotPlacedInPalmWhileHeld(robotInfo, kMinTimeToConfirmRobotHeldInPalm_ms));
+        }
 #if REMOTE_CONSOLE_ENABLED
         if (kEnableDebugTransitionPrintouts && _isHeldInPalm) {
           LOG_INFO("HIPTracker.CheckIfIsHeldInPalm", "Robot transitioned to palm while being held");
@@ -274,10 +298,16 @@ bool HeldInPalmTracker::WasRobotPlacedInPalmWhileHeld(const BEIRobotInfo& robotI
       timeSinceNotHeld_ms >= timeToConfirmHeldInPalm_ms &&
       timeSinceNotInAir_ms >= timeToConfirmHeldInPalm_ms ) {
     const auto& cliffComp = robotInfo.GetCliffSensorComponent();
+    const auto& cliffDataFilt = cliffComp.GetCliffDataFiltered();
+    const float maxCliffSensorVal = *std::max_element(std::begin(cliffDataFilt),
+                                                      std::end(cliffDataFilt));
     const u32 durationOfNoCliffDetections_ms =
       cliffComp.GetDurationForNCliffDetections_ms(kMaxCliffsToConfirmRobotPlacedInPalm);
     
-    return durationOfNoCliffDetections_ms >= timeToConfirmHeldInPalm_ms;
+    return durationOfNoCliffDetections_ms >= timeToConfirmHeldInPalm_ms &&
+       // A cliff sensor reading higher than kCliffValHeldInPalmSurface is likely due to the robot
+       // being put down on the ground, or on an object that is not a user's palm.
+       maxCliffSensorVal < kCliffValHeldInPalmSurface;
   }
   
   return false;
@@ -311,6 +341,18 @@ bool HeldInPalmTracker::HasDetectedEnoughCliffsSincePickup(const BEIRobotInfo& r
   }
   
   return false;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool HeldInPalmTracker::WasRobotMovingRecently(const BEIRobotInfo& robotInfo) const
+{
+  const auto& moveComponent = robotInfo.GetMoveComponent();
+  const RobotTimeStamp_t lastTimeMotorsWereMoving = moveComponent.GetLastTimeWasMoving();
+  const RobotTimeStamp_t latestRobotTime = robotInfo.GetLastMsgTimestamp();
+  const u32 timeSinceMotorsWereMoving_ms =
+    static_cast<u32>( (latestRobotTime > lastTimeMotorsWereMoving) ?
+                      (latestRobotTime - lastTimeMotorsWereMoving) : 0);
+  return timeSinceMotorsWereMoving_ms < kTimeToWaitAterMotorMovement_ms;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
