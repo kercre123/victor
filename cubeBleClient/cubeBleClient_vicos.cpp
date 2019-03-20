@@ -35,19 +35,19 @@ namespace Cozmo {
 namespace {
   // The one and only cube we are connecting/connected to
   std::string _cubeAddress;
-  
+
   // Are we currently connected to the cube?
   bool _connected = false;
-  
+
   struct ev_loop* _loop = nullptr;
-  
+
   std::unique_ptr<BleClient> _bleClient = nullptr;
-  
+
   // shared queue for buffering cube messages received on the client thread
   using CubeMsgRecvBuffer = std::queue<std::vector<uint8_t>>;
   CubeMsgRecvBuffer _cubeMsgRecvBuffer;
   std::mutex _cubeMsgRecvBuffer_mutex;
-  
+
   // shared queue for buffering advertisement messages received on the client thread
   struct CubeAdvertisementInfo {
     CubeAdvertisementInfo(const std::string& addr, const int rssi) : addr(addr), rssi(rssi) { }
@@ -62,22 +62,22 @@ namespace {
   std::atomic<bool> _scanningFinished{false};
 }
 
-  
+
 CubeBleClient::CubeBleClient()
 {
   _loop = ev_default_loop(EVBACKEND_SELECT);
   _bleClient = std::make_unique<BleClient>(_loop);
-  
+
   _bleClient->RegisterAdvertisementCallback([](const std::string& addr, const int rssi) {
     std::lock_guard<std::mutex> lock(_cubeAdvertisementBuffer_mutex);
     _cubeAdvertisementBuffer.emplace(addr, rssi);
   });
-  
+
   _bleClient->RegisterReceiveDataCallback([](const std::string& addr, const std::vector<uint8_t>& data){
     std::lock_guard<std::mutex> lock(_cubeMsgRecvBuffer_mutex);
     _cubeMsgRecvBuffer.push(data);
   });
-  
+
   _bleClient->RegisterScanFinishedCallback([](){
     _scanningFinished = true;
   });
@@ -96,9 +96,9 @@ CubeBleClient::~CubeBleClient()
 bool CubeBleClient::Init()
 {
   DEV_ASSERT(!_inited, "CubeBleClient.Init.AlreadyInitialized");
-  
+
   _bleClient->Start();
-  
+
   _inited = true;
   return true;
 }
@@ -110,7 +110,7 @@ bool CubeBleClient::Update()
     DEV_ASSERT(false, "CubeBleClient.Update.NotInited");
     return false;
   }
-  
+
   // Check for connection state changes
   if (!_connected && _bleClient->IsConnectedToCube()) {
     PRINT_NAMED_INFO("CubeBleClient.Update.ConnectedToCube",
@@ -130,7 +130,7 @@ bool CubeBleClient::Update()
     }
     _cubeAddress.clear();
   }
-  
+
   // Pull advertisement messages from queue into a temp queue,
   // to avoid holding onto the mutex for too long.
   CubeAdvertisementBuffer swapCubeAdvertisementBuffer;
@@ -138,7 +138,7 @@ bool CubeBleClient::Update()
     std::lock_guard<std::mutex> lock(_cubeAdvertisementBuffer_mutex);
     swapCubeAdvertisementBuffer.swap(_cubeAdvertisementBuffer);
   }
-  
+
   while (!swapCubeAdvertisementBuffer.empty()) {
     const auto& data = swapCubeAdvertisementBuffer.front();
     ExternalInterface::ObjectAvailable msg;
@@ -150,7 +150,7 @@ bool CubeBleClient::Update()
     }
     swapCubeAdvertisementBuffer.pop();
   }
-  
+
   // Pull cube messages from queue into a temp queue,
   // to avoid holding onto the mutex for too long.
   CubeMsgRecvBuffer swapCubeMsgRecvBuffer;
@@ -158,7 +158,7 @@ bool CubeBleClient::Update()
     std::lock_guard<std::mutex> lock(_cubeMsgRecvBuffer_mutex);
     swapCubeMsgRecvBuffer.swap(_cubeMsgRecvBuffer);
   }
-  
+
   while (!swapCubeMsgRecvBuffer.empty()) {
     const auto& data = swapCubeMsgRecvBuffer.front();
     for (const auto& callback : _cubeMessageCallbacks) {
@@ -167,7 +167,7 @@ bool CubeBleClient::Update()
     }
     swapCubeMsgRecvBuffer.pop();
   }
-  
+
   // Check to see if scanning for cubes has finished
   if (_scanningFinished) {
     for (const auto& callback : _scanFinishedCallbacks) {
@@ -175,7 +175,7 @@ bool CubeBleClient::Update()
     }
     _scanningFinished = false;
   }
-  
+
   return true;
 }
 
@@ -197,10 +197,15 @@ void CubeBleClient::StartScanning()
 {
   PRINT_NAMED_INFO("CubeBleClient.StartScanning",
                    "Starting to scan for available cubes");
-  
+
   // Sending from this thread for now. May need to queue this and
   // send it on the client thread if ipc client is not thread safe.
   DEV_ASSERT(_bleClient != nullptr, "CubeBleClient.StartScanning.NullBleClient");
+
+  PRINT_NAMED_WARNING("CubeBleClient","Starting scan so forcing disconnection");
+  _bleClient->DisconnectFromCube();
+
+
   _bleClient->StartScanForCubes();
 }
 
@@ -209,7 +214,7 @@ void CubeBleClient::StopScanning()
 {
   PRINT_NAMED_INFO("CubeBleClient.StopScanning",
                    "Stopping scan for available cubes");
-  
+
   // Sending from this thread for now. May need to queue this and
   // send it on the client thread if ipc client is not thread safe.
   DEV_ASSERT(_bleClient != nullptr, "CubeBleClient.StopScanning.NullBleClient");
@@ -224,7 +229,7 @@ bool CubeBleClient::SendMessageToLightCube(const BleFactoryId& factoryId, const 
                  "Can only send a cube message to cube with address %s (requested address %s)",
                  _cubeAddress.c_str(),
                  factoryId.c_str());
-  
+
   u8 buff[msg.Size()];
   msg.Pack(buff, msg.Size());
   const auto& msgVec = std::vector<u8>(buff, buff + msg.Size());
@@ -244,15 +249,15 @@ bool CubeBleClient::ConnectToCube(const BleFactoryId& factoryId)
                         _cubeAddress.c_str());
     return false;
   }
-  
+
   DEV_ASSERT(_cubeAddress.empty(), "CubeBleClient.ConnectToCube.CubeAddressNotEmpty");
-  
+
   _cubeAddress = factoryId;
-  
+
   PRINT_NAMED_INFO("CubeBleClient.ConnectToCube.AttemptingToConnect",
                    "Attempting to connect to cube %s",
                    _cubeAddress.c_str());
-  
+
   // Sending from this thread for now. May need to queue this and
   // send it on the client thread if ipc client is not thread safe.
   DEV_ASSERT(_bleClient != nullptr, "CubeBleClient.ConnectToCube.NullBleClient");
@@ -268,13 +273,13 @@ bool CubeBleClient::DisconnectFromCube(const BleFactoryId& factoryId)
                         "Cannot disconnect - we are not connected to any cubes!");
     return false;
   }
-  
+
   DEV_ASSERT_MSG(factoryId == _cubeAddress,
                  "CubeBleClient.DisconnectFromCube.WrongAddress",
                  "We are not connected to cube with ID %s (current connected cube ID %s)",
                  factoryId.c_str(),
                  _cubeAddress.c_str());
-  
+
   // Sending from this thread for now. May need to queue this and
   // send it on the client thread if ipc client is not thread safe.
   DEV_ASSERT(_bleClient != nullptr, "CubeBleClient.DisconnectFromCube.NullBleClient");

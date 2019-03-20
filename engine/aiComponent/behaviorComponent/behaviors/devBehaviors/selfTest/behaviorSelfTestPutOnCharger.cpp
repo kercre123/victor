@@ -98,7 +98,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPutOnCharger::SelfTestUpdateIn
 
   _isUpsideDown = upsideDown;
 
-  const bool onCharger = robot.IsOnChargerPlatform();
+  const bool onCharger = robot.IsOnChargeContacts();
   if(onCharger)
   {
     SELFTEST_SET_RESULT_WITH_RETURN_VAL(SelfTestResultCode::SUCCESS, SelfTestStatus::Complete);

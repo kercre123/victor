@@ -69,9 +69,6 @@ private:
   // Reset all playpen behaviors and state
   void Reset();
 
-  // Begin the cube connection check
-  void StartCubeConnectionCheck();
-
   // Perform any final checks
   SelfTestResultCode DoFinalChecks();
 
@@ -100,6 +97,8 @@ private:
     Passed
   };
 
+  bool _gotCubeResponse = false;
+  bool _gotWifiResponse = false;
   RadioScanState _radioScanState = RadioScanState::None;
 
 };

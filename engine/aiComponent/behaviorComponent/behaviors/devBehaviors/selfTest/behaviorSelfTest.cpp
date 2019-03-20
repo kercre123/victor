@@ -33,6 +33,8 @@
 #include "util/console/consoleSystem.h"
 #include "util/fileUtils/fileUtils.h"
 
+#include "whiskeyToF/tof.h"
+
 #include <cstddef>
 
 namespace Anki {
@@ -181,8 +183,24 @@ void BehaviorSelfTest::OnBehaviorActivated()
 
   msg.disconnectAfterConnection = true;
   robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
-                  
-  _radioScanState = RadioScanState::WaitingForWifiResult;
+
+  std::function<void(bool)> cubeConnectionCallback = [this](bool success)
+    {
+      PRINT_NAMED_WARNING("CubeCommsComponent","connection callback %d", success);
+      _gotCubeResponse = true;
+      if(success)
+      {
+        _radioScanState = RadioScanState::Passed;
+      }
+    };
+  robot.GetCubeCommsComponent().EnableDiscovery(false);
+  robot.GetCubeCommsComponent().SetBroadcastObjectAvailable(true);
+  robot.GetCubeCommsComponent().SetConnectionChangedCallback(cubeConnectionCallback);
+  robot.GetCubeCommsComponent().EnableDiscovery(true);
+
+  _radioScanState = RadioScanState::Failed;
+
+  ToFSensor::getInstance()->EnableBackgroundTest(false, nullptr);
 
   // Delegate to the first behavior
   _currentBehavior->WantsToBeActivated();
@@ -200,6 +218,8 @@ void BehaviorSelfTest::OnBehaviorDeactivated()
   // Remove the driving animations we pushed
   robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetDebugLabel());
 
+  std::function<void(bool)> callback = nullptr;
+  robot.GetCubeCommsComponent().SetConnectionChangedCallback(callback);
   robot.GetCubeCommsComponent().Disconnect();
 
   Reset();
@@ -432,24 +452,6 @@ void BehaviorSelfTest::HandleMessage(const ExternalInterface::SelfTestBehaviorFa
   }
 }
 
-void BehaviorSelfTest::StartCubeConnectionCheck()
-{
-  // DEPRECATED - Grabbing robot to support current cozmo code, but this should
-  // be removed
-  Robot& robot = GetBEI().GetRobotInfo()._robot;
-
-  std::function<void(bool)> cubeConnectionCallback = [this](bool success)
-    {
-      _radioScanState = (success ? RadioScanState::Passed : RadioScanState::Failed);
-    };
-  robot.GetCubeCommsComponent().EnableDiscovery(false);
-  robot.GetCubeCommsComponent().SetBroadcastObjectAvailable(true);
-  robot.GetCubeCommsComponent().SetConnectionChangedCallback(cubeConnectionCallback);
-  robot.GetCubeCommsComponent().EnableDiscovery(true);
-
-  _radioScanState = RadioScanState::WaitingForCubeResult;
-}
-
 void BehaviorSelfTest::HandleWhileActivated(const GameToEngineEvent& event)
 {
   const auto& tag = event.GetData().GetTag();
@@ -461,6 +463,7 @@ void BehaviorSelfTest::HandleWhileActivated(const GameToEngineEvent& event)
   }
 
   const auto& payload = event.GetData().Get_WifiConnectResponse();
+  _gotWifiResponse = true;
 
   // Fall back to a cube connection check should wifi fail
   // for normal users this is expected as the wifi checks for a hardcoded network
@@ -469,8 +472,6 @@ void BehaviorSelfTest::HandleWhileActivated(const GameToEngineEvent& event)
     PRINT_NAMED_INFO("BehaviorSelfTest.HandleWifiConnectResponse",
                      "Connection request failed with %u, falling back to cube check",
                      payload.status_code);
-
-    StartCubeConnectionCheck();
   }
   else
   {

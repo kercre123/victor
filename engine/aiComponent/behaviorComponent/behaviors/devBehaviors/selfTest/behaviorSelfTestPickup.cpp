@@ -86,10 +86,10 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPickup::SelfTestUpdateInternal
       else if(now - _upsideDownStartTime_ms > SelfTestConfig::kTimeToBeUpsideDown_ms)
       {
         const auto& cliffSenseComp = robot.GetCliffSensorComponent();
-        if(cliffSenseComp.IsCliffDetected(CliffSensor::CLIFF_FL) &&
-           cliffSenseComp.IsCliffDetected(CliffSensor::CLIFF_FR) &&
-           cliffSenseComp.IsCliffDetected(CliffSensor::CLIFF_BL) &&
-           cliffSenseComp.IsCliffDetected(CliffSensor::CLIFF_BR))
+        const auto& cliffData = cliffSenseComp.GetCliffDataRaw();
+        const CliffSensorComponent::CliffSensorDataArray thresh({{50, 50, 50, 50}});
+        const bool cliff = (cliffData <= thresh);
+        if(cliff)
         {
           // All cliff sensors should be seeing cliffs and have values below a threshold
           const auto& cliffData = cliffSenseComp.GetCliffDataRaw();

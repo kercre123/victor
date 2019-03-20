@@ -57,7 +57,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestButton::SelfTestUpdateInternal
   const bool buttonReleased = _buttonPressed && !buttonPressed;
   if(buttonReleased && !_buttonStartedPressed)
   {
-    const bool onCharger = robot.IsOnChargerPlatform();
+    const bool onCharger = robot.IsOnChargeContacts();
     if(onCharger)
     {
       // Once the button has been pressed, wait until we have stabilized

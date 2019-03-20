@@ -102,23 +102,37 @@ void BehaviorSelfTestSoundCheck::AlwaysHandleInScope(const RobotToEngineEvent& e
     {
       const auto& fftResult = payload.result[i];
       PRINT_NAMED_INFO("BehaviorSelfTestDriftCheck.HandleAudioFFTResult.Result",
-                       "FFT result for channel %u : %u",
-                       i, fftResult);
+                       "FFT result for channel %u : %uhz at %f loudness",
+                       i, fftResult.freq_hz, fftResult.loudness);
 
       // Check that the most prominent frequency heard by this mic is
       // near the expected frequency
-      if(!Util::IsNear((float)fftResult,
+      if(!Util::IsNear((float)fftResult.freq_hz,
                        SelfTestConfig::kFFTExpectedFreq_hz,
                        SelfTestConfig::kFFTFreqTolerance_hz))
       {
         ++count;
         res = channelToMic[i];
-        PRINT_NAMED_WARNING("BehaviorSelfTestDriftCheck.HandleAudioFFTResult.FFTFailed",
-                            "%s picked up freq %u which is outside %u +/- %u",
+        PRINT_NAMED_WARNING("BehaviorSelfTestDriftCheck.HandleAudioFFTResult.FFTFailedFreq",
+                            "%s picked up freq %u(%f) which is outside %u +/- %u",
                             EnumToString(res),
-                            fftResult,
+                            fftResult.freq_hz,
+                            fftResult.loudness,
                             SelfTestConfig::kFFTExpectedFreq_hz,
                             SelfTestConfig::kFFTFreqTolerance_hz);
+      }
+
+      // Check that the most prominent frequency heard by this mic is "loud" enough
+      if(fftResult.loudness < SelfTestConfig::kFFTMinLoudnessThresh)
+      {
+        res = channelToMic[i];
+        PRINT_NAMED_WARNING("BehaviorSelfTestDriftCheck.HandleAudioFFTResult.FFTFailedLoudness",
+                            "%s picked up freq %u at loudness %f which is less than %f",
+                            EnumToString(res),
+                            fftResult.freq_hz,
+                            fftResult.loudness,
+                            SelfTestConfig::kFFTMinLoudnessThresh);
+
       }
     }
 

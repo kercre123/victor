@@ -340,7 +340,7 @@ DriveToAndMountChargerAction::DriveToAndMountChargerAction(const ObjectID& objec
   AddAction(driveToAction);
   AddAction(new TurnToAlignWithChargerAction(objectID));
 
-  auto mountAction = new MountChargerAction(objectID, useCliffSensorCorrection);
+  auto mountAction = new MountChargerAction(objectID, useCliffSensorCorrection, enableDockingAnims);
   AddAction(mountAction);
 }
 

@@ -58,7 +58,7 @@
 #define LATTICE_PLANNER_RPLAN_PADDING_SUBTRACT 5.0
 
 // scaling for robot size when inserting for Configuration Space expansion (to avoid clipping corners)
-#define LATTICE_PLANNER_ROBOT_EXPANSION_SCALING 1.2 
+#define LATTICE_PLANNER_ROBOT_EXPANSION_SCALING 1.2
 
 // whether this planner should consider multiple goals
 // todo: probably have this decided in the calling functions based on the world state/goal types/etc
@@ -181,7 +181,7 @@ public:
   EPlannerStatus CheckPlanningStatus() const;
 
   bool GetCompletePath(const Pose3d& currentRobotPose, Planning::Path &path, Planning::GoalID& selectedTargetIndex);
-  
+
   // Compares against context's env, returns true if segments in path comprise a safe plan.
   // Clears and fills in a list of path segments whose cumulative penalty doesnt exceed the max penalty
   bool CheckIsPathSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const;
@@ -209,7 +209,7 @@ public:
   std::recursive_mutex _contextMutex;
   std::condition_variable_any _threadRequest;
   volatile bool _timeToPlan = false;
-  
+
   // this is a bool used to clean up and stop the thread (entirely)
   volatile bool _stopThread = false;
 
@@ -221,7 +221,7 @@ public:
 
   // whether to run multi-goal planner (true) or just plan with respect to the nearest fatal-penalty-free goal
   bool _multiGoalPlanning = LATTICE_PLANNER_MULTIPLE_GOALS;
-  
+
   // if true, always block when starting planning to return in the same tick
   bool _isSynchronous = false;
 
@@ -229,10 +229,10 @@ public:
   volatile EPlannerStatus _internalComputeStatus = EPlannerStatus::Error;
 
   const LatticePlanner* _parent;
-  
+
   // the chosen best goal out of _targetPoses_orig
   GoalID _selectedGoalID = 0;
-  
+
   // the last timestamp at which blockworld objects were imported
   TimeStamp_t _timeOfLastObjectsImport = 0;
 
@@ -242,9 +242,9 @@ public:
   std::vector<Signal::SmartHandle> _signalHandles;
 };
 
-//////////////////////////////////////////////////////////////////////////////// 
+////////////////////////////////////////////////////////////////////////////////
 // LatticePlanner functions
-//////////////////////////////////////////////////////////////////////////////// 
+////////////////////////////////////////////////////////////////////////////////
 
 LatticePlanner::LatticePlanner(Robot* robot, Util::Data::DataPlatform* dataPlatform)
   : IPathPlanner("LatticePlanner")
@@ -305,9 +305,9 @@ EComputePathStatus LatticePlanner::ComputePathHelper(const Pose3d& startPose,
     PRINT_NAMED_WARNING("LatticePlanner.ComputePathHelper.PreviousPlanRequested",
                         "timeToPlan already set, so another compute path call is already waiting to signal the planner");
     return EComputePathStatus::Error;
-  }    
+  }
 
-  
+
   if( LATTICE_PLANNER_THREAD_DEBUG ) {
     PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug", "ComputePathHelper: got lock");
   }
@@ -322,10 +322,10 @@ EComputePathStatus LatticePlanner::ComputePathHelper(const Pose3d& startPose,
     return PLAN_NEEDED_BUT_PLAN_FAILURE;
   }
    */
-  
+
   // Save original target pose
   _impl->_targetPoses_orig = targetPoses;
-  
+
   _impl->ImportBlockworldObstaclesIfNeeded(false);
 
   // Clear plan whenever we attempt to set goal
@@ -333,7 +333,7 @@ EComputePathStatus LatticePlanner::ComputePathHelper(const Pose3d& startPose,
 
   _impl->_context.goals_c.clear();
   _impl->_context.goals_c.reserve(targetPoses.size());
-  
+
   for(GoalID goalID = 0; goalID<targetPoses.size(); ++goalID) {
     std::pair<GoalID, State_c> goal_cPair(std::piecewise_construct,
                                           std::forward_as_tuple(goalID),
@@ -344,7 +344,7 @@ EComputePathStatus LatticePlanner::ComputePathHelper(const Pose3d& startPose,
       _impl->_context.goals_c.emplace_back(std::move(goal_cPair));
     }
   }
-  
+
 
   if( _impl->_context.goals_c.empty() ) {
 
@@ -406,41 +406,41 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
     PRINT_NAMED_WARNING("LatticePlanner.ComputePath.PreviousPlanRequested",
                         "timeToPlan already set, so another compute path call is already waiting to signal the planner");
     return EComputePathStatus::Error;
-  }    
+  }
 
   _impl->ImportBlockworldObstaclesIfNeeded(false, &NamedColors::BLOCK_BOUNDING_QUAD);
 
   // either search among all goals or just one
-  
+
   if( _impl->_multiGoalPlanning ) {
-  
+
     // ComputePathHelper will only copy a goal from targetPoses to the LatticePlannerImpl context
     // if it's not in collision (wrt MAX_OBSTACLE_COST), so just pass all targetPoses to ComputePathHelper
     EComputePathStatus res = ComputePathHelper(startPose, targetPoses);
     return res;
-    
+
   } else {
-  
+
     // Select the closest goal without a soft penalty. If that doesnt exist, select the closest non-colliding goal
 
     size_t numTargetPoses = targetPoses.size();
     GoalID bestTargetID = 0;
     float closestDist2 = 0;
     bool found = false;
-    
+
     for(auto maxPenalty : (float[]){0.01f, MAX_OBSTACLE_COST}) {
-      
+
       bestTargetID = 0;
       closestDist2 = 0;
       for(GoalID i=0; i<numTargetPoses; ++i) {
         float dist2 = (targetPoses[i].GetTranslation() - startPose.GetTranslation()).LengthSq();
-        
+
         if(!found || dist2 < closestDist2) {
           State_c target_c(targetPoses[i].GetTranslation().x(),
                            targetPoses[i].GetTranslation().y(),
                            targetPoses[i].GetRotationAngle<'Z'>().ToFloat());
           State target(_impl->_context.env.State_c2State(target_c));
-          
+
           if(_impl->_context.env.GetCollisionPenalty(target) < maxPenalty) {
             closestDist2 = dist2;
             bestTargetID = i;
@@ -448,7 +448,7 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
           }
         }
       }
-      
+
       if(found) {
         // defer to the single-goal version of this method using the closest non-colliding goal
         EComputePathStatus res = ComputePath(startPose, targetPoses[bestTargetID]);
@@ -456,12 +456,12 @@ EComputePathStatus LatticePlanner::ComputePath(const Pose3d& startPose,
         return res;
       }
     }
-    
+
     PRINT_CH_INFO("Planner", "LatticePlanner.ComputePath.NoValidTarget",
                   "could not find valid target out of %lu possible targets",
                   (unsigned long)numTargetPoses);
     return EComputePathStatus::Error;
-    
+
   }
 }
 
@@ -474,7 +474,7 @@ EComputePathStatus LatticePlanner::ComputeNewPathIfNeeded(const Pose3d& startPos
   }
 
   std::lock_guard<std::recursive_mutex> lg( _impl->_contextMutex, std::adopt_lock);
-  
+
   EComputePathStatus ret = _impl->StartPlanning(startPose, forceReplanFromScratch);
 
   return ret;
@@ -485,7 +485,7 @@ bool LatticePlanner::PreloadObstacles()
   _impl->ImportBlockworldObstaclesIfNeeded(false);
   return true;
 }
-  
+
 bool LatticePlanner::CheckIsPathSafe(const Planning::Path& path, float startAngle, Planning::Path& validPath) const
 {
   return _impl->CheckIsPathSafe(path, startAngle, validPath);
@@ -545,9 +545,9 @@ void LatticePlanner::SetArtificialPlannerDelay_ms(int ms)
   PRINT_CH_INFO("Planner", "LatticePlanner.SetDelay", "Adding %dms of artificial delay", ms);
 }
 
-//////////////////////////////////////////////////////////////////////////////// 
+////////////////////////////////////////////////////////////////////////////////
 // LatticePlannerImpl functions
-//////////////////////////////////////////////////////////////////////////////// 
+////////////////////////////////////////////////////////////////////////////////
 
 void LatticePlannerImpl::DoPlanning()
 {
@@ -579,7 +579,7 @@ void LatticePlannerImpl::DoPlanning()
   }
 
   using namespace std::chrono;
-  
+
   high_resolution_clock::time_point start = high_resolution_clock::now();
   const bool result = _planner.Replan(LATTICE_PLANNER_MAX_EXPANSIONS, &_runPlanner);
   high_resolution_clock::time_point end = high_resolution_clock::now();
@@ -591,7 +591,7 @@ void LatticePlannerImpl::DoPlanning()
   auto duration_ms = duration_cast<std::chrono::milliseconds>(end - start);
 
   const std::string& eventName = result ? "robot.lattice_planner_success" : "robot.lattice_planner_failure";
-  
+
   Util::sEventF(eventName.c_str(),
                 {{DDATA, std::to_string(duration_ms.count()).c_str()}},
                 "%d:%d",
@@ -743,12 +743,12 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
 
   const TimeStamp_t timeOfLastChange = _robot->GetMapComponent().GetCurrentMemoryMap()->GetLastChangedTimeStamp();
   const bool didObjectsChange = (_timeOfLastObjectsImport < timeOfLastChange);
-  
+
   if(!isReplanning ||  // get obstacles if theyve changed or we're not replanning
      didObjectsChange)
   {
     _timeOfLastObjectsImport = timeOfLastChange;
-    
+
     // Configuration of memory map to check for obstacles
     constexpr MemoryMapTypes::FullContentArray typesToCalculateBordersWithInterestingEdges =
     {
@@ -766,8 +766,8 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     };
     static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithInterestingEdges),
       "This array does not define all types once and only once.");
-      
-      
+
+
     constexpr MemoryMapTypes::FullContentArray typesToCalculateBordersWithNotInterestingEdges =
     {
       {MemoryMapTypes::EContentType::Unknown               , true},
@@ -801,24 +801,24 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     };
     static_assert(MemoryMapTypes::IsSequentialArray(typesToCalculateBordersWithProx),
       "This array does not define all types once and only once.");
-    
+
     // GetNavMap Polys
     std::vector<ConvexPolygon> convexHulls;
     INavMap* memoryMap = _robot->GetMapComponent().GetCurrentMemoryMap();
-    
-    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithInterestingEdges, MemoryMapTypes::EContentType::InterestingEdge, convexHulls);    
+
+    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithInterestingEdges, MemoryMapTypes::EContentType::InterestingEdge, convexHulls);
     GetConvexHullsByType(memoryMap, typesToCalculateBordersWithNotInterestingEdges, MemoryMapTypes::EContentType::NotInterestingEdge, convexHulls);
-    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithProx, MemoryMapTypes::EContentType::ObstacleProx, convexHulls);    
-   
+    GetConvexHullsByType(memoryMap, typesToCalculateBordersWithProx, MemoryMapTypes::EContentType::ObstacleProx, convexHulls);
+
     MemoryMapTypes::MemoryMapDataConstList observableObjectData;
-    MemoryMapTypes::NodePredicate pred = 
+    MemoryMapTypes::NodePredicate pred =
       [](MemoryMapTypes::MemoryMapDataPtr d) -> bool
       {
           return (d->type == MemoryMapTypes::EContentType::ObstacleObservable);
       };
-      
+
     memoryMap->FindContentIf(pred, observableObjectData);
-    for (const auto& nodeData : observableObjectData) 
+    for (const auto& nodeData : observableObjectData)
     {
       auto castPtr = MemoryMapData::MemoryMapDataCast<const MemoryMapData_ObservableObject>( nodeData );
       convexHulls.emplace_back( castPtr->boundingPoly );
@@ -828,17 +828,17 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     for(auto& hull : convexHulls) {
       hull.RadialExpand(obstaclePadding);
       hull.SetClockDirection(ConvexPolygon::CW);
-    }  
-    
+    }
+
     // clear old obstacles
     // note: (mrw) This is most definitely a hack. Right now VizManager does not enforce that new objects
-    //       are inserted with unique IDs. Since the vizManager renders polygons as paths, for now, to 
-    //       prevent ID collision with the robot path, always set our start index to be one higher the the 
-    //       robot ID (this relies on any call the render the robot path to set its ID to the robot ID, 
-    //       but that cannot be enforced here). See ticket (VIC-647) for generating unique ids in vizManager 
+    //       are inserted with unique IDs. Since the vizManager renders polygons as paths, for now, to
+    //       prevent ID collision with the robot path, always set our start index to be one higher the the
+    //       robot ID (this relies on any call the render the robot path to set its ID to the robot ID,
+    //       but that cannot be enforced here). See ticket (VIC-647) for generating unique ids in vizManager
     //       to prevent future collisions.
 
-    unsigned int startIdx = _robot->GetID() + 1;      
+    unsigned int startIdx = _robot->GetID() + 1;
     if(vizColor != nullptr) {
       for (int i = startIdx; i <= _context.env.GetNumObstacles() + startIdx; ++i)
       {
@@ -860,12 +860,12 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
       Pose3d robotDriveCenterPose = Pose3d(thetaRads, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f});
       Pose3d robotOriginPose;
       _robot->ComputeOriginPose(robotDriveCenterPose, robotOriginPose);
-      
+
       // Get the robot polygon, and inflate it by a bit to handle error
       Poly2f robotPoly;
       robotPoly.ImportQuad2d(_robot->GetBoundingQuadXY(robotOriginPose, robotPadding)
                                     .Scale(LATTICE_PLANNER_ROBOT_EXPANSION_SCALING) );
-      
+
       for(const auto& boundingPoly : convexHulls) {
         _context.env.AddObstacleWithExpansion(boundingPoly, robotPoly, theta, DEFAULT_OBSTACLE_PENALTY);
 
@@ -901,11 +901,11 @@ void LatticePlannerImpl::ImportBlockworldObstaclesIfNeeded(const bool isReplanni
     //                  numAngles);
   }
   else {
-    PRINT_CH_DEBUG("Planner", "LatticePlanner.ImportBlockworldObstaclesIfNeeded.NoUpdateNeeded",
-                   "robot padding %f, obstacle padding %f , didBlocksChange %d",
-                   robotPadding,
-                   obstaclePadding,
-                   didObjectsChange);
+    // PRINT_CH_DEBUG("Planner", "LatticePlanner.ImportBlockworldObstaclesIfNeeded.NoUpdateNeeded",
+    //                "robot padding %f, obstacle padding %f , didBlocksChange %d",
+    //                robotPadding,
+    //                obstaclePadding,
+    //                didObjectsChange);
   }
 }
 
@@ -939,7 +939,7 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
 
   DEV_ASSERT(startPose.IsRoot() || startPose.GetParent().IsRoot(),
              "LatticePlannerImpl.StartPlanning.StartPoseNotWrtRoot");
-  
+
   State_c currentRobotState(startPose.GetTranslation().x(),
                             startPose.GetTranslation().y(),
                             startPose.GetRotationAngle<'Z'>().ToFloat());
@@ -1051,7 +1051,7 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
 
       if( _isSynchronous ) {
         PRINT_CH_INFO("Planner", "LatticePlanner.RunSynchronous.DoPlanning",
-                      "Do planning now in StartPlanning...");        
+                      "Do planning now in StartPlanning...");
         DoPlanning();
       }
       else {
@@ -1065,7 +1065,7 @@ EComputePathStatus LatticePlannerImpl::StartPlanning(const Pose3d& startPose,
       PRINT_CH_INFO("Planner", "LatticePlanner.ThreadDebug",
                     "StartPlanning: return running (release lock)");
     }
-    
+
     return EComputePathStatus::Running;
   }
   else {
@@ -1130,14 +1130,14 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
   PRINT_CH_DEBUG("Planner", "LatticePlannerImpl", "total path:");
   _context.env.AppendToPath(_totalPlan, path, planIdx);
   path.PrintPath();
- 
-  
+
+
   // Do final check on how close the plan's goal angle is to the originally requested goal angle
   // and either add a point turn at the end or modify the last point turn action.
   u8 numSegments = path.GetNumSegments();
   assert(_selectedGoalID < _targetPoses_orig.size());
   Radians desiredGoalAngle = _targetPoses_orig[_selectedGoalID].GetRotationAngle<'Z'>();
-    
+
   if (numSegments > 0) {
 
     // Get last non-point turn segment of path
@@ -1145,11 +1145,11 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
 
     f32 end_x, end_y, end_angle;
     lastSeg.GetEndPose(end_x, end_y, end_angle);
-      
+
     while(lastSeg.GetType() == Planning::PST_POINT_TURN) {
       path.PopBack(1);
       --numSegments;
-        
+
       if (numSegments > 0) {
         lastSeg = path[numSegments-1];
         lastSeg.GetEndPose(end_x, end_y, end_angle);
@@ -1157,20 +1157,20 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
         break;
       }
     }
-      
+
     Radians plannedGoalAngle(end_angle);
     f32 angDiff = (desiredGoalAngle - plannedGoalAngle).ToFloat();
-      
-    
+
+
     f32 turnDir = angDiff > 0 ? 1.f : -1.f;
     f32 rotSpeed = TERMINAL_POINT_TURN_SPEED * turnDir;
-      
-    PRINT_CH_INFO("Planner", 
+
+    PRINT_CH_INFO("Planner",
                   "LatticePlanner.ReplanIfNeeded.FinalAngleCorrection",
                   "LatticePlanner: Final angle off by %f rad. DesiredAng = %f, endAngle = %f, rotSpeed = %f. "
                   "Adding point turn.",
                   angDiff, desiredGoalAngle.ToFloat(), end_angle, rotSpeed );
-      
+
     path.AppendPointTurn(end_x, end_y, plannedGoalAngle.ToFloat(), desiredGoalAngle.ToFloat(),
                          rotSpeed,
                          TERMINAL_POINT_TURN_ACCEL,
@@ -1180,7 +1180,7 @@ bool LatticePlannerImpl::GetCompletePath(const Pose3d& currentRobotPose,
 
   }
 
-  return true;  
+  return true;
 }
 
 

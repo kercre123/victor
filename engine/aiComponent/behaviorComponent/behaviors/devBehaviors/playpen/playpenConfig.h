@@ -47,16 +47,16 @@ static f32  kTimeToDisplayResultOnFace_ms = 10000;
 // Whether or not to skip checking we have heard from an active object
 static bool kSkipActiveObjectCheck        = false;
 
-// How long to discovery active objects 
+// How long to discovery active objects
 static f32  kActiveObjectDiscoveryTime_s  = 20.f;
- 
+
 // Whether or not to need touch to start playpen
 static bool kUseTouchToStart              = false;
 
 // How long the robot has to be touched until playpen starts
 static u32  kTouchDurationToStart_ms      = 1000;
 
-// Whether or not to need a button press to start 
+// Whether or not to need a button press to start
 static bool kUseButtonToStart             = true;
 
 // How long to record touch sensor data
@@ -88,7 +88,7 @@ static f32 kMaxMinTouchSensorFiltDiff = 11.f;
 static f32 kTouchSensorFiltStdDevThresh = 1.8f;
 
 static std::string kWifiSSID = "AnkiRobits";
- 
+
 // ----------InitChecks----------
 // Whether or not to check firmware version
 static bool      kCheckFirmwareVersion = true;

@@ -46,7 +46,7 @@ void BehaviorSelfTestScreenAndBackpack::TransitionToButtonCheck()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  const bool onCharger = robot.IsOnChargerPlatform();
+  const bool onCharger = robot.IsOnChargeContacts();
   if(onCharger)
   {
     PRINT_NAMED_WARNING("BehaviorSelfTestScreenAndBackpack.TransitionToButtonCheck.StillOnCharger","");
@@ -82,7 +82,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestScreenAndBackpack::SelfTestUpd
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  const bool onCharger = robot.IsOnChargerPlatform();
+  const bool onCharger = robot.IsOnChargeContacts();
   if(onCharger || IsControlDelegated())
   {
     return SelfTestStatus::Running;
@@ -111,7 +111,7 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestScreenAndBackpack::SelfTestUpd
 
     WaitForLambdaAction* cancel = new WaitForLambdaAction([drivePtr](Robot& robot)
       {
-        if(robot.IsOnChargerPlatform())
+        if(robot.IsOnChargeContacts())
         {
           if(auto drive = drivePtr.lock())
           {

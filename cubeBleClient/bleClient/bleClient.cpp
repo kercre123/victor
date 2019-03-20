@@ -12,7 +12,7 @@
  * Copyright: Anki, Inc. 2018
  *
  **/
-  
+
 #include "anki-ble/common/anki_ble_uuids.h"
 #include "bleClient.h"
 #include "util/logging/logging.h"
@@ -24,7 +24,7 @@ namespace Cozmo {
 namespace {
   // If we're not connected, keep trying to connect at this rate
   const ev_tstamp kConnectionCheckTime_sec = 0.5f;
-  
+
   // If we're already connected, check for disconnection at this rate
   const ev_tstamp kDisconnectionCheckTime_sec = 5.f;
 }
@@ -43,7 +43,7 @@ BleClient::BleClient(struct ev_loop* loop)
   _scanningTimer.set<BleClient, &BleClient::ScanningTimerCallback>(this);
 }
 
-  
+
 void BleClient::Start()
 {
   // Create a thread which will run the ev_loop for server comms
@@ -52,22 +52,22 @@ void BleClient::Start()
       PRINT_NAMED_WARNING("BleClient.LoopThread.ConnectFailed",
                           "Unable to connect to ble server - will retry");
     }
-    
+
     // Start a connection check/retry timer to naively just always try to
     // reconnect if we become disconnected
     _connectionCheckTimer.start(kConnectionCheckTime_sec);
-    
+
     // Start async watchers
     _asyncBreakSignal.start();
     _asyncStartScanSignal.start();
-    
+
     // Start the loop (runs 'forever')
     ev_loop(_loop, 0);
   };
-  
+
   // Kick off the thread
   _loopThread = std::thread(threadFunc);
-  
+
 }
 
 void BleClient::Stop()
@@ -75,16 +75,16 @@ void BleClient::Stop()
   if (_connectionId >= 0) {
     DisconnectFromCube();
   }
-  
+
   // Signal the ev loop thread to break out of its loop
   _asyncBreakSignal.send();
-  
+
   // Wait for the loop thread to complete
   if (_loopThread.joinable()) {
     _loopThread.join();
   }
 }
-  
+
 bool BleClient::Send(const std::vector<uint8_t>& msg)
 {
   if (!IsConnected()) {
@@ -92,7 +92,7 @@ bool BleClient::Send(const std::vector<uint8_t>& msg)
                         "Cannot send - not connected to the server");
     return false;
   }
-  
+
   if(_connectionId < 0) {
     PRINT_NAMED_WARNING("BleClient.Send.NotConnectedToCube",
                         "Cannot send - not connected to any cube");
@@ -116,7 +116,7 @@ void BleClient::ConnectToCube(const std::string& address)
                         "Cannot connect to cube - not connected to the server");
     return;
   }
-  
+
   _cubeAddress = address;
   ConnectToPeripheral(_cubeAddress);
 }
@@ -129,7 +129,7 @@ void BleClient::DisconnectFromCube()
                         "Cannot disconnect from cube - not connected to the server");
     return;
   }
-  
+
   if (_connectionId >= 0) {
     Disconnect(_connectionId);
   }
@@ -143,7 +143,7 @@ void BleClient::StartScanForCubes()
                         "Cannot start a scan - not connected to the server");
     return;
   }
-  
+
   _asyncStartScanSignal.send();
 }
 
@@ -156,7 +156,7 @@ void BleClient::StopScanForCubes()
                         "Cannot stop scanning - not connected to the server");
     return;
   }
-  
+
   StopScan();
   if (_scanFinishedCallback) {
     _scanFinishedCallback();
@@ -172,7 +172,7 @@ void BleClient::OnScanResults(int error, const std::vector<BluetoothDaemon::Scan
                         error);
     return;
   }
-  
+
   if (_advertisementCallback) {
     for (const auto& r : records) {
       _advertisementCallback(r.address, r.rssi);
@@ -188,19 +188,20 @@ void BleClient::OnOutboundConnectionChange(const std::string& address,
   PRINT_NAMED_INFO("BleClient.OnOutboundConnectionChange",
                    "addr %s, connected %d, connection_id %d, ",
                    address.c_str(), connected, connection_id);
-  
+
   if (address != _cubeAddress) {
-    return;
+    PRINT_NAMED_WARNING("","OutboundConnectionChange not ignoring change for random cube");
   }
-  
+
   if (connected) {
     _connectionId = connection_id;
+    _cubeAddress = address;
   } else if (_connectionId == connection_id) {
     _connectionId = -1;
     _cubeAddress.clear();
   }
 }
-  
+
 void BleClient::OnReceiveMessage(const int connection_id,
                                  const std::string& characteristic_uuid,
                                  const std::vector<uint8_t>& value)
@@ -208,12 +209,12 @@ void BleClient::OnReceiveMessage(const int connection_id,
   if (connection_id != _connectionId) {
     return;
   }
-  
+
   // We only care about CubeAppRead messages (for now, at least)
   if (!Util::StringCaseInsensitiveEquals(characteristic_uuid, Anki::kCubeAppRead_128_BIT_UUID)) {
     return;
   }
-  
+
   if (_receiveDataCallback) {
     _receiveDataCallback(_cubeAddress, value);
   }
@@ -258,12 +259,12 @@ void BleClient::ConnectionCheckTimerCallback(ev::timer& timer, int revents)
       StartScanForCubes();
     }
   }
-  
+
   // Fire up the timer again for the appropriate interval
   timer.start(IsConnected() ?
               kDisconnectionCheckTime_sec :
               kConnectionCheckTime_sec);
-  
+
   wasConnected = IsConnected();
 }
 

@@ -371,6 +371,10 @@ void CubeCommsComponent::HandleCubeMessage(const BleFactoryId& factoryId, const 
   const auto activeId = it->second;
 
   auto* cube = GetCubeByActiveId(activeId);
+  if(cube == nullptr)
+  {
+    return;
+  }
   DEV_ASSERT(cube != nullptr, "CubeCommsComponent.HandleCubeMessage.CubeNotFound");
 
   cube->lastHeardTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
@@ -495,13 +499,17 @@ void CubeCommsComponent::HandleScanForCubesFinished()
     }
   }
 
-  if(!FACTORY_TEST)
+  // Only attempt to connect to the cube if this is not the factory test
+  // or this is the factory test and the robot has been packed out (cube connection
+  // is needed for the self test)
+  if((FACTORY_TEST && _connectionChangedCallback != nullptr) || !FACTORY_TEST)
   {
     // Connect to the selected cubes
     for (const auto& entry : objectsToConnectTo) {
       const auto& factoryId = entry.second;
       if (!_cubeBleClient->ConnectToCube(factoryId)) {
         PRINT_NAMED_WARNING("CubeCommsComponent.HandleScanForCubesFinished.FailedConnecting", "Failed connecting to cube with factory ID %s", factoryId.c_str());
+
       }
     }
   }

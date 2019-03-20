@@ -30,7 +30,7 @@ namespace SelfTestConfig {
 // Whether or not to ignore any test failures
 // The self test behaviors should be written in such a way so that they can continue running
 // even after something has gone wrong (basically no branching)
-static bool kIgnoreFailures       = false;
+static bool kIgnoreFailures       = true;
 
 // Default timeout to force a self test behavior to end
 static f32  kDefaultTimeout_ms    = 20000;
@@ -110,7 +110,7 @@ static f32 kIMUDriftAngleThreshDeg     = 0.2f;
 
 // ----------Distance Sensor----------
 // Number of distance sensor readings to record
-static u32 kNumDistanceSensorReadingsToRecord       = 1;
+static u32 kNumDistanceSensorReadingsToRecord       = 40;
 
 // Threshold on calculated distance to distance sensor target (using detected marker)
 // +/- this from the expected distance to the object/marker defined in the distance sensor
@@ -120,6 +120,10 @@ static f32 kVisualDistanceToDistanceSensorObjectThresh_mm = 30;
 // Threshold on the raw distance sensor reading from the expected distance defined in the
 // distance sensor behavior json file
 static f32 kDistanceSensorReadingThresh_mm = 20;
+
+// Angle to move the head to when doing the distance sensor check
+// Whiskey ToF is angled 11 degrees down so move head to 11 degrees so ToF is looking forwards
+static f32 kDistanceSensorHeadAngle_rad = DEG_TO_RAD(11);
 
 // Bias adjustment for raw distance sensor reading when comparing to visual distance
 static f32 kDistanceSensorBiasAdjustment_mm = 0;
@@ -147,6 +151,11 @@ static u32 kFFTExpectedFreq_hz         = 1024;
 
 // The allowed +/- deviation of the FFT frequency from the expected value
 static u32 kFFTFreqTolerance_hz        = 20;
+
+// The minimum loudness/amplitude of the most prominent frequency found
+// by the FFT. Unknown units, value acquired through testing good robots
+// compared to a robot without mic holes
+static f32 kFFTMinLoudnessThresh       = 1000000000000.f;
 
 // The charger marker's last observed time is allowed to be this old compared to the latest processed image
 static u32 kChargerMarkerLastObservedTimeThresh_ms = 500;

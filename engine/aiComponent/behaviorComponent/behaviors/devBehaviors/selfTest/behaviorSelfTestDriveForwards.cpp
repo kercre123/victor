@@ -42,7 +42,7 @@ void BehaviorSelfTestDriveForwards::TransitionToOffChargerChecks()
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
-  const bool onCharger = robot.IsOnChargerPlatform();
+  const bool onCharger = robot.IsOnChargeContacts();
   if(onCharger)
   {
     PRINT_NAMED_WARNING("BehaviorSelfTestDriveForwards.TransitionToOffChargerChecks.StillOnCharger","");

@@ -18,10 +18,11 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/sensors/rangeSensorComponent.h"
 #include "engine/components/visionComponent.h"
-#include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 
 #include "coretech/common/engine/jsonTools.h"
+
+#include "whiskeyToF/tof.h"
 
 namespace Anki {
 namespace Cozmo {
@@ -61,6 +62,7 @@ BehaviorSelfTestLookAtCharger::BehaviorSelfTestLookAtCharger(const Json::Value& 
     PRINT_NAMED_ERROR("BehaviorSelfTestLookAtCharger.Constructor.MissingConfigKey",
                       "Missing %s key from SelfTestLookAtCharger Config", kExpectedDistKey.c_str());
   }
+  _origExpectedDistanceToObject_mm = _expectedDistanceToObject_mm;
 
   JsonTools::GetValueOptional(config, kDistToDriveKey, _distToDrive_mm);
 
@@ -199,8 +201,17 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestLookAtCharger::SelfTestUpdateI
 
 void BehaviorSelfTestLookAtCharger::OnBehaviorDeactivated()
 {
+  ToFSensor::getInstance()->StopRanging([this](ToFSensor::CommandResult res)
+                                        {
+                                          if(res != ToFSensor::CommandResult::Success)
+                                          {
+                                            SELFTEST_SET_RESULT(SelfTestResultCode::STOP_TOF_FAILED);
+                                          }
+                                        });
+
   _startingAngle = 0;
   _numRecordedReadingsLeft = -1;
+  _expectedDistanceToObject_mm = _origExpectedDistanceToObject_mm;
 }
 
 IActionRunner* BehaviorSelfTestLookAtCharger::CreateRefineTurn()
@@ -258,6 +269,8 @@ IActionRunner* BehaviorSelfTestLookAtCharger::CreateRefineTurn()
 
   VisuallyVerifyObjectAction* verify = new VisuallyVerifyObjectAction(objectID);
   action->AddAction(verify);
+
+  action->AddAction(new WaitAction(3));
 
   return action;
 }
@@ -325,6 +338,7 @@ void BehaviorSelfTestLookAtCharger::TransitionToApproachMarker()
       SELFTEST_SET_RESULT(SelfTestResultCode::CHARGER_NOT_FOUND);
     }
 
+    CompoundActionSequential* seq = new CompoundActionSequential();
     // Copied from DriveToAndMountChargerAction
     DriveToObjectAction* action = new DriveToObjectAction(object->GetID(),
                                                           PreActionPose::ActionType::DOCKING,
@@ -334,13 +348,38 @@ void BehaviorSelfTestLookAtCharger::TransitionToApproachMarker()
     action->SetPreActionPoseAngleTolerance(DEG_TO_RAD(15.f));
     action->DoPositionCheckOnPathCompletion(false);
 
-    DelegateIfInControl(action, [this](){ TransitionToRefineTurnAfterApproach(); });
+    Pose3d objectWrtRobot = object->GetPose();
+    (void)object->GetPose().GetWithRespectTo(robot.GetPose(), objectWrtRobot);
+
+    const float dist_mm = objectWrtRobot.GetTranslation().x();
+    PRINT_NAMED_WARNING("","DRIVING %f", dist_mm);
+    DriveStraightAction* drive = new DriveStraightAction(dist_mm);
+    _expectedDistanceToObject_mm -= dist_mm;
+
+    seq->AddAction(action);
+    seq->AddAction(drive);
+
+    DelegateIfInControl(seq, [this](){ TransitionToRefineTurnAfterApproach(); });
   }
 }
 
 void BehaviorSelfTestLookAtCharger::TransitionToRecordSensor()
 {
-  _numRecordedReadingsLeft = SelfTestConfig::kNumDistanceSensorReadingsToRecord;
+  TurnInPlaceAction* turn = new TurnInPlaceAction(DEG_TO_RAD(12), false);
+  MoveHeadToAngleAction* head = new MoveHeadToAngleAction(SelfTestConfig::kDistanceSensorHeadAngle_rad);
+  CompoundActionSequential* action = new CompoundActionSequential({turn, head});
+
+  DelegateIfInControl(action, [this](){
+      ToFSensor::getInstance()->StartRanging([this](ToFSensor::CommandResult res)
+        {
+          if(res != ToFSensor::CommandResult::Success)
+          {
+            SELFTEST_SET_RESULT(SelfTestResultCode::START_TOF_FAILED);
+          }
+        });
+
+      _numRecordedReadingsLeft = SelfTestConfig::kNumDistanceSensorReadingsToRecord;
+    });
 }
 
 void BehaviorSelfTestLookAtCharger::TransitionToTurnBack()

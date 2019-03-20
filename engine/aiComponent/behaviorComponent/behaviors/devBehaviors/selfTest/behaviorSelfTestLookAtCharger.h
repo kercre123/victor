@@ -70,6 +70,7 @@ private:
 
   // The expected distance we should be seeing the expected object at
   f32        _expectedDistanceToObject_mm = 0;
+  f32        _origExpectedDistanceToObject_mm = 0;
 
   // The number of distance sensor readings left to record
   int        _numRecordedReadingsLeft     = -1;
