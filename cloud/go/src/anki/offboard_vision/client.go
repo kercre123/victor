@@ -86,7 +86,7 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 
 	// dial server, make it blocking
 	wg.AddFunc(func() {
-		rpcConn, rpcErr = grpc.DialContext(ctx, config.Env.Box, append(dialOpts, grpc.WithBlock())...)
+		rpcConn, rpcErr = grpc.DialContext(ctx, config.Env.OffboardVision, append(dialOpts, grpc.WithBlock())...)
 		if rpcErr == nil {
 			rpcClose = rpcConn.Close
 		}
