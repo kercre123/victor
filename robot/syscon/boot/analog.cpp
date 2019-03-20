@@ -63,6 +63,20 @@ static int total_release = 0;
 static uint16_t volatile adc_values[ADC_CHANNELS];
 bool Analog::button_pressed = false;
 
+static inline void leds_off(void) {
+  // Shifing by 5 is enough to disable LEDs (WHISKEY ONLY)
+  LED_DAT::reset();
+  __nop(); LED_CLK_WIS::set(); __nop(); LED_CLK_WIS::reset();
+  __nop(); LED_CLK_WIS::set(); __nop(); LED_CLK_WIS::reset();
+  __nop(); LED_CLK_WIS::set(); __nop(); LED_CLK_WIS::reset();
+  LED_DAT::set();
+  __nop(); LED_CLK_WIS::set(); __nop(); LED_CLK_WIS::reset();
+  __nop(); LED_CLK_WIS::set(); __nop(); LED_CLK_WIS::reset();
+  __nop(); LED_CLK_WIS::set(); __nop(); LED_CLK_WIS::reset();
+  __nop(); LED_CLK_WIS::set(); __nop(); LED_CLK_WIS::reset();
+  __nop(); LED_CLK_WIS::set(); __nop(); LED_CLK_WIS::reset();
+}
+
 void Analog::init(void) {
   // Calibrate ADC1
   if ((ADC1->CR & ADC_CR_ADEN) != 0) {
@@ -128,7 +142,6 @@ void Analog::init(void) {
   NVIC_SetPriority(ADC1_IRQn, PRIORITY_ADC);
 
   // Configure all our GPIO to what it needs to be
-  #ifdef BOOTLOADER
   nCHG_PWR::type(TYPE_PUSHPULL);
   nCHG_PWR::mode(MODE_OUTPUT);
   nCHG_PWR::reset();
@@ -182,22 +195,20 @@ void Analog::init(void) {
   nVENC_EN::set();
   nVENC_EN::mode(MODE_OUTPUT);
 
-  #ifndef DEBUG
-  // Cap-sense
-  CAPO::reset();
-  CAPO::mode(MODE_OUTPUT);
   CAPI::alternate(2);
   CAPI::mode(MODE_ALTERNATE);
-  
-  // LEDs
-  LED_CLK::type(TYPE_OPENDRAIN);
+
+  #ifndef DEBUG
+  // LEDs (WHISKEY ONLY)
+  LED_DAT::type(TYPE_OPENDRAIN);
   LED_DAT::reset();
-  LED_CLK::reset();
   LED_DAT::mode(MODE_OUTPUT);
-  LED_CLK::mode(MODE_OUTPUT);
+
+  LED_CLK_WIS::type(TYPE_OPENDRAIN);
+  LED_CLK_WIS::reset();
+  LED_CLK_WIS::mode(MODE_OUTPUT);
 
   leds_off();
-  #endif
   #endif
 
   POWER_EN::mode(MODE_INPUT);

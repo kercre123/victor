@@ -13,14 +13,16 @@
 
 static const int SELECTED_CHANNELS = 0
   | ADC_CHSELR_CHSEL2
+  | ADC_CHSELR_CHSEL3
   | ADC_CHSELR_CHSEL4
   | ADC_CHSELR_CHSEL6
   | ADC_CHSELR_CHSEL16
   | ADC_CHSELR_CHSEL17
   ;
 
-static const uint16_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.4);
-static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 200;  // 1s
+static const uint16_t BATTERY_FULL_VOLTAGE = ADC_VOLTS(4.2);
+static const int      CHARGE_FULL_TIME = 200 * 60 * 5;           // 5 minutes
+
 static const uint16_t TRANSITION_POINT = ADC_VOLTS(4.3);
 static const uint32_t FALLING_EDGE = ADC_WINDOW(ADC_VOLTS(3.50), ~0);
 static const int      MINIMUM_ON_CHARGER = 5;
@@ -36,7 +38,6 @@ static const int OVERHEAT_SHUTDOWN = 200 * 30;
 
 static const int POWER_DOWN_TIME = 200 * 5.5;               // Shutdown
 static const int POWER_WIPE_TIME = 200 * 12;                // Enter recovery mode
-static const int MAX_CHARGE_TIME = 200 * 60 * 25;           // 25 minutes
 static const int ON_CHARGER_RESET = 200 * 60;               // 1 Minute
 static const int TOP_OFF_TIME    = 200 * 60 * 60 * 24 * 90; // 90 Days
 
@@ -48,7 +49,10 @@ static bool is_charging = false;
 bool Analog::on_charger = false;
 static bool charge_cutoff = false;
 static bool too_hot = false;
+static bool power_low = false;
+static bool power_battery_shutdown = false;
 static int heat_counter = 0;
+static int low_power_count_up = 0;
 static TemperatureAlarm temp_alarm = TEMP_ALARM_SAFE;
 
 // Assume we started on the charger
@@ -166,6 +170,8 @@ void Analog::transmit(BodyToHead* data) {
   data->battery.charger = EXACT_ADC(ADC_VEXT);
   data->battery.temperature = (int16_t) temperature;
   data->battery.flags = 0
+                      | (power_battery_shutdown ? POWER_BATTERY_SHUTDOWN : 0)
+                      | (power_low ? POWER_IS_TOO_LOW : 0)
                       | (is_charging ? POWER_IS_CHARGING : 0)
                       | (on_charger ? POWER_ON_CHARGER : 0)
                       | (too_hot ? POWER_CHARGER_OVERHEAT : 0)
@@ -249,19 +255,24 @@ static inline bool alarmTimer(uint16_t temp, const int target) {
 
   temp_alarm = alert;
   heat_counter += increment;
-  
+
   return heat_counter > MAX_HEAT_COUNTDOWN;
 }
 
 static void handleTemperature() {
+  int32_t temp_now;
   // Temperature logic
-  int32_t temp_now = *TEMP30_CAL_ADDR - ((EXACT_ADC(ADC_TEMP) * TEMP_VOLT_ADJ) >> 16);
-  temp_now = ((temp_now * TEMP_SCALE_ADJ) >> 16) + 30;
+  if (IS_WHISKEY) {
+    temp_now = (adc_values[ADC_THERMISTOR] * 4) / 112 - 53;
+  } else {
+    temp_now = *TEMP30_CAL_ADDR - ((EXACT_ADC(ADC_TEMP) * TEMP_VOLT_ADJ) >> 16);
+    temp_now = ((temp_now * TEMP_SCALE_ADJ) >> 16) + 30;
 
-  // We are running way too hot, have a bowl of boot loops.
-  if (temp_now >= 70) {
-    Power::setMode(POWER_STOP);
-    return ;
+    // We are running way too hot, have a bowl of boot loops.
+    if (temp_now >= 70) {
+      Power::setMode(POWER_STOP);
+      return ;
+    }
   }
 
   static int samples = 0;
@@ -289,7 +300,7 @@ static void handleTemperature() {
     if (overheated == 0 && disable_vmain) {
       overheated = OVERHEAT_SHUTDOWN;
     }
-  } 
+  }
 
   // NOTE: This counter cannot be reset until it fires
   if (overheated > 0 && --overheated == 0) {
@@ -298,16 +309,65 @@ static void handleTemperature() {
 }
 
 static void handleLowBattery() {
-  if (Analog::on_charger) return ;
+  // Levels
+  static const uint32_t EMERGENCY_POWER_DOWN_POINT = ADC_VOLTS(3.4);
+  static const uint32_t LOW_VOLTAGE_POWER_DOWN_POINT = ADC_VOLTS(3.62);
+  static const int      LOW_VOLTAGE_POWER_DOWN_TIME = 45*200; // 45 seconds
+  static const int      EARLY_POWER_COUNT_TIME = 200; // 1 second
+
+  static const int      POWER_DOWN_BATTERY_TIME = 10*200; // 10 seconds
+  static const int      POWER_DOWN_WARNING_TIME = 4*60*200 + POWER_DOWN_BATTERY_TIME; // 4 minutes
 
   // Low voltage shutdown
   static int power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
-  if (EXACT_ADC(ADC_VMAIN) < LOW_VOLTAGE_POWER_DOWN_POINT) {
-    if (--power_down_timer <= 0) {
+  static int power_down_limit = POWER_DOWN_WARNING_TIME;
+  static int emergency_filter = EARLY_POWER_COUNT_TIME;
+
+  uint32_t vmain = EXACT_ADC(ADC_VMAIN);
+
+  // Emergency power down
+  if (vmain < EMERGENCY_POWER_DOWN_POINT) {
+    if (emergency_filter > 0 && --emergency_filter == 0) {
       Power::setMode(POWER_STOP);
+    }
+    return ;
+  } else {
+    emergency_filter = EARLY_POWER_COUNT_TIME;
+  }
+
+  // Crazy low power logic
+  if (Analog::on_charger) {
+    power_battery_shutdown = false;
+    low_power_count_up = EARLY_POWER_COUNT_TIME;
+
+    // Top-up power down timers while on charger
+    if (power_down_limit < POWER_DOWN_WARNING_TIME) {
+      ++power_down_limit;
+    } else if (power_down_timer < LOW_VOLTAGE_POWER_DOWN_TIME) {
+      ++power_down_timer;
+    } else {
+      power_low = false;
+    }
+  } 
+  // On boot, if voltage is low immediately off charger, shut down right away
+  else if (low_power_count_up < EARLY_POWER_COUNT_TIME) { 
+    if (vmain < LOW_VOLTAGE_POWER_DOWN_POINT) {
+      Power::setMode(POWER_STOP);
+    }
+    low_power_count_up++;
+  } else if (power_low) {
+    if (power_down_limit <= 0) {
+      Power::setMode(POWER_STOP);
+    } else if (--power_down_limit < POWER_DOWN_BATTERY_TIME) {
+      power_battery_shutdown = true;
+    }
+  } else if (vmain < LOW_VOLTAGE_POWER_DOWN_POINT) {
+    if (--power_down_timer <= 0) {
+      power_low = true;
     }
   } else {
     power_down_timer = LOW_VOLTAGE_POWER_DOWN_TIME;
+    power_down_limit = POWER_DOWN_WARNING_TIME;
   }
 }
 
@@ -345,6 +405,7 @@ void Analog::tick(void) {
   static bool delay_disable = true;
   static int on_charger_time = 0;
   static int off_charger_time = 0;
+  static int charging_time = 0;
 
   updateADCCompensate();
   debounceVEXT();
@@ -365,13 +426,29 @@ void Analog::tick(void) {
     // This holds the on_charger_time at zero if charging is disabled
     if (!prevent_charge && on_charger_time++ >= TOP_OFF_TIME) {
       on_charger_time = 0;
+      charging_time = 0;
+    }
+
+    uint16_t vmain_adc = EXACT_ADC(ADC_VMAIN);
+
+    if (vmain_adc > BATTERY_FULL_VOLTAGE) {
+      if (on_charger_time < 200) {
+        charging_time = CHARGE_FULL_TIME;
+      } else {
+        charging_time++;
+      }
+
+      // Unlikely that power_low == true, 
+      // but maybe possible with strategic charger hopping.
+      power_low = false;
     }
   } else if (++off_charger_time >= ON_CHARGER_RESET) {
     on_charger_time = 0;
+    charging_time = 0;
   }
 
-  // 30 minute charge cut-off
-  bool max_charge_time_expired = on_charger_time >= MAX_CHARGE_TIME;
+  // Charge saturation time after desired voltage
+  const bool max_charge_time_expired = charging_time >= CHARGE_FULL_TIME;
   charge_cutoff = prevent_charge || max_charge_time_expired;
 
   // Charger / Battery logic
@@ -388,6 +465,7 @@ void Analog::tick(void) {
       delay_disable = false;
     }
 
+    low_power_count_up = 0;
     overheated = 0;
     heat_counter = 0;
     is_charging = false;
@@ -409,18 +487,18 @@ void Analog::tick(void) {
     if (!delay_disable) {
       ADC1->ISR = ADC_ISR_AWD;
       NVIC_EnableIRQ(ADC1_IRQn);
-      
+
       POWER_EN::pull(PULL_NONE);
       POWER_EN::mode(MODE_INPUT);
     } else {
       delay_disable = false;
     }
 
-    // As long as the 30 min timer hasn't expired (and we're not manually disabling charging)
+    // As long as the timer hasn't expired (and we're not manually disabling charging)
     // continue to report that we are charging.
     is_charging = !max_charge_time_expired && !disable_charger;
   } else {
-    // Battery connected, on charger (charging)  
+    // Battery connected, on charger (charging)
     nCHG_PWR::reset();
 
     POWER_EN::pull(PULL_UP);

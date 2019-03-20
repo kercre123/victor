@@ -15,7 +15,7 @@ import math
 
 VICTOR_EPOCH = 1498237200 #2017-06-23 10:00a PST
 BUILD_TIME = int(time.time()-VICTOR_EPOCH)
-BUILD_TIMESTAMP = "Pr{:014x}".format(BUILD_TIME)
+BUILD_TIMESTAMP = "Ws{:014x}".format(BUILD_TIME)
 
 parser = argparse.ArgumentParser()
 parser.add_argument("-k", "--key", type=str,

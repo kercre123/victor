@@ -801,6 +801,8 @@ void HAL::MicroWait(u32 microseconds)
 
 TimeStamp_t HAL::GetTimeStamp(void)
 {
+  // Note: steady_clock starts at zero from bootup so realistically this
+  //       should never overflow under normal use.
   auto currTime = std::chrono::steady_clock::now();
   return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::milliseconds>(currTime.time_since_epoch()).count());
 }
@@ -992,6 +994,11 @@ bool HAL::BatteryIsOverheated()
   return bodyData_->battery.flags & POWER_IS_OVERHEATED;
 }
 
+bool HAL::BatteryIsLow()
+{
+  return bodyData_->battery.flags & POWER_IS_TOO_LOW;
+}
+
 f32 HAL::ChargerGetVoltage()
 {
   // scale raw ADC counts to voltage (conversion factor from Vandiver)
@@ -1005,6 +1012,11 @@ u8 HAL::BatteryGetTemperature_C()
     return 0;
   }
   return static_cast<u8>(bodyData_->battery.temperature);
+}
+
+bool HAL::IsShutdownImminent()
+{
+  return (bodyData_->battery.flags & POWER_BATTERY_SHUTDOWN); 
 }
 
 u8 HAL::GetWatchdogResetCounter()
