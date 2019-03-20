@@ -87,7 +87,8 @@ CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInAU);
 namespace MicData {
 
 constexpr auto kCladMicDataTypeSize = sizeof(RobotInterface::MicData::data)/sizeof(RobotInterface::MicData::data[0]);
-static_assert(kCladMicDataTypeSize == kRawAudioChunkSize, "Expecting size of MicData::data to match RawAudioChunk");
+static_assert(kCladMicDataTypeSize == kIncomingAudioChunkSize, 
+              "Expecting size of MicData::data to match DeinterlacedAudioChunk");
 
 static_assert(
   std::is_same<std::remove_reference<decltype(RobotInterface::MicDirection::confidenceList[0])>::type,
@@ -204,6 +205,7 @@ void MicDataSystem::RecordProcessedAudio(uint32_t duration_ms, const std::string
 
 void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool playGetInFromAnimProcess)
 {
+  
   if(HasStreamingJob())
   {
     // We "fake" having a streaming job in order to achieve the "feel" of a minimum streaming time for UX
@@ -463,6 +465,10 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
   // lock the job mutex
   {
     std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
+
+    //  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+    // ... this block is where we kick off a new stream to the cloud ...
+
     // check if the pointer to the currently streaming job is valid
     if (!_currentlyStreaming && HasStreamingJob()
       #if ANKI_DEV_CHEATS
@@ -499,21 +505,28 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       }
     }
 
+    //  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+    // ... this block is where we actually do the streaming of the mic data up to the cloud ...
+
     if (_currentlyStreaming)
     {
+      bool realStreamHasFinished = false;
+
       // Are we done with what we want to stream?
       if (!_streamingComplete)
       {
-        static constexpr size_t kMaxRecordNumChunks = (kStreamingTimeout_ms / kTimePerSEBlock_ms) + 1;
+        static constexpr size_t kMaxRecordNumChunks = (kStreamingTimeout_ms / kTimePerChunk_ms) + 1;
         const bool didTimeout = _streamingAudioIndex >= kMaxRecordNumChunks;
         if (receivedStopMessage || didTimeout)
         {
           _streamingComplete = true;
+          realStreamHasFinished = true;
+
           if (didTimeout)
           {
             SendUdpMessage(CloudMic::Message::CreateaudioDone({}));
           }
-          LOG_INFO("MicDataSystem.Update.StreamingEnd", "%zu ms", _streamingAudioIndex * kTimePerSEBlock_ms);
+          LOG_INFO("MicDataSystem.Update.StreamingEnd", "%zu ms", _streamingAudioIndex * kTimePerChunk_ms);
           #if ANKI_DEV_CHEATS
             _fakeStreamingState = false;
           #endif
@@ -551,7 +564,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         uint32_t minStreamingDuration_ms = _context->GetShowAudioStreamStateManager()->GetMinStreamingDuration();
         const BaseStationTime_t minStreamDuration_ns = minStreamingDuration_ms * 1000 * 1000;
         const BaseStationTime_t minStreamEnd_ns = _streamBeginTime_ns + minStreamDuration_ns;
-        if (currTime_nanosec >= minStreamEnd_ns)
+        if ( ( currTime_nanosec >= minStreamEnd_ns ) || realStreamHasFinished )
         {
           LOG_INFO("MicDataSystem.Update.StreamingComplete.ClearJob", "Clearing streaming job now that enough time has elapsed");
           ClearCurrentStreamingJob();

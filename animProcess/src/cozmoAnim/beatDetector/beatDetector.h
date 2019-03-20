@@ -75,7 +75,8 @@ private:
   
   // Stages audio data to be piped into the aubio detector at the correct chunk size.
   // Use twice the capacity we actually need just to be safe.
-  Util::FixedCircularBuffer<AudioUtil::AudioSample, 2 * (kAubioTempoHopSize + MicData::kSamplesPerBlock)> _aubioInputBuffer;
+  Util::FixedCircularBuffer<AudioUtil::AudioSample, 2 * (kAubioTempoHopSize + MicData::kSamplesPerBlockPerChannel)> 
+      _aubioInputBuffer;
 };
 
 } // namespace Vector

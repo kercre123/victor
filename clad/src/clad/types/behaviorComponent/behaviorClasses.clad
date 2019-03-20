@@ -256,6 +256,7 @@ enum uint_8 BehaviorClass {
   PoweringRobotOff,
   ReactToTouchPetting,
   ReactToUnclaimedIntent,
+  RobustChargerObservation,
   TrackCube,
   TrackFace,
 

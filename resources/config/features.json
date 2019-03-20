@@ -81,7 +81,7 @@
   },
   {
     "feature": "HeldInPalm",
-    "enabled": false
+    "enabled": true
   },
   {
     "feature": "PRDemo",

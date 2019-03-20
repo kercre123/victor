@@ -19,11 +19,7 @@
 
 #include "clad/types/lcdTypes.h"
 
-#include <array>
-#include <memory>
-#include <mutex>
 #include <thread>
-#include <atomic>
 
 namespace Anki {
 
@@ -65,10 +61,13 @@ private:
   std::unique_ptr<Vision::ImageRGB565>  _faceDrawImg[2];
   Vision::ImageRGB565*                  _faceDrawNextImg = nullptr;
   Vision::ImageRGB565*                  _faceDrawCurImg = nullptr;
-  Vision::ImageRGB565*                  _faceDrawLastImg = nullptr;
   std::thread                           _faceDrawThread;
   std::mutex                            _faceDrawMutex;
   std::atomic<bool>                     _stopDrawFace;
+
+  std::mutex                            _readyMutex;
+  std::condition_variable               _readyCondition;
+  bool                                  _readyFace;
 
   // Whether or not the boot animation process has been stopped
   // Atomic because it is checked by the face drawing thread

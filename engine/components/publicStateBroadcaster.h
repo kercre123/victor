@@ -58,7 +58,6 @@ public:
     dependencies.insert(RobotComponentID::Map);
     dependencies.insert(RobotComponentID::NVStorage);
     dependencies.insert(RobotComponentID::AIComponent);
-    dependencies.insert(RobotComponentID::ObjectPoseConfirmer);
     dependencies.insert(RobotComponentID::CubeLights);
     dependencies.insert(RobotComponentID::BackpackLights);
     dependencies.insert(RobotComponentID::CubeAccel);

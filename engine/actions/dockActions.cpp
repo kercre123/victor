@@ -21,6 +21,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/audio/engineRobotAudioClient.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/carryingComponent.h"
@@ -1499,7 +1500,6 @@ namespace Anki {
           _dockObjectOrigPose.SetParent(GetRobot().GetPose().GetParent());
 
           Radians angleDiff;
-          ObservableObject* objectInOriginalPose = nullptr;
           for(const auto& object : objectsWithType)
           {
             // TODO: is it safe to always have useAbsRotation=true here?
@@ -1517,53 +1517,12 @@ namespace Anki {
                        object->GetID().GetValue(),
                        Tdiff.x(), Tdiff.y(), Tdiff.z(), angleDiff.getDegrees(),
                        carryObject->GetID().GetValue());
-
-              objectInOriginalPose = object;
               break;
             }
           }
 
-          // rsam/andrew. We don't think this code should be necessary anymore if the observation code
-          // already checks this
-          if(objectInOriginalPose != nullptr)
-          {
-            // We do not expect this code to be running and if we get this error when also seeing a FindOrigin
-            // crash (as in COZMO-10977 for example), it suggests this code is related. (Come bug Andrew/Raul.)
-            PRINT_NAMED_ERROR("PickupObjectAction.Verify.FishyCode",
-                              "Possible red flag for COZMO-10977");
-
-            // Must not actually be carrying the object I thought I was!
-            // Put the object I thought I was carrying in the position of the
-            // object I matched to it above, and then delete that object.
-            // (This prevents a new object with different ID being created.)
-            if(carryObject->GetID() != objectInOriginalPose->GetID())
-            {
-              LOG_INFO("PickupObjectAction.Verify.SeeingDifferentObjectInOrigPose",
-                       "Moving carried object (%s ID=%d) to object seen in original pose "
-                       "and deleting that object (%s ID=%d).",
-                       EnumToString(carryObject->GetType()),
-                       carryObject->GetID().GetValue(),
-                       EnumToString(objectInOriginalPose->GetType()),
-                       objectInOriginalPose->GetID().GetValue());
-
-              GetRobot().GetObjectPoseConfirmer().CopyWithNewPose(carryObject, objectInOriginalPose->GetPose(), objectInOriginalPose);
-
-              BlockWorldFilter filter;
-              filter.AddAllowedID(objectInOriginalPose->GetID());
-              blockWorld.DeleteLocatedObjects(filter);
-            }
-
-            if(VerifyCarryingComponentValid()){
-              _carryingComponentPtr->UnSetCarryingObject();
-            }
-
-            LOG_INFO("PickupObjectAction.Verify.SeeingCarriedObjectInOrigPose",
-                     "Object pick-up FAILED! (Still seeing object in same place.)");
-            result = ActionResult::NOT_CARRYING_OBJECT_RETRY;
-          } else {
-            LOG_INFO("PickupObjectAction.Verify.Success", "Object pick-up SUCCEEDED!");
-            result = ActionResult::SUCCESS;
-          }
+          LOG_INFO("PickupObjectAction.Verify.Success", "Object pick-up SUCCEEDED!");
+          result = ActionResult::SUCCESS;
           break;
         } // PICKUP
 

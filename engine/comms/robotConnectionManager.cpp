@@ -83,7 +83,7 @@ void RobotConnectionManager::SendAndResetQueueStats()
            _queueSizeAccumulator.GetMin(),
            _queueSizeAccumulator.GetMean(),
            _queueSizeAccumulator.GetMax());
-  
+
   // clear accumulator so we only send recent stats
   _queueSizeAccumulator.Clear();
 }
@@ -111,8 +111,8 @@ Result RobotConnectionManager::Connect(RobotID_t robotID)
 
   const bool ok = _udpClient.Connect(client_path, server_path);
   if (!ok) {
-    LOG_ERROR("RobotConnectionManager.Connect", "Unable to connect from %s to %s",
-              client_path.c_str(), server_path.c_str());
+    LOG_WARNING("RobotConnectionManager.Connect", "Unable to connect from %s to %s",
+                client_path.c_str(), server_path.c_str());
     _currentConnectionData->SetState(RobotConnectionData::State::Disconnected);
     return RESULT_FAIL_IO;
   }

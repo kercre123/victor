@@ -902,6 +902,17 @@ namespace Anki {
       return 40;
     }
 
+    bool HAL::BatteryIsLow()
+    {
+      return (BatteryGetVoltage() < 3.6f);
+    }
+
+    bool HAL::IsShutdownImminent()
+    {
+      // Shutdown not yet implemented in sim
+      return false;
+    }
+
     f32 HAL::ChargerGetVoltage()
     {
       if (BatteryIsOnCharger()) {

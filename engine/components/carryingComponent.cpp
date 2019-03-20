@@ -13,6 +13,7 @@
 #include "engine/components/carryingComponent.h"
 
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/robot.h"
 
@@ -94,7 +95,7 @@ Result CarryingComponent::SetCarriedObjectAsUnattached(bool deleteLocatedObjects
   // unfortunate ordering dependencies with how we set the pose, set the pose state, and
   // unset the carrying objects below. It's safer to do all of that, and _then_
   // clear the objects at the end.
-  const Result poseResult = _robot->GetObjectPoseConfirmer().AddRobotRelativeObservation(object, placedPoseWrtRobot, PoseState::Dirty);
+  const Result poseResult = _robot->GetBlockWorld().SetObjectPose(object->GetID(), placedPoseWrtRobot, PoseState::Dirty);
   if(RESULT_OK != poseResult)
   {
     PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.TopRobotRelativeObservationFailed",
@@ -137,15 +138,6 @@ void CarryingComponent::SetCarryingObject(ObjectID carryObjectID, Vision::Marker
   {
     _carryingObjectID = carryObjectID;
     _carryingMarkerCode = atMarkerCode;
-    
-    // Don't remain localized to an object if we are now carrying it
-    if(_carryingObjectID == _robot->GetLocalizedTo())
-    {
-      // Note that the robot may still remaing localized (based on its
-      // odometry), but just not *to an object*
-      _robot->SetLocalizedTo(nullptr);
-    } // if(_carryingObjectID == GetLocalizedTo())
-    
 
     SendSetCarryState(CarryState::CARRY_1_BLOCK);
   }
@@ -204,56 +196,49 @@ bool CarryingComponent::IsCarryingObject(const ObjectID& objectID) const
 }
 
 Result CarryingComponent::SetObjectAsAttachedToLift(const ObjectID& objectID,
-                                                   const Vision::KnownMarker::Code atMarkerCode)
+                                                    const Vision::KnownMarker::Code atMarkerCode)
 {
   if(!objectID.IsSet()) {
     // This can happen if the robot is picked up after/right at the end of completing a dock
     // The dock object gets cleared from the world but the robot ends up sending a
     // pickAndPlaceResult success
-    PRINT_NAMED_WARNING("Robot.PickUpDockObject.ObjectIDNotSet",
-                        "No docking object ID set, but told to pick one up.");
+    LOG_WARNING("CarryingComponent.SetObjectAsAttachedToLift.ObjectIDNotSet",
+                "Object ID not set.");
     return RESULT_FAIL;
   }
   
   if(IsCarryingObject()) {
-    PRINT_NAMED_ERROR("Robot.PickUpDockObject.AlreadyCarryingObject",
-                      "Already carrying an object, but told to pick one up.");
+    LOG_ERROR("CarryingComponent.SetObjectAsAttachedToLift.AlreadyCarryingObject",
+              "Already carrying an object!");
     return RESULT_FAIL;
   }
   
   ObservableObject* object = _robot->GetBlockWorld().GetLocatedObjectByID(objectID);
   if(object == nullptr) {
-    PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectDoesNotExist",
-                      "Dock object with ID=%d no longer exists for picking up.", objectID.GetValue());
+    LOG_ERROR("CarryingComponent.SetObjectAsAttachedToLift.ObjectDoesNotExist",
+              "Object with ID=%d does not exist", objectID.GetValue());
     return RESULT_FAIL;
   }
   
   // get the marker from the code
   const auto& markersWithCode = object->GetMarkersWithCode(atMarkerCode);
   if ( markersWithCode.empty() ) {
-    PRINT_NAMED_ERROR("Robot.PickUpDockObject.NoMarkerWithCode",
-                      "No marker found with that code.");
+    LOG_ERROR("CarryingComponent.SetObjectAsAttachedToLift.NoMarkerWithCode",
+              "No marker found with code %d.", atMarkerCode);
     return RESULT_FAIL;
   }
   
-  // notify if we have more than one, since we are going to assume that any is fine to use its pose
-  // we currently don't have this, so treat as warning. But if we ever allow, make sure that they are
-  // simetrical with respect to the object
-  const bool hasMultipleMarkers = (markersWithCode.size() > 1);
-  if(hasMultipleMarkers) {
-    PRINT_NAMED_WARNING("Robot.PickUpDockObject.MultipleMarkersForCode",
-                        "Multiple markers found for code '%d'. Using first for lift attachment", atMarkerCode);
-  }
+  // We assume that there is only one marker with the given code
+  DEV_ASSERT(markersWithCode.size() == 1, "Robot.PickUpDockObject.MultipleMarkersForCode");
   
   const Vision::KnownMarker* attachmentMarker = markersWithCode[0];
   
   // Base the object's pose relative to the lift on how far away the dock
   // marker is from the center of the block
-  // TODO: compute the height adjustment per object or at least use values from cozmoConfig.h
   Pose3d objectPoseWrtLiftPose;
   if(object->GetPose().GetWithRespectTo(_robot->GetComponent<FullRobotPose>().GetLiftPose(), objectPoseWrtLiftPose) == false) {
-    PRINT_NAMED_ERROR("Robot.PickUpDockObject.ObjectAndLiftPoseHaveDifferentOrigins",
-                      "Object robot is picking up and robot's lift must share a common origin.");
+    LOG_ERROR("CarryingComponent.SetObjectAsAttachedToLift.ObjectAndLiftPoseHaveDifferentOrigins",
+              "Object robot is picking up and robot's lift must share a common origin.");
     return RESULT_FAIL;
   }
   
@@ -262,10 +247,15 @@ Result CarryingComponent::SetObjectAsAttachedToLift(const ObjectID& objectID,
   
   SetCarryingObject(objectID, atMarkerCode); // also marks the object as carried
   
-  Result poseResult = _robot->GetObjectPoseConfirmer().AddLiftRelativeObservation(object, objectPoseWrtLiftPose);
+  const bool makePoseWrtOrigin = false;
+  Result poseResult = _robot->GetBlockWorld().SetObjectPose(objectID,
+                                                            objectPoseWrtLiftPose,
+                                                            PoseState::Known,
+                                                            makePoseWrtOrigin);
   if(RESULT_OK != poseResult)
   {
-    // TODO: warn
+    LOG_WARNING("CarryingComponent.SetObjectAsAttachedToLift.FailedSettingPose",
+                "Failed setting carried object pose (%d)", poseResult);
     return poseResult;
   }
   

@@ -162,12 +162,6 @@ MovementComponent& BEIRobotInfo::GetMoveComponent() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectPoseConfirmer& BEIRobotInfo::GetObjectPoseConfirmer() const
-{
-  return _robot.GetObjectPoseConfirmer();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 OffTreadsState BEIRobotInfo::GetOffTreadsState() const
 {
   return _robot.GetOffTreadsState();

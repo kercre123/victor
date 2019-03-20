@@ -14,6 +14,7 @@
 #define __Engine_Behaviors_BehaviorGoHome_H__
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 
 namespace Anki {
 namespace Vector {
@@ -74,6 +75,7 @@ private:
     std::shared_ptr<BehaviorClearChargerArea> clearChargerAreaBehavior;
     std::shared_ptr<BehaviorRequestToGoHome> requestHomeBehavior;
     std::shared_ptr<BehaviorWiggleOntoChargerContacts> wiggleOntoChargerBehavior;
+    ICozmoBehaviorPtr observeChargerBehavior;
   };
 
   struct DynamicVariables {
@@ -83,8 +85,6 @@ private:
     int      driveToRetryCount = 0;
     int      turnToDockRetryCount = 0;
     int      mountChargerRetryCount = 0;
-    u32      numImagesDetectingMarkers = 0;
-    u32      numImagesTooDark = 0;
     
     // Handle to the callback function registered in the VisionComponent
     Signal::SmartHandle visionProcessingResultHandle;
@@ -117,6 +117,7 @@ private:
   void TransitionToMountCharger();
   void TransitionToPlayingNuzzleAnim();
   void TransitionToOnChargerCheck();
+  void TransitionToPostVisualVerification(const RobotTimeStamp_t verifyStartTime);
   
   // An action failed such that we must exit the behavior, or
   // we're out of retries for action failures.

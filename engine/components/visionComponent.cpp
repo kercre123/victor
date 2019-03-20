@@ -18,6 +18,7 @@
 #include "camera/cameraService.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/nvStorageComponent.h"
@@ -26,6 +27,7 @@
 #include "engine/components/sensors/imuComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
+#include "engine/namedColors/namedColors.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -974,9 +976,6 @@ namespace Vector {
                                                                    std::move(visionModesList),
                                                                    imageMean)));
         }
-
-        // Trigger all registered callbacks on the image processing result
-        _visionResultSignal.emit(result);
       }
     }
 
@@ -1433,6 +1432,7 @@ namespace Vector {
   {
     ExternalInterface::RobotObservedIllumination msg( procResult.illumination );
     _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+    _lastIlluminationState = procResult.illumination.state;
     return RESULT_OK;
   }
   
@@ -2988,11 +2988,6 @@ namespace Vector {
       sTimeSinceValidImg_ms = 0;
       _restartingCameraTime_ms = 0;
     }
-  }
-
-  Signal::SmartHandle VisionComponent::RegisterVisionResultCallback(const std::function<VisionResultCallback>& callback)
-  {
-    return _visionResultSignal.ScopedSubscribe(callback);
   }
 
 } // namespace Vector

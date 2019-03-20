@@ -11,11 +11,7 @@
  **/
 #include "engine/blockWorld/blockWorld.h"
 
-// Putting engine config include first so we get coretech/common/shared/types.h instead of anki/types.h
-// TODO: Fix this types.h include mess (COZMO-3752)
-#include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
-
 #include "coretech/common/engine/math/poseOriginList.h"
 #include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/shared/math/rect_impl.h"
@@ -25,6 +21,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/block.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/charger.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
@@ -35,12 +32,12 @@
 #include "engine/cozmoContext.h"
 #include "engine/customObject.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/namedColors/namedColors.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"
-#include "engine/objectPoseConfirmer.h"
-#include "engine/potentialObjectsForLocalizingTo.h"
 #include "engine/robot.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "engine/robotStateHistory.h"
 #include "engine/viz/vizManager.h"
 #include "coretech/vision/engine/observableObjectLibrary_impl.h"
 #include "coretech/vision/engine/visionMarker.h"
@@ -97,7 +94,18 @@ namespace Vector {
       SetupEventHandlers(*_robot->GetExternalInterface());
     }
   }
-
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::UpdateDependent(const RobotCompMap& dependentComps)
+  {
+    // Check for any objects that overlap with the robot's position, and mark them dirty
+    CheckForRobotObjectCollisions();
+    
+    if (ANKI_DEVELOPER_CODE) {
+      SanityCheckBookkeeping();
+    }
+  }
+  
 
   void BlockWorld::SetupEventHandlers(IExternalInterface& externalInterface)
   {
@@ -144,9 +152,6 @@ namespace Vector {
                             "Type %s was already defined, removing object(s) with old definition",
                             EnumToString(objType));
 
-        BlockWorldFilter filter;
-        filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-        filter.AddAllowedType(objType);
         DeleteLocatedObjects(filter);
       }
     }
@@ -299,24 +304,11 @@ namespace Vector {
   };
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  ObservableObject* BlockWorld::FindLocatedObjectHelper(const BlockWorldFilter& filterIn,
+  ObservableObject* BlockWorld::FindLocatedObjectHelper(const BlockWorldFilter& filter,
                                                         const ModifierFcn& modifierFcn,
                                                         bool returnFirstFound) const
   {
     ObservableObject* matchingObject = nullptr;
-
-    BlockWorldFilter filter(filterIn);
-
-    if(filter.IsOnlyConsideringLatestUpdate())
-    {
-      const RobotTimeStamp_t atTimestamp = _currentObservedMarkerTimestamp;
-
-      filter.AddFilterFcn([atTimestamp](const ObservableObject* object) -> bool
-                          {
-                            const bool seenAtTimestamp = (object->GetLastObservedTime() == atTimestamp);
-                            return seenAtTimestamp;
-                          });
-    }
 
     const auto& currRobotOriginId = _robot->GetPoseOriginList().GetCurrentOriginID();
     
@@ -353,8 +345,6 @@ namespace Vector {
                                                bool returnFirstFound) const
   {
     Block* matchingObject = nullptr;
-
-    DEV_ASSERT(!filter.IsOnlyConsideringLatestUpdate(), "BlockWorld.FindConnectedObjectHelper.InvalidFlag");
 
     for (auto& connectedObject : _connectedObjects) {
       if(nullptr == connectedObject) {
@@ -508,7 +498,7 @@ namespace Vector {
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   BlockWorld::ObjectsContainer_t::const_iterator BlockWorld::FindInContainerWithID(const ObjectsContainer_t& container,
-                                                                                   const ObjectID& objectID)
+                                                                                   const ObjectID& objectID) const
   {
     return std::find_if(container.begin(),
                         container.end(),
@@ -680,18 +670,12 @@ namespace Vector {
 
       _locatedObjects[newOriginID].push_back(object);
       
-      // Notify pose confirmer
-      _robot->GetObjectPoseConfirmer().AddInExistingPose(object.get());
-      
       // Delete from old origin
       objectsInOldOrigin.erase(objectIt);
-      
-      // Clean up if we just deleted the last object from this origin
-      if(objectsInOldOrigin.empty())
-      {
-        _locatedObjects.erase(originIter);
-      }
     }
+    
+    // Delete any now-zombie origins
+    DeleteZombieOrigins();
     
     return RESULT_OK;
   }
@@ -716,14 +700,6 @@ namespace Vector {
 
     const Pose3d& oldOrigin = _robot->GetPoseOriginList().GetOriginByID(oldOriginID);
     const Pose3d& newOrigin = _robot->GetPoseOriginList().GetOriginByID(newOriginID);
-
-    // COZMO-9797
-    // lengthy discussion between Andrew and Raul. Ideally we would keep unconfirmed observations when
-    // we rejigger. However, because we move from current to a previously known origin, the code is more
-    // complicated that way. Since we plan on refactoring PoseConfirmer in the future, for now we are ok with
-    // losing information. Clear PoseConfirmer here and let the originUpdater and addToPoseConfirmer modifiers
-    // later re-add kosher information.
-    _robot->GetObjectPoseConfirmer().Clear();
 
     // Look for objects in the old origin
     BlockWorldFilter filterOld;
@@ -792,11 +768,6 @@ namespace Vector {
                       T_new.x(), T_new.y(), T_new.z());
 
         newObject = oldObject->CloneType();
-
-        // This call is necessary due to dependencies from CopyWithNewPose and AddNewObject
-        // AddNewObject needs the correct origin which CopyWithNewPose sets
-        // CopyWithNewPose needs the correct object ID which normally would be set by AddNewObject
-        // Since this is a circular dependency we need to set the ID first outside of AddNewObject
         newObject->CopyID(oldObject);
 
         addNewObject = true;
@@ -824,7 +795,7 @@ namespace Vector {
 
       // Use all of oldObject's time bookkeeping, then update the pose and pose state
       newObject->SetObservationTimes(oldObject);
-      result = _robot->GetObjectPoseConfirmer().CopyWithNewPose(newObject, newPose, oldObject);
+      newObject->SetPose(newPose, oldObject->GetLastPoseUpdateDistance(), oldObject->GetPoseState());
 
       if(addNewObject)
       {
@@ -855,19 +826,6 @@ namespace Vector {
       _locatedObjects.erase(oldOriginID);
     }
 
-    // Now go through all the objects already in the origin we are switching _to_
-    // (the "new" origin) and make sure PoseConfirmer knows about them since we
-    // have delocalized since last being in this origin (which clears the PoseConfirmer)
-    BlockWorldFilter filterNew;
-    filterOld.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
-    filterOld.AddAllowedOrigin(newOriginID);
-
-    ModifierFcn addToPoseConfirmer = [this](ObservableObject* object){
-      _robot->GetObjectPoseConfirmer().AddInExistingPose(object);
-    };
-
-    FindLocatedObjectHelper(filterNew, addToPoseConfirmer, false);
-
     // Notify the world about the objects in the new coordinate frame, in case
     // we added any based on rejiggering (not observation). Include unconnected
     // ones as well.
@@ -877,286 +835,264 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  void BlockWorld::DeleteObjectsFromZombieOrigins()
+  void BlockWorld::DeleteZombieOrigins()
   {
-    ObjectsByOrigin_t::iterator originIt = _locatedObjects.begin();
-    while( originIt != _locatedObjects.end() )
-    {
-      const bool isZombie = IsZombiePoseOrigin( originIt->first );
-      if ( isZombie ) {
-        PRINT_CH_INFO("BlockWorld", "BlockWorld.DeleteObjectsFromZombieOrigins.DeletingOrigin",
-                      "Deleting objects from Origin %d because it was zombie", originIt->first);
+    for (auto originIt = _locatedObjects.begin() ; originIt != _locatedObjects.end() ; ) {
+      if (IsZombiePoseOrigin(originIt->first)) {
+        LOG_INFO("BlockWorld.DeleteZombieOrigins.DeletingOrigin",
+                 "Deleting origin %d (which contained %zu objects) because it was zombie",
+                 originIt->first, originIt->second.size());
+        // With their tanks, and their bombs, and their bombs, and their guns
         originIt = _locatedObjects.erase(originIt);
       } else {
-        PRINT_CH_DEBUG("BlockWorld", "BlockWorld.DeleteObjectsFromZombieOrigins.KeepingOrigin",
-                       "Origin %d is still good (keeping objects)", originIt->first);
         ++originIt;
       }
     }
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  Result BlockWorld::AddAndUpdateObjects(const std::vector<ObservableObject*>& objectsSeen,
-                                         const RobotTimeStamp_t atTimestamp)
+  Result BlockWorld::ProcessVisualObservations(const std::vector<std::shared_ptr<ObservableObject>>& objectsSeenRaw,
+                                               const RobotTimeStamp_t atTimestamp)
   {
-    const Pose3d& currFrame = _robot->GetWorldOrigin();
-    const PoseOriginID_t currFrameID = currFrame.GetID();
+    // if there are no objects, then exit early. This might happen if we see an SDK marker
+    // but have not created a custom object for it.
+    if (objectsSeenRaw.empty()) {
+      return RESULT_OK;
+    }
+    
+    // We cannot trust observations of objects if we were off treads, so no need to continue
+    if (_robot->GetOffTreadsState() != OffTreadsState::OnTreads) {
+      return RESULT_OK;
+    }
+    
+    // First, filter the raw observations
+    auto objectsSeen = FilterRawObservedObjects(objectsSeenRaw);
+    
+    // Have we observed a charger?
+    std::shared_ptr<ObservableObject> observedCharger = nullptr;
+    const auto chargerIt = std::find_if(objectsSeen.begin(), objectsSeen.end(),
+                                        [](const std::shared_ptr<ObservableObject>& obj) {
+                                          return IsChargerType(obj->GetType(), false);
+                                        });
+    if (chargerIt != objectsSeen.end()) {
+      observedCharger = *chargerIt;
+    }
 
-    // Construct a helper data structure for determining which objects we might
-    // want to localize to
-    PotentialObjectsForLocalizingTo potentialObjectsForLocalizingTo(*_robot);
+    const bool wasCameraMoving = (_robot->GetMoveComponent().IsCameraMoving() ||
+                                  _robot->GetMoveComponent().WasCameraMoving(atTimestamp));
+    const bool canRobotLocalize = (_robot->GetLocalizedTo().IsUnknown() || _robot->HasMovedSinceBeingLocalized()) &&
+                                  !wasCameraMoving;
+    
+    auto result = Result::RESULT_OK;
+    
+    // Now see if we should localize to the charger. The order of localizing vs. updating object poses is important.
+    // For example, if we see the charger and match it in the current origin, we want to localize to the charger
+    // _first_, then update all other object poses, since localizing to the charger will shift the robot's own position.
+    // However, if we are seeing the charger for the first time and localizing to it, we want to update all object poses
+    // (including the charger) first, _then_ localize to the charger.
+    if ((observedCharger != nullptr) && canRobotLocalize) {
+      // Do we have any existing chargers?
+      BlockWorldFilter filt;
+      filt.SetAllowedTypes({ObjectType::Charger_Basic});
+      filt.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+      ObservableObject* existingCharger = FindLocatedMatchingObject(filt);
 
-    for(const auto& objSeenRawPtr : objectsSeen)
-    {
-      // Note that we wrap shared_ptr around the passed-in object, which was created
-      // by the caller (via Cloning from the library of known objects). We will either
-      // add this object to the poseConfirmer, in which case it will not get deleted,
-      // or it will simply be used to update an existing object's pose and/or for
-      // localization, both done by potentialObjectsForLocalizingTo. In that case,
-      // once potentialObjectsForLocalizingTo is done with it, and we have exited
-      // this for loop, its refcount will be zero and it'll get deleted for us.
-      std::shared_ptr<ObservableObject> objSeen(objSeenRawPtr);
+      if (existingCharger == nullptr) {
+        // No match in any origin. Simply update all the seen objects and localize to the charger.
+        UpdateKnownObjects(objectsSeen, atTimestamp);
+        result = _robot->LocalizeToObject(observedCharger.get(), observedCharger.get());
+      } else if (existingCharger->GetPose().GetRootID() == _robot->GetWorldOriginID()) {
+        // We already have a charger in the current origin - is it close enough to its last pose to localize to it?
+        const bool localizeToCharger = existingCharger->GetPose().IsSameAs(observedCharger->GetPose(),
+                                                                           existingCharger->GetSameDistanceTolerance(),
+                                                                           existingCharger->GetSameAngleTolerance());
 
-      // We use the distance to the observed object to decide (a) if the object is
-      // close enough to do localization/identification and (b) to use only the
-      // closest object in each coordinate frame for localization.
-      f32 distToObjSeen = 0.f;
-      if (!ComputeDistanceBetween(_robot->GetPose(), objSeen->GetPose(), distToObjSeen)) {
-        LOG_ERROR("BlockWorld.AddAndUpdateObjects.ComputeDistanceFailure",
-                  "Failed to compute distance between robot and object seen");
-        return RESULT_FAIL;
-      }
-
-      // First thing that we have to do is ask the PoseConfirmer whether this is a confirmed object,
-      // or a visual observation of an object that we want to consider for the future (unconfirmed object).
-      // Pass in the object as an observation
-      const ObservableObject* poseConfirmationObjectIDMatch = nullptr;
-      const bool isConfirmedAtPose = _robot->GetObjectPoseConfirmer().IsObjectConfirmedAtObservedPose(objSeen,
-                                                                  poseConfirmationObjectIDMatch);
-
-      // inherit the ID of a match, or assign a new one depending if there were no matches
-      DEV_ASSERT( !objSeen->GetID().IsSet(), "BlockWorld.AddAndUpdateObjects.ObservationAlreadyHasID");
-      if ( nullptr != poseConfirmationObjectIDMatch ) {
-        objSeen->CopyID( poseConfirmationObjectIDMatch );
+        bool localizeSuccess = false;
+        if (localizeToCharger) {
+          // Localize to the charger instance in this origin
+          result = _robot->LocalizeToObject(observedCharger.get(), existingCharger);
+          localizeSuccess = (result == Result::RESULT_OK);
+        }
+        // Update object poses, but ignore the charger if we've just localized to it
+        const bool ignoreCharger = localizeSuccess;
+        UpdateKnownObjects(objectsSeen, atTimestamp, ignoreCharger);
       } else {
-        objSeen->SetID();
+        // We have a match for the charger in a previous origin. First update all objects _except_ the charger, then
+        // localize to charger from the previous origin.
+        const bool ignoreCharger = true;
+        UpdateKnownObjects(objectsSeen, atTimestamp, ignoreCharger);
+        
+        // Localize to the charger instance in the old origin
+        result = _robot->LocalizeToObject(observedCharger.get(), existingCharger);
       }
+    } else {
+      UpdateKnownObjects(objectsSeen, atTimestamp);
+    }
 
-      /*
-        Note: Andrew and Raul think that next iteration of PoseConfirmer vs PotentialObjectsToLocalizeTo should
-              separate 'observations' from 'confirmations', where PoseConfirmer turns into ObservationFilter,
-              and only reports accepted observations (aka confirmation) towards this method/PotentialOTLT. In
-              that scenario, observations that come here would either update the robot (localizing) or update
-              the object in blockworld (not localizing), but there would be no need to feed back that observation
-              back into the PoseConfirmer/ObservationFilter, which is a one-way filter.
-
-              For now, to prevent adding an observation twice or not adding it at all, flag here whether the
-              observation is used by the PoseConfirmer before letting it cascade down when it confirms an object (which
-              is a fix for a bug in which observations that confirm an object were not used for localization,
-              which would delay rejiggering by one tick, while any other system already had access to the object from
-              the BlockWorld.)
-      */
-      bool observationAlreadyUsed = false;
-
-      // if the object is not confirmed add this observation to the poseConfirmer. If this observation causes
-      // a confirmation, we don't need to localize to it in the current origin because we are setting its pose
-      // wrt robot based on this observation. However, we could bring other origins with it.
-      if ( !isConfirmedAtPose )
-      {
-        // even if not confirmed at this pose, it could be confirmed in this origin. AddVisualObservation needs
-        // to receive any confirmed matches in the current origin, but IsObjectConfirmedAtObservedPose no longer
-        // provides separate pointers for this. Note this is an optimization so that AddVisualObservation doesn't
-        // need to do GetLocatedObjectByID itself when it's not necessary, but it seems to complicate logic.
-        // Rethink that API in following iterations of PoseConfirmer
-        ObservableObject* curMatchInOrigin = GetLocatedObjectByID(objSeen->GetID());
-
-        // Add observation. Check if the robot was moving at all
-        const bool wasRobotMoving = _robot->GetMoveComponent().WasCameraMoving(atTimestamp);
-        const bool isConfirmingObservation = _robot->GetObjectPoseConfirmer().AddVisualObservation(objSeen,
-                                                                                curMatchInOrigin,
-                                                                                wasRobotMoving,
-                                                                                distToObjSeen);
-        if ( !isConfirmingObservation ) {
-          // Don't print this during the factory test because it spams when seeing the
-          // calibration target
-          #if !FACTORY_TEST
-          PRINT_CH_INFO("BlockWorld", "BlockWorld.AddAndUpdateObjects.NonConfirmingObservation",
-                        "Added non-confirming visual observation for %d", objSeen->GetID().GetValue() );
-          #endif
-
-          // TODO should we broadcast RobotObservedPossibleObject here?
-          continue;
-        }
-
-        // the observation was used to confirm the object. If the observation is not used to localize, do not
-        // add it back again to the PoseConfirmer (see note in declaration of variable)
-        observationAlreadyUsed = true;
-      }
-
-      // At this point the object is confirmed in the current origin, find matches and see if we want to localize to it
-      // Note that if it just became confirmed we still want to localize to it in case that it can rejigger
-      // other origins
-
-      // Keep a list of objects matching this objSeen, by coordinate frame
-      std::map<PoseOriginID_t, ObservableObject*> matchingObjects;
-
-      // Match unique objects by type and nonunique objects by pose. Regardless,
-      // only look at objects with the same type.
-      BlockWorldFilter filter;
-      filter.AddAllowedType(objSeen->GetType());
-
-      if (objSeen->IsUnique())
-      {
-        // Can consider matches for unique objects in other coordinate frames
-        filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-        filter.AddFilterFcn(&BlockWorldFilter::UniqueObjectsFilter);
-
-        // Unique objects just match based on type (already set above)
-        std::vector<ObservableObject*> objectsFound;
-        FindLocatedMatchingObjects(filter, objectsFound);
-
-        bool matchedCarryingObject = false;
-        for(ObservableObject* objectFound : objectsFound)
-        {
-          assert(nullptr != objectFound);
-
-          if(objectFound->GetPose().HasSameRootAs(currFrame))
-          {
-            // handle special case of seeing the object that we are carrying. We don't want to use it for localization
-            // Note that if the object is observed at a different location than the lift, it will be moved to that
-            // location, and the robot should be notified that it's no longer carried. That responsibility now
-            // lies on whomever changes the position (PoseConfirmer)
-            if (_robot->GetCarryingComponent().IsCarryingObject(objectFound->GetID()))
-            {
-              // If this is the object we're carrying observed in the carry position,
-              // do nothing and continue to the next observed object.
-              matchedCarryingObject = true;
-              PRINT_NAMED_WARNING("Blockworld.AddAndUpdateObjects.SeeingCarriedObject",
-                                  "Seeing object %s[%d] on lift at height %fmm",
-                                  EnumToString(objSeen->GetType()),
-                                  objSeen->GetID().GetValue(),
-                                  _robot->GetLiftHeight());
-              break; // break out of the current matches for the observation
-            }
-          }
-
-          // Check for duplicates (same type observed in the same coordinate frame)
-          // and add to our map of matches by origin
-          const Pose3d& objectRoot = objectFound->GetPose().FindRoot();
-          const PoseOriginID_t objectOriginID = objectRoot.GetID();
-          DEV_ASSERT_MSG(_robot->GetPoseOriginList().ContainsOriginID(objectOriginID),
-                         "BlockWorld.AddAndUpdateObjects.ObjectRootNotAnOrigin", "ObjectID:%d Root:%s",
-                         objectFound->GetID().GetValue(), objectRoot.GetName().c_str());
-          auto iter = matchingObjects.find(objectOriginID);
-          if(iter != matchingObjects.end()) {
-            PRINT_NAMED_WARNING("BlockWorld.AddAndUpdateObjects.MultipleMatchesForUniqueObjectInSameFrame",
-                                "Observed unique object of type %s matches multiple existing objects of "
-                                "same type and in the same frame (ID:%d).",
-                                EnumToString(objSeen->GetType()), objectOriginID);
-          } else {
-            matchingObjects[objectOriginID] = objectFound;
-          }
-        } // for each object found
-
-        if(matchedCarryingObject)
-        {
-          continue;
-        }
-      }
-      else
-      {
-        // For non-unique objects, match based on pose (considering only objects in current frame)
-        // The observation has already matched by pose, otherwise it would not be confirmed at this pose. We don't need
-        // to match by pose here, we can just used the ID we found as part of the observation confirmation
-        ObservableObject* matchingObject = GetLocatedObjectByID( objSeen->GetID() );
-
-        if (nullptr != matchingObject) {
-          DEV_ASSERT(matchingObject->GetPose().HasSameRootAs(currFrame),
-                     "BlockWorld.AddAndUpdateObjects.MatchedPassiveObjectInOtherCoordinateFrame");
-          matchingObjects[currFrameID] = matchingObject;
-        }
-        else
-        {
-          PRINT_NAMED_ERROR("BlockWorld.UpdateObjectPoses.AddAndUpdateNoCurrentOriginMatchNonUnique",
-                            "Must find match in current origin, since object is confirmed.");
-        }
-
-      }
-
-      // We know the object was confirmed, so we must have found the instance in the current origin
-      ObservableObject* observedObject = nullptr;
-
-      auto currFrameMatchIter = matchingObjects.find(currFrameID);
-      if(currFrameMatchIter != matchingObjects.end())
-      {
-        observedObject = currFrameMatchIter->second;
-      }
-      else
-      {
-        PRINT_NAMED_ERROR("BlockWorld.UpdateObjectPoses.AddAndUpdateNoCurrentOriginMatch",
-                          "Must find match in current origin, since object is confirmed.");
-        continue;
-      }
-
-      // Update lastObserved times of this object
-      // (Do this before possibly attempting to localize to the object below!)
-      observedObject->SetLastObservedTime(objSeen->GetLastObservedTime());
-      observedObject->UpdateMarkerObservationTimes(*objSeen);
-
-      // See if we might want to localize to the object matched in the current frame
-      const bool wantedToInsertObjectInCurrentFrame = potentialObjectsForLocalizingTo.Insert(objSeen, observedObject, distToObjSeen, observationAlreadyUsed);
-      if(wantedToInsertObjectInCurrentFrame)
-      {
-         // Add all other match pairs from other frames as potentials for localization.
-         // We will decide which object(s) to localize to from this list after we've
-         // processed all objects seen in this update.
-        for(auto & match : matchingObjects)
-        {
-           // Don't try to reinsert the object in the current frame (already did this above)
-           if(match.second != observedObject)
-           {
-             potentialObjectsForLocalizingTo.Insert(objSeen, match.second, distToObjSeen, true); // all observations used since they are matches
-           }
-         }
-      }
-
-      /* This is pretty verbose...
-       fprintf(stdout, "Merging observation of object type=%s, with ID=%d at (%.1f, %.1f, %.1f), timestamp=%d\n",
-       objSeen->GetType().GetName().c_str(),
-       overlappingObjects[0]->GetID().GetValue(),
-       objSeen->GetPose().GetTranslation().x(),
-       objSeen->GetPose().GetTranslation().y(),
-       objSeen->GetPose().GetTranslation().z(),
-       overlappingObjects[0]->GetLastObservedTime());
-       */
-
-      // ObservedObject should be set by now and should be in the current frame
-      assert(observedObject != nullptr); // this REALLY shouldn't happen
-      DEV_ASSERT(observedObject->GetPose().HasSameRootAs(currFrame),
-                 "BlockWorld.AddAndUpdateObjects.ObservedObjectNotInCurrentFrame");
-
+    // For any objects whose poses were just updated, broadcast information about them now. Note that this list could
+    // be different from the objectsSeen list, since we may have decided to ignore an object observation for some
+    // reason (e.g. robot was moving too fast)
+    BlockWorldFilter updatedNowFilter;
+    updatedNowFilter.SetFilterFcn([&atTimestamp](const ObservableObject* obj){
+      return (obj->GetLastObservedTime() == atTimestamp);
+    });
+    std::vector<ObservableObject*> updatedNowObjects;
+    FindLocatedMatchingObjects(updatedNowFilter, updatedNowObjects);
+    
+    for (auto* object : updatedNowObjects) {
       // Add all observed markers of this object as occluders
       std::vector<const Vision::KnownMarker *> observedMarkers;
-      observedObject->GetObservedMarkers(observedMarkers);
+      object->GetObservedMarkers(observedMarkers);
       for(auto marker : observedMarkers) {
         _robot->GetVisionComponent().GetCamera().AddOccluder(*marker);
       }
+      
+      // If we are observing an object that we are supposed to be carrying, then tell the robot we are no longer
+      // carrying it
+      if (_robot->GetCarryingComponent().IsCarryingObject(object->GetID())) {
+        LOG_INFO("BlockWorld.ProcessVisualObservations.SeeingCarriedObject",
+                 "We have observed object %d, so we must not be carrying it anymore. Unsetting as carried object.",
+                 object->GetID().GetValue());
+        _robot->GetCarryingComponent().UnSetCarryingObject();
+      }
+      
+      // Update map component
+      const Pose3d oldPoseCopy = object->GetPose();
+      _robot->GetMapComponent().UpdateObjectPose(*object, &oldPoseCopy, PoseState::Known);
+      
+      BroadcastObjectObservation(object);
+    }
+    
+    return result;
+  } // ProcessVisualObservations()
 
-      const ObjectID obsID = observedObject->GetID();
-      DEV_ASSERT(obsID.IsSet(), "BlockWorld.AddAndUpdateObjects.IDNotSet");
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::UpdateKnownObjects(const std::vector<std::shared_ptr<ObservableObject>>& objectsSeen,
+                                      const RobotTimeStamp_t atTimestamp,
+                                      const bool ignoreCharger)
+  {
+    // Go through each observation and, if possible, associate it to an already-known object. If the observation does
+    // not match any existing known objects, we generate a new objectID for it and add it to the list of known objects.
+    for (const auto& objSeen : objectsSeen) {
+      if (ignoreCharger && IsChargerType(objSeen->GetType(), false)) {
+        continue;
+      }
+      
+      const float distToObjSeen =  objSeen->GetLastPoseUpdateDistance();
+      
+      DEV_ASSERT(!objSeen->GetID().IsSet(), "BlockWorld.UpdateKnownObjects.SeenObjectAlreadyHasID");
+      
+      // Find a match (or matches) for this object in the list of existing objects so that we can copy its ID and
+      // update its latest observation if necessary.
+      
+      // Always match by type, but also match by pose for non-unique objects.
+      BlockWorldFilter filter;
+      filter.SetAllowedTypes({objSeen->GetType()});
+      const bool isUnique = objSeen->IsUnique();
+      if (!isUnique) {
+        // For non-unique objects, match by pose (by using IsSameAs)
+        filter.AddFilterFcn([&objSeen](const ObservableObject* obj){
+          return obj->IsSameAs(*objSeen);
+        });
+      }
+      
+      // Check for matches in the current origin
+      ObservableObject* matchingObject = FindLocatedMatchingObject(filter);
+      
+      // Was the camera moving? If so, we must skip this observation _unless_ this is the dock object or carry object.
+      // Might be sufficient to check for movement at historical time, but to be conservative (and account for
+      // timestamping inaccuracies?) we will also check _current_ moving status.
+      const bool wasCameraMoving = (_robot->GetMoveComponent().IsCameraMoving() ||
+                                    _robot->GetMoveComponent().WasCameraMoving(atTimestamp));
+      const bool isDockObject    = (matchingObject != nullptr) &&
+                                   (_robot->GetDockingComponent().GetDockObject() == matchingObject->GetID());
+      const bool isCarriedObject = (matchingObject != nullptr) &&
+                                   _robot->GetCarryingComponent().IsCarryingObject(matchingObject->GetID());
+      
+      if (wasCameraMoving && !isDockObject && !isCarriedObject) {
+        continue;
+      }
+      
+      // If we haven't found a match in the current origin, then continue looking in other origins (for unique objects)
+      if ((matchingObject == nullptr) && isUnique) {
+        filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+        matchingObject = FindLocatedMatchingObject(filter);
+      }
+      
+      if (matchingObject != nullptr) {
+        // We found a matching object
+        const PoseID_t matchingObjectOrigin = matchingObject->GetPose().GetRootID();
 
-      // Tell the world about the observed object. NOTE: it is guaranteed to be in the current frame.
-      BroadcastObjectObservation(observedObject);
-    } // for each object seen
-
-    // NOTE: This will be a no-op if we no objects got inserted above as being potentially
-    //       useful for localization
-    Result localizeResult = potentialObjectsForLocalizingTo.LocalizeRobot();
-
-    return localizeResult;
-
-  } // AddAndUpdateObjects()
-
+        objSeen->CopyID(matchingObject);
+        
+        // Update the matching object's pose
+        matchingObject->SetObservationTimes(objSeen.get());
+        matchingObject->SetPose(objSeen->GetPose(), distToObjSeen, PoseState::Known);
+        
+        // If we matched an object from a previous origin, we need to move it into the current origin
+        if (matchingObjectOrigin != _robot->GetWorldOriginID()) {
+          UpdateObjectOrigin(matchingObject->GetID(), matchingObjectOrigin);
+        }
+      } else {
+        // Did not find _any_ match for this object among located objects. If this is an active object, maybe there is
+        // a known connected instance (e.g., robot has connected to a cube but has not yet visually observed it) from
+        // which we can grab the objectID.
+        if (objSeen->IsActive()) {
+          BlockWorldFilter connectedFilter;
+          connectedFilter.SetAllowedTypes({objSeen->GetType()});
+          const auto* connectedBlock = FindConnectedMatchingBlock(connectedFilter);
+          if (connectedBlock != nullptr) {
+            DEV_ASSERT(connectedBlock->GetID().IsSet(), "BlockWorld.UpdateKnownObjects.ConnectedObjectHasNoId");
+            objSeen->CopyID(connectedBlock);
+          }
+        }
+        
+        // If we _still_ don't have an ID yet, then generate a new one now
+        if (!objSeen->GetID().IsSet()) {
+          objSeen->SetID();
+        }
+        
+        // Add this object to the located objects container
+        AddLocatedObject(objSeen);
+      }
+    }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  std::vector<std::shared_ptr<ObservableObject>> BlockWorld::FilterRawObservedObjects(const std::vector<std::shared_ptr<ObservableObject>>& objectsSeenRaw)
+  {
+    // First copy the raw objects container
+    auto objectsSeenFilt = objectsSeenRaw;
+    
+    // Remove any objects that were observed from too far away
+    objectsSeenFilt.erase(std::remove_if(objectsSeenFilt.begin(),
+                                         objectsSeenFilt.end(),
+                                         [](const std::shared_ptr<ObservableObject>& obj) {
+                                           return obj->GetLastPoseUpdateDistance() > obj->GetMaxObservationDistance_mm();
+                                         }),
+                          objectsSeenFilt.end());
+    
+    // Ignore duplicate 'unique' objects. For example, chargers are supposed to be 'unique' objects, meaning we can only
+    // ever know about one of them at a time. However, it is still possible to see two of them in the same image. We
+    // only want to keep the closest one for consistency.
+    //
+    // First, sort the container by distance so that we can use std::unique to do the work for us.
+    
+    std::sort(objectsSeenFilt.begin(), objectsSeenFilt.end(),
+              [](const std::shared_ptr<ObservableObject>& objA, const std::shared_ptr<ObservableObject>& objB) {
+                return objA->GetLastPoseUpdateDistance() < objB->GetLastPoseUpdateDistance();
+              });
+    
+    auto last = std::unique(objectsSeenFilt.begin(), objectsSeenFilt.end(),
+                            [](const std::shared_ptr<ObservableObject>& objA, const std::shared_ptr<ObservableObject>& objB) {
+                              return (objA->GetType() == objB->GetType()) && objA->IsUnique() && objB->IsUnique();
+                            });
+    objectsSeenFilt.erase(last, objectsSeenFilt.end());
+    
+    return objectsSeenFilt;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::CheckForUnobservedObjects(RobotTimeStamp_t atTimestamp)
   {
     // Don't bother if the robot is picked up or if it was rotating too fast to
@@ -1187,8 +1123,8 @@ namespace Vector {
       // Look for "unobserved" objects not seen atTimestamp -- but skip objects:
       //    - that are currently being carried
       //    - that we are currently docking to
-      const RobotTimeStamp_t lastVisuallyMatchedTime = _robot->GetObjectPoseConfirmer().GetLastVisuallyMatchedTime(object->GetID());
-      const bool isUnobserved = ( (lastVisuallyMatchedTime < atTimestamp) &&
+      const RobotTimeStamp_t lastObservedTime = object->GetLastObservedTime();
+      const bool isUnobserved = ( (lastObservedTime < atTimestamp) &&
                                  (_robot->GetCarryingComponent().GetCarryingObjectID() != object->GetID()) &&
                                  (_robot->GetDockingComponent().GetDockObject() != object->GetID()) );
       if ( isUnobserved )
@@ -1221,16 +1157,14 @@ namespace Vector {
         const auto& markerList = unobservedObject->GetMarkers();
         if ( !markerList.empty() )
         {
-          // we think localizable distance is a good distance to give the object a marker's length of padding
-          // at localization distance we give a full marker of padding
-          const float localizationDistance = unobservedObject->GetMaxLocalizationDistance_mm();
+          const float observationDistance = unobservedObject->GetMaxObservationDistance_mm();
           const Point2f& markerSize = markerList.front().GetSize();
           const f32 focalLenX = camera.GetCalibration()->GetFocalLength_x();
           const f32 focalLenY = camera.GetCalibration()->GetFocalLength_y();
           // distFactor = (1-distNorm) + 1; 1-distNorm to invert normalization, +1 because we want 100% at distNorm=1
-          const f32 distToObjInvFactor = 2-(objectPoseWrtCamera.GetTranslation().Length()/localizationDistance);
-          float xPadding = focalLenX*markerSize.x()*distToObjInvFactor/localizationDistance;
-          float yPadding = focalLenY*markerSize.y()*distToObjInvFactor/localizationDistance;
+          const f32 distToObjInvFactor = 2-(objectPoseWrtCamera.GetTranslation().Length()/observationDistance);
+          float xPadding = focalLenX*markerSize.x()*distToObjInvFactor/observationDistance;
+          float yPadding = focalLenY*markerSize.y()*distToObjInvFactor/observationDistance;
           xBorderPad = static_cast<u16>(xPadding);
           yBorderPad = static_cast<u16>(yPadding);
         }
@@ -1251,9 +1185,13 @@ namespace Vector {
         continue;
       }
 
-      // Remove objects that should have been visible based on their last known
-      // location, but which must not be there because we saw something behind
-      // that location:
+      // We want to remove objects that should have been visible from the current pose, but were not observed for some
+      // reason. There are two scenarios:
+      //   - If the object's pose is marked 'dirty' and we didn't see it, we immediately remove it.
+      //   - If the object's pose is 'known', we only remove the object if we saw _another_ object behind it (proving
+      //     that it really must not be there).
+      //
+      // Note: The return value of IsVisibleFrom() can be a source of confusion. See VIC-13732 for details.
       bool hasNothingBehind = false;
       const bool shouldBeVisible = unobservedObject->IsVisibleFrom(camera,
                                                                    MAX_MARKER_NORMAL_ANGLE_FOR_SHOULD_BE_VISIBLE_CHECK_RAD,
@@ -1263,30 +1201,20 @@ namespace Vector {
 
       const bool isDirtyPoseState = (PoseState::Dirty == unobservedObject->GetPoseState());
 
-      // If the object should _not_ be visible, but the reason was only that
-      // it has nothing behind it to confirm that, _and_ the object has already
-      // been marked dirty (e.g., by being moved), then increment the number of
-      // times it has gone unobserved while dirty.
-      if(!shouldBeVisible && hasNothingBehind && isDirtyPoseState)
+      const bool removeObject = shouldBeVisible || (hasNothingBehind && isDirtyPoseState);
+      if (removeObject)
       {
-        _robot->GetObjectPoseConfirmer().MarkObjectUnobserved(unobservedObject);
-      }
-      else if(shouldBeVisible)
-      {
-        // We "should" have seen the object! Clear it.
-        PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForUnobservedObjects.MarkingUnobservedObject",
-                      "Marking object %d unobserved, which should have been seen, but wasn't. "
-                      "(shouldBeVisible:%d hasNothingBehind:%d isDirty:%d)",
-                      unobservedObject->GetID().GetValue(),
-                      shouldBeVisible, hasNothingBehind, isDirtyPoseState);
+        LOG_INFO("BlockWorld.CheckForUnobservedObjects.MarkingUnobservedObject",
+                 "Removing object %d, which should have been seen, but wasn't. "
+                 "(shouldBeVisible:%d hasNothingBehind:%d isDirty:%d)",
+                 unobservedObject->GetID().GetValue(),
+                 shouldBeVisible, hasNothingBehind, isDirtyPoseState);
 
         _robot->GetMapComponent().MarkObjectUnobserved(*unobservedObject);
         
-        Result markResult = _robot->GetObjectPoseConfirmer().MarkObjectUnobserved(unobservedObject);
-        if(RESULT_OK != markResult)
-        {
-          PRINT_NAMED_WARNING("BlockWorldCheckForUnobservedObjects.MarkObjectUnobservedFailed", "");
-        }
+        BlockWorldFilter filter;
+        filter.SetAllowedIDs({objectID});
+        DeleteLocatedObjects(filter);
       }
 
     } // for each unobserved object
@@ -1409,8 +1337,7 @@ namespace Vector {
             matchObjectID = sameTypeObject->GetID();
           }
 
-          // COZMO-9663: Separate localizable property from poseState
-          _robot->GetObjectPoseConfirmer().MarkObjectDirty(sameTypeObject);
+          MarkObjectDirty(sameTypeObject);
 
           // check if the instance has activeID
           if (sameTypeObject->GetActiveID() == ObservableObject::InvalidActiveID)
@@ -1598,15 +1525,107 @@ namespace Vector {
     {
       const Pose3d* oldPosePtr = nullptr;
       const PoseState oldPoseState = PoseState::Invalid;
-      _robot->GetObjectPoseConfirmer().BroadcastObjectPoseChanged(*object, oldPosePtr, oldPoseState);
+      _robot->GetMapComponent().UpdateObjectPose(*object, oldPosePtr, oldPoseState);
     }
   }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::SetRobotOnChargerContacts()
+  {
+    const Pose3d& poseWrtRobot = Charger::GetDockPoseRelativeToRobot(*_robot);
+    const Pose3d poseWrtOrigin = poseWrtRobot.GetWithRespectToRoot();
+    
+    BlockWorldFilter chargerFilter;
+    chargerFilter.SetAllowedTypes({ObjectType::Charger_Basic});
+    auto* charger = FindLocatedMatchingObject(chargerFilter);
+    if (charger != nullptr) {
+      // Found a match in this origin - simply update its pose
+      SetObjectPose(charger->GetID(), poseWrtOrigin, PoseState::Known);
+      charger->SetLastObservedTime((TimeStamp_t) _robot->GetLastImageTimeStamp());
+    } else {
+      // Don't have a match in this origin, so create a new instance. If we have a match in _another_ origin, copy its
+      // ID and delete it.
+      // Note: We could localize to the existing charger here, but if we've gotten to this point it likely means
+      // someone has picked up the robot and placed it on the charger. If that's the case, we make the assumption that
+      // the world has changed enough that we should just start anew rather than use an old origin.
+      std::shared_ptr<ObservableObject> newCharger;
+      newCharger.reset(new Charger{});
+      
+      chargerFilter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+      charger = FindLocatedMatchingObject(chargerFilter);
+      if (charger != nullptr) {
+        newCharger->CopyID(charger);
+        DeleteLocatedObjects(chargerFilter);
+      } else {
+        newCharger->SetID();
+      }
+      newCharger->SetPose(poseWrtOrigin, poseWrtRobot.GetTranslation().Length(), PoseState::Known);
+      newCharger->SetLastObservedTime((TimeStamp_t) _robot->GetLastImageTimeStamp());
+      AddLocatedObject(newCharger);
+    }
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  Result BlockWorld::SetObjectPose(const ObjectID& objId,
+                                   const Pose3d& newPose,
+                                   const PoseState poseState,
+                                   const bool makeWrtOrigin)
+  {
+    auto* object = GetLocatedObjectByID(objId);
+    if (object == nullptr) {
+      LOG_ERROR("BlockWorld.SetObjectPose.ObjectDoesNotExist",
+                "Object %d does not exist in the current origin",
+                objId.GetValue());
+      return RESULT_FAIL;
+    }
+    
+    // Even if makeWrtOrigin is false, we still want to ensure that the given pose is in the same origin as the robot's
+    // world origin.
+    Pose3d poseWrtOrigin;
+    if (!newPose.GetWithRespectTo(_robot->GetWorldOrigin(), poseWrtOrigin)) {
+      LOG_ERROR("BlockWorld.SetObjectPose.BadPose",
+                "Could not get pose w.r.t. origin");
+      return RESULT_FAIL;
+    }
+    
+    const auto& newObjectPose = makeWrtOrigin ? poseWrtOrigin : newPose;
+    object->SetPose(newObjectPose, object->GetLastPoseUpdateDistance(), poseState);
+    
+    // Inform map component of the updated pose
+    _robot->GetMapComponent().UpdateObjectPose(*object, &object->GetPose(), object->GetPoseState());
+    
+    return RESULT_OK;
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  void BlockWorld::MarkObjectDirty(ObservableObject* object)
+  {
+    DEV_ASSERT(object->HasValidPose(), "BlockWorld.MarkObjectDirty.CantChangePoseStateOfInvalidObjects");
 
+    if (_robot->GetCarryingComponent().IsCarryingObject(object->GetID())) {
+      LOG_WARNING("BlockWorld.MarkObjectDirty.CarryingObject", "Not marking carried object as dirty");
+      return;
+    }
+    
+    const PoseState oldPoseState = object->GetPoseState();
+    if (oldPoseState != PoseState::Dirty) {
+      object->SetPoseState(PoseState::Dirty);
+      
+      if(_robot->GetLocalizedTo() == object->GetID()) {
+        _robot->SetLocalizedTo(nullptr);
+      }
+      
+      if (_robot->IsPoseInWorldOrigin(object->GetPose())) {
+        _robot->GetMapComponent().UpdateObjectPose(*object, &object->GetPose(), oldPoseState);
+      }
+    }
+  }
+  
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::OnRobotDelocalized(PoseOriginID_t newWorldOriginID)
   {
-    // delete objects that have become useless since we delocalized last time
-    DeleteObjectsFromZombieOrigins();
+    // delete origins that have become useless since we delocalized last time
+    DeleteZombieOrigins();
 
     // create a new memory map for this origin
     _robot->GetMapComponent().CreateLocalizedMemoryMap(newWorldOriginID);
@@ -1621,8 +1640,20 @@ namespace Vector {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   void BlockWorld::SanityCheckBookkeeping() const
   {
+    // Sanity checks for robot's origin
+    DEV_ASSERT(_robot->GetPose().IsChildOf(_robot->GetWorldOrigin()),
+               "BlockWorld.Update.RobotParentShouldBeOrigin");
+    DEV_ASSERT(_robot->IsPoseInWorldOrigin(_robot->GetPose()),
+               "BlockWorld.Update.BadRobotOrigin");
+    
     // Sanity check our containers to make sure each located object's properties
     // match the keys of the containers within which it is stored
+    
+    ANKI_VERIFY(_locatedObjects.size() <= 2,
+                "BlockWorld.SanityCheckBookkeeping.TooManyOrigins",
+                "Should only have at most 2 origins");
+    
+    std::set<ObjectType> knownTypes;
     for(auto const& objectsByOrigin : _locatedObjects)
     {
       const auto& objects = objectsByOrigin.second;
@@ -1638,14 +1669,24 @@ namespace Vector {
         }
         const Pose3d& origin = object->GetPose().FindRoot();
         const PoseOriginID_t originID = origin.GetID();
+        const auto& objType = object->GetType();
         ANKI_VERIFY(PoseOriginList::UnknownOriginID != originID,
                     "BlockWorld.SanityCheckBookkeeping.ObjectWithUnknownOriginID",
                     "Origin: %s", origin.GetName().c_str());
         ANKI_VERIFY(objectsByOrigin.first == originID,
                     "BlockWorld.SanityCheckBookkeeping.MismatchedOrigin",
                     "%s Object %d is in Origin:%d but is keyed by Origin:%d",
-                    EnumToString(object->GetType()), object->GetID().GetValue(),
+                    EnumToString(objType), object->GetID().GetValue(),
                     originID, objectsByOrigin.first);
+        
+
+        if (object->IsUnique()) {
+          ANKI_VERIFY(knownTypes.find(objType) == knownTypes.end(),
+                      "BlockWorld.SanityCheckBookkeeping.MultipleUniqueInstances",
+                      "%s Object %d in Origin:%d already exists in another origin!",
+                      EnumToString(objType), object->GetID().GetValue(), originID);
+        }
+        knownTypes.insert(objType);
       }
     }
   }
@@ -1658,7 +1699,6 @@ namespace Vector {
     if(!currentObsMarkers.empty())
     {
       const RobotTimeStamp_t atTimestamp = currentObsMarkers.front().GetTimeStamp();
-      _currentObservedMarkerTimestamp = atTimestamp;
 
       // Sanity check
       if(ANKI_DEVELOPER_CODE)
@@ -1689,24 +1729,14 @@ namespace Vector {
       // Add, update, and/or localize the robot to any objects indicated by the
       // observed markers
       {
-        // Sanity checks for robot's origin
-        DEV_ASSERT(_robot->GetPose().IsChildOf(_robot->GetWorldOrigin()),
-                   "BlockWorld.Update.RobotParentShouldBeOrigin");
-        DEV_ASSERT(_robot->IsPoseInWorldOrigin(_robot->GetPose()),
-                   "BlockWorld.Update.BadRobotOrigin");
+        std::vector<std::shared_ptr<ObservableObject>> objectsSeen;
 
-        std::vector<ObservableObject*> objectsSeen;
+        _objectLibrary.CreateObjectsFromMarkers(currentObsMarkers, objectsSeen);
 
-        Result lastResult = _objectLibrary.CreateObjectsFromMarkers(currentObsMarkers, objectsSeen);
-        if(lastResult != RESULT_OK) {
-          PRINT_NAMED_ERROR("BlockWorld.UpdateObservedMarkers.CreateObjectsFromMarkersFailed", "");
-          return lastResult;
-        }
-
-        lastResult = AddAndUpdateObjects(objectsSeen, atTimestamp);
-        if(lastResult != RESULT_OK) {
+        const Result result = ProcessVisualObservations(objectsSeen, atTimestamp);
+        if(result != RESULT_OK) {
           PRINT_NAMED_ERROR("BlockWorld.UpdateObservedMarkers.AddAndUpdateFailed", "");
-          return lastResult;
+          return result;
         }
       }
 
@@ -1716,8 +1746,6 @@ namespace Vector {
     }
     else
     {
-      _currentObservedMarkerTimestamp = 0;
-
       const RobotTimeStamp_t lastImgTimestamp = _robot->GetLastImageTimeStamp();
       if(lastImgTimestamp > 0) // Avoid warning on first Update()
       {
@@ -1746,56 +1774,32 @@ namespace Vector {
       dispOcc.Display("Occluders");
     }
 
-    //PRINT_CH_INFO("BlockWorld", "BlockWorld.Update.NumBlocksObserved", "Saw %d blocks", numBlocksObserved);
-
-
-    // Check for unobserved, uncarried objects that overlap with the robot's position,
-    // and mark them as dirty.
-    // For now we aren't worrying about collision with the robot while picking or placing since
-    // we are trying to get close to objects in these modes.
-    // TODO: Enable collision checking while picking and placing too
-    // (I feel like we should be able to always do this, since we _do_ check that the
-    //  object is not the docking object as part of the filter, and we do height checks as well.
-    //  But I'm wary of changing it now either...)
-    if(!_robot->GetDockingComponent().IsPickingOrPlacing())
-    {
-      BlockWorldFilter unobservedCollidingObjectFilter;
-      unobservedCollidingObjectFilter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame);
-      unobservedCollidingObjectFilter.SetFilterFcn([this](const ObservableObject* object) {
-        return CheckForCollisionWithRobot(object);
-      });
-
-      ModifierFcn markAsDirty = [this](ObservableObject* object)
-      {
-        // Mark object and everything on top of it as "dirty". Next time we look
-        // for it and don't see it, we will fully clear it and mark it as "unknown"
-        _robot->GetObjectPoseConfirmer().MarkObjectDirty(object);
-      };
-
-      ModifyLocatedObjects(markAsDirty, unobservedCollidingObjectFilter);
-    }
-
-    if(ANKI_DEVELOPER_CODE)
-    {
-      SanityCheckBookkeeping();
-    }
-
     return RESULT_OK;
 
   } // UpdateObservedMarkers()
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool BlockWorld::CheckForCollisionWithRobot(const ObservableObject* object) const
+  void BlockWorld::CheckForRobotObjectCollisions()
+  {
+    BlockWorldFilter intersectingObjectFilter;
+    intersectingObjectFilter.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame);
+    intersectingObjectFilter.SetFilterFcn([this](const ObservableObject* object) {
+      return IntersectsRobotBoundingBox(object);
+    });
+    
+    ModifierFcn markAsDirty = [this](ObservableObject* object) {
+      MarkObjectDirty(object);
+    };
+    
+    ModifyLocatedObjects(markAsDirty, intersectingObjectFilter);
+  }
+  
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  bool BlockWorld::IntersectsRobotBoundingBox(const ObservableObject* object) const
   {
     // If this object is _allowed_ to intersect with the robot, no reason to
     // check anything
     if(object->CanIntersectWithRobot()) {
-      return false;
-    }
-
-    // If object was observed, it must be there, so don't check for collision
-    const bool wasObserved = object->GetLastObservedTime() >= _robot->GetLastImageTimeStamp();
-    if(wasObserved) {
       return false;
     }
 
@@ -1822,11 +1826,11 @@ namespace Vector {
     Pose3d objectPoseWrtRobotOrigin;
     if(false == object->GetPose().GetWithRespectTo(_robot->GetWorldOrigin(), objectPoseWrtRobotOrigin))
     {
-      PRINT_NAMED_WARNING("BlockWorld.CheckForCollisionWithRobot.BadOrigin",
-                          "Could not get %s %d pose (origin: %s) w.r.t. robot origin (%s)",
-                          EnumToString(object->GetType()), objectID.GetValue(),
-                          object->GetPose().FindRoot().GetName().c_str(),
-                          _robot->GetWorldOrigin().GetName().c_str());
+      LOG_WARNING("BlockWorld.IntersectsRobotBoundingBox.BadOrigin",
+                  "Could not get %s %d pose (origin: %s) w.r.t. robot origin (%s)",
+                  EnumToString(object->GetType()), objectID.GetValue(),
+                  object->GetPose().FindRoot().GetName().c_str(),
+                  _robot->GetWorldOrigin().GetName().c_str());
       return false;
     }
 
@@ -1854,9 +1858,9 @@ namespace Vector {
     const bool bboxIntersects = robotBBox.Intersects(objectBBox);
     if(bboxIntersects)
     {
-      PRINT_CH_INFO("BlockWorld", "BlockWorld.CheckForCollisionWithRobot.ObjectRobotIntersection",
-                    "Marking object %s %d as 'dirty', because it intersects robot's bounding quad.",
-                    EnumToString(object->GetType()), object->GetID().GetValue());
+      LOG_INFO("BlockWorld.IntersectsRobotBoundingBox.ObjectRobotIntersection",
+               "Object %s %d intersects robot's bounding quad.",
+               EnumToString(object->GetType()), object->GetID().GetValue());
 
       return true;
     }
@@ -2106,31 +2110,22 @@ namespace Vector {
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool BlockWorld::AnyRemainingLocalizableObjects() const
-  {
-    return AnyRemainingLocalizableObjects(PoseOriginList::UnknownOriginID);
-  }
-
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   bool BlockWorld::AnyRemainingLocalizableObjects(PoseOriginID_t originID) const
   {
-    // Filter out anything that can't be used for localization 
+    // Filter out anything that can't be used for localization (i.e. only allow charger)
     BlockWorldFilter filter;
-    filter.SetFilterFcn([](const ObservableObject* obj) {
-      return obj->CanBeUsedForLocalization();
-    });
+    filter.SetAllowedTypes({ObjectType::Charger_Basic});
 
-    // Allow all origins if origin is nullptr or allow only the specified origin
-    filter.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
-    if(originID != PoseOriginList::UnknownOriginID) {
+    // Allow all origins if UnknownOriginID was passed in, otherwise allow only the specified origin
+    if (originID == PoseOriginList::UnknownOriginID) {
+      filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+    } else {
+      filter.SetOriginMode(BlockWorldFilter::OriginMode::Custom);
       filter.AddAllowedOrigin(originID);
     }
 
-    if(nullptr != FindLocatedObjectHelper(filter, nullptr, true)) {
-      return true;
-    } else {
-      return false;
-    }
+    const bool localizableObjectFound = (nullptr != FindLocatedObjectHelper(filter, nullptr, true));
+    return localizableObjectFound;
   }
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -2146,14 +2141,12 @@ namespace Vector {
     };
     std::vector<DeletedObjectInfo> objectsToBroadcast;
 
-    auto originIter = _locatedObjects.begin();
-    while(originIter != _locatedObjects.end())
-    {
-      const PoseOriginID_t crntOriginID = originIter->first;
-      auto& objectContainer = originIter->second;
+    for (auto& originPair : _locatedObjects) {
+      const PoseOriginID_t crntOriginID = originPair.first;
 
       if(filter.ConsiderOrigin(crntOriginID, _robot->GetPoseOriginList().GetCurrentOriginID()))
       {
+        auto& objectContainer = originPair.second;
         for (auto objectIter = objectContainer.begin() ; objectIter != objectContainer.end() ; ) {
           auto* object = objectIter->get();
           if (object == nullptr) {
@@ -2186,15 +2179,11 @@ namespace Vector {
           }
         }
       }
-      
-      if(objectContainer.empty()) {
-        // All objects removed from this origin, erase it
-        originIter = _locatedObjects.erase(originIter);
-      } else {
-        ++originIter;
-      }
     }
 
+    // Remove any now-zombie origins
+    DeleteZombieOrigins();
+    
     // notify of the deleted objects
     for(auto& objectDeletedInfo : objectsToBroadcast)
     {
@@ -2205,12 +2194,9 @@ namespace Vector {
       const Pose3d* oldPosePtr = &objectDeletedInfo._oldPose;
       const PoseState oldPoseState = objectDeletedInfo._oldPoseState;
 
-      // tell PoseConfirmer this object is not confirmed anymore (in case we delete without unobserving)
-      _robot->GetObjectPoseConfirmer().DeletedObjectInCurrentOrigin(deletedID);
-
       // PoseConfirmer::PoseChanged (should not have valid pose)
-      DEV_ASSERT(!objectDeletedInfo._objectCopy->HasValidPose(), "ObjectPoseConfirmer.CopyInheritedPose");
-      _robot->GetObjectPoseConfirmer().BroadcastObjectPoseChanged(*objectDeletedInfo._objectCopy, oldPosePtr, oldPoseState);
+      DEV_ASSERT(!objectDeletedInfo._objectCopy->HasValidPose(), "BlockWorld.DeleteLocatedObjects.CopyInheritedPose");
+      _robot->GetMapComponent().UpdateObjectPose(*objectDeletedInfo._objectCopy, oldPosePtr, oldPoseState);
 
       RobotDeletedLocatedObject msg(deletedID);
 

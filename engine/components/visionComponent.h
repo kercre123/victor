@@ -336,9 +336,8 @@ struct DockingErrorSignal;
     void EnableSendingSDKImageChunks(bool enable) { _sendProtoImageChunks = enable; }
     bool IsSendingSDKImageChunks() { return _sendProtoImageChunks; }
 
-    // Method to register external callbacks when a vision processing result is ready.
-    // Callbacks must check whether the required vision modes were completed.
-    Signal::SmartHandle RegisterVisionResultCallback(const std::function<VisionResultCallback>& callback);
+    Vision::ImageQuality GetLastImageQuality() const { return _lastImageQuality; }
+    IlluminationState GetLastIlluminationState() const { return _lastIlluminationState; }
 
   protected:
     
@@ -445,8 +444,7 @@ struct DockingErrorSignal;
     // some amount of time
     EngineTimeStamp_t _restartingCameraTime_ms = 0;
 
-    // Container of all the callback handles to call
-    Signal::Signal<VisionResultCallback> _visionResultSignal;
+    IlluminationState _lastIlluminationState = IlluminationState::Unknown;
 
     #if REMOTE_CONSOLE_ENABLED
     // Array of pairs of ConsoleVars and their associated values used for toggling VisionModes

@@ -106,16 +106,7 @@ namespace Anki {
       
       // Set the moving state of the object and when it either started or stopped moving.
       virtual void SetIsMoving(bool isMoving, TimeStamp_t t) {};
-      
-      // Override for objects that can be used for localization (e.g., mats
-      // or active blocks that have not moved since last localization)
-      // Note that true means the object can be used for localization *now*, in its current state,
-      // (not whether this object is of a type that might ever be suitable for localization).
-      virtual bool CanBeUsedForLocalization() const { return false; }
-      
-      // How flat an object must be to be used for localization (override if different
-      // objects have different tolerances)
-      virtual f32 GetRestingFlatTolForLocalization_deg() const { return 5.f; }
+  
 
       virtual bool IsMoveable()               const { return true; }
       
@@ -183,6 +174,8 @@ namespace Anki {
       void CopyID(const ObservableObject* fromOther);
             
       void SetColor(const ColorRGBA& color);
+      
+      // Set the object's pose. newPose should be with respect to world origin.
       virtual void SetPose(const Pose3d& newPose,
                            f32 fromDistance = -1.f,
                            PoseState newPoseState = PoseState::Known);

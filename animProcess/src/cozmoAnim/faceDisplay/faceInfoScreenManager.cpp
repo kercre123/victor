@@ -1394,11 +1394,21 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
           state.backpackTouchSensorRaw);
   const std::string touch = temp;
 
-  const bool batteryDisconnected = static_cast<bool>(state.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED);
+  #define IS_STATUS_FLAG_SET(x) ((state.status & (uint32_t)RobotStatusFlag::x) != 0)
+  const bool batteryDisconnected = IS_STATUS_FLAG_SET(IS_BATTERY_DISCONNECTED);
+  const bool batteryCharging     = IS_STATUS_FLAG_SET(IS_CHARGING);
+  const bool batteryHot          = IS_STATUS_FLAG_SET(IS_BATTERY_OVERHEATED);
+  const bool batteryLow          = IS_STATUS_FLAG_SET(IS_BATTERY_LOW);
+  const bool shutdownImminent    = IS_STATUS_FLAG_SET(IS_SHUTDOWN_IMMINENT);
+
   sprintf(temp,
-          "BATT:  %0.2fV   %s",
+          "BATT:  %0.2fV   %s%s%s%s%s",
           state.batteryVoltage,
-          batteryDisconnected ? "D" : "");
+          batteryDisconnected ? "D" : " ",
+          batteryCharging     ? "C" : " ",
+          batteryHot          ? "H" : " ",
+          batteryLow          ? "L" : " ",
+          shutdownImminent    ? "S" : " ");
   const std::string batt = temp;
 
   sprintf(temp,
@@ -1478,6 +1488,8 @@ void FaceInfoScreenManager::DrawMicInfo(const RobotInterface::MicData& micData)
     return;
   }
 
+  //Get the intensity of the first sample in each channel and print them to a debug string.
+  //(Should we instead use the max intensity of the first n samples per channel?)
   char temp[32] = "";
   sprintf(temp,
           "%d",
@@ -1486,17 +1498,17 @@ void FaceInfoScreenManager::DrawMicInfo(const RobotInterface::MicData& micData)
 
   sprintf(temp,
           "%d",
-          micData.data[1]);
+          micData.data[MicData::kSamplesPerBlockPerChannel]);
   const std::string micData1 = temp;
 
   sprintf(temp,
           "%d",
-          micData.data[2]);
+          micData.data[MicData::kSamplesPerBlockPerChannel*2]);
   const std::string micData2 = temp;
 
   sprintf(temp,
           "%d",
-          micData.data[3]);
+          micData.data[MicData::kSamplesPerBlockPerChannel*3]);
   const std::string micData3 = temp;
 
   DrawTextOnScreen({"MICS", micData0, micData1, micData2, micData3});

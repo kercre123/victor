@@ -52,7 +52,6 @@ class IGatewayInterface;
 class MoodManager;
 class MovementComponent;
 class NVStorageComponent;
-class ObjectPoseConfirmer;
 class PathComponent;
 class ProgressionUnlockComponent;
 class ProxSensorComponent;
@@ -109,7 +108,6 @@ public:
   f32                         GetLiftHeight()                         const;
   MovementComponent&          GetMoveComponent()                      const;
   NVStorageComponent&         GetNVStorageComponent()                 const;
-  ObjectPoseConfirmer&        GetObjectPoseConfirmer()                const;
   OffTreadsState              GetOffTreadsState()                     const;
   EngineTimeStamp_t           GetOffTreadsStateLastChangedTime_ms()   const;
   PathComponent&              GetPathComponent()                      const;

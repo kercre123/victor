@@ -64,7 +64,6 @@ enum class RobotComponentID {
   StimulationFaceDisplay,
   Movement,
   NVStorage,
-  ObjectPoseConfirmer,
   PathPlanning,
   PetWorld,
   PhotographyManager,
