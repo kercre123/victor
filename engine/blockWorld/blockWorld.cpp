@@ -854,7 +854,11 @@ namespace Vector {
   Result BlockWorld::ProcessVisualObservations(const std::vector<std::shared_ptr<ObservableObject>>& objectsSeenRaw,
                                                const RobotTimeStamp_t atTimestamp)
   {
-    DEV_ASSERT(!objectsSeenRaw.empty(), "BlockWorld.ProcessVisualObservations.NoObjects");
+    // if there are no objects, then exit early. This might happen if we see an SDK marker
+    // but have not created a custom object for it.
+    if (objectsSeenRaw.empty()) {
+      return RESULT_OK;
+    }
     
     // We cannot trust observations of objects if we were off treads, so no need to continue
     if (_robot->GetOffTreadsState() != OffTreadsState::OnTreads) {
