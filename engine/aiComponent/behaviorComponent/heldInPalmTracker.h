@@ -75,6 +75,8 @@ private:
   
   bool HasDetectedEnoughCliffsSincePickup(const BEIRobotInfo& robotInfo) const;
   
+  bool WasRobotMovingRecently(const BEIRobotInfo& robotInfo) const;
+  
   // Auxilary helper functions:
   u32 GetMillisecondsSince(const EngineTimeStamp_t& pastTimestamp) const;
 
