@@ -1,6 +1,6 @@
 // +build !shipping
 
-package box
+package offboard_vision
 
 import (
 	"anki/ipc"
@@ -20,25 +20,25 @@ import (
 	"github.com/gwatts/rootcerts"
 )
 
-const baseDir = "/anki/data/assets/cozmo_resources/webserver/cloud/box"
+const baseDir = "/anki/data/assets/cozmo_resources/webserver/cloud/offboard_vision"
 const imageDir = baseDir + "/images"
-const cacheDir = "/data/data/com.anki.victor/cache/boxtest"
+const cacheDir = "/data/data/com.anki.victor/cache/offboard_vision"
 
 func init() {
 	devHandlers = func(s *http.ServeMux) [][]string {
-		s.HandleFunc("/box/", boxHandler)
-		s.HandleFunc("/box/request", reqHandler)
+		s.HandleFunc("/offboard_vision/", offboardVisionHandler)
+		s.HandleFunc("/offboard_vision/request", reqHandler)
 
-		imgPrefix := "/box/images/"
+		imgPrefix := "/offboard_vision/images/"
 		s.Handle(imgPrefix, http.StripPrefix(imgPrefix, http.HandlerFunc(imgHandler)))
 
-		log.Println("Box dev handlers added")
-		return [][]string{[]string{"/box", "Send test images to Snapper and see the results from MS"}}
+		log.Println("Offboard vision dev handlers added")
+		return [][]string{[]string{"/offboard_vision", "Send test images to Snapper and see the results from MS"}}
 	}
 	devURLReader = fetchURLData
 }
 
-func boxHandler(w http.ResponseWriter, r *http.Request) {
+func offboardVisionHandler(w http.ResponseWriter, r *http.Request) {
 	files, err := ioutil.ReadDir(imageDir)
 
 	if err != nil {
@@ -66,13 +66,13 @@ func boxHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-var boxClient ipc.Conn
+var offboardVisionClient ipc.Conn
 
 func reqHandler(w http.ResponseWriter, r *http.Request) {
 	// initialize connection to ipc server
-	if boxClient == nil {
+	if offboardVisionClient == nil {
 		var err error
-		if boxClient, err = ipc.NewUnixgramClient(ipc.GetSocketPath("offboard_vision_server"), "offboard_vision_dev_client"); err != nil {
+		if offboardVisionClient, err = ipc.NewUnixgramClient(ipc.GetSocketPath("offboard_vision_server"), "offboard_vision_dev_client"); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, "Error connecting to server: ", err)
 			return
@@ -124,13 +124,13 @@ func reqHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if _, err := boxClient.Write(buf.Bytes()); err != nil {
+	if _, err := offboardVisionClient.Write(buf.Bytes()); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)
 		fmt.Fprint(w, "Error sending message: ", err)
 		return
 	}
 
-	respBuf := boxClient.ReadBlock()
+	respBuf := offboardVisionClient.ReadBlock()
 	var resp vision.OffboardResultReady
 	if err := resp.Unpack(bytes.NewBuffer(respBuf)); err != nil {
 		w.WriteHeader(http.StatusInternalServerError)

@@ -1,4 +1,4 @@
-package box
+package offboard_vision
 
 import "net/http"
 

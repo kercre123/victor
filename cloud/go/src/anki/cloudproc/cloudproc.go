@@ -79,8 +79,8 @@ func Run(ctx context.Context, procOptions ...Option) {
 		})
 	}
 	wg.AddFunc(func() {
-		box.Run(ctx)
+		offboard_vision.Run(ctx)
 	})
-	addHandlers(box.GetDevHandlers)
+	addHandlers(offboard_vision.GetDevHandlers)
 	wg.Wait()
 }

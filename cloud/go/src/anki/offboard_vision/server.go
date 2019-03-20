@@ -1,4 +1,4 @@
-package box
+package offboard_vision
 
 import (
 	"anki/ipc"
@@ -6,7 +6,7 @@ import (
 	"context"
 )
 
-// Run starts the box service
+// Run starts the offboard vision service
 func Run(ctx context.Context) {
 	runServer(ctx)
 }
@@ -14,7 +14,7 @@ func Run(ctx context.Context) {
 func runServer(ctx context.Context) {
 	serv, err := ipc.NewUnixgramServer(ipc.GetSocketPath("offboard_vision_server"))
 	if err != nil {
-		log.Println("Error creating box server:", err)
+		log.Println("Error creating offboard vision server:", err)
 		return
 	}
 
@@ -25,7 +25,7 @@ func runServer(ctx context.Context) {
 		}()
 	}
 
-	log.Println("Elemental box server is running")
+	log.Println("Elemental offboard vision server is running")
 
 	for c := range serv.NewConns() {
 		cl := client{Conn: c}

@@ -1,4 +1,4 @@
-package box
+package offboard_vision
 
 import (
 	"anki/config"
@@ -20,7 +20,7 @@ import (
 )
 
 var deviceID = "mac-build"
-var defaultGroupName = "box-demo"
+var defaultGroupName = "offboard_vision"
 
 func init() {
 	cvars.AddString("FaceGroup", func(x string) interface{} {
@@ -49,21 +49,21 @@ func (c *client) handleConn(ctx context.Context) {
 		}
 		var msg vision.OffboardImageReady
 		if err := msg.Unpack(bytes.NewBuffer(msgbuf)); err != nil {
-			log.Println("Could not unpack box request:", err)
+			log.Println("Could not unpack offboard vision request:", err)
 			continue
 		}
 
 		resps, err := c.handleRequest(ctx, &msg)
 		if err != nil {
-			log.Println("Error handling box request:", err)
+			log.Println("Error handling offboard vision request:", err)
 		}
 
 		for _, resp := range resps {
 			var buf bytes.Buffer
 			if err := resp.Pack(&buf); err != nil {
-				log.Println("Error packing box response:", err)
+				log.Println("Error packing offboard vision response:", err)
 			} else if n, err := c.Write(buf.Bytes()); n != buf.Len() || err != nil {
-				log.Println("Error sending box response:", fmt.Sprintf("%d/%d,", n, buf.Len()), err)
+				log.Println("Error sending offboard vision response:", fmt.Sprintf("%d/%d,", n, buf.Len()), err)
 			}
 		}
 	}
