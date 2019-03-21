@@ -23,7 +23,7 @@ target_link_libraries(switchboard
 PRIVATE
   ${PLATFORM_LIBS}
   sdk_clad_cpp
-  robot_clad_cpplite
+  robot_clad
   cti_messaging_shared
   engine_clad
   ${SODIUM_LIBS}
@@ -83,7 +83,7 @@ target_link_libraries(vic-switchboard
   switchboard
   ${PLATFORM_LIBS}
   sdk_clad_cpp
-  robot_clad_cpplite
+  robot_clad
   cti_messaging_shared
   engine_clad
   ${SODIUM_LIBS}
@@ -124,7 +124,7 @@ target_link_libraries(vic-rescue
   cti_vision 
   ${PLATFORM_LIBS}
   sdk_clad_cpp
-  robot_clad_cpplite
+  robot_clad
   cti_messaging_shared
   engine_clad
   ${SODIUM_LIBS}
