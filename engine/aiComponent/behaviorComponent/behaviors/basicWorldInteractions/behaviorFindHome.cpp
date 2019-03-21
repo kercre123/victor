@@ -83,6 +83,9 @@ namespace {
     {MemoryMapTypes::EContentType::InterestingEdge       , true },
     {MemoryMapTypes::EContentType::NotInterestingEdge    , true }
   };
+
+  const float kIncidenceForObservation_rad = DEG_TO_RAD(75.f);
+  const float kNumRandomPosesForObservation = 10;
 }
 
 
@@ -403,7 +406,9 @@ void BehaviorFindHome::GenerateSearchPoses(std::vector<Pose3d>& outPoses)
   const auto* charger = dynamic_cast<const Charger*>(GetBEI().GetBlockWorld().FindLocatedObjectClosestTo(robotPose, *_iConfig.homeFilter));
   if ((charger != nullptr) &&
       (now_sec > _dVars.persistent.lastVisitedOldChargerTime + _iConfig.recentSearchWindow_sec)) {
-    outPoses = charger->GenerateObservationPoses(GetRNG());
+    outPoses = charger->GenerateObservationPoses( GetRNG(),
+                                                  kNumRandomPosesForObservation,
+                                                  kIncidenceForObservation_rad);
     _dVars.persistent.lastVisitedOldChargerTime = now_sec;
     return;
   }
