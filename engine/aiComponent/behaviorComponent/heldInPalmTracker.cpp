@@ -271,8 +271,16 @@ void HeldInPalmTracker::CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo)
   
   if (!_isHeldInPalm) {
     _lastTimeNotHeldInPalm = currTime;
+    auto& moveComponent = robotInfo.GetMoveComponent();
+    if (moveComponent.IsUnexpectedMovementWhilePickedUpEnabled()) {
+      moveComponent.EnableUnexpectedMovementWhilePickedUp(false);
+    }
   } else {
     _lastHeldInPalmTime = currTime;
+    auto& moveComponent = robotInfo.GetMoveComponent();
+    if (!moveComponent.IsUnexpectedMovementWhilePickedUpEnabled()) {
+      moveComponent.EnableUnexpectedMovementWhilePickedUp(true);
+    }
   }
 }
 

@@ -246,9 +246,10 @@ void MovementComponent::CheckForUnexpectedMovement(const Vector::RobotState& rob
   }
   
   // Don't check for unexpected movement under the following conditions
-  if (robotState.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP   ||
+  if (robotState.status & (uint32_t)RobotStatusFlag::IS_FALLING     ||
       robotState.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER  ||
-      robotState.status & (uint32_t)RobotStatusFlag::IS_FALLING)
+        (robotState.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP  &&
+         !_enableUnexpectedMovementWhilePickedUp) )
   {
     _unexpectedMovement.Reset();
     return;
