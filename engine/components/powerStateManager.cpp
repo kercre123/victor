@@ -30,8 +30,6 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "webServerProcess/src/webService.h"
 
-#include "clad/types/lcdTypes.h"
-
 namespace Anki {
 namespace Vector {
 
@@ -367,6 +365,15 @@ void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
                         savePower ? "enable" : "disable",
                         Util::EnumToUnderlying(setting));
   }
+}
+
+void PowerStateManager::RequestLCDBrightnessChange(const LCDBrightness& level) const
+{
+  // For now, we will honor all LCD brightness changes, but in the future
+  //  if powersaving concerns are relevant here, we may put logic that
+  //  decides the ultimate effected change in this method.
+  _context->GetRobotManager()->GetMsgHandler()->SendMessage(
+        RobotInterface::EngineToRobot( RobotInterface::SetLCDBrightnessLevel( level ) ) );
 }
 
 

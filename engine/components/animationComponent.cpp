@@ -83,23 +83,21 @@ void AnimationComponent::InitDependent(Vector::Robot* robot, const RobotCompMap&
   _movementComponent = dependentComps.GetComponentPtr<MovementComponent>();
   const CozmoContext* context = _robot->GetContext();
   _animationGroups = std::make_unique<AnimationGroupWrapper>(*(context->GetDataLoader()->GetAnimationGroups()));
-  if (context) {
-    // Setup game message handlers
-    IExternalInterface *extInterface = context->GetExternalInterface();
-    if (extInterface != nullptr) {
-      
-      auto helper = MakeAnkiEventUtil(*extInterface, *this, GetSignalHandles());
-  
-      using namespace ExternalInterface;
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableAnimations>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableAnimationGroups>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayProceduralFace>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceHue>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageBinaryChunk>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageRGBChunk>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
 
-    }
+  // Setup game message handlers
+  IExternalInterface *extInterface = context->GetExternalInterface();
+  if (extInterface != nullptr) {
+    
+    auto helper = MakeAnkiEventUtil(*extInterface, *this, GetSignalHandles());
+
+    using namespace ExternalInterface;
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableAnimations>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableAnimationGroups>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayProceduralFace>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceHue>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageBinaryChunk>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageRGBChunk>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
   }
   
   // Setup robot message handlers

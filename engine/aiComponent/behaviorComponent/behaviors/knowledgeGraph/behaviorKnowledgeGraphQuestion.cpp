@@ -31,7 +31,6 @@
 #include "util/global/globalDefinitions.h"
 #include "util/logging/logging.h"
 #include "clad/types/animationTrigger.h"
-#include "clad/types/behaviorComponent/userIntent.h"
 
 #define PRINT_DEBUG( format, ... ) \
   PRINT_CH_DEBUG( "KnowledgeGraph", "BehaviorKnowledgeGraphQuestion", format, ##__VA_ARGS__ )
@@ -447,17 +446,6 @@ void BehaviorKnowledgeGraphQuestion::TransitionToNoResponse()
   DelegateIfInControl( messageAnimation );
 
   // ... annnnnd we're done
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::TransitionToNoConnection()
-{
-  PRINT_DEBUG( "Knowledge Graph not connected" );
-
-  _dVars.state = EState::NoConnection;
-
-  // currently no distinction between "no response", but there will/may be at some point
-  TransitionToNoResponse();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

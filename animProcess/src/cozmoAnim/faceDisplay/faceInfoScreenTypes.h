@@ -47,6 +47,7 @@ enum class ScreenName : uint8_t {
   AlexaPairingExpired, // code expires (has timeout)
   AlexaPairingFailed,  // server error (has timeout)
   ToggleMute, // Quick animation to show change in microphone mute state
+  ToF,
   
   Count
 };

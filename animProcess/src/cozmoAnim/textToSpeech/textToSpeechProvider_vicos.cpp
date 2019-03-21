@@ -37,7 +37,7 @@ namespace Anki {
 namespace Vector {
 namespace TextToSpeech {
 
-TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* context, const Json::Value& tts_platform_config)
+TextToSpeechProviderImpl::TextToSpeechProviderImpl(const Anim::AnimContext* context, const Json::Value& tts_platform_config)
 {
   // Caller must provide context & RNG
   DEV_ASSERT(context != nullptr, "TextToSpeechProviderImpl.InvalidContext");

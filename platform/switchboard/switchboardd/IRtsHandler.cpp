@@ -11,6 +11,8 @@
  **/
 
 #include "switchboardd/IRtsHandler.h"
+#include "osState/osState.h"
+#include <cutils/properties.h>
 
 namespace Anki {
 namespace Switchboard {
@@ -41,6 +43,20 @@ bool IRtsHandler::LoadKeys() {
     Log::Write("Generating new key pair.");
     return false;
   }
+}
+
+const std::string& IRtsHandler::GetBuildIdString() {
+  if (_buildIdString.empty()) {
+    char buildNo[PROPERTY_VALUE_MAX] = {0};
+    (void)property_get("ro.build.id", buildNo, "");
+
+    _buildIdString = std::string(buildNo);
+    if(Vector::OSState::getInstance()->IsAnkiDevRobot()) {
+      _buildIdString += "-ankidev";
+    }
+  }
+
+  return _buildIdString;
 }
 
 } // Switchboard

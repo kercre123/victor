@@ -72,6 +72,7 @@ target_link_libraries(cozmo_engine
   util
   PRIVATE
   cameraService
+  whiskeyToF
   canned_anim_lib_engine
   victor_web_library
   # cti

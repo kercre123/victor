@@ -15,6 +15,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/factory/factoryTestLogger.h"

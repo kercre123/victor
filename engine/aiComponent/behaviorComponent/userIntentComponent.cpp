@@ -33,7 +33,6 @@
 #include "clad/audio/audioEventTypes.h"
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/behaviorTriggerResponse.h"
-#include "clad/types/behaviorComponent/userIntent.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -274,9 +273,6 @@ void UserIntentComponent::StartTransitionIntoActiveUserIntentFeedback()
   }
 }
 
-// todo: remove this when we decide what we're doing with the lights
-#define USE_CUSTOM_BP_ANIM 0
-
 UserIntentComponent::ActiveIntentFeedback::ActiveIntentFeedback() :
   robot(nullptr),
   activatedIntentTag(UserIntentTag::INVALID),
@@ -309,7 +305,7 @@ void UserIntentComponent::ActiveIntentFeedback::StartTransitionIntoActive()
 
   if (!IsActive()) {
     BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
-    bplComponent.SetBackpackAnimation( BackpackAnimationTrigger::MeetVictor );
+    bplComponent.SetBackpackAnimation( BackpackAnimationTrigger::WorkingOnIt );
 
     const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
     transitionShutOffTime = (currentTime + kIntentFeedbackTransitionShutoffTime);
@@ -341,28 +337,8 @@ void UserIntentComponent::ActiveIntentFeedback::Activate(UserIntentTag userInten
   {
     StopTransitionIntoActive();
 
-    #if USE_CUSTOM_BP_ANIM
-    {
-      static const BackpackLightAnimation::BackpackAnimation kActiveStateLights =
-      {
-        .onColors               = {{NamedColors::WHITE,NamedColors::WHITE,NamedColors::WHITE}},
-        .offColors              = {{NamedColors::BLACK,NamedColors::BLACK,NamedColors::BLACK}},
-        .onPeriod_ms            = {{1000,1000,1000}},
-        .offPeriod_ms           = {{250,250,250}},
-        .transitionOnPeriod_ms  = {{500,500,500}},
-        .transitionOffPeriod_ms = {{500,500,500}},
-        .offset                 = {{0,0,0}}
-      };
-
-      BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
-      bplComponent.StartLoopingBackpackAnimation( kActiveStateLights, activeLightsHandle );
-    }
-    #else
-    {
-      BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
-      bplComponent.SetBackpackAnimation( BackpackAnimationTrigger::MeetVictor );
-    }
-    #endif
+    BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+    bplComponent.SetBackpackAnimation( BackpackAnimationTrigger::WorkingOnIt );
 
     // send audio state begin event
 //    const AudioMetaData::GameEvent::GenericEvent startEvent = AudioMetaData::GameEvent::GenericEvent::Play_Robot_Vic_SfxWorking_Loop_Play;
@@ -391,20 +367,8 @@ void UserIntentComponent::ActiveIntentFeedback::Deactivate(UserIntentTag userInt
   // UserIntentTag::INVALID intent will force deactivation
   if (IsActive() && ((userIntent == activatedIntentTag) || (userIntent == UserIntentTag::INVALID)))
   {
-    #if USE_CUSTOM_BP_ANIM
-    {
-      if ( activeLightsHandle.IsValid() )
-      {
-        BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
-        bplComponent.StopLoopingBackpackAnimation( activeLightsHandle );
-      }
-    }
-    #else
-    {
-      BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
-      bplComponent.ClearAllBackpackLightConfigs();
-    }
-    #endif
+    BackpackLightComponent& bplComponent = robot->GetBackpackLightComponent();
+    bplComponent.ClearAllBackpackLightConfigs();
 
     // send audio state end event
 //    const AudioMetaData::GameEvent::GenericEvent startEvent = AudioMetaData::GameEvent::GenericEvent::StopRobot_Vic_Sfx_Working_Loop_Stop;

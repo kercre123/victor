@@ -23,7 +23,8 @@
 
 namespace Anki {
 namespace Vector {
-  
+namespace Anim {
+
 namespace {
 // Keep Face Alive Layer Names
 const std::string kEyeBlinkLayerName  = "KeepAliveEyeBlink";
@@ -45,7 +46,7 @@ CONSOLE_VAR_RANGED(u32, kAudioAnimationOffset_ms, "Audio.AnimationStreamer", 200
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TrackLayerComponent::TrackLayerComponent(const AnimContext* context)
+TrackLayerComponent::TrackLayerComponent(const Anim::AnimContext* context)
 : _audioLayerManager(new AudioLayerManager(*context->GetRandom()))
 , _backpackLayerManager(new BackpackLayerManager(*context->GetRandom()))
 , _faceLayerManager(new FaceLayerManager(*context->GetRandom()))
@@ -98,9 +99,9 @@ void TrackLayerComponent::ApplyLayersToAnim(Animation* anim,
                                             bool storeFace) const
 {
   // Apply layers of individual tracks to anim
-  ApplyAudioLayersToAnim(anim, timeSinceAnimStart_ms, layeredKeyframes);
+  ApplyAudioLayersToAnim   (anim, timeSinceAnimStart_ms, layeredKeyframes);
   ApplyBackpackLayersToAnim(anim, timeSinceAnimStart_ms, layeredKeyframes);
-  ApplyFaceLayersToAnim(anim, timeSinceAnimStart_ms, layeredKeyframes, storeFace);
+  ApplyFaceLayersToAnim    (anim, timeSinceAnimStart_ms, layeredKeyframes, storeFace);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -329,7 +330,7 @@ void TrackLayerComponent::ApplyAudioLayersToAnim(Animation* anim,
     }
 
     if ((_audioKeyframeIt != frameList.end()) &&
-        _audioKeyframeIt->IsTimeToPlay(audioOffsetTime_ms)) {
+         _audioKeyframeIt->IsTimeToPlay(audioOffsetTime_ms)) {
       layeredKeyFrames.audioKeyFrame = *_audioKeyframeIt;
       layeredKeyFrames.haveAudioKeyFrame = true;
       ++_audioKeyframeIt;
@@ -456,6 +457,6 @@ void TrackLayerComponent::EnableProceduralAudio(bool enabled)
   }
 }
 
-
+}
 }
 }

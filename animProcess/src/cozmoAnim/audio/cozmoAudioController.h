@@ -32,7 +32,9 @@ enum class ParameterType : uint32_t;
 }
 }
 namespace Vector {
-class AnimContext;
+namespace Anim {
+  class AnimContext;
+}
 namespace Audio {
 
 
@@ -40,7 +42,7 @@ class CozmoAudioController : public AudioEngine::AudioEngineController
 {
 public:
 
-  CozmoAudioController(const AnimContext* context);
+  CozmoAudioController(const Anim::AnimContext* context);
 
   virtual ~CozmoAudioController();
   
@@ -93,7 +95,7 @@ public:
 
 private:
   
-  const AnimContext* _animContext = nullptr;
+  const Anim::AnimContext* _animContext = nullptr;
   std::unique_ptr<AudioEngine::SoundbankLoader> _soundbankLoader;
   // Parameter Value Update functionality
   AudioEngine::AudioEngineCallbackId _parameterUpdateCallbackId = AudioEngine::kInvalidAudioEngineCallbackId;

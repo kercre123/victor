@@ -42,7 +42,7 @@ namespace {
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioPlaybackSystem::AudioPlaybackSystem( const AnimContext* context ) :
+AudioPlaybackSystem::AudioPlaybackSystem( const Anim::AnimContext* context ) :
   _animContext( context ),
   _isJobLoading( false )
 {

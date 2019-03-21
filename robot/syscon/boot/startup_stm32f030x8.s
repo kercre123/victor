@@ -77,7 +77,7 @@ __Vectors       DCD     __initial_sp                   ; Top of Stack
                 DCD     Reset_Handler                  ; Reset Handler
                 DCD     NMI_Handler                    ; NMI Handler
                 DCD     HardFault_Handler              ; Hard Fault Handler
-__HW_REVISION   DCD     1                              ; Current Hardware Revision
+__HW_REVISION   DCD     10                             ; Current Hardware Revision
 __HW_MODEL      DCD     1                              ; Current Model
 __EIN           DCD     0xFFFFFFFF                     ; EIN(0)
                 DCD     0xFFFFFFFF                     ; EIN(1)

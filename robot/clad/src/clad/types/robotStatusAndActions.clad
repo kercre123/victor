@@ -35,6 +35,9 @@ enum uint_32 RobotStatusFlag {
     ENCODERS_DISABLED       = 0x00100000,
     ENCODER_HEAD_INVALID    = 0x00200000,
     ENCODER_LIFT_INVALID    = 0x00400000,
+
+    IS_BATTERY_LOW          = 0x01000000,
+    IS_SHUTDOWN_IMMINENT    = 0x02000000,
 }
 
 enum uint_8 DockAction

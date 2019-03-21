@@ -3,11 +3,15 @@
   "behaviorClass" : "DispatcherQueue",
 
   "associatedActiveFeature": "FistBump",
+  
+  "wantsToBeActivatedCondition": {
+    "conditionType": "OffTreadsState",
+    "targetState": "OnTreads"
+  },
 
   "respondToUserIntents" : [
     {
-      "type": "play_specific",
-      "entity_behavior": "fist_bump"
+      "type" : "play_fistbump"
     }
   ],
 

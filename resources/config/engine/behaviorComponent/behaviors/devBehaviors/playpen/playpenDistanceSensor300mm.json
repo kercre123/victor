@@ -3,5 +3,7 @@
   "behaviorID": "PlaypenDistanceSensor300mm",
   "AngleToTurnToSeeTarget_deg": 0,
   "ExpectedObjectType": "Charger_Basic",
-  "ExpectedDistance_mm": 300
+  "DistanceToDriveToSeeTarget_mm": 0,
+  "ExpectedDistance_mm": 300,
+  "PerformCalibration": true    
 }

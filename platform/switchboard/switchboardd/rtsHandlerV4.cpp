@@ -27,7 +27,7 @@ long long RtsHandlerV4::sTimeStarted;
 
 RtsHandlerV4::RtsHandlerV4(INetworkStream* stream, 
     struct ev_loop* evloop,
-    std::shared_ptr<EngineMessagingClient> engineClient,
+    std::shared_ptr<ISwitchboardCommandClient> engineClient,
     std::shared_ptr<TokenClient> tokenClient,
     std::shared_ptr<GatewayMessagingServer> gatewayServer,
     std::shared_ptr<ConnectionIdManager> connectionIdManager,
@@ -297,7 +297,9 @@ void RtsHandlerV4::HandleRtsWifiConnectRequest(const Vector::ExternalComms::RtsC
     UpdateFace(Anki::Vector::SwitchboardInterface::ConnectionStatus::SETTING_WIFI);
 
     // Disable autoconnect before connecting manually
-    _wifiWatcher->Disable();
+    if(_wifiWatcher != nullptr) {
+      _wifiWatcher->Disable();
+    }
 
     Wifi::ConnectWifiResult connected = Wifi::ConnectWiFiBySsid(wifiConnectMessage.wifiSsidHex,
       wifiConnectMessage.password,
@@ -397,7 +399,7 @@ void RtsHandlerV4::HandleRtsWifiForgetRequest(const Vector::ExternalComms::RtsCo
 }
 
 void RtsHandlerV4::HandleRtsOtaUpdateRequest(const Vector::ExternalComms::RtsConnection_4& msg) {
-  if(!IsAuthenticated()) {
+  if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
 
@@ -411,7 +413,7 @@ void RtsHandlerV4::HandleRtsOtaUpdateRequest(const Vector::ExternalComms::RtsCon
 }
 
 void RtsHandlerV4::HandleRtsOtaCancelRequest(const Vector::ExternalComms::RtsConnection_4& msg) {
-  if(!IsAuthenticated()) {
+  if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
 
@@ -522,6 +524,11 @@ void RtsHandlerV4::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
     return;
   }
 
+  if(_tokenClient == nullptr) {
+    SendRtsMessage<RtsResponse>(RtsResponseCode::UnsupportedRequest, "Unsupported request type.");
+    return;
+  }
+
   Anki::Vector::ExternalComms::RtsCloudSessionRequest cloudReq =
     msg.Get_RtsCloudSessionRequest();
   std::string sessionToken = cloudReq.sessionToken;
@@ -621,7 +628,7 @@ void RtsHandlerV4::HandleRtsForceDisconnect(const Vector::ExternalComms::RtsConn
 }
 
 void RtsHandlerV4::HandleRtsLogRequest(const Vector::ExternalComms::RtsConnection_4& msg) {
-  if(!IsAuthenticated()) {
+  if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
 
@@ -840,10 +847,7 @@ void RtsHandlerV4::SendStatusResponse() {
   bool isApMode = Wifi::IsAccessPointMode();
 
   // Send challenge and update state
-  char buildNo[PROPERTY_VALUE_MAX] = {0};
-  (void)property_get("ro.build.id", buildNo, "");
-
-  std::string buildNoString(buildNo);
+  std::string buildNoString = GetBuildIdString();
   std::string esnString("");
 
   // Get output of emr-cat e
@@ -908,7 +912,9 @@ void RtsHandlerV4::SendWifiConnectResult(Wifi::ConnectWifiResult result) {
   }
 
   // Re-enable autoconnect
-  _wifiWatcher->Enable();
+  if(_wifiWatcher != nullptr) {
+    _wifiWatcher->Enable();
+  }
 
   // Send challenge and update state
   Wifi::WiFiState wifiState = Wifi::GetWiFiState();
@@ -916,7 +922,7 @@ void RtsHandlerV4::SendWifiConnectResult(Wifi::ConnectWifiResult result) {
 }
 
 void RtsHandlerV4::SendFile(uint32_t fileId, std::vector<uint8_t> fileBytes) {
-  if(!IsAuthenticated()) {
+  if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
 
@@ -948,7 +954,7 @@ void RtsHandlerV4::SendCancelPairing() {
 }
 
 void RtsHandlerV4::SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal) {
-  if(!IsAuthenticated()) {
+  if(!AssertState(RtsCommsType::Encrypted)) {
     return;
   }
   // Send Ota Progress

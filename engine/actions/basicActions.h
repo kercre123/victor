@@ -568,7 +568,13 @@ namespace Vector {
     {
     public:
       
-      // VisionMode indicates the vision mode(s) that this action wants to wait for, for numFrames instances. VisionMode::Count means any
+      // NumFrames is the number of times this action will wait for a mode
+      //  to be marked as processed, before completing.
+      // VisionMode indicates the vision mode(s) that this action wants to wait for
+      //
+      // If the specified visionMode takes more than one camera frame to complete, 
+      // or is not scheduled to run on every frame, then several images may go 
+      // through the vision system before this mode is marked as "processed".
       WaitForImagesAction(u32 numFrames, VisionMode visionMode = VisionMode::Count, RobotTimeStamp_t afterTimeStamp = 0);
 
       struct UseDefaultNumImages_t {};

@@ -34,7 +34,7 @@ protected:
                                          const Pose3d& targetPose) override;
 
   Vec3f _targetVec;
-  float _finalTargetAngle;
+  float _finalTargetAngle = 0.f;
 };
 
 }

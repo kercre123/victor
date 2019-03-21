@@ -16,9 +16,9 @@
     "ReactToTouchPetting",
     "BasicVoiceCommands", // these are simple voice commands that we want to ignore obstacles
     "ReactToObstacle",
+    "Volume",
     "InterruptingVoiceReactions",
     "ChangeEyeColor",
-    "Volume",
     "ReactToUnclaimedIntent",
     "HeldInPalmDispatcher",
     "WhileInAirDispatcher",
@@ -26,9 +26,9 @@
     "ReactToDarkness",
     "GreetAfterLongTime", // autonomous - I think this should be higher priority than StayOnCharger--the magic moment is worth it (?)
     "ReactToUncalibratedHeadAndLift",
+    "DanceToTheBeatCoordinator", // does the right thing internally wrt charging
     "StayOnChargerUntilCharged", // delegate includes ReactToSoundAwake
     "ReactToSoundAwake",
-    "DanceToTheBeatCoordinator", 
     "ConfirmHabitat",
     "HighLevelAI"
   ]

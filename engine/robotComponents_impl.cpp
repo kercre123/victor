@@ -36,7 +36,6 @@ class VisionScheduleMediator;
 class MapComponent;
 class NVStorageComponent;
 class AIComponent;
-class ObjectPoseConfirmer;
 class CubeLightComponent;
 class BackpackLightComponent;
 class CubeAccelComponent;
@@ -50,6 +49,7 @@ class CarryingComponent;
 class CliffSensorComponent;
 class ProxSensorComponent;
 class ImuComponent;
+class RangeSensorComponent;
 class TouchSensorComponent;
 class AnimationComponent;
 class RobotStateHistory;
@@ -76,8 +76,7 @@ class JdocsManager;
 class RobotExternalRequestComponent;
 class AccountSettingsManager;
 class UserEntitlementsManager;
-
-
+class RangeSensorComponent;
 } // namespace Vector
 
 // Template specializations mapping enums from the _fwd.h file to the class forward declarations above
@@ -97,7 +96,6 @@ LINK_COMPONENT_TYPE_TO_ENUM(VisionScheduleMediator,        RobotComponentID, Vis
 LINK_COMPONENT_TYPE_TO_ENUM(MapComponent,                  RobotComponentID, Map)
 LINK_COMPONENT_TYPE_TO_ENUM(NVStorageComponent,            RobotComponentID, NVStorage)
 LINK_COMPONENT_TYPE_TO_ENUM(AIComponent,                   RobotComponentID, AIComponent)
-LINK_COMPONENT_TYPE_TO_ENUM(ObjectPoseConfirmer,           RobotComponentID, ObjectPoseConfirmer)
 LINK_COMPONENT_TYPE_TO_ENUM(CubeLightComponent,            RobotComponentID, CubeLights)
 LINK_COMPONENT_TYPE_TO_ENUM(BackpackLightComponent,        RobotComponentID, BackpackLights)
 LINK_COMPONENT_TYPE_TO_ENUM(CubeAccelComponent,            RobotComponentID, CubeAccel)
@@ -137,6 +135,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(JdocsManager,                  RobotComponentID, Jdo
 LINK_COMPONENT_TYPE_TO_ENUM(RobotExternalRequestComponent, RobotComponentID, RobotExternalRequestComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(AccountSettingsManager,        RobotComponentID, AccountSettingsManager)
 LINK_COMPONENT_TYPE_TO_ENUM(UserEntitlementsManager,       RobotComponentID, UserEntitlementsManager)
+LINK_COMPONENT_TYPE_TO_ENUM(RangeSensorComponent,          RobotComponentID, RangeSensor)
 
 // Translate entity into string
 template<>
@@ -184,13 +183,13 @@ std::string GetComponentStringForID<Vector::RobotComponentID>(Vector::RobotCompo
     CASE(MoodManager)
     CASE(Movement)
     CASE(NVStorage)
-    CASE(ObjectPoseConfirmer)
     CASE(PathPlanning)
     CASE(PetWorld)
     CASE(PhotographyManager)
     CASE(PowerStateManager)
     CASE(ProxSensor)
     CASE(PublicStateBroadcaster)
+    CASE(RangeSensor)
     CASE(RobotExternalRequestComponent)
     CASE(RobotHealthReporter)
     CASE(RobotStatsTracker)

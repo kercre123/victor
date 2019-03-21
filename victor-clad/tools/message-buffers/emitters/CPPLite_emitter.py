@@ -905,19 +905,22 @@ if __name__ == '__main__':
     option_parser.add_argument('-r', '--header-output-directory', metavar='dir',
         help='The directory to output the {language} header file(s) to.'.format(language=language))
     option_parser.add_argument('--max-message-size', metavar='bytes', type=int,
-        help='Maximum serialized size that any single union or message can be.'.format(language=language))
+        help='Maximum serialized size that any single union or message can be.')
     
     options = option_parser.parse_args()
     if not options.header_output_directory:
         options.header_output_directory = options.output_directory
     
     tree = emitterutil.parse(options)
+
     comment_lines = emitterutil.get_comment_lines(options, language)
     
     ConstraintVisitor(options=options).visit(tree)
     
+    namespace_emitter = HNamespaceEmitter(options=options)
     def main_output_header_callback(output):
-        HNamespaceEmitter(output, options=options).visit(tree)
+        namespace_emitter.output = output
+        namespace_emitter.visit(tree)
     
     main_output_header = emitterutil.get_output_file(options, header_extension)
     emitterutil.write_c_file(options.header_output_directory, main_output_header,

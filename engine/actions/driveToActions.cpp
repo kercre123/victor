@@ -17,7 +17,9 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
@@ -306,7 +308,6 @@ namespace Anki {
     
     ActionResult DriveToObjectAction::Init()
     {
-      ActionResult result = ActionResult::SUCCESS;
       ActionableObject* object = dynamic_cast<ActionableObject*>(GetRobot().GetBlockWorld().GetLocatedObjectByID(_objectID));
       if(object == nullptr)
       {
@@ -317,7 +318,7 @@ namespace Anki {
       }
 
       // Use a helper here so that it can be shared with DriveToPlaceCarriedObjectAction
-      result = InitHelper(object);
+      ActionResult result = InitHelper(object);
 
       // Only set cube lights if the dock object is a light cube
       _shouldSetCubeLights = IsValidLightCube(object->GetType(), false);

@@ -662,6 +662,10 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
   // Put the new values in the output result:
   std::swap(_currentResult.cameraParams, nextParams);
   _currentResult.imageQuality = _cameraParamsController->GetImageQuality();
+  if(_cameraParamsController->IsCurrentCyclingExposureReset() && IsModeEnabled(VisionMode::CyclingExposure)) {
+    // We have completed one full pass through the list of exposures to cycle
+    _currentResult.modesProcessed.Insert(VisionMode::CyclingExposure);
+  }
   
   return RESULT_OK;
 }
@@ -1142,6 +1146,11 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
       assert(false); // should never get here
       break;
   }
+
+  #define DEBUG_IMAGE_COMPOSITING 0
+  #if(DEBUG_IMAGE_COMPOSITING)
+  static Vision::Image dispCompositeImg;
+  #endif
   
   Vision::Image compositeImage;
   if(IsModeEnabled(VisionMode::CompositingImages)) {
@@ -1152,13 +1161,9 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
     if(shouldRunOnComposite) {
       _imageCompositor->GetCompositeImage(compositeImage);
       imagePtrs.push_back(&compositeImage);
-
-      #define DEBUG_IMAGE_COMPOSITING 0
       #if(DEBUG_IMAGE_COMPOSITING)
-      // Debug image display
-      Vision::ImageRGB dispImg;
-      dispImg.SetFromGray(compositeImage);
-      _currentResult.debugImages.emplace_back("ImageCompositing", dispImg);
+      dispCompositeImg.Allocate(compositeImage.GetNumRows(), compositeImage.GetNumCols());
+      compositeImage.CopyTo(dispCompositeImg);
       #endif
     }
 
@@ -1175,6 +1180,12 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
       _currentResult.modesProcessed.Insert(VisionMode::CompositingImages);
     }
   }
+
+  #if(DEBUG_IMAGE_COMPOSITING)
+  if(!dispCompositeImg.IsEmpty()) {
+    _currentResult.debugImages.emplace_back("ImageCompositing", dispCompositeImg);
+  }
+  #endif
   
   // Set up cropping rectangles to cycle through each time DetectMarkers is called
   DEV_ASSERT(!imagePtrs.empty(), "VisionSystem.DetectMarkersWithCLAHE.NoImagePointers");
@@ -1550,6 +1561,13 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
   }
   
+  if(!IsModeEnabled(VisionMode::CompositingImages) && 
+     _imageCompositor->GetNumImagesComposited() > 0) {
+    // Clears any leftover artifacts from prematurely cancelled ImageCompositing
+    // Check this here to avoid gating it on whether or not DetectMarkers
+    _imageCompositor->Reset();
+  }
+  
   if(IsModeEnabled(VisionMode::DetectingFaces))
   {
     const bool estimatingFacialExpression = IsModeEnabled(VisionMode::EstimatingFacialExpression);
@@ -1905,8 +1923,9 @@ Result VisionSystem::SaveSensorData() const {
 
     const HistRobotState& state = _poseData.histState;
     // prox sensor
-    if (state.ProxSensorFoundObject()) {
-      config["proxSensor"] = state.GetProxSensorVal_mm();
+    const auto& proxData = state.GetProxSensorData();
+    if (proxData.foundObject) {
+      config["proxSensor"] = proxData.distance_mm;
     }
     else {
       config["proxSensor"] = -1;

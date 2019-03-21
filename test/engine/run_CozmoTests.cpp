@@ -13,6 +13,8 @@
 
 #include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
+#include "engine/charger.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
@@ -29,6 +31,7 @@
 #include "engine/robotToEngineImplMessaging.h"
 #include "engine/vision/visionSystem.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
+#include "anki/cozmo/shared/factory/emrHelper.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "gtest/gtest.h"
 #include "json/json.h"
@@ -48,6 +51,8 @@
 #if !defined(ANKIWORKROOT)
 #error "You must define a default ANKIWORKROOT when compiling"
 #endif
+
+using namespace Anki::Vector;
 
 Anki::Vector::CozmoContext* cozmoContext = nullptr; // This is externed and used by tests
 
@@ -104,6 +109,23 @@ TEST(Cozmo, SimpleCozmoTest)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(Cozmo, WhiskeyTest)
+{
+  using namespace Anki::Vector;
+
+  UNIT_TEST_WHISKEY;
+
+  ASSERT_TRUE(IsWhiskey());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+TEST(Cozmo, NotWhiskeyTest)
+{
+  using namespace Anki::Vector;
+  ASSERT_FALSE(IsWhiskey());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(RobotState, ImuDataSize)
 {
   using namespace Anki::Vector;
@@ -112,7 +134,7 @@ TEST(RobotState, ImuDataSize)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TEST(BlockWorld, DISABLED_AddAndRemoveObject)
+TEST(BlockWorld, AddAndRemoveObject)
 {
   using namespace Anki;
   using namespace Vector;
@@ -141,9 +163,17 @@ TEST(BlockWorld, DISABLED_AddAndRemoveObject)
   }
 
   // Fake a state message update for robot
-  RobotState stateMsg( Robot::GetDefaultRobotState() );
-
-  lastResult = robot.UpdateFullRobotState(stateMsg);
+  auto fakeRobotState = [](const uint32_t atTimestamp) {
+    RobotState stateMsg = Robot::GetDefaultRobotState();
+    stateMsg.timestamp = atTimestamp;
+    for (auto& imuData : stateMsg.imuData) {
+      imuData.timestamp = atTimestamp;
+    }
+    return stateMsg;
+  };
+  
+  uint32_t stateMsgTimestamp = 1;
+  lastResult = robot.UpdateFullRobotState(fakeRobotState(stateMsgTimestamp));
   ASSERT_EQ(lastResult, RESULT_OK);
 
   // Fake an observation of a block:
@@ -194,7 +224,7 @@ TEST(BlockWorld, DISABLED_AddAndRemoveObject)
   corners[Quad::BottomLeft] = {xcen - markerHalfSize*kNotFlatFraction, ycen + markerHalfSize};
   corners[Quad::TopRight]   = {xcen + markerHalfSize, ycen - markerHalfSize};
   corners[Quad::BottomRight]= {xcen + markerHalfSize*kNotFlatFraction, ycen + markerHalfSize};
-  Vision::ObservedMarker marker(stateMsg.timestamp, testCode, corners, robot.GetVisionComponent().GetCamera());
+  Vision::ObservedMarker marker(stateMsgTimestamp, testCode, corners, robot.GetVisionComponent().GetCamera());
 
   // Enable "vision while moving" so that we don't have to deal with trying to compute
   // angular velocities, since we don't have real state history to do so.
@@ -209,38 +239,16 @@ TEST(BlockWorld, DISABLED_AddAndRemoveObject)
   ASSERT_EQ(lastResult, RESULT_OK);
 
   {
-    // There should be nothing in BlockWorld yet because we have only seen it once (it's unconfirmed)
-    BlockWorldFilter filter;
-    std::vector<ObservableObject*> objects;
-    blockWorld.FindLocatedMatchingObjects(filter, objects);
-    ASSERT_TRUE(objects.empty());
-  }
-
-  {
-    // still no connected objects
+    // should be no connected objects
     BlockWorldFilter filter;
     std::vector<Block*> activeObjects;
     blockWorld.FindConnectedMatchingBlocks(filter, activeObjects);
     ASSERT_TRUE(activeObjects.empty());
   }
 
-  // After seeing three times, ...
-  const s32 kNumObservations = 3;
-  for(s32 i=0; i<kNumObservations; ++i)
-  {
-    // Tick the robot, which will tick the BlockWorld, which will use the queued marker
-    stateMsg.timestamp+=10;
-    lastResult = robot.UpdateFullRobotState(stateMsg);
-    ASSERT_EQ(RESULT_OK, lastResult);
-    Vision::ObservedMarker marker(stateMsg.timestamp, testCode, corners, robot.GetVisionComponent().GetCamera());
-    std::list<Vision::ObservedMarker> markers{marker};
-    lastResult = robot.GetBlockWorld().UpdateObservedMarkers(markers);
-    ASSERT_EQ(lastResult, RESULT_OK);
-  }
-
   ObjectID firstObjID;
 
-  // There should now be an object of the right type, with the right ID in BlockWorld
+  // There should be an object of the right type, with the right ID in BlockWorld
   {
     BlockWorldFilter filter;
     std::vector<ObservableObject*> objects;
@@ -256,10 +264,6 @@ TEST(BlockWorld, DISABLED_AddAndRemoveObject)
     firstObjID = object->GetID();
 
     ASSERT_EQ(PoseState::Known, object->GetPoseState());
-
-    // Make sure the corners used above resulted in a non-flat pose so clamping doesn't occur
-    // and we can expect the reprojected corners to closely match below
-    ASSERT_FALSE(object->IsRestingFlat(DEG_TO_RAD(object->GetRestingFlatTolForLocalization_deg())));
 
     // Projected corners of the marker should match the corners of the fake marker
     // we queued above
@@ -282,12 +286,13 @@ TEST(BlockWorld, DISABLED_AddAndRemoveObject)
   // After NOT seeing the object three times, it should still be known
   // because we don't yet have evidence that actually isn't there
   std::list<Vision::ObservedMarker> emptyMarkersList;
+  const s32 kNumObservations = 3;
   for(s32 i=0; i<kNumObservations; ++i)
   {
-    stateMsg.timestamp+=10;
-    lastResult = robot.UpdateFullRobotState(stateMsg);
+    stateMsgTimestamp += 10;
+    lastResult = robot.UpdateFullRobotState(fakeRobotState(stateMsgTimestamp));
     ASSERT_EQ(RESULT_OK, lastResult);
-    robot.GetVisionComponent().FakeImageProcessed(stateMsg.timestamp);
+    robot.GetVisionComponent().FakeImageProcessed(stateMsgTimestamp);
     lastResult = robot.GetBlockWorld().UpdateObservedMarkers(emptyMarkersList);
     ASSERT_EQ(lastResult, RESULT_OK);
   }
@@ -300,20 +305,22 @@ TEST(BlockWorld, DISABLED_AddAndRemoveObject)
 
     // Now fake an object moved message
     object->SetIsMoving(true, 0);
-    robot.GetObjectPoseConfirmer().MarkObjectDirty(object);
+    blockWorld.MarkObjectDirty(object);
   }
 
   // Now after not seeing the object three times, it should be Unknown
   // because it was dirty
   for(s32 i=0; i<kNumObservations; ++i)
   {
-    stateMsg.timestamp+=10;
-    lastResult = robot.UpdateFullRobotState(stateMsg);
+    stateMsgTimestamp += 10;
+    lastResult = robot.UpdateFullRobotState(fakeRobotState(stateMsgTimestamp));
     ASSERT_EQ(RESULT_OK, lastResult);
-    robot.GetVisionComponent().FakeImageProcessed(stateMsg.timestamp);
+    robot.GetVisionComponent().FakeImageProcessed(stateMsgTimestamp);
     lastResult = robot.GetBlockWorld().UpdateObservedMarkers(emptyMarkersList);
     ASSERT_EQ(lastResult, RESULT_OK);
   }
+  
+  blockWorld.CheckForUnobservedObjects(stateMsgTimestamp);
 
   {
     // should be unknown now. In the new code Unknown objects are removed from their origin
@@ -321,17 +328,16 @@ TEST(BlockWorld, DISABLED_AddAndRemoveObject)
     ASSERT_EQ(object, nullptr);
   }
 
-  // See the object again, but from "far" away, which after a few ticks should make it
-  // Dirty again.
+  // See the object again, but from "far" away
   corners.Scale(0.15f);
 
   for(s32 i=0; i<kNumObservations; ++i)
   {
     // Tick the robot, which will tick the BlockWorld, which will use the queued marker
-    stateMsg.timestamp+=10;
-    lastResult = robot.UpdateFullRobotState(stateMsg);
+    stateMsgTimestamp += 10;
+    lastResult = robot.UpdateFullRobotState(fakeRobotState(stateMsgTimestamp));
     ASSERT_EQ(RESULT_OK, lastResult);
-    Vision::ObservedMarker markerFar(stateMsg.timestamp, testCode, corners, robot.GetVisionComponent().GetCamera());
+    Vision::ObservedMarker markerFar(stateMsgTimestamp, testCode, corners, robot.GetVisionComponent().GetCamera());
     std::list<Vision::ObservedMarker> markersFar{markerFar};
     lastResult = robot.GetBlockWorld().UpdateObservedMarkers(markersFar);
     ASSERT_EQ(lastResult, RESULT_OK);
@@ -352,8 +358,11 @@ TEST(BlockWorld, DISABLED_AddAndRemoveObject)
     ObservableObject* object = *objByIdIter;
     secondObjID = object->GetID();
 
+    // Should have used the same ID for the cube
+    ASSERT_EQ(secondObjID, firstObjID);
+    
     ASSERT_NE(nullptr, object);
-    ASSERT_EQ(PoseState::Dirty, object->GetPoseState());
+    ASSERT_EQ(PoseState::Known, object->GetPoseState());
   }
 
   {
@@ -393,6 +402,9 @@ static Anki::Result ObserveMarkerHelper(const s32 kNumObservations,
     stateMsg.timestamp = (TimeStamp_t)fakeTime;
     stateMsg.pose_frame_id = robot.GetPoseFrameID();
     stateMsg.pose_origin_id = robot.GetPoseOriginList().GetCurrentOriginID();
+    for (auto& imuData : stateMsg.imuData) {
+      imuData.timestamp = (uint32_t) fakeTime;
+    }
     Result lastResult = robot.UpdateFullRobotState(stateMsg);
     if(RESULT_OK != lastResult)
     {
@@ -533,13 +545,6 @@ TEST(BlockWorld, UpdateObjectOrigins)
   ASSERT_NE(nullptr, connectedFar);
   ASSERT_EQ(connectedFar->GetActiveID(), matchingObject->GetActiveID());
 
-  // Should be localized to "far" object
-  ASSERT_EQ(farID, robot.GetLocalizedTo());
-
-  // Delocalize the robot
-  const bool isCarryingObject = false;
-  robot.Delocalize(isCarryingObject);
-
   // Now just see the close block by itself
   lastResult = ObserveMarkerHelper(kNumObservations, {{closeCode, closeCorners}},
                                    fakeTime, robot, stateMsg, procResult);
@@ -557,9 +562,6 @@ TEST(BlockWorld, UpdateObjectOrigins)
   auto* connectedClose = robot.GetBlockWorld().GetConnectedBlockByID(closeID);
   ASSERT_NE(nullptr, connectedClose);
   ASSERT_EQ(connectedClose->GetActiveID(), matchingObject->GetActiveID());
-
-  // Should be localized to "close" object
-  ASSERT_EQ(closeID, robot.GetLocalizedTo());
 
   // Now let the robot see both objects at the same time
   lastResult = ObserveMarkerHelper(kNumObservations, {{farCode, farCorners}, {closeCode, closeCorners}},
@@ -585,894 +587,7 @@ TEST(BlockWorld, UpdateObjectOrigins)
   lastResult = ObserveMarkerHelper(1, {{farCode, farCorners}, {closeCode, closeCorners}},
                                    fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
-
-  // Should end up localized to the close object
-  ASSERT_EQ(closeID, robot.GetLocalizedTo());
-
 } // BlockWorld.UpdateObjectOrigins
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-namespace {
-
-// helper for device connection messages, for example when cubes connect/disconnect. Note implementation directly
-// calls the robot handler, rather than simulating actually sending a message
-using namespace Anki::Vector;
-void FakeRecvConnectionMessage(Robot& robot, uint32_t activeID, std::string factoryID, Anki::Vector::ObjectType objectType, bool connected)
-{
-  DEV_ASSERT(IsValidLightCube(objectType, false), "FaceRecvConnectionMessage.UnsupportedObjectType");
-
-  if (connected) {
-    robot.GetBlockWorld().AddConnectedBlock(activeID, factoryID, objectType);
-  } else {
-    robot.GetBlockWorld().RemoveConnectedBlock(activeID);
-  }
-}
-
-// helper for move messages
-void FakeRecvMovedMessage(Robot& robot, const Anki::ObjectID& objectId)
-{
-  robot.GetCubeAccelComponent().ObjectMovedOrStoppedCallback(objectId, true);
-}
-
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TEST(BlockWorld, PoseUpdates)
-{
-  using namespace Anki;
-  using namespace Vector;
-
-  Result lastResult;
-
-  Robot robot(1, cozmoContext);
-  robot.FakeSyncRobotAck();
-
-  BlockWorld& blockWorld = robot.GetBlockWorld();
-
-  // There should be nothing in BlockWorld yet
-  BlockWorldFilter filter;
-  std::vector<ObservableObject*> objects;
-  blockWorld.FindLocatedMatchingObjects(filter, objects);
-  ASSERT_TRUE(objects.empty());
-
-  {
-    // no connected objects either
-    std::vector<Block*> activeObjects;
-    blockWorld.FindConnectedMatchingBlocks(BlockWorldFilter(), activeObjects);
-    ASSERT_TRUE(activeObjects.empty());
-  }
-
-  // Fake a state message update for robot
-  RobotState stateMsg = robot.GetDefaultRobotState();
-
-  lastResult = robot.UpdateFullRobotState(stateMsg);
-  ASSERT_EQ(lastResult, RESULT_OK);
-
-  // Camera calibration
-  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
-  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
-  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
-  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
-
-  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
-
-  robot.GetVisionComponent().SetCameraCalibration(camCalib);
-
-  // Enable "vision while moving" so that we don't have to deal with trying to compute
-  // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
-
-  /*
-    + See unique    object1 (non-localizable) from close, seeing same object in *different pose from far
-      | - It should override the pose
-    + See connected object2 (localizable), seeing same object in *different pose from far
-      | - It should NOT override the pose
-    + See connected object3 (localizable), seeing same object in *different pose from far
-      | - It should NOT override the pose
-    + Move object2 & see object 2
-      | - It should override the pose
-    + Move object3
-      | - It should NOT override the pose
-    + Disconnect active object3 & see object3
-      | - It should override the pose
-  */
-
-  // For faking observations of blocks
-  const ObjectType obj1Type = ObjectType::Block_LIGHTCUBE1;
-  const ObjectType obj2Type = ObjectType::Block_LIGHTCUBE2;
-  const ObjectType obj3Type = ObjectType::Block_LIGHTCUBE3;
-  const Block obj1Cube(obj1Type);
-  const Block obj2Cube(obj2Type);
-  const Block obj3Cube(obj3Type);
-  const Vision::Marker::Code obj1Code = obj1Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
-  const Vision::Marker::Code obj2Code = obj2Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
-  const Vision::Marker::Code obj3Code = obj3Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
-
-//  const Quad2f farCornersLocalizable {
-//    Point2f(213,111),  Point2f(214,158),  Point2f(260,111),  Point2f(258,158)
-//  };
-
-  // These parameters create corners beyond localizable distance
-  const f32 halfHeight = 0.025f*static_cast<f32>(camCalib->GetNrows());
-  const f32 halfWidth = 0.025f*static_cast<f32>(camCalib->GetNcols());
-  const f32 xcen = camCalib->GetCenter_x();
-  const f32 ycen = camCalib->GetCenter_y();
-  Quad2f farCorners;
-  const f32 markerHalfSize = std::min(halfHeight, halfWidth);
-  farCorners[Quad::TopLeft]    = {xcen - markerHalfSize, ycen - markerHalfSize};
-  farCorners[Quad::BottomLeft] = {xcen - markerHalfSize, ycen + markerHalfSize};
-  farCorners[Quad::TopRight]   = {xcen + markerHalfSize, ycen - markerHalfSize};
-  farCorners[Quad::BottomRight]= {xcen + markerHalfSize, ycen + markerHalfSize};
-
-  const Quad2f closeCorners{
-    Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
-  };
-
-  // - - - Connect to some cubes
-
-  // Do not connect object1
-  //  const ObjectID connObj1 = robot.GetBlockWorld().AddConnectedBlock(0, 100, ObjectType::Block_LIGHTCUBE1);
-  //  ASSERT_TRUE(connObj1.IsSet());
-
-  const ObjectID connObj2 = robot.GetBlockWorld().AddConnectedBlock(1, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE2);
-  ASSERT_TRUE(connObj2.IsSet());
-
-  const ObjectID connObj3 = robot.GetBlockWorld().AddConnectedBlock(2, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE3);
-  ASSERT_TRUE(connObj3.IsSet());
-
-  // - - - See all objects from close so that their poses are Known
-
-  VisionProcessingResult procResult;
-  RobotTimeStamp_t fakeTime = 10;
-
-  // After seeing at least 2 times, should be Known
-  const s32 kNumObservations = 5;
-
-  lastResult = ObserveMarkerHelper(kNumObservations, {{obj1Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-  lastResult = ObserveMarkerHelper(kNumObservations, {{obj2Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-  lastResult = ObserveMarkerHelper(kNumObservations, {{obj3Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  fakeTime += 10;
-
-  // see object 1 from far, it should update its pose, since it's not localizable
-  {
-    filter.SetAllowedTypes({obj1Type});
-    const ObservableObject* matchingObject1 = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
-    ASSERT_NE(nullptr, matchingObject1);
-
-    const Pose3d prevObj1Pose = matchingObject1->GetPose();
-
-    lastResult = ObserveMarkerHelper(kNumObservations, {{obj1Code, farCorners}}, fakeTime, robot, stateMsg, procResult);
-    const Pose3d& newObj1Pose = matchingObject1->GetPose();
-    const bool isSameNewToPrev = newObj1Pose.IsSameAs(prevObj1Pose, matchingObject1->GetSameDistanceTolerance(), matchingObject1->GetSameAngleTolerance());
-    ASSERT_FALSE(isSameNewToPrev); // DIFFERENT
-  }
-
-  // see object 2 from far, it should NOT update its pose, since it's localizable
-  {
-    filter.SetAllowedTypes({obj2Type});
-    const ObservableObject* matchingObject2 = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
-    ASSERT_NE(nullptr, matchingObject2);
-    const ObjectID& conMatch2 = matchingObject2->GetID();
-    ASSERT_EQ(conMatch2, connObj2);
-
-    // should become localize to 2
-    const bool localizedTo2 = (robot.GetLocalizedTo() == conMatch2);
-    ASSERT_TRUE(localizedTo2);
-
-    const Pose3d prevObj2Pose = matchingObject2->GetPose();
-
-    lastResult = ObserveMarkerHelper(kNumObservations, {{obj2Code, farCorners}}, fakeTime, robot, stateMsg, procResult);
-    const Pose3d& newObj2Pose = matchingObject2->GetPose();
-    const bool isSameNewToPrev = newObj2Pose.IsSameAs(prevObj2Pose, matchingObject2->GetSameDistanceTolerance(), matchingObject2->GetSameAngleTolerance());
-    ASSERT_TRUE(isSameNewToPrev); // SAME
-  }
-
-  // see object 3 from far, it should NOT update its pose, since it's localizable
-  {
-    filter.SetAllowedTypes({obj3Type});
-    const ObservableObject* matchingObject3 = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
-    ASSERT_NE(nullptr, matchingObject3);
-    const ObjectID& conMatch3 = matchingObject3->GetID();
-    ASSERT_EQ(conMatch3, connObj3);
-
-    const Pose3d prevObj3Pose = matchingObject3->GetPose();
-
-    lastResult = ObserveMarkerHelper(kNumObservations, {{obj3Code, farCorners}}, fakeTime, robot, stateMsg, procResult);
-    const Pose3d& newObj3Pose = matchingObject3->GetPose();
-    const bool isSameNewToPrev = newObj3Pose.IsSameAs(prevObj3Pose, matchingObject3->GetSameDistanceTolerance(), matchingObject3->GetSameAngleTolerance());
-    ASSERT_TRUE(isSameNewToPrev); // SAME
-  }
-
-  // MOVE object2
-  {
-    FakeRecvMovedMessage(robot, connObj2);
-    ++fakeTime;
-  }
-
-  // move object 2, and do the same observations. If moved, then the pose should be updated, since it's not localizable
-  {
-    filter.SetAllowedTypes({obj2Type});
-    const ObservableObject* matchingObject2 = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
-    ASSERT_NE(nullptr, matchingObject2);
-    const ObjectID& conMatch2 = matchingObject2->GetID();
-    ASSERT_EQ(conMatch2, connObj2);
-
-    const Pose3d prevObj2Pose = matchingObject2->GetPose();
-
-    lastResult = ObserveMarkerHelper(kNumObservations, {{obj2Code, farCorners}}, fakeTime, robot, stateMsg, procResult);
-    const Pose3d& newObj2Pose = matchingObject2->GetPose();
-    const bool isSameNewToPrev = newObj2Pose.IsSameAs(prevObj2Pose, matchingObject2->GetSameDistanceTolerance(), matchingObject2->GetSameAngleTolerance());
-    ASSERT_FALSE(isSameNewToPrev); // DIFFERENT
-  }
-
-  // DISCONNECT object3
-  {
-    const auto* con3 = robot.GetBlockWorld().GetConnectedBlockByID( connObj3 );
-    FakeRecvConnectionMessage(robot, con3->GetActiveID(), "BB:BB:BB:BB:BB:BB", Anki::Vector::ObjectType::Block_LIGHTCUBE2, false);
-    ++fakeTime;
-  }
-
-  // disconnect object 3, and do the same observations. If disconnected, the pose should be updated, since it's not localizable
-  {
-    filter.SetAllowedTypes({obj3Type});
-    const ObservableObject* matchingObject3 = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
-    ASSERT_NE(nullptr, matchingObject3);
-    const ObjectID& conMatch3 = matchingObject3->GetID();
-    ASSERT_EQ(conMatch3, connObj3);
-
-    const Pose3d prevObj3Pose = matchingObject3->GetPose();
-
-    lastResult = ObserveMarkerHelper(kNumObservations, {{obj3Code, farCorners}}, fakeTime, robot, stateMsg, procResult);
-    const Pose3d& newObj3Pose = matchingObject3->GetPose();
-    const bool isSameNewToPrev = newObj3Pose.IsSameAs(prevObj3Pose, matchingObject3->GetSameDistanceTolerance(), matchingObject3->GetSameAngleTolerance());
-    ASSERT_FALSE(isSameNewToPrev); // DIFFERENT
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TEST(BlockWorld, RejiggerAndObserveAtSameTick)
-{
-  using namespace Anki;
-  using namespace Vector;
-
-  // This test is explicitly testing for pose confirmation while rejiggering and
-  // assumes that we do not immediately confirm objects (i.e. it should take two
-  // observations for the purposes of this test). This is controlled by console var,
-  // so make sure we set them to expected values for the test and restore when done.
-  const auto origImmediateConfirmationValue = NativeAnkiUtilConsoleGetVarValueAsInt64("UseImmediateConfirmationIfRobotNotMoving");
-  const auto origMinObservationsToConfirm   = NativeAnkiUtilConsoleGetVarValueAsInt64("MinTimesToObserveObject");
-  NativeAnkiUtilConsoleSetValueWithString("UseImmediateConfirmationIfRobotNotMoving", "0");
-  NativeAnkiUtilConsoleSetValueWithString("MinTimesToObserveObject", "2");
-
-  Result lastResult;
-
-  Robot robot(1, cozmoContext);
-  robot.FakeSyncRobotAck();
-
-  BlockWorld& blockWorld = robot.GetBlockWorld();
-
-  // There should be nothing in BlockWorld yet
-  BlockWorldFilter filter;
-  std::vector<ObservableObject*> objects;
-  blockWorld.FindLocatedMatchingObjects(filter, objects);
-  ASSERT_TRUE(objects.empty());
-
-  {
-    // no connected objects either
-    std::vector<Block*> activeObjects;
-    blockWorld.FindConnectedMatchingBlocks(BlockWorldFilter(), activeObjects);
-    ASSERT_TRUE(activeObjects.empty());
-  }
-
-  // Fake a state message update for robot
-  RobotState stateMsg( Robot::GetDefaultRobotState() );
-
-  lastResult = robot.UpdateFullRobotState(stateMsg);
-  ASSERT_EQ(lastResult, RESULT_OK);
-
-  // Camera calibration
-  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
-  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
-  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
-  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
-
-  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
-
-  robot.GetVisionComponent().SetCameraCalibration(camCalib);
-
-  // Enable "vision while moving" so that we don't have to deal with trying to compute
-  // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
-
-  // For faking observations of blocks
-  const Block obj1Cube(ObjectType::Block_LIGHTCUBE1);
-  const Block obj2Cube(ObjectType::Block_LIGHTCUBE2);
-  const Block obj3Cube(ObjectType::Block_LIGHTCUBE3);
-  const Vision::Marker::Code obj1Code = obj1Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
-  const Vision::Marker::Code obj2Code = obj2Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
-  const Vision::Marker::Code obj3Code = obj3Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
-
-  const Quad2f closeCorners{
-    Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
-  };
-
-  // - - - Connect to some cubes
-
-  const ObjectID connObj1 = robot.GetBlockWorld().AddConnectedBlock(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
-  ASSERT_TRUE(connObj1.IsSet());
-
-  const ObjectID connObj2 = robot.GetBlockWorld().AddConnectedBlock(1, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE2);
-  ASSERT_TRUE(connObj2.IsSet());
-
-  const ObjectID connObj3 = robot.GetBlockWorld().AddConnectedBlock(2, "CC:CC:CC:CC:CC:CC", ObjectType::Block_LIGHTCUBE3);
-  ASSERT_TRUE(connObj3.IsSet());
-
-  // - - - See all objects from close so that their poses are Known
-
-  VisionProcessingResult procResult;
-  RobotTimeStamp_t fakeTime = 10;
-
-  // After seeing at least 2 times, should be Known
-  const s32 kNumObservations = 5;
-
-  lastResult = ObserveMarkerHelper(kNumObservations, {{obj1Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-  lastResult = ObserveMarkerHelper(kNumObservations, {{obj2Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-  // Do not add object 3 so that we need to confirm it later
-  //  lastResult = ObserveMarkerHelper(kNumObservations, {{obj3Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
-  //  ASSERT_EQ(RESULT_OK, lastResult);
-
-  // Observe a face
-  const Vision::FaceID_t faceID = 123;
-  {
-    Vision::TrackedFace face;
-    Pose3d headPose(0, Z_AXIS_3D(), {300.f, 300.f, 300.f});
-    face.SetID(faceID);
-    face.SetTimeStamp((TimeStamp_t)fakeTime);
-    face.SetHeadPose(headPose);
-
-    std::list<Vision::TrackedFace> faces{std::move(face)};
-
-    // Need a state message for the observation time first
-    stateMsg.timestamp = (TimeStamp_t)fakeTime;
-    lastResult = robot.UpdateFullRobotState(stateMsg);
-    ASSERT_EQ(RESULT_OK, lastResult);
-
-    lastResult = robot.GetFaceWorld().Update(faces);
-    ASSERT_EQ(RESULT_OK, lastResult);
-    ASSERT_TRUE(robot.GetFaceWorld().HasAnyFaces());
-    ASSERT_NE(nullptr, robot.GetFaceWorld().GetFace(faceID));
-    ASSERT_EQ(1, robot.GetFaceWorld().GetFaceIDs(0).size());
-    ASSERT_EQ(1, robot.GetFaceWorld().GetFaceIDs(fakeTime).size());
-    ASSERT_TRUE(robot.GetFaceWorld().GetFaceIDs(fakeTime + 10).empty());
-  }
-
-  fakeTime += 10;
-
-  // - - - Delocalize
-
-  const bool isCarryingObject = false;
-  robot.Delocalize(isCarryingObject);
-  ++fakeTime;
-
-  // FaceWorld should no longer return anything because we have a new origin
-  {
-    ASSERT_FALSE(robot.GetFaceWorld().HasAnyFaces());
-    ASSERT_EQ(nullptr, robot.GetFaceWorld().GetFace(faceID));
-    ASSERT_TRUE(robot.GetFaceWorld().GetFaceIDs(0).empty());
-  }
-
-  // See all objects from close so they all have unconfirmed observations
-  lastResult = ObserveMarkerHelper(1,
-                                   {{obj1Code, closeCorners}, {obj2Code, closeCorners}, {obj3Code, closeCorners}},
-                                   fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  // now see each cube separately
-
-  // 1 will rejigger
-  lastResult = ObserveMarkerHelper(1,{{obj1Code, closeCorners}},
-                                   fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  // Should have face again because we are back in its coordinate frame
-  {
-    ASSERT_TRUE(robot.GetFaceWorld().HasAnyFaces());
-    ASSERT_NE(nullptr, robot.GetFaceWorld().GetFace(faceID));
-    ASSERT_FALSE(robot.GetFaceWorld().GetFaceIDs(0).empty());
-  }
-
-  // we should have objects 1 and 2, but not 3, since 3 was not in the world before delocalizing
-  const ObservableObject* obj1Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj1);
-  ASSERT_NE(obj1Ptr, nullptr);
-  const ObservableObject* obj2Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj2);
-  ASSERT_NE(obj2Ptr, nullptr);
-  const ObservableObject* obj3Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj3);
-  ASSERT_EQ(obj3Ptr, nullptr);
-
-  // Add 1 confirmation for 2 and 3
-  lastResult = ObserveMarkerHelper(1,{{obj2Code, closeCorners}},
-                                   fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-  lastResult = ObserveMarkerHelper(1,{{obj3Code, closeCorners}},
-                                   fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  // still should have 1 and 2, but not 3
-  obj1Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj1);
-  ASSERT_NE(obj1Ptr, nullptr);
-  obj2Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj2);
-  ASSERT_NE(obj2Ptr, nullptr);
-  obj3Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj3);
-  ASSERT_EQ(obj3Ptr, nullptr);
-
-  // Add 1 confirmation for 2 and 3
-  lastResult = ObserveMarkerHelper(1,{{obj2Code, closeCorners}},
-                                   fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-  lastResult = ObserveMarkerHelper(1,{{obj3Code, closeCorners}},
-                                   fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  // now 3 should be added (assumes we need 2 visual observations to confirm)
-  obj1Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj1);
-  ASSERT_NE(obj1Ptr, nullptr);
-  obj2Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj2);
-  ASSERT_NE(obj2Ptr, nullptr);
-  obj3Ptr = robot.GetBlockWorld().GetLocatedObjectByID(connObj3);
-  ASSERT_NE(obj3Ptr, nullptr);
-
-  // Restore original values for console vars controlling the pose confirmer
-  NativeAnkiUtilConsoleSetValueWithString("UseImmediateConfirmationIfRobotNotMoving",
-                                          std::to_string(origImmediateConfirmationValue).c_str());
-  NativeAnkiUtilConsoleSetValueWithString("MinTimesToObserveObject",
-                                          std::to_string(origMinObservationsToConfirm).c_str());
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TEST(BlockWorld, RejiggerAndFlatten)
-{
-  // See object 1 in origin A
-  // Delocalize, now in origin B
-  // See object 2 in origin B
-  // Delocalize, now in origin C
-  // Create pose w.r.t. C
-  // See object 2 again, now in origin B
-  // See object 1 again, now in origin A
-  // C should now be flattened w.r.t. A
-  // Receiving a state message referencing old origin C should not cause issues
-
-  using namespace Anki;
-  using namespace Vector;
-
-  Result lastResult;
-
-  Robot robot(1, cozmoContext);
-  robot.FakeSyncRobotAck();
-
-  BlockWorld& blockWorld = robot.GetBlockWorld();
-
-  // There should be nothing in BlockWorld yet
-  BlockWorldFilter filter;
-  std::vector<ObservableObject*> objects;
-  blockWorld.FindLocatedMatchingObjects(filter, objects);
-  ASSERT_TRUE(objects.empty());
-
-  {
-    // no connected objects either
-    std::vector<Block*> activeObjects;
-    blockWorld.FindConnectedMatchingBlocks(BlockWorldFilter(), activeObjects);
-    ASSERT_TRUE(activeObjects.empty());
-  }
-
-  // Fake a state message update for robot
-  RobotState stateMsg( Robot::GetDefaultRobotState() );
-
-  lastResult = robot.UpdateFullRobotState(stateMsg);
-  ASSERT_EQ(lastResult, RESULT_OK);
-
-  // Camera calibration
-  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
-  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
-  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
-  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
-
-  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
-
-  robot.GetVisionComponent().SetCameraCalibration(camCalib);
-
-  // Enable "vision while moving" so that we don't have to deal with trying to compute
-  // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
-
-  // For faking observations of blocks
-  const Block obj1Cube(ObjectType::Block_LIGHTCUBE1);
-  const Block obj2Cube(ObjectType::Block_LIGHTCUBE2);
-
-  const Vision::Marker::Code obj1Code = obj1Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
-  const Vision::Marker::Code obj2Code = obj2Cube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
-
-  // Connect to some cubes
-
-  const ObjectID connObj1 = robot.GetBlockWorld().AddConnectedBlock(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
-  ASSERT_TRUE(connObj1.IsSet());
-
-  const ObjectID connObj2 = robot.GetBlockWorld().AddConnectedBlock(1, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE2);
-  ASSERT_TRUE(connObj2.IsSet());
-
-  // - - - See all objects from close so that their poses are Known and we can localize to them
-  const Quad2f closeCorners{
-    Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
-  };
-
-  VisionProcessingResult procResult;
-  RobotTimeStamp_t fakeTime = 10;
-
-  const PoseOriginID_t originA = robot.GetWorldOriginID();
-
-  ASSERT_EQ(1, robot.GetPoseOriginList().GetSize());
-
-  // See object 1
-  const s32 kNumObservations = 5; // After seeing at least 2 times, should be Known
-  lastResult = ObserveMarkerHelper(kNumObservations, {{obj1Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  // Should be localized to object 1, still in originA
-  ASSERT_EQ(connObj1, robot.GetLocalizedTo());
-  ASSERT_EQ(originA, robot.GetWorldOriginID());
-
-  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
-
-  // Delocalize
-  const bool isCarryingObject = false;
-  robot.Delocalize(isCarryingObject);
-  ++fakeTime;
-
-  const PoseOriginID_t originB = robot.GetWorldOriginID();
-  ASSERT_NE(originA, originB);
-  ASSERT_EQ(2, robot.GetPoseOriginList().GetSize());
-  ASSERT_NE(connObj1, robot.GetLocalizedTo());
-
-  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
-
-  // See object 2
-  lastResult = ObserveMarkerHelper(kNumObservations, {{obj2Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  // Should now be localized to object 2, still in origin B
-  ASSERT_EQ(connObj2, robot.GetLocalizedTo());
-  ASSERT_EQ(originB, robot.GetWorldOriginID());
-
-  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
-
-  // Delocalize again
-  robot.Delocalize(isCarryingObject);
-  ++fakeTime;
-
-  const PoseOriginID_t originC = robot.GetWorldOriginID();
-  ASSERT_NE(originA, originC);
-  ASSERT_NE(originB, originC);
-  ASSERT_NE(connObj2, robot.GetLocalizedTo());
-  ASSERT_EQ(3, robot.GetPoseOriginList().GetSize());
-
-  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
-
-  // Create some arbitrary pose in this origin
-  const Pose3d somePose(DEG_TO_RAD(45), Z_AXIS_3D(), {100.f, 200.f, 300.f}, robot.GetWorldOrigin());
-
-  // See object 2 again, should be back in originB
-  lastResult = ObserveMarkerHelper(kNumObservations, {{obj2Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  ASSERT_EQ(originB, robot.GetWorldOriginID());
-  ASSERT_EQ(connObj2, robot.GetLocalizedTo());
-  ASSERT_EQ(3, robot.GetPoseOriginList().GetSize());
-
-  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
-
-  // After rejigger, origin C should now have B as its parent
-  ASSERT_TRUE(robot.GetPoseOriginList().GetOriginByID(originC).IsChildOf(robot.GetPoseOriginList().GetOriginByID(originB)));
-
-  // "Move" the robot so it will relocalize
-  lastResult = FakeRobotMovement(robot, stateMsg, fakeTime);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  // See object 1 again, should be back in origin A
-  lastResult = ObserveMarkerHelper(kNumObservations, {{obj1Code, closeCorners}}, fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  ASSERT_EQ(originA, robot.GetWorldOriginID());
-  ASSERT_EQ(connObj1, robot.GetLocalizedTo());
-  ASSERT_EQ(3, robot.GetPoseOriginList().GetSize());
-
-  // We should have flattened C to be w.r.t. A now. B will be rejiggered to be parented to A as well.
-  ASSERT_TRUE(robot.GetPoseOriginList().GetOriginByID(originC).IsChildOf(robot.GetPoseOriginList().GetOriginByID(originA)));
-  ASSERT_TRUE(robot.GetPoseOriginList().GetOriginByID(originB).IsChildOf(robot.GetPoseOriginList().GetOriginByID(originA)));
-  ASSERT_TRUE(robot.GetPoseOriginList().SanityCheckOwnership());
-
-  // Our arbitrary pose should still have a valid parent
-  ASSERT_EQ(originC, somePose.GetParent().GetID());
-  ASSERT_EQ(originA, somePose.GetRootID());
-
-  // Getting robot state will create a PoseStruct3d, which should work just fine, even after rejiggering/flattening
-  ASSERT_EQ(originA, robot.GetRobotState().pose.originID);
-
-  // Receive state message with pose information referencing old origin C
-  stateMsg.pose_origin_id = originC;
-  stateMsg.timestamp = (TimeStamp_t)fakeTime;
-
-  // Using that message should still be kosher
-  lastResult = robot.UpdateFullRobotState(stateMsg);
-  ASSERT_EQ(lastResult, RESULT_OK);
-  ASSERT_EQ(originA, robot.GetPose().GetRootID());
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TEST(BlockWorld, LocalizedObjectDisconnect)
-{
-  using namespace Anki;
-  using namespace Vector;
-
-  Result lastResult;
-
-  Robot robot(1, cozmoContext);
-  robot.FakeSyncRobotAck();
-
-  BlockWorld& blockWorld = robot.GetBlockWorld();
-
-  // There should be nothing in BlockWorld yet
-  BlockWorldFilter filter;
-  std::vector<ObservableObject*> objects;
-  blockWorld.FindLocatedMatchingObjects(filter, objects);
-  ASSERT_TRUE(objects.empty());
-
-  // Fake a state message update for robot
-  RobotState stateMsg( Robot::GetDefaultRobotState() );
-
-  lastResult = robot.UpdateFullRobotState(stateMsg);
-  ASSERT_EQ(lastResult, RESULT_OK);
-
-  // For faking observations of a cube
-  const ActiveID closeActiveID = 1;
-  const FactoryID& closeFactoryID = "AA:AA:AA:AA:AA:AA";
-  const ObjectType closeType = ObjectType::Block_LIGHTCUBE2;
-  const Block closeCube(closeType);
-  const Vision::Marker::Code closeCode = closeCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
-
-  const Quad2f closeCorners{
-    Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
-  };
-
-  RobotTimeStamp_t fakeTime = 10;
-
-  // connect to cube
-  FakeRecvConnectionMessage(robot, closeActiveID, closeFactoryID, closeType, true);
-  ++fakeTime;
-
-  // Should have a "close" object connected
-  filter.SetAllowedTypes({closeType});
-  filter.SetFilterFcn(&BlockWorldFilter::ActiveObjectsFilter);
-  const ObservableObject* matchingObject = robot.GetBlockWorld().FindConnectedMatchingBlock(filter);
-  ASSERT_NE(nullptr, matchingObject);
-  ASSERT_TRUE(matchingObject->GetID().IsSet());
-  ASSERT_FALSE(matchingObject->HasValidPose());
-  ASSERT_EQ(closeActiveID, matchingObject->GetActiveID());
-
-  // capture the ID so we can compare later
-  const ObjectID blockObjectID = matchingObject->GetID();
-
-  // Camera calibration
-  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
-  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
-  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
-  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
-
-  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
-
-  robot.GetVisionComponent().SetCameraCalibration(camCalib);
-
-  // Enable "vision while moving" so that we don't have to deal with trying to compute
-  // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
-
-  VisionProcessingResult procResult;
-
-  // After seeing three times, should be Known and localizable
-  const s32 kNumObservations = 5;
-
-  // see the close block by itself
-  lastResult = ObserveMarkerHelper(kNumObservations, {{closeCode, closeCorners}},
-                                   fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  // Should be localized to "close" object
-  filter.SetAllowedTypes({closeType});
-  matchingObject = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
-  ASSERT_NE(nullptr, matchingObject);
-  ASSERT_EQ(blockObjectID, matchingObject->GetID());
-  ASSERT_EQ(closeActiveID, matchingObject->GetActiveID());
-  ASSERT_TRUE(matchingObject->IsPoseStateKnown());
-  ASSERT_EQ(blockObjectID, robot.GetLocalizedTo());
-
-  // disconnect from the cube
-  FakeRecvConnectionMessage(robot, closeActiveID, closeFactoryID, closeType, false);
-  ++fakeTime;
-
-  // delocalize while the cube is disconnected
-  // this causes the memory map to be destroyed, since there are no localizable cubes available
-  const bool isCarryingObject = false;
-  robot.Delocalize(isCarryingObject);
-  ++fakeTime;
-
-  // reconnect to the cube
-  FakeRecvConnectionMessage(robot, closeActiveID, "AA:AA:AA:AA:AA:AA", closeType, true);
-  ++fakeTime;
-
-  // see the cube again
-  lastResult = ObserveMarkerHelper(kNumObservations, {{closeCode, closeCorners}},
-                                   fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  // Should have the object back
-  filter.SetAllowedTypes({closeType});
-  std::vector<ObservableObject*> matchingObjects;
-  robot.GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
-  ASSERT_EQ(1, matchingObjects.size());
-
-  // Close object should now be Known pose state
-  matchingObject = robot.GetBlockWorld().GetLocatedObjectByID(blockObjectID);
-  ASSERT_NE(nullptr, matchingObject);
-  ASSERT_TRUE(matchingObject->IsPoseStateKnown());
-
-  // "Move" the robot so it will relocalize
-  lastResult = FakeRobotMovement(robot, stateMsg, fakeTime);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  // Seeing both objects again, now that we've moved, should relocalize (and not crash!)
-  lastResult = ObserveMarkerHelper(kNumObservations, {{closeCode, closeCorners}},
-                                   fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  // Should end up localized to the close object
-  ASSERT_EQ(blockObjectID, robot.GetLocalizedTo());
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TEST(BlockWorld, CopyObjectsFromZombieOrigins)
-{
-  using namespace Anki;
-  using namespace Vector;
-
-  Robot robot(1, cozmoContext);
-  robot.FakeSyncRobotAck();
-
-  BlockWorld& blockWorld = robot.GetBlockWorld();
-
-  // There should be nothing in BlockWorld yet
-  BlockWorldFilter filter;
-  std::vector<ObservableObject*> objects;
-  blockWorld.FindLocatedMatchingObjects(filter, objects);
-  ASSERT_TRUE(objects.empty());
-  ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 0);
-
-  // Only connected objects can localize, so add connected
-  const ObjectID objID1 = blockWorld.AddConnectedBlock(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
-  const ObjectID objID2 = blockWorld.AddConnectedBlock(1, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE2);
-
-  // make object2 localizable in the current world by adding visual observations
-  {
-    // Add observation (note observations now require to be shared pointers)
-    auto* object2 = blockWorld.GetConnectedBlockByID(objID2);
-    ASSERT_NE(nullptr, object2);
-
-    Pose3d fakePose;
-    fakePose.SetParent(robot.GetPose().GetParent());
-
-    ObservableObject* observation1 = object2->CloneType();
-    observation1->InitPose(fakePose, PoseState::Known);
-    observation1->CopyID(object2);
-    const bool wasRobotMoving = true; // prevents "immediate confirmation if robot not moving", if enabled by console var
-    bool isConfirmed = robot.GetObjectPoseConfirmer().AddVisualObservation(std::shared_ptr<ObservableObject>(observation1), nullptr, wasRobotMoving, 10);
-
-    ObservableObject* confirmedObject = blockWorld.GetLocatedObjectByID(objID2);
-
-    const auto minObservationsToConfirm = NativeAnkiUtilConsoleGetVarValueAsInt64("MinTimesToObserveObject");
-    if(minObservationsToConfirm > 1)
-    {
-      // Test assumes it takes exactly two confirmations, so assert that
-      ASSERT_EQ(2, minObservationsToConfirm);
-
-      // should not be confirmed yet in this origin
-      ASSERT_FALSE(isConfirmed);
-      ASSERT_EQ(nullptr, confirmedObject);
-
-      ObservableObject* observation2 = object2->CloneType();
-      observation2->InitPose(fakePose, PoseState::Known);
-      observation2->CopyID(object2);
-      isConfirmed = robot.GetObjectPoseConfirmer().AddVisualObservation(std::shared_ptr<ObservableObject>(observation2), confirmedObject, false, 10);
-    }
-
-    // now it should have been confirmed
-    ASSERT_TRUE(isConfirmed);
-    confirmedObject = blockWorld.GetLocatedObjectByID(objID2);
-    ASSERT_NE(nullptr, confirmedObject);
-
-    confirmedObject->SetIsMoving(false, 0);
-    confirmedObject->SetLastObservedTime(10);
-  }
-
-  // Make object2 able to be localized to
-  ObservableObject* locatedObj2 = blockWorld.GetLocatedObjectByID(objID2);
-  ASSERT_NE(nullptr, locatedObj2);
-  ASSERT_EQ(locatedObj2->GetPoseState(), PoseState::Known);
-  ASSERT_EQ(locatedObj2->IsActive(), true);
-  ASSERT_EQ(locatedObj2->CanBeUsedForLocalization(), true);
-  ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 1);
-
-  // Delocalizing will create a new frame but the old frame will still exist since
-  // object2 is localizable
-  robot.Delocalize(false);
-
-  // We won't be able to get objects1 and 2 by id since they aren't in the current frame
-  ObservableObject* obj1 = blockWorld.GetLocatedObjectByID(objID1);
-  ASSERT_EQ(nullptr, obj1);
-
-  // Storing this to a new pointer because I use the old object2 pointer later to set poseState
-  ObservableObject* obj2 = blockWorld.GetLocatedObjectByID(objID2);
-  ASSERT_EQ(nullptr, obj2);
-
-  // Add a new object to this currently empty frame
-  ObservableObject* object3 = CubePlacementHelper::CreateObjectLocatedAtOrigin(robot, ObjectType::Block_LIGHTCUBE3);
-  ASSERT_NE(nullptr, object3);
-  const ObjectID objID3 = object3->GetID();
-  ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 2);
-
-  // Mark object2 in previous frame as Dirty so that frame will become a zombie (not localizable anymore)
-  robot.GetObjectPoseConfirmer().MarkObjectDirty(locatedObj2);
-
-  // Delocalizing will create a new frame and delete our 2 zombie frames
-  // One of the frames has object1 and 2 the other has object3
-  // Since our new frame has no objects, they are all lost. However, the connected instances of 1 and 2 should
-  // still be available
-  robot.Delocalize(false);
-  ASSERT_EQ(blockWorld.GetNumAliveOrigins(), 0); // there are no origins with objects after deloc
-
-  obj1 = blockWorld.GetLocatedObjectByID(objID1);
-  ASSERT_EQ(nullptr, obj1);
-
-  obj2 = blockWorld.GetLocatedObjectByID(objID2);
-  ASSERT_EQ(nullptr, obj2);
-
-  object3 = blockWorld.GetLocatedObjectByID(objID3);
-  ASSERT_EQ(nullptr, object3);
-
-  auto* active1 = blockWorld.GetConnectedBlockByID(objID1);
-  ASSERT_NE(nullptr, active1);
-  auto* active2 = blockWorld.GetConnectedBlockByID(objID1);
-  ASSERT_NE(nullptr, active2);
-} // BlockWorld.CopyObjectsFromZombieOrigins
-
 
 // This test object allows us to reuse the TEST_P below with different
 // Json filenames as a parameter
@@ -1482,184 +597,6 @@ class BlockWorldTest : public ::testing::TestWithParam<const char*>
 }; // class BlockWorldTest
 
 #define DISPLAY_ERRORS 0
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TEST(Localization, LocalizationDistance)
-{
-  using namespace Anki;
-  using namespace Vector;
-
-  Result lastResult;
-
-  Robot robot(1, cozmoContext);
-  robot.FakeSyncRobotAck();
-
-  BlockWorld& blockWorld = robot.GetBlockWorld();
-
-  // There should be nothing in BlockWorld yet
-  BlockWorldFilter filter;
-  std::vector<ObservableObject*> objects;
-  blockWorld.FindLocatedMatchingObjects(filter, objects);
-  ASSERT_TRUE(objects.empty());
-
-  // Fake a state message update for robot
-  RobotState stateMsg( Robot::GetDefaultRobotState() );
-
-  lastResult = robot.UpdateFullRobotState(stateMsg);
-  ASSERT_EQ(lastResult, RESULT_OK);
-
-  // For faking observations of two blocks, one closer, one far
-  const ObjectType firstType = ObjectType::Block_LIGHTCUBE1;
-  const ObjectType secondType = ObjectType::Block_LIGHTCUBE2;
-  const Block firstCube(firstType);
-  const Block secondCube(secondType);
-  const Vision::Marker::Code firstCode  = firstCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
-  const Vision::Marker::Code secondCode = secondCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
-
-  const Quad2f farCorners{
-    Point2f(159,109),  Point2f(158,129),  Point2f(178,109),  Point2f(178,129)
-  };
-
-  const Quad2f closeCorners1{
-    Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
-  };
-
-  const Quad2f closeCorners2{
-    Point2f( 167,117),  Point2f( 170,185),  Point2f(236,116),  Point2f(237,184)
-  };
-
-  const ObjectID firstID = robot.GetBlockWorld().AddConnectedBlock(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
-  ASSERT_TRUE(firstID.IsSet());
-
-  const ObjectID secondID = robot.GetBlockWorld().AddConnectedBlock(1, "BB:BB:BB:BB:BB:BB", ObjectType::Block_LIGHTCUBE2);
-  ASSERT_TRUE(secondID.IsSet());
-
-  // Camera calibration
-  const u16 HEAD_CAM_CALIB_WIDTH  = 320;
-  const u16 HEAD_CAM_CALIB_HEIGHT = 240;
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_X = 290.f;
-  const f32 HEAD_CAM_CALIB_FOCAL_LENGTH_Y = 290.f;
-  const f32 HEAD_CAM_CALIB_CENTER_X       = 160.f;
-  const f32 HEAD_CAM_CALIB_CENTER_Y       = 120.f;
-
-  auto camCalib = std::make_shared<Vision::CameraCalibration>(HEAD_CAM_CALIB_HEIGHT, HEAD_CAM_CALIB_WIDTH,
-                                                              HEAD_CAM_CALIB_FOCAL_LENGTH_X, HEAD_CAM_CALIB_FOCAL_LENGTH_Y,
-                                                              HEAD_CAM_CALIB_CENTER_X, HEAD_CAM_CALIB_CENTER_Y);
-
-  robot.GetVisionComponent().SetCameraCalibration(camCalib);
-
-  // Enable "vision while moving" so that we don't have to deal with trying to compute
-  // angular velocities, since we don't have real state history to do so.
-  robot.GetVisionComponent().EnableVisionWhileRotatingFast(true);
-
-  VisionProcessingResult procResult;
-  RobotTimeStamp_t fakeTime = 10;
-  const s32 kNumObservations = 5;
-  f32 observedDistance_mm = -1.f;
-  bool success = false;
-
-  // After first seeing three times, should be Known and localizable
-  lastResult = ObserveMarkerHelper(kNumObservations, {{firstCode, closeCorners1}},
-                                   fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  // Should have the first object present in block world now
-  filter.SetAllowedTypes({firstType});
-  const ObservableObject* matchingObject = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
-  ASSERT_NE(nullptr, matchingObject);
-
-  // Make sure we're seeing the first object from close enough to localize to it
-  success = ComputeDistanceBetween(robot.GetPose(), matchingObject->GetPose(), observedDistance_mm);
-  ASSERT_EQ(true, success);
-  ASSERT_LE(observedDistance_mm, matchingObject->GetMaxLocalizationDistance_mm());
-
-  const ObjectID obsFirstID = matchingObject->GetID();
-  ASSERT_EQ(firstID, obsFirstID);
-
-  // Should be localized to "first" object
-  ASSERT_EQ(firstID, robot.GetLocalizedTo());
-
-  auto FakeMovement = [](RobotState& stateMsg, Robot& robot, RobotTimeStamp_t& fakeTime) -> Result
-  {
-    // "Move" the robot with a fake state message indicating movement
-    stateMsg.status |= (s32)RobotStatusFlag::ARE_WHEELS_MOVING;
-    stateMsg.timestamp = (TimeStamp_t)fakeTime;
-    fakeTime += 10;
-    Result lastResult = robot.UpdateFullRobotState(stateMsg);
-    if(RESULT_OK == lastResult)
-    {
-
-      // Stop
-      stateMsg.status &= ~(s32)RobotStatusFlag::ARE_WHEELS_MOVING;
-      stateMsg.timestamp = (TimeStamp_t)fakeTime;
-      fakeTime += 10;
-      lastResult = robot.UpdateFullRobotState(stateMsg);
-
-    }
-    return lastResult;
-  };
-
-  // Need to move and stop the robot so it's willing to localize again
-  lastResult = FakeMovement(stateMsg, robot, fakeTime);
-  ASSERT_EQ(lastResult, RESULT_OK);
-
-  // Now observe the second object in close position
-  lastResult = ObserveMarkerHelper(kNumObservations, {{secondCode, closeCorners2}},
-                                   fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  // Should have a the second object present in block world now
-  filter.SetAllowedTypes({secondType});
-  matchingObject = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
-  ASSERT_NE(nullptr, matchingObject);
-
-  // Make sure we're seeing the second object from close enough to localize to it
-  success = ComputeDistanceBetween(robot.GetPose(), matchingObject->GetPose(), observedDistance_mm);
-  ASSERT_EQ(true, success);
-  ASSERT_LE(observedDistance_mm, matchingObject->GetMaxLocalizationDistance_mm());
-
-  const ObjectID obsSecondID = matchingObject->GetID();
-  ASSERT_EQ(secondID, obsSecondID);
-
-  // Should be localized to "second" object
-  ASSERT_EQ(secondID, robot.GetLocalizedTo());
-
-  // Need to move and stop the robot so it's willing to localize again
-  stateMsg.status |= (s32)RobotStatusFlag::ARE_WHEELS_MOVING;
-  stateMsg.timestamp = (TimeStamp_t)fakeTime;
-  fakeTime += 10;
-  lastResult = robot.UpdateFullRobotState(stateMsg);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  // Stop in a new pose
-  stateMsg.status &= ~(s32)RobotStatusFlag::ARE_WHEELS_MOVING;
-  stateMsg.timestamp = (TimeStamp_t)fakeTime;
-  stateMsg.pose.angle = DEG_TO_RAD(90);
-  fakeTime += 10;
-  lastResult = robot.UpdateFullRobotState(stateMsg);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  // Now observe the first object again, but from far away
-  lastResult = ObserveMarkerHelper(kNumObservations, {{firstCode, farCorners}},
-                                   fakeTime, robot, stateMsg, procResult);
-  ASSERT_EQ(RESULT_OK, lastResult);
-
-  // Make sure the first object's pose is "far"
-  matchingObject = robot.GetBlockWorld().GetLocatedObjectByID(firstID);
-  ASSERT_NE(nullptr, matchingObject);
-  ASSERT_GE(matchingObject->GetLastObservedTime(), stateMsg.timestamp);
-
-  // Note we can't check the object's new pose, because it will not update since it was Known before (from being seen
-  // from close). We refuse to update it to the new, likely inaccurate pose now.
-  //success = ComputeDistanceBetween(robot.GetPose(), matchingObject->GetPose(), observedDistance_mm);
-  //ASSERT_EQ(true, success);
-  //ASSERT_GT(observedDistance_mm, matchingObject->GetMaxLocalizationDistance_mm());
-
-  // Should still be localized to the second object, since we see the first one from too far away
-  ASSERT_EQ(secondID, robot.GetLocalizedTo());
-
-} // TEST(Localization, LocalizationDistance)
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 TEST(FactoryTest, IdealCameraPose)
@@ -1923,19 +860,10 @@ TEST(BlockWorld, ObjectRobotCollisionCheck)
       object->SetIsMoving(false, 0);
       object->SetLastObservedTime((TimeStamp_t)fakeTime);
       pose.SetParent(robot.GetPose().GetParent());
-
-      // Add enough observations to fully update object's pose and make it Known
-      std::shared_ptr<ObservableObject> observation( object->CloneType() );
-      observation->InitPose(pose, PoseState::Known);
-      observation->CopyID(object);
-      for(s32 i=0; i<2; ++i)
-      {
-        robot.GetObjectPoseConfirmer().AddVisualObservation(observation, object, false, 10);
-      }
-
-      if(!ANKI_VERIFY(object->GetPoseState() == PoseState::Known,
-                      "BlockWorld.ObjectRobotCollisionCheck.HelperLambda.PoseNotKnown",
-                      "PoseState:%s", EnumToString(object->GetPoseState())))
+      
+      auto result = robot.GetBlockWorld().SetObjectPose(object->GetID(), pose, PoseState::Known);
+      if(!ANKI_VERIFY(result == RESULT_OK,
+                      "BlockWorld.ObjectRobotCollisionCheck.HelperLambda.FailedUpdateBlockworld", ""))
       {
         return PoseState::Invalid;
       }
@@ -1947,6 +875,7 @@ TEST(BlockWorld, ObjectRobotCollisionCheck)
     robot.GetVisionComponent().FakeImageProcessed(fakeTime);
     fakeTime+=10;
     robot.GetBlockWorld().UpdateObservedMarkers({});
+    robot.GetBlockWorld().CheckForRobotObjectCollisions();
 
     return object->GetPoseState();
   };
@@ -1992,17 +921,13 @@ TEST(Localization, UnexpectedMovement)
   lastResult = robot.UpdateFullRobotState(stateMsg);
   ASSERT_EQ(lastResult, RESULT_OK);
 
-  // For faking observations of a block
-  const ObjectType firstType = ObjectType::Block_LIGHTCUBE1;
-  const Block firstCube(firstType);
-  const Vision::Marker::Code firstCode  = firstCube.GetMarker(Block::FaceName::FRONT_FACE).GetCode();
+  // For faking observations of a charger
+  const Charger charger;
+  const Vision::Marker::Code code = charger.GetMarker()->GetCode();
 
   const Quad2f closeCorners1{
     Point2f( 67,117),  Point2f( 70,185),  Point2f(136,116),  Point2f(137,184)
   };
-
-  const ObjectID firstID = robot.GetBlockWorld().AddConnectedBlock(0, "AA:AA:AA:AA:AA:AA", ObjectType::Block_LIGHTCUBE1);
-  ASSERT_TRUE(firstID.IsSet());
 
   // Camera calibration
   const u16 HEAD_CAM_CALIB_WIDTH  = 320;
@@ -2027,20 +952,20 @@ TEST(Localization, UnexpectedMovement)
   const s32 kNumObservations = 5;
 
   // After first seeing three times, should be Known and localizable
-  lastResult = ObserveMarkerHelper(kNumObservations, {{firstCode, closeCorners1}},
+  lastResult = ObserveMarkerHelper(kNumObservations, {{code, closeCorners1}},
                                    fakeTime, robot, stateMsg, procResult);
   ASSERT_EQ(RESULT_OK, lastResult);
 
-  // Should have the first object present in block world now
-  filter.SetAllowedTypes({firstType});
+  // Should have the charger present in block world now
+  filter.SetAllowedTypes({ObjectType::Charger_Basic});
   const ObservableObject* matchingObject = robot.GetBlockWorld().FindLocatedMatchingObject(filter);
   ASSERT_NE(nullptr, matchingObject);
 
-  const ObjectID obsFirstID = matchingObject->GetID();
-  ASSERT_EQ(firstID, obsFirstID);
+  const ObjectID obsID = matchingObject->GetID();
+  ASSERT_TRUE(obsID.IsSet());
 
-  // Should be localized to "first" object
-  ASSERT_EQ(firstID, robot.GetLocalizedTo());
+  // Should be localized to charger
+  ASSERT_EQ(obsID, robot.GetLocalizedTo());
 
   auto FakeUnexpectedMovement = [](RobotState& stateMsg, Robot& robot, RobotTimeStamp_t& fakeTime) -> Result
   {

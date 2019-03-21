@@ -77,7 +77,7 @@ AlexaRevokeAuthHandler::AlexaRevokeAuthHandler( std::shared_ptr<ExceptionEncount
 avsCommon::avs::DirectiveHandlerConfiguration AlexaRevokeAuthHandler::getConfiguration() const
 {
   return avsCommon::avs::DirectiveHandlerConfiguration{ {NamespaceAndName{REVOKE_NAMESPACE, REVOKE_DIRECTIVE_NAME},
-                                                        avsCommon::avs::BlockingPolicy::NON_BLOCKING} };
+                                                         avsCommon::avs::BlockingPolicy(BlockingPolicy::MEDIUMS_NONE, false)}};
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

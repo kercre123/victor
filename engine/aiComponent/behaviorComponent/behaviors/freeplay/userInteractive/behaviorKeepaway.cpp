@@ -25,9 +25,11 @@
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/cozmoObservableObject.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/utils/cozmoFeatureGate.h"
+#include "util/helpers/quoteMacro.h"
 #include "util/math/math.h"
 
 #define SET_STATE(s) do{ \

@@ -385,10 +385,13 @@ namespace Anki {
       accel_ = webotRobot_.getAccelerometer("accel");
       accel_->enable(ROBOT_TIME_STEP_MS);
 
-      // Proximity sensor
+      // Proximity sensor	
       proxCenter_ = webotRobot_.getDistanceSensor("forwardProxSensor");
-      proxCenter_->enable(ROBOT_TIME_STEP_MS);
-
+      if(proxCenter_ != nullptr)
+      {
+        proxCenter_->enable(ROBOT_TIME_STEP_MS);
+      }
+      
       // Cliff sensors
       cliffSensors_[HAL::CLIFF_FL] = webotRobot_.getDistanceSensor("cliffSensorFL");
       cliffSensors_[HAL::CLIFF_FR] = webotRobot_.getDistanceSensor("cliffSensorFR");
@@ -770,6 +773,12 @@ namespace Anki {
     ProxSensorDataRaw HAL::GetRawProxData()
     {
       ProxSensorDataRaw proxData;
+
+      if(proxCenter_ == nullptr)
+      {
+        return proxData;
+      }
+      
       if (PowerGetMode() == POWER_MODE_ACTIVE) {
         proxData.distance_mm = static_cast<u16>( proxCenter_->getValue() );
         // Note: These fields are spoofed with simple defaults for now, but should be computed
@@ -891,6 +900,17 @@ namespace Anki {
     u8 HAL::BatteryGetTemperature_C()
     {
       return 40;
+    }
+
+    bool HAL::BatteryIsLow()
+    {
+      return (BatteryGetVoltage() < 3.6f);
+    }
+
+    bool HAL::IsShutdownImminent()
+    {
+      // Shutdown not yet implemented in sim
+      return false;
     }
 
     f32 HAL::ChargerGetVoltage()

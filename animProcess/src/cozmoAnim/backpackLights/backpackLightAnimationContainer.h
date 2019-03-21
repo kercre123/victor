@@ -18,7 +18,7 @@
 
 namespace Anki {
 namespace Vector {
-
+namespace Anim {
 class BackpackLightAnimationContainer
 {
 public:
@@ -32,6 +32,7 @@ private:
   std::unordered_map<std::string, BackpackLightAnimation::BackpackAnimation> _animations;
 };
 
+} // namespace Anim
 } // namespace Vector
 } // namespace Anki
 

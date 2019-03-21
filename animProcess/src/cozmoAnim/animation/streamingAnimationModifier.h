@@ -28,13 +28,16 @@ struct AlterStreamingAnimationAtTime;
 struct EngineToRobot;
 }
 
+namespace Anim {
 class AnimationStreamer;
+}
 class TextToSpeechComponent;
 
 namespace Audio {
 class EngineRobotAudioInput;
 }
 
+namespace Anim {
 class StreamingAnimationModifier
 {
 public:
@@ -62,6 +65,7 @@ private:
 }; // class StreamingAnimationModifier
   
 
+} // namespace Anim
 } // namespace Vector
 } // namespace Anki
 

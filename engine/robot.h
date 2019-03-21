@@ -73,7 +73,6 @@ class IGatewayInterface;
 class MoodManager;
 class MovementComponent;
 class NVStorageComponent;
-class ObjectPoseConfirmer;
 enum class OffTreadsState : int8_t;
 class PetWorld;
 class PhotographyManager;
@@ -97,6 +96,7 @@ class DockingComponent;
 class CarryingComponent;
 class CliffSensorComponent;
 class ProxSensorComponent;
+class RangeSensorComponent;
 class TouchSensorComponent;
 class ImuComponent;
 class AnimationComponent;
@@ -230,7 +230,6 @@ public:
   INLINE_GETTERS(MicComponent)
   INLINE_GETTERS(MoodManager)
   INLINE_GETTERS(NVStorageComponent)
-  INLINE_GETTERS(ObjectPoseConfirmer)
   INLINE_GETTERS(PathComponent)
   INLINE_GETTERS(PetWorld)
   INLINE_GETTERS(PhotographyManager)
@@ -250,6 +249,9 @@ public:
   #undef INLINE_GETTERS
 
   const PoseOriginList& GetPoseOriginList() const { return *_poseOrigins.get(); }
+
+  inline RangeSensorComponent& GetRangeSensorComponent() {return GetComponent<RangeSensorComponent>(); }
+  inline const RangeSensorComponent& GetRangeSensorComponent() const {return GetComponent<RangeSensorComponent>(); }
 
   inline BlockTapFilterComponent& GetBlockTapFilter() {return GetComponent<BlockTapFilterComponent>();}
   inline const BlockTapFilterComponent& GetBlockTapFilter() const {return GetComponent<BlockTapFilterComponent>();}
@@ -684,13 +686,17 @@ protected:
   void DevReplaceAIComponent(AIComponent* aiComponent, bool shouldManage = false);
 
   // Performs various startup checks and displays fault codes as appropriate
+
   // Returns true if the check is complete, false if the check is still running
   // If return true, then res will be set appropriately
   bool UpdateStartupChecks(Result& res);
   bool UpdateCameraStartupChecks(Result& res);
   bool UpdateGyroCalibChecks(Result& res);
+  bool UpdateToFStartupChecks(Result& res);
+  bool UpdateRampostErrorChecks(Result& res);
 
   bool IsStatusFlagSet(RobotStatusFlag flag) const { return _lastStatusFlags & static_cast<u32>(flag); }
+
 }; // class Robot
 
 

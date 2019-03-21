@@ -52,7 +52,6 @@ class IGatewayInterface;
 class MoodManager;
 class MovementComponent;
 class NVStorageComponent;
-class ObjectPoseConfirmer;
 class PathComponent;
 class ProgressionUnlockComponent;
 class ProxSensorComponent;
@@ -87,6 +86,7 @@ public:
   ActionList&                 GetActionList();
   BatteryComponent&           GetBatteryComponent()                   const;
   BatteryLevel                GetBatteryLevel()                       const;
+  BatteryLevel                GetPrevBatteryLevel()                   const;
   Quad2f                      GetBoundingQuadXY(const Pose3d& atPose) const;
   CarryingComponent&          GetCarryingComponent()                  const;
   const CliffSensorComponent& GetCliffSensorComponent()               const;
@@ -108,7 +108,6 @@ public:
   f32                         GetLiftHeight()                         const;
   MovementComponent&          GetMoveComponent()                      const;
   NVStorageComponent&         GetNVStorageComponent()                 const;
-  ObjectPoseConfirmer&        GetObjectPoseConfirmer()                const;
   OffTreadsState              GetOffTreadsState()                     const;
   EngineTimeStamp_t           GetOffTreadsStateLastChangedTime_ms()   const;
   PathComponent&              GetPathComponent()                      const;
@@ -134,6 +133,7 @@ public:
   Result ComputeHeadAngleToSeePose(const Pose3d& pose, Radians& headAngle, f32 yTolFrac) const;
 
   bool IsCharging() const;
+  float GetTimeAtBatteryLevelSec(BatteryLevel level) const;
   float GetOnChargerDurationSec() const;
   bool IsHeadCalibrated() const;
   bool IsLiftCalibrated() const;

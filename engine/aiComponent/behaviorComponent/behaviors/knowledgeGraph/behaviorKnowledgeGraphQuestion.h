@@ -63,7 +63,6 @@ protected:
   void TransitionToSearchingLoop();
   void TransitionToBeginResponse();
   void TransitionToNoResponse();
-  void TransitionToNoConnection();
 
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

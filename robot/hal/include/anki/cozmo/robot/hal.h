@@ -65,8 +65,6 @@ Result Init(const int * shutdownSignal);
 Result Step(void);
 void Stop(void);
 
-void Shutdown();
-
 /************************************************************************
  * \section Time
  */
@@ -175,7 +173,7 @@ typedef enum
   CLIFF_COUNT
 } CliffID; //TODO: assert matches DropSensor, or use directly
 
-/// Forward proximity sensor
+/// Face proximity sensor
 ProxSensorDataRaw GetRawProxData();
 
 /// Cliff sensors
@@ -238,6 +236,10 @@ u8 BatteryGetTemperature_C();
 // Syscon will shutoff 30s after this first becomes true.
 bool BatteryIsOverheated();
 
+// Battery is low. 
+// Time until shutdown: POWER_DOWN_WARNING_TIME
+bool BatteryIsLow();
+
 /// Return detected charger voltage
 f32 ChargerGetVoltage();
 /************************************************************************
@@ -294,6 +296,12 @@ PowerState PowerGetMode();
 /** Get syscon's current power state
  */
 PowerState PowerGetMode();
+
+// Returns true if syscon says it's going to shutoff power soon
+bool IsShutdownImminent();
+
+// Shutoff robot power completely
+void Shutdown();
 
 /************************************************************************
  * \section "Radio" comms to/from engine

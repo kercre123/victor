@@ -36,6 +36,8 @@ public:
   
   using CliffSensorDataArray = std::array<uint16_t, kNumCliffSensors>;
   static_assert(std::is_same<CliffSensorDataArray, decltype(RobotState::cliffDataRaw)>::value, "CliffSensorDataArray must be same as type used in RobotState");
+  
+  using CliffSensorFiltDataArray = std::array<f32, kNumCliffSensors>;
 
   CliffSensorComponent();
 
@@ -119,6 +121,8 @@ public:
   
   const CliffSensorDataArray& GetCliffDataRawAtLastStop() const { return _cliffDataRawAtLastStop; }
   
+  const CliffSensorFiltDataArray & GetCliffDataFiltered() const { return _cliffDataFilt; }
+  
   // Retrieves the number of milliseconds that the cliff sensors have reported @param numCliffs
   // being detected.
   //
@@ -163,7 +167,7 @@ private:
   CliffSensorDataArray _cliffDataRaw;
   
   // Filtered cliff sensor data, which smooths out noise in the data
-  std::array<f32, kNumCliffSensors> _cliffDataFilt;
+  CliffSensorFiltDataArray _cliffDataFilt;
   
   // Minimum observed cliff sensor values (used to adaptively adjust detection thresholds)
   CliffSensorDataArray _cliffMinObserved;

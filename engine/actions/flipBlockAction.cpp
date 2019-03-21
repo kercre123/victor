@@ -342,10 +342,11 @@ ActionResult FlipBlockAction::CheckIfDone()
   
   if(result != ActionResult::RUNNING)
   {
-    // Purposely forget where the block is
+    // After flipping the block, it will definitely be in a new pose, but it will be _pretty close_ to its previous
+    // pose. Therefore, mark the pose as dirty, but do not remove the object entirely.
     if ( nullptr != block )
     {
-      GetRobot().GetObjectPoseConfirmer().MarkObjectUnknown(block);
+      GetRobot().GetBlockWorld().MarkObjectDirty(block);
     }
     else
     {

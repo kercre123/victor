@@ -21,6 +21,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/audio/engineRobotAudioClient.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/carryingComponent.h"
@@ -1358,7 +1359,6 @@ namespace Anki {
     {
       ActionResult result = ActionResult::ABORT;
       const RobotTimeStamp_t currentTime = GetRobot().GetLastMsgTimestamp();
-      bool checkObjectMotion = false;
 
       if (_firstVerifyCallTime == 0) {
         _firstVerifyCallTime = currentTime;
@@ -1367,6 +1367,8 @@ namespace Anki {
       if (VerifyDockingComponentValid() &&
           _dockingComponentPtr->GetLastPickOrPlaceSucceeded()) {
 
+        bool checkObjectMotion = false;
+        
         // Determine whether or not we should do a SearchForNearbyObject instead of TurnTowardsPose
         // depending on if the liftLoad test resulted in HAS_NO_LOAD since this could be due to sticky lift.
         if (_doLiftLoadCheck) {
@@ -1374,13 +1376,15 @@ namespace Anki {
             // If liftLoad message hasn't come back yet, wait a little longer
             if (_liftLoadWaitTime_ms == 0) {
               _liftLoadWaitTime_ms = currentTime + kLiftLoadTimeout_ms;
+              return ActionResult::RUNNING;
             } else if (currentTime > _liftLoadWaitTime_ms) {
               // If LiftLoadCheck times out for some reason -- lift probably just couldn't get into
               // position fast enough -- then just proceed to motion check.
               PRINT_NAMED_WARNING("PickupObjectAction.Verify.LiftLoadTimeout", "");
               checkObjectMotion = true;
+            } else {
+              return ActionResult::RUNNING;
             }
-            return ActionResult::RUNNING;
           } else if (_liftLoadState == LiftLoadState::HAS_NO_LOAD) {
             checkObjectMotion = true;
           }
@@ -1434,7 +1438,7 @@ namespace Anki {
 
       if(_verifyAction == nullptr)
       {
-        _verifyAction.reset(new TurnTowardsPoseAction(_dockObjectOrigPose, 0));
+        _verifyAction.reset(new VisuallyVerifyNoObjectAtPoseAction(_dockObjectOrigPose));
         _verifyAction->ShouldSuppressTrackLocking(true);
         _verifyAction->SetRobot(&GetRobot());
         _verifyActionDone = false;
@@ -1496,7 +1500,6 @@ namespace Anki {
           _dockObjectOrigPose.SetParent(GetRobot().GetPose().GetParent());
 
           Radians angleDiff;
-          ObservableObject* objectInOriginalPose = nullptr;
           for(const auto& object : objectsWithType)
           {
             // TODO: is it safe to always have useAbsRotation=true here?
@@ -1514,53 +1517,12 @@ namespace Anki {
                        object->GetID().GetValue(),
                        Tdiff.x(), Tdiff.y(), Tdiff.z(), angleDiff.getDegrees(),
                        carryObject->GetID().GetValue());
-
-              objectInOriginalPose = object;
               break;
             }
           }
 
-          // rsam/andrew. We don't think this code should be necessary anymore if the observation code
-          // already checks this
-          if(objectInOriginalPose != nullptr)
-          {
-            // We do not expect this code to be running and if we get this error when also seeing a FindOrigin
-            // crash (as in COZMO-10977 for example), it suggests this code is related. (Come bug Andrew/Raul.)
-            PRINT_NAMED_ERROR("PickupObjectAction.Verify.FishyCode",
-                              "Possible red flag for COZMO-10977");
-
-            // Must not actually be carrying the object I thought I was!
-            // Put the object I thought I was carrying in the position of the
-            // object I matched to it above, and then delete that object.
-            // (This prevents a new object with different ID being created.)
-            if(carryObject->GetID() != objectInOriginalPose->GetID())
-            {
-              LOG_INFO("PickupObjectAction.Verify.SeeingDifferentObjectInOrigPose",
-                       "Moving carried object (%s ID=%d) to object seen in original pose "
-                       "and deleting that object (%s ID=%d).",
-                       EnumToString(carryObject->GetType()),
-                       carryObject->GetID().GetValue(),
-                       EnumToString(objectInOriginalPose->GetType()),
-                       objectInOriginalPose->GetID().GetValue());
-
-              GetRobot().GetObjectPoseConfirmer().CopyWithNewPose(carryObject, objectInOriginalPose->GetPose(), objectInOriginalPose);
-
-              BlockWorldFilter filter;
-              filter.AddAllowedID(objectInOriginalPose->GetID());
-              blockWorld.DeleteLocatedObjects(filter);
-            }
-
-            if(VerifyCarryingComponentValid()){
-              _carryingComponentPtr->UnSetCarryingObject();
-            }
-
-            LOG_INFO("PickupObjectAction.Verify.SeeingCarriedObjectInOrigPose",
-                     "Object pick-up FAILED! (Still seeing object in same place.)");
-            result = ActionResult::NOT_CARRYING_OBJECT_RETRY;
-          } else {
-            LOG_INFO("PickupObjectAction.Verify.Success", "Object pick-up SUCCEEDED!");
-            result = ActionResult::SUCCESS;
-          }
+          LOG_INFO("PickupObjectAction.Verify.Success", "Object pick-up SUCCEEDED!");
+          result = ActionResult::SUCCESS;
           break;
         } // PICKUP
 

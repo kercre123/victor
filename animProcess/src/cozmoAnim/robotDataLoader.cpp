@@ -46,6 +46,7 @@
 
 namespace Anki {
 namespace Vector {
+namespace Anim {
 
 namespace{
 const char* kPathToExternalIndependentSprites = "assets/sprites/independentSprites/";
@@ -332,6 +333,6 @@ void RobotDataLoader::LoadBackpackLightAnimationFile(const std::string& path)
   }
 }
 
-  
+}
 }
 }

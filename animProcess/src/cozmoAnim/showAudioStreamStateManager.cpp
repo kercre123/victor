@@ -29,7 +29,7 @@ const int32_t kUseDefaultStreamingDuration = -1;
 namespace Anki {
 namespace Vector {
 
-ShowAudioStreamStateManager::ShowAudioStreamStateManager(const AnimContext* context)
+ShowAudioStreamStateManager::ShowAudioStreamStateManager(const Anim::AnimContext* context)
 : _context(context)
 , _minStreamingDuration_ms(kUseDefaultStreamingDuration)
 {

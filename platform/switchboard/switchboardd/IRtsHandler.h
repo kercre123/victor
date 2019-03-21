@@ -71,6 +71,8 @@ protected:
     (void) SavedSessionManager::SaveRtsKeys(_rtsKeys);
   }
 
+  const std::string& GetBuildIdString();
+
   std::unique_ptr<KeyExchange> _keyExchange;
 
   RtsPairingPhase _state = RtsPairingPhase::AwaitingHandshake;
@@ -81,6 +83,7 @@ protected:
   std::shared_ptr<TokenClient> _tokenClient;
   std::shared_ptr<WifiWatcher> _wifiWatcher;
   bool _hasOwner;
+  std::string _buildIdString;
 };
 
 } // Switchboard

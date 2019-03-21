@@ -44,7 +44,7 @@ namespace Vector {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Constructor
 //
-SdkAudioComponent::SdkAudioComponent(const AnimContext* context) {
+SdkAudioComponent::SdkAudioComponent(const Anim::AnimContext* context) {
   DEV_ASSERT(nullptr != context, "SdkAudioComponent.InvalidContext");
   DEV_ASSERT(nullptr != context->GetAudioController(), "SdkAudioComponent.InvalidAudioController");
 

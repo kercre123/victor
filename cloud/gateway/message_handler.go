@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -742,6 +743,40 @@ func (service *rpcService) MoveLift(ctx context.Context, in *extint.MoveLiftRequ
 		return nil, err
 	}
 	return &extint.MoveLiftResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+	}, nil
+}
+
+func (service *rpcService) StopAllMotors(ctx context.Context, in *extint.StopAllMotorsRequest) (*extint.StopAllMotorsResponse, error) {
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_StopAllMotorsRequest{
+			StopAllMotorsRequest: in,
+		},
+	}
+	_, err := engineProtoManager.Write(message)
+	if err != nil {
+		return nil, err
+	}
+	return &extint.StopAllMotorsResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+	}, nil
+}
+
+func (service *rpcService) CancelActionByIdTag(ctx context.Context, in *extint.CancelActionByIdTagRequest) (*extint.CancelActionByIdTagResponse, error) {
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_CancelActionByIdTagRequest{
+			CancelActionByIdTagRequest: in,
+		},
+	}
+	_, err := engineProtoManager.Write(message)
+	if err != nil {
+		return nil, err
+	}
+	return &extint.CancelActionByIdTagResponse{
 		Status: &extint.ResponseStatus{
 			Code: extint.ResponseStatus_REQUEST_PROCESSING,
 		},
@@ -1964,6 +1999,180 @@ func (service *rpcService) SetLiftHeight(ctx context.Context, in *extint.SetLift
 	return response, nil
 }
 
+func (service *rpcService) TurnTowardsFace(ctx context.Context, in *extint.TurnTowardsFaceRequest) (*extint.TurnTowardsFaceResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_TurnTowardsFaceResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_TurnTowardsFaceRequest{
+			TurnTowardsFaceRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	turnTowardsFaceResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := turnTowardsFaceResponse.GetTurnTowardsFaceResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+func (service *rpcService) GoToObject(ctx context.Context, in *extint.GoToObjectRequest) (*extint.GoToObjectResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_GoToObjectResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_GoToObjectRequest{
+			GoToObjectRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	goToObjectResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := goToObjectResponse.GetGoToObjectResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+func (service *rpcService) RollObject(ctx context.Context, in *extint.RollObjectRequest) (*extint.RollObjectResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_RollObjectResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_RollObjectRequest{
+			RollObjectRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	rollObjectResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := rollObjectResponse.GetRollObjectResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+func (service *rpcService) PopAWheelie(ctx context.Context, in *extint.PopAWheelieRequest) (*extint.PopAWheelieResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PopAWheelieResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_PopAWheelieRequest{
+			PopAWheelieRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	popAWheelieResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := popAWheelieResponse.GetPopAWheelieResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+func (service *rpcService) PickupObject(ctx context.Context, in *extint.PickupObjectRequest) (*extint.PickupObjectResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PickupObjectResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_PickupObjectRequest{
+			PickupObjectRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	pickupObjectResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := pickupObjectResponse.GetPickupObjectResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+func (service *rpcService) PlaceObjectOnGroundHere(ctx context.Context, in *extint.PlaceObjectOnGroundHereRequest) (*extint.PlaceObjectOnGroundHereResponse, error) {
+
+	if err := ValidateActionTag(in.IdTag); err != nil {
+		return nil, err
+	}
+
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PlaceObjectOnGroundHereResponse{}, 1)
+	defer f()
+
+	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_PlaceObjectOnGroundHereRequest{
+			PlaceObjectOnGroundHereRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	placeObjectOnGroundResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := placeObjectOnGroundResponse.GetPlaceObjectOnGroundHereResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
 func (service *rpcService) BatteryState(ctx context.Context, in *extint.BatteryStateRequest) (*extint.BatteryStateResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_BatteryStateResponse{}, 1)
 	defer f()
@@ -2303,31 +2512,51 @@ func (service *rpcService) EnableMirrorMode(ctx context.Context, request *extint
 	return response, nil
 }
 
-// TODO support CaptureSingleImage
-// func (service *rpcService) CaptureSingleImage(ctx context.Context, request *extint.CaptureSingleImageRequest) (*extint.CaptureSingleImageResponse, error) {
-// 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_CaptureSingleImageResponse{}, 1)
-// 	defer f()
+// Capture a single image using the camera
+func (service *rpcService) CaptureSingleImage(ctx context.Context, request *extint.CaptureSingleImageRequest) (*extint.CaptureSingleImageResponse, error) {
+	// Enable image stream
+	_, err := service.EnableImageStreaming(nil, &extint.EnableImageStreamingRequest{
+		Enable: true,
+	})
 
-// 	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
-// 		OneofMessageType: &extint.GatewayWrapper_CaptureSingleImageRequest{
-// 			CaptureSingleImageRequest: request,
-// 		},
-// 	})
-// 	if err != nil {
-// 		return nil, err
-// 	}
+	if err != nil {
+		return nil, err
+	}
 
-// 	payload, ok := <-responseChan
-// 	if !ok {
-// 		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
-// 	}
+	// Disable image stream
+	defer service.EnableImageStreaming(nil, &extint.EnableImageStreamingRequest{
+		Enable: false,
+	})
 
-// 	payload.GetCaptureSingleImageResponse().Status = &extint.ResponseStatus{
-// 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
-// 	}
+	f, cameraFeedChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ImageChunk{}, 1024)
+	defer f()
 
-// 	return payload.GetCaptureSingleImageResponse(), nil
-// }
+	cache := CameraFeedCache{
+		Data:    nil,
+		ImageId: -1,
+		Invalid: false,
+		Size:    0,
+	}
+
+	for result := range cameraFeedChannel {
+		imageChunk := result.GetImageChunk()
+		readyToSend := UnpackCameraImageChunk(imageChunk, &cache)
+		if readyToSend {
+			capturedSingleImage := &extint.CaptureSingleImageResponse{
+				FrameTimeStamp: imageChunk.GetFrameTimeStamp(),
+				ImageId:        uint32(cache.ImageId),
+				ImageEncoding:  imageChunk.GetImageEncoding(),
+				Data:           cache.Data[0:cache.Size],
+			}
+			capturedSingleImage.Status = &extint.ResponseStatus{Code: extint.ResponseStatus_RESPONSE_RECEIVED}
+			return capturedSingleImage, nil
+		}
+	}
+
+	errMsg := "ImageChunk engine stream died unexpectedly"
+	log.Errorln(errMsg)
+	return nil, grpc.Errorf(codes.Internal, errMsg)
+}
 
 // TODO VIC-11579 Support specifying streaming resolution
 func (service *rpcService) EnableImageStreaming(ctx context.Context, request *extint.EnableImageStreamingRequest) (*extint.EnableImageStreamingResponse, error) {
@@ -2491,21 +2720,56 @@ func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extin
 }
 
 // CheckUpdateStatus tells if the robot is ready to reboot and update.
-func (service *rpcService) CheckUpdateStatus(ctx context.Context, in *extint.CheckUpdateStatusRequest) (*extint.CheckUpdateStatusResponse, error) {
-	if _, err := os.Stat("/run/update-engine/done"); err == nil {
-		return &extint.CheckUpdateStatusResponse{
-			Status: &extint.ResponseStatus{
-				Code: extint.ResponseStatus_OK,
-			},
-			UpdateStatus: extint.CheckUpdateStatusResponse_READY_TO_INSTALL,
-		}, nil
-	}
-	return &extint.CheckUpdateStatusResponse{
+func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse, error) {
+	update_status := &extint.CheckUpdateStatusResponse{
 		Status: &extint.ResponseStatus{
 			Code: extint.ResponseStatus_OK,
 		},
-		UpdateStatus: extint.CheckUpdateStatusResponse_NO_UPDATE,
-	}, nil
+	}
+
+	update_status.Progress = -1
+	update_status.Expected = -1
+	if _, err := os.Stat("/run/update-engine/done"); err == nil {
+		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_READY_TO_INSTALL
+		return update_status, nil
+	}
+
+	update_status.UpdateStatus = extint.CheckUpdateStatusResponse_NO_UPDATE
+	if data, err := ioutil.ReadFile("/run/update-engine/progress"); err == nil {
+		update_status.Progress, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
+		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
+	}
+	if data, err := ioutil.ReadFile("/run/update-engine/expected-size"); err == nil {
+		update_status.Expected, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
+		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
+	}
+	return update_status, nil
+}
+
+// CheckUpdateStatus tells if the robot is ready to reboot and update.
+func (service *rpcService) CheckUpdateStatus(
+	ctx context.Context, in *extint.CheckUpdateStatusRequest) (*extint.CheckUpdateStatusResponse, error) {
+
+	return service.GetUpdateStatus()
+}
+
+// CheckUpdateStatusStream tells if the robot is ready to reboot and update.
+func (service *rpcService) CheckUpdateStatusStream(
+	in *extint.CheckUpdateStatusRequest,
+	stream extint.ExternalInterface_CheckUpdateStatusStreamServer) error {
+
+	for {
+		status, err := service.GetUpdateStatus()
+		//Keep streaming to the requestor until they disconnect. We don't stop streaming just because there's no update
+		//pending, because a requested update may be pending, but hasn't had a chance to update /run/update-engine/* yet.
+		if err != nil {
+			return err
+		}
+		if err := stream.Send(status); err != nil {
+			return err
+		}
+		time.Sleep(2000 * time.Millisecond)
+	}
 }
 
 // UpdateAndRestart reboots the robot when an update is available.

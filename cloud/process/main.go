@@ -25,7 +25,6 @@ import (
 	"github.com/gwatts/rootcerts"
 )
 
-var verbose bool
 var checkDataFunc func() error // overwritten by platform_linux.go
 var certErrorFunc func() bool  // overwritten by cert_error_dev.go, determines if error should cause exit
 var platformOpts []cloudproc.Option
@@ -94,7 +93,6 @@ func main() {
 	signalHandler()
 
 	// don't yet have control over process startup on DVT2, set these as default
-	verbose = true
 	test := false
 
 	// flag.BoolVar(&verbose, "verbose", false, "enable verbose logging")
@@ -186,6 +184,8 @@ func signalHandler() {
 	go func() {
 		<-ch
 		fmt.Println("Received SIGTERM, shutting down immediately")
+		fmt.Println("Uninstall crash reporter")
+		robot.UninstallCrashReporter()
 		os.Exit(0)
 	}()
 }

@@ -77,7 +77,6 @@ bool BehaviorSearchWithinBoundingBox::WantsToBeActivatedBehavior() const
 void BehaviorSearchWithinBoundingBox::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
   modifiers.wantsToBeActivatedWhenCarryingObject = false;
-  modifiers.wantsToBeActivatedWhenOffTreads = false;
   modifiers.wantsToBeActivatedWhenOnCharger = false;
   modifiers.behaviorAlwaysDelegates = true;
 }

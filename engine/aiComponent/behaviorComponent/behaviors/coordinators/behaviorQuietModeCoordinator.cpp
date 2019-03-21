@@ -24,6 +24,7 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/moodSystem/moodManager.h"

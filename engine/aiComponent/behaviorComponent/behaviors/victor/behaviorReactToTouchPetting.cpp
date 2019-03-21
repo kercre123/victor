@@ -188,11 +188,11 @@ void BehaviorReactToTouchPetting::OnBehaviorActivated()
   // set internal state to speed up entry into Level1 animations
   _numPressesAtCurrentBlissLevel = 1;
   
-  GetBEI().GetMoodManager().TriggerEmotionEvent("PettingStarted");
+  auto& moodManager = GetBEI().GetMoodManager();
+  moodManager.TriggerEmotionEvent("PettingStarted");
   
-  auto& heldInPalmTracker = GetBEI().GetHeldInPalmTracker();
-  if (heldInPalmTracker.IsHeldInPalm()) {
-    heldInPalmTracker.UpdateTrustLevelForEvent(HeldInPalmTrustEventType::RobotPetted);
+  if ( GetBEI().GetHeldInPalmTracker().IsHeldInPalm() ) {
+    moodManager.TriggerEmotionEvent("PettingStartedOnPalm");
   }
   
   GetBEI().GetBehaviorTimerManager().GetTimer(BehaviorTimerTypes::ReactToTouchPetting).Reset();
@@ -306,12 +306,22 @@ void BehaviorReactToTouchPetting::BehaviorUpdate()
 
         if( nowAtMaxBliss ) {
           // reached max bliss this time
-          GetBEI().GetMoodManager().TriggerEmotionEvent("PettingReachedMaxBliss");
+          auto& moodManager = GetBEI().GetMoodManager();
+          
+          if ( GetBEI().GetHeldInPalmTracker().IsHeldInPalm() ) {
+            moodManager.TriggerEmotionEvent("PettingReachedMaxBlissOnPalm");
+          }
+          moodManager.TriggerEmotionEvent("PettingReachedMaxBliss");
           GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::PettingReachedMaxBliss);
         }
         else {
           // "leveled up" but did not reach max
-          GetBEI().GetMoodManager().TriggerEmotionEvent("PettingBlissLevelIncrease");
+          auto& moodManager = GetBEI().GetMoodManager();
+          
+          if ( GetBEI().GetHeldInPalmTracker().IsHeldInPalm() ) {
+            moodManager.TriggerEmotionEvent("PettingReachedMaxBlissOnPalm");
+          }
+          moodManager.TriggerEmotionEvent("PettingBlissLevelIncrease");
           GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::PettingBlissIncrease);
         }
       }

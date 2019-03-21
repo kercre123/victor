@@ -41,6 +41,7 @@ protected:
   BehaviorDevBatteryLogging(const Json::Value& config);
   
   void InitBehavior() override;
+  virtual void GetAllDelegates( std::set<IBehavior*>& delegates ) const override;
   
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override; 
 
@@ -65,6 +66,9 @@ private:
     bool stressSpeaker;
 
     bool driveOffChargerWhenFull;
+    bool doExploring;
+
+    ICozmoBehaviorPtr testBehavior;
   };
 
   InstanceConfig   _iConfig;

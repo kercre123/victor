@@ -126,7 +126,6 @@ namespace Vector {
       }
       else if( msg.fileType == ExternalInterface::FileType::FaceImg)
       {
-        std::string str = msg.filename;
         std::size_t found_char = msg.filename.find_last_of("_");
         if( found_char != std::string::npos)
         {

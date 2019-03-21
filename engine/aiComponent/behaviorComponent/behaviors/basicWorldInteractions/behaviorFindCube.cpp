@@ -22,6 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 
 #include "coretech/common/engine/utils/timer.h"
@@ -145,9 +146,9 @@ void BehaviorFindCube::BehaviorUpdate()
 
   if( FindCubeState::CheckForCubeInFront == _dVars.state || 
       FindCubeState::QuickSearchForCube  == _dVars.state ){
-    auto& proxSensor = GetBEI().GetRobotInfo().GetProxSensorComponent();
-    uint16_t proxDist_mm = 0;
-    if( proxSensor.GetLatestDistance_mm(proxDist_mm) && ( proxDist_mm < kProxBackupThreshold_mm ) ){
+    const auto& proxSensor = GetBEI().GetRobotInfo().GetProxSensorComponent();
+    const auto& proxData = proxSensor.GetLatestProxData();
+    if( proxData.foundObject && ( proxData.distance_mm < kProxBackupThreshold_mm ) ){
       TransitionToBackUpAndCheck();
     }
 

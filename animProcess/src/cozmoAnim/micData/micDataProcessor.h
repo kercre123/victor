@@ -62,7 +62,7 @@ namespace MicData {
 
 class MicDataProcessor {
 public:
-  MicDataProcessor(const AnimContext* context, MicDataSystem* micDataSystem, const std::string& writeLocation);
+  MicDataProcessor(const Anim::AnimContext* context, MicDataSystem* micDataSystem, const std::string& writeLocation);
   ~MicDataProcessor();
   MicDataProcessor(const MicDataProcessor& other) = delete;
   MicDataProcessor& operator=(const MicDataProcessor& other) = delete;
@@ -100,7 +100,7 @@ public:
 
 
 private:
-  const AnimContext* _context = nullptr;
+  const Anim::AnimContext* _context = nullptr;
   MicDataSystem* _micDataSystem = nullptr;
   SpeechRecognizerSystem* _speechRecognizerSystem = nullptr;
   
@@ -114,8 +114,6 @@ private:
   int _policyFallbackFlag = 0;
 
   // Members for general purpose processing and state
-  std::array<AudioUtil::AudioSample, kSamplesPerBlock * kNumInputChannels> _inProcessAudioBlock;
-  bool _inProcessAudioBlockFirstHalf = true;
   std::unique_ptr<SVadConfig_t> _sVadConfig;
   std::unique_ptr<SVadObject_t> _sVadObject;
   uint32_t _vadCountdown = 0;
@@ -146,16 +144,15 @@ private:
 #endif
 
   // Internal buffer used to add to the streaming audio once a trigger is detected
-  static constexpr uint32_t kImmediateBufferSize = kTriggerAudioLength_ms / kTimePerSEBlock_ms;
+  static constexpr uint32_t kImmediateBufferSize = kTriggerAudioLength_ms / kTimePerChunk_ms;
   struct TimedMicData {
-    std::array<AudioUtil::AudioSample, kSamplesPerBlock> audioBlock;
+    std::array<AudioUtil::AudioSample, kSamplesPerBlockPerChannel> audioBlock;
     RobotTimeStamp_t timestamp;
   };
   Util::FixedCircularBuffer<TimedMicData, kImmediateBufferSize> _immediateAudioBuffer;
 
-  using RawAudioChunk = std::array<AudioUtil::AudioSample, kRawAudioChunkSize>;
+  using RawAudioChunk = std::array<AudioUtil::AudioSample, kIncomingAudioChunkSize>;
   static constexpr uint32_t kImmediateBufferRawSize = kTriggerAudioLength_ms / kTimePerChunk_ms;
-  Util::FixedCircularBuffer<RawAudioChunk, kImmediateBufferRawSize> _immediateAudioBufferRaw;
   
   std::mutex _procAudioXferMutex;
   std::condition_variable _dataReadyCondition;

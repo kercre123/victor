@@ -41,6 +41,12 @@ BatteryLevel BEIRobotInfo::GetBatteryLevel() const
 {
   return _robot.GetBatteryComponent().GetBatteryLevel();
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BatteryLevel BEIRobotInfo::GetPrevBatteryLevel() const
+{
+  return _robot.GetBatteryComponent().GetPrevBatteryLevel();
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Quad2f BEIRobotInfo::GetBoundingQuadXY(const Pose3d& atPose) const
@@ -153,12 +159,6 @@ f32 BEIRobotInfo::GetLiftHeight() const
 MovementComponent& BEIRobotInfo::GetMoveComponent() const
 {
   return _robot.GetMoveComponent();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-ObjectPoseConfirmer& BEIRobotInfo::GetObjectPoseConfirmer() const
-{
-  return _robot.GetObjectPoseConfirmer();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -288,6 +288,13 @@ bool BEIRobotInfo::IsCharging() const
   return _robot.GetBatteryComponent().IsCharging();
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+float BEIRobotInfo::GetTimeAtBatteryLevelSec(BatteryLevel level) const
+{
+  return _robot.GetBatteryComponent().GetTimeAtLevelSec(level);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float BEIRobotInfo::GetOnChargerDurationSec() const
 {
   return _robot.GetBatteryComponent().GetOnChargerDurationSec();

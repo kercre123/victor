@@ -47,6 +47,8 @@
 #include <Alerts/AlertObserverInterface.h>
 #include <CBLAuthDelegate/CBLAuthRequesterInterface.h>
 #include <AVSCommon/AVS/IndicatorState.h>
+#include <Settings/DeviceSettingsManager.h>
+#include <Settings/SettingCallbacks.h>
 
 #include <functional>
 #include <string>
@@ -79,7 +81,9 @@ class AlexaClient;
 class AlexaKeywordObserver;
 class AlexaMediaPlayer;
 class AlexaObserver;
-class AnimContext;
+namespace Anim {
+  class AnimContext;
+}
 
 class AlexaImpl : private Util::noncopyable
 {
@@ -91,7 +95,7 @@ public:
   
   // Starts an async init thread that when complete runs a callback on the same thread as callers to Update()
   using InitCompleteCallback = std::function<void(bool initSuccessful)>;
-  void Init( const AnimContext* context, InitCompleteCallback&& completionCallback );
+  void Init( const Anim::AnimContext* context, InitCompleteCallback&& completionCallback );
   
   // If true, the sdk is ready to go (but may not be connected yet)
   bool IsInitialized() const { return _initState == InitState::Completed; }
@@ -190,7 +194,7 @@ private:
   // readable version int
   alexaClientSDK::avsCommon::sdkInterfaces::softwareInfo::FirmwareVersion GetFirmwareVersion() const;
   
-  const AnimContext* _context = nullptr;
+  const Anim::AnimContext* _context = nullptr;
   std::string _alexaPersistentFolder;
   std::string _alexaCacheFolder;
   
@@ -240,6 +244,8 @@ private:
   std::shared_ptr<AlexaObserver> _observer;
   
   std::shared_ptr<alexaClientSDK::capabilitiesDelegate::CapabilitiesDelegate> _capabilitiesDelegate;
+  
+  std::shared_ptr<alexaClientSDK::settings::SettingCallbacks<alexaClientSDK::settings::DeviceSettingsManager>> _settingsCallbacks;
   
   std::shared_ptr<AlexaMediaPlayer> _ttsMediaPlayer;
   std::shared_ptr<AlexaMediaPlayer> _alertsMediaPlayer;

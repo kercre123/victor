@@ -44,6 +44,7 @@ enum uint_16 BehaviorID {
   PlaypenDistanceSensor100mm,
   PlaypenDistanceSensor300mm,
   PlaypenDistanceSensor80mm,
+  PlaypenDistanceSensorCalib80mm,
   PlaypenDriftCheck,
   PlaypenDriveForwards,
   PlaypenEndChecks,
@@ -187,6 +188,7 @@ enum uint_16 BehaviorID {
   GoHome,
   RequestHomeBecauseStuck,
   RequestToGoHome,
+  RobustChargerObservation,
   WiggleBackOntoChargerFromPlatform,
 
   // victorBehaviorTree/highLevelDelegates/heldInPalm
@@ -194,9 +196,15 @@ enum uint_16 BehaviorID {
   HeldInPalmDispatcher,
   HeldInPalmResponses,
   InitialHeldInPalmReaction,
+  LookInPlaceAtEdgeOfPalm,
+  LookInPlaceHeadDownNervous,
+  LookInPlaceHeadDownRelaxed,
+  LookInPlaceHeadUpInPalm,
+  NestleWhileHeldInPalmAnim,
   ReactToPalmTilt,
   ReactToPickupFromPalm,
   ReactToPutDownFromPalm,
+  ReactToPutDownFromPalmAnimSelector,
 
   // victorBehaviorTree/highLevelDelegates
   InitialPickupAnimation,
@@ -219,9 +227,7 @@ enum uint_16 BehaviorID {
   KnowledgeGraphTTS,
 
   // victorBehaviorTree/highLevelDelegates
-  LookInPlaceHeadDownInAir,
   LookInPlaceHeadUp,
-  LookInPlaceHeadUpInAir,
 
   // victorBehaviorTree/highLevelDelegates/meetVictor
   MeetVictor,
@@ -313,7 +319,6 @@ enum uint_16 BehaviorID {
   FindYourCubeVoiceCommand,
   FistBumpVoiceCommand,
   GoHomeVoiceCommand,
-  KeepawayVoiceCommand,
   LookAtMeVoiceCommand,
   LookOverThereVoiceCommand,
   PickUpCubeVoiceCommand,

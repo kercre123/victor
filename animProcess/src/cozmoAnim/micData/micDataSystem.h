@@ -46,7 +46,9 @@ namespace Anki {
       class MicDataInfo;
       class MicDataProcessor;
     }
-    class RobotDataLoader;
+    namespace Anim {
+      class RobotDataLoader;
+    }
     namespace RobotInterface {
       struct MicData;
       struct RobotToEngine;
@@ -70,12 +72,12 @@ namespace MicData {
 class MicDataSystem : private Util::SignalHolder {
 public:
   MicDataSystem(Util::Data::DataPlatform* dataPlatform,
-                const AnimContext* context);
+                const Anim::AnimContext* context);
   ~MicDataSystem();
   MicDataSystem(const MicDataSystem& other) = delete;
   MicDataSystem& operator=(const MicDataSystem& other) = delete;
 
-  void Init(const RobotDataLoader& dataLoader);
+  void Init(const Anim::RobotDataLoader& dataLoader);
 
   MicData::MicDataProcessor* GetMicDataProcessor() const { return _micDataProcessor.get(); }
   SpeechRecognizerSystem* GetSpeechRecognizerSystem() const { return _speechRecognizerSystem.get(); }
@@ -147,7 +149,7 @@ public:
 
 private:
 
-  const AnimContext* _context;
+  const Anim::AnimContext* _context;
 
   bool IsButtonPressAlexa() const;
 

@@ -27,6 +27,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/robotDrivenDialog/behaviorPromptUserForVoiceCommand.h"
+#include "engine/aiComponent/behaviorComponent/heldInPalmTracker.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/faceSelectionComponent.h"
@@ -54,7 +55,6 @@
 
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/behaviorComponent/behaviorStats.h"
-#include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/enrolledFaceStorage.h"
 
 #if ANKI_DEV_CHEATS
@@ -883,7 +883,7 @@ void BehaviorEnrollFace::BehaviorUpdate()
         const std::string dataType = "recognition_data";
         const std::string path = Util::FileUtils::FullFilePath({cachePath, "images", dataType});
         const bool result = Util::FileUtils::CreateDirectory(path);
-        if (result) {
+        if (!result) {
           LOG_ERROR("BehaviorEnrollFace.OnBehaviorActivated.FailedToCreateRecognitionImageSavePath",
                     "Path %s failed to be created.", path.c_str());
         }
@@ -1194,7 +1194,7 @@ bool BehaviorEnrollFace::CanMoveTreads() const
   {
     return false;
   }
-
+  
   const auto& robotInfo = GetBEI().GetRobotInfo();
   if(robotInfo.GetCliffSensorComponent().IsCliffDetected())
   {
@@ -1469,23 +1469,30 @@ void BehaviorEnrollFace::TransitionToStartEnrollment()
   auto getInAnimAction = new TriggerAnimationAction(AnimationTrigger::MeetVictorGetIn);
   
   IActionRunner* action = nullptr;
-  if(CanMoveTreads())
+  if( CanMoveTreads() || GetBEI().GetHeldInPalmTracker().IsHeldInPalm() )
   {
     SmartFaceID smartID = GetBEI().GetFaceWorld().GetSmartFaceID(_dVars->faceID);
     // Turn towards the person we've chosen to enroll, play the "get in" animation
-    // to start "scanning" and move towards the person a bit to show intentionality
+    // to start "scanning". If we are on the ground and can drive forwards, move
+    // towards the person a bit to show intentionality
+    IActionRunner* actionAfterTurn = nullptr;
+    if (CanMoveTreads()) {
+      actionAfterTurn =
+        new CompoundActionParallel({
+          getInAnimAction,
+          new DriveStraightAction(kEnrollFace_DriveForwardIntentDist_mm,
+                                  kEnrollFace_DriveForwardIntentSpeed_mmps, false)
+        });
+    } else {
+      actionAfterTurn = getInAnimAction;
+    }
     action = new CompoundActionSequential({
-      new TurnTowardsFaceAction(smartID, M_PI, false),
-      new CompoundActionParallel({
-        getInAnimAction,
-        new DriveStraightAction(kEnrollFace_DriveForwardIntentDist_mm,
-                                kEnrollFace_DriveForwardIntentSpeed_mmps, false)
-      })
+      new TurnTowardsFaceAction(smartID, M_PI, false), actionAfterTurn
     });
   }
   else
   {
-    // Just play the get-in if we aren't able to move the treads
+    // Just play the get-in if we aren't able to turn or move the treads at all
     action = getInAnimAction;
   }
   
@@ -1516,11 +1523,13 @@ void BehaviorEnrollFace::TransitionToEnrolling()
   _dVars->forceNewID = false;
 
   TrackFaceAction* trackAction = new TrackFaceAction(_dVars->faceID);
+  
+  const bool isHeldInPalm = GetBEI().GetHeldInPalmTracker().IsHeldInPalm();
 
-  if(!CanMoveTreads())
+  if( !CanMoveTreads() && !isHeldInPalm )
   {
-    // Only move head during tracking if robot is off the ground or a cliff is detected
-    // (the latter can happen if picked up but held very level)
+    // If robot is not currently held in a user's palm and is off the ground, or a cliff is detected
+    // while on the ground, then only move the head during tracking.
     trackAction->SetMode(ITrackAction::Mode::HeadOnly);
   }
 
@@ -1529,6 +1538,12 @@ void BehaviorEnrollFace::TransitionToEnrolling()
   trackAction->SetTiltTolerance(DEG_TO_RAD(kEnrollFace_MinTrackingTiltAngle_deg));
   trackAction->SetPanTolerance(DEG_TO_RAD(kEnrollFace_MinTrackingPanAngle_deg));
   trackAction->SetClampSmallAnglesToTolerances(true);
+  
+  // When the robot is on a user's palm, the OffTreadsState is set to InAir, and so we must specify
+  // that the tracking action is allowed to run in that state as well.
+  if (isHeldInPalm) {
+    trackAction->SetValidOffTreadsStates({OffTreadsState::OnTreads, OffTreadsState::InAir});
+  }
 
   // Play the scanning animation in parallel while we're tracking. This anim group has multiple
   // animations chosen at random. It loops forever
@@ -1606,6 +1621,12 @@ void BehaviorEnrollFace::TransitionToSayingName()
       SayTextAction* sayNameAction = new SayTextAction(_dVars->faceName);
       sayNameAction->SetAnimationTrigger(AnimationTrigger::MeetVictorSayName);
       finalAnimation->AddAction(sayNameAction);
+    }
+    
+    if (!CanMoveTreads()) {
+      // If the robot is not on the ground or a cliff is detected, don't let the animation
+      // move the treads to drive the robot forward/backward.
+      finalAnimation->SetTracksToLock((u8)AnimTrackFlag::BODY_TRACK);
     }
 
     // This is kinda hacky, but we could have used up a lot of our timeout time
@@ -1858,9 +1879,10 @@ IActionRunner* BehaviorEnrollFace::CreateTurnTowardsFaceAction(Vision::FaceID_t 
     
   }
 
-  if(!CanMoveTreads())
+  if( !CanMoveTreads() && !GetBEI().GetHeldInPalmTracker().IsHeldInPalm() )
   {
-    // If being held in the air, don't try to turn, so just return the parallel
+    // If we are not on a semi-stable and level platform (e.g. the ground or a user's palm), or if
+    // a cliff is detected while we are on the ground, don't try to turn, just return the parallel
     // compound action as it is now
     return liftAndTurnTowardsAction;
   }
@@ -1944,12 +1966,12 @@ IActionRunner* BehaviorEnrollFace::CreateLookAroundAction()
 
   CompoundActionSequential* compoundAction = new CompoundActionSequential();
 
-  if(CanMoveTreads())
+  if( CanMoveTreads() || GetBEI().GetHeldInPalmTracker().IsHeldInPalm() )
   {
     compoundAction->AddAction(new PanAndTiltAction(relBodyAngle, absHeadAngle, false, true));
 
-    // Also back up a little if we haven't gone too far back already
-    if(_dVars->totalBackup_mm <= kEnrollFace_MaxTotalBackup_mm)
+    // Also back up a little if we haven't gone too far back already, and the treads can move freely
+    if(CanMoveTreads() && _dVars->totalBackup_mm <= kEnrollFace_MaxTotalBackup_mm)
     {
       const f32 backupSpeed_mmps = 100.f;
       const f32 backupDist_mm = GetRNG().RandDblInRange(kEnrollFace_MinBackup_mm, kEnrollFace_MaxBackup_mm);
@@ -1961,7 +1983,7 @@ IActionRunner* BehaviorEnrollFace::CreateLookAroundAction()
   }
   else
   {
-    // If in the air (i.e. held in hand), just move head, not body
+    // If we're not any sort of semi-stable platform that allows tread movement, just move head, not body
     compoundAction->AddAction(new MoveHeadToAngleAction(absHeadAngle));
   }
 

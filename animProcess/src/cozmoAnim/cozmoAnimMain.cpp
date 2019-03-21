@@ -150,7 +150,7 @@ int main(void)
   ANKI_CONSOLE_SYSTEM_INIT(dataPlatform->pathToResource(Anki::Util::Data::Scope::Cache, "consoleVarsAnim.ini").c_str());
 
   // Create and init AnimEngine
-  AnimEngine * animEngine = new AnimEngine(dataPlatform);
+  Anim::AnimEngine * animEngine = new Anim::AnimEngine(dataPlatform);
 
   Result result = animEngine->Init();
   if (RESULT_OK != result) {

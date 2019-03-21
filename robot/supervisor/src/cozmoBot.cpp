@@ -32,6 +32,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <stdlib.h>
 #include <unistd.h>
 #endif
 
@@ -92,7 +93,7 @@ namespace Anki {
         u32 lastCycleStartTime_usec_ = 0;
         u32 nextMainCycleTimeErrorReportTime_usec_ = 0;
         const u32 MAIN_TOO_LATE_TIME_THRESH_USEC = ROBOT_TIME_STEP_MS * 1500;  // Normal cycle time plus 50% margin
-        const u32 MAIN_TOO_LONG_TIME_THRESH_USEC = 2500;
+        const u32 MAIN_TOO_LONG_TIME_THRESH_USEC = 4000;
         const u32 MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC = 1000000;
 
         // If there are more than this many TooLates in a reporting period
@@ -102,6 +103,16 @@ namespace Anki {
         // If a single tick is late by this amount in a reporting period
         // a warning is issued
         const u32 INSTANT_WARNING_TOO_LATE_TIME_THRESH_USEC = 15000;
+
+        // If there are more than this many TooLongs in a reporting period
+        // a warning is issued
+        const u32 MIN_TOO_LONG_COUNT_PER_REPORTING_PERIOD = 5;
+
+        // If a single tick takes this long in a reporting period
+        // a warning is issued
+        const u32 INSTANT_WARNING_TOO_LONG_TIME_THRESH_USEC = 10000;
+
+        u32 lastOnChargerChangedTime_ms_ = 0;
 
         bool shutdownInProgress_ = false;
       } // Robot private namespace
@@ -178,12 +189,30 @@ namespace Anki {
         #endif
       }
 
+      void Reboot() {
+        #ifdef VICOS
+        int res = system("sudo reboot");
+        AnkiInfo("CozmoBot.Reboot.Rebooting", "res: %d", res);
+        #else
+        // Reboot not support in sim
+        AnkiWarn("CozmoBot.Reboot.WouldRebootButSim", "");
+        #endif
+      }
+
       void SendPrepForShutdown(ShutdownReason reason)
       {
         RobotInterface::PrepForShutdown msg;
         msg.reason = reason;
         RobotInterface::SendMessage(msg);
         SaveWallClockToDisk();
+
+        const u32 timeSinceOnChargerStateChanged_ms = lastOnChargerChangedTime_ms_ > 0 ? HAL::GetTimeStamp() - lastOnChargerChangedTime_ms_ : 0;
+        DASMSG(vectorbot_prep_for_shutdown,    "vectorbot.prep_for_shutdown", "Signalling to prepare for imminent shutdown");
+        DASMSG_SET(i1, static_cast<u32>(HAL::BatteryGetVoltage() * 1000), "Current raw battery voltage (mV)");
+        DASMSG_SET(i2, HAL::BatteryIsOnCharger(), "Whether the battery is on charger");
+        DASMSG_SET(i3, timeSinceOnChargerStateChanged_ms, "Time since on charger state changed (ms)");
+        DASMSG_SET(s1, EnumToString(reason), "Reason for shutdown");
+        DASMSG_SEND();
       }
 
       void CheckForOverheatingBatteryShutdown()
@@ -198,33 +227,29 @@ namespace Anki {
       }
 
       void CheckForCriticalBatteryShutdown()
-      {        
-        static const int   CRITICAL_BATTERY_THRESH_TICS = 66;
-        static const float CRITICAL_BATTERY_THRESH_VOLTS = 3.45f;
-        static const float HAL_SHUTDOWN_DELAY_MS = 2000;
+      { 
+        static const u32 HAL_SHUTDOWN_DELAY_MS = 5000;
         static TimeStamp_t shutdownTime_ms = 0;
-        static int         numTicsBelowThresh = 0;
+        const TimeStamp_t now_ms = HAL::GetTimeStamp();
 
-        const f32 battVoltage = HAL::BatteryGetVoltage();
-        if (shutdownTime_ms == 0) {
-          if (battVoltage < CRITICAL_BATTERY_THRESH_VOLTS) {
-            ++numTicsBelowThresh;
-            if (numTicsBelowThresh > CRITICAL_BATTERY_THRESH_TICS) {
-              // Send a shutdown message to anim/engine
-              AnkiInfo("CozmoBot.CheckForCriticalBattery.Shutdown", "Sending PrepForShutdown");
-              SendPrepForShutdown(ShutdownReason::SHUTDOWN_BATTERY_CRITICAL_VOLT);
-
-              shutdownTime_ms = HAL::GetTimeStamp() + HAL_SHUTDOWN_DELAY_MS;
-              shutdownInProgress_ = true;
-            }
-          } else {
-            numTicsBelowThresh = 0;
+        if (HAL::IsShutdownImminent()) {
+          if (shutdownTime_ms == 0) {
+            AnkiInfo("CozmoBot.CheckForCriticalBattery.Shutdown", "Sending PrepForShutdown");
+            SendPrepForShutdown(ShutdownReason::SHUTDOWN_BATTERY_CRITICAL_VOLT);
+            shutdownTime_ms = now_ms + HAL_SHUTDOWN_DELAY_MS;
+            shutdownInProgress_ = true;
+          } else if (now_ms > shutdownTime_ms) {
+             AnkiInfo("CozmoBot.CheckForCriticalBattery.HALShutdown","");
+             HAL::Shutdown();
           }
-        } else if (HAL::GetTimeStamp() > shutdownTime_ms) {
-          AnkiInfo("CozmoBot.CheckForCriticalBattery.HALShutdown","");
-          HAL::Shutdown();
+        } else if (shutdownTime_ms > 0 && now_ms > shutdownTime_ms) {
+          // "Imminent" shutdown aborted because placed back on charger
+          // Reboot instead of shutting down so the robot doesn't stay
+          // "dead" while on charger.
+          shutdownTime_ms = 0;
+          Reboot();
         }
-      }
+      }  
 
       void CheckForShutdown()
       {
@@ -473,6 +498,7 @@ namespace Anki {
           wasConnected_ = false;
         }
 
+
         // Process any messages from the basestation
         MARK_NEXT_TIME_PROFILE(CozmoBot, MSG);
         Messages::Update();
@@ -506,6 +532,17 @@ namespace Anki {
         WheelController::Manage();
 
         //////////////////////////////////////////////////////////////
+        // Power management
+        //////////////////////////////////////////////////////////////
+
+        // Check if on-charger state changed
+        static bool s_onCharger = false;
+        if (HAL::BatteryIsOnCharger() != s_onCharger) {
+          lastOnChargerChangedTime_ms_ = HAL::GetTimeStamp();
+          s_onCharger = HAL::BatteryIsOnCharger();
+        }
+
+        //////////////////////////////////////////////////////////////
         // Feedback / Display
         //////////////////////////////////////////////////////////////
 
@@ -536,11 +573,12 @@ namespace Anki {
         lastCycleStartTime_usec_ = cycleStartTime;          
 
         // Report main cycle time error
-        if (nextMainCycleTimeErrorReportTime_usec_ > cycleEndTime) {
+        if (nextMainCycleTimeErrorReportTime_usec_ < cycleEndTime) {
 
-          const bool reportTooLate = (mainTooLateCnt_ > MIN_TOO_LATE_COUNT_PER_REPORTING_PERIOD) || 
-                                     (maxMainTooLateTime_usec_ > INSTANT_WARNING_TOO_LATE_TIME_THRESH_USEC);
-          const bool reportTooLong = (mainTooLongCnt_ > 0);
+          const bool reportTooLate = (mainTooLateCnt_ >= MIN_TOO_LATE_COUNT_PER_REPORTING_PERIOD) || 
+                                     (maxMainTooLateTime_usec_ >= INSTANT_WARNING_TOO_LATE_TIME_THRESH_USEC);
+          const bool reportTooLong = (mainTooLongCnt_ >= MIN_TOO_LONG_COUNT_PER_REPORTING_PERIOD) || 
+                                     (maxMainTooLongTime_usec_ >= INSTANT_WARNING_TOO_LONG_TIME_THRESH_USEC);
           if (reportTooLate || reportTooLong) {
             AnkiWarn( "CozmoBot.MainCycleTimeError", 
                       "TooLate: %d tics, avg: %d us, max: %d us, TooLong: %d tics, avg: %d us, max: %d us",
@@ -575,7 +613,7 @@ namespace Anki {
           avgMainTooLongTime_usec_ = 0;
           maxMainTooLongTime_usec_ = 0;
 
-          nextMainCycleTimeErrorReportTime_usec_ += MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC;
+          nextMainCycleTimeErrorReportTime_usec_ = cycleEndTime + MAIN_CYCLE_ERROR_REPORTING_PERIOD_USEC;
         }
 
         EventStop(EventType::MAIN_STEP);

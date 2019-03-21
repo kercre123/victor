@@ -1,0 +1,38 @@
+{
+  "behaviorID" : "NestleWhileHeldInPalmAnim",
+  "behaviorClass" : "AnimSequence",
+
+  "associatedActiveFeature": "HeldInPalm",
+
+  // Cooldown will handle how often the nestling animation repeats once
+  // it wants to be activated.
+  "num_loops"        : 1,
+  "animTriggers": ["HeldOnPalmNestling"],
+
+  // Nestle in the user's palm after 3 minutes of held-in-palm
+  // activity with no jolts or shocks experienced.
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "and": [
+      {
+        // When the robot is jolted or shocked, the "Trust" level will
+        // drop back to 0, and prevent Vector from nestling until he
+        // regains trust in the user.
+        "conditionType": "Emotion",
+        "emotion": "Trust",
+        "min": 0.5
+      },
+      {
+        // We only want the nestling to start 3 minutes after the robot
+        // detects it has first been put in a user's palm
+        "conditionType": "RobotHeldInPalm",
+        "shouldBeHeldInPalm": true,
+        "minDuration_s": 180.0
+      }
+    ]
+    // NOTE(GB): Petting does not prevent the robot from continuing
+    // to nestle in the user's palm, that way when a robot is woken
+    // from sleep by a user petting, they will default back to nestling,
+    // since the robot is still "comfortable".
+  }
+}

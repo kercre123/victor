@@ -17,11 +17,14 @@
 #include "anki/cozmo/robot/logEvent.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/factory/faultCodes.h"
+#include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include "../spine/spine.h"
 #include "../spine/cc_commander.h"
 
 #include "schema/messages.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/types/proxMessages.h"
 
 #include <errno.h>
@@ -107,7 +110,9 @@ namespace { // "Private members"
 
   VersionInfo _sysconVersionInfo;
   
-  const u32 SPINE_GET_FRAME_TIMEOUT_MS = 1000;
+  const u32 SELECT_TIMEOUT_SEC = 1;
+  const u32 SELECT_TIMEOUT_ATTEMPTS = 5;
+  const u32 SPINE_GET_FRAME_TIMEOUT_MS = 1000 * SELECT_TIMEOUT_SEC * (SELECT_TIMEOUT_ATTEMPTS + 1);
   const int* shutdownSignal_ = 0;
 
 } // "private" namespace
@@ -146,7 +151,7 @@ bool check_select_timeout(spine_ctx_t spine)
   int fd = spine_get_fd(spine);
 
   static u8 selectTimeoutCount = 0;
-  if(selectTimeoutCount >= 5)
+  if(selectTimeoutCount >= SELECT_TIMEOUT_ATTEMPTS)
   {
     AnkiError("spine.check_select_timeout.timeoutCountReached","");
     FaultCode::DisplayFaultCode(FaultCode::SPINE_SELECT_TIMEOUT);
@@ -158,13 +163,20 @@ bool check_select_timeout(spine_ctx_t spine)
   FD_ZERO(&fdSet);
   FD_SET(fd, &fdSet);
   static timeval timeout;
-  timeout.tv_sec = 1;
+  timeout.tv_sec = SELECT_TIMEOUT_SEC;
   timeout.tv_usec = 0;
   ssize_t s = select(FD_SETSIZE, &fdSet, NULL, NULL, &timeout);
   if(s == 0)
   {
     selectTimeoutCount++;
     AnkiWarn("spine.check_select_timeout.selectTimedout", "%u", selectTimeoutCount);
+
+    // Let anim know that robot is still alive since we haven't
+    // been sending RobotState messages for the last second.
+    // Otherwise, anim will fault with NO_ROBOT_COMMS
+    RobotInterface::StillAlive msg;
+    RobotInterface::SendMessage(msg);
+
     return true;
   }
   return false;
@@ -592,7 +604,8 @@ Result HAL::Step(void)
   do {
     result = spine_get_frame();
 
-    // Check for timeout
+    // It's taking too long to get a frame!
+    // Timeout is tuned to accomodate worst case back-to-back spine select timeouts
     const u32 timeSinceStartOfGetFrame_ms = GetTimeStamp() - startSpineGetFrameTime_ms;
     if (timeSinceStartOfGetFrame_ms > SPINE_GET_FRAME_TIMEOUT_MS) {
       AnkiError("HAL.Step.SpineLoopTimeout", "");
@@ -788,6 +801,8 @@ void HAL::MicroWait(u32 microseconds)
 
 TimeStamp_t HAL::GetTimeStamp(void)
 {
+  // Note: steady_clock starts at zero from bootup so realistically this
+  //       should never overflow under normal use.
   auto currTime = std::chrono::steady_clock::now();
   return static_cast<TimeStamp_t>(std::chrono::duration_cast<std::chrono::milliseconds>(currTime.time_since_epoch()).count());
 }
@@ -868,6 +883,12 @@ ProxSensorDataRaw HAL::GetRawProxData()
 
 void ProcessProxData()
 {
+  // No body prox sensor on Whiskey
+  if(IsWhiskey())
+  {
+    return;
+  }
+  
   if (HAL::PowerGetMode() == POWER_MODE_CALM) {
     proxData_.distance_mm      = PROX_CALM_MODE_DIST_MM;
     proxData_.signalIntensity  = 0.f;
@@ -973,6 +994,11 @@ bool HAL::BatteryIsOverheated()
   return bodyData_->battery.flags & POWER_IS_OVERHEATED;
 }
 
+bool HAL::BatteryIsLow()
+{
+  return bodyData_->battery.flags & POWER_IS_TOO_LOW;
+}
+
 f32 HAL::ChargerGetVoltage()
 {
   // scale raw ADC counts to voltage (conversion factor from Vandiver)
@@ -986,6 +1012,11 @@ u8 HAL::BatteryGetTemperature_C()
     return 0;
   }
   return static_cast<u8>(bodyData_->battery.temperature);
+}
+
+bool HAL::IsShutdownImminent()
+{
+  return (bodyData_->battery.flags & POWER_BATTERY_SHUTDOWN); 
 }
 
 u8 HAL::GetWatchdogResetCounter()

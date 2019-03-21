@@ -17,6 +17,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/aiWhiteboard.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/robot.h"

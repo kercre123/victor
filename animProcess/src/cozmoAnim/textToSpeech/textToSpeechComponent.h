@@ -28,7 +28,9 @@
 // Forward declarations
 namespace Anki {
   namespace Vector {
-    class AnimContext;
+    namespace Anim {
+      class AnimContext;
+    }
     namespace Audio {
       class CozmoAudioController;
     }
@@ -61,7 +63,7 @@ public:
   static constexpr TTSID_t kInvalidTTSID = 0;
 
   // Constructor, destructor
-  TextToSpeechComponent(const AnimContext* context);
+  TextToSpeechComponent(const Anim::AnimContext* context);
   ~TextToSpeechComponent();
 
   // Reports active TTSID (if any), else kInvalidTTSID

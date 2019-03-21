@@ -142,7 +142,6 @@ protected:
                                    const char* debugStr) const;
 
   // Send a message to force the robot to delov  
-  void SendForceDeloc();
   bool IsLocalizedToObject() const;
   
 }; // class CozmoSimTestController

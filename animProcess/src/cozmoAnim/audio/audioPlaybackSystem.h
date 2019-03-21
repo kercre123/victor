@@ -22,7 +22,9 @@
 
 namespace Anki {
 namespace Vector {
+namespace Anim {
   class AnimContext;
+}
 }
 }
 
@@ -38,7 +40,7 @@ class AudioPlaybackSystem
 public:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  AudioPlaybackSystem( const AnimContext* context );
+  AudioPlaybackSystem( const Anim::AnimContext* context );
   ~AudioPlaybackSystem();
 
   AudioPlaybackSystem() = delete;
@@ -69,7 +71,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Member Data
 
-  const AnimContext*                  _animContext;
+  const Anim::AnimContext*            _animContext;
 
   std::shared_ptr<AudioPlaybackJob>   _currentJob;
   std::queue<AudioPlaybackJob*>       _jobQueue;

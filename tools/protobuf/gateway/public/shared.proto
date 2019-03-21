@@ -162,28 +162,45 @@ message GatewayWrapper {
     DriveOnChargerResponse        drive_on_charger_response          = 403;
 
     // ------------ movement request/response pairs ----------------------
-    TurnInPlaceRequest            turn_in_place_request              = 500;
-    TurnInPlaceResponse           turn_in_place_response             = 501;
-    DriveStraightRequest          drive_straight_request             = 502;
-    DriveStraightResponse         drive_straight_response            = 503;
-    SetHeadAngleRequest           set_head_angle_request             = 504;
-    SetHeadAngleResponse          set_head_angle_response            = 505;
-    SetLiftHeightRequest          set_lift_height_request            = 506;
-    SetLiftHeightResponse         set_lift_height_response           = 507;
-    PlayAnimationRequest          play_animation_request             = 508;
-    PlayAnimationResponse         play_animation_response            = 509;
-    GoToPoseRequest               go_to_pose_request                 = 510;
-    GoToPoseResponse              go_to_pose_response                = 511;
-    DockWithCubeRequest           dock_with_cube_request             = 512;
-    DockWithCubeResponse          dock_with_cube_response            = 513;
-    DriveWheelsRequest            drive_wheels_request               = 514;
-    DriveWheelsResponse           drive_wheels_response              = 515;
-    ListAnimationsRequest         list_animations_request            = 516;
-    ListAnimationsResponse        list_animations_response           = 517;
-    PlayAnimationTriggerRequest   play_animation_trigger_request     = 518;
-    ListAnimationTriggersRequest  list_animation_triggers_request    = 519;
-    ListAnimationTriggersResponse list_animation_triggers_response   = 520;
-    
+    TurnInPlaceRequest              turn_in_place_request                = 500;
+    TurnInPlaceResponse             turn_in_place_response               = 501;
+    DriveStraightRequest            drive_straight_request               = 502;
+    DriveStraightResponse           drive_straight_response              = 503;
+    SetHeadAngleRequest             set_head_angle_request               = 504;
+    SetHeadAngleResponse            set_head_angle_response              = 505;
+    SetLiftHeightRequest            set_lift_height_request              = 506;
+    SetLiftHeightResponse           set_lift_height_response             = 507;
+    PlayAnimationRequest            play_animation_request               = 508;
+    PlayAnimationResponse           play_animation_response              = 509;
+    GoToPoseRequest                 go_to_pose_request                   = 510;
+    GoToPoseResponse                go_to_pose_response                  = 511;
+    DockWithCubeRequest             dock_with_cube_request               = 512;
+    DockWithCubeResponse            dock_with_cube_response              = 513;
+    DriveWheelsRequest              drive_wheels_request                 = 514;
+    DriveWheelsResponse             drive_wheels_response                = 515;
+    ListAnimationsRequest           list_animations_request              = 516;
+    ListAnimationsResponse          list_animations_response             = 517;
+    PlayAnimationTriggerRequest     play_animation_trigger_request       = 518;
+    ListAnimationTriggersRequest    list_animation_triggers_request      = 519;
+    ListAnimationTriggersResponse   list_animation_triggers_response     = 520;
+    CancelActionByIdTagRequest      cancel_action_by_id_tag_request      = 521;
+    CancelActionByIdTagResponse     cancel_action_by_id_tag_response     = 522;
+    TurnTowardsFaceRequest          turn_towards_face_request            = 523;
+    TurnTowardsFaceResponse         turn_towards_face_response           = 524;
+    GoToObjectRequest               go_to_object_request                 = 525;
+    GoToObjectResponse              go_to_object_response                = 526;
+    RollObjectRequest               roll_object_request                  = 527;
+    RollObjectResponse              roll_object_response                 = 528;
+    PopAWheelieRequest              pop_a_wheelie_request                = 529;
+    PopAWheelieResponse             pop_a_wheelie_response               = 530;
+    PickupObjectRequest             pickup_object_request                = 531;
+    PickupObjectResponse            pickup_object_response               = 532;
+    PlaceObjectOnGroundHereRequest  place_object_on_ground_here_request  = 533;
+    PlaceObjectOnGroundHereResponse place_object_on_ground_here_response = 534;
+    StopAllMotorsRequest            stop_all_motors_request              = 535;
+    StopAllMotorsResponse           stop_all_motors_response             = 536;
+
+
     // ------------ status history --------------------
     RobotHistoryRequest           robot_history_request              = 600;
     RobotHistoryResponse          robot_history_response             = 601;

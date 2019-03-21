@@ -1,12 +1,13 @@
 PROTO CozmoEngine2 [
   field SFString name "CozmoEngine"
   field SFInt32 robotID 0
+  field SFBool isWhiskey FALSE
 
   field SFVec3f translation 0 0 0
   field SFRotation rotation 0 0 1 0
-  
+
   field SFInt32 numUIDevicesToWaitFor 1
-  
+
   # how many comms slots to create for cubes
   field SFInt32 numCubeReceivers 5
 
@@ -21,30 +22,37 @@ Supervisor {
   controller "webotsCtrlGameEngine2"
 
   # append optional command line parameters
-  %{ ctrlArgs="" }%
-  %{ if fields.filterLogs.value then }%
-    %{ ctrlArgs = ctrlArgs .. " --applyLogFilter"}%
-  %{ end }%
-  %{ if fields.colorizeStderrOutput.value then }%
-    %{ ctrlArgs = ctrlArgs .. " --colorizeStderrOutput"}%
-  %{ end }%
+  %{
+    if fields.filterLogs.value then end
+    if fields.colorizeStderrOutput.value then end
+    if fields.isWhiskey.value then end
+
+    local package = require('package')
+    -- Directly append our custom module path to the package search paths
+    -- This will allow 'require' to find our module without the search path getting
+    -- mangled where all `.` are replaced with `/`
+    package.path = context.project_path .. "protos/lua/?.lua;" .. package.path
+
+    protoHelper = require("protoHelper")
+    ctrlArgs = protoHelper.setCtrlOptArgs(fields)
+  }%
 
   controllerArgs "%{=ctrlArgs}%"
 
 
-  children [  
+  children [
     CozmoCamera {
       translation 0.01884 0 -0.00796 # Matches engine definitions
       rotation    0.563430001007340  -0.563430001007340  -0.604229482837223 2.054545429548061 # 4-degree look-down
       #rotation    0.57735 -0.57735 -0.57735 2.0944 # look straight ahead
     }
-    
+
     # This IMU is positioned in the same place as the one in CozmoBot2.proto
     # as way to simulate access to the same IMU from both the engine and robot processes
     CozmoIMU {
       translation 0.0058 -0.0135 0
     }
-        
+
     # Comms for communicating with blocks
     Emitter {
       name "cubeCommsEmitter"
@@ -53,7 +61,7 @@ Supervisor {
     Receiver {
       name "discoveryReceiver"
     }
-    
+
     # There should be a total of numCubeReceivers receivers
     %{ for iReceiver=0,fields.numCubeReceivers.value do }%
     Receiver {

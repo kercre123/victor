@@ -15,32 +15,23 @@
 #define __Engine_Components_HeldInPalmTracker_H__
 #pragma once
 
-#include "coretech/common/shared/types.h"
+#include "engine/engineTimeStamp.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
 #include "json/json-forwards.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
-#include "clad/types/behaviorComponent/heldInPalmTrustEventTypes.h"
-
-#include <unordered_map>
 
 namespace Anki {
 namespace Vector {
 
-namespace Audio{
-  class EngineRobotAudioClient;
-}
-
-class CozmoFeatureGate;
+class BEIRobotInfo;
 
 class HeldInPalmTracker : public IDependencyManagedComponent<BCComponentID>,
                           public Anki::Util::noncopyable
 {
 public:
-  
-  using TrustEventType = HeldInPalmTrustEventType;
-  
+    
   HeldInPalmTracker();
 
   virtual void InitDependent( Robot* robot, const BCCompMap& dependentComps ) override;
@@ -52,40 +43,45 @@ public:
   }
   virtual void UpdateDependent(const BCCompMap& dependentComps) override;
   
-  void SetIsHeldInPalm(const bool isHeldInPalm);
-  
-  // An external behavior can cause the trust level to change if it tracks and observes one of the specified
-  // events from <event enum name here> occurring, and notifies this component.
-  void UpdateTrustLevelForEvent( const TrustEventType& trustEventType );
-  
-  float GetTrustLevel() const { return _trustLevel; }
-  
   bool IsHeldInPalm() const { return _isHeldInPalm; }
+  
+  u32 GetTimeSinceLastHeldInPalm_ms() const;
+  
+  u32 GetHeldInPalmDuration_ms() const;
 
 private:
   
-  // Clamps trust level to be between kMinTrustLevel and kMaxTrustLevel, warns the user if desired when a
-  // caller tries to set the level outside of these limits.
-  void SetTrustLevel(const float trustLevel, const bool verboseWarn = true);
-
-  // Held-In-Palm "trust" tracking
-  float _trustLevel = 0.0f;
-  std::unordered_map<TrustEventType, float> _trustEvents;
-  TrustEventType _lastTrustEventType = TrustEventType::Invalid;
-
   float _nextUpdateTime_s = 0.0f;
+  
+  EngineTimeStamp_t engineTime = 0;
+  
+  EngineTimeStamp_t _lastHeldInPalmTime = 0;
+  EngineTimeStamp_t _lastTimeOnTreadsOrCharger = 0;
+  EngineTimeStamp_t _lastTimeNotHeldInPalm = 0;
+    
+  bool _enoughCliffsDetectedSincePickup = false;
+  
   bool _isHeldInPalm = false;
 
   std::vector<::Signal::SmartHandle> _eventHandles;
   
-  // Audio engine updates
-  void SendTrustLevelToAudio();
-  Audio::EngineRobotAudioClient* _audioClient;
-  // Needed for checks when updating audio engine
-  CozmoFeatureGate* _featureGate = nullptr;
+  void SetIsHeldInPalm(const bool isHeldInPalm);
+  
+  void CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo);
+  
+  // Helper functions to check whether robot has transitioned into user's palm:
+  bool WasRobotPlacedInPalmWhileHeld(const BEIRobotInfo& robotInfo,
+                                             const u32 timeToConfirmHeldInPalm_ms) const;
+  
+  bool HasDetectedEnoughCliffsSincePickup(const BEIRobotInfo& robotInfo) const;
+  
+  bool WasRobotMovingRecently(const BEIRobotInfo& robotInfo) const;
+  
+  // Auxilary helper functions:
+  u32 GetMillisecondsSince(const EngineTimeStamp_t& pastTimestamp) const;
 
   // WebViz updates on trust-levels, last event, etc.
-  void PopulateWebVizJson(Json::Value& data) const;
+  void PopulateWebVizJson(Json::Value& data) const {}
 };
 
 }

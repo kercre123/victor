@@ -45,11 +45,19 @@ private:
       const external_interface::GatewayWrapper& proto_message,
       ExternalInterface::MessageGameToEngine& clad_message);
 
+  static void ProtoCancelActionByIdTagRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
   static void ProtoListAnimationsRequestToClad(
       const external_interface::GatewayWrapper& proto_message,
       ExternalInterface::MessageGameToEngine& clad_message);
 
   static void ProtoPlayAnimationTriggerRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
+  static void ProtoStopAllMotorsRequestToClad(
       const external_interface::GatewayWrapper& proto_message,
       ExternalInterface::MessageGameToEngine& clad_message);
 
@@ -64,8 +72,16 @@ private:
       const ExternalInterface::MessageGameToEngine& clad_message,
       external_interface::GatewayWrapper& proto_message);
 
+  static void CladCancelActionByIdTagToProto(
+      const ExternalInterface::MessageGameToEngine& clad_message, 
+      external_interface::GatewayWrapper& proto_message);
+
   static void CladAnimationAvailableToProto(
       const ExternalInterface::MessageEngineToGame& clad_message, 
+      external_interface::GatewayWrapper& proto_message);
+
+  static void CladStopAllMotorsToProto(
+      const ExternalInterface::MessageGameToEngine& clad_message, 
       external_interface::GatewayWrapper& proto_message);
 
   static void CladEndOfMessageToProto(

@@ -13,24 +13,19 @@
 #ifndef ANKI_COZMO_BLOCKWORLD_H
 #define ANKI_COZMO_BLOCKWORLD_H
 
-#include <queue>
-#include <map>
-#include <vector>
-
 #include "engine/aiComponent/behaviorComponent/behaviorComponents_fwd.h"
-#include "engine/block.h"
-#include "engine/blockWorld/blockWorldFilter.h"
+
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
-#include "engine/namedColors/namedColors.h"
-#include "engine/overheadEdge.h"
-#include "coretech/common/engine/exceptions.h"
-#include "coretech/common/engine/robotTimeStamp.h"
 
+#include "clad/types/objectTypes.h"
+
+#include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/observableObjectLibrary.h"
 
-#include "clad/types/actionTypes.h"
+#include "util/signals/simpleSignal_fwd.h"
 
+#include <map>
 #include <vector>
 
 namespace Anki
@@ -39,12 +34,10 @@ namespace Anki
   {
     // Forward declarations:
     class Robot;
-    class RobotManager;
-    class RobotMessageHandler;
     class Block;
+    class BlockWorldFilter;
     class IExternalInterface;
-    class INavMap;
-    class MapComponent;
+    class ObservableObject;
     
     namespace ExternalInterface {
       struct RobotDeletedLocatedObject;
@@ -58,6 +51,9 @@ namespace Anki
     class BlockWorld : public UnreliableComponent<BCComponentID>, 
                        public IDependencyManagedComponent<RobotComponentID>
     {
+      using ActiveID = s32;  // TODO: Change this to u32 and use 0 as invalid
+      using FactoryID = std::string;
+      
     public:
       using ObservableObjectLibrary = Vision::ObservableObjectLibrary<ObservableObject>;
       
@@ -72,6 +68,7 @@ namespace Anki
       virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
         dependencies.insert(RobotComponentID::CozmoContextWrapper);
       };
+      virtual void UpdateDependent(const RobotCompMap& dependentComps) override final;
       virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
         dependencies.insert(RobotComponentID::CubeComms);
         dependencies.insert(RobotComponentID::Vision);
@@ -80,6 +77,7 @@ namespace Anki
       // Prevent hiding function warnings by exposing the (valid) unreliable component methods
       using UnreliableComponent<BCComponentID>::InitDependent;
       using UnreliableComponent<BCComponentID>::GetInitDependencies;
+      using UnreliableComponent<BCComponentID>::UpdateDependent;
       using UnreliableComponent<BCComponentID>::GetUpdateDependencies;
       //////
       // end IDependencyManagedComponent functions
@@ -113,6 +111,22 @@ namespace Anki
       // wrong matching the current BlockWorld objects
       void AddLocatedObject(const std::shared_ptr<ObservableObject>& object);
 
+      // Set the charger's pose relative to the robot's pose as if the robot is on the charger contacts. If the charger
+      // does not exist in the current origin, it will be created (i.e., it is safe to call this even if there is no
+      // known charger in the world).
+      void SetRobotOnChargerContacts();
+      
+      // Set the pose of the object with the given ID. If makeWrtOrigin is true, then the given pose will be converted
+      // to be with respect to the robot's world origin before assigning it to the object. Otherwise, the passed-in pose
+      // is assigned directly to the object.
+      Result SetObjectPose(const ObjectID& objId,
+                           const Pose3d& newPose,
+                           const PoseState poseState,
+                           const bool makeWrtOrigin = true);
+      
+      // Set the given object's pose state to 'dirty'
+      void MarkObjectDirty(ObservableObject* object);
+      
       // Called when robot gets delocalized in order to do internal bookkeeping and broadcast updated object states
       void OnRobotDelocalized(PoseOriginID_t newWorldOriginID);
          
@@ -172,7 +186,7 @@ namespace Anki
       
       // Applies given modifier to all located objects that match 'filter'
       using ModifierFcn = std::function<void(ObservableObject*)>;
-      inline void ModifyLocatedObjects(const ModifierFcn& modifierFcn, const BlockWorldFilter& filter = BlockWorldFilter());
+      inline void ModifyLocatedObjects(const ModifierFcn& modifierFcn, const BlockWorldFilter& filter);
       
       // Returns (in arguments) all objects matching a filter, among objects that are currently located (their pose
       // is valid in the origins matching the filter)
@@ -188,15 +202,15 @@ namespace Anki
       // Finds an object closer than the given distance (optional) (rotation -- not implemented yet) with respect
       // to the given pose. Returns nullptr if no objects match, closest one if multiple matches are found.
       inline const ObservableObject* FindLocatedObjectClosestTo(const Pose3d& pose,
-                                                                const BlockWorldFilter& filter = BlockWorldFilter()) const;
+                                                                const BlockWorldFilter& filter) const;
       inline       ObservableObject* FindLocatedObjectClosestTo(const Pose3d& pose,
-                                                                const BlockWorldFilter& filter = BlockWorldFilter());
+                                                                const BlockWorldFilter& filter);
       inline const ObservableObject* FindLocatedObjectClosestTo(const Pose3d& pose,
                                                                 const Vec3f& distThreshold,
-                                                                const BlockWorldFilter& filter = BlockWorldFilter()) const;
+                                                                const BlockWorldFilter& filter) const;
       inline       ObservableObject* FindLocatedObjectClosestTo(const Pose3d& pose,
                                                                 const Vec3f& distThreshold,
-                                                                const BlockWorldFilter& filter = BlockWorldFilter());
+                                                                const BlockWorldFilter& filter);
       
       // Finds a matching object (one with the same type) that is closest to the given object, within the
       // specified distance and angle thresholds.
@@ -204,11 +218,11 @@ namespace Anki
       inline const ObservableObject* FindLocatedClosestMatchingObject(const ObservableObject& object,
                                                                       const Vec3f& distThreshold,
                                                                       const Radians& angleThreshold,
-                                                                      const BlockWorldFilter& filter = BlockWorldFilter()) const;
+                                                                      const BlockWorldFilter& filter) const;
       inline       ObservableObject* FindLocatedClosestMatchingObject(const ObservableObject& object,
                                                                       const Vec3f& distThreshold,
                                                                       const Radians& angleThreshold,
-                                                                      const BlockWorldFilter& filter = BlockWorldFilter());
+                                                                      const BlockWorldFilter& filter);
       
       // Finds the object of the given type that is closest to the given pose, within the specified distance and
       // angle thresholds.
@@ -217,34 +231,34 @@ namespace Anki
                                                                       const Pose3d& pose,
                                                                       const Vec3f& distThreshold,
                                                                       const Radians& angleThreshold,
-                                                                      const BlockWorldFilter& filter = BlockWorldFilter()) const;
+                                                                      const BlockWorldFilter& filter) const;
       inline       ObservableObject* FindLocatedClosestMatchingObject(ObjectType withType,
                                                                       const Pose3d& pose,
                                                                       const Vec3f& distThreshold,
                                                                       const Radians& angleThreshold,
-                                                                      const BlockWorldFilter& filter = BlockWorldFilter());
+                                                                      const BlockWorldFilter& filter);
       
-      const ObservableObject* FindMostRecentlyObservedObject(const BlockWorldFilter& filter = BlockWorldFilter()) const;
+      const ObservableObject* FindMostRecentlyObservedObject(const BlockWorldFilter& filter) const;
       
       // Finds existing objects whose XY bounding boxes intersect with objectSeen's XY bounding box, and pass
       // the given filter.
       void FindLocatedIntersectingObjects(const ObservableObject* objectSeen,
                                           std::vector<const ObservableObject*>& intersectingExistingObjects,
                                           f32 padding_mm,
-                                          const BlockWorldFilter& filter = BlockWorldFilter()) const;
+                                          const BlockWorldFilter& filter) const;
       void FindLocatedIntersectingObjects(const ObservableObject* objectSeen,
                                           std::vector<ObservableObject*>& intersectingExistingObjects,
                                           f32 padding_mm,
-                                          const BlockWorldFilter& filter = BlockWorldFilter());
+                                          const BlockWorldFilter& filter);
       // same as above, except it takes Quad2f instead of an object
       void FindLocatedIntersectingObjects(const Quad2f& quad,
                                           std::vector<const ObservableObject*> &intersectingExistingObjects,
                                           f32 padding_mm,
-                                          const BlockWorldFilter& filter = BlockWorldFilter()) const;
+                                          const BlockWorldFilter& filter) const;
       void FindLocatedIntersectingObjects(const Quad2f& quad,
                                           std::vector<ObservableObject*> &intersectingExistingObjects,
                                           f32 padding_mm,
-                                          const BlockWorldFilter& filter = BlockWorldFilter());
+                                          const BlockWorldFilter& filter);
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       // BoundingBoxes
@@ -257,7 +271,7 @@ namespace Anki
       // Optionally, will filter according to given BlockWorldFilter.
       void GetLocatedObjectBoundingBoxesXY(const f32 minHeight, const f32 maxHeight, const f32 padding,
                                            std::vector<std::pair<Quad2f,ObjectID> >& boundingBoxes,
-                                           const BlockWorldFilter& filter = BlockWorldFilter()) const;
+                                           const BlockWorldFilter& filter) const;
 
       // Wrapper for GetLocatedObjectBoundingBoxesXY that returns bounding boxes of objects that are
       // obstacles given the robot's current z height.
@@ -268,16 +282,13 @@ namespace Anki
       // Localization
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       
-      // returns true if the given origin is a zombie origin. A zombie origin means that no active objects are currently
-      // in that origin/frame, which would make it impossible to relocalize to any other origin. Note that current origin
-      // is not a zombie even if it doesn't have any cubes yet.
+      // Returns true if the given origin is a zombie origin. A zombie origin means that no localizable objects are
+      // currently in that origin/frame, which would make it impossible to relocalize to any other origin. Note that
+      // current origin is not a zombie even if it doesn't have any objects yet.
       bool IsZombiePoseOrigin(PoseOriginID_t originID) const;
       
-      // Returns true if there are remaining objects that the robot could potentially localize to
-      bool AnyRemainingLocalizableObjects() const;
-      
-      // returns true if there are localizable objects at the specified origin. It iterates all localizable objects
-      // and returns true if any of them has the given origin as origin
+      // Returns true if there are any localizable objects remaining in the specified origin. Passing in
+      // PoseOriginList::UnknownOriginID will cause this to check for any localizable objects among _all_ origins.
       bool AnyRemainingLocalizableObjects(PoseOriginID_t origin) const;
 
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -304,8 +315,8 @@ namespace Anki
       // found in the given origin, RESULT_FAIL is returned.
       Result UpdateObjectOrigin(const ObjectID& objectID, PoseOriginID_t oldOriginID);
       
-      // checks the origins currently storing objects and if they have become zombies it deletes them
-      void DeleteObjectsFromZombieOrigins();
+      // Looks for any origins that are 'zombies' (see comment for IsZombiePoseOrigin()) and removes them.
+      void DeleteZombieOrigins();
       
       size_t GetNumAliveOrigins() const { return _locatedObjects.size(); }
       
@@ -380,26 +391,42 @@ namespace Anki
       // Helper for finding the object with a specified ID in the given container.
       // Returns an iterator to that object's entry.
       ObjectsContainer_t::const_iterator FindInContainerWithID(const ObjectsContainer_t& container,
-                                                               const ObjectID& objectID);
+                                                               const ObjectID& objectID) const;
       
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       //
       // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
       
-      // Looks for objects that should have been seen (markers should have been visible
-      // but something was seen through/behind their last known location) and delete
-      // them.
+      // Looks for objects that should have been observed and deletes them.
       void CheckForUnobservedObjects(RobotTimeStamp_t atTimestamp);
       
-      // Checks whether an object is unobserved and in collision with the robot,
-      // for use in filtering objects to mark them as dirty
-      bool CheckForCollisionWithRobot(const ObservableObject* object) const;
+      // Checks all objects in the current origin to see if any of them intersect with the robot's bounding box, and if
+      // so marks them dirty. The idea is that if the robot is driving through where an object should be, then either
+      // the object is not there or its pose is now inaccurate due to being bumped by the robot.
+      void CheckForRobotObjectCollisions();
       
-      // NOTE: this function takes control over the passed-in ObservableObject*'s and
-      //  will either directly add them to BlockWorld's existing objects or delete them
-      //  if/when they are no longer needed.
-      Result AddAndUpdateObjects(const std::vector<ObservableObject*>& objectsSeen,
-                                 const RobotTimeStamp_t atTimestamp);
+      // Returns true if the given object intersects the robot's current bounding box.
+      bool IntersectsRobotBoundingBox(const ObservableObject* object) const;
+      
+      // This method gets called whenever we have new observations available from the vision system. It processes the
+      // candidate object observations given in objectsSeenRaw, and appropriately adds to or updates our record of
+      // located objects (via UpdateKnownObjects). This updates the poses of objects, localizes to the charger if
+      // appropriate, and broadcasts information about the observations.
+      Result ProcessVisualObservations(const std::vector<std::shared_ptr<ObservableObject>>& objectsSeenRaw,
+                                       const RobotTimeStamp_t atTimestamp);
+      
+      // Try to match the objects in objectsSeen to existing located objects. If no match is found, the new object is
+      // added to our records. If a match is found, update the located instance's pose and metadata (e.g., pose state).
+      // If ignoreCharger = true, then any charger objects are _not_ updated.
+      void UpdateKnownObjects(const std::vector<std::shared_ptr<ObservableObject>>& objectsSeen,
+                              const RobotTimeStamp_t atTimestamp,
+                              const bool ignoreCharger = false);
+      
+      // Given a list of raw object observations, return a 'filtered' list of objects using the following logic:
+      //   - Ignore objects which were observed from too far away
+      //   - If multiple instaces of a 'unique' object were observed, ignore all but the closest one.
+      //   - The returned list of objects is guaranteed to be sorted on observation distance.
+      std::vector<std::shared_ptr<ObservableObject>> FilterRawObservedObjects(const std::vector<std::shared_ptr<ObservableObject>>& objectsSeenRaw);
       
       // Clear the object from shared uses, like localization, selection or carrying, etc. So that it can be removed
       // without those system lingering
@@ -444,8 +471,6 @@ namespace Anki
       ObjectID _selectedObjectID;
       
       std::vector<Signal::SmartHandle> _eventHandles;
-            
-      RobotTimeStamp_t _currentObservedMarkerTimestamp = 0;
       
       // Note: This is only required for SDK v0.5.1 compatibility
       ObjectFamily LegacyGetObjectFamily(const ObservableObject* const object) const;
