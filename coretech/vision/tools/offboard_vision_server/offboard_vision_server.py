@@ -28,7 +28,7 @@ class SnapperServicer(chipperpb_pb2_grpc.ChipperGrpcServicer):
     print('Succesfully decode an image of shape {}'.format(img.shape))
 
     # Make the image response
-    # One day this will be a real payload
+    # One day this will be a real payload.
     # The color of the rectangle that will displayed
     # on vector's face during mirror mode is determined
     # by the order in this list.
@@ -61,30 +61,10 @@ class SnapperServicer(chipperpb_pb2_grpc.ChipperGrpcServicer):
     }
 
     image_response = chipperpb_pb2.ImageResponse()
-
-    # Fill in the image result. This has the data
-    # that is actually returned to OffboardModel.
-    image_result = image_response.image_results.add()
-    if len(request.modes) != 0:
-      image_result.mode = request.modes[0]
-    else:
-      # TODO do we want to default our mode to LOCATE_OBJECT,
-      # right now we're not setup to handle multiple requests
-      # in this fashion it's handled by storing everything in
-      # json.
-      image_result.mode = 2
-
-    image_result.raw_result = json.dumps(fake_payload)
-
-    # Now make the rest of image response
+    image_response.raw_result = json.dumps(fake_payload)
     image_response.session = request.session
     image_response.device_id = request.device_id
-    # TODO After going through the go client that
-    # sits between this and OffboardModel, it appears
-    # this isn't used. We should probably just remove
-    # it entirely (VIC-13955)
-    image_response.raw_result = json.dumps(fake_payload)
-    image_response.raw_result = ""
+    image_response.timestamp_ms = request.timestamp_ms
 
     return image_response
 

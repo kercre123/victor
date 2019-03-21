@@ -53,23 +53,21 @@ func (c *client) handleConn(ctx context.Context) {
 			continue
 		}
 
-		resps, err := c.handleRequest(ctx, &msg)
+		resp, err := c.handleRequest(ctx, &msg)
 		if err != nil {
 			log.Println("Error handling offboard vision request:", err)
 		}
 
-		for _, resp := range resps {
-			var buf bytes.Buffer
-			if err := resp.Pack(&buf); err != nil {
-				log.Println("Error packing offboard vision response:", err)
-			} else if n, err := c.Write(buf.Bytes()); n != buf.Len() || err != nil {
-				log.Println("Error sending offboard vision response:", fmt.Sprintf("%d/%d,", n, buf.Len()), err)
-			}
-		}
+    var buf bytes.Buffer
+    if err := resp.Pack(&buf); err != nil {
+		  log.Println("Error packing offboard vision response:", err)
+    } else if n, err := c.Write(buf.Bytes()); n != buf.Len() || err != nil {
+			log.Println("Error sending offboard vision response:", fmt.Sprintf("%d/%d,", n, buf.Len()), err)
+    }
 	}
 }
 
-func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageReady) ([]vision.OffboardResultReady, error) {
+func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageReady) (*vision.OffboardResultReady, error) {
 	var dialOpts []grpc.DialOption
 	dialOpts = append(dialOpts, util.CommonGRPC()...)
 	dialOpts = append(dialOpts, grpc.WithInsecure())
@@ -113,16 +111,17 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 		return nil, err
 	}
 
-	// TODO: Planning to remove enumerated ImageModes and use raw strings to easy dev pain translating through the layers. (VIC-13955)
-	var modes []pb.ImageMode
+	// TODO: Actually read this in instead of hard coding it. (VIC-13955)
+	var modes = []string{"people", "faces"}
 
 	sessionID := uuid.New().String()[:16]
 	r := &pb.ImageRequest{
-		Session:   sessionID,
-		DeviceId:  deviceID,
-		Lang:      "en",
-		ImageData: fileData,
-		Modes:     modes,
+		Session:      sessionID,
+		DeviceId:     deviceID,
+		Lang:         "en",
+		ImageData:    fileData,
+    TimestampMs:  msg.Timestamp,
+		Modes:        modes,
 	}
 	// todo: possibly not hardcode this?
 	r.Configs = &pb.ImageConfig{}
@@ -136,13 +135,9 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 	}
 	log.Println("image analysis response: ", resp.String())
 
-	var resultsReady []vision.OffboardResultReady
-	for _, r := range resp.ImageResults {
-		var resultReady vision.OffboardResultReady
-		resultReady.JsonResult = r.RawResult
-		resultReady.Timestamp = msg.Timestamp
-		resultsReady = append(resultsReady, resultReady)
-	}
+	var resultReady vision.OffboardResultReady
+  resultReady.JsonResult = resp.RawResult
+  resultReady.Timestamp = resp.TimestampMs
 
-	return resultsReady, nil
+	return &resultReady, nil
 }

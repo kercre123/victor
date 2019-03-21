@@ -20,7 +20,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='chippergrpc2',
   syntax='proto3',
   serialized_options=_b('Z\014chippergrpc2'),
-  serialized_pb=_b('\n\x0f\x63hipperpb.proto\x12\x0c\x63hippergrpc2\"\x80\x02\n\x0bTextRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12\x12\n\ntext_input\x18\x03 \x01(\t\x12\x31\n\rlanguage_code\x18\x04 \x01(\x0e\x32\x1a.chippergrpc2.LanguageCode\x12\x33\n\x0eintent_service\x18\x05 \x01(\x0e\x32\x1b.chippergrpc2.IntentService\x12\x18\n\x10\x66irmware_version\x18\x06 \x01(\t\x12%\n\x04mode\x18\x07 \x01(\x0e\x32\x17.chippergrpc2.RobotMode\x12\x10\n\x08skip_das\x18\x08 \x01(\x08\"\xa6\x03\n\x16StreamingIntentRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12\x13\n\x0binput_audio\x18\x03 \x01(\x0c\x12\x31\n\rlanguage_code\x18\x04 \x01(\x0e\x32\x1a.chippergrpc2.LanguageCode\x12\x13\n\x0bspeech_only\x18\x05 \x01(\x08\x12\x18\n\x10\x66irmware_version\x18\x06 \x01(\t\x12%\n\x04mode\x18\x07 \x01(\x0e\x32\x17.chippergrpc2.RobotMode\x12\x0f\n\x07\x62oot_id\x18\x08 \x01(\t\x12\x10\n\x08skip_das\x18\t \x01(\x08\x12\x33\n\x0e\x61udio_encoding\x18\r \x01(\x0e\x32\x1b.chippergrpc2.AudioEncoding\x12\x18\n\x10single_utterance\x18\x0e \x01(\x08\x12\x33\n\x0eintent_service\x18\x0f \x01(\x0e\x32\x1b.chippergrpc2.IntentService\x12\x0f\n\x07\x61pp_key\x18\x10 \x01(\t\x12\x12\n\nsave_audio\x18\x11 \x01(\x08\"\xb5\x02\n\x1eStreamingKnowledgeGraphRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12\x13\n\x0binput_audio\x18\x03 \x01(\x0c\x12\x31\n\rlanguage_code\x18\x04 \x01(\x0e\x32\x1a.chippergrpc2.LanguageCode\x12\x18\n\x10\x66irmware_version\x18\x05 \x01(\t\x12\x33\n\x0e\x61udio_encoding\x18\x06 \x01(\x0e\x32\x1b.chippergrpc2.AudioEncoding\x12\x0f\n\x07\x61pp_key\x18\x07 \x01(\t\x12\x12\n\nsave_audio\x18\x08 \x01(\x08\x12\x0f\n\x07\x62oot_id\x18\t \x01(\t\x12\x10\n\x08skip_das\x18\n \x01(\x08\x12\x10\n\x08timezone\x18\x0b \x01(\t\"\xb8\x01\n\x1fStreamingConnectionCheckRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12\x13\n\x0binput_audio\x18\x03 \x01(\x0c\x12\x18\n\x10\x66irmware_version\x18\x04 \x01(\t\x12\x0f\n\x07\x61pp_key\x18\x05 \x01(\t\x12\x16\n\x0etotal_audio_ms\x18\x06 \x01(\r\x12\x19\n\x11\x61udio_per_request\x18\x07 \x01(\r\"\xe5\x01\n\x0eIntentResponse\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12\x10\n\x08is_final\x18\x03 \x01(\x08\x12\x31\n\rintent_result\x18\x04 \x01(\x0b\x32\x1a.chippergrpc2.IntentResult\x12\x31\n\rspeech_result\x18\x05 \x01(\x0b\x32\x1a.chippergrpc2.SpeechResult\x12%\n\x04mode\x18\x06 \x01(\x0e\x32\x17.chippergrpc2.RobotMode\x12\x10\n\x08\x61udio_id\x18\x10 \x01(\t\"4\n\x0cSpeechResult\x12\x12\n\ntranscript\x18\x01 \x01(\t\x12\x10\n\x08is_final\x18\x02 \x01(\x08\"\xbe\x02\n\x0cIntentResult\x12\x12\n\nquery_text\x18\x01 \x01(\t\x12\x0e\n\x06\x61\x63tion\x18\x02 \x01(\t\x12\x19\n\x11intent_confidence\x18\x03 \x01(\x02\x12\x19\n\x11speech_confidence\x18\x04 \x01(\x02\x12>\n\nparameters\x18\x05 \x03(\x0b\x32*.chippergrpc2.IntentResult.ParametersEntry\x12\x1e\n\x16\x61ll_parameters_present\x18\x06 \x01(\x08\x12\x13\n\x0bhas_context\x18\x07 \x01(\x08\x12,\n\x07service\x18\x08 \x01(\x0e\x32\x1b.chippergrpc2.IntentService\x1a\x31\n\x0fParametersEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xa3\x01\n\x16KnowledgeGraphResponse\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12\x12\n\nquery_text\x18\x03 \x01(\t\x12\x13\n\x0bspoken_text\x18\x04 \x01(\t\x12\x14\n\x0c\x63ommand_type\x18\x05 \x01(\t\x12\x14\n\x0c\x64omains_used\x18\x06 \x03(\t\x12\x10\n\x08\x61udio_id\x18\x07 \x01(\t\"B\n\x17\x43onnectionCheckResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x17\n\x0f\x66rames_received\x18\x02 \x01(\r\"?\n\x0fWeatherLocation\x12\x0c\n\x04\x63ity\x18\x01 \x01(\t\x12\r\n\x05state\x18\x02 \x01(\t\x12\x0f\n\x07\x63ountry\x18\x03 \x01(\t\"\xda\x01\n\x0bImageConfig\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x16\n\x0emax_candidates\x18\x02 \x01(\x05\x12\x1c\n\x14\x63onfidence_threshold\x18\x03 \x01(\x01\x12\x34\n\x0f\x66\x61\x63\x65_attributes\x18\x04 \x03(\x0e\x32\x1b.chippergrpc2.FaceAttribute\x12\x16\n\x0e\x66\x61\x63\x65_landmarks\x18\x05 \x01(\x08\x12\x34\n\x0fvisual_features\x18\x06 \x03(\x0e\x32\x1b.chippergrpc2.VisualFeature\"\xe6\x01\n\x0cImageRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12\x0c\n\x04lang\x18\x03 \x01(\t\x12\x12\n\nimage_data\x18\x04 \x01(\x0c\x12)\n\x06\x66ormat\x18\x05 \x01(\x0e\x32\x19.chippergrpc2.ImageFormat\x12\x11\n\timage_url\x18\x06 \x01(\t\x12&\n\x05modes\x18\x07 \x03(\x0e\x32\x17.chippergrpc2.ImageMode\x12*\n\x07\x63onfigs\x18\x08 \x01(\x0b\x32\x19.chippergrpc2.ImageConfig\"W\n\x0bImageResult\x12%\n\x04mode\x18\x01 \x01(\x0e\x32\x17.chippergrpc2.ImageMode\x12\x12\n\nraw_result\x18\x02 \x01(\t\x12\r\n\x05\x65rror\x18\x03 \x01(\t\"\xa8\x01\n\rImageResponse\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12\x12\n\nraw_result\x18\x03 \x01(\t\x12\x30\n\rimage_results\x18\x04 \x03(\x0b\x32\x19.chippergrpc2.ImageResult\x12-\n\x08\x61nalysis\x18\x05 \x01(\x0b\x32\x1b.chippergrpc2.ImageAnalysis\"\xe8\x01\n\rImageAnalysis\x12+\n\x07\x63ontent\x18\x01 \x01(\x0e\x32\x1a.chippergrpc2.ImageContent\x12&\n\x07\x63\x61ption\x18\x02 \x01(\x0b\x32\x15.chippergrpc2.Caption\x12/\n\ncategories\x18\x03 \x03(\x0b\x32\x1b.chippergrpc2.ImageCategory\x12\'\n\x05\x66\x61\x63\x65s\x18\x04 \x03(\x0b\x32\x18.chippergrpc2.FaceResult\x12(\n\x08top_tags\x18\x05 \x03(\x0b\x32\x16.chippergrpc2.ImageTag\"+\n\x08ImageTag\x12\x0b\n\x03tag\x18\x01 \x01(\t\x12\x12\n\nconfidence\x18\x02 \x01(\x02\"<\n\rImageCategory\x12\x0c\n\x04name\x18\x01 \x01(\t\x12\r\n\x05score\x18\x02 \x01(\x02\x12\x0e\n\x06\x64\x65tail\x18\x03 \x01(\t\"j\n\nFaceResult\x12\x0e\n\x06gender\x18\x01 \x01(\t\x12\x0b\n\x03\x61ge\x18\x02 \x01(\x05\x12.\n\tface_rect\x18\x03 \x01(\x0b\x32\x1b.chippergrpc2.FaceRectangle\x12\x0f\n\x07\x64\x65tails\x18\x04 \x01(\t\"I\n\rFaceRectangle\x12\x0c\n\x04left\x18\x01 \x01(\x05\x12\x0b\n\x03top\x18\x02 \x01(\x05\x12\r\n\x05width\x18\x03 \x01(\x05\x12\x0e\n\x06height\x18\x04 \x01(\x05\"+\n\x07\x43\x61ption\x12\x0c\n\x04text\x18\x01 \x01(\t\x12\x12\n\nconfidence\x18\x02 \x01(\x02\"f\n\x13\x43reatePersonRequest\x12\x12\n\ngroup_name\x18\x01 \x01(\t\x12\x13\n\x0bperson_name\x18\x02 \x01(\t\x12\x11\n\tface_data\x18\x03 \x01(\x0c\x12\x13\n\x0b\x64\x65scription\x18\x10 \x01(\t\"l\n\x14\x43reatePersonResponse\x12\x13\n\x0bperson_name\x18\x01 \x01(\t\x12\x11\n\tperson_id\x18\x02 \x01(\t\x12\x19\n\x11persisted_face_id\x18\x03 \x01(\t\x12\x11\n\tgroupName\x18\x04 \x01(\t\"4\n\x0bPersonGroup\x12\x12\n\ngroup_name\x18\x01 \x01(\t\x12\x11\n\tuser_data\x18\x02 \x01(\t\":\n\x13PersonGroupResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x12\n\ngroup_name\x18\x03 \x01(\t\"<\n\x0fPersonGroupList\x12)\n\x06groups\x18\x01 \x03(\x0b\x32\x19.chippergrpc2.PersonGroup*V\n\x0cLanguageCode\x12\x0e\n\nENGLISH_US\x10\x00\x12\x0e\n\nENGLISH_UK\x10\x01\x12\x0e\n\nENGLISH_AU\x10\x02\x12\n\n\x06GERMAN\x10\x03\x12\n\n\x06\x46RENCH\x10\x04*D\n\rIntentService\x12\x0b\n\x07\x44\x45\x46\x41ULT\x10\x00\x12\x0e\n\nDIALOGFLOW\x10\x01\x12\r\n\tBING_LUIS\x10\x02\x12\x07\n\x03LEX\x10\x03*-\n\rAudioEncoding\x12\x0e\n\nLINEAR_PCM\x10\x00\x12\x0c\n\x08OGG_OPUS\x10\x01*(\n\tRobotMode\x12\x11\n\rVOICE_COMMAND\x10\x00\x12\x08\n\x04GAME\x10\x01*E\n\tImageMode\x12\x12\n\x0e\x44\x45SCRIBE_SCENE\x10\x00\x12\x11\n\rIDENTIFY_FACE\x10\x01\x12\x11\n\rLOCATE_OBJECT\x10\x02*\xc2\x01\n\rFaceAttribute\x12\x07\n\x03\x41GE\x10\x00\x12\n\n\x06GENDER\x10\x01\x12\r\n\tHEAD_POSE\x10\x02\x12\t\n\x05SMILE\x10\x03\x12\x0f\n\x0b\x46\x41\x43IAL_HAIR\x10\x04\x12\x0b\n\x07GLASSES\x10\x05\x12\x0b\n\x07\x45MOTION\x10\x06\x12\x08\n\x04HAIR\x10\x07\x12\n\n\x06MAKEUP\x10\x08\x12\r\n\tOCCLUSION\x10\t\x12\x0f\n\x0b\x41\x43\x43\x45SSORIES\x10\n\x12\x08\n\x04\x42LUR\x10\x0b\x12\x0c\n\x08\x45XPOSURE\x10\x0c\x12\t\n\x05NOISE\x10\r*x\n\rVisualFeature\x12\t\n\x05\x41\x44ULT\x10\x00\x12\x0e\n\nCATEGORIES\x10\x01\x12\t\n\x05\x43OLOR\x10\x02\x12\x0f\n\x0b\x44\x45SCRIPTION\x10\x03\x12\t\n\x05\x46\x41\x43\x45S\x10\x04\x12\x0e\n\nIMAGE_TYPE\x10\x05\x12\x0b\n\x07OBJECTS\x10\x06\x12\x08\n\x04TAGS\x10\x07*1\n\x0bImageFormat\x12\x07\n\x03JPG\x10\x00\x12\x07\n\x03PNG\x10\x01\x12\x07\n\x03GIF\x10\x02\x12\x07\n\x03GMP\x10\x03*A\n\x0cImageContent\x12\n\n\x06Others\x10\x00\x12\x08\n\x04\x46\x61\x63\x65\x10\x01\x12\x0c\n\x08Landmark\x10\x02\x12\r\n\tCelebrity\x10\x03\x32\xff\x06\n\x0b\x43hipperGrpc\x12G\n\nTextIntent\x12\x19.chippergrpc2.TextRequest\x1a\x1c.chippergrpc2.IntentResponse\"\x00\x12Y\n\x0fStreamingIntent\x12$.chippergrpc2.StreamingIntentRequest\x1a\x1c.chippergrpc2.IntentResponse(\x01\x30\x01\x12q\n\x17StreamingKnowledgeGraph\x12,.chippergrpc2.StreamingKnowledgeGraphRequest\x1a$.chippergrpc2.KnowledgeGraphResponse(\x01\x30\x01\x12t\n\x18StreamingConnectionCheck\x12-.chippergrpc2.StreamingConnectionCheckRequest\x1a%.chippergrpc2.ConnectionCheckResponse(\x01\x30\x01\x12G\n\x0c\x41nalyzeImage\x12\x1a.chippergrpc2.ImageRequest\x1a\x1b.chippergrpc2.ImageResponse\x12U\n\x0c\x43reatePerson\x12!.chippergrpc2.CreatePersonRequest\x1a\".chippergrpc2.CreatePersonResponse\x12Q\n\x11\x43reatePersonGroup\x12\x19.chippergrpc2.PersonGroup\x1a!.chippergrpc2.PersonGroupResponse\x12K\n\x0fListPersonGroup\x12\x19.chippergrpc2.PersonGroup\x1a\x1d.chippergrpc2.PersonGroupList\x12Q\n\x11\x44\x65letePersonGroup\x12\x19.chippergrpc2.PersonGroup\x1a!.chippergrpc2.PersonGroupResponse\x12P\n\x10TrainPersonGroup\x12\x19.chippergrpc2.PersonGroup\x1a!.chippergrpc2.PersonGroupResponseB\x0eZ\x0c\x63hippergrpc2b\x06proto3')
+  serialized_pb=_b('\n\x0f\x63hipperpb.proto\x12\x0c\x63hippergrpc2\"\x80\x02\n\x0bTextRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12\x12\n\ntext_input\x18\x03 \x01(\t\x12\x31\n\rlanguage_code\x18\x04 \x01(\x0e\x32\x1a.chippergrpc2.LanguageCode\x12\x33\n\x0eintent_service\x18\x05 \x01(\x0e\x32\x1b.chippergrpc2.IntentService\x12\x18\n\x10\x66irmware_version\x18\x06 \x01(\t\x12%\n\x04mode\x18\x07 \x01(\x0e\x32\x17.chippergrpc2.RobotMode\x12\x10\n\x08skip_das\x18\x08 \x01(\x08\"\xa6\x03\n\x16StreamingIntentRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12\x13\n\x0binput_audio\x18\x03 \x01(\x0c\x12\x31\n\rlanguage_code\x18\x04 \x01(\x0e\x32\x1a.chippergrpc2.LanguageCode\x12\x13\n\x0bspeech_only\x18\x05 \x01(\x08\x12\x18\n\x10\x66irmware_version\x18\x06 \x01(\t\x12%\n\x04mode\x18\x07 \x01(\x0e\x32\x17.chippergrpc2.RobotMode\x12\x0f\n\x07\x62oot_id\x18\x08 \x01(\t\x12\x10\n\x08skip_das\x18\t \x01(\x08\x12\x33\n\x0e\x61udio_encoding\x18\r \x01(\x0e\x32\x1b.chippergrpc2.AudioEncoding\x12\x18\n\x10single_utterance\x18\x0e \x01(\x08\x12\x33\n\x0eintent_service\x18\x0f \x01(\x0e\x32\x1b.chippergrpc2.IntentService\x12\x0f\n\x07\x61pp_key\x18\x10 \x01(\t\x12\x12\n\nsave_audio\x18\x11 \x01(\x08\"\xb5\x02\n\x1eStreamingKnowledgeGraphRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12\x13\n\x0binput_audio\x18\x03 \x01(\x0c\x12\x31\n\rlanguage_code\x18\x04 \x01(\x0e\x32\x1a.chippergrpc2.LanguageCode\x12\x18\n\x10\x66irmware_version\x18\x05 \x01(\t\x12\x33\n\x0e\x61udio_encoding\x18\x06 \x01(\x0e\x32\x1b.chippergrpc2.AudioEncoding\x12\x0f\n\x07\x61pp_key\x18\x07 \x01(\t\x12\x12\n\nsave_audio\x18\x08 \x01(\x08\x12\x0f\n\x07\x62oot_id\x18\t \x01(\t\x12\x10\n\x08skip_das\x18\n \x01(\x08\x12\x10\n\x08timezone\x18\x0b \x01(\t\"\xb8\x01\n\x1fStreamingConnectionCheckRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12\x13\n\x0binput_audio\x18\x03 \x01(\x0c\x12\x18\n\x10\x66irmware_version\x18\x04 \x01(\t\x12\x0f\n\x07\x61pp_key\x18\x05 \x01(\t\x12\x16\n\x0etotal_audio_ms\x18\x06 \x01(\r\x12\x19\n\x11\x61udio_per_request\x18\x07 \x01(\r\"\xe5\x01\n\x0eIntentResponse\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12\x10\n\x08is_final\x18\x03 \x01(\x08\x12\x31\n\rintent_result\x18\x04 \x01(\x0b\x32\x1a.chippergrpc2.IntentResult\x12\x31\n\rspeech_result\x18\x05 \x01(\x0b\x32\x1a.chippergrpc2.SpeechResult\x12%\n\x04mode\x18\x06 \x01(\x0e\x32\x17.chippergrpc2.RobotMode\x12\x10\n\x08\x61udio_id\x18\x10 \x01(\t\"4\n\x0cSpeechResult\x12\x12\n\ntranscript\x18\x01 \x01(\t\x12\x10\n\x08is_final\x18\x02 \x01(\x08\"\xbe\x02\n\x0cIntentResult\x12\x12\n\nquery_text\x18\x01 \x01(\t\x12\x0e\n\x06\x61\x63tion\x18\x02 \x01(\t\x12\x19\n\x11intent_confidence\x18\x03 \x01(\x02\x12\x19\n\x11speech_confidence\x18\x04 \x01(\x02\x12>\n\nparameters\x18\x05 \x03(\x0b\x32*.chippergrpc2.IntentResult.ParametersEntry\x12\x1e\n\x16\x61ll_parameters_present\x18\x06 \x01(\x08\x12\x13\n\x0bhas_context\x18\x07 \x01(\x08\x12,\n\x07service\x18\x08 \x01(\x0e\x32\x1b.chippergrpc2.IntentService\x1a\x31\n\x0fParametersEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01\"\xa3\x01\n\x16KnowledgeGraphResponse\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12\x12\n\nquery_text\x18\x03 \x01(\t\x12\x13\n\x0bspoken_text\x18\x04 \x01(\t\x12\x14\n\x0c\x63ommand_type\x18\x05 \x01(\t\x12\x14\n\x0c\x64omains_used\x18\x06 \x03(\t\x12\x10\n\x08\x61udio_id\x18\x07 \x01(\t\"B\n\x17\x43onnectionCheckResponse\x12\x0e\n\x06status\x18\x01 \x01(\t\x12\x17\n\x0f\x66rames_received\x18\x02 \x01(\r\"?\n\x0fWeatherLocation\x12\x0c\n\x04\x63ity\x18\x01 \x01(\t\x12\r\n\x05state\x18\x02 \x01(\t\x12\x0f\n\x07\x63ountry\x18\x03 \x01(\t\"\xda\x01\n\x0bImageConfig\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12\x16\n\x0emax_candidates\x18\x02 \x01(\x05\x12\x1c\n\x14\x63onfidence_threshold\x18\x03 \x01(\x01\x12\x34\n\x0f\x66\x61\x63\x65_attributes\x18\x04 \x03(\x0e\x32\x1b.chippergrpc2.FaceAttribute\x12\x16\n\x0e\x66\x61\x63\x65_landmarks\x18\x05 \x01(\x08\x12\x34\n\x0fvisual_features\x18\x06 \x03(\x0e\x32\x1b.chippergrpc2.VisualFeature\"\xe3\x01\n\x0cImageRequest\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12\x14\n\x0ctimestamp_ms\x18\x03 \x01(\r\x12\x0c\n\x04lang\x18\x04 \x01(\t\x12\x12\n\nimage_data\x18\x05 \x01(\x0c\x12)\n\x06\x66ormat\x18\x06 \x01(\x0e\x32\x19.chippergrpc2.ImageFormat\x12\r\n\x05modes\x18\x07 \x03(\t\x12\x11\n\timage_url\x18\x08 \x01(\t\x12*\n\x07\x63onfigs\x18\t \x01(\x0b\x32\x19.chippergrpc2.ImageConfig\"]\n\rImageResponse\x12\x0f\n\x07session\x18\x01 \x01(\t\x12\x11\n\tdevice_id\x18\x02 \x01(\t\x12\x14\n\x0ctimestamp_ms\x18\x03 \x01(\r\x12\x12\n\nraw_result\x18\x04 \x01(\t\"\x8c\x01\n\rPersonRequest\x12\x12\n\ngroup_name\x18\x01 \x01(\t\x12*\n\x06\x61\x63tion\x18\x02 \x01(\x0e\x32\x1a.chippergrpc2.PersonAction\x12\x13\n\x0bperson_name\x18\x03 \x01(\t\x12\x11\n\tface_data\x18\x04 \x01(\x0c\x12\x13\n\x0b\x64\x65scription\x18\x10 \x01(\t\"\x8c\x01\n\x06Person\x12\x11\n\tperson_id\x18\x01 \x01(\t\x12\x13\n\x0bperson_name\x18\x02 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x03 \x01(\t\x12\x19\n\x11persisted_face_id\x18\x04 \x03(\t\x12*\n\x06status\x18\x05 \x01(\x0e\x32\x1a.chippergrpc2.PersonStatus\"J\n\x0ePersonResponse\x12\x11\n\tgroupName\x18\x01 \x01(\t\x12%\n\x07persons\x18\x02 \x03(\x0b\x32\x14.chippergrpc2.Person\"4\n\x0bPersonGroup\x12\x12\n\ngroup_name\x18\x01 \x01(\t\x12\x11\n\tuser_data\x18\x02 \x01(\t\":\n\x13PersonGroupResponse\x12\x0f\n\x07success\x18\x01 \x01(\x08\x12\x12\n\ngroup_name\x18\x03 \x01(\t\"<\n\x0fPersonGroupList\x12)\n\x06groups\x18\x01 \x03(\x0b\x32\x19.chippergrpc2.PersonGroup*V\n\x0cLanguageCode\x12\x0e\n\nENGLISH_US\x10\x00\x12\x0e\n\nENGLISH_UK\x10\x01\x12\x0e\n\nENGLISH_AU\x10\x02\x12\n\n\x06GERMAN\x10\x03\x12\n\n\x06\x46RENCH\x10\x04*D\n\rIntentService\x12\x0b\n\x07\x44\x45\x46\x41ULT\x10\x00\x12\x0e\n\nDIALOGFLOW\x10\x01\x12\r\n\tBING_LUIS\x10\x02\x12\x07\n\x03LEX\x10\x03*-\n\rAudioEncoding\x12\x0e\n\nLINEAR_PCM\x10\x00\x12\x0c\n\x08OGG_OPUS\x10\x01*(\n\tRobotMode\x12\x11\n\rVOICE_COMMAND\x10\x00\x12\x08\n\x04GAME\x10\x01*\xc2\x01\n\rFaceAttribute\x12\x07\n\x03\x41GE\x10\x00\x12\n\n\x06GENDER\x10\x01\x12\r\n\tHEAD_POSE\x10\x02\x12\t\n\x05SMILE\x10\x03\x12\x0f\n\x0b\x46\x41\x43IAL_HAIR\x10\x04\x12\x0b\n\x07GLASSES\x10\x05\x12\x0b\n\x07\x45MOTION\x10\x06\x12\x08\n\x04HAIR\x10\x07\x12\n\n\x06MAKEUP\x10\x08\x12\r\n\tOCCLUSION\x10\t\x12\x0f\n\x0b\x41\x43\x43\x45SSORIES\x10\n\x12\x08\n\x04\x42LUR\x10\x0b\x12\x0c\n\x08\x45XPOSURE\x10\x0c\x12\t\n\x05NOISE\x10\r*x\n\rVisualFeature\x12\t\n\x05\x41\x44ULT\x10\x00\x12\x0e\n\nCATEGORIES\x10\x01\x12\t\n\x05\x43OLOR\x10\x02\x12\x0f\n\x0b\x44\x45SCRIPTION\x10\x03\x12\t\n\x05\x46\x41\x43\x45S\x10\x04\x12\x0e\n\nIMAGE_TYPE\x10\x05\x12\x0b\n\x07OBJECTS\x10\x06\x12\x08\n\x04TAGS\x10\x07*1\n\x0bImageFormat\x12\x07\n\x03JPG\x10\x00\x12\x07\n\x03PNG\x10\x01\x12\x07\n\x03GIF\x10\x02\x12\x07\n\x03GMP\x10\x03*T\n\x0cPersonStatus\x12\x08\n\x04NONE\x10\x00\x12\x0b\n\x07\x43REATED\x10\x01\x12\x0b\n\x07\x44\x45LETED\x10\x02\x12\x0e\n\nADDED_FACE\x10\x03\x12\x10\n\x0c\x44\x45LETED_FACE\x10\x04*G\n\x0cPersonAction\x12\n\n\x06\x43REATE\x10\x00\x12\x0c\n\x08\x41\x44\x44_FACE\x10\x01\x12\x07\n\x03GET\x10\x02\x12\x08\n\x04LIST\x10\x03\x12\n\n\x06\x44\x45LETE\x10\x04\x32\xc0\x07\n\x0b\x43hipperGrpc\x12G\n\nTextIntent\x12\x19.chippergrpc2.TextRequest\x1a\x1c.chippergrpc2.IntentResponse\"\x00\x12Y\n\x0fStreamingIntent\x12$.chippergrpc2.StreamingIntentRequest\x1a\x1c.chippergrpc2.IntentResponse(\x01\x30\x01\x12q\n\x17StreamingKnowledgeGraph\x12,.chippergrpc2.StreamingKnowledgeGraphRequest\x1a$.chippergrpc2.KnowledgeGraphResponse(\x01\x30\x01\x12t\n\x18StreamingConnectionCheck\x12-.chippergrpc2.StreamingConnectionCheckRequest\x1a%.chippergrpc2.ConnectionCheckResponse(\x01\x30\x01\x12G\n\x0c\x41nalyzeImage\x12\x1a.chippergrpc2.ImageRequest\x1a\x1b.chippergrpc2.ImageResponse\x12I\n\x0cPersonAction\x12\x1b.chippergrpc2.PersonRequest\x1a\x1c.chippergrpc2.PersonResponse\x12Q\n\x11\x43reatePersonGroup\x12\x19.chippergrpc2.PersonGroup\x1a!.chippergrpc2.PersonGroupResponse\x12K\n\x0fListPersonGroup\x12\x19.chippergrpc2.PersonGroup\x1a\x1d.chippergrpc2.PersonGroupList\x12Q\n\x11\x44\x65letePersonGroup\x12\x19.chippergrpc2.PersonGroup\x1a!.chippergrpc2.PersonGroupResponse\x12P\n\x10TrainPersonGroup\x12\x19.chippergrpc2.PersonGroup\x1a!.chippergrpc2.PersonGroupResponse\x12K\n\x0bTrainStatus\x12\x19.chippergrpc2.PersonGroup\x1a!.chippergrpc2.PersonGroupResponseB\x0eZ\x0c\x63hippergrpc2b\x06proto3')
 )
 
 _LANGUAGECODE = _descriptor.EnumDescriptor(
@@ -52,8 +52,8 @@ _LANGUAGECODE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=3796,
-  serialized_end=3882,
+  serialized_start=3206,
+  serialized_end=3292,
 )
 _sym_db.RegisterEnumDescriptor(_LANGUAGECODE)
 
@@ -83,8 +83,8 @@ _INTENTSERVICE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=3884,
-  serialized_end=3952,
+  serialized_start=3294,
+  serialized_end=3362,
 )
 _sym_db.RegisterEnumDescriptor(_INTENTSERVICE)
 
@@ -106,8 +106,8 @@ _AUDIOENCODING = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=3954,
-  serialized_end=3999,
+  serialized_start=3364,
+  serialized_end=3409,
 )
 _sym_db.RegisterEnumDescriptor(_AUDIOENCODING)
 
@@ -129,39 +129,12 @@ _ROBOTMODE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=4001,
-  serialized_end=4041,
+  serialized_start=3411,
+  serialized_end=3451,
 )
 _sym_db.RegisterEnumDescriptor(_ROBOTMODE)
 
 RobotMode = enum_type_wrapper.EnumTypeWrapper(_ROBOTMODE)
-_IMAGEMODE = _descriptor.EnumDescriptor(
-  name='ImageMode',
-  full_name='chippergrpc2.ImageMode',
-  filename=None,
-  file=DESCRIPTOR,
-  values=[
-    _descriptor.EnumValueDescriptor(
-      name='DESCRIBE_SCENE', index=0, number=0,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='IDENTIFY_FACE', index=1, number=1,
-      serialized_options=None,
-      type=None),
-    _descriptor.EnumValueDescriptor(
-      name='LOCATE_OBJECT', index=2, number=2,
-      serialized_options=None,
-      type=None),
-  ],
-  containing_type=None,
-  serialized_options=None,
-  serialized_start=4043,
-  serialized_end=4112,
-)
-_sym_db.RegisterEnumDescriptor(_IMAGEMODE)
-
-ImageMode = enum_type_wrapper.EnumTypeWrapper(_IMAGEMODE)
 _FACEATTRIBUTE = _descriptor.EnumDescriptor(
   name='FaceAttribute',
   full_name='chippergrpc2.FaceAttribute',
@@ -227,8 +200,8 @@ _FACEATTRIBUTE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=4115,
-  serialized_end=4309,
+  serialized_start=3454,
+  serialized_end=3648,
 )
 _sym_db.RegisterEnumDescriptor(_FACEATTRIBUTE)
 
@@ -274,8 +247,8 @@ _VISUALFEATURE = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=4311,
-  serialized_end=4431,
+  serialized_start=3650,
+  serialized_end=3770,
 )
 _sym_db.RegisterEnumDescriptor(_VISUALFEATURE)
 
@@ -305,43 +278,82 @@ _IMAGEFORMAT = _descriptor.EnumDescriptor(
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=4433,
-  serialized_end=4482,
+  serialized_start=3772,
+  serialized_end=3821,
 )
 _sym_db.RegisterEnumDescriptor(_IMAGEFORMAT)
 
 ImageFormat = enum_type_wrapper.EnumTypeWrapper(_IMAGEFORMAT)
-_IMAGECONTENT = _descriptor.EnumDescriptor(
-  name='ImageContent',
-  full_name='chippergrpc2.ImageContent',
+_PERSONSTATUS = _descriptor.EnumDescriptor(
+  name='PersonStatus',
+  full_name='chippergrpc2.PersonStatus',
   filename=None,
   file=DESCRIPTOR,
   values=[
     _descriptor.EnumValueDescriptor(
-      name='Others', index=0, number=0,
+      name='NONE', index=0, number=0,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='Face', index=1, number=1,
+      name='CREATED', index=1, number=1,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='Landmark', index=2, number=2,
+      name='DELETED', index=2, number=2,
       serialized_options=None,
       type=None),
     _descriptor.EnumValueDescriptor(
-      name='Celebrity', index=3, number=3,
+      name='ADDED_FACE', index=3, number=3,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='DELETED_FACE', index=4, number=4,
       serialized_options=None,
       type=None),
   ],
   containing_type=None,
   serialized_options=None,
-  serialized_start=4484,
-  serialized_end=4549,
+  serialized_start=3823,
+  serialized_end=3907,
 )
-_sym_db.RegisterEnumDescriptor(_IMAGECONTENT)
+_sym_db.RegisterEnumDescriptor(_PERSONSTATUS)
 
-ImageContent = enum_type_wrapper.EnumTypeWrapper(_IMAGECONTENT)
+PersonStatus = enum_type_wrapper.EnumTypeWrapper(_PERSONSTATUS)
+_PERSONACTION = _descriptor.EnumDescriptor(
+  name='PersonAction',
+  full_name='chippergrpc2.PersonAction',
+  filename=None,
+  file=DESCRIPTOR,
+  values=[
+    _descriptor.EnumValueDescriptor(
+      name='CREATE', index=0, number=0,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='ADD_FACE', index=1, number=1,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='GET', index=2, number=2,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='LIST', index=3, number=3,
+      serialized_options=None,
+      type=None),
+    _descriptor.EnumValueDescriptor(
+      name='DELETE', index=4, number=4,
+      serialized_options=None,
+      type=None),
+  ],
+  containing_type=None,
+  serialized_options=None,
+  serialized_start=3909,
+  serialized_end=3980,
+)
+_sym_db.RegisterEnumDescriptor(_PERSONACTION)
+
+PersonAction = enum_type_wrapper.EnumTypeWrapper(_PERSONACTION)
 ENGLISH_US = 0
 ENGLISH_UK = 1
 ENGLISH_AU = 2
@@ -355,9 +367,6 @@ LINEAR_PCM = 0
 OGG_OPUS = 1
 VOICE_COMMAND = 0
 GAME = 1
-DESCRIBE_SCENE = 0
-IDENTIFY_FACE = 1
-LOCATE_OBJECT = 2
 AGE = 0
 GENDER = 1
 HEAD_POSE = 2
@@ -384,10 +393,16 @@ JPG = 0
 PNG = 1
 GIF = 2
 GMP = 3
-Others = 0
-Face = 1
-Landmark = 2
-Celebrity = 3
+NONE = 0
+CREATED = 1
+DELETED = 2
+ADDED_FACE = 3
+DELETED_FACE = 4
+CREATE = 0
+ADD_FACE = 1
+GET = 2
+LIST = 3
+DELETE = 4
 
 
 
@@ -1239,43 +1254,50 @@ _IMAGEREQUEST = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='lang', full_name='chippergrpc2.ImageRequest.lang', index=2,
-      number=3, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='image_data', full_name='chippergrpc2.ImageRequest.image_data', index=3,
-      number=4, type=12, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b(""),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='format', full_name='chippergrpc2.ImageRequest.format', index=4,
-      number=5, type=14, cpp_type=8, label=1,
+      name='timestamp_ms', full_name='chippergrpc2.ImageRequest.timestamp_ms', index=2,
+      number=3, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='image_url', full_name='chippergrpc2.ImageRequest.image_url', index=5,
-      number=6, type=9, cpp_type=9, label=1,
+      name='lang', full_name='chippergrpc2.ImageRequest.lang', index=3,
+      number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
+      name='image_data', full_name='chippergrpc2.ImageRequest.image_data', index=4,
+      number=5, type=12, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b(""),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='format', full_name='chippergrpc2.ImageRequest.format', index=5,
+      number=6, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
       name='modes', full_name='chippergrpc2.ImageRequest.modes', index=6,
-      number=7, type=14, cpp_type=8, label=3,
+      number=7, type=9, cpp_type=9, label=3,
       has_default_value=False, default_value=[],
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='configs', full_name='chippergrpc2.ImageRequest.configs', index=7,
-      number=8, type=11, cpp_type=10, label=1,
+      name='image_url', full_name='chippergrpc2.ImageRequest.image_url', index=7,
+      number=8, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='configs', full_name='chippergrpc2.ImageRequest.configs', index=8,
+      number=9, type=11, cpp_type=10, label=1,
       has_default_value=False, default_value=None,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
@@ -1293,52 +1315,7 @@ _IMAGEREQUEST = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=2344,
-  serialized_end=2574,
-)
-
-
-_IMAGERESULT = _descriptor.Descriptor(
-  name='ImageResult',
-  full_name='chippergrpc2.ImageResult',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='mode', full_name='chippergrpc2.ImageResult.mode', index=0,
-      number=1, type=14, cpp_type=8, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='raw_result', full_name='chippergrpc2.ImageResult.raw_result', index=1,
-      number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='error', full_name='chippergrpc2.ImageResult.error', index=2,
-      number=3, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=2576,
-  serialized_end=2663,
+  serialized_end=2571,
 )
 
 
@@ -1364,215 +1341,14 @@ _IMAGERESPONSE = _descriptor.Descriptor(
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='raw_result', full_name='chippergrpc2.ImageResponse.raw_result', index=2,
-      number=3, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='image_results', full_name='chippergrpc2.ImageResponse.image_results', index=3,
-      number=4, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='analysis', full_name='chippergrpc2.ImageResponse.analysis', index=4,
-      number=5, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=2666,
-  serialized_end=2834,
-)
-
-
-_IMAGEANALYSIS = _descriptor.Descriptor(
-  name='ImageAnalysis',
-  full_name='chippergrpc2.ImageAnalysis',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='content', full_name='chippergrpc2.ImageAnalysis.content', index=0,
-      number=1, type=14, cpp_type=8, label=1,
+      name='timestamp_ms', full_name='chippergrpc2.ImageResponse.timestamp_ms', index=2,
+      number=3, type=13, cpp_type=3, label=1,
       has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='caption', full_name='chippergrpc2.ImageAnalysis.caption', index=1,
-      number=2, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='categories', full_name='chippergrpc2.ImageAnalysis.categories', index=2,
-      number=3, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='faces', full_name='chippergrpc2.ImageAnalysis.faces', index=3,
-      number=4, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='top_tags', full_name='chippergrpc2.ImageAnalysis.top_tags', index=4,
-      number=5, type=11, cpp_type=10, label=3,
-      has_default_value=False, default_value=[],
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=2837,
-  serialized_end=3069,
-)
-
-
-_IMAGETAG = _descriptor.Descriptor(
-  name='ImageTag',
-  full_name='chippergrpc2.ImageTag',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='tag', full_name='chippergrpc2.ImageTag.tag', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='confidence', full_name='chippergrpc2.ImageTag.confidence', index=1,
-      number=2, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=3071,
-  serialized_end=3114,
-)
-
-
-_IMAGECATEGORY = _descriptor.Descriptor(
-  name='ImageCategory',
-  full_name='chippergrpc2.ImageCategory',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='name', full_name='chippergrpc2.ImageCategory.name', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='score', full_name='chippergrpc2.ImageCategory.score', index=1,
-      number=2, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='detail', full_name='chippergrpc2.ImageCategory.detail', index=2,
-      number=3, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=3116,
-  serialized_end=3176,
-)
-
-
-_FACERESULT = _descriptor.Descriptor(
-  name='FaceResult',
-  full_name='chippergrpc2.FaceResult',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='gender', full_name='chippergrpc2.FaceResult.gender', index=0,
-      number=1, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='age', full_name='chippergrpc2.FaceResult.age', index=1,
-      number=2, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='face_rect', full_name='chippergrpc2.FaceResult.face_rect', index=2,
-      number=3, type=11, cpp_type=10, label=1,
-      has_default_value=False, default_value=None,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='details', full_name='chippergrpc2.FaceResult.details', index=3,
+      name='raw_result', full_name='chippergrpc2.ImageResponse.raw_result', index=3,
       number=4, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -1590,131 +1366,48 @@ _FACERESULT = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3178,
-  serialized_end=3284,
+  serialized_start=2573,
+  serialized_end=2666,
 )
 
 
-_FACERECTANGLE = _descriptor.Descriptor(
-  name='FaceRectangle',
-  full_name='chippergrpc2.FaceRectangle',
+_PERSONREQUEST = _descriptor.Descriptor(
+  name='PersonRequest',
+  full_name='chippergrpc2.PersonRequest',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='left', full_name='chippergrpc2.FaceRectangle.left', index=0,
-      number=1, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='top', full_name='chippergrpc2.FaceRectangle.top', index=1,
-      number=2, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='width', full_name='chippergrpc2.FaceRectangle.width', index=2,
-      number=3, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='height', full_name='chippergrpc2.FaceRectangle.height', index=3,
-      number=4, type=5, cpp_type=1, label=1,
-      has_default_value=False, default_value=0,
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=3286,
-  serialized_end=3359,
-)
-
-
-_CAPTION = _descriptor.Descriptor(
-  name='Caption',
-  full_name='chippergrpc2.Caption',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
-    _descriptor.FieldDescriptor(
-      name='text', full_name='chippergrpc2.Caption.text', index=0,
+      name='group_name', full_name='chippergrpc2.PersonRequest.group_name', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='confidence', full_name='chippergrpc2.Caption.confidence', index=1,
-      number=2, type=2, cpp_type=6, label=1,
-      has_default_value=False, default_value=float(0),
+      name='action', full_name='chippergrpc2.PersonRequest.action', index=1,
+      number=2, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
-  ],
-  extensions=[
-  ],
-  nested_types=[],
-  enum_types=[
-  ],
-  serialized_options=None,
-  is_extendable=False,
-  syntax='proto3',
-  extension_ranges=[],
-  oneofs=[
-  ],
-  serialized_start=3361,
-  serialized_end=3404,
-)
-
-
-_CREATEPERSONREQUEST = _descriptor.Descriptor(
-  name='CreatePersonRequest',
-  full_name='chippergrpc2.CreatePersonRequest',
-  filename=None,
-  file=DESCRIPTOR,
-  containing_type=None,
-  fields=[
     _descriptor.FieldDescriptor(
-      name='group_name', full_name='chippergrpc2.CreatePersonRequest.group_name', index=0,
-      number=1, type=9, cpp_type=9, label=1,
+      name='person_name', full_name='chippergrpc2.PersonRequest.person_name', index=2,
+      number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='person_name', full_name='chippergrpc2.CreatePersonRequest.person_name', index=1,
-      number=2, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
-      message_type=None, enum_type=None, containing_type=None,
-      is_extension=False, extension_scope=None,
-      serialized_options=None, file=DESCRIPTOR),
-    _descriptor.FieldDescriptor(
-      name='face_data', full_name='chippergrpc2.CreatePersonRequest.face_data', index=2,
-      number=3, type=12, cpp_type=9, label=1,
+      name='face_data', full_name='chippergrpc2.PersonRequest.face_data', index=3,
+      number=4, type=12, cpp_type=9, label=1,
       has_default_value=False, default_value=_b(""),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='description', full_name='chippergrpc2.CreatePersonRequest.description', index=3,
+      name='description', full_name='chippergrpc2.PersonRequest.description', index=4,
       number=16, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
@@ -1732,43 +1425,50 @@ _CREATEPERSONREQUEST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3406,
-  serialized_end=3508,
+  serialized_start=2669,
+  serialized_end=2809,
 )
 
 
-_CREATEPERSONRESPONSE = _descriptor.Descriptor(
-  name='CreatePersonResponse',
-  full_name='chippergrpc2.CreatePersonResponse',
+_PERSON = _descriptor.Descriptor(
+  name='Person',
+  full_name='chippergrpc2.Person',
   filename=None,
   file=DESCRIPTOR,
   containing_type=None,
   fields=[
     _descriptor.FieldDescriptor(
-      name='person_name', full_name='chippergrpc2.CreatePersonResponse.person_name', index=0,
+      name='person_id', full_name='chippergrpc2.Person.person_id', index=0,
       number=1, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='person_id', full_name='chippergrpc2.CreatePersonResponse.person_id', index=1,
+      name='person_name', full_name='chippergrpc2.Person.person_name', index=1,
       number=2, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='persisted_face_id', full_name='chippergrpc2.CreatePersonResponse.persisted_face_id', index=2,
+      name='description', full_name='chippergrpc2.Person.description', index=2,
       number=3, type=9, cpp_type=9, label=1,
       has_default_value=False, default_value=_b("").decode('utf-8'),
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
     _descriptor.FieldDescriptor(
-      name='groupName', full_name='chippergrpc2.CreatePersonResponse.groupName', index=3,
-      number=4, type=9, cpp_type=9, label=1,
-      has_default_value=False, default_value=_b("").decode('utf-8'),
+      name='persisted_face_id', full_name='chippergrpc2.Person.persisted_face_id', index=3,
+      number=4, type=9, cpp_type=9, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='status', full_name='chippergrpc2.Person.status', index=4,
+      number=5, type=14, cpp_type=8, label=1,
+      has_default_value=False, default_value=0,
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
@@ -1784,8 +1484,46 @@ _CREATEPERSONRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3510,
-  serialized_end=3618,
+  serialized_start=2812,
+  serialized_end=2952,
+)
+
+
+_PERSONRESPONSE = _descriptor.Descriptor(
+  name='PersonResponse',
+  full_name='chippergrpc2.PersonResponse',
+  filename=None,
+  file=DESCRIPTOR,
+  containing_type=None,
+  fields=[
+    _descriptor.FieldDescriptor(
+      name='groupName', full_name='chippergrpc2.PersonResponse.groupName', index=0,
+      number=1, type=9, cpp_type=9, label=1,
+      has_default_value=False, default_value=_b("").decode('utf-8'),
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='persons', full_name='chippergrpc2.PersonResponse.persons', index=1,
+      number=2, type=11, cpp_type=10, label=3,
+      has_default_value=False, default_value=[],
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
+  ],
+  extensions=[
+  ],
+  nested_types=[],
+  enum_types=[
+  ],
+  serialized_options=None,
+  is_extendable=False,
+  syntax='proto3',
+  extension_ranges=[],
+  oneofs=[
+  ],
+  serialized_start=2954,
+  serialized_end=3028,
 )
 
 
@@ -1822,8 +1560,8 @@ _PERSONGROUP = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3620,
-  serialized_end=3672,
+  serialized_start=3030,
+  serialized_end=3082,
 )
 
 
@@ -1860,8 +1598,8 @@ _PERSONGROUPRESPONSE = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3674,
-  serialized_end=3732,
+  serialized_start=3084,
+  serialized_end=3142,
 )
 
 
@@ -1891,8 +1629,8 @@ _PERSONGROUPLIST = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=3734,
-  serialized_end=3794,
+  serialized_start=3144,
+  serialized_end=3204,
 )
 
 _TEXTREQUEST.fields_by_name['language_code'].enum_type = _LANGUAGECODE
@@ -1913,17 +1651,10 @@ _INTENTRESULT.fields_by_name['service'].enum_type = _INTENTSERVICE
 _IMAGECONFIG.fields_by_name['face_attributes'].enum_type = _FACEATTRIBUTE
 _IMAGECONFIG.fields_by_name['visual_features'].enum_type = _VISUALFEATURE
 _IMAGEREQUEST.fields_by_name['format'].enum_type = _IMAGEFORMAT
-_IMAGEREQUEST.fields_by_name['modes'].enum_type = _IMAGEMODE
 _IMAGEREQUEST.fields_by_name['configs'].message_type = _IMAGECONFIG
-_IMAGERESULT.fields_by_name['mode'].enum_type = _IMAGEMODE
-_IMAGERESPONSE.fields_by_name['image_results'].message_type = _IMAGERESULT
-_IMAGERESPONSE.fields_by_name['analysis'].message_type = _IMAGEANALYSIS
-_IMAGEANALYSIS.fields_by_name['content'].enum_type = _IMAGECONTENT
-_IMAGEANALYSIS.fields_by_name['caption'].message_type = _CAPTION
-_IMAGEANALYSIS.fields_by_name['categories'].message_type = _IMAGECATEGORY
-_IMAGEANALYSIS.fields_by_name['faces'].message_type = _FACERESULT
-_IMAGEANALYSIS.fields_by_name['top_tags'].message_type = _IMAGETAG
-_FACERESULT.fields_by_name['face_rect'].message_type = _FACERECTANGLE
+_PERSONREQUEST.fields_by_name['action'].enum_type = _PERSONACTION
+_PERSON.fields_by_name['status'].enum_type = _PERSONSTATUS
+_PERSONRESPONSE.fields_by_name['persons'].message_type = _PERSON
 _PERSONGROUPLIST.fields_by_name['groups'].message_type = _PERSONGROUP
 DESCRIPTOR.message_types_by_name['TextRequest'] = _TEXTREQUEST
 DESCRIPTOR.message_types_by_name['StreamingIntentRequest'] = _STREAMINGINTENTREQUEST
@@ -1937,16 +1668,10 @@ DESCRIPTOR.message_types_by_name['ConnectionCheckResponse'] = _CONNECTIONCHECKRE
 DESCRIPTOR.message_types_by_name['WeatherLocation'] = _WEATHERLOCATION
 DESCRIPTOR.message_types_by_name['ImageConfig'] = _IMAGECONFIG
 DESCRIPTOR.message_types_by_name['ImageRequest'] = _IMAGEREQUEST
-DESCRIPTOR.message_types_by_name['ImageResult'] = _IMAGERESULT
 DESCRIPTOR.message_types_by_name['ImageResponse'] = _IMAGERESPONSE
-DESCRIPTOR.message_types_by_name['ImageAnalysis'] = _IMAGEANALYSIS
-DESCRIPTOR.message_types_by_name['ImageTag'] = _IMAGETAG
-DESCRIPTOR.message_types_by_name['ImageCategory'] = _IMAGECATEGORY
-DESCRIPTOR.message_types_by_name['FaceResult'] = _FACERESULT
-DESCRIPTOR.message_types_by_name['FaceRectangle'] = _FACERECTANGLE
-DESCRIPTOR.message_types_by_name['Caption'] = _CAPTION
-DESCRIPTOR.message_types_by_name['CreatePersonRequest'] = _CREATEPERSONREQUEST
-DESCRIPTOR.message_types_by_name['CreatePersonResponse'] = _CREATEPERSONRESPONSE
+DESCRIPTOR.message_types_by_name['PersonRequest'] = _PERSONREQUEST
+DESCRIPTOR.message_types_by_name['Person'] = _PERSON
+DESCRIPTOR.message_types_by_name['PersonResponse'] = _PERSONRESPONSE
 DESCRIPTOR.message_types_by_name['PersonGroup'] = _PERSONGROUP
 DESCRIPTOR.message_types_by_name['PersonGroupResponse'] = _PERSONGROUPRESPONSE
 DESCRIPTOR.message_types_by_name['PersonGroupList'] = _PERSONGROUPLIST
@@ -1954,11 +1679,11 @@ DESCRIPTOR.enum_types_by_name['LanguageCode'] = _LANGUAGECODE
 DESCRIPTOR.enum_types_by_name['IntentService'] = _INTENTSERVICE
 DESCRIPTOR.enum_types_by_name['AudioEncoding'] = _AUDIOENCODING
 DESCRIPTOR.enum_types_by_name['RobotMode'] = _ROBOTMODE
-DESCRIPTOR.enum_types_by_name['ImageMode'] = _IMAGEMODE
 DESCRIPTOR.enum_types_by_name['FaceAttribute'] = _FACEATTRIBUTE
 DESCRIPTOR.enum_types_by_name['VisualFeature'] = _VISUALFEATURE
 DESCRIPTOR.enum_types_by_name['ImageFormat'] = _IMAGEFORMAT
-DESCRIPTOR.enum_types_by_name['ImageContent'] = _IMAGECONTENT
+DESCRIPTOR.enum_types_by_name['PersonStatus'] = _PERSONSTATUS
+DESCRIPTOR.enum_types_by_name['PersonAction'] = _PERSONACTION
 _sym_db.RegisterFileDescriptor(DESCRIPTOR)
 
 TextRequest = _reflection.GeneratedProtocolMessageType('TextRequest', (_message.Message,), dict(
@@ -2053,13 +1778,6 @@ ImageRequest = _reflection.GeneratedProtocolMessageType('ImageRequest', (_messag
   ))
 _sym_db.RegisterMessage(ImageRequest)
 
-ImageResult = _reflection.GeneratedProtocolMessageType('ImageResult', (_message.Message,), dict(
-  DESCRIPTOR = _IMAGERESULT,
-  __module__ = 'chipperpb_pb2'
-  # @@protoc_insertion_point(class_scope:chippergrpc2.ImageResult)
-  ))
-_sym_db.RegisterMessage(ImageResult)
-
 ImageResponse = _reflection.GeneratedProtocolMessageType('ImageResponse', (_message.Message,), dict(
   DESCRIPTOR = _IMAGERESPONSE,
   __module__ = 'chipperpb_pb2'
@@ -2067,61 +1785,26 @@ ImageResponse = _reflection.GeneratedProtocolMessageType('ImageResponse', (_mess
   ))
 _sym_db.RegisterMessage(ImageResponse)
 
-ImageAnalysis = _reflection.GeneratedProtocolMessageType('ImageAnalysis', (_message.Message,), dict(
-  DESCRIPTOR = _IMAGEANALYSIS,
+PersonRequest = _reflection.GeneratedProtocolMessageType('PersonRequest', (_message.Message,), dict(
+  DESCRIPTOR = _PERSONREQUEST,
   __module__ = 'chipperpb_pb2'
-  # @@protoc_insertion_point(class_scope:chippergrpc2.ImageAnalysis)
+  # @@protoc_insertion_point(class_scope:chippergrpc2.PersonRequest)
   ))
-_sym_db.RegisterMessage(ImageAnalysis)
+_sym_db.RegisterMessage(PersonRequest)
 
-ImageTag = _reflection.GeneratedProtocolMessageType('ImageTag', (_message.Message,), dict(
-  DESCRIPTOR = _IMAGETAG,
+Person = _reflection.GeneratedProtocolMessageType('Person', (_message.Message,), dict(
+  DESCRIPTOR = _PERSON,
   __module__ = 'chipperpb_pb2'
-  # @@protoc_insertion_point(class_scope:chippergrpc2.ImageTag)
+  # @@protoc_insertion_point(class_scope:chippergrpc2.Person)
   ))
-_sym_db.RegisterMessage(ImageTag)
+_sym_db.RegisterMessage(Person)
 
-ImageCategory = _reflection.GeneratedProtocolMessageType('ImageCategory', (_message.Message,), dict(
-  DESCRIPTOR = _IMAGECATEGORY,
+PersonResponse = _reflection.GeneratedProtocolMessageType('PersonResponse', (_message.Message,), dict(
+  DESCRIPTOR = _PERSONRESPONSE,
   __module__ = 'chipperpb_pb2'
-  # @@protoc_insertion_point(class_scope:chippergrpc2.ImageCategory)
+  # @@protoc_insertion_point(class_scope:chippergrpc2.PersonResponse)
   ))
-_sym_db.RegisterMessage(ImageCategory)
-
-FaceResult = _reflection.GeneratedProtocolMessageType('FaceResult', (_message.Message,), dict(
-  DESCRIPTOR = _FACERESULT,
-  __module__ = 'chipperpb_pb2'
-  # @@protoc_insertion_point(class_scope:chippergrpc2.FaceResult)
-  ))
-_sym_db.RegisterMessage(FaceResult)
-
-FaceRectangle = _reflection.GeneratedProtocolMessageType('FaceRectangle', (_message.Message,), dict(
-  DESCRIPTOR = _FACERECTANGLE,
-  __module__ = 'chipperpb_pb2'
-  # @@protoc_insertion_point(class_scope:chippergrpc2.FaceRectangle)
-  ))
-_sym_db.RegisterMessage(FaceRectangle)
-
-Caption = _reflection.GeneratedProtocolMessageType('Caption', (_message.Message,), dict(
-  DESCRIPTOR = _CAPTION,
-  __module__ = 'chipperpb_pb2'
-  # @@protoc_insertion_point(class_scope:chippergrpc2.Caption)
-  ))
-_sym_db.RegisterMessage(Caption)
-
-CreatePersonRequest = _reflection.GeneratedProtocolMessageType('CreatePersonRequest', (_message.Message,), dict(
-  DESCRIPTOR = _CREATEPERSONREQUEST,
-  __module__ = 'chipperpb_pb2'
-  # @@protoc_insertion_point(class_scope:chippergrpc2.CreatePersonRequest)
-  ))
-_sym_db.RegisterMessage(CreatePersonRequest)
-
-CreatePersonResponse = _reflection.GeneratedProtocolMessageType('CreatePersonResponse', (_message.Message,), dict(
-  DESCRIPTOR = _CREATEPERSONRESPONSE,
-  __module__ = 'chipperpb_pb2'
-  # @@protoc_insertion_point(class_scope:chippergrpc2.CreatePersonResponse)
-  ))
-_sym_db.RegisterMessage(CreatePersonResponse)
+_sym_db.RegisterMessage(PersonResponse)
 
 PersonGroup = _reflection.GeneratedProtocolMessageType('PersonGroup', (_message.Message,), dict(
   DESCRIPTOR = _PERSONGROUP,
@@ -2154,8 +1837,8 @@ _CHIPPERGRPC = _descriptor.ServiceDescriptor(
   file=DESCRIPTOR,
   index=0,
   serialized_options=None,
-  serialized_start=4552,
-  serialized_end=5447,
+  serialized_start=3983,
+  serialized_end=4943,
   methods=[
   _descriptor.MethodDescriptor(
     name='TextIntent',
@@ -2203,12 +1886,12 @@ _CHIPPERGRPC = _descriptor.ServiceDescriptor(
     serialized_options=None,
   ),
   _descriptor.MethodDescriptor(
-    name='CreatePerson',
-    full_name='chippergrpc2.ChipperGrpc.CreatePerson',
+    name='PersonAction',
+    full_name='chippergrpc2.ChipperGrpc.PersonAction',
     index=5,
     containing_service=None,
-    input_type=_CREATEPERSONREQUEST,
-    output_type=_CREATEPERSONRESPONSE,
+    input_type=_PERSONREQUEST,
+    output_type=_PERSONRESPONSE,
     serialized_options=None,
   ),
   _descriptor.MethodDescriptor(
@@ -2242,6 +1925,15 @@ _CHIPPERGRPC = _descriptor.ServiceDescriptor(
     name='TrainPersonGroup',
     full_name='chippergrpc2.ChipperGrpc.TrainPersonGroup',
     index=9,
+    containing_service=None,
+    input_type=_PERSONGROUP,
+    output_type=_PERSONGROUPRESPONSE,
+    serialized_options=None,
+  ),
+  _descriptor.MethodDescriptor(
+    name='TrainStatus',
+    full_name='chippergrpc2.ChipperGrpc.TrainStatus',
+    index=10,
     containing_service=None,
     input_type=_PERSONGROUP,
     output_type=_PERSONGROUPRESPONSE,

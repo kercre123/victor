@@ -39,10 +39,10 @@ class ChipperGrpcStub(object):
         request_serializer=chipperpb__pb2.ImageRequest.SerializeToString,
         response_deserializer=chipperpb__pb2.ImageResponse.FromString,
         )
-    self.CreatePerson = channel.unary_unary(
-        '/chippergrpc2.ChipperGrpc/CreatePerson',
-        request_serializer=chipperpb__pb2.CreatePersonRequest.SerializeToString,
-        response_deserializer=chipperpb__pb2.CreatePersonResponse.FromString,
+    self.PersonAction = channel.unary_unary(
+        '/chippergrpc2.ChipperGrpc/PersonAction',
+        request_serializer=chipperpb__pb2.PersonRequest.SerializeToString,
+        response_deserializer=chipperpb__pb2.PersonResponse.FromString,
         )
     self.CreatePersonGroup = channel.unary_unary(
         '/chippergrpc2.ChipperGrpc/CreatePersonGroup',
@@ -61,6 +61,11 @@ class ChipperGrpcStub(object):
         )
     self.TrainPersonGroup = channel.unary_unary(
         '/chippergrpc2.ChipperGrpc/TrainPersonGroup',
+        request_serializer=chipperpb__pb2.PersonGroup.SerializeToString,
+        response_deserializer=chipperpb__pb2.PersonGroupResponse.FromString,
+        )
+    self.TrainStatus = channel.unary_unary(
+        '/chippergrpc2.ChipperGrpc/TrainStatus',
         request_serializer=chipperpb__pb2.PersonGroup.SerializeToString,
         response_deserializer=chipperpb__pb2.PersonGroupResponse.FromString,
         )
@@ -105,11 +110,11 @@ class ChipperGrpcServicer(object):
     context.set_details('Method not implemented!')
     raise NotImplementedError('Method not implemented!')
 
-  def CreatePerson(self, request, context):
+  def PersonAction(self, request, context):
     """additional Face functionality
 
-    CreatePerson will enroll a person into a group, and add face result for the person
-    If person already exists, only add-face operation is done
+    PersonAction will enroll a person into a group, and add face result for the person
+    also does add-face, delete-face, get-person and list persons in group
     """
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
     context.set_details('Method not implemented!')
@@ -137,6 +142,13 @@ class ChipperGrpcServicer(object):
     raise NotImplementedError('Method not implemented!')
 
   def TrainPersonGroup(self, request, context):
+    # missing associated documentation comment in .proto file
+    pass
+    context.set_code(grpc.StatusCode.UNIMPLEMENTED)
+    context.set_details('Method not implemented!')
+    raise NotImplementedError('Method not implemented!')
+
+  def TrainStatus(self, request, context):
     # missing associated documentation comment in .proto file
     pass
     context.set_code(grpc.StatusCode.UNIMPLEMENTED)
@@ -171,10 +183,10 @@ def add_ChipperGrpcServicer_to_server(servicer, server):
           request_deserializer=chipperpb__pb2.ImageRequest.FromString,
           response_serializer=chipperpb__pb2.ImageResponse.SerializeToString,
       ),
-      'CreatePerson': grpc.unary_unary_rpc_method_handler(
-          servicer.CreatePerson,
-          request_deserializer=chipperpb__pb2.CreatePersonRequest.FromString,
-          response_serializer=chipperpb__pb2.CreatePersonResponse.SerializeToString,
+      'PersonAction': grpc.unary_unary_rpc_method_handler(
+          servicer.PersonAction,
+          request_deserializer=chipperpb__pb2.PersonRequest.FromString,
+          response_serializer=chipperpb__pb2.PersonResponse.SerializeToString,
       ),
       'CreatePersonGroup': grpc.unary_unary_rpc_method_handler(
           servicer.CreatePersonGroup,
@@ -193,6 +205,11 @@ def add_ChipperGrpcServicer_to_server(servicer, server):
       ),
       'TrainPersonGroup': grpc.unary_unary_rpc_method_handler(
           servicer.TrainPersonGroup,
+          request_deserializer=chipperpb__pb2.PersonGroup.FromString,
+          response_serializer=chipperpb__pb2.PersonGroupResponse.SerializeToString,
+      ),
+      'TrainStatus': grpc.unary_unary_rpc_method_handler(
+          servicer.TrainStatus,
           request_deserializer=chipperpb__pb2.PersonGroup.FromString,
           response_serializer=chipperpb__pb2.PersonGroupResponse.SerializeToString,
       ),
