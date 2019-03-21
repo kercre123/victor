@@ -252,8 +252,6 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
     const Json::Value& whiteListedIntents = ConditionUserIntentPending::GenerateConfig(config[kIntentWhitelistKey]);
     _iVars.intentWhitelistCondition = std::make_unique<ConditionUserIntentPending>(whiteListedIntents);
   }
-
-  SetRespondToTriggerWord( true );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -356,7 +354,8 @@ void BehaviorReactToVoiceCommand::GetBehaviorOperationModifiers( BehaviorOperati
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior() const
 {
-  return kRespondsToTriggerWord;
+  const UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+  return kRespondsToTriggerWord && uic.IsTriggerWordPending();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -396,6 +395,9 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
 
+  UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+  uic.ClearPendingTriggerWord();
+
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
     auto* wakeWordBegin = new external_interface::WakeWordBegin;
@@ -408,7 +410,6 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
     moodManager.TriggerEmotionEvent( "ReactToTriggerWord", MoodManager::GetCurrentTimeInSeconds() );
   }
 
-  const UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
   _dVars.expectingStream = uic.WillPendingTriggerWordOpenStream();
 
   // Trigger word is heard (since we've been activated) ...

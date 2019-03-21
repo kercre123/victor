@@ -303,11 +303,6 @@ protected:
   void ClearWaitForUserIntent();
   
   
-  // Set whether this behavior responds to the trigger word. It's only valid to call this before Init
-  // is called (i.e. from the constructor). Normally this can be specified in json, but in some cases
-  // it may be more desirable to set it from code
-  void SetRespondToTriggerWord(bool shouldRespond);
-  
   // Add to a list of BehaviorTimerManager timers that this behavior should reset upon activation.
   // You don't want to put a reset in too high (/ deep in the stack) a behavior in case one
   // of its delegates fails, which might reset the timer without the action being performed. You
@@ -616,12 +611,7 @@ private:
 
   // if set, increment this behavior stat when this behavior activates
   std::unique_ptr<BehaviorStat> _behaviorStatToIncrement;
-  
-  // true when the trigger word is pending, in which case ICozmoBehavior will
-  // 1) WantToBeActivated, in the absence of other negative conditions
-  // 2) Clear the trigger word when the behavior is activated
-  bool _respondToTriggerWord;
-  
+   
   // a list of named timers in the BehaviorTimerManager that should be reset when this behavior starts
   std::vector<std::string> _resetTimers;
 
