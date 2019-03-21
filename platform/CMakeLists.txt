@@ -31,6 +31,8 @@ add_subdirectory(arf)
 
 add_subdirectory(arf_tester)
 
+add_subdirectory(royale_depth_node)
+
 #
 # Macro command to create build rules for full symbol files
 #

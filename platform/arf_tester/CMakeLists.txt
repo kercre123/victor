@@ -5,7 +5,6 @@ project(arf_tester)
 include(anki_build_cxx)
 include(anki_build_strip)
 include(protobuf)
-include(nng_ext)
 
 set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")

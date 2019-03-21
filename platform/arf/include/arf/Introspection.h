@@ -261,7 +261,7 @@ public:
     T item;
 
     // TODO Ensure copy/move/assign do the right thing
-    TaggedItem() : uuid() {}
+    TaggedItem() : uuid( Anki::Util::GetUUIDString() ) {}
 
     TaggedItem( const T& t ) 
     : uuid( Anki::Util::GetUUIDString() ), item( t ) {}

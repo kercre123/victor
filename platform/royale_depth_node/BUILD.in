@@ -1,0 +1,4 @@
+cxx_project(
+  name = 'royale_depth_node',
+  srcs = ['RoyaleDepthNode.cpp']
+)

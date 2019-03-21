@@ -1,0 +1,2105 @@
+ChangeLog for Royale
+====================
+
+Status of current long term support versions
+--------------------------------------------
+
+Version v3.21.1 is the current version of the v3.x LTS branch.
+
+v3.21.1 - 2018-12-21
+--------------------
+
+### SDK
+
+#### Changes
+
+- Improved error handling in CameraDevice
+- Report more information if no suitable camera is found
+- Imager::stopCapture now returns void
+
+#### Features
+
+- New multi camera sample
+- Added Python wrappers for Linux ARM platforms
+- Added Selene module
+- Added Orpheus module
+- Added Orat45 module
+- Added MTT016 module
+- Added Spectre 3.13.2
+- Added new Level 1 API functions setFilterLevel/getFilterLevel
+    - Royale now offers different filter levels that can be used to configure the processing
+- Added new use cases for pico flexx and pico monstar glass that show the new filters    
+
+#### Bugfixes
+
+- Windows 10 driver now works (was defective since 3.19.0)
+- Corrected eye-safety pixel interpretation for M2453 B11
+- Fixed resetting of processing parameters for every frame
+- Added rpath handling for Python wrapper
+- Fixed opening a camera with faulty calibration data in raw mode
+- Playback will stop if the parameters are not accepted by the processing
+- Added setFrameRate call to Matlab wrapper
+- Fixed check of internal current monitor for M2453 modules
+
+#### Known Bugs
+
+
+
+### Features for source code customers
+
+- New class ModuleConfigFactoryZwetschge
+    - Zwetschge devices can now use different ModuleConfigs via an identifier in the storage of the device
+- Added code to support the LoadConfigurationFromFlash feature of the M2453 imager
+
+#### Changes affecting source code customers
+
+- Build now requires an installed Cypress FX3 SDK on windows
+- Zwetschge can be used as flash image
+    - use cases in Zwetschge files now override the use cases in the ModuleConfig
+    - refactored loading of Zwetschge and lena files
+- ZwetschgeTool improved
+    - Better input validation
+    - Page-align SequentialRegisterBlocks
+    - Support for calibration data
+- Refactored ImagerM2453_A11 and ImagerM2453_B11 into different classes with the common base class ImagerM2453
+- Module configs now reference processing parameters by ID
+- Unified processing parameters
+- Added tool to flash Zwetschge files to the device
+- RoyaleViewer now supports the Level 3 code and you can read and write registers in the GUI
+- Moved access level code handling to CMake
+
+### USB firmware
+
+#### Features
+
+#### Bugfixes
+
+#### Known Bugs
+
+
+
+### Royale Viewer
+
+#### Features
+
+- Added short cut for fullscreen mode (Alt + Enter)
+- Added a shortcut for loading a file (Ctrl + o)
+- Added possibility to change the rrf output path (you can change the path
+  in the viewersettings.ini file in the Royale standard output directory)
+
+#### Bugfixes
+
+- Royale Viewer highlights correct use case after use case setting failed
+- Recording and playback now works with IRS1645C
+- Fixed support of XXHDPI devices using Android
+- Removed translucency of menus because of performance issues
+- Fixed overflow in the ColorHelper
+- Fixed entering of numbers into the ParameterView
+- Removed image smoothing for saved images
+
+v3.20.0 - 2018-07-24
+--------------------
+
+### SDK
+
+#### Changes
+
+- Renamed sample_rrf_record.py to sample_record_rrf.py, to match the name of the C++ sample
+
+#### Features
+
+- For the Python API, added getCameraInfo and functions to read the exposure limits
+- Added a sample for Android with AndroidStudio 3+
+- Added get_camera_info to the C sample
+- Added support for the x1 module
+
+#### Bugfixes
+
+- Playback will be stopped if the frames are too small (indicating a corrupt .rrf)
+- For the Matlab API, added missing CameraStatus conversions
+
+### Features for source code customers
+
+- Added an Android library
+- Added new FacePlus variants, and Equinox and x1 modules
+- Added support for Zwetschge files
+    - These will replace Lena files
+    - In v3.21, Zwetschge will also be usable as flash images for the M2453
+    - They allow the use cases to be stored in the file instead of the ModuleConfig
+- Added a python tool to create Zwetschge files
+    - This tool can create also create Lena files, as part of the migration path
+    - For both .zwetschge and .lena, comments in the input files aren't included in the output
+      files. However, it should no longer be necessary to hand-edit the .lena files, instead the
+      input files can be edited, complete with all of their comments.
+- Updated the .lena file for Salome to allow framerate changes
+- Mirrored the harddrive folder structure in the Visual Studio folders for the imager component
+- Separated support for M2453's A11 and B11 steppings
+    - Added support for changing frame rates on the M2453 B11
+
+#### Changes affecting source code customers
+
+- Redesign of the eye safety pause when switching use cases
+    - Now handled by the imager component instead of CameraCore; the pause is done in startCapture
+      (which is also used internally when switching use cases)
+    - For M2453, the "tail time" in Zwetschge was replaced with a "wait time", which is now actually adhered to
+    - The other imagers use the same algorithm as before (it is now implemented in
+      Imager.cpp and ImagerUseCaseDefinition.cpp)
+- The minimum version of Python is now 3.5
+- When cross-compiling, the host's Python interpreter will be used, not the target's
+- New unit test and integration test utilities will use the royale::test::utils namespace
+- Added shared test utils in LenaTestUtils.hpp, StorageTestUtils.hpp and ZwetschgeTestUtils.hpp
+- The IImagerExternalConfig has moved to Royale's config component
+- UuidlikeIdentifier's algorithm for hashing arbitrary strings is documented
+    - The algorithm is unchanged, but it's no longer "implementation defined", and it will not
+      change in future versions
+    - Added a Python uuidlike_identifier.py that calculates the same hashes
+- General refactoring to integrate Zwetschge
+
+#### Bugfixes
+
+- Cleanup of CppCheck warnings
+- The UUID strings in Lena files and ModuleConfigs are parsed as UUIDs again
+    - In v3.19.0, they changed to using UuidlikeIdentifier's hashing instead of parsing constructor
+    - They all calculated the same IDs, so this only caused problems when comparing them to UUIDs
+      read from the binary .zwetschge files
+- Fixed CMake 3.11's warnings about CMP0072 (libGL vs libOpenGL)
+- CMake changes to ensure that the SWIG (Python) files are regenerated when needed
+
+### USB firmware
+
+#### Features
+
+- Updated to firmware version arctic_v0.17.2
+- Update CX3 code based on version 1.3.4 of the Cypress SDK and firmware library
+- Add link power management for USB 2.0
+- The manufacturer identifier in the USB descriptor can now be configured
+- CX3 images allow burst lengths of up to 16 (previously it was limited to 12)
+- Added new devices Equinox, F1, M1 and X1
+- Removed UVC images for devices that now normally use Amundsen
+
+#### Bugfixes
+
+- Fix a bug which could give garbage data in response to a UVC video probe request
+
+#### Known Bugs
+
+- There is no firmware for (non-CX3) FX3 devices, they'll be re-added in a later release
+
+### Royale Viewer
+
+#### Features
+
+- The link to RoyaleViewer in Windows' start menu now shows the version number
+
+v3.19.0 - 2018-06-29
+--------------------
+
+### SDK
+
+#### Features
+
+- Added C++ and Python samples for recording rrf files
+- An event listener can be registered with the camera manager
+    - This can receive details about cameras that are omitted from getConnectedCameraList()'s list
+      because of errors while searching for connected cameras.
+- Improved the Python wrapper
+    - Added getVersion()
+    - Implemented the Python IRecordStopListener
+- Added USB (Arctic) type and firmware version to getCameraInfo()
+
+#### Bugfixes
+
+- Added support for setting the exposure time for slave modules
+- Fix a taking-the-address-of-end() bug in StorageFile
+- Fixed PLY files having values near the max for unsigned integers for invalid pixels
+
+### Features for source code customers
+
+- Added build instructions for the Python wrapper
+- Added Salome Rev 2 modules
+    - These use a separate config and Lena than the Salome Rev 1
+- Use cases can now be linked to processing parameters by ProcessingParameterId
+- Added UseCaseDefFactoryProcessingOnly, for reading Royale's data for Flash Defined Imagers
+    - During bring-up, Flash Defined Imagers are likely to be configured with the existing
+      ModuleConfig structures. This factory can be used as a filter, to ensure that only
+      data that can be stored in the flash after bring-up is being used during bring-up.
+
+#### Changes affecting source code customers
+
+- Refactoring of the device-specific hardware tests
+    - Many tests now support Alea945nm and Salome modules
+    - Removed references to the now-unsupported C2 module
+- Refactored internal implementation of auto exposure
+- Adapted noise thresholds for pico monstar with glass lens
+- The Windows CyAPI library is now used from the Cypress SDK
+    - Using Enclustra and Amundsen USB devices will need the SDK to be installed on the machine
+      building Royale. The requirements for running an already-built Royale are unchanged.
+
+#### Bugfixes
+
+- Fixed logic in the imager that assumed grayscale frames would only have MODFREQ_AUTO
+- Corrected the exposure for the intensity frame in the M2453 module configs
+
+### Royale Viewer
+
+#### Features
+
+- For L2 access
+    - When saving a screenshot, also save the processing parameters used
+    - Add UI for changing the frame rate
+    - Allow 3 decimal places for float parameters
+
+v3.18.0 - 2018-06-04
+--------------------
+
+### SDK
+
+#### Changes
+
+- Changed the Master/Slave example to a Slave example
+  (as the pico monstar and maxx only support the slave functionality)
+
+#### Features
+
+- Added first version of the Python wrapper for Royale
+- Enabled external triggers (master/slave) for the pico maxx
+- Capturing will be stopped if the internal current monitor of the
+  IRD2381 triggers
+
+#### Bugfixes
+
+- Fixed a crash if Spectre didn't get the correct calibration data
+  for the use case
+- Fixed a crash in the Matlab wrapper that could happen if mexprintf
+  was called from different threads
+- Fixed a crash when using SparsePointCloud data  
+- Fixed a problem with switching use cases with Amundsen and UVC devices
+  (e.g. pico monstar and pico maxx) on OSX
+
+#### Known Bugs
+
+### Features for source code customers
+
+- Added an option to the SPIFlashTool to only write the header without
+  calibration data
+- Added the possibility to check the state of the internal current monitor
+  of the IRS2381
+- Added the possibility of linking to processing parameter maps by GUID 
+  in the ModuleConfig
+
+#### Changes affecting source code customers
+
+- Moved CoreConfig out of the Royale core component, leaving ICoreConfig
+  in
+
+### USB firmware
+
+#### Features
+
+#### Bugfixes
+
+#### Known Bugs
+
+### Royale Viewer
+
+#### Features
+
+- Temperature information will be displayed when the viewer is started with
+  Level 2 access
+
+#### Bugfixes
+
+v3.17.0 - 2018-05-04
+--------------------
+
+### SDK
+
+#### Changes
+
+- The coding style for the samples has been updated
+    - C++ samples qualify "royale::" class names, instead of using the namespace
+    - C# samples qualify "RoyaleDotNet." class names, instead of using the namespace
+
+#### Features
+
+- Enabled external triggers (master/slave) for the pico monstar
+
+#### Bugfixes
+
+- Fixed retrieval of calibration data from recordings
+- Fixed retrieval of processing parameters from recordings
+- On Linux, UVC based 3D cameras that are not currently in use by Royale can be seen by the V4L
+  utilities.  They disappear from V4L's list when Royale opens the camera, the bugfix is that they
+  now reappear when Royale closes the camera (the kernel UVC driver is reattached).
+- Alea devices could not be set to the maximum exposure time
+
+### Features for source code customers
+
+- Pseudodata-based readings of NTC sensors can now be filtered with a weighted average
+
+#### Changes affecting source code customers
+
+- Alea has 2 megabits of storage, not 1 megabit
+- Corrections to the calibration use case for Cuthbert and Williams devices
+
+### Royale Viewer
+
+#### Features
+
+- The log button is now a log/help button with separate tabs for
+    - The log
+    - A help menu
+    - Info about the connected camera(s), separate from the log
+    - Info about the licenses for all libraries included in the Royale SDK
+
+#### Bugfixes
+
+- Improvements to the window size and cursor when more than 1 camera is attached
+- Fixed the --mode option to select a starting use case
+
+v3.16.0 - 2018-04-13
+--------------------
+
+### SDK 
+
+#### Changes
+
+- Added Linux (udev) permissions for FacePlus
+- Clarification of licensing
+   - Open-source source can be downloaded from https://oss.pmdtec.com/
+
+#### Features
+
+- Updated the Royale license to explicitly allow usage embedded in an application
+- Python samples now call CoInitialize on Windows, this fixes them not being able to find UVC
+  cameras on Windows.
+- Updated the processing library to Spectre 3.11
+   - Parameter AUTO_EXPOSURE_SET_VALUE replaces EXPOSURE_REFERENCE_AMPLITUDE
+- Add new error status returns if a specific device is only usable in L3 mode
+
+#### Bugfixes
+
+- Fixed lens center being ignored when camera is opened in raw mode
+- The .NET SampleDotNetCameraInfo now defaults to building for x64 on 64-bit Windows
+
+### Features for source code customers
+
+- Rewrote README_tools.md for easy comparison of the existing flash tools
+- Added IModuleConfigFactory.enumerateConfigs(), which can return a list of the configs that
+  hardware probing could return, without needing hardware to probe
+   - For devices that use unique identifiers for use cases (Salome and FacePlus), the
+     without-hardware integration tests now check the identifiers for uniqueness
+- Added JRoyale proof of concept for a wrapper-based Java interface on Android
+- Added a beam profile use case for Salome
+
+#### Changes affecting source code customers
+
+- The imager class hierarchy is being restructured, with more separation between imagers that have
+  factory-set timings (M2453, used in Salome and FacePlus), and imagers that calculate the timings
+  in Royale
+- Combined the Imager*DirectAccess classes in to a template
+- For imagers using GUID-like strings in their Module Configs (Salome and FacePlus), handling of
+  these identifiers is now encapsulated in the UseCaseIdentifier class.  The identifiers are now
+  converted to an internal representation during construction
+- Split UseCaseDefinition.getName() in to getTypeName() and getIdentifier()
+   - Added documentation comparing UseCase.getName() to UCD.getTypeName()
+- Callers of the UseCaseDefinition class' copy constructor and assignment operator are being
+  refactored to avoid using these slicing operations, with the aim of moving to an
+  IUseCaseDefinition interface
+- Renamed RegisterMap to TimedRegisterList
+- It's now possible to build a playback-only build of Royale, which can only use .rrf files
+
+### USB firmware
+
+#### Features
+
+#### Bugfixes
+
+#### Known Bugs
+
+### Royale Viewer
+
+#### Features
+
+- Changed to a smaller font size on some combinations of display resolution and pixel density
+- Added a checkbox to enable/disable the min/max filter
+- When fast-forwarding and rewinding during playback of recordings with very few images, changed the
+  minimum skip to 3 frames (for larger files it's 10% of the number of frames in the recording).
+
+#### Bugfixes
+
+- Fixed rewinding to the beginning (previously the rewind button would only go to frame 2)
+
+v3.15.0 - 2018-03-23
+--------------------
+
+### SDK
+
+#### Changes
+
+- Alea and Salome devices are now officially supported
+- For applications that use IDepthImageListener, the meaning of the confidence value has changed
+    - If you don't see a compiler error, your application is almost certainly not affected
+    - If your application is affected, it will receive a compiler error that "DepthImage::data" no
+      longer exists, it has been renamed to "DepthImage::cdData"
+    - Similar renames have been applied to the C and C# APIs
+    - Documentation about the change is in the DepthImage.hpp file and DepthImage documentation
+- Improved the startup time for M2453 devices with storage attached via the M2453
+- Clarification of licensing
+    - Added a contact address <info@pmdtec.com> for questions about licensing
+    - Added a missing license for PackedArray
+
+#### Bugfixes
+
+- For C and C++ developers on Windows: replaced some _WINDOWS ifdefs with _WIN32, as _WIN32 is the
+  official define, and some compilers do not define _WINDOWS
+    - This was causing the samples to not see UVC devices.  For an explanation of why it affected
+      UVC devices, please refer to samples/inc/sample_utils/PlatformResources.hpp
+- Fixes for the C and C# APIs when using level 2 access
+    - Fixed data corruption in intermediate data
+    - Added phaseAngles and illuminationEnabled
+- Removed ROS-related libraries and headers from the Android SDK
+
+### Features for source code customers
+
+- Allow NTC voltage lower than 1.0f
+- Allow pseudodata NTC readings to be read from a specific frame
+- Default configurations for modules without product codes
+    - Added a default for Alea
+    - Fixed the default for Daedalus
+- Added a function for gray phases with SSC
+- Print the CMAKE_VERSION in the build log
+- Unit tests for roypy, added to the `hardware_test` target
+- Ensure that CMake's PYTHON_EXECUTABLE points to Python 3, even if both v2 and v3 are available
+- Use the ImagerType enum instead of uint32_t
+- IImagerExternalConfig for M2453 imagers is changing to support new features
+    - This will continue in v3.16.0, the new features are in the Zwetschge files
+
+#### Changes affecting source code customers
+
+- Directories have been rearranged to clarify ownership of parts of the codebase
+    - This matches the copyright policy in the SLA
+- Support for the M2452's A11 stepping has been removed
+    - This is because all Royale-supported M2452 devices are using the B1x steppings
+    - This is preparation for refactoring the M2452 imager code
+- Animator boards running the USB firmware for C2 modules will now be treated as Animator boards
+    - The C2 module itself was an M2452 A11 based device
+    - The module config for a C2 + Animator board has now been renamed AnimatorDefault
+    - The AnimatorDefault config has changed to match an Alea module by default
+- The Lewis device has been renamed to FacePlus
+    - Some of the Lewis use cases have changed to 60MHz
+- Support for more devices in the flash and eraseFlash tools
+- LibUVC has been removed, it has been disabled by default at build time since Royale v3.13.0
+    - UVC devices are still supported, BridgeAmundsen supports both Amundsen and UVC firmware
+- CMake will now report that the minimum CMake version is 3.0 for the imager's CMakeLists.txt
+    - This has been required since v3.12.0, which used the string concat command
+
+### Royale Viewer
+
+#### Features
+
+- During playback, the back and forwards buttons now move by 10% of the recording
+- Added keyboard shortcuts for playback
+- RoyaleViewer now changes the mouse cursor to a waiting cursor when the camera is being opened
+
+v3.14.0 - 2018-03-02
+--------------------
+
+### SDK
+
+#### Changes
+
+- Changed the default exposure times for Alea modules to the maximum
+
+#### Features
+
+- Added Spectre 3.10
+
+##### Features for source code customers
+
+- Added a tool to update the maxx/monstar CX3 firmware
+- The Doxygen for internal classes now includes royalecore
+- Added SensorRoutingFilename which can be used to specify calibration
+  files on the filesystem in the ModuleConfig to help bringing up new modules
+
+##### Changes affecting source code customers
+
+- Fixed a lot of CppCheck warnings
+- Renamed FlashMemoryPolar to StorageFormatPolar
+- Renamed FlashMemoryPico to StorageFormatPicoLegacy
+
+#### Bugfixes
+
+- Fixed a bug that could happen switching use cases with the ImagerM2452_B1x_AIO
+  imager implementation
+- RoyaleLogger is now thread safe  
+
+### Royale Viewer
+
+#### Features
+
+- 3D view can now also be flipped
+
+#### Bugfixes
+
+- Increased size of parameter view
+- Fixed the color of the context menu items
+
+v3.13.0 - 2018-02-13
+--------------------
+
+### SDK
+
+#### Changes
+
+- Removed empty sections from this changelog
+
+#### Features
+
+- Enabled 64-bit file sizes on 32-bit systems, to support long .rrf recordings
+- When recording .rrf files, the write buffer is now flushed after each frame. On Win32, the buffer
+  was growing until the PC started freezing.
+- Updated Spectre to v3.9
+- Performance optimisations for BridgeAmundsen on all platforms
+- For OSX and desktop Linux, changed the UVC support to use BridgeAmundsen instead of LibUVC
+- The OpenCV sample now uses a Z-image specific scaling algorithm, instead of just normalizing it
+
+##### Features for source code customers
+
+- For devices where the imager reads an NTC temperature sensor, it's now possible to configure which
+  reading is used from the set of raw frames that are combined in to a depth frame
+- Added a new method to construct use cases, for details please refer to the unit test
+  (TestUseCaseArbitraryPhases)
+- CalibrationToolV7 can now write product identifiers to the flash
+- Refactored the way in which ProcessingFlags are specified in ModuleConfigs, to reduce duplication
+    - Each camera can have a common set of standard parameters
+    - ParametersMaps only need to list the flags that are different to the standard parameters
+    - Please refer to ModuleConfigPicoFlexxCommon.hpp for examples
+- Added an `ENABLE_ALL_LOGS` constant, which has all bits of the RoyaleLoggerLevels bitmask set
+- Updated the Unity Test Framework (a C testing framework, unrelated to the similarly-named game engine)
+- Added Lewis cameras
+- For Master/Slave setups, there is now a UseCaseDefinitionSlave helper class
+
+##### Changes affecting source code customers
+
+- On M2453 devices, performance tuning for 60MHz phases
+- On M2453 devices, switched to superframe mode
+- Cleaned up some warnings detected by CppCheck
+    - Many constructors now use the 'explicit' keyword
+    - The `jenkins_cppcheck` script now checks more files
+- For OSX and desktop Linux, changed the default for UVC support to use BridgeAmundsen instead of
+  LibUVC.  We believe this will now support all existing CX3-based Arctic UVC devices on all USB
+  hosts, but for FX3 (non-CX3) based Arctic UVC devices there is a still-open known bug; if
+  necessary the change can be reversed by setting `ROYALE_BRIDGE_UVC_IMPLEMENTATION` to `LIBUVC`.
+
+#### Bugfixes
+
+- On some USB hosts, the Amundsen devices' data streaming couldn't be started via `SET_INTERFACE`.
+  On these a fallback to `COMMIT_CONTROL` will be used.
+- On FX3 (non-CX3) UVC devices, the `SET_INTERFACE` call does not start data streaming; on platforms
+  that can use BridgeAmundsen for UVC devices, a `COMMIT_CONTROL` will be sent after the
+  `SET_INTERFACE`.
+- Fixed a crash if a calibrated device is set to use a frequency that is not in the calibration
+- Made the destructor of IGpioAccess virtual
+- During CMake's configure step, old versions of royale-version.h will be cleaned up
+
+#### Known Bugs
+
+- On FX3 (non-CX3) UVC devices, BridgeAmundsen is not doing the same disconnection handshake that
+  LibUVC does.  Disconnecting and then quickly reconnecting is unreliable on these devices when
+  using BridgeAmundsen.
+
+### USB firmware
+
+- Firmware updated to version 0.16.1
+
+#### Features
+
+- Added a second command to start data streaming, for USB hosts where the `SET_INTERFACE` call fails
+
+#### Bugfixes
+
+- All devices identify themselves as bus powered, not self-powered
+- When connected at SuperSpeed, all devices declare a max power consumption of 896mA
+- Add LPM U1/U2 exit latencies to the SuperSpeed descriptor
+- The Amundsen Animator now has the same features enabled as the UVC Animator
+
+#### Known Bugs
+
+- The FX3 codebase has different edge cases to the CX3 codebase.
+
+### Royale Viewer
+
+#### Features
+
+- Improved font sizes when used with 4K display resolution
+
+#### Bugfixes
+
+- When playing a recording, you can now fast forward or rewind by moving the track slider
+- Filtering is now supported in 3D mode on Samsung S7 phones
+
+v3.12.1 - 2018-01-26
+--------------------
+
+### SDK
+
+#### Bugfixes
+
+- Fixed opening of uncalibrated modules
+- Fixed build of Python wrapper
+
+v3.12.0 - 2018-01-22
+--------------------
+
+### SDK
+
+#### Changes
+
+- Raised minimum supported development platform for Linux to Ubuntu 16.04 and GCC5
+
+#### Features
+
+- Optimized Amundsen's USB buffer handling
+- Added the possibility to cache calibration files for modules that use the SPI flash over
+  the imager (e.g. Alea)
+- Added calculation methods for M2453 exposure values
+- Added a new UI to the ROS example
+- Added information about the processing to getCameraInfo
+- Added Spectre 3.8
+- Spectre Multithreading support is now enabled as default
+- Added Salome support
+- Added official support for Windows 10 for pico maxx and pico monstar
+
+##### Features for source code customers
+
+- Improved Python examples
+- Added support for Salome to the SPIFlashTool
+- Added a PCL(Point Cloud Library) example. This is not part of the release package, 
+  because of bugs in the PCL CMake build system.
+
+#### Bugfixes
+
+- Fixed calling setExposureTime before starting the capturing
+- Fixed getMaxSensorHeight for playbacks
+- Fixed a bug where the exposure times could be delivered in the wrong order
+- Added missing processing flag in DotNet wrapper 
+
+v3.11.0 - 2017-11-30
+--------------------
+
+### SDK
+
+#### Changes
+
+- Updated Spectre to v3.7
+
+#### Features
+
+- Calling setExposureTime() before startCapture() is now supported
+- With L2 access, automatic binning can be enabled (combining multiple pixels to increase accuracy
+  from noisy data)
+
+##### Features for source code customers
+
+- Refactoring of the imager interfaces, towards supporting imagers which have their settings defined
+  in storage that is accessible to the imager itself, without needing Royale to have the full data.
+- Timing is specific to the imager, so tests using simulated hardware can run to the speed of the
+  simulation (faster than wall-clock time for unit tests, and slower for simulated silicon)
+- For recording a sequence of imager commands, any required timing is now visible.
+- Python support for extended data (level 2 access)
+- When building on a non-Windows machine with an incompatible version of OpenCV, CMake will detect
+  the incompatibility and not build the OpenCV sample
+- Superframes are now supported for IRS10x0C and IRS1x15C (only when connected via CSI-2)
+
+##### Changes affecting source code customers
+
+- On Windows, nightly and developer builds now show a modal pop-up for 5 seconds warning that they
+  are not guaranteed to be eye-safe
+  - The EXCEPT_DIRTY_DEV flag will disable this when run by the same Windows user who built the
+    binary (see doc/build_instructions.md)
+
+#### Bugfixes
+
+- Corrected the formatting of the module identifiers in CameraInfo
+
+### USB firmware
+
+#### Known Bugs
+
+- We are still debugging some edge conditions on Windows 10, with some USB ports the camera does not
+  connect reliably
+
+### Royale Viewer
+
+#### Features
+
+- Removed v3.7.0's feature of checking whether new versions of the SDK are available
+
+#### Bugfixes
+
+- On Windows, RoyaleViewer can now load .rrf files from paths that can be represented in the local
+  codepage. These were already supported on other platforms.
+  - For example, files with umlauts in the path name on machines running German locales
+
+v3.10.0 - 2017-11-03
+--------------------
+
+### SDK
+
+#### Changes
+
+- Updated documentation about the importance of the x and y coordinates of the depth data.  The x, y
+  layout of the pixels is similar to those of a two-dimensional camera, and it is unlikely to be a
+  rectilinear projection (this depends on the camera lens).
+- Added an undistortion routine for the lens projection to the OpenCV sample
+
+#### Features
+
+- Expanded the ROS demo, including support for setting the use case and exposure mode
+- Support command-line arguments to sample_roypy.py
+- Support playing a recording in sample_roypy.py, using the --rrf argument
+
+##### Features for source code customers
+
+- Added sanity checks that the each module's image width is sufficient to hold the pseudodata
+- Autoexposure can now be used on uncalibrated modules
+- Uncalibrated modules' image data now passes through a similar path to calibrated modules (through
+  the processing component), this removes some duplicated code
+- Added ability to write arbitrary data to calibration storage via the Royale API layer, this
+  requires level 3 access
+- Added documentation about `ROYALE_TEST_FILE_PATH`, which is used for loading data during unit
+  tests, without depending on the directory that the test is run from
+
+##### Changes affecting source code customers
+
+- Tools that use the PlatformResources class previously had their own copy, they now include the
+  code from the sample_utils folder
+- Added the ModuleConfigFactoryAnimatorBoard and removed the separate ModuleConfigDataCX3Uvc which
+  was used for the Animator board.  Please see ModuleConfigFactoryAnimatorBoard.hpp for details.
+- Added the Animator's USB identifiers to the udev rules file
+- Some of the integration tests require knowledge of camera, for example checking that the API
+  methods return the expected set of use case names.  Many of these only tested the pico flexx, and
+  have been updated to make it easier to test additional cameras.
+- Added details of the pico maxx and pico monstar to several integration tests.
+
+#### Bugfixes
+
+- The IntermediateData, which is only available with level 2 access, was corrupted in previous
+  versions of Royale.
+
+### Royale Viewer
+
+#### Features
+
+- Added tool-tips for buttons, showing which hotkey can be used instead
+- Improved the submenus
+
+#### Bugfixes
+
+- Changes to min/max filters and parameters now take effect immediately, previously they took effect
+  when the next frame was received.  They now work in the two edge cases where no new frames are
+  received: when playback is paused, and on the last frame received before disconnecting a camera.
+
+v3.9.0 - 2017-10-13
+--------------------
+
+### SDK
+
+#### Features
+
+- Upgraded to Spectre 3.4
+- Added IRS1645C/IRS1615C SPI firmware. Modules that support this can now access the 
+  SPI flash through the imager 
+- sampleRetrieveData will output the frames as ASCII art, supports command line options and
+  now supports mixed mode use cases
+- Added a top level html to improve the accessibility of the Doxygen documentation
+- Added variant handling for different cameras
+- Added a ROS example
+- Added examples for Level 2 functionality (raw data readout, setting processing parameters)
+- Added support for new Amundsen CX3 firmware
+
+##### Changes affecting source code customers
+
+- Fixed VS2015 compilation
+- Added the first version of a wrapper for Python 3 
+
+#### Bugfixes
+
+- Added Doxygen API documentation to Android package
+- Setting CallbackData before initialization now works for all values
+- For IntermediateData the illuminationEnabled vector grew endlessly
+
+### USB firmware
+
+#### Features
+
+- As well as UVC firmware, we now have non-UVC firmware ("Amundsen") which provides the same 
+  functionality without using the native UVC stack.
+
+### Royale Viewer
+
+#### Features
+
+- Added automatic rotation feature
+
+#### Bugfixes
+
+- Fixed the background color in the streams combo box
+
+v3.8.0 - 2017-08-31
+--------------------
+
+### SDK
+
+#### Features
+
+- Upgraded to Spectre 3.3
+- Added an OpenNI2 driver (samples/cpp/sampleOpenNI2Driver), allowing Royale and Royale-supported
+  cameras to be used and controlled via OpenNI2
+- For Matlab users, timeouts can now be adjusted
+
+##### Features for source code customers
+
+- Some of the integration tests from test_royale (which requires a camera to be attached) have been
+  added to the new test_royale_without_hardware, and to the tests run by `make test`
+- Added support to identify variants of devices by their calibration data, and for Royale to load
+  different configurations based on these identifiers (ModuleConfigFactoryByStorageId)
+  - In this release, none of the reference devices are using this feature
+
+##### Changes affecting source code customers
+
+- ModuleConfigs using the multiple-argument constructor of FlashMemoryConfig must change to using
+  the Named Parameter Idiom methods (setImageSize, setPageSize and setSectorSize)
+
+#### Bugfixes
+
+- With L2 access, new calibration data can be applied to an already-open device, but in mixed-mode
+  use cases this only affected the first stream
+- Fixed the playback of some older rrf files which didn't work in Royale 3.7  
+
+### Royale Viewer
+
+- The Android app now has the same version number as the Royale release
+
+#### Features
+
+- With Level 2 access, RoyaleViewer can show a count of the valid pixels
+
+#### Bugfixes
+
+- Fixed a bug in the standard deviation display, after clicking on a second point the value
+  displayed was zero
+
+v3.7.0 - 2017-08-10
+--------------------
+
+### SDK
+
+#### Changes
+
+- Android builds no longer include libuvc, although UVC devices are still supported.
+- In the v3.6.0 release, libuvc was unused on Android.  Android applications'
+  `System.loadLibrary("uvc")` call can be removed when building with v3.6.0, and must be removed
+  when building with v3.7.0.
+
+#### Features
+
+- Upgraded to Spectre 3.2
+- Added read-only support for calibration header format v7
+
+##### Features for source code customers
+
+- Reduced the amount of logging in debug builds when looking for USB devices.  The verbose logs of
+  v3.6.0 can be re-enabled by setting the ROYALE_LOGGING_VERBOSE_BRIDGE CMake flag.
+- Skylla flash tool can access SPI devices connected directly to the imager.
+- The imager component has been refactored, as preparation for using it as a stand-alone tool.
+
+#### Known Bugs
+
+- On some Android devices, any use case faster than 5FPS may stop receiving frames.  In
+  RoyaleViewer, touching the screen starts the frames being received again, although the frame drops
+  are happening in the I/O layer (the frame-drop stats report them as bridge drops).
+- This issue is also seen with previous versions of Royale.
+
+### Royale Viewer
+
+#### Features
+
+- The command-line parameters are now documented in RoyaleViewer.pdf
+- The RoyaleViewer will now check whether new versions of the SDK are available.
+
+#### Bugfixes
+
+- Fixed a crash on exit on Android
+
+v3.6.0 - 2017-07-17
+--------------------
+
+### SDK
+
+#### Features
+
+- pico maxx and pico monstar have mixed-modes available
+- Added a new .NET sample, introducing how to read the camera info
+- The installer will now warn before installing 64-bit Royale on 32-bit Windows
+
+##### Features for source code customers
+
+- The CameraCoreBuilderMira has been refactored, to enable modules' storage
+  devices to be read during module recognition
+- Added a README_tools.md, describing the utilities in the tools/ directory
+- A new BridgeAmundsen has been added, which uses LibUsb without needing LibUvc.
+  For Android this replaces BridgeUvc, on other non-Windows platforms either
+  bridge can be used with UVC devices
+- The Imager component is being decoupled from the rest of Royale
+
+#### Bugfixes
+
+- Debug logging on Android is now working again
+- Fixed Android support for UVC devices.  Please note that most phones will not
+  be able to use the pico maxx or pico monstar, as they require USB 3's
+  SuperSpeed bandwidth.
+
+### Royale Viewer
+
+#### Features
+
+- The displayed data can be filtered by min/max distance
+- Recorded .rrf files can now be drag-and-dropped
+- RoyaleViewer can now be started by clicking on .rrf files in Windows' File Explorer
+- Command-line arguments that end `.rrf` will be assumed to be a filename,
+  equivalent to using v3.1.0's `--rrf <filename>` option.
+
+v3.5.0 - 2017-06-23
+--------------------
+
+### SDK
+
+#### Changes
+
+- getAccessLevel will now return the level 1 based instead of 0 based
+  (e.g. CameraAccessLevel::L2 returns 2 instead of 1)
+- Royale now supports synching cameras and running them as master or slave (if the camera
+  supports it, please refer to the documentation of the camera in question)
+
+#### Features
+
+- Added Spectre 3.0
+
+#### Bugfixes
+
+- Fixed exposure time handling for uncalibrated modules
+- Updated error handling in case of missing calibration data
+- Fixed the Android example
+
+### Royale Viewer
+
+#### Bugfixes
+
+- Fixed keyboard short cuts not always working properly on Mac OSX
+
+v3.4.0 - 2017-06-02
+--------------------
+
+### SDK
+
+#### Features
+
+- Introduced ModuleConfigFactories to prepare the introduction of multiple phases 
+  into the USB device discovery
+- Added an OpenCV example (You have to set the OpenCV_DIR to your OpenCV 2 folder
+  to enable the compilation)
+- Added an example which shows how to export PLY files from a Royale recording
+- Added the phase angle and the illumination status to the raw data struct (Level 2 access needed)
+- Added support for low FPS use cases 
+
+##### Features for source code customers
+
+- The source code formatting is now using AStyle 3.0
+
+#### Bugfixes
+
+- Added a mechanism to recover after an unsuccessful use case switch
+- Fixed a crash that happened when processing parameters were set during raw data readout
+
+### USB firmware
+
+#### Features
+
+- Added firmware image for Daedalus
+
+### Royale Viewer
+
+#### Features
+
+- The color scale for the overlay mode has been optimized so that near objects
+  appear brighter than in previous versions
+
+#### Bugfixes
+
+- The color range isn't adapted anymore when changing between 2D and 3D
+- The automatic color range adaption now eliminates outliers to give the best
+  color map 
+
+v3.3.0 - 2017-05-09
+--------------------
+
+### SDK
+
+#### Changes
+
+- Most devices now use the All-In-One imager firmware
+- The minimum exposure times for PicoFlexx devices has been increased, because
+  of the new firmware
+- All FPGA based pmd cameras (for example the MiniCam) are no longer supported
+- The license text was clarified with respect to third-party code
+- The license text was clarified with respect to third-party imager hardware
+- The depth data confidence can now have values between the min and max, 
+  previously it could only be either the minimum (0, bad) or 
+  the maximum (255, good)
+- Added getErrorString to royale.hpp which translates a CameraStatus to a human
+  readable description
+  
+#### Features
+
+- On the pico flexx, two mixed modes have been verified as eye-safe and are now
+  available in all access levels
+  (Only one of these modes is available when connected via USB2, as the one
+  with higher FPS needs USB3's SuperSpeed transfer rate. Please keep in mind that
+  many smartphones only provide a USB2 port!)
+- A new API function has been added to allow searching for the mixed-mode use
+  cases without needing to call setUseCase for each one
+- Added Spectre 2.10.0
+    - The stray light removal feature is now supported on pico flexx
+- Added a new overload of royale::getVersion() which provides the SCM (Git)
+  revision number that Royale was built from
+- If the application registers an exposure listener and calls setUseCase, the
+  listener will now be notified if changing to the new use case causes a change
+  in the exposure time
+- Minor performance improvement to the effect of debugging logging in non-debug
+  builds, where the logging is disabled
+
+- Royale API:
+    - Added ICameraDevice::getNumberOfStreams to the C++ API
+    - Added the corresponding functions to the C, .NET and Matlab APIs
+
+- royaleCAPI:
+    - Added royale_camera_device_get_number_of_streams (API version v330)
+    - The C API version is selectable by setting ROYALE_C_API_VERSION
+        - "330" is the latest API which adds the new function alias
+        - Except for added functions, "330" and "320" are the same as "300"
+        - By default, the latest API is used
+
+##### Features for source code customers
+
+- When level 3 access is enabled, setExposureTime no longer enforces the eye
+  safety limits
+- The build will now handle Royale being a subproject instead of expecting to be
+  in the top CMAKE_SOURCE_DIR
+- The hardware abstraction has been improved, using II2cDeviceAccess instead of
+  SensorRole.  The existing II2cAccess class has been renamed II2cBusAccess.
+- The BridgeUvc's buffer handling has been separated to BridgeCopyAndNormalize,
+  for other bridges to use
+
+#### Bugfixes
+
+- Fixed a race condition in the imager firmware when receiving I2C
+  messages at the same time as reconfiguring for exposure changes
+- When autoexposure mode is enabled, calling setExposureTime() from an
+  application will now return an error status
+- Errors during stopCapture() are now reported
+- While playing back recorded files and using the L2-only raw data listener,
+  the exposure times could be reported in the wrong order
+- Performance improvement for changing use case or closing the camera, if the
+  temperature sensor is scheduled to be read during that operation
+
+### USB firmware
+
+#### Features
+
+- Updated the prebuilt CX3 firmware image to v0.13.6
+
+#### Known Bugs
+
+- The FX3 Arctic firmware does not support enabling low-power mode for the
+  imager.  CX3 devices and Enclustra FX3 devices are not affected.  This
+  low-power mode is a new feature, it has been postponed until Royale v3.4.0,
+  and we will ensure that it is not enabled for devices with the current FX3
+  firmware.  The bug causes corruption in the first image after reverting to
+  normal mode.
+
+### Royale Viewer
+
+#### Features
+
+- Mixed modes are now available on the pico flexx, without needing a special
+  access level
+- The "Log" button will be highlighted if there are new log messages
+- Added more command line options to the Viewer
+    - --ac Automatically connect to the camera on startup
+    - --mode=USE_CASE Select the given use case when connected
+    - --ae Enable auto exposure in every mode by default
+    - --help List the supported options
+- The streamIds (for mixed mode) can now be displayed in the UI
+- In the 3D display mode when viewing a mixed-mode use case, the "lock view"
+  option will display all streams from the same viewpoint
+- The "Force Color" button is now a top level button, instead of only being
+  in the Color Range menu
+- On Android, the L2/L3/L4 access can now be enabled by passing the access
+  code in the Intent that launches RoyaleViewer
+- If recording fails then an error message will be added to the log
+
+#### Bugfixes
+
+- Checked for error statuses when changing the exposure
+- On Android, the back button is now working correctly
+
+v3.2.0 - 2017-03-16
+--------------------
+
+### SDK
+
+#### Features
+
+- Added support for new devices: pico monstar and pico maxx
+- Added support for Android 7
+- Added functions to shift and retrieve the lens center (only for raw data
+  acquisition and Level >= 3)
+- Added Git version information into the Royale version
+- Added Spectre 2.9.1
+- Setting calibration data before calling initialize will force Royale to use
+  this calibration data
+- Royale CAPI default version is now 320 (due to the new functions for the Git
+  version and lens center)  
+
+#### Bugfixes
+
+- Fixed a crash changing processing parameters during recording
+- royale::Vector's constructor is now explicit, which avoids unexpected conversions to Vector
+- ICameraDevice::stopCapture will now report errors, if they occur
+- Fixed a bug that the SparsePointCloud vector wasn't cleared between callbacks
+
+### USB firmware
+
+#### Features
+
+- Updated the prebuilt CX3 firmware image to v0.13.4
+- The firmware version can now be read via getBridgeInfo()
+
+#### Bugfixes
+
+- UVC devices no longer include a Colorformat in their descriptor,
+  which was incorrect for our infrared camera
+- LibUVC will no longer print a "unsupported descriptor subtype: 13"
+  message, which was caused by the Colorformat.
+
+### Royale Viewer
+
+- Mixed mode support
+  - Multiview
+  - Updated exposure dialog for multiple streams
+- Using lens parameters for the 3D view
+- Added command line options to the Viewer
+    - --rrf=somefile.rrf will open up the specified file and start playback
+    - --cal=somecal.cal will use the specified calibration file for calculations
+
+#### Features
+
+- Added support for HighDPI (Retina) on Mac OSX
+
+v3.1.0 - 2017-01-27
+--------------------
+
+### SDK
+
+#### Changes
+
+- Removed deprecated functions (these were deprecated in v2.2.0, they threw exceptions 
+  instead of returning a CameraStatus)
+  
+#### Features
+
+- Added Spectre 2.8.5
+- Precompiled versions of the examples can now be found in the bin folder
+- Reworked parts of the Matlab wrapper which leads to faster readout of rrf files
+- Added libraries for 64-bit Android ARM
+- On Windows with UVC devices, Royale used to keep ownership of the system image 
+  buffers while processing data. It now copies the data to Royale-allocated buffers, 
+  ensuring that enough buffers are allocated to capture the incoming data
+- On Linux, the libraries' DT_RUNPATH now includes $ORIGIN, this means that ld
+  searches in the same directory for libraries that other libraries depend on.
+  (Please see v3.0.0's Known Bugs section for an explanation of what this fixes.)
+
+#### Bugfixes
+
+- Fixed the Matlab wrapper which was not working properly in 3.0
+- Fixed multiple memory leaks in Royale::Vector
+- Fixed SSC feature for All-in-one firmware
+
+### Royale Viewer
+
+#### Bugfixes
+
+- Fixed a bug on Android devices which cause some menu items to not reappear after 
+  stopping and restarting the sensor
+- Changed size of color range menu to fix the display on small devices
+
+v3.0.0 - 2016-12-16
+--------------------
+
+### SDK
+
+#### Features
+
+- Added mixed mode capabilities to the Royale framework
+    - There are currently no mixed mode use cases available for the pico flexx
+    - Use cases can now contain multiple streams
+    - The id of the current stream is transferred in the data callbacks
+
+- Royale C++ API:
+    - Many ICameraDevice methods now take an optional StreamId.  These will work
+      as before with use cases that have only one stream, but will return an
+      error if the StreamId is not provided when there are multiple streams.
+    - New functions : 
+        - Level 1 : royale::CameraStatus getStreams (royale::Vector<royale::StreamId> &streams)
+        - Level 2 : royale::CameraStatus getExposureGroups (royale::Vector< royale::String > &exposureGroups)
+        - Level 2 : royale::CameraStatus setExposureTime (const String &exposureGroup, uint32_t exposureTime)
+        - Level 2 : royale::CameraStatus getExposureLimits (const String &exposureGroup, royale::Pair<uint32_t, uint32_t> &exposureLimits)
+        - Level 2 : royale::CameraStatus setExposureForGroups (const royale::Vector<uint32_t> &exposureTimes)
+    - Adapted functions : 
+        - Level 1 : royale::CameraStatus setExposureTime (uint32_t exposureTime, royale::StreamId streamId = 0)
+        - Level 1 : royale::CameraStatus setExposureMode (royale::ExposureMode exposureMode, royale::StreamId streamId = 0)
+        - Level 1 : royale::CameraStatus getExposureMode (royale::ExposureMode &exposureMode, royale::StreamId streamId = 0)
+        - Level 1 : royale::CameraStatus getExposureLimits (royale::Pair<uint32_t, uint32_t> &exposureLimits, royale::StreamId streamId = 0)
+        - Level 2 : royale::CameraStatus setExposureTimes (const royale::Vector<uint32_t> &exposureTimes, royale::StreamId streamId = 0)
+        - Level 2 : royale::CameraStatus setProcessingParameters (const royale::ProcessingParameterVector &parameters, uint16_t streamId = 0)
+        - Level 2 : royale::CameraStatus getProcessingParameters (royale::ProcessingParameterVector &parameters, uint16_t streamId = 0)
+    
+- royaleCAPI:
+    - The C API version is selectable by setting ROYALE_C_API_VERSION to either
+        - "300" for the new API which includes stream ids, or
+        - "220" to use an API compatible with the long-term support branch.
+        - By default, the latest API is used.
+    - The documentation for this is in the new CAPIVersion.h, which is
+      automatically included from the CAPI headers that need it. 
+    - The C API functions that take a stream id take it as their second
+      argument, after the camera handle.  This is different to the C++ API,
+      because in C++ it has to be last to make it optional. When using a use
+      case with only one stream, zero can be passed as the stream id argument.
+
+    - For migration, the latest API version is also made available using
+      alternative names (with a "_new_api" suffix added) if the preprocessor
+      symbol ROYALE_C_API_MIGRATION is defined.
+    - v2.2.0 had a similar mechanism with the ROYALE_NEW_API_2_2_0 and
+      ROYALE_FINAL_API_2_2_0 definitons, but defaulted to the old v2.1.0 API.
+    - The v2.1.0 API is no longer supported,
+
+- RoyaleDotNet API:
+    - As with the C++ API, functions now take an optional StreamId.  When using
+      a use case with multiple streams, adding the StreamId is mandatory.
+
+- Added Spectre 2.7.5.64
+- Added possibility to read out temperatures from the pseudo data of 
+  the imager
+- Added possibility to define levels for use cases
+- Separated RRFReader/RRFWriter from Royale Core
+- Added new RRF version 3 which can handle mixed mode use cases
+- Added calculation of the registers used for the SSC feature (previously
+  only certain cases were supported)
+- Increased the accuracy of the framerate calculation
+
+#### Bugfixes
+
+- Fixed a race condition in the Android example
+- CMake now not only searches for the MATLAB MCR, but also for MATLAB itself
+
+- royaleCAPI:
+    - In v2.2.0, royale_camera_device_set_exposure_mode used the v2.1.0 version
+      even when ROYALE_FINAL_API_2_2_0 was set, the v2.2.0 version was only
+      used when the "2" suffix was used.  In v3.0.0's 220 compatibility mode,
+      this function's name still has the "2" suffix.
+  
+#### Known Bugs
+
+On some Linux systems, including Debian's next release "Stretch", the
+indirectly-linked shared libraries are not found.  For CAPI applications, this
+causes a failure to load libroyale.so.3.0.0, for C++ applications the failure is
+on loading libuvc.  We believe this was triggered by a toolchain change setting
+DT_RUNPATH instead of DT_RPATH, it also affects the 2.3.0 SDK when building on
+an up-to-date Debian Stretch system.
+
+A workaround for this issue is to copy all the libraries from the SDK's bin
+directory (and subdirectories), and use a renamed copy of the
+bin/royaleviewer.sh wrapper script to set LD_LIBRARY_PATH.
+
+### USB firmware
+
+#### Features
+
+- Updated the prebuilt CX3 firmware image to v0.12.3
+- Added support for Skylla and LiteMore
+
+### Royale Viewer
+
+#### Features
+
+- Added the possibility to switch between streams
+
+#### Bugfixes
+
+- Color range will only be set if there are valid pixels
+- Fixed a bug that occured when a recording could not be loaded
+
+v2.3.0 - 2016-10-14
+--------------------
+
+### SDK
+
+#### Features
+
+- Added Natvis file for MSVC to make debugging of the Royale String, Vector and Pair 
+  datatypes easier. Please take a look at doc/natvis/natvis.md for installation instruction
+
+#### Bugfixes
+
+- Integrated Spectre 2.6.1 which fixes a serious bug introduced in Spectre 2.5.5
+
+### USB firmware
+
+#### Features
+
+- Updated the prebuilt CX3 firmware image to v0.11.4.
+
+#### Bugfixes
+
+- After an error in a write operation, a race could cause Royale to throw a generic exception 
+  instead of a detailed DeviceDetectedError.
+
+v2.2.0 - 2016-09-30
+--------------------
+
+### SDK
+
+#### Changes
+
+- Royale C++ API:
+  All ICameraDevice methods are now returning a CameraStatus. The following functions were added 
+  and their previous versions were marked as deprecated :
+  
+    getAccessLevel
+    getCameraInfo
+    getCameraName
+    getCurrentUseCase
+    getExposureLimits
+    getExposureMode
+    getFrameRate
+    getId
+    getMaxFrameRate
+    getMaxSensorHeight
+    getMaxSensorWidth
+    getUseCases
+    isCalibrated
+    isCapturing
+    isConnected
+
+- royaleCAPI:
+  To adapt to the changes in the Royale C++ API, additional calls were added to the CAPI:
+
+    royale_camera_device_get_access_level2
+    royale_camera_device_get_camera_info2
+    royale_camera_device_get_camera_name2
+    royale_camera_device_get_current_use_case2
+    royale_camera_device_get_exposure_limits2
+    royale_camera_device_get_exposure_mode2
+    royale_camera_device_get_frame_rate2
+    royale_camera_device_get_id2
+    royale_camera_device_get_max_frame_rate2
+    royale_camera_device_get_max_sensor_height2
+    royale_camera_device_get_max_sensor_width2
+    royale_camera_device_get_use_cases2
+    royale_camera_device_is_calibrated2
+    royale_camera_device_is_capturing2
+    royale_camera_device_is_connected2
+
+  Please note that these names with a trailing "2" are only temporary. In a future release the deprecated 
+  royaleCAPI v2.1.0 calls will be removed, and the old names will refer to the "2" version of the functions. 
+  In a release after that, the "2" names will be removed.
+  If you want to use the final naming already, you can utilize the defines ROYALE_NEW_API_2_2_0 and 
+  ROYALE_FINAL_API_2_2_0. Refer to sampleCAPI for further information and usage examples.
+  
+#### Features
+
+- Added read support for Polar header version 6
+- The UVC C2 camera now supports the same use cases as the PicoFlexx
+
+#### Bugfixes
+
+- Fixed the wrong USB speed being reported for UVC devices on Windows. This requires the v0.11.3 firmware 
+  to be flashed to the device; old firmware will work but will report that the speed is unknown.
+
+### USB firmware
+
+#### Features
+
+- Updated the prebuilt CX3 firmware image to v0.11.3
+
+### Royale Viewer
+
+#### Features
+
+- Added separate controls for the overlay mode
+
+#### Bugfixes
+
+- Uniform data option will only be visible in the 3D visualization
+
+v2.1.0 - 2016-09-09
+--------------------
+
+### SDK
+
+#### Changes
+
+- Removed royaleWrapper, RoyaleDotNet now uses the royaleCAPI
+- royaleCAPI changed slightly:
+    - handles are now of type uint64_t
+    - added min and max to Variants to reflect the royale functionality
+    - fixed bug where a few parameters of royale_raw_data were not set in the callback
+    - data structures within royale_extended_data are now pointers instead of directly nested
+- RoyaleDotNet API changes:
+    - CameraDevice.StartRecording() now also supports royale's frameSkip and msSkip parameters
+    - ExtendedData's nested data structures DepthData, IntermediateData and RawData are now accessed via Properties rather than getters
+    - ExtendedData's HasDepthData, HasIntermediateData and HasRawData are now accessed via Properties rather than getters
+
+#### Features
+
+- Restructured return status handling (this should give better error messages)
+- Support writing registers in a bulk write to UVC devices
+
+#### Bugfixes
+
+- On the EvalBoard, the LEDs were on during startup
+- Fixed DepthImageListener and SparsePointCloudListener which were broken since Royale v2.0
+
+### USB firmware
+
+#### Features
+
+- Update the prebuilt CX3 firmware image to v0.11.2
+
+#### Bugfixes
+
+- CX3: On Linux with USB3, fixed streaming data. Previously it only worked once after the device was plugged in
+
+#### Known Bugs
+
+- FX3-specific firmware isn't working properly with LibUvc. This doesn't affect the CX3 devices
+
+### Royale Viewer
+
+#### Features
+
+- Added keyboard shortcuts (see Getting Started Guide for description)
+- Added possibility to hide buttons
+
+#### Bugfixes
+
+- Exposure tab now remembers last value
+
+v2.0.0 - 2016-08-22
+--------------------
+
+### SDK
+
+#### Changes
+
+- Added C API on top of Royale C++ API
+- The royaleWrapper is deprecated, to be replaced with royaleCAPI (This will not affect the .NET interface, 
+  which will still be supported)
+
+#### Features
+
+- Changed to RRFv2 which enables the saving of custom data with every frame (the custom data 
+  field is not used yet by Royale)
+- Raspberry Pi support
+
+#### Bugfixes
+
+- Prevent Windows' UVC code blocking when the device is reset
+- Use cmake object libraries for the components
+- Changed UseCaseTenPhase to UseCaseCalibration
+- Fixed FX3-UVC-only race condition corrupting image data
+
+#### Known Bugs
+
+- Linux USB3 with UVC firmware: after disconnecting, the device may need to be unplugged and reconnected to 
+  receive image data again (bug ROYAL-1306)
+
+### USB firmware
+
+#### Features
+
+- Update the prebuilt CX3 firmware image to v0.11.1
+- Soft-reset feature to reset Animator-supported changes (I2C bus speed, etc)
+
+#### Bugfixes
+
+- Fix an FX3-only race condition that corrupted image data
+- Ensure that the second SPI select line is initialized (affected FX3 devices with two SPI memories)
+
+### Royale Viewer
+
+#### Bugfixes
+
+- The 3D visualization is now working on the Samsung S7 (Exynos)
+
+
+v1.10.0 - 2016-07-29
+--------------------
+
+### SDK
+
+#### Changes
+
+- Removed deprecated setExposureTime (expoTime, index) function
+- Changed the name of "depth" in the IntermediatePoint to "distance" to
+  correctly reflect the content
+
+#### Features
+
+- Added Level 3 functionality to read/write registers during runtime
+- Added setDutyCycle support to MATLAB and .NET wrapper
+- Flash memory configuration now allows an accessOffset for the calibration data (only SPI)
+
+#### Bugfixes
+
+- Fixed getUseCases call for callbackData Intermediate
+- Fixed bug that happened if you switch CallbackData from Raw to Depth 
+  (if the camera was initialized with the raw mode)
+- Fixed crash if getLensParameter is called for an uncalibrated camera  
+
+### Royale Viewer
+
+#### Features
+
+- Level 2 : If you call the RoyaleViewer with the access code as command line
+  parameter you will get the possibility to change processing parameters during
+  runtime
+
+#### Bugfixes
+
+- During playback it wasn't possible to display statistics for the pixels in the lower
+  part of the image
+  
+#### Known Bugs
+
+- The 3D visualization is still not working on the Samsung S7 (Exynos)
+
+v1.9.0 - 2016-07-08
+-------------------
+
+### SDK
+
+#### Features
+
+- Added a function to change the duty cycle (Level 3)
+- Added a function to set the complete exposure time vector (Level 2)
+    - setExposureTime (uint32_t exposureTime, uint16_t index) is deprecated now and will be
+      removed in the next release
+- Finished internal restructuring      
+
+#### Bugfixes
+
+- Fixed .NET wrapper not supporting all API calls
+- Fixed grayscale use cases (only raw mode)
+
+### Royale Viewer
+
+#### Known Bugs
+
+- The 3D visualization is currently not working on the Samsung S7 (Exynos)
+
+v1.8.0 - 2016-06-10
+-------------------
+
+### SDK
+
+#### Features
+
+- Return a type information for the IEvent
+- PicoFlexx cameras' calibration data can now be flashed (expert only interface)
+- Add new IEvent for device removal
+- Internal refactorings
+
+#### Bugfixes
+
+- Fixed isConnected call which now delivers the correct value
+- EvalBoard is fully supported again
+- Minor fixes for Matlab wrapper
+- Fixed problem where some PicoFlexx modules did not work anymore
+- Fixed problem where PMDPlatform cannot change exposure times multiple times
+- Fixed problem with UseCase 10 phase for PMDPlatform
+- Fixed missing camera information for PMDPlatform
+- Support for modules which contain 0x101 USB header information
+
+### USB firmware
+
+#### Features
+
+- GPIO configuration
+- SPI raw access
+- I2C reconfiguration
+- FX3 chip support (requires source code access)
+
+### Royale Viewer
+
+#### Known Bugs
+
+- The 3D visualization is currently not working on the Samsung S7 (Exynos)
+
+v1.7.0 - 2016-05-20
+-------------------
+
+### SDK
+
+#### Features
+
+- UVC CX3 support for Linux, Mac OSX and Android ARM
+- Changes timestamp from milliseconds to microseconds
+
+#### Known Bugs
+
+- On Linux with USB3 ports, the UVC CX3 can always talk to the imager,
+  but only streams data on the first time after it is plugged in.
+  Via a USB2 hub it works as normal.
+
+### Royale Viewer
+
+#### Known Bugs
+
+- The 3D visualization is currently not working on the Samsung S7 (Exynos)
+
+v1.6.0 - 2016-04-28
+-------------------
+
+### SDK
+
+#### Features
+
+- Interference avoidance of multiple cameras in proximity of each other
+- Improved UVC CX3 firmware support (error handling and stability improvements)
+- Optimize CX3 EEPROM writing
+- Updated to new spectre version
+- Feature to report frame drops
+
+#### Bugfixes
+
+- CX3-based modules did not work for USB2
+- Calibration could not be set in Matlab wrapper
+
+### Royale Viewer
+
+#### Bugfixes
+
+- Exposure time slider may not show correct values under certain circumstances
+- Exposure slider is showing 0 if auto-exposure is enabled
+- Race condition in error log text widget may lead to crashes
+
+#### Known Bugs
+
+- The 3D visualization is currently not working on the Samsung S7 (Exynos)
+
+v1.5.0 - 2016-04-13
+-------------------
+
+### SDK
+
+#### Features
+
+- Finished switch to new underlying design
+- Changed the phase order (4+4+1 -> 1+4+4)
+- Added a function to lower the framerate
+- Updated to Spectre 2.2.5 (including NEON optimizations for Android)
+- Added EEPROM writing with the UVC bridge (first implementation is slow)
+- Added additional callback functions
+    - IRImage
+    - DepthImage
+    - SparsePointCloud
+- Changed libusb handling under Android. Please take a look at the updated Android example!
+
+#### Bugfixes
+
+- Improved use case switch timing to prevent accidentally triggering the eye safety circuit
+- Bugfixes for the UVC bridge
+
+### Royale Viewer
+
+#### Bugfixes
+
+- UI improvements for small displays
+- Fixed recording on some devices
+
+#### Known Bugs
+
+- The 3D visualization is currently not working on the Samsung S7 (Exynos)
+
+v1.4.0 - 2016-03-11
+-------------------
+
+### SDK
+
+#### Features
+
+- Added an internal Level 4 example
+- More preparation for move to CameraDevice
+- Updated to Spectre 2.2.0
+
+#### Bugfixes
+
+- Fixed handling of some CX3 C2 modules
+- Minor bugfixes for the UVC bridge
+
+### Royale Viewer
+
+#### Bugfixes
+
+- UI improvements for small displays
+
+
+v1.3.0 - 2016-02-19
+-------------------
+
+### SDK
+
+#### API CHANGES
+
+This release introduces a fourth access level for internal users.
+The following methods have been moved to Level 4:
+
+~~~
+royale::CameraStatus initialize (const royale::String &initUseCase); // Level 4
+CameraStatus writeRegisters (const royale::Vector<royale::Pair<royale::String, uint64_t>> registers); // Level 4
+~~~
+
+#### Bugfixes
+
+- Bugfixes for the Lotte imager
+- Minor bugfixes for the UVC bridge
+- Minor improvement of processing speed
+
+### Royale Viewer
+
+#### Features
+
+- If multiple cameras are connected the user can select which one should be used
+
+#### Bugfixes
+
+- Minor bugfixes
+
+v1.2.0 - 2016-01-29
+-------------------
+
+### SDK
+
+#### API CHANGES
+
+This release has some interface changes for the ICameraDevice:
+
+The following methods have been added:
+
+~~~
+royale::Vector<royale::Pair<royale::String, royale::String>> getCameraInfo() const; // Level 1
+royale::CameraStatus initialize (const royale::String &initUseCase); // Level 3
+CameraStatus writeRegisters (const royale::Vector<royale::Pair<royale::String, uint64_t>> registers); // Level 3
+~~~
+
+The following method has been removed:
+
+~~~
+CameraStatus setFrameRate(uint16_t frameRate); // Level 3
+~~~
+
+#### Features
+
+- Offer an API call to convert errors into error string (`royale::getErrorString(status)`)
+- royale now supports UVC-based cameras under Windows (requires Cypress CX3 chip)
+- Allow to set arbitrary register values to the imager (only available in Level 3)
+- Raise maximal exposure times for Evalboard
+- Allow to record every X frames or Y milliseconds
+- Integrate amplitudes in PLY export
+- Add CRC 32 checksum for EEPROM header data
+- Lower the minimal exposure times to 1 microsecond
+- Improve Android tool chain files for royale
+- Introduce additional camera information (e.g. FPGA serial number)
+- Add a new use case for PicoFlexx (for calibration)
+- Extend Android sample
+- Integrate support for a new Evalboard
+- Add build instructions for different platforms
+- Update to a new spectre release
+
+#### Bugfixes
+
+- CameraPlayback required processing even if CallbackData::Raw is set
+- Fixed incorrect duty cycle for Minicam
+- Offer proper use cases in case of CallbackData::Raw
+- Calling stopRecording twice lead to a crash
+- Minor fixes in Matlab wrapper
+- Driver could not be installed on Windows 10
+- Fixed Android example for Android 5
+- Fixed build for Android x86-64
+- Fixed memory leak reading RRF files
+- Fixed memory leak in processing pipeline
+
+### Royale Viewer
+
+#### Features
+
+- Add control buttons for playback mode
+- Add functionality to pause and resume a recorded stream
+- Add possibility to mirror the imager horizontally and vertically
+
+#### Bugfixes
+
+- Fixed bug where the viewer crashes if opening a non existing file under Windows
+- Show warning for PicoS and EvalBoard upon connection
+- Fixed crashed during playback
+- Fixed bug where visualization was not updated if different camera got connected
+- Fixed bug where screenshot was not selectable by some phones
+
+v1.1.0 - 2015-12-17
+-------------------
+
+### SDK
+
+#### API CHANGES
+
+This release has some interface changes for the ICameraDevice. The following interfaces were removed:
+
+~~~
+CameraStatus setOperationMode (OperationMode mode);
+OperationMode getOperationMode ();
+const Vector<OperationMode> &getOperationModes() const;
+CameraType getCameraType() const;
+~~~
+
+and replaced by the following calls:
+
+~~~
+CameraStatus setUseCase (const royale::String &name);
+royale::String getCurrentUseCase() const;
+Vector<royale::String> getUseCases() const;
+royale::String getCameraName() const;
+~~~
+
+For Level 3 access, the following call was removed and is not supported anymore:
+
+~~~
+CameraStatus setCaptureMode (const CameraCaptureMode &captureMode);
+~~~
+
+#### Features
+
+- Replace enum-based operation modes by string-based use case names
+- New and improved processing pipeline
+- Add additional use cases for EvalBoard
+- ATTENTION: EvalBoard now is only supported on a USB3 port
+- Better support FPGA-based cameras
+- Remove zlib dependency
+- Change exposure limits and use cases for FPGA-based cameras
+- Add convenience functions for Vector and String
+- Improve calibration routines for FPGA
+
+#### Bugfixes
+
+- Fixed bug where PID/VID were wrong for the FPGA-based cameras
+- Fixed bug for wrong radial distortion lens parameters
+- Fixed bug where system hangs during installation if no admin rights are available
+
+### Royale Viewer
+
+#### Features
+
+- Update to new Qt version (5.5.1)
+
+#### Bugfixes
+
+- Fixed bug where rff file could not be loaded in pause mode
+- Fixed bug where auto-exposure was not ticked in playback mode
+- Shrink click able area for buttons
+- Fixed scrollbar visualization artifact
+
+
+v1.0.6 - 2015-11-03
+-------------------
+
+Patch for MiniCam release.
+
+### SDK
+
+#### Bugfixes
+
+- Fixed modulation frequencies for MiniCam
+- Fixed exposure times for intensity images for MiniCam
+
+### Royale Viewer
+
+#### Features
+
+- Added standard deviation to pixel info view
+
+#### Bugfixes
+
+- Fixed wrong working directory in RoyaleViewer link on Windows
+
+v1.0.5 - 2015-10-23
+-------------------
+
+Please see README file for supported hardware configurations.
+
+### SDK
+
+#### Features
+
+- Added exposure times and modulation frequencies to RawData structure
+- Add additional OperationModes for FPGA calibration
+- Exposure values for access Level 3 are ignoring min/max values
+- Adding iterator for royale Vector and String classes
+- Calibration data can now be set by the API user (requires Level 2)
+- Playback is now possible with different calibration information
+- Optimize data quality and transfer speed for supported camera devices
+
+#### Bugfixes
+
+- CalibrationManager loads wrong frequencies under certain conditions
+- Fix bug where Matlab crashed because of wrong flags pointer
+- Fix wrong wiggling values for PicoS
+- Fix wrong default values for EvalKit (depth values are now correct)
+- Minor fixes of HTML documentation
+- Illumination temperature was wrong in recording data
+- Sensor serial was wrong for FPGA cameras
+- Documentation added that several operations are not allowed to be performed in onNewData()
+- Improve stability while camera is getting unplugged under certain situations
+
+### Royale Viewer
+
+#### Features
+
+- Visualization of color coded depth map with amplitude information
+- Updated to Qt 5.5.1
+- Add geometric translation capabilities
+
+#### Bugfixes
+
+- OperationMode switches have not been stored correctly in recording data
+- Distance tooltip now updated correctly if mouse is not moving
+- Fix color range bug
+
+v1.0.0 - 2015-10-01
+-------------------
+
+### SDK
+
+#### Features
+
+- API is now free from STL containers (higher degree of compatibility)
+- Support for FPGA-based camera in raw data mode
+- New logo has been introduced
+- Flags are now exposed in IntermediateData
+- Different system frequencies are now supported
+
+#### Bugfixes
+
+- .NET wrapper now also wrapping access level 2 and 3
+- Update Android samples
+- Consistently return CameraStatus for callback registration
+- Fix bug with incorrect compiler flags for .NET wrapper
+- Fix incorrect serial number generation (please be aware that the serial number changed!)
+- IntermediateData now contains unnormalized amplitudes
+
+### Royale Viewer
+
+#### Features
+
+- Frustum can now be hidden
+- Add screen shot for 2D/3D visualization
+- Add distance measurement by mouse click/touch
+
+#### Bugfixes
+
+- Better alignment of 2D/3D view
+- Scale point sprites according to point distance
+- Keep image size ratio based on original image size
+
+
+v0.9.5 - 2015-09-04
+-------------------
+
+### Features
+
+- .NET wrapper for Windows
+- Matlab wrapper for Windows
+- Auto-exposure functionality
+- Improvements for processing chain
+- Add signed driver for Infineon's EvalKit
+- Enhanced DepthData structure (now containing exposure time)
+- Register as IExposureListener in order to get the current exposure values
+- Query current OperationMode
+- Improvements for royaleviewer (e.g. cleanup menus, auto-exposure, ...)
+
+### Bugfixes
+
+- Remove remaining installation directory after uninstalling libroyale
+- Proper handling for CameraManager::getConnectedCameraList()
+
+v0.9.0 - 2015-08-14
+-------------------
+
+### Features
+
+- Added additional data output for Level 2
+- Record/Playback functionality
+- FPS display
+- Various improvements in royaleviewer (possibility
+  to change the exposure time, colored 3D mode, ...)
+
+### Bugfixes
+
+- Added missing libusbandroid to Android package
+- Fixed some bugs concerning the layout and usability of the menus and buttons
+  in royaleviewer
+
+v0.8.5 - 2015-07-24
+-------------------
+
+### Features
+
+- Windows installer for Royale SDK
+- Mac OSX version
+- Improve processing chain
+- Processing chain is now linked statically
+- Introduces three different access levels for ICameraDevice replacine Pro/Expert mode
+  - L1 ... normal
+  - L2 ... requires activation code (for evaluation purposes)
+  - L3 ... requires activation code (internal only)
+- CameraFactor for custom module creation via API (L3)
+- CameraProperties exposed for custom module creation (L3)
+- Raw data listener (L2)
+- Get exposure time limits
+- Set processing parameters (L2)
+- Royale version can now be queried
+
+### Bugfixes
+
+- Fix bug where wrong image height was exposed in ICameraDevice
+- Fix bug where wrong lens parameters are exposed
+
+v0.8.0 - 2015-07-02
+-------------------
+
+### Features
+
+- First (beta) release of the Royale SDK
+- Supported cameras: CamBoard pico flexx
+- Supported platforms: Windows, Linux, Android

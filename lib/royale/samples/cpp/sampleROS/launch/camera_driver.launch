@@ -1,0 +1,18 @@
+<launch>
+  <!-- node name: all topics will be advertised under this name -->
+  <arg name = "node_name"          default = "royale_camera"/>
+
+  <!-- static TF publisher -->
+  <node pkg = "tf" type = "static_transform_publisher" name = "$(arg node_name)_static_tf"
+        args = "0 0 0 1.57 0 -1.57 $(arg node_name)_link $(arg node_name)_optical_frame 100" />
+
+  <!-- nodelet manager -->
+  <node pkg = "nodelet" type = "nodelet" name = "$(arg node_name)" args = "manager" output = "screen"/>
+
+  <!-- camera_driver nodelet -->
+  <node pkg = "nodelet" type = "nodelet" name = "$(arg node_name)_driver"
+        args = "load royale_in_ros/royale_nodelet $(arg node_name)"
+        respawn = "true" output = "screen">
+    <param name = "node_name"          type = "str"    value = "$(arg node_name)"/>
+  </node>
+</launch>

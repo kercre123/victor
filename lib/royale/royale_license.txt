@@ -1,0 +1,87 @@
+﻿Royale License for camera systems
+
+Version 1.2, January 2018
+
+TERMS AND CONDITIONS FOR USE AND REPRODUCTION
+
+
+1. Definitions.
+
+"License" shall mean the terms and conditions for use and reproduction of the Software as defined
+by sections 1 to 8 of this document.
+
+"Licensor" shall mean the company pmdtechnologies ag, organized under the laws of Germany, with
+offices at Am Eichenhang 50, 57076 Siegen, Germany.
+
+"Licensee" shall mean an individual or legal entity exercising permissions granted by this License.
+
+"Software" shall mean the software "Royale" developed by Licensor and made available to the Licensee
+under this License, whether in Source Code or Object Code.
+
+"Product" shall mean a camera system provided by the Licensor (e.g. pico flexx, pico maxx, ...)
+
+"Source Code" shall mean the human readable embodiment of a computer code.
+
+"Object Code" shall mean the code resulting from the translation of Source Code in machine readable
+format.
+
+"Derivative Work" shall mean any work executed by the Licensee that is based on or derived from the
+Software.
+
+"Third Party Software" shall mean a software program developed by an individual or legal entity other
+than the Licensor and supplied under the terms and conditions of a Third Party License.
+
+"Third Party License" shall mean the terms and conditions for use and reproduction of the Third Party
+Software.
+
+2. Grant of License.
+
+Licensor grants to Licensee only for use in combination with a product a non-exclusive, royalty-free
+license for the Software delivered by the Licensor solely to
+(i)  use the Software as a basis for the creation of Derivative Work; and
+(ii) integrate the Software as well as the Derivative Work in Object Code into other software
+     applications to be used with a product.
+
+For all other purposes, the Licensee shall require the prior written consent of the Licensor.
+
+3. Reproduction and Distribution.
+
+Licensee may reproduce or copy the Software and any Derivative Works thereof only for the purposes
+defined in Section 2 of this document.
+
+4. Third party software
+
+The Software may include, access or use Third Party Software. Any Third Party Software is provided to
+the Licensee subject to the terms and conditions of the corresponding Third Party License. The Licensor
+shall make available to the Licensee the Third Party Licenses. The Licensee represents and warrants to
+comply with all terms and conditions of such Third Party Licenses.
+
+5. Warranty Disclaimer.
+
+UNLESS REQUIRED BY APPLICABLE LAW OR AGREED TO IN WRITING, THE LICENSE GRANTED UNDER THIS AGREEMENT IS
+PROVIDED "AS IS" AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTY OF ANY KIND INCLUDING, BUT NOT LIMITED TO
+WARRANTIES OF MERCHANTABILITY, TITLE, NON-INFRINGEMENT OF INTELLECTUAL PROPERTY RIGHTS, OR FITNESS FOR
+ANY PARTICULAR PURPOSE.
+
+6. Limitation of Liability.
+
+IN NO EVENT SHALL LICENSOR BE LIABLE FOR ANY DAMAGES OF ANY KIND OR CHARACTER ARISING OUT OF OR IN
+CONNECTION WITH THE GRANT OF LICENCE UNDER THIS DOCUMENT, INCLUDING, BUT NOT LIMITED TO ANY DAMAGES FOR
+LOSS OF PROFITS, BUSINESS INTERRUPTION, LOSS OF DATA, OR ANY DAMAGES CAUSED BY THIRD PARTY CLAIMS,
+UNLESS LIABILITY IS MANDATORY AT LAW, E. G. IN CASES OF PERSONAL INJURY, GROSS NEGLIGENCE OR INTENT.
+
+7. Reservation of Rights.
+
+The Licensor reserves all right, title and interest in the Software and any part thereof not expressly
+granted to the Licensee in this document. Except as expressly provided herein, the Licensor does not
+grant any express or implied right under any patents, copyrights, trademarks or any other intellectual
+property or proprietary right to the Licensee.
+
+8. Final Provisions.
+
+This license shall be governed by the laws of the Federal Republic of Germany.
+
+Place of jurisdiction for all disputes arising from this agreement shall be Siegen, Germany.
+
+
+END OF TERMS AND CONDITIONS

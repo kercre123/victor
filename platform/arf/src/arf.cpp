@@ -36,11 +36,11 @@ namespace ARF
     auto it = portMap.find(full_name);
     if(it != portMap.end()) {
       static char buf[64];
-      sprintf(buf, "tcp://192.168.34.128:%i", it->second);
+      sprintf(buf, "tcp://192.168.34.35:%i", it->second);
       return buf;
     }
     
-    return "tcp://192.168.34.128:40000";
+    return "tcp://192.168.34.35:40000";
   }
   
   void Init(int /*argc*/, char** /*argv*/, const char* name)

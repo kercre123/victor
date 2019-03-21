@@ -1,0 +1,9 @@
+<library path="lib/libroyale_nodelet">
+  <class name="royale_in_ros/RoyaleControl"
+         type="royale_in_ros::RoyaleControl"
+         base_class_type="rviz::Panel">
+    <description>
+      A panel widget to show the info of royale camera.
+    </description>
+  </class>
+</library>

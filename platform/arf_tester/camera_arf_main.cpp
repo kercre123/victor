@@ -114,8 +114,7 @@ class ImageNode : public Node
                 printf("Bad read\n");
             }
             Task get_image_task = [image_buffer, output, this]() {
-                TaggedImage image;
-                image.item = std::make_shared<Anki::Vision::Image>();
+                TaggedImage image(std::make_shared<Anki::Vision::Image>());
                 bool convert_to_gray = image_buffer.item->GetGray(*image.item, Anki::Vision::ImageCacheSize::Half);
                 if (!convert_to_gray)
                 {

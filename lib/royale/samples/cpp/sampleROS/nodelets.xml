@@ -1,0 +1,5 @@
+<library path="lib/libroyale_nodelet">
+  <class name="royale_in_ros/royale_nodelet" type="RoyaleInRos" base_class_type="nodelet::Nodelet">
+  <description>royale nodelet</description>
+  </class>
+</library>
