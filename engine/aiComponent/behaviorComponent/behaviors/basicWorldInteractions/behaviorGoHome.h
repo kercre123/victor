@@ -110,6 +110,9 @@ private:
   
   void TransitionToCheckDockingArea();
   void TransitionToPlacingCubeOnGround();
+  void TransitionToFaceCharger();
+  void TransitionToDriveToObservationPose(const bool canRetry);
+  void TransitionToPostObservation();
   void TransitionToObserveCharger();
   void TransitionToDriveToCharger();
   void TransitionToCheckPreTurnPosition();
