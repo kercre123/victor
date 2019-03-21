@@ -23,6 +23,8 @@ void intHandler(int /*dummy*/) {
 
 int main(int argc, char **argv)
 {
+    signal(SIGINT, intHandler);
+    
     ARF::Init(argc, argv, "vector");
     ARF::NodeHandle n;
     ARF::PubHandle<std::string> pub_handle = n.RegisterPublisher<std::string>("rgb");

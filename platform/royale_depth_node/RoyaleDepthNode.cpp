@@ -156,7 +156,16 @@ int InitializeCamera(ARF::PubHandle<std::string>& pubHandle) {
   return 0;
 }
 
+bool g_run = true;
+
+void intHandler(int /*dummy*/)
+{
+    g_run = false;
+}
+
 int main(int argc, char* argv[]) {
+  signal(SIGINT, intHandler);
+
   if (argc < 4) {
     return 1;
   }
@@ -173,7 +182,13 @@ int main(int argc, char* argv[]) {
     return 1;
   }
 
-  n.Spin();
+  while (g_run) {
+    n.SpinOnce();
+    usleep(10000);
+  }
+
+  printf("Shutting down\n");
+  cameraDevice->stopCapture();
 
   return 0;
 }

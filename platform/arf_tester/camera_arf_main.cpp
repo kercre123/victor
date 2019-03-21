@@ -280,6 +280,8 @@ class FacePublishNode : public Node
 
 int main(int argc, char **argv)
 {
+    signal(SIGINT, intHandler);
+
     Logger::Inst().Initialize("/data/arf/face_tracker.log");
     ARF::Init(argc, argv, "vector");
     CameraNode camera_node("camera");
