@@ -15,7 +15,6 @@
  **/
 
 #include "coretech/vision/engine/debugImageList.h"
-#include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/trackedFace.h"
 #include "coretech/vision/engine/profiler.h"
 #include "coretech/vision/engine/enrolledFaceEntry.h"
@@ -29,11 +28,8 @@
 #include "CommonDef.h"
 #include "DetectorComDef.h"
 
-#include "util/math/numericCast.h"
-
 #include <list>
 #include <map>
-#include <ctime>
 #include <thread>
 #include <mutex>
 
@@ -81,7 +77,7 @@ namespace Vision {
                                 const DETECTION_INFO& detectionInfo,
                                 const POINT* facialParts,     // PT_POINT_KIND_MAX in length
                                 const INT32* partConfidences, // PT_POINT_KIND_MAX in length
-                                bool enableEnrollment);
+                                const bool enableEnrollment);
     
 
                                      
@@ -97,7 +93,7 @@ namespace Vision {
     // (I.e., this just "queues" the clear to help prevent race conditions when running asynchronously)
     void ClearAllTrackingData();
     
-    // Return existing or newly-computed recognitino info for a given tracking ID.
+    // Return existing or newly-computed recognition info for a given tracking ID.
     // If a specific enrollment ID and count are in use, and the enrollment just
     // completed (the count was just reached), then that count is returned in
     // 'enrollmentCountReached'. Otherwise 0 is returned.
@@ -276,6 +272,7 @@ namespace Vision {
       FeaturesReady
     };
     std::mutex      _mutex;
+    std::condition_variable _newImageCondition;
     std::thread     _featureExtractionThread;
     bool            _isRunningAsync = true;
     bool            _isEnrollmentCancelled = false;
@@ -283,7 +280,7 @@ namespace Vision {
     void StartThread();
     void Run();
     void StopThread();
-    
+
     // Passed-in state for processing
     Image          _img;
     DETECTION_INFO _detectionInfo;
