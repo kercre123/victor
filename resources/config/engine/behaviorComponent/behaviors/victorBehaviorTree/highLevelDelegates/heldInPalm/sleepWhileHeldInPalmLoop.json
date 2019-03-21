@@ -1,0 +1,63 @@
+{
+  "behaviorID"       : "SleepWhileHeldInPalmLoop",
+  "behaviorClass"    : "AnimGetInLoop",
+  "associatedActiveFeature": "HeldInPalm",
+
+  "getIn"            : "GoToSleepGetIn",
+  "loopAnimation"    : "GoToSleepSleeping",
+  "getOut"           : "WakeupGetout",
+  
+  "shouldCheckEndCondDuringAnim": false,
+  "lockTreads"                  : true,
+  
+  // Force the get-in animation for the trigger-word response behavior
+  // to be a gentle, slow, wake-up animation, when this behavior is active.
+  "pushTriggerWordResponse": {
+    "postAudioEvent": "Play__Robot_Vic_Sfx__Wake_Word_On",
+    "streamAndLightEffect": "StreamingEnabled",
+    "getInTrigger": "VC_SleepingToListeningGetIn"
+  },
+  
+  // Go to "sleep" in the user's palm after 5 minutes of held-in-palm
+  // activity with no jolts or shocks experienced. The robot must have
+  // a high "Trust" level from being placed in user's palm enough times
+  // or has been pet a lot while held in user's palm.
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "and": [
+      {
+        // When the robot is jolted or shocked, the "Trust" level should
+        // drop to 0 again, and hence stop this from activating.
+        "conditionType": "Emotion",
+        "emotion": "Trust",
+        "min": 0.5
+      },
+      {
+        "conditionType": "RobotHeldInPalm",
+        "shouldBeHeldInPalm": true,
+        "minDuration_s": 300.0
+      },
+      {
+        "conditionType": "BehaviorTimer",
+        "timerName": "ReactToTouchPetting",
+        // If the user pets Vector while he's awake, we want to wait
+        // a little bit longer before starting or continuing to sleep.
+        // The cooldown should be set to value that is approximately
+        // the difference between the time it normally takes to
+        // activate NestleWhileHeldInPalm and the time it normally
+        // takes to activate this behavior.
+        "cooldown_s": 120.0
+      },
+      {
+        "conditionType": "BehaviorTimer",
+        "timerName": "WakeGentlyFromHeldInPalmSleep",
+        // If the user gently wakes-up Vector from his sleep, we
+        // don't want to go immediately back to sleep once the
+        // wake-up animation finishes playing, so we stay awake
+        // for a few seconds to see if the user is going to keep
+        // interacting with Vector, or let him go back to sleep.
+        "cooldown_s": 10.0
+      }
+    ]
+  }
+}
