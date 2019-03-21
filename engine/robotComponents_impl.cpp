@@ -25,6 +25,7 @@ class AppCubeConnectionSubscriber;
 class ContextWrapper;
 class BlockWorld;
 class FaceWorld;
+class LocaleComponent;
 class PetWorld;
 class PublicStateBroadcaster;
 class PathComponent;
@@ -73,6 +74,7 @@ class SettingsManager;
 class VariableSnapshotComponent;
 class PowerStateManager;
 class JdocsManager;
+class LocaleComponent;
 class RobotExternalRequestComponent;
 class AccountSettingsManager;
 class UserEntitlementsManager;
@@ -132,10 +134,12 @@ LINK_COMPONENT_TYPE_TO_ENUM(RobotStatsTracker,             RobotComponentID, Rob
 LINK_COMPONENT_TYPE_TO_ENUM(VariableSnapshotComponent,     RobotComponentID, VariableSnapshotComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(PowerStateManager,             RobotComponentID, PowerStateManager)
 LINK_COMPONENT_TYPE_TO_ENUM(JdocsManager,                  RobotComponentID, JdocsManager)
+LINK_COMPONENT_TYPE_TO_ENUM(LocaleComponent,               RobotComponentID, LocaleComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(RobotExternalRequestComponent, RobotComponentID, RobotExternalRequestComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(AccountSettingsManager,        RobotComponentID, AccountSettingsManager)
 LINK_COMPONENT_TYPE_TO_ENUM(UserEntitlementsManager,       RobotComponentID, UserEntitlementsManager)
 LINK_COMPONENT_TYPE_TO_ENUM(RangeSensorComponent,          RobotComponentID, RangeSensor)
+
 
 // Translate entity into string
 template<>
@@ -178,6 +182,7 @@ std::string GetComponentStringForID<Vector::RobotComponentID>(Vector::RobotCompo
     CASE(HabitatDetector)
     CASE(ImuSensor)
     CASE(JdocsManager)
+    CASE(LocaleComponent)
     CASE(Map)
     CASE(MicComponent)
     CASE(MoodManager)

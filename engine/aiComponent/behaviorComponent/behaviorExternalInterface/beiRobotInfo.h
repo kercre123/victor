@@ -60,11 +60,12 @@ class Robot;
 class RobotEventHandler;
 class SDKComponent;
 class VisionComponent;
+class LocaleComponent;
 
 struct AccelData;
 struct GyroData;
 
-  
+
 class BEIRobotInfo : public IDependencyManagedComponent<BCComponentID> {
 public:
   BEIRobotInfo(Robot& robot)
@@ -123,10 +124,11 @@ public:
   TimeStamp_t                 GetTimeSincePowerButtonPressed_ms()     const;
   const Pose3d&               GetWorldOrigin()                        const;
   PoseOriginID_t              GetWorldOriginID()                      const;
-  
+  const LocaleComponent &     GetLocaleComponent()                    const;
+
   bool HasExternalInterface() const;
   IExternalInterface* GetExternalInterface();
-  
+
   bool HasGatewayInterface() const;
   IGatewayInterface* GetGatewayInterface();
 
@@ -146,16 +148,16 @@ public:
   bool IsPhysical() const;
   bool IsPickedUp() const;
   bool IsPowerButtonPressed() const;
-  
+
   bool IsBeingHeld() const;
   EngineTimeStamp_t GetBeingHeldLastChangedTime_ms() const;
-  
+
   bool IsPoseInWorldOrigin(const Pose3d& pose) const;
-  
+
   bool IsCarryingObject() const;
 
   void EnableStopOnCliff(const bool enable);
-  
+
 private:
   // let the test classes access robot directly
   friend class BehaviorFactoryCentroidExtractor;
@@ -191,7 +193,7 @@ private:
   friend class BehaviorSelfTestLookAtCharger;
   friend class BehaviorSelfTestDockWithCharger;
   friend class BehaviorSelfTestPickup;
-  
+
   Robot& _robot;
 };
 
