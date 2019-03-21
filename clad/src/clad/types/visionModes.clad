@@ -58,7 +58,9 @@ namespace Vector {
     CroppedFaceDetection,  
     
     // Require AutoExposure
-    CyclingExposure,             // Cycles through a list of AE target values to aid search in extreme lighting
+    CyclingExposure,             // Cycles through a list of AE target values to aid search in extreme lighting. This mode is marked as
+                                 //  processed if it tried all exposure settings to cycle through, or something (faces, pets, or markers)
+                                 //  was detected. This is because detections will trigger metering which locks the exposure.
     MinGainAutoExposure,         // Vs. min-exposure-time mode. Useful for less grainy images when TakingPhotos
 
     Count

@@ -662,9 +662,26 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
   // Put the new values in the output result:
   std::swap(_currentResult.cameraParams, nextParams);
   _currentResult.imageQuality = _cameraParamsController->GetImageQuality();
-  if(_cameraParamsController->IsCurrentCyclingExposureReset() && IsModeEnabled(VisionMode::CyclingExposure)) {
+  const bool _isMeteringForDetection = (!_meteringRegions.empty());
+  const bool completedExposureCyclingOnce = (_cameraParamsController->IsExposureCyclingComplete() && 
+                                              IsModeEnabled(VisionMode::CyclingExposure));
+  if(_isMeteringForDetection || completedExposureCyclingOnce) {
     // We have completed one full pass through the list of exposures to cycle
+    //  or we have detected something (which triggers metering that locks the
+    //  exposure settings, during this mode).
     _currentResult.modesProcessed.Insert(VisionMode::CyclingExposure);
+  } else if(!IsModeEnabled(VisionMode::CyclingExposure)) {
+    // Whenever we are not cycling the exposure, make sure the
+    //  iterator starts with the first value in the cycle.
+    // This is necessary because of the asynchronous nature of
+    //  VisionSystem, we cannot predict whether we ticked an 
+    //  extra frame of processing after the mode is turned off 
+    //  by the VisionSchedule.
+    // Because of this potential extra-tick, and because of how
+    //  we track the current exposure as state-var, it could
+    //  potentially throw off our count of how many full loops
+    //  through the exposure values we have gone through.
+    _cameraParamsController->ResetTargetCyclingExposure();
   }
   
   return RESULT_OK;
