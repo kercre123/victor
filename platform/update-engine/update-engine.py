@@ -152,11 +152,6 @@ def is_dev_robot(cmdline):
     "Returns true if this robot is a dev robot"
     if "anki.dev" in cmdline:
         return True
-    emrcat = subprocess.Popen(['/bin/emr-cat', 'v'], shell=False, stdout=subprocess.PIPE)
-    if emrcat.wait() == 0:
-        hw_ver = int(emrcat.communicate()[0], 16)
-        if hw_ver == 0x7:
-            return True # All whiskey DVT1s are dev even though cmdline doesn't indicate it
     return False
 
 
