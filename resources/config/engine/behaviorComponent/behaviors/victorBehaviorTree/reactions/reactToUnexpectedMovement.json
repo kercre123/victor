@@ -2,6 +2,8 @@
   "behaviorClass": "ReactToUnexpectedMovement",
   "behaviorID": "ReactToUnexpectedMovement",
   "associatedActiveFeature": "NoFeature",
+  
+  "enableRepeatedActivationChecks": true,
 
   "repeatedActivationWindow_sec": 10.0,
   "repeatedActivationAngleWindow_deg": 30.0,
