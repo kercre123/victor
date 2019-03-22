@@ -12,7 +12,9 @@
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "engine/robotComponents_fwd.h"
 
+#include <mutex>
 #include <string>
+#include <unordered_map>
 
 namespace Anki {
 namespace Vector {
@@ -34,6 +36,22 @@ public:
   // If localized string is not available, return stringID itself.
   //
   std::string GetString(const std::string & stringID) const;
+
+private:
+  // Internal types
+  using StringMap = std::unordered_map<std::string,std::string>;
+
+  // Map of translations
+  StringMap _map;
+
+  // Mutex to protect map
+  mutable std::mutex _mutex;
+
+  // Load strings from given file
+  bool LoadFile(const std::string & path);
+
+  // Load strings from given directory
+  bool LoadDirectory(const std::string & path);
 
 };
 

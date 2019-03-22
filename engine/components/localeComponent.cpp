@@ -43,14 +43,102 @@ void LocaleComponent::InitDependent(Robot *, const RobotCompMap & dependencies)
   const auto * locale = context->GetLocale();
   DEV_ASSERT(locale != nullptr, "LocaleComponent.InitDependent.InvalidLocale");
 
-  // TBD: Load string translations
-  LOG_INFO("LocaleComponent.InitDependent", "Initialize component");
+  const std::string & resourcePath = dataPlatform->GetResourcePath("assets/LocalizedStrings");
+  const std::string & localePath = resourcePath + "/" + locale->ToString();
 
+  //
+  // Try to load strings from current locale.  If that fails, fall back to default locale.
+  //
+  if (!LoadDirectory(localePath)) {
+    LOG_WARNING("LocaleComponent.InitDependent", "Unable to load %s", localePath.c_str());
+    LoadDirectory(resourcePath + "/" + Util::Locale::kDefaultLocale.ToString());
+  }
+
+}
+
+bool LocaleComponent::LoadFile(const std::string & path)
+{
+  LOG_INFO("LocaleComponent.LoadFile", "Load %s", path.c_str());
+
+  try {
+    const std::string & document = Util::FileUtils::ReadFile(path);
+
+    Json::Value root;
+    Json::Reader reader;
+    if (!reader.parse(document, root)) {
+      const auto & errors = reader.getFormattedErrorMessages();
+      LOG_WARNING("LocaleComponent.LoadFile", "Unable to parse %s (%s)", path.c_str(), errors.c_str());
+      return false;
+    }
+
+    if (!root.isObject()) {
+      LOG_WARNING("LocaleComponent.LoadFile", "Invalid root object in %s", path.c_str());
+      return false;
+    }
+
+    const auto & memberNames = root.getMemberNames();
+
+    // Lock the map while we add entries
+    std::lock_guard<std::mutex> lock(_mutex);
+
+    for (const auto & memberName : memberNames) {
+      if (memberName == "smartling") {
+        // Skip translation directives
+        continue;
+      }
+
+      const auto & member = root[memberName];
+      if (!member.isObject()) {
+        LOG_WARNING("LocaleComponent.LoadFile", "Invalid entry for key %s", memberName.c_str());
+        continue;
+      }
+
+      const auto & translation = member["translation"];
+      if (!translation.isString()) {
+        LOG_WARNING("LocaleComponent.LoadFile", "Invalid translation for key %s", memberName.c_str());
+        continue;
+      }
+
+      _map[memberName] = translation.asString();
+    }
+
+  } catch (const std::exception & ex) {
+    LOG_ERROR("LocaleComponent.LoadFile", "Failed to load %s (%s)", path.c_str(), ex.what());
+    return false;
+  }
+
+  return true;
+}
+
+bool LocaleComponent::LoadDirectory(const std::string & path)
+{
+  LOG_INFO("LocaleComponent.LoadDirectory", "Load %s", path.c_str());
+
+  if (!Util::FileUtils::DirectoryExists(path)) {
+    LOG_WARNING("LocaleComponent.LoadDirectory", "Invalid directory %s", path.c_str());
+    return false;
+  }
+
+  bool ok = true;
+
+  const auto & files = Util::FileUtils::FilesInDirectory(path, true);
+  for (const auto & file : files) {
+    if (!LoadFile(file)) {
+      LOG_WARNING("LocaleComponent.LoadDirectory", "Failed to load %s", file.c_str());
+      ok = false;
+    }
+  }
+  return ok;
 }
 
 std::string LocaleComponent::GetString(const std::string & stringID) const
 {
-  // TBD: Perform string translation
+  // Lock the map while we search for an entry
+  std::lock_guard<std::mutex> lock(_mutex);
+  const auto & pos = _map.find(stringID);
+  if (pos != _map.end()) {
+    return pos->second;
+  }
   return stringID;
 }
 
