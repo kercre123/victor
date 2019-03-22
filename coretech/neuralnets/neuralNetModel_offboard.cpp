@@ -95,12 +95,23 @@ Result OffboardModel::LoadModelInternal(const std::string& modelPath, const Json
     LOG_INFO("OffboardModel.LoadModelInternal.ConnectionStatus", "%d", connected);
   }
   
-  // TODO: Support multiple procTypes (comma-delimited?)
-  _procTypes.resize(1);
-  if(!JsonTools::GetValueOptional(config, JsonKeys::OffboardProcType, _procTypes[0]))
+  if(!config.isMember(JsonKeys::OffboardProcType))
   {
     LOG_ERROR("OffboardModel.LoadModelInternal.MissingOffboardProcType", "");
     return RESULT_FAIL;
+  }
+  
+  const Json::Value& jsonProcTypes = config[JsonKeys::OffboardProcType];
+  if(jsonProcTypes.isArray())
+  {
+    for(auto const& jsonProcType : jsonProcTypes)
+    {
+      _procTypes.emplace_back(JsonTools::GetValue<std::string>(jsonProcType));
+    }
+  }
+  else
+  {
+    _procTypes.emplace_back(JsonTools::GetValue<std::string>(jsonProcTypes));
   }
   
   return RESULT_OK;

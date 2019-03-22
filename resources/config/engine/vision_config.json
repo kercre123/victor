@@ -163,7 +163,7 @@
       {
         "modelType"           : "offboard",
         "networkName"         : "offboard_person_detection",
-        "procType"            : "ObjectDetection", // One of OffboardProcType (TODO: Support multiple)
+        "procType"            : "ObjectDetection", 
         "commsType"           : "CLAD",
         "inputWidth"          : 640,
         "inputHeight"         : 360,
