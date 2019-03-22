@@ -165,10 +165,6 @@ void BehaviorSDKInterface::BehaviorUpdate()
   }
 
   // TODO Consider which slot should be deactivated once SDK occupies multiple slots.
-  //
-  // TODO If the external SDK code (e.g., Python) crashes or otherwise does not release
-  // control, then currently behavior will be activated indefinitely until a higher
-  // priority behavior takes over.
   auto& robotInfo = GetBEI().GetRobotInfo();
   auto& sdkComponent = robotInfo.GetSDKComponent();
   if (!sdkComponent.SDKWantsControl())

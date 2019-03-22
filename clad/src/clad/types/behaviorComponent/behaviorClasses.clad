@@ -231,6 +231,7 @@ enum uint_8 BehaviorClass {
 
   // sdkBehaviors
   SDKInterface,
+  SDKLock,
 
   // simpleFaceBehaviors
   DriveToFace,

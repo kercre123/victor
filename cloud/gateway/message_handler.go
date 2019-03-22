@@ -3,6 +3,7 @@ package main
 import (
 	"encoding/binary"
 	"io/ioutil"
+	"math/rand"
 	"os"
 	"os/exec"
 	"reflect"
@@ -345,7 +346,7 @@ func CladMemoryMapQuadInfoToProto(msg *gw_clad.MemoryMapQuadInfo) *extint.NavMap
 func SendOnboardingComplete(in *extint.GatewayWrapper_OnboardingCompleteRequest) (*extint.OnboardingInputResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingCompleteResponse{}, 1)
 	defer f()
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: in,
 	})
 	if err != nil {
@@ -368,7 +369,7 @@ func SendOnboardingComplete(in *extint.GatewayWrapper_OnboardingCompleteRequest)
 func SendOnboardingWakeUpStarted(in *extint.GatewayWrapper_OnboardingWakeUpStartedRequest) (*extint.OnboardingInputResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingWakeUpStartedResponse{}, 1)
 	defer f()
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: in,
 	})
 	if err != nil {
@@ -391,7 +392,7 @@ func SendOnboardingWakeUpStarted(in *extint.GatewayWrapper_OnboardingWakeUpStart
 func SendOnboardingWakeUp(in *extint.GatewayWrapper_OnboardingWakeUpRequest) (*extint.OnboardingInputResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingWakeUpResponse{}, 1)
 	defer f()
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: in,
 	})
 	if err != nil {
@@ -422,7 +423,7 @@ func SendAppDisconnected() {
 }
 
 func SendOnboardingSkipOnboarding(in *extint.GatewayWrapper_OnboardingSkipOnboarding) (*extint.OnboardingInputResponse, error) {
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: in,
 	})
 	if err != nil {
@@ -436,7 +437,7 @@ func SendOnboardingSkipOnboarding(in *extint.GatewayWrapper_OnboardingSkipOnboar
 }
 
 func SendOnboardingRestart(in *extint.GatewayWrapper_OnboardingRestart) (*extint.OnboardingInputResponse, error) {
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: in,
 	})
 	if err != nil {
@@ -452,7 +453,7 @@ func SendOnboardingRestart(in *extint.GatewayWrapper_OnboardingRestart) (*extint
 func SendOnboardingSetPhase(in *extint.GatewayWrapper_OnboardingSetPhaseRequest) (*extint.OnboardingInputResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingSetPhaseResponse{}, 1)
 	defer f()
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: in,
 	})
 	if err != nil {
@@ -475,7 +476,7 @@ func SendOnboardingSetPhase(in *extint.GatewayWrapper_OnboardingSetPhaseRequest)
 func SendOnboardingPhaseProgress(in *extint.GatewayWrapper_OnboardingPhaseProgressRequest) (*extint.OnboardingInputResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingPhaseProgressResponse{}, 1)
 	defer f()
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: in,
 	})
 	if err != nil {
@@ -498,7 +499,7 @@ func SendOnboardingPhaseProgress(in *extint.GatewayWrapper_OnboardingPhaseProgre
 func SendOnboardingChargeInfo(in *extint.GatewayWrapper_OnboardingChargeInfoRequest) (*extint.OnboardingInputResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingChargeInfoResponse{}, 1)
 	defer f()
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: in,
 	})
 	if err != nil {
@@ -519,7 +520,7 @@ func SendOnboardingChargeInfo(in *extint.GatewayWrapper_OnboardingChargeInfoRequ
 }
 
 func SendOnboardingMarkCompleteAndExit(in *extint.GatewayWrapper_OnboardingMarkCompleteAndExit) (*extint.OnboardingInputResponse, error) {
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: in,
 	})
 	if err != nil {
@@ -554,7 +555,7 @@ func (service *rpcService) DriveWheels(ctx context.Context, in *extint.DriveWhee
 			DriveWheelsRequest: in,
 		},
 	}
-	_, err := engineProtoManager.Write(message)
+	_, _, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -576,7 +577,7 @@ func (service *rpcService) PlayAnimationTrigger(ctx context.Context, in *extint.
 			PlayAnimationTriggerRequest: in,
 		},
 	}
-	_, err := engineProtoManager.Write(message)
+	_, _, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -601,7 +602,7 @@ func (service *rpcService) PlayAnimation(ctx context.Context, in *extint.PlayAni
 			PlayAnimationRequest: in,
 		},
 	}
-	_, err := engineProtoManager.Write(message)
+	_, _, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -628,7 +629,7 @@ func (service *rpcService) ListAnimations(ctx context.Context, in *extint.ListAn
 		},
 	}
 
-	_, err := engineProtoManager.Write(message)
+	_, _, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -681,7 +682,7 @@ func (service *rpcService) ListAnimationTriggers(ctx context.Context, in *extint
 		},
 	}
 
-	_, err := engineProtoManager.Write(message)
+	_, _, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -755,7 +756,7 @@ func (service *rpcService) StopAllMotors(ctx context.Context, in *extint.StopAll
 			StopAllMotorsRequest: in,
 		},
 	}
-	_, err := engineProtoManager.Write(message)
+	_, _, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -772,7 +773,7 @@ func (service *rpcService) CancelActionByIdTag(ctx context.Context, in *extint.C
 			CancelActionByIdTagRequest: in,
 		},
 	}
-	_, err := engineProtoManager.Write(message)
+	_, _, err := engineProtoManager.Write(message)
 	if err != nil {
 		return nil, err
 	}
@@ -1121,6 +1122,7 @@ func (service *rpcService) EventStream(in *extint.EventRequest, stream extint.Ex
 
 func (service *rpcService) BehaviorRequestToGatewayWrapper(request *extint.BehaviorControlRequest) (*extint.GatewayWrapper, error) {
 	msg := &extint.GatewayWrapper{}
+
 	switch x := request.RequestType.(type) {
 	case *extint.BehaviorControlRequest_ControlRelease:
 		msg.OneofMessageType = &extint.GatewayWrapper_ControlRelease{
@@ -1136,13 +1138,14 @@ func (service *rpcService) BehaviorRequestToGatewayWrapper(request *extint.Behav
 	return msg, nil
 }
 
-func (service *rpcService) BehaviorControlRequestHandler(in extint.ExternalInterface_BehaviorControlServer, done chan struct{}) {
+func (service *rpcService) BehaviorControlRequestHandler(in extint.ExternalInterface_BehaviorControlServer, done chan struct{}, connID uint64) {
 	defer close(done)
-	defer engineProtoManager.Write(&extint.GatewayWrapper{
+	defer engineProtoManager.WriteWithID(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_ControlRelease{
 			ControlRelease: &extint.ControlRelease{},
 		},
-	})
+	}, connID)
+
 	for {
 		request, err := in.Recv()
 		if err != nil {
@@ -1156,14 +1159,14 @@ func (service *rpcService) BehaviorControlRequestHandler(in extint.ExternalInter
 			log.Println(err)
 			return
 		}
-		_, err = engineProtoManager.Write(msg)
+		_, err = engineProtoManager.WriteWithID(msg, connID)
 		if err != nil {
 			return
 		}
 	}
 }
 
-func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInterface_AssumeBehaviorControlServer, responses chan extint.GatewayWrapper, done chan struct{}) error {
+func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInterface_AssumeBehaviorControlServer, responses chan extint.GatewayWrapper, done chan struct{}, connID uint64) error {
 	ping := extint.BehaviorControlResponse{
 		ResponseType: &extint.BehaviorControlResponse_KeepAlive{
 			KeepAlive: &extint.KeepAlivePing{},
@@ -1180,24 +1183,28 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 			if !ok {
 				return grpc.Errorf(codes.Internal, "Failed to retrieve message")
 			}
+			if connID != response.GetConnectionId() {
+				continue
+			}
 			msg := response.GetBehaviorControlResponse()
+			log.Println("BehaviorControl Incoming BehaviorControlResponse message:", msg)
 			if err := out.Send(msg); err != nil {
-				log.Println("Closing BehaviorControl stream (on send):", err)
+				log.Printf("Closing BehaviorControl stream (on send): %s connID %d\n", err.Error(), connID)
 				return err
 			} else if err = out.Context().Err(); err != nil {
 				// This is the case where the user disconnects the stream
 				// We should still return the err in case the user doesn't think they disconnected
-				log.Println("Closing BehaviorControl stream:", err)
+				log.Printf("Closing BehaviorControl stream: %s connID %d\n", err, connID)
 				return err
 			}
 		case <-pingTicker: // ping to check connection liveness after one second.
 			if err := out.Send(&ping); err != nil {
-				log.Println("Closing BehaviorControl stream (on send):", err)
+				log.Printf("Closing BehaviorControl stream (on send): %s connID %d\n", err.Error(), connID)
 				return err
 			} else if err = out.Context().Err(); err != nil {
 				// This is the case where the user disconnects the stream
 				// We should still return the err in case the user doesn't think they disconnected
-				log.Println("Closing BehaviorControl stream:", err)
+				log.Printf("Closing BehaviorControl stream: %s connID %d\n", err, connID)
 				return err
 			}
 		}
@@ -1217,12 +1224,13 @@ func (service *rpcService) BehaviorControl(bidirectionalStream extint.ExternalIn
 	}()
 
 	done := make(chan struct{})
+	connID := rand.Uint64()
 
 	f, behaviorStatus := engineProtoManager.CreateChannel(&extint.GatewayWrapper_BehaviorControlResponse{}, 1)
 	defer f()
 
-	go service.BehaviorControlRequestHandler(bidirectionalStream, done)
-	return service.BehaviorControlResponseHandler(bidirectionalStream, behaviorStatus, done)
+	go service.BehaviorControlRequestHandler(bidirectionalStream, done, connID)
+	return service.BehaviorControlResponseHandler(bidirectionalStream, behaviorStatus, done, connID)
 }
 
 func (service *rpcService) AssumeBehaviorControl(in *extint.BehaviorControlRequest, out extint.ExternalInterface_AssumeBehaviorControlServer) error {
@@ -1236,19 +1244,19 @@ func (service *rpcService) AssumeBehaviorControl(in *extint.BehaviorControlReque
 		return err
 	}
 
-	_, err = engineProtoManager.Write(msg)
+	_, connID, err := engineProtoManager.Write(msg)
 	if err != nil {
 		return err
 	}
 
-	return service.BehaviorControlResponseHandler(out, behaviorStatus, done)
+	return service.BehaviorControlResponseHandler(out, behaviorStatus, done, connID)
 }
 
 func (service *rpcService) DriveOffCharger(ctx context.Context, in *extint.DriveOffChargerRequest) (*extint.DriveOffChargerResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_DriveOffChargerResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_DriveOffChargerRequest{
 			DriveOffChargerRequest: in,
 		},
@@ -1271,7 +1279,7 @@ func (service *rpcService) DriveOnCharger(ctx context.Context, in *extint.DriveO
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_DriveOnChargerResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_DriveOnChargerRequest{
 			DriveOnChargerRequest: in,
 		},
@@ -1294,7 +1302,7 @@ func (service *rpcService) DriveOnCharger(ctx context.Context, in *extint.DriveO
 func (service *rpcService) GetOnboardingState(ctx context.Context, in *extint.OnboardingStateRequest) (*extint.OnboardingStateResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingState{}, 1)
 	defer f()
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_OnboardingStateRequest{
 			OnboardingStateRequest: in,
 		},
@@ -1362,7 +1370,7 @@ func (service *rpcService) PhotosInfo(ctx context.Context, in *extint.PhotosInfo
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PhotosInfoResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_PhotosInfoRequest{
 			PhotosInfoRequest: in,
 		},
@@ -1395,7 +1403,7 @@ func (service *rpcService) Photo(ctx context.Context, in *extint.PhotoRequest) (
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PhotoPathMessage{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_PhotoRequest{
 			PhotoRequest: in,
 		},
@@ -1437,7 +1445,7 @@ func (service *rpcService) Thumbnail(ctx context.Context, in *extint.ThumbnailRe
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ThumbnailPathMessage{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_ThumbnailRequest{
 			ThumbnailRequest: in,
 		},
@@ -1479,7 +1487,7 @@ func (service *rpcService) DeletePhoto(ctx context.Context, in *extint.DeletePho
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_DeletePhotoResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_DeletePhotoRequest{
 			DeletePhotoRequest: in,
 		},
@@ -1501,7 +1509,7 @@ func (service *rpcService) DeletePhoto(ctx context.Context, in *extint.DeletePho
 func (service *rpcService) GetLatestAttentionTransfer(ctx context.Context, in *extint.LatestAttentionTransferRequest) (*extint.LatestAttentionTransferResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_LatestAttentionTransfer{}, 1)
 	defer f()
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_LatestAttentionTransferRequest{
 			LatestAttentionTransferRequest: in,
 		},
@@ -1525,7 +1533,7 @@ func (service *rpcService) ConnectCube(ctx context.Context, in *extint.ConnectCu
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ConnectCubeResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_ConnectCubeRequest{
 			ConnectCubeRequest: in,
 		},
@@ -1545,7 +1553,7 @@ func (service *rpcService) ConnectCube(ctx context.Context, in *extint.ConnectCu
 }
 
 func (service *rpcService) DisconnectCube(ctx context.Context, in *extint.DisconnectCubeRequest) (*extint.DisconnectCubeResponse, error) {
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_DisconnectCubeRequest{
 			DisconnectCubeRequest: in,
 		},
@@ -1563,7 +1571,7 @@ func (service *rpcService) DisconnectCube(ctx context.Context, in *extint.Discon
 func (service *rpcService) CubesAvailable(ctx context.Context, in *extint.CubesAvailableRequest) (*extint.CubesAvailableResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_CubesAvailableResponse{}, 1)
 	defer f()
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_CubesAvailableRequest{
 			CubesAvailableRequest: in,
 		},
@@ -1583,7 +1591,7 @@ func (service *rpcService) CubesAvailable(ctx context.Context, in *extint.CubesA
 }
 
 func (service *rpcService) FlashCubeLights(ctx context.Context, in *extint.FlashCubeLightsRequest) (*extint.FlashCubeLightsResponse, error) {
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_FlashCubeLightsRequest{
 			FlashCubeLightsRequest: in,
 		},
@@ -1599,7 +1607,7 @@ func (service *rpcService) FlashCubeLights(ctx context.Context, in *extint.Flash
 }
 
 func (service *rpcService) ForgetPreferredCube(ctx context.Context, in *extint.ForgetPreferredCubeRequest) (*extint.ForgetPreferredCubeResponse, error) {
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_ForgetPreferredCubeRequest{
 			ForgetPreferredCubeRequest: in,
 		},
@@ -1615,7 +1623,7 @@ func (service *rpcService) ForgetPreferredCube(ctx context.Context, in *extint.F
 }
 
 func (service *rpcService) SetPreferredCube(ctx context.Context, in *extint.SetPreferredCubeRequest) (*extint.SetPreferredCubeResponse, error) {
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_SetPreferredCubeRequest{
 			SetPreferredCubeRequest: in,
 		},
@@ -1631,7 +1639,7 @@ func (service *rpcService) SetPreferredCube(ctx context.Context, in *extint.SetP
 }
 
 func (service *rpcService) SetCubeLights(ctx context.Context, in *extint.SetCubeLightsRequest) (*extint.SetCubeLightsResponse, error) {
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_SetCubeLightsRequest{
 			SetCubeLightsRequest: in,
 		},
@@ -1651,7 +1659,7 @@ func (service *rpcService) RobotStatusHistory(ctx context.Context, in *extint.Ro
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_RobotHistoryResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_RobotHistoryRequest{
 			RobotHistoryRequest: in,
 		},
@@ -1670,7 +1678,7 @@ func (service *rpcService) PullJdocs(ctx context.Context, in *extint.PullJdocsRe
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PullJdocsResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_PullJdocsRequest{
 			PullJdocsRequest: in,
 		},
@@ -1696,7 +1704,7 @@ func (service *rpcService) UpdateSettings(ctx context.Context, in *extint.Update
 	}
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_UpdateSettingsRequest{
 			UpdateSettingsRequest: in,
 		},
@@ -1722,7 +1730,7 @@ func (service *rpcService) UpdateAccountSettings(ctx context.Context, in *extint
 	}
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_UpdateAccountSettingsRequest{
 			UpdateAccountSettingsRequest: in,
 		},
@@ -1748,7 +1756,7 @@ func (service *rpcService) UpdateUserEntitlements(ctx context.Context, in *extin
 	}
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_UpdateUserEntitlementsRequest{
 			UpdateUserEntitlementsRequest: in,
 		},
@@ -1833,7 +1841,7 @@ func (service *rpcService) GoToPose(ctx context.Context, in *extint.GoToPoseRequ
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_GoToPoseResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_GoToPoseRequest{
 			GoToPoseRequest: in,
 		},
@@ -1863,7 +1871,7 @@ func (service *rpcService) DockWithCube(ctx context.Context, in *extint.DockWith
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_DockWithCubeResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_DockWithCubeRequest{
 			DockWithCubeRequest: in,
 		},
@@ -1892,7 +1900,7 @@ func (service *rpcService) DriveStraight(ctx context.Context, in *extint.DriveSt
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_DriveStraightResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_DriveStraightRequest{
 			DriveStraightRequest: in,
 		},
@@ -1921,7 +1929,7 @@ func (service *rpcService) TurnInPlace(ctx context.Context, in *extint.TurnInPla
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_TurnInPlaceResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_TurnInPlaceRequest{
 			TurnInPlaceRequest: in,
 		},
@@ -1950,7 +1958,7 @@ func (service *rpcService) SetHeadAngle(ctx context.Context, in *extint.SetHeadA
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_SetHeadAngleResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_SetHeadAngleRequest{
 			SetHeadAngleRequest: in,
 		},
@@ -1979,7 +1987,7 @@ func (service *rpcService) SetLiftHeight(ctx context.Context, in *extint.SetLift
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_SetLiftHeightResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_SetLiftHeightRequest{
 			SetLiftHeightRequest: in,
 		},
@@ -2008,7 +2016,7 @@ func (service *rpcService) TurnTowardsFace(ctx context.Context, in *extint.TurnT
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_TurnTowardsFaceResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_TurnTowardsFaceRequest{
 			TurnTowardsFaceRequest: in,
 		},
@@ -2037,7 +2045,7 @@ func (service *rpcService) GoToObject(ctx context.Context, in *extint.GoToObject
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_GoToObjectResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_GoToObjectRequest{
 			GoToObjectRequest: in,
 		},
@@ -2066,7 +2074,7 @@ func (service *rpcService) RollObject(ctx context.Context, in *extint.RollObject
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_RollObjectResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_RollObjectRequest{
 			RollObjectRequest: in,
 		},
@@ -2095,7 +2103,7 @@ func (service *rpcService) PopAWheelie(ctx context.Context, in *extint.PopAWheel
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PopAWheelieResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_PopAWheelieRequest{
 			PopAWheelieRequest: in,
 		},
@@ -2124,7 +2132,7 @@ func (service *rpcService) PickupObject(ctx context.Context, in *extint.PickupOb
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PickupObjectResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_PickupObjectRequest{
 			PickupObjectRequest: in,
 		},
@@ -2153,7 +2161,7 @@ func (service *rpcService) PlaceObjectOnGroundHere(ctx context.Context, in *exti
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_PlaceObjectOnGroundHereResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_PlaceObjectOnGroundHereRequest{
 			PlaceObjectOnGroundHereRequest: in,
 		},
@@ -2177,7 +2185,7 @@ func (service *rpcService) BatteryState(ctx context.Context, in *extint.BatteryS
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_BatteryStateResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_BatteryStateRequest{
 			BatteryStateRequest: in,
 		},
@@ -2199,7 +2207,7 @@ func (service *rpcService) VersionState(ctx context.Context, in *extint.VersionS
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_VersionStateResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_VersionStateRequest{
 			VersionStateRequest: in,
 		},
@@ -2221,7 +2229,7 @@ func (service *rpcService) SayText(ctx context.Context, in *extint.SayTextReques
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_SayTextResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_SayTextRequest{
 			SayTextRequest: in,
 		},
@@ -2253,7 +2261,7 @@ func (service *rpcService) SayText(ctx context.Context, in *extint.SayTextReques
 func AudioSendModeRequest(mode extint.AudioProcessingMode) error {
 	log.Println("SDK Requesting Audio with mode(", mode, ")")
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_AudioSendModeRequest{
 			AudioSendModeRequest: &extint.AudioSendModeRequest{
 				Mode: mode,
@@ -2392,7 +2400,7 @@ func (service *rpcService) EnableMarkerDetection(ctx context.Context, request *e
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_EnableMarkerDetectionResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_EnableMarkerDetectionRequest{
 			EnableMarkerDetectionRequest: request,
 		},
@@ -2438,7 +2446,7 @@ func (service *rpcService) EnableFaceDetection(ctx context.Context, request *ext
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_EnableFaceDetectionResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_EnableFaceDetectionRequest{
 			EnableFaceDetectionRequest: request,
 		},
@@ -2464,7 +2472,7 @@ func (service *rpcService) EnableMotionDetection(ctx context.Context, request *e
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_EnableMotionDetectionResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_EnableMotionDetectionRequest{
 			EnableMotionDetectionRequest: request,
 		},
@@ -2490,7 +2498,7 @@ func (service *rpcService) EnableMirrorMode(ctx context.Context, request *extint
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_EnableMirrorModeResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_EnableMirrorModeRequest{
 			EnableMirrorModeRequest: request,
 		},
@@ -2563,7 +2571,7 @@ func (service *rpcService) EnableImageStreaming(ctx context.Context, request *ex
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_EnableImageStreamingResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_EnableImageStreamingRequest{
 			EnableImageStreamingRequest: request,
 		},
@@ -2589,7 +2597,7 @@ func (service *rpcService) EnableImageStreaming(ctx context.Context, request *ex
 func (service *rpcService) IsImageStreamingEnabled(ctx context.Context, request *extint.IsImageStreamingEnabledRequest) (*extint.IsImageStreamingEnabledResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_IsImageStreamingEnabledResponse{}, 1)
 	defer f()
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_IsImageStreamingEnabledRequest{
 			IsImageStreamingEnabledRequest: request,
 		},
@@ -2881,7 +2889,7 @@ func (service *rpcService) CheckCloudConnection(ctx context.Context, in *extint.
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_CheckCloudResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_CheckCloudRequest{
 			CheckCloudRequest: in,
 		},
@@ -3013,7 +3021,7 @@ func (service *rpcService) GetFeatureFlag(ctx context.Context, in *extint.Featur
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_FeatureFlagResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_FeatureFlagRequest{
 			FeatureFlagRequest: in,
 		},
@@ -3037,7 +3045,7 @@ func (service *rpcService) GetFeatureFlagList(ctx context.Context, in *extint.Fe
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_FeatureFlagListResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_FeatureFlagListRequest{
 			FeatureFlagListRequest: in,
 		},
@@ -3061,7 +3069,7 @@ func (service *rpcService) GetAlexaAuthState(ctx context.Context, in *extint.Ale
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_AlexaAuthStateResponse{}, 1)
 	defer f()
 
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_AlexaAuthStateRequest{
 			AlexaAuthStateRequest: in,
 		},
@@ -3082,7 +3090,7 @@ func (service *rpcService) GetAlexaAuthState(ctx context.Context, in *extint.Ale
 
 // AlexaOptIn is used to check the alexa authorization state
 func (service *rpcService) AlexaOptIn(ctx context.Context, in *extint.AlexaOptInRequest) (*extint.AlexaOptInResponse, error) {
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_AlexaOptInRequest{
 			AlexaOptInRequest: in,
 		},
@@ -3194,7 +3202,7 @@ func newServer() *rpcService {
 // Set Eye Color (SDK only)
 // TODO Set eye color back to Settings value in internal code when SDK program ends or loses behavior control (e.g., in go code or when SDK behavior deactivates)
 func (service *rpcService) SetEyeColor(ctx context.Context, in *extint.SetEyeColorRequest) (*extint.SetEyeColorResponse, error) {
-	_, err := engineProtoManager.Write(&extint.GatewayWrapper{
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_SetEyeColorRequest{
 			SetEyeColorRequest: in,
 		},
@@ -3251,7 +3259,7 @@ func (service *rpcService) ExternalAudioStreamRequestHandler(in extint.ExternalI
 			return
 		}
 
-		_, err = engineProtoManager.Write(msg)
+		_, _, err = engineProtoManager.Write(msg)
 		if err != nil {
 			log.Printf("Could not write GatewayWrapper_AudioStreamRequest\n")
 		}

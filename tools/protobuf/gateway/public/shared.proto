@@ -106,17 +106,25 @@ message UserAuthenticationResponse {
 // *** App only proto below ***
 
 // Messages to pass to the engine
+
+// These are only used between engine and gateway, so the field indices may
+// be changed freely, unlike externally-facing proto definitions that where
+// changes could break backwards-compatibility.
 message GatewayWrapper {
+  // connection_id can be used to identify multiple messages going to/from 
+  // the same source
+  uint64 connection_id = 1;
+
   oneof oneof_message_type {
     // ------------ messages sent from robot to app ----------------------
-    Event event                                                      = 1;
+    Event event                                                      = 2;
 
     // ------------ onboarding requests and responses --------------------
     // 1p0 backward compatibility enum values vvv
-    OnboardingStateRequest        onboarding_state_request           = 2;
-    OnboardingState               onboarding_state                   = 3;
-    OnboardingSkipOnboarding      onboarding_skip_onboarding         = 7;
-    OnboardingRestart             onboarding_restart                 = 8;
+    OnboardingStateRequest        onboarding_state_request           = 3;
+    OnboardingState               onboarding_state                   = 4;
+    OnboardingSkipOnboarding      onboarding_skip_onboarding         = 5;
+    OnboardingRestart             onboarding_restart                 = 6;
     OnboardingCompleteRequest     onboarding_complete_request        = 11;
     OnboardingCompleteResponse    onboarding_complete_response       = 12;
     OnboardingWakeUpRequest       onboarding_wake_up_request         = 13;
