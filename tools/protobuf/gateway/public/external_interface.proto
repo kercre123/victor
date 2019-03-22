@@ -529,15 +529,6 @@ service ExternalInterface {
     };
   }    
 
-  // CheckUpdateStatus tells the robot's current state regarding download, installation, and
-  // readiness to boot to, engine updates.
-  rpc CheckUpdateStatusStream(CheckUpdateStatusRequest) returns (stream CheckUpdateStatusResponse) {
-    option (google.api.http) = {
-      post: "/v1/check_update_status_stream",
-      body: "*"
-    };
-  }
-
   // CheckUpdateStatus tells if the robot is ready to reboot and update.
   rpc CheckUpdateStatus(CheckUpdateStatusRequest) returns (CheckUpdateStatusResponse) {
     option (google.api.http) = {
