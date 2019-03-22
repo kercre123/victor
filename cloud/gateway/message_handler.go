@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -2719,15 +2720,17 @@ func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extin
 	return grpc.Errorf(codes.Internal, errMsg)
 }
 
-// CheckUpdateStatus tells if the robot is ready to reboot and update.
+// GetUpdateStatus tells if the robot is ready to reboot and update.
 func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse, error) {
+	log.Println("ron_gateway GetUpdateStatus")
 	update_status := &extint.CheckUpdateStatusResponse{
 		Status: &extint.ResponseStatus{
 			Code: extint.ResponseStatus_OK,
 		},
-		UpdateStatus: extint.CheckUpdateStatusResponse_NO_UPDATE,
-		Progress:     -1,
-		Expected:     -1,
+		UpdateStatus:  extint.CheckUpdateStatusResponse_NO_UPDATE,
+		Progress:      -1,
+		Expected:      -1,
+		UpdateVersion: "",
 	}
 
 	if _, err := os.Stat("/run/update-engine/done"); err == nil {
@@ -2743,6 +2746,18 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 		update_status.Expected, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
 		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
 	}
+
+	if data, err := ioutil.ReadFile("/run/update-engine/manifest.ini"); err == nil {
+		expr := regexp.MustCompile("update_version\\s*=\\s*(\\S*)")
+		match := expr.FindStringSubmatch(string(data))
+		log.Println("ron_gateway len(match), match: ", len(match), match)
+		if len(match) == 2 {
+			update_status.UpdateVersion = match[1]
+		}
+		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
+	}
+
+	log.Println("ron_gateway returning: ", update_status)
 	return update_status, nil
 }
 
@@ -2788,8 +2803,8 @@ func (service *rpcService) UpdateStatusStream() {
 	}
 }
 
-// CheckUpdateStatus tells if the robot is ready to reboot and update.
-func (service *rpcService) CheckUpdateStatus(
+// CheckUpdateStatusStream restarts the update-engine process and starts a stream of status messages to the app.
+func (service *rpcService) CheckUpdateStatusStream(
 	ctx context.Context, in *extint.CheckUpdateStatusRequest) (*extint.CheckUpdateStatusResponse, error) {
 
 	retval := &extint.CheckUpdateStatusResponse{
@@ -2813,6 +2828,13 @@ func (service *rpcService) CheckUpdateStatus(
 	}
 
 	return retval, err
+}
+
+// CheckUpdateStatus tells if the robot is ready to reboot and update.
+func (service *rpcService) CheckUpdateStatus(
+	ctx context.Context, in *extint.CheckUpdateStatusRequest) (*extint.CheckUpdateStatusResponse, error) {
+
+	return service.GetUpdateStatus()
 }
 
 // UpdateAndRestart reboots the robot when an update is available.

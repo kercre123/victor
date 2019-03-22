@@ -529,6 +529,14 @@ service ExternalInterface {
     };
   }    
 
+  // CheckUpdateStatusStream sets up a stream of UpdateStatusResponse Events.
+  rpc CheckUpdateStatusStream(CheckUpdateStatusRequest) returns (CheckUpdateStatusResponse) {
+    option (google.api.http) = {
+      post: "/v1/check_update_status_stream",
+      body: "*"
+    };
+  }
+
   // CheckUpdateStatus tells if the robot is ready to reboot and update.
   rpc CheckUpdateStatus(CheckUpdateStatusRequest) returns (CheckUpdateStatusResponse) {
     option (google.api.http) = {

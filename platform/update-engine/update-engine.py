@@ -448,7 +448,7 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
 
         # Update progress estimate
         num_operations = len(payload.manifest.install_operations) + len(payload.manifest.kernel_install_operations)
-        progress = num_operations / download_progress_denominator
+        progress = num_operations / (download_progress_denominator + 1)
         num_operations += progress
         write_status(PROGRESS_FILE, progress)
         write_status(EXPECTED_WRITE_SIZE_FILE, num_operations)
