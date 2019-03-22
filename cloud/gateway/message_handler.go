@@ -2722,7 +2722,6 @@ func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extin
 
 // GetUpdateStatus tells if the robot is ready to reboot and update.
 func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse, error) {
-	log.Println("ron_gateway GetUpdateStatus")
 	update_status := &extint.CheckUpdateStatusResponse{
 		Status: &extint.ResponseStatus{
 			Code: extint.ResponseStatus_OK,
@@ -2750,14 +2749,12 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 	if data, err := ioutil.ReadFile("/run/update-engine/manifest.ini"); err == nil {
 		expr := regexp.MustCompile("update_version\\s*=\\s*(\\S*)")
 		match := expr.FindStringSubmatch(string(data))
-		log.Println("ron_gateway len(match), match: ", len(match), match)
 		if len(match) == 2 {
 			update_status.UpdateVersion = match[1]
 		}
 		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
 	}
 
-	log.Println("ron_gateway returning: ", update_status)
 	return update_status, nil
 }
 
