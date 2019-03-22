@@ -4,6 +4,13 @@
   
   "associatedActiveFeature": "HeldInPalm",
   
+  "behaviors": [
+    "InitialHeldInPalmReaction",
+    "HeldInPalmResponses",
+    "ReactToPickupFromPalm",
+    "ReactToPutDownFromPalm"
+  ],
+  
   "wantsToBeActivatedCondition": {
     "conditionType": "Compound",
     "and": [
@@ -19,21 +26,10 @@
     ]
   },
   
-  // If the robot is put back down on the charging platform instead of the ground,
-  // cancel everything to skip the attempted FistBump behavior that would otherwise
-  // trigger after being put down.
+  // If the robot is put back on the charging platform instead of the ground, cancel the rest
+  // of the queued behaviors to skip the attempted ReactToPutDownFromPalm behavior that would
+  // would otherwise trigger after being put down.
   "wantsToCancelSelfCondition": {
     "conditionType": "OnCharger"
-  },
-
-  "behaviors": [
-    "InitialHeldInPalmReaction",
-    "HeldInPalmResponses",
-    // If the pick-up reaction times out, the entire dispatcher should as well. Therefore,
-    // no other behavior after this one should be able to run while InAir. That way the
-    // WhileInAirDispatcher can be allowed to [re-]activate, since the robot will still
-    // be being held in mid-air.
-    "ReactToPickupFromPalm",
-    "ReactToPutDownFromPalm"
-  ]
+  }
 }

@@ -50,10 +50,12 @@ public:
   using WakeWord = external_interface::WakeWord;
   using AttentionTransfer = external_interface::AttentionTransfer;
 
+  //optional connId allows for identifying source of response
   template<typename T>
-  inline static external_interface::GatewayWrapper WrapResponse( T* message )
+  inline static external_interface::GatewayWrapper WrapResponse( T* message, uint64_t connId = 0)
   {
     GatewayWrapper wrapper{ message };
+    wrapper.set_connection_id(connId);
     return wrapper;
   }
 

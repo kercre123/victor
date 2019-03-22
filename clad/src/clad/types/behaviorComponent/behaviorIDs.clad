@@ -200,11 +200,15 @@ enum uint_16 BehaviorID {
   LookInPlaceHeadDownNervous,
   LookInPlaceHeadDownRelaxed,
   LookInPlaceHeadUpInPalm,
+  LookingNervousInPalmAnim,
   NestleWhileHeldInPalmAnim,
   ReactToPalmTilt,
   ReactToPickupFromPalm,
   ReactToPutDownFromPalm,
   ReactToPutDownFromPalmAnimSelector,
+  WakeGentlyFromHeldInPalmSleep,
+  SleepWhileHeldInPalm,
+  SleepWhileHeldInPalmLoop,
 
   // victorBehaviorTree/highLevelDelegates
   InitialPickupAnimation,
@@ -401,7 +405,6 @@ enum uint_16 BehaviorID {
   ReactToAbuse,
   ReactToAffirmative,
   ReactToApology,
-  ReactToBatteryTooHotToCharge,
   ReactToCliff,
   ReactToCliffDuringFetch,
   ReactToDarkness,
@@ -428,6 +431,7 @@ enum uint_16 BehaviorID {
   ReactToTriggerDirectionAwake,
   ReactToUncalibratedHeadAndLift,
   ReactToUnexpectedMovement,
+  ReactToUnexpectedMovementInAir,
   StuckOnEdge,
   TriggerWordWithoutIntent,
 
@@ -437,6 +441,7 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/sdkBehaviors
   SDKDefault,
   SDKOverrideAll,
+  SDKLock,
 
   // victorBehaviorTree/seasonal
   SeasonalHappyHolidays,

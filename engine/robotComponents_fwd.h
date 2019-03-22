@@ -58,6 +58,7 @@ enum class RobotComponentID {
   HabitatDetector,
   ImuSensor,
   JdocsManager,
+  LocaleComponent,
   Map,
   MicComponent,
   MoodManager,
@@ -88,7 +89,7 @@ enum class RobotComponentID {
   Count
 };
 
-using RobotComp =  IDependencyManagedComponent<RobotComponentID>;
+using RobotComponent =  IDependencyManagedComponent<RobotComponentID>;
 using RobotCompMap = DependencyManagedEntity<RobotComponentID>;
 using RobotCompIDSet = std::set<RobotComponentID>;
 

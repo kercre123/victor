@@ -118,6 +118,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorPuzzleMaze.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/gateBehaviors/behaviorConnectToCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/habitat/behaviorConfirmHabitat.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/heldInPalm/behaviorInitialHeldInPalmReaction.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/knowledgeGraph/behaviorKnowledgeGraphQuestion.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorEnrollFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorRespondToRenameFace.h"
@@ -138,7 +139,6 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/proxBehaviors/behaviorProxGetToDistance.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorAskForHelp.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorCheckForAndReactToSalientPoint.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToBatteryTooHotToCharge.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCliff.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToCubeTap.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToDarkness.h"
@@ -159,6 +159,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/robotDrivenDialog/behaviorPromptUserForVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKLock.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorDriveToFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorFindFaceAndThen.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/simpleFaceBehaviors/behaviorLookAtMe.h"
@@ -857,6 +858,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
+    case BehaviorClass::InitialHeldInPalmReaction:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorInitialHeldInPalmReaction(config));
+      break;
+    }
+    
     case BehaviorClass::KnowledgeGraphQuestion:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorKnowledgeGraphQuestion(config));
@@ -977,12 +984,6 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
       break;
     }
     
-    case BehaviorClass::ReactToBatteryTooHotToCharge:
-    {
-      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToBatteryTooHotToCharge(config));
-      break;
-    }
-    
     case BehaviorClass::ReactToCliff:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorReactToCliff(config));
@@ -1100,6 +1101,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::SDKInterface:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorSDKInterface(config));
+      break;
+    }
+    
+    case BehaviorClass::SDKLock:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSDKLock(config));
       break;
     }
     

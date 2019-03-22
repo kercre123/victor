@@ -164,6 +164,9 @@ enum uint_8 BehaviorClass {
   // habitat
   ConfirmHabitat,
 
+  // heldInPalm
+  InitialHeldInPalmReaction,
+
   // knowledgeGraph
   KnowledgeGraphQuestion,
 
@@ -203,7 +206,6 @@ enum uint_8 BehaviorClass {
   // reactions
   AskForHelp,
   CheckForAndReactToSalientPoint,
-  ReactToBatteryTooHotToCharge,
   ReactToCliff,
   ReactToCubeTap,
   ReactToDarkness,
@@ -228,6 +230,7 @@ enum uint_8 BehaviorClass {
 
   // sdkBehaviors
   SDKInterface,
+  SDKLock,
 
   // simpleFaceBehaviors
   DriveToFace,

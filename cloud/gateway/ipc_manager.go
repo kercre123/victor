@@ -17,6 +17,7 @@ import (
 	"anki/ipc"
 	"bytes"
 	"encoding/binary"
+	"math/rand"
 	"path"
 	"reflect"
 	"sync"
@@ -94,9 +95,21 @@ func (manager *EngineProtoIpcManager) Init() {
 
 // Write sends a Protobuf message to vic-engine. This will be handled by
 // ProtoMessageHandler::ProcessMessages() in the engine C++ code.
-func (manager *EngineProtoIpcManager) Write(msg proto.Message) (int, error) {
+// All Gateway messages get a ConnectionId, we create one here and return it.
+func (manager *EngineProtoIpcManager) Write(msg *extint.GatewayWrapper) (int, uint64, error) {
+	connectionID := rand.Uint64()
+	count, err := manager.WriteWithID(msg, connectionID)
+	return count, connectionID, err
+}
+
+// Write sends a Protobuf message to vic-engine. This will be handled by
+// ProtoMessageHandler::ProcessMessages() in the engine C++ code.
+func (manager *EngineProtoIpcManager) WriteWithID(msg *extint.GatewayWrapper, connID uint64) (int, error) {
 	var err error
 	var buf bytes.Buffer
+
+	msg.ConnectionId = connID
+
 	if msg == nil {
 		return -1, grpc.Errorf(codes.InvalidArgument, "Unable to parse request")
 	}

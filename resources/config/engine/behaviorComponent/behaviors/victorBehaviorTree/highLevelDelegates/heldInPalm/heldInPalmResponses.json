@@ -12,11 +12,11 @@
       "cooldown_s": 0.0
     },
     {
-      "behavior": "SleepInAirAnimLoopInternal",
+      "behavior": "SleepWhileHeldInPalm",
       "cooldown_s": 0.0
     },
     {
-      "behavior": "LookingNervousAnimLoopInternal",
+      "behavior": "LookingNervousInPalmAnim",
       "cooldown_s": 0.0
     },
     {
@@ -30,77 +30,6 @@
     {
       "behavior": "LookInPlaceAtEdgeOfPalm",
       "cooldown_s": 0.0
-    }
-  ],
-
-  "anonymousBehaviors": [
-    {
-      "behaviorName"     : "SleepInAirAnimLoopInternal",
-      "behaviorClass"    : "AnimGetInLoop",
-      
-      "getIn"            : "GoToSleepGetIn",
-      "loopAnimation"    : "GoToSleepSleeping",
-      "getOut"           : "WakeupGetout",
-      
-      // Force the get-out animation to play to completion, so that Vector
-      // continues playing the "WakeupGetout" animation even if
-      // ReactToTouchPetting wants to quickly force a deactivation.
-      "shouldForceLoopGetOutAnim"   : true,
-      "shouldCheckEndCondDuringAnim": false,
-      "lockTreads"                  : true,
-
-      // Go to "sleep" in the user's palm after 5 minutes of held-in-palm
-      // activity with no jolts or shocks experienced.
-      "wantsToBeActivatedCondition": {
-        "conditionType": "Compound",
-        "and": [
-          {
-            // When the robot is jolted or shocked, the "Trust" level should
-            // drop to 0 again, and hence stop this from activating.
-            "conditionType": "Emotion",
-            "emotion": "Trust",
-            "min": 0.5
-          },
-          {
-            "conditionType": "RobotHeldInPalm",
-            "shouldBeHeldInPalm": true,
-            "minDuration_s": 300.0
-          },
-          {
-            "conditionType": "BehaviorTimer",
-            "timerName": "ReactToTouchPetting",
-            // If the user pets Vector, we want to continue nestling once
-            "cooldown_s": 120.0
-          }
-        ]
-      }
-    },
-    {
-      "behaviorName"  : "LookingNervousAnimLoopInternal",
-      "behaviorClass" : "AnimSequence",
-      // Cooldown will handle how often this nervous animation repeats once
-      // it wants to be activated.
-      "num_loops"        : 1,
-      "animTriggers"     : ["HeldOnPalmLookingNervous"],
-      
-      "wantsToBeActivatedCondition": {
-        "conditionType": "Compound",
-        "not": {
-          "conditionType": "Compound",
-          "and": [
-            {
-              "conditionType": "RobotPitchInRange",
-              "minPitchThreshold_deg": -20.0,
-              "maxPitchThreshold_deg": 20.0
-            },
-            {
-              "conditionType": "RobotRollInRange",
-              "minRollThreshold_deg": -20.0,
-              "maxRollThreshold_deg": 20.0
-            }
-          ]
-        }
-      }
     }
   ],
 

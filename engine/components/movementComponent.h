@@ -242,6 +242,9 @@ public:
   // differs from the most common use case of this component.
   void EnableUnexpectedRotationWithoutMotors(bool enabled) { _enableRotatedWithoutMotors = enabled; }
   bool IsUnexpectedRotationWithoutMotorsEnabled() const { return _enableRotatedWithoutMotors; }
+  
+  void EnableUnexpectedMovementWhilePickedUp(bool enabled) { _enableUnexpectedMovementWhilePickedUp = enabled; }
+  bool IsUnexpectedMovementWhilePickedUpEnabled() const { return _enableUnexpectedMovementWhilePickedUp; }
     
   // Returns body distance traveled
   // i.e. Average wheel speed integrated over time
@@ -304,6 +307,7 @@ private:
   bool _isHeadEncoderInvalid = false;
   bool _isLiftEncoderInvalid = false;
   bool _enableRotatedWithoutMotors = false;
+  bool _enableUnexpectedMovementWhilePickedUp = false;
 
   // True if we are currently allowed to handle raw motion commands from the outside world
   // (e.g. while SDK or Webots is active)

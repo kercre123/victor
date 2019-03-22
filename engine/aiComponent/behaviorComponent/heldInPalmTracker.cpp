@@ -274,6 +274,11 @@ void HeldInPalmTracker::CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo)
   } else {
     _lastHeldInPalmTime = currTime;
   }
+  
+  // Set the movement component to start detecting unexpected movement if the robot is held in a
+  // user's palm since some of the behaviors that can run in this state might try to turn in place.
+  auto& moveComponent = robotInfo.GetMoveComponent();
+  moveComponent.EnableUnexpectedMovementWhilePickedUp(_isHeldInPalm);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

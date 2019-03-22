@@ -15,7 +15,6 @@
 #include "coretech/vision/engine/debugImageList.h"
 #include "coretech/vision/engine/eyeContact.h"
 #include "coretech/vision/engine/faceTracker.h"
-#include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/profiler.h"
 #include "coretech/vision/engine/trackedFace.h"
 
@@ -33,10 +32,7 @@
 #include "CommonDef.h"
 #include "DetectorComDef.h"
 
-#include "json/json.h"
-
 #include <list>
-#include <ctime>
 
 namespace Anki {
   

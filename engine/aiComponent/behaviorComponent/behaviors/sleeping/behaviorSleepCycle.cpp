@@ -910,7 +910,9 @@ void BehaviorSleepCycle::RespondToPersonCheck()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorSleepCycle::SleepTransitionHelper(const SleepStateID& newState, const bool playSleepGetIn)
+void BehaviorSleepCycle::SleepTransitionHelper(const SleepStateID& newState, 
+                                               const bool playSleepGetIn, 
+                                               ICozmoBehaviorPtr preSleepDelegate)
 {
   if( _dVars.currState == SleepStateID::Awake ) {
     // not going to be awake anymore
@@ -919,7 +921,13 @@ void BehaviorSleepCycle::SleepTransitionHelper(const SleepStateID& newState, con
 
   SetState(newState);
 
-  SleepIfInControl(playSleepGetIn);
+  if (preSleepDelegate != nullptr && preSleepDelegate->WantsToBeActivated()) {
+    DelegateIfInControl(preSleepDelegate.get(), [this, playSleepGetIn]() {
+      SleepIfInControl(playSleepGetIn);
+    });
+  } else {
+    SleepIfInControl(playSleepGetIn);
+  }
 }
 
 
@@ -935,7 +943,7 @@ void BehaviorSleepCycle::TransitionToComatose()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSleepCycle::TransitionToEmergencySleep()
 {
-  SleepTransitionHelper(SleepStateID::EmergencySleep);
+  SleepTransitionHelper(SleepStateID::EmergencySleep, true, _iConfig.emergencyModeAnimBehavior);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

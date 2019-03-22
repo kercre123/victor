@@ -288,37 +288,69 @@ void SDKComponent::OnSendAudioModeRequest(const AnkiEvent<external_interface::Ga
   gi->Broadcast(ExternalMessageRouter::WrapResponse(changedEvent));
 }
 
+//keep ID for multiple exclusive user attempts
+void SDKComponent::SetBehaviorLock(uint64_t controlId)
+{
+  if (_sdkWantsLock && (_sdkLockConnId != controlId)) {
+    //grabbing control from another connection
+    DispatchBehaviorLockLostResult();
+    LOG_INFO("SDKComponent.SetBehaviorLock","Connection_id %llu control reservation LOST", _sdkLockConnId);
+  }        
+  
+  LOG_INFO("SDKComponent.SetBehaviorLock","Connection_id %llu reserving control", controlId);
+  _sdkLockConnId = controlId;
+  _sdkWantsLock = true;
+  DispatchSDKActivationResult(true, controlId);
+}
+
 void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::GatewayWrapper>& event)
 {
   using namespace external_interface;
   auto* gi = _robot->GetGatewayInterface();
-   
+  const auto id = event.GetData().connection_id();
+
   switch(event.GetData().GetTag()) {
     // Receives a message that external SDK wants an SDK behavior to be activated.
     case external_interface::GatewayWrapperTag::kControlRequest:
       {
         auto & control_req = event.GetData().control_request(); 
         _sdkControlLevel = control_req.priority();
+        LOG_INFO("SDKComponent.HandleProtoMessage", "SDK requested control connection_id %llu", id);
         if (!ANKI_VERIFY(_sdkControlLevel, "SDKComponent::HandleProtoMessage", "Invalid _sdkControlLevel 0 (UNKNOWN)")) {
           return;
         }
 
+        if (event.GetData().control_request().priority() == event.GetData().control_request().RESERVE_CONTROL) {
+          //user wants long-running control
+          SetBehaviorLock(id);
+          return;
+        }
+
         _sdkWantsControl = true;
-        LOG_INFO("SDKComponent::HandleProtoMessage","SDK requested control priority %s (%u)", 
+        _sdkControlConnId =  id;
+        
+        LOG_INFO("SDKComponent.HandleProtoMessage","SDK requested control priority %s (%u)", 
                   control_req.Priority_Name(control_req.priority()).c_str(), _sdkControlLevel); 
 
         if (_sdkBehaviorActivated) {
           LOG_INFO("SDKComponent.HandleMessageBehaviorActivated", "SDK already has control");
           // SDK wants control and and the SDK Behavior is already running. Send response that SDK behavior is activated.
-          DispatchSDKActivationResult(_sdkBehaviorActivated);
+          DispatchSDKActivationResult(_sdkBehaviorActivated, _sdkControlConnId);
           return;
         }
       }
       break;
 
     case external_interface::GatewayWrapperTag::kControlRelease:
-      LOG_INFO("SDKComponent.HandleMessageRelease", "Releasing SDK control");
+      LOG_INFO("SDKComponent.HandleProtoMessage", "Releasing SDK control connection_id %llu", id);
+      if (id == _sdkLockConnId) {
+        DispatchSDKActivationResult(false, _sdkLockConnId);
+        LOG_INFO("SDKComponent.HandleProtoMessage", "ControlRelease Releasing control");
+        _sdkWantsLock = false;
+        _sdkLockConnId = 0;
+      }
       _sdkWantsControl = false;
+      _sdkControlConnId = 0;
       break;
 
     case external_interface::GatewayWrapperTag::kAudioSendModeRequest:
@@ -564,11 +596,6 @@ void SDKComponent::HandleMessage(const ExternalInterface::RobotProcessedImage& m
   }
 }
 
-bool SDKComponent::SDKWantsControl()
-{
-  return _sdkWantsControl;
-}
-
 int SDKComponent::SDKControlLevel()
 {
   ANKI_VERIFY(_sdkWantsControl, "SDKComponent::SDKControlLevel", "_sdkWantsControl not set when accessing _sdkControlLevel");  
@@ -576,10 +603,20 @@ int SDKComponent::SDKControlLevel()
   return _sdkControlLevel;
 }
 
+bool SDKComponent::SDKWantsControl()
+{
+  return _sdkWantsControl;
+}
+
+bool SDKComponent::SDKWantsBehaviorLock()
+{
+  return _sdkWantsLock;
+}
+
 void SDKComponent::SDKBehaviorActivation(bool enabled)
 {
   _sdkBehaviorActivated = enabled;
-  DispatchSDKActivationResult(_sdkBehaviorActivated);
+  DispatchSDKActivationResult(_sdkBehaviorActivated, _sdkControlConnId);
 
   // If sdk behavior is being deactivated...
   if(!_sdkBehaviorActivated)
@@ -680,17 +717,29 @@ void SDKComponent::HandleAudioStreamCancelRequest(const AnkiEvent<external_inter
   }
 }
 
-void SDKComponent::DispatchSDKActivationResult(bool enabled) {
+void SDKComponent::DispatchSDKActivationResult(bool enabled, uint64_t connectionId) {
   auto* gi = _robot->GetGatewayInterface();
   if (enabled) {
+    LOG_INFO("SDKComponent::DispatchSDKActivationResult","Dispatching SDK enabled activation %llu", connectionId);
     //TODO: better naming, more readable, and logging
     auto* msg = new external_interface::BehaviorControlResponse(new external_interface::ControlGrantedResponse());
-    gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+    external_interface::GatewayWrapper wrapper = ExternalMessageRouter::WrapResponse(msg, connectionId);
+    gi->Broadcast(std::move(wrapper));
   }
   else {
+    LOG_INFO("SDKComponent::DispatchSDKActivationResult","Dispatching SDK disabled/lost activation %llu", connectionId);
     auto* msg = new external_interface::BehaviorControlResponse(new external_interface::ControlLostResponse());
-    gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+    external_interface::GatewayWrapper wrapper = ExternalMessageRouter::WrapResponse(msg, connectionId);
+    gi->Broadcast(std::move(wrapper));
   }
+}
+
+void SDKComponent::DispatchBehaviorLockLostResult() {
+  LOG_INFO("SDKComponent::DispatchBehaviorLockLostResult","Dispatching SDK control lost %llu", _sdkLockConnId);
+  auto* gi = _robot->GetGatewayInterface();
+  auto* msg = new external_interface::BehaviorControlResponse(new external_interface::ReservedControlLostResponse());
+  external_interface::GatewayWrapper wrapper = ExternalMessageRouter::WrapResponse(msg, _sdkLockConnId);
+  gi->Broadcast(std::move(wrapper));
 }
 
 template <typename MessageType>
