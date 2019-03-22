@@ -40,7 +40,7 @@ HTTP_BLOCK_SIZE = 1024*2  # Tuned to what seems to work best with DD_BLOCK_SIZE
 HTTP_TIMEOUT = 90 # Give up after 90 seconds on blocking operations
 DD_BLOCK_SIZE = HTTP_BLOCK_SIZE*1024
 SUPPORTED_MANIFEST_VERSIONS = ["1.0.0"]
-MINIMUM_OS_VERSION = "1.0.0.1741" # FIXME VIC-12256
+MINIMUM_OS_VERSION = "1.6.0.3167" # Minimum OS version with Whiskey hardware support
 DEBUG = False
 
 def make_blocking(pipe, blocking):
