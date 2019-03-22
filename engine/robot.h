@@ -101,6 +101,7 @@ class TouchSensorComponent;
 class ImuComponent;
 class AnimationComponent;
 class MapComponent;
+class LocalizationComponent;
 class MicComponent;
 class BatteryComponent;
 class BeatDetectorComponent;
@@ -227,6 +228,7 @@ public:
   INLINE_GETTERS(FaceWorld)
   INLINE_GETTERS(HabitatDetectorComponent)
   INLINE_GETTERS(MapComponent)
+  INLINE_GETTERS(LocalizationComponent)
   INLINE_GETTERS(MicComponent)
   INLINE_GETTERS(MoodManager)
   INLINE_GETTERS(NVStorageComponent)
@@ -248,7 +250,7 @@ public:
 
   #undef INLINE_GETTERS
 
-  const PoseOriginList& GetPoseOriginList() const { return *_poseOrigins.get(); }
+  const PoseOriginList& GetPoseOriginList() const;
 
   inline RangeSensorComponent& GetRangeSensorComponent() {return GetComponent<RangeSensorComponent>(); }
   inline const RangeSensorComponent& GetRangeSensorComponent() const {return GetComponent<RangeSensorComponent>(); }
@@ -274,44 +276,6 @@ public:
   const Util::RandomGenerator& GetRNG() const;
   Util::RandomGenerator& GetRNG();
 
-
-  // =========== Localization ===========
-
-  bool IsLocalized() const;
-  void Delocalize(bool isCarryingObject);
-
-  // Updates the pose of the robot.
-  // Sends new pose down to robot (on next tick).
-  Result SetNewPose(const Pose3d& newPose);
-
-  // Get the ID of the object we are localized to
-  const ObjectID& GetLocalizedTo() const {return _localizedToID;}
-
-  // Set the object we are localized to.
-  // Use nullptr to UnSet the localizedTo object but still mark the robot
-  // as localized (i.e. to "odometry").
-  Result SetLocalizedTo(const ObservableObject* object);
-
-  // Has the robot moved since it was last localized
-  bool HasMovedSinceBeingLocalized() const;
-
-  // Get the squared distance to the closest, most recently observed marker
-  // on the object we are localized to
-  f32 GetLocalizedToDistanceSq() const;
-
-  Result LocalizeToObject(const ObservableObject* seenObject, ObservableObject* existingObject);
-
-  // Updates pose to be on charger
-  Result SetPoseOnCharger();
-
-  // Update's the robot's pose to be in front of the
-  // charger as if it had just rolled off the charger.
-  Result SetPosePostRollOffCharger();
-
-  // Sets the charger that it's docking to
-  void           SetCharger(const ObjectID& chargerID) { _chargerID = chargerID; }
-  const ObjectID GetCharger() const                    { return _chargerID; }
-
   // =========== Cliff reactions ===========
 
   // whether or not the robot should react (the sensor may still be enabled)
@@ -331,7 +295,7 @@ public:
 
   // =========== Pose (of the robot or its parts) ===========
   const Pose3d&       GetPose() const;
-  const PoseFrameID_t GetPoseFrameID()  const { return _frameId; }
+  const PoseFrameID_t GetPoseFrameID()  const;
   const Pose3d&       GetWorldOrigin()  const;
   PoseOriginID_t      GetWorldOriginID()const;
 
@@ -479,18 +443,6 @@ public:
   // Only state updates should be calling this, however, it is exposed for unit tests
   Result AddRobotStateToHistory(const Pose3d& pose, const RobotState& state);
 
-  // Increments frameID and adds a vision-only pose to history
-  // Sets a flag to send a localization update on the next tick
-  Result AddVisionOnlyStateToHistory(const RobotTimeStamp_t t,
-                                     const Pose3d& pose,
-                                     const f32 head_angle,
-                                     const f32 lift_angle);
-
-  // Updates the current pose to the best estimate based on
-  // historical poses including vision-based poses.
-  // Returns true if the pose is successfully updated, false otherwise.
-  bool UpdateCurrPoseFromHistory();
-
   Result GetComputedStateAt(const RobotTimeStamp_t t_request, Pose3d& pose) const;
 
   // =========  Block messages  ============
@@ -568,7 +520,6 @@ protected:
   ShutdownReason _shutdownReason = ShutdownReason::SHUTDOWN_UNKNOWN;
 
   CozmoContext* _context;
-  std::unique_ptr<PoseOriginList> _poseOrigins;
 
   using EntityType = DependencyManagedEntity<RobotComponentID>;
   using ComponentPtr = std::unique_ptr<EntityType>;
@@ -586,22 +537,10 @@ protected:
   RobotTimeStamp_t _lastMsgTimestamp;
   bool             _newStateMsgAvailable = false;
 
-  Pose3d         _driveCenterPose;
-  PoseFrameID_t  _frameId                   = 0;
-  ObjectID       _localizedToID; // ID of mat object robot is localized to
-  bool           _hasMovedSinceLocalization = false;
-  u32            _numMismatchedFrameIDs     = 0;
-
-  // May be true even if not localized to an object, if robot has not been picked up
-  bool _isLocalized                  = true;
-  bool _localizedToFixedObject; // false until robot sees a _fixed_ mat
-  bool _needToSendLocalizationUpdate = false;
+  u32            _numMismatchedFrameIDs     = 0; // TODO: move to LocalizationComponent
 
   // Whether or not to ignore all external action messages
   bool _ignoreExternalActions = false;
-
-  // Stores (squared) distance to the closest observed marker of the object we're localized to
-  f32 _localizedMarkerDistToCameraSq = -1.0f;
 
   f32              _leftWheelSpeed_mmps;
   f32              _rightWheelSpeed_mmps;
@@ -616,9 +555,6 @@ protected:
   // out of bounds, it'll trigger a calibration
   bool             _isHeadMotorOutOfBounds = false;
   bool             _isLiftMotorOutOfBounds = false;
-
-  // Charge base ID that is being docked to
-  ObjectID         _chargerID;
 
   // State
   bool               _powerButtonPressed        = false;
@@ -648,11 +584,6 @@ protected:
   // Whether or not we have sent the engine is fully loaded message
   bool _sentEngineLoadedMsg = false;
 
-  // Sets robot pose but does not update the pose on the robot.
-  // Unless you know what you're doing you probably want to use
-  // the public function SetNewPose()
-  void SetPose(const Pose3d &newPose);
-
   // Takes startPose and moves it forward as if it were a robot pose by distance mm and
   // puts result in movedPose.
   static void MoveRobotPoseForward(const Pose3d &startPose, const f32 distance, Pose3d &movedPose);
@@ -662,17 +593,10 @@ protected:
   // returns whether the tread state was updated or not
   bool CheckAndUpdateTreadsState(const RobotState& msg);
 
-  Result SendAbsLocalizationUpdate(const Pose3d&             pose,
-                                   const RobotTimeStamp_t&   t,
-                                   const PoseFrameID_t&      frameId) const;
-
   // Sync with physical robot
   Result SendSyncRobot() const;
 
   float _syncRobotSentTime_sec = 0.0f;
-
-  // Send robot's current pose
-  Result SendAbsLocalizationUpdate() const;
 
   // Request imu log from robot
   Result SendIMURequest(const u32 length_ms) const;
@@ -722,34 +646,6 @@ inline const Pose3d& Robot::GetPose(void) const
               GetComponent<FullRobotPose>().GetPose().GetNamedPathToRoot(false).c_str());
 
   return GetComponent<FullRobotPose>().GetPose();
-}
-
-inline const Pose3d& Robot::GetDriveCenterPose(void) const
-{
-  // TODO: COZMO-1637: Once we figure this out, switch this back to dev_assert for efficiency
-  ANKI_VERIFY(_driveCenterPose.HasSameRootAs(GetWorldOrigin()),
-              "Robot.GetDriveCenterPose.PoseOriginNotWorldOrigin",
-              "WorldOrigin: %s, Pose: %s",
-              GetWorldOrigin().GetNamedPathToRoot(false).c_str(),
-              _driveCenterPose.GetNamedPathToRoot(false).c_str());
-
-  return _driveCenterPose;
-}
-
-inline f32 Robot::GetLocalizedToDistanceSq() const {
-  return _localizedMarkerDistToCameraSq;
-}
-
-inline bool Robot::HasMovedSinceBeingLocalized() const {
-  return _hasMovedSinceLocalization;
-}
-
-inline bool Robot::IsLocalized() const {
-
-  DEV_ASSERT(_isLocalized || (!_isLocalized && !_localizedToID.IsSet()),
-             "Robot can't think it is localized and have localizedToID set!");
-
-  return _isLocalized;
 }
 
 } // namespace Vector

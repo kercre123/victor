@@ -13,6 +13,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/selfTest/behaviorSelfTestInitChecks.h"
 
 #include "engine/actions/basicActions.h"
+#include "engine/components/localizationComponent.h"
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
@@ -131,7 +132,7 @@ void BehaviorSelfTestInitChecks::TransitionToChecks()
   }
   
   // Force delocalize the robot to ensure consistent starting pose
-  robot.Delocalize(false);
+  robot.GetLocalizationComponent().Delocalize(false);
 
   SELFTEST_SET_RESULT(SelfTestResultCode::SUCCESS);
 }

@@ -22,6 +22,7 @@
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/charger.h"
 #include "engine/components/visionComponent.h"
+#include "engine/components/localizationComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
@@ -235,7 +236,7 @@ TEST_F(BlockWorldTest, ConnectToObservedBlock)
 TEST_F(BlockWorldTest, LocalizeToCharger)
 {
   // See a charger for the first time - should immediately localize to it
-  ASSERT_FALSE(_robot->IsLocalized());
+  ASSERT_FALSE(_robot->GetLocalizationComponent().IsLocalized());
 
   const auto firstOriginId = _robot->GetWorldOriginID();
   
@@ -249,7 +250,7 @@ TEST_F(BlockWorldTest, LocalizeToCharger)
   ObserveMarker(code, fakeTimestamp_ms);
   
   // Robot should be localized now in the original origin, since we've observed the charger
-  ASSERT_TRUE(_robot->IsLocalized());
+  ASSERT_TRUE(_robot->GetLocalizationComponent().IsLocalized());
   ASSERT_EQ(firstOriginId, _robot->GetWorldOriginID());
   
   auto& blockWorld = _robot->GetBlockWorld();
@@ -261,7 +262,7 @@ TEST_F(BlockWorldTest, LocalizeToCharger)
   
   ASSERT_NE(nullptr, object);
   
-  auto localizedToID = _robot->GetLocalizedTo();
+  auto localizedToID = _robot->GetLocalizationComponent().GetLocalizedTo();
   ASSERT_TRUE(localizedToID.IsSet());
   ASSERT_EQ(localizedToID, object->GetID());
   
@@ -270,11 +271,11 @@ TEST_F(BlockWorldTest, LocalizeToCharger)
   FakeRobotState(fakeTimestamp_ms);
   
   const bool isCarryingObject = false;
-  _robot->Delocalize(isCarryingObject);
+  _robot->GetLocalizationComponent().Delocalize(isCarryingObject);
   
-  ASSERT_FALSE(_robot->IsLocalized());
+  ASSERT_FALSE(_robot->GetLocalizationComponent().IsLocalized());
   
-  localizedToID = _robot->GetLocalizedTo();
+  localizedToID = _robot->GetLocalizationComponent().GetLocalizedTo();
   ASSERT_FALSE(localizedToID.IsSet());
   ASSERT_NE(firstOriginId, _robot->GetWorldOriginID()) << "Should be in a new origin since we've delocalized";
   
@@ -287,21 +288,21 @@ TEST_F(BlockWorldTest, LocalizeToCharger)
   
   ObserveMarker(code, fakeTimestamp_ms);
   
-  ASSERT_TRUE(_robot->IsLocalized());
+  ASSERT_TRUE(_robot->GetLocalizationComponent().IsLocalized());
   ASSERT_EQ(firstOriginId, _robot->GetWorldOriginID()) << "Should have localized in the first origin, since that's where we saw the charger first";
   
   object = blockWorld.FindLocatedMatchingObject(filter);
   
   ASSERT_NE(nullptr, object);
   
-  localizedToID = _robot->GetLocalizedTo();
+  localizedToID = _robot->GetLocalizationComponent().GetLocalizedTo();
   ASSERT_TRUE(localizedToID.IsSet());
   ASSERT_EQ(localizedToID, object->GetID());
 }
 
 TEST_F(BlockWorldTest, ObservationDistance)
 {
-  ASSERT_FALSE(_robot->IsLocalized());
+  ASSERT_FALSE(_robot->GetLocalizationComponent().IsLocalized());
   
   // Send a fake robot state
   uint32_t fakeTimestamp_ms = 10;
@@ -318,7 +319,7 @@ TEST_F(BlockWorldTest, ObservationDistance)
   
   // This observation should be ignored because the charger is so 'far' away.
   auto& blockWorld = _robot->GetBlockWorld();
-  ASSERT_FALSE(_robot->IsLocalized());
+  ASSERT_FALSE(_robot->GetLocalizationComponent().IsLocalized());
   ASSERT_EQ(0, blockWorld._locatedObjects.size());
   
   fakeTimestamp_ms += 10;
@@ -331,7 +332,7 @@ TEST_F(BlockWorldTest, ObservationDistance)
   
   ObserveMarker(code, fakeTimestamp_ms, closeCorners);
   
-  ASSERT_TRUE(_robot->IsLocalized());
+  ASSERT_TRUE(_robot->GetLocalizationComponent().IsLocalized());
   ASSERT_EQ(1, blockWorld._locatedObjects.size());
   
   BlockWorldFilter filter;
@@ -340,7 +341,7 @@ TEST_F(BlockWorldTest, ObservationDistance)
   
   ASSERT_NE(nullptr, object);
   
-  auto localizedToID = _robot->GetLocalizedTo();
+  auto localizedToID = _robot->GetLocalizationComponent().GetLocalizedTo();
   ASSERT_TRUE(localizedToID.IsSet());
   ASSERT_EQ(localizedToID, object->GetID());
   
@@ -359,9 +360,9 @@ TEST_F(BlockWorldTest, ObservationDistance)
   
   ASSERT_FALSE(firstChargerPose.IsSameAs(object->GetPose(), 5.f, DEG_TO_RAD(5.f)));
   
-  ASSERT_TRUE(_robot->IsLocalized());
+  ASSERT_TRUE(_robot->GetLocalizationComponent().IsLocalized());
   ASSERT_EQ(1, blockWorld._locatedObjects.size());
-  localizedToID = _robot->GetLocalizedTo();
+  localizedToID = _robot->GetLocalizationComponent().GetLocalizedTo();
   ASSERT_EQ(localizedToID, object->GetID());
 }
 

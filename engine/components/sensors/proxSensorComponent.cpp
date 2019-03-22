@@ -11,6 +11,7 @@
  **/
 
 #include "engine/components/carryingComponent.h"
+#include "engine/components/localizationComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 
 #include "engine/robot.h"
@@ -146,7 +147,7 @@ void ProxSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
     // which span 60ms (i.e. the slowest rate expected of the prox sensor) then
     // report warning since a historical state should've been found.
     const u32 numRawStatesInSameFrame = _robot->GetStateHistory()->GetNumRawStatesWithFrameID(msg.pose_frame_id);
-    if (numRawStatesInSameFrame >= 3 && _robot->IsLocalized()) {
+    if (numRawStatesInSameFrame >= 3 && _robot->GetLocalizationComponent().IsLocalized()) {
       LOG_WARNING("ProxSensorComponent.ProcessRawSensorData.NoHistoricalPose",
                   "Could not retrieve historical pose for timestamp %u (msg time %u)",
                   msg.proxData.timestamp_ms, msg.timestamp);

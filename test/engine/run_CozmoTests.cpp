@@ -20,6 +20,7 @@
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/components/localizationComponent.h"
 #include "engine/cozmoAPI/comms/protoMessageHandler.h"
 #include "engine/cozmoAPI/comms/uiMessageHandler.h"
 #include "engine/cozmoContext.h"
@@ -844,7 +845,7 @@ TEST(BlockWorld, ObjectRobotCollisionCheck)
 
   // Put the robot somewhere "random" (to avoid possible special case of reasoning near origin)
   const Pose3d robotPose(M_PI_4_F, Z_AXIS_3D(), {123.f, 456.f, 0.f}, robot.GetWorldOrigin());
-  robot.SetPose(robotPose);
+  robot.GetLocalizationComponent().SetPose(robotPose);
 
   // Helper lambda for doing test with object at different heights
   auto CheckPoseStateAtHeight = [&robot,object,&fakeTime](f32 objHeight) -> PoseState
@@ -965,7 +966,7 @@ TEST(Localization, UnexpectedMovement)
   ASSERT_TRUE(obsID.IsSet());
 
   // Should be localized to charger
-  ASSERT_EQ(obsID, robot.GetLocalizedTo());
+  ASSERT_EQ(obsID, robot.GetLocalizationComponent().GetLocalizedTo());
 
   auto FakeUnexpectedMovement = [](RobotState& stateMsg, Robot& robot, RobotTimeStamp_t& fakeTime) -> Result
   {
@@ -986,7 +987,7 @@ TEST(Localization, UnexpectedMovement)
   }
 
   // Delocalize the robot to create a new origin
-  robot.Delocalize(false);
+  robot.GetLocalizationComponent().Delocalize(false);
 
   // Fake one more unexpected movement which used to cause unexpected movement to fully trigger
   // setting the robot's pose to a pose in history (when the unexpected movement started). This

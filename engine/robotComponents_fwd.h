@@ -58,6 +58,7 @@ enum class RobotComponentID {
   HabitatDetector,
   ImuSensor,
   JdocsManager,
+  Localization,
   Map,
   MicComponent,
   MoodManager,

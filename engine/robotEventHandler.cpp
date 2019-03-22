@@ -24,6 +24,7 @@
 #include "engine/components/movementComponent.h"
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/pathComponent.h"
+#include "engine/components/localizationComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/gatewayInterface.h"
@@ -1592,7 +1593,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ForceDelocalizeRo
 
     robot->SendRobotMessage<RobotInterface::ForceDelocalizeSimulatedRobot>();
   } else {
-    robot->Delocalize( robot->GetCarryingComponent().IsCarryingObject() );
+    robot->GetLocalizationComponent().Delocalize( robot->GetCarryingComponent().IsCarryingObject() );
   }
 }
 

@@ -34,6 +34,7 @@ class MovementComponent;
 class VisionComponent;
 class VisionScheduleMediator;
 class MapComponent;
+class LocalizationComponent;
 class NVStorageComponent;
 class AIComponent;
 class CubeLightComponent;
@@ -94,6 +95,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(MovementComponent,             RobotComponentID, Mov
 LINK_COMPONENT_TYPE_TO_ENUM(VisionComponent,               RobotComponentID, Vision)
 LINK_COMPONENT_TYPE_TO_ENUM(VisionScheduleMediator,        RobotComponentID, VisionScheduleMediator)
 LINK_COMPONENT_TYPE_TO_ENUM(MapComponent,                  RobotComponentID, Map)
+LINK_COMPONENT_TYPE_TO_ENUM(LocalizationComponent,         RobotComponentID, Localization)
 LINK_COMPONENT_TYPE_TO_ENUM(NVStorageComponent,            RobotComponentID, NVStorage)
 LINK_COMPONENT_TYPE_TO_ENUM(AIComponent,                   RobotComponentID, AIComponent)
 LINK_COMPONENT_TYPE_TO_ENUM(CubeLightComponent,            RobotComponentID, CubeLights)
@@ -178,6 +180,7 @@ std::string GetComponentStringForID<Vector::RobotComponentID>(Vector::RobotCompo
     CASE(HabitatDetector)
     CASE(ImuSensor)
     CASE(JdocsManager)
+    CASE(Localization)
     CASE(Map)
     CASE(MicComponent)
     CASE(MoodManager)

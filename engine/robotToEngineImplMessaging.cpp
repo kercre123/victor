@@ -30,6 +30,7 @@
 #include "engine/components/dockingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/components/localizationComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/components/mics/micComponent.h"
@@ -142,7 +143,7 @@ void RobotToEngineImplMessaging::InitRobotMessageComponent(RobotInterface::Messa
                                                                     "Charger mount %s.",
                                                                     didSucceed ? "SUCCEEDED" : "FAILED" );
                                                            if (didSucceed) {
-                                                             robot->SetPoseOnCharger();
+                                                             robot->GetLocalizationComponent().SetPoseOnCharger();
                                                            }
                                                          }));
 

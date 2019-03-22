@@ -17,6 +17,7 @@
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/nvStorageComponent.h"
+#include "engine/components/localizationComponent.h"
 #include "engine/factory/factoryTestLogger.h"
 #include "engine/robot.h"
 
@@ -84,7 +85,7 @@ Result BehaviorPlaypenInitChecks::OnBehaviorActivatedInternal()
   }
   
   // Force delocalize the robot to ensure consistent starting pose
-  robot.Delocalize(false);
+  robot.GetLocalizationComponent().Delocalize(false);
 
   PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, RESULT_OK);
   

@@ -18,6 +18,7 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/charger.h"
 #include "engine/components/battery/batteryComponent.h"
+#include "engine/components/localizationComponent.h"
 #include "engine/robot.h"
 
 #define LOG_CHANNEL "Actions"
@@ -67,7 +68,7 @@ ActionResult MountChargerAction::Init()
   }
   
   // Tell robot which charger it will be using
-  GetRobot().SetCharger(_chargerID);
+  GetRobot().GetLocalizationComponent().SetCharger(_chargerID);
 
   // Set up the turnAndMount compound action
   ActionResult result = ConfigureMountAction();
@@ -307,7 +308,7 @@ ActionResult BackupOntoChargerAction::SelectDockAction(ActionableObject* object)
   
   
   // Tell robot which charger it will be using
-  GetRobot().SetCharger(_dockObjectID);
+  GetRobot().GetLocalizationComponent().SetCharger(_dockObjectID);
 
   return ActionResult::SUCCESS;
 }

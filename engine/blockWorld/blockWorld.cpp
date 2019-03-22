@@ -29,6 +29,7 @@
 #include "engine/components/movementComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/components/localizationComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/customObject.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -880,7 +881,8 @@ namespace Vector {
 
     const bool wasCameraMoving = (_robot->GetMoveComponent().IsCameraMoving() ||
                                   _robot->GetMoveComponent().WasCameraMoving(atTimestamp));
-    const bool canRobotLocalize = (_robot->GetLocalizedTo().IsUnknown() || _robot->HasMovedSinceBeingLocalized()) &&
+    const bool canRobotLocalize = (_robot->GetLocalizationComponent().GetLocalizedTo().IsUnknown() || 
+                                   _robot->GetLocalizationComponent().HasMovedSinceBeingLocalized()) &&
                                   !wasCameraMoving;
     
     auto result = Result::RESULT_OK;
@@ -900,7 +902,7 @@ namespace Vector {
       if (existingCharger == nullptr) {
         // No match in any origin. Simply update all the seen objects and localize to the charger.
         UpdateKnownObjects(objectsSeen, atTimestamp);
-        result = _robot->LocalizeToObject(observedCharger.get(), observedCharger.get());
+        result = _robot->GetLocalizationComponent().LocalizeToObject(observedCharger.get(), observedCharger.get());
       } else if (existingCharger->GetPose().GetRootID() == _robot->GetWorldOriginID()) {
         // We already have a charger in the current origin - is it close enough to its last pose to localize to it?
         const bool localizeToCharger = existingCharger->GetPose().IsSameAs(observedCharger->GetPose(),
@@ -910,7 +912,7 @@ namespace Vector {
         bool localizeSuccess = false;
         if (localizeToCharger) {
           // Localize to the charger instance in this origin
-          result = _robot->LocalizeToObject(observedCharger.get(), existingCharger);
+          result = _robot->GetLocalizationComponent().LocalizeToObject(observedCharger.get(), existingCharger);
           localizeSuccess = (result == Result::RESULT_OK);
         }
         // Update object poses, but ignore the charger if we've just localized to it
@@ -923,7 +925,7 @@ namespace Vector {
         UpdateKnownObjects(objectsSeen, atTimestamp, ignoreCharger);
         
         // Localize to the charger instance in the old origin
-        result = _robot->LocalizeToObject(observedCharger.get(), existingCharger);
+        result = _robot->GetLocalizationComponent().LocalizeToObject(observedCharger.get(), existingCharger);
       }
     } else {
       UpdateKnownObjects(objectsSeen, atTimestamp);
@@ -1611,8 +1613,8 @@ namespace Vector {
     if (oldPoseState != PoseState::Dirty) {
       object->SetPoseState(PoseState::Dirty);
       
-      if(_robot->GetLocalizedTo() == object->GetID()) {
-        _robot->SetLocalizedTo(nullptr);
+      if(_robot->GetLocalizationComponent().GetLocalizedTo() == object->GetID()) {
+        _robot->GetLocalizationComponent().SetLocalizedTo(nullptr);
       }
       
       if (_robot->IsPoseInWorldOrigin(object->GetPose())) {
@@ -1879,13 +1881,13 @@ namespace Vector {
 
     // Check to see if this object is the one the robot is localized to.
     // If so, the robot needs to be marked as localized to nothing.
-    if(_robot->GetLocalizedTo() == object->GetID()) {
+    if(_robot->GetLocalizationComponent().GetLocalizedTo() == object->GetID()) {
       PRINT_CH_INFO("BlockWorld", "BlockWorld.ClearObjectHelper.LocalizeRobotToNothing",
                     "Setting robot as localized to no object, because it "
                     "is currently localized to %s object with ID=%d, which is "
                     "about to be cleared.",
                     ObjectTypeToString(object->GetType()), object->GetID().GetValue());
-      _robot->SetLocalizedTo(nullptr);
+      _robot->GetLocalizationComponent().SetLocalizedTo(nullptr);
     }
 
     // Check to see if this object is the one the robot is carrying.
@@ -2361,7 +2363,7 @@ namespace Vector {
 
     auto webSender = WebService::WebVizSender::CreateWebVizSender("navmap", _robot->GetContext()->GetWebService());
 
-    const ObjectID& locObject = _robot->GetLocalizedTo();
+    const ObjectID& locObject = _robot->GetLocalizationComponent().GetLocalizedTo();
 
     // Note: only drawing objects in current coordinate frame!
     BlockWorldFilter filter;

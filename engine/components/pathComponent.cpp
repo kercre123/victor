@@ -1025,7 +1025,7 @@ Result PathComponent::ClearPath()
   if( _lastSentPathID != 0 ) {
     _lastCanceledPathID = _lastSentPathID;
   }
-
+  
   _robot->GetContext()->GetVizManager()->ErasePath(_robot->GetID());
   if(_pdo) {
     _pdo->ClearPath();

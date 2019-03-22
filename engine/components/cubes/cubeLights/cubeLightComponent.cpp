@@ -28,6 +28,7 @@
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
 #include "engine/components/visionComponent.h"
+#include "engine/components/localizationComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -148,7 +149,7 @@ void CubeLightComponent::UpdateInternal(bool shouldPickNextAnim)
   
   // We are going from delocalized to localized
   bool doRelocalizedUpdate = false;
-  if(_robotDelocalized && _robot->IsLocalized())
+  if(_robotDelocalized && _robot->GetLocalizationComponent().IsLocalized())
   {
     doRelocalizedUpdate = true;
     _robotDelocalized = false;

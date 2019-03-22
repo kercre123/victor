@@ -21,6 +21,7 @@
 #include "engine/components/battery/batteryStats.h"
 #include "engine/components/cubes/cubeBatteryComponent.h"
 #include "engine/components/movementComponent.h"
+#include "engine/components/localizationComponent.h"
 #include "engine/robot.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -457,8 +458,8 @@ void BatteryComponent::UpdateOnChargerPlatform()
         // charger platform onto the table. Update the robot's pose accordingly.
         onPlatform = false;
         if (charger != nullptr) {
-          _robot->SetCharger(charger->GetID());
-          _robot->SetPosePostRollOffCharger();
+          _robot->GetLocalizationComponent().SetCharger(charger->GetID());
+          _robot->GetLocalizationComponent().SetPosePostRollOffCharger();
         }
       }
     }

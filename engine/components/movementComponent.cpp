@@ -26,6 +26,7 @@
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/robotStatsTracker.h"
+#include "engine/components/localizationComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -435,7 +436,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Vector::RobotState& rob
         // to the physical robot.
         Pose3d newPose(histState.GetPose());
         newPose.SetRotation(_robot->GetPose().GetRotation());
-        Result res = _robot->SetNewPose(newPose);
+        Result res = _robot->GetLocalizationComponent().SetNewPose(newPose);
         if (res != RESULT_OK)
         {
           LOG_WARNING("MovementComponent.CheckForUnexpectedMovement.SetNewPose", "Failed to set new pose");

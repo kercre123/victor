@@ -57,6 +57,7 @@ class HeldInPalmTracker;
 class ICozmoBehavior;
 class IExternalInterface;
 class MapComponent;
+
 class MicComponent;
 class MoodManager;
 class MovementComponent;
