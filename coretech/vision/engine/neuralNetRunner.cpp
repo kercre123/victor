@@ -61,10 +61,6 @@ namespace {
 
   CONSOLE_VAR(f32,   kNeuralNetRunner_Gamma,       CONSOLE_GROUP, 1.0f); // set to 1.0 to disable
   
-  // How long the asynchronous future should wait when polling to see if the model is done
-  // Note that this is in *micro* seconds!
-  CONSOLE_VAR(s32,   kNeuralNetRunner_WaitTime_us, CONSOLE_GROUP, 500);
-  
   // Save images sent to the model for processing to:
   //   <cachePath>/saved_images/{full|resized}/<timestamp>.png
   // 0: off
@@ -336,8 +332,7 @@ bool NeuralNetRunner::GetDetections(std::list<SalientPoint>& salientPoints)
   {
     // Check the future's status and keep waiting until it's ready.
     // Once it's ready, return the result.
-    const auto kWaitForTime = std::chrono::microseconds(kNeuralNetRunner_WaitTime_us);
-    const std::future_status futureStatus = _future.wait_for(kWaitForTime);
+    const std::future_status futureStatus = _future.wait_for(std::chrono::milliseconds{0});
     if(std::future_status::ready == futureStatus)
     {
       auto newSalientPoints = _future.get();
