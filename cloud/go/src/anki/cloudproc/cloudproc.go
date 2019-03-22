@@ -1,7 +1,6 @@
 package cloudproc
 
 import (
-	"anki/offboard_vision"
 	"anki/jdocs"
 	"anki/log"
 	"anki/logcollector"
@@ -78,9 +77,6 @@ func Run(ctx context.Context, procOptions ...Option) {
 			logcollector.Run(ctx, logcollectorOpts...)
 		})
 	}
-	wg.AddFunc(func() {
-		offboard_vision.Run(ctx)
-	})
 	addHandlers(offboard_vision.GetDevHandlers)
 	wg.Wait()
 }
