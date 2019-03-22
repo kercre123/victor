@@ -259,11 +259,11 @@ void BehaviorReactToUnexpectedMovement::TransitionToAskForHelp()
 {
   // Reset records of activation times to prevent getting stuck in loop with the emergency maneuver.
   ResetActivationHistory();
-  LOG_WARNING("BehaviorReactToUnexpectedMovement.TransitionToAskForHelp",
-              "Emergency maneuver executed %zu times in the past %.1f seconds, delegating to %s",
-              _dVars.persistent.repeatedActivationDetectionTimes_sec.size(),
-              _iConfig.repeatedActivationDetectionsCheckWindow_sec,
-              _iConfig.askForHelpBehavior->GetDebugLabel().c_str());
+  LOG_INFO("BehaviorReactToUnexpectedMovement.TransitionToAskForHelp",
+           "Emergency maneuver executed %zu times in the past %.1f seconds, delegating to %s",
+           _dVars.persistent.repeatedActivationDetectionTimes_sec.size(),
+           _iConfig.repeatedActivationDetectionsCheckWindow_sec,
+           _iConfig.askForHelpBehavior->GetDebugLabel().c_str());
   // We've commanded the emergency maneuever too frequently, we should just delegate to a behavior
   // that indicates that the robot is stuck on something.
   if (_iConfig.askForHelpBehavior->WantsToBeActivated()) {
@@ -277,10 +277,10 @@ void BehaviorReactToUnexpectedMovement::TransitionToEmergencyRetreatAction()
   // control to an action that attempts to raise the lift and backs up, instead of continuing with
   // the ReactToUnexpectedMovement behavior, since we may be stuck in a loop, in the event that
   // somehow the lift has been caught on something low to the ground plane.
-  LOG_WARNING("BehaviorReactToUnexpectedMovement.TransitionToRetreatAction",
-              "Activated %zu times in the past %.1f seconds, executing emergency retreat maneuver",
-              _dVars.persistent.activatedTimes_sec.size(),
-              _iConfig.repeatedActivationCheckWindow_sec);
+  LOG_INFO("BehaviorReactToUnexpectedMovement.TransitionToRetreatAction",
+           "Activated %zu times in the past %.1f seconds, executing emergency retreat maneuver",
+           _dVars.persistent.activatedTimes_sec.size(),
+           _iConfig.repeatedActivationCheckWindow_sec);
   // Reset records of activation times to prevent getting stuck in loop with this emergency maneuver.
   ResetActivationHistory();
   // Command the emergency maneuver of raising lift as high as possible and then retreating slowly.
