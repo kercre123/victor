@@ -2725,16 +2725,16 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 		Status: &extint.ResponseStatus{
 			Code: extint.ResponseStatus_OK,
 		},
+		UpdateStatus: extint.CheckUpdateStatusResponse_NO_UPDATE,
+		Progress:     -1,
+		Expected:     -1,
 	}
 
-	update_status.Progress = -1
-	update_status.Expected = -1
 	if _, err := os.Stat("/run/update-engine/done"); err == nil {
 		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_READY_TO_INSTALL
 		return update_status, nil
 	}
 
-	update_status.UpdateStatus = extint.CheckUpdateStatusResponse_NO_UPDATE
 	if data, err := ioutil.ReadFile("/run/update-engine/progress"); err == nil {
 		update_status.Progress, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
 		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
@@ -2746,30 +2746,73 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 	return update_status, nil
 }
 
+// UpdateStatusStream tells if the robot is ready to reboot and update.
+func (service *rpcService) UpdateStatusStream() {
+	updateStarted := false
+	iterations := 0
+	for len(connectionId) == 0 && iterations < 10 {
+		// Wait a bit to be sure that the connectionId is valid before continuing.
+		time.Sleep(250 * time.Millisecond)
+		iterations++
+	}
+
+	for len(connectionId) != 0 {
+		status, err := service.GetUpdateStatus()
+		//Keep streaming to the requestor until they disconnect. We don't stop streaming just because there's no update
+		//pending (a requested update may be pending, but hasn't had a chance to update /run/update-engine/* yet).
+		if err != nil {
+			break
+		}
+
+		tag := reflect.TypeOf(&extint.GatewayWrapper_Event{}).String()
+		msg := extint.GatewayWrapper{
+			OneofMessageType: &extint.GatewayWrapper_Event{
+				// TODO: Convert all events into proto events
+				Event: &extint.Event{
+					EventType: &extint.Event_CheckUpdateStatusResponse{
+						CheckUpdateStatusResponse: status,
+					},
+				},
+			},
+		}
+		engineProtoManager.SendToListeners(tag, msg)
+
+		if status.UpdateStatus == extint.CheckUpdateStatusResponse_NO_UPDATE {
+			if updateStarted {
+				break
+			}
+		} else {
+			updateStarted = true
+		}
+		time.Sleep(2000 * time.Millisecond)
+	}
+}
+
 // CheckUpdateStatus tells if the robot is ready to reboot and update.
 func (service *rpcService) CheckUpdateStatus(
 	ctx context.Context, in *extint.CheckUpdateStatusRequest) (*extint.CheckUpdateStatusResponse, error) {
 
-	return service.GetUpdateStatus()
-}
-
-// CheckUpdateStatusStream tells if the robot is ready to reboot and update.
-func (service *rpcService) CheckUpdateStatusStream(
-	in *extint.CheckUpdateStatusRequest,
-	stream extint.ExternalInterface_CheckUpdateStatusStreamServer) error {
-
-	for {
-		status, err := service.GetUpdateStatus()
-		//Keep streaming to the requestor until they disconnect. We don't stop streaming just because there's no update
-		//pending, because a requested update may be pending, but hasn't had a chance to update /run/update-engine/* yet.
-		if err != nil {
-			return err
-		}
-		if err := stream.Send(status); err != nil {
-			return err
-		}
-		time.Sleep(2000 * time.Millisecond)
+	retval := &extint.CheckUpdateStatusResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+		},
 	}
+
+	err := exec.Command("/usr/bin/sudo", "-n", "/bin/systemctl", "stop", "update-engine.service").Run()
+	if err != nil {
+		log.Errorf("Update attempt failed on `systemctl stop update-engine`: %s\n", err)
+		retval.Status.Code = extint.ResponseStatus_ERROR_UPDATE_IN_PROGRESS
+	} else {
+		err := exec.Command("/usr/bin/sudo", "-n", "/bin/systemctl", "restart", "update-engine-oneshot").Run()
+		if err != nil {
+			log.Errorf("Update attempt failed on `systemctl restart update-engine-oneshot`: %s\n", err)
+			retval.Status.Code = extint.ResponseStatus_ERROR_UPDATE_IN_PROGRESS
+		} else {
+			go service.UpdateStatusStream()
+		}
+	}
+
+	return retval, err
 }
 
 // UpdateAndRestart reboots the robot when an update is available.

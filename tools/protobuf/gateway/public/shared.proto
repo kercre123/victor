@@ -66,6 +66,7 @@ message Event {
     AlexaAuthEvent                   alexa_auth_event                    = 15; // App only
     MirrorModeDisabled               mirror_mode_disabled                = 16;
     VisionModesAutoDisabled          vision_modes_auto_disabled          = 17;
+    CheckUpdateStatusResponse        check_update_status_response        = 18; // App only
   }
 }
 
