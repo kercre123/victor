@@ -164,6 +164,9 @@ enum uint_8 BehaviorClass {
   // habitat
   ConfirmHabitat,
 
+  // heldInPalm
+  InitialHeldInPalmReaction,
+
   // knowledgeGraph
   KnowledgeGraphQuestion,
 
