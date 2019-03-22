@@ -405,7 +405,6 @@ enum uint_16 BehaviorID {
   ReactToAbuse,
   ReactToAffirmative,
   ReactToApology,
-  ReactToBatteryTooHotToCharge,
   ReactToCliff,
   ReactToCliffDuringFetch,
   ReactToDarkness,

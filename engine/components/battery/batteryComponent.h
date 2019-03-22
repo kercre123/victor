@@ -104,6 +104,8 @@ public:
   // NOTE: If battery is disconnected and IsCharging() == true, it means the battery
   //       has actually suspended charging but will resume when the battery has cooled down.
   bool IsCharging() const { return _isCharging; }
+
+  bool IsChargingStalledBecauseTooHot() const { return _isCharging && _battDisconnected; }
   
   // Indicates that the robot is sensing voltage on its charge contacts
   bool IsOnChargerContacts() const { return _isOnChargerContacts; }
