@@ -93,8 +93,6 @@ private:
   bool                  _isInitialized = false;
   s32                   _processingWidth;
   s32                   _processingHeight;
-  f32                   _widthScale = 1.f;
-  f32                   _heightScale = 1.f;
   f32                   _currentGamma;
   std::array<u8,256>    _gammaLUT{};
   

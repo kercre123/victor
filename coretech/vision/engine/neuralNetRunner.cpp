@@ -231,10 +231,6 @@ bool NeuralNetRunner::StartProcessingHelper()
     _imgBeingProcessed.Save(saveFilename);
   }
   
-  // Store its size relative to original size so we can rescale object detections later
-  _heightScale = (f32)_imgOrig.GetNumRows();
-  _widthScale  = (f32)_imgOrig.GetNumCols();
-  
   if(_model->IsVerbose())
   {
     LOG_INFO("NeuralNetRunner.StartProcessingIfIdle.ProcessingImage",
