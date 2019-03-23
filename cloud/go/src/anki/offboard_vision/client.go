@@ -12,7 +12,8 @@ import (
   "fmt"
   "io/ioutil"
 
-  pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
+  // pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
+  pb "proto/vision"
   "github.com/google/uuid"
   "github.com/gwatts/rootcerts"
   "google.golang.org/grpc"
@@ -127,7 +128,7 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
   r.Configs = &pb.ImageConfig{}
   r.Configs.GroupName = defaultGroupName
 
-  client := pb.NewChipperGrpcClient(rpcConn)
+  client := pb.NewOffboardVisionGrpcClient(rpcConn)
   resp, err := client.AnalyzeImage(ctx, r)
   if err != nil {
     log.Println("image analysis error: ", err)
