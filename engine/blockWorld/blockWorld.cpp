@@ -1654,11 +1654,15 @@ namespace Vector {
                 "Should only have at most 2 origins");
     
     std::set<ObjectType> knownTypes;
+    const auto worldOrigin = _robot->GetWorldOriginID();
     for(auto const& objectsByOrigin : _locatedObjects)
     {
-      const auto& objects = objectsByOrigin.second;
+      const auto& originID = objectsByOrigin.first;
+      const auto& objects  = objectsByOrigin.second;
       
-      ANKI_VERIFY(!objects.empty(),
+      // if any origin besides from the current origin has no observable objects,
+      // it should have been deleted
+      ANKI_VERIFY(worldOrigin == originID || !objects.empty(),
                   "BlockWorld.SanityCheckBookkeeping.NoObjectsInOrigin",
                   "OriginId: %d", objectsByOrigin.first);
       
@@ -1668,23 +1672,23 @@ namespace Vector {
           continue;
         }
         const Pose3d& origin = object->GetPose().FindRoot();
-        const PoseOriginID_t originID = origin.GetID();
+        const PoseOriginID_t objectsOriginID = origin.GetID();
         const auto& objType = object->GetType();
-        ANKI_VERIFY(PoseOriginList::UnknownOriginID != originID,
+        ANKI_VERIFY(PoseOriginList::UnknownOriginID != objectsOriginID,
                     "BlockWorld.SanityCheckBookkeeping.ObjectWithUnknownOriginID",
                     "Origin: %s", origin.GetName().c_str());
-        ANKI_VERIFY(objectsByOrigin.first == originID,
+        ANKI_VERIFY(objectsByOrigin.first == objectsOriginID,
                     "BlockWorld.SanityCheckBookkeeping.MismatchedOrigin",
                     "%s Object %d is in Origin:%d but is keyed by Origin:%d",
                     EnumToString(objType), object->GetID().GetValue(),
-                    originID, objectsByOrigin.first);
+                    objectsOriginID, objectsByOrigin.first);
         
 
         if (object->IsUnique()) {
           ANKI_VERIFY(knownTypes.find(objType) == knownTypes.end(),
                       "BlockWorld.SanityCheckBookkeeping.MultipleUniqueInstances",
                       "%s Object %d in Origin:%d already exists in another origin!",
-                      EnumToString(objType), object->GetID().GetValue(), originID);
+                      EnumToString(objType), object->GetID().GetValue(), objectsOriginID);
         }
         knownTypes.insert(objType);
       }
