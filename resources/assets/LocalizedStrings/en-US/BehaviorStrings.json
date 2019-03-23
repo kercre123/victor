@@ -23,5 +23,8 @@
   },
   "behavior.DevTest2": {
     "translation": "I am {0}"
+  },
+  "BehaviorKnowledgeGraphQuestion.Ready": {
+    "translation": "Ready"
   }
 }
