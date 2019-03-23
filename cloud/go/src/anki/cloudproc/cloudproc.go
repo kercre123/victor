@@ -4,6 +4,7 @@ import (
 	"anki/jdocs"
 	"anki/log"
 	"anki/logcollector"
+  "anki/offboard_vision"
 	"anki/token"
 	"anki/token/identity"
 	"anki/util"
@@ -77,6 +78,10 @@ func Run(ctx context.Context, procOptions ...Option) {
 			logcollector.Run(ctx, logcollectorOpts...)
 		})
 	}
-	addHandlers(offboard_vision.GetDevHandlers)
+  // TODO use options like above to enable this
+  wg.AddFunc(func() {
+   offboard_vision.Run(ctx)
+  })
+  addHandlers(offboard_vision.GetDevHandlers)
 	wg.Wait()
 }
