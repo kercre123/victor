@@ -4,6 +4,7 @@ import (
 	"anki/jdocs"
 	"anki/log"
 	"anki/logcollector"
+  "anki/offboard_vision"
 	"anki/token"
 	"anki/token/identity"
 	"anki/voice"
