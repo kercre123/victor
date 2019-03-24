@@ -35,8 +35,11 @@
 namespace Anki {
 namespace Vector {
   
-class Robot;
 class BackpackLightAnimationContainer;
+
+namespace RobotInterface{
+class MessageHandler;
+}
 
 class BackpackLightComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
@@ -46,7 +49,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
@@ -87,7 +90,8 @@ private:
   
   void SetBackpackAnimationInternal(const BackpackAnimationTrigger& trigger);
 
-  Robot* _robot = nullptr;
+  RobotInterface::MessageHandler* _messageHandler = nullptr;
+
   std::list<Signal::SmartHandle> _eventHandles;
 
   // Contains a list of light configurations

@@ -13,19 +13,20 @@
 
 #include "engine/components/backpackLights/engineBackpackLightComponent.h"
 
+#include "clad/robotInterface/messageEngineToRobot.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
-#include "engine/engineTimeStamp.h"
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/engineTimeStamp.h"
 #include "engine/events/ankiEvent.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
-#include "clad/robotInterface/messageEngineToRobot.h"
+#include "engine/robotMessageHelper.h"
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
 
@@ -54,13 +55,15 @@ BackpackLightComponent::BackpackLightComponent()
   static_assert((int)LEDId::NUM_BACKPACK_LEDS == 3, "BackpackLightComponent.WrongNumBackpackLights");
 }
 
-void BackpackLightComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
+void BackpackLightComponent::InitDependent(const RobotCompMap& dependentComponents)
 {
-  _robot = robot;
+  const auto* context = dependentComponents.GetComponent<ContextWrapper>().context;
+  _messageHandler = context->GetMessageHandler();
 
   // Subscribe to messages
-  if( _robot->HasExternalInterface() ) {
-    auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _eventHandles);
+  auto* externalInterface = context->GetExternalInterface();
+  if( externalInterface != nullptr ) {
+    auto helper = MakeAnkiEventUtil(*externalInterface, *this, _eventHandles);
     using namespace ExternalInterface;
     helper.SubscribeGameToEngine<MessageGameToEngineTag::SetBackpackLEDs>();
   }
@@ -133,7 +136,7 @@ void BackpackLightComponent::SetBackpackAnimation(const BackpackAnimationTrigger
 
 void BackpackLightComponent::SetBackpackAnimationInternal(const BackpackAnimationTrigger& trigger)
 {
-  _robot->SendRobotMessage<RobotInterface::TriggerBackpackAnimation>(trigger);
+  RobotMessageHelper::SendRobotMessage<RobotInterface::TriggerBackpackAnimation>(_messageHandler, trigger);
 }
 
 void BackpackLightComponent::StartLoopingBackpackAnimation(const BackpackLightAnimation::BackpackAnimation& lights,
@@ -183,7 +186,7 @@ void BackpackLightComponent::HandleMessage(const ExternalInterface::SetBackpackL
 
 Result BackpackLightComponent::SetBackpackAnimationInternal(const BackpackLightAnimation::BackpackAnimation& lights)
 {
-  return _robot->SendMessage(RobotInterface::EngineToRobot(lights.ToMsg()));
+  return RobotMessageHelper::SendMessage(_messageHandler, RobotInterface::EngineToRobot(lights.ToMsg()));
 }
  
   
