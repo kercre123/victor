@@ -15,7 +15,10 @@
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/dockingComponent.h"
+#include "engine/cozmoContext.h"
+#include "engine/fullRobotPose.h"
 #include "engine/robot.h"
+#include "engine/robotMessageHelper.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
@@ -30,9 +33,13 @@ CarryingComponent::CarryingComponent()
   
 }
 
-void CarryingComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
+void CarryingComponent::InitDependent(const RobotCompMap& dependentComponents)
 {
-  _robot = robot;
+  const auto* context = dependentComponents.GetComponent<ContextWrapper>().context;
+  _messageHandler = context->GetMessageHandler();
+  _blockWorld = dependentComponents.GetComponentPtr<BlockWorld>();
+  _dockingComponent = dependentComponents.GetComponentPtr<DockingComponent>();
+  _robotPose = dependentComponents.GetComponentPtr<FullRobotPose>();
 }
 
 
@@ -44,23 +51,26 @@ Result CarryingComponent::PlaceObjectOnGround()
     return RESULT_FAIL;
   }
   
-  _robot->GetDockingComponent().SetLastPickOrPlaceSucceeded(false);
+  _dockingComponent->SetLastPickOrPlaceSucceeded(false);
   
-  return _robot->SendRobotMessage<Anki::Vector::PlaceObjectOnGround>(0, 0, 0,
-                                                                   DEFAULT_PATH_MOTION_PROFILE.speed_mmps,
-                                                                   DEFAULT_PATH_MOTION_PROFILE.accel_mmps2,
-                                                                   DEFAULT_PATH_MOTION_PROFILE.decel_mmps2);
+  return RobotMessageHelper::SendRobotMessage<Anki::Vector::PlaceObjectOnGround>(
+    _messageHandler,
+    0, 0, 0,
+    DEFAULT_PATH_MOTION_PROFILE.speed_mmps,
+    DEFAULT_PATH_MOTION_PROFILE.accel_mmps2,
+    DEFAULT_PATH_MOTION_PROFILE.decel_mmps2);
 }
 
 Result CarryingComponent::SendSetCarryState(CarryState state) const
 {
-  return _robot->SendMessage(RobotInterface::EngineToRobot(Anki::Vector::CarryStateUpdate(state)));
+  return RobotMessageHelper::SendMessage(_messageHandler,
+                                         RobotInterface::EngineToRobot(Anki::Vector::CarryStateUpdate(state)));
 }
 
 Result CarryingComponent::SetDockObjectAsAttachedToLift()
 {
-  const ObjectID& dockObjectID = _robot->GetDockingComponent().GetDockObject();
-  const Vision::KnownMarker::Code dockMarkerCode = _robot->GetDockingComponent().GetDockMarkerCode();
+  const ObjectID& dockObjectID = _dockingComponent->GetDockObject();
+  const Vision::KnownMarker::Code dockMarkerCode = _dockingComponent->GetDockMarkerCode();
   return SetObjectAsAttachedToLift(dockObjectID, dockMarkerCode);
 }
 
@@ -73,7 +83,7 @@ Result CarryingComponent::SetCarriedObjectAsUnattached(bool deleteLocatedObjects
     return RESULT_FAIL;
   }
   
-  ObservableObject* object = _robot->GetBlockWorld().GetLocatedObjectByID(_carryingObjectID);
+  ObservableObject* object = _blockWorld->GetLocatedObjectByID(_carryingObjectID);
   
   if(object == nullptr)
   {
@@ -84,7 +94,7 @@ Result CarryingComponent::SetCarriedObjectAsUnattached(bool deleteLocatedObjects
   }
   
   Pose3d placedPoseWrtRobot;
-  if(object->GetPose().GetWithRespectTo(_robot->GetPose(), placedPoseWrtRobot) == false) {
+  if(object->GetPose().GetWithRespectTo(_robotPose->GetPose(), placedPoseWrtRobot) == false) {
     PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.OriginMisMatch",
                       "Could not get carrying object's pose relative to robot's origin.");
     return RESULT_FAIL;
@@ -95,7 +105,7 @@ Result CarryingComponent::SetCarriedObjectAsUnattached(bool deleteLocatedObjects
   // unfortunate ordering dependencies with how we set the pose, set the pose state, and
   // unset the carrying objects below. It's safer to do all of that, and _then_
   // clear the objects at the end.
-  const Result poseResult = _robot->GetBlockWorld().SetObjectPose(object->GetID(), placedPoseWrtRobot, PoseState::Dirty);
+  const Result poseResult = _blockWorld->SetObjectPose(object->GetID(), placedPoseWrtRobot, PoseState::Dirty);
   if(RESULT_OK != poseResult)
   {
     PRINT_NAMED_ERROR("Robot.SetCarriedObjectAsUnattached.TopRobotRelativeObservationFailed",
@@ -119,7 +129,7 @@ Result CarryingComponent::SetCarriedObjectAsUnattached(bool deleteLocatedObjects
   {
     BlockWorldFilter filter;
     filter.AddAllowedID(carriedObjectID);
-    _robot->GetBlockWorld().DeleteLocatedObjects(filter);
+    _blockWorld->DeleteLocatedObjects(filter);
   }
   
   return RESULT_OK;
@@ -128,7 +138,7 @@ Result CarryingComponent::SetCarriedObjectAsUnattached(bool deleteLocatedObjects
 
 void CarryingComponent::SetCarryingObject(ObjectID carryObjectID, Vision::Marker::Code atMarkerCode)
 {
-  ObservableObject* object = _robot->GetBlockWorld().GetLocatedObjectByID(carryObjectID);
+  ObservableObject* object = _blockWorld->GetLocatedObjectByID(carryObjectID);
   if(object == nullptr) {
     PRINT_NAMED_ERROR("Robot.SetCarryingObject.NullCarryObject",
                       "Object %d no longer exists in the world. Can't set it as robot's carried object.",
@@ -149,12 +159,12 @@ void CarryingComponent::UnSetCarryingObject()
   if (IsCarryingObject())
   {
     const auto& objID = GetCarryingObjectID();
-    ObservableObject* carriedObject = _robot->GetBlockWorld().GetLocatedObjectByID(objID);
+    ObservableObject* carriedObject = _blockWorld->GetLocatedObjectByID(objID);
     if(carriedObject == nullptr) {
       PRINT_NAMED_ERROR("Robot.UnSetCarryingObject.NullObject",
                         "Object %d robot thought it was carrying no longer exists in the world.",
                         objID.GetValue());
-    } else if ( carriedObject->GetPose().IsChildOf(_robot->GetComponent<FullRobotPose>().GetLiftPose())) {
+    } else if ( carriedObject->GetPose().IsChildOf(_robotPose->GetLiftPose())) {
       // if the carried object is still attached to the lift it can cause issues. We had a bug
       // in which we delocalized and unset as carrying, but would not dettach from lift, causing
       // the cube to accidentally inherit the new origin via its parent, the lift, since the robot is always
@@ -213,7 +223,7 @@ Result CarryingComponent::SetObjectAsAttachedToLift(const ObjectID& objectID,
     return RESULT_FAIL;
   }
   
-  ObservableObject* object = _robot->GetBlockWorld().GetLocatedObjectByID(objectID);
+  ObservableObject* object = _blockWorld->GetLocatedObjectByID(objectID);
   if(object == nullptr) {
     LOG_ERROR("CarryingComponent.SetObjectAsAttachedToLift.ObjectDoesNotExist",
               "Object with ID=%d does not exist", objectID.GetValue());
@@ -236,7 +246,7 @@ Result CarryingComponent::SetObjectAsAttachedToLift(const ObjectID& objectID,
   // Base the object's pose relative to the lift on how far away the dock
   // marker is from the center of the block
   Pose3d objectPoseWrtLiftPose;
-  if(object->GetPose().GetWithRespectTo(_robot->GetComponent<FullRobotPose>().GetLiftPose(), objectPoseWrtLiftPose) == false) {
+  if(object->GetPose().GetWithRespectTo(_robotPose->GetLiftPose(), objectPoseWrtLiftPose) == false) {
     LOG_ERROR("CarryingComponent.SetObjectAsAttachedToLift.ObjectAndLiftPoseHaveDifferentOrigins",
               "Object robot is picking up and robot's lift must share a common origin.");
     return RESULT_FAIL;
@@ -248,10 +258,10 @@ Result CarryingComponent::SetObjectAsAttachedToLift(const ObjectID& objectID,
   SetCarryingObject(objectID, atMarkerCode); // also marks the object as carried
   
   const bool makePoseWrtOrigin = false;
-  Result poseResult = _robot->GetBlockWorld().SetObjectPose(objectID,
-                                                            objectPoseWrtLiftPose,
-                                                            PoseState::Known,
-                                                            makePoseWrtOrigin);
+  Result poseResult = _blockWorld->SetObjectPose(objectID,
+                                                 objectPoseWrtLiftPose,
+                                                 PoseState::Known,
+                                                 makePoseWrtOrigin);
   if(RESULT_OK != poseResult)
   {
     LOG_WARNING("CarryingComponent.SetObjectAsAttachedToLift.FailedSettingPose",

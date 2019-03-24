@@ -29,8 +29,14 @@
 namespace Anki {
 namespace Vector {
 
+class BlockWorld;
+class DockingComponent;
+class FullRobotPose;
 class ObservableObject;
-class Robot;
+
+namespace RobotInterface {
+class MessageHandler;
+}
 
 class CarryingComponent : public IDependencyManagedComponent<RobotComponentID>, private Util::noncopyable
 {
@@ -40,8 +46,14 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
-  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
+  virtual void InitDependent(const RobotCompMap& dependentComps) override;
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {}
+  virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override {
+    components.insert(RobotComponentID::CozmoContextWrapper);
+    components.insert(RobotComponentID::BlockWorld);
+    components.insert(RobotComponentID::Docking);
+    components.insert(RobotComponentID::FullRobotPose);
+  }
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
   //////
   // end IDependencyManagedComponent functions
@@ -80,8 +92,12 @@ private:
   // Sets object with objectID as attached to lift pose
   Result SetObjectAsAttachedToLift(const ObjectID& objectID,
                                    const Vision::KnownMarker::Code atMarkerCode);
-  
-  Robot* _robot = nullptr;
+
+  RobotInterface::MessageHandler* _messageHandler = nullptr;
+  BlockWorld* _blockWorld = nullptr;
+  DockingComponent* _dockingComponent = nullptr;
+  FullRobotPose* _robotPose = nullptr;
+
   
   ObjectID                  _carryingObjectID;
   Vision::KnownMarker::Code _carryingMarkerCode = Vision::MARKER_INVALID;
