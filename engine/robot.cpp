@@ -22,9 +22,9 @@
 #include "engine/charger.h"
 #include "engine/components/accountSettingsManager.h"
 #include "engine/components/animationComponent.h"
+#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/components/blockTapFilterComponent.h"
-#include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/appCubeConnectionSubscriber.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
@@ -49,13 +49,13 @@
 #include "engine/components/robotHealthReporter.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/components/sdkComponent.h"
-#include "engine/components/settingsCommManager.h"
-#include "engine/components/settingsManager.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/imuComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/sensors/rangeSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
+#include "engine/components/settingsCommManager.h"
+#include "engine/components/settingsManager.h"
 #include "engine/components/textToSpeech/textToSpeechCoordinator.h"
 #include "engine/components/userEntitlementsManager.h"
 #include "engine/components/variableSnapshot/variableSnapshotComponent.h"
@@ -71,6 +71,7 @@
 #include "engine/robotDataLoader.h"
 #include "engine/robotGyroDriftDetector.h"
 #include "engine/robotManager.h"
+#include "engine/robotMessageHelper.h"
 #include "engine/robotStateHistory.h"
 #include "engine/robotToEngineImplMessaging.h"
 #include "engine/viz/vizManager.h"
@@ -79,7 +80,6 @@
 #include "util/environment/locale.h"
 #include "util/logging/DAS.h"
 #include "util/logging/logging.h"
-#include "util/messageProfiler/messageProfiler.h"
 
 #include "osState/osState.h"
 
@@ -1861,17 +1861,7 @@ Result Robot::SetPosePostRollOffCharger()
 
 Result Robot::SendMessage(const RobotInterface::EngineToRobot& msg, bool reliable, bool hot) const
 {
-  static Util::MessageProfiler msgProfiler("Robot::SendMessage");
-
-  Result sendResult = GetContext()->GetRobotManager()->GetMsgHandler()->SendMessage(msg, reliable, hot);
-  if (sendResult == RESULT_OK) {
-    msgProfiler.Update((int)msg.GetTag(), msg.Size());
-  } else {
-    const char* msgTypeName = EngineToRobotTagToString(msg.GetTag());
-    LOG_WARNING("Robot.SendMessage", "Robot %d failed to send a message type %s", _ID, msgTypeName);
-    msgProfiler.ReportOnFailure();
-  }
-  return sendResult;
+  return RobotMessageHelper::SendMessage(GetContext()->GetRobotManager()->GetMsgHandler(), msg, reliable, hot);
 }
 
 // Sync with physical robot
