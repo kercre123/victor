@@ -48,7 +48,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComponents) override;
+  virtual void InitDependent(const RobotCompMap& dependentComponents) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };
@@ -128,7 +128,7 @@ private:
 
   external_interface::JdocType JdocTypeFromDocName(const std::string& docName) const;
 
-  Robot*                    _robot = nullptr;
+  const CozmoContext*       _context = nullptr;
   Util::Data::DataPlatform* _platform = nullptr;
   std::string               _savePath;
   bool                      _cloudJdocResetRequested = false;

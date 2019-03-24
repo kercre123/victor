@@ -151,16 +151,16 @@ JdocsManager::JdocInfo::CloudAbuseDetectionConfig::CloudAbuseDetectionConfig()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComponents)
+void JdocsManager::InitDependent(const RobotCompMap& dependentComponents)
 {
-  _robot = robot;
+  _context = dependentComponents.GetComponent<ContextWrapper>().context;
   s_JdocsManager = this;
 
   using namespace ExternalInterface;
-  auto helper = MakeAnkiEventUtil(*_robot->GetExternalInterface(), *this, _eventHandles);
+  auto helper = MakeAnkiEventUtil(*_context->GetExternalInterface(), *this, _eventHandles);
   helper.SubscribeGameToEngine<MessageGameToEngineTag::UserLoggedIn>();
 
-  _platform = robot->GetContextDataPlatform();
+  _platform = _context->GetDataPlatform();
   DEV_ASSERT(_platform != nullptr, "JdocsManager.InitDependent.DataPlatformIsNull");
 
   _savePath = _platform->pathToResource(Util::Data::Scope::Persistent, kJdocsManagerFolder);
@@ -180,7 +180,7 @@ void JdocsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComp
   }
 
   // Build our jdoc data structure based on the config data, and possible saved jdoc files on disk
-  const auto& config = robot->GetContext()->GetDataLoader()->GetJdocsConfig();
+  const auto& config = _context->GetDataLoader()->GetJdocsConfig();
   _minCloudGetPeriod_s = config[kMinCloudGetPeriodKey].asUInt();
   const auto& jdocsConfig = config[kManagedJdocsKey];
   const auto& memberNames = jdocsConfig.getMemberNames();
@@ -1652,18 +1652,18 @@ void JdocsManager::SubmitJdocToCloud(const external_interface::JdocType jdocType
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void JdocsManager::SendJdocsChangedMessage(const std::vector<external_interface::JdocType>& jdocTypes)
 {
-  if (_robot->HasGatewayInterface())
+  auto* gatewayInterface = _context->GetGatewayInterface();
+  if (gatewayInterface != nullptr)
   {
     LOG_INFO("JdocsManager.SendJdocsChangedMessage", "Signaling app for %zu jdocs changed",
              jdocTypes.size());
-    auto* gi = _robot->GetGatewayInterface();
     auto* jdocsChangedMsg = new external_interface::JdocsChanged();
     for (auto i = 0; i < jdocTypes.size(); i++)
     {
       jdocsChangedMsg->add_jdoc_types(jdocTypes[i]);
     }
 
-    gi->Broadcast(ExternalMessageRouter::Wrap(jdocsChangedMsg));
+    gatewayInterface->Broadcast(ExternalMessageRouter::Wrap(jdocsChangedMsg));
   }
 }
 
