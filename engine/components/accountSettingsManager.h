@@ -41,7 +41,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Robot* robot, const RobotCompMap& dependentComponents) override;
+  virtual void InitDependent(const RobotCompMap& dependentComponents) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
     dependencies.insert(RobotComponentID::JdocsManager);
@@ -79,7 +79,6 @@ private:
 
   void DoJdocFormatMigration();
 
-  Robot*                    _robot = nullptr;
   Json::Value               _currentAccountSettings;
   const Json::Value*        _accountSettingsConfig;
   bool                      _applyAccountSettingsNextTick = false;
@@ -91,9 +90,10 @@ private:
     SettingFunction         applicationFunction;
   };
   using SettingSetters = std::map<external_interface::AccountSetting, SettingSetter>;
-  SettingSetters            _settingSetters;
+  SettingSetters                  _settingSetters;
 
-  JdocsManager*             _jdocsManager = nullptr;
+  JdocsManager*                   _jdocsManager = nullptr;
+  RobotInterface::MessageHandler *_messageHandler = nullptr;
 };
 
 

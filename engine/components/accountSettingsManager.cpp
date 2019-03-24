@@ -19,6 +19,7 @@
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "engine/robotMessageHelper.h"
 
 #include "coretech/common/engine/utils/timer.h"
 #include "util/console/consoleInterface.h"
@@ -55,12 +56,13 @@ AccountSettingsManager::AccountSettingsManager()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AccountSettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentComponents)
+void AccountSettingsManager::InitDependent(const RobotCompMap& dependentComponents)
 {
-  _robot = robot;
-  _jdocsManager = &_robot->GetComponent<JdocsManager>();
-
-  _accountSettingsConfig = &_robot->GetContext()->GetDataLoader()->GetAccountSettingsConfig();
+  _jdocsManager = dependentComponents.GetComponentPtr<JdocsManager>();
+  const auto* context = dependentComponents.GetComponent<ContextWrapper>().context;
+  _messageHandler = context->GetMessageHandler();
+  auto* dataLoader = context->GetDataLoader();
+  _accountSettingsConfig = &dataLoader->GetAccountSettingsConfig();
 
   // Call the JdocsManager to see if our account settings jdoc file exists
   bool settingsDirty = false;
@@ -328,7 +330,7 @@ bool AccountSettingsManager::ApplyAccountSettingDataCollection()
   // This message is 'overloaded' because we're running out of message tags
   const auto msg = EngineToRobot::CreateupdatedSettings(UpdatedSettings(SettingBeingChanged::SETTING_ENABLE_DATA_COLLECTION,
                                                                         value, ""));
-  _robot->SendMessage(std::move(msg));
+  RobotMessageHelper::SendMessage(_messageHandler, std::move(msg));
 
   return true;
 }
