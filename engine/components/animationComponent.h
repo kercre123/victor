@@ -43,11 +43,15 @@ class Animation;
 class AnimationGroupContainer;
 class CozmoContext;
 class DataAccessorComponent;
+class FullRobotPose;
+class MoodManager;
 class MovementComponent;
-class Robot;
+
 namespace RobotInterface{
 class EngineToRobot;
+class MessageHandler;
 }
+
 template <typename T>
 class AnkiEvent;
   
@@ -72,12 +76,16 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
-    dependencies.insert(RobotComponentID::DataAccessor);
-    dependencies.insert(RobotComponentID::Movement);
   };
+  virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override {
+    components.insert(RobotComponentID::DataAccessor);
+    components.insert(RobotComponentID::FullRobotPose);
+    components.insert(RobotComponentID::MoodManager);
+    components.insert(RobotComponentID::Movement);
+  }
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::AIComponent);
   };
@@ -293,9 +301,12 @@ private:
   bool _isInitialized;
   Tag  _tagCtr;
   
-  Robot* _robot = nullptr;
+  const CozmoContext* _context = nullptr;
   DataAccessorComponent* _dataAccessor = nullptr;
   MovementComponent* _movementComponent = nullptr;
+  RobotInterface::MessageHandler *_messageHandler = nullptr;
+  MoodManager* _moodManager = nullptr;
+  FullRobotPose* _robotPose = nullptr;
 
   struct AnimationGroupWrapper{
     AnimationGroupWrapper(AnimationGroupContainer&  container)
