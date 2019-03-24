@@ -43,7 +43,7 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
-  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
+  virtual void InitDependent(const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   };

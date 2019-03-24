@@ -38,7 +38,7 @@ DataAccessorComponent::~DataAccessorComponent()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void DataAccessorComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
+void DataAccessorComponent::InitDependent(const RobotCompMap& dependentComps)
 {
   auto* context = dependentComps.GetComponent<ContextWrapper>().context;
   auto& dataLoader = *context->GetDataLoader();
