@@ -73,10 +73,19 @@ public:
   // Additional components will be passed into init but may not have been initialized
   virtual void AdditionalInitAccessibleComponents(std::set<EnumType>& components) const{};
 
+  // Called once to initialize this component _after_ everything listed as an InitDependency has already been
+  // initialized
+  virtual void InitDependent(const DependencyManagedEntity<EnumType>& dependentComps) {}
+
   // TMP - add in robot to make transition to new system easier for comps that previously
   // received robot - theoretically only dependent components should be necessary in the future
+  // ***************************************************************************************************
+  // NOTE: for all new code, please use the above version without robot instead
+  // ***************************************************************************************************
   virtual void InitDependent(Vector::Robot* robot, 
-                             const DependencyManagedEntity<EnumType>& dependentComps) {};
+                             const DependencyManagedEntity<EnumType>& dependentComps) {
+    InitDependent(dependentComps);
+  };
 
   // Update dependencies are guaranteed to be updated before this component
   virtual void GetUpdateDependencies(std::set<EnumType>& dependencies) const {};
