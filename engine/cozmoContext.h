@@ -96,6 +96,7 @@ public:
   CozmoExperiments*                     GetExperiments() const { return _cozmoExperiments.get(); }
   PerfMetricEngine*                     GetPerfMetric() const { return _perfMetric.get(); }
   WebService::WebService*               GetWebService() const { return _webService.get(); }
+  RobotInterface::MessageHandler*       GetMessageHandler() const;
 
   void  SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const;
 

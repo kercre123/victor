@@ -59,6 +59,11 @@ CozmoContext::~CozmoContext()
 {
 }
 
+RobotInterface::MessageHandler* CozmoContext::GetMessageHandler() const
+{
+  return _robotMgr->GetMsgHandler();
+}
+
 void CozmoContext::Shutdown()
 {
   // Order of destruction matters!  RobotManager makes calls back into context,
