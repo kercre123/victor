@@ -36,6 +36,8 @@ public:
   // If localized string is not available, return stringID itself.
   //
   std::string GetString(const std::string & stringID) const;
+  std::string GetString(const std::string & stringID, const std::string & arg0) const ;
+  std::string GetString(const std::string & stringID, const std::string & arg0, const std::string & arg1) const;
 
 private:
   // Internal types

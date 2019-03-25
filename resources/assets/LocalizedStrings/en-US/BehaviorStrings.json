@@ -24,6 +24,21 @@
   "behavior.DevTest2": {
     "translation": "I am {0}"
   },
+  "BehaviorEnrollFace.HaveWeMetBefore": {
+    "translation": "Have we met before, {0}?"
+  },
+  "BehaviorEnrollFace.AlreadyKnowVowelName": {
+    "translation": "I already know an {0}"
+  },
+  "BehaviorEnrollFace.AlreadyKnowConsonantName": {
+    "translation": "I already know a {0}"
+  },
+  "BehaviorEnrollFace.AlreadyKnowYou": {
+    "translation": "I already know you!"
+  },
+  "BehaviorEnrollFace.AlreadyKnowFace": {
+    "translation": "You're {0}, not {1}"
+  },
   "BehaviorKnowledgeGraphQuestion.Ready": {
     "translation": "Ready"
   }
