@@ -397,10 +397,8 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/reactions
   AskForHelp,
   AskForHelpOnSide,
-  BasicVoiceCommands,
   CheckForAndReactToHand,
   ForceStuckOnEdge,
-  InterruptingVoiceReactions,
   MandatoryPhysicalReactions,
   ProceduralTurnToMicDirection,
   ReactToAbuse,
@@ -433,8 +431,10 @@ enum uint_16 BehaviorID {
   ReactToUncalibratedHeadAndLift,
   ReactToUnexpectedMovement,
   ReactToUnexpectedMovementInAir,
+  SimpleVoiceResponses,
   StuckOnEdge,
   TriggerWordWithoutIntent,
+  VoiceFeatures,
 
   // victorBehaviorTree
   ResetSafely,

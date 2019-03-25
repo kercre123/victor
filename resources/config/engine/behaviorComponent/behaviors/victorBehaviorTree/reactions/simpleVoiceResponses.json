@@ -1,11 +1,12 @@
 {
   "behaviorClass" : "DispatcherStrictPriority",
-  "behaviorID": "BasicVoiceCommands",
+  "behaviorID": "SimpleVoiceResponses",
 
   "linkScope": true,
   "interruptActiveBehavior": true,
 
-  // all behaviors below this count as "greetings"
+  // the default feature here is just a basic response, with an app string along the lines of "Vector is
+  // responding". Some behaviors specify more specific features within their json (e.g. movement specific)
   "associatedActiveFeature": "BasicVoiceCommand",
 
   "behaviors": [
