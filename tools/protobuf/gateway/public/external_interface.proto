@@ -533,7 +533,7 @@ service ExternalInterface {
   // UpdateStatusResponse Events.
   rpc StartUpdateEngine(CheckUpdateStatusRequest) returns (CheckUpdateStatusResponse) {
     option (google.api.http) = {
-      post: "/v1/check_update_status_stream",
+      post: "/v1/start_update_engine",
       body: "*"
     };
   }
