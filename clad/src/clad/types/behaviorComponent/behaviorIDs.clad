@@ -315,6 +315,7 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/highLevelDelegates/voiceCommands
   BlackJackVoiceCommand,
   DoATrickVoiceCommand,
+  EyeColorVoiceCommand,
   FetchCubeVoiceCommand,
   FindYourCubeVoiceCommand,
   FistBumpVoiceCommand,

@@ -1,0 +1,191 @@
+/**
+ * File: BehaviorEyeColorVoiceCommand.cpp
+ *
+ * Author: Andrew Stout
+ * Created: 2019-03-19
+ *
+ * Description: Voice command for changing Vector's eye color.
+ *
+ * Copyright: Anki, Inc. 2019
+ *
+ **/
+
+
+#include "engine/aiComponent/behaviorComponent/behaviors/eyeColor/behaviorEyeColorVoiceCommand.h"
+
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/components/settingsManager.h"
+#include "proto/external_interface/settings.pb.h"
+
+#define LOG_CHANNEL "BehaviorEyeColorVoiceCommand"
+
+namespace Anki {
+namespace Vector {
+
+namespace {
+  const std::map<std::string, external_interface::EyeColor> kEyeColorMap {
+      {"COLOR_TEAL", external_interface::EyeColor::TIP_OVER_TEAL},
+      {"COLOR_ORANGE", external_interface::EyeColor::OVERFIT_ORANGE},
+      {"COLOR_YELLOW", external_interface::EyeColor::UNCANNY_YELLOW},
+      {"COLOR_GREEN", external_interface::EyeColor::NON_LINEAR_LIME},
+      {"COLOR_BLUE", external_interface::EyeColor::SINGULARITY_SAPPHIRE},
+      {"COLOR_PURPLE", external_interface::EyeColor::FALSE_POSITIVE_PURPLE}
+  };
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorEyeColorVoiceCommand::InstanceConfig::InstanceConfig()
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorEyeColorVoiceCommand::DynamicVariables::DynamicVariables()
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorEyeColorVoiceCommand::BehaviorEyeColorVoiceCommand(const Json::Value& config)
+ : ICozmoBehavior(config)
+{
+  // TODO: read config into _iConfig
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorEyeColorVoiceCommand::~BehaviorEyeColorVoiceCommand()
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorEyeColorVoiceCommand::WantsToBeActivatedBehavior() const
+{
+  // check the different intents that should be handled here
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  const bool eyecolorPending = uic.IsUserIntentPending(USER_INTENT(imperative_eyecolor));
+  const bool eyecolorSpecificPending = uic.IsUserIntentPending(USER_INTENT(imperative_eyecolor_specific));
+
+  return eyecolorPending || eyecolorSpecificPending;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEyeColorVoiceCommand::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEyeColorVoiceCommand::GetAllDelegates(std::set<IBehavior*>& delegates) const
+{
+  // TODO: insert any behaviors this will delegate to into delegates.
+  // TODO: delete this function if you don't need it
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEyeColorVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
+{
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEyeColorVoiceCommand::OnBehaviorActivated() 
+{
+  // reset dynamic variables
+  _dVars = DynamicVariables(); // TODO: remove if I don't wind up needing any dVars
+
+  // get the intent
+  auto& uic = GetBehaviorComp<UserIntentComponent>();
+  UserIntentPtr intentData = nullptr;
+  external_interface::EyeColor newEyeColor;
+  if (uic.IsUserIntentPending(USER_INTENT(imperative_eyecolor_specific))){
+    // in this case the user has requested a specific color
+    intentData = SmartActivateUserIntent(USER_INTENT(imperative_eyecolor_specific));
+    // look at the entity to determine which specific color
+    newEyeColor = GetDesiredColorFromIntent(intentData);
+    // set the color through the settings manager
+  } else if (uic.IsUserIntentPending(USER_INTENT(imperative_eyecolor))){
+    // in this case the user has non-specifically requested a change--cycle or random
+    intentData = SmartActivateUserIntent(USER_INTENT(imperative_eyecolor));
+    // or choosing next in cycle or random
+    newEyeColor = ChooseColorCyclic();
+  } else {
+    LOG_WARNING("BehaviorEyeColorVoiceCommand.OnBehaviorActivated.NoRecognizedPendingIntent",
+        "No recognized pending intent.");
+    return;
+  }
+
+  SetEyeColor(newEyeColor);
+
+
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorEyeColorVoiceCommand::BehaviorUpdate() 
+{
+  // TODO: monitor for things you care about here
+  if( IsActivated() ) {
+    // TODO: do stuff here if the behavior is active
+  }
+  // TODO: delete this function if you don't need it
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+external_interface::EyeColor BehaviorEyeColorVoiceCommand::GetDesiredColorFromIntent(UserIntentPtr intentData)
+{
+  const std::string colorRequest = intentData->intent.Get_imperative_eyecolor_specific().eye_color;
+  // TODO: check this against a map
+  external_interface::EyeColor desiredEyeColor;
+  const auto it = kEyeColorMap.find(colorRequest);
+  if (it != kEyeColorMap.end()){
+    desiredEyeColor = it->second;
+    LOG_DEBUG("BehaviorEyeColorVoiceCommand.GetDesiredColorFromIntent",
+              "mapped eye color request %s to desiredEyeColor %u", colorRequest.c_str(), desiredEyeColor);
+  } else {
+    // invalid. print a warning, return the current color.
+    LOG_WARNING("BehaviorEyeColorVoiceCommand.GetDesiredColorFromIntent.InvalidColorRequest",
+        "Unrecognized user intent eye color: %s", colorRequest.c_str());
+    SettingsManager& settings = GetBEI().GetSettingsManager();
+    desiredEyeColor = static_cast<external_interface::EyeColor>(
+        settings.GetRobotSettingAsUInt(external_interface::RobotSetting::eye_color) );
+  }
+  return desiredEyeColor;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+external_interface::EyeColor BehaviorEyeColorVoiceCommand::ChooseColorCyclic()
+{
+  // get current eye color,   // increment it
+  SettingsManager& settings = GetBEI().GetSettingsManager();
+  external_interface::EyeColor newEyeColor = static_cast<external_interface::EyeColor>(
+      settings.GetRobotSettingAsUInt(external_interface::RobotSetting::eye_color) + 1 );
+  // roll over if needed
+  if (newEyeColor >= external_interface::EyeColor_MAX) {
+    newEyeColor = external_interface::EyeColor_MIN;
+  }
+  return newEyeColor;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorEyeColorVoiceCommand::SetEyeColor(external_interface::EyeColor desiredEyeColor)
+{
+  SettingsManager& settings = GetBEI().GetSettingsManager();
+  bool ignoredDueToNoChange;
+  const bool success = settings.SetRobotSetting(external_interface::RobotSetting::eye_color,
+      desiredEyeColor, true, ignoredDueToNoChange);
+  if (success) {
+    LOG_INFO("BehaviorEyeColorVoiceCommand.SetEyeColor.Success", "Successfully changed eye color to %u", desiredEyeColor);
+  } else {
+    LOG_INFO("BehaviorEyeColorVoiceCommand.SetEyeColor.Failure", "Failed to change eye color.");
+  }
+  if (ignoredDueToNoChange) {
+    LOG_INFO("BehaviorEyeColorVoiceCommand.SetEyeColor.NoChange",
+        "SettingsManager reported no change in eye color setting.");
+  }
+  return success;
+}
+
+
+
+} // namespace Vector
+} // namespace Anki

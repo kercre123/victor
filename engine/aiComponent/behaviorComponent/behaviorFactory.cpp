@@ -110,6 +110,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/dispatch/behaviorDispatcherStrictPriorityWithCooldown.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/exploring/behaviorExploring.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/exploring/behaviorExploringExamineObstacle.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/eyeColor/behaviorEyeColorVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/putDownDispatch/behaviorLookForFaceAndCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorFistBump.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/freeplay/userInteractive/behaviorInspectCube.h"
@@ -806,6 +807,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ExploringExamineObstacle:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorExploringExamineObstacle(config));
+      break;
+    }
+    
+    case BehaviorClass::EyeColorVoiceCommand:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorEyeColorVoiceCommand(config));
       break;
     }
     
