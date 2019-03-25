@@ -263,8 +263,10 @@ namespace Anki {
         _maxSpeed_radPerSec = std::copysign(_maxSpeed_radPerSec, _requestedAngle_rad);
       }
       
-      // Recalculate the timeout limit allowed for this turn, if progress-tracking is enabled
-      if (_shouldTimeoutOnProgressStall) {
+      // Recalculate the timeout limit allowed for this turn, if the robot is held on a palm
+      // since the treads tend to slip often, so we decrease the timeout according to the expected
+      // runtime of the action.
+      if ( GetRobot().GetMoveComponent().IsHeldInPalmModeEnabled() ) {
         _timeout_s = _kDefaultTimeoutFactor * RecalculateTimeout();
         LOG_DEBUG("TurnInPlaceAction.Init.RecalculatedTimeout",
                   "Action will timeout after %.1f s",
@@ -438,19 +440,31 @@ namespace Anki {
                                 _angleTolerance.getDegrees(),
                                 GetRobot().GetPoseFrameID());
         
-        if ( _turnStarted && !areWheelsMoving ) {
-          PRINT_NAMED_WARNING("TurnInPlaceAction.StoppedMakingProgress",
-                              "[%d] giving up since we stopped moving. currentAngle=%.1fdeg, target=%.1fdeg, angDistExp=%.1fdeg, angDistTrav=%.1fdeg (pfid: %d)",
-                              GetTag(),
-                              _currentAngle.getDegrees(),
-                              _currentTargetAngle.getDegrees(),
-                              RAD_TO_DEG(_angularDistExpected_rad),
-                              RAD_TO_DEG(_angularDistTraversed_rad),
-                              GetRobot().GetPoseFrameID());
-          result = ActionResult::MOTOR_STOPPED_MAKING_PROGRESS;
-        } else if (_turnStarted && _shouldTimeoutOnProgressStall && !IsActionMakingProgress()) {
-          result = ActionResult::TIMEOUT;
+        if ( _turnStarted ) {
+          if ( !areWheelsMoving ) {
+            PRINT_NAMED_WARNING("TurnInPlaceAction.CheckIfDone.WheelsStoppedMoving",
+                                "[%d] giving up since we stopped moving. currentAngle=%.1fdeg, target=%.1fdeg, angDistExp=%.1fdeg, angDistTrav=%.1fdeg (pfid: %d)",
+                                GetTag(),
+                                _currentAngle.getDegrees(),
+                                _currentTargetAngle.getDegrees(),
+                                RAD_TO_DEG(_angularDistExpected_rad),
+                                RAD_TO_DEG(_angularDistTraversed_rad),
+                                GetRobot().GetPoseFrameID());
+            result = ActionResult::MOTOR_STOPPED_MAKING_PROGRESS;
+          } else if ( GetRobot().GetMoveComponent().IsHeldInPalmModeEnabled() && !IsActionMakingProgress()) {
+            LOG_INFO("TurnInPlaceAction.CheckIfDone.StoppedMakingProgress",
+                     "[%d] giving up, robot not turning at expected speed, "
+                     "currentAngle=%.1f [deg], target=%.1f [deg], angDistExp=%.1f [deg], angDistTrav=%.1f [deg] (pfid: %d)",
+                     GetTag(),
+                     _currentAngle.getDegrees(),
+                     _currentTargetAngle.getDegrees(),
+                     RAD_TO_DEG(_angularDistExpected_rad),
+                     RAD_TO_DEG(_angularDistTraversed_rad),
+                     GetRobot().GetPoseFrameID());
+            result = ActionResult::TIMEOUT;
+          }
         }
+        
       }
       
       // Ensure that the OffTreadsState is valid
@@ -496,24 +510,14 @@ namespace Anki {
         }
       }
       
-      
       // If it's taken much longer than expected to reach the current orientation (scaled by the same timeout factor),
       // this will trigger and warn the caller that the action might be stalled.
       const bool isActionMakingProgress = expectedTraversalTime_sec > 0.2f ?
           (currRunTime_sec < (_kDefaultProgressTimeoutFactor * expectedTraversalTime_sec)) : (currRunTime_sec < 0.5f);
       if(!isActionMakingProgress) {
-        LOG_INFO("TurnInPlaceAction.StoppedMakingProgress",
-                 "[%d] is not causing robot to rotate fast enough.", GetTag());
-        LOG_INFO("TurnInPlaceAction.StoppedMakingProgress",
-                 "currentAngle=%.1fdeg, target=%.1fdeg, angDistExp=%.1fdeg, angDistTrav=%.1fdeg (pfid: %d)",
-                 _currentAngle.getDegrees(),
-                 _currentTargetAngle.getDegrees(),
-                 RAD_TO_DEG(_angularDistExpected_rad),
-                 RAD_TO_DEG(_angularDistTraversed_rad),
-                 GetRobot().GetPoseFrameID());
-        LOG_INFO("TurnInPlaceAction.StoppedMakingProgress",
-                 "Completed %.1f of turn, expectedTraversalTime=%.1fsec, currRunTime=%.1fsec",
-                 _angularDistTraversed_rad/_angularDistExpected_rad,
+        LOG_INFO("TurnInPlaceAction.IsActionMakingProgress.CurrentProgress",
+                 "Completed %.1f%% of turn, expectedTraversalTime=%.1fsec, currRunTime=%.1fsec",
+                 (_angularDistTraversed_rad/_angularDistExpected_rad) * 100.0f,
                  expectedTraversalTime_sec,
                  currRunTime_sec);
       }
@@ -1619,7 +1623,6 @@ namespace Anki {
       TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle.ToFloat(), _isPanAbsolute);      
       action->SetTolerance(_panAngleTol);
       action->SetMoveEyes(_moveEyes);
-      action->EnableProgressTrackingTimeout(_shouldTimeoutPanOnProgressStall);
       if( _panSpeedsManuallySet ) {
         action->SetMaxSpeed(_maxPanSpeed_radPerSec);
         action->SetAccel(_panAccel_radPerSec2);

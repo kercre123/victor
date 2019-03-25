@@ -144,9 +144,6 @@ protected:
     float sxt_HeadTurnSpeed_degPerSec = 0.0f; // for turn states
     float sxh_HeadTurnSpeed_degPerSec = 0.0f; // for head move states
     
-    // Tracking and cancelling of point-turns that have stalled and are not making progress towards goal pose
-    bool behavior_TrackTurnProgress;
-    
     // Locks treads during animations to prevent unwanted forward/backward motion during pauses
     bool behavior_LockTreadsDuringWaitAnims;
 

@@ -15,11 +15,8 @@
     "behavior_AngleOfFocus_deg": 0,
     "behavior_NumberOfScansBeforeStop": 1,
     
-    // Since the surface is not assumed to be stable and easy to grip,
-    // the turn actions commanded in this behavior are set to monitor and
-    // track their progress, and cancel themselves if the robot is stalled
-    // and not turning due to one or more treads slipping.
-    "behavior_TrackTurnProgress": true,
+    // TODO(GB): Delete this once animation is updated to not move treads so much, currently too
+    // risky to enable since it can cause the robot to slowly inch off the user's palm.
     "behavior_LockTreadsDuringWaitAnims": true,
 
     // shared speeds

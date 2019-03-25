@@ -100,10 +100,15 @@ HeldInPalmTracker::HeldInPalmTracker()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void HeldInPalmTracker::SetIsHeldInPalm(const bool isHeldInPalm)
+void HeldInPalmTracker::SetIsHeldInPalm(const bool isHeldInPalm, MovementComponent& moveComp)
 {
   if (_isHeldInPalm != isHeldInPalm) {
     LOG_INFO("HeldInPalmTracker.SetIsHeldInPalm", "%s", isHeldInPalm ? "true" : "false");
+    
+    // Set the movement component to start detecting unexpected movement and clamp the maximum
+    // point-turn angular speeds if the robot is held in a user's palm since some of the behaviors
+    // that can run in this state might try to turn in place.
+    moveComp.EnableHeldInPalmMode(isHeldInPalm);
   }
   _isHeldInPalm = isHeldInPalm;
 }
@@ -163,6 +168,7 @@ void HeldInPalmTracker::CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo)
     _lastTimeOnTreadsOrCharger = currTime;
   }
   
+  auto& moveComponent = robotInfo.GetMoveComponent();
   if ( _isHeldInPalm ) {
     const auto& cliffComp = robotInfo.GetCliffSensorComponent();
     // The robot only continues to be considered held "in a palm" as long as:
@@ -180,7 +186,8 @@ void HeldInPalmTracker::CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo)
                     // that supports dealing with the user gripping Vector in the palm of their
                     // hand while holding them in the OnRightSide, OnLeftSide, OnBack, or OnFace
                     // orientations. Tracked in VIC-12701.
-                    otState == OffTreadsState::InAir);
+                    otState == OffTreadsState::InAir,
+                    moveComponent);
   } else {
     // If the robot is no longer held in a palm, there are 3 transitions possible that could result
     // in the robot returning to a user's palm:
@@ -236,7 +243,8 @@ void HeldInPalmTracker::CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo)
             timeToConfirmRobotHeldInPalm_ms = kMinTimeToConfirmRobotHeldInPalm_ms;
           }
           
-          SetIsHeldInPalm(WasRobotPlacedInPalmWhileHeld(robotInfo, timeToConfirmRobotHeldInPalm_ms));
+          SetIsHeldInPalm(WasRobotPlacedInPalmWhileHeld(robotInfo, timeToConfirmRobotHeldInPalm_ms),
+                          moveComponent);
         }
   #if REMOTE_CONSOLE_ENABLED
         if (kEnableDebugTransitionPrintouts && _isHeldInPalm) {
@@ -258,7 +266,8 @@ void HeldInPalmTracker::CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo)
         if (!wasMovingRecently) {
           // Robot has been held in a user's palm more recently than it was on the
           // ground (OffTreadsState::OnTreads). Check final condition for scenario C.
-          SetIsHeldInPalm(WasRobotPlacedInPalmWhileHeld(robotInfo, kMinTimeToConfirmRobotHeldInPalm_ms));
+          SetIsHeldInPalm(WasRobotPlacedInPalmWhileHeld(robotInfo, kMinTimeToConfirmRobotHeldInPalm_ms),
+                          moveComponent);
         }
 #if REMOTE_CONSOLE_ENABLED
         if (kEnableDebugTransitionPrintouts && _isHeldInPalm) {
@@ -274,11 +283,6 @@ void HeldInPalmTracker::CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo)
   } else {
     _lastHeldInPalmTime = currTime;
   }
-  
-  // Set the movement component to start detecting unexpected movement if the robot is held in a
-  // user's palm since some of the behaviors that can run in this state might try to turn in place.
-  auto& moveComponent = robotInfo.GetMoveComponent();
-  moveComponent.EnableHeldInPalmMode(_isHeldInPalm);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

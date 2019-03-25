@@ -340,7 +340,8 @@ private:
     f32               _sumWheelSpeedL_mmps;
     f32               _sumWheelSpeedR_mmps;
     u8                _count;
-    bool              _inAirThresholdEnabled;
+    
+    bool              _heldInPalmModeEnabled = false;
     
   public:
     
@@ -357,7 +358,7 @@ private:
     void Increment(u8 countInc, f32 leftSpeed_mmps, f32 rightSpeed_mmps, RobotTimeStamp_t currentTime);
     void Decrement();
     void Reset();
-    void EnableInAirThreshold(const bool enable) { _inAirThresholdEnabled = enable; }
+    void EnableHeldInPalmMode(const bool enable) { _heldInPalmModeEnabled = enable; }
   };
   
   UnexpectedMovement _unexpectedMovement;

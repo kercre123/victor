@@ -488,7 +488,7 @@ void MovementComponent::RemoveEyeShiftWhenHeadMoves(const std::string& name, Tim
 void MovementComponent::EnableHeldInPalmMode(const bool enabled)
 {
   _heldInPalmModeEnabled = enabled;
-  _unexpectedMovement.EnableInAirThreshold(enabled);
+  _unexpectedMovement.EnableHeldInPalmMode(enabled);
 }
 
 template<>
@@ -1216,7 +1216,7 @@ RobotTimeStamp_t MovementComponent::GetLastTimeCameraWasMoving() const
 #pragma mark Unexpected Movement
 
 const u8 MovementComponent::UnexpectedMovement::kMaxUnexpectedMovementCount = 11;
-CONSOLE_VAR(u8, kMaxUnexpectedMovementCountInAir, "Robot", 100);
+CONSOLE_VAR(u8, kMaxUnexpectedMovementCountWhileHeldInPalm, "Robot", 200);
 
 bool MovementComponent::UnexpectedMovement::IsDetected() const
 {
@@ -1259,7 +1259,7 @@ void MovementComponent::UnexpectedMovement::GetAvgWheelSpeeds(f32& left, f32& ri
 
 u8 MovementComponent::UnexpectedMovement::GetMaxCount() const
 {
-  return _inAirThresholdEnabled ? kMaxUnexpectedMovementCountInAir : kMaxUnexpectedMovementCount;
+  return _heldInPalmModeEnabled ? kMaxUnexpectedMovementCountWhileHeldInPalm : kMaxUnexpectedMovementCount;
 }
 
 } // namespace Vector
