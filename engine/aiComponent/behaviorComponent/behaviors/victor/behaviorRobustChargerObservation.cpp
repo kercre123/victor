@@ -35,7 +35,10 @@ namespace Anki {
 namespace Vector {
 
 #define LOG_CHANNEL "Behaviors"
-  
+
+// Enable for debug, to save images during WaitForImageAction
+CONSOLE_VAR(bool, kRobustChargerObservation_SaveImages, "Behaviors.RobustChargerObservation", false);  
+
 namespace {
   const char* kNumImageCompositingCyclesToWaitForKey = "numImageCompositingCyclesToWaitFor";
   const char* kNumCyclingExposureCyclesToWaitForKey = "numCyclingExposureCyclesToWaitFor";
@@ -43,8 +46,6 @@ namespace {
   const LCDBrightness kNormalLCDBrightness = LCDBrightness::LCDLevel_5mA;
   const LCDBrightness kMaxLCDBrightness = LCDBrightness::LCDLevel_20mA;
 
-  // Enable for debug, to save images during WaitForImageAction
-  CONSOLE_VAR(bool, kRobustChargerObservation_SaveImages, "Behaviors.RobustChargerObservation", false);
   CONSOLE_VAR(bool, kFakeLowlightCondition, "Behaviors.RobustChargerObservation", false);
 }
 
@@ -217,6 +218,7 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
                               Util::Data::Scope::Cache,
                               "robustChargerObsImages");
     ImageSaverParams params(path, ImageSaverParams::Mode::Stream, -1);  // Quality: save PNGs
+    params.size = Vision::ImageCacheSize::Full;
     waitAction->SetSaveParams(params);
   }
 
