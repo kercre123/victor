@@ -2732,6 +2732,14 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 		UpdateVersion: "",
 	}
 
+	if data, err := ioutil.ReadFile("/run/update-engine/manifest.ini"); err == nil {
+		expr := regexp.MustCompile("update_version\\s*=\\s*(\\S*)")
+		match := expr.FindStringSubmatch(string(data))
+		if len(match) == 2 {
+			update_status.UpdateVersion = match[1]
+		}
+	}
+
 	if _, err := os.Stat("/run/update-engine/done"); err == nil {
 		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_READY_TO_INSTALL
 		return update_status, nil
@@ -2741,17 +2749,9 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 		update_status.Progress, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
 		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
 	}
+
 	if data, err := ioutil.ReadFile("/run/update-engine/expected-size"); err == nil {
 		update_status.Expected, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
-		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
-	}
-
-	if data, err := ioutil.ReadFile("/run/update-engine/manifest.ini"); err == nil {
-		expr := regexp.MustCompile("update_version\\s*=\\s*(\\S*)")
-		match := expr.FindStringSubmatch(string(data))
-		if len(match) == 2 {
-			update_status.UpdateVersion = match[1]
-		}
 		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
 	}
 
@@ -2800,8 +2800,8 @@ func (service *rpcService) UpdateStatusStream() {
 	}
 }
 
-// CheckUpdateStatusStream restarts the update-engine process and starts a stream of status messages to the app.
-func (service *rpcService) CheckUpdateStatusStream(
+// StartUpdateEngine restarts the update-engine process and starts a stream of status messages to the app.
+func (service *rpcService) StartUpdateEngine(
 	ctx context.Context, in *extint.CheckUpdateStatusRequest) (*extint.CheckUpdateStatusResponse, error) {
 
 	retval := &extint.CheckUpdateStatusResponse{

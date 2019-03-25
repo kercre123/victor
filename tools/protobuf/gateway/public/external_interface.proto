@@ -529,8 +529,9 @@ service ExternalInterface {
     };
   }    
 
-  // CheckUpdateStatusStream sets up a stream of UpdateStatusResponse Events.
-  rpc CheckUpdateStatusStream(CheckUpdateStatusRequest) returns (CheckUpdateStatusResponse) {
+  // StartUpdateEngine cycles the update-engine service (to start a new check for an update) and sets up a stream of 
+  // UpdateStatusResponse Events.
+  rpc StartUpdateEngine(CheckUpdateStatusRequest) returns (CheckUpdateStatusResponse) {
     option (google.api.http) = {
       post: "/v1/check_update_status_stream",
       body: "*"
