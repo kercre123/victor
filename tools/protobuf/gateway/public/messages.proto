@@ -1377,6 +1377,7 @@ message CheckUpdateStatusResponse{
   UpdateStatus update_status = 2;
   int64 expected = 3;
   int64 progress = 4;
+  string update_version = 5;
 }
   
 message UploadDebugLogsRequest{}
