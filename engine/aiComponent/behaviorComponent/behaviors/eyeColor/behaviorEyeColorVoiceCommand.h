@@ -22,15 +22,6 @@
 namespace Anki {
 namespace Vector {
 
-enum class EEyeColor : uint32_t { // TODO: validate (or replace?) this with the enum used in settings, which I can't find
-  TEAL,
-  ORANGE,
-  YELLOW,
-  GREEN,
-  BLUE,
-  PURPLE
-};
-
 class BehaviorEyeColorVoiceCommand : public ICozmoBehavior
 {
 public: 
@@ -51,19 +42,6 @@ protected:
   virtual void BehaviorUpdate() override;
 
 private:
-
-  struct InstanceConfig {
-    InstanceConfig();
-    // TODO: put configuration variables here
-  };
-
-  struct DynamicVariables {
-    DynamicVariables();
-    // TODO: put member variables here
-  };
-
-  InstanceConfig _iConfig;
-  DynamicVariables _dVars;
 
   external_interface::EyeColor GetDesiredColorFromIntent(UserIntentPtr intentData);
   external_interface::EyeColor ChooseColorCyclic();

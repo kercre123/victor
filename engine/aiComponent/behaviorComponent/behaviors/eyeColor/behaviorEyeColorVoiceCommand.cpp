@@ -33,21 +33,11 @@ namespace {
   };
 }
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorEyeColorVoiceCommand::InstanceConfig::InstanceConfig()
-{
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorEyeColorVoiceCommand::DynamicVariables::DynamicVariables()
-{
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorEyeColorVoiceCommand::BehaviorEyeColorVoiceCommand(const Json::Value& config)
  : ICozmoBehavior(config)
 {
-  // TODO: read config into _iConfig
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -74,22 +64,16 @@ void BehaviorEyeColorVoiceCommand::GetBehaviorOperationModifiers(BehaviorOperati
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEyeColorVoiceCommand::GetAllDelegates(std::set<IBehavior*>& delegates) const
 {
-  // TODO: insert any behaviors this will delegate to into delegates.
-  // TODO: delete this function if you don't need it
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEyeColorVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
-
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEyeColorVoiceCommand::OnBehaviorActivated() 
 {
-  // reset dynamic variables
-  _dVars = DynamicVariables(); // TODO: remove if I don't wind up needing any dVars
-
   // get the intent
   auto& uic = GetBehaviorComp<UserIntentComponent>();
   UserIntentPtr intentData = nullptr;
@@ -112,19 +96,13 @@ void BehaviorEyeColorVoiceCommand::OnBehaviorActivated()
   }
 
   SetEyeColor(newEyeColor);
-
-
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEyeColorVoiceCommand::BehaviorUpdate() 
 {
-  // TODO: monitor for things you care about here
-  if( IsActivated() ) {
-    // TODO: do stuff here if the behavior is active
-  }
-  // TODO: delete this function if you don't need it
+
 }
 
 
@@ -132,7 +110,6 @@ void BehaviorEyeColorVoiceCommand::BehaviorUpdate()
 external_interface::EyeColor BehaviorEyeColorVoiceCommand::GetDesiredColorFromIntent(UserIntentPtr intentData)
 {
   const std::string colorRequest = intentData->intent.Get_imperative_eyecolor_specific().eye_color;
-  // TODO: check this against a map
   external_interface::EyeColor desiredEyeColor;
   const auto it = kEyeColorMap.find(colorRequest);
   if (it != kEyeColorMap.end()){
