@@ -369,11 +369,11 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
     DASMSG_SET(i3, onChargeContacts ? GetBatteryVolts_mV() : GetBatteryVoltsRaw_mV(), 
                "If on charger, last filtered battery voltage. "
                "If off charger, current raw battery voltage (mV)");
-    DASMSG_SET(i4, onChargeContacts ? _battDisconnected : _wasBattDisconnected, 
+    DASMSG_SET(i4, timeSinceLowBattStarted_sec, 
+               "Time since low battery (sec)");
+    DASMSG_SET(s1, (onChargeContacts ? _battDisconnected : _wasBattDisconnected) ? "disconnected" : "connected", 
                "If on charger, current battery disconnected state. "
                "If off charger, battery disconnected state when it was on charger.");
-    DASMSG_SET(s1, timeSinceLowBattStarted_sec, 
-               "Time since low battery (sec)");
     DASMSG_SEND();
     _lastOnChargerContactsChange_sec = now_sec;
   }
