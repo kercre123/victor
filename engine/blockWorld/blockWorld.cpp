@@ -925,6 +925,18 @@ namespace Vector {
         // Localize to the charger instance in the old origin
         result = _robot->LocalizeToObject(observedCharger.get(), existingCharger);
       }
+
+      if(ANKI_VERIFY( !( (existingCharger != nullptr) && (existingCharger->GetLastObservedTime() == observedCharger->GetLastObservedTime()) ),
+                      "BlockWorld.ProcessVisualObservations.IncorrectObservedTimeUpdateToCharger",
+                      "Existing and Observed charger timestamps are not matching (E=%u O=%u)",
+                      existingCharger->GetLastObservedTime(),
+                      observedCharger->GetLastObservedTime())) {
+        // Having observed a charger, and having knowledge of an existing charger (in any origin, including this one)
+        //  we should always update the observation times for the charger, after localizing to it.
+        // If this verify is hit, then there might be a problem in UpdateKnownObjects() or LocalizeToObject()
+        //  either is responsible for updating observation times.
+        existingCharger->SetObservationTimes(observedCharger.get());
+      }
     } else {
       UpdateKnownObjects(objectsSeen, atTimestamp);
     }
