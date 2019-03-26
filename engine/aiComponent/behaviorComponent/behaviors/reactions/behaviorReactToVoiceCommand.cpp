@@ -147,6 +147,15 @@ BehaviorReactToVoiceCommand::DynamicVariables::DynamicVariables() :
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorReactToVoiceCommand::DynamicVariables::Persistent::Persistent() :
+  forcedAnimListeningLoop( AnimationTrigger::Count ),
+  forcedAnimListeningGetOut( AnimationTrigger::Count ),
+  listeningAnimsResetQueued( false )
+{
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& config ) :
   ICozmoBehavior( config ),
   _triggerDirection( kMicDirectionUnknown )

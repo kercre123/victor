@@ -207,6 +207,9 @@ private:
     bool                      expectingStream;
     
     struct Persistent {
+
+      Persistent();
+
       AnimationTrigger          forcedAnimListeningLoop;
       AnimationTrigger          forcedAnimListeningGetOut;
       
