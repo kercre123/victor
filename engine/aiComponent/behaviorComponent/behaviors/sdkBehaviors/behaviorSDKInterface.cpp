@@ -58,7 +58,6 @@ const std::set<std::tuple<UserIntentTag, unsigned int>> kIntentWhitelist = {
   { UserIntentTag::global_stop, 3 },
   { UserIntentTag::greeting_goodbye, 4 },
   { UserIntentTag::greeting_goodmorning, 5 },
-  { UserIntentTag::greeting_hello, 6 },
   { UserIntentTag::imperative_abuse, 7 },
   { UserIntentTag::imperative_affirmative, 8 },
   { UserIntentTag::imperative_apology, 9 },
@@ -74,7 +73,6 @@ const std::set<std::tuple<UserIntentTag, unsigned int>> kIntentWhitelist = {
   { UserIntentTag::imperative_volumelevel, 19 },
   { UserIntentTag::imperative_volumeup, 20 },
   { UserIntentTag::imperative_volumedown, 21 },
-  { UserIntentTag::movement_forward, 22 },
   { UserIntentTag::movement_backward, 23 },
   { UserIntentTag::movement_turnleft, 24 },
   { UserIntentTag::movement_turnright, 25 },
@@ -95,6 +93,14 @@ const std::set<std::tuple<UserIntentTag, unsigned int>> kIntentWhitelist = {
   { UserIntentTag::take_a_photo, 40 },
   { UserIntentTag::weather_response, 41 }
 };
+
+// special case: simple voice responses are mapped to an int via their animation group since they all live
+// under the same UserIntentTag (see VIC-14247)
+const std::set<std::tuple<std::string, unsigned int>> kSimpleVoiceResponseMap = {
+  { "ag_greeting_hello", 6},
+  { "ag_movement_forward_01", 22},
+};
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -255,23 +261,55 @@ void BehaviorSDKInterface::ProcessUserIntents()
     const auto* userIntentDataPtr = uic.GetPendingUserIntent();
     if( userIntentDataPtr != nullptr ) {
       auto intent = userIntentDataPtr->intent;
-      LOG_INFO("BehaviorSDKInterface::ProcessUserIntents", "Intercepted pending user untent ID %u json: %s", 
+      LOG_INFO("BehaviorSDKInterface.ProcessUserIntents.InterceptedIntent",
+               "Intercepted pending user untent ID %u json: %s",
                (unsigned int)intent.GetTag(), intent.GetJSON().toStyledString().c_str());
 
-      //Find the tuple with our tag
-      auto it = std::find_if(kIntentWhitelist.begin(), kIntentWhitelist.end(), [intent](const std::tuple<UserIntentTag, unsigned int>& e) {return std::get<0>(e) == intent.GetTag();});
+      unsigned int sdkIntentTag = 0;
 
-      if (it == kIntentWhitelist.end()) {
-        //not found in list, not ours
-        LOG_INFO("BehaviorSDKInterface::ProcessUserIntents", "Not forwarding user intent");
-        return;
+      //Special case for simple voice responses, which are all under the same intent tag
+      if( intent.GetTag() == UserIntentTag::simple_voice_response ) {
+        //Find the tuple matching the animation group from the simple response
+        const std::string& animGroup = intent.Get_simple_voice_response().anim_group;
+
+        auto it = std::find_if(kSimpleVoiceResponseMap.begin(),
+                               kSimpleVoiceResponseMap.end(),
+                               [&animGroup](const std::tuple<std::string, unsigned int>& e) {
+                                 return std::get<0>(e) == animGroup;
+                               });
+
+        if (it == kSimpleVoiceResponseMap.end()) {
+          //not found in simple voice mapping
+          LOG_INFO("BehaviorSDKInterface.ProcessUserIntents.SimpleVoiceMapMissing",
+                   "Not forwarding simple voice response, no entry for animation group '%s'",
+                   animGroup.c_str());
+          return;
+        }
+
+        sdkIntentTag = std::get<1>(*it);
+      }
+      else {
+        //Not a simple voice response intent, check the normal intent map based on the intent tag
+        auto it = std::find_if(kIntentWhitelist.begin(),
+                               kIntentWhitelist.end(),
+                               [&intent](const std::tuple<UserIntentTag, unsigned int>& e) {
+                                 return std::get<0>(e) == intent.GetTag();
+                               });
+
+        if (it == kIntentWhitelist.end()) {
+          //not found in list, not ours
+          LOG_INFO("BehaviorSDKInterface.ProcessUserIntents.IntentWhitelistMissing", "Not forwarding user intent");
+          return;
+        }
+
+        sdkIntentTag = std::get<1>(*it);
       }
 
       uic.DropUserIntent(intent.GetTag());
 
       auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
       if( gi != nullptr ) {
-        auto* userIntentMsg = new external_interface::UserIntent(std::get<1>(*it), intent.GetJSON().toStyledString().c_str());
+        auto* userIntentMsg = new external_interface::UserIntent(sdkIntentTag, intent.GetJSON().toStyledString().c_str());
         gi->Broadcast( ExternalMessageRouter::Wrap(userIntentMsg) );
       }
     }

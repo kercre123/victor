@@ -70,7 +70,11 @@ public:
   UserIntentComponent(const Robot& robot, const Json::Value& userIntentMapConfig);
 
   ~UserIntentComponent();
-  
+
+  virtual void AdditionalInitAccessibleComponents(BCCompIDSet& dependencies) const override {
+    // needed for checking the validity of simple mood events, already init'd before AIComponent
+    dependencies.insert(BCComponentID::MoodManager);
+  }
   virtual void InitDependent( Vector::Robot* robot, const BCCompMap& dependentComps ) override;
   virtual void UpdateDependent(const BCCompMap& dependentComps) override;
 

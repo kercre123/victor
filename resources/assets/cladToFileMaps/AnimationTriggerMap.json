@@ -1991,10 +1991,6 @@
     "AnimName": "ag_movement_backward_01"
   },
   {
-    "CladEvent": "MovementDriveForward",
-    "AnimName": "ag_movement_forward_01"
-  },
-  {
     "CladEvent": "MovementTurnLeft",
     "AnimName": "ag_movement_left_01"
   },

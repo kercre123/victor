@@ -28,12 +28,19 @@ namespace Anki {
 namespace Vector {
 
 class CozmoContext;
+class AnimationComponent;
+class MoodManager;
+
+// struct defined in cpp to hide UserIntent from needing a header dependency
+struct SimpleVoiceResponseMap;
 
 class UserIntentMap : private Util::noncopyable
 {
 public:
 
   explicit UserIntentMap(const Json::Value& config, const CozmoContext* ctx);
+
+  ~UserIntentMap();
 
   // returns a user intent that matches cloud intent. If none is found, it will return an intent signaling
   // that there was no match
@@ -55,10 +62,22 @@ public:
   // the config passed in the constructor
   void SanitizeCloudIntentVariables(const std::string& cloudIntent, Json::Value& paramsList) const;
   void SanitizeAppIntentVariables(const std::string& appIntent, Json::Value& paramsList) const;
-  
+
+  // if a given cloud intent is a "simple voice response" (i.e. GetUserIntentFromCloudIntent returns
+  // simple_voice_response), then the user intent map will actually contain a full UserIntent, not just the
+  // tag. This function can be used to return it
+  const UserIntent& GetSimpleVoiceResponse(const std::string& cloudIntent) const;
+
   // get list of cloud/app intents from json
   std::vector<std::string> DevGetCloudIntentsList() const;
   std::vector<std::string> DevGetAppIntentsList() const;
+
+  // iterate through the simple response map and validate that the parameters within are valid (e.g. that
+  // animation groups and emotion event names are valid). This should be called after load time and will
+  // assert / print errors internally and return false if there is an issue. NOTE: if anim groups are invalid,
+  // the map entries will be removed so that they go to "unmatched intent" instead, but if emotion events are
+  // invalid, only an error will be printed
+  bool VerifySimpleVoiceResponses(const AnimationComponent& animComponent, const MoodManager& moodManager);
 
 private:
 
@@ -80,6 +99,8 @@ private:
   
   MapType _cloudToUserMap;
   MapType _appToUserMap;
+
+  std::unique_ptr<SimpleVoiceResponseMap> _simpleCloudResponseMap;
 
   UserIntentTag _unmatchedUserIntent;
   

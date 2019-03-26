@@ -350,7 +350,6 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/movement
   MovementBackward,
-  MovementForward,
   MovementTurnAround,
   MovementTurnLeft,
   MovementTurnRight,
@@ -411,7 +410,6 @@ enum uint_16 BehaviorID {
   ReactToGoodBye,
   ReactToGoodMorning,
   ReactToHand,
-  ReactToHello,
   ReactToLove,
   ReactToMotorCalibration,
   ReactToNegative,
