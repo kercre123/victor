@@ -17,7 +17,7 @@
 #include "engine/components/settingsManager.h"
 #include "proto/external_interface/settings.pb.h"
 
-#define LOG_CHANNEL "BehaviorEyeColorVoiceCommand"
+#define LOG_CHANNEL "Behaviors"
 
 namespace Anki {
 namespace Vector {
@@ -59,6 +59,9 @@ bool BehaviorEyeColorVoiceCommand::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEyeColorVoiceCommand::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
+  modifiers.wantsToBeActivatedWhenCarryingObject  = true;
+  modifiers.wantsToBeActivatedWhenOnCharger       = true;
+  modifiers.wantsToBeActivatedWhenOffTreads       = true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
