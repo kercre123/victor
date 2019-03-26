@@ -2,34 +2,34 @@
 [
   {
     "Condition" : "Cloudy",
-    "Say"       : "and Cloudy"
+    "Say"       : "BehaviorDisplayWeather.Cloudy"
   },
   {
     "Condition" : "Cold",
-    "Say"       : "and Cold"
+    "Say"       : "BehaviorDisplayWeather.Cold"
   },
   {
     "Condition" : "Rain",
-    "Say"       : "and Raining"
+    "Say"       : "BehaviorDisplayWeather.Rain"
   },
   {
     "Condition" : "Snow",
-    "Say"       : "and Snowing"
+    "Say"       : "BehaviorDisplayWeather.Snow"
   },
   {
     "Condition" : "Stars",
-    "Say"       : "and Clear"
+    "Say"       : "BehaviorDisplayWeather.Stars"
   },
   {
     "Condition" : "Sunny",
-    "Say"       : "and Sunny"
+    "Say"       : "BehaviorDisplayWeather.Sunny"
   },
   {
     "Condition" : "Thunderstorms",
-    "Say"       : "with Thunderstorms"
+    "Say"       : "BehaviorDisplayWeather.Thunderstorms"
   },
   {
     "Condition" : "Windy",
-    "Say"       : "and Windy"
+    "Say"       : "BehaviorDisplayWeather.Windy"
   }
 ]

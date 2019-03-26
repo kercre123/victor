@@ -24,6 +24,30 @@
   "behavior.DevTest2": {
     "translation": "I am {0}"
   },
+  "BehaviorDisplayWeather.Cloudy": {
+    "translation": "{0} degrees and cloudy"
+  },
+  "BehaviorDisplayWeather.Cold": {
+    "translation": "{0} degrees and cold"
+  },
+  "BehaviorDisplayWeather.Rain": {
+    "translation": "{0} degrees and raining"
+  },
+  "BehaviorDisplayWeather.Snow": {
+    "translation": "{0} degrees and snowing"
+  },
+  "BehaviorDisplayWeather.Stars": {
+    "translation": "{0} degrees and clear"
+  },
+  "BehaviorDisplayWeather.Sunny": {
+    "translation": "{0} degrees and sunny"
+  },
+  "BehaviorDisplayWeather.Thunderstorms": {
+    "translation": "{0} degrees with thunderstorms"
+  },
+  "BehaviorDisplayWeather.Windy": {
+    "translation": "{0} degrees and windy"
+  },
   "BehaviorEnrollFace.HaveWeMetBefore": {
     "translation": "Have we met before, {0}?"
   },
