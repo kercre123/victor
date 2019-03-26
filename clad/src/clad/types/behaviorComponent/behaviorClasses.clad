@@ -148,6 +148,9 @@ enum uint_8 BehaviorClass {
   Exploring,
   ExploringExamineObstacle,
 
+  // eyeColor
+  EyeColorVoiceCommand,
+
   // freeplay/putDownDispatch
   LookForFaceAndCube,
 

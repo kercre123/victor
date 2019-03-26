@@ -1,0 +1,11 @@
+{
+  "behaviorID": "EyeColorVoiceCommand",
+  "behaviorClass": "EyeColorVoiceCommand",
+  "associatedActiveFeature": "EyeColor",
+
+  "wantsToBeActivatedCondition":  {
+    "conditionType": "FeatureGate",
+    "feature": "EyeColorVC",
+    "expected": true
+  }
+}
