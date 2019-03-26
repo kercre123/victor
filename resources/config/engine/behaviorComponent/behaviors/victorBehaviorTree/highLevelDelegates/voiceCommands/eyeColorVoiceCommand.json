@@ -1,11 +1,11 @@
 {
   "behaviorID": "EyeColorVoiceCommand",
-  "behaviorClass": "EyeColorVoiceCommand"
-  //"associatedActiveFeature": "VolumeAdjustment",
+  "behaviorClass": "EyeColorVoiceCommand",
+  "associatedActiveFeature": "EyeColor",
 
-  //"wantsToBeActivatedCondition":  {
-  //  "conditionType": "FeatureGate",
-  //  "feature": "Volume",
-  //  "expected": true
-  //}
+  "wantsToBeActivatedCondition":  {
+    "conditionType": "FeatureGate",
+    "feature": "EyeColorVC",
+    "expected": true
+  }
 }

@@ -30,6 +30,7 @@ enum uint_8 FeatureType {
   GazeDirection,
   HowOldAreYou,
   StayOnChargerUntilCharged,
+  EyeColorVC,
 
   TestFeature,
   PRDemo,
