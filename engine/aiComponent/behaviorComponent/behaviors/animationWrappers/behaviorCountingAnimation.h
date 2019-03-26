@@ -21,13 +21,13 @@ namespace Vector {
 
 class BehaviorCountingAnimation : public ICozmoBehavior
 {
-public: 
+public:
   virtual ~BehaviorCountingAnimation();
 
   // must be called before activation.
   // target is the number to count to,
   // announcement is what Vector should say when he finishes counting. (Keep it short.)
-  void SetCountTarget(uint32_t target, std::string announcement="");
+  void SetCountTarget(uint32_t target, const std::string & announcement="");
 
 protected:
 
@@ -38,7 +38,7 @@ protected:
   virtual void InitBehavior() override;
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
@@ -70,7 +70,7 @@ private:
   DynamicVariables _dVars;
 
   void SetCountParameters();
-  
+
 };
 
 } // namespace Vector

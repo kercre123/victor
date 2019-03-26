@@ -63,6 +63,18 @@
   "BehaviorEnrollFace.AlreadyKnowFace": {
     "translation": "You're {0}, not {1}"
   },
+  "BehaviorHowOldAreYou.OneDay": {
+    "translation": "One day"
+  },
+  "BehaviorHowOldAreYou.SomeDays": {
+    "translation": "{0} days"
+  },
+  "BehaviorHowOldAreYou.OneMonth": {
+    "translation": "One month"
+  },
+  "BehaviorHowOldAreYou.SomeMonths": {
+    "translation": "{0} months"
+  },
   "BehaviorKnowledgeGraphQuestion.Ready": {
     "translation": "Ready"
   }
