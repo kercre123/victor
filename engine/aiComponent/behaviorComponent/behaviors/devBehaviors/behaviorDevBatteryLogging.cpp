@@ -228,9 +228,9 @@ void BehaviorDevBatteryLogging::BehaviorUpdate()
 
           if (_iConfig.stressCPU) {
             GetBEI().GetVisionScheduleMediator().SetVisionModeSubscriptions(this, {
-              {VisionMode::DetectingFaces, EVisionUpdateFrequency::High},
-              {VisionMode::DetectingMarkers, EVisionUpdateFrequency::High},
-              {VisionMode::DetectingMotion, EVisionUpdateFrequency::High}
+              {VisionMode::Faces, EVisionUpdateFrequency::High},
+              {VisionMode::Markers, EVisionUpdateFrequency::High},
+              {VisionMode::Motion, EVisionUpdateFrequency::High}
             });
           }
 

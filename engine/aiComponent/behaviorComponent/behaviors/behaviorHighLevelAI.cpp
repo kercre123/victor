@@ -160,7 +160,7 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
           return false;
         },
         ConditionLambda::VisionModeSet{
-          { VisionMode::DetectingFaces, EVisionUpdateFrequency::Low }
+          { VisionMode::Faces, EVisionUpdateFrequency::Low }
         },
         emptyOwnerLabel )));
 
@@ -178,7 +178,7 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
           return block != nullptr;
         },
         ConditionLambda::VisionModeSet{
-          { VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low }
+          { VisionMode::Markers, EVisionUpdateFrequency::Low }
         },
         emptyOwnerLabel )));
   
@@ -230,7 +230,7 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
           return block != nullptr;
         },
         ConditionLambda::VisionModeSet{
-          { VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low }
+          { VisionMode::Markers, EVisionUpdateFrequency::Low }
         },
         emptyOwnerLabel )));
 

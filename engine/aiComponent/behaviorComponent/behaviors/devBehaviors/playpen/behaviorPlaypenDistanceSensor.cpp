@@ -120,7 +120,7 @@ Result BehaviorPlaypenDistanceSensor::OnBehaviorActivatedInternal()
   TurnInPlaceAction* turn = new TurnInPlaceAction(_angleToTurn.ToFloat(), false);
 
   // After turning wait to process 10 images before trying to refine the turn
-  WaitForImagesAction* wait = new WaitForImagesAction(5, VisionMode::DetectingMarkers);
+  WaitForImagesAction* wait = new WaitForImagesAction(5, VisionMode::Markers);
   
   CompoundActionSequential* action = new CompoundActionSequential({liftHeadDrive, turn, wait});
   DelegateIfInControl(action, [this]() { TransitionToRefineTurn(); });
@@ -266,7 +266,7 @@ void BehaviorPlaypenDistanceSensor::TransitionToRefineTurn()
   action->AddAction(new DriveStraightAction(-30));
 
 
-  action->AddAction(new WaitForImagesAction(5, VisionMode::DetectingMarkers));
+  action->AddAction(new WaitForImagesAction(5, VisionMode::Markers));
 
   // Once we are perpendicular to the marker, start recording distance sensor readings
   DelegateIfInControl(action.release(), [this]() { TransitionToRecordSensor(); });

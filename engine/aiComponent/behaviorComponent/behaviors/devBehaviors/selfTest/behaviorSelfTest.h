@@ -43,7 +43,7 @@ protected:
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.wantsToBeActivatedWhenOffTreads = true;
     modifiers.behaviorAlwaysDelegates = false;
-    modifiers.visionModesForActiveScope->insert({VisionMode::DetectingMarkers, EVisionUpdateFrequency::High});
+    modifiers.visionModesForActiveScope->insert({VisionMode::Markers, EVisionUpdateFrequency::High});
   }
 
   virtual void InitBehavior() override;

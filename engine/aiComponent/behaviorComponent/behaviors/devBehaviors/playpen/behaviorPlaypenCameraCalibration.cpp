@@ -134,7 +134,7 @@ IBehaviorPlaypen::PlaypenStatus BehaviorPlaypenCameraCalibration::PlaypenUpdateI
     {
       robot.GetVisionComponent().EnableComputingCameraCalibration(true);
       _computingCalibration = true;
-      AddTimer(PlaypenConfig::kTimeoutForComputingCalibration_ms, [this, &robot](){ 
+      AddTimer(PlaypenConfig::kTimeoutForCalibration_ms, [this, &robot](){ 
           // We have at least seen the calibration target so we should at least save the image we were trying to use for
           // calibration before failing with calibration timeout
           std::list<std::vector<u8> > rawJpegData = robot.GetVisionComponent().GetCalibrationImageJpegData(nullptr);

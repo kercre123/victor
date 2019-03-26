@@ -170,7 +170,7 @@ static f32 kHeadAngleToSeeTarget_rad                  = DEG_TO_RAD(42.f);
 static u32 kTimeoutWaitingForTarget_ms                = 5000;
 
 // How long we should wait for camera calibration to be computed
-static u32 kTimeoutForComputingCalibration_ms         = 5000;
+static u32 kTimeoutForCalibration_ms         = 5000;
 
 // Which calibration target we are using (see CameraCalibrator::CalibTargetTypes)
 static u32 kPlaypenCalibTarget                        = 2; // 1 = INVERTED_BOX 2 = QBERT (I don't feel like including cameraCalibrator.h here)

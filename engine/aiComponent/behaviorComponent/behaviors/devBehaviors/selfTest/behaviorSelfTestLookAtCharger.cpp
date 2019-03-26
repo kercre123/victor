@@ -100,7 +100,7 @@ Result BehaviorSelfTestLookAtCharger::OnBehaviorActivatedInternal()
   TurnInPlaceAction* turn = new TurnInPlaceAction(_angleToTurn.ToFloat(), false);
 
   // After turning wait to process 10 images before trying to refine the turn
-  WaitForImagesAction* wait = new WaitForImagesAction(5, VisionMode::DetectingMarkers);
+  WaitForImagesAction* wait = new WaitForImagesAction(5, VisionMode::Markers);
   
   CompoundActionSequential* action = new CompoundActionSequential({liftHeadDrive, turn, wait});
   DelegateIfInControl(action, [this]() { TransitionToRefineTurn(); });

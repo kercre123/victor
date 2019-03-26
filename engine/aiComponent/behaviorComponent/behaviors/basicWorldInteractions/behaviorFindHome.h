@@ -96,7 +96,7 @@ private:
 
     // Count of the frames of marker detection being run
     //  while this behavior is activated.
-    u32 numFramesOfDetectingMarkers = 0;
+    u32 numFramesOfMarkers = 0;
 
     // Count of the frames where the image quality was TooDark.
     // NOTE: only counted while marker detection is being run.

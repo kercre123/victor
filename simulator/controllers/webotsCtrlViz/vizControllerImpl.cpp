@@ -946,11 +946,38 @@ void VizControllerImpl::ProcessVisionModeDebug(const AnkiEvent<VizInterface::Mes
 
   DrawText(_visionModeDisp, 0, (u32)Anki::NamedColors::WHITE, "Vision Schedule:       Mode:");
   for( size_t i=0; i < debugData.debugStrings.size(); ++i ) {
-    DrawText(_visionModeDisp, (u32)(i+1), (u32)Anki::NamedColors::GREEN, debugData.debugStrings[i].c_str());
+    // Only show full-blown vision modes, not modifiers (which just piggy back on their Modes' schedules)
+    // The convention is that modifiers have an underscore in their name
+    if(debugData.debugStrings[i].find("_") == std::string::npos) {
+      DrawText(_visionModeDisp, (u32)(i+1), (u32)Anki::NamedColors::GREEN, debugData.debugStrings[i].c_str());
+    }
   }
 
 }
 
+static inline void SetColorForMode(const std::vector<VisionMode>& modes, const VisionMode mode, webots::Display* disp)
+{
+  // If this mode was processed then draw it in white
+  if(std::find(modes.begin(), modes.end(), mode) != modes.end())
+  {
+    disp->setColor(NamedColors::WHITE.As0RGB());
+  }
+  // Otherwise draw it in gray
+  else
+  {
+    disp->setColor(NamedColors::DARKGRAY.As0RGB());
+  }
+}
+  
+static inline void DrawTextHelper(const u32 x, const u32 y, const std::string& str, webots::Display* disp)
+{
+  if( (x >= disp->getWidth()) || (y >= disp->getHeight()) )
+  {
+    LOG_WARNING("VizControllerImpl.DrawTextHelper.StringOOB", "'%s': (x,y)=(%d,%d)", str.c_str(), x, y);
+  }
+  disp->drawText(str, x, y);
+}
+  
 void VizControllerImpl::ProcessEnabledVisionModes(const AnkiEvent<VizInterface::MessageViz>& msg)
 {
   if( _disp == nullptr ) {
@@ -959,51 +986,117 @@ void VizControllerImpl::ProcessEnabledVisionModes(const AnkiEvent<VizInterface::
 
   const auto& data = msg.GetData().Get_EnabledVisionModes();
 
-  _disp->setColor(NamedColors::BLACK.As0RGB());
-  const u32 fillY = ((uint32_t)VizTextLabelType::NUM_TEXT_LABELS + (uint32_t)TextLabelType::VISION_MODE + 1)*10;
-  _disp->fillRectangle(0, fillY, _disp->getWidth(), 10*11);
-
-  std::stringstream ss;
   const u32 kTextWidth = 15;
   const u32 kNumModesPerLine = 4;
   const u32 kCharWidth = 6;
   const u32 kLineHeight = 10;
 
+  _disp->setColor(NamedColors::BLACK.As0RGB());
+  const u32 fillY = ((uint32_t)VizTextLabelType::NUM_TEXT_LABELS + (uint32_t)TextLabelType::VISION_MODE + 1)*kLineHeight;
+  _disp->fillRectangle(0, fillY, _disp->getWidth(), _disp->getHeight()-fillY);
+
+  // Insert a little divider
+  _disp->setColor(NamedColors::DARKGRAY.As0RGB());
+  _disp->drawLine(0, fillY-1, _disp->getWidth(), fillY-1);
+  
   // x,y position to draw each VisionMode at in the display
   u32 x = 0;
   u32 y = fillY;
 
-  for(VisionMode m = VisionMode(0); m < VisionMode::Count; m++)
+  // organize into modes with and without modifiers (one time only)
+  static std::map<VisionMode, std::list<std::pair<VisionMode, std::string>>> kModesMap;
+  if(kModesMap.empty())
   {
+    for(VisionMode m = VisionMode(0); m < VisionMode::Count; m++)
+    {
+      std::string str(EnumToString(m));
+      const auto underscorePos = str.find("_");
+      const bool isModifier = (underscorePos != std::string::npos);
+      if(isModifier)
+      {
+        const VisionMode mode = VisionModeFromString(str.substr(0,underscorePos));
+        const size_t kMaxModStrLen = 8;
+        const std::string modifierStr = str.substr(underscorePos+1, std::min(str.size()-underscorePos, kMaxModStrLen));
+        kModesMap[mode].emplace_back(m, modifierStr);
+      }
+      else
+      {
+        kModesMap[m]; // Insert empty entry
+      }
+    }
+  }
+  
+  // Loop over all the modes and draw those _without_ modifiers first, in columns
+  u32 index = 0;
+  for(auto const& entry : kModesMap)
+  {
+    if(!entry.second.empty())
+    {
+      continue;
+    }
+    
+    const VisionMode m = entry.first;
+    
     // Left align text with kTextWidth+1 padding of spaces (+1 for space between modes)
+    std::stringstream ss;
     ss << std::setw(kTextWidth + 1) << std::left;
     std::string s(EnumToString(m));
     ss << s.substr(0, kTextWidth);
     
-    // If this mode was processed then draw it in white
-    if(std::find(data.modes.begin(), data.modes.end(), m) != data.modes.end())
-    {
-      _disp->setColor(NamedColors::WHITE.As0RGB());
-    }
-    // Otherwise draw it in gray
-    else
-    {
-      _disp->setColor(0x808080);
-    }
-
-    _disp->drawText(ss.str(), x, y);
+    SetColorForMode(data.modes, m, _disp);
+    DrawTextHelper(x, y, ss.str(), _disp);
 
     // Increase x by VisionMode text length + 1 (for spacing)
     x += kCharWidth*(kTextWidth+1);
 
     // Only draw kNumModesPerLine
-    if((static_cast<u32>(m)+1) % kNumModesPerLine == 0)
+    if((index+1) % kNumModesPerLine == 0)
     {
       x = 0;
       y += kLineHeight;
     }
-
-    ss.str(std::string(""));
+    
+    ++index;
+  }
+  
+  // Second loop draws those _with_ modifiers, one mode per line, modifiers grouped into [] after
+  x = 0;
+  y += kLineHeight+1;
+  
+  // Insert a little divider between vision modes with and without modifiers
+  _disp->setColor(NamedColors::DARKGRAY.As0RGB());
+  _disp->drawLine(0, y-1, _disp->getWidth(), y-1);
+  
+  for(auto const& entry : kModesMap)
+  {
+    auto const& modifiers = entry.second;
+    if(modifiers.empty())
+    {
+      continue;
+    }
+    
+    // If this mode was processed then draw it in white
+    const VisionMode m = entry.first;
+    std::string str(EnumToString(m));
+    str += "[";
+    SetColorForMode(data.modes, m, _disp);
+    DrawTextHelper(x, y, str, _disp);
+    x += kCharWidth*(str.size());
+    
+    // Now loop over the modifiers of this mode
+    for(const auto& modifier : modifiers)
+    {
+      SetColorForMode(data.modes, modifier.first, _disp);
+      DrawTextHelper(x, y, modifier.second, _disp);
+      x += kCharWidth*(modifier.second.size()+1); // +1 for space
+    }
+    
+    SetColorForMode(data.modes, m, _disp);
+    DrawTextHelper(x-kCharWidth, y, "]", _disp); // -kCharWidth for trailing space
+    
+    // Modes with modifiers each get their own line
+    y += kLineHeight;
+    x = 0;
   }
 }
   

@@ -92,14 +92,14 @@ void BehaviorSayName::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) c
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSayName::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.visionModesForActiveScope->insert( {VisionMode::DetectingFaces, EVisionUpdateFrequency::High} );
+  modifiers.visionModesForActiveScope->insert( {VisionMode::Faces, EVisionUpdateFrequency::High} );
   
   // Assumption is that we're already looking at the face, so use cropping for better efficiency
-  modifiers.visionModesForActiveScope->insert( {VisionMode::CroppedFaceDetection, EVisionUpdateFrequency::High} );
+  modifiers.visionModesForActiveScope->insert( {VisionMode::Faces_Crop, EVisionUpdateFrequency::High} );
   
   // Avoid marker detection to improve performance
   // TODO: Remove with VIC-6838
-  modifiers.visionModesForActiveScope->insert( { VisionMode::DisableMarkerDetection, EVisionUpdateFrequency::High } );
+  modifiers.visionModesForActiveScope->insert( { VisionMode::Markers_Off, EVisionUpdateFrequency::High } );
 
   // No longer true: can wait on recognition
   modifiers.behaviorAlwaysDelegates = false;

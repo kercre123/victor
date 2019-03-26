@@ -386,7 +386,7 @@ TEST(FaceRecognition, VideoRecognitionAndTracking)
     
     robot.GetVisionComponent().SetCameraCalibration(camCalib);
     robot.GetVisionScheduleMediator().DevOnly_ReleaseAllSubscriptions();
-    robot.GetVisionScheduleMediator().DevOnly_SelfSubscribeVisionMode({VisionMode::DetectingFaces});
+    robot.GetVisionScheduleMediator().DevOnly_SelfSubscribeVisionMode({VisionMode::Faces});
     robot.GetVisionComponent().Enable(true);
     
     if(iReload == 0)

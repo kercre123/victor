@@ -27,9 +27,9 @@ public:
 protected:
   virtual bool AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const override;
   virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requiredVisionModes) const override {
-    requiredVisionModes.insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
-    requiredVisionModes.insert({ VisionMode::DetectingGaze, EVisionUpdateFrequency::Standard });
-    requiredVisionModes.insert({ VisionMode::DetectingBlinkAmount, EVisionUpdateFrequency::Standard });
+    requiredVisionModes.insert({ VisionMode::Faces, EVisionUpdateFrequency::Standard });
+    requiredVisionModes.insert({ VisionMode::Faces_Gaze, EVisionUpdateFrequency::Standard });
+    requiredVisionModes.insert({ VisionMode::Faces_Blink, EVisionUpdateFrequency::Standard });
   }
 
 };

@@ -507,7 +507,7 @@ namespace Anki {
 
     void IDockAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
-      requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+      requests.insert({ VisionMode::Markers, EVisionUpdateFrequency::High });
     }
 
     ActionResult IDockAction::Init()

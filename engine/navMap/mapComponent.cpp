@@ -218,7 +218,7 @@ static Robot* consoleRobot = nullptr;
 void DevProcessOneFrameForVisionEdges( ConsoleFunctionContextRef context )
 {
   if(consoleRobot != nullptr) {
-    consoleRobot->GetActionList().QueueAction(QueueActionPosition::NOW, new WaitForImagesAction(1, VisionMode::DetectingOverheadEdges));
+    consoleRobot->GetActionList().QueueAction(QueueActionPosition::NOW, new WaitForImagesAction(1, VisionMode::OverheadEdges));
   }
 }
 

@@ -113,7 +113,7 @@ WRAP_EXTERN_CONSOLE_VAR(f32, kRadialDistortionTolerance,                 "Plaype
 WRAP_EXTERN_CONSOLE_VAR(f32, kTangentialDistortionTolerance,             "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kHeadAngleToSeeTarget_rad,                  "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32, kTimeoutWaitingForTarget_ms,                "Playpen");
-WRAP_EXTERN_CONSOLE_VAR(u32, kTimeoutForComputingCalibration_ms,         "Playpen");
+WRAP_EXTERN_CONSOLE_VAR(u32, kTimeoutForCalibration_ms,         "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kCalibMarkerSize_mm,                        "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(u32, kPlaypenCalibTarget,                        "Playpen");
 WRAP_EXTERN_CONSOLE_VAR(f32, kCalibMarkerCubeSize_mm,                    "Playpen");

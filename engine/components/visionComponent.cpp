@@ -741,11 +741,11 @@ namespace Vector {
       LOG_WARNING("VisionComponent.UpdateVisionSystem.UpdateFailed", "");
     }
 
-    // VisionMode::ComputingCalibration is a one-shot mode, turn it off
+    // VisionMode::Calibration is a one-shot mode, turn it off
     // as soon as it runs
-    if(input.modesToProcess.Contains(VisionMode::ComputingCalibration))
+    if(input.modesToProcess.Contains(VisionMode::Calibration))
     {
-      EnableMode(VisionMode::ComputingCalibration, false);
+      EnableMode(VisionMode::Calibration, false);
     }
   }
 
@@ -909,28 +909,28 @@ namespace Vector {
 
         // NOTE: UpdateVisionMarkers will also update BlockWorld (which broadcasts
         //  object observations and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdateVisionMarkers,        {VisionMode::DetectingMarkers});
+        tryAndReport(&VisionComponent::UpdateVisionMarkers,        {VisionMode::Markers});
 
         // NOTE: UpdateFaces will also update FaceWorld (which broadcasts face observations
         //  and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdateFaces,                {VisionMode::DetectingFaces});
+        tryAndReport(&VisionComponent::UpdateFaces,                {VisionMode::Faces});
 
         // NOTE: UpdatePets will also update PetWorld (which broadcasts pet face observations
         //  and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdatePets,                 {VisionMode::DetectingPets});
+        tryAndReport(&VisionComponent::UpdatePets,                 {VisionMode::Pets});
 
-        tryAndReport(&VisionComponent::UpdateMotionCentroid,       {VisionMode::DetectingMotion});
-        tryAndReport(&VisionComponent::UpdateOverheadEdges,        {VisionMode::DetectingOverheadEdges});
-        tryAndReport(&VisionComponent::UpdateComputedCalibration,  {VisionMode::ComputingCalibration});
+        tryAndReport(&VisionComponent::UpdateMotionCentroid,       {VisionMode::Motion});
+        tryAndReport(&VisionComponent::UpdateOverheadEdges,        {VisionMode::OverheadEdges});
+        tryAndReport(&VisionComponent::UpdateComputedCalibration,  {VisionMode::Calibration});
 
         // NOTE: Same handler for two modes
-        tryAndReport(&VisionComponent::UpdateCameraParams,         {VisionMode::AutoExposure, VisionMode::WhiteBalance});
+        tryAndReport(&VisionComponent::UpdateCameraParams,         {VisionMode::AutoExp, VisionMode::WhiteBalance});
 
-        tryAndReport(&VisionComponent::UpdateLaserPoints,          {VisionMode::DetectingLaserPoints});
+        tryAndReport(&VisionComponent::UpdateLaserPoints,          {VisionMode::Lasers});
         tryAndReport(&VisionComponent::UpdateSalientPoints,        {}); // Use empty set here to always call UpdateSalientPoints
-        tryAndReport(&VisionComponent::UpdateVisualObstacles,      {VisionMode::DetectingVisualObstacles});
-        tryAndReport(&VisionComponent::UpdatePhotoManager,         {VisionMode::SavingImages});
-        tryAndReport(&VisionComponent::UpdateDetectedIllumination, {VisionMode::DetectingIllumination});
+        tryAndReport(&VisionComponent::UpdateVisualObstacles,      {VisionMode::Obstacles});
+        tryAndReport(&VisionComponent::UpdatePhotoManager,         {VisionMode::SaveImages});
+        tryAndReport(&VisionComponent::UpdateDetectedIllumination, {VisionMode::Illumination});
 
         // Note: we always run this because it handles switching to the mirror mode debug screen
         // It internally checks whether the MirrorMode flag is set in modesProcessed
@@ -955,7 +955,7 @@ namespace Vector {
           using namespace ExternalInterface;
 
           u8 imageMean = 0;
-          if(result.modesProcessed.Contains(VisionMode::ComputingStatistics))
+          if(result.modesProcessed.Contains(VisionMode::Stats))
           {
             imageMean = result.imageMean;
           }
@@ -1187,7 +1187,7 @@ namespace Vector {
 
     const auto& visionModesUsingNeuralNets = GetVisionModesUsingNeuralNets();
     if(procResult.modesProcessed.ContainsAnyOf(visionModesUsingNeuralNets)
-       || procResult.modesProcessed.Contains(VisionMode::DetectingBrightColors))
+       || procResult.modesProcessed.Contains(VisionMode::BrightColors))
     {
       if(!usingFixedDrawTime)
       {
@@ -1324,7 +1324,7 @@ namespace Vector {
                                                        params.whiteBalanceGainB);
       }
 
-      const bool isAutoExposureEnabled = procResult.modesProcessed.Contains(VisionMode::AutoExposure);
+      const bool isAutoExposureEnabled = procResult.modesProcessed.Contains(VisionMode::AutoExp);
       if(isAutoExposureEnabled)
       {
         cameraService->CameraSetParameters(procResult.cameraParams.exposureTime_ms,
@@ -1435,7 +1435,7 @@ namespace Vector {
       wasMirrorModeEnabled = isMirrorModeEnabled;
     }
 
-    // If MirrorMode is no longer scheduled then don't bother trying to draw anything
+    // If Mirror is no longer scheduled then don't bother trying to draw anything
     // Normally you would only need to check if MirrorMode was in the processed vision modes, however,
     // due to a timing issue between anim and engine when entering pairing from the mirror mode screen
     // we need to check the schedule instead of processed vision modes.
@@ -2193,7 +2193,7 @@ namespace Vector {
 
   void VisionComponent::EnableAutoExposure(bool enable)
   {
-    EnableMode(VisionMode::AutoExposure, enable);
+    EnableMode(VisionMode::AutoExp, enable);
   }
 
   void VisionComponent::EnableWhiteBalance(bool enable)
@@ -2597,7 +2597,7 @@ namespace Vector {
 
       if(params.mode != ImageSendMode::Off)
       {
-        EnableMode(VisionMode::SavingImages, true);
+        EnableMode(VisionMode::SaveImages, true);
       }
 
       LOG_DEBUG("VisionComponent.SetSaveImageParameters.SaveImages",
@@ -2757,7 +2757,7 @@ namespace Vector {
                 "%s", str.c_str());
     }
 
-    if(result.modesProcessed.Contains(VisionMode::ImageViz))
+    if(result.modesProcessed.Contains(VisionMode::Viz))
     {
       SendCompressedImage(result.compressedDisplayImg, "camera");
     }
@@ -2786,7 +2786,7 @@ namespace Vector {
     //     if(_storeNextImageForCalibration)
     //     {
     //       _storeNextImageForCalibration = false;
-    //       if (IsModeEnabled(VisionMode::ComputingCalibration)) {
+    //       if (IsModeEnabled(VisionMode::Calibration)) {
     //         LOG_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
     //       } else {
     //         Lock();
@@ -2903,7 +2903,7 @@ namespace Vector {
 
   void VisionComponent::EnableImageSending(bool enable)
   {
-    EnableMode(VisionMode::ImageViz, enable);
+    EnableMode(VisionMode::Viz, enable);
   }
 
   void VisionComponent::EnableMirrorMode(bool enable)

@@ -102,7 +102,7 @@ public:
   // Whether we've reached the end of the cycle of exposure values to try
   // In the following call to cycling exposure, the first value will be picked
   bool IsExposureCyclingComplete() const { return (_cycleTargetIter == _cyclingTargetValues.end()); }
-  void ResetTargetCyclingExposure() { _cycleTargetIter = _cyclingTargetValues.begin(); }
+  void ResetTargetAutoExposure_Cycling() { _cycleTargetIter = _cyclingTargetValues.begin(); }
   
 private:
   

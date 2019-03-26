@@ -84,8 +84,8 @@ bool BehaviorAnimSequenceWithFace::WantsToBeActivatedAnimSeqInternal() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAnimSequenceWithFace::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Low });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
+  modifiers.visionModesForActivatableScope->insert({ VisionMode::Faces, EVisionUpdateFrequency::Low });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Faces, EVisionUpdateFrequency::Standard });
 
   BaseClass::GetBehaviorOperationModifiers(modifiers);
 }

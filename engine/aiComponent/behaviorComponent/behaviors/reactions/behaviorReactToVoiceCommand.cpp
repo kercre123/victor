@@ -357,7 +357,7 @@ void BehaviorReactToVoiceCommand::GetBehaviorOperationModifiers( BehaviorOperati
 
   // Since so many voice commands need faces, this helps improve the changes that a behavior following
   // this one will know about faces when the behavior starts
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Faces, EVisionUpdateFrequency::High });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

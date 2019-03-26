@@ -10,57 +10,59 @@ namespace Vector {
     //
     // Full-blown vision modes
     //
-    DetectingMarkers = 0x00,    // By default, uses cropping. See also "FullFrame/Height/Width" modifiers below.
-    DetectingFaces,
-    DetectingMotion,
-    DetectingBrightColors,
-    DetectingOverheadEdges,
-    ComputingCalibration,
-    AutoExposure,        
+    Markers = 0x00,       // By default, uses cropping. See also "FullFrame/Height/Width" modifiers below.
+    Faces,
+    Motion,
+    BrightColors,
+    OverheadEdges,
+    Calibration,
+    AutoExp,
     WhiteBalance,
-    ComputingStatistics,
-    DetectingPets,
-    DetectingLaserPoints,
-    BuildingOverheadMap,
-    DetectingVisualObstacles,
-    Benchmarking,
-    SavingImages,
-    DetectingPeople,
-    DetectingHands,
-    DetectingIllumination,
-    ImageViz,                    // For getting images out of VisionSystem to send to Viz/SDK
-    MirrorMode,                  // Draw images/detections on the robot's face, mirrored
+    Stats,
+    Pets,
+    Lasers,
+    OverheadMap,
+    Obstacles,
+    Benchmark,
+    SaveImages,
+    People,
+    Hands,
+    Illumination,
+    Viz,                    // For getting images out of VisionSystem to send to Viz/SDK
+    MirrorMode,             // Draw images/detections on the robot's face, mirrored
     
     // This is a gross thing to do: a mode to disable another mode. TODO: Remove with VIC-6838
-    // If this is "enabled", then it takes precedence over DetectingMarkers mode above and will force that
+    // If this is "enabled", then it takes precedence over Markers mode above and will force that
     // mode to be skipped.
-    DisableMarkerDetection,
+    Markers_Off,
     
     //
     // Vision mode "modifiers" (require one of the above to be enabled to have an effect)
+    // The name convention is <Mode>_<Modifier>
     //   TODO: Make "modifiers" a separate type (hard now because vision shedules consist only of VisionModes)
     //   TODO: Enforce that modifiers always have their "required" mode enabled via unit test
+    //
     
-    // Require DetectingMarkers
-    MeteringFromChargerOnly,          // For auto-exposure metering, only use charger marker, if detected
-    FullFrameMarkerDetection,         // Slower, process entire frame, without crop scheduling. Subsumes FullHeight/Width options below.
-    FullHeightMarkerDetection,        // Still does horizontal crop scheduling, but does not consider head angle / height
-    FullWidthMarkerDetection,         // Considers head angle to search only near ground, but no horizontal crop scheduling
-    MarkerDetectionWhileRotatingFast, // Mostly for unit tests: allow markers to be detected when rotating fast (or without IMU data)
-    CompositingImages,                // Averages a buffer of images, periodically detecting markers in the image
+    // Require Markers
+    Markers_ChargerOnly,         // For auto-exposure metering, only use charger marker, if detected
+    Markers_FullFrame,           // Slower, process entire frame, without crop scheduling. Subsumes FullHeight/Width options below.
+    Markers_FullHeight,          // Still does horizontal crop scheduling, but does not consider head angle / height
+    Markers_FullWidth,           // Considers head angle to search only near ground, but no horizontal crop scheduling
+    Markers_FastRotation,        // Mostly for unit tests: allow markers to be detected when rotating fast (or without IMU data)
+    Markers_Composite,           // Averages a buffer of images, periodically detecting markers in the image
 
-    // Require DetectingFaces:
-    EstimatingFacialExpression,
-    DetectingSmileAmount,
-    DetectingGaze,
-    DetectingBlinkAmount,
-    CroppedFaceDetection,  
+    // Require Faces:
+    Faces_Expression,
+    Faces_Smile,
+    Faces_Gaze,
+    Faces_Blink,
+    Faces_Crop,
     
     // Require AutoExposure
-    CyclingExposure,             // Cycles through a list of AE target values to aid search in extreme lighting. This mode is marked as
+    AutoExp_Cycling,             // Cycles through a list of AE target values to aid search in extreme lighting. This mode is marked as
                                  //  processed if it tried all exposure settings to cycle through, or something (faces, pets, or markers)
                                  //  was detected. This is because detections will trigger metering which locks the exposure.
-    MinGainAutoExposure,         // Vs. min-exposure-time mode. Useful for less grainy images when TakingPhotos
+    AutoExp_MinGain,             // Vs. min-exposure-time mode. Useful for less grainy images when TakingPhotos
 
     Count
   }
@@ -73,43 +75,43 @@ namespace Vector {
   // needed to get a result from this mode.
   enum_concept bool CycleCompletesInOneFrame[VisionMode]
   {
-    DetectingMarkers                  = 1,
-    DetectingFaces                    = 1,
-    DetectingMotion                   = 1,
-    DetectingBrightColors             = 1,
-    DetectingOverheadEdges            = 1,
-    ComputingCalibration              = 1,
-    AutoExposure                      = 1,        
-    WhiteBalance                      = 1,
-    ComputingStatistics               = 1,
-    DetectingPets                     = 1,
-    DetectingLaserPoints              = 1,
-    BuildingOverheadMap               = 1,
-    DetectingVisualObstacles          = 1,
-    Benchmarking                      = 1,
-    SavingImages                      = 1,
-    DetectingPeople                   = 1,
-    DetectingHands                    = 1,
-    DetectingIllumination             = 1,
-    ImageViz                          = 1,
-    MirrorMode                        = 1,
-    DisableMarkerDetection            = 1,
-    MeteringFromChargerOnly           = 1,
-    FullFrameMarkerDetection          = 1,
-    FullHeightMarkerDetection         = 1,
-    FullWidthMarkerDetection          = 1,
-    MarkerDetectionWhileRotatingFast  = 1,
-    EstimatingFacialExpression        = 1,
-    DetectingSmileAmount              = 1,
-    DetectingGaze                     = 1,
-    DetectingBlinkAmount              = 1,
-    CroppedFaceDetection              = 1,
-    MinGainAutoExposure               = 1,
+    Markers                  = 1,
+    Faces                    = 1,
+    Motion                   = 1,
+    BrightColors             = 1,
+    OverheadEdges            = 1,
+    Calibration              = 1,
+    AutoExp                  = 1,
+    WhiteBalance             = 1,
+    Stats                    = 1,
+    Pets                     = 1,
+    Lasers                   = 1,
+    OverheadMap              = 1,
+    Obstacles                = 1,
+    Benchmark                = 1,
+    SaveImages               = 1,
+    People                   = 1,
+    Hands                    = 1,
+    Illumination             = 1,
+    Viz                      = 1,
+    MirrorMode               = 1,
+    Markers_Off              = 1,
+    Markers_ChargerOnly      = 1,
+    Markers_FullFrame        = 1,
+    Markers_FullHeight       = 1,
+    Markers_FullWidth        = 1,
+    Markers_FastRotation     = 1,
+    Faces_Expression         = 1,
+    Faces_Smile              = 1,
+    Faces_Gaze               = 1,
+    Faces_Blink              = 1,
+    Faces_Crop               = 1,
+    AutoExp_MinGain          = 1,
 
-    CyclingExposure                   = 0,
-    CompositingImages                 = 0,
+    AutoExp_Cycling          = 0,
+    Markers_Composite        = 0,
 
-    Count                             = 1
+    Count                    = 1
   }
 
 } // namespace Vector

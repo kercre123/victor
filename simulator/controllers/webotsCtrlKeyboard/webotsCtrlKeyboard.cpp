@@ -1123,7 +1123,7 @@ namespace Vector {
   {
     static bool isFaceDetectionEnabled = true;
     isFaceDetectionEnabled = !isFaceDetectionEnabled;
-    SendEnableVisionMode(VisionMode::DetectingFaces, isFaceDetectionEnabled);
+    SendEnableVisionMode(VisionMode::Faces, isFaceDetectionEnabled);
   }
 
   void WebotsKeyboardController::FlipSelectedBlock()

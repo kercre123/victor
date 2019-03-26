@@ -88,8 +88,8 @@ bool BehaviorFindCube::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindCube::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::FullFrameMarkerDetection,EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Markers, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Markers_FullFrame,EVisionUpdateFrequency::High });
   modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.wantsToBeActivatedWhenCarryingObject = false; 
   modifiers.cubeConnectionRequirements = BehaviorOperationModifiers::CubeConnectionRequirements::OptionalActive;
@@ -225,11 +225,11 @@ void BehaviorFindCube::TransitionToCheckForCubeInFront()
   const bool isAbsolute = false;
   auto searchInFrontAction = new CompoundActionSequential({
     new MoveHeadToAngleAction(0.0f),
-    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers),
+    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::Markers),
     new TurnInPlaceAction(DEG_TO_RAD(30.0f), isAbsolute),
-    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers),
+    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::Markers),
     new TurnInPlaceAction(DEG_TO_RAD(-60.0f), isAbsolute),
-    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers),
+    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::Markers),
   });
 
   auto* targetCube = GetTargetCube();
@@ -261,7 +261,7 @@ void BehaviorFindCube::TransitionToBackUpAndCheck()
 
   auto* loopAndWaitAction = new CompoundActionParallel();
   loopAndWaitAction->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ChargerDockingSearchWaitForImages));
-  loopAndWaitAction->AddAction(new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers));
+  loopAndWaitAction->AddAction(new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::Markers));
   backupAndCheckAction->AddAction(loopAndWaitAction);
 
   DelegateIfInControl(backupAndCheckAction, &BehaviorFindCube::TransitionToQuickSearchForCube);
@@ -312,7 +312,7 @@ void BehaviorFindCube::StartNextTurn()
 
     auto* loopAndWaitAction = new CompoundActionParallel();
     loopAndWaitAction->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::FindCubeWaitLoop));
-    loopAndWaitAction->AddAction(new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers));
+    loopAndWaitAction->AddAction(new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::Markers));
     action->AddAction(loopAndWaitAction);
 
     // Keep track of the pose before the robot starts turning
