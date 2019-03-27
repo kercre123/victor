@@ -1015,8 +1015,11 @@ namespace Vector {
     for (const auto& objSeen : objectsSeen) {
       DEV_ASSERT(!objSeen->GetID().IsSet(), "BlockWorld.UpdateKnownObjects.SeenObjectAlreadyHasID");
 
+<<<<<<< HEAD
       const bool skipCharger = (ignoreCharger && IsChargerType(objSeen->GetType(), false));
 
+=======
+>>>>>>> arjun/VIC-14082-FixFrequentChargerDeletionsInGoHomeLowlight
       BlockWorldFilter filter;
       filter.SetAllowedTypes({objSeen->GetType()});
       const bool isUnique = objSeen->IsUnique();
@@ -1039,11 +1042,21 @@ namespace Vector {
         matchingObject = FindLocatedMatchingObject(filter);
       }
 
+<<<<<<< HEAD
+=======
+      // Regardless of whether we skip updating the existing object's pose
+      //  we should update the timestamps for the observations.
+      if(matchingObject != nullptr) {
+        matchingObject->SetObservationTimes(objSeen.get());
+      }
+
+>>>>>>> arjun/VIC-14082-FixFrequentChargerDeletionsInGoHomeLowlight
       // Was the camera moving? If so, we must skip this observation _unless_ this is the dock object or carry object.
       // Might be sufficient to check for movement at historical time, but to be conservative (and account for
       // timestamping inaccuracies?) we will also check _current_ moving status.
       const bool wasCameraMoving = (_robot->GetMoveComponent().IsCameraMoving() ||
                                     _robot->GetMoveComponent().WasCameraMoving(atTimestamp));
+<<<<<<< HEAD
 
       if (skipCharger || (wasCameraMoving && !isSelectedObject)) {
         // Regardless of whether we skip updating the existing objects pose
@@ -1051,6 +1064,10 @@ namespace Vector {
         if(matchingObject != nullptr) {
           matchingObject->SetObservationTimes(objSeen.get());
         }
+=======
+      const bool ignoreChargerAndIsCharger = (ignoreCharger && IsChargerType(objSeen->GetType(), false));
+      if (ignoreChargerAndIsCharger || (wasCameraMoving && !isSelectedObject)) {
+>>>>>>> arjun/VIC-14082-FixFrequentChargerDeletionsInGoHomeLowlight
         continue;
       }
       
