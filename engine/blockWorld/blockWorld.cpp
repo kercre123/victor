@@ -1025,6 +1025,8 @@ namespace Vector {
         const float distToObjSeen = objSeen->GetLastPoseUpdateDistance();
         matchingObject->SetPose(objSeen->GetPose(), distToObjSeen, PoseState::Known);
         
+        matchingObject->SetObservationTimes(objSeen.get());
+        
         // If we matched an object from a previous origin, we need to move it into the current origin
         if (matchingObjectOrigin != _robot->GetWorldOriginID()) {
           UpdateObjectOrigin(matchingObject->GetID(), matchingObjectOrigin);
