@@ -271,7 +271,7 @@ void HeldInPalmTracker::CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo)
         }
 #if REMOTE_CONSOLE_ENABLED
         else if (kEnableDebugTransitionPrintouts && _enoughCliffsDetectedSincePickup){
-          LOG_PERIODIC_INFO(100, "HIPTracker.CheckIfIsHeldInPalm.MotorsMovedTooRecently",
+          LOG_PERIODIC_INFO(5, "HIPTracker.CheckIfIsHeldInPalm.MotorsMovedTooRecently",
                             "Robot has detected enough cliffs to confirm true pickup, but motors moved "
                             "too recently (in the last %d [ms])", kTimeToWaitAterMotorMovement_ms);
         }
@@ -346,13 +346,13 @@ bool HeldInPalmTracker::WasRobotPlacedInPalmWhileHeld(const BEIRobotInfo& robotI
       if (cliffComp.GetNumCliffsDetected() <= kMaxCliffsAllowedWhileHeldInPalm &&
           durationOfNoCliffDetections_ms < timeToConfirmHeldInPalm_ms &&
           maxCliffSensorVal < kCliffValHeldInPalmSurface) {
-        LOG_PERIODIC_INFO(100, "HIPTracker.WasRobotPlacedInPalmWhileHeld.InsufficientCliffDetectionDuration",
+        LOG_PERIODIC_INFO(5, "HIPTracker.WasRobotPlacedInPalmWhileHeld.InsufficientCliffDetectionDuration",
                           "Robot detecting a valid palm surface with max reported cliff sensor value of %.1f,"
                           "but %d cliffs (or less) have only been detected for %d [ms]", maxCliffSensorVal,
                           kMaxCliffsAllowedWhileHeldInPalm, durationOfNoCliffDetections_ms);
       } else if (durationOfNoCliffDetections_ms >= timeToConfirmHeldInPalm_ms &&
                  maxCliffSensorVal >= kCliffValHeldInPalmSurface) {
-        LOG_PERIODIC_INFO(100, "HIPTracker.WasRobotPlacedInPalmWhileHeld.InvalidPalmSurface",
+        LOG_PERIODIC_INFO(5, "HIPTracker.WasRobotPlacedInPalmWhileHeld.InvalidPalmSurface",
                           "Robot has detected %d cliffs for %d [ms], but invalid palm surface currently"
                           "detected with max reported cliff sensor value of %.1f" ,
                           kMaxCliffsAllowedWhileHeldInPalm, durationOfNoCliffDetections_ms,
@@ -397,7 +397,7 @@ bool HeldInPalmTracker::HasDetectedEnoughCliffsSincePickup(const BEIRobotInfo& r
     }
 #if REMOTE_CONSOLE_ENABLED
     if (kEnableDebugTransitionPrintouts) {
-      LOG_PERIODIC_INFO(100, "HIPTracker.HasDetectedEnoughCliffsSincePickup.InsufficientCliffDetectionDuration",
+      LOG_PERIODIC_INFO(5, "HIPTracker.HasDetectedEnoughCliffsSincePickup.InsufficientCliffDetectionDuration",
                         "Robot has only been detecting %u cliffs (or more) for %u [ms], %u [ms] elapsed since "
                         "last OnTreads or on charger", currNumCliffs, durationOfCurrentCliffDetections_ms,
                         timeSinceOnTreadsOrCharger_ms);
@@ -407,7 +407,7 @@ bool HeldInPalmTracker::HasDetectedEnoughCliffsSincePickup(const BEIRobotInfo& r
   
 #if REMOTE_CONSOLE_ENABLED
   if (kEnableDebugTransitionPrintouts) {
-    LOG_PERIODIC_INFO(100, "HIPTracker.HasDetectedEnoughCliffsSincePickup.TooFewCliffs",
+    LOG_PERIODIC_INFO(5, "HIPTracker.HasDetectedEnoughCliffsSincePickup.TooFewCliffs",
                       "Robot is only currently detecting %u cliffs", currNumCliffs);
   }
 #endif
