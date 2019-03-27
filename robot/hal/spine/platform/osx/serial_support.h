@@ -6,8 +6,8 @@
 #include <IOKit/serial/ioss.h>
 #include <string.h>
 
-#define platform_set_baud(fd, cfg, speed) do{\
-      speed_t speed = speed;\
+#define platform_set_baud(fd, cfg, _speed) do{\
+      speed_t speed = _speed;\
       if (ioctl(fd, IOSSIOSPEED, &speed) == -1) {\
          LOGE("Error calling ioctl(..., IOSSIOSPEED, %ld) %s(%d).\n", speed, strerror(errno), errno); \
       }} while (0)

@@ -4,12 +4,12 @@ cxx_project(
     srcs = cxx_src_glob(['.'], excludes = ['ptree/*']),
     platform_srcs = [
         ('vicos', glob(['**/*_vicos.cpp'])),
-        ('mac', glob(['**/*_iososx.mm']))
+        ('mac', glob(['**/*_iososx.mm','**/*_macos.cpp']))
     ],
     headers = cxx_header_glob(['.'], excludes = ['ptree/*']),
     platform_headers = [
         ('vicos', glob(['**/*_vicos.h'])),
-        ('mac', glob(['**/*_iososx.h']))
+        ('mac', glob(['**/*_iososx.h','**/*_macos.h']))
     ]
 )
     

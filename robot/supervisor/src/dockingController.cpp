@@ -88,7 +88,7 @@ namespace Anki {
         // view and docking is aborted.
         const u32 GIVEUP_DOCKING_TIMEOUT_MS = 2000;
 
-#ifndef SIMULATOR
+#ifndef MACOSX
         // Compensating for motor backlash by lifting a little higher when
         // approaching an object for high pickup.
         // Lift heights are reached reasonably accurately when moving down
@@ -508,7 +508,7 @@ namespace Anki {
 
             // Apply height
             LiftController::SetDesiredHeight(liftHeight);
-#ifdef SIMULATOR
+#ifdef MACOSX
             // If we are picking up a block, engage the gripper now, so that we engage with the block as soon as we
             // encounter it. Otherwise, the block may 'slide' to the side as we begin pushing it. Note: This is
             // slightly more realistic, since the real-life forks "hook into" the cube, preventing lateral movement.
@@ -814,7 +814,7 @@ namespace Anki {
                         ABS(dockingErrSignalMsg_.angleErr) <= ERRMSG_HM_ANGLE_TOL)
                     {
                       AnkiInfo( "DockingController.Update.AbleToDoHannsManeuver_1", "");
-  #ifndef SIMULATOR
+  #ifndef MACOSX
                       doHannsManeuver = true;
   #endif
                     }
@@ -836,7 +836,7 @@ namespace Anki {
                         ABS(rel_angle_to_block) < POSE_HM_ANGLE_TOL)
                     {
                       AnkiInfo( "DockingController.Update.AbleToDoHannsManeuver_2", "");
-  #ifndef SIMULATOR
+  #ifndef MACOSX
                       doHannsManeuver = true;
   #endif
                     }

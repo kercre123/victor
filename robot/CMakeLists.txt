@@ -17,10 +17,9 @@ set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES "")
 set(PLATFORM_COMPILE_DEFS "")
 set(PLATFORM_FLAGS "")
-if (MACOSX)
-  find_library(FOUNDATION Foundation)
-  set(PLATFORM_COMPILE_DEFS
-    SIMULATOR
+if (VICOS)
+  set(PLATFORM_LIBS
+      log
   )
 endif()
 
@@ -37,7 +36,7 @@ target_link_libraries(robot_hal
   robot_interface
   robot_clad_cpplite
   hdr_histogram_static
-  log
+  ${PLATFORM_LIBS}
   ${ASAN_LINKER_FLAGS}
 )
 
@@ -98,28 +97,30 @@ if (VICOS)
     robot_hal
   )
 elseif (MACOSX)
-  include(webots)
-
   set(PLATFORM_LIBS
       util
       util_audio
       cti_messaging
-      ${WEBOTS_LIBS}
   )
+  if (WEBOTS)
+    include(webots)
+    list(APPEND PLATFORM_LIBS
+        ${WEBOTS_LIBS}
+    )
+  endif()
   set(PLATFORM_INCLUDES
       # FIXME gross: ("simulator/robot/sim_overlayDisplay.h")
       ${CMAKE_SOURCE_DIR}
       ${CMAKE_SOURCE_DIR}/robot/hal/include
       ${CMAKE_SOURCE_DIR}/robot/hal/sim/include
   )
-  set(PLATFORM_COMPILE_DEFS
-      SIMULATOR
-  )
   set(PLATFORM_SRCS
       ${CMAKE_SOURCE_DIR}/robot/hal/sim/src/sim_DAS.cpp
-      ${CMAKE_SOURCE_DIR}/robot/hal/sim/src/sim_hal.cpp
+      ${CMAKE_SOURCE_DIR}/robot/hal/sim/src/sim_hal_mac.cpp
+      ${CMAKE_SOURCE_DIR}/robot/hal/sim/src/sim_hal_webots.cpp
       ${CMAKE_SOURCE_DIR}/robot/hal/src/radio.cpp
-      ${CMAKE_SOURCE_DIR}/simulator/robot/sim_overlayDisplay.cpp
+      ${CMAKE_SOURCE_DIR}/simulator/robot/sim_overlayDisplay_mac.cpp
+      ${CMAKE_SOURCE_DIR}/simulator/robot/sim_overlayDisplay_webots.cpp
   )
 endif()
 
@@ -197,15 +198,20 @@ elseif (MACOSX)
   set(PLATFORM_LIBS
     ${FOUNDATION}
   )
-  set(PLATFORM_COMPILE_DEFS
-    SIMULATOR
-  )
 endif()
 
 #
 # spine
 #
-if (VICOS)
+if (VICOS OR (MACOSX AND NOT WEBOTS))
+
+  if (VICOS)
+    list(APPEND PLATFORM_COMPILE_DEFS
+    )
+    list(APPEND PLATFORM_LIBS
+        robot_hal
+    )
+  endif()
 
   anki_build_cxx_library(spine ${ANKI_SRCLIST_DIR} STATIC)
   anki_build_target_license(spine "ANKI")
@@ -213,25 +219,47 @@ if (VICOS)
   target_include_directories(spine
     PRIVATE
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
+    $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/hal/include>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/clad/src>
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/syscon>
   )
 
   target_link_libraries(spine
     PRIVATE
-    robot_hal
     ${PLATFORM_LIBS}
   )
 
 endif()
 
+set(PLATFORM_LIBS "")
+set(PLATFORM_INCLUDES "")
+set(PLATFORM_COMPILE_DEFS "")
+set(PLATFORM_FLAGS "")
+if (VICOS)
+  set(PLATFORM_LIBS log)
+elseif (MACOSX)
+  find_library(FOUNDATION Foundation)
+  set(PLATFORM_LIBS
+    ${FOUNDATION}
+  )
+endif()
+
 #
 # robot_supervisor
 #
-if (VICOS)
+if (VICOS OR (MACOSX AND NOT WEBOTS))
 
   anki_build_cxx_executable(vic-robot ${ANKI_SRCLIST_DIR})
   anki_build_target_license(vic-robot "ANKI")
+
+  if (VICOS)
+    list(APPEND PLATFORM_LIBS
+      robot_hal
+      victorCrashReports  
+      ${ANKITRACE}
+    )
+  endif()
 
   target_compile_definitions(vic-robot
     PRIVATE
@@ -252,15 +280,12 @@ if (VICOS)
 
   target_link_libraries(vic-robot
     PRIVATE
-    robot_hal
     supervisor
     spine
     robot_interface
     robot_clad_cpplite
     cti_common_robot
     cti_messaging_robot
-    victorCrashReports
-    ${ANKITRACE}
     ${PLATFORM_LIBS}
     ${ASAN_EXE_LINKER_FLAGS}
   )

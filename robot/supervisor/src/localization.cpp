@@ -11,14 +11,14 @@
 #define DEBUG_LOCALIZATION 0
 #define DEBUG_POSE_HISTORY 0
 
-#ifdef SIMULATOR
+#ifdef MACOSX
 // Whether or not to use simulator "ground truth" pose
 #define USE_SIM_GROUND_TRUTH_POSE 0
 #define USE_OVERLAY_DISPLAY 1
 #else // else not simulator
 #define USE_SIM_GROUND_TRUTH_POSE 0
 #define USE_OVERLAY_DISPLAY 0
-#endif // #ifdef SIMULATOR
+#endif // #ifdef MACOSX
 
 
 #if(USE_OVERLAY_DISPLAY)

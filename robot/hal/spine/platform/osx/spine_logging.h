@@ -8,6 +8,7 @@
 #define LOGI(fmt, args...) printf("Inf: " fmt "\n", ##args)
 #define LOGD(fmt, args...) printf("Dbg: " fmt "\n", ##args)
 #define LOGE(fmt, args...) printf("Err: " fmt "\n", ##args)
+#define LOGW(fmt, args...) printf("Wrn: " fmt "\n", ##args)
 
 #endif//PLATFORM_LOGGING_H
 

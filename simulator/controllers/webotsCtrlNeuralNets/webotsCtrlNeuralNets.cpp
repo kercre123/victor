@@ -10,8 +10,8 @@
  * Copyright: Anki, Inc. 2018
  **/
 
-#ifndef SIMULATOR
-# error Expecting SIMULATOR to be defined when building this file
+#ifndef MACOSX
+# error Expecting MACOSX to be defined when building this file
 #endif
 
 #include "coretech/neuralnets/iNeuralNetMain.h"

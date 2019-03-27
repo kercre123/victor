@@ -1,5 +1,5 @@
 /**
- * File: sim_hal.cpp
+ * File: sim_hal_webots.cpp
  *
  * Author: Andrew Stein (andrew)
  * Created: 10/10/2013
@@ -27,6 +27,7 @@
  *
  **/
 
+#ifdef WEBOTS
 
 // System Includes
 #include <array>
@@ -69,8 +70,8 @@
 // Whether or not to simulate gyro bias and drift due to temperature
 static const bool kSimulateGyroBias = false;
 
-#ifndef SIMULATOR
-#error SIMULATOR should be defined by any target using sim_hal.cpp
+#ifndef MACOSX
+#error MACOSX should be defined by any target using sim_hal_webots.cpp
 #endif
 
 namespace Anki {
@@ -90,7 +91,6 @@ namespace Anki {
       constexpr auto MOTOR_COUNT = EnumToUnderlyingType(MotorID::MOTOR_COUNT);
 
       constexpr auto NUM_BACKPACK_LEDS = EnumToUnderlyingType(LEDId::NUM_BACKPACK_LEDS);
-
 
 #pragma mark --- Simulated HardwareInterface "Member Variables" ---
 
@@ -213,7 +213,6 @@ namespace Anki {
       {
         return power * 2*M_PI_F;
       }
-
 
       void MotorUpdate()
       {
@@ -470,7 +469,6 @@ namespace Anki {
     {
       gps_->disable();
       compass_->disable();
-
     } // Destroy()
 
     bool HAL::IsInitialized(void)
@@ -491,8 +489,6 @@ namespace Anki {
 
       //PRINT("GroundTruth:  pos %f %f %f   rad %f %f %f\n", position[0], position[1], position[2],
       //      northVector[0], northVector[1], northVector[2]);
-
-
     } // GetGroundTruthPose()
 
 
@@ -510,7 +506,6 @@ namespace Anki {
               GetControllerCommandedVehicleSpeed(),
               GetCurrentMeasuredVehicleSpeed());
       */
-
     } // HAL::UpdateDisplay()
 
 
@@ -518,7 +513,7 @@ namespace Anki {
     {
       const double* gyroVals = gyro_->getValues();  // rad/s
       const double* accelVals = accel_->getValues();   // m/s^2
-      
+
       for (int i=0 ; i<3 ; i++) {
         IMUData.gyro[i]  = (f32)(gyroVals[i]);
         IMUData.accel[i] = (f32)(accelVals[i] * 1000);
@@ -669,7 +664,6 @@ namespace Anki {
 #     if DEBUG_GRIPPER
       PRINT_NAMED_DEBUG("simHAL.DisengageGripper.Unlocked", "");
 #     endif
-
     }
 
     // Forward declaration
@@ -677,7 +671,6 @@ namespace Anki {
 
     Result HAL::Step(void)
     {
-
       if(webotRobot_.step(Vector::ROBOT_TIME_STEP_MS) == -1) {
         return RESULT_FAIL;
       } else {
@@ -720,8 +713,6 @@ namespace Anki {
         ++tickCnt_;
         return RESULT_OK;
       }
-
-
     } // step()
 
 
@@ -984,3 +975,5 @@ namespace Anki {
   
   } // namespace Vector
 } // namespace Anki
+
+#endif // WEBOTS
