@@ -93,7 +93,7 @@ namespace Anki {
     {
       f32 x = ABS(desired_speed_mmps);
 
-#     ifdef MACOSX
+#     ifdef SIMULATOR
       f32 out_ol = x * 0.004f;
 #     else
       // Piecewise linear

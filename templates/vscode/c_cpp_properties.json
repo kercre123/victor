@@ -36,6 +36,7 @@
             ],
             "defines": [
                 "MACOSX",
+                "SIMULATOR"
             ],
             "intelliSenseMode": "clang-x64",
             "browse": {

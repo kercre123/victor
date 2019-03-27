@@ -47,6 +47,7 @@ target_include_directories(test_animprocess
 
 target_compile_definitions(test_animprocess 
   PRIVATE
+  SIMULATOR
   CORETECH_ENGINE
 )
 

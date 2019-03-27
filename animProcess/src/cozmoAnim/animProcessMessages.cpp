@@ -993,7 +993,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   }
 
 #if FACTORY_TEST
-#if defined(MACOSX)
+#if defined(SIMULATOR)
   // Simulator never has EMR
   FaceInfoScreenManager::getInstance()->SetShouldDrawFAC(false);
 #else

@@ -32,7 +32,7 @@
 #include "clad/types/proxMessages.h"
 
 
-#ifdef MACOSX
+#ifdef SIMULATOR
 #include "sim_hal.h"
 #endif
 

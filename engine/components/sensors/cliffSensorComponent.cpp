@@ -227,7 +227,7 @@ void CliffSensorComponent::SendCliffDetectThresholdsToRobot()
   
   _robot->SendRobotMessage<SetCliffDetectThresholds>(_cliffDetectThresholds);
   
-#if defined(MACOSX)
+#if defined(SIMULATOR)
   // Also send to game (for webots tests)
   _robot->Broadcast(ExternalInterface::MessageEngineToGame(SetCliffDetectThresholds(_cliffDetectThresholds)));
 #endif

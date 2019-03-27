@@ -16,6 +16,7 @@ elseif (MACOSX)
     set(PLATFORM_LIBS
         ${WEBOTS_LIBS}
     )
+    set(PLATFORM_COMPILE_DEFS "-DSIMULATOR")
 endif()
 
 if (VICOS AND ANKI_DEV_CHEATS)

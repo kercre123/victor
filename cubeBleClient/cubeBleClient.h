@@ -48,7 +48,7 @@ public:
   
   bool Update();
 
-#ifdef MACOSX
+#ifdef SIMULATOR
   // Assign Webots supervisor
   // Webots processes must do this before creating CubeBleClient for the first time.
   // Unit test processes must call SetSupervisor(nullptr) to run without a supervisor.
@@ -100,7 +100,7 @@ public:
   
 private:
   
-#ifdef MACOSX
+#ifdef SIMULATOR
   // sim-only: Turn off cube lights on the connected cube
   void SendLightsOffToCube();
 #endif

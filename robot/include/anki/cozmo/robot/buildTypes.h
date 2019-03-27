@@ -10,7 +10,7 @@
 #if defined(NDEBUG)
 #define ANKI_DEBUG_LEVEL  ANKI_DEBUG_ERRORS_AND_WARNS
 #define ANKI_DEBUG_INFO   1
-#elif defined(MACOSX)
+#elif defined(SIMULATOR)
 #define ANKI_DEBUG_LEVEL  ANKI_DEBUG_ALL
 #define ANKI_DEBUG_INFO   1
 #else // Default is development build

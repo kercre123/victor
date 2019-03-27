@@ -112,9 +112,7 @@ int main(void)
 {
   signal(SIGTERM, Shutdown);
 
-#ifdef VICOS
   InstallCrashReporter(LOG_PROCNAME);
-#endif
 
   // - create and set logger
   auto logger = std::make_unique<Anki::Util::VictorLogger>(LOG_PROCNAME);
@@ -160,9 +158,7 @@ int main(void)
     delete animEngine;
     Util::gLoggerProvider = nullptr;
     Util::gEventProvider = nullptr;
-#ifdef VICOS
     UninstallCrashReporter();
-#endif
     sync();
     exit(result);
   }
@@ -254,9 +250,7 @@ int main(void)
   Util::gLoggerProvider = nullptr;
   Util::gEventProvider = nullptr;
 
-#ifdef VICOS
   UninstallCrashReporter();
-#endif
   sync();
   exit(result);
 }

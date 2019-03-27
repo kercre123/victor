@@ -437,7 +437,7 @@ void JdocsManager::UpdateDependent(const RobotCompMap& dependentComps)
 
   if (!_udpClient.IsConnected())
   {
-#ifndef MACOSX // vic-cloud jdocs stuff doesn't work on webots yet
+#ifndef SIMULATOR // vic-cloud jdocs stuff doesn't work on webots yet
     static const float kTimeBetweenConnectionAttempts_s = 1.0f;
     static float nextAttemptTime_s = 0.0f;
     if (_currTime_s >= nextAttemptTime_s)
@@ -961,7 +961,7 @@ bool JdocsManager::ConnectToJdocsServer()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool JdocsManager::SendJdocsRequest(const JDocs::DocRequest& docRequest)
 {
-#ifdef MACOSX
+#ifdef SIMULATOR
   // No webots support for vic-cloud jdoc requests
   return false;
 #endif

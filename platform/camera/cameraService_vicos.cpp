@@ -27,8 +27,8 @@
 #include <chrono>
 #include <unistd.h>
 
-#ifdef MACOSX
-#error MACOSX should NOT be defined by any target using cameraService_vicos.cpp
+#ifdef SIMULATOR
+#error SIMULATOR should NOT be defined by any target using cameraService_vicos.cpp
 #endif
 
 #define LOG_CHANNEL "CameraService"

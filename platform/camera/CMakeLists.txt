@@ -52,16 +52,13 @@ if (VICOS)
         log
         camera_client)
 elseif (MACOSX)
+    include(webots)
     set(PLATFORM_LIBS
+        webotsCtrlCommon
         ${OPENCV_LIBS}
+        ${WEBOTS_LIBS}
     )
-    if (WEBOTS)
-        include(webots)
-        list(APPEND PLATFORM_LIBS
-            webotsCtrlCommon
-            ${WEBOTS_LIBS}
-        )
-    endif()
+    set(PLATFORM_COMPILE_DEFS "-DSIMULATOR")
 endif()
 
 target_link_libraries(cameraService

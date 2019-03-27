@@ -144,7 +144,7 @@ public:
   const RobotID_t GetID() const;
 
   bool IsPhysical() const {
-#ifdef MACOSX
+#ifdef SIMULATOR
     return false;
 #else
     return true;

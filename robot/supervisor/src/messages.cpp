@@ -44,7 +44,7 @@ namespace Anki {
         bool syncRobotReceived_ = false;
         bool syncRobotAckSent_ = false;
 
-#ifdef MACOSX
+#ifdef SIMULATOR
         bool isForcedDelocalizing_ = false;
 #endif
       } // private namespace
@@ -149,7 +149,7 @@ namespace Anki {
         SET_STATUS_BIT(HAL::AreEncodersDisabled(),                  ENCODERS_DISABLED);
         SET_STATUS_BIT(HeadController::IsEncoderInvalid(),          ENCODER_HEAD_INVALID);
         SET_STATUS_BIT(LiftController::IsEncoderInvalid(),          ENCODER_LIFT_INVALID);
-#ifdef  MACOSX
+#ifdef  SIMULATOR
         SET_STATUS_BIT(isForcedDelocalizing_,                       IS_PICKED_UP);
 #endif
         #undef SET_STATUS_BIT
@@ -221,7 +221,7 @@ namespace Anki {
 
       void Process_forceDelocalizeSimulatedRobot(const RobotInterface::ForceDelocalizeSimulatedRobot& msg)
       {
-#ifdef MACOSX
+#ifdef SIMULATOR
         isForcedDelocalizing_ = true;
 #endif
       }
@@ -646,7 +646,7 @@ namespace Anki {
 
 
         if(RobotInterface::SendMessage(robotState_) == true) {
-          #ifdef MACOSX
+          #ifdef SIMULATOR
           {
             isForcedDelocalizing_ = false;
           }

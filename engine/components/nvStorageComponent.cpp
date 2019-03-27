@@ -18,10 +18,10 @@
 #include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 
-#ifdef MACOSX
+#ifdef SIMULATOR
 #include "camera/cameraService.h"
 #include "clad/types/imageTypes.h"
-#endif // ifdef MACOSX
+#endif // ifdef SIMULATOR
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
@@ -55,7 +55,7 @@ void NVStorageComponent::InitDependent(Vector::Robot* robot, const RobotCompMap&
 {
   _robot = robot;
   _kStoragePath = (_robot->GetContextDataPlatform() != nullptr ? _robot->GetContextDataPlatform()->pathToResource(Util::Data::Scope::Persistent, "nvStorage/") : "");
-  #ifdef MACOSX
+  #ifdef SIMULATOR
   LoadSimData();
   #endif
 
@@ -364,7 +364,7 @@ void NVStorageComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
 }
   
-#ifdef WEBOTS
+#ifdef SIMULATOR
 void NVStorageComponent::LoadSimData()
 {
   // Store simulated camera calibration data
@@ -372,15 +372,7 @@ void NVStorageComponent::LoadSimData()
   
   _tagDataMap[NVEntryTag::NVEntry_CameraCalib].assign(reinterpret_cast<const u8*>(camCalib), reinterpret_cast<const u8*>(camCalib) + sizeof(*camCalib));
 }
-#elif defined(MACOSX)
-void NVStorageComponent::LoadSimData()
-{
-  // Store simulated camera calibration data
-  static CameraCalibration camCalib;
-
-  _tagDataMap[NVEntryTag::NVEntry_CameraCalib].assign(reinterpret_cast<const u8*>(&camCalib), reinterpret_cast<const u8*>(&camCalib) + sizeof(camCalib));
-}
-#endif  // ifdef MACOSX
+#endif  // ifdef SIMULATOR
   
 size_t NVStorageComponent::MakeWordAligned(size_t size) {
   u8 numBytesToMakeAligned = 4 - (size % 4);
@@ -416,7 +408,7 @@ int NVStorageComponent::OpenCameraCalibFile(int openFlags)
 
 void NVStorageComponent::ReadCameraCalibFile()
 {
-  #ifdef MACOSX
+  #ifdef SIMULATOR
   return;
   #endif
   

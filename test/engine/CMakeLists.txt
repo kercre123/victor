@@ -54,6 +54,7 @@ target_include_directories(test_engine
 
 target_compile_definitions(test_engine
   PRIVATE
+  SIMULATOR
   CORETECH_ENGINE
   ANKICONFIGROOT="${CMAKE_CURRENT_BINARY_DIR}"
   ANKIWORKROOT="${CMAKE_CURRENT_BINARY_DIR}"

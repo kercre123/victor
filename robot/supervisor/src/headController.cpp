@@ -42,7 +42,7 @@ namespace HeadController {
 
       const f32 SPEED_FILTERING_COEFF = 0.5f;
 
-#ifdef MACOSX
+#ifdef SIMULATOR
       f32 Kp_ = 20.f; // proportional control constant
       f32 Kd_ = 0.f;  // derivative control constant
       f32 Ki_ = 0.1f; // integral control constant

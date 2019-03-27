@@ -27,15 +27,12 @@ if (VICOS)
         log
         robot_core)
 elseif (MACOSX)
+    include(webots)
     set(PLATFORM_LIBS
         ${OPENCV_LIBS}
+        ${WEBOTS_LIBS}
     )
-    if (WEBOTS)
-        include(webots)
-        list(APPEND PLATFORM_LIBS
-            ${WEBOTS_LIBS}
-        )
-    endif()
+    set(PLATFORM_COMPILE_DEFS "-DSIMULATOR")
 endif()
 
 target_link_libraries(victor_anim
@@ -93,14 +90,9 @@ target_include_directories(victor_anim
   ${PLATFORM_INCLUDES}
 )
 
-if (VICOS OR (MACOSX AND NOT WEBOTS))
-
-  if (VICOS)
-    list(APPEND PLATFORM_LIBS
-         victorCrashReports
-         ${ANKITRACE}
-    )
-  endif()
+# victor_anim binary only builds on vicos now
+# mac implementation uses (webotsCtrlAnim)
+if (VICOS)
 
   anki_build_cxx_executable(vic-anim ${ANKI_SRCLIST_DIR})
   anki_build_target_license(vic-anim "ANKI" "Commercial,${CMAKE_SOURCE_DIR}/licenses/acapela.license")
@@ -108,6 +100,7 @@ if (VICOS OR (MACOSX AND NOT WEBOTS))
   target_link_libraries(vic-anim
     PRIVATE
     victor_anim
+    victorCrashReports
     # NOTE: deliberately using non-robot cti_common here to ease build
     #       pain given differing include paths for clad types. This still
     #       does not expose cpplite clad messaging within the anim process
@@ -119,6 +112,7 @@ if (VICOS OR (MACOSX AND NOT WEBOTS))
     #       wait for a (much) larger cleanup to cmake / clad / coretech.
     cti_common
     jsoncpp
+    ${ANKITRACE}
     ${PLATFORM_LIBS}
     ${ASAN_EXE_LINKER_FLAGS}
   )
@@ -126,24 +120,23 @@ if (VICOS OR (MACOSX AND NOT WEBOTS))
   anki_build_strip(TARGET vic-anim)
 
 
-  if (VICOS)
-    project(vic-bootAnim)
+  project(vic-bootAnim)
 
-    anki_build_cxx_executable(vic-bootAnim ${ANKI_SRCLIST_DIR})
+  anki_build_cxx_executable(vic-bootAnim ${ANKI_SRCLIST_DIR})
 
-    target_compile_definitions(vic-bootAnim
-      PRIVATE
-      ${PLATFORM_COMPILE_DEFS}
-    )
+  target_compile_definitions(vic-bootAnim
+    PRIVATE
+    ${PLATFORM_COMPILE_DEFS}
+  )
 
-      target_link_libraries(vic-bootAnim
-        PRIVATE
-        robot_core
-        ${ASAN_EXE_LINKER_FLAGS}
-      )
+  target_link_libraries(vic-bootAnim
+    PRIVATE
+    robot_core
+    ${ASAN_EXE_LINKER_FLAGS}
+  )
 
-    anki_build_strip(TARGET vic-bootAnim)
+  anki_build_strip(TARGET vic-bootAnim)
 
-    anki_build_target_license(vic-bootAnim "ANKI")
-  endif()
+  anki_build_target_license(vic-bootAnim "ANKI")
+
 endif()

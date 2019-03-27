@@ -22,7 +22,7 @@
 #include "localization_geometry.h"
 // Distance between the robot origin and the distance along the robot's x-axis
 // to the lift when it is in the low docking position.
-#ifdef MACOSX
+#ifdef SIMULATOR
 ///*
 //const f32 ORIGIN_TO_LOW_LIFT_DIST_MM = 24.f;
 //const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 14.f;

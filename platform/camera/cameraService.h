@@ -52,7 +52,7 @@ namespace Anki
 
       Result Update();
 
-#ifdef MACOSX
+#ifdef SIMULATOR
       // NOTE: Only NVStorageComponent::LoadSimData() should call this function.
       //       Everyone else should be getting CameraCalibration data from NVStorageComponent!
       const CameraCalibration* GetHeadCamInfo();
@@ -113,7 +113,7 @@ namespace Anki
       
       static CameraService* _instance;
 
-#ifdef MACOSX
+#ifdef SIMULATOR
       CameraCalibration headCamInfo_;
 #else
 

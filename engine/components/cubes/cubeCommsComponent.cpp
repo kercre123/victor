@@ -52,7 +52,7 @@ namespace {
   const ObjectType kValidCubeType = ObjectType::Block_LIGHTCUBE1;
   
   // How long to remain in discovery mode
-#ifdef MACOSX
+#ifdef SIMULATOR
   const float kDefaultScanningTime_sec = 3.f;
 #else
   const float kDefaultScanningTime_sec = 15.f;

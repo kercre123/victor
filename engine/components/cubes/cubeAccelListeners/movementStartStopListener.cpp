@@ -30,7 +30,7 @@ namespace {
   // Started/Stopped movement score thresholds.
   // Simulator accelerometer behaves differently from real one,
   // so use different thresholds
-#ifdef MACOSX
+#ifdef SIMULATOR
   const float kStartedMovingThresh = 3'000.f;
   const float kStoppedMovingThresh = 1'500.f;
 #else

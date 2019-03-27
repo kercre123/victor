@@ -67,7 +67,7 @@ FaceDisplay::FaceDisplay()
   // Don't try to stop the boot anim in sim
   // or if we are not supposed to manunually stop it
   // (systemd will stop it for us)
-#if defined(MACOSX) || !MANUALLY_STOP_BOOT_ANIM
+#if defined(SIMULATOR) || !MANUALLY_STOP_BOOT_ANIM
   _stopBootAnim = true;
 #endif
 	

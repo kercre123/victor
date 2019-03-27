@@ -12,7 +12,7 @@
 
 
 #include "util/global/globalDefinitions.h"
-#if ANKI_PROFILING_ENABLED && !defined(MACOSX) && defined(NDEBUG)
+#if ANKI_PROFILING_ENABLED && !defined(SIMULATOR) && defined(NDEBUG)
   #define ENABLE_TICK_TIME_WARNINGS 1
 #else
   #define ENABLE_TICK_TIME_WARNINGS 0

@@ -47,8 +47,8 @@
 #include <iomanip>
 
 
-#ifdef MACOSX
-#error MACOSX should NOT be defined by any target using osState_vicos.cpp
+#ifdef SIMULATOR
+#error SIMULATOR should NOT be defined by any target using osState_vicos.cpp
 #endif
 
 #define LOG_CHANNEL "OsState"

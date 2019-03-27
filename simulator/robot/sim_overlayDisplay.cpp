@@ -1,7 +1,6 @@
-#ifdef WEBOTS
-
 #include "simulator/robot/sim_overlayDisplay.h"
 
+// Webots Includes
 #include <webots/Display.hpp>
 #include <webots/Supervisor.hpp>
 
@@ -10,6 +9,7 @@ namespace Anki {
     
     namespace Sim {
       extern webots::Supervisor* CozmoBot;
+      
       namespace OverlayDisplay {
         
         namespace { // "Private members"
@@ -66,4 +66,3 @@ namespace Anki {
 } // namespace Anki
 
 
-#endif // WEBOTS

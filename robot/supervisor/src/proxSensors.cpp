@@ -22,7 +22,7 @@ namespace Anki {
 
       namespace {
 
-#ifndef MACOSX
+#ifndef SIMULATOR
         struct ProxSensorLookupEntry {
           u16 rawDistance_mm; // raw distance reading from the sensor
           int offset_mm;      // offset to add to the raw distance to get actual distance
@@ -116,7 +116,7 @@ namespace Anki {
           return proxData;
         }
         
-#ifndef MACOSX
+#ifndef SIMULATOR
         // Apply look-up table to convert from raw distance reading
         // to corrected reading. Piecewise linear interpolation.
         // Assumes kProxSensorRawDistLUT_mm is sorted on 'first' elements.

@@ -39,13 +39,13 @@
 #include "util/helpers/ankiDefines.h"
 #include "util/time/universalTime.h"
 
-#ifdef MACOSX
+#ifdef SIMULATOR
 #include "osState/osState.h"
 #endif
 
 // The amount of time that the UI must have not been
 // returning pings before we consider it disconnected
-#ifdef MACOSX
+#ifdef SIMULATOR
 // No timeout in sim
 static const u32 kPingTimeoutForDisconnect_ms = 0;
 #else
@@ -134,7 +134,7 @@ namespace Anki {
 
       // Currently not supporting UI connections for any sim robot other
       // than the default ID
-      #ifdef MACOSX
+      #ifdef SIMULATOR
       const auto robotID = OSState::getInstance()->GetRobotID();
       if (robotID != DEFAULT_ROBOT_ID) {
         PRINT_NAMED_WARNING("UiMessageHandler.Ctor.SkippingUIConnections",

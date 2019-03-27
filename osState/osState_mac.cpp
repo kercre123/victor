@@ -18,9 +18,7 @@
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 
-#ifdef WEBOTS
 #include <webots/Supervisor.hpp>
-#endif
 
 #include <array>
 
@@ -42,8 +40,8 @@
 #include <uuid/uuid.h>
 
 
-#ifndef MACOSX
-#error MACOSX should be defined by any target using osState_mac.cpp
+#ifndef SIMULATOR
+#error SIMULATOR should be defined by any target using osState_mac.cpp
 #endif
 
 namespace Anki {

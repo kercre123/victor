@@ -6,9 +6,7 @@
  **/
 
 #include "anki/cozmo/robot/DAS.h"
-#ifdef VICOS
 #include <android/log.h>
-#endif
 
 #include <time.h>
 
@@ -22,7 +20,6 @@
 #define CLOCK CLOCK_MONOTONIC
 #endif
 
-#ifdef VICOS
 namespace {
   uint64_t UptimeMS()
   {
@@ -33,7 +30,6 @@ namespace {
     return 0;
   }
 }
-#endif
 
 namespace Anki {
 namespace Vector {
@@ -66,42 +62,32 @@ void DasLogEvent(int prio, const DasMsg & dasMsg)
   static_assert(Anki::Vector::RobotInterface::DAS::FIELD_MARKER == '\x1F', "DAS field marker does not match declarations");
   static_assert(Anki::Vector::RobotInterface::DAS::FIELD_COUNT == 9, "DAS field count does not match declarations");
 
-#ifdef VICOS
   __android_log_print(prio, "vic-robot", "@%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%s\x1F%llu",
                       dasMsg.event.c_str(),
                       dasMsg.s1.c_str(), dasMsg.s2.c_str(), dasMsg.s3.c_str(), dasMsg.s4.c_str(),
                       dasMsg.i1.c_str(), dasMsg.i2.c_str(), dasMsg.i3.c_str(), dasMsg.i4.c_str(),
                       UptimeMS());
-#endif
 }
 
 
 void sLogError(const DasMsg & dasMessage)
 {
-#ifdef VICOS
   DasLogEvent(ANDROID_LOG_ERROR, dasMessage);
-#endif
 }
 
 void sLogWarning(const DasMsg & dasMessage)
 {
-#ifdef VICOS
   DasLogEvent(ANDROID_LOG_WARN, dasMessage);
-#endif
 }
 
 void sLogInfo(const DasMsg & dasMessage)
 {
-#ifdef VICOS
   DasLogEvent(ANDROID_LOG_INFO, dasMessage);
-#endif
 }
 
 void sLogDebug(const DasMsg & dasMessage)
 {
-#ifdef VICOS
   DasLogEvent(ANDROID_LOG_DEBUG, dasMessage);
-#endif
 }
 
 } // namespace RobotInterface

@@ -53,7 +53,7 @@ private:
   
   static const uint_t kAubioTempoBufSize = 512;
   static const uint_t kAubioTempoHopSize = 256;
-#ifdef MACOSX
+#ifdef SIMULATOR
   static const uint_t kAubioTempoSampleRate = AudioUtil::kSampleRate_hz;
 #else
   // The downsampling process in syscon results in an actual sample rate of 15625 Hz

@@ -155,14 +155,14 @@ ssize_t spine_receive_data(spine_ctx_t spine, const void* bytes, size_t len)
     size_t remaining = sizeof(spine->buf_rx) - next_offset;
 
     if (len > remaining) {
-        LOGE("spine_receive_data.overflow :: %d", (int)(len - remaining));
+        LOGE("spine_receive_data.overflow :: %u", len - remaining);
         spine->rx_cursor = 0;
         // BRC: add a flag to indicate a reset (for using in parsing?)
     }
 
     uint8_t* rx = spine->buf_rx + next_offset;
     memcpy(rx, bytes, len);
-    spine->rx_cursor = (uint32_t)(next_offset + len);
+    spine->rx_cursor = next_offset + len;
 
     // printf("spine_receive_data %u :: rx_cursor at %u\n", len, spine->rx_cursor);
 
@@ -468,7 +468,7 @@ ssize_t spine_make_h2b_frame(const struct HeadToBody* h2b_payload, struct spine_
 
     memmove(&(out_frame->payload), h2b_payload, payload_len);
     const uint8_t* payload_bytes = (const uint8_t*)h2b_payload;
-    out_frame->footer.checksum = calc_crc(payload_bytes, (int)payload_len);
+    out_frame->footer.checksum = calc_crc(payload_bytes, payload_len);
 
     return payload_len;
 }
@@ -549,7 +549,7 @@ ssize_t spine_write_ccc_frame(spine_ctx_t spine, const struct ContactData* ccc_p
     uint8_t* payload_start = (uint8_t*)(out_frame+1);
     memmove(payload_start, ccc_payload, payload_len);
     crc_t* csp = (crc_t*)(payload_start+payload_len);
-    *csp = calc_crc(payload_start, (int)payload_len);
+    *csp = calc_crc(payload_start, payload_len);
 
     r = payload_len;
     if (r <= 0) {

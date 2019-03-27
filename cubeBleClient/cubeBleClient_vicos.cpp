@@ -29,8 +29,8 @@
 #include <queue>
 #include <thread>
 
-#ifdef MACOSX
-#error MACOSX should NOT be defined by any target using cubeBleClient_vicos.cpp
+#ifdef SIMULATOR
+#error SIMULATOR should NOT be defined by any target using cubeBleClient_vicos.cpp
 #endif
 
 namespace Anki {

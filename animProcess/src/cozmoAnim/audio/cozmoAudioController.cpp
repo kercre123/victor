@@ -38,9 +38,7 @@
 
 
 // Allow the build to include/exclude the audio libs
-#ifndef WEBOTS
-#define EXCLUDE_ANKI_AUDIO_LIBS 0
-#endif
+//#define EXCLUDE_ANKI_AUDIO_LIBS 0
 
 #ifndef EXCLUDE_ANKI_AUDIO_LIBS
 

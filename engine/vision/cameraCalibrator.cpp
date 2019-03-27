@@ -378,7 +378,7 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
   }
   
   // Depending on what type of robot we are running, provide a different initial guess for calibration
-#ifdef MACOSX
+#ifdef SIMULATOR
   cv::Mat_<f64> cameraMatrix = (cv::Mat_<f64>(3,3) <<
                                 507, 0, 639,
                                 0, 507, 359,

@@ -53,14 +53,14 @@ namespace Vector {
   // located (note that this is different when carrying a block).
   // (If you were to model the treaded robot as a two-wheel robot,
   // the drive center is the location between the two wheels)
-#ifdef MACOSX
+#ifdef SIMULATOR
   // In simulation, the drive center pose always seems to be this value, whether carrying a block or not
   const f32 DRIVE_CENTER_OFFSET = -16.f;
   const f32 DRIVE_CENTER_OFFSET_CARRYING_CUBE = -16.f;
 #else
   const f32 DRIVE_CENTER_OFFSET = -25.f;
   const f32 DRIVE_CENTER_OFFSET_CARRYING_CUBE = 0.f;
-#endif // MACOSX
+#endif // SIMULATOR
   
   // Forward distance sensor measurements (TODO: finalize these dimensions on production robot)
   const float kProxSensorTiltAngle_rad = DEG_TO_RAD(6.5f);    // Angle that the prox sensor is tilted (upward is positive)
@@ -351,7 +351,7 @@ namespace Vector {
   const u32 MAX_SENT_BYTES_PER_TIC_TO_UI = 0;
   
   // Packet headers/footers:
-  // TODO: Do we need this?  Only used in simulation I think? (Add #ifdef MACOSX?)
+  // TODO: Do we need this?  Only used in simulation I think? (Add #ifdef SIMULATOR?)
   const u8 RADIO_PACKET_HEADER[2] = {0xBE, 0xEF};
   const u8 RADIO_PACKET_FOOTER[2] = {0xFF, 0x0F};
   

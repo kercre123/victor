@@ -12,14 +12,12 @@
 #include  "../spine/cc_commander.h"
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
-#ifdef VICOS
 #include "platform/victorCrashReports/victorCrashReporter.h"
-#endif
 
 #define LOG_PROCNAME "vic-robot"
 
 // For development purposes, while HW is scarce, it's useful to be able to run on phones
-#if defined(HAL_DUMMY_BODY) || defined(MACOSX)
+#ifdef HAL_DUMMY_BODY
   #define HAL_NOT_PROVIDING_CLOCK
 #endif
 
@@ -61,10 +59,6 @@ int run()
   const Result result = Anki::Vector::Robot::Init(&shutdownSignal);
   if (result != Result::RESULT_OK) {
     AnkiError("robot.main.InitFailed", "Unable to initialize (result %d)", result);
-#ifdef VICOS
-    Anki::Vector::UninstallCrashReporter();
-#endif
-    sync();
     if (shutdownSignal == SIGTERM) {
       return 0;
     } else if (shutdownSignal != 0) {
@@ -92,9 +86,6 @@ int run()
     if (Anki::Vector::HAL::Step() == Anki::RESULT_OK) {
       if (Anki::Vector::Robot::step_MainExecution() != Anki::RESULT_OK) {
         AnkiError("robot.main.MainStepFailed", "");
-#ifdef VICOS
-        Anki::Vector::UninstallCrashReporter();
-#endif
         return -1;
       }
     } else {
@@ -164,29 +155,23 @@ int main(int argc, const char* argv[])
   setlinebuf(stdout);
   setlinebuf(stderr);
 
-#ifdef VICOS
   struct sched_param params;
   params.sched_priority = sched_get_priority_max(SCHED_FIFO);
   sched_setscheduler(0, SCHED_FIFO, &params);
-#endif
 
   signal(SIGTERM, Shutdown);
 
-#ifdef VICOS
   Anki::Vector::InstallCrashReporter(LOG_PROCNAME);
 
   if (argc > 1) {
     ccc_set_shutdown_function(Shutdown);
     ccc_parse_command_line(argc-1, argv+1);
   }
-#endif
 
   int res = run();
 
   Anki::Vector::Robot::Destroy();
-#ifdef VICOS
   Anki::Vector::UninstallCrashReporter();
-#endif
   sync();
 
   return res;
@@ -199,11 +184,9 @@ int main_test(int argc, const char* argv[])
 {
   mlockall(MCL_FUTURE);
 
-#ifdef VICOS
   struct sched_param params;
   params.sched_priority = sched_get_priority_max(SCHED_FIFO);
   sched_setscheduler(0, SCHED_FIFO, &params);
-#endif
 
   signal(SIGTERM, Shutdown);
 
