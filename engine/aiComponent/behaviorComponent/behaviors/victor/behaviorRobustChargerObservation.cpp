@@ -199,6 +199,7 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
                               }));
     compoundAction->AddAction(getinAndSetLcd);
     waitAction = new WaitForImagesAction(_iConfig.numImageCompositingCyclesToWaitFor, VisionMode::Markers_Composite);
+    waitAction->SetTracksToLock((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK);
     compoundAction->AddAction(new LoopAnimWhileAction(waitAction, AnimationTrigger::LowlightChargerSearchLoop));
   } else {
     // Use cycling exposure instead
