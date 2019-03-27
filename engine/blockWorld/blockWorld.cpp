@@ -925,18 +925,6 @@ namespace Vector {
         // Localize to the charger instance in the old origin
         result = _robot->LocalizeToObject(observedCharger.get(), existingCharger);
       }
-
-      if(existingCharger != nullptr && observedCharger != nullptr) {
-        // Having observed a charger, and having knowledge of an existing charger (in any origin, including this one)
-        //  we should always update the observation times for the charger, after localizing to it.
-        // If this verify is hit, then there might be a problem in UpdateKnownObjects() or LocalizeToObject()
-        //  either is responsible for updating observation times.
-        ANKI_VERIFY(existingCharger->GetLastObservedTime() == observedCharger->GetLastObservedTime(),
-                    "BlockWorld.ProcessVisualObservations.IncorrectObservedTimeUpdateToCharger",
-                    "Existing and Observed charger timestamps are not matching (E=%u O=%u)",
-                    existingCharger->GetLastObservedTime(),
-                    observedCharger->GetLastObservedTime());
-      }
     } else {
       UpdateKnownObjects(objectsSeen, atTimestamp);
     }
@@ -986,18 +974,10 @@ namespace Vector {
     // Go through each observation and, if possible, associate it to an already-known object. If the observation does
     // not match any existing known objects, we generate a new objectID for it and add it to the list of known objects.
     for (const auto& objSeen : objectsSeen) {
-      if (ignoreCharger && IsChargerType(objSeen->GetType(), false)) {
-        continue;
-      }
-      
-      const float distToObjSeen =  objSeen->GetLastPoseUpdateDistance();
-      
       DEV_ASSERT(!objSeen->GetID().IsSet(), "BlockWorld.UpdateKnownObjects.SeenObjectAlreadyHasID");
-      
-      // Find a match (or matches) for this object in the list of existing objects so that we can copy its ID and
-      // update its latest observation if necessary.
-      
-      // Always match by type, but also match by pose for non-unique objects.
+
+      const bool skipCharger = (ignoreCharger && IsChargerType(objSeen->GetType(), false));
+
       BlockWorldFilter filter;
       filter.SetAllowedTypes({objSeen->GetType()});
       const bool isUnique = objSeen->IsUnique();
@@ -1007,28 +987,32 @@ namespace Vector {
           return obj->IsSameAs(*objSeen);
         });
       }
-      
       // Check for matches in the current origin
       ObservableObject* matchingObject = FindLocatedMatchingObject(filter);
-      
+
+      const bool isSelectedObject = (matchingObject != nullptr) && 
+                                    ((_robot->GetDockingComponent().GetDockObject() == matchingObject->GetID()) ||
+                                      (_robot->GetCarryingComponent().IsCarryingObject(matchingObject->GetID())));
+
+      // If we haven't found a match in the current origin, then continue looking in other origins (for unique objects)
+      if ((matchingObject == nullptr) && isUnique) {
+        filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
+        matchingObject = FindLocatedMatchingObject(filter);
+      }
+
       // Was the camera moving? If so, we must skip this observation _unless_ this is the dock object or carry object.
       // Might be sufficient to check for movement at historical time, but to be conservative (and account for
       // timestamping inaccuracies?) we will also check _current_ moving status.
       const bool wasCameraMoving = (_robot->GetMoveComponent().IsCameraMoving() ||
                                     _robot->GetMoveComponent().WasCameraMoving(atTimestamp));
-      const bool isDockObject    = (matchingObject != nullptr) &&
-                                   (_robot->GetDockingComponent().GetDockObject() == matchingObject->GetID());
-      const bool isCarriedObject = (matchingObject != nullptr) &&
-                                   _robot->GetCarryingComponent().IsCarryingObject(matchingObject->GetID());
-      
-      if (wasCameraMoving && !isDockObject && !isCarriedObject) {
+
+      if (skipCharger || (wasCameraMoving && !isSelectedObject)) {
+        // Regardless of whether we skip updating the existing objects pose
+        //  we should update the timestamps for the observations.
+        if(matchingObject != nullptr) {
+          matchingObject->SetObservationTimes(objSeen.get());
+        }
         continue;
-      }
-      
-      // If we haven't found a match in the current origin, then continue looking in other origins (for unique objects)
-      if ((matchingObject == nullptr) && isUnique) {
-        filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-        matchingObject = FindLocatedMatchingObject(filter);
       }
       
       if (matchingObject != nullptr) {
@@ -1038,7 +1022,7 @@ namespace Vector {
         objSeen->CopyID(matchingObject);
         
         // Update the matching object's pose
-        matchingObject->SetObservationTimes(objSeen.get());
+        const float distToObjSeen = objSeen->GetLastPoseUpdateDistance();
         matchingObject->SetPose(objSeen->GetPose(), distToObjSeen, PoseState::Known);
         
         // If we matched an object from a previous origin, we need to move it into the current origin
