@@ -98,5 +98,8 @@
   },
   "BehaviorPlaybackMessage.NoMessages": {
     "translation": "I have no messages for {0}"
+  },
+  "BehaviorSayName.DontKnow": {
+    "translation": "I don't know"
   }
 }
