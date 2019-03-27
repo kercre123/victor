@@ -82,8 +82,8 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_InvertedBox)
   imageCache.Reset(img);
 
   Anki::Vector::VisionSystemInput input;
-  input.modesToProcess.Insert(Anki::Vector::VisionMode::DetectingMarkers);
-  input.modesToProcess.Insert(Anki::Vector::VisionMode::ComputingCalibration);
+  input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers);
+  input.modesToProcess.Insert(Anki::Vector::VisionMode::Calibration);
   input.imageBuffer = imageCache.GetBuffer();
   
   result = visionSystem->Update(input);
@@ -183,8 +183,8 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_Qbert)
   imageCache.Reset(img);
   
   Anki::Vector::VisionSystemInput input;
-  input.modesToProcess.Insert(Anki::Vector::VisionMode::DetectingMarkers);
-  input.modesToProcess.Insert(Anki::Vector::VisionMode::ComputingCalibration);
+  input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers);
+  input.modesToProcess.Insert(Anki::Vector::VisionMode::Calibration);
   input.imageBuffer = imageCache.GetBuffer();
   
   result = visionSystem->Update(input);
@@ -313,10 +313,10 @@ TEST(VisionSystem, ImageCompositing_MarkerDetection)
       imageCache.Reset(img);
 
       Anki::Vector::VisionSystemInput input;
-      input.modesToProcess.Insert(Anki::Vector::VisionMode::DetectingMarkers);
-      input.modesToProcess.Insert(Anki::Vector::VisionMode::FullFrameMarkerDetection);
-      input.modesToProcess.Insert(Anki::Vector::VisionMode::MarkerDetectionWhileRotatingFast);
-      input.modesToProcess.Insert(Anki::Vector::VisionMode::CompositingImages);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers_FullFrame);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers_FastRotation);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers_Composite);
       input.imageBuffer = imageCache.GetBuffer();
 
       Vector::VisionPoseData robotState; // not needed just to detect markers
@@ -332,7 +332,7 @@ TEST(VisionSystem, ImageCompositing_MarkerDetection)
       EXPECT_TRUE(resultAvailable);
 
       foundMarker |= isChargerDetected(processingResult.observedMarkers);
-      countCompositeImagesProcessed += processingResult.modesProcessed.Contains(Vector::VisionMode::CompositingImages);
+      countCompositeImagesProcessed += processingResult.modesProcessed.Contains(Vector::VisionMode::Markers_Composite);
       if( index == 0 ) { // first image 
         // Ensure no images are found in a base image (thus requiring compositing to detect a marker)
         EXPECT_FALSE(foundMarker);
@@ -484,9 +484,9 @@ TEST(VisionSystem, MarkerDetectionTests)
       imageCache.Reset(img);
 
       Anki::Vector::VisionSystemInput input;
-      input.modesToProcess.Insert(Anki::Vector::VisionMode::DetectingMarkers);
-      input.modesToProcess.Insert(Anki::Vector::VisionMode::FullFrameMarkerDetection);
-      input.modesToProcess.Insert(Anki::Vector::VisionMode::MarkerDetectionWhileRotatingFast);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers_FullFrame);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers_FastRotation);
       input.imageBuffer = imageCache.GetBuffer();
   
       Vector::VisionPoseData robotState; // not needed just to detect markers
@@ -646,7 +646,7 @@ TEST(VisionSystem, ImageQuality)
       imageCache.Reset(img);
 
       Anki::Vector::VisionSystemInput input;
-      input.modesToProcess.Insert(Anki::Vector::VisionMode::AutoExposure);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::AutoExp);
       input.imageBuffer = imageCache.GetBuffer();
       
       Vector::VisionPoseData robotState; // not needed for image quality check
@@ -799,43 +799,43 @@ GTEST_TEST(VisionModeSet, BasicFunctionality)
   VisionModeSet set1;
   ASSERT_TRUE(set1.IsEmpty());
   
-  set1.Insert(VisionMode::DetectingMarkers);
+  set1.Insert(VisionMode::Markers);
   ASSERT_FALSE(set1.IsEmpty());
   
-  ASSERT_TRUE(set1.Contains(VisionMode::DetectingMarkers));
-  ASSERT_FALSE(set1.Contains(VisionMode::DetectingFaces));
+  ASSERT_TRUE(set1.Contains(VisionMode::Markers));
+  ASSERT_FALSE(set1.Contains(VisionMode::Faces));
   
-  set1.Insert(VisionMode::DetectingMarkers); // shouldn't change anything
-  ASSERT_TRUE(set1.Contains(VisionMode::DetectingMarkers));
+  set1.Insert(VisionMode::Markers); // shouldn't change anything
+  ASSERT_TRUE(set1.Contains(VisionMode::Markers));
   ASSERT_EQ(1, set1.size());
   
   set1.Clear();
   ASSERT_TRUE(set1.IsEmpty());
   
-  VisionModeSet set2{VisionMode::DetectingFaces};
+  VisionModeSet set2{VisionMode::Faces};
   ASSERT_FALSE(set2.IsEmpty());
-  ASSERT_TRUE(set2.Contains(VisionMode::DetectingFaces));
+  ASSERT_TRUE(set2.Contains(VisionMode::Faces));
   ASSERT_EQ(1, set2.size());
-  set2.Insert(VisionMode::DetectingMarkers);
+  set2.Insert(VisionMode::Markers);
   ASSERT_EQ(2, set2.size());
   
-  VisionModeSet set3{VisionMode::DetectingMarkers, VisionMode::DetectingMotion, VisionMode::DetectingFaces};
+  VisionModeSet set3{VisionMode::Markers, VisionMode::Motion, VisionMode::Faces};
   ASSERT_EQ(3, set3.size());
   
   VisionModeSet intersection = set2.Intersect(set3);
   ASSERT_EQ(2, intersection.size());
-  ASSERT_TRUE(intersection.Contains(VisionMode::DetectingMarkers));
-  ASSERT_TRUE(intersection.Contains(VisionMode::DetectingFaces));
-  ASSERT_FALSE(intersection.Contains(VisionMode::DetectingMotion));
+  ASSERT_TRUE(intersection.Contains(VisionMode::Markers));
+  ASSERT_TRUE(intersection.Contains(VisionMode::Faces));
+  ASSERT_FALSE(intersection.Contains(VisionMode::Motion));
   
   intersection = set1.Intersect(set2);
   ASSERT_TRUE(intersection.IsEmpty());
   
-  intersection = set2.Intersect(VisionModeSet{VisionMode::DetectingIllumination});
+  intersection = set2.Intersect(VisionModeSet{VisionMode::Illumination});
   ASSERT_TRUE(intersection.IsEmpty());
   
   // Hard-coded multi-insertion
-  set1.Insert(VisionMode::DetectingMarkers, VisionMode::DetectingMotion, VisionMode::DetectingFaces);
+  set1.Insert(VisionMode::Markers, VisionMode::Motion, VisionMode::Faces);
   ASSERT_EQ(3, set1.size());
   
   set1.Clear();
@@ -843,9 +843,9 @@ GTEST_TEST(VisionModeSet, BasicFunctionality)
   
   // Insert/enable/remove using a container of VisionModes
   const std::list<VisionMode> listOfModes{
-    VisionMode::DetectingFaces,
-    VisionMode::DetectingMotion,
-    VisionMode::DetectingIllumination
+    VisionMode::Faces,
+    VisionMode::Motion,
+    VisionMode::Illumination
   };
   
   set1.Insert(listOfModes);

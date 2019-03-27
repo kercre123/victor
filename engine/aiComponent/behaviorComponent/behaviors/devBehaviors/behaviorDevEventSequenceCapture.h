@@ -39,7 +39,7 @@ protected:
     modifiers.wantsToBeActivatedWhenOffTreads = true;
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.behaviorAlwaysDelegates = false;
-    modifiers.visionModesForActiveScope->insert({VisionMode::SavingImages, EVisionUpdateFrequency::High});
+    modifiers.visionModesForActiveScope->insert({VisionMode::SaveImages, EVisionUpdateFrequency::High});
     modifiers.visionModesForActiveScope->insert({VisionMode::MirrorMode,   EVisionUpdateFrequency::High});
   }
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;

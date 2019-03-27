@@ -204,7 +204,7 @@ struct DockingErrorSignal;
     Result GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p) const;
 
     // Call to compute calibration from previously stored images
-    void EnableComputingCameraCalibration(bool enable) { EnableMode(VisionMode::ComputingCalibration, enable); }
+    void EnableComputingCameraCalibration(bool enable) { EnableMode(VisionMode::Calibration, enable); }
     
     // For factory test behavior use only: tell vision component to find the
     // four dots for the test target and compute camera pose. Result is
@@ -521,7 +521,7 @@ struct DockingErrorSignal;
   
   inline void VisionComponent::EnableVisionWhileRotatingFast(bool enable) {
     _visionWhileRotatingFastEnabled = enable;
-    EnableMode(VisionMode::MarkerDetectionWhileRotatingFast, _visionWhileRotatingFastEnabled);
+    EnableMode(VisionMode::Markers_FastRotation, _visionWhileRotatingFastEnabled);
   }
   
   inline bool VisionComponent::IsVisionWhileRotatingFastEnabled() const {

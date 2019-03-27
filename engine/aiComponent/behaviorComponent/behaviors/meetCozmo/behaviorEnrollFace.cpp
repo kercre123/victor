@@ -1261,7 +1261,7 @@ void BehaviorEnrollFace::TransitionToWaitInPlaceForFace()
   CancelDelegates(false); // Make sure we stop tracking/scanning if necessary
   IActionRunner* action = new CompoundActionSequential({
     new MoveHeadToAngleAction(MAX_HEAD_ANGLE),
-    new WaitForImagesAction(kEnrollFace_NumImagesToWaitInPlace, VisionMode::DetectingFaces),
+    new WaitForImagesAction(kEnrollFace_NumImagesToWaitInPlace, VisionMode::Faces),
   });
   DelegateIfInControl(action, [this](){
     TransitionToLookingForFace();
@@ -1295,7 +1295,7 @@ void BehaviorEnrollFace::TransitionToLookingForFace()
   CancelDelegates(false); // Make sure we stop tracking/scanning if necessary
   IActionRunner* action = new CompoundActionSequential({
     CreateTurnTowardsFaceAction(_dVars->faceID, _dVars->saveID, playScanningGetOut),
-    new WaitForImagesAction(kEnrollFace_NumImagesToWait, VisionMode::DetectingFaces),
+    new WaitForImagesAction(kEnrollFace_NumImagesToWait, VisionMode::Faces),
   });
 
   DelegateIfInControl(action, [this]()
@@ -1813,12 +1813,11 @@ void BehaviorEnrollFace::TransitionToFailedState( State state, const std::string
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorEnrollFace::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.visionModesForActiveScope->insert( { VisionMode::CroppedFaceDetection, EVisionUpdateFrequency::High } );
-  modifiers.visionModesForActiveScope->insert( { VisionMode::DetectingFaces, EVisionUpdateFrequency::High } );
-
+  modifiers.visionModesForActiveScope->insert( { VisionMode::Faces_Crop, EVisionUpdateFrequency::High } );
+  modifiers.visionModesForActiveScope->insert( { VisionMode::Faces, EVisionUpdateFrequency::High } );
   // Avoid marker detection to improve performance
   // TODO: Remove with VIC-6838
-  modifiers.visionModesForActiveScope->insert( { VisionMode::DisableMarkerDetection, EVisionUpdateFrequency::High } );
+  modifiers.visionModesForActiveScope->insert( { VisionMode::Markers_Off, EVisionUpdateFrequency::High } );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1976,7 +1975,7 @@ IActionRunner* BehaviorEnrollFace::CreateLookAroundAction()
     compoundAction->AddAction(new MoveHeadToAngleAction(absHeadAngle));
   }
 
-  compoundAction->AddAction(new WaitForImagesAction(kEnrollFace_NumImagesToWait, VisionMode::DetectingFaces));
+  compoundAction->AddAction(new WaitForImagesAction(kEnrollFace_NumImagesToWait, VisionMode::Faces));
 
   return compoundAction;
 }

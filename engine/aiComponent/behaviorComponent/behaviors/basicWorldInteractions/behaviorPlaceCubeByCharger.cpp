@@ -442,7 +442,7 @@ void BehaviorPlaceCubeByCharger::StartNextSearchForChargerTurn()
 
     auto* loopAndWaitAction = new CompoundActionParallel();
     loopAndWaitAction->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::FindCubeWaitLoop));
-    loopAndWaitAction->AddAction(new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers));
+    loopAndWaitAction->AddAction(new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::Markers));
     action->AddAction(loopAndWaitAction);
 
     // Keep track of the pose before the robot starts turning

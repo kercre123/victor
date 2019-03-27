@@ -74,7 +74,7 @@ protected:
 
   void PlayNextRecipientTTS();
   void PlayTextToSpeech( const std::string& ttsString, BehaviorSimpleCallback callback = {} );
-  
+
 
 private:
 
@@ -85,10 +85,11 @@ private:
   {
     InstanceConfig();
 
-    std::string ttsAnnounceSingle;
-    std::string ttsAnnouncePlural;
-    std::string ttsErrorNoRecipient;
-    std::string ttsErrorNoMessages;
+    // Configurable localization keys
+    std::string ttsAnnounceSingleKey;
+    std::string ttsAnnouncePluralKey;
+    std::string ttsNoRecipientKey;
+    std::string ttsNoMessagesKey;
 
     std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
 

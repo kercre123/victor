@@ -590,7 +590,7 @@ namespace Anki {
 
     void SearchForNearbyObjectAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
-      requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+      requests.insert({ VisionMode::Markers, EVisionUpdateFrequency::High });
     }
 
     ActionResult SearchForNearbyObjectAction::Init()
@@ -765,7 +765,7 @@ namespace Anki {
 
     void DriveStraightAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
-      requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
+      requests.insert({ VisionMode::Markers, EVisionUpdateFrequency::Low });
     }
 
     void DriveStraightAction::SetAccel(f32 accel_mmps2)
@@ -1705,7 +1705,7 @@ namespace Anki {
 
     void TurnTowardsObjectAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
-      requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
+      requests.insert({ VisionMode::Markers, EVisionUpdateFrequency::Low });
     }
 
     void TurnTowardsObjectAction::UseCustomObject(ObservableObject* objectPtr)
@@ -2242,7 +2242,7 @@ namespace Anki {
 
     void TurnTowardsFaceAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
-      requests.insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
+      requests.insert({ VisionMode::Faces, EVisionUpdateFrequency::High });
     }
 
     ActionResult TurnTowardsFaceAction::Init()
@@ -2477,7 +2477,7 @@ namespace Anki {
                         "Will wait no more than %d frames",
                         _maxFramesToWait);
               DEV_ASSERT(nullptr == _action, "TurnTowardsFaceAction.CheckIfDone.ActionPointerShouldStillBeNull");
-              SetAction(new WaitForImagesAction(_maxFramesToWait, VisionMode::DetectingFaces));
+              SetAction(new WaitForImagesAction(_maxFramesToWait, VisionMode::Faces));
               // TODO:(bn) parallel action with an animation here? This will let us span the gap a bit better
               // and buy us more time. Skipping for now
               _state = State::WaitingForFace;
@@ -2676,7 +2676,7 @@ namespace Anki {
       //  in a single frame, then we can use the special SingleShot update frequency. This forcibly
       //  disables the mode after a single camera frame. 
       // If the VisionMode needs multiple frames to complete a "cycle" (as is the case for 
-      //  ImageCompositing or CyclingExposure), or multiple frames are requested, then we simply 
+      //  Markers_Composite or AutoExp_Cycling), or multiple frames are requested, then we simply 
       //  use High frequency. In this case, there may be one extra frame actually processed with the 
       //  specified mode, because the VisionSystem runs asynchronously and may have already 
       //  started on the next frame before this action unsubscribes from the mode.

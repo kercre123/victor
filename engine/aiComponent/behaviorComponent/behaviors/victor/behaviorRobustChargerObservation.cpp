@@ -86,10 +86,10 @@ bool BehaviorRobustChargerObservation::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRobustChargerObservation::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers,           EVisionUpdateFrequency::High });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingIllumination,      EVisionUpdateFrequency::High });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::FullFrameMarkerDetection,   EVisionUpdateFrequency::High });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::MeteringFromChargerOnly,    EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Markers,                EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Illumination,           EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Markers_FullFrame,      EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Markers_ChargerOnly,    EVisionUpdateFrequency::High });
   
   modifiers.wantsToBeActivatedWhenOnCharger = false;
   modifiers.wantsToBeActivatedWhenCarryingObject = true;
@@ -171,7 +171,7 @@ bool BehaviorRobustChargerObservation::IsLowLightVision() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRobustChargerObservation::TransitionToIlluminationCheck()
 {
-  WaitForImagesAction* waitForIllumState = new WaitForImagesAction(2, VisionMode::DetectingIllumination);
+  WaitForImagesAction* waitForIllumState = new WaitForImagesAction(2, VisionMode::Illumination);
   DelegateIfInControl(waitForIllumState, &BehaviorRobustChargerObservation::TransitionToObserveCharger);
 }
 
@@ -198,12 +198,12 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
                                 return true;
                               }));
     compoundAction->AddAction(getinAndSetLcd);
-    waitAction = new WaitForImagesAction(_iConfig.numImageCompositingCyclesToWaitFor, VisionMode::CompositingImages);
+    waitAction = new WaitForImagesAction(_iConfig.numImageCompositingCyclesToWaitFor, VisionMode::Markers_Composite);
     waitAction->SetTracksToLock((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK);
     compoundAction->AddAction(new LoopAnimWhileAction(waitAction, AnimationTrigger::LowlightChargerSearchLoop));
   } else {
     // Use cycling exposure instead
-    waitAction = new WaitForImagesAction(_iConfig.numCyclingExposureCyclesToWaitFor, VisionMode::CyclingExposure);
+    waitAction = new WaitForImagesAction(_iConfig.numCyclingExposureCyclesToWaitFor, VisionMode::AutoExp_Cycling);
     const auto currMood = GetBEI().GetMoodManager().GetSimpleMood();
     const bool isHighStim = (currMood == SimpleMoodType::HighStim);
     if (isHighStim) {

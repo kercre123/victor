@@ -579,7 +579,7 @@ namespace Vector {
       // use a default number of images to give the robot a good chance to see something with the given vision modes
       WaitForImagesAction(UseDefaultNumImages_t, VisionMode visionMode);
       
-      // Set save params, assuming VisionMode::SavingImages is active
+      // Set save params, assuming VisionMode::SaveImages is active
       // If Mode is SingleShot, will save one image at the start of this action.
       // If Mode is Stream, will save all images (irrespective of visionMode above) while the action
       //   is running. In this case, the mode will be set back to off when the action ends, so anything

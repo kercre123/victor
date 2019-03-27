@@ -82,7 +82,7 @@ void BehaviorBlackJack::GetBehaviorOperationModifiers(BehaviorOperationModifiers
 {
   modifiers.wantsToBeActivatedWhenOffTreads = true;
   modifiers.behaviorAlwaysDelegates = false;
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Low });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Faces, EVisionUpdateFrequency::Low });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -361,7 +361,7 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
     // All of the vision mode requests are gated behind the sdk behavior being activated
     // to prevent enabling of unnecessary modes that may have performance impact.
     // The modes are automatically removed when the behavior is deactivated.
-    // Except for ImageViz since the SDK still wants to receive images while the robot is
+    // Except for Viz since the SDK still wants to receive images while the robot is
     // doing his normal things
     #define SEND_FORBIDDEN(RESPONSE_TYPE) {                                     \
         ResponseStatus* status = new ResponseStatus(ResponseStatus::FORBIDDEN); \
@@ -375,8 +375,8 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
         if(_sdkBehaviorActivated)
         {
           const auto& enable = event.GetData().enable_marker_detection_request().enable();
-          SubscribeToVisionMode(enable, VisionMode::DetectingMarkers);
-          SubscribeToVisionMode(enable, VisionMode::FullFrameMarkerDetection);
+          SubscribeToVisionMode(enable, VisionMode::Markers);
+          SubscribeToVisionMode(enable, VisionMode::Markers_FullFrame);
         }
         else
         {
@@ -390,11 +390,11 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
         if(_sdkBehaviorActivated)
         {
           const auto& msg = event.GetData().enable_face_detection_request();
-          SubscribeToVisionMode(msg.enable(), VisionMode::DetectingFaces);
-          SubscribeToVisionMode(msg.enable_smile_detection(), VisionMode::DetectingSmileAmount);
-          SubscribeToVisionMode(msg.enable_expression_estimation(), VisionMode::EstimatingFacialExpression);
-          SubscribeToVisionMode(msg.enable_blink_detection(), VisionMode::DetectingBlinkAmount);
-          SubscribeToVisionMode(msg.enable_gaze_detection(), VisionMode::DetectingGaze);
+          SubscribeToVisionMode(msg.enable(), VisionMode::Faces);
+          SubscribeToVisionMode(msg.enable_smile_detection(), VisionMode::Faces_Smile);
+          SubscribeToVisionMode(msg.enable_expression_estimation(), VisionMode::Faces_Expression);
+          SubscribeToVisionMode(msg.enable_blink_detection(), VisionMode::Faces_Blink);
+          SubscribeToVisionMode(msg.enable_gaze_detection(), VisionMode::Faces_Gaze);
         }
         else
         {
@@ -408,7 +408,7 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
         if(_sdkBehaviorActivated)
         {
           const auto& enable = event.GetData().enable_motion_detection_request().enable();
-          SubscribeToVisionMode(enable, VisionMode::DetectingMotion);
+          SubscribeToVisionMode(enable, VisionMode::Motion);
         }
         else
         {
@@ -435,7 +435,7 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
       {
         // Allowed to be controlled even when the behavior is not active
         const auto& enable = event.GetData().enable_image_streaming_request().enable();
-        SubscribeToVisionMode(enable, VisionMode::ImageViz);
+        SubscribeToVisionMode(enable, VisionMode::Viz);
         _robot->GetVisionComponent().EnableSendingSDKImageChunks(enable);
       }
       break;
@@ -538,21 +538,21 @@ void SDKComponent::HandleMessage(const ExternalInterface::RobotProcessedImage& m
       ResponseStatus* status = new ResponseStatus(ResponseStatus::OK);
       switch(waitingIter->first)
       {
-        case VisionMode::DetectingMarkers:
+        case VisionMode::Markers:
           {
             auto* msg = new EnableMarkerDetectionResponse();
             msg->set_allocated_status(status);
             gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
           }
           break;
-        case VisionMode::DetectingFaces:
+        case VisionMode::Faces:
           {
             auto* msg = new EnableFaceDetectionResponse();
             msg->set_allocated_status(status);
             gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
           }
           break;
-        case VisionMode::DetectingMotion:
+        case VisionMode::Motion:
           {
             auto* msg = new EnableMotionDetectionResponse();
             msg->set_allocated_status(status);
@@ -566,7 +566,7 @@ void SDKComponent::HandleMessage(const ExternalInterface::RobotProcessedImage& m
             gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
           }
           break;
-        case VisionMode::ImageViz:
+        case VisionMode::Viz:
           {
             auto* msg = new EnableImageStreamingResponse();
             msg->set_allocated_status(status);
@@ -625,12 +625,12 @@ void SDKComponent::SDKBehaviorActivation(bool enabled)
     // will display eyes when the sdk no longer has control.
     DisableMirrorMode();
 
-    // Remove all other vision modes except for ImageViz in order
+    // Remove all other vision modes except for Viz in order
     // to allow SDK users to still receive images when the SDK does not have
     // control.
     VisionModeSet modes;
     modes.InsertAllModes();
-    modes.Remove(VisionMode::ImageViz);
+    modes.Remove(VisionMode::Viz);
     _robot->GetVisionScheduleMediator().RemoveVisionModeSubscriptions(this, modes.GetSet());    
 
     auto* gi = _robot->GetGatewayInterface();

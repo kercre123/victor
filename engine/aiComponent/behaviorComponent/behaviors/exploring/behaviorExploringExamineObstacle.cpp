@@ -231,7 +231,7 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
     SET_STATE(CheckForHand);
     
     _dVars.lastImageTime = GetBEI().GetVisionComponent().GetLastProcessedImageTimeStamp();
-    WaitForImagesAction* action = new WaitForImagesAction(1, VisionMode::DetectingHands, _dVars.lastImageTime);
+    WaitForImagesAction* action = new WaitForImagesAction(1, VisionMode::Hands, _dVars.lastImageTime);
     DelegateNow( action, [this]() {
       std::list<Vision::SalientPoint> handsFound;
       const auto& salientPtsComponent = GetAIComp<SalientPointsComponent>();

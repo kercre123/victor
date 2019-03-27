@@ -66,7 +66,7 @@ namespace Anki {
           // enable the correct vision modes (using the console var message for this will also ensure
           // the right schedule is used as well)
           using namespace ExternalInterface;
-          MessageGameToEngine wrap(SetDebugConsoleVarMessage("DetectingFaces", "1"));
+          MessageGameToEngine wrap(SetDebugConsoleVarMessage("Faces", "1"));
           
           if(SendMessage(wrap)==Anki::RESULT_OK) {
             _testState = TestState::TurnToFace;

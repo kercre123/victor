@@ -2818,21 +2818,27 @@ func (service *rpcService) StartUpdateEngine(
 		},
 	}
 
-	err := exec.Command("/usr/bin/sudo", "-n", "/bin/systemctl", "stop", "update-engine.service").Run()
-	if err != nil {
-		log.Errorf("Update attempt failed on `systemctl stop update-engine`: %s\n", err)
-		retval.Status.Code = extint.ResponseStatus_ERROR_UPDATE_IN_PROGRESS
-	} else {
-		err := exec.Command("/usr/bin/sudo", "-n", "/bin/systemctl", "restart", "update-engine-oneshot").Run()
+	status, _ := service.GetUpdateStatus()
+
+	if status.UpdateStatus == extint.CheckUpdateStatusResponse_NO_UPDATE {
+		err := exec.Command("/usr/bin/sudo", "-n", "/bin/systemctl", "stop", "update-engine.service").Run()
+		if err != nil {
+			log.Errorf("Update attempt failed on `systemctl stop update-engine`: %s\n", err)
+			retval.Status.Code = extint.ResponseStatus_ERROR_UPDATE_IN_PROGRESS
+			return retval, err
+		}
+
+		err = exec.Command("/usr/bin/sudo", "-n", "/bin/systemctl", "restart", "update-engine-oneshot").Run()
 		if err != nil {
 			log.Errorf("Update attempt failed on `systemctl restart update-engine-oneshot`: %s\n", err)
 			retval.Status.Code = extint.ResponseStatus_ERROR_UPDATE_IN_PROGRESS
-		} else {
-			go service.UpdateStatusStream()
+			return retval, err
 		}
 	}
 
-	return retval, err
+	go service.UpdateStatusStream()
+
+	return retval, nil
 }
 
 // CheckUpdateStatus tells if the robot is ready to reboot and update.
