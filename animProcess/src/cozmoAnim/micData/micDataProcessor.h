@@ -17,9 +17,11 @@
 #include "svad.h"
 
 #include "micDataTypes.h"
+#include "audioUtil/audioDataTypes.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "cozmoAnim/micData/micTriggerConfig.h"
 #include "clad/cloud/mic.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
 #include "util/container/fixedCircularBuffer.h"
 #include "util/global/globalDefinitions.h"
 
@@ -180,8 +182,7 @@ private:
   void TriggerWordDetectCallback(TriggerWordDetectSource source,
                                  const AudioUtil::SpeechRecognizerCallbackInfo& info);
   
-  // Return 0 if the stream job can not be created
-  RobotTimeStamp_t CreateTriggerWordDetectedJobs(bool shouldStream);
+  void CreateTriggerWordDetectedJobs(bool shouldStream);
   
   void ProcessRawAudio(RobotTimeStamp_t timestamp,
                        const AudioUtil::AudioSample* audioChunk,

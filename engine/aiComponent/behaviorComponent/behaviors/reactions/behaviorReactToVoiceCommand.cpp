@@ -426,7 +426,7 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
   // Trigger word is heard (since we've been activated) ...
   LOG_DEBUG( "BehaviorReactToVoiceCommand.Activated",
              "Reacting to trigger word from direction [%d] (%s stream)",
-             (int)GetReactionDirection(),
+             (int)_triggerDirection,
              _dVars.expectingStream ? "expecting" : "not expecting" );
 
   if( nullptr != _iVars.intentWhitelistCondition )

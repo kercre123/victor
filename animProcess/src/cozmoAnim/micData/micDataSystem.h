@@ -16,6 +16,7 @@
 
 #include "micDataTypes.h"
 #include "coretech/common/shared/types.h"
+#include "cozmoAnim/micData/micRecordingStateController.h"
 #include "cozmoAnim/speechRecognizer/speechRecognizerSystem.h"
 #include "util/console/consoleFunction.h"
 #include "util/global/globalDefinitions.h"
@@ -130,11 +131,6 @@ public:
   // command audio to be played and it actually gets played on the speaker
   uint32_t GetSpeakerLatency_ms() const { return _speakerLatency_ms; }
 
-  // Callback parameter is whether or not we will be streaming after
-  // the trigger word is detected
-  void AddTriggerWordDetectedCallback(std::function<void(bool)> callback)
-    { _triggerWordDetectedCallbacks.push_back(callback); }
-
   // Callback parameter is whether or not the stream was started
   // True if started, False if stopped
   void AddStreamUpdatedCallback(std::function<void(bool)> callback)
@@ -149,6 +145,8 @@ public:
   // simulated streaming is when we make everything look like we're streaming normally, but we're not actually
   // sending any data to the cloud; this lasts for a set duration
   bool ShouldSimulateStreaming() const;
+
+  MicRecordingStateController& GetMicRecordingStateController() { return _micStateController; }
 
   // let's anybody who registered a callback with AddTriggerWordDetectedCallback(...) know that we've heard the
   // trigger word and are either about to start streaming, or not (either on purpose, or it was cancelled/error)
@@ -181,6 +179,8 @@ private:
   std::unique_ptr<SpeechRecognizerSystem> _speechRecognizerSystem;
   std::unique_ptr<LocalUdpServer>         _udpServer;
 
+  MicRecordingStateController             _micStateController;
+
 #if ANKI_DEV_CHEATS
   bool _forceRecordClip = false;
 #endif
@@ -200,7 +200,7 @@ private:
   std::vector<std::unique_ptr<RobotInterface::RobotToEngine>> _msgsToEngine;
   std::mutex _msgsMutex;
 
-  std::vector<std::function<void(bool)>> _triggerWordDetectedCallbacks;
+
   std::vector<std::function<void(bool)>> _streamUpdatedCallbacks;
 
   bool _batteryLow = false;

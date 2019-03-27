@@ -169,20 +169,20 @@ void ShowAudioStreamStateManager::StartTriggerResponseWithoutGetIn(OnTriggerAudi
 }
 
 
-bool ShowAudioStreamStateManager::HasValidTriggerResponse()
+bool ShowAudioStreamStateManager::HasValidTriggerResponse() const
 {
   std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
   return _postAudioEvent.audioEvent != AudioMetaData::GameEvent::GenericEvent::Invalid;
 }
 
 
-bool ShowAudioStreamStateManager::ShouldStreamAfterTriggerWordResponse()
+bool ShowAudioStreamStateManager::ShouldStreamAfterTriggerWordResponse() const
 {
   std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
   return HasValidTriggerResponse() && _shouldTriggerWordStartStream;
 }
 
-bool ShowAudioStreamStateManager::ShouldSimulateStreamAfterTriggerWord()
+bool ShowAudioStreamStateManager::ShouldSimulateStreamAfterTriggerWord() const
 {
   std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
   return HasValidTriggerResponse() && _shouldTriggerWordSimulateStream;

@@ -185,12 +185,15 @@ void MicDataProcessor::GetLatestMicDirectionData(MicDirectionData& out_lastSampl
 void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
                                                  const AudioUtil::SpeechRecognizerCallbackInfo& info)
 {
-  ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
+  MicRecordingStateController& streamController = _micDataSystem->GetMicRecordingStateController();
+
   // Ignore extra triggers during streaming
-  if (_micDataSystem->HasStreamingJob() || !showStreamState->HasValidTriggerResponse())
+  if ( !streamController.CanBeginStreamingJob() )
   {
     return;
   }
+
+  ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
   
   // By the time the earcon completes, engine may have changed its response, so assume the decision to stream
   // should be based on the engine-requested state at the time of the trigger word callback. Ugh.
@@ -201,8 +204,7 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
   auto earConCallback = [this,shouldStream](bool success) {
     // If we didn't succeed, it means that we didn't have a wake word response setup
     if (success) {
-      RobotTimeStamp_t mostRecentTimestamp = CreateTriggerWordDetectedJobs(shouldStream);
-      LOG_INFO("MicDataProcessor.TWCallback", "Timestamp %d", (TimeStamp_t)mostRecentTimestamp);
+      CreateTriggerWordDetectedJobs( shouldStream );
     }
     else {
       // since we're not opening up a stream, we need to reset the streaming light since it get's turned on
@@ -214,12 +216,9 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
   
   const bool muteButton = (source == TriggerWordDetectSource::ButtonFromMute);
   const bool buttonPress = (source == TriggerWordDetectSource::Button) || muteButton;
-  if( muteButton ) {
-    // don't play the get-in if this trigger word started from mute, because the mute animation should be playing
-    showStreamState->SetPendingTriggerResponseWithoutGetIn(earConCallback);
-  } else {
-    showStreamState->SetPendingTriggerResponseWithGetIn(earConCallback);
-  }
+
+  // don't play the get-in if this trigger word started from mute, because the mute animation should be playing
+  _micDataSystem->GetMicRecordingStateController().BeginStreamingJob( CloudMic::StreamType::Normal, !muteButton, earConCallback );
 
   const auto currentDirection = _micImmediateDirection->GetDominantDirection();
   const bool willStreamAudio = showStreamState->ShouldStreamAfterTriggerWordResponse() &&
@@ -317,17 +316,8 @@ RobotTimeStamp_t MicDataProcessor::CreateStreamJob(CloudMic::StreamType streamTy
   return mostRecentTimestamp;
 }
 
-RobotTimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs(bool shouldStream)
+void MicDataProcessor::CreateTriggerWordDetectedJobs(bool shouldStream)
 {
-  RobotTimeStamp_t mostRecentTimestamp = 0;
-  if (shouldStream)
-  {
-    // First we create the job responsible for streaming the intent after the trigger
-    mostRecentTimestamp = CreateStreamJob(CloudMic::StreamType::Normal, kTriggerOverlapSize_ms);
-  } else {
-    LOG_INFO("MicDataProcessor.CreateTriggerWordDetectedJobs.NoStreaming", "Not adding streaming jobs because disabled");
-  }
-
   // Now we set up the optional job for recording _just_ the trigger that was just recognized
   bool saveTriggerOnly = false;
 # if ANKI_DEV_CHEATS
@@ -363,11 +353,9 @@ RobotTimeStamp_t MicDataProcessor::CreateTriggerWordDetectedJobs(bool shouldStre
       const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
       triggerJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
     }
-    const auto notStreamingJob = false;
-    _micDataSystem->AddMicDataJob(triggerJob, notStreamingJob);
+    const auto isStreamingJob = false;
+    _micDataSystem->AddMicDataJob(triggerJob, isStreamingJob);
   }
-
-  return mostRecentTimestamp;
 }
 
 MicDataProcessor::~MicDataProcessor()

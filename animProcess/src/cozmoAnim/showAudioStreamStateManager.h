@@ -57,13 +57,13 @@ public:
 
   // Indicates whether or not the audio stream state manager will be able to indicate to the user
   // that streaming may be happening - if this returns false 
-  bool HasValidTriggerResponse();
+  bool HasValidTriggerResponse() const;
 
   // Indicates whether voice data should be streamed to the cloud after the trigger response has indicated to
   // the user that streaming may be happening
-  bool ShouldStreamAfterTriggerWordResponse();
+  bool ShouldStreamAfterTriggerWordResponse() const;
   
-  bool ShouldSimulateStreamAfterTriggerWord();
+  bool ShouldSimulateStreamAfterTriggerWord() const;
 
   uint32_t GetMinStreamingDuration();
   

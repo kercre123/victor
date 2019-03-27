@@ -116,6 +116,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
                              const Anim::AnimContext* context)
 : _context(context)
 , _udpServer(new LocalUdpServer())
+, _micStateController(this)
 , _fftResultData(new FFTResultData())
 , _alexaState(AlexaSimpleState::Disabled)
 , _micMuted(false)
@@ -172,6 +173,8 @@ void MicDataSystem::Init(const Anim::RobotDataLoader& dataLoader)
   };
   _speechRecognizerSystem->InitVector(dataLoader, _locale, callback);
   _micDataProcessor->Init();
+
+  _micStateController.Initialize( _context );
   
   if( Util::FileUtils::FileExists(_persistentFolder + kMicSettingsFile) ) {
     ToggleMicMute();
@@ -213,65 +216,11 @@ void MicDataSystem::RecordProcessedAudio(uint32_t duration_ms, const std::string
 
 void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool playGetInFromAnimProcess)
 {
-  
-  if(HasStreamingJob())
+  // if we can start a new stream, go ahead and do that now
+  // the streaming controller will handle the rest for us
+  if( _micStateController.CanBeginStreamingJob() )
   {
-    // We "fake" having a streaming job in order to achieve the "feel" of a minimum streaming time for UX
-    // reasons (I think?). This means that HasStreamingJob() may actually lie, so if we have a job, but have
-    // completed streaming, and the engine is requesting a wakewordless stream (e.g. knowledge graph), we
-    // should clear it now. This is a workaround to fix VIC-13402 (a blocker for R1.4.1)
-
-    // TODO:(bn) VIC-13438 this is tech debt and should be cleaned up
-
-    if( _currentlyStreaming &&
-        _streamingComplete ) {
-
-      LOG_INFO("MicDataSystem.StartWakeWordlessStreaming.OverlappingWithFakeStream.Opening",
-               "Request came in overlapping with a 'fake' extended request, so cancel it before starting a new one");
-      ClearCurrentStreamingJob();
-    }
-    else {
-      LOG_WARNING("MicDataSystem.StartWakeWordlessStreaming.OverlappingStreamRequests",
-                  "Received StartWakeWorldlessStreaming message from engine, but micDataSystem is already streaming (not faking to extend the stream)");
-      return;
-    }
-  }
-
-  // we want to start the stream AFTER the audio is complete so that it is not captured in the stream
-  auto callback = [this,type]( bool success )
-  {
-    // if we didn't succeed, it means that we didn't have a wake word response setup
-    if(success){
-      // it would be highly unlikely that we started another streaming job while waiting for the earcon,
-      // but doesn't hurt to check
-      if (!HasStreamingJob()) {
-        _micDataProcessor->CreateStreamJob(type, kTriggerLessOverlapSize_ms);
-        LOG_INFO("MicDataSystem.StartWakeWordlessStreaming.StartStreaming",
-                 "Starting Wake Wordless streaming");
-      }
-      else {
-        LOG_WARNING("MicDataSystem.StartWakeWordlessStreaming.OverlappingStreamRequests",
-                    "Started streaming job while waiting for StartTriggerResponseWithoutGetIn callback");
-        SetWillStream(false);
-      }
-    }
-    else {
-      LOG_WARNING("MicDataSystem.StartWakeWordlessStreaming.CantStreamToCloud",
-                  "Wakewordless streaming request received, but incapable of opening the cloud stream, so ignoring request");
-      SetWillStream(false);
-    }
-  };
-
-  ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
-  if(showStreamState->HasValidTriggerResponse()){
-    SetWillStream(true);
-  }
-
-  if(playGetInFromAnimProcess){
-    showStreamState->SetPendingTriggerResponseWithGetIn(callback);
-  }
-  else {
-    showStreamState->SetPendingTriggerResponseWithoutGetIn(callback);
+    _micStateController.BeginStreamingJob( type, playGetInFromAnimProcess, {} );
   }
 }
 
@@ -595,14 +544,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
   #endif
   for (const auto& msg : stolenMessages)
   {
-    if (msg->tag == RobotInterface::RobotToEngine::Tag_triggerWordDetected)
-    {
-      RobotInterface::SendAnimToEngine(msg->triggerWordDetected);
-
-      ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
-      SetWillStream(showStreamState->ShouldStreamAfterTriggerWordResponse());
-    }
-    else if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
+    if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
     {
       _latestMicDirectionMsg = msg->micDirection;
       #if ANKI_DEV_CHEATS
@@ -671,17 +613,6 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
 #endif
 }
 
-void MicDataSystem::SetWillStream(bool willStream) const
-{
-  for(auto func : _triggerWordDetectedCallbacks)
-  {
-    if(func != nullptr)
-    {
-      func(willStream);
-    }
-  }
-}
-
 void MicDataSystem::ClearCurrentStreamingJob()
 {
   {
@@ -691,6 +622,8 @@ void MicDataSystem::ClearCurrentStreamingJob()
     {
       _currentStreamingJob->SetTimeToRecord(0);
       _currentStreamingJob = nullptr;
+
+      _micStateController.EndStreamingJob();
 
       for(auto func : _streamUpdatedCallbacks)
       {
@@ -882,14 +815,8 @@ void MicDataSystem::ToggleMicMute()
   // Note that Alexa also has a method to stopStreamingMicrophoneData, but without the wakeword,
   // the samples go no where. Also check if it saves CPU to drop samples. Note that the time indices
   // for the wake word bookends might be wrong afterwards.
-  
-  // toggle backpack lights
-  if( _context != nullptr ) {
-    auto* bplComp = _context->GetBackpackLightComponent();
-    if( bplComp != nullptr ) {
-      bplComp->SetMicMute( _micMuted );
-    }
-  }
+
+  _micStateController.SetMicsMuted( _micMuted );
   
   // add/remove persistent file
   const auto muteFile = _persistentFolder + kMicSettingsFile;
