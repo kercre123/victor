@@ -77,5 +77,26 @@
   },
   "BehaviorKnowledgeGraphQuestion.Ready": {
     "translation": "Ready"
+  },
+  "BehaviorLeaveAMessage.NoRecipient": {
+    "translation": "I did not hear the name"
+  },
+  "BehaviorLeaveAMessage.UnknownRecipient": {
+    "translation": "I do not know a {0}"
+  },
+  "BehaviorLeaveAMessage.MailboxFull": {
+    "translation": "Voice mailbox is full"
+  },
+  "BehaviorPlaybackMessage.AnnounceSingle": {
+    "translation": "One message for {0}"
+  },
+  "BehaviorPlaybackMessage.AnnouncePlural": {
+    "translation": "{1} messages for {0}"
+  },
+  "BehaviorPlaybackMessage.NoRecipient": {
+    "translation": "I did not hear the name"
+  },
+  "BehaviorPlaybackMessage.NoMessages": {
+    "translation": "I have no messages for {0}"
   }
 }
