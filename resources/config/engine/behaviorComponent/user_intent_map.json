@@ -304,11 +304,13 @@
     },
     {
       "user_intent": "imperative_eyecolor_specific",
-      "cloud_intent": "intent_imperative_eyecolor_specific_extend"
+      "cloud_intent": "intent_imperative_eyecolor_specific_extend",
+      "feature_gate": "EyeColorVC"
     },
     {
       "user_intent": "imperative_eyecolor",
-      "cloud_intent": "intent_imperative_eyecolor"
+      "cloud_intent": "intent_imperative_eyecolor",
+      "feature_gate": "EyeColorVC"
     }
   ],
 
