@@ -263,6 +263,9 @@ void BehaviorFindHome::OnBehaviorDeactivated()
     RobotTimeStamp_t chrgObsTime = charger->GetLastObservedTime();
     RobotTimeStamp_t now = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
     chargerSeen = (now-chrgObsTime) < kMaxAgeForChargerSeenRecently_ms;
+    LOG_INFO("BehaviorFindHome.OnBehaviorDeactivated", "%s Charger! (t_last_seen=%u)", (chargerSeen?"New":"Old"), (TimeStamp_t)chrgObsTime);
+  } else {
+    LOG_INFO("BehaviorFindHome.OnBehaviorDeactivated", "Null Charger!");
   }
 
   DASMSG(find_home_result, "find_home.result", "Whether the FindHome behavior succeeded in locating the object");

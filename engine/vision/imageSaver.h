@@ -101,13 +101,13 @@ public:
   // Return the full filename to use for saving, using the given path and frameNumber/basename, and appending
   // the given extension.
   // If no basename has been provided in params, will use frameNumber. Otherwise frameNumber is ignored.
-  std::string GetFullFilename(const s32 frameNumber, const char* extension) const;
+  std::string GetFullFilename(const s32 frameNumber, const char* extension, const std::string& suffix = "") const;
   
   // Save the specified size image from the cache and a corresponding thumbnail if requested.
-  Result Save(Vision::ImageCache& imageCache, const s32 frameNumber);
+  Result Save(Vision::ImageCache& imageCache, const s32 frameNumber, const std::string& suffix = "");
   
   // Same as above, but uses specific image ("size" parameter will be ignored)
-  Result Save(const Vision::ImageRGB& img, const s32 frameNumber);
+  Result Save(const Vision::ImageRGB& img, const s32 frameNumber, const std::string& suffix = "");
   
   // Return the extension for the given quality
   static const char* GetExtension(int8_t forQuality);

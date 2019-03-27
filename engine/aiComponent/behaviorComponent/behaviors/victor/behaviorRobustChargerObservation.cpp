@@ -37,7 +37,7 @@ namespace Vector {
 #define LOG_CHANNEL "Behaviors"
 
 // Enable for debug, to save images during WaitForImageAction
-CONSOLE_VAR(bool, kRobustChargerObservation_SaveImages, "Behaviors.RobustChargerObservation", false);  
+CONSOLE_VAR(bool, kRobustChargerObservation_SaveImages, "Behaviors.RobustChargerObservation", true);  
 
 namespace {
   const char* kNumImageCompositingCyclesToWaitForKey = "numImageCompositingCyclesToWaitFor";
@@ -199,7 +199,6 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
                               }));
     compoundAction->AddAction(getinAndSetLcd);
     waitAction = new WaitForImagesAction(_iConfig.numImageCompositingCyclesToWaitFor, VisionMode::Markers_Composite);
-    waitAction->SetTracksToLock((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK);
     compoundAction->AddAction(new LoopAnimWhileAction(waitAction, AnimationTrigger::LowlightChargerSearchLoop));
   } else {
     // Use cycling exposure instead
@@ -219,7 +218,7 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
                               Util::Data::Scope::Cache,
                               "robustChargerObsImages");
     ImageSaverParams params(path, ImageSaverParams::Mode::Stream, -1);  // Quality: save PNGs
-    params.size = Vision::ImageCacheSize::Full;
+    params.size = Vision::ImageCacheSize::Half;
     waitAction->SetSaveParams(params);
   }
 

@@ -525,8 +525,9 @@ void BehaviorGoHome::TransitionToPostVisualVerification(const RobotTimeStamp_t v
   }
 
   // Has to be seen sometime after the observe action
-  ObservableObject* object = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
-  const bool chargerSeen = (object != nullptr) && (object->GetLastObservedTime() >= verifyStartTime);
+  const bool chargerSeen = (charger != nullptr) && (charger->GetLastObservedTime() >= verifyStartTime);
+
+  LOG_INFO("BehaviorGoHome.TransitionToPostVisualVerification", "Charger State? null=%d poseOk=%d seen=%d", (charger!=nullptr), poseOk, chargerSeen);
 
   if (poseOk && chargerSeen) {
     TransitionToTurn();
@@ -537,7 +538,7 @@ void BehaviorGoHome::TransitionToPostVisualVerification(const RobotTimeStamp_t v
                         "Deleting charger with ID %d since visual verification failed (start=%u end=%u)",
                         _dVars.chargerID.GetValue(),
                         (TimeStamp_t)verifyStartTime,
-                        (TimeStamp_t)GetBEI().GetRobotInfo().GetLastMsgTimestamp());
+                        (charger!=nullptr) ? ((TimeStamp_t)charger->GetLastObservedTime()) : 0);
     const bool removeChargerFromBlockworld = true;
     DASMSG(go_home_charger_not_visible, "go_home.charger_not_visible", "GoHome behavior failure because the charger is not seen when should be.");
     DASMSG_SEND();

@@ -1795,16 +1795,6 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
   // set this flag to do the localization update once out in Update().
   _needToSendLocalizationUpdate = true;
 
-  // VIC-14082 Because we localize to the charger, we do not update its observation
-  //  times until after we have finished using the previous timestamps for interpolating
-  //  the positions of the robot in time (for accurate pose tree transformations).
-  // At this point in the execution we have successfully localized, so it is now safe to
-  //  overwrite the observation times for the existing instance (which persists over the
-  //  seen instance of this object).
-  if(seenObject != nullptr && existingObject != nullptr) {
-    existingObject->SetObservationTimes(seenObject);
-  }
-
   return RESULT_OK;
 } // LocalizeToObject()
 

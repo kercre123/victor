@@ -199,16 +199,16 @@ bool ImageSaver::ShouldSaveSensorData() const
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ImageSaver::Save(Vision::ImageCache& imageCache, const s32 frameNumber)
+Result ImageSaver::Save(Vision::ImageCache& imageCache, const s32 frameNumber, const std::string& suffix)
 {
   const Vision::ImageRGB& cachedImage = imageCache.GetRGB(_params.size);
-  return Save(cachedImage, frameNumber);
+  return Save(cachedImage, frameNumber, suffix);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result ImageSaver::Save(const Vision::ImageRGB& inputImg, const s32 frameNumber)
+Result ImageSaver::Save(const Vision::ImageRGB& inputImg, const s32 frameNumber, const std::string& suffix)
 {
-  const std::string fullFilename = GetFullFilename(frameNumber, GetExtension(_params.quality));
+  const std::string fullFilename = GetFullFilename(frameNumber, GetExtension(_params.quality), suffix);
   
   PRINT_CH_INFO(kLogChannelName, "ImageSaver.Save.SavingImage", "Saving image with timestamp %u to %s",
                 inputImg.GetTimestamp(), fullFilename.c_str());
@@ -306,13 +306,13 @@ static inline std::string GetZeroPaddedFrameNumber(const s32 frameNumber)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::string ImageSaver::GetFullFilename(const s32 frameNumber, const char *extension) const
+std::string ImageSaver::GetFullFilename(const s32 frameNumber, const char *extension, const std::string& suffix) const
 {
   std::string fullFilename;
   if(_params.basename.empty())
   {
     // No base name provided: Use zero-padded frame number as filename
-    const std::string filename(GetZeroPaddedFrameNumber(frameNumber) + "." + extension);
+    const std::string filename(GetZeroPaddedFrameNumber(frameNumber) + suffix + "." + extension);
     fullFilename = Util::FileUtils::FullFilePath({_params.path, filename});
   }
   else
@@ -324,7 +324,7 @@ std::string ImageSaver::GetFullFilename(const s32 frameNumber, const char *exten
       basename += "_";
       basename += GetZeroPaddedFrameNumber(frameNumber);
     }
-    fullFilename = Util::FileUtils::FullFilePath({_params.path, basename + "." + extension});
+    fullFilename = Util::FileUtils::FullFilePath({_params.path, basename + suffix + "." + extension});
   }
   
   return fullFilename;

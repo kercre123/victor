@@ -1184,6 +1184,14 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
       dispCompositeImg.Allocate(compositeImage.GetNumRows(), compositeImage.GetNumCols());
       compositeImage.CopyTo(dispCompositeImg);
       #endif
+
+      if(IsModeEnabled(VisionMode::SaveImages) && _imageSaver->WantsToSave(_currentResult, compositeImage.GetTimestamp()))
+      {
+        const Result saveResult = _imageSaver->Save(compositeImage, _frameNumber, "_composite");
+        if(RESULT_OK == saveResult) {
+          _currentResult.modesProcessed.Insert(VisionMode::SaveImages);
+        }
+      }
     }
 
     const bool shouldReset = (numImagesComposited == _imageCompositorResetPeriod);
@@ -1381,7 +1389,7 @@ void VisionSystem::CheckForNeuralNetResults()
            !_neuralNetRunnerImage.IsEmpty() &&
            _imageSaver->WantsToSave(_currentResult, _neuralNetRunnerImage.GetTimestamp()))
         {
-          const Result saveResult = _imageSaver->Save(_neuralNetRunnerImage, _frameNumber);
+          const Result saveResult = _imageSaver->Save(_neuralNetRunnerImage, _frameNumber, "_neuralnet");
           if(RESULT_OK == saveResult)
           {
             _currentResult.modesProcessed.Insert(VisionMode::SaveImages);
@@ -1854,7 +1862,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
   }
   
-  if(IsModeEnabled(VisionMode::SaveImages) && _imageSaver->WantsToSave(_currentResult, imageCache.GetTimeStamp()))
+  CONSOLE_VAR_EXTERN(bool, kRobustChargerObservation_SaveImages);
+  if(!kRobustChargerObservation_SaveImages && IsModeEnabled(VisionMode::SaveImages) && _imageSaver->WantsToSave(_currentResult, imageCache.GetTimeStamp()))
   {
     Tic("SaveImages");
     

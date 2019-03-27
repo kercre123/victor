@@ -60,7 +60,7 @@ namespace {
   #define CONSOLE_GROUP "BatteryComponent"
 
   // Console var for faking low battery
-  CONSOLE_VAR(bool, kFakeLowBattery, CONSOLE_GROUP, false);
+  CONSOLE_VAR(bool, kFakeLowBattery, CONSOLE_GROUP, true);
   const float kFakeLowBatteryVoltage = 3.5f;
 
   // If non-zero, a low battery status is faked after this many seconds off charger
