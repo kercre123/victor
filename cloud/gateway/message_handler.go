@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
@@ -1217,11 +1218,14 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 func (service *rpcService) BehaviorControl(bidirectionalStream extint.ExternalInterface_BehaviorControlServer) error {
 	sdkStartTime := time.Now()
 
+	numCommandsSentFromSDK = 0
+
 	log.Das("sdk.connection_started", (&log.DasFields{}).SetStrings(""))
 
 	defer func() {
 		sdkElapsedSeconds := time.Since(sdkStartTime)
-		log.Das("sdk.connection_ended", (&log.DasFields{}).SetStrings(sdkElapsedSeconds.String()))
+		log.Das("sdk.connection_ended", (&log.DasFields{}).SetStrings(sdkElapsedSeconds.String(), fmt.Sprint(numCommandsSentFromSDK)))
+		numCommandsSentFromSDK = 0		
 	}()
 
 	done := make(chan struct{})
@@ -3284,6 +3288,7 @@ func (service *rpcService) ExternalAudioStreamRequestHandler(in extint.ExternalI
 			return
 		}
 
+		numCommandsSentFromSDK++
 		_, _, err = engineProtoManager.Write(msg)
 		if err != nil {
 			log.Printf("Could not write GatewayWrapper_AudioStreamRequest\n")
