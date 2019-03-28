@@ -37,6 +37,8 @@ protected:
     modifiers.behaviorAlwaysDelegates = true;
     modifiers.wantsToBeActivatedWhenOnCharger = false;
     modifiers.visionModesForActiveScope->insert({ VisionMode::Markers, EVisionUpdateFrequency::High });
+    modifiers.cubeConnectionRequirements = BehaviorOperationModifiers::CubeConnectionRequirements::OptionalActive;
+    modifiers.connectToCubeInBackground = true;
   }
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
 
