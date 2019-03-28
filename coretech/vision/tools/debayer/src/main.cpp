@@ -18,6 +18,7 @@
 #include <iostream>
 #include <fstream>
 #include <sstream>
+#include <iomanip>
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -33,10 +34,33 @@ Debayer::Method StringToMethod(const std::string& value)
   throw std::runtime_error("Invalid value: "+value);
 }
 
+std::string MethodToString(Debayer::Method value)
+{
+  switch(value)
+  {
+  case Debayer::Method::PHOTO: return "PHOTO";
+  case Debayer::Method::PERCEPTION: return "PERCEPTION";
+  default: 
+    throw std::runtime_error("Invalid value: " + 
+      std::to_string(static_cast<std::underlying_type<Debayer::Method>::type>(value)));
+  }
+}
+
 Debayer::Layout StringToLayout(const std::string& value)
 {
   if (value == "RAW10") return Debayer::Layout::RAW10;
   throw std::runtime_error("Invalid value: "+value);
+}
+
+std::string LayoutToString(Debayer::Layout value)
+{
+  switch(value)
+  {
+  case Debayer::Layout::RAW10: return "RAW10";
+  default: 
+    throw std::runtime_error("Invalid value: " + 
+      std::to_string(static_cast<std::underlying_type<Debayer::Layout>::type>(value)));
+  }
 }
 
 Debayer::Pattern StringToPattern(const std::string& value)
@@ -48,6 +72,20 @@ Debayer::Pattern StringToPattern(const std::string& value)
   throw std::runtime_error("Invalid value: "+value);
 }
 
+std::string PatternToString(Debayer::Pattern value)
+{
+  switch(value)
+  {
+  case Debayer::Pattern::RGGB: return "RGGB";
+  case Debayer::Pattern::BGGR: return "BGGR";
+  case Debayer::Pattern::GRBG: return "GRBG";
+  case Debayer::Pattern::GBRG: return "GBRG";
+  default: 
+    throw std::runtime_error("Invalid value: " + 
+      std::to_string(static_cast<std::underlying_type<Debayer::Pattern>::type>(value)));
+  }
+}
+
 Debayer::Scale StringToScale(const std::string& value)
 {
   if (value == "FULL")    return Debayer::Scale::FULL;
@@ -57,11 +95,37 @@ Debayer::Scale StringToScale(const std::string& value)
   throw std::runtime_error("Invalid value: "+value);
 }
 
+std::string ScaleToString(Debayer::Scale value)
+{
+  switch(value)
+  {
+  case Debayer::Scale::FULL: return "FULL";
+  case Debayer::Scale::HALF: return "HALF";
+  case Debayer::Scale::QUARTER: return "QUARTER";
+  case Debayer::Scale::EIGHTH: return "EIGHTH";
+  default: 
+    throw std::runtime_error("Invalid value: " + 
+      std::to_string(static_cast<std::underlying_type<Debayer::Scale>::type>(value)));
+  }
+}
+
 Debayer::OutputFormat StringToOutputFormat(const std::string& value)
 {
   if (value == "RGB24") return Debayer::OutputFormat::RGB24;
   if (value == "Y8")    return Debayer::OutputFormat::Y8;
   throw std::runtime_error("Invalid value: "+value);
+}
+
+std::string OutputFormatToString(Debayer::OutputFormat value)
+{
+  switch(value)
+  {
+  case Debayer::OutputFormat::RGB24: return "RGB24";
+  case Debayer::OutputFormat::Y8: return "Y8";
+  default: 
+    throw std::runtime_error("Invalid value: " + 
+      std::to_string(static_cast<std::underlying_type<Debayer::OutputFormat>::type>(value)));
+  }
 }
 
 float ScaleToFloat(Debayer::Scale scale)
@@ -77,7 +141,7 @@ float ScaleToFloat(Debayer::Scale scale)
   }
 }
 
-uint32_t OutputFormatToChannels(Debayer::OutputFormat OutputFormat)
+u32 OutputFormatToChannels(Debayer::OutputFormat OutputFormat)
 {
   switch(OutputFormat)
   {
@@ -110,8 +174,8 @@ struct Config {
     Input(const Json::Value& root);
 
     std::string filename;
-    uint32_t width;
-    uint32_t height;
+    u32 width;
+    u32 height;
     Debayer::Layout layout;
     Debayer::Pattern pattern;
   };
@@ -189,7 +253,7 @@ Config::Output::Output(const Json::Value& root)
   {
     Json::Value value = root.get("images",Json::nullValue);
     this->images.reserve(value.size());
-    for (uint32_t ii = 0; ii < value.size(); ++ii)
+    for (u32 ii = 0; ii < value.size(); ++ii)
     {
       this->images.emplace_back(value[ii]);
     }
@@ -242,10 +306,11 @@ int main(int argc, char** argv)
     FileUtils::CreateDirectory(config.output.directory);
   }
 
-  Debayer debayer;
+  Debayer& debayer = Debayer::Instance();
+  debayer.SetGamma(2.2f);
 
   std::ifstream ifs(config.input.filename);
-  std::vector<uint8_t> inBytes(std::istreambuf_iterator<char>(ifs),{});
+  std::vector<u8> inBytes(std::istreambuf_iterator<char>(ifs),{});
 
   Debayer::InArgs inArgs(
     inBytes.data(),
@@ -255,30 +320,41 @@ int main(int argc, char** argv)
     config.input.pattern
   );
 
-  for (uint32_t ii = 0; ii < config.output.images.size(); ++ii)
+  for (u32 ii = 0; ii < config.output.images.size(); ++ii)
   {
     const float scale = ScaleToFloat(config.output.images[ii].scale);
-    s32 width = inArgs.width * scale;
-    s32 height = inArgs.height * scale;
-    const uint32_t channels = OutputFormatToChannels(config.output.images[ii].format);
-    const uint32_t size = channels * width * height;
-    std::vector<uint8_t> outBytes(size);
+    const s32 width = inArgs.width * scale;
+    const s32 height = inArgs.height * scale;
+    const u32 channels = OutputFormatToChannels(config.output.images[ii].format);
+    const u32 size = channels * width * height;
+    std::vector<u8> outBytes(size);
 
     Debayer::OutArgs outArgs(
       outBytes.data(),
-      inArgs.height * scale,
-      inArgs.width * scale,
+      height, width,
       config.output.images[ii].scale,
       config.output.images[ii].format
     );
     
     const Debayer::Method method = config.output.images[ii].method;
     
+    auto start = std::chrono::steady_clock::now();
     Anki::Result result = debayer.Invoke(method, inArgs, outArgs);
+    auto end = std::chrono::steady_clock::now();
+    auto diff = std::chrono::duration_cast<std::chrono::duration<float>>(end-start);
     if (result != Anki::Result::RESULT_OK)
     {
       std::cout<<"Error debayering "<<config.output.images[ii].filename<<std::endl;
     }
+    else
+    {
+      std::cout<<"Finished["<<std::setw(3)<<ii<<"]"
+        <<std::setw(12)<<MethodToString(method)
+        <<std::setw(9)<<ScaleToString(config.output.images[ii].scale)
+        <<std::setw(6)<<OutputFormatToString(config.output.images[ii].format)
+        <<"   in "<<std::fixed<<std::setprecision(6)<<diff.count()<<" seconds"<<std::endl;
+    }
+    
 
     if (config.output.save)
     {
@@ -291,7 +367,7 @@ int main(int argc, char** argv)
     {
       std::string path = FileUtils::FullFilePath({config.compare.directory,config.output.images[ii].filename});
       std::ifstream stream(path);
-      std::vector<uint8_t> refBytes(std::istreambuf_iterator<char>(stream),{});
+      std::vector<u8> refBytes(std::istreambuf_iterator<char>(stream),{});
 
       // This is a lazy comparison of bytes. We assume that the output bytes will exactly match the reference bytes.
       // In the future it may be worth allowing for some amount of error between the output bytes and reference bytes.

@@ -15,10 +15,11 @@
 #include "coretech/vision/engine/imageBuffer/conversions/imageConversions.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/imageCache.h"
-#include "coretech/vision/engine/neonMacros.h"
+#include "coretech/vision/engine/debayer.h"
 
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"
+
 
 #include <unistd.h>
 
@@ -186,49 +187,50 @@ bool ImageBuffer::GetGray(Image& gray, ImageCacheSize size) const
 
 bool ImageBuffer::GetRGBFromBAYER(ImageRGB& rgb, ImageCacheSize size) const
 {
+  Debayer::OutputFormat outFormat = Debayer::OutputFormat::RGB24;
+  Debayer::Scale outScale = Debayer::Scale::FULL;
   switch(size)
   {
     case ImageCacheSize::Full:
-      {
-        ImageConversions::DemosaicBGGR10ToRGB(_rawData,
-                                              _rawNumRows,
-                                              _rawNumCols,
-                                              rgb);
-      }
-      return true;
-      
+    {
+      outScale = Debayer::Scale::FULL;
+      break;
+    }
     case ImageCacheSize::Half:
-      {
-        ImageConversions::HalveBGGR10ToRGB(_rawData,
-                                           _rawNumRows,
-                                           _rawNumCols,
-                                           rgb);
-      }
-      return true;
-      
+    {
+      outScale = Debayer::Scale::HALF;
+      break;
+    }
     case ImageCacheSize::Quarter:
-      {
-        // ImageCacheSizes smaller than Full are defined relative to Full
-        // So Half of Full ends up being quarter sized bayer
-        ImageConversions::QuarterBGGR10ToRGB(_rawData,
-                                             _rawNumRows,
-                                             _rawNumCols,
-                                             rgb);
-      }
-      return true;
-      
+    {
+      outScale = Debayer::Scale::QUARTER;
+      break;
+    }
     case ImageCacheSize::Eighth:
-      {
-        // Get closest conversion we know how to do and then
-        // resize to the correct size
-        ImageConversions::QuarterBGGR10ToRGB(_rawData,
-                                             _rawNumRows,
-                                             _rawNumCols,
-                                             rgb);
-        rgb.Resize(0.5f, _resizeMethod);
-      }
-      return true;
+    {
+      outScale = Debayer::Scale::EIGHTH;
+      break;
+    }
+    default:
+      LOG_ERROR("ImageBuffer.GetRGBFromBAYER.InvalidCacheSize","");
+      return false;
   }
+
+  Debayer::Method method(Debayer::Method::PERCEPTION);
+  Debayer::InArgs inArgs(_rawData, _sensorNumRows, _sensorNumCols, Debayer::Layout::RAW10, Debayer::Pattern::RGGB);
+
+  u8 sampleRate = 1;
+  if (!Debayer::SampleRateFromScale(outScale, sampleRate))
+  {
+    LOG_ERROR("ImageBuffer.GetRGBFromBAYER.InvalidScale","");
+    return false;
+  }
+  s32 outHeight = _sensorNumRows / sampleRate;
+  s32 outWidth = _sensorNumCols / sampleRate;
+  rgb.Allocate(outHeight, outWidth);
+  Debayer::OutArgs outArgs(rgb.get_CvMat_().data, outHeight, outWidth, outScale, outFormat);
+
+  return Debayer::Instance().Invoke(method, inArgs, outArgs) == RESULT_OK;
 }
 
 bool ImageBuffer::GetRGBFromRawRGB(ImageRGB& rgb, ImageCacheSize size) const
@@ -287,32 +289,50 @@ bool ImageBuffer::GetRGBFromRawGray(ImageRGB& rgb, ImageCacheSize size) const
 
 bool ImageBuffer::GetGrayFromBAYER(Image& gray, ImageCacheSize size) const
 {
-  // For now the only optimized conversion from Bayer to Gray is for halved gray
-  // So do that and then resize image if needed
-  ImageConversions::HalveBGGR10ToGray(_rawData,
-                                      _rawNumRows,
-                                      _rawNumCols,
-                                      gray);
-
+  Debayer::OutputFormat outFormat = Debayer::OutputFormat::Y8;
+  Debayer::Scale outScale = Debayer::Scale::FULL;
   switch(size)
   {
-    // TODO VIC-9781 Add method to convert directly to Full sized Gray
-    // instead of halving and resizing
     case ImageCacheSize::Full:
-      gray.Resize(2.0f, _resizeMethod);
-      return true;
-      
+    {
+      outScale = Debayer::Scale::FULL;
+      break;
+    }
     case ImageCacheSize::Half:
-      return true;
-      
+    {
+      outScale = Debayer::Scale::HALF;
+      break;
+    }
     case ImageCacheSize::Quarter:
-      gray.Resize(0.5f, _resizeMethod);
-      return true;
-
+    {
+      outScale = Debayer::Scale::QUARTER;
+      break;
+    }
     case ImageCacheSize::Eighth:
-      gray.Resize(0.25f, _resizeMethod);
-      return true;
+    {
+      outScale = Debayer::Scale::EIGHTH;
+      break;
+    }
+    default:
+      LOG_ERROR("ImageBuffer.GetGrayFromBAYER.InvalidCacheSize","");
+      return false;
   }
+
+  Debayer::Method method(Debayer::Method::PERCEPTION);
+  Debayer::InArgs inArgs(_rawData, _sensorNumRows, _sensorNumCols, Debayer::Layout::RAW10, Debayer::Pattern::RGGB);
+
+  u8 sampleRate = 1;
+  if (!Debayer::SampleRateFromScale(outScale, sampleRate))
+  {
+    LOG_ERROR("ImageBuffer.GetGrayFromBAYER.InvalidScale","");
+    return false;
+  }
+  s32 outHeight = _sensorNumRows / sampleRate;
+  s32 outWidth = _sensorNumCols / sampleRate;
+  gray.Allocate(outHeight, outWidth);
+  Debayer::OutArgs outArgs(gray.get_CvMat_().data, outHeight, outWidth, outScale, outFormat);
+
+  return Debayer::Instance().Invoke(method, inArgs, outArgs) == RESULT_OK;
 }
 
 bool ImageBuffer::GetGrayFromRawRGB(Image& gray, ImageCacheSize size) const

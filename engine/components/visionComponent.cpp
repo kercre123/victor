@@ -43,6 +43,9 @@
 #include "coretech/common/engine/opencvThreading.h"
 #include "coretech/common/engine/math/polygon.h"
 
+// Include debayer.h because ConsoleVars for gamma must be here; they didn't work in debayer.cpp 
+#include "coretech/vision/engine/debayer.h" 
+
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
@@ -122,6 +125,14 @@ namespace Vector {
     enable = !enable;
   }
   CONSOLE_FUNC(DebugToggleCameraEnabled, "Vision.General");
+
+  CONSOLE_VAR_RANGED(f32, kDebayerGamma, "Vision.Debayer", 2.2f, 0.1f, 4.f);
+  bool s_debayerResetGamma(false);
+  void ResetGamma(ConsoleFunctionContextRef context)
+  {
+    Anki::Vision::Debayer::Instance().SetGamma(kDebayerGamma);
+  }
+  CONSOLE_FUNC(ResetGamma, "Vision.Debayer");
 
   namespace JsonKey
   {
@@ -219,6 +230,8 @@ namespace Vector {
           _captureFormatState = CaptureFormatState::None;
         }
       });
+
+    Anki::Vision::Debayer::Instance().SetGamma(kDebayerGamma);
 
     SetLiftCrossBar();
 
