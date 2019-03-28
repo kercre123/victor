@@ -686,6 +686,9 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
     _cameraParamsController->ResetTargetAutoExposure_Cycling();
   }
   
+  _currentResult.modesProcessed.Enable(VisionMode::AutoExp_MinGain,
+                                       (aeMode == Vision::CameraParamsController::AutoExpMode::MinGain));
+  
   return RESULT_OK;
 }
 
@@ -1218,6 +1221,7 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
   if(IsModeEnabled(VisionMode::Markers_FullFrame))
   {
     cropRect = Rectangle<s32>(0,0,imagePtrs.front()->GetNumCols(), imagePtrs.front()->GetNumRows());
+    _currentResult.modesProcessed.Insert(VisionMode::Markers_FullFrame);
   }
   else
   {
@@ -1236,6 +1240,9 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
     }
     
     DEV_ASSERT(cropRect.Area() > 0, "VisionSystem.DetectMarkersWithCLAHE.EmptyCrop");
+    
+    _currentResult.modesProcessed.Enable(VisionMode::Markers_FullWidth, !useHorizontalCycling);
+    _currentResult.modesProcessed.Enable(VisionMode::Markers_FullHeight, !useVariableHeight);
   }
   
   Result lastResult = RESULT_OK;
@@ -1266,6 +1273,7 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
   }
 
   const bool meterFromChargerOnly = IsModeEnabled(VisionMode::Markers_ChargerOnly);
+  _currentResult.modesProcessed.Enable(VisionMode::Markers_ChargerOnly, meterFromChargerOnly);
   
   auto markerIter = _currentResult.observedMarkers.begin();
   while(markerIter != _currentResult.observedMarkers.end())
@@ -1553,30 +1561,38 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
 
   bool anyModeFailures = false;
   
-  if(IsModeEnabled(VisionMode::Markers) &&
-     !IsModeEnabled(VisionMode::Markers_Off))
+  
+  if(IsModeEnabled(VisionMode::Markers))
   {
-    const bool allowWhileRotatingFast = IsModeEnabled(VisionMode::Markers_FastRotation);
-    const bool wasRotatingTooFast = ( allowWhileRotatingFast ? false :
-                                     poseData.imuDataHistory.WasRotatingTooFast(imageCache.GetTimeStamp(),
-                                                                                DEG_TO_RAD(kBodyTurnSpeedThreshBlock_degs),
-                                                                                DEG_TO_RAD(kHeadTurnSpeedThreshBlock_degs)));
-    if(!wasRotatingTooFast)
+    if(IsModeEnabled(VisionMode::Markers_Off))
     {
-      // Marker detection uses rolling shutter compensation
-      UpdateRollingShutter(poseData, imageCache);
-      
-      Tic("TotalMarkers");
-      lastResult = DetectMarkers(imageCache, claheImage, detectionsByMode[VisionMode::Markers], useCLAHE, poseData);
-      
-      if(RESULT_OK != lastResult) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
-        anyModeFailures = true;
-      } else {
-        visionModesProcessed.Insert(VisionMode::Markers);
-        visionModesProcessed.Enable(VisionMode::Markers_FastRotation, allowWhileRotatingFast);
+      // Marker detection is forcibly disabled (Gross, see VIC-6838)
+      visionModesProcessed.Insert(VisionMode::Markers, VisionMode::Markers_Off);
+    }
+    else
+    {
+      const bool allowWhileRotatingFast = IsModeEnabled(VisionMode::Markers_FastRotation);
+      const bool wasRotatingTooFast = ( allowWhileRotatingFast ? false :
+                                       poseData.imuDataHistory.WasRotatingTooFast(imageCache.GetTimeStamp(),
+                                                                                  DEG_TO_RAD(kBodyTurnSpeedThreshBlock_degs),
+                                                                                  DEG_TO_RAD(kHeadTurnSpeedThreshBlock_degs)));
+      if(!wasRotatingTooFast)
+      {
+        // Marker detection uses rolling shutter compensation
+        UpdateRollingShutter(poseData, imageCache);
+        
+        Tic("TotalMarkers");
+        lastResult = DetectMarkers(imageCache, claheImage, detectionsByMode[VisionMode::Markers], useCLAHE, poseData);
+        
+        if(RESULT_OK != lastResult) {
+          PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
+          anyModeFailures = true;
+        } else {
+          visionModesProcessed.Insert(VisionMode::Markers);
+          visionModesProcessed.Enable(VisionMode::Markers_FastRotation, allowWhileRotatingFast);
+        }
+        Toc("TotalMarkers");
       }
-      Toc("TotalMarkers");
     }
   }
   
@@ -1614,9 +1630,9 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       visionModesProcessed.Insert(VisionMode::Faces);
       visionModesProcessed.Enable(VisionMode::Faces_Crop,          useCropping);
       visionModesProcessed.Enable(VisionMode::Faces_Expression,    estimatingFacialExpression);
-      visionModesProcessed.Enable(VisionMode::Faces_Smile,          detectingSmile);
-      visionModesProcessed.Enable(VisionMode::Faces_Gaze,                 detectingGaze);
-      visionModesProcessed.Enable(VisionMode::Faces_Blink,          detectingBlink);
+      visionModesProcessed.Enable(VisionMode::Faces_Smile,         detectingSmile);
+      visionModesProcessed.Enable(VisionMode::Faces_Gaze,          detectingGaze);
+      visionModesProcessed.Enable(VisionMode::Faces_Blink,         detectingBlink);
     }
     Toc("TotalFaces");
   }

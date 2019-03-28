@@ -39,7 +39,7 @@ namespace Vector {
     //
     // Vision mode "modifiers" (require one of the above to be enabled to have an effect)
     // The name convention is <Mode>_<Modifier>
-    //   TODO: Make "modifiers" a separate type (hard now because vision shedules consist only of VisionModes)
+    //   TODO: Make "modifiers" a separate type (hard now because vision schedules consist only of VisionModes)
     //   TODO: Enforce that modifiers always have their "required" mode enabled via unit test
     //
     
