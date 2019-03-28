@@ -113,9 +113,10 @@ void BehaviorRobustChargerObservation::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRobustChargerObservation::OnBehaviorDeactivated()
 {
-  if(_dVars.isLowlight) {
+  if(_dVars.isLowlight && !_dVars.playedGetout) {
     // Previously played the special Getin and set LCD brightness
-    //  so now play the getout and restore the LCD brightness
+    //  so now play the getout and restore the LCD brightness, if
+    //  we haven't already.
     PlayEmergencyGetOut(AnimationTrigger::LowlightChargerSearchGetout);
     GetBEI().GetPowerStateManager().RequestLCDBrightnessChange(kNormalLCDBrightness);
   }
@@ -191,16 +192,28 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
     // Use image compositing
     // - prepend a getin animation and set LCD brightness
     // - wait for images with the appropriate looping animation
-    CompoundActionParallel* getinAndSetLcd = new CompoundActionParallel();
-    getinAndSetLcd->AddAction(new TriggerAnimationAction(AnimationTrigger::LowlightChargerSearchGetin));
-    getinAndSetLcd->AddAction(new WaitForLambdaAction([this,level=kMaxLCDBrightness](Robot& robot) {
-                                GetBEI().GetPowerStateManager().RequestLCDBrightnessChange(level);
-                                return true;
-                              }));
-    compoundAction->AddAction(getinAndSetLcd);
+    {
+      CompoundActionParallel* getinAndSetLcd = new CompoundActionParallel();
+      getinAndSetLcd->AddAction(new TriggerAnimationAction(AnimationTrigger::LowlightChargerSearchGetin));
+      getinAndSetLcd->AddAction(new WaitForLambdaAction([this,level=kMaxLCDBrightness](Robot& robot) {
+                                  GetBEI().GetPowerStateManager().RequestLCDBrightnessChange(level);
+                                  return true;
+                                }));
+      compoundAction->AddAction(getinAndSetLcd);
+    }
     waitAction = new WaitForImagesAction(_iConfig.numImageCompositingCyclesToWaitFor, VisionMode::Markers_Composite);
     waitAction->SetTracksToLock((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK);
     compoundAction->AddAction(new LoopAnimWhileAction(waitAction, AnimationTrigger::LowlightChargerSearchLoop));
+    {
+      CompoundActionSequential* getoutAndSetLcd = new CompoundActionSequential();
+      getoutAndSetLcd->AddAction(new TriggerAnimationAction(AnimationTrigger::LowlightChargerSearchGetout));
+      getoutAndSetLcd->AddAction(new WaitForLambdaAction([this,level=kNormalLCDBrightness](Robot& robot) {
+                                  _dVars.playedGetout = true;
+                                  GetBEI().GetPowerStateManager().RequestLCDBrightnessChange(level);
+                                  return true;
+                                }));
+      compoundAction->AddAction(getoutAndSetLcd);
+    }
   } else {
     // Use cycling exposure instead
     waitAction = new WaitForImagesAction(_iConfig.numCyclingExposureCyclesToWaitFor, VisionMode::AutoExp_Cycling);
