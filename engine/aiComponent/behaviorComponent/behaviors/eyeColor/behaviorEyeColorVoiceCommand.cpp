@@ -13,6 +13,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/eyeColor/behaviorEyeColorVoiceCommand.h"
 
+#include "engine/actions/animActions.h"
+#include "engine/actions/compoundActions.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/components/settingsManager.h"
 #include "proto/external_interface/settings.pb.h"
@@ -161,6 +163,14 @@ bool BehaviorEyeColorVoiceCommand::SetEyeColor(external_interface::EyeColor desi
   if (ignoredDueToNoChange) {
     LOG_INFO("BehaviorEyeColorVoiceCommand.SetEyeColor.NoChange",
         "SettingsManager reported no change in eye color setting.");
+    // play the eye color change animation anyway
+    // (usually it's triggered in the eyeColor reaction behavior, but in this case it won't be)
+    CompoundActionSequential* animationSequence = new CompoundActionSequential();
+    animationSequence->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::EyeColorGetIn ), true );
+    animationSequence->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::EyeColorSwitch ), true );
+    animationSequence->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::EyeColorGetOut ), true );
+
+    DelegateIfInControl( animationSequence );
   }
   return success;
 }
