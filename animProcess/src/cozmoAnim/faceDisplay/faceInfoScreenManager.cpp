@@ -1135,6 +1135,13 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
         LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.ExitPairing", "Going to Customer Service Main from Pairing");
         RobotInterface::SendAnimToEngine(SwitchboardInterface::ExitPairing());
         SetScreen(ScreenName::Main);
+
+        // DAS msg for entering customer care screen
+        // Note: The debug info screens will only be reported unlocked here if they 
+        //       were unlocked the previous time the customer care screen was entered.
+        DASMSG(robot_cc_screen_enter, "robot.cc_screen_enter", "Entered customer care screen");
+        DASMSG_SET(i1, _debugInfoScreensUnlocked ? 1 : 0, "Debug info screens unlocked");
+        DASMSG_SEND();
       }
     }
   }
