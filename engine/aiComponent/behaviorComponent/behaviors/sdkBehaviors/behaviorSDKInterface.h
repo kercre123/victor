@@ -24,6 +24,9 @@ class UserIntentComponent;
 namespace external_interface {
   class DriveOffChargerRequest;
   class DriveOnChargerRequest;
+  class FindFacesRequest;
+  class LookAroundInPlaceRequest;
+  class RollBlockRequest;
 }
   
 class BehaviorSDKInterface : public ICozmoBehavior
@@ -49,9 +52,15 @@ protected:
 private:
   void DriveOffChargerRequest(const external_interface::DriveOffChargerRequest& driveOffChargerRequest);
   void DriveOnChargerRequest(const external_interface::DriveOnChargerRequest& driveOnChargerRequest);
+  void FindFacesRequest(const external_interface::FindFacesRequest& findFacesRequest);
+  void LookAroundInPlaceRequest(const external_interface::LookAroundInPlaceRequest& lookAroundInPlaceRequest);
+  void RollBlockRequest(const external_interface::RollBlockRequest& rollBlockRequest);
 
   void HandleDriveOffChargerComplete();
   void HandleDriveOnChargerComplete();
+  void HandleFindFacesComplete();
+  void HandleLookAroundInPlaceComplete();
+  void HandleRollBlockComplete();
 
   // Use this to prevent (or allow) raw movement commands from the SDK. We only want to allow these when the SDK
   // behavior is activated and _not_ delegating to another behavior.
@@ -61,13 +70,19 @@ private:
   struct InstanceConfig {
     InstanceConfig();
 
-    std::string driveOffChargerBehaviorStr;
-    ICozmoBehaviorPtr driveOffChargerBehavior;
-
     int behaviorControlLevel;
     bool disableCliffDetection;
+
+    std::string driveOffChargerBehaviorStr;
     std::string findAndGoToHomeBehaviorStr;
+    std::string findFacesBehaviorStr;
+    std::string lookAroundInPlaceBehaviorStr;
+    std::string rollBlockBehaviorStr;
+    ICozmoBehaviorPtr driveOffChargerBehavior;
     ICozmoBehaviorPtr findAndGoToHomeBehavior;
+    ICozmoBehaviorPtr findFacesBehavior;
+    ICozmoBehaviorPtr lookAroundInPlaceBehavior;
+    ICozmoBehaviorPtr rollBlockBehavior;
   };
 
   struct DynamicVariables {

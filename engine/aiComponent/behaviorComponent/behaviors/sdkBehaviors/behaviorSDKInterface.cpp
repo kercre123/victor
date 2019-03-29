@@ -35,6 +35,10 @@ const char* const kBehaviorControlLevelKey = "behaviorControlLevel";
 const char* const kDisableCliffDetection = "disableCliffDetection";
 const char* const kDriveOffChargerBehaviorKey = "driveOffChargerBehavior";
 const char* const kFindAndGoToHomeBehaviorKey = "findAndGoToHomeBehavior";
+const char* const kFindFacesBehaviorKey = "findFacesBehavior";
+const char* const kLookAroundInPlaceBehaviorKey = "lookAroundInPlaceBehavior";
+const char* const kRollBlockBehaviorKey = "rollBlockBehavior";
+
 
 /* UserIntents that the SDK can relay to the user
  *
@@ -114,6 +118,9 @@ BehaviorSDKInterface::BehaviorSDKInterface(const Json::Value& config)
   _iConfig.disableCliffDetection = JsonTools::ParseBool(config, kDisableCliffDetection, debugName);
   _iConfig.driveOffChargerBehaviorStr = JsonTools::ParseString(config, kDriveOffChargerBehaviorKey, debugName);
   _iConfig.findAndGoToHomeBehaviorStr = JsonTools::ParseString(config, kFindAndGoToHomeBehaviorKey, debugName);
+  _iConfig.findFacesBehaviorStr = JsonTools::ParseString(config, kFindFacesBehaviorKey, debugName);
+  _iConfig.lookAroundInPlaceBehaviorStr = JsonTools::ParseString(config, kLookAroundInPlaceBehaviorKey, debugName);
+  _iConfig.rollBlockBehaviorStr = JsonTools::ParseString(config, kRollBlockBehaviorKey, debugName);
 
   SubscribeToTags({
     EngineToGameTag::RobotCompletedAction,
@@ -122,6 +129,9 @@ BehaviorSDKInterface::BehaviorSDKInterface(const Json::Value& config)
   SubscribeToAppTags({
     AppToEngineTag::kDriveOffChargerRequest,
     AppToEngineTag::kDriveOnChargerRequest,
+    AppToEngineTag::kFindFacesRequest,
+    AppToEngineTag::kLookAroundInPlaceRequest,
+    AppToEngineTag::kRollBlockRequest,
   });
 }
 
@@ -148,6 +158,9 @@ void BehaviorSDKInterface::GetAllDelegates(std::set<IBehavior*>& delegates) cons
 {
   delegates.insert(_iConfig.driveOffChargerBehavior.get());
   delegates.insert(_iConfig.findAndGoToHomeBehavior.get());
+  delegates.insert(_iConfig.findFacesBehavior.get());
+  delegates.insert(_iConfig.lookAroundInPlaceBehavior.get());
+  delegates.insert(_iConfig.rollBlockBehavior.get());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -156,11 +169,23 @@ void BehaviorSDKInterface::InitBehavior()
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.driveOffChargerBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.driveOffChargerBehaviorStr));
   DEV_ASSERT(_iConfig.driveOffChargerBehavior != nullptr,
-             "BehaviorFindFaces.InitBehavior.NullDriveOffChargerBehavior");
+             "BehaviorSDKInterface.InitBehavior.NullDriveOffChargerBehavior");
 
   _iConfig.findAndGoToHomeBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.findAndGoToHomeBehaviorStr));
   DEV_ASSERT(_iConfig.findAndGoToHomeBehavior != nullptr,
-             "BehaviorFindFaces.InitBehavior.NullFindAndGoToHomeBehavior");
+             "BehaviorSDKInterface.InitBehavior.NullFindAndGoToHomeBehavior");
+
+  _iConfig.findFacesBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.findFacesBehaviorStr));
+  DEV_ASSERT(_iConfig.findFacesBehavior != nullptr,
+             "BehaviorSDKInterface.InitBehavior.NullFindFacesBehavior");
+
+  _iConfig.lookAroundInPlaceBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.lookAroundInPlaceBehaviorStr));
+  DEV_ASSERT(_iConfig.lookAroundInPlaceBehavior != nullptr,
+             "BehaviorSDKInterface.InitBehavior.NullLookAroundInPlaceBehavior");
+
+  _iConfig.rollBlockBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.rollBlockBehaviorStr));
+  DEV_ASSERT(_iConfig.rollBlockBehavior != nullptr,
+             "BehaviorSDKInterface.InitBehavior.NullRollBlockBehavior");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -171,6 +196,9 @@ void BehaviorSDKInterface::GetBehaviorJsonKeys(std::set<const char*>& expectedKe
     kDisableCliffDetection,
     kDriveOffChargerBehaviorKey,
     kFindAndGoToHomeBehaviorKey,
+    kFindFacesBehaviorKey,
+    kLookAroundInPlaceBehaviorKey,
+    kRollBlockBehaviorKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -288,6 +316,36 @@ void BehaviorSDKInterface::HandleDriveOnChargerComplete() {
   }
 }
 
+void BehaviorSDKInterface::HandleFindFacesComplete() {
+  SetAllowExternalMovementCommands(true);
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* findFacesResponse = new external_interface::FindFacesResponse;
+    findFacesResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(findFacesResponse) );
+  }
+}
+
+void BehaviorSDKInterface::HandleLookAroundInPlaceComplete() {
+  SetAllowExternalMovementCommands(true);
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* lookAroundInPlaceResponse = new external_interface::LookAroundInPlaceResponse;
+    lookAroundInPlaceResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(lookAroundInPlaceResponse) );
+  }
+}
+
+void BehaviorSDKInterface::HandleRollBlockComplete() {
+  SetAllowExternalMovementCommands(true);
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* rollBlockResponse = new external_interface::RollBlockResponse;
+    rollBlockResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(rollBlockResponse) );
+  }
+}
+
 // Reports back to gateway that requested actions have been completed.
 // E.g., the Python SDK ran play_animation and wants to know when the animation
 // action was completed.
@@ -320,6 +378,7 @@ void BehaviorSDKInterface::SetAllowExternalMovementCommands(const bool allow) {
 }
 
 void BehaviorSDKInterface::HandleWhileActivated(const AppToEngineEvent& event) {
+  LOG_INFO("BehaviorSDKInterface::HandleWhileActivated", "Received AppToEngine message %u", (unsigned int)event.GetData().GetTag());
   switch(event.GetData().GetTag())
   {
     case external_interface::GatewayWrapperTag::kDriveOffChargerRequest:
@@ -328,6 +387,18 @@ void BehaviorSDKInterface::HandleWhileActivated(const AppToEngineEvent& event) {
 
     case external_interface::GatewayWrapperTag::kDriveOnChargerRequest:
       DriveOnChargerRequest(event.GetData().drive_on_charger_request());
+      break;
+
+    case external_interface::GatewayWrapperTag::kFindFacesRequest:
+      FindFacesRequest(event.GetData().find_faces_request());
+      break;
+
+    case external_interface::GatewayWrapperTag::kLookAroundInPlaceRequest:
+      LookAroundInPlaceRequest(event.GetData().look_around_in_place_request());
+      break;
+
+    case external_interface::GatewayWrapperTag::kRollBlockRequest:
+      RollBlockRequest(event.GetData().roll_block_request());
       break;
 
     default:
@@ -341,6 +412,7 @@ void BehaviorSDKInterface::HandleWhileActivated(const AppToEngineEvent& event) {
 // Delegate to the DriveOffCharger behavior
 void BehaviorSDKInterface::DriveOffChargerRequest(const external_interface::DriveOffChargerRequest& driveOffChargerRequest) {
   if (_iConfig.driveOffChargerBehavior->WantsToBeActivated()) {
+    LOG_INFO("BehaviorSDKInterface::DriveOffChargerRequest", "Delegating to DriveOffCharger behavior");
     if (DelegateIfInControl(_iConfig.driveOffChargerBehavior.get(), &BehaviorSDKInterface::HandleDriveOffChargerComplete)) {
       SetAllowExternalMovementCommands(false);
       return;
@@ -348,6 +420,7 @@ void BehaviorSDKInterface::DriveOffChargerRequest(const external_interface::Driv
   }
 
   // If we got this far, we failed to activate the requested behavior.
+  LOG_ERROR("BehaviorSDKInterface::DriveOffChargerRequest", "Behavior did not want to be activated/delegated");
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
     auto* driveOffChargerResponse = new external_interface::DriveOffChargerResponse;
@@ -359,6 +432,7 @@ void BehaviorSDKInterface::DriveOffChargerRequest(const external_interface::Driv
 // Delegate to FindAndGoToHome
 void BehaviorSDKInterface::DriveOnChargerRequest(const external_interface::DriveOnChargerRequest& driveOnChargerRequest) {
   if (_iConfig.findAndGoToHomeBehavior->WantsToBeActivated()) {
+    LOG_INFO("BehaviorSDKInterface::DriveOnChargerRequest", "Delegating to DriveOnCharger behavior");
     if (DelegateIfInControl(_iConfig.findAndGoToHomeBehavior.get(), &BehaviorSDKInterface::HandleDriveOnChargerComplete)) {
       SetAllowExternalMovementCommands(false);
       return;
@@ -366,11 +440,73 @@ void BehaviorSDKInterface::DriveOnChargerRequest(const external_interface::Drive
   }
 
   // If we got this far, we failed to activate the requested behavior.
+  LOG_ERROR("BehaviorSDKInterface::DriveOnChargerRequest", "Behavior did not want to be activated/delegated");
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
     auto* driveOnChargerResponse = new external_interface::DriveOnChargerResponse;
     driveOnChargerResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
     gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOnChargerResponse) );
+  }
+}
+
+// Delegate to the FindFaces behavior
+void BehaviorSDKInterface::FindFacesRequest(const external_interface::FindFacesRequest& findFacesRequest) {
+  if (_iConfig.findFacesBehavior->WantsToBeActivated()) {
+    LOG_INFO("BehaviorSDKInterface::FindFacesRequest", "Delegating to FindFaces behavior");
+
+    if (DelegateIfInControl(_iConfig.findFacesBehavior.get(), &BehaviorSDKInterface::HandleFindFacesComplete)) {
+      SetAllowExternalMovementCommands(false);
+      return;
+    }
+  }
+
+  // If we got this far, we failed to activate the requested behavior.
+  LOG_ERROR("BehaviorSDKInterface::FindFacesRequest", "Behavior did not want to be activated/delegated");
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* findFacesResponse = new external_interface::FindFacesResponse;
+    findFacesResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(findFacesResponse) );
+  }
+}
+
+// Delegate to the LookAroundInPlace behavior
+void BehaviorSDKInterface::LookAroundInPlaceRequest(const external_interface::LookAroundInPlaceRequest& lookAroundInPlaceRequest) {
+  if (_iConfig.lookAroundInPlaceBehavior->WantsToBeActivated()) {
+    LOG_INFO("BehaviorSDKInterface::LookAroundInPlaceRequest", "Delegating to LookAroundInPlace behavior");
+    if (DelegateIfInControl(_iConfig.lookAroundInPlaceBehavior.get(), &BehaviorSDKInterface::HandleLookAroundInPlaceComplete)) {
+      SetAllowExternalMovementCommands(false);
+      return;
+    }
+  }
+
+  // If we got this far, we failed to activate the requested behavior.
+  LOG_ERROR("BehaviorSDKInterface::LookAroundInPlaceRequest", "Behavior did not want to be activated/delegated");
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* lookAroundInPlaceResponse = new external_interface::LookAroundInPlaceResponse;
+    lookAroundInPlaceResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(lookAroundInPlaceResponse) );
+  }
+}
+
+// Delegate to the RollBlock behavior
+void BehaviorSDKInterface::RollBlockRequest(const external_interface::RollBlockRequest& rollBlockRequest) {
+  if (_iConfig.rollBlockBehavior->WantsToBeActivated()) {
+    LOG_ERROR("BehaviorSDKInterface::RollBlockRequest", "Delegating to RollBlock behavior");
+    if (DelegateIfInControl(_iConfig.rollBlockBehavior.get(), &BehaviorSDKInterface::HandleRollBlockComplete)) {
+      SetAllowExternalMovementCommands(false);
+      return;
+    }
+  }
+
+  // If we got this far, we failed to activate the requested behavior.
+  LOG_ERROR("BehaviorSDKInterface::RollBlockRequest", "Behavior did not want to be activated/delegated");
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* rollBlockResponse = new external_interface::RollBlockResponse;
+    rollBlockResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(rollBlockResponse) );
   }
 }
 

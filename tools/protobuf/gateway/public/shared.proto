@@ -170,6 +170,12 @@ message GatewayWrapper {
     DriveOffChargerResponse       drive_off_charger_response         = 401;
     DriveOnChargerRequest         drive_on_charger_request           = 402;
     DriveOnChargerResponse        drive_on_charger_response          = 403;
+    FindFacesRequest              find_faces_request                 = 404;
+    FindFacesResponse             find_faces_response                = 405;
+    LookAroundInPlaceRequest      look_around_in_place_request       = 406;
+    LookAroundInPlaceResponse     look_around_in_place_response      = 407;
+    RollBlockRequest              roll_block_request                 = 408;
+    RollBlockResponse             roll_block_response                = 409;
 
     // ------------ movement request/response pairs ----------------------
     TurnInPlaceRequest              turn_in_place_request                = 500;

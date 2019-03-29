@@ -446,6 +446,30 @@ message DriveOnChargerResponse {
   BehaviorResults result = 2;
 }
 
+message FindFacesRequest {
+}
+
+message FindFacesResponse {
+  ResponseStatus status = 1;
+  BehaviorResults result = 2;
+}
+
+message LookAroundInPlaceRequest {
+}
+
+message LookAroundInPlaceResponse {
+  ResponseStatus status = 1;
+  BehaviorResults result = 2;
+}
+
+//this triggers a Vector Behavior, different from RollObjectRequest which triggers an Action
+message RollBlockRequest {
+}
+
+message RollBlockResponse {
+  ResponseStatus status = 1;
+  BehaviorResults result = 2;
+}
 
 message WakeWordBegin {
 }

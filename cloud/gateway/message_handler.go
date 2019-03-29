@@ -1303,6 +1303,75 @@ func (service *rpcService) DriveOnCharger(ctx context.Context, in *extint.DriveO
 	return response, nil
 }
 
+func (service *rpcService) FindFaces(ctx context.Context, in *extint.FindFacesRequest) (*extint.FindFacesResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_FindFacesResponse{}, 1)
+	defer f()
+
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_FindFacesRequest{
+			FindFacesRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	findFacesResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := findFacesResponse.GetFindFacesResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+func (service *rpcService) LookAroundInPlace(ctx context.Context, in *extint.LookAroundInPlaceRequest) (*extint.LookAroundInPlaceResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_LookAroundInPlaceResponse{}, 1)
+	defer f()
+
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_LookAroundInPlaceRequest{
+			LookAroundInPlaceRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	lookAroundInPlaceResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := lookAroundInPlaceResponse.GetLookAroundInPlaceResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+func (service *rpcService) RollBlock(ctx context.Context, in *extint.RollBlockRequest) (*extint.RollBlockResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_RollBlockResponse{}, 1)
+	defer f()
+
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_RollBlockRequest{
+			RollBlockRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	rollBlockResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := rollBlockResponse.GetRollBlockResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
 // Request the current robot onboarding status
 func (service *rpcService) GetOnboardingState(ctx context.Context, in *extint.OnboardingStateRequest) (*extint.OnboardingStateResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_OnboardingState{}, 1)
