@@ -455,6 +455,11 @@ message WakeWordEnd {
   string intent_json = 2;
 }
 
+message UserIntent {
+  uint32 intent_id = 1;
+  string json_data = 2;
+}
+
 message PhotoInfo {
   uint32 photo_id = 1;
   uint32 timestamp_utc = 2;

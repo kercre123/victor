@@ -16,12 +16,16 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDriveOffCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/sdkComponent.h"
 #include "engine/components/settingsManager.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/externalInterface/gatewayInterface.h"
+
+#define LOG_CHANNEL "BehaviorSDKInterface"
 
 namespace Anki {
 namespace Vector {
@@ -31,6 +35,62 @@ const char* const kBehaviorControlLevelKey = "behaviorControlLevel";
 const char* const kDisableCliffDetection = "disableCliffDetection";
 const char* const kDriveOffChargerBehaviorKey = "driveOffChargerBehavior";
 const char* const kFindAndGoToHomeBehaviorKey = "findAndGoToHomeBehavior";
+
+/* UserIntents that the SDK can relay to the user
+ *
+ * We don't relay messages that are consumed by higher-level behaviors
+ * We don't relay messages that aren't released
+ * We don't don't relay messages that are part of a multi-part behavior
+ * 
+ * This needs to be updated when the SDK wants to notify of new UserIntents, 
+ * or if UserIntents are replaced.
+ * 
+ * Keep the IDs (second part of the tuples) intact to avoid breaking users.
+*/
+const std::set<std::tuple<UserIntentTag, unsigned int>> kIntentWhitelist = { 
+  { UserIntentTag::character_age, 0 },
+  { UserIntentTag::check_timer, 1 },
+  { UserIntentTag::explore_start, 2 },
+  { UserIntentTag::global_stop, 3 },
+  { UserIntentTag::greeting_goodbye, 4 },
+  { UserIntentTag::greeting_goodmorning, 5 },
+  { UserIntentTag::greeting_hello, 6 },
+  { UserIntentTag::imperative_abuse, 7 },
+  { UserIntentTag::imperative_affirmative, 8 },
+  { UserIntentTag::imperative_apology, 9 },
+  { UserIntentTag::imperative_come, 10 },
+  { UserIntentTag::imperative_dance, 11 },
+  { UserIntentTag::imperative_fetchcube, 12 },
+  { UserIntentTag::imperative_findcube, 13 },
+  { UserIntentTag::imperative_lookatme, 14 },
+  { UserIntentTag::imperative_love, 15 },
+  { UserIntentTag::imperative_praise, 16 },
+  { UserIntentTag::imperative_negative, 17 },
+  { UserIntentTag::imperative_scold, 18 },
+  { UserIntentTag::imperative_volumelevel, 19 },
+  { UserIntentTag::imperative_volumeup, 20 },
+  { UserIntentTag::imperative_volumedown, 21 },
+  { UserIntentTag::movement_forward, 22 },
+  { UserIntentTag::movement_backward, 23 },
+  { UserIntentTag::movement_turnleft, 24 },
+  { UserIntentTag::movement_turnright, 25 },
+  { UserIntentTag::movement_turnaround, 26 },
+  { UserIntentTag::knowledge_question, 27 },
+  { UserIntentTag::names_ask, 28 },
+  { UserIntentTag::play_anygame, 29 },
+  { UserIntentTag::play_anytrick, 30 },
+  { UserIntentTag::play_blackjack, 31 },
+  { UserIntentTag::play_fistbump, 32 },
+  { UserIntentTag::play_pickupcube, 33 },
+  { UserIntentTag::play_popawheelie, 34 },
+  { UserIntentTag::play_rollcube, 35 },
+  { UserIntentTag::seasonal_happyholidays, 36 },
+  { UserIntentTag::seasonal_happynewyear, 37 },
+  { UserIntentTag::set_timer, 38 },
+  { UserIntentTag::show_clock, 39 },
+  { UserIntentTag::take_a_photo, 40 },
+  { UserIntentTag::weather_response, 41 }
+};
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -157,6 +217,39 @@ void BehaviorSDKInterface::OnBehaviorDeactivated()
   }
 }
 
+void BehaviorSDKInterface::ProcessUserIntents()
+{
+  //pull any pending user intents so we can send them to the SDK
+  //then drop them so they are not used
+  //only accept whitelisted events to avoid unexpecxted side-effects
+  UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+  if( uic.IsAnyUserIntentPending() ) {
+    const auto* userIntentDataPtr = uic.GetPendingUserIntent();
+    if( userIntentDataPtr != nullptr ) {
+      auto intent = userIntentDataPtr->intent;
+      LOG_INFO("BehaviorSDKInterface::ProcessUserIntents", "Intercepted pending user untent ID %u json: %s", 
+               (unsigned int)intent.GetTag(), intent.GetJSON().toStyledString().c_str());
+
+      //Find the tuple with our tag
+      auto it = std::find_if(kIntentWhitelist.begin(), kIntentWhitelist.end(), [intent](const std::tuple<UserIntentTag, unsigned int>& e) {return std::get<0>(e) == intent.GetTag();});
+
+      if (it == kIntentWhitelist.end()) {
+        //not found in list, not ours
+        LOG_INFO("BehaviorSDKInterface::ProcessUserIntents", "Not forwarding user intent");
+        return;
+      }
+
+      uic.DropUserIntent(intent.GetTag());
+
+      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+      if( gi != nullptr ) {
+        auto* userIntentMsg = new external_interface::UserIntent(std::get<1>(*it), intent.GetJSON().toStyledString().c_str());
+        gi->Broadcast( ExternalMessageRouter::Wrap(userIntentMsg) );
+      }
+    }
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSDKInterface::BehaviorUpdate() 
 {
@@ -171,6 +264,8 @@ void BehaviorSDKInterface::BehaviorUpdate()
   {
     CancelSelf();
   }
+
+  ProcessUserIntents();
 }
 
 void BehaviorSDKInterface::HandleDriveOffChargerComplete() {
