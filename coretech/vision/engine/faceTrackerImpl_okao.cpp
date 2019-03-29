@@ -596,9 +596,9 @@ namespace Vision {
         FacialExpression::Sadness
       };
 
-      for(INT32 okaoExpressionVal = 0; okaoExpressionVal < EX_EXPRESSION_KIND_MAX; ++okaoExpressionVal) {
-        face.SetExpressionValue(TrackedFaceExpressionLUT[okaoExpressionVal],
-                                _expressionValues[okaoExpressionVal]);
+      for(INT32 okaoExprIndex = 0; okaoExprIndex < EX_EXPRESSION_KIND_MAX; ++okaoExprIndex) {
+        face.SetExpressionValue(TrackedFaceExpressionLUT[okaoExprIndex],
+                                Util::numeric_cast<TrackedFace::ExpressionValue>(_expressionValues[okaoExprIndex]));
       }
 
     }
