@@ -48,7 +48,6 @@ target_include_directories(cubeBleClient
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
   PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../robot/include>
-  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../generated/clad/engine>
   ${PLATFORM_INCLUDES}
 )
 

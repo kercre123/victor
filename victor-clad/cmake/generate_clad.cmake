@@ -153,6 +153,10 @@ function(generate_clad_cpplite)
         add_library(${genclad_LIBRARY} STATIC
             ${CLAD_GEN_OUTPUTS}
         )
+        target_compile_definitions(${genclad_LIBRARY}
+          PUBLIC
+          USES_CPPLITE
+        )
         anki_build_target_license(${genclad_LIBRARY} "ANKI")
     endif()
 endfunction()
@@ -305,6 +309,10 @@ function(generate_clad_cpp)
     if (genclad_LIBRARY)
         add_library(${genclad_LIBRARY} STATIC
             ${CLAD_GEN_OUTPUTS}
+        )
+        target_compile_definitions(${genclad_LIBRARY}
+          PUBLIC
+          USES_CLAD
         )
         anki_build_target_license(${genclad_LIBRARY} "ANKI")
     endif()

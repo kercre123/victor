@@ -34,7 +34,6 @@ set(CLAD_CPPLITE_FLAGS
     ${CLAD_CPPLITE_NS_FLAG})
 
 set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/robot")
-# set(PY_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladPython")
 
 file(STRINGS "${ANKI_SRCLIST_DIR}/robot_clad_embedded.srcs.lst" ROBOT_SRCS)
 
@@ -46,13 +45,6 @@ generate_clad_cpplite(
     INCLUDES "${CLAD_INCLUDES}"
     OUTPUT_SRCS CLAD_CPP_GEN_ROBOT_SRCS
 )
-
-# generate_clad_py(
-#     SRCS ${ROBOT_SRCS}
-#     RELATIVE_SRC_DIR "src"
-#     OUTPUT_DIR "${PY_OUTPUT_DIR}"
-#     OUTPUT_SRCS CLAD_PY_GEN_ROBOT_SRCS
-# )
 
 #
 # Accumulate sources from running special emitters on union clad files
@@ -230,9 +222,14 @@ add_library(robot_clad_cpplite STATIC
 )
 
 target_include_directories(robot_clad_cpplite
-  PUBLIC
-  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad>
-  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/robot>
+    PUBLIC
+#   TODO:REG  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad>
+    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/robot>
+)
+
+target_compile_definitions(robot_clad_cpplite
+    PUBLIC
+    USES_CPPLITE
 )
 
 anki_build_target_license(robot_clad_cpplite "ANKI")

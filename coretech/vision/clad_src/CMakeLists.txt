@@ -33,6 +33,11 @@ target_include_directories(cti_vision_clad
   $<BUILD_INTERFACE:${OUTPUT_DIR}>
 )
 
+target_compile_definitions(cti_vision_clad
+  PUBLIC
+  USES_CLAD
+)
+
 target_link_libraries(cti_vision_clad
   clad
   cti_common_clad
@@ -63,6 +68,11 @@ add_library(cti_vision_clad_cpplite STATIC
 target_include_directories(cti_vision_clad_cpplite
   PUBLIC
   $<BUILD_INTERFACE:${CPPLITE_ROBOT_OUTPUT_DIR}>
+)
+
+target_compile_definitions(cti_vision_clad_cpplite
+    PUBLIC
+    USES_CPPLITE
 )
 
 anki_build_target_license(cti_vision_clad_cpplite "ANKI")

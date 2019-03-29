@@ -27,19 +27,6 @@ set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/engine")
 set(CLAD_CS_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladCSharp")
 set(CLAD_GO_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladgo/src")
 set(CLAD_PY_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladPython")
-#set(OUTPUT_DIR "../generated/clad/engine")
-
-#generate_clad(
-#    LIBRARY "clad_engine"
-#    SRCS "${SRCS}"
-#    RELATIVE_SRC_DIR "src"
-#    OUTPUT_DIR "${OUTPUT_DIR}"
-#    EMITTER "${CLAD_CPP}"
-#    OUTPUT_EXTS ".h" ".cpp"
-#    FLAGS "${CLAD_CPP_FLAGS}"
-#    INCLUDES "${CLAD_INCLUDES}"
-#    OUTPUT_SRCS CLAD_GEN_SRCS
-#)
 
 file(STRINGS "${ANKI_SRCLIST_DIR}/robot_clad.srcs.lst" ROBOT_SRCS)
 generate_clad_cpp(
@@ -87,7 +74,12 @@ add_library(robot_clad STATIC
 
 target_include_directories(robot_clad
     PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/engine>
+    $<BUILD_INTERFACE:${OUTPUT_DIR}>
+)
+
+target_compile_definitions(robot_clad
+  PUBLIC
+  USES_CLAD
 )
 
 target_link_libraries(robot_clad
@@ -218,10 +210,17 @@ add_library(cloud_clad_cpp STATIC
     ${CLAD_CLOUD_CPP_GEN_SRCS}
     ${CLAD_GATEWAY_CPP_GEN_SRCS}
 )
+
 target_include_directories(cloud_clad_cpp
     PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/engine>
+    $<BUILD_INTERFACE:${OUTPUT_DIR}>
 )
+
+target_compile_definitions(cloud_clad_cpp
+    PUBLIC
+    USES_CLAD
+)
+
 target_link_libraries(cloud_clad_cpp
     clad
 )
@@ -239,7 +238,12 @@ add_library(engine_clad STATIC
 
 target_include_directories(engine_clad
     PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/engine>
+    $<BUILD_INTERFACE:${OUTPUT_DIR}>
+)
+
+target_compile_definitions(engine_clad
+    PUBLIC
+    USES_CLAD
 )
 
 target_link_libraries(engine_clad

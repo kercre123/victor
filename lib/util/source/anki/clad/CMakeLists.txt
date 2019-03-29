@@ -33,7 +33,12 @@ add_library(util_clad STATIC
 
 target_include_directories(util_clad
     PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/util>
+    $<BUILD_INTERFACE:${OUTPUT_DIR}>
+)
+
+target_compile_definitions(util_clad
+  PUBLIC
+  USES_CLAD
 )
 
 target_link_libraries(util_clad
