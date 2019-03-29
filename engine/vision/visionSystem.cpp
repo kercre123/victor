@@ -341,16 +341,14 @@ Result VisionSystem::Init(const Json::Value& config)
       }
       
       const std::string& name = modelConfig[NeuralNets::JsonKeys::NetworkName].asString();
-      auto addModelResult = _neuralNetRunners.emplace(name, new Vision::NeuralNetRunner());
+      auto addModelResult = _neuralNetRunners.emplace(name, new Vision::NeuralNetRunner(modelPath));
       if(!addModelResult.second)
       {
         PRINT_NAMED_ERROR("VisionSystem.Init.DuplicateNeuralNetModelName", "%s", name.c_str());
         continue;
       }
       std::unique_ptr<Vision::NeuralNetRunner>& neuralNetRunner = addModelResult.first->second;
-      Result neuralNetResult = neuralNetRunner->Init(modelPath,
-                                                     dnnCachePath,
-                                                     modelConfig);
+      Result neuralNetResult = neuralNetRunner->Init(dnnCachePath, modelConfig);
       if(RESULT_OK != neuralNetResult)
       {
         PRINT_NAMED_ERROR("VisionSystem.Init.NeuralNetInitFailed", "Name: %s", name.c_str());

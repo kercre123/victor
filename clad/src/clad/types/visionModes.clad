@@ -108,7 +108,8 @@ namespace Vector {
     Faces_Blink              = 1,
     Faces_Crop               = 1,
     AutoExp_MinGain          = 1,
-
+    Offboard                 = 1,
+    
     AutoExp_Cycling          = 0,
     Markers_Composite        = 0,
 
