@@ -1,5 +1,5 @@
 /**
- * File: BehaviorOnboardingCoordinator.h
+ * File: BehaviorOnboardingCoordinator.cpp
  *
  * Author: Sam Russell
  * Created: 2018-10-26
@@ -185,7 +185,7 @@ void BehaviorOnboardingCoordinator::InitBehavior()
     AppToEngineTag::kOnboardingSkipOnboarding,
     AppToEngineTag::kOnboardingMarkCompleteAndExit,
     AppToEngineTag::kAppDisconnected
-  }, 
+  },
   std::bind(&BehaviorOnboardingCoordinator::HandleOnboardingMessageFromApp, this, std::placeholders::_1));
 
   const auto& BC = GetBEI().GetBehaviorContainer();
@@ -249,7 +249,7 @@ void BehaviorOnboardingCoordinator::OnBehaviorActivated()
   // by something and pick up where we left off to maintain App Authoritative design if at all possible
   if(_dVars.terminatedNaturally){
     _dVars = DynamicVariables();
-    // If this isn't set to true before exiting, onboarding was interrupted, probably by an infoFace feature like 
+    // If this isn't set to true before exiting, onboarding was interrupted, probably by an infoFace feature like
     // mute or customer care
     _dVars.terminatedNaturally = false;
 
@@ -311,7 +311,7 @@ void BehaviorOnboardingCoordinator::HandleOnboardingMessageFromApp(const AppToEn
     {
       _dVars.pendingPhase = CladProtoTypeTranslator::ToCladEnum(event.GetData().onboarding_set_phase_request().phase());
       _dVars.lastSetPhase = _dVars.pendingPhase;
-      auto iter = _iConfig.OnboardingPhaseMap.find(_dVars.lastSetPhase); 
+      auto iter = _iConfig.OnboardingPhaseMap.find(_dVars.lastSetPhase);
       _dVars.lastSetPhaseBehavior = (_iConfig.OnboardingPhaseMap.end() != iter) ? iter->second.behavior : nullptr;
       _dVars.lastSetPhaseState = OnboardingPhaseState::PhasePending;
       SendSetPhaseResponseToApp();
@@ -450,7 +450,7 @@ void BehaviorOnboardingCoordinator::TransitionToPhase(const OnboardingPhase& pha
     _dVars.onboardingStarted = true;
   }
 
-  auto iter = _iConfig.OnboardingPhaseMap.find(phase); 
+  auto iter = _iConfig.OnboardingPhaseMap.find(phase);
   if( _iConfig.OnboardingPhaseMap.end() != iter ){
     ICozmoBehaviorPtr behavior = iter->second.behavior;
     if( behavior->WantsToBeActivated() ){
@@ -460,7 +460,7 @@ void BehaviorOnboardingCoordinator::TransitionToPhase(const OnboardingPhase& pha
         if(phaseWithProgress){
           phaseWithProgress->ResumeUponNextActivation();
         }
-      } 
+      }
       else {
         // Only reset the phase timeout if this transition is NOT resuming after an interruption
         const bool phaseHasTimeout = iter->second.timeout_s > 0.0f;
@@ -470,7 +470,7 @@ void BehaviorOnboardingCoordinator::TransitionToPhase(const OnboardingPhase& pha
       if( appCommandedTransition ){
         _dVars.lastSetPhaseState = OnboardingPhaseState::PhaseInProgress;
       }
-      
+
       _dVars.currentPhase = iter->first;
       _dVars.shouldCheckPowerOff = iter->second.allowPowerOff;
 
@@ -679,16 +679,16 @@ void BehaviorOnboardingCoordinator::Send1p0WakeUpResponseToApp(bool canWakeUp)
     chargingInfo->set_on_charger( _dVars.batteryInfo.onCharger );
     chargingInfo->set_needs_to_charge( _dVars.batteryInfo.needsToCharge );
     chargingInfo->set_suggested_charger_time( GetChargerTime() );
-    
+
     LOG_INFO("BehaviorOnboarding.OnboardingStatus.Received1p0Wakeup",
             "Received wakeup. Responding with ok=%d, onCharger=%d, needsToCharger=%d, chargerTime=%f",
             canWakeUp, _dVars.batteryInfo.onCharger, _dVars.batteryInfo.needsToCharge, GetChargerTime());
-    
+
     auto* onboardingWakeUpResponse = new external_interface::OnboardingWakeUpResponse;
     onboardingWakeUpResponse->set_waking_up( canWakeUp );
     onboardingWakeUpResponse->set_allocated_charging_info( chargingInfo );
     gi->Broadcast( ExternalMessageRouter::WrapResponse(onboardingWakeUpResponse) );
-  }      
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -806,7 +806,7 @@ bool BehaviorOnboardingCoordinator::ShouldExitDueToTimeout()
 {
   float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   bool shouldTimeOut = false;
-  const char* reason = "";
+  std::string reason;
 
   if( ( _dVars.globalExitTime_s > 0.0f ) && ( _dVars.globalExitTime_s < currTime_s ) ){
     auto timeoutType = _dVars.onboardingStarted ? "DELAYED_COMPLETION" : "DELAYED_START";
@@ -823,7 +823,7 @@ bool BehaviorOnboardingCoordinator::ShouldExitDueToTimeout()
     LOG_INFO( "BehaviorOnboardingCoordinator.TimeoutExpired",
               "Onboarding aborted due to expired %s.",
               timeoutType.c_str() );
-    reason = timeoutType.c_str();
+    reason = timeoutType;
     shouldTimeOut = true;
   }
   else if( ( _dVars.appDisconnectExitTime_s > 0.0f ) && ( _dVars.appDisconnectExitTime_s < currTime_s ) ){
