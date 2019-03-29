@@ -7,3 +7,6 @@
 [submodule "tools/sdk/vector-python-sdk-private"]
 	path = tools/sdk/vector-python-sdk-private
 	url = git@github.com:anki/vector-python-sdk-private.git
+[submodule "apps/demos/ble-pairing/vector-web-setup"]
+	path = apps/demos/ble-pairing/vector-web-setup
+	url = git@github.com:anki/vector-web-setup.git

@@ -34,6 +34,12 @@ namespace external_interface {
   class TurnInPlaceRequest;
   class SetLiftHeightRequest;
   class SetHeadAngleRequest;
+  class TurnTowardsFaceRequest;
+  class GoToObjectRequest;
+  class RollObjectRequest;
+  class PopAWheelieRequest;
+  class PickupObjectRequest;
+  class PlaceObjectOnGroundHereRequest;
 }
 
 class Robot;
@@ -59,9 +65,11 @@ public:
   // Event/Message handling
   void HandleProtoMessage(const AnkiEvent<external_interface::GatewayWrapper>& event);
 
+  // SDK behavior activation functions
   bool SDKWantsControl();
   int SDKControlLevel();
   void SDKBehaviorActivation(bool enabled);
+  bool SDKWantsBehaviorLock();
 
   void OnActionCompleted(ExternalInterface::RobotCompletedAction msg);
 
@@ -72,8 +80,11 @@ private:
 
   Robot* _robot = nullptr;  
   bool _sdkWantsControl = false;
+  bool _sdkWantsLock = false;
   bool _sdkBehaviorActivated = false;
   int _sdkControlLevel;
+  uint64_t _sdkLockConnId = 0;
+  uint64_t _sdkControlConnId = 0;
 
   bool _captureSingleImage = false;
   
@@ -86,8 +97,11 @@ private:
 
   void OnSendAudioModeRequest(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void IsImageStreamingEnabledRequest(const AnkiEvent<external_interface::GatewayWrapper>& event);
-  void DispatchSDKActivationResult(bool enabled);
+  void DispatchSDKActivationResult(bool enabled, uint64_t connectionId);
+  void DispatchBehaviorLockLostResult();
+  void SetBehaviorLock(uint64_t controlId);
   void DispatchAudioStreamResult();
+
   // Returns true if the subscription was actually updated
   bool SubscribeToVisionMode(bool subscribe, VisionMode mode, bool updateWaitingToChangeSet = true);
   void DisableMirrorMode();

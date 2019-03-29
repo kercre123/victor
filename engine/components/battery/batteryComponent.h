@@ -104,6 +104,8 @@ public:
   // NOTE: If battery is disconnected and IsCharging() == true, it means the battery
   //       has actually suspended charging but will resume when the battery has cooled down.
   bool IsCharging() const { return _isCharging; }
+
+  bool IsChargingStalledBecauseTooHot() const { return _isCharging && _battDisconnected; }
   
   // Indicates that the robot is sensing voltage on its charge contacts
   bool IsOnChargerContacts() const { return _isOnChargerContacts; }
@@ -166,19 +168,15 @@ private:
   
   bool _battOverheated = false;
   bool _battDisconnected = false;
+  bool _wasBattDisconnected = false;
   bool _isCharging = false;
   bool _isOnChargerContacts = false;
   bool _isOnChargerPlatform = false;
-  bool _hasStoppedChargingSinceLastSaturationCharge = false;
   
   float _lastBatteryLevelChange_sec = 0;
   float _lastOnChargerContactsChange_sec = 0;
   float _lastDisconnectedChange_sec = 0;
   
-  float _saturationChargingStartTime_sec = 0.f;
-  float _saturationChargeTimeRemaining_sec = 0.f;
-  float _lastSaturationChargingEndTime_sec = 0.f;
-
   bool _resetVoltageFilterWhenBatteryConnected = false;
 
   // The timestamp of the RobotState message with the latest data

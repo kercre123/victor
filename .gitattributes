@@ -8,3 +8,5 @@
 *.pb filter=lfs diff=lfs merge=lfs -text
 *.tflite filter=lfs diff=lfs merge=lfs -text
 *.lite filter=lfs diff=lfs merge=lfs -text
+coretech/vision/tools/debayer/resources/inputs/** filter=lfs diff=lfs merge=lfs -text
+coretech/vision/tools/debayer/resources/references/** filter=lfs diff=lfs merge=lfs -text

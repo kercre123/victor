@@ -147,9 +147,17 @@ void ShowAudioStreamStateManager::StartTriggerResponseWithoutGetIn(OnTriggerAudi
       });
     }
 
-    controller->PostAudioEvent(ToAudioEventId(_postAudioEvent.audioEvent),
-                               ToAudioGameObject(_postAudioEvent.gameObject),
-                               audioCallbackContext);
+    AudioPlayingId result = controller->PostAudioEvent(ToAudioEventId(_postAudioEvent.audioEvent),
+                                                       ToAudioGameObject(_postAudioEvent.gameObject),
+                                                       audioCallbackContext);
+
+    // if we failed to post the earcon, we still want the callback to be called successfully since we've still
+    // completed the get-in process.  the unsuccessful callback is for when no valid response exists ... in this
+    // case, it DOES exists, the audio engine is just being an ass right now
+    if ( AudioEngine::kInvalidAudioPlayingId == result )
+    {
+      callback(true);
+    }
   }
   else
   {

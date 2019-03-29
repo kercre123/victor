@@ -25,9 +25,11 @@
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
+#include "engine/cozmoObservableObject.h"
 #include "engine/drivingAnimationHandler.h"
 #include "engine/moodSystem/moodManager.h"
 #include "engine/utils/cozmoFeatureGate.h"
+#include "util/helpers/quoteMacro.h"
 #include "util/math/math.h"
 
 #define SET_STATE(s) do{ \
@@ -64,7 +66,7 @@ BehaviorKeepaway::InstanceConfig::InstanceConfig(const Json::Value& config)
   } while(0)
 
   minPouncesForSoloPlay = JsonTools::ParseInt8(config, kMinPouncesForSoloPlayKey, kDebugName);
-  maxPouncesForSoloPlay = JsonTools::ParseInt8(config, kMaxPouncesForSoloPlayKey, kDebugName); 
+  maxPouncesForSoloPlay = JsonTools::ParseInt8(config, kMaxPouncesForSoloPlayKey, kDebugName);
 
   SET_FLOAT_HELPER(targetUnmovedGameEndTimeout_s);
   SET_FLOAT_HELPER(noVisibleTargetGameEndTimeout_s);
@@ -169,7 +171,7 @@ BehaviorKeepaway::BehaviorKeepaway(const Json::Value& config)
   MakeMemberTunable(_iConfig.probReactMax, "probReactMax", kDebugName);
   MakeMemberTunable(_iConfig.useProxForDistance, "useProxForDistance", kDebugName);
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKeepaway::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
@@ -182,7 +184,7 @@ void BehaviorKeepaway::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorKeepaway::WantsToBeActivatedBehavior() const 
+bool BehaviorKeepaway::WantsToBeActivatedBehavior() const
 {
   return true;
 }
@@ -201,7 +203,7 @@ void BehaviorKeepaway::OnBehaviorActivated()
 
   GetBEI().GetMoodManager().TriggerEmotionEvent("KeepawayStarted");
 
-  // push driving animations for creeping 
+  // push driving animations for creeping
   auto& robotInfo = GetBEI().GetRobotInfo();
   robotInfo.GetDrivingAnimationHandler().PushDrivingAnimations(kKeepawayDrivingAnims, GetDebugLabel());
 
@@ -266,14 +268,14 @@ void BehaviorKeepaway::UpdateTargetStatus()
   _dVars.target.isOffCenter = ABS(status.angleFromRobotFwd_deg) > _iConfig.allowablePointingError_deg;
   _dVars.target.isInMousetrapRange = status.distance_mm < (_iConfig.globalOffsetDist_mm + _iConfig.mousetrapPounceDistance_mm);
 
-  // Handle pertinent state changes 
+  // Handle pertinent state changes
   bool isNotMoving = (GetCurrentTimeInSeconds() - status.lastMovedTime_s) > _iConfig.targetUnmovedCreepTimeout_s;
   bool isInPounceRange = status.distance_mm < (_iConfig.globalOffsetDist_mm + _iConfig.nominalPounceDistance_mm);
 
   // If the target just stopped moving
   if(!_dVars.target.isNotMoving && isNotMoving){
     float creepDelay = GetRNG().RandDblInRange(_iConfig.creepDelayTimeMin_s, _iConfig.creepDelayTimeMax_s);
-    _dVars.creepTime = GetCurrentTimeInSeconds() + creepDelay; 
+    _dVars.creepTime = GetCurrentTimeInSeconds() + creepDelay;
   }
   _dVars.target.isNotMoving = isNotMoving;
 
@@ -299,7 +301,7 @@ void BehaviorKeepaway::CheckGetOutTimeOuts()
     // Don't do a movement timeout if the cube hasn't moved since starting. This typically indicates that he is
     // pouncing on a cube without an opponent
     if(timeSinceMoved > timeSinceGameStart){
-      // just keep playing until we exit from too much success, or someone engages 
+      // just keep playing until we exit from too much success, or someone engages
       if(_dVars.pounceCount == _dVars.pounceCountToExit - 1){
         _dVars.soloExitAfterNextPounce = true;
         return;
@@ -309,7 +311,7 @@ void BehaviorKeepaway::CheckGetOutTimeOuts()
            ( timeSinceMoved > _iConfig.targetUnmovedGameEndTimeout_s) ){
       victorIsBored = true;
       PRINT_CH_INFO(kLogChannelName,
-                    "BehaviorKeepaway.GameEndTimeout", 
+                    "BehaviorKeepaway.GameEndTimeout",
                     "Victor got bored and quit because the cube didn't move for %f seconds",
                     _iConfig.targetUnmovedGameEndTimeout_s);
     }
@@ -319,14 +321,14 @@ void BehaviorKeepaway::CheckGetOutTimeOuts()
         (GetCurrentTimeInSeconds() - status.lastObservedTime_s) > _iConfig.noVisibleTargetGameEndTimeout_s){
       victorIsBored = true;
       PRINT_CH_INFO(kLogChannelName,
-                    "BehaviorKeepaway.GameEndTimeout", 
+                    "BehaviorKeepaway.GameEndTimeout",
                     "Victor got bored and quit because his cube was hidden for %f seconds",
                     _iConfig.noVisibleTargetGameEndTimeout_s);
     }
   }
 
   if( KeepawayState::Stalking == _dVars.state &&
-      _dVars.outOfPlayExitTime_s != 0.0f && 
+      _dVars.outOfPlayExitTime_s != 0.0f &&
       GetCurrentTimeInSeconds() > _dVars.outOfPlayExitTime_s ){
     PRINT_CH_INFO(kLogChannelName,
                   "BehaviorKeepaway.OutOfPlayTimeout",
@@ -337,7 +339,7 @@ void BehaviorKeepaway::CheckGetOutTimeOuts()
 
   if(victorIsBored){
     TransitionToGetOutBored();
-  } 
+  }
   return;
 }
 
@@ -359,24 +361,19 @@ void BehaviorKeepaway::TransitionToSearching()
     CancelDelegates(false);
   }
 
-  if(_dVars.target.isVisible){
-    TransitionToStalking();
-  }
-  else{
-    if(_dVars.target.isValid){
-      DelegateIfInControl(new SearchForNearbyObjectAction(_dVars.targetID), 
-                          &BehaviorKeepaway::TransitionToSearching);
-    } else {
-      DelegateIfInControl(new SearchForNearbyObjectAction(), 
-                          &BehaviorKeepaway::TransitionToSearching);
-    }
+  if(_dVars.target.isValid){
+    DelegateIfInControl(new SearchForNearbyObjectAction(_dVars.targetID),
+                        &BehaviorKeepaway::TransitionToSearching);
+  } else {
+    DelegateIfInControl(new SearchForNearbyObjectAction(),
+                        &BehaviorKeepaway::TransitionToSearching);
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorKeepaway::TransitionToStalking()
 {
-  SET_STATE(Stalking);  
+  SET_STATE(Stalking);
   StopIdleAnimation();
   CancelDelegates(false);
 
@@ -398,7 +395,7 @@ void BehaviorKeepaway::UpdateStalking()
 {
   if(!IsControlDelegated() || _dVars.isIdling){
 
-    if(!_dVars.target.isValid || !_dVars.target.isVisible){
+    if(!_dVars.target.isVisible){
       // If the target goes out of sight, don't change the ready state
       TransitionToSearching();
       return;
@@ -424,7 +421,7 @@ void BehaviorKeepaway::UpdateStalking()
           DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceGetUnready),
             [this](){
               _dVars.pounceReadyState = PounceReadyState::Unready;
-              _dVars.outOfPlayExitTime_s = GetCurrentTimeInSeconds() + _iConfig.outOfPlayGameEndTimeout_s; 
+              _dVars.outOfPlayExitTime_s = GetCurrentTimeInSeconds() + _iConfig.outOfPlayGameEndTimeout_s;
               StartIdleAnimation();
             });
         } else if(_dVars.target.isInMousetrapRange){
@@ -482,7 +479,7 @@ void BehaviorKeepaway::TransitionToCreeping()
   float creepDistance = 0.0f;
   if(maxCreepDistance <= 0.0f){
     TransitionToStalking();
-    return; 
+    return;
   } else if(maxCreepDistance < _iConfig.creepDistanceMin_mm){
     creepDistance = maxCreepDistance;
   } else {
@@ -509,7 +506,7 @@ void BehaviorKeepaway::TransitionToPouncing()
   float startingPitch = GetBEI().GetRobotInfo().GetPitchAngle().getDegrees();
   _dVars.pounceSuccessPitch_deg = startingPitch + _iConfig.pounceSuccessPitchDiff_deg;
   _dVars.pounceChance = _iConfig.basePounceChance;
-  AnimationTrigger pounceTrigger = _dVars.target.isInMousetrapRange ? 
+  AnimationTrigger pounceTrigger = _dVars.target.isInMousetrapRange ?
                                    AnimationTrigger::CubePouncePounceClose :
                                    AnimationTrigger::CubePouncePounceNormal;
   ++_dVars.pounceCount;
@@ -524,7 +521,7 @@ void BehaviorKeepaway::TransitionToFakeOut()
   CancelDelegates(false);
 
   _dVars.pounceChance = Util::Clamp((_dVars.pounceChance + _iConfig.pounceChanceIncrement), 0.0f, 1.0f);
-  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceFake), 
+  DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::CubePounceFake),
                       &BehaviorKeepaway::TransitionToStalking);
 }
 
@@ -555,7 +552,7 @@ void BehaviorKeepaway::TransitionToReacting()
                      "Successful pounce! Scale value: %f. Exit probability: %f",
                      _dVars.frustrationExcitementScale,
                      probExit);
-  } 
+  }
   else {
     float min = 1.0f - _iConfig.maxProbExitFrustrated;
     float newVal = _dVars.frustrationExcitementScale - _iConfig.frustrationIncPerMiss;
@@ -576,11 +573,11 @@ void BehaviorKeepaway::TransitionToReacting()
   }
 
   if(exitRoll < probExit){
-    PRINT_CH_INFO("Behaviors", "BehaviorKeepaway.EmotionalExit", 
+    PRINT_CH_INFO("Behaviors", "BehaviorKeepaway.EmotionalExit",
                      "Exiting keepaway due to excessive excitement/frustration. prob: %f. rand: %f.",
                      probExit, exitRoll);
-                      
-    AnimationTrigger winResponseAnim = _dVars.victorGotLastPoint ? 
+
+    AnimationTrigger winResponseAnim = _dVars.victorGotLastPoint ?
                                         AnimationTrigger::CubePounceWinSession :
                                         AnimationTrigger::CubePounceLoseSession;
     // No Delegation. Behavior will end after winResponse.

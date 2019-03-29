@@ -53,7 +53,6 @@ The engine is the "main" process on Victor. Just as in Cozmo, it is responsible 
 | FaceWorld                      | Registers faces for recognition, maintains pose estimates of any observed faces |
 | MovementComponent   |  Interface for moving the robots various motors. In general, if you want to move the robot you should be using actions! |
 | Navmap                         | Occupancy map storing knowledge of objects and features of interest including those detected by proximity sensors or camera
-| ObjectPoseConfirmer    | Updates pose of observed objects based on accumulated evidence |
 | PathComponent            | Generates paths to get robot from one pose to another. Depending on the planner, it may generate plan in a separate thread from the main thread. |
 | PetWorld                       | Maintains poses of observed pet faces |
 | RobotStateHistory        | Maintains a limited history of robot poses (as reported by RobotState message) and is used to compensate for comms latency in order to compute accurate robot and marker poses. |

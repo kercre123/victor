@@ -27,7 +27,7 @@ static const char * const kLogChannelName = "Actions";
 
 void TrackMotionAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
 {
-  requests.insert({ VisionMode::DetectingMotion, EVisionUpdateFrequency::High });
+  requests.insert({ VisionMode::Motion, EVisionUpdateFrequency::High });
 }
 
 ActionResult TrackMotionAction::InitInternal()

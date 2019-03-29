@@ -21,6 +21,14 @@
   "listeningBehavior"         : "ListenForBeats",
   "longListeningBehavior"     : "ListenForBeatsLong",
   "offChargerDancingBehavior" : "DanceToTheBeat",
-  "onChargerDancingBehavior"  : "DanceToTheBeat"
+  "onChargerDancingBehavior"  : "DanceToTheBeat",
+  
+  "wantsToCancelSelfCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "OffTreadsState",
+      "targetState": "OnTreads"
+    }
+  }
   
 }

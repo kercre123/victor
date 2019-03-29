@@ -218,7 +218,7 @@ static Robot* consoleRobot = nullptr;
 void DevProcessOneFrameForVisionEdges( ConsoleFunctionContextRef context )
 {
   if(consoleRobot != nullptr) {
-    consoleRobot->GetActionList().QueueAction(QueueActionPosition::NOW, new WaitForImagesAction(1, VisionMode::DetectingOverheadEdges));
+    consoleRobot->GetActionList().QueueAction(QueueActionPosition::NOW, new WaitForImagesAction(1, VisionMode::OverheadEdges));
   }
 }
 
@@ -916,6 +916,8 @@ std::shared_ptr<INavMap> MapComponent::GetCurrentMemoryMapHelper() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MapComponent::UpdateObjectPose(const ObservableObject& object, const Pose3d* oldPose, PoseState oldPoseState)
 {
+  // TODO (VIC-13789): Clean this method up (e.g., no need to pass a pointer to oldPose)
+  
   const ObjectID& objectID = object.GetID();
   DEV_ASSERT(objectID.IsSet(), "MapComponent.OnObjectPoseChanged.InvalidObjectID");
 

@@ -112,7 +112,7 @@ do
                     fi
                 fi
 
-                if /usr/bin/curl ${form} ${VIC_CRASH_UPLOAD_URL} ; then
+                if /usr/bin/curl ${form} "${VIC_CRASH_UPLOAD_URL}" ; then
                     echo "Successfully uploaded ${i}"
 
                     # Rename the file so that we can keep it around for a while before deletion

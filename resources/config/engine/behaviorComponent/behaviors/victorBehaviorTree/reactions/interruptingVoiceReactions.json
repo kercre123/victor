@@ -6,6 +6,8 @@
   "interruptActiveBehavior": true,
 
   "behaviors": [
+    "Volume",
+    "EyeColorVoiceCommand",
     "DoATrickVoiceCommand",
     "PlayAGameVoiceCommand",
     "FindYourCubeVoiceCommand",

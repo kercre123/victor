@@ -50,8 +50,8 @@ namespace {
   const f32 kLiftHeightOccludingProxSensorWithCubeMin = 0;
   const f32 kLiftHeightOccludingProxSensorWithCubeMax = LIFT_HEIGHT_HIGHDOCK;
 
-  const f32 kMinPitch = DEG_TO_RAD(-8);
-  const f32 kMaxPitch = DEG_TO_RAD(8);
+  const f32 kMinPitch = DEG_TO_RAD(-5);
+  const f32 kMaxPitch = DEG_TO_RAD(5);
 
   // for checking if the state has changed since the last measurement
   const Point3f kRobotTranslationTolerance_mm{0.1f, 0.1f, 0.1f};

@@ -178,7 +178,7 @@ message RobotFallingEvent {
 message RobotProcessedImage {
    uint_32 timestamp,
    VisionMode visionModes[uint_8],
-   uint_8 mean // Valid iff ComputingStatistics mode enabled
+   uint_8 mean // Valid iff Stats mode enabled
 }
 
 // RobotObservedObject for signaling that an object
@@ -199,14 +199,6 @@ message RobotObservedObject {
 message RobotObservedPossibleObject {
     // objectID will always be -1
     RobotObservedObject possibleObject
-}
-
-// RobotObservedGenericObject - for detecting general objects (not Cozmo accessories with markers on them)
-message RobotObservedGenericObject {
-    CladRect      img_rect,       // Position in the image, if available
-    string        name,
-    uint_32       timestamp,
-    float_32      score
 }
 
 // RobotObservedFace
@@ -352,11 +344,6 @@ message CreatedFixedCustomObject {
 // DefinedCustomObject
 message DefinedCustomObject {
     bool success     // false if the last custom object definition failed (e.g. due to duplicate marker already in use)
-}
-
-// RobotMarkedObjectPoseUnknown
-message RobotMarkedObjectPoseUnknown {
-    uint_32 objectID
 }
 
 structure LocatedObjectState {

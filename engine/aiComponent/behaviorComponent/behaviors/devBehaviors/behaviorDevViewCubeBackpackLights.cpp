@@ -15,6 +15,7 @@
 
 #include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"

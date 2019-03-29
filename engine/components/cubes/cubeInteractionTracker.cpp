@@ -18,6 +18,7 @@
 
 #include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeConnectionCoordinator.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
@@ -198,7 +199,7 @@ void CubeInteractionTracker::UpdateDependent(const RobotCompMap& dependentComps)
       if(_trackingAtHighRate && (_targetStatus.probabilityIsHeld < kConnectedLowRateConfidence)){
         _trackingAtHighRate = false;
         auto& vsm = dependentComps.GetComponent<VisionScheduleMediator>();
-        vsm.SetVisionModeSubscriptions(this, {{VisionMode::DetectingMarkers, EVisionUpdateFrequency::High}});
+        vsm.SetVisionModeSubscriptions(this, {{VisionMode::Markers, EVisionUpdateFrequency::High}});
       }
       else if(!_trackingAtHighRate && (_targetStatus.probabilityIsHeld > kConnectedHighRateConfidence)){
         _trackingAtHighRate = true;
@@ -356,7 +357,7 @@ void CubeInteractionTracker::TransitionToTrackingUnconnected(const RobotCompMap&
   _filterDecrement = kFilterDecrement_tracking;
 
   auto& vsm = dependentComps.GetComponent<VisionScheduleMediator>();
-  vsm.SetVisionModeSubscriptions(this, {{VisionMode::DetectingMarkers, EVisionUpdateFrequency::High}});
+  vsm.SetVisionModeSubscriptions(this, {{VisionMode::Markers, EVisionUpdateFrequency::High}});
   _trackingAtHighRate = true;
 }
 

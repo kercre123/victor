@@ -1,9 +1,9 @@
 /*
  * File:          webotsCtrlKeyboard.cpp
  * Date:
- * Description:   
- * Author:        
- * Modifications: 
+ * Description:
+ * Author:
+ * Modifications:
  */
 
 #include "webotsCtrlKeyboard.h"
@@ -44,8 +44,8 @@
 
 namespace Anki {
 namespace Vector {
-  
-  
+
+
   // Private members:
   namespace {
 
@@ -53,55 +53,55 @@ namespace Vector {
                                                     { 0.0f, 76.696196f, 10.0f });
 
     std::set<int> lastKeysPressed_;
-    
+
     s8 _steeringDir = 0;  // -1 = left, 0 = straight, 1 = right
     s8 _throttleDir = 0;  // -1 = reverse, 0 = stop, 1 = forward
-    
+
     bool _pressBackpackButton = false;
     bool _wasBackpackButtonPressed = false;
-    
+
     bool _touchBackpackTouchSensor = false;
     bool _wasBackpackTouchSensorTouched = false;
 
     f32 _commandedLiftSpeed = 0.f;
     f32 _commandedHeadSpeed = 0.f;
-    
+
     bool _movingHead      = false;
     bool _movingLift      = false;
-    
+
     bool _wasMovingWheels = false;
     bool _wasMovingHead   = false;
     bool _wasMovingLift   = false;
-    
+
     s16  lastDrivingCurvature_mm_ = 0;
-    
+
     webots::Node* root_ = nullptr;
-    
+
     u8 poseMarkerMode_ = 0;
     Anki::Pose3d prevGoalMarkerPose_;
     webots::Field* poseMarkerDiffuseColor_ = nullptr;
     double poseMarkerColor_[2][3] = { {0.1, 0.8, 0.1} // Goto pose color
       ,{0.8, 0.1, 0.1} // Place object color
     };
-    
+
     double lastKeyPressTime_;
-    
+
     PathMotionProfile pathMotionProfile_ = PathMotionProfile();
-    
+
     // For displaying cozmo's POV:
     webots::Display* uiCamDisplay_ = nullptr;
     webots::ImageRef* img_ = nullptr;
-    
+
     EncodedImage _encodedImage;
 
     std::string _drivingStartAnim = "";
     std::string _drivingLoopAnim = "";
     std::string _drivingEndAnim = "";
-    
+
     struct ObservedImageCentroid {
       Point2f          point;
       RobotTimeStamp_t timestamp;
-      
+
       template<class MsgType>
       void SetFromMessage(const MsgType& msg)
       {
@@ -109,20 +109,20 @@ namespace Vector {
         point.y() = msg.img_rect.y_topLeft + msg.img_rect.height*0.5f;
         timestamp = msg.timestamp;
       }
-      
+
     } _lastObservedImageCentroid;
-    
+
     std::set<u32> streamingAccelObjIds; // ObjectIDs of objects that are currently streaming accelerometer data.
-    
+
     ImageSendMode _imageStreamSavingMode = ImageSendMode::Off;
-    
+
     int  _currKey;
     bool _shiftKeyPressed;
     bool _altKeyPressed;
-    
+
     bool useApproachAngle;
     f32 approachAngle_rad;
-    
+
     // Key press mapping
     typedef struct {
       std::function<void()> fcn;
@@ -139,17 +139,17 @@ namespace Vector {
       MOD_ALT = webots::Keyboard::ALT,
       MOD_ALT_SHIFT = webots::Keyboard::ALT | webots::Keyboard::SHIFT,
     };
-    
+
   } // private namespace
 
   // ======== Message handler callbacks =======
-  
+
   // For processing image chunks arriving from robot.
   // Sends complete images to VizManager for visualization (and possible saving).
   void WebotsKeyboardController::HandleImageChunk(const ImageChunk& msg)
   {
     const bool isImageReady = _encodedImage.AddChunk(msg);
-    
+
     if(isImageReady)
     {
       Vision::ImageRGB img;
@@ -158,13 +158,13 @@ namespace Vector {
         printf("WARNING: image decode failed");
         return;
       }
-      
+
       cv::Mat cvImg = img.get_CvMat_();
-      
+
       const s32 outputColor = 1; // 1 for Green, 2 for Blue
-      
+
       for(s32 i=0; i<cvImg.rows; ++i) {
-        
+
         if(i % 2 == 0) {
           cv::Mat img_i = cvImg.row(i);
           img_i.setTo(0);
@@ -172,18 +172,18 @@ namespace Vector {
           u8* img_i = cvImg.ptr(i);
           for(s32 j=0; j<cvImg.cols; ++j) {
             img_i[3*j+outputColor] = std::max(std::max(img_i[3*j], img_i[3*j + 1]), img_i[3*j + 2]);
-            
+
             img_i[3*j+(3-outputColor)] /= 2;
             img_i[3*j] = 0; // kill red channel
-            
+
             // [Optional] Add a bit of noise
             f32 noise = 20.f*static_cast<f32>(std::rand()) / static_cast<f32>(RAND_MAX) - 0.5f;
             img_i[3*j+outputColor] = static_cast<u8>(std::max(0.f,std::min(255.f,static_cast<f32>(img_i[3*j+outputColor]) + noise)));
-            
+
           }
         }
       }
-      
+
 
       if (uiCamDisplay_ != nullptr) {
         // Delete existing image if there is one.
@@ -193,19 +193,19 @@ namespace Vector {
         img_ = uiCamDisplay_->imageNew(cvImg.cols, cvImg.rows, cvImg.data, webots::Display::RGB);
         uiCamDisplay_->imagePaste(img_, 0, 0);
       }
-      
+
     } // if(isImageReady)
-    
+
   } // HandleImageChunk()
-  
-  
+
+
   void WebotsKeyboardController::HandleRobotObservedObject(const ExternalInterface::RobotObservedObject& msg)
   {
     if (uiCamDisplay_ != nullptr)
     {
       // Draw a rectangle in red with the object ID as text in the center
       uiCamDisplay_->setColor(0x000000);
-      
+
       //std::string dispStr(ObjectType::GetName(msg.objectType));
       //dispStr += " ";
       //dispStr += std::to_string(msg.objectID);
@@ -213,7 +213,7 @@ namespace Vector {
       uiCamDisplay_->drawText(dispStr,
                           msg.img_rect.x_topLeft + msg.img_rect.width/4 + 1,
                           msg.img_rect.y_topLeft + msg.img_rect.height/2 + 1);
-      
+
       uiCamDisplay_->setColor(0xff0000);
       uiCamDisplay_->drawRectangle(msg.img_rect.x_topLeft, msg.img_rect.y_topLeft,
                                    msg.img_rect.width, msg.img_rect.height);
@@ -224,12 +224,12 @@ namespace Vector {
     // Record centroid of observation in image
     _lastObservedImageCentroid.SetFromMessage(msg);
   }
-  
+
   void WebotsKeyboardController::HandleRobotObservedFace(const ExternalInterface::RobotObservedFace& msg)
   {
     //printf("RECEIVED FACE OBSERVED: faceID %llu\n", msg.faceID);
     // _lastFace = msg;
-    
+
     // Record centroid of observation in image
     _lastObservedImageCentroid.SetFromMessage(msg);
   }
@@ -239,7 +239,7 @@ namespace Vector {
     // Record centroid of observation in image
     _lastObservedImageCentroid.SetFromMessage(msg);
   }
-  
+
   void WebotsKeyboardController::HandleLoadedKnownFace(const Vision::LoadedKnownFace& msg)
   {
     printf("HandleLoadedKnownFace: '%s' (ID:%d) first enrolled %lld seconds ago, last updated %lld seconds ago, last seen %lld seconds ago\n",
@@ -278,7 +278,7 @@ namespace Vector {
     }
 
     LOG_INFO("WebotsKeyboardController.WaitForStart", "Press Shift+Enter to start the engine");
-    
+
     const int EnterKey = 4; // tested experimentally... who knows if this will work on other platforms
     const int ShiftEnterKey = EnterKey | webots::Keyboard::SHIFT;
 
@@ -299,20 +299,20 @@ namespace Vector {
   void WebotsKeyboardController::InitInternal()
   {
     poseMarkerDiffuseColor_ = root_->getField("poseMarkerDiffuseColor");
-    
+
     const int displayWidth  = root_->getField("uiCamDisplayWidth")->getSFInt32();
     const int displayHeight = root_->getField("uiCamDisplayHeight")->getSFInt32();
     if (displayWidth > 0 && displayHeight > 0)
     {
       uiCamDisplay_ = GetSupervisor().getDisplay("uiCamDisplay");
     }
-    
+
     _lastObservedImageCentroid.point = {-1.f,-1.f};
   }
-  
-  
-  
-  
+
+
+
+
   // ======== Start of key press functions =========
 
   void WebotsKeyboardController::RequestSingleImageToGame()
@@ -320,16 +320,16 @@ namespace Vector {
     PRINT_NAMED_INFO("RequestSingleImage", "");
     SendImageRequest(ImageSendMode::SingleShot);
   }
-  
+
   void WebotsKeyboardController::ToggleImageStreamingToGame() {
-    
+
     static ImageSendMode mode = ImageSendMode::Stream;
     if (mode == ImageSendMode::Stream) {
       mode = ImageSendMode::Off;
     } else {
       mode = ImageSendMode::Stream;
     }
-    
+
     PRINT_NAMED_INFO("ToggleImageStreaming", "Mode: %s", EnumToString(mode));
     SendImageRequest(mode);
   }
@@ -338,20 +338,20 @@ namespace Vector {
   {
     SendLogProxDataRequest(2000);
   }
-  
+
   void WebotsKeyboardController::ToggleVizDisplay()
   {
     static bool showObjects = false;
     SendEnableDisplay(showObjects);
     showObjects = !showObjects;
   }
-  
+
   void WebotsKeyboardController::SaveSingleImage()
   {
     PRINT_NAMED_INFO("SaveSingleImage","");
     SendSaveImages(ImageSendMode::SingleShot);
   }
-  
+
   void WebotsKeyboardController::ToggleImageSaving()
   {
     // Toggle saving of images to pgm
@@ -364,7 +364,7 @@ namespace Vector {
     PRINT_NAMED_INFO("ToggleImageSaving", "Mode: %s", EnumToString(_imageStreamSavingMode));
     SendSaveImages(_imageStreamSavingMode);
   }
-  
+
   void WebotsKeyboardController::ToggleImageAndStateSaving()
   {
     ToggleImageSaving();
@@ -372,27 +372,27 @@ namespace Vector {
     SendSaveState(_imageStreamSavingMode != ImageSendMode::Off);
   }
 
-  
+
   void WebotsKeyboardController::TogglePoseMarkerMode()
   {
     poseMarkerMode_ = !poseMarkerMode_;
     printf("Pose marker mode: %d\n", poseMarkerMode_);
     poseMarkerDiffuseColor_->setSFColor(poseMarkerColor_[poseMarkerMode_]);
     SendErasePoseMarker();
-  }  
-  
+  }
+
   void WebotsKeyboardController::GotoPoseMarker()
   {
     if (poseMarkerMode_ == 0) {
       // Execute path to pose
-      
+
       // the pose of the green-cone marker in the WebotsOrigin frame
       Pose3d goalMarkerPose = GetGoalMarkerPose();
       printf("Going to pose marker at x=%f y=%f angle=%f\n",
              goalMarkerPose.GetTranslation().x(),
              goalMarkerPose.GetTranslation().y(),
              goalMarkerPose.GetRotationAngle<'Z'>().ToFloat());
-      
+
       // note: Goal is w.r.t. webots origin which may not match
       // engine origin (due to delocalization or drift). This
       // correction makes them match so the robot drives to where
@@ -411,28 +411,28 @@ namespace Vector {
       Pose3d markerPose_inEngineFrame = GetRobotPose() *
       GetRobotPoseActual().GetInverse() *
       goalMarkerPose;
-      
+
       SendExecutePathToPose(markerPose_inEngineFrame, pathMotionProfile_);
       //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
     } else {
       Pose3d goalMarkerPose = GetGoalMarkerPose();
-      
+
       // For placeOn and placeOnGround, specify whether or not to use the exactRotation specified
       bool useExactRotation = root_->getField("useExactPlacementRotation")->getSFBool();
-      
+
       // Indicate whether or not to place object at the exact rotation specified or
       // just use the nearest preActionPose so that it's merely aligned with the specified pose.
       printf("Setting block on ground at rotation %f rads about z-axis (%s)\n", goalMarkerPose.GetRotationAngle<'Z'>().ToFloat(), useExactRotation ? "Using exact rotation" : "Using nearest preActionPose" );
-      
+
       SendPlaceObjectOnGroundSequence(goalMarkerPose,
                                       pathMotionProfile_,
                                       useExactRotation);
       // Make sure head is tilted down so that it can localize well
       //SendMoveHeadToAngle(-0.26, headSpeed, headAccel);
-      
+
     }
   }
-  
+
   void WebotsKeyboardController::ToggleEngineLightComponent()
   {
     ExternalInterface::EnableLightStates msg;
@@ -442,16 +442,16 @@ namespace Vector {
              enableLightComponent ? "TRUE" : "FALSE");
     msg.enable = enableLightComponent;
     enableLightComponent = !enableLightComponent;
-    
+
     ExternalInterface::MessageGameToEngine msgWrapper;
     msgWrapper.Set_EnableLightStates(msg);
     SendMessage(msgWrapper);
   }
-  
+
   void WebotsKeyboardController::SearchForNearbyObject()
   {
     ExternalInterface::QueueSingleAction msg;
-    
+
     using SFNOD = ExternalInterface::SearchForNearbyObjectDefaults;
     ExternalInterface::SearchForNearbyObject searchAction {
       -1,
@@ -460,19 +460,19 @@ namespace Vector {
       Util::numeric_cast<f32>(DEG_TO_RAD(Util::EnumToUnderlying(SFNOD::HeadAngle_deg)))
     };
     msg.action.Set_searchForNearbyObject(std::move(searchAction));
-    
+
     SendAction(msg);
   }
-  
+
   void WebotsKeyboardController::ToggleCliffSensorEnable()
   {
     static bool enableCliffSensor = false;
-    
+
     printf("setting enable cliff sensor to %d\n", enableCliffSensor);
     ExternalInterface::MessageGameToEngine msg;
     msg.Set_EnableCliffSensor(ExternalInterface::EnableCliffSensor{enableCliffSensor});
     SendMessage(msg);
-    
+
     enableCliffSensor = !enableCliffSensor;
   }
 
@@ -483,11 +483,11 @@ namespace Vector {
     msgWrapper.Set_CliffAlignToWhite(msg);
     SendMessage(msgWrapper);
   }
-  
+
   void WebotsKeyboardController::ToggleTestBackpackLights()
   {
     static bool backpackLightsOn = false;
-    
+
     ExternalInterface::SetBackpackLEDs msg;
     for (u32 i=0; i < (u32) LEDId::NUM_BACKPACK_LEDS; ++i)
     {
@@ -499,42 +499,42 @@ namespace Vector {
       msg.transitionOffPeriod_ms[i] = 500;
       msg.offset[i] = 0;
     }
-    
+
     if(!backpackLightsOn) {
       // Use red channel to control left and right lights
       msg.onColor[(uint32_t)LEDId::LED_BACKPACK_FRONT] = ::Anki::NamedColors::RED;
       msg.onColor[(uint32_t)LEDId::LED_BACKPACK_MIDDLE] = ::Anki::NamedColors::GREEN;
       msg.onColor[(uint32_t)LEDId::LED_BACKPACK_BACK] = ::Anki::NamedColors::BLUE;
     }
-    
+
     ExternalInterface::MessageGameToEngine msgWrapper;
     msgWrapper.Set_SetBackpackLEDs(msg);
     SendMessage(msgWrapper);
-    
+
     backpackLightsOn = !backpackLightsOn;
   }
 
-  
+
   void WebotsKeyboardController::TrackPet()
   {
     using namespace ExternalInterface;
     TrackToPet trackAction(5.f, Vision::UnknownFaceID, Vision::PetType::Unknown);
     SendMessage(MessageGameToEngine(std::move(trackAction)));
   }
-  
+
   void WebotsKeyboardController::ToggleTrackToObject()
   {
     static bool trackingObject = false;
-    
+
     trackingObject = !trackingObject;
-    
+
     if(trackingObject) {
       const bool headOnly = false;
-      
+
       printf("Telling robot to track %sto the currently observed object %d\n",
              headOnly ? "its head " : "",
              GetLastObservedObject().id);
-      
+
       SendTrackToObject(GetLastObservedObject().id, headOnly);
     } else {
       // Disable tracking
@@ -545,24 +545,24 @@ namespace Vector {
   void WebotsKeyboardController::ToggleTrackToFace()
   {
     static bool trackingFace = false;
-    
+
     trackingFace = !trackingFace;
-    
+
     if(trackingFace) {
       const bool headOnly = false;
-      
+
       printf("Telling robot to track %sto the currently observed face %d\n",
              headOnly ? "its head " : "",
              (u32)GetLastObservedFaceID());
-      
+
       SendTrackToFace((u32)GetLastObservedFaceID(), headOnly);
     } else {
       // Disable tracking
       SendTrackToFace(std::numeric_limits<u32>::max());
     }
-    
+
   }
-  
+
   void WebotsKeyboardController::ExecuteTestPlan()
   {
     SendExecuteTestPlan(pathMotionProfile_);
@@ -574,7 +574,7 @@ namespace Vector {
     if (!WebotsHelpers::GetFieldAsString(*root_, "behaviorName", behaviorName)) {
       return;
     }
-    
+
     // Ensure that behaviorName is a valid BehaviorID
     BehaviorID behaviorId;
     if (!EnumFromString(behaviorName, behaviorId)) {
@@ -583,7 +583,7 @@ namespace Vector {
                         behaviorName.c_str());
       return;
     }
-    
+
     printf("Selecting behavior by NAME: %s\n", behaviorName.c_str());
     if (behaviorId == BehaviorID::LiftLoadTest) {
       SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::SetLiftLoadTestAsActivatable()));
@@ -592,13 +592,13 @@ namespace Vector {
     SendMessage(ExternalInterface::MessageGameToEngine(
                                                        ExternalInterface::ExecuteBehaviorByID(behaviorName, numRuns, true)));
   }
-  
+
   void WebotsKeyboardController::LogCliffSensorData()
   {
     // Send a request to log raw cliff sensor data
     SendLogCliffDataRequest(2000);
   }
-  
+
 
   // shift + alt + H = Fake trigger word detected
   // H = Fake cloud intent w/ string in field
@@ -608,12 +608,12 @@ namespace Vector {
     if (!WebotsHelpers::GetFieldAsString(*root_, "intent", cloudIntent)) {
       return;
     }
-    
+
     printf("sending cloud intent '%s'\n", cloudIntent.c_str());
-    
+
     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FakeCloudIntent(cloudIntent)));
   }
-  
+
   // shift + H = Fake user intent detected
   void WebotsKeyboardController::FakeUserIntent()
   {
@@ -621,33 +621,33 @@ namespace Vector {
     if (!WebotsHelpers::GetFieldAsString(*root_, "intent", userIntent)) {
       return;
     }
-    
+
     printf("sending user intent '%s'\n", userIntent.c_str());
-    
+
     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FakeUserIntent(userIntent)));
-  }  
-  
+  }
+
   void WebotsKeyboardController::SetEmotion()
   {
     std::string emotionName;
     if (!WebotsHelpers::GetFieldAsString(*root_, "emotionName", emotionName)) {
       return;
     }
-    
+
     webots::Field* emotionValField = root_->getField("emotionVal");
     if (emotionValField == nullptr) {
       printf("ERROR: No emotionValField field found in WebotsKeyboardController.proto\n");
       return;
     }
-    
+
     float emotionVal = emotionValField->getSFFloat();
     EmotionType emotionType = EmotionTypeFromString(emotionName.c_str());
-    
+
     SendMessage(ExternalInterface::MessageGameToEngine(
                                                        ExternalInterface::MoodMessage(
                                                                                       ExternalInterface::MoodMessageUnion(
                                                                                                                           ExternalInterface::SetEmotion( emotionType, emotionVal )))));
-    
+
   }
 
   void WebotsKeyboardController::TriggerEmotionEvent()
@@ -656,30 +656,30 @@ namespace Vector {
     if (!WebotsHelpers::GetFieldAsString(*root_, "emotionEvent", emotionEvent)) {
       return;
     }
-    
+
     SendMessage(ExternalInterface::MessageGameToEngine(
                   ExternalInterface::MoodMessage(
                     ExternalInterface::MoodMessageUnion(
                       ExternalInterface::TriggerEmotionEvent(
-                        emotionEvent )))));    
+                        emotionEvent )))));
   }
 
-  
+
   void WebotsKeyboardController::PickOrPlaceObject()
   {
     bool usePreDockPose = !_shiftKeyPressed;
     bool placeOnGroundAtOffset = _altKeyPressed;
-    
+
     f32 placementOffsetX_mm = 0;
     if (placeOnGroundAtOffset) {
       placementOffsetX_mm = root_->getField("placeOnGroundOffsetX_mm")->getSFFloat();
     }
-    
+
     // Exact rotation to use if useExactRotation == true
     const double* rotVals = root_->getField("exactPlacementRotation")->getSFRotation();
     Rotation3d rot(rotVals[3], {static_cast<f32>(rotVals[0]), static_cast<f32>(rotVals[1]), static_cast<f32>(rotVals[2])} );
     printf("Rotation %f\n", rot.GetAngleAroundZaxis().ToFloat());
-    
+
     if (GetCarryingObjectID() < 0) {
       // Not carrying anything so pick up!
       SendPickupSelectedObject(pathMotionProfile_,
@@ -700,14 +700,14 @@ namespace Vector {
                                   approachAngle_rad);
       }
     }
-    
+
   }
-  
-  
+
+
   void WebotsKeyboardController::MountSelectedCharger()
   {
     bool useCliffSensorCorrection = !_shiftKeyPressed;
-    
+
     SendMountSelectedCharger(pathMotionProfile_,
                              useCliffSensorCorrection);
   }
@@ -736,12 +736,12 @@ namespace Vector {
                           "Cannot get target pose W.R.T. webots origin");
       return;
     }
-      
+
     SetActualRobotPose(targetPose);
     SendForceDelocalize();
   }
-  
-  
+
+
   void WebotsKeyboardController::PopAWheelie()
   {
     bool usePreDockPose = !_shiftKeyPressed;
@@ -751,7 +751,7 @@ namespace Vector {
                     useApproachAngle,
                     approachAngle_rad);
   }
-  
+
   void WebotsKeyboardController::RollObject()
   {
     bool usePreDockPose = !_shiftKeyPressed;
@@ -762,12 +762,12 @@ namespace Vector {
                            useApproachAngle,
                            approachAngle_rad);
   }
-  
-  
+
+
   void WebotsKeyboardController::SetControllerGains()
   {
     if (root_) {
-      
+
       if(_shiftKeyPressed) {
         f32 steer_k1 = root_->getField("steerK1")->getSFFloat();
         f32 steer_k2 = root_->getField("steerK2")->getSFFloat();
@@ -776,7 +776,7 @@ namespace Vector {
         printf("New steering gains: k1 %f, k2 %f, distOffsetCap %f, angOffsetCap %f\n",
                steer_k1, steer_k2, steerDistOffsetCap, steerAngOffsetCap);
         SendControllerGains(ControllerChannel::controller_steering, steer_k1, steer_k2, steerDistOffsetCap, steerAngOffsetCap);
-        
+
         // Point turn gains
         f32 kp = root_->getField("pointTurnKp")->getSFFloat();
         f32 ki = root_->getField("pointTurnKi")->getSFFloat();
@@ -784,9 +784,9 @@ namespace Vector {
         f32 maxErrorSum = root_->getField("pointTurnMaxErrorSum")->getSFFloat();
         printf("New pointTurn gains: kp=%f ki=%f kd=%f maxErrorSum=%f\n", kp, ki, kd, maxErrorSum);
         SendControllerGains(ControllerChannel::controller_pointTurn, kp, ki, kd, maxErrorSum);
-        
+
       } else {
-        
+
         // Wheel gains
         f32 kp = root_->getField("wheelKp")->getSFFloat();
         f32 ki = root_->getField("wheelKi")->getSFFloat();
@@ -794,7 +794,7 @@ namespace Vector {
         f32 maxErrorSum = root_->getField("wheelMaxErrorSum")->getSFFloat();
         printf("New wheel gains: kp=%f ki=%f kd=%f\n", kp, ki, maxErrorSum);
         SendControllerGains(ControllerChannel::controller_wheel, kp, ki, kd, maxErrorSum);
-        
+
         // Head and lift gains
         kp = root_->getField("headKp")->getSFFloat();
         ki = root_->getField("headKi")->getSFFloat();
@@ -802,7 +802,7 @@ namespace Vector {
         maxErrorSum = root_->getField("headMaxErrorSum")->getSFFloat();
         printf("New head gains: kp=%f ki=%f kd=%f maxErrorSum=%f\n", kp, ki, kd, maxErrorSum);
         SendControllerGains(ControllerChannel::controller_head, kp, ki, kd, maxErrorSum);
-        
+
         kp = root_->getField("liftKp")->getSFFloat();
         ki = root_->getField("liftKi")->getSFFloat();
         kd = root_->getField("liftKd")->getSFFloat();
@@ -814,7 +814,7 @@ namespace Vector {
       printf("No WebotsKeyboardController was found in world\n");
     }
   }
-    
+
   void WebotsKeyboardController::ToggleVisionWhileMoving()
   {
     static bool visionWhileMovingEnabled = false;
@@ -826,7 +826,7 @@ namespace Vector {
     msgWrapper.Set_VisionWhileMoving(msg);
     SendMessage(msgWrapper);
   }
-  
+
   void WebotsKeyboardController::SetRobotVolume()
   {
     const f32 robotVolume = root_->getField("robotVolume")->getSFFloat();
@@ -845,15 +845,15 @@ namespace Vector {
       Json::Reader reader;
       std::string jsonFilename("../webotsCtrlGameEngine/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json");
       std::ifstream jsonFile(jsonFilename);
-      
+
       if(jsonFile.fail()) {
         jsonMsgCtr = 0;
         jsonFilename = "../webotsCtrlGameEngine/SetBlockLights_" + std::to_string(jsonMsgCtr++) + ".json";
         jsonFile.open(jsonFilename);
       }
-      
+
       printf("Sending message from: %s\n", jsonFilename.c_str());
-      
+
       reader.parse(jsonFile, jsonMsg);
       jsonFile.close();
       //ExternalInterface::SetActiveObjectLEDs msg(jsonMsg);
@@ -867,7 +867,7 @@ namespace Vector {
         msg.transitionOnPeriod_ms[iLED]  = jsonMsg["transitionOnPeriod_ms"][iLED].asUInt();
         msg.transitionOffPeriod_ms[iLED]  = jsonMsg["transitionOffPeriod_ms"][iLED].asUInt();
       }
-      
+
       ExternalInterface::MessageGameToEngine msgWrapper;
       msgWrapper.Set_SetAllActiveObjectLEDs(msg);
       SendMessage(msgWrapper);
@@ -880,9 +880,9 @@ namespace Vector {
         ::Anki::NamedColors::RED, ::Anki::NamedColors::GREEN, ::Anki::NamedColors::BLUE,
         ::Anki::NamedColors::BLACK
       };
-      
+
       static s32 colorIndex = 0;
-      
+
       ExternalInterface::SetActiveObjectLEDs msg;
       msg.objectID = GetLastObservedObject().id;
       msg.onPeriod_ms = 250;
@@ -892,7 +892,7 @@ namespace Vector {
       msg.turnOffUnspecifiedLEDs = 1;
       msg.offset = 0;
       msg.rotate = false;
-      
+
       if(_shiftKeyPressed) {
         printf("Updating active block edge\n");
         msg.onColor = ::Anki::NamedColors::RED;
@@ -901,13 +901,13 @@ namespace Vector {
         msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE;
         msg.relativeToX = GetRobotPose().GetTranslation().x();
         msg.relativeToY = GetRobotPose().GetTranslation().y();
-        
+
       } else if( _altKeyPressed) {
         static s32 edgeIndex = 0;
-        
+
         printf("Turning edge %d new color %d (%x)\n",
                edgeIndex, colorIndex, u32(colorList[colorIndex]));
-        
+
         msg.whichLEDs = (WhichCubeLEDs)(1 << edgeIndex);
         msg.onColor = colorList[colorIndex];
         msg.offColor = 0;
@@ -915,13 +915,13 @@ namespace Vector {
         msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_BY_SIDE;
         msg.relativeToX = GetRobotPose().GetTranslation().x();
         msg.relativeToY = GetRobotPose().GetTranslation().y();
-        
+
         ++edgeIndex;
         if(edgeIndex == 4) {
           edgeIndex = 0;
           ++colorIndex;
         }
-        
+
       } else {
         printf("Cycling active block %d color from (%d,%d,%d) to (%d,%d,%d)\n",
                msg.objectID,
@@ -936,8 +936,8 @@ namespace Vector {
         msg.whichLEDs = WhichCubeLEDs::FRONT;
         msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
         msg.turnOffUnspecifiedLEDs = 1;
-        
-        
+
+
         /*
          static bool white = false;
          white = !white;
@@ -966,7 +966,7 @@ namespace Vector {
          ExternalInterface::MessageGameToEngine msgWrapper;
          msgWrapper.Set_SetActiveObjectLEDs(msg);
          SendMessage(msgWrapper);
-         
+
          msg.onColor = ::Anki::NamedColors::GREEN;
          msg.offColor = ::Anki::NamedColors::BLACK;
          msg.whichLEDs = WhichCubeLEDs::RIGHT;
@@ -974,7 +974,7 @@ namespace Vector {
          msg.turnOffUnspecifiedLEDs = 0;
          msgWrapper.Set_SetActiveObjectLEDs(msg);
          SendMessage(msgWrapper);
-         
+
          msg.onColor = ::Anki::NamedColors::BLUE;
          msg.offColor = ::Anki::NamedColors::BLACK;
          msg.whichLEDs = WhichCubeLEDs::BACK;
@@ -982,7 +982,7 @@ namespace Vector {
          msg.turnOffUnspecifiedLEDs = 0;
          msgWrapper.Set_SetActiveObjectLEDs(msg);
          SendMessage(msgWrapper);
-         
+
          msg.onColor = ::Anki::NamedColors::YELLOW;
          msg.offColor = ::Anki::NamedColors::BLACK;
          msg.whichLEDs = WhichCubeLEDs::LEFT;
@@ -992,13 +992,13 @@ namespace Vector {
          SendMessage(msgWrapper);
          }
          */
-        
+
       }
-      
+
       if(colorIndex == NUM_COLORS) {
         colorIndex = 0;
       }
-      
+
       ExternalInterface::MessageGameToEngine msgWrapper;
       msgWrapper.Set_SetActiveObjectLEDs(msg);
       SendMessage(msgWrapper);
@@ -1015,7 +1015,7 @@ namespace Vector {
                         useApproachAngle,
                         approachAngle_rad);
   }
-  
+
   void WebotsKeyboardController::TurnTowardsObject()
   {
     ExternalInterface::TurnTowardsObject msg;
@@ -1023,24 +1023,24 @@ namespace Vector {
     msg.panTolerance_rad = DEG_TO_RAD(5);
     msg.maxTurnAngle_rad = DEG_TO_RAD(90);
     msg.headTrackWhenDone = 0;
-    
+
     ExternalInterface::MessageGameToEngine msgWrapper;
     msgWrapper.Set_TurnTowardsObject(msg);
     SendMessage(msgWrapper);
   }
-  
+
   void WebotsKeyboardController::GotoObject()
   {
     SendGotoObject(-1, // tell game to use blockworld's "selected" object
                    sqrtf(2.f)*44.f,
                    pathMotionProfile_);
   }
-  
+
   void WebotsKeyboardController::RequestIMUData()
   {
     SendIMURequest(2000);
   }
-  
+
 
   void WebotsKeyboardController::AssociateNameWithCurrentFace()
   {
@@ -1054,34 +1054,34 @@ namespace Vector {
       printf("No 'enrollToID' field!");
       return;
     }
-    
+
     const s32 enrollToID = enrollToIDField->getSFInt32();
-    
+
     //                      printf("Assigning name '%s' to ID %d\n", userName.c_str(), GetLastObservedFaceID());
     //                      ExternalInterface::AssignNameToFace assignNameToFace;
     //                      assignNameToFace.faceID = GetLastObservedFaceID();
     //                      assignNameToFace.name   = userName;
     //                      SendMessage(ExternalInterface::MessageGameToEngine(std::move(assignNameToFace)));
-    
+
     webots::Field* saveFaceField = root_->getField("saveFaceToRobot");
     if( saveFaceField == nullptr ) {
       PRINT_NAMED_ERROR("WebotsKeyboardController.MissingField",
                         "missing saveFaceToRobot field");
       return;
     }
-    
+
     using namespace ExternalInterface;
-    
+
     // Set face enrollment settings
     bool saveFaceToRobot = saveFaceField->getSFBool();
-    
+
     const bool sayName = true;
     const bool useMusic = false;
     const s32 observedID = Vision::UnknownFaceID; // GetLastObservedFaceID();
     printf("Enrolling face ID %d with name '%s'\n", observedID, userName.c_str());
     SetFaceToEnroll setFaceToEnroll(userName, observedID, enrollToID, saveFaceToRobot, sayName, useMusic);
     SendMessage(MessageGameToEngine(std::move(setFaceToEnroll)));
-    
+
     // todo: currently we send both the SetFaceToEnroll and the cloud intent for meet victor. This
     // will change, but since we don't know what SetFaceToEnroll will be replaced by yet, both messages
     // are being send for now. Eventually there should be one "meet_victor" message and one "I'm changing
@@ -1090,7 +1090,7 @@ namespace Vector {
                            "\"parameters\": \"{\\\"username\\\": \\\"" + userName + "\\\"}\" }");
     SendMessage(ExternalInterface::MessageGameToEngine(ExternalInterface::FakeCloudIntent(json)));
   }
-  
+
   void WebotsKeyboardController::TurnTowardsFace()
   {
     int faceID = root_->getField("faceIDToTurnTowards")->getSFInt32();
@@ -1112,18 +1112,18 @@ namespace Vector {
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(turnTowardsFace)));
     }
   }
-  
+
   void WebotsKeyboardController::EraseLastObservedFace()
   {
     using namespace ExternalInterface;
     SendMessage(MessageGameToEngine(EraseEnrolledFaceByID(GetLastObservedFaceID())));
   }
-  
+
   void WebotsKeyboardController::ToggleFaceDetection()
   {
     static bool isFaceDetectionEnabled = true;
     isFaceDetectionEnabled = !isFaceDetectionEnabled;
-    SendEnableVisionMode(VisionMode::DetectingFaces, isFaceDetectionEnabled);
+    SendEnableVisionMode(VisionMode::Faces, isFaceDetectionEnabled);
   }
 
   void WebotsKeyboardController::FlipSelectedBlock()
@@ -1152,7 +1152,7 @@ namespace Vector {
       SendTurnInPlace(DEG_TO_RAD(pointTurnAngle), DEG_TO_RAD(pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
     }
   }
-  
+
   void WebotsKeyboardController::TurnInPlaceCW()
   {
     GET_POINT_TURN_PARAMS();
@@ -1162,13 +1162,13 @@ namespace Vector {
       SendTurnInPlace(DEG_TO_RAD(-pointTurnAngle), DEG_TO_RAD(-pointTurnSpeed), DEG_TO_RAD(pointTurnAccel));
     }
   }
-  
+
   void WebotsKeyboardController::ExecutePlaypenTest()
   {
     SendMessage(ExternalInterface::MessageGameToEngine(
                                                        ExternalInterface::ExecuteBehaviorByID("PlaypenTest", -1, false)));
   }
-  
+
   void WebotsKeyboardController::SetFaceDisplayHue()
   {
     using namespace ExternalInterface;
@@ -1181,7 +1181,7 @@ namespace Vector {
     }
     SendMessage(MessageGameToEngine(SetFaceHue(hueField->getSFFloat())));
   }
-  
+
   void WebotsKeyboardController::SendRandomProceduralFace()
   {
     // Send a random procedural face
@@ -1192,9 +1192,9 @@ namespace Vector {
                   "LeftEye parameter array is the wrong length");
     static_assert( std::tuple_size<decltype(faceParams.rightEye)>::value == (size_t)Param::NumParameters,
                   "RightEye parameter array is the wrong length");
-    
+
     Util::RandomGenerator rng;
-    
+
     faceParams.leftEye[static_cast<s32>(Param::UpperInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
     faceParams.leftEye[static_cast<s32>(Param::UpperInnerRadiusY)]   = rng.RandDblInRange(0., 1.);
     faceParams.leftEye[static_cast<s32>(Param::LowerInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
@@ -1219,7 +1219,7 @@ namespace Vector {
     faceParams.leftEye[static_cast<s32>(Param::GlowSize)]      = rng.RandDblInRange(0.f, 1.f);
     faceParams.leftEye[static_cast<s32>(Param::HotSpotCenterX)]= rng.RandDblInRange(-0.8f, 0.8f);
     faceParams.leftEye[static_cast<s32>(Param::HotSpotCenterY)]= rng.RandDblInRange(-0.8f, 0.8f);
-    
+
     faceParams.rightEye[static_cast<s32>(Param::UpperInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
     faceParams.rightEye[static_cast<s32>(Param::UpperInnerRadiusY)]   = rng.RandDblInRange(0., 1.);
     faceParams.rightEye[static_cast<s32>(Param::LowerInnerRadiusX)]   = rng.RandDblInRange(0., 1.);
@@ -1244,13 +1244,13 @@ namespace Vector {
     faceParams.rightEye[static_cast<s32>(Param::GlowSize)]      = rng.RandDblInRange(0.f, 0.75f);
     faceParams.rightEye[static_cast<s32>(Param::HotSpotCenterX)]= rng.RandDblInRange(-0.8f, 0.8f);
     faceParams.rightEye[static_cast<s32>(Param::HotSpotCenterY)]= rng.RandDblInRange(-0.8f, 0.8f);
-    
+
     faceParams.faceAngle_deg = 0; //rng.RandIntInRange(-10, 10);
     faceParams.faceScaleX = 1.f;//rng.RandDblInRange(0.9, 1.1);
     faceParams.faceScaleY = 1.f;//rng.RandDblInRange(0.9, 1.1);
     faceParams.faceCenX  = 0; //rng.RandIntInRange(-5, 5);
     faceParams.faceCenY  = 0; //rng.RandIntInRange(-5, 5);
-    
+
     SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
   }
 
@@ -1260,13 +1260,13 @@ namespace Vector {
     if (!WebotsHelpers::GetFieldAsString(*root_, "animationToSendName", animToSendName)) {
       return;
     }
-    
+
     webots::Field* animNumLoopsField = root_->getField("animationNumLoops");
     u32 animNumLoops = 1;
     if (animNumLoopsField && (animNumLoopsField->getSFInt32() > 0)) {
       animNumLoops = (u32) animNumLoopsField->getSFInt32();
     }
-    
+
     SendAnimation(animToSendName.c_str(), animNumLoops, true);
   }
 
@@ -1277,16 +1277,16 @@ namespace Vector {
     if (!WebotsHelpers::GetFieldAsString(*root_, "animationToSendName", animTriggerName)) {
       return;
     }
-    
+
     webots::Field* animNumLoopsField = root_->getField("animationNumLoops");
     u32 animNumLoops = 1;
     if (animNumLoopsField && (animNumLoopsField->getSFInt32() > 0)) {
       animNumLoops = (u32) animNumLoopsField->getSFInt32();
     }
-    
+
     SendAnimationTrigger(animTriggerName.c_str(), animNumLoops, true);
   }
-  
+
   void WebotsKeyboardController::PlayAnimationGroup()
   {
     // Send whatever animation group is specified in the animationToSendName field
@@ -1294,13 +1294,13 @@ namespace Vector {
     if (!WebotsHelpers::GetFieldAsString(*root_, "animationToSendName", animGroupName)) {
       return;
     }
-    
+
     webots::Field* animNumLoopsField = root_->getField("animationNumLoops");
     u32 animNumLoops = 1;
     if (animNumLoopsField && (animNumLoopsField->getSFInt32() > 0)) {
       animNumLoops = (u32) animNumLoopsField->getSFInt32();
     }
-    
+
     SendAnimationGroup(animGroupName.c_str(), animNumLoops, true);
   }
 
@@ -1311,16 +1311,16 @@ namespace Vector {
     if (!WebotsHelpers::GetFieldAsString(*root_, "consoleVarName", funcName)) {
       return;
     }
-    
+
     std::string funcArgs;
     if (!WebotsHelpers::GetFieldAsString(*root_, "consoleVarValue", funcArgs, false)) {
       return;
     }
-    
+
     printf("Trying to call console func: %s(%s)\n",
            funcName.c_str(),
            funcArgs.c_str());
-    
+
     using namespace ExternalInterface;
     if (_altKeyPressed) {
       // Alt: Send to Anim process
@@ -1331,7 +1331,7 @@ namespace Vector {
       SendMessage(MessageGameToEngine(RunDebugConsoleFuncMessage(funcName, funcArgs)));
     }
   }
-  
+
 
   void WebotsKeyboardController::SetDebugConsoleVar()
   {
@@ -1340,15 +1340,15 @@ namespace Vector {
     if (!WebotsHelpers::GetFieldAsString(*root_, "consoleVarName", varName)) {
       return;
     }
-    
+
     std::string tryValue;
     if (!WebotsHelpers::GetFieldAsString(*root_, "consoleVarValue", tryValue)) {
       return;
     }
-    
+
     printf("Trying to set console var '%s' to '%s'\n",
            varName.c_str(), tryValue.c_str());
-    
+
     using namespace ExternalInterface;
     if(_altKeyPressed)
     {
@@ -1361,8 +1361,8 @@ namespace Vector {
       SendMessage(MessageGameToEngine(SetDebugConsoleVarMessage(varName, tryValue)));
     }
   }
-  
-  
+
+
   void WebotsKeyboardController::SetRollActionParams()
   {
     SendRollActionParams(root_->getField("rollLiftHeight_mm")->getSFFloat(),
@@ -1371,7 +1371,7 @@ namespace Vector {
                          root_->getField("rollDriveDuration_ms")->getSFInt32(),
                          root_->getField("rollBackupDist_mm")->getSFFloat());
   }
-  
+
   void WebotsKeyboardController::PlayCubeAnimation()
   {
     if(_altKeyPressed) {
@@ -1380,7 +1380,7 @@ namespace Vector {
       if (!WebotsHelpers::GetFieldAsString(*root_, "animationToSendName", cubeAnimTriggerStr)) {
         return;
       }
-      
+
       CubeAnimationTrigger cubeAnimTrigger;
       if (!EnumFromString(cubeAnimTriggerStr, cubeAnimTrigger)) {
         LOG_ERROR("WebotsKeyboardController.PlayCubeAnimation.InvalidCubeAnimationTrigger",
@@ -1388,19 +1388,19 @@ namespace Vector {
                   cubeAnimTriggerStr.c_str());
         return;
       }
-      
+
       SendCubeAnimation(-1, cubeAnimTrigger);
     } else {
       SendCubeAnimation(-1, CubeAnimationTrigger::Flash);
     }
   }
-  
+
   void WebotsKeyboardController::TogglePowerMode()
   {
     static bool enableCalmPower = true;
     LOG_INFO("WebotsKeyboardController.TogglePowerMode", "Calm: %d", enableCalmPower);
     using namespace ExternalInterface;
-    SendMessage(MessageGameToEngine(RunDebugConsoleFuncMessage("EnableCalmPowerMode", 
+    SendMessage(MessageGameToEngine(RunDebugConsoleFuncMessage("EnableCalmPowerMode",
                                                                enableCalmPower ? "true" : "false")));
     enableCalmPower = !enableCalmPower;
   }
@@ -1415,14 +1415,14 @@ namespace Vector {
     message.Set_SetCameraSettings(settings);
     SendMessage(message);
   }
-  
+
   void WebotsKeyboardController::SayText()
   {
     ExternalInterface::SayText sayTextMsg;
     if (!WebotsHelpers::GetFieldAsString(*root_, "sayString", sayTextMsg.text)) {
       return;
     }
-    
+
     // TODO: Add ability to set action style, voice style, duration scalar and pitch from KB controller
     using AudioTtsProcessingStyle = Anki::AudioMetaData::SwitchState::Robot_Vic_External_Processing;
     sayTextMsg.voiceStyle = (_altKeyPressed ?
@@ -1430,7 +1430,7 @@ namespace Vector {
                              AudioTtsProcessingStyle::Unprocessed);
     sayTextMsg.durationScalar = 1.f;
     sayTextMsg.playEvent = AnimationTrigger::Count;
-    
+
     printf("Saying '%s' in voice style '%s' w/ duration scalar %f\n",
            sayTextMsg.text.c_str(),
            EnumToString(sayTextMsg.voiceStyle),
@@ -1446,23 +1446,23 @@ namespace Vector {
       msg.x = _lastObservedImageCentroid.point.x();
       msg.y = _lastObservedImageCentroid.point.y();
       msg.timestamp = (TimeStamp_t)_lastObservedImageCentroid.timestamp;
-      
+
       SendMessage(ExternalInterface::MessageGameToEngine(std::move(msg)));
     }
   }
-  
+
   void WebotsKeyboardController::QuitKeyboardController()
   {
     _shouldQuit = true;
   }
-  
+
   void WebotsKeyboardController::ToggleLiftPower()
   {
     static bool liftPowerEnable = false;
     SendEnableLiftPower(liftPowerEnable);
     liftPowerEnable = !liftPowerEnable;
   }
-  
+
   f32 WebotsKeyboardController::GetLiftSpeed_radps()
   {
     f32 liftSpeed = DEG_TO_RAD(root_->getField("liftSpeedDegPerSec")->getSFFloat());
@@ -1471,17 +1471,17 @@ namespace Vector {
     }
     return liftSpeed;
   }
-  
+
   f32 WebotsKeyboardController::GetLiftAccel_radps2()
   {
     return DEG_TO_RAD(root_->getField("liftAccelDegPerSec2")->getSFFloat());
   }
-  
+
   f32 WebotsKeyboardController::GetLiftDuration_sec()
   {
     return root_->getField("liftDurationSec")->getSFFloat();
   }
-  
+
   f32 WebotsKeyboardController::GetHeadSpeed_radps()
   {
     f32 headSpeed = DEG_TO_RAD(root_->getField("headSpeedDegPerSec")->getSFFloat());
@@ -1490,27 +1490,27 @@ namespace Vector {
     }
     return headSpeed;
   }
-  
+
   f32 WebotsKeyboardController::GetHeadAccel_radps2()
   {
     return DEG_TO_RAD(root_->getField("headAccelDegPerSec2")->getSFFloat());
   }
-  
+
   f32 WebotsKeyboardController::GetHeadDuration_sec()
   {
     return root_->getField("headDurationSec")->getSFFloat();
   }
-  
+
   void WebotsKeyboardController::MoveLiftToLowDock()
   {
     SendMoveLiftToHeight(LIFT_HEIGHT_LOWDOCK, GetLiftSpeed_radps(), GetLiftAccel_radps2(), GetLiftDuration_sec());
   }
-  
+
   void WebotsKeyboardController::MoveLiftToHighDock()
   {
     SendMoveLiftToHeight(LIFT_HEIGHT_HIGHDOCK, GetLiftSpeed_radps(), GetLiftAccel_radps2(), GetLiftDuration_sec());
   }
-  
+
   void WebotsKeyboardController::MoveLiftToCarryHeight()
   {
     SendMoveLiftToHeight(LIFT_HEIGHT_CARRY, GetLiftSpeed_radps(), GetLiftAccel_radps2(), GetLiftDuration_sec());
@@ -1521,22 +1521,22 @@ namespace Vector {
     f32 targetAngle_rad = DEG_TO_RAD(root_->getField("liftTargetAngleDeg")->getSFFloat());
     SendMoveLiftToAngle(targetAngle_rad, GetLiftSpeed_radps(), GetLiftAccel_radps2(), GetLiftDuration_sec());
   }
-  
+
   void WebotsKeyboardController::MoveHeadToLowLimit()
   {
     SendMoveHeadToAngle(MIN_HEAD_ANGLE, GetHeadSpeed_radps(), GetHeadAccel_radps2(), GetHeadDuration_sec());
   }
-  
+
   void WebotsKeyboardController::MoveHeadToHorizontal()
   {
     SendMoveHeadToAngle(0, GetHeadSpeed_radps(), GetHeadAccel_radps2(), GetHeadDuration_sec());
   }
-  
+
   void WebotsKeyboardController::MoveHeadToHighLimit()
   {
     SendMoveHeadToAngle(MAX_HEAD_ANGLE, GetHeadSpeed_radps(), GetHeadAccel_radps2(), GetHeadDuration_sec());
   }
-  
+
   void WebotsKeyboardController::MoveHeadUp()
   {
     _commandedHeadSpeed += GetHeadSpeed_radps();
@@ -1548,7 +1548,7 @@ namespace Vector {
     _commandedHeadSpeed -= GetHeadSpeed_radps();
     _movingHead = true;
   }
-  
+
   void WebotsKeyboardController::MoveLiftUp()
   {
     _commandedLiftSpeed += GetLiftSpeed_radps();
@@ -1565,22 +1565,22 @@ namespace Vector {
   {
     ++_throttleDir;
   }
-  
+
   void WebotsKeyboardController::DriveBackward()
   {
     --_throttleDir;
   }
-  
+
   void WebotsKeyboardController::DriveLeft()
   {
     --_steeringDir;
   }
-  
+
   void WebotsKeyboardController::DriveRight()
   {
     ++_steeringDir;
   }
-  
+
   // Check for test mode (alt + key)
   void WebotsKeyboardController::ExecuteRobotTestMode()
   {
@@ -1590,9 +1590,9 @@ namespace Vector {
           // Hold shift down too to add 10 to the pressed key
           _currKey += 10;
         }
-        
+
         TestMode m = TestMode(_currKey - '0');
-        
+
         // Set parameters for special test cases
         s32 p1 = 0, p2 = 0, p3 = 0;
         switch(m) {
@@ -1638,13 +1638,13 @@ namespace Vector {
           default:
             break;
         }
-        
+
         printf("Sending test mode %s\n", TestModeToString(m));
         SendStartTestMode(m,p1,p2,p3);
       }
     }
   }
-  
+
   void WebotsKeyboardController::PressBackButton()
   {
     _pressBackpackButton = true;
@@ -1661,7 +1661,7 @@ namespace Vector {
 
     SwitchboardInterface::SetConnectionStatus s;
     s.status = static_cast<SwitchboardInterface::ConnectionStatus>(status);
-    
+
     status++;
     if(status >= static_cast<u8>(SwitchboardInterface::ConnectionStatus::COUNT))
     {
@@ -1672,7 +1672,7 @@ namespace Vector {
     message.Set_SetConnectionStatus(s);
     SendMessage(message);
   }
-  
+
   // ===== End of key press functions ====
 
   // Register key press and modifier to a function
@@ -1687,7 +1687,7 @@ namespace Vector {
   if (!RegisterKeyFcn(key, modifier, std::bind(&WebotsKeyboardController::fcn, this), help_msg, display_string)) { \
     PRINT_NAMED_ERROR("WebotsKeyboardController.RegisterKeyFcn.DuplicateRegistration", "Key: '%c' (0x%x), Modifier: 0x%x, Fcn: %s", key, key, modifier, #fcn); \
   }
-  
+
   // Register key that already requires shift to be pressed.
   // Only MOD_NONE and MOD_ALT are valid modifiers since MOD_SHIFT is already implied.
   #define REGISTER_SHIFTED_KEY_FCN(key, modifier, fcn, help_msg) \
@@ -1721,14 +1721,14 @@ namespace Vector {
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::PAGEDOWN, MOD_SHIFT,     , "", "<PageDown>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::PAGEDOWN, MOD_ALT_SHIFT, , "", "<PageDown>");
     REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,  MOD_NONE, PressBackButton, "Press backpack button", "<Home>");
-    REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,  MOD_ALT,  TouchBackSensor, "Touch backpack touch sensor", "<Home>");    
+    REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,  MOD_ALT,  TouchBackSensor, "Touch backpack touch sensor", "<Home>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,     MOD_SHIFT,       , "", "<Home>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::HOME,     MOD_ALT_SHIFT, , "", "<Home>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::END,      MOD_NONE,      , "", "<End>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::END,      MOD_ALT,       , "", "<End>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::END,      MOD_SHIFT,     , "", "<End>");
 //      REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(webots::Keyboard::END,      MOD_ALT_SHIFT, , "", "<End>");
-    
+
     REGISTER_KEY_FCN('`', MOD_NONE,      CycleVizOrigin,         "Update viz alignment");
     REGISTER_KEY_FCN('1', MOD_NONE,      MoveLiftToLowDock,      "Move lift to low dock height");
     REGISTER_KEY_FCN('1', MOD_ALT,       ExecuteRobotTestMode,   "Start robot test mode 1");
@@ -1775,7 +1775,7 @@ namespace Vector {
 //      REGISTER_KEY_FCN('.', MOD_ALT,      , "");
     REGISTER_KEY_FCN('/', MOD_NONE,      StartFreeplayMode,      "Start 'freeplay' mode (as if robot was shaken)");
 //      REGISTER_KEY_FCN('/', MOD_ALT,       , "");
-    
+
     REGISTER_SHIFTED_KEY_FCN('~', MOD_NONE, PlayAnimationTrigger,              "Play animation trigger specified in 'animationToSendName'");
     REGISTER_SHIFTED_KEY_FCN('~', MOD_ALT,  PlayAnimationGroup,                "Play animation group specified in 'animationToSendName'");
 //      REGISTER_SHIFTED_KEY_FCN('!', MOD_NONE, , "");
@@ -1819,27 +1819,27 @@ namespace Vector {
     REGISTER_SHIFTED_KEY_FCN('?', MOD_NONE, PrintHelp,                         "Print help menu");
 //      REGISTER_SHIFTED_KEY_FCN('?', MOD_ALT,  , "");
 
-    
+
     REGISTER_KEY_FCN('A', MOD_NONE,      MoveLiftUp,            "Move lift up");
     REGISTER_KEY_FCN('A', MOD_SHIFT,     MoveLiftUp,            "Move lift up (half speed)");
 //    REGISTER_KEY_FCN('A', MOD_ALT,       SendReadAnimationFile, "Re-load animations (Not working)");
 //      REGISTER_KEY_FCN('A', MOD_ALT_SHIFT, , "");
-    
+
     REGISTER_KEY_FCN('B', MOD_NONE,      SetActiveObjectLights, "Cube lights");
     REGISTER_KEY_FCN('B', MOD_SHIFT,     SetActiveObjectLights, "Cube lights");
     REGISTER_KEY_FCN('B', MOD_ALT,       SetActiveObjectLights, "Cube lights");
     REGISTER_KEY_FCN('B', MOD_ALT_SHIFT, SetActiveObjectLights, "Cube lights");
-    
+
     REGISTER_KEY_FCN('C', MOD_NONE,      LogCliffSensorData,    "Request cliff sensor log");
     REGISTER_KEY_FCN('C', MOD_SHIFT,     ExecuteBehavior,       "Execute behavior in 'behaviorName'");
     REGISTER_KEY_FCN('C', MOD_ALT,       ToggleCameraCaptureFormat, "Toggle camera capture format between RGB and YUV");
     // REGISTER_KEY_FCN('C', MOD_ALT_SHIFT, , "");
-    
+
     REGISTER_KEY_FCN('D', MOD_NONE,      ToggleVizDisplay,      "Toggle viz display");
     REGISTER_KEY_FCN('D', MOD_SHIFT,     LogRawProxData,        "Request prox sensor log");
 //      REGISTER_KEY_FCN('D', MOD_ALT,       , "");
     REGISTER_KEY_FCN('D', MOD_ALT_SHIFT, SendForceDelocalize,   "Force robot delocalization");
-    
+
     REGISTER_KEY_FCN('E', MOD_NONE,      SaveSingleImage,           "Save single image");
     REGISTER_KEY_FCN('E', MOD_SHIFT,     ToggleImageSaving,         "Toggle image saving (in viz) mode");
     REGISTER_KEY_FCN('E', MOD_ALT_SHIFT, ToggleImageAndStateSaving, "Toggle image and robot state saving (in viz) mode");
@@ -1848,7 +1848,7 @@ namespace Vector {
     REGISTER_KEY_FCN('F', MOD_SHIFT,     AssociateNameWithCurrentFace, "Assign 'userName' to current face");
     REGISTER_KEY_FCN('F', MOD_ALT,       TurnTowardsFace,              "Turn towards face 'faceIDToTurnTowards' or last face if 0");
     REGISTER_KEY_FCN('F', MOD_ALT_SHIFT, EraseLastObservedFace,        "Erase last observed face");
-    
+
     REGISTER_KEY_FCN('G', MOD_NONE,      GotoPoseMarker,              "Goto/place object at pose marker");
     REGISTER_KEY_FCN('G', MOD_SHIFT,     TogglePoseMarkerMode,        "Toggle pose marker mode");
 //      REGISTER_KEY_FCN('G', MOD_ALT,       , "");
@@ -1858,22 +1858,22 @@ namespace Vector {
     REGISTER_KEY_FCN('H', MOD_SHIFT,     FakeUserIntent, "Fake user intent with the contents of 'intent'");
 //      REGISTER_KEY_FCN('H', MOD_ALT,       , "");
     REGISTER_KEY_FCN('H', MOD_ALT_SHIFT, SendFakeTriggerWordDetect, "Send fake trigger word detect");
-    
+
     REGISTER_KEY_FCN('I', MOD_NONE,      ToggleImageStreamingToGame, "Toggle image streaming");
 //      REGISTER_KEY_FCN('I', MOD_SHIFT,     , "");
 //      REGISTER_KEY_FCN('I', MOD_ALT,       , "");
 //      REGISTER_KEY_FCN('I', MOD_ALT_SHIFT, , "");
-    
+
      REGISTER_KEY_FCN('J', MOD_NONE,     CycleConnectionFlowState, "Cycle connection flow states");
 //      REGISTER_KEY_FCN('J', MOD_SHIFT,     , "");
 //      REGISTER_KEY_FCN('J', MOD_ALT,       , "");
 //      REGISTER_KEY_FCN('J', MOD_ALT_SHIFT, , "");
-    
+
     REGISTER_KEY_FCN('K', MOD_NONE,      SetControllerGains, "Set wheel/head/lift gains");
     REGISTER_KEY_FCN('K', MOD_SHIFT,     SetControllerGains, "Set steering and point turn gains");
     //REGISTER_KEY_FCN('K', MOD_ALT,       , "");
     //REGISTER_KEY_FCN('K', MOD_ALT_SHIFT, , "");
-    
+
     REGISTER_KEY_FCN('L', MOD_NONE,      ToggleTestBackpackLights,   "Toggles a test pattern on backpack lights");
     REGISTER_KEY_FCN('L', MOD_SHIFT,     SearchForNearbyObject,      "Search for nearby object");
     REGISTER_KEY_FCN('L', MOD_ALT,       ToggleCliffSensorEnable,    "Toggles cliff sensor enable");
@@ -1883,17 +1883,17 @@ namespace Vector {
     REGISTER_KEY_FCN('M', MOD_SHIFT,     TriggerEmotionEvent, "Trigger 'emotionEvent'");
 //    REGISTER_KEY_FCN('M', MOD_ALT,     ,   "");
 //    REGISTER_KEY_FCN('M', MOD_ALT_SHIFT, ,  "");
-    
+
 //    REGISTER_KEY_FCN('N', MOD_NONE,      ,  );
 //    REGISTER_KEY_FCN('N', MOD_SHIFT,     ,  );
 //    REGISTER_KEY_FCN('N', MOD_ALT,       ,  );
 //    REGISTER_KEY_FCN('N', MOD_ALT_SHIFT, ,  );
-    
+
     REGISTER_KEY_FCN('O', MOD_NONE,      RequestIMUData,    "Request IMU data log");
     REGISTER_KEY_FCN('O', MOD_SHIFT,     TurnTowardsObject, "Turn torwards selected object");
     REGISTER_KEY_FCN('O', MOD_ALT,       GotoObject,        "Go to selected object");
     REGISTER_KEY_FCN('O', MOD_ALT_SHIFT, AlignWithObject,   "Align with selected object");
-    
+
     REGISTER_KEY_FCN('P', MOD_NONE,      PickOrPlaceObject, "Pickup or place on selected object from predock pose");
     REGISTER_KEY_FCN('P', MOD_SHIFT,     PickOrPlaceObject, "Pickup or place on selected object from current pose");
     REGISTER_KEY_FCN('P', MOD_ALT,       PickOrPlaceObject, "Pickup or place relative to selected object at offset 'placeOnGroundOffsetX_mm' from predock pose");
@@ -1903,17 +1903,17 @@ namespace Vector {
     REGISTER_KEY_FCN('Q', MOD_SHIFT,     SendAbortAll,     "Cancel everything (paths, animations, docking, etc.)");
     REGISTER_KEY_FCN('Q', MOD_ALT,       SendCancelAction, "Cancel current action");
 //      REGISTER_KEY_FCN('Q', MOD_ALT_SHIFT, , "");
-    
+
     REGISTER_KEY_FCN('R', MOD_NONE,      MountSelectedCharger, "Dock to charger using cliff sensor correction");
     REGISTER_KEY_FCN('R', MOD_SHIFT,     MountSelectedCharger, "Dock to charger without using cliff sensor correction");
     REGISTER_KEY_FCN('R', MOD_ALT,       FlipSelectedBlock,    "Flips the selected cube");
     REGISTER_KEY_FCN('R', MOD_ALT_SHIFT, TeleportOntoCharger,  "Teleport the robot onto the charger");
-    
+
     REGISTER_KEY_FCN('S', MOD_NONE,      MoveHeadUp, "Move head up");
     REGISTER_KEY_FCN('S', MOD_SHIFT,     MoveHeadUp, "Move head up (half speed)");
 //    REGISTER_KEY_FCN('S', MOD_ALT,       , "");
     REGISTER_KEY_FCN('S', MOD_ALT_SHIFT, DoCliffAlignToWhite, "If one front sensor is detecting white (> MIN_CLIFF_STOP_ON_WHITE_VAL) then rotate until other front sensor detects it as well.");
-    
+
     REGISTER_KEY_FCN('T', MOD_NONE,      ExecuteTestPlan,     "Execute test plan");
     REGISTER_KEY_FCN('T', MOD_ALT,       ToggleTrackToFace,   "Track to face");
     REGISTER_KEY_FCN('T', MOD_SHIFT,     ToggleTrackToObject, "Track to object");
@@ -1923,33 +1923,33 @@ namespace Vector {
     REGISTER_KEY_FCN('U', MOD_SHIFT,     ToggleImageStreamingToGame, "Toggle image streaming to game mode");
 //      REGISTER_KEY_FCN('U', MOD_ALT,       , "");
 //      REGISTER_KEY_FCN('U', MOD_ALT_SHIFT, , "");
-    
+
     REGISTER_KEY_FCN('V', MOD_NONE,      SetRobotVolume,          "Set robot volume to 'robotVolume'");
     REGISTER_KEY_FCN('V', MOD_SHIFT,     ToggleVisionWhileMoving, "Toggle vision-while-moving enable");
 //      REGISTER_KEY_FCN('V', MOD_ALT,       , "");
 //      REGISTER_KEY_FCN('V', MOD_ALT_SHIFT, , "");
-    
+
     REGISTER_KEY_FCN('W', MOD_NONE,      RollObject,  "Roll selected object from predock pose");
     REGISTER_KEY_FCN('W', MOD_SHIFT,     RollObject,  "Roll selected object without using predock pose");
     REGISTER_KEY_FCN('W', MOD_ALT,       PopAWheelie, "Pop-a-wheelie off of selected object from predock pose");
     REGISTER_KEY_FCN('W', MOD_ALT_SHIFT, PopAWheelie, "Pop-a-wheelie off of selected object without using predock pose");
-    
+
     REGISTER_KEY_FCN('X', MOD_NONE,      MoveHeadDown, "Move head down");
     REGISTER_KEY_FCN('X', MOD_SHIFT,     MoveHeadDown, "Move head down (half speed)");
 //      REGISTER_KEY_FCN('X', MOD_ALT,       , "");
     REGISTER_KEY_FCN('X', MOD_ALT_SHIFT, QuitKeyboardController, "Quit keyboard controller");
-    
+
 // REGISTER_KEY_FCN('Y', MOD_NONE,      ToggleKeepFaceAliveEnable,     "Toggle keep face alive enable"); // TODO:(bn) new way to do this
-    
+
 //    REGISTER_KEY_FCN('Y', MOD_ALT_SHIFT, , "");
-    
+
     REGISTER_KEY_FCN('Z', MOD_NONE,      MoveLiftDown,    "Move lift down");
     REGISTER_KEY_FCN('Z', MOD_SHIFT,     MoveLiftDown,    "Move lift down (half speed)");
     REGISTER_KEY_FCN('Z', MOD_ALT,       ToggleLiftPower, "Toggle lift power");
 //      REGISTER_KEY_FCN('Z', MOD_ALT_SHIFT, , "");
 
     REGISTER_KEY_FCN_WITH_SPECIAL_DISPLAY_CHAR(' ', MOD_NONE,      SendStopAllMotors, "Stops all motors", "<Space>");
-    
+
   }
 
   bool WebotsKeyboardController::RegisterKeyFcn(int key, int modifier, std::function<void()> fcn, const char* help_msg, std::string display_string)
@@ -1973,7 +1973,7 @@ namespace Vector {
     } else {
       fcnInfo.displayString = display_string;
     }
-    
+
     // Insert key, if not already present, in registrationOrder list
     auto it = find(_keyRegistrationOrder.begin(), _keyRegistrationOrder.end(), key);
     if (it == _keyRegistrationOrder.end()) {
@@ -1996,16 +1996,16 @@ namespace Vector {
                         "Key: '%c' (0x%x), Modifier: 0x%x", key, key, modifier);
   }
 
-  
+
   void WebotsKeyboardController::PrintHelp()
   {
     printf("Keyboard controls\n");
     printf("===============================\n");
-    
+
     for (const auto key : _keyRegistrationOrder) {
       const auto& mod_map = _keyFcnMap[key];
       for (const auto& fcn_map : mod_map) {
-        
+
         // Generate modifier string
         std::string modifierString = "";
         int modifierKey = fcn_map.first & MOD_ALT_SHIFT;
@@ -2022,13 +2022,13 @@ namespace Vector {
           default:
             break;
         }
-        
+
         std::string keyComboStr = modifierString + std::string("'") + fcn_map.second.displayString.c_str() + std::string("'");
         printf("%17s: %s\n", keyComboStr.c_str(), fcn_map.second.helpMsg.c_str());
       }
     }
   }
-  
+
   //Check the keyboard keys and issue robot commands
   void WebotsKeyboardController::ProcessKeystroke()
   {
@@ -2036,50 +2036,50 @@ namespace Vector {
     _throttleDir = 0.f;
     _pressBackpackButton = false;
     _touchBackpackTouchSensor = false;
-    
+
     _commandedLiftSpeed = 0.f;
     _commandedHeadSpeed = 0.f;
-    
+
     _movingHead = false;
     _movingLift = false;
-    
+
     root_ = GetSupervisor().getSelf();
-    
+
     static bool keyboardRestart = false;
     if (keyboardRestart) {
       GetSupervisor().getKeyboard()->disable();
       GetSupervisor().getKeyboard()->enable(BS_TIME_STEP_MS);
       keyboardRestart = false;
     }
-    
+
     // Get all keys pressed this tic
     std::set<int> keysPressed;
     int key;
     while((key = GetSupervisor().getKeyboard()->getKey()) >= 0) {
       keysPressed.insert(key);
     }
-    
+
     // If exact same keys were pressed last tic, do nothing.
     if (lastKeysPressed_ == keysPressed) {
       return;
     }
     lastKeysPressed_ = keysPressed;
-    
+
     for(auto key : keysPressed)
     {
       // Extract modifier key(s)
       const int modifier_key = key & ~webots::Keyboard::KEY;
       _shiftKeyPressed = modifier_key & webots::Keyboard::SHIFT;
       _altKeyPressed = modifier_key & webots::Keyboard::ALT;
-      
+
       // Set key to its modifier-less self
       key &= webots::Keyboard::KEY;
-      
+
       lastKeyPressTime_ = GetSupervisor().getTime();
 
       // Update _currKey for functions that might care
       _currKey = key;
-      
+
       /*
       // DEBUG: Display modifier key information
       printf("Key = '%c' (%d)", char(key), key);
@@ -2094,17 +2094,17 @@ namespace Vector {
         if(modifier_key & webots::Keyboard::CONTROL) {
           printf("CTRL/CMD ");
         }
-       
+
       }
       printf("\n");
       */
-      
-      
+
+
       // Dock speed
       const f32 dockSpeed_mmps = root_->getField("dockSpeed_mmps")->getSFFloat();
       const f32 dockAccel_mmps2 = root_->getField("dockAccel_mmps2")->getSFFloat();
       const f32 dockDecel_mmps2 = root_->getField("dockDecel_mmps2")->getSFFloat();
-      
+
       // Path speeds
       const f32 pathSpeed_mmps = root_->getField("pathSpeed_mmps")->getSFFloat();
       const f32 pathAccel_mmps2 = root_->getField("pathAccel_mmps2")->getSFFloat();
@@ -2139,21 +2139,21 @@ namespace Vector {
       pathMotionProfile_.dockAccel_mmps2 = dockAccel_mmps2;
       pathMotionProfile_.dockDecel_mmps2 = dockDecel_mmps2;
       pathMotionProfile_.reverseSpeed_mmps = pathReverseSpeed_mmps;
-      
+
       // For pickup or placeRel, specify whether or not you want to use the
       // given approach angle for pickup, placeRel, or roll actions
       useApproachAngle = root_->getField("useApproachAngle")->getSFBool();
       approachAngle_rad = DEG_TO_RAD(root_->getField("approachAngle_deg")->getSFFloat());
-      
+
       //printf("keypressed: %d, modifier %d, orig_key %d, prev_key %d\n",
       //       key, modifier_key, key | modifier_key, lastKeyPressed_);
-      
+
       std::string drivingStartAnim, drivingLoopAnim, drivingEndAnim;
       const bool failOnEmptyString = false;
       WebotsHelpers::GetFieldAsString(*root_, "drivingStartAnim", drivingStartAnim, failOnEmptyString);
       WebotsHelpers::GetFieldAsString(*root_, "drivingLoopAnim" , drivingLoopAnim,  failOnEmptyString);
       WebotsHelpers::GetFieldAsString(*root_, "drivingEndAnim"  , drivingEndAnim,   failOnEmptyString);
-      
+
       if(_drivingStartAnim.compare(drivingStartAnim) != 0 ||
          _drivingLoopAnim.compare(drivingLoopAnim) != 0 ||
          _drivingEndAnim.compare(drivingEndAnim) != 0)
@@ -2161,7 +2161,7 @@ namespace Vector {
         _drivingStartAnim = drivingStartAnim;
         _drivingLoopAnim = drivingLoopAnim;
         _drivingEndAnim = drivingEndAnim;
-        
+
         static const char* kWebotsDrivingLock = "webots_driving_lock";
         // Pop whatever driving animations were being used and push the new ones
         SendRemoveDrivingAnimations(kWebotsDrivingLock);
@@ -2170,25 +2170,25 @@ namespace Vector {
                                   AnimationTriggerFromString(_drivingLoopAnim),
                                   AnimationTriggerFromString(_drivingEndAnim));
       }
-      
-      
+
+
       ProcessKeyPressFunction(key, modifier_key);
-      
+
     } // for(auto key : keysPressed_)
-    
+
     bool movingWheels = _throttleDir || _steeringDir;
 
     f32 driveAccel = root_->getField("driveAccel")->getSFFloat();
     bool useDriveArc = root_->getField("useDriveArc")->getSFBool();
-    
+
     if(movingWheels) {
-      
+
       f32 leftSpeed = 0.f;
       f32 rightSpeed = 0.f;
-      
+
       f32 wheelSpeed = root_->getField("driveSpeedNormal")->getSFFloat();
       f32 steeringCurvature = root_->getField("steeringCurvature")->getSFFloat();
-      
+
       // Use slow motor speeds if SHIFT is pressed
       // Use fast motor speeds if ALT is pressed
       if (_shiftKeyPressed) {
@@ -2196,7 +2196,7 @@ namespace Vector {
       } else if(_altKeyPressed) {
         wheelSpeed = root_->getField("driveSpeedTurbo")->getSFFloat();
       }
-      
+
       // Set wheel speeds based on drive commands
       if (_throttleDir > 0) {
         leftSpeed = wheelSpeed + _steeringDir * wheelSpeed * steeringCurvature;
@@ -2208,7 +2208,7 @@ namespace Vector {
         leftSpeed = _steeringDir * wheelSpeed;
         rightSpeed = -_steeringDir * wheelSpeed;
       }
-      
+
       if (useDriveArc) {
         f32 speed = _throttleDir * wheelSpeed;
         s16 curvature = -_steeringDir * 50;
@@ -2226,7 +2226,7 @@ namespace Vector {
       } else {
         SendDriveWheels(leftSpeed, rightSpeed, driveAccel, driveAccel);
       }
-      
+
       _wasMovingWheels = true;
     } else if(_wasMovingWheels && !movingWheels) {
       // If we just stopped moving the wheels:
@@ -2237,7 +2237,7 @@ namespace Vector {
       }
       _wasMovingWheels = false;
     }
-    
+
     // If the last key pressed was a move lift key then stop it.
     if(_movingLift) {
       SendMoveLift(_commandedLiftSpeed);
@@ -2247,7 +2247,7 @@ namespace Vector {
       SendMoveLift(0);
       _wasMovingLift = false;
     }
-    
+
     if(_movingHead) {
       SendMoveHead(_commandedHeadSpeed);
       _wasMovingHead = true;
@@ -2256,24 +2256,24 @@ namespace Vector {
       SendMoveHead(0);
       _wasMovingHead = false;
     }
-    
+
     if (_pressBackpackButton && !_wasBackpackButtonPressed) {
       PressBackpackButton(true);
     } else if (!_pressBackpackButton && _wasBackpackButtonPressed) {
       PressBackpackButton(false);
     }
     _wasBackpackButtonPressed = _pressBackpackButton;
-   
+
     if (_touchBackpackTouchSensor && !_wasBackpackTouchSensorTouched) {
       TouchBackpackTouchSensor(true);
     } else if (!_touchBackpackTouchSensor && _wasBackpackTouchSensorTouched) {
       TouchBackpackTouchSensor(false);
     }
     _wasBackpackTouchSensorTouched = _touchBackpackTouchSensor;
-    
+
   } // BSKeyboardController::ProcessKeyStroke()
-  
-  
+
+
   void WebotsKeyboardController::TestLightCube()
   {
     static std::vector<ColorRGBA> colors = {{
@@ -2286,14 +2286,14 @@ namespace Vector {
       WhichCubeLEDs::FRONT,
       WhichCubeLEDs::RIGHT
     }};
-    
+
     static auto colorIter = colors.begin();
     static auto ledIter = leds.begin();
     static s32 counter = 0;
-    
+
     if(counter++ == 30) {
       counter = 0;
-      
+
       ExternalInterface::SetActiveObjectLEDs msg;
       msg.objectID = GetLastObservedObject().id;
       msg.onPeriod_ms = 100;
@@ -2305,7 +2305,7 @@ namespace Vector {
       msg.offColor = 0;
       msg.whichLEDs = *ledIter;
       msg.makeRelative = MakeRelativeMode::RELATIVE_LED_MODE_OFF;
-      
+
       ++ledIter;
       if(ledIter==leds.end()) {
         ledIter = leds.begin();
@@ -2314,7 +2314,7 @@ namespace Vector {
           colorIter = colors.begin();
         }
       }
-      
+
       ExternalInterface::MessageGameToEngine message;
       message.Set_SetActiveObjectLEDs(msg);
       SendMessage(message);
@@ -2328,7 +2328,7 @@ namespace Vector {
     // in the pose of the Webots::Node
     return GetPose3dOfNode(root_);
   }
-  
+
   void WebotsKeyboardController::ToggleCameraCaptureFormat()
   {
     ExternalInterface::SetCameraCaptureFormat msg;
@@ -2338,12 +2338,12 @@ namespace Vector {
              yuv ? "YUV" : "RGB");
     msg.format = (yuv ? Vision::ImageEncoding::YUV420sp : Vision::ImageEncoding::RawRGB);
     yuv = !yuv;
-    
+
     ExternalInterface::MessageGameToEngine msgWrapper;
     msgWrapper.Set_SetCameraCaptureFormat(msg);
     SendMessage(msgWrapper);
   }
-    
+
   s32 WebotsKeyboardController::UpdateInternal()
   {
 
@@ -2354,7 +2354,7 @@ namespace Vector {
     }
 
     Pose3d goalMarkerPose = GetGoalMarkerPose();
-    
+
     // Update pose marker if different from last time
     if (!(prevGoalMarkerPose_ == goalMarkerPose)) {
       if (poseMarkerMode_ != 0) {
@@ -2364,7 +2364,7 @@ namespace Vector {
       prevGoalMarkerPose_ = goalMarkerPose;
     }
 
-    
+
     ProcessKeystroke();
 
     if( _shouldQuit ) {
@@ -2381,7 +2381,7 @@ namespace Vector {
     if (root_->getField("startFreeplayModeImmediately")->getSFBool()) {
       StartFreeplayMode();
     }
-    
+
     SendSetRobotVolume(0);
   }
 
@@ -2406,7 +2406,7 @@ int main(int argc, char **argv)
   Anki::Vector::WebotsKeyboardController webotsCtrlKeyboard(BS_TIME_STEP_MS);
   webotsCtrlKeyboard.PreInit();
   webotsCtrlKeyboard.WaitOnKeyboardToConnect();
-  
+
   webotsCtrlKeyboard.Init();
   while (webotsCtrlKeyboard.Update() == 0)
   {

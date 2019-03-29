@@ -101,7 +101,7 @@ s32 CST_RollBlockBehavior::UpdateSimInternal()
       IF_CONDITION_WITH_TIMEOUT_ASSERT(_turnInPlaceResult == ActionResult::SUCCESS, 10) {
         // Make sure we are still localized (to an object) before sending deloc
         CST_ASSERT( IsLocalizedToObject(), "Should be localized to object before we deloc");
-        SendForceDeloc();
+        SendForceDelocalize();
         SET_TEST_STATE(WaitForDeloc);
       }
       break;

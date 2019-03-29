@@ -14,7 +14,13 @@ requested pose due to a wall, etc.):
  - ConnectCube/DisconnectCube/CubesAvailable
  - CameraFeed
  - AudioFeed
+ - ExternalAudioStreamPlayback
  - NavMapFeed
+ - GoToObject
+ - RollObject
+ - PopAWheelie
+ - PickupObject
+ - PlaceObjectOnGroundHere
 
  **When run by automated nightly tests, this script is run by the released version of the SDK, not the internal build.**
  So proto messages that are not yet in a public SDK build should not yet be added to this test.
@@ -156,6 +162,12 @@ MESSAGES_TO_TEST = [
      protocol.MoveLiftRequest(speed_rad_per_sec=0.0),
      TestResultMatches(protocol.MoveLiftResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
 
+    # Add StopAllMotors
+    # TODO Turn on when is available in public SDK proto
+    # (Interface.StopAllMotors,
+    #  protocol.StopAllMotorsRequest(),
+    #  TestResultMatches(protocol.StopAllMotorsResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+
     # SetEyeColor message
     (Interface.SetEyeColor,
      protocol.SetEyeColorRequest(hue=1.0, saturation=1.0),
@@ -197,6 +209,15 @@ MESSAGES_TO_TEST = [
     (Interface.SetFaceToEnroll,
      protocol.SetFaceToEnrollRequest(name="Boberta", observed_id=1, save_id=0, save_to_robot=True, say_name=True, use_music=True),
      TestResultMatches(protocol.SetFaceToEnrollResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+
+    # Coming in next SDK release.
+    # TODO Turn on when is available in public SDK proto
+    # (Interface.TurnTowardsFace,
+    #  protocol.TurnTowardsFaceRequest(face_id=1,
+    #                                max_turn_angle_rad=0.0,
+    #                                id_tag=protocol.FIRST_SDK_TAG + 4),
+    #  TestResultMatches(protocol.TurnTowardsFaceResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),    # pylint: disable=no-member
+    #                                                   result=protocol.ActionResult(code=protocol.ActionResult.ACTION_RESULT_SUCCESS)))),  # pylint: disable=no-member
 
     # CancelFaceEnrollment message
     (Interface.CancelFaceEnrollment,
@@ -418,6 +439,14 @@ MESSAGES_TO_TEST = [
     # (Interface.DeleteCustomObjects,
     #  protocol.DeleteCustomObjectsRequest(mode=protocol.CustomObjectDeletionMode.Value("DELETION_MASK_FIXED_CUSTOM_OBJECTS")),
     #  TestResultMatches(protocol.DeleteCustomObjectsResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
+
+    # CaptureSingleImage message
+    # TODO Turn on when it is available in public SDK proto
+    # (Interface.CaptureSingleImage,
+    #  protocol.CaptureSingleImageRequest(),
+    #  TestResultIsTypeWithStatusAndFieldNames(protocol.CaptureSingleImageResponse,
+    #                                          protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED),  # pylint: disable=no-member
+    #                                          ["frame_time_stamp", "image_id", "image_encoding", "data"]))
 
     # NOTE: Add additional messages here
 ]

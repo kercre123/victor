@@ -1,9 +1,9 @@
 /*
  * File:          cozmoSimTestController.cpp
  * Date:
- * Description:   
- * Author:        
- * Modifications: 
+ * Description:
+ * Author:
+ * Modifications:
  */
 
 #include "simulator/game/cozmoSimTestController.h"
@@ -21,7 +21,7 @@ const static std::string kScreenShotsPath = kBuildDirectory + "mac/Debug/webots_
 
 namespace Anki {
   namespace Vector {
-  
+
     CozmoSimTestController::CozmoSimTestController()
     : UiGameController(BS_TIME_STEP_MS)
     , _result(0)
@@ -43,10 +43,10 @@ namespace Anki {
       _defaultTestMotionProfile.reverseSpeed_mmps = 30.f;
       _defaultTestMotionProfile.isCustom = true;
     }
-    
+
     CozmoSimTestController::~CozmoSimTestController()
     { }
-    
+
     bool CozmoSimTestController::IsTrueBeforeTimeout(bool cond,
                                                      const char* condAsString,
                                                      double start_time,
@@ -59,17 +59,17 @@ namespace Anki {
         if (!cond) {
           PRINT_STREAM_WARNING("CONDITION_WITH_TIMEOUT_ASSERT", "(" << condAsString << ") still false after " << timeout << " seconds. (" << file << "." << func << "." << line << " started at: " << start_time << ")");
           _result = 255;
-          
+
           StopMovie();
-          
+
           CST_EXIT();
         }
       }
-      
+
       return cond;
     }
-    
-    
+
+
     bool CozmoSimTestController::AllTrueBeforeTimeout(const std::vector<bool>& conditionBools,
                                                       const std::vector<std::string>& conditionStrings,
                                                       double start_time,
@@ -79,11 +79,11 @@ namespace Anki {
                                                       int line)
     {
       const bool allTrue = !std::any_of(conditionBools.begin(), conditionBools.end(), [](bool b){ return (b==false); });
-      
+
       if (allTrue) {
         return true;
       }
-      
+
       // Some conditions were false. Check for timeout.
       if (GetSupervisor().getTime() - start_time > timeout) {
         DEV_ASSERT(conditionStrings.size() == conditionBools.size(), "CozmoSimTestController.AllTrueBeforeTimeout.NumberOfConditionsMismatch");
@@ -93,30 +93,35 @@ namespace Anki {
         for (int i=0 ; i < conditionBools.size() ; i++) {
           msg << (conditionBools[i] ? "<TRUE>   " : "<FALSE>  ") << conditionStrings[i] << "\n";
         }
-        
+
         msg << "\nAbove conditions were still false after " << timeout << " seconds (started at " << start_time << ")\n";
         msg << "File: \"" << file << "\", line " << line << ", in function \"" << func << "()\"";
-        
+
         PRINT_STREAM_WARNING("ALL_CONDITIONS_WITH_TIMEOUT_ASSERT", msg.str().c_str());
         _result = 255;
-        
+
         StopMovie();
-        
+
         CST_EXIT();
       }
-      
+
       return false;
     }
-    
-    
+
+    void CozmoSimTestController::HandleRobotConnected(const ExternalInterface::RobotConnectionResponse& msg)
+    {
+      // Robot has connected so make it run synchronously
+      MakeSynchronous();
+    }
+
     s32 CozmoSimTestController::UpdateInternal()
     {
       //Check if screenshots need to be taken
       if(_screenshotInterval > 0){
-        
+
         // Use simulated time intervals to decide _when_ to take the screen shots
         const double simTime = GetSupervisor().getTime();
-        
+
         if((simTime - _timeOfLastScreenshot) > _screenshotInterval)
         {
           // Use system time to time/date-stamp the screenshot filenames so that
@@ -125,28 +130,22 @@ namespace Anki {
           time(&now);
           char timeString[256];
           strftime(timeString, sizeof(timeString), "%F_%H-%M-%S", localtime(&now));
-          
+
           std::stringstream ss;
           ss << kScreenShotsPath << _screenshotID << "_" << timeString << "_" << _screenshotNum << ".png";
           GetSupervisor().exportImage(ss.str(), 80);
-          
+
           PRINT_NAMED_INFO("CozmoSimTestController.UpdateInternal.TookScreenshot",
                            "ID:%s Num:%d Time:%s",
                            _screenshotID.c_str(), _screenshotNum, timeString);
-          
+
           _screenshotNum++;
           _timeOfLastScreenshot = simTime;
         }
-        
+
       }
-      
+
       return UpdateSimInternal();
-    }
-    
-    
-    void CozmoSimTestController::InitInternal()
-    {
-      MakeSynchronous();
     }
 
     void CozmoSimTestController::ExitTest()
@@ -157,7 +156,7 @@ namespace Anki {
         QuitController(_result); // Just quit the controller, but keep Webots running
       }
     }
-    
+
     //Only runs if #define RECORD_TEST 1, use for local testing
     void CozmoSimTestController::StartMovieConditional(const std::string& name, int speed)
     {
@@ -167,14 +166,14 @@ namespace Anki {
         time(&t);
         std::string dateStr = std::asctime(std::localtime(&t));
         dateStr.erase(std::remove(dateStr.begin(), dateStr.end(), '\n'), dateStr.end());
-        
+
         std::stringstream ss;
         ss << name << dateStr;
         StartMovieAlways(name, speed);
         _isRecording = true;
       }
     }
-    
+
     //Use for movies on teamcity - be sure to add to build artifacts
     void CozmoSimTestController::StartMovieAlways(const std::string& name, int speed)
     {
@@ -186,59 +185,63 @@ namespace Anki {
       _isRecording =  GetSupervisor().getMovieStatus() == webots::Supervisor::MOVIE_RECORDING;
       PRINT_NAMED_INFO("Is Movie Recording?","_isRecording:%d", _isRecording);
     }
-    
-    
-    
+
+
+
     void CozmoSimTestController::StopMovie()
     {
       if(_isRecording && GetSupervisor().getMovieStatus() == GetSupervisor().MOVIE_RECORDING)
       {
         GetSupervisor().movieStopRecording();
         PRINT_NAMED_INFO("CozmoSimTestController.StopMovie", "Movie Stop Command issued");
-        
+
         while(GetSupervisor().movieIsReady()){
         }
 
         if(GetSupervisor().movieFailed()){
           PRINT_NAMED_ERROR("CozmoSimTestController.StopMovie", "Movie failed to save properly");
         }
-        
+
         _isRecording = false;
       }
     }
-    
-    
+
+
     void CozmoSimTestController::TakeScreenshotsAtInterval(const std::string& screenshotID, f32 interval)
     {
       if(interval <= 0){
         PRINT_NAMED_ERROR("CozmoSimTestController.TakeShotsAtInterval.InvalidInterval", "Interval passed in: %f", interval);
         return;
       }
-      
+
       //Set up output folder
       struct stat st;
       if(stat(kScreenShotsPath.c_str(), &st) != 0){
         system(("mkdir -p " + kScreenShotsPath).c_str());
       }
-      
+
       _screenshotInterval = interval;
       _screenshotID = screenshotID;
-      
+
       PRINT_NAMED_INFO("CozmoSimTestController.TakeScreenshotsAtInterval.SettingInterval",
                        "Interval:%f Path:%s", _screenshotInterval, kScreenShotsPath.c_str());
     }
 
-    
+    Result CozmoSimTestController::SendMessage(const ExternalInterface::MessageGameToEngine& msg)
+    {
+      const Result res = UiGameController::SendMessage(msg);
+      CST_ASSERT(res == RESULT_OK, "CozmoSimTestController.SendMessage.Fail");
+      return res;
+    }
+
     void CozmoSimTestController::MakeSynchronous()
     {
-      {
-        // Set vision to synchronous
-        ExternalInterface::VisionRunMode m;
-        m.isSync = true;
-        ExternalInterface::MessageGameToEngine message;
-        message.Set_VisionRunMode(m);
-        SendMessage(message);
-      }
+      // Set vision to synchronous
+      ExternalInterface::VisionRunMode m;
+      m.isSync = true;
+      ExternalInterface::MessageGameToEngine message;
+      message.Set_VisionRunMode(m);
+      SendMessage(message);
     }
 
     void CozmoSimTestController::DisableRandomPathSpeeds()
@@ -249,7 +252,7 @@ namespace Anki {
     void CozmoSimTestController::PrintPeriodicBlockDebug()
     {
       const double currTime_s = GetSupervisor().getTime();
-      
+
       if( _nextPrintTime < 0 || currTime_s >= _nextPrintTime ) {
         _nextPrintTime = currTime_s + _printInterval_s;
 
@@ -289,8 +292,8 @@ namespace Anki {
               // TODO:(bn) warning. Could be a non-lightcube though
             }
           }
-          
-          
+
+
         }
       }
     }
@@ -299,14 +302,14 @@ namespace Anki {
     {
       Pose3d robotPose(GetRobotPose());
       robotPose.PreComposeWith(transform); // preserves robot pose's parent
-      
+
       Pose3d robotPoseActual(GetRobotPoseActual());
       robotPoseActual.SetParent(robotPose.GetParent());
-      
+
       const bool isSame = robotPose.IsSameAs(robotPoseActual, distThreshold, angleThreshold);
       return isSame;
     }
-  
+
     bool CozmoSimTestController::IsObjectPoseWrtRobotCorrect(s32 objectID,
                                                              const Pose3d& actualPose,
                                                              const Point3f& distThresh_mm,
@@ -314,9 +317,9 @@ namespace Anki {
                                                              const char* debugStr) const
     {
       const PoseOrigin fakeOrigin; // declare before any poses that use it as parent so it destructs last!
-      
+
       Pose3d objectPoseWrtRobot;
-      
+
       if(RESULT_OK != GetObjectPose(objectID, objectPoseWrtRobot))
       {
         PRINT_NAMED_WARNING("CozmoSimTestController.IsObjectPoseWrtRobotCorrect",
@@ -324,7 +327,7 @@ namespace Anki {
                             debugStr, objectID);
         return false;
       }
-      
+
       if(false == objectPoseWrtRobot.GetWithRespectTo(GetRobotPose(), objectPoseWrtRobot))
       {
         PRINT_NAMED_WARNING("CozmoSimTestController.IsObjectPoseWrtRobotCorrect",
@@ -332,13 +335,13 @@ namespace Anki {
                             debugStr, objectID);
         return false;
       }
-      
+
       // Assume that actual object pose and actual robot pose are in the same origin
       Pose3d robotPoseActual(GetRobotPoseActual());
       robotPoseActual.SetParent(actualPose.GetParent());
-      
+
       Pose3d actualObjectPoseWrtRobot;
-      
+
       if(false == actualPose.GetWithRespectTo(robotPoseActual, actualObjectPoseWrtRobot))
       {
         PRINT_NAMED_WARNING("CozmoSimTestController.IsObjectPoseWrtRobotCorrect",
@@ -346,13 +349,13 @@ namespace Anki {
                             debugStr, objectID);
         return false;
       }
-      
+
       // Assuming the two object poses are w.r.t. the same robot, make them share
       // a common origin and see if the represent the same pose relative to that common
       // origin
       objectPoseWrtRobot.SetParent(fakeOrigin);
       actualObjectPoseWrtRobot.SetParent(fakeOrigin);
-      
+
       Vec3f Tdiff(0,0,0);
       Radians angleDiff(0);
       if(!objectPoseWrtRobot.IsSameAs(actualObjectPoseWrtRobot, distThresh_mm, angleThresh, Tdiff, angleDiff))
@@ -363,27 +366,21 @@ namespace Anki {
                             Tdiff.x(), Tdiff.y(), Tdiff.z(), angleDiff.getDegrees());
         return false;
       }
-      
+
       return true;
     }
 
-    void CozmoSimTestController::SendForceDeloc()
-    {
-      SendMessage(ExternalInterface::MessageGameToEngine(
-                    ExternalInterface::ForceDelocalizeRobot()));
-    }
-  
     bool CozmoSimTestController::IsLocalizedToObject() const
     {
       return GetRobotState().localizedToObjectID >= 0;
-    }    
-      
+    }
+
     // =========== CozmoSimTestFactory ============
-    
+
     std::shared_ptr<CozmoSimTestController> CozmoSimTestFactory::Create(std::string name)
     {
       CozmoSimTestController * instance = nullptr;
-      
+
       // find name in the registry and call factory method.
       auto it = factoryFunctionRegistry.find(name);
       if(it != factoryFunctionRegistry.end()){
@@ -395,7 +392,7 @@ namespace Anki {
       else
         return nullptr;
     }
-    
+
     void CozmoSimTestFactory::RegisterFactoryFunction(std::string name,
                                  std::function<CozmoSimTestController*(void)> classFactoryFunction)
     {
@@ -403,7 +400,7 @@ namespace Anki {
       factoryFunctionRegistry[name] = classFactoryFunction;
     }
 
-    
-    
+
+
   } // namespace Vector
 } // namespace Anki

@@ -188,6 +188,7 @@ enum uint_16 BehaviorID {
   GoHome,
   RequestHomeBecauseStuck,
   RequestToGoHome,
+  RobustChargerObservation,
   WiggleBackOntoChargerFromPlatform,
 
   // victorBehaviorTree/highLevelDelegates/heldInPalm
@@ -199,11 +200,15 @@ enum uint_16 BehaviorID {
   LookInPlaceHeadDownNervous,
   LookInPlaceHeadDownRelaxed,
   LookInPlaceHeadUpInPalm,
+  LookingNervousInPalmAnim,
   NestleWhileHeldInPalmAnim,
   ReactToPalmTilt,
   ReactToPickupFromPalm,
   ReactToPutDownFromPalm,
   ReactToPutDownFromPalmAnimSelector,
+  SleepWhileHeldInPalm,
+  SleepWhileHeldInPalmLoop,
+  WakeGentlyFromHeldInPalmSleep,
 
   // victorBehaviorTree/highLevelDelegates
   InitialPickupAnimation,
@@ -314,6 +319,7 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/highLevelDelegates/voiceCommands
   BlackJackVoiceCommand,
   DoATrickVoiceCommand,
+  EyeColorVoiceCommand,
   FetchCubeVoiceCommand,
   FindYourCubeVoiceCommand,
   FistBumpVoiceCommand,
@@ -400,7 +406,6 @@ enum uint_16 BehaviorID {
   ReactToAbuse,
   ReactToAffirmative,
   ReactToApology,
-  ReactToBatteryTooHotToCharge,
   ReactToCliff,
   ReactToCliffDuringFetch,
   ReactToDarkness,
@@ -427,6 +432,7 @@ enum uint_16 BehaviorID {
   ReactToTriggerDirectionAwake,
   ReactToUncalibratedHeadAndLift,
   ReactToUnexpectedMovement,
+  ReactToUnexpectedMovementInAir,
   StuckOnEdge,
   TriggerWordWithoutIntent,
 
@@ -435,6 +441,7 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/sdkBehaviors
   SDKDefault,
+  SDKLock,
   SDKOverrideAll,
 
   // victorBehaviorTree/seasonal

@@ -166,7 +166,7 @@ namespace Vector {
                                    const f32 currentGain,
                                    const GammaCurve& gammaCurve);
 
-    // When SavingImages mode is enabled, how to save them
+    // When SaveImages mode is enabled, how to save them
     void SetSaveParameters(const ImageSaverParams& params);
 
     Vision::CameraParams GetCurrentCameraParams() const;

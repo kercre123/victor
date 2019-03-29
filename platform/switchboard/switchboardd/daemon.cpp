@@ -33,6 +33,7 @@
 #include "anki-ble/common/ble_advertise_settings.h"
 #include "anki-wifi/wifi.h"
 #include "anki-wifi/exec_command.h"
+#include "auto-test/autoTest.h"
 #include "cutils/properties.h"
 #include "switchboardd/christen.h"
 #include "platform/victorCrashReports/victorCrashReporter.h"
@@ -251,6 +252,13 @@ void Daemon::UpdateAdvertisement(bool pairing) {
   if(_bleClient == nullptr || !_bleClient->IsConnected()) {
     Log::Write("Tried to update BLE advertisement when not connected to ankibluetoothd.");
     return;
+  }
+
+  if(AutoTest::IsAutoTestBot()) {
+    if(!pairing) {
+      Log::Write("automation: UpdatingAdvertisement - overriding pairing state. Forcing into pairing mode.");
+    }
+    pairing = true;
   }
 
   // update state

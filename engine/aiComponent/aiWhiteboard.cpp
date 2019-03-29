@@ -19,6 +19,7 @@
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/robotStatsTracker.h"
@@ -29,6 +30,7 @@
 #include "engine/robot.h"
 #include "engine/sayNameProbabilityTable.h"
 
+#include "coretech/common/engine/math/quad_impl.h"
 #include "coretech/common/shared/math/rotation.h"
 #include "coretech/common/engine/utils/timer.h"
 
@@ -619,7 +621,7 @@ void AIWhiteboard::ConsiderNewPossibleObject(ObjectType objectType, const Pose3d
   Vec3f maxLocDist(kBW_PossibleObjectClose_mm);
   Radians maxLocAngle(kBW_PossibleObjectClose_rad);
   ObservableObject* prevObservedObject =
-    _robot.GetBlockWorld().FindLocatedClosestMatchingObject( objectType, obsPose, maxLocDist, maxLocAngle);
+    _robot.GetBlockWorld().FindLocatedClosestMatchingObject( objectType, obsPose, maxLocDist, maxLocAngle, BlockWorldFilter() );
   
   // found object nearby, no need
   if ( nullptr != prevObservedObject )

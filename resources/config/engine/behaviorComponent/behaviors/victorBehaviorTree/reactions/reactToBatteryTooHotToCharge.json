@@ -1,6 +1,0 @@
-{
-  "behaviorID": "ReactToBatteryTooHotToCharge",
-  "behaviorClass": "ReactToBatteryTooHotToCharge",
-
-  "associatedActiveFeature": "NoFeature"
-}

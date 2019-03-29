@@ -71,9 +71,13 @@ namespace Anki {
       // that must be clear before the robot can dock with the charger.
       Quad2f GetDockingAreaQuad() const;
       
-      // Randomly generate some poses from which to observe the charger for the purpose of verifying its position
+      // Randomly generate some poses from which to observe the charger 
+      // for the purpose of verifying its position
       // (e.g. before attempting to dock with it)
-      std::vector<Pose3d> GenerateObservationPoses(Util::RandomGenerator& rng, const size_t nPoses = 10) const;
+      // NOTE: the poses are randomly sampled in a annulus around the charger
+      std::vector<Pose3d> GenerateObservationPoses( Util::RandomGenerator& rng, 
+                                                    const size_t nPoses,
+                                                    const float& span_rad) const;
       
       //
       // Inherited Virtual Methods
@@ -91,11 +95,11 @@ namespace Anki {
       virtual Point3f GetSameDistanceTolerance()  const override;
       
       
-      // Charger has no accelerometer so it should never be considered moving nor used for localization
+      // Charger has no accelerometer so it should never be considered moving
       virtual bool IsMoving(RobotTimeStamp_t* t = nullptr) const override { return false; }
       virtual void SetIsMoving(bool isMoving, RobotTimeStamp_t t) override { }
-      virtual bool CanBeUsedForLocalization() const override;
       
+      virtual f32 GetMaxObservationDistance_mm() const override;
       
       constexpr static f32 GetLength() { return kLength; }
       

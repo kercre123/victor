@@ -47,6 +47,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionOnChargerPlatform.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionPetInitialDetection.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionProxInRange.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionRobotHeldInPalm.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotInHabitat.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPitchInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPickedUp.h"
@@ -62,6 +63,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionTimePowerButtonPressed.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimedDedup.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionTooHotToCharge.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTriggerWordPending.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTrue.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUnexpectedMovement.h"
@@ -340,6 +342,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       condition = std::make_shared<ConditionProxInRange>(config);
       break;
     }
+    case BEIConditionType::RobotHeldInPalm:
+    {
+      condition = std::make_shared<ConditionRobotHeldInPalm>(config);
+      break;
+    }
     case BEIConditionType::RobotInHabitat:
     {
       condition = std::make_shared<ConditionRobotInHabitat>(config);
@@ -408,6 +415,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::TimePowerButtonPressed:
     {
       condition = std::make_shared<ConditionTimePowerButtonPressed>(config);
+      break;
+    }
+    case BEIConditionType::TooHotToCharge:
+    {
+      condition = std::make_shared<ConditionTooHotToCharge>(config);
       break;
     }
     case BEIConditionType::TrueCondition:

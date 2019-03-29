@@ -313,7 +313,9 @@ void lcd_shutdown(void) {
   }
 
   if (lcd_fd) {
-    lcd_run_script(sleep_in);
+    if (DnC_PIN) {
+      lcd_run_script(sleep_in);
+    }
     close(lcd_fd);
   }
   if (DnC_PIN) {

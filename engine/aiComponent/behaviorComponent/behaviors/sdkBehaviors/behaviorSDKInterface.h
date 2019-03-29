@@ -20,6 +20,7 @@ namespace Vector {
 
 class BehaviorDriveOffCharger;
 class IGatewayInterface;
+class UserIntentComponent; 
 namespace external_interface {
   class DriveOffChargerRequest;
   class DriveOnChargerRequest;
@@ -55,6 +56,7 @@ private:
   // Use this to prevent (or allow) raw movement commands from the SDK. We only want to allow these when the SDK
   // behavior is activated and _not_ delegating to another behavior.
   void SetAllowExternalMovementCommands(const bool allow);
+  void ProcessUserIntents();
 
   struct InstanceConfig {
     InstanceConfig();

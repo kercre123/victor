@@ -26,6 +26,19 @@
     "behaviorName": "AlreadyHomeInternal",
     "animTriggers": ["ChargerDockingAlreadyHere"]
   }
-  ]
+  ],
+  
+  "wantsToBeActivatedCondition" : {
+    "conditionType": "Compound",
+    "or": [
+      {
+        "conditionType": "OffTreadsState",
+        "targetState": "OnTreads"
+      },
+      {
+        "conditionType": "OnCharger"
+      }
+    ]
+  }
 
 }

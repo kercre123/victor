@@ -83,9 +83,9 @@ private:
     float         recordDuration;
     bool          requireKnownUser;
 
-    std::string   ttsErrorNoRecipient;
-    std::string   ttsErrorUnknownRecipient;
-    std::string   ttsErrorMailboxFull;
+    std::string   ttsNoRecipientKey;
+    std::string   ttsUnknownRecipientKey;
+    std::string   ttsMailboxFullKey;
 
     std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
 

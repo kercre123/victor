@@ -25,10 +25,10 @@ IMPLEMENT_ENUM_INCREMENT_OPERATORS(VisionMode);
 // add it to this lookup table initialization. Note that multiple
 // VisionModes _can_ refer to the same network name.
 static const Util::SymmetricMap<VisionMode, std::string> sNetModeLUT{
-  {VisionMode::DetectingPeople, "person_detector"},
-  {VisionMode::DetectingHands,  "hand_detector"},
-  {VisionMode::DetectingPets,   "mobilenet"}, // TODO: Update to real network
-  {VisionMode::OffboardVision,  "offboard_person_detection"},
+  {VisionMode::People,    "person_detector"},
+  {VisionMode::Hands,     "hand_detector"},
+  {VisionMode::Pets,      "mobilenet"}, // TODO: Update to real network
+  {VisionMode::Offboard,  "offboard_person_detection"},
 };
   
 bool GetNeuralNetsForVisionMode(const VisionMode mode, std::set<std::string>& networkNames)

@@ -25,6 +25,7 @@
 #include "engine/aiComponent/behaviorComponent/weatherIntents/weatherIntentParser.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/dataAccessorComponent.h"
+#include "engine/components/localeComponent.h"
 #include "engine/components/settingsManager.h"
 #include "engine/faceWorld.h"
 #include "engine/utils/cozmoFeatureGate.h"
@@ -40,16 +41,16 @@
 namespace Anki {
 namespace Vector {
 
-namespace{
+namespace {
 const char* kImageLayoutListKey = "imageLayouts";
 const char* kImageMapListKey    = "imageMaps";
 const char* kAnimationNameKey   = "animationName";
 
 const char* kFahrenheitIndicatorSpriteName = "weather_fahrenheit_indicator";
 const char* kCelsiusIndicatorSpriteName = "weather_celsius_indicator";
-const char* kNegativeTemmpIndicatorSpriteName = "weather_negative_indicator";
+const char* kNegativeTempIndicatorSpriteName = "weather_negative_indicator";
 
-// staticly defined for now - can be moved into JSON easily if
+// statically defined for now - can be moved into JSON easily if
 // we need to support different asset designs
 const std::vector<std::string> kTemperatureAssets = {
   "weather_temp_0",
@@ -431,7 +432,7 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
 
   // Add sprite boxes as appropriate to the layer
   {
-    const std::string tempIndicator = isFahrenheit ? 
+    const std::string tempIndicator = isFahrenheit ?
                                       kFahrenheitIndicatorSpriteName :
                                       kCelsiusIndicatorSpriteName;
     layer.AddToImageMap(spriteCache, seqContainer,
@@ -441,7 +442,7 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
   if(temp < 0){
     layer.AddToImageMap(spriteCache, seqContainer,
                         Vision::SpriteBoxName::TemperatureNegativeIndicator,
-                        kNegativeTemmpIndicatorSpriteName);
+                        kNegativeTempIndicatorSpriteName);
   }
 
   const auto absTemp = std::abs(temp);
@@ -623,23 +624,28 @@ void BehaviorDisplayWeather::StartTTSGeneration()
   const auto condition = _iConfig->intentParser->GetCondition(weatherResponse);
 
   int temperature = 0;
-  auto success = _iConfig->intentParser->GetRawTemperature(weatherResponse, temperature);
-  const auto& ttsMap = GetBEI().GetDataAccessorComponent().GetWeatherConditionTTSMap();
-  const auto& ttsIter = ttsMap->find(condition);
-  if(success && ttsIter != ttsMap->end()){
-      std::string conditionText = std::to_string(temperature)  + " degrees " + ttsIter->second;
-      const UtteranceTriggerType triggerType = UtteranceTriggerType::Manual;
-      const AudioTtsProcessingStyle style = AudioTtsProcessingStyle::Default_Processed;
+  const auto success = _iConfig->intentParser->GetRawTemperature(weatherResponse, temperature);
+  const auto & bei = GetBEI();
+  const auto & ttsMap = bei.GetDataAccessorComponent().GetWeatherConditionTTSMap();
+  const auto ttsIter = ttsMap->find(condition);
+  if (success && ttsIter != ttsMap->end()) {
 
-      _dVars.utteranceID = GetBEI().GetTextToSpeechCoordinator().CreateUtterance(conditionText, triggerType, style,
-                                                                                 1.0f, callback);
+    // Get localized version of "X degrees and cloudy"
+    const auto & robotInfo = bei.GetRobotInfo();
+    const auto & localeComponent = robotInfo.GetLocaleComponent();
+    const auto & ttsString = localeComponent.GetString(ttsIter->second, std::to_string(temperature));
+
+    // Generate TTS utterance for localized string
+    auto & ttsCoordinator = bei.GetTextToSpeechCoordinator();
+    const UtteranceTriggerType triggerType = UtteranceTriggerType::Manual;
+    const AudioTtsProcessingStyle style = AudioTtsProcessingStyle::Default_Processed;
+    _dVars.utteranceID = ttsCoordinator.CreateUtterance(ttsString, triggerType, style, 1.0f, callback);
   }
 
-  if(kInvalidUtteranceID == _dVars.utteranceID){
+  if (kInvalidUtteranceID == _dVars.utteranceID) {
     _dVars.utteranceState = UtteranceState::Invalid;
   }
 }
-
 
 }
 }

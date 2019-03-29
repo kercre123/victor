@@ -465,6 +465,10 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
   // lock the job mutex
   {
     std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
+
+    //  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+    // ... this block is where we kick off a new stream to the cloud ...
+
     // check if the pointer to the currently streaming job is valid
     if (!_currentlyStreaming && HasStreamingJob()
       #if ANKI_DEV_CHEATS
@@ -501,8 +505,13 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       }
     }
 
+    //  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+    // ... this block is where we actually do the streaming of the mic data up to the cloud ...
+
     if (_currentlyStreaming)
     {
+      bool realStreamHasFinished = false;
+
       // Are we done with what we want to stream?
       if (!_streamingComplete)
       {
@@ -511,6 +520,8 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         if (receivedStopMessage || didTimeout)
         {
           _streamingComplete = true;
+          realStreamHasFinished = true;
+
           if (didTimeout)
           {
             SendUdpMessage(CloudMic::Message::CreateaudioDone({}));
@@ -553,7 +564,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         uint32_t minStreamingDuration_ms = _context->GetShowAudioStreamStateManager()->GetMinStreamingDuration();
         const BaseStationTime_t minStreamDuration_ns = minStreamingDuration_ms * 1000 * 1000;
         const BaseStationTime_t minStreamEnd_ns = _streamBeginTime_ns + minStreamDuration_ns;
-        if (currTime_nanosec >= minStreamEnd_ns)
+        if ( ( currTime_nanosec >= minStreamEnd_ns ) || realStreamHasFinished )
         {
           LOG_INFO("MicDataSystem.Update.StreamingComplete.ClearJob", "Clearing streaming job now that enough time has elapsed");
           ClearCurrentStreamingJob();

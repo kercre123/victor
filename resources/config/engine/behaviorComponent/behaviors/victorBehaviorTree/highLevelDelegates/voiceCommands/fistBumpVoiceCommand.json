@@ -3,6 +3,11 @@
   "behaviorClass" : "DispatcherQueue",
 
   "associatedActiveFeature": "FistBump",
+  
+  "wantsToBeActivatedCondition": {
+    "conditionType": "OffTreadsState",
+    "targetState": "OnTreads"
+  },
 
   "respondToUserIntents" : [
     {

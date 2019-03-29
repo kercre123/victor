@@ -789,6 +789,11 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
       
     }
     break;
+    case RobotInterface::RobotToEngine::Tag_stillAlive:
+    {
+      _pendingRobotDisconnectTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kNoRobotStateDisconnectTimeout_sec;
+    }
+    break;
     case RobotInterface::RobotToEngine::Tag_robotStopped:
     {
       LOG_INFO("AnimProcessMessages.ProcessMessageFromRobot.RobotStopped", "Abort animation");

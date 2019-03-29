@@ -55,6 +55,11 @@ public:
   void DisableTurnForTimestamp(EngineTimeStamp_t timestampToDisableFor){
     _dVars.timestampToDisableTurnFor = timestampToDisableFor;
   }
+  
+  void SetListeningAnims(const AnimationTrigger& listeningLoop,
+                         const AnimationTrigger& listeningGetOut);
+  
+  void ResetListeningAnimsToConfig();
 
 protected:
 
@@ -200,6 +205,17 @@ private:
     EngineTimeStamp_t         timestampToDisableTurnFor;
 
     bool                      expectingStream;
+    
+    struct Persistent {
+
+      Persistent();
+
+      AnimationTrigger          forcedAnimListeningLoop;
+      AnimationTrigger          forcedAnimListeningGetOut;
+      
+      bool                      listeningAnimsResetQueued;
+    };
+    Persistent persistent;
   } _dVars;
 
   // these are dynamic vars that live beyond the activation scope ...

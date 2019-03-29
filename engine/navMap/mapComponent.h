@@ -24,8 +24,6 @@
 #include "engine/robotComponents_fwd.h"
 #include "engine/engineTimeStamp.h"
 
-#include "coretech/vision/engine/observableObjectLibrary.h"
-
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h"
 

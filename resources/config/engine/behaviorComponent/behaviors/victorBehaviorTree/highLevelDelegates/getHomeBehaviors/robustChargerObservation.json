@@ -1,0 +1,9 @@
+{
+  "behaviorID": "RobustChargerObservation",
+  "behaviorClass": "RobustChargerObservation",
+
+  "associatedActiveFeature": "NoFeature",
+
+  "numImageCompositingCyclesToWaitFor": 1,
+  "numCyclingExposureCyclesToWaitFor": 1
+}

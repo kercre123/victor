@@ -89,6 +89,9 @@ service ExternalInterface {
   // Moves Vector's lift.
   rpc MoveLift(MoveLiftRequest) returns (MoveLiftResponse) {}
   
+  // Stop all motor commands requested: MoveHead, MoveLift and DriveWheels.
+  rpc StopAllMotors(StopAllMotorsRequest) returns (StopAllMotorsResponse) {}
+
   // Sets screen (Vector's face) to a solid color.
   rpc DisplayFaceImageRGB(DisplayFaceImageRGBRequest) returns (DisplayFaceImageRGBResponse) {
     option (google.api.http) = {
@@ -296,6 +299,24 @@ service ExternalInterface {
   // Tell Vector's lift to move to a given height.
   rpc SetLiftHeight(SetLiftHeightRequest) returns (SetLiftHeightResponse) {}
 
+  // Tell Vector to turn towards this face.
+  rpc TurnTowardsFace(TurnTowardsFaceRequest) returns (TurnTowardsFaceResponse) {}
+
+  // Tell Vector to drive to the specified object.
+  rpc GoToObject(GoToObjectRequest) returns (GoToObjectResponse) {}
+
+  // Tell Vector to roll his cube.
+  rpc RollObject(RollObjectRequest) returns (RollObjectResponse) {}
+
+  // Tell Vector to "pop a wheelie" using his cube.
+  rpc PopAWheelie(PopAWheelieRequest) returns (PopAWheelieResponse) {}
+
+  // Instruct the robot to pick up the supplied object.
+  rpc PickupObject(PickupObjectRequest) returns (PickupObjectResponse) {}
+
+  // Ask Vector to place the object he is carrying on the ground at the current location.
+  rpc PlaceObjectOnGroundHere(PlaceObjectOnGroundHereRequest) returns (PlaceObjectOnGroundHereResponse) {}
+
   rpc UserAuthentication(UserAuthenticationRequest) returns (UserAuthenticationResponse) {
     option (google.api.http) = {
       post: "/v1/user_authentication",
@@ -426,6 +447,14 @@ service ExternalInterface {
     };
   }
 
+  // Request a single image to be captured and sent from the robot.
+  rpc CaptureSingleImage(CaptureSingleImageRequest) returns (CaptureSingleImageResponse) {
+    option (google.api.http) = {
+      post: "/v1/capture_single_image",
+      body: "*"
+    };
+  }
+
   // Set Vector's eye color.
   rpc SetEyeColor(SetEyeColorRequest) returns (SetEyeColorResponse) {
     option (google.api.http) = {
@@ -500,11 +529,11 @@ service ExternalInterface {
     };
   }    
 
-  // CheckUpdateStatus tells the robot's current state regarding download, installation, and
-  // readiness to boot to, engine updates.
-  rpc CheckUpdateStatusStream(CheckUpdateStatusRequest) returns (stream CheckUpdateStatusResponse) {
+  // StartUpdateEngine cycles the update-engine service (to start a new check for an update) and sets up a stream of 
+  // UpdateStatusResponse Events.
+  rpc StartUpdateEngine(CheckUpdateStatusRequest) returns (CheckUpdateStatusResponse) {
     option (google.api.http) = {
-      post: "/v1/check_update_status_stream",
+      post: "/v1/start_update_engine",
       body: "*"
     };
   }

@@ -146,6 +146,10 @@ public:
   // sending any data to the cloud; this lasts for a set duration
   bool ShouldSimulateStreaming() const;
 
+  // let's anybody who registered a callback with AddTriggerWordDetectedCallback(...) know that we've heard the
+  // trigger word and are either about to start streaming, or not (either on purpose, or it was cancelled/error)
+  void SetWillStream(bool willStream) const;
+
 
 private:
 
@@ -210,8 +214,6 @@ private:
 #if ANKI_DEV_CHEATS
   std::vector<Json::Value> _devTriggerResults;
 #endif
-
-  void SetWillStream(bool willStream) const;
 
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
   void ClearCurrentStreamingJob();

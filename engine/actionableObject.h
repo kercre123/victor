@@ -65,6 +65,7 @@ namespace Anki {
       virtual void GeneratePreActionPoses(const PreActionPose::ActionType type,
                                           std::vector<PreActionPose>& preActionPoses) const = 0;
       
+      // Set the object's pose. newPose should be with respect to world origin.
       virtual void SetPose(const Pose3d& newPose, f32 fromDistance, PoseState newPoseState) override;
       
     private:      

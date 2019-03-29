@@ -65,7 +65,7 @@ ConditionIlluminationDetected::~ConditionIlluminationDetected() {}
 
 void ConditionIlluminationDetected::GetRequiredVisionModes(std::set<VisionModeRequest>& request) const
 {
-  request.insert({ VisionMode::DetectingIllumination, EVisionUpdateFrequency::High });
+  request.insert({ VisionMode::Illumination, EVisionUpdateFrequency::High });
 }
 
 void ConditionIlluminationDetected::InitInternal( BehaviorExternalInterface& bei )

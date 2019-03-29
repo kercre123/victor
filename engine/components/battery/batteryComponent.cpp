@@ -16,6 +16,7 @@
 #include "engine/aiComponent/aiComponent.h"
 
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/charger.h"
 #include "engine/components/battery/batteryStats.h"
 #include "engine/components/cubes/cubeBatteryComponent.h"
@@ -51,28 +52,10 @@ namespace {
   const float kCalmModeBatteryVoltsUpdatePeriod_sec =  STATE_MESSAGE_FREQUENCY_CALM * ROBOT_TIME_STEP_MS / 1000.f;
 
   // Time constant of the low-pass filter for battery voltage
-  const float kBatteryVoltsFilterTimeConstant_sec = 6.0f;
+  const float kBatteryVoltsFilterTimeConstant_sec = 20.0f;
 
-  // Voltage above which the battery is considered fully charged
-  // after _saturationChargeTimeRemaining_sec expires.
-  const float kSaturationChargingThresholdVolts = 4.1f;
+  const float kInvalidPitchAngle = std::numeric_limits<float>::max();
 
-  // Max time to wait after kSaturationChargingThresholdVolts is reached
-  // before battery is considered "fully charged".
-  const float kMaxSaturationTime_sec = 7 * 60.f;
-
-  // Voltage below which battery is considered in a low charge state
-  // At 3.6V, there is about 7 minutes of battery life left (if stationary, minimal processing, no wifi transmission, no sound)
-  const float kLowBatteryThresholdVolts = 3.6f;
-
-  // We apply a small hysteresis band when transitioning between Nominal and Low battery
-  const float kLowBatteryHysteresisVolts = 0.05f;
-
-  // Voltage below which battery is considered in a low charge state _when on charger_. When the robot is placed on the
-  // charger, the voltage immediately increases by a step amount, so a different threshold is required. The value of
-  // 4.0V was chosen because it takes about 5 minutes for the battery to reach 4.0V when placed on the charger at 3.6V
-  // (the 'off-charger' low battery threshold).
-  const float kOnChargerLowBatteryThresholdVolts = 4.0f;
 
   #define CONSOLE_GROUP "BatteryComponent"
 
@@ -80,7 +63,9 @@ namespace {
   CONSOLE_VAR(bool, kFakeLowBattery, CONSOLE_GROUP, false);
   const float kFakeLowBatteryVoltage = 3.5f;
 
-  const float kInvalidPitchAngle = std::numeric_limits<float>::max();
+  // If non-zero, a low battery status is faked after this many seconds off charger
+  CONSOLE_VAR(uint32_t, kFakeLowBatteryAfterOffChargerTimeout_sec, CONSOLE_GROUP, 0);
+  float _fakeLowBatteryTime_sec = 0.f;
 
   // Console var for faking disconnected battery
   CONSOLE_VAR(bool, kFakeDisconnectedBattery, CONSOLE_GROUP, false);
@@ -103,7 +88,6 @@ namespace {
 
 BatteryComponent::BatteryComponent()
   : IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::Battery)
-  , _saturationChargeTimeRemaining_sec(kMaxSaturationTime_sec)
   , _chargerFilter(std::make_unique<BlockWorldFilter>())
   , _batteryStatsAccumulator(std::make_unique<BatteryStats>())
 {
@@ -146,11 +130,12 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 
   // Check if battery is _really_ overheating, enough for a shutdown to be coming.
   // This is actually handled in vic-robot, but is recorded here for viz purposes.
-  _battOverheated = msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_OVERHEATED;
+  #define IS_STATUS_FLAG_SET(x) ((msg.status & (uint32_t)RobotStatusFlag::x) != 0)
+  _battOverheated = IS_STATUS_FLAG_SET(IS_BATTERY_OVERHEATED);
 
   // Only update filtered value if the battery isn't disconnected
-  bool wasDisconnected = _battDisconnected;
-  _battDisconnected = (msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED)
+  _wasBattDisconnected = _battDisconnected;
+  _battDisconnected = IS_STATUS_FLAG_SET(IS_BATTERY_DISCONNECTED)
                       || (_batteryVoltsRaw < 3);  // Just in case syscon doesn't report IS_BATTERY_DISCONNECTED for some reason.
                                                   // Anything under 3V doesn't make sense.
 
@@ -162,7 +147,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   // If in calm mode, RobotState messages are expected to come in at a slower rate
   // and we therefore need to adjust the sampling rate of the filter.
   static bool prevSysconCalmMode = false;
-  const bool currSysconCalmMode = msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE;
+  const bool currSysconCalmMode = IS_STATUS_FLAG_SET(CALM_POWER_MODE);
   if (currSysconCalmMode && !prevSysconCalmMode) {
     _batteryVoltsFilter->SetSamplePeriod(kCalmModeBatteryVoltsUpdatePeriod_sec);
   } else if (!currSysconCalmMode && prevSysconCalmMode) {
@@ -190,13 +175,12 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   const auto oldBatteryLevel = _batteryLevel;
 
   // Update isCharging / isOnChargerContacts / isOnChargerPlatform
-  SetOnChargeContacts(msg.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
-  SetIsCharging(msg.status & (uint32_t)RobotStatusFlag::IS_CHARGING);
+  SetOnChargeContacts(IS_STATUS_FLAG_SET(IS_ON_CHARGER));
+  SetIsCharging(IS_STATUS_FLAG_SET(IS_CHARGING));
   UpdateOnChargerPlatform();
 
-
   // Check for change in disconnected state
-  if (_battDisconnected != wasDisconnected) {
+  if (_battDisconnected != _wasBattDisconnected) {
     _lastDisconnectedChange_sec = now_sec;
 
     // The battery becomes disconnected for one of two reasons:
@@ -209,9 +193,11 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     //   that it is disconnected from users. This ensures the robot is left alone, on 
     //   the charger, so that it may naturally cool down and eventually resume charging.
     //
-    // - When the battery has been charging for 25 minutes (considered the maximum time needed), 
-    //   there is no need to keep drawing power. So, the battery is disconnected to prolong its life.
+    // - When the battery has been charging for 5 minutes past 4.2V, or 25 minutes of 
+    //   battery-connected charging has occured, whichver comes first. In this case, the 
+    //   battery is disconnected to prolong its life by not overcharging. 
     //   The IS_CHARGING bit is set to false here, because no more charging takes place.
+    //   (This logic and relevant constants are defined in robot/syscon/src/analog.cpp)
     if (IsCharging()) {
       // DAS message for when battery is disconnected for cooldown
       DASMSG(battery_cooldown, "battery.cooldown", "Indicates that the battery was disconnected/reconnected in order to cool down the battery");
@@ -223,118 +209,37 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     }
   }
 
-  // Check if saturation charging
-  bool isSaturationCharging = _isCharging && !_battDisconnected && _batteryVoltsFilt > kSaturationChargingThresholdVolts;
+  // Check if charging has completed
   bool isFullyCharged = false;
-  bool saturationChargingStateChanged = false;
-  if (isSaturationCharging) {
-    if (_saturationChargingStartTime_sec <= 0.f) {
-      // Saturation charging has started
-      _saturationChargingStartTime_sec = now_sec;
-      saturationChargingStateChanged = true;
-
-      // The amount of time until fully charged is the (discounted) amount of time
-      // that has elapsed since the last time it was saturation charging
-      // plus the amount of saturation charge time that was left when it ended
-      // to a max time of kMaxSaturationTime_sec.
-      //
-      // kSaturationTimeReplenishmentSpeed represents a heuristic that very roughly
-      // approximates the amount of saturation charge time required to offset the
-      // amount of time spent since it was last saturation charging (which obviously
-      // depends on exactly what it was doing off charger).
-      //
-      // NOTE: This replenish rate of 60% seems to work fine based on a test
-      //       where the wheels were run full speed right after coming fully charged
-      //       off the charger and returning to charger after 7 minutes. This resulted in
-      //       just over 4 minutes of saturation charge time and seemed to yield as much
-      //       subsequent discharge time as a fully charged battery.
-      const float kSaturationTimeReplenishmentSpeed = 0.6f;  //  1: Replenish at real-time rate
-                                                             // >1: Replenish faster (i.e. Takes longer to reach full)
-                                                             // <1: Replenish slower (i.e. Faster to reach full)
-      float newPossibleSaturationChargeTimeRemaining_sec = _saturationChargeTimeRemaining_sec;
-
-      // Add extra time if charging had actually stopped since the last time we were saturation charging
-      if (_hasStoppedChargingSinceLastSaturationCharge) {
-        newPossibleSaturationChargeTimeRemaining_sec += (kSaturationTimeReplenishmentSpeed *
-                                                        (now_sec - _lastSaturationChargingEndTime_sec));
-      }
-
-      _saturationChargeTimeRemaining_sec = std::min(kMaxSaturationTime_sec, newPossibleSaturationChargeTimeRemaining_sec);
-    }
-    _lastSaturationChargingEndTime_sec = now_sec;
-
-    isFullyCharged = now_sec > _saturationChargingStartTime_sec + _saturationChargeTimeRemaining_sec;
-
-    // If transitioning to full, write DAS log
-    if (isFullyCharged && !IsBatteryFull()) {
-      DASMSG(battery_fully_charged_voltage, "battery.fully_charged_voltage", "Transitioning to Full battery after saturation charging");
-      DASMSG_SET(i1, GetBatteryVolts_mV(), "Current filtered battery voltage (mV)");
-      DASMSG_SEND();
-    }
-
-  } else if (_saturationChargingStartTime_sec > 0.f) {
-    // Saturation charging has stopped so update the amount of
-    // saturation charge time remaining by subtracting the amount of
-    // time that has elapsed since saturation charging started
-    const float newPossibleSaturationChargeTimeRemaining_sec = _saturationChargeTimeRemaining_sec -
-                                                               (now_sec - _saturationChargingStartTime_sec);
-    _saturationChargeTimeRemaining_sec = std::max(0.f, newPossibleSaturationChargeTimeRemaining_sec);
-    _saturationChargingStartTime_sec = 0.f;
-    saturationChargingStateChanged = true;
-
-    // If saturation charging stopped because the robot moved off the contacts
-    // We add more saturation time when we next saturation charge again.
-    // If saturation charging stopped because the battery was disconnected due
-    // to overheating, don't add any extra charging time.
-    _hasStoppedChargingSinceLastSaturationCharge = !IsCharging();
-  }
-
-  // Send a DAS message if the state of saturation charging has changed
-  if (saturationChargingStateChanged) {
-    const bool saturationChargingStarted = _saturationChargingStartTime_sec > 0.f;
-    DASMSG(battery_saturation_charging, "battery.saturation_charging", "Saturation charging has started/stopped");
-    DASMSG_SET(i1, saturationChargingStarted, "Whether we have started or stopped saturation charging (1 if we have started, 0 if we have stopped)");
-    DASMSG_SET(i2, _saturationChargeTimeRemaining_sec, "Saturation charging time remaining (sec)");
-    DASMSG_SET(i3, GetBatteryVolts_mV(), "Current filtered battery voltage (mV)");
-    DASMSG_SEND();
-  }
-
-  // Battery may sometimes disconnect to cool down an overheating
-  // battery while on charger. In this situation, the IS_CHARGING bit
-  // is still set. Otherwise, after 30 min of cumulative connected
-  // charging time, the battery will disconnect and IS_CHARGING will
-  // go low. By this time, the battery should always be full.
-  // If it isn't, we may need to adjust kSaturationChargingThresholdVolts
-  // or possibly the syscon cutoff time.
-  // Current battery voltage should also be non-zero, otherwise it means
-  // the engine started while the battery was already disconnected which
-  // does not warrant a warning.
   if (_battDisconnected && !IsCharging()) {
-    if (!wasDisconnected && !IsBatteryFull() && !NEAR_ZERO(_batteryVoltsFilt) ) {
-      PRINT_NAMED_WARNING("BatteryComponent.NotifyOfRobotState.FullBatteryExpected", "%f", _batteryVoltsFilt);
-    }
-
-    // Force full battery state when disconnected.
-    // It's not going to get anymore charged so might as well
-    // pretend we're full.
     isFullyCharged = true;
+  }
+
+  // Check if low battery
+  bool isLowBattery = IS_STATUS_FLAG_SET(IS_BATTERY_LOW);
+
+  // Fake low battery?
+  if (!IsOnChargerContacts()) {
+    if (kFakeLowBattery) {
+      isLowBattery = true;
+    } else if ((kFakeLowBatteryAfterOffChargerTimeout_sec != 0) &&
+               (now_sec > _fakeLowBatteryTime_sec)) {
+      isLowBattery = true;
+    }
+  } else if (kFakeLowBatteryAfterOffChargerTimeout_sec != 0) {
+    // Reset countdown-to-low battery timer when on charger
+    _fakeLowBatteryTime_sec = now_sec + kFakeLowBatteryAfterOffChargerTimeout_sec;
   }
 
   // Update battery charge level
   BatteryLevel level = BatteryLevel::Nominal;
-  auto lowBattThreshold = _isCharging ? kOnChargerLowBatteryThresholdVolts : kLowBatteryThresholdVolts;
-  // Add a small hysteresis band if we are currently low battery, so that we do not flicker between
-  // Low and Nominal if the voltage estimate is noisy
-  if (oldBatteryLevel == BatteryLevel::Low) {
-    lowBattThreshold += kLowBatteryHysteresisVolts;
-  }
   if (isFullyCharged) {
-    // NOTE: Given the dependence on isFullyCharged, this means BatteryLevel::Full is a state
-    //       that can only be achieved while on charger
+    // NOTE: Battery can only be full while on charger
     level = BatteryLevel::Full;
-  } else if (_batteryVoltsFilt < lowBattThreshold) {
+  } else if (isLowBattery) {
     level = BatteryLevel::Low;
   }
+  
 
   if (level != _batteryLevel) {
     LOG_INFO("BatteryComponent.BatteryLevelChanged",
@@ -346,6 +251,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     DASMSG(battery_level_changed, "battery.battery_level_changed", "The battery level has changed");
     DASMSG_SET(s1, BatteryLevelToString(level), "New battery level");
     DASMSG_SET(s2, BatteryLevelToString(_batteryLevel), "Previous battery level");
+    DASMSG_SET(s3, now_sec - _lastOnChargerContactsChange_sec, "Time since last on charger (sec)");
     DASMSG_SET(i1, IsCharging(), "Is the battery currently charging? 1 if charging, 0 if not");
     DASMSG_SET(i2, now_sec - _lastBatteryLevelChange_sec, "Time spent at previous battery level (sec)");
     DASMSG_SET(i3, GetBatteryVolts_mV(), "Current filtered battery voltage (mV)");
@@ -356,6 +262,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
     _prevBatteryLevel = _batteryLevel;
     _batteryLevel = level;
   }
+
 
   static RobotInterface::BatteryStatus prevStatus;
   RobotInterface::BatteryStatus curStatus;
@@ -379,7 +286,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   // Report encoder stats only while off charger
   // (Encoders should normally be off while on charger)
   if (!IsOnChargerContacts()) {
-    bool encodersDisabled = msg.status & (uint32_t)RobotStatusFlag::ENCODERS_DISABLED;
+    bool encodersDisabled = IS_STATUS_FLAG_SET(ENCODERS_DISABLED);
     _batteryStatsAccumulator->UpdateEncoderStats(encodersDisabled, currSysconCalmMode);
   }
 
@@ -425,21 +332,8 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
   // match the robot. If we don't have an instance, we can add an instance now
   if (onChargeContacts)
   {
-    const Pose3d& poseWrtRobot = Charger::GetDockPoseRelativeToRobot(*_robot);
-
-    // find instance in current origin
-    ObservableObject* chargerInstance = _robot->GetBlockWorld().FindLocatedMatchingObject(*_chargerFilter);
-    if (nullptr == chargerInstance)
-    {
-      // there's currently no located instance, we need to create one.
-      chargerInstance = new Charger();
-      chargerInstance->SetID();
-    }
-
-    // pretend the instance we created was an observation
-    chargerInstance->SetLastObservedTime((TimeStamp_t)_robot->GetLastMsgTimestamp());
-    _robot->GetObjectPoseConfirmer().AddRobotRelativeObservation(chargerInstance, poseWrtRobot, PoseState::Known);
-
+    _robot->GetBlockWorld().SetRobotOnChargerContacts();
+    
     // Update the last OnChargeContacts pitch angle
     if (!_robot->GetMoveComponent().IsMoving()) {
       _lastOnChargerContactsPitchAngle = _robot->GetPitchAngle();
@@ -458,16 +352,29 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
     _resetVoltageFilterWhenBatteryConnected = true;
 
     const float now_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+    // Report time since low battery started if battery was low
+    u32 timeSinceLowBattStarted_sec = IsBatteryLow() ? static_cast<u32>(now_sec - _lastBatteryLevelChange_sec) : 0;
+
     LOG_INFO(onChargeContacts ? "robot.on_charger" : "robot.off_charger", "");
     // Broadcast to game
     using namespace ExternalInterface;
     _robot->Broadcast(MessageEngineToGame(ChargerEvent(onChargeContacts)));
     // Broadcast to DAS
     DASMSG(battery_on_charger_changed, "battery.on_charger_changed", "The robot onChargerContacts state has changed");
-    DASMSG_SET(i1, onChargeContacts, "On or off charge contacts (1 if on contacts, 0 if not)");
-    DASMSG_SET(i2, now_sec - _lastOnChargerContactsChange_sec, "Time since previous change (sec)");
-    DASMSG_SET(i3, GetBatteryVolts_mV(), "Current filtered battery voltage (mV)");
-    DASMSG_SET(i4, _battDisconnected, "Battery is (1) disconnected or (0) connected");
+    DASMSG_SET(i1, onChargeContacts, 
+               "New on charger contacts state (1: on contacts, 0: off contacts)");
+    DASMSG_SET(i2, now_sec - _lastOnChargerContactsChange_sec, 
+               "Time since previous change (sec)");
+    DASMSG_SET(i3, onChargeContacts ? GetBatteryVolts_mV() : GetBatteryVoltsRaw_mV(), 
+               "If on charger, last filtered battery voltage. "
+               "If off charger, current raw battery voltage (mV)");
+    DASMSG_SET(i4, timeSinceLowBattStarted_sec, 
+               "Time since low battery (sec)");
+    DASMSG_SET(s1, (onChargeContacts ? _battDisconnected : _wasBattDisconnected) ? "disconnected" : "connected", 
+               "If on charger, current battery disconnected state. "
+               "If off charger, battery disconnected state when it was on charger.");
+    DASMSG_SET(s2, EnumToString(_batteryLevel), "Battery level just prior to on charger change");
     DASMSG_SEND();
     _lastOnChargerContactsChange_sec = now_sec;
   }

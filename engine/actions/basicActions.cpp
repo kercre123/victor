@@ -263,8 +263,10 @@ namespace Anki {
         _maxSpeed_radPerSec = std::copysign(_maxSpeed_radPerSec, _requestedAngle_rad);
       }
       
-      // Recalculate the timeout limit allowed for this turn, if progress-tracking is enabled
-      if (_shouldTimeoutOnProgressStall) {
+      // Recalculate the timeout limit allowed for this turn, if the robot is held on a palm
+      // since the treads tend to slip often, so we decrease the timeout according to the expected
+      // runtime of the action.
+      if ( GetRobot().GetMoveComponent().IsHeldInPalmModeEnabled() ) {
         _timeout_s = _kDefaultTimeoutFactor * RecalculateTimeout();
         LOG_DEBUG("TurnInPlaceAction.Init.RecalculatedTimeout",
                   "Action will timeout after %.1f s",
@@ -438,19 +440,31 @@ namespace Anki {
                                 _angleTolerance.getDegrees(),
                                 GetRobot().GetPoseFrameID());
         
-        if ( _turnStarted && !areWheelsMoving ) {
-          PRINT_NAMED_WARNING("TurnInPlaceAction.StoppedMakingProgress",
-                              "[%d] giving up since we stopped moving. currentAngle=%.1fdeg, target=%.1fdeg, angDistExp=%.1fdeg, angDistTrav=%.1fdeg (pfid: %d)",
-                              GetTag(),
-                              _currentAngle.getDegrees(),
-                              _currentTargetAngle.getDegrees(),
-                              RAD_TO_DEG(_angularDistExpected_rad),
-                              RAD_TO_DEG(_angularDistTraversed_rad),
-                              GetRobot().GetPoseFrameID());
-          result = ActionResult::MOTOR_STOPPED_MAKING_PROGRESS;
-        } else if (_turnStarted && _shouldTimeoutOnProgressStall && !IsActionMakingProgress()) {
-          result = ActionResult::TIMEOUT;
+        if ( _turnStarted ) {
+          if ( !areWheelsMoving ) {
+            PRINT_NAMED_WARNING("TurnInPlaceAction.CheckIfDone.WheelsStoppedMoving",
+                                "[%d] giving up since we stopped moving. currentAngle=%.1fdeg, target=%.1fdeg, angDistExp=%.1fdeg, angDistTrav=%.1fdeg (pfid: %d)",
+                                GetTag(),
+                                _currentAngle.getDegrees(),
+                                _currentTargetAngle.getDegrees(),
+                                RAD_TO_DEG(_angularDistExpected_rad),
+                                RAD_TO_DEG(_angularDistTraversed_rad),
+                                GetRobot().GetPoseFrameID());
+            result = ActionResult::MOTOR_STOPPED_MAKING_PROGRESS;
+          } else if ( GetRobot().GetMoveComponent().IsHeldInPalmModeEnabled() && !IsActionMakingProgress()) {
+            LOG_INFO("TurnInPlaceAction.CheckIfDone.StoppedMakingProgress",
+                     "[%d] giving up, robot not turning at expected speed, "
+                     "currentAngle=%.1f [deg], target=%.1f [deg], angDistExp=%.1f [deg], angDistTrav=%.1f [deg] (pfid: %d)",
+                     GetTag(),
+                     _currentAngle.getDegrees(),
+                     _currentTargetAngle.getDegrees(),
+                     RAD_TO_DEG(_angularDistExpected_rad),
+                     RAD_TO_DEG(_angularDistTraversed_rad),
+                     GetRobot().GetPoseFrameID());
+            result = ActionResult::TIMEOUT;
+          }
         }
+        
       }
       
       // Ensure that the OffTreadsState is valid
@@ -496,24 +510,14 @@ namespace Anki {
         }
       }
       
-      
       // If it's taken much longer than expected to reach the current orientation (scaled by the same timeout factor),
       // this will trigger and warn the caller that the action might be stalled.
       const bool isActionMakingProgress = expectedTraversalTime_sec > 0.2f ?
           (currRunTime_sec < (_kDefaultProgressTimeoutFactor * expectedTraversalTime_sec)) : (currRunTime_sec < 0.5f);
       if(!isActionMakingProgress) {
-        LOG_INFO("TurnInPlaceAction.StoppedMakingProgress",
-                 "[%d] is not causing robot to rotate fast enough.", GetTag());
-        LOG_INFO("TurnInPlaceAction.StoppedMakingProgress",
-                 "currentAngle=%.1fdeg, target=%.1fdeg, angDistExp=%.1fdeg, angDistTrav=%.1fdeg (pfid: %d)",
-                 _currentAngle.getDegrees(),
-                 _currentTargetAngle.getDegrees(),
-                 RAD_TO_DEG(_angularDistExpected_rad),
-                 RAD_TO_DEG(_angularDistTraversed_rad),
-                 GetRobot().GetPoseFrameID());
-        LOG_INFO("TurnInPlaceAction.StoppedMakingProgress",
-                 "Completed %.1f of turn, expectedTraversalTime=%.1fsec, currRunTime=%.1fsec",
-                 _angularDistTraversed_rad/_angularDistExpected_rad,
+        LOG_INFO("TurnInPlaceAction.IsActionMakingProgress.CurrentProgress",
+                 "Completed %.1f%% of turn, expectedTraversalTime=%.1fsec, currRunTime=%.1fsec",
+                 (_angularDistTraversed_rad/_angularDistExpected_rad) * 100.0f,
                  expectedTraversalTime_sec,
                  currRunTime_sec);
       }
@@ -586,7 +590,7 @@ namespace Anki {
 
     void SearchForNearbyObjectAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
-      requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+      requests.insert({ VisionMode::Markers, EVisionUpdateFrequency::High });
     }
 
     ActionResult SearchForNearbyObjectAction::Init()
@@ -761,7 +765,7 @@ namespace Anki {
 
     void DriveStraightAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
-      requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
+      requests.insert({ VisionMode::Markers, EVisionUpdateFrequency::Low });
     }
 
     void DriveStraightAction::SetAccel(f32 accel_mmps2)
@@ -1619,7 +1623,6 @@ namespace Anki {
       TurnInPlaceAction* action = new TurnInPlaceAction(_bodyPanAngle.ToFloat(), _isPanAbsolute);      
       action->SetTolerance(_panAngleTol);
       action->SetMoveEyes(_moveEyes);
-      action->EnableProgressTrackingTimeout(_shouldTimeoutPanOnProgressStall);
       if( _panSpeedsManuallySet ) {
         action->SetMaxSpeed(_maxPanSpeed_radPerSec);
         action->SetAccel(_panAccel_radPerSec2);
@@ -1702,7 +1705,7 @@ namespace Anki {
 
     void TurnTowardsObjectAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
-      requests.insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
+      requests.insert({ VisionMode::Markers, EVisionUpdateFrequency::Low });
     }
 
     void TurnTowardsObjectAction::UseCustomObject(ObservableObject* objectPtr)
@@ -2239,7 +2242,7 @@ namespace Anki {
 
     void TurnTowardsFaceAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
-      requests.insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
+      requests.insert({ VisionMode::Faces, EVisionUpdateFrequency::High });
     }
 
     ActionResult TurnTowardsFaceAction::Init()
@@ -2474,7 +2477,7 @@ namespace Anki {
                         "Will wait no more than %d frames",
                         _maxFramesToWait);
               DEV_ASSERT(nullptr == _action, "TurnTowardsFaceAction.CheckIfDone.ActionPointerShouldStillBeNull");
-              SetAction(new WaitForImagesAction(_maxFramesToWait, VisionMode::DetectingFaces));
+              SetAction(new WaitForImagesAction(_maxFramesToWait, VisionMode::Faces));
               // TODO:(bn) parallel action with an animation here? This will let us span the gap a bit better
               // and buy us more time. Skipping for now
               _state = State::WaitingForFace;
@@ -2668,9 +2671,20 @@ namespace Anki {
     , _numFramesToWaitFor(numFrames)
     , _afterTimeStamp(afterTimeStamp)
     , _visionMode(visionMode)
-    , _updateFrequency(_numFramesToWaitFor==1 ? EVisionUpdateFrequency::SingleShot : EVisionUpdateFrequency::High)
     {
-    
+      // If the caller requested to wait one frame and the specified VisionMode also completes 
+      //  in a single frame, then we can use the special SingleShot update frequency. This forcibly
+      //  disables the mode after a single camera frame. 
+      // If the VisionMode needs multiple frames to complete a "cycle" (as is the case for 
+      //  Markers_Composite or AutoExp_Cycling), or multiple frames are requested, then we simply 
+      //  use High frequency. In this case, there may be one extra frame actually processed with the 
+      //  specified mode, because the VisionSystem runs asynchronously and may have already 
+      //  started on the next frame before this action unsubscribes from the mode.
+      if(_numFramesToWaitFor==1 && CycleCompletesInOneFrame(visionMode, true)) {
+        _updateFrequency = EVisionUpdateFrequency::SingleShot;
+      } else {
+        _updateFrequency = EVisionUpdateFrequency::High;
+      }
     }
 
     WaitForImagesAction::WaitForImagesAction(WaitForImagesAction::UseDefaultNumImages_t, VisionMode visionMode)

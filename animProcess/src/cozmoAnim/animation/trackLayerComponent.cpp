@@ -99,9 +99,9 @@ void TrackLayerComponent::ApplyLayersToAnim(Animation* anim,
                                             bool storeFace) const
 {
   // Apply layers of individual tracks to anim
-  ApplyAudioLayersToAnim(anim, timeSinceAnimStart_ms, layeredKeyframes);
+  ApplyAudioLayersToAnim   (anim, timeSinceAnimStart_ms, layeredKeyframes);
   ApplyBackpackLayersToAnim(anim, timeSinceAnimStart_ms, layeredKeyframes);
-  ApplyFaceLayersToAnim(anim, timeSinceAnimStart_ms, layeredKeyframes, storeFace);
+  ApplyFaceLayersToAnim    (anim, timeSinceAnimStart_ms, layeredKeyframes, storeFace);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -330,7 +330,7 @@ void TrackLayerComponent::ApplyAudioLayersToAnim(Animation* anim,
     }
 
     if ((_audioKeyframeIt != frameList.end()) &&
-        _audioKeyframeIt->IsTimeToPlay(audioOffsetTime_ms)) {
+         _audioKeyframeIt->IsTimeToPlay(audioOffsetTime_ms)) {
       layeredKeyFrames.audioKeyFrame = *_audioKeyframeIt;
       layeredKeyFrames.haveAudioKeyFrame = true;
       ++_audioKeyframeIt;
