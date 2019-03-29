@@ -205,6 +205,9 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
       LOG_INFO("MicDataProcessor.TWCallback", "Timestamp %d", (TimeStamp_t)mostRecentTimestamp);
     }
     else {
+      // since we're not opening up a stream, we need to reset the streaming light since it get's turned on
+      // when we hear the trigger word
+      _micDataSystem->SetWillStream(false);
       LOG_WARNING("MicDataProcessor.TWCallback", "Don't have a wake word response setup");
     }
   };
