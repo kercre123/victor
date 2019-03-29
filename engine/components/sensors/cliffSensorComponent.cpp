@@ -267,9 +267,11 @@ void CliffSensorComponent::UpdateLatestCliffDetectionDuration()
 
   // Count the number of flags/bits set
   _latestNumCliffsDetected = __builtin_popcount(_cliffDetectedFlags.GetFlags());
+
+  const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  _cliffLastDetectedTimes_ms[_latestNumCliffsDetected] = currTime;
   
-  if ( _latestNumCliffsDetected != prevNumCliffsDetected ) {
-    const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  if ( _latestNumCliffsDetected != prevNumCliffsDetected ) {  
     
     // When the number of cliffs detected increases, update all start times for entries
     // for cliff detections greater than the previous number seen, up to the current level.
@@ -306,6 +308,15 @@ u32 CliffSensorComponent::GetDurationForNCliffDetections_ms(const int minNumClif
   const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
   return (cliffDetectionStartTime > 0) && (cliffDetectionStartTime < currTime) ?
          (currTime - cliffDetectionStartTime) : 0u;
+}
+
+u32 CliffSensorComponent::GetTimeSinceNCliffsLastDetected_ms(const int numCliffs) const
+{
+  DEV_ASSERT(numCliffs >= 0 && numCliffs <= kNumCliffSensors,
+             "CliffSensorComponent.GetDurationForAtLeastNCliffDetections.InvalidNumCliffs");
+  
+  const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  return currTime - _cliffLastDetectedTimes_ms[numCliffs];
 }
 
 bool CliffSensorComponent::GetCliffPoseRelativeToRobot(const uint8_t cliffDetectedFlags, Pose3d& relativePose) const

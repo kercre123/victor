@@ -51,8 +51,6 @@ namespace {
   // "cliff" caused by the gaps between the user's fingers when holding the robot.
   static const int kMaxCliffsAllowedWhileHeldInPalm = 1;
   
-  static const int kMaxCliffsToConfirmRobotPlacedInPalm = 0;
-  
   // To prevent false-positive detections of the robot being held in a palm, we enforce that
   // the robot must observe at least this many cliffs after being picked up to try to capture
   // the fact that when a robot is being held by the user and put in their palm, they usually
@@ -339,29 +337,38 @@ bool HeldInPalmTracker::WasRobotPlacedInPalmWhileHeld(const BEIRobotInfo& robotI
     const auto& cliffDataFilt = cliffComp.GetCliffDataFiltered();
     const float maxCliffSensorVal = *std::max_element(std::begin(cliffDataFilt),
                                                       std::end(cliffDataFilt));
-    const u32 durationOfNoCliffDetections_ms =
-      cliffComp.GetDurationForNCliffDetections_ms(kMaxCliffsToConfirmRobotPlacedInPalm);
+
+    // How long have kMaxCliffsAllowedWhileHeldInPalm or fewer cliffs have been detected for?
+    // To find out, take the min of times since more than kMaxCliffsAllowedWhileHeldInPalm cliffs have been observed.
+    u32 durationOfInPalmAllowableCliffsDetected_ms = std::numeric_limits<u32>::max();
+    for (int i=kMaxCliffsAllowedWhileHeldInPalm+1; i<=CliffSensorComponent::kNumCliffSensors; ++i) {
+      u32 duration_ms = cliffComp.GetTimeSinceNCliffsLastDetected_ms(i);
+      if (durationOfInPalmAllowableCliffsDetected_ms > duration_ms) {
+        durationOfInPalmAllowableCliffsDetected_ms = duration_ms;
+      }
+    }
+
 #if REMOTE_CONSOLE_ENABLED
     if (kEnableDebugTransitionPrintouts) {
       if (cliffComp.GetNumCliffsDetected() <= kMaxCliffsAllowedWhileHeldInPalm &&
-          durationOfNoCliffDetections_ms < timeToConfirmHeldInPalm_ms &&
+          durationOfInPalmAllowableCliffsDetected_ms < timeToConfirmHeldInPalm_ms &&
           maxCliffSensorVal < kCliffValHeldInPalmSurface) {
         LOG_PERIODIC_INFO(5, "HIPTracker.WasRobotPlacedInPalmWhileHeld.InsufficientCliffDetectionDuration",
                           "Robot detecting a valid palm surface with max reported cliff sensor value of %.1f,"
                           "but %d cliffs (or less) have only been detected for %d [ms]", maxCliffSensorVal,
-                          kMaxCliffsAllowedWhileHeldInPalm, durationOfNoCliffDetections_ms);
-      } else if (durationOfNoCliffDetections_ms >= timeToConfirmHeldInPalm_ms &&
+                          kMaxCliffsAllowedWhileHeldInPalm, durationOfInPalmAllowableCliffsDetected_ms);
+      } else if (durationOfInPalmAllowableCliffsDetected_ms >= timeToConfirmHeldInPalm_ms &&
                  maxCliffSensorVal >= kCliffValHeldInPalmSurface) {
         LOG_PERIODIC_INFO(5, "HIPTracker.WasRobotPlacedInPalmWhileHeld.InvalidPalmSurface",
                           "Robot has detected %d cliffs for %d [ms], but invalid palm surface currently"
                           "detected with max reported cliff sensor value of %.1f" ,
-                          kMaxCliffsAllowedWhileHeldInPalm, durationOfNoCliffDetections_ms,
+                          kMaxCliffsAllowedWhileHeldInPalm, durationOfInPalmAllowableCliffsDetected_ms,
                           maxCliffSensorVal);
       }
     }
 #endif
     
-    return durationOfNoCliffDetections_ms >= timeToConfirmHeldInPalm_ms &&
+    return durationOfInPalmAllowableCliffsDetected_ms >= timeToConfirmHeldInPalm_ms &&
        // A cliff sensor reading higher than kCliffValHeldInPalmSurface is likely due to the robot
        // being put down on the ground, or on an object that is not a user's palm.
        maxCliffSensorVal < kCliffValHeldInPalmSurface;
