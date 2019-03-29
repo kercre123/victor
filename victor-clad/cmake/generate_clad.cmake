@@ -96,6 +96,7 @@ function(generate_clad_cpplite)
     set(multiValueArgs SRCS INCLUDES FLAGS OUTPUT_SRCS)
     cmake_parse_arguments(genclad "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+    set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/victor-clad/tools/message-buffers")
     set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
 
     set(CLAD_CPP "${CLAD_EMITTER_DIR}/CPPLite_emitter.py")
@@ -162,6 +163,7 @@ function(generate_clad_c)
     set(multiValueArgs SRCS INCLUDES FLAGS OUTPUT_SRCS)
     cmake_parse_arguments(genclad "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+    set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/victor-clad/tools/message-buffers")
     set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
 
     set(CLAD_C "${CLAD_EMITTER_DIR}/C_emitter.py")
@@ -227,6 +229,7 @@ function(generate_clad_cpp)
     set(multiValueArgs SRCS INCLUDES FLAGS OUTPUT_SRCS)
     cmake_parse_arguments(genclad "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+    set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/victor-clad/tools/message-buffers")
     set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
 
     set(CLAD_CPP "${CLAD_EMITTER_DIR}/CPP_emitter.py")
@@ -242,6 +245,7 @@ function(generate_clad_cpp)
         "${OUTPUT_JSON}"
         "${genclad_FLAGS}")
 
+    set(CLAD_VICTOR_EMITTER_DIR ${CMAKE_SOURCE_DIR}/victor-clad/victorEmitters)
     set(CLAD_CPP_DECL "${CLAD_VICTOR_EMITTER_DIR}/cozmo_CPP_declarations_emitter.py")
     set(CLAD_CPP_DECL_EXTS "_declarations.def")
     set(CLAD_CPP_DECL_FLAGS "")
@@ -314,12 +318,14 @@ function(generate_clad_py)
     set(multiValueArgs SRCS INCLUDES FLAGS OUTPUT_SRCS)
     cmake_parse_arguments(genclad "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+    set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/victor-clad/tools/message-buffers")
     set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
 
     set(CLAD_PY "${CLAD_EMITTER_DIR}/Python_emitter.py")
     set(CLAD_PY_EXTS ".py")
     set(CLAD_PY_FLAGS "${genclad_FLAGS}")
 
+    set(CLAD_VICTOR_EMITTER_DIR ${CMAKE_SOURCE_DIR}/victor-clad/victorEmitters)
     set(CLAD_PY_DECL "${CLAD_VICTOR_EMITTER_DIR}/cozmo_Python_declarations_emitter.py")
     set(CLAD_PY_DECL_EXTS "_declarations.def")
     set(CLAD_PY_DECL_FLAGS "")
@@ -379,12 +385,14 @@ function(generate_clad_cs)
     set(multiValueArgs SRCS INCLUDES FLAGS OUTPUT_SRCS)
     cmake_parse_arguments(genclad "${options}" "${oneValueArgs}" "${multiValueArgs}" ${ARGN})
 
+    set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/victor-clad/tools/message-buffers")
     set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
 
     set(CLAD_CS "${CLAD_EMITTER_DIR}/CSharp_emitter.py")
     set(CLAD_CS_EXTS ".cs")
     set(CLAD_CS_FLAGS "${genclad_FLAGS}")
 
+    set(CLAD_VICTOR_EMITTER_DIR ${CMAKE_SOURCE_DIR}/victor-clad/victorEmitters)
     set(CLAD_CS_DECL "${CLAD_VICTOR_EMITTER_DIR}/cozmo_CSharp_declarations_emitter.py")
     set(CLAD_CS_DECL_EXTS "_declarations.def")
     set(CLAD_CS_DECL_FLAGS "")
