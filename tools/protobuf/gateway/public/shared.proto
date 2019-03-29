@@ -287,9 +287,11 @@ message GatewayWrapper {
     AlexaOptInRequest             alexa_opt_in_request               = 1602;
     AlexaOptInResponse            alexa_opt_in_response              = 1603;
 
-    // ------------ Eye color (SDK only) ------------
+    // ------------ Individual Robot Settings (SDK only) ------------
     SetEyeColorRequest            set_eye_color_request              = 1700;
     SetEyeColorResponse           set_eye_color_response             = 1701;
+    MasterVolumeRequest           master_volume_request              = 1702;
+    MasterVolumeResponse          master_volume_response             = 1703;
 
     // ------------ Streaming audio playback (SDK only) ------------
     ExternalAudioStreamPrepare    external_audio_stream_prepare      = 1800;

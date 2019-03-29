@@ -1225,7 +1225,7 @@ func (service *rpcService) BehaviorControl(bidirectionalStream extint.ExternalIn
 	defer func() {
 		sdkElapsedSeconds := time.Since(sdkStartTime)
 		log.Das("sdk.connection_ended", (&log.DasFields{}).SetStrings(sdkElapsedSeconds.String(), fmt.Sprint(numCommandsSentFromSDK)))
-		numCommandsSentFromSDK = 0		
+		numCommandsSentFromSDK = 0
 	}()
 
 	done := make(chan struct{})
@@ -2249,6 +2249,30 @@ func (service *rpcService) PlaceObjectOnGroundHere(ctx context.Context, in *exti
 		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
 	}
 	response := placeObjectOnGroundResponse.GetPlaceObjectOnGroundHereResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+func (service *rpcService) SetMasterVolume(ctx context.Context, in *extint.MasterVolumeRequest) (*extint.MasterVolumeResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_MasterVolumeResponse{}, 1)
+	defer f()
+
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_MasterVolumeRequest{
+			MasterVolumeRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	masterVolumeResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := masterVolumeResponse.GetMasterVolumeResponse()
 	response.Status = &extint.ResponseStatus{
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}

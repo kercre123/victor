@@ -341,6 +341,9 @@ service ExternalInterface {
   // Ask Vector to place the object he is carrying on the ground at the current location.
   rpc PlaceObjectOnGroundHere(PlaceObjectOnGroundHereRequest) returns (PlaceObjectOnGroundHereResponse) {}
 
+  // Set the Robot's master volume
+  rpc SetMasterVolume(MasterVolumeRequest) returns (MasterVolumeResponse) {}
+
   rpc UserAuthentication(UserAuthenticationRequest) returns (UserAuthenticationResponse) {
     option (google.api.http) = {
       post: "/v1/user_authentication",

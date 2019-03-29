@@ -1009,6 +1009,25 @@ message ExternalAudioStreamResponse {
   }
 }
 
+enum MasterVolumeLevel
+{
+  VOLUME_LOW         = 0;
+  VOLUME_MEDIUM_LOW  = 1;
+  VOLUME_MEDIUM      = 2;
+  VOLUME_MEDIUM_HIGH = 3;
+  VOLUME_HIGH        = 4;
+}
+
+message MasterVolumeRequest 
+{
+  MasterVolumeLevel volume_level = 1;
+}
+
+message MasterVolumeResponse
+{
+  ResponseStatus status = 1;
+}
+
 // When enabled, RobotObservedObject messages will be produced
 message EnableMarkerDetectionRequest
 {
