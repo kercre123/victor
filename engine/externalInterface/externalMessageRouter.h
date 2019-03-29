@@ -112,7 +112,7 @@ public:
   // in case this is used with a MessageEngineToGame
   inline static MessageEngineToGame Wrap(MessageEngineToGame&& message)
   {
-    return message;
+    return std::move(message);
   }
 
   template <typename T>
