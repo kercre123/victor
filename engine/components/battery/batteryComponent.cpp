@@ -374,6 +374,7 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
     DASMSG_SET(s1, (onChargeContacts ? _battDisconnected : _wasBattDisconnected) ? "disconnected" : "connected", 
                "If on charger, current battery disconnected state. "
                "If off charger, battery disconnected state when it was on charger.");
+    DASMSG_SET(s2, EnumToString(_batteryLevel), "Battery level just prior to on charger change");
     DASMSG_SEND();
     _lastOnChargerContactsChange_sec = now_sec;
   }

@@ -349,7 +349,9 @@ static void handleLowBattery() {
       power_low = false;
     }
   }
-  // On boot, if voltage is low immediately off charger, warn and shut down fast
+  // On boot, if voltage is low immediately off charger, warn and shut down fast.
+  // Relying on rampost to show low battery icon and 
+  // relying on vic-robot to detect and shutdown right away.
   else if (low_power_count_up < EARLY_POWER_COUNT_TIME) {
     if (vmain < LOW_VOLTAGE_POWER_DOWN_POINT) {
       power_low = true;
