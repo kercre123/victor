@@ -41,8 +41,7 @@ static const int kNumLinesInSummary = 4;
 static int PerfMetricWebServerImpl(WebService::WebService::Request* request)
 {
   auto* perfMetric = static_cast<PerfMetric*>(request->_cbdata);
-  //LOG_INFO("PerfMetric.PerfMetricWebServerImpl", "Query string: %s", request->_param1.c_str());
-  
+
   int returnCode = perfMetric->ParseCommands(request->_param1);
   if (returnCode != 0)
   {
@@ -51,7 +50,7 @@ static int PerfMetricWebServerImpl(WebService::WebService::Request* request)
     // so that they can be returned in the web request
     perfMetric->ExecuteQueuedCommands(&request->_result);
   }
-  
+
   return returnCode;
 }
 
@@ -60,7 +59,7 @@ static int PerfMetricWebServerHandler(struct mg_connection *conn, void *cbdata)
 {
   const mg_request_info* info = mg_get_request_info(conn);
   auto* perfMetric = static_cast<PerfMetric*>(cbdata);
-  
+
   std::string commands;
   if (info->content_length > 0)
   {
@@ -73,10 +72,10 @@ static int PerfMetricWebServerHandler(struct mg_connection *conn, void *cbdata)
   {
     commands = info->query_string;
   }
-  
+
   auto ws = perfMetric->GetWebService();
   const int returnCode = ws->ProcessRequestExternal(conn, cbdata, PerfMetricWebServerImpl, commands);
-  
+
   return returnCode;
 }
 
@@ -160,9 +159,7 @@ void PerfMetric::Status(std::string* resultStr) const
 {
   *resultStr += _isRecording ? "Recording" : "Stopped";
   const int numFrames = _bufferFilled ? kNumFramesInBuffer : _nextFrameIndex;
-  *resultStr += ",";
-  *resultStr += std::to_string(numFrames);
-  *resultStr += "\n";
+  *resultStr += ("," + std::to_string(numFrames) + "," + std::to_string(kNumFramesInBuffer) + "\n");
 }
 
 void PerfMetric::Start()
@@ -229,6 +226,13 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
 
   if (dumpAll)
   {
+    if (dumpType == DT_RESPONSE_STRING)
+    {
+      // When dumping all to HTTP response string, also send back the current frame buffer index:
+      // First, return the new frame buffer index (what we are catching up to)
+      *resultStr += ("Next frame buffer index:" + std::to_string(_nextFrameIndex) + "\n");
+    }
+
     static const bool kDumpLine2Extra = true;
     DumpHeading(dumpType, kDumpLine2Extra, fd, resultStr);
   }
@@ -279,14 +283,15 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
       frame._tickSleepIntended_ms, frame._tickSleepActual_ms, tickSleepOver_ms
 
       static const char* kFormatLine = "%s %5i %8.3f %8.3f %8.3f %8.3f %8.3f";
-      static const char* kFormatLineCSV = "%s,%5i,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f";
+      static const char* kFormatLineCSV = "%s,%i,%.3f,%.3f,%.3f,%.3f,%.3f";
 
       int strSize = snprintf(_dumpBuffer, kSizeDumpBuffer,
                              dumpType == DT_FILE_CSV ? kFormatLineCSV : kFormatLine,
                              LINE_DATA_VARS);
 
       // Append additional data from derived class
-      strSize += AppendFrameData(dumpType, frameBufferIndex, strSize);
+      static const bool kGraphableDataOnly = false;
+      strSize += AppendFrameData(dumpType, frameBufferIndex, strSize, kGraphableDataOnly);
 
       DumpLine(dumpType, strSize, fd, resultStr);
     }
@@ -324,7 +329,7 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
   for (int lineIndex = 0; lineIndex < kNumLinesInSummary; lineIndex++)
   {
     static const char* kSummaryLineFormat = "%18s %8.3f %8.3f %8.3f %8.3f %8.3f";
-    static const char* kSummaryLineCSVFormat = "%s,,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f";
+    static const char* kSummaryLineCSVFormat = ",%s,%8.3f,%8.3f,%8.3f,%8.3f,%8.3f";
 
 #define SUMMARY_LINE_VARS(StatCall)\
     accTickDuration.StatCall(), accTickTotal.StatCall(),\
@@ -351,6 +356,63 @@ void PerfMetric::Dump(const DumpType dumpType, const bool dumpAll,
   if (dumpType == DT_FILE_TEXT || dumpType == DT_FILE_CSV)
   {
     fclose(fd);
+  }
+}
+
+
+void PerfMetric::DumpFramesSince(const int firstFrameBufferIndex, std::string* resultStr)
+{
+  ANKI_CPU_PROFILE("PerfMetric::DumpFramesSince");
+
+  int frameBufferIndex = firstFrameBufferIndex;
+  int numFrames = 0;
+  if (firstFrameBufferIndex < 0)
+  {
+    frameBufferIndex = _bufferFilled ? _nextFrameIndex : 0;
+    numFrames = _bufferFilled ? kNumFramesInBuffer : _nextFrameIndex;
+  }
+  else
+  {
+    if (firstFrameBufferIndex < _nextFrameIndex)
+    {
+      numFrames = _nextFrameIndex - firstFrameBufferIndex;
+    }
+    else if (firstFrameBufferIndex > _nextFrameIndex)
+    {
+      DEV_ASSERT(_bufferFilled, "first frame requested is beyond buffer that's been recorded");
+      numFrames = kNumFramesInBuffer - (firstFrameBufferIndex - _nextFrameIndex);
+    }
+  }
+
+  // First, return the new frame buffer index (what we are catching up to), and the number of frames to follow
+  *resultStr += (std::to_string(_nextFrameIndex) + "," + std::to_string(numFrames) + "\n");
+  
+  // Now return data for each frame
+  for ( ; numFrames > 0; numFrames--)
+  {
+    const FrameMetric& frame = GetBaseFrame(frameBufferIndex);
+    // This stat is calculated rather than stored
+    const float tickSleepOver_ms = frame._tickSleepActual_ms - frame._tickSleepIntended_ms;
+
+#define SINCE_LINE_DATA_VARS \
+    frame._tickExecution_ms, frame._tickTotal_ms,\
+    frame._tickSleepIntended_ms, frame._tickSleepActual_ms, tickSleepOver_ms
+
+    // Note that we omit the first two fields normally sent (log time and frame buffer index)
+    static const char* kFormatLineCSV = ",,%.3f,%.3f,%.3f,%.3f,%.3f";
+
+    int strSize = snprintf(_dumpBuffer, kSizeDumpBuffer, kFormatLineCSV, SINCE_LINE_DATA_VARS);
+
+    // Append additional data from derived class
+    static const bool kGraphableDataOnly = true;  // To exclude behavior strings in engine, e.g.
+    strSize += AppendFrameData(DT_FILE_CSV, frameBufferIndex, strSize, kGraphableDataOnly);
+
+    *resultStr += _dumpBuffer;
+
+    if (++frameBufferIndex >= kNumFramesInBuffer)
+    {
+      frameBufferIndex = 0;
+    }
   }
 }
 
@@ -557,12 +619,12 @@ int PerfMetric::ParseCommands(std::string& queryString)
     }
     else if (current == "dumpresponse")
     {
-      PerfMetricCommand cmd(DUMP_RESPONSE_STRING, DT_LOG, false);
+      PerfMetricCommand cmd(DUMP_RESPONSE_STRING, DT_RESPONSE_STRING, false);
       cmds.push_back(cmd);
     }
     else if (current == "dumpresponseall")
     {
-      PerfMetricCommand cmd(DUMP_RESPONSE_STRING, DT_LOG, true);
+      PerfMetricCommand cmd(DUMP_RESPONSE_STRING, DT_RESPONSE_STRING, true);
       cmds.push_back(cmd);
     }
     else if (current == "dumpfiles")
@@ -575,7 +637,8 @@ int PerfMetric::ParseCommands(std::string& queryString)
       // Commands that have arguments:
       static const std::string cmdKeywordWaitSeconds("waitseconds");
       static const std::string cmdKeywordWaitTicks("waitticks");
-      
+      static const std::string cmdKeywordDumpResponseSince("dumpresponsesince");
+
       if (current.substr(0, cmdKeywordWaitSeconds.size()) == cmdKeywordWaitSeconds)
       {
         std::string argumentValue = current.substr(cmdKeywordWaitSeconds.size());
@@ -604,6 +667,20 @@ int PerfMetric::ParseCommands(std::string& queryString)
         }
         cmds.push_back(cmd);
       }
+      else if (current.substr(0, cmdKeywordDumpResponseSince.size()) == cmdKeywordDumpResponseSince)
+      {
+        std::string argumentValue = current.substr(cmdKeywordDumpResponseSince.size());
+        PerfMetricCommand cmd(DUMP_RESPONSE_CSV_SINCE);
+        try
+        {
+          cmd._frameIndex = std::stoi(argumentValue);
+        } catch (std::exception)
+        {
+          LOG_INFO("PerfMetric.ParseCommands", "Error parsing int argument in perfmetric command: %s", current.c_str());
+          return 0;
+        }
+        cmds.push_back(cmd);
+      }
       else
       {
         LOG_INFO("PerfMetric.ParseCommands", "Error parsing perfmetric command: %s", current.c_str());
@@ -611,7 +688,7 @@ int PerfMetric::ParseCommands(std::string& queryString)
       }
     }
   }
-  
+
   // Now that there are no errors, add all parse commands to queue
   for (auto& cmd : cmds)
   {
@@ -644,6 +721,9 @@ void PerfMetric::ExecuteQueuedCommands(std::string* resultStr)
         break;
       case DUMP_RESPONSE_STRING:
         Dump(DT_RESPONSE_STRING, cmd._dumpAll, nullptr, resultStr);
+        break;
+      case DUMP_RESPONSE_CSV_SINCE:
+        DumpFramesSince(cmd._frameIndex, resultStr);
         break;
       case DUMP_FILES:
         DumpFiles();

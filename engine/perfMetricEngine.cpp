@@ -46,7 +46,7 @@ PerfMetricEngine::PerfMetricEngine(const CozmoContext* context)
   _headingLine2Extra = "  Active Feature/Behavior";
   _headingLine1CSV = ",,Engine,Engine,Sleep,Sleep,Over,RtE,EtR,GtE,EtG,GWtE,EtGW,Viz,Battery,CPU";
   _headingLine2CSV = ",,Duration,Freq,Intended,Actual,Sleep,Count,Count,Count,Count,Count,Count,Count,Voltage,Freq";
-  _headingLine2ExtraCSV = ",,Active Feature,Behavior";
+  _headingLine2ExtraCSV = ",Active Feature,Behavior";
 }
 
 PerfMetricEngine::~PerfMetricEngine()
@@ -178,24 +178,45 @@ const PerfMetric::FrameMetric& PerfMetricEngine::UpdateDumpAccumulators(const in
 
 int PerfMetricEngine::AppendFrameData(const DumpType dumpType,
                                       const int frameBufferIndex,
-                                      const int dumpBufferOffset)
+                                      const int dumpBufferOffset,
+                                      const bool graphableDataOnly)
 {
   const FrameMetricEngine& frame = _frameBuffer[frameBufferIndex];
+
+  if (graphableDataOnly)
+  {
+    // For the auto-update graph, we omit activity and behavior strings
+#define ENGINE_LINE_DATA_VARS_GRAPHABLE_ONLY \
+    frame._messageCountRobotToEngine, frame._messageCountEngineToRobot,\
+    frame._messageCountGameToEngine, frame._messageCountEngineToGame,\
+    frame._messageCountGatewayToEngine, frame._messageCountEngineToGateway,\
+    frame._messageCountViz,\
+    frame._batteryVoltage, frame._cpuFreq_kHz
+
+    static const char* kFormatLine = "    %5i %5i %5i %5i %5i %5i %5i %8.3f %6i\n";
+    static const char* kFormatLineCSV = ",%i,%i,%i,%i,%i,%i,%i,%.3f,%i\n";
+
+    return snprintf(&_dumpBuffer[dumpBufferOffset], kSizeDumpBuffer - dumpBufferOffset,
+                    dumpType == DT_FILE_CSV ? kFormatLineCSV : kFormatLine,
+                    ENGINE_LINE_DATA_VARS_GRAPHABLE_ONLY);
+  }
+  else
+  {
 #define ENGINE_LINE_DATA_VARS \
-  frame._messageCountRobotToEngine, frame._messageCountEngineToRobot,\
-  frame._messageCountGameToEngine, frame._messageCountEngineToGame,\
-  frame._messageCountGatewayToEngine, frame._messageCountEngineToGateway,\
-  frame._messageCountViz,\
-  frame._batteryVoltage, frame._cpuFreq_kHz, EnumToString(frame._activeFeature),\
-  frame._behavior
+    frame._messageCountRobotToEngine, frame._messageCountEngineToRobot,\
+    frame._messageCountGameToEngine, frame._messageCountEngineToGame,\
+    frame._messageCountGatewayToEngine, frame._messageCountEngineToGateway,\
+    frame._messageCountViz,\
+    frame._batteryVoltage, frame._cpuFreq_kHz, EnumToString(frame._activeFeature),\
+    frame._behavior
 
-  static const char* kFormatLine = "    %5i %5i %5i %5i %5i %5i %5i %8.3f %6i  %s  %s\n";
-  static const char* kFormatLineCSV = ",%5i,%5i,%5i,%5i,%5i,%5i,%5i,%8.3f,%6i,%s,%s\n";
-
-  const int lenOut = snprintf(&_dumpBuffer[dumpBufferOffset], kSizeDumpBuffer - dumpBufferOffset,
-                              dumpType == DT_FILE_CSV ? kFormatLineCSV : kFormatLine,
-                              ENGINE_LINE_DATA_VARS);
-  return lenOut;
+    static const char* kFormatLine = "    %5i %5i %5i %5i %5i %5i %5i %8.3f %6i  %s  %s\n";
+    static const char* kFormatLineCSV = ",%i,%i,%i,%i,%i,%i,%i,%.3f,%i,%s,%s\n";
+    
+    return snprintf(&_dumpBuffer[dumpBufferOffset], kSizeDumpBuffer - dumpBufferOffset,
+                    dumpType == DT_FILE_CSV ? kFormatLineCSV : kFormatLine,
+                    ENGINE_LINE_DATA_VARS);
+  }
 }
 
 
@@ -205,7 +226,7 @@ int PerfMetricEngine::AppendSummaryData(const DumpType dumpType,
 {
   DEV_ASSERT_MSG(lineIndex < kNumLinesInSummary, "PerfMetricEngine.AppendSummaryData",
                  "lineIndex %d out of range", lineIndex);
-  
+
 #define ENGINE_SUMMARY_LINE_VARS(StatCall)\
   _accMessageCountRtE.StatCall(), _accMessageCountEtR.StatCall(),\
   _accMessageCountGtE.StatCall(), _accMessageCountEtG.StatCall(),\
@@ -214,7 +235,7 @@ int PerfMetricEngine::AppendSummaryData(const DumpType dumpType,
   _accBatteryVoltage.StatCall(), _accCPUFreq.StatCall()
 
   static const char* kFormatLine = "    %5.1f %5.1f %5.1f %5.1f %5.1f %5.1f %5.1f %8.3f %6.0f\n";
-  static const char* kFormatLineCSV = ",%5.1f,%5.1f,%5.1f,%5.1f,%5.1f,%5.1f,%5.1f,%8.3f,%6.0f\n";
+  static const char* kFormatLineCSV = ",%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.1f,%.3f,%.0f\n";
 
 #define APPEND_SUMMARY_LINE(StatCall)\
   lenOut = snprintf(&_dumpBuffer[dumpBufferOffset], kSizeDumpBuffer - dumpBufferOffset,\
