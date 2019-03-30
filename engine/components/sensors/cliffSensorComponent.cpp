@@ -310,6 +310,23 @@ u32 CliffSensorComponent::GetDurationForNCliffDetections_ms(const int minNumClif
          (currTime - cliffDetectionStartTime) : 0u;
 }
 
+u32 CliffSensorComponent::GetDurationForAtMostNCliffDetections_ms(const int numCliffs) const
+{
+  DEV_ASSERT(numCliffs >= 0 && numCliffs <= kNumCliffSensors,
+             "CliffSensorComponent.GetDurationForAtMostNCliffDetections_ms.InvalidNumCliffs");
+
+  const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  u32 maxDuration_ms = std::numeric_limits<u32>::max();
+  for (int i=numCliffs+1; i<=kNumCliffSensors; ++i) {
+    const u32 duration_ms = currTime - _cliffLastDetectedTimes_ms[i];
+    if (maxDuration_ms > duration_ms) {
+      maxDuration_ms = duration_ms;
+    }
+  }
+  return maxDuration_ms;
+}
+
+
 u32 CliffSensorComponent::GetTimeSinceNCliffsLastDetected_ms(const int numCliffs) const
 {
   DEV_ASSERT(numCliffs >= 0 && numCliffs <= kNumCliffSensors,

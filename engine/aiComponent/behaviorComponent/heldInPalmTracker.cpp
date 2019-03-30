@@ -339,14 +339,7 @@ bool HeldInPalmTracker::WasRobotPlacedInPalmWhileHeld(const BEIRobotInfo& robotI
                                                       std::end(cliffDataFilt));
 
     // How long have kMaxCliffsAllowedWhileHeldInPalm or fewer cliffs have been detected for?
-    // To find out, take the min of times since more than kMaxCliffsAllowedWhileHeldInPalm cliffs have been observed.
-    u32 durationOfInPalmAllowableCliffsDetected_ms = std::numeric_limits<u32>::max();
-    for (int i=kMaxCliffsAllowedWhileHeldInPalm+1; i<=CliffSensorComponent::kNumCliffSensors; ++i) {
-      u32 duration_ms = cliffComp.GetTimeSinceNCliffsLastDetected_ms(i);
-      if (durationOfInPalmAllowableCliffsDetected_ms > duration_ms) {
-        durationOfInPalmAllowableCliffsDetected_ms = duration_ms;
-      }
-    }
+    u32 durationOfInPalmAllowableCliffsDetected_ms = cliffComp.GetDurationForAtMostNCliffDetections_ms(kMaxCliffsAllowedWhileHeldInPalm);
 
 #if REMOTE_CONSOLE_ENABLED
     if (kEnableDebugTransitionPrintouts) {

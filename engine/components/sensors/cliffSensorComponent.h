@@ -134,6 +134,9 @@ public:
   // that the cliff sensors have currently been reporting _exactly_ zero cliffs detections.
   u32 GetDurationForNCliffDetections_ms(const int minNumCliffs) const;
 
+  // Returns the amount of time that numCliff or fewer cliffs have been detected for.
+  u32 GetDurationForAtMostNCliffDetections_ms(const int numCliffs) const;
+
   // Returns the amount of time since exactly numCliffs cliffs were last detected
   u32 GetTimeSinceNCliffsLastDetected_ms(const int numCliffs) const;
     
