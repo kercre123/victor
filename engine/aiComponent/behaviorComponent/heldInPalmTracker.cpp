@@ -59,11 +59,6 @@ namespace {
   // sensors will still be covered, and therefore the robot is not about to be placed in a palm.
   static const int kMinCliffsToConfirmHeldInPalmPickup = 3;
   
-  // Sometimes the OffTreadsState experiences a delay in switching from OnTreads to InAir even
-  // after 3+ cliffs are detected, so we need to compensate for this in
-  // `HasDetectedEnoughCliffsSincePickup`.
-  static const u32 kOffTreadsStateChangeDelay_ms = 250;
-  
   // Set a minimum time limit after all motors have stopped moving to confirm that the robot is
   // actually moving because it is being held, and not because of some InAir animation tricking the
   // IMU filter in the robot process into detecting "motion".
@@ -379,40 +374,15 @@ bool HeldInPalmTracker::HasDetectedEnoughCliffsSincePickup(const BEIRobotInfo& r
               "Robot still on charger contacts, check is invalid");
   
   const auto& cliffComp = robotInfo.GetCliffSensorComponent();
-  const int currNumCliffs = cliffComp.GetNumCliffsDetected();
-  if (currNumCliffs >= kMinCliffsToConfirmHeldInPalmPickup) {
-    const u32 timeSinceOnTreadsOrCharger_ms = GetMillisecondsSince(_lastTimeOnTreadsOrCharger);
-    const u32 durationOfCurrentCliffDetections_ms =
-      cliffComp.GetDurationForNCliffDetections_ms(currNumCliffs);
-    if (durationOfCurrentCliffDetections_ms <= timeSinceOnTreadsOrCharger_ms + kOffTreadsStateChangeDelay_ms) {
-#if REMOTE_CONSOLE_ENABLED
-      if (kEnableDebugTransitionPrintouts) {
-        LOG_INFO("HIPTracker.HasDetectedEnoughCliffsSincePickup",
-                 "Robot has been detecting at least %u cliffs for %u [ms], %u [ms] elapsed since "
-                 "last OnTreads or on charger", currNumCliffs, durationOfCurrentCliffDetections_ms,
-                 timeSinceOnTreadsOrCharger_ms);
-      }
-#endif
-      return true;
-    }
+  const int maxNumCliffs = cliffComp.GetMaxNumCliffsDetectedWhilePickedUp();
 #if REMOTE_CONSOLE_ENABLED
     if (kEnableDebugTransitionPrintouts) {
-      LOG_PERIODIC_INFO(5, "HIPTracker.HasDetectedEnoughCliffsSincePickup.InsufficientCliffDetectionDuration",
-                        "Robot has only been detecting %u cliffs (or more) for %u [ms], %u [ms] elapsed since "
-                        "last OnTreads or on charger", currNumCliffs, durationOfCurrentCliffDetections_ms,
-                        timeSinceOnTreadsOrCharger_ms);
+      LOG_PERIODIC_INFO(5, "HIPTracker.HasDetectedEnoughCliffsSincePickup.MaxNumCliffsDetectedWhilePickedUp",
+                           "%d", maxNumCliffs);
     }
 #endif
-  }
-  
-#if REMOTE_CONSOLE_ENABLED
-  if (kEnableDebugTransitionPrintouts) {
-    LOG_PERIODIC_INFO(5, "HIPTracker.HasDetectedEnoughCliffsSincePickup.TooFewCliffs",
-                      "Robot is only currently detecting %u cliffs", currNumCliffs);
-  }
-#endif
-  
-  return false;
+
+  return maxNumCliffs >= kMinCliffsToConfirmHeldInPalmPickup;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

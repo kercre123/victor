@@ -141,6 +141,10 @@ public:
   u32 GetTimeSinceNCliffsLastDetected_ms(const int numCliffs) const;
     
   int GetNumCliffsDetected() const { return _latestNumCliffsDetected; }
+
+  // Returns the max number of cliffs observed while picked up (according to RobotState.status)
+  // Returns 0 if not currently picked up.
+  int GetMaxNumCliffsDetectedWhilePickedUp() const { return _maxNumCliffsDetectedWhilePickedUp; } 
   
 private:
   
@@ -166,6 +170,8 @@ private:
   // unlike _cliffDetectionTimes_ms which contains only the times
   // of cliffs that are _currently_ being detected.
   std::array<u32, kNumCliffSensors + 1> _cliffLastDetectedTimes_ms;
+
+  int _maxNumCliffsDetectedWhilePickedUp = 0;
   
   uint32_t _latestMsgTimestamp = 0;
   

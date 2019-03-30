@@ -136,6 +136,9 @@ void CliffSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
   
   UpdateLatestCliffDetectionDuration();
   
+  const bool isPickedUp = (msg.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP) != 0;
+  _maxNumCliffsDetectedWhilePickedUp = isPickedUp ? std::max(_maxNumCliffsDetectedWhilePickedUp, _latestNumCliffsDetected) : 0;
+
   UpdateCliffDetectThresholds();
   
   // Send new thresholds to the robot if needed:
