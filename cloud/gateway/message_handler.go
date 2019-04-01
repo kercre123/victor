@@ -2837,11 +2837,12 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 		UpdateVersion: "",
 	}
 
-	if data, err := ioutil.ReadFile("/run/update-engine/manifest.ini"); err == nil {
-		expr := regexp.MustCompile("update_version\\s*=\\s*(\\S*)")
-		match := expr.FindStringSubmatch(string(data))
-		if len(match) == 2 {
-			update_status.UpdateVersion = match[1]
+	if data, err := ioutil.ReadFile("/run/update-engine/error"); err == nil {
+		// The script uses the current software version to generate a url. When that url exists, the file contains-
+		// the .ota that will go from the bot's current version to the latest available. If that file doesn't exist, it's
+		// because the bot's current version is the latest.
+		if string(data) == "Failed to open URL: HTTP Error 403: Forbidden" {
+			return update_status, nil
 		}
 	}
 
@@ -2850,14 +2851,25 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 		return update_status, nil
 	}
 
+	if _, err := os.Stat("/run/update-engine/app_requested"); err != nil {
+		// update-engine.py has started. The first thing it does is destroy everything in this directory.
+		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
+	}
+
+	if data, err := ioutil.ReadFile("/run/update-engine/manifest.ini"); err == nil {
+		update_version_expr := regexp.MustCompile("update_version\\s*=\\s*(\\S*)")
+		match := update_version_expr.FindStringSubmatch(string(data))
+		if len(match) == 2 {
+			update_status.UpdateVersion = match[1]
+		}
+	}
+
 	if data, err := ioutil.ReadFile("/run/update-engine/progress"); err == nil {
 		update_status.Progress, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
-		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/expected-size"); err == nil {
 		update_status.Expected, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
-		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
 	}
 
 	return update_status, nil
@@ -2918,7 +2930,13 @@ func (service *rpcService) StartUpdateEngine(
 	status, _ := service.GetUpdateStatus()
 
 	if status.UpdateStatus == extint.CheckUpdateStatusResponse_NO_UPDATE {
-		err := exec.Command("/usr/bin/sudo", "-n", "/bin/systemctl", "stop", "update-engine.service").Run()
+		// If this fails, we can still continue, but it could indicate something more serious (hence, the error)
+		err := exec.Command("/bin/touch", "/run/update-engine/app_requested").Run()
+		if err != nil {
+			log.Errorf("Couldn't /bin/touch /run/update-engine/app_requested")
+		}
+
+		err = exec.Command("/usr/bin/sudo", "-n", "/bin/systemctl", "stop", "update-engine.service").Run()
 		if err != nil {
 			log.Errorf("Update attempt failed on `systemctl stop update-engine`: %s\n", err)
 			retval.Status.Code = extint.ResponseStatus_ERROR_UPDATE_IN_PROGRESS
@@ -2929,11 +2947,10 @@ func (service *rpcService) StartUpdateEngine(
 		if err != nil {
 			log.Errorf("Update attempt failed on `systemctl restart update-engine-oneshot`: %s\n", err)
 			retval.Status.Code = extint.ResponseStatus_ERROR_UPDATE_IN_PROGRESS
-			return retval, err
+		} else {
+			go service.UpdateStatusStream()
 		}
 	}
-
-	go service.UpdateStatusStream()
 
 	return retval, nil
 }
