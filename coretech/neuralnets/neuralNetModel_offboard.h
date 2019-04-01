@@ -38,11 +38,22 @@ public:
   
   virtual ~OffboardProcessor() = default;
   
-  Result Init(const std::string& name,
-              const OffboardCommsType commsType,
-              const std::vector<OffboardProcType>& procTypes,
-              const int pollingPeriod_ms,
-              const float timeoutDuration_sec);
+  struct Params
+  {
+    std::string                    name;
+    OffboardCommsType              commsType;
+    std::vector<OffboardProcType>  procTypes;
+    int                            pollingPeriod_ms;
+    float                          timeoutDuration_sec;
+    
+    struct {
+      std::string image;
+      std::string result;
+      std::string timestamp;
+    } filenames;
+  };
+  
+  Result Init(const Params& params);
   
   // Blocking call! Use an IAsyncRunner if you want asynchronous running
   Result Detect(ImageRGB& img, std::list<Vision::SalientPoint>& salientPoints);
@@ -56,16 +67,12 @@ private:
   bool WaitForResultFile(const std::string& resultFilename, std::list<SalientPoint>& salientPoints);
   bool WaitForResultCLAD(std::list<SalientPoint>& salientPoints);
   
-  std::string _name;
+  Params      _params;
+  
   std::string _cachePath;
-  int         _pollPeriod_ms;
-  float       _timeoutDuration_sec = 10.f;
   TimeStamp_t _imageTimestamp = 0;
   s32         _imageRows = 0;
   s32         _imageCols = 0;
-  
-  OffboardCommsType _commsType = OffboardCommsType::FileIO;
-  std::vector<OffboardProcType> _procTypes;
   
   // For non-FileIO comms
   std::unique_ptr<LocalUdpClient> _udpClient;

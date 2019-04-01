@@ -43,46 +43,37 @@ OffboardProcessor::OffboardProcessor(const std::string& cachePath)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result OffboardProcessor::Init(const std::string& name,
-                               const OffboardCommsType commsType,
-                               const std::vector<OffboardProcType>& procTypes,
-                               const int pollingPeriod_ms,
-                               const float timeoutDuration_sec)
+Result OffboardProcessor::Init(const Params& params)
 {
   // NOTE: This implementation of an INeuralNetRunner::Model does not actual load any model as it is communicating
   //       with a standalone process which is loading and running the model. Here we'll just set any inititalization
   //       parameters for communicating with that process.
   
   // Sanity check the inputs
-  if(procTypes.empty())
+  if(params.procTypes.empty())
   {
     LOG_ERROR("OffboardProcessor.Init.EmptyProcTypes", "");
     return RESULT_FAIL;
   }
-  if(pollingPeriod_ms <= 0)
+  if(params.pollingPeriod_ms <= 0)
   {
-    LOG_ERROR("OffboardProcessor.Init.BadPollPeriod", "%d", pollingPeriod_ms);
+    LOG_ERROR("OffboardProcessor.Init.BadPollPeriod", "%d", params.pollingPeriod_ms);
     return RESULT_FAIL;
   }
-  if(Util::IsFltLEZero(timeoutDuration_sec))
+  if(Util::IsFltLEZero(params.timeoutDuration_sec))
   {
-    LOG_ERROR("OffboardProcessor.Init.BadTimeout", "%f", timeoutDuration_sec);
+    LOG_ERROR("OffboardProcessor.Init.BadTimeout", "%f", params.timeoutDuration_sec);
     return RESULT_FAIL;
   }
   
-  _name = name;
-  _cachePath = Util::FileUtils::FullFilePath({_cachePath, _name});
-  _commsType = commsType;
-  
-  _procTypes = procTypes;
-  _pollPeriod_ms = pollingPeriod_ms;
-  _timeoutDuration_sec = timeoutDuration_sec;
+  _params = params;
+  _cachePath = Util::FileUtils::FullFilePath({_cachePath, _params.name});
   
   LOG_INFO("OffboardProcessor.Init.Success",
-           "Polling period: %dms, Cache: %s", _pollPeriod_ms, _cachePath.c_str());
+           "Polling period: %dms, Cache: %s", _params.pollingPeriod_ms, _cachePath.c_str());
   
   // Anything not talking over FileIO is assumed to be talking over UDP
-  if(OffboardCommsType::FileIO != _commsType && _udpClient == nullptr)
+  if( (OffboardCommsType::FileIO != _params.commsType) && _udpClient == nullptr)
   {
     if(!ANKI_DEV_CHEATS)
     {
@@ -108,7 +99,7 @@ Result OffboardProcessor::Detect(Vision::ImageRGB& img, std::list<Vision::Salien
   _imageRows = img.GetNumRows();
   _imageCols = img.GetNumCols();
   
-  switch(_commsType)
+  switch(_params.commsType)
   {
     case OffboardCommsType::FileIO:
       return DetectWithFileIO(img, salientPoints);
@@ -138,14 +129,14 @@ Result OffboardProcessor::Detect(Vision::ImageRGB& img, std::list<Vision::Salien
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result OffboardProcessor::DetectWithFileIO(const ImageRGB& img, std::list<SalientPoint>& salientPoints)
 {
-  const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, NeuralNets::Filenames::Image});
+  const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, _params.filenames.image});
   {
     // Write image to a temporary file
     const std::string tempFilename = Util::FileUtils::FullFilePath({_cachePath, "temp.png"});
     img.Save(tempFilename);
     
     // Write timestamp to file
-    const std::string timestampFilename = Util::FileUtils::FullFilePath({_cachePath, NeuralNets::Filenames::Timestamp});
+    const std::string timestampFilename = Util::FileUtils::FullFilePath({_cachePath, _params.filenames.timestamp});
     const std::string timestampString = std::to_string(img.GetTimestamp());
     std::ofstream timestampFile(timestampFilename);
     timestampFile << timestampString;
@@ -165,7 +156,7 @@ Result OffboardProcessor::DetectWithFileIO(const ImageRGB& img, std::list<Salien
   }
 
   // Wait for detection result JSON to appear (blocking until timeout!)
-  const std::string resultFilename = Util::FileUtils::FullFilePath({_cachePath, NeuralNets::Filenames::Result});
+  const std::string resultFilename = Util::FileUtils::FullFilePath({_cachePath, _params.filenames.result});
   Json::Value salientPointsJson;
   const bool resultAvailable = WaitForResultFile(resultFilename, salientPoints);
 # pragma unused(resultAvailable)
@@ -182,7 +173,7 @@ Result OffboardProcessor::DetectWithFileIO(const ImageRGB& img, std::list<Salien
 Result OffboardProcessor::DetectWithCLAD(const ImageRGB& img, std::list<SalientPoint>& salientPoints)
 {
   // Until we have a way to send image data via CLAD (or protobuf), just write to file
-  const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, NeuralNets::Filenames::Image});
+  const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, _params.filenames.image});
   const Result saveResult = img.Save(imageFilename);
   if(RESULT_OK != saveResult)
   {
@@ -201,7 +192,7 @@ Result OffboardProcessor::DetectWithCLAD(const ImageRGB& img, std::list<SalientP
                                            img.GetNumChannels(),
                                            kIsCompressed,
                                            kIsEncrypted,
-                                           _procTypes,
+                                           _params.procTypes,
                                            imageFilename);
   
   const auto expectedSize = imageReadyMsg.Size();
@@ -241,9 +232,9 @@ bool OffboardProcessor::WaitForResultFile(const std::string& resultFilename,
   const f32 startTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   f32 currentTime_sec = startTime_sec;
     
-  while( !resultAvailable && (currentTime_sec - startTime_sec < _timeoutDuration_sec) )
+  while( !resultAvailable && (currentTime_sec - startTime_sec < _params.timeoutDuration_sec) )
   {
-    std::this_thread::sleep_for(std::chrono::milliseconds(_pollPeriod_ms));
+    std::this_thread::sleep_for(std::chrono::milliseconds(_params.pollingPeriod_ms));
     resultAvailable = Util::FileUtils::FileExists(resultFilename);
     currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   }
@@ -275,7 +266,7 @@ bool OffboardProcessor::WaitForResultFile(const std::string& resultFilename,
   {
     LOG_WARNING("OffboardProcessor.WaitForResultFile.PollingForResultTimedOut",
                 "Start:%.1fsec Current:%.1f Timeout:%.1fsec",
-                startTime_sec, currentTime_sec, _timeoutDuration_sec);
+                startTime_sec, currentTime_sec, _params.timeoutDuration_sec);
   }
   
   return resultAvailable;
@@ -288,7 +279,7 @@ bool OffboardProcessor::WaitForResultCLAD(std::list<SalientPoint>& salientPoints
   const f32 startTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   f32 currentTime_sec = startTime_sec;
   
-  while( !resultAvailable && (currentTime_sec - startTime_sec < _timeoutDuration_sec) )
+  while( !resultAvailable && (currentTime_sec - startTime_sec < _params.timeoutDuration_sec) )
   {
     while (_udpClient->IsConnected())
     {
@@ -301,7 +292,7 @@ bool OffboardProcessor::WaitForResultCLAD(std::list<SalientPoint>& salientPoints
         break;
       } else if (n == 0) {
         LOG_PERIODIC_INFO(100, "OffboardProcessor.WaitForResultCLAD.NothingToRead", "");
-        std::this_thread::sleep_for(std::chrono::milliseconds(_pollPeriod_ms));
+        std::this_thread::sleep_for(std::chrono::milliseconds(_params.pollingPeriod_ms));
         break;
       } else {
         LOG_INFO("OffboardProcessor.WaitForResultCLAD.ProcessMessage", "Read %zu/%zu", n, sizeof(buf));
@@ -354,7 +345,7 @@ bool OffboardProcessor::Connect()
   static s32 numTries = 0;
   
   const char* serverPath = LOCAL_SOCKET_PATH "offboard_vision_server";
-  const std::string clientPath = std::string(LOCAL_SOCKET_PATH) + "_" + _name;
+  const std::string clientPath = std::string(LOCAL_SOCKET_PATH) + "_" + _params.name;
   
   const bool udpSuccess = _udpClient->Connect(clientPath.c_str(), serverPath);
   ++numTries;
@@ -396,22 +387,25 @@ OffboardModel::~OffboardModel()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result OffboardModel::LoadModelInternal(const std::string& modelPath, const Json::Value& config)
 {
-  int pollPeriod_ms = 0;
-  if (false == JsonTools::GetValueOptional(config, JsonKeys::PollingPeriod, pollPeriod_ms))
+  Vision::OffboardProcessor::Params offboardParams;
+  offboardParams.name = GetName();
+  offboardParams.filenames.image = NeuralNets::Filenames::Image;
+  offboardParams.filenames.timestamp = NeuralNets::Filenames::Timestamp;
+  offboardParams.filenames.result = NeuralNets::Filenames::Result;
+  
+  if (false == JsonTools::GetValueOptional(config, JsonKeys::PollingPeriod, offboardParams.pollingPeriod_ms))
   {
     LOG_ERROR("OffboardModel.LoadModelInternal.MissingPollPeriod", "");
     return RESULT_FAIL;
   }
   
-  float timeoutDuration_sec = 0.f;
-  if (false == JsonTools::GetValueOptional(config, NeuralNets::JsonKeys::TimeoutDuration, timeoutDuration_sec))
+  if (false == JsonTools::GetValueOptional(config, NeuralNets::JsonKeys::TimeoutDuration, offboardParams.timeoutDuration_sec))
   {
     LOG_INFO("OffboardModel.LoadModelInternal.MissingTimeoutDuraction",
              "Keeping timeout at default value, %.3f seconds",
-             timeoutDuration_sec);
+             offboardParams.timeoutDuration_sec);
   }
   
-  Vision::OffboardCommsType commsType = Vision::OffboardCommsType::FileIO;
   std::string commsTypeString;
   if(false == JsonTools::GetValueOptional(config, NeuralNets::JsonKeys::OffboardCommsType, commsTypeString))
   {
@@ -420,7 +414,7 @@ Result OffboardModel::LoadModelInternal(const std::string& modelPath, const Json
   }
   else
   {
-    const bool success = OffboardCommsTypeFromString(commsTypeString, commsType);
+    const bool success = OffboardCommsTypeFromString(commsTypeString, offboardParams.commsType);
     if(!success)
     {
       LOG_ERROR("OffboardProcessor.LoadModelInternal.BadCommsType", "%s", commsTypeString.c_str());
@@ -434,25 +428,20 @@ Result OffboardModel::LoadModelInternal(const std::string& modelPath, const Json
     return RESULT_FAIL;
   }
   
-  std::vector<Vision::OffboardProcType> procTypes;
   const Json::Value& jsonProcTypes = config[NeuralNets::JsonKeys::OffboardProcType];
   if(jsonProcTypes.isArray())
   {
     for(auto const& jsonProcType : jsonProcTypes)
     {
-      procTypes.emplace_back(JsonTools::GetValue<std::string>(jsonProcType));
+      offboardParams.procTypes.emplace_back(JsonTools::GetValue<std::string>(jsonProcType));
     }
   }
   else
   {
-    procTypes.emplace_back(JsonTools::GetValue<std::string>(jsonProcTypes));
+    offboardParams.procTypes.emplace_back(JsonTools::GetValue<std::string>(jsonProcTypes));
   }
-  
-  return _offboardProc->Init(GetName(),
-                             commsType,
-                             procTypes,
-                             pollPeriod_ms,
-                             timeoutDuration_sec);
+
+  return _offboardProc->Init(offboardParams);
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
