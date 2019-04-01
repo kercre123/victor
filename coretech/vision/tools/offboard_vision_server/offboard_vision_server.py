@@ -7,11 +7,11 @@ import json
 import numpy as np	
 import time	
 
-import chipperpb_pb2	
-import chipperpb_pb2_grpc	
+import vision_pb2
+import vision_pb2_grpc
 
 
-class SnapperServicer(chipperpb_pb2_grpc.ChipperGrpcServicer):	
+class OffboardVisionServicer(vision_pb2_grpc.OffboardVisionGrpcServicer):
 
    def AnalyzeImage(self, request, context):	
     """	
@@ -60,26 +60,26 @@ class SnapperServicer(chipperpb_pb2_grpc.ChipperGrpcServicer):
       ]	
     }	
 
-    image_response = chipperpb_pb2.ImageResponse()	
-    image_response.raw_result = json.dumps(fake_payload)	
-    image_response.session = request.session	
-    image_response.device_id = request.device_id	
-    image_response.timestamp_ms = request.timestamp_ms	
+    image_response = vision_pb2.ImageResponse()
+    image_response.raw_result = json.dumps(fake_payload)
+    image_response.session = request.session
+    image_response.device_id = request.device_id
+    image_response.timestamp_ms = request.timestamp_ms
 
     return image_response	
 
 
-def serve():	
-  server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))	
-  chipperpb_pb2_grpc.add_ChipperGrpcServicer_to_server(	
-    SnapperServicer(), server)	
-  server.add_insecure_port('[::]:16643')	
-  server.start()	
-  try:	
-    while True:	
-      time.sleep(3600)	
-  except KeyboardInterrupt:	
-    server.stop(0)	
+def serve():
+  server = grpc.server(futures.ThreadPoolExecutor(max_workers=4))
+  vision_pb2_grpc.add_OffboardVisionGrpcServicer_to_server(
+    OffboardVisionServicer(), server)
+  server.add_insecure_port('[::]:16643')
+  server.start()
+  try:
+    while True:
+      time.sleep(3600)
+  except KeyboardInterrupt:
+    server.stop(0)
 
 if __name__ == '__main__':	
   logging.basicConfig()	
