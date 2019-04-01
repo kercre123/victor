@@ -9,8 +9,8 @@
  * Copyright: Anki, Inc. 2019
  **/
 
-#ifndef __Anki_NeuralNets_ParseSalientPointsFromJson_H__
-#define __Anki_NeuralNets_ParseSalientPointsFromJson_H__
+#ifndef __Anki_Vision_ParseSalientPointsFromJson_H__
+#define __Anki_Vision_ParseSalientPointsFromJson_H__
 
 #include "clad/types/offboardVision.h"
 #include "coretech/common/shared/types.h"
@@ -19,19 +19,20 @@
 #include <list>
 
 namespace Anki {
+namespace Vision {
   
 // Forward declaration
-namespace Vision {
-  struct SalientPoint;
-}
+struct SalientPoint;
   
-namespace NeuralNets {
+namespace JsonKeys {
+  extern const char* const SalientPoints;
+}
 
 Result ParseSalientPointsFromJson(const Json::Value& jsonSalientPoints,
                                   const int imageRows, const int imageCols, const TimeStamp_t timestamp,
-                                  std::list<Vision::SalientPoint>& salientPoints);
+                                  std::list<SalientPoint>& salientPoints);
 
 }
 }
 
-#endif /* __Anki_NeuralNets_ParseSalientPointsFromJson_H__ */
+#endif /* __Anki_Vision_ParseSalientPointsFromJson_H__ */

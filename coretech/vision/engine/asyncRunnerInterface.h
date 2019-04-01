@@ -1,48 +1,38 @@
 /**
- * File: objectDetector.h
+ * File: asyncRunnerInterface.h
  *
  * Author: Andrew Stein
- * Date:   6/29/2017
+ * Date:   4/1/2019
  *
- * Description: Asynchronous wrapper for running forward inference with a deep neural network on an image.
- *              Currently supports detection of SalientPoints, but API could be extended to get other
- *              types of outputs later.
+ * Description: Interface for running a detection test asynchronously. The usage model on each update tick is:
+ *               - poll for any new "detections", in the form of SalientPoints, and then
+ *               - start processing a new image if idle
+ *              Images are provided to the asynchronous processor at "processing" resolution defined by Json config.
+ *              Implementations of this interface are expecting to define a Run() method which takes an image
+ *               and produces a list of SalientPoints.
  *
- *              Abstracts away the private implementation around what kind of inference engine is used
- *              and runs asynchronously since forward inference through deep networks is generally "slow".
- *
- * Copyright: Anki, Inc. 2017
+ * Copyright: Anki, Inc. 2019
  **/
 
-#ifndef __Anki_Vision_IAsyncRunner_H__
-#define __Anki_Vision_IAsyncRunner_H__
+#include "clad/types/salientPointTypes.h"
 
 #include "coretech/common/shared/types.h"
-#include "coretech/common/shared/math/rect.h"
-
-#include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/profiler.h"
-
-#include "clad/types/salientPointTypes.h"
+#include "coretech/vision/engine/image.h"
 
 #include <future>
 #include <list>
 
-// Forward declaration:
-namespace Json {
-  class Value;
-}
+#ifndef __Anki_Vision_AsyncRunnerInterface_H__
+#define __Anki_Vision_AsyncRunnerInterface_H__
 
 namespace Anki {
-  
-namespace NeuralNets {
-  class INeuralNetModel;
-}
-  
 namespace Vision {
 
+// Forward delcarations
 class ImageCache;
-
+class ImageRGB;
+  
 class IAsyncRunner
 {
 public:
@@ -74,6 +64,11 @@ public:
   s32 GetProcessingWidth()  const { return _processingWidth; }
   s32 GetProcessingHeight() const { return _processingHeight; }
   
+  struct JsonKeys {
+    static const char* const InputHeight;
+    static const char* const InputWidth;
+  };
+  
 protected:
   
   virtual Result InitInternal(const std::string& cachePath, const Json::Value& config) = 0;
@@ -91,7 +86,7 @@ private:
   
   // Use a std::future as the mechenism for asynchronous processing
   std::future<std::list<SalientPoint>> _future;
-
+  
   // Stores a copy of the "original" image, from which the processed image is resized,
   // which can be used for saving or chained processing
   ImageRGB              _imgOrig;
@@ -100,7 +95,6 @@ private:
   ImageRGB              _imgBeingProcessed;
   
   std::string           _cachePath;
-  std::string           _visualizationDirectory;
   bool                  _isInitialized = false;
   s32                   _processingWidth;
   s32                   _processingHeight;
@@ -108,26 +102,8 @@ private:
   bool StartProcessingHelper();
   
 }; // class IAsyncRunner
-  
-class NeuralNetRunner : public IAsyncRunner
-{
-public:
-  
-  NeuralNetRunner(const std::string& modelPath);
-  virtual ~NeuralNetRunner();
-  
-protected:
-  
-  virtual Result InitInternal(const std::string& cachePath, const Json::Value& config) override;
-  virtual bool IsVerbose() const override;
-  virtual std::list<SalientPoint> Run(ImageRGB& img) override;
-  
-private:
-  std::string _modelPath;
-  std::unique_ptr<NeuralNets::INeuralNetModel> _model;
-};
-  
+
 } // namespace Vision
 } // namespace Anki
 
-#endif /* __Anki_Vision_IAsyncRunner_H__ */
+#endif /* __Anki_Vision_AsyncRunnerInterface_H__ */

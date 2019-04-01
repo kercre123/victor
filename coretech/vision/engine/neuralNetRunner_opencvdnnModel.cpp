@@ -11,7 +11,7 @@
 
 #if defined(ANKI_NEURALNETS_USE_OPENCVDNN)
 
-#include "coretech/vision/engine/neuralNetRunner.h"
+#include "coretech/neuralNets/neuralNetRunner.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/profiler.h"
 

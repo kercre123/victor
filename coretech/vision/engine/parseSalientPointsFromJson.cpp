@@ -13,8 +13,8 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/shared/math/rect_impl.h"
 #include "coretech/common/engine/math/polygon_impl.h"
-#include "coretech/neuralnets/neuralNetJsonKeys.h"
-#include "coretech/neuralnets/parseSalientPointsFromJson.h"
+#include "coretech/vision/engine/offboardProcessor.h"
+#include "coretech/vision/engine/parseSalientPointsFromJson.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
@@ -22,7 +22,7 @@
 #define LOG_CHANNEL "NeuralNets"
 
 namespace Anki {
-namespace NeuralNets {
+namespace Vision {
 
 namespace {
   
@@ -30,6 +30,10 @@ CONSOLE_VAR_RANGED(s32, kNeuralNets_MaxNumSceneDescriptionTags, "NeuralNets", 5,
   
 }
  
+namespace JsonKeys {
+  const char* const SalientPoints = "salientPoints";
+}
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result ParseSceneDescriptionFromJson(const Json::Value& jsonSalientPoints,
                                      const int imageRows, const int imageCols, const TimeStamp_t timestamp,
@@ -454,11 +458,11 @@ Result ParseSalientPointsFromJson(const Json::Value& detectionResult,
 
   auto iter = kParserLUT.end();
   std::string procType;
-  if(!JsonTools::GetValueOptional(detectionResult, JsonKeys::OffboardProcType, procType))
+  if(!JsonTools::GetValueOptional(detectionResult, OffboardProcessor::JsonKeys::ProcType, procType))
   {
     LOG_WARNING("NeuralNets.ParseSalientPointsFromJson.MissingProcessingType",
                 "No %s field in Json result. Assuming raw SalientPoints.",
-                JsonKeys::OffboardProcType);
+                OffboardProcessor::JsonKeys::ProcType);
   }
   else
   {
@@ -468,14 +472,14 @@ Result ParseSalientPointsFromJson(const Json::Value& detectionResult,
   if(iter == kParserLUT.end())
   {
     // No registered parser: Assume the detectionResult just contains an array of SalientPoints in Json format
-    if(!detectionResult.isMember(NeuralNets::JsonKeys::SalientPoints))
+    if(!detectionResult.isMember(JsonKeys::SalientPoints))
     {
       LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.MissingSalientPointsArray",
-                "%s", NeuralNets::JsonKeys::SalientPoints);
+                "%s", JsonKeys::SalientPoints);
       return RESULT_FAIL;
     }
     
-    const Json::Value& salientPointsJson = detectionResult[NeuralNets::JsonKeys::SalientPoints];
+    const Json::Value& salientPointsJson = detectionResult[JsonKeys::SalientPoints];
     if(!salientPointsJson.isArray())
     {
       LOG_ERROR("OffboardModel.ParseSalientPointsFromJson.ExpectingArray", "");

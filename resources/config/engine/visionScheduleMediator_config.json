@@ -253,7 +253,7 @@
       "relativeCost" : 1
     },
     {
-      "mode"         : "OffboardVision",
+      "mode"         : "Offboard",
       "low"          : 16,
       "med"          : 8,
       "high"         : 1,

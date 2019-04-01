@@ -36,13 +36,13 @@
 
 #include "coretech/neuralnets/iNeuralNetMain.h"
 #include "coretech/neuralnets/neuralNetJsonKeys.h"
+#include "coretech/neuralnets/neuralNetRunner.h"
 #include "coretech/vision/engine/benchmark.h"
 #include "coretech/vision/engine/cameraParamsController.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "coretech/vision/engine/image_impl.h"
 #include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/markerDetector.h"
-#include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/engine/petTracker.h"
 
 #include "clad/vizInterface/messageViz.h"
@@ -341,13 +341,13 @@ Result VisionSystem::Init(const Json::Value& config)
       }
       
       const std::string& name = modelConfig[NeuralNets::JsonKeys::NetworkName].asString();
-      auto addModelResult = _neuralNetRunners.emplace(name, new Vision::NeuralNetRunner(modelPath));
+      auto addModelResult = _neuralNetRunners.emplace(name, new NeuralNets::NeuralNetRunner(modelPath));
       if(!addModelResult.second)
       {
         PRINT_NAMED_ERROR("VisionSystem.Init.DuplicateNeuralNetModelName", "%s", name.c_str());
         continue;
       }
-      std::unique_ptr<Vision::NeuralNetRunner>& neuralNetRunner = addModelResult.first->second;
+      std::unique_ptr<NeuralNets::NeuralNetRunner>& neuralNetRunner = addModelResult.first->second;
       Result neuralNetResult = neuralNetRunner->Init(dnnCachePath, modelConfig);
       if(RESULT_OK != neuralNetResult)
       {

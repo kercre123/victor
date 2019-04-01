@@ -66,7 +66,6 @@ public:
   
   static bool WriteResults(const std::string& jsonFilename, const Json::Value& detectionResults);
   
-  
 protected:
   
   INeuralNetMain();

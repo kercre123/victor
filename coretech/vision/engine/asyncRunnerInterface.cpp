@@ -1,76 +1,47 @@
 /**
- * File: objectDetector.cpp
+ * File: asyncRunnerInterface.h
  *
  * Author: Andrew Stein
- * Date:   6/29/2017
+ * Date:   4/1/2019
  *
- * Description: 
+ * Description: See header file.
  *
- * Copyright: Anki, Inc. 2017
+ * Copyright: Anki, Inc. 2019
  **/
 
-#include "coretech/vision/engine/neuralNetRunner.h"
-#include "coretech/vision/engine/image.h"
-#include "coretech/vision/engine/imageCache.h"
-#include "coretech/vision/engine/profiler.h"
-
-#include "coretech/common/shared/array2d_impl.h"
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/utils/timer.h"
 
-#include "coretech/neuralnets/neuralNetJsonKeys.h"
-#include "coretech/neuralnets/neuralNetModel_offboard.h"
-#include "coretech/neuralnets/neuralNetModel_tflite.h"
+#include "coretech/vision/engine/asyncRunnerInterface.h"
+#include "coretech/vision/engine/imageCache.h"
+#include "coretech/vision/engine/image_impl.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
-#include "util/helpers/quoteMacro.h"
-#include "util/threading/threadPriority.h"
+#include "util/logging/logging.h"
 
-#include <cstdio>
-#include <list>
-#include <fstream>
-
-// TODO: put this back if/when we start supporting other IAsyncRunnerModels
-//#if USE_TENSORFLOW
-//#  ifndef TENSORFLOW_USE_AOT
-//#    error Expecting TENSORFLOW_USE_AOT to be defined by cmake!
-//#  elif TENSORFLOW_USE_AOT==1
-//#    include "objectDetectorModel_tensorflow_AOT.cpp"
-//#  else
-//#    include "objectDetectorModel_tensorflow.cpp"
-//#  endif
-//#elif USE_TENSORFLOW_LITE
-//#  include "objectDetectorModel_tensorflow_lite.cpp"
-//#elif USE_OPENCV_DNN
-//#  include "neuralNetRunner_opencvdnnModel.cpp"
-//#else
-//#include "neuralNetRunner_messengerModel.cpp"
-//#endif
-
-#define LOG_CHANNEL "NeuralNets"
+#define LOG_CHANNEL "NeuralNets" // TODO: Logging to NeuralNets for historical reasons, should probably be elsewhere
 
 namespace Anki {
 namespace Vision {
- 
-// Log channel name currently expected to be defined by one of the model cpp files...
-// static const char * const kLogChannelName = "VisionSystem";
- 
+  
 namespace {
 #define CONSOLE_GROUP "Vision.IAsyncRunner"
-
-  // Save images sent to the model for processing to:
-  //   <cachePath>/saved_images/{full|resized}/<timestamp>.png
-  // 0: off
-  // 1: save resized images
-  // 2: save full images
-  CONSOLE_VAR_ENUM(s32,   kIAsyncRunner_SaveImages,  CONSOLE_GROUP, 0, "Off,Save Resized,Save Original Size");
   
-  // 1: Full size, 2: Half size
-  CONSOLE_VAR_RANGED(s32, kIAsyncRunner_OrigImageSubsample, CONSOLE_GROUP, 1, 1, 2);
+// Save images sent to the model for processing to:
+//   <cachePath>/saved_images/{full|resized}/<timestamp>.png
+// 0: off
+// 1: save resized images
+// 2: save full images
+CONSOLE_VAR_ENUM(s32,   kIAsyncRunner_SaveImages,  CONSOLE_GROUP, 0, "Off,Save Resized,Save Original Size");
 
+// 1: Full size, 2: Half size
+CONSOLE_VAR_RANGED(s32, kIAsyncRunner_OrigImageSubsample, CONSOLE_GROUP, 1, 1, 2);
+  
 #undef CONSOLE_GROUP
 }
+
+const char* const IAsyncRunner::JsonKeys::InputHeight = "inputHeight";
+const char* const IAsyncRunner::JsonKeys::InputWidth = "inputWidth";
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IAsyncRunner::IAsyncRunner()
@@ -89,40 +60,37 @@ IAsyncRunner::~IAsyncRunner()
 Result IAsyncRunner::Init(const std::string& cachePath, const Json::Value& config)
 {
   Result result = RESULT_OK;
-
+  
   _isInitialized = false;
   _cachePath = cachePath;
   
   // Get the input height/width so we can do the resize and only need to share/copy/write as
   // small an image as possible for the standalone CNN process to pick up
-  if(false == JsonTools::GetValueOptional(config, NeuralNets::JsonKeys::InputHeight, _processingHeight))
+  if(false == JsonTools::GetValueOptional(config, JsonKeys::InputHeight, _processingHeight))
   {
-    LOG_ERROR("IAsyncRunner.Init.MissingConfig", "%s", NeuralNets::JsonKeys::InputHeight);
+    LOG_ERROR("IAsyncRunner.Init.MissingConfig", "%s", JsonKeys::InputHeight);
     return RESULT_FAIL;
   }
   
-  if(false == JsonTools::GetValueOptional(config, NeuralNets::JsonKeys::InputWidth, _processingWidth))
+  if(false == JsonTools::GetValueOptional(config, JsonKeys::InputWidth, _processingWidth))
   {
-    LOG_ERROR("IAsyncRunner.Init.MissingConfig", "%s", NeuralNets::JsonKeys::InputWidth);
+    LOG_ERROR("IAsyncRunner.Init.MissingConfig", "%s", JsonKeys::InputWidth);
     return RESULT_FAIL;
   }
-
+  
   _profiler.SetPrintFrequency(config.get("ProfilingPrintFrequency_ms", 10000).asUInt());
   _profiler.SetDasLogFrequency(config.get("ProfilingEventLogFrequency_ms", 10000).asUInt());
-
+  
   // Clear the cache of any stale images/results:
   Util::FileUtils::RemoveDirectory(_cachePath);
   Util::FileUtils::CreateDirectory(_cachePath);
 
-  // Note: right now we should assume that we only will be running
-  // one model. This is definitely going to change but until
-  // we know how we want to handle a bit more let's not worry about it.
-  if(JsonTools::GetValueOptional(config, NeuralNets::JsonKeys::VisualizationDir, _visualizationDirectory))
+  result = InitInternal(cachePath, config);
+  if(ANKI_VERIFY(RESULT_OK == result, "IAsyncRunner.Init.InitInternalFailed", ""))
   {
-    Util::FileUtils::CreateDirectory(Util::FileUtils::FullFilePath({_cachePath, _visualizationDirectory}));
+    _isInitialized = true;
   }
-
-  _isInitialized = true;
+  
   return result;
 }
 
@@ -162,13 +130,13 @@ bool IAsyncRunner::StartProcessingHelper()
   // We did start processing the given image
   return true;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IAsyncRunner::StartProcessingIfIdle(ImageCache& imageCache)
 {
   if(!_isInitialized)
   {
-    // This will spam the log, but only in the NeuralNets channel, plus it helps make it more obvious to a
+    // This will spam the log, but only in the logging channel, plus it helps make it more obvious to a
     // developer that something is wrong since it's easy to miss a model load failure (and associated error
     // in the log) at startup.
     //
@@ -199,7 +167,7 @@ bool IAsyncRunner::StartProcessingIfIdle(ImageCache& imageCache)
   // We were not idle, so did not start processing the new image
   return false;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IAsyncRunner::StartProcessingIfIdle(const Vision::ImageRGB& img)
 {
@@ -221,7 +189,7 @@ bool IAsyncRunner::StartProcessingIfIdle(const Vision::ImageRGB& img)
   // We were not idle, so did not start processing the new image
   return false;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IAsyncRunner::GetDetections(std::list<SalientPoint>& salientPoints)
 {
@@ -234,7 +202,7 @@ bool IAsyncRunner::GetDetections(std::list<SalientPoint>& salientPoints)
     {
       auto newSalientPoints = _future.get();
       std::copy(newSalientPoints.begin(), newSalientPoints.end(), std::back_inserter(salientPoints));
-
+      
       DEV_ASSERT(!_future.valid(), "IAsyncRunner.GetDetections.FutureStillValid");
       
       if(ANKI_DEV_CHEATS && IsVerbose())
@@ -258,86 +226,7 @@ bool IAsyncRunner::GetDetections(std::list<SalientPoint>& salientPoints)
   
   return false;
 }
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NeuralNetRunner::NeuralNetRunner(const std::string& modelPath)
-: _modelPath(modelPath)
-{
-  GetProfiler().SetProfileGroupName("NeuralNetRunner");
-}
- 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-NeuralNetRunner::~NeuralNetRunner()
-{
-  
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result NeuralNetRunner::InitInternal(const std::string& cachePath, const Json::Value& config)
-{
-  std::string modelTypeString;
-  if(JsonTools::GetValueOptional(config, NeuralNets::JsonKeys::ModelType, modelTypeString))
-  {
-    if(NeuralNets::JsonKeys::TFLiteModelType == modelTypeString)
-    {
-      _model.reset(new NeuralNets::TFLiteModel());
-    }
-    else if(NeuralNets::JsonKeys::OffboardModelType == modelTypeString)
-    {
-      _model.reset(new NeuralNets::OffboardModel(GetCachePath()));
-    }
-    else
-    {
-      LOG_ERROR("IAsyncRunner.Init.UnknownModelType", "%s", modelTypeString.c_str());
-      return RESULT_FAIL;
-    }
-  }
-  else
-  {
-    LOG_ERROR("IAsyncRunner.Init.MissingConfig", "%s", NeuralNets::JsonKeys::ModelType);
-    return RESULT_FAIL;
-  }
-  
-  GetProfiler().Tic("LoadModel");
-  Result result = _model->LoadModel(_modelPath, config);
-  GetProfiler().Toc("LoadModel");
-  
-  if(RESULT_OK != result)
-  {
-    LOG_ERROR("IAsyncRunner.Init.LoadModelFailed", "");
-    return result;
-  }
-  
-  PRINT_NAMED_INFO("IAsyncRunner.Init.LoadModelTime", "Loading model from '%s' took %.1fsec",
-                   _modelPath.c_str(), Util::MilliSecToSec(GetProfiler().AverageToc("LoadModel")));
-  
-  return result;
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool NeuralNetRunner::IsVerbose() const
-{
-  return _model->IsVerbose();
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::list<SalientPoint> NeuralNetRunner::Run(ImageRGB& img)
-{
-  Util::SetThreadName(pthread_self(), _model->GetName());
-  
-  std::list<SalientPoint> salientPoints;
-  
-  GetProfiler().Tic("Model.Detect");
-  Result result = _model->Detect(img, salientPoints);
-  GetProfiler().Toc("Model.Detect");
-  
-  if(RESULT_OK != result)
-  {
-    LOG_WARNING("IAsyncRunner.RunModel.ModelDetectFailed", "");
-  }
-  
-  return salientPoints;
-}
-  
+
 } // namespace Vision
 } // namespace Anki
+

@@ -22,14 +22,8 @@ namespace JsonKeys {
   
   const char* const NetworkName      = "networkName";
   const char* const GraphFile        = "graphFile";
-  const char* const InputHeight      = "inputHeight";
-  const char* const InputWidth       = "inputWidth";
   const char* const ModelType        = "modelType";
-  const char* const OffboardCommsType= "commsType";
-  const char* const OffboardProcType = "procType";
-  const char* const PollingPeriod    = "pollPeriod_ms";
   const char* const SalientPoints    = "salientPoints";
-  const char* const TimeoutDuration  = "timeoutDuration_sec";
   const char* const Verbose          = "verbose";
   const char* const VisualizationDir = "visualizationDirectory";
   

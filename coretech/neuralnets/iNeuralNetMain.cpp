@@ -28,7 +28,6 @@
 #include "clad/types/salientPointTypes.h"
 #include "coretech/common/engine/scopedTicToc.h"
 #include "coretech/neuralnets/iNeuralNetMain.h"
-#include "coretech/neuralnets/neuralNetFilenames.h"
 #include "coretech/neuralnets/neuralNetJsonKeys.h"
 #include "coretech/neuralnets/neuralNetModel_offboard.h"
 #include "coretech/vision/engine/image_impl.h"
@@ -241,7 +240,7 @@ Result INeuralNetMain::Run()
       // Is there an image file available in the cache?
       const std::string fullImagePath = (imageFileProvided ?
                                          _imageFilename :
-                                         Util::FileUtils::FullFilePath({_cachePath, networkName, Filenames::Image}));
+                                         Util::FileUtils::FullFilePath({_cachePath, networkName, OffboardModel::Filenames::Image}));
       
       const bool isImageAvailable = Util::FileUtils::FileExists(fullImagePath);
       
@@ -257,7 +256,7 @@ Result INeuralNetMain::Run()
         {
           ScopedTicToc ticToc("GetImage", LOG_CHANNEL);
           
-          const std::string timestampFilename = Util::FileUtils::FullFilePath({_cachePath, networkName, Filenames::Timestamp});
+          const std::string timestampFilename = Util::FileUtils::FullFilePath({_cachePath, networkName, OffboardModel::Filenames::Timestamp});
           
           GetImage(fullImagePath, timestampFilename, img);
           
@@ -326,7 +325,7 @@ Result INeuralNetMain::Run()
             break;
           }
           
-          const std::string jsonFilename = Util::FileUtils::FullFilePath({_cachePath, networkName, Filenames::Result});
+          const std::string jsonFilename = Util::FileUtils::FullFilePath({_cachePath, networkName, OffboardModel::Filenames::Result});
           if(neuralNet->IsVerbose())
           {
             LOG_INFO("INeuralNetMain.Run.MovingToFinalResults", "%s", jsonFilename.c_str());

@@ -25,9 +25,9 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "coretech/neuralnets/neuralNetJsonKeys.h"
+#include "coretech/neuralnets/neuralNetRunner.h"
 
 #include "coretech/vision/engine/imageCache.h"
-#include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "util/console/consoleSystem.h"
@@ -773,8 +773,8 @@ GTEST_TEST(NeuralNets, InitFromConfig)
   ASSERT_TRUE(allModelsConfig.isArray());
   for(const auto& modelConfig : allModelsConfig)
   {
-    Vision::NeuralNetRunner neuralNetRunner;
-    const Result loadRunnerResult = neuralNetRunner.Init(modelPath, dnnCachePath, modelConfig);
+    NeuralNets::NeuralNetRunner neuralNetRunner(modelPath);
+    const Result loadRunnerResult = neuralNetRunner.Init(dnnCachePath, modelConfig);
     ASSERT_EQ(RESULT_OK, loadRunnerResult);
     
     ASSERT_TRUE(modelConfig.isMember(NeuralNets::JsonKeys::GraphFile));
