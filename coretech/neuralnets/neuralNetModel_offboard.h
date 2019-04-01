@@ -27,9 +27,6 @@ namespace Json {
 namespace Anki {
 namespace Vision {
 
-// Someday we may want this to be an enumerated type
-using OffboardProcType = std::string;
-
 class OffboardProcessor
 {
 public:
@@ -37,12 +34,15 @@ public:
   OffboardProcessor(const std::string& cachePath);
   
   virtual ~OffboardProcessor() = default;
+
+  // Someday we may want this to be an enumerated type
+  using ProcType = std::string;
   
   struct Params
   {
     std::string                    name;
     OffboardCommsType              commsType;
-    std::vector<OffboardProcType>  procTypes;
+    std::vector<ProcType>          procTypes;
     int                            pollingPeriod_ms;
     float                          timeoutDuration_sec;
     
