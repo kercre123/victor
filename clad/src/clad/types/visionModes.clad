@@ -106,6 +106,7 @@ namespace Vector {
     DetectingBlinkAmount              = 1,
     CroppedFaceDetection              = 1,
     MinGainAutoExposure               = 1,
+    OffboardVision                    = 1,
 
     CyclingExposure                   = 0,
     CompositingImages                 = 0,
