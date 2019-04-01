@@ -27,6 +27,7 @@ class RAW10toRGB24: public Debayer::Op
 {
 public:
   RAW10toRGB24();
+  virtual ~RAW10toRGB24() = default;
   Result operator()(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const override;
   
 private:
@@ -37,6 +38,7 @@ class RAW10toY8: public Debayer::Op
 {
 public:
   RAW10toY8();
+  virtual ~RAW10toY8() = default;
   Result operator()(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const override;
   
 private:
