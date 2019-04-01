@@ -5,24 +5,100 @@
 #
 include(generate_clad)
 
-set(CLAD_SUBTREE_DIR "${CMAKE_SOURCE_DIR}/victor-clad")
-set(CLAD_BASE_DIR "${CLAD_SUBTREE_DIR}/tools/message-buffers")
-set(VICTOR_EMMITER_DIR "${CLAD_SUBTREE_DIR}/victorEmitters")
+set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/victor-clad/tools/message-buffers")
 set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
 set(CLAD_CPPLITE "${CLAD_EMITTER_DIR}/CPP_emitter.py")
 set(CLAD_HASH "${CLAD_EMITTER_DIR}/ASTHash_emitter.py")
+set(VICTOR_EMMITER_DIR "${CMAKE_SOURCE_DIR}/victor-clad/victorEmitters")
 
-set(CLAD_INCLUDES
-    "${CMAKE_CURRENT_SOURCE_DIR}/src"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../coretech/vision/clad_src"
+set(ENGINE_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/engine")
+set(ROBOT_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/robot")
+set(CLAD_CS_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladCSharp")
+set(CLAD_PY_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladPython")
+
+file(STRINGS "${ANKI_SRCLIST_DIR}/robot_clad.srcs.lst" ROBOT_SRCS)
+
+set(ENGINE_INCLUDES
+    "${CMAKE_SOURCE_DIR}/clad/src/"
+    "${CMAKE_SOURCE_DIR}/lib/util/source/anki/clad/"
+    "${CMAKE_SOURCE_DIR}/robot/clad/src/"
+    "${CMAKE_SOURCE_DIR}/coretech/vision/clad_src/"
+    "${CMAKE_SOURCE_DIR}/coretech/common/clad_src/"
 )
 
-# Path to helper scripts
-set(ROBOT_CLAD ${CMAKE_SOURCE_DIR}/robot/clad)
+set(CLAD_INCLUDES
+    "${CMAKE_SOURCE_DIR}/robot/clad/src"
+    "${CMAKE_SOURCE_DIR}/coretech/vision/clad_src"
+)
 
-#CLAD_CPP_DECL=../robot/clad/cozmo_CPP_declarations_emitter.py
-#CLAD_CPP_SWITCH=./cozmo_CPP_switch_emitter.py
-#CLAD_HASH=$(CLAD_EMITTER_DIR)/ASTHash_emitter.py
+set(ENGINE_CLAD_INCLUDES
+    "${CMAKE_SOURCE_DIR}/clad/src/"
+    "${CMAKE_SOURCE_DIR}/lib/util/source/anki/clad/"
+    "${CMAKE_SOURCE_DIR}/robot/clad/src/"
+    "${CMAKE_SOURCE_DIR}/coretech/vision/clad_src/"
+    "${CMAKE_SOURCE_DIR}/coretech/common/clad_src/"
+)
+
+generate_clad_cpp(
+    SRCS ${ROBOT_SRCS}
+    RELATIVE_SRC_DIR "src"
+    OUTPUT_DIR "${ENGINE_OUTPUT_DIR}"
+    INCLUDES "${ENGINE_CLAD_INCLUDES}"
+    OUTPUT_SRCS CLAD_CPP_GEN_ROBOT_SRCS
+)
+
+generate_clad_py(
+    TARGET "robot_clad_python"
+    SRCS ${ROBOT_SRCS}
+    RELATIVE_SRC_DIR "src"
+    OUTPUT_DIR "${CLAD_PY_OUTPUT_DIR}"
+    INCLUDES "${ENGINE_INCLUDES}"
+    OUTPUT_SRCS CLAD_PY_GEN_ROBOT_SRCS
+)
+
+generate_clad_cs(
+    TARGET "robot_clad_csharp"
+    SRCS ${ROBOT_SRCS}
+    RELATIVE_SRC_DIR "src"
+    OUTPUT_DIR "${CLAD_CS_OUTPUT_DIR}"
+    INCLUDES "${ENGINE_INCLUDES}"
+    OUTPUT_SRCS CLAD_CS_GEN_ROBOT_SRCS
+)
+
+file(STRINGS "${ANKI_SRCLIST_DIR}/robot_clad.headers.lst" ROBOT_HASH_SRCS)
+
+generate_clad(
+    SRCS "${ROBOT_HASH_SRCS}"
+    RELATIVE_SRC_DIR "src"
+    OUTPUT_DIR "${ENGINE_OUTPUT_DIR}"
+    OUTPUT_FILE true
+    EMITTER "${CLAD_HASH}"
+    OUTPUT_EXTS "_hash.h"
+    INCLUDES "${ENGINE_INCLUDES}"
+    OUTPUT_SRCS CLAD_HASH_GEN_ROBOT_SRCS
+)
+
+add_library(robot_clad STATIC
+    ${CLAD_CPP_GEN_ROBOT_SRCS}
+    ${CLAD_HASH_GEN_ROBOT_SRCS}
+)
+
+target_include_directories(robot_clad
+    PUBLIC
+    $<BUILD_INTERFACE:${ENGINE_OUTPUT_DIR}>
+)
+
+target_compile_definitions(robot_clad
+  PUBLIC
+  USES_CLAD
+)
+
+target_link_libraries(robot_clad
+    cti_vision_clad
+    clad
+)
+
+anki_build_target_license(robot_clad "ANKI")
 
 set(CLAD_CPPLITE_NS_FLAG "")
 
@@ -33,14 +109,10 @@ set(CLAD_CPPLITE_FLAGS
     --max-message-size 1400
     ${CLAD_CPPLITE_NS_FLAG})
 
-set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/robot")
-
-file(STRINGS "${ANKI_SRCLIST_DIR}/robot_clad_embedded.srcs.lst" ROBOT_SRCS)
-
 generate_clad_cpplite(
     SRCS ${ROBOT_SRCS}
     RELATIVE_SRC_DIR "src"
-    OUTPUT_DIR "${OUTPUT_DIR}"
+    OUTPUT_DIR "${ROBOT_OUTPUT_DIR}"
     FLAGS "${CLAD_CPPLITE_FLAGS}"
     INCLUDES "${CLAD_INCLUDES}"
     OUTPUT_SRCS CLAD_CPP_GEN_ROBOT_SRCS
@@ -51,12 +123,12 @@ generate_clad_cpplite(
 #
 set(CLAD_UNION_EMITTER_SRCS "")
 
-file(STRINGS "${ANKI_SRCLIST_DIR}/robot_clad_embedded.headers.lst" ROBOT_UNION_SRCS)
+file(STRINGS "${ANKI_SRCLIST_DIR}/robot_clad.headers.lst" ROBOT_UNION_SRCS)
 
 generate_clad(
     SRCS "${ROBOT_UNION_SRCS}"
     RELATIVE_SRC_DIR "src"
-    OUTPUT_DIR "${OUTPUT_DIR}"
+    OUTPUT_DIR "${ROBOT_OUTPUT_DIR}"
     OUTPUT_FILE true
     EMITTER "${CLAD_HASH}"
     OUTPUT_EXTS "_hash.h"
@@ -76,7 +148,7 @@ set(CLAD_CPP_DECL_EXTS "_declarations.def")
 generate_clad(
     SRCS "${ROBOT_UNION_SRCS}"
     RELATIVE_SRC_DIR "src"
-    OUTPUT_DIR "${OUTPUT_DIR}"
+    OUTPUT_DIR "${ROBOT_OUTPUT_DIR}"
     EMITTER ${CLAD_CPP_DECL}
     OUTPUT_EXTS ${CLAD_CPP_DECL_EXTS}
     INCLUDES "${CLAD_INCLUDES}"
@@ -95,7 +167,7 @@ set(CLAD_CPP_SWITCH_EXTS "_switch.def")
 generate_clad(
     SRCS "${ROBOT_UNION_SRCS}"
     RELATIVE_SRC_DIR "src"
-    OUTPUT_DIR "${OUTPUT_DIR}"
+    OUTPUT_DIR "${ROBOT_OUTPUT_DIR}"
     EMITTER ${CLAD_CPP_SWITCH}
     OUTPUT_EXTS ${CLAD_CPP_SWITCH_EXTS}
     INCLUDES "${CLAD_INCLUDES}"
@@ -119,7 +191,7 @@ set(CLAD_CPP_SWITCH_SUPERVISOR_FLAGS
 generate_clad(
     SRCS "${ROBOT_UNION_SRCS}"
     RELATIVE_SRC_DIR "src"
-    OUTPUT_DIR "${OUTPUT_DIR}"
+    OUTPUT_DIR "${ROBOT_OUTPUT_DIR}"
     EMITTER ${CLAD_CPP_SWITCH}
     OUTPUT_EXTS ${CLAD_CPP_SWITCH_SUPERVISOR_EXTS}
     FLAGS ${CLAD_CPP_SWITCH_SUPERVISOR_FLAGS}
@@ -144,7 +216,7 @@ set(CLAD_CPP_SWITCH_ANIM_FLAGS
 generate_clad(
     SRCS "${ROBOT_UNION_SRCS}"
     RELATIVE_SRC_DIR "src"
-    OUTPUT_DIR "${OUTPUT_DIR}"
+    OUTPUT_DIR "${ROBOT_OUTPUT_DIR}"
     EMITTER ${CLAD_CPP_SWITCH}
     OUTPUT_EXTS ${CLAD_CPP_SWITCH_ANIM_EXTS}
     FLAGS ${CLAD_CPP_SWITCH_ANIM_FLAGS}
@@ -164,7 +236,7 @@ set(CLAD_CPP_SEND_HELPER_EXTS "_send_helper.h")
 generate_clad(
     SRCS "${ROBOT_UNION_SRCS}"
     RELATIVE_SRC_DIR "src"
-    OUTPUT_DIR "${OUTPUT_DIR}"
+    OUTPUT_DIR "${ROBOT_OUTPUT_DIR}"
     EMITTER ${CLAD_CPP_SEND_HELPER}
     OUTPUT_EXTS ${CLAD_CPP_SEND_HELPER_EXTS}
     INCLUDES "${CLAD_INCLUDES}"
@@ -183,7 +255,7 @@ set(CLAD_CPP_A2R_HELPER_EXTS "_sendAnimToRobot_helper.h")
 generate_clad(
     SRCS "${ROBOT_UNION_SRCS}"
     RELATIVE_SRC_DIR "src"
-    OUTPUT_DIR "${OUTPUT_DIR}"
+    OUTPUT_DIR "${ROBOT_OUTPUT_DIR}"
     EMITTER ${CLAD_CPP_A2R_HELPER}
     OUTPUT_EXTS ${CLAD_CPP_A2R_HELPER_EXTS}
     INCLUDES "${CLAD_INCLUDES}"
@@ -202,7 +274,7 @@ set(CLAD_CPP_A2E_HELPER_EXTS "_sendAnimToEngine_helper.h")
 generate_clad(
     SRCS "${ROBOT_UNION_SRCS}"
     RELATIVE_SRC_DIR "src"
-    OUTPUT_DIR "${OUTPUT_DIR}"
+    OUTPUT_DIR "${ROBOT_OUTPUT_DIR}"
     EMITTER ${CLAD_CPP_A2E_HELPER}
     OUTPUT_EXTS ${CLAD_CPP_A2E_HELPER_EXTS}
     INCLUDES "${CLAD_INCLUDES}"
