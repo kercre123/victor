@@ -8,5 +8,8 @@
   "disableCliffDetection": true,
   
   "driveOffChargerBehavior": "DriveOffChargerStraight",
-  "findAndGoToHomeBehavior": "FindAndGoToHome"
+  "findAndGoToHomeBehavior": "FindAndGoToHome",
+  "findFacesBehavior": "ObservingFindFaces",
+  "lookAroundInPlaceBehavior": "ShortLookAroundForFaceAndCube",
+  "rollBlockBehavior": "PlayRollBlock"
 }

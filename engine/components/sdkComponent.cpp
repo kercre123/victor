@@ -26,6 +26,7 @@
 
 #include "engine/ankiEventUtil.h"
 #include "engine/components/sdkComponent.h"
+#include "engine/components/settingsManager.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
@@ -105,6 +106,7 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamChunk, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamComplete, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamCancel, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kMasterVolumeRequest, callback));
   }
 
   auto* context = _robot->GetContext();
@@ -505,6 +507,12 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
       }
       break;
 
+    case external_interface::GatewayWrapperTag::kMasterVolumeRequest:
+      {
+        SetMasterVolume(event);
+      }
+      break;
+
     default:
       _robot->GetRobotEventHandler().HandleMessage(event);
       break;
@@ -715,6 +723,34 @@ void SDKComponent::HandleAudioStreamCancelRequest(const AnkiEvent<external_inter
     LOG_ERROR("SDKComponent.HandleAudioStreamCancelRequest", "SDK Send Audio Stream Cancel Message to Robot failed");
     return;
   }
+}
+
+void SDKComponent::SetMasterVolume(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  auto* gi = _robot->GetGatewayInterface();
+  external_interface::MasterVolumeRequest request = event.GetData().master_volume_request();
+
+  //set the volume level
+  unsigned int desiredVolume = (unsigned int) request.volume_level();
+  if (desiredVolume <= 4) {
+    desiredVolume += 1; //we don't allow MUTE, so our SDK enum is 1 lower
+    auto* settings = _robot->GetComponentPtr<SettingsManager>();
+    bool ignoredDueToNoChange;
+    const bool success = settings->SetRobotSetting(external_interface::RobotSetting::master_volume,
+                                                   desiredVolume,
+                                                   true,
+                                                   ignoredDueToNoChange);
+    if (success || ignoredDueToNoChange) {
+      auto* msg = new external_interface::MasterVolumeResponse(new external_interface::ResponseStatus(external_interface::ResponseStatus::OK));
+      gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+      return;
+    } 
+  } 
+
+  //Bad volume or failed to set:  Send result
+  LOG_ERROR("SDKComponent::SetMasterVolume","Failed to change volume.");
+  auto* msg = new external_interface::MasterVolumeResponse(new external_interface::ResponseStatus(external_interface::ResponseStatus::FORBIDDEN));
+  gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
 }
 
 void SDKComponent::DispatchSDKActivationResult(bool enabled, uint64_t connectionId) {

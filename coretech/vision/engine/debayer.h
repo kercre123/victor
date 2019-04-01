@@ -137,6 +137,7 @@ public:
    */
   struct Op
   {
+    virtual ~Op() = default;
     virtual Result operator()(const InArgs& inArgs, OutArgs& outArgs) const = 0;
   };
 
@@ -144,6 +145,8 @@ public:
    * @brief Debayer constructor, registers default debayer operators.
    */
   Debayer();
+
+  virtual ~Debayer() = default;
 
   /**
    * @brief Invoke debayering, return Anki::Result::RESULT_SUCCESS on success and Anki::Result::RESULT_FAIL otherwise.

@@ -51,7 +51,7 @@ public:
   // Blocking call! Use an IAsyncRunner if you want asynchronous running
   Result Detect(ImageRGB& img, std::list<SalientPoint>& salientPoints);
   
-  // Use these in stead of hard-coded strings to refer to the underlying files and
+  // Use these instead of hard-coded strings to refer to the underlying files and
   // Json keys used by an OffboardProcessor
   struct Filenames {
     static const char* const Timestamp;
