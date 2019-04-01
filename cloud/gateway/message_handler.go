@@ -2861,9 +2861,9 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/error"); err == nil {
-		// The script uses the current software version to generate a url. When that url exists, the file contains-
-		// the .ota that will go from the bot's current version to the latest available. If that file doesn't exist, it's
-		// because the bot's current version is the latest.
+		// The script uses the current software version to generate a url. When that url exists, it contains the .ota that
+		// will take the bot from its current version to the latest available. If that file doesn't exist, it's because the
+		// bot's current version is the latest.
 		if string(data) == "Failed to open URL: HTTP Error 403: Forbidden" {
 			return update_status, nil
 		}
