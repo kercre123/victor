@@ -1,9 +1,8 @@
 {
 	"jdocs": "jdocs-dev.api.anki.com:443",
 	"tms": "token-dev.api.anki.com:443",
-	"chipper": "chipper-dev-pr-201807.api.anki.com:443",
+	"chipper": "chipper-dev.api.anki.com:443",
 	"check": "conncheck.global.anki-dev-services.com/ok",
 	"logfiles": "s3://anki-device-logs-dev/victor",
-	"appkey": "xiepae8Ach2eequiphee4U",
-	"offboard_vision": "192.168.40.102:16643"
+	"appkey": "xiepae8Ach2eequiphee4U"
 }
