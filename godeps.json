@@ -11,9 +11,9 @@
     "commit": "bdb0727fa72e9f94e0b23df2b8c17561956811cd",
     "branch": "master"
   },
- "github.com/anki/sai-chipper-voice": {
-    "commit": "df67d5f38e5a1bc4392abfc2792242707d0daeef",
-    "branch": "offboard-vision"
+  "github.com/anki/sai-chipper-voice": {
+    "commit": "6d5672a668c4c1e67316ae1586347b7f94e65f67",
+    "branch": "active"
   },
   "github.com/golang/protobuf": {
     "commit": "b4deda0973fb4c70b50d226b1af49f3da59f5265",
