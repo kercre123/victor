@@ -9,12 +9,10 @@ import sys
 import textwrap
 
 def _modify_path():
-    currentpath = os.path.dirname(inspect.getfile(inspect.currentframe()))
-    searchpath = os.path.normpath(os.path.abspath(os.path.join(currentpath, '..', '..')))
-    searchpath = os.path.normpath(os.path.abspath(os.path.realpath(searchpath)))
-    if searchpath not in sys.path:
-        sys.path.insert(0, searchpath)
-    sys.path.insert(0, os.path.join(currentpath, '..', 'tools', 'message-buffers'))
+    message_buffers_path = os.path.join(os.path.dirname(__file__), '..', '..', 'victor-clad', 'tools', 'message-buffers')
+    if message_buffers_path not in sys.path:
+        sys.path.insert(0, message_buffers_path)
+
 _modify_path()
 
 from clad import ast
