@@ -15,7 +15,7 @@
 #include "coretech/messaging/shared/LocalUdpClient.h"
 #include "coretech/messaging/shared/socketConstants.h"
 
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/offboardProcessor.h"
 #include "coretech/vision/engine/parseSalientPointsFromJson.h"
 

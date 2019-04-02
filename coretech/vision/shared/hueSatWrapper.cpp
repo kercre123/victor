@@ -13,7 +13,7 @@
 
 
 #include "coretech/vision/shared/hueSatWrapper.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 
 namespace Anki {
 namespace Vision {

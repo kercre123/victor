@@ -9,13 +9,13 @@
  * Copyright: Anki, Inc. 2018
  **/
 
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/polygon_impl.h"
-#include "coretech/common/shared/math/rect_impl.h"
+#include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/shared/math/rect.h"
 #include "coretech/neuralnets/neuralNetJsonKeys.h"
 #include "coretech/neuralnets/neuralNetModel_interface.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"

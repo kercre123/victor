@@ -15,7 +15,7 @@
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/profiler.h"
 
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/engine/jsonTools.h"
 
 #include "util/console/consoleInterface.h"

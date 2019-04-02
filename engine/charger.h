@@ -14,7 +14,7 @@
 #define ANKI_COZMO_BASESTATION_CHARGER_H
 
 #include "coretech/common/engine/math/pose.h"
-#include "coretech/common/engine/math/quad.h"
+#include "coretech/common/engine/math/quad_fwd.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 
 #include "coretech/vision/engine/observableObject.h"

@@ -13,8 +13,8 @@
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 
 #include "coretech/common/engine/math/fastPolygon2d.h"
-#include "coretech/common/engine/math/polygon_impl.h"
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/engine/math/quad.h"
 
 #include <vector>
 

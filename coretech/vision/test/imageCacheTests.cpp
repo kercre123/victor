@@ -2,7 +2,7 @@
 
 #include "coretech/common/shared/types.h"
 
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/imageBuffer/imageBuffer.h"
 #include "coretech/vision/engine/imageCache.h"
 

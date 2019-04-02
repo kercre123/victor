@@ -11,9 +11,9 @@
  **/
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 #include "engine/vision/mirrorModeManager.h"
 #include "engine/vision/visionModesHelpers.h"
 #include "engine/vision/visionSystem.h"

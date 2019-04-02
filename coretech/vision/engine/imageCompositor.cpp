@@ -15,7 +15,7 @@
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/imageBrightnessHistogram.h"
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "util/console/consoleInterface.h"
 #include <algorithm>
 #include <limits>

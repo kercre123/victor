@@ -12,7 +12,7 @@
 #ifndef __Anki_NeuralNets_NeuralNetModel_Interface_H__
 #define __Anki_NeuralNets_NeuralNetModel_Interface_H__
 
-#include "coretech/common/shared/array2d.h"
+#include "coretech/common/shared/array2d_fwd.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/neuralnets/neuralNetParams.h"
 #include "coretech/vision/engine/image.h"

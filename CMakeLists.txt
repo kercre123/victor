@@ -139,8 +139,8 @@ set(OKAO_VISION_DIR "${CMAKE_CURRENT_SOURCE_DIR}/okaoVision")
 
 set(ANKI_SRCLIST_DIR "${CMAKE_SOURCE_DIR}/generated/cmake")
 
-set(CLAD_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/victor-clad/tools/message-buffers")
-set(CLAD_VICTOR_EMITTER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/victor-clad/victorEmitters")
+set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/victor-clad/tools/message-buffers")
+set(CLAD_VICTOR_EMITTER_DIR "${CMAKE_SOURCE_DIR}/victor-clad/victorEmitters")
 add_subdirectory("victor-clad") # includes clad via message-buffers
 
 # Current DEFAULT (android or mac platforms)

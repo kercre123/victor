@@ -12,7 +12,7 @@
  **/
 
 #include "coretech/common/shared/types.h"
-#include "coretech/common/shared/array2d.h"
+#include "coretech/common/shared/array2d_fwd.h"
 
 #include <map>
 #include <memory>

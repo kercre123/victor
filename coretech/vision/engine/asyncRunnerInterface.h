@@ -4,7 +4,7 @@
  * Author: Andrew Stein
  * Date:   4/1/2019
  *
- * Description: Interface for running a detection test asynchronously. The usage model on each update tick is:
+ * Description: Interface for running a detection task asynchronously. The usage model on each update tick is:
  *               - poll for any new "detections", in the form of SalientPoints, and then
  *               - start processing a new image if idle
  *              Images are provided to the asynchronous processor at "processing" resolution defined by Json config.
@@ -18,7 +18,7 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/profiler.h"
-#include "coretech/vision/engine/image.h"
+#include "coretech/vision/engine/image_fwd.h"
 
 #include <future>
 #include <list>
@@ -31,7 +31,6 @@ namespace Vision {
 
 // Forward delcarations
 class ImageCache;
-class ImageRGB;
   
 class IAsyncRunner
 {

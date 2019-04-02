@@ -11,8 +11,8 @@
 
 #include "clad/types/salientPointTypes.h"
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/shared/math/rect_impl.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/shared/math/rect.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/vision/engine/offboardProcessor.h"
 #include "coretech/vision/engine/parseSalientPointsFromJson.h"
 

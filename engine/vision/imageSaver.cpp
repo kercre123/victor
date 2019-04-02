@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2018
  **/
 
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/engine/scopedTicToc.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/imageCache.h"

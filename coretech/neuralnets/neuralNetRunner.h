@@ -20,7 +20,6 @@
 #include "coretech/common/shared/types.h"
 
 #include "coretech/vision/engine/asyncRunnerInterface.h"
-#include "coretech/vision/engine/image.h"
 
 #include <list>
 
@@ -33,6 +32,7 @@ namespace Anki {
 
 // Forward declarations:
 namespace Vision {
+  class ImageRGB;
   class ImageCache;
   struct SalientPoint;
 }

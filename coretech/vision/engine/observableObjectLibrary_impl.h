@@ -19,7 +19,7 @@
 
 #include "coretech/common/engine/exceptions.h"
 #include "coretech/common/engine/math/pose.h"
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/quad.h"
 
 namespace Anki {
 namespace Vision {

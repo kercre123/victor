@@ -9,23 +9,20 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#include "coretech/common/engine/math/polygon_impl.h"
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/engine/math/quad.h"
 #include "coretech/vision/engine/cameraCalibration.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
 #include "util/helpers/boundedWhile.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 
-#if ANKICORETECH_USE_OPENCV
 #include "opencv2/core.hpp"
 #include "opencv2/imgproc.hpp"
 #include "opencv2/highgui.hpp"
 #include "image.h"
-
-#endif
 
 #include <fstream>
 

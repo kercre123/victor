@@ -13,7 +13,7 @@
 
 #include "coretech/vision/engine/asyncRunnerInterface.h"
 #include "coretech/vision/engine/imageCache.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
@@ -136,7 +136,7 @@ bool IAsyncRunner::StartProcessingIfIdle(ImageCache& imageCache)
 {
   if(!_isInitialized)
   {
-    // This will spam the log, but only in the logging channel, plus it helps make it more obvious to a
+    // This will spam the log, but only in the LOG_CHANNEL channel, plus it helps make it more obvious to a
     // developer that something is wrong since it's easy to miss a model load failure (and associated error
     // in the log) at startup.
     //

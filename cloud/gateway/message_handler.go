@@ -937,6 +937,29 @@ func (service *rpcService) SetFaceToEnroll(ctx context.Context, in *extint.SetFa
 	}, nil
 }
 
+func (service *rpcService) EnrollFace(ctx context.Context, in *extint.EnrollFaceRequest) (*extint.EnrollFaceResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_EnrollFaceResponse{}, 1)
+	defer f()
+
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_EnrollFaceRequest{
+			EnrollFaceRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	enrollFaceResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := enrollFaceResponse.GetEnrollFaceResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
 func isMember(needle string, haystack []string) bool {
 	for _, word := range haystack {
 		if word == needle {

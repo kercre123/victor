@@ -27,7 +27,7 @@
 
 #include "coretech/common/shared/math/matrix.h"
 #include "coretech/common/shared/math/point.h"
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 
 #include <ostream>
 #include <cstdio>

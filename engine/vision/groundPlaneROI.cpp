@@ -13,7 +13,7 @@
 
 #include "engine/vision/groundPlaneROI.h"
 
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/quad.h"
 #include "coretech/common/shared/math/matrix_impl.h"
 
 #include "opencv2/core/core.hpp"

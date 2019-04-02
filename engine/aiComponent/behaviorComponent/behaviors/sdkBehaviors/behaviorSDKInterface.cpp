@@ -38,6 +38,7 @@ const char* const kFindAndGoToHomeBehaviorKey = "findAndGoToHomeBehavior";
 const char* const kFindFacesBehaviorKey = "findFacesBehavior";
 const char* const kLookAroundInPlaceBehaviorKey = "lookAroundInPlaceBehavior";
 const char* const kRollBlockBehaviorKey = "rollBlockBehavior";
+const char* const kEnrollFaceBehaviorKey = "enrollFaceBehavior";
 
 
 /* UserIntents that the SDK can relay to the user
@@ -121,6 +122,7 @@ BehaviorSDKInterface::BehaviorSDKInterface(const Json::Value& config)
   _iConfig.findFacesBehaviorStr = JsonTools::ParseString(config, kFindFacesBehaviorKey, debugName);
   _iConfig.lookAroundInPlaceBehaviorStr = JsonTools::ParseString(config, kLookAroundInPlaceBehaviorKey, debugName);
   _iConfig.rollBlockBehaviorStr = JsonTools::ParseString(config, kRollBlockBehaviorKey, debugName);
+  _iConfig.enrollFaceBehaviorStr = JsonTools::ParseString(config, kEnrollFaceBehaviorKey, debugName);
 
   SubscribeToTags({
     EngineToGameTag::RobotCompletedAction,
@@ -132,6 +134,7 @@ BehaviorSDKInterface::BehaviorSDKInterface(const Json::Value& config)
     AppToEngineTag::kFindFacesRequest,
     AppToEngineTag::kLookAroundInPlaceRequest,
     AppToEngineTag::kRollBlockRequest,
+    AppToEngineTag::kEnrollFaceRequest,
   });
 }
 
@@ -161,6 +164,7 @@ void BehaviorSDKInterface::GetAllDelegates(std::set<IBehavior*>& delegates) cons
   delegates.insert(_iConfig.findFacesBehavior.get());
   delegates.insert(_iConfig.lookAroundInPlaceBehavior.get());
   delegates.insert(_iConfig.rollBlockBehavior.get());
+  delegates.insert(_iConfig.enrollFaceBehavior.get());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -186,6 +190,10 @@ void BehaviorSDKInterface::InitBehavior()
   _iConfig.rollBlockBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.rollBlockBehaviorStr));
   DEV_ASSERT(_iConfig.rollBlockBehavior != nullptr,
              "BehaviorSDKInterface.InitBehavior.NullRollBlockBehavior");
+
+  _iConfig.enrollFaceBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.enrollFaceBehaviorStr));
+  DEV_ASSERT(_iConfig.enrollFaceBehavior != nullptr,
+             "BehaviorSDKInterface.InitBehavior.NullEnrollFaceBehavior");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -199,6 +207,7 @@ void BehaviorSDKInterface::GetBehaviorJsonKeys(std::set<const char*>& expectedKe
     kFindFacesBehaviorKey,
     kLookAroundInPlaceBehaviorKey,
     kRollBlockBehaviorKey,
+    kEnrollFaceBehaviorKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -346,6 +355,16 @@ void BehaviorSDKInterface::HandleRollBlockComplete() {
   }
 }
 
+void BehaviorSDKInterface::HandleEnrollFaceComplete() {
+  SetAllowExternalMovementCommands(true);
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* enrollFaceResponse = new external_interface::EnrollFaceResponse;
+    enrollFaceResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(enrollFaceResponse) );
+  }
+}
+
 // Reports back to gateway that requested actions have been completed.
 // E.g., the Python SDK ran play_animation and wants to know when the animation
 // action was completed.
@@ -399,6 +418,10 @@ void BehaviorSDKInterface::HandleWhileActivated(const AppToEngineEvent& event) {
 
     case external_interface::GatewayWrapperTag::kRollBlockRequest:
       RollBlockRequest(event.GetData().roll_block_request());
+      break;
+
+    case external_interface::GatewayWrapperTag::kEnrollFaceRequest:
+      EnrollFaceRequest(event.GetData().enroll_face_request());
       break;
 
     default:
@@ -510,5 +533,24 @@ void BehaviorSDKInterface::RollBlockRequest(const external_interface::RollBlockR
   }
 }
 
+// Delegate to the EnrollFace behavior
+void BehaviorSDKInterface::EnrollFaceRequest(const external_interface::EnrollFaceRequest& enrollFaceRequest) {
+  if (_iConfig.enrollFaceBehavior->WantsToBeActivated()) {
+    LOG_ERROR("BehaviorSDKInterface::EnrollFaceRequest", "Delegating to EnrollFace behavior");
+    if (DelegateIfInControl(_iConfig.enrollFaceBehavior.get(), &BehaviorSDKInterface::HandleEnrollFaceComplete)) {
+      SetAllowExternalMovementCommands(false);
+      return;
+    }
+  }
+
+  // If we got this far, we failed to activate the requested behavior.
+  LOG_ERROR("BehaviorSDKInterface::EnrollFaceRequest", "Behavior did not want to be activated/delegated");
+  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+  if( gi != nullptr ) {
+    auto* enrollFaceResponse = new external_interface::EnrollFaceResponse;
+    enrollFaceResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(enrollFaceResponse) );
+  }
+}
 } // namespace Vector
 } // namespace Anki

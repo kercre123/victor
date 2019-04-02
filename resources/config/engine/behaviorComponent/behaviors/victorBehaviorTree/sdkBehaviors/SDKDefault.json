@@ -11,5 +11,7 @@
   "findAndGoToHomeBehavior": "FindAndGoToHome",
   "findFacesBehavior": "ObservingFindFaces",
   "lookAroundInPlaceBehavior": "ShortLookAroundForFaceAndCube",
-  "rollBlockBehavior": "PlayRollBlock"
+  "rollBlockBehavior": "PlayRollBlock",
+  "enrollFaceBehavior": "MeetVictor"
+
 }

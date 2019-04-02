@@ -35,6 +35,7 @@ STATUS_DIR = "/run/update-engine"
 EXPECTED_DOWNLOAD_SIZE_FILE = os.path.join(STATUS_DIR, "expected-download-size")
 EXPECTED_WRITE_SIZE_FILE = os.path.join(STATUS_DIR, "expected-size")
 PROGRESS_FILE = os.path.join(STATUS_DIR, "progress")
+PHASE_FILE = os.path.join(STATUS_DIR, "phase")
 ERROR_FILE = os.path.join(STATUS_DIR, "error")
 DONE_FILE = os.path.join(STATUS_DIR, "done")
 MANIFEST_FILE = os.path.join(STATUS_DIR, "manifest.ini")
@@ -410,6 +411,12 @@ def copy_slot(partition, src_slot, dst_slot):
                 buffer = src.read(DD_BLOCK_SIZE)
             dst.write(buffer)
 
+def get_file_size(filename):
+    fd = os.open(filename, os.O_RDONLY)
+    try:
+        return os.lseek(fd, 0, os.SEEK_END)
+    finally:
+        os.close(fd)
 
 def handle_delta(current_slot, target_slot, manifest, tar_stream):
     "Apply a delta update to the boot and system partitions"
@@ -418,7 +425,7 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
     if current_version != delta_base_version:
         die(211, "My version is {} not {}".format(current_version, delta_base_version))
     delta_bytes = manifest.getint("DELTA", "bytes")
-    download_progress_denominator = 4  # Download expected not to take more than 25% of the time
+    download_progress_denominator = 10  # Download expected not to take more than 10% of the time
     write_status(EXPECTED_WRITE_SIZE_FILE, delta_bytes*download_progress_denominator)
     write_status(PROGRESS_FILE, 0)
 
@@ -442,7 +449,19 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
         payload.Init()
 
         # Update progress estimate
-        num_operations = len(payload.manifest.install_operations) + len(payload.manifest.kernel_install_operations)
+        # Assume each 1 megabyte of copied or hashed data from the eMMC is equivalent
+        # to 1 operation in addition to the operations necessary to transform the
+        # system and boot partitions
+        block_size = 1024 * 1024
+        num_operations = ( (payload.manifest.old_rootfs_info.size / block_size)
+                           + (payload.manifest.old_kernel_info.size / block_size)
+                           + (get_file_size(get_slot_name("system", current_slot)) / block_size)
+                           + (get_file_size(get_slot_name("boot", current_slot)) / block_size)
+                           + len(payload.manifest.install_operations)
+                           + len(payload.manifest.kernel_install_operations)
+                           + (payload.manifest.new_rootfs_info.size / block_size)
+                           + (payload.manifest.new_kernel_info.size / block_size))
+
         progress = (num_operations + 1) / (download_progress_denominator - 1)
         num_operations += progress
         write_status(PROGRESS_FILE, progress)
@@ -460,6 +479,7 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
                 yield
 
         payload.progress_tick_callback = progress_ticker(progress, num_operations)
+        payload.phase_callback = lambda phase: write_status(PHASE_FILE, phase)
         payload.Apply(get_slot_name("boot", target_slot),
                       get_slot_name("system", target_slot),
                       get_slot_name("boot", current_slot),
@@ -552,6 +572,7 @@ def validate_new_os_version(current_os_version, new_os_version, cmdline):
 
 def update_from_url(url):
     "Updates the inactive slot from the given URL"
+    write_status(PHASE_FILE, "download")
     # Figure out slots
     cmdline = get_cmdline()
     current_slot, target_slot = get_slot(cmdline)
@@ -643,6 +664,7 @@ def update_from_url(url):
             die(202, "Could not set b slot as unbootable")
     safe_delete(ERROR_FILE)
     write_status(DONE_FILE, 1)
+    write_status(PHASE_FILE, "done")
     das_event("robot.ota_download_end", ["success", next_boot_os_version])
     if reboot_after_install:
         os.system("/sbin/reboot")

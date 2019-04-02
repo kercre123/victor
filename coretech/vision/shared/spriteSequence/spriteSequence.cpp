@@ -10,7 +10,7 @@
  **/
 
 #include "coretech/vision/shared/spriteSequence/spriteSequence.h"
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/image.h"
 

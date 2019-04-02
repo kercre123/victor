@@ -15,7 +15,6 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/image.h"
-#include "coretech/vision/engine/image_impl.h"
 #include "clad/types/actionTypes.h"
 #include "clad/types/behaviorComponent/behaviorIDs.h"
 #include "clad/types/ledTypes.h"

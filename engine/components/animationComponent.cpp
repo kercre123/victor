@@ -26,7 +26,7 @@
 
 #include "cannedAnimLib/cannedAnims/animation.h"
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/shared/compositeImage/compositeImage.h"

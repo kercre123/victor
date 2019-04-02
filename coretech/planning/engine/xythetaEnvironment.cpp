@@ -11,8 +11,8 @@
  **/
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/polygon_impl.h"
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/engine/math/quad.h"
 #include "coretech/common/engine/math/rotatedRect.h"
 #include "coretech/common/shared/math/radians.h"
 #include "coretech/common/shared/utilities_shared.h"
