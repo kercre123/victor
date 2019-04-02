@@ -332,16 +332,6 @@ u32 CliffSensorComponent::GetDurationForAtMostNCliffDetections_ms(const int numC
   return maxDuration_ms;
 }
 
-
-u32 CliffSensorComponent::GetTimeSinceNCliffsLastDetected_ms(const int numCliffs) const
-{
-  DEV_ASSERT(numCliffs >= 0 && numCliffs <= kNumCliffSensors,
-             "CliffSensorComponent.GetDurationForAtLeastNCliffDetections.InvalidNumCliffs");
-  
-  const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  return currTime - _cliffLastDetectedTimes_ms[numCliffs];
-}
-
 bool CliffSensorComponent::GetCliffPoseRelativeToRobot(const uint8_t cliffDetectedFlags, Pose3d& relativePose) const
 {
   // The cliff pose depends on which cliff sensors were tripped

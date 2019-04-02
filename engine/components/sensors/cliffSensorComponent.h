@@ -137,9 +137,6 @@ public:
   // Returns the amount of time that @param numCliff or fewer cliffs have been detected for.
   // (Returns MAX_UINT for numCliffs == 4)
   u32 GetDurationForAtMostNCliffDetections_ms(const int numCliffs) const;
-
-  // Returns the amount of time since exactly @param numCliffs cliffs were last detected
-  u32 GetTimeSinceNCliffsLastDetected_ms(const int numCliffs) const;
     
   int GetNumCliffsDetected() const { return _latestNumCliffsDetected; }
 
