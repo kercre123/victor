@@ -3,21 +3,8 @@
 <p>Congrats! If you've loaded this, the cloud process is not dead.</p>
 <p>
 <ul>
-	<li><a href="connect.html">Connect tests</a></li>
-	<li><a href="debug/pprof/">pprof index</a></li>
-	<li><a href="cvars">Console variables</a></li>
+    <li><a href="connect.html">Connect tests</a></li>
+    <li><a href="debug/pprof/">pprof index</a></li>
 </ul>
-
-{{if .}}
-	<ul>
-		{{range .}}
-			<li><a href="{{index . 0}}">{{index . 0}}</a>
-			{{if gt (len .) 1}}
-				- {{index . 1}}
-			{{end}}
-			</li>
-		{{end}}
-	</ul>
-{{end}}
 </p>
 </html>
