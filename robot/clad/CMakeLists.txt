@@ -13,7 +13,6 @@ set(VICTOR_EMMITER_DIR "${CMAKE_SOURCE_DIR}/victor-clad/victorEmitters")
 
 set(ENGINE_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/engine")
 set(ROBOT_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/robot")
-set(CLAD_CS_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladCSharp")
 set(CLAD_PY_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladPython")
 
 file(STRINGS "${ANKI_SRCLIST_DIR}/robot_clad.srcs.lst" ROBOT_SRCS)
@@ -54,15 +53,6 @@ generate_clad_py(
     OUTPUT_DIR "${CLAD_PY_OUTPUT_DIR}"
     INCLUDES "${ENGINE_INCLUDES}"
     OUTPUT_SRCS CLAD_PY_GEN_ROBOT_SRCS
-)
-
-generate_clad_cs(
-    TARGET "robot_clad_csharp"
-    SRCS ${ROBOT_SRCS}
-    RELATIVE_SRC_DIR "src"
-    OUTPUT_DIR "${CLAD_CS_OUTPUT_DIR}"
-    INCLUDES "${ENGINE_INCLUDES}"
-    OUTPUT_SRCS CLAD_CS_GEN_ROBOT_SRCS
 )
 
 file(STRINGS "${ANKI_SRCLIST_DIR}/robot_clad.headers.lst" ROBOT_HASH_SRCS)
