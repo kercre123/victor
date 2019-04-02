@@ -223,12 +223,12 @@ stage("${primaryStageName} Build") {
         }
         parallel buildConfigMap
     } catch (FlowInterruptedException ae) {
-        node(uuid) {
+        node('victor-static') {
             notifyBuildStatus('Aborted', 'shipping')
         }
         throw ae
     } catch (exc) {
-        node(uuid) {
+        node('victor-static') {
             notifyBuildStatus('Failure', 'shipping')
         }
         throw exc
