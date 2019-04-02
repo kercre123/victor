@@ -14,7 +14,7 @@
 
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 #include "util/cladHelpers/cladEnumToStringMap.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"

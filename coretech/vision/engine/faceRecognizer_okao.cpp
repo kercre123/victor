@@ -25,7 +25,7 @@
 #include "util/helpers/cleanupHelper.h"
 #include "util/threading/threadPriority.h"
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/quad.h"
 
 #include "OkaoCoAPI.h"
 

@@ -4,7 +4,7 @@
  * Author: Brad Neuman
  * Created: 2014-10-13
  *
- * Description: Defines a planar (2D) polygon in N-dimensional
+ * Description: Implements a planar (2D) polygon in N-dimensional
  *              space. This is a container of points are in clockwise
  *              order
  *
@@ -12,123 +12,314 @@
  *
  **/
 
-#ifndef __COMMON_BASESTATION_MATH_POLYGON_H__
-#define __COMMON_BASESTATION_MATH_POLYGON_H__
+#ifndef __COMMON_BASESTATION_MATH_POLYGON_IMPL_H__
+#define __COMMON_BASESTATION_MATH_POLYGON_IMPL_H__
 
-#include "coretech/common/shared/math/point_fwd.h"
+#include "coretech/common/engine/math/polygon_fwd.h"
+#include "coretech/common/engine/math/quad.h"
+#include "coretech/common/engine/math/rotatedRect.h"
+#include "coretech/common/engine/utils/helpers/compareFcns.h"
+#include "coretech/common/shared/utilities_shared.h"
 
-#include "clad/types/cladPoint.h"
-
-#include <vector>
+#include <utility>
+#include <limits>
 
 namespace Anki {
 
-using PolygonDimType = size_t;
-
-template<PolygonDimType N, typename T>
-class Quadrilateral;
-
-template<typename T>
-class Rectangle;
-
-class RotatedRectangle;
+template <PolygonDimType N, typename T>
+Polygon<N,T>::Polygon()
+{
+}
 
 template <PolygonDimType N, typename T>
-class Polygon
+Polygon<N,T>::Polygon(const Polygon<N,T>& other)
+  : _points(other._points)
 {
-protected:
-  using PointContainer = std::vector< Point<N,T> >;
+}
 
-public:
+template <PolygonDimType N, typename T>
+Polygon<N,T>::Polygon( std::initializer_list< Point<N,T> > points )
+  : _points(points)
+{
+}
 
-  virtual ~Polygon() = default;
+template <PolygonDimType N, typename T>
+Polygon<N,T>::Polygon(const std::vector<CladPoint2d>& cladPoints)
+{
+  static_assert(N == 2, "Must use 2D to convert from vector of CladPoint2d");
+  this->reserve(cladPoints.size());
+  for(auto& cladPoint : cladPoints)
+  {
+    this->emplace_back({cladPoint.x, cladPoint.y});
+  }
+}
+  
+template <PolygonDimType N, typename T>
+Polygon<N,T>::Polygon(const std::vector<CladPoint3d>& cladPoints)
+{
+  static_assert(N == 3, "Must use 3D to convert from vector of CladPoint3d");
+  this->reserve(cladPoints.size());
+  for(auto& cladPoint : cladPoints)
+  {
+    this->emplace_back({cladPoint.x, cladPoint.y, cladPoint.z});
+  }
+}
+ 
+template <PolygonDimType N, typename T>
+std::vector<CladPoint2d> Polygon<N,T>::ToCladPoint2dVector() const
+{
+  static_assert(N == 2, "Must use 2D to convert to vector of CladPoint2d");
+  std::vector<CladPoint2d> vec;
+  vec.reserve(this->size());
+  for(const auto& point : _points)
+  {
+    vec.emplace_back(CladPoint2d(point.x(), point.y()));
+  }
+  return vec;
+}
 
-  Polygon();
-  Polygon(const Polygon<N,T>& other);
+template <PolygonDimType N, typename T>
+std::vector<CladPoint3d> Polygon<N,T>::ToCladPoint3dVector() const
+{
+  static_assert(N == 3, "Must use 3D to convert to vector of CladPoint3d");
+  std::vector<CladPoint3d> vec;
+  vec.reserve(this->size());
+  for(const auto& point : _points)
+  {
+    vec.emplace_back(CladPoint3d(point.x(), point.y(), point.z()));
+  }
+  return vec;
+}
+  
+template <PolygonDimType N, typename T>
+Polygon<N,T>::Polygon(const Polygon<N+1,T>& other)
+{
+  for( const auto& point : other ) {
+    // use points N+1 constructor to drop the last dimension
+    _points.emplace_back(point);
+  }
+}
 
-  // Initialize polygon from list of points. Assumes points are already in clockwise order!
-  Polygon(std::initializer_list< Point<N,T> > points);
+template <PolygonDimType N, typename T>
+Polygon<N,T>::Polygon(const Rectangle<T>& rect)
+  : _points{rect.GetTopLeft(), rect.GetTopRight(), rect.GetBottomRight(), rect.GetBottomLeft()}
+{
+  static_assert(N == 2, "Must use 2D for rectangles");
+}
 
-  // Construct from polygon living in one dimension higher. Last
-  // dimension simply gets dropped. For example, this allows
-  // construction of a 2D quad from a 3D polygon, by simply using the
-  // (x,y) coordinates and ignoring z.
-  Polygon(const Polygon<N+1,T>& other);
+template <PolygonDimType N, typename T>
+Polygon<N,T>::Polygon(const RotatedRectangle& rect)
+{
+  static_assert(N == 2, "Must use 2D for rotated rectangles");
 
-  // convert from common 2d objects
-  explicit Polygon(const Rectangle<T>& rect);
-  explicit Polygon(const RotatedRectangle& rect);
-  explicit Polygon(const Quadrilateral<2, T>& quad);
+  ImportQuad2d(rect.GetQuad());
+}
 
-  // Initialize 2D/3D polygons from a list of clad points. Assumes points are already in clockwise order!
-  Polygon(const std::vector<CladPoint2d>& cladPoints);
-  Polygon(const std::vector<CladPoint3d>& cladPoints);
+template <PolygonDimType N, typename T>
+Polygon<N,T>::Polygon(const Quadrilateral<2, T>& quad)
+{
+  ImportQuad2d(quad);
+}
 
-  // Get a vector of CladPoints
-  std::vector<CladPoint2d> ToCladPoint2dVector() const;
-  std::vector<CladPoint3d> ToCladPoint3dVector() const;
+template <PolygonDimType N, typename T>
+void Polygon<N,T>::ImportQuad(const Quadrilateral<N,T>& quad)
+{
+  static_assert(N != 2, "Must use ImportQuad2D for 2d");
 
-  // Import from a 2D quad
-  void ImportQuad2d(const Quadrilateral<2, T>& quad);
+  Quadrilateral<N,T> sortedQuad ( quad.SortCornersClockwise( Z_AXIS_3D() ) );
 
-  // Import from a quadrilateral > 2D
-  void ImportQuad(const Quadrilateral<N, T>& quad);
+  // For some reason, these need to be backwards for things to work...
 
-  void Print() const;
+  // _points.emplace_back(sortedQuad[Quad::TopRight]);
+  // _points.emplace_back(sortedQuad[Quad::BottomRight]);
+  // _points.emplace_back(sortedQuad[Quad::BottomLeft]);
+  // _points.emplace_back(sortedQuad[Quad::TopLeft]);
 
-  // TODO:(bn) define equality operators?
-
-  // Get min/max coordinates (e.g. for bounding box)
-  virtual T GetMinX(void) const;
-  virtual T GetMinY(void) const;
-  virtual T GetMaxX(void) const;
-  virtual T GetMaxY(void) const;
-
-  // TODO:(bn) implement the rest of the helper functions like in Quad (e.g. Contains point, intersects, etc...)
-
-  // computes the angle between point at idx and point at idx + 1 (wrapping around to 0 at the end)
-  T GetEdgeAngle(size_t idx) const;
-
-  // Returns the vector pointing from the point at idx to the point at idx + 1 (wrapping around at the end)
-  Point<N,T> GetEdgeVector(size_t idx) const;
-
-  // Compute the weighted average of the points. NOTE: is currently broken for integral types!
-  Point<N,T> ComputeWeightedAverage() const;
-
-  ////////////////////////////////////////////////////////////////////////////////
-  // container functions:
-  ////////////////////////////////////////////////////////////////////////////////
-
-  typename PointContainer::iterator begin() {return _points.begin();}
-  typename PointContainer::iterator end() {return _points.end();}
-  typename PointContainer::const_iterator begin() const {return _points.begin();}
-  typename PointContainer::const_iterator end() const {return _points.end();}
-
-  // reserves/allocates memory for n Points, according to the rules of underlying container, currently std::vector
-  void reserve(size_t n);
-
-  void push_back(const Point<N, T>& val);
-  void push_back(Point<N, T>&& val);
-  void emplace_back(Point<N, T>&& val);
-
-  void pop_back();
-
-  virtual       Point<N,T>& operator[] (size_t idx);
-  virtual const Point<N,T>& operator[] (size_t idx) const;
-
-  size_t size() const;
-
-protected:
-
-  PointContainer _points;
-
-};
-
-using Poly2f = Polygon<2, f32>;
-using Poly3f = Polygon<3, f32>;
-using Poly2i = Polygon<2, s32>;
-using Poly3i = Polygon<3, s32>;
+  _points.emplace_back(sortedQuad[Quad::TopLeft]);
+  _points.emplace_back(sortedQuad[Quad::BottomLeft]);
+  _points.emplace_back(sortedQuad[Quad::BottomRight]);
+  _points.emplace_back(sortedQuad[Quad::TopRight]);
 
 }
+
+template <PolygonDimType N, typename T>
+void Polygon<N,T>::ImportQuad2d(const Quadrilateral<2,T>& quad)
+{
+  static_assert(N == 2, "Must use ImportQuad for > 2d");
+
+  Quadrilateral<2,T> sortedQuad ( quad.SortCornersClockwise(  ) );
+
+  // For some reason, these need to be backwards for things to work...
+
+  // _points.emplace_back(sortedQuad[Quad::TopRight]);
+  // _points.emplace_back(sortedQuad[Quad::BottomRight]);
+  // _points.emplace_back(sortedQuad[Quad::BottomLeft]);
+  // _points.emplace_back(sortedQuad[Quad::TopLeft]);
+
+  _points.emplace_back(sortedQuad[Quad::TopLeft]);
+  _points.emplace_back(sortedQuad[Quad::BottomLeft]);
+  _points.emplace_back(sortedQuad[Quad::BottomRight]);
+  _points.emplace_back(sortedQuad[Quad::TopRight]);
+
+}
+
+
+template <PolygonDimType N, typename T>
+void Polygon<N,T>::Print() const
+{
+  // BN: tried to copy the format from Quadrilateral::Print
+  CoreTechPrint("Polygon: ");
+  for(const auto& point : _points) {
+    CoreTechPrint("(");
+    for(PolygonDimType i = 0; i < N; ++i) {
+      CoreTechPrint(" %f", point[i]);
+    }
+    CoreTechPrint(")\n");
+  }
+}
+
+template <PolygonDimType N, typename T>
+T Polygon<N,T>::GetMinX(void) const
+{
+  T minX = std::numeric_limits<T>::max();
+  for(const auto& it : _points) {
+    if( it.x() < minX) {
+      minX = it.x();
+    }
+  }
+
+  return minX;
+}
+
+template <PolygonDimType N, typename T>
+T Polygon<N,T>::GetMaxX(void) const
+{
+  T maxX = std::numeric_limits<T>::lowest();
+  for(const auto& it : _points) {
+    if( it.x() > maxX) {
+      maxX = it.x();
+    }
+  }
+
+  return maxX;
+}
+
+template <PolygonDimType N, typename T>
+T Polygon<N,T>::GetMinY(void) const
+{
+  T minX = std::numeric_limits<T>::max();
+  for(const auto& it : _points) {
+    if( it.y() < minX) {
+      minX = it.y();
+    }
+  }
+
+  return minX;
+}
+
+template <PolygonDimType N, typename T>
+T Polygon<N,T>::GetMaxY(void) const
+{
+  T maxX = std::numeric_limits<T>::lowest();
+  for(const auto& it : _points) {
+    if( it.y() > maxX) {
+      maxX = it.y();
+    }
+  }
+
+  return maxX;
+}
+
+template <PolygonDimType N, typename T>
+void Polygon<N,T>::reserve(size_t n)
+{
+  _points.reserve(n);
+}
+
+template <PolygonDimType N, typename T>
+void Polygon<N,T>::push_back(const Point<N, T>& val)
+{
+  _points.push_back(val);
+}
+
+template <PolygonDimType N, typename T>
+void Polygon<N,T>::push_back(Point<N, T>&& val)
+{
+  _points.push_back(std::forward< Point<N,T> >(val));
+}
+
+template <PolygonDimType N, typename T>
+void Polygon<N,T>::emplace_back(Point<N, T>&& val)
+{
+  _points.emplace_back(std::forward< Point<N,T> >(val));
+}
+
+template <PolygonDimType N, typename T>
+void Polygon<N,T>::pop_back()
+{
+  _points.pop_back();
+}
+
+template <PolygonDimType N, typename T>
+size_t Polygon<N,T>::size() const
+{
+  return _points.size();
+}
+
+template <PolygonDimType N, typename T>
+Point<N,T>& Polygon<N,T>::operator[] (size_t idx)
+{
+  return _points[idx];
+}
+
+template <PolygonDimType N, typename T>
+const Point<N,T>& Polygon<N,T>::operator[] (size_t idx) const
+{
+  return _points[idx];
+}
+
+
+template <PolygonDimType N, typename T>
+T Polygon<N,T>::GetEdgeAngle(size_t idx) const
+{
+  assert(!_points.empty());
+
+  size_t idx2 = (idx + 1) % _points.size();
+  return atan2(_points[idx2].y() - _points[idx].y(), _points[idx2].x() - _points[idx].x());
+}
+
+template <PolygonDimType N, typename T>
+Point<N,T> Polygon<N,T>::GetEdgeVector(size_t idx) const
+{
+  assert(!_points.empty());
+
+  size_t idx2 = (idx + 1) % _points.size();
+  return _points[idx2] - _points[idx];
+}
+
+template <PolygonDimType N, typename T>
+Point<N,T> Polygon<N,T>::ComputeWeightedAverage() const
+{
+  Point<N, T> ret;
+
+  for(PolygonDimType dim = 0; dim < N; ++dim) {
+    ret[dim] = (T) 0;
+  }
+
+  // NOTE: this won't work for integer types!
+  T oneOverNum = ((T) 1.0) / ((T) _points.size());
+
+  for(const auto& point : _points) {
+    for(PolygonDimType dim = 0; dim < N; ++dim) {
+      ret[dim] += point[dim] * oneOverNum;
+    }
+  }
+
+  return ret;
+}
+
+
+}
+
 
 #endif

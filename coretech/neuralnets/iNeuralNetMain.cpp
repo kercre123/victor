@@ -31,7 +31,7 @@
 #include "coretech/neuralnets/neuralNetFilenames.h"
 #include "coretech/neuralnets/neuralNetJsonKeys.h"
 #include "coretech/neuralnets/neuralNetModel_offboard.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 #include "json/json.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"

@@ -13,8 +13,8 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "coretech/common/engine/math/poseOriginList.h"
-#include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/shared/math/rect_impl.h"
+#include "coretech/common/engine/math/quad.h"
+#include "coretech/common/shared/math/rect.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/shared/utilities_shared.h"
 #include "engine/aiComponent/aiWhiteboard.h"

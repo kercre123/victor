@@ -32,7 +32,7 @@
 #include "engine/utils/robotPointSamplerHelper.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 
 #include "util/random/randomGenerator.h"
 #include "util/random/randomIndexSampler.h"

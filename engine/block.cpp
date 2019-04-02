@@ -13,7 +13,7 @@
 
 #include "coretech/vision/engine/camera.h"
 #include "coretech/common/engine/math/linearAlgebra_impl.h"
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/quad.h"
 
 #include <iomanip>
 

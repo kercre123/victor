@@ -29,7 +29,7 @@
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/math/fastPolygon2d.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #include "coretech/vision/engine/faceTracker.h"

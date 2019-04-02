@@ -14,7 +14,7 @@
 #define __Anki_Vision_MarkerDetector_H__
 
 #include "coretech/common/shared/types.h"
-#include "coretech/common/shared/math/rect.h"
+#include "coretech/common/shared/math/rect_fwd.h"
 
 #include "coretech/vision/engine/visionMarker.h"
 

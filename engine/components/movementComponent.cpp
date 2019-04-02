@@ -15,7 +15,7 @@
 #include "coretech/common/robot/utilities.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/fastPolygon2d.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 
 #include "engine/ankiEventUtil.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"

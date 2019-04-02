@@ -22,7 +22,7 @@
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include "coretech/common/engine/math/convexIntersection.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleInterface.h"
 

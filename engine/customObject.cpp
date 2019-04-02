@@ -10,7 +10,7 @@
 
 #include "engine/customObject.h"
 
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/quad.h"
 
 namespace Anki {
 namespace Vector {

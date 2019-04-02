@@ -34,7 +34,7 @@
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #include "clad/types/behaviorComponent/behaviorStats.h"

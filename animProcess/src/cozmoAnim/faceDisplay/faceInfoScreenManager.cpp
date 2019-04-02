@@ -28,11 +28,10 @@
 
 #include "micDataTypes.h"
 
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image.h"
-#include "coretech/vision/engine/image_impl.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleSystem.h"
 #include "util/fileUtils/fileUtils.h"

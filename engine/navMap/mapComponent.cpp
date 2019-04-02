@@ -15,7 +15,7 @@
 
 #include "coretech/vision/engine/observableObjectLibrary.h"
 #include "coretech/common/engine/math/poseOriginList.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/messaging/engine/IComms.h"
 

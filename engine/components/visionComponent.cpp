@@ -41,7 +41,7 @@
 #include "coretech/vision/engine/compressedImage.h"
 
 #include "coretech/common/engine/opencvThreading.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"

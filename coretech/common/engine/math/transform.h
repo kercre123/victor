@@ -19,7 +19,7 @@
 #include "coretech/common/shared/math/rotation.h"
 #include "coretech/common/shared/math/radians.h"
 
-#include "coretech/common/engine/math/quad.h"
+#include "coretech/common/engine/math/quad_fwd.h"
 
 #include <list>
 
