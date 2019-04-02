@@ -2967,7 +2967,7 @@ func (service *rpcService) StartUpdateEngine(
 	status, _ := service.GetUpdateStatus()
 
 	if status.UpdateStatus == extint.CheckUpdateStatusResponse_NO_UPDATE {
-		err = exec.Command(
+		err := exec.Command(
 			"/usr/bin/sudo",
 			"-n",
 			"/bin/systemctl",
