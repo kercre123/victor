@@ -176,6 +176,8 @@ message GatewayWrapper {
     LookAroundInPlaceResponse     look_around_in_place_response      = 407;
     RollBlockRequest              roll_block_request                 = 408;
     RollBlockResponse             roll_block_response                = 409;
+    EnrollFaceRequest             enroll_face_request                = 410;
+    EnrollFaceResponse            enroll_face_response               = 411;
 
     // ------------ movement request/response pairs ----------------------
     TurnInPlaceRequest              turn_in_place_request                = 500;

@@ -27,6 +27,7 @@ namespace external_interface {
   class FindFacesRequest;
   class LookAroundInPlaceRequest;
   class RollBlockRequest;
+  class EnrollFaceRequest;
 }
   
 class BehaviorSDKInterface : public ICozmoBehavior
@@ -55,12 +56,14 @@ private:
   void FindFacesRequest(const external_interface::FindFacesRequest& findFacesRequest);
   void LookAroundInPlaceRequest(const external_interface::LookAroundInPlaceRequest& lookAroundInPlaceRequest);
   void RollBlockRequest(const external_interface::RollBlockRequest& rollBlockRequest);
+  void EnrollFaceRequest(const external_interface::EnrollFaceRequest& enrollFaceRequest);
 
   void HandleDriveOffChargerComplete();
   void HandleDriveOnChargerComplete();
   void HandleFindFacesComplete();
   void HandleLookAroundInPlaceComplete();
   void HandleRollBlockComplete();
+  void HandleEnrollFaceComplete();
 
   // Use this to prevent (or allow) raw movement commands from the SDK. We only want to allow these when the SDK
   // behavior is activated and _not_ delegating to another behavior.
@@ -78,11 +81,13 @@ private:
     std::string findFacesBehaviorStr;
     std::string lookAroundInPlaceBehaviorStr;
     std::string rollBlockBehaviorStr;
+    std::string enrollFaceBehaviorStr;
     ICozmoBehaviorPtr driveOffChargerBehavior;
     ICozmoBehaviorPtr findAndGoToHomeBehavior;
     ICozmoBehaviorPtr findFacesBehavior;
     ICozmoBehaviorPtr lookAroundInPlaceBehavior;
     ICozmoBehaviorPtr rollBlockBehavior;
+    ICozmoBehaviorPtr enrollFaceBehavior;
   };
 
   struct DynamicVariables {
