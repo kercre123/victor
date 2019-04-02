@@ -1,15 +1,14 @@
 package cloudproc
 
 import (
-	"anki/offboard_vision"
 	"anki/jdocs"
 	"anki/log"
 	"anki/logcollector"
 	"anki/token"
 	"anki/token/identity"
-	"anki/util"
 	"anki/voice"
 	"context"
+	"sync"
 )
 
 var devServer func() error
@@ -20,9 +19,9 @@ func Run(ctx context.Context, procOptions ...Option) {
 		o(&opts)
 	}
 
-	var wg util.SyncGroup
+	var wg sync.WaitGroup
 	if devServer != nil {
-		wg.AddFunc(func() {
+		launchProcess(&wg, func() {
 			if err := devServer(); err != nil {
 				log.Println("dev HTTP server reported error:", err)
 			}
@@ -46,14 +45,13 @@ func Run(ctx context.Context, procOptions ...Option) {
 		log.Println("Fatal error initializing token service:", err)
 		return
 	}
-	token.SetDevServer(tokenServer)
-	addHandlers(token.GetDevHandlers)
-	wg.AddFunc(func() {
+	addHandlers(token.GetDevHandlers, tokenServer)
+	launchProcess(&wg, func() {
 		tokenServer.Run(ctx, opts.tokenOpts...)
 	})
 	tokener := token.GetAccessor(identityProvider, tokenServer)
 	if opts.voice != nil {
-		wg.AddFunc(func() {
+		launchProcess(&wg, func() {
 			// provide default token accessor
 			voiceOpts := append([]voice.Option{voice.WithTokener(tokener),
 				voice.WithErrorListener(tokenServer.ErrorListener())},
@@ -62,7 +60,7 @@ func Run(ctx context.Context, procOptions ...Option) {
 		})
 	}
 	if opts.jdocOpts != nil {
-		wg.AddFunc(func() {
+		launchProcess(&wg, func() {
 			// provide default token accessor
 			jdocOpts := append([]jdocs.Option{jdocs.WithTokener(tokener),
 				jdocs.WithErrorListener(tokenServer.ErrorListener())},
@@ -71,16 +69,20 @@ func Run(ctx context.Context, procOptions ...Option) {
 		})
 	}
 	if opts.logcollectorOpts != nil {
-		wg.AddFunc(func() {
+		launchProcess(&wg, func() {
 			logcollectorOpts := append([]logcollector.Option{logcollector.WithTokener(tokener),
 				logcollector.WithErrorListener(tokenServer.ErrorListener())},
 				opts.logcollectorOpts...)
 			logcollector.Run(ctx, logcollectorOpts...)
 		})
 	}
-	wg.AddFunc(func() {
-		offboard_vision.Run(ctx)
-	})
-	addHandlers(offboard_vision.GetDevHandlers)
 	wg.Wait()
+}
+
+func launchProcess(wg *sync.WaitGroup, launcher func()) {
+	wg.Add(1)
+	go func() {
+		launcher()
+		wg.Done()
+	}()
 }

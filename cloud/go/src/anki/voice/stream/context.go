@@ -148,8 +148,7 @@ func sendIntentResponse(resp *chipper.IntentResult, receiver Receiver) {
 		}
 	}
 
-	receiver.OnIntent(&cloud.IntentResult{Intent: resp.Action, Parameters: buf.String(), Metadata: metadata,
-		Query: resp.QueryText})
+	receiver.OnIntent(&cloud.IntentResult{Intent: resp.Action, Parameters: buf.String(), Metadata: metadata})
 }
 
 func sendKGResponse(resp *chipper.KnowledgeGraphResponse, receiver Receiver) {

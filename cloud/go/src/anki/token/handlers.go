@@ -4,11 +4,8 @@ import "net/http"
 
 var devHandlers func(*http.ServeMux)
 
-func GetDevHandlers(s *http.ServeMux) [][]string {
+func GetDevHandlers(s *http.ServeMux) {
 	if devHandlers != nil {
 		devHandlers(s)
 	}
-	return nil
 }
-
-var SetDevServer = func(s *Server) {}

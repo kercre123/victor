@@ -1,15 +1,14 @@
 package cloudproc
 
 import (
+	"anki/token"
 	"net/http"
 )
 
-type handlerAdder func(*http.ServeMux) [][]string
+var addHandlerFunc func(func(*http.ServeMux), *token.Server)
 
-var addHandlerFunc func(handlerAdder)
-
-func addHandlers(f handlerAdder) {
-	if addHandlerFunc != nil && f != nil {
-		addHandlerFunc(f)
+func addHandlers(f func(*http.ServeMux), s *token.Server) {
+	if addHandlerFunc != nil && f != nil && s != nil {
+		addHandlerFunc(f, s)
 	}
 }
