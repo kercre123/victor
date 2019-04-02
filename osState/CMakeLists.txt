@@ -14,10 +14,15 @@ if (VICOS)
         log
         libcutils.so.0)
 elseif (MACOSX)
-    include(webots)
     set(PLATFORM_LIBS
-        ${WEBOTS_LIBS}
     )
+
+    if (WEBOTS)
+      include(webots)
+      list(APPEND PLATFORM_LIBS
+          ${WEBOTS_LIBS}
+      )
+    endif()
 endif()
 
 target_link_libraries(osState

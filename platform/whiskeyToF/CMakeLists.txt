@@ -21,11 +21,16 @@ if (VICOS)
         gpio
     )
 elseif (MACOSX)
-    include(webots)
     set(PLATFORM_LIBS
-        webotsCtrlCommon
-        ${WEBOTS_LIBS}
     )
+
+    if (WEBOTS)
+      include(webots)
+      list(APPEND PLATFORM_LIBS
+          webotsCtrlCommon
+          ${WEBOTS_LIBS}
+      )
+    endif()
 endif()
 
 target_link_libraries(whiskeyToF

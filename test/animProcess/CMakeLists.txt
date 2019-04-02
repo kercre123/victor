@@ -11,12 +11,16 @@ set(PLATFORM_FLAGS "")
 if (VICOS)
   set(PLATFORM_LIBS log)
 elseif (MACOSX)
-  include(webots)
-  include(gtest)
   find_library(FOUNDATION Foundation)
   set(PLATFORM_LIBS
     ${FOUNDATION}
   )
+
+  if (WEBOTS)
+    include(webots)
+  endif()
+  
+  include(gtest)
 endif()
 
 include(anki_build_cxx)

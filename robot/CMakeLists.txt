@@ -97,14 +97,20 @@ if (VICOS)
     robot_hal
   )
 elseif (MACOSX)
-  include(webots)
-
   set(PLATFORM_LIBS
       util
       util_audio
       cti_messaging
-      ${WEBOTS_LIBS}
   )
+
+  if (WEBOTS)
+    include(webots)
+
+    list(APPEND PLATFORM_LIBS
+        ${WEBOTS_LIBS}
+    )
+  endif()
+
   set(PLATFORM_INCLUDES
       # FIXME gross: ("simulator/robot/sim_overlayDisplay.h")
       ${CMAKE_SOURCE_DIR}

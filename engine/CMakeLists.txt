@@ -47,14 +47,17 @@ if (VICOS)
   set(PLATFORM_LIBS log)
 elseif (MACOSX)
   find_library(FOUNDATION Foundation)
-  include(webots)
   set(PLATFORM_LIBS
     ${FOUNDATION}
     ${OPENCV_LIBS}
-    ${WEBOTS_LIBS}
   )
-  set(PLATFORM_COMPILE_DEFS
-  )
+
+  if (WEBOTS)
+    include(webots)
+    list(APPEND PLATFORM_LIBS
+      ${WEBOTS_LIBS}
+    )
+  endif()
 endif()
 
 target_link_libraries(cozmo_engine

@@ -11,12 +11,16 @@ set(PLATFORM_FLAGS "")
 if (VICOS)
   set(PLATFORM_LIBS log)
 elseif (MACOSX)
-  include(webots)
-  include(gtest)
   find_library(FOUNDATION Foundation)
   set(PLATFORM_LIBS
     ${FOUNDATION}
   )
+
+  if (WEBOTS)
+    include(webots)
+  endif()
+
+  include(gtest)
 endif()
 
 include(anki_build_cxx)
@@ -67,23 +71,25 @@ symlink_target(TARGET test_engine
   DST ${CMAKE_CURRENT_BINARY_DIR}/resources
 )
 
-#
-# Set up symlinks to satisfy webots dynamic loading
-#
-symlink_target(TARGET test_engine
-  SRC ${WEBOTS_HOME}/lib/libController.dylib
-  DST $<TARGET_FILE_DIR:cozmo_engine>/lib/
-)
+if (WEBOTS)
+  #
+  # Set up symlinks to satisfy webots dynamic loading
+  #
+  symlink_target(TARGET test_engine
+    SRC ${WEBOTS_HOME}/lib/libController.dylib
+    DST $<TARGET_FILE_DIR:cozmo_engine>/lib/
+  )
 
-symlink_target(TARGET test_engine
-  SRC ${WEBOTS_HOME}/lib/libCppController.dylib
-  DST $<TARGET_FILE_DIR:cozmo_engine>/lib/
-)
+  symlink_target(TARGET test_engine
+    SRC ${WEBOTS_HOME}/lib/libCppController.dylib
+    DST $<TARGET_FILE_DIR:cozmo_engine>/lib/
+  )
 
-symlink_target(TARGET test_engine
-  SRC ${WEBOTS_HOME}/lib/libode.dylib
-  DST $<TARGET_FILE_DIR:cozmo_engine>/lib/
-)
+  symlink_target(TARGET test_engine
+    SRC ${WEBOTS_HOME}/lib/libode.dylib
+    DST $<TARGET_FILE_DIR:cozmo_engine>/lib/
+  )
+endif()
 
 if (MACOSX)
   enable_testing()

@@ -12,10 +12,15 @@ if (VICOS)
     set(PLATFORM_LIBS
     )
 elseif (MACOSX)
-    include(webots)
     set(PLATFORM_LIBS
-        ${WEBOTS_LIBS}
     )
+
+    if (WEBOTS)
+      include(webots)
+      list(APPEND PLATFORM_LIBS
+          ${WEBOTS_LIBS}
+      )
+    endif()
 endif()
 
 if (VICOS AND ANKI_DEV_CHEATS)

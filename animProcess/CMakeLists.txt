@@ -27,11 +27,16 @@ if (VICOS)
         log
         robot_core)
 elseif (MACOSX)
-    include(webots)
     set(PLATFORM_LIBS
         ${OPENCV_LIBS}
-        ${WEBOTS_LIBS}
     )
+
+    if (WEBOTS)
+      include(webots)
+      list(APPEND PLATFORM_LIBS
+          ${WEBOTS_LIBS}
+      )
+    endif()
 endif()
 
 target_link_libraries(victor_anim

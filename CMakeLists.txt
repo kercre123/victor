@@ -207,7 +207,7 @@ endif()
 
 add_subdirectory("resources")
 
-if (MACOSX)
+if (WEBOTS)
   add_subdirectory("test")
   add_subdirectory("simulator") # webots
 

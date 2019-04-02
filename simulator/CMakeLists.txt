@@ -5,7 +5,7 @@ cmake_minimum_required(VERSION 3.6)
 
 project(webots_controllers)
 
-if (NOT MACOSX)
+if (NOT WEBOTS)
   return()
 endif()
 
