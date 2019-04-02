@@ -2869,27 +2869,28 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 		}
 
 		updateStatus.Error = string(data)
-		if string(data) == "IO Error: ('The read operation timed out',)" {
-			updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_FAILURE_INTERRUPTED_DOWNLOAD
-			return updateStatus, nil
-		}
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/exit_code"); err == nil {
 		updateStatus.ExitCode, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
 	}
 
-	if _, err := os.Stat("/run/update-engine/done"); err == nil {
-		updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_READY_TO_INSTALL
-		return updateStatus, nil
-	}
-
 	if data, err := ioutil.ReadFile("/run/update-engine/phase"); err == nil {
 		updateStatus.UpdatePhase = string(data)
 
 		if updateStatus.UpdatePhase == "download" {
-			updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
+			if updateStatus.ExitCode == 208 || updateStatus.ExitCode == 215 {
+				updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_FAILURE_INTERRUPTED_DOWNLOAD
+				return updateStatus, nil
+			} else {
+				updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
+			}
 		}
+	}
+
+	if _, err := os.Stat("/run/update-engine/done"); err == nil {
+		updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_READY_TO_INSTALL
+		return updateStatus, nil
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/manifest.ini"); err == nil {
