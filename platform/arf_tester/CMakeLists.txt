@@ -17,6 +17,8 @@ elseif (MACOSX)
   set(PLATFORM_LIBS
     ${FOUNDATION}
   )
+  set(PLATFORM_COMPILE_DEFS ${PLATFORM_COMPILE_DEFS} 
+      MACOS=1)
 endif()
 
 anki_build_cxx_executable(camera_main ${ANKI_SRCLIST_DIR})

@@ -157,10 +157,13 @@ class FaceTrackerNode : public Node
                                                                        distortionCoeffs);
 
         camera_.SetCalibration(calib);
-
-        const std::string data_path = "/anki/data/assets/cozmo_resources/config/engine/vision/";
-
-        const std::string jsonFilename = "/anki/data/assets/cozmo_resources/config/engine/vision_config.json";
+#if defined(MACOS)
+    const std::string data_path = "_build/mac/Debug/data/assets/cozmo_resources/config/engine/vision/";    
+    const std::string jsonFilename = "_build/mac/Debug/data/assets/cozmo_resources/config/engine/vision_config.json";
+#else
+    const std::string data_path = "/anki/data/assets/cozmo_resources/config/engine/vision/";
+    const std::string jsonFilename = "/anki/data/assets/cozmo_resources/config/engine/vision_config.json";
+#endif
         std::ifstream jsonFile(jsonFilename);
         Json::Reader reader;
         Json::Value jsonData;

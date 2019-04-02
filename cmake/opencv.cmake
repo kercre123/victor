@@ -113,9 +113,13 @@ if (MACOSX)
   # Add Frameworks
   find_library(ACCELERATE Accelerate)
   find_library(APPKIT AppKit)
+  find_library(AVFOUNDATION AvFoundation)
+  find_library(COREGRAPHICS CoreGraphics)
+  find_library(COREMEDIA CoreMedia)
+  find_library(COREVIDEO CoreVideo)
   find_library(OPENCL OpenCL)
-  list(APPEND OPENCV_LIBS ${ACCELERATE} ${APPKIT} ${OPENCL})
-endif()
+  list(APPEND OPENCV_LIBS ${ACCELERATE} ${APPKIT} ${OPENCL} ${AVFOUNDATION} ${COREGRAPHICS} ${COREMEDIA} ${COREVIDEO})
+  endif()
 
 # On Android, we need to copy shared libs to our library output folder
 macro(copy_opencv_android_libs)

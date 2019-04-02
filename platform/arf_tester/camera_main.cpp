@@ -46,9 +46,14 @@ int main(int argc, char **argv)
 
     camera.SetCalibration(calib);
 
+#if defined(MACOS)
+    const std::string data_path = "_build/mac/Debug/data/assets/cozmo_resources/config/engine/vision/";    
+    const std::string jsonFilename = "_build/mac/Debug/data/assets/cozmo_resources/config/engine/vision_config.json";
+#else
     const std::string data_path = "/anki/data/assets/cozmo_resources/config/engine/vision/";
-
     const std::string jsonFilename = "/anki/data/assets/cozmo_resources/config/engine/vision_config.json";
+#endif
+    printf("Data path: %s\n", data_path.c_str());
     std::ifstream jsonFile(jsonFilename);
     Json::Reader reader;
     Json::Value jsonData;
@@ -81,12 +86,11 @@ int main(int argc, char **argv)
         }
 
         Anki::Vision::Image image;
-        bool convert_to_gray = image_buffer.GetGray(image, Anki::Vision::ImageCacheSize::Full);
+        bool convert_to_gray = image_buffer.GetGray(image, Anki::Vision::ImageCacheSize::Half);
         if (!convert_to_gray) {
             printf("Couldn't convert to gray");
             camera_service->CameraReleaseFrame(image_buffer.GetImageId());
         }
-        
         std::list<Anki::Vision::TrackedFace> face_list;
         std::list<Anki::Vision::UpdatedFaceID> updated_ids_list;
         Anki::Vision::DebugImageList<Anki::Vision::CompressedImage> debug_images;
@@ -98,7 +102,7 @@ int main(int argc, char **argv)
         }
 
         Anki::Vision::ImageRGB image_rgb;
-        bool convert_to_rgb = image_buffer.GetRGB(image_rgb, Anki::Vision::ImageCacheSize::Full);
+        bool convert_to_rgb = image_buffer.GetRGB(image_rgb, Anki::Vision::ImageCacheSize::Half);
         if (!convert_to_rgb) {
             printf("Couldn't convert to rgb");
             camera_service->CameraReleaseFrame(image_buffer.GetImageId());

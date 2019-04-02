@@ -8,7 +8,7 @@ cxx_project(
     platform_srcs = [
         ('vicos', glob(['vicos/**/*.cpp',
                           '**/*_vicos.cpp'])),
-        ('mac', glob(['**/*_mac.cpp']))
+        ('mac', glob(['**/*_opencv.cpp']))
     ],
     headers = cxx_header_glob(['.']),
 )

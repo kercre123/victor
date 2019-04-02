@@ -49,13 +49,13 @@ if (VICOS)
         log
         camera_client)
 elseif (MACOSX)
-    include(webots)
+    #include(webots)
     set(PLATFORM_LIBS
-        webotsCtrlCommon
+        #webotsCtrlCommon
         ${OPENCV_LIBS}
-        ${WEBOTS_LIBS}
+        #${WEBOTS_LIBS}
     )
-    set(PLATFORM_COMPILE_DEFS "-DSIMULATOR")
+    set(PLATFORM_COMPILE_DEFS "-DSIMULATOR -DMACOS")
 endif()
 
 target_link_libraries(cameraService
@@ -73,6 +73,7 @@ anki_build_strip(TARGET cameraService)
 
 target_compile_definitions(cameraService
   PRIVATE
+  ANKICORETECH_USE_OPENCV=1
   ${PLATFORM_COMPILE_DEFS}
 )
 
