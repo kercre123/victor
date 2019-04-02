@@ -2861,9 +2861,9 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/error"); err == nil {
-		// The script uses the current software version to generate a url. When that url exists, it contains the .ota that
-		// will take the bot from its current version to the latest available. If that file doesn't exist, it's because the
-		// bot's current version is the latest.
+		// The script uses the current software version to generate a url. When that url exists,
+		// it contains the .ota that will take the bot from its current version to the latest
+		// available. If that file doesn't exist, it's because the bot's current version is the latest.
 		if updateStatus.Error == "Failed to open URL: HTTP Error 403: Forbidden" {
 			return updateStatus, nil
 		}
@@ -2923,8 +2923,9 @@ func (service *rpcService) UpdateStatusStream() {
 
 	for len(connectionId) != 0 {
 		status, err := service.GetUpdateStatus()
-		//Keep streaming to the requestor until they disconnect. We don't stop streaming just because there's no update
-		//pending (a requested update may be pending, but hasn't had a chance to update /run/update-engine/* yet).
+		// Keep streaming to the requestor until they disconnect. We don't stop streaming
+		// just because there's no update pending (a requested update may be pending, but
+		// hasn't had a chance to update /run/update-engine/* yet).
 		if err != nil {
 			break
 		}
@@ -2966,20 +2967,24 @@ func (service *rpcService) StartUpdateEngine(
 	status, _ := service.GetUpdateStatus()
 
 	if status.UpdateStatus == extint.CheckUpdateStatusResponse_NO_UPDATE {
-		// If this fails, we can still continue, but it could indicate something more serious (hence, the error)
-		err := exec.Command("/bin/touch", "/run/update-engine/app_requested").Run()
-		if err != nil {
-			log.Errorf("Couldn't /bin/touch /run/update-engine/app_requested")
-		}
-
-		err = exec.Command("/usr/bin/sudo", "-n", "/bin/systemctl", "stop", "update-engine.service").Run()
+		err = exec.Command(
+			"/usr/bin/sudo",
+			"-n",
+			"/bin/systemctl",
+			"stop",
+			"update-engine.service").Run()
 		if err != nil {
 			log.Errorf("Update attempt failed on `systemctl stop update-engine`: %s\n", err)
 			retval.Status.Code = extint.ResponseStatus_ERROR_UPDATE_IN_PROGRESS
 			return retval, err
 		}
 
-		err = exec.Command("/usr/bin/sudo", "-n", "/bin/systemctl", "restart", "update-engine-oneshot").Run()
+		err = exec.Command(
+			"/usr/bin/sudo",
+			"-n",
+			"/bin/systemctl",
+			"restart",
+			"update-engine-oneshot").Run()
 		if err != nil {
 			log.Errorf("Update attempt failed on `systemctl restart update-engine-oneshot`: %s\n", err)
 			retval.Status.Code = extint.ResponseStatus_ERROR_UPDATE_IN_PROGRESS
