@@ -10,6 +10,8 @@
  *
  **/
 
+#ifdef VICOS
+
 #include "whiskeyToF/tof.h"
 
 #include "whiskeyToF/tofUserspace_vicos.h"
@@ -27,10 +29,6 @@
 #include <queue>
 #include <iomanip>
 #include <chrono>
-
-#ifdef MACOSX
-#error MACOSX should be defined by any target using tof_vicos.cpp
-#endif
 
 namespace Anki {
 namespace Vector {
@@ -426,3 +424,5 @@ bool ToFSensor::IsValidRoiStatus(uint8_t status) const
 
 }
 }
+
+#endif // VICOS

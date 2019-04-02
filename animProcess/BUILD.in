@@ -8,12 +8,12 @@ cxx_project(
     platform_srcs = [
         ('vicos', glob(['vicos/**/*.cpp',
                           '**/*_vicos.cpp'])),
-        ('mac', glob(['**/*_mac.cpp']))
+        ('mac', glob(['**/*_mac.cpp','**/*_webots.cpp']))
     ],
     headers = cxx_header_glob(['.']),
     platform_headers = [
         ('vicos', glob(['**/*_vicos.h'])),
-        ('mac', glob(['**/*_mac.h']))
+        ('mac', glob(['**/*_mac.h','**/*_webots.h']))
     ]
 )
 

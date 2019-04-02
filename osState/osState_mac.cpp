@@ -18,8 +18,6 @@
 #include "util/logging/logging.h"
 #include "util/math/numericCast.h"
 
-#include <webots/Supervisor.hpp>
-
 #include <array>
 
 // For getting our ip address

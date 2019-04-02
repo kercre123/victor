@@ -4,7 +4,7 @@ cxx_project(
     platform_srcs = [
         ('vicos', glob(['**/*_vicos.cpp'],
                         excludes = ['*test.*'])),
-        ('mac', glob(['**/*_mac.cpp']))
+        ('mac', glob(['**/*_mac.cpp','**/*_webots.cpp']))
     ],
     headers = cxx_header_glob(['.']),
 )
