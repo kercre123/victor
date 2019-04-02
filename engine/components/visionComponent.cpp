@@ -1303,7 +1303,7 @@ namespace Vector {
 
     const Vision::CameraParams& params = procResult.cameraParams;
 
-    // Note that we set all parameters together. If WB or AE isn't enabled accoding to current VisionModes,
+    // Note that we set all parameters together. If WB or AE isn't enabled according to current VisionModes,
     // their corresponding values should not actually be different in the params.
     const Result result = _visionSystem->SetNextCameraParams(params);
 
@@ -2860,7 +2860,7 @@ namespace Vector {
       pair.first = new Util::ConsoleVar<bool>(pair.second,
                                               EnumToString(m),
                                               "Vision.General.VisionModes",
-                                              false);
+                                              true);
     }
     #endif
   }
@@ -2953,7 +2953,7 @@ namespace Vector {
           cameraService->DeleteCamera();
         }
         // Some time after stopping the camera, try to start it back up
-        // Stopping/Starting are asynchonous so we need to wait a bit between the calls
+        // Stopping/Starting are asynchronous so we need to wait a bit between the calls
         else if(_restartingCameraTime_ms != 0 &&
                 curTime_ms - _restartingCameraTime_ms > kRestartCameraDelay_ms)
         {
