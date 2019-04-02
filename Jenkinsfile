@@ -205,63 +205,11 @@ if (env.CHANGE_ID) {
 }
 
 stage("${primaryStageName} Build") {
-    while ( true ) {
-        agent = new EphemeralAgent()
-        gatekeeper = new Gatekeeper(this)
-        node('master') {
-            echo "Checking if resources are available on vSphere..."
-            gatekeeper.checkLimits()
-            if (gatekeeper.canProvision) {
-                stage('Spin up ephemeral VM') {
-                    try {
-                        uuid = agent.getMachineName()
-                        vSphere buildStep: [$class: 'Clone', clone: uuid, cluster: 'sjc-vm-cluster',
-                            customizationSpec: '', datastore: 'sjc-vm-04-localssd', folder: 'sjc/build',
-                            linkedClone: true, powerOn: false, resourcePool: 'jenkins-build-slaves',
-                            sourceName: 'js-photon-os-template', timeoutInSeconds: 60], serverName: vSphereServer
-
-                        vSphere buildStep: [$class: 'Reconfigure', reconfigureSteps: [[$class: 'ReconfigureCpu',
-                            coresPerSocket: '1', cpuCores: '2', cpuLimitMHz: '6600']], vm: uuid], serverName: vSphereServer // Max overcommit is 4:1 vCPU to pCPU
-
-                        vSphere buildStep: [$class: 'PowerOn', timeoutInSeconds: 60, vm: uuid], serverName: vSphereServer
-
-                        def buildAgentIP = vSphere buildStep: [$class: 'ExposeGuestInfo',
-                            envVariablePrefix: 'VSPHERE', vm: uuid, waitForIp4: true], serverName: vSphereServer
-
-                        agent.setIPAddress(buildAgentIP)
-                        agent.Attach()
-                        gatekeeper.provisioningDone()
-                    } catch (Exception exc) {
-                        def jobName = "${env.JOB_NAME}"
-                        jobName = jobName.getAt(0..(jobName.indexOf('/') - 1))
-                        def reason = "Could not provision VM, retrying..."
-                        notifySlack("", slackNotificationChannel,
-                            [
-                                title: "${jobName} ${primaryStageName} ${env.CHANGE_ID}, build #${env.BUILD_NUMBER}",
-                                title_link: "${env.BUILD_URL}",
-                                color: "warning",
-                                text: "${reason}",
-                            ]
-                        )
-                        node('master') {
-                            stage('Destroy ephemeral VM') {
-                                vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
-                            }
-                        }
-                    }
-                }
-            } else {
-                echo "Not enough resources, retrying VM provisioning in 30 seconds..."
-                sleep(time:30, unit:"SECONDS")
-            }
-        }
-        if (gatekeeper.nodeProvisioned) break
-    }
     try {
         for (int i = 0; i < enabledBuildConfigs.size() ; i++) {
             def buildFlavor = enabledBuildConfigs[i]
             buildConfigMap[buildFlavor] = {
-                node(uuid) {
+                node('victor-static') {
                     def ghsb = new GithubStatusMsgBuilder(this, buildFlavor)
                     gitCheckout(true)
                     withDockerEnv {
@@ -293,11 +241,10 @@ stage("${primaryStageName} Build") {
                     deleteDir()
                 }
             }
-            stage('Destroy ephemeral VM') {
-                vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
-            }
-            stage('Detach ephemeral build agent from Jenkins') {
-                agent.Detach()
+            stage('Cleaning slave workspace') {
+                node('victor-static') {
+                    cleanWs()
+                }
             }
         }
     }
