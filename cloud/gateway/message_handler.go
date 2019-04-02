@@ -2850,7 +2850,7 @@ func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extin
 
 // GetUpdateStatus tells if the robot is ready to reboot and update.
 func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse, error) {
-	update_status := &extint.CheckUpdateStatusResponse{
+	updateStatus := &extint.CheckUpdateStatusResponse{
 		Status: &extint.ResponseStatus{
 			Code: extint.ResponseStatus_OK,
 		},
@@ -2864,38 +2864,51 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 		// The script uses the current software version to generate a url. When that url exists, it contains the .ota that
 		// will take the bot from its current version to the latest available. If that file doesn't exist, it's because the
 		// bot's current version is the latest.
-		if string(data) == "Failed to open URL: HTTP Error 403: Forbidden" {
-			return update_status, nil
+		if updateStatus.Error == "Failed to open URL: HTTP Error 403: Forbidden" {
+			return updateStatus, nil
+		}
+
+		updateStatus.Error = string(data)
+		if string(data) == "IO Error: ('The read operation timed out',)" {
+			updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_FAILURE_INTERRUPTED_DOWNLOAD
+			return updateStatus, nil
 		}
 	}
 
-	if _, err := os.Stat("/run/update-engine/done"); err == nil {
-		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_READY_TO_INSTALL
-		return update_status, nil
+	if data, err := ioutil.ReadFile("/run/update-engine/exit_code"); err == nil {
+		updateStatus.ExitCode, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
 	}
 
-	if _, err := os.Stat("/run/update-engine/app_requested"); err != nil {
-		// update-engine.py has started. The first thing it does is destroy everything in this directory.
-		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
+	if _, err := os.Stat("/run/update-engine/done"); err == nil {
+		updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_READY_TO_INSTALL
+		return updateStatus, nil
+	}
+
+	if data, err := ioutil.ReadFile("/run/update-engine/phase"); err == nil {
+		updateStatus.UpdatePhase = string(data)
+
+		if updateStatus.UpdatePhase == "download" {
+			updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
+		}
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/manifest.ini"); err == nil {
-		update_version_expr := regexp.MustCompile("update_version\\s*=\\s*(\\S*)")
-		match := update_version_expr.FindStringSubmatch(string(data))
+		updateVersionExpr := regexp.MustCompile("update_version\\s*=\\s*(\\S*)")
+		match := updateVersionExpr.FindStringSubmatch(string(data))
 		if len(match) == 2 {
-			update_status.UpdateVersion = match[1]
+			updateStatus.UpdateVersion = match[1]
 		}
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/progress"); err == nil {
-		update_status.Progress, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
+		updateStatus.Progress, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/expected-size"); err == nil {
-		update_status.Expected, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
+		updateStatus.Expected, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
 	}
 
-	return update_status, nil
+	return updateStatus, nil
 }
 
 // UpdateStatusStream tells if the robot is ready to reboot and update.
