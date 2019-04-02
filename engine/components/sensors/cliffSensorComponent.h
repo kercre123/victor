@@ -132,12 +132,13 @@ public:
   //
   // If @param numCliffs is 0, then this assumes that the user wants only the duration of time
   // that the cliff sensors have currently been reporting _exactly_ zero cliffs detections.
-  u32 GetDurationForNCliffDetections_ms(const int minNumCliffs) const;
+  u32 GetDurationForAtLeastNCliffDetections_ms(const int minNumCliffs) const;
 
-  // Returns the amount of time that numCliff or fewer cliffs have been detected for.
+  // Returns the amount of time that @param numCliff or fewer cliffs have been detected for.
+  // (Returns MAX_UINT for numCliffs == 4)
   u32 GetDurationForAtMostNCliffDetections_ms(const int numCliffs) const;
 
-  // Returns the amount of time since exactly numCliffs cliffs were last detected
+  // Returns the amount of time since exactly @param numCliffs cliffs were last detected
   u32 GetTimeSinceNCliffsLastDetected_ms(const int numCliffs) const;
     
   int GetNumCliffsDetected() const { return _latestNumCliffsDetected; }
