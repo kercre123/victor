@@ -9,7 +9,7 @@ set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/victor-clad/tools/message-buffers")
 set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
 set(CLAD_CPPLITE "${CLAD_EMITTER_DIR}/CPP_emitter.py")
 set(CLAD_HASH "${CLAD_EMITTER_DIR}/ASTHash_emitter.py")
-set(VICTOR_EMMITER_DIR "${CMAKE_SOURCE_DIR}/victor-clad/victorEmitters")
+set(VICTOR_EMITTER_DIR "${CMAKE_SOURCE_DIR}/victor-clad/victorEmitters")
 
 set(ENGINE_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/engine")
 set(ROBOT_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/robot")
@@ -132,7 +132,7 @@ list(APPEND CLAD_UNION_EMITTER_SRCS ${CLAD_HASH_GEN_ROBOT_SRCS})
 # declarations emitter
 #
 
-set(CLAD_CPP_DECL "${VICTOR_EMMITER_DIR}/cozmo_CPP_declarations_emitter.py")
+set(CLAD_CPP_DECL "${VICTOR_EMITTER_DIR}/cozmo_CPP_declarations_emitter.py")
 set(CLAD_CPP_DECL_EXTS "_declarations.def")
 
 generate_clad(
@@ -151,7 +151,7 @@ list(APPEND CLAD_UNION_EMITTER_SRCS ${CLAD_DECL_GEN_ROBOT_SRCS})
 # switch emitter
 #
 
-set(CLAD_CPP_SWITCH "${VICTOR_EMMITER_DIR}/cozmo_CPPLite_switch_emitter.py")
+set(CLAD_CPP_SWITCH "${VICTOR_EMITTER_DIR}/cozmo_CPPLite_switch_emitter.py")
 set(CLAD_CPP_SWITCH_EXTS "_switch.def")
 
 generate_clad(
@@ -220,7 +220,7 @@ list(APPEND CLAD_UNION_EMITTER_SRCS ${CLAD_SUPERVISOR_GEN_ANIM_SRCS})
 # send helper
 #
 
-set(CLAD_CPP_SEND_HELPER "${VICTOR_EMMITER_DIR}/cozmo_CPPLite_send_helper_emitter.py")
+set(CLAD_CPP_SEND_HELPER "${VICTOR_EMITTER_DIR}/cozmo_CPPLite_send_helper_emitter.py")
 set(CLAD_CPP_SEND_HELPER_EXTS "_send_helper.h")
 
 generate_clad(
@@ -239,7 +239,7 @@ list(APPEND CLAD_UNION_EMITTER_SRCS ${CLAD_SEND_HELPER_GEN_ROBOT_SRCS})
 # sendAnimToRobot helper
 #
 
-set(CLAD_CPP_A2R_HELPER "${VICTOR_EMMITER_DIR}/cozmo_CPPLite_sendAnimToRobot_helper_emitter.py")
+set(CLAD_CPP_A2R_HELPER "${VICTOR_EMITTER_DIR}/cozmo_CPPLite_sendAnimToRobot_helper_emitter.py")
 set(CLAD_CPP_A2R_HELPER_EXTS "_sendAnimToRobot_helper.h")
 
 generate_clad(
@@ -258,7 +258,7 @@ list(APPEND CLAD_UNION_EMITTER_SRCS ${CLAD_A2R_HELPER_GEN_ROBOT_SRCS})
 # sendAnimToEngine helper
 #
 
-set(CLAD_CPP_A2E_HELPER "${VICTOR_EMMITER_DIR}/cozmo_CPPLite_sendAnimToEngine_helper_emitter.py")
+set(CLAD_CPP_A2E_HELPER "${VICTOR_EMITTER_DIR}/cozmo_CPPLite_sendAnimToEngine_helper_emitter.py")
 set(CLAD_CPP_A2E_HELPER_EXTS "_sendAnimToEngine_helper.h")
 
 generate_clad(

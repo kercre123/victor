@@ -1,5 +1,5 @@
 #
-# clad/engine/CMakeLists.txt
+# clad/CMakeLists.txt
 #
 # CMake declarations to generate engine CLAD
 #
