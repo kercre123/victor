@@ -364,13 +364,21 @@ void NVStorageComponent::UpdateDependent(const RobotCompMap& dependentComps)
 {
 }
   
-#ifdef MACOSX
+#ifdef WEBOTS
 void NVStorageComponent::LoadSimData()
 {
   // Store simulated camera calibration data
   const CameraCalibration* camCalib = CameraService::getInstance()->GetHeadCamInfo();
   
   _tagDataMap[NVEntryTag::NVEntry_CameraCalib].assign(reinterpret_cast<const u8*>(camCalib), reinterpret_cast<const u8*>(camCalib) + sizeof(*camCalib));
+}
+#elif defined(MACOSX)
+void NVStorageComponent::LoadSimData()
+{
+  // Store simulated camera calibration data
+  static CameraCalibration camCalib;
+
+  _tagDataMap[NVEntryTag::NVEntry_CameraCalib].assign(reinterpret_cast<const u8*>(&camCalib), reinterpret_cast<const u8*>(&camCalib) + sizeof(camCalib));
 }
 #endif  // ifdef MACOSX
   

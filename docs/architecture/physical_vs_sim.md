@@ -10,8 +10,11 @@ In the animation and engine processes, this separation is done on a per-hardware
 
 ### `#ifdef MACOSX`
 
-The `MACOSX` macro is sometimes used in areas where logic between simulation and physical differs, but does not warrant an entirely separate class or file.
+The `MACOSX` macro is used in areas where logic between simulation and physical differs, but does not warrant an entirely separate class or file.
 
+### `#ifdef WEBOTS`
+
+The `WEBOTS` macro is used in areas where logic specifics to WEBOTS resides, but does not warrant an entirely separate class or file.
 
 ### Webots Tests
 
