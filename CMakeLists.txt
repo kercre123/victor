@@ -233,6 +233,7 @@ include(sodium)
 include(aubio)
 include(sensory)
 include(signalessence)
+include(pryon_lite)
 
 write_license_html()
 check_licenses()
