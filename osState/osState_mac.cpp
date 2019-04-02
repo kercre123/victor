@@ -40,8 +40,8 @@
 #include <uuid/uuid.h>
 
 
-#ifndef SIMULATOR
-#error SIMULATOR should be defined by any target using osState_mac.cpp
+#ifndef MACOSX
+#error MACOSX should be defined by any target using osState_mac.cpp
 #endif
 
 namespace Anki {

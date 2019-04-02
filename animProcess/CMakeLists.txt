@@ -32,7 +32,6 @@ elseif (MACOSX)
         ${OPENCV_LIBS}
         ${WEBOTS_LIBS}
     )
-    set(PLATFORM_COMPILE_DEFS "-DSIMULATOR")
 endif()
 
 target_link_libraries(victor_anim

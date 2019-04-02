@@ -14,7 +14,7 @@
 
 #include "anki/common/robot/matlabInterface.h"
 
-#if defined(SIMULATOR) && ANKICORETECH_EMBEDDED_USE_MATLAB
+#if defined(MACOSX) && ANKICORETECH_EMBEDDED_USE_MATLAB
 #define USE_MATLAB_VISUALIZATION 0
 #else
 #define USE_MATLAB_VISUALIZATION 0

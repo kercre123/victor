@@ -28,8 +28,8 @@
 #include <iomanip>
 #include <chrono>
 
-#ifdef SIMULATOR
-#error SIMULATOR should be defined by any target using tof_vicos.cpp
+#ifdef MACOSX
+#error MACOSX should be defined by any target using tof_vicos.cpp
 #endif
 
 namespace Anki {

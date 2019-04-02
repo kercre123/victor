@@ -23,8 +23,8 @@
 #include <webots/Supervisor.hpp>
 #include <webots/RangeFinder.hpp>
 
-#ifndef SIMULATOR
-#error SIMULATOR should be defined by any target using tof_mac.cpp
+#ifndef MACOSX
+#error MACOSX should be defined by any target using tof_mac.cpp
 #endif
 
 namespace Anki {

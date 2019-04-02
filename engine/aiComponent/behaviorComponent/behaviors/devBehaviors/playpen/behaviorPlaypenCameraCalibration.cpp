@@ -30,7 +30,7 @@ namespace Vector {
 
 namespace {
 
-#ifdef SIMULATOR
+#ifdef MACOSX
 // V2 Simulated camera calibration
 static const std::shared_ptr<Vision::CameraCalibration> kApproxCalib(
   new Vision::CameraCalibration(360, 640,

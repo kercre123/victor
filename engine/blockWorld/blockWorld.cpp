@@ -77,7 +77,7 @@ void BlockWorld::InitDependent(Robot* robot, const RobotCompMap& dependentComps)
   // 1x1 Light Cubes
   //
   DefineObject(std::make_unique<Block>(ObjectType::Block_LIGHTCUBE1));
-#ifdef SIMULATOR
+#ifdef MACOSX
   // VIC-12886 These object types are only used in Webots tests (not in the real world), so only define them if this
   // is sim. The physical robot can sometimes hallucinate these objects, which causes issues.
   DefineObject(std::make_unique<Block>(ObjectType::Block_LIGHTCUBE2));

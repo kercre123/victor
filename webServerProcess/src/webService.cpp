@@ -51,7 +51,7 @@
 using namespace Anki::Vector;
 
 namespace {
-#ifndef SIMULATOR
+#ifndef MACOSX
   bool                     s_WaitingForProcessStatus = false;
   std::vector<std::string> s_ProcessStatuses;
   std::mutex               s_ProcessStatusMutex;
@@ -524,7 +524,7 @@ static int GetInitialConfig(struct mg_connection *conn, void *cbdata)
   const std::string& title0    = that->GetConfig()["title0"].asString();
   const std::string& title1    = that->GetConfig()["title1"].asString();
   const std::string& startPage = that->GetConfig()["startPage"].asString();
-#ifdef SIMULATOR
+#ifdef MACOSX
   const std::string& webotsSim = "true";
 #else
   const std::string& webotsSim = "false";
@@ -565,7 +565,7 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
   "DEBUG";
 #endif
 
-#ifdef SIMULATOR
+#ifdef MACOSX
 
   const std::string procVersion = "n/a (webots)";
   const std::string procCmdLine = "n/a (webots)";
@@ -734,7 +734,7 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
 }
 
 
-#ifndef SIMULATOR
+#ifndef MACOSX
 
 static int SystemCtl(struct mg_connection *conn, void *cbdata)
 {
@@ -885,7 +885,7 @@ static int ProcessStatus(struct mg_connection *conn, void *cbdata)
   return 1;
 }
 
-#endif  // #ifndef SIMULATOR
+#endif  // #ifndef MACOSX
 
 
 namespace Anki {
@@ -987,7 +987,7 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
   mg_set_request_handler(_ctx, "/getinitialconfig", GetInitialConfig, 0);
   mg_set_request_handler(_ctx, "/getmainrobotinfo", GetMainRobotInfo, 0);
   mg_set_request_handler(_ctx, "/getperfstats", GetPerfStats, 0);
-#ifndef SIMULATOR
+#ifndef MACOSX
   mg_set_request_handler(_ctx, "/systemctl", SystemCtl, 0);
   mg_set_request_handler(_ctx, "/getprocessstatus", GetProcessStatus, 0);
   mg_set_request_handler(_ctx, "/processstatus", ProcessStatus, 0);
@@ -1266,7 +1266,7 @@ void WebService::Stop()
 
 #ifdef VICOS
     // shutdown nicely on the robot but let the OS handle it for the simulator, mg_stop triggers
-    // the thread sanitizer and execution stops here, by removing this line in SIMULATOR builds
+    // the thread sanitizer and execution stops here, by removing this line in MACOSX builds
     // it allows the thread sanitizier to continue to do useful work.
     mg_stop(_ctx);
 #endif

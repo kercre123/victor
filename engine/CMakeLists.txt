@@ -54,7 +54,6 @@ elseif (MACOSX)
     ${WEBOTS_LIBS}
   )
   set(PLATFORM_COMPILE_DEFS
-    SIMULATOR
   )
 endif()
 

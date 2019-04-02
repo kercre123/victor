@@ -35,7 +35,7 @@ public:
 
   Result Update();
 
-#ifdef SIMULATOR
+#ifdef MACOSX
 
   static void SetSupervisor(webots::Supervisor* sup);
 

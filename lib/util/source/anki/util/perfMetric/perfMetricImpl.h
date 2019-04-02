@@ -477,7 +477,7 @@ void PerfMetric::DumpLine(const DumpType dumpType,
   {
     case DT_LOG:
       {
-#ifdef SIMULATOR
+#ifdef MACOSX
         // In webots, the log system adds a newline for us, unlike in VicOS, so we strip it
         // off here rather than have code below to append a newline in the VicOS version
         if (_dumpBuffer[dumpBufferOffset - 1] == '\n')

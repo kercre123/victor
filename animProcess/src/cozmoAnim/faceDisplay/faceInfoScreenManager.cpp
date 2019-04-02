@@ -58,7 +58,7 @@
 #include <iomanip>
 #include <thread>
 
-#ifndef SIMULATOR
+#ifndef MACOSX
 #include <linux/reboot.h>
 #include <sys/reboot.h>
 #endif
@@ -70,7 +70,7 @@
 // Forces transition to BLE pairing screen on double button press
 // without waiting for actual START_PAIRING message from switchboard.
 // Mainly useful in sim, where there is currently no switchboard.
-#ifdef SIMULATOR
+#ifdef MACOSX
 #define FORCE_TRANSITION_TO_PAIRING 1
 #else
 #define FORCE_TRANSITION_TO_PAIRING 0
@@ -558,7 +558,7 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
     RobotInterface::SendAnimToEngine(std::move(msg));
   }
 
-#ifndef SIMULATOR
+#ifndef MACOSX
   // Enable/Disable lift
   RobotInterface::EnableMotorPower msg;
   msg.motorID = MotorID::MOTOR_LIFT;
@@ -1960,7 +1960,7 @@ void FaceInfoScreenManager::DrawScratch()
 
 void FaceInfoScreenManager::Reboot()
 {
-#ifdef SIMULATOR
+#ifdef MACOSX
   LOG_WARNING("FaceInfoScreenManager.Reboot.NotSupportInSimulator", "");
   return;
 #else

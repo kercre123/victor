@@ -19,8 +19,8 @@
 #include <webots/Display.hpp>
 
 
-#ifndef SIMULATOR
-#error SIMULATOR should be defined by any target using faceDisplay_mac.cpp
+#ifndef MACOSX
+#error MACOSX should be defined by any target using faceDisplay_mac.cpp
 #endif
 
 extern webots::Supervisor animSupervisor;

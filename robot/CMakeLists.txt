@@ -20,7 +20,6 @@ set(PLATFORM_FLAGS "")
 if (MACOSX)
   find_library(FOUNDATION Foundation)
   set(PLATFORM_COMPILE_DEFS
-    SIMULATOR
   )
 endif()
 
@@ -113,7 +112,6 @@ elseif (MACOSX)
       ${CMAKE_SOURCE_DIR}/robot/hal/sim/include
   )
   set(PLATFORM_COMPILE_DEFS
-      SIMULATOR
   )
   set(PLATFORM_SRCS
       ${CMAKE_SOURCE_DIR}/robot/hal/sim/src/sim_DAS.cpp
@@ -196,7 +194,6 @@ elseif (MACOSX)
     ${FOUNDATION}
   )
   set(PLATFORM_COMPILE_DEFS
-    SIMULATOR
   )
 endif()
 

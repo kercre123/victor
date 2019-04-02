@@ -22,8 +22,8 @@
 #include <fcntl.h>
 #include <errno.h>
 
-#ifdef SIMULATOR
-#error SIMULATOR should NOT be defined by any target using emrHelper_vicos.h
+#ifdef MACOSX
+#error MACOSX should NOT be defined by any target using emrHelper_vicos.h
 #endif
 
 namespace Anki {

@@ -29,7 +29,7 @@
 #include "timeProfiler.h"
 #include "wheelController.h"
 
-#ifndef SIMULATOR
+#ifndef MACOSX
 #include <errno.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -540,7 +540,7 @@ namespace Anki {
           AnkiInfo("CozmoBot.Radio.Connected", "");
           wasConnected_ = true;
 
-#ifdef SIMULATOR
+#ifdef MACOSX
           LiftController::Enable();
           HeadController::Enable();
           WheelController::Enable();

@@ -145,7 +145,7 @@ void RangeSensorComponent::UpdateDependent(const RobotCompMap& dependentComps)
             c,
             "rightProx");
 
-  #ifndef SIMULATOR
+  #ifndef MACOSX
   //rp.RotateBy(Rotation3d(DEG_TO_RAD(180), X_AXIS_3D()));
   //lp.RotateBy(Rotation3d(DEG_TO_RAD(180), X_AXIS_3D()));
   #endif

@@ -25,8 +25,8 @@
 #include <webots/Receiver.hpp>
 #include <webots/Supervisor.hpp>
 
-#ifndef SIMULATOR
-#error SIMULATOR should be defined by any target using cubeBleClient_mac.cpp
+#ifndef MACOSX
+#error MACOSX should be defined by any target using cubeBleClient_mac.cpp
 #endif
 
 namespace Anki {

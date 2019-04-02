@@ -49,7 +49,7 @@
 
 using namespace Anki;
 
-#ifdef SIMULATOR
+#ifdef MACOSX
 Anki::Vision::CameraCalibration GetCameraCalibration(const webots::Camera* camera)
 {
   const u16 nrows  = static_cast<u16>(camera->getHeight());

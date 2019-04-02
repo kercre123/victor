@@ -59,7 +59,7 @@ namespace Anki {
         const f32 USE_PI_CONTROL_LIFT_ANGLE_LOW_THRESH_RAD = LIFT_ANGLE_LOW_LIMIT_RAD + NO_D_ANGULAR_RANGE_RAD;
         const f32 USE_PI_CONTROL_LIFT_ANGLE_HIGH_THRESH_RAD = LIFT_ANGLE_HIGH_LIMIT_RAD - NO_D_ANGULAR_RANGE_RAD;
 
-#ifdef SIMULATOR
+#ifdef MACOSX
         // Only angles greater than this can contribute to error
         // This is to prevent micro-oscillations in sim which make the lift
         // never actually stop moving
@@ -77,14 +77,14 @@ namespace Anki {
         f32 Ki_ = 0.f; // integral control constant
         f32 angleErrorSum_ = 0.f;
         f32 MAX_ERROR_SUM = 10.f;
-#else // ifdef SIMULATOR
+#else // ifdef MACOSX
 
         f32 Kp_ = 3.f;     // proportional control constant
         f32 Kd_ = 3000.f;  // derivative gain
         f32 Ki_ = 0.1f;    // integral control constant
         f32 angleErrorSum_ = 0.f;
         f32 MAX_ERROR_SUM = 5.f;
-#endif // ifdef SIMULATOR
+#endif // ifdef MACOSX
 
         // Amount by which angleErrorSum decays to MAX_ANGLE_ERROR_SUM_IN_POSITION
         const f32 ANGLE_ERROR_SUM_DECAY_STEP = 0.02f;
@@ -229,7 +229,7 @@ namespace Anki {
           enableAtTime_ms_ = 0;  // Reset auto-enable trigger time
 
           ResetAnglePosition(currentAngle_rad_);
-#ifdef SIMULATOR
+#ifdef MACOSX
           // SetDesiredHeight might engage the gripper, but we don't want it engaged right now.
           HAL::DisengageGripper();
 #endif
@@ -524,7 +524,7 @@ namespace Anki {
         // Do range check on angle
         const f32 newDesiredAngle = CLIP(angle_rad, MIN_LIFT_ANGLE, MAX_LIFT_ANGLE);
 
-#ifdef SIMULATOR
+#ifdef MACOSX
         if(!HAL::IsGripperEngaged()) {
           // If the new desired height will make the lift move upward, turn on
           // the gripper's locking mechanism so that we might pick up a block as
@@ -782,7 +782,7 @@ namespace Anki {
           return RESULT_OK;
         }
 
-#ifdef SIMULATOR
+#ifdef MACOSX
         if (disengageGripperAtDest_ && currentAngle_rad_ < disengageAtAngle_) {
           HAL::DisengageGripper();
           disengageGripperAtDest_ = false;
@@ -820,7 +820,7 @@ namespace Anki {
         // Compute position error
         f32 angleError = currDesiredAngle_rad_ - currentAngle_rad_;
 
-#ifdef SIMULATOR
+#ifdef MACOSX
         // Ignore if it's less than encoder resolution
         if (ABS(angleError) < ENCODER_ANGLE_RES) {
           angleError = 0;
@@ -925,7 +925,7 @@ namespace Anki {
 
       void CheckForLoad(void (*callback)(bool))
       {
-#ifdef SIMULATOR
+#ifdef MACOSX
         if (callback) {
           callback(HAL::IsGripperEngaged());
         }

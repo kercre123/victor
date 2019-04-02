@@ -28,7 +28,7 @@
 
 #include "util/cpuProfiler/cpuProfiler.h"
 
-#ifdef SIMULATOR
+#ifdef MACOSX
 #include "osState/osState.h"
 #endif
 

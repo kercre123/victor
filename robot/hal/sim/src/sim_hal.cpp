@@ -69,8 +69,8 @@
 // Whether or not to simulate gyro bias and drift due to temperature
 static const bool kSimulateGyroBias = false;
 
-#ifndef SIMULATOR
-#error SIMULATOR should be defined by any target using sim_hal.cpp
+#ifndef MACOSX
+#error MACOSX should be defined by any target using sim_hal.cpp
 #endif
 
 namespace Anki {

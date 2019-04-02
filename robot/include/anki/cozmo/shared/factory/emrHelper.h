@@ -10,7 +10,7 @@
 * Copyright: Anki, Inc. 2018
 **/
 
-#ifdef SIMULATOR
+#ifdef MACOSX
 #include "anki/cozmo/shared/factory/emrHelper_mac.h"
 #else
 #include "anki/cozmo/shared/factory/emrHelper_vicos.h"
