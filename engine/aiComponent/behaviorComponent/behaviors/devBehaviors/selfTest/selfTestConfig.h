@@ -158,7 +158,8 @@ static u32 kFFTFreqTolerance_hz        = 20;
 static f32 kFFTMinLoudnessThresh       = 1000000000000.f;
 
 // The charger marker's last observed time is allowed to be this old compared to the latest processed image
-static u32 kChargerMarkerLastObservedTimeThresh_ms = 500;
+// TODO: Put this back to 500, with the inward facing sensor, we can't see the charger marker
+static u32 kChargerMarkerLastObservedTimeThresh_ms = 5000;
 
 // ----------Screen and Backpack----------
 // Distance to drive off the charger

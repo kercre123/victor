@@ -35,6 +35,8 @@ protected:
   virtual Result        OnBehaviorActivatedInternal() override;
   virtual SelfTestStatus SelfTestUpdateInternal() override;
   virtual void          OnBehaviorDeactivated() override;
+  template<typename T>
+  void HandleMessage(const T& msg);
 
 private:
 

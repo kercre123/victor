@@ -3216,7 +3216,7 @@ Result Robot::CheckForRampostError()
     if(f != nullptr)
     {
       char data[32] = {0};
-      rc = fread(data, sizeof(data), 1, f);
+      rc = (int)fread(data, sizeof(data), 1, f);
       (void)fclose(f);
       if(rc < 0)
       {

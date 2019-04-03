@@ -246,9 +246,13 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
       // Probably will never get here because we will restart
       // while updating os
       if(FACTORY_TEST)
+      {
+        // Only draw start pairing screen if packed out
+        if(Factory::GetEMR()->fields.PACKED_OUT_FLAG)
         {
           DrawStartPairingScreen(animStreamer);
         }
+      }
       else
       {
         // Reenable keep face alive

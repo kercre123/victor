@@ -26,6 +26,8 @@ BehaviorSelfTestPutOnCharger::BehaviorSelfTestPutOnCharger(const Json::Value& co
   SubscribeToTags(std::set<ExternalInterface::MessageEngineToGameTag>
                   {ExternalInterface::MessageEngineToGameTag::ChargerEvent,
                    ExternalInterface::MessageEngineToGameTag::RobotOffTreadsStateChanged});
+
+  SubscribeToTags({GameToEngineTag::SetConnectionStatus});
 }
 
 Result BehaviorSelfTestPutOnCharger::OnBehaviorActivatedInternal()
@@ -110,6 +112,46 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestPutOnCharger::SelfTestUpdateIn
 void BehaviorSelfTestPutOnCharger::OnBehaviorDeactivated()
 {
   _isUpsideDown = false;
+}
+
+template<>
+void BehaviorSelfTestPutOnCharger::HandleMessage(const SwitchboardInterface::SetConnectionStatus& msg)
+{
+  if(FACTORY_TEST && IsActivated())
+  {
+    // Super hacky but the SetConnectionStatus message is also forwarded to anim process
+    // where it will trigger an animation streamer abort. This would cause whatever the last face
+    // sent with DrawTextOnScreen to be cleared. In order to avoid this we wait some amount of time
+    // before calling DrawTextOnScreen. This will prevent animation streamer abort from clearing the screen
+    AddTimer(1000, [this](){
+       Robot& robot = GetBEI().GetRobotInfo()._robot;
+
+       const bool isPickedUp = robot.IsPickedUp();
+       //const bool isBeingHeld = robot.IsBeingHeld();
+
+       bool upsideDown = false;
+       if(isPickedUp/* && isBeingHeld*/)
+       {
+         const AccelData& accel = robot.GetHeadAccelData();
+         if(accel.z <= SelfTestConfig::kUpsideDownZAccel)
+         {
+           upsideDown = true;
+         }
+       }
+
+       float textAngle = 0;
+       if(!_isUpsideDown && upsideDown)
+       {
+         textAngle = 180;
+       }
+
+       DrawTextOnScreen(robot,
+                        {"Put on charger"},
+                        NamedColors::WHITE,
+                        NamedColors::BLACK,
+                        textAngle);
+    });
+  }
 }
 
 }

@@ -28,7 +28,7 @@
 #endif
 
 namespace Anki {
-namespace Vector {
+namespace Cozmo {
 
 namespace {
   bool _engineSupervisorSet = false;
@@ -77,7 +77,7 @@ ToFSensor::ToFSensor()
     // setVisibility() requires a pointer to the Rangefinder NODE, _not_ the Rangefinder device (which is of type
     // webots::Rangefinder*). There seems to be no good way to get the underlying node pointer of the Rangefinder, so we
     // have to do this somewhat hacky iteration over all of the nodes in the world to find the Rangefinder node.
-    const auto& vizNodes = WebotsHelpers::GetMatchingSceneTreeNodes(*_engineSupervisor, "CozmoVizDisplay");
+    const auto& vizNodes = WebotsHelpers::GetMatchingSceneTreeNodes(_engineSupervisor, "CozmoVizDisplay");
 
     webots::Node* tofNode = nullptr;
     const int maxNodesToSearch = 10000;
@@ -197,7 +197,7 @@ bool ToFSensor::IsCalibrating() const
   return false;
 }
 
-void ToFSensor::SetLogPath(const std::string& path)
+void ToFSensor::EnableBackgroundTest(bool enable, const CommandCallbac& callback)
 {
   return;
 }

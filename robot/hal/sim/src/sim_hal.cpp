@@ -926,5 +926,11 @@ namespace Anki {
       return powerState_;
     }
 
+    const uint8_t* const HAL::GetSysconVersionInfo()
+    {
+      static uint8_t version[16] = {'M', 'A', 'C'};
+      return version;
+    }
+
   } // namespace Cozmo
 } // namespace Anki
