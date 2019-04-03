@@ -2860,36 +2860,52 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 		UpdateVersion: "",
 	}
 
-	if data, err := ioutil.ReadFile("/run/update-engine/error"); err == nil {
-		// The script uses the current software version to generate a url. When that url exists,
-		// it contains the .ota that will take the bot from its current version to the latest
-		// available. If that file doesn't exist, it's because the bot's current version is the latest.
-		if updateStatus.Error == "Failed to open URL: HTTP Error 403: Forbidden" {
-			return updateStatus, nil
-		}
-
-		updateStatus.Error = string(data)
+	if _, err := os.Stat("/run/update-engine/done"); err == nil {
+		updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_READY_TO_INSTALL
+		return updateStatus, nil
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/exit_code"); err == nil {
 		updateStatus.ExitCode, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
+		if data, err := ioutil.ReadFile("/run/update-engine/error"); err == nil {
+			data_str := string(data)
+
+			// I do this, rather than checking for the 203 because the 203 has other meanings.
+			if strings.HasPrefix(data_str, "Failed to open URL: HTTP Error 403: Forbidden") {
+				updateStatus.ExitCode = 0
+				updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_NO_UPDATE
+				return updateStatus, nil
+			}
+
+			if !strings.HasPrefix(data_str, "Unclean exit") {
+				updateStatus.Error = data_str
+			}
+		}
+	}
+
+	if _, err := os.Stat("/run/update-engine/app_requested"); err == nil {
+		// update-engine.py has started. The first thing it does is destroy everything in this
+		// directory. In this state, we can conclude nothing about the update state and must
+		// tell the app that it has to wait a bit.
+		updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_STARTING
+		return updateStatus, nil
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/phase"); err == nil {
 		updateStatus.UpdatePhase = string(data)
 
-		if updateStatus.UpdatePhase == "download" {
+		if strings.HasPrefix(updateStatus.UpdatePhase, "download") {
 			if updateStatus.ExitCode == 208 || updateStatus.ExitCode == 215 {
 				updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_FAILURE_INTERRUPTED_DOWNLOAD
 				return updateStatus, nil
 			} else {
 				updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
 			}
+		} else {
+			updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_OTHER
 		}
-	}
-
-	if _, err := os.Stat("/run/update-engine/done"); err == nil {
-		updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_READY_TO_INSTALL
+	} else {
+		updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_STARTING
 		return updateStatus, nil
 	}
 
@@ -2968,7 +2984,14 @@ func (service *rpcService) StartUpdateEngine(
 	status, _ := service.GetUpdateStatus()
 
 	if status.UpdateStatus == extint.CheckUpdateStatusResponse_NO_UPDATE {
-		err := exec.Command(
+		// If this fails, we can still continue, but it could indicate something more serious
+		// (hence, the error)
+		err := exec.Command("/bin/touch", "/run/update-engine/app_requested").Run()
+		if err != nil {
+			log.Errorf("Couldn't /bin/touch /run/update-engine/app_requested")
+		}
+
+		err = exec.Command(
 			"/usr/bin/sudo",
 			"-n",
 			"/bin/systemctl",

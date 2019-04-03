@@ -1431,6 +1431,8 @@ message CheckUpdateStatusResponse{
     READY_TO_INSTALL = 1;
     IN_PROGRESS_DOWNLOAD = 2;
     FAILURE_INTERRUPTED_DOWNLOAD = 3;
+    IN_PROGRESS_STARTING = 4;
+    IN_PROGRESS_OTHER = 5;
   }
   UpdateStatus update_status = 2;
   int64 expected = 3;
