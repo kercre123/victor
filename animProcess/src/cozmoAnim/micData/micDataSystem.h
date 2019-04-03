@@ -16,7 +16,7 @@
 
 #include "micDataTypes.h"
 #include "coretech/common/shared/types.h"
-#include "cozmoAnim/micData/micRecordingStateController.h"
+#include "cozmoAnim/micData/micStreamingController.h"
 #include "cozmoAnim/speechRecognizer/speechRecognizerSystem.h"
 #include "util/console/consoleFunction.h"
 #include "util/global/globalDefinitions.h"
@@ -146,7 +146,7 @@ public:
   // sending any data to the cloud; this lasts for a set duration
   bool ShouldSimulateStreaming() const;
 
-  MicRecordingStateController& GetMicRecordingStateController() { return _micStateController; }
+  MicStreamingController& GetMicStreamingController() { return _micStateController; }
 
   // let's anybody who registered a callback with AddTriggerWordDetectedCallback(...) know that we've heard the
   // trigger word and are either about to start streaming, or not (either on purpose, or it was cancelled/error)
@@ -179,7 +179,7 @@ private:
   std::unique_ptr<SpeechRecognizerSystem> _speechRecognizerSystem;
   std::unique_ptr<LocalUdpServer>         _udpServer;
 
-  MicRecordingStateController             _micStateController;
+  MicStreamingController                  _micStateController;
 
 #if ANKI_DEV_CHEATS
   bool _forceRecordClip = false;

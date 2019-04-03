@@ -185,7 +185,7 @@ void MicDataProcessor::GetLatestMicDirectionData(MicDirectionData& out_lastSampl
 void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
                                                  const AudioUtil::SpeechRecognizerCallbackInfo& info)
 {
-  MicRecordingStateController& streamController = _micDataSystem->GetMicRecordingStateController();
+  MicStreamingController& streamController = _micDataSystem->GetMicStreamingController();
 
   // Ignore extra triggers during streaming
   if ( !streamController.CanBeginStreamingJob() )
@@ -218,7 +218,7 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
   const bool buttonPress = (source == TriggerWordDetectSource::Button) || muteButton;
 
   // don't play the get-in if this trigger word started from mute, because the mute animation should be playing
-  _micDataSystem->GetMicRecordingStateController().BeginStreamingJob( CloudMic::StreamType::Normal, !muteButton, earConCallback );
+  _micDataSystem->GetMicStreamingController().BeginStreamingJob( CloudMic::StreamType::Normal, !muteButton, earConCallback );
 
   const auto currentDirection = _micImmediateDirection->GetDominantDirection();
   const bool willStreamAudio = showStreamState->ShouldStreamAfterTriggerWordResponse() &&

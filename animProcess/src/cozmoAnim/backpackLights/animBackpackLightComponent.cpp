@@ -55,7 +55,7 @@ BackpackLightComponent::BackpackLightComponent(const AnimContext* context)
   static_assert((int)LEDId::NUM_BACKPACK_LEDS == 3, "BackpackLightComponent.WrongNumBackpackLights");
 
   // Add callbacks so we know when trigger word/audio stream are updated
-  _context->GetMicDataSystem()->GetMicRecordingStateController().AddTriggerWordDetectedCallback([this](bool willStream)
+  _context->GetMicDataSystem()->GetMicStreamingController().AddTriggerWordDetectedCallback([this](bool willStream)
     {
       _willStreamOpen = willStream;
 

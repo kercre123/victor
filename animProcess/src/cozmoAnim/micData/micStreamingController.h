@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- *  MicRecordingStateController .h
+ *  MicStreamingController .h
  *  Victor / Anim
  *
  *  Created by Jarrod Hatfield on 3/22/2019
@@ -13,8 +13,8 @@
  *
  **********************************************************************************************************************/
 
-#ifndef __AnimProcess_MicRecordingStateController_H_
-#define __AnimProcess_MicRecordingStateController_H_
+#ifndef __AnimProcess_MicStreamingController_H_
+#define __AnimProcess_MicStreamingController_H_
 
 #include "micDataTypes.h"
 // #include "util/global/globalDefinitions.h"
@@ -33,7 +33,7 @@ namespace MicData {
   class MicDataSystem;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class MicRecordingStateController
+class MicStreamingController
 {
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Structs and Enums ...
@@ -50,11 +50,11 @@ public:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-  MicRecordingStateController( MicDataSystem* micSystem );
-  ~MicRecordingStateController();
+  MicStreamingController( MicDataSystem* micSystem );
+  ~MicStreamingController();
 
-  MicRecordingStateController( const MicRecordingStateController& )             = delete;
-  MicRecordingStateController& operator=( const MicRecordingStateController& )  = delete;
+  MicStreamingController( const MicStreamingController& )             = delete;
+  MicStreamingController& operator=( const MicStreamingController& )  = delete;
 
   void Initialize( const Anim::AnimContext* animContext );
 
@@ -123,4 +123,4 @@ private:
 } // namespace Vector
 } // namespace Anki
 
-#endif // __AnimProcess_MicRecordingStateController_H_
+#endif // __AnimProcess_MicStreamingController_H_

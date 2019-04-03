@@ -1,6 +1,6 @@
 /***********************************************************************************************************************
  *
- *  MicRecordingStateController .cpp
+ *  MicStreamingController .cpp
  *  Victor / Anim
  *
  *  Created by Jarrod Hatfield on 3/22/2019
@@ -8,8 +8,8 @@
  *
  **********************************************************************************************************************/
 
-// #include "cozmoAnim/micData/micRecordingStateController.h"
-#include "micRecordingStateController.h"
+// #include "cozmoAnim/micData/micStreamingController.h"
+#include "micStreamingController.h"
 #include "cozmoAnim/animContext.h"
 #include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 #include "cozmoAnim/micData/micDataProcessor.h"
@@ -31,44 +31,44 @@ namespace Vector {
 namespace MicData {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MicRecordingStateController::MicRecordingStateController( MicDataSystem* micSystem ) :
+MicStreamingController::MicStreamingController( MicDataSystem* micSystem ) :
   _micDataSystem( micSystem )
 {
 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-MicRecordingStateController::~MicRecordingStateController()
+MicStreamingController::~MicStreamingController()
 {
 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicRecordingStateController::Initialize( const Anim::AnimContext* animContext )
+void MicStreamingController::Initialize( const Anim::AnimContext* animContext )
 {
   _animContext = animContext;
 
   // we need this to do our stuff ...
-  DEV_ASSERT( nullptr != _animContext, "MicRecordingStateController.Initialize" );
-  DEV_ASSERT( nullptr != _animContext->GetBackpackLightComponent(), "MicRecordingStateController.Initialize" );
-  DEV_ASSERT( nullptr != _animContext->GetShowAudioStreamStateManager(), "MicRecordingStateController.Initialize" );
+  DEV_ASSERT( nullptr != _animContext, "MicStreamingController.Initialize" );
+  DEV_ASSERT( nullptr != _animContext->GetBackpackLightComponent(), "MicStreamingController.Initialize" );
+  DEV_ASSERT( nullptr != _animContext->GetShowAudioStreamStateManager(), "MicStreamingController.Initialize" );
 
   // these should all exist by now ...
-  DEV_ASSERT( nullptr != _micDataSystem, "MicRecordingStateController.Initialize" );
-  DEV_ASSERT( nullptr != _micDataSystem->GetMicDataProcessor(), "MicRecordingStateController.Initialize" );
+  DEV_ASSERT( nullptr != _micDataSystem, "MicStreamingController.Initialize" );
+  DEV_ASSERT( nullptr != _micDataSystem->GetMicDataProcessor(), "MicStreamingController.Initialize" );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MicRecordingStateController::CanBeginStreamingJob() const
+bool MicStreamingController::CanBeginStreamingJob() const
 {
   const ShowAudioStreamStateManager* streamAnimManager = _animContext->GetShowAudioStreamStateManager();
-  DEV_ASSERT( nullptr != streamAnimManager, "MicRecordingStateController.BeginStreamingJob" );
+  DEV_ASSERT( nullptr != streamAnimManager, "MicStreamingController.BeginStreamingJob" );
 
   return ( HasStreamingBegun() || streamAnimManager->HasValidTriggerResponse() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MicRecordingStateController::BeginStreamingJob( CloudMic::StreamType streamType, bool shouldPlayTransitionAnim, OnTransitionComplete callback )
+bool MicStreamingController::BeginStreamingJob( CloudMic::StreamType streamType, bool shouldPlayTransitionAnim, OnTransitionComplete callback )
 {
   bool streamingBegun = false;
 
@@ -80,7 +80,7 @@ bool MicRecordingStateController::BeginStreamingJob( CloudMic::StreamType stream
     streamingBegun = true;
 
     ShowAudioStreamStateManager* streamAnimManager = _animContext->GetShowAudioStreamStateManager();
-    DEV_ASSERT( nullptr != streamAnimManager, "MicRecordingStateController.BeginStreamingJob" );
+    DEV_ASSERT( nullptr != streamAnimManager, "MicStreamingController.BeginStreamingJob" );
 
     // we consider ourselves transitioning regardless of if the anim has played or not
     // this is because we want to wait until we actually get the callback to stream before setting our stream state
@@ -97,10 +97,10 @@ bool MicRecordingStateController::BeginStreamingJob( CloudMic::StreamType stream
         {
           // the transition was successful and now we should officially start the stream.
           MicDataProcessor* micProcessor = _micDataSystem->GetMicDataProcessor();
-          DEV_ASSERT( nullptr != micProcessor, "MicRecordingStateController.BeginStreamingJob" );
+          DEV_ASSERT( nullptr != micProcessor, "MicStreamingController.BeginStreamingJob" );
 
           const RobotTimeStamp_t timestamp = micProcessor->CreateStreamJob( streamType, kTriggerLessOverlapSize_ms );
-          LOG_INFO( "MicRecordingStateController.CreateStreamJob", "Timestamp %d", (TimeStamp_t)timestamp );
+          LOG_INFO( "MicStreamingController.CreateStreamJob", "Timestamp %d", (TimeStamp_t)timestamp );
 
           OnStreamingBegin();
         }
@@ -132,7 +132,7 @@ bool MicRecordingStateController::BeginStreamingJob( CloudMic::StreamType stream
   else
   {
     callback( false );
-    LOG_WARNING( "MicRecordingStateController.BeginStreamingJob",
+    LOG_WARNING( "MicStreamingController.BeginStreamingJob",
                  "Trying to start a new streaming job while one is already active ... ignoring this request" );
   }
 
@@ -140,18 +140,18 @@ bool MicRecordingStateController::BeginStreamingJob( CloudMic::StreamType stream
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicRecordingStateController::EndStreamingJob()
+void MicStreamingController::EndStreamingJob()
 {
   OnStreamingEnd();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicRecordingStateController::OnTransitionBegin()
+void MicStreamingController::OnTransitionBegin()
 {
   _state = MicState::TransitionToStreaming;
 
   const ShowAudioStreamStateManager* streamAnimManager = _animContext->GetShowAudioStreamStateManager();
-  DEV_ASSERT( nullptr != streamAnimManager, "MicRecordingStateController.OnTransitionBegin" );
+  DEV_ASSERT( nullptr != streamAnimManager, "MicStreamingController.OnTransitionBegin" );
 
   // todo: jmeh
   // why do we even play the transition if we're not going to stream afterwards?
@@ -160,19 +160,19 @@ void MicRecordingStateController::OnTransitionBegin()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicRecordingStateController::OnStreamingBegin()
+void MicStreamingController::OnStreamingBegin()
 {
   _state = MicState::Streaming;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicRecordingStateController::OnStreamingEnd()
+void MicStreamingController::OnStreamingEnd()
 {
   _state = MicState::Listening;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicRecordingStateController::SetWillStream( bool willStream ) const
+void MicStreamingController::SetWillStream( bool willStream ) const
 {
   for ( auto func : _triggerWordDetectedCallbacks )
   {
@@ -184,10 +184,10 @@ void MicRecordingStateController::SetWillStream( bool willStream ) const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicRecordingStateController::SetMicsMuted( bool isMuted )
+void MicStreamingController::SetMicsMuted( bool isMuted )
 {
   Anim::BackpackLightComponent* bpLights = _animContext->GetBackpackLightComponent();
-  DEV_ASSERT( nullptr != bpLights, "MicRecordingStateController.SetMicsMuted" );
+  DEV_ASSERT( nullptr != bpLights, "MicStreamingController.SetMicsMuted" );
 
   if ( _isMuted != isMuted )
   {
