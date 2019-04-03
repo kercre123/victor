@@ -8,6 +8,9 @@
  *              space. This is a container of points are in clockwise
  *              order
  *
+ *  NOTE: This header "forward declares" templated definitions.
+ *        To get the implementations, you must include polygon.h.
+ *
  * Copyright: Anki, Inc. 2014
  *
  **/

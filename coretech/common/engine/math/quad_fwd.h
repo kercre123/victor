@@ -4,9 +4,11 @@
  * Author: Andrew Stein (andrew)
  * Created: 9/10/2013
  *
- *
  * Description: Defines a general N-dimensional Quadrilateral class for holding
  *              four points in arbitrary positions.
+ *
+ *  NOTE: This header "forward declares" templated definitions.
+ *        To get the implementations, you must include quad.h.
  *
  * Copyright: Anki, Inc. 2013
  *

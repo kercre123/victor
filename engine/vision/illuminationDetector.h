@@ -10,7 +10,7 @@
  **/
 
 #include "coretech/common/shared/types.h"
-#include "coretech/common/shared/math/matrix.h"
+#include "coretech/common/shared/math/matrix_fwd.h"
 #include "coretech/vision/engine/image.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 

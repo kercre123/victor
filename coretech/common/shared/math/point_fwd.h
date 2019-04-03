@@ -10,9 +10,12 @@
  *              special accessors for x, y, and z components as well. All offer
  *              math capabilities and are templated to store any type.
  *
- *              NOTE: These classes may also be useful to store 2-, 3- or 
- *                    N-dimensional vectors as well. Thus there are also 
- *                    aliases for Vec3f and Vec2f.
+ *              NOTES:
+ *                1. These classes may also be useful to store 2-, 3- or
+ *                   N-dimensional vectors as well. Thus there are also
+ *                   aliases for Vec3f and Vec2f.
+ *                2. This header "forward declares" templated definitions.
+ *                   To get the implementations, you must include point.h.
  *
  * Copyright: Anki, Inc. 2013
  *
