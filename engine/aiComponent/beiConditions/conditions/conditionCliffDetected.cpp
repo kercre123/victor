@@ -71,7 +71,7 @@ bool ConditionCliffDetected::AreConditionsMetInternal(BehaviorExternalInterface&
   const int numCliffs = cliffSensorComponent.GetNumCliffsDetected();
   if ( (_shouldDetectNoCliffs && numCliffs == 0) ||
        (!_shouldDetectNoCliffs && numCliffs >= _numCliffDetectionsToTrigger) ) {
-    const int currDetectionDuration = cliffSensorComponent.GetDurationForNCliffDetections_ms(_numCliffDetectionsToTrigger);
+    const int currDetectionDuration = cliffSensorComponent.GetDurationForAtLeastNCliffDetections_ms(_numCliffDetectionsToTrigger);
     return (currDetectionDuration >= _minDuration_ms) && (currDetectionDuration <= _maxDuration_ms);
   }
   return false;

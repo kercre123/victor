@@ -51,8 +51,6 @@ namespace {
   // "cliff" caused by the gaps between the user's fingers when holding the robot.
   static const int kMaxCliffsAllowedWhileHeldInPalm = 1;
   
-  static const int kMaxCliffsToConfirmRobotPlacedInPalm = 0;
-  
   // To prevent false-positive detections of the robot being held in a palm, we enforce that
   // the robot must observe at least this many cliffs after being picked up to try to capture
   // the fact that when a robot is being held by the user and put in their palm, they usually
@@ -60,11 +58,6 @@ namespace {
   // robot is just pushed or dragged along the ground, or only slightly picked up, the cliff
   // sensors will still be covered, and therefore the robot is not about to be placed in a palm.
   static const int kMinCliffsToConfirmHeldInPalmPickup = 3;
-  
-  // Sometimes the OffTreadsState experiences a delay in switching from OnTreads to InAir even
-  // after 3+ cliffs are detected, so we need to compensate for this in
-  // `HasDetectedEnoughCliffsSincePickup`.
-  static const u32 kOffTreadsStateChangeDelay_ms = 250;
   
   // Set a minimum time limit after all motors have stopped moving to confirm that the robot is
   // actually moving because it is being held, and not because of some InAir animation tricking the
@@ -339,29 +332,31 @@ bool HeldInPalmTracker::WasRobotPlacedInPalmWhileHeld(const BEIRobotInfo& robotI
     const auto& cliffDataFilt = cliffComp.GetCliffDataFiltered();
     const float maxCliffSensorVal = *std::max_element(std::begin(cliffDataFilt),
                                                       std::end(cliffDataFilt));
-    const u32 durationOfNoCliffDetections_ms =
-      cliffComp.GetDurationForNCliffDetections_ms(kMaxCliffsToConfirmRobotPlacedInPalm);
+
+    // How long have kMaxCliffsAllowedWhileHeldInPalm or fewer cliffs have been detected for?
+    u32 durationOfInPalmAllowableCliffsDetected_ms = cliffComp.GetDurationForAtMostNCliffDetections_ms(kMaxCliffsAllowedWhileHeldInPalm);
+
 #if REMOTE_CONSOLE_ENABLED
     if (kEnableDebugTransitionPrintouts) {
       if (cliffComp.GetNumCliffsDetected() <= kMaxCliffsAllowedWhileHeldInPalm &&
-          durationOfNoCliffDetections_ms < timeToConfirmHeldInPalm_ms &&
+          durationOfInPalmAllowableCliffsDetected_ms < timeToConfirmHeldInPalm_ms &&
           maxCliffSensorVal < kCliffValHeldInPalmSurface) {
         LOG_PERIODIC_INFO(5, "HIPTracker.WasRobotPlacedInPalmWhileHeld.InsufficientCliffDetectionDuration",
                           "Robot detecting a valid palm surface with max reported cliff sensor value of %.1f,"
                           "but %d cliffs (or less) have only been detected for %d [ms]", maxCliffSensorVal,
-                          kMaxCliffsAllowedWhileHeldInPalm, durationOfNoCliffDetections_ms);
-      } else if (durationOfNoCliffDetections_ms >= timeToConfirmHeldInPalm_ms &&
+                          kMaxCliffsAllowedWhileHeldInPalm, durationOfInPalmAllowableCliffsDetected_ms);
+      } else if (durationOfInPalmAllowableCliffsDetected_ms >= timeToConfirmHeldInPalm_ms &&
                  maxCliffSensorVal >= kCliffValHeldInPalmSurface) {
         LOG_PERIODIC_INFO(5, "HIPTracker.WasRobotPlacedInPalmWhileHeld.InvalidPalmSurface",
                           "Robot has detected %d cliffs for %d [ms], but invalid palm surface currently"
                           "detected with max reported cliff sensor value of %.1f" ,
-                          kMaxCliffsAllowedWhileHeldInPalm, durationOfNoCliffDetections_ms,
+                          kMaxCliffsAllowedWhileHeldInPalm, durationOfInPalmAllowableCliffsDetected_ms,
                           maxCliffSensorVal);
       }
     }
 #endif
     
-    return durationOfNoCliffDetections_ms >= timeToConfirmHeldInPalm_ms &&
+    return durationOfInPalmAllowableCliffsDetected_ms >= timeToConfirmHeldInPalm_ms &&
        // A cliff sensor reading higher than kCliffValHeldInPalmSurface is likely due to the robot
        // being put down on the ground, or on an object that is not a user's palm.
        maxCliffSensorVal < kCliffValHeldInPalmSurface;
@@ -379,40 +374,15 @@ bool HeldInPalmTracker::HasDetectedEnoughCliffsSincePickup(const BEIRobotInfo& r
               "Robot still on charger contacts, check is invalid");
   
   const auto& cliffComp = robotInfo.GetCliffSensorComponent();
-  const int currNumCliffs = cliffComp.GetNumCliffsDetected();
-  if (currNumCliffs >= kMinCliffsToConfirmHeldInPalmPickup) {
-    const u32 timeSinceOnTreadsOrCharger_ms = GetMillisecondsSince(_lastTimeOnTreadsOrCharger);
-    const u32 durationOfCurrentCliffDetections_ms =
-      cliffComp.GetDurationForNCliffDetections_ms(currNumCliffs);
-    if (durationOfCurrentCliffDetections_ms <= timeSinceOnTreadsOrCharger_ms + kOffTreadsStateChangeDelay_ms) {
-#if REMOTE_CONSOLE_ENABLED
-      if (kEnableDebugTransitionPrintouts) {
-        LOG_INFO("HIPTracker.HasDetectedEnoughCliffsSincePickup",
-                 "Robot has been detecting at least %u cliffs for %u [ms], %u [ms] elapsed since "
-                 "last OnTreads or on charger", currNumCliffs, durationOfCurrentCliffDetections_ms,
-                 timeSinceOnTreadsOrCharger_ms);
-      }
-#endif
-      return true;
-    }
+  const int maxNumCliffs = cliffComp.GetMaxNumCliffsDetectedWhilePickedUp();
 #if REMOTE_CONSOLE_ENABLED
     if (kEnableDebugTransitionPrintouts) {
-      LOG_PERIODIC_INFO(5, "HIPTracker.HasDetectedEnoughCliffsSincePickup.InsufficientCliffDetectionDuration",
-                        "Robot has only been detecting %u cliffs (or more) for %u [ms], %u [ms] elapsed since "
-                        "last OnTreads or on charger", currNumCliffs, durationOfCurrentCliffDetections_ms,
-                        timeSinceOnTreadsOrCharger_ms);
+      LOG_PERIODIC_INFO(5, "HIPTracker.HasDetectedEnoughCliffsSincePickup.MaxNumCliffsDetectedWhilePickedUp",
+                           "%d", maxNumCliffs);
     }
 #endif
-  }
-  
-#if REMOTE_CONSOLE_ENABLED
-  if (kEnableDebugTransitionPrintouts) {
-    LOG_PERIODIC_INFO(5, "HIPTracker.HasDetectedEnoughCliffsSincePickup.TooFewCliffs",
-                      "Robot is only currently detecting %u cliffs", currNumCliffs);
-  }
-#endif
-  
-  return false;
+
+  return maxNumCliffs >= kMinCliffsToConfirmHeldInPalmPickup;
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

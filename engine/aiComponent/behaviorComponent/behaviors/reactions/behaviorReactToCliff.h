@@ -88,6 +88,9 @@ private:
     // that serves as the look-at target for any visual observation actions
     bool hasTargetCliff; 
     
+    // Used to cancel behavior if picked up for too long
+    TimeStamp_t lastPickupStartTime_ms;
+    
     // used to determine where the robot searches for visual edges
     Pose3d cliffPose;
 
