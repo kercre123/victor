@@ -2,6 +2,7 @@
 #include "cannedAnimLib/proceduralFace/scanlineDistorter.h"
 
 #include "coretech/common/shared/array2d.h"
+#include "coretech/common/shared/math/matrix.h"
 #include "coretech/common/engine/math/quad.h"
 #include "coretech/common/shared/math/rotation.h"
 

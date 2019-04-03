@@ -19,8 +19,8 @@
 
 #include "coretech/common/engine/exceptions.h"
 
-#include "coretech/common/engine/math/linearAlgebra_impl.h"
-#include "coretech/common/engine/math/triangle_impl.h"
+#include "coretech/common/engine/math/linearAlgebra.h"
+#include "coretech/common/engine/math/triangle.h"
 #include "coretech/common/engine/utils/helpers/compareFcns.h"
 #include "coretech/common/shared/utilities_shared.h"
 
@@ -28,14 +28,12 @@
 
 #include "util/logging/logging.h"
 
-#if ANKICORETECH_USE_OPENCV
+static_assert(ANKICORETECH_USE_OPENCV, "Quad implementation requires OpenCV");
 #include "opencv2/core/core.hpp"
 #include "opencv2/imgproc/imgproc.hpp" // for minAreaRect
-#endif
 
 #include <cmath>
 #include <array>
-
 
 namespace Anki {
 

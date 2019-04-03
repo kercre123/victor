@@ -10,10 +10,11 @@
  *   Currently, this inherits from cv::Mat_<T> in order to provide basic
  *   members and accessors as well as handy smart pointer functionality.
  *
- *  NOTE:
- *   Despite the common name, this class is substantially different from the
- *   Embedded::Array2d class.
- *
+ *  NOTES:
+ *   1. Despite the common name, this class is substantially different from the
+ *      Embedded::Array2d class.
+ *   2. This header "forward declares" templated definitions.
+ *      To get the implementations, you must include array2d.h.
  *
  * Copyright: Anki, Inc. 2013
  *

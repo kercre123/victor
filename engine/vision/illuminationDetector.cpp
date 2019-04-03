@@ -12,7 +12,7 @@
 #include "clad/types/featureGateTypes.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/linearClassifier_impl.h"
+#include "coretech/common/engine/math/linearClassifier.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/vision/engine/imageBrightnessHistogram.h"
 #include "coretech/vision/engine/imageCache.h"

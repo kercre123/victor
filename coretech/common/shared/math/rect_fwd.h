@@ -7,6 +7,9 @@
  * Description: Defines a templated class for storing 2D rectangles according to 
  *              their upper left corner and width + height.
  *
+ *  NOTE: This header "forward declares" templated definitions.
+ *        To get the implementations, you must include rect.h.
+ *
  * Copyright: Anki, Inc. 2014
  *
  **/

@@ -1,10 +1,13 @@
 /**
- * File: image.h
+ * File: image_fwd.h
  *
  * Author: Andrew Stein
  * Date:   11/20/2014
  *
  * Description: Defines a container for images on the basestation.
+ *
+ *  NOTE: This header "forward declares" templated definitions.
+ *        To get the implementations, you must include image.h.
  *
  * Copyright: Anki, Inc. 2014
  **/

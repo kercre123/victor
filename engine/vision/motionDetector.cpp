@@ -13,7 +13,7 @@
 #include "engine/vision/motionDetector.h"
 #include "engine/vision/motionDetector_neon.h"
 
-#include "coretech/common/engine/math/linearAlgebra_impl.h"
+#include "coretech/common/engine/math/linearAlgebra.h"
 #include "coretech/common/engine/math/quad.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/imageCache.h"

@@ -33,7 +33,7 @@
 
 #include "util/logging/logging.h"
 
-#include "coretech/common/shared/math/matrix.h"
+#include "coretech/common/shared/math/matrix_fwd.h"
 #include "coretech/common/shared/math/point_fwd.h"
 #include "coretech/common/engine/math/poseBase.h"
 #include "coretech/common/engine/math/quad_fwd.h"

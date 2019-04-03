@@ -16,7 +16,7 @@
 #include "coretech/common/shared/types.h"
 #include "coretech/common/shared/math/point_fwd.h"
 
-#include "coretech/common/shared/math/matrix_impl.h"
+#include "coretech/common/shared/math/matrix.h"
 #include "util/random/randomGenerator.h"
 #include "util/console/consoleInterface.h"
 
