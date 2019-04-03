@@ -213,7 +213,14 @@ UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
     }
 
     // set default feature to a "basic voice command"
-    MetaUserIntent_SimpleVoiceResponse response("", "", ActiveFeature::BasicVoiceCommand);
+    MetaUserIntent_SimpleVoiceResponse response;
+
+    // manually set default
+    response.anim_group = "";
+    response.emotion_event = "";
+    response.active_feature = ActiveFeature::BasicVoiceCommand;
+    response.disable_wakeword_turn = false;
+
     const bool jsonOK = response.SetFromJSON( simpleResponseGroup[kResponseKey] );
     if( !jsonOK ) {
       LOG_ERROR("UserIntentMap.Ctor.InvalidConfig.SimpleResponseParseFail.Response",

@@ -106,7 +106,10 @@ structure MetaUserIntent_SimpleVoiceResponse
 {
   string anim_group, // group, not trigger, to avoid needed a clad update if a new group is added
   string emotion_event, // optional (blank if not needed)
-  ActiveFeature active_feature // optional (should use 'BasicVoiceCommand' if not otherwise specified)
+  ActiveFeature active_feature, // optional (should use 'BasicVoiceCommand' if not otherwise specified)
+
+  // special case logic to disable turning after the wakeword, generally should be left to default to false
+  bool disable_wakeword_turn,
 }
 
 union dupes_allowed UserIntent

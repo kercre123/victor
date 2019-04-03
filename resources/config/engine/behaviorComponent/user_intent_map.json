@@ -13,7 +13,8 @@
       "response": {
         "anim_group": "ag_movement_forward_01",
         "emotion_event": "RespondToShortVoiceCommand",
-        "active_feature": "MovementForward"
+        "active_feature": "MovementForward",
+        "disable_wakeword_turn": true
       }
     }
   ],
