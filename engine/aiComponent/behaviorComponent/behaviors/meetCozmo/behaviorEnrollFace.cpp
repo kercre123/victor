@@ -2332,6 +2332,12 @@ void BehaviorEnrollFace::HandleWhileInScopeButNotActivated(const GameToEngineEve
       // This is a re-enroll if saveID is provided (and "manual" because this came as a message)
       _dVars->persistent.isManualReEnroll = (msg.saveID != Vision::UnknownFaceID);
 
+      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+      if( gi != nullptr ) {
+        external_interface::SetFaceToEnrollResponse* set_face_to_enroll_response = new external_interface::SetFaceToEnrollResponse;
+        gi->Broadcast( ExternalMessageRouter::WrapResponse(set_face_to_enroll_response));
+      }
+
       break;
     }
 

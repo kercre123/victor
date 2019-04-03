@@ -178,6 +178,8 @@ message GatewayWrapper {
     RollBlockResponse             roll_block_response                = 409;
     EnrollFaceRequest             enroll_face_request                = 410;
     EnrollFaceResponse            enroll_face_response               = 411;
+    SetFaceToEnrollRequest        set_face_to_enroll_request         = 412;
+    SetFaceToEnrollResponse       set_face_to_enroll_response        = 413;
 
     // ------------ movement request/response pairs ----------------------
     TurnInPlaceRequest              turn_in_place_request                = 500;

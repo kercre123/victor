@@ -70,6 +70,11 @@ bool ProtoCladInterpreter::Redirect(
       ProtoStopAllMotorsRequestToClad(proto_message, clad_message);
       break;
     }
+    case external_interface::GatewayWrapper::kSetFaceToEnrollRequest:
+    {
+      ProtoSetFaceToEnrollRequestToClad(proto_message, clad_message);
+      break;
+    }
     default:
     {
       return false;
@@ -201,6 +206,18 @@ void ProtoCladInterpreter::ProtoStopAllMotorsRequestToClad(
   clad_message.Set_StopAllMotors(stop_all_motors);
 }
 
+void ProtoCladInterpreter::ProtoSetFaceToEnrollRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+  Anki::Vector::ExternalInterface::SetFaceToEnroll set_face_to_enroll;
+  set_face_to_enroll.name = proto_message.set_face_to_enroll_request().name();
+  set_face_to_enroll.observedID = proto_message.set_face_to_enroll_request().observed_id();
+  set_face_to_enroll.saveID = proto_message.set_face_to_enroll_request().save_id();
+  set_face_to_enroll.saveToRobot = proto_message.set_face_to_enroll_request().save_to_robot();
+  set_face_to_enroll.sayName = proto_message.set_face_to_enroll_request().say_name();
+  set_face_to_enroll.useMusic = proto_message.set_face_to_enroll_request().use_music();
+  clad_message.Set_SetFaceToEnroll(set_face_to_enroll);
+}
 
 void ProtoCladInterpreter::CladDriveWheelsToProto(
     const ExternalInterface::MessageGameToEngine& clad_message,

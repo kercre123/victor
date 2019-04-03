@@ -93,17 +93,6 @@ func ProtoEraseAllEnrolledFacesToClad(msg *extint.EraseAllEnrolledFacesRequest) 
 	return gw_clad.NewMessageExternalToRobotWithEraseAllEnrolledFaces(&gw_clad.EraseAllEnrolledFaces{})
 }
 
-func ProtoSetFaceToEnrollToClad(msg *extint.SetFaceToEnrollRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithSetFaceToEnroll(&gw_clad.SetFaceToEnroll{
-		Name:        msg.Name,
-		ObservedID:  msg.ObservedId,
-		SaveID:      msg.SaveId,
-		SaveToRobot: msg.SaveToRobot,
-		SayName:     msg.SayName,
-		UseMusic:    msg.UseMusic,
-	})
-}
-
 func ProtoPoseToClad(msg *extint.PoseStruct) *gw_clad.PoseStruct3d {
 	return &gw_clad.PoseStruct3d{
 		X:        msg.X,
@@ -926,15 +915,26 @@ func (service *rpcService) EraseAllEnrolledFaces(ctx context.Context, in *extint
 }
 
 func (service *rpcService) SetFaceToEnroll(ctx context.Context, in *extint.SetFaceToEnrollRequest) (*extint.SetFaceToEnrollResponse, error) {
-	_, err := engineCladManager.Write(ProtoSetFaceToEnrollToClad(in))
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_SetFaceToEnrollResponse{}, 1)
+	defer f()
+
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_SetFaceToEnrollRequest{
+			SetFaceToEnrollRequest: in,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
-	return &extint.SetFaceToEnrollResponse{
-		Status: &extint.ResponseStatus{
-			Code: extint.ResponseStatus_REQUEST_PROCESSING,
-		},
-	}, nil
+	setFaceToEnrollResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := setFaceToEnrollResponse.GetSetFaceToEnrollResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
 }
 
 func (service *rpcService) EnrollFace(ctx context.Context, in *extint.EnrollFaceRequest) (*extint.EnrollFaceResponse, error) {
