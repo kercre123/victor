@@ -1428,7 +1428,7 @@ message CheckUpdateStatusResponse{
   ResponseStatus status = 1;
   enum UpdateStatus {
     NO_UPDATE = 0;
-    READY_TO_INSTALL = 1;
+    READY_TO_REBOOT_INTO_NEW_OS_VERSION = 1;
     IN_PROGRESS_DOWNLOAD = 2;
     FAILURE_INTERRUPTED_DOWNLOAD = 3;
     IN_PROGRESS_STARTING = 4;

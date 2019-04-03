@@ -2861,7 +2861,8 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 	}
 
 	if _, err := os.Stat("/run/update-engine/done"); err == nil {
-		updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_READY_TO_INSTALL
+		updateStatus.UpdateStatus =
+			extint.CheckUpdateStatusResponse_READY_TO_REBOOT_INTO_NEW_OS_VERSION
 		return updateStatus, nil
 	}
 
@@ -2884,9 +2885,9 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 	}
 
 	if _, err := os.Stat("/run/update-engine/app_requested"); err == nil {
-		// update-engine.py has started. The first thing it does is destroy everything in this
-		// directory. In this state, we can conclude nothing about the update state and must
-		// tell the app that it has to wait a bit.
+		// /anki/bin/update-engine has started. The first thing it does is destroy everything
+		// in this directory. In this state, we can conclude nothing about the update state
+		// and must tell the app that it has to wait a bit.
 		updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_STARTING
 		return updateStatus, nil
 	}
