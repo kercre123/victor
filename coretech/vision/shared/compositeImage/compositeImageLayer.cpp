@@ -18,6 +18,11 @@
 #include "coretech/vision/shared/compositeImage/compositeImageLayoutModifier.h"
 #include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD_VISION(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD_VISION(ns) ns
+#endif
 
 namespace Anki {
 namespace Vision {
@@ -37,7 +42,7 @@ CompositeImageLayer::CompositeImageLayer(const Json::Value& layoutSpec)
   // Load in the layer name
   {
     const std::string layerName = JsonTools::ParseString(layoutSpec, kLayerNameKey, templateDebugStr + kLayerNameKey);
-    _layerName = LayerNameFromString(layerName);
+    _layerName = CLAD_VISION(LayerNameFromString)(layerName);
   }
 
   // Verify that a layout is specified
@@ -54,15 +59,15 @@ CompositeImageLayer::CompositeImageLayer(const Json::Value& layoutSpec)
     const int width            = JsonTools::ParseInt32(entry,  kWidthKey,         templateDebugStr);
     const int height           = JsonTools::ParseInt32(entry,  kHeightKey,        templateDebugStr);
 
-    SpriteRenderConfig renderConfig;
+    CLAD_VISION(SpriteRenderConfig) renderConfig;
     JsonTools::GetValueOptional(entry,  kHueKey,        renderConfig.hue);
     JsonTools::GetValueOptional(entry,  kSaturationKey,  renderConfig.saturation);
 
     const std::string renderString = JsonTools::ParseString(entry, kRenderMethodKey, templateDebugStr);
-    renderConfig.renderMethod = SpriteRenderMethodFromString(renderString);
+    renderConfig.renderMethod = CLAD_VISION(SpriteRenderMethodFromString)(renderString);
 
     const std::string sbString = JsonTools::ParseString(entry, kSpriteBoxNameKey, templateDebugStr);
-    SpriteBoxName sbName = SpriteBoxNameFromString(sbString);
+    CLAD_VISION(SpriteBoxName) sbName = CLAD_VISION(SpriteBoxNameFromString)(sbString);
 
     _layoutMap.emplace(std::make_pair(sbName, SpriteBox(sbName, renderConfig, Point2i(x, y), width, height)));
   }
@@ -85,7 +90,7 @@ bool CompositeImageLayer::operator==(const CompositeImageLayer& other) const{
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint16_t CompositeImageLayer::GetAssetID(SpriteBoxName sbName)  const
+uint16_t CompositeImageLayer::GetAssetID(CLAD_VISION(SpriteBoxName) sbName)  const
 {
   auto imageMapIter = _imageMap.find(sbName);
   if(imageMapIter != _imageMap.end()){
@@ -96,7 +101,7 @@ uint16_t CompositeImageLayer::GetAssetID(SpriteBoxName sbName)  const
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool CompositeImageLayer::GetFrame(SpriteBoxName sbName, const u32 index,
+bool CompositeImageLayer::GetFrame(CLAD_VISION(SpriteBoxName) sbName, const u32 index,
                                    Vision::SpriteHandle& handle) const
 {
   auto imageMapIter = _imageMap.find(sbName);
@@ -123,7 +128,7 @@ void CompositeImageLayer::MergeInLayer(const CompositeImageLayer& otherLayer)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CompositeImageLayer::AddToLayout(SpriteBoxName sbName, const SpriteBox& spriteBox)
+void CompositeImageLayer::AddToLayout(CLAD_VISION(SpriteBoxName) sbName, const SpriteBox& spriteBox)
 {
   auto resultPair = _layoutMap.emplace(sbName, spriteBox);
   // If map entry already exists, just update existing iterator
@@ -135,7 +140,7 @@ void CompositeImageLayer::AddToLayout(SpriteBoxName sbName, const SpriteBox& spr
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CompositeImageLayer::AddToImageMap(SpriteCache* cache, SpriteSequenceContainer* seqContainer,
-                                        SpriteBoxName sbName, const std::string& assetName)
+                                        CLAD_VISION(SpriteBoxName) sbName, const std::string& assetName)
 {
   auto resultPair = _imageMap.emplace(sbName, SpriteEntry(cache, seqContainer, assetName));
   // If map entry already exists, just update existing iterator
@@ -145,7 +150,7 @@ void CompositeImageLayer::AddToImageMap(SpriteCache* cache, SpriteSequenceContai
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CompositeImageLayer::AddToImageMap(SpriteBoxName sbName, const SpriteEntry& spriteEntry)
+void CompositeImageLayer::AddToImageMap(CLAD_VISION(SpriteBoxName) sbName, const SpriteEntry& spriteEntry)
 {
   auto resultPair = _imageMap.emplace(sbName, spriteEntry);
   // If map entry already exists, just update existing iterator
@@ -164,7 +169,7 @@ void CompositeImageLayer::AddOrUpdateSpriteBoxWithEntry(const SpriteBox& spriteB
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CompositeImageLayer::ClearSpriteBoxByName(const SpriteBoxName& sbName)
+void CompositeImageLayer::ClearSpriteBoxByName(const CLAD_VISION(SpriteBoxName)& sbName)
 {
   auto iter = _imageMap.find(sbName);
   if(iter != _imageMap.end()){
@@ -201,7 +206,7 @@ void CompositeImageLayer::SetImageMap(const Json::Value& imageMapSpec,
   const std::string implDebugStr = "CompositeImageBuilder.BuildCompositeImage.SpecKey";
   for(auto& entry: imageMapSpec){
     const std::string sbString  = JsonTools::ParseString(entry, kSpriteBoxNameKey, implDebugStr);
-    SpriteBoxName sbName        = SpriteBoxNameFromString(sbString);
+    CLAD_VISION(SpriteBoxName) sbName        = CLAD_VISION(SpriteBoxNameFromString)(sbString);
     const std::string assetName = JsonTools::ParseString(entry, kAssetNameKey, implDebugStr);
     auto spriteEntry = Vision::CompositeImageLayer::SpriteEntry(cache,
                                                                 seqContainer,
@@ -229,9 +234,15 @@ bool CompositeImageLayer::IsValidImageMap(const ImageMap& imageMap, bool require
   for(const auto& pair: imageMap){
     auto iter = _layoutMap.find(pair.first);
     if(iter == _layoutMap.end()){
+#ifndef USES_CLAD_CPPLITE
       PRINT_NAMED_WARNING("CompositeImageLayerDef.IsValidImplementation.spriteBoxNameMismatch",
                           "Implementation has quadrant named %s which is not present in layout",
                           SpriteBoxNameToString(iter->first));
+#else
+      PRINT_NAMED_WARNING("CompositeImageLayerDef.IsValidImplementation.spriteBoxNameMismatch",
+                          "Implementation has quadrant named %s which is not present in layout",
+                          EnumToString(iter->first));
+#endif
       return false;
     }
   }
@@ -241,9 +252,9 @@ bool CompositeImageLayer::IsValidImageMap(const ImageMap& imageMap, bool require
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SerializedSpriteBox CompositeImageLayer::SpriteBox::Serialize() const
+CLAD_VISION(SerializedSpriteBox) CompositeImageLayer::SpriteBox::Serialize() const
 {
-  SerializedSpriteBox serialized;
+  CLAD_VISION(SerializedSpriteBox) serialized;
   serialized.topLeftX = topLeftCorner.x();
   serialized.topLeftY = topLeftCorner.y();
   serialized.width    = width;
@@ -278,17 +289,23 @@ SerializedSpriteBox CompositeImageLayer::SpriteBox::Serialize() const
 bool CompositeImageLayer::SpriteBox::ValidateRenderConfig() const
 {
   switch(renderConfig.renderMethod){
-    case SpriteRenderMethod::RGBA:
-    case SpriteRenderMethod::EyeColor:
-    case SpriteRenderMethod::CustomHue:
+    case CLAD_VISION(SpriteRenderMethod)::RGBA:
+    case CLAD_VISION(SpriteRenderMethod)::EyeColor:
+    case CLAD_VISION(SpriteRenderMethod)::CustomHue:
     {
       return true;
     }
     default:
     {
+#ifndef USES_CLAD_CPPLITE
       PRINT_NAMED_ERROR("CompositeImageLayer.ValidateRenderConfig",
                         "Sprite Box %s does not have a valid render method",
                         SpriteBoxNameToString(spriteBoxName));
+#else
+      PRINT_NAMED_ERROR("CompositeImageLayer.ValidateRenderConfig",
+                        "Sprite Box %s does not have a valid render method",
+                        EnumToString(spriteBoxName));
+#endif
       return false;
     }
   }
@@ -299,7 +316,9 @@ bool CompositeImageLayer::SpriteBox::ValidateRenderConfig() const
 bool CompositeImageLayer::SpriteBox::operator==(const SpriteBox& other) const
 {
   return (spriteBoxName == other.spriteBoxName) &&
+#ifndef USES_CLAD_CPPLITE
          (renderConfig  == other.renderConfig) &&
+#endif
          (topLeftCorner == other.topLeftCorner) &&
          (width         == other.width) &&
          (height        == other.height);
@@ -338,7 +357,7 @@ CompositeImageLayer::SpriteBox::SpriteBox(const SpriteBox& spriteBox)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CompositeImageLayer::SpriteBox::SpriteBox(const SerializedSpriteBox& spriteBox)
+CompositeImageLayer::SpriteBox::SpriteBox(const CLAD_VISION(SerializedSpriteBox)& spriteBox)
 : spriteBoxName(spriteBox.name)
 , renderConfig(spriteBox.renderConfig)
 , topLeftCorner(spriteBox.topLeftX, spriteBox.topLeftY)

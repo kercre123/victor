@@ -20,13 +20,13 @@
 #include "util/console/consoleInterface.h"
 #include "util/math/math.h"
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
 #else
 #define CLAD_VECTOR(ns) ns
 #endif
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 namespace CppLite {
 #endif
 namespace Anki {
@@ -34,7 +34,7 @@ namespace Vector {
 struct RobotState;
 }
 }
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 }
 #endif
 

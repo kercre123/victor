@@ -15,7 +15,7 @@
 #include "util/console/consoleInterface.h"
 #include <algorithm>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD_ANKI(ns) CppLite::Anki::ns
 #else
 #define CLAD_ANKI(ns) ns
@@ -27,7 +27,7 @@ namespace Anim {
 
 namespace
 {
-  const auto kProceduralGameObject = AudioMetaData::GameObjectType::Procedural;
+  const auto kProceduralGameObject = CLAD_ANKI(AudioMetaData)::GameObjectType::Procedural;
   #define CONSOLE_PATH "Audio.KeepAlive"
   CONSOLE_VAR(bool, kEnableKeepAliveEyeBlinkAudioEvents, CONSOLE_PATH, true);
   CONSOLE_VAR(bool, kEnableKeepAliveEyeDartAudioEvents, CONSOLE_PATH, true);

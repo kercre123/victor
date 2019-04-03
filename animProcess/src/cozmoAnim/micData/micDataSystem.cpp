@@ -47,6 +47,14 @@
 #include <iomanip>
 #include <sstream>
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
+#else
+#define CLAD(ns) ns
+#define CLAD_AUDIOMETADATA(ns) AudioMetaData::ns
+#endif
+
 namespace {
 #define LOG_CHANNEL "Microphones"
 #define CONSOLE_GROUP "MicData"
@@ -70,18 +78,18 @@ CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInAU);
   
 namespace MicData {
 
-constexpr auto kCladMicDataTypeSize = sizeof(RobotInterface::MicData::data)/sizeof(RobotInterface::MicData::data[0]);
+constexpr auto kCladMicDataTypeSize = sizeof(CLAD(RobotInterface)::MicData::data)/sizeof(CLAD(RobotInterface)::MicData::data[0]);
 static_assert(kCladMicDataTypeSize == kIncomingAudioChunkSize, 
               "Expecting size of MicData::data to match DeinterlacedAudioChunk");
 
 static_assert(
-  std::is_same<std::remove_reference<decltype(RobotInterface::MicDirection::confidenceList[0])>::type,
+  std::is_same<std::remove_reference<decltype(CLAD(RobotInterface)::MicDirection::confidenceList[0])>::type,
   decltype(MicDirectionData::confidenceList)::value_type>::value,
   "Expecting type of RobotInterface::MicDirection::confidenceList items "\
   "to match MicDirectionData::confidenceList items");
 
-constexpr auto kMicDirectionConfListSize = sizeof(RobotInterface::MicDirection::confidenceList);
-constexpr auto kMicDirectionConfListItemSize = sizeof(RobotInterface::MicDirection::confidenceList[0]);
+constexpr auto kMicDirectionConfListSize = sizeof(CLAD(RobotInterface)::MicDirection::confidenceList);
+constexpr auto kMicDirectionConfListItemSize = sizeof(CLAD(RobotInterface)::MicDirection::confidenceList[0]);
 static_assert(
   kMicDirectionConfListSize / kMicDirectionConfListItemSize ==
   decltype(MicDirectionData::confidenceList)().size(),
@@ -117,7 +125,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
 : _context(context)
 , _udpServer(new LocalUdpServer())
 , _fftResultData(new FFTResultData())
-, _alexaState(AlexaSimpleState::Disabled)
+, _alexaState(CLAD(AlexaSimpleState)::Disabled)
 , _micMuted(false)
 , _abortAlexaScreenDueToHeyVector(false)
 {
@@ -158,7 +166,7 @@ void MicDataSystem::Init(const Anim::RobotDataLoader& dataLoader)
     }
 #endif
     
-    if( _alexaState == AlexaSimpleState::Active ) {
+    if( _alexaState == CLAD(AlexaSimpleState)::Active ) {
       // Don't run "hey vector" when alexa is in the middle of an interaction, or if the mic is muted
       return;
     }
@@ -196,7 +204,7 @@ MicDataSystem::~MicDataSystem()
   _udpServer->StopListening();
 }
 
-void MicDataSystem::ProcessMicDataPayload(const RobotInterface::MicData& payload)
+void MicDataSystem::ProcessMicDataPayload(const CLAD(RobotInterface)::MicData& payload)
 {
   _micDataProcessor->ProcessMicDataPayload(payload);
 }
@@ -304,7 +312,7 @@ void MicDataSystem::FakeTriggerWordDetection()
     // "Hey Vector" button press
     // This next check is probably not necessary, but for symmetry, the hey vector button press shouldn't trigger
     // if alexa is in the middle of an interaction
-    if( _alexaState != AlexaSimpleState::Active ) {
+    if( _alexaState != CLAD(AlexaSimpleState)::Active ) {
       _micDataProcessor->FakeTriggerWordDetection( wasMuted );
     }
   }
@@ -360,13 +368,13 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     _fftResultData->_fftResultMutex.unlock();
 
     // Populate the fft result message
-    auto msg = RobotInterface::AudioFFTResult();
+    auto msg = CLAD(RobotInterface)::AudioFFTResult();
 
     for(uint8_t i = 0; i < result.size(); ++i)
     {
       msg.result[i] = result[i];
     }
-    RobotInterface::SendAnimToEngine(std::move(msg));
+    SendAnimToEngine(std::move(msg));
 
     _fftResultData->_fftResultMutex.lock();
   }
@@ -393,11 +401,11 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         _fakeStreamingState = true;
 
         // Set up a message to send out about the triggerword
-        RobotInterface::TriggerWordDetected twDetectedMessage;
+        CLAD(RobotInterface)::TriggerWordDetected twDetectedMessage;
         twDetectedMessage.direction = kFirstIndex;
         // TODO:(bn) check stream state here? Currently just assuming streaming is on
         twDetectedMessage.willOpenStream = true;
-        auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
+        auto engineMessage = std::make_unique<CLAD(RobotInterface)::RobotToEngine>(std::move(twDetectedMessage));
         {
           std::lock_guard<std::mutex> lock(_msgsMutex);
           _msgsToEngine.push_back(std::move(engineMessage));
@@ -411,11 +419,11 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         FaceInfoScreenManager::getInstance()->SetNetworkStatus(msg.Get_connectionResult().code);
 
         // Send the results back to engine
-        ReportCloudConnectivity msgToEngine;
-        msgToEngine.code            = static_cast<ConnectionCode>(msg.Get_connectionResult().code);
+        CLAD(ReportCloudConnectivity) msgToEngine;
+        msgToEngine.code            = static_cast<CLAD(ConnectionCode)>(msg.Get_connectionResult().code);
         msgToEngine.numPackets      = msg.Get_connectionResult().numPackets;
         msgToEngine.expectedPackets = msg.Get_connectionResult().expectedPackets;
-        RobotInterface::SendAnimToEngine(msgToEngine);
+        SendAnimToEngine(msgToEngine);
         break;
       }
 
@@ -582,7 +590,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
   }
 
   // Send out any messages we have to the engine
-  std::vector<std::unique_ptr<RobotInterface::RobotToEngine>> stolenMessages;
+  std::vector<std::unique_ptr<CLAD(RobotInterface)::RobotToEngine>> stolenMessages;
   {
     std::lock_guard<std::mutex> lock(_msgsMutex);
     stolenMessages = std::move(_msgsToEngine);
@@ -595,37 +603,37 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
   #endif
   for (const auto& msg : stolenMessages)
   {
-    if (msg->tag == RobotInterface::RobotToEngine::Tag_triggerWordDetected)
+    if (msg->tag == CLAD(RobotInterface)::RobotToEngine::Tag_triggerWordDetected)
     {
-      RobotInterface::SendAnimToEngine(msg->triggerWordDetected);
+      SendAnimToEngine(msg->triggerWordDetected);
 
       ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
       SetWillStream(showStreamState->ShouldStreamAfterTriggerWordResponse());
     }
-    else if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
+    else if (msg->tag == CLAD(RobotInterface)::RobotToEngine::Tag_micDirection)
     {
       _latestMicDirectionMsg = msg->micDirection;
       #if ANKI_DEV_CHEATS
         updatedMicDirection = true;
       #endif
-      RobotInterface::SendAnimToEngine(msg->micDirection);
+      SendAnimToEngine(msg->micDirection);
     }
-    else if (msg->tag == RobotInterface::RobotToEngine::Tag_beatDetectorState)
+    else if (msg->tag == CLAD(RobotInterface)::RobotToEngine::Tag_beatDetectorState)
     {
-      RobotInterface::SendAnimToEngine(msg->beatDetectorState);
+      SendAnimToEngine(msg->beatDetectorState);
     }
     else
     {
       DEV_ASSERT_MSG(false,
                      "MicDataSystem.Update.UnhandledOutgoingMessageType",
-                     "%s", RobotInterface::RobotToEngine::TagToString(msg->tag));
+                     "%s", CLAD(RobotInterface)::RobotToEngine::TagToString(msg->tag));
     }
   }
 
   const auto& rawBufferFullness = GetIncomingMicDataPercentUsed();
-  RobotInterface::MicDataState micDataState{};
+  CLAD(RobotInterface)::MicDataState micDataState{};
   micDataState.rawBufferFullness = rawBufferFullness;
-  RobotInterface::SendAnimToEngine(micDataState);
+  SendAnimToEngine(micDataState);
 
   #if ANKI_DEV_CHEATS
     if (updatedMicDirection || recordingSecondsRemaining != 0)
@@ -715,7 +723,7 @@ float MicDataSystem::GetIncomingMicDataPercentUsed()
   return _micDataProcessor->GetIncomingMicDataPercentUsed();
 }
 
-void MicDataSystem::SendMessageToEngine(std::unique_ptr<RobotInterface::RobotToEngine> msgPtr)
+void MicDataSystem::SendMessageToEngine(std::unique_ptr<CLAD(RobotInterface)::RobotToEngine> msgPtr)
 {
   std::lock_guard<std::mutex> lock(_msgsMutex);
   _msgsToEngine.push_back(std::move(msgPtr));
@@ -788,7 +796,7 @@ void MicDataSystem::AudioSaveCallback(const std::string& dest)
     // shouldn't be a problem, but if we ever hit this we'll need to find another solution
     DEV_ASSERT( dest.length() <= 255, "MicDataSystem::AudioSaveCallback path is too long for MicRecordingComplete message" );
 
-    RobotInterface::MicRecordingComplete event;
+    CLAD(RobotInterface)::MicRecordingComplete event;
 
     memcpy( event.path, dest.c_str(), dest.length() );
     event.path_length = dest.length();
@@ -797,7 +805,7 @@ void MicDataSystem::AudioSaveCallback(const std::string& dest)
   }
 }
 
-BeatInfo MicDataSystem::GetLatestBeatInfo()
+CLAD(BeatInfo) MicDataSystem::GetLatestBeatInfo()
 {
   return _micDataProcessor->GetBeatDetector().GetLatestBeat();
 }
@@ -807,13 +815,13 @@ void MicDataSystem::ResetBeatDetector()
   _micDataProcessor->GetBeatDetector().Start();
 }
   
-void MicDataSystem::SetAlexaState(AlexaSimpleState state)
+void MicDataSystem::SetAlexaState(CLAD(AlexaSimpleState) state)
 {
   const auto oldState = _alexaState;
   _alexaState = state;
-  const bool enabled = (_alexaState != AlexaSimpleState::Disabled);
+  const bool enabled = (_alexaState != CLAD(AlexaSimpleState)::Disabled);
   
-  if ((oldState == AlexaSimpleState::Disabled) && enabled) {
+  if ((oldState == CLAD(AlexaSimpleState)::Disabled) && enabled) {
     const auto callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info,
                                   const AudioUtil::SpeechRecognizerIgnoreReason& ignore)
     {
@@ -842,12 +850,12 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
     };
     _speechRecognizerSystem->ActivateAlexa(_locale, callback);
   }
-  else if((oldState != AlexaSimpleState::Disabled) && !enabled) {
+  else if((oldState != CLAD(AlexaSimpleState)::Disabled) && !enabled) {
     // Disable "Alexa" wake word in SpeechRecognizerSystem
     _speechRecognizerSystem->DisableAlexa();
   }
   
-  const bool active = (_alexaState == AlexaSimpleState::Active);
+  const bool active = (_alexaState == CLAD(AlexaSimpleState)::Active);
   // UK/AU seem to be worse at handling self-loops
   if (((_locale.GetCountry() == Util::Locale::CountryISO2::GB) && kAlexaEnabledInUK)
       || ((_locale.GetCountry() == Util::Locale::CountryISO2::AU) && kAlexaEnabledInAU)) {
@@ -871,11 +879,11 @@ void MicDataSystem::ToggleMicMute()
   auto* audioController = _context->GetAudioController();
   if (audioController != nullptr) {
     using namespace AudioEngine;
-    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+    using GenericEvent = CLAD_AUDIOMETADATA(GameEvent)::GenericEvent;
     const auto eventID = ToAudioEventId( _micMuted
                                          ? GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_State_Privacy_Mode_On
                                          : GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_State_Privacy_Mode_Off );
-    const auto gameObject = ToAudioGameObject(AudioMetaData::GameObjectType::Default);
+    const auto gameObject = ToAudioGameObject(CLAD_AUDIOMETADATA(GameObjectType)::Default);
     audioController->PostAudioEvent( eventID, gameObject );
   }
 

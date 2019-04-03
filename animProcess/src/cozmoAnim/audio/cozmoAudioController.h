@@ -20,7 +20,7 @@
 #include <memory>
 #include <map>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::ns
 #define CLAD_ANKI(ns) CppLite::Anki::ns
 #define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
@@ -30,7 +30,7 @@
 #define CLAD_AUDIOMETADATA(ns) AudioMetaData::ns
 #endif
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 namespace CppLite {
 #endif
 namespace Anki {
@@ -41,7 +41,7 @@ enum class ParameterType : uint32_t;
 }
 }
 }
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 }
 #endif
 

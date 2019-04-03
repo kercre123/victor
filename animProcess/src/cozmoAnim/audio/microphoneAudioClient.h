@@ -16,13 +16,13 @@
 #ifndef __Anki_Victor_MicrophoneAudioClient_H__
 #define __Anki_Victor_MicrophoneAudioClient_H__
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
 #else
 #define CLAD_VECTOR(ns) ns
 #endif
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 namespace CppLite {
 #endif
 namespace Anki {
@@ -32,7 +32,7 @@ struct MicDirection;
 }
 }
 }
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 }
 #endif
 

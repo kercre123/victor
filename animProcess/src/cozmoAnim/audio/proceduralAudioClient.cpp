@@ -24,9 +24,11 @@
 #include <fstream>
 #include <string>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
 #define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
 #else
+#define CLAD(ns) ns
 #define CLAD_AUDIOMETADATA(ns) AudioMetaData::ns
 #endif
 
@@ -130,9 +132,9 @@ ProceduralAudioClient::~ProceduralAudioClient()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ProceduralAudioClient::ProcessMessage(const RobotInterface::RobotToEngine &msg)
+void ProceduralAudioClient::ProcessMessage(const CLAD(RobotInterface)::RobotToEngine &msg)
 {
-  using namespace RobotInterface;
+  using namespace CLAD(RobotInterface);
   switch (msg.tag) {
     case RobotToEngine::Tag_state:
     {
@@ -153,7 +155,7 @@ void ProceduralAudioClient::ProcessMessage(const RobotInterface::RobotToEngine &
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ProceduralAudioClient::HandleStateMessage(const RobotInterface::RobotToEngine& msg)
+void ProceduralAudioClient::HandleStateMessage(const CLAD(RobotInterface)::RobotToEngine& msg)
 {
   // NOTE: First couple frames are unreliable because of init state.
   //       isActive is set to false while the first frames are collected.

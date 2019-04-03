@@ -23,6 +23,12 @@
 
 #define LOG_CHANNEL "Animations"
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD_VISION(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD_VISION(ns) Vision::ns
+#endif
+
 namespace Anki{
 namespace Vector{
 namespace Animations{
@@ -45,7 +51,7 @@ const char* kHeightKey        = "height";
 // Fwd declare local helper
 bool GetFrameFromSpriteSequenceHelper(const Vision::SpriteSequence& sequence,
                                       const uint16_t frameIdx,
-                                      const Vision::SpriteSeqEndType& spriteSeqEndType,
+                                      const CLAD_VISION(SpriteSeqEndType)& spriteSeqEndType,
                                       Vision::SpriteHandle& outSpriteHandle);
 }
 
@@ -60,9 +66,9 @@ SpriteBoxKeyFrame::SpriteBoxKeyFrame()
 , yPos(0)
 , width(0)
 , height(0)
-, layer(Vision::LayerName::Layer_1)
-, renderMethod(Vision::SpriteRenderMethod::RGBA)
-, spriteSeqEndType(Vision::SpriteSeqEndType::Hold)
+, layer(CLAD_VISION(LayerName)::Layer_1)
+, renderMethod(CLAD_VISION(SpriteRenderMethod)::RGBA)
+, spriteSeqEndType(CLAD_VISION(SpriteSeqEndType)::Hold)
 {
 }
 
@@ -75,9 +81,9 @@ SpriteBoxKeyFrame::SpriteBoxKeyFrame(const CozmoAnim::SpriteBox* spriteBox)
 , yPos(spriteBox->yPos())
 , width(spriteBox->width())
 , height(spriteBox->height())
-, layer(Vision::LayerNameFromString(spriteBox->layer()->str()))
-, renderMethod(Vision::SpriteRenderMethodFromString(spriteBox->renderMethod()->str()))
-, spriteSeqEndType(Vision::SpriteSeqEndTypeFromString(spriteBox->spriteSeqEndType()->str()))
+, layer(CLAD_VISION(LayerNameFromString)(spriteBox->layer()->str()))
+, renderMethod(CLAD_VISION(SpriteRenderMethodFromString)(spriteBox->renderMethod()->str()))
+, spriteSeqEndType(CLAD_VISION(SpriteSeqEndTypeFromString)(spriteBox->spriteSeqEndType()->str()))
 {
 }
 
@@ -90,9 +96,9 @@ SpriteBoxKeyFrame::SpriteBoxKeyFrame(const Json::Value& json, const std::string&
 , yPos(JsonTools::ParseInt32(json, kYPosKey, animName))
 , width(JsonTools::ParseInt32(json, kWidthKey, animName))
 , height(JsonTools::ParseInt32(json, kHeightKey, animName))
-, layer(Vision::LayerNameFromString(JsonTools::ParseString(json, kLayerNameKey, animName)))
-, renderMethod(Vision::SpriteRenderMethodFromString(JsonTools::ParseString(json, kRenderMethodKey, animName)))
-, spriteSeqEndType(Vision::SpriteSeqEndTypeFromString(JsonTools::ParseString(json, kSpriteSeqEndKey, animName)))
+, layer(CLAD_VISION(LayerNameFromString)(JsonTools::ParseString(json, kLayerNameKey, animName)))
+, renderMethod(CLAD_VISION(SpriteRenderMethodFromString)(JsonTools::ParseString(json, kRenderMethodKey, animName)))
+, spriteSeqEndType(CLAD_VISION(SpriteSeqEndTypeFromString)(JsonTools::ParseString(json, kSpriteSeqEndKey, animName)))
 {
 }
 
@@ -284,7 +290,7 @@ bool SpriteBoxCompositor::PopulateCompositeImage(Vision::SpriteCache& spriteCach
       spriteHandle = spriteCache.GetSpriteHandleForNamedSprite(currentKeyFrame.assetName);
     }
 
-    const Vision::SpriteBoxName currentSpriteBoxName = Vision::SpriteBoxNameFromString(trackPair.first);
+    const CLAD_VISION(SpriteBoxName) currentSpriteBoxName = CLAD_VISION(SpriteBoxNameFromString)(trackPair.first);
     outCompImg.AddImage(spriteHandle, currentSpriteBoxName, currentKeyFrame.layer, currentKeyFrame.renderMethod,
                         currentKeyFrame.xPos, currentKeyFrame.yPos, currentKeyFrame.width, currentKeyFrame.height);
     addedImage = true;
@@ -299,23 +305,23 @@ bool SpriteBoxCompositor::PopulateCompositeImage(Vision::SpriteCache& spriteCach
 namespace{
 bool GetFrameFromSpriteSequenceHelper(const Vision::SpriteSequence& sequence,
                                       const uint16_t absFrameIdx,
-                                      const Vision::SpriteSeqEndType& spriteSeqEndType,
+                                      const CLAD_VISION(SpriteSeqEndType)& spriteSeqEndType,
                                       Vision::SpriteHandle& outSpriteHandle)
 {
   uint16_t relFrameIdx = absFrameIdx;
   switch(spriteSeqEndType){
-    case Vision::SpriteSeqEndType::Loop:
+    case CLAD_VISION(SpriteSeqEndType)::Loop:
     {
       relFrameIdx = absFrameIdx % sequence.GetNumFrames();
       break;
     }
-    case Vision::SpriteSeqEndType::Hold:
+    case CLAD_VISION(SpriteSeqEndType)::Hold:
     {
       uint16_t maxIndex = sequence.GetNumFrames() - 1;
       relFrameIdx = (absFrameIdx > maxIndex) ? maxIndex : absFrameIdx;
       break;
     }
-    case Vision::SpriteSeqEndType::Clear:
+    case CLAD_VISION(SpriteSeqEndType)::Clear:
     {
       // Draw Nothing for this SpriteBox
       if(absFrameIdx >= sequence.GetNumFrames()){

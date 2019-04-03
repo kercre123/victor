@@ -104,7 +104,11 @@ bool CladEnumToStringMap<CladEnum>::Load(const Anki::Util::Data::DataPlatform* d
           std::string filePath = JsonTools::ParseString(singleEvent, fileNameKey.c_str(), debugName + fileNameKey);
           const std::string enumAsString = JsonTools::ParseString(singleEvent, kCladEventKey, debugName + kCladEventKey);
           CladEnum enumValue;
+#ifdef USES_CLAD_CPPLITE
+          /* WARNING No equivalent const bool success = EnumFromString(enumAsString, enumValue); */
+#else
           const bool success = EnumFromString(enumAsString, enumValue);
+#endif
           ANKI_VERIFY(success, "CladEnumToStringMap.Load.EnumFromStringFailure",
                       "%s did not match enum value", enumAsString.c_str());
           if(success){

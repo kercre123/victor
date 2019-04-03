@@ -16,6 +16,12 @@
 
 #include <array>
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
   namespace Vector {
     namespace ProxSensors {
@@ -64,7 +70,7 @@ namespace Anki {
 
         u16 _cliffDetectThresh[4] = {CLIFF_SENSOR_THRESHOLD_DEFAULT, CLIFF_SENSOR_THRESHOLD_DEFAULT, CLIFF_SENSOR_THRESHOLD_DEFAULT, CLIFF_SENSOR_THRESHOLD_DEFAULT};
 
-        CliffEvent _cliffMsg;
+        CLAD(CliffEvent) _cliffMsg;
         TimeStamp_t _pendingCliffEvent = 0;
         TimeStamp_t _pendingUncliffEvent = 0;
       } // "private" namespace
@@ -106,7 +112,7 @@ namespace Anki {
         return _cliffVals[ind];
       }
 
-      ProxSensorDataRaw GetProxData()
+      CLAD(ProxSensorDataRaw) GetProxData()
       {
         auto proxData = HAL::GetRawProxData();
 
@@ -207,14 +213,14 @@ namespace Anki {
         const bool frontCliffsDetectingWhite = ProxSensors::IsWhiteDetected(HAL::CLIFF_FL) ||
                                               ProxSensors::IsWhiteDetected(HAL::CLIFF_FR);
 
-        const bool possibleCliffStop = (IsAnyCliffDetected() && !_wasAnyCliffDetected) || sideCliffsDetected;
+        const bool possibleCliffStop = (ProxSensors::IsAnyCliffDetected() && !_wasAnyCliffDetected) || sideCliffsDetected;
         const bool possibleWhiteStop = frontCliffsDetectingWhite && !_wasAnyWhiteDetected;
 
         // Don't allow stopping if it was putdown on a cliff.
         // Need to be able to drive away from it!
         if (!IMUFilter::IsPickedUp() && _wasPickedup) {
-          _putdownOnCliff = IsAnyCliffDetected();
-        } else if (!IsAnyCliffDetected()) {
+          _putdownOnCliff = ProxSensors::IsAnyCliffDetected();
+        } else if (!ProxSensors::IsAnyCliffDetected()) {
           _putdownOnCliff = false;
         }
 
@@ -243,11 +249,11 @@ namespace Anki {
             SteeringController::Disable();
 
             // Send stopped message
-            RobotInterface::RobotStopped msg;
-            msg.reason = stoppingBecauseCliff ? StopReason::CLIFF : StopReason::WHITE;
+            CLAD(RobotInterface)::RobotStopped msg;
+            msg.reason = stoppingBecauseCliff ? CLAD(StopReason)::CLIFF : CLAD(StopReason)::WHITE;
             msg.cliffDetectedFlags = ProxSensors::GetCliffDetectedFlags();
             msg.whiteDetectedFlags = ProxSensors::GetWhiteDetectedFlags();
-            RobotInterface::SendMessage(RobotInterface::RobotStopped(msg));
+            SendMessage(CLAD(RobotInterface)::RobotStopped(msg));
 
             // Queue cliff detected message
             if (stoppingBecauseCliff) {
@@ -261,13 +267,13 @@ namespace Anki {
           {
             // If we aren't stopping at this cliff then send a potential cliff message
             // because we might not be able to verify that it is indeed a cliff
-            PotentialCliff msg;
-            RobotInterface::SendMessage(msg);
+            CLAD(PotentialCliff) msg;
+            SendMessage(msg);
           }
 
         }
         
-        if (!IsAnyCliffDetected() && _wasAnyCliffDetected) {
+        if (!ProxSensors::IsAnyCliffDetected() && _wasAnyCliffDetected) {
           QueueUncliffEvent();
           _wasAnyCliffDetected = false;
         }
@@ -289,7 +295,7 @@ namespace Anki {
           _cliffMsg.detectedFlags |= _cliffDetectedFlags;
 
           if (HAL::GetTimeStamp() >= _pendingCliffEvent) {
-            RobotInterface::SendMessage(_cliffMsg);
+            SendMessage(_cliffMsg);
             _pendingCliffEvent = 0;
           }
         }
@@ -297,7 +303,7 @@ namespace Anki {
         // Send queued uncliff event
         if (_pendingUncliffEvent != 0 && HAL::GetTimeStamp() >= _pendingUncliffEvent) {
           _cliffMsg.detectedFlags = 0;
-          RobotInterface::SendMessage(_cliffMsg);
+          SendMessage(_cliffMsg);
           _pendingUncliffEvent = 0;
         }
       }

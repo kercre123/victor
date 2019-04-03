@@ -4,6 +4,12 @@
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include <stdint.h>
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
 namespace Vector {
 
@@ -28,7 +34,7 @@ namespace Factory {
 
   int RunEngineTest(uint8_t id, uint8_t args[4])
   {
-    using namespace RobotInterface;
+    using namespace CLAD(RobotInterface);
     RunFactoryTest msg;
     memcpy(msg.args, args, 4);
     switch (id)

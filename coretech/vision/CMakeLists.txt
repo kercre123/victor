@@ -61,10 +61,57 @@ target_compile_definitions(cti_vision
   ${additional_defines}
 )
 
+##
+
+anki_build_cxx_library(cti_vision_robot ${ANKI_SRCLIST_DIR} STATIC)
+anki_build_target_license(cti_vision_robot "ANKI" "BSD-3,${CMAKE_CURRENT_SOURCE_DIR}/engine/perspectivePoseEstimation.cpp")
+
+set_target_properties(cti_vision_robot
+  PROPERTIES
+  FOLDER "CoreTech"#/Basestation"
+)
+
+target_link_libraries(cti_vision_robot
+  PUBLIC
+  cti_common_robot
+  cti_vision_clad_cpplite
+  jsoncpp
+  util
+  ${OPENCV_LIBS}
+  ${OKAO_LIBS}
+  ${ASAN_LINKER_FLAGS}
+)
+
+target_compile_options(cti_vision_robot
+PRIVATE
+  $<$<CONFIG:Debug>:-O0>
+  $<$<CONFIG:Release>:-O2>
+  ${SYMBOL_VISIBILITY_FLAGS}
+  ${ASAN_CXX_FLAGS} 
+)
+
+target_include_directories(cti_vision_robot
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
+)
+
+target_compile_definitions(cti_vision_robot
+  PRIVATE
+  CORETECH_ROBOT
+  FACE_TRACKER_FACIOMETRIC=0
+  FACE_TRACKER_FACESDK=1
+  FACE_TRACKER_OPENCV=2
+  FACE_TRACKER_OKAO=3
+  FACE_TRACKER_TEST=4
+  FACE_TRACKER_PROVIDER=FACE_TRACKER_OKAO
+  ${additional_defines}
+)
+
 #
 # Vision CLAD must be generated before vision library
 #
 add_dependencies(cti_vision cti_vision_clad)
+add_dependencies(cti_vision_robot cti_vision_clad_cpplite)
 
 if (MATLAB)
   add_subdirectory(robot/mex)

@@ -84,7 +84,7 @@ target_include_directories(cti_common_clad_cpplite
 
 target_compile_definitions(cti_common_clad_cpplite
   PUBLIC
-  USES_CPPLITE
+  USES_CLAD_CPPLITE
 )
 
 anki_build_target_license(cti_common_clad_cpplite "ANKI")

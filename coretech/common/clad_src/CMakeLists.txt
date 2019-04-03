@@ -74,11 +74,9 @@ target_include_directories(cti_common_clad_cpplite
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/robot/coretech/common>
 )
 
-if (USE_CPPLITE_NAMESPACE)
-  target_compile_definitions(cti_common_clad_cpplite
-    PUBLIC
-      USES_CPPLITE=1
-  )
-endif()
+target_compile_definitions(cti_common_clad_cpplite
+  PUBLIC
+    USES_CLAD_CPPLITE
+)
 
 anki_build_target_license(cti_common_clad_cpplite "ANKI")

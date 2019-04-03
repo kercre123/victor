@@ -21,12 +21,24 @@
 #include <mutex>
 #include <vector>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::ns
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
 #else
 #define CLAD(ns) ns
 #define CLAD_VECTOR(ns) ns
+#endif
+
+#ifdef USES_CLAD_CPPLITE
+namespace CppLite {
+#endif
+namespace Anki {
+namespace Vector {
+enum class AlexaUXState : uint8_t;
+}
+}
+#ifdef USES_CLAD_CPPLITE
+}
 #endif
 
 namespace Anki {
@@ -35,7 +47,6 @@ namespace Vector {
 namespace Anim {
   class AnimationStreamer;
 }
-enum class AlexaUXState : uint8_t;
 
 namespace Audio {
 class EngineRobotAudioInput;
@@ -82,8 +93,8 @@ public:
   // with the exception of HasAnyAlexaResponse, alexa methods should be called on the main thread.
   // This is only because the current Alexa implementation fits this constraint, so I'm assuming it here.
   bool HasAnyAlexaResponse() const; // ok to call off thread
-  bool HasValidAlexaUXResponse(AlexaUXState state) const;
-  bool StartAlexaResponse(AlexaUXState state, bool ignoreGetIn = false);
+  bool HasValidAlexaUXResponse(CLAD_VECTOR(AlexaUXState) state) const;
+  bool StartAlexaResponse(CLAD_VECTOR(AlexaUXState) state, bool ignoreGetIn = false);
   
   void SetOnCharger(bool onCharger) { _onCharger = onCharger; }
   void SetFrozenOnCharger(bool frozenOnCharger) { _frozenOnCharger = frozenOnCharger; }
@@ -117,7 +128,7 @@ private:
   // Alexa-specific get-ins and audio info
   struct AlexaInfo
   {
-    AlexaUXState state; // a transition from Idle to this state will trigger the below response
+    CLAD_VECTOR(AlexaUXState) state; // a transition from Idle to this state will trigger the below response
     CLAD(Anki)::AudioEngine::Multiplexer::PostAudioEvent audioEvent;
     uint8_t getInAnimTag;
     std::string getInAnimName;

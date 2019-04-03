@@ -35,7 +35,6 @@
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 
 #include "clad/cloud/mic.h"
-
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobotTag.h"
@@ -57,6 +56,16 @@
 #include "util/messageProfiler/messageProfiler.h"
 
 #include <unistd.h>
+
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::ns
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#define CLAD_AUDIOENGINE(ns) CppLite::Anki::AudioEngine::ns
+#else
+#define CLAD(ns) ns
+#define CLAD_VECTOR(ns) ns
+#define CLAD_AUDIOENGINE(ns) AudioEngine::ns
+#endif
 
 // Log options
 #define LOG_CHANNEL    "AnimProcessMessages"
@@ -209,7 +218,7 @@ uint32_t AnimProcessMessages::_messageCountEngineToAnim = 0;
 // ========== START OF PROCESSING MESSAGES FROM ENGINE ==========
 // #pragma mark "EngineToRobot Handlers"
 
-void Process_checkCloudConnectivity(const Anki::Vector::RobotInterface::CheckCloudConnectivity& msg)
+void Process_checkCloudConnectivity(const CLAD_VECTOR(RobotInterface)::CheckCloudConnectivity& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
   if (micDataSystem != nullptr) {
@@ -217,13 +226,13 @@ void Process_checkCloudConnectivity(const Anki::Vector::RobotInterface::CheckClo
   }
 }
 
-void Process_setFullAnimTrackLockState(const Anki::Vector::RobotInterface::SetFullAnimTrackLockState& msg)
+void Process_setFullAnimTrackLockState(const CLAD_VECTOR(RobotInterface)::SetFullAnimTrackLockState& msg)
 {
   //LOG_DEBUG("AnimProcessMessages.Process_setFullAnimTrackLockState", "0x%x", msg.whichTracks);
   _animStreamer->SetLockedTracks(msg.trackLockState);
 }
 
-void Process_addAnim(const Anki::Vector::RobotInterface::AddAnim& msg)
+void Process_addAnim(const CLAD_VECTOR(RobotInterface)::AddAnim& msg)
 {
   const std::string path(msg.animPath, msg.animPath_length);
 
@@ -233,7 +242,7 @@ void Process_addAnim(const Anki::Vector::RobotInterface::AddAnim& msg)
   _context->GetDataLoader()->LoadAnimationFile(path);
 }
 
-void Process_playAnim(const Anki::Vector::RobotInterface::PlayAnim& msg)
+void Process_playAnim(const CLAD_VECTOR(RobotInterface)::PlayAnim& msg)
 {
   const std::string animName(msg.animName, msg.animName_length);
 
@@ -246,55 +255,55 @@ void Process_playAnim(const Anki::Vector::RobotInterface::PlayAnim& msg)
   _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops, msg.startAt_ms, interruptRunning, overrideEyes, msg.renderInEyeHue);
 }
 
-void Process_abortAnimation(const Anki::Vector::RobotInterface::AbortAnimation& msg)
+void Process_abortAnimation(const CLAD_VECTOR(RobotInterface)::AbortAnimation& msg)
 {
   LOG_INFO("AnimProcessMessages.Process_abortAnimation", "Tag: %d", msg.tag);
   _animStreamer->Abort(msg.tag);
 }
 
-void Process_displayProceduralFace(const Anki::Vector::RobotInterface::DisplayProceduralFace& msg)
+void Process_displayProceduralFace(const CLAD_VECTOR(RobotInterface)::DisplayProceduralFace& msg)
 {
   ProceduralFace procFace;
   procFace.SetFromMessage(msg.faceParams);
   _animStreamer->SetProceduralFace(procFace, msg.duration_ms);
 }
 
-void Process_setFaceHue(const Anki::Vector::RobotInterface::SetFaceHue& msg)
+void Process_setFaceHue(const CLAD_VECTOR(RobotInterface)::SetFaceHue& msg)
 {
   ProceduralFace::SetHue(msg.hue);
 }
 
-void Process_setFaceSaturation(const Anki::Vector::RobotInterface::SetFaceSaturation& msg)
+void Process_setFaceSaturation(const CLAD_VECTOR(RobotInterface)::SetFaceSaturation& msg)
 {
   ProceduralFace::SetSaturation(msg.saturation);
 }
 
-void Process_displayFaceImageBinaryChunk(const Anki::Vector::RobotInterface::DisplayFaceImageBinaryChunk& msg)
+void Process_displayFaceImageBinaryChunk(const CLAD_VECTOR(RobotInterface)::DisplayFaceImageBinaryChunk& msg)
 {
   _animStreamer->Process_displayFaceImageChunk(msg);
 }
 
-void Process_displayFaceImageGrayscaleChunk(const Anki::Vector::RobotInterface::DisplayFaceImageGrayscaleChunk& msg)
+void Process_displayFaceImageGrayscaleChunk(const CLAD_VECTOR(RobotInterface)::DisplayFaceImageGrayscaleChunk& msg)
 {
   _animStreamer->Process_displayFaceImageChunk(msg);
 }
 
-void Process_displayFaceImageRGBChunk(const Anki::Vector::RobotInterface::DisplayFaceImageRGBChunk& msg)
+void Process_displayFaceImageRGBChunk(const CLAD_VECTOR(RobotInterface)::DisplayFaceImageRGBChunk& msg)
 {
   _animStreamer->Process_displayFaceImageChunk(msg);
 }
 
-void Process_displayCompositeImageChunk(const Anki::Vector::RobotInterface::DisplayCompositeImageChunk& msg)
+void Process_displayCompositeImageChunk(const CLAD_VECTOR(RobotInterface)::DisplayCompositeImageChunk& msg)
 {
   _animStreamer->Process_displayCompositeImageChunk(msg);
 }
 
-void Process_updateCompositeImage(const Anki::Vector::RobotInterface::UpdateCompositeImage& msg)
+void Process_updateCompositeImage(const CLAD_VECTOR(RobotInterface)::UpdateCompositeImage& msg)
 {
   _animStreamer->Process_updateCompositeImage(msg);
 }
 
-void Process_playCompositeAnimation(const Anki::Vector::RobotInterface::PlayCompositeAnimation& msg)
+void Process_playCompositeAnimation(const CLAD_VECTOR(RobotInterface)::PlayCompositeAnimation& msg)
 {
   const std::string animName(msg.animName, msg.animName_length);
 
@@ -302,62 +311,62 @@ void Process_playCompositeAnimation(const Anki::Vector::RobotInterface::PlayComp
 }
 
 
-void Process_enableKeepFaceAlive(const Anki::Vector::RobotInterface::EnableKeepFaceAlive& msg)
+void Process_enableKeepFaceAlive(const CLAD_VECTOR(RobotInterface)::EnableKeepFaceAlive& msg)
 {
   _animStreamer->EnableKeepFaceAlive(msg.enable, msg.disableTimeout_ms);
 }
 
-void Process_setKeepFaceAliveFocus(const Anki::Vector::RobotInterface::SetKeepFaceAliveFocus& msg)
+void Process_setKeepFaceAliveFocus(const CLAD_VECTOR(RobotInterface)::SetKeepFaceAliveFocus& msg)
 {
   _animStreamer->SetKeepFaceAliveFocus(msg.enable);
 }
 
-void Process_addOrUpdateEyeShift(const Anki::Vector::RobotInterface::AddOrUpdateEyeShift& msg)
+void Process_addOrUpdateEyeShift(const CLAD_VECTOR(RobotInterface)::AddOrUpdateEyeShift& msg)
 {
   _animStreamer->ProcessAddOrUpdateEyeShift(msg);
 }
 
-void Process_removeEyeShift(const Anki::Vector::RobotInterface::RemoveEyeShift& msg)
+void Process_removeEyeShift(const CLAD_VECTOR(RobotInterface)::RemoveEyeShift& msg)
 {
   _animStreamer->ProcessRemoveEyeShift(msg);
 }
 
-void Process_addSquint(const Anki::Vector::RobotInterface::AddSquint& msg)
+void Process_addSquint(const CLAD_VECTOR(RobotInterface)::AddSquint& msg)
 {
   _animStreamer->ProcessAddSquint(msg);
 }
 
-void Process_removeSquint(const Anki::Vector::RobotInterface::RemoveSquint& msg)
+void Process_removeSquint(const CLAD_VECTOR(RobotInterface)::RemoveSquint& msg)
 {
   _animStreamer->ProcessRemoveSquint(msg);
 }
 
-void Process_postAudioEvent(const Anki::AudioEngine::Multiplexer::PostAudioEvent& msg)
+void Process_postAudioEvent(const CLAD_AUDIOENGINE(Multiplexer)::PostAudioEvent& msg)
 {
   _engAudioInput->HandleMessage(msg);
 }
 
-void Process_stopAllAudioEvents(const Anki::AudioEngine::Multiplexer::StopAllAudioEvents& msg)
+void Process_stopAllAudioEvents(const CLAD_AUDIOENGINE(Multiplexer)::StopAllAudioEvents& msg)
 {
   _engAudioInput->HandleMessage(msg);
 }
 
-void Process_postAudioGameState(const Anki::AudioEngine::Multiplexer::PostAudioGameState& msg)
+void Process_postAudioGameState(const CLAD_AUDIOENGINE(Multiplexer)::PostAudioGameState& msg)
 {
   _engAudioInput->HandleMessage(msg);
 }
 
-void Process_postAudioSwitchState(const Anki::AudioEngine::Multiplexer::PostAudioSwitchState& msg)
+void Process_postAudioSwitchState(const CLAD_AUDIOENGINE(Multiplexer)::PostAudioSwitchState& msg)
 {
   _engAudioInput->HandleMessage(msg);
 }
 
-void Process_postAudioParameter(const Anki::AudioEngine::Multiplexer::PostAudioParameter& msg)
+void Process_postAudioParameter(const CLAD_AUDIOENGINE(Multiplexer)::PostAudioParameter& msg)
 {
   _engAudioInput->HandleMessage(msg);
 }
 
-void Process_setDebugConsoleVarMessage(const Anki::Vector::RobotInterface::SetDebugConsoleVarMessage& msg)
+void Process_setDebugConsoleVarMessage(const CLAD_VECTOR(RobotInterface)::SetDebugConsoleVarMessage& msg)
 {
   // We are using messages generated by the CppLite emitter here, which does not support
   // variable length arrays. CLAD also doesn't have a char, so the "strings" in this message
@@ -385,7 +394,7 @@ void Process_setDebugConsoleVarMessage(const Anki::Vector::RobotInterface::SetDe
   }
 }
 
-void Process_startRecordingMicsRaw(const Anki::Vector::RobotInterface::StartRecordingMicsRaw& msg)
+void Process_startRecordingMicsRaw(const CLAD_VECTOR(RobotInterface)::StartRecordingMicsRaw& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
   if (micDataSystem == nullptr)
@@ -399,7 +408,7 @@ void Process_startRecordingMicsRaw(const Anki::Vector::RobotInterface::StartReco
                                 msg.runFFT);
 }
 
-void Process_startRecordingMicsProcessed(const Anki::Vector::RobotInterface::StartRecordingMicsProcessed& msg)
+void Process_startRecordingMicsProcessed(const CLAD_VECTOR(RobotInterface)::StartRecordingMicsProcessed& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
   if (micDataSystem == nullptr)
@@ -412,7 +421,7 @@ void Process_startRecordingMicsProcessed(const Anki::Vector::RobotInterface::Sta
                                                   msg.path_length));
 }
 
-void Process_startWakeWordlessStreaming(const Anki::Vector::RobotInterface::StartWakeWordlessStreaming& msg)
+void Process_startWakeWordlessStreaming(const CLAD_VECTOR(RobotInterface)::StartWakeWordlessStreaming& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
   if(micDataSystem == nullptr){
@@ -423,7 +432,7 @@ void Process_startWakeWordlessStreaming(const Anki::Vector::RobotInterface::Star
                                             msg.playGetInFromAnimProcess);
 }
 
-void Process_setTriggerWordResponse(const Anki::Vector::RobotInterface::SetTriggerWordResponse& msg)
+void Process_setTriggerWordResponse(const CLAD_VECTOR(RobotInterface)::SetTriggerWordResponse& msg)
 {
   auto* showStreamStateManager = _context->GetShowAudioStreamStateManager();
   if(showStreamStateManager == nullptr){
@@ -433,7 +442,7 @@ void Process_setTriggerWordResponse(const Anki::Vector::RobotInterface::SetTrigg
   showStreamStateManager->SetTriggerWordResponse(msg);
 }
 
-void Process_setAlexaUXResponses(const Anki::Vector::RobotInterface::SetAlexaUXResponses& msg)
+void Process_setAlexaUXResponses(const CLAD_VECTOR(RobotInterface)::SetAlexaUXResponses& msg)
 {
   auto* showStreamStateManager = _context->GetShowAudioStreamStateManager();
   if( showStreamStateManager != nullptr ) {
@@ -441,7 +450,7 @@ void Process_setAlexaUXResponses(const Anki::Vector::RobotInterface::SetAlexaUXR
   }
 }
 
-void Process_resetBeatDetector(const Anki::Vector::RobotInterface::ResetBeatDetector& msg)
+void Process_resetBeatDetector(const CLAD_VECTOR(RobotInterface)::ResetBeatDetector& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
   if (micDataSystem != nullptr) {
@@ -449,7 +458,7 @@ void Process_resetBeatDetector(const Anki::Vector::RobotInterface::ResetBeatDete
   }
 }
 
-void Process_setAlexaUsage(const Anki::Vector::RobotInterface::SetAlexaUsage& msg)
+void Process_setAlexaUsage(const CLAD_VECTOR(RobotInterface)::SetAlexaUsage& msg)
 {
   auto* alexa = _context->GetAlexa();
   if (alexa != nullptr) {
@@ -457,7 +466,7 @@ void Process_setAlexaUsage(const Anki::Vector::RobotInterface::SetAlexaUsage& ms
   }
 }
 
-void Process_setButtonWakeWord(const Anki::Vector::RobotInterface::SetButtonWakeWord& msg)
+void Process_setButtonWakeWord(const CLAD_VECTOR(RobotInterface)::SetButtonWakeWord& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
   if (micDataSystem != nullptr) {
@@ -465,12 +474,12 @@ void Process_setButtonWakeWord(const Anki::Vector::RobotInterface::SetButtonWake
   }
 }
 
-void Process_setLCDBrightnessLevel(const Anki::Vector::RobotInterface::SetLCDBrightnessLevel& msg)
+void Process_setLCDBrightnessLevel(const CLAD_VECTOR(RobotInterface)::SetLCDBrightnessLevel& msg)
 {
   FaceDisplay::getInstance()->SetFaceBrightness(msg.level);
 }
 
-void Process_playbackAudioStart(const Anki::Vector::RobotInterface::StartPlaybackAudio& msg)
+void Process_playbackAudioStart(const CLAD_VECTOR(RobotInterface)::StartPlaybackAudio& msg)
 {
   using namespace Audio;
 
@@ -483,12 +492,12 @@ void Process_playbackAudioStart(const Anki::Vector::RobotInterface::StartPlaybac
   audioPlayer->PlaybackAudio( std::string(msg.path, msg.path_length) );
 }
 
-void Process_drawTextOnScreen(const Anki::Vector::RobotInterface::DrawTextOnScreen& msg)
+void Process_drawTextOnScreen(const CLAD_VECTOR(RobotInterface)::DrawTextOnScreen& msg)
 {
   FaceInfoScreenManager::getInstance()->SetCustomText(msg);
 }
 
-void Process_runDebugConsoleFuncMessage(const Anki::Vector::RobotInterface::RunDebugConsoleFuncMessage& msg)
+void Process_runDebugConsoleFuncMessage(const CLAD_VECTOR(RobotInterface)::RunDebugConsoleFuncMessage& msg)
 {
   // We are using messages generated by the CppLite emitter here, which does not support
   // variable length arrays. CLAD also doesn't have a char, so the "strings" in this message
@@ -513,44 +522,44 @@ void Process_runDebugConsoleFuncMessage(const Anki::Vector::RobotInterface::RunD
   }
 }
 
-void Process_externalAudioChunk(const RobotInterface::ExternalAudioChunk& msg)
+void Process_externalAudioChunk(const CLAD_VECTOR(RobotInterface)::ExternalAudioChunk& msg)
 {
   _animEngine->HandleMessage(msg);
 }
 
-void Process_externalAudioPrepare(const RobotInterface::ExternalAudioPrepare& msg)
+void Process_externalAudioPrepare(const CLAD_VECTOR(RobotInterface)::ExternalAudioPrepare& msg)
 {
   _animEngine->HandleMessage(msg);
 }
 
-void Process_externalAudioComplete(const RobotInterface::ExternalAudioComplete& msg)
+void Process_externalAudioComplete(const CLAD_VECTOR(RobotInterface)::ExternalAudioComplete& msg)
 {
   _animEngine->HandleMessage(msg);
 }
 
-void Process_externalAudioCancel(const RobotInterface::ExternalAudioCancel& msg)
+void Process_externalAudioCancel(const CLAD_VECTOR(RobotInterface)::ExternalAudioCancel& msg)
 {
   _animEngine->HandleMessage(msg);
 }
 
-void Process_textToSpeechPrepare(const RobotInterface::TextToSpeechPrepare& msg)
+void Process_textToSpeechPrepare(const CLAD_VECTOR(RobotInterface)::TextToSpeechPrepare& msg)
 {
   _animEngine->HandleMessage(msg);
 }
 
-void Process_textToSpeechPlay(const RobotInterface::TextToSpeechPlay& msg)
+void Process_textToSpeechPlay(const CLAD_VECTOR(RobotInterface)::TextToSpeechPlay& msg)
 {
   _animEngine->HandleMessage(msg);
 }
 
-void Process_textToSpeechCancel(const RobotInterface::TextToSpeechCancel& msg)
+void Process_textToSpeechCancel(const CLAD_VECTOR(RobotInterface)::TextToSpeechCancel& msg)
 {
   _animEngine->HandleMessage(msg);
 }
 
-void Process_setConnectionStatus(const Anki::Vector::SwitchboardInterface::SetConnectionStatus& msg)
+void Process_setConnectionStatus(const CLAD_VECTOR(SwitchboardInterface)::SetConnectionStatus& msg)
 {
-  using namespace SwitchboardInterface;
+  using namespace CLAD_VECTOR(SwitchboardInterface);
   auto* bc = _context->GetBackpackLightComponent();
   bc->SetPairingLight((msg.status == ConnectionStatus::START_PAIRING ||
                        msg.status == ConnectionStatus::SHOW_PRE_PIN ||
@@ -559,50 +568,50 @@ void Process_setConnectionStatus(const Anki::Vector::SwitchboardInterface::SetCo
   UpdateConnectionFlow(std::move(msg), _animStreamer, _context);
 }
 
-void Process_showUrlFace(const RobotInterface::ShowUrlFace& msg)
+void Process_showUrlFace(const CLAD_VECTOR(RobotInterface)::ShowUrlFace& msg)
 {
   if(msg.show) {
-    using namespace SwitchboardInterface;
-    Anki::Vector::SwitchboardInterface::SetConnectionStatus connMsg;
+    using namespace CLAD_VECTOR(SwitchboardInterface);
+    CLAD_VECTOR(SwitchboardInterface)::SetConnectionStatus connMsg;
     connMsg.status = ConnectionStatus::SHOW_URL_FACE;
 
     UpdateConnectionFlow(std::move(connMsg), _animStreamer, _context);
   }
 }
 
-void Process_setBLEPin(const Anki::Vector::SwitchboardInterface::SetBLEPin& msg)
+void Process_setBLEPin(const CLAD_VECTOR(SwitchboardInterface)::SetBLEPin& msg)
 {
   SetBLEPin(msg.pin);
 }
 
-void Process_rangeDataToDisplay(const Anki::Vector::RobotInterface::RangeDataToDisplay& msg)
+void Process_rangeDataToDisplay(const CLAD_VECTOR(RobotInterface)::RangeDataToDisplay& msg)
 {
   FaceInfoScreenManager::getInstance()->DrawToF(msg.data);
 }
 
-void Process_sendBLEConnectionStatus(const Anki::Vector::SwitchboardInterface::SendBLEConnectionStatus& msg)
+void Process_sendBLEConnectionStatus(const CLAD_VECTOR(SwitchboardInterface)::SendBLEConnectionStatus& msg)
 {
   // todo
 }
 
-void Process_alterStreamingAnimation(const RobotInterface::AlterStreamingAnimationAtTime& msg)
+void Process_alterStreamingAnimation(const CLAD_VECTOR(RobotInterface)::AlterStreamingAnimationAtTime& msg)
 {
   _streamingAnimationModifier->HandleMessage(msg);
 }
 
-void Process_setLocale(const RobotInterface::SetLocale& msg)
+void Process_setLocale(const CLAD_VECTOR(RobotInterface)::SetLocale& msg)
 {
   DEV_ASSERT(_animEngine != nullptr, "AnimProcessMessages.SetLocale.InvalidEngine");
   _animEngine->HandleMessage(msg);
 }
 
-void Process_batteryStatus(const RobotInterface::BatteryStatus& msg)
+void Process_batteryStatus(const CLAD_VECTOR(RobotInterface)::BatteryStatus& msg)
 {
   _context->GetBackpackLightComponent()->UpdateBatteryStatus(msg);
   _context->GetMicDataSystem()->SetBatteryLowStatus(msg.isLow);
 }
 
-void Process_acousticTestEnabled(const Anki::Vector::RobotInterface::AcousticTestEnabled& msg)
+void Process_acousticTestEnabled(const CLAD_VECTOR(RobotInterface)::AcousticTestEnabled& msg)
 {
   bool enabled = msg.enabled;
   _animStreamer->SetFrozenOnCharger( enabled );
@@ -616,12 +625,12 @@ void Process_acousticTestEnabled(const Anki::Vector::RobotInterface::AcousticTes
   }
 }
 
-void Process_triggerBackpackAnimation(const RobotInterface::TriggerBackpackAnimation& msg)
+void Process_triggerBackpackAnimation(const CLAD_VECTOR(RobotInterface)::TriggerBackpackAnimation& msg)
 {
   _context->GetBackpackLightComponent()->SetBackpackAnimation(msg.trigger);
 }
 
-void Process_engineFullyLoaded(const RobotInterface::EngineFullyLoaded& msg)
+void Process_engineFullyLoaded(const CLAD_VECTOR(RobotInterface)::EngineFullyLoaded& msg)
 {
   _engineLoaded = true;
 
@@ -633,49 +642,49 @@ void Process_engineFullyLoaded(const RobotInterface::EngineFullyLoaded& msg)
   }
 }
 
-void Process_selfTestEnd(const RobotInterface::SelfTestEnd& msg)
+void Process_selfTestEnd(const CLAD_VECTOR(RobotInterface)::SelfTestEnd& msg)
 {
   FaceInfoScreenManager::getInstance()->SelfTestEnd(_animStreamer);
 }
 
-void Process_enableMirrorModeScreen(const RobotInterface::EnableMirrorModeScreen& msg)
+void Process_enableMirrorModeScreen(const CLAD_VECTOR(RobotInterface)::EnableMirrorModeScreen& msg)
 {
   FaceInfoScreenManager::getInstance()->EnableMirrorModeScreen(msg.enable);
 }
 
-void Process_updatedSettings(const RobotInterface::UpdatedSettings& msg)
+void Process_updatedSettings(const CLAD_VECTOR(RobotInterface)::UpdatedSettings& msg)
 {
   using namespace RobotInterface;
   switch (msg.settingBeingChanged)
   {
-    case SettingBeingChanged::SETTING_ENABLE_DATA_COLLECTION:
+    case CLAD_VECTOR(RobotInterface)::SettingBeingChanged::SETTING_ENABLE_DATA_COLLECTION:
       _context->GetMicDataSystem()->SetEnableDataCollectionSettings(msg.enableDataCollection);
       break;
-    case SettingBeingChanged::SETTING_TIME_ZONE:
+    case CLAD_VECTOR(RobotInterface)::SettingBeingChanged::SETTING_TIME_ZONE:
       std::string timeZone{msg.timeZone, msg.timeZone_length};
       _context->GetMicDataSystem()->UpdateTimeZone(timeZone);
       break;
   }
 }
 
-void Process_fakeWakeWordFromExternalInterface(const RobotInterface::FakeWakeWordFromExternalInterface& msg)
+void Process_fakeWakeWordFromExternalInterface(const CLAD_VECTOR(RobotInterface)::FakeWakeWordFromExternalInterface& msg)
 {
   _context->GetMicDataSystem()->FakeTriggerWordDetection();
 }
 
-void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg)
+void AnimProcessMessages::ProcessMessageFromEngine(const CLAD_VECTOR(RobotInterface)::EngineToRobot& msg)
 {
   //LOG_WARNING("AnimProcessMessages.ProcessMessageFromEngine", "%d", msg.tag);
   bool forwardToRobot = false;
   switch (msg.tag)
   {
-    case RobotInterface::EngineToRobot::Tag_absLocalizationUpdate:
+    case CLAD_VECTOR(RobotInterface)::EngineToRobot::Tag_absLocalizationUpdate:
     {
       forwardToRobot = true;
       _context->GetMicDataSystem()->ResetMicListenDirection();
       break;
     }
-    case RobotInterface::EngineToRobot::Tag_calmPowerMode:
+    case CLAD_VECTOR(RobotInterface)::EngineToRobot::Tag_calmPowerMode:
     {
       // Remember the power mode specified by engine so that we can go back to
       // it when pairing/debug screens are exited.
@@ -684,7 +693,7 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
       forwardToRobot = FaceInfoScreenManager::getInstance()->GetCurrScreenName() == ScreenName::None;
       break;
     }
-    case RobotInterface::EngineToRobot::Tag_setBackpackLights:
+    case CLAD_VECTOR(RobotInterface)::EngineToRobot::Tag_setBackpackLights:
     {
       // Intercept the SetBackpackLights message from engine
       _context->GetBackpackLightComponent()->SetBackpackAnimation({msg.setBackpackLights});
@@ -712,7 +721,7 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
 // ========== START OF PROCESSING MESSAGES FROM ROBOT ==========
 // #pragma mark "RobotToEngine handlers"
 
-static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
+static void ProcessMicDataMessage(const CLAD_VECTOR(RobotInterface)::MicData& payload)
 {
   FaceInfoScreenManager::getInstance()->DrawMicInfo(payload);
 
@@ -723,7 +732,7 @@ static void ProcessMicDataMessage(const RobotInterface::MicData& payload)
   }
 }
 
-static void HandleRobotStateUpdate(const Anki::Vector::RobotState& robotState)
+static void HandleRobotStateUpdate(const CLAD_VECTOR(RobotState)& robotState)
 {
   _pendingRobotDisconnectTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kNoRobotStateDisconnectTimeout_sec;
 
@@ -746,17 +755,17 @@ static void HandleRobotStateUpdate(const Anki::Vector::RobotState& robotState)
 #endif
 }
 
-void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToEngine& msg)
+void AnimProcessMessages::ProcessMessageFromRobot(const CLAD_VECTOR(RobotInterface)::RobotToEngine& msg)
 {
   const auto tag = msg.tag;
   switch (tag)
   {
-    case RobotInterface::RobotToEngine::Tag_robotServerDisconnect:
+    case CLAD_VECTOR(RobotInterface)::RobotToEngine::Tag_robotServerDisconnect:
     {
       AnimComms::DisconnectRobot();
     }
     break;
-    case RobotInterface::RobotToEngine::Tag_prepForShutdown:
+    case CLAD_VECTOR(RobotInterface)::RobotToEngine::Tag_prepForShutdown:
     {
       PRINT_NAMED_INFO("AnimProcessMessages.ProcessMessageFromRobot.Shutdown","");
       // Need to wait a couple ticks before actually shutting down so that this message
@@ -764,17 +773,17 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
       _countToShutdown = kNumTicksToShutdown;
     }
     break;
-    case RobotInterface::RobotToEngine::Tag_micData:
+    case CLAD_VECTOR(RobotInterface)::RobotToEngine::Tag_micData:
     {
       const auto& payload = msg.micData;
       ProcessMicDataMessage(payload);
       return;
     }
     break;
-    case RobotInterface::RobotToEngine::Tag_state:
+    case CLAD_VECTOR(RobotInterface)::RobotToEngine::Tag_state:
     {
       HandleRobotStateUpdate(msg.state);
-      const bool onChargerContacts = (msg.state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
+      const bool onChargerContacts = (msg.state.status & (uint32_t)CLAD_VECTOR(RobotStatusFlag)::IS_ON_CHARGER);
       _animStreamer->SetOnCharger(onChargerContacts);
       auto* showStreamStateManager = _context->GetShowAudioStreamStateManager();
       if (showStreamStateManager != nullptr)
@@ -789,18 +798,18 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
 
     }
     break;
-    case RobotInterface::RobotToEngine::Tag_stillAlive:
+    case CLAD_VECTOR(RobotInterface)::RobotToEngine::Tag_stillAlive:
     {
       _pendingRobotDisconnectTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kNoRobotStateDisconnectTimeout_sec;
     }
     break;
-    case RobotInterface::RobotToEngine::Tag_robotStopped:
+    case CLAD_VECTOR(RobotInterface)::RobotToEngine::Tag_robotStopped:
     {
       LOG_INFO("AnimProcessMessages.ProcessMessageFromRobot.RobotStopped", "Abort animation");
       _animStreamer->Abort();
     }
     break;
-    case RobotInterface::RobotToEngine::Tag_syncRobotAck:
+    case CLAD_VECTOR(RobotInterface)::RobotToEngine::Tag_syncRobotAck:
     {
       std::string version((const char*)&msg.syncRobotAck.sysconVersion, 16);
       FaceInfoScreenManager::getInstance()->SetSysconVersion(version);
@@ -865,7 +874,7 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
   const bool isConnected = AnimComms::IsConnectedToEngine();
   if (!wasConnected && isConnected) {
     LOG_INFO("AnimProcessMessages.MonitorConnectionState", "Robot now available");
-    RobotInterface::SendAnimToEngine(RobotAvailable());
+    SendAnimToEngine(CLAD_VECTOR(RobotAvailable()));
 
     // Clear any scheduled fault code display
     displayFaultCodeTime_nanosec = 0;
@@ -952,7 +961,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
     while((dataLen = AnimComms::GetNextPacketFromEngine(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
     {
       ++_messageCountEngineToAnim;
-      Anki::Vector::RobotInterface::EngineToRobot msg;
+      CLAD_VECTOR(RobotInterface)::EngineToRobot msg;
       memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
       if (msg.Size() != dataLen) {
         LOG_WARNING("AnimProcessMessages.Update.EngineToRobot.InvalidSize",
@@ -975,7 +984,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
     while ((dataLen = AnimComms::GetNextPacketFromRobot(pktBuffer_, MAX_PACKET_BUFFER_SIZE)) > 0)
     {
       ++_messageCountRobotToAnim;
-      Anki::Vector::RobotInterface::RobotToEngine msg;
+      CLAD_VECTOR(RobotInterface)::RobotToEngine msg;
       memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
       if (msg.Size() != dataLen) {
         LOG_WARNING("AnimProcessMessages.Update.RobotToEngine.InvalidSize",
@@ -1019,7 +1028,7 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
 
 
 
-bool AnimProcessMessages::SendAnimToRobot(const RobotInterface::EngineToRobot& msg)
+bool AnimProcessMessages::SendAnimToRobot(const CLAD_VECTOR(RobotInterface)::EngineToRobot& msg)
 {
   static Util::MessageProfiler msgProfiler("AnimProcessMessages::SendAnimToRobot");
   LOG_TRACE("AnimProcessMessages.SendAnimToRobot", "Send tag %d size %u", msg.tag, msg.Size());
@@ -1033,7 +1042,7 @@ bool AnimProcessMessages::SendAnimToRobot(const RobotInterface::EngineToRobot& m
   return result;
 }
 
-bool AnimProcessMessages::SendAnimToEngine(const RobotInterface::RobotToEngine & msg)
+bool AnimProcessMessages::SendAnimToEngine(const CLAD_VECTOR(RobotInterface)::RobotToEngine & msg)
 {
   static Util::MessageProfiler msgProfiler("AnimProcessMessages::SendAnimToEngine");
 

@@ -21,7 +21,7 @@
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::ns
 #define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
 #else
@@ -43,7 +43,7 @@ namespace Vector {
 namespace Audio {
 
 using namespace AudioEngine;
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 using namespace CppLite::Anki::AudioMetaData;
 #else
 using namespace AudioMetaData;

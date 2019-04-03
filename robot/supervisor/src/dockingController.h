@@ -44,7 +44,7 @@ const f32 ORIGIN_TO_HIGH_LIFT_DIST_MM = 20.f;
 const f32 ORIGIN_TO_LOW_ROLL_DIST_MM = 13.f;
 
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
 #else
 #define CLAD_VECTOR(ns) ns

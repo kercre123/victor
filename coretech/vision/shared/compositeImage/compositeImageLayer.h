@@ -24,7 +24,7 @@
 #include <unordered_map>
 #include "util/helpers/templateHelpers.h"
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::Anki::Vision::ns
 #else
 #define CLAD(ns) ns

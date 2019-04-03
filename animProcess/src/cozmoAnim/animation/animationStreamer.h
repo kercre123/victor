@@ -25,7 +25,7 @@
 #include "cannedAnimLib/cannedAnims/animationMessageWrapper.h"
 #include "cannedAnimLib/baseTypes/track.h"
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns)        CppLite::ns
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
 #define CLAD_VISION(ns) CppLite::Anki::Vision::ns
@@ -33,6 +33,23 @@
 #define CLAD(ns)        ns
 #define CLAD_VECTOR(ns) ns
 #define CLAD_VISION(ns) Vision::ns
+#endif
+
+#ifdef USES_CLAD_CPPLITE
+namespace CppLite {
+#endif
+namespace Anki {
+  namespace Vector {
+    namespace RobotInterface {
+      struct AddOrUpdateEyeShift;
+      struct RemoveEyeShift;
+      struct AddSquint;
+      struct RemoveSquint;
+    }
+  }
+}
+#ifdef USES_CLAD_CPPLITE
+}
 #endif
 
 namespace Anki {
@@ -53,13 +70,6 @@ namespace Vector {
   namespace Audio {
     class AnimationAudioClient;
     class ProceduralAudioClient;
-  }
-
-  namespace RobotInterface {
-    struct AddOrUpdateEyeShift;
-    struct RemoveEyeShift;
-    struct AddSquint;
-    struct RemoveSquint;
   }
 
 namespace Anim {

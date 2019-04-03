@@ -933,17 +933,21 @@ class ASTNamespaceWrapper(NodeVisitor):
         self.parent_decl_list = None
 
     def visit_IncludeDecl(self, node, *args, **kwargs):
-        # ignore includes, we only wrap namespaces in the current file
-        pass
+        # Pass local vars for wrapped_namespace & parent_decl_list so that each include
+        # is correctly wrapped with the namespace
+        self.ns_visit(node, wrapped_namespace=False, parent_decl_list=None)
 
     def generic_visit(self, node):
+        self.ns_visit(node, self.wrapped_namespace, self.parent_decl_list)
+
+    def ns_visit(self, node, wrapped_namespace=False, parent_decl_list=None):
         if node:
             if isinstance(node, DeclList):
                 # keep track of the current DeclList
-                self.parent_decl_list = node
+                parent_decl_list = node
             if isinstance(node, NamespaceDecl):
                 # if this is the first namespace then process it
-                if not self.wrapped_namespace:
+                if not wrapped_namespace:
                     # Create a new DeclList wrapper for the current Namespace
                     wrapper_decl_list = DeclList([], None)
                     wrapper_decl_list.append(node)
@@ -954,14 +958,15 @@ class ASTNamespaceWrapper(NodeVisitor):
                     # Set the nodes (current ns) "parent" namespace to be our wrapper namespace
                     # This will ensure correct "fully qualified namespace" generation
                     node.namespace = wrapper_ns
-                    self.wrapped_namespace = True
+                    wrapped_namespace = True
 
                     # Replace the current namespace with our wrapper
-                    self.parent_decl_list.remove(node)
-                    self.parent_decl_list.append(wrapper_ns)
+                    parent_decl_list.remove(node)
+                    parent_decl_list.append(wrapper_ns)
 
             for (name, child) in node.children():
-                self.visit(child)
+                self.ns_visit(child, wrapped_namespace, parent_decl_list)
+
 
 # DEBUG emitter
 class ASTDebug(NodeVisitor):

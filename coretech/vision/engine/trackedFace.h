@@ -25,7 +25,7 @@
 #include "clad/types/facialExpressions.h"
 #include "clad/types/faceDetectionMetaData.h"
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::Anki::Vision::ns
 #else
 #define CLAD(ns) Anki::Vision::ns

@@ -19,7 +19,7 @@
 #include "util/helpers/fullEnumToValueArrayChecker.h"
 #include "util/helpers/templateHelpers.h"
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::Anki::Vector::ns
 #else
 #define CLAD(ns) ns

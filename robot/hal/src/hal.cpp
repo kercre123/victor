@@ -33,6 +33,12 @@
 // disable when you aren't trying to debug the touch sensor
 #define DEBUG_TOUCH_SENSOR 0
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
 namespace Vector {
 
@@ -53,7 +59,7 @@ namespace { // "Private members"
   };
 #endif
   // For storing latest prox data from body
-  ProxSensorDataRaw proxData_;
+  CLAD(ProxSensorDataRaw) proxData_;
   uint16_t lastProxDataSampleCount_ = 0;
 
   // update every tick of the robot:
@@ -62,7 +68,7 @@ namespace { // "Private members"
   u16 lastValidTouchIntensity_ = 0;
 
   // Counter for invalid prox sensor readings
-  u32 invalidProxSensorStatusCounts_[(int)RangeStatus::HARDWARE_FAIL + 1] = {0};
+  u32 invalidProxSensorStatusCounts_[(int)CLAD(RangeStatus)::HARDWARE_FAIL + 1] = {0};
   u32 noUpdateProxSensorStatusCount_ = 0;
   TimeStamp_t nextInvalidProxDataReportSendTime_ms_ = 0;
   const u32 INVALID_PROX_DATA_REPORT_PERIOD_MS = 86400000; // Every 24 hours
@@ -174,8 +180,8 @@ bool check_select_timeout(spine_ctx_t spine)
     // Let anim know that robot is still alive since we haven't
     // been sending RobotState messages for the last second.
     // Otherwise, anim will fault with NO_ROBOT_COMMS
-    RobotInterface::StillAlive msg;
-    RobotInterface::SendMessage(msg);
+    CLAD(RobotInterface)::StillAlive msg;
+    SendMessage(msg);
 
     return true;
   }
@@ -400,7 +406,7 @@ Result HAL::Init(const int * shutdownSignal)
 
 
   for (int m = MOTOR_LIFT; m < MOTOR_COUNT; m++) {
-    MotorResetPosition((MotorID)m);
+    MotorResetPosition((CLAD(MotorID))m);
   }
   AnkiInfo("HAL.Init.Success", "");
 
@@ -486,24 +492,24 @@ Result spine_get_frame() {
 void ReportRecentInvalidProxDataReadings()
 {
   const TimeStamp_t timeSinceBoot_ms = HAL::GetTimeStamp();
-  if ( (invalidProxSensorStatusCounts_[(int)RangeStatus::SIGMA_FAIL] +
-        invalidProxSensorStatusCounts_[(int)RangeStatus::SIGNAL_FAIL] +
-        invalidProxSensorStatusCounts_[(int)RangeStatus::PHASE_FAIL]) > 0) {
+  if ( (invalidProxSensorStatusCounts_[(int)CLAD(RangeStatus)::SIGMA_FAIL] +
+        invalidProxSensorStatusCounts_[(int)CLAD(RangeStatus)::SIGNAL_FAIL] +
+        invalidProxSensorStatusCounts_[(int)CLAD(RangeStatus)::PHASE_FAIL]) > 0) {
     DASMSG(hal_invalid_prox_reading_report, "hal.invalid_prox_reading_report", "Report the recent number of minor status failures");
     DASMSG_SET(i1, timeSinceBoot_ms, "Time (ms) since last boot")
-    DASMSG_SET(i2, invalidProxSensorStatusCounts_[(int)RangeStatus::SIGMA_FAIL], "Number of recent sigma failures");
-    DASMSG_SET(i3, invalidProxSensorStatusCounts_[(int)RangeStatus::SIGNAL_FAIL], "Number of recent signal failures");
-    DASMSG_SET(i4, invalidProxSensorStatusCounts_[(int)RangeStatus::PHASE_FAIL], "Number of recent phase failures");
+    DASMSG_SET(i2, invalidProxSensorStatusCounts_[(int)CLAD(RangeStatus)::SIGMA_FAIL], "Number of recent sigma failures");
+    DASMSG_SET(i3, invalidProxSensorStatusCounts_[(int)CLAD(RangeStatus)::SIGNAL_FAIL], "Number of recent signal failures");
+    DASMSG_SET(i4, invalidProxSensorStatusCounts_[(int)CLAD(RangeStatus)::PHASE_FAIL], "Number of recent phase failures");
     DASMSG_SEND();
   }
 
-  if ( (invalidProxSensorStatusCounts_[(int)RangeStatus::MIN_RANGE_FAIL] +
-        invalidProxSensorStatusCounts_[(int)RangeStatus::HARDWARE_FAIL] +
+  if ( (invalidProxSensorStatusCounts_[(int)CLAD(RangeStatus)::MIN_RANGE_FAIL] +
+        invalidProxSensorStatusCounts_[(int)CLAD(RangeStatus)::HARDWARE_FAIL] +
         noUpdateProxSensorStatusCount_) > 0) {
     DASMSG(hal_severe_invalid_prox_reading_report, "hal.severe_invalid_prox_reading_report", "Report of recent number of severe status failures");
     DASMSG_SET(i1, timeSinceBoot_ms, "Time (ms) since last boot")
-    DASMSG_SET(i2, invalidProxSensorStatusCounts_[(int)RangeStatus::MIN_RANGE_FAIL], "Number of recent min range failures");
-    DASMSG_SET(i3, invalidProxSensorStatusCounts_[(int)RangeStatus::HARDWARE_FAIL], "Number of recent hardware failures");
+    DASMSG_SET(i2, invalidProxSensorStatusCounts_[(int)CLAD(RangeStatus)::MIN_RANGE_FAIL], "Number of recent min range failures");
+    DASMSG_SET(i3, invalidProxSensorStatusCounts_[(int)CLAD(RangeStatus)::HARDWARE_FAIL], "Number of recent hardware failures");
     DASMSG_SET(i4, noUpdateProxSensorStatusCount_, "Number of recent missing updates");
     DASMSG_SEND();
   }
@@ -681,7 +687,7 @@ Result HAL::Step(void)
 void StopMotors()
 {
   for (int m = 0; m < MOTOR_COUNT; m++) {
-    HAL::MotorSetPower((MotorID)m, 0.f);
+    HAL::MotorSetPower((CLAD(MotorID))m, 0.f);
   }
 }
 
@@ -842,7 +848,7 @@ inline u16 FlipBytes(u16 v) {
   return ((((v) & 0x00FF)<<8) | ((v)>>8));
 }
 
-inline RangeStatus ConvertToApiRangeStatus(const u8 deviceRangeStatus)
+inline CLAD(RangeStatus) ConvertToApiRangeStatus(const u8 deviceRangeStatus)
 {
   uint8_t internal_device_range_status = ((deviceRangeStatus & 0x78) >> 3);
 
@@ -858,25 +864,25 @@ inline RangeStatus ConvertToApiRangeStatus(const u8 deviceRangeStatus)
     case 1:
     case 2:
     case 3:
-      return RangeStatus::HARDWARE_FAIL;
+      return CLAD(RangeStatus)::HARDWARE_FAIL;
     case 6:
     case 9:
-      return RangeStatus::PHASE_FAIL;
+      return CLAD(RangeStatus)::PHASE_FAIL;
     case 8:
     case 10:
-      return RangeStatus::MIN_RANGE_FAIL;
+      return CLAD(RangeStatus)::MIN_RANGE_FAIL;
     case 4:
-      return RangeStatus::SIGNAL_FAIL;
+      return CLAD(RangeStatus)::SIGNAL_FAIL;
     case 11:
-      return RangeStatus::RANGE_VALID;
+      return CLAD(RangeStatus)::RANGE_VALID;
     default:
       // This error should NOT trigger
       // AnkiWarn("HAL.ConvertToApiRangeStatus.InvalidStatus", "0x%02x", deviceRangeStatus);
-      return RangeStatus::NO_UPDATE;
+      return CLAD(RangeStatus)::NO_UPDATE;
   }
 }
 
-ProxSensorDataRaw HAL::GetRawProxData()
+CLAD(ProxSensorDataRaw) HAL::GetRawProxData()
 {
   return proxData_;
 }
@@ -895,22 +901,22 @@ void ProcessProxData()
     proxData_.ambientIntensity = 0.f;
     proxData_.spadCount        = 200.f;
     proxData_.timestamp_ms     = HAL::GetTimeStamp();
-    proxData_.rangeStatus      = RangeStatus::RANGE_VALID;
+    proxData_.rangeStatus      = CLAD(RangeStatus)::RANGE_VALID;
   } else if (bodyData_->proximity.sampleCount != lastProxDataSampleCount_) {
     proxData_.rangeStatus = ConvertToApiRangeStatus(bodyData_->proximity.rangeStatus);
     // Track the occurrences of invalid prox sensor readings, reported on a periodic basis
     switch(proxData_.rangeStatus) {
-      case RangeStatus::RANGE_VALID:
+      case CLAD(RangeStatus)::RANGE_VALID:
         // Do nothing
         break;
-      case RangeStatus::SIGMA_FAIL:
-      case RangeStatus::SIGNAL_FAIL:
-      case RangeStatus::MIN_RANGE_FAIL:
-      case RangeStatus::PHASE_FAIL:
-      case RangeStatus::HARDWARE_FAIL:
+      case CLAD(RangeStatus)::SIGMA_FAIL:
+      case CLAD(RangeStatus)::SIGNAL_FAIL:
+      case CLAD(RangeStatus)::MIN_RANGE_FAIL:
+      case CLAD(RangeStatus)::PHASE_FAIL:
+      case CLAD(RangeStatus)::HARDWARE_FAIL:
         ++invalidProxSensorStatusCounts_[(int)proxData_.rangeStatus];
         break;
-      case RangeStatus::NO_UPDATE:
+      case CLAD(RangeStatus)::NO_UPDATE:
         ++noUpdateProxSensorStatusCount_;
         break;
       default:

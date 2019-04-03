@@ -26,6 +26,12 @@
 // Whether or not we need to manually stop the boot animation process, vic-bootAnim
 #define MANUALLY_STOP_BOOT_ANIM 0
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
 namespace Vector {
 
@@ -126,7 +132,7 @@ void FaceDisplay::DrawToFaceDebug(const Vision::ImageRGB565& img)
   DrawToFaceInternal(img);
 }
 
-void FaceDisplay::SetFaceBrightness(LCDBrightness level)
+void FaceDisplay::SetFaceBrightness(CLAD(LCDBrightness) level)
 {
   if(_displayImpl != nullptr)
   {

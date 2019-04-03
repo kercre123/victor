@@ -21,7 +21,7 @@
 #define ENABLE_AUDIO_PROBABILITY_LOG 0
 #define INVALID_EVENT_IDX std::numeric_limits<size_t>::max()
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
 #else
 #define CLAD_AUDIOMETADATA(ns) AudioMetaData::ns

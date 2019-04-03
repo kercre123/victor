@@ -16,10 +16,22 @@
 
 #include "clad/robotInterface/messageEngineToRobot.h"
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::Anki::Vector::ns
 #else
 #define CLAD(ns) ns
+#endif
+
+#ifdef USES_CLAD_CPPLITE
+namespace CppLite {
+#endif
+namespace Anki {
+  namespace Vector {
+    struct AnimationEvent;
+  }
+}
+#ifdef USES_CLAD_CPPLITE
+}
 #endif
 
 namespace Anki {
@@ -31,8 +43,6 @@ class ImageRGB565;
 namespace Vector {
 
 class RobotAudioKeyFrame;
-
-struct AnimationEvent;
 
 struct AnimationMessageWrapper{
   AnimationMessageWrapper(Vision::ImageRGB565& img)
@@ -46,7 +56,7 @@ struct AnimationMessageWrapper{
   ETR* turnToRecHeadMessage    = nullptr;
   ETR* backpackLightsMessage   = nullptr;
   RobotAudioKeyFrame* audioKeyFrameMessage = nullptr;
-  AnimationEvent* eventMessage = nullptr;
+  CLAD(AnimationEvent)* eventMessage = nullptr;
 
   bool haveFaceToSend = false;
   Vision::ImageRGB565& faceImg;

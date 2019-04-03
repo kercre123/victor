@@ -217,8 +217,7 @@ target_link_libraries(webotsCtrlAnim
   PRIVATE
   util
   kazmath
-  cti_common
-  #cti_common_robot
+  cti_common_robot
   cti_vision
   robot_interface
   webotsCtrlCommon

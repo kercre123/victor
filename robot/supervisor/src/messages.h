@@ -33,45 +33,58 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
   namespace Vector {
     namespace Messages {
-
-      // Return a const reference to the current robot state message
-      RobotState const& GetRobotStateMsg();
-
       // Create all the dispatch function prototypes (all implemented
       // manually in messages.cpp).
       #include "clad/robotInterface/messageEngineToRobot_declarations.def"
+    }
+  }
+}
 
-      void ProcessBadTag_EngineToRobot(const RobotInterface::EngineToRobot::Tag tag);
-
-      Result Init();
+namespace Anki {
+  namespace Vector {
+    namespace Messages {
+  
+      // Return a const reference to the current robot state message
+      CLAD(RobotState) const& GetRobotStateMsg();
+  
+      void ProcessBadTag_EngineToRobot(const CLAD(RobotInterface)::EngineToRobot::Tag tag);
+  
+      Anki::Result Init();
       extern "C" void ProcessMessage(u8* buffer, u16 bufferSize);
-
+  
       void Update();
-
-      void ProcessMessage(RobotInterface::EngineToRobot& msg);
-
+  
+      void ProcessMessage(CLAD(RobotInterface)::EngineToRobot& msg);
+  
       void UpdateRobotStateMsg();
-
-      Result SendRobotStateMsg();
-
-      Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted, bool autoStarted = false);
+  
+      Anki::Result SendRobotStateMsg();
+  
+      Anki::Result SendMotorCalibrationMsg(CLAD(MotorID) motor, bool calibStarted, bool autoStarted = false);
       
-      Result SendMotorAutoEnabledMsg(MotorID motor, bool calibStarted);
-
-      Result SendMicDataMsgs();
-
+      Anki::Result SendMotorAutoEnabledMsg(CLAD(MotorID) motor, bool calibStarted);
+  
+      Anki::Result SendMicDataMsgs();
+  
       // Returns whether or not init message was received from basestation
       bool ReceivedInit();
-
+  
       // Resets the receipt of init message
       void ResetInit();
-
+  
     } // namespace Messages
   } // namespace Vector
 } // namespace Anki
 
+#undef CLAD
 
 #endif  // #ifndef COZMO_MESSAGE_ROBOT_H

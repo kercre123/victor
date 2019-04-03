@@ -22,6 +22,12 @@
 #include <set>
 #include <unordered_map>
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD_VISION(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD_VISION(ns) Vision::ns
+#endif
+
 // Fwd Decl
 namespace CozmoAnim {
   struct SpriteBox;
@@ -110,9 +116,9 @@ struct SpriteBoxKeyFrame
   int yPos;
   int width;
   int height;
-  Vision::LayerName layer;
-  Vision::SpriteRenderMethod renderMethod;
-  Vision::SpriteSeqEndType spriteSeqEndType;
+  CLAD_VISION(LayerName) layer;
+  CLAD_VISION(SpriteRenderMethod) renderMethod;
+  CLAD_VISION(SpriteSeqEndType) spriteSeqEndType;
   // Sort SpriteBoxKeyFrames by triggerTime_ms within a set. This also implies that
   // for a given SpriteBoxName, two KeyFrames are considered duplicates if they have
   // the same triggerTime_ms. Ergo, multiple keyframes for the same SBName and trigger

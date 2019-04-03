@@ -30,7 +30,7 @@
 #include <opencv2/core.hpp>
 #include <cassert>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::Anki::ns
 #define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
@@ -145,13 +145,13 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
      }
     
     #if CAN_STREAM
-      RobotInterface::EngineToRobot* HeadAngleKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
+      CLAD_VECTOR(RobotInterface)::EngineToRobot* HeadAngleKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
       {
         if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
           return nullptr;
         }
         
-        RobotInterface::SetHeadAngle streamHeadMsg;
+        CLAD_VECTOR(RobotInterface)::SetHeadAngle streamHeadMsg;
         streamHeadMsg.actionID = 0;
         streamHeadMsg.duration_sec = 0.001 * _keyframeActiveDuration_ms;
         
@@ -163,7 +163,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           streamHeadMsg.angle_rad = DEG_TO_RAD(_angle_deg);
         }
         
-        return new RobotInterface::EngineToRobot(streamHeadMsg);
+        return new CLAD_VECTOR(RobotInterface)::EngineToRobot(streamHeadMsg);
       }
 
     #endif
@@ -205,13 +205,13 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     }
     
     #if CAN_STREAM
-      RobotInterface::EngineToRobot* LiftHeightKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
+      CLAD_VECTOR(RobotInterface)::EngineToRobot* LiftHeightKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
       {
         if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
           return nullptr;
         }
         
-        RobotInterface::SetLiftHeight streamLiftMsg;
+        CLAD_VECTOR(RobotInterface)::SetLiftHeight streamLiftMsg;
         streamLiftMsg.actionID = 0;
         streamLiftMsg.duration_sec = Util::MilliSecToSec(static_cast<float>(_keyframeActiveDuration_ms));
         
@@ -223,7 +223,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           streamLiftMsg.height_mm = _height_mm;
         }
 
-        return new RobotInterface::EngineToRobot(streamLiftMsg);
+        return new CLAD_VECTOR(RobotInterface)::EngineToRobot(streamLiftMsg);
       }
     #endif
 
@@ -975,7 +975,7 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     //
     
     #if CAN_STREAM
-      RobotInterface::EngineToRobot* EventKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
+      CLAD_VECTOR(RobotInterface)::EngineToRobot* EventKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
       {
         // This function isn't actually used. Instead GetAnimEvent() is used by animationStreamer.
         DEV_ASSERT(false, "EventKeyFrame.GetStreamMessage.ShouldntCallThis");
@@ -1086,12 +1086,12 @@ _streamMsg.lights[__LED_NAME__].offset_ms = 0; } while(0)
     }
   
     #if CAN_STREAM
-      RobotInterface::EngineToRobot* BackpackLightsKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
+      CLAD_VECTOR(RobotInterface)::EngineToRobot* BackpackLightsKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
       {
         if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
           return nullptr;
         }
-        return new RobotInterface::EngineToRobot(_streamMsg);
+        return new CLAD_VECTOR(RobotInterface)::EngineToRobot(_streamMsg);
       }
     #endif
     
@@ -1239,16 +1239,16 @@ _streamMsg.lights[__LED_NAME__].offset_ms = 0; } while(0)
     }
 
     #if CAN_STREAM
-      RobotInterface::EngineToRobot* BodyMotionKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
+      CLAD_VECTOR(RobotInterface)::EngineToRobot* BodyMotionKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
       {
         //PRINT_NAMED_INFO("BodyMotionKeyFrame.GetStreamMessage",
         //                 "currentTime=%d, duration=%d\n", timeSinceAnimStart_ms, _keyframeActiveDuration_ms);
         if(IsFirstKeyframeTick(timeSinceAnimStart_ms)) {
           // Send the motion command at the beginning
-          return new RobotInterface::EngineToRobot(_streamMsg);
+          return new CLAD_VECTOR(RobotInterface)::EngineToRobot(_streamMsg);
         } else if(_enableStopMessage && GetTimeSinceTrigger(timeSinceAnimStart_ms) >= _keyframeActiveDuration_ms) {
           // Send a stop command when the duration has passed
-          return new RobotInterface::EngineToRobot(_stopMsg);
+          return new CLAD_VECTOR(RobotInterface)::EngineToRobot(_stopMsg);
         } else {
           // Do nothing in the middle or if no done message is required.
           return nullptr;
@@ -1292,12 +1292,12 @@ _streamMsg.lights[__LED_NAME__].offset_ms = 0; } while(0)
     }
     
     #if CAN_STREAM
-      RobotInterface::EngineToRobot* RecordHeadingKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
+      CLAD_VECTOR(RobotInterface)::EngineToRobot* RecordHeadingKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
       {
         if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
           return nullptr;
         }
-        return new RobotInterface::EngineToRobot(_streamMsg);
+        return new CLAD_VECTOR(RobotInterface)::EngineToRobot(_streamMsg);
       }
     #endif
     
@@ -1407,12 +1407,12 @@ _streamMsg.lights[__LED_NAME__].offset_ms = 0; } while(0)
     }
     
     #if CAN_STREAM
-      RobotInterface::EngineToRobot* TurnToRecordedHeadingKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
+      CLAD_VECTOR(RobotInterface)::EngineToRobot* TurnToRecordedHeadingKeyFrame::GetStreamMessage(const TimeStamp_t timeSinceAnimStart_ms) const
       {
         if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
           return nullptr;
         }
-        return new RobotInterface::EngineToRobot(_streamMsg);
+        return new CLAD_VECTOR(RobotInterface)::EngineToRobot(_streamMsg);
       }
     #endif
 

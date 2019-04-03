@@ -21,6 +21,12 @@
 #include "coretech/common/shared/types.h"
 #include "clad/types/dockingSignals.h"
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
   namespace Vector {
 
@@ -56,20 +62,20 @@ namespace Anki {
       
       Mode GetMode();
       
-      DockAction GetCurAction();
+      CLAD(DockAction) GetCurAction();
 
       bool IsBusy();
       bool IsCarryingBlock();
       bool IsPickingUp();
 
-      void SetCarryState(CarryState state);
-      CarryState GetCarryState();
+      void SetCarryState(CLAD(CarryState) state);
+      CLAD(CarryState) GetCarryState();
 
       // Starts the docking process, relying on the relative pose of the marker to be
       // transmitted from cozmo-engine immediately after calling this. (Except for DA_PLACE_LOW_BLIND)
       // If DA_PLACE_LOW_BLIND, rel_* parameters are wrt to current robot pose. Otherwise, rel_* params
       // are ignored.
-      void DockToBlock(const DockAction action,
+      void DockToBlock(const CLAD(DockAction) action,
                        const bool doLiftLoadCheck,
                        const f32 speed_mmps,
                        const f32 accel_mmps2,
@@ -109,5 +115,7 @@ namespace Anki {
     } // namespace PickAndPlaceController
   } // namespace Vector
 } // namespace Anki
+
+#undef CLAD
 
 #endif // COZMO_PICK_AND_PLACE_CONTROLLER_H_

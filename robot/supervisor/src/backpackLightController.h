@@ -15,19 +15,26 @@
 #include "coretech/common/shared/types.h"
 #include "clad/types/ledTypes.h"
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
 #else
 #define CLAD_VECTOR(ns) ns
 #endif
 
+namespace CppLite {
+  namespace Anki {
+    namespace Vector {
+      
+      namespace RobotInterface {
+        struct SetBackpackLights;
+        struct SetSystemLight;
+      }
+    }
+  }
+}
+
 namespace Anki {
   namespace Vector {
-    
-    namespace RobotInterface {
-      struct SetBackpackLights;
-      struct SetSystemLight;
-    }
     
     namespace BackpackLightController {
       
@@ -47,8 +54,8 @@ namespace Anki {
       
       // Set the parameters of an LED for a specified layer.
       // EnableLayer() must be called to actually apply changes if this is for the non-active layer.
-      void SetParams(const RobotInterface::SetBackpackLights& params);
-      void SetParams(const RobotInterface::SetSystemLight& params);
+      void SetParams(const CLAD_VECTOR(RobotInterface)::SetBackpackLights& params);
+      void SetParams(const CLAD_VECTOR(RobotInterface)::SetSystemLight& params);
 
       // Set all lights on all layers to off
       void TurnOffAll();

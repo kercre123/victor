@@ -45,7 +45,7 @@ target_link_libraries(victor_anim
   canned_anim_lib_anim
   # cti
   cti_common_robot
-  cti_vision_clad_cpplite
+  cti_vision_robot
   cti_messaging_robot
   robot_clad_cpplite
   cloud_clad_cpp
@@ -110,7 +110,9 @@ if (VICOS)
     #       separation would be clearer and cleaner or we would
     #       exclusively use one or the other, but that will have to
     #       wait for a (much) larger cleanup to cmake / clad / coretech.
-    cti_common
+    cti_common_robot
+    cti_vision_robot
+    cti_vision
     jsoncpp
     ${ANKITRACE}
     ${PLATFORM_LIBS}

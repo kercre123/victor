@@ -24,7 +24,7 @@
 #include <utility>
 #include <limits>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::Anki::ns
 #else
 #define CLAD(ns) ns
@@ -50,7 +50,7 @@ Polygon<N,T>::Polygon( std::initializer_list< Point<N,T> > points )
 }
 
 template <PolygonDimType N, typename T>
-Polygon<N,T>::Polygon(const std::vector<CladPoint2d>& cladPoints)
+Polygon<N,T>::Polygon(const std::vector<CLAD(CladPoint2d)>& cladPoints)
 {
   static_assert(N == 2, "Must use 2D to convert from vector of CladPoint2d");
   this->reserve(cladPoints.size());
@@ -61,7 +61,7 @@ Polygon<N,T>::Polygon(const std::vector<CladPoint2d>& cladPoints)
 }
   
 template <PolygonDimType N, typename T>
-Polygon<N,T>::Polygon(const std::vector<CladPoint3d>& cladPoints)
+Polygon<N,T>::Polygon(const std::vector<CLAD(CladPoint3d)>& cladPoints)
 {
   static_assert(N == 3, "Must use 3D to convert from vector of CladPoint3d");
   this->reserve(cladPoints.size());
@@ -72,23 +72,23 @@ Polygon<N,T>::Polygon(const std::vector<CladPoint3d>& cladPoints)
 }
  
 template <PolygonDimType N, typename T>
-std::vector<CladPoint2d> Polygon<N,T>::ToCladPoint2dVector() const
+std::vector<CLAD(CladPoint2d)> Polygon<N,T>::ToCladPoint2dVector() const
 {
   static_assert(N == 2, "Must use 2D to convert to vector of CladPoint2d");
-  std::vector<CladPoint2d> vec;
+  std::vector<CLAD(CladPoint2d)> vec;
   vec.reserve(this->size());
   for(const auto& point : _points)
   {
-    vec.emplace_back(CladPoint2d(point.x(), point.y()));
+    vec.emplace_back(CLAD(CladPoint2d)(point.x(), point.y()));
   }
   return vec;
 }
 
 template <PolygonDimType N, typename T>
-std::vector<CladPoint3d> Polygon<N,T>::ToCladPoint3dVector() const
+std::vector<CLAD(CladPoint3d)> Polygon<N,T>::ToCladPoint3dVector() const
 {
   static_assert(N == 3, "Must use 3D to convert to vector of CladPoint3d");
-  std::vector<CladPoint3d> vec;
+  std::vector<CLAD(CladPoint3d)> vec;
   vec.reserve(this->size());
   for(const auto& point : _points)
   {

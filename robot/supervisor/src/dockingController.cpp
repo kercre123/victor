@@ -15,6 +15,12 @@
 #include "imuFilter.h"
 #include <math.h>
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 #define DEBUG_DOCK_CONTROLLER 0
 
 // Resets localization pose to (0,0,0) every time a relative block pose update is received.
@@ -48,7 +54,7 @@ namespace Anki {
         // Constants
         
         // Which docking method to use
-        DockingMethod dockingMethod_ = DockingMethod::TRACKER_DOCKING;
+        CLAD(DockingMethod) dockingMethod_ = CLAD(DockingMethod)::TRACKER_DOCKING;
 
         enum Mode {
           IDLE,
@@ -178,7 +184,7 @@ namespace Anki {
         f32 headCamFOV_ver_ = 0.f;
         f32 headCamFOV_hor_ = 0.f;
 
-        DockingErrorSignal dockingErrSignalMsg_;
+        CLAD(DockingErrorSignal) dockingErrSignalMsg_;
         bool dockingErrSignalMsgReady_ = false;
         
         u8 numDockingFails_ = 0;
@@ -280,11 +286,11 @@ namespace Anki {
         
         bool dockingStarted = false;
         
-        DockingResult dockingResult_ = DockingResult::DOCK_UNKNOWN;
+        CLAD(DockingResult) dockingResult_ = CLAD(DockingResult)::DOCK_UNKNOWN;
         
       } // "private" namespace
 
-      void SetDockingMethod(DockingMethod method)
+      void SetDockingMethod(CLAD(DockingMethod) method)
       {
         if(!IsBusy())
         {
@@ -295,8 +301,8 @@ namespace Anki {
       
       bool IsHybridDocking()
       {
-        return (dockingMethod_ == DockingMethod::HYBRID_DOCKING) ||
-               (dockingMethod_ == DockingMethod::HYBRID_DOCKING_BEELINE);
+        return (dockingMethod_ == CLAD(DockingMethod)::HYBRID_DOCKING) ||
+               (dockingMethod_ == CLAD(DockingMethod)::HYBRID_DOCKING_BEELINE);
       }
 
       bool IsBusy()
@@ -306,9 +312,9 @@ namespace Anki {
 
       bool DidLastDockSucceed()
       {
-        if(dockingResult_ == DockingResult::DOCK_SUCCESS ||
-           dockingResult_ == DockingResult::DOCK_SUCCESS_HANNS_MANEUVER ||
-           dockingResult_ == DockingResult::DOCK_SUCCESS_RETRY)
+        if(dockingResult_ == CLAD(DockingResult)::DOCK_SUCCESS ||
+           dockingResult_ == CLAD(DockingResult)::DOCK_SUCCESS_HANNS_MANEUVER ||
+           dockingResult_ == CLAD(DockingResult)::DOCK_SUCCESS_RETRY)
         {
           return true;
         }
@@ -325,17 +331,17 @@ namespace Anki {
         return headCamFOV_hor_;
       }
       
-      DockingResult GetDockingResult()
+      CLAD(DockingResult) GetDockingResult()
       {
         return dockingResult_;
       }
       
-      Result SendDockingStatusMessage(Status status)
+      Result SendDockingStatusMessage(CLAD(Status) status)
       {
-        DockingStatus msg;
+        CLAD(DockingStatus) msg;
         msg.timestamp = HAL::GetTimeStamp();
         msg.status = status;
-        if(RobotInterface::SendMessage(msg)) {
+        if(SendMessage(msg)) {
           return RESULT_OK;
         }
         return RESULT_FAIL;
@@ -417,13 +423,13 @@ namespace Anki {
 
       Result SendGoalPoseMessage(const Anki::Embedded::Pose2d &p)
       {
-        GoalPose msg;
+        CLAD(GoalPose) msg;
         msg.pose.x = p.GetX();
         msg.pose.y = p.GetY();
         msg.pose.z = 0;
         msg.pose.angle = p.GetAngle().ToFloat();
         msg.followingMarkerNormal = followingBlockNormalPath_;
-        if(RobotInterface::SendMessage(msg)) {
+        if(SendMessage(msg)) {
           return RESULT_OK;
         }
         return RESULT_FAIL;
@@ -460,14 +466,14 @@ namespace Anki {
       // over the marker distance ranging from START_LIFT_TRACKING_DIST_MM to dockOffsetDistX_.
       void HighDockLiftUpdate() {
         // Don't want to move the lift while we are backing up or carrying a block
-        const DockAction curAction = PickAndPlaceController::GetCurAction();
+        const CLAD(DockAction) curAction = PickAndPlaceController::GetCurAction();
         if(failureMode_ != BACKING_UP &&
            !PickAndPlaceController::IsCarryingBlock() &&
-           curAction != DockAction::DA_ALIGN &&
-           curAction != DockAction::DA_ROLL_LOW &&
-           curAction != DockAction::DA_DEEP_ROLL_LOW &&
-           curAction != DockAction::DA_POP_A_WHEELIE &&
-           curAction != DockAction::DA_ALIGN_SPECIAL)
+           curAction != CLAD(DockAction)::DA_ALIGN &&
+           curAction != CLAD(DockAction)::DA_ROLL_LOW &&
+           curAction != CLAD(DockAction)::DA_DEEP_ROLL_LOW &&
+           curAction != CLAD(DockAction)::DA_POP_A_WHEELIE &&
+           curAction != CLAD(DockAction)::DA_ALIGN_SPECIAL)
         {
           f32 lastCommandedHeight = LiftController::GetDesiredHeight();
           if (lastCommandedHeight == dockingErrSignalMsg_.z_height) {
@@ -558,7 +564,7 @@ namespace Anki {
             if(IsHybridDocking())
             {
               AnkiDebug( "DockingController.Update.BackingUpAndStopping", "");
-              StopDocking(DockingResult::DOCK_FAILURE_RETRY);
+              StopDocking(CLAD(DockingResult)::DOCK_FAILURE_RETRY);
             }
           }
           else
@@ -583,7 +589,7 @@ namespace Anki {
           // Fail immediatly if the block height is above our docking limit
           if(dockingErrSignalMsg_.z_height > DOCK_HEIGHT_LIMIT_MM)
           {
-            StopDocking(DockingResult::DOCK_FAILURE_TOO_HIGH);
+            StopDocking(CLAD(DockingResult)::DOCK_FAILURE_TOO_HIGH);
             return RESULT_FAIL;
           }
 
@@ -707,9 +713,9 @@ namespace Anki {
         Result retVal = RESULT_OK;
         
         // There are some special cases for aligning with a block (rolling is basically aligning)
-        const bool isAligning = PickAndPlaceController::GetCurAction() == DockAction::DA_ALIGN ||
-        PickAndPlaceController::GetCurAction() == DockAction::DA_ROLL_LOW ||
-        PickAndPlaceController::GetCurAction() == DockAction::DA_DEEP_ROLL_LOW;
+        const bool isAligning = PickAndPlaceController::GetCurAction() == CLAD(DockAction)::DA_ALIGN ||
+        PickAndPlaceController::GetCurAction() == CLAD(DockAction)::DA_ROLL_LOW ||
+        PickAndPlaceController::GetCurAction() == CLAD(DockAction)::DA_DEEP_ROLL_LOW;
         
         switch(mode_)
         {
@@ -720,7 +726,7 @@ namespace Anki {
             if ((!pastPointOfNoReturn_)
                 && !markerOutOfFOV_
               && (HAL::GetTimeStamp() - lastDockingErrorSignalRecvdTime_ > GIVEUP_DOCKING_TIMEOUT_MS)) {
-              StopDocking(DockingResult::DOCK_FAILURE_TOO_LONG_WITHOUT_BLOCKPOSE);
+              StopDocking(CLAD(DockingResult)::DOCK_FAILURE_TOO_LONG_WITHOUT_BLOCKPOSE);
               AnkiInfo( "DockingController.LOOKING_FOR_BLOCK.TooLongWithoutErrorSignal", "currTime %d, lastErrSignal %d, Giving up.", HAL::GetTimeStamp(), lastDockingErrorSignalRecvdTime_);
             }
             break;
@@ -728,7 +734,7 @@ namespace Anki {
           {
             HighDockLiftUpdate();
 
-            if(dockingMethod_ != DockingMethod::EVEN_BLINDER_DOCKING)
+            if(dockingMethod_ != CLAD(DockingMethod)::EVEN_BLINDER_DOCKING)
             {
               // Stop if we haven't received error signal for a while
               if (!markerlessDocking_
@@ -748,7 +754,7 @@ namespace Anki {
             // believe it will work
             if(failureMode_ == HANNS_MANEUVER && createdValidPath_ && !PathFollower::IsTraversingPath())
             {
-              StopDocking(DockingResult::DOCK_SUCCESS_HANNS_MANEUVER);
+              StopDocking(CLAD(DockingResult)::DOCK_SUCCESS_HANNS_MANEUVER);
               break;
             }
             
@@ -758,10 +764,10 @@ namespace Anki {
             // we can turn around to back into it.
             if (createdValidPath_ &&
                 !PathFollower::IsTraversingPath() &&
-                (PickAndPlaceController::GetCurAction() == DockAction::DA_BACKUP_ONTO_CHARGER ||
-                 PickAndPlaceController::GetCurAction() == DockAction::DA_BACKUP_ONTO_CHARGER_USE_CLIFF))
+                (PickAndPlaceController::GetCurAction() == CLAD(DockAction)::DA_BACKUP_ONTO_CHARGER ||
+                 PickAndPlaceController::GetCurAction() == CLAD(DockAction)::DA_BACKUP_ONTO_CHARGER_USE_CLIFF))
             {
-              StopDocking(DockingResult::DOCK_SUCCESS);
+              StopDocking(CLAD(DockingResult)::DOCK_SUCCESS);
               break;
             }
             
@@ -780,7 +786,7 @@ namespace Anki {
               bool inPosition = true;
               bool doHannsManeuver = false;
               
-              if(dockingMethod_ != DockingMethod::BLIND_DOCKING && dockingMethod_ != DockingMethod::EVEN_BLINDER_DOCKING)
+              if(dockingMethod_ != CLAD(DockingMethod)::BLIND_DOCKING && dockingMethod_ != CLAD(DockingMethod)::EVEN_BLINDER_DOCKING)
               {
                 f32 rel_angle_to_block = relPose.GetAngle().ToFloat();
 
@@ -788,12 +794,12 @@ namespace Anki {
                 // distances to the dock pose to determine if we are in position. Note: we only do these checks if we
                 // are not beelining, since the beeline path may be angled a bit, causing these tolerances to be
                 // inappropriate.
-                const bool isBeelineDocking = (dockingMethod_ == DockingMethod::HYBRID_DOCKING_BEELINE);
+                const bool isBeelineDocking = (dockingMethod_ == CLAD(DockingMethod)::HYBRID_DOCKING_BEELINE);
                 if(!markerlessDocking_ && !isBeelineDocking)
                 {
                   // Since hybrid docking doesn't plan into the block the error signal will be slightly larger
                   // when we finish traversing the path so increase the x_dist_err tolerance
-                  f32 rel_x_tol_mm = (dockingMethod_ == DockingMethod::HYBRID_DOCKING ? HYBRID_REL_X_TOL_MM : 0);
+                  f32 rel_x_tol_mm = (dockingMethod_ == CLAD(DockingMethod)::HYBRID_DOCKING ? HYBRID_REL_X_TOL_MM : 0);
                   if((HAL::GetTimeStamp() - dockingErrSignalMsg_.timestamp) <= TIME_SINCE_LAST_ERRSIG &&
                      (dockingErrSignalMsg_.x_distErr > pointOfNoReturnDistMM_ + rel_x_tol_mm ||
                       ABS(dockingErrSignalMsg_.y_horErr) > LATERAL_DOCK_TOLERANCE_AT_DOCK_MM ||
@@ -849,7 +855,7 @@ namespace Anki {
               // docking this way if the docking involves markers
               if(!markerlessDocking_ && !inPosition)
               {
-                if(dockingMethod_ != DockingMethod::BLIND_DOCKING && dockingMethod_ != DockingMethod::EVEN_BLINDER_DOCKING)
+                if(dockingMethod_ != CLAD(DockingMethod)::BLIND_DOCKING && dockingMethod_ != CLAD(DockingMethod)::EVEN_BLINDER_DOCKING)
                 {
                   // If we have determined we should do the Hanns maneuver and we aren't currently doing it,
                   // are docking to a block on the ground, and not carrying a block
@@ -859,7 +865,7 @@ namespace Anki {
                      !PickAndPlaceController::IsCarryingBlock() &&
                      !isAligning)
                   {
-                    SendDockingStatusMessage(Status::STATUS_DOING_HANNS_MANEUVER);
+                    SendDockingStatusMessage(CLAD(Status)::STATUS_DOING_HANNS_MANEUVER);
                     AnkiInfo( "DockingController.Update.ExecutingHannsManeuver", "");
                     
                     // Hanns Maneuver was accidentally tuned to work with specific gains so apply them
@@ -908,18 +914,18 @@ namespace Anki {
                   // and just succeed
                   else if(doHannsManeuver && (isAligning || !dockingToBlockOnGround))
                   {
-                    StopDocking(DockingResult::DOCK_SUCCESS);
+                    StopDocking(CLAD(DockingResult)::DOCK_SUCCESS);
                   }
                   // Otherwise we are not in position and should just back up
                   else
                   {
-                    SendDockingStatusMessage(Status::STATUS_BACKING_UP);
+                    SendDockingStatusMessage(CLAD(Status)::STATUS_BACKING_UP);
                     AnkiInfo( "DockingController.Update.BackingUp", "");
                     
                     // If we have failed too many times just give up
                     if(numDockingFails_++ >= maxDockRetries_)
                     {
-                      StopDocking(DockingResult::DOCK_FAILURE_RETRY);
+                      StopDocking(CLAD(DockingResult)::DOCK_FAILURE_RETRY);
                       AnkiInfo( "DockingController.Update.TooManyDockingFails", "MaxRetries %d", maxDockRetries_);
                       break;
                     }
@@ -937,14 +943,14 @@ namespace Anki {
                     
                     // Raise the lift if rolling, don't do anything to the lift if aligning or carrying a block, everything else
                     // we want to lower the lift when backing up
-                    if(PickAndPlaceController::GetCurAction() == DockAction::DA_ROLL_LOW ||
-                       PickAndPlaceController::GetCurAction() == DockAction::DA_DEEP_ROLL_LOW)
+                    if(PickAndPlaceController::GetCurAction() == CLAD(DockAction)::DA_ROLL_LOW ||
+                       PickAndPlaceController::GetCurAction() == CLAD(DockAction)::DA_DEEP_ROLL_LOW)
                     {
                       LiftController::SetDesiredHeight(LIFT_HEIGHT_CARRY);
                     }
                     else if(!isAligning &&
                             !PickAndPlaceController::IsCarryingBlock() &&
-                            PickAndPlaceController::GetCurAction() != DockAction::DA_ALIGN_SPECIAL)
+                            PickAndPlaceController::GetCurAction() != CLAD(DockAction)::DA_ALIGN_SPECIAL)
                     {
                       LiftController::SetDesiredHeightByDuration(LIFT_HEIGHT_LOWDOCK, 0.25, 0.25, 1);
                     }
@@ -960,11 +966,11 @@ namespace Anki {
                 AnkiInfo( "DockingController.Update.Success", "vert:%f horz:%f rel_x:%f rel_y:%f t:%d",  rel_vert_dist_block, ABS(rel_horz_dist_block), dockingErrSignalMsg_.x_distErr, dockingErrSignalMsg_.y_horErr, (int)(HAL::GetTimeStamp()-dockingErrSignalMsg_.timestamp));
                 if(numDockingFails_ > 0)
                 {
-                  StopDocking(DockingResult::DOCK_SUCCESS_RETRY);
+                  StopDocking(CLAD(DockingResult)::DOCK_SUCCESS_RETRY);
                 }
                 else
                 {
-                  StopDocking(DockingResult::DOCK_SUCCESS);
+                  StopDocking(CLAD(DockingResult)::DOCK_SUCCESS);
                 }
               }
             }
@@ -1091,8 +1097,8 @@ namespace Anki {
         
         // Ignore error signal if blind docking or hybird docking and we dont need to acquire a new signal
         if (PathFollower::IsTraversingPath() &&
-            (dockingMethod_ == DockingMethod::BLIND_DOCKING ||
-             dockingMethod_ == DockingMethod::EVEN_BLINDER_DOCKING ||
+            (dockingMethod_ == CLAD(DockingMethod)::BLIND_DOCKING ||
+             dockingMethod_ == CLAD(DockingMethod)::EVEN_BLINDER_DOCKING ||
              (IsHybridDocking() && numErrSigToAcquireNewSignal_ < CONSEC_ERRSIG_TO_ACQUIRE_NEW_SIGNAL))) {
           return;
         }
@@ -1254,11 +1260,11 @@ namespace Anki {
             f32 y_end_mm = 0.f;
             // Plan just a little bit into the block to reduce the chance that we don't quite get close enough
             // and completely whiff picking up the object. If we are rolling, push the block by the configured amount.
-            const DockAction curAction = PickAndPlaceController::GetCurAction();
-            const bool isRolling = (curAction == DockAction::DA_ROLL_LOW) ||
-                                   (curAction == DockAction::DA_DEEP_ROLL_LOW);
+            const CLAD(DockAction) curAction = PickAndPlaceController::GetCurAction();
+            const bool isRolling = (curAction == CLAD(DockAction)::DA_ROLL_LOW) ||
+                                   (curAction == CLAD(DockAction)::DA_DEEP_ROLL_LOW);
             f32 distIntoBlock_mm = isRolling ? PATH_END_DIST_INTO_BLOCK_MM : 5;
-            if(dockingMethod_ == DockingMethod::HYBRID_DOCKING_BEELINE) {
+            if(dockingMethod_ == CLAD(DockingMethod)::HYBRID_DOCKING_BEELINE) {
               // If we are beeline docking, we should just draw a line from the robot's pose to the block pose, and
               // follow that line.
               const f32 absAngleToBlock = atan2_fast(blockPose_.y() - Localization::GetCurrPose_y(),
@@ -1430,7 +1436,7 @@ namespace Anki {
       void StartDocking_internal(const f32 speed_mmps, const f32 accel_mmps, const f32 decel_mmps)
       {
         dockingStarted = true;
-        dockingResult_ = DockingResult::DOCK_UNKNOWN;
+        dockingResult_ = CLAD(DockingResult)::DOCK_UNKNOWN;
       
         dockSpeed_mmps_ = speed_mmps;
         dockAccel_mmps2_ = accel_mmps;
@@ -1440,7 +1446,7 @@ namespace Anki {
         numErrSigToAcquireNewSignal_ = 0;
         
         // Change gains for tracker docking to smooth pathfollowing due to constantly changing path
-        if(dockingMethod_ == DockingMethod::TRACKER_DOCKING)
+        if(dockingMethod_ == CLAD(DockingMethod)::TRACKER_DOCKING)
         {
           ApplyDockingSteeringGains();
         }
@@ -1477,7 +1483,7 @@ namespace Anki {
         SetRelDockPose(rel_x, rel_y, rel_angle);
       }
 
-      void StopDocking(DockingResult result) {
+      void StopDocking(CLAD(DockingResult) result) {
         if(!dockingStarted)
         {
           return;
@@ -1525,7 +1531,7 @@ namespace Anki {
         return dist;
       }
 
-      void SetDockingErrorSignalMessage(const DockingErrorSignal& msg)
+      void SetDockingErrorSignalMessage(const CLAD(DockingErrorSignal)& msg)
       {
         // If the path is already going then ignore any incoming error signals if
         // only using the first error signal.

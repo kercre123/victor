@@ -15,6 +15,33 @@
 
 #include "coretech/common/shared/types.h"
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
+#ifdef USES_CLAD_CPPLITE
+namespace CppLite {
+#endif
+namespace Anki {
+  namespace Vector {
+    namespace RobotInterface {
+      struct SetLocale;
+      struct ExternalAudioChunk;
+      struct ExternalAudioPrepare;
+      struct ExternalAudioComplete;
+      struct ExternalAudioCancel;
+      struct TextToSpeechPrepare;
+      struct TextToSpeechPlay;
+      struct TextToSpeechCancel;
+    }
+  }
+}
+#ifdef USES_CLAD_CPPLITE
+}
+#endif
+
 // Forward declarations
 namespace Anki {
   namespace Vector {
@@ -30,16 +57,6 @@ namespace Anki {
       class CozmoAudioController;
       class MicrophoneAudioClient;
     } // Audio
-    namespace RobotInterface {
-      struct SetLocale;
-      struct ExternalAudioChunk;
-      struct ExternalAudioPrepare;
-      struct ExternalAudioComplete;
-      struct ExternalAudioCancel;
-      struct TextToSpeechPrepare;
-      struct TextToSpeechPlay;
-      struct TextToSpeechCancel;
-    } // RobotInterface
   } // Vector
   namespace Util {
     namespace Data {
@@ -70,14 +87,14 @@ public:
                                const float sleepDurationActual_ms) const;
 
   // Message handlers
-  void HandleMessage(const RobotInterface::SetLocale& msg);
-  void HandleMessage(const RobotInterface::ExternalAudioPrepare& msg);
-  void HandleMessage(const RobotInterface::ExternalAudioChunk& msg);
-  void HandleMessage(const RobotInterface::ExternalAudioComplete& msg);
-  void HandleMessage(const RobotInterface::ExternalAudioCancel& msg);
-  void HandleMessage(const RobotInterface::TextToSpeechPrepare& msg);
-  void HandleMessage(const RobotInterface::TextToSpeechPlay& msg);
-  void HandleMessage(const RobotInterface::TextToSpeechCancel& msg);
+  void HandleMessage(const CLAD(RobotInterface)::SetLocale& msg);
+  void HandleMessage(const CLAD(RobotInterface)::ExternalAudioPrepare& msg);
+  void HandleMessage(const CLAD(RobotInterface)::ExternalAudioChunk& msg);
+  void HandleMessage(const CLAD(RobotInterface)::ExternalAudioComplete& msg);
+  void HandleMessage(const CLAD(RobotInterface)::ExternalAudioCancel& msg);
+  void HandleMessage(const CLAD(RobotInterface)::TextToSpeechPrepare& msg);
+  void HandleMessage(const CLAD(RobotInterface)::TextToSpeechPlay& msg);
+  void HandleMessage(const CLAD(RobotInterface)::TextToSpeechCancel& msg);
   
 protected:
 
@@ -95,5 +112,7 @@ protected:
 } // namespace Anim
 } // namespace Vector
 } // namespace Anki
+
+#undef CLAD
 
 #endif // ANKI_VECTOR_ANIM_ENGINE_H

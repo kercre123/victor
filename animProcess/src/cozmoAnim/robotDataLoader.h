@@ -29,10 +29,25 @@
 #include <thread>
 #include <vector>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::Anki::Vector::ns
+#define CLAD_VISION(ns) CppLite::Anki::Vision::ns
 #else
 #define CLAD(ns) ns
+#define CLAD_VISION(ns) Vision::ns
+#endif
+
+#ifdef USES_CLAD_CPPLITE
+namespace CppLite {
+#endif
+namespace Anki {
+namespace Vision {
+class SpriteCache;
+class SpriteSequenceContainer;
+}
+}
+#ifdef USES_CLAD_CPPLITE
+}
 #endif
 
 namespace Anki {
@@ -43,10 +58,6 @@ class DataPlatform;
 }
 }
 
-namespace Vision {
-class SpriteCache;
-class SpriteSequenceContainer;
-}
 
 namespace Vector {
 
@@ -110,10 +121,10 @@ private:
   const Util::Data::DataPlatform* _platform;
 
   // animation data
-  std::unique_ptr<CannedAnimationContainer>              _cannedAnimations;
-  std::unique_ptr<Vision::SpriteSequenceContainer>       _spriteSequenceContainer;
-  std::unique_ptr<Vision::SpritePathMap>                 _spritePathMap;
-  std::unique_ptr<Vision::SpriteCache>                   _spriteCache;
+  std::unique_ptr<CannedAnimationContainer>         _cannedAnimations;
+  std::unique_ptr<Vision::SpriteSequenceContainer>  _spriteSequenceContainer;
+  std::unique_ptr<Vision::SpritePathMap>            _spritePathMap;
+  std::unique_ptr<Vision::SpriteCache>              _spriteCache;
 
 
   // loading properties shared with the animiation loader
@@ -140,5 +151,6 @@ private:
 }
 
 #undef CLAD
+#undef CLAD_VISION
 
 #endif

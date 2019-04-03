@@ -23,9 +23,7 @@
 #include "util/environment/locale.h"
 #include "util/signals/signalHolder.h"
 
-// #ifndef USES_CPPLITE
 #include "clad/cloud/mic.h"
-// #endif
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/types/beatDetectorTypes.h"
 
@@ -37,7 +35,7 @@
 #include <string>
 #include <vector>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::ns
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
 #else
@@ -45,7 +43,7 @@
 #define CLAD_VECTOR(ns) ns
 #endif
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 namespace CppLite {
 #endif
 namespace Anki {
@@ -54,9 +52,10 @@ namespace Anki {
       struct MicData;
       struct RobotToEngine;
     }
+    enum class AlexaSimpleState : uint8_t;
   }
 }
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 }
 #endif
 
@@ -78,7 +77,6 @@ namespace Anki {
       class RobotDataLoader;
     }
     class SpeechRecognizerSystem;
-    enum class AlexaSimpleState : uint8_t;
   }
   namespace Util {
     namespace Data {
@@ -134,7 +132,7 @@ public:
   
   void ResetBeatDetector();
   
-  void SetAlexaState(AlexaSimpleState state);
+  void SetAlexaState(CLAD_VECTOR(AlexaSimpleState) state);
   
   void SetButtonWakeWordIsAlexa(bool isAlexa);
   
@@ -227,7 +225,7 @@ private:
   bool _batteryLow = false;
   bool _enableDataCollection = false;
   bool _buttonPressIsAlexa = false;
-  AlexaSimpleState _alexaState;
+  CLAD_VECTOR(AlexaSimpleState) _alexaState;
   
   std::atomic<bool> _micMuted;
 

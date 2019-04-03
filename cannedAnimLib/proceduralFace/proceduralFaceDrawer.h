@@ -7,7 +7,7 @@
 #include "cannedAnimLib/proceduralFace/proceduralFaceModifierTypes.h"
 #include "coretech/vision/engine/image.h"
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::Anki::Vector::ns
 #else
 #define CLAD(ns) ns

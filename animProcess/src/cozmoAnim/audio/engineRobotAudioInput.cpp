@@ -18,10 +18,14 @@
 #include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 #include <util/logging/logging.h>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::Anki::ns
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#define CLAD_AUDIOENGINE(ns) CppLite::Anki::AudioEngine::ns
 #else
 #define CLAD(ns) ns
+#define CLAD_VECTOR(ns) ns
+#define CLAD_AUDIOENGINE(ns) AudioEngine::ns
 #endif
 
 namespace Anki {
@@ -29,59 +33,59 @@ namespace Vector {
 namespace Audio {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void EngineRobotAudioInput::HandleMessage( const CLAD(AudioEngine)::Multiplexer::PostAudioEvent& postAudioEvent ) 
+void EngineRobotAudioInput::HandleMessage( const CLAD_AUDIOENGINE(Multiplexer)::PostAudioEvent& postAudioEvent ) 
 {
-  CLAD(AudioEngine)::Multiplexer::AudioMuxInput::HandleMessage(postAudioEvent);
+  AudioEngine::Multiplexer::AudioMuxInput::HandleMessage(postAudioEvent);
 }
-void EngineRobotAudioInput::HandleMessage( const CLAD(AudioEngine)::Multiplexer::StopAllAudioEvents& stopAllAudioEvents )
+void EngineRobotAudioInput::HandleMessage( const CLAD_AUDIOENGINE(Multiplexer)::StopAllAudioEvents& stopAllAudioEvents )
 {
-  CLAD(AudioEngine)::Multiplexer::AudioMuxInput::HandleMessage(stopAllAudioEvents);
+  AudioEngine::Multiplexer::AudioMuxInput::HandleMessage(stopAllAudioEvents);
 }
-void EngineRobotAudioInput::HandleMessage( const CLAD(AudioEngine)::Multiplexer::PostAudioGameState& postAudioGameState )
+void EngineRobotAudioInput::HandleMessage( const CLAD_AUDIOENGINE(Multiplexer)::PostAudioGameState& postAudioGameState )
 {
-  CLAD(AudioEngine)::Multiplexer::AudioMuxInput::HandleMessage(postAudioGameState);
+  AudioEngine::Multiplexer::AudioMuxInput::HandleMessage(postAudioGameState);
 }
-void EngineRobotAudioInput::HandleMessage( const CLAD(AudioEngine)::Multiplexer::PostAudioSwitchState& postAudioSwitchState )
+void EngineRobotAudioInput::HandleMessage( const CLAD_AUDIOENGINE(Multiplexer)::PostAudioSwitchState& postAudioSwitchState )
 {
-  CLAD(AudioEngine)::Multiplexer::AudioMuxInput::HandleMessage(postAudioSwitchState);
+  AudioEngine::Multiplexer::AudioMuxInput::HandleMessage(postAudioSwitchState);
 }
-void EngineRobotAudioInput::HandleMessage( const CLAD(AudioEngine)::Multiplexer::PostAudioParameter& postAudioParameter )
+void EngineRobotAudioInput::HandleMessage( const CLAD_AUDIOENGINE(Multiplexer)::PostAudioParameter& postAudioParameter )
 {
-  CLAD(AudioEngine)::Multiplexer::AudioMuxInput::HandleMessage(postAudioParameter);
+  AudioEngine::Multiplexer::AudioMuxInput::HandleMessage(postAudioParameter);
 }
-void EngineRobotAudioInput::HandleMessage( const CLAD(AudioEngine)::Multiplexer::PostAudioMusicState& postAudioMusicState )
+void EngineRobotAudioInput::HandleMessage( const CLAD_AUDIOENGINE(Multiplexer)::PostAudioMusicState& postAudioMusicState )
 {
-  CLAD(AudioEngine)::Multiplexer::AudioMuxInput::HandleMessage(postAudioMusicState);
+  AudioEngine::Multiplexer::AudioMuxInput::HandleMessage(postAudioMusicState);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void EngineRobotAudioInput::PostCallback( CLAD(AudioEngine)::Multiplexer::AudioCallbackDuration&& callbackMessage ) const
+void EngineRobotAudioInput::PostCallback( CLAD_AUDIOENGINE(Multiplexer)::AudioCallbackDuration&& callbackMessage ) const
 {
-  if (!RobotInterface::SendAnimToEngine(callbackMessage)) {
+  if (!SendAnimToEngine(callbackMessage)) {
     PRINT_NAMED_ERROR("EngineRobotAudioInput.PostCallback", "Failed.SendMessageToEngine.AudioCallbackDuration");
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void EngineRobotAudioInput::PostCallback( CLAD(AudioEngine)::Multiplexer::AudioCallbackMarker&& callbackMessage ) const
+void EngineRobotAudioInput::PostCallback( CLAD_AUDIOENGINE(Multiplexer)::AudioCallbackMarker&& callbackMessage ) const
 {
-  if (!RobotInterface::SendAnimToEngine(callbackMessage)) {
+  if (!SendAnimToEngine(callbackMessage)) {
     PRINT_NAMED_ERROR("EngineRobotAudioInput.PostCallback", "Failed.SendMessageToEngine.AudioCallbackMarker");
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void EngineRobotAudioInput::PostCallback( CLAD(AudioEngine)::Multiplexer::AudioCallbackComplete&& callbackMessage ) const
+void EngineRobotAudioInput::PostCallback( CLAD_AUDIOENGINE(Multiplexer)::AudioCallbackComplete&& callbackMessage ) const
 {
-  if (!RobotInterface::SendAnimToEngine(callbackMessage)) {
+  if (!SendAnimToEngine(callbackMessage)) {
     PRINT_NAMED_ERROR("EngineRobotAudioInput.PostCallback", "Failed.SendMessageToEngine.AudioCallbackComplete");
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void EngineRobotAudioInput::PostCallback( CLAD(AudioEngine)::Multiplexer::AudioCallbackError&& callbackMessage ) const
+void EngineRobotAudioInput::PostCallback( CLAD_AUDIOENGINE(Multiplexer)::AudioCallbackError&& callbackMessage ) const
 {
-  if (!RobotInterface::SendAnimToEngine(callbackMessage)) {
+  if (!SendAnimToEngine(callbackMessage)) {
     PRINT_NAMED_ERROR("EngineRobotAudioInput.PostCallback", "Failed.SendMessageToEngine.AudioCallbackError");
   }
 }

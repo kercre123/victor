@@ -32,7 +32,7 @@
 #define CAN_STREAM true
 #endif
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::Anki::Vector::ns
 #define CLAD_VISION(ns) CppLite::Anki::Vision::ns
 #else

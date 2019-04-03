@@ -24,6 +24,29 @@
 #include <future>
 #include <list>
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns)        CppLite::ns
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns)        ns
+#define CLAD_VECTOR(ns) ns
+#endif
+
+#ifdef USES_CLAD_CPPLITE
+namespace CppLite {
+#endif
+namespace Anki {
+namespace Vector {
+enum class AlexaAuthState : uint8_t;
+enum class AlexaNetworkErrorType : uint8_t;
+enum class AlexaUXState : uint8_t;
+enum class AlexaSimpleState : uint8_t;
+}
+}
+#ifdef USES_CLAD_CPPLITE
+}
+#endif
+
 namespace Anki {
 namespace AudioEngine {
 class AudioCallbackContext;
@@ -38,10 +61,6 @@ class AlexaImpl;
 namespace Anim {
   class AnimContext;
 }
-enum class AlexaAuthState : uint8_t;
-enum class AlexaNetworkErrorType : uint8_t;
-enum class AlexaSimpleState : uint8_t;
-enum class AlexaUXState : uint8_t;
 enum class ScreenName : uint8_t;
 
 class Alexa
@@ -97,14 +116,14 @@ private:
   void SetAlexaActive( bool active, bool deleteUserData = false );
   
   // called when SDK auth state changes
-  void OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, const std::string& code, bool errFlag );
+  void OnAlexaAuthChanged( CLAD_VECTOR(AlexaAuthState) state, const std::string& url, const std::string& code, bool errFlag );
   
   // called when SDK dialog or media player state changes. Note this will never send Error. The state should
   // be switch to Error only when OnAlexaNetworkError is called
-  void OnAlexaUXStateChanged( AlexaUXState newState );
+  void OnAlexaUXStateChanged( CLAD_VECTOR(AlexaUXState) newState );
   
   // called when there is a user-facing error. This will set the ux state to Error for some period of time
-  void OnAlexaNetworkError( AlexaNetworkErrorType errorType );
+  void OnAlexaNetworkError( CLAD_VECTOR(AlexaNetworkErrorType) errorType );
   
   // called when SDK requests that we logout
   void OnLogout();
@@ -118,14 +137,14 @@ private:
   bool HasInitializedImpl() const; // done loading sdk but maybe not done connecting yet
   
   // sets this class's _authState and messages engine if it changes
-  void SetAuthState( AlexaAuthState state, const std::string& url="", const std::string& code="" );
+  void SetAuthState( CLAD_VECTOR(AlexaAuthState) state, const std::string& url="", const std::string& code="" );
   // sets this class's _uxState and messages engine if it changes
-  void SetUXState( AlexaUXState newState );
+  void SetUXState( CLAD_VECTOR(AlexaUXState) newState );
   
   // Helper to tell MicDataSystem whether the wake word should be active
-  void SetSimpleState( AlexaSimpleState state ) const;
+  void SetSimpleState( CLAD_VECTOR(AlexaSimpleState) state ) const;
   
-  void PlayErrorAudio( AlexaNetworkErrorType errorType );
+  void PlayErrorAudio( CLAD_VECTOR(AlexaNetworkErrorType) errorType );
   bool IsErrorPlaying() const { return (_timeToEndError_s >= 0.0f); }
   
   // messages engine
@@ -155,14 +174,14 @@ private:
   
   const Anim::AnimContext* _context = nullptr;
   
-  AlexaAuthState _authState;
+  CLAD_VECTOR(AlexaAuthState) _authState;
   std::string _authExtra;
   bool _engineLoaded = false;
   bool _pendingAuthMsgs = false;
   bool _pendingUXMsgs = false;
   
-  AlexaUXState _uxState;
-  AlexaUXState _pendingUXState; // during AlexaUXState::Error, this is pending to be re-assigned to _uxState
+  CLAD_VECTOR(AlexaUXState) _uxState;
+  CLAD_VECTOR(AlexaUXState) _pendingUXState; // during AlexaUXState::Error, this is pending to be re-assigned to _uxState
   
   // If non-negative, turn on the wakeword at this time, even if not connected, so we can play error states
   float _timeEnableWakeWord_s = -1.0f;
@@ -202,5 +221,8 @@ private:
 
 } // namespace Vector
 } // namespace Anki
+
+#undef CLAD
+#undef CLAD_VECTOR
 
 #endif // ANIMPROCESS_COZMO_ALEXA_H

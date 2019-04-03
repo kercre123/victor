@@ -47,6 +47,12 @@
 // Whether or not to tuck head and lift down when falling is detected
 #define DEFAULT_BRACE_WHEN_FALLING true
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
   namespace Vector {
     namespace IMUFilter {
@@ -165,9 +171,9 @@ namespace Anki {
 
 #if(RECORD_AND_SEND_MODE == RECORD_AND_SEND_FILT_DATA)
         u8 recordDataIdx_ = 0;
-        RobotInterface::IMUDataChunk imuChunkMsg_;
+        CLAD(RobotInterface)::IMUDataChunk imuChunkMsg_;
 #else
-        RobotInterface::IMURawDataChunk imuRawDataMsg_;
+        CLAD(RobotInterface)::IMURawDataChunk imuRawDataMsg_;
         u32 totalIMUDataMsgsToSend_ = 0;
         u32 sentIMUDataMsgs_ = 0;
 #endif
@@ -569,10 +575,10 @@ namespace Anki {
             if((fabsf(accel_robot_frame_high_pass[0]) < STOPPED_TUMBLING_THRESH) &&
                (now - braceStartedTime_ > bracingTime_ms)) {
               // Send the FallingEvent message
-              RobotInterface::FallingEvent msg;
+              CLAD(RobotInterface)::FallingEvent msg;
               msg.timestamp = fallStartedTime_;
               msg.duration_ms = freefallDuration_;
-              RobotInterface::SendMessage(msg);
+              SendMessage(msg);
               DASMSG(imu_filter_falling_event,  "imu_filter.falling_event", "Robot experienced a fall");
               DASMSG_SET(i1, freefallDuration_, "Duration of fall (ms)");
               DASMSG_SEND();
@@ -650,7 +656,7 @@ namespace Anki {
           const bool detectedImpact = shouldCheckForImpact && !beingHeldSuppressImpact && didAccelerationSpike;
 
           if(detectedImpact) {
-            RobotInterface::SendMessage(RobotInterface::FallImpactEvent());
+            SendMessage(CLAD(RobotInterface)::FallImpactEvent());
 
             DASMSG(imu_filter_fall_impact_event,  "imu_filter.fall_impact_event", "Robot experienced a freefall for a minimum duration and then a sudden impact");
             DASMSG_SEND();
@@ -855,8 +861,8 @@ namespace Anki {
               AnkiInfo( "IMUFilter.PokeDetected.Gyro", "");
               _peakGyroStartTime = currTime;
               _lastPokeDetectTime = currTime;
-              RobotInterface::RobotPoked m;
-              RobotInterface::SendMessage(m);
+              CLAD(RobotInterface)::RobotPoked m;
+              SendMessage(m);
             } else {
               _peakGyroStartTime = currTime;
             }
@@ -938,9 +944,9 @@ namespace Anki {
           timeOfLastImuTempSample_ms_ = curTime;
 
           // Also send an IMUTemperature message to engine
-          RobotInterface::IMUTemperature m;
+          CLAD(RobotInterface)::IMUTemperature m;
           m.temperature_degC = imu_data_.temperature_degC;
-          RobotInterface::SendMessage(m);
+          SendMessage(m);
         }
 
         ////// Gyro Update //////
@@ -1095,7 +1101,7 @@ namespace Anki {
 
           // Send message when it's full
           if (++recordDataIdx_ == IMU_CHUNK_SIZE) {
-            RobotInterface::SendMessage(imuChunkMsg_);
+            SendMessage(imuChunkMsg_);
             recordDataIdx_ = 0;
             ++imuChunkMsg_.chunkId;
 
@@ -1117,7 +1123,7 @@ namespace Anki {
             imuRawDataMsg_.g[i] = (int16_t) 1000.f * imu_data_.gyro[i]; // millirad/sec
           }
 
-          RobotInterface::SendMessage(imuRawDataMsg_);
+          SendMessage(imuRawDataMsg_);
           imuRawDataMsg_.order = 1;    // 1 == intermediate msg of sequence
 #endif
 

@@ -22,7 +22,7 @@
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
 #define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
 #else

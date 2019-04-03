@@ -82,6 +82,12 @@
 
 #endif
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
 namespace Anki {
 namespace Vector {
 
@@ -258,7 +264,7 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
   };
   auto noneExitFcn = []() {
     // Disable calm mode
-    RobotInterface::CalmPowerMode msg;
+    CLAD_VECTOR(RobotInterface)::CalmPowerMode msg;
     msg.enable = false;
     SendAnimToRobot(std::move(msg));
   };
@@ -308,7 +314,7 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
     animStreamer->Abort();
     animStreamer->EnableKeepFaceAlive(false, 0);
     _context->GetBackpackLightComponent()->SetSelfTestRunning(true);
-    RobotInterface::SendAnimToEngine(RobotInterface::StartSelfTest());
+    SendAnimToEngine(CLAD_VECTOR(RobotInterface)::StartSelfTest());
     return ScreenName::SelfTestRunning;
   };
   ADD_MENU_ITEM_WITH_ACTION(SelfTest, "CONFIRM", confirmSelfTest);
@@ -352,15 +358,15 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
     
   // === Camera screen ===
   FaceInfoScreen::ScreenAction cameraEnterAction = [this]() {
-    StreamCameraImages m;
+    CLAD_VECTOR(StreamCameraImages) m;
     m.enable = true;
-    RobotInterface::SendAnimToEngine(std::move(m));
+    SendAnimToEngine(std::move(m));
     _animationStreamer->RedirectFaceImagesToDebugScreen(true);
   };
   auto cameraExitAction = [this]() {
-    StreamCameraImages m;
+    CLAD_VECTOR(StreamCameraImages) m;
     m.enable = false;
-    RobotInterface::SendAnimToEngine(std::move(m));
+    SendAnimToEngine(std::move(m));
     _animationStreamer->RedirectFaceImagesToDebugScreen(false);
   };
   SET_ENTER_ACTION(Camera, cameraEnterAction);
@@ -415,7 +421,7 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
 
   auto cameraMotorTestExitAction = [cameraExitAction]() {
     cameraExitAction();
-    SendAnimToRobot(RobotInterface::StopAllMotors());
+    SendAnimToRobot(CLAD_VECTOR(RobotInterface)::StopAllMotors());
   };
   SET_ENTER_ACTION(CameraMotorTest, cameraEnterAction);
   SET_EXIT_ACTION(CameraMotorTest, cameraMotorTestExitAction);
@@ -424,17 +430,17 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
   {
     // ToF screen 
     FaceInfoScreen::ScreenAction enterToFScreen = []() {
-                                                    RobotInterface::SendRangeData msg;
+                                                    CLAD_VECTOR(RobotInterface)::SendRangeData msg;
                                                     msg.enable = true;
-                                                    RobotInterface::SendAnimToEngine(std::move(msg));
+                                                    SendAnimToEngine(std::move(msg));
                                                   };
     SET_ENTER_ACTION(ToF, enterToFScreen);
 
     // ToF screen 
     FaceInfoScreen::ScreenAction exitToFScreen = []() {
-                                                   RobotInterface::SendRangeData msg;
+                                                   CLAD_VECTOR(RobotInterface)::SendRangeData msg;
                                                    msg.enable = false;
-                                                   RobotInterface::SendAnimToEngine(std::move(msg));
+                                                   SendAnimToEngine(std::move(msg));
                                                  };
     SET_EXIT_ACTION(ToF, exitToFScreen);
   }
@@ -550,18 +556,18 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   bool currScreenIsDebug = IsDebugScreen(GetCurrScreenName());
   bool currScreenNeedsWait = ScreenNeedsWait(GetCurrScreenName());
   if ((currScreenIsDebug != prevScreenIsDebug) || (currScreenNeedsWait != prevScreenNeedsWait)) {
-    DebugScreenMode msg;
+    CLAD_VECTOR(DebugScreenMode) msg;
     msg.isDebug = currScreenIsDebug;
     msg.needsWait = currScreenNeedsWait;
     // leaving the mute screen via single press may coincide with the start of a wake word trigger, so don't clear it
     msg.fromMute = prevScreenWasMute;
-    RobotInterface::SendAnimToEngine(std::move(msg));
+    SendAnimToEngine(std::move(msg));
   }
 
 #ifndef SIMULATOR
   // Enable/Disable lift
-  RobotInterface::EnableMotorPower msg;
-  msg.motorID = MotorID::MOTOR_LIFT;
+  CLAD_VECTOR(RobotInterface)::EnableMotorPower msg;
+  msg.motorID = CLAD_VECTOR(MotorID)::MOTOR_LIFT;
   msg.enable = (!currScreenIsDebug ||
                 GetCurrScreenName() == ScreenName::CameraMotorTest ||
                 GetCurrScreenName() == ScreenName::SelfTestRunning);
@@ -629,7 +635,7 @@ void FaceInfoScreenManager::DrawCameraImage(const Vision::ImageRGB565& img)
 }
 
 void FaceInfoScreenManager::DrawConfidenceClock(
-  const RobotInterface::MicDirection& micData,
+  const CLAD_VECTOR(RobotInterface)::MicDirection& micData,
   float bufferFullPercent,
   uint32_t secondsRemaining,
   bool triggerRecognized)
@@ -718,7 +724,7 @@ void FaceInfoScreenManager::DrawConfidenceClock(
   {
     const auto drawText = std::string(" ") + std::to_string(secondsRemaining);
 
-    RobotInterface::DrawTextOnScreen drawTextData{};
+    CLAD_VECTOR(RobotInterface)::DrawTextOnScreen drawTextData{};
     drawTextData.drawNow = true;
     drawTextData.textColor.r = NamedColors::WHITE.r();
     drawTextData.textColor.g = NamedColors::WHITE.g();
@@ -968,7 +974,7 @@ void FaceInfoScreenManager::CheckForButtonEvent(const bool buttonPressed,
                                      (GetCurrScreenName() == ScreenName::None);
   if (shouldTriggerShutdown && !shutdownSent) {
     LOG_INFO("FaceInfoScreenManager.CheckForButtonEvent.StartShutdownAnim", "");
-    RobotInterface::SendAnimToEngine(StartShutdownAnim());
+    SendAnimToEngine(CLAD_VECTOR(StartShutdownAnim()));
     lastPressTime_ms    = 0;
     singlePressPending  = false;
     singlePressDetected = false;
@@ -997,9 +1003,9 @@ void FaceInfoScreenManager::ResetObservedHeadAndLiftAngles()
   _headHighestAngle_rad = std::numeric_limits<f32>::lowest();
 }
 
-void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
+void FaceInfoScreenManager::ProcessMenuNavigation(const CLAD_VECTOR(RobotState)& state)
 {
-  const bool buttonIsPressed = static_cast<bool>(state.status & (uint32_t)RobotStatusFlag::IS_BUTTON_PRESSED);
+  const bool buttonIsPressed = static_cast<bool>(state.status & (uint32_t)CLAD_VECTOR(RobotStatusFlag)::IS_BUTTON_PRESSED);
   bool buttonPressedEvent;
   bool buttonReleasedEvent;
   bool singlePressDetected;
@@ -1010,7 +1016,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
                       singlePressDetected, 
                       doublePressDetected);
 
-  const bool isOnCharger = static_cast<bool>(state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
+  const bool isOnCharger = static_cast<bool>(state.status & (uint32_t)CLAD_VECTOR(RobotStatusFlag)::IS_ON_CHARGER);
 
   const ScreenName currScreenName = GetCurrScreenName();
 
@@ -1036,7 +1042,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
       // screens that are normally active during playpen test
       CanEnterPairingFromScreen(currScreenName)) {
     LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.GotDoublePress", "Entering pairing");
-    RobotInterface::SendAnimToEngine(SwitchboardInterface::EnterPairing());
+    SendAnimToEngine(CLAD_VECTOR(SwitchboardInterface)::EnterPairing());
 
     if (FORCE_TRANSITION_TO_PAIRING) {
       LOG_WARNING("FaceInfoScreenManager.ProcessMenuNavigation.ForcedPairing",
@@ -1132,7 +1138,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
         SetScreen(_currScreen->ConfirmMenuItemAndGetNextScreen());
       } else if (GetCurrScreenName() == ScreenName::Pairing) {
         LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.ExitPairing", "Going to Customer Service Main from Pairing");
-        RobotInterface::SendAnimToEngine(SwitchboardInterface::ExitPairing());
+        SendAnimToEngine(CLAD_VECTOR(SwitchboardInterface)::ExitPairing());
         SetScreen(ScreenName::Main);
 
         // DAS msg for entering customer care screen
@@ -1182,7 +1188,7 @@ ScreenName FaceInfoScreenManager::GetCurrScreenName() const
   return _currScreen->GetName();
 }
 
-void FaceInfoScreenManager::Update(const RobotState& state)
+void FaceInfoScreenManager::Update(const CLAD_VECTOR(RobotState)& state)
 {
   ProcessMenuNavigation(state);
 
@@ -1361,7 +1367,7 @@ void FaceInfoScreenManager::DrawNetwork()
   DrawTextOnScreen(lines);
 }
 
-void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
+void FaceInfoScreenManager::DrawSensorInfo(const CLAD_VECTOR(RobotState)& state)
 {
   char temp[32] = "";
   sprintf(temp,
@@ -1400,7 +1406,7 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
           state.backpackTouchSensorRaw);
   const std::string touch = temp;
 
-  #define IS_STATUS_FLAG_SET(x) ((state.status & (uint32_t)RobotStatusFlag::x) != 0)
+  #define IS_STATUS_FLAG_SET(x) ((state.status & (uint32_t)CLAD_VECTOR(RobotStatusFlag)::x) != 0)
   const bool batteryDisconnected = IS_STATUS_FLAG_SET(IS_BATTERY_DISCONNECTED);
   const bool batteryCharging     = IS_STATUS_FLAG_SET(IS_CHARGING);
   const bool batteryHot          = IS_STATUS_FLAG_SET(IS_BATTERY_OVERHEATED);
@@ -1438,7 +1444,7 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
   }
 }
 
-void FaceInfoScreenManager::DrawIMUInfo(const RobotState& state)
+void FaceInfoScreenManager::DrawIMUInfo(const CLAD_VECTOR(RobotState)& state)
 {
   char temp[32] = "";
   sprintf(temp,
@@ -1468,7 +1474,7 @@ void FaceInfoScreenManager::DrawIMUInfo(const RobotState& state)
   DrawTextOnScreen({"ACC        GYRO", accelGyroX, accelGyroY, accelGyroZ});
 }
 
-void FaceInfoScreenManager::DrawMotorInfo(const RobotState& state)
+void FaceInfoScreenManager::DrawMotorInfo(const CLAD_VECTOR(RobotState)& state)
 {
   char temp[32] = "";
   sprintf(temp, "HEAD:   %3.1f deg", RAD_TO_DEG(state.headAngle));
@@ -1487,7 +1493,7 @@ void FaceInfoScreenManager::DrawMotorInfo(const RobotState& state)
 }
 
 
-void FaceInfoScreenManager::DrawMicInfo(const RobotInterface::MicData& micData)
+void FaceInfoScreenManager::DrawMicInfo(const CLAD_VECTOR(RobotInterface)::MicData& micData)
 {
   if(GetCurrScreenName() != ScreenName::MicInfo)
   {
@@ -1520,7 +1526,7 @@ void FaceInfoScreenManager::DrawMicInfo(const RobotInterface::MicData& micData)
   DrawTextOnScreen({"MICS", micData0, micData1, micData2, micData3});
 }
 
-void FaceInfoScreenManager::SetCustomText(const RobotInterface::DrawTextOnScreen& text)
+void FaceInfoScreenManager::SetCustomText(const CLAD_VECTOR(RobotInterface)::DrawTextOnScreen& text)
 {
   _customText = text;
 
@@ -1640,7 +1646,7 @@ void FaceInfoScreenManager::DrawAlexaFace()
   // This actually draws the scratch image to the screen
   DrawScratch();
 
-  RobotInterface::SetHeadAngle headAction;
+  CLAD_VECTOR(RobotInterface)::SetHeadAngle headAction;
   headAction.angle_rad = MAX_HEAD_ANGLE;
   headAction.duration_sec = 1.0;
   headAction.max_speed_rad_per_sec = MAX_HEAD_SPEED_RAD_PER_S;
@@ -1756,7 +1762,7 @@ void FaceInfoScreenManager::DrawTextOnScreen(const ColoredTextLines& lines,
   DrawScratch();
 }
 
-void FaceInfoScreenManager::DrawToF(const RangeDataDisplay& data)
+void FaceInfoScreenManager::DrawToF(const CLAD_VECTOR(RangeDataDisplay)& data)
 {
   if(GetCurrScreenName() != ScreenName::ToF)
   {
@@ -2005,19 +2011,19 @@ void FaceInfoScreenManager::UpdateCameraTestMode(uint32_t curTime_ms)
     lastMovement_ms = curTime_ms;
     static bool up = false;
 
-    RobotInterface::SetHeadAngle head;
+    CLAD_VECTOR(RobotInterface)::SetHeadAngle head;
     head.angle_rad = (up ? MAX_HEAD_ANGLE : MIN_HEAD_ANGLE);
     head.duration_sec = alternateTime_ms / 1000.f;
     head.max_speed_rad_per_sec = MAX_HEAD_SPEED_RAD_PER_S;
     head.accel_rad_per_sec2 = MAX_HEAD_ACCEL_RAD_PER_S2;
       
-    RobotInterface::SetLiftHeight lift;
+    CLAD_VECTOR(RobotInterface)::SetLiftHeight lift;
     lift.height_mm = (up ? LIFT_HEIGHT_CARRY : 50);
     lift.duration_sec = alternateTime_ms / 1000.f;
     lift.max_speed_rad_per_sec = MAX_LIFT_SPEED_RAD_PER_S;
     lift.accel_rad_per_sec2 = MAX_LIFT_ACCEL_RAD_PER_S2;
 
-    RobotInterface::DriveWheels wheels;
+    CLAD_VECTOR(RobotInterface)::DriveWheels wheels;
     wheels.lwheel_speed_mmps = (up ? 60 : -60);
     wheels.rwheel_speed_mmps = (up ? 60 : -60);
     wheels.lwheel_accel_mmps2 = MAX_WHEEL_ACCEL_MMPS2;

@@ -73,6 +73,12 @@ static const bool kSimulateGyroBias = false;
 #error SIMULATOR should be defined by any target using sim_hal.cpp
 #endif
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
   namespace Vector {
 
@@ -83,13 +89,13 @@ namespace Anki {
 
       const f64 WEBOTS_INFINITY = std::numeric_limits<f64>::infinity();
 
-      constexpr auto MOTOR_LEFT_WHEEL = EnumToUnderlyingType(MotorID::MOTOR_LEFT_WHEEL);
-      constexpr auto MOTOR_RIGHT_WHEEL = EnumToUnderlyingType(MotorID::MOTOR_RIGHT_WHEEL);
-      constexpr auto MOTOR_LIFT = EnumToUnderlyingType(MotorID::MOTOR_LIFT);
-      constexpr auto MOTOR_HEAD = EnumToUnderlyingType(MotorID::MOTOR_HEAD);
-      constexpr auto MOTOR_COUNT = EnumToUnderlyingType(MotorID::MOTOR_COUNT);
+      constexpr auto MOTOR_LEFT_WHEEL = EnumToUnderlyingType(CLAD(MotorID)::MOTOR_LEFT_WHEEL);
+      constexpr auto MOTOR_RIGHT_WHEEL = EnumToUnderlyingType(CLAD(MotorID)::MOTOR_RIGHT_WHEEL);
+      constexpr auto MOTOR_LIFT = EnumToUnderlyingType(CLAD(MotorID)::MOTOR_LIFT);
+      constexpr auto MOTOR_HEAD = EnumToUnderlyingType(CLAD(MotorID)::MOTOR_HEAD);
+      constexpr auto MOTOR_COUNT = EnumToUnderlyingType(CLAD(MotorID)::MOTOR_COUNT);
 
-      constexpr auto NUM_BACKPACK_LEDS = EnumToUnderlyingType(LEDId::NUM_BACKPACK_LEDS);
+      constexpr auto NUM_BACKPACK_LEDS = EnumToUnderlyingType(CLAD(LEDId)::NUM_BACKPACK_LEDS);
 
 
 #pragma mark --- Simulated HardwareInterface "Member Variables" ---
@@ -557,12 +563,12 @@ namespace Anki {
     }
 
     // Returns the motor power used for calibration [-1.0, 1.0]
-    float HAL::MotorGetCalibPower(MotorID motor)
+    float HAL::MotorGetCalibPower(CLAD(MotorID) motor)
     {
       float power = 0.f;
       switch (motor) {
-        case MotorID::MOTOR_LIFT:
-        case MotorID::MOTOR_HEAD:
+        case CLAD(MotorID)::MOTOR_LIFT:
+        case CLAD(MotorID)::MOTOR_HEAD:
           power = -0.4f;
           break;
         default:
@@ -573,19 +579,19 @@ namespace Anki {
     }
 
     // Set the motor power in the unitless range [-1.0, 1.0]
-    void HAL::MotorSetPower(MotorID motor, f32 power)
+    void HAL::MotorSetPower(CLAD(MotorID) motor, f32 power)
     {
       switch(motor) {
-        case MotorID::MOTOR_LEFT_WHEEL:
+        case CLAD(MotorID)::MOTOR_LEFT_WHEEL:
           leftWheelMotor_->setVelocity(WheelPowerToAngSpeed(power));
           break;
-        case MotorID::MOTOR_RIGHT_WHEEL:
+        case CLAD(MotorID)::MOTOR_RIGHT_WHEEL:
           rightWheelMotor_->setVelocity(WheelPowerToAngSpeed(power));
           break;
-        case MotorID::MOTOR_LIFT:
+        case CLAD(MotorID)::MOTOR_LIFT:
           liftMotor_->setVelocity(LiftPowerToAngSpeed(power));
           break;
-        case MotorID::MOTOR_HEAD:
+        case CLAD(MotorID)::MOTOR_HEAD:
           // TODO: Assuming linear relationship, but it's not!
           headMotor_->setVelocity(HeadPowerToAngSpeed(power));
           break;
@@ -596,9 +602,9 @@ namespace Anki {
     }
 
     // Reset the internal position of the specified motor to 0
-    void HAL::MotorResetPosition(MotorID motor)
+    void HAL::MotorResetPosition(CLAD(MotorID) motor)
     {
-      if (motor >= MotorID::MOTOR_COUNT) {
+      if (motor >= CLAD(MotorID)::MOTOR_COUNT) {
         PRINT_NAMED_ERROR("simHAL.MotorResetPosition.UndefinedType", "%d", EnumToUnderlyingType(motor));
         return;
       }
@@ -609,16 +615,16 @@ namespace Anki {
 
     // Returns units based on the specified motor type:
     // Wheels are in mm/s, everything else is in degrees/s.
-    f32 HAL::MotorGetSpeed(MotorID motor)
+    f32 HAL::MotorGetSpeed(CLAD(MotorID) motor)
     {
       switch(motor) {
-        case MotorID::MOTOR_LEFT_WHEEL:
-        case MotorID::MOTOR_RIGHT_WHEEL:
+        case CLAD(MotorID)::MOTOR_LEFT_WHEEL:
+        case CLAD(MotorID)::MOTOR_RIGHT_WHEEL:
           // if usingTreads, fall through to just returning motorSpeeds_ since
           // it is already stored in mm/s
 
-        case MotorID::MOTOR_LIFT:
-        case MotorID::MOTOR_HEAD:
+        case CLAD(MotorID)::MOTOR_LIFT:
+        case CLAD(MotorID)::MOTOR_HEAD:
           return motorSpeeds_[EnumToUnderlyingType(motor)];
 
         default:
@@ -630,16 +636,16 @@ namespace Anki {
 
     // Returns units based on the specified motor type:
     // Wheels are in mm since reset, everything else is in degrees.
-    f32 HAL::MotorGetPosition(MotorID motor)
+    f32 HAL::MotorGetPosition(CLAD(MotorID) motor)
     {
       switch(motor) {
-        case MotorID::MOTOR_RIGHT_WHEEL:
-        case MotorID::MOTOR_LEFT_WHEEL:
+        case CLAD(MotorID)::MOTOR_RIGHT_WHEEL:
+        case CLAD(MotorID)::MOTOR_LEFT_WHEEL:
           // if usingTreads, fall through to just returning motorSpeeds_ since
           // it is already stored in mm
 
-        case MotorID::MOTOR_LIFT:
-        case MotorID::MOTOR_HEAD:
+        case CLAD(MotorID)::MOTOR_LIFT:
+        case CLAD(MotorID)::MOTOR_HEAD:
           return motorPositions_[EnumToUnderlyingType(motor)];
 
         default:
@@ -770,9 +776,9 @@ namespace Anki {
       return robotID_;
     }
 
-    ProxSensorDataRaw HAL::GetRawProxData()
+    CLAD(ProxSensorDataRaw) HAL::GetRawProxData()
     {
-      ProxSensorDataRaw proxData;
+      CLAD(ProxSensorDataRaw) proxData;
 
       if(proxCenter_ == nullptr)
       {
@@ -787,7 +793,7 @@ namespace Anki {
         proxData.ambientIntensity = 0.25f;
         proxData.spadCount        = 90.f;
         proxData.timestamp_ms     = HAL::GetTimeStamp();
-        proxData.rangeStatus      = RangeStatus::RANGE_VALID;
+        proxData.rangeStatus      = CLAD(RangeStatus)::RANGE_VALID;
       } else {
         // Calm mode values
         proxData.distance_mm      = PROX_CALM_MODE_DIST_MM;
@@ -795,7 +801,7 @@ namespace Anki {
         proxData.ambientIntensity = 0.f;
         proxData.spadCount        = 200.f;
         proxData.timestamp_ms     = HAL::GetTimeStamp();
-        proxData.rangeStatus      = RangeStatus::RANGE_VALID;
+        proxData.rangeStatus      = CLAD(RangeStatus)::RANGE_VALID;
       }
 
       return proxData;

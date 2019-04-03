@@ -21,6 +21,12 @@
 #include "anki/cozmo/robot/hal.h"
 #include "util/container/fixedCircularBuffer.h"
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
 
   namespace Vector {
@@ -39,7 +45,7 @@ namespace Anki {
       const f32* GetBiasCorrectedGyroData();
 
       // Retrieve circular-buffered ImuDataFrames
-      using ImuDataBufferType = Util::FixedCircularBuffer<IMUDataFrame, IMUConstants::IMU_FRAMES_PER_ROBOT_STATE>;
+      using ImuDataBufferType = Util::FixedCircularBuffer<CLAD(IMUDataFrame), CLAD(IMUConstants)::IMU_FRAMES_PER_ROBOT_STATE>;
       ImuDataBufferType& GetImuDataBuffer();
       
       // Rotation (or "yaw") in radians. Turning left is positive.

@@ -7,10 +7,10 @@ include(anki_build_cxx)
 anki_build_cxx_library(canned_anim_lib_anim ${ANKI_SRCLIST_DIR} STATIC)
 anki_build_target_license(canned_anim_lib_anim "ANKI")
 
-target_compile_definitions(canned_anim_lib_anim
-    PRIVATE
-    CAN_STREAM=false
-)
+# target_compile_definitions(canned_anim_lib_anim
+#     PRIVATE
+#     CAN_STREAM=false
+# )
 
 include(flatbuffers)
 

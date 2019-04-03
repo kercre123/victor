@@ -15,6 +15,26 @@
 
 #include <string>
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
+#ifdef USES_CLAD_CPPLITE
+namespace CppLite {
+#endif
+namespace Anki {
+namespace Vector {
+namespace SwitchboardInterface {
+  struct SetConnectionStatus;
+}
+}
+}
+#ifdef USES_CLAD_CPPLITE
+}
+#endif
+
 namespace Anki {
 namespace Vector {
 namespace Anim {
@@ -22,19 +42,17 @@ namespace Anim {
   class AnimationStreamer;
 }
 
-namespace SwitchboardInterface {
-  struct SetConnectionStatus;
-}
-
 void SetBLEPin(uint32_t pin);
 
 bool InitConnectionFlow(Anim::AnimationStreamer* animStreamer);
 
-void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
+void UpdateConnectionFlow(const CLAD_VECTOR(SwitchboardInterface)::SetConnectionStatus& msg,
                           Anim::AnimationStreamer* animStreamer,
                           const Anim::AnimContext* context);
 
 }
 }
+
+#undef CLAD_VECTOR
 
 #endif

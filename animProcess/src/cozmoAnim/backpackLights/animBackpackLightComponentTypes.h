@@ -18,7 +18,7 @@
 #include <map>
 #include <memory>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
 #else
 #define CLAD_VECTOR(ns) ns

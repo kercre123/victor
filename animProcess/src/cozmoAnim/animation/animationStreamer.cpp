@@ -52,6 +52,16 @@
 #define DEBUG_ANIMATION_STREAMING 0
 #define DEBUG_ANIMATION_STREAMING_AUDIO 0
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::ns
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#define CLAD_VISION(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD(ns) Anki::ns
+#define CLAD_VECTOR(ns) ns
+#define CLAD_VISION(ns) Vision::ns
+#endif
+
 namespace Anki {
 namespace Vector {
 namespace Anim {
@@ -371,7 +381,7 @@ namespace Anim {
   AnimationStreamer::AnimationStreamer(const Anim::AnimContext* context)
   : _context(context)
   , _proceduralTrackComponent(new TrackLayerComponent(context))
-  , _lockedTracks((u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK)
+  , _lockedTracks((u8)CLAD_VECTOR(AnimTrackFlag)::BACKPACK_LIGHTS_TRACK)
   , _tracksInUse(0)
   , _animAudioClient( new Audio::AnimationAudioClient(context->GetAudioController()) )
   , _proceduralAudioClient( new Audio::ProceduralAudioClient(context->GetAudioController()) )
@@ -430,7 +440,7 @@ namespace Anim {
     {
       ProceduralFace blankFace;
       const f32 zeroScale = 0.0f;
-      const std::vector<f32> arbitraryEyes((int)ProceduralEyeParameter::NumParameters, 0.5f);
+      const std::vector<f32> arbitraryEyes((int)CLAD_VECTOR(ProceduralEyeParameter)::NumParameters, 0.5f);
       blankFace.SetFromValues(arbitraryEyes, arbitraryEyes, 0.0f, 0.0f, 0.0f, zeroScale, zeroScale, 0.0f);
 
       SetProceduralFace(blankFace, std::numeric_limits<u32>::max());
@@ -582,27 +592,27 @@ namespace Anim {
 #       define DEBUG_STREAM_KEYFRAME_MESSAGE(__KF_NAME__)
 #     endif
 
-    if (SendIfTrackUnlocked(stateToSend.moveHeadMessage, AnimTrackFlag::HEAD_TRACK)) {
+    if (SendIfTrackUnlocked(stateToSend.moveHeadMessage, CLAD_VECTOR(AnimTrackFlag)::HEAD_TRACK)) {
       DEBUG_STREAM_KEYFRAME_MESSAGE("HeadAngle");
     }
 
-    if (SendIfTrackUnlocked(stateToSend.moveLiftMessage, AnimTrackFlag::LIFT_TRACK)) {
+    if (SendIfTrackUnlocked(stateToSend.moveLiftMessage, CLAD_VECTOR(AnimTrackFlag)::LIFT_TRACK)) {
       DEBUG_STREAM_KEYFRAME_MESSAGE("LiftHeight");
     }
 
-    if (SendIfTrackUnlocked(stateToSend.bodyMotionMessage, AnimTrackFlag::BODY_TRACK)) {
+    if (SendIfTrackUnlocked(stateToSend.bodyMotionMessage, CLAD_VECTOR(AnimTrackFlag)::BODY_TRACK)) {
       DEBUG_STREAM_KEYFRAME_MESSAGE("BodyMotion");
     }
 
-    if (SendIfTrackUnlocked(stateToSend.recHeadMessage, AnimTrackFlag::BODY_TRACK)) {
+    if (SendIfTrackUnlocked(stateToSend.recHeadMessage, CLAD_VECTOR(AnimTrackFlag)::BODY_TRACK)) {
       DEBUG_STREAM_KEYFRAME_MESSAGE("RecordHeading");
     }
 
-    if (SendIfTrackUnlocked(stateToSend.turnToRecHeadMessage, AnimTrackFlag::BODY_TRACK)) {
+    if (SendIfTrackUnlocked(stateToSend.turnToRecHeadMessage, CLAD_VECTOR(AnimTrackFlag)::BODY_TRACK)) {
       DEBUG_STREAM_KEYFRAME_MESSAGE("TurnToRecordedHeading");
     }
 
-    if (SendIfTrackUnlocked(stateToSend.backpackLightsMessage, AnimTrackFlag::BACKPACK_LIGHTS_TRACK)) {
+    if (SendIfTrackUnlocked(stateToSend.backpackLightsMessage, CLAD_VECTOR(AnimTrackFlag)::BACKPACK_LIGHTS_TRACK)) {
       EnableBackpackAnimationLayer(true);
     }
 
@@ -614,7 +624,7 @@ namespace Anim {
     // Send AnimationEvent directly up to engine if it's time to play one
     if (stateToSend.eventMessage != nullptr) {
       DEBUG_STREAM_KEYFRAME_MESSAGE("Event");
-      RobotInterface::SendAnimToEngine(*stateToSend.eventMessage);
+      SendAnimToEngine(*stateToSend.eventMessage);
       Util::SafeDelete(stateToSend.eventMessage);
     }
 
@@ -628,7 +638,7 @@ namespace Anim {
   }
 
 
-  void AnimationStreamer::Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageBinaryChunk& msg)
+  void AnimationStreamer::Process_displayFaceImageChunk(const CLAD_VECTOR(RobotInterface)::DisplayFaceImageBinaryChunk& msg)
   {
     // Since binary images and grayscale images both use the same underlying image, ensure that
     // only one type is being sent at a time
@@ -683,7 +693,7 @@ namespace Anim {
     }
   }
 
-  void AnimationStreamer::Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageGrayscaleChunk& msg)
+  void AnimationStreamer::Process_displayFaceImageChunk(const CLAD_VECTOR(RobotInterface)::DisplayFaceImageGrayscaleChunk& msg)
   {
     // Since binary images and grayscale images both use the same underlying image, ensure that
     // only one type is being sent at a time
@@ -721,7 +731,7 @@ namespace Anim {
     }
   }
 
-  void AnimationStreamer::Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageRGBChunk& msg)
+  void AnimationStreamer::Process_displayFaceImageChunk(const CLAD_VECTOR(RobotInterface)::DisplayFaceImageRGBChunk& msg)
   {
     if (msg.imageId != _faceImageRGBId) {
       if (_faceImageRGBChunksReceivedBitMask != 0) {
@@ -753,7 +763,7 @@ namespace Anim {
     }
   }
 
-  void AnimationStreamer::Process_displayCompositeImageChunk(const RobotInterface::DisplayCompositeImageChunk& msg)
+  void AnimationStreamer::Process_displayCompositeImageChunk(const CLAD_VECTOR(RobotInterface)::DisplayCompositeImageChunk& msg)
   {
     // Check for image ID mismatches
     if (_compositeImageBuilder != nullptr) {
@@ -798,7 +808,7 @@ namespace Anim {
 
   }
 
-  void AnimationStreamer::Process_updateCompositeImage(const RobotInterface::UpdateCompositeImage& msg)
+  void AnimationStreamer::Process_updateCompositeImage(const CLAD_VECTOR(RobotInterface)::UpdateCompositeImage& msg)
   {
     Vision::CompositeImageLayer::SpriteBox sb(msg.serializedSpriteBox);
     UpdateCompositeImage(msg.layerName, sb, msg.assetID, msg.applyAt_ms);
@@ -932,7 +942,7 @@ namespace Anim {
                                  shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
   }
 
-  Result AnimationStreamer::UpdateCompositeImage(Vision::LayerName layerName,
+  Result AnimationStreamer::UpdateCompositeImage(CLAD(Vision)::LayerName layerName,
                                                  const Vision::CompositeImageLayer::SpriteBox& spriteBox,
                                                  uint16_t assetID,
                                                  u32 applyAt_ms)
@@ -1069,7 +1079,7 @@ namespace Anim {
   //
   // TODO: Take in EngineToRobot& instead of ptr?
   //       i.e. Why doesn't KeyFrame::GetStreamMessage() return a ref?
-  bool AnimationStreamer::SendIfTrackUnlocked(RobotInterface::EngineToRobot*& msg, AnimTrackFlag track)
+  bool AnimationStreamer::SendIfTrackUnlocked(CLAD_VECTOR(RobotInterface)::EngineToRobot*& msg, CLAD_VECTOR(AnimTrackFlag) track)
   {
     bool res = false;
     if (msg != nullptr)
@@ -1078,16 +1088,16 @@ namespace Anim {
       {
         switch(track)
         {
-          case AnimTrackFlag::BACKPACK_LIGHTS_TRACK:
+          case CLAD_VECTOR(AnimTrackFlag)::BACKPACK_LIGHTS_TRACK:
           {
             if (!kEnableBackpackLightsTrack)
             {
               break;
             } // else fall through
           }
-          case AnimTrackFlag::HEAD_TRACK:
-          case AnimTrackFlag::LIFT_TRACK:
-          case AnimTrackFlag::BODY_TRACK:
+          case CLAD_VECTOR(AnimTrackFlag)::HEAD_TRACK:
+          case CLAD_VECTOR(AnimTrackFlag)::LIFT_TRACK:
+          case CLAD_VECTOR(AnimTrackFlag)::BODY_TRACK:
             res = AnimProcessMessages::SendAnimToRobot(*msg);
             _tracksInUse |= (u8)track;
             break;
@@ -1413,7 +1423,7 @@ namespace Anim {
       const u16* startIt = faceImg565.GetRawDataPointer();
       while (pixelsLeftToSend > 0)
       {
-        RobotInterface::DisplayedFaceImageRGBChunk msg;
+        CLAD_VECTOR(RobotInterface)::DisplayedFaceImageRGBChunk msg;
         msg.imageId = imageID;
         msg.chunkIndex = chunkCount++;
         msg.numPixels = std::min(kMaxPixelsPerMsg, pixelsLeftToSend);
@@ -1422,7 +1432,7 @@ namespace Anim {
 
         pixelsLeftToSend -= msg.numPixels;
         std::advance(startIt, msg.numPixels);
-        RobotInterface::SendAnimToEngine(msg);
+        SendAnimToEngine(msg);
       }
       imageID++;
 
@@ -1461,7 +1471,7 @@ namespace Anim {
 
   Result AnimationStreamer::EnableBackpackAnimationLayer(bool enable)
   {
-    RobotInterface::BackpackSetLayer msg;
+    CLAD_VECTOR(RobotInterface)::BackpackSetLayer msg;
 
     if (enable && !_backpackAnimationLayerEnabled) {
       msg.layer = 1; // 1 == BPL_ANIMATION
@@ -1474,7 +1484,7 @@ namespace Anim {
       return RESULT_OK;
     }
 
-    if (!RobotInterface::SendAnimToRobot(msg)) {
+    if (!SendAnimToRobot(msg)) {
       return RESULT_FAIL;
     }
 
@@ -1497,11 +1507,11 @@ namespace Anim {
       // Don't actually send start message for proceduralFace or neutralFace anims since
       // they weren't requested by engine
       if (!_playingInternalAnim) {
-        AnimationStarted startMsg;
+        CLAD_VECTOR(AnimationStarted) startMsg;
         memcpy(startMsg.animName, streamingAnimName.c_str(), streamingAnimName.length());
         startMsg.animName_length = streamingAnimName.length();
         startMsg.tag = _tag;
-        if (!RobotInterface::SendAnimToEngine(startMsg)) {
+        if (!SendAnimToEngine(startMsg)) {
           return RESULT_FAIL;
         }
       }
@@ -1536,13 +1546,13 @@ namespace Anim {
       // Don't actually send end message for proceduralFace or neutralFace anims since
       // they weren't requested by engine
       if (!_playingInternalAnim) {
-        AnimationEnded endMsg;
+        CLAD_VECTOR(AnimationEnded) endMsg;
         memcpy(endMsg.animName, streamingAnimName.c_str(), streamingAnimName.length());
         endMsg.animName_length = streamingAnimName.length();
         endMsg.tag = _tag;
         endMsg.wasAborted = abortingAnim;
         endMsg.streamTimeAnimEnded = _relativeStreamTime_ms;
-        if (!RobotInterface::SendAnimToEngine(endMsg)) {
+        if (!SendAnimToEngine(endMsg)) {
           return RESULT_FAIL;
         }
       }
@@ -1576,11 +1586,11 @@ namespace Anim {
     {
       // Lock the face track if it's not time for a new procedural face
       u8 lockedTracks = _lockedTracks;
-      const bool isFaceTrackAlreadyLocked = IsTrackLocked(lockedTracks, (u8)AnimTrackFlag::FACE_TRACK);
+      const bool isFaceTrackAlreadyLocked = IsTrackLocked(lockedTracks, (u8)CLAD_VECTOR(AnimTrackFlag)::FACE_TRACK);
       const bool isTimeForProceduralFace = BaseStationTimer::getInstance()->GetCurrentTimeStamp() >= _nextProceduralFaceAllowedTime_ms;
       if (!isFaceTrackAlreadyLocked && !isTimeForProceduralFace)
       {
-        lockedTracks |= (u8)AnimTrackFlag::FACE_TRACK;
+        lockedTracks |= (u8)CLAD_VECTOR(AnimTrackFlag)::FACE_TRACK;
       }
 
       ExtractMessagesRelatedToProceduralTrackComponent(_context, nullptr, _proceduralTrackComponent.get(),
@@ -1656,7 +1666,7 @@ namespace Anim {
         const AnimTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
         auto& eventKeyFrame = eventTrack.GetCurrentKeyFrame();
 
-        stateToSend.eventMessage = new AnimationEvent();
+        stateToSend.eventMessage = new CLAD_VECTOR(AnimationEvent)();
         stateToSend.eventMessage->event_id = eventKeyFrame.GetAnimEvent();
         stateToSend.eventMessage->timestamp = (TimeStamp_t)currTime_ms;
         stateToSend.eventMessage->tag = _tag;
@@ -1702,13 +1712,13 @@ namespace Anim {
                                  storeFace);
 
     if (layeredKeyFrames.haveBackpackKeyFrame &&
-        !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK))
+        !IsTrackLocked(tracksCurrentlyLocked, (u8)CLAD_VECTOR(AnimTrackFlag)::BACKPACK_LIGHTS_TRACK))
     {
       stateToSend.backpackLightsMessage = layeredKeyFrames.backpackKeyFrame.GetStreamMessage(timeSinceAnimStart_ms);
     }
 
     if (layeredKeyFrames.haveAudioKeyFrame &&
-        !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::AUDIO_TRACK))
+        !IsTrackLocked(tracksCurrentlyLocked, (u8)CLAD_VECTOR(AnimTrackFlag)::AUDIO_TRACK))
     {
       // TODO: Kevin K. - Avoid this copy w/ restructuring
       stateToSend.audioKeyFrameMessage = new RobotAudioKeyFrame(layeredKeyFrames.audioKeyFrame);
@@ -1719,7 +1729,7 @@ namespace Anim {
     // of a huge, apparently unrelated call stack. Takes forever to discover this stuff
     // ----- Face Rendering Code -----
 
-    bool needToRenderStreamable = !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::FACE_TRACK);
+    bool needToRenderStreamable = !IsTrackLocked(tracksCurrentlyLocked, (u8)CLAD_VECTOR(AnimTrackFlag)::FACE_TRACK);
     if (anim != nullptr)
     {
       // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
@@ -2045,12 +2055,12 @@ namespace Anim {
     {
       const auto numKeyframes = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>().TrackLength();
 
-      AnimationState msg;
+      CLAD_VECTOR(AnimationState) msg;
       msg.numProcAnimFaceKeyframes = static_cast<uint32_t>(numKeyframes);
       msg.lockedTracks             = _lockedTracks;
       msg.tracksInUse              = _tracksInUse;
 
-      RobotInterface::SendAnimToEngine(msg);
+      SendAnimToEngine(msg);
       _numTicsToSendAnimState = kAnimStateReportingPeriod_tics;
     }
 
@@ -2100,7 +2110,7 @@ namespace Anim {
     _longEnoughSinceLastStreamTimeout_s = kDefaultLongEnoughSinceLastStreamTimeout_s;
   }
 
-  void AnimationStreamer::ProcessAddOrUpdateEyeShift(const RobotInterface::AddOrUpdateEyeShift& msg)
+  void AnimationStreamer::ProcessAddOrUpdateEyeShift(const CLAD_VECTOR(RobotInterface)::AddOrUpdateEyeShift& msg)
   {
     const std::string layerName(msg.name, msg.name_length);
     _proceduralTrackComponent->AddOrUpdateEyeShift(layerName,
@@ -2115,13 +2125,13 @@ namespace Anim {
                                                    msg.outerEyeScaleIncrease);
   }
 
-  void AnimationStreamer::ProcessRemoveEyeShift(const RobotInterface::RemoveEyeShift& msg)
+  void AnimationStreamer::ProcessRemoveEyeShift(const CLAD_VECTOR(RobotInterface)::RemoveEyeShift& msg)
   {
     const std::string layerName(msg.name, msg.name_length);
     _proceduralTrackComponent->RemoveEyeShift(layerName, _relativeStreamTime_ms, msg.disableTimeout_ms);
   }
 
-  void AnimationStreamer::ProcessAddSquint(const RobotInterface::AddSquint& msg)
+  void AnimationStreamer::ProcessAddSquint(const CLAD_VECTOR(RobotInterface)::AddSquint& msg)
   {
     const std::string layerName(msg.name, msg.name_length);
     _proceduralTrackComponent->AddSquint(layerName,
@@ -2131,7 +2141,7 @@ namespace Anim {
                                          _relativeStreamTime_ms);
   }
 
-  void AnimationStreamer::ProcessRemoveSquint(const RobotInterface::RemoveSquint& msg)
+  void AnimationStreamer::ProcessRemoveSquint(const CLAD_VECTOR(RobotInterface)::RemoveSquint& msg)
   {
     const std::string layerName(msg.name, msg.name_length);
     _proceduralTrackComponent->RemoveSquint(layerName, _relativeStreamTime_ms, msg.disableTimeout_ms);
@@ -2141,28 +2151,28 @@ namespace Anim {
   {
     if (whichTracks)
     {
-      if (whichTracks & (u8)AnimTrackFlag::HEAD_TRACK)
+      if (whichTracks & (u8)CLAD_VECTOR(AnimTrackFlag)::HEAD_TRACK)
       {
-        RobotInterface::MoveHead msg;
+        CLAD_VECTOR(RobotInterface)::MoveHead msg;
         msg.speed_rad_per_sec = 0;
-        RobotInterface::SendAnimToRobot(std::move(msg));
+        SendAnimToRobot(std::move(msg));
       }
 
-      if (whichTracks & (u8)AnimTrackFlag::LIFT_TRACK)
+      if (whichTracks & (u8)CLAD_VECTOR(AnimTrackFlag)::LIFT_TRACK)
       {
-        RobotInterface::MoveLift msg;
+        CLAD_VECTOR(RobotInterface)::MoveLift msg;
         msg.speed_rad_per_sec = 0;
-        RobotInterface::SendAnimToRobot(std::move(msg));
+        SendAnimToRobot(std::move(msg));
       }
 
-      if (whichTracks & (u8)AnimTrackFlag::BODY_TRACK)
+      if (whichTracks & (u8)CLAD_VECTOR(AnimTrackFlag)::BODY_TRACK)
       {
-        RobotInterface::DriveWheels msg;
+        CLAD_VECTOR(RobotInterface)::DriveWheels msg;
         msg.lwheel_speed_mmps = 0;
         msg.rwheel_speed_mmps = 0;
         msg.lwheel_accel_mmps2 = 0;
         msg.rwheel_accel_mmps2 = 0;
-        RobotInterface::SendAnimToRobot(std::move(msg));
+        SendAnimToRobot(std::move(msg));
       }
 
       _tracksInUse &= ~whichTracks;
@@ -2173,7 +2183,7 @@ namespace Anim {
       if (!aborting)
       {
         // The anim has terminated normally so just let head and lift settle to final positions
-        _tracksInUse &= ~((u8)AnimTrackFlag::LIFT_TRACK | (u8)AnimTrackFlag::HEAD_TRACK);
+        _tracksInUse &= ~((u8)CLAD_VECTOR(AnimTrackFlag)::LIFT_TRACK | (u8)CLAD_VECTOR(AnimTrackFlag)::HEAD_TRACK);
       }
       StopTracks(_tracksInUse);
     }
@@ -2212,7 +2222,7 @@ namespace Anim {
     {
       _proceduralAnimation = new Animation();
     }
-    _proceduralAnimation->SetName(EnumToString(AnimConstants::PROCEDURAL_ANIM));
+    _proceduralAnimation->SetName(EnumToString(CLAD_VECTOR(AnimConstants)::PROCEDURAL_ANIM));
   }
 
   // TODO(str): VIC-13519 Linearize Face Rendering 
@@ -2229,21 +2239,21 @@ namespace Anim {
     using namespace Vision;
     using Entry = Vision::CompositeImageLayer::SpriteEntry;
 
-    SpriteRenderConfig renderConfig;
-    renderConfig.renderMethod = SpriteRenderMethod::CustomHue;
+    CLAD_VISION(SpriteRenderConfig) renderConfig;
+    renderConfig.renderMethod = CLAD_VISION(SpriteRenderMethod)::CustomHue;
     // Set up sprite box layout
-    CompositeImageLayer::SpriteBox sb(SpriteBoxName::FaceKeyframe, renderConfig,
+    CompositeImageLayer::SpriteBox sb(CLAD_VISION(SpriteBoxName)::FaceKeyframe, renderConfig,
                                       Point2i(0,0), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
     CompositeImageLayer::LayoutMap map;
-    map.emplace(SpriteBoxName::FaceKeyframe, sb);
-    CompositeImageLayer eyeLayer(LayerName::Procedural_Eyes, std::move(map));
+    map.emplace(CLAD_VISION(SpriteBoxName)::FaceKeyframe, sb);
+    CompositeImageLayer eyeLayer(CLAD_VISION(LayerName)::Procedural_Eyes, std::move(map));
 
     // set up image map for layer
     SpriteSequence seq;
     seq.AddFrame(handle);
 
     CompositeImageLayer::ImageMap imageMap;
-    imageMap.emplace(SpriteBoxName::FaceKeyframe, Entry(std::move(seq)));
+    imageMap.emplace(CLAD_VISION(SpriteBoxName)::FaceKeyframe, Entry(std::move(seq)));
     eyeLayer.SetImageMap(std::move(imageMap));
 
     // add layer to comp image
@@ -2254,7 +2264,7 @@ namespace Anim {
                                                      const u8 tracksCurrentlyLocked,
                                                      const TimeStamp_t relativeStreamTime_ms)
   {
-    const bool spriteSeqHasData = !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::FACE_TRACK) &&
+    const bool spriteSeqHasData = !IsTrackLocked(tracksCurrentlyLocked, (u8)CLAD_VECTOR(AnimTrackFlag)::FACE_TRACK) &&
                                   spriteTrack.HasFramesLeft() &&
                                   spriteTrack.GetCurrentKeyFrame().IsTimeToPlay(relativeStreamTime_ms);
 
@@ -2277,7 +2287,7 @@ namespace Anim {
   {
     // Non-procedural faces (raw pixel data/images) take precedence over procedural faces (parameterized faces
     // like idles, keep alive, or normal animated faces)
-    const bool spriteSeqHasData = !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::FACE_TRACK) &&
+    const bool spriteSeqHasData = !IsTrackLocked(tracksCurrentlyLocked, (u8)CLAD_VECTOR(AnimTrackFlag)::FACE_TRACK) &&
                                   spriteTrack.HasFramesLeft() &&
                                   spriteTrack.GetCurrentKeyFrame().IsTimeToPlay(relativeStreamTime_ms);
 
@@ -2297,7 +2307,7 @@ namespace Anim {
                                                  AnimationMessageWrapper& messageWrapper) const
   {
     const bool needToCheckWhitelist = _onCharger &&
-                                      ((_lockedTracks & (u8)AnimTrackFlag::BODY_TRACK) == 0);
+                                      ((_lockedTracks & (u8)CLAD_VECTOR(AnimTrackFlag)::BODY_TRACK) == 0);
     
     // note: this duplicates engine's animation_whitelist.json, but hopefully InvalidateBannedTracks is removed soon
     //

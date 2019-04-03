@@ -44,6 +44,12 @@
 #define LOG_CHANNEL    "AnimEngine"
 #define NUM_ANIM_OPENCV_THREADS 0
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
 namespace Vector {
 namespace Anim {
@@ -245,25 +251,25 @@ void AnimEngine::RegisterTickPerformance(const float tickDuration_ms,
                                     sleepDurationIntended_ms, sleepDurationActual_ms);
 }
 
-void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechPrepare & msg)
+void AnimEngine::HandleMessage(const CLAD(RobotInterface)::TextToSpeechPrepare & msg)
 {
   DEV_ASSERT(_ttsComponent, "AnimEngine.TextToSpeechPrepare.InvalidTTSComponent");
   _ttsComponent->HandleMessage(msg);
 }
 
-void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechPlay & msg)
+void AnimEngine::HandleMessage(const CLAD(RobotInterface)::TextToSpeechPlay & msg)
 {
   DEV_ASSERT(_ttsComponent, "AnimEngine.TextToSpeechPlay.InvalidTTSComponent");
   _ttsComponent->HandleMessage(msg);
 }
 
-void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechCancel & msg)
+void AnimEngine::HandleMessage(const CLAD(RobotInterface)::TextToSpeechCancel & msg)
 {
   DEV_ASSERT(_ttsComponent, "AnimEngine.TextToSpeechCancel.InvalidTTSComponent");
   _ttsComponent->HandleMessage(msg);
 }
 
-void AnimEngine::HandleMessage(const RobotInterface::SetLocale & msg)
+void AnimEngine::HandleMessage(const CLAD(RobotInterface)::SetLocale & msg)
 {
   const std::string locale(msg.locale, msg.locale_length);
 
@@ -278,25 +284,25 @@ void AnimEngine::HandleMessage(const RobotInterface::SetLocale & msg)
   }
 }
 
-void AnimEngine::HandleMessage(const RobotInterface::ExternalAudioChunk & msg)
+void AnimEngine::HandleMessage(const CLAD(RobotInterface)::ExternalAudioChunk & msg)
 {
   DEV_ASSERT(_sdkAudioComponent, "AnimEngine.ExternalAudioChunk.InvalidSDKAudioComponent");
   _sdkAudioComponent->HandleMessage(msg);
 }
 
-void AnimEngine::HandleMessage(const RobotInterface::ExternalAudioComplete & msg)
+void AnimEngine::HandleMessage(const CLAD(RobotInterface)::ExternalAudioComplete & msg)
 {
   DEV_ASSERT(_sdkAudioComponent, "AnimEngine.ExternalAudioComplete.InvalidSDKAudioComponent");
   _sdkAudioComponent->HandleMessage(msg);
 }
 
-void AnimEngine::HandleMessage(const RobotInterface::ExternalAudioCancel & msg)
+void AnimEngine::HandleMessage(const CLAD(RobotInterface)::ExternalAudioCancel & msg)
 {
   DEV_ASSERT(_sdkAudioComponent, "AnimEngine.ExternalAudioCancel.InvalidSDKAudioComponent");
   _sdkAudioComponent->HandleMessage(msg);
 }
 
-void AnimEngine::HandleMessage(const RobotInterface::ExternalAudioPrepare & msg)
+void AnimEngine::HandleMessage(const CLAD(RobotInterface)::ExternalAudioPrepare & msg)
 {
   DEV_ASSERT(_sdkAudioComponent, "AnimEngine.ExternalAudioPrepare.InvalidSDKAudioComponent");
   _sdkAudioComponent->HandleMessage(msg);

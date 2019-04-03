@@ -23,9 +23,8 @@
 #include "coretech/common/shared/math/point_fwd.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenTypes.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-// #ifndef USES_CPPLITE
+#include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/cloud/mic.h"
-// #endif
 #include "clad/types/tofDisplayTypes.h"
 
 #include "util/singleton/dynamicSingleton.h"
@@ -35,7 +34,7 @@
 #include <unordered_map>
 #include <vector>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
 #else
 #define CLAD_VECTOR(ns) ns
@@ -105,11 +104,11 @@ public:
   
   // Begin drawing functionality
   // These functions update the screen only if they are relevant to the current screen
-  void DrawConfidenceClock(const RobotInterface::MicDirection& micData,
+  void DrawConfidenceClock(const CLAD_VECTOR(RobotInterface)::MicDirection& micData,
                            float bufferFullPercent,
                            uint32_t secondsRemaining,
                            bool triggerRecognized);
-  void DrawMicInfo(const RobotInterface::MicData& micData);
+  void DrawMicInfo(const CLAD_VECTOR(RobotInterface)::MicData& micData);
   void DrawCameraImage(const Vision::ImageRGB565& img);
 
   void DrawToF(const CLAD_VECTOR(RangeDataDisplay)& data);
@@ -252,5 +251,7 @@ private:
 
 } // namespace Vector
 } // namespace Anki
+
+#undef CLAD_VECTOR
 
 #endif // __AnimProcess_CozmoAnim_FaceDisplay_FaceInfoScreenManager_H_

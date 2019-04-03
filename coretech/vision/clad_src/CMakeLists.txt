@@ -34,11 +34,6 @@ target_include_directories(cti_vision_clad
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/engine/coretech/vision>
 )
 
-target_compile_definitions(cti_vision_clad
-  PUBLIC
-  USES_CLAD
-)
-
 target_link_libraries(cti_vision_clad
   clad
   cti_common_clad
@@ -86,20 +81,8 @@ target_include_directories(cti_vision_clad_cpplite
   $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/robot/coretech/vision>
 )
 
-if (USE_CPPLITE_NAMESPACE)
-  target_compile_definitions(cti_vision_clad_cpplite
-    PUBLIC
-    USES_CPPLITE=1
-  )
-endif()
-
 target_link_libraries(cti_vision_clad_cpplite
   ${OPENCV_LIBS}
-)
-
-target_compile_definitions(cti_vision_clad_cpplite
-    PUBLIC
-    USES_CPPLITE
 )
 
 anki_build_target_license(cti_vision_clad_cpplite "ANKI")

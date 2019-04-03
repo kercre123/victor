@@ -21,7 +21,7 @@
 #include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
 #include "clad/types/compositeImageTypes.h"
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD_VISION(ns) CppLite::Anki::Vision::ns
 #else
 #define CLAD_VISION(ns) Vision::ns

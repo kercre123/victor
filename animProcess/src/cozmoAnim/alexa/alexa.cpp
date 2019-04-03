@@ -40,6 +40,14 @@
 
 #include <chrono>
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
+#else
+#define CLAD(ns) ns
+#define CLAD_AUDIOMETADATA(ns) AudioMetaData::ns
+#endif
+
 namespace Anki {
 namespace Vector {
   
@@ -79,24 +87,24 @@ namespace {
 CONSOLE_VAR(bool, kAllowAudioOnCharger, "Alexa", true);
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-AudioEngine::AudioEventId GetErrorAudioEvent( AlexaNetworkErrorType errorType )
+AudioEngine::AudioEventId GetErrorAudioEvent( CLAD(AlexaNetworkErrorType) errorType )
 {
   using namespace AudioEngine;
-  using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+  using GenericEvent = CLAD_AUDIOMETADATA(GameEvent)::GenericEvent;
   switch( errorType ) {
-    case AlexaNetworkErrorType::NoInitialConnection:
+    case CLAD(AlexaNetworkErrorType)::NoInitialConnection:
       // "I'm having trouble connecting to the internet. For help, go to your device's companion app"
       return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Avs_System_Prompt_Error_Offline_Not_Connected_To_Internet );
-    case AlexaNetworkErrorType::LostConnection:
+    case CLAD(AlexaNetworkErrorType)::LostConnection:
       // "Sorry, your device lost its connection."
       return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Avs_System_Prompt_Error_Offline_Lost_Connection );
-    case AlexaNetworkErrorType::HavingTroubleThinking:
+    case CLAD(AlexaNetworkErrorType)::HavingTroubleThinking:
       // "Sorry, I'm having trouble understanding right now. please try a little later"
       return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Avs_System_Prompt_Error_Offline_Not_Connected_To_Service_Else );
-    case AlexaNetworkErrorType::AuthRevoked:
+    case CLAD(AlexaNetworkErrorType)::AuthRevoked:
       // "Your device isnt registered. For help, go it its companion app"
       return ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Avs_System_Prompt_Error_Offline_Not_Registered );
-    case AlexaNetworkErrorType::NoError:
+    case CLAD(AlexaNetworkErrorType)::NoError:
     default:
       return AudioEngine::kInvalidAudioEventId;
   }
@@ -104,9 +112,9 @@ AudioEngine::AudioEventId GetErrorAudioEvent( AlexaNetworkErrorType errorType )
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Alexa::Alexa()
-: _authState{ AlexaAuthState::Uninitialized }
-, _uxState{ AlexaUXState::Idle }
-, _pendingUXState{ AlexaUXState::Idle }
+: _authState{ CLAD(AlexaAuthState)::Uninitialized }
+, _uxState{ CLAD(AlexaUXState)::Idle }
+, _pendingUXState{ CLAD(AlexaUXState)::Idle }
 {
 }
 
@@ -144,7 +152,7 @@ void Alexa::Init(const Anim::AnimContext* context)
       // alexa is not opted in, but the user was once authenticated. enable the wakeword so that
       // when they say the wake word, it plays "Your device isn't registered. For help, go to its companion app."
       // TODO: it might make sense to load the least sensitive model to avoid false positives
-      SetSimpleState( AlexaSimpleState::Idle );
+      SetSimpleState( CLAD(AlexaSimpleState)::Idle );
     }
   }
   
@@ -196,7 +204,7 @@ void Alexa::Update()
     _timeEnableWakeWord_s = -1.0f;
     LOG_INFO("Alexa.Update.EnablingWakeWord", "Enabling the wakeword because of a delay in connecting");
     // enable the wakeword
-    SetSimpleState( AlexaSimpleState::Idle );
+    SetSimpleState( CLAD(AlexaSimpleState)::Idle );
   }
   
   if( (_timeToEndError_s >= 0.0f) && (currTime_s >= _timeToEndError_s) ) {
@@ -255,11 +263,11 @@ void Alexa::SetAlexaActive( bool active, bool deleteUserData )
   
   if( active && !HasImpl() ) {
     // wake word might be enabled because of a previous authentication. disable it while trying the actual auth process
-    SetSimpleState( AlexaSimpleState::Disabled );
+    SetSimpleState( CLAD(AlexaSimpleState)::Disabled );
     // create impl
     CreateImpl();
   } else if( !active && HasImpl() ) {
-    const auto simpleState = (_authenticatedEver && kPlayErrorIfSignedOut) ? AlexaSimpleState::Idle : AlexaSimpleState::Disabled;
+    const auto simpleState = (_authenticatedEver && kPlayErrorIfSignedOut) ? CLAD(AlexaSimpleState)::Idle : CLAD(AlexaSimpleState)::Disabled;
     SetSimpleState( simpleState );
     DeleteImpl();
   }
@@ -277,8 +285,8 @@ void Alexa::SetAlexaActive( bool active, bool deleteUserData )
       DeleteUserFiles();
     }
     // this is also set in other ways, but just to be sure
-    SetAuthState( AlexaAuthState::Uninitialized );
-    OnAlexaUXStateChanged( AlexaUXState::Idle );
+    SetAuthState( CLAD(AlexaAuthState)::Uninitialized );
+    OnAlexaUXStateChanged( CLAD(AlexaUXState)::Idle );
     
     // If the user signs in again without rebooting, use the old locale
     if( _locale != nullptr ) {
@@ -303,7 +311,7 @@ void Alexa::CancelPendingAlexaAuth(const std::string& reason)
             reason.c_str() );
   
   switch( _authState ) {
-    case AlexaAuthState::WaitingForCode:
+    case CLAD(AlexaAuthState)::WaitingForCode:
     {
 
       DASMSG(sign_in_canceled,
@@ -314,21 +322,21 @@ void Alexa::CancelPendingAlexaAuth(const std::string& reason)
       DASMSG_SEND();
     }
       // fall through
-    case AlexaAuthState::RequestingAuth:
+    case CLAD(AlexaAuthState)::RequestingAuth:
     {
       // if the robot is authorizing, cancel it. go through this method instead of SetAlexaActive so that any code face
       // is removed
       const bool errFlag = false;
-      OnAlexaAuthChanged( AlexaAuthState::Uninitialized, "", "", errFlag );
+      OnAlexaAuthChanged( CLAD(AlexaAuthState)::Uninitialized, "", "", errFlag );
     }
       break;
-    case AlexaAuthState::Uninitialized:
-    case AlexaAuthState::Authorized:
+    case CLAD(AlexaAuthState)::Uninitialized:
+    case CLAD(AlexaAuthState)::Authorized:
     {
       // the robot is either not using alexa, or is already authorized, so nothing to do here
     }
       break;
-    case AlexaAuthState::Invalid:
+    case CLAD(AlexaAuthState)::Invalid:
       break;
   }
 }
@@ -347,7 +355,7 @@ void Alexa::CreateImpl()
   // the state is Uninitialized. (the impl may also set this state through
   // a callback once it gets to that phase of initialization, but the current impl
   // design does not.)
-  SetAuthState( AlexaAuthState::RequestingAuth );
+  SetAuthState( CLAD(AlexaAuthState)::RequestingAuth );
   
   _impl = std::make_unique<AlexaImpl>();
   // set callbacks into this class (in case they occur during init)
@@ -367,7 +375,7 @@ void Alexa::CreateImpl()
       // authentication attempt, turn on the wakeword by default after some amount of time has
       // elapsed. If they say the wake word before we can connect to avs, we play an error sound. If
       // there's a failure in auth, disable the wakeword. If auth changes in any way, clear the _timeEnableWakeWord_s.
-      if( !_authStartedByUser && (_authState == AlexaAuthState::RequestingAuth) ) {
+      if( !_authStartedByUser && (_authState == CLAD(AlexaAuthState)::RequestingAuth) ) {
         _timeEnableWakeWord_s = kTimeUntilWakeWord_s + BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
       }
     } else {
@@ -392,7 +400,7 @@ void Alexa::DeleteImpl()
     ASSERT_NAMED( _implToBeDeleted == nullptr, "Alexa.DeleteImpl.Leak" );
     _implToBeDeleted = _impl.release();
   }
-  SetAuthState( AlexaAuthState::Uninitialized );
+  SetAuthState( CLAD(AlexaAuthState)::Uninitialized );
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -406,7 +414,7 @@ bool Alexa::HasInitializedImpl() const
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, const std::string& code, bool errFlag )
+void Alexa::OnAlexaAuthChanged( CLAD(AlexaAuthState) state, const std::string& url, const std::string& code, bool errFlag )
 {
   const auto oldState = _authState;
   bool codeExpired = false;
@@ -418,19 +426,19 @@ void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, co
             code.c_str() );
 
   switch( state ) {
-    case AlexaAuthState::Uninitialized:
+    case CLAD(AlexaAuthState)::Uninitialized:
     {
       _timeEnableWakeWord_s = -1.0f;
       const bool deleteUserData = errFlag;
       SetAlexaActive( false, deleteUserData ); // which also sets the state
     }
       break;
-    case AlexaAuthState::RequestingAuth:
+    case CLAD(AlexaAuthState)::RequestingAuth:
     {
       SetAuthState( state );
     }
       break;
-    case AlexaAuthState::WaitingForCode:
+    case CLAD(AlexaAuthState)::WaitingForCode:
     {
       _timeEnableWakeWord_s = -1.0f;
       if( !_authStartedByUser ) {
@@ -451,17 +459,17 @@ void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, co
       }
     }
       break;
-    case AlexaAuthState::Authorized:
+    case CLAD(AlexaAuthState)::Authorized:
     {
       _timeEnableWakeWord_s = -1.0f;
       SetAuthState( state );
       TouchOptInFiles();
       _authenticatedEver = true;
-      const auto simpleState = (_uxState == AlexaUXState::Idle) ? AlexaSimpleState::Idle : AlexaSimpleState::Active;
+      const auto simpleState = (_uxState == CLAD(AlexaUXState)::Idle) ? CLAD(AlexaSimpleState)::Idle : CLAD(AlexaSimpleState)::Active;
       SetSimpleState( simpleState );
     }
       break;
-    case AlexaAuthState::Invalid:
+    case CLAD(AlexaAuthState)::Invalid:
       _timeEnableWakeWord_s = -1.0f;
       break;
   }
@@ -476,18 +484,18 @@ void Alexa::OnAlexaAuthChanged( AlexaAuthState state, const std::string& url, co
     } else if( codeExpired ) {
       SetAlexaFace( ScreenName::AlexaPairingExpired );
     } else if( oldState != state ) {
-      if( state == AlexaAuthState::WaitingForCode ) {
+      if( state == CLAD(AlexaAuthState)::WaitingForCode ) {
         SetAlexaFace( ScreenName::AlexaPairing, url, code );
-      } else if( state == AlexaAuthState::Authorized ) {
+      } else if( state == CLAD(AlexaAuthState)::Authorized ) {
         SetAlexaFace( ScreenName::AlexaPairingSuccess );
-      } else if( state == AlexaAuthState::Uninitialized ) {
+      } else if( state == CLAD(AlexaAuthState)::Uninitialized ) {
         // note: face info screen manager considers None as "not alexa," but might not switch to None
         SetAlexaFace( ScreenName::None );
       }
     }
   }
   
-  if( _authState == AlexaAuthState::Authorized ) {
+  if( _authState == CLAD(AlexaAuthState)::Authorized ) {
     // any future errors that only show when the user started the auth process no longer show once auth completes
     _authStartedByUser = false;
   }
@@ -511,13 +519,13 @@ void Alexa::OnNotificationsChanged( bool hasNotification ) const
   if( hasNotification ) {
     // play some animation for the user.
     // If animators want to avoid alexa "eye" pops, a queued notification would have to be separate
-    // AlexaUXState. That would also mean more behavior work though...
+    // CLAD(AlexaUXState). That would also mean more behavior work though...
     FaceInfoScreenManager::getInstance()->StartAlexaNotification();
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::SetAuthState( AlexaAuthState state, const std::string& url, const std::string& code )
+void Alexa::SetAuthState( CLAD(AlexaAuthState) state, const std::string& url, const std::string& code )
 {
   _authExtra = url;
   if( _authState != state ) {
@@ -546,12 +554,12 @@ void Alexa::SetAlexaFace( ScreenName screenName, std::string url, const std::str
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::OnAlexaUXStateChanged( AlexaUXState newState )
+void Alexa::OnAlexaUXStateChanged( CLAD(AlexaUXState) newState )
 {
   // the impl should never send Error, because it doesn't internally consider that UX state, since the duration of that
   // state is determined by the duration of the audio clip we play. The audio clip must be played here instead of in
   // the impl because the latter may get destroyed when there is an authentication issue
-  DEV_ASSERT( newState != AlexaUXState::Error, "Alexa.OnAlexaUXStateChanged.NoError" );
+  DEV_ASSERT( newState != CLAD(AlexaUXState)::Error, "Alexa.OnAlexaUXStateChanged.NoError" );
   
   _pendingUXState = newState;
   
@@ -568,7 +576,7 @@ void Alexa::OnAlexaUXStateChanged( AlexaUXState newState )
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::SetUXState( AlexaUXState newState )
+void Alexa::SetUXState( CLAD(AlexaUXState) newState )
 {
 
   LOG_INFO( "Alexa.SetUXState", "new State '%s', old state was '%s'",
@@ -583,18 +591,18 @@ void Alexa::SetUXState( AlexaUXState newState )
   
   if( oldState != _uxState ) {
     // set backpack lights if streaming
-    const bool listening = (_uxState == AlexaUXState::Listening);
+    const bool listening = (_uxState == CLAD(AlexaUXState)::Listening);
     _context->GetBackpackLightComponent()->SetAlexaStreaming( listening );
-    const bool speaking = ( _uxState == AlexaUXState::Speaking );
+    const bool speaking = ( _uxState == CLAD(AlexaUXState)::Speaking );
     _context->GetMicDataSystem()->GetSpeechRecognizerSystem()->SetAlexaSpeakingState( speaking );
   }
   
-  if( _authState == AlexaAuthState::Authorized ) {
-    const auto simpleState = (_uxState == AlexaUXState::Idle) ? AlexaSimpleState::Idle : AlexaSimpleState::Active;
+  if( _authState == CLAD(AlexaAuthState)::Authorized ) {
+    const auto simpleState = (_uxState == CLAD(AlexaUXState)::Idle) ? CLAD(AlexaSimpleState)::Idle : CLAD(AlexaSimpleState)::Active;
     SetSimpleState( simpleState );
   }
   
-  if( (oldState == AlexaUXState::Idle) && (_uxState != AlexaUXState::Idle) ) {
+  if( (oldState == CLAD(AlexaUXState)::Idle) && (_uxState != CLAD(AlexaUXState)::Idle) ) {
     // when transitioning out of idle, play a getin animation, if there is one.
     auto* showStreamStateManager = _context->GetShowAudioStreamStateManager();
     if( showStreamStateManager != nullptr ) {
@@ -610,20 +618,20 @@ void Alexa::SetUXState( AlexaUXState newState )
   // Only play earcons when not frozen on charger (alexa acoustic test mode)
   if( !(_frozenOnCharger && _onCharger) || kAllowAudioOnCharger ) {
     using namespace AudioEngine;
-    using GenericEvent = AudioMetaData::GameEvent::GenericEvent;
+    using GenericEvent = CLAD_AUDIOMETADATA(GameEvent)::GenericEvent;
     // Play Audio Event for state change
-    if (_uxState == AlexaUXState::Listening) {
-      if ( (oldState == AlexaUXState::Idle) && (_notifyType != NotifyType::None) ) {
+    if (_uxState == CLAD(AlexaUXState)::Listening) {
+      if ( (oldState == CLAD(AlexaUXState)::Idle) && (_notifyType != NotifyType::None) ) {
         // Alexa triggered by voice or button press
         PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
       }
-      else if (oldState == AlexaUXState::Speaking) {
+      else if (oldState == CLAD(AlexaUXState)::Speaking) {
         // Play EarCon for follow up question
         PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Wakesound ) );
       }
       _notifyType = NotifyType::None;
     }
-    else if( (oldState == AlexaUXState::Listening) && (_uxState == AlexaUXState::Thinking) ) {
+    else if( (oldState == CLAD(AlexaUXState)::Listening) && (_uxState == CLAD(AlexaUXState)::Thinking) ) {
       // Play when listening ends
       PlayAudioEvent( ToAudioEventId( GenericEvent::Play__Robot_Vic_Alexa__Sfx_Sml_Ui_Endpointing ) );
     }
@@ -631,21 +639,21 @@ void Alexa::SetUXState( AlexaUXState newState )
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::OnAlexaNetworkError( AlexaNetworkErrorType errorType )
+void Alexa::OnAlexaNetworkError( CLAD(AlexaNetworkErrorType) errorType )
 {
   LOG_INFO( "Alexa.OnAlexaNetworkError.Type", "Error: %d", (int)errorType );
   // _uxState may be error if the user said the wake word while the error is playing. In that case, preserve the
   // old _pendingUXState, since _pendingUXState should never be Error
-  if( _uxState != AlexaUXState::Error ) {
+  if( _uxState != CLAD(AlexaUXState)::Error ) {
     _pendingUXState = _uxState;
   }
-  SetUXState( AlexaUXState::Error );
+  SetUXState( CLAD(AlexaUXState)::Error );
   PlayErrorAudio( errorType );
 
   DASMSG(local_error_msg, "alexa.local_error", "A local (network) error response is being played");
   DASMSG_SET(s1,
              EnumToString(errorType),
-             "type of the error (see AlexaNetworkErrorType in alexaTypes.clad)");
+             "type of the error (see CLAD(AlexaNetworkErrorType) in alexaTypes.clad)");
   DASMSG_SET(s2,
              EnumToString(_pendingUXState),
              "former UX state before the error happened (see alexaTypes.clad)");
@@ -657,9 +665,9 @@ void Alexa::OnAlexaNetworkError( AlexaNetworkErrorType errorType )
 void Alexa::SendUXState()
 {
   if( _engineLoaded ) {
-    RobotInterface::AlexaUXChanged msg;
+    CLAD(RobotInterface)::AlexaUXChanged msg;
     msg.state = _uxState;
-    RobotInterface::SendAnimToEngine( msg );
+    SendAnimToEngine( msg );
     LOG_INFO( "Alexa.SendUXState", "Sending state = %s", EnumToString(_uxState) );
   } else {
     // the ux state can change before engine init if a timer goes off, for example
@@ -751,12 +759,12 @@ void Alexa::OnEngineLoaded()
 void Alexa::SendAuthState()
 {
   if( _engineLoaded ) {
-    RobotInterface::AlexaAuthChanged msg;
+    CLAD(RobotInterface)::AlexaAuthChanged msg;
     msg.state = _authState;
     memcpy( msg.extra, _authExtra.c_str(), _authExtra.length() );
     msg.extra_length = _authExtra.length();
 
-    RobotInterface::SendAnimToEngine( msg );
+    SendAnimToEngine( msg );
     LOG_INFO( "Alexa.SendAuthState", "Sending state = %s", EnumToString(_authState));
   } else {
     _pendingAuthMsgs = true;
@@ -830,7 +838,7 @@ void Alexa::NotifyOfWakeWord( uint64_t fromSampleIndex, uint64_t toSampleIndex )
   }
   
   if( kPlayErrorIfSignedOut && !hasImpl && _authenticatedEver ) {
-    OnAlexaNetworkError( AlexaNetworkErrorType::AuthRevoked );
+    OnAlexaNetworkError( CLAD(AlexaNetworkErrorType)::AuthRevoked );
   }
 }
 
@@ -853,7 +861,11 @@ void Alexa::UpdateLocale( const Util::Locale& locale )
   auto* audioController = _context->GetAudioController();
   if ( audioController != nullptr ) {
     using namespace AudioEngine;
+#ifdef USES_CLAD_CPPLITE
+    using namespace CppLite::Anki::AudioMetaData;
+#else
     using namespace AudioMetaData;
+#endif
     const auto stateGroup = ToAudioStateGroupId( GameState::StateGroupType::Robot_Alexa_Locale );
     GameState::Robot_Alexa_Locale newState = GameState::Robot_Alexa_Locale::En_Us;
     bool matched = true;
@@ -881,7 +893,7 @@ void Alexa::UpdateLocale( const Util::Locale& locale )
         break;
     }
     if( matched ) {
-      audioController->SetState( stateGroup, ToAudioStateId((AudioMetaData::GameState::GenericState)newState) );
+      audioController->SetState( stateGroup, ToAudioStateId((CLAD_AUDIOMETADATA(GameState)::GenericState)newState) );
     }
   }
 }
@@ -897,10 +909,10 @@ uint64_t Alexa::GetMicrophoneSampleIndex() const
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::PlayErrorAudio( AlexaNetworkErrorType errorType )
+void Alexa::PlayErrorAudio( CLAD(AlexaNetworkErrorType) errorType )
 {
   LOG_INFO( "Alexa.PlayErrorAudio.Type", "Setting error flag %d", (int) errorType );
-  DEV_ASSERT( errorType != AlexaNetworkErrorType::NoError, "Alexa.PlayErrorAudio.NotAnError" );
+  DEV_ASSERT( errorType != CLAD(AlexaNetworkErrorType)::NoError, "Alexa.PlayErrorAudio.NotAnError" );
   
   if( !IsErrorPlaying() ) {
     using namespace AudioEngine;
@@ -931,13 +943,13 @@ void Alexa::PlayAudioEvent( AudioEngine::AudioEventId eventId, AudioEngine::Audi
   auto* audioController = _context->GetAudioController();
   if ( audioController != nullptr ) {
     using namespace AudioEngine;
-    const auto gameObject = ToAudioGameObject( AudioMetaData::GameObjectType::Alexa );
+    const auto gameObject = ToAudioGameObject( CLAD_AUDIOMETADATA(GameObjectType)::Alexa );
     audioController->PostAudioEvent( eventId, gameObject, callback );
   }
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void Alexa::SetSimpleState( AlexaSimpleState state ) const
+void Alexa::SetSimpleState( CLAD(AlexaSimpleState) state ) const
 {
   auto* mds = _context->GetMicDataSystem();
   if( mds != nullptr ) {

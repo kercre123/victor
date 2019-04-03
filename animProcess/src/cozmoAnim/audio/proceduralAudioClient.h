@@ -18,12 +18,28 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "audioEngine/audioTypes.h"
 
-
+#ifdef USES_CLAD_CPPLITE
+namespace CppLite {
+#endif
 namespace Anki {
 namespace Vector {
 namespace RobotInterface {
 struct RobotToEngine;
 }
+}
+}
+#ifdef USES_CLAD_CPPLITE
+}
+#endif
+
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
+namespace Anki {
+namespace Vector {
 namespace Audio {
 class CozmoAudioController;
 class AudioProceduralFrame;
@@ -38,7 +54,7 @@ public:
 
   bool GetIsActive() const { return _isActive; }
 
-  void ProcessMessage(const RobotInterface::RobotToEngine& msg);
+  void ProcessMessage(const CLAD(RobotInterface)::RobotToEngine& msg);
 
 
 private:
@@ -66,7 +82,7 @@ private:
   
   
   // Handle Robot Messages
-  void HandleStateMessage(const RobotInterface::RobotToEngine& msg);
+  void HandleStateMessage(const CLAD(RobotInterface)::RobotToEngine& msg);
   
   // Update Procedural Audio component states
   void UpdateTreadState(const AudioProceduralFrame& previousFrame, const AudioProceduralFrame& currentFrame);
@@ -81,5 +97,7 @@ private:
 }
 }
 }
+
+#undef CLAD
 
 #endif // __Anki_Cozmo_ProceduralAudioClient_H__

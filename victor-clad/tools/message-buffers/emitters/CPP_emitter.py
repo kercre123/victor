@@ -34,6 +34,9 @@ from clad import ast
 from clad import clad
 from clad import emitterutil
 
+byte = 'uint8_t'
+size_t = 'uint32_t'
+
 _type_translations = {
     'bool': 'bool',
     'int_8': 'int8_t',
@@ -49,31 +52,13 @@ _type_translations = {
 }
 
 def cpp_value_type(type):
-    if isinstance(type, ast.BuiltinType):
-        if not type.name in _type_translations:
-            raise ValueError('Error: {0} was expected to be a primitive type, but is not.'.format(type.name))
-        return _type_translations[type.name]
-    elif isinstance(type, ast.PascalStringType):
-        return "std::string";
-    elif isinstance(type, ast.VariableArrayType) or isinstance(type, ast.FixedArrayType):
-        if (not isinstance(type.member_type, ast.PascalStringType) and
-                (isinstance(type.member_type, ast.VariableArrayType) or
-                isinstance(type.member_type, ast.FixedArrayType))):
-            raise ValueError('Error: Arrays of arrays are not supported.')
-        elif isinstance(type, ast.VariableArrayType):
-            return 'std::vector<{member_type}>'.format(
-                member_type=cpp_value_type(type.member_type))
-        else:
-            if isinstance(type.length, str):
-                 return 'std::array<{member_type}, static_cast<size_t>({length})>'.format(
-                    member_type=cpp_value_type(type.member_type),
-                    length=type.length)
-            else:
-                return 'std::array<{member_type}, {length}>'.format(
-                    member_type=cpp_value_type(type.member_type),
-                    length=type.length)
-    else:
-        return type.fully_qualified_name()
+    """A return value with any pointers mutable."""
+    return _generic_type(type,
+                         None,
+                         '{value_type}',
+                         '{value_type}',
+                         '{value_type}*',
+                         '{value_type}*')
 
 def cpp_value_type_destructor(type):
     if isinstance(type, ast.BuiltinType):
@@ -264,6 +249,20 @@ class HEnumEmitter(BaseEmitter):
         self.output.write('extern const uint8_t {enum_name}VersionHash[16];\n\n'.format(**globals))
         self.output.write('constexpr {enum_storage_type} {enum_name}NumEntries = {enum_member_count};\n\n'.format(**globals))
 
+        self.output.write('\n')
+
+        with self.output.reset_indent():
+            self.output.write(textwrap.dedent('''\
+              constexpr {enum_storage_type} EnumToUnderlyingType({enum_name} e)
+              {{
+                return static_cast<{enum_storage_type}>(e);
+              }}
+              
+              ''').format(**globals));
+        
+        self.output.write('const char* EnumToString({enum_name} m);\n'.format(**globals))
+        self.output.write('{enum_name} {enum_name}FromString(const std::string&);\n\n'.format(**globals))
+
 class CPPEnumEmitter(HEnumEmitter):
 
     def visit_EnumDecl(self, node):
@@ -290,7 +289,7 @@ class CPPEnumEmitter(HEnumEmitter):
 
     def emitToStringFooter(self, node, globals):
         self.output.write(textwrap.dedent('''\
-            \t\tdefault: return nullptr;
+            \t\tdefault: return 0;
             \t}
             \treturn nullptr;
             }
@@ -363,6 +362,35 @@ class CPPEnumEmitter(HEnumEmitter):
 
         self.output.write('}\n\n')
 
+        self.output.write('\n')
+
+        self.output.write(textwrap.dedent('''\
+          {enum_name} {enum_name}FromString(const std::string& str)
+          {{
+          ''').format(num_values=len(node.members()), **globals))
+          
+        with self.output.indent(1):
+          self.output.write('static const std::unordered_map<std::string, {enum_name}> stringToEnumMap = {{\n'.format(**globals))
+          for member in node.members():
+              self.output.write('\t{{"{member_name}", {enum_name}::{member_name}}},\n'.format(member_name=member.name, **globals))
+          self.output.write('};\n\n')
+                
+          self.output.write(textwrap.dedent('''\
+              auto it = stringToEnumMap.find(str);
+              if(it == stringToEnumMap.end()) {{
+              #ifndef NDEBUG
+              std::cerr << "error: string '" << str << "' is not a valid {enum_name} value" << std::endl;
+              #endif // NDEBUG
+              assert(false && "string must be a valid {enum_name} value");
+              return {enum_name}::{first_val};
+              }}
+              
+          ''').format(first_val=node.members()[0].name, **globals))
+            
+          self.output.write('return it->second;\n')
+        
+        self.output.write('}\n\n')
+
 
     def emitSuffix(self, node, globals):
         self.output.write('const char* {enum_name}VersionHashStr = "{enum_hash}";\n\n'.format(**globals))
@@ -387,14 +415,24 @@ class HStructEmitter(BaseEmitter):
             message_name=node.name,
             message_hash=node.hash_str,
             object_type=node.object_type().upper(),
+
+            object_name=node.name,
+            object_type=node.object_type().upper(),
+            qualified_object_name=node.fully_qualified_name(),
+            max_size=node.max_message_size(),
+            min_size=node.min_message_size(),
+            byte=byte,
+            size_t=size_t,
         )
 
         self.emitHeader(node, globals)
         with self.output.indent(self.body_indent):
             self.emitMembers(node, globals)
+            self.emitCast(node, globals)
             self.emitConstructors(node, globals)
             self.emitPack(node, globals)
             self.emitUnpack(node, globals)
+            self.emitIsValid(node, globals)
             self.emitSize(node, globals)
             self.emitEquality(node, globals)
             self.emitInvoke(node, globals)
@@ -423,19 +461,40 @@ class HStructEmitter(BaseEmitter):
         self.output.write('extern const uint8_t {message_name}VersionHash[16];\n\n'.format(**globals))
 
     def emitMembers(self, node, globals):
-        for member in node.members():
-            self.output.write('{member_type} {member_name}'.format(
-                member_type=cpp_value_type(member.type),
-                member_name=member.name))
-            if member.init:
-                initial_value = member.init
-                member_val = initial_value.value
-                member_str = hex(member_val) if initial_value.type == "hex" else str(member_val)
-                self.output.write(" = %s" % member_str)
-            self.output.write(';\n')
+        if node.members():
+            for member in node.members():
+                self.output.write('{member_type} {member_name}'.format(
+                    member_type=cpp_value_type(member.type),
+                    member_name=member.name))
+                if member.init:
+                    initial_value = member.init
+                    member_val = initial_value.value
+                    member_str = hex(member_val) if initial_value.type == "hex" else str(member_val)
+                    self.output.write(" = %s" % member_str)
+                self.output.write(';\n')
+        else:
+            self.output.write('// To conform to C99 standard (6.7.2.1)\n')
+            self.output.write('char _empty;\n')
 
         self.output.write('\n')
 
+    def emitCast(self, node, globals):
+        # NOTE: There are no leading padding bytes for messages (at least for now). These are just for compatibility.
+        self.output.write(textwrap.dedent('''\
+            /**** Cast to/from buffer, adjusting any padding. ****/
+            inline {byte}* GetBuffer() {{ return reinterpret_cast<{byte}*>(this); }}
+            inline const {byte}* GetBuffer() const {{ return reinterpret_cast<const {byte}*>(this); }}
+            
+            ''').format(**globals))
+    
+    def emitIsValid(self, node, globals):
+        self.output.write('/**** Check if current message is parsable. ****/\n')
+        if node.are_all_representations_valid():
+            self.output.write('bool IsValid() const {{ return true; }}\n'.format(**globals))
+        else:
+            self.output.write('bool IsValid() const;\n'.format(**globals))
+        self.output.write('\n')
+    
     def emitInvoke(self, node, globals):
         paramsStr = ', '.join([m.name for m in node.members()])
         self.output.write(textwrap.dedent('''
@@ -513,7 +572,14 @@ class HStructEmitter(BaseEmitter):
             '''))
 
     def emitSize(self, node, globals):
-        self.output.write('size_t Size() const;\n\n')
+        self.output.write('/**** Serialized size, starting from GetBuffer(). ****/\n')
+        self.output.write('static const {size_t} MAX_SIZE = {max_size};\n'.format(**globals))
+        self.output.write('static const {size_t} MIN_SIZE = {min_size};\n'.format(**globals))
+        if node.is_message_size_fixed():
+            self.output.write('inline {size_t} Size() const {{ return {max_size}; }}\n'.format(**globals))
+        else:
+            self.output.write('{size_t} Size() const;\n'.format(**globals))
+        self.output.write('\n')
 
     def emitEquality(self, node, globals):
         self.output.write(textwrap.dedent('''\
@@ -579,6 +645,27 @@ class CPPStructEmitter(HStructEmitter):
 
     def emitMembers(self, node, globals):
         pass
+    
+    def emitCast(self, node, globals):
+        pass
+    
+    def emitIsValid(self, node, globals):
+        if not node.are_all_representations_valid():
+            self.output.write(textwrap.dedent('''\
+                bool {object_name}::IsValid() const
+                {{
+                    return (''').format(**globals))
+            with self.output.indent(2):
+                visitor = CPPLiteIsValidExpressionEmitter(self.output, self.options)
+                glue = ''
+                members = [member for member in node.members() if not member.type.are_all_representations_valid()]
+                for i, member in enumerate(members):
+                    visitor.visit(member)
+                    if i != len(members) - 1:
+                        self.output.write(' &&\n')
+                    else:
+                        self.output.write(');\n')
+            self.output.write('}\n\n')
     
     # recursively goes through all members of the node and generates code to explicitly initialize
     # each member
@@ -680,21 +767,22 @@ class CPPStructEmitter(HStructEmitter):
             '''))
 
     def emitSize(self, node, globals):
-        self.output.write(textwrap.dedent('''\
-            size_t {message_name}::Size() const
-            {{
-            \tsize_t result = 0;
-            ''').format(**globals))
-        with self.output.indent(1):
-            visitor = CPPSizeStatementEmitter(self.output, self.options)
-            for member in node.members():
-                self.output.write('// {member_name}\n'.format(member_name=member.name))
-                visitor.visit(member.type, member_name=member.name)
-        self.output.write(textwrap.dedent('''\
-            \treturn result;
-            }
+        if not node.is_message_size_fixed():
+            self.output.write(textwrap.dedent('''\
+                {size_t} {object_name}::Size() const
+                {{
+                \t{size_t} result = 0;
+                ''').format(**globals))
+            with self.output.indent(1):
+                visitor = CPPLiteSizeStatementEmitter(self.output, self.options)
+                for member in node.members():
+                    self.output.write('// {member_name}\n'.format(member_name=member.name))
+                    visitor.visit(member)
+            self.output.write(textwrap.dedent('''\
+                \treturn result;
+                }
 
-            '''))
+                '''))
 
     def emitEquality(self, node, globals):
         self.output.write(textwrap.dedent('''\

@@ -241,6 +241,7 @@ generate_clad(
     OUTPUT_DIR "${ROBOT_OUTPUT_DIR}"
     EMITTER ${CLAD_CPP_A2R_HELPER}
     OUTPUT_EXTS ${CLAD_CPP_A2R_HELPER_EXTS}
+    FLAGS ${CLAD_CPPLITE_NS_FLAG}
     INCLUDES "${CLAD_INCLUDES}"
     OUTPUT_SRCS CLAD_A2R_HELPER_GEN_ROBOT_SRCS
 )
@@ -285,20 +286,13 @@ target_include_directories(robot_clad_cpplite
 
 target_compile_definitions(robot_clad_cpplite
     PUBLIC
-    USES_CPPLITE
+    USES_CLAD_CPPLITE
 )
-
-if (USE_CPPLITE_NAMESPACE)
-    target_compile_definitions(robot_clad_cpplite
-        PUBLIC
-        USES_CPPLITE=1
-    )
-endif()
 
 target_link_libraries(robot_clad_cpplite
     cti_vision_clad_cpplite)
 
 anki_build_target_license(robot_clad_cpplite "ANKI")
 
-# add_dependencies(robot_clad_cpplite cti_vision_clad_cpplite)
+add_dependencies(robot_clad_cpplite cti_vision_clad)
 

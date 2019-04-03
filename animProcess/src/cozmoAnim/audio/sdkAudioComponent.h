@@ -16,7 +16,7 @@
 #include "audioEngine/audioTools/standardWaveDataContainer.h"
 #include "audioEngine/audioTools/streamingWaveDataInstance.h"
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::ns
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
 #else
@@ -25,6 +25,19 @@
 #endif
 
 // Forward declarations
+namespace CppLite {
+  namespace Anki {
+    namespace Vector {
+      namespace RobotInterface {
+        struct ExternalAudioPrepare;
+        struct ExternalAudioChunk;
+        struct ExternalAudioComplete;
+        struct ExternalAudioCancel;
+      }
+    }
+  }
+}
+
 namespace Anki {
   namespace Vector {
     namespace Anim {
@@ -32,12 +45,6 @@ namespace Anki {
     }
     namespace Audio {
       class CozmoAudioController;
-    }
-    namespace RobotInterface {
-      struct ExternalAudioPrepare;
-      struct ExternalAudioChunk;
-      struct ExternalAudioComplete;
-      struct ExternalAudioCancel;
     }
   }
 }
@@ -56,10 +63,10 @@ public:
   //
   // CLAD message handlers are called on the main thread to handle incoming requests.
   //
-  void HandleMessage(const RobotInterface::ExternalAudioPrepare& msg);
-  void HandleMessage(const RobotInterface::ExternalAudioChunk& msg);
-  void HandleMessage(const RobotInterface::ExternalAudioComplete& msg);
-  void HandleMessage(const RobotInterface::ExternalAudioCancel& msg);
+  void HandleMessage(const CLAD_VECTOR(RobotInterface)::ExternalAudioPrepare& msg);
+  void HandleMessage(const CLAD_VECTOR(RobotInterface)::ExternalAudioChunk& msg);
+  void HandleMessage(const CLAD_VECTOR(RobotInterface)::ExternalAudioComplete& msg);
+  void HandleMessage(const CLAD_VECTOR(RobotInterface)::ExternalAudioCancel& msg);
 
 
 private:
@@ -87,8 +94,8 @@ private:
   // -------------------------------------------------------------------------------------------------------------------
 
   // Set up Audio Engine to play text's audio data
-  bool PrepareAudioEngine(const RobotInterface::ExternalAudioPrepare& msg );
-  bool AddAudioChunk(const RobotInterface::ExternalAudioChunk& msg );
+  bool PrepareAudioEngine(const CLAD_VECTOR(RobotInterface)::ExternalAudioPrepare& msg );
+  bool AddAudioChunk(const CLAD_VECTOR(RobotInterface)::ExternalAudioChunk& msg );
   bool PostAudioEvent();    
   void OnAudioCompleted();
   void StopActiveAudio();

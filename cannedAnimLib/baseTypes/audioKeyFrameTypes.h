@@ -18,7 +18,7 @@
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include <vector>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::Anki::ns
 #else
 #define CLAD(ns) ns

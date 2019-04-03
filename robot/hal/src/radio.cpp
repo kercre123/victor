@@ -22,6 +22,11 @@
 
 #define ARRAY_SIZE(inArray)   (sizeof(inArray) / sizeof((inArray)[0]))
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
 
 namespace Anki {
   namespace Vector {
@@ -65,8 +70,8 @@ namespace Anki {
     void HAL::DisconnectRadio(bool sendDisconnectMsg)
     {
       if (sendDisconnectMsg && RadioIsConnected()) {
-        RobotInterface::RobotServerDisconnect msg;
-        RobotInterface::SendMessage(msg);
+        CLAD(RobotInterface)::RobotServerDisconnect msg;
+        SendMessage(msg);
       }
       
       server.Disconnect();

@@ -29,7 +29,7 @@
 
 #include <thread>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
 #define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
 #else
@@ -175,7 +175,7 @@ void AudioPlaybackSystem::BeginAudioPlayback()
 
   OnAudioPlaybackBegin();
 
-  #ifdef USES_CPPLITE
+  #ifdef USES_CLAD_CPPLITE
   using namespace CppLite::Anki::AudioMetaData;
   #else
   using namespace Anki::AudioMetaData;

@@ -40,6 +40,11 @@
 #include <list>
 #include <sched.h>
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
 
 namespace Anki {
 namespace Vector {
@@ -90,7 +95,7 @@ CONSOLE_VAR_ENUM(u8,      kMicDataProcessorRaw_Logging,     ANKI_CPU_CONSOLEVARG
 CONSOLE_VAR_ENUM(u8,      kMicDataProcessorTrigger_Logging, ANKI_CPU_CONSOLEVARGROUP, 0, Util::CpuProfiler::CpuProfilerLogging());
 #endif
 
-constexpr auto kCladMicDataTypeSize = sizeof(RobotInterface::MicData::data)/sizeof(RobotInterface::MicData::data[0]);
+constexpr auto kCladMicDataTypeSize = sizeof(CLAD(RobotInterface)::MicData::data)/sizeof(CLAD(RobotInterface)::MicData::data[0]);
 static_assert(kCladMicDataTypeSize == kIncomingAudioChunkSize,
               "Expecting size of MicData::data to match kIncomingAudioChunkSize");
 
@@ -226,13 +231,13 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
                                !_micDataSystem->ShouldSimulateStreaming();
 
   // Set up a message to send out about the triggerword
-  RobotInterface::TriggerWordDetected twDetectedMessage;
+  CLAD(RobotInterface)::TriggerWordDetected twDetectedMessage;
   twDetectedMessage.direction = currentDirection;
   twDetectedMessage.isButtonPress = buttonPress;
   twDetectedMessage.fromMute = muteButton;
   twDetectedMessage.triggerScore = (uint32_t) info.score;
   twDetectedMessage.willOpenStream = willStreamAudio;
-  auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
+  auto engineMessage = std::make_unique<CLAD(RobotInterface)::RobotToEngine>(std::move(twDetectedMessage));
   _micDataSystem->SendMessageToEngine(std::move(engineMessage));
 
   // Tell signal essence software to lock in on the current direction if it's known
@@ -437,7 +442,7 @@ void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
   _micImmediateDirection->AddDirectionSample(directionResult);
 
   // Set up a message to send out about the direction
-  RobotInterface::MicDirection newMessage;
+  CLAD(RobotInterface)::MicDirection newMessage;
   newMessage.timestamp = (TimeStamp_t)timestamp;
   newMessage.direction = directionResult.winningDirection;
   newMessage.confidence = directionResult.winningConfidence;
@@ -451,7 +456,7 @@ void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
     directionResult.confidenceList.end(),
     newMessage.confidenceList);
   
-  auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(newMessage));
+  auto engineMessage = std::make_unique<CLAD(RobotInterface)::RobotToEngine>(std::move(newMessage));
   _micDataSystem->SendMessageToEngine(std::move(engineMessage));
 }
 
@@ -464,9 +469,9 @@ MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSa
   PolicySetAbsoluteOrientation(robotAngle);
   // Note that currently we are only monitoring the moving flag. We _could_ also discard mic data when the robot
   // is picked up, but that is being evaluated with design before implementation, see VIC-1219
-  const bool robotIsMoving = static_cast<bool>(robotStatus & (uint32_t)RobotStatusFlag::IS_MOVING);
+  const bool robotIsMoving = static_cast<bool>(robotStatus & (uint32_t)CLAD(RobotStatusFlag)::IS_MOVING);
   const bool robotStoppedMoving = !robotIsMoving && _robotWasMoving;
-  _isInLowPowerMode = static_cast<bool>(robotStatus & (uint32_t)RobotStatusFlag::CALM_POWER_MODE);
+  _isInLowPowerMode = static_cast<bool>(robotStatus & (uint32_t)CLAD(RobotStatusFlag)::CALM_POWER_MODE);
   _robotWasMoving = robotIsMoving;
 
   // Check if we are playing audio through the speaker. Add a small delay after the speaker
@@ -820,21 +825,21 @@ void MicDataProcessor::UpdateBeatDetector(const AudioUtil::AudioSample* const sa
     
     const bool beatDetected = _beatDetector->AddSamples(samples, nSamples);
     if (beatDetected) {
-      auto beatMessage = RobotInterface::BeatDetectorState{_beatDetector->GetLatestBeat()};
-      auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(beatMessage));
+      auto beatMessage = CLAD(RobotInterface)::BeatDetectorState{_beatDetector->GetLatestBeat()};
+      auto engineMessage = std::make_unique<CLAD(RobotInterface)::RobotToEngine>(std::move(beatMessage));
       _micDataSystem->SendMessageToEngine(std::move(engineMessage));
     }
   }
 }
   
-void MicDataProcessor::ProcessMicDataPayload(const RobotInterface::MicData& payload)
+void MicDataProcessor::ProcessMicDataPayload(const CLAD(RobotInterface)::MicData& payload)
 {
   // Store off this next job
   std::lock_guard<std::mutex> lock(_rawMicDataMutex);
   if (!_muteMics) {
     // Use whichever buffer is currently _not_ being processed
     auto& bufferToUse = (_rawAudioProcessingIndex == 1) ? _rawAudioBuffers[0] : _rawAudioBuffers[1];
-    RobotInterface::MicData& nextJob = bufferToUse.push_back();
+    CLAD(RobotInterface)::MicData& nextJob = bufferToUse.push_back();
     nextJob = payload;
   }
 }

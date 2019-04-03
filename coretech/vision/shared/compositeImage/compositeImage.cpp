@@ -22,6 +22,14 @@
 
 #define LOG_CHANNEL "CompositeImage"
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::ns
+#define CLAD_VISION(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD(ns) ns
+#define CLAD_VISION(ns) ns
+#endif
+
 namespace Anki {
 namespace Vision {
 
@@ -88,20 +96,20 @@ CompositeImage::CompositeImage(ConstHSImageHandle faceHSImageHandle,
   auto img = spriteHandle->GetSpriteContentsGrayscale();
   _width = img.GetNumCols();
   _height = img.GetNumRows();
-  SpriteRenderConfig renderConfig;
+  CLAD_VISION(SpriteRenderConfig) renderConfig;
   renderConfig.renderMethod = shouldRenderRGBA ?
-                                SpriteRenderMethod::RGBA :
-                                SpriteRenderMethod::CustomHue;
-  SpriteBox sb(Vision::SpriteBoxName::StaticBackground,
+                                CLAD_VISION(SpriteRenderMethod)::RGBA :
+                                CLAD_VISION(SpriteRenderMethod)::CustomHue;
+  SpriteBox sb(CLAD_VISION(SpriteBoxName)::StaticBackground,
                renderConfig,
                topLeftCorner, 
                img.GetNumCols(),
                img.GetNumRows());
 
   CompositeImageLayer::LayoutMap layout;
-  layout.emplace(Vision::SpriteBoxName::StaticBackground, sb);
-  CompositeImageLayer layer(Vision::LayerName::StaticBackground, std::move(layout));
-  layer.AddToImageMap(Vision::SpriteBoxName::StaticBackground, SpriteEntry(spriteHandle));
+  layout.emplace(CLAD_VISION(SpriteBoxName)::StaticBackground, sb);
+  CompositeImageLayer layer(CLAD_VISION(LayerName)::StaticBackground, std::move(layout));
+  layer.AddToImageMap(CLAD_VISION(SpriteBoxName)::StaticBackground, SpriteEntry(spriteHandle));
   AddLayer(std::move(layer));
 }
 
@@ -129,21 +137,21 @@ CompositeImage::CompositeImage(ConstHSImageHandle faceHSImageHandle,
   auto img = handle->GetSpriteContentsGrayscale();
   _width = img.GetNumCols();
   _height = img.GetNumRows();
-  SpriteRenderConfig renderConfig;
+  CLAD_VISION(SpriteRenderConfig) renderConfig;
   renderConfig.renderMethod = shouldRenderRGBA ?
-                                SpriteRenderMethod::RGBA :
-                                SpriteRenderMethod::CustomHue;
-  SpriteBox sb(Vision::SpriteBoxName::StaticBackground,
+                                CLAD_VISION(SpriteRenderMethod)::RGBA :
+                                CLAD_VISION(SpriteRenderMethod)::CustomHue;
+  SpriteBox sb(CLAD_VISION(SpriteBoxName)::StaticBackground,
                renderConfig,
                topLeftCorner, 
                img.GetNumCols(),
                img.GetNumRows());
 
   CompositeImageLayer::LayoutMap layout;
-  layout.emplace(Vision::SpriteBoxName::StaticBackground, sb);
-  CompositeImageLayer layer(Vision::LayerName::StaticBackground, std::move(layout));
+  layout.emplace(CLAD_VISION(SpriteBoxName)::StaticBackground, sb);
+  CompositeImageLayer layer(CLAD_VISION(LayerName)::StaticBackground, std::move(layout));
   Vision::SpriteSequence intentionalCopy = *spriteSeq;
-  layer.AddToImageMap(Vision::SpriteBoxName::StaticBackground, SpriteEntry(std::move(intentionalCopy)));
+  layer.AddToImageMap(CLAD_VISION(SpriteBoxName)::StaticBackground, SpriteEntry(std::move(intentionalCopy)));
   AddLayer(std::move(layer));
 }
 
@@ -154,9 +162,9 @@ CompositeImage::~CompositeImage()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::vector<CompositeImageChunk> CompositeImage::GetImageChunks(bool emptySpriteBoxesAreValid) const
+std::vector<CLAD_VISION(CompositeImageChunk)> CompositeImage::GetImageChunks(bool emptySpriteBoxesAreValid) const
 {
-  CompositeImageChunk baseChunk;
+  CLAD_VISION(CompositeImageChunk) baseChunk;
   // Add all of the values that are constant across all chunks
   baseChunk.imageWidth  = _width;
   baseChunk.imageHeight = _height;
@@ -164,7 +172,7 @@ std::vector<CompositeImageChunk> CompositeImage::GetImageChunks(bool emptySprite
 
   // Iterate through all layers/sprite boxes adding one chunk per sprite box to the
   // chunks vector
-  std::vector<CompositeImageChunk> chunks;
+  std::vector<CLAD_VISION(CompositeImageChunk)> chunks;
   int layerIdx = 0;
   // For each Layer in the CompositeImage
   for(auto& layerPair : _layerMap){
@@ -234,22 +242,28 @@ bool CompositeImage::AddLayer(CompositeImageLayer&& layer)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CompositeImage::ClearLayerByName(LayerName name)
+void CompositeImage::ClearLayerByName(CLAD_VISION(LayerName) name)
 {
   const auto numRemoved = _layerMap.erase(name);
   if(numRemoved == 0){
+#ifndef USES_CLAD_CPPLITE
     LOG_WARNING("CompositeImage.ClearLayerByName.LayerNotFound",
                 "Layer %s not found in composite image",
                 LayerNameToString(name));
+#else
+    LOG_WARNING("CompositeImage.ClearLayerByName.LayerNotFound",
+                "Layer %s not found in composite image",
+                EnumToString(name));
+#endif
   }
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CompositeImage::AddImage(SpriteHandle handle,
-                              const SpriteBoxName& sbName,
-                              const LayerName& layerName,
-                              const SpriteRenderMethod& renderMethod,
+                              const CLAD_VISION(SpriteBoxName)& sbName,
+                              const CLAD_VISION(LayerName)& layerName,
+                              const CLAD_VISION(SpriteRenderMethod)& renderMethod,
                               const int xPos,
                               const int yPos,
                               const int width,
@@ -260,14 +274,22 @@ void CompositeImage::AddImage(SpriteHandle handle,
     iter = _layerMap.emplace(layerName, layerName).first;
   }
 
-  SpriteRenderConfig renderConfig(0, 0, renderMethod, 0);
+#ifdef USES_CLAD_CPPLITE
+  CLAD_VISION(SpriteRenderConfig) renderConfig;
+  renderConfig.hue = 0;
+  renderConfig.saturation = 0;
+  renderConfig.renderMethod = renderMethod;
+  renderConfig.padding = 0;
+#else
+  CLAD_VISION(SpriteRenderConfig) renderConfig(0, 0, renderMethod, 0);
+#endif
   iter->second.AddToLayout(sbName, SpriteBox(sbName, renderConfig, Point2i(xPos, yPos), width, height));
   iter->second.AddToImageMap(sbName, SpriteEntry(handle));
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-CompositeImageLayer* CompositeImage::GetLayerByName(LayerName name)
+CompositeImageLayer* CompositeImage::GetLayerByName(CLAD_VISION(LayerName) name)
 {
   auto iter = _layerMap.find(name);
   if(iter != _layerMap.end()){
@@ -281,14 +303,14 @@ CompositeImageLayer* CompositeImage::GetLayerByName(LayerName name)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
                                            const u32 frameIdx,
-                                           std::set<Vision::LayerName> layersToIgnore) const
+                                           std::set<CLAD_VISION(LayerName)> layersToIgnore) const
 {
   ANKI_CPU_PROFILE("CompositeImage::OverlayImageWithFrame");
 
   bool firstImage = true;
 
   auto callback = [this, &baseImage, &frameIdx, &layersToIgnore, &firstImage]
-                     (Vision::LayerName layerName, SpriteBoxName spriteBoxName, 
+                     (CLAD_VISION(LayerName) layerName, CLAD_VISION(SpriteBoxName) spriteBoxName, 
                       const SpriteBox& spriteBox, const SpriteEntry& spriteEntry){
     if(layersToIgnore.find(layerName) != layersToIgnore.end()){
       return;
@@ -308,7 +330,7 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
       const bool drawBlankPixels = firstImage;
       firstImage = false;
       switch(spriteBox.renderConfig.renderMethod){
-        case SpriteRenderMethod::RGBA:
+        case CLAD_VISION(SpriteRenderMethod)::RGBA:
         {
           // Check to see if the RGBA image is cached
           if(handle->IsContentCached().rgba){
@@ -329,8 +351,8 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
         // Note: CustomHue is treated the same as eye color for now to support legacy animations.
         // Nothing currently makes use of true custom hue assignment, so the SpriteBoxKeyFrame 
         // doesn't support it.
-        case SpriteRenderMethod::CustomHue:
-        case SpriteRenderMethod::EyeColor:
+        case CLAD_VISION(SpriteRenderMethod)::CustomHue:
+        case CLAD_VISION(SpriteRenderMethod)::EyeColor:
         {
           Vision::HueSatWrapper::ImageSize imageSize(static_cast<uint32_t>(height),
                                                      static_cast<uint32_t>(width));
@@ -378,10 +400,17 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
         }
         default:
         {
+#ifndef USES_CLAD_CPPLITE
           LOG_ERROR("CompositeImage.OverlayImageWithFrame.InvalidRenderMethod",
                     "Layer %s Sprite Box %s does not have a valid render method",
                     LayerNameToString(layerName),
                     SpriteBoxNameToString(spriteBoxName));
+#else
+          LOG_ERROR("CompositeImage.OverlayImageWithFrame.InvalidRenderMethod",
+                    "Layer %s Sprite Box %s does not have a valid render method",
+                    EnumToString(layerName),
+                    EnumToString(spriteBoxName));
+#endif
           break;
         }
       } // end switch
@@ -394,9 +423,15 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
       baseImage.DrawLine(spriteBoxRect.GetTopLeft(), spriteBoxRect.GetBottomRight(), Anki::NamedColors::RED);
       baseImage.DrawLine(spriteBoxRect.GetBottomLeft(), spriteBoxRect.GetTopRight(), Anki::NamedColors::RED);
 #endif
+#ifndef USES_CLAD_CPPLITE
       LOG_ERROR("CompositeImage.OverlayImageWithFrame.NoImageForSpriteBox",
                 "Sprite Box %s will not be rendered - no valid image found",
                 SpriteBoxNameToString(spriteBoxName));
+#else
+      LOG_ERROR("CompositeImage.OverlayImageWithFrame.NoImageForSpriteBox",
+                "Sprite Box %s will not be rendered - no valid image found",
+                EnumToString(spriteBoxName));
+#endif
     }
   };
   ProcessAllSpriteBoxes(callback);
@@ -407,7 +442,7 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
 uint CompositeImage::GetFullLoopLength()
 {
   uint maxSequenceLength = 0;
-  auto callback = [&maxSequenceLength](Vision::LayerName layerName, SpriteBoxName spriteBoxName, 
+  auto callback = [&maxSequenceLength](CLAD_VISION(LayerName) layerName, CLAD_VISION(SpriteBoxName) spriteBoxName, 
                                        const SpriteBox& spriteBox, const SpriteEntry& spriteEntry){
     const auto numFrames = spriteEntry.GetNumFrames();
     maxSequenceLength = (numFrames > maxSequenceLength) ? numFrames : maxSequenceLength;
@@ -420,9 +455,9 @@ uint CompositeImage::GetFullLoopLength()
 
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CompositeImage::OverrideRenderMethod(Anki::Vision::SpriteRenderMethod renderMethod)
+void CompositeImage::OverrideRenderMethod(CLAD_VISION(SpriteRenderMethod) renderMethod)
 {
-  auto callback = [&renderMethod](Vision::LayerName layerName, SpriteBoxName spriteBoxName,
+  auto callback = [&renderMethod](CLAD_VISION(LayerName) layerName, CLAD_VISION(SpriteBoxName) spriteBoxName,
                      SpriteBox& spriteBox, SpriteEntry& spriteEntry){
     spriteBox.renderConfig.renderMethod = renderMethod;
   };
@@ -434,16 +469,17 @@ void CompositeImage::OverrideRenderMethod(Anki::Vision::SpriteRenderMethod rende
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CompositeImage::CacheInternalSprites(Vision::SpriteCache* cache, const TimeStamp_t endTime_ms)
 {
-  auto callback = [cache, endTime_ms](Vision::LayerName layerName, SpriteBoxName spriteBoxName, 
+  auto callback = [cache, endTime_ms](CLAD_VISION(LayerName) layerName, CLAD_VISION(SpriteBoxName) spriteBoxName, 
                                        const SpriteBox& spriteBox, const SpriteEntry& spriteEntry){
     const auto numFrames = spriteEntry.GetNumFrames();
     Vision::SpriteHandle handle;
     for(auto i = 0; i < numFrames; i++){
+#ifndef USES_CLAD_CPPLITE
       if(ANKI_VERIFY(spriteEntry.GetFrame(i, handle),
                      "CompositeImage.CacheInternalSprites.FailedToGetFrame", 
                      "Get Frame %d failed for layer %s and spriteBoxName %s",
                      i, LayerNameToString(layerName), SpriteBoxNameToString(spriteBoxName))){
-        const bool cacheRGBA = (spriteBox.renderConfig.renderMethod == SpriteRenderMethod::RGBA);
+        const bool cacheRGBA = (spriteBox.renderConfig.renderMethod == CLAD_VISION(SpriteRenderMethod)::RGBA);
         ISpriteWrapper::ImgTypeCacheSpec cacheSpec;
         cacheSpec.grayscale = !cacheRGBA;
         cacheSpec.rgba = cacheRGBA;
@@ -452,6 +488,21 @@ void CompositeImage::CacheInternalSprites(Vision::SpriteCache* cache, const Time
                                                   spriteBox.renderConfig.saturation);
         cache->CacheSprite(handle, cacheSpec, endTime_ms, hs);
       }
+#else
+      if(ANKI_VERIFY(spriteEntry.GetFrame(i, handle),
+                     "CompositeImage.CacheInternalSprites.FailedToGetFrame", 
+                     "Get Frame %d failed for layer %s and spriteBoxName %s",
+                     i, EnumToString(layerName), EnumToString(spriteBoxName))){
+        const bool cacheRGBA = (spriteBox.renderConfig.renderMethod == CLAD_VISION(SpriteRenderMethod)::RGBA);
+        ISpriteWrapper::ImgTypeCacheSpec cacheSpec;
+        cacheSpec.grayscale = !cacheRGBA;
+        cacheSpec.rgba = cacheRGBA;
+
+        auto hs = std::make_shared<HueSatWrapper>(spriteBox.renderConfig.hue, 
+                                                  spriteBox.renderConfig.saturation);
+        cache->CacheSprite(handle, cacheSpec, endTime_ms, hs);
+      }
+#endif
     }
   };
 
@@ -460,7 +511,7 @@ void CompositeImage::CacheInternalSprites(Vision::SpriteCache* cache, const Time
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void CompositeImage::AddEmptyLayer(SpriteSequenceContainer* seqContainer, Vision::LayerName layerName)
+void CompositeImage::AddEmptyLayer(SpriteSequenceContainer* seqContainer, CLAD_VISION(LayerName) layerName)
 {
   Json::Reader reader;
   Json::Value config;
@@ -470,11 +521,15 @@ void CompositeImage::AddEmptyLayer(SpriteSequenceContainer* seqContainer, Vision
   }
   
 
+#ifndef USES_CLAD_CPPLITE
   config[CompositeImageConfigKeys::kLayerNameKey] =  LayerNameToString(layerName);
+#else
+  config[CompositeImageConfigKeys::kLayerNameKey] =  EnumToString(layerName);
+#endif
   static CompositeImageLayer layer(config);
   if(layer.GetImageMap().size() == 0){
     CompositeImageLayer::SpriteEntry entry(_spriteCache, seqContainer, kEmptySpriteName);
-    layer.AddToImageMap(SpriteBoxName::EmptyBox, entry);
+    layer.AddToImageMap(CLAD_VISION(SpriteBoxName)::EmptyBox, entry);
   }
   auto intentionalCopy = layer;
   AddLayer(std::move(intentionalCopy));
@@ -521,15 +576,15 @@ void CompositeImage::UpdateAllSpriteBoxes(UpdateSpriteBoxDataFunc updateCallback
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-HSImageHandle CompositeImage::HowToRenderRGBA(const SpriteRenderConfig& config) const
+HSImageHandle CompositeImage::HowToRenderRGBA(const CLAD_VISION(SpriteRenderConfig)& config) const
 {
   HSImageHandle hsImageHandle;
   switch(config.renderMethod){
-    case SpriteRenderMethod::RGBA:
+    case CLAD_VISION(SpriteRenderMethod)::RGBA:
     {
       break;
     }
-    case SpriteRenderMethod::CustomHue:
+    case CLAD_VISION(SpriteRenderMethod)::CustomHue:
     {      
       const bool shouldRenderInEyeHue = (config.hue == 0) &&
                                         (config.saturation == 0);
@@ -574,6 +629,7 @@ void CompositeImage::VerifySubImageProperties(const ImageType& image, const Spri
   sb.GetPositionForFrame(frameIdx, topCornerInt, width, height);
 
   // dev only verification that image size is as expected
+#ifndef USES_CLAD_CPPLITE
   ANKI_VERIFY(width == image.GetNumCols(), 
               "CompositeImage.DrawSubImage.InvalidWidth",
               "Quadrant Name:%s Expected Width:%d, Image Width:%d",
@@ -582,6 +638,16 @@ void CompositeImage::VerifySubImageProperties(const ImageType& image, const Spri
               "CompositeImage.DrawSubImage.InvalidHeight",
               "Quadrant Name:%s Expected Height:%d, Image Height:%d",
               SpriteBoxNameToString(sb.spriteBoxName), height, image.GetNumRows());
+#else
+  ANKI_VERIFY(width == image.GetNumCols(), 
+              "CompositeImage.DrawSubImage.InvalidWidth",
+              "Quadrant Name:%s Expected Width:%d, Image Width:%d",
+              EnumToString(sb.spriteBoxName), width, image.GetNumCols());
+  ANKI_VERIFY(height == image.GetNumRows(), 
+              "CompositeImage.DrawSubImage.InvalidHeight",
+              "Quadrant Name:%s Expected Height:%d, Image Height:%d",
+              EnumToString(sb.spriteBoxName), height, image.GetNumRows());
+#endif
 }
 
 

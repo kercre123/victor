@@ -32,6 +32,12 @@
 // 2 == Assumes total dist travelled per tic is discounted more the sharper you turn
 #define SLIP_MODELLING 2
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
   namespace Vector {
     namespace Localization {
@@ -394,8 +400,8 @@ namespace Anki {
       Result Init() {
         SetCurrPose(0,0,0);
 
-        prevLeftWheelPos_ = HAL::MotorGetPosition(MotorID::MOTOR_LEFT_WHEEL);
-        prevRightWheelPos_ = HAL::MotorGetPosition(MotorID::MOTOR_RIGHT_WHEEL);
+        prevLeftWheelPos_ = HAL::MotorGetPosition(CLAD(MotorID)::MOTOR_LEFT_WHEEL);
+        prevRightWheelPos_ = HAL::MotorGetPosition(CLAD(MotorID)::MOTOR_RIGHT_WHEEL);
 
         gyroRotOffset_ =  -IMUFilter::GetRotation();
 
@@ -432,8 +438,8 @@ namespace Anki {
 
         // Update current pose estimate based on wheel motion
 
-        f32 currLeftWheelPos = HAL::MotorGetPosition(MotorID::MOTOR_LEFT_WHEEL);
-        f32 currRightWheelPos = HAL::MotorGetPosition(MotorID::MOTOR_RIGHT_WHEEL);
+        f32 currLeftWheelPos = HAL::MotorGetPosition(CLAD(MotorID)::MOTOR_LEFT_WHEEL);
+        f32 currRightWheelPos = HAL::MotorGetPosition(CLAD(MotorID)::MOTOR_RIGHT_WHEEL);
 
         // Compute distance traveled by each wheel
         f32 lDist = currLeftWheelPos - prevLeftWheelPos_;
@@ -639,8 +645,8 @@ namespace Anki {
         // Set orientation according to gyro
         orientation_ = IMUFilter::GetRotation() + gyroRotOffset_;
 
-        prevLeftWheelPos_ = HAL::MotorGetPosition(MotorID::MOTOR_LEFT_WHEEL);
-        prevRightWheelPos_ = HAL::MotorGetPosition(MotorID::MOTOR_RIGHT_WHEEL);
+        prevLeftWheelPos_ = HAL::MotorGetPosition(CLAD(MotorID)::MOTOR_LEFT_WHEEL);
+        prevRightWheelPos_ = HAL::MotorGetPosition(CLAD(MotorID)::MOTOR_RIGHT_WHEEL);
         
 
 #if(USE_OVERLAY_DISPLAY)

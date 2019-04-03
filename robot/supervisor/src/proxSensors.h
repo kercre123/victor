@@ -19,6 +19,12 @@
 
 #include "coretech/common/shared/types.h"
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
   
   namespace Vector {
@@ -59,10 +65,12 @@ namespace Anki {
       u16 GetCliffValue(u32 ind);
 
       // Get corrected ToF distance sensor data
-      ProxSensorDataRaw GetProxData();
+      CLAD(ProxSensorDataRaw) GetProxData();
 
     } // namespace ProxSensors
   } // namespace Vector
 } // namespace Anki
+
+#undef CLAD
 
 #endif // PROX_SENSORS_H_

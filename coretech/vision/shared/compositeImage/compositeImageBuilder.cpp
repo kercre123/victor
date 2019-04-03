@@ -16,13 +16,21 @@
 
 #include "coretech/vision/shared/compositeImage/compositeImageBuilder.h"
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::ns
+#define CLAD_VISION(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD(ns) ns
+#define CLAD_VISION(ns) ns
+#endif
+
 namespace Anki {
 namespace Vision {
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImageBuilder::CompositeImageBuilder(SpriteCache* cache,
                                              SpriteSequenceContainer* seqContainer,
-                                             const CompositeImageChunk& chunk)
+                                             const CLAD_VISION(CompositeImageChunk)& chunk)
 : _expectedNumLayers(chunk.layerMax)
 , _width(chunk.imageWidth)
 , _height(chunk.imageHeight)
@@ -41,7 +49,7 @@ CompositeImageBuilder::~CompositeImageBuilder()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CompositeImageBuilder::AddImageChunk(SpriteCache* cache,
                                           SpriteSequenceContainer* seqContainer,
-                                          const CompositeImageChunk& chunk)
+                                          const CLAD_VISION(CompositeImageChunk)& chunk)
 {
   // Find or create the layer within the builder
   auto layerIter = _layerMap.find(chunk.layerName);
@@ -53,6 +61,7 @@ bool CompositeImageBuilder::AddImageChunk(SpriteCache* cache,
   }
 
   const auto& layout = layerIter->second.GetLayoutMap();
+#ifndef USES_CLAD_CPPLITE
   if(ANKI_VERIFY(layout.find(chunk.spriteBox.name) == layout.end(),
                  "CompositeImageBuilder.AddImageChunk.SpriteBoxAlreadySet",
                  "Sprite box %s already set for image %s",
@@ -68,6 +77,23 @@ bool CompositeImageBuilder::AddImageChunk(SpriteCache* cache,
       layerIter->second.AddToImageMap(cache, seqContainer, chunk.spriteBox.name, assetName);
     } 
   }
+#else
+  if(ANKI_VERIFY(layout.find(chunk.spriteBox.name) == layout.end(),
+                 "CompositeImageBuilder.AddImageChunk.SpriteBoxAlreadySet",
+                 "Sprite box %s already set for image %s",
+                 EnumToString(chunk.spriteBox.name),
+                 EnumToString(chunk.layerName))){
+    // Add sprite box to map
+    CompositeImageLayer::SpriteBox sb(chunk.spriteBox);
+    layerIter->second.AddToLayout(chunk.spriteBox.name, std::move(sb));
+
+    // If its an empty SpriteBox, don't add it to the image map
+    if(Vision::SpritePathMap::kEmptySpriteBoxID != chunk.assetID){
+      std::string assetName = cache->GetSpritePathMap()->GetAssetName(chunk.assetID);
+      layerIter->second.AddToImageMap(cache, seqContainer, chunk.spriteBox.name, assetName);
+    } 
+  }
+#endif
 
   return true;
 }

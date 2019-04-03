@@ -29,12 +29,13 @@ target_link_libraries(test_animprocess
   PRIVATE
   # anki libs
   victor_anim
-  cti_common
-  engine_clad
+  cti_common_robot
+  cti_vision
+#  engine_clad
   cameraService
-  cubeBleClient
-  osState
-  util
+#  cubeBleClient
+#  osState
+#  util
   gtest
   # platform
   ${PLATFORM_LIBS}

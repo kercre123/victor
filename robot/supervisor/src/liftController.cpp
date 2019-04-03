@@ -17,6 +17,12 @@
 
 #include <math.h>
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 #define DEBUG_LIFT_CONTROLLER 0
 
 // In order to allow charging even when the processes are
@@ -149,7 +155,7 @@ namespace Anki {
         bool firstCalibration_ = true;
         
         // Keep track of why we started a calibration, so that we can report this to DAS once the calibration completes
-        MotorCalibrationReason calibrationReason_ = MotorCalibrationReason::Startup;
+        CLAD(MotorCalibrationReason) calibrationReason_ = CLAD(MotorCalibrationReason)::Startup;
 
         // Last time lift movement was detected
         u32 lastLiftMovedTime_ms = 0;
@@ -219,7 +225,7 @@ namespace Anki {
       void SetPower(f32 power)
       {
         power_ = power;
-        HAL::MotorSetPower(MotorID::MOTOR_LIFT, power_);
+        HAL::MotorSetPower(CLAD(MotorID)::MOTOR_LIFT, power_);
       }
 
       void EnableInternal()
@@ -270,7 +276,7 @@ namespace Anki {
         DisableInternal(autoReEnable);
       }
 
-      void StartCalibrationRoutine(const bool autoStarted, const MotorCalibrationReason& reason)
+      void StartCalibrationRoutine(const bool autoStarted, const CLAD(MotorCalibrationReason)& reason)
       {
       
         calibrationReason_ = reason;
@@ -278,7 +284,7 @@ namespace Anki {
         isCalibrated_ = false;
         inPosition_ = false;
         potentialBurnoutStartTime_ms_ = 0;
-        Messages::SendMotorCalibrationMsg(MotorID::MOTOR_LIFT, true, autoStarted);
+        Messages::SendMotorCalibrationMsg(CLAD(MotorID)::MOTOR_LIFT, true, autoStarted);
         angleErrorSum_ = 0.f;
       }
 
@@ -317,7 +323,7 @@ namespace Anki {
         
         // Log DAS, but not if this is a calibration due to normal startup
         const u32 timeUncalibrated_ms = encoderInvalidStartTime_ms_ > 0 ? HAL::GetTimeStamp() - encoderInvalidStartTime_ms_ : 0;
-        if (calibrationReason_ != MotorCalibrationReason::Startup) {
+        if (calibrationReason_ != CLAD(MotorCalibrationReason)::Startup) {
           DASMSG(lift_motor_calibrated,
                  "lift_motor_calibrated",
                  "The robot's lift motor has just completed a calibration");
@@ -338,7 +344,7 @@ namespace Anki {
               break;
 
             case LCS_LOWER_LIFT:
-              SetPower(HAL::MotorGetCalibPower(MotorID::MOTOR_LIFT));
+              SetPower(HAL::MotorGetCalibPower(CLAD(MotorID)::MOTOR_LIFT));
               lastLiftMovedTime_ms = HAL::GetTimeStamp();
               lowLiftAngleDuringCalib_rad_ = currentAngle_rad_;
               liftAngleHigherThanCalibAbortAngleCount_ = 0;
@@ -369,8 +375,8 @@ namespace Anki {
               if (HAL::GetTimeStamp() - lastLiftMovedTime_ms > LIFT_RELAX_TIME_MS) {
                 OnMotorCalibrated();
 
-                HAL::MotorResetPosition(MotorID::MOTOR_LIFT);
-                prevHalPos_ = HAL::MotorGetPosition(MotorID::MOTOR_LIFT);
+                HAL::MotorResetPosition(CLAD(MotorID)::MOTOR_LIFT);
+                prevHalPos_ = HAL::MotorGetPosition(CLAD(MotorID)::MOTOR_LIFT);
                 calState_ = LCS_COMPLETE;
                 // Intentional fall-through
               } else {
@@ -381,7 +387,7 @@ namespace Anki {
               // Turn off motor
               SetPower(0.f);
 
-              Messages::SendMotorCalibrationMsg(MotorID::MOTOR_LIFT, false);
+              Messages::SendMotorCalibrationMsg(CLAD(MotorID)::MOTOR_LIFT, false);
 
               isCalibrated_ = true;
               firstCalibration_ = false;
@@ -480,11 +486,11 @@ namespace Anki {
       void PoseAndSpeedFilterUpdate()
       {
         // Update position
-        const f32 currHalPos = HAL::MotorGetPosition(MotorID::MOTOR_LIFT);
+        const f32 currHalPos = HAL::MotorGetPosition(CLAD(MotorID)::MOTOR_LIFT);
         currentAngle_rad_ += (currHalPos - prevHalPos_);
 
         // Get encoder speed measurements
-        f32 measuredSpeed = Vector::HAL::MotorGetSpeed(MotorID::MOTOR_LIFT);
+        f32 measuredSpeed = Vector::HAL::MotorGetSpeed(CLAD(MotorID)::MOTOR_LIFT);
         
         radSpeed_ = (measuredSpeed *
                      (1.0f - SPEED_FILTERING_COEFF) +
@@ -492,7 +498,7 @@ namespace Anki {
 
 #if(DEBUG_LIFT_CONTROLLER)
         AnkiDebug( "LiftController", "LIFT FILT: speed %f, speedFilt %f, currentAngle %f, currHalPos %f, prevPos %f, pwr %f\n",
-              measuredSpeed, radSpeed_, currentAngle_rad_, HAL::MotorGetPosition(MotorID::MOTOR_LIFT), prevHalPos_, power_);
+              measuredSpeed, radSpeed_, currentAngle_rad_, HAL::MotorGetPosition(CLAD(MotorID)::MOTOR_LIFT), prevHalPos_, power_);
 #endif      
         prevHalPos_ = currHalPos;
       }
@@ -687,13 +693,13 @@ namespace Anki {
           if (IsInPosition() || IMUFilter::IsBeingHeld() || ProxSensors::IsAnyCliffDetected()) {
             // Stop messing with the lift! Going limp until you do!
             AnkiInfo("LiftController.MotorBurnoutProtection.GoingLimp", "");
-            Messages::SendMotorAutoEnabledMsg(MotorID::MOTOR_LIFT, false);
+            Messages::SendMotorAutoEnabledMsg(CLAD(MotorID)::MOTOR_LIFT, false);
             DisableInternal(true);
           } else {
             // Burnout protection triggered. Recalibrating.
             AnkiInfo("LiftController.MotorBurnoutProtection.Recalibrating", "");
             const bool autoStarted = true;
-            StartCalibrationRoutine(autoStarted, MotorCalibrationReason::LiftMotorBurnoutProtection);
+            StartCalibrationRoutine(autoStarted, CLAD(MotorCalibrationReason)::LiftMotorBurnoutProtection);
           }
           return true;
         }
@@ -761,7 +767,7 @@ namespace Anki {
             enableAtTime_ms_ = currTime + REENABLE_TIMEOUT_MS;
             return RESULT_OK;
           } else if (enabledExternally_ && currTime >= enableAtTime_ms_) {
-            Messages::SendMotorAutoEnabledMsg(MotorID::MOTOR_LIFT, true);
+            Messages::SendMotorAutoEnabledMsg(CLAD(MotorID)::MOTOR_LIFT, true);
             EnableInternal();
           } else {
             return RESULT_OK;
@@ -918,9 +924,9 @@ namespace Anki {
       }
 
       void SendLiftLoadMessage(bool hasLoad) {
-        RobotInterface::LiftLoad msg;
+        CLAD(RobotInterface)::LiftLoad msg;
         msg.hasLoad = hasLoad;
-        RobotInterface::SendMessage(msg);
+        SendMessage(msg);
       }
 
       void CheckForLoad(void (*callback)(bool))

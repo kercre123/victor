@@ -30,6 +30,12 @@
 // clamped to prevent driving off of cliffs
 #define CLAMP_TO_CLIFF_SAFE_SPEEDS 0
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki
 {
   namespace Vector
@@ -85,12 +91,12 @@ namespace Anki
         return RESULT_OK;
       }
 
-      void SendPathFollowingEvent(PathEventType event)
+      void SendPathFollowingEvent(CLAD(PathEventType) event)
       {
-        RobotInterface::PathFollowingEvent pathEventMsg;
+        CLAD(RobotInterface)::PathFollowingEvent pathEventMsg;
         pathEventMsg.pathID = lastPathID_;
         pathEventMsg.eventType = event;
-        RobotInterface::SendMessage(pathEventMsg);
+        SendMessage(pathEventMsg);
       }
 
       f32 GetCurrentSegmentTargetSpeed()
@@ -118,7 +124,7 @@ namespace Anki
           if(!didCompletePath && currentPathIsExternal_)
           {
             // Send a path interruption event iff we were following an externally-specified path when cleared
-            SendPathFollowingEvent(PathEventType::PATH_INTERRUPTED);
+            SendPathFollowingEvent(CLAD(PathEventType)::PATH_INTERRUPTED);
           }
         }
 
@@ -233,7 +239,7 @@ namespace Anki
         // If we were already following an externally-specified path, send an interruption event.
         if(IsTraversingPath() && currentPathIsExternal_)
         {
-          SendPathFollowingEvent(PathEventType::PATH_INTERRUPTED);
+          SendPathFollowingEvent(CLAD(PathEventType)::PATH_INTERRUPTED);
         }
 
         // Set first path segment
@@ -276,7 +282,7 @@ namespace Anki
         {
           // update the lastPathID and send an event that we're starting a new externally-specified path
           lastPathID_ = path_id;
-          SendPathFollowingEvent(PathEventType::PATH_STARTED);
+          SendPathFollowingEvent(CLAD(PathEventType)::PATH_STARTED);
         }
 
         return TRUE;
@@ -415,7 +421,7 @@ namespace Anki
         // Send a path completion event iff this is an externally-specified path
         if(currentPathIsExternal_)
         {
-          SendPathFollowingEvent(PathEventType::PATH_COMPLETED);
+          SendPathFollowingEvent(CLAD(PathEventType)::PATH_COMPLETED);
         }
 
         // Pass in "true" to signify that we _did_ complete the path (so don't send an Interruption event, since

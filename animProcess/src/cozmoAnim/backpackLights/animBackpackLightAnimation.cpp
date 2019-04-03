@@ -13,7 +13,7 @@
 #include "cozmoAnim/backpackLights/animBackpackLightAnimation.h"
 #include "coretech/common/engine/jsonTools.h"
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
 #else
 #define CLAD_VECTOR(ns) ns

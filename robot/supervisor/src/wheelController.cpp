@@ -15,6 +15,12 @@
 
 #define DEBUG_WHEEL_CONTROLLER 0
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
   namespace Vector {
   namespace WheelController {
@@ -82,8 +88,8 @@ namespace Anki {
 
         power_l_ = 0.f;
         power_r_ = 0.f;
-        HAL::MotorSetPower(MotorID::MOTOR_LEFT_WHEEL, power_l_);
-        HAL::MotorSetPower(MotorID::MOTOR_RIGHT_WHEEL, power_r_);
+        HAL::MotorSetPower(CLAD(MotorID)::MOTOR_LEFT_WHEEL, power_l_);
+        HAL::MotorSetPower(CLAD(MotorID)::MOTOR_RIGHT_WHEEL, power_r_);
 
         enable_ = false;
       }
@@ -203,8 +209,8 @@ namespace Anki {
 #endif
 
       //Command the computed motor power values
-      HAL::MotorSetPower(MotorID::MOTOR_LEFT_WHEEL, power_l_);
-      HAL::MotorSetPower(MotorID::MOTOR_RIGHT_WHEEL, power_r_);
+      HAL::MotorSetPower(CLAD(MotorID)::MOTOR_LEFT_WHEEL, power_l_);
+      HAL::MotorSetPower(CLAD(MotorID)::MOTOR_RIGHT_WHEEL, power_r_);
 
     } // Run()
 
@@ -214,8 +220,8 @@ namespace Anki {
     void EncoderSpeedFilterIteration(void)
     {
       // Get encoder speed measurements
-      measuredWheelSpeedL_ = Vector::HAL::MotorGetSpeed(MotorID::MOTOR_LEFT_WHEEL);
-      measuredWheelSpeedR_ = Vector::HAL::MotorGetSpeed(MotorID::MOTOR_RIGHT_WHEEL);
+      measuredWheelSpeedL_ = Vector::HAL::MotorGetSpeed(CLAD(MotorID)::MOTOR_LEFT_WHEEL);
+      measuredWheelSpeedR_ = Vector::HAL::MotorGetSpeed(CLAD(MotorID)::MOTOR_RIGHT_WHEEL);
 
       filterWheelSpeedL_ = (measuredWheelSpeedL_ *
                        (1.0f - ENCODER_FILTERING_COEFF) +

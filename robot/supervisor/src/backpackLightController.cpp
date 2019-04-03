@@ -21,7 +21,7 @@
 #include <string.h>
 #include "clad/robotInterface/messageEngineToRobot.h"
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
 #else
 #define CLAD_VECTOR(ns) ns
@@ -34,9 +34,9 @@ namespace BackpackLightController {
   namespace {
 
     // Light parameters for each layer
-    RobotInterface::SetBackpackLights _ledParams[(int)CLAD_VECTOR(BackpackLightLayer)::BPL_NUM_LAYERS];
+    CLAD_VECTOR(RobotInterface)::SetBackpackLights _ledParams[(int)CLAD_VECTOR(BackpackLightLayer)::BPL_NUM_LAYERS];
 
-    RobotInterface::SetSystemLight _sysLedParams;
+    CLAD_VECTOR(RobotInterface)::SetSystemLight _sysLedParams;
     
     CLAD_VECTOR(BackpackLightLayer) _layer;                                    // Currently animated layer
     TimeStamp_t        _ledPhases[(int)CLAD_VECTOR(LEDId)::NUM_BACKPACK_LEDS]; // Time phase of current animation
@@ -53,7 +53,7 @@ namespace BackpackLightController {
     }
   }
 
-  void SetParams(const RobotInterface::SetBackpackLights& params)
+  void SetParams(const CLAD_VECTOR(RobotInterface)::SetBackpackLights& params)
   {
     if (params.layer >= (int)CLAD_VECTOR(BackpackLightLayer)::BPL_NUM_LAYERS) {
       AnkiWarn( "BackpackLightController.SetParams.InvalidLayer", "Layer %d is invalid", (int)params.layer);
@@ -67,7 +67,7 @@ namespace BackpackLightController {
     }
   }
 
-  void SetParams(const RobotInterface::SetSystemLight& params)
+  void SetParams(const CLAD_VECTOR(RobotInterface)::SetSystemLight& params)
   {
     memcpy(&_sysLedParams, &params, sizeof(params));
     _sysLedPhase = HAL::GetTimeStamp();

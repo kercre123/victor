@@ -37,6 +37,12 @@
 
 #include "osState/osState.h"
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
 namespace Anki {
 namespace Vector {
 
@@ -173,11 +179,11 @@ bool InitConnectionFlow(Anim::AnimationStreamer* animStreamer)
   return true;
 }
 
-void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
+void UpdateConnectionFlow(const CLAD_VECTOR(SwitchboardInterface)::SetConnectionStatus& msg,
                           Anim::AnimationStreamer* animStreamer,
                           const Anim::AnimContext* context)
 {
-  using namespace SwitchboardInterface;
+  using namespace CLAD_VECTOR(SwitchboardInterface);
 
   PRINT_NAMED_INFO("ConnectionFlow.UpdateConnectionFlow.NewStatus", "%s", EnumToString(msg.status));
   
@@ -202,7 +208,7 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
     animStreamer->EnableKeepFaceAlive(false, 0);
 
     // Always look up since we're displaying something that user will want to see
-    RobotInterface::SetHeadAngle msg;
+    CLAD_VECTOR(RobotInterface)::SetHeadAngle msg;
     msg.angle_rad             = MAX_HEAD_ANGLE;
     msg.max_speed_rad_per_sec = DEG_TO_RAD(60);
     msg.accel_rad_per_sec2    = DEG_TO_RAD(360);

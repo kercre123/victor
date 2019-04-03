@@ -20,13 +20,29 @@
 #include "coretech/common/shared/types.h"
 #include <map>
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
+#ifdef USES_CLAD_CPPLITE
+namespace CppLite {
+#endif
+  namespace Anki {
+    namespace Vector {
+      namespace RobotInterface {
+        struct AlterStreamingAnimationAtTime;
+        struct EngineToRobot;
+      }
+    }
+  }
+#ifdef USES_CLAD_CPPLITE
+}
+#endif
+
 namespace Anki {
 namespace Vector {
-
-namespace RobotInterface{
-struct AlterStreamingAnimationAtTime;
-struct EngineToRobot;
-}
 
 namespace Anim {
 class AnimationStreamer;
@@ -51,16 +67,16 @@ public:
   // Messages applied after update will be applied after the keyframe's processed (e.g. lock face track after drawing an image)
   void ApplyAlterationsAfterUpdate(AnimationStreamer* streamer);
 
-  void HandleMessage(const RobotInterface::AlterStreamingAnimationAtTime& msg);
+  void HandleMessage(const CLAD_VECTOR(RobotInterface)::AlterStreamingAnimationAtTime& msg);
 
 private:
-  std::multimap<TimeStamp_t, RobotInterface::EngineToRobot> _streamTimeToMessageMap;
+  std::multimap<TimeStamp_t, CLAD_VECTOR(RobotInterface)::EngineToRobot> _streamTimeToMessageMap;
   Audio::EngineRobotAudioInput* _audioInput = nullptr;
   TextToSpeechComponent* _ttsComponent = nullptr;
 
   void ApplyMessagesHelper(AnimationStreamer* streamer, TimeStamp_t streamTime_ms);
-  void ApplyMessageToStreamer(AnimationStreamer* streamer, const RobotInterface::EngineToRobot& msg);
-  void AddToMapStreamMap(TimeStamp_t relativeStreamTime_ms, RobotInterface::EngineToRobot&& msg);
+  void ApplyMessageToStreamer(AnimationStreamer* streamer, const CLAD_VECTOR(RobotInterface)::EngineToRobot& msg);
+  void AddToMapStreamMap(TimeStamp_t relativeStreamTime_ms, CLAD_VECTOR(RobotInterface)::EngineToRobot&& msg);
 
 }; // class StreamingAnimationModifier
   
@@ -69,6 +85,6 @@ private:
 } // namespace Vector
 } // namespace Anki
 
-
+#undef CLAD_VECTOR
 
 #endif /* __Anki_Cozmo_StreamingAnimationModifier_H__ */

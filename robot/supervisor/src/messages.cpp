@@ -29,6 +29,12 @@
 
 #define SEND_TEXT_REDIRECT_TO_STDOUT 0
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
+
 namespace Anki {
   namespace Vector {
     namespace Messages {
@@ -37,7 +43,7 @@ namespace Anki {
 
         u8 pktBuffer_[2048];
 
-        static RobotState robotState_;
+        static CLAD(RobotState) robotState_;
 
         // Flag for receipt of sync message
         bool syncRobotReceived_ = false;
@@ -56,14 +62,16 @@ namespace Anki {
 
 // #pragma mark --- Messages Method Implementations ---
 
-      Result Init()
+      ::Anki::Result Init()
       {
-        return RESULT_OK;
+        return ::Anki::Result::RESULT_OK;
       }
 
-      void ProcessMessage(RobotInterface::EngineToRobot& msg)
+      void ProcessMessage(CLAD(RobotInterface)::EngineToRobot& msg)
       {
-        switch(msg.tag)
+        using namespace CppLite::Anki::Vector;
+
+        switch(msg.tag) 
         {
           #include "clad/robotInterface/messageEngineToRobot_switch_from_0x01_to_0x4F.def"
 
@@ -98,12 +106,12 @@ namespace Anki {
         robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];
         
         auto& imuDataBuffer = IMUFilter::GetImuDataBuffer();
-        for (int i=0 ; i < IMUConstants::IMU_FRAMES_PER_ROBOT_STATE ; i++) {
+        for (int i=0 ; i < CLAD(IMUConstants)::IMU_FRAMES_PER_ROBOT_STATE ; i++) {
           if (!imuDataBuffer.empty()) {
             robotState_.imuData[i] = imuDataBuffer.front();
             imuDataBuffer.pop_front();
           } else {
-            static IMUDataFrame invalidDataFrame{0, {0, 0, 0}};
+            static CLAD(IMUDataFrame) invalidDataFrame{0, {0, 0, 0}};
             robotState_.imuData[i] = invalidDataFrame;
           }
         }
@@ -127,7 +135,7 @@ namespace Anki {
         robotState_.battTemp_C = HAL::BatteryGetTemperature_C();
 
         robotState_.status = 0;
-        #define SET_STATUS_BIT(expr, bit) robotState_.status |= ((expr) ? EnumToUnderlyingType(RobotStatusFlag::bit) : 0)
+        #define SET_STATUS_BIT(expr, bit) robotState_.status |= ((expr) ? EnumToUnderlyingType(CLAD(RobotStatusFlag)::bit) : 0)
         const bool areWheelsMoving = WheelController::AreWheelsMoving() || 
                                      SteeringController::GetMode() == SteeringController::SM_POINT_TURN;
         const bool isMoving        = HeadController::IsMoving() || LiftController::IsMoving() || areWheelsMoving;
@@ -170,14 +178,14 @@ namespace Anki {
 
       }
 
-      RobotState const& GetRobotStateMsg() {
+      CLAD(RobotState) const& GetRobotStateMsg() {
         return robotState_;
       }
 
 
 // #pragma --- Message Dispatch Functions ---
 
-      void Process_syncRobot(const RobotInterface::SyncRobot& msg)
+      void Process_syncRobot(const CLAD(RobotInterface)::SyncRobot& msg)
       {
         AnkiInfo( "Messages.Process_syncRobot.Recvd", "");
 
@@ -194,12 +202,12 @@ namespace Anki {
       } // ProcessRobotInit()
 
 
-      void Process_shutdown(const RobotInterface::Shutdown& msg)
+      void Process_shutdown(const CLAD(RobotInterface)::Shutdown& msg)
       {
         HAL::Shutdown();
       }
 
-      void Process_calmPowerMode(const RobotInterface::CalmPowerMode& msg)
+      void Process_calmPowerMode(const CLAD(RobotInterface)::CalmPowerMode& msg)
       {
         // NOTE: This used to actually enable calm mode in syscon, but since "quiet" mode
         //       was implemented in syscon where encoders are "off" when the motors are
@@ -212,12 +220,12 @@ namespace Anki {
         calmMode_ = msg.enable;
       }
 
-      void Process_absLocalizationUpdate(const RobotInterface::AbsoluteLocalizationUpdate& msg)
+      void Process_absLocalizationUpdate(const CLAD(RobotInterface)::AbsoluteLocalizationUpdate& msg)
       {
         // Don't modify localization while running path following test.
         // The point of the test is to see how well it follows a path
         // assuming perfect localization.
-        if (TestModeController::GetMode() == TestMode::TM_PATH_FOLLOW) {
+        if (TestModeController::GetMode() == CLAD(TestMode)::TM_PATH_FOLLOW) {
           return;
         }
 
@@ -241,14 +249,14 @@ namespace Anki {
          */
       } // ProcessAbsLocalizationUpdateMessage()
 
-      void Process_forceDelocalizeSimulatedRobot(const RobotInterface::ForceDelocalizeSimulatedRobot& msg)
+      void Process_forceDelocalizeSimulatedRobot(const CLAD(RobotInterface)::ForceDelocalizeSimulatedRobot& msg)
       {
 #ifdef SIMULATOR
         isForcedDelocalizing_ = true;
 #endif
       }
 
-      void Process_dockingErrorSignal(const DockingErrorSignal& msg)
+      void Process_dockingErrorSignal(const CLAD(DockingErrorSignal)& msg)
       {
         DockingController::SetDockingErrorSignalMessage(msg);
       }
@@ -261,9 +269,9 @@ namespace Anki {
               IMUFilter::IsBiasFilterComplete() &&
               LiftController::IsCalibrated() &&
               HeadController::IsCalibrated()) {
-            RobotInterface::SyncRobotAck syncRobotAckMsg;
+            CLAD(RobotInterface)::SyncRobotAck syncRobotAckMsg;
             memcpy(&syncRobotAckMsg.sysconVersion, HAL::GetSysconVersionInfo(), 16);
-            while (RobotInterface::SendMessage(syncRobotAckMsg) == false);
+            while (SendMessage(syncRobotAckMsg) == false);
             syncRobotAckSent_ = true;
 
             // Send up gyro calibration
@@ -282,7 +290,7 @@ namespace Anki {
         // Each packet is a single message
         while((dataLen = HAL::RadioGetNextPacket(pktBuffer_)) > 0)
         {
-          Anki::Vector::RobotInterface::EngineToRobot msgBuf;
+          CLAD(RobotInterface)::EngineToRobot msgBuf;
 
           // Copy into structured memory
           memcpy(msgBuf.GetBuffer(), pktBuffer_, dataLen);
@@ -302,40 +310,40 @@ namespace Anki {
 
       }
 
-      void Process_clearPath(const RobotInterface::ClearPath& msg) {
+      void Process_clearPath(const CLAD(RobotInterface)::ClearPath& msg) {
         SpeedController::SetUserCommandedDesiredVehicleSpeed(0);
         PathFollower::ClearPath();
         //SteeringController::ExecuteDirectDrive(0,0);
       }
 
-      void Process_appendPathSegArc(const RobotInterface::AppendPathSegmentArc& msg) {
+      void Process_appendPathSegArc(const CLAD(RobotInterface)::AppendPathSegmentArc& msg) {
         PathFollower::AppendPathSegment_Arc(msg.x_center_mm, msg.y_center_mm,
                                             msg.radius_mm, msg.startRad, msg.sweepRad,
                                             msg.speed.target, msg.speed.accel, msg.speed.decel);
       }
 
-      void Process_appendPathSegLine(const RobotInterface::AppendPathSegmentLine& msg) {
+      void Process_appendPathSegLine(const CLAD(RobotInterface)::AppendPathSegmentLine& msg) {
         PathFollower::AppendPathSegment_Line(msg.x_start_mm, msg.y_start_mm,
                                              msg.x_end_mm, msg.y_end_mm,
                                              msg.speed.target, msg.speed.accel, msg.speed.decel);
       }
 
-      void Process_appendPathSegPointTurn(const RobotInterface::AppendPathSegmentPointTurn& msg) {
+      void Process_appendPathSegPointTurn(const CLAD(RobotInterface)::AppendPathSegmentPointTurn& msg) {
         PathFollower::AppendPathSegment_PointTurn(msg.x_center_mm, msg.y_center_mm, msg.startRad, msg.targetRad,
                                                   msg.speed.target, msg.speed.accel, msg.speed.decel,
                                                   msg.angleTolerance, msg.useShortestDir);
       }
 
-      void Process_trimPath(const RobotInterface::TrimPath& msg) {
+      void Process_trimPath(const CLAD(RobotInterface)::TrimPath& msg) {
         PathFollower::TrimPath(msg.numPopFrontSegments, msg.numPopBackSegments);
       }
 
-      void Process_executePath(const RobotInterface::ExecutePath& msg) {
+      void Process_executePath(const CLAD(RobotInterface)::ExecutePath& msg) {
         AnkiInfo( "Messages.Process_executePath.StartingPath", "%d", msg.pathID);
         PathFollower::StartPathTraversal(msg.pathID);
       }
 
-      void Process_dockWithObject(const DockWithObject& msg)
+      void Process_dockWithObject(const CLAD(DockWithObject)& msg)
       {
         AnkiInfo( "Messages.Process_dockWithObject.Recvd", "action %hhu, dockMethod %hhu, doLiftLoadCheck %d, backUpWhileLiftingCube %d, speed %f, accel %f, decel %f",
                  msg.action, msg.dockingMethod, msg.doLiftLoadCheck, msg.backUpWhileLiftingCube, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2);
@@ -354,7 +362,7 @@ namespace Anki {
                                             msg.numRetries);
       }
 
-      void Process_placeObjectOnGround(const PlaceObjectOnGround& msg)
+      void Process_placeObjectOnGround(const CLAD(PlaceObjectOnGround)& msg)
       {
         //AnkiInfo( "Messages.Process_placeObjectOnGround.Recvd", "");
         PickAndPlaceController::PlaceOnGround(msg.speed_mmps,
@@ -365,7 +373,7 @@ namespace Anki {
                                               msg.rel_angle);
       }
 
-      void Process_startMotorCalibration(const RobotInterface::StartMotorCalibration& msg) {
+      void Process_startMotorCalibration(const CLAD(RobotInterface)::StartMotorCalibration& msg) {
         const bool autoStarted = false;
         if (msg.calibrateHead) {
           HeadController::StartCalibrationRoutine(autoStarted, msg.reason);
@@ -377,7 +385,7 @@ namespace Anki {
       }
 
 
-      void Process_drive(const RobotInterface::DriveWheels& msg) {
+      void Process_drive(const CLAD(RobotInterface)::DriveWheels& msg) {
         // Do not process external drive commands if following a test path
         if (PathFollower::IsTraversingPath()) {
           AnkiWarn( "Messages.Process_drive.IgnoringBecauseAlreadyOnPath", "");
@@ -391,30 +399,30 @@ namespace Anki {
                                                msg.lwheel_accel_mmps2, msg.rwheel_accel_mmps2);
       }
 
-      void Process_driveCurvature(const RobotInterface::DriveWheelsCurvature& msg) {
+      void Process_driveCurvature(const CLAD(RobotInterface)::DriveWheelsCurvature& msg) {
         SteeringController::ExecuteDriveCurvature(msg.speed,
                                                   msg.curvatureRadius_mm,
                                                   msg.accel);
       }
 
-      void Process_moveLift(const RobotInterface::MoveLift& msg) {
+      void Process_moveLift(const CLAD(RobotInterface)::MoveLift& msg) {
         LiftController::SetAngularVelocity(msg.speed_rad_per_sec, MAX_LIFT_ACCEL_RAD_PER_S2);
       }
 
-      void Process_moveHead(const RobotInterface::MoveHead& msg) {
+      void Process_moveHead(const CLAD(RobotInterface)::MoveHead& msg) {
         HeadController::SetAngularVelocity(msg.speed_rad_per_sec, MAX_HEAD_ACCEL_RAD_PER_S2);
       }
 
       // Send ack of head motor action
       void AckMotorCommand(u8 actionID) {
         if (actionID != 0) {
-          RobotInterface::MotorActionAck ack;
+          CLAD(RobotInterface)::MotorActionAck ack;
           ack.actionID = actionID;
-          RobotInterface::SendMessage(ack);
+          SendMessage(ack);
         }
       }
 
-      void Process_liftHeight(const RobotInterface::SetLiftHeight& msg) {
+      void Process_liftHeight(const CLAD(RobotInterface)::SetLiftHeight& msg) {
         //AnkiInfo( "Messages.Process_liftHeight.Recvd", "height %f, maxSpeed %f, duration %f", msg.height_mm, msg.max_speed_rad_per_sec, msg.duration_sec);
         if (msg.duration_sec > 0) {
           LiftController::SetDesiredHeightByDuration(msg.height_mm, 0.1f, 0.1f, msg.duration_sec);
@@ -424,7 +432,7 @@ namespace Anki {
         AckMotorCommand(msg.actionID);
       }
 
-      void Process_setLiftAngle(const RobotInterface::SetLiftAngle& msg) {
+      void Process_setLiftAngle(const CLAD(RobotInterface)::SetLiftAngle& msg) {
         // AnkiInfo( "Messages.Process_liftAngle.Recvd", 
         //           "height %f, maxSpeed %f, duration %f", 
         //           msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
@@ -436,7 +444,7 @@ namespace Anki {
         AckMotorCommand(msg.actionID);
       }
 
-      void Process_headAngle(const RobotInterface::SetHeadAngle& msg) {
+      void Process_headAngle(const CLAD(RobotInterface)::SetHeadAngle& msg) {
         //AnkiInfo( "Messages.Process_headAngle.Recvd", "angle %f, maxSpeed %f, duration %f", msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
         if (msg.duration_sec > 0) {
           HeadController::SetDesiredAngleByDuration(msg.angle_rad, 0.1f, 0.1f, msg.duration_sec);
@@ -446,7 +454,7 @@ namespace Anki {
         AckMotorCommand(msg.actionID);
       }
 
-      void Process_setBodyAngle(const RobotInterface::SetBodyAngle& msg)
+      void Process_setBodyAngle(const CLAD(RobotInterface)::SetBodyAngle& msg)
       {
         SteeringController::ExecutePointTurn(msg.angle_rad, msg.max_speed_rad_per_sec,
                                              msg.accel_rad_per_sec2,
@@ -457,38 +465,38 @@ namespace Anki {
         AckMotorCommand(msg.actionID);
       }
 
-      void Process_setCarryState(const CarryStateUpdate& update)
+      void Process_setCarryState(const CLAD(CarryStateUpdate)& update)
       {
         PickAndPlaceController::SetCarryState(update.state);
       }
 
-      void Process_imuRequest(const IMURequest& msg)
+      void Process_imuRequest(const CLAD(IMURequest)& msg)
       {
         IMUFilter::RecordAndSend(msg.length_ms);
       }
 
-      void Process_turnInPlaceAtSpeed(const RobotInterface::TurnInPlaceAtSpeed& msg) {
+      void Process_turnInPlaceAtSpeed(const CLAD(RobotInterface)::TurnInPlaceAtSpeed& msg) {
         //AnkiInfo( "Messages.Process_turnInPlaceAtSpeed.Recvd", "speed %f rad/s, accel %f rad/s2", msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
         SteeringController::ExecutePointTurn(msg.speed_rad_per_sec, msg.accel_rad_per_sec2);
       }
 
-      void Process_stop(const RobotInterface::StopAllMotors& msg) {
+      void Process_stop(const CLAD(RobotInterface)::StopAllMotors& msg) {
         LiftController::SetAngularVelocity(0);
         HeadController::SetAngularVelocity(0);
         SteeringController::ExecuteDirectDrive(0,0);
       }
 
-      void Process_startControllerTestMode(const StartControllerTestMode& msg)
+      void Process_startControllerTestMode(const CLAD(StartControllerTestMode)& msg)
       {
-        TestModeController::Start((TestMode)(msg.mode), msg.p1, msg.p2, msg.p3);
+        TestModeController::Start(CLAD(TestMode)(msg.mode), msg.p1, msg.p2, msg.p3);
       }
 
-      void Process_cameraFOVInfo(const CameraFOVInfo& msg)
+      void Process_cameraFOVInfo(const CLAD(CameraFOVInfo)& msg)
       {
         DockingController::SetCameraFieldOfView(msg.horizontalFOV, msg.verticalFOV);
       }
 
-      void Process_rollActionParams(const RobotInterface::RollActionParams& msg) {
+      void Process_rollActionParams(const CLAD(RobotInterface)::RollActionParams& msg) {
         PickAndPlaceController::SetRollActionParams(msg.liftHeight_mm,
                                                     msg.driveSpeed_mmps,
                                                     msg.driveAccel_mmps2,
@@ -496,37 +504,37 @@ namespace Anki {
                                                     msg.backupDist_mm);
       }
 
-      void Process_playpenStart(const RobotInterface::PlaypenStart& msg) {
+      void Process_playpenStart(const CLAD(RobotInterface)::PlaypenStart& msg) {
       }
 
-      void Process_printBodyData(const RobotInterface::PrintBodyData& msg) {
+      void Process_printBodyData(const CLAD(RobotInterface)::PrintBodyData& msg) {
         HAL::PrintBodyData(msg.period_tics, msg.motors, msg.prox, msg.battery);
       }
 
-      void Process_setControllerGains(const RobotInterface::ControllerGains& msg) {
+      void Process_setControllerGains(const CLAD(RobotInterface)::ControllerGains& msg) {
         switch (msg.controller)
         {
-          case ControllerChannel::controller_wheel:
+          case CLAD(ControllerChannel)::controller_wheel:
           {
             WheelController::SetGains(msg.kp, msg.ki, msg.maxIntegralError);
             break;
           }
-          case ControllerChannel::controller_head:
+          case CLAD(ControllerChannel)::controller_head:
           {
             HeadController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
             break;
           }
-          case ControllerChannel::controller_lift:
+          case CLAD(ControllerChannel)::controller_lift:
           {
             LiftController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
             break;
           }
-          case ControllerChannel::controller_steering:
+          case CLAD(ControllerChannel)::controller_steering:
           {
             SteeringController::SetGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError); // Coopting structure
             break;
           }
-          case ControllerChannel::controller_pointTurn:
+          case CLAD(ControllerChannel)::controller_pointTurn:
           {
             SteeringController::SetPointTurnGains(msg.kp, msg.ki, msg.kd, msg.maxIntegralError);
             break;
@@ -538,25 +546,25 @@ namespace Anki {
         }
       }
 
-      void Process_setMotionModelParams(const RobotInterface::SetMotionModelParams& msg)
+      void Process_setMotionModelParams(const CLAD(RobotInterface)::SetMotionModelParams& msg)
       {
         Localization::SetMotionModelParams(msg.slipFactor);
       }
 
-      void Process_abortDocking(const AbortDocking& msg)
+      void Process_abortDocking(const CLAD(AbortDocking)& msg)
       {
         DockingController::StopDocking();
       }
 
-      void Process_checkLiftLoad(const RobotInterface::CheckLiftLoad& msg)
+      void Process_checkLiftLoad(const CLAD(RobotInterface)::CheckLiftLoad& msg)
       {
         LiftController::CheckForLoad();
       }
 
-      void Process_enableMotorPower(const RobotInterface::EnableMotorPower& msg)
+      void Process_enableMotorPower(const CLAD(RobotInterface)::EnableMotorPower& msg)
       {
         switch(msg.motorID) {
-          case MotorID::MOTOR_HEAD:
+          case CLAD(MotorID)::MOTOR_HEAD:
           {
             if (msg.enable) {
               HeadController::Enable();
@@ -565,7 +573,7 @@ namespace Anki {
             }
             break;
           }
-          case MotorID::MOTOR_LIFT:
+          case CLAD(MotorID)::MOTOR_LIFT:
           {
             if (msg.enable) {
               LiftController::Enable();
@@ -582,37 +590,37 @@ namespace Anki {
         }
       }
 
-      void Process_robotStoppedAck(const RobotInterface::RobotStoppedAck& msg)
+      void Process_robotStoppedAck(const CLAD(RobotInterface)::RobotStoppedAck& msg)
       {
         AnkiInfo("Messages.Process_robotStoppedAck", "");
         SteeringController::Enable();
       }
 
-      void Process_enableStopOnCliff(const RobotInterface::EnableStopOnCliff& msg)
+      void Process_enableStopOnCliff(const CLAD(RobotInterface)::EnableStopOnCliff& msg)
       {
         ProxSensors::EnableStopOnCliff(msg.enable);
       }
 
-      void Process_enableStopOnWhite(const RobotInterface::EnableStopOnWhite& msg)
+      void Process_enableStopOnWhite(const CLAD(RobotInterface)::EnableStopOnWhite& msg)
       {
         ProxSensors::EnableStopOnWhite(msg.enable);
       }
       
-      void Process_setCliffDetectThresholds(const SetCliffDetectThresholds& msg)
+      void Process_setCliffDetectThresholds(const CLAD(SetCliffDetectThresholds)& msg)
       {
         for (int i = 0 ; i < HAL::CLIFF_COUNT ; i++) {
           ProxSensors::SetCliffDetectThreshold(i, msg.thresholds[i]);
         }
       }
       
-      void Process_setWhiteDetectThresholds(const SetWhiteDetectThresholds& msg)
+      void Process_setWhiteDetectThresholds(const CLAD(SetWhiteDetectThresholds)& msg)
       {
         for (int i = 0 ; i < HAL::CLIFF_COUNT ; i++) {
           ProxSensors::SetWhiteDetectThreshold(i, msg.whiteThresholds[i]);
         }
       }
 
-      void Process_cliffAlignToWhiteAction(const RobotInterface::CliffAlignToWhiteAction& msg)
+      void Process_cliffAlignToWhiteAction(const CLAD(RobotInterface)::CliffAlignToWhiteAction& msg)
       {
         if (msg.start) {
           PickAndPlaceController::CliffAlignToWhite();
@@ -621,17 +629,17 @@ namespace Anki {
         }
       }
 
-      void Process_enableBraceWhenFalling(const RobotInterface::EnableBraceWhenFalling& msg)
+      void Process_enableBraceWhenFalling(const CLAD(RobotInterface)::EnableBraceWhenFalling& msg)
       {
         IMUFilter::EnableBraceWhenFalling(msg.enable);
       }
 
-      void Process_recordHeading(RobotInterface::RecordHeading const& msg)
+      void Process_recordHeading(CLAD(RobotInterface)::RecordHeading const& msg)
       {
         SteeringController::RecordHeading();
       }
 
-      void Process_turnToRecordedHeading(RobotInterface::TurnToRecordedHeading const& msg)
+      void Process_turnToRecordedHeading(CLAD(RobotInterface)::TurnToRecordedHeading const& msg)
       {
         SteeringController::ExecutePointTurnToRecordedHeading(DEG_TO_RAD_F32(msg.offset_deg),
                                                               DEG_TO_RAD_F32(msg.speed_degPerSec),
@@ -642,19 +650,19 @@ namespace Anki {
                                                               msg.useShortestDir);
       }
 
-      void Process_setBackpackLights(RobotInterface::SetBackpackLights const& msg)
+      void Process_setBackpackLights(CLAD(RobotInterface)::SetBackpackLights const& msg)
       {
         BackpackLightController::SetParams(msg);
       }
 
-      void Process_setSystemLight(RobotInterface::SetSystemLight const& msg)
+      void Process_setSystemLight(CLAD(RobotInterface)::SetSystemLight const& msg)
       {
         BackpackLightController::SetParams(msg);
       }
 
 
-      void Process_setBackpackLayer(const RobotInterface::BackpackSetLayer& msg) {
-        BackpackLightController::EnableLayer((BackpackLightLayer)msg.layer);
+      void Process_setBackpackLayer(const CLAD(RobotInterface)::BackpackSetLayer& msg) {
+        BackpackLightController::EnableLayer((CLAD(BackpackLightLayer))msg.layer);
       }
       
 // ----------- Send messages -----------------
@@ -667,7 +675,7 @@ namespace Anki {
         }
 
 
-        if(RobotInterface::SendMessage(robotState_) == true) {
+        if(SendMessage(robotState_) == true) {
           #ifdef SIMULATOR
           {
             isForcedDelocalizing_ = false;
@@ -681,21 +689,21 @@ namespace Anki {
       }
 
 
-      Result SendMotorCalibrationMsg(MotorID motor, bool calibStarted, bool autoStarted)
+      Result SendMotorCalibrationMsg(CLAD(MotorID) motor, bool calibStarted, bool autoStarted)
       {
-        MotorCalibration m;
+        CLAD(MotorCalibration) m;
         m.motorID = motor;
         m.calibStarted = calibStarted;
         m.autoStarted = autoStarted;
-        return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;
+        return SendMessage(m) ? RESULT_OK : RESULT_FAIL;
       }
 
-      Result SendMotorAutoEnabledMsg(MotorID motor, bool enabled)
+      Result SendMotorAutoEnabledMsg(CLAD(MotorID) motor, bool enabled)
       {
-        MotorAutoEnabled m;
+        CLAD(MotorAutoEnabled) m;
         m.motorID = motor;
         m.enabled = enabled;
-        return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;
+        return SendMessage(m) ? RESULT_OK : RESULT_FAIL;
       }
 
       Result SendMicDataFunction(const s16* latestMicData, uint32_t numSamples) 
@@ -705,7 +713,7 @@ namespace Anki {
         static const int samplesPerChunk = 80;
         static const int samplesPerDeinterlacedChunk = 160;
         static int16_t sampleBuffer[numChannels * samplesPerDeinterlacedChunk];
-        RobotInterface::MicData micData{};
+        CLAD(RobotInterface)::MicData micData{};
         micData.timestamp = HAL::GetTimeStamp();
         micData.robotStatusFlags = robotState_.status;
         micData.robotRotationAngle = robotState_.pose.angle;
@@ -737,7 +745,7 @@ namespace Anki {
         chunkID = chunkID ? 0 : 1;
         if (chunkID == 0) {
           memcpy(micData.data, sampleBuffer, numChannels * samplesPerDeinterlacedChunk * sizeof(s16));
-          return RobotInterface::SendMessage(micData) ? RESULT_OK : RESULT_FAIL;
+          return SendMessage(micData) ? RESULT_OK : RESULT_FAIL;
         }
         return RESULT_OK;
       }

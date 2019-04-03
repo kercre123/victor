@@ -4,7 +4,7 @@
 #include "coretech/common/shared/types.h"
 #include "clad/types/ledTypes.h"
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::Anki::Vector::ns
 #else
 #define CLAD(ns) ns

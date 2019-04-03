@@ -22,10 +22,10 @@
 #include "coretech/vision/engine/image.h"
 #include <set>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD_VISION(ns) CppLite::Anki::Vision::ns
 #else
-#define CLAD_VISION(ns) ns
+#define CLAD_VISION(ns) Vision::ns
 #endif
 
 namespace Anki {
@@ -97,9 +97,9 @@ public:
   void ClearLayerByName(CLAD_VISION(LayerName) name);
 
   void AddImage(SpriteHandle handle,
-                const SpriteBoxName& sbName,
-                const LayerName& layerName,
-                const SpriteRenderMethod& renderMethod,
+                const CLAD_VISION(SpriteBoxName)& sbName,
+                const CLAD_VISION(LayerName)& layerName,
+                const CLAD_VISION(SpriteRenderMethod)& renderMethod,
                 const int xPos,
                 const int yPos,
                 const int width,

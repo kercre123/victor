@@ -44,6 +44,14 @@
 
 #define LOG_CHANNEL   "RobotDataLoader"
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#define CLAD_VISION(ns) CppLite::Anki::Vision::ns
+#else
+#define CLAD(ns) ns
+#define CLAD_VISION(ns) Vision::ns
+#endif
+
 namespace Anki {
 namespace Vector {
 namespace Anim {
@@ -245,7 +253,7 @@ std::vector<std::string> RobotDataLoader::GetAnimationNames()
 
 void RobotDataLoader::NotifyAnimAdded(const std::string& animName, uint32_t animLength)
 {
-  AnimationAdded msg;
+  CLAD(AnimationAdded) msg;
   memcpy(msg.animName, animName.c_str(), animName.length());
   msg.animName_length = animName.length();
   msg.animLength = animLength;

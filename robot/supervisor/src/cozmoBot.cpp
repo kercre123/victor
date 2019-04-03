@@ -5,10 +5,10 @@
 #include "anki/cozmo/robot/DAS.h"
 
 #include "clad/types/motorTypes.h"
-// #include "clad/robotInterface/messageEngineToRobot.h"
-// #include "clad/robotInterface/messageRobotToEngine.h"
-// #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
-// #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot.h"
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_send_helper.h"
+#include "clad/robotInterface/messageEngineToRobot_send_helper.h"
 
 #include "platform/anki-trace/tracing.h"
 
@@ -68,6 +68,11 @@ static int triggerFakeHwClock() {
 }
 #endif
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD(ns) ns
+#endif
 
 namespace Anki {
   namespace Vector {
@@ -184,7 +189,7 @@ namespace Anki {
 
         // Calibrate motors
         const bool autoStarted = true;
-        const auto reason = MotorCalibrationReason::Startup;
+        const auto reason = CLAD(MotorCalibrationReason)::Startup;
         LiftController::StartCalibrationRoutine(autoStarted, reason);
         HeadController::StartCalibrationRoutine(autoStarted, reason);
 
@@ -233,11 +238,11 @@ namespace Anki {
         #endif
       }
 
-      void SendPrepForShutdown(ShutdownReason reason)
+      void SendPrepForShutdown(CLAD(ShutdownReason) reason)
       {
-        RobotInterface::PrepForShutdown msg;
+        CLAD(RobotInterface)::PrepForShutdown msg;
         msg.reason = reason;
-        RobotInterface::SendMessage(msg);
+        SendMessage(msg);
         SaveWallClockToDisk();
 
         const u32 timeSinceOnChargerStateChanged_ms = lastOnChargerChangedTime_ms_ > 0 ? HAL::GetTimeStamp() - lastOnChargerChangedTime_ms_ : 0;
@@ -261,7 +266,7 @@ namespace Anki {
         if (HAL::BatteryIsOverheated() || hotBattOnStart_) {
           if (shutdownTime_ms == 0) {
             AnkiInfo("CozmoBot.CheckForOverheatingBattery.PrepForShutdown", "");
-            SendPrepForShutdown(ShutdownReason::SHUTDOWN_BATTERY_CRITICAL_TEMP);
+            SendPrepForShutdown(CLAD(ShutdownReason)::SHUTDOWN_BATTERY_CRITICAL_TEMP);
             shutdownTime_ms = now_ms + (hotBattOnStart_ ? HAL_SHUTDOWN_DELAY_SHORT_MS : HAL_SHUTDOWN_DELAY_MS);
             shutdownInProgress_ = true;
           }
@@ -289,7 +294,7 @@ namespace Anki {
         if (HAL::IsShutdownImminent() || lowBattOnStart_) {
           if (shutdownTime_ms == 0) {
             AnkiInfo("CozmoBot.CheckForCriticalBattery.PrepForShutdown", "");
-            SendPrepForShutdown(ShutdownReason::SHUTDOWN_BATTERY_CRITICAL_VOLT);
+            SendPrepForShutdown(CLAD(ShutdownReason)::SHUTDOWN_BATTERY_CRITICAL_VOLT);
             shutdownTime_ms = now_ms + (lowBattOnStart_ ? HAL_SHUTDOWN_DELAY_SHORT_MS : HAL_SHUTDOWN_DELAY_MS);
             shutdownInProgress_ = true;
           } else if (now_ms > shutdownTime_ms) {
@@ -366,7 +371,7 @@ namespace Anki {
                 state = START;
                 // Send a shutdown message to anim/engine
                 AnkiInfo("CozmoBot.CheckForButtonHeld.Shutdown", "Sending PrepForShutdown");
-                SendPrepForShutdown(ShutdownReason::SHUTDOWN_BUTTON);
+                SendPrepForShutdown(CLAD(ShutdownReason)::SHUTDOWN_BUTTON);
 #endif
                 shutdownInProgress_ = true;
               }
@@ -445,7 +450,7 @@ namespace Anki {
               if (timeDif_ms > GYRO_NOT_CALIB_PREP_FOR_SHUTDOWN_MS) {
                 // Send a shutdown message to anim/engine
                 AnkiInfo("CozmoBot.CheckForGyroCalibShutdown.Shutdown", "Sending PrepForShutdown");
-                SendPrepForShutdown(ShutdownReason::SHUTDOWN_GYRO_NOT_CALIBRATING);
+                SendPrepForShutdown(CLAD(ShutdownReason)::SHUTDOWN_GYRO_NOT_CALIBRATING);
 
                 state = SHUTDOWN;
                 shutdownInProgress_ = true;
@@ -544,11 +549,11 @@ namespace Anki {
           PathFollower::Init();
           SteeringController::ExecuteDirectDrive(0,0);
           PickAndPlaceController::Reset();
-          PickAndPlaceController::SetCarryState(CarryState::CARRY_NONE);
+          PickAndPlaceController::SetCarryState(CLAD(CarryState)::CARRY_NONE);
           ProxSensors::EnableStopOnCliff(true);
           ProxSensors::SetAllCliffDetectThresholds(CLIFF_SENSOR_THRESHOLD_DEFAULT);
 
-          TestModeController::Start(TestMode::TM_NONE);
+          TestModeController::Start(CLAD(TestMode)::TM_NONE);
 
           wasConnected_ = false;
         }

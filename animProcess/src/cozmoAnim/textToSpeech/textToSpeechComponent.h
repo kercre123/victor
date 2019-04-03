@@ -25,7 +25,7 @@
 #include <mutex>
 #include <map>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD_ANKI(ns) CppLite::Anki::ns
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
 #else
@@ -34,6 +34,23 @@
 #endif
 
 // Forward declarations
+
+#ifdef USES_CLAD_CPPLITE
+namespace CppLite {
+#endif
+namespace Anki {
+  namespace Vector {
+    namespace RobotInterface {
+      struct TextToSpeechPrepare;
+      struct TextToSpeechPlay;
+      struct TextToSpeechCancel;
+    }
+  }
+}
+#ifdef USES_CLAD_CPPLITE
+}
+#endif
+
 namespace Anki {
   namespace Vector {
     namespace Anim {
@@ -41,11 +58,6 @@ namespace Anki {
     }
     namespace Audio {
       class CozmoAudioController;
-    }
-    namespace RobotInterface {
-      struct TextToSpeechPrepare;
-      struct TextToSpeechPlay;
-      struct TextToSpeechCancel;
     }
     namespace TextToSpeech {
       class TextToSpeechProvider;
@@ -80,9 +92,9 @@ public:
   //
   // CLAD message handlers are called on the main thread to handle incoming requests.
   //
-  void HandleMessage(const RobotInterface::TextToSpeechPrepare& msg);
-  void HandleMessage(const RobotInterface::TextToSpeechPlay& msg);
-  void HandleMessage(const RobotInterface::TextToSpeechCancel& msg);
+  void HandleMessage(const CLAD_VECTOR(RobotInterface)::TextToSpeechPrepare& msg);
+  void HandleMessage(const CLAD_VECTOR(RobotInterface)::TextToSpeechPlay& msg);
+  void HandleMessage(const CLAD_VECTOR(RobotInterface)::TextToSpeechCancel& msg);
 
   //
   // Update method is called once per tick on main thread. This method responds to events

@@ -26,12 +26,14 @@
 
 #include <memory>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::ns
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
 #else
 #define CLAD(ns) ns
 #define CLAD_VECTOR(ns) ns
+#define CLAD_AUDIOMETADATA(ns) AudioMetaData::ns
 #endif
 
 // Log options
@@ -42,7 +44,7 @@
 #define AUDIO_TO_BEGIN_PLAYING_SEC (0.2)
 
 namespace {
-  constexpr CLAD(Anki)::AudioMetaData::GameObjectType kSdkGameObject = CLAD(Anki)::AudioMetaData::GameObjectType::TextToSpeech;
+  constexpr CLAD_AUDIOMETADATA(GameObjectType) kSdkGameObject = CLAD_AUDIOMETADATA(GameObjectType)::TextToSpeech;
   constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kSdkPluginId = 100;
 }
 
@@ -73,7 +75,7 @@ SdkAudioComponent::~SdkAudioComponent() {
 //
 // Called to handle incoming ExternalAudioComplete message when client signals end of streaming
 //
-void SdkAudioComponent::HandleMessage(const RobotInterface::ExternalAudioComplete& msg)
+void SdkAudioComponent::HandleMessage(const CLAD_VECTOR(RobotInterface)::ExternalAudioComplete& msg)
 {
   if (ANKI_VERIFY(_audioPrepared, 
                     "SdkAudioComponent.HandleMessage.ExternalAudioComplete", 
@@ -85,7 +87,7 @@ void SdkAudioComponent::HandleMessage(const RobotInterface::ExternalAudioComplet
 //
 // Called to handle incoming ExternalAudioCancel message for user cancellation
 //
-void SdkAudioComponent::HandleMessage(const RobotInterface::ExternalAudioCancel& msg)
+void SdkAudioComponent::HandleMessage(const CLAD_VECTOR(RobotInterface)::ExternalAudioCancel& msg)
 {
   if (ANKI_VERIFY(_audioPrepared, 
                     "SdkAudioComponent.HandleMessage.ExternalAudioCancel", 
@@ -98,7 +100,7 @@ void SdkAudioComponent::HandleMessage(const RobotInterface::ExternalAudioCancel&
 //
 // Called to handle incoming ExternalAudioPrepare messages to start audio streaming process
 //
-void SdkAudioComponent::HandleMessage(const RobotInterface::ExternalAudioPrepare& msg)
+void SdkAudioComponent::HandleMessage(const CLAD_VECTOR(RobotInterface)::ExternalAudioPrepare& msg)
 {
   LOG_DEBUG("SdkAudioComponent.HandleMessage.ExternalAudioPrepare", 
            "Sample rate %d, volume %d", msg.audio_volume, msg.audio_rate );
@@ -114,7 +116,7 @@ void SdkAudioComponent::HandleMessage(const RobotInterface::ExternalAudioPrepare
 //
 // Called to handle incoming ExternalAudioChunk message for streaming audio data chunks
 //
-void SdkAudioComponent::HandleMessage(const RobotInterface::ExternalAudioChunk& msg)
+void SdkAudioComponent::HandleMessage(const CLAD_VECTOR(RobotInterface)::ExternalAudioChunk& msg)
 {
   if (!_audioPrepared) {
     LOG_DEBUG("SdkAudioComponent.HandleMessage.ExternalAudioChunk", "Dropping chunks due to cancellation");
@@ -154,7 +156,7 @@ bool SdkAudioComponent::SetPlayerVolume(float volume) const
     return false;
   }
   const auto parameterId = 
-    AudioEngine::ToAudioParameterId( AudioMetaData::GameParameter::ParameterType::Robot_Vic_Sdk_Volume );
+    AudioEngine::ToAudioParameterId( CLAD_AUDIOMETADATA(GameParameter)::ParameterType::Robot_Vic_Sdk_Volume );
   const auto parameterValue = AudioEngine::ToAudioRTPCValue( volume );
   _audioController->SetParameter( parameterId, parameterValue, AudioEngine::kInvalidAudioGameObject );
   return true;
@@ -163,7 +165,7 @@ bool SdkAudioComponent::SetPlayerVolume(float volume) const
 //
 // Prepare for audio playback
 //
-bool SdkAudioComponent::PrepareAudioEngine(const RobotInterface::ExternalAudioPrepare& msg )
+bool SdkAudioComponent::PrepareAudioEngine(const CLAD_VECTOR(RobotInterface)::ExternalAudioPrepare& msg )
 {
   if (_audioPrepared) {
     //no reentrance, only one playing at a time
@@ -202,7 +204,7 @@ bool SdkAudioComponent::PrepareAudioEngine(const RobotInterface::ExternalAudioPr
 //
 // Add a chunk of audio to the audio engine
 //
-bool SdkAudioComponent::AddAudioChunk(const RobotInterface::ExternalAudioChunk& msg) {
+bool SdkAudioComponent::AddAudioChunk(const CLAD_VECTOR(RobotInterface)::ExternalAudioChunk& msg) {
   //check for dangerous buffer expansion
   auto * pluginInterface = _audioController->GetPluginInterface();
   auto * plugin = pluginInterface->GetStreamingWavePortalPlugIn();
@@ -258,7 +260,7 @@ bool SdkAudioComponent::PostAudioEvent()
     }
   });
 
-  using AudioEvent = AudioMetaData::GameEvent::GenericEvent;
+  using AudioEvent = CLAD_AUDIOMETADATA(GameEvent)::GenericEvent;
   const auto eventID = AudioEngine::ToAudioEventId( AudioEvent::Play__Robot_Vic__External_Sdk_Playback_01 );
   const auto gameObject = static_cast<AudioEngine::AudioGameObject>( kSdkGameObject );
   const auto playingID = _audioController->PostAudioEvent(eventID, gameObject, audioCallbackContext);
@@ -304,7 +306,7 @@ void SdkAudioComponent::ClearOperationData()
 void SdkAudioComponent::StopActiveAudio()
 {
   LOG_DEBUG("SdkAudioComponent.StopActiveAudio", "Stop active Sdk audio");
-  using AudioEvent = AudioMetaData::GameEvent::GenericEvent;
+  using AudioEvent = CLAD_AUDIOMETADATA(GameEvent)::GenericEvent;
   const auto eventID = AudioEngine::ToAudioEventId( AudioEvent::Stop__Robot_Vic__External_Sdk_Playback_01 );
   _audioController->StopAllAudioEvents(eventID);
 }
@@ -338,7 +340,7 @@ bool SdkAudioComponent::SendAnimToEngine(CLAD_VECTOR(SDKAudioStreamingState) aud
 {
   LOG_DEBUG("sdkAudioComponent.SendAnimToEngine", 
             "audioState %d audioSent %d audioPlayed %d", (int)audioState, audioSent, audioPlayed);
-  AudioStreamStatusEvent evt;
+  CLAD_VECTOR(AudioStreamStatusEvent) evt;
   evt.streamResultID = audioState;
   evt.audioReceived = audioSent;  //used only for ChunkAdded messages
   evt.audioPlayed = audioPlayed;  //used only for ChunkAdded messages

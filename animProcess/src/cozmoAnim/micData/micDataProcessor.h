@@ -33,7 +33,27 @@
 #include <thread>
 #include <utility>
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#endif
+
 // Declarations
+#ifdef USES_CLAD_CPPLITE
+namespace CppLite {
+#endif
+namespace Anki {
+  namespace Vector {
+    namespace RobotInterface {
+      struct MicData;
+    }
+  }
+}
+#ifdef USES_CLAD_CPPLITE
+}
+#endif
+
 namespace Anki {
   namespace AudioUtil {
     class SpeechRecognizer;
@@ -46,9 +66,6 @@ namespace Anki {
       class MicImmediateDirection;
     }
     class RobotDataLoader;
-    namespace RobotInterface {
-      struct MicData;
-    }
     class SpeechRecognizerSystem;
   }
   namespace Util {
@@ -69,7 +86,7 @@ public:
 
   void Init();
 
-  void ProcessMicDataPayload(const RobotInterface::MicData& payload);
+  void ProcessMicDataPayload(const CLAD_VECTOR(RobotInterface)::MicData& payload);
   void RecordRawAudio(uint32_t duration_ms, const std::string& path, bool runFFT);
 
   enum class ProcessingState {
@@ -123,7 +140,7 @@ private:
   float _rawAudioBufferFullness[2] = { 0.f, 0.f };
   // We have 2 fixed buffers for incoming raw audio that we alternate between, so that the processing thread can work
   // on one set of data while the main thread can copy new data into the other set.
-  Util::FixedCircularBuffer<RobotInterface::MicData, kRawAudioBufferSize> _rawAudioBuffers[2];
+  Util::FixedCircularBuffer<CLAD_VECTOR(RobotInterface)::MicData, kRawAudioBufferSize> _rawAudioBuffers[2];
   // Index of the buffer that is currently being used by the processing thread
   uint32_t _rawAudioProcessingIndex = 0;
   std::thread _processThread;

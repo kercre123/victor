@@ -20,7 +20,7 @@
 #include <set>
 #include <mutex>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD_ANKI(ns) CppLite::Anki::ns
 #else
 #define CLAD_ANKI(ns) ns

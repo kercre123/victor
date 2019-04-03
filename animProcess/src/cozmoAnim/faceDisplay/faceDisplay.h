@@ -21,7 +21,7 @@
 
 #include <thread>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::ns
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
 #else

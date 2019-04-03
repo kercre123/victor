@@ -70,7 +70,7 @@ TODO (VIC-9853): re-implement this properly. I think it should more closely rese
 #include <unistd.h>
 #include <array>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
 #else
 #define CLAD_AUDIOMETADATA(ns) AudioMetaData::ns

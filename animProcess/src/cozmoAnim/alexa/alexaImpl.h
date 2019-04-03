@@ -56,7 +56,7 @@
 #include <unordered_map>
 #include <thread>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns)        CppLite::ns
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
 #else
@@ -72,7 +72,7 @@ namespace alexaClientSDK {
   }
 }
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 namespace CppLite {
 #endif
 namespace Anki {
@@ -82,7 +82,7 @@ enum class AlexaNetworkErrorType : uint8_t;
 enum class AlexaUXState : uint8_t;
 }
 }
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 }
 #endif
 

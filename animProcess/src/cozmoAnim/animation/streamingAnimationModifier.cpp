@@ -21,6 +21,16 @@
 #include "cozmoAnim/textToSpeech/textToSpeechComponent.h"
 #include "util/logging/logging.h"
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD(ns) CppLite::Anki::ns
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
+#else
+#define CLAD(ns) Anki::ns
+#define CLAD_VECTOR(ns) ns
+#define CLAD_AUDIOMETADATA(ns) Anki::AudioMetaData::ns
+#endif
+
 namespace Anki {
 namespace Vector {
 namespace Anim {
@@ -70,7 +80,7 @@ void StreamingAnimationModifier::ApplyAlterationsAfterUpdate(AnimationStreamer* 
   ApplyMessagesHelper(streamer, streamTime_ms - 1);
 }
 
-void StreamingAnimationModifier::HandleMessage(const RobotInterface::AlterStreamingAnimationAtTime& msg)
+void StreamingAnimationModifier::HandleMessage(const CLAD_VECTOR(RobotInterface)::AlterStreamingAnimationAtTime& msg)
 {
   auto relativeStreamTime_ms = msg.relativeStreamTime_ms;
   if((relativeStreamTime_ms % ANIM_TIME_STEP_MS) != 0){
@@ -87,11 +97,11 @@ void StreamingAnimationModifier::HandleMessage(const RobotInterface::AlterStream
     relativeStreamTime_ms += kOffsetForEndOfFrame;
   }
 
-  RobotInterface::EngineToRobot alterationMessage;
+  CLAD_VECTOR(RobotInterface)::EngineToRobot alterationMessage;
   switch(static_cast<RobotInterface::EngineToRobotTag>(msg.internalTag)){
     case RobotInterface::EngineToRobotTag::setFullAnimTrackLockState:
     {
-      RobotInterface::EngineToRobot alterationMessage(std::move(msg.setFullAnimTrackLockState));
+      CLAD_VECTOR(RobotInterface)::EngineToRobot alterationMessage(std::move(msg.setFullAnimTrackLockState));
       AddToMapStreamMap(relativeStreamTime_ms, std::move(alterationMessage));
       break;
     }
@@ -100,18 +110,18 @@ void StreamingAnimationModifier::HandleMessage(const RobotInterface::AlterStream
       if(ANKI_DEV_CHEATS){
         ANKI_VERIFY(msg.postAudioEvent.callbackId == 0, "StreamingAnimationModifier.HandleMessage.InvalidCallbackID",
                     "Callbacks are not currently supported for altering the streaming animation");
-        ANKI_VERIFY(msg.postAudioEvent.gameObject == Anki::AudioMetaData::GameObjectType::Animation,
+        ANKI_VERIFY(msg.postAudioEvent.gameObject == CLAD_AUDIOMETADATA(GameObjectType)::Animation,
                     "StreamingAnimationModifier.HandleMessage.PostAudioEvent.ImproperGameObject", 
                     "All game objects sent through alter streaming animation must have object type Animation");
       }
 
-      RobotInterface::EngineToRobot alterationMessage(std::move(msg.postAudioEvent));
+      CLAD_VECTOR(RobotInterface)::EngineToRobot alterationMessage(std::move(msg.postAudioEvent));
       AddToMapStreamMap(relativeStreamTime_ms, std::move(alterationMessage));
       break;
     }
     case RobotInterface::EngineToRobotTag::textToSpeechPlay:
     {
-      RobotInterface::EngineToRobot alterationMessage(std::move(msg.textToSpeechPlay));
+      CLAD_VECTOR(RobotInterface)::EngineToRobot alterationMessage(std::move(msg.textToSpeechPlay));
       AddToMapStreamMap(relativeStreamTime_ms, std::move(alterationMessage));
       break;
     }
@@ -128,7 +138,7 @@ void StreamingAnimationModifier::HandleMessage(const RobotInterface::AlterStream
 
 
 void StreamingAnimationModifier::ApplyMessageToStreamer(AnimationStreamer* streamer, 
-                                                        const RobotInterface::EngineToRobot& msg)
+                                                        const CLAD_VECTOR(RobotInterface)::EngineToRobot& msg)
 {
   switch(msg.tag){
     case (uint32_t)RobotInterface::EngineToRobotTag::setFullAnimTrackLockState:
@@ -159,7 +169,7 @@ void StreamingAnimationModifier::ApplyMessageToStreamer(AnimationStreamer* strea
   }
 }
 
-void StreamingAnimationModifier::AddToMapStreamMap(TimeStamp_t relativeStreamTime_ms, RobotInterface::EngineToRobot&& msg)
+void StreamingAnimationModifier::AddToMapStreamMap(TimeStamp_t relativeStreamTime_ms, CLAD_VECTOR(RobotInterface)::EngineToRobot&& msg)
 {
   _streamTimeToMessageMap.emplace(relativeStreamTime_ms, std::move(msg));
 }

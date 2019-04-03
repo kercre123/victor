@@ -26,6 +26,14 @@ namespace{
 const int32_t kUseDefaultStreamingDuration = -1;
 }
 
+#ifdef USES_CLAD_CPPLITE
+#define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
+#else
+#define CLAD_VECTOR(ns) ns
+#define CLAD_AUDIOMETADATA(ns) AudioMetaData::ns
+#endif
+
 namespace Anki {
 namespace Vector {
 
@@ -34,7 +42,7 @@ ShowAudioStreamStateManager::ShowAudioStreamStateManager(const Anim::AnimContext
 , _minStreamingDuration_ms(kUseDefaultStreamingDuration)
 {
   // Initialize this value to prevent errors before the TriggerResponse is first set
-  _postAudioEvent.audioEvent = AudioMetaData::GameEvent::GenericEvent::Invalid;
+  _postAudioEvent.audioEvent = CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Invalid;
 }
 
 
@@ -64,7 +72,7 @@ void ShowAudioStreamStateManager::Update()
   }
 }
 
-void ShowAudioStreamStateManager::SetTriggerWordResponse(const RobotInterface::SetTriggerWordResponse& msg)
+void ShowAudioStreamStateManager::SetTriggerWordResponse(const CLAD_VECTOR(RobotInterface)::SetTriggerWordResponse& msg)
 {
   std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
   _postAudioEvent = msg.postAudioEvent;
@@ -172,7 +180,7 @@ void ShowAudioStreamStateManager::StartTriggerResponseWithoutGetIn(OnTriggerAudi
 bool ShowAudioStreamStateManager::HasValidTriggerResponse()
 {
   std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex);
-  return _postAudioEvent.audioEvent != AudioMetaData::GameEvent::GenericEvent::Invalid;
+  return _postAudioEvent.audioEvent != CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Invalid;
 }
 
 
@@ -188,7 +196,7 @@ bool ShowAudioStreamStateManager::ShouldSimulateStreamAfterTriggerWord()
   return HasValidTriggerResponse() && _shouldTriggerWordSimulateStream;
 }
 
-void ShowAudioStreamStateManager::SetAlexaUXResponses(const RobotInterface::SetAlexaUXResponses& msg)
+void ShowAudioStreamStateManager::SetAlexaUXResponses(const CLAD_VECTOR(RobotInterface)::SetAlexaUXResponses& msg)
 {
   std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex); // HasAnyAlexaResponse may be called off thread
   
@@ -207,7 +215,7 @@ void ShowAudioStreamStateManager::SetAlexaUXResponses(const RobotInterface::SetA
   static_assert( sizeof(msg.getInAnimTags) / sizeof(msg.getInAnimTags[0]) == 4, "Expected 4 elems" );
   for( int i=0; i<maxAnims; ++i ) {
     AlexaInfo info;
-    info.state = static_cast<AlexaUXState>(i);
+    info.state = static_cast<CLAD_VECTOR(AlexaUXState)>(i);
     info.audioEvent = msg.postAudioEvents[i];
     info.getInAnimTag = msg.getInAnimTags[i];
     info.getInAnimName = animNames[i];
@@ -244,7 +252,7 @@ bool ShowAudioStreamStateManager::HasAnyAlexaResponse() const
   return false;
 }
   
-bool ShowAudioStreamStateManager::HasValidAlexaUXResponse(AlexaUXState state) const
+bool ShowAudioStreamStateManager::HasValidAlexaUXResponse(CLAD_VECTOR(AlexaUXState) state) const
 {
   for( const auto& info : _alexaResponses ) {
     if( info.state == state ) {
@@ -256,7 +264,7 @@ bool ShowAudioStreamStateManager::HasValidAlexaUXResponse(AlexaUXState state) co
   return false;
 }
   
-bool ShowAudioStreamStateManager::StartAlexaResponse(AlexaUXState state, bool ignoreGetIn)
+bool ShowAudioStreamStateManager::StartAlexaResponse(CLAD_VECTOR(AlexaUXState) state, bool ignoreGetIn)
 {
   const AlexaInfo* response = nullptr;
   for( const auto& info : _alexaResponses ) {
@@ -295,7 +303,7 @@ bool ShowAudioStreamStateManager::StartAlexaResponse(AlexaUXState state, bool ig
     {
       using namespace AudioEngine;
       const auto audioEvent = response->audioEvent.audioEvent;
-      if ( audioEvent != AudioMetaData::GameEvent::GenericEvent::Invalid ) {
+      if ( audioEvent != CLAD_AUDIOMETADATA(GameEvent)::GenericEvent::Invalid ) {
         controller->PostAudioEvent( ToAudioEventId( audioEvent ),
                                     ToAudioGameObject( response->audioEvent.gameObject ) );
       }

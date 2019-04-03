@@ -38,12 +38,14 @@
 #include <fcntl.h>
 #include <unistd.h>
 
-#ifdef USES_CPPLITE
+#ifdef USES_CLAD_CPPLITE
 #define CLAD(ns) CppLite::
 #define CLAD_VECTOR(ns) CppLite::Anki::Vector::ns
+#define CLAD_AUDIOMETADATA(ns) CppLite::Anki::AudioMetaData::ns
 #else
 #define CLAD(ns) ns
 #define CLAD_VECTOR(ns) ns
+#define CLAD_AUDIOMETADATA(ns) AudioMetaData::ns
 #endif
 
 // Log options
@@ -52,9 +54,9 @@
 namespace {
 
   // TTS audio always plays on robot device
-  constexpr CLAD(Anki)::AudioMetaData::GameObjectType kTTSGameObject = CLAD(Anki)::AudioMetaData::GameObjectType::TextToSpeech;
+  constexpr CLAD_AUDIOMETADATA(GameObjectType) kTTSGameObject = CLAD_AUDIOMETADATA(GameObjectType)::TextToSpeech;
 
-  constexpr CLAD(Anki)::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kTtsPluginId = 0;
+  constexpr Anki::AudioEngine::PlugIns::StreamingWavePortalPlugIn::PluginId_t kTtsPluginId = 0;
 
    // How many frames do we need before utterance is playable?
   CONSOLE_VAR_RANGED(u32, kMinPlayableFrames, "TextToSpeech", 8192, 0, 65536);
@@ -128,7 +130,7 @@ f32 TextToSpeechComponent::GetDuration_ms(const BundlePtr & bundle)
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
-                                           const TextToSpeechTriggerMode triggerMode,
+                                           const CLAD_VECTOR(TextToSpeechTriggerMode) triggerMode,
                                            const std::string& text,
                                            const AudioTtsProcessingStyle style,
                                            const float durationScalar)
@@ -443,7 +445,7 @@ TextToSpeechComponent::BundlePtr TextToSpeechComponent::GetBundle(const TTSID_t 
 //
 void TextToSpeechComponent::SetAudioProcessingStyle(AudioTtsProcessingStyle style)
 {
-  const auto switchGroup = AudioMetaData::SwitchState::SwitchGroupType::Robot_Vic_External_Processing;
+  const auto switchGroup = CLAD_AUDIOMETADATA(SwitchState)::SwitchGroupType::Robot_Vic_External_Processing;
   _audioController->SetSwitchState(
     static_cast<AudioEngine::AudioSwitchGroupId>(switchGroup),
     static_cast<AudioEngine::AudioSwitchStateId>(style),
@@ -458,7 +460,7 @@ void TextToSpeechComponent::SetAudioProcessingStyle(AudioTtsProcessingStyle styl
 static bool SendAnimToEngine(uint8_t ttsID, CLAD_VECTOR(TextToSpeechState) state, float expectedDuration = 0.0f)
 {
   LOG_DEBUG("TextToSpeechComponent.SendAnimToEngine", "ttsID %hhu state %hhu", ttsID, state);
-  TextToSpeechEvent evt;
+  CLAD_VECTOR(TextToSpeechEvent) evt;
   evt.ttsID = ttsID;
   evt.ttsState = state;
   evt.expectedDuration_ms = expectedDuration; // Used only on TextToSpeechState::Delivered messages
@@ -485,7 +487,7 @@ bool TextToSpeechComponent::PostAudioEvent(uint8_t ttsID)
                                                 callbackFunc();
                                               } );
 
-  using AudioEvent = AudioMetaData::GameEvent::GenericEvent;
+  using AudioEvent = CLAD_AUDIOMETADATA(GameEvent)::GenericEvent;
   const auto eventID = AudioEngine::ToAudioEventId( AudioEvent::Play__Robot_Vic__External_Voice_Text );
   const auto gameObject = static_cast<AudioEngine::AudioGameObject>( kTTSGameObject );
   const auto playingID = _audioController->PostAudioEvent(eventID, gameObject, audioCallbackContext);
@@ -536,9 +538,9 @@ void TextToSpeechComponent::OnUtteranceCompleted(uint8_t ttsID)
 //
 // Called on main thread to handle incoming TextToSpeechPrepare
 //
-void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPrepare & msg)
+void TextToSpeechComponent::HandleMessage(const CLAD_VECTOR(RobotInterface)::TextToSpeechPrepare & msg)
 {
-  using CLAD(Anki)::Util::HidePersonallyIdentifiableInfo;
+  using Anki::Util::HidePersonallyIdentifiableInfo;
 
   // Unpack message fields
   const auto ttsID = msg.ttsID;
@@ -567,7 +569,7 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPrep
 //
 // Called on main thread to handle incoming TextToSpeechPlay
 //
-void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPlay& msg)
+void TextToSpeechComponent::HandleMessage(const CLAD_VECTOR(RobotInterface)::TextToSpeechPlay& msg)
 {
   const auto ttsID = msg.ttsID;
 
@@ -583,7 +585,7 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPlay
 
   // Validate trigger mode
   const auto triggerMode = bundle->triggerMode;
-  if (triggerMode != TextToSpeechTriggerMode::Manual && triggerMode != TextToSpeechTriggerMode::Keyframe) {
+  if (triggerMode != CLAD_VECTOR(TextToSpeechTriggerMode)::Manual && triggerMode != CLAD_VECTOR(TextToSpeechTriggerMode)::Keyframe) {
     LOG_ERROR("TextToSpeechComponent.TextToSpeechPlay", "ttsID %d has unplayable trigger mode %s",
       ttsID, EnumToString(bundle->triggerMode));
     SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Invalid);
@@ -605,7 +607,7 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPlay
   // Post audio event? For manual triggers, post event now and notify engine that playback is in progress.
   // For keyframe events, event will be posted by AnimationAudioClient and engine will be notified by
   // callback to OnAudioPlaying.
-  if (triggerMode == TextToSpeechTriggerMode::Manual) {
+  if (triggerMode == CLAD_VECTOR(TextToSpeechTriggerMode)::Manual) {
     if (!PostAudioEvent(ttsID)) {
       LOG_ERROR("TextToSpeechComponent.TextToSpeechPlay", "Unable to post audio event for ttsID %d", ttsID);
       SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Invalid);
@@ -620,7 +622,7 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPlay
 //
 // Called on main thread to handle incoming TextToSpeechCancel
 //
-void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechCancel& msg)
+void TextToSpeechComponent::HandleMessage(const CLAD_VECTOR(RobotInterface)::TextToSpeechCancel& msg)
 {
   const auto ttsID = msg.ttsID;
 
@@ -689,7 +691,7 @@ void TextToSpeechComponent::OnStatePlayable(const TTSID_t ttsID, f32 duration_ms
   // When audio playback is complete, the audio engine invokes a callback
   // to clean up operation data.
   //
-  if (bundle->triggerMode == TextToSpeechTriggerMode::Immediate) {
+  if (bundle->triggerMode == CLAD_VECTOR(TextToSpeechTriggerMode)::Immediate) {
     if (!PrepareAudioEngine(ttsID, duration_ms)) {
       LOG_ERROR("TextToSpeechComponent.OnStatePlayable", "Unable to prepare audio for ttsID %d", ttsID);
       SendAnimToEngine(ttsID, CLAD_VECTOR(TextToSpeechState)::Invalid);
