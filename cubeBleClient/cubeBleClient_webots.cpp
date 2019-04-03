@@ -61,6 +61,7 @@ namespace { // "Private members"
   // use this value to automatically 'disconnect' it (or else it will
   // remain 'connected').
   double _connectedCubeLastHeardTime_sec = 0.f;
+  
 } // "private" namespace
 
 
