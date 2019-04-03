@@ -66,6 +66,7 @@ private:
   {
     IntentHeard,
     IntentUnknown,
+    IntentSilence,
     NoIntentHeard
   };
 

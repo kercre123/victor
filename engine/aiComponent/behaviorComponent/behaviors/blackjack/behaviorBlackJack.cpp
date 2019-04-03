@@ -63,6 +63,7 @@ namespace{
 
   static const UserIntentTag affirmativeIntent = USER_INTENT(imperative_affirmative);
   static const UserIntentTag negativeIntent = USER_INTENT(imperative_negative);
+  static const UserIntentTag silenceIntent = USER_INTENT(silence);
   static const UserIntentTag playerHitIntent = USER_INTENT(blackjack_hit);
   static const UserIntentTag playerStandIntent = USER_INTENT(blackjack_stand);
   static const UserIntentTag playAgainIntent = USER_INTENT(blackjack_playagain);
@@ -384,6 +385,8 @@ void BehaviorBlackJack::TransitionToHitOrStand()
       uic.DropUserIntent(playerStandIntent);
     } else if(uic.IsUserIntentPending(negativeIntent)) {
       uic.DropUserIntent(negativeIntent);
+    } else if(uic.IsUserIntentPending(silenceIntent)) {
+      uic.DropUserIntent(silenceIntent);
     }
 
     // 2. We didn't receive any intents at all
@@ -558,6 +561,8 @@ void BehaviorBlackJack::TransitionToPlayAgain()
   } else {
     if (uic.IsUserIntentPending(negativeIntent)){
       uic.DropUserIntent(negativeIntent);
+    } else if(uic.IsUserIntentPending(silenceIntent)) {
+      uic.DropUserIntent(silenceIntent);
     }
     TransitionToGetOut();
   }
