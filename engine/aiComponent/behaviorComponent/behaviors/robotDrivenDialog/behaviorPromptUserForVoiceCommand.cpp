@@ -31,7 +31,7 @@
 
 namespace Anki {
 namespace Vector {
-  
+
 namespace {
   const char* kDefaultTTSBehaviorID = "DefaultTextToSpeechLoop";
 
@@ -63,7 +63,7 @@ namespace {
                           _dVars.state = EState::s; \
                           PRINT_CH_INFO("Behaviors", "BehaviorPromptUserForVoiceCommand.State", "State = %s", #s); \
                         } while(0);
-                        
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPromptUserForVoiceCommand::InstanceConfig::InstanceConfig()
 : streamType( CloudMic::StreamType::Normal )
@@ -107,7 +107,7 @@ BehaviorPromptUserForVoiceCommand::BehaviorPromptUserForVoiceCommand(const Json:
     if(JsonTools::GetValueOptional(config, kEarConSuccess, earConString)){
       _iConfig.earConSuccess = AudioMetaData::GameEvent::GenericEventFromString(earConString);
     }
-    
+
     if(JsonTools::GetValueOptional(config, kEarConFail, earConString)){
       _iConfig.earConFail = AudioMetaData::GameEvent::GenericEventFromString(earConString);
     }
@@ -145,7 +145,7 @@ BehaviorPromptUserForVoiceCommand::~BehaviorPromptUserForVoiceCommand()
 bool BehaviorPromptUserForVoiceCommand::WantsToBeActivatedBehavior() const
 {
   const bool hasPrompt = !GetVocalPromptString().empty();
-  
+
   return hasPrompt;
 }
 
@@ -216,7 +216,7 @@ void BehaviorPromptUserForVoiceCommand::SetReprompt(const std::string &text)
     _iConfig.vocalRepromptString = text;
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPromptUserForVoiceCommand::InitBehavior(){
   BehaviorID ttsID = BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.ttsBehaviorID);
@@ -226,7 +226,7 @@ void BehaviorPromptUserForVoiceCommand::InitBehavior(){
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPromptUserForVoiceCommand::OnBehaviorActivated() 
+void BehaviorPromptUserForVoiceCommand::OnBehaviorActivated()
 {
   // _dVars are reset on deactivation so that the effects of SetPrompt/SetReprompt persist
 
@@ -251,16 +251,16 @@ void BehaviorPromptUserForVoiceCommand::OnBehaviorDeactivated()
 {
   // Any resultant intents should be handled by external behaviors or transitions, let 'em roll
   GetBehaviorComp<UserIntentComponent>().SetUserIntentTimeoutEnabled(true);
-  
+
   // reset dynamic variables
   _dVars = DynamicVariables();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPromptUserForVoiceCommand::BehaviorUpdate() 
+void BehaviorPromptUserForVoiceCommand::BehaviorUpdate()
 {
   if( !IsActivated() ) {
-    return; 
+    return;
   }
 
   if(EState::Listening == _dVars.state){
@@ -288,14 +288,14 @@ void BehaviorPromptUserForVoiceCommand::BehaviorUpdate()
   } else if(EState::Thinking == _dVars.state){
     CheckForPendingIntents();
   }
-  
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPromptUserForVoiceCommand::CheckForPendingIntents()
 {
   UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
-  if((EIntentStatus::NoIntentHeard == _dVars.intentStatus) && uic.IsAnyUserIntentPending()){
+  if ((EIntentStatus::NoIntentHeard == _dVars.intentStatus) && uic.IsAnyUserIntentPending()) {
 
     // Don't dismiss unclaimed intents until this behavior exits, or other behaviors may miss their
     // chance to claim the pending intents
@@ -303,13 +303,22 @@ void BehaviorPromptUserForVoiceCommand::CheckForPendingIntents()
 
     _dVars.intentStatus = EIntentStatus::IntentHeard;
 
-    // If it was an unmatched intent, note it so we can respond appropriately, then clear it.
+    // If robot heard an unmatched intent, note it so we can respond appropriately, then clear it.
     static const UserIntentTag unmatched = USER_INTENT(unmatched_intent);
-    if(uic.IsUserIntentPending(unmatched))
-    {
+    if (uic.IsUserIntentPending(unmatched)) {
       uic.DropUserIntent(unmatched);
       _dVars.intentStatus = EIntentStatus::IntentUnknown;
+      return;
     }
+
+    // If robot heard silence, treat it like an unmatched intent.
+    static const UserIntentTag silence = USER_INTENT(silence);
+    if (uic.IsUserIntentPending(silence)) {
+      uic.DropUserIntent(silence);
+      _dVars.intentStatus = EIntentStatus::IntentUnknown;
+      return;
+    }
+
   }
 }
 
@@ -329,7 +338,7 @@ void BehaviorPromptUserForVoiceCommand::TransitionToPrompting()
     DelegateIfInControl(_iConfig.ttsBehavior.get(), &BehaviorPromptUserForVoiceCommand::TransitionToListening);
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPromptUserForVoiceCommand::TransitionToListening()
 {
@@ -435,12 +444,12 @@ void BehaviorPromptUserForVoiceCommand::TransitionToReprompt()
 
   CancelSelf();
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const std::string& BehaviorPromptUserForVoiceCommand::GetVocalPromptString() const
 {
   return _iConfig.wasPromptSetFromJson ? _iConfig.vocalPromptString : _dVars.vocalPromptString;
 }
 
-} // namespace Vector 
+} // namespace Vector
 } // namespace Anki

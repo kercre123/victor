@@ -2727,7 +2727,7 @@ bool Robot::UpdateToFStartupChecks(Result& res)
 bool Robot::UpdateGyroCalibChecks(Result& res)
 {
   // Wait this much time after sending sync to robot before checking if we
-  // should be displaying the gyro not calibrated image
+  // should be displaying the low battery image to encourage user to put the robot down.
   // Note that by the time that the sync has been sent, the face has already
   // been blank for around 7 seconds.
   const float kTimeAfterSyncSent_sec = 2.f;
@@ -2746,7 +2746,7 @@ bool Robot::UpdateGyroCalibChecks(Result& res)
     // but we haven't received syncTime yet likely because the gyro hasn't calibrated
     GetAnimationComponent().Init();
 
-    static const std::string kGyroNotCalibratedImg = "config/devOnlySprites/independentSprites/gyro_not_calibrated.png";
+    static const std::string kGyroNotCalibratedImg = "config/devOnlySprites/independentSprites/battery_low.png";
     const std::string imgPath = GetContextDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
                                                                          kGyroNotCalibratedImg);
     Vision::ImageRGB img;
