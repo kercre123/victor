@@ -44,7 +44,7 @@ namespace Vector {
 namespace {
  
 # if !ALEXA_ACOUSTIC_TEST
-  CONSOLE_VAR(bool, kAcousticTestMode, "Alexa", false);
+  CONSOLE_VAR(bool, kAcousticTestMode, "Alexa", true);
 # endif
 
 }

@@ -20,7 +20,7 @@ set(PLATFORM_LIBS "")
 set(PLATFORM_INCLUDES ${OPENCV_INCLUDE_PATHS})
 set(PLATFORM_COMPILE_DEFS "")
 
-option(ALEXA_ACOUSTIC_TEST "Enable alexa acoustic testing (no movement mode)" OFF)
+option(ALEXA_ACOUSTIC_TEST "Enable alexa acoustic testing (no movement mode)" ON)
 
 if (VICOS)
     set(PLATFORM_LIBS

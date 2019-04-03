@@ -453,6 +453,12 @@ void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
   
   auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(newMessage));
   _micDataSystem->SendMessageToEngine(std::move(engineMessage));
+  
+  static RobotTimeStamp_t lastNoiseTime = 0;
+  if( timestamp - lastNoiseTime >= 500 ) {
+    _speechRecognizerSystem->SetNoiseData( directionResult.latestPowerValue, directionResult.latestNoiseFloor );
+    lastNoiseTime = timestamp;
+  }
 }
 
 MicDirectionData MicDataProcessor::ProcessMicrophonesSE(const AudioUtil::AudioSample* audioChunk,

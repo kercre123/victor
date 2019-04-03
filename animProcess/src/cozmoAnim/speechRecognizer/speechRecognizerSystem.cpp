@@ -27,7 +27,10 @@
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+#include "cozmoAnim/webRTC/webrtc_vad.h"
+#include "webServerProcess/src/webService.h"
 #include <list>
+#include <chrono>
 
 #include <fcntl.h>
 #include <unistd.h>
@@ -39,6 +42,9 @@ namespace Vector {
 // VIC-13319 remove
 CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInUK);
 CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInAU);
+  
+CONSOLE_VAR_RANGED(int, kMaxEnergy, "VAD", 50, 0, 500);
+CONSOLE_VAR_RANGED(int, kTriggerEnergy, "VAD", 20, 0, 500);
   
 namespace {
 #define LOG_CHANNEL "SpeechRecognizer"
@@ -280,6 +286,8 @@ std::string result;
 # undef CONSOLE_GROUP
   
 
+VadInst* _webRTC_VADHandle = nullptr;
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // SpeechRecognizerSystem
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -292,11 +300,30 @@ SpeechRecognizerSystem::SpeechRecognizerSystem(const Anim::AnimContext* context,
 , _notchDetector(std::make_shared<NotchDetector>())
 {
   SetupConsoleFuncs();
+  
+  _webRTC_VADHandle = WebRtcVad_Create();
+  if( !_webRTC_VADHandle ) {
+    PRINT_NAMED_WARNING("WHATNOW", "No WebRTC VAD");
+  }
+  
+  int error = WebRtcVad_Init(_webRTC_VADHandle);
+  if( error ) {
+    PRINT_NAMED_WARNING("WHATNOW", "WebRTC VAD Init failed");
+  }
+  const int aggressiveness = 3; // 0..3. The higher, the more is cut off.
+  error = WebRtcVad_set_mode(_webRTC_VADHandle, aggressiveness);
+  if( error ) {
+    PRINT_NAMED_WARNING("WHATNOW", "Setting WebRTC VAD aggressiveness failed");
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SpeechRecognizerSystem::~SpeechRecognizerSystem()
 {
+  if( _webRTC_VADHandle ) {
+    WebRtcVad_Free(_webRTC_VADHandle);
+  }
+  
   _victorTrigger->recognizer->Stop();
   if (_alexaTrigger) {
     _alexaTrigger->recognizer->Stop();
@@ -311,6 +338,26 @@ void SpeechRecognizerSystem::InitVector(const Anim::RobotDataLoader& dataLoader,
                                         const Util::Locale& locale,
                                         TriggerWordDetectedCallback callback)
 {
+  if( _context != nullptr ) {
+    auto* webService = _context->GetWebService();
+    if( webService != nullptr ) {
+      auto onWebVizData = [](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
+        // just got a subscription, send now
+        if( data["type"].isString() && data["type"].asString() == "time" ) {
+          int refIdx = data["index"].asInt();
+          Json::Value data;
+          data["type"] = "time";
+          data["index"] = refIdx;
+          using namespace std::chrono;
+          data["time"] = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
+          sendToClient(data);
+        }
+      };
+      static auto dummy = webService->OnWebVizData( "vad" ).ScopedSubscribe( onWebVizData );
+      
+    }
+  }
+  
   if (_victorTrigger) {
     LOG_WARNING("SpeechRecognizerSystem.InitVector", "Victor Recognizer is already running");
     return;
@@ -319,7 +366,10 @@ void SpeechRecognizerSystem::InitVector(const Anim::RobotDataLoader& dataLoader,
   const bool useVad = true;
   _victorTrigger = std::make_unique<TriggerContextThf>("Vector", useVad);
   _victorTrigger->recognizer->Init("");
-  _victorTrigger->recognizer->SetCallback(callback);
+  _victorTrigger->recognizer->SetCallback([&](const AudioUtil::SpeechRecognizerCallbackInfo& info){
+    SendTriggerActivity(info.Description());
+    //callback(info);
+  });
   _victorTrigger->recognizer->Start();
   _victorTrigger->micTriggerConfig->Init("hey_vector_thf", dataLoader.GetMicTriggerConfig());
   
@@ -392,6 +442,34 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample * audioData, un
     ApplyLocaleUpdate();
   }
   // Update recognizer
+  
+  static int wasActive = -1;
+  if( (int)vadActive != wasActive ) {
+    SendVADActivity("Vector", vadActive);
+    wasActive = vadActive;
+  }
+  
+  static int webRTCEnergy = 0;
+  // The result value is 0 for inactive, 1 for active, and -1 for error (e.g., not enough data).
+  bool webRTCActive = WebRtcVad_Process(_webRTC_VADHandle, 16000, audioData, audioDataLen) == 1;
+  if( webRTCActive ) {
+    ++webRTCEnergy;
+  } else {
+    --webRTCEnergy;
+  }
+  if( webRTCEnergy > kMaxEnergy ) {
+    webRTCEnergy = kMaxEnergy;
+  } else if( webRTCEnergy < 0 ) {
+    webRTCEnergy = 0;
+  }
+  const bool webRTCVadActive = (webRTCEnergy >= kTriggerEnergy);
+  static int webRTCwasActive = -1;
+  if( webRTCVadActive != webRTCwasActive ) {
+    SendVADActivity("WebRTC", webRTCVadActive);
+    webRTCwasActive = webRTCVadActive;
+  }
+  
+  
   if (vadActive || !_victorTrigger->useVad) {
     _victorTrigger->recognizer->Update(audioData, audioDataLen);
   }
@@ -533,21 +611,22 @@ void SpeechRecognizerSystem::InitAlexa(const Util::Locale& locale,
   // wrap callback with another check for whether the input signal contains a notch
   const auto wrappedCallback = [callback=std::move(callback), this](const AudioUtil::SpeechRecognizerCallbackInfo& info)
   {
-    AudioUtil::SpeechRecognizerIgnoreReason ignoreReason;
-    if (_notchDetectorActive || kForceRunNotchDetector) {
-      std::lock_guard<std::mutex> lg{_notchMutex};
-      ignoreReason.notch = _notchDetector->HasNotch();
-    }
-    const auto diff = info.endSampleIndex - _playbackTrigerSampleIdx;
-    ignoreReason.playback = (diff <= kPlaybackRecognizerSampleCountThreshold);
-    
-    if (ignoreReason) {
-      LOG_INFO("SpeechRecognizerSystem.InitAlexaCallback.Ignored",
-               "Alexa wake word contained a notch '%c' or playback recognizer '%c'"
-               " samples between playback and user recognizers %llu samples | %llu ms",
-               ignoreReason.notch ? 'Y' : 'N', ignoreReason.playback ? 'Y' : 'N', diff, (diff/16));
-    }
-    callback(info, ignoreReason);
+    SendTriggerActivity(info.Description());
+    //    AudioUtil::SpeechRecognizerIgnoreReason ignoreReason;
+    //    if (_notchDetectorActive || kForceRunNotchDetector) {
+    //      std::lock_guard<std::mutex> lg{_notchMutex};
+    //      ignoreReason.notch = _notchDetector->HasNotch();
+    //    }
+    //    const auto diff = info.endSampleIndex - _playbackTrigerSampleIdx;
+    //    ignoreReason.playback = (diff <= kPlaybackRecognizerSampleCountThreshold);
+    //
+    //    if (ignoreReason) {
+    //      LOG_INFO("SpeechRecognizerSystem.InitAlexaCallback.Ignored",
+    //               "Alexa wake word contained a notch '%c' or playback recognizer '%c'"
+    //               " samples between playback and user recognizers %llu samples | %llu ms",
+    //               ignoreReason.notch ? 'Y' : 'N', ignoreReason.playback ? 'Y' : 'N', diff, (diff/16));
+    //    }
+    //    callback(info, ignoreReason);
   };
   
   _alexaComponent = _context->GetAlexa();
@@ -558,6 +637,13 @@ void SpeechRecognizerSystem::InitAlexa(const Util::Locale& locale,
   _alexaTrigger = std::make_unique<TriggerContextPryon>("Alexa", useVad);
   _alexaTrigger->recognizer->SetCallback(wrappedCallback);
   _alexaTrigger->micTriggerConfig->Init("alexa_pryon", dataLoader->GetMicTriggerConfig());
+  _alexaTrigger->recognizer->SetVadCallback([&](int vadActivity) {
+    static int oldVad = -2;
+    if( vadActivity != oldVad ) {
+      SendVADActivity("Alexa", vadActivity);
+      oldVad = vadActivity;
+    }
+  });
   _alexaTrigger->recognizer->Start();
   
   // On Debug builds, check that all the files listed in the trigger config actually exist
@@ -731,6 +817,65 @@ bool SpeechRecognizerSystem::UpdateRecognizerModel(TriggerContext<SpeechRecogniz
   }
   
   return success;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpeechRecognizerSystem::SendTriggerActivity( const std::string& info ) const
+{
+  PRINT_NAMED_WARNING("WHATNOW", "Trigger '%s'", info.c_str());
+  using namespace std::chrono;
+  if (_context != nullptr)
+  {
+    static const std::string kWebVizModuleName = "vad";
+    auto* webService = _context->GetWebService();
+    if( webService != nullptr && webService->IsWebVizClientSubscribed(kWebVizModuleName) ) {
+      Json::Value data;
+      data["type"] = "trigger";
+      data["trigger"] = info;
+      data["time"] = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
+      webService->SendToWebViz(kWebVizModuleName, data);
+    }
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpeechRecognizerSystem::SendVADActivity( const std::string& type, int val ) const
+{
+  PRINT_NAMED_WARNING("WHATNOW", "VAD %s = %d", type.c_str(), val);
+  using namespace std::chrono;
+  if (_context != nullptr)
+  {
+    static const std::string kWebVizModuleName = "vad";
+    auto* webService = _context->GetWebService();
+    if( webService != nullptr && webService->IsWebVizClientSubscribed(kWebVizModuleName) ) {
+      Json::Value data;
+      data["type"] = "VAD";
+      data["VAD"] = type;
+      data["value"] = val;
+      data["time"] = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
+      webService->SendToWebViz(kWebVizModuleName, data);
+    }
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpeechRecognizerSystem::SetNoiseData( float latestPower, float noiseFloor ) const
+{
+  PRINT_NAMED_WARNING("WHATNOW", "Noise %f, %f", latestPower, noiseFloor);
+  using namespace std::chrono;
+  if (_context != nullptr)
+  {
+    static const std::string kWebVizModuleName = "vad";
+    auto* webService = _context->GetWebService();
+    if( webService != nullptr && webService->IsWebVizClientSubscribed(kWebVizModuleName) ) {
+      Json::Value data;
+      data["type"] = "noise";
+      data["power"] = latestPower;
+      data["noise"] = noiseFloor;
+      data["time"] = duration_cast<milliseconds>(steady_clock::now().time_since_epoch()).count();
+      webService->SendToWebViz(kWebVizModuleName, data);
+    }
+  }
 }
 
 

@@ -56,6 +56,9 @@ public:
   // Return true when voice is detected
   bool IsVadActive() const;
   
+  using VadCallbackFunc = std::function<void(int)>;
+  void SetVadCallback( VadCallbackFunc&& func) { _vadCallback = std::move(func); }
+  
   // Get state of recognizer
   // Return true when recognizer is initialized and model is loaded
   bool IsReady() const;
@@ -66,7 +69,6 @@ public:
   virtual void SetRecognizerIndex(IndexType index) override {}
   virtual void SetRecognizerFollowupIndex(IndexType index) override {}
   virtual IndexType GetRecognizerIndex() const override { return 0; }
-
 
 private:
 
@@ -89,6 +91,8 @@ private:
   
   virtual void StartInternal() override;
   virtual void StopInternal() override;
+  
+  VadCallbackFunc _vadCallback;
 
 }; // class SpeechRecognizer
 
