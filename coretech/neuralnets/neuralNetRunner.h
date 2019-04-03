@@ -1,5 +1,5 @@
 /**
- * File: objectDetector.h
+ * File: neuralNetRunner.h
  *
  * Author: Andrew Stein
  * Date:   6/29/2017
@@ -64,4 +64,4 @@ private:
 } // namespace NeuralNets
 } // namespace Anki
 
-#endif /* __Anki_Vision_NeuralNetRunner_H__ */
+#endif /* __Anki_NeuralNets_NeuralNetRunner_H__ */

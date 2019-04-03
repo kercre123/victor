@@ -1,10 +1,10 @@
 /**
- * File: objectDetector.cpp
+ * File: neuralNetRunner.cpp
  *
  * Author: Andrew Stein
  * Date:   6/29/2017
  *
- * Description: 
+ * Description: See header file.
  *
  * Copyright: Anki, Inc. 2017
  **/
@@ -22,31 +22,10 @@
 #include "util/fileUtils/fileUtils.h"
 #include "util/threading/threadPriority.h"
 
-// TODO: put this back if/when we start supporting other IAsyncRunnerModels
-//#if USE_TENSORFLOW
-//#  ifndef TENSORFLOW_USE_AOT
-//#    error Expecting TENSORFLOW_USE_AOT to be defined by cmake!
-//#  elif TENSORFLOW_USE_AOT==1
-//#    include "objectDetectorModel_tensorflow_AOT.cpp"
-//#  else
-//#    include "objectDetectorModel_tensorflow.cpp"
-//#  endif
-//#elif USE_TENSORFLOW_LITE
-//#  include "objectDetectorModel_tensorflow_lite.cpp"
-//#elif USE_OPENCV_DNN
-//#  include "neuralNetRunner_opencvdnnModel.cpp"
-//#else
-//#include "neuralNetRunner_messengerModel.cpp"
-//#endif
-
 #define LOG_CHANNEL "NeuralNets"
 
 namespace Anki {
 namespace NeuralNets {
- 
-// Log channel name currently expected to be defined by one of the model cpp files...
-// static const char * const kLogChannelName = "VisionSystem";
-
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NeuralNetRunner::NeuralNetRunner(const std::string& modelPath)
