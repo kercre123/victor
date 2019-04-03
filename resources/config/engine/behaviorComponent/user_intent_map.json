@@ -1,4 +1,24 @@
 {
+  "simple_voice_responses": [
+    {
+      "cloud_intent": "intent_greeting_hello",
+      "response": {
+        "anim_group": "ag_greeting_hello",
+        "emotion_event": "RespondToShortVoiceCommand",
+        "active_feature": "ReactToHello"
+      }
+    },
+    {
+      "cloud_intent": "intent_imperative_forward",
+      "response": {
+        "anim_group": "ag_movement_forward_01",
+        "emotion_event": "RespondToShortVoiceCommand",
+        "active_feature": "MovementForward",
+        "disable_wakeword_turn": true
+      }
+    }
+  ],
+
   "user_intent_map": [
     {
       "cloud_intent": "intent_amazon_signin",
@@ -109,10 +129,6 @@
     {
       "cloud_intent": "intent_greeting_goodnight",
       "user_intent": "greeting_goodnight"
-    },
-    {
-      "cloud_intent": "intent_greeting_hello",
-      "user_intent": "greeting_hello"
     },
     {
       "cloud_intent": "intent_status_feeling",
@@ -268,10 +284,6 @@
       "user_intent": "imperative_volumedown",
       "cloud_intent": "intent_imperative_volumedown",
       "feature_gate": "Volume"
-    },
-    {
-      "user_intent": "movement_forward",
-      "cloud_intent": "intent_imperative_forward"
     },
     {
       "user_intent": "movement_backward",

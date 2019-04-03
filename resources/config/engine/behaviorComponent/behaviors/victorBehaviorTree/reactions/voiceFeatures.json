@@ -1,5 +1,5 @@
 {
-  "behaviorID" : "InterruptingVoiceReactions",
+  "behaviorID" : "VoiceFeatures",
   "behaviorClass" : "DispatcherStrictPriority",
 
   "linkScope": true,

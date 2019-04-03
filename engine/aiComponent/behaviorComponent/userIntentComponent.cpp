@@ -23,9 +23,11 @@
 #include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
+#include "engine/moodSystem/moodManager.h"
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "engine/unitTestKey.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
 #include "audioEngine/multiplexer/audioCladMessageHelper.h"
@@ -581,51 +583,56 @@ bool UserIntentComponent::SetIntentPendingFromCloudJSONValue(Json::Value json)
   Json::Value emptyJson;
   Json::Value& intentJson = hasParams ? params : emptyJson;
 
-  UserIntentTag userIntentTag = _intentMap->GetUserIntentFromCloudIntent(cloudIntent);
-
-  if (hasParams) {
-    // translate variable names, if necessary
-    _intentMap->SanitizeCloudIntentVariables( cloudIntent, params );
-  }
-
-  ANKI_VERIFY( json["type"].isNull(),
-               "UserIntentComponent.SetIntentPendingFromCloudJSONValue.Reserved",
-               "cloud intent '%s' contains reserved key 'type'",
-               cloudIntent.c_str() );
+  const UserIntentTag userIntentTag = _intentMap->GetUserIntentFromCloudIntent(cloudIntent);
 
   UserIntent pendingIntent;
 
-  // Set up json to look like a union
-  intentJson["type"] = UserIntentTagToString(userIntentTag);
-  const bool setOK = pendingIntent.SetFromJSON(intentJson);
-
-  // the UserIntent will have size 1 if it's a UserIntent_Void, which means the user intent
-  // corresponding to this cloud intent should _not_ have data.
-  using Tag = std::underlying_type<UserIntentTag>::type;
-  const bool expectedParams = (pendingIntent.Size() > sizeof(Tag));
-  static_assert( std::is_same<Tag, uint8_t>::value,
-                 "If the type changes, you need to rethink this");
-
-  if (!setOK) {
-    LOG_WARNING("UserIntentComponent.SetCloudIntentPendingFromJSON.BadParams",
-                "could not parse user intent '%s' from cloud intent of type '%s'",
-                UserIntentTagToString(userIntentTag),
-                cloudIntent.c_str());
-    // NOTE: also don't set the pending intent, since the request was malformed
-    return false;
-  } else if (!expectedParams && hasParams) {
-    // simply ignore the extraneous data but continue
-    LOG_WARNING("UserIntentComponent.SetIntentPendingFromCloudJSONValue.ExtraData",
-                "Intent '%s' has unexpected params",
-                cloudIntent.c_str() );
-  } else if (expectedParams && !hasParams) {
-    // missing params, bail
-    LOG_WARNING("UserIntentComponent.SetIntentPendingFromCloudJSONValue.MissingParams",
-                "Intent '%s' did not contain required params",
-                cloudIntent.c_str() );
-    return false;
+  if( userIntentTag == UserIntentTag::simple_voice_response ) {
+    // special (simpler) case for a simple voice response. The map has the fully-formed intent already
+    pendingIntent = _intentMap->GetSimpleVoiceResponse(cloudIntent);
   }
+  else {
+    if (hasParams) {
+      // translate variable names, if necessary
+      _intentMap->SanitizeCloudIntentVariables( cloudIntent, params );
+    }
 
+    ANKI_VERIFY( json["type"].isNull(),
+                 "UserIntentComponent.SetIntentPendingFromCloudJSONValue.Reserved",
+                 "cloud intent '%s' contains reserved key 'type'",
+                 cloudIntent.c_str() );
+
+    // Set up json to look like a union
+    intentJson["type"] = UserIntentTagToString(userIntentTag);
+    const bool setOK = pendingIntent.SetFromJSON(intentJson);
+
+    // the UserIntent will have size 1 if it's a UserIntent_Void, which means the user intent
+    // corresponding to this cloud intent should _not_ have data.
+    using Tag = std::underlying_type<UserIntentTag>::type;
+    const bool expectedParams = (pendingIntent.Size() > sizeof(Tag));
+    static_assert( std::is_same<Tag, uint8_t>::value,
+                   "If the type changes, you need to rethink this");
+
+    if (!setOK) {
+      LOG_WARNING("UserIntentComponent.SetCloudIntentPendingFromJSON.BadParams",
+                  "could not parse user intent '%s' from cloud intent of type '%s'",
+                  UserIntentTagToString(userIntentTag),
+                  cloudIntent.c_str());
+      // NOTE: also don't set the pending intent, since the request was malformed
+      return false;
+    } else if (!expectedParams && hasParams) {
+      // simply ignore the extraneous data but continue
+      LOG_WARNING("UserIntentComponent.SetIntentPendingFromCloudJSONValue.ExtraData",
+                  "Intent '%s' has unexpected params",
+                  cloudIntent.c_str() );
+    } else if (expectedParams && !hasParams) {
+      // missing params, bail
+      LOG_WARNING("UserIntentComponent.SetIntentPendingFromCloudJSONValue.MissingParams",
+                  "Intent '%s' did not contain required params",
+                  cloudIntent.c_str() );
+      return false;
+    }
+  }
 
   if (!_whitelistedIntents.empty()) {
     // only pass on whitelisted intents
@@ -653,6 +660,45 @@ void UserIntentComponent::InitDependent( Vector::Robot* robot, const BCCompMap& 
   _tagForTriggerWordGetInCallbacks = _robot->GetAnimationComponent().SetTriggerWordGetInCallback(callback);
 
   _activeIntentFeedback.Init(robot);
+
+  const AnimationComponent& animComponent = _robot->GetAnimationComponent();
+  const MoodManager& moodManager = dependentComps.GetComponent<MoodManager>();
+
+  auto verifySimpleVoiceResponse = [&animComponent, &moodManager](const MetaUserIntent_SimpleVoiceResponse& response) {
+    bool ok = true;
+
+    if( !response.emotion_event.empty() ) {
+      if( !moodManager.IsValidEmotionEvent( response.emotion_event ) ) {
+        LOG_ERROR("UserIntentComponent.Init.VerifySimpleVoiceResponses.InvalidEmotionEvent",
+                  "response to cloud intent has invalid emotion event '%s'",
+                  response.emotion_event.c_str());
+        ok = false;
+      }
+    }
+
+    if( !animComponent.IsAnimationGroup( response.anim_group ) ) {
+      LOG_ERROR("UserIntentComponent.Init.VerifySimpleVoiceResponses.InvalidAnimGroup",
+                "response to cloud intent has invalid anim group '%s', removing from map",
+                response.anim_group.c_str());
+      ok = false;
+    }
+
+    return ok;
+  };
+
+  _intentMap->VerifySimpleVoiceResponses( verifySimpleVoiceResponse, "UserIntentComponent.Init" );
+}
+
+void UserIntentComponent::DEVONLY_IterateSimpleVoiceResponse(UnitTestKey key,
+                                                             UserIntentComponent::SimpleVoiceResponseLambda lambda)
+{
+  // unit tests use the "Verify" interface to iterate, but always return "true" to keep the intents in the map
+  const auto verifyLmabda = [&lambda](const MetaUserIntent_SimpleVoiceResponse& r) {
+    lambda(r);
+    return true;
+  };
+
+  _intentMap->VerifySimpleVoiceResponses( verifyLmabda, "UNIT_TEST" );
 }
 
 bool UserIntentComponent::SetCloudIntentPendingFromString(const std::string& cloudStr)

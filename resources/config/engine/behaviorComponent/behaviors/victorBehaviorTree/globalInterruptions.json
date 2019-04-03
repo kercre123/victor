@@ -15,9 +15,9 @@
     "TakeAPhotoCoordinator",
     "ReactToRobotShaken",
     "ReactToTouchPetting",
-    "BasicVoiceCommands", // these are simple voice commands that we want to ignore obstacles
+    "SimpleVoiceResponses", // these are simple voice commands that we want to ignore obstacles
     "ReactToObstacle",
-    "InterruptingVoiceReactions",
+    "VoiceFeatures",
     "ChangeEyeColor",
     "ReactToUnclaimedIntent",
     "HeldInPalmDispatcher",

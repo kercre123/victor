@@ -3,6 +3,9 @@
 // Created: 2018-02-04
 // Copyright: Anki, inc. 2018
 
+// for ActiveFeature override in the generic SimpleVoiceResponse struct
+#include "clad/types/behaviorComponent/activeFeatures.clad"
+
 namespace Anki {
 namespace Vector {
 
@@ -95,6 +98,20 @@ structure UserIntent_EyeColor
   string eye_color
 }
 
+// This is a container for multiple "simple voice responses" to make it easy to specify, in json, a simple "cloud
+// intent" -> "animation" mapping. Note that these are _not_ intended to be sent directly from cloud with these
+// parameters, cloud shouldn't know about things like emotion events or active features, or specific animation
+// groups
+structure MetaUserIntent_SimpleVoiceResponse
+{
+  string anim_group, // group, not trigger, to avoid needed a clad update if a new group is added
+  string emotion_event, // optional (blank if not needed)
+  ActiveFeature active_feature, // optional (should use 'BasicVoiceCommand' if not otherwise specified)
+
+  // special case logic to disable turning after the wakeword, generally should be left to default to false
+  bool disable_wakeword_turn,
+}
+
 union dupes_allowed UserIntent
 {
   UserIntent_Void unmatched_intent,
@@ -117,7 +134,6 @@ union dupes_allowed UserIntent
   UserIntent_Void             greeting_goodbye,
   UserIntent_Void             greeting_goodmorning,
   UserIntent_Void             greeting_goodnight,
-  UserIntent_Void             greeting_hello,
   UserIntent_Void             imperative_abuse,
   UserIntent_Void             imperative_affirmative,
   UserIntent_Void             imperative_apology,
@@ -136,7 +152,6 @@ union dupes_allowed UserIntent
   UserIntent_Volume           imperative_volumelevel,
   UserIntent_Void             imperative_volumeup,
   UserIntent_Void             imperative_volumedown,
-  UserIntent_Void             movement_forward,
   UserIntent_Void             movement_backward,
   UserIntent_Void             movement_turnleft,
   UserIntent_Void             movement_turnright,
@@ -165,11 +180,14 @@ union dupes_allowed UserIntent
   UserIntent_Void             system_sleep,
   UserIntent_TakeAPhoto       take_a_photo,
   UserIntent_WeatherResponse  weather_response,
-  
 
+  // used for validation to know when the above "normal intents" end
+  UserIntent_Void               test_SEPARATOR,
 
-  // for tests
-  UserIntent_Void               test_SEPARATOR, // used for validation to know when the above ends
+  // simple response from json mapping (below the test seperator because these are a special case mapping)
+  MetaUserIntent_SimpleVoiceResponse simple_voice_response,
+
+  // intents for unit tests
   UserIntent_Void               test_user_intent_1,
   UserIntent_Void               test_user_intent_2,
   UserIntent_Test_Name          test_name,

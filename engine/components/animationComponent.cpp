@@ -283,7 +283,13 @@ const std::string& AnimationComponent::GetAnimationNameFromGroup(const std::stri
   }
   return empty;
 }
-  
+
+bool AnimationComponent::IsAnimationGroup(const std::string& group) const
+{
+  const bool groupExists = _animationGroups->_container.HasGroup(group);
+  return groupExists;
+}
+
 Result AnimationComponent::PlayAnimByName(const std::string& animName,
                                           int numLoops,
                                           bool interruptRunning,

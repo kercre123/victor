@@ -12,6 +12,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorLookAroundInPlace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorResetState.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/behaviorSimpleVoiceResponse.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorStayOnChargerUntilCharged.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorWait.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/alexa/behaviorAlexa.h"
@@ -220,6 +221,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ResetState:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorResetState(config));
+      break;
+    }
+    
+    case BehaviorClass::SimpleVoiceResponse:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSimpleVoiceResponse(config));
       break;
     }
     

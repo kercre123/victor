@@ -350,7 +350,6 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/movement
   MovementBackward,
-  MovementForward,
   MovementTurnAround,
   MovementTurnLeft,
   MovementTurnRight,
@@ -397,10 +396,8 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/reactions
   AskForHelp,
   AskForHelpOnSide,
-  BasicVoiceCommands,
   CheckForAndReactToHand,
   ForceStuckOnEdge,
-  InterruptingVoiceReactions,
   MandatoryPhysicalReactions,
   ProceduralTurnToMicDirection,
   ReactToAbuse,
@@ -413,7 +410,6 @@ enum uint_16 BehaviorID {
   ReactToGoodBye,
   ReactToGoodMorning,
   ReactToHand,
-  ReactToHello,
   ReactToLove,
   ReactToMotorCalibration,
   ReactToNegative,
@@ -433,8 +429,10 @@ enum uint_16 BehaviorID {
   ReactToUncalibratedHeadAndLift,
   ReactToUnexpectedMovement,
   ReactToUnexpectedMovementInAir,
+  SimpleVoiceResponses,
   StuckOnEdge,
   TriggerWordWithoutIntent,
+  VoiceFeatures,
 
   // victorBehaviorTree
   ResetSafely,
