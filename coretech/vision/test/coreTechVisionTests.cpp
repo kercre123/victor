@@ -7,7 +7,7 @@
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/pose.h"
 
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/quad.h"
 
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/compressedImage.h"

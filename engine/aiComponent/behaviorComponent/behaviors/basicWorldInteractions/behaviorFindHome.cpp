@@ -42,7 +42,7 @@
 #include "clad/externalInterface/messageEngineToGame.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #define LOG_CHANNEL "Behaviors"
@@ -132,7 +132,7 @@ BehaviorFindHome::~BehaviorFindHome()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindHome::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Markers, EVisionUpdateFrequency::High });
   
   modifiers.wantsToBeActivatedWhenOnCharger = false;
   modifiers.wantsToBeActivatedWhenCarryingObject = true;
@@ -216,7 +216,7 @@ void BehaviorFindHome::AlwaysHandleInScope(const EngineToGameEvent& event)
       // It is a duplicated set of stats that are tracked for the purpose of
       //  analytics for robot's charger finding capability
       if(IsActivated() && GetBEI().HasVisionComponent()) {
-        _dVars.numFramesOfDetectingMarkers++;
+        _dVars.numFramesOfMarkers++;
         if(GetBEI().GetVisionComponent().GetLastImageQuality() == Vision::ImageQuality::TooDark) {
           _dVars.numFramesOfImageTooDark++;
         }
@@ -267,7 +267,7 @@ void BehaviorFindHome::OnBehaviorDeactivated()
 
   DASMSG(find_home_result, "find_home.result", "Whether the FindHome behavior succeeded in locating the object");
   DASMSG_SET(i1, chargerSeen, "Success/failure on locating the charger. 1=success 0=failuire");
-  DASMSG_SET(i2, _dVars.numFramesOfDetectingMarkers, "Count of total number of processed image frames searching for Markers");
+  DASMSG_SET(i2, _dVars.numFramesOfMarkers, "Count of total number of processed image frames searching for Markers");
   DASMSG_SET(i3, _dVars.numFramesOfImageTooDark, "Count of number of processed image frames (searching for Markers) that are TooDark");
   DASMSG_SEND();
 }

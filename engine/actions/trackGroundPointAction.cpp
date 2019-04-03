@@ -45,7 +45,7 @@ void TrackGroundPointAction::GetRequiredVisionModes(std::set<VisionModeRequest>&
   {
     case ExternalInterface::MessageEngineToGameTag::RobotObservedLaserPoint:
     {
-      requests.insert({ VisionMode::DetectingLaserPoints, EVisionUpdateFrequency::High });
+      requests.insert({ VisionMode::Lasers, EVisionUpdateFrequency::High });
       break;
     }
       

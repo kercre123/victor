@@ -78,7 +78,7 @@ namespace {
   static const u32 kTimeToConfirmRobotHeldInPalmDefault_ms = Util::SecToMilliSec(10.0f);
 }
 
-CONSOLE_VAR_RANGED(float, kCliffValHeldInPalmSurface, CONSOLE_GROUP, 400.0f, 0.0f, 1000.0f);
+CONSOLE_VAR_RANGED(float, kCliffValHeldInPalmSurface, CONSOLE_GROUP, 500.0f, 0.0f, 1000.0f);
 
 CONSOLE_VAR_RANGED(u32, kMinTimeToConfirmRobotHeldInPalm_ms,
                    CONSOLE_GROUP, 500, 0, kTimeToConfirmRobotHeldInPalmDefault_ms);
@@ -88,22 +88,27 @@ CONSOLE_VAR_RANGED(u32, kMinTimeToConfirmRobotHeldInPalm_ms,
 HeldInPalmTracker::HeldInPalmTracker()
   : IDependencyManagedComponent(this, BCComponentID::HeldInPalmTracker )
 {
-  DEV_ASSERT_MSG(kMinCliffsToConfirmHeldInPalmPickup > 0,
-                 "HIPTracker.CTor.InvalidNumberOfCliffsToConfirmHeldInPalmPickup",
-                 "Number of cliffs to confirm pickup (%i) must be positive",
-                 kMinCliffsToConfirmHeldInPalmPickup);
+  ANKI_VERIFY(kMinCliffsToConfirmHeldInPalmPickup > 0,
+              "HIPTracker.CTor.InvalidNumberOfCliffsToConfirmHeldInPalmPickup",
+              "Number of cliffs to confirm pickup (%i) must be positive",
+              kMinCliffsToConfirmHeldInPalmPickup);
   
-  DEV_ASSERT_MSG(kMinCliffsToConfirmHeldInPalmPickup <= CliffSensorComponent::kNumCliffSensors,
-                 "HIPTracker.CTor.InvalidNumberOfCliffsToConfirmHeldInPalmPickup",
-                 "Number of cliffs to confirm pickup (%i) must be <= to number of cliff sensors %i",
-                 kMinCliffsToConfirmHeldInPalmPickup, CliffSensorComponent::kNumCliffSensors);
+  ANKI_VERIFY(kMinCliffsToConfirmHeldInPalmPickup <= CliffSensorComponent::kNumCliffSensors,
+              "HIPTracker.CTor.InvalidNumberOfCliffsToConfirmHeldInPalmPickup",
+              "Number of cliffs to confirm pickup (%i) must be <= to number of cliff sensors %i",
+              kMinCliffsToConfirmHeldInPalmPickup, CliffSensorComponent::kNumCliffSensors);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void HeldInPalmTracker::SetIsHeldInPalm(const bool isHeldInPalm)
+void HeldInPalmTracker::SetIsHeldInPalm(const bool isHeldInPalm, MovementComponent& moveComp)
 {
   if (_isHeldInPalm != isHeldInPalm) {
     LOG_INFO("HeldInPalmTracker.SetIsHeldInPalm", "%s", isHeldInPalm ? "true" : "false");
+    
+    // Set the movement component to start detecting unexpected movement and clamp the maximum
+    // point-turn angular speeds if the robot is held in a user's palm since some of the behaviors
+    // that can run in this state might try to turn in place.
+    moveComp.EnableHeldInPalmMode(isHeldInPalm);
   }
   _isHeldInPalm = isHeldInPalm;
 }
@@ -163,6 +168,7 @@ void HeldInPalmTracker::CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo)
     _lastTimeOnTreadsOrCharger = currTime;
   }
   
+  auto& moveComponent = robotInfo.GetMoveComponent();
   if ( _isHeldInPalm ) {
     const auto& cliffComp = robotInfo.GetCliffSensorComponent();
     // The robot only continues to be considered held "in a palm" as long as:
@@ -173,14 +179,38 @@ void HeldInPalmTracker::CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo)
     // If condition #2 is not true, it is indicative that some behavior/action has caused the robot
     // to drive very far over the edge of the user's palm. For more details, see explanation of
     // `kMaxCliffsAllowedWhileHeldInPalm`.
+    
+    const int numCliffsDetected = cliffComp.GetNumCliffsDetected();
+    
+#if REMOTE_CONSOLE_ENABLED
+    if (kEnableDebugTransitionPrintouts) {
+      if (!robotInfo.IsBeingHeld()) {
+        LOG_INFO("HIPTracker.CheckIfIsHeldInPalm.IsNotBeingHeld",
+                 "Robot not being held anymore while held in palm (no motion detected and not picked up)");
+      }
+      if (numCliffsDetected > kMaxCliffsAllowedWhileHeldInPalm) {
+        LOG_INFO("HIPTracker.CheckIfIsHeldInPalm.TooManyCliffs",
+                 "%d cliffs detected while held in palm", numCliffsDetected);
+      }
+      if (onCharger) {
+        LOG_INFO("HIPTracker.CheckIfIsHeldInPalm.ChargerDetected", "Charger detected while held in palm");
+      }
+      if (otState != OffTreadsState::InAir) {
+        LOG_INFO("HIPTracker.CheckIfIsHeldInPalm.InvalidOffTreadsState",
+                 "Robot transitioned to invalid state of %s while held in palm",
+                 OffTreadsStateToString(otState));
+      }
+    }
+#endif
     SetIsHeldInPalm(robotInfo.IsBeingHeld() &&
-                    cliffComp.GetNumCliffsDetected() <= kMaxCliffsAllowedWhileHeldInPalm &&
+                    numCliffsDetected <= kMaxCliffsAllowedWhileHeldInPalm &&
                     !onCharger &&
                     // NOTE(GB): The following condition can be removed when a behavior is added
                     // that supports dealing with the user gripping Vector in the palm of their
                     // hand while holding them in the OnRightSide, OnLeftSide, OnBack, or OnFace
                     // orientations. Tracked in VIC-12701.
-                    otState == OffTreadsState::InAir);
+                    otState == OffTreadsState::InAir,
+                    moveComponent);
   } else {
     // If the robot is no longer held in a palm, there are 3 transitions possible that could result
     // in the robot returning to a user's palm:
@@ -236,9 +266,16 @@ void HeldInPalmTracker::CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo)
             timeToConfirmRobotHeldInPalm_ms = kMinTimeToConfirmRobotHeldInPalm_ms;
           }
           
-          SetIsHeldInPalm(WasRobotPlacedInPalmWhileHeld(robotInfo, timeToConfirmRobotHeldInPalm_ms));
+          SetIsHeldInPalm(WasRobotPlacedInPalmWhileHeld(robotInfo, timeToConfirmRobotHeldInPalm_ms),
+                          moveComponent);
         }
-  #if REMOTE_CONSOLE_ENABLED
+#if REMOTE_CONSOLE_ENABLED
+        else if (kEnableDebugTransitionPrintouts && _enoughCliffsDetectedSincePickup){
+          LOG_PERIODIC_INFO(5, "HIPTracker.CheckIfIsHeldInPalm.MotorsMovedTooRecently",
+                            "Robot has detected enough cliffs to confirm true pickup, but motors moved "
+                            "too recently (in the last %d [ms])", kTimeToWaitAterMotorMovement_ms);
+        }
+        
         if (kEnableDebugTransitionPrintouts && _isHeldInPalm) {
           if (!_enoughCliffsDetectedSincePickup) {
             LOG_INFO("HIPTracker.CheckIfIsHeldInPalm",
@@ -258,7 +295,8 @@ void HeldInPalmTracker::CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo)
         if (!wasMovingRecently) {
           // Robot has been held in a user's palm more recently than it was on the
           // ground (OffTreadsState::OnTreads). Check final condition for scenario C.
-          SetIsHeldInPalm(WasRobotPlacedInPalmWhileHeld(robotInfo, kMinTimeToConfirmRobotHeldInPalm_ms));
+          SetIsHeldInPalm(WasRobotPlacedInPalmWhileHeld(robotInfo, kMinTimeToConfirmRobotHeldInPalm_ms),
+                          moveComponent);
         }
 #if REMOTE_CONSOLE_ENABLED
         if (kEnableDebugTransitionPrintouts && _isHeldInPalm) {
@@ -274,11 +312,6 @@ void HeldInPalmTracker::CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo)
   } else {
     _lastHeldInPalmTime = currTime;
   }
-  
-  // Set the movement component to start detecting unexpected movement if the robot is held in a
-  // user's palm since some of the behaviors that can run in this state might try to turn in place.
-  auto& moveComponent = robotInfo.GetMoveComponent();
-  moveComponent.EnableUnexpectedMovementWhilePickedUp(_isHeldInPalm);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -308,6 +341,25 @@ bool HeldInPalmTracker::WasRobotPlacedInPalmWhileHeld(const BEIRobotInfo& robotI
                                                       std::end(cliffDataFilt));
     const u32 durationOfNoCliffDetections_ms =
       cliffComp.GetDurationForNCliffDetections_ms(kMaxCliffsToConfirmRobotPlacedInPalm);
+#if REMOTE_CONSOLE_ENABLED
+    if (kEnableDebugTransitionPrintouts) {
+      if (cliffComp.GetNumCliffsDetected() <= kMaxCliffsAllowedWhileHeldInPalm &&
+          durationOfNoCliffDetections_ms < timeToConfirmHeldInPalm_ms &&
+          maxCliffSensorVal < kCliffValHeldInPalmSurface) {
+        LOG_PERIODIC_INFO(5, "HIPTracker.WasRobotPlacedInPalmWhileHeld.InsufficientCliffDetectionDuration",
+                          "Robot detecting a valid palm surface with max reported cliff sensor value of %.1f,"
+                          "but %d cliffs (or less) have only been detected for %d [ms]", maxCliffSensorVal,
+                          kMaxCliffsAllowedWhileHeldInPalm, durationOfNoCliffDetections_ms);
+      } else if (durationOfNoCliffDetections_ms >= timeToConfirmHeldInPalm_ms &&
+                 maxCliffSensorVal >= kCliffValHeldInPalmSurface) {
+        LOG_PERIODIC_INFO(5, "HIPTracker.WasRobotPlacedInPalmWhileHeld.InvalidPalmSurface",
+                          "Robot has detected %d cliffs for %d [ms], but invalid palm surface currently"
+                          "detected with max reported cliff sensor value of %.1f" ,
+                          kMaxCliffsAllowedWhileHeldInPalm, durationOfNoCliffDetections_ms,
+                          maxCliffSensorVal);
+      }
+    }
+#endif
     
     return durationOfNoCliffDetections_ms >= timeToConfirmHeldInPalm_ms &&
        // A cliff sensor reading higher than kCliffValHeldInPalmSurface is likely due to the robot
@@ -343,7 +395,22 @@ bool HeldInPalmTracker::HasDetectedEnoughCliffsSincePickup(const BEIRobotInfo& r
 #endif
       return true;
     }
+#if REMOTE_CONSOLE_ENABLED
+    if (kEnableDebugTransitionPrintouts) {
+      LOG_PERIODIC_INFO(5, "HIPTracker.HasDetectedEnoughCliffsSincePickup.InsufficientCliffDetectionDuration",
+                        "Robot has only been detecting %u cliffs (or more) for %u [ms], %u [ms] elapsed since "
+                        "last OnTreads or on charger", currNumCliffs, durationOfCurrentCliffDetections_ms,
+                        timeSinceOnTreadsOrCharger_ms);
+    }
+#endif
   }
+  
+#if REMOTE_CONSOLE_ENABLED
+  if (kEnableDebugTransitionPrintouts) {
+    LOG_PERIODIC_INFO(5, "HIPTracker.HasDetectedEnoughCliffsSincePickup.TooFewCliffs",
+                      "Robot is only currently detecting %u cliffs", currNumCliffs);
+  }
+#endif
   
   return false;
 }

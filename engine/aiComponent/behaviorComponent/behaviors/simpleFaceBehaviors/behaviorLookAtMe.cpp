@@ -73,7 +73,7 @@ BehaviorLookAtMe::BehaviorLookAtMe(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLookAtMe::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.visionModesForActiveScope->insert( {VisionMode::DetectingFaces, EVisionUpdateFrequency::High} );
+  modifiers.visionModesForActiveScope->insert( {VisionMode::Faces, EVisionUpdateFrequency::High} );
   modifiers.behaviorAlwaysDelegates = true;
 }
   

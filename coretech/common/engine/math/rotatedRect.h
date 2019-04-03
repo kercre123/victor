@@ -13,7 +13,7 @@
 #ifndef _ANKICORETECH_COMMON_ROTATEDRECT_H_
 #define _ANKICORETECH_COMMON_ROTATEDRECT_H_
 
-#include "coretech/common/engine/math/quad.h"
+#include "coretech/common/engine/math/quad_fwd.h"
 
 /**
  * A class representing a rectangle in a planar (2D) environment. This

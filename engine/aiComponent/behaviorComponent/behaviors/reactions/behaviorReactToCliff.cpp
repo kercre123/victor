@@ -513,7 +513,7 @@ void BehaviorReactToCliff::TransitionToVisualExtendCliffs()
     turnAction2->SetMaxPanSpeed(DEG_TO_RAD(kBodyTurnSpeedForCliffSearch_degPerSec));
     compoundAction->AddAction(turnAction2);
   }
-  compoundAction->AddAction(new WaitForImagesAction(kNumImagesToWaitForEdges, VisionMode::DetectingOverheadEdges));
+  compoundAction->AddAction(new WaitForImagesAction(kNumImagesToWaitForEdges, VisionMode::OverheadEdges));
   
   DelegateIfInControl(compoundAction, []() {
     PRINT_CH_INFO("Behaviors", "BehaviorReactToCliff.TransitionToVisualCliffExtend.ObservationFinished", "");

@@ -11,7 +11,7 @@
  **/
 
 #include "gtest/gtest.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/math/lineSegment2d.h"
 #include "coretech/common/engine/math/ball.h"
 #include "coretech/common/engine/math/fastPolygon2d.h"

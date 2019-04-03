@@ -16,7 +16,7 @@
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
 #include "cannedAnimLib/proceduralFace/proceduralFace.h"
 #include "clad/types/compositeImageTypes.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 #include "coretech/vision/shared/spriteCache/iSpriteWrapper.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"

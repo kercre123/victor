@@ -34,7 +34,7 @@ CONSOLE_VAR(int16_t, kTapIntensityMin, "TapFilter.IntesityMin", 60);
 CONSOLE_VAR(Anki::TimeStamp_t, kTapWaitOffset_ms, "TapFilter.WaitOffsetTime", 75);
 CONSOLE_VAR(Anki::TimeStamp_t, kDoubleTapTime_ms, "TapFilter.DoubleTapTime", 500);
 CONSOLE_VAR(Anki::TimeStamp_t, kIgnoreMoveTimeAfterDoubleTap_ms, "TapFilter.IgnoreMoveTimeAfterDoubleTap", 500);
-CONSOLE_VAR(bool, kCanDoubleTapDirtyPoses, "DoubleTap", true);
+CONSOLE_VAR(bool, kCanDoubleTapDirtyPoses, "DoubleTap", false);
 CONSOLE_VAR(bool, kIgnoreMovementWhileWaitingForDoubleTap, "DoubleTap", false);
 
 namespace Anki {
@@ -89,27 +89,29 @@ void BlockTapFilterComponent::UpdateDependent(const RobotCompMap& dependentComps
        ignoreMovementTimePassed)
     {
       doubleTapInfo.second.isIgnoringMoveMessages = false;
-      
-      BlockWorldFilter filter;
-      filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-      filter.SetFilterFcn([&doubleTapInfo](const ObservableObject* object) {
-        return object->IsActive() && (object->GetID() == doubleTapInfo.first);
-      });
-      
-      std::vector<ObservableObject *> matchingObjects;
-      _robot->GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
-      
+            
       const auto* tappedObject = _robot->GetBlockWorld().GetConnectedBlockByActiveID( doubleTapInfo.first );
       if ( nullptr != tappedObject ) {
         PRINT_CH_DEBUG("BlockTapFilterComponent", "BlockTapFilterComponent.Update.ExpiredTap",
                        "Marking object %d as dirty due to tap timeout",
                         tappedObject->GetID().GetValue());
       }
-      
-      for(auto& object : matchingObjects)
-      {
-        if ( object->IsPoseStateKnown() ) {
-          _robot->GetBlockWorld().MarkObjectDirty(object);
+
+      if (kCanDoubleTapDirtyPoses) {
+        BlockWorldFilter filter;	
+        filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);	
+        filter.SetFilterFcn([&doubleTapInfo](const ObservableObject* object) {	
+          return object->IsActive() && (object->GetID() == doubleTapInfo.first);	
+        });	
+
+        std::vector<ObservableObject *> matchingObjects;	
+        _robot->GetBlockWorld().FindLocatedMatchingObjects(filter, matchingObjects);
+
+        for(auto& object : matchingObjects)	
+        {	
+          if ( object->IsPoseStateKnown() ) {	
+            _robot->GetBlockWorld().MarkObjectDirty(object);	
+          }	
         }
       }
     }

@@ -13,7 +13,7 @@
 #ifdef ANKI_NEURALNETS_USE_TFLITE
 
 #include "coretech/neuralnets/neuralNetModel_tflite.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 #include <list>
 #include <queue>
 

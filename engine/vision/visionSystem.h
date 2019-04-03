@@ -13,7 +13,7 @@
 #ifndef ANKI_COZMO_BASESTATION_VISIONSYSTEM_H
 #define ANKI_COZMO_BASESTATION_VISIONSYSTEM_H
 
-#include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/engine/math/polygon_fwd.h"
 #include "coretech/common/shared/types.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -166,7 +166,7 @@ namespace Vector {
                                    const f32 currentGain,
                                    const GammaCurve& gammaCurve);
 
-    // When SavingImages mode is enabled, how to save them
+    // When SaveImages mode is enabled, how to save them
     void SetSaveParameters(const ImageSaverParams& params);
 
     Vision::CameraParams GetCurrentCameraParams() const;

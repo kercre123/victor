@@ -11,7 +11,7 @@
 
 #include "coretech/vision/engine/compressedImage.h"
 
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 
 #include "util/helpers/templateHelpers.h"
 

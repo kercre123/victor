@@ -40,6 +40,7 @@ namespace external_interface {
   class PopAWheelieRequest;
   class PickupObjectRequest;
   class PlaceObjectOnGroundHereRequest;
+  class MasterVolumeRequest;
 }
 
 class Robot;
@@ -113,6 +114,7 @@ private:
   void HandleAudioStreamCompleteRequest(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void HandleAudioStreamCancelRequest(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void HandleStreamStatusEvent(SDKAudioStreamingState streamStatusId, int audioFramesReceived, int audioFramesPlayed);
+  void SetMasterVolume(const AnkiEvent<external_interface::GatewayWrapper>& event);
 };
 
 } // namespace Vector

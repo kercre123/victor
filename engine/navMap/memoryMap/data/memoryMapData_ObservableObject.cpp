@@ -11,7 +11,7 @@
  
 #include "memoryMapData_ObservableObject.h"
 #include "clad/types/memoryMap.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 
 namespace Anki {
 namespace Vector {

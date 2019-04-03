@@ -69,6 +69,7 @@ private:
     u32 numFramesOfImageTooDark = 0; 
 
     bool isLowlight = false;
+    bool playedGetout = false;
   };
 
   InstanceConfig _iConfig;

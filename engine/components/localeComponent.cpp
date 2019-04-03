@@ -14,6 +14,7 @@
 #include "util/environment/locale.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
+#include "util/string/stringUtils.h"
 
 #define LOG_CHANNEL "Locale"
 
@@ -140,6 +141,25 @@ std::string LocaleComponent::GetString(const std::string & stringID) const
     return pos->second;
   }
   return stringID;
+}
+
+std::string LocaleComponent::GetString(const std::string & stringID,
+                                       const std::string & arg0) const
+{
+  std::string s = GetString(stringID);
+  Anki::Util::StringReplace(s, "{0}", arg0);
+  return s;
+}
+
+std::string LocaleComponent::GetString(const std::string & stringID,
+                                       const std::string & arg0,
+                                       const std::string & arg1) const
+{
+  std::string s = GetString(stringID);
+  Anki::Util::StringReplace(s, "{0}", arg0);
+  Anki::Util::StringReplace(s, "{1}", arg1);
+  return s;
+
 }
 
 } // end namespace Vector

@@ -80,6 +80,8 @@ AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
 
 AnimEngine::~AnimEngine()
 {
+  _context->GetWebService()->Stop();
+
 #if ANKI_PROFILE_ANIMCOMMS_SOCKET_BUFFER_STATS
   AnimComms::ReportSocketBufferStats();
 #endif

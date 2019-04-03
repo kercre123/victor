@@ -36,7 +36,7 @@ bool VisionProcessingResult::ContainsDetectionsForMode(const VisionMode mode, co
 {
   switch(mode)
   {
-    case VisionMode::DetectingMarkers:
+    case VisionMode::Markers:
     {
       for(const auto& marker: observedMarkers)
       {
@@ -48,7 +48,7 @@ bool VisionProcessingResult::ContainsDetectionsForMode(const VisionMode mode, co
       return false;
     }
       
-    case VisionMode::DetectingFaces:
+    case VisionMode::Faces:
     {
       for(const auto& face : faces)
       {
@@ -60,10 +60,10 @@ bool VisionProcessingResult::ContainsDetectionsForMode(const VisionMode mode, co
       return false;
     }
       
-    case VisionMode::DetectingHands:
+    case VisionMode::Hands:
       return SalientPointDetectionPresent(salientPoints, Vision::SalientPointType::Hand, atTimestamp);
       
-    case VisionMode::DetectingPeople:
+    case VisionMode::People:
       return SalientPointDetectionPresent(salientPoints, Vision::SalientPointType::Person, atTimestamp);
       
     default:

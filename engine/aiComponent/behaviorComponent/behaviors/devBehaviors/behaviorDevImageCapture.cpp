@@ -258,7 +258,7 @@ void BehaviorDevImageCapture::GetBehaviorOperationModifiers(BehaviorOperationMod
   modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.behaviorAlwaysDelegates = false;
   modifiers.visionModesForActiveScope->insert({VisionMode::MirrorMode,   EVisionUpdateFrequency::High});
-  modifiers.visionModesForActiveScope->insert({VisionMode::SavingImages, EVisionUpdateFrequency::High});
+  modifiers.visionModesForActiveScope->insert({VisionMode::SaveImages, EVisionUpdateFrequency::High});
   for(auto const& mode : _iConfig.visionModesBesidesSaving)
   {
     // TODO: support non-"Standard" frequency specification?
@@ -570,7 +570,7 @@ void BehaviorDevImageCapture::SaveImages(const ImageSendMode sendMode)
   
   if(!_dVars.isStreaming)
   {
-    WaitForImagesAction* waitAction = new WaitForImagesAction(1, VisionMode::SavingImages);
+    WaitForImagesAction* waitAction = new WaitForImagesAction(1, VisionMode::SaveImages);
     
     DelegateIfInControl(waitAction, [this]() {
       _dVars.imagesSaved++;

@@ -145,14 +145,14 @@ BehaviorFindFaceAndThen::BehaviorFindFaceAndThen(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindFaceAndThen::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.visionModesForActiveScope->insert( {VisionMode::DetectingFaces, EVisionUpdateFrequency::High} );
+  modifiers.visionModesForActiveScope->insert( {VisionMode::Faces, EVisionUpdateFrequency::High} );
   if( _iConfig.alwaysDetectFaces ) {
     // always look for faces, so that when the robot turns in the direction of a voice command, hopefully a
     // face pose is already known
-    modifiers.visionModesForActivatableScope->insert( {VisionMode::DetectingFaces, EVisionUpdateFrequency::Low} );
+    modifiers.visionModesForActivatableScope->insert( {VisionMode::Faces, EVisionUpdateFrequency::Low} );
   }
   if( _iConfig.useBodyDetector ) {
-    modifiers.visionModesForActiveScope->insert( {VisionMode::DetectingPeople, EVisionUpdateFrequency::Med} );
+    modifiers.visionModesForActiveScope->insert( {VisionMode::People, EVisionUpdateFrequency::Med} );
   }
   
   modifiers.behaviorAlwaysDelegates = false;

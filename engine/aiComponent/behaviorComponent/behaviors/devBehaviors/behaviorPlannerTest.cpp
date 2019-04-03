@@ -53,7 +53,7 @@ BehaviorPlannerTest::BehaviorPlannerTest(const Json::Value& config)
 void BehaviorPlannerTest::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
   modifiers.behaviorAlwaysDelegates = false;
-  modifiers.visionModesForActiveScope->insert( {VisionMode::DetectingMarkers, EVisionUpdateFrequency::High} );
+  modifiers.visionModesForActiveScope->insert( {VisionMode::Markers, EVisionUpdateFrequency::High} );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

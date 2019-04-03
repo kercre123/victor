@@ -206,9 +206,9 @@ enum uint_16 BehaviorID {
   ReactToPickupFromPalm,
   ReactToPutDownFromPalm,
   ReactToPutDownFromPalmAnimSelector,
-  WakeGentlyFromHeldInPalmSleep,
   SleepWhileHeldInPalm,
   SleepWhileHeldInPalmLoop,
+  WakeGentlyFromHeldInPalmSleep,
 
   // victorBehaviorTree/highLevelDelegates
   InitialPickupAnimation,
@@ -319,6 +319,7 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/highLevelDelegates/voiceCommands
   BlackJackVoiceCommand,
   DoATrickVoiceCommand,
+  EyeColorVoiceCommand,
   FetchCubeVoiceCommand,
   FindYourCubeVoiceCommand,
   FistBumpVoiceCommand,
@@ -440,8 +441,8 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/sdkBehaviors
   SDKDefault,
-  SDKOverrideAll,
   SDKLock,
+  SDKOverrideAll,
 
   // victorBehaviorTree/seasonal
   SeasonalHappyHolidays,

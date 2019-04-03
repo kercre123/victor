@@ -9,7 +9,7 @@
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/visionMarker.h"
 
-#include "coretech/common/shared/math/matrix_impl.h"
+#include "coretech/common/shared/math/matrix.h"
 
 #include "util/logging/logging.h"
 

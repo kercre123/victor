@@ -2785,7 +2785,6 @@ bool Robot::UpdateStartupChecks(Result& res)
   RUN_CHECK(UpdateGyroCalibChecks);
   RUN_CHECK(UpdateCameraStartupChecks);
   RUN_CHECK(UpdateToFStartupChecks);
-  RUN_CHECK(UpdateRampostErrorChecks);
   return checkDone;
 
 #undef RUN_CHECK
@@ -2816,58 +2815,6 @@ void Robot::Shutdown(ShutdownReason reason)
   }
   _toldToShutdown = true;
   _shutdownReason = reason;
-}
-
-bool Robot::UpdateRampostErrorChecks(Result& res)
-{
-  static bool rampostFileRead = false;
-  static bool rampostError = false;
-
-  if(!rampostFileRead)
-  {
-    rampostFileRead = true;
-
-    const std::string path = "/dev/rampost_error";
-    struct stat buffer;
-    int rc = stat(path.c_str(), &buffer);
-    if(rc == 0)
-    {
-      FILE* f = fopen(path.c_str(), "r");
-      if(f != nullptr)
-      {
-        char data[32] = {0};
-        rc = (int)fread(data, sizeof(data), 1, f);
-        (void)fclose(f);
-        if(rc < 0)
-        {
-          PRINT_NAMED_ERROR("Robot.UpdateRampostErrorChecks.ReadFail",
-                            "Failed to read from rampost_error file %u %u",
-                            rc,
-                            errno);
-        }
-        else
-        {
-          PRINT_NAMED_WARNING("Robot.UpdateRampostErrorChecks", "%s", data);
-        }
-      }
-      else
-      {
-        PRINT_NAMED_ERROR("Robot.UpdateRampostErrorCheck.FileExistsButReadFailed",
-                          "%d",
-                          rc);
-      }
-
-      res = RESULT_FAIL;
-    }
-
-    if(res != RESULT_OK)
-    {
-      rampostError = true;
-      FaultCode::DisplayFaultCode(FaultCode::RAMPOST_ERROR);
-    }
-  }
-
-  return rampostFileRead;
 }
 
 } // namespace Vector

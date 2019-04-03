@@ -11,9 +11,9 @@
  **/
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 #include "engine/vision/mirrorModeManager.h"
 #include "engine/vision/visionModesHelpers.h"
 #include "engine/vision/visionSystem.h"
@@ -164,7 +164,7 @@ void MirrorModeManager::DrawAutoExposure(const VisionProcessingResult& procResul
   // Draw exposure and gain in the lower left of the screen
   // Use a static to keep the last params displayed even when AE wasn't run (since it doesn't run every frame)
   static std::string exposureStr = "";
-  if(procResult.modesProcessed.Contains(VisionMode::AutoExposure))
+  if(procResult.modesProcessed.Contains(VisionMode::AutoExp))
   {
     const Vision::CameraParams& params = procResult.cameraParams;
     std::stringstream ss;
@@ -199,7 +199,7 @@ void MirrorModeManager::DrawSalientPoints(const VisionProcessingResult& procResu
     }
   }
   
-  if(procResult.modesProcessed.Contains(VisionMode::DetectingBrightColors) ||
+  if(procResult.modesProcessed.Contains(VisionMode::BrightColors) ||
      procResult.modesProcessed.ContainsAnyOf(GetVisionModesUsingNeuralNets()))
   {
     if(!usingFixedDrawTime)

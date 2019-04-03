@@ -90,6 +90,11 @@ structure UserIntent_Volume
   string volume_level
 }
 
+structure UserIntent_EyeColor
+{
+  string eye_color
+}
+
 union dupes_allowed UserIntent
 {
   UserIntent_Void unmatched_intent,
@@ -104,6 +109,8 @@ union dupes_allowed UserIntent
   UserIntent_Void             blackjack_playagain,
   UserIntent_Void             character_age,
   UserIntent_Void             check_timer,
+  UserIntent_EyeColor         imperative_eyecolor_specific,
+  UserIntent_Void             imperative_eyecolor,
   UserIntent_Void             explore_start,
   UserIntent_GlobalStop       global_stop,
   UserIntent_GlobalStop       global_delete,

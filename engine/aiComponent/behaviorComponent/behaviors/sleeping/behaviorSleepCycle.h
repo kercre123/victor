@@ -91,6 +91,7 @@ private:
   void SetReactionState(SleepReactionType reaction);
 
   static bool ShouldReactToSoundInState(const SleepStateID& state);
+  static bool IsPreSleepState(const SleepStateID& state);
 
   bool ShouldWiggleOntoChargerFromSleep();
 

@@ -114,12 +114,39 @@ namespace Anki {
 
         u32 lastOnChargerChangedTime_ms_ = 0;
 
+        // If battery is too hot or too low on start, shutdown
+        bool hotBattOnStart_ = false;
+        bool lowBattOnStart_ = false;
+
+        // HAL shutdown delay for some of the critical battery checks.
+        // This shorter delay is used if we're shutting down based on
+        // a battery error on Init(). If the error was on Init() an
+        // appropriate icon should already have been displayed on the
+        // screen by rampost and we just want to shutdown quickly.
+        // Otherwise, for critical battery events _not_ on Init() 
+        // it's up to faultCodeDisplay to show the appropriate icon. 
+        // (TODO: VIC-8571)
+        static const u32 HAL_SHUTDOWN_DELAY_SHORT_MS = 2000;
+
         bool shutdownInProgress_ = false;
       } // Robot private namespace
 
       //
       // Methods:
       //
+      bool HasRampostError()
+      {
+#ifdef VICOS
+        struct stat buffer;
+        int rc = stat("/dev/rampost_error", &buffer);
+        if(rc == 0) {
+          return true;
+        }
+#endif
+        return false;
+      }
+
+
       Result Init(const int * shutdownSignal)
       {
         Result lastResult = RESULT_OK;
@@ -160,6 +187,15 @@ namespace Anki {
         const auto reason = MotorCalibrationReason::Startup;
         LiftController::StartCalibrationRoutine(autoStarted, reason);
         HeadController::StartCalibrationRoutine(autoStarted, reason);
+
+        // If there was rampost error, check if battery is too hot or too low and shutdown if so.
+        // The appropriate icon should already be on the face from rampost.
+        if (HasRampostError()) {
+          hotBattOnStart_ = HAL::BatteryIsOverheated();
+          lowBattOnStart_ = HAL::BatteryIsLow() && !HAL::BatteryIsOnCharger();
+        }
+
+        robotStateMessageCounter_ = 0;
 
         return RESULT_OK;
 
@@ -211,18 +247,31 @@ namespace Anki {
         DASMSG_SET(i1, static_cast<u32>(HAL::BatteryGetVoltage() * 1000), "Current raw battery voltage (mV)");
         DASMSG_SET(i2, HAL::BatteryIsOnCharger(), "Whether the battery is on charger");
         DASMSG_SET(i3, timeSinceOnChargerStateChanged_ms, "Time since on charger state changed (ms)");
+        DASMSG_SET(i4, HAL::BatteryGetTemperature_C(), "Battery temperature (C)");
         DASMSG_SET(s1, EnumToString(reason), "Reason for shutdown");
+        DASMSG_SET(s2, lowBattOnStart_ ? "LowBattOnStart" : "", "Battery was low when vic-robot started");
+        DASMSG_SET(s3, hotBattOnStart_ ? "HotBattOnStart" : "", "Battery was overheating when vic-robot started");
         DASMSG_SEND();
       }
 
       void CheckForOverheatingBatteryShutdown()
       {
-        if (!shutdownInProgress_ && HAL::BatteryIsOverheated()) {
-          // Send a shutdown message to anim/engine
-          AnkiInfo("CozmoBot.CheckForOverheatingBattery.Shutdown", "Sending PrepForShutdown");
-          SendPrepForShutdown(ShutdownReason::SHUTDOWN_BATTERY_CRITICAL_TEMP);
-
-          shutdownInProgress_ = true;
+        static const u32 HAL_SHUTDOWN_DELAY_MS = 25000;
+        static TimeStamp_t shutdownTime_ms = 0;
+        const TimeStamp_t now_ms = HAL::GetTimeStamp();
+        
+        if (HAL::BatteryIsOverheated() || hotBattOnStart_) {
+          if (shutdownTime_ms == 0) {
+            AnkiInfo("CozmoBot.CheckForOverheatingBattery.PrepForShutdown", "");
+            SendPrepForShutdown(ShutdownReason::SHUTDOWN_BATTERY_CRITICAL_TEMP);
+            shutdownTime_ms = now_ms + (hotBattOnStart_ ? HAL_SHUTDOWN_DELAY_SHORT_MS : HAL_SHUTDOWN_DELAY_MS);
+            shutdownInProgress_ = true;
+          }
+        } 
+        
+        if ((shutdownTime_ms > 0) && (now_ms > shutdownTime_ms)) {
+          AnkiInfo("CozmoBot.CheckForOverheatingBattery.HALShutdown","");
+          HAL::Shutdown();
         }
       }
 
@@ -231,21 +280,29 @@ namespace Anki {
         static const u32 HAL_SHUTDOWN_DELAY_MS = 5000;
         static TimeStamp_t shutdownTime_ms = 0;
         const TimeStamp_t now_ms = HAL::GetTimeStamp();
+        
+        // If about to shutdown because of low battery on start,
+        // cancel if placed on charger since Init().
+        if (lowBattOnStart_ && HAL::BatteryIsOnCharger()) {
+          AnkiInfo("CozmoBot.CheckForCriticalBattery.LowBattOnStartCancelled", "");
+          lowBattOnStart_ = false;
+        }
 
-        if (HAL::IsShutdownImminent()) {
+        if (HAL::IsShutdownImminent() || lowBattOnStart_) {
           if (shutdownTime_ms == 0) {
-            AnkiInfo("CozmoBot.CheckForCriticalBattery.Shutdown", "Sending PrepForShutdown");
+            AnkiInfo("CozmoBot.CheckForCriticalBattery.PrepForShutdown", "");
             SendPrepForShutdown(ShutdownReason::SHUTDOWN_BATTERY_CRITICAL_VOLT);
-            shutdownTime_ms = now_ms + HAL_SHUTDOWN_DELAY_MS;
+            shutdownTime_ms = now_ms + (lowBattOnStart_ ? HAL_SHUTDOWN_DELAY_SHORT_MS : HAL_SHUTDOWN_DELAY_MS);
             shutdownInProgress_ = true;
           } else if (now_ms > shutdownTime_ms) {
-             AnkiInfo("CozmoBot.CheckForCriticalBattery.HALShutdown","");
-             HAL::Shutdown();
+            AnkiInfo("CozmoBot.CheckForCriticalBattery.HALShutdown","");
+            HAL::Shutdown();
           }
         } else if (shutdownTime_ms > 0 && now_ms > shutdownTime_ms) {
           // "Imminent" shutdown aborted because placed back on charger
           // Reboot instead of shutting down so the robot doesn't stay
           // "dead" while on charger.
+          AnkiInfo("CozmoBot.CheckForCriticalBattery.RebootingInstead", "");
           shutdownTime_ms = 0;
           Reboot();
         }

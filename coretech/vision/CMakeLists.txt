@@ -115,3 +115,13 @@ if (MACOSX)
 
 endif()
 
+anki_build_cxx_executable(cti_vision_debayer ${ANKI_SRCLIST_DIR})
+anki_build_target_license(cti_vision_debayer "ANKI")
+target_include_directories(cti_vision_debayer
+  PUBLIC
+  $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
+)
+target_link_libraries(cti_vision_debayer
+  PRIVATE
+  cti_vision
+)

@@ -695,7 +695,6 @@ protected:
   bool UpdateCameraStartupChecks(Result& res);
   bool UpdateGyroCalibChecks(Result& res);
   bool UpdateToFStartupChecks(Result& res);
-  bool UpdateRampostErrorChecks(Result& res);
 
   bool IsStatusFlagSet(RobotStatusFlag flag) const { return _lastStatusFlags & static_cast<u32>(flag); }
 

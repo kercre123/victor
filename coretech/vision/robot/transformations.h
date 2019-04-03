@@ -155,7 +155,7 @@ namespace Anki
         const Quadrilateral<f32>& get_initialCorners() const;
 
         Result set_initialPointsAreZeroCentered(const bool areTheyCentered);
-        bool get_initialPointsAreZeroCenetered() const;
+        bool get_initialPointsAreZeroCentered() const;
 
         Result set_centerOffset(const Point<f32> &centerOffset);
         Point<f32> get_centerOffset(const f32 scale) const;

@@ -34,7 +34,7 @@
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #include "clad/types/behaviorComponent/behaviorStats.h"
@@ -47,6 +47,9 @@
 
 namespace Anki {
 namespace Vector {
+
+CONSOLE_VAR_EXTERN(bool, kRobustChargerObservation_SaveImages);
+CONSOLE_VAR(bool, kGoHome_VisualVerification_SaveImages, "Behaviors.BehaviorGoHome", false);
 
 namespace {
   const char* kUseCliffSensorsKey        = "useCliffSensorCorrection";
@@ -462,13 +465,24 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
     LOG_ERROR("BehaviorGoHome.TransitionToCheckPreTurnPosition.ObserveChargerBehaviorDWTA","");
     return;
   }
-
+  
+  if(kGoHome_VisualVerification_SaveImages) {
+    #if(REMOTE_CONSOLE_ENABLED)
+    kRobustChargerObservation_SaveImages = true;
+    #endif
+  }
   RobotTimeStamp_t verifyStartTime = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
   DelegateIfInControl(_iConfig.observeChargerBehavior.get(), [this,verifyStartTime](){
     TransitionToPostVisualVerification(verifyStartTime);
+    if(kGoHome_VisualVerification_SaveImages) {
+      #if(REMOTE_CONSOLE_ENABLED)
+      kRobustChargerObservation_SaveImages = false;
+      #endif
+    }
   });
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::TransitionToPostVisualVerification(const RobotTimeStamp_t verifyStartTime)
 {
   // Check to make sure we are in a safe position to begin the 180
@@ -520,8 +534,10 @@ void BehaviorGoHome::TransitionToPostVisualVerification(const RobotTimeStamp_t v
     // If visual observation failed, then we've successfully gotten to the charger
     // pre-action pose, but it is no longer there. Delete the charger from the map.
     LOG_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.DeletingCharger",
-                        "Deleting charger with ID %d since visual verification failed",
-                        _dVars.chargerID.GetValue());
+                        "Deleting charger with ID %d since visual verification failed (start=%u end=%u)",
+                        _dVars.chargerID.GetValue(),
+                        (TimeStamp_t)verifyStartTime,
+                        (TimeStamp_t)GetBEI().GetRobotInfo().GetLastMsgTimestamp());
     const bool removeChargerFromBlockworld = true;
     DASMSG(go_home_charger_not_visible, "go_home.charger_not_visible", "GoHome behavior failure because the charger is not seen when should be.");
     DASMSG_SEND();

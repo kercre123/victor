@@ -437,13 +437,12 @@ void UserIntentComponent::DropUserIntent(UserIntentTag userIntent)
 
     // just in case we were told to transition, let's stop it as a new one is about to begin
     _activeIntentFeedback.StopTransitionIntoActive();
+  } else {
+    LOG_WARNING("UserIntentComponent.DropUserIntent.NotPending",
+                "Trying to drop intent '%s' but %s is pending",
+                UserIntentTagToString(userIntent),
+                _pendingIntent ? UserIntentTagToString(_pendingIntent->intent.GetTag()) : "nothing");
   }
-
-  LOG_WARNING("UserIntentComponent.DropUserIntent.NotPending",
-              "Trying to drop intent '%s' but %s is pending",
-              UserIntentTagToString(userIntent),
-              _pendingIntent ? UserIntentTagToString(_pendingIntent->intent.GetTag()) : "nothing");
-
 }
 
 void UserIntentComponent::DropAnyUserIntent()

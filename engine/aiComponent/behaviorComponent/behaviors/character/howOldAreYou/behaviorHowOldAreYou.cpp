@@ -16,19 +16,25 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/onboarding/behaviorOnboardingCoordinator.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/components/localeComponent.h"
 #include "engine/components/robotStatsTracker.h"
-#include "engine/components/textToSpeech/textToSpeechCoordinator.h"
 #include "engine/cozmoContext.h"
 
 
 #define LOG_CHANNEL "BehaviorHowOldAreYou"
 
+namespace {
+  constexpr const float kMonthsThresh_days = 30.436875; // days at which we start counting in months instead
+
+  // Localization keys
+  constexpr const char * kOneDayKey = "BehaviorHowOldAreYou.OneDay";
+  constexpr const char * kSomeDaysKey = "BehaviorHowOldAreYou.SomeDays";
+  constexpr const char * kOneMonthKey = "BehaviorHowOldAreYou.OneMonth";
+  constexpr const char * kSomeMonthsKey = "BehaviorHowOldAreYou.SomeMonths";
+}
+
 namespace Anki {
 namespace Vector {
-
-namespace {
-  const float kMonthsThresh_d = 30.436875; // days at which we start counting in months instead
-}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorHowOldAreYou::InstanceConfig::InstanceConfig()
@@ -37,8 +43,7 @@ BehaviorHowOldAreYou::InstanceConfig::InstanceConfig()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorHowOldAreYou::DynamicVariables::DynamicVariables():
-    robotAge_h(-1),
-    robotAge_presentable(std::make_pair(-1, "invalid"))
+    robotAge_hours(-1)
 {
 }
 
@@ -90,24 +95,25 @@ void BehaviorHowOldAreYou::InitBehavior()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorHowOldAreYou::OnBehaviorActivated() 
+void BehaviorHowOldAreYou::OnBehaviorActivated()
 {
   // reset dynamic variables
   _dVars = DynamicVariables();
-  
+
   // the behavior is active now, time to do something!
 
   // get age
-  _dVars.robotAge_h = GetRobotAge();
+  _dVars.robotAge_hours = GetRobotAge();
   // round age
-  _dVars.robotAge_presentable = PresentableAgeFromHours(_dVars.robotAge_h);
-  LOG_INFO("BehaviorHowOldAreYou.OnBehaviorActivated.PresentableAge",
-      "Robot presentable age: %d %s", _dVars.robotAge_presentable.first, _dVars.robotAge_presentable.second.c_str());
+  const auto & presentable = PresentableAgeFromHours(_dVars.robotAge_hours);
 
-  const std::string textToSay = std::to_string(_dVars.robotAge_presentable.first) + " " +  _dVars.robotAge_presentable.second;
+  LOG_INFO("BehaviorHowOldAreYou.OnBehaviorActivated.PresentableAge",
+           "Robot presentable age: %d %s",
+           presentable.first,
+           presentable.second.c_str());
 
   // delegate to counting animation
-  _iConfig.countingAnimationBehavior->SetCountTarget(_dVars.robotAge_presentable.first, textToSay);
+  _iConfig.countingAnimationBehavior->SetCountTarget(presentable.first, presentable.second);
   if ( _iConfig.countingAnimationBehavior->WantsToBeActivated() ) {
     DelegateIfInControl( _iConfig.countingAnimationBehavior.get() );
   }
@@ -122,11 +128,11 @@ std::chrono::hours BehaviorHowOldAreYou::GetRobotAge()
   const auto* platform = GetBEI().GetRobotInfo().GetContext()->GetDataPlatform();
   auto saveFolder = platform->pathToResource( Util::Data::Scope::Persistent, BehaviorOnboardingCoordinator::kOnboardingFolder );
   saveFolder = Util::FileUtils::AddTrailingFileSeparator( saveFolder );
-  const std::string onboardingDataFilePath = saveFolder + BehaviorOnboardingCoordinator::kOnboardingFilename;
+  const std::string & onboardingDataFilePath = saveFolder + BehaviorOnboardingCoordinator::kOnboardingFilename;
   if( Util::FileUtils::DirectoryExists( saveFolder ) && Util::FileUtils::FileExists( onboardingDataFilePath ) ) {
 
     // file exists
-    const std::string file_s = Util::FileUtils::ReadFile(onboardingDataFilePath);
+    const std::string & file_s = Util::FileUtils::ReadFile(onboardingDataFilePath);
     // gotta parse the file
     Json::Value file_j;
     Json::Reader reader;
@@ -190,28 +196,43 @@ std::chrono::hours BehaviorHowOldAreYou::GetRobotAge()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-std::pair<int, std::string> BehaviorHowOldAreYou::PresentableAgeFromHours(std::chrono::hours age_dh)
+BehaviorHowOldAreYou::PresentableAge BehaviorHowOldAreYou::PresentableAgeFromHours(std::chrono::hours age_hours)
 {
   // Handy types that aren't built in until C++20
   using duration_days = std::chrono::duration<int, std::ratio<86400> >;
   using duration_months = std::chrono::duration<int, std::ratio<2629746> >;
 
   // translate hours to days
-  duration_days age_dd = std::chrono::duration_cast<duration_days>(age_dh); // we're cool with loss of precision
+  // we're cool with loss of precision
+  const duration_days age_days = std::chrono::duration_cast<duration_days>(age_hours);
+  const int count_days = age_days.count();
 
-  // if we're less than kMonthsThresh_d days, use days
-  if (age_dd.count() < kMonthsThresh_d) {
-    // note: current implementation (at Design's request) is to return the floor:
-    // i.e., round everything down until we get to a whole day: 47 hours -> 1 day, 49 hours -> 2 days
-    return std::make_pair( age_dd.count() , age_dd.count() == 1 ? "day" : "days" );
+  // translate days to months
+  // loss of precision is basically the point
+  const duration_months age_months = std::chrono::duration_cast<duration_months>(age_days);
+  const int count_months = age_months.count();
+
+  //
+  // Use locale component to get localized version of announcement string.
+  // This is basically a four-way switch between "one day", "N days", "one month", and "N months".
+  // If we're less than kMonthsThresh_days days, use days, else translate to months.
+  //
+  // Note: current implementation (at Design's request) is to return the floor:
+  // i.e., round everything down until we get to a whole day: 47 hours -> 1 day, 49 hours -> 2 days
+  //
+  const auto & localeComponent = GetBEI().GetRobotInfo().GetLocaleComponent();
+
+  if (count_days == 1) {
+    return PresentableAge(count_days, localeComponent.GetString(kOneDayKey));
+  } else if (count_days < kMonthsThresh_days) {
+    return PresentableAge(count_days, localeComponent.GetString(kSomeDaysKey, std::to_string(count_days)));
+  } else if (count_months == 1) {
+    return PresentableAge(count_months, localeComponent.GetString(kOneMonthKey));
+  } else {
+    return PresentableAge(count_months, localeComponent.GetString(kSomeMonthsKey, std::to_string(count_months)));
   }
-  // else, translate to months
-  duration_months age_dm = std::chrono::duration_cast<duration_months>(age_dd); // loss of precision is basically the point, really.
-  return std::make_pair(age_dm.count(), age_dm.count() == 1 ? "month" : "months" );
 }
 
 
 } // namespace Vector
 } // namespace Anki
-
-

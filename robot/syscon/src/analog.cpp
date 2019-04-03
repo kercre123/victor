@@ -348,11 +348,13 @@ static void handleLowBattery() {
     } else {
       power_low = false;
     }
-  } 
-  // On boot, if voltage is low immediately off charger, shut down right away
-  else if (low_power_count_up < EARLY_POWER_COUNT_TIME) { 
+  }
+  // On boot, if voltage is low immediately off charger, warn and shut down fast.
+  // Relying on rampost to show low battery icon and 
+  // relying on vic-robot to detect and shutdown right away.
+  else if (low_power_count_up < EARLY_POWER_COUNT_TIME) {
     if (vmain < LOW_VOLTAGE_POWER_DOWN_POINT) {
-      Power::setMode(POWER_STOP);
+      power_low = true;
     }
     low_power_count_up++;
   } else if (power_low) {
@@ -438,7 +440,7 @@ void Analog::tick(void) {
         charging_time++;
       }
 
-      // Unlikely that power_low == true, 
+      // Unlikely that power_low == true,
       // but maybe possible with strategic charger hopping.
       power_low = false;
     }

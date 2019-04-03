@@ -11,8 +11,8 @@
  **/
 
 
-#include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/engine/math/rotatedRect_impl.h"
+#include "coretech/common/engine/math/quad.h"
+#include "coretech/common/engine/math/rotatedRect.h"
 #include "coretech/common/shared/math/rotation.h"
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
 #include <set>

@@ -14,7 +14,6 @@
 
 #include "coretech/vision/shared/spriteCache/spriteWrapper.h"
 
-#include "coretech/vision/engine/image_impl.h"
 #include "coretech/vision/engine/image.h"
 #include "util/cladHelpers/cladEnumToStringMap.h"
 #include "util/helpers/templateHelpers.h"

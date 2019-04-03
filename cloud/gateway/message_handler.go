@@ -2,11 +2,13 @@ package main
 
 import (
 	"encoding/binary"
+	"fmt"
 	"io/ioutil"
 	"math/rand"
 	"os"
 	"os/exec"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 	"sync"
@@ -935,6 +937,29 @@ func (service *rpcService) SetFaceToEnroll(ctx context.Context, in *extint.SetFa
 	}, nil
 }
 
+func (service *rpcService) EnrollFace(ctx context.Context, in *extint.EnrollFaceRequest) (*extint.EnrollFaceResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_EnrollFaceResponse{}, 1)
+	defer f()
+
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_EnrollFaceRequest{
+			EnrollFaceRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	enrollFaceResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := enrollFaceResponse.GetEnrollFaceResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
 func isMember(needle string, haystack []string) bool {
 	for _, word := range haystack {
 		if word == needle {
@@ -1216,11 +1241,14 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 func (service *rpcService) BehaviorControl(bidirectionalStream extint.ExternalInterface_BehaviorControlServer) error {
 	sdkStartTime := time.Now()
 
+	numCommandsSentFromSDK = 0
+
 	log.Das("sdk.connection_started", (&log.DasFields{}).SetStrings(""))
 
 	defer func() {
 		sdkElapsedSeconds := time.Since(sdkStartTime)
-		log.Das("sdk.connection_ended", (&log.DasFields{}).SetStrings(sdkElapsedSeconds.String()))
+		log.Das("sdk.connection_ended", (&log.DasFields{}).SetStrings(sdkElapsedSeconds.String(), fmt.Sprint(numCommandsSentFromSDK)))
+		numCommandsSentFromSDK = 0
 	}()
 
 	done := make(chan struct{})
@@ -1292,6 +1320,75 @@ func (service *rpcService) DriveOnCharger(ctx context.Context, in *extint.DriveO
 		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
 	}
 	response := driveOnChargerResponse.GetDriveOnChargerResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+func (service *rpcService) FindFaces(ctx context.Context, in *extint.FindFacesRequest) (*extint.FindFacesResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_FindFacesResponse{}, 1)
+	defer f()
+
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_FindFacesRequest{
+			FindFacesRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	findFacesResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := findFacesResponse.GetFindFacesResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+func (service *rpcService) LookAroundInPlace(ctx context.Context, in *extint.LookAroundInPlaceRequest) (*extint.LookAroundInPlaceResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_LookAroundInPlaceResponse{}, 1)
+	defer f()
+
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_LookAroundInPlaceRequest{
+			LookAroundInPlaceRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	lookAroundInPlaceResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := lookAroundInPlaceResponse.GetLookAroundInPlaceResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
+func (service *rpcService) RollBlock(ctx context.Context, in *extint.RollBlockRequest) (*extint.RollBlockResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_RollBlockResponse{}, 1)
+	defer f()
+
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_RollBlockRequest{
+			RollBlockRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+	rollBlockResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := rollBlockResponse.GetRollBlockResponse()
 	response.Status = &extint.ResponseStatus{
 		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
 	}
@@ -2181,6 +2278,30 @@ func (service *rpcService) PlaceObjectOnGroundHere(ctx context.Context, in *exti
 	return response, nil
 }
 
+func (service *rpcService) SetMasterVolume(ctx context.Context, in *extint.MasterVolumeRequest) (*extint.MasterVolumeResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_MasterVolumeResponse{}, 1)
+	defer f()
+
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_MasterVolumeRequest{
+			MasterVolumeRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	masterVolumeResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := masterVolumeResponse.GetMasterVolumeResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
+}
+
 func (service *rpcService) BatteryState(ctx context.Context, in *extint.BatteryStateRequest) (*extint.BatteryStateResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_BatteryStateResponse{}, 1)
 	defer f()
@@ -2727,15 +2848,24 @@ func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extin
 	return grpc.Errorf(codes.Internal, errMsg)
 }
 
-// CheckUpdateStatus tells if the robot is ready to reboot and update.
+// GetUpdateStatus tells if the robot is ready to reboot and update.
 func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse, error) {
 	update_status := &extint.CheckUpdateStatusResponse{
 		Status: &extint.ResponseStatus{
 			Code: extint.ResponseStatus_OK,
 		},
-		UpdateStatus: extint.CheckUpdateStatusResponse_NO_UPDATE,
-		Progress:     -1,
-		Expected:     -1,
+		UpdateStatus:  extint.CheckUpdateStatusResponse_NO_UPDATE,
+		Progress:      -1,
+		Expected:      -1,
+		UpdateVersion: "",
+	}
+
+	if data, err := ioutil.ReadFile("/run/update-engine/manifest.ini"); err == nil {
+		expr := regexp.MustCompile("update_version\\s*=\\s*(\\S*)")
+		match := expr.FindStringSubmatch(string(data))
+		if len(match) == 2 {
+			update_status.UpdateVersion = match[1]
+		}
 	}
 
 	if _, err := os.Stat("/run/update-engine/done"); err == nil {
@@ -2747,10 +2877,12 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 		update_status.Progress, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
 		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
 	}
+
 	if data, err := ioutil.ReadFile("/run/update-engine/expected-size"); err == nil {
 		update_status.Expected, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
 		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
 	}
+
 	return update_status, nil
 }
 
@@ -2796,8 +2928,8 @@ func (service *rpcService) UpdateStatusStream() {
 	}
 }
 
-// CheckUpdateStatus tells if the robot is ready to reboot and update.
-func (service *rpcService) CheckUpdateStatus(
+// StartUpdateEngine restarts the update-engine process and starts a stream of status messages to the app.
+func (service *rpcService) StartUpdateEngine(
 	ctx context.Context, in *extint.CheckUpdateStatusRequest) (*extint.CheckUpdateStatusResponse, error) {
 
 	retval := &extint.CheckUpdateStatusResponse{
@@ -2806,21 +2938,34 @@ func (service *rpcService) CheckUpdateStatus(
 		},
 	}
 
-	err := exec.Command("/usr/bin/sudo", "-n", "/bin/systemctl", "stop", "update-engine.service").Run()
-	if err != nil {
-		log.Errorf("Update attempt failed on `systemctl stop update-engine`: %s\n", err)
-		retval.Status.Code = extint.ResponseStatus_ERROR_UPDATE_IN_PROGRESS
-	} else {
-		err := exec.Command("/usr/bin/sudo", "-n", "/bin/systemctl", "restart", "update-engine-oneshot").Run()
+	status, _ := service.GetUpdateStatus()
+
+	if status.UpdateStatus == extint.CheckUpdateStatusResponse_NO_UPDATE {
+		err := exec.Command("/usr/bin/sudo", "-n", "/bin/systemctl", "stop", "update-engine.service").Run()
+		if err != nil {
+			log.Errorf("Update attempt failed on `systemctl stop update-engine`: %s\n", err)
+			retval.Status.Code = extint.ResponseStatus_ERROR_UPDATE_IN_PROGRESS
+			return retval, err
+		}
+
+		err = exec.Command("/usr/bin/sudo", "-n", "/bin/systemctl", "restart", "update-engine-oneshot").Run()
 		if err != nil {
 			log.Errorf("Update attempt failed on `systemctl restart update-engine-oneshot`: %s\n", err)
 			retval.Status.Code = extint.ResponseStatus_ERROR_UPDATE_IN_PROGRESS
-		} else {
-			go service.UpdateStatusStream()
+			return retval, err
 		}
 	}
 
-	return retval, err
+	go service.UpdateStatusStream()
+
+	return retval, nil
+}
+
+// CheckUpdateStatus tells if the robot is ready to reboot and update.
+func (service *rpcService) CheckUpdateStatus(
+	ctx context.Context, in *extint.CheckUpdateStatusRequest) (*extint.CheckUpdateStatusResponse, error) {
+
+	return service.GetUpdateStatus()
 }
 
 // UpdateAndRestart reboots the robot when an update is available.
@@ -3259,6 +3404,7 @@ func (service *rpcService) ExternalAudioStreamRequestHandler(in extint.ExternalI
 			return
 		}
 
+		numCommandsSentFromSDK++
 		_, _, err = engineProtoManager.Write(msg)
 		if err != nil {
 			log.Printf("Could not write GatewayWrapper_AudioStreamRequest\n")

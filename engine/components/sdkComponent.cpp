@@ -26,6 +26,7 @@
 
 #include "engine/ankiEventUtil.h"
 #include "engine/components/sdkComponent.h"
+#include "engine/components/settingsManager.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
@@ -105,6 +106,7 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamChunk, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamComplete, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamCancel, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kMasterVolumeRequest, callback));
   }
 
   auto* context = _robot->GetContext();
@@ -361,7 +363,7 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
     // All of the vision mode requests are gated behind the sdk behavior being activated
     // to prevent enabling of unnecessary modes that may have performance impact.
     // The modes are automatically removed when the behavior is deactivated.
-    // Except for ImageViz since the SDK still wants to receive images while the robot is
+    // Except for Viz since the SDK still wants to receive images while the robot is
     // doing his normal things
     #define SEND_FORBIDDEN(RESPONSE_TYPE) {                                     \
         ResponseStatus* status = new ResponseStatus(ResponseStatus::FORBIDDEN); \
@@ -375,8 +377,8 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
         if(_sdkBehaviorActivated)
         {
           const auto& enable = event.GetData().enable_marker_detection_request().enable();
-          SubscribeToVisionMode(enable, VisionMode::DetectingMarkers);
-          SubscribeToVisionMode(enable, VisionMode::FullFrameMarkerDetection);
+          SubscribeToVisionMode(enable, VisionMode::Markers);
+          SubscribeToVisionMode(enable, VisionMode::Markers_FullFrame);
         }
         else
         {
@@ -390,11 +392,11 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
         if(_sdkBehaviorActivated)
         {
           const auto& msg = event.GetData().enable_face_detection_request();
-          SubscribeToVisionMode(msg.enable(), VisionMode::DetectingFaces);
-          SubscribeToVisionMode(msg.enable_smile_detection(), VisionMode::DetectingSmileAmount);
-          SubscribeToVisionMode(msg.enable_expression_estimation(), VisionMode::EstimatingFacialExpression);
-          SubscribeToVisionMode(msg.enable_blink_detection(), VisionMode::DetectingBlinkAmount);
-          SubscribeToVisionMode(msg.enable_gaze_detection(), VisionMode::DetectingGaze);
+          SubscribeToVisionMode(msg.enable(), VisionMode::Faces);
+          SubscribeToVisionMode(msg.enable_smile_detection(), VisionMode::Faces_Smile);
+          SubscribeToVisionMode(msg.enable_expression_estimation(), VisionMode::Faces_Expression);
+          SubscribeToVisionMode(msg.enable_blink_detection(), VisionMode::Faces_Blink);
+          SubscribeToVisionMode(msg.enable_gaze_detection(), VisionMode::Faces_Gaze);
         }
         else
         {
@@ -408,7 +410,7 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
         if(_sdkBehaviorActivated)
         {
           const auto& enable = event.GetData().enable_motion_detection_request().enable();
-          SubscribeToVisionMode(enable, VisionMode::DetectingMotion);
+          SubscribeToVisionMode(enable, VisionMode::Motion);
         }
         else
         {
@@ -435,7 +437,7 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
       {
         // Allowed to be controlled even when the behavior is not active
         const auto& enable = event.GetData().enable_image_streaming_request().enable();
-        SubscribeToVisionMode(enable, VisionMode::ImageViz);
+        SubscribeToVisionMode(enable, VisionMode::Viz);
         _robot->GetVisionComponent().EnableSendingSDKImageChunks(enable);
       }
       break;
@@ -505,6 +507,12 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
       }
       break;
 
+    case external_interface::GatewayWrapperTag::kMasterVolumeRequest:
+      {
+        SetMasterVolume(event);
+      }
+      break;
+
     default:
       _robot->GetRobotEventHandler().HandleMessage(event);
       break;
@@ -538,21 +546,21 @@ void SDKComponent::HandleMessage(const ExternalInterface::RobotProcessedImage& m
       ResponseStatus* status = new ResponseStatus(ResponseStatus::OK);
       switch(waitingIter->first)
       {
-        case VisionMode::DetectingMarkers:
+        case VisionMode::Markers:
           {
             auto* msg = new EnableMarkerDetectionResponse();
             msg->set_allocated_status(status);
             gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
           }
           break;
-        case VisionMode::DetectingFaces:
+        case VisionMode::Faces:
           {
             auto* msg = new EnableFaceDetectionResponse();
             msg->set_allocated_status(status);
             gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
           }
           break;
-        case VisionMode::DetectingMotion:
+        case VisionMode::Motion:
           {
             auto* msg = new EnableMotionDetectionResponse();
             msg->set_allocated_status(status);
@@ -566,7 +574,7 @@ void SDKComponent::HandleMessage(const ExternalInterface::RobotProcessedImage& m
             gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
           }
           break;
-        case VisionMode::ImageViz:
+        case VisionMode::Viz:
           {
             auto* msg = new EnableImageStreamingResponse();
             msg->set_allocated_status(status);
@@ -625,12 +633,12 @@ void SDKComponent::SDKBehaviorActivation(bool enabled)
     // will display eyes when the sdk no longer has control.
     DisableMirrorMode();
 
-    // Remove all other vision modes except for ImageViz in order
+    // Remove all other vision modes except for Viz in order
     // to allow SDK users to still receive images when the SDK does not have
     // control.
     VisionModeSet modes;
     modes.InsertAllModes();
-    modes.Remove(VisionMode::ImageViz);
+    modes.Remove(VisionMode::Viz);
     _robot->GetVisionScheduleMediator().RemoveVisionModeSubscriptions(this, modes.GetSet());    
 
     auto* gi = _robot->GetGatewayInterface();
@@ -715,6 +723,34 @@ void SDKComponent::HandleAudioStreamCancelRequest(const AnkiEvent<external_inter
     LOG_ERROR("SDKComponent.HandleAudioStreamCancelRequest", "SDK Send Audio Stream Cancel Message to Robot failed");
     return;
   }
+}
+
+void SDKComponent::SetMasterVolume(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  auto* gi = _robot->GetGatewayInterface();
+  external_interface::MasterVolumeRequest request = event.GetData().master_volume_request();
+
+  //set the volume level
+  unsigned int desiredVolume = (unsigned int) request.volume_level();
+  if (desiredVolume <= 4) {
+    desiredVolume += 1; //we don't allow MUTE, so our SDK enum is 1 lower
+    auto* settings = _robot->GetComponentPtr<SettingsManager>();
+    bool ignoredDueToNoChange;
+    const bool success = settings->SetRobotSetting(external_interface::RobotSetting::master_volume,
+                                                   desiredVolume,
+                                                   true,
+                                                   ignoredDueToNoChange);
+    if (success || ignoredDueToNoChange) {
+      auto* msg = new external_interface::MasterVolumeResponse(new external_interface::ResponseStatus(external_interface::ResponseStatus::OK));
+      gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+      return;
+    } 
+  } 
+
+  //Bad volume or failed to set:  Send result
+  LOG_ERROR("SDKComponent::SetMasterVolume","Failed to change volume.");
+  auto* msg = new external_interface::MasterVolumeResponse(new external_interface::ResponseStatus(external_interface::ResponseStatus::FORBIDDEN));
+  gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
 }
 
 void SDKComponent::DispatchSDKActivationResult(bool enabled, uint64_t connectionId) {
