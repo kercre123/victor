@@ -1,7 +1,5 @@
 {
   "simple_voice_responses": [
-    // NOTE: for SDK compatibilty, for now if these should be exposed to the SDK they must be manually added
-    // to the map in behaviorSDKInterface.cpp (see VIC-14247)
     {
       "cloud_intent": "intent_greeting_hello",
       "response": {
