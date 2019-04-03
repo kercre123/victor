@@ -549,7 +549,7 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::Rts
 
     UpdateFace(Anki::Cozmo::SwitchboardInterface::ConnectionStatus::SETTING_WIFI);
 
-    bool connected = Anki::ConnectWiFiBySsid(wifiConnectMessage.wifiSsidHex,
+    ConnectWifiResult connected = Anki::ConnectWiFiBySsid(wifiConnectMessage.wifiSsidHex,
       wifiConnectMessage.password,
       wifiConnectMessage.authType,
       (bool)wifiConnectMessage.hidden,
@@ -559,7 +559,7 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::Rts
     WiFiState state = Anki::GetWiFiState();
     bool online = state.connState == WiFiConnState::ONLINE;
 
-    if(online) {
+    if(online || (connected == ConnectWifiResult::CONNECT_INVALIDKEY)) {
       ev_timer_stop(_loop, &_handleInternet.timer);
       _inetTimerCount = 0;
       SendWifiConnectResult();
@@ -567,8 +567,10 @@ void SecurePairing::HandleRtsWifiConnectRequest(const Victor::ExternalComms::Rts
       ev_timer_again(_loop, &_handleInternet.timer);
     }
 
-    if(connected) {
+    if(connected == ConnectWifiResult::CONNECT_SUCCESS) {
       Log::Write("Connected to wifi.");
+    } else if(connected == ConnectWifiResult::CONNECT_INVALIDKEY) {
+      Log::Write("Failure to connect: invalid wifi password.");
     } else {
       Log::Write("Could not connect to wifi.");
     }

@@ -26,6 +26,143 @@
 
 namespace Anki {
 
+static const char* kConnmanErrorAlreadyEnabledString =
+  "GDBus.Error:net.connman.Error.AlreadyEnabled: Already enabled";
+
+static const char* kConnmanErrorAlreadyDisabledString =
+  "GDBus.Error:net.connman.Error.AlreadyDisabled: Already disabled";
+
+static ConnManBusManager* GetConnManBusManager() {
+  ConnManBusManager* manager_proxy;
+  GError* error = nullptr;
+
+  manager_proxy = conn_man_bus_manager_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
+                                                              G_DBUS_PROXY_FLAGS_NONE,
+                                                              "net.connman",
+                                                              "/",
+                                                              nullptr,
+                                                              &error);
+  if (!manager_proxy) {
+    loge("error getting proxy for net.connman /: %s", error->message);
+  }
+
+  return manager_proxy;
+}
+
+static WifiScanErrorCode GetConnManServices(GVariant** services) {
+  *services = nullptr;
+
+  ConnManBusManager* manager_proxy = GetConnManBusManager();
+  if (!manager_proxy) {
+    return WifiScanErrorCode::ERROR_GETTING_MANAGER;
+  }
+
+  GError* error = nullptr;
+  gboolean success = conn_man_bus_manager_call_get_services_sync(manager_proxy,
+                                                                 services,
+                                                                 nullptr,
+                                                                 &error);
+  g_object_unref(manager_proxy);
+  if (error) {
+    loge("Error getting services from connman");
+    return WifiScanErrorCode::ERROR_GETTING_SERVICES;
+  }
+
+  if (!success) {
+    loge("connman failed to get list of services");
+    return WifiScanErrorCode::FAILED_GETTING_SERVICES;
+  }
+
+  return WifiScanErrorCode::SUCCESS;
+}
+
+static ConnManBusTechnology* GetConnManBusTechnologyForWiFi() {
+  ConnManBusTechnology* wifi_proxy;
+  GError* error = nullptr;
+
+  wifi_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
+                                                              G_DBUS_PROXY_FLAGS_NONE,
+                                                              "net.connman",
+                                                              "/net/connman/technology/wifi",
+                                                              nullptr,
+                                                              &error);
+  if (!wifi_proxy) {
+    loge("error getting proxy for net.connman /net/connman/technology/wifi: %s",
+         error->message);
+  }
+
+  return wifi_proxy;
+}
+
+static bool SetWiFiProperty(ConnManBusTechnology* wifi_proxy,
+                            const char* property_name,
+                            GVariant* value,
+                            const char* already_error) {
+
+  bool need_to_unref_wifi_proxy = false;
+  if (!wifi_proxy) {
+    wifi_proxy = GetConnManBusTechnologyForWiFi();
+    if (!wifi_proxy) {
+      return false;
+    }
+    need_to_unref_wifi_proxy = true;
+  }
+
+  GError* error = nullptr;
+  gchar* value_string = g_variant_print(value, false);
+  bool success = (bool) conn_man_bus_technology_call_set_property_sync (
+    wifi_proxy,
+    property_name,
+    value,
+    nullptr,
+    &error);
+
+  if (!success) {
+    if (already_error && (0 == strcmp(error->message, already_error))) {
+      success = true;
+    } else {
+      loge("Error asking connman to set wifi/%s to %s : %s",
+           property_name, (char *) value_string, error->message);
+    }
+    g_error_free(error);
+  }
+  g_free(value_string);
+
+  if (need_to_unref_wifi_proxy) {
+    g_object_unref(wifi_proxy);
+  }
+
+  return success;
+}
+
+static bool SetStringWiFiProperty(ConnManBusTechnology* wifi_proxy,
+                                  const char* property_name,
+                                  const char* property_value,
+                                  const char* already_error)
+{
+  GVariant* value_s = g_variant_new_string((gchar *) property_value);
+  GVariant* value_v = g_variant_new_variant(value_s);
+
+  return SetWiFiProperty(wifi_proxy,
+                         property_name,
+                         value_v,
+                         already_error);
+}
+
+static bool SetBooleanWiFiProperty(ConnManBusTechnology* wifi_proxy,
+                                   const char* property_name,
+                                   const bool value,
+                                   const char* already_error) {
+
+  GVariant* value_b = g_variant_new_boolean((gboolean) value);
+  GVariant* value_v = g_variant_new_variant(value_b);
+
+  return SetWiFiProperty(wifi_proxy,
+                         property_name,
+                         value_v,
+                         already_error);
+}
+
 static int CalculateSignalLevel(const int strength, const int min, const int max, const int numLevels) {
   if (strength < min) {
     return 0;
@@ -48,27 +185,22 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
     Log::Write("Disabled AccessPoint mode.");
   }
 
-  ConnManBusTechnology* tech_proxy;
-  GError* error;
+  if (!EnableWiFi()) {
+    Log::Write("Failed to enable wifi");
+  }
 
-  error = nullptr;
-  tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
-                                                              G_DBUS_PROXY_FLAGS_NONE,
-                                                              "net.connman",
-                                                              "/net/connman/technology/wifi",
-                                                              nullptr,
-                                                              &error);
-  if (error) {
-    loge("error getting proxy for net.connman /net/connman/technology/wifi");
+  ConnManBusTechnology* wifi_proxy = GetConnManBusTechnologyForWiFi();
+  if (!wifi_proxy) {
     return WifiScanErrorCode::ERROR_GETTING_PROXY;
   }
 
-  gboolean success = conn_man_bus_technology_call_scan_sync(tech_proxy,
+  GError* error = nullptr;
+  gboolean success = conn_man_bus_technology_call_scan_sync(wifi_proxy,
                                                             nullptr,
                                                             &error);
-  g_object_unref(tech_proxy);
+  g_object_unref(wifi_proxy);
   if (error) {
-    loge("error asking connman to scan for wifi access points");
+    loge("error asking connman to scan for wifi access points: %s", error->message);
     return WifiScanErrorCode::ERROR_SCANNING;
   }
 
@@ -77,32 +209,10 @@ WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results) 
     return WifiScanErrorCode::FAILED_SCANNING;
   }
 
-  ConnManBusManager* manager_proxy;
-  manager_proxy = conn_man_bus_manager_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
-                                                              G_DBUS_PROXY_FLAGS_NONE,
-                                                              "net.connman",
-                                                              "/",
-                                                              nullptr,
-                                                              &error);
-  if (error) {
-    loge("error getting proxy for net.connman /");
-    return WifiScanErrorCode::ERROR_GETTING_MANAGER;
-  }
-
   GVariant* services = nullptr;
-  success = conn_man_bus_manager_call_get_services_sync(manager_proxy,
-                                                        &services,
-                                                        nullptr,
-                                                        &error);
-  g_object_unref(manager_proxy);
-  if (error) {
-    loge("Error getting services from connman");
-    return WifiScanErrorCode::ERROR_GETTING_SERVICES;
-  }
-
-  if (!success) {
-    loge("connman failed to get list of services");
-    return WifiScanErrorCode::FAILED_GETTING_SERVICES;
+  WifiScanErrorCode result = GetConnManServices(&services);
+  if (result != WifiScanErrorCode::SUCCESS) {
+    return result;
   }
 
   // Get hidden flag
@@ -221,7 +331,7 @@ void HandleOutputCallback(int rc) {
   // noop
 }
 
-static gpointer connectionThread(gpointer data)
+static gpointer ConnectionThread(gpointer data)
 {
   GMainLoop *loop = g_main_loop_new(NULL, true);
 
@@ -237,32 +347,22 @@ static gpointer connectionThread(gpointer data)
 
 static GMutex connectMutex;
 
-void connectCallback(GObject *source_object, GAsyncResult *result, gpointer user_data)
+void ConnectCallback(GObject *source_object, GAsyncResult *result, gpointer user_data)
 {
-  struct ConnectAsyncData *connectData = (struct ConnectAsyncData *)user_data;
-
-  // sanity check
-  gpointer res_user_data = g_async_result_get_user_data(result);
-  if (res_user_data != user_data) {
-    loge("%s: res_user_data != user_data, bailing out", __func__);
-    return;
-  }
-
-  if (!g_cancellable_is_cancelled(connectData->cancellable)) {
-    conn_man_bus_service_call_connect_finish (connectData->service,
-                                              result,
-                                              &connectData->error);
-  }
-
   g_mutex_lock(&connectMutex);
-  connectData->completed = true;
-  g_cond_signal(connectData->cond);
+  struct ConnectInfo* data = (ConnectInfo*)user_data;
+
+  conn_man_bus_service_call_connect_finish(data->service,
+                                          result,
+                                          &data->error);
+
+  g_cond_signal(data->cond);
   g_mutex_unlock(&connectMutex);
 }
 
-static const char* const hiddenAgentPath = "/tmp/vic_switchboard/connman_agent";
+static const char* const agentPath = "/tmp/vic_switchboard/connman_agent";
 
-static void HiddenAPCallback(GDBusConnection *connection,
+static void AgentCallback(GDBusConnection *connection,
                       const gchar *sender,
                       const gchar *object_path,
                       const gchar *interface_name,
@@ -273,7 +373,7 @@ static void HiddenAPCallback(GDBusConnection *connection,
 {
   struct WPAConnectInfo *wpaConnectInfo = (struct WPAConnectInfo *)user_data;
 
-  if (strcmp(object_path, hiddenAgentPath)) {
+  if (strcmp(object_path, agentPath)) {
     return; //not us
   }
 
@@ -310,10 +410,29 @@ static void HiddenAPCallback(GDBusConnection *connection,
 
     g_dbus_method_invocation_return_value(invocation, response);
   }
+
+  if (!strcmp(method_name, "ReportError")) {
+    gchar *obj;
+    gchar *err;
+
+    g_variant_get(parameters, "(os)", &obj, &err);
+
+    if (!strcmp(err, "invalid-key")) {
+      wpaConnectInfo->status = ConnectWifiResult::CONNECT_INVALIDKEY;
+      g_dbus_method_invocation_return_value(invocation, NULL);
+      return;
+    }
+
+    if(++wpaConnectInfo->retryCount < MAX_NUM_ATTEMPTS) {
+      Log::Write("Connection Error: Retrying");
+      g_dbus_method_invocation_return_dbus_error(invocation, "net.connman.Agent.Error.Retry", "");
+    }
+  }
+
 }
 
-GDBusInterfaceVTable hiddenAPVtable = {
-  .method_call = HiddenAPCallback,
+GDBusInterfaceVTable agentVtable = {
+  .method_call = AgentCallback,
 };
 
 /* Introspection data for the service we are exporting */
@@ -325,10 +444,14 @@ static const gchar introspection_xml[] =
   "      <arg type='a{sv}' name='fields' direction='in'/>"
   "      <arg type='a{sv}' name='input' direction='out'/>"
   "    </method>"
+  "    <method name='ReportError'>"
+  "      <arg type='o' name='service' direction='in'/>"
+  "      <arg type='s' name='error' direction='in'/>"
+  "    </method>"
   "  </interface>"
   "</node>";
 
-bool RegisterAgentHidden(struct WPAConnectInfo *wpaConnectInfo)
+bool RegisterAgent(struct WPAConnectInfo *wpaConnectInfo)
 {
   GError *error = nullptr;
 
@@ -341,23 +464,18 @@ bool RegisterAgentHidden(struct WPAConnectInfo *wpaConnectInfo)
     return false;
   }
 
-  ConnManBusManager *manager;
-  manager = conn_man_bus_manager_proxy_new_sync(gdbusConn,
-                                                G_DBUS_PROXY_FLAGS_NONE,
-                                                "net.connman",
-                                                "/",
-                                                nullptr,
-                                                &error);
-  if (error) {
+  ConnManBusManager *manager = GetConnManBusManager();
+
+  if (!manager) {
     loge("error getting manager");
     return false;
   }
 
   guint agentId = 0;
   agentId = g_dbus_connection_register_object(gdbusConn,
-                                              hiddenAgentPath,
+                                              agentPath,
                                               introspection_data->interfaces[0],
-                                              &hiddenAPVtable,
+                                              &agentVtable,
                                               wpaConnectInfo,
                                               nullptr,
                                               &error);
@@ -367,7 +485,7 @@ bool RegisterAgentHidden(struct WPAConnectInfo *wpaConnectInfo)
   }
 
   if (!conn_man_bus_manager_call_register_agent_sync(manager,
-                                                     hiddenAgentPath,
+                                                     agentPath,
                                                      nullptr,
                                                      &error)) {
     g_dbus_connection_unregister_object(gdbusConn, agentId);
@@ -381,7 +499,7 @@ bool RegisterAgentHidden(struct WPAConnectInfo *wpaConnectInfo)
   return true;
 }
 
-bool UnregisterAgentHidden(struct WPAConnectInfo *wpaConnectInfo)
+bool UnregisterAgent(struct WPAConnectInfo *wpaConnectInfo)
 {
   GError *error = nullptr;
 
@@ -390,7 +508,7 @@ bool UnregisterAgentHidden(struct WPAConnectInfo *wpaConnectInfo)
   }
 
   conn_man_bus_manager_call_unregister_agent_sync (wpaConnectInfo->manager,
-                                                   hiddenAgentPath,
+                                                   agentPath,
                                                    nullptr,
                                                    &error);
 
@@ -406,59 +524,20 @@ bool UnregisterAgentHidden(struct WPAConnectInfo *wpaConnectInfo)
   return true;
 }
 
-bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData) {
-  ConnManBusTechnology* tech_proxy;
-  GError* error;
-  bool success;
-
-  static GThread *thread = g_thread_new("connect", connectionThread, nullptr);
+ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData) {
+  static GThread *thread = g_thread_new("connect", ConnectionThread, nullptr);
 
   if (thread == nullptr) {
     loge("couldn't spawn connection thread");
-    return false;
+    return ConnectWifiResult::CONNECT_FAILURE;
   }
 
   std::string nameFromHex = hexStringToAsciiString(ssid);
 
-  error = nullptr;
-  tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
-                                                              G_DBUS_PROXY_FLAGS_NONE,
-                                                              "net.connman",
-                                                              "/net/connman/technology/wifi",
-                                                              nullptr,
-                                                              &error);
-  if (error) {
-    loge("error getting proxy for net.connman /net/connman/technology/wifi");
-    return false;
-  }
-
-  ConnManBusManager* manager_proxy;
-  manager_proxy = conn_man_bus_manager_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
-                                                              G_DBUS_PROXY_FLAGS_NONE,
-                                                              "net.connman",
-                                                              "/",
-                                                              nullptr,
-                                                              &error);
-  if (error) {
-    loge("error getting proxy for net.connman /");
-    return false;
-  }
-
   GVariant* services = nullptr;
-  success = conn_man_bus_manager_call_get_services_sync(manager_proxy,
-                                                        &services,
-                                                        nullptr,
-                                                        &error);
-
-  g_object_unref(manager_proxy);
-  if (error) {
-    loge("Error getting services from connman");
-    return false;
-  }
-
-  if (!success) {
-    loge("connman failed to get list of services");
-    return false;
+  WifiScanErrorCode result = GetConnManServices(&services);
+  if (result != WifiScanErrorCode::SUCCESS) {
+    return ConnectWifiResult::CONNECT_FAILURE;
   }
 
   GVariant* serviceVariant = nullptr;
@@ -529,6 +608,11 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidd
           serviceOnline = true;
         }
       }
+
+      g_variant_unref(attr);
+      g_variant_unref(key_v);
+      g_variant_unref(val_v);
+      g_variant_unref(val);
     }
 
     if(matchedName && matchedInterface && matchedType) {
@@ -538,21 +622,27 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidd
 
       if(serviceOnline) {
         // early out--we are already connected!
-        return true;
+        return ConnectWifiResult::CONNECT_SUCCESS;
       }
     } else if(hidden && !hasName) {
       serviceVariant = child;
       foundService = true;
     }
+
+    g_variant_unref(attrs);
+    if(child != serviceVariant && child != currentServiceVariant) {
+      g_variant_unref(child);
+    }
   }
 
   if(!foundService) {
     loge("Could not find service...");
-    return false;
+    g_variant_unref(services);
+    if(currentServiceVariant != nullptr) {
+      g_variant_unref(currentServiceVariant);
+    }
+    return ConnectWifiResult::CONNECT_FAILURE;
   }
-
-  // Set config
-  SetWiFiConfig(ssid, pw, (WiFiAuth)auth, hidden);
 
   std::string servicePath = GetObjectPathForService(serviceVariant);
   Log::Write("Initiating connection to %s.", servicePath.c_str());
@@ -573,73 +663,49 @@ bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidd
   Log::Write("Service path: %s", servicePath.c_str());
   ConnManBusService* service = GetServiceForPath(servicePath);
   if(service == nullptr) {
-    return false;
+    g_variant_unref(services);
+    g_variant_unref(serviceVariant);
+    return ConnectWifiResult::CONNECT_FAILURE;
   }
 
   WPAConnectInfo connectInfo = {};
-  bool agent_registered = false;
-  if(hidden) {
-    connectInfo.name = nameFromHex.c_str();
-    connectInfo.passphrase = pw.c_str();
+  connectInfo.name = nameFromHex.c_str();
+  connectInfo.passphrase = pw.c_str();
+  connectInfo.status = ConnectWifiResult::CONNECT_NONE;
 
-    agent_registered = RegisterAgentHidden(&connectInfo);
-    if (!agent_registered) {
-      loge("could not register agent, bailing out");
-      return false;
-    }
+  if (!RegisterAgent(&connectInfo)) {
+    loge("could not register agent, bailing out");
+    g_variant_unref(services);
+    g_variant_unref(serviceVariant);
+    g_object_unref(service);
+    return ConnectWifiResult::CONNECT_FAILURE;
   }
 
   // Try to connect to our service
-  bool connect = ConnectToWifiService(service);
+  ConnectWifiResult connectStatus = ConnectToWifiService(service);
 
-  if (!connect) {
-    Log::Write("Retry connecting one more time");
-    connect = ConnectToWifiService(service);
+  if(connectInfo.status != ConnectWifiResult::CONNECT_NONE) {
+    // If we set the status in the agent callback, use it
+    // (it is probably the invalid key error)
+    connectStatus = connectInfo.status;
   }
 
-  if (agent_registered) {
-    Log::Write("unregistering agent");
-    UnregisterAgentHidden(&connectInfo);
-  }
-  return connect;
+  Log::Write("unregistering agent");
+  (void) UnregisterAgent(&connectInfo);
+
+  g_variant_unref(services);
+  g_variant_unref(serviceVariant);
+  g_object_unref(service);
+
+  return connectStatus;
 }
 
 bool RemoveWifiService(std::string ssid) {
-  GError* error;
-  bool success;
-
   std::string nameFromHex = hexStringToAsciiString(ssid);
 
-  error = nullptr;
-
-  ConnManBusManager* manager_proxy;
-  manager_proxy = conn_man_bus_manager_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
-                                                              G_DBUS_PROXY_FLAGS_NONE,
-                                                              "net.connman",
-                                                              "/",
-                                                              nullptr,
-                                                              &error);
-  if (error) {
-    loge("error getting proxy for net.connman /");
-    g_error_free(error);
-    return false;
-  }
-
   GVariant* services = nullptr;
-  success = conn_man_bus_manager_call_get_services_sync(manager_proxy,
-                                                        &services,
-                                                        nullptr,
-                                                        &error);
-
-  g_object_unref(manager_proxy);
-  if (error) {
-    loge("Error getting services from connman");
-    g_error_free(error);
-    return false;
-  }
-
-  if (!success) {
-    loge("connman failed to get list of services");
+  WifiScanErrorCode result = GetConnManServices(&services);
+  if (result != WifiScanErrorCode::SUCCESS) {
     return false;
   }
 
@@ -747,7 +813,8 @@ bool RemoveWifiService(std::string ssid) {
     return false;
   }
 
-  success = conn_man_bus_service_call_remove_sync(
+  GError* error = nullptr;
+  bool success = conn_man_bus_service_call_remove_sync(
     service,
     nullptr,
     &error);
@@ -776,53 +843,37 @@ ConnManBusService* GetServiceForPath(std::string objectPath) {
   return service;
 }
 
-bool ConnectToWifiService(ConnManBusService* service) {
+ConnectWifiResult ConnectToWifiService(ConnManBusService* service) {
 
   if(service == nullptr) {
-    return false;
+    return ConnectWifiResult::CONNECT_FAILURE;
   }
 
   GCond connectCond;
   g_cond_init(&connectCond);
-
   g_mutex_lock(&connectMutex);
 
-  struct ConnectAsyncData connAsyncData;
+  struct ConnectInfo data;
 
-  connAsyncData.completed = false;
-  connAsyncData.error = nullptr;
-  connAsyncData.cond = &connectCond;
-  connAsyncData.service = service;
-  connAsyncData.cancellable = g_cancellable_new();
-  if (connAsyncData.cancellable == nullptr) {
-    loge("%s: out of memory", __func__);
-    return false;
-  }
-  conn_man_bus_service_call_connect (service,
-                                     connAsyncData.cancellable,
-                                     connectCallback,
-                                     (gpointer)&connAsyncData);
+  data.error = nullptr;
+  data.cond = &connectCond;
+  data.service = service;
 
-  gint64 end_time = g_get_monotonic_time () + 10 * G_TIME_SPAN_SECOND;
-  bool timedOut = false;
-  while (!connAsyncData.completed) {
-    timedOut = !g_cond_wait_until(&connectCond, &connectMutex, end_time);
-    if (timedOut) {
-      g_cancellable_cancel(connAsyncData.cancellable);
-      g_cond_wait(&connectCond, &connectMutex);
-      break;
-    }
-  }
+  conn_man_bus_service_call_connect (
+    service,
+    nullptr,
+    ConnectCallback,
+    (gpointer)&data);
+
+  g_cond_wait(&connectCond, &connectMutex);
   g_mutex_unlock(&connectMutex);
 
-  bool didConnect = !timedOut && connAsyncData.error == nullptr;
-  if(!didConnect) {
-    Log::Write("Error connecting to wifi: %s",
-               timedOut ?
-               "timed out waiting on conditional" : connAsyncData.error->message);
+  if(data.error != nullptr) {
+    Log::Write("Connect error: %s", data.error->message);
   }
-  g_object_unref(connAsyncData.cancellable);
-  return didConnect;
+
+  return (data.error == nullptr)? ConnectWifiResult::CONNECT_SUCCESS:
+    ConnectWifiResult::CONNECT_FAILURE;
 }
 
 bool DisconnectFromWifiService(ConnManBusService* service) {
@@ -968,33 +1019,9 @@ WiFiState GetWiFiState() {
   wifiState.ssid = "";
   wifiState.connState = WiFiConnState::UNKNOWN;
 
-  GError* error = nullptr;
-
-  ConnManBusManager* manager_proxy;
-  manager_proxy = conn_man_bus_manager_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
-                                                              G_DBUS_PROXY_FLAGS_NONE,
-                                                              "net.connman",
-                                                              "/",
-                                                              nullptr,
-                                                              &error);
-  if (error) {
-    loge("error getting proxy for net.connman /");
-    return wifiState;
-  }
-
   GVariant* services = nullptr;
-  bool success = conn_man_bus_manager_call_get_services_sync(manager_proxy,
-                                                        &services,
-                                                        nullptr,
-                                                        &error);
-  g_object_unref(manager_proxy);
-  if (error) {
-    loge("Error getting services from connman");
-    return wifiState;
-  }
-
-  if (!success) {
-    loge("connman failed to get list of services");
+  WifiScanErrorCode result = GetConnManServices(&services);
+  if (result != WifiScanErrorCode::SUCCESS) {
     return wifiState;
   }
 
@@ -1157,8 +1184,8 @@ bool IsAccessPointMode() {
 
   GVariant* properties;
 
-  ConnManBusTechnology* tech_proxy = nullptr;
-  tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
+  ConnManBusTechnology* wifi_proxy = nullptr;
+  wifi_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
                                                               G_DBUS_PROXY_FLAGS_NONE,
                                                               "net.connman",
                                                               "/net/connman/technology/wifi",
@@ -1166,16 +1193,20 @@ bool IsAccessPointMode() {
                                                               &error);
 
   if(error != nullptr) {
+    loge("error asking connman about access point mode: %s", error->message);
     return false;
   }
 
   bool success = (bool)conn_man_bus_technology_call_get_properties_sync (
-    tech_proxy,
+    wifi_proxy,
     &properties,
     nullptr,
     &error);
 
   if(error != nullptr || !success) {
+    if (error) {
+      loge("error asking connman to get properties about access point mode: %s", error->message);
+    }
     return false;
   }
 
@@ -1196,95 +1227,42 @@ bool IsAccessPointMode() {
 }
 
 bool EnableAccessPointMode(std::string ssid, std::string pw) {
-  GError* error = nullptr;
-
-  GVariant* ssid_s = g_variant_new_string(ssid.c_str());
-  GVariant* ssid_v = g_variant_new_variant(ssid_s);
-
-  GVariant* pw_s = g_variant_new_string(pw.c_str());
-  GVariant* pw_v = g_variant_new_variant(pw_s);
-
-  GVariant* enable_b = g_variant_new_boolean(true);
-  GVariant* enable_v = g_variant_new_variant(enable_b);
-
-  ConnManBusTechnology* tech_proxy = nullptr;
-  tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
-                                                              G_DBUS_PROXY_FLAGS_NONE,
-                                                              "net.connman",
-                                                              "/net/connman/technology/wifi",
-                                                              nullptr,
-                                                              &error);
-
-  if(error != nullptr) {
+  ConnManBusTechnology* wifi_proxy = GetConnManBusTechnologyForWiFi();
+  if (!wifi_proxy) {
     return false;
   }
 
-  conn_man_bus_technology_call_set_property_sync (
-    tech_proxy,
-    "TetheringIdentifier",
-    ssid_v,
-    nullptr,
-    &error);
-
-  if(error != nullptr) {
+  if (!SetStringWiFiProperty(wifi_proxy, "TetheringIdentifier", ssid.c_str(), nullptr)) {
+    g_object_unref(wifi_proxy);
     return false;
   }
 
-  conn_man_bus_technology_call_set_property_sync (
-    tech_proxy,
-    "TetheringPassphrase",
-    pw_v,
-    nullptr,
-    &error);
-
-  if(error != nullptr) {
+  if (!SetStringWiFiProperty(wifi_proxy, "TetheringPassphrase", pw.c_str(), nullptr)) {
+    g_object_unref(wifi_proxy);
     return false;
   }
 
-  conn_man_bus_technology_call_set_property_sync (
-    tech_proxy,
-    "Tethering",
-    enable_v,
-    nullptr,
-    &error);
-
-  if(error != nullptr) {
+  if (!SetBooleanWiFiProperty(wifi_proxy, "Tethering", true, kConnmanErrorAlreadyEnabledString)) {
+    g_object_unref(wifi_proxy);
     return false;
   }
 
+  g_object_unref(wifi_proxy);
   return true;
 }
 
 bool DisableAccessPointMode() {
-  GError* error = nullptr;
+  return SetBooleanWiFiProperty(nullptr,
+                                "Tethering",
+                                false,
+                                kConnmanErrorAlreadyDisabledString);
+}
 
-  GVariant* enable_b = g_variant_new_boolean(false);
-  GVariant* enable_v = g_variant_new_variant(enable_b);
-
-  ConnManBusTechnology* tech_proxy = nullptr;
-  tech_proxy = conn_man_bus_technology_proxy_new_for_bus_sync(G_BUS_TYPE_SYSTEM,
-                                                              G_DBUS_PROXY_FLAGS_NONE,
-                                                              "net.connman",
-                                                              "/net/connman/technology/wifi",
-                                                              nullptr,
-                                                              &error);
-
-  if(error != nullptr) {
-    return false;
-  }
-
-  conn_man_bus_technology_call_set_property_sync (
-    tech_proxy,
-    "Tethering",
-    enable_v,
-    nullptr,
-    &error);
-
-  if(error != nullptr) {
-    return false;
-  }
-
-  return true;
+bool EnableWiFi() {
+  return SetBooleanWiFiProperty(nullptr,
+                                "Powered",
+                                true,
+                                kConnmanErrorAlreadyEnabledString);
 }
 
 WiFiIpFlags GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits) {

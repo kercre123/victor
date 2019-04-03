@@ -63,6 +63,13 @@ enum WifiScanErrorCode : uint8_t {
     FAILED_GETTING_SERVICES   = 105,
 };
 
+enum ConnectWifiResult : uint8_t {
+  CONNECT_NONE = 255,
+  CONNECT_SUCCESS = 0,
+  CONNECT_FAILURE = 1,
+  CONNECT_INVALIDKEY = 2,
+};
+
 class WiFiScanResult {
  public:
   WiFiAuth    auth;
@@ -86,12 +93,20 @@ struct WiFiState {
   WiFiConnState connState;
 };
 
+static const unsigned MAX_NUM_ATTEMPTS = 5;
+
 struct ConnectAsyncData {
   bool completed;
   GCond *cond;
   GError *error;
   GCancellable *cancellable;
   ConnManBusService *service;
+};
+
+struct ConnectInfo {
+  ConnManBusService* service;
+  GCond* cond;
+  GError* error;
 };
 
 struct WPAConnectInfo {
@@ -102,16 +117,19 @@ struct WPAConnectInfo {
   guint agentId;
   GDBusConnection *connection;
   ConnManBusManager *manager;
+  bool errRetry;
+  uint8_t retryCount;
+  ConnectWifiResult status;
 };
 
 std::string GetObjectPathForService(GVariant* service);
-bool ConnectToWifiService(ConnManBusService* service);
+ConnectWifiResult ConnectToWifiService(ConnManBusService* service);
 bool DisconnectFromWifiService(ConnManBusService* service);
 ConnManBusService* GetServiceForPath(std::string objectPath);
 void SetWiFiConfig(std::string ssid, std::string password, WiFiAuth auth, bool isHidden);
 std::string GetHexSsidFromServicePath(const std::string& servicePath);
 
-bool ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData);
+ConnectWifiResult ConnectWiFiBySsid(std::string ssid, std::string pw, uint8_t auth, bool hidden, GAsyncReadyCallback cb, gpointer userData);
 bool RemoveWifiService(std::string ssid);
 WifiScanErrorCode ScanForWiFiAccessPoints(std::vector<WiFiScanResult>& results);
 std::vector<uint8_t> PackWiFiScanResults(const std::vector<WiFiScanResult>& results);
@@ -122,6 +140,7 @@ bool GetIpFromHostName(char* hostname, char* ip);
 bool IsAccessPointMode();
 bool EnableAccessPointMode(std::string ssid, std::string pw);
 bool DisableAccessPointMode();
+bool EnableWiFi();
 std::string GetConfigField(std::string& field, std::string& outSsid);
 WiFiIpFlags GetIpAddress(uint8_t* ipv4_32bits, uint8_t* ipv6_128bits);
 WiFiState GetWiFiState();
