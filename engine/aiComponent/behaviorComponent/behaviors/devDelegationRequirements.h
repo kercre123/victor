@@ -41,9 +41,9 @@ void ApplyForceDelegationRequirements<BehaviorClass::PromptUserForVoiceCommand>(
                                                                                  BehaviorExternalInterface& bei )
 {
   BehaviorPromptUserForVoiceCommand* castPtr = static_cast<BehaviorPromptUserForVoiceCommand*>(behavior);
-  castPtr->SetPrompt( "hello" );
+  castPtr->SetPromptString( "hello" );
 }
- 
+
 template <>
 void ApplyForceDelegationRequirements<BehaviorClass::EyeColor>( ICozmoBehavior* behavior,
                                                                 BehaviorExternalInterface& bei )

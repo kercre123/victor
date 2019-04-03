@@ -1394,7 +1394,7 @@ void BehaviorEnrollFace::TransitionToAlreadyKnowYouPrompt()
               "FaceID to enroll should be set by now");
 
   const std::string & prompt = GetLocalizedHaveWeMetBefore(_dVars->faceName);
-  _iConfig->alreadyKnowYouPromptBehavior->SetPrompt(prompt);
+  _iConfig->alreadyKnowYouPromptBehavior->SetPromptString(prompt);
 
   ANKI_VERIFY(_iConfig->alreadyKnowYouPromptBehavior->WantsToBeActivated(),
               "BehaviorEnrollFace.TransitionToAlreadyKnowYouPrompt.PromptBehaviorShouldWantToBeActivated", "");
