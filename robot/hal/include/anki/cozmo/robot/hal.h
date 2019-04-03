@@ -47,7 +47,7 @@ namespace HAL {
 /************************************************************************
  * \section Parameters and Constants
  */
-  
+
 /// Number of time stamp ticks per second
 static const int TICKS_PER_SECOND = 200;
 /// Scale value for maximum motor power in HAL
@@ -92,14 +92,14 @@ u8 GetWatchdogResetCounter(void);
 
 /// IMU_DataStructure contains 3-axis acceleration and 3-axis gyro data
 struct IMU_DataStructure
-{ 
+{
   f32 acc_x;  ///< mm/s/s
   f32 acc_y;  ///< mm/s/s
   f32 acc_z;  ///< mm/s/s
   f32 rate_x; ///< rad/s
   f32 rate_y; ///< rad/s
   f32 rate_z; ///< rad/s
-  
+
   f32 temperature_degC;
 };
 
@@ -179,7 +179,7 @@ using SendDataFunction = Result (*)(const s16* latestMicData, uint32_t numSample
 /** Grants access to microphone data from this tick.
  * @param[in] Provides a function pointer for actually sending out the message using the mic data
  * @return true if more data needs to be sent (and this should be called again) false otherwise
- */ 
+ */
 bool HandleLatestMicData(SendDataFunction sendDataFunc);
 
 /************************************************************************
@@ -187,7 +187,7 @@ bool HandleLatestMicData(SendDataFunction sendDataFunc);
  */
 
 /// Button IDs
-typedef enum 
+typedef enum
 {
   BUTTON_CAPACITIVE = 0,
   BUTTON_POWER = 1,
@@ -214,9 +214,9 @@ bool IsTouchSensorValid();
 
 // Checks EMR for new valid ranges
 // Also reset Valid state.
-void UpdateTouchSensorValidRange(); 
+void UpdateTouchSensorValidRange();
 #endif
- 
+
 /************************************************************************
  * \section Battery
  */
@@ -273,7 +273,7 @@ void SetSystemLED(u32 color);
  */
 
 /// Run levels for the hardware
-typedef enum 
+typedef enum
 {
   POWER_MODE_ACTIVE           = 0x0,
   POWER_MODE_CALM             = 0x1,
@@ -331,7 +331,7 @@ const uint8_t* const GetSysconVersionInfo();
 /// Force a hard fault in the processor, used for hardware assert
 void FORCE_HARDFAULT();
 #define HAL_ASSERT(c) do { if(!(c)) FORCE_HARDFAULT(); } while(0)
-  
+
 } // namespace HAL
 } // namespace Cozmo
 } // namespace Anki

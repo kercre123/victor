@@ -30,22 +30,22 @@ namespace Cozmo {
   static const std::string _kArchiveRootDirName = "factory_test_log_archives";
   static const Util::Data::Scope _kLogScope = Util::Data::Scope::Cache;
   static std::string _kPathToCopyLogTo = "/factory";
-  
+
   static const int _kMaxEngineLogSizeBytes = 1500000;
-  
+
   FactoryTestLogger::FactoryTestLogger(bool exportJson)
   : _logDir("")
   , _logFileName("")
   , _exportJson(exportJson)
   {
-    
+
   }
-  
+
   FactoryTestLogger::~FactoryTestLogger()
   {
     CloseLog();
   }
-  
+
   std::string FactoryTestLogger::ChooseNextFileName(const std::string& dir, const std::string& name)
   {
     static constexpr uint32_t kNumberDigitsLength = 4;
@@ -76,14 +76,14 @@ namespace Cozmo {
 
       listIter++;
     }
-    
+
     // Otherwise:
     // Sort list of entries
     std::sort(dirNames.begin(), dirNames.end(), std::greater<std::string>());
-    
+
     // Take the first name in the list
     const auto& entryToReplace = dirNames.front();
-    
+
     // Pull out the iteration number, +3 for "_-_"
     const auto iterStrBegin = name.length() + 3;
     static constexpr uint32_t kMaxIterationNum = 9999;
@@ -96,7 +96,7 @@ namespace Cozmo {
                         kMaxIterationNum);
       return "";
     }
-    
+
     // use increased iteration number to make the new filename
     std::ostringstream newNameStream;
     newNameStream << name
@@ -125,8 +125,8 @@ namespace Cozmo {
     //   newLogDir += "_-_" + GetCurrDateTime() + "/";
     // }
 
-    
-    
+
+
     // Check if it already exists
     if (Util::FileUtils::DirectoryExists(newLogDir)) {
       if (_logDir == newLogDir) {
@@ -146,26 +146,26 @@ namespace Cozmo {
     PRINT_NAMED_INFO("FactoryTestLogger.StartLog.CreatingLogDir", "%s", _logDir.c_str());
     Util::FileUtils::CreateDirectory(_logDir);
     _logFileName = Util::FileUtils::FullFilePath({_logDir, _kLogTextFileName + (_exportJson ? ".json" : ".txt")});
-    
+
     if (_logFileHandle.is_open()) {
       PRINT_NAMED_WARNING("FactoryTestLogger.FileUnexpectedlyOpen", "");
       _logFileHandle.close();
     }
-    
+
     PRINT_NAMED_INFO("FactoryTestLogger.StartLog.CreatingLogFile", "%s", _logFileName.c_str());
     _logFileHandle.open(_logFileName, std::ofstream::out | std::ofstream::app);
-    
+
     _json.clear();
-    
+
     return true;
   }
-  
-  
+
+
   void FactoryTestLogger::CloseLog()
   {
     if (_logFileHandle.is_open()) {
       PRINT_NAMED_INFO("FactoryTestLogger.CloseLog.Closing", "%s", _logFileName.c_str());
-      
+
       // If exporting json, write it to file here
       if (_exportJson) {
         // Use FastWriter to "compress" the json string (removes newlines, tabs, etc)
@@ -188,8 +188,8 @@ namespace Cozmo {
 
       // Copy log to factory partition. This should overwrite any log already there
       // so it will always contain the most recent log
-      PRINT_NAMED_INFO("FactoryTestLogger.CloseLog.Copying", 
-                       "Copying log from %s to %s", 
+      PRINT_NAMED_INFO("FactoryTestLogger.CloseLog.Copying",
+                       "Copying log from %s to %s",
                        _logFileName.c_str(),
                        _kPathToCopyLogTo.c_str());
       Util::FileUtils::CopyFile(_kPathToCopyLogTo, _logFileName);
@@ -197,7 +197,7 @@ namespace Cozmo {
       // The log file has been copied to the correct directory but now needs to be renamed
       const std::string oldFileName = _kPathToCopyLogTo + "/" + (_kLogTextFileName + (_exportJson ? ".json" : ".txt"));
       const std::string newFileName = _kPathToCopyLogTo + "/log0";
-      int rc = std::rename(oldFileName.c_str(), 
+      int rc = std::rename(oldFileName.c_str(),
                            newFileName.c_str());
 
       // Make sure files are written to disk
@@ -211,15 +211,15 @@ namespace Cozmo {
                           newFileName.c_str());
       }
     }
-    
+
     _logDir = "";
     _logFileName = "";
   }
-  
+
   bool FactoryTestLogger::IsOpen() {
     return _logFileHandle.is_open();
   }
-  
+
   bool FactoryTestLogger::Append(const FactoryTestResultEntry& data)
   {
     std::stringstream ss;
@@ -250,8 +250,8 @@ namespace Cozmo {
     PRINT_NAMED_INFO("FactoryTestLogger.Append.FactoryTestResultEntry", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
   }
-  
-  
+
+
   bool FactoryTestLogger::Append(const CameraCalibration& data)
   {
     std::stringstream ss;
@@ -278,7 +278,7 @@ namespace Cozmo {
       << "\nrows: " << data.nrows
       << "\ncols: " << data.ncols
       << "\ndistortionCoeffs: ";
- 
+
       for(auto coeff : data.distCoeffs) {
         ss << coeff << " ";
       }
@@ -286,7 +286,7 @@ namespace Cozmo {
     PRINT_NAMED_INFO("FactoryTestLogger.Append.CameraCalibration", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
   }
-  
+
   bool FactoryTestLogger::Append(const ToolCodeInfo& data)
   {
     std::stringstream ss;
@@ -310,7 +310,7 @@ namespace Cozmo {
       << "\nObserved_L: " << data.observedCalibDotLeft_x  << ", " << data.observedCalibDotLeft_y
       << "\nObserved_R: " << data.observedCalibDotRight_x << ", " << data.observedCalibDotRight_y;
     }
-    
+
     PRINT_NAMED_INFO("FactoryTestLogger.Append.ToolCodeInfo", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
   }
@@ -351,7 +351,7 @@ namespace Cozmo {
   bool FactoryTestLogger::Append(const CalibMetaInfo& data)
   {
     std::bitset<8> b(data.dotsFoundMask);
-    
+
     std::stringstream ss;
     if (_exportJson) {
       Json::Value& node = _json["CalibMetaInfo"];
@@ -364,7 +364,7 @@ namespace Cozmo {
     PRINT_NAMED_INFO("FactoryTestLogger.Append.CalibMetaInfo", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
   }
-  
+
   void FactoryTestLogger::ParseIMUTempDuration(const IMUTempDuration& data,
                                                     Json::Value* json,
                                                     std::stringstream& ss)
@@ -372,7 +372,7 @@ namespace Cozmo {
     if(_exportJson)
     {
       DEV_ASSERT(json != nullptr, "FactoryTestLogger.NullJson");
-      
+
       Json::Value& node = (*json)["IMUTempDuration"];
       node["TempStart_c"] = data.tempStart_c;
       node["TempEnd_c"] = data.tempEnd_c;
@@ -387,7 +387,7 @@ namespace Cozmo {
       << "\nDuration_ms: " << data.duration_ms;
     }
   }
-  
+
   bool FactoryTestLogger::Append(const IMUTempDuration& data)
   {
     std::stringstream ss;
@@ -395,7 +395,7 @@ namespace Cozmo {
     PRINT_NAMED_INFO("FactoryTestLogger.Append.IMUTempDuration", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
   }
-  
+
   bool FactoryTestLogger::Append(const IMUInfo& data)
   {
     std::stringstream ss;
@@ -412,27 +412,27 @@ namespace Cozmo {
     PRINT_NAMED_INFO("FactoryTestLogger.Append.IMUInfo", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
   }
-  
+
   bool FactoryTestLogger::AppendCliffValueOnDrop(const CliffSensorValue& data) {
     return AppendCliffSensorValue("CliffOnDrop", data);
   }
-  
+
   bool FactoryTestLogger::AppendCliffValueOnGround(const CliffSensorValue& data) {
     return AppendCliffSensorValue("CliffOnGround", data);
   }
-  
+
   bool FactoryTestLogger::AppendCliffValuesOnFrontDrop(const CliffSensorValues& data) {
     return AppendCliffSensorValues("CliffsOnFrontDrop", data);
   }
-  
+
   bool FactoryTestLogger::AppendCliffValuesOnBackDrop(const CliffSensorValues& data) {
     return AppendCliffSensorValues("CliffsOnBackDrop", data);
   }
-  
+
   bool FactoryTestLogger::AppendCliffValuesOnGround(const CliffSensorValues& data) {
     return AppendCliffSensorValues("CliffsOnGround", data);
   }
-  
+
   bool FactoryTestLogger::AppendCliffSensorValue(const std::string& readingName, const CliffSensorValue& data)
   {
     std::stringstream ss;
@@ -447,7 +447,7 @@ namespace Cozmo {
     PRINT_NAMED_INFO("FactoryTestLogger.Append.CliffSensorValue", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
   }
-  
+
   bool FactoryTestLogger::AppendCliffSensorValues(const std::string& readingName, const CliffSensorValues& data)
   {
     std::stringstream ss;
@@ -468,7 +468,7 @@ namespace Cozmo {
     PRINT_NAMED_INFO("FactoryTestLogger.Append.CliffSensorValues", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
   }
-      
+
   bool FactoryTestLogger::AppendCalibPose(const PoseData& data) {
     return AppendPoseData("CalibPose", data);
   }
@@ -476,7 +476,7 @@ namespace Cozmo {
   bool FactoryTestLogger::AppendObservedCubePose(const PoseData& data) {
     return AppendPoseData("ObservedCubePose", data);
   }
-    
+
   bool FactoryTestLogger::AppendPoseData(const std::string& poseName, const PoseData& data)
   {
     std::stringstream ss;
@@ -497,7 +497,7 @@ namespace Cozmo {
     PRINT_NAMED_INFO("FactoryTestLogger.Append.PoseData", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
   }
-  
+
   bool FactoryTestLogger::Append(const ExternalInterface::RobotCompletedFactoryDotTest& msg)
   {
     std::stringstream ss;
@@ -515,7 +515,7 @@ namespace Cozmo {
         node["LowerRight"][0] = msg.dotCenX_pix[3];
         node["LowerRight"][1] = msg.dotCenY_pix[3];
         ss << "[CentroidInfo]\n" << node;
-        
+
         if(msg.didComputePose)
         {
           PoseData pd(msg.camPoseRoll_rad, msg.camPosePitch_rad, msg.camPoseYaw_rad,
@@ -532,7 +532,7 @@ namespace Cozmo {
         << "\nLowerLeft: "  << msg.dotCenX_pix[1] << " " << msg.dotCenY_pix[1]
         << "\nUpperRight: " << msg.dotCenX_pix[2] << " " << msg.dotCenY_pix[2]
         << "\nLowerRight: " << msg.dotCenX_pix[3] << " " << msg.dotCenY_pix[3];
-        
+
         if(msg.didComputePose)
         {
           PoseData pd(msg.camPoseRoll_rad, msg.camPosePitch_rad, msg.camPoseYaw_rad,
@@ -541,11 +541,11 @@ namespace Cozmo {
         }
       }
     }
-    
+
     PRINT_NAMED_INFO("FactoryTestLogger.Append.CentroidInfo", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
   }
-  
+
   bool FactoryTestLogger::Append(const std::string& name, const DistanceSensorData& data)
   {
     std::stringstream ss;
@@ -609,7 +609,7 @@ namespace Cozmo {
         rangeNode["SpadCount"] = range.spadCount;
         rangeNode["ProcessedRange_mm"] = range.processedRange_mm;
       }
-      
+
       newNode["VisualDistance_mm"] = data.visualDistanceToTarget_mm;
       newNode["VisualAngleAway_rad"] = data.visualAngleAwayFromTarget_rad;
       newNode["HeadAngle_rad"] = data.headAngle_rad;
@@ -634,7 +634,7 @@ namespace Cozmo {
   bool FactoryTestLogger::Append(const std::map<std::string, std::vector<FactoryTestResultCode>>& results)
   {
     std::stringstream ss;
-    
+
     for(const auto& kv : results)
     {
       if(_exportJson)
@@ -658,11 +658,11 @@ namespace Cozmo {
     PRINT_NAMED_INFO("FactoryTestLogger.Append.AllPlaypenResults", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
   }
-  
+
   bool FactoryTestLogger::Append(const std::string& dataTypeName, const TouchSensorValues& data)
   {
     std::stringstream ss;
-    
+
     if(_exportJson)
     {
       Json::Value& node = _json[dataTypeName];
@@ -688,7 +688,7 @@ namespace Cozmo {
   bool FactoryTestLogger::Append(const std::string& name, const TouchSensorFilt& data)
   {
     std::stringstream ss;
-    
+
     if(_exportJson)
     {
       Json::Value& node = _json[name];
@@ -711,9 +711,9 @@ namespace Cozmo {
     return AppendToFile(ss.str());
   }
 
-  
+
   bool FactoryTestLogger::AppendToFile(const std::string& data) {
-    
+
     // If log name was not actually defined yet, do nothing.
     if (!_logFileHandle.is_open()) {
       PRINT_NAMED_WARNING("FactoryTestLogger.Append.LogNotStarted", "Ignoring because log not started");
@@ -732,24 +732,24 @@ namespace Cozmo {
       PRINT_NAMED_WARNING("FactoryTestLogger.AddFile.LogNotStarted", "Ignoring because log not started");
       return false;
     }
-    
+
     if (filename.empty()) {
       PRINT_NAMED_WARNING("FactoryTestLogger.AddFile.EmptyFilename", "");
       return false;
     }
-    
+
     std::string outFile = Util::FileUtils::FullFilePath({_logDir, filename});
-    
+
     if (Util::FileUtils::FileExists(outFile)) {
       PRINT_NAMED_WARNING("FactoryTestLogger.AddFile.AlreadyExists",
                           "Ignoring because %s already exists", outFile.c_str() );
       return false;
     }
-    
+
     PRINT_NAMED_INFO("FactoryTestLogger.AddFile",
                      "File: %s, size: %zu bytes",
                      outFile.c_str(), data.size());
-    
+
     return Util::FileUtils::WriteFile(outFile, data);
   }
 
@@ -759,12 +759,12 @@ namespace Cozmo {
       PRINT_NAMED_WARNING("FactoryTestLogger.CopyEngineLog.LogNotStarted", "Ignoring because log not started");
       return false;
     }
-    
+
     if (dataPlatform == nullptr) {
       PRINT_NAMED_WARNING("FactoryTestLogger.CopyEngineLog.NullDataPlatform", "");
       return false;
     }
-    
+
     // Get directories inside CurrentGameLog. There should only ever be one.
     // TODO (Al): Get LOGNAME (log folder) from cozmoeEngineMain.cpp instead of duplicating it
     std::string srcDir = dataPlatform->pathToResource(Util::Data::Scope::CurrentGameLog, "vic-engine");
@@ -775,11 +775,11 @@ namespace Cozmo {
       PRINT_NAMED_WARNING("FactoryTestLogger.CopyEngineLog.NoLogFound", "");
       return false;
     }
-    
+
     if (dirs.size() > 1) {
       PRINT_NAMED_WARNING("FactoryTestLogger.CopyEngineLog.MoreLogDirsThanExpected", "%zu", dirs.size());
     }
-    
+
     srcDir = Util::FileUtils::FullFilePath({srcDir, dirs.front(), "print"});
     std::vector<std::string> engineLogFiles = Util::FileUtils::FilesInDirectory(srcDir, true, ".log", true);
 
@@ -797,11 +797,11 @@ namespace Cozmo {
         res = false;
       }
     }
-    
+
     return res;
   }
-  
-  
+
+
   uint32_t FactoryTestLogger::GetNumLogs(Util::Data::DataPlatform* dataPlatform)
   {
     // Get base directory of log directories
@@ -809,11 +809,11 @@ namespace Cozmo {
     if (dataPlatform) {
       baseDirectory = dataPlatform->pathToResource(_kLogScope, _kLogRootDirName);
     }
-    
+
     // Get all log directories
     std::vector<std::string> directoryList;
     Util::FileUtils::ListAllDirectories(baseDirectory, directoryList);
-    
+
     return static_cast<uint32_t>(directoryList.size());
   }
 
@@ -824,31 +824,31 @@ namespace Cozmo {
     if (dataPlatform) {
       baseDirectory = dataPlatform->pathToResource(_kLogScope, _kArchiveRootDirName);
     }
-    
+
     // Get all log directories
     std::vector<std::string> directoryList;
     Util::FileUtils::ListAllDirectories(baseDirectory, directoryList);
-    
+
     return static_cast<uint32_t>(directoryList.size());
   }
-  
+
   bool FactoryTestLogger::ArchiveAndDelete(const std::string& archiveName, const std::string& logBaseDir)
   {
     auto filePaths = Util::FileUtils::FilesInDirectory(logBaseDir, true, nullptr, true);
     if (ArchiveUtil::CreateArchiveFromFiles(archiveName, logBaseDir, filePaths)) {
-      
+
       // Delete original logs
       Util::FileUtils::RemoveDirectory(logBaseDir);
-      
+
       return true;
     }
-    
+
     PRINT_NAMED_WARNING("FactoryTestLogger.ArchiveAndDelete.Failed",
                         "ArchiveName: %s, LogBaseDir: %s",
                         archiveName.c_str(), logBaseDir.c_str());
     return false;
   }
-  
+
   bool FactoryTestLogger::ArchiveLogs(Util::Data::DataPlatform* dataPlatform)
   {
     // Get base directory of log directories
@@ -858,18 +858,18 @@ namespace Cozmo {
       logBaseDirectory = dataPlatform->pathToResource(_kLogScope, _kLogRootDirName);
       archiveBaseDirectory = dataPlatform->pathToResource(_kLogScope, _kArchiveRootDirName);
     }
-    
+
     // Make sure output directory exists
     Util::FileUtils::CreateDirectory(archiveBaseDirectory, false, true);
-    
+
     // Generate name of new archive based on current date-time
     std::string archiveName = GetCurrDateTime() + ".tar.gz";
-    
+
     // Create archive
     if (!ArchiveAndDelete(archiveBaseDirectory + "/" + archiveName, logBaseDirectory)) {
       return false;
     }
-    
+
 #if ARCHIVE_OLD_LOGS
     archiveName = "old_" + GetCurrDateTime() + ".tar.gz";
     logBaseDirectory = dataPlatform->pathToResource(Util::Data::Scope::Cache, _kLogRootDirName);
@@ -877,12 +877,12 @@ namespace Cozmo {
       return false;
     }
 #endif
-    
-    
-    
+
+
+
     return false;
   }
-  
+
   std::string FactoryTestLogger::GetCurrDateTime() const
   {
     auto time_point = std::chrono::system_clock::now();
@@ -892,6 +892,6 @@ namespace Cozmo {
     strftime(buf, sizeof(buf), "%F_%H-%M-%S", nowLocalTime);
     return std::string(buf);
   }
-  
+
 } // end namespace Cozmo
 } // end namespace Anki

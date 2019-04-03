@@ -55,7 +55,7 @@ bool DrawStartPairingScreen(AnimationStreamer* animStreamer)
   {
     return false;
   }
-  
+
   animStreamer->EnableKeepFaceAlive(false, 0);
   animStreamer->Abort();
 
@@ -77,7 +77,7 @@ bool DrawStartPairingScreen(AnimationStreamer* animStreamer)
 void DrawShowPinScreen(AnimationStreamer* animStreamer, const AnimContext* context, const std::string& pin)
 {
   Vision::ImageRGB key;
-  key.Load(context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources, 
+  key.Load(context->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
                                                       "config/facePNGs/pairing_icon_key.png"));
 
   Vision::ImageRGB img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
@@ -154,7 +154,7 @@ void UpdatePairingLight(bool on)
             .offset = 0
           }}));
     AnimComms::SendPacketToRobot((char*)m.GetBuffer(), m.Size());
-    isOn = on; 
+    isOn = on;
   }
   else if(isOn && !on)
   {
@@ -246,9 +246,9 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
       // Probably will never get here because we will restart
       // while updating os
       if(FACTORY_TEST)
-      {
-        DrawStartPairingScreen(animStreamer);
-      }
+        {
+          DrawStartPairingScreen(animStreamer);
+        }
       else
       {
         // Reenable keep face alive

@@ -44,7 +44,7 @@ ToFSensor* ToFSensor::getInstance()
   {
     return nullptr;
   }
-  
+
   DEV_ASSERT(_engineSupervisorSet, "tof_mac.NoSupervisorSet");
   if(nullptr == _instance)
   {
@@ -78,7 +78,7 @@ ToFSensor::ToFSensor()
     // webots::Rangefinder*). There seems to be no good way to get the underlying node pointer of the Rangefinder, so we
     // have to do this somewhat hacky iteration over all of the nodes in the world to find the Rangefinder node.
     const auto& vizNodes = WebotsHelpers::GetMatchingSceneTreeNodes(*_engineSupervisor, "CozmoVizDisplay");
-          
+
     webots::Node* tofNode = nullptr;
     const int maxNodesToSearch = 10000;
     for (int i=0 ; i < maxNodesToSearch ; i++) {
@@ -89,7 +89,7 @@ ToFSensor::ToFSensor()
       }
     }
     DEV_ASSERT(tofNode != nullptr, "ToF.NoWebotsRangeFinderFound");
-          
+
     for (const auto& vizNode : vizNodes) {
       vizNode.nodePtr->setVisibility(tofNode, false);
     }
@@ -110,7 +110,7 @@ Result ToFSensor::Update()
 RangeDataRaw ToFSensor::GetData(bool& dataUpdated)
 {
   dataUpdated = true;
-  
+
   RangeDataRaw rangeData;
 
   const float* leftImage = leftSensor_->getRangeImage();
@@ -127,7 +127,7 @@ RangeDataRaw ToFSensor::GetData(bool& dataUpdated)
       rData.spadCount = 90.f;
 
       rData.roi = index;
-      
+
       rData.processedRange_mm = leftImage[i*4 + j] * 1000;
 
       RangeReading reading;
@@ -140,7 +140,7 @@ RangeDataRaw ToFSensor::GetData(bool& dataUpdated)
       rData.readings.push_back(reading);
     }
   }
-  
+
   return rangeData;
 }
 
@@ -180,7 +180,7 @@ bool ToFSensor::IsValidRoiStatus(uint8_t status) const
 {
   return true;
 }
-  
+
 int ToFSensor::PerformCalibration(uint32_t distanceToTarget_mm,
                                   float targetReflectance,
                                   const CommandCallback& callback)
@@ -201,6 +201,6 @@ void ToFSensor::SetLogPath(const std::string& path)
 {
   return;
 }
-  
+
 }
 }

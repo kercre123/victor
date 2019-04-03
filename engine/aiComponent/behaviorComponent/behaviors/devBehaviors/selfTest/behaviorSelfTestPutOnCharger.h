@@ -21,17 +21,17 @@ namespace Cozmo {
 class BehaviorSelfTestPutOnCharger : public IBehaviorSelfTest
 {
 protected:
-  
+
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
   BehaviorSelfTestPutOnCharger(const Json::Value& config);
-  
+
 protected:
   virtual void GetBehaviorOperationModifiersInternal(BehaviorOperationModifiers& modifiers) const override {
     modifiers.wantsToBeActivatedWhenOnCharger = true;
     modifiers.wantsToBeActivatedWhenOffTreads = true;
   }
-  
+
   virtual Result        OnBehaviorActivatedInternal() override;
   virtual SelfTestStatus SelfTestUpdateInternal() override;
   virtual void          OnBehaviorDeactivated() override;
@@ -39,7 +39,7 @@ protected:
 private:
 
   bool _isUpsideDown = false;
-  
+
 };
 
 }
