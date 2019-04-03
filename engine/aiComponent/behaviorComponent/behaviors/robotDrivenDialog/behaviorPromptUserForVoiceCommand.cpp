@@ -267,7 +267,8 @@ void BehaviorPromptUserForVoiceCommand::BehaviorUpdate()
     if(_iConfig.stopListeningOnIntents){
       const bool intentHeard = (EIntentStatus::IntentHeard == _dVars.intentStatus);
       const bool intentUnknown = (EIntentStatus::IntentUnknown == _dVars.intentStatus) && kStopListeningOnUnknownIntent;
-      if(intentHeard || intentUnknown){
+      const bool intentSilence = (EIntentStatus::IntentSilence == _dVars.intentStatus);
+      if(intentHeard || intentUnknown || intentSilence){
         // End the listening anim, which should push us into Thinking
         CancelDelegates(false);
         TransitionToThinking();
@@ -299,11 +300,11 @@ void BehaviorPromptUserForVoiceCommand::CheckForPendingIntents()
       return;
     }
 
-    // If robot heard silence, treat it like an unmatched intent.
+    // If robot heard silence, record the outcome for proper handling, then clear it.
     static const UserIntentTag silence = USER_INTENT(silence);
     if (uic.IsUserIntentPending(silence)) {
       uic.DropUserIntent(silence);
-      _dVars.intentStatus = EIntentStatus::IntentUnknown;
+      _dVars.intentStatus = EIntentStatus::IntentSilence;
       return;
     }
 
@@ -386,6 +387,8 @@ void BehaviorPromptUserForVoiceCommand::TransitionToIntentReceived()
         DelegateIfInControl(_iConfig.ttsBehavior.get(), [this](){ CancelSelf(); });
       }
     }
+  } else if(EIntentStatus::IntentSilence == _dVars.intentStatus) {
+    TransitionToReprompt();
   } else {
     const auto & vocalResponseToBadIntentString = GetVocalResponseToBadIntentString();
     if (vocalResponseToBadIntentString.empty()) {
