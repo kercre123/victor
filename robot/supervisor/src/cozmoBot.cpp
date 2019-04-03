@@ -282,7 +282,7 @@ namespace Anki {
 
       void CheckForCriticalBatteryShutdown()
       { 
-        static const u32 HAL_SHUTDOWN_DELAY_MS = 5000;
+        static const u32 HAL_SHUTDOWN_DELAY_MS = 10000;
         static TimeStamp_t shutdownTime_ms = 0;
         const TimeStamp_t now_ms = HAL::GetTimeStamp();
         
