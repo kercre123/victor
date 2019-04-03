@@ -118,7 +118,7 @@ bool SpeechRecognizerPryonLite::InitRecognizer(const std::string& modlePath, boo
   _impl->config.detectThreshold   = _detectThreshold;
   _impl->config.useVad            = useVad;
   if (useVad) {
-    _impl->config.vadCallback     = SpeechRecognizerPryonLite::VadCallback;
+    _impl->config.vadCallback     = VadCallback;
   }
   
   err = PryonLiteDecoder_Initialize(&_impl->config, &sessionInfo, &_impl->decoder);
@@ -267,6 +267,9 @@ void SpeechRecognizerPryonLite::VadCallback(PryonLiteDecoderHandle handle, const
 #if PRYON_ENABLED
   auto* recContext = static_cast<SpeechRecognizerPryonLite*>(vadEvent->userData);
   recContext->_impl->vadState = vadEvent->vadState;
+  if( recContext->_vadCallback ) {
+    recContext->_vadCallback( vadEvent->vadState );
+  }
 #endif
 }
 

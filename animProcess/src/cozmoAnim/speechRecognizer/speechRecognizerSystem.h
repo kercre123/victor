@@ -116,6 +116,8 @@ public:
   // Start/Stop playback recognizer when Alexa is in Speaking state
   void SetAlexaSpeakingState(bool isSpeaking);
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  
+  void SetNoiseData( float latestPower, float noiseFloor ) const;
 
 
 private:
@@ -210,6 +212,9 @@ private:
                                      int& inOut_searchIdx, int new_searchIdx,
                                      const TriggerModelTypeData modelTypeDataList[],
                                      TriggerContext<SpeechRecognizerType>& trigger);
+  
+  void SendVADActivity( const std::string& type, int val ) const;
+  void SendTriggerActivity( const std::string& info ) const;
 };
 
 

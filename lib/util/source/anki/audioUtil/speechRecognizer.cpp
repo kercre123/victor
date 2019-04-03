@@ -11,6 +11,7 @@
 */
 
 #include "speechRecognizer.h"
+#include "util/logging/logging.h"
 
 namespace Anki {
 namespace AudioUtil {
