@@ -15,15 +15,15 @@
 #include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/featureGateTypes.h"
 #include "coretech/common/engine/jsonTools.h"
-#include "engine/components/animationComponent.h"
 #include "engine/cozmoContext.h"
-#include "engine/moodSystem/moodManager.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "json/json.h"
 #include "util/featureGate/featureGate.h"
 #include "util/logging/logging.h"
 
 #include <unordered_set>
+
+#define LOG_CHANNEL "Behaviors"
 
 namespace Anki {
 namespace Vector {
@@ -59,7 +59,7 @@ UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
   // for validation
   std::unordered_set<UserIntentTag> foundUserIntent;
   std::unordered_set<UserIntentTag> gatedUserIntent;
-  
+
   ANKI_VERIFY(config[kUserIntentMapKey].size() > 0,
               "UserIntentMap.InvalidConfig",
               "expected to find group '%s'",
@@ -77,10 +77,10 @@ UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
                    intentStr.c_str() );
       const bool featureEnabled = ctx->GetFeatureGate()->IsFeatureEnabled( feature );
       if( !featureEnabled ) {
-        PRINT_NAMED_INFO( "UserIntentMap.Ctor.FeatureGated",
-                          "Disabled feature '%s' is gating intent '%s'",
-                          featureName.c_str(),
-                          intentStr.c_str() );
+        LOG_INFO( "UserIntentMap.Ctor.FeatureGated",
+                  "Disabled feature '%s' is gating intent '%s'",
+                  featureName.c_str(),
+                  intentStr.c_str() );
         return false;
         // this will be an unmatched intent!
       }
@@ -104,9 +104,9 @@ UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
       gatedUserIntent.insert( intentTag );
       continue;
     }
-    
+
     foundUserIntent.insert( intentTag );
-    
+
     auto processMapping = [&intentTag](const Json::Value& input,
                                        MapType& container,
                                        const char* intentKey,
@@ -120,7 +120,7 @@ UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
         const bool doTest = input.get(testKey, true).asBool();
 
         VarSubstitutionList varSubstitutions;
-        
+
         const auto& subs = input[subsKey];
         if( !subs.isNull() ) {
           for( const auto& fromStr : subs.getMemberNames() ) {
@@ -146,7 +146,7 @@ UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
             }
           }
         }
-        
+
         // a cloud/app intent should only appear once, since it only has one user intent (although multiple
         // cloud/app intents can map to the same user intent
         ANKI_VERIFY( container.find(intentName) == container.end(),
@@ -159,10 +159,10 @@ UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
         container.emplace(intentName, IntentInfo{intentTag, varSubstitutions, doTest});
       }
     };
-    
+
     processMapping( mapping, _cloudToUserMap, kCloudIntentKey, kCloudVariableSubstitutionsKey, kCloudVariableNumericsKey, kTestUserIntentParsingKey, "cloud" );
     processMapping( mapping, _appToUserMap, kAppIntentKey, kAppVariableSubstitutionsKey, kAppVariableNumericsKey, kTestUserIntentParsingKey, "app" );
-    
+
     if( ANKI_DEVELOPER_CODE ) {
       // prevent typos
       std::vector<const char*> validKeys = {
@@ -223,8 +223,7 @@ UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
     }
 
     // NOTE: in order to check the validity of anim groups and emotion events, we need access to more
-    // components than we have here. For this reason, a separate function VerifySimpleVoiceResponses should be
-    // called to do the error checking
+    // components than we have here. This is the job of the owner (i.e. UserIntentComponent)
 
     _simpleCloudResponseMap->map.emplace(cloudIntent, std::move(response));
 
@@ -236,7 +235,7 @@ UserIntentMap::UserIntentMap(const Json::Value& config, const CozmoContext* ctx)
                "supplied %s '%s' is invalid",
                kUnmatchedKey,
                unmatchedString.c_str() );
-  
+
   // now verify that all user intents were listed. This isnt necessary for the c++ code base, but we
   // want to keep the json accurate so that if anyone else cares about our user intents, they can
   // parse json instead of clad.
@@ -262,49 +261,30 @@ UserIntentMap::~UserIntentMap()
 {
 }
 
-bool UserIntentMap::VerifySimpleVoiceResponses(const AnimationComponent& animComponent,
-                                               const MoodManager& moodManager)
+void UserIntentMap::VerifySimpleVoiceResponses(UserIntentMap::SimpleVoiceResponseVerification verify,
+                                               const std::string& debugKey)
 {
-  if( _simpleCloudResponseMap == nullptr ) {
-    LOG_ERROR("UserIntentMap.VerifySimpleVoiceResponses.NoMap",
-              "Map is null, has this component been properly constructed?");
-    return false;
-  }
-
-  bool ok = true;
-
   for( auto mapIt = _simpleCloudResponseMap->map.begin(); mapIt != _simpleCloudResponseMap->map.end(); ) {
     const auto& response = mapIt->second.Get_simple_voice_response();
+    if( verify(response) ) {
+      LOG_DEBUG("UserIntentMap.VerifySimpleVoiceResponses.Pass",
+                "%s: response to cloud intent '%s' passed (verify returned true)",
+                debugKey.c_str(),
+                mapIt->first.c_str());
 
-    if( !response.emotion_event.empty() ) {
-      if( !moodManager.IsValidEmotionEvent( response.emotion_event ) ) {
-        LOG_ERROR("UserIntentMap.VerifySimpleVoiceResponses.InvalidEmotionEvent",
-                  "response to cloud intent '%s' has invalid emotion event '%s'",
-                  mapIt->first.c_str(),
-                  response.emotion_event.c_str());
-        ok = false;
-      }
+      ++mapIt;
     }
+    else {
+      LOG_ERROR("UserIntentMap.VerifySimpleVoiceResponses.Fail",
+                "%s: response to cloud intent '%s' failed verification, removing from map",
+                debugKey.c_str(),
+                mapIt->first.c_str());
 
-    if( !response.anim_group.empty() ) {
-      if( !animComponent.IsAnimationGroup( response.anim_group ) ) {
-        LOG_ERROR("UserIntentMap.VerifySimpleVoiceResponses.InvalidAnimGroup",
-                  "response to cloud intent '%s' has invalid anim group '%s', removing from map",
-                  mapIt->first.c_str(),
-                  response.anim_group.c_str());
-        ok = false;
-        // without a valid anim group, the response will not visibly play, so it's better to remove this from
-        // the map and have the cloud intent result in "unmatched intent" rather than a silent failure
-        mapIt = _simpleCloudResponseMap->map.erase( mapIt );
-        continue;
-      }
+      mapIt = _simpleCloudResponseMap->map.erase( mapIt );
     }
-
-    ++mapIt;
   }
-
-  return ok;
 }
+
 
 
 UserIntentTag UserIntentMap::GetUserIntentFromCloudIntent(const std::string& cloudIntent) const
@@ -327,10 +307,10 @@ UserIntentTag UserIntentMap::GetUserIntentFromCloudIntent(const std::string& clo
 
       DEV_ASSERT( static_cast<Tag>(_unmatchedUserIntent) < static_cast<Tag>(USER_INTENT(INVALID)),
                   "Invalid intent value" );
-      PRINT_NAMED_WARNING("UserIntentMap.NoCloudIntentMatch",
-                          "No match for cloud intent '%s', returning default user intent '%s'",
-                          cloudIntent.c_str(),
-                          UserIntentTagToString(_unmatchedUserIntent));
+      LOG_WARNING("UserIntentMap.NoCloudIntentMatch",
+                  "No match for cloud intent '%s', returning default user intent '%s'",
+                  cloudIntent.c_str(),
+                  UserIntentTagToString(_unmatchedUserIntent));
       return _unmatchedUserIntent;
     }
   }
@@ -349,9 +329,9 @@ bool UserIntentMap::GetTestParsingBoolFromCloudIntent(const std::string& cloudIn
     return it->second.testParsing;
   }
   else {
-    PRINT_NAMED_WARNING("UserIntentMap.NoCloudIntentMatch",
-                        "No match for cloud intent '%s', returning default value of true to test user intent parsing",
-                        cloudIntent.c_str());
+    LOG_WARNING("UserIntentMap.NoCloudIntentMatch",
+                "No match for cloud intent '%s', returning default value of true to test user intent parsing",
+                cloudIntent.c_str());
     return true;
   }
 }
@@ -366,14 +346,14 @@ UserIntentTag UserIntentMap::GetUserIntentFromAppIntent(const std::string& appIn
   }
   else {
     DEV_ASSERT( static_cast<Tag>(_unmatchedUserIntent) < static_cast<Tag>(USER_INTENT(INVALID)), "Invalid intent value" );
-    PRINT_NAMED_WARNING("UserIntentMap.NoAppIntentMatch",
-                        "No match for app intent '%s', returning default user intent '%s'",
-                        appIntent.c_str(),
-                        UserIntentTagToString(_unmatchedUserIntent));
+    LOG_WARNING("UserIntentMap.NoAppIntentMatch",
+                "No match for app intent '%s', returning default user intent '%s'",
+                appIntent.c_str(),
+                UserIntentTagToString(_unmatchedUserIntent));
     return _unmatchedUserIntent;
   }
 }
-  
+
 bool UserIntentMap::IsValidAppIntent(const std::string& appIntent) const
 {
   const bool found = ( _appToUserMap.find(appIntent) != _appToUserMap.end() );
@@ -384,12 +364,12 @@ void UserIntentMap::SanitizeCloudIntentVariables(const std::string& cloudIntent,
 {
   SanitizeVariables(cloudIntent, _cloudToUserMap, "cloud", paramsList);
 }
-  
+
 void UserIntentMap::SanitizeAppIntentVariables(const std::string& appIntent, Json::Value& paramsList) const
 {
   SanitizeVariables(appIntent, _appToUserMap, "app", paramsList);
 }
-  
+
 void UserIntentMap::SanitizeVariables(const std::string& intent,
                                       const MapType& container,
                                       const char* debugName,
@@ -414,14 +394,14 @@ void UserIntentMap::SanitizeVariables(const std::string& intent,
           {
             continue;
           }
-          
+
           if( it->to == it->from ) {
-            PRINT_NAMED_WARNING( "UserIntentMap.SanitizeVariables.NoOp",
-                                 "The provided '%s' substitution '%s' resulted in no op. Substitution is optional",
-                                 debugName,
-                                 it->to.c_str() );
+            LOG_WARNING( "UserIntentMap.SanitizeVariables.NoOp",
+                         "The provided '%s' substitution '%s' resulted in no op. Substitution is optional",
+                         debugName,
+                         it->to.c_str() );
           }
-          
+
           // replace
           paramsList[it->to] = paramsList[varName];
           paramsList.removeMember( it->from );
@@ -439,10 +419,10 @@ void UserIntentMap::SanitizeVariables(const std::string& intent,
               paramsList[*varNameP] = std::stoll(str);
             }
           } catch( std::exception ) {
-            PRINT_NAMED_ERROR( "UserIntentMap.SanitizeVariables.Invalid",
-                               "Tried to convert %s intent '%s' and failed. No conversion performed",
-                               debugName,
-                               str.c_str() );
+            LOG_ERROR( "UserIntentMap.SanitizeVariables.Invalid",
+                       "Tried to convert %s intent '%s' and failed. No conversion performed",
+                       debugName,
+                       str.c_str() );
           }
         }
       }
@@ -469,10 +449,14 @@ const UserIntent& UserIntentMap::GetSimpleVoiceResponse(const std::string& cloud
 std::vector<std::string> UserIntentMap::DevGetCloudIntentsList() const
 {
   std::vector<std::string> ret;
-  ret.reserve( _cloudToUserMap.size() );
+  ret.reserve( _cloudToUserMap.size() + _simpleCloudResponseMap->map.size() );
   for( const auto& pair : _cloudToUserMap ) {
     ret.push_back( pair.first );
   }
+  for( const auto& pair : _simpleCloudResponseMap->map ) {
+    ret.push_back( pair.first );
+  }
+
   return ret;
 }
 
@@ -486,6 +470,6 @@ std::vector<std::string> UserIntentMap::DevGetAppIntentsList() const
   return ret;
 }
 
-  
+
 }
 }

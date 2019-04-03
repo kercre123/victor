@@ -30,6 +30,7 @@ namespace Vector {
 class CozmoContext;
 class AnimationComponent;
 class MoodManager;
+struct MetaUserIntent_SimpleVoiceResponse;
 
 // struct defined in cpp to hide UserIntent from needing a header dependency
 struct SimpleVoiceResponseMap;
@@ -72,12 +73,12 @@ public:
   std::vector<std::string> DevGetCloudIntentsList() const;
   std::vector<std::string> DevGetAppIntentsList() const;
 
-  // iterate through the simple response map and validate that the parameters within are valid (e.g. that
-  // animation groups and emotion event names are valid). This should be called after load time and will
-  // assert / print errors internally and return false if there is an issue. NOTE: if anim groups are invalid,
-  // the map entries will be removed so that they go to "unmatched intent" instead, but if emotion events are
-  // invalid, only an error will be printed
-  bool VerifySimpleVoiceResponses(const AnimationComponent& animComponent, const MoodManager& moodManager);
+  // This function will call lambda once for each simple voice response defined in the map. The function is a
+  // verification function and should return true if the response is OK and should be kept, or false if it
+  // should be erased. This can be used for load time data validation, tools, unit tests, etc. DebugKey will
+  // be printed in any log messages associated with actions taken within
+  using SimpleVoiceResponseVerification = std::function< bool( const MetaUserIntent_SimpleVoiceResponse& ) >;
+  void VerifySimpleVoiceResponses(SimpleVoiceResponseVerification lambda, const std::string& debugKey);
 
 private:
 

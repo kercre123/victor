@@ -42,14 +42,16 @@ namespace Util {
   
 namespace Vector {
 
-enum class AnimationTrigger : int32_t;
 class BackpackLightComponent;
 class BehaviorComponentCloudServer;
 class CozmoContext;
 class Robot;
+class UnitTestKey;
 class UserIntent;
 class UserIntentMap;
+enum class AnimationTrigger : int32_t;
 
+struct MetaUserIntent_SimpleVoiceResponse;
 struct TriggerWordResponseData;
 
 namespace ExternalInterface{
@@ -272,6 +274,10 @@ public:
   // get list of cloud/app intents from json
   std::vector<std::string> DevGetCloudIntentsList() const;
   std::vector<std::string> DevGetAppIntentsList() const;
+
+  // for unit tests, iterate over the simple voice responses in the map
+  using SimpleVoiceResponseLambda = std::function< void( const MetaUserIntent_SimpleVoiceResponse& ) >;
+  void DEVONLY_IterateSimpleVoiceResponse(UnitTestKey key, SimpleVoiceResponseLambda lambda);
 
 private:
   
