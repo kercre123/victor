@@ -1926,9 +1926,9 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   }
 
   // NOTE: This should come at the end because it relies on elements of the current VisionProcessingResult
-  //       (i.e. _currentResult) to be populated, as well as any _neuralNetResults, for the purposes of drawing them.
-  //       Note that neural net results get drawn on whatever image is current when they complete, for better or worse,
-  //       so they are not actually in sync.
+  //       (i.e. _currentResult) to be populated for the purposes of drawing them.
+  //       Note that any asynchronous results (e.g. from neural nets) get drawn on whatever image is current
+  //       when they complete, for better or worse, so they are not actually in sync.
   if(IsModeEnabled(VisionMode::MirrorMode))
   {
     // TODO: Add an ImageCache::Size for MirrorMode directly
@@ -1945,10 +1945,6 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   // Push the result, along with any neural net results, onto the queue of results all together.
   _mutex.lock();
   _results.push(_currentResult);
-  for(auto & result : _neuralNetResults)
-  {
-    _results.push(result);
-  }
   _mutex.unlock();
   
   return (anyModeFailures ? RESULT_FAIL : RESULT_OK);

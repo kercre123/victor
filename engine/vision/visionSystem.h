@@ -334,7 +334,6 @@ namespace Vector {
     std::mutex _mutex;
     std::queue<VisionProcessingResult> _results;
     VisionProcessingResult _currentResult;
-    std::list<VisionProcessingResult> _neuralNetResults;
 
     // Image compositor settings, 
     // Used to manage the cycles of Reset()
