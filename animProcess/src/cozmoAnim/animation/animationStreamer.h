@@ -354,6 +354,7 @@ namespace Anim {
     Result ExtractAnimationMessages(AnimationMessageWrapper& stateToSend);
     // Actually stream the animation (called each tick)
     Result ExtractMessagesFromStreamingAnim(AnimationMessageWrapper& stateToSend);
+
     // Used to stream _just_ the stuff left in the various layers (all procedural stuff)
     Result ExtractMessagesFromProceduralTracks(AnimationMessageWrapper& stateToSend) const;
 

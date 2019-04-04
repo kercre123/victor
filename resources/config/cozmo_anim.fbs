@@ -72,6 +72,20 @@ table FaceAnimation {
   scanlineOpacity:float = 1.0;
 }
 
+table SpriteBox {
+  triggerTime_ms:uint;
+  spriteBoxName:string (required);
+  layer:string (required);
+  assetName:string (required);
+  renderMethod:string (required);
+  spriteSeqEndType:string (required);
+  alpha:float = 100.0;
+  xPos:int = 0;
+  yPos:int = 0;
+  width:uint;
+  height:uint;
+}
+
 table Event {
   triggerTime_ms:uint;
   event_id:string (required);
@@ -111,6 +125,7 @@ table Keyframes {
   BodyMotionKeyFrame:[BodyMotion];
   RecordHeadingKeyFrame:[RecordHeading];
   TurnToRecordedHeadingKeyFrame:[TurnToRecordedHeading];
+  SpriteBoxKeyFrame:[SpriteBox];
 }
 
 table AnimClip {

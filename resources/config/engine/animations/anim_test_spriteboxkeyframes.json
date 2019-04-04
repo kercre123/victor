@@ -1,0 +1,540 @@
+{
+  "anim_test_spriteboxkeyframes": [
+    {
+      "Name": "ProceduralFaceKeyFrame",
+      "faceScaleY": 2.2677516982316792e-10,
+      "scanlineOpacity": 1.0,
+      "faceScaleX": 2.2677516982316792e-10,
+      "leftEye": [
+        8.107326060759803,
+        0.0,
+        1.5174507300664741,
+        1.1453089027930028,
+        0.0,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0
+      ],
+      "faceAngle": 0.0,
+      "durationTime_ms": 0,
+      "faceCenterY": 0.0,
+      "faceCenterX": 0.0,
+      "rightEye": [
+        -7.315991464547729,
+        0.0,
+        1.5174507300664741,
+        1.144941064931666,
+        0.0,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        0.6,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        0.0,
+        1,
+        1.0,
+        0.0,
+        0.0,
+        0.0,
+        0
+      ],
+      "triggerTime_ms": 0
+    },
+    {
+      "event_id": "DEAL_CARDS_BEGIN",
+      "triggerTime_ms": 264,
+      "Name": "EventKeyFrame"
+    },
+    {
+      "angleVariability_deg": 0,
+      "angle_deg": 45,
+      "triggerTime_ms": 0,
+      "Name": "HeadAngleKeyFrame",
+      "durationTime_ms": 99
+    },
+    {
+      "angleVariability_deg": 0,
+      "angle_deg": 31,
+      "triggerTime_ms": 198,
+      "Name": "HeadAngleKeyFrame",
+      "durationTime_ms": 66
+    },
+    {
+      "angleVariability_deg": 0,
+      "angle_deg": 39,
+      "triggerTime_ms": 264,
+      "Name": "HeadAngleKeyFrame",
+      "durationTime_ms": 33
+    },
+    {
+      "eventGroups": [
+        {
+          "probabilities": [
+            1.0
+          ],
+          "audioName": [
+            "Play__Robot_Vic_Sfx__Blackjack_Deal"
+          ],
+          "eventIds": [
+            3691452503
+          ],
+          "volumes": [
+            1.0
+          ]
+        }
+      ],
+      "triggerTime_ms": 132,
+      "Name": "RobotAudioKeyFrame"
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 264,
+      "spriteBoxName": "SpriteBox_1",
+      "layer": "Layer_1",
+      "assetName": "blackjack_player_back",
+      "renderMethod": "EyeColor",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 3,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 396,
+      "spriteBoxName": "SpriteBox_1",
+      "layer": "Layer_1",
+      "assetName": "blackjack_player_spadeace",
+      "renderMethod": "EyeColor",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 3,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 1386,
+      "spriteBoxName": "SpriteBox_1",
+      "layer": "Layer_1",
+      "assetName": "blackjack_player_spadeace",
+      "renderMethod": "EyeColor",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 3,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "angleVariability_deg": 0,
+      "angle_deg": 45,
+      "triggerTime_ms": 396,
+      "Name": "HeadAngleKeyFrame",
+      "durationTime_ms": 99
+    },
+    {
+      "angleVariability_deg": 0,
+      "angle_deg": 31,
+      "triggerTime_ms": 594,
+      "Name": "HeadAngleKeyFrame",
+      "durationTime_ms": 66
+    },
+    {
+      "angleVariability_deg": 0,
+      "angle_deg": 39,
+      "triggerTime_ms": 660,
+      "Name": "HeadAngleKeyFrame",
+      "durationTime_ms": 33
+    },
+    {
+      "eventGroups": [
+        {
+          "probabilities": [
+            1.0
+          ],
+          "audioName": [
+            "Play__Robot_Vic_Sfx__Blackjack_Deal"
+          ],
+          "eventIds": [
+            3691452503
+          ],
+          "volumes": [
+            1.0
+          ]
+        }
+      ],
+      "triggerTime_ms": 528,
+      "Name": "RobotAudioKeyFrame"
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 660,
+      "spriteBoxName": "SpriteBox_2",
+      "layer": "Layer_3",
+      "assetName": "blackjack_player_back",
+      "renderMethod": "RGBA",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 62,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 792,
+      "spriteBoxName": "SpriteBox_2",
+      "layer": "Layer_3",
+      "assetName": "blackjack_player_spade2",
+      "renderMethod": "RGBA",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 62,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 1386,
+      "spriteBoxName": "SpriteBox_2",
+      "layer": "Layer_3",
+      "assetName": "blackjack_player_spade2",
+      "renderMethod": "RGBA",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 62,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "angleVariability_deg": 0,
+      "angle_deg": 45,
+      "triggerTime_ms": 792,
+      "Name": "HeadAngleKeyFrame",
+      "durationTime_ms": 99
+    },
+    {
+      "angleVariability_deg": 0,
+      "angle_deg": 31,
+      "triggerTime_ms": 990,
+      "Name": "HeadAngleKeyFrame",
+      "durationTime_ms": 66
+    },
+    {
+      "angleVariability_deg": 0,
+      "angle_deg": 39,
+      "triggerTime_ms": 1056,
+      "Name": "HeadAngleKeyFrame",
+      "durationTime_ms": 33
+    },
+    {
+      "eventGroups": [
+        {
+          "probabilities": [
+            1.0
+          ],
+          "audioName": [
+            "Play__Robot_Vic_Sfx__Blackjack_Deal"
+          ],
+          "eventIds": [
+            3691452503
+          ],
+          "volumes": [
+            1.0
+          ]
+        }
+      ],
+      "triggerTime_ms": 924,
+      "Name": "RobotAudioKeyFrame"
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 1056,
+      "spriteBoxName": "SpriteBox_3",
+      "layer": "Layer_2",
+      "assetName": "blackjack_player_back",
+      "renderMethod": "EyeColor",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 122,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 1188,
+      "spriteBoxName": "SpriteBox_3",
+      "layer": "Layer_2",
+      "assetName": "blackjack_player_spade3",
+      "renderMethod": "EyeColor",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 122,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 1386,
+      "spriteBoxName": "SpriteBox_3",
+      "layer": "Layer_2",
+      "assetName": "blackjack_player_spade3",
+      "renderMethod": "EyeColor",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 122,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 1980,
+      "spriteBoxName": "SpriteBox_1",
+      "layer": "Layer_1",
+      "assetName": "blackjack_player_spadeace",
+      "renderMethod": "EyeColor",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 62,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 1980,
+      "spriteBoxName": "SpriteBox_2",
+      "layer": "Layer_3",
+      "assetName": "blackjack_player_spade2",
+      "renderMethod": "RGBA",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 62,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 1980,
+      "spriteBoxName": "SpriteBox_3",
+      "layer": "Layer_2",
+      "assetName": "blackjack_player_spade3",
+      "renderMethod": "EyeColor",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 62,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 2310,
+      "spriteBoxName": "SpriteBox_1",
+      "layer": "Layer_3",
+      "assetName": "blackjack_player_spadeace",
+      "renderMethod": "EyeColor",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 62,
+      "yPos": -112,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 2310,
+      "spriteBoxName": "SpriteBox_2",
+      "layer": "Layer_2",
+      "assetName": "blackjack_player_spade2",
+      "renderMethod": "RGBA",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 62,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 2310,
+      "spriteBoxName": "SpriteBox_3",
+      "layer": "Layer_1",
+      "assetName": "blackjack_player_spade3",
+      "renderMethod": "EyeColor",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 62,
+      "yPos": -62,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 2640,
+      "spriteBoxName": "SpriteBox_1",
+      "layer": "Layer_3",
+      "assetName": "blackjack_player_spadeace",
+      "renderMethod": "EyeColor",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 62,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 2640,
+      "spriteBoxName": "SpriteBox_2",
+      "layer": "Layer_2",
+      "assetName": "blackjack_player_spade2",
+      "renderMethod": "RGBA",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 62,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 2640,
+      "spriteBoxName": "SpriteBox_3",
+      "layer": "Layer_1",
+      "assetName": "blackjack_player_spade3",
+      "renderMethod": "EyeColor",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 62,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 2640,
+      "spriteBoxName": "SpriteBox_4",
+      "layer": "Layer_1",
+      "assetName": "blackjack_player_back",
+      "renderMethod": "EyeColor",
+      "spriteSeqEndType": "Clear",
+      "alpha": 100,
+      "xPos": 3,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 2640,
+      "spriteBoxName": "SpriteBox_5",
+      "layer": "Layer_1",
+      "assetName": "blackjack_player_back",
+      "renderMethod": "RGBA",
+      "spriteSeqEndType": "Hold",
+      "alpha": 100,
+      "xPos": 62,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 2640,
+      "spriteBoxName": "SpriteBox_6",
+      "layer": "Layer_1",
+      "assetName": "blackjack_player_back",
+      "renderMethod": "RGBA",
+      "spriteSeqEndType": "Loop",
+      "alpha": 100,
+      "xPos": 122,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Name": "SpriteBoxKeyFrame",
+      "triggerTime_ms": 3630,
+      "spriteBoxName": "SpriteBox_5",
+      "layer": "Layer_1",
+      "assetName": "clear_sprite_box",
+      "renderMethod": "RGBA",
+      "spriteSeqEndType": "Loop",
+      "alpha": 100,
+      "xPos": 62,
+      "yPos": -12,
+      "width": 59,
+      "height": 108
+    },
+    {
+      "Right": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "Name": "BackpackLightsKeyFrame",
+      "durationTime_ms": 99,
+      "Back": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "Middle": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "Front": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ],
+      "triggerTime_ms": 0,
+      "Left": [
+        0.0,
+        0.0,
+        0.0,
+        0.0
+      ]
+    }
+  ]
+}
