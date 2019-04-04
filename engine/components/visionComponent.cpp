@@ -50,9 +50,6 @@
 #include "util/string/stringUtils.h"
 #include "util/threading/threadPriority.h"
 
-#include "webServerProcess/src/webService.h"
-#include "webServerProcess/src/webVizSender.h"
-
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
 #include "proto/external_interface/shared.pb.h"
