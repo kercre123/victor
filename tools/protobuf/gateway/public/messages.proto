@@ -1433,6 +1433,7 @@ message CheckUpdateStatusResponse{
     FAILURE_INTERRUPTED_DOWNLOAD = 3;
     IN_PROGRESS_STARTING = 4;
     IN_PROGRESS_OTHER = 5;
+    FAILURE_OTHER = 6;
   }
   UpdateStatus update_status = 2;
   int64 expected = 3;

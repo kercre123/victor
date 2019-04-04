@@ -2857,31 +2857,18 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 		UpdateStatus:  extint.CheckUpdateStatusResponse_NO_UPDATE,
 		Progress:      -1,
 		Expected:      -1,
+		ExitCode:      -1,
 		UpdateVersion: "",
 	}
 
+	// If /run/update-engine/done exists, it means that a previous run of
+	// /anki/bin/update-engine constructed a new boot partition and it's ready
+	// to be started.
 	if _, err := os.Stat("/run/update-engine/done"); err == nil {
 		updateStatus.UpdateStatus =
 			extint.CheckUpdateStatusResponse_READY_TO_REBOOT_INTO_NEW_OS_VERSION
+		updateStatus.ExitCode = 0
 		return updateStatus, nil
-	}
-
-	if data, err := ioutil.ReadFile("/run/update-engine/exit_code"); err == nil {
-		updateStatus.ExitCode, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
-		if data, err := ioutil.ReadFile("/run/update-engine/error"); err == nil {
-			data_str := string(data)
-
-			// I do this, rather than checking for the 203 because the 203 has other meanings.
-			if strings.HasPrefix(data_str, "Failed to open URL: HTTP Error 403: Forbidden") {
-				updateStatus.ExitCode = 0
-				updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_NO_UPDATE
-				return updateStatus, nil
-			}
-
-			if !strings.HasPrefix(data_str, "Unclean exit") {
-				updateStatus.Error = data_str
-			}
-		}
 	}
 
 	if _, err := os.Stat("/run/update-engine/app_requested"); err == nil {
@@ -2889,25 +2876,27 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 		// in this directory. In this state, we can conclude nothing about the update state
 		// and must tell the app that it has to wait a bit.
 		updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_STARTING
+		updateStatus.ExitCode = 0
 		return updateStatus, nil
+	}
+
+	if data, err := ioutil.ReadFile("/run/update-engine/exit_code"); err == nil {
+		updateStatus.ExitCode, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
+		if data, err := ioutil.ReadFile("/run/update-engine/error"); err == nil {
+			updateStatus.Error = string(data)
+			if strings.HasPrefix(updateStatus.Error, "Unclean exit") {
+				// If we get this error, either we caught /anki/bin/update-engine in its earliest
+				// stages, or systemd has gone awry. The former case is not an error - the string
+				// was initialized this way in case an error did occur. The latter case isn't
+				// easily detectable, and implies a larger system failure from which we can't
+				// recover (or provide users with good info on) anyway.
+				updateStatus.Error = ""
+			}
+		}
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/phase"); err == nil {
 		updateStatus.UpdatePhase = string(data)
-
-		if strings.HasPrefix(updateStatus.UpdatePhase, "download") {
-			if updateStatus.ExitCode == 208 || updateStatus.ExitCode == 215 {
-				updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_FAILURE_INTERRUPTED_DOWNLOAD
-				return updateStatus, nil
-			} else {
-				updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
-			}
-		} else {
-			updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_OTHER
-		}
-	} else {
-		updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_STARTING
-		return updateStatus, nil
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/manifest.ini"); err == nil {
@@ -2924,6 +2913,38 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 
 	if data, err := ioutil.ReadFile("/run/update-engine/expected-size"); err == nil {
 		updateStatus.Expected, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
+	}
+
+	// I do this, rather than checking for the 203 because the 203 has other meanings.
+	if strings.HasPrefix(updateStatus.Error, "Failed to open URL: HTTP Error 403: Forbidden") {
+		updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_NO_UPDATE
+		updateStatus.Error = ""
+		updateStatus.ExitCode = 0
+		return updateStatus, nil
+	}
+
+	if data, err := ioutil.ReadFile("/run/update-engine/phase"); err == nil {
+		updateStatus.UpdatePhase = string(data)
+	}
+
+	if strings.HasPrefix(updateStatus.UpdatePhase, "download") {
+		if updateStatus.ExitCode > 1 {
+			if updateStatus.ExitCode == 208 || updateStatus.ExitCode == 215 {
+				updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_FAILURE_INTERRUPTED_DOWNLOAD
+			} else {
+				updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_FAILURE_OTHER
+			}
+		} else {
+			// IN_PROGRESS_STARTING has already been addressed, so there's only IN_PROGRESS_OTHER
+			// to deal with.
+			updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
+		}
+	} else {
+		if updateStatus.ExitCode > 1 {
+			updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_FAILURE_OTHER
+		} else {
+			updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_OTHER
+		}
 	}
 
 	return updateStatus, nil
