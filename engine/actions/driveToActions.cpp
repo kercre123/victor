@@ -623,7 +623,7 @@ namespace Anki {
     
     void DriveToPoseAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
-      requests.insert({ VisionMode::DetectingMarkers , EVisionUpdateFrequency::Low });
+      requests.insert({ VisionMode::Markers , EVisionUpdateFrequency::Low });
     }
 
     f32 DriveToPoseAction::GetTimeoutInSeconds() const { return kDriveToPoseTimeout; }  

@@ -177,8 +177,8 @@ void checkClassifier(Anki::Vector::RawPixelsClassifier& clf,
          const auto& trainingLabels) {
 
       using T = decltype(trainingLabels(0)); //either float or int
-      auto elementY = trainingLabels.template begin(); // probably don't need the .template here, but it looks cool :)
-      for (uint rowNumber = 0; elementY != trainingLabels.template end(); rowNumber++, elementY++) {
+      auto elementY = trainingLabels.begin();
+      for (uint rowNumber = 0; elementY != trainingLabels.end(); rowNumber++, elementY++) {
         const T value = *elementY;
         if ( value != 0) { // if it's positive class, add the sample to pixels
           std::vector<Anki::Vector::RawPixelsClassifier::FeatureType> rowPixels;

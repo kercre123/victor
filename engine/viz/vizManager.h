@@ -16,8 +16,8 @@
 
 #include "coretech/common/engine/math/fastPolygon2d.h"
 #include "coretech/common/engine/math/pose.h"
-#include "coretech/common/engine/math/polygon.h"
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/polygon_fwd.h"
+#include "coretech/common/engine/math/quad.h"
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "util/helpers/ankiDefines.h"

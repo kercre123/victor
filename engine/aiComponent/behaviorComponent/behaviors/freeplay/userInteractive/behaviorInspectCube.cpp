@@ -119,7 +119,7 @@ void BehaviorInspectCube::GetBehaviorOperationModifiers(BehaviorOperationModifie
   modifiers.behaviorAlwaysDelegates = true;
   modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.wantsToBeActivatedWhenOffTreads = false;
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Markers, EVisionUpdateFrequency::High });
 
   // Interaction tracking is MUCH better when connected. Request a background connection once we've decided the 
   // user is trying to engage with a cube

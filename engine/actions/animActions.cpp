@@ -307,6 +307,35 @@ namespace Anki {
       SendStatsToDasAndWeb(_animName, _animGroupName, _animTrigger);
     }
 
+    #pragma mark ---- PlayAnimationGroupAction ----
+
+    PlayAnimationGroupAction::PlayAnimationGroupAction(const std::string& animGroupName)
+      : PlayAnimationAction("")
+      , _animGroupName(animGroupName)
+    {
+      SetName("PlayAnimationGroup");
+    }
+
+    ActionResult PlayAnimationGroupAction::Init()
+    {
+      if(_animGroupName.empty())
+      {
+        LOG_ERROR("TriggerAnimationAction.NoAnimationGroupSet", "PlayAnimationGroup created with empty group name");
+        return ActionResult::NO_ANIM_NAME;
+      }
+
+      const bool strictCooldown = false;
+      _animName = GetRobot().GetAnimationComponent().GetAnimationNameFromGroup(_animGroupName, strictCooldown);
+
+      if( _animName.empty() ) {
+        return ActionResult::NO_ANIM_NAME;
+      }
+      else {
+        const ActionResult res = PlayAnimationAction::Init();
+        return res;
+      }
+    }
+
     #pragma mark ---- TriggerLiftSafeAnimationAction ----
 
     TriggerLiftSafeAnimationAction::TriggerLiftSafeAnimationAction(AnimationTrigger animEvent,

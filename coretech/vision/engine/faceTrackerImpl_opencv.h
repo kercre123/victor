@@ -16,7 +16,7 @@
 #include "coretech/vision/engine/trackedFace.h"
 #include "coretech/vision/engine/profiler.h"
 
-#include "coretech/common/shared/math/rect_impl.h"
+#include "coretech/common/shared/math/rect.h"
 #include "coretech/common/shared/math/rotation.h"
 
 #include "util/logging/logging.h"

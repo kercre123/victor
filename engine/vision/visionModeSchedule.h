@@ -60,11 +60,11 @@ public:
   // any unspecified modes will be disabled.)
   //
   // Example for setting one mode:
-  //   AllVisionModesSchedule({{VisionMode::DetectingMarkers, VisionModeSchedule(1)}})
+  //   AllVisionModesSchedule({{VisionMode::Markers, VisionModeSchedule(1)}})
   //
   // Example for setting two modes:
-  //   AllVisionModesSchedule({{VisionMode::DetectingPets,          VisionModeSchedule({true, false})},
-  //                           {VisionMode::DetectingOverheadEdges, VisionModeSchedule({false, true})}});
+  //   AllVisionModesSchedule({{VisionMode::Pets,          VisionModeSchedule({true, false})},
+  //                           {VisionMode::OverheadEdges, VisionModeSchedule({false, true})}});
   //
   AllVisionModesSchedule(const ModeScheduleList& schedules,
                          bool useDefaultsForUnspecified = true);

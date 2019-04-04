@@ -13,7 +13,7 @@
 #ifndef __Cozmo_Basestation_Vision_CameraCalibrator_H__
 #define __Cozmo_Basestation_Vision_CameraCalibrator_H__
 
-#include "coretech/common/shared/math/rect.h"
+#include "coretech/common/shared/math/rect_fwd.h"
 
 #include "coretech/vision/engine/cameraCalibration.h"
 #include "coretech/vision/engine/compressedImage.h"

@@ -12,7 +12,7 @@
 
 
 #include "coretech/vision/engine/cameraParamsController.h"
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/vision/engine/image.h"
 
 #include "util/console/consoleInterface.h"

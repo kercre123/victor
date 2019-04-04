@@ -63,6 +63,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionTimePowerButtonPressed.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimedDedup.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTimerInRange.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionTooHotToCharge.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTriggerWordPending.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionTrue.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionUnexpectedMovement.h"
@@ -414,6 +415,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::TimePowerButtonPressed:
     {
       condition = std::make_shared<ConditionTimePowerButtonPressed>(config);
+      break;
+    }
+    case BEIConditionType::TooHotToCharge:
+    {
+      condition = std::make_shared<ConditionTooHotToCharge>(config);
       break;
     }
     case BEIConditionType::TrueCondition:

@@ -11,7 +11,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 
-#include "coretech/common/shared/math/matrix_impl.h"
+#include "coretech/common/shared/math/matrix.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/undistorter.h"
 

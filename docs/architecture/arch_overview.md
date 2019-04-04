@@ -122,7 +122,7 @@ The HAL (aka Hardware Abstraction Layer) is the supervisor code's interface to t
 
 ### Messages
 
-The messaging protocol between the three processes is defined in [CLAD](../../tools/message-buffers) files which contain language-independent message definitions. From these files language-specific implementations of the messages are generated. The engine uses the structs generated for C++. Both the robot and animation processes use a "C++-lite" version. This version was necessary on the resource-limited Cozmo embedded platform. It's less necessary in Victor, but offers some performance advantages.
+The messaging protocol between the three processes is defined in [CLAD](../../victor-clad/tools/message-buffers) files which contain language-independent message definitions. From these files language-specific implementations of the messages are generated. The engine uses the structs generated for C++. Both the robot and animation processes use a "C++-lite" version. This version was necessary on the resource-limited Cozmo embedded platform. It's less necessary in Victor, but offers some performance advantages.
 
 | CLAD file               | Description |
 | --------------------- |-------------|

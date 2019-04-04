@@ -21,9 +21,11 @@
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/audio/engineRobotAudioClient.h"
+#include "engine/components/localeComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "micDataTypes.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
@@ -31,7 +33,7 @@
 
 namespace Anki {
 namespace Vector {
-  
+
 namespace {
   const char* kDefaultTTSBehaviorID = "DefaultTextToSpeechLoop";
 
@@ -42,14 +44,17 @@ namespace {
   // TODO:(str) Currently not in use. Rework this to use a smarter TurnToFace structure, perhaps LookAtFaceInFront
   const char* kShouldTurnToFaceKey                = "shouldTurnToFaceBeforePrompting";
   const char* kTextToSpeechBehaviorKey            = "textToSpeechBehaviorID";
-  const char* kVocalPromptKey                     = "vocalPromptString";
-  const char* kVocalResponseToIntentKey           = "vocalResponseToIntentString";
-  const char* kVocalResponseToBadIntentKey        = "vocalResponseToBadIntentString";
-  const char* kVocalRepromptKey                   = "vocalRepromptString";
   const char* kStopListeningOnIntentsKey          = "stopListeningOnIntents";
   const char* kPlayListeningGetInKey              = "playListeningGetIn";
   const char* kPlayListeningGetOutKey             = "playListeningGetOut";
   const char* kMaxRepromptKey                     = "maxNumberOfReprompts";
+
+  // Configurable localization keys
+  const char* kVocalPromptKey                     = "vocalPromptKey";
+  const char* kVocalResponseToIntentKey           = "vocalResponseToIntentKey";
+  const char* kVocalResponseToBadIntentKey        = "vocalResponseToBadIntentKey";
+  const char* kVocalRepromptKey                   = "vocalRepromptKey";
+
   constexpr float kMaxRecordTime_s                = 10.0f; // matches timeouts for TriggerWord and KnowledgeGraph
 
   static_assert( kMaxRecordTime_s >= ( ( MicData::kStreamingTimeout_ms + 2000 ) / 1000.f ),
@@ -57,13 +62,15 @@ namespace {
 
   // when we heard something but don't have a matching intent, do we want to stop immediately or wait for animation timeout?
   const bool kStopListeningOnUnknownIntent        = false;
+
+  const std::string empty = "";
 }
 
 #define SET_STATE(s) do{ \
                           _dVars.state = EState::s; \
                           PRINT_CH_INFO("Behaviors", "BehaviorPromptUserForVoiceCommand.State", "State = %s", #s); \
                         } while(0);
-                        
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPromptUserForVoiceCommand::InstanceConfig::InstanceConfig()
 : streamType( CloudMic::StreamType::Normal )
@@ -107,7 +114,7 @@ BehaviorPromptUserForVoiceCommand::BehaviorPromptUserForVoiceCommand(const Json:
     if(JsonTools::GetValueOptional(config, kEarConSuccess, earConString)){
       _iConfig.earConSuccess = AudioMetaData::GameEvent::GenericEventFromString(earConString);
     }
-    
+
     if(JsonTools::GetValueOptional(config, kEarConFail, earConString)){
       _iConfig.earConFail = AudioMetaData::GameEvent::GenericEventFromString(earConString);
     }
@@ -118,13 +125,11 @@ BehaviorPromptUserForVoiceCommand::BehaviorPromptUserForVoiceCommand(const Json:
   // Set up the TextToSpeech Behavior
   JsonTools::GetValueOptional(config, kTextToSpeechBehaviorKey, _iConfig.ttsBehaviorID);
 
-  // If prompt string is _not_ set by JSON config, it must be set by a call to SetPrompt()
-  // before the behavior wants to be activated, or an error will occur.
-  _iConfig.wasPromptSetFromJson = JsonTools::GetValueOptional(config, kVocalPromptKey, _iConfig.vocalPromptString);
-
-  JsonTools::GetValueOptional(config, kVocalResponseToIntentKey, _iConfig.vocalResponseToIntentString);
-  JsonTools::GetValueOptional(config, kVocalResponseToBadIntentKey, _iConfig.vocalResponseToBadIntentString);
-  _iConfig.wasRepromptSetFromJson = JsonTools::GetValueOptional(config, kVocalRepromptKey, _iConfig.vocalRepromptString);
+  // Configurable localization keys
+  JsonTools::GetValueOptional(config, kVocalPromptKey, _iConfig.vocalPromptKey);
+  JsonTools::GetValueOptional(config, kVocalResponseToIntentKey, _iConfig.vocalResponseToIntentKey);
+  JsonTools::GetValueOptional(config, kVocalResponseToBadIntentKey, _iConfig.vocalResponseToBadIntentKey);
+  JsonTools::GetValueOptional(config, kVocalRepromptKey, _iConfig.vocalRepromptKey);
 
   // Should we exit the behavior as soon as an intent is pending, or finish what we're doing first?
   JsonTools::GetValueOptional(config, kStopListeningOnIntentsKey, _iConfig.stopListeningOnIntents);
@@ -145,7 +150,7 @@ BehaviorPromptUserForVoiceCommand::~BehaviorPromptUserForVoiceCommand()
 bool BehaviorPromptUserForVoiceCommand::WantsToBeActivatedBehavior() const
 {
   const bool hasPrompt = !GetVocalPromptString().empty();
-  
+
   return hasPrompt;
 }
 
@@ -176,9 +181,6 @@ void BehaviorPromptUserForVoiceCommand::GetBehaviorJsonKeys(std::set<const char*
     kVocalResponseToIntentKey,
     kVocalResponseToBadIntentKey,
     kVocalRepromptKey,
-    kVocalResponseToIntentKey,
-    kVocalResponseToBadIntentKey,
-    kVocalRepromptKey,
     kStopListeningOnIntentsKey,
     kMaxRepromptKey,
     kPlayListeningGetInKey,
@@ -190,33 +192,19 @@ void BehaviorPromptUserForVoiceCommand::GetBehaviorJsonKeys(std::set<const char*
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPromptUserForVoiceCommand::SetPrompt(const std::string &text)
+void BehaviorPromptUserForVoiceCommand::SetPromptString(const std::string &text)
 {
-  // Don't allow programmatic override of Json-configured prompts.
-  // Use a separate indicator 'wasPromptSetFromJson' to allow multiple calls to SetPrompt if
-  //  the prompt was _not_ set by Json config.
-  if(ANKI_VERIFY(!_iConfig.wasPromptSetFromJson,
-                 "BehaviorPromptUserForVoiceCommand.SetPrompt.AlreadySetFromJson",
-                 "Prompt set by Json config. Refusing to override."))
-  {
-    _dVars.vocalPromptString = text;
-  }
+  _dVars.useDynamicPromptString = true;
+  _dVars.dynamicPromptString = text;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPromptUserForVoiceCommand::SetReprompt(const std::string &text)
+void BehaviorPromptUserForVoiceCommand::SetRepromptString(const std::string &text)
 {
-  // Don't allow programmatic override of Json-configured prompts.
-  // Use a separate indicator 'wasRepromptSetFromJson' to allow multiple calls to SetReprompt if
-  //  the prompt was _not_ set by Json config.
-  if(ANKI_VERIFY(!_iConfig.wasRepromptSetFromJson,
-                 "BehaviorPromptUserForVoiceCommand.SetPrompt.AlreadySetFromJson",
-                 "Prompt set by Json config. Refusing to override."))
-  {
-    _iConfig.vocalRepromptString = text;
-  }
+  _dVars.useDynamicRepromptString = true;
+  _dVars.dynamicRepromptString = text;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPromptUserForVoiceCommand::InitBehavior(){
   BehaviorID ttsID = BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.ttsBehaviorID);
@@ -226,7 +214,7 @@ void BehaviorPromptUserForVoiceCommand::InitBehavior(){
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPromptUserForVoiceCommand::OnBehaviorActivated() 
+void BehaviorPromptUserForVoiceCommand::OnBehaviorActivated()
 {
   // _dVars are reset on deactivation so that the effects of SetPrompt/SetReprompt persist
 
@@ -251,16 +239,16 @@ void BehaviorPromptUserForVoiceCommand::OnBehaviorDeactivated()
 {
   // Any resultant intents should be handled by external behaviors or transitions, let 'em roll
   GetBehaviorComp<UserIntentComponent>().SetUserIntentTimeoutEnabled(true);
-  
+
   // reset dynamic variables
   _dVars = DynamicVariables();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPromptUserForVoiceCommand::BehaviorUpdate() 
+void BehaviorPromptUserForVoiceCommand::BehaviorUpdate()
 {
   if( !IsActivated() ) {
-    return; 
+    return;
   }
 
   if(EState::Listening == _dVars.state){
@@ -279,7 +267,8 @@ void BehaviorPromptUserForVoiceCommand::BehaviorUpdate()
     if(_iConfig.stopListeningOnIntents){
       const bool intentHeard = (EIntentStatus::IntentHeard == _dVars.intentStatus);
       const bool intentUnknown = (EIntentStatus::IntentUnknown == _dVars.intentStatus) && kStopListeningOnUnknownIntent;
-      if(intentHeard || intentUnknown){
+      const bool intentSilence = (EIntentStatus::IntentSilence == _dVars.intentStatus);
+      if(intentHeard || intentUnknown || intentSilence){
         // End the listening anim, which should push us into Thinking
         CancelDelegates(false);
         TransitionToThinking();
@@ -288,14 +277,14 @@ void BehaviorPromptUserForVoiceCommand::BehaviorUpdate()
   } else if(EState::Thinking == _dVars.state){
     CheckForPendingIntents();
   }
-  
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPromptUserForVoiceCommand::CheckForPendingIntents()
 {
   UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
-  if((EIntentStatus::NoIntentHeard == _dVars.intentStatus) && uic.IsAnyUserIntentPending()){
+  if ((EIntentStatus::NoIntentHeard == _dVars.intentStatus) && uic.IsAnyUserIntentPending()) {
 
     // Don't dismiss unclaimed intents until this behavior exits, or other behaviors may miss their
     // chance to claim the pending intents
@@ -303,13 +292,22 @@ void BehaviorPromptUserForVoiceCommand::CheckForPendingIntents()
 
     _dVars.intentStatus = EIntentStatus::IntentHeard;
 
-    // If it was an unmatched intent, note it so we can respond appropriately, then clear it.
+    // If robot heard an unmatched intent, note it so we can respond appropriately, then clear it.
     static const UserIntentTag unmatched = USER_INTENT(unmatched_intent);
-    if(uic.IsUserIntentPending(unmatched))
-    {
+    if (uic.IsUserIntentPending(unmatched)) {
       uic.DropUserIntent(unmatched);
       _dVars.intentStatus = EIntentStatus::IntentUnknown;
+      return;
     }
+
+    // If robot heard silence, record the outcome for proper handling, then clear it.
+    static const UserIntentTag silence = USER_INTENT(silence);
+    if (uic.IsUserIntentPending(silence)) {
+      uic.DropUserIntent(silence);
+      _dVars.intentStatus = EIntentStatus::IntentSilence;
+      return;
+    }
+
   }
 }
 
@@ -329,7 +327,7 @@ void BehaviorPromptUserForVoiceCommand::TransitionToPrompting()
     DelegateIfInControl(_iConfig.ttsBehavior.get(), &BehaviorPromptUserForVoiceCommand::TransitionToListening);
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPromptUserForVoiceCommand::TransitionToListening()
 {
@@ -377,24 +375,28 @@ void BehaviorPromptUserForVoiceCommand::TransitionToIntentReceived()
   SET_STATE(Thinking)
 
   // Play intent response anim and voice, if set
-  if(EIntentStatus::IntentHeard == _dVars.intentStatus){
-    if(_iConfig.vocalResponseToIntentString.empty()){
+  if(EIntentStatus::IntentHeard == _dVars.intentStatus) {
+    const auto & vocalResponseToIntentString = GetVocalResponseToIntentString();
+    if (vocalResponseToIntentString.empty()) {
       // No prompts specified, exit so the intent can be handled elsewhere
       CancelSelf();
       return;
     } else {
-      _iConfig.ttsBehavior->SetTextToSay(_iConfig.vocalResponseToIntentString);
-      if(_iConfig.ttsBehavior->WantsToBeActivated()){
+      _iConfig.ttsBehavior->SetTextToSay(vocalResponseToIntentString);
+      if (_iConfig.ttsBehavior->WantsToBeActivated()) {
         DelegateIfInControl(_iConfig.ttsBehavior.get(), [this](){ CancelSelf(); });
       }
     }
+  } else if(EIntentStatus::IntentSilence == _dVars.intentStatus) {
+    TransitionToReprompt();
   } else {
-    if(_iConfig.vocalResponseToBadIntentString.empty()){
+    const auto & vocalResponseToBadIntentString = GetVocalResponseToBadIntentString();
+    if (vocalResponseToBadIntentString.empty()) {
       // No prompts specified, either reprompt or exit
       TransitionToReprompt();
       return;
     } else {
-      _iConfig.ttsBehavior->SetTextToSay(_iConfig.vocalResponseToBadIntentString);
+      _iConfig.ttsBehavior->SetTextToSay(vocalResponseToBadIntentString);
       if(_iConfig.ttsBehavior->WantsToBeActivated()){
         DelegateIfInControl(_iConfig.ttsBehavior.get(), &BehaviorPromptUserForVoiceCommand::TransitionToReprompt);
       }
@@ -411,7 +413,8 @@ void BehaviorPromptUserForVoiceCommand::TransitionToReprompt()
     // Reset necessary vars
     _dVars.intentStatus = EIntentStatus::NoIntentHeard;
 
-    if(_iConfig.vocalRepromptString.empty()){
+    const auto & vocalRepromptString = GetVocalRepromptString();
+    if (vocalRepromptString.empty()) {
       // If we don't have any Reprompt anims or vocalizations, just reuse the prompting state
       PRINT_CH_INFO("Behaviors", "BehaviorPromptUserForVoiceCommand.RepromptGeneric",
                        "Reprompting user %d of %d times with original prompt action",
@@ -425,7 +428,7 @@ void BehaviorPromptUserForVoiceCommand::TransitionToReprompt()
                       _dVars.repromptCount,
                       _iConfig.maxNumReprompts);
       SET_STATE(Reprompt);
-      _iConfig.ttsBehavior->SetTextToSay(_iConfig.vocalRepromptString);
+      _iConfig.ttsBehavior->SetTextToSay(vocalRepromptString);
       if(_iConfig.ttsBehavior->WantsToBeActivated()){
         DelegateIfInControl(_iConfig.ttsBehavior.get(), &BehaviorPromptUserForVoiceCommand::TransitionToListening);
       }
@@ -435,12 +438,56 @@ void BehaviorPromptUserForVoiceCommand::TransitionToReprompt()
 
   CancelSelf();
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const std::string& BehaviorPromptUserForVoiceCommand::GetVocalPromptString() const
+std::string BehaviorPromptUserForVoiceCommand::GetVocalPromptString() const
 {
-  return _iConfig.wasPromptSetFromJson ? _iConfig.vocalPromptString : _dVars.vocalPromptString;
+  if (_dVars.useDynamicPromptString) {
+    return _dVars.dynamicPromptString;
+  }
+  const auto & vocalPromptKey = _iConfig.vocalPromptKey;
+  if (vocalPromptKey != empty) {
+    const auto & localeComponent = GetBEI().GetRobotInfo().GetLocaleComponent();
+    return localeComponent.GetString(vocalPromptKey);
+  }
+  return empty;
 }
 
-} // namespace Vector 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string BehaviorPromptUserForVoiceCommand::GetVocalRepromptString() const
+{
+  if (_dVars.useDynamicRepromptString) {
+    return _dVars.dynamicRepromptString;
+  }
+  const auto & vocalRepromptKey = _iConfig.vocalRepromptKey;
+  if (vocalRepromptKey != empty) {
+    const auto & localeComponent = GetBEI().GetRobotInfo().GetLocaleComponent();
+    return localeComponent.GetString(vocalRepromptKey);
+  }
+  return empty;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string BehaviorPromptUserForVoiceCommand::GetVocalResponseToIntentString() const
+{
+  const auto & vocalResponseToIntentKey = _iConfig.vocalResponseToIntentKey;
+  if (vocalResponseToIntentKey != empty) {
+    const auto & localeComponent = GetBEI().GetRobotInfo().GetLocaleComponent();
+    return localeComponent.GetString(vocalResponseToIntentKey);
+  }
+  return empty;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string BehaviorPromptUserForVoiceCommand::GetVocalResponseToBadIntentString() const
+{
+  const auto & vocalResponseToBadIntentKey = _iConfig.vocalResponseToBadIntentKey;
+  if (vocalResponseToBadIntentKey != empty) {
+    const auto & localeComponent = GetBEI().GetRobotInfo().GetLocaleComponent();
+    return localeComponent.GetString(vocalResponseToBadIntentKey);
+  }
+  return empty;
+}
+
+} // namespace Vector
 } // namespace Anki

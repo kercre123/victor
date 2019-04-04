@@ -123,7 +123,7 @@ void BehaviorReactToGazeDirection::TransitionToCheckForFace(const Radians& turnA
 
   turnAndAnimate->SetShouldEndWhenFirstActionCompletes(true);
   turnAction->AddAction(turnAndAnimate);
-  turnAction->AddAction(new WaitForImagesAction(kSearchForFaceNumberOfImagesToWait, VisionMode::DetectingFaces));
+  turnAction->AddAction(new WaitForImagesAction(kSearchForFaceNumberOfImagesToWait, VisionMode::Faces));
   turnAction->AddAction(new MoveHeadToAngleAction(Radians(MAX_HEAD_ANGLE)));
   TurnTowardsFaceAction* turnTowardsFace = new TurnTowardsFaceAction(SmartFaceID(), M_PI_2);
   turnTowardsFace->SetRequireFaceConfirmation(true);
@@ -333,10 +333,10 @@ void BehaviorReactToGazeDirection::GetBehaviorOperationModifiers(BehaviorOperati
   modifiers.behaviorAlwaysDelegates = true;
 
   // This will result in running facial part detection whenever is behavior is an activatable scope
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingGaze, EVisionUpdateFrequency::High });
-  modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
-  modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingGaze, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Faces, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Faces_Gaze, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActivatableScope->insert({ VisionMode::Faces, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActivatableScope->insert({ VisionMode::Faces_Gaze, EVisionUpdateFrequency::High });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

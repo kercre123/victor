@@ -107,3 +107,26 @@ def pull_request_merge_info(auth_token, pull_request_number, retries=5, verbose=
         print("against {0} at {1}".format(pr.head.ref, pr.head.sha))
 
     return results
+
+def post_ci_bot_comment(auth_token, pull_request_number, mrkdwn_comment, repo_name="anki/victor"):
+    """
+    Returns a :class:`github.CommitComment.CommitComment`
+
+    :param auth_token: string
+    :param pull_request_number: int
+    :param mrkdwn_comment: string
+    :param repo_name: string
+    :return: :class:`github.CommitComment.CommitComment`
+    """
+    try:
+        gh = Github(auth_token)
+        repo = gh.get_repo(repo_name)
+        pull = repo.get_pull(pull_request_number)
+        head_commit = repo.get_commit(pull.head.sha)
+        rendered_markdown_comment = gh.render_markdown(mrkdwn_comment)
+        comment = head_commit.create_comment(rendered_markdown_comment)
+        return comment
+        
+    except GithubException as e:
+        print("Exception thrown because of {0}".format(e))
+        sys.exit("GITHUB ERROR: {0}".format(e.data['message']))

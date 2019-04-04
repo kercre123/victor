@@ -14,7 +14,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/exploring/behaviorExploring.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
@@ -248,10 +248,10 @@ void BehaviorExploring::GetBehaviorOperationModifiers(BehaviorOperationModifiers
 {
   modifiers.behaviorAlwaysDelegates = false; // take control of CancelSelf()
   // always look for the charger so we know how to get back
-  modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low });
+  modifiers.visionModesForActivatableScope->insert({ VisionMode::Markers, EVisionUpdateFrequency::Low });
   modifiers.visionModesForActiveScope->insert({
-    {VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low},
-    {VisionMode::DetectingFaces, EVisionUpdateFrequency::Med} // so it is able to occasionally look back at faces
+    {VisionMode::Markers, EVisionUpdateFrequency::Low},
+    {VisionMode::Faces, EVisionUpdateFrequency::Med} // so it is able to occasionally look back at faces
   });
 }
 

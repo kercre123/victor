@@ -2,7 +2,7 @@
 
 #include "coretech/common/shared/math/rotation.h"
 #include "coretech/common/engine/math/pose.h"
-#include "coretech/common/shared/math/matrix_impl.h"
+#include "coretech/common/shared/math/matrix.h"
 
 #include <iostream>
 

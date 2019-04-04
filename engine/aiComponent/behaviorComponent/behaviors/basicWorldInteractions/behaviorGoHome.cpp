@@ -34,7 +34,7 @@
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #include "clad/types/behaviorComponent/behaviorStats.h"
@@ -47,6 +47,9 @@
 
 namespace Anki {
 namespace Vector {
+
+CONSOLE_VAR_EXTERN(bool, kRobustChargerObservation_SaveImages);
+CONSOLE_VAR(bool, kGoHome_VisualVerification_SaveImages, "Behaviors.BehaviorGoHome", false);
 
 namespace {
   const char* kUseCliffSensorsKey        = "useCliffSensorCorrection";
@@ -74,8 +77,12 @@ namespace {
   
   // If we are too far from the charger at the beginning of the behavior, or we have not observed the charger in a
   // while, then first try to drive to a pose from which to verify the charger's location before trying to dock to it.
-  const float kFarFromChargerThreshold_mm = 200.f;
+  const float kFarFromChargerThreshold_mm = 400.f;
   const TimeStamp_t kRecentlyObservedChargerThreshold_ms = 30*1000;
+
+  const float kInitialChargerIncidenceForObservation_rad = DEG_TO_RAD(35.f);
+  const float kFinalChargerIncidenceForObservation_rad = DEG_TO_RAD(75.f);
+  const float kNumRandomPosesForObservation = 10;
 }
 
 
@@ -235,7 +242,7 @@ void BehaviorGoHome::OnBehaviorActivated()
   GetBEI().GetMapComponent().RemoveAllProxObstacles();
   
   // First, re-observe the charger to confirm its location
-  TransitionToObserveCharger();
+  TransitionToFaceCharger();
 }
 
 
@@ -254,58 +261,86 @@ void BehaviorGoHome::OnBehaviorDeactivated()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGoHome::TransitionToObserveCharger()
+void BehaviorGoHome::TransitionToFaceCharger()
 {
   LOG_FUNCTION_NAME();
-  
-  // First turn toward the charger. This will hopefully update its pose to be more accurate before interacting with it.
+
+  // First turn toward the charger. This will hopefully update its 
+  // pose to be more accurate before interacting with it.
   auto* turnToAction = new TurnTowardsObjectAction(_dVars.chargerID);
   DelegateIfInControl(turnToAction, [this](){
-    // If we have not observed the charger recently or we are too far away, then drive to a pose from which to try and
-    // observe the charger and confirm its pose.
-    const auto* charger = dynamic_cast<const Charger*>(GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID));
-    if (charger == nullptr) {
-      LOG_ERROR("BehaviorGoHome.TransitionToObserveCharger", "Null charger!");
-      return;
-    }
-    const auto& robotInfo = GetBEI().GetRobotInfo();
-    
-    auto afterObservationCallback = [this]() {
-      if (GetBEI().GetRobotInfo().GetCarryingComponent().IsCarryingObject()) {
-        TransitionToPlacingCubeOnGround();
-      } else {
-        TransitionToCheckDockingArea();
-      }
-    };
-    
-    float robotToChargerDist_mm = 0.f;
-    if (!ComputeDistanceBetween(charger->GetPose(), robotInfo.GetPose(), robotToChargerDist_mm)) {
-      LOG_ERROR("BehaviorGoHome.TransitionToObserveCharger.ComputeDistanceFailure", "poses not comparable");
-      return;
-    }
-    const bool farFromCharger = (robotToChargerDist_mm > kFarFromChargerThreshold_mm);
-    const bool observedRecently = robotInfo.GetLastMsgTimestamp() - charger->GetLastObservedTime() < kRecentlyObservedChargerThreshold_ms;
-    if (farFromCharger || !observedRecently) {
-      // Note: nested delegate calls will perform the following actions
-      // - drive to a random pose
-      // - look for the charger
-      // - transition to the next behavior sub-state
-      // It will not check if the charger was seen during the observation action
-      auto* driveAction = new DriveToPoseAction(charger->GenerateObservationPoses(GetRNG()));
-      DelegateIfInControl(driveAction, [this,afterObservationCallback](){
-        const bool observeChargerWantsToRun = _iConfig.observeChargerBehavior->WantsToBeActivated();
-        if(observeChargerWantsToRun) {
-          DelegateIfInControl(_iConfig.observeChargerBehavior.get(), afterObservationCallback);
-        } else {
-          LOG_ERROR("BehaviorGoHome.TransitionToObserveCharger.ObserveChargerNotActivating", "Visual verify behavior does not want to be activated.");
-        }
-      });
-    } else {
-      afterObservationCallback();
-    }
+    const bool shouldRetry = true;
+    TransitionToDriveToObservationPose(shouldRetry);
   });
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorGoHome::TransitionToObserveCharger()
+{
+  LOG_FUNCTION_NAME();
+
+  const bool observeChargerWantsToRun = _iConfig.observeChargerBehavior->WantsToBeActivated();
+  if(observeChargerWantsToRun) {
+    DelegateIfInControl(_iConfig.observeChargerBehavior.get(), &BehaviorGoHome::TransitionToPostObservation);
+  } else {
+    LOG_ERROR("BehaviorGoHome.TransitionToObserveCharger.ObserveChargerNotActivating", "Visual verify behavior does not want to be activated.");
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorGoHome::TransitionToDriveToObservationPose(const bool canRetry)
+{
+  LOG_FUNCTION_NAME();
+
+  // If we have not observed the charger recently or we are too far away, then drive to a pose from which to try and
+  // observe the charger and confirm its pose.
+  const auto* charger = dynamic_cast<const Charger*>(GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID));
+  if (charger == nullptr) {
+    LOG_ERROR("BehaviorGoHome.TransitionToObserveCharger", "Null charger!");
+    return;
+  }
+  const auto& robotInfo = GetBEI().GetRobotInfo();
+  float robotToChargerDist_mm = 0.f;
+  if (!ComputeDistanceBetween(charger->GetPose(), robotInfo.GetPose(), robotToChargerDist_mm)) {
+    LOG_ERROR("BehaviorGoHome.TransitionToObserveCharger.ComputeDistanceFailure", "poses not comparable");
+    return;
+  }
+  const bool farFromCharger = (robotToChargerDist_mm > kFarFromChargerThreshold_mm);
+  const bool observedRecently = ((robotInfo.GetLastMsgTimestamp() - charger->GetLastObservedTime()) < kRecentlyObservedChargerThreshold_ms);
+  
+  if (farFromCharger || !observedRecently) {
+    const float incidenceAngle_rad =  (canRetry) ? 
+                                      (kInitialChargerIncidenceForObservation_rad) : 
+                                      (kFinalChargerIncidenceForObservation_rad);
+    auto poses = charger->GenerateObservationPoses( GetRNG(), 
+                                                    kNumRandomPosesForObservation,
+                                                    incidenceAngle_rad);
+    auto* driveAction = new DriveToPoseAction(std::move(poses));
+    DelegateIfInControl(driveAction, [this,canRetry](const ActionResult& res) {
+      const bool isPlanningFailure = (res == ActionResult::PATH_PLANNING_FAILED_ABORT) || (res == ActionResult::PATH_PLANNING_FAILED_RETRY);
+      if(canRetry && isPlanningFailure) {
+        const bool shouldRetry = false;
+        TransitionToDriveToObservationPose(shouldRetry);
+      } else {
+        TransitionToObserveCharger();
+      }
+    });
+  } else {
+    TransitionToPostObservation();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorGoHome::TransitionToPostObservation()
+{
+  LOG_FUNCTION_NAME();
+
+  if (GetBEI().GetRobotInfo().GetCarryingComponent().IsCarryingObject()) {
+    TransitionToPlacingCubeOnGround();
+  } else {
+    TransitionToCheckDockingArea();
+  }
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::TransitionToCheckDockingArea()
@@ -430,13 +465,24 @@ void BehaviorGoHome::TransitionToCheckPreTurnPosition()
     LOG_ERROR("BehaviorGoHome.TransitionToCheckPreTurnPosition.ObserveChargerBehaviorDWTA","");
     return;
   }
-
+  
+  if(kGoHome_VisualVerification_SaveImages) {
+    #if(REMOTE_CONSOLE_ENABLED)
+    kRobustChargerObservation_SaveImages = true;
+    #endif
+  }
   RobotTimeStamp_t verifyStartTime = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
   DelegateIfInControl(_iConfig.observeChargerBehavior.get(), [this,verifyStartTime](){
     TransitionToPostVisualVerification(verifyStartTime);
+    if(kGoHome_VisualVerification_SaveImages) {
+      #if(REMOTE_CONSOLE_ENABLED)
+      kRobustChargerObservation_SaveImages = false;
+      #endif
+    }
   });
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorGoHome::TransitionToPostVisualVerification(const RobotTimeStamp_t verifyStartTime)
 {
   // Check to make sure we are in a safe position to begin the 180
@@ -488,8 +534,10 @@ void BehaviorGoHome::TransitionToPostVisualVerification(const RobotTimeStamp_t v
     // If visual observation failed, then we've successfully gotten to the charger
     // pre-action pose, but it is no longer there. Delete the charger from the map.
     LOG_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.DeletingCharger",
-                        "Deleting charger with ID %d since visual verification failed",
-                        _dVars.chargerID.GetValue());
+                        "Deleting charger with ID %d since visual verification failed (start=%u end=%u)",
+                        _dVars.chargerID.GetValue(),
+                        (TimeStamp_t)verifyStartTime,
+                        (TimeStamp_t)GetBEI().GetRobotInfo().GetLastMsgTimestamp());
     const bool removeChargerFromBlockworld = true;
     DASMSG(go_home_charger_not_visible, "go_home.charger_not_visible", "GoHome behavior failure because the charger is not seen when should be.");
     DASMSG_SEND();

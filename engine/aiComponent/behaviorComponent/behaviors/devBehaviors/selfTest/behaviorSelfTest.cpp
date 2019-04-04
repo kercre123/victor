@@ -33,6 +33,7 @@
 
 #include "util/console/consoleSystem.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/DAS.h"
 
 #include <cstddef>
 
@@ -187,6 +188,10 @@ void BehaviorSelfTest::OnBehaviorActivated()
   // Delegate to the first behavior
   (void)_currentBehavior->WantsToBeActivated();
   DelegateNow(_currentBehavior.get());
+
+  // DAS msg for self test start
+  DASMSG(behavior_self_test_start, "behavior.self_test_start", "Self test has started");
+  DASMSG_SEND();
 }
 
 void BehaviorSelfTest::OnBehaviorDeactivated()
@@ -356,6 +361,13 @@ void BehaviorSelfTest::HandleResult(SelfTestResultCode result)
 
   // Display result on screen
   DisplayResult(result);
+
+  // DAS msg for end of self test
+  const bool testPassed = (result == SelfTestResultCode::SUCCESS);
+  DASMSG(behavior_self_test_end, "behavior.self_test_end", "Self test has completed");
+  DASMSG_SET(s1, testPassed ? "success" : "failure", "Test passed or failed");
+  DASMSG_SET(s2, testPassed ? "" : EnumToString(result), "Error code if test failed");
+  DASMSG_SEND();
 
   // Reset playpen
   Reset();

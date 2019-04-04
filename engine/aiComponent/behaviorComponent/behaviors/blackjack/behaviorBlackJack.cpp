@@ -14,11 +14,13 @@
 
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorLookAtFaceInFront.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/robotDrivenDialog/behaviorPromptUserForVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "engine/components/localeComponent.h"
 #include "engine/components/robotStatsTracker.h"
 #include "engine/clad/types/animationTypes.h"
 
@@ -31,6 +33,27 @@
                           PRINT_CH_INFO("Behaviors", "BehaviorBlackJack.State", "State = %s", #s); \
                         } while(0);
 
+//
+// Localization keys defined in BlackJackStrings.json
+//
+namespace {
+  const char * kDealerGoodLuck = "BlackJack.DealerGoodLuck";
+  const char * kDealerScore = "BlackJack.DealerScore";
+  const char * kDealerScoreBusted = "BlackJack.DealerScoreBusted";
+  const char * kDealerScorePush = "BlackJack.DealerScorePush";
+  const char * kDealerScoreDealerWins = "BlackJack.DealerScoreDealerWins";
+  const char * kDealerScorePlayerWins = "BlackJack.DealerScorePlayerWins";
+  const char * kDealerTwentyOne = "BlackJack.DealerTwentyOne";
+  const char * kDealerTurn = "BlackJack.DealerTurn";
+
+  const char * kPlayerScore = "BlackJack.PlayerScore";
+  const char * kPlayerScoreBusted = "BlackJack.PlayerScoreBusted";
+  const char * kPlayerTwentyOne = "BlackJack.PlayerTwentyOne";
+  const char * kPlayerWinsBlackJack = "BlackJack.PlayerWinsBlackJack";
+  const char * kPlayerWinsNaturalBlackJack = "BlackJack.PlayerWinsNaturalBlackJack";
+  const char * kPlayerWinsFiveCardCharlie = "BlackJack.PlayerWinsFiveCardCharlie";
+}
+
 namespace Anki {
 namespace Vector {
 
@@ -40,10 +63,11 @@ namespace{
 
   static const UserIntentTag affirmativeIntent = USER_INTENT(imperative_affirmative);
   static const UserIntentTag negativeIntent = USER_INTENT(imperative_negative);
+  static const UserIntentTag silenceIntent = USER_INTENT(silence);
   static const UserIntentTag playerHitIntent = USER_INTENT(blackjack_hit);
   static const UserIntentTag playerStandIntent = USER_INTENT(blackjack_stand);
   static const UserIntentTag playAgainIntent = USER_INTENT(blackjack_playagain);
-}  
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorBlackJack::InstanceConfig::InstanceConfig()
@@ -82,7 +106,7 @@ void BehaviorBlackJack::GetBehaviorOperationModifiers(BehaviorOperationModifiers
 {
   modifiers.wantsToBeActivatedWhenOffTreads = true;
   modifiers.behaviorAlwaysDelegates = false;
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Low });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Faces, EVisionUpdateFrequency::Low });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -129,7 +153,7 @@ void BehaviorBlackJack::InitBehavior()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBlackJack::OnBehaviorActivated() 
+void BehaviorBlackJack::OnBehaviorActivated()
 {
   // reset dynamic variables
   _dVars = DynamicVariables();
@@ -183,7 +207,7 @@ void BehaviorBlackJack::OnBehaviorDeactivated()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorBlackJack::BehaviorUpdate() 
+void BehaviorBlackJack::BehaviorUpdate()
 {
   if( !IsActivated() ) {
     return;
@@ -223,8 +247,9 @@ void BehaviorBlackJack::TransitionToDealing()
         {
           _dVars.dealingState = EDealingState::DealerFirstCard;
           // keep an eye out for Aces
-          if(_game.LastCard().IsAnAce()){
-            _iConfig.goodLuckTTSBehavior->SetTextToSay("Good Luck!");
+          if(_game.LastCard().IsAnAce()) {
+            const auto & tts = GetLocalizedString(kDealerGoodLuck);
+            _iConfig.goodLuckTTSBehavior->SetTextToSay(tts);
             if(!ANKI_VERIFY(_iConfig.goodLuckTTSBehavior->WantsToBeActivated(),
                             "BehaviorBlackjack.TTSError",
                             "The Good Luck TTS behavior did not want to be activated, this indicates a usage error")){
@@ -258,8 +283,8 @@ void BehaviorBlackJack::TransitionToDealing()
           // Keep an eye out for natural BlackJack
           if(_game.PlayerHasBlackJack()){
             _dVars.outcome = EOutcome::VictorLosesBlackJack;
-            DelegateIfInControl(SetUpSpeakingBehavior("BlackJack!"),
-                                &BehaviorBlackJack::TransitionToEndGame);
+            const auto & tts = GetLocalizedString(kPlayerWinsNaturalBlackJack);
+            DelegateIfInControl(SetUpSpeakingBehavior(tts), &BehaviorBlackJack::TransitionToEndGame);
 
           } else {
             TransitionToDealing();
@@ -276,8 +301,8 @@ void BehaviorBlackJack::TransitionToDealing()
           // Respond to BlackJack for the player
           if(_game.PlayerHasBlackJack()){
             _dVars.outcome = EOutcome::VictorLosesBlackJack;
-            DelegateIfInControl(SetUpSpeakingBehavior("BlackJack, You win!"),
-                                &BehaviorBlackJack::TransitionToEndGame);
+            const auto & tts = GetLocalizedString(kPlayerWinsBlackJack);
+            DelegateIfInControl(SetUpSpeakingBehavior(tts), &BehaviorBlackJack::TransitionToEndGame);
           } else {
             TransitionToReactToPlayerCard();
           }
@@ -299,31 +324,30 @@ void BehaviorBlackJack::TransitionToReactToPlayerCard()
   SET_STATE(ReactToPlayerCard);
   if(_game.PlayerBusted()) {
     // Build the card value and bust string and action
-    std::string playerScoreString(std::to_string(_game.GetPlayerScore()) + ". You busted!");
+    const auto & tts = GetLocalizedString(kPlayerScoreBusted, _game.GetPlayerScore());
     _dVars.outcome = EOutcome::VictorWins;
-    DelegateIfInControl(SetUpSpeakingBehavior(playerScoreString), 
-                        &BehaviorBlackJack::TransitionToEndGame);
+    DelegateIfInControl(SetUpSpeakingBehavior(tts), &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.PlayerHasCharlie()) {
-    std::string scoreString(std::to_string(_game.GetPlayerScore()));
-    DelegateIfInControl(SetUpSpeakingBehavior(scoreString), [this]()
+    const auto & tts = GetLocalizedString(kPlayerScore, _game.GetPlayerScore());
+    DelegateIfInControl(SetUpSpeakingBehavior(tts), [this]()
       {
         _visualizer.DisplayCharlieFrame(GetBEI(), [this]()
           {
             _dVars.outcome = EOutcome::VictorLosesBlackJack;
-            DelegateIfInControl(SetUpSpeakingBehavior("5 Card Charlie! You win!"), &BehaviorBlackJack::TransitionToEndGame);
+            const auto & tts = GetLocalizedString(kPlayerWinsFiveCardCharlie);
+            DelegateIfInControl(SetUpSpeakingBehavior(tts), &BehaviorBlackJack::TransitionToEndGame);
           }
         );
       }
     );
   }else if(_game.PlayerHasBlackJack()){
     // Player got a BlackJack, but Victor could still tie
-    DelegateIfInControl(SetUpSpeakingBehavior("21!"), 
-                        &BehaviorBlackJack::TransitionToVictorsTurn);
+    const auto & tts = GetLocalizedString(kPlayerTwentyOne);
+    DelegateIfInControl(SetUpSpeakingBehavior(tts), &BehaviorBlackJack::TransitionToVictorsTurn);
   } else {
     // Build the card value string and read out action
-    std::string playerScoreString(std::to_string(_game.GetPlayerScore()));
-    DelegateIfInControl(SetUpSpeakingBehavior(playerScoreString),
-                        &BehaviorBlackJack::TransitionToHitOrStandPrompt);
+    const auto & tts = GetLocalizedString(kPlayerScore, _game.GetPlayerScore());
+    DelegateIfInControl(SetUpSpeakingBehavior(tts), &BehaviorBlackJack::TransitionToHitOrStandPrompt);
   }
 }
 
@@ -361,6 +385,8 @@ void BehaviorBlackJack::TransitionToHitOrStand()
       uic.DropUserIntent(playerStandIntent);
     } else if(uic.IsUserIntentPending(negativeIntent)) {
       uic.DropUserIntent(negativeIntent);
+    } else if(uic.IsUserIntentPending(silenceIntent)) {
+      uic.DropUserIntent(silenceIntent);
     }
 
     // 2. We didn't receive any intents at all
@@ -378,8 +404,8 @@ void BehaviorBlackJack::TransitionToVictorsTurn()
 
   // TODO:(str) work out whether a "spread" is happening or not, dependent on dynamic layouts
   // _visualizer.VisualizeSpread();
-
-  DelegateIfInControl(SetUpSpeakingBehavior("Dealers Turn!"),
+  const auto & tts = GetLocalizedString(kDealerTurn);
+  DelegateIfInControl(SetUpSpeakingBehavior(tts),
     [this](){
       _game.Flop();
       _visualizer.Flop(GetBEI(), std::bind(&BehaviorBlackJack::TransitionToReactToDealerCard, this));
@@ -403,30 +429,28 @@ void BehaviorBlackJack::TransitionToReactToDealerCard()
   if(_game.DealerBusted()){
     // Announce score and bust
     _dVars.outcome = EOutcome::VictorBusts;
-    std::string dealerScoreString(std::to_string(_game.GetDealerScore()) + ". Dealer Busted.");
-    DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToEndGame);
+    const auto & tts = GetLocalizedString(kDealerScoreBusted, _game.GetDealerScore());
+    DelegateIfInControl(SetUpSpeakingBehavior(tts), &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.DealerTied()){
     _dVars.outcome = EOutcome::Tie;
-    std::string tieString(std::to_string(_game.GetDealerScore()) + ". Push." );
-    DelegateIfInControl(SetUpSpeakingBehavior(tieString),
-                        &BehaviorBlackJack::TransitionToEndGame);
+    const auto & tts = GetLocalizedString(kDealerScorePush, _game.GetDealerScore());
+    DelegateIfInControl(SetUpSpeakingBehavior(tts), &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.DealerHasBlackJack()){
     _dVars.outcome = EOutcome::VictorWinsBlackJack;
-    DelegateIfInControl(SetUpSpeakingBehavior("21!"),
-                        &BehaviorBlackJack::TransitionToEndGame);
+    const auto & tts = GetLocalizedString(kDealerTwentyOne);
+    DelegateIfInControl(SetUpSpeakingBehavior(tts), &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.DealerHasWon()){
     _dVars.outcome = EOutcome::VictorWins;
-    std::string dealerScoreString(std::to_string(_game.GetDealerScore()) + ". Dealer Wins!");
-    DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToEndGame);
+    const auto & tts = GetLocalizedString(kDealerScoreDealerWins, _game.GetDealerScore());
+    DelegateIfInControl(SetUpSpeakingBehavior(tts), &BehaviorBlackJack::TransitionToEndGame);
   } else if(_game.DealerHasLost()) {
-    std::string dealerScoreString(std::to_string(_game.GetDealerScore()) + ". You win!" );
     _dVars.outcome = EOutcome::VictorLoses;
-    DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString),
-                        &BehaviorBlackJack::TransitionToEndGame);
+    const auto & tts = GetLocalizedString(kDealerScorePlayerWins, _game.GetDealerScore());
+    DelegateIfInControl(SetUpSpeakingBehavior(tts), &BehaviorBlackJack::TransitionToEndGame);
   } else {
     // Announce score and Hit again
-    std::string dealerScoreString( std::to_string(_game.GetDealerScore()) );
-    DelegateIfInControl(SetUpSpeakingBehavior(dealerScoreString), &BehaviorBlackJack::TransitionToDealToVictor);
+    const auto & tts = GetLocalizedString(kDealerScore, _game.GetDealerScore());
+    DelegateIfInControl(SetUpSpeakingBehavior(tts), &BehaviorBlackJack::TransitionToDealToVictor);
   }
 
 }
@@ -528,7 +552,7 @@ void BehaviorBlackJack::TransitionToPlayAgain()
   SET_STATE(PlayAgain);
   UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
 
-  if(uic.IsUserIntentPending(playAgainIntent)){     
+  if(uic.IsUserIntentPending(playAgainIntent)){
     uic.DropUserIntent(playAgainIntent);
     OnBehaviorActivated();
   } else if(uic.IsUserIntentPending(affirmativeIntent)){
@@ -537,6 +561,8 @@ void BehaviorBlackJack::TransitionToPlayAgain()
   } else {
     if (uic.IsUserIntentPending(negativeIntent)){
       uic.DropUserIntent(negativeIntent);
+    } else if(uic.IsUserIntentPending(silenceIntent)) {
+      uic.DropUserIntent(silenceIntent);
     }
     TransitionToGetOut();
   }
@@ -563,6 +589,20 @@ IBehavior* BehaviorBlackJack::SetUpSpeakingBehavior(const std::string& vocalizat
     CancelSelf();
   }
   return _iConfig.ttsBehavior.get();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string BehaviorBlackJack::GetLocalizedString(const std::string & key)
+{
+  const auto & localeComponent = GetBEI().GetRobotInfo().GetLocaleComponent();
+  return localeComponent.GetString(key);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+std::string BehaviorBlackJack::GetLocalizedString(const std::string & key, const int score)
+{
+  const auto & localeComponent = GetBEI().GetRobotInfo().GetLocaleComponent();
+  return localeComponent.GetString(key, std::to_string(score));
 }
 
 } // namespace Vector

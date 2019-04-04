@@ -64,7 +64,11 @@ private:
   void TransitionToDeepSleep();
   void TransitionToLightSleep();
 
-  void SleepTransitionHelper(const SleepStateID& newState, const bool playSleepGetIn = true);
+  // Helper for transitioning to new sleep state.
+  // Delegates to preSleepDelegate, if defined, before transitioning to sleep.
+  void SleepTransitionHelper(const SleepStateID& newState, 
+                             const bool playSleepGetIn = true, 
+                             ICozmoBehaviorPtr preSleepDelegate = nullptr);
 
   void RespondToPersonCheck();
 
@@ -87,6 +91,7 @@ private:
   void SetReactionState(SleepReactionType reaction);
 
   static bool ShouldReactToSoundInState(const SleepStateID& state);
+  static bool IsPreSleepState(const SleepStateID& state);
 
   bool ShouldWiggleOntoChargerFromSleep();
 

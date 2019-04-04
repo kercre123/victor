@@ -15,7 +15,7 @@
 
 #include "coretech/vision/engine/observableObjectLibrary.h"
 #include "coretech/common/engine/math/poseOriginList.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/messaging/engine/IComms.h"
 
@@ -218,7 +218,7 @@ static Robot* consoleRobot = nullptr;
 void DevProcessOneFrameForVisionEdges( ConsoleFunctionContextRef context )
 {
   if(consoleRobot != nullptr) {
-    consoleRobot->GetActionList().QueueAction(QueueActionPosition::NOW, new WaitForImagesAction(1, VisionMode::DetectingOverheadEdges));
+    consoleRobot->GetActionList().QueueAction(QueueActionPosition::NOW, new WaitForImagesAction(1, VisionMode::OverheadEdges));
   }
 }
 

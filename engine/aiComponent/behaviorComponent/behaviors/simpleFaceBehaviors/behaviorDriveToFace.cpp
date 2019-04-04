@@ -26,7 +26,7 @@
 #include "engine/navMap/memoryMap/memoryMapTypes.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 
@@ -139,7 +139,7 @@ BehaviorDriveToFace::BehaviorDriveToFace(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDriveToFace::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.visionModesForActiveScope->insert( {VisionMode::DetectingFaces, EVisionUpdateFrequency::High} );
+  modifiers.visionModesForActiveScope->insert( {VisionMode::Faces, EVisionUpdateFrequency::High} );
   modifiers.behaviorAlwaysDelegates = true;
 }
   

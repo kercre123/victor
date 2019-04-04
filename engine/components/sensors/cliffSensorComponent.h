@@ -36,6 +36,8 @@ public:
   
   using CliffSensorDataArray = std::array<uint16_t, kNumCliffSensors>;
   static_assert(std::is_same<CliffSensorDataArray, decltype(RobotState::cliffDataRaw)>::value, "CliffSensorDataArray must be same as type used in RobotState");
+  
+  using CliffSensorFiltDataArray = std::array<f32, kNumCliffSensors>;
 
   CliffSensorComponent();
 
@@ -119,6 +121,8 @@ public:
   
   const CliffSensorDataArray& GetCliffDataRawAtLastStop() const { return _cliffDataRawAtLastStop; }
   
+  const CliffSensorFiltDataArray & GetCliffDataFiltered() const { return _cliffDataFilt; }
+  
   // Retrieves the number of milliseconds that the cliff sensors have reported @param numCliffs
   // being detected.
   //
@@ -128,9 +132,17 @@ public:
   //
   // If @param numCliffs is 0, then this assumes that the user wants only the duration of time
   // that the cliff sensors have currently been reporting _exactly_ zero cliffs detections.
-  u32 GetDurationForNCliffDetections_ms(const int minNumCliffs) const;
+  u32 GetDurationForAtLeastNCliffDetections_ms(const int minNumCliffs) const;
+
+  // Returns the amount of time that @param numCliff or fewer cliffs have been detected for.
+  // (Returns MAX_UINT for numCliffs == 4)
+  u32 GetDurationForAtMostNCliffDetections_ms(const int numCliffs) const;
     
   int GetNumCliffsDetected() const { return _latestNumCliffsDetected; }
+
+  // Returns the max number of cliffs observed while picked up (according to RobotState.status)
+  // Returns 0 if not currently picked up.
+  int GetMaxNumCliffsDetectedWhilePickedUp() const { return _maxNumCliffsDetectedWhilePickedUp; } 
   
 private:
   
@@ -151,6 +163,13 @@ private:
   int _latestNumCliffsDetected = -1;
     
   std::array<u32, kNumCliffSensors + 1> _cliffDetectionTimes_ms;
+
+  // Stores the last time that N cliffs were detected
+  // unlike _cliffDetectionTimes_ms which contains only the times
+  // of cliffs that are _currently_ being detected.
+  std::array<u32, kNumCliffSensors + 1> _cliffLastDetectedTimes_ms;
+
+  int _maxNumCliffsDetectedWhilePickedUp = 0;
   
   uint32_t _latestMsgTimestamp = 0;
   
@@ -163,7 +182,7 @@ private:
   CliffSensorDataArray _cliffDataRaw;
   
   // Filtered cliff sensor data, which smooths out noise in the data
-  std::array<f32, kNumCliffSensors> _cliffDataFilt;
+  CliffSensorFiltDataArray _cliffDataFilt;
   
   // Minimum observed cliff sensor values (used to adaptively adjust detection thresholds)
   CliffSensorDataArray _cliffMinObserved;

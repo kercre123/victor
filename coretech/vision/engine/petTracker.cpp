@@ -12,7 +12,7 @@
 
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/shared/math/rotation.h"
 
 #include "coretech/vision/engine/petTracker.h"

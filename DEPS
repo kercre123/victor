@@ -93,7 +93,7 @@
         "repo_names": {
             "anki-thirdparty": {
                 "branch": "branches/victor",
-                "version": "203"
+                "version": "208"
             },
             "victor-animation-assets": {
                 "additional_files": [
@@ -110,11 +110,11 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "4964"
+                "version": "4974"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "171"
+                "version": "176"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

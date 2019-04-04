@@ -35,7 +35,10 @@ namespace Anki {
 namespace Vector {
 
 #define LOG_CHANNEL "Behaviors"
-  
+
+// Enable for debug, to save images during WaitForImageAction
+CONSOLE_VAR(bool, kRobustChargerObservation_SaveImages, "Behaviors.RobustChargerObservation", false);  
+
 namespace {
   const char* kNumImageCompositingCyclesToWaitForKey = "numImageCompositingCyclesToWaitFor";
   const char* kNumCyclingExposureCyclesToWaitForKey = "numCyclingExposureCyclesToWaitFor";
@@ -43,8 +46,6 @@ namespace {
   const LCDBrightness kNormalLCDBrightness = LCDBrightness::LCDLevel_5mA;
   const LCDBrightness kMaxLCDBrightness = LCDBrightness::LCDLevel_20mA;
 
-  // Enable for debug, to save images during WaitForImageAction
-  CONSOLE_VAR(bool, kRobustChargerObservation_SaveImages, "Behaviors.RobustChargerObservation", false);
   CONSOLE_VAR(bool, kFakeLowlightCondition, "Behaviors.RobustChargerObservation", false);
 }
 
@@ -85,10 +86,10 @@ bool BehaviorRobustChargerObservation::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRobustChargerObservation::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers,           EVisionUpdateFrequency::High });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingIllumination,      EVisionUpdateFrequency::High });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::FullFrameMarkerDetection,   EVisionUpdateFrequency::High });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::MeteringFromChargerOnly,    EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Markers,                EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Illumination,           EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Markers_FullFrame,      EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Markers_ChargerOnly,    EVisionUpdateFrequency::High });
   
   modifiers.wantsToBeActivatedWhenOnCharger = false;
   modifiers.wantsToBeActivatedWhenCarryingObject = true;
@@ -112,9 +113,10 @@ void BehaviorRobustChargerObservation::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRobustChargerObservation::OnBehaviorDeactivated()
 {
-  if(_dVars.isLowlight) {
+  if(_dVars.isLowlight && !_dVars.playedGetout) {
     // Previously played the special Getin and set LCD brightness
-    //  so now play the getout and restore the LCD brightness
+    //  so now play the getout and restore the LCD brightness, if
+    //  we haven't already.
     PlayEmergencyGetOut(AnimationTrigger::LowlightChargerSearchGetout);
     GetBEI().GetPowerStateManager().RequestLCDBrightnessChange(kNormalLCDBrightness);
   }
@@ -170,7 +172,7 @@ bool BehaviorRobustChargerObservation::IsLowLightVision() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorRobustChargerObservation::TransitionToIlluminationCheck()
 {
-  WaitForImagesAction* waitForIllumState = new WaitForImagesAction(2, VisionMode::DetectingIllumination);
+  WaitForImagesAction* waitForIllumState = new WaitForImagesAction(2, VisionMode::Illumination);
   DelegateIfInControl(waitForIllumState, &BehaviorRobustChargerObservation::TransitionToObserveCharger);
 }
 
@@ -190,18 +192,31 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
     // Use image compositing
     // - prepend a getin animation and set LCD brightness
     // - wait for images with the appropriate looping animation
-    CompoundActionParallel* getinAndSetLcd = new CompoundActionParallel();
-    getinAndSetLcd->AddAction(new TriggerAnimationAction(AnimationTrigger::LowlightChargerSearchGetin));
-    getinAndSetLcd->AddAction(new WaitForLambdaAction([this,level=kMaxLCDBrightness](Robot& robot) {
-                                GetBEI().GetPowerStateManager().RequestLCDBrightnessChange(level);
-                                return true;
-                              }));
-    compoundAction->AddAction(getinAndSetLcd);
-    waitAction = new WaitForImagesAction(_iConfig.numImageCompositingCyclesToWaitFor, VisionMode::CompositingImages);
+    {
+      CompoundActionParallel* getinAndSetLcd = new CompoundActionParallel();
+      getinAndSetLcd->AddAction(new TriggerAnimationAction(AnimationTrigger::LowlightChargerSearchGetin));
+      getinAndSetLcd->AddAction(new WaitForLambdaAction([this,level=kMaxLCDBrightness](Robot& robot) {
+                                  GetBEI().GetPowerStateManager().RequestLCDBrightnessChange(level);
+                                  return true;
+                                }));
+      compoundAction->AddAction(getinAndSetLcd);
+    }
+    waitAction = new WaitForImagesAction(_iConfig.numImageCompositingCyclesToWaitFor, VisionMode::Markers_Composite);
+    waitAction->SetTracksToLock((u8)AnimTrackFlag::BODY_TRACK | (u8)AnimTrackFlag::HEAD_TRACK);
     compoundAction->AddAction(new LoopAnimWhileAction(waitAction, AnimationTrigger::LowlightChargerSearchLoop));
+    {
+      CompoundActionSequential* getoutAndSetLcd = new CompoundActionSequential();
+      getoutAndSetLcd->AddAction(new TriggerAnimationAction(AnimationTrigger::LowlightChargerSearchGetout));
+      getoutAndSetLcd->AddAction(new WaitForLambdaAction([this,level=kNormalLCDBrightness](Robot& robot) {
+                                  _dVars.playedGetout = true;
+                                  GetBEI().GetPowerStateManager().RequestLCDBrightnessChange(level);
+                                  return true;
+                                }));
+      compoundAction->AddAction(getoutAndSetLcd);
+    }
   } else {
     // Use cycling exposure instead
-    waitAction = new WaitForImagesAction(_iConfig.numCyclingExposureCyclesToWaitFor, VisionMode::CyclingExposure);
+    waitAction = new WaitForImagesAction(_iConfig.numCyclingExposureCyclesToWaitFor, VisionMode::AutoExp_Cycling);
     const auto currMood = GetBEI().GetMoodManager().GetSimpleMood();
     const bool isHighStim = (currMood == SimpleMoodType::HighStim);
     if (isHighStim) {
@@ -217,6 +232,7 @@ void BehaviorRobustChargerObservation::TransitionToObserveCharger()
                               Util::Data::Scope::Cache,
                               "robustChargerObsImages");
     ImageSaverParams params(path, ImageSaverParams::Mode::Stream, -1);  // Quality: save PNGs
+    params.size = Vision::ImageCacheSize::Full;
     waitAction->SetSaveParams(params);
   }
 

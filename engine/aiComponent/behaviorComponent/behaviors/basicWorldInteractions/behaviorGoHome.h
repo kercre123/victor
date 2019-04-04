@@ -38,7 +38,7 @@ public:
   
 protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::Markers, EVisionUpdateFrequency::High });
     modifiers.wantsToBeActivatedWhenOnCharger = false;
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
   }
@@ -110,6 +110,9 @@ private:
   
   void TransitionToCheckDockingArea();
   void TransitionToPlacingCubeOnGround();
+  void TransitionToFaceCharger();
+  void TransitionToDriveToObservationPose(const bool canRetry);
+  void TransitionToPostObservation();
   void TransitionToObserveCharger();
   void TransitionToDriveToCharger();
   void TransitionToCheckPreTurnPosition();

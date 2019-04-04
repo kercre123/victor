@@ -66,6 +66,8 @@ message Event {
     AlexaAuthEvent                   alexa_auth_event                    = 15; // App only
     MirrorModeDisabled               mirror_mode_disabled                = 16;
     VisionModesAutoDisabled          vision_modes_auto_disabled          = 17;
+    CheckUpdateStatusResponse        check_update_status_response        = 18; // App only
+    UserIntent                       user_intent                         = 19;
   }
 }
 
@@ -105,17 +107,25 @@ message UserAuthenticationResponse {
 // *** App only proto below ***
 
 // Messages to pass to the engine
+
+// These are only used between engine and gateway, so the field indices may
+// be changed freely, unlike externally-facing proto definitions that where
+// changes could break backwards-compatibility.
 message GatewayWrapper {
+  // connection_id can be used to identify multiple messages going to/from 
+  // the same source
+  uint64 connection_id = 1;
+
   oneof oneof_message_type {
     // ------------ messages sent from robot to app ----------------------
-    Event event                                                      = 1;
+    Event event                                                      = 2;
 
     // ------------ onboarding requests and responses --------------------
     // 1p0 backward compatibility enum values vvv
-    OnboardingStateRequest        onboarding_state_request           = 2;
-    OnboardingState               onboarding_state                   = 3;
-    OnboardingSkipOnboarding      onboarding_skip_onboarding         = 7;
-    OnboardingRestart             onboarding_restart                 = 8;
+    OnboardingStateRequest        onboarding_state_request           = 3;
+    OnboardingState               onboarding_state                   = 4;
+    OnboardingSkipOnboarding      onboarding_skip_onboarding         = 5;
+    OnboardingRestart             onboarding_restart                 = 6;
     OnboardingCompleteRequest     onboarding_complete_request        = 11;
     OnboardingCompleteResponse    onboarding_complete_response       = 12;
     OnboardingWakeUpRequest       onboarding_wake_up_request         = 13;
@@ -160,6 +170,16 @@ message GatewayWrapper {
     DriveOffChargerResponse       drive_off_charger_response         = 401;
     DriveOnChargerRequest         drive_on_charger_request           = 402;
     DriveOnChargerResponse        drive_on_charger_response          = 403;
+    FindFacesRequest              find_faces_request                 = 404;
+    FindFacesResponse             find_faces_response                = 405;
+    LookAroundInPlaceRequest      look_around_in_place_request       = 406;
+    LookAroundInPlaceResponse     look_around_in_place_response      = 407;
+    RollBlockRequest              roll_block_request                 = 408;
+    RollBlockResponse             roll_block_response                = 409;
+    EnrollFaceRequest             enroll_face_request                = 410;
+    EnrollFaceResponse            enroll_face_response               = 411;
+    SetFaceToEnrollRequest        set_face_to_enroll_request         = 412;
+    SetFaceToEnrollResponse       set_face_to_enroll_response        = 413;
 
     // ------------ movement request/response pairs ----------------------
     TurnInPlaceRequest              turn_in_place_request                = 500;
@@ -271,9 +291,11 @@ message GatewayWrapper {
     AlexaOptInRequest             alexa_opt_in_request               = 1602;
     AlexaOptInResponse            alexa_opt_in_response              = 1603;
 
-    // ------------ Eye color (SDK only) ------------
+    // ------------ Individual Robot Settings (SDK only) ------------
     SetEyeColorRequest            set_eye_color_request              = 1700;
     SetEyeColorResponse           set_eye_color_response             = 1701;
+    MasterVolumeRequest           master_volume_request              = 1702;
+    MasterVolumeResponse          master_volume_response             = 1703;
 
     // ------------ Streaming audio playback (SDK only) ------------
     ExternalAudioStreamPrepare    external_audio_stream_prepare      = 1800;

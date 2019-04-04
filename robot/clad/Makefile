@@ -1,7 +1,7 @@
 # CLAD makefile by Pauley
 # Customized for Robot by Daniel
 
-CLAD_BASE_DIR=../../tools/message-buffers
+CLAD_BASE_DIR=../../victor-clad/tools/message-buffers
 CLAD_EMITTER_DIR=$(CLAD_BASE_DIR)/emitters
 CLAD_LIB_DIR=$(CLAD_BASE_DIR)/clad
 CLAD_DEPENDENCIES=$(CLAD_LIB_DIR)/*.py

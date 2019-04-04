@@ -13,7 +13,7 @@
 
 #include "coretech/vision/engine/imageCache.h"
 
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 
 #include "util/math/math.h"
 

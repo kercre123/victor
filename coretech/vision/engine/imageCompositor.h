@@ -13,7 +13,7 @@
 #ifndef __Anki_Coretech_Vision_Engine_ImageCompositor_H__
 #define __Anki_Coretech_Vision_Engine_ImageCompositor_H__
 
-#include "coretech/common/shared/array2d.h"
+#include "coretech/common/shared/array2d_fwd.h"
 #include "json/json-forwards.h"
 
 namespace Anki {

@@ -12,7 +12,7 @@
  **/
 
 #include "gtest/gtest.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "engine/cozmoContext.h"
 #include "engine/navMap/iNavMap.h"
 #include "engine/navMap/mapComponent.h"

@@ -72,7 +72,7 @@ Supervisor {
       
       name "cozmo_viz_display"
       width 400
-      height 300
+      height 320
     }
 
     # Create camera display, plus N debug displays (0 == camera display, by convention)

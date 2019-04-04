@@ -1,0 +1,28 @@
+{
+  "behaviorID"    : "SleepWhileHeldInPalm",
+  "behaviorClass" : "DispatcherStrictPriority",
+  "associatedActiveFeature": "HeldInPalm",
+  
+  "interruptActiveBehavior": true,
+  "linkScope": true,
+  
+  "behaviors": [
+    "WakeGentlyFromHeldInPalmSleep",
+    "SleepWhileHeldInPalmLoop"
+  ],
+  
+  // When the HeldInPalmResponses dispatcher is deactivated
+  // while still held in a user's palm because of a higher-priority
+  // behavior such as TriggerWordDetected, the robot should not
+  // want to sleep again as soon as that higher priority behavior
+  // deactivates and allows HeldInPalmResponses to re-activate.
+  // Instead, the sleeping behavior should wait to be in-scope
+  // for a few seconds, to allow some other HIP response behavior
+  // to be active, then return the robot to sleep. This prevents
+  // the robot from abruptly just activating the sleep animations
+  // as soon as the robot is done with the higher-priority behavior
+  "wantsToBeActivatedCondition": {
+    "conditionType": "TimerInRange",
+    "begin_s": 10.0
+  }
+}

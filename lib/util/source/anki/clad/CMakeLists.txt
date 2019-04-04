@@ -1,7 +1,7 @@
 include(generate_clad)
 include(anki_build_strip)
 
-set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/tools/message-buffers")
+set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/victor-clad/tools/message-buffers")
 set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
 set(CLAD_CPP "${CLAD_EMITTER_DIR}/CPP_emitter.py")
 set(CLAD_HASH "${CLAD_EMITTER_DIR}/ASTHash_emitter.py")
@@ -33,7 +33,12 @@ add_library(util_clad STATIC
 
 target_include_directories(util_clad
     PUBLIC
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/util>
+    $<BUILD_INTERFACE:${OUTPUT_DIR}>
+)
+
+target_compile_definitions(util_clad
+  PUBLIC
+  USES_CLAD
 )
 
 target_link_libraries(util_clad

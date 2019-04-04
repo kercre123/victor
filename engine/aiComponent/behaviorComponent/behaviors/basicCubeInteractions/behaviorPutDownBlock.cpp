@@ -109,7 +109,7 @@ IActionRunner* BehaviorPutDownBlock::CreateLookAfterPlaceAction(CarryingComponen
     CompoundActionParallel* parallel = new CompoundActionParallel({new MoveHeadToAngleAction(DEG_TO_RAD(kBPDB_finalHeadAngle_deg)),
                                                                    new DriveStraightAction(kBPDB_verifyBackupDist_mm)});
     action->AddAction(parallel);
-    action->AddAction(new WaitForImagesAction(kNumFrames, VisionMode::DetectingMarkers));
+    action->AddAction(new WaitForImagesAction(kNumFrames, VisionMode::Markers));
   }
 
   if(doLookAtFaceAfter)

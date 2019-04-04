@@ -51,7 +51,7 @@ TEST(EyeContact, GazeEstimationInterface)
   config["FaceRecognition"] = faceRecognition;
 
   Json::Value initialVisionModes;
-  initialVisionModes["DetectingFaces"] = true;
+  initialVisionModes["Faces"] = true;
   config["InitialVisionModes"] = initialVisionModes;
   config["FaceAlbum"] = "robot";
 

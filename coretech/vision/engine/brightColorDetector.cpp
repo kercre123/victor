@@ -8,7 +8,7 @@
 #include "util/math/math.h"
 #include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/camera.h"
-#include "coretech/common/shared/math/matrix_impl.h"
+#include "coretech/common/shared/math/matrix.h"
 
 namespace Anki {
 namespace Vision {

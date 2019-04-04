@@ -26,7 +26,7 @@
 
 #include "cannedAnimLib/cannedAnims/animation.h"
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
@@ -283,7 +283,13 @@ const std::string& AnimationComponent::GetAnimationNameFromGroup(const std::stri
   }
   return empty;
 }
-  
+
+bool AnimationComponent::IsAnimationGroup(const std::string& group) const
+{
+  const bool groupExists = _animationGroups->_container.HasGroup(group);
+  return groupExists;
+}
+
 Result AnimationComponent::PlayAnimByName(const std::string& animName,
                                           int numLoops,
                                           bool interruptRunning,

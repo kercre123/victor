@@ -61,6 +61,10 @@ private:
       const external_interface::GatewayWrapper& proto_message,
       ExternalInterface::MessageGameToEngine& clad_message);
 
+  static void ProtoSetFaceToEnrollRequestToClad(
+      const external_interface::GatewayWrapper& proto_message,
+      ExternalInterface::MessageGameToEngine& clad_message);
+
   //
   // Clad-to-Proto interpreters
   //
@@ -82,6 +86,10 @@ private:
 
   static void CladStopAllMotorsToProto(
       const ExternalInterface::MessageGameToEngine& clad_message, 
+      external_interface::GatewayWrapper& proto_message);
+
+  static void CladSetFaceToEnrollToProto(
+      const ExternalInterface::MessageGameToEngine& clad_message,
       external_interface::GatewayWrapper& proto_message);
 
   static void CladEndOfMessageToProto(

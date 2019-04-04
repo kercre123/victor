@@ -65,6 +65,7 @@ enum uint_8 BEIConditionType {
   TimePowerButtonPressed,
   TimedDedup,
   TimerInRange,
+  TooHotToCharge,
   TriggerWordPending,
   UnexpectedMovement,
   UserIntentActive,

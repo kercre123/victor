@@ -11,29 +11,21 @@
  * Copyright: Anki, Inc. 2014
  **/
 
-#ifndef ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
-#define ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
+#ifndef ANKI_VECTOR_BASESTATION_VISION_PROC_THREAD_H
+#define ANKI_VECTOR_BASESTATION_VISION_PROC_THREAD_H
 
 #include "coretech/vision/engine/cameraCalibration.h"
-#include "coretech/vision/engine/droppedFrameStats.h"
-#include "coretech/vision/engine/imageCache.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/engine/visionMarker.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "util/entityComponent/entity.h"
 #include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
 #include "engine/engineTimeStamp.h"
-#include "engine/externalInterface/externalInterface.h"
-#include "engine/robotStateHistory.h"
-#include "engine/rollingShutterCorrector.h"
-#include "engine/vision/visionModeSchedule.h"
-#include "engine/vision/visionPoseData.h"
 #include "engine/vision/visionSystemInput.h"
 
 #include "clad/types/cameraParams.h"
 #include "clad/types/imageTypes.h"
 #include "clad/types/loadedKnownFace.h"
-#include "clad/types/robotStatusAndActions.h"
 #include "clad/types/salientPointTypes.h"
 #include "clad/types/visionModes.h"
 
@@ -45,7 +37,6 @@
 #include <mutex>
 #include <list>
 #include <vector>
-#include <future>
 
 namespace Anki {
 
@@ -143,7 +134,7 @@ struct DockingErrorSignal;
     // Non blocking but will cause VisionComponent/System to
     // wait until no one is using the shared camera memory before
     // requesting the format change and will continue to
-    // wait until we once again recieve frames from the camera
+    // wait until we once again receive frames from the camera
     bool   SetCameraCaptureFormat(Vision::ImageEncoding format);
     
     // Returns true while camera format is in the process of changing
@@ -154,7 +145,7 @@ struct DockingErrorSignal;
     Result UpdateAllResults();
     
     // Individual processing update helpers. These are called individually by
-    // UpdateAllResults() above, but are exposed as public fo Unit Test usage.
+    // UpdateAllResults() above, but are exposed as public for Unit Test usage.
     Result UpdateFaces(const VisionProcessingResult& result);
     Result UpdatePets(const VisionProcessingResult& procResult);
     Result UpdateVisionMarkers(const VisionProcessingResult& result);
@@ -175,7 +166,7 @@ struct DockingErrorSignal;
     const std::shared_ptr<Vision::CameraCalibration> GetCameraCalibration() const;
     bool IsCameraCalibrationSet() const { return _camera->IsCalibrated(); }
     Result ClearCalibrationImages();
-      
+
     RobotTimeStamp_t GetLastProcessedImageTimeStamp() const;
     
     TimeStamp_t GetProcessingPeriod_ms() const;
@@ -213,7 +204,7 @@ struct DockingErrorSignal;
     Result GetCalibrationPoseToRobot(size_t whichPose, Pose3d& p) const;
 
     // Call to compute calibration from previously stored images
-    void EnableComputingCameraCalibration(bool enable) { EnableMode(VisionMode::ComputingCalibration, enable); }
+    void EnableComputingCameraCalibration(bool enable) { EnableMode(VisionMode::Calibration, enable); }
     
     // For factory test behavior use only: tell vision component to find the
     // four dots for the test target and compute camera pose. Result is
@@ -377,6 +368,11 @@ struct DockingErrorSignal;
     // and can not be modified by VisionComponent
     VisionSystemInput _visionSystemInput = {};
 
+    // This mutex/condition_variable pair is used for the main thread to signal the
+    // Processor thread that an image is ready to be processed (or we are shutting down)
+    std::mutex              _imageReadyMutex;
+    std::condition_variable _imageReadyCondition;
+
     bool _storeNextImageForCalibration = false;
     Rectangle<s32> _calibTargetROI;
     
@@ -449,7 +445,7 @@ struct DockingErrorSignal;
     #if REMOTE_CONSOLE_ENABLED
     // Array of pairs of ConsoleVars and their associated values used for toggling VisionModes
     using VisionModeConsoleVarPair = std::pair<Util::ConsoleVar<bool>*, bool>;
-    std::array<VisionModeConsoleVarPair, static_cast<u32>(VisionMode::Count)>  _visionModeConsoleVars;
+    std::array<VisionModeConsoleVarPair, static_cast<u32>(VisionMode::Count)> _visionModeConsoleVars;
     #endif
     
     void ReadVisionConfig(const Json::Value& config);
@@ -525,7 +521,7 @@ struct DockingErrorSignal;
   
   inline void VisionComponent::EnableVisionWhileRotatingFast(bool enable) {
     _visionWhileRotatingFastEnabled = enable;
-    EnableMode(VisionMode::MarkerDetectionWhileRotatingFast, _visionWhileRotatingFastEnabled);
+    EnableMode(VisionMode::Markers_FastRotation, _visionWhileRotatingFastEnabled);
   }
   
   inline bool VisionComponent::IsVisionWhileRotatingFastEnabled() const {
@@ -583,4 +579,4 @@ struct DockingErrorSignal;
 } // namespace Vector
 } // namespace Anki
 
-#endif // ANKI_COZMO_BASESTATION_VISION_PROC_THREAD_H
+#endif // ANKI_VECTOR_BASESTATION_VISION_PROC_THREAD_H

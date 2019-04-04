@@ -15,7 +15,7 @@ For internal use only. No part of this code may be used without a signed non-dis
 #define DRAW_LINE_FITS 0
 
 #if DRAW_LINE_FITS
-#  include "coretech/vision/engine/image_impl.h"
+#  include "coretech/vision/engine/image.h"
 #endif
 
 #define LINE_FIT_METHOD_KMEANS 0 // Works, but needs profiling to see if termination parameters (and initialization) are good and fast enough

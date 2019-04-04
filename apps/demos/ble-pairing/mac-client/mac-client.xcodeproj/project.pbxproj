@@ -566,12 +566,12 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 6N4JN4E7V7;
 				HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/../../../../tools/message-buffers/support/cpp/include/**",
+					"$(PROJECT_DIR)/../../../../victor-clad/tools/message-buffers/support/cpp/include/**",
 					"$(PROJECT_DIR)/../../../../EXTERNALS/libsodium/mac/include",
 					"$(PROJECT_DIR)/**",
 				);
 				"HEADER_SEARCH_PATHS[arch=*]" = (
-					"$(PROJECT_DIR)/../../../../tools/message-buffers/support/cpp/include/**",
+					"$(PROJECT_DIR)/../../../../victor-clad/tools/message-buffers/support/cpp/include/**",
 					"$(PROJECT_DIR)/../../../../EXTERNALS/libsodium/mac/include",
 					"$(PROJECT_DIR)",
 				);
@@ -592,7 +592,7 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 6N4JN4E7V7;
 				HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/../../../../tools/message-buffers/support/cpp/include/**",
+					"$(PROJECT_DIR)/../../../../victor-clad/tools/message-buffers/support/cpp/include/**",
 					"$(PROJECT_DIR)/../../../../EXTERNALS/libsodium/mac/include",
 					"$(PROJECT_DIR)",
 				);

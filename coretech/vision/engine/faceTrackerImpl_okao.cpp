@@ -15,14 +15,11 @@
 
 #include "faceTrackerImpl_okao.h"
 
-#include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/shared/math/rotation.h"
-#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/quad.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/okaoParamInterface.h"
 
 #include "util/console/consoleInterface.h"
-#include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
 
@@ -134,7 +131,7 @@ namespace Vision {
 
     // Get and print Okao library version as a sanity check that we can even
     // talk to the library
-    UINT8 okaoVersionMajor=0, okaoVersionMinor = 0;
+    UINT8 okaoVersionMajor = 0, okaoVersionMinor = 0;
     INT32 okaoResult = OKAO_CO_GetVersion(&okaoVersionMajor, &okaoVersionMinor);
     if(okaoResult != OKAO_NORMAL) {
       LOG_ERROR("FaceTrackerImpl.Init.FaceLibVersionFail", "");
@@ -146,7 +143,7 @@ namespace Vision {
     
     okaoResult = OKAO_DT_GetVersion(&okaoVersionMajor, &okaoVersionMinor);
     if(okaoResult != OKAO_NORMAL) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceDetectorVersionFail", "");
+      LOG_ERROR("FaceTrackerImpl.Init.FaceDetectorVersionFail", "");
       return RESULT_FAIL;
     }
     LOG_INFO("FaceTrackerImpl.Init.FaceDetectorVersion",
@@ -599,9 +596,9 @@ namespace Vision {
         FacialExpression::Sadness
       };
 
-      for(INT32 okaoExpressionVal = 0; okaoExpressionVal < EX_EXPRESSION_KIND_MAX; ++okaoExpressionVal) {
-        face.SetExpressionValue(TrackedFaceExpressionLUT[okaoExpressionVal],
-                                _expressionValues[okaoExpressionVal]);
+      for(INT32 okaoExprIndex = 0; okaoExprIndex < EX_EXPRESSION_KIND_MAX; ++okaoExprIndex) {
+        face.SetExpressionValue(TrackedFaceExpressionLUT[okaoExprIndex],
+                                Util::numeric_cast<TrackedFace::ExpressionValue>(_expressionValues[okaoExprIndex]));
       }
 
     }

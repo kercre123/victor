@@ -57,6 +57,7 @@ namespace {
   std::mutex               s_ProcessStatusMutex;
   std::condition_variable  s_ProcessStatusCondition;
 #endif
+  std::atomic_bool         s_ShuttingDown{false};
 }
 
 // Used websockets codes, see websocket RFC pg 29
@@ -230,6 +231,11 @@ ProcessRequest(struct mg_connection *conn, WebService::WebService::RequestType r
                bool waitAndSendResponse = true, WebService::WebService::ExternalCallback extCallback = nullptr,
                void* cbdata = nullptr)
 {
+  if (s_ShuttingDown)
+  {
+    return 1;
+  }
+
   WebService::WebService::Request* requestPtr = new WebService::WebService::Request(requestType, param1, param2,
                                                                                     param3, extCallback, cbdata);
 
@@ -594,6 +600,11 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
 
 static int GetPerfStats(struct mg_connection *conn, void *cbdata)
 {
+  if (s_ShuttingDown)
+  {
+    return 1;
+  }
+  
   using namespace std::chrono;
   const auto startTime = steady_clock::now();
 
@@ -763,6 +774,11 @@ static int SystemCtl(struct mg_connection *conn, void *cbdata)
 
 static int GetProcessStatus(struct mg_connection *conn, void *cbdata)
 {
+  if (s_ShuttingDown)
+  {
+    return 1;
+  }
+
   std::string resultsString;
 
   using namespace std::chrono;
@@ -1228,15 +1244,34 @@ void WebService::Update()
 
 void WebService::Stop()
 {
-  if (_ctx) {
+  s_ShuttingDown = true;
+  if (_ctx)
+  {
+    // Call update to process any pending request(s) and wake up the
+    // thread(s) that are waiting for those request(s) to be processed.
+    // This will allow the mg_stop call below to not take forever waiting
+    // for threads to shut down.
+    Update();
+    
+#ifndef SIMULATOR
+    // Notify any pending thread that's waiting for process status, so that
+    // the mg_stop call below will not hang waiting for it
+    {
+      std::unique_lock<std::mutex> lk{s_ProcessStatusMutex};
+      s_ProcessStatuses.clear();
+      s_WaitingForProcessStatus = false;
+    }
+    s_ProcessStatusCondition.notify_all();
+#endif
+
 #ifdef VICOS
     // shutdown nicely on the robot but let the OS handle it for the simulator, mg_stop triggers
     // the thread sanitizer and execution stops here, by removing this line in SIMULATOR builds
     // it allows the thread sanitizier to continue to do useful work.
     mg_stop(_ctx);
 #endif
+    _ctx = nullptr;
   }
-  _ctx = nullptr;
 }
 
 

@@ -130,11 +130,12 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 
   // Check if battery is _really_ overheating, enough for a shutdown to be coming.
   // This is actually handled in vic-robot, but is recorded here for viz purposes.
-  _battOverheated = msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_OVERHEATED;
+  #define IS_STATUS_FLAG_SET(x) ((msg.status & (uint32_t)RobotStatusFlag::x) != 0)
+  _battOverheated = IS_STATUS_FLAG_SET(IS_BATTERY_OVERHEATED);
 
   // Only update filtered value if the battery isn't disconnected
   _wasBattDisconnected = _battDisconnected;
-  _battDisconnected = (msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED)
+  _battDisconnected = IS_STATUS_FLAG_SET(IS_BATTERY_DISCONNECTED)
                       || (_batteryVoltsRaw < 3);  // Just in case syscon doesn't report IS_BATTERY_DISCONNECTED for some reason.
                                                   // Anything under 3V doesn't make sense.
 
@@ -146,7 +147,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   // If in calm mode, RobotState messages are expected to come in at a slower rate
   // and we therefore need to adjust the sampling rate of the filter.
   static bool prevSysconCalmMode = false;
-  const bool currSysconCalmMode = msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE;
+  const bool currSysconCalmMode = IS_STATUS_FLAG_SET(CALM_POWER_MODE);
   if (currSysconCalmMode && !prevSysconCalmMode) {
     _batteryVoltsFilter->SetSamplePeriod(kCalmModeBatteryVoltsUpdatePeriod_sec);
   } else if (!currSysconCalmMode && prevSysconCalmMode) {
@@ -174,15 +175,9 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   const auto oldBatteryLevel = _batteryLevel;
 
   // Update isCharging / isOnChargerContacts / isOnChargerPlatform
-  SetOnChargeContacts(msg.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
-  SetIsCharging(msg.status & (uint32_t)RobotStatusFlag::IS_CHARGING);
+  SetOnChargeContacts(IS_STATUS_FLAG_SET(IS_ON_CHARGER));
+  SetIsCharging(IS_STATUS_FLAG_SET(IS_CHARGING));
   UpdateOnChargerPlatform();
-
-  // Fake low battery timeout
-  if (IsOnChargerContacts() && kFakeLowBatteryAfterOffChargerTimeout_sec != 0) {
-    _fakeLowBatteryTime_sec = now_sec + kFakeLowBatteryAfterOffChargerTimeout_sec;
-  }
-
 
   // Check for change in disconnected state
   if (_battDisconnected != _wasBattDisconnected) {
@@ -221,7 +216,20 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   }
 
   // Check if low battery
-  const bool isLowBattery = msg.status & (uint32_t)RobotStatusFlag::IS_BATTERY_LOW;
+  bool isLowBattery = IS_STATUS_FLAG_SET(IS_BATTERY_LOW);
+
+  // Fake low battery?
+  if (!IsOnChargerContacts()) {
+    if (kFakeLowBattery) {
+      isLowBattery = true;
+    } else if ((kFakeLowBatteryAfterOffChargerTimeout_sec != 0) &&
+               (now_sec > _fakeLowBatteryTime_sec)) {
+      isLowBattery = true;
+    }
+  } else if (kFakeLowBatteryAfterOffChargerTimeout_sec != 0) {
+    // Reset countdown-to-low battery timer when on charger
+    _fakeLowBatteryTime_sec = now_sec + kFakeLowBatteryAfterOffChargerTimeout_sec;
+  }
 
   // Update battery charge level
   BatteryLevel level = BatteryLevel::Nominal;
@@ -231,15 +239,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   } else if (isLowBattery) {
     level = BatteryLevel::Low;
   }
-
-  if (kFakeLowBatteryAfterOffChargerTimeout_sec != 0) {
-    if (now_sec > _fakeLowBatteryTime_sec) {
-      if (_batteryLevel != BatteryLevel::Low) {
-        LOG_INFO("BatteryComponent.ForceLowBattery", "");
-      }
-      level = BatteryLevel::Low;
-    }
-  }
+  
 
   if (level != _batteryLevel) {
     LOG_INFO("BatteryComponent.BatteryLevelChanged",
@@ -286,7 +286,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   // Report encoder stats only while off charger
   // (Encoders should normally be off while on charger)
   if (!IsOnChargerContacts()) {
-    bool encodersDisabled = msg.status & (uint32_t)RobotStatusFlag::ENCODERS_DISABLED;
+    bool encodersDisabled = IS_STATUS_FLAG_SET(ENCODERS_DISABLED);
     _batteryStatsAccumulator->UpdateEncoderStats(encodersDisabled, currSysconCalmMode);
   }
 
@@ -369,11 +369,12 @@ void BatteryComponent::SetOnChargeContacts(const bool onChargeContacts)
     DASMSG_SET(i3, onChargeContacts ? GetBatteryVolts_mV() : GetBatteryVoltsRaw_mV(), 
                "If on charger, last filtered battery voltage. "
                "If off charger, current raw battery voltage (mV)");
-    DASMSG_SET(i4, onChargeContacts ? _battDisconnected : _wasBattDisconnected, 
+    DASMSG_SET(i4, timeSinceLowBattStarted_sec, 
+               "Time since low battery (sec)");
+    DASMSG_SET(s1, (onChargeContacts ? _battDisconnected : _wasBattDisconnected) ? "disconnected" : "connected", 
                "If on charger, current battery disconnected state. "
                "If off charger, battery disconnected state when it was on charger.");
-    DASMSG_SET(s1, timeSinceLowBattStarted_sec, 
-               "Time since low battery (sec)");
+    DASMSG_SET(s2, EnumToString(_batteryLevel), "Battery level just prior to on charger change");
     DASMSG_SEND();
     _lastOnChargerContactsChange_sec = now_sec;
   }

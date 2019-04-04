@@ -25,7 +25,9 @@
 namespace Anki {
 namespace Vector {
 
+// Forward declarations:
 class BEIRobotInfo;
+class MovementComponent;
 
 class HeldInPalmTracker : public IDependencyManagedComponent<BCComponentID>,
                           public Anki::Util::noncopyable
@@ -65,15 +67,17 @@ private:
 
   std::vector<::Signal::SmartHandle> _eventHandles;
   
-  void SetIsHeldInPalm(const bool isHeldInPalm);
+  void SetIsHeldInPalm(const bool isHeldInPalm, MovementComponent& moveComp);
   
   void CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo);
   
   // Helper functions to check whether robot has transitioned into user's palm:
   bool WasRobotPlacedInPalmWhileHeld(const BEIRobotInfo& robotInfo,
-                                             const u32 timeToConfirmHeldInPalm_ms) const;
+                                     const u32 timeToConfirmHeldInPalm_ms) const;
   
   bool HasDetectedEnoughCliffsSincePickup(const BEIRobotInfo& robotInfo) const;
+  
+  bool WasRobotMovingRecently(const BEIRobotInfo& robotInfo) const;
   
   // Auxilary helper functions:
   u32 GetMillisecondsSince(const EngineTimeStamp_t& pastTimestamp) const;

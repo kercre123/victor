@@ -17,7 +17,7 @@
 
 #include "camera/cameraService.h"
 
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 
 #include "simulator/controllers/shared/webotsHelpers.h"
 

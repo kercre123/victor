@@ -279,6 +279,7 @@ bool CompositeImageLayer::SpriteBox::ValidateRenderConfig() const
 {
   switch(renderConfig.renderMethod){
     case SpriteRenderMethod::RGBA:
+    case SpriteRenderMethod::EyeColor:
     case SpriteRenderMethod::CustomHue:
     {
       return true;

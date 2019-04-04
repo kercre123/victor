@@ -13,7 +13,6 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/factory/faultCodes.h"
 #include "core/lcd.h"
-#include "coretech/common/shared/array2d_impl.h"
 #include "coretech/vision/engine/image.h"
 #include "rescue/pairing_icon_key.h"
 #include "opencv2/highgui.hpp"

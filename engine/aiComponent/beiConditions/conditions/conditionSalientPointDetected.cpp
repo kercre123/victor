@@ -55,7 +55,7 @@ bool ConditionSalientPointDetected::AreConditionsMetInternal(BehaviorExternalInt
 void
 Anki::Vector::ConditionSalientPointDetected::GetRequiredVisionModes(std::set<Anki::Vector::VisionModeRequest>& requiredVisionModes) const
 {
-  requiredVisionModes.insert( {VisionMode::DetectingPeople, EVisionUpdateFrequency::Low} );
+  requiredVisionModes.insert( {VisionMode::People, EVisionUpdateFrequency::Low} );
 }
 
 } // namespace Vector

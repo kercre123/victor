@@ -17,6 +17,7 @@ enum uint_8 BehaviorClass {
   HighLevelAI,
   LookAroundInPlace,
   ResetState,
+  SimpleVoiceResponse,
   StayOnChargerUntilCharged,
   Wait,
 
@@ -148,6 +149,9 @@ enum uint_8 BehaviorClass {
   Exploring,
   ExploringExamineObstacle,
 
+  // eyeColor
+  EyeColorVoiceCommand,
+
   // freeplay/putDownDispatch
   LookForFaceAndCube,
 
@@ -163,6 +167,9 @@ enum uint_8 BehaviorClass {
 
   // habitat
   ConfirmHabitat,
+
+  // heldInPalm
+  InitialHeldInPalmReaction,
 
   // knowledgeGraph
   KnowledgeGraphQuestion,
@@ -203,7 +210,6 @@ enum uint_8 BehaviorClass {
   // reactions
   AskForHelp,
   CheckForAndReactToSalientPoint,
-  ReactToBatteryTooHotToCharge,
   ReactToCliff,
   ReactToCubeTap,
   ReactToDarkness,
@@ -228,6 +234,7 @@ enum uint_8 BehaviorClass {
 
   // sdkBehaviors
   SDKInterface,
+  SDKLock,
 
   // simpleFaceBehaviors
   DriveToFace,
