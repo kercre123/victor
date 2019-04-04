@@ -8,6 +8,8 @@ enum uint_32 BusType
 {
   Alexa_Robot = 3848958671,
   Dev_Bus = 2403041217,
+  Dev_General_Bus = 948416556,
+  Dev_Squawk_Bus = 3005198374,
   Invalid = 0,
   Master_Audio_Bus = 3803692087,
   Master_Secondary_Bus = 805203703,
