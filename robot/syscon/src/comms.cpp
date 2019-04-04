@@ -69,7 +69,6 @@ static struct {
 
 static const uint16_t BYTE_TIMER_PRESCALE = SYSTEM_CLOCK / COMMS_BAUDRATE;
 static const uint16_t BYTE_TIMER_PERIOD = 14; // 8 bits, 1 start / stop + 3 bits of "slop"
-static const int MAX_MISSED_FRAMES = 200; // 1 second of missed frames
 static const int MAX_FIFO_SLOTS = 4;
 static const int MAX_INBOUND_SIZE = 0x100;  // Must be a power of two, and at least twice as big as InboundPacket
 static const int EXTRA_MESSAGE_DATA = sizeof(SpineMessageHeader) + sizeof(SpineMessageFooter);
@@ -78,8 +77,6 @@ static TransmitFifo txFifo[MAX_FIFO_SLOTS];
 static int txFifo_read = 0;
 static int txFifo_write = 0;
 static uint8_t inbound_raw[MAX_INBOUND_SIZE];
-
-static int missed_frames = 0;
 
 // Receive buffer stuff
 static int previousIndex = 0;
@@ -192,13 +189,6 @@ static int dequeue(void* out, int size) {
 }
 
 void Comms::tick(void) {
-  // Soft-watchdog (Disable power to sensors when robot process is idle)
-  if (missed_frames < MAX_MISSED_FRAMES) {
-    missed_frames++;
-  } else if (Opto::sensorsValid()) {
-    Power::setMode(POWER_CALM);
-  }
-
   // Stop our DMA
   DMA1_Channel3->CCR = DMA_CCR_MINC
                      | DMA_CCR_DIR;
@@ -279,7 +269,6 @@ static void ProcessMessage(InboundPacket& packet) {
     switch (packet.header.payload_type) {
       case PAYLOAD_SHUT_DOWN:
         // Prevent system from waking itself up for 1 second
-        missed_frames = 0;
         Power::setMode(POWER_STOP);
         break ;
       case PAYLOAD_MODE_CHANGE:
@@ -294,8 +283,6 @@ static void ProcessMessage(InboundPacket& packet) {
         Lights::receive(packet.lightState.ledColors);
         break ;
       case PAYLOAD_DATA_FRAME:
-        missed_frames = 0;
-        Power::wakeUp();
         Motors::receive(&packet.headToBody);
         Lights::receive(packet.headToBody.lightState.ledColors);
         Analog::receive(&packet.headToBody);

@@ -4,7 +4,6 @@
 enum PowerMode {
   POWER_UNINIT = 0,
   POWER_ACTIVE,       // Encoders
-  POWER_CALM,
   POWER_STOP,
   POWER_ERASE
 };
@@ -12,7 +11,6 @@ enum PowerMode {
 namespace Power {
   void init(void);
   void tick(void);
-  void wakeUp(void);
   void adjustHead();
   void signalRecovery();
   void setMode(PowerMode);

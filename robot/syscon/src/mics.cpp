@@ -21,7 +21,6 @@ static const int PDM_BYTES_PER_IRQ = SAMPLES_PER_IRQ * AUDIO_DECIMATION * 2 / 8;
 static int16_t audio_data[2][AUDIO_SAMPLES_PER_FRAME * 4];
 static uint16_t pdm_data[2][2][PDM_BYTES_PER_IRQ / 2];
 static int sample_index;
-static bool reduced;
 
 static int16_t MIC_SPI_CR1 = 0
            | SPI_CR1_MSTR                 // Master
@@ -97,8 +96,6 @@ void Mics::init(void) {
 
   NVIC_SetPriority(DMA1_Channel2_3_IRQn, PRIORITY_MICS);
 
-  reduced = false;
-
   start_mic_spi(TIM_CR1_CEN, MIC_SPI_CR1, (void*)&TIM15->CR1);
 }
 
@@ -109,10 +106,6 @@ void Mics::start(void) {
 
 void Mics::stop(void) {
   NVIC_DisableIRQ(DMA1_Channel2_3_IRQn);
-}
-
-void Mics::reduce(bool reduce) {
-  reduced = reduce;
 }
 
 void Mics::errorCode(uint16_t* data) {
@@ -126,7 +119,7 @@ void Mics::transmit(int16_t* payload) {
 
 static void decimate(const uint16_t* input, int32_t* acc, int16_t* output) {
   dec_odd(&acc[0], input, &output[0]);
-  if (!reduced) dec_even(&acc[2], input, &output[1]);
+  dec_even(&acc[2], input, &output[1]);
 }
 
 extern "C" void DMA1_Channel2_3_IRQHandler(void) {
@@ -139,14 +132,14 @@ extern "C" void DMA1_Channel2_3_IRQHandler(void) {
   // Note: if this falls behind, it will drop a bunch of samples
   if (isr & DMA_ISR_HTIF2) {
     decimate(pdm_data[0][0], accumulator[0], &output[0]);
-    if (!reduced) decimate(pdm_data[1][0], accumulator[1], &output[2]);
+    decimate(pdm_data[1][0], accumulator[1], &output[2]);
     output += SAMPLES_PER_IRQ * 4;
     sample_index++;
   }
 
   if (isr & DMA_ISR_TCIF2) {
     decimate(pdm_data[0][1], accumulator[0], &output[0]);
-    if (!reduced) decimate(pdm_data[1][1], accumulator[1], &output[2]);
+    decimate(pdm_data[1][1], accumulator[1], &output[2]);
     output += SAMPLES_PER_IRQ * 4;
     sample_index++;
   }

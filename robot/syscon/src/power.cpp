@@ -35,7 +35,7 @@ static const uint32_t APB2_CLOCKS = 0
               ;
 
 static PowerMode currentState = POWER_UNINIT;
-static PowerMode desiredState = POWER_CALM;
+static PowerMode desiredState = POWER_ACTIVE;
 static bool enter_recovery = false;
 
 static void enterBootloader(void);
@@ -157,13 +157,6 @@ static void enterBootloader(void) {
   SoftReset(Analog::on_charger);
 }
 
-void Power::wakeUp() {
-  // Only wake up if we are in a low power state, not sleeping
-  if (desiredState == POWER_CALM) {
-    desiredState = POWER_ACTIVE;
-  }
-}
-
 void Power::setMode(PowerMode set) {
   desiredState = set;
 }
@@ -206,11 +199,9 @@ void Power::tick(void) {
     if (currentState == POWER_ACTIVE) {
       Opto::stop();
       Encoders::stop();
-      Mics::reduce(true);
     } else if (desired == POWER_ACTIVE) {
       Encoders::start();
       Opto::start();
-      Mics::reduce(false);
     } 
 
     if (desired == POWER_ERASE) {
