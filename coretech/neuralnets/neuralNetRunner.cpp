@@ -56,13 +56,13 @@ Result NeuralNetRunner::InitInternal(const std::string& cachePath, const Json::V
     }
     else
     {
-      LOG_ERROR("IAsyncRunner.Init.UnknownModelType", "%s", modelTypeString.c_str());
+      LOG_ERROR("NeuralNetRunner.InitInternal.UnknownModelType", "%s", modelTypeString.c_str());
       return RESULT_FAIL;
     }
   }
   else
   {
-    LOG_ERROR("IAsyncRunner.Init.MissingConfig", "%s", NeuralNets::JsonKeys::ModelType);
+    LOG_ERROR("NeuralNetRunner.InitInternal.MissingConfig", "%s", NeuralNets::JsonKeys::ModelType);
     return RESULT_FAIL;
   }
   
@@ -80,11 +80,11 @@ Result NeuralNetRunner::InitInternal(const std::string& cachePath, const Json::V
   
   if(RESULT_OK != result)
   {
-    LOG_ERROR("IAsyncRunner.Init.LoadModelFailed", "");
+    LOG_ERROR("NeuralNetRunner.InitInternal.LoadModelFailed", "");
     return result;
   }
   
-  PRINT_NAMED_INFO("IAsyncRunner.Init.LoadModelTime", "Loading model from '%s' took %.1fsec",
+  PRINT_NAMED_INFO("NeuralNetRunner.InitInternal.LoadModelTime", "Loading model from '%s' took %.1fsec",
                    _modelPath.c_str(), Util::MilliSecToSec(GetProfiler().AverageToc("LoadModel")));
   
   return result;
@@ -109,7 +109,7 @@ std::list<Vision::SalientPoint> NeuralNetRunner::Run(Vision::ImageRGB& img)
   
   if(RESULT_OK != result)
   {
-    LOG_WARNING("IAsyncRunner.RunModel.ModelDetectFailed", "");
+    LOG_WARNING("NeuralNetRunner.Run.ModelDetectFailed", "");
   }
   
   return salientPoints;
