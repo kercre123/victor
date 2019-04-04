@@ -2885,11 +2885,12 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 		if data, err := ioutil.ReadFile("/run/update-engine/error"); err == nil {
 			updateStatus.Error = string(data)
 			if strings.HasPrefix(updateStatus.Error, "Unclean exit") {
-				// If we get this error, either we caught /anki/bin/update-engine in its earliest
-				// stages, or systemd has gone awry. The former case is not an error - the string
-				// was initialized this way in case an error did occur. The latter case isn't
-				// easily detectable, and implies a larger system failure from which we can't
-				// recover (or provide users with good info on) anyway.
+				// If we get this error, either we caught /anki/bin/update-engine in its
+				// earliest stages, or systemd has gone awry. The former case is not an
+				// error - the string was initialized this way in case an error did occur.
+				// The latter case isn't easily detectable, and implies a larger system
+				// failure from which we can't recover (or provide users with good info
+				// on) anyway.
 				updateStatus.Error = ""
 			}
 		}
@@ -2930,7 +2931,8 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 	if strings.HasPrefix(updateStatus.UpdatePhase, "download") {
 		if updateStatus.ExitCode > 1 {
 			if updateStatus.ExitCode == 208 || updateStatus.ExitCode == 215 {
-				updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_FAILURE_INTERRUPTED_DOWNLOAD
+				updateStatus.UpdateStatus =
+					extint.CheckUpdateStatusResponse_FAILURE_INTERRUPTED_DOWNLOAD
 			} else {
 				updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_FAILURE_OTHER
 			}
@@ -2962,9 +2964,10 @@ func (service *rpcService) UpdateStatusStream() {
 
 	for len(connectionId) != 0 {
 		status, err := service.GetUpdateStatus()
-		// Keep streaming to the requestor until they disconnect. We don't stop streaming
-		// just because there's no update pending (a requested update may be pending, but
-		// hasn't had a chance to update /run/update-engine/* yet).
+		// Keep streaming to the requestor until they disconnect. We don't stop
+		// streaming just because there's no update pending (a requested update
+		// may be pending, but hasn't had a chance to update
+		// /run/update-engine/* yet).
 		if err != nil {
 			break
 		}
@@ -3006,8 +3009,8 @@ func (service *rpcService) StartUpdateEngine(
 	status, _ := service.GetUpdateStatus()
 
 	if status.UpdateStatus == extint.CheckUpdateStatusResponse_NO_UPDATE {
-		// If this fails, we can still continue, but it could indicate something more serious
-		// (hence, the error)
+		// If this fails, we can still continue, but it could indicate something more
+		// serious (hence, the error)
 		err := exec.Command("/bin/touch", "/run/update-engine/app_requested").Run()
 		if err != nil {
 			log.Errorf("Couldn't /bin/touch /run/update-engine/app_requested")
