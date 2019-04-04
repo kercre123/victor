@@ -779,7 +779,7 @@ GTEST_TEST(NeuralNets, InitFromConfig)
     
     // Check that the model file exists and is a .tflite model (unless this is an "offboard" model definition)
     ASSERT_TRUE(modelConfig.isMember(NeuralNets::JsonKeys::ModelType));
-    const std::string modelTypeStr = modelConfig[NeuralNets::JsonKeys::GraphFile].asString();
+    const std::string modelTypeStr = modelConfig[NeuralNets::JsonKeys::ModelType].asString();
     if(modelTypeStr != NeuralNets::JsonKeys::OffboardModelType)
     {
       ASSERT_TRUE(modelConfig.isMember(NeuralNets::JsonKeys::GraphFile));
