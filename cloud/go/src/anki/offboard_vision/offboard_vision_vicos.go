@@ -1,3 +1,5 @@
+// +build !shipping
+
 package offboard_vision
 
 import (

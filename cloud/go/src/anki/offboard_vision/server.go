@@ -1,3 +1,5 @@
+// +build !:wshipping
+
 package offboard_vision
 
 import (
