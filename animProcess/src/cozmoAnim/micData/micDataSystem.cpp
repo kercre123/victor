@@ -220,7 +220,18 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
   // the streaming controller will handle the rest for us
   if( _micStateController.CanBeginStreamingJob() )
   {
-    _micStateController.BeginStreamingJob( type, playGetInFromAnimProcess, {} );
+    MicStreamingController::StreamingArguments args =
+    {
+      .streamType                 = type,
+      .shouldPlayTransitionAnim   = playGetInFromAnimProcess,
+      .shouldRecordTriggerWord    = false,
+    };
+    _micStateController.BeginStreamingJob( args );
+  }
+  else
+  {
+    LOG_INFO( "MicDataSystem.StartWakeWordlessStreaming",
+              "Trying to start a new streaming job while one is already active ... ignoring this request" );
   }
 }
 
@@ -544,23 +555,39 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
   #endif
   for (const auto& msg : stolenMessages)
   {
-    if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
+    switch (msg->tag)
     {
-      _latestMicDirectionMsg = msg->micDirection;
-      #if ANKI_DEV_CHEATS
-        updatedMicDirection = true;
-      #endif
-      RobotInterface::SendAnimToEngine(msg->micDirection);
-    }
-    else if (msg->tag == RobotInterface::RobotToEngine::Tag_beatDetectorState)
-    {
-      RobotInterface::SendAnimToEngine(msg->beatDetectorState);
-    }
-    else
-    {
-      DEV_ASSERT_MSG(false,
-                     "MicDataSystem.Update.UnhandledOutgoingMessageType",
-                     "%s", RobotInterface::RobotToEngine::TagToString(msg->tag));
+      case RobotInterface::RobotToEngine::Tag_micDirection:
+      {
+        _latestMicDirectionMsg = msg->micDirection;
+        #if ANKI_DEV_CHEATS
+          updatedMicDirection = true;
+        #endif
+        RobotInterface::SendAnimToEngine(msg->micDirection);
+
+        break;
+      }
+
+      case RobotInterface::RobotToEngine::Tag_beatDetectorState:
+      {
+        RobotInterface::SendAnimToEngine(msg->beatDetectorState);
+        break;
+      }
+
+      case RobotInterface::RobotToEngine::Tag_triggerWordDetected:
+      {
+        RobotInterface::SendAnimToEngine(msg->triggerWordDetected);
+        break;
+      }
+
+      default:
+      {
+        DEV_ASSERT_MSG(false,
+                       "MicDataSystem.Update.UnhandledOutgoingMessageType",
+                       "%s", RobotInterface::RobotToEngine::TagToString(msg->tag));
+
+        break;
+      }
     }
   }
 

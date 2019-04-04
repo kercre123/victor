@@ -89,10 +89,12 @@ public:
   
   BeatDetector& GetBeatDetector() { assert(nullptr != _beatDetector); return *_beatDetector.get(); }
 
+  // create and start an audio data job that will record just the trigger word audio
+  void CreateTriggerWordDetectedJob();
+
   // Create and start stream audio data job
   // Note: Overlap size is only as large as the audio buffer, see kTriggerAudioLengthShipping_ms
-  RobotTimeStamp_t CreateStreamJob(CloudMic::StreamType streamType = CloudMic::StreamType::Normal,
-                                  uint32_t overlapLength_ms = 0);
+  RobotTimeStamp_t CreateStreamingJob(CloudMic::StreamType streamType, uint32_t overlapLength_ms = 0);
 
   void VoiceTriggerWordDetection(const AudioUtil::SpeechRecognizerCallbackInfo& info);
 
@@ -181,8 +183,6 @@ private:
   
   void TriggerWordDetectCallback(TriggerWordDetectSource source,
                                  const AudioUtil::SpeechRecognizerCallbackInfo& info);
-  
-  void CreateTriggerWordDetectedJobs(bool shouldStream);
   
   void ProcessRawAudio(RobotTimeStamp_t timestamp,
                        const AudioUtil::AudioSample* audioChunk,

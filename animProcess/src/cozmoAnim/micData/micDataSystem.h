@@ -148,10 +148,6 @@ public:
 
   MicStreamingController& GetMicStreamingController() { return _micStateController; }
 
-  // let's anybody who registered a callback with AddTriggerWordDetectedCallback(...) know that we've heard the
-  // trigger word and are either about to start streaming, or not (either on purpose, or it was cancelled/error)
-  void SetWillStream(bool willStream) const;
-
 
 private:
 

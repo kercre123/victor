@@ -62,8 +62,7 @@ public:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Public API ...
 
-  // Callback parameter is whether or not we will be streaming after
-  // the trigger word is detected
+  // Callback parameter is whether or not we will be streaming after the trigger word is detected
   using OnTriggerWordDetectedCallback = std::function<void(bool)>;
   void AddTriggerWordDetectedCallback( OnTriggerWordDetectedCallback callback )
   {
@@ -76,10 +75,14 @@ public:
   bool CanBeginStreamingJob() const;
 
   // this kicks off the start of a new streaming job
-  // bool shouldPlayTransitionAnim = attempt to play the get-in animation or not
   // returns true if the process was started successfully, false otherwise (eg. we're already streaming)
-  using OnTransitionComplete = std::function<void(bool success)>;
-  bool BeginStreamingJob( CloudMic::StreamType streamType, bool shouldPlayTransitionAnim, OnTransitionComplete callback );
+  struct StreamingArguments
+  {
+    CloudMic::StreamType      streamType; // what type of stream is this
+    bool                      shouldPlayTransitionAnim; // attempt to play the get-in animation or not
+    bool                      shouldRecordTriggerWord;
+  };
+  bool BeginStreamingJob( StreamingArguments args );
 
   // this ends the current streaming job and cleans up any state needed so that we are ready to begin a new stream
   void EndStreamingJob();
@@ -100,11 +103,21 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Helper Functions ...
 
-  void OnTransitionBegin();
+  // starts the transition from the current state to the specified state
+  // use this function to move throughout the states
+  void TransitionToState( MicState nextState );
+
+  // called whenever each "event" is hit, generally through state transition
+  void OnStreamingTransitionBegin();
   void OnStreamingBegin();
   void OnStreamingEnd();
 
-  void SetWillStream( bool willStream ) const;
+  // this tells all of our 'trigger word detected' callbacks that we've detected the trigger word and we're about
+  // to start a stream as soon as the earcon finishes
+  void NotifyTriggerWordDetectedCallbacks( bool willStream ) const;
+
+  // debug state strings
+  const char* GetStateString( MicState state ) const;
 
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -115,6 +128,8 @@ private:
 
   MicState                  _state          = MicState::Listening;
   bool                      _isMuted        = false;
+
+  StreamingArguments        _streamingArgs;
 
   std::vector<OnTriggerWordDetectedCallback> _triggerWordDetectedCallbacks;
 };

@@ -188,69 +188,66 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
   MicStreamingController& streamController = _micDataSystem->GetMicStreamingController();
 
   // Ignore extra triggers during streaming
-  if ( !streamController.CanBeginStreamingJob() )
+  if ( streamController.CanBeginStreamingJob() )
   {
-    return;
+    LOG_INFO("MicDataProcessor.TriggerWordDetectCallback", "Wakeword Detected!" );
+
+    const bool muteButton = (source == TriggerWordDetectSource::ButtonFromMute);
+    const bool buttonPress = (source == TriggerWordDetectSource::Button) || muteButton;
+
+    // don't play the get-in if this trigger word started from mute, because the mute animation should be playing
+    MicStreamingController::StreamingArguments args =
+    {
+      .streamType                 = CloudMic::StreamType::Normal,
+      .shouldPlayTransitionAnim   = !muteButton,
+      .shouldRecordTriggerWord    = true,
+    };
+    const bool success = streamController.BeginStreamingJob( args );
+
+    if ( success )
+    {
+      ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
+
+      const auto currentDirection = _micImmediateDirection->GetDominantDirection();
+      const bool willStreamAudio = showStreamState->ShouldStreamAfterTriggerWordResponse() &&
+                                   !_micDataSystem->ShouldSimulateStreaming();
+
+      // Set up a message to send out about the triggerword
+      RobotInterface::TriggerWordDetected twDetectedMessage;
+      {
+        twDetectedMessage.direction       = currentDirection;
+        twDetectedMessage.isButtonPress   = buttonPress;
+        twDetectedMessage.fromMute        = muteButton;
+        twDetectedMessage.triggerScore    = (uint32_t) info.score;
+        twDetectedMessage.willOpenStream  = willStreamAudio;
+      }
+      auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
+      _micDataSystem->SendMessageToEngine(std::move(engineMessage));
+
+      // Tell signal essence software to lock in on the current direction if it's known
+      // NOTE: This is disabled for now as we've gotten better accuracy with the direction of the intent
+      // that happens after this point, so it is currently not desireable to lock in the supposed trigger direction,
+      // as that direction can be incorrect due to motor noise, speaker noise, etc.
+      // The code is left here with this comment to make resurrecting this functionality in the SE software easier in the
+      // future, if desired.
+      // if (currentDirection != kDirectionUnknown)
+      // {
+      //   std::lock_guard<std::mutex> lock(_seInteractMutex);
+      //   PolicySetKeyPhraseDirection(currentDirection);
+      // }
+
+      LOG_INFO("MicDataProcessor.TriggerWordDetectCallback", "Direction index %d", currentDirection);
+    }
   }
-
-  ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
-  
-  // By the time the earcon completes, engine may have changed its response, so assume the decision to stream
-  // should be based on the engine-requested state at the time of the trigger word callback. Ugh.
-  // Anyway, we should cache shouldStream and use it in earConCallback
-  bool shouldStream = showStreamState->ShouldStreamAfterTriggerWordResponse();
-  
-  // Start command stream after EarCon completes
-  auto earConCallback = [this,shouldStream](bool success) {
-    // If we didn't succeed, it means that we didn't have a wake word response setup
-    if (success) {
-      CreateTriggerWordDetectedJobs( shouldStream );
-    }
-    else {
-      // since we're not opening up a stream, we need to reset the streaming light since it get's turned on
-      // when we hear the trigger word
-      _micDataSystem->SetWillStream(false);
-      LOG_WARNING("MicDataProcessor.TWCallback", "Don't have a wake word response setup");
-    }
-  };
-  
-  const bool muteButton = (source == TriggerWordDetectSource::ButtonFromMute);
-  const bool buttonPress = (source == TriggerWordDetectSource::Button) || muteButton;
-
-  // don't play the get-in if this trigger word started from mute, because the mute animation should be playing
-  _micDataSystem->GetMicStreamingController().BeginStreamingJob( CloudMic::StreamType::Normal, !muteButton, earConCallback );
-
-  const auto currentDirection = _micImmediateDirection->GetDominantDirection();
-  const bool willStreamAudio = showStreamState->ShouldStreamAfterTriggerWordResponse() &&
-                               !_micDataSystem->ShouldSimulateStreaming();
-
-  // Set up a message to send out about the triggerword
-  RobotInterface::TriggerWordDetected twDetectedMessage;
-  twDetectedMessage.direction = currentDirection;
-  twDetectedMessage.isButtonPress = buttonPress;
-  twDetectedMessage.fromMute = muteButton;
-  twDetectedMessage.triggerScore = (uint32_t) info.score;
-  twDetectedMessage.willOpenStream = willStreamAudio;
-  auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
-  _micDataSystem->SendMessageToEngine(std::move(engineMessage));
-
-  // Tell signal essence software to lock in on the current direction if it's known
-  // NOTE: This is disabled for now as we've gotten better accuracy with the direction of the intent
-  // that happens after this point, so it is currently not desireable to lock in the supposed trigger direction,
-  // as that direction can be incorrect due to motor noise, speaker noise, etc.
-  // The code is left here with this comment to make resurrecting this functionality in the SE software easier in the
-  // future, if desired.
-  // if (currentDirection != kDirectionUnknown)
-  // {
-  //   std::lock_guard<std::mutex> lock(_seInteractMutex);
-  //   PolicySetKeyPhraseDirection(currentDirection);
-  // }
-
-  LOG_INFO("MicDataProcessor.TWCallback", "Direction index %d", currentDirection);
+  else
+  {
+    LOG_INFO("MicDataProcessor.TriggerWordDetectCallback",
+             "Trying to start a new streaming job while one is already active ... ignoring this request" );
+  }
 }
   
-RobotTimeStamp_t MicDataProcessor::CreateStreamJob(CloudMic::StreamType streamType,
-                                                  uint32_t overlapLength_ms)
+RobotTimeStamp_t MicDataProcessor::CreateStreamingJob(CloudMic::StreamType streamType,
+                                                      uint32_t overlapLength_ms)
 {
   // Setup Job
   auto newJob = std::make_shared<MicDataInfo>();
@@ -288,7 +285,7 @@ RobotTimeStamp_t MicDataProcessor::CreateStreamJob(CloudMic::StreamType streamTy
   // only capture that in-between time, and push it into the streaming job for intent matching
   std::lock_guard<std::mutex> lock(_procAudioXferMutex);
   DEV_ASSERT(_procAudioRawComplete >= _procAudioXferCount,
-             "MicDataProcessor.CreateStreamJob.AudioProcIdx");
+             "MicDataProcessor.CreateStreamingJob.AudioProcIdx");
   
   if (overlapLength_ms > 0) {
     const auto overlapCount = overlapLength_ms / kTimePerChunk_ms;
@@ -316,15 +313,10 @@ RobotTimeStamp_t MicDataProcessor::CreateStreamJob(CloudMic::StreamType streamTy
   return mostRecentTimestamp;
 }
 
-void MicDataProcessor::CreateTriggerWordDetectedJobs(bool shouldStream)
+void MicDataProcessor::CreateTriggerWordDetectedJob()
 {
   // Now we set up the optional job for recording _just_ the trigger that was just recognized
-  bool saveTriggerOnly = false;
-# if ANKI_DEV_CHEATS
-  saveTriggerOnly = true;
-# endif // ANKI_DEV_CHEATS
-  
-  if (saveTriggerOnly)
+  #if ANKI_DEV_CHEATS
   {
     std::lock_guard<std::mutex> lock(_procAudioXferMutex);
     
@@ -332,10 +324,10 @@ void MicDataProcessor::CreateTriggerWordDetectedJobs(bool shouldStream)
     triggerJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggersOnly"});
     triggerJob->_writeNameBase = ""; // Use the autogen names in this subfolder
     triggerJob->_numMaxFiles = 100;
-    triggerJob->EnableDataCollect(MicDataType::Processed, saveTriggerOnly);
+    triggerJob->EnableDataCollect(MicDataType::Processed, true);
     if (kMicData_CollectRawTriggers)
     {
-      triggerJob->EnableDataCollect(MicDataType::Raw, saveTriggerOnly);
+      triggerJob->EnableDataCollect(MicDataType::Raw, true);
     }
     triggerJob->_audioSaveCallback = std::bind(&MicDataSystem::AudioSaveCallback, _micDataSystem, std::placeholders::_1);
     
@@ -355,7 +347,11 @@ void MicDataProcessor::CreateTriggerWordDetectedJobs(bool shouldStream)
     }
     const auto isStreamingJob = false;
     _micDataSystem->AddMicDataJob(triggerJob, isStreamingJob);
+
+    LOG_INFO("MicDataProcessor.CreateTriggerWordDetectedJob", "Trigger word audio recorded to (%s)",
+             triggerJob->_writeLocationDir.c_str());
   }
+  #endif
 }
 
 MicDataProcessor::~MicDataProcessor()
