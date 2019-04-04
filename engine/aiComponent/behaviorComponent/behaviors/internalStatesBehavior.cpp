@@ -223,7 +223,17 @@ InternalStatesBehavior::InternalStatesBehavior(const Json::Value& config,
         }
       }
     } else {
-      fromStates.push_back( ParseStateFromJson(transitionDefConfig, "from") );
+
+      const std::string& stateStr = transitionDefConfig["from"].asString();
+      if( stateStr == "*" ) {
+        // special case: all states
+        for( const auto statePair : *_states ) {
+          fromStates.push_back( statePair.first );
+        }
+      }
+      else {
+        fromStates.push_back( GetStateID( stateStr ) );
+      }
     }
 
     for( const StateID fromStateID : fromStates ) {
