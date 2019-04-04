@@ -55,8 +55,6 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     
-    float startOfMotionDetectedTime_s;
-    float enablePowerSaveModeTime_s;
     AnimationTrigger getInTrigger;
     AnimationTrigger idleTrigger;
   };

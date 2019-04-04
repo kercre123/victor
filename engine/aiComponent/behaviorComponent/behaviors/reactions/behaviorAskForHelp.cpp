@@ -17,7 +17,6 @@
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/components/movementComponent.h"
-#include "engine/components/powerStateManager.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 
 #include "coretech/common/engine/utils/timer.h"
@@ -32,8 +31,6 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorAskForHelp::DynamicVariables::DynamicVariables()
 {
-  startOfMotionDetectedTime_s = 0.f;
-  enablePowerSaveModeTime_s   = 0.f;
   getInTrigger = AnimationTrigger::StuckOnEdgeGetIn;
   idleTrigger  = AnimationTrigger::StuckOnEdgeIdle;
 }
@@ -59,26 +56,22 @@ void BehaviorAskForHelp::OnBehaviorActivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorAskForHelp::SetAnimTriggers()
 {
-  const auto& powerSaveManager = GetBehaviorComp<PowerStateManager>();
-  const bool inSysconCalmMode = powerSaveManager.InSysconCalmMode();
-
   _dVars.getInTrigger = AnimationTrigger::StuckOnEdgeGetIn;
   _dVars.idleTrigger  = AnimationTrigger::StuckOnEdgeIdle;
-  if (!inSysconCalmMode) {
-    // Check if a cliff is detected on either side of ther robot in the location where we're stuck.
-    const auto& cliffComp = GetBEI().GetRobotInfo().GetCliffSensorComponent();
-    bool leftCliffs = cliffComp.IsCliffDetected(CliffSensor::CLIFF_FL) && cliffComp.IsCliffDetected(CliffSensor::CLIFF_BL);
-    bool rightCliffs = cliffComp.IsCliffDetected(CliffSensor::CLIFF_FR) && cliffComp.IsCliffDetected(CliffSensor::CLIFF_BR);
 
-    // Only pick a "sided" animation if we're seeing cliffs on one side only
-    if (leftCliffs != rightCliffs) {
-      if (leftCliffs) {
-        _dVars.getInTrigger = AnimationTrigger::StuckOnEdgeLeftGetIn;
-        _dVars.idleTrigger  = AnimationTrigger::StuckOnEdgeLeftIdle;
-      } else {
-        _dVars.getInTrigger = AnimationTrigger::StuckOnEdgeRightGetIn;
-        _dVars.idleTrigger  = AnimationTrigger::StuckOnEdgeRightIdle;
-      }
+  // Check if a cliff is detected on either side of ther robot in the location where we're stuck.
+  const auto& cliffComp = GetBEI().GetRobotInfo().GetCliffSensorComponent();
+  bool leftCliffs = cliffComp.IsCliffDetected(CliffSensor::CLIFF_FL) && cliffComp.IsCliffDetected(CliffSensor::CLIFF_BL);
+  bool rightCliffs = cliffComp.IsCliffDetected(CliffSensor::CLIFF_FR) && cliffComp.IsCliffDetected(CliffSensor::CLIFF_BR);
+
+  // Only pick a "sided" animation if we're seeing cliffs on one side only
+  if (leftCliffs != rightCliffs) {
+    if (leftCliffs) {
+      _dVars.getInTrigger = AnimationTrigger::StuckOnEdgeLeftGetIn;
+      _dVars.idleTrigger  = AnimationTrigger::StuckOnEdgeLeftIdle;
+    } else {
+      _dVars.getInTrigger = AnimationTrigger::StuckOnEdgeRightGetIn;
+      _dVars.idleTrigger  = AnimationTrigger::StuckOnEdgeRightIdle;
     }
   }
 }

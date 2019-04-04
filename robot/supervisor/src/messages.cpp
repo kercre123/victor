@@ -50,7 +50,7 @@ namespace Anki {
         // For only sending robot state messages every STATE_MESSAGE_FREQUENCY
         // times through the main loop
         u32 robotStateMessageCounter_ = 0;
-        bool sendStateMsgSlowly_ = false;
+        bool calmMode_ = false;
 
       } // private namespace
 
@@ -142,7 +142,7 @@ namespace Anki {
         SET_STATUS_BIT(PathFollower::IsTraversingPath(),            IS_PATHING);
         SET_STATUS_BIT(LiftController::IsInPosition(),              LIFT_IN_POS);
         SET_STATUS_BIT(HeadController::IsInPosition(),              HEAD_IN_POS);
-        SET_STATUS_BIT(HAL::PowerGetMode() == HAL::POWER_MODE_CALM, CALM_POWER_MODE);
+        SET_STATUS_BIT(calmMode_,                                   CALM_POWER_MODE);
         SET_STATUS_BIT(HAL::BatteryIsDisconnected(),                IS_BATTERY_DISCONNECTED);
         SET_STATUS_BIT(HAL::BatteryIsOnCharger(),                   IS_ON_CHARGER);
         SET_STATUS_BIT(HAL::BatteryIsCharging(),                    IS_CHARGING);
@@ -162,7 +162,7 @@ namespace Anki {
 
         // Send state message
         ++robotStateMessageCounter_;
-        const s32 messagePeriod = sendStateMsgSlowly_ ? STATE_MESSAGE_FREQUENCY_CALM : STATE_MESSAGE_FREQUENCY;
+        const s32 messagePeriod = calmMode_ ? STATE_MESSAGE_FREQUENCY_CALM : STATE_MESSAGE_FREQUENCY;
         if(robotStateMessageCounter_ >= messagePeriod) {
           SendRobotStateMsg();
           robotStateMessageCounter_ = 0;
@@ -209,7 +209,7 @@ namespace Anki {
         //       Not going into syscon calm mode also means that motor calibrations are no 
         //       longer necessary as a precaution when leaving calm mode.
         AnkiInfo("Messages.Process_calmPowerMode.enable", "enable: %d", msg.enable);
-        sendStateMsgSlowly_ = msg.enable;
+        calmMode_ = msg.enable;
       }
 
       void Process_absLocalizationUpdate(const RobotInterface::AbsoluteLocalizationUpdate& msg)
