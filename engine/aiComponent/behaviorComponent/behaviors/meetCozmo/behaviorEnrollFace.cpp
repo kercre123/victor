@@ -1815,9 +1815,6 @@ void BehaviorEnrollFace::GetBehaviorOperationModifiers(BehaviorOperationModifier
 {
   modifiers.visionModesForActiveScope->insert( { VisionMode::Faces_Crop, EVisionUpdateFrequency::High } );
   modifiers.visionModesForActiveScope->insert( { VisionMode::Faces, EVisionUpdateFrequency::High } );
-  // Avoid marker detection to improve performance
-  // TODO: Remove with VIC-6838
-  modifiers.visionModesForActiveScope->insert( { VisionMode::Markers_Off, EVisionUpdateFrequency::High } );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

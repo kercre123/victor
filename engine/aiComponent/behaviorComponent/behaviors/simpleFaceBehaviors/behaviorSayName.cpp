@@ -99,10 +99,6 @@ void BehaviorSayName::GetBehaviorOperationModifiers(BehaviorOperationModifiers& 
   // Assumption is that we're already looking at the face, so use cropping for better efficiency
   modifiers.visionModesForActiveScope->insert( {VisionMode::Faces_Crop, EVisionUpdateFrequency::High} );
 
-  // Avoid marker detection to improve performance
-  // TODO: Remove with VIC-6838
-  modifiers.visionModesForActiveScope->insert( { VisionMode::Markers_Off, EVisionUpdateFrequency::High } );
-
   // No longer true: can wait on recognition
   modifiers.behaviorAlwaysDelegates = false;
 }

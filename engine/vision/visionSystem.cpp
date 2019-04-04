@@ -1564,35 +1564,27 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   
   if(IsModeEnabled(VisionMode::Markers))
   {
-    if(IsModeEnabled(VisionMode::Markers_Off))
+    const bool allowWhileRotatingFast = IsModeEnabled(VisionMode::Markers_FastRotation);
+    const bool wasRotatingTooFast = ( allowWhileRotatingFast ? false :
+                                     poseData.imuDataHistory.WasRotatingTooFast(imageCache.GetTimeStamp(),
+                                                                                DEG_TO_RAD(kBodyTurnSpeedThreshBlock_degs),
+                                                                                DEG_TO_RAD(kHeadTurnSpeedThreshBlock_degs)));
+    if(!wasRotatingTooFast)
     {
-      // Marker detection is forcibly disabled (Gross, see VIC-6838)
-      visionModesProcessed.Insert(VisionMode::Markers, VisionMode::Markers_Off);
-    }
-    else
-    {
-      const bool allowWhileRotatingFast = IsModeEnabled(VisionMode::Markers_FastRotation);
-      const bool wasRotatingTooFast = ( allowWhileRotatingFast ? false :
-                                       poseData.imuDataHistory.WasRotatingTooFast(imageCache.GetTimeStamp(),
-                                                                                  DEG_TO_RAD(kBodyTurnSpeedThreshBlock_degs),
-                                                                                  DEG_TO_RAD(kHeadTurnSpeedThreshBlock_degs)));
-      if(!wasRotatingTooFast)
-      {
-        // Marker detection uses rolling shutter compensation
-        UpdateRollingShutter(poseData, imageCache);
-        
-        Tic("TotalMarkers");
-        lastResult = DetectMarkers(imageCache, claheImage, detectionsByMode[VisionMode::Markers], useCLAHE, poseData);
-        
-        if(RESULT_OK != lastResult) {
-          PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
-          anyModeFailures = true;
-        } else {
-          visionModesProcessed.Insert(VisionMode::Markers);
-          visionModesProcessed.Enable(VisionMode::Markers_FastRotation, allowWhileRotatingFast);
-        }
-        Toc("TotalMarkers");
+      // Marker detection uses rolling shutter compensation
+      UpdateRollingShutter(poseData, imageCache);
+      
+      Tic("TotalMarkers");
+      lastResult = DetectMarkers(imageCache, claheImage, detectionsByMode[VisionMode::Markers], useCLAHE, poseData);
+      
+      if(RESULT_OK != lastResult) {
+        PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
+        anyModeFailures = true;
+      } else {
+        visionModesProcessed.Insert(VisionMode::Markers);
+        visionModesProcessed.Enable(VisionMode::Markers_FastRotation, allowWhileRotatingFast);
       }
+      Toc("TotalMarkers");
     }
   }
   
