@@ -40,7 +40,7 @@ PRIVATE
   $<$<CONFIG:Debug>:-O0>
   $<$<CONFIG:Release>:-O2>
   ${SYMBOL_VISIBILITY_FLAGS}
-  ${ASAN_CXX_FLAGS} 
+  ${ASAN_CXX_FLAGS}
 )
 
 target_include_directories(cti_vision
@@ -125,3 +125,5 @@ target_link_libraries(cti_vision_debayer
   PRIVATE
   cti_vision
 )
+
+add_executable(debayer ${CMAKE_CURRENT_SOURCE_DIR}/engine/imageBuffer/conversions/debayer.c)
