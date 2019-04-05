@@ -25,7 +25,7 @@ const imageDir = baseDir + "/images"
 const cacheDir = "/data/data/com.anki.victor/cache/offboard_vision"
 
 func init() {
-  devHandlers = func(s *http.ServeMux) [][]string {
+  devHandlers = func(s *http.ServeMux) {
     s.HandleFunc("/offboard_vision/", offboardVisionHandler)
     s.HandleFunc("/offboard_vision/request", reqHandler)
 
@@ -33,7 +33,6 @@ func init() {
     s.Handle(imgPrefix, http.StripPrefix(imgPrefix, http.HandlerFunc(imgHandler)))
 
     log.Println("Offboard vision dev handlers added")
-    return [][]string{[]string{"/offboard_vision", "Send test images to Snapper and see the results from MS"}}
   }
   devURLReader = fetchURLData
 }

@@ -80,7 +80,7 @@ func Run(ctx context.Context, procOptions ...Option) {
   launchProcess(&wg, func() {
 		offboard_vision.Run(ctx)
 	})
-	addHandlers(offboard_vision.GetDevHandlers)
+	addHandlers(offboard_vision.GetDevHandlers, tokenServer)
 	wg.Wait()
 }
 

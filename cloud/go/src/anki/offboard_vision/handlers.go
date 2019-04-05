@@ -2,11 +2,10 @@ package offboard_vision
 
 import "net/http"
 
-var devHandlers func(*http.ServeMux) [][]string
+var devHandlers func(*http.ServeMux)
 
-func GetDevHandlers(s *http.ServeMux) [][]string {
+func GetDevHandlers(s *http.ServeMux) {
   if devHandlers != nil {
-    return devHandlers(s)
+    devHandlers(s)
   }
-  return nil
 }

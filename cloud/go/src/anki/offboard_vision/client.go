@@ -7,12 +7,12 @@ import (
   "anki/ipc"
   "anki/log"
   "anki/util"
-  "anki/util/cvars"
   "bytes"
   "clad/vision"
   "context"
   "fmt"
   "io/ioutil"
+  "sync"
 
   // pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
   pb "proto/vision"
@@ -24,15 +24,6 @@ import (
 
 var deviceID = "mac-build"
 var defaultGroupName = "offboard_vision"
-
-func init() {
-  cvars.AddString("FaceGroup", func(x string) interface{} {
-    defaultGroupName = x
-    return x
-  }, func() interface{} {
-    return defaultGroupName
-  })
-}
 
 type client struct {
   ipc.Conn
@@ -75,7 +66,7 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
   dialOpts = append(dialOpts, util.CommonGRPC()...)
   dialOpts = append(dialOpts, grpc.WithInsecure())
 
-  var wg util.SyncGroup
+  var wg sync.WaitGroup
 
   // dial server and read file data in parallel
   var rpcConn *grpc.ClientConn
@@ -86,7 +77,7 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
   var fileErr error
 
   // dial server, make it blocking
-  wg.AddFunc(func() {
+  launchProcess(&wg, func() {
     rpcConn, rpcErr = grpc.DialContext(ctx, config.Env.OffboardVision, append(dialOpts, grpc.WithBlock())...)
     if rpcErr == nil {
       rpcClose = rpcConn.Close
@@ -94,7 +85,7 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
   })
 
   // read file data
-  wg.AddFunc(func() {
+  launchProcess(&wg, func() {
     if devURLReader != nil {
       var handled bool
       if fileData, fileErr, handled = devURLReader(msg.Filename); handled {
@@ -143,4 +134,12 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
   resultReady.Timestamp = resp.TimestampMs
 
   return &resultReady, nil
+}
+
+func launchProcess(wg *sync.WaitGroup, launcher func()) {
+	wg.Add(1)
+	go func() {
+		launcher()
+		wg.Done()
+	}()
 }
