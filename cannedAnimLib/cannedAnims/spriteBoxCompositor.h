@@ -25,6 +25,7 @@
 // Fwd Decl
 namespace CozmoAnim {
   struct SpriteBox;
+  struct FaceAnimation;
 }
 
 namespace Anki{
@@ -55,6 +56,15 @@ public:
   Result AddKeyFrame(const std::string& spriteBoxName, Animations::SpriteBoxKeyFrame&& keyFrame) {
     return AddKeyFrameInternal(spriteBoxName, std::move(keyFrame));
   }
+
+  // Legacy SpriteSequence animation support
+  Result AddFullFaceSpriteSeq(const CozmoAnim::FaceAnimation* faceAnimationKeyFrame, 
+                              const Vision::SpriteSequenceContainer& spriteSeqContainer);
+  Result AddFullFaceSpriteSeq(const Json::Value& faceAnimationKeyFrame, 
+                              const Vision::SpriteSequenceContainer& spriteSeqContainer,
+                              const std::string& animName);
+  Result AddFullFaceSpriteSeqInternal(SpriteBoxKeyFrame& startKeyFrame,
+                                      const Vision::SpriteSequenceContainer& spriteSeqContainer);
 
   void CacheInternalSprites(Vision::SpriteCache* spriteCache);
 

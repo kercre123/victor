@@ -26,6 +26,7 @@ namespace Vector {
 
 static const char* kNameKey = "Name";
 static const char* kSpriteBoxKeyFrameName = "SpriteBoxKeyFrame";
+static const char* kFaceAnimKeyFrameName = "FaceAnimationKeyFrame";
 CONSOLE_VAR(bool, kShouldPreCacheSprites, "Animation", false);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -183,33 +184,14 @@ Result Animation::DefineFromFlatBuf(const std::string& name,
     }
   }
 
+  // Handle legacy anims with full-screen png sequences through the SpriteBoxCompositor
   auto spriteSequenceData = keyframes->FaceAnimationKeyFrame();
   if (spriteSequenceData != nullptr) {
     for (int faIdx=0; faIdx < spriteSequenceData->size(); faIdx++) {
       const CozmoAnim::FaceAnimation* faceAnimKeyframe = spriteSequenceData->Get(faIdx);
-      const Vision::SpriteSequence* spriteSeq = nullptr;
-      TimeStamp_t triggerTime_ms = 0;
-
-      // Note that ExtractDataFromFlatBuf() will return false for unmapped sprite sequences, even though spriteSeq
-      // points to a valid sequence.
-      const bool success = SpriteSequenceKeyFrame::ExtractDataFromFlatBuf(faceAnimKeyframe, seqContainer,
-                                                                          spriteSeq, triggerTime_ms);
-      if (spriteSeq == nullptr) {
-        LOG_ERROR("Animation.DefineFromFlatBuf.ExtractDataFromFlatBuf",
-                  "Unable to extract sprite sequence for animation %s keyframe %d",
-                  name.c_str(), faIdx);
-        return RESULT_FAIL_INVALID_OBJECT;
-      }
-
-      // Construct a keyframe for this sprite sequence
-      const u32 frameInterval_ms = ANIM_TIME_STEP_MS;
-      const bool shouldRenderInEyeHue = true;
-      SpriteSequenceKeyFrame kf(spriteSeq, triggerTime_ms, frameInterval_ms, shouldRenderInEyeHue);
-
-      // Add keyframe to animation track
-      const Result addResult = _spriteSequenceTrack.AddKeyFrameToBack(kf);
-      if (success && addResult != RESULT_OK) {
-        LOG_ERROR("Animation.DefineFromFlatBuf.AddKeyFrameFailure", "Adding FaceAnimation frame %d failed", faIdx);
+      const Result addResult = _spriteBoxCompositor.AddFullFaceSpriteSeq(faceAnimKeyframe, *seqContainer);
+      if (RESULT_OK != addResult){
+        LOG_ERROR("Animation.DefineFromFlatBuf.AddKeyFrameFailure", "Adding SpriteBox frame %d failed", faIdx);
         return addResult;
       }
     }
@@ -310,20 +292,8 @@ Result Animation::DefineFromJson(const std::string& name, const Json::Value &jso
       addResult = _liftTrack.AddKeyFrameToBack(jsonFrame, name);
     } else if(frameName == kSpriteBoxKeyFrameName) {
       addResult = _spriteBoxCompositor.AddKeyFrame(jsonFrame, name);
-    } else if(frameName == SpriteSequenceKeyFrame::GetClassName()) {
-      const Vision::SpriteSequence* spriteSeq = nullptr;
-      TimeStamp_t triggerTime_ms = 0;
-      TimeStamp_t frameUpdateInterval = ANIM_TIME_STEP_MS;
-      const bool success = SpriteSequenceKeyFrame::ExtractDataFromJson(jsonFrame, seqContainer,
-                                                                       spriteSeq, triggerTime_ms,
-                                                                       frameUpdateInterval);
-      if(success){
-        const bool shouldRenderInEyeHue = true;
-        SpriteSequenceKeyFrame kf(spriteSeq, triggerTime_ms, frameUpdateInterval, shouldRenderInEyeHue);
-        addResult = _spriteSequenceTrack.AddKeyFrameToBack(kf);
-      }else{
-        addResult = RESULT_FAIL;
-      }
+    } else if(frameName == kFaceAnimKeyFrameName) {
+      addResult = _spriteBoxCompositor.AddFullFaceSpriteSeq(jsonFrame, *seqContainer, name);
     } else if(frameName == EventKeyFrame::GetClassName()) {
       addResult = _eventTrack.AddKeyFrameToBack(jsonFrame, name);
     } else if(frameName == "DeviceAudioKeyFrame") {
