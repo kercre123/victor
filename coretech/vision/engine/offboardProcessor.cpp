@@ -152,9 +152,7 @@ Result OffboardProcessor::Init(const std::string& name, const Json::Value& confi
     }
     
     _udpClient.reset(new LocalUdpClient());
-    
-    const bool connected = Connect();
-    LOG_INFO("OffboardProcessor.Init.ConnectionStatus", "%d", connected);
+    // VIC-14318 add in connect here once we have merged this PR
   }
   
   return RESULT_OK;
