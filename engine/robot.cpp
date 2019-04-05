@@ -2801,6 +2801,16 @@ bool Robot::SetLocale(const std::string & locale)
   DEV_ASSERT(_context != nullptr, "Robot.SetLocale.InvalidContext");
   _context->SetLocale(locale);
 
+  //
+  // Attempt to load localized strings for given locale.
+  // If that fails, fall back to default locale.
+  //
+  auto & localeComponent = GetLocaleComponent();
+  if (!localeComponent.SetLocale(locale)) {
+    LOG_WARNING("Robot.SetLocale", "Unable to set locale %s", locale.c_str());
+    localeComponent.SetLocale(Anki::Util::Locale::kDefaultLocale.ToString());
+  }
+
   // Notify animation process
   SendRobotMessage<RobotInterface::SetLocale>(locale);
 

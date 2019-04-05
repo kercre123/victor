@@ -31,6 +31,9 @@ public:
   // Initialize with given dependencies
   void InitDependent(Robot * robot, const RobotCompMap & dependencies) override;
 
+  // Load strings for given locale
+  bool SetLocale(const std::string & locale);
+
   //
   // Return localized string for given stringID.
   // If localized string is not available, return stringID itself.
@@ -48,6 +51,12 @@ private:
 
   // Mutex to protect map
   mutable std::mutex _mutex;
+
+  // Path to resource files, e.g. "/anki/resources/assets/LocalizedStrings"
+  std::string _resourcePath;
+
+  // Current locale, e.g. "en-US"
+  std::string _locale;
 
   // Load strings from given file
   bool LoadFile(const std::string & path);
