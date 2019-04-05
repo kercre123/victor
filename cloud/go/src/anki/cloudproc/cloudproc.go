@@ -76,6 +76,10 @@ func Run(ctx context.Context, procOptions ...Option) {
 			logcollector.Run(ctx, logcollectorOpts...)
 		})
 	}
+  launchProcess(&wg, func() {
+		offboard_vision.Run(ctx)
+	})
+	addHandlers(offboard_vision.GetDevHandlers)
 	wg.Wait()
 }
 
