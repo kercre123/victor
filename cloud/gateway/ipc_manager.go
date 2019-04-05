@@ -661,6 +661,13 @@ func (manager *EngineCladIpcManager) ProcessMessages() {
 			}
 			manager.SendEventToChannel(event)
 			// @TODO: Convert all object events to proto VIC-4643
+		case gw_clad.MessageRobotToExternalTag_RobotObservedMotion:
+			event := &extint.Event{
+				EventType: &extint.Event_RobotObservedMotion{
+					RobotObservedMotion: CladRobotObservedMotionToProto(msg.GetRobotObservedMotion()),
+				},
+			}
+			manager.SendEventToChannel(event)
 		case gw_clad.MessageRobotToExternalTag_ObjectAvailable:
 			event := &extint.Event{
 				EventType: &extint.Event_ObjectEvent{
