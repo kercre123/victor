@@ -336,6 +336,8 @@ void BehaviorSelfTestLookAtCharger::TransitionToApproachMarker()
     {
       PRINT_NAMED_INFO("BehaviorSelfTestLookAtCharger.GetExpectedObjectMarkerPoseWrtRobot.NullObject","");
       SELFTEST_SET_RESULT(SelfTestResultCode::CHARGER_NOT_FOUND);
+      TransitionToRefineTurnAfterApproach();
+      return;
     }
 
     CompoundActionSequential* seq = new CompoundActionSequential();

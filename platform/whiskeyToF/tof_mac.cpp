@@ -40,10 +40,10 @@ ToFSensor* ToFSensor::_instance = nullptr;
 
 ToFSensor* ToFSensor::getInstance()
 {
-  if(!IsWhiskey())
-  {
-    return nullptr;
-  }
+  // if(!IsWhiskey())
+  // {
+  //   return nullptr;
+  // }
 
   DEV_ASSERT(_engineSupervisorSet, "tof_mac.NoSupervisorSet");
   if(nullptr == _instance)
@@ -197,7 +197,7 @@ bool ToFSensor::IsCalibrating() const
   return false;
 }
 
-void ToFSensor::EnableBackgroundTest(bool enable, const CommandCallbac& callback)
+void ToFSensor::EnableBackgroundTest(bool enable, const CommandCallback& callback)
 {
   return;
 }

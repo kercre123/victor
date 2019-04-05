@@ -1,4 +1,4 @@
-subdirs = {'charger', 'lightCubeSquare', 'lightCubeCircle'};
+subdirs = {''};
 
 for iSubDir = 1:length(subdirs)
   

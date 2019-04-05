@@ -158,6 +158,9 @@ void BehaviorSelfTest::OnBehaviorActivated()
   // Clear backpack lights
   robot.GetBodyLightComponent().ClearAllBackpackLightConfigs();
 
+  // Switch to light on dark marker detection for Vector charger
+  NativeAnkiUtilConsoleSetValueWithString("MarkerDetector_DarkOnLight", "false");
+
   // Set master volume for speaker check
   // Not going through SettingsManager in order to
   // be able to easily restore the previous volume setting
@@ -214,6 +217,8 @@ void BehaviorSelfTest::OnBehaviorDeactivated()
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   robot.GetBodyLightComponent().ClearAllBackpackLightConfigs();
+
+  NativeAnkiUtilConsoleSetValueWithString("MarkerDetector_DarkOnLight", "true");
 
   // Remove the driving animations we pushed
   robot.GetDrivingAnimationHandler().RemoveDrivingAnimations(GetDebugLabel());
