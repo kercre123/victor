@@ -68,8 +68,8 @@ BackpackLightComponent::BackpackLightComponent(const AnimContext* context)
         _offlineAtTime_ms = 1;
       }
     });
-  
-  _context->GetMicDataSystem()->AddStreamUpdatedCallback([this](bool streamStart)
+
+  _context->GetMicDataSystem()->GetMicStreamingController().AddStreamingStateChangedCallback([this](bool streamStart)
     {
       _isStreaming = streamStart;
       _willStreamOpen = false;

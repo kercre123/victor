@@ -17,7 +17,7 @@
 #define __AnimProcess_MicStreamingController_H_
 
 #include "micDataTypes.h"
-// #include "util/global/globalDefinitions.h"
+#include "coretech/common/shared/types.h"
 #include "clad/cloud/mic.h"
 
 
@@ -35,17 +35,6 @@ namespace MicData {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class MicStreamingController
 {
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Structs and Enums ...
-
-  enum class MicState : uint8_t
-  {
-    Listening,
-    TransitionToStreaming,
-    Streaming,
-  };
-
-
 public:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -58,6 +47,8 @@ public:
 
   void Initialize( const Anim::AnimContext* animContext );
 
+  void Update();
+
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Public API ...
@@ -69,10 +60,18 @@ public:
     _triggerWordDetectedCallbacks.push_back(callback);
   }
 
+  // Callback parameter is true if streaming has begun, false if has stopped
+  using OnStreamingStateChanged = std::function<void(bool)>;
+  void AddStreamingStateChangedCallback( OnStreamingStateChanged callback )
+  {
+    _streamingStateChangedCallbacks.push_back(callback);
+  }
+
+
   // are we allowed to start a new stream at this time
   // limit to one stream at a time
   // must have appropriate "permission" from the engine
-  bool CanBeginStreamingJob() const;
+  bool CanStartNewMicStream() const;
 
   // this kicks off the start of a new streaming job
   // returns true if the process was started successfully, false otherwise (eg. we're already streaming)
@@ -81,27 +80,60 @@ public:
     CloudMic::StreamType      streamType; // what type of stream is this
     bool                      shouldPlayTransitionAnim; // attempt to play the get-in animation or not
     bool                      shouldRecordTriggerWord;
+    bool                      isSimulated = false;
   };
-  bool BeginStreamingJob( StreamingArguments args );
+  bool StartNewMicStream( StreamingArguments args );
+
+  // kick off a new streaming job, bypassing any safety checks, and setting default parameters
+  // this is meant to be kicked off from the cloud, but could be used whenever we want to force a stream for testing
+  // * behavior is undefined if there is already a current stream open ... should be fine though *
+  void StartCloudTestStream();
 
   // this ends the current streaming job and cleans up any state needed so that we are ready to begin a new stream
-  void EndStreamingJob();
+  enum class StreamingResult
+  {
+    Success,
+    Timeout,
+    Error
+  };
+  void StopCurrentMicStreaming( StreamingResult reason );
 
-  // returns true if we kicked off the process of starting a new streaming job by calling BeginStreamingJob(...)
+  // returns true if we kicked off the process of starting a new streaming job by calling StartNewMicStream(...)
   // this includes actively streaming, as well as the transition animations into streaming
   bool HasStreamingBegun() const { return ( MicState::Listening != _state ); }
   // returns true if we are actively in the midst of streaming mic data to the cloud
   // does not include the transition animations into streaming
   bool IsActivelyStreaming() const { return ( MicState::Streaming == _state ); }
 
-  bool IsMicsMuted() const { return _isMuted; }
-  void SetMicsMuted( bool isMuted );
-
 
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  // Structs and Enums ...
+
+  enum class MicState : uint8_t
+  {
+    Listening,
+    TransitionToStreaming,
+    Streaming,
+  };
+
+  struct StreamData
+  {
+    StreamingArguments      args;
+
+    BaseStationTime_t       streamBeginTime   = 0;
+    bool                    streamJobCreated  = false;
+    StreamingResult         result            = StreamingResult::Success;
+  };
+
+
+  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Helper Functions ...
+
+  // kicks off the streaming process
+  // this assumes all checks and requirements have already been taken care of (eg. CanStartNewMicStream())
+  void StartStreamInternal( StreamData streamData );
 
   // starts the transition from the current state to the specified state
   // use this function to move throughout the states
@@ -115,6 +147,11 @@ private:
   // this tells all of our 'trigger word detected' callbacks that we've detected the trigger word and we're about
   // to start a stream as soon as the earcon finishes
   void NotifyTriggerWordDetectedCallbacks( bool willStream ) const;
+  // this tells all of our callbacks that streaming has either started or stopped
+  void NotifyStreamingStateChangedCallbacks( bool streamStarted ) const;
+
+  bool CanStreamToCloud() const;
+  bool IsStreamSimulated() const { return _streamingData.args.isSimulated; }
 
   // debug state strings
   const char* GetStateString( MicState state ) const;
@@ -123,15 +160,14 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Member Variables ...
 
-  MicDataSystem*            _micDataSystem  = nullptr;
-  const Anim::AnimContext*  _animContext    = nullptr;
+  MicDataSystem*            _micDataSystem    = nullptr;
+  const Anim::AnimContext*  _animContext      = nullptr;
 
-  MicState                  _state          = MicState::Listening;
-  bool                      _isMuted        = false;
+  MicState                  _state            = MicState::Listening;
+  StreamData                _streamingData;
 
-  StreamingArguments        _streamingArgs;
-
-  std::vector<OnTriggerWordDetectedCallback> _triggerWordDetectedCallbacks;
+  std::vector<OnTriggerWordDetectedCallback>  _triggerWordDetectedCallbacks;
+  std::vector<OnStreamingStateChanged>        _streamingStateChangedCallbacks;
 };
 
 } // namespace MicData

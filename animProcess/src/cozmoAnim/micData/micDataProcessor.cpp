@@ -188,7 +188,7 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
   MicStreamingController& streamController = _micDataSystem->GetMicStreamingController();
 
   // Ignore extra triggers during streaming
-  if ( streamController.CanBeginStreamingJob() )
+  if ( streamController.CanStartNewMicStream() )
   {
     LOG_INFO("MicDataProcessor.TriggerWordDetectCallback", "Wakeword Detected!" );
 
@@ -201,8 +201,9 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
       .streamType                 = CloudMic::StreamType::Normal,
       .shouldPlayTransitionAnim   = !muteButton,
       .shouldRecordTriggerWord    = true,
+      .isSimulated                = _micDataSystem->ShouldSimulateStreaming()
     };
-    const bool success = streamController.BeginStreamingJob( args );
+    const bool success = streamController.StartNewMicStream( args );
 
     if ( success )
     {
@@ -246,11 +247,11 @@ void MicDataProcessor::TriggerWordDetectCallback(TriggerWordDetectSource source,
   }
 }
   
-RobotTimeStamp_t MicDataProcessor::CreateStreamingJob(CloudMic::StreamType streamType,
-                                                      uint32_t overlapLength_ms)
+std::unique_ptr<MicDataInfo>
+MicDataProcessor::CreateStreamingJob(CloudMic::StreamType streamType, uint32_t overlapLength_ms)
 {
   // Setup Job
-  auto newJob = std::make_shared<MicDataInfo>();
+  auto newJob = std::make_unique<MicDataInfo>();
   newJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggeredCapture"});
   newJob->_writeNameBase = ""; //use autogen names
   newJob->_numMaxFiles = 100;
@@ -306,21 +307,19 @@ RobotTimeStamp_t MicDataProcessor::CreateStreamingJob(CloudMic::StreamType strea
     }
   }
 
-  const bool isStreamingJob = true;
-  _micDataSystem->AddMicDataJob(newJob, isStreamingJob);
-  
-  RobotTimeStamp_t mostRecentTimestamp = _immediateAudioBuffer[_procAudioRawComplete-1].timestamp;
-  return mostRecentTimestamp;
+  return newJob;
 }
 
-void MicDataProcessor::CreateTriggerWordDetectedJob()
+std::unique_ptr<MicDataInfo> MicDataProcessor::CreateTriggerWordDetectedJob()
 {
+  std::unique_ptr<MicDataInfo> triggerJob;
+
   // Now we set up the optional job for recording _just_ the trigger that was just recognized
   #if ANKI_DEV_CHEATS
   {
     std::lock_guard<std::mutex> lock(_procAudioXferMutex);
     
-    auto triggerJob = std::make_shared<MicDataInfo>();
+    triggerJob.reset( new MicDataInfo() );
     triggerJob->_writeLocationDir = Util::FileUtils::FullFilePath({_writeLocationDir, "triggersOnly"});
     triggerJob->_writeNameBase = ""; // Use the autogen names in this subfolder
     triggerJob->_numMaxFiles = 100;
@@ -345,13 +344,13 @@ void MicDataProcessor::CreateTriggerWordDetectedJob()
       const auto& audioBlock = _immediateAudioBuffer[i].audioBlock;
       triggerJob->CollectRawAudio(audioBlock.data(), audioBlock.size());
     }
-    const auto isStreamingJob = false;
-    _micDataSystem->AddMicDataJob(triggerJob, isStreamingJob);
 
     LOG_INFO("MicDataProcessor.CreateTriggerWordDetectedJob", "Trigger word audio recorded to (%s)",
              triggerJob->_writeLocationDir.c_str());
   }
   #endif
+
+  return triggerJob;
 }
 
 MicDataProcessor::~MicDataProcessor()

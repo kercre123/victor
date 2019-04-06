@@ -222,7 +222,7 @@ void ShowAudioStreamStateManager::SetAlexaUXResponses(const RobotInterface::SetA
   }
 }
 
-uint32_t ShowAudioStreamStateManager::GetMinStreamingDuration()
+uint32_t ShowAudioStreamStateManager::GetMinStreamingDuration() const
 {
   if( _minStreamingDuration_ms > kUseDefaultStreamingDuration ){
     return _minStreamingDuration_ms;

@@ -103,8 +103,8 @@ public:
 
   void SendMessageToEngine(std::unique_ptr<RobotInterface::RobotToEngine> msgPtr);
 
-  void AddMicDataJob(std::shared_ptr<MicDataInfo> newJob, bool isStreamingJob = false);
-  bool HasStreamingJob() const;
+  void AddMicDataJob(std::shared_ptr<MicDataInfo> newJob);
+
   std::deque<std::shared_ptr<MicDataInfo>> GetMicDataJobs() const;
   void UpdateMicJobs();
   void AudioSaveCallback(const std::string& dest);
@@ -131,11 +131,6 @@ public:
   // command audio to be played and it actually gets played on the speaker
   uint32_t GetSpeakerLatency_ms() const { return _speakerLatency_ms; }
 
-  // Callback parameter is whether or not the stream was started
-  // True if started, False if stopped
-  void AddStreamUpdatedCallback(std::function<void(bool)> callback)
-    { _streamUpdatedCallbacks.push_back(callback); }
-
   bool HasConnectionToCloud() const;
   void RequestConnectionStatus();
 
@@ -159,14 +154,8 @@ private:
   std::string _persistentFolder;
   // Members for the the mic jobs
   std::deque<std::shared_ptr<MicDataInfo>> _micProcessingJobs;
-  std::shared_ptr<MicDataInfo> _currentStreamingJob;
   mutable std::recursive_mutex _dataRecordJobMutex;
-  BaseStationTime_t _streamBeginTime_ns = 0;
-  bool _currentlyStreaming = false;
-  bool _streamingComplete = false;
-#if ANKI_DEV_CHEATS
-  bool _fakeStreamingState = false;
-#endif
+
   size_t _streamingAudioIndex = 0;
   Util::Locale _locale = {"en", "US"};
   std::string _timeZone = "";
@@ -197,8 +186,6 @@ private:
   std::mutex _msgsMutex;
 
 
-  std::vector<std::function<void(bool)>> _streamUpdatedCallbacks;
-
   bool _batteryLow = false;
   bool _enableDataCollection = false;
   bool _buttonPressIsAlexa = false;
@@ -219,7 +206,6 @@ private:
 
   void SetupConsoleFuncs();
   void RecordAudioInternal(uint32_t duration_ms, const std::string& path, MicDataType type, bool runFFT);
-  void ClearCurrentStreamingJob();
   float GetIncomingMicDataPercentUsed();
   void SendUdpMessage(const CloudMic::Message& msg);
   
@@ -230,6 +216,29 @@ private:
 
   void SendRecognizerDasLog(const AudioUtil::SpeechRecognizerCallbackInfo& info,
                             const char* stateStr) const;
+
+  // rather than moving all of the recording data into the MicStreamingController, we're simply going to use
+  // to "control" the data and flow of streaming, without actually having ownership.
+  // ... this is because I didn't want to refactor all of the mic recording jobs and passing around thread-unsafe
+  //     data is bad
+  friend class MicStreamingController;
+
+  // These streaming related data and functions that are manipulated via MicStreamingController ...
+  // Do not call these from anywhere else unless you know what you're doing
+
+  // creates the trigger word detected audio job (recording)
+  void StartTriggerWordDetectedJob();
+  // creates the mic streaming job and then preps the system for streaming said job
+  bool StartMicStreamingJob(CloudMic::StreamType streamType);
+  // stops the current mic streaming job
+  void StopMicStreamingJob(bool shouldNotifyCloud);
+
+  // this will send our latest mic streaming job data up to the cloud
+  // returns the number of audio chunks we've streamed so far
+  size_t SendLatestMicStreamingJobDataToCloud();
+
+  // this is the MicDataInfo job that we're currently streaming (a.k.a. mic streaming job referred to above)
+  std::shared_ptr<MicDataInfo> _currentStreamingJob;
 };
 
 } // namespace MicData

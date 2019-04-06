@@ -62,6 +62,8 @@ namespace Anki {
 namespace Vector {
 namespace MicData {
 
+class MicDataInfo;
+
 class MicDataProcessor {
 public:
   MicDataProcessor(const Anim::AnimContext* context, MicDataSystem* micDataSystem, const std::string& writeLocation);
@@ -89,12 +91,12 @@ public:
   
   BeatDetector& GetBeatDetector() { assert(nullptr != _beatDetector); return *_beatDetector.get(); }
 
-  // create and start an audio data job that will record just the trigger word audio
-  void CreateTriggerWordDetectedJob();
+  // create an audio data job that will record just the trigger word audio
+  std::unique_ptr<MicDataInfo> CreateTriggerWordDetectedJob();
 
-  // Create and start stream audio data job
+  // Create stream audio data job
   // Note: Overlap size is only as large as the audio buffer, see kTriggerAudioLengthShipping_ms
-  RobotTimeStamp_t CreateStreamingJob(CloudMic::StreamType streamType, uint32_t overlapLength_ms = 0);
+  std::unique_ptr<MicDataInfo> CreateStreamingJob(CloudMic::StreamType streamType, uint32_t overlapLength_ms = 0);
 
   void VoiceTriggerWordDetection(const AudioUtil::SpeechRecognizerCallbackInfo& info);
 

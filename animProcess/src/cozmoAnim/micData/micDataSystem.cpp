@@ -218,7 +218,7 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
 {
   // if we can start a new stream, go ahead and do that now
   // the streaming controller will handle the rest for us
-  if( _micStateController.CanBeginStreamingJob() )
+  if( _micStateController.CanStartNewMicStream() )
   {
     MicStreamingController::StreamingArguments args =
     {
@@ -226,7 +226,7 @@ void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool p
       .shouldPlayTransitionAnim   = playGetInFromAnimProcess,
       .shouldRecordTriggerWord    = false,
     };
-    _micStateController.BeginStreamingJob( args );
+    _micStateController.StartNewMicStream( args );
   }
   else
   {
@@ -332,7 +332,6 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
   }
   _fftResultData->_fftResultMutex.unlock();
 
-  bool receivedStopMessage = false;
   static constexpr size_t kMaxReceiveBytes = 2000;
   uint8_t receiveArray[kMaxReceiveBytes];
 
@@ -343,25 +342,27 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
 
       case CloudMic::MessageTag::stopSignal:
         LOG_INFO("MicDataSystem.Update.RecvCloudProcess.StopSignal", "");
-        receivedStopMessage = true;
+        _micStateController.StopCurrentMicStreaming(MicStreamingController::StreamingResult::Success);
         break;
 
       #if ANKI_DEV_CHEATS
       case CloudMic::MessageTag::testStarted:
       {
         LOG_INFO("MicDataSystem.Update.RecvCloudProcess.FakeTrigger", "");
-        _fakeStreamingState = true;
+        _micStateController.StartCloudTestStream();
 
         // Set up a message to send out about the triggerword
         RobotInterface::TriggerWordDetected twDetectedMessage;
-        twDetectedMessage.direction = kFirstIndex;
-        // TODO:(bn) check stream state here? Currently just assuming streaming is on
-        twDetectedMessage.willOpenStream = true;
-        auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
         {
-          std::lock_guard<std::mutex> lock(_msgsMutex);
-          _msgsToEngine.push_back(std::move(engineMessage));
+          twDetectedMessage.direction       = kFirstIndex;
+          twDetectedMessage.isButtonPress   = false;
+          twDetectedMessage.fromMute        = false;
+          twDetectedMessage.triggerScore    = 0;
+          twDetectedMessage.willOpenStream  = true;
         }
+        auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(twDetectedMessage));
+        SendMessageToEngine(std::move(engineMessage));
+
         break;
       }
       #endif
@@ -380,8 +381,8 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       }
 
       default:
-        LOG_INFO("MicDataSystem.Update.RecvCloudProcess.UnexpectedSignal", "0x%x 0x%x", receiveArray[0], receiveArray[1]);
-        receivedStopMessage = true;
+        // note(jmeh): should this be an error?  (It wasn't previously)
+        _micStateController.StopCurrentMicStreaming( MicStreamingController::StreamingResult::Success );
         break;
     }
   }
@@ -419,127 +420,10 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       _saveJob = _micProcessingJobs.back();
     }
   }
-
-  // Minimum length of time to display the "trigger heard" symbol on the mic data debug screen
-  // (is extended by streaming)
-  constexpr uint32_t kTriggerDisplayTime_ns = 1000 * 1000 * 2000; // 2 seconds
-  static BaseStationTime_t endTriggerDispTime_ns = 0;
-  if (endTriggerDispTime_ns > 0 && endTriggerDispTime_ns < currTime_nanosec)
-  {
-    endTriggerDispTime_ns = 0;
-  }
 #endif
 
-  // lock the job mutex
-  {
-    std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
-
-    //  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-    // ... this block is where we kick off a new stream to the cloud ...
-
-    // check if the pointer to the currently streaming job is valid
-    if (!_currentlyStreaming && HasStreamingJob()
-      #if ANKI_DEV_CHEATS
-        && !_forceRecordClip
-      #endif
-       )
-    {
-      #if ANKI_DEV_CHEATS
-        endTriggerDispTime_ns = currTime_nanosec + kTriggerDisplayTime_ns;
-      #endif
-      if (_udpServer->HasClient())
-      {
-        _currentlyStreaming = true;
-        _streamingComplete = ShouldSimulateStreaming();
-        _streamingAudioIndex = 0;
-
-        // even though this isn't necessarily the exact frame the backpack lights begin (since that's done in a different
-        // thread), it doesn't make a noticeable difference since this is an arbitrary number and doesn't need to be precise
-        _streamBeginTime_ns = currTime_nanosec;
-
-        // Send out the message announcing the trigger word has been detected
-        auto hw = CloudMic::Hotword{CloudMic::StreamType::Normal, _locale.ToString(),
-                                    _timeZone, !_enableDataCollection};
-        if (_currentStreamingJob != nullptr) {
-          hw.mode = _currentStreamingJob->_type;
-        }
-        SendUdpMessage(CloudMic::Message::Createhotword(std::move(hw)));
-        LOG_INFO("MicDataSystem.Update.StreamingStart", "");
-      }
-      else
-      {
-        ClearCurrentStreamingJob();
-        LOG_INFO("MicDataSystem.Update.StreamingStartIgnored", "Ignoring stream start as no clients connected.");
-      }
-    }
-
-    //  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
-    // ... this block is where we actually do the streaming of the mic data up to the cloud ...
-
-    if (_currentlyStreaming)
-    {
-      bool realStreamHasFinished = false;
-
-      // Are we done with what we want to stream?
-      if (!_streamingComplete)
-      {
-        static constexpr size_t kMaxRecordNumChunks = (kStreamingTimeout_ms / kTimePerChunk_ms) + 1;
-        const bool didTimeout = _streamingAudioIndex >= kMaxRecordNumChunks;
-        if (receivedStopMessage || didTimeout)
-        {
-          _streamingComplete = true;
-          realStreamHasFinished = true;
-
-          if (didTimeout)
-          {
-            SendUdpMessage(CloudMic::Message::CreateaudioDone({}));
-          }
-          LOG_INFO("MicDataSystem.Update.StreamingEnd", "%zu ms", _streamingAudioIndex * kTimePerChunk_ms);
-          #if ANKI_DEV_CHEATS
-            _fakeStreamingState = false;
-          #endif
-        }
-        else
-        {
-        #if ANKI_DEV_CHEATS
-          if (!_fakeStreamingState)
-        #endif
-          {
-            // Copy any new data that has been pushed onto the currently streaming job
-            AudioUtil::AudioChunkList newAudio = _currentStreamingJob->GetProcessedAudio(_streamingAudioIndex);
-            _streamingAudioIndex += newAudio.size();
-
-            // Send the audio to any clients we've got
-            if (_udpServer->HasClient())
-            {
-              for(const auto& audioChunk : newAudio)
-              {
-                SendUdpMessage(CloudMic::Message::Createaudio(CloudMic::AudioData{audioChunk}));
-              }
-            }
-          }
-        }
-      }
-
-      // we want to extend the streaming state so that it at least appears to be streaming for a minimum duration
-      // here we hold onto the streaming job until we've reached that minimum duration
-      // note: the streaming job will not actually be recording, we're simply holding it so we don't start a new job
-
-      // TODO:(bn) VIC-13438 this is tech debt and has caused bugs and confusion and should be cleaned up
-      if (_streamingComplete)
-      {
-        // our stream is complete, so clear out the current stream as long as our minimum streaming time has elapsed
-        uint32_t minStreamingDuration_ms = _context->GetShowAudioStreamStateManager()->GetMinStreamingDuration();
-        const BaseStationTime_t minStreamDuration_ns = minStreamingDuration_ms * 1000 * 1000;
-        const BaseStationTime_t minStreamEnd_ns = _streamBeginTime_ns + minStreamDuration_ns;
-        if ( ( currTime_nanosec >= minStreamEnd_ns ) || realStreamHasFinished )
-        {
-          LOG_INFO("MicDataSystem.Update.StreamingComplete.ClearJob", "Clearing streaming job now that enough time has elapsed");
-          ClearCurrentStreamingJob();
-        }
-      }
-    }
-  }
+  // update our current mic streaming
+  _micStateController.Update();
 
   // Send out any messages we have to the engine
   std::vector<std::unique_ptr<RobotInterface::RobotToEngine>> stolenMessages;
@@ -603,7 +487,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         _latestMicDirectionMsg,
         rawBufferFullness,
         recordingSecondsRemaining,
-        endTriggerDispTime_ns != 0 || _currentlyStreaming);
+        _micStateController.HasStreamingBegun());
     }
   #endif
   
@@ -640,31 +524,6 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
 #endif
 }
 
-void MicDataSystem::ClearCurrentStreamingJob()
-{
-  {
-    std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
-    _currentlyStreaming = false;
-    if (_currentStreamingJob != nullptr)
-    {
-      _currentStreamingJob->SetTimeToRecord(0);
-      _currentStreamingJob = nullptr;
-
-      _micStateController.EndStreamingJob();
-
-      for(auto func : _streamUpdatedCallbacks)
-      {
-        if(func != nullptr)
-        {
-          func(false);
-        }
-      }
-    }
-  }
-
-  ResetMicListenDirection();
-}
-
 void MicDataSystem::ResetMicListenDirection()
 {
   _micDataProcessor->ResetMicListenDirection();
@@ -681,32 +540,105 @@ void MicDataSystem::SendMessageToEngine(std::unique_ptr<RobotInterface::RobotToE
   _msgsToEngine.push_back(std::move(msgPtr));
 }
 
-bool MicDataSystem::HasStreamingJob() const
-{
-  std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
-  return (_currentStreamingJob != nullptr
-  #if ANKI_DEV_CHEATS
-    || _fakeStreamingState || _forceRecordClip
-  #endif
-  );
-}
-
-void MicDataSystem::AddMicDataJob(std::shared_ptr<MicDataInfo> newJob, bool isStreamingJob)
+void MicDataSystem::AddMicDataJob(std::shared_ptr<MicDataInfo> newJob)
 {
   std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
   _micProcessingJobs.push_back(std::shared_ptr<MicDataInfo>(newJob));
-  if (isStreamingJob)
-  {
-    _currentStreamingJob = _micProcessingJobs.back();
+}
 
-    for(auto func : _streamUpdatedCallbacks)
+void MicDataSystem::StartTriggerWordDetectedJob()
+{
+  auto triggerJob = _micDataProcessor->CreateTriggerWordDetectedJob();
+  if (triggerJob)
+  {
+    AddMicDataJob(std::move(triggerJob));
+  }
+}
+
+bool MicDataSystem::StartMicStreamingJob(CloudMic::StreamType streamType)
+{
+  if (!_currentStreamingJob)
+  {
+    if (_udpServer->HasClient())
     {
-      if(func != nullptr)
-      {
-        func(true);
-      }
+      // create the mic job that will record our audio that we will then stream to the cloud
+      _currentStreamingJob = _micDataProcessor->CreateStreamingJob(streamType, kTriggerLessOverlapSize_ms);
+      AddMicDataJob(_currentStreamingJob);
+
+      // setup our streaming values
+      _streamingAudioIndex = 0;
+
+      // Send out the message announcing the trigger word has been detected
+      auto hw = CloudMic::Hotword{ streamType, _locale.ToString(), _timeZone, !_enableDataCollection };
+      SendUdpMessage(CloudMic::Message::Createhotword(std::move(hw)));
+
+      LOG_INFO( "MicDataSystem.StartMicStreamingJob", "Mic streaming job started" );
+      return true;
+    }
+    else
+    {
+      LOG_INFO("MicDataSystem.StartMicStreamingJob", "Ignoring stream start as no clients (cloud) connected.");
+      return false;
     }
   }
+  else
+  {
+    LOG_ERROR("MicDataSystem.StartMicStreamingJob",
+              "Attempting to create a new streaming mic job when one already exists ... ignoring this request");
+    return false;
+  }
+}
+
+void MicDataSystem::StopMicStreamingJob(bool shouldNotifyCloud)
+{
+  if (_currentStreamingJob)
+  {
+    std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
+
+    _currentStreamingJob->SetTimeToRecord(0);
+    _currentStreamingJob = nullptr;
+
+    // let the cloud know that we're done streaming if we ended it on our side
+    if (shouldNotifyCloud && _udpServer->HasClient())
+    {
+      SendUdpMessage(CloudMic::Message::CreateaudioDone({}));
+    }
+  }
+  else
+  {
+    LOG_ERROR("MicDataSystem.StopMicStreamingJob",
+              "Attempting to stop a mic streaming job when no job has been created");
+  }
+
+  LOG_INFO( "MicDataSystem.StopMicStreamingJob", "Mic streaming job stopped" );
+  ResetMicListenDirection();
+}
+
+size_t MicDataSystem::SendLatestMicStreamingJobDataToCloud()
+{
+  if (_currentStreamingJob)
+  {
+    std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
+
+    // Copy any new data that has been pushed onto the currently streaming job
+    AudioUtil::AudioChunkList newAudio = _currentStreamingJob->GetProcessedAudio(_streamingAudioIndex);
+    _streamingAudioIndex += newAudio.size();
+
+    // Send the audio to any clients we've got
+    if (_udpServer->HasClient())
+    {
+      for(const auto& audioChunk : newAudio)
+      {
+        SendUdpMessage(CloudMic::Message::Createaudio(CloudMic::AudioData{audioChunk}));
+      }
+    }
+
+    return _streamingAudioIndex;
+  }
+
+  LOG_ERROR("MicDataSystem.SendLatestMicStreamingJobDataToCloud",
+            "Attempting to stream mic data but no streaming job was ever created");
+  return 0;
 }
 
 std::deque<std::shared_ptr<MicDataInfo>> MicDataSystem::GetMicDataJobs() const
@@ -786,7 +718,7 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
       }
 #endif
       
-      if( ignore || HasStreamingJob() ) {
+      if( ignore || _micStateController.IsActivelyStreaming() ) {
         // Don't run alexa wakeword if
         // 1. there's a "hey vector" streaming job
         // 2. if the mic is muted
@@ -843,7 +775,13 @@ void MicDataSystem::ToggleMicMute()
   // the samples go no where. Also check if it saves CPU to drop samples. Note that the time indices
   // for the wake word bookends might be wrong afterwards.
 
-  _micStateController.SetMicsMuted( _micMuted );
+  // toggle backpack lights
+  if( _context != nullptr ) {
+    auto* bplComp = _context->GetBackpackLightComponent();
+    if( bplComp != nullptr ) {
+      bplComp->SetMicMute( _micMuted );
+    }
+  }
   
   // add/remove persistent file
   const auto muteFile = _persistentFolder + kMicSettingsFile;

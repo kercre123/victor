@@ -65,7 +65,7 @@ public:
   
   bool ShouldSimulateStreamAfterTriggerWord() const;
 
-  uint32_t GetMinStreamingDuration();
+  uint32_t GetMinStreamingDuration() const;
   
   // with the exception of HasAnyAlexaResponse, alexa methods should be called on the main thread.
   // This is only because the current Alexa implementation fits this constraint, so I'm assuming it here.
