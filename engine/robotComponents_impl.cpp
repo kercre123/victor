@@ -71,6 +71,7 @@ class RobotHealthReporter;
 class RobotStatsTracker;
 class SettingsCommManager;
 class SettingsManager;
+class SocialPresenceEstimator;
 class VariableSnapshotComponent;
 class PowerStateManager;
 class JdocsManager;
@@ -139,6 +140,7 @@ LINK_COMPONENT_TYPE_TO_ENUM(RobotExternalRequestComponent, RobotComponentID, Rob
 LINK_COMPONENT_TYPE_TO_ENUM(AccountSettingsManager,        RobotComponentID, AccountSettingsManager)
 LINK_COMPONENT_TYPE_TO_ENUM(UserEntitlementsManager,       RobotComponentID, UserEntitlementsManager)
 LINK_COMPONENT_TYPE_TO_ENUM(RangeSensorComponent,          RobotComponentID, RangeSensor)
+LINK_COMPONENT_TYPE_TO_ENUM(SocialPresenceEstimator,       RobotComponentID, SocialPresenceEstimator)
 
 
 // Translate entity into string
@@ -202,6 +204,7 @@ std::string GetComponentStringForID<Vector::RobotComponentID>(Vector::RobotCompo
     CASE(SDK)
     CASE(SettingsCommManager)
     CASE(SettingsManager)
+    CASE(SocialPresenceEstimator)
     CASE(StateHistory)
     CASE(StimulationFaceDisplay)
     CASE(TextToSpeechCoordinator)

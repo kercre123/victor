@@ -68,6 +68,7 @@
 #include "engine/moodSystem/stimulationFaceDisplay.h"
 #include "engine/navMap/mapComponent.h"
 #include "engine/petWorld.h"
+#include "engine/receptiveSocialPresenceEstimator/socialPresenceEstimator.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotGyroDriftDetector.h"
 #include "engine/robotManager.h"
@@ -357,6 +358,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::AccountSettingsManager,     new AccountSettingsManager());
     _components->AddDependentComponent(RobotComponentID::UserEntitlementsManager,    new UserEntitlementsManager());
     _components->AddDependentComponent(RobotComponentID::LocaleComponent,            new LocaleComponent());
+    _components->AddDependentComponent(RobotComponentID::SocialPresenceEstimator,    new SocialPresenceEstimator());
     _components->InitComponents(this);
   }
 
