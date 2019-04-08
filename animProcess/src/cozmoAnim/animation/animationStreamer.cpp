@@ -529,6 +529,7 @@ namespace Anim {
     _loopCtr = 0;
     _numLoops = numLoops;
     // Get the animation ready to play
+    // DNM FTLOG why?
     InitStreamingAnimation(tag, startAt_ms, shouldOverrideEyeHue, shouldRenderInEyeHue);
 
     _playingInternalAnim = isInternalAnim;
@@ -818,14 +819,17 @@ namespace Anim {
     // undefined behavior
     _streamingAnimation = _neutralFaceAnimation;
     CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(name));
+    // DNM this call with EyeHue overrides and junk... gonna be a PITA
     SetStreamingAnimation(_proceduralAnimation, tag, numLoops, startAtTime_ms, interruptRunning,
                           shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
 
     _expectingCompositeImage = true;
   }
 
-  // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
-  // refactor this method around the SpriteBoxCompositor
+  // DNM Testing with MirrorMode from Vision. Attempting to add duplicate keyframes often, I think the SpriteSeqTrack
+  // just blindly overwrote the last one... but I'm not certain of that.
+  // Are we keeping mountains of image data in memory if the SpriteHandles don't descope? Yes, that's why we have the 
+  // call to clearUpToCurrent on line 1981. Make sure this is compatible.
   Result AnimationStreamer::SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms)
   {
     if (_redirectFaceImagesToDebugScreen) {
@@ -884,6 +888,7 @@ namespace Anim {
     return result;
   }
 
+  // DNM SetCompositeImage. This should be pretty easy too.
   Result AnimationStreamer::SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms,
                                               u32 duration_ms)
   {
@@ -902,6 +907,7 @@ namespace Anim {
       const bool shouldRenderInEyeHue = false;
       const bool isInternalAnim = true;
       const bool shouldClearProceduralAnim = false;
+      // DNM FTLOG why?
       SetStreamingAnimation(nullptr, 0, numLoops, startTime_ms, interruptRunning,
                             shouldOverrideEyeHue, shouldRenderInEyeHue,
                             isInternalAnim, shouldClearProceduralAnim);
@@ -928,10 +934,12 @@ namespace Anim {
     const bool interruptRunning = true;
     const bool shouldOverrideEyeHue = false;
     const bool isInternalAnim = false;
+    // DNM FTLOG why?
     return SetStreamingAnimation(_proceduralAnimation, preserveTag, numLoops, startTime_ms, interruptRunning,
                                  shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
   }
 
+  // DNM UpdateCompositeImage. Once this is converted, Queue and Apply should be totally unnecessary.
   Result AnimationStreamer::UpdateCompositeImage(Vision::LayerName layerName,
                                                  const Vision::CompositeImageLayer::SpriteBox& spriteBox,
                                                  uint16_t assetID,
@@ -954,10 +962,7 @@ namespace Anim {
                                                             spriteBox,
                                                             assetID);
 
-      // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
-      // This is a mess. A single KeyFrame is now responsible for updating the
-      // face image any time it is updated. This dilutes the "moment in time" notion
-      // of a KeyFrame pretty deeply
+      // DNM KO
       keyframe.QueueCompositeImageUpdate(std::move(spec), applyAt_ms);
     }
     else
@@ -1671,9 +1676,10 @@ namespace Anim {
     static const bool kStoreFace = true;
     ExtractMessagesRelatedToProceduralTrackComponent(_context, _streamingAnimation, _proceduralTrackComponent.get(),
                                                      _lockedTracks, _relativeStreamTime_ms, kStoreFace, stateToSend);
-    // Functionally, this checks whether we rendered the SpriteTrack during EMRTPTC above.
 
+    // Functionally, this checks whether we rendered the SpriteTrack during EMRTPTC above.
     // If we did, we note it by preventing procedural face draws for a while. Move it somewhere appropriate.
+    // DNM Careful with this one... could have far-reaching effects if not transitioned properly
     auto & spriteSeqTrack = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>();
     if (ShouldRenderSpriteTrack(spriteSeqTrack, _lockedTracks, _relativeStreamTime_ms, false))
     {
@@ -1722,8 +1728,7 @@ namespace Anim {
     bool needToRenderStreamable = !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::FACE_TRACK);
     if (anim != nullptr)
     {
-      // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
-      // once the spriteSeqTrack is gone this will collapse to only the first check
+      // DNM once the spriteSeqTrack is gone this will collapse to only the first check
       const auto & spriteSeqTrack = anim->GetTrack<SpriteSequenceKeyFrame>();
       needToRenderStreamable &= layeredKeyFrames.haveFaceKeyFrame &&
                                 ShouldRenderProceduralFace(spriteSeqTrack,
@@ -1749,8 +1754,7 @@ namespace Anim {
                                                               *context->GetDataLoader()->GetSpriteSequenceContainer(),
                                                               timeSinceAnimStart_ms, compImg);
 
-      // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
-      // CompImageUpdates should just go into the SpriteBoxCompositor as SpriteBoxKeyframes. Then
+      // DNM CompImageUpdates should just go into the SpriteBoxCompositor as SpriteBoxKeyframes. Then
       // this whole block will go away
       u32 curFrameIdx = 0;
       const auto & spriteSeqTrack = anim->GetTrack<SpriteSequenceKeyFrame>();
@@ -1950,7 +1954,9 @@ namespace Anim {
     {
       std::lock_guard<std::mutex> lock(_pendingAnimationMutex);
       if (!_pendingAnimation.empty()) {
-        SetStreamingAnimation(_pendingAnimation, /*tag*/ 1, _pendingNumLoops, 0, /*interruptRunning*/ true);
+        // DNM investigate or reset
+        // SetStreamingAnimation(_pendingAnimation, /*tag*/ 1, _pendingNumLoops, 0, /*interruptRunning*/ true);
+        SetStreamingAnimation(_pendingAnimation,  1, _pendingNumLoops, 0, true, true, false);
 
         _pendingAnimation.clear();
         _pendingNumLoops = 0;
@@ -2043,6 +2049,7 @@ namespace Anim {
     // Send animState message
     if (--_numTicsToSendAnimState == 0)
     {
+      // DNM Yikes... make sure to understand the ramifications before swapping this out
       const auto numKeyframes = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>().TrackLength();
 
       AnimationState msg;
@@ -2250,6 +2257,7 @@ namespace Anim {
     image.AddLayer(std::move(eyeLayer));
   }
 
+  // DNM KO this shit
   bool AnimationStreamer::ShouldRenderProceduralFace(const Animations::Track<SpriteSequenceKeyFrame>& spriteTrack,
                                                      const u8 tracksCurrentlyLocked,
                                                      const TimeStamp_t relativeStreamTime_ms)
@@ -2270,6 +2278,7 @@ namespace Anim {
     return !newSpriteSeqData || allowEyeOverlays;
   }
 
+  // DNM KO this shit too
   bool AnimationStreamer::ShouldRenderSpriteTrack(const Animations::Track<SpriteSequenceKeyFrame>& spriteTrack,
                                                   const u8 tracksCurrentlyLocked,
                                                   const TimeStamp_t relativeStreamTime_ms,

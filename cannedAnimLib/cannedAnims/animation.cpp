@@ -341,6 +341,7 @@ Animations::Track<LiftHeightKeyFrame>& Animation::GetTrack() {
   return _liftTrack;
 }
 
+// DNM KO
 template<>
 Animations::Track<SpriteSequenceKeyFrame>& Animation::GetTrack() {
   return _spriteSequenceTrack;
@@ -443,7 +444,7 @@ void Animation::CacheAnimationSprites(Vision::SpriteCache* cache)
 {
   _spriteBoxCompositor.CacheInternalSprites(cache); 
 
-  // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
+  // DNM KO
   auto& frameList = _spriteSequenceTrack.GetAllFrames();
   auto endTime_ms = GetLastKeyFrameEndTime_ms();
   for(auto& frame: frameList){
@@ -478,6 +479,7 @@ void Animation::AppendAnimation(const Animation& appendAnim)
   // Append animation tracks
   _headTrack.AppendTrack(appendAnim.GetTrack<HeadAngleKeyFrame>(), animOffest_ms);
   _liftTrack.AppendTrack(appendAnim.GetTrack<LiftHeightKeyFrame>(), animOffest_ms);
+  // DNM KO
   _spriteSequenceTrack.AppendTrack(appendAnim.GetTrack<SpriteSequenceKeyFrame>(), animOffest_ms);
   _proceduralFaceTrack.AppendTrack(appendAnim.GetTrack<ProceduralFaceKeyFrame>(), animOffest_ms);
   _eventTrack.AppendTrack(appendAnim.GetTrack<EventKeyFrame>(), animOffest_ms);
@@ -503,6 +505,7 @@ uint32_t Animation::GetLastKeyFrameTime_ms() const
   lastFrameTime_ms = CompareLastFrameTime<RecordHeadingKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<TurnToRecordedHeadingKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<EventKeyFrame>(lastFrameTime_ms);
+  // DNM KO
   lastFrameTime_ms = CompareLastFrameTime<SpriteSequenceKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<BackpackLightsKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<ProceduralFaceKeyFrame>(lastFrameTime_ms);
@@ -525,6 +528,7 @@ uint32_t Animation::GetLastKeyFrameEndTime_ms() const
   lastFrameTime_ms = CompareLastFrameEndTime<RecordHeadingKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<TurnToRecordedHeadingKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<EventKeyFrame>(lastFrameTime_ms);
+  // DNM KO
   lastFrameTime_ms = CompareLastFrameEndTime<SpriteSequenceKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<BackpackLightsKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<ProceduralFaceKeyFrame>(lastFrameTime_ms);

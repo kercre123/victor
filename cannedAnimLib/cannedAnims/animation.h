@@ -138,7 +138,7 @@ private:
   // All the animation tracks, storing different kinds of KeyFrames
   Animations::Track<HeadAngleKeyFrame>      _headTrack;
   Animations::Track<LiftHeightKeyFrame>     _liftTrack;
-  // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
+  // DNM KO
   Animations::Track<SpriteSequenceKeyFrame> _spriteSequenceTrack;
   Animations::Track<ProceduralFaceKeyFrame> _proceduralFaceTrack;
   Animations::Track<EventKeyFrame>          _eventTrack;
