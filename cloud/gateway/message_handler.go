@@ -2937,7 +2937,7 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 			updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
 		}
 	} else {
-		if updateStatus.ExitCode > 1 {
+		if updateStatus.ExitCode > 0 {
 			updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_FAILURE_OTHER
 		} else {
 			updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_OTHER
