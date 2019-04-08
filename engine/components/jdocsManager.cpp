@@ -1253,6 +1253,17 @@ void JdocsManager::HandleReadResponse(const JDocs::ReadRequest& readRequest, con
         {
           pullCloudVersion = false;
         }
+        else if (!jdoc._hasAccessedCloud)
+        {
+          // If we've not accessed the cloud yet (since clearing user data), then we
+          // don't want to pull down the cloud version of this jdoc, which is for a
+          // prior "lifetime" (but same userID and thingID); this often happens when
+          // a developer or QA person has cleared user data, then re-runs the app
+          // but with the same userID and robot.  In that case the OLD JDOCS (for
+          // that userID/robot combo) are STILL IN THE CLOUD.  So let's just use the
+          // newly-created jdoc and push it up to the cloud.
+          pullCloudVersion = false;
+        }
         static const size_t kBufferLen = 256;
         char logMsg[kBufferLen];
         snprintf(logMsg, kBufferLen, "Cloud version (%llu) of %s jdoc is later than robot version (%llu); %s",
