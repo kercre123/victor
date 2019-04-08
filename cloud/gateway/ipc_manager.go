@@ -745,6 +745,13 @@ func (manager *EngineCladIpcManager) ProcessMessages() {
 				},
 			}
 			manager.SendEventToChannel(event)
+		case gw_clad.MessageRobotToExternalTag_RobotErasedEnrolledFace:
+			event := &extint.Event{
+				EventType: &extint.Event_RobotErasedEnrolledFace{
+					RobotErasedEnrolledFace: CladRobotErasedEnrolledFaceToProto(msg.GetRobotErasedEnrolledFace()),
+				},
+			}
+			manager.SendEventToChannel(event)
 
 		default:
 			manager.SendToListeners(msg)

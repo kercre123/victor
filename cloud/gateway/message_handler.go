@@ -254,6 +254,13 @@ func CladRobotObservedMotionToProto(msg *gw_clad.RobotObservedMotion) *extint.Ro
 	}
 }
 
+func CladRobotErasedEnrolledFaceToProto(msg *gw_clad.RobotErasedEnrolledFace) *extint.RobotErasedEnrolledFace {
+	return &extint.RobotErasedEnrolledFace{
+		FaceId:         msg.FaceID,
+		Name:           msg.Name,
+	}
+}
+
 func CladPoseToProto(msg *gw_clad.PoseStruct3d) *extint.PoseStruct {
 	return &extint.PoseStruct{
 		X:        msg.X,

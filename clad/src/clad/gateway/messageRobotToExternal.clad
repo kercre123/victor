@@ -134,6 +134,12 @@ message EnrolledNamesResponse {
   LoadedKnownFace faces[uint_8],
 }
 
+// NOTE: This is separate from deleting an _observed_ face.
+message RobotErasedEnrolledFace {
+    int_32 faceID,
+    string name
+}
+
 structure AccelData {
   float_32 x,  // mm/s^2
   float_32 y,
@@ -387,6 +393,7 @@ union MessageRobotToExternal {
   MemoryMapMessage                  MemoryMapMessage                   = 0x17,
   MemoryMapMessageEnd               MemoryMapMessageEnd                = 0x18,
   RobotObservedMotion               RobotObservedMotion                = 0x19,
+  RobotErasedEnrolledFace           RobotErasedEnrolledFace            = 0x20,
 }
 
 } // Gateway

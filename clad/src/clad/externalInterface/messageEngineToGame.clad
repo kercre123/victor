@@ -711,6 +711,7 @@ autounion MessageEngineToGame
   MemoryMapMessage                  MemoryMapMessage                   = 0x17,
   MemoryMapMessageEnd               MemoryMapMessageEnd                = 0x18,
   RobotObservedMotion               RobotObservedMotion                = 0x19,
+  RobotErasedEnrolledFace           RobotErasedEnrolledFace            = 0x20,
 }
 
 } // namespace ExternalInterface
