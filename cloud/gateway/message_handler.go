@@ -2674,7 +2674,8 @@ func (service *rpcService) EnableMirrorMode(ctx context.Context, request *extint
 func (service *rpcService) CaptureSingleImage(ctx context.Context, request *extint.CaptureSingleImageRequest) (*extint.CaptureSingleImageResponse, error) {
 	// Enable image stream
 	_, err := service.EnableImageStreaming(nil, &extint.EnableImageStreamingRequest{
-		Enable: true,
+		Enable:               true,
+		EnableHighResolution: request.EnableHighResolution,
 	})
 
 	if err != nil {
@@ -2683,7 +2684,8 @@ func (service *rpcService) CaptureSingleImage(ctx context.Context, request *exti
 
 	// Disable image stream
 	defer service.EnableImageStreaming(nil, &extint.EnableImageStreamingRequest{
-		Enable: false,
+		Enable:               false,
+		EnableHighResolution: false,
 	})
 
 	f, cameraFeedChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ImageChunk{}, 1024)
@@ -2825,9 +2827,10 @@ func UnpackCameraImageChunk(imageChunk *extint.ImageChunk, cache *CameraFeedCach
 
 // Long running message for sending camera feed to listening sdk users
 func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extint.ExternalInterface_CameraFeedServer) error {
-	// Enable video stream
+	// Enable video stream. The video stream only uses the default image resolution.
 	_, err := service.EnableImageStreaming(nil, &extint.EnableImageStreamingRequest{
-		Enable: true,
+		Enable:               true,
+		EnableHighResolution: false,
 	})
 
 	if err != nil {
@@ -2836,7 +2839,8 @@ func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extin
 
 	// Disable video stream
 	defer service.EnableImageStreaming(nil, &extint.EnableImageStreamingRequest{
-		Enable: false,
+		Enable:               false,
+		EnableHighResolution: false,
 	})
 
 	f, cameraFeedChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ImageChunk{}, 1024)
