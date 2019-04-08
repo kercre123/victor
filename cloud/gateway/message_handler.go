@@ -2882,22 +2882,21 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 
 	if data, err := ioutil.ReadFile("/run/update-engine/exit_code"); err == nil {
 		updateStatus.ExitCode, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
-		if data, err := ioutil.ReadFile("/run/update-engine/error"); err == nil {
-			updateStatus.Error = string(data)
-			if strings.HasPrefix(updateStatus.Error, "Unclean exit") {
-				// If we get this error, either we caught /anki/bin/update-engine in its
-				// earliest stages, or systemd has gone awry. The former case is not an
-				// error - the string was initialized this way in case an error did occur.
-				// The latter case isn't easily detectable, and implies a larger system
-				// failure from which we can't recover (or provide users with good info
-				// on) anyway.
+	}
+
+	if data, err := ioutil.ReadFile("/run/update-engine/error"); err == nil {
+		updateStatus.Error = strings.TrimSpace(string(data))
+		if updateStatus.Error == "Unclean exit" {
+			// If we get this error, either we caught /anki/bin/update-engine in its
+			// earliest stages, or systemd has gone awry.
+			if updateStatus.ExitCode == -1 {
 				updateStatus.Error = ""
 			}
 		}
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/phase"); err == nil {
-		updateStatus.UpdatePhase = string(data)
+		updateStatus.UpdatePhase = strings.TrimSpace(string(data))
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/manifest.ini"); err == nil {
@@ -2909,27 +2908,23 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/progress"); err == nil {
-		updateStatus.Progress, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
+		updateStatus.Progress, _ = strconv.ParseInt(string(data), 0, 64)
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/expected-size"); err == nil {
-		updateStatus.Expected, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
+		updateStatus.Expected, _ = strconv.ParseInt(string(data), 0, 64)
 	}
 
 	// I do this, rather than checking for the 203 because the 203 has other meanings.
-	if strings.HasPrefix(updateStatus.Error, "Failed to open URL: HTTP Error 403: Forbidden") {
+	if strings.Contains(updateStatus.Error, "Failed to open URL: HTTP Error 403: Forbidden") {
 		updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_NO_UPDATE
 		updateStatus.Error = ""
 		updateStatus.ExitCode = 0
 		return updateStatus, nil
 	}
 
-	if data, err := ioutil.ReadFile("/run/update-engine/phase"); err == nil {
-		updateStatus.UpdatePhase = string(data)
-	}
-
-	if strings.HasPrefix(updateStatus.UpdatePhase, "download") {
-		if updateStatus.ExitCode > 1 {
+	if strings.Contains(updateStatus.UpdatePhase, "download") {
+		if updateStatus.ExitCode > 0 {
 			if updateStatus.ExitCode == 208 || updateStatus.ExitCode == 215 {
 				updateStatus.UpdateStatus =
 					extint.CheckUpdateStatusResponse_FAILURE_INTERRUPTED_DOWNLOAD
