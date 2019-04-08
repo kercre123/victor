@@ -1472,13 +1472,20 @@ message CheckUpdateStatusResponse{
   ResponseStatus status = 1;
   enum UpdateStatus {
     NO_UPDATE = 0;
-    READY_TO_INSTALL = 1;
+    READY_TO_REBOOT_INTO_NEW_OS_VERSION = 1;
     IN_PROGRESS_DOWNLOAD = 2;
+    FAILURE_INTERRUPTED_DOWNLOAD = 3;
+    IN_PROGRESS_STARTING = 4;
+    IN_PROGRESS_OTHER = 5;
+    FAILURE_OTHER = 6;
   }
   UpdateStatus update_status = 2;
   int64 expected = 3;
   int64 progress = 4;
   string update_version = 5;
+  string update_phase = 6;
+  string error = 7;
+  int64 exit_code = 8;
 }
   
 message UploadDebugLogsRequest{}
