@@ -254,6 +254,11 @@ namespace Anim {
     // length, since that's what keeps time for streaming animations (not a
     // clock)
     TimeStamp_t _relativeStreamTime_ms;
+    // Track whether or not any content was displayed to the face from the current animation
+    // on the previous frame. This is used to determine whether we need to send a blank image
+    // to clear the face when the animation provides no content on the current frame
+    // DNM the fact that this has to be static is #RealDumb
+    static bool _prevFrameDisplayedFaceContent;
     // There are a few special cases where time should not be incremented for a tick
     // e.g. looping animations which are initialized one tick, but don't get their first
     // update call until the next tick

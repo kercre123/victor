@@ -87,6 +87,7 @@ namespace Anim {
   static ProceduralFace s_faceDataBaseline; // baseline to compare against, differences mean override the incoming animation
   static bool s_faceDataReset = false;
 
+  bool AnimationStreamer::_prevFrameDisplayedFaceContent = false;
   uint16_t AnimationStreamer::_numLayersRendered = 0;
 
 #if ANKI_DEV_CHEATS
@@ -1045,6 +1046,7 @@ namespace Anim {
 
       _startTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
       _relativeStreamTime_ms = startAt_ms;
+      _prevFrameDisplayedFaceContent = false;
 
       _endOfAnimationSent = false;
       _startOfAnimationSent = false;
@@ -1809,6 +1811,16 @@ namespace Anim {
         stateToSend.faceImg.SetFromImageRGB(img);
 
         stateToSend.haveFaceToSend = true;
+        _prevFrameDisplayedFaceContent = true;
+      }
+      else if (!renderFromCompImage && !needToRenderStreamable && _prevFrameDisplayedFaceContent)
+      {
+        // Nothing should be rendered to the face from this animation on this frame. Ensure
+        // that the face is cleared of content if necessary by rendering a blank image on the
+        // first empty frame
+        stateToSend.haveFaceToSend = true;
+        _prevFrameDisplayedFaceContent = false;
+        stateToSend.faceImg.FillWith(Vision::PixelRGB());
       }
     }
 
