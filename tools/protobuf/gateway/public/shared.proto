@@ -181,6 +181,8 @@ message GatewayWrapper {
     EnrollFaceResponse            enroll_face_response               = 411;
     SetFaceToEnrollRequest        set_face_to_enroll_request         = 412;
     SetFaceToEnrollResponse       set_face_to_enroll_response        = 413;
+    CancelBehaviorRequest         cancel_behavior_request            = 414;
+    CancelBehaviorResponse        cancel_behavior_response           = 415;
 
     // ------------ movement request/response pairs ----------------------
     TurnInPlaceRequest              turn_in_place_request                = 500;

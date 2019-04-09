@@ -694,6 +694,15 @@ message CancelActionByIdTagResponse {
   ResponseStatus status = 1;
 }
 
+// Cancel a behavior in progress
+message CancelBehaviorRequest {
+}
+
+// Response from the robot to CancelBehaviorRequest.
+message CancelBehaviorResponse {
+  ResponseStatus status = 1;
+}
+
 // GotoPose
 message GoToPoseRequest {
   float x_mm                    = 1;

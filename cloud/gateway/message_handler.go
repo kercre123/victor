@@ -794,6 +794,23 @@ func (service *rpcService) StopAllMotors(ctx context.Context, in *extint.StopAll
 	}, nil
 }
 
+func (service *rpcService) CancelBehavior(ctx context.Context, in *extint.CancelBehaviorRequest) (*extint.CancelBehaviorResponse, error) {
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_CancelBehaviorRequest{
+			CancelBehaviorRequest: in,
+		},
+	}
+	_, _, err := engineProtoManager.Write(message)
+	if err != nil {
+		return nil, err
+	}
+	return &extint.CancelBehaviorResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+	}, nil
+}
+
 func (service *rpcService) CancelActionByIdTag(ctx context.Context, in *extint.CancelActionByIdTagRequest) (*extint.CancelActionByIdTagResponse, error) {
 	message := &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_CancelActionByIdTagRequest{
