@@ -41,7 +41,9 @@ structure UserIntent_WeatherResponse
 
   string  temperature,
   string  temperatureUnit,
-  string  localDateTime
+  string  localDateTime,
+
+  string  dayOrNight,
 }
 
 structure UserIntent_TakeAPhoto
