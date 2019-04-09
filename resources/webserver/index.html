@@ -184,7 +184,6 @@
     var pmXModeLastN = 100;
     var pmXModeFirst = 50;
     var pmXModeLast = 150;
-    var pmDataSelectorDescriptions = [];
     var pmDataSelectorInitialized = false;
     const pmNumDataSelectors = 3;
     var pmShowMsInYAxis = false;
@@ -218,7 +217,9 @@
 
     function SetPage(pageName) {
         // Page EXIT actions:
-        if (curPageName == "page_perf") {
+        if (curPageName == "page_consolevars") {
+            $('#content_console_vars').hide();
+        } else if (curPageName == "page_perf") {
             if (perfAutoUpdate) {
                 clearTimeout(perfAutoUpdateTimerId);
             }
@@ -267,6 +268,7 @@
             if (allowConsoleVarsPage) {
                 $("#consolevars_main_section").show();
                 $("#consolevars_page_disabled").hide();
+                $('#content_console_vars').show();
             } else {
                 $("#consolevars_main_section").hide();
                 $("#consolevars_page_disabled").show();
@@ -855,19 +857,25 @@
             var lines = result.split("\n");
             if (!pmDataSelectorInitialized) {
                 pmDataSelectorInitialized = true;
+                if (pmGraphAutoUpdate) {
+                    // If user had toggled graph auto update on before the first 'dump all', we are
+                    // in the midst of that but need to set up the next graph update request (to
+                    // happen immediately)
+                    pmGraphAutoUpdateTimerId = setTimeout(SendPerfMetricGraphUpdateRequest, 0, true);
+                }
                 // Parse the header lines to auto-construct data series selectors:
                 var headingsLine1 = lines[0].match(/\S+/g);
                 var headingsLine2 = lines[1].match(/\S+/g);
-                pmDataSelectorDescriptions = [];
-                for (var i = 0; i < headingsLine1.length; i++) {
-                    pmDataSelectorDescriptions[i] = headingsLine1[i] + ' ' + headingsLine2[i];
-                    for (var j = 0; j < pmNumDataSelectors; j++) {
-                        $('#menu_pm_data_' + j).append($('<option>', {
-                            value: i,
-                            text: pmDataSelectorDescriptions[i]
+                for (var i = 0; i < pmNumDataSelectors; i++) {
+                    var selectorId = '#menu_pm_data_' + i;
+                    for (var j = 0; j < headingsLine1.length; j++) {
+                        var dataSelectorItemText = headingsLine1[j] + ' ' + headingsLine2[j];
+                        $(selectorId).append($('<option>', {
+                            value: j,
+                            text: dataSelectorItemText
                         }));
-                        $('#menu_pm_data_' + j).selectmenu('refresh');
                     }
+                    $(selectorId).selectmenu('refresh');
                 }
             }
             // Parse into data we can use in a graph
@@ -932,6 +940,7 @@
             // If we haven't dumped all data yet (which also populates the data selectors),
             // then do that now (INSTEAD of getting frames since last dump)
             ButtonHandler_PerfMetricDumpAll();
+            return;
         }
         else {
             pmGraphAutoUpdateRequestInProgress = true;
@@ -1067,9 +1076,6 @@
         }
     });
     $(function() {
-        // $(".widget input[type=submit], .widget a, .widget button").button();
-        // $(".widget input[type=submit]").button();
-
         $("button").click(function(event) {
             var name = event.target.name;
             if (name.startsWith('page_')) {
@@ -1081,11 +1087,21 @@
             event.preventDefault();
         });
         $("input[type='submit']").click(function(event) {
-            $.post("/"+event.target.value, function(data) {
-                $("#content").html(data);
-                $("#content").show();
-                InitConfirmDialog();
-            });
+            if (event.target.value == 'consolevars') {
+                $('#content_console_vars').html("Loading...");
+                $.post("/" + event.target.value, function(data) {
+                    $('#content_console_vars').html(data);
+                    $('#content_console_vars').show();
+                    InitConfirmDialog();
+                });
+            }
+            else {
+                $.post("/" + event.target.value, function(data) {
+                    $("#content").html(data);
+                    $("#content").show();
+                    InitConfirmDialog();
+                });
+            }
             event.preventDefault();
         });
         $(".pmxmodelistbox").each(function() {
@@ -1377,6 +1393,8 @@
     </div>
 
     <div id="content">
+    </div>
+    <div id='content_console_vars'>
     </div>
 </body>
 
