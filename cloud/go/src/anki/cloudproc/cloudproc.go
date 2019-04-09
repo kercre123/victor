@@ -4,7 +4,7 @@ import (
 	"anki/jdocs"
 	"anki/log"
 	"anki/logcollector"
-  "anki/offboard_vision"
+	"anki/offboard_vision"
 	"anki/token"
 	"anki/token/identity"
 	"anki/voice"
@@ -77,7 +77,7 @@ func Run(ctx context.Context, procOptions ...Option) {
 			logcollector.Run(ctx, logcollectorOpts...)
 		})
 	}
-  launchProcess(&wg, func() {
+	launchProcess(&wg, func() {
 		offboard_vision.Run(ctx)
 	})
 	addHandlers(offboard_vision.GetDevHandlers, tokenServer)
