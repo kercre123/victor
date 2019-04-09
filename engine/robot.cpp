@@ -1150,7 +1150,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   GetCliffSensorComponent().NotifyOfRobotState(msg);
   GetProxSensorComponent().NotifyOfRobotState(msg);
   GetTouchSensorComponent().NotifyOfRobotState(msg);
-  GetPowerStateManager().NotifyOfRobotState(msg);
 
   // Update processed proxSensorData in history after ProxSensorComponent was updated
   GetStateHistory()->UpdateProxSensorData(msg.timestamp, GetProxSensorComponent().GetLatestProxData());

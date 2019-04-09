@@ -35,7 +35,6 @@ enum uint_8 BEIConditionType {
   FeatureGate,
   HighTemperature,
   IlluminationDetected,
-  InCalmMode,
   IsMaintenanceReboot,
   IsNightTime,
   Lambda,

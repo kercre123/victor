@@ -34,7 +34,6 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionFeatureGate.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionHighTemperature.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionIlluminationDetected.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionInCalmMode.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionIsMaintenanceReboot.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionIsNightTime.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
@@ -496,11 +495,6 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::UnitTestCondition:
     {
       condition = std::make_shared<ConditionUnitTest>(config);
-      break;
-    }
-    case BEIConditionType::InCalmMode:
-    {
-      condition = std::make_shared<ConditionInCalmMode>(config);
       break;
     }
     case BEIConditionType::IsMaintenanceReboot:
