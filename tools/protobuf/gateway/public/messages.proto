@@ -1088,6 +1088,7 @@ message ExternalAudioStreamResponse {
     ExternalAudioStreamPlaybackComplete audio_stream_playback_complete = 1;
     ExternalAudioStreamBufferOverrun audio_stream_buffer_overrun = 2;
     ExternalAudioStreamPlaybackFailure audio_stream_playback_failyer = 3;
+    KeepAlivePing keep_alive = 4;
   }
 }
 

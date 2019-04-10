@@ -3617,6 +3617,14 @@ func (service *rpcService) ExternalAudioStreamRequestHandler(in extint.ExternalI
 }
 
 func (service *rpcService) ExternalAudioStreamResponseHandler(out extint.ExternalInterface_ExternalAudioStreamPlaybackServer, responses chan extint.GatewayWrapper, done chan struct{}) error {
+	ping := extint.ExternalAudioStreamResponse{
+		AudioResponseType: &extint.ExternalAudioStreamResponse_KeepAlive{
+			KeepAlive: &extint.KeepAlivePing{},
+		},
+	}
+
+	pingTicker := time.Tick(time.Second)
+
 	for {
 		select {
 		case <-done:
@@ -3633,6 +3641,16 @@ func (service *rpcService) ExternalAudioStreamResponseHandler(out extint.Externa
 				// This is the case where the user disconnects the stream
 				// We should still return the err in case the user doesn't think they disconnected
 				log.Println("Closing AudioStream stream:", err)
+				return err
+			}
+		case <-pingTicker: // ping to check connection liveness after one second.
+			if err := out.Send(&ping); err != nil {
+				log.Println("Closing External Audio stream (on send):", err)
+				return err
+			} else if err = out.Context().Err(); err != nil {
+				log.Println("Closing External Audio stream:", err)
+				// This is the case where the user disconnects the stream
+				// We should still return the err in case the user doesn't think they disconnected
 				return err
 			}
 		}
