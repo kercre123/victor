@@ -324,7 +324,9 @@ struct DockingErrorSignal;
     void EnableImageSending(bool enable);
     void EnableMirrorMode(bool enable);
 
-    void EnableSendingSDKImageChunks(bool enable) { _sendProtoImageChunks = enable; }
+    // Enable/disable broadcasting proto image chunks to the SDK. Set resolution of images
+    // broadcasted to the Viz.
+    void EnableSendingSDKImageChunks(bool enableImageStreaming, bool enableHighResolutionImages);
     bool IsSendingSDKImageChunks() { return _sendProtoImageChunks; }
 
     Vision::ImageQuality GetLastImageQuality() const { return _lastImageQuality; }

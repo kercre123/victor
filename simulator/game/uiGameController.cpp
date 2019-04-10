@@ -226,7 +226,7 @@ namespace Anki {
           const ObjectInteractionCompleted info = msg.completionInfo.Get_objectInteractionCompleted();
           printf("Robot %s picking up object with ID: %d ",
                  ActionResultToString(msg.result),
-                 info.objectIDs[0]);
+                 info.objectID);
           printf("[Tag=%d]\n", msg.idTag);
         }
           break;
@@ -237,7 +237,7 @@ namespace Anki {
           const ObjectInteractionCompleted info = msg.completionInfo.Get_objectInteractionCompleted();
           printf("Robot %s placing object with ID: %d ",
                  ActionResultToString(msg.result),
-                 info.objectIDs[0]);
+                 info.objectID);
           printf("[Tag=%d]\n", msg.idTag);
         }
           break;

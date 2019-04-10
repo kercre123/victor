@@ -288,6 +288,51 @@ message CladRect
   float height = 4;
 }
 
+message RobotObservedMotion {
+  uint32 timestamp = 1; // Timestamp of the corresponding image
+
+  // Area of the supporting region for the point, as a fraction of the image
+  float img_area = 2;
+  int32 img_x = 3; // Pixel coordinate of the point in the image, relative to top-left corner.
+  int32 img_y = 4; // Pixel coordinate of the point in the image, relative to top-left corner.
+
+  // Area of the supporting region for the point, as a fraction of the ground ROI
+  // If unable to map to the ground, area=0
+  float ground_area = 5;
+  int32 ground_x = 6; // Coordinates of the point on the ground, relative to robot, in mm
+  int32 ground_y = 7; // Coordinates of the point on the ground, relative to robot, in mm
+
+  // Top area
+  // Area of the supporting region for the point, as a fraction of the top region
+  float top_img_area = 8;
+  int32 top_img_x = 9; // Pixel coordinate of the point in the image, relative to top-left corner.
+  int32 top_img_y = 10; // Pixel coordinate of the point in the image, relative to top-left corner.
+
+  // Bottom area
+  // Area of the supporting region for the point, as a fraction of the bottom region
+  float bottom_img_area = 11;
+  int32 bottom_img_x = 12; // Pixel coordinate of the point in the image, relative to top-left corner.
+  int32 bottom_img_y = 13; // Pixel coordinate of the point in the image, relative to top-left corner.
+
+  // Left area
+  // Area of the supporting region for the point, as a fraction of the left region
+  float left_img_area = 14;
+  int32 left_img_x = 15; // Pixel coordinate of the point in the image, relative to top-left corner.
+  int32 left_img_y = 16; // Pixel coordinate of the point in the image, relative to top-left corner.
+
+  // Right area
+  // Area of the supporting region for the point, as a fraction of the right region
+  float right_img_area = 17;
+  int32 right_img_x = 18; // Pixel coordinate of the point in the image, relative to top-left corner.
+  int32 right_img_y = 19; // Pixel coordinate of the point in the image, relative to top-left corner.
+}
+
+ // Event confirming that an enrolled face has been removed from the robot.
+message RobotErasedEnrolledFace {
+  int32 face_id = 1;
+  string name = 2;
+}
+
 // This is an int8 on the clad side.
 // Proto field names are prefixed with "EXPRESSION_"
 enum FacialExpression
@@ -646,6 +691,15 @@ message CancelActionByIdTagRequest {
 // Response from the robot to CancelActionByIdTagRequest.
 message CancelActionByIdTagResponse {
   // A generic status.
+  ResponseStatus status = 1;
+}
+
+// Cancel a behavior in progress
+message CancelBehaviorRequest {
+}
+
+// Response from the robot to CancelBehaviorRequest.
+message CancelBehaviorResponse {
   ResponseStatus status = 1;
 }
 
@@ -1098,6 +1152,7 @@ message MirrorModeDisabled
 message EnableImageStreamingRequest
 {
   bool enable = 1;
+  bool enable_high_resolution = 2;
 }
 
 message EnableImageStreamingResponse
@@ -1159,7 +1214,11 @@ message CameraFeedResponse {
   bytes                    data = 4;
 }
 
-message CaptureSingleImageRequest {}
+// Request for a single image from the robot. Default resolution is 640*360,
+// enabling high resolution provides a 1280*720 image.
+message CaptureSingleImageRequest {
+  bool enable_high_resolution = 1;
+}
 
 message CaptureSingleImageResponse {
   ResponseStatus           status = 1;
@@ -1428,13 +1487,20 @@ message CheckUpdateStatusResponse{
   ResponseStatus status = 1;
   enum UpdateStatus {
     NO_UPDATE = 0;
-    READY_TO_INSTALL = 1;
+    READY_TO_REBOOT_INTO_NEW_OS_VERSION = 1;
     IN_PROGRESS_DOWNLOAD = 2;
+    FAILURE_INTERRUPTED_DOWNLOAD = 3;
+    IN_PROGRESS_STARTING = 4;
+    IN_PROGRESS_OTHER = 5;
+    FAILURE_OTHER = 6;
   }
   UpdateStatus update_status = 2;
   int64 expected = 3;
   int64 progress = 4;
   string update_version = 5;
+  string update_phase = 6;
+  string error = 7;
+  int64 exit_code = 8;
 }
   
 message UploadDebugLogsRequest{}

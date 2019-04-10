@@ -95,11 +95,7 @@ enum uint_8 AlignmentType {
 
 // Object Interaction completed is used by actions that interact with objects
 structure ObjectInteractionCompleted {
-    int_32 objectIDs[5],
-    uint_8 numObjects = 0,
-    bool   seeingUnexpectedObject = 0, // True if this action failed because it saw an unexpected object
-                                       // E.g. PickupObjectAction failing because it saw an object on top of the one
-                                       // it was trying to pickup
+    int_32 objectID
 }
 
 // Used by PlayAnimationAction

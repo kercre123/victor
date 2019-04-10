@@ -146,14 +146,14 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
 
   // If in calm mode, RobotState messages are expected to come in at a slower rate
   // and we therefore need to adjust the sampling rate of the filter.
-  static bool prevSysconCalmMode = false;
-  const bool currSysconCalmMode = IS_STATUS_FLAG_SET(CALM_POWER_MODE);
-  if (currSysconCalmMode && !prevSysconCalmMode) {
+  static bool prevCalmMode = false;
+  const bool currCalmMode = IS_STATUS_FLAG_SET(CALM_POWER_MODE);
+  if (currCalmMode && !prevCalmMode) {
     _batteryVoltsFilter->SetSamplePeriod(kCalmModeBatteryVoltsUpdatePeriod_sec);
-  } else if (!currSysconCalmMode && prevSysconCalmMode) {
+  } else if (!currCalmMode && prevCalmMode) {
     _batteryVoltsFilter->SetSamplePeriod(kBatteryVoltsUpdatePeriod_sec);
   }
-  prevSysconCalmMode = currSysconCalmMode;
+  prevCalmMode = currCalmMode;
 
   // If processes start while the battery is disconnected (because it's been on the charger for > 30min),
   // we make sure to set the battery voltage to a less wrong _batteryVoltsRaw.
@@ -287,7 +287,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
   // (Encoders should normally be off while on charger)
   if (!IsOnChargerContacts()) {
     bool encodersDisabled = IS_STATUS_FLAG_SET(ENCODERS_DISABLED);
-    _batteryStatsAccumulator->UpdateEncoderStats(encodersDisabled, currSysconCalmMode);
+    _batteryStatsAccumulator->UpdateEncoderStats(encodersDisabled, currCalmMode);
   }
 
 #if ANKI_DEV_CHEATS
@@ -304,7 +304,7 @@ void BatteryComponent::NotifyOfRobotState(const RobotState& msg)
       DASMSG_SET(i4, IsOnChargerContacts(), "On charge contacts");
       DASMSG_SET(s1, IsBatteryDisconnectedFromCharger() ? "1" : "0", "Battery disconnected state");
       DASMSG_SET(s2, IsCharging() ? "1" : "0", "Battery charging state");
-      DASMSG_SET(s3, currSysconCalmMode ? "1" : "0", "Calm mode enabled");
+      DASMSG_SET(s3, currCalmMode ? "1" : "0", "Calm mode enabled");
       DASMSG_SET(s4, std::to_string( OSState::getInstance()->GetTemperature_C() ), "CPU temperature (C)");
       DASMSG_SEND();
     }

@@ -2974,5 +2974,18 @@ namespace Vector {
     }
   }
 
+  void VisionComponent::EnableSendingSDKImageChunks(bool enableImageStreaming, bool enableHighResolutionImages)
+  {
+    _sendProtoImageChunks = enableImageStreaming;
+    if(enableHighResolutionImages)
+    {
+      _visionSystemInput.vizImageBroadcastSize = Vision::ImageCacheSize::Full;
+    }
+    else
+    {
+      _visionSystemInput.vizImageBroadcastSize = Vision::ImageCacheSize::Half;
+    }
+  }
+
 } // namespace Vector
 } // namespace Anki

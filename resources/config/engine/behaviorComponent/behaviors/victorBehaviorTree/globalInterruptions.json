@@ -23,10 +23,7 @@
     "HeldInPalmDispatcher",
     "WhileInAirDispatcher",
     "ReactToPutDown",
-    "ReactToDarkness",
-    "GreetAfterLongTime", // autonomous - I think this should be higher priority than StayOnCharger--the magic moment is worth it (?)
-    "ReactToUncalibratedHeadAndLift",
-    "DanceToTheBeatCoordinator", // does the right thing internally wrt charging
+    "OptionalReactions",
     "StayOnChargerUntilCharged", // delegate includes ReactToSoundAwake
     "ReactToSoundAwake",
     "ConfirmHabitat",

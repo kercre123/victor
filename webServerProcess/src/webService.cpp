@@ -27,6 +27,7 @@
 #include "util/logging/logging.h"
 #include "util/console/consoleSystem.h"
 #include "util/console/consoleChannel.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/ankiDefines.h"
@@ -193,7 +194,7 @@ LogHandler(struct mg_connection *conn, void *cbdata)
 void ExecCommand(const std::vector<std::string>& args)
 {
   LOG_INFO("WebService.ExecCommand", "Called with cmd: %s (and %i arguments)",
-                   args[0].c_str(), (int)(args.size() - 1));
+           args[0].c_str(), (int)(args.size() - 1));
 
   pid_t pID = fork();
   if (pID == 0) // child
@@ -1012,6 +1013,8 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
 // This is called from the main thread
 void WebService::Update()
 {
+  ANKI_CPU_PROFILE("WebService::Update");
+
   std::lock_guard<std::mutex> lock(_requestMutex);
 
   // First pass:  Delete any completely-finished requests from the list (and delete the requests themselves)
@@ -1252,7 +1255,7 @@ void WebService::Stop()
     // This will allow the mg_stop call below to not take forever waiting
     // for threads to shut down.
     Update();
-    
+
 #ifndef SIMULATOR
     // Notify any pending thread that's waiting for process status, so that
     // the mg_stop call below will not hang waiting for it
@@ -1312,6 +1315,8 @@ static std::string sanitize_tag(const std::string& tag)
 
 void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& category)
 {
+  ANKI_CPU_PROFILE("GenerateConsoleVarsUI");
+  
   std::string style;
   std::string script;
   std::string html;
@@ -1751,4 +1756,4 @@ namespace WebService {
 } // namespace Vector
 } // namespace Anki
 
-#endif // ANKI_WEBSERVICE_ENABLED
+#endif // ANKI_NO_WEBSERVER_ENABLED

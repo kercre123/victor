@@ -44,17 +44,39 @@ void LocaleComponent::InitDependent(Robot *, const RobotCompMap & dependencies)
   const auto * locale = context->GetLocale();
   DEV_ASSERT(locale != nullptr, "LocaleComponent.InitDependent.InvalidLocale");
 
-  const std::string & resourcePath = dataPlatform->GetResourcePath("assets/LocalizedStrings");
-  const std::string & localePath = resourcePath + "/" + locale->ToString();
+  _resourcePath = dataPlatform->GetResourcePath("assets/LocalizedStrings");
 
   //
-  // Try to load strings from current locale.  If that fails, fall back to default locale.
+  // Attempt to load strings for given locale.
+  // If that fails, fall back to default locale.
   //
-  if (!LoadDirectory(localePath)) {
-    LOG_WARNING("LocaleComponent.InitDependent", "Unable to load %s", localePath.c_str());
-    LoadDirectory(resourcePath + "/" + Util::Locale::kDefaultLocale.ToString());
+  const auto & localeString = locale->ToString();
+  if (!SetLocale(localeString)) {
+    LOG_WARNING("LocaleComponent.InitDependent.InvalidLocale", "Unable to set locale %s", localeString.c_str());
+    SetLocale(Anki::Util::Locale::kDefaultLocale.ToString());
   }
 
+}
+
+bool LocaleComponent::SetLocale(const std::string & locale)
+{
+
+  LOG_INFO("LocaleComponent.SetLocale", "Set locale to %s", locale.c_str());
+  if (locale == _locale) {
+    LOG_DEBUG("LocaleComponent.SetLocale", "Already using locale %s", locale.c_str());
+    return true;
+  }
+
+  const std::string & localePath = _resourcePath + "/" + locale;
+  if (!LoadDirectory(localePath)) {
+    LOG_WARNING("LocaleComponent.SetLocale.InvalidLocale", "Unable to load %s", localePath.c_str());
+    _locale.clear();
+    return false;
+  }
+
+  _locale = locale;
+
+  return true;
 }
 
 bool LocaleComponent::LoadFile(const std::string & path)

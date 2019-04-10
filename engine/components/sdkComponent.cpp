@@ -436,9 +436,10 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
     case external_interface::GatewayWrapperTag::kEnableImageStreamingRequest:
       {
         // Allowed to be controlled even when the behavior is not active
-        const auto& enable = event.GetData().enable_image_streaming_request().enable();
-        SubscribeToVisionMode(enable, VisionMode::Viz);
-        _robot->GetVisionComponent().EnableSendingSDKImageChunks(enable);
+        const auto& enableImageStreaming = event.GetData().enable_image_streaming_request().enable();
+        const auto& enableHighResolutionImages = event.GetData().enable_image_streaming_request().enable_high_resolution();
+        SubscribeToVisionMode(enableImageStreaming, VisionMode::Viz);
+        _robot->GetVisionComponent().EnableSendingSDKImageChunks(enableImageStreaming, enableHighResolutionImages);
       }
       break;
 
