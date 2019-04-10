@@ -66,6 +66,8 @@ public:
   Result AddFullFaceSpriteSeqInternal(SpriteBoxKeyFrame& startKeyFrame,
                                       const Vision::SpriteSequenceContainer& spriteSeqContainer);
 
+  void AddSpriteBoxRemap(const Vision::SpriteBoxName spriteBox, const std::string& remappedAssetName);
+
   void CacheInternalSprites(Vision::SpriteCache* spriteCache);
 
   void AppendTracks(const SpriteBoxCompositor& other, const TimeStamp_t animOffset_ms);
@@ -145,6 +147,12 @@ public:
   bool GetCurrentKeyFrame(const TimeStamp_t timeSinceAnimStart_ms, SpriteBoxKeyFrame& outKeyFrame);
   const std::set<SpriteBoxKeyFrame>& GetKeyFrames() const { return _track; }
 
+  void SetAssetRemap(const std::string& remappedAssetName){ 
+    _remapAsset = true;
+    _remappedAssetName = remappedAssetName;
+  }
+  void ClearAssetRemap(){ _remapAsset = false; _remappedAssetName = ""; }
+
 private:
 
   std::set<SpriteBoxKeyFrame> _track;
@@ -157,6 +165,8 @@ private:
   TrackIterator _currentKeyFrameIter;
   TrackIterator _nextKeyFrameIter;
 
+  bool _remapAsset;
+  std::string _remappedAssetName;
 };
 
 } // namespace Animations

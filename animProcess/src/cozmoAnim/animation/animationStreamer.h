@@ -102,6 +102,7 @@ namespace Anim {
     void Process_updateCompositeImage(const RobotInterface::UpdateCompositeImage& msg);
     void Process_playCompositeAnimation(const std::string& name, Tag tag);
 
+    void Process_playAnimWithSpriteBoxRemaps(const RobotInterface::PlayAnimWithSpriteBoxRemaps& msg);
 
     Result SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms);
     Result SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms, u32 duration_ms);

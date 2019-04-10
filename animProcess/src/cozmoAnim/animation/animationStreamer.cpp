@@ -827,6 +827,31 @@ namespace Anim {
     _expectingCompositeImage = true;
   }
 
+  void AnimationStreamer::Process_playAnimWithSpriteBoxRemaps(const RobotInterface::PlayAnimWithSpriteBoxRemaps& msg)
+  {
+    const u32 numLoops = 1;
+    const u32 startAtTime_ms = 0;
+    const bool interruptRunning = true;
+    const bool shouldOverrideEyeHue = true;
+    const bool shouldRenderInEyeHue = false;
+    const bool isInternalAnim = false;
+
+    // Hack: if _streamingAnimation == _proceduralAnimation, the subsequent CopyIntoProceduralAnimation call
+    // will delete *_streamingAnimation without assigning it to nullptr. This assignment prevents associated
+    // undefined behavior
+    _streamingAnimation = _neutralFaceAnimation;
+    const std::string animName(msg.animName, msg.animName_length);
+    CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(animName));
+    const Vision::SpritePathMap& spritePathMap = *_context->GetDataLoader()->GetSpritePaths();
+    for (int i = 0; i < msg.numRemaps; ++i)
+    {
+      _proceduralAnimation->AddSpriteBoxRemap(msg.spriteBoxRemaps[i].spriteBoxName,
+                                              spritePathMap.GetAssetName(msg.spriteBoxRemaps[i].remappedAssetID));
+    }
+    SetStreamingAnimation(_proceduralAnimation, msg.tag, numLoops, startAtTime_ms, interruptRunning,
+                          shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
+  }
+
   // DNM Testing with MirrorMode from Vision. Attempting to add duplicate keyframes often, I think the SpriteSeqTrack
   // just blindly overwrote the last one... but I'm not certain of that.
   // Are we keeping mountains of image data in memory if the SpriteHandles don't descope? Yes, that's why we have the 

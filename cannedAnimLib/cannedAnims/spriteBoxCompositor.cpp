@@ -213,6 +213,30 @@ Result SpriteBoxCompositor::AddKeyFrameInternal(const std::string& spriteBoxName
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpriteBoxCompositor::AddSpriteBoxRemap(const Vision::SpriteBoxName spriteBox, const std::string& remappedAssetName)
+{
+  const std::string& spriteBoxName = Vision::SpriteBoxNameToString(spriteBox);
+  if(IsEmpty()){
+    LOG_ERROR("SpriteBoxCompositor.AddSpriteBoxRemap.EmptyCompositor",
+              "Attempted to add remap for SpriteBox %s with remapped asset name %s",
+              spriteBoxName.c_str(),
+              remappedAssetName.c_str());
+    return;
+  }
+
+  auto iter = _spriteBoxMap->find(spriteBoxName);
+  if(_spriteBoxMap->end() == iter){
+    LOG_ERROR("SpriteBoxCompositor.AddSpriteBoxRemap.InvalidSpriteBox",
+              "Attempted to add remap for invalid SpriteBox %s with remapped asset name %s",
+              spriteBoxName.c_str(),
+              remappedAssetName.c_str());
+    return;
+  }
+
+  iter->second.SetAssetRemap(remappedAssetName);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpriteBoxCompositor::CacheInternalSprites(Vision::SpriteCache* spriteCache)
 {
   // TODO: Implement this if we try to enable pre-caching
@@ -381,6 +405,7 @@ SpriteBoxTrack::SpriteBoxTrack()
 , _firstKeyFrameTime_ms(std::numeric_limits<TimeStamp_t>::max())
 , _lastKeyFrameTime_ms(0)
 , _iteratorsAreValid(false)
+, _remapAsset(false)
 {
 }
 
@@ -426,10 +451,6 @@ void SpriteBoxTrack::ClearUpToTime(const TimeStamp_t toTime_ms)
     _firstKeyFrameTime_ms = _track.begin()->triggerTime_ms;
   }
 
-  if(kClearSpriteBox == currentKeyFrameIter->assetName){
-    _track.erase(currentKeyFrameIter);
-    modifiedTrack = true;
-  }
 
   _iteratorsAreValid = !modifiedTrack;
 }
@@ -457,6 +478,10 @@ bool SpriteBoxTrack::GetCurrentKeyFrame(const TimeStamp_t timeSinceAnimStart_ms,
     ++_nextKeyFrameIter;
   }
   outKeyFrame = *_currentKeyFrameIter;
+
+  if(_remapAsset){
+    outKeyFrame.assetName = _remappedAssetName;
+  }
 
   if(outKeyFrame.assetName == kClearSpriteBox){
     // This "clear" keyframe is simply terminating whatever was being displayed.

@@ -32,6 +32,7 @@ enum uint_16 BehaviorID {
   DevTestConnectToCube,
   DevTestPersonDetectorBehavior,
   DevTestPromptUser,
+  DevTestSpriteBoxRemaps,
   DevTouchDataCollection,
   DevTurnInPlaceTest,
   DevViewCubeBackpackLights,
