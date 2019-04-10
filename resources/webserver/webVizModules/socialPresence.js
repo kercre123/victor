@@ -5,7 +5,7 @@
   var yLabelPose = -1.0;
   var overlappingWidth_s = 1.3;
 
-  var defaultDisplayedEmotions = ['Stimulated', 'Trust'];
+  var defaultDisplayedGraphData = ['RSPI'];
 
   var gridMarkings = []
   var gridMarkingLabels = []
@@ -34,8 +34,8 @@
   }      
   
   var first = true;
-  var emoToIdxMap = {}
-  var moodData = [];
+  var graphDataToIdxMap = {}
+  var graphData = [];
   var plotData = [];
   var dumpedData = [];
   var chart;
@@ -179,10 +179,10 @@
   }
 
   function UpdateControlsData() {
-    for( var emoName in emoToIdxMap ) {
-      if( emoToIdxMap.hasOwnProperty( emoName ) ) {
-        var idx = emoToIdxMap[ emoName ];
-        var value = moodData[idx][moodData[idx].length - 1][1];
+    for( var emoName in graphDataToIdxMap ) {
+      if( graphDataToIdxMap.hasOwnProperty( emoName ) ) {
+        var idx = graphDataToIdxMap[ emoName ];
+        var value = graphData[idx][graphData[idx].length - 1][1];
 
         if( typeof (draggingSlider !== 'undefined') && ($(draggingSlider).attr('data-emotion') == emoName) ) {
           // don't update if it's being dragged
@@ -307,7 +307,7 @@
 
     $('body').on('click', '.legendLabel', function () {
       var emo = this.innerText;
-      var idx = emoToIdxMap[emo];
+      var idx = graphDataToIdxMap[emo];
       plotData[idx].lines.show = !plotData[idx].lines.show;
       chart.setData(plotData);
       chart.setupGrid();
@@ -317,17 +317,17 @@
   };
 
   myMethods.onData = function(data, elem) {
-    /*
-    if( first && (typeof data.moods !== 'undefined') ) {
 
-      for( var i=0; i<data.moods.length; ++i ) {
-        var emo = data.moods[i].emotion;
-        emoToIdxMap[emo] = i;
-        moodData.push( [] );
-        var newData = { label: emo,
-                        data: moodData[i],
+    if( first && (typeof data.graphData !== 'undefined') ) {
+
+      for( var i=0; i<data.graphData.length; ++i ) {
+        var graphDataName = data.graphData[i].name;
+        graphDataToIdxMap[graphDataName] = i;
+        graphData.push( [] );
+        var newData = { label: graphDataName,
+                        data: graphData[i],
                         lines: {show: true} };
-        if( defaultDisplayedEmotions.indexOf( emo ) < 0 ) {
+        if( defaultDisplayedGraphData.indexOf( graphDataName ) < 0 ) {
           newData.lines.show = false;
         }
         plotData.push( newData );
@@ -336,34 +336,37 @@
 
       first = false;
     }
-    */
+
     if( typeof data.info !== 'undefined' ) {
       CreateControls( elem, data.info );
       return;
     }
-    /*
+
+    // TODO: get graphValues and graph them (like above)
+
     if( $('#dumpData').is(':checked') ) {
       dumpedData.push( data );
     }
-
+    /*
     if( "simpleMood" in data ) {
       $('#simpleMoodDisplay').text( 'SimpleMood: ' + data.simpleMood );
     }
+    */
 
-    for( var i=0; i<data.moods.length; ++i ) {
-      var idx = emoToIdxMap[ data.moods[i].emotion ];
+    for( var i=0; i<data.graphData.length; ++i ) {
+      var idx = graphDataToIdxMap[ data.graphData[i].name ];
 
-      moodData[idx].push( [data["time"], parseFloat(data.moods[i].value) ] );
+      graphData[idx].push( [data["time"], parseFloat(data.graphData[i].value) ] );
 
-      var dt = data["time"] - moodData[idx][0][0];
-      while( dt > maxWidth_s && moodData[idx].length > 0 ) {
-        moodData[idx].shift();
-        dt = data["time"] - moodData[idx][0][0];
+      var dt = data["time"] - graphData[idx][0][0];
+      while( dt > maxWidth_s && graphData[idx].length > 0 ) {
+        graphData[idx].shift();
+        dt = data["time"] - graphData[idx][0][0];
       }
     }
 
     UpdateControlsData();
-
+    /*
     if( "emotionEvent" in data ) {
       gridMarkings.push( { xaxis: {from: data["time"], to: data["time"]},
                            color: "#000",
@@ -375,7 +378,7 @@
         PruneOverlapingEvents()
       }
     }
-
+    */
     if( gridMarkings.length > 0 ) {
 
       var dt = data["time"] - gridMarkings[0].xaxis.from;
@@ -427,7 +430,7 @@
         $("#vl" + i).hide();
       }
     }
-    */
+
   };
 
   myMethods.update = function(dt, elem) {

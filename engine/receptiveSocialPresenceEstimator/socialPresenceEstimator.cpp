@@ -17,6 +17,7 @@
 #include "engine/ankiEventUtil.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
+#include "util/console/consoleInterface.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/logging/logging.h"
 #include "webServerProcess/src/webService.h"
@@ -26,12 +27,62 @@ namespace Vector {
 
 #define LOG_CHANNEL "RSPE"
 
+namespace {
+  float kEpsilon = 0.01; // threshold for calling a SocialPresenceEvent's value zero
+}
+
+
+SocialPresenceEvent::SocialPresenceEvent(std::string name,
+    float decayRatePerSec,
+    float independentEffect,
+    float independentEffectMax,
+    float reinforcementEffect,
+    float reinforcementEffectMax)
+: _value(0.0),
+  _name(name),
+  _decayRatePerSec(decayRatePerSec),
+  _independentEffect(independentEffect),
+  _independentEffectMax(independentEffectMax),
+  _reinforcementEffect(reinforcementEffect),
+  _reinforcementEffectMax(reinforcementEffectMax)
+{}
+
+
+void SocialPresenceEvent::Update(float dt_s)
+{
+  _value = _value * pow((1.0 - _decayRatePerSec), dt_s);
+  // should zero out when we get close to zero
+  if (_value < kEpsilon) {
+    _value = 0.0f;
+  }
+}
+
+void SocialPresenceEvent::Trigger(float& rspi) {
+  // TODO: temporary!
+  //_value = _independentEffect;
+
+  if (rspi > _independentEffectMax) {
+    // reinforcement
+  } else {
+    // independent effect
+    _value = fmin(_independentEffectMax, (_value + _independentEffect));
+  }
+
+}
+
+
+
+
 namespace{
   const std::string kWebVizModuleName = "socialpresence";
+  const float kMinRSPIUpdatePeriod_s = 0.1;
+
+  CONSOLE_VAR(float, kRSPE_WebVizPeriod_s, "SocialPresenceEstimator", 0.5f);
 }
 
 SocialPresenceEstimator::SocialPresenceEstimator()
-: IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::SocialPresenceEstimator)
+: IDependencyManagedComponent<RobotComponentID>(this, RobotComponentID::SocialPresenceEstimator),
+  _rspi(0.0f)
 {
 
 }
@@ -47,12 +98,56 @@ void SocialPresenceEstimator::InitDependent(Vector::Robot *robot, const RobotCom
   if( ANKI_DEV_CHEATS ) {
     SubscribeToWebViz();
   }
+
+  // set up input events
+  _inputEvents = {
+      SocialPresenceEvent("test1", 0.3f, 0.75f, 1.0f, 0.75f, 1.0f)
+  };
 }
 
 
 void SocialPresenceEstimator::UpdateDependent(const RobotCompMap &dependentComps)
 {
-  //LOG_INFO("RSPE.UpdateDependent.Update", "RSPE Update ran."); // TODO: this can't stay in, obviously.
+  const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  UpdateRSPI();
+
+  if( ANKI_DEV_CHEATS && dependentComps.HasComponent<ContextWrapper>() ) {
+    if( (currentTime - _lastWebVizSendTime_s) > kRSPE_WebVizPeriod_s ) {
+      SendDataToWebViz(dependentComps.GetComponent<ContextWrapper>().context);
+    }
+  }
+}
+
+
+void SocialPresenceEstimator::UpdateRSPI()
+{
+  // get current time
+  const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  // compute dt_s
+  const float dt_s = currentTime - _lastInputEventsUpdateTime_s;
+  // limit update rate
+  if (dt_s >= kMinRSPIUpdatePeriod_s) {
+
+    // note that there's a potential ordering dependency between different input events:
+    // an event can't reinforce another event that comes later in the update order...until the next update.
+    // We assume here that the period of updates is rapid enough (relative to the period of events) that this won't matter.
+    // update all (singleton) input events
+    for (SocialPresenceEvent& inputEvent : _inputEvents) {
+      inputEvent.Update(dt_s);
+    }
+    // update all (dynamic) input events
+    // cull any expired dynamic input events
+    // update RSPI: iterate through all input events, summing their values
+    float newRSPI = 0;
+    for (SocialPresenceEvent& inputEvent : _inputEvents) {
+      newRSPI = fmin(1.0, (newRSPI + inputEvent.GetValue()));
+    }
+    _rspi = newRSPI;
+
+
+    _lastInputEventsUpdateTime_s = currentTime;
+  }
 }
 
 
@@ -89,21 +184,34 @@ void SocialPresenceEstimator::SubscribeToWebViz()
     sendToClient( subscriptionData );
   };
 
-  auto onDataBehaviors = [](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
+  auto onDataBehaviors = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
     // if the client sent any emotion types, set them
     LOG_WARNING("RSPE.SubscribeToWebViz.onDataBehaviors.GotEvent", "RSPE got WebViz event %s", data["eventName"].asString().c_str());
+    // a name : inputEvent map would be more efficient
+    for (auto& inputEvent : _inputEvents) {
+      LOG_WARNING("RSPE.SubscribeToWebViz.onDataBehaviors.nameComp",
+          "got name %s, compare to %s", data["eventName"].asString().c_str(), inputEvent.GetName().c_str());
+      if (data["eventName"].asString() == inputEvent.GetName()) {
+        LOG_WARNING("RSPE.SubscribeToWebViz.onDataBehaviors.trigger", "triggering %s", inputEvent.GetName().c_str());
+        inputEvent.Trigger(_rspi);
+        break;
+      }
+    }
   };
 
   _signalHandles.emplace_back( webService->OnWebVizSubscribed( kWebVizModuleName ).ScopedSubscribe( onSubscribedBehaviors ) );
   _signalHandles.emplace_back( webService->OnWebVizData( kWebVizModuleName ).ScopedSubscribe( onDataBehaviors ) );
 }
 
-/*
-void MoodManager::SendDataToWebViz(const CozmoContext* context, const std::string& emotionEvent)
+
+void SocialPresenceEstimator::SendDataToWebViz(const CozmoContext* context)
 {
   if( nullptr == context ) {
+    LOG_WARNING("RSPE.SendDataToWebViz.NoContext", "");
     return;
   }
+
+  LOG_WARNING("RSPE.SendDataToWebViz.Running", "RSPE SendDataToWebViz running."); // TODO: this can't stay in, obviously.
 
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
@@ -113,8 +221,18 @@ void MoodManager::SendDataToWebViz(const CozmoContext* context, const std::strin
     Json::Value data;
     data["time"] = currentTime_s;
 
-    data["RSPI"] = 0; // TODO: temporary, obvs
-
+    auto& graphData = data["graphData"];
+    Json::Value rspi;
+    rspi["name"] = "RSPI";
+    rspi["value"] = _rspi;
+    graphData.append(rspi);
+    for (auto inputEvent : _inputEvents) {
+      Json::Value iedata;
+      iedata["name"] = inputEvent.GetName();
+      iedata["value"] = inputEvent.GetValue();
+      graphData.append(iedata);
+    }
+    /*
     auto& moodData = data["moods"];
 
     for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
@@ -133,13 +251,13 @@ void MoodManager::SendDataToWebViz(const CozmoContext* context, const std::strin
     }
 
     data["simpleMood"] = SimpleMoodTypeToString(GetSimpleMood());
-
+    */
     webService->SendToWebViz( kWebVizModuleName, data );
   }
 
   _lastWebVizSendTime_s = currentTime_s;
 }
-*/
+
 
 }
 }
