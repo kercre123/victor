@@ -7,13 +7,13 @@ import (
 
 // URLs represents a set of URLs where Anki's cloud services can be reached
 type URLs struct {
-	JDocs          string `json:"jdocs"`
-	Token          string `json:"tms"`
-	Chipper        string `json:"chipper"`
-	Check          string `json:"check"`
-	LogFiles       string `json:"logfiles"`
-	AppKey         string `json:"appkey"`
-	OffboardVision string `json:"offboard_vision"`
+	JDocs           string `json:"jdocs"`
+	Token           string `json:"tms"`
+	Chipper         string `json:"chipper"`
+	Check           string `json:"check"`
+	LogFiles        string `json:"logfiles"`
+	AppKey          string `json:"appkey"`
+	OffboardVision *string `json:"offboard_vision"`
 }
 
 // DefaultURLs provides a default, hard-coded configuration that can be used
@@ -25,8 +25,6 @@ var DefaultURLs = URLs{
 	Check:    "conncheck.global.anki-dev-services.com/ok",
 	LogFiles: "s3://anki-device-logs-dev/victor",
 	AppKey:   "xiepae8Ach2eequiphee4U",
-	// OffboardVision should be overridden by the ip of the offboard vision server
-	OffboardVision: "192.168.40.102:16643",
 }
 
 // Env represents the URLs associated with the most recent successful call to

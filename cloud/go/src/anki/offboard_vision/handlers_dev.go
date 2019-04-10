@@ -73,6 +73,7 @@ func reqHandler(w http.ResponseWriter, r *http.Request) {
 	// initialize connection to ipc server
 	if offboardVisionClient == nil {
 		var err error
+		// TODO: refactor this to use chan instead because these messages are being handled by the same process in server_dev.go
 		if offboardVisionClient, err = ipc.NewUnixgramClient(ipc.GetSocketPath("offboard_vision_server"), "offboard_vision_dev_client"); err != nil {
 			w.WriteHeader(http.StatusInternalServerError)
 			fmt.Fprint(w, "Error connecting to server: ", err)

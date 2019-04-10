@@ -1,4 +1,4 @@
-// +build !shipping
+// +build !shipping,vicos
 
 package offboard_vision
 
@@ -22,7 +22,7 @@ import (
 )
 
 var (
-	deviceID = "mac-build"
+	deviceID = "vicos-build"
 	// TODO: Actually read this in instead of hard coding it. (VIC-13955)
 	modes = []string{"people", "faces"}
 )
@@ -72,7 +72,11 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 
 	var wg sync.WaitGroup
 
-	// dial server and read file data in parallel
+	// Dial server and read file data in parallel.
+	// It isn't clear this parallelism is entirely neccesary however
+	// it's not causing any issues now and since this was copied over
+	// from a demo branch (the box) just sticking with it for now
+	// until there is a good motivation to change it.
 	var rpcConn *grpc.ClientConn
 	var rpcErr error
 	rpcClose := func() error { return nil }
@@ -80,15 +84,15 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 	var fileData []byte
 	var fileErr error
 
-	// dial server, make it blocking
+	// Dial server, make it blocking
 	launchProcess(&wg, func() {
-		rpcConn, rpcErr = grpc.DialContext(ctx, config.Env.OffboardVision, append(dialOpts, grpc.WithBlock())...)
+		rpcConn, rpcErr = grpc.DialContext(ctx, *config.Env.OffboardVision, append(dialOpts, grpc.WithBlock())...)
 		if rpcErr == nil {
 			rpcClose = rpcConn.Close
 		}
 	})
 
-	// read file data
+	// Read file data
 	launchProcess(&wg, func() {
 		if devURLReader != nil {
 			var handled bool
@@ -99,9 +103,9 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 		fileData, fileErr = ioutil.ReadFile(msg.Filename)
 	})
 
-	// wait for both routines above to finish
+	// Wait for both routines above to finish
 	wg.Wait()
-	// if rpc connection didn't fail, this will be set to rpcConn.Close()
+	// If rpc connection didn't fail, this will be set to rpcConn.Close()
 	defer rpcClose()
 
 	err := util.NewErrors(rpcErr, fileErr).Error()
