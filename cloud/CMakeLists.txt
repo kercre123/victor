@@ -260,11 +260,13 @@ endif()
 _build_cloud_executable(opusenc)
 _add_chipper_flags(opusenc)
 anki_disable_default_build(opusenc)
+
 #
 # vic-vision
 #
-# SDK translation service that interfaces between the engine and the external world.
+# Generate grpc go files for offboard vision
 #
+
 set(GOPATH_VISION "${CMAKE_CURRENT_SOURCE_DIR}/go")
 # Generate grpc go files
 add_custom_command(
@@ -274,7 +276,6 @@ add_custom_command(
     ${PROTOBUF_HOME}/bin/protoc "-I${VISION_PROTO_HOME_DIR}/private"
     "-I${PROTOBUF_HOME}/include"
     "-I${GOPATH_VISION}/src"
-    "-I${GOPATH_VISION}/src/github.com/grpc-ecosystem/grpc-gateway/third_party/googleapis"
     "--go_out=plugins=grpc:${VISION_PROTOBUF_OUTPUT_DIR}"
     ${VISION_PROTO_SRCS}
   DEPENDS ${VISION_PROTO_SRCS}
@@ -283,11 +284,11 @@ add_custom_command(
 #
 # vic-gateway
 #
+# SDK translation service that interfaces between the engine and the external world.
 #
 
 set(GOPATH_GATEWAY "${CMAKE_CURRENT_SOURCE_DIR}/go")
 
-# Generate grpc go files for offboard vision
 add_custom_command(
   OUTPUT ${GATEWAY_PROTO_GO_GEN_SRCS} ${GATEWAY_GRPC_GO_GEN_SRCS}
   COMMAND mkdir -p ${GATEWAY_GRPC_OUTPUT_DIR}

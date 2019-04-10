@@ -20,16 +20,18 @@ import (
 	"github.com/gwatts/rootcerts"
 )
 
-const baseDir = "/anki/data/assets/cozmo_resources/webserver/cloud/offboard_vision"
-const imageDir = baseDir + "/images"
-const cacheDir = "/data/data/com.anki.victor/cache/offboard_vision"
+const (
+	baseDir   = "/anki/data/assets/cozmo_resources/webserver/cloud/offboard_vision"
+	imageDir  = baseDir + "/images"
+	cacheDir  = "/data/data/com.anki.victor/cache/offboard_vision"
+	imgPrefix = "/offboard_vision/images/"
+)
 
 func init() {
 	devHandlers = func(s *http.ServeMux) {
 		s.HandleFunc("/offboard_vision/", offboardVisionHandler)
 		s.HandleFunc("/offboard_vision/request", reqHandler)
 
-		imgPrefix := "/offboard_vision/images/"
 		s.Handle(imgPrefix, http.StripPrefix(imgPrefix, http.HandlerFunc(imgHandler)))
 
 		log.Println("Offboard vision dev handlers added")

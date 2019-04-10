@@ -10,10 +10,6 @@ import (
 
 // Run starts the offboard vision service
 func Run(ctx context.Context) {
-	runServer(ctx)
-}
-
-func runServer(ctx context.Context) {
 	serv, err := ipc.NewUnixgramServer(ipc.GetSocketPath("offboard_vision_server"))
 	if err != nil {
 		log.Println("Error creating offboard vision server:", err)

@@ -1,5 +1,7 @@
 // +build !shipping
 
+// +build vicos
+
 package offboard_vision
 
 import (

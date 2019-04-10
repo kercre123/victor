@@ -14,7 +14,6 @@ import (
 	"io/ioutil"
 	"sync"
 
-	// pb "github.com/anki/sai-chipper-voice/proto/anki/chipperpb"
 	"github.com/google/uuid"
 	"github.com/gwatts/rootcerts"
 	"google.golang.org/grpc"
@@ -22,18 +21,21 @@ import (
 	pb "proto/vision"
 )
 
-var deviceID = "mac-build"
-var defaultGroupName = "offboard_vision"
+var (
+	deviceID = "mac-build"
+	// TODO: Actually read this in instead of hard coding it. (VIC-13955)
+	modes = []string{"people", "faces"}
+)
 
 type client struct {
 	ipc.Conn
 }
 
 var (
-	defaultTLSCert = credentials.NewClientTLSFromCert(rootcerts.ServerCertPool(), "")
+	defaultGroupName = "offboard_vision"
+	defaultTLSCert   = credentials.NewClientTLSFromCert(rootcerts.ServerCertPool(), "")
+	devURLReader     func(string) ([]byte, error, bool)
 )
-
-var devURLReader func(string) ([]byte, error, bool)
 
 func (c *client) handleConn(ctx context.Context) {
 	for {
@@ -50,6 +52,8 @@ func (c *client) handleConn(ctx context.Context) {
 		resp, err := c.handleRequest(ctx, &msg)
 		if err != nil {
 			log.Println("Error handling offboard vision request:", err)
+			// Nothing left to do, we should just continue
+			continue
 		}
 
 		var buf bytes.Buffer
@@ -105,9 +109,6 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 		return nil, err
 	}
 
-	// TODO: Actually read this in instead of hard coding it. (VIC-13955)
-	var modes = []string{"people", "faces"}
-
 	sessionID := uuid.New().String()[:16]
 	r := &pb.ImageRequest{
 		Session:     sessionID,
@@ -117,7 +118,7 @@ func (c *client) handleRequest(ctx context.Context, msg *vision.OffboardImageRea
 		TimestampMs: msg.Timestamp,
 		Modes:       modes,
 	}
-	// todo: possibly not hardcode this?
+	// TODO don't hardcode this?
 	r.Configs = &pb.ImageConfig{}
 	r.Configs.GroupName = defaultGroupName
 
