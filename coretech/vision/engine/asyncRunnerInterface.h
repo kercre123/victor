@@ -83,7 +83,7 @@ private:
   
   Profiler _profiler;
   
-  // Use a std::future as the mechenism for asynchronous processing
+  // Use a std::future as the mechanism for asynchronous processing
   std::future<std::list<SalientPoint>> _future;
   
   // Stores a copy of the "original" image, from which the processed image is resized,

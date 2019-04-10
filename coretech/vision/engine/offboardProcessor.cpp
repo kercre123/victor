@@ -200,7 +200,7 @@ Result OffboardProcessor::DetectWithFileIO(const ImageRGB& img, std::list<Salien
   const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, Filenames::Image});
   {
     // Write image to a temporary file
-    const std::string tempFilename = Util::FileUtils::FullFilePath({_cachePath, "temp.png"});
+    const std::string tempFilename = Util::FileUtils::FullFilePath({_cachePath, "temp.jpg"});
     img.Save(tempFilename);
     
     // Write timestamp to file
@@ -415,7 +415,7 @@ bool OffboardProcessor::Connect()
   const char* serverPath = LOCAL_SOCKET_PATH "offboard_vision_server";
   const std::string clientPath = std::string(LOCAL_SOCKET_PATH) + "_" + _params.name;
   
-  const bool udpSuccess = _udpClient->Connect(clientPath.c_str(), serverPath);
+  const bool udpSuccess = _udpClient->Connect(clientPath, serverPath);
   ++numTries;
   
   LOG_INFO("OffboardProcessor.Connect.Status", "Try %d: %s - Server:%s Client:%s",

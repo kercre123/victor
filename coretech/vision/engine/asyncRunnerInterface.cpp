@@ -42,7 +42,10 @@ CONSOLE_VAR_RANGED(s32, kIAsyncRunner_OrigImageSubsample, CONSOLE_GROUP, 1, 1, 2
 
 const char* const IAsyncRunner::JsonKeys::InputHeight = "inputHeight";
 const char* const IAsyncRunner::JsonKeys::InputWidth = "inputWidth";
-  
+
+constexpr static const int kSaveResizedImage   = 1;
+constexpr static const int kSaveFullSizedImage = 2;
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IAsyncRunner::IAsyncRunner()
 : _profiler("IAsyncRunner")
@@ -99,9 +102,9 @@ bool IAsyncRunner::StartProcessingHelper()
 {
   DEV_ASSERT(!_imgOrig.IsEmpty(), "IAsyncRunner.StartProcessingHelper.EmptyImage");
   
-  if(kIAsyncRunner_SaveImages == 2)
+  if(kIAsyncRunner_SaveImages == kSaveFullSizedImage)
   {
-    const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "half",
+    const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "full",
       std::to_string(_imgOrig.GetTimestamp()) + ".png"});
     _imgOrig.Save(saveFilename);
   }
@@ -111,7 +114,7 @@ bool IAsyncRunner::StartProcessingHelper()
   const Vision::ResizeMethod kResizeMethod = Vision::ResizeMethod::Linear;
   _imgOrig.Resize(_imgBeingProcessed, kResizeMethod);
   
-  if(kIAsyncRunner_SaveImages == 1)
+  if(kIAsyncRunner_SaveImages == kSaveResizedImage)
   {
     const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "resized",
       std::to_string(_imgBeingProcessed.GetTimestamp()) + ".png"});

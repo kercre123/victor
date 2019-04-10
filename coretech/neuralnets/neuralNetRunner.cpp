@@ -48,11 +48,11 @@ Result NeuralNetRunner::InitInternal(const std::string& cachePath, const Json::V
   {
     if(NeuralNets::JsonKeys::TFLiteModelType == modelTypeString)
     {
-      _model.reset(new TFLiteModel());
+      _model = std::make_unique<OffboardModel>(GetCachePath());
     }
     else if(NeuralNets::JsonKeys::OffboardModelType == modelTypeString)
     {
-      _model.reset(new OffboardModel(GetCachePath()));
+      _model = std::make_unique<TFLiteModel>();
     }
     else
     {

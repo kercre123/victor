@@ -39,7 +39,7 @@ class OffboardProcessor
 {
 public:
   
-  OffboardProcessor(const std::string& cachePath);
+  explicit OffboardProcessor(const std::string& cachePath);
   
   ~OffboardProcessor();
   
