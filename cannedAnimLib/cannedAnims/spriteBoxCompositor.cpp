@@ -410,6 +410,20 @@ SpriteBoxTrack::SpriteBoxTrack()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SpriteBoxTrack::SpriteBoxTrack(const SpriteBoxTrack& other)
+:_track(other._track)
+// last access should not copy
+, _lastAccessTime_ms(0)
+, _firstKeyFrameTime_ms(other._firstKeyFrameTime_ms)
+, _lastKeyFrameTime_ms(other._lastKeyFrameTime_ms)
+// Remaps and iterators do not copy
+, _iteratorsAreValid(false)
+, _remapAsset(false)
+, _remappedAssetName()
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SpriteBoxTrack::InsertKeyFrame(SpriteBoxKeyFrame&& spriteBox)
 {
   _iteratorsAreValid = false;

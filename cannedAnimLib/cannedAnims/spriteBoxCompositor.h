@@ -139,6 +139,7 @@ class SpriteBoxTrack
   using TrackIterator = std::set<SpriteBoxKeyFrame>::iterator;
 public:
   SpriteBoxTrack();
+  SpriteBoxTrack(const SpriteBoxTrack& other);
 
   bool InsertKeyFrame(SpriteBoxKeyFrame&& spriteBox);
   bool IsEmpty() const { return _track.empty(); }
@@ -154,6 +155,9 @@ public:
   void ClearAssetRemap(){ _remapAsset = false; _remappedAssetName = ""; }
 
 private:
+  SpriteBoxTrack(SpriteBoxTrack&& other); // Move ctor
+  SpriteBoxTrack& operator=(SpriteBoxTrack&& other); // Move assignment
+  SpriteBoxTrack& operator=(const SpriteBoxTrack& other); // Copy assignment
 
   std::set<SpriteBoxKeyFrame> _track;
 
