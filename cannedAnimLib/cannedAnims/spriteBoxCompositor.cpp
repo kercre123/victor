@@ -465,8 +465,7 @@ void SpriteBoxTrack::ClearUpToTime(const TimeStamp_t toTime_ms)
     _firstKeyFrameTime_ms = _track.begin()->triggerTime_ms;
   }
 
-
-  _iteratorsAreValid = !modifiedTrack;
+  _iteratorsAreValid &= !modifiedTrack;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
