@@ -296,9 +296,8 @@ void SdkAudioComponent::ClearOperationData()
 void SdkAudioComponent::StopActiveAudio()
 {
   LOG_DEBUG("SdkAudioComponent.StopActiveAudio", "Stop active Sdk audio");
-  using AudioEvent = AudioMetaData::GameEvent::GenericEvent;
-  const auto eventID = AudioEngine::ToAudioEventId( AudioEvent::Stop__Robot_Vic__External_Sdk_Playback_01 );
-  _audioController->StopAllAudioEvents(eventID);
+  const auto gameObject = static_cast<AudioEngine::AudioGameObject>( kSdkGameObject );
+  _audioController->StopAllAudioEvents(gameObject);
 }
 
 //
