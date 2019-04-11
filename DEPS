@@ -5,12 +5,6 @@
     },
     "deptool": {
         "deps": {
-            "flatbuffers": {
-                "checksums": {
-                    "sha256": "1f24769f7d6084e141c3e36fb7c72c1a00ef682d0db7518fd4b827f85260c372"
-                },
-                "version": "v1.5.0"
-            },
             "libsodium": {
                 "checksums": {
                     "sha256": "18fefd8b70bfeab16fcb9ac87ed9b22bc376c7e316d46fec1ed71512edb18c11"
