@@ -17,7 +17,6 @@
 #include "localization.h"
 #include "pathFollower.h"
 #include "pickAndPlaceController.h"
-#include "powerModeManager.h"
 #include "proxSensors.h"
 #include "speedController.h"
 #include "steeringController.h"
@@ -47,6 +46,12 @@ namespace Anki {
 #ifdef SIMULATOR
         bool isForcedDelocalizing_ = false;
 #endif
+
+        // For only sending robot state messages every STATE_MESSAGE_FREQUENCY
+        // times through the main loop
+        u32 robotStateMessageCounter_ = 0;
+        bool calmMode_ = false;
+
       } // private namespace
 
 // #pragma mark --- Messages Method Implementations ---
@@ -137,11 +142,13 @@ namespace Anki {
         SET_STATUS_BIT(PathFollower::IsTraversingPath(),            IS_PATHING);
         SET_STATUS_BIT(LiftController::IsInPosition(),              LIFT_IN_POS);
         SET_STATUS_BIT(HeadController::IsInPosition(),              HEAD_IN_POS);
-        SET_STATUS_BIT(HAL::PowerGetMode() == HAL::POWER_MODE_CALM, CALM_POWER_MODE);
+        SET_STATUS_BIT(calmMode_,                                   CALM_POWER_MODE);
         SET_STATUS_BIT(HAL::BatteryIsDisconnected(),                IS_BATTERY_DISCONNECTED);
         SET_STATUS_BIT(HAL::BatteryIsOnCharger(),                   IS_ON_CHARGER);
         SET_STATUS_BIT(HAL::BatteryIsCharging(),                    IS_CHARGING);
         SET_STATUS_BIT(HAL::BatteryIsOverheated(),                  IS_BATTERY_OVERHEATED);
+        SET_STATUS_BIT(HAL::BatteryIsLow(),                         IS_BATTERY_LOW);
+        SET_STATUS_BIT(HAL::IsShutdownImminent(),                   IS_SHUTDOWN_IMMINENT);
         SET_STATUS_BIT(ProxSensors::IsAnyCliffDetected(),           CLIFF_DETECTED);
         SET_STATUS_BIT(IMUFilter::IsFalling(),                      IS_FALLING);
         SET_STATUS_BIT(HAL::AreEncodersDisabled(),                  ENCODERS_DISABLED);
@@ -151,6 +158,16 @@ namespace Anki {
         SET_STATUS_BIT(isForcedDelocalizing_,                       IS_PICKED_UP);
 #endif
         #undef SET_STATUS_BIT
+
+
+        // Send state message
+        ++robotStateMessageCounter_;
+        const s32 messagePeriod = calmMode_ ? STATE_MESSAGE_FREQUENCY_CALM : STATE_MESSAGE_FREQUENCY;
+        if(robotStateMessageCounter_ >= messagePeriod) {
+          SendRobotStateMsg();
+          robotStateMessageCounter_ = 0;
+        }
+
       }
 
       RobotState const& GetRobotStateMsg() {
@@ -184,8 +201,15 @@ namespace Anki {
 
       void Process_calmPowerMode(const RobotInterface::CalmPowerMode& msg)
       {
-        AnkiInfo("Messages.Process_calmPowerMode.enable", "%d", msg.enable);
-        PowerModeManager::EnableActiveMode(!msg.enable);
+        // NOTE: This used to actually enable calm mode in syscon, but since "quiet" mode
+        //       was implemented in syscon where encoders are "off" when the motors are
+        //       not being driven leaving minimal difference between calm mode and active mode
+        //       in terms of battery life, this now only throttles RobotState messages being 
+        //       sent to engine since it still results in a 10+% reduction in CPU consumption.
+        //       Not going into syscon calm mode also means that motor calibrations are no 
+        //       longer necessary as a precaution when leaving calm mode.
+        AnkiInfo("Messages.Process_calmPowerMode.enable", "enable: %d", msg.enable);
+        calmMode_ = msg.enable;
       }
 
       void Process_absLocalizationUpdate(const RobotInterface::AbsoluteLocalizationUpdate& msg)

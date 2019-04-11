@@ -15,7 +15,7 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/quad_impl.h" // include this to avoid linking error in android
+#include "coretech/common/engine/math/quad.h" // include this to avoid linking error in android
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"

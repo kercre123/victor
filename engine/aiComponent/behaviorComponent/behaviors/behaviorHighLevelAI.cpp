@@ -18,10 +18,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
-#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionAnyStimuli.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
@@ -160,7 +157,7 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
           return false;
         },
         ConditionLambda::VisionModeSet{
-          { VisionMode::DetectingFaces, EVisionUpdateFrequency::Low }
+          { VisionMode::Faces, EVisionUpdateFrequency::Low }
         },
         emptyOwnerLabel )));
 
@@ -178,7 +175,7 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
           return block != nullptr;
         },
         ConditionLambda::VisionModeSet{
-          { VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low }
+          { VisionMode::Markers, EVisionUpdateFrequency::Low }
         },
         emptyOwnerLabel )));
   
@@ -230,7 +227,7 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
           return block != nullptr;
         },
         ConditionLambda::VisionModeSet{
-          { VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low }
+          { VisionMode::Markers, EVisionUpdateFrequency::Low }
         },
         emptyOwnerLabel )));
 

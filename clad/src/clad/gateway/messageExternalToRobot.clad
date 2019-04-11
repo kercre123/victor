@@ -109,7 +109,7 @@ message SetFaceToEnroll {
 }
 
 enum uint_32 VisionMode {
-    DetectingFaces = 0x01 // TODO: Stop exposing VisionModes directly in the SDK 
+    Faces = 0x01 // TODO: Stop exposing VisionModes directly in the SDK 
 }
 
 message EnableVisionMode {

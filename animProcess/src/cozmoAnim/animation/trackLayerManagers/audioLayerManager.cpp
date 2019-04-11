@@ -23,6 +23,10 @@ namespace Anim {
 namespace
 {
   const auto kProceduralGameObject = AudioMetaData::GameObjectType::Procedural;
+  #define CONSOLE_PATH "Audio.KeepAlive"
+  CONSOLE_VAR(bool, kEnableKeepAliveEyeBlinkAudioEvents, CONSOLE_PATH, true);
+  CONSOLE_VAR(bool, kEnableKeepAliveEyeDartAudioEvents, CONSOLE_PATH, true);
+  CONSOLE_VAR(bool, kEnableKeepAliveEyeSquintAudioEvents, CONSOLE_PATH, true);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -36,7 +40,7 @@ AudioLayerManager::AudioLayerManager(const Util::RandomGenerator& rng)
                                                     const BlinkEventList& eventList,
                                                     const TimeStamp_t timeSinceAnimStart_ms)
 {
-  if (!_enabled) {
+  if (!_enabled || !kEnableKeepAliveEyeBlinkAudioEvents) {
     return RESULT_OK;
   }
   
@@ -69,7 +73,7 @@ Result AudioLayerManager::AddEyeDartToAudioTrack(const std::string& layerName,
                                                  const TimeStamp_t interpolationTime_ms,
                                                  const TimeStamp_t timeSinceAnimStart_ms)
 {
-  if (!_enabled) {
+  if (!_enabled || !kEnableKeepAliveEyeDartAudioEvents) {
     return RESULT_OK;
   }
   
@@ -98,7 +102,7 @@ Result AudioLayerManager::AddEyeDartToAudioTrack(const std::string& layerName,
 Result AudioLayerManager::AddEyeSquintToAudioTrack(const std::string& layerName,
                                                    const TimeStamp_t timeSinceAnimStart_ms)
 {
-  if (!_enabled) {
+  if (!_enabled || !kEnableKeepAliveEyeSquintAudioEvents) {
     return RESULT_OK;
   }
   

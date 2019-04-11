@@ -1,0 +1,15 @@
+{
+  "behaviorClass": "ReactToUnexpectedMovement",
+  "behaviorID": "ReactToUnexpectedMovementInAir",
+  "associatedActiveFeature": "HeldInPalm",
+
+  "lockTreadsDuringAnim": true,
+  
+  "behaviorModifiers": {
+    "wantsToBeActivatedWhenOffTreads": true
+  },
+  
+  "wantsToBeActivatedCondition": {
+    "conditionType": "UnexpectedMovement"
+  }
+}

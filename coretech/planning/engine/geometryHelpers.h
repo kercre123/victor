@@ -13,7 +13,7 @@
 #ifndef __Coretech_Planning_GeometryHelpers_H__
 #define __Coretech_Planning_GeometryHelpers_H__
 
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/math/ball.h"
 #include "coretech/common/engine/math/lineSegment2d.h"
 

@@ -270,6 +270,12 @@ void BleClient::OnOutboundConnectionChange(const std::string& address,
     // Immediately read the cube firmware version
     _pendingFirmwareCheckOrUpdate = true;
     ReadCharacteristic(_connectionId, Anki::kCubeAppVersion_128_BIT_UUID);
+  } else if (_connectionId < 0) {
+    // We were trying to connect, but received a disconnect notice instead.  Let's try again.
+    PRINT_NAMED_INFO("BleClient.UnexpectedDisconnectWhileTryingToConnect",
+                     "addr %s", address.c_str());
+    DisconnectByAddress(address);
+    ConnectToPeripheral(address);
   } else if (_connectionId == connection_id) {
     _connectionId = -1;
     _cubeAddress.clear();

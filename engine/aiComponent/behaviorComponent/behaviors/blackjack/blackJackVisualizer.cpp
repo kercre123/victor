@@ -16,7 +16,7 @@
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
 #include "cannedAnimLib/proceduralFace/proceduralFace.h"
 #include "clad/types/compositeImageTypes.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 #include "coretech/vision/shared/spriteCache/iSpriteWrapper.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
@@ -222,7 +222,7 @@ void BlackJackVisualizer::Init(BehaviorExternalInterface& bei)
     if(nullptr == swipeAnimPtr){
       PRINT_NAMED_ERROR("BlackJackVisualizer.Init.AnimationNotFoundInContainer",
                         "Animations need to be manually loaded on engine side - %s is not",
-                        kDealAnimationName);
+                        kSwipeAnimationName);
     } else {
       const auto& track = swipeAnimPtr->GetTrack<EventKeyFrame>();
       _clearCardsDuringSwipeAt_ms = track.GetFirstKeyFrame()->GetTriggerTime_ms();

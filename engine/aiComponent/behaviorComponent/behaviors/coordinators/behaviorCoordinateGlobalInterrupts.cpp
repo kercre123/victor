@@ -94,7 +94,6 @@ namespace{
   static const std::set<UserIntentTag> kUserIntentTagsToSuppressWakeWordTurn = {{
     USER_INTENT(imperative_findcube),
     USER_INTENT(system_charger),
-    USER_INTENT(movement_forward),
     USER_INTENT(movement_backward),
     USER_INTENT(movement_turnleft),
     USER_INTENT(movement_turnright),

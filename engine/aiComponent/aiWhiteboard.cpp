@@ -30,7 +30,7 @@
 #include "engine/robot.h"
 #include "engine/sayNameProbabilityTable.h"
 
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/quad.h"
 #include "coretech/common/shared/math/rotation.h"
 #include "coretech/common/engine/utils/timer.h"
 

@@ -13,8 +13,8 @@
  *
  **/
 
-#ifndef __Anki_Cozmo_AnimationStreamer_H__
-#define __Anki_Cozmo_AnimationStreamer_H__
+#ifndef __Anki_Vector_AnimationStreamer_H__
+#define __Anki_Vector_AnimationStreamer_H__
 
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/image.h"
@@ -24,9 +24,6 @@
 #include "cannedAnimLib/cannedAnims/animation.h"
 #include "cannedAnimLib/cannedAnims/animationMessageWrapper.h"
 #include "cannedAnimLib/baseTypes/track.h"
-
-#include <list>
-#include <memory>
 
 namespace Anki {
 namespace Vision{
@@ -357,6 +354,7 @@ namespace Anim {
     Result ExtractAnimationMessages(AnimationMessageWrapper& stateToSend);
     // Actually stream the animation (called each tick)
     Result ExtractMessagesFromStreamingAnim(AnimationMessageWrapper& stateToSend);
+
     // Used to stream _just_ the stuff left in the various layers (all procedural stuff)
     Result ExtractMessagesFromProceduralTracks(AnimationMessageWrapper& stateToSend) const;
 
@@ -443,4 +441,4 @@ namespace Anim {
 } // namespace Vector
 } // namespace Anki
 
-#endif /* __Anki_Cozmo_AnimationStreamer_H__ */
+#endif /* __Anki_Vector_AnimationStreamer_H__ */

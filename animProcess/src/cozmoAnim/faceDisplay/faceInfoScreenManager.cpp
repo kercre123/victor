@@ -28,11 +28,10 @@
 
 #include "micDataTypes.h"
 
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image.h"
-#include "coretech/vision/engine/image_impl.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleSystem.h"
 #include "util/fileUtils/fileUtils.h"
@@ -1135,6 +1134,13 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
         LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.ExitPairing", "Going to Customer Service Main from Pairing");
         RobotInterface::SendAnimToEngine(SwitchboardInterface::ExitPairing());
         SetScreen(ScreenName::Main);
+
+        // DAS msg for entering customer care screen
+        // Note: The debug info screens will only be reported unlocked here if they 
+        //       were unlocked the previous time the customer care screen was entered.
+        DASMSG(robot_cc_screen_enter, "robot.cc_screen_enter", "Entered customer care screen");
+        DASMSG_SET(i1, _debugInfoScreensUnlocked ? 1 : 0, "Debug info screens unlocked");
+        DASMSG_SEND();
       }
     }
   }
@@ -1394,11 +1400,21 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
           state.backpackTouchSensorRaw);
   const std::string touch = temp;
 
-  const bool batteryDisconnected = static_cast<bool>(state.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED);
+  #define IS_STATUS_FLAG_SET(x) ((state.status & (uint32_t)RobotStatusFlag::x) != 0)
+  const bool batteryDisconnected = IS_STATUS_FLAG_SET(IS_BATTERY_DISCONNECTED);
+  const bool batteryCharging     = IS_STATUS_FLAG_SET(IS_CHARGING);
+  const bool batteryHot          = IS_STATUS_FLAG_SET(IS_BATTERY_OVERHEATED);
+  const bool batteryLow          = IS_STATUS_FLAG_SET(IS_BATTERY_LOW);
+  const bool shutdownImminent    = IS_STATUS_FLAG_SET(IS_SHUTDOWN_IMMINENT);
+
   sprintf(temp,
-          "BATT:  %0.2fV   %s",
+          "BATT:  %0.2fV   %s%s%s%s%s",
           state.batteryVoltage,
-          batteryDisconnected ? "D" : "");
+          batteryDisconnected ? "D" : " ",
+          batteryCharging     ? "C" : " ",
+          batteryHot          ? "H" : " ",
+          batteryLow          ? "L" : " ",
+          shutdownImminent    ? "S" : " ");
   const std::string batt = temp;
 
   sprintf(temp,

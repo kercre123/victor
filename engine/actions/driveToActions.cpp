@@ -405,8 +405,7 @@ namespace Anki {
     void DriveToObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
       ObjectInteractionCompleted interactionCompleted;
-      interactionCompleted.objectIDs[0] = _objectID.GetValue();
-      interactionCompleted.numObjects = 1;
+      interactionCompleted.objectID = _objectID.GetValue();
       completionUnion.Set_objectInteractionCompleted(interactionCompleted);
     }
     
@@ -623,7 +622,7 @@ namespace Anki {
     
     void DriveToPoseAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
-      requests.insert({ VisionMode::DetectingMarkers , EVisionUpdateFrequency::Low });
+      requests.insert({ VisionMode::Markers , EVisionUpdateFrequency::Low });
     }
 
     f32 DriveToPoseAction::GetTimeoutInSeconds() const { return kDriveToPoseTimeout; }  

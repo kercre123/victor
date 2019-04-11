@@ -147,6 +147,15 @@ BehaviorReactToVoiceCommand::DynamicVariables::DynamicVariables() :
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+BehaviorReactToVoiceCommand::DynamicVariables::Persistent::Persistent() :
+  forcedAnimListeningLoop( AnimationTrigger::Count ),
+  forcedAnimListeningGetOut( AnimationTrigger::Count ),
+  listeningAnimsResetQueued( false )
+{
+
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& config ) :
   ICozmoBehavior( config ),
   _triggerDirection( kMicDirectionUnknown )
@@ -252,8 +261,6 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
     const Json::Value& whiteListedIntents = ConditionUserIntentPending::GenerateConfig(config[kIntentWhitelistKey]);
     _iVars.intentWhitelistCondition = std::make_unique<ConditionUserIntentPending>(whiteListedIntents);
   }
-
-  SetRespondToTriggerWord( true );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -350,13 +357,14 @@ void BehaviorReactToVoiceCommand::GetBehaviorOperationModifiers( BehaviorOperati
 
   // Since so many voice commands need faces, this helps improve the changes that a behavior following
   // this one will know about faces when the behavior starts
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Faces, EVisionUpdateFrequency::High });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior() const
 {
-  return kRespondsToTriggerWord;
+  const UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+  return kRespondsToTriggerWord && uic.IsTriggerWordPending();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -394,7 +402,12 @@ void BehaviorReactToVoiceCommand::OnBehaviorEnteredActivatableScope()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnBehaviorActivated()
 {
+  const auto persistent = _dVars.persistent;
   _dVars = DynamicVariables();
+  _dVars.persistent = persistent;
+
+  UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+  uic.ClearPendingTriggerWord();
 
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
@@ -408,7 +421,6 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
     moodManager.TriggerEmotionEvent( "ReactToTriggerWord", MoodManager::GetCurrentTimeInSeconds() );
   }
 
-  const UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
   _dVars.expectingStream = uic.WillPendingTriggerWordOpenStream();
 
   // Trigger word is heard (since we've been activated) ...
@@ -473,6 +485,7 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
 
   // reset this bad boy
   _triggerDirection = kMicDirectionUnknown;
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -487,6 +500,9 @@ void BehaviorReactToVoiceCommand::OnBehaviorLeftActivatableScope()
 void BehaviorReactToVoiceCommand::BehaviorUpdate()
 {
   if(!IsActivated()){
+    if (_dVars.persistent.listeningAnimsResetQueued) {
+      ResetListeningAnimsToConfig();
+    }
     return;
   }
 
@@ -530,7 +546,11 @@ void BehaviorReactToVoiceCommand::BehaviorUpdate()
 
       // we now loop indefinitely and wait for the timeout in the update function
       // this is because we don't know when the streaming will begin (if it hasn't already) so we can't time it accurately
-      DelegateIfInControl( new ReselectingLoopAnimationAction( _iVars.animListeningLoop ) );
+      if ( _dVars.persistent.forcedAnimListeningLoop != AnimationTrigger::Count ) {
+        DelegateIfInControl( new ReselectingLoopAnimationAction( _dVars.persistent.forcedAnimListeningLoop ) );
+      } else {
+        DelegateIfInControl( new ReselectingLoopAnimationAction( _iVars.animListeningLoop ) );
+      }
       _dVars.state = EState::ListeningLoop;
     }
   }
@@ -922,7 +942,11 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
   };
 
   // we need to get out of our listening loop anim before we react
-  DelegateIfInControl( new TriggerLiftSafeAnimationAction( _iVars.animListeningGetOut ), callback );
+  if ( _dVars.persistent.forcedAnimListeningGetOut != AnimationTrigger::Count ) {
+    DelegateIfInControl( new TriggerLiftSafeAnimationAction( _dVars.persistent.forcedAnimListeningGetOut ), callback );
+  } else {
+    DelegateIfInControl( new TriggerLiftSafeAnimationAction( _iVars.animListeningGetOut ), callback );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1067,12 +1091,77 @@ void BehaviorReactToVoiceCommand::HandleStreamFailure()
     DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_IntentNeutral ) );
   }
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToVoiceCommand::SetListeningAnims(const AnimationTrigger& listeningLoop,
+                                                    const AnimationTrigger& listeningGetOut)
+{
+  if ( IsActivated() ) {
+    LOG_ERROR("BehaviorReactToVoiceCommand.CannotSetListeningAnimsWhileActivated",
+              "Behavior %s is activated, cannot currently set new listening animations!",
+              GetDebugLabel().c_str());
+    return;
+  }
+  
+  if (listeningLoop == AnimationTrigger::Count && listeningGetOut == AnimationTrigger::Count) {
+    LOG_ERROR("BehaviorReactToVoiceCommand.CannotSetInvalidListeningAnims",
+              "Behavior %s cannot set invalid listening animations!",
+              GetDebugLabel().c_str());
+  } else {
+    _dVars.persistent.listeningAnimsResetQueued = false;
+    _dVars.persistent.forcedAnimListeningLoop = listeningLoop;
+    _dVars.persistent.forcedAnimListeningGetOut = listeningGetOut;
+    if (listeningLoop != AnimationTrigger::Count) {
+      LOG_DEBUG("BehaviorReactToVoiceCommand.SetListeningLoopAnim",
+                "Behavior %s set listening loop animation to %s",
+                GetDebugLabel().c_str(), AnimationTriggerToString(listeningLoop));
+    }
+    if (listeningGetOut != AnimationTrigger::Count) {
+      LOG_DEBUG("BehaviorReactToVoiceCommand.SetListeningGetOutAnim",
+                "Behavior %s set listening get-out animation to %s",
+                GetDebugLabel().c_str(), AnimationTriggerToString(listeningGetOut));
+    }
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToVoiceCommand::ResetListeningAnimsToConfig()
+{
+  if ( IsActivated() ) {
+    _dVars.persistent.listeningAnimsResetQueued = true;
+    LOG_WARNING("BehaviorReactToVoiceCommand.CannotResetListeningAnimsWhileActivated",
+                "Behavior %s is activated, cannot currently reset listening animations, but a"
+                "reset is queued to happen after deactivation!",
+                GetDebugLabel().c_str());
+    return;
+  }
+  _dVars.persistent.listeningAnimsResetQueued = false;
+  _dVars.persistent.forcedAnimListeningLoop = AnimationTrigger::Count;
+  _dVars.persistent.forcedAnimListeningGetOut = AnimationTrigger::Count;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToVoiceCommand::IsTurnEnabled() const
 {
   const EngineTimeStamp_t ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  return ts != _dVars.timestampToDisableTurnFor;
+  const bool extnerallyDisabled = (ts == _dVars.timestampToDisableTurnFor);
+
+  if( extnerallyDisabled ) {
+    return false;
+  }
+
+  // special case for simple voice intents, don't turn if the flag is set
+  UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+  UserIntent pendingIntent;
+  if( uic.IsUserIntentPending(USER_INTENT(simple_voice_response), pendingIntent) ) {
+    const MetaUserIntent_SimpleVoiceResponse& response = pendingIntent.Get_simple_voice_response();
+    if( response.disable_wakeword_turn ) {
+      return false;
+    }
+  }
+
+  // otherwise, we're ok to turn
+  return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -11,6 +11,9 @@
  **/
 
 #include <random>
+#include "switchboardd/log.h"
+#include "util/fileUtils/fileUtils.h"
+#include "auto-test/autoTest.h"
 #include "switchboardd/keyExchange.h"
 
 namespace Anki {
@@ -53,7 +56,27 @@ bool KeyExchange::ValidateKeys(uint8_t* publicKey, uint8_t* privateKey) {
 }
 
 std::string KeyExchange::GeneratePin() const {
-  return GeneratePin(_numPinDigits);
+  std::string pin { "" };
+
+  if(AutoTest::IsAutoTestBot()) {
+    Log::Write("Test pin file exists.");
+    // Check if pin file exists--if so, use
+    // as pin instead of randomly generated
+    
+    std::vector<uint8_t> pinBytes = Anki::Util::FileUtils::ReadFileAsBinary(AutoTest::kTestPinFilePath, 0, _numPinDigits);
+    
+    if(pinBytes.size() == _numPinDigits) {
+      pin = std::string((char*)pinBytes.data(), _numPinDigits);
+    } else {
+      Log::Write("Error reading test pin file. File [%s] has contents of size [%d] but was expecting at least [%d] bytes.", AutoTest::kTestPinFilePath.c_str(), pinBytes.size(), _numPinDigits);
+    }
+  } 
+
+  if(pin.empty()) {
+    pin = GeneratePin(_numPinDigits);
+  }
+
+  return pin;
 }
 
 std::string KeyExchange::GeneratePin(int digits) const {

@@ -27,19 +27,19 @@ class BehaviorLookAtFaceInFront;
 
 class BehaviorBlackJack : public ICozmoBehavior
 {
-public: 
+public:
   virtual ~BehaviorBlackJack();
 
 protected:
 
   // Enforce creation through BehaviorFactory
   friend class BehaviorFactory;
-  explicit BehaviorBlackJack(const Json::Value& config);  
+  explicit BehaviorBlackJack(const Json::Value& config);
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
-  
+
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void InitBehavior() override;
   virtual void OnBehaviorActivated() override;
@@ -128,6 +128,11 @@ private:
   // Helper functions
   IBehavior* SetUpSpeakingBehavior(const std::string& vocalizationString);
   void SetState_internal(EState state, const std::string& stateName);
+
+  // Get localized value for given string key
+  std::string GetLocalizedString(const std::string & key);
+  std::string GetLocalizedString(const std::string & key, const int score);
+
 };
 
 } // namespace Vector

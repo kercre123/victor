@@ -23,11 +23,6 @@
 namespace Anki {
 namespace Vector {
 
-namespace {
-  const std::string kWeatherLocationPrepend = "Right now in ";
-}
-
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 WeatherIntentParser::WeatherIntentParser(const RobotDataLoader::WeatherResponseMap* weatherResponseMap,
                                          const Json::Value& conditionRemaps)
@@ -43,15 +38,6 @@ bool WeatherIntentParser::IsForecast(const UserIntent_WeatherResponse& weatherIn
 {
   return (weatherIntent.isForecast == "true") ||
          (weatherIntent.isForecast == "True");
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool WeatherIntentParser::ShouldSayText(const UserIntent_WeatherResponse& weatherIntent,
-                                        std::string& textToSay) const
-{
-  textToSay = kWeatherLocationPrepend + weatherIntent.speakableLocationString;
-  return !weatherIntent.speakableLocationString.empty();
 }
 
 

@@ -15,10 +15,7 @@
       "behaviorName": "RelaxedReactToPickupFromPalmInternal",
       "behaviorClass" : "AnimGetInLoop",
       
-      // TODO(GB): Change to corresponding held-on-palm pickup anim
       "getIn"            : "HeldOnPalmPickupRelaxed",
-      // Maybe make some animation that keeps asking the user to put them
-      // back in the palm of their hand
       "loopAnimation"    : "NeutralFace",
       "getOut"           : "NeutralFace",
       
@@ -35,15 +32,16 @@
       "behaviorName": "NervousReactToPickupFromPalmInternal",
       "behaviorClass" : "AnimGetInLoop",
       
-      // TODO(GB): Change to corresponding held-on-palm pickup anim
       "getIn"            : "HeldOnPalmPickupNervous",
-      // Maybe make some animation that keeps asking the user to put them
-      // back in the palm of their hand
       "loopAnimation"    : "NeutralFace",
       "getOut"           : "NeutralFace",
       
       "shouldCheckEndCondDuringAnim": false,
-      "lockTreads"       : false
+      // NOTE(GB): Tread motion is too aggressive with current animation,
+      // can cause robot to not detect OnTreads even when not put down on
+      // the ground again, which can cause a whole host of issues, so lock
+      // the treads for now until animation is revised.
+      "lockTreads"       : true
     }
   ],
   

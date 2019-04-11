@@ -69,7 +69,7 @@ fi
 export CGO_ENABLED=1
 export GOCACHE=off
 
-export GOPATH=${SCRIPT_PATH}/cloud/go:${SCRIPT_PATH}/generated/cladgo:${SCRIPT_PATH}/generated/go:${SCRIPT_PATH}/tools/message-buffers/support/go
+export GOPATH=${SCRIPT_PATH}/cloud/go:${SCRIPT_PATH}/generated/cladgo:${SCRIPT_PATH}/generated/go:${SCRIPT_PATH}/victor-clad/tools/message-buffers/support/go
 export CGO_FLAGS=-g
 export CGO_CPPFLAGS=-I\ ${SCRIPT_PATH}/lib/util/source/anki/util/..\ -I\ /usr/include/opus\ -I\ ${SCRIPT_PATH}
 export CGO_CXXFLAGS=-std=c++14

@@ -22,7 +22,7 @@
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include "coretech/common/engine/math/convexIntersection.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleInterface.h"
 
@@ -50,8 +50,8 @@ namespace {
   const f32 kLiftHeightOccludingProxSensorWithCubeMin = 0;
   const f32 kLiftHeightOccludingProxSensorWithCubeMax = LIFT_HEIGHT_HIGHDOCK;
 
-  const f32 kMinPitch = DEG_TO_RAD(-8);
-  const f32 kMaxPitch = DEG_TO_RAD(8);
+  const f32 kMinPitch = DEG_TO_RAD(-5);
+  const f32 kMaxPitch = DEG_TO_RAD(5);
 
   // for checking if the state has changed since the last measurement
   const Point3f kRobotTranslationTolerance_mm{0.1f, 0.1f, 0.1f};
@@ -183,11 +183,10 @@ void ProxSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
   }
 
   // check if we should bother updating the map
-  const bool isCalmPowerMode    = static_cast<bool>(msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE); // Reading is meaningless in calm mode so just skip map update
   const bool stillUpdating      = (_measurementsAtPose < kNumMeasurementsAtPose);                             // if the robot hasn't moved but we still need to update the belief state
   const bool measurementInFrame = (histState.GetFrameId() != _robot->GetPoseFrameID());                       // if measurement frame is not the current robot frame
 
-  if (_mapEnabled && !isCalmPowerMode && stillUpdating && !measurementInFrame) {
+  if (_mapEnabled && stillUpdating && !measurementInFrame) {
     UpdateNavMap(measurmentTime);
   }
 }

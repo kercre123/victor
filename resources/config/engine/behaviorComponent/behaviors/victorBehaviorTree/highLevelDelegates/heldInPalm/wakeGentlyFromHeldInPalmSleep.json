@@ -1,0 +1,35 @@
+{
+  "behaviorID"    : "WakeGentlyFromHeldInPalmSleep",
+  "behaviorClass" : "DispatcherStrictPriorityWithCooldown",
+  "associatedActiveFeature": "HeldInPalm",
+  
+  // Keeps SleepWhileHeldInPalmLoop from re-activating once wake-up
+  // animation finishes playing, and by extension, cancels the entire
+  // SleepWhileHeldInPalm behavior to let other behaviors from
+  // HeldInPalmResponses activate.
+  "resetTimers": ["WakeGentlyFromHeldInPalmSleep"],
+
+  "interruptActiveBehavior": true,
+  "linkScope": true,
+  
+  // TODO(GB): Add gentle wake-up behavior to react to loud sounds
+  "behaviors": [
+    {
+      "behavior": "WakeGentlyOnTouchInternal",
+      "cooldown_s": 5.0
+    }
+  ],
+  
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "WakeGentlyOnTouchInternal",
+      "behaviorClass": "AnimSequence",
+      "animTriggers": ["ConnectWakeUp"],
+      
+      "wantsToBeActivatedCondition": {
+        "conditionType" : "RobotTouched",
+        "minTouchTime" : 0.1
+      }
+    }
+  ]
+}

@@ -2,7 +2,7 @@
   "behaviorID" :   "CheckForAndReactToHand",
   "behaviorClass": "CheckForAndReactToSalientPoint",
 
-  "visionMode" : "DetectingHands",
+  "visionMode" : "Hands",
   "numFrames" : 2,
   
   "reactions" : [

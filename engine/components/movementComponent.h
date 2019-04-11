@@ -231,7 +231,7 @@ public:
   
   bool IsDirectDriving() const { return ((_drivingWheels || _drivingHead || _drivingLift)); }
   
-  u8 GetMaxUnexpectedMovementCount() const { return UnexpectedMovement::kMaxUnexpectedMovementCount; }
+  u8 GetMaxUnexpectedMovementCount() const { return _unexpectedMovement.GetMaxCount(); }
 
   // Call this if you would like to allow 'external' movement commands (e.g. raw DriveWheels command). These should
   // really only be allowed for things like SDK and Webots. The requester name is used to track where the request came
@@ -242,6 +242,13 @@ public:
   // differs from the most common use case of this component.
   void EnableUnexpectedRotationWithoutMotors(bool enabled) { _enableRotatedWithoutMotors = enabled; }
   bool IsUnexpectedRotationWithoutMotorsEnabled() const { return _enableRotatedWithoutMotors; }
+  
+  // Enable/disable detection of unexpected movement even when picked up, and clamps the max angular
+  // velocity of any point-turn to the value specified by kMaxHeldInPalmTurnSpeed_radps. Must be
+  // explicitly enabled by the HeldInPalmTracker component since that component enables behaviors
+  // with point-turn actions to run even when the robot is picked up.
+  void EnableHeldInPalmMode(const bool enabled);
+  bool IsHeldInPalmModeEnabled() const { return _heldInPalmModeEnabled; }
     
   // Returns body distance traveled
   // i.e. Average wheel speed integrated over time
@@ -304,6 +311,7 @@ private:
   bool _isHeadEncoderInvalid = false;
   bool _isLiftEncoderInvalid = false;
   bool _enableRotatedWithoutMotors = false;
+  bool _heldInPalmModeEnabled = false;
 
   // True if we are currently allowed to handle raw motion commands from the outside world
   // (e.g. while SDK or Webots is active)
@@ -333,20 +341,24 @@ private:
     f32               _sumWheelSpeedR_mmps;
     u8                _count;
     
+    bool              _heldInPalmModeEnabled = false;
+    
   public:
     
     UnexpectedMovement() { Reset(); }
     
     static const u8  kMaxUnexpectedMovementCount;
     
-    u8          GetCount() const { return _count; }
+    u8               GetMaxCount()  const;
+    u8               GetCount()     const { return _count; }
     RobotTimeStamp_t GetStartTime() const { return _startTime; }
-    void        GetAvgWheelSpeeds(f32& left, f32& right) const;
+    void             GetAvgWheelSpeeds(f32& left, f32& right) const;
     
     bool IsDetected() const;
     void Increment(u8 countInc, f32 leftSpeed_mmps, f32 rightSpeed_mmps, RobotTimeStamp_t currentTime);
     void Decrement();
     void Reset();
+    void EnableHeldInPalmMode(const bool enable) { _heldInPalmModeEnabled = enable; }
   };
   
   UnexpectedMovement _unexpectedMovement;
@@ -356,6 +368,7 @@ private:
   const f32 kGyroTol_radps                 = DEG_TO_RAD(10);
   const f32 kWheelDifForTurning_mmps       = 30;
   const f32 kMinWheelSpeed_mmps            = 20;
+  const f32 kMaxHeldInPalmTurnSpeed_radps  = DEG_TO_RAD(40);
   const f32 kExpectedVsActualGyroTol_radps = 0.2f;
   
   // Flags for whether or not we are currently directly driving the following motors

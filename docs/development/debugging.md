@@ -4,6 +4,119 @@ Debugging on Victor is provided by `lldb` and can be used via the command-line o
 
 You can also use `gdb` on the robot itself.
 
+## Getting Started With LLDB
+
+### 1. Start lldb server on robot
+
+```bash
+./project/victor/scripts/start-lldb.sh
+```
+
+Note that `start-lldb-sh` will make changes to your root filesystem!
+The root filesystem (aka /) must be made writable for lldb-server to launch processes.
+Your filesystem will stay writable until the robot is rebooted.
+
+Note that `start-lldb.sh` will make changes to firewall settings on your robot!
+Your firewall will stay open until the robot is rebooted.
+
+Note that `start-lldb.sh` will set up some environment variables to locate shared libraries.
+If you want to start it by hand, you will need to do something like
+
+```bash
+$ export LD_LIBRARY_PATH=/usr/lib:/anki/lib
+```
+
+in your shell.
+
+### 2. Start lldb client on build host
+
+```bash
+$ cd ~/projects/victor
+$ lldb
+```
+
+You will have to fill in the path your top-level project directory.
+
+### 3. Connect lldb client to lldb server
+
+```lldb
+(lldb) platform select remote-linux
+(lldb) platform connect connect://${ANKI_ROBOT_HOST}:55001
+(lldb) settings set target.exec-search-paths ./_build/vicos/Debug/bin ./_build/vicos/Debug/lib
+```
+
+You will have to fill in the IP address for your robot.
+
+If you are debugging a release build, set search paths to use `_build/vicos/Release` instead of `_build/vicos/Debug`.
+
+### 4. Attach to a process
+
+```lldb
+(lldb) process attach -name vic-robot
+```
+
+For more help with lldb, see 'Useful lldb commands' below.
+
+## Getting Started With VS Code
+
+Visual Studio Code can be extended to support lldb integration.
+
+If you haven't already followed the setup instructions for [vscode](vscode.md), do that now.
+
+If you haven't already installed [vadimcn.vscode-lldb](https://marketplace.visualstudio.com/items?itemName=vadimcn.vscode-lldb), do that now.
+
+### LLDB Settings
+
+The lldb extension uses configuration variables stored in `.vscode/settings.json`.
+Edit your `settings.json` to include something like this:
+
+```json
+ "lldb.dbgconfig": {
+        "host": "ANKI-ROBOT-HOST-IP",
+        "bin": "${workspaceRoot}/_build/vicos/Debug/bin",
+        "lib": "${workspaceRoot}/_build/vicos/Debug/lib"
+    },
+```
+
+Fill in your own robot IP and path to your build directory.
+
+If you are debugging a release build, set search paths to use `Release` instead of `Debug`.
+
+### LLDB Launch Tasks
+
+The lldb extension uses launch tasks configured in `.vscode/launch.json`.
+Edit your `launch.json` to include something like this:
+
+```json
+"configurations": [
+        {
+            "name": "victor:attach:vic-robot",
+            "type": "lldb",
+            "request": "attach",
+            "program": "vic-robot",
+            "initCommands": [
+                "platform select remote-linux",
+                "platform connect connect://${dbgconfig:host}:55001",
+                "settings set target.exec-search-paths ${dbgconfig:lib} ${dbgconfig:bin}"
+            ],
+            "stopOnEntry": true
+        }
+]
+```
+
+Add additional tasks as needed.
+Note the `dbgconfig` values used in place of hard-coded strings.
+These will be replaced with values from your `settings.json`.
+This lets you set up multiple tasks without having to repeat your robot IP in a lot of different places.
+
+### VS Code Debug View
+
+Use `View -> Open View... -> Debug` to open the debug view.
+
+Select a launch task from the dropdown, then click the "Play" arrow to start the task.
+
+Output from the task appears in the "Debug Console" display window.
+
 ## Address spaces
 
 The heap, starts at `0xadxxxxxx` and grows down
@@ -15,7 +128,7 @@ Code and function pointers are at: `0x7fxxxxxx`
 
 ## Running a process standalone
 
-```
+```bash
 systemctl stop victor.target
 systemctl restart vic-robot
 /anki/bin/vic-anim -c /anki/etc/config/platform_config.json
@@ -23,7 +136,7 @@ systemctl restart vic-robot
 
 ## Running a process with the address sanitizer
 
-```
+```bash
 systemctl stop victor.target
 systemctl restart vic-robot
 ASAN_OPTIONS=detect_container_overflow=0 /anki/bin/vic-anim -c /anki/etc/config/platform_config.json
@@ -33,7 +146,7 @@ ASAN_OPTIONS=detect_container_overflow=0:replace_intrin=0 /anki/bin/vic-anim -c 
 
 ## Running a process with the address sanitizer in gdb
 
-```
+```bash
 systemctl stop victor.target
 systemctl restart vic-robot
 ASAN_OPTIONS=detect_container_overflow=0:replace_intrin=0 VIC_ANIM_CONFIG=/anki/etc/config/platform_config.json gdb /anki/bin/vic-anim
@@ -41,10 +154,10 @@ ASAN_OPTIONS=detect_container_overflow=0:replace_intrin=0 VIC_ANIM_CONFIG=/anki/
 
 Note: setting arguments within `gdb` does not work, for example:
 
-```
+```bash
 (gdb) set args "-c" "/anki/etc/config/platform_config.json"
 (gdb) set args -c /anki/etc/config/platform_config.json
-(gdb) run "-c /anki/etc/config/platform_config.json" 
+(gdb) run "-c /anki/etc/config/platform_config.json"
 ```
 
 ## Useful gdb commands
@@ -53,71 +166,13 @@ Note: setting arguments within `gdb` does not work, for example:
 
 `info symbol <address>`
 
-## Robot setup
-
-- modify the robot filesystem to allow writes
-
-```
-ssh root@${ANKI_ROBOT_HOST}
-mount -o remount r,w /
-```
-
-- allow ADB over TCP
-
-```
-setprop service.adb.tcp.port 5555
-systemctl restart adbd
-```
-
-- and to make it permanent:
-
-```
-setprop persist.adb.tcp.port 5555
-systemctl restart adbd
-```
-
-- check if lldb is running
-
-```bash
-ps | grep lldb
-```
-
-and if you're having problems kill those processes
-
-```
-kill -9 <process id>
-```
-
-# Development setup
-
-- connect to the robot
-
-```bash
-adb connect 192.168.1.43
-```
-
-- start lldb server
-
-```bash
-./project/victor/scripts/start-lldb.sh
-```
-
-- start lldb
-
-```bash
-lldb
-platform select remote-android
-platform connect connect://localhost:55001
-settings set target.exec-search-paths ~/projects/victor/_build/vicos/Debug/lib
-```
-
-# Useful lldb commands
+## Useful lldb commands
 
 - attach -- Attach to a process
 
 (but first, ssh into robot and get a list of process ids with `ps | grep vic-`)
 
-```
+```bash
 process attach --pid 1905
 
 Process 1905 stopped

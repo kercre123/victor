@@ -10,8 +10,8 @@
 #include <list>
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/shared/math/matrix_impl.h"
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/shared/math/matrix.h"
+#include "coretech/common/engine/math/quad.h"
 
 #if ANKICORETECH_USE_OPENCV
 #include "opencv2/calib3d/calib3d.hpp"

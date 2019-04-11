@@ -30,8 +30,6 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "webServerProcess/src/webService.h"
 
-#include "clad/types/lcdTypes.h"
-
 namespace Anki {
 namespace Vector {
 
@@ -101,7 +99,7 @@ void PowerStateManager::UpdateDependent(const RobotCompMap& dependentComps)
     return;
   }
 
- static bool wasForceCalmMode = false;
+  static bool wasForceCalmMode = false;
   if (kForceCalmMode != wasForceCalmMode) {
     _context->GetRobotManager()->GetMsgHandler()->SendMessage(
         RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(kForceCalmMode)));
@@ -369,6 +367,15 @@ void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
   }
 }
 
+void PowerStateManager::RequestLCDBrightnessChange(const LCDBrightness& level) const
+{
+  // For now, we will honor all LCD brightness changes, but in the future
+  //  if powersaving concerns are relevant here, we may put logic that
+  //  decides the ultimate effected change in this method.
+  _context->GetRobotManager()->GetMsgHandler()->SendMessage(
+        RobotInterface::EngineToRobot( RobotInterface::SetLCDBrightnessLevel( level ) ) );
+}
+
 
 void PowerStateManager::EnterPowerSave(const RobotCompMap& components)
 {
@@ -430,13 +437,6 @@ void PowerStateManager::ExitPowerSave(const RobotCompMap& components)
   _inPowerSaveMode = false;
   _timePowerSaveToggled_s = currTime_s;
 }
-
-
-void PowerStateManager::NotifyOfRobotState(const RobotState& msg)
-{
-  _inSysconCalmMode = static_cast<bool>(msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE);
-}
-
 
 }
 }

@@ -23,9 +23,7 @@
 // ---------- BEGIN FORWARD DECLARATIONS ----------
 namespace Anki {
 namespace Util {
-  //class GameLogTransferTask;
   class RandomGenerator;
-  //class TransferQueueMgr;
   class Locale;
   namespace AnkiLab {
     class AnkiLab;
@@ -92,7 +90,6 @@ public:
   RobotDataLoader*                      GetDataLoader() const { return _dataLoader.get(); }
   RobotManager*                         GetRobotManager() const { return _robotMgr.get(); }
   VizManager*                           GetVizManager() const { return _vizManager.get(); }
-  //Util::TransferQueueMgr*               GetTransferQueue() const { return _transferQueueMgr.get(); }
   CozmoExperiments*                     GetExperiments() const { return _cozmoExperiments.get(); }
   PerfMetricEngine*                     GetPerfMetric() const { return _perfMetric.get(); }
   WebService::WebService*               GetWebService() const { return _webService.get(); }
@@ -130,8 +127,6 @@ private:
   std::unique_ptr<RobotDataLoader>                      _dataLoader;
   std::unique_ptr<RobotManager>                         _robotMgr;
   std::unique_ptr<VizManager>                           _vizManager;
-  //std::unique_ptr<Util::TransferQueueMgr>               _transferQueueMgr;
-  //std::unique_ptr<Util::GameLogTransferTask>            _gameLogTransferTask;
   std::unique_ptr<CozmoExperiments>                     _cozmoExperiments;
   std::unique_ptr<PerfMetricEngine>                     _perfMetric;
   std::unique_ptr<WebService::WebService>               _webService;

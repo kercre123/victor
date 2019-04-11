@@ -40,16 +40,12 @@ bool AnkiProtoGenerator::Generate( const FileDescriptor* file,
     // but we could annotate messages with "// @@anki_gen_code=true" and look for that in
     // SourceLocation::leading_comments. For now, generate code for all the messages!
     
-    // Check the # of oneofs in the message. 
-    // Generate tags only for a single oneof but no other params.
+    // Check the # of oneofs in the message, generate tags for a single oneof 
     const int numOneOfs = message->oneof_decl_count();
     const int numFields = message->field_count();
-    bool shouldGenTags = false;
-    if( numOneOfs == 1 ) {
-      const int numOneOfFields = message->oneof_decl(0)->field_count();
-      shouldGenTags = (numOneOfFields == numFields);
-    }
-    // Generate constructors if there's either no one-of, or a single oneof but no other params,
+    bool shouldGenTags = ( numOneOfs == 1 );
+
+    // Generate constructors if there's either no one-of, or a single oneof,
     // and no repeated fields (we could support repeated fields with vectors, but forcing users
     // to use the pure protobuf methods will result in fewer copies)
     bool shouldGenCtors = shouldGenTags || (numOneOfs == 0 && numFields > 0);

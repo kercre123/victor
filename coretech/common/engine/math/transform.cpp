@@ -12,8 +12,8 @@
 
 #include "coretech/common/engine/math/transform.h"
 
-#include "coretech/common/shared/math/matrix_impl.h"
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/shared/math/matrix.h"
+#include "coretech/common/engine/math/quad.h"
 
 #include "coretech/common/shared/utilities_shared.h"
 

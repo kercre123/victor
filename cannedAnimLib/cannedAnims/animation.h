@@ -21,6 +21,7 @@
 #include "anki/cozmo/shared/animationTag.h"
 #include "cannedAnimLib/baseTypes/keyframe.h"
 #include "cannedAnimLib/baseTypes/track.h"
+#include "cannedAnimLib/cannedAnims/spriteBoxCompositor.h"
 #include <list>
 #include <queue>
 
@@ -29,6 +30,13 @@ namespace CozmoAnim {
 }
 
 namespace Anki {
+
+// Fwd Declaration
+namespace Vision{
+  class SpriteCache;
+  class SpriteSequenceContainer;
+}
+
 namespace Vector {
 
 class Animation
@@ -52,6 +60,11 @@ public:
   template<class KeyFrameType>
   Result AddKeyFrameByTime(const KeyFrameType& kf);
 
+  Result AddSpriteBoxKeyFrame(const std::string& spriteBoxName, Animations::SpriteBoxKeyFrame&& keyFrame)
+  {
+    return _spriteBoxCompositor.AddKeyFrame(spriteBoxName, std::move(keyFrame));
+  }
+
   // Get a track by KeyFrameType
   template<class KeyFrameType>
   Animations::Track<KeyFrameType>& GetTrack();
@@ -64,6 +77,8 @@ public:
     // is to have a different specialization for each type, in order to return the correct Track member.
     return const_cast<Animation*>(this)->GetTrack<KeyFrameType>();
   }
+
+  const Animations::SpriteBoxCompositor& GetSpriteBoxCompositor() const { return _spriteBoxCompositor; }
   
   // Calls all tracks' Init() methods
   Result Init(Vision::SpriteCache* cache);
@@ -101,6 +116,19 @@ public:
   // NOTE: This function only moves tracks forwards
   void AdvanceTracks(const TimeStamp_t toTime_ms);
 
+  // Takes a CompositeImage for rendering to the face. If this animation has
+  // any SpriteBoxKeyFrames, they will be added to the provided CompositeImage
+  // and we'll return true. Else returns false.
+  bool PopulateCompositeImage(Vision::SpriteCache& spriteCache,
+                              Vision::SpriteSequenceContainer& spriteSeqContainer,
+                              TimeStamp_t timeSinceAnimStart_ms,
+                              Vision::CompositeImage& outCompImg){
+    return _spriteBoxCompositor.PopulateCompositeImage(spriteCache,
+                                                       spriteSeqContainer,
+                                                       timeSinceAnimStart_ms,
+                                                       outCompImg);
+  }
+
 private:
 
   // Name of this animation
@@ -110,6 +138,7 @@ private:
   // All the animation tracks, storing different kinds of KeyFrames
   Animations::Track<HeadAngleKeyFrame>      _headTrack;
   Animations::Track<LiftHeightKeyFrame>     _liftTrack;
+  // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
   Animations::Track<SpriteSequenceKeyFrame> _spriteSequenceTrack;
   Animations::Track<ProceduralFaceKeyFrame> _proceduralFaceTrack;
   Animations::Track<EventKeyFrame>          _eventTrack;
@@ -119,6 +148,8 @@ private:
   Animations::Track<TurnToRecordedHeadingKeyFrame> _turnToRecordedHeadingTrack;
   Animations::Track<RobotAudioKeyFrame>     _robotAudioTrack;
   
+  Animations::SpriteBoxCompositor _spriteBoxCompositor;
+
   // Compare if the track's last key frame time is gerater then the lastFrameTime_ms argument
   // Return the greater time
   template<class KeyFrameType>

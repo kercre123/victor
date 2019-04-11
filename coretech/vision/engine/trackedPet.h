@@ -12,8 +12,8 @@
 #ifndef __Anki_Vision_TrackedPet_H__
 #define __Anki_Vision_TrackedPet_H__
 
+#include "coretech/common/shared/math/rect_fwd.h"
 #include "coretech/common/shared/math/rect.h"
-#include "coretech/common/shared/math/rect_impl.h"
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/shared/math/radians.h"
 

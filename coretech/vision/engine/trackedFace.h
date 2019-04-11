@@ -14,8 +14,8 @@
 #define __Anki_Vision_TrackedFace_H__
 
 #include "coretech/common/shared/math/point_fwd.h"
+#include "coretech/common/shared/math/rect_fwd.h"
 #include "coretech/common/shared/math/rect.h"
-#include "coretech/common/shared/math/rect_impl.h"
 #include "coretech/common/engine/math/pose.h"
 #include "coretech/common/shared/math/radians.h"
 
@@ -132,15 +132,16 @@ namespace Vision {
     void SetIsFacingCamera(bool tf);
     
     // Return the histogram over all expressions (sums to 100)
-    using FacialExpressionValues = std::array<u8, (size_t)FacialExpression::Count>;
-    const FacialExpressionValues& GetExpressionValues() const;
+    using ExpressionValue = u8;
+    using ExpressionValues = std::array<ExpressionValue, (size_t)FacialExpression::Count>;
+    const ExpressionValues& GetExpressionValues() const;
     
     // Return the expression with highest value (and optionally, its score if valuePtr != nullptr)
-    // (If the returned expression is Unknown, the returned value will be -1.f) 
-    FacialExpression GetMaxExpression(s32* valuePtr = nullptr) const;
+    // (If the returned expression is Unknown, the returned value will be -1) 
+    FacialExpression GetMaxExpression(ExpressionValue* valuePtr = nullptr) const;
     
     // Set a particular expression value
-    void SetExpressionValue(FacialExpression whichExpression, f32 newValue);
+    void SetExpressionValue(FacialExpression whichExpression, ExpressionValue newValue);
     
     // Smile information, if available
     const SmileAmount& GetSmileAmount() const { return _smileAmount; }
@@ -193,7 +194,7 @@ namespace Vision {
     
     std::array<Feature, NumFeatures> _features;
     std::array<FeatureConfidence, NumFeatures> _featureConfidences;
-    FacialExpressionValues _expression{};
+    ExpressionValues _expression{};
     
     // "Metadata" about the face
     SmileAmount _smileAmount;

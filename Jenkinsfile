@@ -8,29 +8,6 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurperClassic
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException
 
-@NonCPS
-def getListOfOnlineNodesForLabel(label) {
-  def nodes = []
-  jenkins.model.Jenkins.instance.computers.each { c ->
-    if (c.node.labelString.contains(label) && c.node.toComputer().isOnline()) {
-      nodes.add(c.node.selfLabel.name)
-    }
-  }
-  return nodes
-}
-
-@NonCPS
-def checkIfAgentsAreBusy() {
-    for (node in hudson.model.Hudson.instance.slaves) {
-        if (node.getLabelString() == 'victor-shipping') {
-            if (node.getComputer().countIdle() > 0) {
-                return false
-            }
-            return true
-        }
-    }
-}
-
 enum buildConfig {
     SHIPPING, DEBUG, RELEASE, MASTER
 
@@ -44,6 +21,9 @@ enum buildConfig {
         return firstChar + restOfStringLowerCased
     }
 }
+
+enabledBuildConfigs = [buildConfig.SHIPPING.getBuildType(), buildConfig.DEBUG.getBuildType()]
+buildConfigMap = [:]
 
 def server = Artifactory.server 'artifactory-dev'
 library 'victor-helpers@master'
@@ -99,7 +79,7 @@ def jsonParsePayload(def json) {
     new groovy.json.JsonSlurperClassic().parseText(json)
 }
 
-def notifyBuildStatus(status) {
+def notifyBuildStatus(status, config) {
     def jobName = "${env.JOB_NAME}"
     jobName = jobName.getAt(0..(jobName.indexOf('/') - 1))
     def pullRequestURL = "https://github.com/anki/${jobName}/pull/${env.CHANGE_ID}"
@@ -117,7 +97,7 @@ def notifyBuildStatus(status) {
 
     notifySlack("", slackNotificationChannel, 
         [
-            title: "${jobName} ${primaryStageName} ${env.CHANGE_ID}, build #${env.BUILD_NUMBER}",
+            title: "${jobName} ${primaryStageName} ${env.CHANGE_ID} ${config}, build #${env.BUILD_NUMBER}",
             title_link: "${env.BUILD_URL}",
             color: slackColorMapping[status],
             text: "${status}\nAuthor: ${commitObj.commit.author.name} <${commitObj.commit.author.email}>",
@@ -141,7 +121,20 @@ def notifyBuildStatus(status) {
             ]
         ]
     )
-    
+    def commitStatusMsg = "PR #${env.CHANGE_ID} :: vicos ${config} :: Finished"
+    def statusMap = [msg: commitStatusMsg, result: status.toUpperCase(), sha: commitObj.sha, context: "ci/jenkins/pr/vicos/${config}"]
+    setGHBuildStatus(statusMap)
+}
+
+void setGHBuildStatus(Map statusFields) {
+  step([
+      $class: "GitHubCommitStatusSetter",
+      reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/anki/victor"],
+      commitShaSource: [$class: "ManuallyEnteredShaSource", sha: statusFields.sha],
+      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: statusFields.context],
+      errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: statusFields.msg, state: statusFields.result]] ]
+  ]);
 }
 
 
@@ -212,9 +205,9 @@ if (env.CHANGE_ID) {
 }
 
 stage("${primaryStageName} Build") {
+    gatekeeper = new Gatekeeper(this)
     while ( true ) {
         agent = new EphemeralAgent()
-        gatekeeper = new Gatekeeper(this)
         node('master') {
             echo "Checking if resources are available on vSphere..."
             gatekeeper.checkLimits()
@@ -255,6 +248,7 @@ stage("${primaryStageName} Build") {
                                 vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
                             }
                         }
+                        gatekeeper.throttle()
                     }
                 }
             } else {
@@ -265,33 +259,30 @@ stage("${primaryStageName} Build") {
         if (gatekeeper.nodeProvisioned) break
     }
     try {
-        parallel shipping: {
-            node(uuid) {
-                gitCheckout(true)
-                withDockerEnv {
-                    buildPRStepsVicOS type: buildConfig.SHIPPING.getBuildType()
-                }
-            }
-        },
-        debug: {
-            node(uuid) {
-                gitCheckout(true)
-                withDockerEnv {
-                    buildPRStepsVicOS type: buildConfig.DEBUG.getBuildType()
+        for (int i = 0; i < enabledBuildConfigs.size() ; i++) {
+            def buildFlavor = enabledBuildConfigs[i]
+            buildConfigMap[buildFlavor] = {
+                node(uuid) {
+                    def ghsb = new GithubStatusMsgBuilder(this, buildFlavor)
+                    gitCheckout(true)
+                    withDockerEnv {
+                        ghsb.postBuildStart()
+                        buildPRStepsVicOS type: buildFlavor
+                        ghsb.postBuildFinished('SUCCESS')
+                        notifyBuildStatus('Success', buildFlavor)
+                    }
                 }
             }
         }
-        node('master') {
-            notifyBuildStatus('Success')
-        }
+        parallel buildConfigMap
     } catch (FlowInterruptedException ae) {
-        node('master') {
-            notifyBuildStatus('Aborted')
+        node(uuid) {
+            notifyBuildStatus('Aborted', 'shipping')
         }
         throw ae
     } catch (exc) {
-        node('master') {
-            notifyBuildStatus('Failure')
+        node(uuid) {
+            notifyBuildStatus('Failure', 'shipping')
         }
         throw exc
     } finally {

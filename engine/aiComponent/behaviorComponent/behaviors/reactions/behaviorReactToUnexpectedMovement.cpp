@@ -30,25 +30,43 @@ namespace Anki {
 namespace Vector {
 
 namespace {
+  // Key to disable all repeated deactivation checks
+  const char* kEnableRepeatedActivationChecksKey = "enableRepeatedActivationChecks";
+  
+  // Configuration keys for setting detection thresholds for repeated activation
   const char* kRepeatedActivationWindowKey = "repeatedActivationWindow_sec";
   const char* kRepeatedActivationAngleWindowKey = "repeatedActivationAngleWindow_deg";
   const char* kNumRepeatedActivationsAllowedKey = "numRepeatedActivationsAllowed";
+  
+  // Configuration keys for "retreat" compound action performed when repeated activation is detected
   const char* kRetreatDistanceKey = "retreatDistance_mm";
   const char* kRetreatSpeedKey = "retreatSpeed_mmps";
+  
+  // Configuration keys for setting AskForHeld activation thresholds
   const char* kRepeatedActivationDetectionWindowKey = "repeatedActivationDetectionWindow_sec";
   const char* kNumRepeatedActivationDetectionsAllowedKey = "numRepeatedActivationDetectionsAllowed";
+  
+  // Configuration key to always lock treads during the animation, regardless of the direction of
+  // unexpected movement
+  const char* kLockTreadsDuringAnimKey = "lockTreadsDuringAnim";
+  
+  // ID of behavior to delegate to if robot repeatedly encounters unexpected movement and tries
+  // emergency "retreat" maneuvers too many times, but is unable to get un-stuck.
+  const BehaviorID kAskForHelpBehaviorID = BEHAVIOR_ID(AskForHelp);
 }
 
 void BehaviorReactToUnexpectedMovement::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   const char* list[] = {
+    kEnableRepeatedActivationChecksKey,
     kRepeatedActivationWindowKey,
     kRepeatedActivationAngleWindowKey,
     kNumRepeatedActivationsAllowedKey,
     kRetreatDistanceKey,
     kRetreatSpeedKey,
     kRepeatedActivationDetectionWindowKey,
-    kNumRepeatedActivationDetectionsAllowedKey
+    kNumRepeatedActivationDetectionsAllowedKey,
+    kLockTreadsDuringAnimKey
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -62,45 +80,48 @@ BehaviorReactToUnexpectedMovement::InstanceConfig::InstanceConfig()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToUnexpectedMovement::InstanceConfig::InstanceConfig(const Json::Value& config, const std::string& debugName)
 {
-  repeatedActivationCheckWindow_sec = JsonTools::ParseFloat(config, kRepeatedActivationWindowKey, debugName);
-  // Convert user input setting from degrees to radians
-  float possibleYawAngleWindow_rad = std::fabs( DEG_TO_RAD( JsonTools::ParseFloat(config,
-                                                                                  kRepeatedActivationAngleWindowKey,
-                                                                                  debugName)));
-  if (!ANKI_VERIFY(Util::IsFltLE(possibleYawAngleWindow_rad, M_PI_F), (debugName + ".InvalidYawAngleWindow").c_str(),
-                   "Yaw angle window should be less than PI radians (not %f). Clamping to PI radians.",
-                   possibleYawAngleWindow_rad))
-  {
-    yawAngleWindow_rad = M_PI_F;
-  } else {
-    yawAngleWindow_rad = possibleYawAngleWindow_rad;
-  }
-
-  numRepeatedActivationsAllowed = JsonTools::ParseUInt32(config, kNumRepeatedActivationsAllowedKey, debugName);
-  retreatDistance_mm = JsonTools::ParseFloat(config, kRetreatDistanceKey, debugName);
-  if (!ANKI_VERIFY(Util::IsFltGTZero(retreatDistance_mm),
-                  (debugName + ".NonPositiveDistance").c_str(),
-                  "Retreat distance should always be positive (not %f). Making positive.",
-                  retreatDistance_mm))
-  {
-    retreatDistance_mm *= -1.0;
-  }
-  retreatSpeed_mmps = JsonTools::ParseFloat(config, kRetreatSpeedKey, debugName);
-  if (!ANKI_VERIFY(Util::IsFltGTZero(retreatSpeed_mmps),
-                  (debugName + ".NonPositiveSpeed").c_str(),
-                  "Retreat speed should always be positive (not %f). Making positive.",
-                  retreatSpeed_mmps))
-  {
-    retreatSpeed_mmps *= -1.0;
+  JsonTools::GetValueOptional(config, kEnableRepeatedActivationChecksKey, enableRepeatedActivationChecks);
+  if (enableRepeatedActivationChecks) {
+    repeatedActivationCheckWindow_sec = JsonTools::ParseFloat(config, kRepeatedActivationWindowKey, debugName);
+    // Convert user input setting from degrees to radians
+    float possibleYawAngleWindow_rad = std::fabs( DEG_TO_RAD( JsonTools::ParseFloat(config,
+                                                                                    kRepeatedActivationAngleWindowKey,
+                                                                                    debugName)));
+    if (!ANKI_VERIFY(Util::IsFltLE(possibleYawAngleWindow_rad, M_PI_F), (debugName + ".InvalidYawAngleWindow").c_str(),
+                     "Yaw angle window should be less than PI radians (not %f). Clamping to PI radians.",
+                     possibleYawAngleWindow_rad))
+    {
+      yawAngleWindow_rad = M_PI_F;
+    } else {
+      yawAngleWindow_rad = possibleYawAngleWindow_rad;
+    }
+    
+    numRepeatedActivationsAllowed = JsonTools::ParseUInt32(config, kNumRepeatedActivationsAllowedKey, debugName);
+    retreatDistance_mm = JsonTools::ParseFloat(config, kRetreatDistanceKey, debugName);
+    if (!ANKI_VERIFY(Util::IsFltGTZero(retreatDistance_mm),
+                     (debugName + ".NonPositiveDistance").c_str(),
+                     "Retreat distance should always be positive (not %f). Making positive.",
+                     retreatDistance_mm))
+    {
+      retreatDistance_mm *= -1.0;
+    }
+    retreatSpeed_mmps = JsonTools::ParseFloat(config, kRetreatSpeedKey, debugName);
+    if (!ANKI_VERIFY(Util::IsFltGTZero(retreatSpeed_mmps),
+                     (debugName + ".NonPositiveSpeed").c_str(),
+                     "Retreat speed should always be positive (not %f). Making positive.",
+                     retreatSpeed_mmps))
+    {
+      retreatSpeed_mmps *= -1.0;
+    }
+    
+    repeatedActivationDetectionsCheckWindow_sec =
+      JsonTools::ParseFloat(config, kRepeatedActivationDetectionWindowKey, debugName);
+    
+    numRepeatedActivationDetectionsAllowed =
+      JsonTools::ParseUInt32(config, kNumRepeatedActivationDetectionsAllowedKey, debugName);
   }
   
-  repeatedActivationDetectionsCheckWindow_sec = JsonTools::ParseFloat(config,
-                                                                      kRepeatedActivationDetectionWindowKey,
-                                                                      debugName);
-  numRepeatedActivationDetectionsAllowed = JsonTools::ParseUInt32(config,
-                                                                  kNumRepeatedActivationDetectionsAllowedKey,
-                                                                  debugName);
-
+  JsonTools::GetValueOptional(config, kLockTreadsDuringAnimKey, lockTreadsDuringAnim);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -185,7 +206,11 @@ void BehaviorReactToUnexpectedMovement::GetAllDelegates(std::set<IBehavior*>& de
 void BehaviorReactToUnexpectedMovement::InitBehavior()
 {
   const auto& BC = GetBEI().GetBehaviorContainer();
-  _iConfig.askForHelpBehavior = BC.FindBehaviorByID(BEHAVIOR_ID(AskForHelp));
+  _iConfig.askForHelpBehavior = BC.FindBehaviorByID(kAskForHelpBehaviorID);
+  ANKI_VERIFY(_iConfig.askForHelpBehavior != nullptr,
+              "BehaviorReactToUnexpectedMovement.InitBehavior.AskForHelpBehaviorNotFound",
+              "Behavior %s not found",
+              BehaviorIDToString(kAskForHelpBehaviorID));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -197,58 +222,73 @@ void BehaviorReactToUnexpectedMovement::OnBehaviorActivated()
 
   if(GetBEI().HasMoodManager()){
     auto& moodManager = GetBEI().GetMoodManager();
-    // Make Cozmo more frustrated if he keeps running into things/being turned
+    // Make robot more frustrated if he keeps running into things/being turned
     moodManager.TriggerEmotionEvent("ReactToUnexpectedMovement",
                                     MoodManager::GetCurrentTimeInSeconds());
   }
 
   UpdateActivationHistory();
 
-  // If we have been activated too many times within a short window of time, then just delegate control to an action that
-  // attempts to raise the lift and backs up, instead of continuing with the ReactToUnexpectedMovement behavior, since we
-  // may be stuck in a loop, in the event that somehow the lift has been caught on something low to the ground plane.
-  if (HasBeenReactivatedFrequently()) {
-    LOG_WARNING("BehaviorReactToUnexpectedMovement.OnBehaviorActivated.RepeatedlyActivated",
-                "Activated %zu times in the past %.1f seconds.",
-                _dVars.persistent.activatedTimes_sec.size(), _iConfig.repeatedActivationCheckWindow_sec);
+  // Check for repeated activations if we've enabled that in the config
+  if (_iConfig.enableRepeatedActivationChecks && HasBeenReactivatedFrequently()) {
     UpdateRepeatedActivationDetectionHistory();
-    // Reset the records of activation times to prevent getting stuck in a loop with this emergency maneuver.
-    ResetActivationHistory();
     if (ShouldAskForHelp()) {
-      LOG_WARNING("BehaviorReactToUnexpectedMovement.OnBehaviorActivated.DelegateToAskForHelp",
-                  "Emergency maneuver executed %zu times in the past %.1f seconds, delegating to AskForHelp.",
-                  _dVars.persistent.repeatedActivationDetectionTimes_sec.size(),
-                  _iConfig.repeatedActivationDetectionsCheckWindow_sec);
-      // We've commanded the emergency maneuever too frequently, we should just delegate to a behavior that indicates that
-      // the robot is stuck on something.
-      if (_iConfig.askForHelpBehavior->WantsToBeActivated()) {
-        DelegateIfInControl(_iConfig.askForHelpBehavior.get());
-      }
+      TransitionToAskForHelp();
     } else {
-      // Command the emergency maneuver of raising the lift as high as possible and then retreating slowly.
-      CompoundActionSequential* seq_action = new CompoundActionSequential({
-        new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::CARRY),
-        new DriveStraightAction(-_iConfig.retreatDistance_mm, _iConfig.retreatSpeed_mmps)});
-      DelegateIfInControl(seq_action);
+      TransitionToEmergencyRetreatAction();
     }
     return;
   }
 
-  // Otherwise, Lock the wheels if the unexpected movement is behind us so we don't drive backward and delete the created obstacle
+  // Otherwise, Lock the wheels if the unexpected movement is behind us so we don't drive backward
+  // and delete the created obstacle, or if we've been asked to always lock the wheels in the config.
   // TODO: Consider using a different animation that drives forward instead of backward? (COZMO-13035)
   const auto& unexpectedMovementSide = GetBEI().GetMovementComponent().GetUnexpectedMovementSide();
-  const u8 tracksToLock = Util::EnumToUnderlying(unexpectedMovementSide == UnexpectedMovementSide::BACK ?
+  const bool lockTreads = _iConfig.lockTreadsDuringAnim ||
+                          (unexpectedMovementSide == UnexpectedMovementSide::BACK);
+  const u8 tracksToLock = Util::EnumToUnderlying(lockTreads ?
                                                  AnimTrackFlag::BODY_TRACK :
                                                  AnimTrackFlag::NO_TRACKS);
-  
   const u32  kNumLoops = 1;
   const bool kInterruptRunning = true;
-  
-  AnimationTrigger reactionAnimation = AnimationTrigger::ReactToUnexpectedMovement;
-  DelegateIfInControl(new TriggerLiftSafeAnimationAction(reactionAnimation,
+  DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::ReactToUnexpectedMovement,
                                                          kNumLoops, kInterruptRunning, tracksToLock));  
 }
-
   
+void BehaviorReactToUnexpectedMovement::TransitionToAskForHelp()
+{
+  // Reset records of activation times to prevent getting stuck in loop with the emergency maneuver.
+  ResetActivationHistory();
+  LOG_INFO("BehaviorReactToUnexpectedMovement.TransitionToAskForHelp",
+           "Emergency maneuver executed %zu times in the past %.1f seconds, delegating to %s",
+           _dVars.persistent.repeatedActivationDetectionTimes_sec.size(),
+           _iConfig.repeatedActivationDetectionsCheckWindow_sec,
+           _iConfig.askForHelpBehavior->GetDebugLabel().c_str());
+  // We've commanded the emergency maneuever too frequently, we should just delegate to a behavior
+  // that indicates that the robot is stuck on something.
+  if (_iConfig.askForHelpBehavior->WantsToBeActivated()) {
+    DelegateIfInControl(_iConfig.askForHelpBehavior.get());
+  }
+}
+
+void BehaviorReactToUnexpectedMovement::TransitionToEmergencyRetreatAction()
+{
+  // If we have been activated too many times within a short window of time, then just delegate
+  // control to an action that attempts to raise the lift and backs up, instead of continuing with
+  // the ReactToUnexpectedMovement behavior, since we may be stuck in a loop, in the event that
+  // somehow the lift has been caught on something low to the ground plane.
+  LOG_INFO("BehaviorReactToUnexpectedMovement.TransitionToRetreatAction",
+           "Activated %zu times in the past %.1f seconds, executing emergency retreat maneuver",
+           _dVars.persistent.activatedTimes_sec.size(),
+           _iConfig.repeatedActivationCheckWindow_sec);
+  // Reset records of activation times to prevent getting stuck in loop with this emergency maneuver.
+  ResetActivationHistory();
+  // Command the emergency maneuver of raising lift as high as possible and then retreating slowly.
+  CompoundActionSequential* seq_action = new CompoundActionSequential({
+    new MoveLiftToHeightAction(MoveLiftToHeightAction::Preset::CARRY),
+    new DriveStraightAction(-_iConfig.retreatDistance_mm, _iConfig.retreatSpeed_mmps)});
+  DelegateIfInControl(seq_action);
+}
+
 }
 }

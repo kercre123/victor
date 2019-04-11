@@ -12,7 +12,7 @@
 
 
 #include "coretech/vision/engine/cameraParamsController.h"
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/vision/engine/image.h"
 
 #include "util/console/consoleInterface.h"
@@ -536,11 +536,18 @@ Result CameraParamsController::ComputeAdjustmentFraction(const bool useCycling, 
   if(useCycling)
   {
     DEV_ASSERT(!_cyclingTargetValues.empty(), "CameraParamsController.ComputeAdjustmentFraction.EmptyCyclingTargetValues");
-    currentTargetValue = *_cycleTargetIter;
-    ++_cycleTargetIter;
     if(_cycleTargetIter == _cyclingTargetValues.end()) {
+      // IMPORTANT: we reset to the head of the list here
+      //  rather than after the increment step because we
+      //  use the `iterator == end()` test when querying if
+      //  the exposure cycle is wrapping around now
+      // This is needed to recover when one full pass on all
+      //  exposure values is completed without extra tracking
+      //  state variables.
       _cycleTargetIter = _cyclingTargetValues.begin();
     }
+    currentTargetValue = *_cycleTargetIter;
+    ++_cycleTargetIter;
   }
   else
   {

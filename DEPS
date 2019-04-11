@@ -1,7 +1,6 @@
 {
     "artifactory": {
-        "builds": {
-        },
+        "builds": {},
         "root_url": "http://10.10.7.40:8081/artifactory"
     },
     "deptool": {
@@ -94,7 +93,7 @@
         "repo_names": {
             "anki-thirdparty": {
                 "branch": "branches/victor",
-                "version": "203"
+                "version": "208"
             },
             "victor-animation-assets": {
                 "additional_files": [
@@ -111,11 +110,11 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "4940"
+                "version": "4984"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "170"
+                "version": "176"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

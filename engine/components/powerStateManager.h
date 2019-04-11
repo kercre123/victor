@@ -21,6 +21,8 @@
 
 #include "util/signals/simpleSignal_fwd.h"
 
+#include "clad/types/lcdTypes.h"
+
 #include <set>
 
 namespace Anki {
@@ -60,8 +62,6 @@ public:
 
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
 
-  void NotifyOfRobotState(const RobotState& robotState);
-
   // Request the robot enter power save mode. If any requests are active, this component will attempt to enter
   // power save. The requester string should be unique and is useful for debugging
   void RequestPowerSaveMode(const std::string& requester);
@@ -74,7 +74,7 @@ public:
 
   bool InPowerSaveMode() const { return _inPowerSaveMode; }
 
-  bool InSysconCalmMode() const { return _inSysconCalmMode; }
+  void RequestLCDBrightnessChange(const LCDBrightness& level) const;
 
   // NOTE: In an ideal system, we'd work the opposite way, where specific behaviors or pieces of code could
   // request a higher power mode, and the _default_ would be power save. This would potentially allow better
@@ -94,7 +94,6 @@ private:
 
   std::multiset<std::string> _powerSaveRequests;
   bool _inPowerSaveMode = false;
-  bool _inSysconCalmMode = false;
 
   float _timePowerSaveToggled_s = -1.0f;
 

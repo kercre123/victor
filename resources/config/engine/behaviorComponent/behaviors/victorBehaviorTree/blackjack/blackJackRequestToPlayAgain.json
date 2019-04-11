@@ -1,13 +1,13 @@
 {
   "behaviorID" : "BlackJackRequestToPlayAgain",
   "behaviorClass" : "PromptUserForVoiceCommand",
- 
+
   "associatedActiveFeature": "Blackjack",
 
   "streamType"                     : "Blackjack",
   "earConAudioEventSuccess"        : "Play__Robot_Vic_Sfx__Wake_Word_Success",
   "earConAudioEventNeutral"        : "Play__Robot_Vic_Sfx__Wake_Word_Off",
-  "vocalPromptString"              : "Play Another Round?",
+  "vocalPromptKey"                 : "BlackJack.PlayAgainQuestion",
   "maxNumberOfReprompts"           : 1,
   "stopListeningOnIntents"         : true,
   "playListeningGetIn"             : true,

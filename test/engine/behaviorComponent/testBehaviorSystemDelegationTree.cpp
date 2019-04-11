@@ -330,7 +330,6 @@ TEST(DelegationTree, CreateBehaviorTreeHTML)
   EXPECT_EQ(res, true) << "Error writing file " << outFilename;
 }
 
-
 TEST(DelegationTree, CheckActiveFeatures)
 {
   // this test checks that active features are correctly defined, and also dumps the active feature per
@@ -381,10 +380,15 @@ TEST(DelegationTree, CheckActiveFeatures)
 
   // don't require explicitly using NoFeature
   usedFeatures.insert(ActiveFeature::NoFeature);
-  
+
+  // simple voice responses can specify active features outside of the normal behavior tree, so add those here
+  tbf.IterateSimpleVoiceResponse( [&usedFeatures]( const MetaUserIntent_SimpleVoiceResponse& response ) {
+      usedFeatures.insert(response.active_feature);
+    });
+
   auto& bei = tbf.GetBehaviorExternalInterface();
   auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
-  
+
   // tree walk callback
   auto evaluateTree = [&ss, &tbf, &usedFeatures, &uic](bool isLeaf){
     auto currentStack = tbf.GetCurrentBehaviorStack();

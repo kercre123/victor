@@ -14,7 +14,7 @@
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 
-#include "coretech/common/shared/math/rect_impl.h"
+#include "coretech/common/shared/math/rect.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "anki/cozmo/shared/cozmoConfig.h"

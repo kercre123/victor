@@ -89,6 +89,9 @@ service ExternalInterface {
   // Moves Vector's lift.
   rpc MoveLift(MoveLiftRequest) returns (MoveLiftResponse) {}
   
+  // Stop all motor commands requested: MoveHead, MoveLift and DriveWheels.
+  rpc StopAllMotors(StopAllMotorsRequest) returns (StopAllMotorsResponse) {}
+
   // Sets screen (Vector's face) to a solid color.
   rpc DisplayFaceImageRGB(DisplayFaceImageRGBRequest) returns (DisplayFaceImageRGBResponse) {
     option (google.api.http) = {
@@ -114,14 +117,6 @@ service ExternalInterface {
 
   // Integrate with and acquire control of Vector's AI system.
   rpc BehaviorControl(stream BehaviorControlRequest) returns (stream BehaviorControlResponse) {
-  }
-
-  // Acquire control of Vector's AI system.
-  rpc AssumeBehaviorControl(BehaviorControlRequest) returns (stream BehaviorControlResponse) {
-    option (google.api.http) = {
-      post: "/v1/assume_behavior_control",
-      body: "*"
-    };
   }
 
   rpc CancelFaceEnrollment(CancelFaceEnrollmentRequest) returns (CancelFaceEnrollmentResponse) {
@@ -166,6 +161,14 @@ service ExternalInterface {
   rpc SetFaceToEnroll(SetFaceToEnrollRequest) returns (SetFaceToEnrollResponse) {
     option (google.api.http) = {
       post: "/v1/set_face_to_enroll",
+      body: "*"
+    };
+  }
+
+  // Enroll a face. Must be used with SetFaceToEnroll
+  rpc EnrollFace(EnrollFaceRequest) returns (EnrollFaceResponse) {
+    option (google.api.http) = {
+      post: "/v1/enroll_face",
       body: "*"
     };
   }
@@ -220,6 +223,14 @@ service ExternalInterface {
     };
   }
 
+  // Cancel running SDK Behavior
+  rpc CancelBehavior(CancelBehaviorRequest) returns (CancelBehaviorResponse) {
+    option (google.api.http) = {
+      post: "/v1/cancel_behavior",
+      body: "*"
+    };
+  }
+  
   // Tells Vector to drive to the specified pose and orientation.
   rpc GoToPose(GoToPoseRequest) returns (GoToPoseResponse) {
     option (google.api.http) = {
@@ -248,6 +259,30 @@ service ExternalInterface {
   rpc DriveOnCharger(DriveOnChargerRequest) returns (DriveOnChargerResponse) {
     option (google.api.http) = {
       post: "/v1/drive_on_charger",
+      body: "*"
+    };
+  }
+
+  // Make Vector look for faces by turning and angling his head
+  rpc FindFaces(FindFacesRequest) returns (FindFacesResponse) {
+    option (google.api.http) = {
+      post: "/v1/find_faces",
+      body: "*"
+    };
+  }
+
+  // Make Vector look around in place by turning and moving his head
+  rpc LookAroundInPlace(LookAroundInPlaceRequest) returns (LookAroundInPlaceResponse) {
+    option (google.api.http) = {
+      post: "/v1/look_around_in_place",
+      body: "*"
+    };
+  }
+  
+  // Make Vector roll his block, regardless of relative position and orientation
+  rpc RollBlock(RollBlockRequest) returns (RollBlockResponse) {
+    option (google.api.http) = {
+      post: "/v1/roll_block",
       body: "*"
     };
   }
@@ -313,6 +348,9 @@ service ExternalInterface {
 
   // Ask Vector to place the object he is carrying on the ground at the current location.
   rpc PlaceObjectOnGroundHere(PlaceObjectOnGroundHereRequest) returns (PlaceObjectOnGroundHereResponse) {}
+
+  // Set the Robot's master volume
+  rpc SetMasterVolume(MasterVolumeRequest) returns (MasterVolumeResponse) {}
 
   rpc UserAuthentication(UserAuthenticationRequest) returns (UserAuthenticationResponse) {
     option (google.api.http) = {
@@ -526,11 +564,11 @@ service ExternalInterface {
     };
   }    
 
-  // CheckUpdateStatus tells the robot's current state regarding download, installation, and
-  // readiness to boot to, engine updates.
-  rpc CheckUpdateStatusStream(CheckUpdateStatusRequest) returns (stream CheckUpdateStatusResponse) {
+  // StartUpdateEngine cycles the update-engine service (to start a new check for an update) and sets up a stream of 
+  // UpdateStatusResponse Events.
+  rpc StartUpdateEngine(CheckUpdateStatusRequest) returns (CheckUpdateStatusResponse) {
     option (google.api.http) = {
-      post: "/v1/check_update_status_stream",
+      post: "/v1/start_update_engine",
       body: "*"
     };
   }
@@ -591,4 +629,12 @@ service ExternalInterface {
       body: "*"
     };
   }  
+
+  // Acquire control of Vector's AI system.
+  rpc AssumeBehaviorControl(BehaviorControlRequest) returns (stream BehaviorControlResponse) {
+    option (google.api.http) = {
+      post: "/v1/assume_behavior_control",
+      body: "*"
+    };
+  }
 }
