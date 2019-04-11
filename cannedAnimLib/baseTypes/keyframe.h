@@ -361,16 +361,15 @@ namespace Vector {
     // Depending on the contents of the keyframe there may or may not be updates to images
     // Checking this function ensures there aren't unnecessary re-draws
     bool NewImageContentAvailable(const TimeStamp_t timeSinceAnimStart_ms) const;
-    // These functions retrieve the image handle. 
-    // Returns true if the Image field was populated, false otherwise.
-    // Empty frames are expected for animations that have a duration longer than ANIM_TIME_STEP_MS, and hence
-    // this function may return false even though there are frames remaining. To check if the keyframe is done,
-    // check the final keyframe timestamp rather than the return value of this function.
-    bool GetFaceImageHandle(const TimeStamp_t timeSinceAnimStart_ms,
-                            Vision::SpriteHandle& handle,
-                            uint16_t& numLayers);
 
-    Vision::CompositeImage& GetCompositeImage() { assert(_compositeImage != nullptr); return *_compositeImage; }
+    bool ApplyCompositeImageUpdates(const TimeStamp_t timeSinceAnimStart_ms);
+
+    // Get the CompositeImage for rendering. This will result in noting that recent image updates have been
+    // consumed. This should all be temporary since this whole Class will likely go away soon.
+    Vision::CompositeImage& GetCompositeImage() { 
+      assert(_compositeImage != nullptr);
+      _compositeImageUpdated = false;
+      return *_compositeImage; }
     
     void OverrideShouldRenderInEyeHue(bool shouldRenderInEyeHue);
 
@@ -383,16 +382,16 @@ namespace Vector {
     // If frame duration is zero keyframe lasts forever
     bool SequenceShouldAdvance() const { return _keyframeActiveDuration_ms != 0;}
     
-  protected:
-    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
-    virtual TimeStamp_t GetKeyframeDuration_ms() const override;
-
-  private:
     u32 GetFrameNumberForTime(const TimeStamp_t timeSinceAnimStart_ms) const {
       return (timeSinceAnimStart_ms > _triggerTime_ms) ?
              (timeSinceAnimStart_ms - _triggerTime_ms)/_internalUpdateInterval_ms :
              0;
     }
+  protected:
+    virtual Result SetMembersFromJson(const Json::Value &jsonRoot, const std::string& animNameDebug = "") override;
+    virtual TimeStamp_t GetKeyframeDuration_ms() const override;
+
+  private:
     bool HaveKeyframeForTimeStamp(const TimeStamp_t timeSinceAnimStart_ms) const;
 
     // Apply the update to the composite image

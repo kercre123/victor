@@ -19,8 +19,6 @@ enum uint_32 Dev_Robot
   Freq_Sweep_20Sec = 4128432838,
   Freq_Sweep_5Sec = 253187573,
   Fx_Test_Sequence = 1735763806,
-  Fx_Test_Sequence_Loop_Play = 1392017168,
-  Fx_Test_Sequence_Loop_Stop = 475745752,
   Invalid = 0,  // Use this to check for Invalid events
   Mozart = 627442460,
   Pink_1Sec = 3980968688,
@@ -44,11 +42,26 @@ enum uint_32 Dev_Robot_Factory
   Tone_1K_5Sec = 3379703224,
 }
 
+enum uint_32 Dev_Squawk
+{
+  Blackjack_Lose = 3912070771,
+  Camera_Flash = 4063827073,
+  Emote_Happy = 540775366,
+  Fist_Bump = 969212508,
+  Head_Long_Curious = 3780596321,
+  Head_Short_Curious = 2320289125,
+  Invalid = 0,  // Use this to check for Invalid events
+  No_Wifi = 2268001086,
+  Tread_Happy = 621662666,
+  Wake_Word_On = 4211032222,
+}
+
 enum uint_32 EventGroupType
 {
   Dev_Device,
   Dev_Robot,
   Dev_Robot_Factory,
+  Dev_Squawk,
   GenericEvent,
   Robot_Sfx,
   Robot_Vic,
@@ -71,7 +84,6 @@ enum uint_32 GenericEvent
   Play__Dev_Robot__Freq_Sweep_20Sec = 4128432838,
   Play__Dev_Robot__Freq_Sweep_5Sec = 253187573,
   Play__Dev_Robot__Fx_Test_Sequence = 1735763806,
-  Play__Dev_Robot__Fx_Test_Sequence_Loop_Play = 1392017168,
   Play__Dev_Robot__Mozart = 627442460,
   Play__Dev_Robot__Pink_1Sec = 3980968688,
   Play__Dev_Robot__Pink_5Sec = 988519260,
@@ -84,6 +96,15 @@ enum uint_32 GenericEvent
   Play__Dev_Robot__Tone_30_Frames_01 = 2834616264,
   Play__Dev_Robot__Tone_440Hz_5Sec = 1471825745,
   Play__Dev_Robot__White_5Sec = 4289674931,
+  Play__Dev_Squawk__Blackjack_Lose = 3912070771,
+  Play__Dev_Squawk__Camera_Flash = 4063827073,
+  Play__Dev_Squawk__Emote_Happy = 540775366,
+  Play__Dev_Squawk__Fist_Bump = 969212508,
+  Play__Dev_Squawk__Head_Long_Curious = 3780596321,
+  Play__Dev_Squawk__Head_Short_Curious = 2320289125,
+  Play__Dev_Squawk__No_Wifi = 2268001086,
+  Play__Dev_Squawk__Tread_Happy = 621662666,
+  Play__Dev_Squawk__Wake_Word_On = 4211032222,
   Play__Robot_Sfx__Fist_Bump = 1216170354,
   Play__Robot_Vic_Alexa__Avs_System_Prompt_Error_Cannot_Play_Song = 1721825381,
   Play__Robot_Vic_Alexa__Avs_System_Prompt_Error_Offline_Lost_Connection = 2347545436,
@@ -482,7 +503,6 @@ enum uint_32 GenericEvent
   Play__Robot_Vic__External_Sdk_Playback_02 = 2749641935,
   Play__Robot_Vic__External_Voice_Message = 3168753800,
   Play__Robot_Vic__External_Voice_Text = 2774572774,
-  Stop__Dev_Robot__Fx_Test_Sequence_Loop_Stop = 475745752,
   Stop__Robot_Vic_Sfx__Attention_Device_Loop_Stop = 2479504035,
   Stop__Robot_Vic_Sfx__Camera_Charge_Stop = 3169780311,
   Stop__Robot_Vic_Sfx__Concentrate_Loop_Stop = 1731537112,

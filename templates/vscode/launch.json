@@ -8,8 +8,8 @@
             "program": "vic-robot",
             "initCommands": [
                 "platform select remote-linux",
-                "platform connect connect://victor:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Release/bin ${workspaceRoot}/_build/vicos/Release/lib"
+                "platform connect connect://${dbgconfig:host}:55001",
+                "settings set target.exec-search-paths ${dbgconfig:lib} ${dbgconfig:bin}"
             ]
         },
         {
@@ -19,8 +19,8 @@
             "program": "vic-anim",
             "initCommands": [
                 "platform select remote-linux",
-                "platform connect connect://victor:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Release/bin ${workspaceRoot}/_build/vicos/Release/lib"
+                "platform connect connect://${dbgconfig:host}:55001",
+                "settings set target.exec-search-paths ${dbgconfig:lib} ${dbgconfig:bin}"
             ]
         },
         {
@@ -30,8 +30,8 @@
             "program": "vic-engine",
             "initCommands": [
                 "platform select remote-linux",
-                "platform connect connect://victor:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Release/bin ${workspaceRoot}/_build/vicos/Release/lib",
+                "platform connect connect://${dbgconfig:host}:55001",
+                "settings set target.exec-search-paths ${dbgconfig:lib} ${dbgconfig:bin}",
             ]
         },
         {
@@ -43,8 +43,8 @@
             "program": "/anki/bin/vic-robot",
             "initCommands": [
                 "platform select remote-linux",
-                "platform connect connect://victor:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Release/bin ${workspaceRoot}/_build/vicos/Release/lib"
+                "platform connect connect://${dbgconfig:host}:55001",
+                "settings set target.exec-search-paths ${dbgconfig:lib} ${dbgconfig:bin}"
             ]
         },
         {
@@ -59,8 +59,8 @@
             },
             "initCommands": [
                 "platform select remote-linux",
-                "platform connect connect://victor:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Release/bin ${workspaceRoot}/_build/vicos/Release/lib"
+                "platform connect connect://${dbgconfig:host}:55001",
+                "settings set target.exec-search-paths ${dbgconfig:lib} ${dbgconfig:bin}"
             ]
         },
         {
@@ -75,8 +75,8 @@
             },
             "initCommands": [
                 "platform select remote-linux",
-                "platform connect connect://victor:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Release/bin ${workspaceRoot}/_build/vicos/Release/lib",
+                "platform connect connect://${dbgconfig:host}:55001",
+                "settings set target.exec-search-paths ${dbgconfig:lib} ${dbgconfig:bin}",
             ]
         },
         {
@@ -142,7 +142,7 @@
             "configurations": [
                 "webots:attach:webotsCtrlRobot2",
                 "webots:attach:webotsCtrlAnim",
-                "webots:attach:webotsCtrlEngine2"
+                "webots:attach:webotsCtrlGameEngine2"
             ]
         }
     ]

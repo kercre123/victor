@@ -824,6 +824,33 @@ namespace Anim {
     _expectingCompositeImage = true;
   }
 
+  void AnimationStreamer::Process_playAnimWithSpriteBoxRemaps(const RobotInterface::PlayAnimWithSpriteBoxRemaps& msg)
+  {
+    const u32 numLoops = 1;
+    const u32 startAtTime_ms = 0;
+    const bool interruptRunning = true;
+    const bool shouldOverrideEyeHue = true;
+    const bool shouldRenderInEyeHue = false;
+    const bool isInternalAnim = false;
+
+    // Hack: if _streamingAnimation == _proceduralAnimation, the subsequent CopyIntoProceduralAnimation call
+    // will delete *_streamingAnimation without assigning it to nullptr. This assignment prevents associated
+    // undefined behavior
+    _streamingAnimation = _neutralFaceAnimation;
+    const std::string animName(msg.animName, msg.animName_length);
+    CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(animName));
+    const Vision::SpritePathMap& spritePathMap = *_context->GetDataLoader()->GetSpritePaths();
+    for (int i = 0; i < msg.numRemaps; ++i)
+    {
+      _proceduralAnimation->AddSpriteBoxRemap(msg.spriteBoxRemaps[i].spriteBoxName,
+                                              spritePathMap.GetAssetName(msg.spriteBoxRemaps[i].remappedAssetID));
+    }
+    SetStreamingAnimation(_proceduralAnimation, msg.tag, numLoops, startAtTime_ms, interruptRunning,
+                          shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
+  }
+
+  // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
+  // refactor this method around the SpriteBoxCompositor
   Result AnimationStreamer::SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms)
   {
     if (_redirectFaceImagesToDebugScreen) {
@@ -952,6 +979,10 @@ namespace Anim {
                                                             spriteBox,
                                                             assetID);
 
+      // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
+      // This is a mess. A single KeyFrame is now responsible for updating the
+      // face image any time it is updated. This dilutes the "moment in time" notion
+      // of a KeyFrame pretty deeply
       keyframe.QueueCompositeImageUpdate(std::move(spec), applyAt_ms);
     }
     else
@@ -1557,6 +1588,9 @@ namespace Anim {
   } // SendEndOfAnimation()
 
 
+  // TODO(str): VIC-13519 Linearize Face Rendering 
+  // This side-loop of rendering logic is a workaround used only if there is no running animation. It
+  // should be possible to remove this given a more linear, single-image rendering pipeline. 
   Result AnimationStreamer::ExtractMessagesFromProceduralTracks(AnimationMessageWrapper& stateToSend) const
   {
     Result lastResult = RESULT_OK;
@@ -1600,6 +1634,10 @@ namespace Anim {
       return RESULT_OK;
     }
 
+    // TODO(str): VIC-13521 SpritepathMap::OverrideAssetPath
+    // This can likely be removed if we simplify runtime engine based animation overrides to simply
+    // redirecting asset paths, that way the required messages would be radically simpler.
+    // Removing this logic will require some refactoring for weather, timer, clock, and blackjack
     // TEMP (Kevin K.): We're waiting on messages that have been delayed - don't start
     // the animation yet
     if (_expectingCompositeImage)
@@ -1650,12 +1688,17 @@ namespace Anim {
       }
     }
 
+    // TODO(str): VIC-13519 Linearize Face Rendering 
+    // The remainder of this logic is not "ExtractingMessagesFromStreamingAnimation"... this is confusing.
+    // This logic could/should be moved up to Update so that building the desired animation is a visibly linear
+    // process instead of burying procedural content under canned animation oriented function calls.
     // Apply any track layers to the animation
     static const bool kStoreFace = true;
     ExtractMessagesRelatedToProceduralTrackComponent(_context, _streamingAnimation, _proceduralTrackComponent.get(),
                                                      _lockedTracks, _relativeStreamTime_ms, kStoreFace, stateToSend);
 
-
+    // Functionally, this checks whether we rendered the SpriteTrack during EMRTPTC above.
+    // If we did, we note it by preventing procedural face draws for a while. Move it somewhere appropriate.
     auto & spriteSeqTrack = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>();
     if (ShouldRenderSpriteTrack(spriteSeqTrack, _lockedTracks, _relativeStreamTime_ms, false))
     {
@@ -1696,9 +1739,16 @@ namespace Anim {
       stateToSend.audioKeyFrameMessage = new RobotAudioKeyFrame(layeredKeyFrames.audioKeyFrame);
     }
 
+    // TODO(str): VIC-13519 Linearize Face Rendering 
+    // Again... it makes precious little sense to be handling all this face rendering logic at the bottom
+    // of a huge, apparently unrelated call stack. Takes forever to discover this stuff
+    // ----- Face Rendering Code -----
+
     bool needToRenderStreamable = !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::FACE_TRACK);
     if (anim != nullptr)
     {
+      // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
+      // once the spriteSeqTrack is gone this will collapse to only the first check
       const auto & spriteSeqTrack = anim->GetTrack<SpriteSequenceKeyFrame>();
       needToRenderStreamable &= layeredKeyFrames.haveFaceKeyFrame &&
                                 ShouldRenderProceduralFace(spriteSeqTrack,
@@ -1714,41 +1764,76 @@ namespace Anim {
 
     if (anim != nullptr)
     {
+      Vision::CompositeImage compImg(context->GetDataLoader()->GetSpriteCache(),
+                                     ProceduralFace::GetHueSatWrapper(),
+                                     FACE_DISPLAY_WIDTH,
+                                     FACE_DISPLAY_HEIGHT);
+
+      // Get the data from the SpriteBoxCompositor
+      bool renderFromCompImage = anim->PopulateCompositeImage(*context->GetDataLoader()->GetSpriteCache(),
+                                                              *context->GetDataLoader()->GetSpriteSequenceContainer(),
+                                                              timeSinceAnimStart_ms, compImg);
+
+      // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
+      // CompImageUpdates should just go into the SpriteBoxCompositor as SpriteBoxKeyframes. Then
+      // this whole block will go away
+      u32 curFrameIdx = 0;
       const auto & spriteSeqTrack = anim->GetTrack<SpriteSequenceKeyFrame>();
       if (ShouldRenderSpriteTrack(spriteSeqTrack, tracksCurrentlyLocked, timeSinceAnimStart_ms, needToRenderStreamable))
       {
         auto & faceKeyFrame = spriteSeqTrack.GetCurrentKeyFrame();
+        faceKeyFrame.ApplyCompositeImageUpdates(timeSinceAnimStart_ms);
+        compImg.MergeInImage(faceKeyFrame.GetCompositeImage());
+        curFrameIdx = faceKeyFrame.GetFrameNumberForTime(timeSinceAnimStart_ms);
+        renderFromCompImage = true;
+      }
 
-        // Insert the procedural/streamable face into the composite anim if necessary
+      if (renderFromCompImage)
+      {
         if (needToRenderStreamable)
         {
-          auto& compImg = faceKeyFrame.GetCompositeImage();
+          // TODO(str): VIC-13519 Linearize Face Rendering 
+          // We should just always be overlaying the procedural face onto the comp image above after rendering
+          // the layers below the face layer, then finish rendering the rest of the layers in the image.
+          // Right now we waste a lot of optimization drawing the face image then copying it into the 
+          // CompImage, then pixel-by-pixel blitting it as a full-screen overlay from within the CompImage.
           InsertStreamableFaceIntoCompImg(stateToSend.faceImg, compImg);
         }
 
-        // Render and display the face
-        Vision::SpriteHandle handle;
-        const bool gotImage = faceKeyFrame.GetFaceImageHandle(timeSinceAnimStart_ms, handle, _numLayersRendered);
-        if (gotImage)
-        {
-          Vision::HSImageHandle hsHandle = std::make_shared<Vision::HueSatWrapper>(0,0);
-          if (handle->IsContentCached(hsHandle).rgba)
-          {
-            const auto& imgRGB = handle->GetCachedSpriteContentsRGBA(hsHandle);
-            // Display the ImageRGB565 directly to the face, without modification
-            stateToSend.faceImg.SetFromImageRGB(imgRGB);
-          }
-          else
-          {
-            auto imgRGB = handle->GetSpriteContentsRGBA(hsHandle);
-            // Display the ImageRGB565 directly to the face, without modification
-            stateToSend.faceImg.SetFromImageRGB(imgRGB);
-          }
+        const auto& layerLayoutMap = compImg.GetLayerLayoutMap();
+        const uint16_t numLayers = layerLayoutMap.size();
 
-          stateToSend.haveFaceToSend = true;
+        const auto height = compImg.GetHeight();
+        const auto width  = compImg.GetWidth();
+        Vision::ImageRGBA img(height, width);
+
+        // if the first layer rendered is going to be full-screen and draw all pixels, then there's
+        // no need to clear the buffer (with FillWith) since all of those blank pixels will be
+        // immediately overwritten. This saves about 1/5 ms when those conditions are true.
+        bool needToClearBuffer = (numLayers == 0);
+        if (!needToClearBuffer)
+        {
+          const auto& firstCompositeImageLayer = layerLayoutMap.begin()->second;
+          const auto& firstSpriteBox = firstCompositeImageLayer.GetLayoutMap().begin()->second;
+          if (firstSpriteBox.GetWidth() != width || firstSpriteBox.GetHeight() != height)
+          {
+            needToClearBuffer = true;
+          }
         }
+        if (needToClearBuffer)
+        {
+          ANKI_CPU_PROFILE("img->FillWith"); // This takes roughly 0.205 ms on robot.
+          img.FillWith(Vision::PixelRGBA());
+        }
+
+        compImg.OverlayImageWithFrame(img, curFrameIdx);
+        stateToSend.faceImg.SetFromImageRGB(img);
+
+        stateToSend.haveFaceToSend = true;
       }
     }
+
+    // ----- Face Rendering Code -----
 
     return RESULT_OK;
   }
@@ -1890,7 +1975,7 @@ namespace Anim {
     {
       std::lock_guard<std::mutex> lock(_pendingAnimationMutex);
       if (!_pendingAnimation.empty()) {
-        SetStreamingAnimation(_pendingAnimation, /*tag*/ 1, _pendingNumLoops, /*interruptRunning*/ true);
+        SetStreamingAnimation(_pendingAnimation, /*tag*/ 1, _pendingNumLoops, 0, /*interruptRunning*/ true);
 
         _pendingAnimation.clear();
         _pendingNumLoops = 0;
@@ -1937,9 +2022,11 @@ namespace Anim {
     }
     else if (_streamingAnimation != nullptr)
     {
-      // TODO: Move this render process into the interpolator - should not be part of
-      // Animation streaming, but too large a change to make right now
-
+      // TODO(str): VIC-13519 Linearize Face Rendering 
+      // IMHO Interpolation doesn't belong here. We already have a concept of tracks for 
+      // specialized KeyFrame handling, the tracks should be responsible for returning 
+      // appropriate content given a relativeStreamTime and interpolate internally.
+      // AnimationStreamer should not be concerned.
       static const bool kStoreFace = true;
       ExtractMessagesRelatedToProceduralTrackComponent(_context,
                                                        _streamingAnimation,
@@ -1949,6 +2036,7 @@ namespace Anim {
                                                        kStoreFace,
                                                        messageWrapper);
 
+      // AnimationInterpolator is unimplemented and does nothing at all in this call.
       AnimationInterpolator::GetInterpolationMessages(_streamingAnimation,
                                                       kCurrentManualFrameNumber,
                                                       messageWrapper);
@@ -2133,6 +2221,11 @@ namespace Anim {
     }
   }
 
+  // TODO(str): VIC-13521 SpritepathMap::OverrideAssetPath
+  // This function is currently only used since we "modify" animations at run time 
+  // to display CompositeImages. This can likely be removed if we run animations 
+  // directly and only override the source asset paths used at display time to 
+  // do the same work.
   void AnimationStreamer::CopyIntoProceduralAnimation(Animation* desiredAnim)
   {
     Util::SafeDelete(_proceduralAnimation);
@@ -2147,6 +2240,9 @@ namespace Anim {
     _proceduralAnimation->SetName(EnumToString(AnimConstants::PROCEDURAL_ANIM));
   }
 
+  // TODO(str): VIC-13519 Linearize Face Rendering 
+  // This function should be replaced by directly rendering the procedural face. Treating it like a
+  // full-screen image here after its been built is very wasteful
   void AnimationStreamer::InsertStreamableFaceIntoCompImg(Vision::ImageRGB565& streamableFace,
                                                           Vision::CompositeImage& image)
   {

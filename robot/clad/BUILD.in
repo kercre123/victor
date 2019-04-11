@@ -1,10 +1,10 @@
 cxx_project(
-    name = 'robot_clad_embedded',
+    name = 'robot_clad',
     srcs = glob(['src/clad/**/*.clad']),
     platform_srcs = [],
     headers = [
         'src/clad/robotInterface/messageEngineToRobot.clad',
-        'src/clad/robotInterface/messageRobotToEngine.clad',
+        'src/clad/robotInterface/messageRobotToEngine.clad'
     ],
     platform_headers = [],
 )

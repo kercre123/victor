@@ -37,6 +37,9 @@ SpritePathMap::SpritePathMap()
   // Make sure these ID's don't conflict with any of the hashed AssetNames
   _idToInfoMap.emplace(kEmptySpriteBoxID, nullptr);
   _idToInfoMap.emplace(kInvalidSpriteID, nullptr);
+
+  // Add an asset to handle sending `clear_sprite_box` remaps from engine
+  AddAsset("clear_sprite_box", "", false);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -638,6 +638,19 @@ bool ICozmoBehavior::GetAssociatedActiveFeature(ActiveFeature& feature) const
 }      
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartSetActiveFeatureOnActivated(const ActiveFeature& feature)
+{
+  if( ANKI_VERIFY( _associatedActiveFeature == nullptr,
+                   "ICozmoBehavior.SmartSetActiveFeatureOnActivated.FeatureAlreadySet",
+                   "Trying to set active feature for this run to %s, but it's already set to %s, aborting",
+                   ActiveFeatureToString(feature),
+                   ActiveFeatureToString(*_associatedActiveFeature) ) ) {
+    _associatedActiveFeature.reset( new ActiveFeature( feature ) );
+    _resetActiveFeature = true;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::map<std::string,ICozmoBehaviorPtr> ICozmoBehavior::TESTONLY_GetAnonBehaviors( UnitTestKey key ) const
 {
   return _anonymousBehaviorMap;
@@ -1013,6 +1026,10 @@ void ICozmoBehavior::OnDeactivatedInternal()
   if( _keepAliveDisabled ) {
     GetBEI().GetAnimationComponent().RemoveKeepFaceAliveDisableLock(GetDebugLabel());
     _keepAliveDisabled = false;
+  }
+
+  if( _resetActiveFeature ) {
+    _associatedActiveFeature.reset();
   }
 }
 

@@ -5,7 +5,7 @@
   "associatedActiveFeature": "Blackjack",
 
   "interruptActiveBehavior" : false,
-  
+
   "behaviors" : [
     "PromptToPlayBlackJack",
     "BlackJackHandleRTPResponses"
@@ -19,7 +19,7 @@
       "streamType"                       : "Blackjack",
       "earConAudioEventSuccess"          : "Play__Robot_Vic_Sfx__Wake_Word_Success",
       "earConAudioEventNeutral"          : "Play__Robot_Vic_Sfx__Wake_Word_Off",
-      "vocalPromptString"                : "Play Blackjack?",
+      "vocalPromptKey"                   : "BlackJack.PlayQuestion",
       "maxNumberOfReprompts"             : 0,
       "stopListeningOnIntents"           : true,
       "playListeningGetIn"               : false,

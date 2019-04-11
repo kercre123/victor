@@ -132,9 +132,17 @@ public:
   //
   // If @param numCliffs is 0, then this assumes that the user wants only the duration of time
   // that the cliff sensors have currently been reporting _exactly_ zero cliffs detections.
-  u32 GetDurationForNCliffDetections_ms(const int minNumCliffs) const;
+  u32 GetDurationForAtLeastNCliffDetections_ms(const int minNumCliffs) const;
+
+  // Returns the amount of time that @param numCliff or fewer cliffs have been detected for.
+  // (Returns MAX_UINT for numCliffs == 4)
+  u32 GetDurationForAtMostNCliffDetections_ms(const int numCliffs) const;
     
   int GetNumCliffsDetected() const { return _latestNumCliffsDetected; }
+
+  // Returns the max number of cliffs observed while picked up (according to RobotState.status)
+  // Returns 0 if not currently picked up.
+  int GetMaxNumCliffsDetectedWhilePickedUp() const { return _maxNumCliffsDetectedWhilePickedUp; } 
   
 private:
   
@@ -155,6 +163,13 @@ private:
   int _latestNumCliffsDetected = -1;
     
   std::array<u32, kNumCliffSensors + 1> _cliffDetectionTimes_ms;
+
+  // Stores the last time that N cliffs were detected
+  // unlike _cliffDetectionTimes_ms which contains only the times
+  // of cliffs that are _currently_ being detected.
+  std::array<u32, kNumCliffSensors + 1> _cliffLastDetectedTimes_ms;
+
+  int _maxNumCliffsDetectedWhilePickedUp = 0;
   
   uint32_t _latestMsgTimestamp = 0;
   

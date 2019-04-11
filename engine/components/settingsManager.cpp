@@ -394,7 +394,7 @@ bool SettingsManager::ValidateSettingMasterVolume()
   const auto& value = _currentSettings[key].asUInt();
   if (!external_interface::Volume_IsValid(value))
   {
-    LOG_ERROR("SettingsManager.ApplySettingMasterVolume.Invalid", "Invalid master volume value %i", value);
+    LOG_ERROR("SettingsManager.ValidateSettingMasterVolume.Invalid", "Invalid master volume value %i", value);
     return false;
   }
   return true;

@@ -27,6 +27,8 @@ struct BackpackLights;
 
 struct FaceAnimation;
 
+struct SpriteBox;
+
 struct Event;
 
 struct BodyMotion;
@@ -600,6 +602,122 @@ inline flatbuffers::Offset<FaceAnimation> CreateFaceAnimationDirect(flatbuffers:
   return CreateFaceAnimation(_fbb, triggerTime_ms, animName ? _fbb.CreateString(animName) : 0, scanlineOpacity);
 }
 
+struct SpriteBox FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
+  enum {
+    VT_TRIGGERTIME_MS = 4,
+    VT_SPRITEBOXNAME = 6,
+    VT_LAYER = 8,
+    VT_ASSETNAME = 10,
+    VT_RENDERMETHOD = 12,
+    VT_SPRITESEQENDTYPE = 14,
+    VT_ALPHA = 16,
+    VT_XPOS = 18,
+    VT_YPOS = 20,
+    VT_WIDTH = 22,
+    VT_HEIGHT = 24
+  };
+  uint32_t triggerTime_ms() const { return GetField<uint32_t>(VT_TRIGGERTIME_MS, 0); }
+  const flatbuffers::String *spriteBoxName() const { return GetPointer<const flatbuffers::String *>(VT_SPRITEBOXNAME); }
+  const flatbuffers::String *layer() const { return GetPointer<const flatbuffers::String *>(VT_LAYER); }
+  const flatbuffers::String *assetName() const { return GetPointer<const flatbuffers::String *>(VT_ASSETNAME); }
+  const flatbuffers::String *renderMethod() const { return GetPointer<const flatbuffers::String *>(VT_RENDERMETHOD); }
+  const flatbuffers::String *spriteSeqEndType() const { return GetPointer<const flatbuffers::String *>(VT_SPRITESEQENDTYPE); }
+  float alpha() const { return GetField<float>(VT_ALPHA, 100.0f); }
+  int32_t xPos() const { return GetField<int32_t>(VT_XPOS, 0); }
+  int32_t yPos() const { return GetField<int32_t>(VT_YPOS, 0); }
+  uint32_t width() const { return GetField<uint32_t>(VT_WIDTH, 0); }
+  uint32_t height() const { return GetField<uint32_t>(VT_HEIGHT, 0); }
+  bool Verify(flatbuffers::Verifier &verifier) const {
+    return VerifyTableStart(verifier) &&
+           VerifyField<uint32_t>(verifier, VT_TRIGGERTIME_MS) &&
+           VerifyFieldRequired<flatbuffers::uoffset_t>(verifier, VT_SPRITEBOXNAME) &&
+           verifier.Verify(spriteBoxName()) &&
+           VerifyFieldRequired<flatbuffers::uoffset_t>(verifier, VT_LAYER) &&
+           verifier.Verify(layer()) &&
+           VerifyFieldRequired<flatbuffers::uoffset_t>(verifier, VT_ASSETNAME) &&
+           verifier.Verify(assetName()) &&
+           VerifyFieldRequired<flatbuffers::uoffset_t>(verifier, VT_RENDERMETHOD) &&
+           verifier.Verify(renderMethod()) &&
+           VerifyFieldRequired<flatbuffers::uoffset_t>(verifier, VT_SPRITESEQENDTYPE) &&
+           verifier.Verify(spriteSeqEndType()) &&
+           VerifyField<float>(verifier, VT_ALPHA) &&
+           VerifyField<int32_t>(verifier, VT_XPOS) &&
+           VerifyField<int32_t>(verifier, VT_YPOS) &&
+           VerifyField<uint32_t>(verifier, VT_WIDTH) &&
+           VerifyField<uint32_t>(verifier, VT_HEIGHT) &&
+           verifier.EndTable();
+  }
+};
+
+struct SpriteBoxBuilder {
+  flatbuffers::FlatBufferBuilder &fbb_;
+  flatbuffers::uoffset_t start_;
+  void add_triggerTime_ms(uint32_t triggerTime_ms) { fbb_.AddElement<uint32_t>(SpriteBox::VT_TRIGGERTIME_MS, triggerTime_ms, 0); }
+  void add_spriteBoxName(flatbuffers::Offset<flatbuffers::String> spriteBoxName) { fbb_.AddOffset(SpriteBox::VT_SPRITEBOXNAME, spriteBoxName); }
+  void add_layer(flatbuffers::Offset<flatbuffers::String> layer) { fbb_.AddOffset(SpriteBox::VT_LAYER, layer); }
+  void add_assetName(flatbuffers::Offset<flatbuffers::String> assetName) { fbb_.AddOffset(SpriteBox::VT_ASSETNAME, assetName); }
+  void add_renderMethod(flatbuffers::Offset<flatbuffers::String> renderMethod) { fbb_.AddOffset(SpriteBox::VT_RENDERMETHOD, renderMethod); }
+  void add_spriteSeqEndType(flatbuffers::Offset<flatbuffers::String> spriteSeqEndType) { fbb_.AddOffset(SpriteBox::VT_SPRITESEQENDTYPE, spriteSeqEndType); }
+  void add_alpha(float alpha) { fbb_.AddElement<float>(SpriteBox::VT_ALPHA, alpha, 100.0f); }
+  void add_xPos(int32_t xPos) { fbb_.AddElement<int32_t>(SpriteBox::VT_XPOS, xPos, 0); }
+  void add_yPos(int32_t yPos) { fbb_.AddElement<int32_t>(SpriteBox::VT_YPOS, yPos, 0); }
+  void add_width(uint32_t width) { fbb_.AddElement<uint32_t>(SpriteBox::VT_WIDTH, width, 0); }
+  void add_height(uint32_t height) { fbb_.AddElement<uint32_t>(SpriteBox::VT_HEIGHT, height, 0); }
+  SpriteBoxBuilder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
+  SpriteBoxBuilder &operator=(const SpriteBoxBuilder &);
+  flatbuffers::Offset<SpriteBox> Finish() {
+    auto o = flatbuffers::Offset<SpriteBox>(fbb_.EndTable(start_, 11));
+    fbb_.Required(o, SpriteBox::VT_SPRITEBOXNAME);  // spriteBoxName
+    fbb_.Required(o, SpriteBox::VT_LAYER);  // layer
+    fbb_.Required(o, SpriteBox::VT_ASSETNAME);  // assetName
+    fbb_.Required(o, SpriteBox::VT_RENDERMETHOD);  // renderMethod
+    fbb_.Required(o, SpriteBox::VT_SPRITESEQENDTYPE);  // spriteSeqEndType
+    return o;
+  }
+};
+
+inline flatbuffers::Offset<SpriteBox> CreateSpriteBox(flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t triggerTime_ms = 0,
+    flatbuffers::Offset<flatbuffers::String> spriteBoxName = 0,
+    flatbuffers::Offset<flatbuffers::String> layer = 0,
+    flatbuffers::Offset<flatbuffers::String> assetName = 0,
+    flatbuffers::Offset<flatbuffers::String> renderMethod = 0,
+    flatbuffers::Offset<flatbuffers::String> spriteSeqEndType = 0,
+    float alpha = 100.0f,
+    int32_t xPos = 0,
+    int32_t yPos = 0,
+    uint32_t width = 0,
+    uint32_t height = 0) {
+  SpriteBoxBuilder builder_(_fbb);
+  builder_.add_height(height);
+  builder_.add_width(width);
+  builder_.add_yPos(yPos);
+  builder_.add_xPos(xPos);
+  builder_.add_alpha(alpha);
+  builder_.add_spriteSeqEndType(spriteSeqEndType);
+  builder_.add_renderMethod(renderMethod);
+  builder_.add_assetName(assetName);
+  builder_.add_layer(layer);
+  builder_.add_spriteBoxName(spriteBoxName);
+  builder_.add_triggerTime_ms(triggerTime_ms);
+  return builder_.Finish();
+}
+
+inline flatbuffers::Offset<SpriteBox> CreateSpriteBoxDirect(flatbuffers::FlatBufferBuilder &_fbb,
+    uint32_t triggerTime_ms = 0,
+    const char *spriteBoxName = nullptr,
+    const char *layer = nullptr,
+    const char *assetName = nullptr,
+    const char *renderMethod = nullptr,
+    const char *spriteSeqEndType = nullptr,
+    float alpha = 100.0f,
+    int32_t xPos = 0,
+    int32_t yPos = 0,
+    uint32_t width = 0,
+    uint32_t height = 0) {
+  return CreateSpriteBox(_fbb, triggerTime_ms, spriteBoxName ? _fbb.CreateString(spriteBoxName) : 0, layer ? _fbb.CreateString(layer) : 0, assetName ? _fbb.CreateString(assetName) : 0, renderMethod ? _fbb.CreateString(renderMethod) : 0, spriteSeqEndType ? _fbb.CreateString(spriteSeqEndType) : 0, alpha, xPos, yPos, width, height);
+}
+
 struct Event FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   enum {
     VT_TRIGGERTIME_MS = 4,
@@ -825,7 +943,8 @@ struct Keyframes FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
     VT_EVENTKEYFRAME = 16,
     VT_BODYMOTIONKEYFRAME = 18,
     VT_RECORDHEADINGKEYFRAME = 20,
-    VT_TURNTORECORDEDHEADINGKEYFRAME = 22
+    VT_TURNTORECORDEDHEADINGKEYFRAME = 22,
+    VT_SPRITEBOXKEYFRAME = 24
   };
   const flatbuffers::Vector<flatbuffers::Offset<LiftHeight>> *LiftHeightKeyFrame() const { return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<LiftHeight>> *>(VT_LIFTHEIGHTKEYFRAME); }
   const flatbuffers::Vector<flatbuffers::Offset<ProceduralFace>> *ProceduralFaceKeyFrame() const { return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<ProceduralFace>> *>(VT_PROCEDURALFACEKEYFRAME); }
@@ -837,6 +956,7 @@ struct Keyframes FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
   const flatbuffers::Vector<flatbuffers::Offset<BodyMotion>> *BodyMotionKeyFrame() const { return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<BodyMotion>> *>(VT_BODYMOTIONKEYFRAME); }
   const flatbuffers::Vector<flatbuffers::Offset<RecordHeading>> *RecordHeadingKeyFrame() const { return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<RecordHeading>> *>(VT_RECORDHEADINGKEYFRAME); }
   const flatbuffers::Vector<flatbuffers::Offset<TurnToRecordedHeading>> *TurnToRecordedHeadingKeyFrame() const { return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<TurnToRecordedHeading>> *>(VT_TURNTORECORDEDHEADINGKEYFRAME); }
+  const flatbuffers::Vector<flatbuffers::Offset<SpriteBox>> *SpriteBoxKeyFrame() const { return GetPointer<const flatbuffers::Vector<flatbuffers::Offset<SpriteBox>> *>(VT_SPRITEBOXKEYFRAME); }
   bool Verify(flatbuffers::Verifier &verifier) const {
     return VerifyTableStart(verifier) &&
            VerifyField<flatbuffers::uoffset_t>(verifier, VT_LIFTHEIGHTKEYFRAME) &&
@@ -869,6 +989,9 @@ struct Keyframes FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {
            VerifyField<flatbuffers::uoffset_t>(verifier, VT_TURNTORECORDEDHEADINGKEYFRAME) &&
            verifier.Verify(TurnToRecordedHeadingKeyFrame()) &&
            verifier.VerifyVectorOfTables(TurnToRecordedHeadingKeyFrame()) &&
+           VerifyField<flatbuffers::uoffset_t>(verifier, VT_SPRITEBOXKEYFRAME) &&
+           verifier.Verify(SpriteBoxKeyFrame()) &&
+           verifier.VerifyVectorOfTables(SpriteBoxKeyFrame()) &&
            verifier.EndTable();
   }
 };
@@ -886,10 +1009,11 @@ struct KeyframesBuilder {
   void add_BodyMotionKeyFrame(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<BodyMotion>>> BodyMotionKeyFrame) { fbb_.AddOffset(Keyframes::VT_BODYMOTIONKEYFRAME, BodyMotionKeyFrame); }
   void add_RecordHeadingKeyFrame(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<RecordHeading>>> RecordHeadingKeyFrame) { fbb_.AddOffset(Keyframes::VT_RECORDHEADINGKEYFRAME, RecordHeadingKeyFrame); }
   void add_TurnToRecordedHeadingKeyFrame(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TurnToRecordedHeading>>> TurnToRecordedHeadingKeyFrame) { fbb_.AddOffset(Keyframes::VT_TURNTORECORDEDHEADINGKEYFRAME, TurnToRecordedHeadingKeyFrame); }
+  void add_SpriteBoxKeyFrame(flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<SpriteBox>>> SpriteBoxKeyFrame) { fbb_.AddOffset(Keyframes::VT_SPRITEBOXKEYFRAME, SpriteBoxKeyFrame); }
   KeyframesBuilder(flatbuffers::FlatBufferBuilder &_fbb) : fbb_(_fbb) { start_ = fbb_.StartTable(); }
   KeyframesBuilder &operator=(const KeyframesBuilder &);
   flatbuffers::Offset<Keyframes> Finish() {
-    auto o = flatbuffers::Offset<Keyframes>(fbb_.EndTable(start_, 10));
+    auto o = flatbuffers::Offset<Keyframes>(fbb_.EndTable(start_, 11));
     return o;
   }
 };
@@ -904,8 +1028,10 @@ inline flatbuffers::Offset<Keyframes> CreateKeyframes(flatbuffers::FlatBufferBui
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<Event>>> EventKeyFrame = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<BodyMotion>>> BodyMotionKeyFrame = 0,
     flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<RecordHeading>>> RecordHeadingKeyFrame = 0,
-    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TurnToRecordedHeading>>> TurnToRecordedHeadingKeyFrame = 0) {
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<TurnToRecordedHeading>>> TurnToRecordedHeadingKeyFrame = 0,
+    flatbuffers::Offset<flatbuffers::Vector<flatbuffers::Offset<SpriteBox>>> SpriteBoxKeyFrame = 0) {
   KeyframesBuilder builder_(_fbb);
+  builder_.add_SpriteBoxKeyFrame(SpriteBoxKeyFrame);
   builder_.add_TurnToRecordedHeadingKeyFrame(TurnToRecordedHeadingKeyFrame);
   builder_.add_RecordHeadingKeyFrame(RecordHeadingKeyFrame);
   builder_.add_BodyMotionKeyFrame(BodyMotionKeyFrame);
@@ -929,8 +1055,9 @@ inline flatbuffers::Offset<Keyframes> CreateKeyframesDirect(flatbuffers::FlatBuf
     const std::vector<flatbuffers::Offset<Event>> *EventKeyFrame = nullptr,
     const std::vector<flatbuffers::Offset<BodyMotion>> *BodyMotionKeyFrame = nullptr,
     const std::vector<flatbuffers::Offset<RecordHeading>> *RecordHeadingKeyFrame = nullptr,
-    const std::vector<flatbuffers::Offset<TurnToRecordedHeading>> *TurnToRecordedHeadingKeyFrame = nullptr) {
-  return CreateKeyframes(_fbb, LiftHeightKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<LiftHeight>>(*LiftHeightKeyFrame) : 0, ProceduralFaceKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<ProceduralFace>>(*ProceduralFaceKeyFrame) : 0, HeadAngleKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<HeadAngle>>(*HeadAngleKeyFrame) : 0, RobotAudioKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<RobotAudio>>(*RobotAudioKeyFrame) : 0, BackpackLightsKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<BackpackLights>>(*BackpackLightsKeyFrame) : 0, FaceAnimationKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<FaceAnimation>>(*FaceAnimationKeyFrame) : 0, EventKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<Event>>(*EventKeyFrame) : 0, BodyMotionKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<BodyMotion>>(*BodyMotionKeyFrame) : 0, RecordHeadingKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<RecordHeading>>(*RecordHeadingKeyFrame) : 0, TurnToRecordedHeadingKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<TurnToRecordedHeading>>(*TurnToRecordedHeadingKeyFrame) : 0);
+    const std::vector<flatbuffers::Offset<TurnToRecordedHeading>> *TurnToRecordedHeadingKeyFrame = nullptr,
+    const std::vector<flatbuffers::Offset<SpriteBox>> *SpriteBoxKeyFrame = nullptr) {
+  return CreateKeyframes(_fbb, LiftHeightKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<LiftHeight>>(*LiftHeightKeyFrame) : 0, ProceduralFaceKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<ProceduralFace>>(*ProceduralFaceKeyFrame) : 0, HeadAngleKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<HeadAngle>>(*HeadAngleKeyFrame) : 0, RobotAudioKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<RobotAudio>>(*RobotAudioKeyFrame) : 0, BackpackLightsKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<BackpackLights>>(*BackpackLightsKeyFrame) : 0, FaceAnimationKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<FaceAnimation>>(*FaceAnimationKeyFrame) : 0, EventKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<Event>>(*EventKeyFrame) : 0, BodyMotionKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<BodyMotion>>(*BodyMotionKeyFrame) : 0, RecordHeadingKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<RecordHeading>>(*RecordHeadingKeyFrame) : 0, TurnToRecordedHeadingKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<TurnToRecordedHeading>>(*TurnToRecordedHeadingKeyFrame) : 0, SpriteBoxKeyFrame ? _fbb.CreateVector<flatbuffers::Offset<SpriteBox>>(*SpriteBoxKeyFrame) : 0);
 }
 
 struct AnimClip FLATBUFFERS_FINAL_CLASS : private flatbuffers::Table {

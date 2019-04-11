@@ -34,6 +34,8 @@ namespace Wifi {
 static GMutex connectMutex;
 static const char* const agentPath = "/tmp/vic_switchboard/connman_agent";
 static const char* WIFI_DEVICE = "wlan0";
+static GMainLoop* gLoop = nullptr;
+
 static gpointer ConnectionThread(gpointer data);
 static std::shared_ptr<TaskExecutor> sTaskExecutor;
 static Signal::Signal<void(bool, std::string)> sWifiChangedSignal;
@@ -188,6 +190,13 @@ void Initialize(std::shared_ptr<TaskExecutor> taskExecutor) {
 }
 
 void Deinitialize() {
+  // Exit our glib event listener thread so we don't
+  // have our AgentCallback and OnTechnologyChanged 
+  // methods called when we are dying.
+  if(gLoop) {
+    g_main_loop_quit(gLoop);
+  }
+
   sTaskExecutor = nullptr;
 }
 
@@ -442,15 +451,15 @@ void HandleOutputCallback(int rc) {
 
 static gpointer ConnectionThread(gpointer data)
 {
-  GMainLoop *loop = g_main_loop_new(NULL, true);
+  gLoop = g_main_loop_new(NULL, true);
 
-  if (!loop) {
+  if (!gLoop) {
       loge("error getting main loop");
       return nullptr;
   }
 
-  g_main_loop_run(loop);
-  g_main_loop_unref(loop);
+  g_main_loop_run(gLoop);
+  g_main_loop_unref(gLoop);
   return nullptr;
 }
 

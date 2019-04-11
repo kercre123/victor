@@ -32,6 +32,7 @@
       { "channel": "SpeechRecognizer",                  "enabled": false },
       { "channel": "VisionComponent",                   "enabled": true  },
       { "channel": "VisionSystem",                      "enabled": true  },
+      { "channel": "BehaviorSDKInterface",              "enabled": true  },
       { "channel": "*",                                 "enabled": false } // must come last, no comma
     ],
     "levels":
@@ -66,6 +67,7 @@
       { "channel": "SpeechRecognizer",                  "enabled": false },
       { "channel": "VisionComponent",                   "enabled": false },
       { "channel": "VisionSystem",                      "enabled": false },
+      { "channel": "BehaviorSDKInterface",              "enabled": false },
       { "channel": "*",                                 "enabled": false } // must come last, no comma
     ],
     "levels":

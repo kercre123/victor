@@ -535,6 +535,21 @@ message PlayCompositeAnimation
   string  animName
 }
 
+structure SpriteBoxRemap
+{
+  Vision::SpriteBoxName spriteBoxName,
+  uint_8                padding,
+  uint_16               remappedAssetID
+}
+
+message PlayAnimWithSpriteBoxRemaps
+{
+  uint_8         tag,
+  uint_8         numRemaps,
+  SpriteBoxRemap spriteBoxRemaps[150], 
+  string         animName
+}
+
 message DisplayCompositeImageChunk
 {
   uint_32 compositeImageID, // Ensures chunks are for the same image
@@ -851,9 +866,10 @@ union EngineToRobot
   DisplayCompositeImageChunk       displayCompositeImageChunk          = 0x63,
   UpdateCompositeImage             updateCompositeImage                = 0x64,
   PlayCompositeAnimation           playCompositeAnimation              = 0x65,
-  EnableMirrorModeScreen           enableMirrorModeScreen              = 0x66,
+  PlayAnimWithSpriteBoxRemaps      playAnimWithSpriteBoxRemaps         = 0x66,
+  EnableMirrorModeScreen           enableMirrorModeScreen              = 0x67,
 
-  SetButtonWakeWord                setButtonWakeWord                   = 0x67,
+  SetButtonWakeWord                setButtonWakeWord                   = 0x68,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,

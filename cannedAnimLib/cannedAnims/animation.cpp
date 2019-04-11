@@ -25,6 +25,7 @@ namespace Anki {
 namespace Vector {
 
 static const char* kNameKey = "Name";
+static const char* kSpriteBoxKeyFrameName = "SpriteBoxKeyFrame";
 CONSOLE_VAR(bool, kShouldPreCacheSprites, "Animation", false);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -170,6 +171,18 @@ Result Animation::DefineFromFlatBuf(const std::string& name,
     }
   }
 
+  auto spriteBoxData = keyframes->SpriteBoxKeyFrame();
+  if (nullptr != spriteBoxData) {
+    for(int sbIdx=0; sbIdx < spriteBoxData->size(); sbIdx++){
+      const CozmoAnim::SpriteBox* spriteBox = spriteBoxData->Get(sbIdx);
+      const Result addResult = _spriteBoxCompositor.AddKeyFrame(spriteBox);
+      if (RESULT_OK != addResult){
+        LOG_ERROR("Animation.DefineFromFlatBuf.AddKeyFrameFailure", "Adding SpriteBox frame %d failed", sbIdx);
+        return addResult;
+      }
+    }
+  }
+
   auto spriteSequenceData = keyframes->FaceAnimationKeyFrame();
   if (spriteSequenceData != nullptr) {
     for (int faIdx=0; faIdx < spriteSequenceData->size(); faIdx++) {
@@ -295,6 +308,8 @@ Result Animation::DefineFromJson(const std::string& name, const Json::Value &jso
       addResult = _headTrack.AddKeyFrameToBack(jsonFrame, name);
     } else if(frameName == LiftHeightKeyFrame::GetClassName()) {
       addResult = _liftTrack.AddKeyFrameToBack(jsonFrame, name);
+    } else if(frameName == kSpriteBoxKeyFrameName) {
+      addResult = _spriteBoxCompositor.AddKeyFrame(jsonFrame, name);
     } else if(frameName == SpriteSequenceKeyFrame::GetClassName()) {
       const Vision::SpriteSequence* spriteSeq = nullptr;
       TimeStamp_t triggerTime_ms = 0;
@@ -417,7 +432,8 @@ _robotAudioTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _backpackLightsTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _bodyPosTrack.__METHOD__(__VA_ARGS__)  __COMBINE_WITH__  \
 _recordHeadingTrack.__METHOD__(__VA_ARGS__)  __COMBINE_WITH__  \
-_turnToRecordedHeadingTrack.__METHOD__(__VA_ARGS__)
+_turnToRecordedHeadingTrack.__METHOD__(__VA_ARGS__)  __COMBINE_WITH__  \
+_spriteBoxCompositor.__METHOD__(__VA_ARGS__)
 
 
 //# define ALL_TRACKS(__METHOD__, __ARG__, __COMBINE_WITH__) ALL_TRACKS_WITH_ARG(__METHOD__, void, __COMBINE_WITH__)
@@ -455,6 +471,9 @@ void Animation::ClearUpToCurrent()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Animation::CacheAnimationSprites(Vision::SpriteCache* cache)
 {
+  _spriteBoxCompositor.CacheInternalSprites(cache); 
+
+  // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
   auto& frameList = _spriteSequenceTrack.GetAllFrames();
   auto endTime_ms = GetLastKeyFrameEndTime_ms();
   for(auto& frame: frameList){
@@ -497,6 +516,7 @@ void Animation::AppendAnimation(const Animation& appendAnim)
   _recordHeadingTrack.AppendTrack(appendAnim.GetTrack<RecordHeadingKeyFrame>(), animOffest_ms);
   _turnToRecordedHeadingTrack.AppendTrack(appendAnim.GetTrack<TurnToRecordedHeadingKeyFrame>(), animOffest_ms);
   _robotAudioTrack.AppendTrack(appendAnim.GetTrack<RobotAudioKeyFrame>(), animOffest_ms);
+  _spriteBoxCompositor.AppendTracks(appendAnim.GetSpriteBoxCompositor(), animOffest_ms);
 
 }
 
@@ -516,6 +536,7 @@ uint32_t Animation::GetLastKeyFrameTime_ms() const
   lastFrameTime_ms = CompareLastFrameTime<SpriteSequenceKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<BackpackLightsKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<ProceduralFaceKeyFrame>(lastFrameTime_ms);
+  lastFrameTime_ms = _spriteBoxCompositor.CompareLastFrameTime(lastFrameTime_ms);
 
   return lastFrameTime_ms;
 }
@@ -537,6 +558,7 @@ uint32_t Animation::GetLastKeyFrameEndTime_ms() const
   lastFrameTime_ms = CompareLastFrameEndTime<SpriteSequenceKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<BackpackLightsKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<ProceduralFaceKeyFrame>(lastFrameTime_ms);
+  lastFrameTime_ms = _spriteBoxCompositor.CompareLastFrameTime(lastFrameTime_ms);
 
   return lastFrameTime_ms;
 }

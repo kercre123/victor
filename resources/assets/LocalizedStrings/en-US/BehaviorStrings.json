@@ -101,5 +101,20 @@
   },
   "BehaviorSayName.DontKnow": {
     "translation": "I don't know"
+  },
+  "DevTestPromptUser.VocalPrompt": {
+    "translation": "Test Prompt: say a command"
+  },
+  "DevTestPromptUser.VocalResponseToIntent": {
+    "translation": "Got an intent"
+  },
+  "DevTestPromptUser.VocalResponseToBadIntent": {
+    "translation": "Didn't get an intent"
+  },
+  "DevTestPromptUser.VocalReprompt" : {
+    "translation": "Try again"
+  },
+  "UserDefinedBehaviorTree.ConfirmNewBehavior": {
+    "translation": "Do you like this reaction?"
   }
 }

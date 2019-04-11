@@ -37,6 +37,7 @@
 
 #include "clad/types/featureGateTypes.h"
 
+#define LOG_CHANNEL "Behaviors"
 
 namespace Anki {
 namespace Vector {
@@ -77,6 +78,8 @@ const std::vector<Vision::CompositeImageLayout> kNegTemperatureLayouts  = {
   Vision::CompositeImageLayout::TemperatureNegTripleDig
 };
 
+CONSOLE_VAR(bool, kDebugDisplayWeather, "Behaviors.DisplayWeather", false);
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -103,14 +106,14 @@ BehaviorDisplayWeather::BehaviorDisplayWeather(const Json::Value& config)
 {
   AddWaitForUserIntent(USER_INTENT(weather_response));
 
-  if(config.isMember(kImageLayoutListKey) && config.isMember(kImageMapListKey)){
+  if (config.isMember(kImageLayoutListKey) && config.isMember(kImageMapListKey)) {
     _iConfig =  std::make_unique<InstanceConfig>(config[kImageLayoutListKey], config[kImageMapListKey]);
     _iConfig->animationName = JsonTools::ParseString(config, kAnimationNameKey, "BehaviorDisplayWeather.Constructor.MissingAnimName");
     _iConfig->temperatureAssets = kTemperatureAssets;
-  }else{
-    PRINT_NAMED_ERROR("BehaviorDisplayWeather.Constructor.MissingConfigKeys",
-                      "Behavior %s does not have all layout keys defined",
-                      GetDebugLabel().c_str());
+  } else {
+    LOG_ERROR("BehaviorDisplayWeather.Constructor.MissingConfigKeys",
+              "Behavior %s does not have all layout keys defined",
+              GetDebugLabel().c_str());
   }
 }
 
@@ -191,12 +194,12 @@ void BehaviorDisplayWeather::InitBehavior()
   for(const auto& layoutName : _iConfig->compLayoutConfig){
     auto layoutEnum = Vision::CompositeImageLayoutFromString(layoutName.asString());
     const auto iter = compLayoutMap.find(layoutEnum);
-    if(iter != compLayoutMap.end()){
+    if (iter != compLayoutMap.end()) {
       _iConfig->compImg->MergeInImage(iter->second);
-    }else{
-      PRINT_NAMED_WARNING("BehaviorDisplayWeather.InitBehavior.InvalidLayout",
-                          "Layout %s not found in compLayoutMap",
-                          layoutName.asString().c_str());
+    } else {
+      LOG_WARNING("BehaviorDisplayWeather.InitBehavior.InvalidLayout",
+                  "Layout %s not found in compLayoutMap",
+                  layoutName.asString().c_str());
     }
   }
 
@@ -210,11 +213,11 @@ void BehaviorDisplayWeather::InitBehavior()
         // Get the layer from the composite image
         const auto& layerName = layerPair.first;
         Vision::CompositeImageLayer* layer = _iConfig->compImg->GetLayerByName(layerName);
-        if(layer == nullptr){
-          PRINT_NAMED_WARNING("BehaviorDisplayWeather.InitBehavior.LayerNotFound",
-                              "Image map has sprite boxes for layer %s which is not present in comp img for behavior %s",
-                              Vision::LayerNameToString(layerName),
-                              GetDebugLabel().c_str());
+        if (layer == nullptr) {
+          LOG_WARNING("BehaviorDisplayWeather.InitBehavior.LayerNotFound",
+                      "Image map has sprite boxes for layer %s which is not present in comp img for behavior %s",
+                      Vision::LayerNameToString(layerName),
+                      GetDebugLabel().c_str());
           continue;
         }
         // add sprite boxes to the layer
@@ -223,9 +226,9 @@ void BehaviorDisplayWeather::InitBehavior()
         }
       }
     }else{
-      PRINT_NAMED_WARNING("BehaviorDisplayWeather.InitBehavior.InvalidImageMap",
-                          "Map %s not found in compImgMap",
-                          mapName.asString().c_str());
+      LOG_WARNING("BehaviorDisplayWeather.InitBehavior.InvalidImageMap",
+                  "Map %s not found in compImgMap",
+                  mapName.asString().c_str());
     }
   }
 
@@ -239,9 +242,10 @@ void BehaviorDisplayWeather::InitBehavior()
     _iConfig->animationPtr = animContainer->GetAnimation(_iConfig->animationName);
   }
 
-  if(_iConfig->animationPtr == nullptr){
-    PRINT_NAMED_WARNING("BehaviorDisplayWeather.InitBehavior.AnimationNotFoundInContainer",
-                        "Animations need to be manually loaded on engine side - %s is not", _iConfig->animationName.c_str());
+  if (_iConfig->animationPtr == nullptr) {
+    LOG_WARNING("BehaviorDisplayWeather.InitBehavior.AnimationNotFoundInContainer",
+                "Animations need to be manually loaded on engine side - %s is not",
+                _iConfig->animationName.c_str());
     return;
   }
 
@@ -304,7 +308,7 @@ void BehaviorDisplayWeather::OnBehaviorDeactivated()
 void BehaviorDisplayWeather::TransitionToFindFaceInFront()
 {
   ANKI_VERIFY(_iConfig->lookAtFaceInFront->WantsToBeActivated(),
-              "BehaviorWallTimeCoordinator.TransitionToShowWallTime.BehaviorDoesntWantToBeActivated", "");
+              "BehaviorDisplayWeather.TransitionToFindFaceInFront.BehaviorDoesNotWantToBeActivated", "");
   // We should see a face during this behavior if there's one in front of us to center on
   DelegateIfInControl(_iConfig->lookAtFaceInFront.get(), [this](){
     DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::LookAtUserEndearingly));
@@ -370,10 +374,10 @@ void BehaviorDisplayWeather::TransitionToDisplayWeatherResponse()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenheit, Vision::CompositeImage*& outImg) const
 {
-  if(_iConfig->temperatureLayouts.size() != 6){
-    PRINT_NAMED_ERROR("BehaviorDisplayWeather.GenerateTemperatureImage.TemperatureLayoutsNotFound",
-                      "Temperature layouts has %zu elements, expected 6",
-                      _iConfig->temperatureLayouts.size());
+  if (_iConfig->temperatureLayouts.size() != 6) {
+    LOG_ERROR("BehaviorDisplayWeather.GenerateTemperatureImage.TemperatureLayoutsNotFound",
+              "Temperature layouts has %zu elements, expected 6",
+              _iConfig->temperatureLayouts.size());
     return false;
   }
 
@@ -385,7 +389,7 @@ bool BehaviorDisplayWeather::GenerateTemperatureImage(int temp, bool isFahrenhei
   const bool featureEnabled = (featureGate != nullptr) ?
                                 featureGate->IsFeatureEnabled(Anki::Vector::FeatureType::PRDemo) :
                                 false;
-  if(featureEnabled){
+  if (featureEnabled) {
     auto& settings = GetBEI().GetSettingsManager();
     const bool shouldBeFahrenheit = settings.GetRobotSettingAsBool(external_interface::RobotSetting::temp_is_fahrenheit);
     if(!shouldBeFahrenheit && isFahrenheit){
@@ -482,9 +486,9 @@ void BehaviorDisplayWeather::ApplyModifiersToTemperatureDisplay(Vision::Composit
   // Setup new image layout modifier to deal with the fact that 1s are half width images
   Vision::CompositeImageLayer::LayoutMap& layoutMap = layer.GetLayoutMap();
   auto onesDigitIter = layoutMap.find(Vision::SpriteBoxName::TemperatureOnesDigit);
-  if(onesDigitIter == layoutMap.end()){
-    PRINT_NAMED_ERROR("BehaviorDisplayWeather.GenerateTemperatureImage.NoOnesDigit",
-                      "Cant calculate layout modifier without a width for the sprite box");
+  if (onesDigitIter == layoutMap.end()) {
+    LOG_ERROR("BehaviorDisplayWeather.GenerateTemperatureImage.NoOnesDigit",
+              "Can't calculate layout modifier without a width for the sprite box");
     return;
   }
 
@@ -585,9 +589,10 @@ void BehaviorDisplayWeather::ParseDisplayTempTimesFromAnim()
     gotAnim = (anim != nullptr);
   }
 
-  if(!gotAnim){
-    PRINT_NAMED_WARNING("BehaviorDisplayWeather.ParseDisplayTempTimesFromAnim.AnimationNotFoundInContainer",
-                        "Animations need to be manually loaded on engine side - %s is not", _iConfig->animationName.c_str());
+  if (!gotAnim) {
+    LOG_WARNING("BehaviorDisplayWeather.ParseDisplayTempTimesFromAnim.AnimationNotFoundInContainer",
+                "Animations need to be manually loaded on engine side - %s is not",
+                _iConfig->animationName.c_str());
     return;
   }
 
@@ -595,16 +600,17 @@ void BehaviorDisplayWeather::ParseDisplayTempTimesFromAnim()
   if(track.TrackLength() == 2){
     _iConfig->timeTempShouldAppear_ms = track.GetFirstKeyFrame()->GetTriggerTime_ms();
     _iConfig->timeTempShouldDisappear_ms = track.GetLastKeyFrame()->GetTriggerTime_ms();
-    PRINT_CH_DEBUG("Behaviors",
-                   "BehaviorDisplayWeather.ParseDisplayTempTimesFromAnim.TemperatureTimes",
-                   "For animation named %s temp will appear at %d and disappear at %d",
-                   _iConfig->animationName.c_str(),
-                   _iConfig->timeTempShouldAppear_ms,
-                   _iConfig->timeTempShouldDisappear_ms);
-  }else{
-    PRINT_NAMED_ERROR("BehaviorDisplayWeather.ParseDisplayTempTimesFromAnim.IncorrectNumberOfKeyframes",
-                      "Expected 2 keyframes in event track, but track has %d",
-                      track.TrackLength());
+    if (kDebugDisplayWeather) {
+      LOG_DEBUG("BehaviorDisplayWeather.ParseDisplayTempTimesFromAnim.TemperatureTimes",
+                "For animation named %s temp will appear at %d and disappear at %d",
+                _iConfig->animationName.c_str(),
+                _iConfig->timeTempShouldAppear_ms,
+                _iConfig->timeTempShouldDisappear_ms);
+    }
+  } else {
+    LOG_ERROR("BehaviorDisplayWeather.ParseDisplayTempTimesFromAnim.IncorrectNumberOfKeyframes",
+              "Expected 2 keyframes in event track, but track has %d",
+              track.TrackLength());
   }
 }
 

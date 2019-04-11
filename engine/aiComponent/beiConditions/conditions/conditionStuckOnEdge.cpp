@@ -14,7 +14,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/components/powerStateManager.h"
 #include "engine/components/sensors/cliffSensorComponent.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -49,36 +48,30 @@ void ConditionStuckOnEdge::InitInternal(BehaviorExternalInterface& behaviorExter
 }
 
 bool ConditionStuckOnEdge::AreConditionsMetInternal(BehaviorExternalInterface& behaviorExternalInterface) const
-{
-  const auto& powerSaveManager = behaviorExternalInterface.GetPowerStateManager();
-  const bool inSysconCalmMode = powerSaveManager.InSysconCalmMode();
-  
+{  
   auto& robotInfo = behaviorExternalInterface.GetRobotInfo();
   const bool isPickedUp = robotInfo.IsPickedUp();
-  
-  // We can only check the cliff sensor components if Syscon is not in Calm Mode.
-  if (!inSysconCalmMode) {
-    auto& cliffComp = robotInfo.GetCliffSensorComponent();
-    const uint8_t cliffFlags = cliffComp.GetCliffDetectedFlags();
-    // Robot is considered stuck iff two cliff sensors on the same side
-    // or on the same diagonal are detecting cliffs.
-    const bool stuckOnEdge = cliffFlags == kLeftCliffSensors ||
-                             cliffFlags == kRightCliffSensors ||
-                             cliffFlags == (BL | FR) ||
-                             cliffFlags == (BR | FL);
 
-    const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  auto& cliffComp = robotInfo.GetCliffSensorComponent();
+  const uint8_t cliffFlags = cliffComp.GetCliffDetectedFlags();
+  // Robot is considered stuck iff two cliff sensors on the same side
+  // or on the same diagonal are detecting cliffs.
+  const bool stuckOnEdge = cliffFlags == kLeftCliffSensors ||
+                            cliffFlags == kRightCliffSensors ||
+                            cliffFlags == (BL | FR) ||
+                            cliffFlags == (BR | FL);
 
-    // Return true if condition has held long enough to not turn out
-    // to be due to pickup.
-    if (stuckOnEdge) {
-      if (isPickedUp) {
-        _onEdgeStartTime_s = 0.f;
-      } else if (NEAR_ZERO(_onEdgeStartTime_s)) {
-        _onEdgeStartTime_s = currTime_s;
-      } else if (currTime_s - _onEdgeStartTime_s > kMaxCancelByPickupTime_s) {
-        return true;
-      }
+  const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+
+  // Return true if condition has held long enough to not turn out
+  // to be due to pickup.
+  if (stuckOnEdge) {
+    if (isPickedUp) {
+      _onEdgeStartTime_s = 0.f;
+    } else if (NEAR_ZERO(_onEdgeStartTime_s)) {
+      _onEdgeStartTime_s = currTime_s;
+    } else if (currTime_s - _onEdgeStartTime_s > kMaxCancelByPickupTime_s) {
+      return true;
     }
   }
   
