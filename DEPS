@@ -5,12 +5,6 @@
     },
     "deptool": {
         "deps": {
-            "aubio": {
-                "checksums": {
-                    "sha256": "74b8350acfffc1b13f31cadafb5979c0db85b543b90fe596b819229ed20a742e"
-                },
-                "version": "0.4.9"
-            },
             "avs-device-sdk": {
                 "checksums": {
                     "sha256": "68abf4214fb726e22777ca6fb9f1bec601aad49013cd7ae9a32453f5b550e50e"
