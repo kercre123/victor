@@ -5,12 +5,6 @@
     },
     "deptool": {
         "deps": {
-            "libsodium": {
-                "checksums": {
-                    "sha256": "18fefd8b70bfeab16fcb9ac87ed9b22bc376c7e316d46fec1ed71512edb18c11"
-                },
-                "version": "1.0.16"
-            },
             "lldb-server": {
                 "checksums": {
                     "sha256": "8c4f3798fbceb23d26e1faf79bb0e90d205d335bae32b0955d10869d65ad79e9"
