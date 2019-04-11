@@ -65,6 +65,11 @@ public:
     return _spriteBoxCompositor.AddKeyFrame(spriteBoxName, std::move(keyFrame));
   }
 
+  void AddSpriteBoxRemap(const Vision::SpriteBoxName& spriteBoxName, const std::string& remappedAssetName)
+  {
+    return _spriteBoxCompositor.AddSpriteBoxRemap(spriteBoxName, remappedAssetName);
+  }
+
   // Get a track by KeyFrameType
   template<class KeyFrameType>
   Animations::Track<KeyFrameType>& GetTrack();

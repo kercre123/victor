@@ -56,6 +56,8 @@ public:
     return AddKeyFrameInternal(spriteBoxName, std::move(keyFrame));
   }
 
+  void AddSpriteBoxRemap(const Vision::SpriteBoxName spriteBox, const std::string& remappedAssetName);
+
   void CacheInternalSprites(Vision::SpriteCache* spriteCache);
 
   void AppendTracks(const SpriteBoxCompositor& other, const TimeStamp_t animOffset_ms);
@@ -127,6 +129,7 @@ class SpriteBoxTrack
   using TrackIterator = std::set<SpriteBoxKeyFrame>::iterator;
 public:
   SpriteBoxTrack();
+  SpriteBoxTrack(const SpriteBoxTrack& other);
 
   bool InsertKeyFrame(SpriteBoxKeyFrame&& spriteBox);
   bool IsEmpty() const { return _track.empty(); }
@@ -135,7 +138,13 @@ public:
   bool GetCurrentKeyFrame(const TimeStamp_t timeSinceAnimStart_ms, SpriteBoxKeyFrame& outKeyFrame);
   const std::set<SpriteBoxKeyFrame>& GetKeyFrames() const { return _track; }
 
+  void SetAssetRemap(const std::string& remappedAssetName){ _remappedAssetName = remappedAssetName; }
+  void ClearAssetRemap(){ _remappedAssetName.clear(); }
+
 private:
+  SpriteBoxTrack(SpriteBoxTrack&& other); // Move ctor
+  SpriteBoxTrack& operator=(SpriteBoxTrack&& other); // Move assignment
+  SpriteBoxTrack& operator=(const SpriteBoxTrack& other); // Copy assignment
 
   std::set<SpriteBoxKeyFrame> _track;
 
@@ -147,6 +156,7 @@ private:
   TrackIterator _currentKeyFrameIter;
   TrackIterator _nextKeyFrameIter;
 
+  std::string _remappedAssetName;
 };
 
 } // namespace Animations

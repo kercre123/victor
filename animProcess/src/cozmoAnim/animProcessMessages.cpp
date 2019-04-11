@@ -300,6 +300,10 @@ void Process_playCompositeAnimation(const Anki::Vector::RobotInterface::PlayComp
   _animStreamer->Process_playCompositeAnimation(animName, msg.tag);
 }
 
+void Process_playAnimWithSpriteBoxRemaps(const Anki::Vector::RobotInterface::PlayAnimWithSpriteBoxRemaps& msg)
+{
+  _animStreamer->Process_playAnimWithSpriteBoxRemaps(msg);
+}
 
 void Process_enableKeepFaceAlive(const Anki::Vector::RobotInterface::EnableKeepFaceAlive& msg)
 {
