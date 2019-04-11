@@ -941,11 +941,6 @@ namespace Anki {
         return encoderInvalidStartTime_ms_ > 0;
       }
 
-      void SetEncoderInvalid() 
-      {
-        encoderInvalidStartTime_ms_ = HAL::GetTimeStamp();
-      }
-
     } // namespace LiftController
   } // namespace Vector
 } // namespace Anki

@@ -50,7 +50,9 @@ namespace Anki {
         // For only sending robot state messages every STATE_MESSAGE_FREQUENCY
         // times through the main loop
         u32 robotStateMessageCounter_ = 0;
+        bool calmModeEnabledByEngine_ = false;
         bool calmMode_ = false;
+        TimeStamp_t timeToEnableCalmMode_ms_ = 0;
 
       } // private namespace
 
@@ -209,6 +211,7 @@ namespace Anki {
         //       Not going into syscon calm mode also means that motor calibrations are no 
         //       longer necessary as a precaution when leaving calm mode.
         AnkiInfo("Messages.Process_calmPowerMode.enable", "enable: %d", msg.enable);
+        calmModeEnabledByEngine_ = msg.enable;
         calmMode_ = msg.enable;
       }
 
@@ -273,6 +276,20 @@ namespace Anki {
                      RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[0]),
                      RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[1]),
                      RAD_TO_DEG_F32(IMUFilter::GetGyroBias()[2]));
+          }
+        }
+
+        // Temporarily unset calm mode when button is pressed so that 
+        // we can still go into pairing/debug screens
+        TimeStamp_t now_ms = HAL::GetTimeStamp();
+        static const u32 TEMP_CALM_MODE_DISABLE_TIME_MS = 1000;
+        if (calmModeEnabledByEngine_) {
+          if (HAL::GetButtonState(HAL::BUTTON_POWER)) {
+            calmMode_ = false;
+            timeToEnableCalmMode_ms_ = now_ms + TEMP_CALM_MODE_DISABLE_TIME_MS;
+          } else if (timeToEnableCalmMode_ms_ != 0 && timeToEnableCalmMode_ms_ < now_ms) {
+            calmMode_ = true;
+            timeToEnableCalmMode_ms_ = 0;
           }
         }
 
