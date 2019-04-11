@@ -630,6 +630,16 @@ T SmallSquareMatrix<DIM,T>::Trace() const
   return trace;
 }
   
+template<MatDimType DIM, typename T>
+SmallSquareMatrix<DIM,T> Eye()
+{
+  // set diagonal elements to 1
+  SmallSquareMatrix<DIM,T> retv;
+  for (size_t i = 0; i < DIM; ++i) {
+    retv(i,i) = T(1);
+  }
+  return retv;
+}
 
 } // namespace Anki
   

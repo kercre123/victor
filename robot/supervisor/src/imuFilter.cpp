@@ -35,7 +35,7 @@
 #include "coretech/common/robot/imuESKF.h"
 #include "coretech/common/shared/math/point.h"
 #include "coretech/common/shared/math/rotation.h"
-#include "coretech/common/shared/math/matrix_impl.h"
+#include "coretech/common/shared/math/matrix.h"
 
 #include "util/container/minMaxQueue.h"
 #include "util/logging/logging.h"
