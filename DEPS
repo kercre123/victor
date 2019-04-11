@@ -53,12 +53,6 @@
                 },
                 "version": "v1.3"
             },
-            "pffft": {
-                "checksums": {
-                    "sha256": "681a3b239326719b456af828998af3818f34a1070fa03bc9413acc27bfd7c969"
-                },
-                "version": "1.0-anki"
-            },
             "protobuf": {
                 "checksums": {
                     "sha256": "9c0699bf3aad7d2ea3b3ad38e32a85edd0f5143193debaaaf9270f1e9f0300ea"
