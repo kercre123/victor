@@ -5,12 +5,6 @@
     },
     "deptool": {
         "deps": {
-            "avs-device-sdk": {
-                "checksums": {
-                    "sha256": "68abf4214fb726e22777ca6fb9f1bec601aad49013cd7ae9a32453f5b550e50e"
-                },
-                "version": "v1.11-anki-r1"
-            },
             "flatbuffers": {
                 "checksums": {
                     "sha256": "1f24769f7d6084e141c3e36fb7c72c1a00ef682d0db7518fd4b827f85260c372"
