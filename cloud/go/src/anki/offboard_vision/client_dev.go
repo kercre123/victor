@@ -1,4 +1,4 @@
-// +build !shipping,vicos
+// +build !shipping
 
 package offboard_vision
 
