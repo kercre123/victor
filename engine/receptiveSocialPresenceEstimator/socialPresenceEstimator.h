@@ -39,8 +39,12 @@ public:
   virtual ~SocialPresenceEvent() {};
 
   // accessors
-  std::string GetName() const { return _name; }
-  float GetValue() const { return _value; }
+  std::string GetName() const { return _name; };
+  float GetValue() const { return _value; };
+  float GetIndependentEffect() const { return _independentEffect; };
+  float GetIndependentEffectMax() const { return _independentEffectMax; };
+  float GetReinforcementEffect() const { return _reinforcementEffect; };
+  float GetReinforcementEffectMax() const { return _reinforcementEffectMax; };
 
   // methods
   void Update(float dt_s);

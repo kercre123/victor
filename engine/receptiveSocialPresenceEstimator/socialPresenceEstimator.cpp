@@ -52,22 +52,20 @@ void SocialPresenceEvent::Update(float dt_s)
 {
   _value = _value * pow((1.0 - _decayRatePerSec), dt_s);
   // should zero out when we get close to zero
-  if (_value < kEpsilon) {
+  if (fabs(_value) < kEpsilon) {
     _value = 0.0f;
   }
 }
 
 void SocialPresenceEvent::Trigger(float& rspi) {
-  // TODO: temporary!
-  //_value = _independentEffect;
-
   if (rspi > _independentEffectMax) {
     // reinforcement
-  } else {
+    _value = _reinforcementEffect;
+  } else if (rspi >= 0.0) {
     // independent effect
-    _value = fmin(_independentEffectMax, (_value + _independentEffect));
+    _value = _independentEffect;
   }
-
+  // if rspi < 0, trigger is inhibited
 }
 
 
@@ -101,7 +99,10 @@ void SocialPresenceEstimator::InitDependent(Vector::Robot *robot, const RobotCom
 
   // set up input events
   _inputEvents = {
-      SocialPresenceEvent("test1", 0.3f, 0.75f, 1.0f, 0.75f, 1.0f)
+      // name, delayRatePerSec, independent effect, independent effect max, reinforcement effect, reinforcement effect max
+      SocialPresenceEvent("test1", 0.1f, 0.80f, 1.0f, 0.80f, 1.0f),
+      SocialPresenceEvent("test2", 0.2f, 0.20f, 0.5f, 0.30f, 1.0f),
+      SocialPresenceEvent("inhibitor", 0.2, -1.0f, 0, -1.0, 0)
   };
 }
 
@@ -139,12 +140,18 @@ void SocialPresenceEstimator::UpdateRSPI()
     // update all (dynamic) input events
     // cull any expired dynamic input events
     // update RSPI: iterate through all input events, summing their values
+    // TODO (AS): I'm not totally happy with this implementation yet: hard to follow, at least.
     float newRSPI = 0;
     for (SocialPresenceEvent& inputEvent : _inputEvents) {
-      newRSPI = fmin(1.0, (newRSPI + inputEvent.GetValue()));
+      if (_rspi >= inputEvent.GetIndependentEffectMax()) {
+        newRSPI = fmax(-1.0, fmin(1.0, fmin( fmax(newRSPI, inputEvent.GetReinforcementEffectMax()),
+                                             (newRSPI + inputEvent.GetValue()) ) ));
+      } else {
+        newRSPI = fmax(-1.0, fmin(1.0, fmin( fmax(newRSPI, inputEvent.GetIndependentEffectMax()),
+                                             (newRSPI + inputEvent.GetValue()) ) ));
+      }
     }
     _rspi = newRSPI;
-
 
     _lastInputEventsUpdateTime_s = currentTime;
   }
@@ -165,20 +172,18 @@ void SocialPresenceEstimator::SubscribeToWebViz()
     return;
   }
 
-  auto onSubscribedBehaviors = [](const std::function<void(const Json::Value&)>& sendToClient) {
+  auto onSubscribedBehaviors = [this](const std::function<void(const Json::Value&)>& sendToClient) {
     // a client subscribed.
     // send them a list of events to spoof
 
     Json:: Value subscriptionData;
     auto& data = subscriptionData["info"];
     auto& events = data["events"];
-    std::vector<std::string> tmp_event_names {"test1", "test2"};
-    for( uint8_t i=0; i<static_cast<uint8_t>(tmp_event_names.size()); ++i ) {
+    for (auto& inputEvent : _inputEvents) {
       Json::Value eventEntry;
-      eventEntry["eventName"] = tmp_event_names[i];
-
-      //events.append( eventEntry );
-      events[tmp_event_names[i]] = eventEntry;
+      const std::string eventName = inputEvent.GetName();
+      eventEntry["eventName"] = eventName;
+      events[eventName] = eventEntry;
     }
 
     sendToClient( subscriptionData );
@@ -210,8 +215,6 @@ void SocialPresenceEstimator::SendDataToWebViz(const CozmoContext* context)
     LOG_WARNING("RSPE.SendDataToWebViz.NoContext", "");
     return;
   }
-
-  LOG_WARNING("RSPE.SendDataToWebViz.Running", "RSPE SendDataToWebViz running."); // TODO: this can't stay in, obviously.
 
   const float currentTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
