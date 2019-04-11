@@ -3592,8 +3592,24 @@ func (service *rpcService) ExternalAudioStreamRequestToGatewayWrapper(request *e
 	return msg, nil
 }
 
+func (service *rpcService) ExternalAudioStreamCancel() {
+	println("ExternalAudioStreamRequestHandler sending cancel")
+
+	count, id, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_ExternalAudioStreamCancel{
+			ExternalAudioStreamCancel: &extint.ExternalAudioStreamCancel{},
+		},
+	})
+
+	if err != nil {
+		log.Printf("ExternalAudioStreamCancel count %u id %u err %s\n", count, id, err.Error())
+	}
+}
+
 func (service *rpcService) ExternalAudioStreamRequestHandler(in extint.ExternalInterface_ExternalAudioStreamPlaybackServer, done chan struct{}) {
 	defer close(done)
+	defer service.ExternalAudioStreamCancel()
+
 	for {
 		request, err := in.Recv()
 		if err != nil {
