@@ -53,16 +53,6 @@ void LocalizationComponent::InitDependent(Vector::Robot* robot, const RobotCompM
 {
   _robot = robot;
   _driveCenterPose.SetName("RobotDriveCenter");
-
-  // Initializes FullRobotPose, _poseOrigins, and _worldOrigin:
-  Delocalize();
-
-  // The call to Delocalize() will increment frameID, but we want it to be
-  // initialized to 0, to match the physical robot's initialization
-  // It will also flag that a localization update is needed when it increments the frameID so set the flag
-  // to false
-  _frameId = 0;
-  _needToSendLocalizationUpdate = false;
 }
 
 void LocalizationComponent::UpdateDependent(const RobotCompMap& dependentComps)
@@ -131,9 +121,7 @@ Result LocalizationComponent::NotifyOfRobotState(const RobotState& msg)
 
 
   // Add to history
-  const HistRobotState histState(newPose,
-                                  msg,
-                                  _robot->GetProxSensorComponent().GetLatestProxData() );
+  const HistRobotState histState(newPose, msg, _robot->GetProxSensorComponent().GetLatestProxData() );
   lastResult = _robot->GetStateHistory()->AddRawOdomState(msg.timestamp, histState);
 
   if (lastResult != RESULT_OK) {

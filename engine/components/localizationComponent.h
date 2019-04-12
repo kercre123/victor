@@ -126,10 +126,10 @@ private:
 
   bool     _isLocalized                  = true;
   bool     _hasMovedSinceLocalization    = false;
+  bool     _needToSendLocalizationUpdate = false;
   bool     _localizedToFixedObject;                  // false until robot sees a _fixed_ mat
   ObjectID _localizedToID;                           // ID of mat object robot is localized to
-  ObjectID _chargerID;                                // Charge base ID that is being docked to
-  bool     _needToSendLocalizationUpdate = false;
+  ObjectID _chargerID;                               // Charge base ID that is being docked to
 
 
   // f32      _localizedMarkerDistToCameraSq = -1.0f;   // Stores (squared) distance to the closest observed marker of the object we're localized to
