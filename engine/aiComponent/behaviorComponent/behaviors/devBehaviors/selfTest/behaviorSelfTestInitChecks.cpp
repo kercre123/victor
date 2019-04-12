@@ -132,7 +132,7 @@ void BehaviorSelfTestInitChecks::TransitionToChecks()
   }
   
   // Force delocalize the robot to ensure consistent starting pose
-  robot.GetLocalizationComponent().Delocalize(false);
+  robot.GetLocalizationComponent().Delocalize();
 
   SELFTEST_SET_RESULT(SelfTestResultCode::SUCCESS);
 }

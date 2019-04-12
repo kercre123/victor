@@ -364,7 +364,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
   GetComponent<FullRobotPose>().GetPose().SetName("Robot_" + std::to_string(_ID));
 
   // Initializes FullRobotPose, _poseOrigins, and _worldOrigin:
-  GetLocalizationComponent().Delocalize(false);
+  GetLocalizationComponent().Delocalize();
 
   // The call to Delocalize() will increment frameID, but we want it to be
   // initialized to 0, to match the physical robot's initialization
@@ -813,7 +813,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // the robot, and the robot updates on the next state update. But that delay guarantees that the robot knows what
   // we think it's true, rather than mixing timestamps of when it started carrying vs when the robot knows that it was
   // carrying
-  const bool isCarryingObject = IS_STATUS_FLAG_SET(IS_CARRYING_BLOCK);
   //robot->SetCarryingBlock( isCarryingObject ); // Still needed?
   GetDockingComponent().SetPickingOrPlacing(IS_STATUS_FLAG_SET(IS_PICKING_OR_PLACING));
   _isPickedUp = IS_STATUS_FLAG_SET(IS_PICKED_UP);
@@ -834,9 +833,8 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _leftWheelSpeed_mmps = msg.lwheel_speed_mmps;
   _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
 
-  // TODO: move relevent parts all into LocalizationComponent
   if (isDelocalizing) {
-    GetLocalizationComponent().Delocalize(isCarryingObject);
+    GetLocalizationComponent().Delocalize();
   } else {
     auto localizationResult = GetLocalizationComponent().NotifyOfRobotState(msg);
     if (localizationResult != RESULT_OK) {

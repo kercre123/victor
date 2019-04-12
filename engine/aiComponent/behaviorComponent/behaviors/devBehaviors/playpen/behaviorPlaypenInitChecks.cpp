@@ -85,7 +85,7 @@ Result BehaviorPlaypenInitChecks::OnBehaviorActivatedInternal()
   }
   
   // Force delocalize the robot to ensure consistent starting pose
-  robot.GetLocalizationComponent().Delocalize(false);
+  robot.GetLocalizationComponent().Delocalize();
 
   PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::SUCCESS, RESULT_OK);
   

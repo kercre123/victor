@@ -987,7 +987,7 @@ TEST(Localization, UnexpectedMovement)
   }
 
   // Delocalize the robot to create a new origin
-  robot.GetLocalizationComponent().Delocalize(false);
+  robot.GetLocalizationComponent().Delocalize();
 
   // Fake one more unexpected movement which used to cause unexpected movement to fully trigger
   // setting the robot's pose to a pose in history (when the unexpected movement started). This

@@ -68,7 +68,7 @@ public:
 
   Result LocalizeToObject(const ObservableObject* seenObject, ObservableObject* existingObject);
 
-  void Delocalize(bool isCarryingObject);
+  void Delocalize();
 
 
   // Updates the pose of the robot.

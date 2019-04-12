@@ -55,7 +55,7 @@ void LocalizationComponent::InitDependent(Vector::Robot* robot, const RobotCompM
   _driveCenterPose.SetName("RobotDriveCenter");
 
   // Initializes FullRobotPose, _poseOrigins, and _worldOrigin:
-  Delocalize(false);
+  Delocalize();
 
   // The call to Delocalize() will increment frameID, but we want it to be
   // initialized to 0, to match the physical robot's initialization
@@ -168,7 +168,7 @@ Result LocalizationComponent::NotifyOfRobotState(const RobotState& msg)
                 msg.pose_frame_id,
                 GetPoseFrameID());
 
-      Delocalize(_robot->GetCarryingComponent().IsCarryingObject());
+      Delocalize();
 
       return RESULT_FAIL;
     }
@@ -177,7 +177,7 @@ Result LocalizationComponent::NotifyOfRobotState(const RobotState& msg)
   return lastResult;
 }
 
-void LocalizationComponent::Delocalize(bool isCarryingObject)
+void LocalizationComponent::Delocalize()
 {
   _isLocalized = false;
   _localizedToID.UnSet();
@@ -254,15 +254,6 @@ void LocalizationComponent::Delocalize(bool isCarryingObject)
                                          worldOrigin.GetName().c_str());
   vizm->EraseAllVizObjects();
 
-  // Sanity check carrying state
-  if (isCarryingObject != _robot->GetCarryingComponent().IsCarryingObject())
-  {
-    LOG_WARNING("Robot.Delocalize.IsCarryingObjectMismatch",
-                "Passed-in isCarryingObject=%c, IsCarryingObject()=%c",
-                isCarryingObject   ? 'Y' : 'N',
-                _robot->GetCarryingComponent().IsCarryingObject() ? 'Y' : 'N');
-  }
-
   // Have to do this _after_ clearing the pose confirmer because UpdateObjectOrigin
   // adds the carried objects to the pose confirmer in their newly updated pose,
   // but _before_ deleting zombie objects (since dirty carried objects may get
@@ -294,7 +285,7 @@ void LocalizationComponent::Delocalize(bool isCarryingObject)
   DASMSG(robot_delocalized,
          "robot.delocalized",
          "The robot has delocalized. This event occurs any time the robot delocalizes.");
-  DASMSG_SET(i1, isCarryingObject, "1 if carrying an object, null if not");
+  DASMSG_SET(i1, _robot->GetCarryingComponent().IsCarryingObject(), "1 if carrying an object, null if not");
   DASMSG_SEND();
 
 } // Delocalize()

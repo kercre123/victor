@@ -273,8 +273,7 @@ TEST_F(BlockWorldTest, LocalizeToCharger)
   fakeTimestamp_ms += 10;
   FakeRobotState(fakeTimestamp_ms);
   
-  const bool isCarryingObject = false;
-  _robot->GetLocalizationComponent().Delocalize(isCarryingObject);
+  _robot->GetLocalizationComponent().Delocalize();
   
   ASSERT_FALSE(_robot->GetLocalizationComponent().IsLocalized());
   

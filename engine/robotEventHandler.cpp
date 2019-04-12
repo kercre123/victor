@@ -1593,7 +1593,7 @@ void RobotEventHandler::HandleMessage(const ExternalInterface::ForceDelocalizeRo
 
     robot->SendRobotMessage<RobotInterface::ForceDelocalizeSimulatedRobot>();
   } else {
-    robot->GetLocalizationComponent().Delocalize( robot->GetCarryingComponent().IsCarryingObject() );
+    robot->GetLocalizationComponent().Delocalize();
   }
 }
 

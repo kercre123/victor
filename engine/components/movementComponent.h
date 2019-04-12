@@ -66,7 +66,7 @@ public:
 
   // Checks for unexpected movement specifically while turning such as
   // - Cozmo is turning one direction but you turn him the other way
-  // - Cozmo is turning one direction and you turn him faster so he overshoots his turn angle
+  // - Cozmo is turning one direction and you turn him faster so he overshoots his turn angle 
   // - Cozmo is stuck on an object and is unable to turn
   void CheckForUnexpectedMovement(const RobotState& robotState);
   
