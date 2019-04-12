@@ -5,12 +5,6 @@
     },
     "deptool": {
         "deps": {
-            "tensorflow": {
-                "checksums": {
-                    "sha256": "11f8230a3da52804ffbd2d5df4388b381164cdaca1f7d6836477f93f2df21c7e"
-                },
-                "version": "v1.9.0-anki"
-            }
         },
         "project": "victor",
         "url_prefix": "https://sai-general.s3.amazonaws.com/build-assets/deps/victor/"
