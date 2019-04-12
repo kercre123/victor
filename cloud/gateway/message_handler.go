@@ -225,42 +225,6 @@ func CladRobotChangedObservedFaceIDToProto(msg *gw_clad.RobotChangedObservedFace
 	}
 }
 
-func CladRobotObservedMotionToProto(msg *gw_clad.RobotObservedMotion) *extint.RobotObservedMotion {
-	return &extint.RobotObservedMotion{
-		Timestamp:     msg.Timestamp,
-		ImgArea:       msg.ImgArea,
-		ImgX:          int32(msg.ImgX),
-		ImgY:          int32(msg.ImgY),
-
-		GroundArea:    msg.GroundArea,
-		GroundX:       int32(msg.GroundX),
-		GroundY:       int32(msg.GroundY),
-
-		TopImgArea:    msg.TopImgArea,
-		TopImgX:       int32(msg.TopImgX),
-		TopImgY:       int32(msg.TopImgY),
-
-		BottomImgArea: msg.BottomImgArea,
-		BottomImgX:    int32(msg.BottomImgX),
-		BottomImgY:    int32(msg.BottomImgY),
-
-		LeftImgArea:   msg.LeftImgArea,
-		LeftImgX:      int32(msg.LeftImgX),
-		LeftImgY:      int32(msg.LeftImgY),
-
-		RightImgArea:  msg.RightImgArea,
-		RightImgX:     int32(msg.RightImgX),
-		RightImgY:     int32(msg.RightImgY),
-	}
-}
-
-func CladRobotErasedEnrolledFaceToProto(msg *gw_clad.RobotErasedEnrolledFace) *extint.RobotErasedEnrolledFace {
-	return &extint.RobotErasedEnrolledFace{
-		FaceId:         msg.FaceID,
-		Name:           msg.Name,
-	}
-}
-
 func CladPoseToProto(msg *gw_clad.PoseStruct3d) *extint.PoseStruct {
 	return &extint.PoseStruct{
 		X:        msg.X,

@@ -116,19 +116,22 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
     auto helper = MakeAnkiEventUtil(*context->GetExternalInterface(), *this, _signalHandles);
 
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotProcessedImage>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedMotion>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotErasedEnrolledFace>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotRenamedEnrolledFace>();
   }
 
   // Disable/Unsubscribe from MirrorMode when we enter pairing.
   // This is to prevent SDK requested MirrorMode from drawing over the pairing screens
   auto setConnectionStatusCallback = [this](const GameToEngineEvent& event) {
-     const auto& msg = event.GetData().Get_SetConnectionStatus();
-     if (msg.status != SwitchboardInterface::ConnectionStatus::NONE &&
-         msg.status != SwitchboardInterface::ConnectionStatus::COUNT &&
-         msg.status != SwitchboardInterface::ConnectionStatus::END_PAIRING)
-     {
-       DisableMirrorMode();
-     }
-   };
+    const auto& msg = event.GetData().Get_SetConnectionStatus();
+    if (msg.status != SwitchboardInterface::ConnectionStatus::NONE &&
+        msg.status != SwitchboardInterface::ConnectionStatus::COUNT &&
+        msg.status != SwitchboardInterface::ConnectionStatus::END_PAIRING)
+    {
+      DisableMirrorMode();
+    }
+  };
 
   _signalHandles.push_back(_robot->GetExternalInterface()->Subscribe(GameToEngineTag::SetConnectionStatus,
                                                                      setConnectionStatusCallback));
@@ -139,7 +142,51 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
       auto streamEvent = event.GetData().Get_audioStreamStatusEvent();
       HandleStreamStatusEvent(streamEvent.streamResultID, streamEvent.audioReceived,
                   streamEvent.audioPlayed);
-  }));                                                                     
+  }));
+}
+
+template<>
+void SDKComponent::HandleMessage(const ExternalInterface::RobotObservedMotion& msg)
+{
+  auto* gi = _robot->GetGatewayInterface();
+  auto* observedMsg = new external_interface::RobotObservedMotion();
+  observedMsg->set_timestamp(msg.timestamp);
+  observedMsg->set_img_area(msg.img_area);
+  observedMsg->set_img_x(msg.img_x);
+  observedMsg->set_img_y(msg.img_y);
+  observedMsg->set_ground_area(msg.ground_area);
+  observedMsg->set_ground_x(msg.ground_x);
+  observedMsg->set_ground_y(msg.ground_y);
+  observedMsg->set_top_img_area(msg.top_img_area);
+  observedMsg->set_top_img_x(msg.top_img_x);
+  observedMsg->set_top_img_y(msg.top_img_y);
+  observedMsg->set_bottom_img_area(msg.bottom_img_area);
+  observedMsg->set_bottom_img_x(msg.bottom_img_x);
+  observedMsg->set_bottom_img_y(msg.bottom_img_y);
+  observedMsg->set_left_img_area(msg.left_img_area);
+  observedMsg->set_left_img_x(msg.left_img_x);
+  observedMsg->set_left_img_y(msg.left_img_y);
+  observedMsg->set_right_img_area(msg.right_img_area);
+  observedMsg->set_right_img_x(msg.right_img_x);
+  observedMsg->set_right_img_y(msg.right_img_y);
+  
+  gi->Broadcast(ExternalMessageRouter::Wrap(observedMsg));
+}
+
+template<>
+void SDKComponent::HandleMessage(const ExternalInterface::RobotErasedEnrolledFace& msg)
+{
+  auto* gi = _robot->GetGatewayInterface();
+  auto* erasedMsg = new external_interface::RobotErasedEnrolledFace(msg.faceID, msg.name);
+  gi->Broadcast(ExternalMessageRouter::Wrap(erasedMsg));
+}
+
+template<>
+void SDKComponent::HandleMessage(const Vision::RobotRenamedEnrolledFace& msg)
+{
+  auto* gi = _robot->GetGatewayInterface();
+  auto* renamedMsg = new external_interface::RobotRenamedEnrolledFace(msg.faceID, msg.name);
+  gi->Broadcast(ExternalMessageRouter::Wrap(renamedMsg));
 }
 
 void SDKComponent::HandleStreamStatusEvent(SDKAudioStreamingState streamStatusId, int audioFramesReceived, int audioFramesPlayed) {
