@@ -129,6 +129,9 @@ EComputePathStatus XYPlanner::InitializePlanner(const Pose2d& start, const std::
       _collisionPenalty = currentPenalty;
       return EComputePathStatus::NoPlanNeeded;
     }
+    LOG_INFO("XYPlanner.InitializePlanner.CollisionCostIncreased",
+             "Replanning. Old=%6.6f New=%6.6f",
+             _collisionPenalty, currentPenalty);
   }
 
   _path.Clear();
@@ -216,6 +219,16 @@ void XYPlanner::StartPlanner()
 
     _path = BuildPath( plan );
     _collisionPenalty = GetPathCollisionPenalty( _path );
+    // Update the selected goal target index, by checking the end pose
+    //  and finding the nearest goal index matching that.
+    float x, y, t;
+    _path.GetSegmentConstRef(_path.GetNumSegments()-1).GetEndPose(x,y,t);
+    _selectedTargetIdx = FindGoalIndex({x,y});
+    ANKI_VERIFY(_selectedTargetIdx < _targets.size(), 
+                "XYPlanner.StartPlanner.InvalidGoalIndexSelected",
+                "totalGoals=%zd nearestIdx=%u", _targets.size(), _selectedTargetIdx);
+    
+    _hasValidPath = true;
     _status = EPlannerStatus::CompleteWithPlan;
   } else {
     LOG_WARNING("XYPlanner.StartPlanner", "No path found!" );
@@ -231,38 +244,11 @@ void XYPlanner::StartPlanner()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool XYPlanner::GetCompletePath_Internal(const Pose3d& robotPose, Planning::Path &path)
-{ 
-  Planning::GoalID ignore;
-  return GetCompletePath_Internal(robotPose, path, ignore);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool XYPlanner::GetCompletePath_Internal(const Pose3d& robotPose, Planning::Path &path, Planning::GoalID& targetIndex)
-{ 
-  if ( !_contextMutex.try_lock() && ( _status == EPlannerStatus::Error || _status == EPlannerStatus::Running ) ) {
-    if (_status == EPlannerStatus::Error || _status == EPlannerStatus::Running ) {
-      LOG_WARNING("XYPlanner.GetCompletePath_Internal", "Tried to get the path while planner was running");
-      return false;
-    } else {
-      _contextMutex.lock();
-    }
-  }
-
-  std::lock_guard<std::recursive_mutex> lg(_contextMutex, std::adopt_lock); 
-
-  path = _path; 
-  float x, y, t;
-  _path[_path.GetNumSegments()-1].GetEndPose(x,y,t);
-  targetIndex = FindGoalIndex({x,y});
-  return (_path.GetNumSegments() > 0) && (targetIndex < _targets.size());
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 inline Planning::GoalID XYPlanner::FindGoalIndex(const Point2f& p) const
 {
   const auto isPose = [&p](const Pose2d& t) { return IsNearlyEqual(p, t.GetTranslation()); };
-  return std::find_if(_targets.begin(), _targets.end(), isPose) - _targets.begin();
+  // Will be _targets.size() if no match was found
+  return std::distance(_targets.begin(), std::find_if(_targets.begin(), _targets.end(), isPose));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -372,10 +358,10 @@ bool XYPlanner::CheckIsPathSafe(const Planning::Path& path, float startAngle, Pl
 
   validPath.Clear();
   for (int i = 0; i < path.GetNumSegments(); ++i) {
-    // TODO (VIC-4315) return the actual safe subpath. It might need splitting into smaller components if the
+    // TODO VIC-4315 return the actual safe subpath. It might need splitting into smaller components if the
     // current segment is long and only part of it is unsafe.
     if ( !isSafe(path.GetSegmentConstRef(i)) ) { return false; }
-  } 
+  }
   return true;
 }
 
@@ -392,8 +378,9 @@ float XYPlanner::GetPathCollisionPenalty(const Planning::Path& path) const
   };
 
   float retv = 0.f;
-  for (int i = 0; i < path.GetNumSegments(); ++i) { 
-    retv += getCost(path.GetSegmentConstRef(i)); 
+  for (int i = 0; i < path.GetNumSegments(); ++i) {
+    const float segmentCost = getCost(path.GetSegmentConstRef(i));
+    retv += segmentCost;
   } 
   return retv;
 }

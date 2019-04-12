@@ -62,7 +62,10 @@ TEST(MinAnglePlanner, Straight)
   Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
 
-  bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);
+  bool hasPath = planner->HasCompletePath();
+  path = planner->GetCompletePath();
+  selectedTargetIdx = planner->GetPathSelectedTargetIndex();
+  
   ASSERT_TRUE(hasPath);
   EXPECT_EQ(selectedTargetIdx, 0) << "only one target, should have selected it";
 
@@ -91,7 +94,10 @@ TEST(MinAnglePlanner, Simple)
   Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
 
-  bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);
+  bool hasPath = planner->HasCompletePath();
+  path = planner->GetCompletePath();
+  selectedTargetIdx = planner->GetPathSelectedTargetIndex();
+  
   ASSERT_TRUE(hasPath);
   EXPECT_EQ(selectedTargetIdx, 0) << "only one target, should have selected it";
 
@@ -122,7 +128,10 @@ TEST(MinAnglePlanner, NoFinalTurn)
   Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
 
-  bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);
+  bool hasPath = planner->HasCompletePath();
+  path = planner->GetCompletePath();
+  selectedTargetIdx = planner->GetPathSelectedTargetIndex();
+  
   ASSERT_TRUE(hasPath);
   EXPECT_EQ(selectedTargetIdx, 0) << "only one target, should have selected it";
 
@@ -152,7 +161,10 @@ TEST(MinAnglePlanner, StraightAndTurn)
   Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
 
-  bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);
+  bool hasPath = planner->HasCompletePath();
+  path = planner->GetCompletePath();
+  selectedTargetIdx = planner->GetPathSelectedTargetIndex();
+  
   ASSERT_TRUE(hasPath);
   EXPECT_EQ(selectedTargetIdx, 0) << "only one target, should have selected it";
 
@@ -181,7 +193,10 @@ TEST(MinAnglePlanner, NoBackup)
   Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
 
-  bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);
+  bool hasPath = planner->HasCompletePath();
+  path = planner->GetCompletePath();
+  selectedTargetIdx = planner->GetPathSelectedTargetIndex();
+  
   ASSERT_TRUE(hasPath);
   EXPECT_EQ(selectedTargetIdx, 0) << "only one target, should have selected it";
 
@@ -211,7 +226,10 @@ TEST(MinAnglePlanner, TurnOnly)
   Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
 
-  bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);
+  bool hasPath = planner->HasCompletePath();
+  path = planner->GetCompletePath();
+  selectedTargetIdx = planner->GetPathSelectedTargetIndex();
+  
   ASSERT_TRUE(hasPath);
   EXPECT_EQ(selectedTargetIdx, 0) << "only one target, should have selected it";
 
@@ -239,7 +257,10 @@ TEST(MinAnglePlanner, OldBug)
   Planning::GoalID selectedTargetIdx = 100;
   Planning::Path path;
 
-  bool hasPath = planner->GetCompletePath(start, path, selectedTargetIdx);
+  bool hasPath = planner->HasCompletePath();
+  path = planner->GetCompletePath();
+  selectedTargetIdx = planner->GetPathSelectedTargetIndex();
+
   ASSERT_TRUE(hasPath);
   EXPECT_EQ(selectedTargetIdx, 0) << "only one target, should have selected it";
 
