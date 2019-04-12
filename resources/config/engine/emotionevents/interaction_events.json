@@ -176,6 +176,10 @@
         {
           "emotionType" : "Trust",
           "value" : 0.1
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.01
         }
       ],
       "repetitionPenalty": {
@@ -193,6 +197,10 @@
         {
           "emotionType" : "Trust",
           "value" : -1.0
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.01
         }
       ],
       "repetitionPenalty": {
@@ -210,6 +218,14 @@
         {
           "emotionType" : "Trust",
           "value" : 0.1
+        },
+        {
+          "emotionType" : "Happy",
+          "value" : 0.1
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : -0.01
         }
       ],
       "repetitionPenalty": {
@@ -227,6 +243,18 @@
         {
           "emotionType" : "Trust",
           "value" : 0.1
+        },
+        {
+          "emotionType" : "Happy",
+          "value" : 0.1
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : -0.08
+        },
+        {
+          "emotionType" : "Social",
+          "value" : 0.2
         }
       ],
       "repetitionPenalty": {
@@ -244,6 +272,18 @@
         {
           "emotionType" : "Trust",
           "value" : 0.1
+        },
+        {
+          "emotionType" : "Happy",
+          "value" : 1.0
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : -0.15
+        },
+        {
+          "emotionType" : "Social",
+          "value" : 1.0
         }
       ],
       "repetitionPenalty": {
