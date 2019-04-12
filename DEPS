@@ -5,12 +5,6 @@
     },
     "deptool": {
         "deps": {
-            "opus": {
-                "checksums": {
-                    "sha256": "4ad513125a5377372a1639ca571af6bd5c2771148a440b13d5ac154789b48f9f"
-                },
-                "version": "v1.3"
-            },
             "protobuf": {
                 "checksums": {
                     "sha256": "9c0699bf3aad7d2ea3b3ad38e32a85edd0f5143193debaaaf9270f1e9f0300ea"
