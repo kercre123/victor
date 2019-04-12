@@ -98,6 +98,7 @@ public:
                                    const PoseFrameID_t&      frameId) const;
 
 
+  Result NotifyOfRobotState(const RobotState& msg);
 
 private:
   // Sets robot pose but does not update the pose on the robot.
@@ -119,7 +120,8 @@ private:
   PoseOriginList _poseOrigins;
 
   Pose3d         _driveCenterPose;
-  PoseFrameID_t  _frameId                   = 0;
+  PoseFrameID_t  _frameId               = 0;
+  u32            _numMismatchedFrameIDs = 0;
 
 
   bool     _isLocalized                  = true;
@@ -128,6 +130,7 @@ private:
   ObjectID _localizedToID;                           // ID of mat object robot is localized to
   ObjectID _chargerID;                                // Charge base ID that is being docked to
   bool     _needToSendLocalizationUpdate = false;
+
 
   // f32      _localizedMarkerDistToCameraSq = -1.0f;   // Stores (squared) distance to the closest observed marker of the object we're localized to
 };

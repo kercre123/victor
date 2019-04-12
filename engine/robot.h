@@ -539,8 +539,6 @@ protected:
   RobotTimeStamp_t _lastMsgTimestamp;
   bool             _newStateMsgAvailable = false;
 
-  u32            _numMismatchedFrameIDs     = 0; // TODO: move to LocalizationComponent
-
   // Whether or not to ignore all external action messages
   bool _ignoreExternalActions = false;
 

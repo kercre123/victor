@@ -73,12 +73,116 @@ void LocalizationComponent::UpdateDependent(const RobotCompMap& dependentComps)
   }
 }
 
+Result LocalizationComponent::NotifyOfRobotState(const RobotState& msg) 
+{
+  Result lastResult = RESULT_OK;
+
+  DEV_ASSERT(msg.pose_frame_id <= GetPoseFrameID(), "Robot.UpdateFullRobotState.FrameFromFuture");
+  const bool frameIsCurrent = msg.pose_frame_id == GetPoseFrameID();
+
+  // This is "normal" mode, where we update pose history based on the
+  // reported odometry from the physical robot
+
+  // Ignore physical robot's notion of z from the message? (msg.pose_z)
+  f32 pose_z = 0.f;
+
+
+  // Need to put the odometry update in terms of the current robot origin
+  if (!_poseOrigins.ContainsOriginID(msg.pose_origin_id))
+  {
+    LOG_WARNING("Robot.UpdateFullRobotState.BadOriginID",
+                "Received RobotState with originID=%u, only %zu pose origins available",
+                msg.pose_origin_id, _poseOrigins.GetSize());
+    return RESULT_FAIL;
+  }
+
+  const Pose3d& origin = _poseOrigins.GetOriginByID(msg.pose_origin_id);
+
+  // Initialize new pose to be within the reported origin
+  Pose3d newPose(msg.pose.angle, Z_AXIS_3D(), {msg.pose.x, msg.pose.y, msg.pose.z}, origin);
+
+  // It's possible the pose origin to which this update refers has since been
+  // rejiggered and is now the child of another origin. To add to history below,
+  // we must first flatten it. We do all this before "fixing" pose_z because pose_z
+  // will be w.r.t. robot origin so we want newPose to already be as well.
+  newPose = newPose.GetWithRespectToRoot();
+
+  if(msg.pose_frame_id == GetPoseFrameID()) {
+    // Frame IDs match. Use the robot's current Z (but w.r.t. world origin)
+    pose_z = _robot->GetPose().GetWithRespectToRoot().GetTranslation().z();
+  } else {
+    // This is an old odometry update from a previous pose frame ID. We
+    // need to look up the correct Z value to use for putting this
+    // message's (x,y) odometry info into history. Since it comes from
+    // pose history, it will already be w.r.t. world origin, since that's
+    // how we store everything in pose history.
+    HistRobotState histState;
+    lastResult = _robot->GetStateHistory()->GetLastStateWithFrameID(msg.pose_frame_id, histState);
+    if (lastResult != RESULT_OK) {
+      LOG_ERROR("Robot.UpdateFullRobotState.GetLastPoseWithFrameIdError",
+                "Failed to get last pose from history with frame ID=%d",
+                msg.pose_frame_id);
+      return lastResult;
+    }
+    pose_z = histState.GetPose().GetWithRespectToRoot().GetTranslation().z();
+  }
+
+  newPose.SetTranslation({newPose.GetTranslation().x(), newPose.GetTranslation().y(), pose_z});
+
+
+  // Add to history
+  const HistRobotState histState(newPose,
+                                  msg,
+                                  _robot->GetProxSensorComponent().GetLatestProxData() );
+  lastResult = _robot->GetStateHistory()->AddRawOdomState(msg.timestamp, histState);
+
+  if (lastResult != RESULT_OK) {
+    LOG_WARNING("Robot.UpdateFullRobotState.AddPoseError",
+                "AddRawOdomStateToHistory failed for timestamp=%d", msg.timestamp);
+    return lastResult;
+  }
+
+  Pose3d prevDriveCenterPose ;
+  _robot->ComputeDriveCenterPose(_robot->GetPose(), prevDriveCenterPose);
+
+  if (UpdateCurrPoseFromHistory() == false) {
+    lastResult = RESULT_FAIL;
+  }
+
+  if (frameIsCurrent) {
+    _numMismatchedFrameIDs = 0;
+  } else {
+    // COZMO-5850 (Al) This is to catch the issue where our frameID is incremented but fails to send
+    // to the robot due to some origin issue. Somehow the robot's pose becomes an origin and doesn't exist
+    // in the PoseOriginList. The frameID mismatch then causes all sorts of issues in things (ie VisionSystem
+    // won't process the next image). Delocalizing will fix the mismatch by creating a new origin and sending
+    // a localization update
+    static const u32 kNumTicksWithMismatchedFrameIDs = 100; // 3 seconds (called each RobotState msg)
+
+    ++_numMismatchedFrameIDs;
+
+    if (_numMismatchedFrameIDs > kNumTicksWithMismatchedFrameIDs)
+    {
+      LOG_ERROR("Robot.UpdateFullRobotState.MismatchedFrameIDs",
+                "Robot[%u] and engine[%u] frameIDs are mismatched, delocalizing",
+                msg.pose_frame_id,
+                GetPoseFrameID());
+
+      Delocalize(_robot->GetCarryingComponent().IsCarryingObject());
+
+      return RESULT_FAIL;
+    }
+  }
+
+  return lastResult;
+}
+
 void LocalizationComponent::Delocalize(bool isCarryingObject)
 {
   _isLocalized = false;
   _localizedToID.UnSet();
   _localizedToFixedObject = false;
-  // _localizedMarkerDistToCameraSq = -1.f;
+  _numMismatchedFrameIDs = 0;
 
   // NOTE: no longer doing this here because Delocalize() can be called by
   //  BlockWorld::ClearAllExistingObjects, resulting in a weird loop...
@@ -100,10 +204,10 @@ void LocalizationComponent::Delocalize(bool isCarryingObject)
 
   // Add a new origin
   const PoseOriginID_t worldOriginID = _poseOrigins.AddNewOrigin();
-  const Pose3d& worldOrigin = GetPoseOriginList().GetCurrentOrigin();
-  DEV_ASSERT_MSG(worldOriginID == GetPoseOriginList().GetCurrentOriginID(),
+  const Pose3d& worldOrigin = _poseOrigins.GetCurrentOrigin();
+  DEV_ASSERT_MSG(worldOriginID == _poseOrigins.GetCurrentOriginID(),
                  "Robot.Delocalize.UnexpectedNewWorldOriginID", "%d vs. %d",
-                 worldOriginID, GetPoseOriginList().GetCurrentOriginID());
+                 worldOriginID, _poseOrigins.GetCurrentOriginID());
   DEV_ASSERT_MSG(worldOriginID == worldOrigin.GetID(),
                  "Robot.Delocalize.MismatchedWorldOriginID", "%d vs. %d",
                  worldOriginID, worldOrigin.GetID());
@@ -111,7 +215,7 @@ void LocalizationComponent::Delocalize(bool isCarryingObject)
   // Log delocalization, new origin name, and num origins to DAS
   LOG_INFO("Robot.Delocalize",
            "Delocalizing robot. New origin: %s. NumOrigins=%zu",
-           worldOrigin.GetName().c_str(), GetPoseOriginList().GetSize());
+           worldOrigin.GetName().c_str(), _poseOrigins.GetSize());
 
   _robot->GetComponent<FullRobotPose>().GetPose().SetRotation(0, Z_AXIS_3D());
   _robot->GetComponent<FullRobotPose>().GetPose().SetTranslation({0.f, 0.f, 0.f});
@@ -146,7 +250,7 @@ void LocalizationComponent::Delocalize(bool isCarryingObject)
                                          "LocalizedTo: <nothing>");
   vizm->SetText(TextLabelType::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
-                                         GetPoseOriginList().GetSize(),
+                                         _poseOrigins.GetSize(),
                                          worldOrigin.GetName().c_str());
   vizm->EraseAllVizObjects();
 
@@ -178,16 +282,9 @@ void LocalizationComponent::Delocalize(bool isCarryingObject)
 
   // If we don't know where we are, we can't know where we are going.
   _robot->GetPathComponent().Abort();
-
-  // notify blockworld
   _robot->GetBlockWorld().OnRobotDelocalized(worldOriginID);
-
-  // notify faceworld
   _robot->GetFaceWorld().OnRobotDelocalized(worldOriginID);
-
-  // notify behavior whiteboard
   _robot->GetAIComponent().OnRobotDelocalized();
-
   _robot->GetMoveComponent().OnRobotDelocalized();
 
   // send message to game. At the moment I implement this so that Webots can update the render, but potentially
@@ -255,7 +352,7 @@ Result LocalizationComponent::SetLocalizedTo(const ObservableObject* object)
                                          ObjectTypeToString(object->GetType()), _localizedToID.GetValue());
   _robot->GetContext()->GetVizManager()->SetText(TextLabelType::WORLD_ORIGIN, NamedColors::YELLOW,
                                          "WorldOrigin[%lu]: %s",
-                                         GetPoseOriginList().GetSize(),
+                                         _poseOrigins.GetSize(),
                                          GetWorldOrigin().GetName().c_str());
 
   DASMSG(robot_localized_to_object, "robot.localized_to_object", "The robot has localized to an object");
@@ -271,7 +368,7 @@ Result LocalizationComponent::SetLocalizedTo(const ObservableObject* object)
 } // SetLocalizedTo()
 
 Result LocalizationComponent::LocalizeToObject(const ObservableObject* seenObject,
-                               ObservableObject* existingObject)
+                                               ObservableObject* existingObject)
 {
   Result lastResult = RESULT_OK;
 
@@ -367,7 +464,7 @@ Result LocalizationComponent::LocalizeToObject(const ObservableObject* seenObjec
   // If the robot's world origin is about to change by virtue of being localized
   // to existingObject, rejigger things so anything seen while the robot was
   // rooted to this world origin will get updated to be w.r.t. the new origin.
-  const Pose3d& origOrigin = GetPoseOriginList().GetCurrentOrigin();
+  const Pose3d& origOrigin = _poseOrigins.GetCurrentOrigin();
   if (!existingObject->GetPose().HasSameRootAs(origOrigin))
   {
     LOG_INFO("Robot.LocalizeToObject.RejiggeringOrigins",
@@ -375,7 +472,7 @@ Result LocalizationComponent::LocalizeToObject(const ObservableObject* seenObjec
              origOrigin.GetName().c_str(),
              existingObject->GetPose().FindRoot().GetName().c_str());
 
-    const PoseOriginID_t origOriginID = GetPoseOriginList().GetCurrentOriginID();
+    const PoseOriginID_t origOriginID = _poseOrigins.GetCurrentOriginID();
 
     // Update the origin to which _worldOrigin currently points to contain
     // the transformation from its current pose to what is about to be the
@@ -386,7 +483,7 @@ Result LocalizationComponent::LocalizeToObject(const ObservableObject* seenObjec
     Result result = _poseOrigins.Rejigger(robotPoseWrtObject.FindRoot(), transform);
     if (ANKI_VERIFY(RESULT_OK == result, "Robot.LocalizeToObject.RejiggerFailed", ""))
     {
-      const PoseOriginID_t newOriginID = GetPoseOriginList().GetCurrentOriginID();
+      const PoseOriginID_t newOriginID = _poseOrigins.GetCurrentOriginID();
 
       // Now we need to go through all objects whose poses have been adjusted
       // by this origin switch and notify the outside world of the change.
@@ -481,7 +578,7 @@ Result LocalizationComponent::SendAbsLocalizationUpdate(const Pose3d&           
   DEV_ASSERT(pose.HasSameRootAs(origin), "Robot.SendAbsLocalizationUpdate.ParentOriginMismatch");
 
   const PoseOriginID_t originID = origin.GetID();
-  if (!GetPoseOriginList().ContainsOriginID(originID))
+  if (!_poseOrigins.ContainsOriginID(originID))
   {
     LOG_ERROR("Robot.SendAbsLocalizationUpdate.InvalidPoseOriginID",
               "Origin %d(%s)", originID, origin.GetName().c_str());

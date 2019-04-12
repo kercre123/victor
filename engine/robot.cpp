@@ -835,116 +835,14 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   _rightWheelSpeed_mmps = msg.rwheel_speed_mmps;
 
   // TODO: move relevent parts all into LocalizationComponent
-  if (isDelocalizing)
-  {
-    _numMismatchedFrameIDs = 0;
-
+  if (isDelocalizing) {
     GetLocalizationComponent().Delocalize(isCarryingObject);
-  }
-  else
-  {
-    DEV_ASSERT(msg.pose_frame_id <= GetPoseFrameID(), "Robot.UpdateFullRobotState.FrameFromFuture");
-    const bool frameIsCurrent = msg.pose_frame_id == GetPoseFrameID();
-
-    // This is "normal" mode, where we update pose history based on the
-    // reported odometry from the physical robot
-
-    // Ignore physical robot's notion of z from the message? (msg.pose_z)
-    f32 pose_z = 0.f;
-
-
-    // Need to put the odometry update in terms of the current robot origin
-    if (!GetPoseOriginList().ContainsOriginID(msg.pose_origin_id))
-    {
-      LOG_WARNING("Robot.UpdateFullRobotState.BadOriginID",
-                  "Received RobotState with originID=%u, only %zu pose origins available",
-                  msg.pose_origin_id, GetPoseOriginList().GetSize());
-      return RESULT_FAIL;
-    }
-
-    const Pose3d& origin = GetPoseOriginList().GetOriginByID(msg.pose_origin_id);
-
-    // Initialize new pose to be within the reported origin
-    Pose3d newPose(msg.pose.angle, Z_AXIS_3D(), {msg.pose.x, msg.pose.y, msg.pose.z}, origin);
-
-    // It's possible the pose origin to which this update refers has since been
-    // rejiggered and is now the child of another origin. To add to history below,
-    // we must first flatten it. We do all this before "fixing" pose_z because pose_z
-    // will be w.r.t. robot origin so we want newPose to already be as well.
-    newPose = newPose.GetWithRespectToRoot();
-
-    if(msg.pose_frame_id == GetPoseFrameID()) {
-      // Frame IDs match. Use the robot's current Z (but w.r.t. world origin)
-      pose_z = GetPose().GetWithRespectToRoot().GetTranslation().z();
-    } else {
-      // This is an old odometry update from a previous pose frame ID. We
-      // need to look up the correct Z value to use for putting this
-      // message's (x,y) odometry info into history. Since it comes from
-      // pose history, it will already be w.r.t. world origin, since that's
-      // how we store everything in pose history.
-      HistRobotState histState;
-      lastResult = GetStateHistory()->GetLastStateWithFrameID(msg.pose_frame_id, histState);
-      if (lastResult != RESULT_OK) {
-        LOG_ERROR("Robot.UpdateFullRobotState.GetLastPoseWithFrameIdError",
-                  "Failed to get last pose from history with frame ID=%d",
-                  msg.pose_frame_id);
-        return lastResult;
-      }
-      pose_z = histState.GetPose().GetWithRespectToRoot().GetTranslation().z();
-    }
-
-    newPose.SetTranslation({newPose.GetTranslation().x(), newPose.GetTranslation().y(), pose_z});
-
-
-    // Add to history
-    const HistRobotState histState(newPose,
-                                   msg,
-                                   GetProxSensorComponent().GetLatestProxData() );
-    lastResult = GetStateHistory()->AddRawOdomState(msg.timestamp, histState);
-
-    if (lastResult != RESULT_OK) {
-      LOG_WARNING("Robot.UpdateFullRobotState.AddPoseError",
-                  "AddRawOdomStateToHistory failed for timestamp=%d", msg.timestamp);
-      return lastResult;
-    }
-
-    Pose3d prevDriveCenterPose ;
-    ComputeDriveCenterPose(GetPose(), prevDriveCenterPose);
-
-    if (GetLocalizationComponent().UpdateCurrPoseFromHistory() == false) {
-      lastResult = RESULT_FAIL;
-    }
-
-    if (frameIsCurrent)
-    {
-      _numMismatchedFrameIDs = 0;
-    } else {
-      // COZMO-5850 (Al) This is to catch the issue where our frameID is incremented but fails to send
-      // to the robot due to some origin issue. Somehow the robot's pose becomes an origin and doesn't exist
-      // in the PoseOriginList. The frameID mismatch then causes all sorts of issues in things (ie VisionSystem
-      // won't process the next image). Delocalizing will fix the mismatch by creating a new origin and sending
-      // a localization update
-      static const u32 kNumTicksWithMismatchedFrameIDs = 100; // 3 seconds (called each RobotState msg)
-
-      ++_numMismatchedFrameIDs;
-
-      if (_numMismatchedFrameIDs > kNumTicksWithMismatchedFrameIDs)
-      {
-        LOG_ERROR("Robot.UpdateFullRobotState.MismatchedFrameIDs",
-                  "Robot[%u] and engine[%u] frameIDs are mismatched, delocalizing",
-                  msg.pose_frame_id,
-                  GetPoseFrameID());
-
-        _numMismatchedFrameIDs = 0;
-
-        GetLocalizationComponent().Delocalize(GetCarryingComponent().IsCarryingObject());
-
-        return RESULT_FAIL;
-      }
-
+  } else {
+    auto localizationResult = GetLocalizationComponent().NotifyOfRobotState(msg);
+    if (localizationResult != RESULT_OK) {
+      return localizationResult;
     }
   }
-
 
   // Update sensor components:
   GetBatteryComponent().NotifyOfRobotState(msg);
