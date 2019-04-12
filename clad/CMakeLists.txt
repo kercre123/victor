@@ -15,6 +15,9 @@ set(CLAD_GO "${CLAD_EMITTER_DIR}/Go_emitter.py")
 set(CLAD_PY "${CLAD_EMITTER_DIR}/Python_emitter.py")
 set(CLAD_HASH "${CLAD_EMITTER_DIR}/ASTHash_emitter.py")
 
+set(VICTOR_EMITTER_DIR "${CMAKE_SOURCE_DIR}/victor-clad/victorEmitters")
+set(CLAD_CPP "${VICTOR_EMITTER_DIR}/CPP_CPPLite_emitter.py")
+
 set(OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/engine")
 set(CLAD_CS_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladCSharp")
 set(CLAD_GO_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/cladgo/src")

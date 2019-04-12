@@ -6,6 +6,9 @@ set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
 set(CLAD_CPP "${CLAD_EMITTER_DIR}/CPP_emitter.py")
 set(CLAD_HASH "${CLAD_EMITTER_DIR}/ASTHash_emitter.py")
 
+set(VICTOR_EMITTER_DIR "${CMAKE_SOURCE_DIR}/victor-clad/victorEmitters")
+set(CLAD_CPP "${VICTOR_EMITTER_DIR}/CPP_CPPLite_emitter.py")
+
 #CLAD_CPP_DECL=../robot/clad/cozmo_CPP_declarations_emitter.py
 #CLAD_CPP_SWITCH=./cozmo_CPP_switch_emitter.py
 #CLAD_HASH=$(CLAD_EMITTER_DIR)/ASTHash_emitter.py

@@ -77,4 +77,8 @@ target_compile_definitions(cti_common_clad_cpplite
   USES_CPPLITE
 )
 
+target_link_libraries(cti_common_clad_cpplite
+  clad
+)
+
 anki_build_target_license(cti_common_clad_cpplite "ANKI")

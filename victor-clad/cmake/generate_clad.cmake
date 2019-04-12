@@ -100,6 +100,10 @@ function(generate_clad_cpplite)
     set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
 
     set(CLAD_CPP "${CLAD_EMITTER_DIR}/CPPLite_emitter.py")
+
+    set(VICTOR_EMITTER_DIR "${CMAKE_SOURCE_DIR}/victor-clad/victorEmitters")
+    set(CLAD_CPP "${VICTOR_EMITTER_DIR}/CPP_CPPLite_emitter.py")
+
     set(CLAD_CPP_EXTS ".h" ".cpp")
     set(CLAD_CPP_FLAGS
         "--max-message-size" "1400"
@@ -238,6 +242,9 @@ function(generate_clad_cpp)
 
     set(CLAD_CPP "${CLAD_EMITTER_DIR}/CPP_emitter.py")
     set(CLAD_CPP_EXTS ".h" ".cpp")
+
+    set(VICTOR_EMITTER_DIR "${CMAKE_SOURCE_DIR}/victor-clad/victorEmitters")
+    set(CLAD_CPP "${VICTOR_EMITTER_DIR}/CPP_CPPLite_emitter.py")
 
     set(OUTPUT_JSON "")
     if(NOT genclad_EXCLUDE_JSON)

@@ -9,7 +9,9 @@ set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/victor-clad/tools/message-buffers")
 set(CLAD_EMITTER_DIR "${CLAD_BASE_DIR}/emitters")
 set(CLAD_CPPLITE "${CLAD_EMITTER_DIR}/CPP_emitter.py")
 set(CLAD_HASH "${CLAD_EMITTER_DIR}/ASTHash_emitter.py")
+
 set(VICTOR_EMITTER_DIR "${CMAKE_SOURCE_DIR}/victor-clad/victorEmitters")
+set(CLAD_CPPLITE "${VICTOR_EMITTER_DIR}/CPP_CPPLite_emitter.py")
 
 set(ENGINE_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/engine")
 set(ROBOT_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/clad/robot")

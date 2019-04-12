@@ -7,6 +7,9 @@ set(CLAD_C "${CLAD_EMITER_DIR}/C_emitter.py")
 set(CLAD_PY "${CLAD_EMITTER_DIR}/Python_emitter.py")
 set(CLAD_HASH "${CLAD_EMITTER_DIR}/ASTHash_emitter.py")
 
+set(VICTOR_EMITTER_DIR "${CMAKE_SOURCE_DIR}/victor-clad/victorEmitters")
+set(CLAD_CPP "${VICTOR_EMITTER_DIR}/CPP_CPPLite_emitter.py")
+
 set(CLAD_INCLUDES
     "${CMAKE_CURRENT_SOURCE_DIR}/sdk"
 )
