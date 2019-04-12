@@ -5,12 +5,6 @@
     },
     "deptool": {
         "deps": {
-            "speexdsp": {
-                "checksums": {
-                    "sha256": "cfcbcfe19fcce8868245997079beb5074c78688979e0e297a14731aa0de6d3cf"
-                },
-                "version": "SpeexDSP-1.2rc3"
-            },
             "tensorflow": {
                 "checksums": {
                     "sha256": "11f8230a3da52804ffbd2d5df4388b381164cdaca1f7d6836477f93f2df21c7e"
