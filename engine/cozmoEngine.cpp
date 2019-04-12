@@ -161,6 +161,13 @@ static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
   ss << micDirectionHistory.GetRecentDirection() << '\n';
   ss << micDirectionHistory.GetSelectedDirection() << '\n';
 
+  const auto& visionComp = robot->GetVisionComponent();
+  const TimeStamp_t framePeriod_ms = visionComp.GetFramePeriod_ms();
+  const TimeStamp_t procPeriod_ms = visionComp.GetProcessingPeriod_ms();
+  
+  ss << std::fixed << std::setprecision(3) << 1.f / Util::MilliSecToSec((f32)framePeriod_ms) << '\n';
+  ss << std::fixed << std::setprecision(3) << 1.f / Util::MilliSecToSec((f32)procPeriod_ms) << '\n';
+
   request->_result = ss.str();
 
   return 1;

@@ -1,0 +1,14 @@
+{
+"salientPoints" : [
+{
+  "timestamp":1234567890,
+  "x_img":0.5,
+  "y_img":0.5,
+  "score":1.0,
+  "area_fraction":-1.0,
+  "salientType":"Face",
+  "description": "{\"name\":\"Fancypants\",\"age\":35,\"emotion\":{\"happiness\":0.9,\"sadness\":0.1}}",
+  "shape":[{"x":0.25,"y": 0.25},{"x":0.75,"y":0.25},{"x":0.75,"y":0.75},{"x":0.25,"y":0.75}]
+}
+]
+}

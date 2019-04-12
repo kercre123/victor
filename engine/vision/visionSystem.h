@@ -56,6 +56,10 @@
 #include <queue>
 
 namespace Anki {
+  
+namespace NeuralNets {
+  class NeuralNetRunner;
+}
  
 namespace Vision {
   class Benchmark;
@@ -64,7 +68,6 @@ namespace Vision {
   class FaceTracker;
   class ImageCache;
   class MarkerDetector;
-  class NeuralNetRunner;
   class PetTracker;
   class ImageCompositor;
 }
@@ -242,10 +245,8 @@ namespace Vector {
     std::unique_ptr<MirrorModeManager>              _mirrorModeManager;
     std::unique_ptr<Vision::Benchmark>              _benchmark;
     
-    std::map<std::string, std::unique_ptr<Vision::NeuralNetRunner>> _neuralNetRunners;
+    std::map<std::string, std::unique_ptr<NeuralNets::NeuralNetRunner>> _neuralNetRunners;
     
-    Vision::ImageRGB                                _neuralNetRunnerImage;
-
     Vision::CompressedImage _compressedDisplayImg;
     s32 _imageCompressQuality = 0;
     
@@ -319,7 +320,7 @@ namespace Vector {
     Result UpdateGroundPlaneClassifier(Vision::ImageCache& image);
     
     void CheckForNeuralNetResults();
-    void AddFakeDetections(const std::set<VisionMode>& modes); // For debugging
+    void AddFakeDetections(const TimeStamp_t atTimestamp, const std::set<VisionMode>& modes); // For debugging
     
     Result SaveSensorData() const;
 

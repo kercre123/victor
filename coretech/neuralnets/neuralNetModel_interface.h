@@ -47,6 +47,7 @@ public:
   // Note that the input imge could be modified (e.g. resized in place)
   virtual Result Detect(Vision::ImageRGB& img, std::list<Vision::SalientPoint>& salientPoints) = 0;
   
+  // Return the network name
   const std::string& GetName() const { return _name; }
   
 protected:

@@ -1243,7 +1243,10 @@ namespace Vector {
           break;
         }
       }
-      _vizManager->DrawCameraPoly(poly, color);
+      if(poly.size() > 0)
+      {
+        _vizManager->DrawCameraPoly(poly, color);
+      }
       _vizManager->DrawCameraText(Point2f(object.x_img, object.y_img), caption, color);
     }
 
