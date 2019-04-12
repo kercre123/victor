@@ -5,12 +5,6 @@
     },
     "deptool": {
         "deps": {
-            "protobuf": {
-                "checksums": {
-                    "sha256": "9c0699bf3aad7d2ea3b3ad38e32a85edd0f5143193debaaaf9270f1e9f0300ea"
-                },
-                "version": "v3.6.1.3"
-            },
             "speexdsp": {
                 "checksums": {
                     "sha256": "cfcbcfe19fcce8868245997079beb5074c78688979e0e297a14731aa0de6d3cf"
