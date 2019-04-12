@@ -1,0 +1,16 @@
+*.a filter=lfs diff=lfs merge=lfs -text
+*.dylib filter=lfs diff=lfs merge=lfs -text
+*.so filter=lfs diff=lfs merge=lfs -text
+*.jar filter=lfs diff=lfs merge=lfs -text
+vicos/lib/libopencv* filter=lfs diff=lfs merge=lfs -text
+modules/imgproc/doc/pics/building_lsd.png filter=lfs diff=lfs merge=lfs -text
+modules/imgproc/doc/pics/integral.png filter=lfs diff=lfs merge=lfs -text
+modules/ml/doc/pics/SVM_Comparison.png filter=lfs diff=lfs merge=lfs -text
+modules/calib3d/doc/pics/pinhole_camera_model.png filter=lfs diff=lfs merge=lfs -text
+modules/imgproc/doc/pics/polar_remap_doc.png filter=lfs diff=lfs merge=lfs -text
+modules/highgui/doc/pics/qtgui.png filter=lfs diff=lfs merge=lfs -text
+modules/java/common_test/res/drawable/lena.png filter=lfs diff=lfs merge=lfs -text
+modules/imgproc/doc/pics/building.jpg filter=lfs diff=lfs merge=lfs -text
+modules/stitching/doc/StitchingPipeline.jpg filter=lfs diff=lfs merge=lfs -text
+modules/calib3d/doc/pics/fisheye_undistorted.jpg filter=lfs diff=lfs merge=lfs -text
+modules/calib3d/doc/pics/stereo_undistort.jpg filter=lfs diff=lfs merge=lfs -text

@@ -5,12 +5,6 @@
     },
     "deptool": {
         "deps": {
-            "opencv": {
-                "checksums": {
-                    "sha256": "0f3263df69448fe9d9fe9ab655f9d9b1c16b616f4208399fbe9f17758807f420"
-                },
-                "version": "3.4.0-victor"
-            },
             "opus": {
                 "checksums": {
                     "sha256": "4ad513125a5377372a1639ca571af6bd5c2771148a440b13d5ac154789b48f9f"
