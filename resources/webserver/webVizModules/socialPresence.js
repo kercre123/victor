@@ -20,7 +20,7 @@
     yaxis: {
       min: -1.05,
       max: 1.05,
-      ticks: [-1.0, 0.0, 1.0],
+      ticks: [-1.0, -0.75, -0.5, -0.25, 0.0, 0.25, 0.5, 0.75, 1.0],
     },
     xaxis: {
       ticks: 10,
@@ -34,7 +34,7 @@
   }      
   
   var first = true;
-  var graphDataToIdxMap = {}
+  var graphDataToIdxMap = {};
   var graphData = [];
   var plotData = [];
   var dumpedData = [];
@@ -57,7 +57,6 @@
   }
 
   function CreateControls( elem, info ) {
-    console.log("Top of CreateControls");
     var container  = $( '#bottomContainer' );
     container.remove( '#slidersCntr,#buttonCntr' );
     //var slidersCntr = $( '<div></div>', {id: 'slidersCntr'} ).appendTo( container );
@@ -498,7 +497,7 @@
         width:250px;
         padding-left:20px;
       }
-
+      
       .legendColorBox {
         // we manually create the boxes below
         display:none;

@@ -32,29 +32,54 @@ namespace {
 }
 
 
+float ExponentialDecay::operator()(float value, float dt_s)
+{
+  float ret = value * pow((1.0 - _ratePerSec), dt_s);
+  // should zero out when we get close to zero
+  if (fabs(ret) < kEpsilon) {
+    ret = 0.0f;
+  }
+  return ret;
+}
+
+
+
+
+
 SocialPresenceEvent::SocialPresenceEvent(std::string name,
-    float decayRatePerSec,
+    std::shared_ptr<IDecayFunction> decayFunction,
     float independentEffect,
     float independentEffectMax,
     float reinforcementEffect,
     float reinforcementEffectMax)
 : _value(0.0),
   _name(name),
-  _decayRatePerSec(decayRatePerSec),
   _independentEffect(independentEffect),
   _independentEffectMax(independentEffectMax),
   _reinforcementEffect(reinforcementEffect),
   _reinforcementEffectMax(reinforcementEffectMax)
-{}
+{
+  _decay = decayFunction;
+}
+
+SocialPresenceEvent::~SocialPresenceEvent()
+{
+  //delete(_decay); // ugh memory management. This assumes exclusive ownership, which seems better than not cleaning up.
+}
 
 
 void SocialPresenceEvent::Update(float dt_s)
 {
+  /*
   _value = _value * pow((1.0 - _decayRatePerSec), dt_s);
   // should zero out when we get close to zero
   if (fabs(_value) < kEpsilon) {
     _value = 0.0f;
   }
+   */
+  LOG_WARNING("SocialPresenceEvent.Update.AboutToCallDecay", "");
+  _value = (*_decay)(_value, dt_s);
+  LOG_WARNING("SocialPresenceEvent.Update.SuccessfullyCalledDecay", "");
 }
 
 void SocialPresenceEvent::Trigger(float& rspi) {
@@ -100,9 +125,9 @@ void SocialPresenceEstimator::InitDependent(Vector::Robot *robot, const RobotCom
   // set up input events
   _inputEvents = {
       // name, delayRatePerSec, independent effect, independent effect max, reinforcement effect, reinforcement effect max
-      SocialPresenceEvent("test1", 0.1f, 0.80f, 1.0f, 0.80f, 1.0f),
-      SocialPresenceEvent("test2", 0.2f, 0.20f, 0.5f, 0.30f, 1.0f),
-      SocialPresenceEvent("inhibitor", 0.2, -1.0f, 0, -1.0, 0)
+      SocialPresenceEvent("test1", std::make_shared<ExponentialDecay>(0.1f), 0.80f, 1.0f, 0.80f, 1.0f),
+      //SocialPresenceEvent("test2", 0.2f, 0.20f, 0.5f, 0.30f, 1.0f),
+      //SocialPresenceEvent("inhibitor", 0.2, -1.0f, 0, -1.0, 0)
   };
 }
 
@@ -130,9 +155,6 @@ void SocialPresenceEstimator::UpdateRSPI()
   // limit update rate
   if (dt_s >= kMinRSPIUpdatePeriod_s) {
 
-    // note that there's a potential ordering dependency between different input events:
-    // an event can't reinforce another event that comes later in the update order...until the next update.
-    // We assume here that the period of updates is rapid enough (relative to the period of events) that this won't matter.
     // update all (singleton) input events
     for (SocialPresenceEvent& inputEvent : _inputEvents) {
       inputEvent.Update(dt_s);

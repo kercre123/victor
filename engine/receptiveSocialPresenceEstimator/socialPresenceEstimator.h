@@ -25,18 +25,36 @@ namespace Vector {
 class Robot;
 
 
+class IDecayFunction {
+public:
+  IDecayFunction() {};
+  virtual ~IDecayFunction() {};
+  // TODO: I'm sure there's a way to make this pure virtual and have it work. Figure it out.
+  virtual float operator()(float value, float dt_s) {return value;};
+};
+
+class ExponentialDecay : public IDecayFunction {
+public:
+  ExponentialDecay(float ratePerSec) : _ratePerSec(ratePerSec) {};
+  virtual float operator()(float value, float dt_s) override;
+
+private:
+  float _ratePerSec;
+};
+
+
 // class for social presence event ("evidence")
 class SocialPresenceEvent {
 public:
   // constructor
   SocialPresenceEvent(std::string name,
-      float decayRatePerSec,
+      std::shared_ptr<IDecayFunction> decayFunction,
       float independentEffect,
       float independentEffectMax,
       float reinforcementEffect,
       float reinforcementEffectMax);
   // destructor
-  virtual ~SocialPresenceEvent() {};
+  virtual ~SocialPresenceEvent();
 
   // accessors
   std::string GetName() const { return _name; };
@@ -54,8 +72,8 @@ private:
   // private member vars
   float _value;
   std::string _name;
-  // decay rate
-  float _decayRatePerSec;
+  // decay function
+  std::shared_ptr<IDecayFunction> _decay;
   // independent effect - the effect if the RSPI starts below the...
   float _independentEffect;
   // independent effect maximum - the highest this event can increase the RSPI to, given that it started below
