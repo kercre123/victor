@@ -5,12 +5,6 @@
     },
     "deptool": {
         "deps": {
-            "mpg123": {
-                "checksums": {
-                    "sha256": "377e3c0299f601b788da28c75ec893761f2e3ad2678dc37180914f0e632f10ad"
-                },
-                "version": "1.25.10"
-            },
             "opencv": {
                 "checksums": {
                     "sha256": "0f3263df69448fe9d9fe9ab655f9d9b1c16b616f4208399fbe9f17758807f420"
