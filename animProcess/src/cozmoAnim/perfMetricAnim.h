@@ -46,9 +46,11 @@ private:
 
   virtual void InitDumpAccumulators() override final;
   virtual const FrameMetric& UpdateDumpAccumulators(const int frameBufferIndex) override final;
+  virtual const FrameMetric& GetBaseFrame(const int frameBufferIndex) override final { return _frameBuffer[frameBufferIndex]; };  
   virtual int AppendFrameData(const DumpType dumpType,
                               const int frameBufferIndex,
-                              const int dumpBufferOffset) override final;
+                              const int dumpBufferOffset,
+                              const bool graphableDataOnly) override final;
   virtual int AppendSummaryData(const DumpType dumpType,
                                 const int dumpBufferOffset,
                                 const int lineIndex) override final;

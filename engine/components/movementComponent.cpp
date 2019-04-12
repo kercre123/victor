@@ -15,7 +15,7 @@
 #include "coretech/common/robot/utilities.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/fastPolygon2d.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 
 #include "engine/ankiEventUtil.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
@@ -246,10 +246,11 @@ void MovementComponent::CheckForUnexpectedMovement(const Vector::RobotState& rob
     return;
   }
   
+  const bool isPickedUp = robotState.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP;
   // Don't check for unexpected movement under the following conditions
-  if (robotState.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP   ||
+  if (robotState.status & (uint32_t)RobotStatusFlag::IS_FALLING     ||
       robotState.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER  ||
-      robotState.status & (uint32_t)RobotStatusFlag::IS_FALLING)
+      (isPickedUp && !_heldInPalmModeEnabled) )
   {
     _unexpectedMovement.Reset();
     return;
@@ -484,7 +485,12 @@ void MovementComponent::RemoveEyeShiftWhenHeadMoves(const std::string& name, Tim
   _eyeShiftToRemove[name].duration_ms  = duration_ms;
   _eyeShiftToRemove[name].headWasMoving = _isHeadMoving;
 }
-
+  
+void MovementComponent::EnableHeldInPalmMode(const bool enabled)
+{
+  _heldInPalmModeEnabled = enabled;
+  _unexpectedMovement.EnableHeldInPalmMode(enabled);
+}
 
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
@@ -780,8 +786,16 @@ Result MovementComponent::TurnInPlace(const f32 angle_rad,
                                       bool use_shortest_direction,
                                       MotorActionID* actionID_out)
 {
+  f32 max_speed_capped_radps = max_speed_rad_per_sec;
+  if (_heldInPalmModeEnabled && max_speed_rad_per_sec > kMaxHeldInPalmTurnSpeed_radps) {
+    LOG_INFO("MovementComponent.TurnInPlace.CappingSpeed",
+              "Point-turn with max turn speed of %.1f[rad/s] requested, "
+              "but capping max speed to %.1f [rad/s] instead, HeldInPalmMode enabled.",
+              max_speed_rad_per_sec, kMaxHeldInPalmTurnSpeed_radps);
+    max_speed_capped_radps = kMaxHeldInPalmTurnSpeed_radps;
+  }
   return _robot->SendRobotMessage<RobotInterface::SetBodyAngle>(angle_rad,
-                                                                max_speed_rad_per_sec,
+                                                                max_speed_capped_radps,
                                                                 accel_rad_per_sec2,
                                                                 angle_tolerance,
                                                                 num_half_revolutions,
@@ -1200,13 +1214,14 @@ RobotTimeStamp_t MovementComponent::GetLastTimeCameraWasMoving() const
   }
   
 #pragma mark -
-#pragma mark Unexpected Movement 
+#pragma mark Unexpected Movement
 
 const u8 MovementComponent::UnexpectedMovement::kMaxUnexpectedMovementCount = 11;
-  
+CONSOLE_VAR(u8, kMaxUnexpectedMovementCountWhileHeldInPalm, "Robot", 200);
+
 bool MovementComponent::UnexpectedMovement::IsDetected() const
 {
-  return _count >= kMaxUnexpectedMovementCount;
+  return _count >= GetMaxCount();
 }
 
 void MovementComponent::UnexpectedMovement::Increment(u8 countInc, f32 leftSpeed_mmps, f32 rightSpeed_mmps, RobotTimeStamp_t currentTime)
@@ -1216,7 +1231,7 @@ void MovementComponent::UnexpectedMovement::Increment(u8 countInc, f32 leftSpeed
     _startTime = currentTime;
   }
   _count += countInc;
-  _count = std::min(_count, kMaxUnexpectedMovementCount);
+  _count = std::min(_count, GetMaxCount());
   _sumWheelSpeedL_mmps += (f32)countInc * leftSpeed_mmps;
   _sumWheelSpeedR_mmps += (f32)countInc * rightSpeed_mmps;
 }
@@ -1241,6 +1256,11 @@ void MovementComponent::UnexpectedMovement::GetAvgWheelSpeeds(f32& left, f32& ri
 {
   left  = _sumWheelSpeedL_mmps / (f32) _count;
   right = _sumWheelSpeedR_mmps / (f32) _count;
+}
+
+u8 MovementComponent::UnexpectedMovement::GetMaxCount() const
+{
+  return _heldInPalmModeEnabled ? kMaxUnexpectedMovementCountWhileHeldInPalm : kMaxUnexpectedMovementCount;
 }
 
 } // namespace Vector

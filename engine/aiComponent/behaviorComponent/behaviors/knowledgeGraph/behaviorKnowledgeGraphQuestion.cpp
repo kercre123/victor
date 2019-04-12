@@ -23,7 +23,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/audio/engineRobotAudioClient.h"
-#include "engine/components/mics/micComponent.h"
+#include "engine/components/localeComponent.h"
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -45,10 +45,11 @@ namespace Vector {
 namespace
 {
   const char* kKey_Duration                       = "streamingTimeout";
-  const char* kKey_ReadyString                    = "readyPromptText";
+  const char* kKey_ReadyStringID                  = "readyStringID";
   const char* kKey_EarConEnd                      = "earConAudioEventEnd";
 
   const double kDefaultDuration                   = 10.0;
+  const char * kDefaultReadyStringID              = "BehaviorKnowledgeGraphQuestion.Ready";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -75,7 +76,7 @@ BehaviorKnowledgeGraphQuestion::BehaviorKnowledgeGraphQuestion( const Json::Valu
   _readyTTSWrapper( UtteranceTriggerType::Immediate )
 {
   JsonTools::GetValueOptional( config, kKey_Duration, _iVars.streamingDuration );
-  _iVars.readyText = JsonTools::ParseString( config, kKey_ReadyString, "BehaviorKnowledgeGraphQuestion" );
+  _iVars.readyStringID = JsonTools::ParseString( config, kKey_ReadyStringID, kDefaultReadyStringID );
 
   std::string earConString;
   if ( JsonTools::GetValueOptional( config, kKey_EarConEnd, earConString ) )
@@ -94,7 +95,7 @@ BehaviorKnowledgeGraphQuestion::BehaviorKnowledgeGraphQuestion( const Json::Valu
 void BehaviorKnowledgeGraphQuestion::GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const
 {
   expectedKeys.insert( kKey_Duration );
-  expectedKeys.insert( kKey_ReadyString );
+  expectedKeys.insert( kKey_ReadyStringID );
   expectedKeys.insert( kKey_EarConEnd );
 }
 
@@ -135,8 +136,14 @@ void BehaviorKnowledgeGraphQuestion::OnBehaviorActivated()
 {
   _dVars = DynamicVariables();
 
+  // Get ready text for current locale
+  const auto & bei = GetBEI();
+  const auto & robotInfo = bei.GetRobotInfo();
+  const auto & localeComponent = robotInfo.GetLocaleComponent();
+  const std::string & readyText = localeComponent.GetString(_iVars.readyStringID);
+
   // start generating our ready text; if we fail, then we'll simply exit the behavior, and cry :(
-  if ( _readyTTSWrapper.SetUtteranceText( _iVars.readyText, {} ) )
+  if ( _readyTTSWrapper.SetUtteranceText( readyText, {} ) )
   {
     auto callback = [this]()
     {
@@ -152,7 +159,7 @@ void BehaviorKnowledgeGraphQuestion::OnBehaviorActivated()
   }
   else
   {
-    PRINT_NAMED_WARNING( "BehaviorKnowledgeGraphQuestion", "Failed to generate Ready TTS (%s)", _iVars.readyText.c_str() );
+    PRINT_NAMED_WARNING( "BehaviorKnowledgeGraphQuestion", "Failed to generate Ready TTS (%s)", readyText.c_str() );
   }
 }
 

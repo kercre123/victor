@@ -303,11 +303,6 @@ protected:
   void ClearWaitForUserIntent();
   
   
-  // Set whether this behavior responds to the trigger word. It's only valid to call this before Init
-  // is called (i.e. from the constructor). Normally this can be specified in json, but in some cases
-  // it may be more desirable to set it from code
-  void SetRespondToTriggerWord(bool shouldRespond);
-  
   // Add to a list of BehaviorTimerManager timers that this behavior should reset upon activation.
   // You don't want to put a reset in too high (/ deep in the stack) a behavior in case one
   // of its delegates fails, which might reset the timer without the action being performed. You
@@ -529,6 +524,14 @@ protected:
   void SmartDisableKeepFaceAlive();
   void SmartReEnableKeepFaceAlive();
 
+  // From code, a behavior can use this function to override the active feature for a _single_ activation of
+  // this behavior. This function must be called before the end of OnBehaviorActivated for it to work, and can
+  // not be combined with a json-set active feature.
+  // NOTE: in most cases, you probably don't want this and instead should set a fixed active feature in the
+  // json instance of the behavior (most behavior instances correspond to a single feature)
+  // NOTE: if you get too fancy here you might break the CheckActiveFeatures unit test in testBehaviorSystemDelegationTree.cpp
+  void SmartSetActiveFeatureOnActivated(const ActiveFeature& feature);
+
   // Helper function to play an emergency get out through the continuity component
   void PlayEmergencyGetOut(AnimationTrigger anim);
 
@@ -613,15 +616,11 @@ private:
   // A behavior can specify an associated ActiveFeature. If it does, the ActiveFeatureComponent can check this
   // while the behavior is active on the stack
   std::unique_ptr<ActiveFeature> _associatedActiveFeature;
+  bool _resetActiveFeature = false;
 
   // if set, increment this behavior stat when this behavior activates
   std::unique_ptr<BehaviorStat> _behaviorStatToIncrement;
-  
-  // true when the trigger word is pending, in which case ICozmoBehavior will
-  // 1) WantToBeActivated, in the absence of other negative conditions
-  // 2) Clear the trigger word when the behavior is activated
-  bool _respondToTriggerWord;
-  
+   
   // a list of named timers in the BehaviorTimerManager that should be reset when this behavior starts
   std::vector<std::string> _resetTimers;
 

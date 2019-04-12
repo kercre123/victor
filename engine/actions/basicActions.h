@@ -72,7 +72,6 @@ namespace Vector {
       void SetTolerance(const Radians& angleTol_rad);
       void SetVariability(const Radians& angleVar_rad)   { _variability = angleVar_rad; }
       void SetValidOffTreadsStates(const std::set<OffTreadsState>& states) { _validTreadStates = states; }
-      void EnableProgressTrackingTimeout(const bool enable) { _shouldTimeoutOnProgressStall = enable; }
 
       virtual bool SetMotionProfile(const PathMotionProfile& motionProfile) override;
       virtual f32 GetTimeoutInSeconds() const override { return _timeout_s; }
@@ -115,7 +114,6 @@ namespace Vector {
       const bool _isAbsoluteAngle;
       f32        _maxSpeed_radPerSec = _kDefaultSpeed;
       f32        _accel_radPerSec2 = _kDefaultAccel;
-      bool       _shouldTimeoutOnProgressStall = false;
       bool       _motionProfileManuallySet = false;
       float      _timeout_s;
       float      _expectedTotalAccelTime_s = 0.f;
@@ -251,7 +249,6 @@ namespace Vector {
       void SetTiltTolerance(const Radians& angleTol_rad);
       void SetMoveEyes(bool enable) { _moveEyes = (enable && PROCEDURAL_EYE_LEADING); }
       void SetValidOffTreadsStates(const std::set<OffTreadsState>& states);
-      void EnableTurnProgressTrackingTimeout(const bool enable) { _shouldTimeoutPanOnProgressStall = enable; }
       
       Radians GetBodyPanAngleTolerance() const { return _panAngleTol; }
       Radians GetHeadTiltAngleTolerance() const { return _tiltAngleTol; }
@@ -291,7 +288,6 @@ namespace Vector {
       f32     _tiltAccel_radPerSec2   = _kDefaultTiltAccel;
       bool    _panSpeedsManuallySet   = false;
       bool    _tiltSpeedsManuallySet  = false;
-      bool    _shouldTimeoutPanOnProgressStall = false;
 
       
     }; // class PanAndTiltAction
@@ -583,7 +579,7 @@ namespace Vector {
       // use a default number of images to give the robot a good chance to see something with the given vision modes
       WaitForImagesAction(UseDefaultNumImages_t, VisionMode visionMode);
       
-      // Set save params, assuming VisionMode::SavingImages is active
+      // Set save params, assuming VisionMode::SaveImages is active
       // If Mode is SingleShot, will save one image at the start of this action.
       // If Mode is Stream, will save all images (irrespective of visionMode above) while the action
       //   is running. In this case, the mode will be set back to off when the action ends, so anything

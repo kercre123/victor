@@ -17,7 +17,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/engine/math/polygon_fwd.h"
 #include "coretech/common/engine/math/pose.h"
 
 #include "util/random/rejectionSamplerHelper_fwd.h"
@@ -49,7 +49,7 @@ protected:
   explicit BehaviorPlaceCubeByCharger(const Json::Value& config);  
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override {
-    modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+    modifiers.visionModesForActiveScope->insert({ VisionMode::Markers, EVisionUpdateFrequency::High });
     modifiers.wantsToBeActivatedWhenOnCharger = false;
     modifiers.wantsToBeActivatedWhenCarryingObject = true;
   }

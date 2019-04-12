@@ -1,0 +1,42 @@
+{
+  "behaviorClass" : "DispatcherStrictPriority",
+  "behaviorID": "SimpleVoiceResponses",
+
+  "linkScope": true,
+  "interruptActiveBehavior": true,
+
+  // the default feature here is just a basic response, with an app string along the lines of "Vector is
+  // responding". Some behaviors specify more specific features within their json (e.g. movement specific)
+  "associatedActiveFeature": "BasicVoiceCommand",
+
+  "behaviors": [
+    "SimpleResponsesInternal",
+
+    "ReactToGoodMorning",
+    "ReactToGoodBye",
+    "ReactToAbuse",
+    "ReactToApology",
+    "ReactToLove",
+
+    "MovementBackward",
+    "MovementTurnLeft",
+    "MovementTurnRight",
+    "MovementTurnAround",
+
+    "SeasonalHappyHolidays",
+    "SeasonalHappyNewYear"
+
+    // NOTE: "goodnight" greeting is handled by the sleep cycle behavior, not here
+  ],
+
+  "postBehaviorSuggestion": "Socialize",
+
+  "anonymousBehaviors": [
+    {
+      // TODO:(bn) once all of the above behaviors are converted to simple ones, this can be removed
+      "behaviorName": "SimpleResponsesInternal",
+      "behaviorClass": "SimpleVoiceResponse"
+    }
+  ]
+}
+ 

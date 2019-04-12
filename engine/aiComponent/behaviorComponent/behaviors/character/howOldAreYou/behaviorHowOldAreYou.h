@@ -14,7 +14,6 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorHowOldAreYou__
 #pragma once
 
-#include "components/textToSpeech/textToSpeechTypes.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorCountingAnimation.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
@@ -27,7 +26,7 @@ namespace Vector {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 class BehaviorHowOldAreYou : public ICozmoBehavior
 {
-public: 
+public:
   virtual ~BehaviorHowOldAreYou();
 
 protected:
@@ -40,7 +39,7 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
-  
+
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
 
@@ -55,15 +54,18 @@ private:
   struct DynamicVariables {
     DynamicVariables();
     // member variables here
-    std::chrono::hours robotAge_h;
-    std::pair<int, std::string> robotAge_presentable;
+    std::chrono::hours robotAge_hours;
   };
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
 
+  // Get lifetime of this robot, in hours
   std::chrono::hours GetRobotAge();
-  std::pair<int, std::string> PresentableAgeFromHours(std::chrono::hours age_dh);
+
+  // Get rounded lifetime and appropriate announcement
+  using PresentableAge = std::pair<int, std::string>;
+  PresentableAge PresentableAgeFromHours(std::chrono::hours age_hours);
 
 };
 

@@ -13,7 +13,7 @@
 #ifndef __COMMON_BASESTATION_MATH_CONVEXPOLYGON2D_H__
 #define __COMMON_BASESTATION_MATH_CONVEXPOLYGON2D_H__
 
-#include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/engine/math/polygon_fwd.h"
 #include "coretech/common/engine/math/pointSet.h"
 #include "coretech/common/engine/math/axisAlignedHyperCube.h"
 

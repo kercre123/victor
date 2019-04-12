@@ -33,6 +33,8 @@
 
 #define LOG_CHANNEL "CubeAccelComponent"
 
+CONSOLE_VAR(bool, kCanAccelDirtyPoses, "CubeAccelComponent", false);
+
 namespace Anki {
 namespace Vector {
   
@@ -225,19 +227,19 @@ void CubeAccelComponent::ObjectMovedOrStoppedCallback(const ObjectID objectId, c
   auto* locatedObject = _robot->GetBlockWorld().GetLocatedObjectByID(objectId);
   const bool isCarryingObject = _robot->GetCarryingComponent().IsCarryingObject(objectId);
   if (locatedObject != nullptr) {
-    // We expect carried objects to move, so don't mark them as dirty/inaccurate.
-    // Their pose state should remain accurate/known because they are attached to
-    // the lift. I'm leaving this a separate check from the decision about broadcasting
-    // the movement, in case we want to easily remove the checks above but keep this one.
-    if (locatedObject->IsPoseStateKnown() && !isCarryingObject)
-    {
-      // Once an object moves, we can no longer use it for localization because
-      // we don't know where it is anymore. Next time we see it, relocalize it
-      // relative to robot's pose estimate. Then we can use it for localization
-      // again.
-      _robot->GetBlockWorld().MarkObjectDirty(locatedObject);
+    // We expect carried objects to move, so don't mark them as dirty/inaccurate.	
+    // Their pose state should remain accurate/known because they are attached to	
+    // the lift. I'm leaving this a separate check from the decision about broadcasting	
+    // the movement, in case we want to easily remove the checks above but keep this one.	
+    if (locatedObject->IsPoseStateKnown() && !isCarryingObject && kCanAccelDirtyPoses)	
+    {	
+      // Once an object moves, we can no longer use it for localization because	
+      // we don't know where it is anymore. Next time we see it, relocalize it	
+      // relative to robot's pose estimate. Then we can use it for localization	
+      // again.	
+      _robot->GetBlockWorld().MarkObjectDirty(locatedObject);	
     }
-    
+
     const bool wasMoving = locatedObject->IsMoving();
     if (wasMoving != isMoving) {
       // Set moving state of object (in any frame)

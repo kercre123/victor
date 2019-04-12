@@ -14,7 +14,7 @@
 
 #include "simulator/game/cozmoSimTestController.h"
 #include "coretech/common/engine/utils/timer.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/math/bresenhamLine2d.h"
 #include "engine/navMap/quadTree/quadTreeTypes.h"
 #include "engine/navMap/memoryMap/data/memoryMapData_Cliff.h"

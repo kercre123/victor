@@ -130,7 +130,8 @@ const PerfMetric::FrameMetric& PerfMetricAnim::UpdateDumpAccumulators(const int 
 
 int PerfMetricAnim::AppendFrameData(const DumpType dumpType,
                                     const int frameBufferIndex,
-                                    const int dumpBufferOffset)
+                                    const int dumpBufferOffset,
+                                    const bool graphableDataOnly)
 {
   const FrameMetricAnim& frame = _frameBuffer[frameBufferIndex];
 #define ANIM_LINE_DATA_VARS \
@@ -139,7 +140,7 @@ int PerfMetricAnim::AppendFrameData(const DumpType dumpType,
   frame._relativeStreamTime_ms, frame._numLayersRendered
 
   static const char* kFormatLine = "    %5i %5i %5i %5i %5i %5i\n";
-  static const char* kFormatLineCSV = ",%5i,%5i,%5i,%5i,%5i,%5i\n";
+  static const char* kFormatLineCSV = ",%i,%i,%i,%i,%i,%i\n";
 
   const int lenOut = snprintf(&_dumpBuffer[dumpBufferOffset], kSizeDumpBuffer - dumpBufferOffset,
                               dumpType == DT_FILE_CSV ? kFormatLineCSV : kFormatLine,
@@ -161,7 +162,7 @@ int PerfMetricAnim::AppendSummaryData(const DumpType dumpType,
   _accRelativeStreamTime_ms.StatCall(), _accNumLayersRendered.StatCall()
 
   static const char* kFormatLine = "    %5.1f %5.1f %5.1f %5.1f %5.0f %5.0f\n";
-  static const char* kFormatLineCSV = ",%5.1f,%5.1f,%5.1f,%5.1f,%5.0f,%5.0f\n";
+  static const char* kFormatLineCSV = ",%.1f,%.1f,%.1f,%.1f,%.0f,%.0f\n";
 
 #define APPEND_SUMMARY_LINE(StatCall)\
   lenOut = snprintf(&_dumpBuffer[dumpBufferOffset],    - dumpBufferOffset,\

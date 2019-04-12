@@ -26,7 +26,7 @@
 
 #include "cannedAnimLib/cannedAnims/animation.h"
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
@@ -283,7 +283,13 @@ const std::string& AnimationComponent::GetAnimationNameFromGroup(const std::stri
   }
   return empty;
 }
-  
+
+bool AnimationComponent::IsAnimationGroup(const std::string& group) const
+{
+  const bool groupExists = _animationGroups->_container.HasGroup(group);
+  return groupExists;
+}
+
 Result AnimationComponent::PlayAnimByName(const std::string& animName,
                                           int numLoops,
                                           bool interruptRunning,
@@ -382,6 +388,67 @@ Result AnimationComponent::PlayCompositeAnimation(const std::string& animName,
 
   outDuration_ms = anim->GetLastKeyFrameEndTime_ms();
   return DisplayFaceImage(compositeImage, frameInterval_ms, outDuration_ms, interruptRunning, emptySpriteBoxesAreValid);
+}
+
+Result AnimationComponent::PlayAnimWithSpriteBoxRemaps(const std::string& animName,
+                                                       const RemapMap& remaps,
+                                                       bool interruptRunning,
+                                                       AnimationCompleteCallback callback,
+                                                       bool lockFaceAtEndOfAnimation)
+{
+  if (!_isInitialized) {
+    LOG_WARNING("AnimationComponent.PlayAnimWithSpriteBoxRemaps.Uninitialized", "");
+    return RESULT_FAIL;
+  }
+
+  // Check that animName is valid
+  auto it = _availableAnims.find(animName);
+  if (it == _availableAnims.end()) {
+    LOG_WARNING("AnimationComponent.PlayAnimWithSpriteBoxRemaps.AnimNotFound", "%s", animName.c_str());
+    return RESULT_FAIL;
+  }
+
+  if (IsPlayingAnimation() && !interruptRunning) {
+    LOG_INFO("AnimationComponent.PlayAnimWithSpriteBoxRemaps.WontInterruptCurrentAnim", "");
+    return RESULT_FAIL;
+  }
+
+  const Tag currTag = GetNextTag();
+  const auto& spritePathMap = *_robot->GetContext()->GetDataLoader()->GetSpritePaths();
+
+  RobotInterface::PlayAnimWithSpriteBoxRemaps msg;
+  msg.tag = currTag;
+  msg.animName = animName;
+  msg.numRemaps = remaps.size();
+
+  if(remaps.size() > msg.spriteBoxRemaps.size()){
+    LOG_ERROR("AnimationComponent.PlayAnimWithSpriteBoxRemaps.MessageOverflow",
+              "Attempted to send %zu remaps, message can only carry %zu",
+              remaps.size(),
+              msg.spriteBoxRemaps.size());
+    return RESULT_FAIL;
+  }
+
+  int i = 0;
+  for(const auto& remap : remaps){
+    msg.spriteBoxRemaps[i].spriteBoxName = remap.first;
+    if(!ANKI_VERIFY(spritePathMap.IsValidAssetName(remap.second),
+                    "AnimationComponent.PlayAnimWithSpriteBoxRemaps.InvalidAsset", 
+                    "Attempted to remap SpriteBox %s with invalid asset name %s",
+                    Vision::SpriteBoxNameToString(remap.first),
+                    remap.second.c_str()) ){
+      return RESULT_FAIL;
+    }
+    msg.spriteBoxRemaps[i].remappedAssetID = spritePathMap.GetAssetID(remap.second);
+    ++i;
+  }
+  _robot->SendRobotMessage<RobotInterface::PlayAnimWithSpriteBoxRemaps>(msg);
+
+  if(callback != nullptr){
+    SetAnimationCallback(animName, callback, currTag, 0, 0, 0);
+  }
+
+  return RESULT_OK;
 }
 
   

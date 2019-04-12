@@ -15,7 +15,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
-#include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/engine/math/polygon_fwd.h"
 #include "coretech/common/engine/math/pose.h"
 
 #include "util/random/rejectionSamplerHelper_fwd.h"
@@ -96,7 +96,7 @@ private:
 
     // Count of the frames of marker detection being run
     //  while this behavior is activated.
-    u32 numFramesOfDetectingMarkers = 0;
+    u32 numFramesOfMarkers = 0;
 
     // Count of the frames where the image quality was TooDark.
     // NOTE: only counted while marker detection is being run.

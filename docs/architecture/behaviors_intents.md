@@ -7,6 +7,12 @@ There are three types of intents. Each represents a user's intention for the rob
 * [DEPRECATED] **App Intents** are messages received from the companion app containing the intent type along with any parameters. The behavior system is not aware of app intents beyond how to translate them into user intents. (Note: app intents were cut from the chewie design)
 
 
+#### Simple Animated Voice responses
+
+If all you need to do is create a voice command (with no parameters / extensions) that in result causes the robot to play an animation from a single animation group, there is a shortcut to the larger process below called "simple voice responses". You can simply add your new mapping to the top of [`user_intent_map.json`](/resources/config/engine/behaviorComponent/user_intent_map.json) under the `simple_voice_responses` section. In this section, you specify a cloud intent string and optionally a feature flag (see below) and then a response. The response must contain an animation group string (checked at load time) and may optionally specify emotion events or active features (used for DAS and the app string). None of this requires touching any code or CLAD files, or even a full build (with the exception, currently, of adding a new `ActiveFeature`, if that is needed).
+
+If you need any parameters, or want a more complex / custom behavior to run, or it needs to run at a different level in the tree with a different priority, you'll need to create a new intent.
+
 #### Creating a new intent
 
 In [`userIntent.clad`](/clad/src/clad/types/behaviorComponent/userIntent.clad), create a new CLAD `structure` containing the data associated with your user intent, or use `UserIntent_Void` if there are no params. Add an entry to [`user_intent_map.json`](/resources/config/engine/behaviorComponent/user_intent_map.json) that defines the mapping from cloud and app intents to user intents.
@@ -31,7 +37,11 @@ Note: Don't include the CLAD-generated files `userIntent.h`/`.cpp` in your behav
 
 Sometimes, an incoming cloud intent does not have a matching user intent. This most frequently happens when the cloud cannot understand the voice command and issues an `intent_system_unsupported`, which is purposefully not listed in [`user_intent_map.json`](/resources/config/engine/behaviorComponent/user_intent_map.json). It could also occur if the version of [`user_intent_map.json`](/resources/config/engine/behaviorComponent/user_intent_map.json) is not the same as that of the cloud, i.e., if the robot is out of date. If there is no match, the `unmatched_intent` user intent is set as pending. Currently, when the `unmatched_intent` user intent is pending, it is activated, a "huh?!" animation plays, and then intent is deactivated.
 
-If a user intent goes unclaimed for more engine ticks than we allow (2-4), it means the behavior tree is not configured to handle the intent based on its current state. Usually this means we forgot to do something, so a warning is printed. To help catch these omissions, there is a behavior `BehaviorReactToUnclaimedIntent` that will play an animation if an intent goes unclaimed. This behavior is also useful when a known user intent is received, but it does not make sense in the present context. For example, if a user intent corresponding to the voice command "go to your charger" is pending when the robot is already on its charger, we could either add an explicit check for "go to your charger," or simply skip the handling of that intent when on the charger. In that case, the unclaimed intent animation would play, indicating that the robot cannot respond to that intent in its current state.
+If a user intent goes unclaimed for more engine ticks than we allow (2-4), it means the behavior tree is not configured to handle the intent based on its current state. This may be because we forgot to implement the feature, or it may be because the intent was understood but can't be carried out (e.g. you say "come here" but the robot is being held in the air). In these cases, a behavior `BehaviorReactToUnclaimedIntent` will play an animation that is meant to communicate "I can't do that" if an intent goes unclaimed.
+
+#### Feature flags
+
+If the new voice feature is feature flagged, you must specify such in [`user_intent_map.json`](/resources/config/engine/behaviorComponent/user_intent_map.json) rather than just in the behavior instance json. This way, if the intent does come in from cloud, the user intent map will map it to "unmatched" with a negative earcon, rather than _successfully_ matching the intent, but then refusing to run the behavior which results in an unclaimed intent ("I don't know") rather than the desired "huh" reaction. The way to think about this is that disabling a feature flag should have the equivalent result (as far us user-visible behavior) as saying something the robot doesn't understand.
 
 #### Unit tests
 

@@ -12,7 +12,7 @@
 #include "clad/types/ledTypes.h"
 
 #include "coretech/common/engine/math/pose.h"
-#include "coretech/common/engine/math/quad.h"
+#include "coretech/common/engine/math/quad_fwd.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
 

@@ -1,8 +1,9 @@
 #include "cannedAnimLib/proceduralFace/proceduralFaceDrawer.h"
 #include "cannedAnimLib/proceduralFace/scanlineDistorter.h"
 
-#include "coretech/common/shared/array2d_impl.h"
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/shared/array2d.h"
+#include "coretech/common/shared/math/matrix.h"
+#include "coretech/common/engine/math/quad.h"
 #include "coretech/common/shared/math/rotation.h"
 
 #include <opencv2/highgui/highgui.hpp>

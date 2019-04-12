@@ -28,9 +28,9 @@ namespace Vector {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BEIRobotInfo::~BEIRobotInfo()
 {
-  
+
 }
-  
+
 ActionList& BEIRobotInfo::GetActionList()
 {
   return _robot.GetComponent<ActionList>();
@@ -41,7 +41,7 @@ BatteryLevel BEIRobotInfo::GetBatteryLevel() const
 {
   return _robot.GetBatteryComponent().GetBatteryLevel();
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BatteryLevel BEIRobotInfo::GetPrevBatteryLevel() const
 {
@@ -59,7 +59,7 @@ CarryingComponent& BEIRobotInfo::GetCarryingComponent() const
 {
   return _robot.GetCarryingComponent();
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsCarryingObject() const
 {
@@ -184,7 +184,7 @@ Radians BEIRobotInfo::GetPitchAngle() const
 {
   return _robot.GetPitchAngle();
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Radians BEIRobotInfo::GetRollAngle() const
 {
@@ -256,19 +256,19 @@ IExternalInterface* BEIRobotInfo::GetExternalInterface()
 {
   return _robot.GetExternalInterface();
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::HasGatewayInterface() const
 {
   return _robot.HasGatewayInterface();
 }
- 
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 uint32_t BEIRobotInfo::GetCpuTemperature_degC() const
 {
   return OSState::getInstance()->GetTemperature_C();
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IGatewayInterface* BEIRobotInfo::GetGatewayInterface()
 {
@@ -293,7 +293,7 @@ float BEIRobotInfo::GetTimeAtBatteryLevelSec(BatteryLevel level) const
 {
   return _robot.GetBatteryComponent().GetTimeAtLevelSec(level);
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 float BEIRobotInfo::GetOnChargerDurationSec() const
 {
@@ -311,7 +311,7 @@ bool BEIRobotInfo::IsLiftCalibrated() const
 {
   return _robot.IsLiftCalibrated();
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BEIRobotInfo::IsHeadMotorOutOfBounds() const
 {
@@ -371,7 +371,7 @@ bool BEIRobotInfo::IsBeingHeld() const
 {
   return _robot.IsBeingHeld();
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 EngineTimeStamp_t BEIRobotInfo::GetBeingHeldLastChangedTime_ms() const
 {
@@ -401,19 +401,24 @@ Util::Data::DataPlatform* BEIRobotInfo::GetDataPlatform() const
 {
   return _robot.GetContextDataPlatform();
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NVStorageComponent& BEIRobotInfo::GetNVStorageComponent() const
 {
   return _robot.GetNVStorageComponent();
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BatteryComponent& BEIRobotInfo::GetBatteryComponent() const
 {
   return _robot.GetBatteryComponent();
 }
 
-  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const LocaleComponent & BEIRobotInfo::GetLocaleComponent() const
+{
+  return _robot.GetLocaleComponent();
+}
+
 } // namespace Vector
 } // namespace Anki

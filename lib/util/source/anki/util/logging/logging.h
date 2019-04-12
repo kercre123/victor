@@ -36,7 +36,7 @@
 #endif
 
 #if !defined(ANKI_BREADCRUMBS)
-#define ANKI_BREADCRUMBS 1
+#define ANKI_BREADCRUMBS 0
 #endif
 
 #define MAX_LOG_STRING_LEN 1024

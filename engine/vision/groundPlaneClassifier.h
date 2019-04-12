@@ -14,7 +14,7 @@
 #ifndef __Anki_Cozmo_Basestation_GroundplaneClassifier_H__
 #define __Anki_Cozmo_Basestation_GroundplaneClassifier_H__
 
-#include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/engine/math/polygon_fwd.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/debugImageList.h"
 #include "coretech/vision/engine/image.h"

@@ -11,6 +11,7 @@
  **/
 
 #include "coretech/vision/engine/trackedFace.h"
+#include "util/helpers/templateHelpers.h"
  
 namespace Anki {
 namespace Vision {
@@ -25,37 +26,61 @@ namespace Vision {
     
   }
 
-  const TrackedFace::FacialExpressionValues& TrackedFace::GetExpressionValues() const
+  const TrackedFace::ExpressionValues& TrackedFace::GetExpressionValues() const
   {
+    if(ANKI_DEVELOPER_CODE)
+    {
+      // Documentation (in trackedFace.h and in Okao expression manual) says this should be a histogram
+      // summing to 100. Verify that's true (in debug builds).
+      s32 sum=0;
+      for(auto const& value : _expression)
+      {
+        sum += value;
+      }
+      const bool noExpressionValues = (sum==0);
+      DEV_ASSERT_MSG(noExpressionValues || (sum==100), "TrackedFace.GetExpressionValues.HistSumNot100", "%d", sum);
+    }
+    
     return _expression;
   }
   
   // Return the expression with highest value
-  FacialExpression TrackedFace::GetMaxExpression(s32* valuePtr) const
+  FacialExpression TrackedFace::GetMaxExpression(ExpressionValue* valuePtr) const
   {
-    static_assert((s32)FacialExpression::Unknown == -1, "Expecting Unknown expression to be value -1");
+    static_assert(Util::EnumToUnderlying(FacialExpression::Unknown) == -1,
+                  "Expecting Unknown expression to be value -1");
     
-    FacialExpression maxExpression = FacialExpression::Unknown;
-    s32 maxValue = -1;
-    for(s32 crntExpression = 0; crntExpression < (s32)FacialExpression::Count; ++crntExpression)
+    // This tracks the index of the expression in the array with the max value
+    auto maxExprIndex = Util::EnumToUnderlying(FacialExpression::Unknown);
+    
+    // This is used to increment through the expression array, starting from the 0 index,
+    // and using the underlying type of the FacialExpression enum
+    auto crntExpIndex = static_cast<std::underlying_type_t<FacialExpression>>(0);
+    
+    ExpressionValue maxValue = 0;
+    for(auto const& crntValue : _expression)
     {
-      if(_expression[crntExpression] > maxValue) {
-        maxValue = _expression[crntExpression];
-        maxExpression = (FacialExpression)crntExpression;
+      if(crntValue > maxValue) {
+        maxValue = crntValue;
+        maxExprIndex = crntExpIndex;
       }
+      ++crntExpIndex;
     }
     
     if(nullptr != valuePtr)
     {
       *valuePtr = maxValue;
     }
-    return maxExpression;
+    return static_cast<FacialExpression>(maxExprIndex);
   }
   
-  void TrackedFace::SetExpressionValue(FacialExpression whichExpression, f32 newValue)
+  void TrackedFace::SetExpressionValue(FacialExpression whichExpression, ExpressionValue newValue)
   {
-    const u32 expressionIndex = (u32)whichExpression;
-    DEV_ASSERT(expressionIndex < (u32)FacialExpression::Count, "TrackedFace.SetExpressionValue.BadExpression");
+    DEV_ASSERT_MSG(Util::InRange(newValue, ExpressionValue(0), ExpressionValue(100)),
+                   "TrackedFace.SetExpressionValue.BadValue",
+                   "%s:%d", EnumToString(whichExpression), newValue);
+    
+    const auto expressionIndex = Util::EnumToUnderlying(whichExpression);
     _expression[expressionIndex] = newValue;
   }
 

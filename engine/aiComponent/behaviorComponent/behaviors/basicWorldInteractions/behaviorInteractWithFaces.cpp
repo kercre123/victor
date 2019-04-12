@@ -29,7 +29,7 @@
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/math/fastPolygon2d.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #include "coretech/vision/engine/faceTracker.h"
@@ -124,18 +124,18 @@ BehaviorInteractWithFaces::BehaviorInteractWithFaces(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorInteractWithFaces::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Low });
+  modifiers.visionModesForActivatableScope->insert({ VisionMode::Faces, EVisionUpdateFrequency::Low });
   
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::Standard });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingGaze, EVisionUpdateFrequency::Standard });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingBlinkAmount, EVisionUpdateFrequency::Standard });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Faces, EVisionUpdateFrequency::Standard });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Faces_Gaze, EVisionUpdateFrequency::Standard });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Faces_Blink, EVisionUpdateFrequency::Standard });
   
   // Assumption is that we're already looking at the face, so use cropping for better efficiency
-  modifiers.visionModesForActiveScope->insert( {VisionMode::CroppedFaceDetection, EVisionUpdateFrequency::Standard} );
+  modifiers.visionModesForActiveScope->insert( {VisionMode::Faces_Crop, EVisionUpdateFrequency::Standard} );
   
   // Avoid marker detection to improve performance
   // TODO: Remove with VIC-6838
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DisableMarkerDetection, EVisionUpdateFrequency::Standard });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Markers_Off, EVisionUpdateFrequency::Standard });
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

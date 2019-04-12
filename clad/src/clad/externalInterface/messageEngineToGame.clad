@@ -178,7 +178,7 @@ message RobotFallingEvent {
 message RobotProcessedImage {
    uint_32 timestamp,
    VisionMode visionModes[uint_8],
-   uint_8 mean // Valid iff ComputingStatistics mode enabled
+   uint_8 mean // Valid iff Stats mode enabled
 }
 
 // RobotObservedObject for signaling that an object
@@ -710,6 +710,8 @@ autounion MessageEngineToGame
   MemoryMapMessageBegin             MemoryMapMessageBegin              = 0x16,
   MemoryMapMessage                  MemoryMapMessage                   = 0x17,
   MemoryMapMessageEnd               MemoryMapMessageEnd                = 0x18,
+  RobotObservedMotion               RobotObservedMotion                = 0x19,
+  RobotErasedEnrolledFace           RobotErasedEnrolledFace            = 0x20,
 }
 
 } // namespace ExternalInterface

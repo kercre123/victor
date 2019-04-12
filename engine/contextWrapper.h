@@ -26,13 +26,11 @@ public:
   ContextWrapper(const CozmoContext* context)
   : IDependencyManagedComponent(this, RobotComponentID::CozmoContextWrapper)
   , context(context){}
+
   const CozmoContext* context;
 
-  virtual ~ContextWrapper(){}
+  inline const CozmoContext * GetContext() const { return context; }
 
-  virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override {};
-  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {};
-  virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {};
 };
 
 }

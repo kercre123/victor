@@ -35,7 +35,6 @@ namespace Vector{
 
 // Forward declaration:
 class CozmoContext;
-class VisionComponent;
 class VisionModeSet;
 class IVisionModeSubscriber;
 
@@ -52,7 +51,6 @@ public:
   // IDependencyManagedComponent
   virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
-    dependencies.insert(RobotComponentID::Vision);
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
   }
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {}
@@ -130,12 +128,12 @@ private:
     }
   };
   
-  // Internal call to parse the subscription record and send the emergent config to the VisionComponent if it changed
-  void UpdateVisionSchedule(VisionComponent& visionComponent, const CozmoContext* context);
+  // Internal call to parse the subscription record
+  void UpdateVisionSchedule(const CozmoContext* context);
 
-  // Makes a pass over the VisionModeSchedule to spread out processing requirements for various modes and sends it to 
-  // the VisionComponent. The generated schedule is returned for evaluation in Unit Tests, but is not normally used.
-  const AllVisionModesSchedule::ModeScheduleList GenerateBalancedSchedule(VisionComponent& visionComponent);
+  // Makes a pass over the VisionModeSchedule to spread out processing requirements for various modes.
+  // The generated schedule is returned for evaluation in Unit Tests, but is not normally used.
+  const AllVisionModesSchedule::ModeScheduleList GenerateBalancedSchedule();
 
   // Returns true if the update period for this mode changed as a result of subscription changes
   bool UpdateModePeriodIfNecessary(VisionModeData& mode) const;

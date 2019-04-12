@@ -134,7 +134,7 @@ void BehaviorLookAtFaceInFront::TransitionToLookUp()
   action->AddAction(new MoveHeadToAngleAction(MAX_HEAD_ANGLE));
   // todo: use WaitToSeeFaceAction (VIC-4789)
   action->AddAction(new WaitForImagesAction(kNumFramesToWait,
-                                            VisionMode::DetectingFaces));
+                                            VisionMode::Faces));
   
   _dVars.waitingForFaces = true;
   DelegateIfInControl(action); // either BehaviorUpdate will break out of this, or the behavior ends

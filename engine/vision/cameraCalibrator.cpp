@@ -13,7 +13,7 @@
 #include "engine/vision/cameraCalibrator.h"
 
 #include "coretech/common/engine/math/pose.h"
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/quad.h"
 #include "coretech/common/shared/math/rotation.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -71,9 +71,9 @@ Result CameraCalibrator::ComputeCalibrationFromCheckerboard(std::list<Vision::Ca
   std::unique_ptr<Vision::CameraCalibration> calibration;
   _isCalibrating = true;
   
-  // Guarantee ComputingCalibration mode gets disabled and computed calibration gets sent
+  // Guarantee Calibration mode gets disabled and computed calibration gets sent
   // no matter how we return from this function
-  Util::CleanupHelper disableComputingCalibration([this, &calibration_out, &calibration]() {
+  Util::CleanupHelper disableCalibration([this, &calibration_out, &calibration]() {
     if(calibration == nullptr)
     {
       PRINT_NAMED_WARNING("CameraCalibrator.ComputeCalibrationFromCheckerboard.NullCalibration", "");
@@ -231,9 +231,9 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
   std::unique_ptr<Vision::CameraCalibration> calibration;
   _isCalibrating = true;
   
-  // Guarantee ComputingCalibration mode gets disabled and computed calibration gets sent
+  // Guarantee Calibration mode gets disabled and computed calibration gets sent
   // no matter how we return from this function
-  Util::CleanupHelper disableComputingCalibration([this, &calibration_out, &calibration]() {
+  Util::CleanupHelper disableCalibration([this, &calibration_out, &calibration]() {
     if(calibration == nullptr)
     {
       PRINT_NAMED_WARNING("CameraCalibrator.ComputeCalibrationFromSingleTarget.NullCalibration", "");

@@ -775,7 +775,7 @@ def main(args):
   parser.add_argument('--timeout',
                       dest='timeout',
                       action='store',
-                      default=180,
+                      default=1000,
                       type=int,
                       help="""Time limit for each webots test before marking it as failure and killing the webots instance.""")
 

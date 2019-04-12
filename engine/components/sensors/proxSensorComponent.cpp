@@ -23,7 +23,7 @@
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include "coretech/common/engine/math/convexIntersection.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleInterface.h"
 
@@ -184,11 +184,10 @@ void ProxSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
   }
 
   // check if we should bother updating the map
-  const bool isCalmPowerMode    = static_cast<bool>(msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE); // Reading is meaningless in calm mode so just skip map update
   const bool stillUpdating      = (_measurementsAtPose < kNumMeasurementsAtPose);                             // if the robot hasn't moved but we still need to update the belief state
   const bool measurementInFrame = (histState.GetFrameId() != _robot->GetPoseFrameID());                       // if measurement frame is not the current robot frame
 
-  if (_mapEnabled && !isCalmPowerMode && stillUpdating && !measurementInFrame) {
+  if (_mapEnabled && stillUpdating && !measurementInFrame) {
     UpdateNavMap(measurmentTime);
   }
 }

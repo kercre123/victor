@@ -2,7 +2,7 @@
 #define _ANKICORETECH_PLANNING_XYTHETA_ENVIRONMENT_H_
 
 #include "coretech/common/engine/math/fastPolygon2d.h"
-#include "coretech/common/engine/math/quad.h"
+#include "coretech/common/engine/math/quad_fwd.h"
 #include "coretech/planning/engine/robotActionParams.h"
 #include "coretech/planning/shared/path.h"
 #include "json/json-forwards.h"

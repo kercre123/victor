@@ -261,6 +261,9 @@ TEST_F(BlockWorldTest, LocalizeToCharger)
   auto* object = blockWorld.FindLocatedMatchingObject(filter);
   
   ASSERT_NE(nullptr, object);
+
+  // the observed object has the correct observation time stamp
+  ASSERT_EQ(object->GetLastObservedTime(), fakeTimestamp_ms);
   
   auto localizedToID = _robot->GetLocalizationComponent().GetLocalizedTo();
   ASSERT_TRUE(localizedToID.IsSet());
@@ -294,6 +297,9 @@ TEST_F(BlockWorldTest, LocalizeToCharger)
   object = blockWorld.FindLocatedMatchingObject(filter);
   
   ASSERT_NE(nullptr, object);
+
+  // the observed object has the correct observation time stamp
+  ASSERT_EQ(object->GetLastObservedTime(), fakeTimestamp_ms);
   
   localizedToID = _robot->GetLocalizationComponent().GetLocalizedTo();
   ASSERT_TRUE(localizedToID.IsSet());
@@ -340,6 +346,9 @@ TEST_F(BlockWorldTest, ObservationDistance)
   auto* object = blockWorld.FindLocatedMatchingObject(filter);
   
   ASSERT_NE(nullptr, object);
+
+  // the observed object has the correct observation time stamp
+  ASSERT_EQ(object->GetLastObservedTime(), fakeTimestamp_ms);
   
   auto localizedToID = _robot->GetLocalizationComponent().GetLocalizedTo();
   ASSERT_TRUE(localizedToID.IsSet());
@@ -364,5 +373,8 @@ TEST_F(BlockWorldTest, ObservationDistance)
   ASSERT_EQ(1, blockWorld._locatedObjects.size());
   localizedToID = _robot->GetLocalizationComponent().GetLocalizedTo();
   ASSERT_EQ(localizedToID, object->GetID());
+
+  // the observed object has the correct observation time stamp
+  ASSERT_EQ(object->GetLastObservedTime(), fakeTimestamp_ms);
 }
 

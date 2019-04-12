@@ -114,7 +114,7 @@ to pick up where you left off.
 
 ## Run Task: Build 
 
-Use "Tasks -> Run Build Task" to run the default build task.  
+Use "Terminal -> Run Build Task" to run the default build task.  
 
 You can set additional build flags (e.g. "-p mac" vs "-p vicos") by editing 
 the task configuration, or you can create a second set of tasks and switch 
@@ -122,19 +122,19 @@ between them.
 
 ## Run Task: Deploy
 
-After building, use "Tasks -> Run Task -> deploy:debug" to deploy executables
+After building, use "Terminal -> Run Task -> deploy:debug" to deploy executables
 to the robot.
 
 ## Run Task: Debug
 
-After deploying, use "Tasks -> Run Task -> debug:debug" to launch the debugger
+After deploying, use "Terminal -> Run Task -> debug:debug" to launch the debugger
 on a robot process.
 
 ## Customize
 
 VS Code is extensible and highly customizable.  Most of the configuration 
 settings use a simple JSON syntax and can be changed with 
-"Tasks -> Configure Tasks" or "Code -> Preferences -> Settings".
+"Terminal -> Configure Tasks" or "Code -> Preferences -> Settings".
 
 If you don't like the default settings, change them!
 

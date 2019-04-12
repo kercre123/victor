@@ -30,10 +30,11 @@ public:
                       const Json::Value& conditionRemaps);
 
   bool IsForecast(const UserIntent_WeatherResponse& weatherIntent) const;
-  bool ShouldSayText(const UserIntent_WeatherResponse& weatherIntent,
-                     std::string& textToSay) const;
+
   bool IsFahrenheit(const UserIntent_WeatherResponse& weatherIntent) const;
+
   WeatherConditionType GetCondition(const UserIntent_WeatherResponse& weatherIntent) const;
+
   tm GetLocalDateTime(const UserIntent_WeatherResponse& weatherIntent) const;
 
   // return raw int temperature in whatever unit it is set

@@ -24,7 +24,15 @@
       "behaviorClass" : "AnimSequence",
       "animTriggers": ["HighTemperatureWarningFace"],
       "wantsToBeActivatedCondition" : {
-        "conditionType" : "HighTemperature"
+        "conditionType" : "Compound",
+        "or" : [
+          {
+            "conditionType" : "HighTemperature"
+          },
+          {
+            "conditionType" : "TooHotToCharge"
+          }
+        ]
       }
     }
   ]

@@ -107,7 +107,9 @@ public:
   const std::string& GetAnimationNameFromGroup(const std::string& name,
                                                bool strictCooldown = false,
                                                int recursionCount = 0) const;
-  
+
+  bool IsAnimationGroup(const std::string& group) const;
+
   // Tell animation process to play the specified animation
   // If a non-empty callback is specified, the actionTag of the calling action must be specified
   Result PlayAnimByName(const std::string& animName,
@@ -129,6 +131,13 @@ public:
                                 bool interruptRunning = true,
                                 bool emptySpriteBoxesAreValid = false,
                                 AnimationCompleteCallback callback = nullptr);
+
+  using RemapMap = std::unordered_map<Vision::SpriteBoxName, std::string>;
+  Result PlayAnimWithSpriteBoxRemaps(const std::string& animName,
+                                     const RemapMap& remaps,
+                                     bool interruptRunning = true,
+                                     AnimationCompleteCallback callback = nullptr,
+                                     bool lockFaceAtEndOfAnimation = false);
   
   bool IsPlayingAnimation() const { return _callbackMap.size() > 0; }
   

@@ -10,7 +10,7 @@
  *
  **/
 
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/quad.h"
 #include "coretech/common/engine/math/rotatedRect.h"
 #include "coretech/common/shared/math/rotation.h"
 #include <math.h>

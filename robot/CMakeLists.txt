@@ -180,8 +180,6 @@ target_include_directories(supervisor
   PRIVATE
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/supervisor/src>
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad>
-  $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/robot>
   PUBLIC
   ${PLATFORM_INCLUDES}
 )
@@ -247,7 +245,6 @@ if (VICOS)
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/hal>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/hal/include>
     $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/robot/syscon>
-    $<BUILD_INTERFACE:${CMAKE_SOURCE_DIR}/generated/clad/robot>
   )
 
   target_link_libraries(vic-robot

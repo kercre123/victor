@@ -374,7 +374,7 @@ namespace Anki
 
         this->centerOffset = newTransformation.get_centerOffset(1.0f);
 
-        this->initialCorners = initialCorners;
+        this->initialCorners = newTransformation.get_initialCorners();
 
         return RESULT_OK;
       }
@@ -487,7 +487,7 @@ namespace Anki
         return RESULT_OK;
       }
 
-      bool PlanarTransformation_f32::get_initialPointsAreZeroCenetered() const
+      bool PlanarTransformation_f32::get_initialPointsAreZeroCentered() const
       {
         return this->initialPointsAreZeroCentered;
       }

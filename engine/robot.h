@@ -70,6 +70,7 @@ enum class EngineErrorCode : uint8_t;
 class FaceWorld;
 class IExternalInterface;
 class IGatewayInterface;
+class LocaleComponent;
 class MoodManager;
 class MovementComponent;
 class NVStorageComponent;
@@ -227,6 +228,7 @@ public:
   INLINE_GETTERS(DrivingAnimationHandler)
   INLINE_GETTERS(FaceWorld)
   INLINE_GETTERS(HabitatDetectorComponent)
+  INLINE_GETTERS(LocaleComponent)
   INLINE_GETTERS(MapComponent)
   INLINE_GETTERS(LocalizationComponent)
   INLINE_GETTERS(MicComponent)
@@ -355,7 +357,7 @@ public:
 
   // Get pitch angle of robot
   Radians GetPitchAngle() const;
-  
+
   // Get roll angle of robot
   Radians GetRollAngle() const;
 
@@ -529,7 +531,7 @@ protected:
   // The robot's identifier
   RobotID_t _ID;
   u32       _serialNumberHead = 0;
-  
+
   // Whether or not sync was acknowledged by physical robot
   bool _syncRobotAcked = false;
 
@@ -617,7 +619,6 @@ protected:
   bool UpdateCameraStartupChecks(Result& res);
   bool UpdateGyroCalibChecks(Result& res);
   bool UpdateToFStartupChecks(Result& res);
-  bool UpdateRampostErrorChecks(Result& res);
 
   bool IsStatusFlagSet(RobotStatusFlag flag) const { return _lastStatusFlags & static_cast<u32>(flag); }
 

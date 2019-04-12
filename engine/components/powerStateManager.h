@@ -62,8 +62,6 @@ public:
 
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
 
-  void NotifyOfRobotState(const RobotState& robotState);
-
   // Request the robot enter power save mode. If any requests are active, this component will attempt to enter
   // power save. The requester string should be unique and is useful for debugging
   void RequestPowerSaveMode(const std::string& requester);
@@ -75,8 +73,6 @@ public:
   bool IsPowerSaveRequestPending() const { return _powerSaveRequests.empty() == _inPowerSaveMode; }
 
   bool InPowerSaveMode() const { return _inPowerSaveMode; }
-
-  bool InSysconCalmMode() const { return _inSysconCalmMode; }
 
   void RequestLCDBrightnessChange(const LCDBrightness& level) const;
 
@@ -98,7 +94,6 @@ private:
 
   std::multiset<std::string> _powerSaveRequests;
   bool _inPowerSaveMode = false;
-  bool _inSysconCalmMode = false;
 
   float _timePowerSaveToggled_s = -1.0f;
 

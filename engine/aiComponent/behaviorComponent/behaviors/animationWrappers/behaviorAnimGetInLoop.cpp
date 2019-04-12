@@ -45,7 +45,6 @@ BehaviorAnimGetInLoop::InstanceConfig::InstanceConfig()
   emergencyGetOutTrigger      = AnimationTrigger::Count;
   loopInterval_s              = 0;
   checkEndConditionDuringAnim = true;
-  forceLoopGetOutAnim         = false;
   tracksToLock                = static_cast<uint8_t>(AnimTrackFlag::NO_TRACKS);
 };
 
@@ -78,11 +77,6 @@ BehaviorAnimGetInLoop::BehaviorAnimGetInLoop(const Json::Value& config)
   
   if(config.isMember(kEmergencyGetOutAnimationKey)){
     loadTrigger(_iConfig.emergencyGetOutTrigger, kEmergencyGetOutAnimationKey);
-  }
-
-  if(config.isMember(kForceLoopGetOutAnimKey)){
-    std::string debugStr = "BehaviorAnimGetInLoop.Constructor.CheckEndCondIssue";
-    _iConfig.forceLoopGetOutAnim = JsonTools::ParseBool(config, kForceLoopGetOutAnimKey, debugStr);
   }
   
   bool lockTreads = false;
@@ -228,14 +222,9 @@ void BehaviorAnimGetInLoop::TransitionToLoop()
 void BehaviorAnimGetInLoop::TransitionToGetOut()
 {
   _dVars.stage = BehaviorStage::GetOut;
-  if ( _iConfig.forceLoopGetOutAnim ) {
-    PlayEmergencyGetOut(_iConfig.getOutTrigger);
+  DelegateIfInControl(new TriggerAnimationAction(_iConfig.getOutTrigger, 1, true, _iConfig.tracksToLock), [this](){
     CancelSelf();
-  } else {
-    DelegateIfInControl(new TriggerAnimationAction(_iConfig.getOutTrigger, 1, true, _iConfig.tracksToLock), [this](){
-      CancelSelf();
-    });
-  }
+  });
 }
 
 

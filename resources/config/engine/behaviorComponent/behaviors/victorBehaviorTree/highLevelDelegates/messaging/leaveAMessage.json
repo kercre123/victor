@@ -1,9 +1,9 @@
 {
   "behaviorClass" : "LeaveAMessage",
   "behaviorID"    : "LeaveAMessage",
-  
+
   "associatedActiveFeature": "RecordingMessage",
-  
+
   "respondToUserIntents" :
   [
     { "type": "message_record" }
@@ -12,8 +12,8 @@
   "requireKnownUser" : true,
   "recordDuration" : 10.0,
 
-  // text to speech utterances
-  "errorNoRecipient"      : "I did not hear the name",
-  "errorUnknownRecipient" : "I do not know a _name_",
-  "errorMailboxFull"      : "Voice mailbox is full"
+  // Configurable localization keys
+  "ttsNoRecipientKey"      : "BehaviorLeaveAMessage.NoRecipient",
+  "ttsUnknownRecipientKey" : "BehaviorLeaveAMessage.UnknownRecipient",
+  "ttsMailboxFullKey"      : "BehaviorLeaveAMessage.MailboxFull"
 }

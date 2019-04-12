@@ -265,7 +265,7 @@ debug build, everything else:
 -I../../../robot/include
 -I../../../robot/supervisor/src
 -I../../../robot/syscon
--I../../../tools/message-buffers/support/cpp/include
+-I../../../victor-clad/tools/message-buffers/support/cpp/include
 -I../../../webServerProcess/src
 ```
 

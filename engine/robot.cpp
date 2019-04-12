@@ -37,6 +37,7 @@
 #include "engine/components/dockingComponent.h"
 #include "engine/components/habitatDetectorComponent.h"
 #include "engine/components/jdocsManager.h"
+#include "engine/components/localeComponent.h"
 #include "engine/components/mics/beatDetectorComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/movementComponent.h"
@@ -356,6 +357,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::JdocsManager,               new JdocsManager());
     _components->AddDependentComponent(RobotComponentID::AccountSettingsManager,     new AccountSettingsManager());
     _components->AddDependentComponent(RobotComponentID::UserEntitlementsManager,    new UserEntitlementsManager());
+    _components->AddDependentComponent(RobotComponentID::LocaleComponent,            new LocaleComponent());
     _components->InitComponents(this);
   }
 
@@ -561,7 +563,7 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
         // Re-enable vision if we've returned to treads
         GetVisionComponent().Pause(false);
       }
-      
+
       // If we are not localized and there is nothing else left in the world (in any origin) that we could localize to,
       // then go ahead and mark us as localized (via odometry alone)
       if (!GetLocalizationComponent().IsLocalized() &&
@@ -756,14 +758,14 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
 
   // Update robot pitch angle
   GetComponent<FullRobotPose>().SetPitchAngle(Radians(msg.pose.pitch_angle));
-  
+
   // Update robot roll angle
   GetComponent<FullRobotPose>().SetRollAngle(Radians(msg.pose.roll_angle));
 
   // Update IMU data
   _robotAccel = msg.accel;
   _robotGyro = msg.gyro;
-  
+
   for (auto imuDataFrame : msg.imuData) {
     if (imuDataFrame.timestamp > 0) {
       GetImuComponent().AddData(std::move(imuDataFrame));
@@ -950,7 +952,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   GetCliffSensorComponent().NotifyOfRobotState(msg);
   GetProxSensorComponent().NotifyOfRobotState(msg);
   GetTouchSensorComponent().NotifyOfRobotState(msg);
-  GetPowerStateManager().NotifyOfRobotState(msg);
 
   // Update processed proxSensorData in history after ProxSensorComponent was updated
   GetStateHistory()->UpdateProxSensorData(msg.timestamp, GetProxSensorComponent().GetLatestProxData());
@@ -1322,7 +1323,7 @@ Radians Robot::GetPitchAngle() const
 {
   return GetComponent<FullRobotPose>().GetPitchAngle();
 }
-  
+
 Radians Robot::GetRollAngle() const
 {
   return GetComponent<FullRobotPose>().GetRollAngle();
@@ -1771,7 +1772,7 @@ external_interface::RobotState* Robot::GenerateRobotStateProto() const
     msg->set_carrying_object_id(-1);
   }
   msg->set_carrying_object_on_top_id(-1);
-  
+
   msg->set_status(status);
 
   msg->set_head_tracking_object_id(GetMoveComponent().GetTrackToObject());
@@ -1806,7 +1807,7 @@ RobotState Robot::GetDefaultRobotState()
 
   std::array<uint16_t, Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT)> defaultCliffRawVals;
   defaultCliffRawVals.fill(std::numeric_limits<uint16_t>::max());
-  
+
   std::array<IMUDataFrame, IMUConstants::IMU_FRAMES_PER_ROBOT_STATE> defaultImuDataFrames;
   defaultImuDataFrames.fill(IMUDataFrame{0, GyroData{0, 0, 0}});
 
@@ -2037,7 +2038,7 @@ bool Robot::UpdateCameraStartupChecks(Result& res)
 bool Robot::UpdateToFStartupChecks(Result& res)
 {
   static bool isDone = false;
-  
+
   enum class State
   {
    WaitingForCallback,
@@ -2064,11 +2065,11 @@ bool Robot::UpdateToFStartupChecks(Result& res)
     } else {                                                            \
       state = nextState;                                                \
     }                                                                   \
-  } 
+  }
 
   const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   static float startTime_sec = currentTime_sec;
-  
+
   // If the ToF check has been running for more than 10 seconds assume failure
   // This will handle failing should we not get any valid ROIs or for some reason
   // one of the command callbacks is not called (never seen it happen but who knows...)
@@ -2077,7 +2078,7 @@ bool Robot::UpdateToFStartupChecks(Result& res)
   {
     HANDLE_RESULT(ToFSensor::CommandResult::Failure, State::Failure);
   }
-  
+
   switch(state)
   {
     case State::Setup:
@@ -2148,14 +2149,14 @@ bool Robot::UpdateToFStartupChecks(Result& res)
   }
 
   return isDone;
-  
+
   #undef HANDLE_RESULT
 }
 
 bool Robot::UpdateGyroCalibChecks(Result& res)
 {
   // Wait this much time after sending sync to robot before checking if we
-  // should be displaying the gyro not calibrated image
+  // should be displaying the low battery image to encourage user to put the robot down.
   // Note that by the time that the sync has been sent, the face has already
   // been blank for around 7 seconds.
   const float kTimeAfterSyncSent_sec = 2.f;
@@ -2174,7 +2175,7 @@ bool Robot::UpdateGyroCalibChecks(Result& res)
     // but we haven't received syncTime yet likely because the gyro hasn't calibrated
     GetAnimationComponent().Init();
 
-    static const std::string kGyroNotCalibratedImg = "config/devOnlySprites/independentSprites/gyro_not_calibrated.png";
+    static const std::string kGyroNotCalibratedImg = "config/devOnlySprites/independentSprites/battery_low.png";
     const std::string imgPath = GetContextDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
                                                                          kGyroNotCalibratedImg);
     Vision::ImageRGB img;
@@ -2213,7 +2214,6 @@ bool Robot::UpdateStartupChecks(Result& res)
   RUN_CHECK(UpdateGyroCalibChecks);
   RUN_CHECK(UpdateCameraStartupChecks);
   RUN_CHECK(UpdateToFStartupChecks);
-  RUN_CHECK(UpdateRampostErrorChecks);
   return checkDone;
 
 #undef RUN_CHECK
@@ -2230,6 +2230,16 @@ bool Robot::SetLocale(const std::string & locale)
   DEV_ASSERT(_context != nullptr, "Robot.SetLocale.InvalidContext");
   _context->SetLocale(locale);
 
+  //
+  // Attempt to load localized strings for given locale.
+  // If that fails, fall back to default locale.
+  //
+  auto & localeComponent = GetLocaleComponent();
+  if (!localeComponent.SetLocale(locale)) {
+    LOG_WARNING("Robot.SetLocale", "Unable to set locale %s", locale.c_str());
+    localeComponent.SetLocale(Anki::Util::Locale::kDefaultLocale.ToString());
+  }
+
   // Notify animation process
   SendRobotMessage<RobotInterface::SetLocale>(locale);
 
@@ -2244,58 +2254,6 @@ void Robot::Shutdown(ShutdownReason reason)
   }
   _toldToShutdown = true;
   _shutdownReason = reason;
-}
-
-bool Robot::UpdateRampostErrorChecks(Result& res)
-{
-  static bool rampostFileRead = false;
-  static bool rampostError = false;
-  
-  if(!rampostFileRead)
-  {
-    rampostFileRead = true;
-
-    const std::string path = "/dev/rampost_error";
-    struct stat buffer;
-    int rc = stat(path.c_str(), &buffer);
-    if(rc == 0)
-    {
-      FILE* f = fopen(path.c_str(), "r");
-      if(f != nullptr)
-      {
-        char data[32] = {0};
-        rc = (int)fread(data, sizeof(data), 1, f);
-        (void)fclose(f);
-        if(rc < 0)
-        {
-          PRINT_NAMED_ERROR("Robot.UpdateRampostErrorChecks.ReadFail",
-                            "Failed to read from rampost_error file %u %u",
-                            rc,
-                            errno);
-        }
-        else
-        {
-          PRINT_NAMED_WARNING("Robot.UpdateRampostErrorChecks", "%s", data);
-        }
-      }
-      else
-      {
-        PRINT_NAMED_ERROR("Robot.UpdateRampostErrorCheck.FileExistsButReadFailed",
-                          "%d",
-                          rc);
-      }
-
-      res = RESULT_FAIL;
-    }
-    
-    if(res != RESULT_OK)
-    {
-      rampostError = true;
-      FaultCode::DisplayFaultCode(FaultCode::RAMPOST_ERROR);    
-    }
-  }
-
-  return rampostFileRead;  
 }
 
 } // namespace Vector

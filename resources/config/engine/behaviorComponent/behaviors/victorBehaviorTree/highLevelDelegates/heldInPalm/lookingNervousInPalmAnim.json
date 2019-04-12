@@ -1,0 +1,25 @@
+{
+  "behaviorID"  : "LookingNervousInPalmAnim",
+  "behaviorClass" : "AnimSequence",
+  
+  "animTriggers"     : ["HeldOnPalmLookingNervous"],
+  
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "Compound",
+      "and": [
+        {
+          "conditionType": "RobotPitchInRange",
+          "minPitchThreshold_deg": -20.0,
+          "maxPitchThreshold_deg": 20.0
+        },
+        {
+          "conditionType": "RobotRollInRange",
+          "minRollThreshold_deg": -20.0,
+          "maxRollThreshold_deg": 20.0
+        }
+      ]
+    }
+  }
+}
