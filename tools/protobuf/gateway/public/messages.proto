@@ -1237,6 +1237,17 @@ message SetEyeColorResponse {
   ResponseStatus status = 1;
 }
 
+message SetCameraSettingsRequest {
+  float   gain = 1;
+  uint32  exposure_ms = 2;
+  bool    enable_auto_exposure = 3;
+}
+
+message SetCameraSettingsResponse {
+  ResponseStatus status = 1;
+  string  status_message = 2;
+}
+
 message SDKInitializationRequest {
   string sdk_module_version = 1;
   string python_version = 2;

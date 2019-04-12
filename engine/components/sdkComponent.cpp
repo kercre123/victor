@@ -107,6 +107,7 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamComplete, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamCancel, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kMasterVolumeRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetCameraSettingsRequest, callback));
   }
 
   auto* context = _robot->GetContext();
@@ -507,7 +508,19 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
         {
           SEND_FORBIDDEN(SayTextResponse);          
         }
-        
+      }
+      break;
+
+    case external_interface::GatewayWrapperTag::kSetCameraSettingsRequest:
+      {
+        if (_sdkBehaviorActivated) 
+        {
+          SetCameraSettings(event);
+        }
+        else
+        {
+          SEND_FORBIDDEN(SetCameraSettingsResponse);          
+        }
       }
       break;
 
@@ -521,7 +534,6 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
         {
           SEND_FORBIDDEN(SetEyeColorResponse);          
         }
-        
       }
       break;
 
@@ -948,6 +960,63 @@ void SDKComponent::SayText(const AnkiEvent<external_interface::GatewayWrapper>& 
                                                        processingStyle,
                                                        request.duration_scalar(),
                                                        ttsCallback);
+}
+
+void SDKComponent::ReleaseCameraExposure() 
+{
+  //get current camera settings
+  auto params = _robot->GetVisionComponent().GetCurrentCameraParams();
+
+  //enable auto exposure, send to vision component
+  auto camera_msg = ExternalInterface::SetCameraSettings();
+  camera_msg.enableAutoExposure = true;
+  camera_msg.gain = params.gain;
+  camera_msg.exposure_ms = params.exposureTime_ms;
+  _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageGameToEngine(std::move(camera_msg)));
+}
+
+void SDKComponent::SetCameraSettings(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  using namespace external_interface;
+  
+  auto* gi = _robot->GetGatewayInterface();
+  if (gi == nullptr) return;
+
+  const auto request = event.GetData().set_camera_settings_request();
+
+  //validate request params
+  auto* vis = &_robot->GetVisionComponent();
+  
+  auto minExp_ms = vis->GetMinCameraExposureTime_ms();
+  auto maxExp_ms = vis->GetMaxCameraExposureTime_ms();
+  auto minGain = vis->GetMinCameraGain();
+  auto maxGain = vis->GetMaxCameraGain();
+  if (!Util::InRange((s32)request.exposure_ms(), minExp_ms, maxExp_ms)
+      || !Util::InRange(request.gain(), minGain, maxGain))
+  {
+    LOG_ERROR("SDKComponent::SetCameraSettings", "User settings out of bounds: exposure %u, gain %f", 
+              request.exposure_ms(), request.gain());
+    SetCameraSettingsResponse* response = new SetCameraSettingsResponse();
+    response->set_allocated_status(new ResponseStatus(ResponseStatus::FORBIDDEN));
+    std::stringstream reason;
+    reason << "Camera exposure time must be in the range " << minExp_ms << " - " << maxExp_ms 
+           << " ms, gain must be in the range " << minGain << " - " << maxGain;
+    response->set_status_message( reason.str() );
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(response));
+    return;
+  }
+
+  //send to vision component
+  auto camera_msg = ExternalInterface::SetCameraSettings();
+  camera_msg.enableAutoExposure = request.enable_auto_exposure();
+  camera_msg.gain = request.gain();
+  camera_msg.exposure_ms = request.exposure_ms();
+  _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageGameToEngine(std::move(camera_msg)));
+
+  //send success response to user
+  auto* response = new SetCameraSettingsResponse();
+  response->set_allocated_status(new ResponseStatus(ResponseStatus::OK));
+  gi->Broadcast( ExternalMessageRouter::WrapResponse(response));
 }
 
 void SDKComponent::SetEyeColor(const AnkiEvent<external_interface::GatewayWrapper>& event) 

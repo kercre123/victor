@@ -300,6 +300,8 @@ message GatewayWrapper {
     SetEyeColorResponse           set_eye_color_response             = 1701;
     MasterVolumeRequest           master_volume_request              = 1702;
     MasterVolumeResponse          master_volume_response             = 1703;
+    SetCameraSettingsRequest      set_camera_settings_request        = 1704;
+    SetCameraSettingsResponse     set_camera_settings_response       = 1705;
 
     // ------------ Streaming audio playback (SDK only) ------------
     ExternalAudioStreamPrepare    external_audio_stream_prepare      = 1800;

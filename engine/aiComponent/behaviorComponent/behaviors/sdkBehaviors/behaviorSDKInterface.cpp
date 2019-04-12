@@ -247,6 +247,9 @@ void BehaviorSDKInterface::OnBehaviorDeactivated()
   auto& sdkComponent = robotInfo.GetSDKComponent();
   sdkComponent.SDKBehaviorActivation(false);
 
+  // Set camera back to auto-exposure
+  sdkComponent.ReleaseCameraExposure();
+
   // Unsets eye color. Also unsets any other changes though SDK only changes eye color but this is good future proofing.
   SettingsManager& settings = GetBEI().GetSettingsManager();
   settings.ApplyAllCurrentSettings();
