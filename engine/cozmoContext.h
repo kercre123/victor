@@ -48,6 +48,7 @@ class RobotDataLoader;
 class RobotManager;
 class VizManager;
 class PerfMetricEngine;
+class RobotTest;
 
 namespace WebService {
   class WebService;
@@ -93,8 +94,9 @@ public:
   CozmoExperiments*                     GetExperiments() const { return _cozmoExperiments.get(); }
   PerfMetricEngine*                     GetPerfMetric() const { return _perfMetric.get(); }
   WebService::WebService*               GetWebService() const { return _webService.get(); }
+  RobotTest*                            GetRobotTest() const { return _robotTest.get(); }
 
-  void  SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const;
+  void SetSdkStatus(SdkStatusType statusType, std::string&& statusText) const;
 
   void SetRandomSeed(uint32_t seed);
 
@@ -113,9 +115,9 @@ public:
 private:
   // This is passed in and held onto, but not owned by the context (yet.
   // It really should be, and that refactoring will have to happen soon).
-  IExternalInterface*                                     _externalInterface = nullptr;
-  IGatewayInterface*                                      _gatewayInterface = nullptr;
-  Util::Data::DataPlatform*                               _dataPlatform = nullptr;
+  IExternalInterface*                                   _externalInterface = nullptr;
+  IGatewayInterface*                                    _gatewayInterface = nullptr;
+  Util::Data::DataPlatform*                             _dataPlatform = nullptr;
 
   // for holding the thread id (and avoiding need to include cpuThreadId.h here)
   std::unique_ptr<ThreadIDInternal> _threadIdHolder;
@@ -130,6 +132,7 @@ private:
   std::unique_ptr<CozmoExperiments>                     _cozmoExperiments;
   std::unique_ptr<PerfMetricEngine>                     _perfMetric;
   std::unique_ptr<WebService::WebService>               _webService;
+  std::unique_ptr<RobotTest>                            _robotTest;
 };
 
 
