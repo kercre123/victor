@@ -36,7 +36,7 @@ namespace Anki {
 namespace Vision {
   
 const char* const OffboardProcessor::Filenames::Timestamp = "timestamp.txt";
-const char* const OffboardProcessor::Filenames::Image     = "offboardProcImage.jpg";
+const char* const OffboardProcessor::Filenames::Image     = "offboardProcImage.png";
 const char* const OffboardProcessor::Filenames::Result    = "offboardProcResult.json";
   
 const char* const OffboardProcessor::JsonKeys::CommsType       = "commsType";
@@ -417,7 +417,7 @@ bool OffboardProcessor::Connect()
   const char* serverPath = LOCAL_SOCKET_PATH "offboard_vision_server";
   const std::string clientPath = std::string(LOCAL_SOCKET_PATH) + "_" + _params.name;
   
-  const bool udpSuccess = _udpClient->Connect(clientPath.c_str(), serverPath);
+  const bool udpSuccess = _udpClient->Connect(clientPath, serverPath);
   ++numTries;
   
   LOG_INFO("OffboardProcessor.Connect.Status", "Try %d: %s - Server:%s Client:%s",

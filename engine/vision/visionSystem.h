@@ -347,6 +347,9 @@ namespace Vector {
     // Note: if set to zero, the image is never reset
     u32 _imageCompositorResetPeriod = 0;
 
+    // Size of images broadcasted to the Viz
+    Vision::ImageCacheSize _vizImageBroadcastSize = Vision::ImageCacheSize::Half;
+
 }; // class VisionSystem
   
 } // namespace Vector

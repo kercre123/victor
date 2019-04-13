@@ -62,6 +62,7 @@ def make_blocking(pipe, blocking):
         fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~os.O_NONBLOCK)  # clear it
 
 def das_event(name, parameters = []):
+    "Log a DAS event"
     args = ["/anki/bin/vic-log-event", "update-engine", name]
     for p in parameters:
         args.append(p.rstrip().replace('\r', '\\r').replace('\n', '\\n'))
@@ -188,7 +189,7 @@ def get_cmdline():
 
 
 def get_slot(kernel_command_line):
-    "Get the current and target slots from the kernel commanlines"
+    "Get the current and target slots from the kernel command line"
     suffix = kernel_command_line.get("androidboot.slot_suffix", '_f')
     if suffix == '_a':
         return 'a', 'b'
@@ -412,6 +413,7 @@ def copy_slot(partition, src_slot, dst_slot):
             dst.write(buffer)
 
 def get_file_size(filename):
+    "Get the size in bytes of a file"
     fd = os.open(filename, os.O_RDONLY)
     try:
         return os.lseek(fd, 0, os.SEEK_END)
@@ -554,6 +556,7 @@ def handle_factory(manifest, tar_stream):
     safe_delete(ABOOT_STAGING)
 
 def validate_new_os_version(current_os_version, new_os_version, cmdline):
+    "Make sure we are allowed to install the new os version"
     allow_downgrade = os.getenv("UPDATE_ENGINE_ALLOW_DOWNGRADE", "False") in TRUE_SYNONYMS
     if allow_downgrade and is_dev_robot(cmdline):
         return
@@ -670,15 +673,18 @@ def update_from_url(url):
         os.system("/sbin/reboot")
 
 def logv(msg):
+    "If DEBUG (verbose logging) is enabled, print out msg"
     if DEBUG:
         print(msg)
         sys.stdout.flush()
 
 def loge(msg):
+    "Send error message to stderr"
     print(msg, file=sys.stderr)
     sys.stderr.flush()
 
 def generate_shard_id():
+    "Generate a shard id"
     override_shard = os.getenv("UPDATE_ENGINE_SHARD", None)
     if override_shard:
         return override_shard
@@ -687,6 +693,7 @@ def generate_shard_id():
     return "{:02d}".format(b)
 
 def construct_update_url(os_version, cmdline):
+    "Construct full URL for automatic updates"
     base_url = os.getenv("UPDATE_ENGINE_BASE_URL", None)
     if is_dev_robot(cmdline):
         base_url = os.getenv("UPDATE_ENGINE_ANKIDEV_BASE_URL", base_url)
@@ -705,6 +712,7 @@ if __name__ == '__main__':
     clear_status()
     DEBUG = os.getenv("UPDATE_ENGINE_DEBUG", "False") in TRUE_SYNONYMS
     url = os.getenv("UPDATE_ENGINE_URL", "auto")
+    # We don't expect command line args, but handle them to facilitate developer testing
     if len(sys.argv) > 1:
         url = sys.argv[1]
     if len(sys.argv) > 2 and sys.argv[2] == '-v':

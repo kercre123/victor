@@ -39,11 +39,16 @@ enum uint_8 LayerName
   Player_5,
   PlayerCardOverlay,
 
+  // Layers 4 & 5 have to stay in front of the eyes until after
+  // weather is refactored for SpriteBoxKeyFrames or a few anims
+  // will break.
   Layer_4,
   Layer_5,
   Layer_6,
   Layer_7,
-  Layer_8
+  Layer_8,
+  Layer_9,
+  Layer_10
 }
 
 // Names for SpriteBoxes
@@ -90,16 +95,75 @@ enum uint_8 SpriteBoxName
   PlayerCardSlot_5,
   PlayerCardOverlay,
 
+  // TODO(str): VIC-13522 Rework Weather, timer, clock, and Blackjack around SpriteBoxKeyframes 
+  // These are temporary Placeholders to allow animations to use SpriteBoxKeyFrames.
+  // Once weather, clock, timer, and Blackjack are switched over to using the SpriteBoxCompositor
+  // system with Asset Remap messages, SpriteBoxName can be removed and existing animations using
+  // these enums should work seamlessly with string-based SpriteBox naming.
+  SpriteBox_1,
+  SpriteBox_2,
+  SpriteBox_3,
+  SpriteBox_4,
+  SpriteBox_5,
+  SpriteBox_6,
+  SpriteBox_7,
+  SpriteBox_8,
+  SpriteBox_9,
+  SpriteBox_10,
+  SpriteBox_11,
+  SpriteBox_12,
+  SpriteBox_13,
+  SpriteBox_14,
+  SpriteBox_15,
+  SpriteBox_16,
+  SpriteBox_17,
+  SpriteBox_18,
+  SpriteBox_19,
+  SpriteBox_20,
+  SpriteBox_21,
+  SpriteBox_22,
+  SpriteBox_23,
+  SpriteBox_24,
+  SpriteBox_25,
+  SpriteBox_26,
+  SpriteBox_27,
+  SpriteBox_28,
+  SpriteBox_29,
+  SpriteBox_30,
+  SpriteBox_31,
+  SpriteBox_32,
+  SpriteBox_33,
+  SpriteBox_34,
+  SpriteBox_35,
+  SpriteBox_36,
+  SpriteBox_37,
+  SpriteBox_38,
+  SpriteBox_39,
+  SpriteBox_40,
+
   Count
 
 }
 
 // Define how the contents of this sprite box should be rendered
 // RGBA - load the image off disk as an RGBA image and render it as is
-// CustomHue - load the image off disk as a Grayscale image and render it in the specified color
+// EyeColor - load the image in grayscale and overlay with procedural eye color
+// CustomHue - (Unsupported) Maps to EyeColor to support legacy animations.
+//             Internal handling to be cleared out in VIC-13523
 enum uint_8 SpriteRenderMethod{
   RGBA,
+  EyeColor,
   CustomHue
+}
+
+// Define how a SpriteSequence should behave in a given SpriteBoxKeyFrame
+// loop - start the sequence over when it reaches the end
+// hold - stop and hold the last frame of the sequence when it reaches the end
+// clear - clear the SpriteBox and hold it empty when the sequence reaches the end
+enum uint_8 SpriteSeqEndType{
+  Loop,
+  Hold,
+  Clear
 }
 
 // Wrap render method and rgb color (represented as RGB565) for messaging

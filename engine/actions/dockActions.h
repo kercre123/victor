@@ -232,8 +232,7 @@ namespace Anki {
       virtual void GetCompletionUnion(ActionCompletedUnion& completionUnion) const override {
         // TODO: Annoying we have to copy this out, bet the Get_() method is const...
         ObjectInteractionCompleted interactionCompleted;
-        interactionCompleted.objectIDs[0] = _dockObjectID;
-        interactionCompleted.numObjects = 1;
+        interactionCompleted.objectID = _dockObjectID;
         completionUnion.Set_objectInteractionCompleted(interactionCompleted);
       }
       

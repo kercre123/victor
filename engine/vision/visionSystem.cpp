@@ -1491,6 +1491,7 @@ Result VisionSystem::Update(const VisionSystemInput& input)
   _modes = input.modesToProcess;
   _futureModes = input.futureModesToProcess;
   _imageCompressQuality = input.imageCompressQuality;
+  _vizImageBroadcastSize = input.vizImageBroadcastSize;
   
   return Update(input.poseData, *_imageCache);
 }
@@ -1909,7 +1910,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   {
     Tic("Viz");
 
-    _currentResult.compressedDisplayImg.Compress(imageCache.GetRGB(), _imageCompressQuality);
+    _currentResult.compressedDisplayImg.Compress(imageCache.GetRGB(_vizImageBroadcastSize), _imageCompressQuality);
 
     Toc("Viz");
 

@@ -71,9 +71,6 @@ public:
 protected:
   virtual EComputePathStatus ComputePath(const Pose3d& startPose, const Pose3d& targetPose) override { return ComputePath(startPose, std::vector<Pose3d>({targetPose})); }
 
-  bool GetCompletePath_Internal(const Pose3d& robotPose, Planning::Path &path) override;
-  bool GetCompletePath_Internal(const Pose3d& robotPose, Planning::Path &path, Planning::GoalID& targetIndex) override;
-
 private:
   // start the planner after thread has been checked and locked
   void StartPlanner();

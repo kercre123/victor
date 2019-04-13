@@ -42,7 +42,10 @@ CONSOLE_VAR_RANGED(s32, kIAsyncRunner_OrigImageSubsample, CONSOLE_GROUP, 1, 1, 2
 
 const char* const IAsyncRunner::JsonKeys::InputHeight = "inputHeight";
 const char* const IAsyncRunner::JsonKeys::InputWidth = "inputWidth";
-  
+
+constexpr static const int kSaveResizedImage   = 1;
+constexpr static const int kSaveFullSizedImage = 2;
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IAsyncRunner::IAsyncRunner()
 : _profiler("IAsyncRunner")
@@ -99,9 +102,9 @@ bool IAsyncRunner::StartProcessingHelper()
 {
   DEV_ASSERT(!_imgOrig.IsEmpty(), "IAsyncRunner.StartProcessingHelper.EmptyImage");
   
-  if(kIAsyncRunner_SaveImages == 2)
+  if(kIAsyncRunner_SaveImages == kSaveFullSizedImage)
   {
-    const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "half",
+    const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "full",
       std::to_string(_imgOrig.GetTimestamp()) + ".png"});
     _imgOrig.Save(saveFilename);
   }
@@ -111,7 +114,7 @@ bool IAsyncRunner::StartProcessingHelper()
   const Vision::ResizeMethod kResizeMethod = Vision::ResizeMethod::Linear;
   _imgOrig.Resize(_imgBeingProcessed, kResizeMethod);
   
-  if(kIAsyncRunner_SaveImages == 1)
+  if(kIAsyncRunner_SaveImages == kSaveResizedImage)
   {
     const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "resized",
       std::to_string(_imgBeingProcessed.GetTimestamp()) + ".png"});
@@ -120,7 +123,7 @@ bool IAsyncRunner::StartProcessingHelper()
   
   if(IsVerbose())
   {
-    LOG_INFO("IAsyncRunner.StartProcessingIfIdle.ProcessingImage",
+    LOG_INFO("IAsyncRunner.StartProcessingHelper.ProcessingImage",
              "Detecting salient points in %dx%d image t=%u",
              _imgBeingProcessed.GetNumCols(), _imgBeingProcessed.GetNumRows(), _imgBeingProcessed.GetTimestamp());
   }
@@ -134,6 +137,19 @@ bool IAsyncRunner::StartProcessingHelper()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool IAsyncRunner::StartProcessingIfIdle(ImageCache& imageCache)
 {
+  // Require color data
+  if(!imageCache.HasColor())
+  {
+    LOG_PERIODIC_DEBUG(30, "IAsyncRunner.StartProcessingIfIdle.NeedColorData", "");
+    return false;
+  }
+  const ImageCacheSize kOrigImageSize = imageCache.GetSize(kIAsyncRunner_OrigImageSubsample);
+  return StartProcessingIfIdle(imageCache.GetRGB(kOrigImageSize));
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool IAsyncRunner::StartProcessingIfIdle(const Vision::ImageRGB& img)
+{
   if(!_isInitialized)
   {
     // This will spam the log, but only in the LOG_CHANNEL channel, plus it helps make it more obvious to a
@@ -143,37 +159,6 @@ bool IAsyncRunner::StartProcessingIfIdle(ImageCache& imageCache)
     // If you do see this error, it is likely one of two things:
     //  1. Your model configuration in vision_config.json is wrong (look for other errors on load)
     //  2. Git LFS has failed you. See: https://ankiinc.atlassian.net/browse/VIC-13455
-    LOG_INFO("IAsyncRunner.StartProcessingIfIdle.FromCache.NotInitialized", "t:%ums", imageCache.GetTimeStamp());
-    return false;
-  }
-  
-  // If we're not already processing an image with a "future", create one to process this image asynchronously.
-  if(!_future.valid())
-  {
-    // Require color data
-    if(!imageCache.HasColor())
-    {
-      LOG_PERIODIC_DEBUG(30, "IAsyncRunner.StartProcessingIfIdle.NeedColorData", "");
-      return false;
-    }
-    
-    const ImageCacheSize kOrigImageSize = imageCache.GetSize(kIAsyncRunner_OrigImageSubsample);
-    
-    imageCache.GetRGB(kOrigImageSize).CopyTo(_imgOrig);
-    
-    return StartProcessingHelper();
-  }
-  
-  // We were not idle, so did not start processing the new image
-  return false;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool IAsyncRunner::StartProcessingIfIdle(const Vision::ImageRGB& img)
-{
-  if(!_isInitialized)
-  {
-    // See note above for same !initialized case in StartProcessingIfIdle(imageCache)
     LOG_INFO("IAsyncRunner.StartProcessingIfIdle.FromImage.NotInitialized", "t:%ums", img.GetTimestamp());
     return false;
   }

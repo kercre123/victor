@@ -122,7 +122,7 @@ def notifyBuildStatus(status, config) {
         ]
     )
     def commitStatusMsg = "PR #${env.CHANGE_ID} :: vicos ${config} :: Finished"
-    def statusMap = [msg: commitStatusMsg, result: status.toUpperCase(), sha: commitObj.sha, context: "ci/jenkins/pr/${config}"]
+    def statusMap = [msg: commitStatusMsg, result: status.toUpperCase(), sha: commitObj.sha, context: "ci/jenkins/pr/vicos/${config}"]
     setGHBuildStatus(statusMap)
 }
 
@@ -205,9 +205,9 @@ if (env.CHANGE_ID) {
 }
 
 stage("${primaryStageName} Build") {
+    gatekeeper = new Gatekeeper(this)
     while ( true ) {
         agent = new EphemeralAgent()
-        gatekeeper = new Gatekeeper(this)
         node('master') {
             echo "Checking if resources are available on vSphere..."
             gatekeeper.checkLimits()
@@ -248,6 +248,7 @@ stage("${primaryStageName} Build") {
                                 vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
                             }
                         }
+                        gatekeeper.throttle()
                     }
                 }
             } else {

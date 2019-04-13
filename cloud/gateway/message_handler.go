@@ -93,17 +93,6 @@ func ProtoEraseAllEnrolledFacesToClad(msg *extint.EraseAllEnrolledFacesRequest) 
 	return gw_clad.NewMessageExternalToRobotWithEraseAllEnrolledFaces(&gw_clad.EraseAllEnrolledFaces{})
 }
 
-func ProtoSetFaceToEnrollToClad(msg *extint.SetFaceToEnrollRequest) *gw_clad.MessageExternalToRobot {
-	return gw_clad.NewMessageExternalToRobotWithSetFaceToEnroll(&gw_clad.SetFaceToEnroll{
-		Name:        msg.Name,
-		ObservedID:  msg.ObservedId,
-		SaveID:      msg.SaveId,
-		SaveToRobot: msg.SaveToRobot,
-		SayName:     msg.SayName,
-		UseMusic:    msg.UseMusic,
-	})
-}
-
 func ProtoPoseToClad(msg *extint.PoseStruct) *gw_clad.PoseStruct3d {
 	return &gw_clad.PoseStruct3d{
 		X:        msg.X,
@@ -769,6 +758,23 @@ func (service *rpcService) StopAllMotors(ctx context.Context, in *extint.StopAll
 	}, nil
 }
 
+func (service *rpcService) CancelBehavior(ctx context.Context, in *extint.CancelBehaviorRequest) (*extint.CancelBehaviorResponse, error) {
+	message := &extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_CancelBehaviorRequest{
+			CancelBehaviorRequest: in,
+		},
+	}
+	_, _, err := engineProtoManager.Write(message)
+	if err != nil {
+		return nil, err
+	}
+	return &extint.CancelBehaviorResponse{
+		Status: &extint.ResponseStatus{
+			Code: extint.ResponseStatus_REQUEST_PROCESSING,
+		},
+	}, nil
+}
+
 func (service *rpcService) CancelActionByIdTag(ctx context.Context, in *extint.CancelActionByIdTagRequest) (*extint.CancelActionByIdTagResponse, error) {
 	message := &extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_CancelActionByIdTagRequest{
@@ -926,15 +932,26 @@ func (service *rpcService) EraseAllEnrolledFaces(ctx context.Context, in *extint
 }
 
 func (service *rpcService) SetFaceToEnroll(ctx context.Context, in *extint.SetFaceToEnrollRequest) (*extint.SetFaceToEnrollResponse, error) {
-	_, err := engineCladManager.Write(ProtoSetFaceToEnrollToClad(in))
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_SetFaceToEnrollResponse{}, 1)
+	defer f()
+
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_SetFaceToEnrollRequest{
+			SetFaceToEnrollRequest: in,
+		},
+	})
 	if err != nil {
 		return nil, err
 	}
-	return &extint.SetFaceToEnrollResponse{
-		Status: &extint.ResponseStatus{
-			Code: extint.ResponseStatus_REQUEST_PROCESSING,
-		},
-	}, nil
+	setFaceToEnrollResponse, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := setFaceToEnrollResponse.GetSetFaceToEnrollResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
 }
 
 func (service *rpcService) EnrollFace(ctx context.Context, in *extint.EnrollFaceRequest) (*extint.EnrollFaceResponse, error) {
@@ -2645,7 +2662,8 @@ func (service *rpcService) EnableMirrorMode(ctx context.Context, request *extint
 func (service *rpcService) CaptureSingleImage(ctx context.Context, request *extint.CaptureSingleImageRequest) (*extint.CaptureSingleImageResponse, error) {
 	// Enable image stream
 	_, err := service.EnableImageStreaming(nil, &extint.EnableImageStreamingRequest{
-		Enable: true,
+		Enable:               true,
+		EnableHighResolution: request.EnableHighResolution,
 	})
 
 	if err != nil {
@@ -2654,7 +2672,8 @@ func (service *rpcService) CaptureSingleImage(ctx context.Context, request *exti
 
 	// Disable image stream
 	defer service.EnableImageStreaming(nil, &extint.EnableImageStreamingRequest{
-		Enable: false,
+		Enable:               false,
+		EnableHighResolution: false,
 	})
 
 	f, cameraFeedChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ImageChunk{}, 1024)
@@ -2796,9 +2815,10 @@ func UnpackCameraImageChunk(imageChunk *extint.ImageChunk, cache *CameraFeedCach
 
 // Long running message for sending camera feed to listening sdk users
 func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extint.ExternalInterface_CameraFeedServer) error {
-	// Enable video stream
+	// Enable video stream. The video stream only uses the default image resolution.
 	_, err := service.EnableImageStreaming(nil, &extint.EnableImageStreamingRequest{
-		Enable: true,
+		Enable:               true,
+		EnableHighResolution: false,
 	})
 
 	if err != nil {
@@ -2807,7 +2827,8 @@ func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extin
 
 	// Disable video stream
 	defer service.EnableImageStreaming(nil, &extint.EnableImageStreamingRequest{
-		Enable: false,
+		Enable:               false,
+		EnableHighResolution: false,
 	})
 
 	f, cameraFeedChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_ImageChunk{}, 1024)
@@ -2850,40 +2871,101 @@ func (service *rpcService) CameraFeed(in *extint.CameraFeedRequest, stream extin
 
 // GetUpdateStatus tells if the robot is ready to reboot and update.
 func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse, error) {
-	update_status := &extint.CheckUpdateStatusResponse{
+	updateStatus := &extint.CheckUpdateStatusResponse{
 		Status: &extint.ResponseStatus{
 			Code: extint.ResponseStatus_OK,
 		},
 		UpdateStatus:  extint.CheckUpdateStatusResponse_NO_UPDATE,
 		Progress:      -1,
 		Expected:      -1,
+		ExitCode:      -1,
 		UpdateVersion: "",
 	}
 
-	if data, err := ioutil.ReadFile("/run/update-engine/manifest.ini"); err == nil {
-		expr := regexp.MustCompile("update_version\\s*=\\s*(\\S*)")
-		match := expr.FindStringSubmatch(string(data))
-		if len(match) == 2 {
-			update_status.UpdateVersion = match[1]
+	// If /run/update-engine/done exists, it means that a previous run of
+	// /anki/bin/update-engine constructed a new boot partition and it's ready
+	// to be started.
+	if _, err := os.Stat("/run/update-engine/done"); err == nil {
+		updateStatus.UpdateStatus =
+			extint.CheckUpdateStatusResponse_READY_TO_REBOOT_INTO_NEW_OS_VERSION
+		updateStatus.ExitCode = 0
+		return updateStatus, nil
+	}
+
+	if _, err := os.Stat("/run/update-engine/app_requested"); err == nil {
+		// /anki/bin/update-engine has started. The first thing it does is destroy everything
+		// in this directory. In this state, we can conclude nothing about the update state
+		// and must tell the app that it has to wait a bit.
+		updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_STARTING
+		updateStatus.ExitCode = 0
+		return updateStatus, nil
+	}
+
+	if data, err := ioutil.ReadFile("/run/update-engine/exit_code"); err == nil {
+		updateStatus.ExitCode, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
+	}
+
+	if data, err := ioutil.ReadFile("/run/update-engine/error"); err == nil {
+		updateStatus.Error = strings.TrimSpace(string(data))
+		if updateStatus.Error == "Unclean exit" {
+			// If we get this error, either we caught /anki/bin/update-engine in its
+			// earliest stages, or systemd has gone awry.
+			if updateStatus.ExitCode == -1 {
+				updateStatus.Error = ""
+			}
 		}
 	}
 
-	if _, err := os.Stat("/run/update-engine/done"); err == nil {
-		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_READY_TO_INSTALL
-		return update_status, nil
+	if data, err := ioutil.ReadFile("/run/update-engine/phase"); err == nil {
+		updateStatus.UpdatePhase = strings.TrimSpace(string(data))
+	}
+
+	if data, err := ioutil.ReadFile("/run/update-engine/manifest.ini"); err == nil {
+		updateVersionExpr := regexp.MustCompile("update_version\\s*=\\s*(\\S*)")
+		match := updateVersionExpr.FindStringSubmatch(string(data))
+		if len(match) == 2 {
+			updateStatus.UpdateVersion = match[1]
+		}
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/progress"); err == nil {
-		update_status.Progress, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
-		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
+		updateStatus.Progress, _ = strconv.ParseInt(string(data), 0, 64)
 	}
 
 	if data, err := ioutil.ReadFile("/run/update-engine/expected-size"); err == nil {
-		update_status.Expected, _ = strconv.ParseInt(strings.TrimSpace(string(data)), 0, 64)
-		update_status.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
+		updateStatus.Expected, _ = strconv.ParseInt(string(data), 0, 64)
 	}
 
-	return update_status, nil
+	// I do this, rather than checking for the 203 because the 203 has other meanings.
+	if strings.Contains(updateStatus.Error, "Failed to open URL: HTTP Error 403: Forbidden") {
+		updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_NO_UPDATE
+		updateStatus.Error = ""
+		updateStatus.ExitCode = 0
+		return updateStatus, nil
+	}
+
+	if strings.Contains(updateStatus.UpdatePhase, "download") {
+		if updateStatus.ExitCode > 0 {
+			if updateStatus.ExitCode == 208 || updateStatus.ExitCode == 215 {
+				updateStatus.UpdateStatus =
+					extint.CheckUpdateStatusResponse_FAILURE_INTERRUPTED_DOWNLOAD
+			} else {
+				updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_FAILURE_OTHER
+			}
+		} else {
+			// IN_PROGRESS_STARTING has already been addressed, so there's only IN_PROGRESS_OTHER
+			// to deal with.
+			updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_DOWNLOAD
+		}
+	} else {
+		if updateStatus.ExitCode > 0 {
+			updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_FAILURE_OTHER
+		} else {
+			updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_OTHER
+		}
+	}
+
+	return updateStatus, nil
 }
 
 // UpdateStatusStream tells if the robot is ready to reboot and update.
@@ -2898,8 +2980,10 @@ func (service *rpcService) UpdateStatusStream() {
 
 	for len(connectionId) != 0 {
 		status, err := service.GetUpdateStatus()
-		//Keep streaming to the requestor until they disconnect. We don't stop streaming just because there's no update
-		//pending (a requested update may be pending, but hasn't had a chance to update /run/update-engine/* yet).
+		// Keep streaming to the requestor until they disconnect. We don't stop
+		// streaming just because there's no update pending (a requested update
+		// may be pending, but hasn't had a chance to update
+		// /run/update-engine/* yet).
 		if err != nil {
 			break
 		}
@@ -2941,22 +3025,38 @@ func (service *rpcService) StartUpdateEngine(
 	status, _ := service.GetUpdateStatus()
 
 	if status.UpdateStatus == extint.CheckUpdateStatusResponse_NO_UPDATE {
-		err := exec.Command("/usr/bin/sudo", "-n", "/bin/systemctl", "stop", "update-engine.service").Run()
+		// If this fails, we can still continue, but it could indicate something more
+		// serious (hence, the error)
+		err := exec.Command("/bin/touch", "/run/update-engine/app_requested").Run()
+		if err != nil {
+			log.Errorf("Couldn't /bin/touch /run/update-engine/app_requested")
+		}
+
+		err = exec.Command(
+			"/usr/bin/sudo",
+			"-n",
+			"/bin/systemctl",
+			"stop",
+			"update-engine.service").Run()
 		if err != nil {
 			log.Errorf("Update attempt failed on `systemctl stop update-engine`: %s\n", err)
 			retval.Status.Code = extint.ResponseStatus_ERROR_UPDATE_IN_PROGRESS
 			return retval, err
 		}
 
-		err = exec.Command("/usr/bin/sudo", "-n", "/bin/systemctl", "restart", "update-engine-oneshot").Run()
+		err = exec.Command(
+			"/usr/bin/sudo",
+			"-n",
+			"/bin/systemctl",
+			"restart",
+			"update-engine-oneshot").Run()
 		if err != nil {
 			log.Errorf("Update attempt failed on `systemctl restart update-engine-oneshot`: %s\n", err)
 			retval.Status.Code = extint.ResponseStatus_ERROR_UPDATE_IN_PROGRESS
-			return retval, err
+		} else {
+			go service.UpdateStatusStream()
 		}
 	}
-
-	go service.UpdateStatusStream()
 
 	return retval, nil
 }
@@ -3345,7 +3445,8 @@ func newServer() *rpcService {
 }
 
 // Set Eye Color (SDK only)
-// TODO Set eye color back to Settings value in internal code when SDK program ends or loses behavior control (e.g., in go code or when SDK behavior deactivates)
+// TODO Set eye color back to Settings value in internal code when SDK program ends or loses behavior control
+// (e.g., in go code or when SDK behavior deactivates)
 func (service *rpcService) SetEyeColor(ctx context.Context, in *extint.SetEyeColorRequest) (*extint.SetEyeColorResponse, error) {
 	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_SetEyeColorRequest{
@@ -3360,6 +3461,31 @@ func (service *rpcService) SetEyeColor(ctx context.Context, in *extint.SetEyeCol
 			Code: extint.ResponseStatus_REQUEST_PROCESSING,
 		},
 	}, nil
+}
+
+// Set Camera Settings
+func (service *rpcService) SetCameraSettings(ctx context.Context, in *extint.SetCameraSettingsRequest) (*extint.SetCameraSettingsResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_SetCameraSettingsResponse{}, 1)
+	defer f()
+
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_SetCameraSettingsRequest{
+			SetCameraSettingsRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := payload.GetSetCameraSettingsResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
 }
 
 func (service *rpcService) ExternalAudioStreamRequestToGatewayWrapper(request *extint.ExternalAudioStreamRequest) (*extint.GatewayWrapper, error) {

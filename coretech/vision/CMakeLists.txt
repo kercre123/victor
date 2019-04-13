@@ -7,6 +7,7 @@ set(CORETECH_VISION_INCLUDE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/../..)
 include(okao)
 
 include(anki_build_cxx)
+include(anki_build_strip)
 
 #
 # cti_vision
@@ -40,7 +41,7 @@ PRIVATE
   $<$<CONFIG:Debug>:-O0>
   $<$<CONFIG:Release>:-O2>
   ${SYMBOL_VISIBILITY_FLAGS}
-  ${ASAN_CXX_FLAGS} 
+  ${ASAN_CXX_FLAGS}
 )
 
 target_include_directories(cti_vision
@@ -115,13 +116,21 @@ if (MACOSX)
 
 endif()
 
+#
+# cti_vision_debayer
+#
 anki_build_cxx_executable(cti_vision_debayer ${ANKI_SRCLIST_DIR})
+
 anki_build_target_license(cti_vision_debayer "ANKI")
+
 target_include_directories(cti_vision_debayer
   PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/../..>
 )
+
 target_link_libraries(cti_vision_debayer
   PRIVATE
   cti_vision
 )
+
+anki_build_strip(TARGET cti_vision_debayer)

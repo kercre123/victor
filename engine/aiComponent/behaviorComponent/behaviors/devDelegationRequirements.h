@@ -41,9 +41,9 @@ void ApplyForceDelegationRequirements<BehaviorClass::PromptUserForVoiceCommand>(
                                                                                  BehaviorExternalInterface& bei )
 {
   BehaviorPromptUserForVoiceCommand* castPtr = static_cast<BehaviorPromptUserForVoiceCommand*>(behavior);
-  castPtr->SetPrompt( "hello" );
+  castPtr->SetPromptString( "hello" );
 }
- 
+
 template <>
 void ApplyForceDelegationRequirements<BehaviorClass::EyeColor>( ICozmoBehavior* behavior,
                                                                 BehaviorExternalInterface& bei )
@@ -132,6 +132,19 @@ void ApplyForceDelegationRequirements<BehaviorClass::ReactToMotion>( ICozmoBehav
   BehaviorReactToMotion* castPtr = static_cast<BehaviorReactToMotion*>(behavior);
   castPtr->DevAddFakeMotion();
 }
+
+template <>
+void ApplyForceDelegationRequirements<BehaviorClass::SimpleVoiceResponse>( ICozmoBehavior* behavior,
+                                                                           BehaviorExternalInterface& bei )
+{
+  auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
+  MetaUserIntent_SimpleVoiceResponse simpleResponse;
+  simpleResponse.anim_group = "ag_not_a_real_group";
+  simpleResponse.emotion_event = "";
+  simpleResponse.active_feature = ActiveFeature::NoFeature;
+  UserIntent intent = UserIntent::Createsimple_voice_response(std::move(simpleResponse));
+  uic.DevSetUserIntentPending( std::move(intent) );
+}
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ApplyForceDelegationRequirements( ICozmoBehavior* behavior, BehaviorExternalInterface& bei )
@@ -149,6 +162,7 @@ void ApplyForceDelegationRequirements( ICozmoBehavior* behavior, BehaviorExterna
       ADD_CASE_FOR_BEHAVIOR(ReactToMotion);
       ADD_CASE_FOR_BEHAVIOR(RespondToRenameFace);
       ADD_CASE_FOR_BEHAVIOR(TakeAPhotoCoordinator);
+      ADD_CASE_FOR_BEHAVIOR(SimpleVoiceResponse);
       
       
     default:

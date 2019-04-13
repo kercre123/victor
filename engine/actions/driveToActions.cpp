@@ -405,8 +405,7 @@ namespace Anki {
     void DriveToObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
       ObjectInteractionCompleted interactionCompleted;
-      interactionCompleted.objectIDs[0] = _objectID.GetValue();
-      interactionCompleted.numObjects = 1;
+      interactionCompleted.objectID = _objectID.GetValue();
       completionUnion.Set_objectInteractionCompleted(interactionCompleted);
     }
     

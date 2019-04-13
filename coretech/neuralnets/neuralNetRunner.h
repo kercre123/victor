@@ -46,7 +46,7 @@ class NeuralNetRunner : public Vision::IAsyncRunner
 {
 public:
   
-  NeuralNetRunner(const std::string& modelPath);
+  explicit NeuralNetRunner(const std::string& modelPath);
   virtual ~NeuralNetRunner();
   
 protected:

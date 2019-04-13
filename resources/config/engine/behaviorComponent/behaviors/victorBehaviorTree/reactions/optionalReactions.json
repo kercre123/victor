@@ -1,0 +1,22 @@
+{
+  "behaviorID" : "OptionalReactions",
+  "behaviorClass" : "DispatcherStrictPriority",
+
+  "linkScope": true,
+  "interruptActiveBehavior": true,
+
+  // These are reactions that should happen but don't need to, so don't run them if a voice command is pending or active
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "AnyUserIntent"
+    }
+  },
+  
+  "behaviors": [
+    "ReactToDarkness",
+    "GreetAfterLongTime",
+    "ReactToUncalibratedHeadAndLift",
+    "DanceToTheBeatCoordinator"
+  ]
+}

@@ -21,6 +21,8 @@
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 
+#define LOG_CHANNEL "Behaviors"
+
 namespace Anki {
 namespace Vector {
 
@@ -157,12 +159,13 @@ void IBehavior::OnLeftActivatableScope()
   }
   _currentInScopeCount--;
 
-  if(_currentInScopeCount != 0){
-    PRINT_CH_INFO("Behaviors",
-                  "IBehavior.OnLeftActivatableScope.StillInScope",
-                  "There's still an in scope count of %d on %s",
-                  _currentInScopeCount,
-                  _debugLabel.c_str());
+  if (_currentInScopeCount != 0) {
+    if (kDebugActivationState) {
+      LOG_DEBUG("IBehavior.OnLeftActivatableScope.StillInScope",
+                "There's still an in scope count of %d on %s",
+                _currentInScopeCount,
+                _debugLabel.c_str());
+    }
     return;
   }
 

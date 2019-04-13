@@ -1144,7 +1144,24 @@ void BehaviorReactToVoiceCommand::ResetListeningAnimsToConfig()
 bool BehaviorReactToVoiceCommand::IsTurnEnabled() const
 {
   const EngineTimeStamp_t ts = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-  return ts != _dVars.timestampToDisableTurnFor;
+  const bool extnerallyDisabled = (ts == _dVars.timestampToDisableTurnFor);
+
+  if( extnerallyDisabled ) {
+    return false;
+  }
+
+  // special case for simple voice intents, don't turn if the flag is set
+  UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+  UserIntent pendingIntent;
+  if( uic.IsUserIntentPending(USER_INTENT(simple_voice_response), pendingIntent) ) {
+    const MetaUserIntent_SimpleVoiceResponse& response = pendingIntent.Get_simple_voice_response();
+    if( response.disable_wakeword_turn ) {
+      return false;
+    }
+  }
+
+  // otherwise, we're ok to turn
+  return true;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

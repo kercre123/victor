@@ -125,7 +125,21 @@ namespace Anki {
       bool _strictCooldown;
       
     }; // class TriggerAnimationAction
-    
+
+    // Directly call an animation group. Note that this should almost never be used from code, instead you
+    // should use the animation trigger so that it can be mapped properly to a group. However, this may be
+    // useful for dev tools or data-driven use cases where the animation group is provided in data
+    class PlayAnimationGroupAction : public PlayAnimationAction
+    {
+    public:
+      explicit PlayAnimationGroupAction(const std::string& animGroupName);
+
+    protected:
+      virtual ActionResult Init() override;
+
+    private:
+      std::string _animGroupName;
+    };
     
     // A special subclass of TriggerAnimationAction which checks to see
     // if the robot is holding a cube and locks the tracks

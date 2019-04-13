@@ -15,6 +15,7 @@ enum uint_8 BEIConditionType {
 
   AlexaInteractionActive,
   AnyStimuli,
+  AnyUserIntent,
   BatteryLevel,
   BeatDetected,
   BecameTrueThisTick,
@@ -34,7 +35,6 @@ enum uint_8 BEIConditionType {
   FeatureGate,
   HighTemperature,
   IlluminationDetected,
-  InCalmMode,
   IsMaintenanceReboot,
   IsNightTime,
   Lambda,
