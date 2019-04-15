@@ -42,6 +42,16 @@ private:
   float _ratePerSec;
 };
 
+class QuadraticDecay: public IDecayFunction {
+public:
+  QuadraticDecay(float power, float duration) : _power(power)/*, _duration(duration)*/ {};
+  virtual float operator()(float value, float dt_s) override;
+
+private:
+  float _power;
+  //float _duration;
+};
+
 
 // class for social presence event ("evidence")
 class SocialPresenceEvent {
@@ -52,7 +62,8 @@ public:
       float independentEffect,
       float independentEffectMax,
       float reinforcementEffect,
-      float reinforcementEffectMax);
+      float reinforcementEffectMax,
+      bool resetPriorOnTrigger = false);
   // destructor
   virtual ~SocialPresenceEvent();
 
@@ -63,10 +74,12 @@ public:
   float GetIndependentEffectMax() const { return _independentEffectMax; };
   float GetReinforcementEffect() const { return _reinforcementEffect; };
   float GetReinforcementEffectMax() const { return _reinforcementEffectMax; };
+  bool GetReset() const { return _resetPriorOnTrigger; };
 
   // methods
   void Update(float dt_s);
   void Trigger(float& rspi);
+  void Reset() { _value = 0.0; };
 
 private:
   // private member vars
@@ -82,6 +95,8 @@ private:
   float _reinforcementEffect;
   // reinforcement effect maximum - the highest this event can increase the RSPI to
   float _reinforcementEffectMax;
+  // should all prior events be reset on trigger
+  bool _resetPriorOnTrigger;
 };
 
 
@@ -109,6 +124,7 @@ private:
   void SubscribeToWebViz();
   void SendDataToWebViz(const CozmoContext* context);
   void UpdateRSPI();
+  void TriggerInputEvent(SocialPresenceEvent& inputEvent);
 
   // -------------------------- Private Member Vars ----------------------------
   Robot* _robot = nullptr;

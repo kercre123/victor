@@ -42,7 +42,20 @@ float ExponentialDecay::operator()(float value, float dt_s)
   return ret;
 }
 
-
+float QuadraticDecay::operator()(float value, float dt_s)
+{
+  if (fabs(value) < kEpsilon) {
+    return 0.0f;
+  }
+  if (value >= 1.0) {
+    value = 0.99;
+  }
+  //float dec = 1.0 - pow(value, _power );
+  // TODO: there must be an analytical way to handle duration; the /2.0 is "derived" empirically.
+  //float ret = fmax(0.0, value - (dt_s/(_duration/2.0))*dec );
+  float ret = pow(value, _power*dt_s);
+  return ret;
+}
 
 
 
@@ -51,42 +64,37 @@ SocialPresenceEvent::SocialPresenceEvent(std::string name,
     float independentEffect,
     float independentEffectMax,
     float reinforcementEffect,
-    float reinforcementEffectMax)
+    float reinforcementEffectMax,
+    bool resetPriorOnTrigger)
 : _value(0.0),
   _name(name),
   _independentEffect(independentEffect),
   _independentEffectMax(independentEffectMax),
   _reinforcementEffect(reinforcementEffect),
-  _reinforcementEffectMax(reinforcementEffectMax)
+  _reinforcementEffectMax(reinforcementEffectMax),
+  _resetPriorOnTrigger(resetPriorOnTrigger)
 {
   _decay = decayFunction;
 }
 
 SocialPresenceEvent::~SocialPresenceEvent()
 {
-  //delete(_decay); // ugh memory management. This assumes exclusive ownership, which seems better than not cleaning up.
+
 }
 
 
 void SocialPresenceEvent::Update(float dt_s)
 {
-  /*
-  _value = _value * pow((1.0 - _decayRatePerSec), dt_s);
-  // should zero out when we get close to zero
-  if (fabs(_value) < kEpsilon) {
-    _value = 0.0f;
-  }
-   */
-  LOG_WARNING("SocialPresenceEvent.Update.AboutToCallDecay", "");
+  //LOG_WARNING("SocialPresenceEvent.Update.AboutToCallDecay", "");
   _value = (*_decay)(_value, dt_s);
-  LOG_WARNING("SocialPresenceEvent.Update.SuccessfullyCalledDecay", "");
+  //LOG_WARNING("SocialPresenceEvent.Update.SuccessfullyCalledDecay", "");
 }
 
 void SocialPresenceEvent::Trigger(float& rspi) {
   if (rspi > _independentEffectMax) {
     // reinforcement
     _value = _reinforcementEffect;
-  } else if (rspi >= 0.0) {
+  } else /*if (rspi >= 0.0)*/ {
     // independent effect
     _value = _independentEffect;
   }
@@ -124,10 +132,11 @@ void SocialPresenceEstimator::InitDependent(Vector::Robot *robot, const RobotCom
 
   // set up input events
   _inputEvents = {
-      // name, delayRatePerSec, independent effect, independent effect max, reinforcement effect, reinforcement effect max
-      SocialPresenceEvent("test1", std::make_shared<ExponentialDecay>(0.1f), 0.80f, 1.0f, 0.80f, 1.0f),
+      // name, delay, independent effect, independent effect max, reinforcement effect, reinforcement effect max
+      SocialPresenceEvent("ExplicitPositive", std::make_shared<ExponentialDecay>(0.1f), 1.0f, 1.0f, 1.0f, 1.0f, true),
+      SocialPresenceEvent("ImplicitPositive", std::make_shared<ExponentialDecay>(0.3f), 0.5f, 1.0f, 0.5f, 1.0f),
       //SocialPresenceEvent("test2", 0.2f, 0.20f, 0.5f, 0.30f, 1.0f),
-      //SocialPresenceEvent("inhibitor", 0.2, -1.0f, 0, -1.0, 0)
+      SocialPresenceEvent("ExplicitInhibitor", std::make_shared<ExponentialDecay>(0.1f), -1.0f, 0, -1.0, 0, true)
   };
 }
 
@@ -180,6 +189,17 @@ void SocialPresenceEstimator::UpdateRSPI()
 }
 
 
+void SocialPresenceEstimator::TriggerInputEvent(SocialPresenceEvent& inputEvent) {
+  if (inputEvent.GetReset()) {
+    // reset all inputEvents
+    for (auto& inputEvent : _inputEvents) {
+      inputEvent.Reset();
+    }
+  }
+  inputEvent.Trigger(_rspi);
+}
+
+
 void SocialPresenceEstimator::SubscribeToWebViz()
 {
   if( _robot == nullptr ) {
@@ -220,7 +240,7 @@ void SocialPresenceEstimator::SubscribeToWebViz()
           "got name %s, compare to %s", data["eventName"].asString().c_str(), inputEvent.GetName().c_str());
       if (data["eventName"].asString() == inputEvent.GetName()) {
         LOG_WARNING("RSPE.SubscribeToWebViz.onDataBehaviors.trigger", "triggering %s", inputEvent.GetName().c_str());
-        inputEvent.Trigger(_rspi);
+        TriggerInputEvent(inputEvent);
         break;
       }
     }
