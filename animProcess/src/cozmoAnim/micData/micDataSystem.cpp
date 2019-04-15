@@ -42,8 +42,6 @@
 
 #include "webServerProcess/src/webService.h"
 
-#include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
-
 #include <iomanip>
 #include <sstream>
 
@@ -366,7 +364,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     {
       msg.result[i] = result[i];
     }
-    RobotInterface::SendAnimToEngine(std::move(msg));
+    AnimProcessMessages::SendAnimToEngine(std::move(msg));
 
     _fftResultData->_fftResultMutex.lock();
   }
@@ -415,7 +413,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         msgToEngine.code            = static_cast<ConnectionCode>(msg.Get_connectionResult().code);
         msgToEngine.numPackets      = msg.Get_connectionResult().numPackets;
         msgToEngine.expectedPackets = msg.Get_connectionResult().expectedPackets;
-        RobotInterface::SendAnimToEngine(msgToEngine);
+        AnimProcessMessages::SendAnimToEngine(std::move(msgToEngine));
         break;
       }
 
@@ -593,39 +591,41 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
     // Store off a copy of (one of) the micDirectionData from this update for debug drawing
     bool updatedMicDirection = false;
   #endif
-  for (const auto& msg : stolenMessages)
+  for (auto& msg : stolenMessages)
   {
-    if (msg->tag == RobotInterface::RobotToEngine::Tag_triggerWordDetected)
+    if (msg->GetTag() == RobotInterface::RobotToEngine::Tag::triggerWordDetected)
     {
-      RobotInterface::SendAnimToEngine(msg->triggerWordDetected);
+      AnimProcessMessages::SendAnimToEngine(*msg);
 
       ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
       SetWillStream(showStreamState->ShouldStreamAfterTriggerWordResponse());
     }
-    else if (msg->tag == RobotInterface::RobotToEngine::Tag_micDirection)
+    else if (msg->GetTag() == RobotInterface::RobotToEngine::Tag::micDirection)
     {
-      _latestMicDirectionMsg = msg->micDirection;
+      _latestMicDirectionMsg = msg->Get_micDirection();
       #if ANKI_DEV_CHEATS
         updatedMicDirection = true;
       #endif
-      RobotInterface::SendAnimToEngine(msg->micDirection);
+      AnimProcessMessages::SendAnimToEngine(*msg);
     }
-    else if (msg->tag == RobotInterface::RobotToEngine::Tag_beatDetectorState)
+    else if (msg->GetTag() == RobotInterface::RobotToEngine::Tag::beatDetectorState)
     {
-      RobotInterface::SendAnimToEngine(msg->beatDetectorState);
+      AnimProcessMessages::SendAnimToEngine(*msg);
     }
     else
     {
       DEV_ASSERT_MSG(false,
                      "MicDataSystem.Update.UnhandledOutgoingMessageType",
-                     "%s", RobotInterface::RobotToEngine::TagToString(msg->tag));
+                     "%s", RobotInterface::RobotToEngineTagToString(msg->GetTag()));
     }
   }
 
   const auto& rawBufferFullness = GetIncomingMicDataPercentUsed();
-  RobotInterface::MicDataState micDataState{};
-  micDataState.rawBufferFullness = rawBufferFullness;
-  RobotInterface::SendAnimToEngine(micDataState);
+  {
+    RobotInterface::MicDataState micDataState{};
+    micDataState.rawBufferFullness = rawBufferFullness;
+    AnimProcessMessages::SendAnimToEngine(std::move(micDataState));
+  }
 
   #if ANKI_DEV_CHEATS
     if (updatedMicDirection || recordingSecondsRemaining != 0)
@@ -790,8 +790,7 @@ void MicDataSystem::AudioSaveCallback(const std::string& dest)
 
     RobotInterface::MicRecordingComplete event;
 
-    memcpy( event.path, dest.c_str(), dest.length() );
-    event.path_length = dest.length();
+    event.path = dest;
 
     AnimProcessMessages::SendAnimToEngine( std::move( event ) );
   }

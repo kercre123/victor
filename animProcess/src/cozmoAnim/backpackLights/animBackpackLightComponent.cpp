@@ -344,9 +344,9 @@ Result BackpackLightComponent::SendBackpackLights(const BackpackLightAnimation::
 {
   RobotInterface::SetBackpackLights setBackpackLights = lights.lights;
   setBackpackLights.layer = EnumToUnderlyingType(BackpackLightLayer::BPL_USER);
-
-  const auto msg = RobotInterface::EngineToRobot(setBackpackLights);
-  const bool res = AnimComms::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
+  uint8_t data[setBackpackLights.Size()];
+  setBackpackLights.Pack(data, setBackpackLights.Size());
+  const bool res = AnimComms::SendPacketToRobot(data, (int)setBackpackLights.Size());
   return (res ? RESULT_OK : RESULT_FAIL);
 }
 
@@ -519,8 +519,10 @@ void BackpackLightComponent::UpdateSystemLightState(bool isCloudStreamOpen)
       light.offset_ms = 0;
     }
 
-    const auto msg = RobotInterface::EngineToRobot(RobotInterface::SetSystemLight({light}));
-    AnimComms::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
+    const auto msg = RobotInterface::SetSystemLight({light});
+    uint8_t data[msg.Size()];
+    msg.Pack(data, (int)msg.Size());
+    AnimComms::SendPacketToRobot(data, (int)msg.Size());
   }
 }
 

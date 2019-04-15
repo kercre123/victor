@@ -38,8 +38,6 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "clad/robotInterface/messageEngineToRobotTag.h"
-#include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
-#include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/factory/emrHelper.h"
@@ -224,7 +222,7 @@ void Process_setFullAnimTrackLockState(const Anki::Vector::RobotInterface::SetFu
 
 void Process_addAnim(const Anki::Vector::RobotInterface::AddAnim& msg)
 {
-  const std::string path(msg.animPath, msg.animPath_length);
+  const std::string path = msg.animPath;
 
   LOG_INFO("AnimProcessMessages.Process_addAnim",
            "Animation File: %s", path.c_str());
@@ -234,7 +232,7 @@ void Process_addAnim(const Anki::Vector::RobotInterface::AddAnim& msg)
 
 void Process_playAnim(const Anki::Vector::RobotInterface::PlayAnim& msg)
 {
-  const std::string animName(msg.animName, msg.animName_length);
+  const std::string animName = msg.animName;
 
   LOG_INFO("AnimProcessMessages.Process_playAnim",
            "Anim: %s, Tag: %d",
@@ -295,7 +293,7 @@ void Process_updateCompositeImage(const Anki::Vector::RobotInterface::UpdateComp
 
 void Process_playCompositeAnimation(const Anki::Vector::RobotInterface::PlayCompositeAnimation& msg)
 {
-  const std::string animName(msg.animName, msg.animName_length);
+  const std::string animName =msg.animName;
 
   _animStreamer->Process_playCompositeAnimation(animName, msg.tag);
 }
@@ -377,8 +375,8 @@ void Process_setDebugConsoleVarMessage(const Anki::Vector::RobotInterface::SetDe
   // are actually arrays of uint8's. Thus we need to do this reinterpret cast here.
   // In some future world, ideally we avoid all this and use, for example, a web interface to
   // set/access console vars, instead of passing around via CLAD messages.
-  const char* varName  = reinterpret_cast<const char *>(msg.varName);
-  const char* tryValue = reinterpret_cast<const char *>(msg.tryValue);
+  const char* varName  = reinterpret_cast<const char *>(msg.varName.data());
+  const char* tryValue = reinterpret_cast<const char *>(msg.tryValue.data());
 
   // TODO: Ideally, we'd send back a verify message that we (failed to) set this
 
@@ -407,8 +405,7 @@ void Process_startRecordingMicsRaw(const Anki::Vector::RobotInterface::StartReco
   }
 
   micDataSystem->RecordRawAudio(msg.duration_ms,
-                                std::string(msg.path,
-                                            msg.path_length),
+                                msg.path,
                                 msg.runFFT);
 }
 
@@ -421,8 +418,7 @@ void Process_startRecordingMicsProcessed(const Anki::Vector::RobotInterface::Sta
   }
 
   micDataSystem->RecordProcessedAudio(msg.duration_ms,
-                                      std::string(msg.path,
-                                                  msg.path_length));
+                                      msg.path);
 }
 
 void Process_startWakeWordlessStreaming(const Anki::Vector::RobotInterface::StartWakeWordlessStreaming& msg)
@@ -493,7 +489,7 @@ void Process_playbackAudioStart(const Anki::Vector::RobotInterface::StartPlaybac
     return;
   }
 
-  audioPlayer->PlaybackAudio( std::string(msg.path, msg.path_length) );
+  audioPlayer->PlaybackAudio( msg.path );
 }
 
 void Process_drawTextOnScreen(const Anki::Vector::RobotInterface::DrawTextOnScreen& msg)
@@ -508,8 +504,8 @@ void Process_runDebugConsoleFuncMessage(const Anki::Vector::RobotInterface::RunD
   // are actually arrays of uint8's. Thus we need to do this reinterpret cast here.
   // In some future world, ideally we avoid all this and use, for example, a web interface to
   // set/access console vars, instead of passing around via CLAD messages.
-  const char* funcName  = reinterpret_cast<const char *>(msg.funcName);
-  const char* funcArgs = reinterpret_cast<const char *>(msg.funcArgs);
+  const char* funcName  = reinterpret_cast<const char *>(msg.funcName.data());
+  const char* funcArgs = reinterpret_cast<const char *>(msg.funcArgs.data());
 
   // TODO: Ideally, we'd send back a verify message that we (failed to) set this
   Anki::Util::IConsoleFunction* consoleFunc = Anki::Util::ConsoleSystem::Instance().FindFunction(funcName);
@@ -665,7 +661,7 @@ void Process_updatedSettings(const RobotInterface::UpdatedSettings& msg)
       _context->GetMicDataSystem()->SetEnableDataCollectionSettings(msg.enableDataCollection);
       break;
     case SettingBeingChanged::SETTING_TIME_ZONE:
-      std::string timeZone{msg.timeZone, msg.timeZone_length};
+      std::string timeZone = msg.timeZone;
       _context->GetMicDataSystem()->UpdateTimeZone(timeZone);
       break;
   }
@@ -680,31 +676,31 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
 {
   //LOG_WARNING("AnimProcessMessages.ProcessMessageFromEngine", "%d", msg.tag);
   bool forwardToRobot = false;
-  switch (msg.tag)
+  switch (msg.GetTag())
   {
-    case RobotInterface::EngineToRobot::Tag_absLocalizationUpdate:
+    case RobotInterface::EngineToRobot::Tag::absLocalizationUpdate:
     {
       forwardToRobot = true;
       _context->GetMicDataSystem()->ResetMicListenDirection();
       break;
     }
-    case RobotInterface::EngineToRobot::Tag_calmPowerMode:
+    case RobotInterface::EngineToRobot::Tag::calmPowerMode:
     {
       // Remember the power mode specified by engine so that we can go back to
       // it when pairing/debug screens are exited.
       // Only relay the power mode to robot process if not already in pairing/debug screen.
-      FaceInfoScreenManager::getInstance()->SetCalmPowerModeOnReturnToNone(msg.calmPowerMode);
+      FaceInfoScreenManager::getInstance()->SetCalmPowerModeOnReturnToNone(msg.Get_calmPowerMode());
       forwardToRobot = FaceInfoScreenManager::getInstance()->GetCurrScreenName() == ScreenName::None;
       break;
     }
-    case RobotInterface::EngineToRobot::Tag_setBackpackLights:
+    case RobotInterface::EngineToRobot::Tag::setBackpackLights:
     {
       // Intercept the SetBackpackLights message from engine
-      _context->GetBackpackLightComponent()->SetBackpackAnimation({msg.setBackpackLights});
+      _context->GetBackpackLightComponent()->SetBackpackAnimation({msg.Get_setBackpackLights()});
       break;
     }
 
-#include "clad/robotInterface/messageEngineToRobot_switch_from_0x50_to_0xAF.def"
+    #include "clad/robotInterface/messageEngineToRobot_switch_from_0x50_to_0xAF.def"
 
     default:
       forwardToRobot = true;
@@ -713,7 +709,9 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
 
   if (forwardToRobot) {
     // Send message along to robot if it wasn't handled here
-    AnimComms::SendPacketToRobot((char*)msg.GetBuffer(), msg.Size());
+    uint8_t data[msg.Size()];
+    msg.Pack(data, msg.Size());
+    AnimComms::SendPacketToRobot((char*)data, (int)msg.Size());
   }
 
 } // ProcessMessageFromEngine()
@@ -761,15 +759,15 @@ static void HandleRobotStateUpdate(const Anki::Vector::RobotState& robotState)
 
 void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToEngine& msg)
 {
-  const auto tag = msg.tag;
+  const auto tag = msg.GetTag();
   switch (tag)
   {
-    case RobotInterface::RobotToEngine::Tag_robotServerDisconnect:
+    case RobotInterface::RobotToEngine::Tag::robotServerDisconnect:
     {
       AnimComms::DisconnectRobot();
     }
     break;
-    case RobotInterface::RobotToEngine::Tag_prepForShutdown:
+    case RobotInterface::RobotToEngine::Tag::prepForShutdown:
     {
       PRINT_NAMED_INFO("AnimProcessMessages.ProcessMessageFromRobot.Shutdown","");
       // Need to wait a couple ticks before actually shutting down so that this message
@@ -777,17 +775,17 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
       _countToShutdown = kNumTicksToShutdown;
     }
     break;
-    case RobotInterface::RobotToEngine::Tag_micData:
+    case RobotInterface::RobotToEngine::Tag::micData:
     {
-      const auto& payload = msg.micData;
+      const auto& payload = msg.Get_micData();
       ProcessMicDataMessage(payload);
       return;
     }
     break;
-    case RobotInterface::RobotToEngine::Tag_state:
+    case RobotInterface::RobotToEngine::Tag::state:
     {
-      HandleRobotStateUpdate(msg.state);
-      const bool onChargerContacts = (msg.state.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
+      HandleRobotStateUpdate(msg.Get_state());
+      const bool onChargerContacts = (msg.Get_state().status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
       _animStreamer->SetOnCharger(onChargerContacts);
       auto* showStreamStateManager = _context->GetShowAudioStreamStateManager();
       if (showStreamStateManager != nullptr)
@@ -802,20 +800,20 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
 
     }
     break;
-    case RobotInterface::RobotToEngine::Tag_stillAlive:
+    case RobotInterface::RobotToEngine::Tag::stillAlive:
     {
       _pendingRobotDisconnectTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kNoRobotStateDisconnectTimeout_sec;
     }
     break;
-    case RobotInterface::RobotToEngine::Tag_robotStopped:
+    case RobotInterface::RobotToEngine::Tag::robotStopped:
     {
       LOG_INFO("AnimProcessMessages.ProcessMessageFromRobot.RobotStopped", "Abort animation");
       _animStreamer->Abort();
     }
     break;
-    case RobotInterface::RobotToEngine::Tag_syncRobotAck:
+    case RobotInterface::RobotToEngine::Tag::syncRobotAck:
     {
-      std::string version((const char*)&msg.syncRobotAck.sysconVersion, 16);
+      std::string version((const char*)&msg.Get_syncRobotAck().sysconVersion, 16);
       FaceInfoScreenManager::getInstance()->SetSysconVersion(version);
     }
     break;
@@ -878,7 +876,7 @@ Result AnimProcessMessages::MonitorConnectionState(BaseStationTime_t currTime_na
   const bool isConnected = AnimComms::IsConnectedToEngine();
   if (!wasConnected && isConnected) {
     LOG_INFO("AnimProcessMessages.MonitorConnectionState", "Robot now available");
-    RobotInterface::SendAnimToEngine(RobotAvailable());
+    SendAnimToEngine(RobotAvailable());
 
     // Clear any scheduled fault code display
     displayFaultCodeTime_nanosec = 0;
@@ -966,17 +964,17 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
     {
       ++_messageCountEngineToAnim;
       Anki::Vector::RobotInterface::EngineToRobot msg;
-      memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
+      msg.Unpack(pktBuffer_, dataLen);
       if (msg.Size() != dataLen) {
         LOG_WARNING("AnimProcessMessages.Update.EngineToRobot.InvalidSize",
                     "Invalid message size from engine (%d != %d)",
-                    msg.Size(), dataLen);
+                    (int)msg.Size(), dataLen);
         continue;
       }
-      if (!msg.IsValid()) {
-        LOG_WARNING("AnimProcessMessages.Update.EngineToRobot.InvalidData", "Invalid message from engine");
-        continue;
-      }
+      // TODO:REG if (!msg.IsValid()) {
+      //   LOG_WARNING("AnimProcessMessages.Update.EngineToRobot.InvalidData", "Invalid message from engine");
+      //   continue;
+      // }
       ProcessMessageFromEngine(msg);
     }
   }
@@ -989,17 +987,17 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
     {
       ++_messageCountRobotToAnim;
       Anki::Vector::RobotInterface::RobotToEngine msg;
-      memcpy(msg.GetBuffer(), pktBuffer_, dataLen);
+      msg.Unpack(pktBuffer_, dataLen);
       if (msg.Size() != dataLen) {
         LOG_WARNING("AnimProcessMessages.Update.RobotToEngine.InvalidSize",
                     "Invalid message size from robot (%d != %d)",
-                    msg.Size(), dataLen);
+                    (int)msg.Size(), dataLen);
         continue;
       }
-      if (!msg.IsValid()) {
-        LOG_WARNING("AnimProcessMessages.Update.RobotToEngine.InvalidData", "Invalid message from robot");
-        continue;
-      }
+// TODO:REG     if (!msg.IsValid()) {
+//        LOG_WARNING("AnimProcessMessages.Update.RobotToEngine.InvalidData", "Invalid message from robot");
+//        continue;
+//      }
       ProcessMessageFromRobot(msg);
       _proceduralAudioClient->ProcessMessage(msg);
     }
@@ -1030,36 +1028,38 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   return RESULT_OK;
 }
 
+bool AnimProcessMessages::SendAnimToRobotEx(const RobotInterface::EngineToRobot& msg)  
+{  
+  static Util::MessageProfiler msgProfiler("AnimProcessMessages::SendAnimToRobot");  
+  LOG_TRACE("AnimProcessMessages.SendAnimToRobot", "Send tag %d size %u", (int)msg.GetTag(), msg.Size());  
+  uint8_t data[msg.Size()];
+  msg.Pack(data, msg.Size());
+  bool result = AnimComms::SendPacketToRobot(data, (int)msg.Size());  
+  if (result) {  
+    msgProfiler.Update((uint32_t)msg.GetTag(), msg.Size());  
+  } else {  
+    msgProfiler.ReportOnFailure();  
+  }  
+  ++_messageCountAnimToRobot;  
+  return result;  
+}  
 
+bool AnimProcessMessages::SendAnimToEngineEx(const RobotInterface::RobotToEngine & msg)  
+{  
+  static Util::MessageProfiler msgProfiler("AnimProcessMessages::SendAnimToEngine");  
 
-bool AnimProcessMessages::SendAnimToRobot(const RobotInterface::EngineToRobot& msg)
-{
-  static Util::MessageProfiler msgProfiler("AnimProcessMessages::SendAnimToRobot");
-  LOG_TRACE("AnimProcessMessages.SendAnimToRobot", "Send tag %d size %u", msg.tag, msg.Size());
-  bool result = AnimComms::SendPacketToRobot(msg.GetBuffer(), msg.Size());
-  if (result) {
-    msgProfiler.Update(msg.tag, msg.Size());
-  } else {
-    msgProfiler.ReportOnFailure();
-  }
-  ++_messageCountAnimToRobot;
-  return result;
-}
-
-bool AnimProcessMessages::SendAnimToEngine(const RobotInterface::RobotToEngine & msg)
-{
-  static Util::MessageProfiler msgProfiler("AnimProcessMessages::SendAnimToEngine");
-
-  LOG_TRACE("AnimProcessMessages.SendAnimToEngine", "Send tag %d size %u", msg.tag, msg.Size());
-  bool result = AnimComms::SendPacketToEngine(msg.GetBuffer(), msg.Size());
-  if (result) {
-    msgProfiler.Update(msg.tag, msg.Size());
-  } else {
-    msgProfiler.ReportOnFailure();
-  }
-  ++_messageCountAnimToEngine;
-  return result;
-}
+   LOG_TRACE("AnimProcessMessages.SendAnimToEngine", "Send tag %d size %u", (int)msg.GetTag(), msg.Size());  
+  uint8_t data[msg.Size()];
+  msg.Pack(data, msg.Size());
+  bool result = AnimComms::SendPacketToEngine(data, (int)msg.Size());  
+  if (result) {  
+    msgProfiler.Update((uint32_t)msg.GetTag(), msg.Size());  
+  } else {  
+    msgProfiler.ReportOnFailure();  
+  }  
+  ++_messageCountAnimToEngine;  
+  return result;  
+}  
 
 } // namespace Vector
 } // namespace Anki

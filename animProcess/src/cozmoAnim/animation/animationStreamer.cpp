@@ -41,8 +41,6 @@
 
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
-#include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
 
 #include "jo_gif/jo_gif.h"
 #include "gif-h/gif.h"
@@ -614,7 +612,7 @@ namespace Anim {
     // Send AnimationEvent directly up to engine if it's time to play one
     if (stateToSend.eventMessage != nullptr) {
       DEBUG_STREAM_KEYFRAME_MESSAGE("Event");
-      RobotInterface::SendAnimToEngine(*stateToSend.eventMessage);
+      AnimProcessMessages::SendAnimToEngine(std::move(*stateToSend.eventMessage));
       Util::SafeDelete(stateToSend.eventMessage);
     }
 
@@ -705,7 +703,7 @@ namespace Anim {
     static const u16 kMaxNumPixelsPerChunk = sizeof(msg.faceData) / sizeof(msg.faceData[0]);
     const auto numPixels = std::min(msg.numPixels, kMaxNumPixelsPerChunk);
     uint8_t* imageData_i = _faceImageGrayscale.GetDataPointer();
-    std::copy_n(msg.faceData, numPixels, imageData_i + (msg.chunkIndex * kMaxNumPixelsPerChunk) );
+    std::copy_n(msg.faceData.begin(), numPixels, imageData_i + (msg.chunkIndex * kMaxNumPixelsPerChunk) );
 
     if (_faceImageGrayscaleChunksReceivedBitMask == kAllFaceImageGrayscaleChunksReceivedMask) {
       auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
@@ -737,7 +735,7 @@ namespace Anim {
 
     static const u16 kMaxNumPixelsPerChunk = sizeof(msg.faceData) / sizeof(msg.faceData[0]);
     const auto numPixels = std::min(msg.numPixels, kMaxNumPixelsPerChunk);
-    std::copy_n(msg.faceData, numPixels, _faceImageRGB565.GetRawDataPointer() + (msg.chunkIndex * kMaxNumPixelsPerChunk) );
+    std::copy_n(msg.faceData.begin(), numPixels, _faceImageRGB565.GetRawDataPointer() + (msg.chunkIndex * kMaxNumPixelsPerChunk) );
 
     if (_faceImageRGBChunksReceivedBitMask == kAllFaceImageRGBChunksReceivedMask) {
       auto* img = new Vision::ImageRGBA(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
@@ -837,7 +835,7 @@ namespace Anim {
     // will delete *_streamingAnimation without assigning it to nullptr. This assignment prevents associated
     // undefined behavior
     _streamingAnimation = _neutralFaceAnimation;
-    const std::string animName(msg.animName, msg.animName_length);
+    const std::string animName = msg.animName;
     CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(animName));
     for (int i = 0; i < msg.numRemaps; ++i)
     {
@@ -1160,7 +1158,7 @@ namespace Anim {
           case AnimTrackFlag::HEAD_TRACK:
           case AnimTrackFlag::LIFT_TRACK:
           case AnimTrackFlag::BODY_TRACK:
-            res = AnimProcessMessages::SendAnimToRobot(*msg);
+            res = AnimProcessMessages::SendAnimToRobot(std::move(*msg));
             _tracksInUse |= (u8)track;
             break;
           default:
@@ -1494,7 +1492,7 @@ namespace Anim {
 
         pixelsLeftToSend -= msg.numPixels;
         std::advance(startIt, msg.numPixels);
-        RobotInterface::SendAnimToEngine(msg);
+        AnimProcessMessages::SendAnimToEngine(std::move(msg));
       }
       imageID++;
 
@@ -1546,7 +1544,7 @@ namespace Anim {
       return RESULT_OK;
     }
 
-    if (!RobotInterface::SendAnimToRobot(msg)) {
+    if (!AnimProcessMessages::SendAnimToRobot(std::move(msg))) {
       return RESULT_FAIL;
     }
 
@@ -1570,10 +1568,9 @@ namespace Anim {
       // they weren't requested by engine
       if (!_playingInternalAnim) {
         AnimationStarted startMsg;
-        memcpy(startMsg.animName, streamingAnimName.c_str(), streamingAnimName.length());
-        startMsg.animName_length = streamingAnimName.length();
+        startMsg.animName = streamingAnimName;
         startMsg.tag = _tag;
-        if (!RobotInterface::SendAnimToEngine(startMsg)) {
+        if (!AnimProcessMessages::SendAnimToEngine(std::move(startMsg))) {
           return RESULT_FAIL;
         }
       }
@@ -1609,12 +1606,11 @@ namespace Anim {
       // they weren't requested by engine
       if (!_playingInternalAnim) {
         AnimationEnded endMsg;
-        memcpy(endMsg.animName, streamingAnimName.c_str(), streamingAnimName.length());
-        endMsg.animName_length = streamingAnimName.length();
+        endMsg.animName = streamingAnimName;
         endMsg.tag = _tag;
         endMsg.wasAborted = abortingAnim;
         endMsg.streamTimeAnimEnded = _relativeStreamTime_ms;
-        if (!RobotInterface::SendAnimToEngine(endMsg)) {
+        if (!AnimProcessMessages::SendAnimToEngine(std::move(endMsg))) {
           return RESULT_FAIL;
         }
       }
@@ -1776,7 +1772,7 @@ namespace Anim {
     if (layeredKeyFrames.haveBackpackKeyFrame &&
         !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK))
     {
-      stateToSend.backpackLightsMessage = layeredKeyFrames.backpackKeyFrame.GetStreamMessage(timeSinceAnimStart_ms);
+      // TODO:REG stateToSend.backpackLightsMessage = layeredKeyFrames.backpackKeyFrame.GetStreamMessage(timeSinceAnimStart_ms);
     }
 
     if (layeredKeyFrames.haveAudioKeyFrame &&
@@ -2126,7 +2122,7 @@ namespace Anim {
       msg.lockedTracks             = _lockedTracks;
       msg.tracksInUse              = _tracksInUse;
 
-      RobotInterface::SendAnimToEngine(msg);
+      AnimProcessMessages::SendAnimToEngine(std::move(msg));
       _numTicsToSendAnimState = kAnimStateReportingPeriod_tics;
     }
 
@@ -2178,7 +2174,7 @@ namespace Anim {
 
   void AnimationStreamer::ProcessAddOrUpdateEyeShift(const RobotInterface::AddOrUpdateEyeShift& msg)
   {
-    const std::string layerName(msg.name, msg.name_length);
+    const std::string layerName = msg.name;
     _proceduralTrackComponent->AddOrUpdateEyeShift(layerName,
                                                    msg.xPix,
                                                    msg.yPix,
@@ -2193,13 +2189,13 @@ namespace Anim {
 
   void AnimationStreamer::ProcessRemoveEyeShift(const RobotInterface::RemoveEyeShift& msg)
   {
-    const std::string layerName(msg.name, msg.name_length);
+    const std::string layerName = msg.name;
     _proceduralTrackComponent->RemoveEyeShift(layerName, _relativeStreamTime_ms, msg.disableTimeout_ms);
   }
 
   void AnimationStreamer::ProcessAddSquint(const RobotInterface::AddSquint& msg)
   {
-    const std::string layerName(msg.name, msg.name_length);
+    const std::string layerName = msg.name;
     _proceduralTrackComponent->AddSquint(layerName,
                                          msg.squintScaleX,
                                          msg.squintScaleY,
@@ -2209,7 +2205,7 @@ namespace Anim {
 
   void AnimationStreamer::ProcessRemoveSquint(const RobotInterface::RemoveSquint& msg)
   {
-    const std::string layerName(msg.name, msg.name_length);
+    const std::string layerName = msg.name;
     _proceduralTrackComponent->RemoveSquint(layerName, _relativeStreamTime_ms, msg.disableTimeout_ms);
   }
 
@@ -2221,14 +2217,14 @@ namespace Anim {
       {
         RobotInterface::MoveHead msg;
         msg.speed_rad_per_sec = 0;
-        RobotInterface::SendAnimToRobot(std::move(msg));
+        AnimProcessMessages::SendAnimToRobot(std::move(msg));
       }
 
       if (whichTracks & (u8)AnimTrackFlag::LIFT_TRACK)
       {
         RobotInterface::MoveLift msg;
         msg.speed_rad_per_sec = 0;
-        RobotInterface::SendAnimToRobot(std::move(msg));
+        AnimProcessMessages::SendAnimToRobot(std::move(msg));
       }
 
       if (whichTracks & (u8)AnimTrackFlag::BODY_TRACK)
@@ -2238,7 +2234,7 @@ namespace Anim {
         msg.rwheel_speed_mmps = 0;
         msg.lwheel_accel_mmps2 = 0;
         msg.rwheel_accel_mmps2 = 0;
-        RobotInterface::SendAnimToRobot(std::move(msg));
+        AnimProcessMessages::SendAnimToRobot(std::move(msg));
       }
 
       _tracksInUse &= ~whichTracks;

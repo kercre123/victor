@@ -407,7 +407,7 @@ RobotInterface::EngineToRobot* Track<FRAME_TYPE>::GetCurrentStreamingMessage(con
     FRAME_TYPE& currentKeyFrame = GetCurrentKeyFrame();
     if(currentKeyFrame.IsTimeToPlay(relativeStreamingTime_ms))
     {
-      msg = currentKeyFrame.GetStreamMessage(relativeStreamingTime_ms);
+      // msg = currentKeyFrame.GetStreamMessage(relativeStreamingTime_ms);
     }
   }
   

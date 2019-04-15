@@ -51,11 +51,23 @@ public:
 
   // Send message to engine
   // Returns true on success, false on error
-  static bool SendAnimToEngine(const RobotInterface::RobotToEngine& msg);
+  static bool SendAnimToEngineEx(const RobotInterface::RobotToEngine& msg);  
 
   // Send message to robot
   // Returns true on success, false on error
-  static bool SendAnimToRobot(const RobotInterface::EngineToRobot& msg);
+  static bool SendAnimToRobotEx(const RobotInterface::EngineToRobot& msg);
+
+  template<typename T>
+  static bool SendAnimToRobot( T&& msg ) {
+    RobotInterface::EngineToRobot wrappedMsg{ std::forward<T>(msg) }; 
+    return AnimProcessMessages::SendAnimToRobotEx( std::move(wrappedMsg) ); 
+  }
+
+  template<typename T>
+  static bool SendAnimToEngine( T&& msg ) {
+    RobotInterface::RobotToEngine wrappedMsg{ std::forward<T>(msg) }; 
+    return AnimProcessMessages::SendAnimToEngineEx( std::move(wrappedMsg) ); 
+  }
 
   // Dispatch message from engine
   static void ProcessMessageFromEngine(const RobotInterface::EngineToRobot& msg);

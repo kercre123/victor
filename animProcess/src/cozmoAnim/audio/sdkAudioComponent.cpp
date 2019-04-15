@@ -213,7 +213,7 @@ bool SdkAudioComponent::AddAudioChunk(const RobotInterface::ExternalAudioChunk& 
   const uint16_t input_chunk_size = msg.audio_chunk_size;
   const uint16_t wave_data_size = input_chunk_size / 2;  //size is in bytes, but buffer samples are 16 bit
   Anki::AudioEngine::StandardWaveDataContainer waveContainer(_audioRate, 1, wave_data_size); 
-  waveContainer.CopyLittleEndianWaveData( (const unsigned char*)msg.audio_chunk_data, wave_data_size );
+  waveContainer.CopyLittleEndianWaveData( (const unsigned char*)msg.audio_chunk_data.data(), wave_data_size );
   const bool result = _waveData->AppendStandardWaveData( std::move(waveContainer ));
 
   if (!result) {
