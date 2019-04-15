@@ -42,9 +42,9 @@ private:
   float _ratePerSec;
 };
 
-class QuadraticDecay: public IDecayFunction {
+class PowerDecay: public IDecayFunction {
 public:
-  QuadraticDecay(float power, float duration) : _power(power)/*, _duration(duration)*/ {};
+  PowerDecay(float power/*, float duration*/) : _power(power)/*, _duration(duration)*/ {};
   virtual float operator()(float value, float dt_s) override;
 
 private:

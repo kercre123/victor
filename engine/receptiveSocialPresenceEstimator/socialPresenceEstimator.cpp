@@ -42,7 +42,7 @@ float ExponentialDecay::operator()(float value, float dt_s)
   return ret;
 }
 
-float QuadraticDecay::operator()(float value, float dt_s)
+float PowerDecay::operator()(float value, float dt_s)
 {
   if (fabs(value) < kEpsilon) {
     return 0.0f;
@@ -50,12 +50,16 @@ float QuadraticDecay::operator()(float value, float dt_s)
   if (value >= 1.0) {
     value = 0.99;
   }
-  //float dec = 1.0 - pow(value, _power );
-  // TODO: there must be an analytical way to handle duration; the /2.0 is "derived" empirically.
-  //float ret = fmax(0.0, value - (dt_s/(_duration/2.0))*dec );
-  float ret = pow(value, _power*dt_s);
+  if (value <= -1.0) {
+    value = -0.99;
+  }
+  float sign = value >= 0.0 ? 1.0 : -1.0;
+  float power = 1.0 + (dt_s*(_power - 1.0));
+  float mag = pow(fabs(value), power);
+  float ret = sign * mag;
   return ret;
 }
+
 
 
 
@@ -135,8 +139,9 @@ void SocialPresenceEstimator::InitDependent(Vector::Robot *robot, const RobotCom
       // name, delay, independent effect, independent effect max, reinforcement effect, reinforcement effect max
       SocialPresenceEvent("ExplicitPositive", std::make_shared<ExponentialDecay>(0.1f), 1.0f, 1.0f, 1.0f, 1.0f, true),
       SocialPresenceEvent("ImplicitPositive", std::make_shared<ExponentialDecay>(0.3f), 0.5f, 1.0f, 0.5f, 1.0f),
-      //SocialPresenceEvent("test2", 0.2f, 0.20f, 0.5f, 0.30f, 1.0f),
-      SocialPresenceEvent("ExplicitInhibitor", std::make_shared<ExponentialDecay>(0.1f), -1.0f, 0, -1.0, 0, true)
+      SocialPresenceEvent("ExplicitInhibitor", std::make_shared<ExponentialDecay>(0.1f), -1.0f, 0, -1.0, 0, true),
+      SocialPresenceEvent("PowerDecayNegative", std::make_shared<PowerDecay>(1.2f), -1.0f, 0.0f, -1.0f, 0.0f, true),
+      SocialPresenceEvent("PowerDecayPositive", std::make_shared<PowerDecay>(1.2f), 1.0f, 1.0f, 1.0f, 1.0f, true)
   };
 }
 
