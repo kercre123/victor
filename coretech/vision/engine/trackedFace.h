@@ -119,6 +119,7 @@ namespace Vision {
     // This is derived from gaze similar to how head
     // pose is derived from head yaw, pitch and roll.
     // The eye pose is independent of the head pose.
+    // This is just a filler comment for merge test, it should not be commited.
     const Pose3d& GetEyePose() const;
     void SetEyePose(Pose3d& pose);
 
