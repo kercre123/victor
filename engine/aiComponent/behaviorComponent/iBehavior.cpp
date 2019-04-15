@@ -64,11 +64,12 @@ void IBehavior::OnEnteredActivatableScope()
 
   _currentInScopeCount++;
   // If this isn't the first EnteredActivatableScope don't call internal functions
-  if(_currentInScopeCount != 1){
-    PRINT_CH_DEBUG("Behaviors",
-                  "IBehavior.OnEnteredActivatableScope.AlreadyInScope",
-                  "Behavior '%s' is already in scope, ignoring request to enter scope",
-                  _debugLabel.c_str());
+  if (_currentInScopeCount != 1) {
+    if (kDebugActivationState) {
+      LOG_DEBUG("IBehavior.OnEnteredActivatableScope.AlreadyInScope",
+                "Behavior '%s' is already in scope, ignoring request to enter scope",
+                _debugLabel.c_str());
+    }
     return;
   }
 
