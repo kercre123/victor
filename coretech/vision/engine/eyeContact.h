@@ -80,6 +80,8 @@ struct GazeData
 
   As far as usage, the value returned from GetGazeAverage is only valid
   if IsMakingEyeContact returns true.
+
+  Just some bonus filler, should be deleted.
 */
 
 class EyeContact
