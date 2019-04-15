@@ -120,9 +120,7 @@ def post_ci_bot_comment(auth_token, pull_request_number, mrkdwn_comment, repo_na
     """
     try:
         gh = Github(auth_token)
-        repo = gh.get_repo(repo_name)
-        pull = repo.get_pull(pull_request_number)
-        head_commit = repo.get_commit(pull.head.sha)
+        head_commit = get_pr_head_commit(auth_token, pull_request_number, repo_name)
         rendered_markdown_comment = gh.render_markdown(mrkdwn_comment)
         comment = head_commit.create_comment(rendered_markdown_comment)
         return comment
@@ -130,3 +128,53 @@ def post_ci_bot_comment(auth_token, pull_request_number, mrkdwn_comment, repo_na
     except GithubException as e:
         print("Exception thrown because of {0}".format(e))
         sys.exit("GITHUB ERROR: {0}".format(e.data['message']))
+
+def get_pr_head_commit(auth_token, pull_request_number, repo_name="anki/victor"):
+    """
+    Returns a :class:`github.CommitComment.CommitComment`
+
+    :param auth_token: string
+    :param pull_request_number: int
+    :param mrkdwn_comment: string
+    :param repo_name: string
+    :return: :class:`github.Commit.Commit`
+    """
+    try:
+        gh = Github(auth_token)
+        repo = gh.get_repo(repo_name)
+        pull = repo.get_pull(pull_request_number)
+        head_commit_sha = repo.get_commit(pull.head.sha)
+        return head_commit_sha
+        
+    except GithubException as e:
+        print("Exception thrown because of {0}".format(e))
+        sys.exit("GITHUB ERROR: {0}".format(e.data['message']))
+
+
+def post_pending_commit_status(auth_token, pull_request_number, build_url, 
+    build_ctx, description_msg, repo_name="anki/victor"):
+    """
+    Returns a :class:`github.CommitComment.CommitComment`
+
+    :param auth_token: string
+    :param pull_request_number: int
+    :param build_url: string
+    :param build_ctx: string
+    :param description_msg: string
+    :param repo_name: string
+    :return: :class:`github.CommitStatus.CommitStatus`
+    """
+    try:
+        head_commit = get_pr_head_commit(auth_token, pull_request_number)
+        status = head_commit.create_status(
+            state="pending",
+            target_url=build_url,
+            description=description_msg,
+            context=build_ctx,
+        )
+        return status
+        
+    except GithubException as e:
+        print("Exception thrown because of {0}".format(e))
+        sys.exit("GITHUB ERROR: {0}".format(e.data['message']))
+    
