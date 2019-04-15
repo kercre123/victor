@@ -13,7 +13,7 @@ type URLs struct {
 	Check           string `json:"check"`
 	LogFiles        string `json:"logfiles"`
 	AppKey          string `json:"appkey"`
-	OffboardVision *string `json:"offboard_vision"`
+	OffboardVision *string `json:"offboard_vision,omitempty"`
 }
 
 // DefaultURLs provides a default, hard-coded configuration that can be used
