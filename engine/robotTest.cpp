@@ -12,6 +12,7 @@
 
 
 #include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
@@ -325,7 +326,7 @@ bool RobotTest::StartScript(const std::string& scriptName)
   _curScriptCommandsJson = &it->second._scriptJson[kScriptCommandsKey];
   _curScriptCommandIndex = 0;
   _waitTickCount = 0;
-  _waitTime = 0.0f;
+  _waitTimeToExpire = 0.0f;
   _waitingForCloudIntent = false;
   FetchNextScriptCommand();
   return true;
@@ -447,8 +448,12 @@ bool RobotTest::ExecuteScriptCommand(ScriptCommandType command)
 
     case ScriptCommandType::WAIT_UNTIL_ENGINE_TICK_COUNT:
     {
-      // todo: Wait until engine global tick count is beyond the number specified.  set commandCompleted to true if so.
-      // note:  re-use _waitTickCount; just set to (target tick count - cur tick count).
+      const auto curTickCount = BaseStationTimer::getInstance()->GetTickCount();
+      if (_waitTickCount <= 0)
+      {
+        _waitTickCount = (*_curScriptCommandsJson)[_curScriptCommandIndex][kParametersKey].asInt();
+      }
+      commandCompleted = (curTickCount >= _waitTickCount);
     }
     break;
 
@@ -457,7 +462,7 @@ bool RobotTest::ExecuteScriptCommand(ScriptCommandType command)
       if (_waitTickCount <= 0)
       {
         _waitTickCount = (*_curScriptCommandsJson)[_curScriptCommandIndex][kParametersKey].asInt();
-        commandCompleted = _waitTickCount <= 0 ? true : false;
+        commandCompleted = (_waitTickCount <= 0);
       }
       else
       {
@@ -471,7 +476,27 @@ bool RobotTest::ExecuteScriptCommand(ScriptCommandType command)
 
     case ScriptCommandType::WAIT_SECONDS:
     {
-      // todo: Wait for N seconds.  set commandCompleted to true when done.
+      const auto curTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      if (_waitTimeToExpire == 0.0f)
+      {
+        const auto secondsToWait = (*_curScriptCommandsJson)[_curScriptCommandIndex][kParametersKey].asFloat();
+        if (secondsToWait > 0.0f)
+        {
+          commandCompleted = false;
+          _waitTimeToExpire = curTime + secondsToWait;
+        }
+      }
+      else
+      {
+        if (curTime >= _waitTimeToExpire)
+        {
+          _waitTimeToExpire = 0.0f;
+        }
+        else
+        {
+          commandCompleted = false;
+        }
+      }
     }
     break;
   }

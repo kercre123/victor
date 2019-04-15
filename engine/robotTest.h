@@ -100,7 +100,7 @@ private:
   int                       _curScriptCommandIndex = 0;
   ScriptCommandType         _nextScriptCommand = ScriptCommandType::EXIT;
   int                       _waitTickCount = 0;
-  float                     _waitTime = 0.0f;
+  float                     _waitTimeToExpire = 0.0f;
   bool                      _waitingForCloudIntent = false;
 
   enum class WebCommandType
@@ -134,8 +134,10 @@ private:
     Json::Value _scriptJson;
   };
 
-  struct comp {
-    bool operator() (const std::string& lhs, const std::string& rhs) const {
+  struct comp
+  {
+    bool operator() (const std::string& lhs, const std::string& rhs) const
+    {
       return Util::stricmp(lhs.c_str(), rhs.c_str()) < 0;
     }
   };
