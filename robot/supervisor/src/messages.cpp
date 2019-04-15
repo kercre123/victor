@@ -348,8 +348,8 @@ namespace Anki {
       }
 
       void Process_executePath(const RobotInterface::ExecutePath& msg) {
-        AnkiInfo( "Messages.Process_executePath.StartingPath", "%d", msg.pathID);
-        PathFollower::StartPathTraversal(msg.pathID);
+        const bool result = PathFollower::StartPathTraversal(msg.pathID);
+        AnkiInfo( "Messages.Process_executePath.Result", "id=%d result=%d", msg.pathID, result);
       }
 
       void Process_dockWithObject(const DockWithObject& msg)

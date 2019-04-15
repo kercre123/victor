@@ -31,7 +31,7 @@
 
 #include "util/console/consoleInterface.h"
 #include "util/helpers/noncopyable.h"
-#include "util/signals/simpleSignal.hpp"
+#include "util/signals/simpleSignal_fwd.h"
 
 #include <thread>
 #include <mutex>

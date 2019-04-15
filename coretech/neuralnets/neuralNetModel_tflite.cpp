@@ -66,12 +66,6 @@ TFLiteModel::~TFLiteModel()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result TFLiteModel::LoadModelInternal(const std::string& modelPath, const Json::Value& config)
 {
-  const Result paramsResult = _params.SetFromConfig(config);
-  if(RESULT_OK != paramsResult)
-  {
-    return paramsResult;
-  }
-
   DEV_ASSERT(!modelPath.empty(), "TFLiteModel.LoadModelInternal.EmptyModelPath");
 
   std::vector<int> sizes = {1, _params.inputHeight, _params.inputWidth, 3};

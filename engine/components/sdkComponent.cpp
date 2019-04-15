@@ -107,6 +107,7 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamComplete, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamCancel, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kMasterVolumeRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetCameraSettingsRequest, callback));
   }
 
   auto* context = _robot->GetContext();
@@ -116,19 +117,22 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
     auto helper = MakeAnkiEventUtil(*context->GetExternalInterface(), *this, _signalHandles);
 
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotProcessedImage>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedMotion>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotErasedEnrolledFace>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotRenamedEnrolledFace>();
   }
 
   // Disable/Unsubscribe from MirrorMode when we enter pairing.
   // This is to prevent SDK requested MirrorMode from drawing over the pairing screens
   auto setConnectionStatusCallback = [this](const GameToEngineEvent& event) {
-     const auto& msg = event.GetData().Get_SetConnectionStatus();
-     if (msg.status != SwitchboardInterface::ConnectionStatus::NONE &&
-         msg.status != SwitchboardInterface::ConnectionStatus::COUNT &&
-         msg.status != SwitchboardInterface::ConnectionStatus::END_PAIRING)
-     {
-       DisableMirrorMode();
-     }
-   };
+    const auto& msg = event.GetData().Get_SetConnectionStatus();
+    if (msg.status != SwitchboardInterface::ConnectionStatus::NONE &&
+        msg.status != SwitchboardInterface::ConnectionStatus::COUNT &&
+        msg.status != SwitchboardInterface::ConnectionStatus::END_PAIRING)
+    {
+      DisableMirrorMode();
+    }
+  };
 
   _signalHandles.push_back(_robot->GetExternalInterface()->Subscribe(GameToEngineTag::SetConnectionStatus,
                                                                      setConnectionStatusCallback));
@@ -139,7 +143,51 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
       auto streamEvent = event.GetData().Get_audioStreamStatusEvent();
       HandleStreamStatusEvent(streamEvent.streamResultID, streamEvent.audioReceived,
                   streamEvent.audioPlayed);
-  }));                                                                     
+  }));
+}
+
+template<>
+void SDKComponent::HandleMessage(const ExternalInterface::RobotObservedMotion& msg)
+{
+  auto* gi = _robot->GetGatewayInterface();
+  auto* observedMsg = new external_interface::RobotObservedMotion();
+  observedMsg->set_timestamp(msg.timestamp);
+  observedMsg->set_img_area(msg.img_area);
+  observedMsg->set_img_x(msg.img_x);
+  observedMsg->set_img_y(msg.img_y);
+  observedMsg->set_ground_area(msg.ground_area);
+  observedMsg->set_ground_x(msg.ground_x);
+  observedMsg->set_ground_y(msg.ground_y);
+  observedMsg->set_top_img_area(msg.top_img_area);
+  observedMsg->set_top_img_x(msg.top_img_x);
+  observedMsg->set_top_img_y(msg.top_img_y);
+  observedMsg->set_bottom_img_area(msg.bottom_img_area);
+  observedMsg->set_bottom_img_x(msg.bottom_img_x);
+  observedMsg->set_bottom_img_y(msg.bottom_img_y);
+  observedMsg->set_left_img_area(msg.left_img_area);
+  observedMsg->set_left_img_x(msg.left_img_x);
+  observedMsg->set_left_img_y(msg.left_img_y);
+  observedMsg->set_right_img_area(msg.right_img_area);
+  observedMsg->set_right_img_x(msg.right_img_x);
+  observedMsg->set_right_img_y(msg.right_img_y);
+  
+  gi->Broadcast(ExternalMessageRouter::Wrap(observedMsg));
+}
+
+template<>
+void SDKComponent::HandleMessage(const ExternalInterface::RobotErasedEnrolledFace& msg)
+{
+  auto* gi = _robot->GetGatewayInterface();
+  auto* erasedMsg = new external_interface::RobotErasedEnrolledFace(msg.faceID, msg.name);
+  gi->Broadcast(ExternalMessageRouter::Wrap(erasedMsg));
+}
+
+template<>
+void SDKComponent::HandleMessage(const Vision::RobotRenamedEnrolledFace& msg)
+{
+  auto* gi = _robot->GetGatewayInterface();
+  auto* renamedMsg = new external_interface::RobotRenamedEnrolledFace(msg.faceID, msg.name);
+  gi->Broadcast(ExternalMessageRouter::Wrap(renamedMsg));
 }
 
 void SDKComponent::HandleStreamStatusEvent(SDKAudioStreamingState streamStatusId, int audioFramesReceived, int audioFramesPlayed) {
@@ -460,7 +508,19 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
         {
           SEND_FORBIDDEN(SayTextResponse);          
         }
-        
+      }
+      break;
+
+    case external_interface::GatewayWrapperTag::kSetCameraSettingsRequest:
+      {
+        if (_sdkBehaviorActivated) 
+        {
+          SetCameraSettings(event);
+        }
+        else
+        {
+          SEND_FORBIDDEN(SetCameraSettingsResponse);          
+        }
       }
       break;
 
@@ -474,7 +534,6 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
         {
           SEND_FORBIDDEN(SetEyeColorResponse);          
         }
-        
       }
       break;
 
@@ -901,6 +960,63 @@ void SDKComponent::SayText(const AnkiEvent<external_interface::GatewayWrapper>& 
                                                        processingStyle,
                                                        request.duration_scalar(),
                                                        ttsCallback);
+}
+
+void SDKComponent::ReleaseCameraExposure() 
+{
+  //get current camera settings
+  auto params = _robot->GetVisionComponent().GetCurrentCameraParams();
+
+  //enable auto exposure, send to vision component
+  auto camera_msg = ExternalInterface::SetCameraSettings();
+  camera_msg.enableAutoExposure = true;
+  camera_msg.gain = params.gain;
+  camera_msg.exposure_ms = params.exposureTime_ms;
+  _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageGameToEngine(std::move(camera_msg)));
+}
+
+void SDKComponent::SetCameraSettings(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  using namespace external_interface;
+  
+  auto* gi = _robot->GetGatewayInterface();
+  if (gi == nullptr) return;
+
+  const auto request = event.GetData().set_camera_settings_request();
+
+  //validate request params
+  auto* vis = &_robot->GetVisionComponent();
+  
+  auto minExp_ms = vis->GetMinCameraExposureTime_ms();
+  auto maxExp_ms = vis->GetMaxCameraExposureTime_ms();
+  auto minGain = vis->GetMinCameraGain();
+  auto maxGain = vis->GetMaxCameraGain();
+  if (!Util::InRange((s32)request.exposure_ms(), minExp_ms, maxExp_ms)
+      || !Util::InRange(request.gain(), minGain, maxGain))
+  {
+    LOG_ERROR("SDKComponent::SetCameraSettings", "User settings out of bounds: exposure %u, gain %f", 
+              request.exposure_ms(), request.gain());
+    SetCameraSettingsResponse* response = new SetCameraSettingsResponse();
+    response->set_allocated_status(new ResponseStatus(ResponseStatus::FORBIDDEN));
+    std::stringstream reason;
+    reason << "Camera exposure time must be in the range " << minExp_ms << " - " << maxExp_ms 
+           << " ms, gain must be in the range " << minGain << " - " << maxGain;
+    response->set_status_message( reason.str() );
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(response));
+    return;
+  }
+
+  //send to vision component
+  auto camera_msg = ExternalInterface::SetCameraSettings();
+  camera_msg.enableAutoExposure = request.enable_auto_exposure();
+  camera_msg.gain = request.gain();
+  camera_msg.exposure_ms = request.exposure_ms();
+  _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageGameToEngine(std::move(camera_msg)));
+
+  //send success response to user
+  auto* response = new SetCameraSettingsResponse();
+  response->set_allocated_status(new ResponseStatus(ResponseStatus::OK));
+  gi->Broadcast( ExternalMessageRouter::WrapResponse(response));
 }
 
 void SDKComponent::SetEyeColor(const AnkiEvent<external_interface::GatewayWrapper>& event) 

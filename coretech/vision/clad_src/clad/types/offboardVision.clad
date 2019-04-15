@@ -1,0 +1,49 @@
+/** Clad message definitions for communicating with offboard vision processes
+ */
+
+namespace Anki {
+namespace Vision {
+
+enum uint_8 OffboardCommsType {
+  FileIO,
+  CLAD
+}
+
+// For easing rapid development, we simply use raw strings for requesting/reporting Offboard processing
+// In a production setting, these should probably go back to enumerated types.
+/*
+enum uint_8 OffboardProcType {
+  CelebrityFace,
+  FaceRecognition,
+  HumanPose,
+  ImageSegmentation,
+  ObjectDetection,
+  OCR,
+  SceneDescription
+}
+*/
+
+structure OffboardImageReady {
+  // Info about the image data
+  uint_32           timestamp,
+  uint_32           numRows, 
+  uint_32           numCols,
+  uint_32           numChannels,
+  bool              isCompressed = 1,
+  bool              isEncrypted = 0,
+  
+  // Array of processing types requested for this image
+  // OffboardResultReady message below will be generated for each
+  string            procTypes[uint_8],
+  
+  // Where to find the image
+  string            filename
+}
+
+structure OffboardResultReady {
+  uint_32           timestamp,
+  string[uint_16]   jsonResult
+}
+
+} // namespace Vision
+} // namespace Anki

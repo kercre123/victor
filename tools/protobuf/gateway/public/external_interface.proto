@@ -506,6 +506,14 @@ service ExternalInterface {
     };
   }
 
+  // Set Vector's camera settings
+  rpc SetCameraSettings(SetCameraSettingsRequest) returns (SetCameraSettingsResponse) {
+    option (google.api.http) = {
+      post: "/v1/set_camera_settings",
+      body: "*"
+    };
+  }
+
   // *** App only proto below ***
 
   rpc AppIntent(AppIntentRequest) returns (AppIntentResponse) {
