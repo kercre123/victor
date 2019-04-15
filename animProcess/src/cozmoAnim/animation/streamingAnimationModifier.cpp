@@ -91,7 +91,9 @@ void StreamingAnimationModifier::HandleMessage(const RobotInterface::AlterStream
   switch(static_cast<RobotInterface::EngineToRobotTag>(msg.internalTag)){
     case RobotInterface::EngineToRobotTag::setFullAnimTrackLockState:
     {
-      RobotInterface::EngineToRobot alterationMessage(std::move(msg.setFullAnimTrackLockState));
+      CLAD::SafeMessageBuffer buff;
+      msg.setFullAnimTrackLockState.Pack(buff);
+      RobotInterface::EngineToRobot alterationMessage(buff);
       AddToMapStreamMap(relativeStreamTime_ms, std::move(alterationMessage));
       break;
     }
@@ -105,13 +107,17 @@ void StreamingAnimationModifier::HandleMessage(const RobotInterface::AlterStream
                     "All game objects sent through alter streaming animation must have object type Animation");
       }
 
-      RobotInterface::EngineToRobot alterationMessage(std::move(msg.postAudioEvent));
+      CLAD::SafeMessageBuffer buff;
+      msg.postAudioEvent.Pack(buff);
+      RobotInterface::EngineToRobot alterationMessage(buff);
       AddToMapStreamMap(relativeStreamTime_ms, std::move(alterationMessage));
       break;
     }
     case RobotInterface::EngineToRobotTag::textToSpeechPlay:
     {
-      RobotInterface::EngineToRobot alterationMessage(std::move(msg.textToSpeechPlay));
+      CLAD::SafeMessageBuffer buff;
+      msg.textToSpeechPlay.Pack(buff);
+      RobotInterface::EngineToRobot alterationMessage(buff);
       AddToMapStreamMap(relativeStreamTime_ms, std::move(alterationMessage));
       break;
     }
@@ -130,23 +136,23 @@ void StreamingAnimationModifier::HandleMessage(const RobotInterface::AlterStream
 void StreamingAnimationModifier::ApplyMessageToStreamer(AnimationStreamer* streamer, 
                                                         const RobotInterface::EngineToRobot& msg)
 {
-  switch(msg.tag){
-    case (uint32_t)RobotInterface::EngineToRobotTag::setFullAnimTrackLockState:
+  switch(msg.GetTag()){
+    case RobotInterface::EngineToRobotTag::setFullAnimTrackLockState:
     {
-      streamer->SetLockedTracks(msg.setFullAnimTrackLockState.trackLockState);
+      streamer->SetLockedTracks(msg.Get_setFullAnimTrackLockState().trackLockState);
       break;
     }
-    case (uint32_t)RobotInterface::EngineToRobotTag::postAudioEvent:
+    case RobotInterface::EngineToRobotTag::postAudioEvent:
     {
       if(_audioInput != nullptr){
-        _audioInput->HandleMessage(msg.postAudioEvent);
+        _audioInput->HandleMessage(msg.Get_postAudioEvent());
       }
       break;
     }
-    case (uint32_t)RobotInterface::EngineToRobotTag::textToSpeechPlay:
+    case RobotInterface::EngineToRobotTag::textToSpeechPlay:
     {
       if(_ttsComponent != nullptr){
-        _ttsComponent->HandleMessage(msg.textToSpeechPlay);
+        _ttsComponent->HandleMessage(msg.Get_textToSpeechPlay());
       }
       break;
     }
@@ -154,7 +160,7 @@ void StreamingAnimationModifier::ApplyMessageToStreamer(AnimationStreamer* strea
     {
       PRINT_NAMED_ERROR("StreamingAnimationModifier.ApplyMessageToStreamer.NoImplementation",
                         "Attempted to apply message tag of type %d to streamer, but no implementation was found",
-                        static_cast<int>(msg.tag));
+                        static_cast<int>(msg.GetTag()));
     }
   }
 }

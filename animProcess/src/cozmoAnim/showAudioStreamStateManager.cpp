@@ -72,7 +72,7 @@ void ShowAudioStreamStateManager::SetTriggerWordResponse(const RobotInterface::S
   _shouldTriggerWordStartStream = msg.shouldTriggerWordStartStream;
   _shouldTriggerWordSimulateStream = msg.shouldTriggerWordSimulateStream;
   _getInAnimationTag = msg.getInAnimationTag;
-  _getInAnimName = std::string(msg.getInAnimationName, msg.getInAnimationName_length);
+  _getInAnimName = msg.getInAnimationName;
 }
 
 void ShowAudioStreamStateManager::SetPendingTriggerResponseWithGetIn(OnTriggerAudioCompleteCallback callback)
@@ -193,7 +193,7 @@ void ShowAudioStreamStateManager::SetAlexaUXResponses(const RobotInterface::SetA
   std::lock_guard<std::recursive_mutex> lock(_triggerResponseMutex); // HasAnyAlexaResponse may be called off thread
 
   _alexaResponses.clear();
-  const std::string csvResponses{msg.csvGetInAnimNames, msg.csvGetInAnimNames_length};
+  const std::string csvResponses = msg.csvGetInAnimNames;
   const std::vector<std::string> animNames = Util::StringSplit(csvResponses, ',');
   int maxAnims = 4;
   if( !ANKI_VERIFY(animNames.size() == 4,

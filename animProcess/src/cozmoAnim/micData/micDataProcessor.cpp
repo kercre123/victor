@@ -36,7 +36,6 @@
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 #include "util/threading/threadPriority.h"
-#include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 #include <list>
 #include <sched.h>
 
@@ -449,7 +448,7 @@ void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
   std::copy(
     directionResult.confidenceList.begin(),
     directionResult.confidenceList.end(),
-    newMessage.confidenceList);
+    newMessage.confidenceList.data());
   
   auto engineMessage = std::make_unique<RobotInterface::RobotToEngine>(std::move(newMessage));
   _micDataSystem->SendMessageToEngine(std::move(engineMessage));
@@ -704,7 +703,7 @@ void MicDataProcessor::ProcessRawLoop()
       ANKI_CPU_PROFILE("ProcessLoop");
 
       const auto& nextData = rawAudioToProcess.front();
-      const auto* audioChunk = nextData.data;
+      const auto* audioChunk = nextData.data.data();
       
       // Copy the current set of jobs we have for recording audio, so the list can be added to while processing
       // continues

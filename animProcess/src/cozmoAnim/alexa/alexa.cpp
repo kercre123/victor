@@ -20,7 +20,6 @@
 #include "audioEngine/audioCallback.h"
 #include "audioEngine/audioTypeTranslator.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
-#include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 #include "clad/types/alexaTypes.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -659,7 +658,8 @@ void Alexa::SendUXState()
   if( _engineLoaded ) {
     RobotInterface::AlexaUXChanged msg;
     msg.state = _uxState;
-    RobotInterface::SendAnimToEngine( msg );
+
+    AnimProcessMessages::SendAnimToEngine( std::move(msg) );
     LOG_INFO( "Alexa.SendUXState", "Sending state = %s", EnumToString(_uxState) );
   } else {
     // the ux state can change before engine init if a timer goes off, for example
@@ -753,10 +753,9 @@ void Alexa::SendAuthState()
   if( _engineLoaded ) {
     RobotInterface::AlexaAuthChanged msg;
     msg.state = _authState;
-    memcpy( msg.extra, _authExtra.c_str(), _authExtra.length() );
-    msg.extra_length = _authExtra.length();
+    msg.extra = _authExtra;
 
-    RobotInterface::SendAnimToEngine( msg );
+    AnimProcessMessages::SendAnimToEngine( std::move(msg) );
     LOG_INFO( "Alexa.SendAuthState", "Sending state = %s", EnumToString(_authState));
   } else {
     _pendingAuthMsgs = true;

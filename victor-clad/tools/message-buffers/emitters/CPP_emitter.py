@@ -264,6 +264,18 @@ class HEnumEmitter(BaseEmitter):
         self.output.write('extern const uint8_t {enum_name}VersionHash[16];\n\n'.format(**globals))
         self.output.write('constexpr {enum_storage_type} {enum_name}NumEntries = {enum_member_count};\n\n'.format(**globals))
 
+        with self.output.reset_indent():
+            self.output.write(textwrap.dedent('''\
+              constexpr {enum_storage_type} EnumToUnderlyingType({enum_name} e)
+              {{
+                return static_cast<{enum_storage_type}>(e);
+              }}
+              
+              ''').format(**globals));
+        
+        self.output.write('const char* EnumToString({enum_name} m);\n'.format(**globals))
+        self.output.write('{enum_name} {enum_name}FromString(const std::string&);\n\n'.format(**globals))
+
 class CPPEnumEmitter(HEnumEmitter):
 
     def visit_EnumDecl(self, node):

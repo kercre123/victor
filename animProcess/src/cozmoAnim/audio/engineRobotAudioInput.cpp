@@ -15,7 +15,6 @@
 #include "cozmoAnim/audio/engineRobotAudioInput.h"
 #include "cozmoAnim/animProcessMessages.h"
 #include "clad/audio/audioMessageTypes.h"
-#include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 #include <util/logging/logging.h>
 
 
@@ -52,7 +51,7 @@ void EngineRobotAudioInput::HandleMessage( const AudioEngine::Multiplexer::PostA
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void EngineRobotAudioInput::PostCallback( AudioEngine::Multiplexer::AudioCallbackDuration&& callbackMessage ) const
 {
-  if (!RobotInterface::SendAnimToEngine(callbackMessage)) {
+  if (!AnimProcessMessages::SendAnimToEngine(std::move(callbackMessage))) {
     PRINT_NAMED_ERROR("EngineRobotAudioInput.PostCallback", "Failed.SendMessageToEngine.AudioCallbackDuration");
   }
 }
@@ -60,7 +59,7 @@ void EngineRobotAudioInput::PostCallback( AudioEngine::Multiplexer::AudioCallbac
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void EngineRobotAudioInput::PostCallback( AudioEngine::Multiplexer::AudioCallbackMarker&& callbackMessage ) const
 {
-  if (!RobotInterface::SendAnimToEngine(callbackMessage)) {
+  if (!AnimProcessMessages::SendAnimToEngine(std::move(callbackMessage))) {
     PRINT_NAMED_ERROR("EngineRobotAudioInput.PostCallback", "Failed.SendMessageToEngine.AudioCallbackMarker");
   }
 }
@@ -68,7 +67,7 @@ void EngineRobotAudioInput::PostCallback( AudioEngine::Multiplexer::AudioCallbac
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void EngineRobotAudioInput::PostCallback( AudioEngine::Multiplexer::AudioCallbackComplete&& callbackMessage ) const
 {
-  if (!RobotInterface::SendAnimToEngine(callbackMessage)) {
+  if (!AnimProcessMessages::SendAnimToEngine(std::move(callbackMessage))) {
     PRINT_NAMED_ERROR("EngineRobotAudioInput.PostCallback", "Failed.SendMessageToEngine.AudioCallbackComplete");
   }
 }
@@ -76,7 +75,7 @@ void EngineRobotAudioInput::PostCallback( AudioEngine::Multiplexer::AudioCallbac
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void EngineRobotAudioInput::PostCallback( AudioEngine::Multiplexer::AudioCallbackError&& callbackMessage ) const
 {
-  if (!RobotInterface::SendAnimToEngine(callbackMessage)) {
+  if (!AnimProcessMessages::SendAnimToEngine(std::move(callbackMessage))) {
     PRINT_NAMED_ERROR("EngineRobotAudioInput.PostCallback", "Failed.SendMessageToEngine.AudioCallbackError");
   }
 }

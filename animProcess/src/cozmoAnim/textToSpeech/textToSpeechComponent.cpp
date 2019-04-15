@@ -541,8 +541,9 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPrep
   const auto triggerMode = msg.triggerMode;
   const auto style = msg.style;
   const auto durationScalar = msg.durationScalar;
-  const auto pitchScalar = msg.pitchScalar;
   const std::string text( reinterpret_cast<const char*>(msg.text) );
+  const auto pitchScalar = msg.pitchScalar;
+  const std::string text( reinterpret_cast<const char*>(msg.text.data()) );
 
   LOG_DEBUG("TextToSpeechComponent.TextToSpeechPrepare",
             "ttsID %d triggerMode %s style %s durationScalar %.2f pitchScalar %.2f text %s",

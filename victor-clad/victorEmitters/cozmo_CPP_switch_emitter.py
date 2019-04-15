@@ -25,7 +25,9 @@ class UnionSwitchEmitter(ast.NodeVisitor):
     CPPLite = False
     groupSwitchPrefix = None
     groupedSwitchMembers = []
-    
+    startID = None
+    endID = None
+
     def __init__(self, output=sys.stdout, include_extension=None):
         self.output = output
     
@@ -40,25 +42,31 @@ class UnionSwitchEmitter(ast.NodeVisitor):
         self.writeFooter(node, globals)
         
     def writeHeader(self, node, globals):
-        self.output.write(textwrap.dedent('''\
-        switch(msg.{tagAccessor}) {{
-        default:
-        \tProcessBadTag_{union_name}(msg.{tagAccessor});
-        \tbreak;
-        ''').format(tagAccessor = 'tag' if self.CPPLite else 'GetTag()', **globals))
+        if self.startID is None:
+            self.output.write(textwrap.dedent('''\
+            switch(msg.{tagAccessor}) {{
+            default:
+            \tProcessBadTag_{union_name}(msg.{tagAccessor});
+            \tbreak;
+            ''').format(tagAccessor = 'tag' if self.CPPLite else 'GetTag()', **globals))
 
     
     def writeFooter(self, node, globals):
-        if self.groupedSwitchMembers:
-            for member in self.groupedSwitchMembers:
-                self.output.write('case {member_tag}:\n'.format(member_tag=member.tag))
-            self.output.write('\tProcess_{group_prefix}(msg);\n\tbreak;\n'.format(group_prefix=self.groupSwitchPrefix))
-        self.output.write('}\n')
+        if self.startID is None:
+            if self.groupedSwitchMembers:
+                for member in self.groupedSwitchMembers:
+                    self.output.write('case {member_tag}:\n'.format(member_tag=member.tag))
+                self.output.write('\tProcess_{group_prefix}(msg);\n\tbreak;\n'.format(group_prefix=self.groupSwitchPrefix))
+            self.output.write('}\n')
         
     def writeMemberCases(self, node, globals):
         for member in node.members():
             if self.groupSwitchPrefix is not None and member.name.startswith(self.groupSwitchPrefix):
                 self.groupedSwitchMembers.append(member)
+            elif self.startID is not None and member.tag < self.startID:
+                continue
+            elif self.endID is not None and member.tag > self.endID:
+                continue
             elif self.CPPLite:
                 self.output.write(textwrap.dedent('''\
                     case {member_tag}:
@@ -80,6 +88,33 @@ if __name__ == '__main__':
         UnionSwitchEmitter.CPPLite = True
         UnionSwitchEmitter.groupSwitchPrefix = "anim"
     
-    emitterutil.c_main(language='C++', extension='_switch.def',
-        emitter_types=[UnionSwitchEmitter],
+    suffix = '_switch'
+
+    language = 'C++'
+
+    option_parser = emitterutil.StandardArgumentParser(language)
+    option_parser.add_argument('--group', metavar='group', help='Group name')
+    option_parser.add_argument('--start', metavar='start_idx', help='Start ID tag')
+    option_parser.add_argument('--end', metavar='end_idx', help='End ID tag')
+    
+    options = option_parser.parse_args()
+
+    if options.group:
+        UnionSwitchEmitter.groupSwitchPrefix = options.group
+        suffix += '_group_' + options.group
+    if options.start:
+        UnionSwitchEmitter.startID = int(options.start, 16)
+        suffix += '_from_' + options.start
+    if options.end:
+        UnionSwitchEmitter.endID = int(options.end, 16)
+        suffix += '_to_' + options.end
+
+    tree = emitterutil.parse(options)
+
+    def main_output_source_callback(output):
+        UnionSwitchEmitter(output).visit(tree)
+
+    main_output_source = emitterutil.get_output_file(options, suffix+'.def')
+    emitterutil.write_c_file(options.output_directory, main_output_source,
+        main_output_source_callback,
         use_inclusion_guards=False)

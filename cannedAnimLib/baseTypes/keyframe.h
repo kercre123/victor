@@ -29,6 +29,8 @@
 #ifndef CAN_STREAM
 #define CAN_STREAM true
 #endif
+#undef CAN_STREAM
+#define CAN_STREAM 0
 
 namespace CozmoAnim {
   struct HeadAngle;
@@ -75,7 +77,7 @@ namespace Vector {
     // E.G. The lift keyframe sends a single message, but if the lift motion lasts 2000 ms, the keyframe
     // should return 2000_ms from this function so that if the track is a single keyframe long the animation doesn't
     // immediately complete and potentially stop the motion early
-    TimeStamp_t GetTimestampActionComplete_ms() const { 
+    TimeStamp_t GetTimestampActionComplete_ms() const {
       if(ANKI_DEV_CHEATS){
         ANKI_VERIFY(GetKeyframeDuration_ms() != 0, 
                     "IKeyframe.GetTimestampActionComplete_ms.DurationZero", 

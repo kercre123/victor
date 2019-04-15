@@ -54,7 +54,6 @@ namespace Anki {
     }
     namespace RobotInterface {
       struct MicData;
-      struct RobotToEngine;
     }
     class SpeechRecognizerSystem;
     enum class AlexaSimpleState : uint8_t;

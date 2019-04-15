@@ -42,15 +42,15 @@ target_link_libraries(victor_anim
   PRIVATE
   util
   util_audio
-  canned_anim_lib_anim
+  canned_anim_lib_engine
   # cti
-  cti_common_robot
+  cti_common
   cti_vision
-  cti_messaging_robot
-  robot_clad_cpplite
+  cti_messaging
+  robot_clad
   cloud_clad_cpp
   audio_engine
-  audio_multiplexer_robot
+  audio_multiplexer_engine
   osState
   micdata
   libev
