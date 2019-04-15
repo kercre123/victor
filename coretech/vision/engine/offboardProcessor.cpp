@@ -152,9 +152,13 @@ Result OffboardProcessor::Init(const std::string& name, const Json::Value& confi
     }
     
     _udpClient.reset(new LocalUdpClient());
-    
+#ifdef VICOS
+    // Right now we only support vicos for offboard vision per the implementation
+    // in vic-cloud, if you're running on mac ... there isn't really a use case for
+    // offboard ... yet.
     const bool connected = Connect();
     LOG_INFO("OffboardProcessor.Init.ConnectionStatus", "%d", connected);
+#endif
   }
   
   return RESULT_OK;
