@@ -351,7 +351,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Vector::RobotState& rob
     const bool isValidTypeOfUnexpectedMovement = (unexpectedMovementType == UnexpectedMovementType::TURNED_BUT_STOPPED ||
                                                   unexpectedMovementType == UnexpectedMovementType::TURNED_IN_OPPOSITE_DIRECTION);
     
-    if (kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement)
+    if (kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement && !_heldInPalmModeEnabled)
     {
       // Add obstacle based on when this started and how robot was trying to turn
       // TODO: Broadcast sufficient information to blockworld and do it there?

@@ -76,6 +76,8 @@ public:
                                                                     _unexpectedMovementSide        :
                                                                     UnexpectedMovementSide::UNKNOWN; }
   
+  u8 GetUnexpectedMovementCount() const { return _unexpectedMovement.GetCount(); }
+  
   // True if any motor speed (head, left, or wheels) is non-zero in most recent RobotState message
   bool   IsMoving()        const { return _isMoving; }
   
@@ -249,6 +251,8 @@ public:
   // with point-turn actions to run even when the robot is picked up.
   void EnableHeldInPalmMode(const bool enabled);
   bool IsHeldInPalmModeEnabled() const { return _heldInPalmModeEnabled; }
+  
+  f32 GetMaxTurnSpeedWhileHeldInPalm_radps() const { return kMaxHeldInPalmTurnSpeed_radps; }
     
   // Returns body distance traveled
   // i.e. Average wheel speed integrated over time
