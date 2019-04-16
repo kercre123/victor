@@ -449,7 +449,7 @@ void BehaviorGoHome::TransitionToDriveToCharger()
                           }
                         } else {
                           // Either out of retries or we got another failure type
-                          ActionFailure();
+                          TransitionToFailureReaction();
                         }
                       });
 }
@@ -540,14 +540,14 @@ void BehaviorGoHome::TransitionToPostVisualVerification(const RobotTimeStamp_t v
                         (TimeStamp_t)GetBEI().GetRobotInfo().GetLastMsgTimestamp());
     DASMSG(go_home_charger_not_visible, "go_home.charger_not_visible", "GoHome behavior failure because the charger is not seen when should be.");
     DASMSG_SEND();
-    ActionFailure();
+    TransitionToFailureReaction();
   } else if (_dVars.turnToDockRetryCount++ < _iConfig.turnToDockRetryCount) {
     // Simply go back to the starting pose, which will allow visual
     // verification to happen again, etc.
     TransitionToDriveToCharger();
   } else {
     // Out of retries
-    ActionFailure();
+    TransitionToFailureReaction();
   }
 }
   
@@ -573,7 +573,7 @@ void BehaviorGoHome::TransitionToTurn()
                           TransitionToDriveToCharger();
                         } else {
                           // Either out of retries or we got another failure type
-                          ActionFailure();
+                          TransitionToFailureReaction();
                         }
                       });
 }
@@ -615,10 +615,10 @@ void BehaviorGoHome::TransitionToMountCharger()
                                                                         DEFAULT_PATH_MOTION_PROFILE.speed_mmps,
                                                                         false),
                                                 [this]() {
-                                                  ActionFailure();
+                                                  TransitionToFailureReaction();
                                                 });
                           } else {
-                            ActionFailure();
+                            TransitionToFailureReaction();
                           }
                         }
                       });
@@ -654,9 +654,9 @@ void BehaviorGoHome::TransitionToOnChargerCheck()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGoHome::ActionFailure()
+void BehaviorGoHome::TransitionToFailureReaction()
 {
-  LOG_WARNING("BehaviorGoHome.ActionFailure", "BehaviorGoHome had an action failure. Delegating to the request to go home");
+  LOG_WARNING("BehaviorGoHome.TransitionToFailureReaction", "BehaviorGoHome had an action failure.");
   // Play the "charger face" animation indicating that we have failed, then allow the behavior to exit
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ChargerDockingFailure));
   _dVars.SetSucceeded(false);

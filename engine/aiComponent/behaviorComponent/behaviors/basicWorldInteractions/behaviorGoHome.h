@@ -124,7 +124,7 @@ private:
   
   // An action failed such that we must exit the behavior, or
   // we're out of retries for action failures.
-  void ActionFailure();
+  void TransitionToFailureReaction();
   
   void PushDrivingAnims();
   void PopDrivingAnims();
