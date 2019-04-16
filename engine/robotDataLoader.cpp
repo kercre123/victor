@@ -179,6 +179,10 @@ void RobotDataLoader::LoadNonConfigData()
     _spriteSequenceContainer.reset(sContainer);
   }
 
+  // After we've finished loading Sprites and SpriteSequences, retroactively verify
+  // any AssetID's requested before/during loading
+  _spritePaths->CheckUnverifiedAssetIDs();
+
   if(!FACTORY_TEST)
   {
     {
@@ -578,9 +582,10 @@ void RobotDataLoader::LoadCompositeImageMaps()
                 // that system to work with animation groups
                 std::transform(assetName.begin(), assetName.end(), assetName.begin(), ::tolower);
 
+                Vision::SpritePathMap::AssetID assetID = Vision::SpritePathMap::GetAssetID(assetName);
                 auto spriteEntry = Vision::CompositeImageLayer::SpriteEntry(_spriteCache.get(),
                                                                             _spriteSequenceContainer.get(),
-                                                                            assetName);
+                                                                            assetID);
                 partialMap.emplace(sbName, std::move(spriteEntry));
               }
               

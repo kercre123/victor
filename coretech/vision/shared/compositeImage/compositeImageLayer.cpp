@@ -135,12 +135,12 @@ void CompositeImageLayer::AddToLayout(SpriteBoxName sbName, const SpriteBox& spr
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void CompositeImageLayer::AddToImageMap(SpriteCache* cache, SpriteSequenceContainer* seqContainer,
-                                        SpriteBoxName sbName, const std::string& assetName)
+                                        SpriteBoxName sbName, const SpritePathMap::AssetID assetID)
 {
-  auto resultPair = _imageMap.emplace(sbName, SpriteEntry(cache, seqContainer, assetName));
+  auto resultPair = _imageMap.emplace(sbName, SpriteEntry(cache, seqContainer, assetID));
   // If map entry already exists, just update existing iterator
   if(!resultPair.second){
-    resultPair.first->second = SpriteEntry(cache, seqContainer, assetName);
+    resultPair.first->second = SpriteEntry(cache, seqContainer, assetID);
   }
 }
 
@@ -203,9 +203,10 @@ void CompositeImageLayer::SetImageMap(const Json::Value& imageMapSpec,
     const std::string sbString  = JsonTools::ParseString(entry, kSpriteBoxNameKey, implDebugStr);
     SpriteBoxName sbName        = SpriteBoxNameFromString(sbString);
     const std::string assetName = JsonTools::ParseString(entry, kAssetNameKey, implDebugStr);
+    SpritePathMap::AssetID assetID = SpritePathMap::GetAssetID(assetName);
     auto spriteEntry = Vision::CompositeImageLayer::SpriteEntry(cache,
                                                                 seqContainer,
-                                                                assetName);
+                                                                assetID);
 
     _imageMap.emplace(std::make_pair(sbName,  std::move(spriteEntry)));
   }
@@ -388,7 +389,7 @@ void CompositeImageLayer::SpriteBox::SetLayoutModifier(CompositeImageLayoutModif
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImageLayer::SpriteEntry::SpriteEntry(SpriteCache* cache,
                                               SpriteSequenceContainer* seqContainer,
-                                              const std::string& assetName,
+                                              const SpritePathMap::AssetID assetID,
                                               uint frameStartOffset)
 : _frameStartOffset(frameStartOffset)
 , _serializable(true)
@@ -397,20 +398,20 @@ CompositeImageLayer::SpriteEntry::SpriteEntry(SpriteCache* cache,
   if(ANKI_VERIFY(nullptr != spritePathMap,
                  "SpriteEntry.Ctor.NullSpritePathMap",
                  "SpritePathMap must not be null to construct SpriteEntry's")){
-    if(!spritePathMap->IsValidAssetName(assetName)){
+    if(!spritePathMap->IsValidAssetID(assetID)){
       // SpriteEntries will handle missing assets internally since we have SpriteBox info when
       // we try to render them. That way we get the benefit of size information that we would lose
       // if we rendered the "missing" asset offered by the SpritePathMap
       _assetID = Vision::SpritePathMap::kInvalidSpriteID;
-      PRINT_NAMED_WARNING("SpriteEntry.Ctor.InvalidAssetName",
-                          "No asset named %s could be found. Target spriteBox will render an X",
-                          assetName.c_str());
+      PRINT_NAMED_WARNING("SpriteEntry.Ctor.InvalidAssetID",
+                          "No asset with id %d could be found. Target spriteBox will render an X",
+                          assetID);
     } else {
-      _assetID = spritePathMap->GetAssetID(assetName);
-      if(spritePathMap->IsSpriteSequence(assetName)){
-        _spriteSequence = *seqContainer->GetSpriteSequence(assetName);
+      _assetID = assetID;
+      if(spritePathMap->IsSpriteSequence(assetID)){
+        _spriteSequence = *seqContainer->GetSpriteSequence(assetID);
       } else {
-        _spriteSequence.AddFrame(cache->GetSpriteHandleForNamedSprite(assetName));
+        _spriteSequence.AddFrame(cache->GetSpriteHandleForAssetID(assetID));
       }
     }
   } else {

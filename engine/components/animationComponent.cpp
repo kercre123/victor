@@ -433,14 +433,14 @@ Result AnimationComponent::PlayAnimWithSpriteBoxRemaps(const std::string& animNa
   int i = 0;
   for(const auto& remap : remaps){
     msg.spriteBoxRemaps[i].spriteBoxName = remap.first;
-    if(!ANKI_VERIFY(spritePathMap.IsValidAssetName(remap.second),
+    if(!ANKI_VERIFY(spritePathMap.IsValidAssetID(remap.second),
                     "AnimationComponent.PlayAnimWithSpriteBoxRemaps.InvalidAsset", 
-                    "Attempted to remap SpriteBox %s with invalid asset name %s",
+                    "Attempted to remap SpriteBox %s with invalid assetID %d",
                     Vision::SpriteBoxNameToString(remap.first),
-                    remap.second.c_str()) ){
+                    remap.second) ){
       return RESULT_FAIL;
     }
-    msg.spriteBoxRemaps[i].remappedAssetID = spritePathMap.GetAssetID(remap.second);
+    msg.spriteBoxRemaps[i].remappedAssetID = remap.second;
     ++i;
   }
 

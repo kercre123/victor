@@ -27,7 +27,6 @@ namespace Vision {
 
 namespace{
 
-const char* kEmptySpriteName = "empty_sprite";
 
 const std::string kEmptyBoxLayout = R"json(
   {
@@ -473,7 +472,7 @@ void CompositeImage::AddEmptyLayer(SpriteSequenceContainer* seqContainer, Vision
   config[CompositeImageConfigKeys::kLayerNameKey] =  LayerNameToString(layerName);
   static CompositeImageLayer layer(config);
   if(layer.GetImageMap().size() == 0){
-    CompositeImageLayer::SpriteEntry entry(_spriteCache, seqContainer, kEmptySpriteName);
+    CompositeImageLayer::SpriteEntry entry(_spriteCache, seqContainer, SpritePathMap::kEmptySpriteBoxID);
     layer.AddToImageMap(SpriteBoxName::EmptyBox, entry);
   }
   auto intentionalCopy = layer;

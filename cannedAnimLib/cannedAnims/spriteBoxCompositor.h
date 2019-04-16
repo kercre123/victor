@@ -18,6 +18,7 @@
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/shared/types.h"
+#include "coretech/vision/shared/spritePathMap.h"
 
 #include <set>
 #include <unordered_map>
@@ -40,7 +41,6 @@ namespace Vector{
 namespace Animations{
 
 // Fwd Decl
-struct SpriteBoxKeyFrame;
 class SpriteBoxTrack;
 
 class SpriteBoxCompositor
@@ -52,11 +52,12 @@ public:
 
   Result AddKeyFrame(const CozmoAnim::SpriteBox* spriteBoxKeyFrame);
   Result AddKeyFrame(const Json::Value& jsonRoot, const std::string& animName);
-  Result AddKeyFrame(const std::string& spriteBoxName, Animations::SpriteBoxKeyFrame&& keyFrame) {
+  Result AddKeyFrame(const std::string& spriteBoxName, Vision::SpriteBoxKeyFrame&& keyFrame) {
     return AddKeyFrameInternal(spriteBoxName, std::move(keyFrame));
   }
 
-  void AddSpriteBoxRemap(const Vision::SpriteBoxName spriteBox, const std::string& remappedAssetName);
+  void AddSpriteBoxRemap(const Vision::SpriteBoxName spriteBox,
+                         const Vision::SpritePathMap::AssetID remappedAssetID);
 
   void CacheInternalSprites(Vision::SpriteCache* spriteCache);
 
@@ -85,11 +86,11 @@ private:
   SpriteBoxCompositor& operator=(SpriteBoxCompositor&& other); // Move assignment
   SpriteBoxCompositor& operator=(const SpriteBoxCompositor& other); // Copy assignment
 
-  Result AddKeyFrameInternal(const std::string& spriteBoxName, SpriteBoxKeyFrame&& spriteBox);
+  Result AddKeyFrameInternal(const std::string& spriteBoxName, Vision::SpriteBoxKeyFrame&& spriteBox);
 
-  SpriteBoxKeyFrame InterpolateKeyFrames(const SpriteBoxKeyFrame& thisKeyFrame,
-                                         const SpriteBoxKeyFrame& nextKeyFrame,
-                                         TimeStamp_t timeSinceAnimStart_ms) const;
+  Vision::SpriteBoxKeyFrame InterpolateKeyFrames(const Vision::SpriteBoxKeyFrame& thisKeyFrame,
+                                                 const Vision::SpriteBoxKeyFrame& nextKeyFrame,
+                                                 TimeStamp_t timeSinceAnimStart_ms) const;
 
   TimeStamp_t _lastKeyFrameTime_ms;
   TimeStamp_t _advanceTime_ms;
@@ -100,53 +101,41 @@ private:
 
 };
 
-struct SpriteBoxKeyFrame
+class SpriteBoxTrack
 {
-  SpriteBoxKeyFrame();
-  SpriteBoxKeyFrame(const CozmoAnim::SpriteBox* spriteBox);
-  SpriteBoxKeyFrame(const Json::Value& json, const std::string& animName);
-  std::string assetName;
-  TimeStamp_t triggerTime_ms;
-  float alpha;
-  int xPos;
-  int yPos;
-  int width;
-  int height;
-  Vision::LayerName layer;
-  Vision::SpriteRenderMethod renderMethod;
-  Vision::SpriteSeqEndType spriteSeqEndType;
+public:
   // Sort SpriteBoxKeyFrames by triggerTime_ms within a set. This also implies that
   // for a given SpriteBoxName, two KeyFrames are considered duplicates if they have
   // the same triggerTime_ms. Ergo, multiple keyframes for the same SBName and trigger
   // time are not allowed.
-  bool operator<(const SpriteBoxKeyFrame& other) const{
-    return triggerTime_ms < other.triggerTime_ms;
-  }
-};
+  struct SpriteBoxKeyFrameCompare{
+    bool operator()(const Vision::SpriteBoxKeyFrame& lhs, const Vision::SpriteBoxKeyFrame& rhs) const {
+      return lhs.triggerTime_ms < rhs.triggerTime_ms;
+    }
+  };
 
-class SpriteBoxTrack
-{
-  using TrackIterator = std::set<SpriteBoxKeyFrame>::iterator;
-public:
+  using SpriteBoxKeyFrameSet = std::set<Vision::SpriteBoxKeyFrame, SpriteBoxKeyFrameCompare>;
+  using TrackIterator = SpriteBoxKeyFrameSet::iterator;
+
   SpriteBoxTrack();
   SpriteBoxTrack(const SpriteBoxTrack& other);
 
-  bool InsertKeyFrame(SpriteBoxKeyFrame&& spriteBox);
+  bool InsertKeyFrame(Vision::SpriteBoxKeyFrame&& spriteBox);
   bool IsEmpty() const { return _track.empty(); }
   void ClearUpToTime(const TimeStamp_t toTime_ms);
 
-  bool GetCurrentKeyFrame(const TimeStamp_t timeSinceAnimStart_ms, SpriteBoxKeyFrame& outKeyFrame);
-  const std::set<SpriteBoxKeyFrame>& GetKeyFrames() const { return _track; }
+  bool GetCurrentKeyFrame(const TimeStamp_t timeSinceAnimStart_ms, Vision::SpriteBoxKeyFrame& outKeyFrame);
+  const SpriteBoxKeyFrameSet& GetKeyFrames() const { return _track; }
 
-  void SetAssetRemap(const std::string& remappedAssetName){ _remappedAssetName = remappedAssetName; }
-  void ClearAssetRemap(){ _remappedAssetName.clear(); }
+  void SetAssetRemap(const Vision::SpritePathMap::AssetID remappedAssetID){ _remappedAssetID = remappedAssetID; }
+  void ClearAssetRemap(){ _remappedAssetID = Vision::SpritePathMap::kInvalidSpriteID; }
 
 private:
   SpriteBoxTrack(SpriteBoxTrack&& other); // Move ctor
   SpriteBoxTrack& operator=(SpriteBoxTrack&& other); // Move assignment
   SpriteBoxTrack& operator=(const SpriteBoxTrack& other); // Copy assignment
 
-  std::set<SpriteBoxKeyFrame> _track;
+  SpriteBoxKeyFrameSet _track;
 
   TimeStamp_t _lastAccessTime_ms;
   TimeStamp_t _firstKeyFrameTime_ms;
@@ -156,7 +145,7 @@ private:
   TrackIterator _currentKeyFrameIter;
   TrackIterator _nextKeyFrameIter;
 
-  std::string _remappedAssetName;
+  Vision::SpritePathMap::AssetID _remappedAssetID;
 };
 
 } // namespace Animations

@@ -60,14 +60,15 @@ public:
   template<class KeyFrameType>
   Result AddKeyFrameByTime(const KeyFrameType& kf);
 
-  Result AddSpriteBoxKeyFrame(const std::string& spriteBoxName, Animations::SpriteBoxKeyFrame&& keyFrame)
+  Result AddSpriteBoxKeyFrame(const std::string& spriteBoxName, Vision::SpriteBoxKeyFrame&& keyFrame)
   {
     return _spriteBoxCompositor.AddKeyFrame(spriteBoxName, std::move(keyFrame));
   }
 
-  void AddSpriteBoxRemap(const Vision::SpriteBoxName& spriteBoxName, const std::string& remappedAssetName)
+  void AddSpriteBoxRemap(const Vision::SpriteBoxName& spriteBoxName,
+                         const Vision::SpritePathMap::AssetID remappedAssetID)
   {
-    return _spriteBoxCompositor.AddSpriteBoxRemap(spriteBoxName, remappedAssetName);
+    return _spriteBoxCompositor.AddSpriteBoxRemap(spriteBoxName, remappedAssetID);
   }
 
   // Get a track by KeyFrameType

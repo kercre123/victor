@@ -16,6 +16,8 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 
+#include "coretech/vision/shared/spritePathMap.h"
+
 namespace Anki {
 namespace Vector {
 
@@ -43,7 +45,7 @@ private:
   void DealNextPlayerCard();
   void DealNextDealerCard();
 
-  using AnimRemapMap = std::unordered_map<Vision::SpriteBoxName, std::string>;
+  using AnimRemapMap = std::unordered_map<Vision::SpriteBoxName, Vision::SpritePathMap::AssetID>;
 
   struct InstanceConfig {
     InstanceConfig();

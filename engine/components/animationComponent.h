@@ -132,7 +132,7 @@ public:
                                 bool emptySpriteBoxesAreValid = false,
                                 AnimationCompleteCallback callback = nullptr);
 
-  using RemapMap = std::unordered_map<Vision::SpriteBoxName, std::string>;
+  using RemapMap = std::unordered_map<Vision::SpriteBoxName, Vision::SpritePathMap::AssetID>;
   Result PlayAnimWithSpriteBoxRemaps(const std::string& animName,
                                      const RemapMap& remaps,
                                      bool interruptRunning = true,
