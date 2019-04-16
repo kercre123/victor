@@ -228,6 +228,38 @@ func CladRobotChangedObservedFaceIDToProto(msg *gw_clad.RobotChangedObservedFace
 	}
 }
 
+<<<<<<< HEAD
+=======
+func CladRobotObservedMotionToProto(msg *gw_clad.RobotObservedMotion) *extint.RobotObservedMotion {
+	return &extint.RobotObservedMotion{
+		Timestamp: msg.Timestamp,
+		ImgArea:   msg.ImgArea,
+		ImgX:      int32(msg.ImgX),
+		ImgY:      int32(msg.ImgY),
+
+		GroundArea: msg.GroundArea,
+		GroundX:    int32(msg.GroundX),
+		GroundY:    int32(msg.GroundY),
+
+		TopImgArea: msg.TopImgArea,
+		TopImgX:    int32(msg.TopImgX),
+		TopImgY:    int32(msg.TopImgY),
+
+		BottomImgArea: msg.BottomImgArea,
+		BottomImgX:    int32(msg.BottomImgX),
+		BottomImgY:    int32(msg.BottomImgY),
+
+		LeftImgArea: msg.LeftImgArea,
+		LeftImgX:    int32(msg.LeftImgX),
+		LeftImgY:    int32(msg.LeftImgY),
+
+		RightImgArea: msg.RightImgArea,
+		RightImgX:    int32(msg.RightImgX),
+		RightImgY:    int32(msg.RightImgY),
+	}
+}
+
+>>>>>>> VIC-7566 Add a shared mem vic-anim -> gateway audio pipeline.
 func CladPoseToProto(msg *gw_clad.PoseStruct3d) *extint.PoseStruct {
 	return &extint.PoseStruct{
 		X:        msg.X,
@@ -3404,6 +3436,29 @@ func (service *rpcService) AlexaOptIn(ctx context.Context, in *extint.AlexaOptIn
 			Code: extint.ResponseStatus_REQUEST_PROCESSING,
 		},
 	}, nil
+}
+
+func (service *rpcService) AudioStream(in *extint.AudioStreamRequest, stream extint.ExternalInterface_AudioStreamServer) error {
+	client := NewSharedCircularBuffer("micDataSharedCircularBuffer")
+	defer client.Close()
+
+	for {
+		micSDKData, offset, getStatus := client.GetNext()
+		if getStatus == "please wait" {
+			time.Sleep(10 * time.Millisecond)
+		} else {
+			audioStreamResponse := extint.AudioStreamResponse{
+				PacketId:   offset,
+				RobotAngle: micSDKData.robotAngle,
+			}
+			for _, amplitude := range micSDKData.samples {
+				audioStreamResponse.AudioData = append(audioStreamResponse.AudioData, byte(amplitude>>8))
+				audioStreamResponse.AudioData = append(audioStreamResponse.AudioData, byte(amplitude&0xff))
+			}
+		}
+		stream.send(audioStreamResponse)
+	}
+	return nil
 }
 
 func SetNavMapBroadcastFrequency(frequency float32) error {

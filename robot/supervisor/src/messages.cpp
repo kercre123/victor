@@ -6,6 +6,7 @@
 #include "clad/robotInterface/messageRobotToEngine.h"
 #include "clad/robotInterface/messageRobotToEngine_send_helper.h"
 #include "clad/robotInterface/messageEngineToRobot_send_helper.h"
+#include "lib/micData/micDataTypes.h"
 
 #include <string.h>
 
@@ -718,11 +719,8 @@ namespace Anki {
       Result SendMicDataFunction(const s16* latestMicData, uint32_t numSamples) 
       {
         static int chunkID = 0;
-        static const int numChannels = 4;
         static const int samplesPerChunk = 80;
-        static const int samplesPerDeinterlacedChunk = 160;
-        static int16_t sampleBuffer[numChannels * samplesPerDeinterlacedChunk];
-        RobotInterface::MicData micData{};
+        static RobotInterface::MicData micData{};
         micData.timestamp = HAL::GetTimeStamp();
         micData.robotStatusFlags = robotState_.status;
         micData.robotRotationAngle = robotState_.pose.angle;
@@ -743,17 +741,16 @@ namespace Anki {
         */
 
         int chunkOffset = chunkID * samplesPerChunk;
-        for (size_t channel=0; channel<numChannels; ++channel) {
+        for (size_t channel=0; channel<MicData::kNumInputChannels; ++channel) {
           for (size_t sample=0; sample<samplesPerChunk; ++sample) {
-            const auto sampleBufferIndex = channel*samplesPerDeinterlacedChunk + chunkOffset + sample;
-            const auto latestMicDataIndex = sample*numChannels + channel;
-            sampleBuffer[sampleBufferIndex] = latestMicData[latestMicDataIndex];
+            const auto sampleBufferIndex = channel*MicData::kSamplesPerBlockPerChannel + chunkOffset + sample;
+            const auto latestMicDataIndex = sample*MicData::kNumInputChannels + channel;
+            micData.data[sampleBufferIndex] = latestMicData[latestMicDataIndex];
           }
         }
 
         chunkID = chunkID ? 0 : 1;
         if (chunkID == 0) {
-          memcpy(micData.data, sampleBuffer, numChannels * samplesPerDeinterlacedChunk * sizeof(s16));
           return RobotInterface::SendMessage(micData) ? RESULT_OK : RESULT_FAIL;
         }
         return RESULT_OK;

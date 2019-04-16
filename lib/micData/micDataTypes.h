@@ -59,6 +59,12 @@ namespace MicData {
     float                 latestPowerValue = 0.f;
     float                 latestNoiseFloor = 0.f;
   };
+
+  struct MicSDKData
+  {
+    float                 robotAngle;
+    int16_t               data[kSamplesPerBlockPerChannel];
+  };
 } // namespace MicData
 } // namespace Vector
 } // namespace Anki

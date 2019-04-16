@@ -30,6 +30,7 @@
 #include "audioUtil/speechRecognizer.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleFunction.h"
+#include "util/container/sharedCircularBuffer.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
@@ -387,6 +388,9 @@ void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
                                        float robotAngle)
 {
   ANKI_CPU_PROFILE("MicDataProcessor::ProcessRawAudio");
+  static Util::SharedCircularBuffer<struct MicData::MicSDKData, 300> 
+      micDataSharedCircularBuffer("micDataSharedCircularBuffer", true);
+
   TimedMicData* nextSampleSpot = nullptr;
   {
     // Note we don't bother to free any slots here that have been consumed (by comparing size to _procAudioXferCount)
@@ -418,6 +422,13 @@ void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
     nextSample.audioBlock.data(),
     robotStatus,
     robotAngle);
+
+  if (micDataSharedCircularBuffer.GetNumReaders()) {
+    MicData::MicSDKData* micSDKData = micDataSharedCircularBuffer.GetWritePtr();
+    micSDKData->robotAngle = robotAngle;
+    memcpy(micSDKData->data, nextSample.audioBlock.data(), kSamplesPerBlockPerChannel);
+    micDataSharedCircularBuffer.Advance();
+  }
 
   // Feed the samples to the beat detector. Optionally either use a raw single channel (the first quarter of the
   // un-interleaved audio block) or the processed audio block

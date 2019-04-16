@@ -1072,6 +1072,16 @@ message ExternalAudioStreamResponse {
   }
 }
 
+message AudioStreamRequest {
+
+}
+
+message AudioStreamResponse {
+  uint64   packet_id      = 1;    // 
+  float    robot_angle    = 2;    //
+  bytes    audio_data     = 3;    // 160 samples of 15670Hz audio data. Mono. Signed 16-bit. Big Endian.
+}
+
 enum MasterVolumeLevel
 {
   VOLUME_LOW         = 0;
