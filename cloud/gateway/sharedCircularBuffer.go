@@ -1,7 +1,6 @@
 package main
 
 import (
-	"anki/log"
 	"syscall"
 	"time"
 	"unsafe"
@@ -45,7 +44,6 @@ type SharedCircularBuffer struct {
 // It is IMPERATIVE that you destroy the returned object, since the destructor decrements
 // the client count on the shared object.
 func NewSharedCircularBuffer(name string) *SharedCircularBuffer {
-	log.Println("SharedCircularBuffer.go New()")
 	client := SharedCircularBuffer{name: name}
 	client.init()
 	client.offset = 0xffffffffffffffff
@@ -56,7 +54,6 @@ func NewSharedCircularBuffer(name string) *SharedCircularBuffer {
 // done, even if you're failing with an exception. It's important that SCB decrement
 // the reader count to deactivate the queueing of data.
 func (client *SharedCircularBuffer) Close() {
-	log.Println("SharedCircularBuffer.go Close()")
 	if client.mapFile != -1 {
 		syscall.Close(client.mapFile)
 	}
@@ -93,8 +90,6 @@ func (client *SharedCircularBuffer) GetNext() (*MicSDKData, uint64, string) {
 }
 
 func (client *SharedCircularBuffer) init() bool {
-	log.Println("SharedCircularBuffer.go Init()")
-
 	if client.initted {
 		return true
 	}
@@ -104,7 +99,6 @@ func (client *SharedCircularBuffer) init() bool {
 	client.mapFile, err = syscall.Open(fullBufferPathName, syscall.O_RDWR, 0)
 
 	if err != nil {
-		log.Println("SharedCircularBuffer.go Init() can't open", fullBufferPathName, ":", err, " Returning false.")
 		client.mapFile = -1
 		return false
 	}
