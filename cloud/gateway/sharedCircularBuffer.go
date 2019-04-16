@@ -2,7 +2,6 @@ package main
 
 import (
 	"syscall"
-	"time"
 	"unsafe"
 )
 
@@ -68,8 +67,6 @@ func (client *SharedCircularBuffer) Close() {
 // you'll be fast-forwarded to the most recent entry. In this case, the second part of
 // the return tuple will be "behind".
 func (client *SharedCircularBuffer) GetNext() (*MicSDKData, uint64, string) {
-	time.Sleep(5 * time.Millisecond)
-
 	client.offset++
 	if (!client.initted && !client.init()) ||
 		client.buffer.queuedCount == 0 ||
@@ -81,10 +78,9 @@ func (client *SharedCircularBuffer) GetNext() (*MicSDKData, uint64, string) {
 
 	getStatus := "okay"
 	if client.offset < client.buffer.queuedCount-(3*bufferSize/4) {
+		offset = client.buffer.queuedCount - 1
 		getStatus = "behind"
 	}
-
-	time.Sleep(5 * time.Millisecond)
 
 	return &client.buffer.objects[client.offset%bufferSize], client.offset, getStatus
 }

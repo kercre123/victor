@@ -100,9 +100,6 @@ public:
   }
 
   uint64_t GetNumReaders() {
-    LOG_WARNING("GetNumReaders()", "_buffer: %p", _buffer);
-    LOG_WARNING("GetNumReaders()", "GetNumReaders: %llu", _buffer->reader_count);
-
     return _buffer->reader_count;
   }
 
