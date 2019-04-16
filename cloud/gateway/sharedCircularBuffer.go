@@ -8,7 +8,8 @@ import (
 )
 
 const (
-	bufferSize      = 300 // three seconds of samples. IF YOU CHANGE THIS, also change messages.cpp
+	// If you change the buffer size (300) to something else, you need to make the same change in micDataProcessor.cpp
+	bufferSize      = 300
 	samplesPerCycle = 160
 	headerMagicNum  = 0x08675309deadbeef
 )

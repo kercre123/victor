@@ -388,6 +388,8 @@ void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
                                        float robotAngle)
 {
   ANKI_CPU_PROFILE("MicDataProcessor::ProcessRawAudio");
+
+  //If you change the size of the buffer, you MUST also change it in sharedCircularBuffer.go
   static Util::SharedCircularBuffer<struct MicData::MicSDKData, 300> 
       micDataSharedCircularBuffer("micDataSharedCircularBuffer", true);
 

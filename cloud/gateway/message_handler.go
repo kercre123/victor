@@ -232,30 +232,30 @@ func CladRobotChangedObservedFaceIDToProto(msg *gw_clad.RobotChangedObservedFace
 =======
 func CladRobotObservedMotionToProto(msg *gw_clad.RobotObservedMotion) *extint.RobotObservedMotion {
 	return &extint.RobotObservedMotion{
-		Timestamp: msg.Timestamp,
-		ImgArea:   msg.ImgArea,
-		ImgX:      int32(msg.ImgX),
-		ImgY:      int32(msg.ImgY),
+		Timestamp:     msg.Timestamp,
+		ImgArea:       msg.ImgArea,
+		ImgX:          int32(msg.ImgX),
+		ImgY:          int32(msg.ImgY),
 
-		GroundArea: msg.GroundArea,
-		GroundX:    int32(msg.GroundX),
-		GroundY:    int32(msg.GroundY),
+		GroundArea:    msg.GroundArea,
+		GroundX:       int32(msg.GroundX),
+		GroundY:       int32(msg.GroundY),
 
-		TopImgArea: msg.TopImgArea,
-		TopImgX:    int32(msg.TopImgX),
-		TopImgY:    int32(msg.TopImgY),
+		TopImgArea:    msg.TopImgArea,
+		TopImgX:       int32(msg.TopImgX),
+		TopImgY:       int32(msg.TopImgY),
 
 		BottomImgArea: msg.BottomImgArea,
 		BottomImgX:    int32(msg.BottomImgX),
 		BottomImgY:    int32(msg.BottomImgY),
 
-		LeftImgArea: msg.LeftImgArea,
-		LeftImgX:    int32(msg.LeftImgX),
-		LeftImgY:    int32(msg.LeftImgY),
+		LeftImgArea:   msg.LeftImgArea,
+		LeftImgX:      int32(msg.LeftImgX),
+		LeftImgY:      int32(msg.LeftImgY),
 
-		RightImgArea: msg.RightImgArea,
-		RightImgX:    int32(msg.RightImgX),
-		RightImgY:    int32(msg.RightImgY),
+		RightImgArea:  msg.RightImgArea,
+		RightImgX:     int32(msg.RightImgX),
+		RightImgY:     int32(msg.RightImgY),
 	}
 }
 
@@ -3447,7 +3447,7 @@ func (service *rpcService) AudioStream(in *extint.AudioStreamRequest, stream ext
 		if getStatus == "please wait" {
 			time.Sleep(10 * time.Millisecond)
 		} else {
-			audioStreamResponse := extint.AudioStreamResponse{
+			audioStreamResponse := &extint.AudioStreamResponse{
 				PacketId:   offset,
 				RobotAngle: micSDKData.robotAngle,
 			}
@@ -3455,8 +3455,8 @@ func (service *rpcService) AudioStream(in *extint.AudioStreamRequest, stream ext
 				audioStreamResponse.AudioData = append(audioStreamResponse.AudioData, byte(amplitude>>8))
 				audioStreamResponse.AudioData = append(audioStreamResponse.AudioData, byte(amplitude&0xff))
 			}
+			stream.Send(audioStreamResponse)
 		}
-		stream.send(audioStreamResponse)
 	}
 	return nil
 }
