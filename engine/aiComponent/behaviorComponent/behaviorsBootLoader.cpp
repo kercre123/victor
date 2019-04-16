@@ -56,7 +56,7 @@ BehaviorsBootLoader::BehaviorsBootLoader(const Json::Value& config)
   _behaviors.factoryBehavior = BEHAVIOR_ID(PlaypenTest);
   _behaviors.prDemoBehavior = BEHAVIOR_ID(InitPRDemo);
   _behaviors.selfTestBehavior = BEHAVIOR_ID(SelfTest);
-  _behaviors.acousticTestBehavior = BEHAVIOR_ID(AcousticTestMode);
+  _behaviors.acousticTestBehavior = BEHAVIOR_ID(DevVisualWakeWord);
   
   if( ANKI_VERIFY(!config.empty(), "BehaviorsBootLoader.Ctor.InvalidConfig", "Empty config") ) {
     

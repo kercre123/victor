@@ -10,9 +10,12 @@
  *
  */
 
+#include "cozmoAnim/animProcessMessages.h" // must come before clad includes........
+
 #include "cozmoAnim/speechRecognizer/speechRecognizerSystem.h"
 
 #include "audioUtil/speechRecognizer.h"
+#include "coretech/common/engine/utils/timer.h"
 #include "cozmoAnim/alexa/alexa.h"
 #include "cozmoAnim/alexa/media/alexaPlaybackRecognizerComponent.h"
 #include "cozmoAnim/animContext.h"
@@ -29,6 +32,10 @@
 #include "util/logging/logging.h"
 #include "cozmoAnim/webRTC/webrtc_vad.h"
 #include "webServerProcess/src/webService.h"
+
+#include "clad/robotInterface/messageRobotToEngine.h"
+#include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
+
 #include <list>
 #include <chrono>
 
@@ -43,8 +50,9 @@ namespace Vector {
 CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInUK);
 CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInAU);
   
-CONSOLE_VAR_RANGED(int, kMaxEnergy, "VAD", 50, 0, 500);
-CONSOLE_VAR_RANGED(int, kTriggerEnergy, "VAD", 20, 0, 500);
+CONSOLE_VAR_RANGED(int, kWebRTCMaxEnergy, "VAD", 50, 0, 500);
+CONSOLE_VAR_RANGED(int, kWebRTCTriggerEnergy, "VAD", 20, 0, 500);
+CONSOLE_VAR_RANGED(float, kDiffVadActivationTimes, "VAD", 0.750f, 0.0f, 5.0f);
   
 namespace {
 #define LOG_CHANNEL "SpeechRecognizer"
@@ -443,10 +451,35 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample * audioData, un
   }
   // Update recognizer
   
+  static float timeWebRTCActive = -1.0f;
+  static float timeVectorActive = -1.0f;
+  
+  bool directionChanged = false;
+  static int oldDirection = 11;
+  int newDirection = _micDataSystem->GetLatestMicDirectionMsg().direction;
+  if( oldDirection == 11 && newDirection != oldDirection) {
+    directionChanged = true;
+  } else if( newDirection != 11 && oldDirection != 11 ) {
+    if( abs(newDirection - oldDirection) > 4) {
+      // exclude periodic
+      if( abs((11-newDirection) - oldDirection) > 4 ) {
+        directionChanged = true;
+      }
+    }
+  }
+  
+  oldDirection = newDirection;
+  
+  
   static int wasActive = -1;
   if( (int)vadActive != wasActive ) {
     SendVADActivity("Vector", vadActive);
     wasActive = vadActive;
+    if( vadActive && ((timeVectorActive < 0.0f) || directionChanged) ) {
+      timeVectorActive = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    } else  {
+      timeVectorActive = -1.0f;
+    }
   }
   
   static int webRTCEnergy = 0;
@@ -457,17 +490,43 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample * audioData, un
   } else {
     --webRTCEnergy;
   }
-  if( webRTCEnergy > kMaxEnergy ) {
-    webRTCEnergy = kMaxEnergy;
+  if( webRTCEnergy > kWebRTCMaxEnergy ) {
+    webRTCEnergy = kWebRTCMaxEnergy;
   } else if( webRTCEnergy < 0 ) {
     webRTCEnergy = 0;
   }
-  const bool webRTCVadActive = (webRTCEnergy >= kTriggerEnergy);
+  const bool webRTCVadActive = (webRTCEnergy >= kWebRTCTriggerEnergy);
   static int webRTCwasActive = -1;
   if( webRTCVadActive != webRTCwasActive ) {
     SendVADActivity("WebRTC", webRTCVadActive);
     webRTCwasActive = webRTCVadActive;
+    
+    if( webRTCVadActive && ((timeWebRTCActive < 0.0f) || directionChanged)  ) {
+      timeWebRTCActive = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+    } else {
+      timeWebRTCActive = -1.0f;
+    }
   }
+  
+  static bool wasBothActive = false;
+  bool bothActive = false;
+  if( timeWebRTCActive >= 0.0f && timeVectorActive >= 0.0f ) {
+    const float dt = fabsf(timeVectorActive - timeWebRTCActive);
+    bothActive = dt < kDiffVadActivationTimes;
+    if( !bothActive ) {
+      PRINT_NAMED_WARNING("WHATNOW", "not at same time because %f", fabsf(timeVectorActive - timeWebRTCActive));
+    } else if( directionChanged ) {
+      PRINT_NAMED_WARNING("WHATNOW", "direction changed old=%d, new=%d", oldDirection, newDirection);
+    }
+  }
+  if( bothActive != wasBothActive ) {
+    RobotInterface::VADActivity vadActivity;
+    vadActivity.value = bothActive;
+    vadActivity.robotTimestamp = (TimeStamp_t) _lastTimestamp;
+    RobotInterface::SendAnimToEngine(vadActivity);
+    PRINT_NAMED_WARNING("HERENOW", "Both active=%d", bothActive);
+  }
+  wasBothActive = bothActive;
   
   
   if (vadActive || !_victorTrigger->useVad) {
@@ -859,10 +918,11 @@ void SpeechRecognizerSystem::SendVADActivity( const std::string& type, int val )
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SpeechRecognizerSystem::SetNoiseData( float latestPower, float noiseFloor ) const
+void SpeechRecognizerSystem::SetNoiseData( float latestPower, float noiseFloor, RobotTimeStamp_t timestamp )
 {
-  PRINT_NAMED_WARNING("WHATNOW", "Noise %f, %f", latestPower, noiseFloor);
+  //PRINT_NAMED_WARNING("WHATNOW", "Noise %f, %f", latestPower, noiseFloor);
   using namespace std::chrono;
+  _lastTimestamp = timestamp;
   if (_context != nullptr)
   {
     static const std::string kWebVizModuleName = "vad";

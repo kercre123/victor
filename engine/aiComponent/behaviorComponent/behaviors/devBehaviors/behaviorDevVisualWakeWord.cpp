@@ -20,6 +20,8 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/robotDrivenDialog/behaviorPromptUserForVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/components/mics/micComponent.h"
+#include "engine/components/mics/micDirectionHistory.h"
 #include "engine/faceWorld.h"
 
 #include "util/console/consoleInterface.h"
@@ -36,15 +38,20 @@ namespace Vector {
 
 namespace {
   CONSOLE_VAR(u32,  kMaxTimeSinceTrackedFaceUpdated_ms,      "Vision.VisualWakeWord",  500);
-  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinXThres_mm,        "Vision.VisualWakeWord", -25.f);
-  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxXThres_mm,        "Vision.VisualWakeWord",  20.f);
+  //CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinXThres_mm,        "Vision.VisualWakeWord", -25.f);
+  //CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxXThres_mm,        "Vision.VisualWakeWord",  20.f);
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinYThres_mm,        "Vision.VisualWakeWord", -100.f);
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxYThres_mm,        "Vision.VisualWakeWord",  100.f);
-  CONSOLE_VAR(f32,  kMinTimeBetweenWakeWordTriggers_ms,      "Vision.VisualWakeWord",  5000.f);
+  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinZThres_mm,        "Vision.VisualWakeWord", -100.f);
+  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxZThres_mm,        "Vision.VisualWakeWord",  500.f); // z is always too hgih. maybe its bc the face poses are too high?
+  CONSOLE_VAR(f32,  kMinTimeBetweenWakeWordTriggers_ms,      "Vision.VisualWakeWord",  500.0f);//5000.f);
   CONSOLE_VAR(bool, kDisableStateMachineToKeyCheckForGaze,   "Vision.VisualWakeWord",  false);
-  CONSOLE_VAR(f32,  kGazeStimulationThreshold_ms,            "Vision.VisualWakeWord",  3000.f);
+  CONSOLE_VAR(f32,  kGazeStimulationThreshold_ms,            "Vision.VisualWakeWord",  100.0f);//3000.f);
   CONSOLE_VAR(f32,  kGazeBreakThreshold_ms,                  "Vision.VisualWakeWord",  300.f);
   CONSOLE_VAR(f32,  kGazeDecrementMultiplier,                "Vision.VisualWakeWord",  1.2f);
+  
+  CONSOLE_VAR_RANGED(uint32_t, kDelayBeforeVad, "AAA", 3000, -1000, 15000);
+  CONSOLE_VAR_RANGED(float, kMicDirectionDiff_deg, "AAA", 35.0f, 0.0f, 90.0f);
 }
 
 namespace {
@@ -70,6 +77,10 @@ void BehaviorDevVisualWakeWord::InitBehavior()
   BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(DevTestPromptUser),
                                   BEHAVIOR_CLASS(PromptUserForVoiceCommand),
                                   _iConfig.yeaOrNayBehavior );
+  
+  SubscribeToTags({
+                    RobotInterface::RobotToEngineTag::vadActivity,
+                  });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -78,7 +89,13 @@ void BehaviorDevVisualWakeWord::BehaviorUpdate()
   if( !IsActivated() ) {
     return;
   }
-  TransitionToCheckForVisualWakeWord();
+  
+  const MicDirectionHistory& history = GetBEI().GetMicComponent().GetMicDirectionHistory();
+  _dVars.direction = history.GetRecentDirection();
+  
+  if( !IsControlDelegated() && _dVars.state != EState::Listening && _dVars.state != EState::Responding ) {
+    TransitionToCheckForVisualWakeWord();
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -86,14 +103,16 @@ void BehaviorDevVisualWakeWord::GetBehaviorOperationModifiers(BehaviorOperationM
 {
   modifiers.wantsToBeActivatedWhenCarryingObject = false;
   modifiers.wantsToBeActivatedWhenOffTreads = false;
-  modifiers.wantsToBeActivatedWhenOnCharger = false;
+  modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.behaviorAlwaysDelegates = false;
 
   // This will result in running facial part detection whenever is behavior is an activatable scope
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingGaze, EVisionUpdateFrequency::High });
-  modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
-  modifiers.visionModesForActivatableScope->insert({ VisionMode::DetectingGaze, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Faces_Smile, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Faces, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Faces_Gaze, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActivatableScope->insert({ VisionMode::Faces_Smile, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActivatableScope->insert({ VisionMode::Faces_Gaze, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActivatableScope->insert({ VisionMode::Faces, EVisionUpdateFrequency::High });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -110,6 +129,9 @@ BehaviorDevVisualWakeWord::InstanceConfig::InstanceConfig(const Json::Value& con
 BehaviorDevVisualWakeWord::DynamicVariables::DynamicVariables()
 : state(EState::CheckingForVisualWakeWord)
 {
+  lastGazeAtRobot = 0;
+  lastVadActivation = 0;
+  gazeTime = 0;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -129,15 +151,43 @@ bool BehaviorDevVisualWakeWord::WantsToBeActivatedBehavior() const
 void BehaviorDevVisualWakeWord::OnBehaviorActivated()
 {
   // TODO not sure if I need this here
-  TransitionToCheckForVisualWakeWord();
+//  TransitionToCheckForVisualWakeWord();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord()
 {
-  // This check should prevent us from trying to trigger a audio stream
-  // when we have already trigger the visual wake word
-  if(GetBEI().GetFaceWorld().GetGazeDirectionPose(kMaxTimeSinceTrackedFaceUpdated_ms,
+  const RobotTimeStamp_t currentTimeStamp = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+  
+  // TODO there is probably a more accurate way get the actual timestamp of when
+  // gaze happened ... because of the "slack" variable pasted into the original
+  // get gaze direction pose, but alas this whole state machine is fucking retarded and this
+  // isn't the reason why.
+  
+  bool incrementedGaze = false;
+  auto incrementGaze = [&]() {
+    // run once
+    if( incrementedGaze ) {
+      return;
+    }
+    incrementedGaze = true;
+    if (_dVars.state == EState::DecreasingGazeStimulation) {
+      SET_STATE(IncreasingGazeStimulation);
+      _dVars.lastGazeAtRobot = currentTimeStamp;
+    } else {
+      IncrementGazeStimulation(currentTimeStamp);
+    }
+    
+    if (_dVars.gazeStimulation > kGazeStimulationThreshold_ms) {
+      _dVars.gazeTime = currentTimeStamp;
+    }
+  };
+  
+  auto makingEyeContact = GetBEI().GetFaceWorld().IsMakingEyeContact(kMaxTimeSinceTrackedFaceUpdated_ms);
+  if( makingEyeContact ) {
+    incrementGaze();
+    PRINT_NAMED_WARNING("WHATNOW", "eye contact!");
+  } else if( GetBEI().GetFaceWorld().GetGazeDirectionPose(kMaxTimeSinceTrackedFaceUpdated_ms,
                                                   _dVars.gazeDirectionPose, _dVars.faceIDToTurnBackTo)) {
     LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToCheckForVisualWakeWord",
                 "Got stable gaze direciton, now see if it's at the robot ... this"
@@ -147,50 +197,71 @@ void BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord()
     if (_dVars.gazeDirectionPose.GetWithRespectTo(robotPose, gazeDirectionPoseWRTRobot)) {
 
       const auto& translation = gazeDirectionPoseWRTRobot.GetTranslation();
-      auto makingEyeContact = GetBEI().GetFaceWorld().IsMakingEyeContact(kMaxTimeSinceTrackedFaceUpdated_ms);
+      
 
       // Check to see if our gaze points is within constraints to be considered
       // "looking" at vector.
-      const bool isWithinXConstraints = ( Util::InRange(translation.x(), kFaceDirectedAtRobotMinXThres_mm,
-                                                        kFaceDirectedAtRobotMaxXThres_mm) );
+      const bool isWithinZConstraints = ( Util::InRange(translation.x(), kFaceDirectedAtRobotMinZThres_mm,
+                                                        kFaceDirectedAtRobotMaxZThres_mm) );
       const bool isWithinYConstarints = ( Util::InRange(translation.y(), kFaceDirectedAtRobotMinYThres_mm,
                                                         kFaceDirectedAtRobotMaxYThres_mm) );
-      if ( ( isWithinXConstraints && isWithinYConstarints ) || makingEyeContact ) {
-        // TODO there is probably a more accurate way get the actual timestamp of when
-        // gaze happened ... because of the "slack" variable pasted into the original
-        // get gaze direction pose, but alas this whole state machine is fucking retarded and this
-        // isn't the reason why.
-        const RobotTimeStamp_t currentTimeStamp = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
-        if (_dVars.state == EState::DecreasingGazeStimulation) {
-          SET_STATE(IncreasingGazeStimulation);
-          _dVars.lastGazeAtRobot = currentTimeStamp;
-        } else {
-          IncrementGazeStimulation(currentTimeStamp);
-        }
-
-        if (_dVars.gazeStimulation > kGazeStimulationThreshold_ms) {
-          // Open up audio stream
-          LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToCheckForVisualWakeWord.HitGazeStimulationThreshold",
-                      "Gaze stimulation is now %.3f and above the threshold %.3f.",
-                      _dVars.gazeStimulation, kGazeStimulationThreshold_ms);
-          if (_iConfig.yeaOrNayBehavior->WantsToBeActivated()) {
-            // This isn't entirely correct but whatever, fuck it, i think it's reduce some bugs so...
-            SET_STATE(DetectedVisualWakeWord);
-            // Now that we know we are going open up the audio stream clear the history and reset
-            // the gazing stim
-            GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
-            ResetGazeStimulation();
-            DelegateIfInControl(_iConfig.yeaOrNayBehavior.get(), &BehaviorDevVisualWakeWord::TransitionToListening);
-          }
-        }
+      if ( ( isWithinZConstraints && isWithinYConstarints ) ) {
+        
+        incrementGaze();
       } else {
         DecrementStimIfGazeHasBroken();
       }
+      PRINT_NAMED_WARNING("WHATNOW", "withinZ=%d (%f), withinY=%d (%f)", isWithinZConstraints, translation.z(), isWithinYConstarints, translation.y());
     } // this case is for whatever reason we fail to get a pose ... not sure how we want to handle this
+    else {
+      PRINT_NAMED_WARNING("WHATNOW", "no pose wrt robot");
+    }
   } else {
+    PRINT_NAMED_WARNING("WHATNOW", "no gaze pose");
     DecrementStimIfGazeHasBroken();
   }
+  
+  const bool recentActivation = (_dVars.gazeTime != 0) && abs((int64)(TimeStamp_t)_dVars.lastVadActivation-(int64)(TimeStamp_t)_dVars.gazeTime) <= kDelayBeforeVad;
+  Pose3d facePose;
+  bool hasFace = GetFacePose( facePose );
+  const float faceAngle = atan2f(facePose.GetTranslation().y(), facePose.GetTranslation().x());
+  ANKI_VERIFY(!hasFace || fabsf(faceAngle)<M_PI_F/2, "WHATNOW", "unexpected face angle %f", faceAngle);
+  //[3,2,1,0] U [10 9 8]
+  float micAngle=0.0f;
+  bool directionMatches = false;
+  if( _dVars.direction <= 3 ) {
+    // map from [0, 3] to [0.0, -pi/2]
+    micAngle = -(M_PI_F*_dVars.direction)/12;
+    directionMatches = fabsf(faceAngle - micAngle) <= kMicDirectionDiff_deg*M_PI_F/180;
+  } else if(_dVars.direction>=8 && _dVars.direction <= 10){
+    // map from 11-[8,10] to [3*pi/6, 1*pi/6]
+    micAngle = (11 - _dVars.direction)*M_PI_F/6.0f;
+    directionMatches = fabsf(faceAngle - micAngle) <= kMicDirectionDiff_deg*M_PI_F/180;
+  }
+  
+  // [0,11] mapped to [-pi, -pi] is [0, -pi] U [pi, 0] is
+  PRINT_NAMED_WARNING("HERENOW", "recentActivation=%d (%d,%d [%lld]), directions %d x=%1.3f y=%1.3f th=%f mic=%d=>%f==%d gaze=%1.1f",
+                      recentActivation, (TimeStamp_t)_dVars.lastVadActivation, (TimeStamp_t)_dVars.gazeTime, (int64)(TimeStamp_t)_dVars.lastVadActivation-(int64)(TimeStamp_t)_dVars.gazeTime,
+                      hasFace, facePose.GetTranslation().x(), facePose.GetTranslation().y(), faceAngle, _dVars.direction, micAngle, directionMatches, _dVars.gazeStimulation );
+  
+  
+  if( recentActivation && directionMatches ) {
+    // Open up audio stream
+    LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToCheckForVisualWakeWord.HitGazeStimulationThreshold",
+                "Gaze stimulation is now %.3f and above the threshold %.3f.",
+                _dVars.gazeStimulation, kGazeStimulationThreshold_ms);
+    if (_iConfig.yeaOrNayBehavior->WantsToBeActivated()) {
+      // This isn't entirely correct but whatever, fuck it, i think it's reduce some bugs so...
+      SET_STATE(DetectedVisualWakeWord);
+      // Now that we know we are going open up the audio stream clear the history and reset
+      // the gazing stim
+      GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
+      ResetGazeStimulation();
+      DelegateIfInControl(_iConfig.yeaOrNayBehavior.get(), &BehaviorDevVisualWakeWord::TransitionToListening);
+    }
+  }
 }
+  
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevVisualWakeWord::TransitionToListening()
@@ -288,6 +359,47 @@ void BehaviorDevVisualWakeWord::DecrementStimIfGazeHasBroken() {
     SET_STATE(DecreasingGazeStimulation);
     DecrementGazeStimulation(currentTimeStamp);
   }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorDevVisualWakeWord::HandleWhileActivated(const RobotToEngineEvent& event)
+{
+  switch(event.GetData().GetTag())
+  {
+    case RobotInterface::RobotToEngineTag::vadActivity:
+    {
+      const bool active = event.GetData().Get_vadActivity().value;
+      const RobotTimeStamp_t timestamp = event.GetData().Get_vadActivity().robotTimestamp;
+      if( active ) {
+        _dVars.lastVadActivation = timestamp;
+      }
+      _dVars.vadActive = active;
+    }
+      break;
+      
+    default:
+      break;
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorDevVisualWakeWord::GetFacePose(Pose3d& pose) const
+{
+  const auto* face = GetBEI().GetFaceWorld().GetFace( _dVars.faceIDToTurnBackTo );
+  if( face != nullptr ) {
+    const RobotTimeStamp_t ts = face->GetTimeStamp();
+    const RobotTimeStamp_t currentTimeStamp = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+    if( currentTimeStamp - ts <= 10000 ) {
+      const auto& facePose = face->GetHeadPose();
+      const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
+      const bool success = facePose.GetWithRespectTo(robotPose, pose);
+      return success;
+    } else {
+      // too old
+      return false;
+    }
+  }
+  return false;
 }
 
 } // namespace Vector

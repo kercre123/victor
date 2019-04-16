@@ -9,6 +9,8 @@
 
 ### FaceWorld
 
+TODO: add docs on face pose
+
 `FaceWorld` is a component of the Robot for storing faces and their last known location. It is effectively a simpler version of [BlockWorld](blockWorld.md) for storing faces and their 3D poses (and "rejiggering" their poses like BlockWorld does for objects).
 
 It is also is the mechanism for interacting with the face recognizier in the [Vision System](visionSystem.md), e.g. for Face Enrollment (aka Meet Cozmo).

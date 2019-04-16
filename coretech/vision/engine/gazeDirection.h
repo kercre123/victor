@@ -80,7 +80,7 @@ class GazeDirection
 public:
   GazeDirection();
 
-  void Update(const TrackedFace& headPose);
+  void Update(const TrackedFace& headPose, const Pose3d& robotPose);
 
   // This will return the average found amoung the inliers
   // this is only accurate if IsStable returns true.
@@ -97,7 +97,7 @@ public:
 private:
   int FindInliers(const Point3f& faceDirectionAverage);
 
-  bool GetPointFromHeadPose(const Pose3d& headPose, Point3f& faceDirectionPoint);
+  bool GetPointFromHeadPose(const Pose3d& headPose, const Pose3d& robotPose, Point3f& faceDirectionPoint);
   Point3f ComputeEntireGazeDirectionAverage();
   Point3f ComputeGazeDirectionAverage(const bool filterOutliers);
   Point3f RecomputeGazeDirectionAverage();

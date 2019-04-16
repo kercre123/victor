@@ -456,7 +456,7 @@ void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
   
   static RobotTimeStamp_t lastNoiseTime = 0;
   if( timestamp - lastNoiseTime >= 500 ) {
-    _speechRecognizerSystem->SetNoiseData( directionResult.latestPowerValue, directionResult.latestNoiseFloor );
+    _speechRecognizerSystem->SetNoiseData( directionResult.latestPowerValue, directionResult.latestNoiseFloor, timestamp );
     lastNoiseTime = timestamp;
   }
 }

@@ -66,7 +66,7 @@ namespace Vector {
   CONSOLE_VAR(f32, kBodyTurnSpeedThreshFace_degs,  "WasRotatingTooFast.Face.Body_deg/s",    30.f);
   CONSOLE_VAR(u8,  kNumImuDataToLookBackFace,      "WasRotatingTooFast.Face.NumToLookBack", 5);
 
-  CONSOLE_VAR(bool,  kRenderGazeDirectionPoints,      "Vision.GazeDirection", false);
+  CONSOLE_VAR(bool,  kRenderGazeDirectionPoints,      "Vision.GazeDirection", true);
 
   static const char * const kLoggingChannelName = "FaceRecognizer";
 
@@ -651,7 +651,7 @@ namespace Vector {
     if (face.HasEyes())
     {
       auto& entry = _gazeDirection[face.GetID()];
-      entry.Update(face);
+      entry.Update(face, _robot->GetPose());
 
       if (entry.GetExpired(face.GetTimeStamp()))
       {

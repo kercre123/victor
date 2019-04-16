@@ -15,6 +15,9 @@
 #include "coretech/common/engine/math/lineSegment2d.h"
 #include "coretech/common/engine/math/ball.h"
 #include "coretech/common/engine/math/fastPolygon2d.h"
+#include "coretech/common/engine/math/pose.h"
+#include "coretech/common/shared/math/point.h"
+#include "coretech/common/shared/math/point_fwd.h"
 
 #include "util/random/randomGenerator.h"
 
@@ -235,6 +238,189 @@ TEST(AffineHyperplane, Contains)
       EXPECT_EQ( plane.Contains(p) , (sum == 0.f) ); 
     }
   }
+}
+
+using namespace Anki;
+bool IntersectPlaneLine( const Vec3f& planeA, const float planeB, const Point3f& from, const Point3f& to, Point3f& intersection)
+{
+  const Vec3f dline = to - from;
+  
+  // assuming line and plane intersect:
+  // line for t in R
+  //  x_ = from + t*dline
+  // plane:
+  //  planeA .* x_ = planeB
+  // intersection:
+  //  planeA .* (from + t*dline) = planeB
+  //  ==> planeA .* from  +  t * planeA.*line = planeB
+  //  ==> t = (planeB - planeA.*from) / (planeA.*line)
+  //  ==> x_ = from + t*dline
+  
+  auto dot = [](const Vec3f& a, const Vec3f& b) -> float {
+    return a.x()*b.x() + a.y()*b.y() + a.z()*b.z();
+  };
+  
+  // check not parallel
+  const float dotVal = dot(planeA,dline);
+  if( fabsf(dotVal) < 1e-4f ) {
+    return false;
+  }
+  
+  const float t = (planeB - dot(planeA, from)) / dotVal;
+  intersection = from + dline*t;
+  return (t >= 0.0f);
+}
+
+TEST(TestMyMath, Run)
+{
+  using namespace Anki;
+  // plane A*x = b
+  Vec3f planeA = {1.0f,0.0f,0.0f};
+  float planeB = 0.f;
+  
+  // line segment, crossing through plane at origin
+  Point3f from = {1.0f,0.0f,0.0f};
+  Point3f to = {-1.0f,0.0f,0.0f};
+  
+  // intersection point (tbd)
+  Point3f intersection;
+  
+  auto eval = [&](const Point3f& expectedIntersection, bool shouldSucceed = true) {
+    bool success = IntersectPlaneLine(planeA, planeB, from, to, intersection);
+    EXPECT_EQ( success, shouldSucceed );
+    if( shouldSucceed ) {
+      EXPECT_NEAR( (intersection - expectedIntersection).LengthSq(), 0.0f, 1e-3f);
+    }
+  };
+  
+  eval({0.0f,0.0f,0.0f});
+  
+  // crosses through plane at z=1
+  from = {1.0f,0.0f,1.0f};
+  to = {-1.0f,0.0f,1.0f};
+  eval({0.0f,0.0f,1.0f});
+  
+  // crosses through plane at origin at a 45deg angle
+  from = {1.0f,1.0f,0.0f};
+  to = {-1.0f,-1.0f,0.0f};
+  eval({0.0f,0.0f,0.0f});
+  
+  // should fail
+  from = {0.0f,1.0f,0.0f};
+  to = {0.0f,-1.0f,0.0f};
+  eval({}, false);
+  
+  // change plane to face up with y=1 and offset by 1
+  planeA = {0.0f,1.0f,0.0f};
+  // should fail
+  from = {1.0f,1.0f,0.0f};
+  to = {-1.0f,1.0f,0.0f};
+  eval({}, false);
+  
+  // path should still be direct to origin
+  from = {1.0f,1.0f,1.0f};
+  to = {-1.0f,-1.0f,-1.0f};
+  eval({0.0f, 0.0f, 0.0f});
+  
+  // move plane offset by 1, still facing up.
+  planeB = 1;
+  from = {1.0f,2.0f,0.0f};
+  to = {0.0f,1.0f,0.0f};
+  eval({0.0f,1.0f, 0.0f});
+  
+  from = {2.0f,2.0f,0.0f};
+  to = {0.0f,0.0f,0.0f};
+  eval({1.0f, 1.0f, 0.0f});
+  
+  // rotating the previous test into the direction of z
+  planeA = {0.0f,0.0f,1.0f};
+  from = {2.0f,0.0f,2.0f};
+  to = {0.0f,0.0f,0.0f};
+  eval({1.0f, 0.0f, 1.0f});
+  
+  
+  
+  
+
+}
+
+TEST(TestMyMath, Run2)
+{
+  // planeA is robotYHat cross zHat
+  
+  // intersect line from headPose forward with robot's x=0 plane:
+  
+  // make line
+  Vec3f from = {-1.0f, 0.0f, 0.0f};
+  Vec3f to = {1.0f, 0.0f, 0.0f};
+  Pose3d robotPose{ Radians{0.0f}, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f} };
+  
+  auto eval = [&](const Point3f& expectedIntersection, bool shouldSucceed = true) {
+    // make plane:
+    // consider vectors {robot y hat} and {global zhat}, which are orth to the robot xhat, call it w.
+    const auto& yhat = robotPose.GetRotation() * Y_AXIS_3D();
+    // also consider vector v = {x-x0, y-y0, z-z0} for x,y,z in R.
+    // Since this is on the plane formed by {robot y hat} x {global z hat}, w .* v = 0, so
+    // yhat.y()*x - yhat.x()*y + (from.y()*yhat.x() - from.x()*yhat.y()) = 0
+    // ==> A^T x = b:
+    const Vec3f planeA = {yhat.y(), -yhat.x(), 0.0f};
+    const float planeB = -(robotPose.GetTranslation().y()*yhat.x() - robotPose.GetTranslation().x()*yhat.y());
+    
+    Point3f intersect;
+    bool intersects = IntersectPlaneLine( planeA, planeB, from, to, intersect );
+    
+    // should be in robot's x=0 plane
+    const auto relativeToRobot = intersect - robotPose.GetTranslation();
+    EXPECT_LE( fabs(relativeToRobot.x()), 1e-4f );
+    
+    EXPECT_EQ( expectedIntersection, intersect);
+    EXPECT_EQ( shouldSucceed, intersects );
+  };
+  
+  eval({0.0f, 0.0f, 0.0f});
+
+  // now robot is facing up
+  from = {-1.0f, 0.0f, 0.0f};
+  to = {1.0f, 0.0f, 0.0f};
+  robotPose = Pose3d{ Radians{M_PI_F/2}, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f} };
+  eval({}, false);
+
+  // new line should intersect again
+  from = {0.0f, 1.0f, 0.0f};
+  to = {0.0f, -1.0f, 0.0f};
+  robotPose = Pose3d{ Radians{M_PI_F/2}, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f} };
+  eval({0.0f, 0.0f, 0.0f});
+
+  // but not if it's on one side of the plane
+  from = {0.0f, 0.5f, 0.0f};
+  to = {0.0f, 1.0f, 0.0f};
+  robotPose = Pose3d{ Radians{M_PI_F/2}, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f} };
+  eval({}, false);
+
+  // now from some height
+  from = {-1.0f, 0.0f, 2.0f};
+  to = {1.0f, 0.0f, 0.0f};
+  robotPose = Pose3d{ Radians{0.0f}, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f} };
+  eval({0.0f, 0.0f, 1.0f});
+
+  // add translation
+  from = {0.0f, 1.0f, 2.0f};
+  to = {2.0f, 1.0f, 0.0f};
+  robotPose = Pose3d{ Radians{0.0f}, Z_AXIS_3D(), {1.0f, 1.0f, 0.0f} };
+  eval({1.0f, 1.0f, 1.0f});
+  
+  // rotation with height
+  from = {0.0f, -1.0f, 2.0f};
+  to = {0.0f, 1.0f, 0.0f};
+  robotPose = Pose3d{ Radians{M_PI_F/2}, Z_AXIS_3D(), {0.0f, 0.0f, 0.0f} };
+  eval({0.0f, 0.0f, 1.0f});
+  
+  // add translation
+  from = {1.0f, -1.0f, 3.0f};
+  to = {1.0f, 1.0f, 1.0f};
+  robotPose = Pose3d{ Radians{M_PI_F/2}, Z_AXIS_3D(), {1.0f, 0.0f, 1.0f} };
+  eval({1.0f, 0.0f, 2.0f});
+  
 }
  
 // InHalfPlane

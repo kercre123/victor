@@ -50,6 +50,11 @@ message AlexaAuthChanged {
   string extra,
 }
 
+message VADActivity {
+  uint_32 robotTimestamp,
+  bool value,
+}
+
 message AlexaUXChanged {
   AlexaUXState state,
 }
@@ -268,6 +273,8 @@ union RobotToEngine {
   // Alexa
   AlexaAuthChanged           alexaAuthChanged       = 0xEC,
   AlexaUXChanged             alexaUXChanged         = 0xED,
+
+  VADActivity                vadActivity            = 0xEE,  
 
 
   // ====== 0xF0 to 0x FE: Unreliable message to the Engine =====

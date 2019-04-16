@@ -45,6 +45,10 @@ protected:
 
   void InitBehavior() override;
 
+protected:
+ 
+  void HandleWhileActivated(const RobotToEngineEvent& event) override;
+
 private:
 
   enum class EState {
@@ -70,7 +74,16 @@ private:
     SmartFaceID           faceIDToTurnBackTo;
 
     float                 gazeStimulation;
+    
+    
     RobotTimeStamp_t      lastGazeAtRobot;
+    RobotTimeStamp_t      lastVadActivation;
+    bool vadActive = false;
+    
+    uint16_t direction = 12;
+    
+    RobotTimeStamp_t gazeTime;
+    
   };
 
   void TransitionToCheckForVisualWakeWord();
@@ -81,6 +94,9 @@ private:
   void DecrementGazeStimulation(const RobotTimeStamp_t currentTimeStamp);
   void DecrementStimIfGazeHasBroken();
   void ResetGazeStimulation();
+  
+  // wrt robot
+  bool GetFacePose(Pose3d& pose) const;
 
 
   InstanceConfig _iConfig;

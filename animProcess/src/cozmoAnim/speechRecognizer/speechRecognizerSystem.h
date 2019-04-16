@@ -15,6 +15,7 @@
 
 #include "audioUtil/audioDataTypes.h"
 #include "cozmoAnim/micData/micTriggerConfig.h"
+#include "coretech/common/engine/robotTimeStamp.h"
 #include <atomic>
 #include <functional>
 #include <memory>
@@ -117,7 +118,7 @@ public:
   void SetAlexaSpeakingState(bool isSpeaking);
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   
-  void SetNoiseData( float latestPower, float noiseFloor ) const;
+  void SetNoiseData( float latestPower, float noiseFloor, RobotTimeStamp_t timestamp );
 
 
 private:
@@ -215,6 +216,8 @@ private:
   
   void SendVADActivity( const std::string& type, int val ) const;
   void SendTriggerActivity( const std::string& info ) const;
+  
+  RobotTimeStamp_t _lastTimestamp = 0;
 };
 
 

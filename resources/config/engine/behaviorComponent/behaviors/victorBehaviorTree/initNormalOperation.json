@@ -11,7 +11,7 @@
       "cooldown_s": -1.0
     },
     {
-      "behavior": "ModeSelector",
+      "behavior": "DevVisualWakeWord",
       "cooldown_s": 0.0
     }
   ]
