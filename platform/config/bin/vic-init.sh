@@ -39,3 +39,8 @@ fi
 # Clear fault code, if any
 #
 /bin/fault-code-clear
+
+#
+# Create the directory to contain shared memory buffers
+#
+mkdir -p /run/sharedCircularBuffer
