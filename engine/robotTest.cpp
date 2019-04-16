@@ -334,9 +334,65 @@ bool RobotTest::ValidateScript(const Json::Value& scriptJson)
 {
   bool valid = true;
 
-  // todo ensure there is a "scriptCommands" list.
-  // todo check for errors, e.g. all commands are valid. (call StringToScriptCommand)  report specific errors in log.  return false if errors found
-  // todo If command is 'PerfMetric', could check 'parameters' is valid by calling PerfMetric::ParseCommand
+  const auto perfMetric = _context->GetPerfMetric();
+
+  if (!scriptJson.isMember(kScriptCommandsKey))
+  {
+    LOG_ERROR("RobotTest.ValidateScript", "Script missing 'scriptCommands'");
+    return false;
+  }
+
+  const auto& commandsJson = scriptJson[kScriptCommandsKey];
+  if (!commandsJson.isArray())
+  {
+    LOG_ERROR("RobotTest.ValidateScript", "'scriptCommands' must be an array");
+    return false;
+  }
+
+  const auto numCommands = commandsJson.size();
+  for (int i = 0; i < numCommands; i++)
+  {
+    const auto& commandJson = commandsJson[i];
+    if (!commandJson.isMember(kCommandKey))
+    {
+      LOG_ERROR("RobotTest.ValidateScript",
+                "Script command at index %i is missing 'command' key", i);
+      valid = false;
+      continue;
+    }
+    const auto& commandStr = commandJson[kCommandKey].asString();
+    ScriptCommandType cmd;
+    const bool success = StringToScriptCommand(commandStr, cmd);
+    valid = valid && success;
+    if (!success)
+    {
+      LOG_ERROR("RobotTest.ValidateScript",
+                "'%s' at index %i is not a valid script command", commandStr.c_str(), i);
+      continue;
+    }
+
+    if (cmd == ScriptCommandType::PERFMETRIC)
+    {
+      if (!commandJson.isMember(kParametersKey))
+      {
+        LOG_ERROR("RobotTest.ValidateScript",
+                  "'perfMetric' script command at index %i is missing 'parameters' key", i);
+        valid = false;
+        continue;
+      }
+      const auto& paramsStr = commandJson[kParametersKey].asString();
+      static const bool kQueueForExecution = false;
+      const bool success = perfMetric->ParseCommands(paramsStr, kQueueForExecution);
+      valid = valid && success;
+      if (!success)
+      {
+        LOG_ERROR("RobotTest.ValidateScript",
+                  "Error parsing 'perfMetric' script command parameters at index %i ('%s')",
+                  i, paramsStr.c_str());
+        continue;
+      }
+    }
+  }
 
   return valid;
 }
@@ -448,7 +504,7 @@ bool RobotTest::ExecuteScriptCommand(ScriptCommandType command)
     {
       const auto& paramsStr = (*_curScriptCommandsJson)[_curScriptCommandIndex][kParametersKey].asString();
       const auto perfMetric = _context->GetPerfMetric();
-      const int success = perfMetric->ParseCommands(paramsStr);
+      const bool success = perfMetric->ParseCommands(paramsStr);
       if (success)
       {
         perfMetric->ExecuteQueuedCommands();

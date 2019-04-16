@@ -578,7 +578,7 @@ void PerfMetric::WaitTicks(const int ticks)
 
 // Parse commands out of the query string, and only if there are no errors,
 // add them to the queue
-bool PerfMetric::ParseCommands(const std::string& queryStr)
+bool PerfMetric::ParseCommands(const std::string& queryStr, const bool queueForExecution)
 {
   auto queryString = Util::StringToLower(queryStr);
 
@@ -696,11 +696,15 @@ bool PerfMetric::ParseCommands(const std::string& queryStr)
     }
   }
 
-  // Now that there are no errors, add all parsed commands to queue
-  for (auto& cmd : cmds)
+  if (queueForExecution)
   {
-    _queuedCommands.push(cmd);
+    // Now that there are no errors, add all parsed commands to queue
+    for (auto& cmd : cmds)
+    {
+      _queuedCommands.push(cmd);
+    }
   }
+
   return true;
 }
 
