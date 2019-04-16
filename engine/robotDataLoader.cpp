@@ -58,9 +58,9 @@ static Anki::Vector::ThreadedPrintStressTester stressTester;
 #endif // REMOTE_CONSOLE_ENABLED
 
 const char* kPathToExternalIndependentSprites = "assets/sprites/independentSprites/";
-const char* kPathToEngineIndependentSprites = "config/devOnlySprites/independentSprites/";
+const char* kPathToEngineIndependentSprites = "config/sprites/independentSprites/";
 const char* kPathToExternalSpriteSequences = "assets/sprites/spriteSequences/";
-const char* kPathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequences/";
+const char* kPathToEngineSpriteSequences   = "config/sprites/spriteSequences/";
 
 const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
   // Dance to the beat:
