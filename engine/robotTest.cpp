@@ -58,7 +58,7 @@ namespace
 
   void RunScript(ConsoleFunctionContextRef context)
   {
-    const std::string scriptName = ConsoleArg_Get_String(context, "scriptName");
+    const std::string& scriptName = ConsoleArg_Get_String(context, "scriptName");
     std::string response;
     s_RobotTest->ExecuteWebCommandRun(scriptName, &response);
     context->channel->WriteLog("%s", response.c_str());
@@ -72,6 +72,23 @@ namespace
     context->channel->WriteLog("%s", response.c_str());
   }
   CONSOLE_FUNC(StopScript, kConsoleGroup);
+
+  void ListScripts(ConsoleFunctionContextRef context)
+  {
+    std::string response;
+    s_RobotTest->ExecuteWebCommandListScripts(&response);
+    context->channel->WriteLog("%s", response.c_str());
+  }
+  CONSOLE_FUNC(ListScripts, kConsoleGroup);
+
+  void GetScript(ConsoleFunctionContextRef context)
+  {
+    const std::string& scriptName = ConsoleArg_Get_String(context, "scriptName");
+    std::string response;
+    s_RobotTest->ExecuteWebCommandGetScript(scriptName, &response);
+    context->channel->WriteLog("%s", response.c_str());
+  }
+  CONSOLE_FUNC(GetScript, kConsoleGroup, const char* scriptName);
 
 #endif  // REMOTE_CONSOLE_ENABLED
 }
@@ -125,7 +142,7 @@ RobotTest::RobotTest(const CozmoContext* context)
 
 RobotTest::~RobotTest()
 {
-//  OnShutdown();
+  s_RobotTest = nullptr;
 }
 
 void RobotTest::Init(Util::Data::DataPlatform* dataPlatform, WebService::WebService* webService)
@@ -249,15 +266,27 @@ int RobotTest::ParseWebCommands(std::string& queryString)
       RobotTestWebCommand cmd(WebCommandType::STATUS);
       cmds.push_back(cmd);
     }
+    else if (current == "listscripts")
+    {
+      RobotTestWebCommand cmd(WebCommandType::LIST_SCRIPTS);
+      cmds.push_back(cmd);
+    }
     else
     {
       // Commands that have arguments:
       static const std::string cmdKeywordRun("run=");
+      static const std::string cmdKeywordGetScript("getscript=");
       
       if (current.substr(0, cmdKeywordRun.size()) == cmdKeywordRun)
       {
         std::string argumentValue = current.substr(cmdKeywordRun.size());
         RobotTestWebCommand cmd(WebCommandType::RUN, argumentValue);
+        cmds.push_back(cmd);
+      }
+      else if (current.substr(0, cmdKeywordGetScript.size()) == cmdKeywordGetScript)
+      {
+        std::string argumentValue = current.substr(cmdKeywordGetScript.size());
+        RobotTestWebCommand cmd(WebCommandType::GET_SCRIPT, argumentValue);
         cmds.push_back(cmd);
       }
       else
@@ -295,6 +324,12 @@ void RobotTest::ExecuteQueuedWebCommands(std::string* resultStr)
       case WebCommandType::STATUS:
         ExecuteWebCommandStatus(resultStr);
         break;
+      case WebCommandType::LIST_SCRIPTS:
+        ExecuteWebCommandListScripts(resultStr);
+        break;
+      case WebCommandType::GET_SCRIPT:
+        ExecuteWebCommandGetScript(cmd._paramString, resultStr);
+        break;
     }
   }
 }
@@ -327,6 +362,33 @@ void RobotTest::ExecuteWebCommandStatus(std::string* resultStr)
   *resultStr += (_state == RobotTestState::INACTIVE ?
                  "Inactive" : "Running: " + _curScriptName);
   *resultStr += "\n";
+}
+
+
+void RobotTest::ExecuteWebCommandListScripts(std::string* resultStr)
+{
+  for (const auto& script : _scripts)
+  {
+    *resultStr += (script.second._wasUploaded ? "Uploaded: " : "Resource: ");
+    *resultStr += (script.second._name + "\n");
+  }
+  *resultStr += (std::to_string(_scripts.size()) + " scripts total\n");
+}
+
+
+void RobotTest::ExecuteWebCommandGetScript(const std::string& scriptName, std::string* resultStr)
+{
+  const auto it = _scripts.find(scriptName);
+  if (it == _scripts.end())
+  {
+    *resultStr += ("Script '" + scriptName + "' not found");
+    return;
+  }
+
+  Json::StyledWriter writer;
+  std::string stringifiedJSON;
+  stringifiedJSON = writer.write(it->second._scriptJson);
+  *resultStr += stringifiedJSON;
 }
 
 
@@ -371,26 +433,42 @@ bool RobotTest::ValidateScript(const Json::Value& scriptJson)
       continue;
     }
 
-    if (cmd == ScriptCommandType::PERFMETRIC)
+    switch (cmd)
     {
-      if (!commandJson.isMember(kParametersKey))
-      {
-        LOG_ERROR("RobotTest.ValidateScript",
-                  "'perfMetric' script command at index %i is missing 'parameters' key", i);
-        valid = false;
-        continue;
-      }
-      const auto& paramsStr = commandJson[kParametersKey].asString();
-      static const bool kQueueForExecution = false;
-      const bool success = perfMetric->ParseCommands(paramsStr, kQueueForExecution);
-      valid = valid && success;
-      if (!success)
-      {
-        LOG_ERROR("RobotTest.ValidateScript",
-                  "Error parsing 'perfMetric' script command parameters at index %i ('%s')",
-                  i, paramsStr.c_str());
-        continue;
-      }
+      case ScriptCommandType::EXIT:
+        break;
+      case ScriptCommandType::PERFMETRIC:
+        {
+          if (!commandJson.isMember(kParametersKey))
+          {
+            LOG_ERROR("RobotTest.ValidateScript",
+                      "'perfMetric' script command at index %i is missing 'parameters' key", i);
+            valid = false;
+            continue;
+          }
+          const auto& paramsStr = commandJson[kParametersKey].asString();
+          static const bool kQueueForExecution = false;
+          const bool success = perfMetric->ParseCommands(paramsStr, kQueueForExecution);
+          valid = valid && success;
+          if (!success)
+          {
+            LOG_ERROR("RobotTest.ValidateScript",
+                      "Error parsing 'perfMetric' script command parameters at index %i ('%s')",
+                      i, paramsStr.c_str());
+            continue;
+          }
+        }
+        break;
+      case ScriptCommandType::CLOUD_INTENT:
+        break;
+      case ScriptCommandType::WAIT_CLOUD_INTENT:
+        break;
+      case ScriptCommandType::WAIT_UNTIL_ENGINE_TICK_COUNT:
+        break;
+      case ScriptCommandType::WAIT_TICKS:
+        break;
+      case ScriptCommandType::WAIT_SECONDS:
+        break;
     }
   }
 

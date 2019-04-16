@@ -57,6 +57,8 @@ public:
   void ExecuteWebCommandRun(const std::string& scriptName, std::string* resultStr);
   void ExecuteWebCommandStop(std::string* resultStr);
   void ExecuteWebCommandStatus(std::string* resultStr);
+  void ExecuteWebCommandListScripts(std::string* resultStr);
+  void ExecuteWebCommandGetScript(const std::string& scriptName, std::string* resultStr);
 
   void OnCloudIntentCompleted() { _waitingForCloudIntent = false; }
 
@@ -108,6 +110,8 @@ private:
     RUN,
     STOP,
     STATUS,
+    LIST_SCRIPTS,
+    GET_SCRIPT,
   };
 
   struct RobotTestWebCommand
