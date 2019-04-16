@@ -40,8 +40,8 @@ namespace {
   CONSOLE_VAR(u32,  kMaxTimeSinceTrackedFaceUpdated_ms,      "Vision.VisualWakeWord",  500);
   //CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinXThres_mm,        "Vision.VisualWakeWord", -25.f);
   //CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxXThres_mm,        "Vision.VisualWakeWord",  20.f);
-  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinYThres_mm,        "Vision.VisualWakeWord", -100.f);
-  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxYThres_mm,        "Vision.VisualWakeWord",  100.f);
+  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinYThres_mm,        "Vision.VisualWakeWord", -180.f);
+  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxYThres_mm,        "Vision.VisualWakeWord",  180.f);
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinZThres_mm,        "Vision.VisualWakeWord", -100.f);
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxZThres_mm,        "Vision.VisualWakeWord",  500.f); // z is always too hgih. maybe its bc the face poses are too high?
   CONSOLE_VAR(f32,  kMinTimeBetweenWakeWordTriggers_ms,      "Vision.VisualWakeWord",  500.0f);//5000.f);
@@ -184,7 +184,8 @@ void BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord()
   };
   
   auto makingEyeContact = GetBEI().GetFaceWorld().IsMakingEyeContact(kMaxTimeSinceTrackedFaceUpdated_ms);
-  if( makingEyeContact ) {
+  // todo: out param for IsMakingEyeContact with a _dVars.faceIDToTurnBackTo
+  if( makingEyeContact && _dVars.faceIDToTurnBackTo.IsValid() ) {
     incrementGaze();
     PRINT_NAMED_WARNING("WHATNOW", "eye contact!");
   } else if( GetBEI().GetFaceWorld().GetGazeDirectionPose(kMaxTimeSinceTrackedFaceUpdated_ms,
@@ -221,43 +222,47 @@ void BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord()
     DecrementStimIfGazeHasBroken();
   }
   
-  const bool recentActivation = (_dVars.gazeTime != 0) && abs((int64)(TimeStamp_t)_dVars.lastVadActivation-(int64)(TimeStamp_t)_dVars.gazeTime) <= kDelayBeforeVad;
-  Pose3d facePose;
-  bool hasFace = GetFacePose( facePose );
-  const float faceAngle = atan2f(facePose.GetTranslation().y(), facePose.GetTranslation().x());
-  ANKI_VERIFY(!hasFace || fabsf(faceAngle)<M_PI_F/2, "WHATNOW", "unexpected face angle %f", faceAngle);
-  //[3,2,1,0] U [10 9 8]
-  float micAngle=0.0f;
-  bool directionMatches = false;
-  if( _dVars.direction <= 3 ) {
-    // map from [0, 3] to [0.0, -pi/2]
-    micAngle = -(M_PI_F*_dVars.direction)/12;
-    directionMatches = fabsf(faceAngle - micAngle) <= kMicDirectionDiff_deg*M_PI_F/180;
-  } else if(_dVars.direction>=8 && _dVars.direction <= 10){
-    // map from 11-[8,10] to [3*pi/6, 1*pi/6]
-    micAngle = (11 - _dVars.direction)*M_PI_F/6.0f;
-    directionMatches = fabsf(faceAngle - micAngle) <= kMicDirectionDiff_deg*M_PI_F/180;
-  }
-  
-  // [0,11] mapped to [-pi, -pi] is [0, -pi] U [pi, 0] is
-  PRINT_NAMED_WARNING("HERENOW", "recentActivation=%d (%d,%d [%lld]), directions %d x=%1.3f y=%1.3f th=%f mic=%d=>%f==%d gaze=%1.1f",
-                      recentActivation, (TimeStamp_t)_dVars.lastVadActivation, (TimeStamp_t)_dVars.gazeTime, (int64)(TimeStamp_t)_dVars.lastVadActivation-(int64)(TimeStamp_t)_dVars.gazeTime,
-                      hasFace, facePose.GetTranslation().x(), facePose.GetTranslation().y(), faceAngle, _dVars.direction, micAngle, directionMatches, _dVars.gazeStimulation );
-  
-  
-  if( recentActivation && directionMatches ) {
-    // Open up audio stream
-    LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToCheckForVisualWakeWord.HitGazeStimulationThreshold",
-                "Gaze stimulation is now %.3f and above the threshold %.3f.",
-                _dVars.gazeStimulation, kGazeStimulationThreshold_ms);
-    if (_iConfig.yeaOrNayBehavior->WantsToBeActivated()) {
-      // This isn't entirely correct but whatever, fuck it, i think it's reduce some bugs so...
-      SET_STATE(DetectedVisualWakeWord);
-      // Now that we know we are going open up the audio stream clear the history and reset
-      // the gazing stim
-      GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
-      ResetGazeStimulation();
-      DelegateIfInControl(_iConfig.yeaOrNayBehavior.get(), &BehaviorDevVisualWakeWord::TransitionToListening);
+  // todo: dont require gaze to work once. or maybe get the faceID from eye contact?
+  if( _dVars.faceIDToTurnBackTo.IsValid() ) {
+    bool recentActivation = (_dVars.gazeTime != 0) && abs((int64)(TimeStamp_t)_dVars.lastVadActivation-(int64)(TimeStamp_t)_dVars.gazeTime) <= kDelayBeforeVad;
+    recentActivation &= (currentTimeStamp <= 5000 + std::max((TimeStamp_t)_dVars.lastVadActivation, (TimeStamp_t)_dVars.gazeTime));
+    Pose3d facePose;
+    bool hasFace = GetFacePose( facePose );
+    const float faceAngle = atan2f(facePose.GetTranslation().y(), facePose.GetTranslation().x());
+    ANKI_VERIFY(!hasFace || fabsf(faceAngle)<M_PI_F/2, "WHATNOW", "unexpected face angle %f", faceAngle);
+    //[3,2,1,0] U [10 9 8]
+    float micAngle=0.0f;
+    bool directionMatches = false;
+    if( _dVars.direction <= 3 ) {
+      // map from [0, 3] to [0.0, -pi/2]
+      micAngle = -(M_PI_F*_dVars.direction)/12;
+      directionMatches = fabsf(faceAngle - micAngle) <= kMicDirectionDiff_deg*M_PI_F/180;
+    } else if(_dVars.direction>=8 && _dVars.direction <= 10){
+      // map from 11-[8,10] to [3*pi/6, 1*pi/6]
+      micAngle = (11 - _dVars.direction)*M_PI_F/6.0f;
+      directionMatches = fabsf(faceAngle - micAngle) <= kMicDirectionDiff_deg*M_PI_F/180;
+    }
+    
+    // [0,11] mapped to [-pi, -pi] is [0, -pi] U [pi, 0] is
+    PRINT_NAMED_WARNING("HERENOW", "recentActivation=%d (%d,%d [%lld]), directions %d x=%1.3f y=%1.3f th=%f mic=%d=>%f==%d gaze=%1.1f",
+                        recentActivation, (TimeStamp_t)_dVars.lastVadActivation, (TimeStamp_t)_dVars.gazeTime, (int64)(TimeStamp_t)_dVars.lastVadActivation-(int64)(TimeStamp_t)_dVars.gazeTime,
+                        hasFace, facePose.GetTranslation().x(), facePose.GetTranslation().y(), faceAngle, _dVars.direction, micAngle, directionMatches, _dVars.gazeStimulation );
+    
+    
+    if( hasFace && recentActivation && directionMatches ) {
+      // Open up audio stream
+      LOG_WARNING("BehaviorDevVisualWakeWord.TransitionToCheckForVisualWakeWord.HitGazeStimulationThreshold",
+                  "Gaze stimulation is now %.3f and above the threshold %.3f.",
+                  _dVars.gazeStimulation, kGazeStimulationThreshold_ms);
+      if (_iConfig.yeaOrNayBehavior->WantsToBeActivated()) {
+        // This isn't entirely correct but whatever, fuck it, i think it's reduce some bugs so...
+        SET_STATE(DetectedVisualWakeWord);
+        // Now that we know we are going open up the audio stream clear the history and reset
+        // the gazing stim
+        GetBEI().GetFaceWorldMutable().ClearGazeDirectionHistory(_dVars.faceIDToTurnBackTo);
+        ResetGazeStimulation();
+        DelegateIfInControl(_iConfig.yeaOrNayBehavior.get(), &BehaviorDevVisualWakeWord::TransitionToListening);
+      }
     }
   }
 }

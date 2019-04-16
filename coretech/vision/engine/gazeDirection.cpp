@@ -198,7 +198,7 @@ bool GazeDirection::GetPointFromHeadPose(const Pose3d& headPose, const Pose3d& r
   if( intersects ) {
     // get relative to robot pose
     gazeDirectionPoint = intersect - robotPose.GetTranslation();
-    ANKI_VERIFY( fabsf(gazeDirectionPoint.x()) < 50.0, "WHATNOW", "");
+    ANKI_VERIFY( fabsf(gazeDirectionPoint.x()) < 50.0, "WHATNOW", "%f", gazeDirectionPoint.x());
   }
   
   PRINT_NAMED_WARNING("WHATNOW",
