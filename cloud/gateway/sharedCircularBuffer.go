@@ -50,7 +50,7 @@ func NewSharedCircularBuffer(name string) *SharedCircularBuffer {
 }
 
 // Close is the SharedCircularBuffer destructor. Be VERY sure to call it when you're
-// done, even if you're failing with an exception. It's important that SCB decrement
+// done, even if you're failing and returning an error. It's important that SCB decrement
 // the reader count to deactivate the queueing of data.
 func (client *SharedCircularBuffer) Close() {
 	if client.mapFile != -1 {
