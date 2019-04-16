@@ -54,13 +54,13 @@ public:
   int  ParseWebCommands(std::string& queryString);
   void ExecuteQueuedWebCommands(std::string* resultStr = nullptr);
 
-  void OnCloudIntentCompleted() { _waitingForCloudIntent = false; }
-
-private:
-
   void ExecuteWebCommandRun(const std::string& scriptName, std::string* resultStr);
   void ExecuteWebCommandStop(std::string* resultStr);
   void ExecuteWebCommandStatus(std::string* resultStr);
+
+  void OnCloudIntentCompleted() { _waitingForCloudIntent = false; }
+
+private:
 
   bool ValidateScript(const Json::Value& scriptJson);
 

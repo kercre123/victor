@@ -21,6 +21,7 @@
 #include "engine/robot.h"
 #include "engine/robotManager.h"
 #include "engine/robotTest.h"
+#include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/string/stringUtils.h"
@@ -36,10 +37,43 @@ const std::string RobotTest::kInactiveScriptName = "(NONE)";
 
 #if ANKI_ROBOT_TEST_ENABLED
 
-namespace {
+namespace
+{
+  RobotTest* s_RobotTest = nullptr;
   const char* kScriptCommandsKey = "scriptCommands";
   const char* kCommandKey = "command";
   const char* kParametersKey = "parameters";
+
+#if REMOTE_CONSOLE_ENABLED
+
+  static const char* kConsoleGroup = "RobotTest";
+
+  void Status(ConsoleFunctionContextRef context)
+  {
+    std::string response;
+    s_RobotTest->ExecuteWebCommandStatus(&response);
+    context->channel->WriteLog("%s", response.c_str());
+  }
+  CONSOLE_FUNC(Status, kConsoleGroup);
+
+  void RunScript(ConsoleFunctionContextRef context)
+  {
+    const std::string scriptName = ConsoleArg_Get_String(context, "scriptName");
+    std::string response;
+    s_RobotTest->ExecuteWebCommandRun(scriptName, &response);
+    context->channel->WriteLog("%s", response.c_str());
+  }
+  CONSOLE_FUNC(RunScript, kConsoleGroup, const char* scriptName);
+
+  void StopScript(ConsoleFunctionContextRef context)
+  {
+    std::string response;
+    s_RobotTest->ExecuteWebCommandStop(&response);
+    context->channel->WriteLog("%s", response.c_str());
+  }
+  CONSOLE_FUNC(StopScript, kConsoleGroup);
+
+#endif  // REMOTE_CONSOLE_ENABLED
 }
 
 
@@ -96,6 +130,8 @@ RobotTest::~RobotTest()
 
 void RobotTest::Init(Util::Data::DataPlatform* dataPlatform, WebService::WebService* webService)
 {
+  s_RobotTest = this;
+
   _webService = webService;
   _webService->RegisterRequestHandler("/robottest", RobotTestWebServerHandler, this);
 
