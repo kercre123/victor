@@ -29,6 +29,7 @@ namespace Animations{
 
 namespace{
 const char* kClearSpriteBox  = "clear_sprite_box";
+const char* kEmptySpriteBox  = "empty_sprite_box";
 
 const char* kSpriteBoxNameKey = "spriteBoxName";
 const char* kTriggerTimeKey   = "triggerTime_ms";
@@ -171,6 +172,12 @@ Result SpriteBoxCompositor::AddKeyFrameInternal(const std::string& spriteBoxName
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpriteBoxCompositor::AddSpriteBoxRemap(const Vision::SpriteBoxName spriteBox, const std::string& remappedAssetName)
 {
+  if(kClearSpriteBox == remappedAssetName){
+    LOG_WARNING("SpriteBoxCompositor.AddSpriteBoxRemap.InvalidRemap",
+                "kClearSpriteBox is not valid from engine, use kEmptySpriteBox to override an SB to display nothing");
+    return;
+  }
+
   const std::string& spriteBoxName = Vision::SpriteBoxNameToString(spriteBox);
   if(IsEmpty()){
     LOG_ERROR("SpriteBoxCompositor.AddSpriteBoxRemap.EmptyCompositor",
@@ -447,12 +454,19 @@ bool SpriteBoxTrack::GetCurrentKeyFrame(const TimeStamp_t timeSinceAnimStart_ms,
   }
   outKeyFrame = *_currentKeyFrameIter;
 
+  // Clear keyframes take precedence over remaps
+  if(kClearSpriteBox == outKeyFrame.assetName){
+    // Nothing to display
+    return false;
+  }
+
   if(!_remappedAssetName.empty()){
     outKeyFrame.assetName = _remappedAssetName;
   }
 
-  if(outKeyFrame.assetName == kClearSpriteBox){
-    // This "clear" keyframe is simply terminating whatever was being displayed.
+  // SpriteBoxes can be remapped to Empty from the engine
+  if(kEmptySpriteBox == outKeyFrame.assetName){
+    // Nothing to display
     return false;
   }
 

@@ -394,7 +394,7 @@ Result AnimationComponent::PlayAnimWithSpriteBoxRemaps(const std::string& animNa
                                                        const RemapMap& remaps,
                                                        bool interruptRunning,
                                                        AnimationCompleteCallback callback,
-                                                       bool lockFaceAtEndOfAnimation)
+                                                       const std::string& lockFaceAtEndOfAnimTag)
 {
   if (!_isInitialized) {
     LOG_WARNING("AnimationComponent.PlayAnimWithSpriteBoxRemaps.Uninitialized", "");
@@ -420,6 +420,7 @@ Result AnimationComponent::PlayAnimWithSpriteBoxRemaps(const std::string& animNa
   msg.tag = currTag;
   msg.animName = animName;
   msg.numRemaps = remaps.size();
+  msg.lockFaceAtEndOfAnim = !lockFaceAtEndOfAnimTag.empty();
 
   if(remaps.size() > msg.spriteBoxRemaps.size()){
     LOG_ERROR("AnimationComponent.PlayAnimWithSpriteBoxRemaps.MessageOverflow",
@@ -442,13 +443,22 @@ Result AnimationComponent::PlayAnimWithSpriteBoxRemaps(const std::string& animNa
     msg.spriteBoxRemaps[i].remappedAssetID = spritePathMap.GetAssetID(remap.second);
     ++i;
   }
-  _robot->SendRobotMessage<RobotInterface::PlayAnimWithSpriteBoxRemaps>(msg);
 
   if(callback != nullptr){
     SetAnimationCallback(animName, callback, currTag, 0, 0, 0);
   }
 
-  return RESULT_OK;
+  if(!lockFaceAtEndOfAnimTag.empty()){
+    auto lockTrackCallback = 
+      [this, lockFaceAtEndOfAnimTag](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded){
+        if(res == AnimResult::Completed){
+          _movementComponent->RecordTracksLocked((u8)AnimTrackFlag::FACE_TRACK, lockFaceAtEndOfAnimTag);
+        }
+      };
+    SetAnimationCallback(animName, lockTrackCallback, currTag, 0, 0, 0);
+  }
+
+  return _robot->SendRobotMessage<RobotInterface::PlayAnimWithSpriteBoxRemaps>(msg);
 }
 
   

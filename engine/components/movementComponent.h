@@ -277,7 +277,12 @@ public:
   bool IsLiftEncoderInvalid() const { return _isLiftEncoderInvalid; }
 
 private:
-  
+  // Record a notification from the animation process that a set of tracks has locked. This
+  // is a work-around for the huge mess that is BlackJack face lock/unlocking and should NOT
+  // be used for anything else. Ideally it will be removed soon during animStreamer refactoring.
+  friend AnimationComponent;
+  void RecordTracksLocked(u8 tracks, const std::string& who);
+
   void InitEventHandlers(IExternalInterface& interface);
   int GetFlagIndex(uint8_t flag) const;
   AnimTrackFlag GetFlagFromIndex(int index);

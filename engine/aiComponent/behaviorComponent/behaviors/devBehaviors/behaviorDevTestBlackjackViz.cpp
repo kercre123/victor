@@ -226,7 +226,7 @@ void BehaviorDevTestBlackjackViz::ClearCards(const bool shuffle)
   } else {
     _game.Init();
   }
-  _visualizer.ClearCards(GetBEI());
+  _visualizer.ResetHands();
   _dVars.firstDealerCard = true;
 }
 

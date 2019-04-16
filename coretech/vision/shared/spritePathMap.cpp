@@ -16,8 +16,9 @@
 namespace Anki {
 namespace Vision {
 
-const uint16_t SpritePathMap::kEmptySpriteBoxID = std::hash<std::string>()("EmptySpriteBox");
-const uint16_t SpritePathMap::kInvalidSpriteID = std::hash<std::string>()("InvalidSpriteBox");
+const char* kEmptySpriteBoxAssetName = "empty_sprite_box";
+const uint16_t SpritePathMap::kEmptySpriteBoxID = std::hash<std::string>()(kEmptySpriteBoxAssetName);
+const uint16_t SpritePathMap::kInvalidSpriteID = std::hash<std::string>()("invalid_sprite_box");
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 SpritePathMap::AssetInfo::AssetInfo(uint16_t wireID,
@@ -35,11 +36,10 @@ SpritePathMap::AssetInfo::AssetInfo(uint16_t wireID,
 SpritePathMap::SpritePathMap()
 {
   // Make sure these ID's don't conflict with any of the hashed AssetNames
-  _idToInfoMap.emplace(kEmptySpriteBoxID, nullptr);
   _idToInfoMap.emplace(kInvalidSpriteID, nullptr);
 
-  // Add an asset to handle sending `clear_sprite_box` remaps from engine
-  AddAsset("clear_sprite_box", "", false);
+  // Add an asset to handle sending `empty_sprite_box` remaps from engine
+  AddAsset(kEmptySpriteBoxAssetName, "", false);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -117,9 +117,6 @@ uint16_t SpritePathMap::GetAssetID(const std::string& assetName) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const std::string& SpritePathMap::GetAssetName(const uint16_t& assetID) const
 {
-  ANKI_VERIFY(kEmptySpriteBoxID != assetID,
-              "SpritePathMap.GetAssetName.EmptySpriteBox",
-              "Requested an asset name for an empty SpriteBox, this indicates a usage error");
   return GetInfoForAsset(assetID)->assetName;
 }
 

@@ -83,7 +83,7 @@
    "width": 59,
    "yPos": -12,
    "renderMethod": "RGBA",
-   "assetName": "clear_sprite_box",
+   "assetName": "empty_sprite_box",
    "alpha": 100,
    "triggerTime_ms": 0,
    "spriteSeqEndType": "Hold"
@@ -125,7 +125,7 @@
    "width": 59,
    "yPos": -12,
    "renderMethod": "RGBA",
-   "assetName": "clear_sprite_box",
+   "assetName": "empty_sprite_box",
    "alpha": 100,
    "triggerTime_ms": 0,
    "spriteSeqEndType": "Hold"
@@ -167,7 +167,7 @@
    "width": 59,
    "yPos": -12,
    "renderMethod": "RGBA",
-   "assetName": "clear_sprite_box",
+   "assetName": "empty_sprite_box",
    "alpha": 100,
    "triggerTime_ms": 0,
    "spriteSeqEndType": "Hold"
@@ -209,7 +209,7 @@
    "width": 59,
    "yPos": -12,
    "renderMethod": "RGBA",
-   "assetName": "clear_sprite_box",
+   "assetName": "empty_sprite_box",
    "alpha": 100,
    "triggerTime_ms": 0,
    "spriteSeqEndType": "Hold"
@@ -251,7 +251,7 @@
    "width": 59,
    "yPos": -12,
    "renderMethod": "RGBA",
-   "assetName": "clear_sprite_box",
+   "assetName": "empty_sprite_box",
    "alpha": 100,
    "triggerTime_ms": 0,
    "spriteSeqEndType": "Hold"
@@ -307,7 +307,7 @@
    "width": 59,
    "yPos": -60,
    "renderMethod": "RGBA",
-   "assetName": "clear_sprite_box",
+   "assetName": "empty_sprite_box",
    "alpha": 100,
    "triggerTime_ms": 0,
    "spriteSeqEndType": "Hold"
@@ -349,7 +349,7 @@
    "width": 59,
    "yPos": -60,
    "renderMethod": "RGBA",
-   "assetName": "clear_sprite_box",
+   "assetName": "empty_sprite_box",
    "alpha": 100,
    "triggerTime_ms": 0,
    "spriteSeqEndType": "Hold"
@@ -391,7 +391,7 @@
    "width": 59,
    "yPos": -60,
    "renderMethod": "RGBA",
-   "assetName": "clear_sprite_box",
+   "assetName": "empty_sprite_box",
    "alpha": 100,
    "triggerTime_ms": 0,
    "spriteSeqEndType": "Hold"
@@ -433,7 +433,7 @@
    "width": 59,
    "yPos": -60,
    "renderMethod": "RGBA",
-   "assetName": "clear_sprite_box",
+   "assetName": "empty_sprite_box",
    "alpha": 100,
    "triggerTime_ms": 0,
    "spriteSeqEndType": "Hold"
@@ -475,7 +475,7 @@
    "width": 59,
    "yPos": -60,
    "renderMethod": "RGBA",
-   "assetName": "clear_sprite_box",
+   "assetName": "empty_sprite_box",
    "alpha": 100,
    "triggerTime_ms": 0,
    "spriteSeqEndType": "Hold"

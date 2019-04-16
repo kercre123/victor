@@ -993,6 +993,18 @@ void MovementComponent::LockTracks(uint8_t tracks, const std::string& who, const
   }
 }
 
+void MovementComponent::RecordTracksLocked(u8 tracks, const std::string& who)
+{
+  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
+  {
+    uint8_t curTrack = (1 << i);
+    if ((tracks & curTrack) == curTrack)
+    {
+      _trackLockCount[i].insert({who, who});
+    }
+  }
+}
+
 bool MovementComponent::UnlockTracks(uint8_t tracks, const std::string& who)
 {
   bool locksLeft = false;

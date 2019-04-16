@@ -137,7 +137,7 @@ public:
                                      const RemapMap& remaps,
                                      bool interruptRunning = true,
                                      AnimationCompleteCallback callback = nullptr,
-                                     bool lockFaceAtEndOfAnimation = false);
+                                     const std::string& lockFaceAtEndOfAnimTag = "");
   
   bool IsPlayingAnimation() const { return _callbackMap.size() > 0; }
   

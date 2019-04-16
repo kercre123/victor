@@ -80,7 +80,7 @@ const std::vector<std::string> kDealerCards = {
 };
 
 const Vision::SpriteBoxName kCharlieFrameSpriteBox = Vision::SpriteBoxName::SpriteBox_31;
-const char* kClearSpriteBoxAssetName = "clear_sprite_box";
+const char* kEmptySpriteBoxAssetName = "empty_sprite_box";
 const char* kCharlieFrameAssetName = "charlieframe";
 const std::string kDealAnimationName = "anim_test_spriteboxremaps";
 
@@ -148,30 +148,30 @@ void BehaviorDevTestSpriteBoxRemaps::ClearAllPositions()
   _dVars.remapMap.clear();
 
   for(const auto& spriteBox : kPlayerDealingSpriteBoxes){
-    _dVars.remapMap.insert({spriteBox, kClearSpriteBoxAssetName});
+    _dVars.remapMap.insert({spriteBox, kEmptySpriteBoxAssetName});
   }
 
   for(const auto& spriteBox : kPlayerShowCardSpriteBoxes){
-    _dVars.remapMap.insert({spriteBox, kClearSpriteBoxAssetName});
+    _dVars.remapMap.insert({spriteBox, kEmptySpriteBoxAssetName});
   }
 
   for(const auto& spriteBox : kPlayerCardSpriteBoxes){
-    _dVars.remapMap.insert({spriteBox, kClearSpriteBoxAssetName});
+    _dVars.remapMap.insert({spriteBox, kEmptySpriteBoxAssetName});
   }
 
   for(const auto& spriteBox : kDealerDealingSpriteBoxes){
-    _dVars.remapMap.insert({spriteBox, kClearSpriteBoxAssetName});
+    _dVars.remapMap.insert({spriteBox, kEmptySpriteBoxAssetName});
   }
 
   for(const auto& spriteBox : kDealerShowCardSpriteBoxes){
-    _dVars.remapMap.insert({spriteBox, kClearSpriteBoxAssetName});
+    _dVars.remapMap.insert({spriteBox, kEmptySpriteBoxAssetName});
   }
 
   for(const auto& spriteBox : kDealerCardSpriteBoxes){
-    _dVars.remapMap.insert({spriteBox, kClearSpriteBoxAssetName});
+    _dVars.remapMap.insert({spriteBox, kEmptySpriteBoxAssetName});
   }
 
-  _dVars.remapMap.insert({kCharlieFrameSpriteBox, kClearSpriteBoxAssetName});
+  _dVars.remapMap.insert({kCharlieFrameSpriteBox, kEmptySpriteBoxAssetName});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -204,8 +204,8 @@ void BehaviorDevTestSpriteBoxRemaps::DealNextPlayerCard()
                                                                  animationCallback);
 
     // Clear the dealing animation...
-    _dVars.remapMap[kPlayerShowCardSpriteBoxes[_dVars.playerCardIndex]] = kClearSpriteBoxAssetName;
-    _dVars.remapMap[kPlayerDealingSpriteBoxes[_dVars.playerCardIndex]] = kClearSpriteBoxAssetName;
+    _dVars.remapMap[kPlayerShowCardSpriteBoxes[_dVars.playerCardIndex]] = kEmptySpriteBoxAssetName;
+    _dVars.remapMap[kPlayerDealingSpriteBoxes[_dVars.playerCardIndex]] = kEmptySpriteBoxAssetName;
     // ...and store the dealt card
     _dVars.remapMap[kPlayerCardSpriteBoxes[_dVars.playerCardIndex]] = kPlayerCards[_dVars.playerCardIndex];
     ++_dVars.playerCardIndex;
@@ -230,8 +230,8 @@ void BehaviorDevTestSpriteBoxRemaps::DealNextDealerCard()
                                                                animationCallback);
 
   // Clear the dealing animation...
-  _dVars.remapMap[kDealerShowCardSpriteBoxes[_dVars.dealerCardIndex]] = kClearSpriteBoxAssetName;
-  _dVars.remapMap[kDealerDealingSpriteBoxes[_dVars.dealerCardIndex]] = kClearSpriteBoxAssetName;
+  _dVars.remapMap[kDealerShowCardSpriteBoxes[_dVars.dealerCardIndex]] = kEmptySpriteBoxAssetName;
+  _dVars.remapMap[kDealerDealingSpriteBoxes[_dVars.dealerCardIndex]] = kEmptySpriteBoxAssetName;
   // ...and store the dealt card
   _dVars.remapMap[kDealerCardSpriteBoxes[_dVars.dealerCardIndex]] = kDealerCards[_dVars.dealerCardIndex];
   ++_dVars.dealerCardIndex;

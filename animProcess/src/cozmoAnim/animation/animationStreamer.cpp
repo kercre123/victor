@@ -847,6 +847,7 @@ namespace Anim {
     }
     SetStreamingAnimation(_proceduralAnimation, msg.tag, numLoops, startAtTime_ms, interruptRunning,
                           shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
+    _lockFaceTrackAtEndOfStreamingAnimation = msg.lockFaceAtEndOfAnim;
   }
 
   // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
@@ -1032,6 +1033,7 @@ namespace Anim {
     }
     _relativeStreamTime_ms = 0;
     _expectingCompositeImage = false;
+    _lockFaceTrackAtEndOfStreamingAnimation = false;
   } // Abort()
 
 
@@ -1895,6 +1897,10 @@ namespace Anim {
         {
           StopTracksInUse(false);
           lastResult = SendEndOfAnimation();
+          if(_lockFaceTrackAtEndOfStreamingAnimation){
+            LockTrack(AnimTrackFlag::FACE_TRACK);
+            _lockFaceTrackAtEndOfStreamingAnimation = false;
+          }
           if (_animAudioClient->HasActiveEvents())
           {
             LOG_WARNING("AnimationStreamer.ExtractMessagesFromStreamingAnim.EndOfAnimation.ActiveAudioEvent",
