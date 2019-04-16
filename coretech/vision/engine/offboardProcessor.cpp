@@ -36,7 +36,7 @@ namespace Anki {
 namespace Vision {
   
 const char* const OffboardProcessor::Filenames::Timestamp = "timestamp.txt";
-const char* const OffboardProcessor::Filenames::Image     = "offboardProcImage.jpg";
+const char* const OffboardProcessor::Filenames::Image     = "offboardProcImage.png";
 const char* const OffboardProcessor::Filenames::Result    = "offboardProcResult.json";
   
 const char* const OffboardProcessor::JsonKeys::CommsType       = "commsType";
@@ -152,7 +152,13 @@ Result OffboardProcessor::Init(const std::string& name, const Json::Value& confi
     }
     
     _udpClient.reset(new LocalUdpClient());
-    // VIC-14318 add in connect here once we have merged this PR
+#ifdef VICOS
+    // Right now we only support vicos for offboard vision per the implementation
+    // in vic-cloud, if you're running on mac ... there isn't really a use case for
+    // offboard ... yet.
+    const bool connected = Connect();
+    LOG_INFO("OffboardProcessor.Init.ConnectionStatus", "%d", connected);
+#endif
   }
   
   return RESULT_OK;
@@ -200,7 +206,7 @@ Result OffboardProcessor::DetectWithFileIO(const ImageRGB& img, std::list<Salien
   const std::string imageFilename = Util::FileUtils::FullFilePath({_cachePath, Filenames::Image});
   {
     // Write image to a temporary file
-    const std::string tempFilename = Util::FileUtils::FullFilePath({_cachePath, "temp.jpg"});
+    const std::string tempFilename = Util::FileUtils::FullFilePath({_cachePath, "temp.png"});
     img.Save(tempFilename);
     
     // Write timestamp to file

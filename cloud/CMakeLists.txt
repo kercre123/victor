@@ -11,6 +11,10 @@ include(anki_build_util)
 include(breakpad)
 include(webots)
 
+#
+# Gateway Protbuf and GRPC configuration
+#
+
 # Grab the gateway files
 file(STRINGS "${ANKI_SRCLIST_DIR}/gateway_grpc.srcs.lst" GATEWAY_GRPC_SRCS)
 file(STRINGS "${ANKI_SRCLIST_DIR}/gateway_proto.srcs.lst" GATEWAY_PROTO_SRCS)
@@ -46,7 +50,27 @@ set(GATEWAY_PROTO_SRCS "${GATEWAY_PROTO_SRCS}" PARENT_SCOPE)
 set(PROTOBUF_OUTPUT_DIR "${PROTOBUF_OUTPUT_DIR}" PARENT_SCOPE)
 set(GATEWAY_PROTO_HOME_DIR "${GATEWAY_PROTO_HOME_DIR}" PARENT_SCOPE)
 
-set(__extra_go_deps "${CLAD_GO_GEN_SRCS}" "${GATEWAY_PROTO_GO_GEN_SRCS}" "${GATEWAY_GRPC_GO_GEN_SRCS}" "${CLAD_GATEWAY_GEN_SRCS}")
+#
+# Vision Protobuf and GRPC configuration
+#
+
+# Grab the vision files
+file(STRINGS "${ANKI_SRCLIST_DIR}/vision_proto.srcs.lst" VISION_PROTO_SRCS)
+
+set(VISION_PROTOBUF_OUTPUT_DIR "${CMAKE_SOURCE_DIR}/generated/go/src/proto/vision")
+set(VISION_PROTO_HOME_DIR "${CMAKE_SOURCE_DIR}/tools/protobuf/vision")
+set(VISION_PROTO_HOME_DIR_RELATIVE "../tools/protobuf/vision")
+
+string(REPLACE ".proto" ".pb.go" VISION_PROTO_GO_GEN_SRCS "${VISION_PROTO_SRCS}")
+
+string(REPLACE "${VISION_PROTO_HOME_DIR_RELATIVE}/private/" "${VISION_PROTOBUF_OUTPUT_DIR}/" VISION_PROTO_GO_GEN_SRCS "${VISION_PROTO_GO_GEN_SRCS}")
+
+string(REPLACE "${VISION_PROTO_HOME_DIR_RELATIVE}" "${VISION_PROTO_HOME_DIR}/" VISION_PROTO_SRCS "${VISION_PROTO_SRCS}")
+
+get_property(VISION_CLAD_SRCS GLOBAL PROPERTY VISION_GO_GEN_SRCS)
+
+# This is where the extra go dependencies get added
+set(__extra_go_deps "${CLAD_GO_GEN_SRCS}" "${GATEWAY_PROTO_GO_GEN_SRCS}" "${GATEWAY_GRPC_GO_GEN_SRCS}" "${CLAD_GATEWAY_GEN_SRCS}" "${VISION_CLAD_SRCS}" "${VISION_PROTO_GO_GEN_SRCS}")
 
 # preserving this now-unused option as an example of how to set variables at build times
 # hopefully someday this saves someone hours of figuring out how many backslashes are necessary
@@ -238,13 +262,33 @@ _add_chipper_flags(opusenc)
 anki_disable_default_build(opusenc)
 
 #
+# vic-vision
+#
+# Generate grpc go files for offboard vision
+#
+
+set(GOPATH_VISION "${CMAKE_CURRENT_SOURCE_DIR}/go")
+# Generate grpc go files
+add_custom_command(
+  OUTPUT  ${VISION_PROTO_GO_GEN_SRCS}
+  COMMAND mkdir -p ${VISION_PROTOBUF_OUTPUT_DIR}
+  COMMAND ${CMAKE_COMMAND} -E env "PATH=${GOPATH_VISION}/bin:$ENV{PATH}"
+    ${PROTOBUF_HOME}/bin/protoc "-I${VISION_PROTO_HOME_DIR}/private"
+    "-I${PROTOBUF_HOME}/include"
+    "-I${GOPATH_VISION}/src"
+    "--go_out=plugins=grpc:${VISION_PROTOBUF_OUTPUT_DIR}"
+    ${VISION_PROTO_SRCS}
+  DEPENDS ${VISION_PROTO_SRCS}
+)
+
+#
 # vic-gateway
 #
 # SDK translation service that interfaces between the engine and the external world.
 #
+
 set(GOPATH_GATEWAY "${CMAKE_CURRENT_SOURCE_DIR}/go")
 
-# Generate grpc go files
 add_custom_command(
   OUTPUT ${GATEWAY_PROTO_GO_GEN_SRCS} ${GATEWAY_GRPC_GO_GEN_SRCS}
   COMMAND mkdir -p ${GATEWAY_GRPC_OUTPUT_DIR}
