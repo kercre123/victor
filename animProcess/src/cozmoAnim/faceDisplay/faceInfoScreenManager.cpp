@@ -1014,7 +1014,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
 
   const ScreenName currScreenName = GetCurrScreenName();
 
-  if (singlePressDetected) {
+  if (singlePressDetected && _engineLoaded) {
     if (IsAlexaScreen(currScreenName)) {
       // Single press should exit any uncompleted alexa authorization
       Alexa* alexa = _context->GetAlexa();
