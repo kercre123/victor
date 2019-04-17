@@ -83,6 +83,8 @@ private:
     uint16_t direction = 12;
     
     RobotTimeStamp_t gazeTime;
+    bool hasConfidentDirection = false;
+    RobotTimeStamp_t confidentDirectionTime = 0;
     
   };
 

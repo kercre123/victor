@@ -53,6 +53,7 @@ CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInAU);
 CONSOLE_VAR_RANGED(int, kWebRTCMaxEnergy, "VAD", 50, 0, 500);
 CONSOLE_VAR_RANGED(int, kWebRTCTriggerEnergy, "VAD", 20, 0, 500);
 CONSOLE_VAR_RANGED(float, kDiffVadActivationTimes, "VAD", 0.750f, 0.0f, 5.0f);
+CONSOLE_VAR(bool, kRunWebRTC, "VAD", true);
   
 namespace {
 #define LOG_CHANNEL "SpeechRecognizer"
@@ -455,11 +456,11 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample * audioData, un
   static float timeVectorActive = -1.0f;
   
   bool directionChanged = false;
-  static int oldDirection = 11;
+  static int oldDirection = 12;
   int newDirection = _micDataSystem->GetLatestMicDirectionMsg().direction;
-  if( oldDirection == 11 && newDirection != oldDirection) {
+  if( oldDirection == 12 && newDirection != oldDirection) {
     directionChanged = true;
-  } else if( newDirection != 11 && oldDirection != 11 ) {
+  } else if( newDirection != 12 && oldDirection != 12 ) {
     if( abs(newDirection - oldDirection) > 4) {
       // exclude periodic
       if( abs((11-newDirection) - oldDirection) > 4 ) {
@@ -484,7 +485,7 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample * audioData, un
   
   static int webRTCEnergy = 0;
   // The result value is 0 for inactive, 1 for active, and -1 for error (e.g., not enough data).
-  bool webRTCActive = WebRtcVad_Process(_webRTC_VADHandle, 16000, audioData, audioDataLen) == 1;
+  bool webRTCActive = kRunWebRTC && WebRtcVad_Process(_webRTC_VADHandle, 16000, audioData, audioDataLen) == 1;
   if( webRTCActive ) {
     ++webRTCEnergy;
   } else {
@@ -508,25 +509,42 @@ void SpeechRecognizerSystem::Update(const AudioUtil::AudioSample * audioData, un
     }
   }
   
-  static bool wasBothActive = false;
-  bool bothActive = false;
+  static bool wasBothActiveA = false;
+  static bool wasBothActiveB= false;
+  static bool wasBothActiveC= false;
+  bool bothActiveA = false;
+  bool bothActiveB = false;
+  bool bothActiveC = false;
   if( timeWebRTCActive >= 0.0f && timeVectorActive >= 0.0f ) {
     const float dt = fabsf(timeVectorActive - timeWebRTCActive);
-    bothActive = dt < kDiffVadActivationTimes;
-    if( !bothActive ) {
-      PRINT_NAMED_WARNING("WHATNOW", "not at same time because %f", fabsf(timeVectorActive - timeWebRTCActive));
-    } else if( directionChanged ) {
-      PRINT_NAMED_WARNING("WHATNOW", "direction changed old=%d, new=%d", oldDirection, newDirection);
-    }
+    bothActiveA = dt < kDiffVadActivationTimes;
   }
-  if( bothActive != wasBothActive ) {
+  
+  if( timeWebRTCActive >= 0.0f && _timeAlexaActive >= 0.0f ) {
+    const float dt = fabsf(_timeAlexaActive - timeWebRTCActive);
+    bothActiveB = dt < kDiffVadActivationTimes;
+  }
+  
+  if( timeVectorActive >= 0.0f && _timeAlexaActive >= 0.0f ) {
+    const float dt = fabsf(_timeAlexaActive - timeVectorActive);
+    bothActiveC = dt < kDiffVadActivationTimes;
+  }
+  
+  const bool anyActive = bothActiveA || bothActiveB || bothActiveC;
+  const bool deActivated = !anyActive && (wasBothActiveA || wasBothActiveB || wasBothActiveC);
+  const bool activated = (bothActiveA && !wasBothActiveA) || (bothActiveB && !wasBothActiveB) || (bothActiveC && !wasBothActiveC);
+  
+  
+  if( activated || deActivated ) {
     RobotInterface::VADActivity vadActivity;
-    vadActivity.value = bothActive;
+    vadActivity.value = !deActivated;
     vadActivity.robotTimestamp = (TimeStamp_t) _lastTimestamp;
     RobotInterface::SendAnimToEngine(vadActivity);
-    PRINT_NAMED_WARNING("HERENOW", "Both active=%d", bothActive);
+    PRINT_NAMED_WARNING("HERENOW", "Both active=%d", vadActivity.value);
   }
-  wasBothActive = bothActive;
+  wasBothActiveA = bothActiveA;
+  wasBothActiveB = bothActiveB;
+  wasBothActiveC = bothActiveC;
   
   
   if (vadActive || !_victorTrigger->useVad) {
@@ -700,6 +718,11 @@ void SpeechRecognizerSystem::InitAlexa(const Util::Locale& locale,
     static int oldVad = -2;
     if( vadActivity != oldVad ) {
       SendVADActivity("Alexa", vadActivity);
+      if( vadActivity && (_timeAlexaActive < 0.0f) ) {
+        _timeAlexaActive = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+      } else {
+        _timeAlexaActive = -1.0f;
+      }
       oldVad = vadActivity;
     }
   });

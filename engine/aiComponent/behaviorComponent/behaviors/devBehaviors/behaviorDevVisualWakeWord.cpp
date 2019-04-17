@@ -43,15 +43,17 @@ namespace {
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinYThres_mm,        "Vision.VisualWakeWord", -180.f);
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxYThres_mm,        "Vision.VisualWakeWord",  180.f);
   CONSOLE_VAR(f32,  kFaceDirectedAtRobotMinZThres_mm,        "Vision.VisualWakeWord", -100.f);
-  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxZThres_mm,        "Vision.VisualWakeWord",  500.f); // z is always too hgih. maybe its bc the face poses are too high?
+  CONSOLE_VAR(f32,  kFaceDirectedAtRobotMaxZThres_mm,        "Vision.VisualWakeWord",  400.f); // z is always too hgih. maybe its bc the face poses are too high?
   CONSOLE_VAR(f32,  kMinTimeBetweenWakeWordTriggers_ms,      "Vision.VisualWakeWord",  500.0f);//5000.f);
   CONSOLE_VAR(bool, kDisableStateMachineToKeyCheckForGaze,   "Vision.VisualWakeWord",  false);
-  CONSOLE_VAR(f32,  kGazeStimulationThreshold_ms,            "Vision.VisualWakeWord",  100.0f);//3000.f);
+  CONSOLE_VAR(f32,  kGazeStimulationThreshold_ms,            "Vision.VisualWakeWord",  200.0f);//3000.f);
   CONSOLE_VAR(f32,  kGazeBreakThreshold_ms,                  "Vision.VisualWakeWord",  300.f);
   CONSOLE_VAR(f32,  kGazeDecrementMultiplier,                "Vision.VisualWakeWord",  1.2f);
   
-  CONSOLE_VAR_RANGED(uint32_t, kDelayBeforeVad, "AAA", 3000, -1000, 15000);
-  CONSOLE_VAR_RANGED(float, kMicDirectionDiff_deg, "AAA", 35.0f, 0.0f, 90.0f);
+  CONSOLE_VAR_RANGED(uint32_t, kDelayBeforeVad, "AAA", 1000, -1000, 15000);
+  CONSOLE_VAR_RANGED(float, kMicDirectionDiff_deg, "AAA", 20.0f, 0.0f, 90.0f);
+  CONSOLE_VAR_RANGED(int, kMicConfidence, "AAA", 3500, 0, 10000);
+  CONSOLE_VAR(bool, kGazeAffectsIt, "AAA", false);
 }
 
 namespace {
@@ -90,8 +92,8 @@ void BehaviorDevVisualWakeWord::BehaviorUpdate()
     return;
   }
   
-  const MicDirectionHistory& history = GetBEI().GetMicComponent().GetMicDirectionHistory();
-  _dVars.direction = history.GetRecentDirection();
+//  const MicDirectionHistory& history = GetBEI().GetMicComponent().GetMicDirectionHistory();
+//  _dVars.direction = history.GetRecentDirection();
   
   if( !IsControlDelegated() && _dVars.state != EState::Listening && _dVars.state != EState::Responding ) {
     TransitionToCheckForVisualWakeWord();
@@ -152,6 +154,21 @@ void BehaviorDevVisualWakeWord::OnBehaviorActivated()
 {
   // TODO not sure if I need this here
 //  TransitionToCheckForVisualWakeWord();
+  
+  MicDirectionHistory& micHistory = GetBEI().GetMicComponent().GetMicDirectionHistory();
+  micHistory.RegisterSoundReactor( [&]( double power, MicDirectionConfidence confidence, MicDirectionIndex direction ){
+    if( confidence >= kMicConfidence && direction < 12 ) {
+      _dVars.hasConfidentDirection = true;
+      _dVars.direction = direction;
+      _dVars.confidentDirectionTime = GetBEI().GetRobotInfo().GetLastImageTimeStamp();
+      return true;
+    } else {
+      _dVars.hasConfidentDirection = false;
+      return false;
+    }
+  } );
+  // todo: unregister based on return value
+  
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -206,10 +223,11 @@ void BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord()
                                                         kFaceDirectedAtRobotMaxZThres_mm) );
       const bool isWithinYConstarints = ( Util::InRange(translation.y(), kFaceDirectedAtRobotMinYThres_mm,
                                                         kFaceDirectedAtRobotMaxYThres_mm) );
-      if ( ( isWithinZConstraints && isWithinYConstarints ) ) {
+
+      if ( ( isWithinZConstraints && isWithinYConstarints ) && kGazeAffectsIt ) {
         
         incrementGaze();
-      } else {
+      } else if( kGazeAffectsIt ) {
         DecrementStimIfGazeHasBroken();
       }
       PRINT_NAMED_WARNING("WHATNOW", "withinZ=%d (%f), withinY=%d (%f)", isWithinZConstraints, translation.z(), isWithinYConstarints, translation.y());
@@ -226,6 +244,7 @@ void BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord()
   if( _dVars.faceIDToTurnBackTo.IsValid() ) {
     bool recentActivation = (_dVars.gazeTime != 0) && abs((int64)(TimeStamp_t)_dVars.lastVadActivation-(int64)(TimeStamp_t)_dVars.gazeTime) <= kDelayBeforeVad;
     recentActivation &= (currentTimeStamp <= 5000 + std::max((TimeStamp_t)_dVars.lastVadActivation, (TimeStamp_t)_dVars.gazeTime));
+    recentActivation &= std::max(abs((int64)(TimeStamp_t)_dVars.lastVadActivation - (int64)(TimeStamp_t)_dVars.confidentDirectionTime), abs((int64)(TimeStamp_t)_dVars.gazeTime - (int64)(TimeStamp_t)_dVars.confidentDirectionTime)) < 5000;
     Pose3d facePose;
     bool hasFace = GetFacePose( facePose );
     const float faceAngle = atan2f(facePose.GetTranslation().y(), facePose.GetTranslation().x());
@@ -235,17 +254,18 @@ void BehaviorDevVisualWakeWord::TransitionToCheckForVisualWakeWord()
     bool directionMatches = false;
     if( _dVars.direction <= 3 ) {
       // map from [0, 3] to [0.0, -pi/2]
-      micAngle = -(M_PI_F*_dVars.direction)/12;
+      micAngle = -(M_PI_F*_dVars.direction)/6;
       directionMatches = fabsf(faceAngle - micAngle) <= kMicDirectionDiff_deg*M_PI_F/180;
-    } else if(_dVars.direction>=8 && _dVars.direction <= 10){
-      // map from 11-[8,10] to [3*pi/6, 1*pi/6]
-      micAngle = (11 - _dVars.direction)*M_PI_F/6.0f;
+    } else if(_dVars.direction>=8 && _dVars.direction <= 11){
+      // map from 12-[9,11] to [3*pi/6, 1*pi/6]
+      micAngle = (12 - _dVars.direction)*M_PI_F/6.0f;
       directionMatches = fabsf(faceAngle - micAngle) <= kMicDirectionDiff_deg*M_PI_F/180;
     }
     
     // [0,11] mapped to [-pi, -pi] is [0, -pi] U [pi, 0] is
-    PRINT_NAMED_WARNING("HERENOW", "recentActivation=%d (%d,%d [%lld]), directions %d x=%1.3f y=%1.3f th=%f mic=%d=>%f==%d gaze=%1.1f",
-                        recentActivation, (TimeStamp_t)_dVars.lastVadActivation, (TimeStamp_t)_dVars.gazeTime, (int64)(TimeStamp_t)_dVars.lastVadActivation-(int64)(TimeStamp_t)_dVars.gazeTime,
+    PRINT_NAMED_WARNING("HERENOW", "recentActivation=%d (%d,%d,%d [%lld]), directions %d x=%1.3f y=%1.3f th=%f mic=%d=>%f==%d gaze=%1.1f",
+                        recentActivation, (TimeStamp_t)_dVars.lastVadActivation, (TimeStamp_t)_dVars.gazeTime, (TimeStamp_t)_dVars.confidentDirectionTime,
+                        (int64)(TimeStamp_t)_dVars.lastVadActivation-(int64)(TimeStamp_t)_dVars.gazeTime,
                         hasFace, facePose.GetTranslation().x(), facePose.GetTranslation().y(), faceAngle, _dVars.direction, micAngle, directionMatches, _dVars.gazeStimulation );
     
     

@@ -218,6 +218,8 @@ private:
   void SendTriggerActivity( const std::string& info ) const;
   
   RobotTimeStamp_t _lastTimestamp = 0;
+  
+  float _timeAlexaActive = -1.0f;
 };
 
 
