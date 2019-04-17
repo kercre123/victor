@@ -198,11 +198,6 @@
 
     var dialogOKFunction = undefined;
 
-    function newlineToBr(str) {
-      var breakTag = '<br>';
-      return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1'+ breakTag +'$2');
-    }
-
     function preserveSpaces(str) {
       return str.replace(" ","&nbsp;");
     }
@@ -1091,7 +1086,7 @@
         $("input[type='submit']").click(function(event) {
             if (event.target.value == 'consolevars') {
                 $('#content_console_vars').html("Loading...");
-                $.post("/" + event.target.value, function(data) {
+                $.post("/" + event.target.value + "?embedded", function(data) {
                     $('#content_console_vars').html(data);
                     $('#content_console_vars').show();
                     InitConfirmDialog();
