@@ -132,16 +132,25 @@ private:
     if(_owner) {
       //TODO: Other applications may require a security review to lock down this file.
       fd = open(fd_share_filename.c_str(), O_RDWR | O_CREAT, 0777);  
-      ftruncate(fd, buffer_size);
+      if(fd < 0) {
+        LOG_ERROR("SharedCircularBuffer", "Init() open of map file failed: %s", strerror(errno));
+        return false;
+      }
+      if(ftruncate(fd, buffer_size) != 0) {
+        LOG_ERROR("SharedCircularBuffer", "Init() ftruncate call failed: %s", strerror(errno));
+        return false;
+      }
     } else {
       fd = open(fd_share_filename.c_str(), O_RDWR);
       if(fd < 0) {
+        LOG_ERROR("SharedCircularBuffer", "Init() open of map file failed: %s", strerror(errno));
         return false;
       }
     }
     _buffer = static_cast<struct MemoryMap*>(mmap(NULL, buffer_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0));
     if(_buffer == MAP_FAILED) {
-      LOG_WARNING("SharedCircularBuffer", "Init() mmap call failed: %s", strerror(errno));
+      LOG_ERROR("SharedCircularBuffer", "Init() mmap call failed: %s", strerror(errno));
+      return false;
     }
 
     if(_owner) {
