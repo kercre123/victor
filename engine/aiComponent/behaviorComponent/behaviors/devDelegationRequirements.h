@@ -139,7 +139,7 @@ void ApplyForceDelegationRequirements<BehaviorClass::SimpleVoiceResponse>( ICozm
 {
   auto& uic = bei.GetAIComponent().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
   MetaUserIntent_SimpleVoiceResponse simpleResponse;
-  simpleResponse.anim_group = "ag_not_a_real_group";
+  simpleResponse.anim_group = "not_a_real_group";
   simpleResponse.emotion_event = "";
   simpleResponse.active_feature = ActiveFeature::NoFeature;
   UserIntent intent = UserIntent::Createsimple_voice_response(std::move(simpleResponse));

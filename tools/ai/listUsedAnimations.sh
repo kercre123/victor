@@ -28,10 +28,18 @@ rm -rf $ANIM_LIST_FILE $ANIM_TRIGGER_FILE $ANIM_GROUP_FILE $UNUSED_TRIGGERS_FILE
 mkdir $OLD_DIR
 
 # if the archive file exists, extract to old dir
-if [ -f $ARCHIVE_FILE ]; then
-    tar xzf $ARCHIVE_FILE -C $OLD_DIR
-    # now remove any old archive file
-    rm -rf $ARCHIVE_FILE
+
+if [[ -z "${SKIP_OLD_DATA}" ]]; then
+    if [ -f $ARCHIVE_FILE ]; then
+        tar xzf $ARCHIVE_FILE -C $OLD_DIR
+        # now remove any old archive file
+        rm -rf $ARCHIVE_FILE
+    fi
+else
+    # remove archive file
+    if [ -f $ARCHIVE_FILE ]; then
+        rm -rf $ARCHIVE_FILE
+    fi
 fi
 
 #######################################################################################################
@@ -39,29 +47,25 @@ fi
 #    animationStreamer.cpp has some temporary animation blacklists that need exluding, but it also has neutral
 #    eyes, so exclude the file but manually add the neutral eyes animation back in
 
-ANIM_LIST=`find cannedAnims engine animProcess resources/config \
+ANIM_LIST=`find cannedAnimLib engine animProcess resources/config \
             -not -path "resources/config/engine/animations/*" \
             -iname "*.json" -o -iname "*.h" -o -iname "*.cpp" \
           | grep -v "animationStreamer.cpp\|animation_whitelist.json" \
           | xargs grep -Eoh \"anim_\.+\" \
+          | grep -v "anim_group" \
           | (cat && echo "anim_neutral_eyes_01") \
           | cut -d "\"" -f 2 \
           | sort | uniq \
           | tee $ANIM_LIST_FILE`  # <--- also write to file
 
 #######################################################################################################
-# 3) gather anything of the form "ag_*" (including quotes) in any .cpp, .h, or config .json file, and
-#    fail the script if so, since we don't handle that case yet
+# 3) gather anything of the form "ag_*" (including quotes) in any .cpp, .h, or config .json file
 
-ANIM_GROUP_LIST=`find cannedAnims engine animProcess resources/config \
+ANIM_GROUP_LIST=`find cannedAnimLib engine animProcess resources/config \
                   -iname "*.json" -o -iname "*.h" -o -iname "*.cpp" \
                 | xargs grep -Eoh \"ag_\.+\" \
                 | cut -d "\"" -f 2 \
                 | sort | uniq`
-if [[ $ANIM_GROUP_LIST = *[![:space:]]* ]]; then
-    echo "This script doesn't know how to handle victor usage of raw animation groups ('ag_*'). Failing"
-    exit 1
-fi
 
 #######################################################################################################
 # 4) gather any usage of AnimationTrigger::TriggerName in engine C++ code
@@ -168,9 +172,10 @@ if [ ! -f $TRIGGER_MAP_FILE ]; then
     echo "File '${TRIGGER_MAP_FILE}' not found! Failing"
     exit 1
 fi
-ANIM_GROUPS=`for ANIM_TRIGGER in $ANIM_TRIGGERS; do
+ANIM_TRIGGER_GROUPS=`for ANIM_TRIGGER in $ANIM_TRIGGERS; do
                 grep -A 1 "\"$ANIM_TRIGGER\"" $TRIGGER_MAP_FILE | cut -d\" -f 4 | tail -n1
-            done \
+            done`
+ANIM_GROUPS=`echo $ANIM_TRIGGER_GROUPS $ANIM_GROUP_LIST | tr " " "\n" \
             | sort | uniq | tee $ANIM_GROUP_FILE` # <--- also write to file
 
 #######################################################################################################
@@ -202,7 +207,7 @@ echo "$UNUSED_GROUPS" | tee $UNUSED_GROUPS_FILE
     echo "Found `echo $ANIM_LIST        | wc -w` animation names";
     echo "Found `echo $TRIGGER_STRINGS  | wc -w` animation triggers referenced by name";
     echo "Found `echo $TRIGGER_LIST_CPP | wc -w` animation triggers referenced by enum value";
-    echo "Found `echo $ANIM_GROUPS      | wc -w` animation groups referenced by animation trigger";
+    echo "Found `echo $ANIM_GROUPS      | wc -w` animation groups referenced directly or by animation trigger";
     echo "Found `echo $UNUSED_TRIGGERS  | wc -w` unused animation triggers in the trigger map";
     echo "Found `echo $UNUSED_GROUPS    | wc -w` unused animation groups in the trigger map";
     echo "";
