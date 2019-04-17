@@ -1077,9 +1077,10 @@ message AudioStreamRequest {
 }
 
 message AudioStreamResponse {
-  uint64   packet_id      = 1;    // 
-  float    robot_angle    = 2;    //
-  bytes    audio_data     = 3;    // 160 samples of 15670Hz audio data. Mono. Signed 16-bit. Big Endian.
+  uint64   packet_id          = 1;    // 
+  bytes    audio_data         = 2;    // 160 samples of 15670Hz audio data. Mono. Signed 16-bit. Big Endian.
+  int32    winning_direction  = 3;    //
+  int32    winning_confidence = 4;
 }
 
 enum MasterVolumeLevel

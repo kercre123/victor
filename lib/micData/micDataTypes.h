@@ -62,7 +62,8 @@ namespace MicData {
 
   struct MicSDKData
   {
-    float                 robotAngle;
+    int16_t               winningDirection;
+    int16_t               winningConfidence;
     int16_t               data[kSamplesPerBlockPerChannel];
   };
 } // namespace MicData

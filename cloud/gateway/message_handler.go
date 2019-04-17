@@ -3416,10 +3416,11 @@ func (service *rpcService) AudioStream(in *extint.AudioStreamRequest, stream ext
 			time.Sleep(10 * time.Millisecond)
 		} else {
 			audioStreamResponse := &extint.AudioStreamResponse{
-				PacketId:   offset,
-				RobotAngle: micSDKData.robotAngle,
+				PacketId:          offset,
+				WinningDirection:  int32(micSDKData.WinningDirection),
+				WinningConfidence: int32(micSDKData.WinningConfidence),
 			}
-			for _, amplitude := range micSDKData.samples {
+			for _, amplitude := range micSDKData.Samples {
 				audioStreamResponse.AudioData = append(audioStreamResponse.AudioData, byte(amplitude>>8))
 				audioStreamResponse.AudioData = append(audioStreamResponse.AudioData, byte(amplitude&0xff))
 			}

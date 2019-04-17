@@ -427,7 +427,8 @@ void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
 
   if (micDataSharedCircularBuffer.GetNumReaders()) {
     MicData::MicSDKData* micSDKData = micDataSharedCircularBuffer.GetWritePtr();
-    micSDKData->robotAngle = robotAngle;
+    micSDKData->winningDirection = directionResult.winningDirection;
+    micSDKData->winningConfidence = directionResult.winningConfidence;
     memcpy(micSDKData->data, nextSample.audioBlock.data(), kSamplesPerBlockPerChannel);
     micDataSharedCircularBuffer.Advance();
   }
