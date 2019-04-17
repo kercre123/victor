@@ -14,7 +14,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTestBlackjackViz.h"
 
 #include "clad/types/compositeImageTypes.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 #include "coretech/vision/shared/spriteCache/iSpriteWrapper.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "engine/actions/animActions.h"
@@ -226,7 +226,7 @@ void BehaviorDevTestBlackjackViz::ClearCards(const bool shuffle)
   } else {
     _game.Init();
   }
-  _visualizer.ClearCards(GetBEI());
+  _visualizer.ResetHands();
   _dVars.firstDealerCard = true;
 }
 

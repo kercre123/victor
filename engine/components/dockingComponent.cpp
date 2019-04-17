@@ -13,6 +13,7 @@
 #include "engine/components/dockingComponent.h"
 
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/cozmoContext.h"
@@ -97,7 +98,7 @@ Result DockingComponent::DockWithObject(const ObjectID objectID,
   
   // If the dock object is expected to move, then mark as dirty so that the robot no longer localizes to this object
   if (ExpectDockObjectToMove(dockAction, true)) {
-    _robot->GetObjectPoseConfirmer().MarkObjectDirty(object);
+    _robot->GetBlockWorld().MarkObjectDirty(object);
   }
   
   _lastPickOrPlaceSucceeded = false;

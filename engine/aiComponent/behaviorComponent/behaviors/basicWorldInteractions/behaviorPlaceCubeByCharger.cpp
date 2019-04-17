@@ -24,6 +24,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPickUpCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicCubeInteractions/behaviorPutDownBlockAtPose.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeInteractionTracker.h"
 #include "engine/navMap/mapComponent.h"
@@ -31,7 +32,7 @@
 #include "engine/utils/robotPointSamplerHelper.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 
 #include "util/random/randomGenerator.h"
 #include "util/random/randomIndexSampler.h"
@@ -441,7 +442,7 @@ void BehaviorPlaceCubeByCharger::StartNextSearchForChargerTurn()
 
     auto* loopAndWaitAction = new CompoundActionParallel();
     loopAndWaitAction->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::FindCubeWaitLoop));
-    loopAndWaitAction->AddAction(new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers));
+    loopAndWaitAction->AddAction(new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::Markers));
     action->AddAction(loopAndWaitAction);
 
     // Keep track of the pose before the robot starts turning

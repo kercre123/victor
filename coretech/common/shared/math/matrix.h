@@ -4,11 +4,8 @@
  * Author: Andrew Stein (andrew)
  * Created: 9/10/2013
  *
- *
- * Description: Defines a few classes for storing matrices.  All are
+ * Description: Implements a few classes for storing matrices.  All are
  *              on storage type.
- *
- // TODO: Move these classes to separate files
  *
  *              - "Matrix" is a general container for a matrix whose size is
  *                unknown at compile time.  It inherits from Array2d and adds 
@@ -25,216 +22,615 @@
  *
  **/
 
-#ifndef _ANKICORETECH_MATRIX_H_
-#define _ANKICORETECH_MATRIX_H_
+#ifndef _ANKICORETECH_MATRIX_IMPL_H_
+#define _ANKICORETECH_MATRIX_IMPL_H_
 
-#if ANKICORETECH_USE_OPENCV
-#include "opencv2/core/core.hpp"
-#endif
-
+#include "coretech/common/shared/math/matrix_fwd.h"
+#include "coretech/common/shared/math/point.h"
 #include "coretech/common/shared/array2d.h"
-#include "coretech/common/shared/math/point_fwd.h"
+
+#include <ostream>
+#include <cstdio>
 
 namespace Anki {
   
-#pragma mark --- Matrix Class Definiton ---
-  
-  // A class for a general matrix:
-  template<typename T>
-  class Matrix : public Array2d<T>
-  {
-  public:
-    Matrix(); 
-    Matrix(s32 nrows, s32 ncols);
-    Matrix(s32 nrows, s32 ncols, const T& initVal);
-    Matrix(s32 nrows, s32 ncols, T *data); // Assumes data is nrows*ncols!
-    Matrix(s32 nrows, s32 ncols, std::vector<T> &data);
-
-    using Array2d<T>::operator=;
-    
-#if ANKICORETECH_USE_OPENCV
-    // Construct from an OpenCv cv::Mat_<T>.
-    // NOTE: this *copies* all the data, to ensure the result
-    //       is memory-aligned the way want.
-    Matrix(const cv::Mat_<T> &cvMatrix);
+#if 0
+#pragma mark ---- Matrix-Point Multiplication ----
 #endif
-    
-    // NOTE: element access inherited from Array2d
-    
-    // Matrix multiplication:
-    Matrix<T>  operator* (const Matrix<T> &other) const;
-    Matrix<T>& operator*=(const Matrix<T> &other);
-    
-    // Matrix inversion:
-    // TODO: provide way to specify method
-    Matrix<T>& Invert(void); // in place
-    void       GetInverse(Matrix<T>& outInverse) const;
-    
-    // Matrix tranpose:
-    void       GetTranspose(Matrix<T>& outTransposed) const;
-    Matrix<T>& Transpose(void); // in place
-    
-    
-  }; // class Matrix
+  
+// Generic ND matrix-point multiplication
+// Working (and output) precision (type) is Twork
+template<MatDimType NROWS, MatDimType NCOLS, typename Tmat, typename Tpt, typename Twork>
+Point<NROWS,Twork> operator*(const SmallMatrix<NROWS,NCOLS,Tmat> &M,
+                            const Point<NCOLS,Tpt> &p)
+{
+  Point<NROWS,Twork> result;
+  for(MatDimType i=0; i<NROWS; ++i) {
+    result[i] = static_cast<Twork>(M(i,0)) * static_cast<Twork>(p[0]);
+    for(MatDimType j=1; j<NCOLS; ++j) {
+      result[i] += static_cast<Twork>(M(i,j)) * static_cast<Twork>(p[j]);
+    }
+  }
+  
+  return result;
+}
 
-  // A class for small matrices, whose size is known at compile time
-  template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  class SmallMatrix
-#if ANKICORETECH_USE_OPENCV
-  : private cv::Matx<T,NROWS,NCOLS> // private inheritance from cv::Matx
-#endif
+
+
+// Common 2D matrix-point multiplication:
+template<typename Tmat, typename Tpt, typename Twork>
+Point2<Twork> operator*(const SmallSquareMatrix<2,Tmat> &M,
+                        const Point2<Tpt> &p)
+{
+  const Twork px = static_cast<Twork>(p.x());
+  const Twork py = static_cast<Twork>(p.y());
+  
+  Point2<Twork> result(static_cast<Twork>(M(0,0))*px + static_cast<Twork>(M(0,1))*py,
+                       static_cast<Twork>(M(1,0))*px + static_cast<Twork>(M(1,1))*py);
+  
+  return result;
+}
+
+// Common 3D matrix-point multiplication:
+template<typename Tmat, typename Tpt, typename Twork>
+Point3<Twork> operator*(const SmallSquareMatrix<3,Tmat> &M,
+                        const Point3<Tpt> &p)
+{
+  const Twork px = static_cast<Twork>(p.x());
+  const Twork py = static_cast<Twork>(p.y());
+  const Twork pz = static_cast<Twork>(p.z());
+  
+  Point3<Twork> result(static_cast<Twork>(M(0,0))*px + static_cast<Twork>(M(0,1))*py + static_cast<Twork>(M(0,2))*pz,
+                       static_cast<Twork>(M(1,0))*px + static_cast<Twork>(M(1,1))*py + static_cast<Twork>(M(1,2))*pz,
+                       static_cast<Twork>(M(2,0))*px + static_cast<Twork>(M(2,1))*py + static_cast<Twork>(M(2,2))*pz);
+  
+  return result;
+}
+
+
+
+#if 0
+#pragma mark --- Matrix Implementations ---
+#endif 
+
+template<typename T>
+Matrix<T>::Matrix()
+: Array2d<T>()
+{
+  
+}
+
+
+template<typename T>
+Matrix<T>::Matrix(s32 nrows, s32 ncols)
+: Array2d<T>(nrows, ncols)
+{
+  DEV_ASSERT(nrows > 0 && ncols > 0, "Matrix.Constructor.InitializedRequiresPositiveDimensions");
+}
+
+template<typename T>
+Matrix<T>::Matrix(s32 nrows, s32 ncols, const T &initVal)
+: Array2d<T>(nrows, ncols, initVal)
+{
+  DEV_ASSERT(nrows > 0 && ncols > 0, "Matrix.Constructor.InitializedRequiresPositiveDimensions");
+}
+
+template<typename T>
+Matrix<T>::Matrix(s32 nrows, s32 ncols, T *data)
+: Array2d<T>(nrows, ncols, data)
+{
+  DEV_ASSERT(nrows > 0 && ncols > 0 && data!=NULL, "Matrix.Constructor.InitializedRequiresPositiveDimensions");
+}
+
+template<typename T>
+Matrix<T>::Matrix(s32 nrows, s32 ncols, std::vector<T> &data)
+: Array2d<T>(nrows, ncols, data)
+{
+  DEV_ASSERT(nrows > 0 && ncols > 0, "Matrix.Constructor.InitializedRequiresPositiveDimensions");
+}
+
+template<typename T>
+Matrix<T>::Matrix(const cv::Mat_<T> &cvMatrix)
+: Array2d<T>(cvMatrix)
+{
+  
+} // Constructor: Matrix<T>(cv::Mat_<T>)
+
+template<typename T>
+Matrix<T> Matrix<T>::operator*(const Matrix<T> &other) const
+{
+  // Make sure the matrices have compatible sizes for multiplication
+  DEV_ASSERT(this->GetNumCols() == other.GetNumRows(), "Matrix.Multiply.DimensionMismatch");
+
+  // For now (?), rely on OpenCV for matrix multiplication:
+  Matrix<T> result( this->get_CvMat_() * other.get_CvMat_() );
+  return result;
+} // Matrix<T>::operator*()
+
+template<typename T>
+Matrix<T>& Matrix<T>::operator*=(const Matrix<T> &other)
+{
+  // Make sure the matrices have compatible sizes for multiplication
+  DEV_ASSERT(this->GetNumCols() == other.GetNumRows(), "Matrix.MultiplyInPlace.DimensionMismatch");
+
+  // For now (?), rely on OpenCV for matrix multiplication:
+  *this = this->get_CvMat_() * other.get_CvMat_();
+  return *this;
+} // Matrix<T>::operator*=()
+
+template<typename T>
+Matrix<T>& Matrix<T>::Invert(void)
+{
+  DEV_ASSERT(this->GetNumRows() == this->GetNumCols(), "Matrix.Invert.NonSquareMatrix");
+  
+  // For now (?), rely on OpenCV for matrix inversion:
+  *this = (Matrix<T>)this->get_CvMat_().inv();
+  return *this;
+} // Matrix<T>::Invert()
+
+template<typename T>
+void Matrix<T>::GetInverse(Matrix<T>& outInverse) const
+{
+  DEV_ASSERT(this->GetNumRows() == this->GetNumCols(), "Matrix.GetInverse.NonSquareMatrix");
+  
+  // For now (?), rely on OpenCV for matrix inversion:
+  cv::invert(this->get_CvMat_(), outInverse.get_CvMat_());
+} // Matrix<T>::GetInverse()
+
+template<typename T>
+void Matrix<T>::GetTranspose(Matrix<T>& outTranspose) const
+{
+  cv::transpose(this->get_CvMat_(), outTranspose.get_CvMat_());
+} // Matrix<T>::getTranspose()
+
+template<typename T>
+Matrix<T>& Matrix<T>::Transpose(void)
+{
+  cv::transpose(this->get_CvMat_(), this->get_CvMat_());
+  return *this;
+} // Matrix<T>::Tranpose()
+
+template<typename T>
+std::ostream& operator<<(std::ostream& out, const Matrix<T>& m)
+{
+  for (int i=0; i<m.GetNumRows(); ++i) {
+    for (int j=0; j<m.GetNumCols(); ++j) {
+      out << m(i,j) << " ";
+    }
+    out << "\n";
+  }
+  return out;
+}
+
+#pragma mark --- SmallMatrix Implementations ---
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T>::SmallMatrix()
+: cv::Matx<T,NROWS,NCOLS>()
+{
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(const T* vals)
+: cv::Matx<T,NROWS,NCOLS>(vals)
+{
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(std::initializer_list<T> valsList)
+{
+  DEV_ASSERT(valsList.size() == NROWS*NCOLS, "SmallMatrix.Constructor.InitializerListDimensionMismatch");
+  
+  T vals[NROWS*NCOLS];
+  MatDimType i=0;
+  for(auto listItem = valsList.begin(); i<NROWS*NCOLS; ++listItem, ++i ) {
+    vals[i] = *listItem;
+  }
+  *this = SmallMatrix<NROWS,NCOLS,T>(vals);
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(std::initializer_list<Point<NROWS,T> > colsList)
+{
+  DEV_ASSERT(colsList.size() == NCOLS, "SmallMatrix.Constructor.InitializerListDimensionMismatch");
+  
+  MatDimType j=0;
+  for(auto col = colsList.begin(); j<NCOLS; ++col, ++j)
   {
-    static_assert(NROWS > 0 && NCOLS > 0, "SmallMatrix should not be empty.");
-    
-  public:
-    // Constructors:
-    SmallMatrix();
-    SmallMatrix(const T* vals); // *assumes* vals is NROWS*NCOLS long
-    
-    explicit SmallMatrix(std::initializer_list<T> valsList);
-    explicit SmallMatrix(std::initializer_list<Point<NROWS,T> > colsList);
-    
-    SmallMatrix(const SmallMatrix<NROWS,NCOLS,T> &M);
-    
-    //    template<typename T_other>
-    //    SmallMatrix(const SmallMatrix<NROWS,NCOLS,T_other> &M);
-    
-    //SmallMatrix<NROWS,NCOLS,T>& operator=(const SmallMatrix& other);
-    
-    // Matrix element access:
-    T&       operator() (MatDimType i, MatDimType j);
-    const T& operator() (MatDimType i, MatDimType j) const;
+    for(MatDimType i=0; i<NROWS; ++i) {
+      this->operator()(i,j) = (*col)[i];
+    }
+  }
+}
 
-    // Extract a single row or column as a point
-    Point<NCOLS,T> GetRow(const MatDimType i) const;
-    Point<NROWS,T> GetColumn(const MatDimType j) const;
-    
-    // Set a single row or column from a point
-    void SetRow(const MatDimType i, const Point<NCOLS,T>& row);
-    void SetColumn(const MatDimType j, const Point<NROWS,T>& col);
-    
-    // Matrix multiplication:
-    // Matrix[MxN] * Matrix[NxK] = Matrix[MxK]
-    template<MatDimType KCOLS, typename T_other, typename T_work=T>
-    SmallMatrix<NROWS,KCOLS,T_work> operator* (const SmallMatrix<NCOLS,KCOLS,T_other> &other) const;
-    
-    SmallMatrix<NROWS,NCOLS,T>  operator* (T value) const;
-    SmallMatrix<NROWS,NCOLS,T>& operator*=(T value);
-    SmallMatrix<NROWS,NCOLS,T>  operator+ (T value) const;
-    SmallMatrix<NROWS,NCOLS,T>& operator+=(T value);
-    SmallMatrix<NROWS,NCOLS,T>  operator+ (const SmallMatrix<NROWS,NCOLS,T>& other) const;
-    SmallMatrix<NROWS,NCOLS,T>& operator+=(const SmallMatrix<NROWS,NCOLS,T>& other);
-    SmallMatrix<NROWS,NCOLS,T>  operator- (const SmallMatrix<NROWS,NCOLS,T>& other) const;
-    SmallMatrix<NROWS,NCOLS,T>& operator-=(const SmallMatrix<NROWS,NCOLS,T>& other);
-    
-    // Matrix transpose:
-    SmallMatrix<NCOLS,NROWS,T> GetTranspose() const;
-    
-    // Take absolute value of all elements (return reference to self)
-    SmallMatrix<NROWS,NCOLS,T>& Abs();
-    
-    // TODO: Add explicit pseudo-inverse? (inv(A'A)*A')
-    // SmallMatrix<T,NCOLS,NROWS> getPsuedoInverse(void) const;
-    
-    MatDimType GetNumRows() const;
-    MatDimType GetNumCols() const;
-    
-    void FillWith(T value);
+/*
+template<DimType NROWS, DimType NCOLS>
+SmallMatrix<NROWS,NCOLS,float>::SmallMatrix(const SmallMatrix<NROWS,NCOLS,float> &M)
+{
+  // TODO: Is there a better way to do this than looping and casting each element?
+  for(size_t i=0; i<NROWS; ++i) {
+    for(size_t j=0; j<NCOLS; ++j) {
+      this->operator()(i,j) = static_cast<float>(M(i,j));
+    }
+  }
+}
+ */
 
-# if ANKICORETECH_USE_OPENCV
-  public:
-    SmallMatrix(const cv::Matx<T,NROWS,NCOLS> &cvMatrix);
-    cv::Matx<T,NROWS,NCOLS>& get_CvMatx_();
-    const cv::Matx<T,NROWS,NCOLS>& get_CvMatx_() const;
-    
-    using cv::Matx<T,NROWS,NCOLS>::operator=;
-# endif
-    
-  protected:
-    
-    // Do we want to provide non-square matrix inversion?
-    // I'm putting this here so the SmallSquareMatrix subclass can get
-    // access to cv::Matx::inv() though.
-    SmallMatrix<NROWS,NCOLS,T>& Invert(void); // in place
-    void GetInverse(SmallMatrix<NROWS,NCOLS,T>& outInverse) const;
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(const SmallMatrix<NROWS,NCOLS,T> &M)
+: cv::Matx<T,NROWS,NCOLS>(M)
+{
+}
 
-  }; // class SmallMatrix
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T>::SmallMatrix(const cv::Matx<T,NROWS,NCOLS> &cvMatrix)
+: cv::Matx<T,NROWS,NCOLS>(cvMatrix)
+{
+}
+
+// Matrix element access:
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+T&  SmallMatrix<NROWS,NCOLS,T>::operator() (const MatDimType i, const MatDimType j)
+{
+  DEV_ASSERT(i < NROWS && j < NCOLS, "SmallMatrix.ElementAccess.OutOfBounds");
+  return cv::Matx<T,NROWS,NCOLS>::operator()((int) i, (int) j);
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+const T& SmallMatrix<NROWS,NCOLS,T>::operator() (const MatDimType i, const MatDimType j) const
+{
+  DEV_ASSERT(i < NROWS && j < NCOLS, "SmallMatrix.ElementAccess.OutOfBounds");
+  return cv::Matx<T,NROWS,NCOLS>::operator()((int) i, (int)j);
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+Point<NCOLS,T> SmallMatrix<NROWS,NCOLS,T>::GetRow(const MatDimType i) const
+{
+  DEV_ASSERT(i < NROWS, "SmallMatrix.GetRow.OutOfBounds");
   
-  // Comparisons for equality and near-equality:
-  template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  bool operator==(const SmallMatrix<NROWS,NCOLS,T> &M1,
-                  const SmallMatrix<NROWS,NCOLS,T> &M2);
+  Point<NCOLS,T> row;
+  for(MatDimType j=0; j<NCOLS; ++j) {
+    row[j] = this->operator()(i,j);
+  }
   
-  template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  bool IsNearlyEqual(const SmallMatrix<NROWS,NCOLS,T> &M1,
-                   const SmallMatrix<NROWS,NCOLS,T> &M2,
-                   const T eps = std::numeric_limits<T>::epsilon());
+  return row;
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+Point<NROWS,T> SmallMatrix<NROWS,NCOLS,T>::GetColumn(const MatDimType j) const
+{
+  DEV_ASSERT(j < NCOLS, "SmallMatrix.GetColumn.OutOfBounds");
   
-  // Absolute value of all elements
-  template<MatDimType NROWS, MatDimType NCOLS, typename T>
-  SmallMatrix<NROWS,NCOLS,T> Abs(const SmallMatrix<NROWS,NCOLS,T>& M);
+  Point<NROWS,T> column;
+  for(MatDimType i=0; i<NROWS; ++i) {
+    column[i] = this->operator()(i,j);
+  }
   
-  // Generic ND matrix-point multiplication
-  // Working (and output) precision (type) is Twork
-  template<MatDimType NROWS, MatDimType NCOLS, typename Tmat, typename Tpt, typename Twork=Tpt>
-  Point<NROWS,Twork> operator*(const SmallMatrix<NROWS,NCOLS,Tmat> &M,
-                               const Point<NCOLS,Tpt> &p);
+  return column;
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+void SmallMatrix<NROWS,NCOLS,T>::SetRow(const MatDimType i, const Point<NCOLS,T>& row)
+{
+  DEV_ASSERT(i < NROWS, "SmallMatrix.SetRow.OutOfBounds");
+
+  for(MatDimType j=0; j<NCOLS; ++j) {
+    this->operator()(i,j) = row[j];
+  }
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+void SmallMatrix<NROWS,NCOLS,T>::SetColumn(const MatDimType j, const Point<NROWS,T>& column)
+{
+  DEV_ASSERT(j < NCOLS, "SmallMatrix.SetColumn.OutOfBounds");
   
+  for(MatDimType i=0; i<NROWS; ++i) {
+    this->operator()(i,j) = column[i];
+  }
+}
+
+
+/*
+template<DimType NROWS, DimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::operator=(const SmallMatrix& other)
+{
+  if(this != &other) {
+    *this = SmallMatrix(other);
+  }
+  return *this;
+}
+ */
+
+// Matrix multiplication:
+// Matrix[MxN] * Matrix[NxK] = Matrix[MxK]
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+template<MatDimType KCOLS, typename T_other, typename T_work>
+SmallMatrix<NROWS,KCOLS,T_work> SmallMatrix<NROWS,NCOLS,T>::operator* (const SmallMatrix<NCOLS,KCOLS,T_other> &other) const
+{
+  SmallMatrix<NROWS,KCOLS,T_work> res;
+  res = this->get_CvMatx_() * other.get_CvMatx_();
+  return res;
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T>  SmallMatrix<NROWS,NCOLS,T>::operator* (T value) const
+{
+  SmallMatrix<NROWS,NCOLS,T> result(*this);
+  result *= value;
+  return result;
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::operator*=(T value)
+{
+  for(MatDimType i=0; i<NROWS*NCOLS; ++i) {
+    this->val[i] *= value;
+  }
+  return *this;
+}
+
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T>  SmallMatrix<NROWS,NCOLS,T>::operator+ (T value) const
+{
+  SmallMatrix<NROWS,NCOLS,T> result(*this);
+  result += value;
+  return result;
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::operator+=(T value)
+{
+  for(MatDimType i=0; i<NROWS*NCOLS; ++i) {
+    this->val[i] += value;
+  }
+  return *this;
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T> SmallMatrix<NROWS,NCOLS,T>::operator+ (const SmallMatrix<NROWS,NCOLS,T>& other) const
+{
+  SmallMatrix<NROWS,NCOLS,T> result(*this);
+  result += other;
+  return result;
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::operator+=(const SmallMatrix<NROWS,NCOLS,T>& other)
+{
+  for(MatDimType i=0; i<NROWS*NCOLS; ++i) {
+    this->val[i] += other.val[i];
+  }
+  return *this;
+}
   
-  // An extension of the SmallMatrix class for square matrices
-  template<MatDimType DIM, typename T>
-  class SmallSquareMatrix : public SmallMatrix<DIM,DIM,T>
-  {
-  public:
-    SmallSquareMatrix();
-    SmallSquareMatrix(const SmallMatrix<DIM,DIM,T> &M);
-    explicit SmallSquareMatrix(std::initializer_list<T> valsList); // DIMxDIM list of values
-    explicit SmallSquareMatrix(std::initializer_list<Point<DIM,T> > colsList); // list of columns
-    
-    using SmallMatrix<DIM,DIM,T>::operator();
-    using SmallMatrix<DIM,DIM,T>::operator*;
-    using SmallMatrix<DIM,DIM,T>::operator+;
-    using SmallMatrix<DIM,DIM,T>::operator+=;
-    using SmallMatrix<DIM,DIM,T>::operator-;
-    using SmallMatrix<DIM,DIM,T>::operator-=;
-    
-    // Matrix multiplication in place...
-    // ... this = this * other;
-    template<typename T_other>
-    SmallSquareMatrix<DIM,T>& operator*=(const SmallSquareMatrix<DIM,T_other> &other);
-    // ... this = other * this;
-    template<typename T_other>
-    SmallSquareMatrix<DIM,T>& PreMultiplyBy(const SmallSquareMatrix<DIM,T_other> &other);
-       
-    // Transpose: (Note that we can transpose square matrices in place)
-    using SmallMatrix<DIM,DIM,T>::GetTranspose;
-    SmallSquareMatrix<DIM,T>& Transpose(void);
-    
-    // Matrix inversion:
-    SmallSquareMatrix<DIM,T>& Invert(void); // in place
-    SmallSquareMatrix<DIM,T> GetInverse() const;
-    
-    // Compute the trace (sum of diagonal elements)
-    T Trace(void) const;
-    
-  }; // class SmallSquareMatrix
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T> SmallMatrix<NROWS,NCOLS,T>::operator- (const SmallMatrix<NROWS,NCOLS,T>& other) const
+{
+  SmallMatrix<NROWS,NCOLS,T> result(*this);
+  result -= other;
+  return result;
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::operator-=(const SmallMatrix<NROWS,NCOLS,T>& other)
+{
+  for(MatDimType i=0; i<NROWS*NCOLS; ++i) {
+    this->val[i] -= other.val[i];
+  }
+  return *this;
+}
+
+// Matrix transpose:
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NCOLS,NROWS,T> SmallMatrix<NROWS,NCOLS,T>::GetTranspose() const
+{
+  SmallMatrix<NCOLS,NROWS,T> retv;
+  retv = this->t();
+  return retv;
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::Abs()
+{
+  for(MatDimType i=0; i<NROWS; ++i) {
+    for(MatDimType j=0; j<NCOLS; ++j) {
+      (*this)(i,j) = std::abs((*this)(i,j));
+    }
+  }
+  return *this;
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+MatDimType SmallMatrix<NROWS,NCOLS,T>::GetNumRows() const
+{
+  return NROWS;
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+MatDimType SmallMatrix<NROWS,NCOLS,T>::GetNumCols() const
+{
+  return NCOLS;
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+bool operator==(const SmallMatrix<NROWS,NCOLS,T> &M1,
+                const SmallMatrix<NROWS,NCOLS,T> &M2)
+{
+  for(unsigned int i=0; i<NROWS; ++i) {
+    for(unsigned int j=0; j<NCOLS; ++j) {
+      if(M1(i,j) != M2(i,j)) {
+        return false;
+      }
+    }
+  }
   
-    
-  // Alias some common small matrix sizes, like 3x3
-  using Matrix_2x2f = SmallSquareMatrix<2,float>;
-  using Matrix_3x3f = SmallSquareMatrix<3,float>;
-  using Matrix_3x4f = SmallMatrix<3,4,float>;
+  return true;
+} // operator==(SmallMatrix,SmallMatrix)
+
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+bool IsNearlyEqual(const SmallMatrix<NROWS,NCOLS,T> &M1,
+                 const SmallMatrix<NROWS,NCOLS,T> &M2,
+                 const T eps)
+{
+  for(unsigned int i=0; i<NROWS; ++i) {
+    for(unsigned int j=0; j<NCOLS; ++j) {
+      if(not NEAR(M1(i,j), M2(i,j), eps)) {
+        return false;
+      }
+    }
+  }
   
-  // Common 2D matrix-point multiplication:
-  template<typename Tmat, typename Tpt, typename Twork=Tpt>
-  Point2<Twork> operator*(const SmallSquareMatrix<2,Tmat> &M,
-                          const Point2<Tpt> &p);
+  return true;
+} // nearlyEqual(SmallMatrix,SmallMatrix)
+
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T> Abs(const SmallMatrix<NROWS,NCOLS,T>& M)
+{
+  SmallMatrix<NROWS,NCOLS,T> Mcopy(M);
+  return Mcopy.abs();
+} // abs()
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+cv::Matx<T,NROWS,NCOLS>& SmallMatrix<NROWS,NCOLS,T>::get_CvMatx_()
+{
+  return (*this);
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+const cv::Matx<T,NROWS,NCOLS>& SmallMatrix<NROWS,NCOLS,T>::get_CvMatx_() const
+{
+  return (*this);
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+std::ostream& operator<<(std::ostream& out, const SmallMatrix<NROWS,NCOLS,T>& m)
+{
+  for (int i=0; i<NROWS; ++i) {
+    for (int j=0; j<NCOLS; ++j) {
+      out << m(i,j) << " ";
+    }
+    out << "\n";
+  }
+  return out;
+}
+
+// Matrix inversion:
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+SmallMatrix<NROWS,NCOLS,T>& SmallMatrix<NROWS,NCOLS,T>::Invert(void)
+{
+  (*this) = this->inv();
+  return *this;
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+void SmallMatrix<NROWS,NCOLS,T>::GetInverse(SmallMatrix<NROWS,NCOLS,T>& outInverse) const
+{
+  outInverse = *this;
+  outInverse.Invert();
+}
+
+template<MatDimType NROWS, MatDimType NCOLS, typename T>
+void SmallMatrix<NROWS,NCOLS,T>::FillWith(T value)
+{
+  for(MatDimType i=0; i<NROWS*NCOLS; ++i) {
+    this->val[i] = value;
+  }
+}
+
+
+
+#pragma mark --- SmallSquareMatrix Implementations
+
+template<MatDimType DIM, typename T>
+SmallSquareMatrix<DIM,T>::SmallSquareMatrix(void)
+: SmallMatrix<DIM,DIM,T>()
+{
   
-  // Common 3D matrix-point multiplication:
-  template<typename Tmat, typename Tpt, typename Twork=Tpt>
-  Point3<Twork> operator*(const SmallSquareMatrix<3,Tmat> &M,
-                          const Point3<Tpt> &p);
+}
+
+template<MatDimType DIM, typename T>
+SmallSquareMatrix<DIM,T>::SmallSquareMatrix(const SmallMatrix<DIM,DIM,T> &M)
+: SmallMatrix<DIM,DIM,T>(M)
+{
   
+}
+
+template<MatDimType DIM, typename T>
+SmallSquareMatrix<DIM,T>::SmallSquareMatrix(std::initializer_list<T> valsList)
+: SmallMatrix<DIM,DIM,T>(valsList)
+{
+  
+}
+
+template<MatDimType DIM, typename T>
+SmallSquareMatrix<DIM,T>::SmallSquareMatrix(std::initializer_list<Point<DIM,T> > colsList)
+: SmallMatrix<DIM,DIM,T>(colsList)
+{
+  
+}
+
+template<MatDimType DIM, typename T>
+template<typename T_other>
+SmallSquareMatrix<DIM,T>& SmallSquareMatrix<DIM,T>::operator*=(const SmallSquareMatrix<DIM,T_other> &other)
+{
+  (*this) = (*this) * other;
+  return *this;
+}
+
+template<MatDimType DIM, typename T>
+template<typename T_other>
+SmallSquareMatrix<DIM,T>& SmallSquareMatrix<DIM,T>::PreMultiplyBy(const SmallSquareMatrix<DIM,T_other> &other)
+{
+  // TODO: Come up with our own in-place, super-awesome pre-multiplcation
+  // method (since opencv doesn't give us one, and this causes a copy)
+  SmallSquareMatrix<DIM,T> otherCopy(other);
+  otherCopy *= (*this);
+  *this = otherCopy;
+  return *this;
+}
+
+template<MatDimType DIM, typename T>
+SmallSquareMatrix<DIM,T>&  SmallSquareMatrix<DIM,T>::Transpose(void)
+{
+  for(MatDimType i=0; i<DIM; ++i) {
+    for(MatDimType j=(i+1); j<DIM; ++j) {
+      std::swap((*this)(i,j), (*this)(j,i));
+    }
+  }
+  
+  return *this;
+} // SmallSquareMatrix::Tranpose()
+ 
+// Matrix inversion:
+template<MatDimType DIM, typename T>
+SmallSquareMatrix<DIM,T>& SmallSquareMatrix<DIM,T>::Invert(void)
+{
+  this->SmallMatrix<DIM,DIM,T>::Invert();
+  return *this;
+}
+
+template<MatDimType DIM, typename T>
+SmallSquareMatrix<DIM,T> SmallSquareMatrix<DIM,T>::GetInverse() const
+{
+  SmallSquareMatrix<DIM,T> retv = *this;
+  return retv.Invert();
+}
+
+
+template<MatDimType DIM, typename T>
+T SmallSquareMatrix<DIM,T>::Trace() const
+{
+  T trace = (*this)(0,0);
+  for(MatDimType i=1; i<DIM; ++i) {
+    trace += (*this)(i,i);
+  }
+  return trace;
+}
+  
+
 } // namespace Anki
   
-#endif // _ANKICORETECH_MATRIX_H_
+#endif // _ANKICORETECH_MATRIX_IMPL_H_

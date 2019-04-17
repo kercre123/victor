@@ -61,8 +61,11 @@ namespace
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorReactToSound::InstanceConfig::InstanceConfig() :
-  reactorId( kInvalidSoundReactorId )
+BehaviorReactToSound::InstanceConfig::InstanceConfig()
+  : absolutePowerThreshold(0.f)
+  , minPowerThreshold(0.f)
+  , confidenceThresholdAtMinPower(0)
+  , reactorId( kInvalidSoundReactorId )
 {
 
 }

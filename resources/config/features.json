@@ -81,7 +81,7 @@
   },
   {
     "feature": "HeldInPalm",
-    "enabled": false
+    "enabled": true
   },
   {
     "feature": "PRDemo",
@@ -113,6 +113,10 @@
   },
   {
     "feature": "StayOnChargerUntilCharged",
+    "enabled": true
+  },
+  {
+    "feature": "EyeColorVC",
     "enabled": true
   }
 ]

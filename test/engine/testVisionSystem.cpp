@@ -25,9 +25,9 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "coretech/neuralnets/neuralNetJsonKeys.h"
+#include "coretech/neuralnets/neuralNetRunner.h"
 
 #include "coretech/vision/engine/imageCache.h"
-#include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "util/console/consoleSystem.h"
@@ -82,8 +82,8 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_InvertedBox)
   imageCache.Reset(img);
 
   Anki::Vector::VisionSystemInput input;
-  input.modesToProcess.Insert(Anki::Vector::VisionMode::DetectingMarkers);
-  input.modesToProcess.Insert(Anki::Vector::VisionMode::ComputingCalibration);
+  input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers);
+  input.modesToProcess.Insert(Anki::Vector::VisionMode::Calibration);
   input.imageBuffer = imageCache.GetBuffer();
   
   result = visionSystem->Update(input);
@@ -183,8 +183,8 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_Qbert)
   imageCache.Reset(img);
   
   Anki::Vector::VisionSystemInput input;
-  input.modesToProcess.Insert(Anki::Vector::VisionMode::DetectingMarkers);
-  input.modesToProcess.Insert(Anki::Vector::VisionMode::ComputingCalibration);
+  input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers);
+  input.modesToProcess.Insert(Anki::Vector::VisionMode::Calibration);
   input.imageBuffer = imageCache.GetBuffer();
   
   result = visionSystem->Update(input);
@@ -246,6 +246,115 @@ TEST(VisionSystem, DISABLED_CameraCalibrationTarget_Qbert)
   
   Anki::Util::SafeDelete(visionSystem);
   visionSystem = nullptr;
+}
+
+
+TEST(VisionSystem, ImageCompositing_MarkerDetection)
+{
+  using namespace Anki;
+
+  const char* kDebugName = "Test.VisionSystem.ImageCompositing_MarkerDetection";
+
+  Vector::VisionSystem visionSystem(cozmoContext);
+  Result result = visionSystem.Init(cozmoContext->GetDataLoader()->GetRobotVisionConfig());
+  Json::Value cfg = cozmoContext->GetDataLoader()->GetRobotVisionConfig();
+  const u32 imageReadyPeriod = JsonTools::ParseUInt32(cfg["ImageCompositing"],"imageReadyPeriod", kDebugName);
+  const u32 imageResetPeriod = imageReadyPeriod * JsonTools::ParseUInt32(cfg["ImageCompositing"],"numImageReadyCyclesBeforeReset", kDebugName);
+  ASSERT_EQ(RESULT_OK, result);
+
+  // Don't really need a valid camera calibration, so just pass a dummy one in
+  // to make vision system happy.
+  auto calib = std::make_shared<Vision::CameraCalibration>(360,640,290.f,290.f,160.f,120.f,0.f);
+  result = visionSystem.UpdateCameraCalibration(calib);
+  ASSERT_EQ(RESULT_OK, result);
+
+  const std::string testImageDir = cozmoContext->GetDataPlatform()->pathToResource(Util::Data::Scope::Resources,
+                                                                                   "test/markerDetectionTests/ImageCompositing");
+  
+  // we only care about detecting the charger in the dark
+  const auto isChargerDetected = [](const std::list<Vision::ObservedMarker>& markers) -> bool {
+    return !markers.empty() && 
+           strncmp("MARKER_CHARGER_HOME", markers.front().GetCodeName(), 19)==0;
+  };
+
+  // Each test case is a collection of images at a given ambient lighting level (given by 2nd folder name),
+  //  and a given LCD brightness (given by the 3rd folder name).
+  // For example:
+  //  "light1p75" is at light level 1.75 (using an arbitrary scale marked on a hardware dimmer switch).
+  //  "1" refers to LCD brightness level =20. Other values this can be are "0" which maps to LCD=1
+  std::vector<std::string> testCaseSubDirs = {
+    "light1p75/1",
+
+    "light2p0/0",
+    "light2p0/1",
+
+    "light2p25/0",
+    "light2p25/1",
+
+    "light2p5/0",
+    "light2p5/1",
+  };
+
+  for(const auto& subdir : testCaseSubDirs) {
+    const std::vector<std::string> testFiles = Util::FileUtils::FilesInDirectory(Util::FileUtils::FullFilePath({testImageDir, subdir}), false, ".jpg");
+    PRINT_CH_DEBUG("VisionSystem", kDebugName, "Loaded %zu images (%s)", testFiles.size(), subdir.c_str());
+    
+    DEV_ASSERT_MSG((testFiles.size()>=imageResetPeriod), kDebugName, "Not enough images for one reset period.");
+    
+    Vision::ImageCache imageCache;
+    size_t countCompositeImagesProcessed = 0;
+    bool foundMarker = false;
+    for(size_t index = 0; index < testFiles.size(); ++index) {
+      std::string filename = testFiles[index];
+
+      Vision::Image img;
+      result = img.Load(Util::FileUtils::FullFilePath({testImageDir, subdir, filename}));
+      ASSERT_EQ(RESULT_OK, result);
+      imageCache.Reset(img);
+
+      Anki::Vector::VisionSystemInput input;
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers_FullFrame);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers_FastRotation);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers_Composite);
+      input.imageBuffer = imageCache.GetBuffer();
+
+      Vector::VisionPoseData robotState; // not needed just to detect markers
+      robotState.cameraPose.SetParent(robotState.histState.GetPose()); // just so we don't trigger an assert
+      input.poseData = robotState;
+      
+      result = visionSystem.Update(input);
+      ASSERT_EQ(RESULT_OK, result);
+
+      Vector::VisionProcessingResult processingResult;
+      processingResult.observedMarkers.clear();
+      bool resultAvailable = visionSystem.CheckMailbox(processingResult);
+      EXPECT_TRUE(resultAvailable);
+
+      foundMarker |= isChargerDetected(processingResult.observedMarkers);
+      countCompositeImagesProcessed += processingResult.modesProcessed.Contains(Vector::VisionMode::Markers_Composite);
+      if( index == 0 ) { // first image 
+        // Ensure no images are found in a base image (thus requiring compositing to detect a marker)
+        EXPECT_FALSE(foundMarker);
+      }
+    }
+
+    EXPECT_TRUE(foundMarker);
+
+    // at the time of writing this test, we expect that:
+    // - image compositing incorporates a new image every frame 
+    //    that MarkerDetection is turned on while the mode is
+    //    enabled.
+    // - however, image composites are only considered PROCESSED 
+    //    if marker detection was run with its output AND
+    //    the buffer for compositing was reset.
+    // - for these tests, we will get at least one full cycle
+    //    including a reset.
+    // NOTE: if we fail on this line, likely we need to ensure
+    //  the configuration parameters in the vision_config.json
+    //  makes sense  
+    EXPECT_GE(countCompositeImagesProcessed, 1);
+  }
 }
 
 TEST(VisionSystem, MarkerDetectionTests)
@@ -375,9 +484,9 @@ TEST(VisionSystem, MarkerDetectionTests)
       imageCache.Reset(img);
 
       Anki::Vector::VisionSystemInput input;
-      input.modesToProcess.Insert(Anki::Vector::VisionMode::DetectingMarkers);
-      input.modesToProcess.Insert(Anki::Vector::VisionMode::FullFrameMarkerDetection);
-      input.modesToProcess.Insert(Anki::Vector::VisionMode::MarkerDetectionWhileRotatingFast);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers_FullFrame);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::Markers_FastRotation);
       input.imageBuffer = imageCache.GetBuffer();
   
       Vector::VisionPoseData robotState; // not needed just to detect markers
@@ -537,7 +646,7 @@ TEST(VisionSystem, ImageQuality)
       imageCache.Reset(img);
 
       Anki::Vector::VisionSystemInput input;
-      input.modesToProcess.Insert(Anki::Vector::VisionMode::AutoExposure);
+      input.modesToProcess.Insert(Anki::Vector::VisionMode::AutoExp);
       input.imageBuffer = imageCache.GetBuffer();
       
       Vector::VisionPoseData robotState; // not needed for image quality check
@@ -664,22 +773,28 @@ GTEST_TEST(NeuralNets, InitFromConfig)
   ASSERT_TRUE(allModelsConfig.isArray());
   for(const auto& modelConfig : allModelsConfig)
   {
-    Vision::NeuralNetRunner neuralNetRunner;
-    const Result loadRunnerResult = neuralNetRunner.Init(modelPath, dnnCachePath, modelConfig);
+    NeuralNets::NeuralNetRunner neuralNetRunner(modelPath);
+    const Result loadRunnerResult = neuralNetRunner.Init(dnnCachePath, modelConfig);
     ASSERT_EQ(RESULT_OK, loadRunnerResult);
     
-    ASSERT_TRUE(modelConfig.isMember(NeuralNets::JsonKeys::GraphFile));
-    const std::string modelFileName = modelConfig[NeuralNets::JsonKeys::GraphFile].asString();
-    
-    // Make sure we have correct extension
-    const size_t extIndex = modelFileName.find_last_of(".");
-    ASSERT_NE(std::string::npos, extIndex); // must have extension
-    const std::string extension = modelFileName.substr(extIndex, std::string::npos);
-    ASSERT_EQ(".tflite", extension); // TODO: make this depend on which neural net platform we're building with?
-    
-    // Make sure model file exists
-    const std::string fullModelPath = Util::FileUtils::FullFilePath({modelPath, modelFileName});
-    ASSERT_TRUE(Util::FileUtils::FileExists(fullModelPath));
+    // Check that the model file exists and is a .tflite model (unless this is an "offboard" model definition)
+    ASSERT_TRUE(modelConfig.isMember(NeuralNets::JsonKeys::ModelType));
+    const std::string modelTypeStr = modelConfig[NeuralNets::JsonKeys::ModelType].asString();
+    if(modelTypeStr != NeuralNets::JsonKeys::OffboardModelType)
+    {
+      ASSERT_TRUE(modelConfig.isMember(NeuralNets::JsonKeys::GraphFile));
+      const std::string modelFileName = modelConfig[NeuralNets::JsonKeys::GraphFile].asString();
+      
+      // Make sure we have correct extension
+      const size_t extIndex = modelFileName.find_last_of(".");
+      ASSERT_NE(std::string::npos, extIndex); // must have extension
+      const std::string extension = modelFileName.substr(extIndex, std::string::npos);
+      ASSERT_EQ(".tflite", extension); // TODO: make this depend on which neural net platform we're building with?
+      
+      // Make sure model file exists
+      const std::string fullModelPath = Util::FileUtils::FullFilePath({modelPath, modelFileName});
+      ASSERT_TRUE(Util::FileUtils::FileExists(fullModelPath));
+    }
   }
 }
 
@@ -690,43 +805,43 @@ GTEST_TEST(VisionModeSet, BasicFunctionality)
   VisionModeSet set1;
   ASSERT_TRUE(set1.IsEmpty());
   
-  set1.Insert(VisionMode::DetectingMarkers);
+  set1.Insert(VisionMode::Markers);
   ASSERT_FALSE(set1.IsEmpty());
   
-  ASSERT_TRUE(set1.Contains(VisionMode::DetectingMarkers));
-  ASSERT_FALSE(set1.Contains(VisionMode::DetectingFaces));
+  ASSERT_TRUE(set1.Contains(VisionMode::Markers));
+  ASSERT_FALSE(set1.Contains(VisionMode::Faces));
   
-  set1.Insert(VisionMode::DetectingMarkers); // shouldn't change anything
-  ASSERT_TRUE(set1.Contains(VisionMode::DetectingMarkers));
+  set1.Insert(VisionMode::Markers); // shouldn't change anything
+  ASSERT_TRUE(set1.Contains(VisionMode::Markers));
   ASSERT_EQ(1, set1.size());
   
   set1.Clear();
   ASSERT_TRUE(set1.IsEmpty());
   
-  VisionModeSet set2{VisionMode::DetectingFaces};
+  VisionModeSet set2{VisionMode::Faces};
   ASSERT_FALSE(set2.IsEmpty());
-  ASSERT_TRUE(set2.Contains(VisionMode::DetectingFaces));
+  ASSERT_TRUE(set2.Contains(VisionMode::Faces));
   ASSERT_EQ(1, set2.size());
-  set2.Insert(VisionMode::DetectingMarkers);
+  set2.Insert(VisionMode::Markers);
   ASSERT_EQ(2, set2.size());
   
-  VisionModeSet set3{VisionMode::DetectingMarkers, VisionMode::DetectingMotion, VisionMode::DetectingFaces};
+  VisionModeSet set3{VisionMode::Markers, VisionMode::Motion, VisionMode::Faces};
   ASSERT_EQ(3, set3.size());
   
   VisionModeSet intersection = set2.Intersect(set3);
   ASSERT_EQ(2, intersection.size());
-  ASSERT_TRUE(intersection.Contains(VisionMode::DetectingMarkers));
-  ASSERT_TRUE(intersection.Contains(VisionMode::DetectingFaces));
-  ASSERT_FALSE(intersection.Contains(VisionMode::DetectingMotion));
+  ASSERT_TRUE(intersection.Contains(VisionMode::Markers));
+  ASSERT_TRUE(intersection.Contains(VisionMode::Faces));
+  ASSERT_FALSE(intersection.Contains(VisionMode::Motion));
   
   intersection = set1.Intersect(set2);
   ASSERT_TRUE(intersection.IsEmpty());
   
-  intersection = set2.Intersect(VisionModeSet{VisionMode::DetectingIllumination});
+  intersection = set2.Intersect(VisionModeSet{VisionMode::Illumination});
   ASSERT_TRUE(intersection.IsEmpty());
   
   // Hard-coded multi-insertion
-  set1.Insert(VisionMode::DetectingMarkers, VisionMode::DetectingMotion, VisionMode::DetectingFaces);
+  set1.Insert(VisionMode::Markers, VisionMode::Motion, VisionMode::Faces);
   ASSERT_EQ(3, set1.size());
   
   set1.Clear();
@@ -734,9 +849,9 @@ GTEST_TEST(VisionModeSet, BasicFunctionality)
   
   // Insert/enable/remove using a container of VisionModes
   const std::list<VisionMode> listOfModes{
-    VisionMode::DetectingFaces,
-    VisionMode::DetectingMotion,
-    VisionMode::DetectingIllumination
+    VisionMode::Faces,
+    VisionMode::Motion,
+    VisionMode::Illumination
   };
   
   set1.Insert(listOfModes);

@@ -169,6 +169,131 @@
           "value" : 0.4
         }
       ]
+    },
+    {
+      "name" : "InitialHeldInPalmReaction",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Trust",
+          "value" : 0.1
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.01
+        }
+      ],
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 1
+          }
+        ]
+      }
+    },
+    {
+      "name" : "ReactToJoltInPalm",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Trust",
+          "value" : -1.0
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : 0.01
+        }
+      ],
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 1
+          }
+        ]
+      }
+    },
+    {
+      "name" : "PettingStartedOnPalm",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Trust",
+          "value" : 0.1
+        },
+        {
+          "emotionType" : "Happy",
+          "value" : 0.1
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : -0.01
+        }
+      ],
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 1
+          }
+        ]
+      }
+    },
+    {
+      "name" : "PettingBlissLevelIncreaseOnPalm",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Trust",
+          "value" : 0.1
+        },
+        {
+          "emotionType" : "Happy",
+          "value" : 0.1
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : -0.08
+        },
+        {
+          "emotionType" : "Social",
+          "value" : 0.2
+        }
+      ],
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 1
+          }
+        ]
+      }
+    },
+    {
+      "name" : "PettingReachedMaxBlissOnPalm",
+      "emotionAffectors" : [
+        {
+          "emotionType" : "Trust",
+          "value" : 0.1
+        },
+        {
+          "emotionType" : "Happy",
+          "value" : 1.0
+        },
+        {
+          "emotionType" : "Stimulated",
+          "value" : -0.15
+        },
+        {
+          "emotionType" : "Social",
+          "value" : 1.0
+        }
+      ],
+      "repetitionPenalty": {
+        "nodes" : [
+          {
+            "x" : 0.0,
+            "y" : 1
+          }
+        ]
+      }
     }
   ]
 }

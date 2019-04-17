@@ -9,8 +9,7 @@
     "and": [
       {
         "conditionType": "BeingHeld",
-        "shouldBeHeld": true,
-        "minTimeSinceChange_ms": 500
+        "shouldBeHeld": true
       },
       {
         "conditionType": "Compound",

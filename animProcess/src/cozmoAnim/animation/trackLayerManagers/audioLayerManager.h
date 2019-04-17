@@ -23,6 +23,7 @@
 
 namespace Anki {
 namespace Vector {
+namespace Anim {
 
 class AudioLayerManager : public ITrackLayerManager<RobotAudioKeyFrame>
 {
@@ -57,6 +58,7 @@ private:
   bool _enabled = true;
 };
 
+}
 }
 }
 

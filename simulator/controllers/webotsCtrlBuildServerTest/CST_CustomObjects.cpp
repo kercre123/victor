@@ -10,7 +10,7 @@
 *              4. Wall should be unique and only seen once.
 *              5. Cube is not unique so there should now be two.
 *              6. Delocalize robot and see two custom cubes.
-*              7. Rejigger to a lightcube to verify custom (passive) objects get updated correctly
+*              7. Rejigger to a charger to verify custom (passive) objects get updated correctly
 *                 - One cube from (6) should match to existing based on pose
 *                 - The other cube from (6) should get rejiggered
 *
@@ -20,7 +20,7 @@
 */
 
 #include "engine/actions/basicActions.h"
-#include "engine/block.h"
+#include "engine/charger.h"
 #include "engine/customObject.h"
 #include "engine/robot.h"
 #include "simulator/game/cozmoSimTestController.h"
@@ -67,10 +67,10 @@ private:
   webots::Node* _cube1     = nullptr;
   webots::Node* _cube2     = nullptr;
   webots::Node* _cube3     = nullptr;
-  webots::Node* _lightCube = nullptr;
+  webots::Node* _charger   = nullptr;
   
   ObjectID _wallID;
-  ObjectID _lightCubeID;
+  ObjectID _chargerID;
   
   const Pose3d kPoseOrigin;
   const Pose3d kKidnappedRobotPose;
@@ -80,7 +80,7 @@ private:
   Pose3d _cubePose1;
   Pose3d _cubePose2;
   Pose3d _cubePose3;
-  Pose3d _lightCubePose;
+  Pose3d _chargerPose;
   
   static const size_t kNumDefinitions = 4;
   
@@ -128,13 +128,13 @@ s32 CST_CustomObjects::UpdateSimInternal()
       _cube1     = GetNodeByDefName("CustomCube1");
       _cube2     = GetNodeByDefName("CustomCube2");
       _cube3     = GetNodeByDefName("CustomCube3");
-      _lightCube = GetNodeByDefName("LightCube");
+      _charger   = GetNodeByDefName("Charger");
      
       CST_ASSERT(nullptr != _wall,      "CST_CustomObjects.Init.MissingWallNode");
       CST_ASSERT(nullptr != _cube1,     "CST_CustomObjects.Init.MissingCube1Node");
       CST_ASSERT(nullptr != _cube2,     "CST_CustomObjects.Init.MissingCube2Node");
       CST_ASSERT(nullptr != _cube3,     "CST_CustomObjects.Init.MissingCube3Node");
-      CST_ASSERT(nullptr != _lightCube, "CST_CustomObjects.Init.MissingLightCube");
+      CST_ASSERT(nullptr != _charger,   "CST_CustomObjects.Init.MissingCharger");
       
       GetDimension(_wall, "width",        _wallWidth_mm);
       GetDimension(_wall, "height",       _wallHeight_mm);
@@ -161,13 +161,13 @@ s32 CST_CustomObjects::UpdateSimInternal()
       _cubePose1     = GetPose3dOfNode(_cube1);
       _cubePose2     = GetPose3dOfNode(_cube2);
       _cubePose3     = GetPose3dOfNode(_cube3);
-      _lightCubePose = GetPose3dOfNode(_lightCube);
+      _chargerPose   = GetPose3dOfNode(_charger);
       
       _wallPose1.SetParent(kPoseOrigin);
       _cubePose1.SetParent(kPoseOrigin);
       _cubePose2.SetParent(kPoseOrigin);
       _cubePose3.SetParent(kPoseOrigin);
-      _lightCubePose.SetParent(kPoseOrigin);
+      _chargerPose.SetParent(kPoseOrigin);
       
       // Define the custom objects
       DefineObjects();
@@ -260,7 +260,7 @@ s32 CST_CustomObjects::UpdateSimInternal()
     {
       // Sending the delocalize message one tic after actually moving the robot to be sure that no images
       // from the previous pose are processed after the delocalization.
-      SendForceDeloc();
+      SendForceDelocalize();
       SET_TEST_STATE(Kidnap);
       break;
     }
@@ -343,7 +343,7 @@ s32 CST_CustomObjects::UpdateSimInternal()
       
     case TestState::Undefine:
     {
-      // Wait for the only object left to exist to be the LightCube, since all custom objects
+      // Wait for the only object left to exist to be the Charger, since all custom objects
       // have been undefined
       IF_ALL_CONDITIONS_WITH_TIMEOUT_ASSERT(kDefaultTimeout_sec,
                                             GetNumObjects()==1,
@@ -532,29 +532,6 @@ void CST_CustomObjects::CheckPoses()
     }
   }
   
-  // Check LightCube
-  if(_testState > TestState::LookAtObjects)
-  {
-    auto lightcubeIDs = GetAllLightCubeObjectIDs();
-    CST_ASSERT(lightcubeIDs.size() == 1, "CST_CustomObjects.CheckPoses.ExpectingOneLightCube");
-    
-    auto* block = new Block(ObjectType::Block_LIGHTCUBE1);
-    block->InitPose(_lightCubePose, PoseState::Known);
-    
-    if(_lightCubeID.IsUnknown())
-    {
-      // First time set _lightCubeID
-      _lightCubeID = lightcubeIDs.front();
-    }
-    else
-    {
-      // Remaining times, verify the ID has remained consistent, since it is unique
-      CST_ASSERT(_lightCubeID == lightcubeIDs.front(), "CST_CustomObject.CheckPoses.LightCubeIDChanged");
-    }
-    
-    CheckPoseHelper(block, _lightCubeID);
-    Util::SafeDelete(block);
-  }
 }
 
 // ================ Message handler callbacks ==================

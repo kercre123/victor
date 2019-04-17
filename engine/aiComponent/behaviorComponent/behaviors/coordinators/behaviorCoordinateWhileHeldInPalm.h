@@ -21,6 +21,9 @@
 namespace Anki {
 namespace Vector {
 
+// Forward declarations:
+class BehaviorReactToVoiceCommand;
+
 class BehaviorCoordinateWhileHeldInPalm : public BehaviorDispatcherPassThrough
 {
 public: 
@@ -48,9 +51,15 @@ private:
     
     ICozmoBehaviorPtr heldInPalmDispatcher;
     ICozmoBehaviorPtr initialHeldInPalmReaction;
+    ICozmoBehaviorPtr heldInPalmSleepingBehavior;
+    
+    std::shared_ptr<BehaviorReactToVoiceCommand> heldInPalmTriggerWordBehavior;
     
     std::set<BehaviorID> behaviorStatesToSuppressHeldInPalmReactions;
     std::unique_ptr<AreBehaviorsActivatedHelper> suppressHeldInPalmBehaviorSet;
+    
+    std::set<BehaviorID> behaviorsToSuppressWhenSleepingInPalm;
+    std::unordered_set<ICozmoBehaviorPtr> sleepSuppressedBehaviorSet;
   };
   
   InstanceConfig _iConfig;
@@ -60,8 +69,10 @@ private:
     
     struct Persistent {
       // For tracking initial pickup reaction
-      bool hasInitialReactionPlayed = false;
-      EngineTimeStamp_t lastTimeNotHeldInPalm_ms = 0;
+      bool hasInitialHIPReactionPlayed = false;
+      
+      bool hasStartedSleepingInPalm = false;
+      bool hasSetNewTriggerWordListeningAnims = false;
     };
     Persistent persistent;
   };
@@ -70,6 +81,7 @@ private:
   
   void SuppressHeldInPalmReactionsIfAppropriate();
   void SuppressInitialHeldInPalmReactionIfAppropriate();
+  void SuppressNonGentleWakeUpBehaviorsIfAppropriate();
 };
 
 } // namespace Vector

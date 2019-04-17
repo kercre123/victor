@@ -197,7 +197,7 @@ AlexaMediaPlayer::~AlexaMediaPlayer()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void AlexaMediaPlayer::Init( const AnimContext* context )
+void AlexaMediaPlayer::Init( const Anim::AnimContext* context )
 {
   DEV_ASSERT(nullptr != context, "AudioMediaPlayer.InvalidContext");
   DEV_ASSERT(nullptr != context->GetAudioController(), "AudioMediaPlayer.InvalidAudioController");

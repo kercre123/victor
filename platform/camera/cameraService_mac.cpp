@@ -17,7 +17,7 @@
 
 #include "camera/cameraService.h"
 
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 
 #include "simulator/controllers/shared/webotsHelpers.h"
 
@@ -198,12 +198,6 @@ namespace Anki {
 
     Result CameraService::Update()
     {
-      if (nullptr != _engineSupervisor) {
-        if (_engineSupervisor->step(Vector::ROBOT_TIME_STEP_MS) == -1) {
-          return RESULT_FAIL;
-        }
-        // AudioUpdate();
-      }
       return RESULT_OK;
     }
 

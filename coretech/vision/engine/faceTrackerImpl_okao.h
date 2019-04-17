@@ -15,7 +15,6 @@
 #include "coretech/vision/engine/debugImageList.h"
 #include "coretech/vision/engine/eyeContact.h"
 #include "coretech/vision/engine/faceTracker.h"
-#include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/profiler.h"
 #include "coretech/vision/engine/trackedFace.h"
 
@@ -33,10 +32,7 @@
 #include "CommonDef.h"
 #include "DetectorComDef.h"
 
-#include "json/json.h"
-
 #include <list>
-#include <ctime>
 
 namespace Anki {
   
@@ -182,7 +178,6 @@ namespace Vision {
     HDTRESULT   _okaoDetectionResultHandle      = NULL;
     HPOINTER    _okaoPartDetectorHandle         = NULL;
     HPTRESULT   _okaoPartDetectionResultHandle  = NULL;
-    HPTRESULT   _okaoPartDetectionResultHandle2 = NULL;
     HEXPRESSION _okaoEstimateExpressionHandle   = NULL;
     HEXPRESSION _okaoExpressionResultHandle     = NULL;
     HSMILE      _okaoSmileDetectHandle          = NULL;

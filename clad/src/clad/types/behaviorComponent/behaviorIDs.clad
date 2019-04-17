@@ -32,6 +32,7 @@ enum uint_16 BehaviorID {
   DevTestConnectToCube,
   DevTestPersonDetectorBehavior,
   DevTestPromptUser,
+  DevTestSpriteBoxRemaps,
   DevTouchDataCollection,
   DevTurnInPlaceTest,
   DevViewCubeBackpackLights,
@@ -44,6 +45,7 @@ enum uint_16 BehaviorID {
   PlaypenDistanceSensor100mm,
   PlaypenDistanceSensor300mm,
   PlaypenDistanceSensor80mm,
+  PlaypenDistanceSensorCalib80mm,
   PlaypenDriftCheck,
   PlaypenDriveForwards,
   PlaypenEndChecks,
@@ -187,6 +189,7 @@ enum uint_16 BehaviorID {
   GoHome,
   RequestHomeBecauseStuck,
   RequestToGoHome,
+  RobustChargerObservation,
   WiggleBackOntoChargerFromPlatform,
 
   // victorBehaviorTree/highLevelDelegates/heldInPalm
@@ -194,9 +197,19 @@ enum uint_16 BehaviorID {
   HeldInPalmDispatcher,
   HeldInPalmResponses,
   InitialHeldInPalmReaction,
+  LookInPlaceAtEdgeOfPalm,
+  LookInPlaceHeadDownNervous,
+  LookInPlaceHeadDownRelaxed,
+  LookInPlaceHeadUpInPalm,
+  LookingNervousInPalmAnim,
+  NestleWhileHeldInPalmAnim,
   ReactToPalmTilt,
   ReactToPickupFromPalm,
   ReactToPutDownFromPalm,
+  ReactToPutDownFromPalmAnimSelector,
+  SleepWhileHeldInPalm,
+  SleepWhileHeldInPalmLoop,
+  WakeGentlyFromHeldInPalmSleep,
 
   // victorBehaviorTree/highLevelDelegates
   InitialPickupAnimation,
@@ -219,9 +232,7 @@ enum uint_16 BehaviorID {
   KnowledgeGraphTTS,
 
   // victorBehaviorTree/highLevelDelegates
-  LookInPlaceHeadDownInAir,
   LookInPlaceHeadUp,
-  LookInPlaceHeadUpInAir,
 
   // victorBehaviorTree/highLevelDelegates/meetVictor
   MeetVictor,
@@ -309,11 +320,11 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/highLevelDelegates/voiceCommands
   BlackJackVoiceCommand,
   DoATrickVoiceCommand,
+  EyeColorVoiceCommand,
   FetchCubeVoiceCommand,
   FindYourCubeVoiceCommand,
   FistBumpVoiceCommand,
   GoHomeVoiceCommand,
-  KeepawayVoiceCommand,
   LookAtMeVoiceCommand,
   LookOverThereVoiceCommand,
   PickUpCubeVoiceCommand,
@@ -340,7 +351,6 @@ enum uint_16 BehaviorID {
 
   // victorBehaviorTree/movement
   MovementBackward,
-  MovementForward,
   MovementTurnAround,
   MovementTurnLeft,
   MovementTurnRight,
@@ -387,16 +397,14 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/reactions
   AskForHelp,
   AskForHelpOnSide,
-  BasicVoiceCommands,
   CheckForAndReactToHand,
   ForceStuckOnEdge,
-  InterruptingVoiceReactions,
   MandatoryPhysicalReactions,
+  OptionalReactions,
   ProceduralTurnToMicDirection,
   ReactToAbuse,
   ReactToAffirmative,
   ReactToApology,
-  ReactToBatteryTooHotToCharge,
   ReactToCliff,
   ReactToCliffDuringFetch,
   ReactToDarkness,
@@ -404,7 +412,6 @@ enum uint_16 BehaviorID {
   ReactToGoodBye,
   ReactToGoodMorning,
   ReactToHand,
-  ReactToHello,
   ReactToLove,
   ReactToMotorCalibration,
   ReactToNegative,
@@ -423,14 +430,18 @@ enum uint_16 BehaviorID {
   ReactToTriggerDirectionAwake,
   ReactToUncalibratedHeadAndLift,
   ReactToUnexpectedMovement,
+  ReactToUnexpectedMovementInAir,
+  SimpleVoiceResponses,
   StuckOnEdge,
   TriggerWordWithoutIntent,
+  VoiceFeatures,
 
   // victorBehaviorTree
   ResetSafely,
 
   // victorBehaviorTree/sdkBehaviors
   SDKDefault,
+  SDKLock,
   SDKOverrideAll,
 
   // victorBehaviorTree/seasonal

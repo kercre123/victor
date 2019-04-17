@@ -50,15 +50,13 @@ ConditionProxInRange::ConditionProxInRange(const Json::Value& config)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool ConditionProxInRange::AreConditionsMetInternal(BehaviorExternalInterface& bei) const
 {
-  auto& proxSensor = bei.GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
-
-  u16 proxDist_mm = 0;
-  const bool isValid = proxSensor.GetLatestDistance_mm(proxDist_mm);
-  if(!isValid){
+  const auto& proxSensor = bei.GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
+  const auto& proxData = proxSensor.GetLatestProxData();
+  if(!proxData.foundObject){
     return _params.invalidSensorReturn;
   }
 
-  return Util::InRange((float) proxDist_mm, _params.minDist_mm, _params.maxDist_mm);
+  return Util::InRange((float) proxData.distance_mm, _params.minDist_mm, _params.maxDist_mm);
 }
 
 }

@@ -41,7 +41,7 @@ protected:
   virtual void HandleEvent(const EngineToGameEvent& event, BehaviorExternalInterface& behaviorExternalInterface) override;
   virtual void GetRequiredVisionModes(std::set<VisionModeRequest>& requiredVisionModes) const override
   {
-    requiredVisionModes.insert( {VisionMode::DetectingMotion, EVisionUpdateFrequency::High} );
+    requiredVisionModes.insert( {VisionMode::Motion, EVisionUpdateFrequency::High} );
   }
 
   virtual void BuildDebugFactorsInternal( BEIConditionDebugFactors& factors ) const override;

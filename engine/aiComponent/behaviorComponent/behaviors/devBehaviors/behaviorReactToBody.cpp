@@ -119,7 +119,7 @@ void BehaviorReactToBody::GetBehaviorOperationModifiers(BehaviorOperationModifie
   modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.behaviorAlwaysDelegates = true;
 
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingFaces, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Faces, EVisionUpdateFrequency::High });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -301,17 +301,17 @@ void BehaviorReactToBody::TransitionToMaybeGoStraightAndLookUp()
   if (_iConfig.shouldDriveStraightWhenBodyDetected) {
     if (! _dVars.droveOffCharger) { // no need to drive straight twice
 
-      const ProxSensorComponent &prox = GetBEI().GetRobotInfo().GetProxSensorComponent();
-      u16 distance_mm = 0;
-      if (prox.GetLatestDistance_mm(distance_mm)) {
-        if (distance_mm < _iConfig.drivingForwardDistance) {
+      const auto& proxSensor = GetBEI().GetRobotInfo().GetProxSensorComponent();
+      const auto& proxData = proxSensor.GetLatestProxData();
+      if (proxData.foundObject) {
+        if (proxData.distance_mm < _iConfig.drivingForwardDistance) {
           LOG_DEBUG("BehaviorReactToBody.TransitionToMaybeGoStraightAndLookUp.ObstacleClose",
                    "Can't go straight, an obstacle is at %d while the driving distance would be %f",
-                   distance_mm, _iConfig.drivingForwardDistance);
+                   proxData.distance_mm, _iConfig.drivingForwardDistance);
           shouldGoStraight = false; // redundant, but it makes things clear
         }
         else {
-          LOG_DEBUG("BehaviorReactToBody.TransitionToMaybeGoStraightAndLookUp.ProxSensorData", "Distance is %u", distance_mm);
+          LOG_DEBUG("BehaviorReactToBody.TransitionToMaybeGoStraightAndLookUp.ProxSensorData", "Distance is %u", proxData.distance_mm);
           shouldGoStraight = true;
         }
       }

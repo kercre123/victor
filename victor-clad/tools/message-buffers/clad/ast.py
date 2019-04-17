@@ -128,6 +128,9 @@ class DeclList(Node):
         self.decl_list.append(decl)
         return self
 
+    def remove(self, decl):
+        self.decl_list.remove(decl)
+
     def length(self):
         return len(self.decl_list)
 
@@ -922,6 +925,43 @@ class StringConst(Node):
         return tuple()
     
     attr_names = tuple(["value", "type"])
+
+class ASTNamespaceWrapper(NodeVisitor):
+    def __init__(self, wrapper_ns):
+        self.wrapper_ns = wrapper_ns
+        self.wrapped_namespace = False
+        self.parent_decl_list = None
+
+    def visit_IncludeDecl(self, node, *args, **kwargs):
+        # ignore includes, we only wrap namespaces in the current file
+        pass
+
+    def generic_visit(self, node):
+        if node:
+            if isinstance(node, DeclList):
+                # keep track of the current DeclList
+                self.parent_decl_list = node
+            if isinstance(node, NamespaceDecl):
+                # if this is the first namespace then process it
+                if not self.wrapped_namespace:
+                    # Create a new DeclList wrapper for the current Namespace
+                    wrapper_decl_list = DeclList([], None)
+                    wrapper_decl_list.append(node)
+
+                    # Create a new namespace containing the current Namespace
+                    wrapper_ns = NamespaceDecl(self.wrapper_ns, wrapper_decl_list, None)
+
+                    # Set the nodes (current ns) "parent" namespace to be our wrapper namespace
+                    # This will ensure correct "fully qualified namespace" generation
+                    node.namespace = wrapper_ns
+                    self.wrapped_namespace = True
+
+                    # Replace the current namespace with our wrapper
+                    self.parent_decl_list.remove(node)
+                    self.parent_decl_list.append(wrapper_ns)
+
+            for (name, child) in node.children():
+                self.visit(child)
 
 # DEBUG emitter
 class ASTDebug(NodeVisitor):

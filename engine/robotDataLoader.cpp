@@ -58,9 +58,9 @@ static Anki::Vector::ThreadedPrintStressTester stressTester;
 #endif // REMOTE_CONSOLE_ENABLED
 
 const char* kPathToExternalIndependentSprites = "assets/sprites/independentSprites/";
-const char* kPathToEngineIndependentSprites = "config/devOnlySprites/independentSprites/";
+const char* kPathToEngineIndependentSprites = "config/sprites/independentSprites/";
 const char* kPathToExternalSpriteSequences = "assets/sprites/spriteSequences/";
-const char* kPathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequences/";
+const char* kPathToEngineSpriteSequences   = "config/sprites/spriteSequences/";
 
 const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
   // Dance to the beat:
@@ -68,20 +68,7 @@ const std::vector<std::string> kPathsToEngineAccessibleAnimations = {
   "assets/animations/anim_dancebeat_02.bin",
   "assets/animations/anim_dancebeat_getin_01.bin",
   "assets/animations/anim_dancebeat_getout_01.bin",
-  
-  // Weather:
-  "assets/animations/anim_weather_cloud_01.bin",
-  "assets/animations/anim_weather_snow_01.bin",
-  "assets/animations/anim_weather_rain_01.bin",
-  "assets/animations/anim_weather_sunny_01.bin",
-  "assets/animations/anim_weather_stars_01.bin",
-  "assets/animations/anim_weather_cold_01.bin",
-  "assets/animations/anim_weather_windy_01.bin",
-  "assets/animations/anim_weather_thunderstorm_01.bin",
 
-  // Blackjack
-  "assets/animations/anim_blackjack_gameplay_01.bin",
-  
   // Cube Spinner
   "assets/animations/anim_spinner_tap_01.bin",
   

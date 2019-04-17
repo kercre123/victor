@@ -26,16 +26,17 @@
 
 #include "engine/ankiEventUtil.h"
 #include "engine/components/sdkComponent.h"
+#include "engine/components/settingsManager.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 #include "engine/robotManager.h"
+#include "engine/robotInterface/messageHandler.h"
 #include "engine/robotEventHandler.h"
 #include "engine/externalInterface/gatewayInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
-#include "clad/robotInterface/messageEngineToRobot.h"
 #include "proto/external_interface/shared.pb.h"
 
 #include "util/logging/logging.h"
@@ -82,6 +83,12 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kTurnInPlaceRequest,   callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetLiftHeightRequest, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetHeadAngleRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kTurnTowardsFaceRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kGoToObjectRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kRollObjectRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPopAWheelieRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPickupObjectRequest,  callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPlaceObjectOnGroundHereRequest,  callback));
 
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kAudioSendModeRequest, callback));
 
@@ -95,6 +102,12 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSayTextRequest, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetEyeColorRequest, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kListAnimationTriggersRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamPrepare, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamChunk, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamComplete, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kExternalAudioStreamCancel, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kMasterVolumeRequest, callback));
+    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kSetCameraSettingsRequest, callback));
   }
 
   auto* context = _robot->GetContext();
@@ -104,22 +117,113 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
     auto helper = MakeAnkiEventUtil(*context->GetExternalInterface(), *this, _signalHandles);
 
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotProcessedImage>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedMotion>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotErasedEnrolledFace>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotRenamedEnrolledFace>();
   }
 
   // Disable/Unsubscribe from MirrorMode when we enter pairing.
   // This is to prevent SDK requested MirrorMode from drawing over the pairing screens
   auto setConnectionStatusCallback = [this](const GameToEngineEvent& event) {
-     const auto& msg = event.GetData().Get_SetConnectionStatus();
-     if (msg.status != SwitchboardInterface::ConnectionStatus::NONE &&
-         msg.status != SwitchboardInterface::ConnectionStatus::COUNT &&
-         msg.status != SwitchboardInterface::ConnectionStatus::END_PAIRING)
-     {
-       DisableMirrorMode();
-     }
-   };
+    const auto& msg = event.GetData().Get_SetConnectionStatus();
+    if (msg.status != SwitchboardInterface::ConnectionStatus::NONE &&
+        msg.status != SwitchboardInterface::ConnectionStatus::COUNT &&
+        msg.status != SwitchboardInterface::ConnectionStatus::END_PAIRING)
+    {
+      DisableMirrorMode();
+    }
+  };
 
   _signalHandles.push_back(_robot->GetExternalInterface()->Subscribe(GameToEngineTag::SetConnectionStatus,
                                                                      setConnectionStatusCallback));
+
+  //subscribe to messages back from audio playback
+  auto* messageHandler = robot->GetRobotMessageHandler();
+  _signalHandles.push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::audioStreamStatusEvent, [this](const AnkiEvent<RobotInterface::RobotToEngine>& event) {
+      auto streamEvent = event.GetData().Get_audioStreamStatusEvent();
+      HandleStreamStatusEvent(streamEvent.streamResultID, streamEvent.audioReceived,
+                  streamEvent.audioPlayed);
+  }));
+}
+
+template<>
+void SDKComponent::HandleMessage(const ExternalInterface::RobotObservedMotion& msg)
+{
+  auto* gi = _robot->GetGatewayInterface();
+  auto* observedMsg = new external_interface::RobotObservedMotion();
+  observedMsg->set_timestamp(msg.timestamp);
+  observedMsg->set_img_area(msg.img_area);
+  observedMsg->set_img_x(msg.img_x);
+  observedMsg->set_img_y(msg.img_y);
+  observedMsg->set_ground_area(msg.ground_area);
+  observedMsg->set_ground_x(msg.ground_x);
+  observedMsg->set_ground_y(msg.ground_y);
+  observedMsg->set_top_img_area(msg.top_img_area);
+  observedMsg->set_top_img_x(msg.top_img_x);
+  observedMsg->set_top_img_y(msg.top_img_y);
+  observedMsg->set_bottom_img_area(msg.bottom_img_area);
+  observedMsg->set_bottom_img_x(msg.bottom_img_x);
+  observedMsg->set_bottom_img_y(msg.bottom_img_y);
+  observedMsg->set_left_img_area(msg.left_img_area);
+  observedMsg->set_left_img_x(msg.left_img_x);
+  observedMsg->set_left_img_y(msg.left_img_y);
+  observedMsg->set_right_img_area(msg.right_img_area);
+  observedMsg->set_right_img_x(msg.right_img_x);
+  observedMsg->set_right_img_y(msg.right_img_y);
+  
+  gi->Broadcast(ExternalMessageRouter::Wrap(observedMsg));
+}
+
+template<>
+void SDKComponent::HandleMessage(const ExternalInterface::RobotErasedEnrolledFace& msg)
+{
+  auto* gi = _robot->GetGatewayInterface();
+  auto* erasedMsg = new external_interface::RobotErasedEnrolledFace(msg.faceID, msg.name);
+  gi->Broadcast(ExternalMessageRouter::Wrap(erasedMsg));
+}
+
+template<>
+void SDKComponent::HandleMessage(const Vision::RobotRenamedEnrolledFace& msg)
+{
+  auto* gi = _robot->GetGatewayInterface();
+  auto* renamedMsg = new external_interface::RobotRenamedEnrolledFace(msg.faceID, msg.name);
+  gi->Broadcast(ExternalMessageRouter::Wrap(renamedMsg));
+}
+
+void SDKComponent::HandleStreamStatusEvent(SDKAudioStreamingState streamStatusId, int audioFramesReceived, int audioFramesPlayed) {
+  auto* gi = _robot->GetGatewayInterface();
+  LOG_INFO("SDKComponent::HandleStreamStatusEvent","Received audio playback stream state %u received %u, played %u", 
+            (int)streamStatusId, audioFramesReceived, audioFramesPlayed);
+  switch (streamStatusId) {
+    case SDKAudioStreamingState::Completed:
+    {
+      //we're done, send message back to Gateway
+      auto* msg = new external_interface::ExternalAudioStreamResponse(new external_interface::ExternalAudioStreamPlaybackComplete());
+      gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+    }
+    break;
+
+    case SDKAudioStreamingState::BufferOverflow:
+    {
+      //failed due to potential buffer overrun situation (sending audio too fast) send message back to Gateway
+      auto* msg = new external_interface::ExternalAudioStreamResponse(new external_interface::ExternalAudioStreamBufferOverrun());
+      gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+    }
+    break;
+
+    case SDKAudioStreamingState::PrepareFailed:
+    case SDKAudioStreamingState::PostFailed:
+    case SDKAudioStreamingState::AddAudioFailed:
+    {
+      //failed due to potential buffer overrun situation (sending audio too fast) send message back to Gateway
+      auto* msg = new external_interface::ExternalAudioStreamResponse(new external_interface::ExternalAudioStreamPlaybackFailure());
+      gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+    }
+    break;
+
+    default:
+      break;
+  } 
 }
 
 // @TODO: JMRivas - Delete this static and replace with a better way to store whether the audio processing mode on the
@@ -234,37 +338,69 @@ void SDKComponent::OnSendAudioModeRequest(const AnkiEvent<external_interface::Ga
   gi->Broadcast(ExternalMessageRouter::WrapResponse(changedEvent));
 }
 
+//keep ID for multiple exclusive user attempts
+void SDKComponent::SetBehaviorLock(uint64_t controlId)
+{
+  if (_sdkWantsLock && (_sdkLockConnId != controlId)) {
+    //grabbing control from another connection
+    DispatchBehaviorLockLostResult();
+    LOG_INFO("SDKComponent.SetBehaviorLock","Connection_id %llu control reservation LOST", _sdkLockConnId);
+  }        
+  
+  LOG_INFO("SDKComponent.SetBehaviorLock","Connection_id %llu reserving control", controlId);
+  _sdkLockConnId = controlId;
+  _sdkWantsLock = true;
+  DispatchSDKActivationResult(true, controlId);
+}
+
 void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::GatewayWrapper>& event)
 {
   using namespace external_interface;
   auto* gi = _robot->GetGatewayInterface();
-   
+  const auto id = event.GetData().connection_id();
+
   switch(event.GetData().GetTag()) {
     // Receives a message that external SDK wants an SDK behavior to be activated.
     case external_interface::GatewayWrapperTag::kControlRequest:
       {
         auto & control_req = event.GetData().control_request(); 
         _sdkControlLevel = control_req.priority();
+        LOG_INFO("SDKComponent.HandleProtoMessage", "SDK requested control connection_id %llu", id);
         if (!ANKI_VERIFY(_sdkControlLevel, "SDKComponent::HandleProtoMessage", "Invalid _sdkControlLevel 0 (UNKNOWN)")) {
           return;
         }
 
+        if (event.GetData().control_request().priority() == event.GetData().control_request().RESERVE_CONTROL) {
+          //user wants long-running control
+          SetBehaviorLock(id);
+          return;
+        }
+
         _sdkWantsControl = true;
-        LOG_INFO("SDKComponent::HandleProtoMessage","SDK requested control priority %s (%u)", 
+        _sdkControlConnId =  id;
+        
+        LOG_INFO("SDKComponent.HandleProtoMessage","SDK requested control priority %s (%u)", 
                   control_req.Priority_Name(control_req.priority()).c_str(), _sdkControlLevel); 
 
         if (_sdkBehaviorActivated) {
           LOG_INFO("SDKComponent.HandleMessageBehaviorActivated", "SDK already has control");
           // SDK wants control and and the SDK Behavior is already running. Send response that SDK behavior is activated.
-          DispatchSDKActivationResult(_sdkBehaviorActivated);
+          DispatchSDKActivationResult(_sdkBehaviorActivated, _sdkControlConnId);
           return;
         }
       }
       break;
 
     case external_interface::GatewayWrapperTag::kControlRelease:
-      LOG_INFO("SDKComponent.HandleMessageRelease", "Releasing SDK control");
+      LOG_INFO("SDKComponent.HandleProtoMessage", "Releasing SDK control connection_id %llu", id);
+      if (id == _sdkLockConnId) {
+        DispatchSDKActivationResult(false, _sdkLockConnId);
+        LOG_INFO("SDKComponent.HandleProtoMessage", "ControlRelease Releasing control");
+        _sdkWantsLock = false;
+        _sdkLockConnId = 0;
+      }
       _sdkWantsControl = false;
+      _sdkControlConnId = 0;
       break;
 
     case external_interface::GatewayWrapperTag::kAudioSendModeRequest:
@@ -275,7 +411,7 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
     // All of the vision mode requests are gated behind the sdk behavior being activated
     // to prevent enabling of unnecessary modes that may have performance impact.
     // The modes are automatically removed when the behavior is deactivated.
-    // Except for ImageViz since the SDK still wants to receive images while the robot is
+    // Except for Viz since the SDK still wants to receive images while the robot is
     // doing his normal things
     #define SEND_FORBIDDEN(RESPONSE_TYPE) {                                     \
         ResponseStatus* status = new ResponseStatus(ResponseStatus::FORBIDDEN); \
@@ -289,8 +425,8 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
         if(_sdkBehaviorActivated)
         {
           const auto& enable = event.GetData().enable_marker_detection_request().enable();
-          SubscribeToVisionMode(enable, VisionMode::DetectingMarkers);
-          SubscribeToVisionMode(enable, VisionMode::FullFrameMarkerDetection);
+          SubscribeToVisionMode(enable, VisionMode::Markers);
+          SubscribeToVisionMode(enable, VisionMode::Markers_FullFrame);
         }
         else
         {
@@ -304,11 +440,11 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
         if(_sdkBehaviorActivated)
         {
           const auto& msg = event.GetData().enable_face_detection_request();
-          SubscribeToVisionMode(msg.enable(), VisionMode::DetectingFaces);
-          SubscribeToVisionMode(msg.enable_smile_detection(), VisionMode::DetectingSmileAmount);
-          SubscribeToVisionMode(msg.enable_expression_estimation(), VisionMode::EstimatingFacialExpression);
-          SubscribeToVisionMode(msg.enable_blink_detection(), VisionMode::DetectingBlinkAmount);
-          SubscribeToVisionMode(msg.enable_gaze_detection(), VisionMode::DetectingGaze);
+          SubscribeToVisionMode(msg.enable(), VisionMode::Faces);
+          SubscribeToVisionMode(msg.enable_smile_detection(), VisionMode::Faces_Smile);
+          SubscribeToVisionMode(msg.enable_expression_estimation(), VisionMode::Faces_Expression);
+          SubscribeToVisionMode(msg.enable_blink_detection(), VisionMode::Faces_Blink);
+          SubscribeToVisionMode(msg.enable_gaze_detection(), VisionMode::Faces_Gaze);
         }
         else
         {
@@ -322,7 +458,7 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
         if(_sdkBehaviorActivated)
         {
           const auto& enable = event.GetData().enable_motion_detection_request().enable();
-          SubscribeToVisionMode(enable, VisionMode::DetectingMotion);
+          SubscribeToVisionMode(enable, VisionMode::Motion);
         }
         else
         {
@@ -345,21 +481,13 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
       }
       break;
 
-    // TODO VIC-11579 Support CaptureSingleImage
-    // case external_interface::GatewayWrapperTag::kCaptureSingleImageRequest:
-    //   {
-    //     SubscribeToVisionMode(true, VisionMode::ImageViz);
-    //     _robot->GetVisionComponent().EnableSendingSDKImageChunks(true);
-    //     _captureSingleImage = true;
-    //   }
-    //   break;
-
     case external_interface::GatewayWrapperTag::kEnableImageStreamingRequest:
       {
         // Allowed to be controlled even when the behavior is not active
-        const auto& enable = event.GetData().enable_image_streaming_request().enable();
-        SubscribeToVisionMode(enable, VisionMode::ImageViz);
-        _robot->GetVisionComponent().EnableSendingSDKImageChunks(enable);
+        const auto& enableImageStreaming = event.GetData().enable_image_streaming_request().enable();
+        const auto& enableHighResolutionImages = event.GetData().enable_image_streaming_request().enable_high_resolution();
+        SubscribeToVisionMode(enableImageStreaming, VisionMode::Viz);
+        _robot->GetVisionComponent().EnableSendingSDKImageChunks(enableImageStreaming, enableHighResolutionImages);
       }
       break;
 
@@ -380,7 +508,19 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
         {
           SEND_FORBIDDEN(SayTextResponse);          
         }
-        
+      }
+      break;
+
+    case external_interface::GatewayWrapperTag::kSetCameraSettingsRequest:
+      {
+        if (_sdkBehaviorActivated) 
+        {
+          SetCameraSettings(event);
+        }
+        else
+        {
+          SEND_FORBIDDEN(SetCameraSettingsResponse);          
+        }
       }
       break;
 
@@ -394,13 +534,42 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
         {
           SEND_FORBIDDEN(SetEyeColorResponse);          
         }
-        
       }
       break;
 
     case external_interface::GatewayWrapperTag::kListAnimationTriggersRequest:
       {
         ListAnimationTriggers(event);
+      }
+      break;
+
+    case external_interface::GatewayWrapperTag::kExternalAudioStreamPrepare:
+      {
+        HandleAudioStreamPrepareRequest(event);
+      }
+      break;
+
+    case external_interface::GatewayWrapperTag::kExternalAudioStreamChunk:
+      {
+        HandleAudioStreamChunkRequest(event);
+      }
+      break;
+
+    case external_interface::GatewayWrapperTag::kExternalAudioStreamComplete:
+      {
+        HandleAudioStreamCompleteRequest(event);
+      }
+      break;
+
+    case external_interface::GatewayWrapperTag::kExternalAudioStreamCancel:
+      {
+        HandleAudioStreamCancelRequest(event);
+      }
+      break;
+
+    case external_interface::GatewayWrapperTag::kMasterVolumeRequest:
+      {
+        SetMasterVolume(event);
       }
       break;
 
@@ -437,21 +606,21 @@ void SDKComponent::HandleMessage(const ExternalInterface::RobotProcessedImage& m
       ResponseStatus* status = new ResponseStatus(ResponseStatus::OK);
       switch(waitingIter->first)
       {
-        case VisionMode::DetectingMarkers:
+        case VisionMode::Markers:
           {
             auto* msg = new EnableMarkerDetectionResponse();
             msg->set_allocated_status(status);
             gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
           }
           break;
-        case VisionMode::DetectingFaces:
+        case VisionMode::Faces:
           {
             auto* msg = new EnableFaceDetectionResponse();
             msg->set_allocated_status(status);
             gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
           }
           break;
-        case VisionMode::DetectingMotion:
+        case VisionMode::Motion:
           {
             auto* msg = new EnableMotionDetectionResponse();
             msg->set_allocated_status(status);
@@ -465,25 +634,11 @@ void SDKComponent::HandleMessage(const ExternalInterface::RobotProcessedImage& m
             gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
           }
           break;
-        case VisionMode::ImageViz:
+        case VisionMode::Viz:
           {
-            // if(_captureSingleImage)
-            // {
-            //   auto* msg = new CaptureSingleImageResponse();
-            //   msg->set_allocated_status(status);
-            //   gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
-
-            //   const bool updateWaitingSet = false;
-            //   SubscribeToVisionMode(false, VisionMode::ImageViz, updateWaitingSet);
-            //   _robot->GetVisionComponent().EnableSendingSDKImageChunks(false);
-            //   _captureSingleImage = false;
-            // }
-            // else
-            {
-              auto* msg = new EnableImageStreamingResponse();
-              msg->set_allocated_status(status);
-              gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
-            }
+            auto* msg = new EnableImageStreamingResponse();
+            msg->set_allocated_status(status);
+            gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
           }
           break;
         
@@ -509,11 +664,6 @@ void SDKComponent::HandleMessage(const ExternalInterface::RobotProcessedImage& m
   }
 }
 
-bool SDKComponent::SDKWantsControl()
-{
-  return _sdkWantsControl;
-}
-
 int SDKComponent::SDKControlLevel()
 {
   ANKI_VERIFY(_sdkWantsControl, "SDKComponent::SDKControlLevel", "_sdkWantsControl not set when accessing _sdkControlLevel");  
@@ -521,10 +671,20 @@ int SDKComponent::SDKControlLevel()
   return _sdkControlLevel;
 }
 
+bool SDKComponent::SDKWantsControl()
+{
+  return _sdkWantsControl;
+}
+
+bool SDKComponent::SDKWantsBehaviorLock()
+{
+  return _sdkWantsLock;
+}
+
 void SDKComponent::SDKBehaviorActivation(bool enabled)
 {
   _sdkBehaviorActivated = enabled;
-  DispatchSDKActivationResult(_sdkBehaviorActivated);
+  DispatchSDKActivationResult(_sdkBehaviorActivated, _sdkControlConnId);
 
   // If sdk behavior is being deactivated...
   if(!_sdkBehaviorActivated)
@@ -533,12 +693,12 @@ void SDKComponent::SDKBehaviorActivation(bool enabled)
     // will display eyes when the sdk no longer has control.
     DisableMirrorMode();
 
-    // Remove all other vision modes except for ImageViz in order
+    // Remove all other vision modes except for Viz in order
     // to allow SDK users to still receive images when the SDK does not have
     // control.
     VisionModeSet modes;
     modes.InsertAllModes();
-    modes.Remove(VisionMode::ImageViz);
+    modes.Remove(VisionMode::Viz);
     _robot->GetVisionScheduleMediator().RemoveVisionModeSubscriptions(this, modes.GetSet());    
 
     auto* gi = _robot->GetGatewayInterface();
@@ -547,17 +707,135 @@ void SDKComponent::SDKBehaviorActivation(bool enabled)
   }
 }
 
-void SDKComponent::DispatchSDKActivationResult(bool enabled) {
+void SDKComponent::HandleAudioStreamPrepareRequest(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  u32 rate, volume;
+  RobotInterface::ExternalAudioPrepare msg;
+
+  rate = event.GetData().external_audio_stream_prepare().audio_frame_rate();
+  volume = event.GetData().external_audio_stream_prepare().audio_volume();
+
+  msg.audio_volume = (u16) volume;
+  msg.audio_rate = (u16) rate;
+  LOG_INFO("SDKComponent.HandleAudioStreamPrepareRequest", "SDK Passing prepare audio stream frame rate %d volume %d", rate, volume); 
+
+  // Send request to animation process
+  const Result result = _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+  if (RESULT_OK != result) {
+    LOG_ERROR("SDKComponent.HandleAudioStreamPrepareRequest", "SDK Send Prepare Audio Streaming Message to Robot failed");
+    return;
+  }
+}
+
+void SDKComponent::HandleAudioStreamChunkRequest(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  const std::string samplesStr = event.GetData().external_audio_stream_chunk().audio_chunk_samples();
+  RobotInterface::ExternalAudioChunk msg;
+  msg.audio_chunk_size = (u16)event.GetData().external_audio_stream_chunk().audio_chunk_size_bytes();
+  LOG_INFO("SDKComponent.HandleAudioStreamChunkRequest", "SDKPassing audio_chunk_size %d", msg.audio_chunk_size);
+
+  if (!ANKI_VERIFY(msg.audio_chunk_size <= 1024, 
+          "SDKComponent.HandleAudioStreamChunkRequest","Invalid audio playback chunk size %u sent", msg.audio_chunk_size)) {
+      auto* gi = _robot->GetGatewayInterface();
+      auto* msg = new external_interface::ExternalAudioStreamResponse(new external_interface::ExternalAudioStreamPlaybackFailure());
+      gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+      return;
+  }
+
+  if (!ANKI_VERIFY(samplesStr.length() >= msg.audio_chunk_size, 
+          "SDKComponent.HandleAudioStreamChunkRequest","Invalid audio chunk data size %lu, message specified %u", 
+          (long)samplesStr.length(), msg.audio_chunk_size)) {
+      auto* gi = _robot->GetGatewayInterface();
+      auto* msg = new external_interface::ExternalAudioStreamResponse(new external_interface::ExternalAudioStreamPlaybackFailure());
+      gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+      return;
+  }
+
+  std::memcpy( msg.audio_chunk_data.data(), samplesStr.c_str(), msg.audio_chunk_size ); //TODO:  do we have to copy?
+
+  // Send request to animation process
+  const Result result = _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+  if (RESULT_OK != result) {
+    LOG_ERROR("SDKComponent.HandleAudioStreamChunkRequest", "SDK Send Audio Stream Chunk Message to Robot failed");
+    return;
+  }
+}
+
+void SDKComponent::HandleAudioStreamCompleteRequest(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  RobotInterface::ExternalAudioComplete msg;
+
+  // Send request to animation process
+  const Result result = _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+  if (RESULT_OK != result) {
+    LOG_ERROR("SDKComponent.HandleAudioStreamCompleteRequest", "SDK Send Audio Stream Complete Message to Robot failed");
+    return;
+  }
+}
+
+void SDKComponent::HandleAudioStreamCancelRequest(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  RobotInterface::ExternalAudioCancel msg;
+
+  // Send request to animation process
+  const Result result = _robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg)));
+  if (RESULT_OK != result) {
+    LOG_ERROR("SDKComponent.HandleAudioStreamCancelRequest", "SDK Send Audio Stream Cancel Message to Robot failed");
+    return;
+  }
+}
+
+void SDKComponent::SetMasterVolume(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  auto* gi = _robot->GetGatewayInterface();
+  external_interface::MasterVolumeRequest request = event.GetData().master_volume_request();
+
+  //set the volume level
+  unsigned int desiredVolume = (unsigned int) request.volume_level();
+  if (desiredVolume <= 4) {
+    desiredVolume += 1; //we don't allow MUTE, so our SDK enum is 1 lower
+    auto* settings = _robot->GetComponentPtr<SettingsManager>();
+    bool ignoredDueToNoChange;
+    const bool success = settings->SetRobotSetting(external_interface::RobotSetting::master_volume,
+                                                   desiredVolume,
+                                                   true,
+                                                   ignoredDueToNoChange);
+    if (success || ignoredDueToNoChange) {
+      auto* msg = new external_interface::MasterVolumeResponse(new external_interface::ResponseStatus(external_interface::ResponseStatus::OK));
+      gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+      return;
+    } 
+  } 
+
+  //Bad volume or failed to set:  Send result
+  LOG_ERROR("SDKComponent::SetMasterVolume","Failed to change volume.");
+  auto* msg = new external_interface::MasterVolumeResponse(new external_interface::ResponseStatus(external_interface::ResponseStatus::FORBIDDEN));
+  gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+}
+
+void SDKComponent::DispatchSDKActivationResult(bool enabled, uint64_t connectionId) {
   auto* gi = _robot->GetGatewayInterface();
   if (enabled) {
+    LOG_INFO("SDKComponent::DispatchSDKActivationResult","Dispatching SDK enabled activation %llu", connectionId);
     //TODO: better naming, more readable, and logging
     auto* msg = new external_interface::BehaviorControlResponse(new external_interface::ControlGrantedResponse());
-    gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+    external_interface::GatewayWrapper wrapper = ExternalMessageRouter::WrapResponse(msg, connectionId);
+    gi->Broadcast(std::move(wrapper));
   }
   else {
+    LOG_INFO("SDKComponent::DispatchSDKActivationResult","Dispatching SDK disabled/lost activation %llu", connectionId);
     auto* msg = new external_interface::BehaviorControlResponse(new external_interface::ControlLostResponse());
-    gi->Broadcast(ExternalMessageRouter::WrapResponse(msg));
+    external_interface::GatewayWrapper wrapper = ExternalMessageRouter::WrapResponse(msg, connectionId);
+    gi->Broadcast(std::move(wrapper));
   }
+}
+
+void SDKComponent::DispatchBehaviorLockLostResult() {
+  LOG_INFO("SDKComponent::DispatchBehaviorLockLostResult","Dispatching SDK control lost %llu", _sdkLockConnId);
+  auto* gi = _robot->GetGatewayInterface();
+  auto* msg = new external_interface::BehaviorControlResponse(new external_interface::ReservedControlLostResponse());
+  external_interface::GatewayWrapper wrapper = ExternalMessageRouter::WrapResponse(msg, _sdkLockConnId);
+  gi->Broadcast(std::move(wrapper));
 }
 
 template <typename MessageType>
@@ -602,7 +880,13 @@ void SDKComponent::OnActionCompleted(ExternalInterface::RobotCompletedAction msg
         { RobotActionType::MOVE_HEAD_TO_ANGLE,  ConstructActionResponseMessage<external_interface::SetHeadAngleResponse> },
         { RobotActionType::MOVE_LIFT_TO_HEIGHT, ConstructActionResponseMessage<external_interface::SetLiftHeightResponse> },
         { RobotActionType::DRIVE_TO_POSE,       ConstructActionResponseMessage<external_interface::GoToPoseResponse> },
-        { RobotActionType::ALIGN_WITH_OBJECT,   ConstructActionResponseMessage<external_interface::DockWithCubeResponse> }
+        { RobotActionType::ALIGN_WITH_OBJECT,   ConstructActionResponseMessage<external_interface::DockWithCubeResponse> },
+        { RobotActionType::TURN_TOWARDS_FACE,  ConstructActionResponseMessage<external_interface::TurnTowardsFaceResponse> },
+        { RobotActionType::DRIVE_TO_OBJECT,  ConstructActionResponseMessage<external_interface::GoToObjectResponse> },
+        { RobotActionType::ROLL_OBJECT_LOW,  ConstructActionResponseMessage<external_interface::RollObjectResponse> },
+        { RobotActionType::POP_A_WHEELIE,  ConstructActionResponseMessage<external_interface::PopAWheelieResponse> },
+        { RobotActionType::PICKUP_OBJECT_LOW,  ConstructActionResponseMessage<external_interface::PickupObjectResponse> },
+        { RobotActionType::PLACE_OBJECT_LOW,  ConstructActionResponseMessage<external_interface::PlaceObjectOnGroundHereResponse> }
       };
 
       if(actionResponseFactories.count((RobotActionType)msg.actionType) == 0) 
@@ -676,6 +960,63 @@ void SDKComponent::SayText(const AnkiEvent<external_interface::GatewayWrapper>& 
                                                        processingStyle,
                                                        request.duration_scalar(),
                                                        ttsCallback);
+}
+
+void SDKComponent::ReleaseCameraExposure() 
+{
+  //get current camera settings
+  auto params = _robot->GetVisionComponent().GetCurrentCameraParams();
+
+  //enable auto exposure, send to vision component
+  auto camera_msg = ExternalInterface::SetCameraSettings();
+  camera_msg.enableAutoExposure = true;
+  camera_msg.gain = params.gain;
+  camera_msg.exposure_ms = params.exposureTime_ms;
+  _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageGameToEngine(std::move(camera_msg)));
+}
+
+void SDKComponent::SetCameraSettings(const AnkiEvent<external_interface::GatewayWrapper>& event)
+{
+  using namespace external_interface;
+  
+  auto* gi = _robot->GetGatewayInterface();
+  if (gi == nullptr) return;
+
+  const auto request = event.GetData().set_camera_settings_request();
+
+  //validate request params
+  auto* vis = &_robot->GetVisionComponent();
+  
+  auto minExp_ms = vis->GetMinCameraExposureTime_ms();
+  auto maxExp_ms = vis->GetMaxCameraExposureTime_ms();
+  auto minGain = vis->GetMinCameraGain();
+  auto maxGain = vis->GetMaxCameraGain();
+  if (!Util::InRange((s32)request.exposure_ms(), minExp_ms, maxExp_ms)
+      || !Util::InRange(request.gain(), minGain, maxGain))
+  {
+    LOG_ERROR("SDKComponent::SetCameraSettings", "User settings out of bounds: exposure %u, gain %f", 
+              request.exposure_ms(), request.gain());
+    SetCameraSettingsResponse* response = new SetCameraSettingsResponse();
+    response->set_allocated_status(new ResponseStatus(ResponseStatus::FORBIDDEN));
+    std::stringstream reason;
+    reason << "Camera exposure time must be in the range " << minExp_ms << " - " << maxExp_ms 
+           << " ms, gain must be in the range " << minGain << " - " << maxGain;
+    response->set_status_message( reason.str() );
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(response));
+    return;
+  }
+
+  //send to vision component
+  auto camera_msg = ExternalInterface::SetCameraSettings();
+  camera_msg.enableAutoExposure = request.enable_auto_exposure();
+  camera_msg.gain = request.gain();
+  camera_msg.exposure_ms = request.exposure_ms();
+  _robot->GetExternalInterface()->Broadcast(ExternalInterface::MessageGameToEngine(std::move(camera_msg)));
+
+  //send success response to user
+  auto* response = new SetCameraSettingsResponse();
+  response->set_allocated_status(new ResponseStatus(ResponseStatus::OK));
+  gi->Broadcast( ExternalMessageRouter::WrapResponse(response));
 }
 
 void SDKComponent::SetEyeColor(const AnkiEvent<external_interface::GatewayWrapper>& event) 

@@ -263,6 +263,9 @@ enum int_32 AnimationTrigger
   LookInPlaceForFacesBodyPause,
   LookInPlaceForFacesHeadMovePause,
   LookAtUserEndearingly,
+  LowlightChargerSearchGetin,
+  LowlightChargerSearchLoop,
+  LowlightChargerSearchGetout,
   MeetVictorConfusion,
   MeetVictorGetIn,
   MeetVictorLookFace,
@@ -279,7 +282,6 @@ enum int_32 AnimationTrigger
   MessagingMessageDeletedShort,
   MessagingMessageRewind,
 
-  MovementDriveForward,
   MovementDriveBackward,
   MovementTurnLeft,
   MovementTurnRight,

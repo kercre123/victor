@@ -185,8 +185,9 @@ func TestSendAfterResponse(t *testing.T) {
 
 	res := <-receiver.intent
 	assert.NotNil(t, res)
-	assert.True(t, len(conn.AudioSends) >= 50)
-	assert.True(t, len(conn.AudioSends) < 100)
+	// Allow time to make sure the sending has a chance to finish
+	time.Sleep(time.Second)
+	assert.True(t, len(conn.AudioSends) == 50)
 }
 
 func TestConnectFailResponse(t *testing.T) {

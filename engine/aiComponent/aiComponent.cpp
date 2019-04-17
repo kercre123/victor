@@ -38,7 +38,6 @@
 #include "util/logging/DAS.h"
 
 namespace {
-static const int kLowQualityProxDistance_mm   = 300;   // Assumed distance if prox reading is low quality
 static const int kObsSampleWindow_ms          = 300;   // sample all measurements over this period
 static const f32 kObsSampleWindow_s           = Anki::Util::MilliSecToSec((f32)kObsSampleWindow_ms);
 static const int kNumRequiredSamples          = static_cast<int>(kObsSampleWindow_s / 0.03f) - 1; // Require almost all samples to be valid
@@ -134,7 +133,7 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
   std::vector<Radians> angleVec;  // set of angles from history
   angleVec.reserve(kNumRequiredSamples);
 
-  const auto&            states  = robot.GetStateHistory()->GetRawPoses();
+  const auto&            states  = robot.GetStateHistory()->GetRawStates();
   const RobotTimeStamp_t endTime = robot.GetLastMsgTimestamp() - kObsSampleWindow_ms;
 
   int n = 0;
@@ -143,24 +142,12 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
     angleVec.push_back(state.GetPose().GetRotationAngle<'Z'>());
     const auto& proxData = state.GetProxSensorData();
 
-    // Ignore readings where lift was in fov or it's too pitched.
-    // Also ignore readings for which the lift was moving and could have been occluding the prox sensor. If the timing
-    // of prox measurements is off a bit, the lift may actually have been in front of the sensor at the time the reading
-    // was taken even though the lift height suggests otherwise.
-    const bool liftMovingNearProx = (state.GetLiftHeight_mm() <= LIFT_HEIGHT_ABOVE_PROX) && state.WasLiftMoving();
-    if (proxData.isLiftInFOV || proxData.isTooPitched || liftMovingNearProx) {
-      continue;
+    // only check for average prox value if we found an object
+    if (proxData.foundObject) {
+      avgProxValue_mm    += proxData.distance_mm;
+      avgRobotSpeed_mmps += state.GetLeftWheelSpeed_mmps() + state.GetRightWheelSpeed_mmps();
+      n++;
     }
-
-    // If signal quality was low, then assume some fixed far
-    // distance since the actual reading can vary wildly.
-    avgProxValue_mm    += proxData.isValidSignalQuality ?
-                          state.GetProxSensorVal_mm() :
-                          kLowQualityProxDistance_mm;
-
-    avgRobotSpeed_mmps += state.GetLeftWheelSpeed_mmps() + state.GetRightWheelSpeed_mmps();
-
-    n++;
   }
 
   // Check that there are a sufficient number of samples
@@ -183,8 +170,9 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
   const f32 angleRange_rad = distToMaxAngle_rad - distToMinAngle_rad;
 
   // Get latest distance reading and assess validity
-  u16 latestDistance_mm;
-  const bool readingIsValid = robot.GetProxSensorComponent().GetLatestDistance_mm(latestDistance_mm);
+  const auto& latestProxData = robot.GetProxSensorComponent().GetLatestProxData();
+  const bool foundObject = latestProxData.foundObject;
+  const u16 latestDistance_mm = latestProxData.distance_mm;
 
   // (Not-exactly) "average" speed at which object is approaching robot
   // If it was looking at nothing and then an obstacle appears in front of it,
@@ -201,12 +189,12 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
   // 6) Last sensor reading is less than a certain distance that defines
   //    how close an obstacle needs to be in order for it to be sudden.
   static bool wasObstacleDetected = false;
-  _suddenObstacleDetected = readingIsValid &&
+  _suddenObstacleDetected = foundObject &&
                             (avgRobotSpeed_mmps  >= 0.f) &&
                             (avgObjectSpeed_mmps >= kObsTriggerSensitivity * avgRobotSpeed_mmps) &&
                             (angleRange_rad <= kObsMaxRotation_rad) &&
                             (avgObjectSpeed_mmps >= kObsMinObjectSpeed_mmps) &&
-                            (latestDistance_mm   <= kObsMaxObjectDistance_mm);
+                            (latestDistance_mm <= kObsMaxObjectDistance_mm);
 
   if (!wasObstacleDetected && _suddenObstacleDetected) {
     DASMSG(robot_obstacle_detected,

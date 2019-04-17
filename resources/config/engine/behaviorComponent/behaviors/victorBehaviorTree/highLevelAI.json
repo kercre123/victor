@@ -576,18 +576,7 @@
 
     // explore voice command
     {
-      "from": [
-        "DriveOffChargerIntoSocializing",
-        "ObservingDriveOffCharger",
-        "Observing",
-        "ObservingOnCharger",
-        "ObservingOnChargerRecentlyPlaced",
-        "Socializing",
-        "PlayingWithCube",
-        "Exploring",
-        "ExploringVoiceCommand",
-        "InvestigateHeldCube"
-      ],
+      "from": "*",
       "interruptingTransitions": [
         {
           "to": "ExploringVoiceCommand",

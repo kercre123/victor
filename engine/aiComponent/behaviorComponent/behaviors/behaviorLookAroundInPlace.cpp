@@ -192,10 +192,10 @@ void BehaviorLookAroundInPlace::LoadConfig(const Json::Value& config)
     _configParams.sxh_HeadTurnSpeed_degPerSec = ParseFloat(config, "sxh_HeadTurnSpeed_degPerSec", debugName);
   }
   
-  if( config.isMember("behavior_TrackTurnProgress") ) {
-    _configParams.behavior_TrackTurnProgress = ParseBool(config, "behavior_TrackTurnProgress", debugName);
+  if( config.isMember("behavior_LockTreadsDuringWaitAnims") ) {
+    _configParams.behavior_LockTreadsDuringWaitAnims = ParseBool(config, "behavior_LockTreadsDuringWaitAnims", debugName);
   } else {
-    _configParams.behavior_TrackTurnProgress = false;
+    _configParams.behavior_LockTreadsDuringWaitAnims = false;
   }
 }
 
@@ -325,19 +325,8 @@ void BehaviorLookAroundInPlace::TransitionToS2_Pause()
 {
   SetDebugStateName("TransitionToS2_Pause");
   
-  IAction* pauseAction = nullptr;
-  
-  const AnimationTrigger trigger = _configParams.s2_WaitAnimTrigger;
-  if ( trigger != AnimationTrigger::Count )
-  {    
-    pauseAction = new TriggerLiftSafeAnimationAction(trigger);
-  }
-  else
-  {    
-    // create wait action
-    const double waitTime_sec = GetRNG().RandDblInRange(_configParams.s2_WaitMin_sec, _configParams.s2_WaitMax_sec);
-    pauseAction = new WaitAction(waitTime_sec );
-  }
+  IAction* pauseAction = CreatePauseAction(_configParams.s2_WaitAnimTrigger,
+                                           _configParams.s2_WaitMin_sec, _configParams.s2_WaitMax_sec);
   
   // request action with transition to proper state
   DEV_ASSERT(nullptr != pauseAction, "BehaviorLookAroundInPlace::TransitionToS2_Pause.NullAction");
@@ -420,20 +409,11 @@ void BehaviorLookAroundInPlace::TransitionToS4_HeadOnlyUp()
     DelegateIfInControl( moveHeadAction, nextCallback );
   };
   
-  IAction* pauseAction = nullptr;
-  const AnimationTrigger& trigger = _configParams.s4_WaitAnimTrigger;
-  if ( trigger != AnimationTrigger::Count )
-  {    
-    pauseAction = new TriggerLiftSafeAnimationAction(trigger);
-  }
-  else
-  {    
-    // create wait action
-    const double waitTime_sec = GetRNG().RandDblInRange(_configParams.s4_WaitBetweenChangesMin_sec,
-                                                      _configParams.s4_WaitBetweenChangesMax_sec);
-    pauseAction = new WaitAction(waitTime_sec );
-  }
+  IAction* pauseAction = CreatePauseAction(_configParams.s4_WaitAnimTrigger,
+                                           _configParams.s4_WaitBetweenChangesMin_sec,
+                                           _configParams.s4_WaitBetweenChangesMax_sec);
   
+  const AnimationTrigger trigger = _configParams.s4_WaitAnimTrigger;
   PRINT_CH_INFO("Behaviors", (GetDebugLabel() + ".S4.StartingPauseAnimAction").c_str(), "Triggering %s",
     (trigger != AnimationTrigger::Count) ? AnimationTriggerToString(trigger) : "pause" );
   
@@ -592,7 +572,6 @@ IAction* BehaviorLookAroundInPlace::CreateBodyAndHeadTurnAction(
   const Radians headTargetAngleAbs_rad( DEG_TO_RAD(headTargetAngleAbs_deg) );
   
   PanAndTiltAction* turnAction = new PanAndTiltAction(bodyTargetAngleAbs_rad, headTargetAngleAbs_rad, true, true);
-  turnAction->EnableTurnProgressTrackingTimeout(_configParams.behavior_TrackTurnProgress);
 
   if( _configParams.customMotionProfile == nullptr ) {
     // only set speeds if the motion profile won't be doing it for us
@@ -609,6 +588,27 @@ IAction* BehaviorLookAroundInPlace::CreateBodyAndHeadTurnAction(
 //    robot.GetHeadAngle() );
 
   return turnAction;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+IAction* BehaviorLookAroundInPlace::CreatePauseAction(const Anki::Vector::AnimationTrigger &trigger,
+                                                      const float waitMin_sec, const float waitMax_sec)
+{
+  if ( trigger != AnimationTrigger::Count ) {
+    if ( _configParams.behavior_LockTreadsDuringWaitAnims ) {
+      const u32 numLoops = 1;
+      const bool interruptRunning = true;
+      const u8 tracksToLock = (u8)AnimTrackFlag::BODY_TRACK;
+      return new TriggerLiftSafeAnimationAction(trigger, numLoops, interruptRunning, tracksToLock);
+    } else {
+      return new TriggerLiftSafeAnimationAction(trigger);
+    }
+  } else {
+    // create wait action
+    const double waitTime_sec = GetRNG().RandDblInRange(waitMin_sec,
+                                                        waitMax_sec);
+    return new WaitAction(waitTime_sec );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

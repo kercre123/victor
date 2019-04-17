@@ -13,7 +13,7 @@
 #include "coretech/vision/engine/imageBuffer/conversions/imageConversions.h"
 
 #include "coretech/vision/engine/imageBuffer/conversions/debayer.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/neonMacros.h"
 
 #include "opencv2/core.hpp"

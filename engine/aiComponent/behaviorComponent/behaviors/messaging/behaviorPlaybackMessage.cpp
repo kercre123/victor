@@ -11,16 +11,18 @@
  *
  **********************************************************************************************************************/
 
-// #include "engine/aiComponent/behaviorComponent/behaviors/messaging/behaviorPlaybackMessage.h"
 #include "behaviorPlaybackMessage.h"
+
 #include "engine/actions/animActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "engine/components/localeComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/mics/voiceMessageSystem.h"
 
@@ -29,11 +31,8 @@
 
 #include "util/logging/logging.h"
 
-#include "clad/types/behaviorComponent/userIntent.h"
-
 
 // todo notes:
-// + need to properly localize tts strings
 // + move the part where we say what messages we have (PlayNextRecipientTTS()) into it's own behavior as this will be used elsewhere
 // + there are many common helper functions and things used between the messaging behavior, create a helpers class
 
@@ -49,13 +48,11 @@ namespace Vector {
 
 namespace
 {
-  const char* kNameIdentifier             = "_name_";
-  const char* kNumberIdentifier           = "_num_";
-
-  const char* kTTSKey_AnnounceSingle      = "announceSingle";
-  const char* kTTSKey_AnnouncePlural      = "announcePlural";
-  const char* kTTSKey_ErrorNoRecipient    = "noRecipient";
-  const char* kTTSKey_ErrorNoMessages     = "noMessagesForRecipient";
+  // Configurable localization keys
+  const char* kTTSAnnounceSingleKey = "ttsAnnounceSingleKey";
+  const char* kTTSAnnouncePluralKey = "ttsAnnouncePluralKey";
+  const char* kTTSNoRecipientKey = "ttsNoRecipientKey";
+  const char* kTTSNoMessagesKey = "ttsNoMessagesKey";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -70,25 +67,25 @@ BehaviorPlaybackMessage::DynamicVariables::DynamicVariables() :
 {
 
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorPlaybackMessage::BehaviorPlaybackMessage( const Json::Value& config ) :
   ICozmoBehavior( config )
 {
-  _iVars.ttsAnnounceSingle    = JsonTools::ParseString( config, kTTSKey_AnnounceSingle, "BehaviorPlaybackMessage" );
-  _iVars.ttsAnnouncePlural    = JsonTools::ParseString( config, kTTSKey_AnnouncePlural, "BehaviorPlaybackMessage" );
-  _iVars.ttsErrorNoRecipient  = JsonTools::ParseString( config, kTTSKey_ErrorNoRecipient, "BehaviorPlaybackMessage" );
-  _iVars.ttsErrorNoMessages   = JsonTools::ParseString( config, kTTSKey_ErrorNoMessages, "BehaviorPlaybackMessage" );
+  _iVars.ttsAnnounceSingleKey = JsonTools::ParseString( config, kTTSAnnounceSingleKey, "BehaviorPlaybackMessage.AnnounceSingle" );
+  _iVars.ttsAnnouncePluralKey = JsonTools::ParseString( config, kTTSAnnouncePluralKey, "BehaviorPlaybackMessage.AnnouncePlural" );
+  _iVars.ttsNoRecipientKey = JsonTools::ParseString( config, kTTSNoRecipientKey, "BehaviorPlaybackMessage.NoRecipient" );
+  _iVars.ttsNoMessagesKey = JsonTools::ParseString( config, kTTSNoMessagesKey, "BehaviorPlaybackMessage.NoMessages" );
 }
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPlaybackMessage::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
-  expectedKeys.insert( kTTSKey_AnnounceSingle );
-  expectedKeys.insert( kTTSKey_AnnouncePlural );
-  expectedKeys.insert( kTTSKey_ErrorNoRecipient );
-  expectedKeys.insert( kTTSKey_ErrorNoMessages );
+  expectedKeys.insert( kTTSAnnounceSingleKey );
+  expectedKeys.insert( kTTSAnnouncePluralKey );
+  expectedKeys.insert( kTTSNoRecipientKey );
+  expectedKeys.insert( kTTSNoMessagesKey );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -166,20 +163,13 @@ void BehaviorPlaybackMessage::OnBehaviorDeactivated()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorPlaybackMessage::PlayTextToSpeech( const std::string& ttsString, BehaviorSimpleCallback callback )
+void BehaviorPlaybackMessage::PlayTextToSpeech( const std::string& text, BehaviorSimpleCallback callback )
 {
-  std::string textToSay = ttsString;
 
-  // we need to replace all of our identifier strings with their actual values ...
-  Util::StringReplace( textToSay, kNumberIdentifier, std::to_string( _dVars.messages.size() ) );
-
-  // print this before we replace the name identifier for privacy reasons
-  PRINT_DEBUG( "TTS: %s", textToSay.c_str() );
-
-  Util::StringReplace( textToSay, kNameIdentifier, _dVars.messageRecipient );
+  PRINT_DEBUG("TTS: %s", Anki::Util::RemovePII(text).c_str());
 
   // delegate to our tts behavior
-  _iVars.ttsBehavior->SetTextToSay( textToSay );
+  _iVars.ttsBehavior->SetTextToSay(text);
   if ( _iVars.ttsBehavior->WantsToBeActivated() )
   {
     DelegateIfInControl( _iVars.ttsBehavior.get(), callback );
@@ -255,8 +245,16 @@ void BehaviorPlaybackMessage::BehaviorUpdate()
 void BehaviorPlaybackMessage::TransitionToPlayingFirstMessage()
 {
   // play our announcement tts
+  const auto & bei = GetBEI();
+  const auto & robotInfo = bei.GetRobotInfo();
+  const auto & localeComponent = robotInfo.GetLocaleComponent();
   const bool isPlural = ( _dVars.messages.size() > 1 );
-  std::string textToSay = ( isPlural ? _iVars.ttsAnnouncePlural : _iVars.ttsAnnounceSingle );
+  const std::string & announceKey = (isPlural ? _iVars.ttsAnnouncePluralKey : _iVars.ttsAnnounceSingleKey);
+  const std::string & recipient = _dVars.messageRecipient;
+  const std::string & count = std::to_string(_dVars.messages.size());
+
+  std::string textToSay = localeComponent.GetString(announceKey, recipient, count);
+
   PlayTextToSpeech( textToSay, [this]()
   {
     // after we've made our announcement, play some anims then get into the message delivery
@@ -279,15 +277,21 @@ void BehaviorPlaybackMessage::TransitionToPlayingNextMessage()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorPlaybackMessage::TransitionToFailureResponse()
 {
-  const VoiceMessageSystem& voicemail = GetBEI().GetMicComponent().GetVoiceMessageSystem();
-  _dVars.allMessages = voicemail.GetUnreadMessages( VoiceMessageSystem::VoiceMessageSystem::SortType::NewestToOldest );
+  const auto & bei = GetBEI();
+  const auto & micComponent = bei.GetMicComponent();
+  const auto & voiceMessageSystem = micComponent.GetVoiceMessageSystem();
+  const auto sortType = VoiceMessageSystem::SortType::NewestToOldest;
+  _dVars.allMessages = voiceMessageSystem.GetUnreadMessages(sortType);
 
   // if we have no messages for anybody, play some error tts
   if ( _dVars.allMessages.empty() )
   {
     if ( _dVars.messageRecipient.empty() )
     {
-      PlayTextToSpeech( _iVars.ttsErrorNoRecipient );
+      const auto & robotInfo = bei.GetRobotInfo();
+      const auto & localeComponent = robotInfo.GetLocaleComponent();
+      const auto & text = localeComponent.GetString(_iVars.ttsNoRecipientKey);
+      PlayTextToSpeech(text);
     }
     else
     {
@@ -307,8 +311,11 @@ void BehaviorPlaybackMessage::TransitionToNoMessagesResponse()
   DEV_ASSERT_MSG( _dVars.messages.empty(),
                   "BehaviorPlaybackMessage.TransitionToNoMessagesResponse",
                   "Transitioning to the no messages state but we actually do have messages!" );
-
-  PlayTextToSpeech( _iVars.ttsErrorNoMessages );
+  const auto & bei = GetBEI();
+  const auto & robotInfo = bei.GetRobotInfo();
+  const auto & localeComponent = robotInfo.GetLocaleComponent();
+  const auto & text = localeComponent.GetString(_iVars.ttsNoMessagesKey, _dVars.messageRecipient);
+  PlayTextToSpeech(text);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -327,9 +334,13 @@ void BehaviorPlaybackMessage::PlayNextRecipientTTS()
     _dVars.messages = std::move( _dVars.allMessages.back().messages );
     _dVars.allMessages.pop_back();
 
+    const auto & bei = GetBEI();
+    const auto & robotInfo = bei.GetRobotInfo();
+    const auto & localeComponent = robotInfo.GetLocaleComponent();
     const bool isPlural = ( _dVars.messages.size() > 1 );
-    std::string textToSay = ( isPlural ? _iVars.ttsAnnouncePlural : _iVars.ttsAnnounceSingle );
-    PlayTextToSpeech( textToSay, [this]()
+    const auto & ttsAnnounceKey = ( isPlural ? _iVars.ttsAnnouncePluralKey : _iVars.ttsAnnounceSingleKey );
+    const auto & text = localeComponent.GetString(ttsAnnounceKey, _dVars.messageRecipient, std::to_string(_dVars.messages.size()));
+    PlayTextToSpeech( text, [this]()
     {
       // keep recursing this until we have no more messages
       PlayNextRecipientTTS();
@@ -342,4 +353,3 @@ void BehaviorPlaybackMessage::PlayNextRecipientTTS()
 
 #undef PRINT_DEBUG
 #undef PRINT_INFO
-

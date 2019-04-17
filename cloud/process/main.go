@@ -25,7 +25,6 @@ import (
 	"github.com/gwatts/rootcerts"
 )
 
-var verbose bool
 var checkDataFunc func() error // overwritten by platform_linux.go
 var certErrorFunc func() bool  // overwritten by cert_error_dev.go, determines if error should cause exit
 var platformOpts []cloudproc.Option
@@ -72,10 +71,9 @@ func testReader(serv ipc.Server, send voice.MsgSender) {
 }
 
 func main() {
-	log.Println("Hello, world!")
-	log.Das("vic.cloud.hello.world", (&log.DasFields{}).SetStrings("one").SetInts(1))
 
-	log.Println("Install crash reporter")
+	log.Println("Starting up")
+
 	robot.InstallCrashReporter(log.Tag)
 
 	// if we want to error, we should do it after we get socket connections, to make sure
@@ -94,7 +92,6 @@ func main() {
 	signalHandler()
 
 	// don't yet have control over process startup on DVT2, set these as default
-	verbose = true
 	test := false
 
 	// flag.BoolVar(&verbose, "verbose", false, "enable verbose logging")
@@ -174,7 +171,6 @@ func main() {
 
 	cloudproc.Run(context.Background(), options...)
 
-	log.Println("Uninstall crash reporter")
 	robot.UninstallCrashReporter()
 
 	log.Println("All processes exited, shutting down")
@@ -186,6 +182,7 @@ func signalHandler() {
 	go func() {
 		<-ch
 		fmt.Println("Received SIGTERM, shutting down immediately")
+		robot.UninstallCrashReporter()
 		os.Exit(0)
 	}()
 }

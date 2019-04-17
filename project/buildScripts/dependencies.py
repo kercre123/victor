@@ -52,6 +52,7 @@ SVN_CRED = "--username %s --password %s --no-auth-cache --non-interactive --trus
 PROJECT_ROOT_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..'))
 DEPS_FILE = os.path.join(PROJECT_ROOT_DIR, 'DEPS')
 EXTERNALS_DIR = os.path.join(PROJECT_ROOT_DIR, 'EXTERNALS')
+THIRD_PARTY_DIR = os.path.join(PROJECT_ROOT_DIR, '3rd')
 DIFF_BRANCH_MSG = "is already a working copy for a different URL"
 
 # Most animation tar files in SVN are packages of JSON files that should be unpacked in the root
@@ -324,12 +325,12 @@ def get_flatc_dir():
   target_triple = platform_map.get(platform_name)
 
   if target_triple:
-    flatc_dir = os.path.join(DEPENDENCY_LOCATION,
+    flatc_dir = os.path.join(THIRD_PARTY_DIR,
                              'flatbuffers', 'host-prebuilts',
                              'current', target_triple, 'bin')
   else: 
     # default
-    flatc_dir = os.path.join(DEPENDENCY_LOCATION,
+    flatc_dir = os.path.join(THIRD_PARTY_DIR,
                              'flatbuffers', 'mac', 'Release')
  
   return flatc_dir
@@ -439,8 +440,8 @@ def get_svn_file_rev(file_from_svn, cred=''):
       return rev
 
 
-def svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
-                 unpack, package, allow_extra_files, verbose=VERBOSE):
+def svn_checkout(url, r_rev, loc, cred, checkout, cleanup, unpack, package, allow_extra_files,
+                 stale_warning, abort_if_offline=True, verbose=VERBOSE):
     status = 0
     err = ''
     successful = ''
@@ -448,7 +449,13 @@ def svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
     need_to_cache_svn_checkout = not extract_svn_cache_tarball_to_directory(url, r_rev, loc)
     if need_to_cache_svn_checkout:
        if not is_up(url):
-          raise RuntimeError('Could not contact svn server at {0}.  This URL may require VPN or local LAN access.'.format(url))
+          msg = 'Could not contact svn server at {0}. This URL may require VPN or local LAN access.'.format(url)
+          if abort_if_offline:
+              raise RuntimeError(msg)
+          else:
+              print(msg)
+              print(stale_warning)
+              return ''
 
        pipe = subprocess.Popen(checkout, stdout=subprocess.PIPE,
                                stderr=subprocess.PIPE, close_fds=True)
@@ -502,6 +509,7 @@ def svn_package(svn_dict):
     repos = svn_dict.get("repo_names", "")
     user = svn_dict.get("default_usr", "undefined")
     cred = SVN_CRED % (user, password)
+    stale_warning = "WARNING: If this build succeeds, it may contain stale external data"
 
     for repo in repos:
         r_rev = repos[repo].get("version", "head")
@@ -562,7 +570,7 @@ def svn_package(svn_dict):
                 print("Checking out '{0}'".format(repo))
                 checked_out_repos.append(repo)
                 err = svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
-                                   unpack, package, allow_extra_files)
+                                   unpack, package, allow_extra_files, stale_warning)
                 if err:
                     print("Error in checking out {0}: {1}".format(repo, err.strip()))
                     if DIFF_BRANCH_MSG in err:
@@ -570,7 +578,7 @@ def svn_package(svn_dict):
                         shutil.rmtree(loc)
                         print("Checking out '{0}' again".format(repo))
                         err = svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
-                                           unpack, package, allow_extra_files)
+                                           unpack, package, allow_extra_files, stale_warning)
                         if err:
                             print("Error in checking out {0}: {1}".format(repo, err.strip()))
                             print(stale_warning)
@@ -840,11 +848,7 @@ def extract_dependencies(version_file, location=EXTERNALS_DIR, validate_assets=T
     if validate_assets and len(set(updated_deps) & set(ASSET_VALIDATION_TRIGGERS)) > 0:
         # At least one of the asset validation triggers was updated, so perform validation...
         validate_anim_data.check_anims_all_anim_groups(location)
-        try:
-            validate_anim_data.check_audio_events_all_anims(location)
-        except ValueError, e:
-            print(str(e))
-            print("WARNING: This build may contain animations that reference missing audio events")
+        validate_anim_data.check_audio_events_all_anims(location)
 
 
 def json_parser(version_file):

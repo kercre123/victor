@@ -30,8 +30,6 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "webServerProcess/src/webService.h"
 
-#include "clad/types/lcdTypes.h"
-
 namespace Anki {
 namespace Vector {
 
@@ -45,6 +43,8 @@ CONSOLE_VAR( bool, kPowerSave_CameraStopCameraStream, CONSOLE_GROUP, false);
 CONSOLE_VAR( bool, kPowerSave_LCDBacklight, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_ThrottleCPU, CONSOLE_GROUP, true);
 CONSOLE_VAR( bool, kPowerSave_ProxSensorMap, CONSOLE_GROUP, true);
+
+CONSOLE_VAR( bool, kForceCalmMode, CONSOLE_GROUP, false);
 
 static constexpr const LCDBrightness kLCDBrightnessLow = LCDBrightness::LCDLevel_5mA;
 static constexpr const LCDBrightness kLCDBrightnessNormal = LCDBrightness::LCDLevel_10mA;
@@ -97,6 +97,13 @@ void PowerStateManager::UpdateDependent(const RobotCompMap& dependentComps)
 {
   if( !ANKI_VERIFY( _context != nullptr, "PowerStateManager.Update.NoContext", "" ) ) {
     return;
+  }
+
+  static bool wasForceCalmMode = false;
+  if (kForceCalmMode != wasForceCalmMode) {
+    _context->GetRobotManager()->GetMsgHandler()->SendMessage(
+        RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(kForceCalmMode)));
+    wasForceCalmMode = kForceCalmMode;
   }
 
   // Check if power save mode needs to be toggled
@@ -266,10 +273,11 @@ void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
 
   switch( setting ) {
     case PowerSaveSetting::CalmMode: {
-      const bool calibOnDisable = true;
-      Result sendResult = _context->GetRobotManager()->GetMsgHandler()->SendMessage(
-        RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(savePower, calibOnDisable)));
-      result = (sendResult == RESULT_OK);
+      if (!kForceCalmMode) {
+        Result sendResult = _context->GetRobotManager()->GetMsgHandler()->SendMessage(
+          RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(savePower)));
+        result = (sendResult == RESULT_OK);
+      }
       break;
     }
 
@@ -359,6 +367,15 @@ void PowerStateManager::TogglePowerSaveSetting( const RobotCompMap& components,
   }
 }
 
+void PowerStateManager::RequestLCDBrightnessChange(const LCDBrightness& level) const
+{
+  // For now, we will honor all LCD brightness changes, but in the future
+  //  if powersaving concerns are relevant here, we may put logic that
+  //  decides the ultimate effected change in this method.
+  _context->GetRobotManager()->GetMsgHandler()->SendMessage(
+        RobotInterface::EngineToRobot( RobotInterface::SetLCDBrightnessLevel( level ) ) );
+}
+
 
 void PowerStateManager::EnterPowerSave(const RobotCompMap& components)
 {
@@ -420,13 +437,6 @@ void PowerStateManager::ExitPowerSave(const RobotCompMap& components)
   _inPowerSaveMode = false;
   _timePowerSaveToggled_s = currTime_s;
 }
-
-
-void PowerStateManager::NotifyOfRobotState(const RobotState& msg)
-{
-  _inSysconCalmMode = static_cast<bool>(msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE);
-}
-
 
 }
 }

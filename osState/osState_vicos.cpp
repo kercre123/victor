@@ -934,5 +934,29 @@ bool OSState::IsUserSpaceSecure()
   return _isUserSpaceSecure;
 }
 
+bool OSState::IsAnkiDevRobot()
+{
+  static bool read = false;
+  if(!read)
+  {
+    read = true;
+    std::ifstream infile(kCmdLineFile);
+    std::string line;
+    while(std::getline(infile, line))
+    {
+      static const char* kKey = "anki.dev";
+      size_t index = line.find(kKey);
+      if(index != std::string::npos)
+      {
+        _isAnkiDevRobot = true;
+        break;
+      }
+    }
+    infile.close();
+  }
+
+  return _isAnkiDevRobot;
+}
+
 } // namespace Vector
 } // namespace Anki

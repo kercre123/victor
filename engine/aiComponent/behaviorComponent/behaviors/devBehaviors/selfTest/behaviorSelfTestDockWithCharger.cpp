@@ -14,6 +14,7 @@
 
 #include "engine/actions/chargerActions.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/robot.h"
 

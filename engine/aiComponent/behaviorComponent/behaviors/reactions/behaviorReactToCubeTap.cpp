@@ -115,7 +115,7 @@ void BehaviorReactToCubeTap::GetBehaviorOperationModifiers( BehaviorOperationMod
   modifiers.behaviorAlwaysDelegates               = true;
 
   // allow us to find the cubes as best as we can
-  modifiers.visionModesForActivatableScope->insert( { VisionMode::DetectingMarkers, EVisionUpdateFrequency::High } );
+  modifiers.visionModesForActivatableScope->insert( { VisionMode::Markers, EVisionUpdateFrequency::High } );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

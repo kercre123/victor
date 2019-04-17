@@ -895,6 +895,7 @@ EXCLUDE_SYMLINKS       = NO
 
 EXCLUDE_PATTERNS       = */_build/* \
                          */EXTERNALS/* \
+                         */3rd/* \
                          */generated/* \
                          */lib/audio/* \
                          */robot/test/* \

@@ -4,156 +4,525 @@
  * Author: Andrew Stein (andrew)
  * Created: 6/19/2014
  *
- *
- * Description: Defines a base class for Pose2d and Pose3d to inherit from in
+ * Description: Implements a base class for Pose2d and Pose3d to inherit from in
  *                order to share pose tree capabilities.
  *
  * Copyright: Anki, Inc. 2014
  *
  **/
 
-#ifndef __Anki_Common_Math_PoseBase_H__
-#define __Anki_Common_Math_PoseBase_H__
+#ifndef _ANKICORETECH_MATH_POSEBASE_IMPL_H_
+#define _ANKICORETECH_MATH_POSEBASE_IMPL_H_
 
 #include "coretech/common/shared/math/matrix.h"
-#include "coretech/common/shared/math/point_fwd.h"
+#include "coretech/common/shared/math/point.h"
 #include "coretech/common/engine/math/quad.h"
 #include "coretech/common/shared/math/rotation.h"
 #include "coretech/common/shared/math/radians.h"
 
-#include "coretech/common/engine/exceptions.h"
+#include "coretech/common/engine/math/poseBase_fwd.h"
+#include "coretech/common/engine/math/poseTreeNode.h"
 
-#include <string>
+#include "util/global/globalDefinitions.h"
+#include "util/logging/logging.h"
 
 namespace Anki {
-
-  using PoseID_t = uint32_t;
   
-  // Pose2d and Pose3d inherit from this base class, which defines the common
-  // elements like the parent pointer, the GetTreeDepth() method, and the
-  // GetWithRespectTo method.
-  template <class PoseNd, class TransformNd>
-  class PoseBase
+template<class PoseNd, class TransformNd>
+bool PoseBase<PoseNd,TransformNd>::_areUnownedParentsAllowed = false;
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+PoseBase<PoseNd,TransformNd>::PoseBase()
+{
+  // NOTE: does not create a PoseTreeNode at all: this does not "wrap" anything!
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+PoseBase<PoseNd,TransformNd>::PoseBase(const TransformNd& transform, const PoseNd& parentPose, const std::string& name)
+: _node(new PoseTreeNode(transform, parentPose._node, name))
+{
+  _node->AddOwner();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+PoseBase<PoseNd,TransformNd>::PoseBase(const TransformNd& transform, const std::string& name)
+: _node(new PoseTreeNode(transform, nullptr, name))
+{
+  _node->AddOwner();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+PoseBase<PoseNd,TransformNd>::PoseBase(const PoseNd& parentPose, const std::string& name)
+: _node(new PoseTreeNode(TransformNd(), parentPose._node, name))
+{
+  _node->AddOwner();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// destructor
+template<class PoseNd, class TransformNd>
+PoseBase<PoseNd,TransformNd>::~PoseBase()
+{
+  if(!IsNull())
   {
-  public:
+    _node->RemoveOwner();
+    if(!_node->IsOwned() && !AreUnownedParentsAllowed())
+    {
+      // Trying to diagnose COZMO-10891: if this was the last owner, the node should have use_count==1
+      ANKI_VERIFY(_node.use_count() == 1,
+                  "PoseBase.Destructor.NotLastOwner",
+                  "Removing pose %d(%s)'s node's last known owner, but it still has use_count=%u",
+                  GetID(), GetName().c_str(), (uint32_t)_node.use_count());
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+// copy constructor
+template<class PoseNd, class TransformNd>
+PoseBase<PoseNd,TransformNd>::PoseBase(const PoseBase& other)
+: _node(new PoseTreeNode(*other._node)) // don't share Nodes with other! copy the contents!
+{
+  _node->AddOwner();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+PoseBase<PoseNd,TransformNd>& PoseBase<PoseNd,TransformNd>::operator=(const PoseBase& other)
+{
+  if(this != &other)
+  {
+    if(other.IsNull())
+    {
+      _node->RemoveOwner();
+      if(!_node->IsOwned() && !AreUnownedParentsAllowed())
+      {
+        // Trying to diagnose COZMO-10891: if this was the last owner, the node should have use_count==1
+        ANKI_VERIFY(_node.use_count() == 1,
+                    "PoseBase.AssignmentOperator.NotLastOwner",
+                    "Removing pose %d(%s)'s node's last known owner, but it still has use_count=%u",
+                    GetID(), GetName().c_str(), (uint32_t)_node.use_count());
+      }
+      _node.reset();
+    }
+    else
+    {
+      // don't share Nodes with other! assign the contents! note that there's no new owner of _node here!
+      *_node = *other._node;
+    }
+  }
+  return *this;
+}
+
+//  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//  // rvalue constructor
+//  template<class PoseNd, class TransformNd>
+//  PoseBase<PoseNd,TransformNd>::PoseBase(PoseBase&& other)
+//  : _node(std::move(other._node))
+//  {
+//    
+//  }
+//  
+//  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+//  // rvalue assignment
+//  template<class PoseNd, class TransformNd>
+//  PoseBase<PoseNd,TransformNd>& PoseBase<PoseNd,TransformNd>::operator=(PoseBase&& other)
+//  {
+//    if(this != &other)
+//    {
+//      std::swap(_node, other._node);
+//    }
+//    return *this;
+//  }
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+inline void PoseBase<PoseNd,TransformNd>::SetName(const std::string& newName)
+{
+  DEV_ASSERT(!IsNull(), "PoseBase.SetName.NullNode");
+  _node->SetName(newName);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+inline const std::string& PoseBase<PoseNd,TransformNd>::GetName() const
+{
+  DEV_ASSERT(!IsNull(), "PoseBase.GetName.NullNode");
+  return _node->GetName();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+inline PoseID_t PoseBase<PoseNd,TransformNd>::GetID() const
+{
+  DEV_ASSERT(!IsNull(), "PoseBase.GetID.NullNode");
+  return _node->GetID();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+inline void PoseBase<PoseNd,TransformNd>::SetID(PoseID_t newID)
+{
+  DEV_ASSERT(!IsNull(), "PoseBase.SetID.NullNode");
+  _node->SetID(newID);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+inline TransformNd const& PoseBase<PoseNd,TransformNd>::GetTransform() const&
+{
+  DEV_ASSERT(!IsNull(), "PoseBase.GetTransformConst.NullNode");
+  return _node->GetTransform();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+inline TransformNd& PoseBase<PoseNd,TransformNd>::GetTransform() &
+{
+  DEV_ASSERT(!IsNull(), "PoseBase.GetTransform.NullNode");
+  return _node->GetTransform();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+inline TransformNd PoseBase<PoseNd,TransformNd>::GetTransform() &&
+{
+  DEV_ASSERT(!IsNull(), "PoseBase.GetTransformRvalue.NullNode");
+  return _node->GetTransform();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+inline bool PoseBase<PoseNd,TransformNd>::IsRoot()    const
+{
+  return (IsNull() ? true : _node->IsRoot());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+inline bool PoseBase<PoseNd,TransformNd>::HasParent() const
+{
+  return (IsNull() ? false : _node->HasParent());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+inline PoseID_t PoseBase<PoseNd,TransformNd>::GetRootID() const
+{
+  return (IsNull() ? 0 : _node->GetRootID());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+inline bool PoseBase<PoseNd,TransformNd>::IsChildOf(const PoseNd& otherPose) const
+{
+  return (IsNull() || otherPose.IsNull() ? false : _node->IsChildOf(*otherPose._node));
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+inline bool PoseBase<PoseNd,TransformNd>::IsParentOf(const PoseNd& otherPose) const
+{
+  return (IsNull() || otherPose.IsNull() ? false : _node->IsParentOf(*otherPose._node));
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+inline void PoseBase<PoseNd,TransformNd>::Invert(void)
+{
+  GetTransform().Invert();
+  ClearParent();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+inline PoseNd PoseBase<PoseNd,TransformNd>::GetInverse(void) const
+{
+  return GetTransform().GetInverse();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+void PoseBase<PoseNd,TransformNd>::SetParent(const PoseNd& otherPose)
+{
+  DEV_ASSERT(!IsNull(), "PoseBase.SetParent.NullNode");
+  DEV_ASSERT(&otherPose != this, "PoseBase.SetParent.ParentCannotBeSelf");
+  if(!AreUnownedParentsAllowed())
+  {
+    ANKI_VERIFY(otherPose.IsOwned(),
+                "PoseBase.SetParent.UnownedParent",
+                "Setting parent of %d(%s) to unowned pose %d(%s)",
+                GetID(), GetName().c_str(), otherPose.GetID(), otherPose.GetName().c_str());
+  }
+  _node->SetParent(otherPose._node);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+void PoseBase<PoseNd,TransformNd>::ClearParent()
+{
+  DEV_ASSERT(!IsNull(), "PoseBase.ClearParent.NullNode");
+  _node->SetParent(nullptr);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+void PoseBase<PoseNd,TransformNd>::PrintNamedPathToRoot(bool showTranslations) const
+{
+  std::string str = GetNamedPathToRoot(showTranslations);
+  fprintf(stdout, "Path to root: %s\n", str.c_str());
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+std::string PoseBase<PoseNd,TransformNd>::GetNamedPathToRoot(bool showTranslations) const
+{
+  if(IsNull())
+  {
+    return "NullNode";
+  }
+  return _node->GetNamedPathToRoot(showTranslations);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+bool PoseBase<PoseNd,TransformNd>::HasSameParentAs(const PoseNd& otherPose) const
+{
+  if(IsNull() || otherPose.IsNull())
+  {
+    return false;
+  }
   
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    // Methods
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+  return _node->HasSameParentAs(*otherPose._node);
+}
 
-    bool IsNull() const { return (nullptr == _node); }
-    
-    // init/destruction, copy, assignment
-    virtual ~PoseBase();
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+PoseNd PoseBase<PoseNd,TransformNd>::operator*(const PoseNd& other) const
+{
+  PoseNd newPose;
+  newPose.GetTransform() = (GetTransform() * other.GetTransform());
+  return newPose;
+}
 
-    //
-    // Simple accessors:
-    //
-    void SetName(const std::string& newName);
-    const std::string& GetName() const;
-    
-    // Get the ID assigned to this pose. IDs default to 0.
-    PoseID_t GetID() const;
-    
-    // Set the ID for this pose. NOTE: ID is *not* copied with pose!
-    void SetID(PoseID_t newID);
-    
-    TransformNd const& GetTransform() const&;
-    TransformNd &      GetTransform() &;
-    TransformNd        GetTransform() &&;
-    
-    // Set / check parent relationships:
-    void ClearParent();
-    void SetParent(const PoseNd& otherPose);
-
-    // "Roots" are the top of a pose tree and thus have no parent
-    bool     IsRoot()    const;
-    bool     HasParent() const;
-    PoseID_t GetRootID() const; // NOTE: more efficient than FindRoot().GetID()
-    
-    // Note that HasSameRootAs will be true if this is other's root or vice versa (a root's root is itself)
-    bool     HasSameRootAs(const PoseNd& otherPose)   const;
-    bool     HasSameParentAs(const PoseNd& otherPose) const;
-    
-    // Get a string suitable for log messages which describes this node's parent
-    std::string GetParentString() const;
-    
-    // Check if given pose is this pose's parent (or vice versa)
-    // Cheaper than calling this->GetParent and then comparing it to pose
-    bool IsChildOf(const PoseNd& otherPose) const;
-    bool IsParentOf(const PoseNd& otherPose) const;
-    
-    // Composition with another PoseNd
-    void   PreComposeWith(const PoseNd& other)  { GetTransform().PreComposeWith(other.GetTransform()); }
-    void   operator*=(const PoseNd& other)      { GetTransform() *= other.GetTransform();              }
-    PoseNd operator*(const PoseNd& other) const;
-    
-    // Inversion
-    void   Invert(void);
-    PoseNd GetInverse(void) const;
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+bool PoseBase<PoseNd,TransformNd>::HasSameRootAs(const PoseNd& otherPose) const
+{
+  if(IsNull() || otherPose.IsNull())
+  {
+    return false;
+  }
   
-    // Creates a new PoseNd around the underlying root/parent node
-    // This is "cheap", but not "free". Consider using one of the above helpers for comparing relationships b/w poses.
-    // NOTE: These return by value, not reference. Do not store references to members in line! I.e., never do:
-    //   const Foo& = somePose.GetWithRespectToRoot().GetFoo(); // Foo will immediately be invalidated
-    // Either store "somePoseWrtRoot" and then get Foo& from it, or make Foo a copy.
-    PoseNd FindRoot()  const;
-    PoseNd GetParent() const;
-    
-    // Check for exact numerical equality of Transform and matching parents/names. Generally only useful for unit tests.
-    bool operator==(const PoseNd &other) const { return ((GetTransform() == other.GetTransform()) &&
-                                                         HasSameParentAs(other) &&
-                                                         GetName()==other.GetName()); }
-    
-    // Useful for debugging and logging messages: print/return a string indicating the path up to the root node
-    std::string GetNamedPathToRoot(bool showTranslations) const;
-    void        PrintNamedPathToRoot(bool showTranslations) const;
-    
-    // An "unowned" parent can result when, for example, Pose A uses a temporary Pose B as its parent and then
-    // Pose B goes out of scope. No Pose actually "owns" the node inside Pose B, but Pose A still refers to it.
-    // If unowned parents are not allowed, then a parent will be ANKI_VERIFY'd to have an owner
-    // each time its node's GetParent() method is called. Normally, unowned parents are *not* allowed
-    // but this can be globally adjusted if desired (e.g. for unit tests).
-    static bool AreUnownedParentsAllowed();
-    static void AllowUnownedParents(bool tf);
-    bool IsOwned() const;
-    uint32_t GetNodeOwnerCount() const; // mostly useful for unit tests
-    
-  protected:
-    
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    // Methods
-    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-    
-    // We don't want to actually publicly create PoseBase objects: just derived
-    // classes like Pose2d and Pose3d
-    PoseBase();
-    PoseBase(const TransformNd& transform, const PoseNd& parentPose, const std::string& name = "");
-    PoseBase(const TransformNd& transform, const std::string& name = "");
-    PoseBase(const PoseNd& parentPose, const std::string& name);
-    
-    // Copy/assignment. NOTE: IDs are *NOT* copied and name is appended with "_COPY".
-    PoseBase(const PoseBase& other);
-    PoseBase& operator=(const PoseBase& other);
-    
-    // COZMO-10891: Removing RValue construction/assignment for trying to debug this ticket
-    // // Rvalue construction/assignment. NOTE: IDS *are* moved and name is preserved.
-    PoseBase(PoseBase&& other) = delete;
-    PoseBase& operator=(PoseBase&& other) = delete;
+  return _node->HasSameRootAs(*otherPose._node);
+}
 
-    static bool GetWithRespectTo(const PoseNd& from, const PoseNd& to, PoseNd& newPose);
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+std::string PoseBase<PoseNd,TransformNd>::GetParentString() const
+{
+  std::stringstream ss;
+  ss << "Parent:";
+  if(IsNull() || !HasParent())
+  {
+    ss << "NULL";
+  }
+  else
+  {
+    ss << _node->GetRawParentPtr()->GetName() << "(0x" << _node->GetRawParentPtr() << ")";
+  }
+  
+  return ss.str();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+PoseNd PoseBase<PoseNd,TransformNd>::FindRoot() const
+{
+  PoseNd root;
+  
+  if(IsRoot())
+  {
+    root.WrapExistingNode(_node);
+  }
+  else
+  {
+    root.WrapExistingNode(_node->FindRoot());
+  }
+  
+  return root;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+PoseNd PoseBase<PoseNd,TransformNd>::GetParent() const
+{
+  PoseNd parent; // Start out with "null" pose
+  if(!IsNull())
+  {
+    parent.WrapExistingNode(_node->GetParent());
+  }
+  return parent; // Likely uses RVO so no copy. TODO: Use move semantics instead?
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+bool PoseBase<PoseNd,TransformNd>::GetWithRespectTo(const PoseNd& fromPose, const PoseNd& toPose, PoseNd& P_wrt_other)
+{
+  if(!ANKI_VERIFY(!fromPose.IsNull() && !toPose.IsNull() && !P_wrt_other.IsNull(),
+                  "PoseBase.GetWithRespectTo.NullInputPose", "FromNull:%s ToNull:%s WrtOtherNull:%s",
+                  fromPose.IsNull() ? "Y" : "N", toPose.IsNull() ? "Y" : "N", P_wrt_other.IsNull() ? "Y" : "N"))
+  {
+    return false;
+  }
+  
+  if(&fromPose == &toPose) {
+    // Asked for pose w.r.t. itself. Just return a pose with a zero transform, parented to toPose.
+    PRINT_NAMED_WARNING("PoseBase.GetWithRespectTo.FromEqualsTo",
+                        "Pose w.r.t. itself requested.");
+    P_wrt_other._node->GetTransform() = TransformNd{};
+    P_wrt_other.SetParent(toPose);
+    return true;
+  }
+
+  if(!fromPose._node->HasSameRootAs(*toPose._node))
+  {
+    // We can't get the transformation between two poses that are not WRT the
+    // same root!
+    return false;
+  }
+  
+  const PoseTreeNode* from = fromPose._node.get();
+  const PoseTreeNode* to   = toPose._node.get();
+  
+  TransformNd T_from(fromPose._node->GetTransform());
+  TransformNd T_to(toPose._node->GetTransform());
+  
+  // First make sure we are pointing at two nodes of the same tree depth,
+  // which is the only way they could possibly share the same _parent.
+  // Until that's true, walk the deeper node up until it is at the same
+  // depth as the shallower node, keeping track of the total transformation
+  // along the way. (NOTE: Only one of the following two while loops should
+  // run, depending on which node is deeper in the tree)
+  
+  int depthDiff = from->GetTreeDepth() - to->GetTreeDepth();
+  
+  while(depthDiff > 0)
+  {
+    DEV_ASSERT(from->HasParent(), "PoseBase.GetWithRespectTo.FromParentIsNull");
     
-    // Create a new Pose object which "wraps" an existing node
-    class PoseTreeNode;
-    void WrapExistingNode(const std::shared_ptr<PoseTreeNode>& node) { _node = node; _node->AddOwner(); }
-        
-  private:
+    T_from.PreComposeWith( from->GetParentTransform() );
+    from = from->GetRawParentPtr();
     
-    std::shared_ptr<PoseTreeNode> _node;
+    if(from->IsChildOf(*to))
+    {
+      // We bumped into the "to" pose on the way up to the common _parent, so
+      // we've got the the chained transform ready to go, and there's no
+      // need to walk past the "to" pose, up to the common _parent, and right
+      // back down, which would unnecessarily compose two more poses which
+      // are the inverse of one another by construction.
+      std::swap(P_wrt_other._node->GetTransform(), T_from);
+      P_wrt_other.SetParent(toPose);
+      return true;
+    }
     
-    static bool _areUnownedParentsAllowed;
-  };
+    --depthDiff;
+  }
+  
+  while(depthDiff < 0)
+  {
+    DEV_ASSERT(to->HasParent(), "PoseBase.GetWithRespectTo.ToParentIsNull");
+    
+    T_to.PreComposeWith( to->GetParentTransform() );
+    to = to->GetRawParentPtr();
+    
+    if(to->IsChildOf(*from)) {
+      // We bumped into the "from" pose on the way up to the common _parent,
+      // so we've got the the (inverse of the) chained transform ready to
+      // go, and there's no need to walk past the "from" pose, up to the
+      // common _parent, and right back down, which would unnecessarily
+      // compose two more poses which are the inverse of one another by
+      // construction.
+      T_to.Invert();
+      std::swap(P_wrt_other._node->GetTransform(), T_to);
+      P_wrt_other.SetParent(toPose);
+      return true;
+    }
+    
+    ++depthDiff;
+  }
+  
+  // Sanity check: Treedepths should now match:
+  DEV_ASSERT(depthDiff == 0, "PoseBase.GetWithRespectTo.NonZeroDepthDiff");
+  DEV_ASSERT(to->GetTreeDepth() == from->GetTreeDepth(), "PoseBase.GetWithRespectTo.TreeDepthMismatch");
+  
+  // Now that we are pointing to the nodes of the same depth, keep moving up
+  // until those nodes have the same _parent, totalling up the transformations
+  // along the way
+  BOUNDED_WHILE(1000, (from != to) && !to->HasSameParentAs(*from))
+  {
+    DEV_ASSERT(from->HasParent(), "PoseBase.GetWithRespectTo.FromParentIsNull");
+    DEV_ASSERT(to->HasParent(), "PoseBase.GetWithRespectTo.ToParentIsNull");
+    
+    T_from.PreComposeWith( from->GetParentTransform() );
+    T_to.PreComposeWith( to->GetParentTransform() );
+    
+    to = to->GetRawParentPtr();
+    from = from->GetRawParentPtr();
+  }
+  
+  // Now compute the total transformation from this pose, up the "from" path
+  // in the tree, to the common ancestor, and back down the "to" side to the
+  // final other pose.
+  //     P_wrt_other = P_to.inv * P_from;
+  P_wrt_other._node->GetTransform() = T_to.GetInverse();
+  P_wrt_other._node->GetTransform() *= T_from;
+  
+  // The Pose we are about to return is w.r.t. the "other" pose provided (that
+  // was the whole point of the exercise!), so set its _parent accordingly:
+  P_wrt_other.SetParent(toPose);
+  
+  return true;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+inline bool PoseBase<PoseNd,TransformNd>::AreUnownedParentsAllowed()
+{
+  return _areUnownedParentsAllowed;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+template<class PoseNd, class TransformNd>
+inline void PoseBase<PoseNd,TransformNd>::AllowUnownedParents(bool tf)
+{
+  _areUnownedParentsAllowed = tf;
+}
+
+template<class PoseNd, class TransformNd>
+inline bool PoseBase<PoseNd,TransformNd>::IsOwned() const
+{
+  if(IsNull())
+  {
+    return false;
+  }
+  return _node->IsOwned();
+}
+
+template<class PoseNd, class TransformNd>
+inline uint32_t PoseBase<PoseNd,TransformNd>::GetNodeOwnerCount() const
+{
+  if(IsNull())
+  {
+    return 0;
+  }
+  return _node->GetOwnerCount();
+}
   
 } // namespace Anki
 
-#endif /* __Anki_Common_Math_PoseBase_H__ */
+#endif // _ANKICORETECH_MATH_POSEBASE_IMPL_H_

@@ -38,6 +38,12 @@ static const std::set<BehaviorID> kBehaviorStatesToSuppressInAirReaction = {{ BE
                                                                               BEHAVIOR_ID(SingletonAnticShowClock),
                                                                               BEHAVIOR_ID(SingletonTimerCheckTime),
                                                                               BEHAVIOR_ID(SingletonTimerSet)  }};
+  
+static const std::set<BehaviorID> kBehaviorStatesToNotLockTracks =
+  {{
+    BEHAVIOR_ID(WhatsMyNameVoiceCommand),
+    BEHAVIOR_ID(MeetVictor)
+  }};
 
 const BehaviorID kWhileInAirDispatcher = BEHAVIOR_ID(WhileInAirDispatcher);
 const TimeStamp_t kMaxTimeForInitialPickupReaction_ms = 1000;
@@ -67,6 +73,7 @@ void BehaviorCoordinateWhileInAir::InitPassThrough()
   _heldInPalmDispatcher = BC.FindBehaviorByID(BEHAVIOR_ID(HeldInPalmDispatcher));
   {
     _suppressInAirBehaviorSet = std::make_unique<AreBehaviorsActivatedHelper>(BC, kBehaviorStatesToSuppressInAirReaction);
+    _dontLockTracksBehaviorSet = std::make_unique<AreBehaviorsActivatedHelper>(BC, kBehaviorStatesToNotLockTracks);
   }
 }
 
@@ -133,9 +140,13 @@ void BehaviorCoordinateWhileInAir::PassThroughUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCoordinateWhileInAir::LockTracksIfAppropriate()
 {
-  if(!_areTreadsLocked){
+  const bool shouldLockTracks = !_dontLockTracksBehaviorSet->AreBehaviorsActivated();
+  if(!_areTreadsLocked && shouldLockTracks){
     SmartLockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK), GetDebugLabel(), GetDebugLabel());
     _areTreadsLocked = true;
+  } else if (_areTreadsLocked && !shouldLockTracks) {
+    SmartUnLockTracks(GetDebugLabel());
+    _areTreadsLocked = false;
   }
 }
 
@@ -175,11 +186,20 @@ void BehaviorCoordinateWhileInAir::OnFirstPassThroughUpdate()
   const auto& BC = GetBEI().GetBehaviorContainer();
   for(const auto& id : kBehaviorStatesToSuppressInAirReaction){
     const auto behaviorPtr = BC.FindBehaviorByID(id);
-    BehaviorOperationModifiers modifiers;
-    behaviorPtr->GetBehaviorOperationModifiers(modifiers);
+    const BehaviorOperationModifiers& modifiers = behaviorPtr->GetBehaviorOperationModifiersPostInit();
     ANKI_VERIFY(modifiers.wantsToBeActivatedWhenOffTreads,
                 "BehaviorCoordinateWhileInAir.OnFirstUpdate.BehaviorCantRunInAir",
                 "Behavior %s is listed as a behavior that suppresses the in air reaction, \
+                but modifier says it can't run while in the air", BehaviorTypesWrapper::BehaviorIDToString(id));
+    
+  }
+  
+  for(const auto& id : kBehaviorStatesToNotLockTracks){
+    const auto behaviorPtr = BC.FindBehaviorByID(id);
+    const BehaviorOperationModifiers& modifiers = behaviorPtr->GetBehaviorOperationModifiersPostInit();
+    ANKI_VERIFY(modifiers.wantsToBeActivatedWhenOffTreads,
+                "BehaviorCoordinateWhileInAir.OnFirstUpdate.BehaviorCantRunInAir",
+                "Behavior %s is listed as a behavior that unlocks the tracks in the air, \
                 but modifier says it can't run while in the air", BehaviorTypesWrapper::BehaviorIDToString(id));
     
   }

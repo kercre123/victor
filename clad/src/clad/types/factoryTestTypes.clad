@@ -5,6 +5,7 @@
 
 #include "clad/types/birthCertificate.clad"
 #include "clad/types/proxMessages.clad"
+#include "clad/types/tofTypes.clad"
 
 namespace Anki {
 namespace Vector {
@@ -90,7 +91,9 @@ enum uint_8 FactoryTestResultCode {
   NVSTORAGE_WRITE_FAILED,
   NVSTORAGE_SEND_FAILED,
   TOO_MANY_TOOL_CODE_IMAGES,
-  CALIB_META_INFO_WRITE_FAILED,
+
+  RAMPOST_ERROR,
+
   IMU_INFO_WRITE_FAILED,
   NO_ACTIVE_OBJECTS_DISCOVERED,
 
@@ -100,17 +103,23 @@ enum uint_8 FactoryTestResultCode {
   CAM_POSE_OOR,
   PLAY_SOUND_FAILED,
   PREV_TEST_RESULTS_READ_FAILED,
-  WRONG_FIRMWARE_VERSION,
+
+  START_TOF_FAILED,
+
   CLIFF_VALUE_TOO_HIGH,
   CLIFF_VALUE_TOO_LOW,
   BACKUP_NOT_STRAIGHT,
   BATTERY_TOO_LOW,
   NO_IMU_DATA,
   BACK_AND_FORTH_NOT_STRAIGHT,
-  WRONG_BODY_HW_VERSION,
-  NO_BODY_VERSION_MESSAGE,
+
+  CALIBRATE_TOF_FAILED,
+  STOP_TOF_FAILED,
+
   NVSTORAGE_ERASE_FAILED,
-  PARSE_HEADER_FAILED,
+
+  SETUP_TOF_FAILED,
+
   NO_WIFI_APS_DISCOVERED,
   UNKNOWN_BODY_COLOR,
 
@@ -193,9 +202,16 @@ structure PoseData {
 }
 
 structure DistanceSensorData {
-  ProxSensorDataRaw proxSensorData,
-  float_32          visualDistanceToTarget_mm,
-  float_32          visualAngleAwayFromTarget_rad
+  float_32 proxDistanceToTarget_mm,
+  float_32 visualDistanceToTarget_mm,
+  float_32 visualAngleAwayFromTarget_rad
+}
+
+structure RangeSensorData {
+  RangeDataRaw rangeData,
+  float_32     visualDistanceToTarget_mm,
+  float_32     visualAngleAwayFromTarget_rad,
+  float_32     headAngle_rad
 }
 
 structure TouchSensorValues {

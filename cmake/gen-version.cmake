@@ -67,3 +67,11 @@ endif()
 configure_file(${CMAKE_SOURCE_DIR}/templates/cmake/revision.in
                ${CMAKE_BINARY_DIR}/etc/revision
                @ONLY)
+
+# Set the VICTOR_COMPAT_VERSION from the file
+file(READ ${CMAKE_SOURCE_DIR}/VICTOR_COMPAT_VERSION VICTOR_COMPAT_VERSION)
+string(STRIP ${VICTOR_COMPAT_VERSION} VICTOR_COMPAT_VERSION)
+
+configure_file(${CMAKE_SOURCE_DIR}/templates/cmake/victor-compat-version.in
+               ${CMAKE_BINARY_DIR}/etc/victor-compat-version
+               @ONLY)

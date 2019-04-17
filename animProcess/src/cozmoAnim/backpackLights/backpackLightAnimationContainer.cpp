@@ -17,7 +17,7 @@
 
 namespace Anki {
 namespace Vector {
-
+namespace Anim {
 
 BackpackLightAnimationContainer::BackpackLightAnimationContainer(const InitMap& initializationMap)
 {
@@ -74,5 +74,6 @@ const BackpackLightAnimation::BackpackAnimation* BackpackLightAnimationContainer
   return animPtr;
 }
 
+} // namespace Anim
 } // namespace Vector
 } // namespace Anki

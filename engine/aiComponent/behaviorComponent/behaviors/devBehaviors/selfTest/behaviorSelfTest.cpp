@@ -33,6 +33,7 @@
 
 #include "util/console/consoleSystem.h"
 #include "util/fileUtils/fileUtils.h"
+#include "util/logging/DAS.h"
 
 #include <cstddef>
 
@@ -45,12 +46,12 @@ BehaviorSelfTest::BehaviorSelfTest(const Json::Value& config)
   SubscribeToTags({GameToEngineTag::WifiConnectResponse});
 }
 
-void BehaviorSelfTest::InitBehavior() 
+void BehaviorSelfTest::InitBehavior()
 {
   Robot& robot = GetBEI().GetRobotInfo()._robot;
 
   const BehaviorContainer& BC = GetBEI().GetBehaviorContainer();
-  
+
   ICozmoBehaviorPtr putOnChargerBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestPutOnCharger);
   DEV_ASSERT(putOnChargerBehavior != nullptr &&
              putOnChargerBehavior->GetClass() == BehaviorClass::SelfTestPutOnCharger,
@@ -62,7 +63,7 @@ void BehaviorSelfTest::InitBehavior()
              buttonBehavior->GetClass() == BehaviorClass::SelfTestButton,
              "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestButton");
   _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(buttonBehavior));
-  
+
   ICozmoBehaviorPtr initChecksBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestInitChecks);
   DEV_ASSERT(initChecksBehavior != nullptr &&
              initChecksBehavior->GetClass() == BehaviorClass::SelfTestInitChecks,
@@ -86,7 +87,7 @@ void BehaviorSelfTest::InitBehavior()
              soundCheckBehavior->GetClass() == BehaviorClass::SelfTestSoundCheck,
              "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestSoundCheck");
   _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(soundCheckBehavior));
-  
+
   ICozmoBehaviorPtr driveFowardsBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestDriveForwards);
   DEV_ASSERT(driveFowardsBehavior != nullptr &&
              driveFowardsBehavior->GetClass() == BehaviorClass::SelfTestDriveForwards,
@@ -110,19 +111,19 @@ void BehaviorSelfTest::InitBehavior()
              pickupBehavior->GetClass() == BehaviorClass::SelfTestPickup,
              "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestPickup");
   _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(pickupBehavior));
-  
+
   ICozmoBehaviorPtr putOnChargerBehavior2 = BC.FindBehaviorByID(BehaviorID::SelfTestPutOnCharger2);
   DEV_ASSERT(putOnChargerBehavior2 != nullptr &&
              putOnChargerBehavior2->GetClass() == BehaviorClass::SelfTestPutOnCharger,
              "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestPutOnCharger2");
   _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(putOnChargerBehavior2));
-  
+
   ICozmoBehaviorPtr touchBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestTouch);
   DEV_ASSERT(touchBehavior != nullptr &&
              touchBehavior->GetClass() == BehaviorClass::SelfTestTouch,
              "BehaviorSelfTest.ImproperClassRetrievedForName.SelfTestTouch");
   _selfTestBehaviors.push_back(std::static_pointer_cast<IBehaviorSelfTest>(touchBehavior));
-  
+
   ICozmoBehaviorPtr screenAndBackpackBehavior = BC.FindBehaviorByID(BehaviorID::SelfTestScreenAndBackpack);
   DEV_ASSERT(screenAndBackpackBehavior != nullptr &&
              screenAndBackpackBehavior->GetClass() == BehaviorClass::SelfTestScreenAndBackpack,
@@ -147,7 +148,7 @@ void BehaviorSelfTest::GetAllDelegates(std::set<IBehavior*>& delegates) const
   }
 }
 
-  
+
 void BehaviorSelfTest::OnBehaviorActivated()
 {
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
@@ -181,12 +182,16 @@ void BehaviorSelfTest::OnBehaviorActivated()
 
   msg.disconnectAfterConnection = true;
   robot.Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
-                  
+
   _radioScanState = RadioScanState::WaitingForWifiResult;
-  
+
   // Delegate to the first behavior
   (void)_currentBehavior->WantsToBeActivated();
   DelegateNow(_currentBehavior.get());
+
+  // DAS msg for self test start
+  DASMSG(behavior_self_test_start, "behavior.self_test_start", "Self test has started");
+  DASMSG_SEND();
 }
 
 void BehaviorSelfTest::OnBehaviorDeactivated()
@@ -207,7 +212,7 @@ void BehaviorSelfTest::OnBehaviorDeactivated()
   // Reapply current settings, this is to put robot volume back to user set level
   SettingsManager& settings = robot.GetComponent<SettingsManager>();
   settings.ApplyAllCurrentSettings();
-  
+
   Reset();
 }
 
@@ -220,13 +225,13 @@ void BehaviorSelfTest::Reset()
   }
 
   CancelDelegates(false);
-  
+
   // Set current behavior to first playpen behavior
   _currentSelfTestBehaviorIter = _selfTestBehaviors.begin();
   _currentBehavior = *_currentSelfTestBehaviorIter;
-  
+
   _waitForButtonToEndTest = false;
-      
+
   _buttonPressed = false;
 
   _radioScanState = RadioScanState::None;
@@ -258,10 +263,10 @@ void BehaviorSelfTest::BehaviorUpdate()
       // This should clear the face and put us back to whatever behavior was previously running
       robot.SendRobotMessage<RobotInterface::SelfTestEnd>();
       robot.Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::SelfTestEnd()));
-       
+
       _waitForButtonToEndTest = false;
     }
-    
+
     _buttonPressed = buttonPressed;
   }
 
@@ -278,7 +283,7 @@ void BehaviorSelfTest::BehaviorUpdate()
                           EnumToString(_currentBehavior->GetResult()));
 
       _currentBehavior = nullptr;
-      
+
       HandleResult(result);
       return;
     }
@@ -287,27 +292,27 @@ void BehaviorSelfTest::BehaviorUpdate()
   // If the current behavior has completed
   if(_currentBehavior != nullptr &&
      _currentBehavior->GetResult() == SelfTestResultCode::SUCCESS)
-  {    
+  {
     // Move to the next behavior
     _currentSelfTestBehaviorIter++;
-    
+
     // If we still have behaviors to run
     if(_currentSelfTestBehaviorIter != _selfTestBehaviors.end())
     {
       // Update current behavior
       _currentBehavior = *_currentSelfTestBehaviorIter;
       DEV_ASSERT(_currentBehavior != nullptr, "BehaviorSelfTest.BehaviorUpdate.NullCurrentBehavior");
-      
+
       if(!_currentBehavior->WantsToBeActivated())
       {
         PRINT_NAMED_ERROR("BehaviorSelfTest.ChooseNextBehaviorInternal.BehaviorNotRunnable",
                           "Current behavior %s is not runnable",
                           _currentBehavior->GetDebugLabel().c_str());
-        
+
         HandleResult(SelfTestResultCode::BEHAVIOR_NOT_RUNNABLE);
         return;
       }
-      
+
       DelegateNow(_currentBehavior.get());
     }
     // All self test behaviors have run so success!
@@ -323,7 +328,7 @@ void BehaviorSelfTest::BehaviorUpdate()
 
 void BehaviorSelfTest::HandleResult(SelfTestResultCode result)
 {
-  PRINT_NAMED_INFO("BehaviorSelfTest.HandleResult.OrigResult", 
+  PRINT_NAMED_INFO("BehaviorSelfTest.HandleResult.OrigResult",
                    "%s", EnumToString(result));
 
   const auto& allResults = IBehaviorSelfTest::GetAllSelfTestResults();
@@ -350,18 +355,25 @@ void BehaviorSelfTest::HandleResult(SelfTestResultCode result)
 
   IBehaviorSelfTest::ResetAllSelfTestResults();
 
-  PRINT_NAMED_INFO("BehaviorSelfTest.HandleResultInternal.Result", 
+  PRINT_NAMED_INFO("BehaviorSelfTest.HandleResultInternal.Result",
                    "Playpen completed with %s",
                    EnumToString(result));
 
   // Display result on screen
   DisplayResult(result);
-  
+
+  // DAS msg for end of self test
+  const bool testPassed = (result == SelfTestResultCode::SUCCESS);
+  DASMSG(behavior_self_test_end, "behavior.self_test_end", "Self test has completed");
+  DASMSG_SET(s1, testPassed ? "success" : "failure", "Test passed or failed");
+  DASMSG_SET(s2, testPassed ? "" : EnumToString(result), "Error code if test failed");
+  DASMSG_SEND();
+
   // Reset playpen
   Reset();
 
   // Not done yet, need to wait for a button press in order to the test to end
-  _waitForButtonToEndTest = true;  
+  _waitForButtonToEndTest = true;
 }
 
 void BehaviorSelfTest::DisplayResult(SelfTestResultCode result)
@@ -381,7 +393,7 @@ void BehaviorSelfTest::DisplayResult(SelfTestResultCode result)
       .transitionOffPeriod_ms = {{450,450,450}},
       .offset                 = {{0,0,0}}
     };
-    
+
     robot.GetBackpackLightComponent().SetBackpackAnimation(passLights);
 
     IBehaviorSelfTest::DrawTextOnScreen(robot,
@@ -407,7 +419,7 @@ void BehaviorSelfTest::DisplayResult(SelfTestResultCode result)
       .transitionOffPeriod_ms = {{0,0,0}},
       .offset                 = {{0,0,0}}
     };
-    
+
     robot.GetBackpackLightComponent().SetBackpackAnimation(failLights);
 
     IBehaviorSelfTest::DrawTextOnScreen(robot,
@@ -443,13 +455,15 @@ void BehaviorSelfTest::StartCubeConnectionCheck()
   // DEPRECATED - Grabbing robot to support current cozmo code, but this should
   // be removed
   Robot& robot = GetBEI().GetRobotInfo()._robot;
-  
+
   auto cubeConnectionCallback = [this](bool success) {
-      _radioScanState = (success ? RadioScanState::Passed : RadioScanState::Failed);
+      _radioScanState = ((success || SelfTestConfig::kSkipActiveObjectCheck) ?
+                         RadioScanState::Passed :
+                         RadioScanState::Failed);
     };
-  
+
   robot.GetCubeCommsComponent().RequestConnectToCube(cubeConnectionCallback);
-  
+
   _radioScanState = RadioScanState::WaitingForCubeResult;
 }
 
@@ -464,7 +478,7 @@ void BehaviorSelfTest::HandleWhileActivated(const GameToEngineEvent& event)
   }
 
   const auto& payload = event.GetData().Get_WifiConnectResponse();
-  
+
   // Fall back to a cube connection check should wifi fail
   // for normal users this is expected as the wifi checks for a hardcoded network
   if(payload.status_code != 0)
@@ -478,7 +492,7 @@ void BehaviorSelfTest::HandleWhileActivated(const GameToEngineEvent& event)
   else
   {
     PRINT_NAMED_INFO("BehaviorSelfTest.HandleWifiConnectResponse.Passed", "");
-    
+
     _radioScanState = RadioScanState::Passed;
   }
 }
@@ -492,4 +506,3 @@ SelfTestResultCode BehaviorSelfTest::DoFinalChecks()
 
 }
 }
-

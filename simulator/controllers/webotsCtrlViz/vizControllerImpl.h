@@ -194,6 +194,9 @@ private:
     _eventMgr.SubscribeForever(static_cast<uint32_t>(tagType), messageHandler);
   }
 
+  // Update the visibility of "node" for other nodes like camera and rangefinder
+  void SetNodeVisibility(webots::Node* node);
+
   webots::Supervisor& _vizSupervisor;
 
   // For displaying nav map in the 3D view
@@ -251,6 +254,7 @@ private:
   // Store the nodeID of the camera node inside the simulated robot (if any). This is to be able to make the viz
   // displays and objects invisible to the robot's camera using webots::Node::setVisibility().
   int _cozmoCameraNodeId = -1;
+  int _cozmoToFNodeId = -1;
   
   // For saving state
   bool          _saveState = false;

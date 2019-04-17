@@ -13,11 +13,12 @@
 #include "visionSystem.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/linearAlgebra_impl.h"
+#include "coretech/common/engine/math/linearAlgebra.h"
 #include "coretech/common/engine/math/linearClassifier.h"
-#include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/shared/math/rect_impl.h"
+#include "coretech/common/engine/math/quad.h"
+#include "coretech/common/shared/math/rect.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
+#include "coretech/vision/engine/imageCompositor.h"
 
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -35,13 +36,13 @@
 
 #include "coretech/neuralnets/iNeuralNetMain.h"
 #include "coretech/neuralnets/neuralNetJsonKeys.h"
+#include "coretech/neuralnets/neuralNetRunner.h"
 #include "coretech/vision/engine/benchmark.h"
 #include "coretech/vision/engine/cameraParamsController.h"
 #include "coretech/vision/engine/faceTracker.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 #include "coretech/vision/engine/imageCache.h"
 #include "coretech/vision/engine/markerDetector.h"
-#include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/engine/petTracker.h"
 
 #include "clad/vizInterface/messageViz.h"
@@ -74,6 +75,11 @@
 
 namespace Anki {
 namespace Vector {
+
+namespace {
+  const char* kImageCompositorReadyPeriodKey = "imageReadyPeriod";
+  const char* kImageCompositorReadyCycleResetKey = "numImageReadyCyclesBeforeReset";
+}
   
 CONSOLE_VAR_RANGED(u8,  kUseCLAHE_u8,     "Vision.PreProcessing", 0, 0, 4);  // One of MarkerDetectionCLAHE enum
 CONSOLE_VAR(s32, kClaheClipLimit,         "Vision.PreProcessing", 32);
@@ -277,6 +283,20 @@ Result VisionSystem::Init(const Json::Value& config)
   }
   _overheadMap.reset(new OverheadMap(config["OverheadMap"], _context));
 
+  const Json::Value& imageCompositeCfg = config["ImageCompositing"];
+  {
+    _imageCompositorReadyPeriod = JsonTools::ParseUInt32(imageCompositeCfg, 
+                                    kImageCompositorReadyPeriodKey, 
+                                    "VisionSystem.Ctor");
+
+    // The Reset Period is an integer multiple of the Ready Period
+    _imageCompositorResetPeriod = _imageCompositorReadyPeriod * 
+                                    JsonTools::ParseUInt32(imageCompositeCfg, 
+                                    kImageCompositorReadyCycleResetKey, 
+                                    "VisionSystem.Ctor");
+  }
+  _imageCompositor.reset(new Vision::ImageCompositor(imageCompositeCfg));
+
   // TODO check config entry here
   _groundPlaneClassifier.reset(new GroundPlaneClassifier(config["GroundPlaneClassifier"], _context));
 
@@ -327,16 +347,14 @@ Result VisionSystem::Init(const Json::Value& config)
       }
       
       const std::string& name = modelConfig[NeuralNets::JsonKeys::NetworkName].asString();
-      auto addModelResult = _neuralNetRunners.emplace(name, new Vision::NeuralNetRunner());
+      auto addModelResult = _neuralNetRunners.emplace(name, new NeuralNets::NeuralNetRunner(modelPath));
       if(!addModelResult.second)
       {
         PRINT_NAMED_ERROR("VisionSystem.Init.DuplicateNeuralNetModelName", "%s", name.c_str());
         continue;
       }
-      std::unique_ptr<Vision::NeuralNetRunner>& neuralNetRunner = addModelResult.first->second;
-      Result neuralNetResult = neuralNetRunner->Init(modelPath,
-                                                     dnnCachePath,
-                                                     modelConfig);
+      std::unique_ptr<NeuralNets::NeuralNetRunner>& neuralNetRunner = addModelResult.first->second;
+      Result neuralNetResult = neuralNetRunner->Init(dnnCachePath, modelConfig);
       if(RESULT_OK != neuralNetResult)
       {
         PRINT_NAMED_ERROR("VisionSystem.Init.NeuralNetInitFailed", "Name: %s", name.c_str());
@@ -522,7 +540,7 @@ u8 VisionSystem::ComputeMean(Vision::ImageCache& imageCache, const s32 sampleInc
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::UpdateMeteringRegions(TimeStamp_t currentTime_ms, DetectionRectsByMode&& detectionsByMode)
 {
-  const bool meterFromChargerOnly = IsModeEnabled(VisionMode::MeteringFromChargerOnly);
+  const bool meterFromChargerOnly = IsModeEnabled(VisionMode::Markers_ChargerOnly);
   
   // Before we do image quality / auto exposure, swap in the detections for any mode that actually ran,
   // in case we need them for metering
@@ -531,7 +549,7 @@ void VisionSystem::UpdateMeteringRegions(TimeStamp_t currentTime_ms, DetectionRe
   for(auto & current : detectionsByMode)
   {
     const VisionMode mode = current.first;
-    if(meterFromChargerOnly && (mode != VisionMode::DetectingMarkers))
+    if(meterFromChargerOnly && (mode != VisionMode::Markers))
     {
       continue;
     }
@@ -547,7 +565,7 @@ void VisionSystem::UpdateMeteringRegions(TimeStamp_t currentTime_ms, DetectionRe
     if(iter->second.empty() || !_futureModes.Contains(mode)) {
       iter = _meteringRegions.erase(iter);
     }
-    else if(meterFromChargerOnly && (mode != VisionMode::DetectingMarkers)) {
+    else if(meterFromChargerOnly && (mode != VisionMode::Markers)) {
       iter = _meteringRegions.erase(iter);
     }
     else {
@@ -562,9 +580,9 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
 # define DEBUG_IMAGE_HISTOGRAM 0
   
   Vision::CameraParamsController::AutoExpMode aeMode = Vision::CameraParamsController::AutoExpMode::Off;
-  if(IsModeEnabled(VisionMode::AutoExposure))
+  if(IsModeEnabled(VisionMode::AutoExp))
   {
-    if(IsModeEnabled(VisionMode::MinGainAutoExposure))
+    if(IsModeEnabled(VisionMode::AutoExp_MinGain))
     {
       aeMode = Vision::CameraParamsController::AutoExpMode::MinGain;
     }
@@ -592,7 +610,7 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
       return RESULT_OK;
     }
     
-    useCycling = IsModeEnabled(VisionMode::CyclingExposure);
+    useCycling = IsModeEnabled(VisionMode::AutoExp_Cycling);
   }
   else
   {   
@@ -648,6 +666,32 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
   // Put the new values in the output result:
   std::swap(_currentResult.cameraParams, nextParams);
   _currentResult.imageQuality = _cameraParamsController->GetImageQuality();
+  const bool _isMeteringForDetection = (!_meteringRegions.empty());
+  const bool completedExposureCycling = _cameraParamsController->IsExposureCyclingComplete();
+  if(IsModeEnabled(VisionMode::AutoExp_Cycling) && (_isMeteringForDetection || completedExposureCycling))
+  {
+    // We have completed one full pass through the list of exposures to cycle
+    //  or we have detected something (which triggers metering that locks the
+    //  exposure settings, during this mode).
+    _currentResult.modesProcessed.Insert(VisionMode::AutoExp_Cycling);
+  }
+  else if(!IsModeEnabled(VisionMode::AutoExp_Cycling))
+  {
+    // Whenever we are not cycling the exposure, make sure the
+    //  iterator starts with the first value in the cycle.
+    // This is necessary because of the asynchronous nature of
+    //  VisionSystem, we cannot predict whether we ticked an 
+    //  extra frame of processing after the mode is turned off 
+    //  by the VisionSchedule.
+    // Because of this potential extra-tick, and because of how
+    //  we track the current exposure as state-var, it could
+    //  potentially throw off our count of how many full loops
+    //  through the exposure values we have gone through.
+    _cameraParamsController->ResetTargetAutoExposure_Cycling();
+  }
+  
+  _currentResult.modesProcessed.Enable(VisionMode::AutoExp_MinGain,
+                                       (aeMode == Vision::CameraParamsController::AutoExpMode::MinGain));
   
   return RESULT_OK;
 }
@@ -1077,11 +1121,11 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
 } // ApplyCLAHE()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
-                                            const Vision::Image& claheImage,
-                                            std::vector<Anki::Rectangle<s32>>& detectionRects,
-                                            MarkerDetectionCLAHE useCLAHE,
-                                            const VisionPoseData& poseData)
+Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
+                                  const Vision::Image& claheImage,
+                                  std::vector<Anki::Rectangle<s32>>& detectionRects,
+                                  MarkerDetectionCLAHE useCLAHE,
+                                  const VisionPoseData& poseData)
 {
   // Currently assuming we detect markers first, so we won't make use of anything already detected
   DEV_ASSERT(detectionRects.empty(), "VisionSystem.DetectMarkersWithCLAHE.ExpectingEmptyDetectionRects");
@@ -1127,7 +1171,6 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
       else {
         imagePtrs.push_back(&imageCache.GetGray(whichSize));
       }
-      
       break;
     }
       
@@ -1143,7 +1186,6 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
       else {
         imagePtrs.push_back(&imageCache.GetGray(whichSize));
       }
-      
       break;
     }
       
@@ -1151,6 +1193,46 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
       assert(false); // should never get here
       break;
   }
+
+  #define DEBUG_IMAGE_COMPOSITING 0
+  #if(DEBUG_IMAGE_COMPOSITING)
+  static Vision::Image dispCompositeImg;
+  #endif
+  
+  Vision::Image compositeImage;
+  if(IsModeEnabled(VisionMode::Markers_Composite)) {
+    _imageCompositor->ComposeWith(imageCache.GetGray(whichSize));
+    const size_t numImagesComposited = _imageCompositor->GetNumImagesComposited();
+
+    const bool shouldRunOnComposite = (numImagesComposited % _imageCompositorReadyPeriod) == 0;
+    if(shouldRunOnComposite) {
+      _imageCompositor->GetCompositeImage(compositeImage);
+      imagePtrs.push_back(&compositeImage);
+      #if(DEBUG_IMAGE_COMPOSITING)
+      dispCompositeImg.Allocate(compositeImage.GetNumRows(), compositeImage.GetNumCols());
+      compositeImage.CopyTo(dispCompositeImg);
+      #endif
+    }
+
+    const bool shouldReset = (numImagesComposited == _imageCompositorResetPeriod);
+    if(shouldReset) {
+      _imageCompositor->Reset();
+
+      // This mode is considered processed iff:
+      // - a composite image was produced for marker detection
+      // - a reset occurs simultaneously
+      // NOTE: by definition of the Ready and Reset periods, we're guaranteed
+      //  to have run MarkerDetection in the same frame we trigger a Reset
+      DEV_ASSERT_MSG(shouldRunOnComposite, "VisionSystem.DetectMarkers.InvalidResetCallBeforeImageUsed","");
+      _currentResult.modesProcessed.Insert(VisionMode::Markers_Composite);
+    }
+  }
+
+  #if(DEBUG_IMAGE_COMPOSITING)
+  if(!dispCompositeImg.IsEmpty()) {
+    _currentResult.debugImages.emplace_back("ImageCompositing", dispCompositeImg);
+  }
+  #endif
   
   // Set up cropping rectangles to cycle through each time DetectMarkers is called
   DEV_ASSERT(!imagePtrs.empty(), "VisionSystem.DetectMarkersWithCLAHE.NoImagePointers");
@@ -1161,14 +1243,15 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
   }
   
   Rectangle<s32> cropRect;
-  if(IsModeEnabled(VisionMode::FullFrameMarkerDetection))
+  if(IsModeEnabled(VisionMode::Markers_FullFrame))
   {
     cropRect = Rectangle<s32>(0,0,imagePtrs.front()->GetNumCols(), imagePtrs.front()->GetNumRows());
+    _currentResult.modesProcessed.Insert(VisionMode::Markers_FullFrame);
   }
   else
   {
-    const bool useHorizontalCycling = !IsModeEnabled(VisionMode::FullWidthMarkerDetection);
-    const bool useVariableHeight = !IsModeEnabled(VisionMode::FullHeightMarkerDetection);
+    const bool useHorizontalCycling = !IsModeEnabled(VisionMode::Markers_FullWidth);
+    const bool useVariableHeight = !IsModeEnabled(VisionMode::Markers_FullHeight);
     const bool cropInBounds = cropScheduler.GetCropRect(imagePtrs.front()->GetNumRows(),
                                                         imagePtrs.front()->GetNumCols(),
                                                         useHorizontalCycling,
@@ -1182,6 +1265,9 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
     }
     
     DEV_ASSERT(cropRect.Area() > 0, "VisionSystem.DetectMarkersWithCLAHE.EmptyCrop");
+    
+    _currentResult.modesProcessed.Enable(VisionMode::Markers_FullWidth, !useHorizontalCycling);
+    _currentResult.modesProcessed.Enable(VisionMode::Markers_FullHeight, !useVariableHeight);
   }
   
   Result lastResult = RESULT_OK;
@@ -1211,7 +1297,8 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
     }
   }
 
-  const bool meterFromChargerOnly = IsModeEnabled(VisionMode::MeteringFromChargerOnly);
+  const bool meterFromChargerOnly = IsModeEnabled(VisionMode::Markers_ChargerOnly);
+  _currentResult.modesProcessed.Enable(VisionMode::Markers_ChargerOnly, meterFromChargerOnly);
   
   auto markerIter = _currentResult.observedMarkers.begin();
   while(markerIter != _currentResult.observedMarkers.end())
@@ -1298,65 +1385,77 @@ Result VisionSystem::DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
   
   return lastResult;
   
-} // DetectMarkersWithCLAHE()
+} // DetectMarkers
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::CheckForNeuralNetResults()
 {
-  for(const auto& neuralNetRunner : _neuralNetRunners)
+  for(const auto& neuralNetRunnerEntry : _neuralNetRunners)
   {
-    const bool resultReady = neuralNetRunner.second->GetDetections(_currentResult.salientPoints);
+    const std::string& networkName = neuralNetRunnerEntry.first;
+    const auto& neuralNetRunner = neuralNetRunnerEntry.second;
+    
+    const bool resultReady = neuralNetRunner->GetDetections(_currentResult.salientPoints);
     if(resultReady)
     {
       PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.CheckForNeuralNetResults.GotDetections",
                      "Network:%s NumSalientPoints:%zu",
-                     neuralNetRunner.first.c_str(), _currentResult.salientPoints.size());
+                     networkName.c_str(), _currentResult.salientPoints.size());
       
       std::set<VisionMode> modes;
-      const bool success = GetVisionModesForNeuralNet(neuralNetRunner.first, modes);
+      const bool success = GetVisionModesForNeuralNet(networkName, modes);
       if(ANKI_VERIFY(success, "VisionSystem.CheckForNeuralNetResults.NoModeForNetworkName", "Name: %s",
-                     neuralNetRunner.first.c_str()))
+                     networkName.c_str()))
       {
-        
+          
         for(auto & mode : modes)
         {
           _currentResult.modesProcessed.Insert(mode);
         }
         
-        if(IsModeEnabled(VisionMode::SavingImages) &&
-           !_neuralNetRunnerImage.IsEmpty() &&
-           _imageSaver->WantsToSave(_currentResult, _neuralNetRunnerImage.GetTimestamp()))
+        if(IsModeEnabled(VisionMode::SaveImages))
         {
-          const Result saveResult = _imageSaver->Save(_neuralNetRunnerImage, _frameNumber);
-          if(RESULT_OK == saveResult)
-          {
-            _currentResult.modesProcessed.Insert(VisionMode::SavingImages);
-          }
+          const Vision::ImageRGB& neuralNetRunnerImage = neuralNetRunner->GetOrigImg();
           
-          const std::string jsonFilename = _imageSaver->GetFullFilename(_frameNumber, "json");
-          Json::Value jsonSalientPoints;
-          NeuralNets::INeuralNetMain::ConvertSalientPointsToJson(_currentResult.salientPoints, false,
-                                                                 jsonSalientPoints);
-          const bool success = NeuralNets::INeuralNetMain::WriteResults(jsonFilename, jsonSalientPoints);
-          if(!success)
+          if(!neuralNetRunnerImage.IsEmpty() &&
+             _imageSaver->WantsToSave(_currentResult, neuralNetRunnerImage.GetTimestamp()))
           {
-            LOG_WARNING("VisionSystem.CheckForNeuralNets.WriteJsonSalientPointsFailed",
-                        "Writing %zu salient points to %s",
-                        _currentResult.salientPoints.size(), jsonFilename.c_str());
+            const Result saveResult = _imageSaver->Save(neuralNetRunnerImage, _frameNumber);
+            if(RESULT_OK == saveResult)
+            {
+              _currentResult.modesProcessed.Insert(VisionMode::SaveImages);
+            }
+            
+            const std::string jsonFilename = _imageSaver->GetFullFilename(_frameNumber, "json");
+            Json::Value jsonSalientPoints;
+            NeuralNets::INeuralNetMain::ConvertSalientPointsToJson(_currentResult.salientPoints, false,
+                                                                   jsonSalientPoints);
+            const bool success = NeuralNets::INeuralNetMain::WriteResults(jsonFilename, jsonSalientPoints);
+            if(!success)
+            {
+              LOG_WARNING("VisionSystem.CheckForNeuralNets.WriteJsonSalientPointsFailed",
+                          "Writing %zu salient points to %s",
+                          _currentResult.salientPoints.size(), jsonFilename.c_str());
+            }
           }
         }
-        
+          
         if(ANKI_DEV_CHEATS)
         {
-          AddFakeDetections(modes);
+          const Vision::ImageRGB& neuralNetRunnerImage = neuralNetRunner->GetOrigImg();
+          if(!neuralNetRunnerImage.IsEmpty())
+          {
+            AddFakeDetections(neuralNetRunnerImage.GetTimestamp(), modes);
+          }
         }
       }
-    }
+    } // if(resultReady)
+    
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void VisionSystem::AddFakeDetections(const std::set<VisionMode>& modes)
+void VisionSystem::AddFakeDetections(const TimeStamp_t atTimestamp, const std::set<VisionMode>& modes)
 {
   // DEBUG: Randomly fake detections of hands and pets if this network was registered to those modes
   if(Util::IsFltGTZero(kFakeHandDetectionProbability) ||
@@ -1369,15 +1468,15 @@ void VisionSystem::AddFakeDetections(const std::set<VisionMode>& modes)
       _currentResult.modesProcessed.Insert(mode);
       
       static Util::RandomGenerator rng;
-      if((VisionMode::DetectingHands == mode) && (rng.RandDbl() < kFakeHandDetectionProbability))
+      if((VisionMode::Hands == mode) && (rng.RandDbl() < kFakeHandDetectionProbability))
       {
         fakeDetectionsToAdd.emplace_back(Vision::SalientPointType::Hand);
       }
-      if((VisionMode::DetectingPets == mode) && (rng.RandDbl() < kFakeCatDetectionProbability))
+      if((VisionMode::Pets == mode) && (rng.RandDbl() < kFakeCatDetectionProbability))
       {
         fakeDetectionsToAdd.emplace_back(Vision::SalientPointType::Cat);
       }
-      if((VisionMode::DetectingPets == mode) && (rng.RandDbl() < kFakeDogDetectionProbability))
+      if((VisionMode::Pets == mode) && (rng.RandDbl() < kFakeDogDetectionProbability))
       {
         fakeDetectionsToAdd.emplace_back(Vision::SalientPointType::Dog);
       }
@@ -1385,7 +1484,7 @@ void VisionSystem::AddFakeDetections(const std::set<VisionMode>& modes)
     for(const auto& type : fakeDetectionsToAdd)
     {
       // Simple full-image "classification" SalientPoint
-      Vision::SalientPoint salientPoint(u32(_neuralNetRunnerImage.GetTimestamp()),
+      Vision::SalientPoint salientPoint(atTimestamp,
                                         0.5f, 0.5f, 1.f, 1.f,
                                         type, EnumToString(type),
                                         {CladPoint2d{0.f,0.f}, CladPoint2d{0.f,1.f}, CladPoint2d{1.f,1.f}, CladPoint2d{1.f,0.f}},
@@ -1419,10 +1518,10 @@ Result VisionSystem::Update(const VisionSystemInput& input)
   _modes = input.modesToProcess;
   _futureModes = input.futureModesToProcess;
   _imageCompressQuality = input.imageCompressQuality;
+  _vizImageBroadcastSize = input.vizImageBroadcastSize;
   
   return Update(input.poseData, *_imageCache);
 }
-
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // This is the regular Update() call
@@ -1487,119 +1586,135 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   lastResult = ApplyCLAHE(imageCache, useCLAHE, claheImage);
   ANKI_VERIFY(RESULT_OK == lastResult, "VisionSystem.Update.FailedCLAHE", "ApplyCLAHE supposedly has no failure mode");
   
-  if(IsModeEnabled(VisionMode::ComputingStatistics))
+  if(IsModeEnabled(VisionMode::Stats))
   {
-    Tic("TotalComputingStatistics");
+    Tic("TotalStats");
     _currentResult.imageMean = ComputeMean(imageCache, kImageMeanSampleInc);
-    visionModesProcessed.Insert(VisionMode::ComputingStatistics);
-    Toc("TotalComputingStatistics");
+    visionModesProcessed.Insert(VisionMode::Stats);
+    Toc("TotalStats");
   }
 
   DetectionRectsByMode detectionsByMode;
 
   bool anyModeFailures = false;
   
-  if(IsModeEnabled(VisionMode::DetectingMarkers) &&
-     !IsModeEnabled(VisionMode::DisableMarkerDetection))
+  
+  if(IsModeEnabled(VisionMode::Markers))
   {
-    const bool allowWhileRotatingFast = IsModeEnabled(VisionMode::MarkerDetectionWhileRotatingFast);
-    const bool wasRotatingTooFast = ( allowWhileRotatingFast ? false :
-                                     poseData.imuDataHistory.WasRotatingTooFast(imageCache.GetTimeStamp(),
-                                                                                DEG_TO_RAD(kBodyTurnSpeedThreshBlock_degs),
-                                                                                DEG_TO_RAD(kHeadTurnSpeedThreshBlock_degs)));
-    if(!wasRotatingTooFast)
+    if(IsModeEnabled(VisionMode::Markers_Off))
     {
-      // Marker detection uses rolling shutter compensation
-      UpdateRollingShutter(poseData, imageCache);
-      
-      Tic("TotalDetectingMarkers");
-      lastResult = DetectMarkersWithCLAHE(imageCache, claheImage, detectionsByMode[VisionMode::DetectingMarkers], useCLAHE, poseData);
-      
-      if(RESULT_OK != lastResult) {
-        PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
-        anyModeFailures = true;
-      } else {
-        visionModesProcessed.Insert(VisionMode::DetectingMarkers);
-        visionModesProcessed.Enable(VisionMode::MarkerDetectionWhileRotatingFast, allowWhileRotatingFast);
+      // Marker detection is forcibly disabled (Gross, see VIC-6838)
+      visionModesProcessed.Insert(VisionMode::Markers, VisionMode::Markers_Off);
+    }
+    else
+    {
+      const bool allowWhileRotatingFast = IsModeEnabled(VisionMode::Markers_FastRotation);
+      const bool wasRotatingTooFast = ( allowWhileRotatingFast ? false :
+                                       poseData.imuDataHistory.WasRotatingTooFast(imageCache.GetTimeStamp(),
+                                                                                  DEG_TO_RAD(kBodyTurnSpeedThreshBlock_degs),
+                                                                                  DEG_TO_RAD(kHeadTurnSpeedThreshBlock_degs)));
+      if(!wasRotatingTooFast)
+      {
+        // Marker detection uses rolling shutter compensation
+        UpdateRollingShutter(poseData, imageCache);
+        
+        Tic("TotalMarkers");
+        lastResult = DetectMarkers(imageCache, claheImage, detectionsByMode[VisionMode::Markers], useCLAHE, poseData);
+        
+        if(RESULT_OK != lastResult) {
+          PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
+          anyModeFailures = true;
+        } else {
+          visionModesProcessed.Insert(VisionMode::Markers);
+          visionModesProcessed.Enable(VisionMode::Markers_FastRotation, allowWhileRotatingFast);
+        }
+        Toc("TotalMarkers");
       }
-      Toc("TotalDetectingMarkers");
     }
   }
   
-  if(IsModeEnabled(VisionMode::DetectingFaces))
+  if(!IsModeEnabled(VisionMode::Markers_Composite) && 
+     _imageCompositor->GetNumImagesComposited() > 0) {
+    // Clears any leftover artifacts from prematurely cancelled ImageCompositing
+    // Check this here to avoid gating it on whether or not DetectMarkers
+    _imageCompositor->Reset();
+  }
+  
+  if(IsModeEnabled(VisionMode::Faces))
   {
-    const bool estimatingFacialExpression = IsModeEnabled(VisionMode::EstimatingFacialExpression);
+    const bool estimatingFacialExpression = IsModeEnabled(VisionMode::Faces_Expression);
     _faceTracker->EnableEmotionDetection(estimatingFacialExpression);
 
-    const bool detectingSmile = IsModeEnabled(VisionMode::DetectingSmileAmount);
+    const bool detectingSmile = IsModeEnabled(VisionMode::Faces_Smile);
     _faceTracker->EnableSmileDetection(detectingSmile);
 
-    const bool detectingGaze = IsModeEnabled(VisionMode::DetectingGaze);
+    const bool detectingGaze = IsModeEnabled(VisionMode::Faces_Gaze);
     _faceTracker->EnableGazeDetection(detectingGaze);
 
-    const bool detectingBlink = IsModeEnabled(VisionMode::DetectingBlinkAmount);
+    const bool detectingBlink = IsModeEnabled(VisionMode::Faces_Blink);
     _faceTracker->EnableBlinkDetection(detectingBlink);
 
     
-    Tic("TotalDetectingFaces");
+    Tic("TotalFaces");
     // NOTE: To use rolling shutter in DetectFaces, call UpdateRollingShutterHere
     // See: VIC-1417 
     // UpdateRollingShutter(poseData, imageCache);
-    const bool useCropping = IsModeEnabled(VisionMode::CroppedFaceDetection);
-    if((lastResult = DetectFaces(imageCache, detectionsByMode[VisionMode::DetectingFaces], useCropping)) != RESULT_OK) {
+    const bool useCropping = IsModeEnabled(VisionMode::Faces_Crop);
+    if((lastResult = DetectFaces(imageCache, detectionsByMode[VisionMode::Faces], useCropping)) != RESULT_OK) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectFacesFailed", "");
       anyModeFailures = true;
     } else {
-      visionModesProcessed.Insert(VisionMode::DetectingFaces);
-      visionModesProcessed.Enable(VisionMode::CroppedFaceDetection,          useCropping);
-      visionModesProcessed.Enable(VisionMode::EstimatingFacialExpression,    estimatingFacialExpression);
-      visionModesProcessed.Enable(VisionMode::DetectingSmileAmount,          detectingSmile);
-      visionModesProcessed.Enable(VisionMode::DetectingGaze,                 detectingGaze);
-      visionModesProcessed.Enable(VisionMode::DetectingBlinkAmount,          detectingBlink);
+      visionModesProcessed.Insert(VisionMode::Faces);
+      visionModesProcessed.Enable(VisionMode::Faces_Crop,          useCropping);
+      visionModesProcessed.Enable(VisionMode::Faces_Expression,    estimatingFacialExpression);
+      visionModesProcessed.Enable(VisionMode::Faces_Smile,         detectingSmile);
+      visionModesProcessed.Enable(VisionMode::Faces_Gaze,          detectingGaze);
+      visionModesProcessed.Enable(VisionMode::Faces_Blink,         detectingBlink);
     }
-    Toc("TotalDetectingFaces");
+    Toc("TotalFaces");
   }
   
-  if(IsModeEnabled(VisionMode::DetectingPets))
+  if(IsModeEnabled(VisionMode::Pets))
   {
-    Tic("TotalDetectingPets");
-    if((lastResult = DetectPets(imageCache, detectionsByMode[VisionMode::DetectingPets])) != RESULT_OK) {
+    Tic("TotalPets");
+    if((lastResult = DetectPets(imageCache, detectionsByMode[VisionMode::Pets])) != RESULT_OK) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectPetsFailed", "");
       anyModeFailures = true;
     } else {
-      visionModesProcessed.Insert(VisionMode::DetectingPets);
+      visionModesProcessed.Insert(VisionMode::Pets);
     }
-    Toc("TotalDetectingPets");
+    Toc("TotalPets");
   }
   
-  if(IsModeEnabled(VisionMode::DetectingMotion))
+  if(IsModeEnabled(VisionMode::Motion))
   {
-    Tic("TotalDetectingMotion");
+    Tic("TotalMotion");
     if((lastResult = DetectMotion(imageCache)) != RESULT_OK) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectMotionFailed", "");
       anyModeFailures = true;
     } else {
-      visionModesProcessed.Insert(VisionMode::DetectingMotion);
+      visionModesProcessed.Insert(VisionMode::Motion);
     }
-    Toc("TotalDetectingMotion");
+    Toc("TotalMotion");
   }
-  if(IsModeEnabled(VisionMode::DetectingBrightColors)){
+
+  if(IsModeEnabled(VisionMode::BrightColors)){
     if (imageCache.HasColor()){
-      Tic("TotalDetectingBrightColors");
+      Tic("TotalBrightColors");
       lastResult = DetectBrightColors(imageCache);
-      Toc("TotalDetectingBrightColors");
+      Toc("TotalBrightColors");
       if (lastResult != RESULT_OK){
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectBrightColorsFailed","");
         anyModeFailures = true;
       } else {
-        visionModesProcessed.Insert(VisionMode::DetectingBrightColors);
+        visionModesProcessed.Insert(VisionMode::BrightColors);
       }
     } else {
       PRINT_NAMED_WARNING("VisionSystem.Update.NoColorImage", "Could not process bright colors. No color image!");
     }
   }
-  // Disabling this while VisionMode::BuildingOverheadMap is disabled
-  if (IsModeEnabled(VisionMode::BuildingOverheadMap))
+  // Disabling this while VisionMode::OverheadMap is disabled
+  if (IsModeEnabled(VisionMode::OverheadMap))
   {
     if (imageCache.HasColor()) {
       Tic("UpdateOverheadMap");
@@ -1608,7 +1723,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       if (lastResult != RESULT_OK) {
         anyModeFailures = true;
       } else {
-        visionModesProcessed.Insert(VisionMode::BuildingOverheadMap);
+        visionModesProcessed.Insert(VisionMode::OverheadMap);
       }
     }
     else {
@@ -1616,7 +1731,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
   }
   
-  if (IsModeEnabled(VisionMode::DetectingVisualObstacles))
+  if (IsModeEnabled(VisionMode::Obstacles))
   {
     if (imageCache.HasColor()) {
       Tic("DetectVisualObstacles");
@@ -1625,7 +1740,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       if (lastResult != RESULT_OK) {
         anyModeFailures = true;
       } else {
-        visionModesProcessed.Insert(VisionMode::DetectingVisualObstacles);
+        visionModesProcessed.Insert(VisionMode::Obstacles);
       }
     }
     else {
@@ -1633,9 +1748,9 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
   }
 
-  if(IsModeEnabled(VisionMode::DetectingOverheadEdges))
+  if(IsModeEnabled(VisionMode::OverheadEdges))
   {
-    Tic("TotalDetectingOverheadEdges");
+    Tic("TotalOverheadEdges");
 
     lastResult = _overheadEdgeDetector->Detect(imageCache, _poseData, _currentResult);
     
@@ -1643,12 +1758,12 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectOverheadEdgesFailed", "");
       anyModeFailures = true;
     } else {
-      visionModesProcessed.Insert(VisionMode::DetectingOverheadEdges);
+      visionModesProcessed.Insert(VisionMode::OverheadEdges);
     }
-    Toc("TotalDetectingOverheadEdges");
+    Toc("TotalOverheadEdges");
   }
   
-  if(IsModeEnabled(VisionMode::ComputingCalibration))
+  if(IsModeEnabled(VisionMode::Calibration))
   {
     switch(kCalibTargetType)
     {
@@ -1662,8 +1777,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       case CameraCalibrator::CalibTargetType::INVERTED_BOX:
       {
         // Marker detection needs to have run before trying to do single target calibration
-        DEV_ASSERT(visionModesProcessed.Contains(VisionMode::DetectingMarkers),
-                   "VisionSystem.Update.ComputingCalibration.MarkersNotDetected");
+        DEV_ASSERT(visionModesProcessed.Contains(VisionMode::Markers),
+                   "VisionSystem.Update.Calibration.MarkersNotDetected");
         
         CameraCalibrator::CalibTargetType targetType = static_cast<CameraCalibrator::CalibTargetType>(kCalibTargetType);
         lastResult = _cameraCalibrator->ComputeCalibrationFromSingleTarget(targetType,
@@ -1677,30 +1792,30 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       PRINT_NAMED_ERROR("VisionSystem.Update.ComputeCalibrationFailed", "");
       anyModeFailures = true;
     } else {
-      visionModesProcessed.Insert(VisionMode::ComputingCalibration);
+      visionModesProcessed.Insert(VisionMode::Calibration);
     }
   }
   
-  if(IsModeEnabled(VisionMode::DetectingLaserPoints))
+  if(IsModeEnabled(VisionMode::Lasers))
   {
     // Skip laser point detection if the Laser FeatureGate is disabled.
     // TODO: Remove this once laser feature is enabled (COZMO-11185)
     if(_context->GetFeatureGate()->IsFeatureEnabled(FeatureType::Laser))
     {
-      Tic("TotalDetectingLaserPoints");
+      Tic("TotalLasers");
       if((lastResult = DetectLaserPoints(imageCache)) != RESULT_OK) {
         PRINT_NAMED_ERROR("VisionSystem.Update.DetectlaserPointsFailed", "");
         anyModeFailures = true;
       } else {
-        visionModesProcessed.Insert(VisionMode::DetectingLaserPoints);
+        visionModesProcessed.Insert(VisionMode::Lasers);
       }
-      Toc("TotalDetectingLaserPoints");
+      Toc("TotalLasers");
     }
   }
 
-  // Check for any objects from the detector. It runs asynchronously, so these objects
-  // will be from a different image than the one in the cache and will use their own
-  // VisionProcessingResult.
+  // Check for any results from any neural nets thave have been running (asynchronously).
+  // Note that any SalientPoints found will be from a different image than the one in the cache and
+  // will have their own timestamp which does not match the current VisionProcessingResult.
   CheckForNeuralNetResults();
   
   // Figure out if any modes requiring neural nets are enabled and keep up with the
@@ -1723,37 +1838,38 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   // Run the set of required networks
   for(const auto& networkName : networksToRun)
   {
-    const bool started = _neuralNetRunners.at(networkName)->StartProcessingIfIdle(imageCache);
+    auto iter = _neuralNetRunners.find(networkName);
+    if(iter == _neuralNetRunners.end())
+    {
+      // If the network does not exist, something has been configured / set up wrong in vision_config.json or
+      // perhaps in registering network names and VisionModes in visionModeHelpers.cpp. Die immediately.
+      // Don't waste time sifting through logs trying to figure out why the associated features isn't working.
+      LOG_ERROR("VisionSystem.Update.MissingNeuralNet",
+                "Requested to run network named %s but no runner for it exists",
+                networkName.c_str());
+      exit(-1);
+    }
+    
+    const bool started = iter->second->StartProcessingIfIdle(imageCache);
     if(started)
     {
-      // Remember the timestamp of the image used to do object detection, or the entire image
-      // if saving is enabled
-      if(IsModeEnabled(VisionMode::SavingImages))
-      {
-        _neuralNetRunnerImage = imageCache.GetRGB(_imageSaver->GetParams().size);
-      }
-      else
-      {
-        // This is just a tiny optimization that doesn't bother storing all the image data if saving is
-        // not enabled (which is the normal case). So we just store the timestamp like the old code this replaces.
-        _neuralNetRunnerImage.Clear();
-        _neuralNetRunnerImage.SetTimestamp(imageCache.GetTimeStamp());
-      }
+      PRINT_CH_DEBUG("NeuralNets", "VisionSystem.Update.StartedNeuralNet", "Running %s on image at time t:%u",
+                     networkName.c_str(), imageCache.GetTimeStamp());
     }
   }
   
   // Check for illumination state
-  if(IsModeEnabled(VisionMode::DetectingIllumination) &&
-     !IsModeEnabled(VisionMode::CyclingExposure)) // don't check for illumination if cycling exposure
+  if(IsModeEnabled(VisionMode::Illumination) &&
+     !IsModeEnabled(VisionMode::AutoExp_Cycling)) // don't check for illumination if cycling exposure
   {
-    Tic("DetectingIllumination");
+    Tic("Illumination");
     lastResult = DetectIllumination(imageCache);
-    Toc("DetectingIllumination");
+    Toc("Illumination");
     if (lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectIlluminationFailed", "");
       anyModeFailures = true;
     } else {
-      visionModesProcessed.Insert(VisionMode::DetectingIllumination);
+      visionModesProcessed.Insert(VisionMode::Illumination);
     }
   }
 
@@ -1762,7 +1878,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   // NOTE: This should come after any detectors that add things to "detectionRects"
   //       since it meters exposure based on those.
   const bool isWhiteBalancing = IsModeEnabled(VisionMode::WhiteBalance);
-  const bool isAutoExposing   = IsModeEnabled(VisionMode::AutoExposure);
+  const bool isAutoExposing   = IsModeEnabled(VisionMode::AutoExp);
   if(isAutoExposing || isWhiteBalancing)
   {
     Tic("UpdateCameraParams");
@@ -1773,12 +1889,12 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       PRINT_NAMED_ERROR("VisionSystem.Update.UpdateCameraParamsFailed", "");
       anyModeFailures = true;
     } else {
-      visionModesProcessed.Enable(VisionMode::AutoExposure, isAutoExposing);
+      visionModesProcessed.Enable(VisionMode::AutoExp, isAutoExposing);
       visionModesProcessed.Enable(VisionMode::WhiteBalance, isWhiteBalancing);
     }
   }
   
-  if(IsModeEnabled(VisionMode::Benchmarking))
+  if(IsModeEnabled(VisionMode::Benchmark))
   {
     Tic("Benchmarking");
     const Result benchMarkResult = _benchmark->Update(imageCache);
@@ -1788,13 +1904,13 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       PRINT_NAMED_ERROR("VisionSystem.Update.BenchmarkFailed", "");
       // Continue processing, since this should be independent of other modes
     } else {
-      visionModesProcessed.Insert(VisionMode::Benchmarking);
+      visionModesProcessed.Insert(VisionMode::Benchmark);
     }
   }
   
-  if(IsModeEnabled(VisionMode::SavingImages) && _imageSaver->WantsToSave(_currentResult, imageCache.GetTimeStamp()))
+  if(IsModeEnabled(VisionMode::SaveImages) && _imageSaver->WantsToSave(_currentResult, imageCache.GetTimeStamp()))
   {
-    Tic("SavingImages");
+    Tic("SaveImages");
     
     // Check this before calling Save(), since that can modify imageSaver's state
     const bool shouldSaveSensorData = _imageSaver->ShouldSaveSensorData();
@@ -1803,29 +1919,29 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     
     const Result saveSensorResult = (shouldSaveSensorData ? SaveSensorData() : RESULT_OK);
     
-    Toc("SavingImages");
+    Toc("SaveImages");
 
     if((RESULT_OK != saveResult) || (RESULT_OK != saveSensorResult)) // || (RESULT_OK != thumbnailResult))
     {
-      PRINT_NAMED_ERROR("VisionSystem.Update.SavingImagesFailed", "Image:%s SensorData:%s",
+      PRINT_NAMED_ERROR("VisionSystem.Update.SaveImagesFailed", "Image:%s SensorData:%s",
                         (RESULT_OK == saveResult ? "OK" : "FAIL"),
                         (RESULT_OK == saveSensorResult ? "OK" : "FAIL"));
       // Continue processing, since this should be independent of other modes
     }
     else {
-      visionModesProcessed.Insert(VisionMode::SavingImages);
+      visionModesProcessed.Insert(VisionMode::SaveImages);
     }
   }
 
-  if(IsModeEnabled(VisionMode::ImageViz))
+  if(IsModeEnabled(VisionMode::Viz))
   {
-    Tic("ImageViz");
+    Tic("Viz");
 
-    _currentResult.compressedDisplayImg.Compress(imageCache.GetRGB(), _imageCompressQuality);
+    _currentResult.compressedDisplayImg.Compress(imageCache.GetRGB(_vizImageBroadcastSize), _imageCompressQuality);
 
-    Toc("ImageViz");
+    Toc("Viz");
 
-    visionModesProcessed.Insert(VisionMode::ImageViz);
+    visionModesProcessed.Insert(VisionMode::Viz);
   }
 
   if(kDisplayUndistortedImages)
@@ -1839,6 +1955,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
 
   // NOTE: This should come at the end because it relies on elements of the current VisionProcessingResult
   //       (i.e. _currentResult) to be populated for the purposes of drawing them.
+  //       Note that any asynchronous results (e.g. from neural nets) get drawn on whatever image is current
+  //       when they complete, for better or worse, so they are not actually in sync.
   if(IsModeEnabled(VisionMode::MirrorMode))
   {
     // TODO: Add an ImageCache::Size for MirrorMode directly
@@ -1852,7 +1970,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   }
   
   // We've computed everything from this image that we're gonna compute.
-  // Push it onto the queue of results all together.
+  // Push the result, along with any neural net results, onto the queue of results all together.
   _mutex.lock();
   _results.push(_currentResult);
   _mutex.unlock();
@@ -1880,8 +1998,9 @@ Result VisionSystem::SaveSensorData() const {
 
     const HistRobotState& state = _poseData.histState;
     // prox sensor
-    if (state.WasProxSensorValid()) {
-      config["proxSensor"] = state.GetProxSensorVal_mm();
+    const auto& proxData = state.GetProxSensorData();
+    if (proxData.foundObject) {
+      config["proxSensor"] = proxData.distance_mm;
     }
     else {
       config["proxSensor"] = -1;

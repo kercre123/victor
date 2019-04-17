@@ -90,6 +90,15 @@ public:
   bool AddLayer(CompositeImageLayer&& layer);
   void ClearLayerByName(LayerName name);
 
+  void AddImage(SpriteHandle handle,
+                const SpriteBoxName& sbName,
+                const LayerName& layerName,
+                const SpriteRenderMethod& renderMethod,
+                const int xPos,
+                const int yPos,
+                const int width,
+                const int height);
+
   const LayerLayoutMap& GetLayerLayoutMap() const { return _layerMap;}
   LayerLayoutMap& GetLayerLayoutMap()             { return _layerMap;}
   // Returns a pointer to the layer within the composite image

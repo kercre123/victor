@@ -18,10 +18,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/delegationComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTimers.h"
-#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionAnyStimuli.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionLambda.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/blockWorld/blockWorldFilter.h"
@@ -117,22 +114,6 @@ BehaviorHighLevelAI::~BehaviorHighLevelAI()
 {
   
 }
-
-bool BehaviorHighLevelAI::IsBehaviorActive( BehaviorID behaviorID ) const
-{
-  const auto& BC = GetBEI().GetBehaviorContainer();
-  const ICozmoBehaviorPtr targetBehavior = BC.FindBehaviorByID( behaviorID );
-  if( targetBehavior != nullptr ) {
-    const IBehavior* behavior = this;
-    BOUNDED_WHILE( 100, (behavior != nullptr) && "Stack too deep to find behavior" ) {
-      behavior = GetBEI().GetDelegationComponent().GetBehaviorDelegatedTo( behavior );
-      if( behavior == targetBehavior.get() ) {
-        return true;
-      }
-    }
-  }
-  return false;
-}
   
 void BehaviorHighLevelAI::BehaviorUpdate()
 {
@@ -176,7 +157,7 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
           return false;
         },
         ConditionLambda::VisionModeSet{
-          { VisionMode::DetectingFaces, EVisionUpdateFrequency::Low }
+          { VisionMode::Faces, EVisionUpdateFrequency::Low }
         },
         emptyOwnerLabel )));
 
@@ -194,7 +175,7 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
           return block != nullptr;
         },
         ConditionLambda::VisionModeSet{
-          { VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low }
+          { VisionMode::Markers, EVisionUpdateFrequency::Low }
         },
         emptyOwnerLabel )));
   
@@ -246,7 +227,7 @@ CustomBEIConditionHandleList BehaviorHighLevelAI::CreateCustomConditions()
           return block != nullptr;
         },
         ConditionLambda::VisionModeSet{
-          { VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low }
+          { VisionMode::Markers, EVisionUpdateFrequency::Low }
         },
         emptyOwnerLabel )));
 
@@ -288,7 +269,6 @@ void BehaviorHighLevelAI::OverrideResumeState( StateID& resumeState )
 {
   // get the most recent post-behavior suggestion that we care about
   size_t maxTick = 0;
-  PostBehaviorSuggestions suggestion = PostBehaviorSuggestions::Invalid;
   StateID maxTickState = InvalidStateID;
   for( const auto& configSuggestion : _params.pbsResumeOverrides ) {
     size_t tick = 0;
@@ -296,7 +276,6 @@ void BehaviorHighLevelAI::OverrideResumeState( StateID& resumeState )
         && (tick >= maxTick) )
     {
       maxTick = tick;
-      suggestion = configSuggestion.first;
       maxTickState = configSuggestion.second;
     }
   }

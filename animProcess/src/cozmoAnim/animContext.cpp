@@ -24,6 +24,7 @@
 
 namespace Anki {
 namespace Vector {
+namespace Anim {
 
 class ThreadIDInternal : private Util::noncopyable
 {
@@ -101,5 +102,6 @@ void AnimContext::SetLocale(const std::string & locale)
     _alexa->UpdateLocale(*_locale);
   }
 }
+} // namespace Anim
 } // namespace Vector
 } // namespace Anki

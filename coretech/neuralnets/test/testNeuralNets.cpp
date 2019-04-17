@@ -13,9 +13,9 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/shared/math/point.h"
 #include "coretech/neuralnets/iNeuralNetMain.h"
-#include "coretech/neuralnets/neuralNetFilenames.h"
 #include "coretech/neuralnets/neuralNetJsonKeys.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/neuralnets/neuralNetModel_offboard.h"
+#include "coretech/vision/engine/image.h"
 
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/includeGTest.h" // Used in place of gTest/gTest.h directly to suppress warnings in the header
@@ -326,8 +326,8 @@ GTEST_TEST(NeuralNets, MultipleModels)
     
     virtual int GetPollPeriod_ms(const Json::Value& config) const override
     {
-      assert(config.isMember(NeuralNets::JsonKeys::PollingPeriod));
-      return config[NeuralNets::JsonKeys::PollingPeriod].asInt();
+      assert(config.isMember(NeuralNets::OffboardModel::JsonKeys::PollingPeriod));
+      return config[NeuralNets::OffboardModel::JsonKeys::PollingPeriod].asInt();
     }
     
     virtual void Step(int pollPeriod_ms) override
@@ -357,8 +357,8 @@ GTEST_TEST(NeuralNets, MultipleModels)
   std::vector<Vision::SalientPoint> salientPoints;
   
   const std::vector<std::string> resultFilenames =  {
-    Util::FileUtils::FullFilePath({TestPaths::CachePath, "quantized", NeuralNets::Filenames::Result}),
-    Util::FileUtils::FullFilePath({TestPaths::CachePath, "non-quantized", NeuralNets::Filenames::Result}),
+    Util::FileUtils::FullFilePath({TestPaths::CachePath, "quantized", NeuralNets::OffboardModel::Filenames::Result}),
+    Util::FileUtils::FullFilePath({TestPaths::CachePath, "non-quantized", NeuralNets::OffboardModel::Filenames::Result}),
   };
   
   for(const auto& resultFilename : resultFilenames)

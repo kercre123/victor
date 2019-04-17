@@ -28,11 +28,10 @@
 
 #include "micDataTypes.h"
 
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image.h"
-#include "coretech/vision/engine/image_impl.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleSystem.h"
 #include "util/fileUtils/fileUtils.h"
@@ -149,13 +148,12 @@ FaceInfoScreenManager::FaceInfoScreenManager()
   _scratchDrawingImg->Allocate(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
 
   _calmModeMsgOnNone.enable = false;
-  _calmModeMsgOnNone.calibOnDisable = false;
 
   memset(&_customText, 0, sizeof(_customText));
 }
 
 
-void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animStreamer)
+void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStreamer* animStreamer)
 {
   DEV_ASSERT(context != nullptr, "FaceInfoScreenManager.Init.NullContext");
 
@@ -233,8 +231,17 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   }
 
   ADD_SCREEN(MicDirectionClock, Camera);
-  ADD_SCREEN(Camera, Main);    // Last screen cycles back to Main
   ADD_SCREEN(CameraMotorTest, Camera);
+  
+  if(IsWhiskey())
+  {
+    ADD_SCREEN(Camera, ToF);
+    ADD_SCREEN(ToF, Main);    // Last screen cycles back to Main
+  }
+  else
+  {
+    ADD_SCREEN(Camera, Main);
+  }
 
 
   // ========== Screen Customization ========= 
@@ -253,7 +260,6 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
     // Disable calm mode
     RobotInterface::CalmPowerMode msg;
     msg.enable = false;
-    msg.calibOnDisable = false;
     SendAnimToRobot(std::move(msg));
   };
   SET_ENTER_ACTION(None, noneEnterFcn);
@@ -413,6 +419,25 @@ void FaceInfoScreenManager::Init(AnimContext* context, AnimationStreamer* animSt
   };
   SET_ENTER_ACTION(CameraMotorTest, cameraEnterAction);
   SET_EXIT_ACTION(CameraMotorTest, cameraMotorTestExitAction);
+
+  if(IsWhiskey())
+  {
+    // ToF screen 
+    FaceInfoScreen::ScreenAction enterToFScreen = []() {
+                                                    RobotInterface::SendRangeData msg;
+                                                    msg.enable = true;
+                                                    RobotInterface::SendAnimToEngine(std::move(msg));
+                                                  };
+    SET_ENTER_ACTION(ToF, enterToFScreen);
+
+    // ToF screen 
+    FaceInfoScreen::ScreenAction exitToFScreen = []() {
+                                                   RobotInterface::SendRangeData msg;
+                                                   msg.enable = false;
+                                                   RobotInterface::SendAnimToEngine(std::move(msg));
+                                                 };
+    SET_EXIT_ACTION(ToF, exitToFScreen);
+  }
 
   
   // Check if we booted in recovery mode
@@ -1109,6 +1134,13 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
         LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.ExitPairing", "Going to Customer Service Main from Pairing");
         RobotInterface::SendAnimToEngine(SwitchboardInterface::ExitPairing());
         SetScreen(ScreenName::Main);
+
+        // DAS msg for entering customer care screen
+        // Note: The debug info screens will only be reported unlocked here if they 
+        //       were unlocked the previous time the customer care screen was entered.
+        DASMSG(robot_cc_screen_enter, "robot.cc_screen_enter", "Entered customer care screen");
+        DASMSG_SET(i1, _debugInfoScreensUnlocked ? 1 : 0, "Debug info screens unlocked");
+        DASMSG_SEND();
       }
     }
   }
@@ -1347,29 +1379,42 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
   const std::string cliffs = temp;
 
 
-  sprintf(temp,
-          "DIST:   %3umm",
-          state.proxData.distance_mm);
-  const std::string prox1 = temp;
+  std::string prox1, prox2;
+  if(!IsWhiskey())
+  {
+    sprintf(temp,
+            "DIST:   %3umm",
+            state.proxData.distance_mm);
+    prox1 = temp;
 
-  sprintf(temp,
-          "        (%2.1f %2.1f %3.f)",
-          state.proxData.signalIntensity,
-          state.proxData.ambientIntensity,
-          state.proxData.spadCount);
-  const std::string prox2 = temp;
-
+    sprintf(temp,
+            "        (%2.1f %2.1f %3.f)",
+            state.proxData.signalIntensity,
+            state.proxData.ambientIntensity,
+            state.proxData.spadCount);
+    prox2 = temp;
+  }
 
   sprintf(temp,
           "TOUCH: %u",
           state.backpackTouchSensorRaw);
   const std::string touch = temp;
 
-  const bool batteryDisconnected = static_cast<bool>(state.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED);
+  #define IS_STATUS_FLAG_SET(x) ((state.status & (uint32_t)RobotStatusFlag::x) != 0)
+  const bool batteryDisconnected = IS_STATUS_FLAG_SET(IS_BATTERY_DISCONNECTED);
+  const bool batteryCharging     = IS_STATUS_FLAG_SET(IS_CHARGING);
+  const bool batteryHot          = IS_STATUS_FLAG_SET(IS_BATTERY_OVERHEATED);
+  const bool batteryLow          = IS_STATUS_FLAG_SET(IS_BATTERY_LOW);
+  const bool shutdownImminent    = IS_STATUS_FLAG_SET(IS_SHUTDOWN_IMMINENT);
+
   sprintf(temp,
-          "BATT:  %0.2fV   %s",
+          "BATT:  %0.2fV   %s%s%s%s%s",
           state.batteryVoltage,
-          batteryDisconnected ? "D" : "");
+          batteryDisconnected ? "D" : " ",
+          batteryCharging     ? "C" : " ",
+          batteryHot          ? "H" : " ",
+          batteryLow          ? "L" : " ",
+          shutdownImminent    ? "S" : " ");
   const std::string batt = temp;
 
   sprintf(temp,
@@ -1383,7 +1428,14 @@ void FaceInfoScreenManager::DrawSensorInfo(const RobotState& state)
           state.battTemp_C);
   const std::string tempC = temp;
 
-  DrawTextOnScreen({syscon, cliffs, prox1, prox2, touch, batt, charger, tempC});
+  if(IsWhiskey())
+  {
+    DrawTextOnScreen({cliffs, touch, batt, charger, tempC});
+  }
+  else
+  {
+    DrawTextOnScreen({syscon, cliffs, prox1, prox2, touch, batt, charger, tempC});
+  }
 }
 
 void FaceInfoScreenManager::DrawIMUInfo(const RobotState& state)
@@ -1442,6 +1494,8 @@ void FaceInfoScreenManager::DrawMicInfo(const RobotInterface::MicData& micData)
     return;
   }
 
+  //Get the intensity of the first sample in each channel and print them to a debug string.
+  //(Should we instead use the max intensity of the first n samples per channel?)
   char temp[32] = "";
   sprintf(temp,
           "%d",
@@ -1450,17 +1504,17 @@ void FaceInfoScreenManager::DrawMicInfo(const RobotInterface::MicData& micData)
 
   sprintf(temp,
           "%d",
-          micData.data[1]);
+          micData.data[MicData::kSamplesPerBlockPerChannel]);
   const std::string micData1 = temp;
 
   sprintf(temp,
           "%d",
-          micData.data[2]);
+          micData.data[MicData::kSamplesPerBlockPerChannel*2]);
   const std::string micData2 = temp;
 
   sprintf(temp,
           "%d",
-          micData.data[3]);
+          micData.data[MicData::kSamplesPerBlockPerChannel*3]);
   const std::string micData3 = temp;
 
   DrawTextOnScreen({"MICS", micData0, micData1, micData2, micData3});
@@ -1702,6 +1756,92 @@ void FaceInfoScreenManager::DrawTextOnScreen(const ColoredTextLines& lines,
   DrawScratch();
 }
 
+void FaceInfoScreenManager::DrawToF(const RangeDataDisplay& data)
+{
+  if(GetCurrScreenName() != ScreenName::ToF)
+  {
+    return;
+  }
+  
+  Vision::ImageRGB565& img = *_scratchDrawingImg;
+  const auto& clearColor = NamedColors::BLACK;
+  img.FillWith( {clearColor.r(), clearColor.g(), clearColor.b()} );
+
+  // Draw the range data in a 4x4 grid where each cell is one of the range ROIs
+  const u32 gridHeight = FACE_DISPLAY_HEIGHT / 4;
+  const u32 gridWidth = FACE_DISPLAY_WIDTH / 4;
+  for(const auto& rangeData : data.data)
+  {
+    int roi = rangeData.roi;
+    
+    const u32 x = (roi % 4) * gridWidth;
+    const u32 y = (roi / 4) * gridHeight;
+    const Rectangle<f32> rect(x, y, gridWidth-1, gridHeight-1); // -1 for 1 pixel borders
+
+    // Assuming max range is 1m
+    f32 temp = std::max(rangeData.processedRange_mm, 0.000001f); // Prevent divide by zero
+    temp = std::min(temp, 1000.f) / 1000.f;
+
+    // Scale color based on distance
+    u8 color = 255 * temp;
+
+    u8 status = rangeData.status;
+
+    // Signal quality is signalRate / spadCount
+    float tempDiv = (rangeData.spadCount == 0 ? -1 : rangeData.spadCount);
+    float signalQuality = (f32)(rangeData.signalRate_mcps / tempDiv);
+
+    // Default background color is green
+    // unless this ROI reported an invalid status in which the background
+    // is red
+    ColorRGBA bg(0, (u8)(255-color), 0);
+    if(status != 0)
+    {
+      bg = ColorRGBA((u8)255, (u8)0, (u8)0);
+      color = 255;
+    }
+
+    img.DrawFilledRect(rect, bg);
+
+    const float kTextScale = 0.3f;
+    const int kTextThickness = 1;
+    
+    // Draw three things in each cell, distance (top left), status (top right), and signal quality (bottom left)
+    Point2f loc(x, y + 8); // Draw text 8 pixels below top cell border
+    const u8 textColor = (color > 128 ? 255 : 0); // Make text color opposite of background for readability
+    img.DrawText(loc,
+                 std::to_string((u32)(rangeData.processedRange_mm)),
+                 {textColor, textColor, textColor},
+                 kTextScale,
+                 false,
+                 kTextThickness);
+
+    // Range status is drawn a fixed amount from range distance (close to top right corner of cell)
+    const f32 xPos = loc.x() + (u32)(2.75f*(f32)kDefaultTextSpacing_pix);
+    img.DrawText({xPos, loc.y()},
+                 std::to_string(status),
+                 {textColor, textColor, textColor},
+                 kTextScale,
+                 false,
+                 kTextThickness);
+
+    const int yOffset = Vision::Image::GetTextSize(std::to_string((u32)(rangeData.processedRange_mm)),
+                                                   kTextScale,
+                                                   kTextThickness).y();
+    const f32 yPos = loc.y() + yOffset + 1; // +1 for extra spacing between text lines
+    char t[8];
+    sprintf(t, "%2.1f", signalQuality);
+    img.DrawText({loc.x(), yPos},
+                 std::string(t),
+                 {textColor, textColor, textColor},
+                 kTextScale,
+                 false,
+                 kTextThickness);
+  }  
+  
+  DrawScratch();
+}
+
 
 void FaceInfoScreenManager::EnablePairingScreen(bool enable)
 {
@@ -1940,7 +2080,7 @@ bool FaceInfoScreenManager::ScreenNeedsWait(const ScreenName& screenName) const
   }
 }
 
-void FaceInfoScreenManager::SelfTestEnd(AnimationStreamer* animStreamer)
+void FaceInfoScreenManager::SelfTestEnd(Anim::AnimationStreamer* animStreamer)
 {
   const ScreenName curScreen = FaceInfoScreenManager::getInstance()->GetCurrScreenName();
   if(curScreen != ScreenName::SelfTestRunning)

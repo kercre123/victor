@@ -14,21 +14,19 @@
 
 #include "engine/aiComponent/salientPointsComponent.h"
 #include "engine/aiComponent/aiComponent.h"
-#include "engine/actions/basicActions.h"
 #include "camera/cameraService.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/dockingComponent.h"
 #include "engine/components/nvStorageComponent.h"
 #include "engine/components/photographyManager.h"
 #include "engine/components/powerStateManager.h"
-#include "engine/components/sensors/imuComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/components/visionScheduleMediator/visionScheduleMediator.h"
+#include "engine/namedColors/namedColors.h"
 #include "engine/navMap/mapComponent.h"
-#include "engine/cozmoContext.h"
-#include "engine/externalInterface/externalInterface.h"
 #include "engine/externalInterface/gatewayInterface.h"
 #include "engine/faceWorld.h"
 #include "engine/petWorld.h"
@@ -40,31 +38,17 @@
 #include "engine/vision/visionSystem.h"
 #include "engine/viz/vizManager.h"
 
-#include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/compressedImage.h"
-#include "coretech/vision/engine/image_impl.h"
-#include "coretech/vision/engine/trackedFace.h"
-#include "coretech/vision/engine/observableObjectLibrary_impl.h"
-#include "coretech/vision/engine/visionMarker.h"
-#include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
-#include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/opencvThreading.h"
-#include "coretech/common/engine/math/polygon_impl.h"
-#include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/engine/utils/data/dataPlatform.h"
-#include "coretech/common/engine/utils/timer.h"
-#include "coretech/common/robot/config.h"
+#include "coretech/common/engine/math/polygon.h"
 
 #include "util/cpuProfiler/cpuProfiler.h"
-#include "util/fileUtils/fileUtils.h"
-#include "util/helpers/boundedWhile.h"
 #include "util/helpers/templateHelpers.h"
 #include "util/logging/logging.h"
 #include "util/logging/DAS.h"
 #include "util/string/stringUtils.h"
 #include "util/threading/threadPriority.h"
-#include "util/bitFlags/bitFlags.h"
 
 #include "anki/cozmo/shared/factory/faultCodes.h"
 
@@ -72,8 +56,6 @@
 
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "clad/externalInterface/messageGameToEngine.h"
-#include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/types/imageTypes.h"
 
 #include "aiComponent/beiConditions/conditions/conditionEyeContact.h"
 
@@ -94,14 +76,10 @@ namespace Vector {
   CONSOLE_VAR(bool, kSendDebugImages,  "Vision.General", true);
 
   CONSOLE_VAR(bool, kSendUndistortedImages, "Vision.General", false);
-  
+
   // Whether or not to do rolling shutter correction for physical robots
   CONSOLE_VAR(bool, kRollingShutterCorrectionEnabled, "Vision.PreProcessing", true);
   CONSOLE_VAR(f32,  kMinCameraGain,                   "Vision.PreProcessing", 0.1f);
-
-  // Amount of time we sleep when paused, waiting for next image, and after processing each image
-  // (in order to provide a little breathing room for main thread)
-  CONSOLE_VAR_RANGED(u8, kVision_MinSleepTime_ms, "Vision.General", 2, 1, 10);
 
   // Set to a value greater than 0 to randomly drop that fraction of frames, for testing
   CONSOLE_VAR_RANGED(f32, kSimulateDroppedFrameFraction, "Vision.General", 0.f, 0.f, 1.f); // DO NOT COMMIT > 0!
@@ -121,7 +99,7 @@ namespace Vector {
   // Prints warning if haven't captured valid frame in this amount of time.
   // This is dependent on how fast we can process an image
   CONSOLE_VAR(u32, kMaxExpectedTimeBetweenCapturedFrames_ms, "Vision.General", 500);
-  
+
   void DebugEraseAllEnrolledFaces(ConsoleFunctionContextRef context)
   {
     LOG_INFO("VisionComponent.ConsoleFunc","DebugEraseAllEnrolledFaces function called");
@@ -169,7 +147,7 @@ namespace Vector {
     TimeStamp_t kImageQualityAlertSpacing_ms = 5000;
 
     u16 kInitialExposureTime_ms = 16;
-    
+
     const char* const kDefaultFaceAlbumName = "default";
   }
 
@@ -222,16 +200,16 @@ namespace Vector {
     {
       const Json::Value& config = context->GetDataLoader()->GetRobotVisionConfig();
       ReadVisionConfig(config);
-      
+
       if(!config.isMember("InitialModeSchedules"))
       {
-        PRINT_NAMED_ERROR("VisionComponent.InitDependent.MissingInitialModeSchedulesConfigField", "");
+        LOG_ERROR("VisionComponent.InitDependent.MissingInitialModeSchedulesConfigField", "");
       }
-      
+
       const Json::Value& modeSchedulesConfig = config["InitialModeSchedules"];
       const Result result = AllVisionModesSchedule::SetDefaultSchedulesFromJSON(modeSchedulesConfig);
       if(RESULT_OK != result) {
-        PRINT_NAMED_ERROR("VisionComponent.InitDependent.FailedToInitializeDefaultModeSchedules", "");
+        LOG_ERROR("VisionComponent.InitDependent.FailedToInitializeDefaultModeSchedules", "");
       }
     }
 
@@ -245,6 +223,10 @@ namespace Vector {
     SetLiftCrossBar();
 
     SetupVisionModeConsoleVars();
+
+    // Turn on auto exposure and white balance
+    EnableAutoExposure(true);
+    EnableWhiteBalance(true);
   }
 
   void VisionComponent::ReadVisionConfig(const Json::Value& config)
@@ -256,7 +238,7 @@ namespace Vector {
 #   define GET_JSON_PARAMETER(__json__, __fieldName__, __variable__) \
     do { \
       if(!JsonTools::GetValueOptional(__json__, __fieldName__, __variable__)) { \
-        PRINT_NAMED_ERROR("Vision.Init.MissingJsonParameter", "%s", __fieldName__); \
+        LOG_ERROR("Vision.Init.MissingJsonParameter", "%s", __fieldName__); \
         return; \
     }} while(0)
 
@@ -273,20 +255,20 @@ namespace Vector {
 
     Result result = _visionSystem->Init(config);
     if(RESULT_OK != result) {
-      PRINT_NAMED_ERROR("VisionComponent.Init.VisionSystemInitFailed", "");
+      LOG_ERROR("VisionComponent.Init.VisionSystemInitFailed", "");
       return;
     }
 
-    
+
     // Load face album and broadcast all known faces
     {
       _faceAlbumName = kDefaultFaceAlbumName;
       JsonTools::GetValueOptional(config, JsonKey::FaceAlbum, _faceAlbumName);
       result = LoadFaceAlbum(); // NOTE: Also broadcasts any loaded faces
-      
+
       if(RESULT_OK != result) {
-        PRINT_NAMED_WARNING("VisionComponent.Init.LoadFaceAlbumFromFileFailed",
-                            "AlbumFile: %s", _faceAlbumName.c_str());
+        LOG_WARNING("VisionComponent.Init.LoadFaceAlbumFromFileFailed",
+                    "AlbumFile: %s", _faceAlbumName.c_str());
       }
     }
 
@@ -350,8 +332,8 @@ namespace Vector {
   void VisionComponent::Start()
   {
     if(!IsCameraCalibrationSet()) {
-      PRINT_NAMED_ERROR("VisionComponent.Start",
-                        "Camera calibration must be set to start VisionComponent.");
+      LOG_ERROR("VisionComponent.Start",
+                "Camera calibration must be set to start VisionComponent.");
       return;
     }
 
@@ -370,13 +352,15 @@ namespace Vector {
     // Note that we're giving the Processor a pointer to "this", so we
     // have to ensure this VisionSystem object outlives the thread.
     _processingThread = std::thread(&VisionComponent::Processor, this);
-    //_processingThread.detach();
-
   }
 
   void VisionComponent::Stop()
   {
-    _running = false;
+    {
+      std::unique_lock<std::mutex> lock{_imageReadyMutex};
+      _running = false;
+    }
+    _imageReadyCondition.notify_all();
 
     // Wait for processing thread to die before destructing since we gave it
     // a reference to *this
@@ -426,7 +410,7 @@ namespace Vector {
     {
       VisionModeRequest request{.mode = mode,
                                 .frequency = EVisionUpdateFrequency::High};
-    
+
       _robot->GetVisionScheduleMediator().AddAndUpdateVisionModeSubscriptions(this, {request});
     }
     else
@@ -454,19 +438,19 @@ namespace Vector {
   void VisionComponent::UpdateDependent(const RobotCompMap& dependentComps)
   {
     if(!_isInitialized) {
-      PRINT_NAMED_WARNING("VisionComponent.Update.NotInitialized", "");
+      LOG_WARNING("VisionComponent.Update.NotInitialized", "");
       return;
     }
 
     if (!_enabled) {
-      PRINT_PERIODIC_CH_INFO(200, "VisionComponent", "VisionComponent.Update.NotEnabled", "If persistent, camera calibration is probably missing");
+      LOG_PERIODIC_INFO(200, "VisionComponent.Update.NotEnabled", "If persistent, camera calibration is probably missing");
       return;
     }
 
     if(!IsCameraCalibrationSet())
     {
-      PRINT_NAMED_WARNING("VisionComponent.Update.NoCameraCalibration",
-                          "Camera calibration should be set before calling UpdateDependent().");
+      LOG_WARNING("VisionComponent.Update.NoCameraCalibration",
+                  "Camera calibration should be set before calling UpdateDependent().");
       return;
     }
 
@@ -474,7 +458,7 @@ namespace Vector {
 
     // Check and update any results from VisionSystem
     UpdateAllResults();
-    
+
     UpdateCaptureFormatChange();
 
     // If we don't yet have an image to process, we need to capture one
@@ -488,8 +472,8 @@ namespace Vector {
 
       if(!gotImage)
       {
-        PRINT_CH_DEBUG("VisionComponent", "VisionComponent.Update.WaitingForBufferedImage", "Tick:%zu",
-                       BaseStationTimer::getInstance()->GetTickCount());
+        LOG_DEBUG("VisionComponent.Update.WaitingForBufferedImage", "Tick:%zu",
+                  BaseStationTimer::getInstance()->GetTickCount());
         return;
       }
 
@@ -501,7 +485,7 @@ namespace Vector {
       {
         return;
       }
-        
+
       // Track how fast we are receiving frames
       if(_lastReceivedImageTimeStamp_ms > 0)
       {
@@ -509,9 +493,9 @@ namespace Vector {
         const bool timeWentBackwards = buffer.GetTimestamp() < _lastReceivedImageTimeStamp_ms;
         if (timeWentBackwards)
         {
-          PRINT_NAMED_WARNING("VisionComponent.SetNextImage.UnexpectedTimeStamp",
-                              "Current:%u Last:%u",
-                              buffer.GetTimestamp(), (TimeStamp_t)_lastReceivedImageTimeStamp_ms);
+          LOG_WARNING("VisionComponent.SetNextImage.UnexpectedTimeStamp",
+                      "Current:%u Last:%u",
+                      buffer.GetTimestamp(), (TimeStamp_t)_lastReceivedImageTimeStamp_ms);
 
           // This should be recoverable (it could happen if we receive a bunch of garbage image data)
           // so reset the lastReceived and lastProcessed timestamps so we can set them fresh next time
@@ -524,7 +508,7 @@ namespace Vector {
         _framePeriod_ms = (TimeStamp_t)(buffer.GetTimestamp() - _lastReceivedImageTimeStamp_ms);
       }
       _lastReceivedImageTimeStamp_ms = buffer.GetTimestamp();
-      
+
       // Try to get the corresponding historical state
       const bool imageOlderThanOldestState = (buffer.GetTimestamp() < _robot->GetStateHistory()->GetOldestTimeStamp());
       if(imageOlderThanOldestState)
@@ -532,9 +516,9 @@ namespace Vector {
         // Special case: we're trying to process an image with a timestamp older than the oldest thing in
         // state history. This can happen at startup, or possibly when we delocalize and clear state
         // history. Just drop this image.
-        PRINT_CH_INFO("VisionComponent", "VisionComponent.Update.DroppingImageOlderThanStateHistory",
-                       "ImageTime=%d OldestState=%d",
-                       buffer.GetTimestamp(), (TimeStamp_t)_robot->GetStateHistory()->GetOldestTimeStamp());
+        LOG_INFO("VisionComponent.Update.DroppingImageOlderThanStateHistory",
+                 "ImageTime=%d OldestState=%d",
+                 buffer.GetTimestamp(), (TimeStamp_t)_robot->GetStateHistory()->GetOldestTimeStamp());
 
         ReleaseImage(buffer);
         return;
@@ -544,14 +528,14 @@ namespace Vector {
       const bool haveHistStateAtLeastAsNewAsImage = (_robot->GetStateHistory()->GetNewestTimeStamp() >= buffer.GetTimestamp());
       if(!haveHistStateAtLeastAsNewAsImage)
       {
-        PRINT_CH_INFO("VisionComponent", "VisionComponent.Update.WaitingForState",
-                       "CapturedImageTime:%u NewestStateInHistory:%u",
-                       buffer.GetTimestamp(), (TimeStamp_t)_robot->GetStateHistory()->GetNewestTimeStamp());
-        
+        LOG_INFO("VisionComponent.Update.WaitingForState",
+                 "CapturedImageTime:%u NewestStateInHistory:%u",
+                 buffer.GetTimestamp(), (TimeStamp_t)_robot->GetStateHistory()->GetNewestTimeStamp());
+
         ReleaseImage(buffer);
         return;
       }
-      
+
       const Result res = SetNextImage(buffer);
       if(res != RESULT_OK)
       {
@@ -564,7 +548,7 @@ namespace Vector {
   {
     // Can't set a new image while we are still processing one
     DEV_ASSERT(!_visionSystemInput.locked, "VisionComponent.SetNextImage.AlreadyProcessingImage");
-    
+
     // Fill in the pose data for the given image, by querying robot history
     HistRobotState imageHistState;
     RobotTimeStamp_t imageHistTimeStamp;
@@ -575,24 +559,24 @@ namespace Vector {
     {
       // Don't print a warning for this case: we expect not to get pose history
       // data successfully
-      PRINT_CH_INFO("VisionComponent", "VisionComponent.SetNextImage.OriginMismatch",
-                    "Could not get pose data for t=%u due to origin mismatch. Returning OK",
-                    buffer.GetTimestamp());
+      LOG_INFO("VisionComponent.SetNextImage.OriginMismatch",
+               "Could not get pose data for t=%u due to origin mismatch. Returning OK",
+               buffer.GetTimestamp());
       ReleaseImage(buffer);
       return RESULT_OK;
     }
     else if(lastResult != RESULT_OK)
     {
-      PRINT_NAMED_WARNING("VisionComponent.SetNextImage.StateHistoryFail",
-                          "Unable to get computed pose at image timestamp of %u."
-                          "(rawStates: have %zu from %u:%u) (visionStates: have %zu from %u:%u)",
-                          buffer.GetTimestamp(),
-                          _robot->GetStateHistory()->GetNumRawStates(),
-                          (TimeStamp_t)_robot->GetStateHistory()->GetOldestTimeStamp(),
-                          (TimeStamp_t)_robot->GetStateHistory()->GetNewestTimeStamp(),
-                          _robot->GetStateHistory()->GetNumVisionStates(),
-                          (TimeStamp_t)_robot->GetStateHistory()->GetOldestVisionOnlyTimeStamp(),
-                          (TimeStamp_t)_robot->GetStateHistory()->GetNewestVisionOnlyTimeStamp());
+      LOG_WARNING("VisionComponent.SetNextImage.StateHistoryFail",
+                  "Unable to get computed pose at image timestamp of %u."
+                  "(rawStates: have %zu from %u:%u) (visionStates: have %zu from %u:%u)",
+                  buffer.GetTimestamp(),
+                  _robot->GetStateHistory()->GetNumRawStates(),
+                  (TimeStamp_t)_robot->GetStateHistory()->GetOldestTimeStamp(),
+                  (TimeStamp_t)_robot->GetStateHistory()->GetNewestTimeStamp(),
+                  _robot->GetStateHistory()->GetNumVisionStates(),
+                  (TimeStamp_t)_robot->GetStateHistory()->GetOldestVisionOnlyTimeStamp(),
+                  (TimeStamp_t)_robot->GetStateHistory()->GetNewestVisionOnlyTimeStamp());
       ReleaseImage(buffer);
       return lastResult;
     }
@@ -635,34 +619,41 @@ namespace Vector {
 
     _visionSystemInput.modesToProcess.Clear();
     _visionSystemInput.futureModesToProcess.Clear();
-    
+
     static u32 scheduleCount = 0;
     const AllVisionModesSchedule& schedule = _robot->GetVisionScheduleMediator().GetSchedule();
     for(VisionMode mode = VisionMode(0); mode < VisionMode::Count; mode++)
     {
       _visionSystemInput.modesToProcess.Enable(mode, schedule.IsTimeToProcess(mode, scheduleCount));
       _visionSystemInput.futureModesToProcess.Enable(mode, schedule.GetScheduleForMode(mode).WillEverRun());
-    } 
+    }
     const bool kResetSingleShotModes = true;
     _robot->GetVisionScheduleMediator().AddSingleShotModesToSet(_visionSystemInput.modesToProcess, kResetSingleShotModes);
     scheduleCount++;
 
-    // We are all set to process this image so lock input
-    // so VisionSystem can use it
-    _visionSystemInput.locked = true;
-      
+    // We are all set to process this image so lock input so VisionSystem can use it;
+    // then notify the processing thread that the image is ready to be processed
+    {
+      std::unique_lock<std::mutex> lock{_imageReadyMutex};
+      _visionSystemInput.locked = true;
+    }
+    _imageReadyCondition.notify_all();
+
     if(_isSynchronous)
     {
       // Process image now
       UpdateVisionSystem(_visionSystemInput);
       ReleaseImage(buffer);
+
+      // Unlock input since it has been processed
+      _visionSystemInput.locked = false;
     }
-    
+
     return RESULT_OK;
 
   } // SetNextImage()
 
-  
+
   void VisionComponent::PopulateGroundPlaneHomographyLUT(f32 angleResolution_rad)
   {
     const Pose3d& robotPose = _robot->GetPose();
@@ -722,9 +713,9 @@ namespace Vector {
     auto iter = _groundPlaneHomographyLUT.lower_bound(atHeadAngle);
 
     if(iter == _groundPlaneHomographyLUT.end()) {
-      PRINT_NAMED_WARNING("VisionComponent.LookupGroundPlaneHomography.KeyNotFound",
-                          "Failed to find homography using headangle of %.2frad (%.1fdeg) as lower bound",
-                          atHeadAngle, RAD_TO_DEG(atHeadAngle));
+      LOG_WARNING("VisionComponent.LookupGroundPlaneHomography.KeyNotFound",
+                  "Failed to find homography using headangle of %.2frad (%.1fdeg) as lower bound",
+                  atHeadAngle, RAD_TO_DEG(atHeadAngle));
       --iter;
     } else {
       auto nextIter = iter; ++nextIter;
@@ -736,9 +727,9 @@ namespace Vector {
     }
 
     //      LOG_DEBUG("VisionComponent.LookupGroundPlaneHomography.HeadAngleDiff",
-    //                        "Requested = %.2fdeg, Returned = %.2fdeg, Diff = %.2fdeg",
-    //                        RAD_TO_DEG(atHeadAngle), RAD_TO_DEG(iter->first),
-    //                        RAD_TO_DEG(std::abs(atHeadAngle - iter->first)));
+    //                "Requested = %.2fdeg, Returned = %.2fdeg, Diff = %.2fdeg",
+    //                RAD_TO_DEG(atHeadAngle), RAD_TO_DEG(iter->first),
+    //                RAD_TO_DEG(std::abs(atHeadAngle - iter->first)));
 
     H = iter->second.H;
     return iter->second.isGroundPlaneROIVisible;
@@ -748,25 +739,25 @@ namespace Vector {
   void VisionComponent::UpdateVisionSystem(const VisionSystemInput& input)
   {
     ANKI_CPU_PROFILE("VC::UpdateVisionSystem");
-    
+
     Result result = _visionSystem->Update(input);
     if(RESULT_OK != result) {
-      PRINT_NAMED_WARNING("VisionComponent.UpdateVisionSystem.UpdateFailed", "");
+      LOG_WARNING("VisionComponent.UpdateVisionSystem.UpdateFailed", "");
     }
 
-    // VisionMode::ComputingCalibration is a one-shot mode, turn it off
+    // VisionMode::Calibration is a one-shot mode, turn it off
     // as soon as it runs
-    if(input.modesToProcess.Contains(VisionMode::ComputingCalibration))
+    if(input.modesToProcess.Contains(VisionMode::Calibration))
     {
-      EnableMode(VisionMode::ComputingCalibration, false);
+      EnableMode(VisionMode::Calibration, false);
     }
   }
-  
+
 
   void VisionComponent::Processor()
   {
     LOG_INFO("VisionComponent.Processor",
-                     "Starting Robot VisionComponent::Processor thread...");
+             "Starting Robot VisionComponent::Processor thread...");
 
     DEV_ASSERT(_visionSystem != nullptr && _visionSystem->IsInitialized(),
                "VisionComponent.Processor.VisionSystemNotReady");
@@ -800,22 +791,25 @@ namespace Vector {
         }
         else
         {
-          PRINT_NAMED_WARNING("VisionComponent.Processor.ImageReadyButDataInvalid","");
+          LOG_WARNING("VisionComponent.Processor.ImageReadyButDataInvalid","");
         }
 
         // Done processing, allow input to be modified by VisionComponent
         _visionSystemInput.locked = false;
       }
-            
-      ANKI_CPU_PROFILE("SleepForNextImage");
-      // Waiting on next image
-      std::this_thread::sleep_for(std::chrono::milliseconds(kVision_MinSleepTime_ms));
+
+      {
+        ANKI_CPU_PROFILE("WaitForNextImage");
+        // Waiting on next image
+        std::unique_lock<std::mutex> lock{_imageReadyMutex};
+        _imageReadyCondition.wait(lock, [this]{ return _visionSystemInput.locked || !_running; });
+      }
     } // while(_running)
 
     ANKI_CPU_REMOVE_THIS_THREAD();
 
-    PRINT_CH_INFO("VisionComponent", "VisionComponent.Processor.TerminatedVisionSystemThread",
-                  "Terminated VisionComponent::Processor thread");
+    LOG_INFO("VisionComponent.Processor.TerminatedVisionSystemThread",
+             "Terminated VisionComponent::Processor thread");
   } // Processor()
 
 
@@ -834,7 +828,7 @@ namespace Vector {
       const auto& objType = object->GetType();
       return (IsBlockType(objType, false) || IsChargerType(objType, false));
     });
-    
+
     filter.AddFilterFcn([&marker,&quadID,this](const ObservableObject* object)
     {
       // When requesting the markers' 3D corners below, we want them
@@ -850,14 +844,14 @@ namespace Vector {
                                                                  blockMarker->Get3dCorners(canonicalPose),
                                                                  markerPose);
         if(poseResult != RESULT_OK) {
-          PRINT_NAMED_WARNING("VisionComponent.VisualizeObservedMarkerIn3D.BadPose",
-                              "Could not estimate pose of marker. Not visualizing.");
+          LOG_WARNING("VisionComponent.VisualizeObservedMarkerIn3D.BadPose",
+                      "Could not estimate pose of marker. Not visualizing.");
         } else {
           if(markerPose.GetWithRespectTo(marker.GetSeenBy().GetPose().FindRoot(), markerPose) == true) {
             _robot->GetContext()->GetVizManager()->DrawGenericQuad(quadID++, blockMarker->Get3dCorners(markerPose), NamedColors::OBSERVED_QUAD);
           } else {
-            PRINT_NAMED_WARNING("VisionComponent.VisualizeObservedMarkerIn3D.MarkerOriginNotCameraOrigin",
-                                "Cannot visualize a marker whose pose origin is not the camera's origin that saw it.");
+            LOG_WARNING("VisionComponent.VisualizeObservedMarkerIn3D.MarkerOriginNotCameraOrigin",
+                        "Cannot visualize a marker whose pose origin is not the camera's origin that saw it.");
           }
         }
       }
@@ -893,7 +887,7 @@ namespace Vector {
         }
 
         SendImages(result);
-        
+
         using LocalHandlerType = Result(VisionComponent::*)(const VisionProcessingResult&);
         auto tryAndReport = [this, &result, &anyFailures]( LocalHandlerType handler, const VisionModeSet& modes )
         {
@@ -910,44 +904,44 @@ namespace Vector {
           if (RESULT_OK != (this->*handler)(result))
           {
             std::string modeStr = modes.ToString();
-            
-            PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults.LocalHandlerFailed",
-                              "For mode(s):%s", modeStr.c_str());
+
+            LOG_ERROR("VisionComponent.UpdateAllResults.LocalHandlerFailed",
+                      "For mode(s):%s", modeStr.c_str());
             anyFailures = true;
           }
         };
-        
+
         // NOTE: UpdateVisionMarkers will also update BlockWorld (which broadcasts
         //  object observations and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdateVisionMarkers,        {VisionMode::DetectingMarkers});
+        tryAndReport(&VisionComponent::UpdateVisionMarkers,        {VisionMode::Markers});
 
         // NOTE: UpdateFaces will also update FaceWorld (which broadcasts face observations
         //  and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdateFaces,                {VisionMode::DetectingFaces});
+        tryAndReport(&VisionComponent::UpdateFaces,                {VisionMode::Faces});
 
         // NOTE: UpdatePets will also update PetWorld (which broadcasts pet face observations
         //  and should be done before sending RobotProcessedImage below!)
-        tryAndReport(&VisionComponent::UpdatePets,                 {VisionMode::DetectingPets});
+        tryAndReport(&VisionComponent::UpdatePets,                 {VisionMode::Pets});
 
-        tryAndReport(&VisionComponent::UpdateMotionCentroid,       {VisionMode::DetectingMotion});
-        tryAndReport(&VisionComponent::UpdateOverheadEdges,        {VisionMode::DetectingOverheadEdges});
-        tryAndReport(&VisionComponent::UpdateComputedCalibration,  {VisionMode::ComputingCalibration});
-        
+        tryAndReport(&VisionComponent::UpdateMotionCentroid,       {VisionMode::Motion});
+        tryAndReport(&VisionComponent::UpdateOverheadEdges,        {VisionMode::OverheadEdges});
+        tryAndReport(&VisionComponent::UpdateComputedCalibration,  {VisionMode::Calibration});
+
         // NOTE: Same handler for two modes
-        tryAndReport(&VisionComponent::UpdateCameraParams,         {VisionMode::AutoExposure, VisionMode::WhiteBalance});
-        
-        tryAndReport(&VisionComponent::UpdateLaserPoints,          {VisionMode::DetectingLaserPoints});
+        tryAndReport(&VisionComponent::UpdateCameraParams,         {VisionMode::AutoExp, VisionMode::WhiteBalance});
+
+        tryAndReport(&VisionComponent::UpdateLaserPoints,          {VisionMode::Lasers});
         tryAndReport(&VisionComponent::UpdateSalientPoints,        {}); // Use empty set here to always call UpdateSalientPoints
-        tryAndReport(&VisionComponent::UpdateVisualObstacles,      {VisionMode::DetectingVisualObstacles});
-        tryAndReport(&VisionComponent::UpdatePhotoManager,         {VisionMode::SavingImages});
-        tryAndReport(&VisionComponent::UpdateDetectedIllumination, {VisionMode::DetectingIllumination});
+        tryAndReport(&VisionComponent::UpdateVisualObstacles,      {VisionMode::Obstacles});
+        tryAndReport(&VisionComponent::UpdatePhotoManager,         {VisionMode::SaveImages});
+        tryAndReport(&VisionComponent::UpdateDetectedIllumination, {VisionMode::Illumination});
 
         // Note: we always run this because it handles switching to the mirror mode debug screen
         // It internally checks whether the MirrorMode flag is set in modesProcessed
         tryAndReport(&VisionComponent::UpdateMirrorMode,           {}); // Use empty set to always run
-                
+
 #       undef ToVisionModeMask
-                
+
         // Store frame rate and last image processed time. Time should only move forward.
         DEV_ASSERT(result.timestamp >= _lastProcessedImageTimeStamp_ms, "VisionComponent.UpdateAllResults.BadTimeStamp");
         if(_lastProcessedImageTimeStamp_ms != 0)
@@ -965,7 +959,7 @@ namespace Vector {
           using namespace ExternalInterface;
 
           u8 imageMean = 0;
-          if(result.modesProcessed.Contains(VisionMode::ComputingStatistics))
+          if(result.modesProcessed.Contains(VisionMode::Stats))
           {
             imageMean = result.imageMean;
           }
@@ -974,9 +968,6 @@ namespace Vector {
                                                                    std::move(visionModesList),
                                                                    imageMean)));
         }
-
-        // Trigger all registered callbacks on the image processing result
-        _visionResultSignal.emit(result);
       }
     }
 
@@ -1012,19 +1003,19 @@ namespace Vector {
       else if(RESULT_OK != lastResult)
       {
         // this can happen if we missed a robot status update message
-        PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateVisionMarkers.HistoricalPoseNotFound",
-                      "Time: %u, hist: %u to %u",
-                      (TimeStamp_t)procResult.timestamp,
-                      (TimeStamp_t)_robot->GetStateHistory()->GetOldestTimeStamp(),
-                      (TimeStamp_t)_robot->GetStateHistory()->GetNewestTimeStamp());
+        LOG_INFO("VisionComponent.UpdateVisionMarkers.HistoricalPoseNotFound",
+                 "Time: %u, hist: %u to %u",
+                 (TimeStamp_t)procResult.timestamp,
+                 (TimeStamp_t)_robot->GetStateHistory()->GetOldestTimeStamp(),
+                 (TimeStamp_t)_robot->GetStateHistory()->GetNewestTimeStamp());
         return RESULT_OK;
       }
 
       if(!_robot->IsPoseInWorldOrigin(histStatePtr->GetPose())) {
-        PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateVisionMarkers.OldOrigin",
-                      "Ignoring observed marker from origin %s (robot origin is %s)",
-                      histStatePtr->GetPose().FindRoot().GetName().c_str(),
-                      _robot->GetWorldOrigin().GetName().c_str());
+        LOG_INFO("VisionComponent.UpdateVisionMarkers.OldOrigin",
+                 "Ignoring observed marker from origin %s (robot origin is %s)",
+                 histStatePtr->GetPose().FindRoot().GetName().c_str(),
+                 _robot->GetWorldOrigin().GetName().c_str());
         return RESULT_OK;
       }
 
@@ -1041,9 +1032,9 @@ namespace Vector {
       {
         if(visionMarker.GetTimeStamp() != procResult.timestamp)
         {
-          PRINT_NAMED_ERROR("VisionComponent.UpdateVisionMarkers.MismatchedTimestamps",
-                            "Marker t=%u vs. ProcResult t=%u",
-                            visionMarker.GetTimeStamp(), (TimeStamp_t)procResult.timestamp);
+          LOG_ERROR("VisionComponent.UpdateVisionMarkers.MismatchedTimestamps",
+                    "Marker t=%u vs. ProcResult t=%u",
+                    visionMarker.GetTimeStamp(), (TimeStamp_t)procResult.timestamp);
           continue;
         }
 
@@ -1053,7 +1044,7 @@ namespace Vector {
         if ((visionMarker.GetSeenBy().GetID() == GetCamera().GetID()) &&
             !_robot->GetStateHistory()->IsValidKey(histStateKey))
         {
-          PRINT_NAMED_WARNING("VisionComponent.Update.InvalidHistStateKey", "key=%d", histStateKey);
+          LOG_WARNING("VisionComponent.Update.InvalidHistStateKey", "key=%d", histStateKey);
           continue;
         }
 
@@ -1087,7 +1078,7 @@ namespace Vector {
     lastResult = _robot->GetBlockWorld().UpdateObservedMarkers(observedMarkers);
     if(RESULT_OK != lastResult)
     {
-      PRINT_NAMED_WARNING("VisionComponent.UpdateVisionResults.BlockWorldUpdateFailed", "");
+      LOG_WARNING("VisionComponent.UpdateVisionResults.BlockWorldUpdateFailed", "");
     }
 
     // If we have observed a marker, attempt to update the docking error signal
@@ -1129,7 +1120,7 @@ namespace Vector {
       // Check this before potentially ignoring the face detection for faceWorld's purposes below
       if(faceDetection.GetNumEnrollments() > 0) {
         LOG_DEBUG("VisionComponent.UpdateFaces.ReachedEnrollmentCount",
-                          "Count=%d", faceDetection.GetNumEnrollments());
+                  "Count=%d", faceDetection.GetNumEnrollments());
 
         _robot->GetFaceWorld().SetFaceEnrollmentComplete(true);
       }
@@ -1138,7 +1129,7 @@ namespace Vector {
     lastResult = _robot->GetFaceWorld().Update(procResult.faces);
     if(RESULT_OK != lastResult)
     {
-      PRINT_NAMED_WARNING("VisionComponent.UpdateFaces.FaceWorldUpdateFailed", "");
+      LOG_WARNING("VisionComponent.UpdateFaces.FaceWorldUpdateFailed", "");
     }
 
     return lastResult;
@@ -1197,16 +1188,16 @@ namespace Vector {
         }
       }
     }
-    
+
     const auto& visionModesUsingNeuralNets = GetVisionModesUsingNeuralNets();
     if(procResult.modesProcessed.ContainsAnyOf(visionModesUsingNeuralNets)
-       || procResult.modesProcessed.Contains(VisionMode::DetectingBrightColors))
+       || procResult.modesProcessed.Contains(VisionMode::BrightColors))
     {
       if(!usingFixedDrawTime)
       {
         _salientPointsToDraw.clear();
       }
-      
+
       // Notify the SalientPointsComponent that we have a bunch of new detections
       if (procResult.salientPoints.size() > 0) {
         _robot->GetAIComponent().GetComponent<SalientPointsComponent>().AddSalientPoints(procResult.salientPoints);
@@ -1252,7 +1243,10 @@ namespace Vector {
           break;
         }
       }
-      _vizManager->DrawCameraPoly(poly, color);
+      if(poly.size() > 0)
+      {
+        _vizManager->DrawCameraPoly(poly, color);
+      }
       _vizManager->DrawCameraText(Point2f(object.x_img, object.y_img), caption, color);
     }
 
@@ -1313,23 +1307,22 @@ namespace Vector {
       // auto exposure and white balance messages to the camera
       return RESULT_OK;
     }
-    
+
     const Vision::CameraParams& params = procResult.cameraParams;
-    
-    // Note that we set all parameters together. If WB or AE isn't enabled accoding to current VisionModes,
+
+    // Note that we set all parameters together. If WB or AE isn't enabled according to current VisionModes,
     // their corresponding values should not actually be different in the params.
     const Result result = _visionSystem->SetNextCameraParams(params);
-      
+
     if(RESULT_OK == result)
     {
-      PRINT_CH_DEBUG("VisionComponent",
-                     "VisionComponent.UpdateImageQuality",
-                     "ExpTime:%dms ExpGain:%f GainR:%f GainG:%f GainB:%f",
-                     params.exposureTime_ms, params.gain,
-                     params.whiteBalanceGainR, params.whiteBalanceGainG, params.whiteBalanceGainB);
-      
+      LOG_DEBUG("VisionComponent.UpdateImageQuality",
+                "ExpTime:%dms ExpGain:%f GainR:%f GainG:%f GainB:%f",
+                params.exposureTime_ms, params.gain,
+                params.whiteBalanceGainR, params.whiteBalanceGainG, params.whiteBalanceGainB);
+
       auto cameraService = CameraService::getInstance();
-      
+
       const bool isWhiteBalanceEnabled = procResult.modesProcessed.Contains(VisionMode::WhiteBalance);
       if(isWhiteBalanceEnabled)
       {
@@ -1337,16 +1330,16 @@ namespace Vector {
                                                        params.whiteBalanceGainG,
                                                        params.whiteBalanceGainB);
       }
-      
-      const bool isAutoExposureEnabled = procResult.modesProcessed.Contains(VisionMode::AutoExposure);
+
+      const bool isAutoExposureEnabled = procResult.modesProcessed.Contains(VisionMode::AutoExp);
       if(isAutoExposureEnabled)
       {
         cameraService->CameraSetParameters(procResult.cameraParams.exposureTime_ms,
                                            procResult.cameraParams.gain);
       }
-      
+
       _vizManager->SendCameraParams(params);
-      
+
       {
         // Still needed?
         // TODO: Add WB params to message?
@@ -1356,7 +1349,7 @@ namespace Vector {
                                                                   exposure_ms_u16,
                                                                   isAutoExposureEnabled)));
       }
-    
+
     }
 
     if(procResult.imageQuality != _lastImageQuality || _currentQualityBeginTime_ms==0)
@@ -1397,11 +1390,10 @@ namespace Vector {
 
         LOG_INFO("robot.vision.image_quality", "%s", EnumToString(errorCode));
 
-        PRINT_CH_DEBUG("VisionComponent",
-                       "VisionComponent.UpdateImageQuality.BroadcastingImageQualityChange",
-                       "Seeing %s for more than %u > %ums, broadcasting %s",
-                       EnumToString(procResult.imageQuality), (TimeStamp_t)timeWithThisQuality_ms,
-                       (TimeStamp_t)_waitForNextAlert_ms, EnumToString(errorCode));
+        LOG_DEBUG("VisionComponent.UpdateImageQuality.BroadcastingImageQualityChange",
+                  "Seeing %s for more than %u > %ums, broadcasting %s",
+                  EnumToString(procResult.imageQuality), (TimeStamp_t)timeWithThisQuality_ms,
+                  (TimeStamp_t)_waitForNextAlert_ms, EnumToString(errorCode));
 
         using namespace ExternalInterface;
         _robot->Broadcast(MessageEngineToGame(EngineErrorCodeMessage(errorCode)));
@@ -1428,14 +1420,15 @@ namespace Vector {
     }
     return RESULT_OK;
   }
-  
+
   Result VisionComponent::UpdateDetectedIllumination(const VisionProcessingResult& procResult)
   {
     ExternalInterface::RobotObservedIllumination msg( procResult.illumination );
     _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
+    _lastIlluminationState = procResult.illumination.state;
     return RESULT_OK;
   }
-  
+
   Result VisionComponent::UpdateMirrorMode(const VisionProcessingResult& procResult)
   {
     // Handle switching the debug screen on/off when mirror mode changes
@@ -1443,13 +1436,13 @@ namespace Vector {
     const bool isMirrorModeEnabled = procResult.modesProcessed.Contains(VisionMode::MirrorMode);
     if(wasMirrorModeEnabled != isMirrorModeEnabled)
     {
-      PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateMirrorMode.TogglingMirrorMode",
-                    "Turning MirrorMode %s", isMirrorModeEnabled ? "ON" : "OFF");
+      LOG_INFO("VisionComponent.UpdateMirrorMode.TogglingMirrorMode",
+               "Turning MirrorMode %s", isMirrorModeEnabled ? "ON" : "OFF");
       _robot->SendRobotMessage<RobotInterface::EnableMirrorModeScreen>(isMirrorModeEnabled);
       wasMirrorModeEnabled = isMirrorModeEnabled;
     }
 
-    // If MirrorMode is no longer scheduled then don't bother trying to draw anything
+    // If Mirror is no longer scheduled then don't bother trying to draw anything
     // Normally you would only need to check if MirrorMode was in the processed vision modes, however,
     // due to a timing issue between anim and engine when entering pairing from the mirror mode screen
     // we need to check the schedule instead of processed vision modes.
@@ -1464,7 +1457,7 @@ namespace Vector {
     {
       return RESULT_OK;
     }
-    
+
     // Send as face display animation
     auto & animComponent = _robot->GetAnimationComponent();
     if(isMirrorModeEnabled && animComponent.GetAnimState_NumProcAnimFaceKeyframes() < 5) // Don't get too far ahead
@@ -1474,12 +1467,12 @@ namespace Vector {
       // it's technically const. Since this is a debug mode, we're using this to avoid a copy in the case
       // that we have eye contact or a display string, since performance is the higher priority here.
       Vision::ImageRGB565 mirrorModeImg = procResult.mirrorModeImg;
-      
+
       if(!_mirrorModeDisplayString.empty())
       {
         mirrorModeImg.DrawText({1,14}, _mirrorModeDisplayString, _mirrorModeStringColor, 0.6f, true);
       }
-      
+
       if(kDisplayEyeContactInMirrorMode)
       {
         const u32 maxTimeSinceSeenFaceToLook_ms = ConditionEyeContact::GetMaxTimeSinceTrackedFaceUpdated_ms();
@@ -1491,15 +1484,15 @@ namespace Vector {
           const f32 y = .5f * (f32)procResult.mirrorModeImg.GetNumRows();
           const f32 width = .2f * (f32)procResult.mirrorModeImg.GetNumCols();
           const f32 height = .2f * (f32)procResult.mirrorModeImg.GetNumRows();
-          
+
           mirrorModeImg.DrawFilledRect(Rectangle<f32>(x, y, width, height), NamedColors::YELLOW);
         }
       }
-      
+
       // Just display the mirror mode image as is, from the processing result
       const bool kInterruptRunning = false;
-      animComponent.DisplayFaceImage(mirrorModeImg, 
-				     AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS, 
+      animComponent.DisplayFaceImage(mirrorModeImg,
+				     AnimationComponent::DEFAULT_STREAMING_FACE_DURATION_MS,
 				     kInterruptRunning);
     }
     return RESULT_OK;
@@ -1515,15 +1508,14 @@ namespace Vector {
     if(RESULT_FAIL_ORIGIN_MISMATCH == result)
     {
       // Not a warning, this can legitimately happen
-      PRINT_CH_INFO("VisionComponent",
-                    "VisionComponent.VisionComponent.AddLiftOccluder.StateHistoryOriginMismatch",
-                    "Could not get pose at t=%u due to origin change. Skipping.", (TimeStamp_t)t_request);
+      LOG_INFO("VisionComponent.VisionComponent.AddLiftOccluder.StateHistoryOriginMismatch",
+               "Could not get pose at t=%u due to origin change. Skipping.", (TimeStamp_t)t_request);
       return;
     }
     else if(RESULT_OK != result)
     {
-      PRINT_NAMED_WARNING("VisionComponent.WasLiftInFOV.StateHistoryFailure",
-                          "Could not get raw pose at t=%u", (TimeStamp_t)t_request);
+      LOG_WARNING("VisionComponent.WasLiftInFOV.StateHistoryFailure",
+                  "Could not get raw pose at t=%u", (TimeStamp_t)t_request);
       return;
     }
 
@@ -1545,8 +1537,8 @@ namespace Vector {
     img.Undistort(*camera.GetCalibration(), img_undistort);
     return img_undistort;
   }
-  
-  
+
+
   Vision::Image GetUndistorted(const Vision::Image& img, const Vision::Camera& camera)
   {
     Vision::Image img_undistort;
@@ -1558,7 +1550,7 @@ namespace Vector {
   {
     if(!_robot->HasExternalInterface())
     {
-      PRINT_NAMED_ERROR("VisionComponent.CompressAndSendImage.NoExternalInterface", "");
+      LOG_ERROR("VisionComponent.CompressAndSendImage.NoExternalInterface", "");
       return RESULT_FAIL;
     }
 
@@ -1604,7 +1596,7 @@ namespace Vector {
 
       // Use the identifier value as the display index
       m.displayIndex = displayIndex;
- 
+
       m.imageId = imgID;
 
       m.frameTimeStamp = img.GetTimestamp();
@@ -1618,7 +1610,7 @@ namespace Vector {
         m.imageEncoding = Vision::ImageEncoding::JPEGColor;
       }
     }
-    
+
     // Construct a proto ImageChunk
     if(_sendProtoImageChunks)
     {
@@ -1647,7 +1639,7 @@ namespace Vector {
 
       auto startIt = compressedBuffer.begin() + (compressedBuffer.size() - bytesRemainingToSend);
       auto endIt = startIt + chunkSize;
-      
+
       if(_sendProtoImageChunks)
       {
         imageChunk->set_chunk_id((u32)chunkId);
@@ -1660,10 +1652,10 @@ namespace Vector {
       }
 
       if(vizConnected)
-      {      
+      {
         m.chunkId = chunkId;
         m.data = std::vector<u8>(startIt, endIt);
-        
+
         _robot->Broadcast(ExternalInterface::MessageEngineToGame(ImageChunk(m)));
         // Forward the image chunks to Viz as well (Note that this does nothing if
         // sending images is disabled in VizManager)
@@ -1684,7 +1676,7 @@ namespace Vector {
   {
     if(nullptr == _visionSystem || !_visionSystem->IsInitialized())
     {
-      PRINT_NAMED_ERROR("VisionComponent.ClearCalibrationImages.VisionSystemNotReady", "");
+      LOG_ERROR("VisionComponent.ClearCalibrationImages.VisionSystemNotReady", "");
       return RESULT_FAIL;
     }
     else
@@ -1708,8 +1700,8 @@ namespace Vector {
 
     auto & calibPoses = _visionSystem->GetCalibrationPoses();
     if(whichPose >= calibPoses.size()) {
-      PRINT_NAMED_WARNING("VisionComponent.WriteCalibrationPoseToRobot.InvalidPoseIndex",
-                          "Requested %zu, only %zu available", whichPose, calibPoses.size());
+      LOG_WARNING("VisionComponent.WriteCalibrationPoseToRobot.InvalidPoseIndex",
+                  "Requested %zu, only %zu available", whichPose, calibPoses.size());
     } else {
       auto & calibImages = _visionSystem->GetCalibrationImages();
       DEV_ASSERT_MSG(calibImages.size() >= calibPoses.size(),
@@ -1795,7 +1787,7 @@ namespace Vector {
     Pose3d targetWrtCamera;
     Result result = _camera->ComputeObjectPose(obsQuad, targetQuad, targetWrtCamera);
     if(RESULT_OK != result) {
-      PRINT_NAMED_WARNING("VisionComponent.FindFactorTestDotCentroids.ComputePoseFailed", "");
+      LOG_WARNING("VisionComponent.FindFactorTestDotCentroids.ComputePoseFailed", "");
       return result;
     }
 
@@ -1878,8 +1870,8 @@ namespace Vector {
       }
 
       if(bestComp == 0) {
-        PRINT_NAMED_WARNING("VisionComponent.FindFactoryTestDotCentroids.NotComponentLargeEnough",
-                            "DotArea=%.1f, MinFrac=%.2f", kDotArea_pix, kMinAreaFrac);
+        LOG_WARNING("VisionComponent.FindFactoryTestDotCentroids.NotComponentLargeEnough",
+                    "DotArea=%.1f, MinFrac=%.2f", kDotArea_pix, kMinAreaFrac);
         return RESULT_FAIL;
       }
 
@@ -1900,7 +1892,7 @@ namespace Vector {
       Pose3d pose;
       Result poseResult = ComputeCameraPoseVsIdeal(obsQuad, pose);
       if(RESULT_OK != poseResult) {
-        PRINT_NAMED_WARNING("VisionComponent.FindFactoryTestDotCentroids.ComputePoseFailed", "");
+        LOG_WARNING("VisionComponent.FindFactoryTestDotCentroids.ComputePoseFailed", "");
       } else {
         msg.camPoseX_mm = pose.GetTranslation().x();
         msg.camPoseY_mm = pose.GetTranslation().y();
@@ -1941,8 +1933,8 @@ namespace Vector {
     Unlock();
 
     if(RESULT_OK != result) {
-      PRINT_NAMED_WARNING("VisionComponent.SaveFaceAlbum.SaveToFileFailed",
-                          "AlbumFile: %s", path.c_str());
+      LOG_WARNING("VisionComponent.SaveFaceAlbum.SaveToFileFailed",
+                  "AlbumFile: %s", path.c_str());
     }
     return result;
   }
@@ -1953,7 +1945,7 @@ namespace Vector {
                                                                             Util::FileUtils::FullFilePath({"faceAlbums", pathIn}));
     return fullPath;
   }
-  
+
   Result VisionComponent::SaveFaceAlbum()
   {
     const std::string fullFaceAlbumPath = GetFullFaceAlbumPath(_context, _faceAlbumName);
@@ -1971,22 +1963,22 @@ namespace Vector {
 
     return loadResult;
   }
-  
+
   Result VisionComponent::LoadFaceAlbum()
   {
     const std::string fullFaceAlbumPath = GetFullFaceAlbumPath(_context, _faceAlbumName);
     return LoadFaceAlbumFromFile(fullFaceAlbumPath);
   }
-  
+
   Result VisionComponent::LoadFaceAlbumFromFile(const std::string& path, std::list<Vision::LoadedKnownFace>& loadedFaces)
   {
     Lock();
     Result result = _visionSystem->LoadFaceAlbum(path, loadedFaces);
     Unlock();
-    
+
     if(RESULT_OK != result) {
-      PRINT_NAMED_WARNING("VisionComponent.LoadFaceAlbum.LoadFromFileFailed",
-                          "AlbumFile: %s", path.c_str());
+      LOG_WARNING("VisionComponent.LoadFaceAlbum.LoadFromFileFailed",
+                  "AlbumFile: %s", path.c_str());
     }
 
     return result;
@@ -2019,9 +2011,9 @@ namespace Vector {
           idStr += std::to_string(idWithName);
           idStr += " ";
         }
-        PRINT_NAMED_ERROR("VisionComponent.AssignNameToFace.DuplicateNameWithoutMerge",
-                          "Name '%s' already in use (IDs:%s) with no mergeID specified. Forcing merge with ID:%d",
-                          Util::HidePersonallyIdentifiableInfo(name.c_str()), idStr.c_str(), mergeWithID);
+        LOG_ERROR("VisionComponent.AssignNameToFace.DuplicateNameWithoutMerge",
+                  "Name '%s' already in use (IDs:%s) with no mergeID specified. Forcing merge with ID:%d",
+                  Util::HidePersonallyIdentifiableInfo(name.c_str()), idStr.c_str(), mergeWithID);
       }
     }
     if(mergeWithID != Vision::UnknownFaceID) // deliberate recheck of mergeWithID, not "else"
@@ -2035,12 +2027,12 @@ namespace Vector {
           idStr += std::to_string(idWithName);
           idStr += " ";
         }
-        PRINT_NAMED_ERROR("VisionComponent.AssignNameToFace.MultipleIDsWithSameName",
-                          "Found %zu IDs with name '%s': %s",
-                          idsWithName.size(), Util::HidePersonallyIdentifiableInfo(name.c_str()), idStr.c_str());
+        LOG_ERROR("VisionComponent.AssignNameToFace.MultipleIDsWithSameName",
+                  "Found %zu IDs with name '%s': %s",
+                  idsWithName.size(), Util::HidePersonallyIdentifiableInfo(name.c_str()), idStr.c_str());
       }
     }
-    
+
     // Pair this name and ID in the vision system
     Lock();
     _visionSystem->AssignNameToFace(faceID, name, mergeWithID);
@@ -2122,11 +2114,11 @@ namespace Vector {
   {
     if(oldName == newName)
     {
-      PRINT_CH_INFO("VisionComponent", "VisionComponent.RenameFace.SameOldAndNewNames",
-                    "Ignoring request to rename face %d from %s to %s",
-                    faceID,
-                    Util::HidePersonallyIdentifiableInfo(oldName.c_str()),
-                    Util::HidePersonallyIdentifiableInfo(newName.c_str()));
+      LOG_INFO("VisionComponent.RenameFace.SameOldAndNewNames",
+               "Ignoring request to rename face %d from %s to %s",
+               faceID,
+               Util::HidePersonallyIdentifiableInfo(oldName.c_str()),
+               Util::HidePersonallyIdentifiableInfo(newName.c_str()));
       {
         DASMSG(vision_enrolled_names_no_change, "vision.enrolled_names.no_change",
                "An enrolled face/name was left unchanged");
@@ -2135,7 +2127,7 @@ namespace Vector {
       }
       return RESULT_OK;
     }
-    
+
     Vision::RobotRenamedEnrolledFace renamedFace;
     Lock();
     Result result = _visionSystem->RenameFace(faceID, oldName, newName, renamedFace);
@@ -2161,7 +2153,7 @@ namespace Vector {
   {
     return !GetFaceIDsWithName(name).empty();
   }
-  
+
   std::set<Vision::FaceID_t> VisionComponent::GetFaceIDsWithName(const std::string& name)
   {
     Lock();
@@ -2187,8 +2179,8 @@ namespace Vector {
     for(auto & loadedFace : loadedFaces)
     {
 
-      PRINT_CH_INFO("VisionComponent", "VisionComponent.BroadcastLoadedNamesAndIDs", "broadcasting loaded face id: %d",
-                    loadedFace.faceID);
+      LOG_INFO("VisionComponent.BroadcastLoadedNamesAndIDs", "broadcasting loaded face id: %d",
+               loadedFace.faceID);
 
       _robot->Broadcast(MessageEngineToGame( Vision::LoadedKnownFace(loadedFace) ));
     }
@@ -2208,7 +2200,7 @@ namespace Vector {
 
   void VisionComponent::EnableAutoExposure(bool enable)
   {
-    EnableMode(VisionMode::AutoExposure, enable);
+    EnableMode(VisionMode::AutoExp, enable);
   }
 
   void VisionComponent::EnableWhiteBalance(bool enable)
@@ -2221,14 +2213,14 @@ namespace Vector {
     const Result result = _visionSystem->SetNextCameraParams(params);
     if(RESULT_OK != result)
     {
-      PRINT_NAMED_WARNING("VisionComponent.SetAndDisableCameraControl.SetNextCameraParamsFailed", "");
+      LOG_WARNING("VisionComponent.SetAndDisableCameraControl.SetNextCameraParamsFailed", "");
       return;
     }
-    
+
     // Disable AE and WB computation on the vision thread
     EnableWhiteBalance(false);
     EnableAutoExposure(false);
-    
+
     // Directly set the specified camera values, since they won't be coming from the
     // VisionSystem in a VisionProcessingResult anymore. Also manually update Viz
     auto cameraService = CameraService::getInstance();
@@ -2239,7 +2231,7 @@ namespace Vector {
       cameraService->CameraSetWhiteBalanceParameters(params.whiteBalanceGainR,
                                                      params.whiteBalanceGainG,
                                                      params.whiteBalanceGainB);
-      
+
       _vizManager->SendCameraParams(params);
     }
   }
@@ -2275,7 +2267,7 @@ namespace Vector {
       }
     }
     return r;
-  
+
   }
 
   bool VisionComponent::IsProcessingImages()
@@ -2297,7 +2289,7 @@ namespace Vector {
     {
       return false;
     }
-    
+
     auto cameraService = CameraService::getInstance();
 
     const int numRows = cameraService->CameraGetHeight();
@@ -2337,12 +2329,12 @@ namespace Vector {
       auto const& powerStateMgr = _robot->GetComponent<PowerStateManager>();
       if (!IsWaitingForCaptureFormatChange() &&
           !powerStateMgr.InPowerSaveMode() &&
-          (_lastImageCaptureTime_ms > 0) && 
+          (_lastImageCaptureTime_ms > 0) &&
           (currTime_ms > _lastImageCaptureTime_ms + kMaxExpectedTimeBetweenCapturedFrames_ms))
       {
-        PRINT_NAMED_WARNING("VisionComponent.CaptureImage.TooLongSinceFrameWasCaptured", 
-                            "last: %dms, now: %dms", 
-                            (TimeStamp_t)_lastImageCaptureTime_ms, (TimeStamp_t)currTime_ms);
+        LOG_WARNING("VisionComponent.CaptureImage.TooLongSinceFrameWasCaptured",
+                    "last: %dms, now: %dms",
+                    (TimeStamp_t)_lastImageCaptureTime_ms, (TimeStamp_t)currTime_ms);
       }
     }
 
@@ -2379,9 +2371,9 @@ namespace Vector {
     // a previous format change to take effect
     if(_captureFormatState != CaptureFormatState::None)
     {
-      PRINT_NAMED_WARNING("VisionComponent.SetCameraCaptureFormat.StillSettingPrevFormat",
-                          "Still waiting for previous format %s to be applied",
-                          EnumToString(_desiredImageFormat));
+      LOG_WARNING("VisionComponent.SetCameraCaptureFormat.StillSettingPrevFormat",
+                  "Still waiting for previous format %s to be applied",
+                  EnumToString(_desiredImageFormat));
       return false;
     }
 
@@ -2391,19 +2383,19 @@ namespace Vector {
     {
       return true;
     }
-    
+
     // Pause and wait for VisionSystem to finish processing the current image
     // before changing formats since that will release all shared camera memory
     Pause(true);
- 
+
     _desiredImageFormat = format;
 
     _captureFormatState = CaptureFormatState::WaitingForProcessingToStop;
 
-    PRINT_CH_INFO("VisionComponent", "VisionComponent.SetCameraCaptureFormat.RequestingSwitch",
-                  "From %s to %s",
-                  ImageEncodingToString(currentFormat), ImageEncodingToString(_desiredImageFormat));
-    
+    LOG_INFO("VisionComponent.SetCameraCaptureFormat.RequestingSwitch",
+             "From %s to %s",
+             ImageEncodingToString(currentFormat), ImageEncodingToString(_desiredImageFormat));
+
     return true;
   }
 
@@ -2419,7 +2411,7 @@ namespace Vector {
       case CaptureFormatState::WaitingForProcessingToStop:
       {
         Lock();
-        
+
         // If we don't have an image to process
         // meaning the VisionSystem has finished processing
         if(!_visionSystemInput.locked)
@@ -2432,9 +2424,9 @@ namespace Vector {
           auto cameraService = CameraService::getInstance();
           cameraService->CameraSetCaptureFormat(_desiredImageFormat);
 
-          PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateCaptureFormatChange.SwitchToWaitForFrame",
-                        "Now in %s", ImageEncodingToString(_desiredImageFormat));
-          
+          LOG_INFO("VisionComponent.UpdateCaptureFormatChange.SwitchToWaitForFrame",
+                   "Now in %s", ImageEncodingToString(_desiredImageFormat));
+
           _captureFormatState = CaptureFormatState::WaitingForFrame;
         }
 
@@ -2445,15 +2437,15 @@ namespace Vector {
 
       case CaptureFormatState::WaitingForFrame:
       {
-        PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateCaptureFormatChange.WaitingForFrameWithNewFormat", "");
-        
+        LOG_INFO("VisionComponent.UpdateCaptureFormatChange.WaitingForFrameWithNewFormat", "");
+
         s32 expectedNumRows = 0;
         switch(_desiredImageFormat)
         {
           case Vision::ImageEncoding::RawRGB:
             expectedNumRows = DEFAULT_CAMERA_RESOLUTION_HEIGHT;
             break;
-            
+
           case Vision::ImageEncoding::YUV420sp:
             expectedNumRows = CAMERA_SENSOR_RESOLUTION_HEIGHT;
             break;
@@ -2461,24 +2453,24 @@ namespace Vector {
           case Vision::ImageEncoding::BAYER:
             expectedNumRows = CAMERA_SENSOR_RESOLUTION_HEIGHT;
             break;
-            
+
           default:
-            PRINT_NAMED_ERROR("VisionComponent.UpdateCaptureFormatChange.BadDesiredFormat", "%s",
-                              ImageEncodingToString(_desiredImageFormat));
+            LOG_ERROR("VisionComponent.UpdateCaptureFormatChange.BadDesiredFormat", "%s",
+                      ImageEncodingToString(_desiredImageFormat));
             return;
         }
-        
+
         if(gotNumRows == expectedNumRows)
         {
           DEV_ASSERT(_paused, "VisionComponent.UpdateCaptureFormatChange.ExpectingVisionComponentToBePaused");
 
-          PRINT_CH_INFO("VisionComponent", "VisionComponent.UpdateCaptureFormatChange.FormatChangeComplete",
-                        "New format: %s, NumRows=%d", ImageEncodingToString(_desiredImageFormat), gotNumRows);
-          
+          LOG_INFO("VisionComponent.UpdateCaptureFormatChange.FormatChangeComplete",
+                   "New format: %s, NumRows=%d", ImageEncodingToString(_desiredImageFormat), gotNumRows);
+
           _captureFormatState = CaptureFormatState::None;
           _desiredImageFormat = Vision::ImageEncoding::NoneImageEncoding;
           Pause(false); // now that state/format are updated, un-pause the vision system
-          
+
         }
 
         return;
@@ -2490,7 +2482,7 @@ namespace Vector {
   {
     return (CaptureFormatState::None != _captureFormatState);
   }
-  
+
 #pragma mark -
 #pragma mark Message Handlers
 
@@ -2566,7 +2558,7 @@ namespace Vector {
     // TODO: EnableColorImages probably shouldn't affect what kind of image
     //       VisionComponent deals with, but it could be repurposed to determine
     //       what gets sent up to game.
-    PRINT_NAMED_WARNING("VisionComponent.HandleEnableColorImages.NotImplemented", "");
+    LOG_WARNING("VisionComponent.HandleEnableColorImages.NotImplemented", "");
   }
 
   template<>
@@ -2574,8 +2566,8 @@ namespace Vector {
   {
     if(payload.enableAutoExposure)
     {
-      PRINT_CH_INFO("VisionComponent", "VisionComponent.HandleSetCameraSettings.Auto",
-                    "Enabling auto exposure and auto whitebalance");
+      LOG_INFO("VisionComponent.HandleSetCameraSettings.Auto",
+               "Enabling auto exposure and auto whitebalance");
       EnableAutoExposure(true);
       EnableWhiteBalance(true);
     }
@@ -2586,12 +2578,12 @@ namespace Vector {
                                   currentParams.whiteBalanceGainR,
                                   currentParams.whiteBalanceGainG,
                                   currentParams.whiteBalanceGainB);
-      
-      PRINT_CH_INFO("VisionComponent", "VisionComponent.HandleSetCameraSettings.Manual",
-                    "Setting camera params to: Exp:%dms / %.3f, WB:%.3f,%.3f,%.3f",
-                    params.exposureTime_ms, params.gain,
-                    params.whiteBalanceGainR, params.whiteBalanceGainG, params.whiteBalanceGainB);
-      
+
+      LOG_INFO("VisionComponent.HandleSetCameraSettings.Manual",
+               "Setting camera params to: Exp:%dms / %.3f, WB:%.3f,%.3f,%.3f",
+               params.exposureTime_ms, params.gain,
+               params.whiteBalanceGainR, params.whiteBalanceGainG, params.whiteBalanceGainB);
+
       SetAndDisableCameraControl(params);
     }
   }
@@ -2607,17 +2599,17 @@ namespace Vector {
         const std::string cachePath = _robot->GetContext()->GetDataPlatform()->pathToResource(Util::Data::Scope::Cache, "camera");
         fullPath = Util::FileUtils::FullFilePath({cachePath, "images"});
       }
-      
+
       _visionSystem->SetSaveParameters(params);
 
       if(params.mode != ImageSendMode::Off)
       {
-        EnableMode(VisionMode::SavingImages, true);
+        EnableMode(VisionMode::SaveImages, true);
       }
 
-      PRINT_CH_DEBUG("VisionComponent", "VisionComponent.SetSaveImageParameters.SaveImages",
-                     "Setting image save mode to %s. Saving to: %s",
-                     EnumToString(params.mode), fullPath.c_str());
+      LOG_DEBUG("VisionComponent.SetSaveImageParameters.SaveImages",
+                "Setting image save mode to %s. Saving to: %s",
+                EnumToString(params.mode), fullPath.c_str());
     }
   }
 
@@ -2646,9 +2638,9 @@ namespace Vector {
           CameraCalibration payload;
 
           if (size != NVStorageComponent::MakeWordAligned(payload.Size())) {
-            PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SizeMismatch",
-                                "Expected %zu, got %zu",
-                                NVStorageComponent::MakeWordAligned(payload.Size()), size);
+            LOG_WARNING("VisionComponent.ReadCameraCalibration.SizeMismatch",
+                        "Expected %zu, got %zu",
+                        NVStorageComponent::MakeWordAligned(payload.Size()), size);
             FaultCode::DisplayFaultCode(FaultCode::NO_CAMERA_CALIB);
             return;
           } else {
@@ -2685,7 +2677,7 @@ namespace Vector {
             // Compute FOV from focal length and send
             CameraFOVInfo msg(calib->ComputeHorizontalFOV().ToFloat(), calib->ComputeVerticalFOV().ToFloat());
             if (_robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg))) != RESULT_OK) {
-              PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
+              LOG_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
             }
           }
         }
@@ -2693,10 +2685,10 @@ namespace Vector {
         // since we should be getting a real one during playpen
         else if(FACTORY_TEST)
         {
-          PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.Failed", "");
+          LOG_WARNING("VisionComponent.ReadCameraCalibration.Failed", "");
 
           // TEMP HACK: Use dummy calibration for now since final camera not available yet
-          PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.UsingDummyV2Calibration", "");
+          LOG_WARNING("VisionComponent.ReadCameraCalibration.UsingDummyV2Calibration", "");
 
           // Calibration computed from Inverted Box target using one of the proto robots
           // Should be close enough for other robots without calibration to use
@@ -2717,12 +2709,12 @@ namespace Vector {
           // Compute FOV from focal length and send
           CameraFOVInfo msg(calib->ComputeHorizontalFOV().ToFloat(), calib->ComputeVerticalFOV().ToFloat());
           if (_robot->SendMessage(RobotInterface::EngineToRobot(std::move(msg))) != RESULT_OK) {
-            PRINT_NAMED_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
+            LOG_WARNING("VisionComponent.ReadCameraCalibration.SendCameraFOVFailed", "");
           }
         }
         else
         {
-          PRINT_NAMED_ERROR("VisionComponent.ReadCameraCalibration.Failed", "");
+          LOG_ERROR("VisionComponent.ReadCameraCalibration.Failed", "");
           FaultCode::DisplayFaultCode(FaultCode::NO_CAMERA_CALIB);
           return;
         }
@@ -2768,17 +2760,16 @@ namespace Vector {
         str += " ";
       }
 
-      PRINT_NAMED_ERROR("VisionComponent.UpdateAllResults.DebugImagesPresent",
-                        "%s",
-                        str.c_str());
+      LOG_ERROR("VisionComponent.UpdateAllResults.DebugImagesPresent",
+                "%s", str.c_str());
     }
 
-    if(result.modesProcessed.Contains(VisionMode::ImageViz))
+    if(result.modesProcessed.Contains(VisionMode::Viz))
     {
       SendCompressedImage(result.compressedDisplayImg, "camera");
     }
   }
-  
+
   void VisionComponent::UpdateForCalibration()
   {
     // VIC-7177 Fix storing images for camera calibration
@@ -2802,7 +2793,7 @@ namespace Vector {
     //     if(_storeNextImageForCalibration)
     //     {
     //       _storeNextImageForCalibration = false;
-    //       if (IsModeEnabled(VisionMode::ComputingCalibration)) {
+    //       if (IsModeEnabled(VisionMode::Calibration)) {
     //         LOG_INFO("VisionComponent.SetNextImage.SkippingStoringImageBecauseAlreadyCalibrating", "");
     //       } else {
     //         Lock();
@@ -2822,7 +2813,7 @@ namespace Vector {
     //       ExternalInterface::RobotCompletedFactoryDotTest msg;
     //       Result dotResult = FindFactoryTestDotCentroids(imageGray, msg);
     //       if(RESULT_OK != dotResult) {
-    //         PRINT_NAMED_WARNING("VisionComponent.SetNextImage.FactoryDotTestFailed", "");
+    //         LOG_WARNING("VisionComponent.SetNextImage.FactoryDotTestFailed", "");
     //       }
     //       _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
 
@@ -2853,7 +2844,7 @@ namespace Vector {
       _lastProcessedImageTimeStamp_ms = 0;
       _lastReceivedImageTimeStamp_ms = 0;
     }
-    
+
     _enableImageCapture = enable;
     CameraService::getInstance()->PauseCamera(!enable);
   }
@@ -2876,7 +2867,7 @@ namespace Vector {
       pair.first = new Util::ConsoleVar<bool>(pair.second,
                                               EnumToString(m),
                                               "Vision.General.VisionModes",
-                                              false);
+                                              true);
     }
     #endif
   }
@@ -2886,7 +2877,7 @@ namespace Vector {
     #if REMOTE_CONSOLE_ENABLED
     // Keep track of previous console var values to know when the new ones change
     static std::array<bool, static_cast<u32>(VisionMode::Count)> prevConsoleVars;
-    
+
     for(int i = 0; i < _visionModeConsoleVars.size(); i++)
     {
       auto& pair = _visionModeConsoleVars[i];
@@ -2910,7 +2901,7 @@ namespace Vector {
         {
           _robot->GetVisionScheduleMediator().DevOnly_SelfSubscribeVisionMode({static_cast<VisionMode>(i)});
         }
-        
+
         prevConsoleVars[i] = pair.second;
       }
     }
@@ -2919,7 +2910,7 @@ namespace Vector {
 
   void VisionComponent::EnableImageSending(bool enable)
   {
-    EnableMode(VisionMode::ImageViz, enable);
+    EnableMode(VisionMode::Viz, enable);
   }
 
   void VisionComponent::EnableMirrorMode(bool enable)
@@ -2963,21 +2954,21 @@ namespace Vector {
         if(_restartingCameraTime_ms == 0)
         {
           _restartingCameraTime_ms = curTime_ms;
-          PRINT_NAMED_WARNING("VisionComponent.Update.StoppingCamera",
-                              "Too long without valid image, restarting camera");
+          LOG_WARNING("VisionComponent.Update.StoppingCamera",
+                      "Too long without valid image, restarting camera");
           auto cameraService = CameraService::getInstance();
           cameraService->DeleteCamera();
         }
         // Some time after stopping the camera, try to start it back up
-        // Stopping/Starting are asynchonous so we need to wait a bit between the calls
+        // Stopping/Starting are asynchronous so we need to wait a bit between the calls
         else if(_restartingCameraTime_ms != 0 &&
                 curTime_ms - _restartingCameraTime_ms > kRestartCameraDelay_ms)
         {
           // Prevent the camera restart checks from triggering again until we either
           // start getting images again or the CAMERA_STOPPED fault code triggers
           _restartingCameraTime_ms = 1;
-          PRINT_NAMED_WARNING("VisionComponent.Update.RestartingCamera",
-                              "Too long without valid image, starting camera back up");
+          LOG_WARNING("VisionComponent.Update.RestartingCamera",
+                      "Too long without valid image, starting camera back up");
           auto cameraService = CameraService::getInstance();
           cameraService->InitCamera();
         }
@@ -2990,9 +2981,17 @@ namespace Vector {
     }
   }
 
-  Signal::SmartHandle VisionComponent::RegisterVisionResultCallback(const std::function<VisionResultCallback>& callback)
+  void VisionComponent::EnableSendingSDKImageChunks(bool enableImageStreaming, bool enableHighResolutionImages)
   {
-    return _visionResultSignal.ScopedSubscribe(callback);
+    _sendProtoImageChunks = enableImageStreaming;
+    if(enableHighResolutionImages)
+    {
+      _visionSystemInput.vizImageBroadcastSize = Vision::ImageCacheSize::Full;
+    }
+    else
+    {
+      _visionSystemInput.vizImageBroadcastSize = Vision::ImageCacheSize::Half;
+    }
   }
 
 } // namespace Vector

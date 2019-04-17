@@ -28,7 +28,7 @@
 #include "util/helpers/ankiDefines.h"
 #include "util/logging/logging.h"
 
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #define LOG_CHANNEL "CliffSensor"
@@ -74,6 +74,7 @@ CliffSensorComponent::CliffSensorComponent()
   _cliffMinObserved.fill(std::numeric_limits<uint16_t>::max());
   _cliffDataFilt.fill(0.f);
   _cliffDetectThresholds.fill(CLIFF_SENSOR_THRESHOLD_DEFAULT);
+  _cliffDetectionTimes_ms.fill(0);
 }
 
 void CliffSensorComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps)
@@ -127,11 +128,17 @@ void CliffSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
                         _cliffDataRaw[i] :
                         (kCliffFiltCoef * _cliffDataFilt[i]) + ((1.f - kCliffFiltCoef) * static_cast<float>(_cliffDataRaw[i]));
   }
+  
   _cliffDetectedFlags = msg.cliffDetectedFlags;
   _whiteDetectedFlags = msg.whiteDetectedFlags;
   
-  _lastMsgTimestamp = msg.timestamp;
+  _latestMsgTimestamp = msg.timestamp;
   
+  UpdateLatestCliffDetectionDuration();
+  
+  const bool isPickedUp = (msg.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP) != 0;
+  _maxNumCliffsDetectedWhilePickedUp = isPickedUp ? std::max(_maxNumCliffsDetectedWhilePickedUp, _latestNumCliffsDetected) : 0;
+
   UpdateCliffDetectThresholds();
   
   // Send new thresholds to the robot if needed:
@@ -158,7 +165,7 @@ std::string CliffSensorComponent::GetLogHeader()
 std::string CliffSensorComponent::GetLogRow()
 {
   std::string str;
-  str += std::to_string(_lastMsgTimestamp);
+  str += std::to_string(_latestMsgTimestamp);
   str += ", ";
   for (int i=0 ; i < kNumCliffSensors ; i++) {
     str += std::to_string(_cliffDataRaw[i]);
@@ -205,7 +212,7 @@ void CliffSensorComponent::UpdateCliffDetectThresholds()
 void CliffSensorComponent::QueueCliffThresholdUpdate()
 {
   if (_nextCliffThresholdUpdateToRobot_ms == 0) {
-    _nextCliffThresholdUpdateToRobot_ms = _lastMsgTimestamp + kCliffThresholdMaxUpdateRate_ms;
+    _nextCliffThresholdUpdateToRobot_ms = _latestMsgTimestamp + kCliffThresholdMaxUpdateRate_ms;
   }
 }
 
@@ -254,6 +261,75 @@ void CliffSensorComponent::SetCliffDetectThreshold(unsigned int ind, uint16_t ne
     curThresh = newThresh;
     QueueCliffThresholdUpdate();
   }
+}
+  
+void CliffSensorComponent::UpdateLatestCliffDetectionDuration()
+{
+  // Cache the latest number of cliffs detected to compare later whether it changes after the recount
+  const int prevNumCliffsDetected = _latestNumCliffsDetected;
+
+  // Count the number of flags/bits set
+  _latestNumCliffsDetected = __builtin_popcount(_cliffDetectedFlags.GetFlags());
+
+  const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  _cliffLastDetectedTimes_ms[_latestNumCliffsDetected] = currTime;
+  
+  if ( _latestNumCliffsDetected != prevNumCliffsDetected ) {  
+    
+    // When the number of cliffs detected increases, update all start times for entries
+    // for cliff detections greater than the previous number seen, up to the current level.
+    // Otherwise, this function call does nothing when the number of cliffs decreases.
+    std::fill_n(_cliffDetectionTimes_ms.begin() + prevNumCliffsDetected + 1,
+                _latestNumCliffsDetected - prevNumCliffsDetected, currTime);
+    
+    // When we stop detecting any cliffs, the above call won't work to populate the
+    // zeroth entry in the array of start times, so we must update it manually.
+    if ( _latestNumCliffsDetected == 0 ) {
+      _cliffDetectionTimes_ms[_latestNumCliffsDetected] = currTime;
+    }
+    
+    // When the number of cliffs detected decreases, reset all start times for entries
+    // that are tracking cliff detections greater than the current level.
+    // Otherwise, this function call does nothing when the number of cliffs increases.
+    std::fill_n(_cliffDetectionTimes_ms.begin() + _latestNumCliffsDetected + 1,
+                prevNumCliffsDetected - _latestNumCliffsDetected, 0);
+    
+    // When we start detecting any cliffs at all, we don't want the start time of the zero-cliff-detection
+    // slot to remain at zero, since it's not true that zero cliffs are still being detected.
+    if ( prevNumCliffsDetected == 0 ) {
+      _cliffDetectionTimes_ms[0] = 0;
+    }
+  }
+}
+  
+u32 CliffSensorComponent::GetDurationForAtLeastNCliffDetections_ms(const int minNumCliffs) const
+{
+  DEV_ASSERT(minNumCliffs >= 0 && minNumCliffs <= kNumCliffSensors,
+             "CliffSensorComponent.GetDurationForAtLeastNCliffDetections.InvalidNumCliffs");
+  
+  const u32 cliffDetectionStartTime = _cliffDetectionTimes_ms[minNumCliffs];
+  const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  return (cliffDetectionStartTime > 0) && (cliffDetectionStartTime < currTime) ?
+         (currTime - cliffDetectionStartTime) : 0u;
+}
+
+u32 CliffSensorComponent::GetDurationForAtMostNCliffDetections_ms(const int numCliffs) const
+{
+  DEV_ASSERT(numCliffs >= 0 && numCliffs <= kNumCliffSensors,
+             "CliffSensorComponent.GetDurationForAtMostNCliffDetections_ms.InvalidNumCliffs");
+
+  const TimeStamp_t currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  u32 maxDuration_ms = std::numeric_limits<u32>::max();
+  if (numCliffs == kNumCliffSensors) {
+    return maxDuration_ms;
+  }
+  for (int i=numCliffs+1; i<=kNumCliffSensors; ++i) {
+    const u32 duration_ms = currTime - _cliffLastDetectedTimes_ms[i];
+    if (maxDuration_ms > duration_ms) {
+      maxDuration_ms = duration_ms;
+    }
+  }
+  return maxDuration_ms;
 }
 
 bool CliffSensorComponent::GetCliffPoseRelativeToRobot(const uint8_t cliffDetectedFlags, Pose3d& relativePose) const

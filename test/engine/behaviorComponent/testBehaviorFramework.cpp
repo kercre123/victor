@@ -40,6 +40,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/charger.h"
 #include "engine/components/battery/batteryComponent.h"
 #include "engine/components/mics/micComponent.h"
@@ -106,7 +107,6 @@ void InitBEIPartial( const BEIComponentMap& map, BehaviorExternalInterface& bei 
            GetFromMap<MicComponent>(map, BEIComponentID::MicComponent),
            GetFromMap<MoodManager>(map, BEIComponentID::MoodManager),
            GetFromMap<MovementComponent>(map, BEIComponentID::MovementComponent),
-           GetFromMap<ObjectPoseConfirmer>(map, BEIComponentID::ObjectPoseConfirmer),
            GetFromMap<PetWorld>(map, BEIComponentID::PetWorld),
            GetFromMap<PhotographyManager>(map, BEIComponentID::PhotographyManager),
            GetFromMap<PowerStateManager>(map, BEIComponentID::PowerStateManager),
@@ -915,6 +915,15 @@ void TestBehaviorFramework::AddFakeFirstObject( ObjectType objectType, Pose3d* p
   blockWorld->AddLocatedObject( std::shared_ptr<ObservableObject>(objectPtr) );
   
   ANKI_VERIFY( blockWorld->FindLocatedMatchingObject(filter) != nullptr, "TestBehaviorFramework.AddFakeFirstObject.Fail", "" );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehaviorFramework::IterateSimpleVoiceResponse(std::function< void( const MetaUserIntent_SimpleVoiceResponse& ) > lambda)
+{
+  if( ANKI_VERIFY(_aiComponent != nullptr, "TestBehaviorFramework.IterateSimpleVoiceResponse.NullAIComponent", "") ) {
+    auto& uic = _aiComponent->GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
+    uic.DEVONLY_IterateSimpleVoiceResponse({}, lambda);
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

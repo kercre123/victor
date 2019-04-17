@@ -32,7 +32,8 @@ static uint32_t measurement_timing_budget_us;
 #define TARGET(value) sizeof(value), (void*)&value
 #define VALUE(value) 1, (void*)value
 
-static const int SKIP_WRITE = 8;  // Don't do the first 7 steps of I2C_LOOP
+static const int SKIP_WRITE = 8;    // Don't do the first 7 steps of I2C_LOOP
+static const int SKIP_NO_TOF = 13;  // There is no TOF sensor, so we can't access these addresses
 
 const I2C_Operation I2C_LOOP[] = {
   // Start single read on TOF sensor
@@ -88,7 +89,9 @@ void Opto::tick(void) {
     COUNT_TARGET = MID_COUNT_TARGET;
   }
 
-  if (++period_counter >= COUNT_TARGET) {
+  if (IS_WHISKEY) {
+    I2C::execute(&I2C_LOOP[SKIP_NO_TOF]);
+  } else if (++period_counter >= COUNT_TARGET) {
     I2C::execute(&I2C_LOOP[0]);
     period_counter = 0;
   } else {
@@ -360,6 +363,13 @@ void Opto::start(void) {
     writeReg(i, DROP_SENSOR_ADDRESS, PS_CAN_1, 0);
   }
 
+  if (IS_WHISKEY) {
+    I2C::release();
+
+    Opto::active = true;
+    return ;
+  }
+  
   // Turn on TOF sensor
   // "Set I2C standard mode"
   writeReg(0, TOF_SENSOR_ADDRESS, 0x88, 0x00);

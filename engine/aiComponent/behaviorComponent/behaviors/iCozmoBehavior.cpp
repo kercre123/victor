@@ -81,7 +81,6 @@ static const char* kAlwaysStreamlineKey              = "alwaysStreamline";
 static const char* kWantsToBeActivatedCondConfigKey  = "wantsToBeActivatedCondition";
 static const char* kWantsToCancelSelfConfigKey       = "wantsToCancelSelfCondition";
 static const char* kRespondToUserIntentsKey          = "respondToUserIntents";
-static const char* kRespondToTriggerWordKey          = "respondToTriggerWord";
 static const char* kDisplayIntentActivity            = "showActiveIntentFeedback";
 static const char* kIntentActivityShutOff            = "autoShutOffIntentFeedback";
 static const char* kResetTimersKey                   = "resetTimers";
@@ -271,7 +270,6 @@ ICozmoBehavior::ICozmoBehavior(const Json::Value& config, const CustomBEIConditi
 , _id(ExtractBehaviorIDFromConfig(config))
 , _behaviorClassID(ExtractBehaviorClassFromConfig(config))
 , _intentToDeactivate( UserIntentTag::INVALID )
-, _respondToTriggerWord( false )
 , _emotionEventOnActivated("")
 , _isActivated(false)
 {
@@ -328,8 +326,6 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
   // set our feedback response type based on our config bools.
   JsonTools::GetValueOptional(config, kDisplayIntentActivity, _showActiveIntentFeedback);
   JsonTools::GetValueOptional(config, kIntentActivityShutOff, _autoShutOffActiveIntentFeedback);
-
-  _respondToTriggerWord = config.get(kRespondToTriggerWordKey, false).asBool();
 
   _emotionEventOnActivated = config.get(kEmotionEventOnActivatedKey, "").asString();
 
@@ -448,7 +444,6 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
     kWantsToBeActivatedCondConfigKey,
     kWantsToCancelSelfConfigKey,
     kRespondToUserIntentsKey,
-    kRespondToTriggerWordKey,
     kDisplayIntentActivity,
     kIntentActivityShutOff,
     kEmotionEventOnActivatedKey,
@@ -478,6 +473,16 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
 
   return expectedKeys;
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const BehaviorOperationModifiers& ICozmoBehavior::GetBehaviorOperationModifiersPostInit() const
+{
+  ANKI_VERIFY(_initHasBeenCalled,
+              "ICozmoBehavior.GetBehaviorOperationModifiersPostInit",
+              "Behavior %s has not been initialized! Operation modifiers not yet finalized",
+              GetDebugLabel().c_str());
+  return _operationModifiers;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::InitInternal()
@@ -492,13 +497,6 @@ void ICozmoBehavior::InitInternal()
     for( auto& condition : _wantsToCancelSelfConditions ) {
       condition->Init(GetBEI());
     }
-
-    if( _respondToTriggerWord ){
-      IBEIConditionPtr condition(BEIConditionFactory::CreateBEICondition(BEIConditionType::TriggerWordPending, GetDebugLabel()));
-      condition->Init(GetBEI());
-      _wantsToBeActivatedConditions.push_back(condition);
-    }
-
   }
 
   if(!_anonymousBehaviorMapConfig.empty()){
@@ -640,6 +638,19 @@ bool ICozmoBehavior::GetAssociatedActiveFeature(ActiveFeature& feature) const
 }      
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void ICozmoBehavior::SmartSetActiveFeatureOnActivated(const ActiveFeature& feature)
+{
+  if( ANKI_VERIFY( _associatedActiveFeature == nullptr,
+                   "ICozmoBehavior.SmartSetActiveFeatureOnActivated.FeatureAlreadySet",
+                   "Trying to set active feature for this run to %s, but it's already set to %s, aborting",
+                   ActiveFeatureToString(feature),
+                   ActiveFeatureToString(*_associatedActiveFeature) ) ) {
+    _associatedActiveFeature.reset( new ActiveFeature( feature ) );
+    _resetActiveFeature = true;
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 std::map<std::string,ICozmoBehaviorPtr> ICozmoBehavior::TESTONLY_GetAnonBehaviors( UnitTestKey key ) const
 {
   return _anonymousBehaviorMap;
@@ -754,25 +765,6 @@ void ICozmoBehavior::ClearWaitForUserIntent()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SetRespondToTriggerWord(bool shouldRespond)
-{
-  if( ANKI_VERIFY( !_initHasBeenCalled,
-                   "ICozmoBehavior.SetRespondToTriggerWord.AfterInit",
-                   "behavior '%s' trying to set trigger word after init has already been called",
-                   GetDebugLabel().c_str()) ) {
-    if( _respondToTriggerWord ) {
-      PRINT_NAMED_WARNING("ICozmoBehavior.SetRespondToTriggerWord.Replace",
-                          "behavior '%s' setting should respond to %d, but it was previously %d",
-                          GetDebugLabel().c_str(),
-                          shouldRespond,
-                          _respondToTriggerWord);
-    }
-
-    _respondToTriggerWord = shouldRespond;
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SubscribeToTags(std::set<GameToEngineTag> &&tags)
 {
   _gameToEngineTags.insert(tags.begin(), tags.end());
@@ -857,11 +849,6 @@ void ICozmoBehavior::OnActivatedInternal()
   }
   if(_tracksToLockWhileActivated != 0){
     SmartLockTracks(_tracksToLockWhileActivated, kTracksLockedWhileActivatedID, GetDebugLabel());
-  }
-
-  // Clear trigger word if responding to it
-  if( _respondToTriggerWord ) {
-    GetBehaviorComp<UserIntentComponent>().ClearPendingTriggerWord();
   }
   
   if( _alterStreamAfterWakeword != nullptr ) {
@@ -1039,6 +1026,10 @@ void ICozmoBehavior::OnDeactivatedInternal()
   if( _keepAliveDisabled ) {
     GetBEI().GetAnimationComponent().RemoveKeepFaceAliveDisableLock(GetDebugLabel());
     _keepAliveDisabled = false;
+  }
+
+  if( _resetActiveFeature ) {
+    _associatedActiveFeature.reset();
   }
 }
 

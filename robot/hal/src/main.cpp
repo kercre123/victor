@@ -16,6 +16,23 @@
 
 #define LOG_PROCNAME "vic-robot"
 
+//
+// Enable Anki::Utils log provider?
+//
+#ifndef ANKI_ROBOT_VICTOR_LOGGER
+#define ANKI_ROBOT_VICTOR_LOGGER 0
+#endif
+
+#if ANKI_ROBOT_VICTOR_LOGGER
+
+#include "util/logging/victorLogger.h"
+
+namespace {
+  Anki::Util::VictorLogger gVictorLogger(LOG_PROCNAME);
+}
+
+#endif
+
 // For development purposes, while HW is scarce, it's useful to be able to run on phones
 #ifdef HAL_DUMMY_BODY
   #define HAL_NOT_PROVIDING_CLOCK
@@ -161,6 +178,11 @@ int main(int argc, const char* argv[])
 
   signal(SIGTERM, Shutdown);
 
+  #if ANKI_ROBOT_VICTOR_LOGGER
+  Anki::Util::gLoggerProvider = &gVictorLogger;
+  Anki::Util::gEventProvider = &gVictorLogger;
+  #endif
+
   Anki::Vector::InstallCrashReporter(LOG_PROCNAME);
 
   if (argc > 1) {
@@ -171,7 +193,14 @@ int main(int argc, const char* argv[])
   int res = run();
 
   Anki::Vector::Robot::Destroy();
+
   Anki::Vector::UninstallCrashReporter();
+
+  #if ANKI_ROBOT_VICTOR_LOGGER
+  Anki::Util::gLoggerProvider = nullptr;
+  Anki::Util::gEventProvider = nullptr;
+  #endif
+
   sync();
 
   return res;

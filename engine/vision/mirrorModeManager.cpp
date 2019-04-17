@@ -11,9 +11,9 @@
  **/
 
 #include "anki/cozmo/shared/cozmoConfig.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 #include "engine/vision/mirrorModeManager.h"
 #include "engine/vision/visionModesHelpers.h"
 #include "engine/vision/visionSystem.h"
@@ -29,7 +29,9 @@ namespace {
   // If > 0, displays detected marker names in Viz Camera Display (still at fixed scale) and
   // and in mirror mode (at specified scale)
   CONSOLE_VAR_RANGED(f32,  kDisplayMarkerNamesScale,           "Vision.MirrorMode", 0.f, 0.f, 1.f);
-  CONSOLE_VAR(bool,        kDisplayDetectionsInMirrorMode,     "Vision.MirrorMode", true); // objects, faces, markers
+  CONSOLE_VAR(bool,        kDisplayMarkersInMirrorMode,        "Vision.MirrorMode", true);
+  CONSOLE_VAR(bool,        kDisplayFacesInMirrorMode,          "Vision.MirrorMode", true);
+  CONSOLE_VAR(bool,        kDisplaySalientPointsInMirrorMode,  "Vision.MirrorMode", true);
   CONSOLE_VAR(bool,        kDisplayExposureInMirrorMode,       "Vision.MirrorMode", true);
   CONSOLE_VAR(f32,         kMirrorModeGamma,                   "Vision.MirrorMode", 1.f);
   CONSOLE_VAR(s32,         kDrawMirrorModeSalientPointsFor_ms, "Vision.MirrorMode", 0);
@@ -164,7 +166,7 @@ void MirrorModeManager::DrawAutoExposure(const VisionProcessingResult& procResul
   // Draw exposure and gain in the lower left of the screen
   // Use a static to keep the last params displayed even when AE wasn't run (since it doesn't run every frame)
   static std::string exposureStr = "";
-  if(procResult.modesProcessed.Contains(VisionMode::AutoExposure))
+  if(procResult.modesProcessed.Contains(VisionMode::AutoExp))
   {
     const Vision::CameraParams& params = procResult.cameraParams;
     std::stringstream ss;
@@ -199,7 +201,7 @@ void MirrorModeManager::DrawSalientPoints(const VisionProcessingResult& procResu
     }
   }
   
-  if(procResult.modesProcessed.Contains(VisionMode::DetectingBrightColors) ||
+  if(procResult.modesProcessed.Contains(VisionMode::BrightColors) ||
      procResult.modesProcessed.ContainsAnyOf(GetVisionModesUsingNeuralNets()))
   {
     if(!usingFixedDrawTime)
@@ -267,20 +269,29 @@ Result MirrorModeManager::CreateMirrorModeImage(const Vision::ImageRGB& cameraIm
   // Flip image around the y axis (before we draw anything on it)
   cv::flip(_screenImg.get_CvMat_(), _screenImg.get_CvMat_(), 1);
 
-  if(kDisplayDetectionsInMirrorMode)
+  if( kDisplayMarkersInMirrorMode )
   {
     DrawVisionMarkers(visionProcResult.observedMarkers);
+  }
+  
+  if( kDisplayFacesInMirrorMode )
+  {
     DrawFaces(visionProcResult.faces);
+  }
+  
+  if( kDisplaySalientPointsInMirrorMode )
+  {
     DrawSalientPoints(visionProcResult);
   }
   
-  if(kDisplayExposureInMirrorMode)
+  if( kDisplayExposureInMirrorMode )
   {
     DrawAutoExposure(visionProcResult);
   }
   
   // Use gamma to make it easier to see
-  if(!Util::IsFltNear(_currentGamma, kMirrorModeGamma)) {
+  if(!Util::IsFltNear(_currentGamma, kMirrorModeGamma))
+  {
     _currentGamma = kMirrorModeGamma;
     const f32 invGamma = 1.f / _currentGamma;
     const f32 divisor = 1.f / 255.f;

@@ -22,6 +22,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 
 #include "coretech/common/engine/utils/timer.h"
@@ -87,8 +88,8 @@ bool BehaviorFindCube::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorFindCube::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
-  modifiers.visionModesForActiveScope->insert({ VisionMode::FullFrameMarkerDetection,EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Markers, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Markers_FullFrame,EVisionUpdateFrequency::High });
   modifiers.wantsToBeActivatedWhenOnCharger = true;
   modifiers.wantsToBeActivatedWhenCarryingObject = false; 
   modifiers.cubeConnectionRequirements = BehaviorOperationModifiers::CubeConnectionRequirements::OptionalActive;
@@ -145,9 +146,9 @@ void BehaviorFindCube::BehaviorUpdate()
 
   if( FindCubeState::CheckForCubeInFront == _dVars.state || 
       FindCubeState::QuickSearchForCube  == _dVars.state ){
-    auto& proxSensor = GetBEI().GetRobotInfo().GetProxSensorComponent();
-    uint16_t proxDist_mm = 0;
-    if( proxSensor.GetLatestDistance_mm(proxDist_mm) && ( proxDist_mm < kProxBackupThreshold_mm ) ){
+    const auto& proxSensor = GetBEI().GetRobotInfo().GetProxSensorComponent();
+    const auto& proxData = proxSensor.GetLatestProxData();
+    if( proxData.foundObject && ( proxData.distance_mm < kProxBackupThreshold_mm ) ){
       TransitionToBackUpAndCheck();
     }
 
@@ -224,11 +225,11 @@ void BehaviorFindCube::TransitionToCheckForCubeInFront()
   const bool isAbsolute = false;
   auto searchInFrontAction = new CompoundActionSequential({
     new MoveHeadToAngleAction(0.0f),
-    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers),
+    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::Markers),
     new TurnInPlaceAction(DEG_TO_RAD(30.0f), isAbsolute),
-    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers),
+    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::Markers),
     new TurnInPlaceAction(DEG_TO_RAD(-60.0f), isAbsolute),
-    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers),
+    new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::Markers),
   });
 
   auto* targetCube = GetTargetCube();
@@ -260,7 +261,7 @@ void BehaviorFindCube::TransitionToBackUpAndCheck()
 
   auto* loopAndWaitAction = new CompoundActionParallel();
   loopAndWaitAction->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::ChargerDockingSearchWaitForImages));
-  loopAndWaitAction->AddAction(new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers));
+  loopAndWaitAction->AddAction(new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::Markers));
   backupAndCheckAction->AddAction(loopAndWaitAction);
 
   DelegateIfInControl(backupAndCheckAction, &BehaviorFindCube::TransitionToQuickSearchForCube);
@@ -311,7 +312,7 @@ void BehaviorFindCube::StartNextTurn()
 
     auto* loopAndWaitAction = new CompoundActionParallel();
     loopAndWaitAction->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::FindCubeWaitLoop));
-    loopAndWaitAction->AddAction(new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::DetectingMarkers));
+    loopAndWaitAction->AddAction(new WaitForImagesAction(kNumImagesToWaitDuringSearch, VisionMode::Markers));
     action->AddAction(loopAndWaitAction);
 
     // Keep track of the pose before the robot starts turning

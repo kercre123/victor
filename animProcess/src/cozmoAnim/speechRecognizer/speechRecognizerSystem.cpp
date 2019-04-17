@@ -283,7 +283,7 @@ std::string result;
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // SpeechRecognizerSystem
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SpeechRecognizerSystem::SpeechRecognizerSystem(const AnimContext* context,
+SpeechRecognizerSystem::SpeechRecognizerSystem(const Anim::AnimContext* context,
                                                MicData::MicDataSystem* micDataSystem,
                                                const std::string& triggerWordDataDir)
 : _context(context)
@@ -307,7 +307,7 @@ SpeechRecognizerSystem::~SpeechRecognizerSystem()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SpeechRecognizerSystem::InitVector(const RobotDataLoader& dataLoader,
+void SpeechRecognizerSystem::InitVector(const Anim::RobotDataLoader& dataLoader,
                                         const Util::Locale& locale,
                                         TriggerWordDetectedCallback callback)
 {
@@ -346,15 +346,8 @@ void SpeechRecognizerSystem::ToggleNotchDetector(bool active)
 }
   
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void SpeechRecognizerSystem::UpdateRaw(const AudioUtil::AudioSample* audioChunk, unsigned int audioDataLen)
+void SpeechRecognizerSystem::UpdateNotch(const AudioUtil::AudioSample* audioChunk, unsigned int audioDataLen)
 {
-  // take 0th channel (back left) and give it to the notch detector
-  std::vector<short> singleChannel;
-  singleChannel.resize(audioDataLen/MicData::kNumInputChannels);
-  for( int i=0, idx=0; i<audioDataLen; i+=MicData::kNumInputChannels, ++idx ) {
-    singleChannel[idx] = audioChunk[i];
-  }
-  
   {
     std::lock_guard<std::mutex> lg{_notchMutex};
     // don't run any ffts if not needed. when _notchDetectorActive is enabled, the notch detector will start computing DFTs
@@ -362,7 +355,7 @@ void SpeechRecognizerSystem::UpdateRaw(const AudioUtil::AudioSample* audioChunk,
     // computes some statistics on the average PSD. This means there won't be any data for when the user speaks the first
     // wake word, but that's fine since that won't have a notch anyway
     const bool analyzeSamples = _notchDetectorActive || (kForceRunNotchDetector != 0);
-    _notchDetector->AddSamples(singleChannel.data(), singleChannel.size(), analyzeSamples);
+    _notchDetector->AddSamples(audioChunk, audioDataLen/MicData::kNumInputChannels, analyzeSamples);
     if( kForceRunNotchDetector == 2 ) {
       // run without result. useful for debugging with built-in sine waves
       _notchDetector->HasNotch();

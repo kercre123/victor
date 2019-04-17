@@ -21,7 +21,8 @@
 
 namespace Anki {
 namespace Vector {
-  
+namespace Anim {
+
 class BackpackLayerManager : public ITrackLayerManager<BackpackLightsKeyFrame>
 {
 public:
@@ -34,6 +35,7 @@ public:
   
 };
   
+}
 }
 }
 

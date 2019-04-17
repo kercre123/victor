@@ -16,7 +16,7 @@ HOST=`uname -a | awk '{print tolower($1);}' | sed -e 's/darwin/mac/'`
 pushd ${SCRIPT_PATH} >> /dev/null
 
 GIT_ROOT=`git rev-parse --show-toplevel`
-PROTOBUF_LOC="${GIT_ROOT}/EXTERNALS/protobuf/${HOST}"
+PROTOBUF_LOC="${GIT_ROOT}/3rd/protobuf/${HOST}"
 INCLUDES="${PROTOBUF_LOC}/include"
 LIBS="${PROTOBUF_LOC}/lib"
 SRCS=`find . -type f -iname "*.cpp"`

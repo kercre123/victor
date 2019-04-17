@@ -46,9 +46,10 @@ namespace Vector {
 
 class CannedAnimationContainer;
 class Animation;
+namespace Anim {
 class AnimContext;
 class BackpackLightAnimationContainer;
- 
+
 class RobotDataLoader : private Util::noncopyable
 {
 public:
@@ -128,6 +129,7 @@ private:
   
 };
 
+}
 }
 }
 

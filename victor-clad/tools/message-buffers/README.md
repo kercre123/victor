@@ -186,3 +186,38 @@ Any new emitter can easily be unit-tested against the other emitters, meaning th
 * tests live in the ```emitters/tests``` directory
 	* To run all unit tests: ```make -C emitters/tests```
 	* To run specific emitter unit test: ```make -C emitters/tests/<subdir>```
+
+###Consumption
+CLAD headers come prepackaged as cmake targets, to use in your executable or library simply add to your `target_link_libraries`
+
+e.g.
+
+```
+target_link_libraries(victor_anim
+  PRIVATE
+  robot_clad
+)
+```
+
+all the necessary `#defines` and include paths will be specified for you.
+
+To assist debugging CLAD vs CPPLITE there are two `#defines` `USES_CLAD` and `USES_CPPLITE`, these can be easily examined in xcode.
+
+####cozmo_engine
+![cozmo engine defines](cozmo_engine_clad.png)
+
+####supervisor
+![supervisor](supervisor_clad.png)
+
+#CPPLITE
+
+"cpplite is for cpp code running on embedded processors - it is a subset of c++ which leaves out the stuff most likely to cause code bloat."
+
+It also places restrictions on message format, e.g. one variable length element, so you can’t have two strings in a message and it must be last item in struct.
+
+The design requirements for cpplite were:
+
+  - the on wire and in memory format of the message are identical
+  - that it can be represented as structs with no pointers and can be directly serialized / deserialized with only memcpy
+
+cpplite pre-dates knowledge of [flat-buffers](https://google.github.io/flatbuffers/).

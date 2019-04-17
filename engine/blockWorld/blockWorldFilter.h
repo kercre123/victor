@@ -81,12 +81,6 @@ namespace Vector {
     static bool IsLightCubeFilter(const ObservableObject* object);
     static bool IsCustomObjectFilter(const ObservableObject* object);
     
-    // Normally, all objects known to BlockWorld are checked. Setting this to
-    // true will only check those objects observed in the most recent BlockWorld
-    // Update() call.
-    void OnlyConsiderLatestUpdate(bool tf) { _onlyConsiderLatestUpdate = tf; }
-    bool IsOnlyConsideringLatestUpdate() const { return _onlyConsiderLatestUpdate; }
-    
     enum class OriginMode : uint8_t {
       InRobotFrame,     // Only objects in the current robot coordinate frame are returned (Default)
       NotInRobotFrame,  // Only objects *not* in the current robot coordinate frame are returned
@@ -102,7 +96,6 @@ namespace Vector {
     
     std::list<FilterFcn>    _filterFcns;
     
-    bool _onlyConsiderLatestUpdate = false;
     OriginMode _originMode = OriginMode::InRobotFrame;
     
     template<class T>

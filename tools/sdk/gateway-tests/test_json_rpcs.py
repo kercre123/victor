@@ -211,17 +211,18 @@ def test_battery_state(vector_connection):
 def test_version_state(vector_connection):
     vector_connection.send("v1/version_state", p.VersionStateRequest(), p.VersionStateResponse())
 
-def test_connect_cube(vector_connection):
-    vector_connection.send("v1/connect_cube", p.ConnectCubeRequest(), p.ConnectCubeResponse())
+# TODO Turn back on
+# def test_connect_cube(vector_connection):
+#     vector_connection.send("v1/connect_cube", p.ConnectCubeRequest(), p.ConnectCubeResponse())
 
-def test_disconnect_cube(vector_connection):
-    vector_connection.send("v1/disconnect_cube", p.DisconnectCubeRequest(), p.DisconnectCubeResponse())
+# def test_disconnect_cube(vector_connection):
+#     vector_connection.send("v1/disconnect_cube", p.DisconnectCubeRequest(), p.DisconnectCubeResponse())
 
-def test_cubes_available(vector_connection):
-    vector_connection.send("v1/cubes_available", p.CubesAvailableRequest(), p.CubesAvailableResponse())
+# def test_cubes_available(vector_connection):
+#     vector_connection.send("v1/cubes_available", p.CubesAvailableRequest(), p.CubesAvailableResponse())
 
-def test_flash_cube_lights(vector_connection):
-    vector_connection.send("v1/flash_cube_lights", p.FlashCubeLightsRequest(), p.FlashCubeLightsResponse())
+# def test_flash_cube_lights(vector_connection):
+#     vector_connection.send("v1/flash_cube_lights", p.FlashCubeLightsRequest(), p.FlashCubeLightsResponse())
 
 def test_forget_preferred_cube(vector_connection):
     vector_connection.send("v1/forget_preferred_cube", p.ForgetPreferredCubeRequest(), p.ForgetPreferredCubeResponse())
@@ -302,3 +303,10 @@ def test_alexa_opt_out(vector_connection, data):
 
 def test_set_eye_color(vector_connection):
     vector_connection.send("v1/set_eye_color", p.SetEyeColorRequest(), p.SetEyeColorResponse())
+
+def test_cancel_behavior(vector_connection):
+    vector_connection.send("v1/cancel_behavior", p.CancelBehaviorRequest(), p.CancelBehaviorResponse())
+
+# TODO Turn back on
+#def test_capture_single_image(vector_connection):
+#    vector_connection.send("v1/capture_single_image", p.CaptureSingleImageRequest(), p.CaptureSingleImageResponse())

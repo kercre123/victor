@@ -2,13 +2,20 @@
   "behaviorClass" : "DevBatteryLogging",
   "behaviorID"    : "DevBatteryLogging",
 
-  "wheelSpeed_mmps" : 220,
-  "liftSpeed_degps"  : 500,
-  "headSpeed_degps"  : 500,
+  // Delegate to exploring behavior when battery reaches full
+  // If this mode is selected, the stress test parameters below 
+  // are ignored.
+  "doExploring" : true,
 
-  "startMovingVoltage" : 3.0,
+  // --- Stress test parameters ---
+  "wheelSpeed_mmps" : 170,
+  "liftSpeed_degps"  : 360,
+  "headSpeed_degps"  : 360,
+
+  "startMovingVoltage" : 4.0,
   "stressCPU" : true,
   "stressSpeaker" : true,
+  // -------------------------------
 
   "driveOffChargerWhenFull" : true
 }

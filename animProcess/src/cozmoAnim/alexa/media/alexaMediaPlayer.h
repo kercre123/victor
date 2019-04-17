@@ -91,7 +91,9 @@ namespace Util {
 namespace Vector {
 
 class AlexaReader;
-class AnimContext;
+namespace Anim {
+  class AnimContext;
+}
 struct AudioInfo;
 namespace Audio {
   class CozmoAudioController;
@@ -120,7 +122,7 @@ public:
                     std::shared_ptr<alexaClientSDK::avsCommon::sdkInterfaces::HTTPContentFetcherInterfaceFactoryInterface> contentFetcherFactory );
   ~AlexaMediaPlayer();
 
-  void Init( const AnimContext* context );
+  void Init( const Anim::AnimContext* context );
 
   void Update();
 

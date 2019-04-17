@@ -13,7 +13,6 @@
 #ifndef __Engine_AiComponent_BehaviorComponent_WeatherIntentParser_H__
 #define __Engine_AiComponent_BehaviorComponent_WeatherIntentParser_H__
 
-#include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/behaviorComponent/weatherConditionTypes.h"
 
 #include "engine/aiComponent/behaviorComponent/weatherIntents/weatherConditionRemaps.h"
@@ -31,10 +30,11 @@ public:
                       const Json::Value& conditionRemaps);
 
   bool IsForecast(const UserIntent_WeatherResponse& weatherIntent) const;
-  bool ShouldSayText(const UserIntent_WeatherResponse& weatherIntent,
-                     std::string& textToSay) const;
+
   bool IsFahrenheit(const UserIntent_WeatherResponse& weatherIntent) const;
+
   WeatherConditionType GetCondition(const UserIntent_WeatherResponse& weatherIntent) const;
+
   tm GetLocalDateTime(const UserIntent_WeatherResponse& weatherIntent) const;
 
   // return raw int temperature in whatever unit it is set

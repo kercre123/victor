@@ -1,0 +1,14 @@
+FROM victor
+ARG USER
+ARG UID
+
+# Packages used during development
+RUN apt update && \
+apt -y install babeltrace python3-babeltrace
+
+# Actually use bash
+Run ln -sf /bin/bash /bin/sh
+
+WORKDIR /home/$USER
+RUN useradd -Ums /bin/bash -u ${UID} ${USER}
+ENTRYPOINT eval $(ssh-agent) && ssh-add; /bin/bash 

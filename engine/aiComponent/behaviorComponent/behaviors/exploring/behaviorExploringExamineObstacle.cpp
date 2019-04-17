@@ -15,7 +15,7 @@
 
 #include "clad/types/animationTrigger.h"
 #include "coretech/common/engine/math/fastPolygon2d.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
@@ -182,12 +182,11 @@ void BehaviorExploringExamineObstacle::OnBehaviorActivated()
                            "Should be facing an obstacle now" );
     }
     
-    auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
-    u16 distance_mm = 0;
-    // ignore return value (sensor validity). this is only used to select an animation so isnt vital
-    proxSensor.GetLatestDistance_mm( distance_mm );
+    const auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
+    const auto& proxData = proxSensor.GetLatestProxData();
     
-    const bool obstacleIsFar = (distance_mm >= kMinDistForFarReaction_mm);
+    // ignore if we actually found an object. this is only used to select an animation so isnt vital
+    const bool obstacleIsFar = (proxData.distance_mm >= kMinDistForFarReaction_mm);
     const AnimationTrigger huhAnim = obstacleIsFar ? AnimationTrigger::ExploringHuhFar : AnimationTrigger::ExploringHuhClose;
     auto* huhAction = new TriggerLiftSafeAnimationAction{ huhAnim };
     DelegateIfInControl(huhAction, [this](ActionResult res){
@@ -232,7 +231,7 @@ void BehaviorExploringExamineObstacle::TransitionToNextAction()
     SET_STATE(CheckForHand);
     
     _dVars.lastImageTime = GetBEI().GetVisionComponent().GetLastProcessedImageTimeStamp();
-    WaitForImagesAction* action = new WaitForImagesAction(1, VisionMode::DetectingHands, _dVars.lastImageTime);
+    WaitForImagesAction* action = new WaitForImagesAction(1, VisionMode::Hands, _dVars.lastImageTime);
     DelegateNow( action, [this]() {
       std::list<Vision::SalientPoint> handsFound;
       const auto& salientPtsComponent = GetAIComp<SalientPointsComponent>();

@@ -62,7 +62,7 @@ public:
 
   bool GetAutoRecord() const { return _autoRecord; }
 
-  int  ParseCommands(std::string& queryString);
+  bool ParseCommands(const std::string& queryStr, const bool queueForExecution = true);
   void ExecuteQueuedCommands(std::string* resultStr = nullptr);
 
 protected:
@@ -79,13 +79,16 @@ protected:
   void Stop();
   void Dump(const DumpType dumpType, const bool dumpAll,
             const std::string* fileName = nullptr, std::string* resultStr = nullptr);
+  void DumpFramesSince(const int firstFrameBufferIndex, std::string* resultStr);
   void DumpHeading(const DumpType dumpType, const bool dumpLine2Extra,
                    FILE* fd, std::string* resultStr) const;
   virtual void InitDumpAccumulators() = 0;
   virtual const FrameMetric& UpdateDumpAccumulators(const int frameBufferIndex) = 0;
+  virtual const FrameMetric& GetBaseFrame(const int frameBufferIndex) = 0;
   virtual int AppendFrameData(const DumpType dumpType,
                               const int frameBufferIndex,
-                              const int dumpBufferOffset) = 0;
+                              const int dumpBufferOffset,
+                              const bool graphableDataOnly) = 0;
   virtual int AppendSummaryData(const DumpType dumpType,
                                 const int dumpBufferOffset,
                                 const int lineIndex) = 0;
@@ -126,6 +129,7 @@ protected:
     STOP,
     DUMP_LOG,
     DUMP_RESPONSE_STRING,
+    DUMP_RESPONSE_CSV_SINCE,
     DUMP_FILES,
     WAIT_SECONDS,
     WAIT_TICKS,
@@ -138,6 +142,7 @@ protected:
     bool        _dumpAll;
     float       _waitSeconds;
     int         _waitTicks;
+    int         _frameIndex;
 
     PerfMetricCommand(CommandType cmd)
     {

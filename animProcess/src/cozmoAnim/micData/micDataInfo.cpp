@@ -40,8 +40,13 @@ void MicDataInfo::CollectRawAudio(const AudioUtil::AudioSample* audioChunk, size
   if (_typesToCollect.IsBitFlagSet(MicDataType::Raw))
   {
     AudioUtil::AudioChunk newChunk;
-    newChunk.resize(kRawAudioChunkSize);
-    std::copy(audioChunk, audioChunk + size, newChunk.begin());
+    newChunk.resize(kIncomingAudioChunkSize);
+    // Re-interlace the audio data, for the sake of the 4-channel .wav that'll be written out.
+    for (size_t sample=0; sample<kSamplesPerBlockPerChannel; ++sample) {
+      for (size_t channel=0; channel<kNumInputChannels; ++channel) {
+        newChunk[kNumInputChannels*sample + channel] = audioChunk[channel*kSamplesPerBlockPerChannel + sample];
+      }
+    }
     _rawAudioData.push_back(std::move(newChunk));
   }
 }
@@ -52,7 +57,7 @@ void MicDataInfo::CollectProcessedAudio(const AudioUtil::AudioSample* audioChunk
   if (_typesToCollect.IsBitFlagSet(MicDataType::Processed))
   {
     AudioUtil::AudioChunk newChunk;
-    newChunk.resize(kSamplesPerBlock);
+    newChunk.resize(kSamplesPerBlockPerChannel);
     
     // Apply fade in
     if (_fadeInSamples > 0) {
@@ -89,7 +94,7 @@ AudioUtil::AudioChunkList MicDataInfo::GetProcessedAudio(size_t beginIndex)
     const auto& audioChunk = *chunkIter;
     ++chunkIter;
     AudioUtil::AudioChunk newChunk;
-    newChunk.resize(kSamplesPerBlock);
+    newChunk.resize(kSamplesPerBlockPerChannel);
     std::copy(audioChunk.begin(), audioChunk.end(), newChunk.begin());
     copiedData.push_back(std::move(newChunk));
   }
@@ -185,7 +190,7 @@ void MicDataInfo::SaveCollectedAudio(const std::string& dataDirectory,
   // Check against a min recording length. If we're not recording raw and our recorded processed time
   // is too short, we're going to abandon saving it.
   if (_rawAudioData.empty() && 
-      (_processedAudioData.size() * kTimePerSEBlock_ms) < kMinAudioSizeToSave_ms)
+      (_processedAudioData.size() * kTimePerChunk_ms) < kMinAudioSizeToSave_ms)
   {
     return;
   }

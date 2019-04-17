@@ -12,7 +12,7 @@
 #ifndef __Anki_NeuralNets_NeuralNetModel_Interface_H__
 #define __Anki_NeuralNets_NeuralNetModel_Interface_H__
 
-#include "coretech/common/shared/array2d.h"
+#include "coretech/common/shared/array2d_fwd.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/neuralnets/neuralNetParams.h"
 #include "coretech/vision/engine/image.h"
@@ -47,6 +47,7 @@ public:
   // Note that the input imge could be modified (e.g. resized in place)
   virtual Result Detect(Vision::ImageRGB& img, std::list<Vision::SalientPoint>& salientPoints) = 0;
   
+  // Return the network name
   const std::string& GetName() const { return _name; }
   
 protected:

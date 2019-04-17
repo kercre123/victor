@@ -15,16 +15,14 @@
 
 #include "engine/aiComponent/behaviorComponent/heldInPalmTracker.h"
 
-#include "clad/audio/audioParameterTypes.h"
-#include "clad/types/featureGateTypes.h"
-
 #include "coretech/common/engine/utils/timer.h"
 
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/audio/engineRobotAudioClient.h"
+#include "engine/components/sensors/cliffSensorComponent.h"
+#include "engine/components/movementComponent.h"
+
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
-#include "engine/utils/cozmoFeatureGate.h"
 
 #include "lib/util/source/anki/util/entityComponent/dependencyManagedEntity.h"
 
@@ -40,87 +38,77 @@ namespace Vector {
 
 #define CONSOLE_GROUP "HeldInPalm.Tracker"
 
-// Gain trust at this rate when held in a palm
-CONSOLE_VAR(float, kHeldInPalm_trustLevelRate, CONSOLE_GROUP, 0.f);
-CONSOLE_VAR(float, kHeldInPalmTracker_updatePeriod_s, CONSOLE_GROUP, 60.0);
+CONSOLE_VAR(float, kTrackerWebVizUpdatePeriod_s, CONSOLE_GROUP, 60.0);
+
+CONSOLE_VAR(bool, kEnableDebugTransitionPrintouts, CONSOLE_GROUP, false);
 
 namespace {
-#if REMOTE_CONSOLE_ENABLED
-  static float sForceTrustLevelDelta = 0.0f;
-  void ForceTrustLevelDelta(ConsoleFunctionContextRef context)
-  {
-    sForceTrustLevelDelta = ConsoleArg_Get_Float(context, "deltaTrustLevel");
-  }
-  
-  static bool sForceSetNewTrustLevel = false;
-  void ForceSetNewTrustLevel(ConsoleFunctionContextRef context)
-  {
-    sForceSetNewTrustLevel = true;
-  }
-#endif
-
   static const char* kWebVizModuleNameHeldInPalm = "heldinpalm";
-  static const float kMinTrustLevel = 0.0f;
-  static const float kMaxTrustLevel = 1.0f;
-  static const float kDefaultForcedTrustLevel = (kMinTrustLevel + kMaxTrustLevel)/2.0f;
+  
+  // Once the robot has started being held in a user's palm, the robot should not immediately
+  // cancel if a few cliffs are detected, since this makes the tracker less robust to situations
+  // where the robot can turn in place and accidentally expose one ore more cliff sensors to a
+  // "cliff" caused by the gaps between the user's fingers when holding the robot.
+  static const int kMaxCliffsAllowedWhileHeldInPalm = 1;
+  
+  // To prevent false-positive detections of the robot being held in a palm, we enforce that
+  // the robot must observe at least this many cliffs after being picked up to try to capture
+  // the fact that when a robot is being held by the user and put in their palm, they usually
+  // lift the robot high enough in the air that multiple cliffs are detected, whereas when the
+  // robot is just pushed or dragged along the ground, or only slightly picked up, the cliff
+  // sensors will still be covered, and therefore the robot is not about to be placed in a palm.
+  static const int kMinCliffsToConfirmHeldInPalmPickup = 3;
+  
+  // Set a minimum time limit after all motors have stopped moving to confirm that the robot is
+  // actually moving because it is being held, and not because of some InAir animation tricking the
+  // IMU filter in the robot process into detecting "motion".
+  static const u32 kTimeToWaitAterMotorMovement_ms = 250;
+  
+  // If no cliffs have been detected since the robot was picked up, but the robot has been
+  // reporting that it has been picked up and held upright for this amount of time, go ahead and
+  // declare the robot to be held in a palm anyways. This is essentially a fallback for the normal
+  // detection mechanism for the tracker.
+  static const u32 kTimeToConfirmRobotHeldInPalmDefault_ms = Util::SecToMilliSec(10.0f);
 }
 
-// Attempts to increase/decrease trust by this amount instantly. This may not always do what the
-// user expects if the input `deltaTrustLevel` would set the trust level to be outside of the
-// range defined by [kMinTrustLevel, kMaxTrustLevel], in which case the trust level will increase
-// or decrease up to those bounds.
-CONSOLE_FUNC(ForceTrustLevelDelta, CONSOLE_GROUP, float deltaTrustLevel);
-  
-// This console variable doesn't actually change the trust level until the `ForceSetNewTrustLevel`
-// console function is called.  This is done in order to prevent the user from trying to set the
-// level to a value outside of the range defined by [kMinTrustLevel, kMaxTrustLevel].
-CONSOLE_VAR_RANGED(float, kForcedTrustLevel, CONSOLE_GROUP, kDefaultForcedTrustLevel, kMinTrustLevel, kMaxTrustLevel);
-CONSOLE_FUNC(ForceSetNewTrustLevel, CONSOLE_GROUP);
-  
-// Force the trust level of the tracker to remain constant. The only way to change the trust level
-// when this is enabled is to use the `ForceSetNewTrustLevel` or `ForceTrustLevelDelta` console
-// functions above.
-CONSOLE_VAR(bool, kForceConstTrustLevel, CONSOLE_GROUP, false);
+CONSOLE_VAR_RANGED(float, kCliffValHeldInPalmSurface, CONSOLE_GROUP, 500.0f, 0.0f, 1000.0f);
 
+CONSOLE_VAR_RANGED(u32, kMinTimeToConfirmRobotHeldInPalm_ms,
+                   CONSOLE_GROUP, 500, 0, kTimeToConfirmRobotHeldInPalmDefault_ms);
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 HeldInPalmTracker::HeldInPalmTracker()
-  : IDependencyManagedComponent(this, BCComponentID::HeldInPalmTracker ),
-    _trustEvents( { { TrustEventType::InitialHeldInPalmReactionPlayed,  0.1f},
-                    { TrustEventType::RobotJolted,                     -0.2f},
-                    { TrustEventType::RobotPetted,                      0.2f},
-                  }
-                )
+  : IDependencyManagedComponent(this, BCComponentID::HeldInPalmTracker )
 {
+  ANKI_VERIFY(kMinCliffsToConfirmHeldInPalmPickup > 0,
+              "HIPTracker.CTor.InvalidNumberOfCliffsToConfirmHeldInPalmPickup",
+              "Number of cliffs to confirm pickup (%i) must be positive",
+              kMinCliffsToConfirmHeldInPalmPickup);
+  
+  ANKI_VERIFY(kMinCliffsToConfirmHeldInPalmPickup <= CliffSensorComponent::kNumCliffSensors,
+              "HIPTracker.CTor.InvalidNumberOfCliffsToConfirmHeldInPalmPickup",
+              "Number of cliffs to confirm pickup (%i) must be <= to number of cliff sensors %i",
+              kMinCliffsToConfirmHeldInPalmPickup, CliffSensorComponent::kNumCliffSensors);
 }
 
-void HeldInPalmTracker::SetIsHeldInPalm(const bool isHeldInPalm) {
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void HeldInPalmTracker::SetIsHeldInPalm(const bool isHeldInPalm, MovementComponent& moveComp)
+{
   if (_isHeldInPalm != isHeldInPalm) {
     LOG_INFO("HeldInPalmTracker.SetIsHeldInPalm", "%s", isHeldInPalm ? "true" : "false");
+    
+    // Set the movement component to start detecting unexpected movement and clamp the maximum
+    // point-turn angular speeds if the robot is held in a user's palm since some of the behaviors
+    // that can run in this state might try to turn in place.
+    moveComp.EnableHeldInPalmMode(isHeldInPalm);
   }
   _isHeldInPalm = isHeldInPalm;
 }
 
-void HeldInPalmTracker::SetTrustLevel(const float trustLevel, const bool verboseWarn)
-{
-  const float prevTrustLevel = _trustLevel;
-  _trustLevel = Util::Clamp(trustLevel, kMinTrustLevel, kMaxTrustLevel);
-  if (trustLevel != _trustLevel && verboseWarn) {
-    LOG_WARNING("HeldInPalmTracker.SetTrustLevel.InvalidTrustLevel",
-                "Cannot set trust level to %f, outside of acceptable range of [%f, %f]",
-                trustLevel, kMinTrustLevel, kMaxTrustLevel);
-  }
-  if (prevTrustLevel != _trustLevel) {
-    LOG_INFO("HeldInPalmTracker.SetTrustLevel", "%f", _trustLevel);
-  }
-}
-
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void HeldInPalmTracker::InitDependent( Robot* robot, const BCCompMap& dependentComps )
 {
-  // Cache a pointer to the robot's audio client component if it exists
-  {
-    const bool hasAudioComp = robot && robot->HasComponent<Audio::EngineRobotAudioClient>();
-    _audioClient = hasAudioComp ? robot->GetComponentPtr<Audio::EngineRobotAudioClient>() : nullptr;
-  }
-  
   // Set up event handle for WebViz subscription, and cache a pointer to the FeatureGate interface if it exists
   const auto* context = dependentComps.GetComponent<BEIRobotInfo>().GetContext();
   if( context != nullptr ) {
@@ -135,47 +123,16 @@ void HeldInPalmTracker::InitDependent( Robot* robot, const BCCompMap& dependentC
       _eventHandles.emplace_back( webService->OnWebVizSubscribed( kWebVizModuleNameHeldInPalm ).ScopedSubscribe(
                                     onWebVizSubscribed ));
     }
-    
-    _featureGate = context->GetFeatureGate();
   }
+  
 }
 
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void HeldInPalmTracker::UpdateDependent(const BCCompMap& dependentComps)
 {
-  bool consoleFuncUsed = false;
-#if REMOTE_CONSOLE_ENABLED
-  consoleFuncUsed = sForceTrustLevelDelta != 0.0f || sForceSetNewTrustLevel;
-#endif
-
   const float currBSTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
-  if( consoleFuncUsed || currBSTime_s > _nextUpdateTime_s ) {
-    _nextUpdateTime_s = currBSTime_s + kHeldInPalmTracker_updatePeriod_s;
-
-    if( consoleFuncUsed ) {
-#if REMOTE_CONSOLE_ENABLED
-      if (sForceTrustLevelDelta != 0.0f) {
-        LOG_WARNING("HeldInPalmTracker.ConsoleFunc.GainTrust",
-                    "Increase trust by %f",
-                    sForceTrustLevelDelta);
-        const float possibleNewTrustLevel = _trustLevel + sForceTrustLevelDelta;
-        SetTrustLevel(possibleNewTrustLevel);
-        sForceTrustLevelDelta = 0.0f;
-      }
-      if (sForceSetNewTrustLevel) {
-        LOG_WARNING("HeldInPalmTracker.ConsoleFunc.ForceNewTrustLevel",
-                    "%f", kForcedTrustLevel);
-        SetTrustLevel(kForcedTrustLevel);
-        sForceSetNewTrustLevel = false;
-      }
-#endif
-    } else if( _isHeldInPalm && !kForceConstTrustLevel) {
-      const float possibleNewTrustLevel = _trustLevel + kHeldInPalmTracker_updatePeriod_s * kHeldInPalm_trustLevelRate;
-      SetTrustLevel(possibleNewTrustLevel, false);
-    }
-
-    // Update the audio client anytime the "trust" level is forcefully updated via a console variable/function
-    // or the "trust" level changes due to a time-based update.
-    SendTrustLevelToAudio();
+  if( currBSTime_s > _nextUpdateTime_s ) {
+    _nextUpdateTime_s = currBSTime_s + kTrackerWebVizUpdatePeriod_s;
     
     const auto* context = dependentComps.GetComponent<BEIRobotInfo>().GetContext();
     if( context ) {
@@ -184,52 +141,279 @@ void HeldInPalmTracker::UpdateDependent(const BCCompMap& dependentComps)
       }
     }
   }
+  
+  CheckIfIsHeldInPalm(dependentComps.GetComponent<BEIRobotInfo>());
 }
   
-void HeldInPalmTracker::UpdateTrustLevelForEvent( const TrustEventType& trustEventType )
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void HeldInPalmTracker::CheckIfIsHeldInPalm(const BEIRobotInfo& robotInfo)
 {
-  if (kForceConstTrustLevel) {
-    LOG_DEBUG("HeldInPalmTracker.UpdateTrustLevelForEvent",
-              "%s event ignored, constant trust level is being enforced",
-              HeldInPalmTrustEventTypeToString(trustEventType));
-    return;
+  // Grab the current time:
+  const auto& currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  
+  // Cache current OffTreadsState and charger-docking status
+  const auto& otState = robotInfo.GetOffTreadsState();
+  const bool onCharger = robotInfo.IsOnChargerContacts();
+  // Reset the flag that indicates that enough cliffs were detected since the last time the robot
+  // was picked up, since the robot has yet to be picked up or is still on the charger.
+  if (otState == OffTreadsState::OnTreads || onCharger) {
+    _enoughCliffsDetectedSincePickup = false;
+    _lastTimeOnTreadsOrCharger = currTime;
   }
   
-  const auto trustEvent = _trustEvents.find(trustEventType);
-  if ( trustEvent != _trustEvents.end() ) {
-    const float possibleNewTrustLevel = _trustLevel + trustEvent->second;
-    SetTrustLevel(possibleNewTrustLevel, false);
-    _lastTrustEventType = trustEventType;
+  auto& moveComponent = robotInfo.GetMoveComponent();
+  if ( _isHeldInPalm ) {
+    const auto& cliffComp = robotInfo.GetCliffSensorComponent();
+    // The robot only continues to be considered held "in a palm" as long as:
+    //   1) The robot is being held (picked up and moved around)
+    //   2) The cliff sensors detect very few cliffs (currently 0-1 cliffs)
+    //   3) The robot is not returned to its charger
+    //
+    // If condition #2 is not true, it is indicative that some behavior/action has caused the robot
+    // to drive very far over the edge of the user's palm. For more details, see explanation of
+    // `kMaxCliffsAllowedWhileHeldInPalm`.
     
-    // Update audio now instead of waiting for the next natural update
-    SendTrustLevelToAudio();
+    const int numCliffsDetected = cliffComp.GetNumCliffsDetected();
+    
+#if REMOTE_CONSOLE_ENABLED
+    if (kEnableDebugTransitionPrintouts) {
+      if (!robotInfo.IsBeingHeld()) {
+        LOG_INFO("HIPTracker.CheckIfIsHeldInPalm.IsNotBeingHeld",
+                 "Robot not being held anymore while held in palm (no motion detected and not picked up)");
+      }
+      if (numCliffsDetected > kMaxCliffsAllowedWhileHeldInPalm) {
+        LOG_INFO("HIPTracker.CheckIfIsHeldInPalm.TooManyCliffs",
+                 "%d cliffs detected while held in palm", numCliffsDetected);
+      }
+      if (onCharger) {
+        LOG_INFO("HIPTracker.CheckIfIsHeldInPalm.ChargerDetected", "Charger detected while held in palm");
+      }
+      if (otState != OffTreadsState::InAir) {
+        LOG_INFO("HIPTracker.CheckIfIsHeldInPalm.InvalidOffTreadsState",
+                 "Robot transitioned to invalid state of %s while held in palm",
+                 OffTreadsStateToString(otState));
+      }
+    }
+#endif
+    SetIsHeldInPalm(robotInfo.IsBeingHeld() &&
+                    numCliffsDetected <= kMaxCliffsAllowedWhileHeldInPalm &&
+                    !onCharger &&
+                    // NOTE(GB): The following condition can be removed when a behavior is added
+                    // that supports dealing with the user gripping Vector in the palm of their
+                    // hand while holding them in the OnRightSide, OnLeftSide, OnBack, or OnFace
+                    // orientations. Tracked in VIC-12701.
+                    otState == OffTreadsState::InAir,
+                    moveComponent);
   } else {
-    LOG_WARNING("HeldInPalmTracker.UpdateTrustLevelForEvent.InvalidTrustEventType",
-                "%s event ignored, type not mapped to any trust level change",
-                HeldInPalmTrustEventTypeToString(trustEventType));
+    // If the robot is no longer held in a palm, there are 3 transitions possible that could result
+    // in the robot returning to a user's palm:
+    //
+    // A) The robot is on the ground or on the charger, and therefore the following sequence of
+    //    events needs to happen exactly as follows, in order to consider the robot "held on palm":
+    //     1) Robot should be currently held, AND not on the charger.
+    //     2) Robot should START to observe at least 3 cliff(s) while picked up, i.e. since the
+    //        last engine tick that the robot was OnTreads or on its charger
+    //     3) Robot should observe NO cliffs while picked up AND held by the user in the UPRIGHT
+    //        position (OffTreadsState::InAir), for at least X milliseconds.
+    //
+    // B) The robot is on the ground (or thinks he's OnTreads) on top of some object that can be
+    //    picked up along with the robot. The following events need to happen:
+    //     1) Robot should be currently held, AND not on the charger.
+    //     2) Robot should observe NO cliffs while picked up AND held by the user in the UPRIGHT
+    //        position (OffTreadsState::InAir), for at least Y milliseconds.
+    //
+    // C) The robot is in the air (in any orientation) because it was recently removed from the
+    //    palm of a user's hand, and therefore the following sequence of events needs to happen
+    //    exactly as follows, in order to consider the robot "held on palm" AGAIN:
+    //     1) Robot should be currently held, AND not on the charger.
+    //     2) Robot should observe NO cliffs while picked up AND held by the user in the UPRIGHT
+    //        position (OffTreadsState::InAir), for at least X milliseconds.
+    //
+    //  NOTE(GB): Y >> X
+    
+    if ( robotInfo.IsBeingHeld() && !onCharger ) {
+      const u32 timeSinceOnTreads_ms = GetMillisecondsSince(_lastTimeOnTreadsOrCharger);
+      
+      // When the robot is playing an animation while InAir (e.g. from the WhileInAirDispatcher,
+      // or ReactToPickupFromPalm) the OffTreadsState will not update to OnTreads even if the
+      // robot really is put down, until the all motors stop moving and preventing the robot from
+      // from updating it's PickedUp status.
+      const bool wasMovingRecently = WasRobotMovingRecently(robotInfo);
+      
+      if ( GetTimeSinceLastHeldInPalm_ms() > timeSinceOnTreads_ms ) {
+        // Robot recently picked up from ground, hasn't been held in a palm since
+        // the pickup occurred. Check condition #2 for scenario B above.
+        _enoughCliffsDetectedSincePickup = _enoughCliffsDetectedSincePickup ||
+                                            HasDetectedEnoughCliffsSincePickup(robotInfo);
+        
+        if (!wasMovingRecently) {
+          // Check final conditions for scenarios A and B, to see if robot has been placed in palm
+          // Depending on whether _enougCliffsDetectedSincePickup is now true after the check above,
+          // we select a different time threshold for confirming that the robot is held in a palm.
+          
+          // We assume by default that Scenario B is occurring
+          u32 timeToConfirmRobotHeldInPalm_ms = kTimeToConfirmRobotHeldInPalmDefault_ms;
+          if (_enoughCliffsDetectedSincePickup) {
+            // If enough cliffs are detected, we can reduce the amount of time needed to confirm
+            // that the robot is being held on a user's palm (Scenario A).
+            timeToConfirmRobotHeldInPalm_ms = kMinTimeToConfirmRobotHeldInPalm_ms;
+          }
+          
+          SetIsHeldInPalm(WasRobotPlacedInPalmWhileHeld(robotInfo, timeToConfirmRobotHeldInPalm_ms),
+                          moveComponent);
+        }
+#if REMOTE_CONSOLE_ENABLED
+        else if (kEnableDebugTransitionPrintouts && _enoughCliffsDetectedSincePickup){
+          LOG_PERIODIC_INFO(5, "HIPTracker.CheckIfIsHeldInPalm.MotorsMovedTooRecently",
+                            "Robot has detected enough cliffs to confirm true pickup, but motors moved "
+                            "too recently (in the last %d [ms])", kTimeToWaitAterMotorMovement_ms);
+        }
+        
+        if (kEnableDebugTransitionPrintouts && _isHeldInPalm) {
+          if (!_enoughCliffsDetectedSincePickup) {
+            LOG_INFO("HIPTracker.CheckIfIsHeldInPalm",
+                     "Insufficient cliffs to confirm true pickup, but robot picked up & held for "
+                     "%u [ms], confirming held-on-palm status anyways",
+                     kTimeToConfirmRobotHeldInPalmDefault_ms);
+          } else {
+            LOG_INFO("HIPTracker.CheckIfIsHeldInPalm", "Robot transitioned to palm from ground");
+          }
+        }
+#endif
+      } else {
+        // When the robot has recently been held in a palm and is still picked up, the WhileInAir
+        // or ReactToPickupFromPalm animations start playing and slamming the lift or moving the
+        // treads as someone is putting the robot back down on the ground, so wait for a short time
+        // period where the robot is not moving its motors before verifying held-on-palm status
+        if (!wasMovingRecently) {
+          // Robot has been held in a user's palm more recently than it was on the
+          // ground (OffTreadsState::OnTreads). Check final condition for scenario C.
+          SetIsHeldInPalm(WasRobotPlacedInPalmWhileHeld(robotInfo, kMinTimeToConfirmRobotHeldInPalm_ms),
+                          moveComponent);
+        }
+#if REMOTE_CONSOLE_ENABLED
+        if (kEnableDebugTransitionPrintouts && _isHeldInPalm) {
+          LOG_INFO("HIPTracker.CheckIfIsHeldInPalm", "Robot transitioned to palm while being held");
+        }
+#endif
+      }
+    }
   }
   
-}
-
-void HeldInPalmTracker::SendTrustLevelToAudio()
-{
-  // Disable audio updates for PR demo (Audio might use it's own settings)
-  if( _featureGate && _featureGate->IsFeatureEnabled( FeatureType::PRDemo ) ) {
-    return;
-  }
-
-  if ( _audioClient ) {
-    _audioClient->PostParameter(AudioMetaData::GameParameter::ParameterType::Robot_Vic_Held_Trust,
-                                _trustLevel);
+  if (!_isHeldInPalm) {
+    _lastTimeNotHeldInPalm = currTime;
+  } else {
+    _lastHeldInPalmTime = currTime;
   }
 }
 
-void HeldInPalmTracker::PopulateWebVizJson(Json::Value& data) const
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool HeldInPalmTracker::WasRobotPlacedInPalmWhileHeld(const BEIRobotInfo& robotInfo,
+                                                      const u32 timeToConfirmHeldInPalm_ms) const
 {
-  data["held_in_palm_trust_level"] = _trustLevel;
-  if( _lastTrustEventType != TrustEventType::Invalid ) {
-    data["last_trust_event_type"] = HeldInPalmTrustEventTypeToString(_lastTrustEventType);
+  ANKI_VERIFY(robotInfo.IsBeingHeld(), "HIPTracker.WasRobotPlacedInPalmWhileHeld",
+              "Robot NOT being held, check is invalid");
+  ANKI_VERIFY(!robotInfo.IsOnChargerContacts(), "HIPTracker.WasRobotPlacedInPalmWhileHeld",
+              "Robot still on charger contacts, check is invalid");
+  
+  const auto& otStateLastChangeTime = robotInfo.GetOffTreadsStateLastChangedTime_ms();
+  // NOTE(GB): In this case, "InAir" specifically refers to the robot being upright
+  // while held by the user, i.e. no extreme pitch or roll
+  const auto timeSinceNotInAir_ms = GetMillisecondsSince(otStateLastChangeTime);
+  
+  const auto& heldStatusLastChangeTime = robotInfo.GetBeingHeldLastChangedTime_ms();
+  const auto timeSinceNotHeld_ms = GetMillisecondsSince(heldStatusLastChangeTime);
+  
+  if (robotInfo.IsBeingHeld() &&
+      robotInfo.GetOffTreadsState() == OffTreadsState::InAir &&
+      timeSinceNotHeld_ms >= timeToConfirmHeldInPalm_ms &&
+      timeSinceNotInAir_ms >= timeToConfirmHeldInPalm_ms ) {
+    const auto& cliffComp = robotInfo.GetCliffSensorComponent();
+    const auto& cliffDataFilt = cliffComp.GetCliffDataFiltered();
+    const float maxCliffSensorVal = *std::max_element(std::begin(cliffDataFilt),
+                                                      std::end(cliffDataFilt));
+
+    // How long have kMaxCliffsAllowedWhileHeldInPalm or fewer cliffs have been detected for?
+    u32 durationOfInPalmAllowableCliffsDetected_ms = cliffComp.GetDurationForAtMostNCliffDetections_ms(kMaxCliffsAllowedWhileHeldInPalm);
+
+#if REMOTE_CONSOLE_ENABLED
+    if (kEnableDebugTransitionPrintouts) {
+      if (cliffComp.GetNumCliffsDetected() <= kMaxCliffsAllowedWhileHeldInPalm &&
+          durationOfInPalmAllowableCliffsDetected_ms < timeToConfirmHeldInPalm_ms &&
+          maxCliffSensorVal < kCliffValHeldInPalmSurface) {
+        LOG_PERIODIC_INFO(5, "HIPTracker.WasRobotPlacedInPalmWhileHeld.InsufficientCliffDetectionDuration",
+                          "Robot detecting a valid palm surface with max reported cliff sensor value of %.1f,"
+                          "but %d cliffs (or less) have only been detected for %d [ms]", maxCliffSensorVal,
+                          kMaxCliffsAllowedWhileHeldInPalm, durationOfInPalmAllowableCliffsDetected_ms);
+      } else if (durationOfInPalmAllowableCliffsDetected_ms >= timeToConfirmHeldInPalm_ms &&
+                 maxCliffSensorVal >= kCliffValHeldInPalmSurface) {
+        LOG_PERIODIC_INFO(5, "HIPTracker.WasRobotPlacedInPalmWhileHeld.InvalidPalmSurface",
+                          "Robot has detected %d cliffs for %d [ms], but invalid palm surface currently"
+                          "detected with max reported cliff sensor value of %.1f" ,
+                          kMaxCliffsAllowedWhileHeldInPalm, durationOfInPalmAllowableCliffsDetected_ms,
+                          maxCliffSensorVal);
+      }
+    }
+#endif
+    
+    return durationOfInPalmAllowableCliffsDetected_ms >= timeToConfirmHeldInPalm_ms &&
+       // A cliff sensor reading higher than kCliffValHeldInPalmSurface is likely due to the robot
+       // being put down on the ground, or on an object that is not a user's palm.
+       maxCliffSensorVal < kCliffValHeldInPalmSurface;
   }
+  
+  return false;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool HeldInPalmTracker::HasDetectedEnoughCliffsSincePickup(const BEIRobotInfo& robotInfo) const
+{
+  ANKI_VERIFY(robotInfo.IsBeingHeld(), "HIPTracker.HasDetectedEnoughCliffsSincePickup",
+              "Robot NOT being held, check is invalid");
+  ANKI_VERIFY(!robotInfo.IsOnChargerContacts(), "HIPTracker.HasDetectedEnoughCliffsSincePickup",
+              "Robot still on charger contacts, check is invalid");
+  
+  const auto& cliffComp = robotInfo.GetCliffSensorComponent();
+  const int maxNumCliffs = cliffComp.GetMaxNumCliffsDetectedWhilePickedUp();
+#if REMOTE_CONSOLE_ENABLED
+    if (kEnableDebugTransitionPrintouts) {
+      LOG_PERIODIC_INFO(5, "HIPTracker.HasDetectedEnoughCliffsSincePickup.MaxNumCliffsDetectedWhilePickedUp",
+                           "%d", maxNumCliffs);
+    }
+#endif
+
+  return maxNumCliffs >= kMinCliffsToConfirmHeldInPalmPickup;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool HeldInPalmTracker::WasRobotMovingRecently(const BEIRobotInfo& robotInfo) const
+{
+  const auto& moveComponent = robotInfo.GetMoveComponent();
+  const RobotTimeStamp_t lastTimeMotorsWereMoving = moveComponent.GetLastTimeWasMoving();
+  const RobotTimeStamp_t latestRobotTime = robotInfo.GetLastMsgTimestamp();
+  const u32 timeSinceMotorsWereMoving_ms =
+    static_cast<u32>( (latestRobotTime > lastTimeMotorsWereMoving) ?
+                      (latestRobotTime - lastTimeMotorsWereMoving) : 0);
+  return timeSinceMotorsWereMoving_ms < kTimeToWaitAterMotorMovement_ms;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+u32 HeldInPalmTracker::GetTimeSinceLastHeldInPalm_ms() const
+{
+  return _isHeldInPalm ? 0 : GetMillisecondsSince(_lastHeldInPalmTime);
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+u32 HeldInPalmTracker::GetHeldInPalmDuration_ms() const
+{
+  return _isHeldInPalm ? GetMillisecondsSince(_lastTimeNotHeldInPalm) : 0;
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+u32 HeldInPalmTracker::GetMillisecondsSince(const EngineTimeStamp_t& pastTimestamp) const
+{
+  const auto& currTime = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+  return static_cast<u32>( (currTime > pastTimestamp) ? (currTime - pastTimestamp) : 0 );
 }
 
 }

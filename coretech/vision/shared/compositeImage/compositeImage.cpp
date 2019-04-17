@@ -14,7 +14,7 @@
 
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 #include "util/cladHelpers/cladEnumToStringMap.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/helpers/templateHelpers.h"
@@ -246,6 +246,27 @@ void CompositeImage::ClearLayerByName(LayerName name)
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void CompositeImage::AddImage(SpriteHandle handle,
+                              const SpriteBoxName& sbName,
+                              const LayerName& layerName,
+                              const SpriteRenderMethod& renderMethod,
+                              const int xPos,
+                              const int yPos,
+                              const int width,
+                              const int height)
+{
+  auto iter = _layerMap.find(layerName);
+  if(_layerMap.end() == iter){
+    iter = _layerMap.emplace(layerName, layerName).first;
+  }
+
+  SpriteRenderConfig renderConfig(0, 0, renderMethod, 0);
+  iter->second.AddToLayout(sbName, SpriteBox(sbName, renderConfig, Point2i(xPos, yPos), width, height));
+  iter->second.AddToImageMap(sbName, SpriteEntry(handle));
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 CompositeImageLayer* CompositeImage::GetLayerByName(LayerName name)
 {
   auto iter = _layerMap.find(name);
@@ -305,7 +326,11 @@ void CompositeImage::OverlayImageWithFrame(ImageRGBA& baseImage,
           }
           break;
         }
+        // Note: CustomHue is treated the same as eye color for now to support legacy animations.
+        // Nothing currently makes use of true custom hue assignment, so the SpriteBoxKeyFrame 
+        // doesn't support it.
         case SpriteRenderMethod::CustomHue:
+        case SpriteRenderMethod::EyeColor:
         {
           Vision::HueSatWrapper::ImageSize imageSize(static_cast<uint32_t>(height),
                                                      static_cast<uint32_t>(width));

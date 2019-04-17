@@ -13,7 +13,6 @@
 #include "clad/types/controllerChannels.clad"
 #include "clad/types/dockingSignals.clad"
 #include "clad/types/imu.clad"
-#include "clad/types/keepFaceAliveParameters.clad"
 #include "clad/types/lcdTypes.clad"
 #include "clad/types/ledTypes.clad"
 #include "clad/types/motorTypes.clad"
@@ -23,6 +22,8 @@
 #include "clad/types/robotTestModes.clad"
 #include "clad/types/switchboardToRobot.clad"
 #include "clad/types/textToSpeechTypes.clad"
+#include "clad/types/tofDisplayTypes.clad"
+#include "clad/types/sdkAudioTypes.clad"
 
 namespace Anki {
 namespace Vector {
@@ -212,7 +213,6 @@ message EngineFullyLoaded
 message CalmPowerMode
 {
   bool enable,
-  bool calibOnDisable,
 }
 
 // Tells syscon to pull the plug
@@ -341,15 +341,11 @@ message EnableKeepFaceAlive
   bool    enable
 }
 
-message SetDefaultKeepFaceAliveParameters
+// Enable/disable "focused" mode for KeepFaceAlive, which limits the eye dart distance to keep the
+// eyes roughly centered (but still moving, rather than "dead" still)
+message SetKeepFaceAliveFocus
 {
-}
-
-message SetKeepFaceAliveParameter
-{
-  float_32               value,
-  KeepFaceAliveParameter param,
-  bool                   setToDefault = 0, // If true, value is ignored
+  bool enable
 }
 
 message AddOrUpdateEyeShift
@@ -539,6 +535,22 @@ message PlayCompositeAnimation
   string  animName
 }
 
+structure SpriteBoxRemap
+{
+  Vision::SpriteBoxName spriteBoxName,
+  uint_8                padding,
+  uint_16               remappedAssetID
+}
+
+message PlayAnimWithSpriteBoxRemaps
+{
+  uint_8         tag,
+  uint_8         numRemaps,
+  SpriteBoxRemap spriteBoxRemaps[150], 
+  bool           lockFaceAtEndOfAnim,
+  string         animName
+}
+
 message DisplayCompositeImageChunk
 {
   uint_32 compositeImageID, // Ensures chunks are for the same image
@@ -685,6 +697,34 @@ message AcousticTestEnabled {
   bool enabled,
 }
 
+//
+// Sent from engine to robot (anim process) to prepare for streaming audio data to the robot speaker
+//
+message ExternalAudioPrepare {
+  uint_16 audio_volume,
+  uint_16 audio_rate
+}
+
+//
+// Sent from engine to robot (anim process) to stream audio data to the robot speaker
+//
+message ExternalAudioChunk {
+  uint_16 audio_chunk_size,       //size in bytes
+  uint_16 audio_chunk_data[512]   //16-bit little-endian data
+}
+
+//
+// Sent from engine to robot (anim process) to signal end of streaming data
+//
+message ExternalAudioComplete {
+}
+
+//
+// Sent from engine to robot (anim process) to cancel streaming audio playback
+//
+message ExternalAudioCancel {
+}
+
 // Because we're running low on message tags, expand this enum and message as we add more settings
 // that we want to send to anim/robot.  To expand, update the Process_updatedSettings() method.
 // We're not using the proto enums for the settings here, because it's proto, not clad, and because
@@ -698,6 +738,11 @@ message UpdatedSettings {
   SettingBeingChanged settingBeingChanged,
   bool                enableDataCollection,
   string              timeZone,
+}
+
+message RangeDataToDisplay
+{
+  RangeDataDisplay data
 }
 
 // ====================================================
@@ -810,8 +855,8 @@ union EngineToRobot
   DisplayFaceImageBinaryChunk   displayFaceImageBinaryChunk = 0x59,
   DisplayFaceImageRGBChunk      displayFaceImageRGBChunk    = 0x5A,
 
-  SetDefaultKeepFaceAliveParameters setDefaultKeepFaceAliveParameters = 0x5B,
-  SetKeepFaceAliveParameter     setKeepFaceAliveParameter   = 0x5C,
+  // Available                                              = 0x5B,
+  SetKeepFaceAliveFocus         setKeepFaceAliveFocus       = 0x5C,
   EnableKeepFaceAlive           enableKeepFaceAlive         = 0x5D,
   AddOrUpdateEyeShift           addOrUpdateEyeShift         = 0x5E,
   RemoveEyeShift                removeEyeShift              = 0x5F,
@@ -822,15 +867,21 @@ union EngineToRobot
   DisplayCompositeImageChunk       displayCompositeImageChunk          = 0x63,
   UpdateCompositeImage             updateCompositeImage                = 0x64,
   PlayCompositeAnimation           playCompositeAnimation              = 0x65,
-  EnableMirrorModeScreen           enableMirrorModeScreen              = 0x66,
+  PlayAnimWithSpriteBoxRemaps      playAnimWithSpriteBoxRemaps         = 0x66,
+  EnableMirrorModeScreen           enableMirrorModeScreen              = 0x67,
 
-  SetButtonWakeWord                setButtonWakeWord                   = 0x67,
+  SetButtonWakeWord                setButtonWakeWord                   = 0x68,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,
   AudioEngine::Multiplexer::PostAudioGameState    postAudioGameState   = 0x72,
   AudioEngine::Multiplexer::PostAudioSwitchState  postAudioSwitchState = 0x73,
   AudioEngine::Multiplexer::PostAudioParameter    postAudioParameter   = 0x74,
+  
+  ExternalAudioPrepare          externalAudioPrepare        = 0x75,
+  ExternalAudioChunk            externalAudioChunk          = 0x76,
+  ExternalAudioComplete         externalAudioComplete       = 0x77,
+  ExternalAudioCancel           externalAudioCancel         = 0x78,
 
   FakeWakeWordFromExternalInterface fakeWakeWordFromExternalInterface = 0x80,
   ShowUrlFace                   showUrlFace                 = 0x81,
@@ -859,21 +910,23 @@ union EngineToRobot
   AlterStreamingAnimationAtTime                 alterStreamingAnimation   = 0xA2,
   SwitchboardInterface::SendBLEConnectionStatus sendBLEConnectionStatus   = 0xA3,
 
-  SelfTestEnd                   selfTestEnd                 = 0xA4,
+  SelfTestEnd               selfTestEnd               = 0xA4,
 
-  AcousticTestEnabled           acousticTestEnabled         = 0xA5,
+  AcousticTestEnabled       acousticTestEnabled       = 0xA5,
 
-  SetLCDBrightnessLevel setLCDBrightnessLevel = 0xAA,
+  RangeDataToDisplay        rangeDataToDisplay        = 0xA6,
 
-  BatteryStatus batteryStatus = 0xAB,
+  SetLCDBrightnessLevel     setLCDBrightnessLevel     = 0xAA,
 
-  TriggerBackpackAnimation triggerBackpackAnimation = 0xAC,
+  BatteryStatus             batteryStatus             = 0xAB,
 
-  EngineFullyLoaded engineFullyLoaded = 0xAD,
+  TriggerBackpackAnimation  triggerBackpackAnimation  = 0xAC,
 
-  CheckCloudConnectivity checkCloudConnectivity = 0xAE,
+  EngineFullyLoaded         engineFullyLoaded         = 0xAD,
 
-  UpdatedSettings updatedSettings = 0xAF,
+  CheckCloudConnectivity    checkCloudConnectivity    = 0xAE,
+
+  UpdatedSettings           updatedSettings           = 0xAF,
 
   // 0xB0 to 0xFE: To engine, see messageRobotToEngine.clad
 }

@@ -118,13 +118,12 @@ void BehaviorDevDisplayReadingsOnFace::UpdateDisplayPeripheralMotion()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevDisplayReadingsOnFace::UpdateDisplayProxReading()
 {
-  auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
-  u16 proxDist_mm = 0;
-  const bool isValid = proxSensor.GetLatestDistance_mm(proxDist_mm);
+  const auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
+  const auto& proxData = proxSensor.GetLatestProxData();
 
   std::string text = "Prox (mm): ";
-  if(isValid){
-    text += std::to_string(proxDist_mm);
+  if(proxData.foundObject){
+    text += std::to_string(proxData.distance_mm);
   }else{
     text += "INVALID READING";
   }

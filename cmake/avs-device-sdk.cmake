@@ -5,11 +5,11 @@ endif(AVS_INCLUDED)
 set(AVS_INCLUDED true)
 
 if (VICOS)
-  set(LIBAVS_INCLUDE_PATH "${ANKI_EXTERNAL_DIR}/avs-device-sdk/vicos/include")
-  set(LIBAVS_LIB_PATH "${ANKI_EXTERNAL_DIR}/avs-device-sdk/vicos/lib")
+  set(LIBAVS_INCLUDE_PATH "${ANKI_THIRD_PARTY_DIR}/avs-device-sdk/vicos/include")
+  set(LIBAVS_LIB_PATH "${ANKI_THIRD_PARTY_DIR}/avs-device-sdk/vicos/lib")
 elseif (MACOSX)
-  set(LIBAVS_INCLUDE_PATH "${ANKI_EXTERNAL_DIR}/avs-device-sdk/mac/include")
-  set(LIBAVS_LIB_PATH "${ANKI_EXTERNAL_DIR}/avs-device-sdk/mac/lib")
+  set(LIBAVS_INCLUDE_PATH "${ANKI_THIRD_PARTY_DIR}/avs-device-sdk/mac/include")
+  set(LIBAVS_LIB_PATH "${ANKI_THIRD_PARTY_DIR}/avs-device-sdk/mac/lib")
 endif()
 
 
@@ -23,6 +23,8 @@ set(AVS_LIBS
   AudioResources
   AVSCommon
   AVSSystem
+  DeviceSettings
+  DoNotDisturbCA
   CapabilitiesDelegate
   CBLAuthDelegate
   CertifiedSender
@@ -35,6 +37,7 @@ set(AVS_LIBS
   RegistrationManager
   Settings
   SpeakerManager
+  SpeechEncoder
   SpeechSynthesizer
   SQLiteStorage
 )

@@ -12,8 +12,8 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
 #include "coretech/vision/engine/camera.h"
-#include "coretech/common/engine/math/linearAlgebra_impl.h"
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/linearAlgebra.h"
+#include "coretech/common/engine/math/quad.h"
 
 #include <iomanip>
 
@@ -800,21 +800,6 @@ namespace Vector {
       whichLED = 0;
     }
     return _ledState[whichLED];
-  }
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  bool Block::CanBeUsedForLocalization() const
-  {
-    if (IsPoseStateKnown() && IsMoving()) {
-      // This shouldn't happen!
-      LOG_WARNING("Block.CanBeUsedForLocalization.PoseStateKnownButMoving", "");
-      return false;
-    }
-    
-    return (GetPoseState() == PoseState::Known &&
-            GetActiveID() >= 0 &&
-            GetLastPoseUpdateDistance() >= 0.f &&
-            IsRestingFlat(DEG_TO_RAD(GetRestingFlatTolForLocalization_deg())));
   }
 
 

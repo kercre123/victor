@@ -514,10 +514,7 @@ namespace Vector {
     {
       Json::Value& node = _json[name];
       Json::Value newNode;
-      newNode["SignalIntensity"] = data.proxSensorData.signalIntensity;
-      newNode["AmbientIntensity"] = data.proxSensorData.ambientIntensity;
-      newNode["SpadCount"] = data.proxSensorData.spadCount;
-      newNode["SensorDistanceRaw_mm"] = data.proxSensorData.distance_mm;
+      newNode["SensorDistance_mm"] = data.proxDistanceToTarget_mm;
       newNode["VisualDistance_mm"] = data.visualDistanceToTarget_mm;
       newNode["VisualAngleAway_rad"] = data.visualAngleAwayFromTarget_rad;
       node.append(newNode);
@@ -526,17 +523,69 @@ namespace Vector {
     else
     {
       ss << "\n[" << name << "]" << std::fixed
-      << "\nSignalIntensity: " << data.proxSensorData.signalIntensity
-      << "\nAmbientIntensity: " << data.proxSensorData.ambientIntensity
-      << "\nSpadCount: " << data.proxSensorData.spadCount
-      << "\nSensorDistanceRaw_mm: " << data.proxSensorData.distance_mm
+      << "\nSensorDistance_mm: " << data.proxDistanceToTarget_mm
       << "\nVisualDistance_mm: " << data.visualDistanceToTarget_mm
       << "\nVisualAngleAway_rad: " << data.visualAngleAwayFromTarget_rad;
     }
     PRINT_NAMED_INFO("FactoryTestLogger.Append.DistanceSensorData", "%s", ss.str().c_str());
     return AppendToFile(ss.str());
   }
-  
+
+  bool FactoryTestLogger::Append(const std::string& name, const RangeSensorData& data)
+  {
+    std::stringstream ss;
+    if (_exportJson)
+    {
+      Json::Value& node = _json[name];
+      Json::Value newNode;
+
+      // Should be 32 of these one for each ROI
+      for(const auto& range : data.rangeData.data)
+      {
+        std::string roiName = "Roi" + std::to_string(range.roi);
+        Json::Value& rangeNode = newNode[roiName];
+
+        // Each ROI can report multiple distance readings, 1 for each object
+        // it detected
+        for(const auto& iter : range.readings)
+        {
+          Json::Value dataNode;
+          dataNode["SignalRate_mcps"] = iter.signalRate_mcps;
+          dataNode["AmbientRate_mcps"] = iter.ambientRate_mcps;
+          dataNode["Sigma_mm"] = iter.sigma_mm;
+          dataNode["RawRange_mm"] = iter.rawRange_mm;
+          dataNode["Status"] = iter.status;
+          rangeNode["Data"].append(dataNode);
+        }
+
+        rangeNode["Roi"] = range.roi;
+        rangeNode["NumObjects"] = range.numObjects;
+        rangeNode["RoiStatus"] = range.roiStatus;
+        rangeNode["SpadCount"] = range.spadCount;
+        rangeNode["ProcessedRange_mm"] = range.processedRange_mm;
+      }
+      
+      newNode["VisualDistance_mm"] = data.visualDistanceToTarget_mm;
+      newNode["VisualAngleAway_rad"] = data.visualAngleAwayFromTarget_rad;
+      newNode["HeadAngle_rad"] = data.headAngle_rad;
+      node.append(newNode);
+
+      ss << "[" << name << "]\n" << newNode;
+    }
+    else
+    {
+      // ss << "\n[" << name << "]" << std::fixed
+      // << "\nSignalIntensity: " << data.proxSensorData.signalIntensity
+      // << "\nAmbientIntensity: " << data.proxSensorData.ambientIntensity
+      // << "\nSpadCount: " << data.proxSensorData.spadCount
+      // << "\nSensorDistanceRaw_mm: " << data.proxSensorData.distance_mm
+      // << "\nVisualDistance_mm: " << data.visualDistanceToTarget_mm
+      // << "\nVisualAngleAway_rad: " << data.visualAngleAwayFromTarget_rad;
+    }
+    //PRINT_NAMED_INFO("FactoryTestLogger.Append.DistanceSensorData", "%s", ss.str().c_str());
+    return AppendToFile(ss.str());
+  }
+
   bool FactoryTestLogger::Append(const std::map<std::string, std::vector<FactoryTestResultCode>>& results)
   {
     std::stringstream ss;

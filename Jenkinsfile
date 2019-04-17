@@ -8,29 +8,6 @@ import groovy.json.JsonOutput
 import groovy.json.JsonSlurperClassic
 import org.jenkinsci.plugins.workflow.steps.FlowInterruptedException
 
-@NonCPS
-def getListOfOnlineNodesForLabel(label) {
-  def nodes = []
-  jenkins.model.Jenkins.instance.computers.each { c ->
-    if (c.node.labelString.contains(label) && c.node.toComputer().isOnline()) {
-      nodes.add(c.node.selfLabel.name)
-    }
-  }
-  return nodes
-}
-
-@NonCPS
-def checkIfAgentsAreBusy() {
-    for (node in hudson.model.Hudson.instance.slaves) {
-        if (node.getLabelString() == 'victor-shipping') {
-            if (node.getComputer().countIdle() > 0) {
-                return false
-            }
-            return true
-        }
-    }
-}
-
 enum buildConfig {
     SHIPPING, DEBUG, RELEASE, MASTER
 
@@ -45,9 +22,12 @@ enum buildConfig {
     }
 }
 
+enabledBuildConfigs = [buildConfig.SHIPPING.getBuildType(), buildConfig.DEBUG.getBuildType()]
+buildConfigMap = [:]
+
 def server = Artifactory.server 'artifactory-dev'
 library 'victor-helpers@master'
-@Library('static-libs')
+@Library('static-libs@master')
 import com.anki.*
 
 primaryStageName = ''
@@ -99,7 +79,7 @@ def jsonParsePayload(def json) {
     new groovy.json.JsonSlurperClassic().parseText(json)
 }
 
-def notifyBuildStatus(status) {
+def notifyBuildStatus(status, config) {
     def jobName = "${env.JOB_NAME}"
     jobName = jobName.getAt(0..(jobName.indexOf('/') - 1))
     def pullRequestURL = "https://github.com/anki/${jobName}/pull/${env.CHANGE_ID}"
@@ -117,7 +97,7 @@ def notifyBuildStatus(status) {
 
     notifySlack("", slackNotificationChannel, 
         [
-            title: "${jobName} ${primaryStageName} ${env.CHANGE_ID}, build #${env.BUILD_NUMBER}",
+            title: "${jobName} ${primaryStageName} ${env.CHANGE_ID} ${config}, build #${env.BUILD_NUMBER}",
             title_link: "${env.BUILD_URL}",
             color: slackColorMapping[status],
             text: "${status}\nAuthor: ${commitObj.commit.author.name} <${commitObj.commit.author.email}>",
@@ -141,7 +121,20 @@ def notifyBuildStatus(status) {
             ]
         ]
     )
-    
+    def commitStatusMsg = "PR #${env.CHANGE_ID} :: vicos ${config} :: Finished"
+    def statusMap = [msg: commitStatusMsg, result: status.toUpperCase(), sha: commitObj.sha, context: "ci/jenkins/pr/vicos/${config}"]
+    setGHBuildStatus(statusMap)
+}
+
+void setGHBuildStatus(Map statusFields) {
+  step([
+      $class: "GitHubCommitStatusSetter",
+      reposSource: [$class: "ManuallyEnteredRepositorySource", url: "https://github.com/anki/victor"],
+      commitShaSource: [$class: "ManuallyEnteredShaSource", sha: statusFields.sha],
+      contextSource: [$class: "ManuallyEnteredCommitContextSource", context: statusFields.context],
+      errorHandlers: [[$class: "ChangingBuildStatusErrorHandler", result: "UNSTABLE"]],
+      statusResultSource: [ $class: "ConditionalStatusResultSource", results: [[$class: "AnyBuildResult", message: statusFields.msg, state: statusFields.result]] ]
+  ]);
 }
 
 
@@ -187,7 +180,7 @@ class EphemeralAgent {
                 "/home/build/jenkins",
                 launcher)
         agent.nodeDescription = "dynamic build agent"
-        agent.numExecutors = 1
+        agent.numExecutors = 2
         agent.labelString = "reserved"
         agent.mode = Node.Mode.EXCLUSIVE
         agent.retentionStrategy = new RetentionStrategy.Always()
@@ -212,90 +205,98 @@ if (env.CHANGE_ID) {
 }
 
 stage("${primaryStageName} Build") {
-    agent = new EphemeralAgent()
     gatekeeper = new Gatekeeper(this)
-    node('master') {
-        while( true ) {
+    while ( true ) {
+        agent = new EphemeralAgent()
+        node('master') {
             echo "Checking if resources are available on vSphere..."
             gatekeeper.checkLimits()
-            if (gatekeeper.canProvision) break
-            sleep(time:30, unit:"SECONDS")
+            if (gatekeeper.canProvision) {
+                stage('Spin up ephemeral VM') {
+                    try {
+                        uuid = agent.getMachineName()
+                        vSphere buildStep: [$class: 'Clone', clone: uuid, cluster: 'sjc-vm-cluster',
+                            customizationSpec: '', datastore: 'sjc-vm-04-localssd', folder: 'sjc/build',
+                            linkedClone: true, powerOn: false, resourcePool: 'jenkins-build-slaves',
+                            sourceName: 'js-photon-os-template', timeoutInSeconds: 60], serverName: vSphereServer
+
+                        vSphere buildStep: [$class: 'Reconfigure', reconfigureSteps: [[$class: 'ReconfigureCpu',
+                            coresPerSocket: '1', cpuCores: '2', cpuLimitMHz: '6600']], vm: uuid], serverName: vSphereServer // Max overcommit is 4:1 vCPU to pCPU
+
+                        vSphere buildStep: [$class: 'PowerOn', timeoutInSeconds: 60, vm: uuid], serverName: vSphereServer
+
+                        def buildAgentIP = vSphere buildStep: [$class: 'ExposeGuestInfo',
+                            envVariablePrefix: 'VSPHERE', vm: uuid, waitForIp4: true], serverName: vSphereServer
+
+                        agent.setIPAddress(buildAgentIP)
+                        agent.Attach()
+                        gatekeeper.provisioningDone()
+                    } catch (Exception exc) {
+                        def jobName = "${env.JOB_NAME}"
+                        jobName = jobName.getAt(0..(jobName.indexOf('/') - 1))
+                        def reason = "Could not provision VM, retrying..."
+                        notifySlack("", slackNotificationChannel,
+                            [
+                                title: "${jobName} ${primaryStageName} ${env.CHANGE_ID}, build #${env.BUILD_NUMBER}",
+                                title_link: "${env.BUILD_URL}",
+                                color: "warning",
+                                text: "${reason}",
+                            ]
+                        )
+                        node('master') {
+                            stage('Destroy ephemeral VM') {
+                                vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
+                            }
+                        }
+                        gatekeeper.throttle()
+                    }
+                }
+            } else {
+                echo "Not enough resources, retrying VM provisioning in 30 seconds..."
+                sleep(time:30, unit:"SECONDS")
+            }
         }
-        stage('Spin up ephemeral VM') {
-            try {
-                uuid = agent.getMachineName()
-                vSphere buildStep: [$class: 'Clone', clone: uuid, cluster: 'sjc-vm-cluster',
-                    customizationSpec: '', datastore: 'sjc-vm-04-localssd', folder: 'sjc/build',
-                    linkedClone: true, powerOn: false, resourcePool: 'jenkins-build-slaves',
-                    sourceName: 'js-photon-os-template', timeoutInSeconds: 60], serverName: vSphereServer
-                
-                vSphere buildStep: [$class: 'Reconfigure', reconfigureSteps: [[$class: 'ReconfigureCpu',
-                    coresPerSocket: '1', cpuCores: '2', cpuLimitMHz: '6600']], vm: uuid], serverName: vSphereServer // Max overcommit is 4:1 vCPU to pCPU
-
-                vSphere buildStep: [$class: 'PowerOn', timeoutInSeconds: 60, vm: uuid], serverName: vSphereServer
-
-                def buildAgentIP = vSphere buildStep: [$class: 'ExposeGuestInfo', envVariablePrefix: 'VSPHERE', vm: uuid, waitForIp4: true], serverName: vSphereServer
-                agent.setIPAddress(buildAgentIP)
-            } catch (Exception exc) {
-                def jobName = "${env.JOB_NAME}"
-                jobName = jobName.getAt(0..(jobName.indexOf('/') - 1))
-                def reason = exc.getCause()
-                notifySlack("", slackNotificationChannel,
-                    [
-                        title: "${jobName} ${primaryStageName} ${env.CHANGE_ID}, build #${env.BUILD_NUMBER}",
-                        title_link: "${env.BUILD_URL}",
-                        color: "warning",
-                        text: "${reason}",
-                    ]
-                )
-                node('master') {
-                    stage('Cleaning master workspace') {
-                        def workspace = pwd()
-                        dir("${workspace}@script") {
-                            deleteDir()
+        if (gatekeeper.nodeProvisioned) break
+    }
+    try {
+        for (int i = 0; i < enabledBuildConfigs.size() ; i++) {
+            def buildFlavor = enabledBuildConfigs[i]
+            buildConfigMap[buildFlavor] = {
+                node(uuid) {
+                    def ghsb = new GithubStatusMsgBuilder(this, buildFlavor)
+                    gitCheckout(true)
+                    withDockerEnv {
+                        try {
+                            ghsb.postBuildStart()
+                            buildPRStepsVicOS type: buildFlavor
+                            ghsb.postBuildFinished('SUCCESS')
+                            notifyBuildStatus('Success', buildFlavor)
+                        } catch (exc) {
+                            ghsb.postBuildFinished('FAILURE')
+                            notifyBuildStatus('Failure', buildFlavor)
+                            throw exc
                         }
                     }
-                    stage('Destroy ephemeral VM') {
-                        vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
-                    }
                 }
-                throw exc
             }
         }
-        stage('Attach ephemeral build agent VM to Jenkins') {
-            agent.Attach()
-        }
-    }
-    node(uuid) {
-        try {
-            withDockerEnv {
-                buildPRStepsVicOS type: buildConfig.SHIPPING.getBuildType()
-                //deployArtifacts type: buildConfig.SHIPPING.getArtifactType(), artifactoryServer: server
-            }
-            notifyBuildStatus('Success')
-        } catch (FlowInterruptedException ae) {
-            notifyBuildStatus('Aborted')
-            throw ae
-        } catch (exc) {
-            notifyBuildStatus('Failure')
-            throw exc
-        } finally {
-            stage('Cleaning slave workspace') {
+        parallel buildConfigMap
+    } catch (exc) {
+        throw exc
+    } finally {
+        node('master') {
+            stage('Cleaning master workspace') {
                 cleanWs()
+                def workspace = pwd()
+                dir("${workspace}@script") {
+                    deleteDir()
+                }
             }
-            node('master') {
-                stage('Cleaning master workspace') {
-                    def workspace = pwd()
-                    dir("${workspace}@script") {
-                        deleteDir()
-                    }
-                }
-                stage('Destroy ephemeral VM') {
-                    vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
-                }
-                stage('Detach ephemeral build agent from Jenkins') {
-                    agent.Detach()
-                }
+            stage('Destroy ephemeral VM') {
+                vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
+            }
+            stage('Detach ephemeral build agent from Jenkins') {
+                agent.Detach()
             }
         }
     }

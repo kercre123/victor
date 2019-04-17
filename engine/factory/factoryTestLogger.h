@@ -71,7 +71,11 @@ public:
   // DistanceSensorData is added to an json array of data called "name". Separate data entries are
   // labelled as "seq_*". Call with an existing name to add to that array
   bool Append(const std::string& name, const DistanceSensorData& data);
-  
+
+  // RangeSensorData is added to an json array of data called "name". Separate data entries are
+  // labelled as "seq_*". Call with an existing name to add to that array
+  bool Append(const std::string& name, const RangeSensorData& data);
+
   // Adds a file with the given contents to the log folder
   bool AddFile(const std::string& filename, const std::vector<uint8_t>& data);
   

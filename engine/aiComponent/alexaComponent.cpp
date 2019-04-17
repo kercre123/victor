@@ -15,7 +15,6 @@
 #include "audioEngine/multiplexer/audioCladMessageHelper.h"
 #include "clad/audio/audioEventTypes.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/types/behaviorComponent/userIntent.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"

@@ -49,7 +49,7 @@ namespace Vector {
 namespace TextToSpeech {
 
 
-TextToSpeechProviderImpl::TextToSpeechProviderImpl(const AnimContext* ctx,
+TextToSpeechProviderImpl::TextToSpeechProviderImpl(const Anim::AnimContext* ctx,
                                                    const Json::Value& tts_platform_config)
 {
   using Locale = Anki::Util::Locale;

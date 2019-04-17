@@ -15,7 +15,9 @@
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/factory/factoryTestLogger.h"
@@ -87,7 +89,7 @@ void BehaviorPlaypenPickupCube::TransitionToWaitForCube()
   filter.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
   robot.GetBlockWorld().DeleteLocatedObjects(filter);
 
-  WaitForImagesAction* action = new WaitForImagesAction(2, VisionMode::DetectingMarkers);
+  WaitForImagesAction* action = new WaitForImagesAction(2, VisionMode::Markers);
   DelegateIfInControl(action, [this](){ TransitionToPickupCube(); });
 }
 

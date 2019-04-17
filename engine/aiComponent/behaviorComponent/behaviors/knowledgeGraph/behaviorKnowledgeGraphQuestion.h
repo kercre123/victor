@@ -63,7 +63,6 @@ protected:
   void TransitionToSearchingLoop();
   void TransitionToBeginResponse();
   void TransitionToNoResponse();
-  void TransitionToNoConnection();
 
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -119,7 +118,7 @@ private:
     InstanceConfig();
 
     double              streamingDuration; // how long before we give up on streaming and bail
-    std::string         readyText; // audio tts to let the user know they can begin speaking
+    std::string         readyStringID; // audio tts to let the user know they can begin speaking
     std::shared_ptr<BehaviorTextToSpeechLoop> ttsBehavior;
 
     AudioMetaData::GameEvent::GenericEvent earConEnd;

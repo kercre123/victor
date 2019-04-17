@@ -1,4 +1,3 @@
-
 //
 //  robot.cpp
 //  Products_Cozmo
@@ -9,6 +8,7 @@
 
 #include "engine/robot.h"
 #include "camera/cameraService.h"
+#include "whiskeyToF/tof.h"
 
 #include "coretech/common/engine/math/poseOriginList.h"
 
@@ -18,6 +18,7 @@
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/charger.h"
 #include "engine/components/accountSettingsManager.h"
 #include "engine/components/animationComponent.h"
@@ -36,6 +37,7 @@
 #include "engine/components/dockingComponent.h"
 #include "engine/components/habitatDetectorComponent.h"
 #include "engine/components/jdocsManager.h"
+#include "engine/components/localeComponent.h"
 #include "engine/components/mics/beatDetectorComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/movementComponent.h"
@@ -52,6 +54,7 @@
 #include "engine/components/sensors/cliffSensorComponent.h"
 #include "engine/components/sensors/imuComponent.h"
 #include "engine/components/sensors/proxSensorComponent.h"
+#include "engine/components/sensors/rangeSensorComponent.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/components/textToSpeech/textToSpeechCoordinator.h"
 #include "engine/components/userEntitlementsManager.h"
@@ -64,7 +67,6 @@
 #include "engine/moodSystem/moodManager.h"
 #include "engine/moodSystem/stimulationFaceDisplay.h"
 #include "engine/navMap/mapComponent.h"
-#include "engine/objectPoseConfirmer.h"
 #include "engine/petWorld.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotGyroDriftDetector.h"
@@ -222,18 +224,6 @@ void SayText(ConsoleFunctionContextRef context)
 
 CONSOLE_FUNC(SayText, kTtsCoordinatorPath, const char* text);
 
-
-static void EnableCalmPowerMode(ConsoleFunctionContextRef context)
-{
-  if (_thisRobot != nullptr) {
-    const bool enableCalm = ConsoleArg_Get_Bool(context, "enable");
-    const bool calibOnDisable = ConsoleArg_GetOptional_Bool(context, "calibOnDisable", false);
-    _thisRobot->SendMessage(RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(enableCalm, calibOnDisable)));
-  }
-}
-
-CONSOLE_FUNC(EnableCalmPowerMode, "EnableCalmPowerMode", bool enable, optional bool calibOnDisable);
-
 } // end namespace
 
 #endif
@@ -327,7 +317,6 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::Map,                        new MapComponent());
     _components->AddDependentComponent(RobotComponentID::NVStorage,                  new NVStorageComponent());
     _components->AddDependentComponent(RobotComponentID::AIComponent,                new AIComponent());
-    _components->AddDependentComponent(RobotComponentID::ObjectPoseConfirmer,        new ObjectPoseConfirmer());
     _components->AddDependentComponent(RobotComponentID::CubeLights,                 new CubeLightComponent());
     _components->AddDependentComponent(RobotComponentID::BackpackLights,             new BackpackLightComponent());
     _components->AddDependentComponent(RobotComponentID::CubeAccel,                  new CubeAccelComponent());
@@ -342,6 +331,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::CliffSensor,                new CliffSensorComponent());
     _components->AddDependentComponent(RobotComponentID::ProxSensor,                 new ProxSensorComponent());
     _components->AddDependentComponent(RobotComponentID::ImuSensor,                  new ImuComponent());
+    _components->AddDependentComponent(RobotComponentID::RangeSensor,                new RangeSensorComponent());
     _components->AddDependentComponent(RobotComponentID::TouchSensor,                new TouchSensorComponent());
     _components->AddDependentComponent(RobotComponentID::Animation,                  new AnimationComponent());
     _components->AddDependentComponent(RobotComponentID::StateHistory,               new RobotStateHistory());
@@ -366,6 +356,7 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
     _components->AddDependentComponent(RobotComponentID::JdocsManager,               new JdocsManager());
     _components->AddDependentComponent(RobotComponentID::AccountSettingsManager,     new AccountSettingsManager());
     _components->AddDependentComponent(RobotComponentID::UserEntitlementsManager,    new UserEntitlementsManager());
+    _components->AddDependentComponent(RobotComponentID::LocaleComponent,            new LocaleComponent());
     _components->InitComponents(this);
   }
 
@@ -395,8 +386,9 @@ Robot::Robot(const RobotID_t robotID, CozmoContext* context)
   _thisRobot = this;
 #endif
 
-  // This will create the AndroidHAL instance if it doesn't yet exist
+  // These will create the instances if they don't yet exist
   CameraService::getInstance();
+  ToFSensor::getInstance();
 
 } // Constructor: Robot
 
@@ -421,7 +413,6 @@ Robot::~Robot()
   // and there's no guarantee on entity/component destruction order
   _components->RemoveComponent(RobotComponentID::Vision);
   _components->RemoveComponent(RobotComponentID::Map);
-  _components->RemoveComponent(RobotComponentID::ObjectPoseConfirmer);
   _components->RemoveComponent(RobotComponentID::PathPlanning);
 
   // Ensure JdocsManager destructor gets called before the destructors of the
@@ -574,11 +565,11 @@ bool Robot::CheckAndUpdateTreadsState(const RobotState& msg)
         // Re-enable vision if we've returned to treads
         GetVisionComponent().Pause(false);
       }
-      
-      // If we are not localized and there is nothing else left in the world that
-      // we could localize to, then go ahead and mark us as localized (via
-      // odometry alone)
-      if (!IsLocalized() && !GetBlockWorld().AnyRemainingLocalizableObjects()) {
+
+      // If we are not localized and there is nothing else left in the world (in any origin) that we could localize to,
+      // then go ahead and mark us as localized (via odometry alone)
+      if (!IsLocalized() &&
+          !GetBlockWorld().AnyRemainingLocalizableObjects(PoseOriginList::UnknownOriginID)) {
         LOG_INFO("Robot.UpdateOfftreadsState.NoMoreRemainingLocalizableObjects",
                  "Marking previously-unlocalized robot as localized to odometry because "
                  "there are no more objects to localize to in the world.");
@@ -724,10 +715,6 @@ void Robot::Delocalize(bool isCarryingObject)
                                          worldOrigin.GetName().c_str());
   GetContext()->GetVizManager()->EraseAllVizObjects();
 
-
-  // clear the pose confirmer now that we've changed pose origins
-  GetObjectPoseConfirmer().Clear();
-
   // Sanity check carrying state
   if (isCarryingObject != GetCarryingComponent().IsCarryingObject())
   {
@@ -771,7 +758,7 @@ void Robot::Delocalize(bool isCarryingObject)
   // send message to game. At the moment I implement this so that Webots can update the render, but potentially
   // any system can listen to this
   Broadcast(ExternalInterface::MessageEngineToGame(ExternalInterface::RobotDelocalized()));
-  
+
   DASMSG(robot_delocalized,
          "robot.delocalized",
          "The robot has delocalized. This event occurs any time the robot delocalizes.");
@@ -789,7 +776,7 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
     _isLocalized = true;
     return RESULT_OK;
   }
-  
+
   // Do not allow localizing if we're not on treads
   if (_offTreadsState != OffTreadsState::OnTreads) {
     LOG_ERROR("Robot.SetLocalizedTo.OffTreads", "Cannot localize while off treads");
@@ -842,7 +829,7 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
   DASMSG_SET(i3, object->GetPose().GetTranslation().z(), "z coordinate of object pose");
   DASMSG_SET(i4, GetPose().GetTranslation().z(), "z coordinate of robot pose");
   DASMSG_SEND();
-  
+
   return RESULT_OK;
 
 } // SetLocalizedTo()
@@ -970,10 +957,13 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Update robot pitch angle
   GetComponent<FullRobotPose>().SetPitchAngle(Radians(msg.pose.pitch_angle));
 
+  // Update robot roll angle
+  GetComponent<FullRobotPose>().SetRollAngle(Radians(msg.pose.roll_angle));
+
   // Update IMU data
   _robotAccel = msg.accel;
   _robotGyro = msg.gyro;
-  
+
   for (auto imuDataFrame : msg.imuData) {
     if (imuDataFrame.timestamp > 0) {
       GetImuComponent().AddData(std::move(imuDataFrame));
@@ -1035,7 +1025,7 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   const bool isHeadMoving = !IS_STATUS_FLAG_SET(HEAD_IN_POS);
   const bool areWheelsMoving = IS_STATUS_FLAG_SET(ARE_WHEELS_MOVING);
   _hasMovedSinceLocalization |= (isHeadMoving || areWheelsMoving || _offTreadsState != OffTreadsState::OnTreads);
-  
+
   // Save the entire flag for sending to game
   _lastStatusFlags = msg.status;
 
@@ -1160,7 +1150,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   GetCliffSensorComponent().NotifyOfRobotState(msg);
   GetProxSensorComponent().NotifyOfRobotState(msg);
   GetTouchSensorComponent().NotifyOfRobotState(msg);
-  GetPowerStateManager().NotifyOfRobotState(msg);
 
   // Update processed proxSensorData in history after ProxSensorComponent was updated
   GetStateHistory()->UpdateProxSensorData(msg.timestamp, GetProxSensorComponent().GetLatestProxData());
@@ -1282,6 +1271,12 @@ Result Robot::Update()
 
   //////////// CameraService Update ////////////
   CameraService::getInstance()->Update();
+
+  auto* tof = ToFSensor::getInstance();
+  if(tof != nullptr)
+  {
+    tof->Update();
+  }
 
   Result factoryRes;
   const bool checkDone = UpdateStartupChecks(factoryRes);
@@ -1567,6 +1562,11 @@ Radians Robot::GetPitchAngle() const
   return GetComponent<FullRobotPose>().GetPitchAngle();
 }
 
+Radians Robot::GetRollAngle() const
+{
+  return GetComponent<FullRobotPose>().GetRollAngle();
+}
+
 bool Robot::WasObjectTappedRecently(const ObjectID& objectID) const
 {
   return GetComponent<BlockTapFilterComponent>().ShouldIgnoreMovementDueToDoubleTap(objectID);
@@ -1612,19 +1612,17 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     return RESULT_FAIL;
   }
 
+  if (!IsChargerType(existingObject->GetType(), false)) {
+    LOG_ERROR("Robot.LocalizeToObject.CanOnlyLocalizeToCharger", "");
+    return RESULT_FAIL;
+  }
+
   if (existingObject->GetID() != GetLocalizedTo())
   {
     LOG_DEBUG("Robot.LocalizeToObject",
               "Robot attempting to localize to %s object %d",
               EnumToString(existingObject->GetType()),
               existingObject->GetID().GetValue());
-  }
-
-  if (!existingObject->CanBeUsedForLocalization() || WasObjectTappedRecently(existingObject->GetID())) {
-    LOG_ERROR("Robot.LocalizeToObject.UnlocalizedObject",
-              "Refusing to localize to object %d, which claims not to be localizable.",
-              existingObject->GetID().GetValue());
-    return RESULT_FAIL;
   }
 
   HistStateKey histStateKey;
@@ -1761,7 +1759,7 @@ Result Robot::LocalizeToObject(const ObservableObject* seenObject,
     LOG_INFO("Robot.LocalizeToObject.OffTreads", "Not localizing to object since we are not on treads");
     return RESULT_OK;
   }
-  
+
   // Mark the robot as now being localized to this object
   // NOTE: this should be _after_ calling AddVisionOnlyStateToHistory, since
   //    that function checks whether the robot is already localized
@@ -2344,7 +2342,7 @@ external_interface::RobotState* Robot::GenerateRobotStateProto() const
     msg->set_carrying_object_id(-1);
   }
   msg->set_carrying_object_on_top_id(-1);
-  
+
   msg->set_status(status);
 
   msg->set_head_tracking_object_id(GetMoveComponent().GetTrackToObject());
@@ -2357,10 +2355,9 @@ external_interface::RobotState* Robot::GenerateRobotStateProto() const
   auto* dstProxData = new external_interface::ProxData(
     srcProxData.distance_mm,
     srcProxData.signalQuality,
-    srcProxData.isInValidRange,
-    srcProxData.isValidSignalQuality,
-    srcProxData.isLiftInFOV,
-    srcProxData.isTooPitched);
+    srcProxData.unobstructed,
+    srcProxData.foundObject,
+    srcProxData.isLiftInFOV);
   msg->set_allocated_prox_data(dstProxData);
 
   auto* dstTouchData = new external_interface::TouchData(
@@ -2380,7 +2377,7 @@ RobotState Robot::GetDefaultRobotState()
 
   std::array<uint16_t, Util::EnumToUnderlying(CliffSensor::CLIFF_COUNT)> defaultCliffRawVals;
   defaultCliffRawVals.fill(std::numeric_limits<uint16_t>::max());
-  
+
   std::array<IMUDataFrame, IMUConstants::IMU_FRAMES_PER_ROBOT_STATE> defaultImuDataFrames;
   defaultImuDataFrames.fill(IMUDataFrame{0, GyroData{0, 0, 0}});
 
@@ -2608,10 +2605,128 @@ bool Robot::UpdateCameraStartupChecks(Result& res)
   return (state != State::WAITING);
 }
 
+bool Robot::UpdateToFStartupChecks(Result& res)
+{
+  static bool isDone = false;
+
+  enum class State
+  {
+   WaitingForCallback,
+   Setup,
+   StartRanging,
+   EndRanging,
+   Success,
+   Failure,
+  };
+  static State state = State::Setup;
+
+  auto* tof = ToFSensor::getInstance();
+  if(tof == nullptr)
+  {
+    res = RESULT_OK;
+    return true;
+  }
+
+#define HANDLE_RESULT(res, nextState) {                                 \
+    if(res != ToFSensor::CommandResult::Success) {                      \
+      PRINT_NAMED_ERROR("Robot.UpdateToFStartupChecks.Fail", "State: %u", state); \
+      FaultCode::DisplayFaultCode(FaultCode::TOF_FAILURE);              \
+      state = State::Failure;                                           \
+    } else {                                                            \
+      state = nextState;                                                \
+    }                                                                   \
+  }
+
+  const float currentTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
+  static float startTime_sec = currentTime_sec;
+
+  // If the ToF check has been running for more than 10 seconds assume failure
+  // This will handle failing should we not get any valid ROIs or for some reason
+  // one of the command callbacks is not called (never seen it happen but who knows...)
+  if((state != State::Failure && state != State::Success) &&
+     currentTime_sec - startTime_sec > 10.f)
+  {
+    HANDLE_RESULT(ToFSensor::CommandResult::Failure, State::Failure);
+  }
+
+  switch(state)
+  {
+    case State::Setup:
+      {
+        state = State::WaitingForCallback;
+        tof->SetupSensors([](ToFSensor::CommandResult res)
+                          {
+                            HANDLE_RESULT(res, State::StartRanging);
+                          });
+      }
+      break;
+
+    case State::StartRanging:
+      {
+        state = State::WaitingForCallback;
+        tof->StartRanging([](ToFSensor::CommandResult res)
+                          {
+                            HANDLE_RESULT(res, State::EndRanging);
+                          });
+      }
+      break;
+
+    case State::EndRanging:
+      {
+        bool isDataNew = false;
+        RangeDataRaw data = tof->GetData(isDataNew);
+        if(isDataNew)
+        {
+          bool atLeastOneValidRoi = false;
+          for(const auto& roiReading : data.data)
+          {
+            if(tof->IsValidRoiStatus(roiReading.roiStatus))
+            {
+              atLeastOneValidRoi = true;
+            }
+          }
+
+          if(atLeastOneValidRoi)
+          {
+            state = State::WaitingForCallback;
+            tof->StopRanging([](ToFSensor::CommandResult res)
+                             {
+                               PRINT_NAMED_INFO("Robot.UpdateToFStartupChecks.Success","");
+                               HANDLE_RESULT(res, State::Success);
+                             });
+          }
+        }
+      }
+      break;
+
+    case State::Success:
+      {
+        isDone = true;
+      }
+      // Intentional fallthrough
+    case State::WaitingForCallback:
+      {
+        res =  RESULT_OK;
+      }
+      break;
+
+    case State::Failure:
+      {
+        isDone = true;
+        res =  RESULT_FAIL;
+      }
+      break;
+  }
+
+  return isDone;
+
+  #undef HANDLE_RESULT
+}
+
 bool Robot::UpdateGyroCalibChecks(Result& res)
 {
   // Wait this much time after sending sync to robot before checking if we
-  // should be displaying the gyro not calibrated image
+  // should be displaying the low battery image to encourage user to put the robot down.
   // Note that by the time that the sync has been sent, the face has already
   // been blank for around 7 seconds.
   const float kTimeAfterSyncSent_sec = 2.f;
@@ -2630,7 +2745,7 @@ bool Robot::UpdateGyroCalibChecks(Result& res)
     // but we haven't received syncTime yet likely because the gyro hasn't calibrated
     GetAnimationComponent().Init();
 
-    static const std::string kGyroNotCalibratedImg = "config/devOnlySprites/independentSprites/gyro_not_calibrated.png";
+    static const std::string kGyroNotCalibratedImg = "config/sprites/independentSprites/battery_low.png";
     const std::string imgPath = GetContextDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
                                                                          kGyroNotCalibratedImg);
     Vision::ImageRGB img;
@@ -2668,6 +2783,7 @@ bool Robot::UpdateStartupChecks(Result& res)
   res = RESULT_OK;
   RUN_CHECK(UpdateGyroCalibChecks);
   RUN_CHECK(UpdateCameraStartupChecks);
+  RUN_CHECK(UpdateToFStartupChecks);
   return checkDone;
 
 #undef RUN_CHECK
@@ -2684,12 +2800,21 @@ bool Robot::SetLocale(const std::string & locale)
   DEV_ASSERT(_context != nullptr, "Robot.SetLocale.InvalidContext");
   _context->SetLocale(locale);
 
+  //
+  // Attempt to load localized strings for given locale.
+  // If that fails, fall back to default locale.
+  //
+  auto & localeComponent = GetLocaleComponent();
+  if (!localeComponent.SetLocale(locale)) {
+    LOG_WARNING("Robot.SetLocale", "Unable to set locale %s", locale.c_str());
+    localeComponent.SetLocale(Anki::Util::Locale::kDefaultLocale.ToString());
+  }
+
   // Notify animation process
   SendRobotMessage<RobotInterface::SetLocale>(locale);
 
   return true;
 }
-
 
 void Robot::Shutdown(ShutdownReason reason)
 {

@@ -60,7 +60,7 @@ namespace Anki {
 namespace Vector {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-TextToSpeechComponent::TextToSpeechComponent(const AnimContext* context)
+TextToSpeechComponent::TextToSpeechComponent(const Anim::AnimContext* context)
 : _activeTTSID(kInvalidTTSID)
 , _dispatchQueue(Util::Dispatch::Create("TtSpeechComponent"))
 {

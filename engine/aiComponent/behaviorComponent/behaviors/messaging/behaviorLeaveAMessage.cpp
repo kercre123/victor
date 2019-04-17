@@ -10,16 +10,17 @@
  *
  **********************************************************************************************************************/
 
-// #include "engine/aiComponent/behaviorComponent/behaviors/messaging/behaviorLeaveAMessage.h"
 #include "behaviorLeaveAMessage.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/compoundActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/animationWrappers/behaviorTextToSpeechLoop.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
+#include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "engine/components/localeComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/mics/voiceMessageSystem.h"
 #include "engine/components/visionComponent.h"
@@ -29,14 +30,12 @@
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 #include "clad/types/animationTrigger.h"
-#include "clad/types/behaviorComponent/userIntent.h"
 
 #include <cstdio>
 
 
 // todo notes:
 // + need to implement "stop on pickup/tap" feature
-// + need to properly localize tts strings
 // + there are many common helper functions and things used between the messaging behavior, create a helpers class
 // + user metadata eg. VisionComponent::IsNameTaken(...) should be moved outside of the vision system
 // + record/playback can be interrupted by "petting him", picking him up, or wakeword?
@@ -54,11 +53,10 @@ namespace Vector {
 
 namespace
 {
-  const char* kNameIdentifier           = "_name_";
-
-  const char* kTTSKey_NoRecipient       = "errorNoRecipient";
-  const char* kTTSKey_UnknownRecipient  = "errorUnknownRecipient";
-  const char* kTTSKey_MailboxFull       = "errorMailboxFull";
+  // Configurable localization keys
+  const char* kKey_ttsNoRecipientKey      = "ttsNoRecipientKey";
+  const char* kKey_ttsUnknownRecipientKey = "ttsUnknownRecipientKey";
+  const char* kKey_ttsMailboxFullKey      = "ttsMailboxFullKey";
 
   const char* kKey_RequireKnownUser     = "requireKnownUser";
   const char* kKey_Duration             = "recordDuration";
@@ -81,14 +79,14 @@ BehaviorLeaveAMessage::DynamicVariables::DynamicVariables() :
 {
 
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorLeaveAMessage::BehaviorLeaveAMessage( const Json::Value& config ) :
   ICozmoBehavior( config )
 {
-  _iVars.ttsErrorNoRecipient      = JsonTools::ParseString( config, kTTSKey_NoRecipient, "BehaviorLeaveAMessage" );
-  _iVars.ttsErrorUnknownRecipient = JsonTools::ParseString( config, kTTSKey_UnknownRecipient, "BehaviorLeaveAMessage" );
-  _iVars.ttsErrorMailboxFull      = JsonTools::ParseString( config, kTTSKey_MailboxFull, "BehaviorLeaveAMessage" );
+  _iVars.ttsNoRecipientKey      = JsonTools::ParseString( config, kKey_ttsNoRecipientKey, "BehaviorLeaveAMessage.NoRecipient" );
+  _iVars.ttsUnknownRecipientKey = JsonTools::ParseString( config, kKey_ttsUnknownRecipientKey, "BehaviorLeaveAMessage.UnknownRecipient" );
+  _iVars.ttsMailboxFullKey      = JsonTools::ParseString( config, kKey_ttsMailboxFullKey, "BehaviorLeaveAMessage.MailboxFull" );
 
   JsonTools::GetValueOptional( config, kKey_Duration, _iVars.recordDuration );
   JsonTools::GetValueOptional( config, kKey_RequireKnownUser, _iVars.requireKnownUser );
@@ -98,9 +96,9 @@ BehaviorLeaveAMessage::BehaviorLeaveAMessage( const Json::Value& config ) :
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLeaveAMessage::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
-  expectedKeys.insert( kTTSKey_NoRecipient );
-  expectedKeys.insert( kTTSKey_UnknownRecipient );
-  expectedKeys.insert( kTTSKey_MailboxFull );
+  expectedKeys.insert( kKey_ttsNoRecipientKey );
+  expectedKeys.insert( kKey_ttsUnknownRecipientKey );
+  expectedKeys.insert( kKey_ttsMailboxFullKey );
   expectedKeys.insert( kKey_Duration );
   expectedKeys.insert( kKey_RequireKnownUser );
 }
@@ -236,16 +234,10 @@ bool BehaviorLeaveAMessage::DoesRequireKnownUser() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLeaveAMessage::PlayTextToSpeech( const std::string& ttsString, BehaviorSimpleCallback callback )
 {
-  std::string textToSay = ttsString;
-
-  // we want to print this before the name identifier has been added for privacy reasons
-  PRINT_DEBUG( "TTS: %s", textToSay.c_str() );
-
-  // we need to replace all of our identifier strings with their actual values ...
-  Util::StringReplace( textToSay, kNameIdentifier, _dVars.messageRecipient );
+  PRINT_DEBUG( "TTS: %s", Anki::Util::RemovePII(ttsString).c_str());
 
   // delegate to our tts behavior
-  _iVars.ttsBehavior->SetTextToSay( textToSay );
+  _iVars.ttsBehavior->SetTextToSay(ttsString);
   if ( _iVars.ttsBehavior->WantsToBeActivated() )
   {
     DelegateIfInControl( _iVars.ttsBehavior.get(), callback );
@@ -287,15 +279,19 @@ void BehaviorLeaveAMessage::OnMessagedRecordingComplete()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorLeaveAMessage::TransitionToInvalidRecipient()
 {
+  const auto & localeComponent = GetBEI().GetRobotInfo().GetLocaleComponent();
+
   if ( _dVars.messageRecipient.empty() )
   {
     // inform the user we didn't hear the name of the recipient
-    PlayTextToSpeech( _iVars.ttsErrorNoRecipient );
+    const std::string & text = localeComponent.GetString(_iVars.ttsNoRecipientKey);
+    PlayTextToSpeech(text);
   }
   else
   {
-    // we didn't hear a recipient
-    PlayTextToSpeech( _iVars.ttsErrorUnknownRecipient );
+    // we don't know the recipient
+    const std::string & text = localeComponent.GetString(_iVars.ttsUnknownRecipientKey, _dVars.messageRecipient);
+    PlayTextToSpeech(text);
   }
 }
 
@@ -303,8 +299,9 @@ void BehaviorLeaveAMessage::TransitionToInvalidRecipient()
 void BehaviorLeaveAMessage::TransitionToMailboxFull()
 {
   // inform the user the mailbox is full
-
-  PlayTextToSpeech( _iVars.ttsErrorMailboxFull );
+  const auto & localeComponent = GetBEI().GetRobotInfo().GetLocaleComponent();
+  const auto & text = localeComponent.GetString(_iVars.ttsMailboxFullKey);
+  PlayTextToSpeech(text);
 }
 
 } // namespace Vector
@@ -312,4 +309,3 @@ void BehaviorLeaveAMessage::TransitionToMailboxFull()
 
 #undef PRINT_DEBUG
 #undef PRINT_INFO
-

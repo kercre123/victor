@@ -1,6 +1,6 @@
 #include "util/helpers/includeGTest.h"
 
-#include "coretech/common/engine/math/linearClassifier_impl.h"
+#include "coretech/common/engine/math/linearClassifier.h"
 #include "util/math/math.h"
 
 #include "json/json.h"

@@ -15,14 +15,11 @@
 
 #include "faceTrackerImpl_okao.h"
 
-#include "coretech/common/engine/math/quad_impl.h"
-#include "coretech/common/shared/math/rotation.h"
-#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/math/quad.h"
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/okaoParamInterface.h"
 
 #include "util/console/consoleInterface.h"
-#include "util/helpers/boundedWhile.h"
 #include "util/logging/logging.h"
 #include "util/random/randomGenerator.h"
 
@@ -134,7 +131,7 @@ namespace Vision {
 
     // Get and print Okao library version as a sanity check that we can even
     // talk to the library
-    UINT8 okaoVersionMajor=0, okaoVersionMinor = 0;
+    UINT8 okaoVersionMajor = 0, okaoVersionMinor = 0;
     INT32 okaoResult = OKAO_CO_GetVersion(&okaoVersionMajor, &okaoVersionMinor);
     if(okaoResult != OKAO_NORMAL) {
       LOG_ERROR("FaceTrackerImpl.Init.FaceLibVersionFail", "");
@@ -146,7 +143,7 @@ namespace Vision {
     
     okaoResult = OKAO_DT_GetVersion(&okaoVersionMajor, &okaoVersionMinor);
     if(okaoResult != OKAO_NORMAL) {
-      PRINT_NAMED_ERROR("FaceTrackerImpl.Init.FaceDetectorVersionFail", "");
+      LOG_ERROR("FaceTrackerImpl.Init.FaceDetectorVersionFail", "");
       return RESULT_FAIL;
     }
     LOG_INFO("FaceTrackerImpl.Init.FaceDetectorVersion",
@@ -311,12 +308,6 @@ namespace Vision {
       return RESULT_FAIL_MEMORY;
     }
 
-    _okaoPartDetectionResultHandle2 = OKAO_PT_CreateResultHandle(_okaoCommonHandle);
-    if(NULL == _okaoPartDetectionResultHandle2) {
-      LOG_ERROR("FacetrackerImpl.Init.FaceLibPartDetectionResultHandle2AllocFail", "");
-      return RESULT_FAIL_MEMORY;
-    }
-
     _okaoEstimateExpressionHandle = OKAO_EX_CreateHandle(_okaoCommonHandle);
     if(NULL == _okaoEstimateExpressionHandle) {
       LOG_ERROR("FaceTrackerImpl.Init.FaceLibEstimateExpressionHandleAllocFail", "");
@@ -423,12 +414,6 @@ namespace Vision {
     if(NULL != _okaoPartDetectionResultHandle) {
       if(OKAO_NORMAL != OKAO_PT_DeleteResultHandle(_okaoPartDetectionResultHandle)) {
         LOG_ERROR("FaceTrackerImpl.Destructor.FaceLibPartDetectionResultHandle1DeleteFail", "");
-      }
-    }
-
-    if(NULL != _okaoPartDetectionResultHandle2) {
-      if(OKAO_NORMAL != OKAO_PT_DeleteResultHandle(_okaoPartDetectionResultHandle2)) {
-        LOG_ERROR("FaceTrackerImpl.Destructor.FaceLibPartDetectionResultHandle2DeleteFail", "");
       }
     }
 
@@ -611,9 +596,9 @@ namespace Vision {
         FacialExpression::Sadness
       };
 
-      for(INT32 okaoExpressionVal = 0; okaoExpressionVal < EX_EXPRESSION_KIND_MAX; ++okaoExpressionVal) {
-        face.SetExpressionValue(TrackedFaceExpressionLUT[okaoExpressionVal],
-                                _expressionValues[okaoExpressionVal]);
+      for(INT32 okaoExprIndex = 0; okaoExprIndex < EX_EXPRESSION_KIND_MAX; ++okaoExprIndex) {
+        face.SetExpressionValue(TrackedFaceExpressionLUT[okaoExprIndex],
+                                Util::numeric_cast<TrackedFace::ExpressionValue>(_expressionValues[okaoExprIndex]));
       }
 
     }
@@ -1319,15 +1304,12 @@ namespace Vision {
             }
           }
           
-          const bool recognizing = _recognizer.SetNextFaceToRecognize(frameOrig,
-                                                                      detectionInfo,
-                                                                      _okaoPartDetectionResultHandle,
-                                                                      enableEnrollment);
-          if(recognizing) {
-            // The FaceRecognizer is now using whatever the partDetectionResultHandle is pointing to.
-            // Switch to using the other handle so we don't step on its toes.
-            std::swap(_okaoPartDetectionResultHandle, _okaoPartDetectionResultHandle2);
-          }
+          _recognizer.SetNextFaceToRecognize(frameOrig,
+                                             detectionInfo,
+                                             _facialParts,
+                                             _facialPartConfs,
+                                             enableEnrollment);
+
           // Very verbose:
           //        else
           //        {

@@ -13,13 +13,7 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/blackjack/blackJackVisualizer.h"
 
-#include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
-#include "cannedAnimLib/proceduralFace/proceduralFace.h"
 #include "clad/types/compositeImageTypes.h"
-#include "coretech/vision/engine/image_impl.h"
-#include "coretech/vision/shared/spriteCache/iSpriteWrapper.h"
-#include "coretech/vision/shared/spriteCache/spriteCache.h"
-#include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/behaviorExternalInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/blackjack/blackJackSimulation.h"
 #include "engine/clad/types/animationTypes.h"
@@ -31,37 +25,56 @@ namespace Anki{
 namespace Vector{
 
 namespace{
-// LayerLookup
-const std::vector<Vision::LayerName> kPlayerCardLayers = {
-  Vision::LayerName::Player_1,
-  Vision::LayerName::Player_2,
-  Vision::LayerName::Player_3,
-  Vision::LayerName::Player_4,
-  Vision::LayerName::Player_5
-};
-const std::vector<Vision::LayerName> kDealerCardLayers = {
-  Vision::LayerName::Dealer_1,
-  Vision::LayerName::Dealer_2,
-  Vision::LayerName::Dealer_3,
-  Vision::LayerName::Dealer_4,
-  Vision::LayerName::Dealer_5
-};
+
 // SpriteBoxName lookup
-const std::vector<Vision::SpriteBoxName> kPlayerCardSlots = {
-  Vision::SpriteBoxName::PlayerCardSlot_1,
-  Vision::SpriteBoxName::PlayerCardSlot_2,
-  Vision::SpriteBoxName::PlayerCardSlot_3,
-  Vision::SpriteBoxName::PlayerCardSlot_4,
-  Vision::SpriteBoxName::PlayerCardSlot_5
+const Vision::SpriteBoxName kCharlieFrameSpriteBox = Vision::SpriteBoxName::SpriteBox_31;
+const std::vector<Vision::SpriteBoxName> kPlayerDealingSpriteBoxes = {
+  Vision::SpriteBoxName::SpriteBox_1,
+  Vision::SpriteBoxName::SpriteBox_4,
+  Vision::SpriteBoxName::SpriteBox_7,
+  Vision::SpriteBoxName::SpriteBox_10,
+  Vision::SpriteBoxName::SpriteBox_13
 };
-const std::vector<Vision::SpriteBoxName> kDealerCardSlots = {
-  Vision::SpriteBoxName::DealerCardSlot_1,
-  Vision::SpriteBoxName::DealerCardSlot_2,
-  Vision::SpriteBoxName::DealerCardSlot_3,
-  Vision::SpriteBoxName::DealerCardSlot_4,
-  Vision::SpriteBoxName::DealerCardSlot_5
+const std::vector<Vision::SpriteBoxName> kPlayerRevealSpriteBoxes = {
+  Vision::SpriteBoxName::SpriteBox_2,
+  Vision::SpriteBoxName::SpriteBox_5,
+  Vision::SpriteBoxName::SpriteBox_8,
+  Vision::SpriteBoxName::SpriteBox_11,
+  Vision::SpriteBoxName::SpriteBox_14
 };
-const char* kCharlieFrameSpriteName = "charlieframe";
+const std::vector<Vision::SpriteBoxName> kPlayerFinalSpriteBoxes = {
+  Vision::SpriteBoxName::SpriteBox_3,
+  Vision::SpriteBoxName::SpriteBox_6,
+  Vision::SpriteBoxName::SpriteBox_9,
+  Vision::SpriteBoxName::SpriteBox_12,
+  Vision::SpriteBoxName::SpriteBox_15
+};
+const std::vector<Vision::SpriteBoxName> kDealerDealingSpriteBoxes = {
+  Vision::SpriteBoxName::SpriteBox_16,
+  Vision::SpriteBoxName::SpriteBox_19,
+  Vision::SpriteBoxName::SpriteBox_22,
+  Vision::SpriteBoxName::SpriteBox_25,
+  Vision::SpriteBoxName::SpriteBox_28
+};
+const std::vector<Vision::SpriteBoxName> kDealerRevealSpriteBoxes = {
+  Vision::SpriteBoxName::SpriteBox_17,
+  Vision::SpriteBoxName::SpriteBox_20,
+  Vision::SpriteBoxName::SpriteBox_23,
+  Vision::SpriteBoxName::SpriteBox_26,
+  Vision::SpriteBoxName::SpriteBox_29
+};
+const std::vector<Vision::SpriteBoxName> kDealerFinalSpriteBoxes = {
+  Vision::SpriteBoxName::SpriteBox_18,
+  Vision::SpriteBoxName::SpriteBox_21,
+  Vision::SpriteBoxName::SpriteBox_24,
+  Vision::SpriteBoxName::SpriteBox_27,
+  Vision::SpriteBoxName::SpriteBox_30
+};
+
+// Asset Lookup
+const char* kEmptySpriteBoxAssetName = "empty_sprite_box";
+const char* kCharlieFrameAssetName = "charlieframe";
+
 // These vectors provide index-based conversion from CardID(0-51) to string AssetName
 const std::vector<const char* const> kPlayerCardAssets = {
   // Spades
@@ -183,14 +196,20 @@ const std::vector<const char* const> kDealerCardAssets = {
 };
 
 // Robot motion animations
-const char* kDealAnimationName = "anim_blackjack_deal_01";
-const char* kSwipeAnimationName = "anim_blackjack_swipe_01";
+const char* kDealAnimationName = "anim_blackjack_deal_01_temp_remap";
+const char* kSwipeAnimationName = "anim_blackjack_swipe_01_temp_remap";
+// TODO(str): VIC-14450 Convert BlackJack anims to use SpriteBoxes ^^
+// Hand(engineer) built placeholder animations made by adding SpriteBoxKeyFrames to the original
+// animations are providing BlackJack functionality for now. This way the animation team can convert
+// the existing animations (if desired) and they can be substituted when ready without an interruption
+// to BlackJack's functionality in Master, at which time the placeholders can be deleted.
+
 const char* kTrackLockingKey = "BlackJackVisualizer_track_lock";
 
 // Card SpriteSequences
-const char* kPlayerCardFlipSeqName    = "blackjack_player_back";
-const char* kDealerCardFlipSeqName    = "blackjack_vector_back";
-const char* kDealerCardTurnSeqName    = "blackjack_vector_flipover";
+const char* kDealPlayerSpriteSeqName = "blackjack_player_back";
+const char* kDealDealerSpriteSeqName = "blackjack_vector_back";
+const char* kDealerFlopSpriteSeqName = "blackjack_vector_flipover";
 
 }
 
@@ -203,66 +222,7 @@ BlackJackVisualizer::BlackJackVisualizer(const BlackJackGame* game)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BlackJackVisualizer::Init(BehaviorExternalInterface& bei)
 {
-  auto& dataAccessorComp = bei.GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
-
-  // Find the time stamps for animation driven events
-  const auto* animContainer = dataAccessorComp.GetCannedAnimationContainer();
-  if(nullptr != animContainer){
-    const Animation* dealAnimPtr = animContainer->GetAnimation(kDealAnimationName);
-    if(nullptr == dealAnimPtr){
-      PRINT_NAMED_ERROR("BlackJackVisualizer.Init.AnimationNotFoundInContainer",
-                        "Animations need to be manually loaded on engine side - %s is not",
-                        kDealAnimationName);
-    } else {
-      const auto& track = dealAnimPtr->GetTrack<EventKeyFrame>();
-      _dealCardSeqApplyAt_ms = track.GetFirstKeyFrame()->GetTriggerTime_ms();
-    }
-
-    const Animation* swipeAnimPtr = animContainer->GetAnimation(kSwipeAnimationName);
-    if(nullptr == swipeAnimPtr){
-      PRINT_NAMED_ERROR("BlackJackVisualizer.Init.AnimationNotFoundInContainer",
-                        "Animations need to be manually loaded on engine side - %s is not",
-                        kDealAnimationName);
-    } else {
-      const auto& track = swipeAnimPtr->GetTrack<EventKeyFrame>();
-      _clearCardsDuringSwipeAt_ms = track.GetFirstKeyFrame()->GetTriggerTime_ms();
-    }
-  }
-
-  uint dealCardSeqDuration_ms = 0;
-  const auto* seqContainer = dataAccessorComp.GetSpriteSequenceContainer();
-  if(nullptr != seqContainer){
-    auto* seqPtr = seqContainer->GetSpriteSequence(kDealerCardFlipSeqName);
-    const uint numFrames = seqPtr->GetNumFrames();
-    dealCardSeqDuration_ms = numFrames * ANIM_TIME_STEP_MS;
-  }
-
-  // Time after the beginning of a deal animation at which the card has finished flipping,
-  // and we want to display the fully up-to-date set of cards
-  _displayDealtCardsAt_ms = _dealCardSeqApplyAt_ms + dealCardSeqDuration_ms;
-
-  // Init an ongoing image showing all cards dealt thus far
-  Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
-  _compImg = std::make_unique<Vision::CompositeImage>(dataAccessorComp.GetSpriteCache(),
-                                                      faceHueAndSaturation,
-                                                      FACE_DISPLAY_WIDTH,
-                                                      FACE_DISPLAY_HEIGHT);
-
-  auto& compLayoutMap = *dataAccessorComp.GetCompLayoutMap(); 
-  // Add the player card layout to the composite image
-  {
-    const auto iter = compLayoutMap.find(Vision::CompositeImageLayout::PlayerCardLayout);
-    if(iter != compLayoutMap.end()){
-      _compImg->MergeInImage(iter->second);
-    }
-  }
-  // Add the dealer card layout to the composite image
-  {
-    const auto iter = compLayoutMap.find(Vision::CompositeImageLayout::DealerCardLayout);
-    if(iter != compLayoutMap.end()){
-      _compImg->MergeInImage(iter->second);
-    }
-  }
+  ResetHands();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -286,10 +246,10 @@ void BlackJackVisualizer::Update(BehaviorExternalInterface& bei)
 void BlackJackVisualizer::DealToPlayer(BehaviorExternalInterface& bei, std::function<void()> callback)
 {
   const std::vector<Card>& playerHand = _game->GetPlayerHand();
-  if(playerHand.size() > kPlayerCardSlots.size()){
+  if(playerHand.size() > kPlayerFinalSpriteBoxes.size()){
     PRINT_NAMED_ERROR("BlackJackVisualizer.ExcessiveHandSize",
                       "Player hand size cannot exceed %d cards",
-                      static_cast<int>(kPlayerCardSlots.size()));
+                      static_cast<int>(kPlayerFinalSpriteBoxes.size()));
     return;
   }
 
@@ -301,23 +261,22 @@ void BlackJackVisualizer::DealToPlayer(BehaviorExternalInterface& bei, std::func
 
   const int cardPositionIndex = static_cast<int>(playerHand.size()) - 1;
   const std::string cardSpriteName(kPlayerCardAssets[playerHand.back().GetID()]);
-  Vision::SpriteBoxName cardSpriteBoxName = kPlayerCardSlots[cardPositionIndex];
-  Vision::LayerName cardLayerName = kPlayerCardLayers[cardPositionIndex];
+  Vision::SpriteBoxName dealSeqSBName = kPlayerDealingSpriteBoxes[cardPositionIndex];
+  Vision::SpriteBoxName revealSBName = kPlayerRevealSpriteBoxes[cardPositionIndex];
+  Vision::SpriteBoxName finalSBName = kPlayerFinalSpriteBoxes[cardPositionIndex];
 
-  PlayCompositeCardAnimationAndLock(bei, kDealAnimationName, cardLayerName, cardSpriteBoxName, 
-                                    cardSpriteName, _displayDealtCardsAt_ms, kPlayerCardFlipSeqName,
-                                    _dealCardSeqApplyAt_ms);
   _animCompletedCallback = callback;
+  DealCard(bei, dealSeqSBName, kDealPlayerSpriteSeqName, revealSBName, finalSBName, cardSpriteName);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BlackJackVisualizer::DealToDealer(BehaviorExternalInterface& bei, std::function<void()> callback)
 {
   const std::vector<Card>& dealerHand = _game->GetDealerHand();
-  if(dealerHand.size() > kDealerCardSlots.size()){
+  if(dealerHand.size() > kDealerFinalSpriteBoxes.size()){
     PRINT_NAMED_ERROR("BlackJackVisualizer.ExcessiveHandSize",
                       "Dealer hand size cannot exceed %d cards",
-                      (int)kDealerCardSlots.size());
+                      (int)kDealerFinalSpriteBoxes.size());
     return;
   }
 
@@ -337,14 +296,13 @@ void BlackJackVisualizer::DealToDealer(BehaviorExternalInterface& bei, std::func
     cardSpriteName = kDealerCardBackSpriteName;
   }
 
-  const int cardPositionIndex = (int)dealerHand.size() - 1;
-  Vision::SpriteBoxName cardSpriteBoxName = kDealerCardSlots[cardPositionIndex];
-  Vision::LayerName cardLayerName = kDealerCardLayers[cardPositionIndex];
+  const int cardPositionIndex = static_cast<int>(dealerHand.size()) - 1;
+  Vision::SpriteBoxName dealSeqSBName = kDealerDealingSpriteBoxes[cardPositionIndex];
+  Vision::SpriteBoxName revealSBName = kDealerRevealSpriteBoxes[cardPositionIndex];
+  Vision::SpriteBoxName finalSBName = kDealerFinalSpriteBoxes[cardPositionIndex];
 
-  PlayCompositeCardAnimationAndLock(bei, kDealAnimationName, cardLayerName, cardSpriteBoxName, cardSpriteName, 
-                                    _displayDealtCardsAt_ms, kDealerCardFlipSeqName, 
-                                    _dealCardSeqApplyAt_ms);
   _animCompletedCallback = callback;
+  DealCard(bei, dealSeqSBName, kDealDealerSpriteSeqName, revealSBName, finalSBName, cardSpriteName);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -370,12 +328,52 @@ void BlackJackVisualizer::Flop(BehaviorExternalInterface& bei, std::function<voi
   Card card = dealerHand.front();
   const std::string cardSpriteName = kDealerCardAssets[card.GetID()];
   const int cardPositionIndex = 0;
-  Vision::SpriteBoxName cardSpriteBoxName = kDealerCardSlots[cardPositionIndex];
-  Vision::LayerName cardLayerName = kDealerCardLayers[cardPositionIndex];
 
-  PlayCompositeCardAnimationAndLock(bei, kDealAnimationName, cardLayerName, cardSpriteBoxName, cardSpriteName,
-                                    _displayDealtCardsAt_ms, kDealerCardTurnSeqName,
-                                    _dealCardSeqApplyAt_ms);
+  Vision::SpriteBoxName dealSeqSBName = kDealerDealingSpriteBoxes[cardPositionIndex];
+  Vision::SpriteBoxName revealSBName = kDealerRevealSpriteBoxes[cardPositionIndex];
+  Vision::SpriteBoxName finalSBName = kDealerFinalSpriteBoxes[cardPositionIndex];
+
+  // Clear off the card back image holding the dealer's first card position before starting the animation,
+  _cardAssetMap[finalSBName] = kEmptySpriteBoxAssetName;
+  DealCard(bei, dealSeqSBName, kDealerFlopSpriteSeqName, revealSBName, finalSBName, cardSpriteName);
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BlackJackVisualizer::DealCard(const BehaviorExternalInterface& bei,
+                                   const Vision::SpriteBoxName& dealSeqSBName,
+                                   const std::string& dealSpriteSeqName,
+                                   const Vision::SpriteBoxName& revealSBName,
+                                   const Vision::SpriteBoxName& finalSBName,
+                                   const std::string& cardSpriteName)
+{
+  bei.GetMovementComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK, kTrackLockingKey);
+
+  // Set up to show the animated card dealing
+  _cardAssetMap[dealSeqSBName] = dealSpriteSeqName;
+  _cardAssetMap[revealSBName] = cardSpriteName;
+
+  auto animationCallback = [this, &bei](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded)
+  {
+    if(_shouldClearLocksOnCallback){
+      bei.GetMovementComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK, kTrackLockingKey);
+    }
+    // Note that the anim has completed to exercise callbacks
+    _animCompletedLastFrame = true;
+  };
+  
+  // Play the animation with appropriate remaps
+  const bool interruptRunning = true;
+  bei.GetAnimationComponent().PlayAnimWithSpriteBoxRemaps(kDealAnimationName,
+                                                          _cardAssetMap,
+                                                          interruptRunning,
+                                                          animationCallback,
+                                                          kTrackLockingKey);
+
+  // Clear the dealing animation assets and reveal spriteBox...
+  _cardAssetMap[dealSeqSBName] = kEmptySpriteBoxAssetName;
+  _cardAssetMap[revealSBName] = kEmptySpriteBoxAssetName;
+  // ...and store the dealt card in the final spritebox so its there in future animations
+  _cardAssetMap[finalSBName] = cardSpriteName;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -384,28 +382,8 @@ void BlackJackVisualizer::DisplayCharlieFrame(BehaviorExternalInterface& bei, st
   bei.GetMovementComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK, kTrackLockingKey);
   _animCompletedCallback = callback;
 
-  PlayCompositeCardAnimationAndLock(bei, kDealAnimationName, Vision::LayerName::PlayerCardOverlay,
-                                    Vision::SpriteBoxName::PlayerCardOverlay, kCharlieFrameSpriteName,
-                                    _displayDealtCardsAt_ms);
-}
+  _cardAssetMap[kCharlieFrameSpriteBox] = kCharlieFrameAssetName;
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BlackJackVisualizer::PlayCompositeCardAnimationAndLock(const BehaviorExternalInterface& bei,
-                                                            const char*                      compAnimName,
-                                                            const Vision::LayerName&         layerName,
-                                                            const Vision::SpriteBoxName&     spriteBoxName,
-                                                            const std::string&               finalItemImageName,
-                                                            const uint                       showFinalImageAt_ms,
-                                                            const std::string&               itemAnimSeqName,
-                                                            const uint                       showAnimSeqAt_ms)
-{
-  bei.GetMovementComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK, kTrackLockingKey);
-
-  auto& dataAccessorComp = bei.GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
-  auto* spriteCache = dataAccessorComp.GetSpriteCache();
-  auto* seqContainer = dataAccessorComp.GetSpriteSequenceContainer();
-
-  // Set up the final state of the static image in the callback
   auto animationCallback = [this, &bei](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded)
   {
     if(_shouldClearLocksOnCallback){
@@ -415,51 +393,18 @@ void BlackJackVisualizer::PlayCompositeCardAnimationAndLock(const BehaviorExtern
     _animCompletedLastFrame = true;
   };
 
-  // Set up the pre-animation image with the composite anim to get things rolling
-  int outAnimationDuration_ms = 0;
-  bool shouldInterrupt = true;
-  bool emptySpriteBoxesAreValid = true;
-  bei.GetAnimationComponent().PlayCompositeAnimation(compAnimName,
-                                                     *(_compImg.get()),
-                                                     ANIM_TIME_STEP_MS,
-                                                     outAnimationDuration_ms,
-                                                     shouldInterrupt,
-                                                     emptySpriteBoxesAreValid,
-                                                     animationCallback);
-
-  // Get a copy of the layer we'll be updating from the base image
-  Vision::CompositeImageLayer* baseImageLayer = _compImg->GetLayerByName(layerName);
-  Vision::CompositeImageLayer intentionalCopyLayer = *baseImageLayer;
-
-  // Add the copied layer to a delta image
-  Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
-  Vision::CompositeImage compImageDelta(dataAccessorComp.GetSpriteCache(),
-                                        faceHueAndSaturation,
-                                        FACE_DISPLAY_WIDTH,
-                                        FACE_DISPLAY_HEIGHT);
-  compImageDelta.AddLayer(std::move(intentionalCopyLayer));
-  Vision::CompositeImageLayer* deltaLayer = compImageDelta.GetLayerByName(layerName);
-
-  // if the user specified a png sequence card anim, display it as a delta
-  if(!itemAnimSeqName.empty()){
-    deltaLayer->AddToImageMap(spriteCache, seqContainer, spriteBoxName, itemAnimSeqName);
-    bei.GetAnimationComponent().UpdateCompositeImage(compImageDelta, showAnimSeqAt_ms);
-  }
-
-  // Set up the image to be displayed once the card has finished flipping as a delta 
-  deltaLayer->AddToImageMap(spriteCache, seqContainer, spriteBoxName, finalItemImageName);
-  bei.GetAnimationComponent().UpdateCompositeImage(compImageDelta, showFinalImageAt_ms); 
-
-  // Store the changes to the base image that we'll start with for the next card 
-  baseImageLayer->AddToImageMap(spriteCache, seqContainer, spriteBoxName, finalItemImageName);
-
-  // Lock Tracks at the end of the animation 
-  bei.GetMovementComponent().LockTracksAtStreamTime((u8)AnimTrackFlag::FACE_TRACK, showFinalImageAt_ms, false, kTrackLockingKey, kTrackLockingKey);
+  const bool interruptRunning = true;
+  bei.GetAnimationComponent().PlayAnimWithSpriteBoxRemaps(kDealAnimationName,
+                                                          _cardAssetMap,
+                                                          interruptRunning,
+                                                          animationCallback,
+                                                          kTrackLockingKey);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BlackJackVisualizer::SwipeToClearFace(BehaviorExternalInterface& bei, std::function<void()> callback)
 {
+  bei.GetMovementComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK, kTrackLockingKey);
   _animCompletedCallback = callback;
 
   auto animationCallback = [this, &bei](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded)
@@ -471,43 +416,63 @@ void BlackJackVisualizer::SwipeToClearFace(BehaviorExternalInterface& bei, std::
     _animCompletedLastFrame = true;
   };
 
-  // Set up the pre-animation image with the composite anim to get things rolling
-  int outAnimationDuration_ms = 0;
-  bool shouldInterrupt = true;
-  bool emptySpriteBoxesAreValid = true;
-  bei.GetAnimationComponent().PlayCompositeAnimation(kSwipeAnimationName,
-                                                     *(_compImg.get()),
-                                                     ANIM_TIME_STEP_MS,
-                                                     outAnimationDuration_ms,
-                                                     shouldInterrupt,
-                                                     emptySpriteBoxesAreValid,
-                                                     animationCallback);
+  // Just grab the final card positions since the swipe anim doesn't have SB's for deal/reveal 
+  AnimRemapMap swipeRemaps;
+  for(const auto& spriteBox : kPlayerFinalSpriteBoxes){
+    swipeRemaps[spriteBox] = _cardAssetMap[spriteBox];
+  }
+  for(const auto& spriteBox : kDealerFinalSpriteBoxes){
+    swipeRemaps[spriteBox] = _cardAssetMap[spriteBox];
+  }
+  swipeRemaps[kCharlieFrameSpriteBox] = _cardAssetMap[kCharlieFrameSpriteBox];
 
-  ClearCards(bei, _clearCardsDuringSwipeAt_ms);
+  const bool interruptRunning = true;
+  bei.GetAnimationComponent().PlayAnimWithSpriteBoxRemaps(kSwipeAnimationName,
+                                                          swipeRemaps,
+                                                          interruptRunning,
+                                                          animationCallback);
+
+  ResetHands();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BlackJackVisualizer::ClearCards(BehaviorExternalInterface& bei, uint32_t applyAt_ms)
+void BlackJackVisualizer::ResetHands()
 {
-  bei.GetMovementComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK, kTrackLockingKey);
+  _cardAssetMap.clear();
 
-  for(auto layerName : kPlayerCardLayers){
-    bei.GetAnimationComponent().ClearCompositeImageLayer( layerName, applyAt_ms);
+  for(const auto& spriteBox : kPlayerDealingSpriteBoxes){
+    _cardAssetMap.insert({spriteBox, kEmptySpriteBoxAssetName});
   }
 
-  for(auto layerName : kDealerCardLayers){
-    bei.GetAnimationComponent().ClearCompositeImageLayer( layerName, applyAt_ms);
+  for(const auto& spriteBox : kPlayerRevealSpriteBoxes){
+    _cardAssetMap.insert({spriteBox, kEmptySpriteBoxAssetName});
   }
 
-  bei.GetAnimationComponent().ClearCompositeImageLayer(Vision::LayerName::PlayerCardOverlay, applyAt_ms);
+  for(const auto& spriteBox : kPlayerFinalSpriteBoxes){
+    _cardAssetMap.insert({spriteBox, kEmptySpriteBoxAssetName});
+  }
 
-  Init(bei);
+  for(const auto& spriteBox : kDealerDealingSpriteBoxes){
+    _cardAssetMap.insert({spriteBox, kEmptySpriteBoxAssetName});
+  }
+
+  for(const auto& spriteBox : kDealerRevealSpriteBoxes){
+    _cardAssetMap.insert({spriteBox, kEmptySpriteBoxAssetName});
+  }
+
+  for(const auto& spriteBox : kDealerFinalSpriteBoxes){
+    _cardAssetMap.insert({spriteBox, kEmptySpriteBoxAssetName});
+  }
+
+  _cardAssetMap.insert({kCharlieFrameSpriteBox, kEmptySpriteBoxAssetName});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BlackJackVisualizer::ReleaseControlAndClearState(BehaviorExternalInterface& bei)
 {
-  ClearCards(bei);
+  ResetHands();
+  bei.GetMovementComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK, kTrackLockingKey);
+
   // Hack: Assume the parent behavior is being interrupted. If that's the case we will want to unlock the face from the
   // animCompletedCallback for any potentially orphaned CompositeAnimations that might currently be running. This will 
   // have no effect if no anim is currently in progress. See VIC-5926

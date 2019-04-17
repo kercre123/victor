@@ -23,14 +23,15 @@
 namespace Anki {
 namespace Vector {
 
-class AnimationStreamer;
-
+namespace Anim {
+  class AnimationStreamer;
+}
 
 class PerfMetricAnim : public PerfMetric
 {
 public:
 
-  explicit PerfMetricAnim(const AnimContext* context);
+  explicit PerfMetricAnim(const Anim::AnimContext* context);
   virtual ~PerfMetricAnim();
 
   virtual void Init(Util::Data::DataPlatform* dataPlatform, WebService::WebService* webService) override final;
@@ -39,15 +40,17 @@ public:
                       const float sleepDurationIntended_ms,
                       const float sleepDurationActual_ms) override final;
 
-  void SetAnimationStreamer(AnimationStreamer* animationStreamer) { _animationStreamer = animationStreamer; };
+  void SetAnimationStreamer(Anim::AnimationStreamer* animationStreamer) { _animationStreamer = animationStreamer; };
 
 private:
 
   virtual void InitDumpAccumulators() override final;
   virtual const FrameMetric& UpdateDumpAccumulators(const int frameBufferIndex) override final;
+  virtual const FrameMetric& GetBaseFrame(const int frameBufferIndex) override final { return _frameBuffer[frameBufferIndex]; };  
   virtual int AppendFrameData(const DumpType dumpType,
                               const int frameBufferIndex,
-                              const int dumpBufferOffset) override final;
+                              const int dumpBufferOffset,
+                              const bool graphableDataOnly) override final;
   virtual int AppendSummaryData(const DumpType dumpType,
                                 const int dumpBufferOffset,
                                 const int lineIndex) override final;
@@ -73,7 +76,7 @@ private:
   Util::Stats::StatsAccumulator _accRelativeStreamTime_ms;
   Util::Stats::StatsAccumulator _accNumLayersRendered;
 
-  AnimationStreamer*            _animationStreamer = nullptr;
+  Anim::AnimationStreamer*            _animationStreamer = nullptr;
 };
 
 static const int kNumFramesInBuffer = 2000;

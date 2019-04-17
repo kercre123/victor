@@ -51,14 +51,6 @@ HEADERS         = {
                       'content-type': "application/json"
                   }
 
-#TODO:Remove the condition which ignores LocalUDPServer errors
-#https://ankiinc.atlassian.net/browse/VIC-5814
-#The webots error logs containing the keywords in ERROR_TO_IGNORE will be ignored, check parse_output()
-ERRORS_TO_IGNORE=[
-  "LocalUdpServer.Send",
-  "LocalUdpSocketComms.SendMessageInternal.FailedSend"
-]
-
 sys.path.insert(0, BUILD_TOOLS_ROOT)
 from ankibuild import util
 
@@ -77,7 +69,7 @@ CERTIFICATE_NAME = "WebotsFirewall"
 class ThreadOutput(object):
   test_return_code = None
 
-class TemplateStringNotFoundException(Exception): 
+class TemplateStringNotFoundException(Exception):
   def __init__(self, template_string, source_data):
     UtilLog.error("Template string was not found in source data!")
     UtilLog.error("Template String: {0}\nSource Data: {1}".format(template_string, source_data))
@@ -411,7 +403,7 @@ def is_webots_running():
   if len(result) > 0:
     return True
   return False
-  
+
 def is_webots_not_running():
   return not is_webots_running()
 
@@ -521,7 +513,7 @@ def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_leve
     for world_file in worlds:
       log_file_paths = []
       cur_time_for_combine = datetime.strftime(datetime.now(), '%Y-%m-%d_%H-%M-%S')
-      for run_number in range(0, num_runs):     
+      for run_number in range(0, num_runs):
         cur_time = datetime.strftime(datetime.now(), '%Y-%m-%d_%H-%M-%S')
         # I use this sequence so we don't have to change the whole parse result code
         if run_number not in test_statuses:
@@ -553,7 +545,7 @@ def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_leve
           UtilLog.info('results will be logged to {file}'.format(file=webots_log_file_name))
           log_file_paths.append(webots_log_file_name)
           log_file_paths.append(sdk_log_file_name)
-      
+
           output_webots = ThreadOutput() #We don't care about the webot return code since we kill it
           output_sdk = ThreadOutput()
           run_webots_thread = threading.Thread(target=run_webots, args=[output_webots, GENERATED_FILE_PATH, world_file,
@@ -598,10 +590,10 @@ def run_tests(tests, log_folder, show_graphics, timeout, forward_webots_log_leve
           test_result = ResultCode.succeeded  # pylint: disable=redefined-variable-type
 
         UtilLog.info("##teamcity[buildStatisticValue key='WebotsNumRetries_{test_controller}_{world_file}' value='{num_of_retries}']".format(
-                      test_controller=test_controller, world_file=world_file, 
+                      test_controller=test_controller, world_file=world_file,
                       num_of_retries=num_retries_counting_up))
 
-        UtilLog.info("Test {test_controller} {test_result}".format(test_controller=test_controller, 
+        UtilLog.info("Test {test_controller} {test_result}".format(test_controller=test_controller,
                                                                  test_result=test_result.name))
         test_statuses[run_number][test_controller][world_file] = test_result
       # Now all runs of the same world file will be combined in one tar file
@@ -685,7 +677,7 @@ def get_log_file_path(log_folder, test_name, world_file_name, extension=".txt", 
 
   timestamp (string, optional)--
     Timestamp of the test run. Will be included in the file name if provided.
-    
+
   retry_number (integer)--
     Which retry of the run this is (0 if it is the original run).
   """
@@ -693,7 +685,7 @@ def get_log_file_path(log_folder, test_name, world_file_name, extension=".txt", 
   retry_string = ""
   if retry_number > 0:
     retry_string = "_retry{0}".format(retry_number)
-    
+
   if timestamp == "":
     file_name = "webots_out_{0}_{1}{2}.{4}".format(test_name, world_file_name, retry_string, extension)
   else:
@@ -770,7 +762,7 @@ def main(args):
                       dest='password',
                       action='store',
                       help="""Your password is needed to add the webots executables to the firewall exception list. Can
-                      be omitted if your firewall is disabled. It is requested in plaintext so this script can be re-ran 
+                      be omitted if your firewall is disabled. It is requested in plaintext so this script can be re-ran
                       easily and also for build server/steps reasons.""")
 
   parser.add_argument('--forwardWebotsLogLevel',
@@ -783,7 +775,7 @@ def main(args):
   parser.add_argument('--timeout',
                       dest='timeout',
                       action='store',
-                      default=180,
+                      default=1000,
                       type=int,
                       help="""Time limit for each webots test before marking it as failure and killing the webots instance.""")
 
@@ -826,7 +818,7 @@ def main(args):
   return_value = 0
 
   global_test_results = {}
-  test_results_list = run_tests(tests, build_folder, options.show_graphics, options.timeout, 
+  test_results_list = run_tests(tests, build_folder, options.show_graphics, options.timeout,
                              options.log_level, options.sdk_root, options.num_runs, options.num_retries)
 
   for run_number in range(0, options.num_runs):
@@ -883,7 +875,7 @@ def main(args):
 
   if options.num_runs > 1:
     UtilLog.info("{failed}/{total} ({percentage:.1f}%) runs failed".format(
-                  failed=num_of_failed_runs, total=num_of_total_runs, 
+                  failed=num_of_failed_runs, total=num_of_total_runs,
                   percentage=float(num_of_failed_runs)/num_of_total_runs*100))
 
     results_passed_msg = ''
@@ -919,7 +911,7 @@ def main(args):
                 ]\
             }}'.format(build_url, SLACK_CHANNEL, results_failed_msg,
                        results_failed_msg, results_passed_msg, results_passed_msg)
-    
+
     response = requests.request(POST_ACTION, SLACK_TOKEN_URL, data=payload, headers=HEADERS)
     UtilLog.info('payload info :\n{}'.format(str(payload)))
     UtilLog.info(response.text)

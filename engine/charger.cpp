@@ -11,14 +11,13 @@
  **/
 #include "engine/charger.h"
 
-#include "engine/objectPoseConfirmer.h"
 #include "engine/robot.h"
 #include "engine/utils/robotPointSamplerHelper.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/quad.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
@@ -27,8 +26,16 @@
 namespace Anki {
   
   namespace Vector {
-    
-    CONSOLE_VAR(bool, kUseChargerForLocalization, "Charger", true);
+
+    namespace 
+    {
+      // Valid range of radii from which the Robot may observe the charger
+      //  with good visibility. Candidate poses are sampled within this range.
+      const float kInnerAnnulusRadiusForObservation_mm = 100.f;
+      const float kOuterAnnulusRadiusForObservation_mm = 200.f;
+    }
+
+    CONSOLE_VAR(f32, kChargerMaxObservationDistance_mm, "Charger", 500.f);
     
     // === Charger predock pose params ===
     // {angle, x, y}
@@ -175,16 +182,15 @@ namespace Anki {
       return boundingQuad;
     }
     
-    std::vector<Pose3d> Charger::GenerateObservationPoses(Util::RandomGenerator& rng, const size_t nPoses) const
+    std::vector<Pose3d> Charger::GenerateObservationPoses(Util::RandomGenerator& rng, 
+                                                          const size_t nPoses,
+                                                          const float& span_rad) const
     {
       // Generate a uniformly distributed set of random poses in a semi-circle (really a semi-annulus) in front of the
       // charger. The poses should point at the charger, and they should not be too far off from the marker normal, so
       // that the robot can see the marker from a reasonable angle.
-      const float r1_mm = 100.f;
-      const float r2_mm = 200.f;
-      const float maxAngleOfIncidence_rad = DEG_TO_RAD(75.f); // maximum allowed angle of incidence with the marker normal
-      const f32 minTheta = M_PI_F - maxAngleOfIncidence_rad;
-      const f32 maxTheta = M_PI_F + maxAngleOfIncidence_rad;
+      const f32 minTheta = M_PI_F - span_rad;
+      const f32 maxTheta = M_PI_F + span_rad;
       
       // The charger's origin is at the front of the lip of the charger, and its x axis points inward toward the marker.
       // Therefore we want poses centered around the angle pi (w.r.t. the charger), and pointing toward the charger origin.
@@ -192,7 +198,7 @@ namespace Anki {
       std::vector<Pose3d> outPoses;
       outPoses.reserve(nPoses);
       for (int i=0 ; i < nPoses ; i++) {
-        const auto pt = RobotPointSamplerHelper::SamplePointInAnnulus(rng, r1_mm, r2_mm, minTheta, maxTheta);
+        const auto pt = RobotPointSamplerHelper::SamplePointInAnnulus(rng, kInnerAnnulusRadiusForObservation_mm, kOuterAnnulusRadiusForObservation_mm, minTheta, maxTheta);
         const f32 th = std::atan2(pt.y(), pt.x());
         outPoses.emplace_back(th + M_PI_F, Z_AXIS_3D(),
                               Vec3f{pt.x(), pt.y(), chargerPose.GetTranslation().z()},
@@ -241,11 +247,10 @@ namespace Anki {
       return distTol;
     }
     
-    bool Charger::CanBeUsedForLocalization() const
+    f32 Charger::GetMaxObservationDistance_mm() const
     {
-      return kUseChargerForLocalization;
+      return kChargerMaxObservationDistance_mm;
     }
-
     
   } // namespace Vector
 } // namespace Anki

@@ -23,9 +23,6 @@
 #include "engine/components/visionScheduleMediator/iVisionModeSubscriber.h"
 #include "engine/vision/visionModeSchedule.h"
 #include "engine/cozmoContext.h"
-#include "engine/robot.h"
-#include "engine/robotComponents_fwd.h"
-#include "util/entityComponent/dependencyManagedEntity.h"
 
 using namespace Anki;
 using namespace Anki::Vector;
@@ -75,7 +72,7 @@ TEST(VisionScheduleMediator, Interleaving)
     "VisionModeSettings" :
     [
       {
-        "mode"         : "DetectingMarkers",
+        "mode"         : "Markers",
         "low"          : 4,
         "med"          : 2,
         "high"         : 1,
@@ -83,7 +80,7 @@ TEST(VisionScheduleMediator, Interleaving)
         "relativeCost" : 16
       },
       {
-        "mode"         : "DetectingFaces",
+        "mode"         : "Faces",
         "low"          : 4,
         "med"          : 2,
         "high"         : 1,
@@ -91,7 +88,7 @@ TEST(VisionScheduleMediator, Interleaving)
         "relativeCost" : 16
       },
       {
-        "mode"         : "DetectingPets",
+        "mode"         : "Pets",
         "low"          : 8,
         "med"          : 4,
         "high"         : 2,
@@ -99,7 +96,7 @@ TEST(VisionScheduleMediator, Interleaving)
         "relativeCost" : 10
       },
       {
-        "mode"         : "DetectingMotion",
+        "mode"         : "Motion",
         "low"          : 4,
         "med"          : 2,
         "high"         : 1,
@@ -110,54 +107,47 @@ TEST(VisionScheduleMediator, Interleaving)
   })json";
   Json::Value config;
   CreateVSMConfig(configString, config);
-  VisionComponent visionComponent;
   VisionScheduleMediator vsm;
   vsm.Init(config);
   std::set<VisionMode> enabledModes;
   
-  // vision component needs access to vision system to not complain, so needs Initing
-  Robot robot(0, cozmoContext);
-  DependencyManagedEntity<RobotComponentID> dependencies;
-  dependencies.AddDependentComponent(RobotComponentID::CozmoContextWrapper, robot.GetComponentPtr<ContextWrapper>(), false);
-  visionComponent.InitDependent( &robot, dependencies);
+  TestSubscriber lowMarkerSubscriber(&vsm, { { VisionMode::Markers, EVisionUpdateFrequency::Low } });
+  TestSubscriber medMarkerSubscriber(&vsm, { { VisionMode::Markers, EVisionUpdateFrequency::Med } });
+  TestSubscriber highMarkerSubscriber(&vsm, { { VisionMode::Markers, EVisionUpdateFrequency::High } });
 
-  TestSubscriber lowMarkerSubscriber(&vsm, { { VisionMode::DetectingMarkers, EVisionUpdateFrequency::Low } });
-  TestSubscriber medMarkerSubscriber(&vsm, { { VisionMode::DetectingMarkers, EVisionUpdateFrequency::Med } });
-  TestSubscriber highMarkerSubscriber(&vsm, { { VisionMode::DetectingMarkers, EVisionUpdateFrequency::High } });
+  TestSubscriber lowFaceSubscriber(&vsm, { { VisionMode::Faces, EVisionUpdateFrequency::Low } });
+  TestSubscriber medFaceSubscriber(&vsm, { { VisionMode::Faces, EVisionUpdateFrequency::Med } });
+  TestSubscriber highFaceSubscriber(&vsm, { { VisionMode::Faces, EVisionUpdateFrequency::High } });
 
-  TestSubscriber lowFaceSubscriber(&vsm, { { VisionMode::DetectingFaces, EVisionUpdateFrequency::Low } });
-  TestSubscriber medFaceSubscriber(&vsm, { { VisionMode::DetectingFaces, EVisionUpdateFrequency::Med } });
-  TestSubscriber highFaceSubscriber(&vsm, { { VisionMode::DetectingFaces, EVisionUpdateFrequency::High } });
-
-  TestSubscriber lowPetSubscriber(&vsm, { { VisionMode::DetectingPets, EVisionUpdateFrequency::Low } });
-  TestSubscriber medPetSubscriber(&vsm, { { VisionMode::DetectingPets, EVisionUpdateFrequency::Med } });
-  TestSubscriber highPetSubscriber(&vsm, { { VisionMode::DetectingPets, EVisionUpdateFrequency::High } });
+  TestSubscriber lowPetSubscriber(&vsm, { { VisionMode::Pets, EVisionUpdateFrequency::Low } });
+  TestSubscriber medPetSubscriber(&vsm, { { VisionMode::Pets, EVisionUpdateFrequency::Med } });
+  TestSubscriber highPetSubscriber(&vsm, { { VisionMode::Pets, EVisionUpdateFrequency::High } });
   
-  TestSubscriber lowMotionSubscriber(&vsm, { { VisionMode::DetectingMotion, EVisionUpdateFrequency::Low } });
-  TestSubscriber medMotionSubscriber(&vsm, { { VisionMode::DetectingMotion, EVisionUpdateFrequency::Med } });
-  TestSubscriber highMotionSubscriber(&vsm, { { VisionMode::DetectingMotion, EVisionUpdateFrequency::High } });
+  TestSubscriber lowMotionSubscriber(&vsm, { { VisionMode::Motion, EVisionUpdateFrequency::Low } });
+  TestSubscriber medMotionSubscriber(&vsm, { { VisionMode::Motion, EVisionUpdateFrequency::Med } });
+  TestSubscriber highMotionSubscriber(&vsm, { { VisionMode::Motion, EVisionUpdateFrequency::High } });
 
   // Test basic Subscription
   lowFaceSubscriber.Subscribe();
   lowMarkerSubscriber.Subscribe();
   lowPetSubscriber.Subscribe();
   lowMotionSubscriber.Subscribe();
-  vsm.UpdateVisionSchedule(visionComponent, nullptr);
-  AllVisionModesSchedule::ModeScheduleList scheduleList = vsm.GenerateBalancedSchedule(visionComponent);
+  vsm.UpdateVisionSchedule(nullptr);
+  AllVisionModesSchedule::ModeScheduleList scheduleList = vsm.GenerateBalancedSchedule();
 
   for(auto& modeSchedule : scheduleList){
     switch(modeSchedule.first){
-      case VisionMode::DetectingFaces:
+      case VisionMode::Faces:
         EXPECT_TRUE((modeSchedule.second._schedule == std::vector<bool>({false, false, true, false})));
         break;
-      case VisionMode::DetectingMarkers:
+      case VisionMode::Markers:
         EXPECT_TRUE((modeSchedule.second._schedule == std::vector<bool>({false, false, false, true})));
         break;
-      case VisionMode::DetectingPets:
+      case VisionMode::Pets:
         EXPECT_TRUE((modeSchedule.second._schedule == std::vector<bool>({false, true, false, false,
                                                                          false, false, false, false})));
         break;
-      case VisionMode::DetectingMotion:
+      case VisionMode::Motion:
         EXPECT_TRUE((modeSchedule.second._schedule == std::vector<bool>({true, false, false, false})));
         break;
       default:
@@ -172,21 +162,21 @@ TEST(VisionScheduleMediator, Interleaving)
   medMarkerSubscriber.Subscribe();
   medPetSubscriber.Subscribe();
   medMotionSubscriber.Subscribe();
-  vsm.UpdateVisionSchedule(visionComponent, nullptr);
-  scheduleList = vsm.GenerateBalancedSchedule(visionComponent);
+  vsm.UpdateVisionSchedule(nullptr);
+  scheduleList = vsm.GenerateBalancedSchedule();
 
   for(auto& modeSchedule : scheduleList){
     switch(modeSchedule.first){
-      case VisionMode::DetectingFaces:
+      case VisionMode::Faces:
         EXPECT_TRUE((modeSchedule.second._schedule == std::vector<bool>({true, false})));
         break;
-      case VisionMode::DetectingMarkers:
+      case VisionMode::Markers:
         EXPECT_TRUE((modeSchedule.second._schedule == std::vector<bool>({false, true})));
         break;
-      case VisionMode::DetectingPets:
+      case VisionMode::Pets:
         EXPECT_TRUE((modeSchedule.second._schedule == std::vector<bool>({false, true, false, false})));
         break;
-      case VisionMode::DetectingMotion:
+      case VisionMode::Motion:
         EXPECT_TRUE((modeSchedule.second._schedule == std::vector<bool>({true, false})));
         break;
       default:
@@ -201,22 +191,22 @@ TEST(VisionScheduleMediator, Interleaving)
   medMarkerSubscriber.Unsubscribe();
   medPetSubscriber.Unsubscribe();
   medMotionSubscriber.Unsubscribe();
-  vsm.UpdateVisionSchedule(visionComponent, nullptr);
-  scheduleList = vsm.GenerateBalancedSchedule(visionComponent);
+  vsm.UpdateVisionSchedule(nullptr);
+  scheduleList = vsm.GenerateBalancedSchedule();
 
   for(auto& modeSchedule : scheduleList){
     switch(modeSchedule.first){
-      case VisionMode::DetectingFaces:
+      case VisionMode::Faces:
         EXPECT_TRUE((modeSchedule.second._schedule == std::vector<bool>({false, false, true, false})));
         break;
-      case VisionMode::DetectingMarkers:
+      case VisionMode::Markers:
         EXPECT_TRUE((modeSchedule.second._schedule == std::vector<bool>({false, false, false, true})));
         break;
-      case VisionMode::DetectingPets:
+      case VisionMode::Pets:
         EXPECT_TRUE((modeSchedule.second._schedule == std::vector<bool>({false, true, false, false,
                                                                          false, false, false, false})));
         break;
-      case VisionMode::DetectingMotion:
+      case VisionMode::Motion:
         EXPECT_TRUE((modeSchedule.second._schedule == std::vector<bool>({true, false, false, false})));
         break;
       default:
@@ -231,6 +221,6 @@ TEST(VisionScheduleMediator, Interleaving)
   lowMarkerSubscriber.Unsubscribe();
   lowPetSubscriber.Unsubscribe();
   lowMotionSubscriber.Unsubscribe();
-  vsm.UpdateVisionSchedule(visionComponent, nullptr);
-  scheduleList = vsm.GenerateBalancedSchedule(visionComponent);
+  vsm.UpdateVisionSchedule(nullptr);
+  scheduleList = vsm.GenerateBalancedSchedule();
 }

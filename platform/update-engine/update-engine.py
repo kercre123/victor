@@ -5,6 +5,12 @@ Example implementation of Anki Victor Update engine.
 """
 __author__ = "Daniel Casner <daniel@anki.com>"
 
+#
+# DAS EVENTS Documentation Notice!!!!!
+# If you add / modify / remove DAS events from this file, you MUST
+# update the DAS macros in update-engine-das-event-documentation.cpp
+#
+
 import sys
 import os
 import urllib2
@@ -29,6 +35,7 @@ STATUS_DIR = "/run/update-engine"
 EXPECTED_DOWNLOAD_SIZE_FILE = os.path.join(STATUS_DIR, "expected-download-size")
 EXPECTED_WRITE_SIZE_FILE = os.path.join(STATUS_DIR, "expected-size")
 PROGRESS_FILE = os.path.join(STATUS_DIR, "progress")
+PHASE_FILE = os.path.join(STATUS_DIR, "phase")
 ERROR_FILE = os.path.join(STATUS_DIR, "error")
 DONE_FILE = os.path.join(STATUS_DIR, "done")
 MANIFEST_FILE = os.path.join(STATUS_DIR, "manifest.ini")
@@ -55,6 +62,7 @@ def make_blocking(pipe, blocking):
         fcntl(fd, F_SETFL, fcntl(fd, F_GETFL) & ~os.O_NONBLOCK)  # clear it
 
 def das_event(name, parameters = []):
+    "Log a DAS event"
     args = ["/anki/bin/vic-log-event", "update-engine", name]
     for p in parameters:
         args.append(p.rstrip().replace('\r', '\\r').replace('\n', '\\n'))
@@ -161,11 +169,6 @@ def is_dev_robot(cmdline):
     "Returns true if this robot is a dev robot"
     if "anki.dev" in cmdline:
         return True
-    emrcat = subprocess.Popen(['/bin/emr-cat', 'v'], shell=False, stdout=subprocess.PIPE)
-    if emrcat.wait() == 0:
-        hw_ver = int(emrcat.communicate()[0], 16)
-        if hw_ver == 0x7:
-            return True # All whiskey DVT1s are dev even though cmdline doesn't indicate it
     return False
 
 
@@ -186,7 +189,7 @@ def get_cmdline():
 
 
 def get_slot(kernel_command_line):
-    "Get the current and target slots from the kernel commanlines"
+    "Get the current and target slots from the kernel command line"
     suffix = kernel_command_line.get("androidboot.slot_suffix", '_f')
     if suffix == '_a':
         return 'a', 'b'
@@ -409,6 +412,13 @@ def copy_slot(partition, src_slot, dst_slot):
                 buffer = src.read(DD_BLOCK_SIZE)
             dst.write(buffer)
 
+def get_file_size(filename):
+    "Get the size in bytes of a file"
+    fd = os.open(filename, os.O_RDONLY)
+    try:
+        return os.lseek(fd, 0, os.SEEK_END)
+    finally:
+        os.close(fd)
 
 def handle_delta(current_slot, target_slot, manifest, tar_stream):
     "Apply a delta update to the boot and system partitions"
@@ -417,7 +427,7 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
     if current_version != delta_base_version:
         die(211, "My version is {} not {}".format(current_version, delta_base_version))
     delta_bytes = manifest.getint("DELTA", "bytes")
-    download_progress_denominator = 4  # Download expected not to take more than 25% of the time
+    download_progress_denominator = 10  # Download expected not to take more than 10% of the time
     write_status(EXPECTED_WRITE_SIZE_FILE, delta_bytes*download_progress_denominator)
     write_status(PROGRESS_FILE, 0)
 
@@ -441,8 +451,20 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
         payload.Init()
 
         # Update progress estimate
-        num_operations = len(payload.manifest.install_operations) + len(payload.manifest.kernel_install_operations)
-        progress = num_operations / download_progress_denominator
+        # Assume each 1 megabyte of copied or hashed data from the eMMC is equivalent
+        # to 1 operation in addition to the operations necessary to transform the
+        # system and boot partitions
+        block_size = 1024 * 1024
+        num_operations = ( (payload.manifest.old_rootfs_info.size / block_size)
+                           + (payload.manifest.old_kernel_info.size / block_size)
+                           + (get_file_size(get_slot_name("system", current_slot)) / block_size)
+                           + (get_file_size(get_slot_name("boot", current_slot)) / block_size)
+                           + len(payload.manifest.install_operations)
+                           + len(payload.manifest.kernel_install_operations)
+                           + (payload.manifest.new_rootfs_info.size / block_size)
+                           + (payload.manifest.new_kernel_info.size / block_size))
+
+        progress = (num_operations + 1) / (download_progress_denominator - 1)
         num_operations += progress
         write_status(PROGRESS_FILE, progress)
         write_status(EXPECTED_WRITE_SIZE_FILE, num_operations)
@@ -459,6 +481,7 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
                 yield
 
         payload.progress_tick_callback = progress_ticker(progress, num_operations)
+        payload.phase_callback = lambda phase: write_status(PHASE_FILE, phase)
         payload.Apply(get_slot_name("boot", target_slot),
                       get_slot_name("system", target_slot),
                       get_slot_name("boot", current_slot),
@@ -533,6 +556,7 @@ def handle_factory(manifest, tar_stream):
     safe_delete(ABOOT_STAGING)
 
 def validate_new_os_version(current_os_version, new_os_version, cmdline):
+    "Make sure we are allowed to install the new os version"
     allow_downgrade = os.getenv("UPDATE_ENGINE_ALLOW_DOWNGRADE", "False") in TRUE_SYNONYMS
     if allow_downgrade and is_dev_robot(cmdline):
         return
@@ -551,6 +575,7 @@ def validate_new_os_version(current_os_version, new_os_version, cmdline):
 
 def update_from_url(url):
     "Updates the inactive slot from the given URL"
+    write_status(PHASE_FILE, "download")
     # Figure out slots
     cmdline = get_cmdline()
     current_slot, target_slot = get_slot(cmdline)
@@ -642,20 +667,24 @@ def update_from_url(url):
             die(202, "Could not set b slot as unbootable")
     safe_delete(ERROR_FILE)
     write_status(DONE_FILE, 1)
+    write_status(PHASE_FILE, "done")
     das_event("robot.ota_download_end", ["success", next_boot_os_version])
     if reboot_after_install:
         os.system("/sbin/reboot")
 
 def logv(msg):
+    "If DEBUG (verbose logging) is enabled, print out msg"
     if DEBUG:
         print(msg)
         sys.stdout.flush()
 
 def loge(msg):
+    "Send error message to stderr"
     print(msg, file=sys.stderr)
     sys.stderr.flush()
 
 def generate_shard_id():
+    "Generate a shard id"
     override_shard = os.getenv("UPDATE_ENGINE_SHARD", None)
     if override_shard:
         return override_shard
@@ -664,6 +693,7 @@ def generate_shard_id():
     return "{:02d}".format(b)
 
 def construct_update_url(os_version, cmdline):
+    "Construct full URL for automatic updates"
     base_url = os.getenv("UPDATE_ENGINE_BASE_URL", None)
     if is_dev_robot(cmdline):
         base_url = os.getenv("UPDATE_ENGINE_ANKIDEV_BASE_URL", base_url)
@@ -682,6 +712,7 @@ if __name__ == '__main__':
     clear_status()
     DEBUG = os.getenv("UPDATE_ENGINE_DEBUG", "False") in TRUE_SYNONYMS
     url = os.getenv("UPDATE_ENGINE_URL", "auto")
+    # We don't expect command line args, but handle them to facilitate developer testing
     if len(sys.argv) > 1:
         url = sys.argv[1]
     if len(sys.argv) > 2 and sys.argv[2] == '-v':

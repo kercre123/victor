@@ -21,6 +21,7 @@
 #include "engine/aiComponent/objectInteractionInfoCache.h"
 #include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
 
@@ -59,9 +60,6 @@ ObservableObject* CreateObjectLocatedAtOrigin(Robot& robot, ObjectType objectTyp
   // now they can be added to the world
   blockWorld.AddLocatedObject(std::shared_ptr<ObservableObject>(objectPtr));
   
-  // need to pretend we observed this object
-  robot.GetObjectPoseConfirmer().AddInExistingPose(objectPtr); // this has to be called after AddLocated just because
-  
   // verify they are there now
   ANKI_VERIFY(objectPtr->GetID().IsSet(), "CreateObjectLocatedAtOrigin.IDNotset", "");
   ANKI_VERIFY(objectPtr->HasValidPose(), "CreateObjectLocatedAtOrigin.InvalidPose", "");
@@ -93,12 +91,12 @@ TEST(ObjectInteractionInfoCache, BestObjectConsistency)
   // put the first cube close to the robot, and put the second cube much further away
   {
     const Pose3d obj1Pose(0.0f, Z_AXIS_3D(), {xOffsetObj1, 0, 0}, robot.GetPose());
-    auto result = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object1, obj1Pose, PoseState::Known);
+    auto result = robot.GetBlockWorld().SetObjectPose(objID1, obj1Pose, PoseState::Known);
     ASSERT_EQ(RESULT_OK, result);
   }
   {
     const Pose3d obj2Pose(0.0f, Z_AXIS_3D(), {xOffsetObj1 *100, 0, 0}, robot.GetPose());
-    auto result = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object2, obj2Pose, PoseState::Known);
+    auto result = robot.GetBlockWorld().SetObjectPose(objID2, obj2Pose, PoseState::Known);
     ASSERT_EQ(RESULT_OK, result);
   }
   
@@ -128,7 +126,7 @@ TEST(ObjectInteractionInfoCache, BestObjectConsistency)
   // Move object 2 in closer - object 1 should still be the best object because
   {
     const Pose3d obj2Pose(0.0f, Z_AXIS_3D(), {xOffsetObj1/2, 0, 0}, robot.GetPose());
-    auto result = robot.GetObjectPoseConfirmer().AddRobotRelativeObservation(object2, obj2Pose, PoseState::Known);
+    auto result = robot.GetBlockWorld().SetObjectPose(objID2, obj2Pose, PoseState::Known);
     ASSERT_EQ(RESULT_OK, result);
   }
   

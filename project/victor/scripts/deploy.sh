@@ -20,6 +20,8 @@ source ${SCRIPT_PATH}/victor_env.sh
 : ${VERBOSE:=0}
 : ${FORCE_RSYNC_BIN:=0}
 : ${FORCE_DEPLOY:=0}
+: ${IGNORE_COMPATIBILITY_MISMATCH:=0}
+: ${IGNORE_VERSION_MISMATCH:=0}
 : ${ANKI_BUILD_TYPE:="Debug"}
 : ${INSTALL_ROOT:="/anki"}
 : ${DEVTOOLS_INSTALL_ROOT:="/anki-devtools"}
@@ -33,6 +35,8 @@ function usage() {
   echo "  -v                      print verbose output"
   echo "  -r                      force-install rsync binary on robot"
   echo "  -f                      force rsync to (re)deploy all files"
+  echo "  -i                      ignore compatibility mismatch. Do not use this. Update your robot/branch!"
+  echo "  -b                      ignore version mismatch.  Do not use this.  Update your robot/branch!"
   echo "  -c CONFIGURATION        build configuration {Debug,Release}"
   echo "  -s ANKI_ROBOT_HOST      hostname or ip address of robot"
   echo ""
@@ -50,7 +54,7 @@ function logv() {
   fi
 }
 
-while getopts "hvrfc:s:" opt; do
+while getopts "hvrfibc:s:" opt; do
   case $opt in
     h)
       usage && exit 0
@@ -63,6 +67,12 @@ while getopts "hvrfc:s:" opt; do
       ;;
     f)
       FORCE_DEPLOY=1
+      ;;
+    i)
+      IGNORE_COMPATIBILITY_MISMATCH=1
+      ;;
+    b)
+      IGNORE_VERSION_MISMATCH=1
       ;;
     c)
       ANKI_BUILD_TYPE="${OPTARG}"
@@ -114,6 +124,21 @@ function cleanup() {
 # trap ctrl-c and call ctrl_c()
 trap cleanup INT
 
+
+# echo 0  if versions are equal
+# echo -1 if $1 < $2
+# echo 1  if $1 > $2
+function compare_victor_compat_version() {
+    local A_VER=$1
+    local B_VER=$2
+    if [[ ${A_VER} -gt ${B_VER} ]]; then
+        echo 1 && return 0
+    elif [[ ${A_VER} -lt ${B_VER} ]]; then
+        echo -1 && return 0
+    fi
+    echo 0
+}
+
 # echo 0  if versions are equal
 # echo -1 if $1 < $2
 # echo 1  if $1 > $2
@@ -157,13 +182,46 @@ elif [ ${VER_CMP} -eq -1 ]; then
 fi
 
 if [ ${VER_CMP} -ne 0 ]; then
-  if [ $FORCE_DEPLOY -eq 1 ]; then
-    echo "Ignoring OS version mismatch"
+  if [ $IGNORE_VERSION_MISMATCH -eq 1 ]; then
+      printf '%s%s%s%s\n' \
+             "$(tput setaf 9)" \
+             "$(tput blink)" \
+             "Ignoring OS version mismatch.  This is probably a really bad idea!!!" \
+             "$(tput sgr0)"
   else
-    echo "OS version mismatch. Use -f to force."
+    echo "OS version mismatch. Update your robot or your branch!"
+    echo "If you are certain you want to deploy anyway, use the -b option."
+    echo "When things don't work, please update your robot and/or your branch and try again!"
     cleanup
     exit 1
   fi
+fi
+
+OS_COMPAT_VERSION=$(robot_sh "cat /etc/victor-compat-version || echo 0")
+DEPLOY_VERSION=$(cat ${STAGING_DIR}/anki/etc/victor-compat-version)
+
+VER_CMP=$(compare_victor_compat_version $DEPLOY_VERSION $OS_COMPAT_VERSION)
+
+if [[ ${VER_CMP} -gt 0 ]]; then
+    echo -e "Target deploy compatibility version (${DEPLOY_VERSION}) is newer than robot version (${OS_COMPAT_VERSION}).\nYou need to upgrade the OS version on your robot.  Try ./project/victor/scripts/robot_sh.sh update-os"
+elif [[ ${VER_CMP} -lt 0 ]]; then
+    echo -e "Target deploy compatibility version (${DEPLOY_VERSION}) is older than robot version (${OS_COMPAT_VERSION}).\nYou need to rebase your current branch to pick up required changes for compatibility with the robot."
+fi
+
+if [[ ${VER_CMP} -ne 0 ]]; then
+    if [[ $IGNORE_COMPATIBILITY_MISMATCH -eq 1 ]]; then
+        printf '%s%s%s%s\n' \
+               "$(tput setaf 9)" \
+               "$(tput blink)" \
+               "Ignoring compatibility version mismatch.  This is probably a really bad idea!!!" \
+               "$(tput sgr0)"
+    else
+        echo "Compatibility version mismatch.  Update your robot or your branch!"
+        echo "If you are certain that you want to deplay anyway, use the -i option."
+        echo "When things don't work, please update your robot and/or your branch and try again!"
+        cleanup
+        exit 1
+    fi
 fi
 
 set +e

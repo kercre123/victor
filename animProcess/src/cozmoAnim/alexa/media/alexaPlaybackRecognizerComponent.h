@@ -44,7 +44,9 @@ namespace Util {
 class Locale;
 }
 namespace Vector {
-class AnimContext;
+namespace Anim {
+  class AnimContext;
+}
 class SpeechRecognizerSystem;
 class SpeechRecognizerPryonLite;
 }
@@ -57,7 +59,7 @@ class AlexaPlaybackRecognizerComponent {
     
 public:
 
-  AlexaPlaybackRecognizerComponent( const AnimContext* context,
+  AlexaPlaybackRecognizerComponent( const Anim::AnimContext* context,
                                     SpeechRecognizerSystem& speechRecognizerSystem );
 
   virtual ~AlexaPlaybackRecognizerComponent();
@@ -92,7 +94,7 @@ private:
   static constexpr size_t kResamplerCircularBufferSize = kResamplerBufferSize * 5;
 
   // Handle to objects
-  const AnimContext*                        _context = nullptr;         // This a pointer to a unique_ptr()'s instance
+  const Anim::AnimContext*                  _context = nullptr;         // This a pointer to a unique_ptr()'s instance
   SpeechRecognizerPryonLite*                _recognizer = nullptr;      // This a pointer to a unique_ptr()'s instance
   SpeechRecognizerSystem&                   _speechRecSys;
   SpeexResamplerState*                      _resamplerState = nullptr;

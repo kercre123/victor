@@ -15,7 +15,7 @@
 #include "coretech/common/robot/utilities.h"
 #include "coretech/common/shared/types.h"
 #include "coretech/common/engine/math/fastPolygon2d.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 
 #include "engine/ankiEventUtil.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
@@ -36,6 +36,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 
 
 #define LOG_CHANNEL    "Movement"
@@ -115,11 +116,32 @@ void MovementComponent::OnRobotDelocalized()
   
 void MovementComponent::NotifyOfRobotState(const Vector::RobotState& robotState)
 {
-  _isMoving     =  static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::IS_MOVING);
-  _isHeadMoving = !static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::HEAD_IN_POS);
-  _isLiftMoving = !static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::LIFT_IN_POS);
-  _areWheelsMoving = static_cast<bool>(robotState.status & (uint32_t)RobotStatusFlag::ARE_WHEELS_MOVING);
+  #define IS_STATUS_FLAG_SET(x) ((robotState.status & (uint32_t)RobotStatusFlag::x) != 0)
+
+  _isMoving            =  IS_STATUS_FLAG_SET(IS_MOVING);
+  _isHeadMoving        = !IS_STATUS_FLAG_SET(HEAD_IN_POS);
+  _isLiftMoving        = !IS_STATUS_FLAG_SET(LIFT_IN_POS);
+  _areWheelsMoving     =  IS_STATUS_FLAG_SET(ARE_WHEELS_MOVING);
+  _areEncodersDisabled =  IS_STATUS_FLAG_SET(ENCODERS_DISABLED);
+
+  const bool isHeadEncoderInvalid = IS_STATUS_FLAG_SET(ENCODER_HEAD_INVALID);
+  const bool isLiftEncoderInvalid = IS_STATUS_FLAG_SET(ENCODER_LIFT_INVALID);
   
+  // Print DAS message when head or lift go out of calibration according to syscon
+  if (isHeadEncoderInvalid && !_isHeadEncoderInvalid) {
+    DASMSG(head_motor_uncalibrated, "head_motor_uncalibrated", "Head is uncalibrated. (Inverse msg: head_motor_calibrated)");
+    DASMSG_SEND();
+  }
+  if (isLiftEncoderInvalid && !_isLiftEncoderInvalid) {
+    DASMSG(lift_motor_uncalibrated, "lift_motor_uncalibrated", "Lift is uncalibrated. (Inverse msg: lift_motor_calibrated)");
+    DASMSG_SEND();
+  }
+
+  _isHeadEncoderInvalid =  isHeadEncoderInvalid;
+  _isLiftEncoderInvalid =  isLiftEncoderInvalid;
+
+
+
   // NOTE(GB): In the future, the meaning of `_isMoving` may change, and may not be coupled to
   // _isHeadMoving, _isLiftMoving, or _areWheelsMoving, so check if we can set each timestamp individually.
   if (_isMoving) {
@@ -223,10 +245,11 @@ void MovementComponent::CheckForUnexpectedMovement(const Vector::RobotState& rob
     return;
   }
   
+  const bool isPickedUp = robotState.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP;
   // Don't check for unexpected movement under the following conditions
-  if (robotState.status & (uint32_t)RobotStatusFlag::IS_PICKED_UP   ||
+  if (robotState.status & (uint32_t)RobotStatusFlag::IS_FALLING     ||
       robotState.status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER  ||
-      robotState.status & (uint32_t)RobotStatusFlag::IS_FALLING)
+      (isPickedUp && !_heldInPalmModeEnabled) )
   {
     _unexpectedMovement.Reset();
     return;
@@ -328,7 +351,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Vector::RobotState& rob
     const bool isValidTypeOfUnexpectedMovement = (unexpectedMovementType == UnexpectedMovementType::TURNED_BUT_STOPPED ||
                                                   unexpectedMovementType == UnexpectedMovementType::TURNED_IN_OPPOSITE_DIRECTION);
     
-    if (kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement)
+    if (kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement && !_heldInPalmModeEnabled)
     {
       // Add obstacle based on when this started and how robot was trying to turn
       // TODO: Broadcast sufficient information to blockworld and do it there?
@@ -461,7 +484,12 @@ void MovementComponent::RemoveEyeShiftWhenHeadMoves(const std::string& name, Tim
   _eyeShiftToRemove[name].duration_ms  = duration_ms;
   _eyeShiftToRemove[name].headWasMoving = _isHeadMoving;
 }
-
+  
+void MovementComponent::EnableHeldInPalmMode(const bool enabled)
+{
+  _heldInPalmModeEnabled = enabled;
+  _unexpectedMovement.EnableHeldInPalmMode(enabled);
+}
 
 template<>
 void MovementComponent::HandleMessage(const ExternalInterface::DriveWheels& msg)
@@ -757,8 +785,16 @@ Result MovementComponent::TurnInPlace(const f32 angle_rad,
                                       bool use_shortest_direction,
                                       MotorActionID* actionID_out)
 {
+  f32 max_speed_capped_radps = max_speed_rad_per_sec;
+  if (_heldInPalmModeEnabled && max_speed_rad_per_sec > kMaxHeldInPalmTurnSpeed_radps) {
+    LOG_INFO("MovementComponent.TurnInPlace.CappingSpeed",
+              "Point-turn with max turn speed of %.1f[rad/s] requested, "
+              "but capping max speed to %.1f [rad/s] instead, HeldInPalmMode enabled.",
+              max_speed_rad_per_sec, kMaxHeldInPalmTurnSpeed_radps);
+    max_speed_capped_radps = kMaxHeldInPalmTurnSpeed_radps;
+  }
   return _robot->SendRobotMessage<RobotInterface::SetBodyAngle>(angle_rad,
-                                                                max_speed_rad_per_sec,
+                                                                max_speed_capped_radps,
                                                                 accel_rad_per_sec2,
                                                                 angle_tolerance,
                                                                 num_half_revolutions,
@@ -954,6 +990,18 @@ void MovementComponent::LockTracks(uint8_t tracks, const std::string& who, const
              debugName.c_str(),
              who.c_str());
     PrintLockState();
+  }
+}
+
+void MovementComponent::RecordTracksLocked(u8 tracks, const std::string& who)
+{
+  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
+  {
+    uint8_t curTrack = (1 << i);
+    if ((tracks & curTrack) == curTrack)
+    {
+      _trackLockCount[i].insert({who, who});
+    }
   }
 }
 
@@ -1177,13 +1225,14 @@ RobotTimeStamp_t MovementComponent::GetLastTimeCameraWasMoving() const
   }
   
 #pragma mark -
-#pragma mark Unexpected Movement 
+#pragma mark Unexpected Movement
 
 const u8 MovementComponent::UnexpectedMovement::kMaxUnexpectedMovementCount = 11;
-  
+CONSOLE_VAR(u8, kMaxUnexpectedMovementCountWhileHeldInPalm, "Robot", 200);
+
 bool MovementComponent::UnexpectedMovement::IsDetected() const
 {
-  return _count >= kMaxUnexpectedMovementCount;
+  return _count >= GetMaxCount();
 }
 
 void MovementComponent::UnexpectedMovement::Increment(u8 countInc, f32 leftSpeed_mmps, f32 rightSpeed_mmps, RobotTimeStamp_t currentTime)
@@ -1193,7 +1242,7 @@ void MovementComponent::UnexpectedMovement::Increment(u8 countInc, f32 leftSpeed
     _startTime = currentTime;
   }
   _count += countInc;
-  _count = std::min(_count, kMaxUnexpectedMovementCount);
+  _count = std::min(_count, GetMaxCount());
   _sumWheelSpeedL_mmps += (f32)countInc * leftSpeed_mmps;
   _sumWheelSpeedR_mmps += (f32)countInc * rightSpeed_mmps;
 }
@@ -1218,6 +1267,11 @@ void MovementComponent::UnexpectedMovement::GetAvgWheelSpeeds(f32& left, f32& ri
 {
   left  = _sumWheelSpeedL_mmps / (f32) _count;
   right = _sumWheelSpeedR_mmps / (f32) _count;
+}
+
+u8 MovementComponent::UnexpectedMovement::GetMaxCount() const
+{
+  return _heldInPalmModeEnabled ? kMaxUnexpectedMovementCountWhileHeldInPalm : kMaxUnexpectedMovementCount;
 }
 
 } // namespace Vector

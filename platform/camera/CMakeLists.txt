@@ -9,8 +9,6 @@ add_library(camera_client STATIC
     vicos/camera_client/camera_client.c
     vicos/camera_client/log.h
     vicos/camera_client/log.c
-    vicos/camera_client/gpio.h
-    vicos/camera_client/gpio.c
 )
 
 target_include_directories(camera_client
@@ -18,6 +16,11 @@ target_include_directories(camera_client
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/..>
   SYSTEM PUBLIC
   $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/vicos/camera_client/inc>
+)
+
+target_link_libraries(camera_client
+  PRIVATE
+  gpio
 )
 
 target_compile_definitions(camera_client

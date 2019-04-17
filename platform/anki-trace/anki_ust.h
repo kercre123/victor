@@ -34,6 +34,13 @@ TRACEPOINT_EVENT(
 
 TRACEPOINT_EVENT(
     anki_ust,
+    vic_robot_robot_loop_period,
+    TP_ARGS(long long, delay),
+    TP_FIELDS(ctf_integer(long long, delay, delay))
+)
+
+TRACEPOINT_EVENT(
+    anki_ust,
     vic_engine_loop_duration,
     TP_ARGS(long long, duration),
     TP_FIELDS(ctf_integer(long long, duration, duration))

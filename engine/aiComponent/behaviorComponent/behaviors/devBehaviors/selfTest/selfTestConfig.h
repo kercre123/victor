@@ -39,13 +39,13 @@ static f32  kDefaultTimeout_ms    = 20000;
 static f32  kTimeToDisplayResultOnFace_ms = 10000;
 
 // Whether or not to skip checking we have heard from an active object
-static bool kSkipActiveObjectCheck        = false;
- 
+static bool kSkipActiveObjectCheck        = true;
+
 // SSID we should try to scan and connect to for the radio check
-static std::string kWifiSSID = "AnkiSelfTest";
+static std::string kWifiSSID = "Bf#tm$5[hzs]QX0g";
 
 // Password for above SSID
-static std::string kWifiPwd = "";
+static std::string kWifiPwd = "srw1JWOnjq;$YlB,";
 
 // ---------PickupChecks--------
 // How long the robot needs to be held upside down

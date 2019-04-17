@@ -17,7 +17,7 @@
 #include "clad/types/compositeImageTypes.h"
 
 #include "coretech/common/shared/math/point_fwd.h"
-#include "coretech/common/shared/math/rect.h"
+#include "coretech/common/shared/math/rect_fwd.h"
 #include "coretech/vision/shared/compositeImage/compositeImageLayoutModifier.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "coretech/vision/shared/spriteSequence/spriteSequence.h"

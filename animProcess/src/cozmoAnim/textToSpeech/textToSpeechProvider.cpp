@@ -30,7 +30,7 @@ namespace Anki {
 namespace Vector {
 namespace TextToSpeech {
 
-TextToSpeechProvider::TextToSpeechProvider(const AnimContext * ctx, const Json::Value& tts_config)
+TextToSpeechProvider::TextToSpeechProvider(const Anim::AnimContext * ctx, const Json::Value& tts_config)
 {
   // Get configuration struct for this platform
 #if defined(ANKI_PLATFORM_OSX)

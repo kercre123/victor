@@ -26,7 +26,7 @@
 
 #include "cannedAnimLib/cannedAnims/animation.h"
 #include "cannedAnimLib/cannedAnims/cannedAnimationContainer.h"
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/shared/compositeImage/compositeImage.h"
@@ -83,24 +83,21 @@ void AnimationComponent::InitDependent(Vector::Robot* robot, const RobotCompMap&
   _movementComponent = dependentComps.GetComponentPtr<MovementComponent>();
   const CozmoContext* context = _robot->GetContext();
   _animationGroups = std::make_unique<AnimationGroupWrapper>(*(context->GetDataLoader()->GetAnimationGroups()));
-  if (context) {
-    // Setup game message handlers
-    IExternalInterface *extInterface = context->GetExternalInterface();
-    if (extInterface != nullptr) {
-      
-      auto helper = MakeAnkiEventUtil(*extInterface, *this, GetSignalHandles());
-  
-      using namespace ExternalInterface;
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableAnimations>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableAnimationGroups>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayProceduralFace>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceHue>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageBinaryChunk>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageRGBChunk>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::SetKeepFaceAliveParameters>();
-      helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
 
-    }
+  // Setup game message handlers
+  IExternalInterface *extInterface = context->GetExternalInterface();
+  if (extInterface != nullptr) {
+    
+    auto helper = MakeAnkiEventUtil(*extInterface, *this, GetSignalHandles());
+
+    using namespace ExternalInterface;
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableAnimations>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::RequestAvailableAnimationGroups>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayProceduralFace>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::SetFaceHue>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageBinaryChunk>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::DisplayFaceImageRGBChunk>();
+    helper.SubscribeGameToEngine<MessageGameToEngineTag::ReadAnimationFile>();
   }
   
   // Setup robot message handlers
@@ -286,7 +283,13 @@ const std::string& AnimationComponent::GetAnimationNameFromGroup(const std::stri
   }
   return empty;
 }
-  
+
+bool AnimationComponent::IsAnimationGroup(const std::string& group) const
+{
+  const bool groupExists = _animationGroups->_container.HasGroup(group);
+  return groupExists;
+}
+
 Result AnimationComponent::PlayAnimByName(const std::string& animName,
                                           int numLoops,
                                           bool interruptRunning,
@@ -385,6 +388,77 @@ Result AnimationComponent::PlayCompositeAnimation(const std::string& animName,
 
   outDuration_ms = anim->GetLastKeyFrameEndTime_ms();
   return DisplayFaceImage(compositeImage, frameInterval_ms, outDuration_ms, interruptRunning, emptySpriteBoxesAreValid);
+}
+
+Result AnimationComponent::PlayAnimWithSpriteBoxRemaps(const std::string& animName,
+                                                       const RemapMap& remaps,
+                                                       bool interruptRunning,
+                                                       AnimationCompleteCallback callback,
+                                                       const std::string& lockFaceAtEndOfAnimTag)
+{
+  if (!_isInitialized) {
+    LOG_WARNING("AnimationComponent.PlayAnimWithSpriteBoxRemaps.Uninitialized", "");
+    return RESULT_FAIL;
+  }
+
+  // Check that animName is valid
+  auto it = _availableAnims.find(animName);
+  if (it == _availableAnims.end()) {
+    LOG_WARNING("AnimationComponent.PlayAnimWithSpriteBoxRemaps.AnimNotFound", "%s", animName.c_str());
+    return RESULT_FAIL;
+  }
+
+  if (IsPlayingAnimation() && !interruptRunning) {
+    LOG_INFO("AnimationComponent.PlayAnimWithSpriteBoxRemaps.WontInterruptCurrentAnim", "");
+    return RESULT_FAIL;
+  }
+
+  const Tag currTag = GetNextTag();
+  const auto& spritePathMap = *_robot->GetContext()->GetDataLoader()->GetSpritePaths();
+
+  RobotInterface::PlayAnimWithSpriteBoxRemaps msg;
+  msg.tag = currTag;
+  msg.animName = animName;
+  msg.numRemaps = remaps.size();
+  msg.lockFaceAtEndOfAnim = !lockFaceAtEndOfAnimTag.empty();
+
+  if(remaps.size() > msg.spriteBoxRemaps.size()){
+    LOG_ERROR("AnimationComponent.PlayAnimWithSpriteBoxRemaps.MessageOverflow",
+              "Attempted to send %zu remaps, message can only carry %zu",
+              remaps.size(),
+              msg.spriteBoxRemaps.size());
+    return RESULT_FAIL;
+  }
+
+  int i = 0;
+  for(const auto& remap : remaps){
+    msg.spriteBoxRemaps[i].spriteBoxName = remap.first;
+    if(!ANKI_VERIFY(spritePathMap.IsValidAssetName(remap.second),
+                    "AnimationComponent.PlayAnimWithSpriteBoxRemaps.InvalidAsset", 
+                    "Attempted to remap SpriteBox %s with invalid asset name %s",
+                    Vision::SpriteBoxNameToString(remap.first),
+                    remap.second.c_str()) ){
+      return RESULT_FAIL;
+    }
+    msg.spriteBoxRemaps[i].remappedAssetID = spritePathMap.GetAssetID(remap.second);
+    ++i;
+  }
+
+  if(callback != nullptr){
+    SetAnimationCallback(animName, callback, currTag, 0, 0, 0);
+  }
+
+  if(!lockFaceAtEndOfAnimTag.empty()){
+    auto lockTrackCallback = 
+      [this, lockFaceAtEndOfAnimTag](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded){
+        if(res == AnimResult::Completed){
+          _movementComponent->RecordTracksLocked((u8)AnimTrackFlag::FACE_TRACK, lockFaceAtEndOfAnimTag);
+        }
+      };
+    SetAnimationCallback(animName, lockTrackCallback, currTag, 0, 0, 0);
+  }
+
+  return _robot->SendRobotMessage<RobotInterface::PlayAnimWithSpriteBoxRemaps>(msg);
 }
 
   
@@ -722,21 +796,6 @@ Result AnimationComponent::SendEnableKeepFaceAlive(bool enable, u32 disableTimeo
   return res;
 }
 
-Result AnimationComponent::SetDefaultKeepFaceAliveParameters() const
-{
-  return _robot->SendRobotMessage<RobotInterface::SetDefaultKeepFaceAliveParameters>();
-}
-
-Result AnimationComponent::SetKeepFaceAliveParameter(KeepFaceAliveParameter param, f32 value) const
-{
-  return _robot->SendRobotMessage<RobotInterface::SetKeepFaceAliveParameter>(value, param, false);
-}
-  
-Result AnimationComponent::SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter param) const
-{
-  return _robot->SendRobotMessage<RobotInterface::SetKeepFaceAliveParameter>(0.f, param, true);
-}
-
 Result AnimationComponent::AddOrUpdateEyeShift(const std::string& name, 
                                                f32 xPix,
                                                f32 yPix,
@@ -908,21 +967,6 @@ void AnimationComponent::HandleMessage(const ExternalInterface::DisplayFaceImage
 }
 
 template<>
-void AnimationComponent::HandleMessage(const ExternalInterface::SetKeepFaceAliveParameters& msg)
-{
-  if (msg.setUnspecifiedToDefault) {
-    SetDefaultKeepFaceAliveParameters();
-  }
-  
-  if(ANKI_VERIFY(msg.paramNames.size() == msg.paramValues.size(), "AnimationComponent.HandleSetKeepFaceAliveParameters.NameValuePairMismatch", ""))
-  {
-    for (int i=0; i<msg.paramNames.size(); ++i) {
-      SetKeepFaceAliveParameter( msg.paramNames.at(i), msg.paramValues.at(i) );
-    }
-  }
-}
-
-template<>
 void AnimationComponent::HandleMessage(const ExternalInterface::ReadAnimationFile& msg)
 {
   _robot->SendRobotMessage<RobotInterface::AddAnim>(msg.full_path);
@@ -1042,8 +1086,7 @@ void AnimationComponent::AddKeepFaceAliveFocus(const std::string& name)
 {
   if (_focusRequests.empty())
   {
-    SetKeepFaceAliveParameter(KeepFaceAliveParameter::EyeDartMaxDistance_pix,
-                              kEyeDartFocusValue_pix);
+    _robot->SendRobotMessage<RobotInterface::SetKeepFaceAliveFocus>(true);
   }
   _focusRequests.insert(name);
 }
@@ -1053,7 +1096,7 @@ void AnimationComponent::RemoveKeepFaceAliveFocus(const std::string& name)
   _focusRequests.erase(name);
   if (_focusRequests.empty())
   {
-    SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter::EyeDartMaxDistance_pix); 
+    _robot->SendRobotMessage<RobotInterface::SetKeepFaceAliveFocus>(false);
   }
 }
 

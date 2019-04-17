@@ -10,6 +10,12 @@ type Errors struct {
 	err multierror
 }
 
+func NewErrors(errs ...error) *Errors {
+	ret := &Errors{}
+	ret.AppendMulti(errs...)
+	return ret
+}
+
 func (e *Errors) Append(err error) {
 	if err == nil {
 		return

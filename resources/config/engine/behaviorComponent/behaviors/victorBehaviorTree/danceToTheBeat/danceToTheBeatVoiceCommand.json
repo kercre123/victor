@@ -3,6 +3,11 @@
   "behaviorID": "DanceToTheBeatVoiceCommand",
   
   "associatedActiveFeature" : "ListeningForBeats",
+  
+  "wantsToBeActivatedCondition": {
+    "conditionType": "OffTreadsState",
+    "targetState": "OnTreads"
+  },
 
   "respondToUserIntents" : [
     { "type": "imperative_dance" }
@@ -12,5 +17,13 @@
     "DriveOffChargerStraight",
     "ListenForBeatsVoiceCommand",
     "DanceToTheBeat"
-  ]
+  ],
+  
+  "wantsToCancelSelfCondition": {
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "OffTreadsState",
+      "targetState": "OnTreads"
+    }
+  }
 }

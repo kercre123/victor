@@ -17,7 +17,6 @@
 
 #include "cozmoAnim/animation/trackLayerManagers/iTrackLayerManager.h"
 #include "cannedAnimLib/proceduralFace/proceduralFaceModifierTypes.h"
-#include "clad/types/keepFaceAliveParameters.h"
 #include <map>
 #include <string>
 
@@ -28,6 +27,7 @@ namespace Vector {
 // Forward declaration
 class ProceduralFace;
 
+namespace Anim {
 class FaceLayerManager : public ITrackLayerManager<ProceduralFaceKeyFrame>
 {
 public:
@@ -54,9 +54,10 @@ public:
                         TimeStamp_t duration_ms,
                         ProceduralFaceKeyFrame& frame) const;
   
-  // Generates a single keyframe with shifted eyes according to the passed in params
-  void GenerateEyeShift(const std::map<KeepFaceAliveParameter,f32>& params,
-                        ProceduralFaceKeyFrame& frame) const;
+  // Generates short, persistent eye dart track
+  void GenerateKeepAliveEyeDart(const std::string& layerName, bool hasDartLayer,
+                                const f32 maxDist_pix,
+                                const TimeStamp_t timeSinceKeepAliveStart_ms);
   
   // Generates a track of all keyframes necessary to make the eyes blink
   void GenerateBlink(Animations::Track<ProceduralFaceKeyFrame>& track,
@@ -71,17 +72,18 @@ public:
                              BlinkEventList& out_eventList);
   
   // Get the next eye blink time
-  s32 GetNextBlinkTime_ms(const std::map<KeepFaceAliveParameter, f32>& params) const;
+  s32 GetNextBlinkTime_ms() const;
   
   // Generate eye dart
   // Set eye dart interpolationTime_ms for other layers to sync with
+  // When isFocused=true, eye darts will be much smaller in order to keep the eyes moving but still looking forward
   Result AddEyeDartToFaceTrack(const std::string& layerName,
-                               const std::map<KeepFaceAliveParameter,f32>& params,
+                               const bool isFocused,
                                const TimeStamp_t timeSinceKeepAliveStart_ms,
                                TimeStamp_t& out_interpolationTime_ms);
   
   // Get the next eye dart time
-  s32 GetNextEyeDartTime_ms(const std::map<KeepFaceAliveParameter, f32>& params) const;
+  s32 GetNextEyeDartTime_ms() const;
   
   // Add "alive" frames to Face Track
   void AddKeepFaceAliveTrack(const std::string& layerName);
@@ -99,8 +101,13 @@ public:
   
   u32 GetMaxBlinkSpacingTimeForScreenProtection_ms() const;
   
+private:
+  
+  Point2f _lastDartPosition;
+  
 };
 
+} // namespace Anim
 } // namespace Vector
 } // namespace Anki
 

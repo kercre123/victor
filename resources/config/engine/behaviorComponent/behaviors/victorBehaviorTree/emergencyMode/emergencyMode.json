@@ -15,6 +15,9 @@
         },
         {
           "conditionType" : "HighTemperature"
+        },
+        {
+          "conditionType" : "TooHotToCharge"
         }
       ]
     },

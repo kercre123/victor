@@ -43,7 +43,7 @@ namespace TextToSpeech {
 class TextToSpeechProviderImpl
 {
 public:
-  TextToSpeechProviderImpl(const AnimContext* context, const Json::Value& tts_platform_config);
+  TextToSpeechProviderImpl(const Anim::AnimContext* context, const Json::Value& tts_platform_config);
   ~TextToSpeechProviderImpl();
 
   Result SetLocale(const std::string & locale);

@@ -12,12 +12,9 @@ import subprocess
 import dependencies
 import sys
 import os
-import requests
-from requests.auth import HTTPBasicAuth
 
 
 DEFAULT_REPO = "anki/cozmo-one"
-
 
 def get_branch_name(auth_token, pull_request_number, repo_name="anki/cozmo-one"):
     """
@@ -111,113 +108,73 @@ def pull_request_merge_info(auth_token, pull_request_number, retries=5, verbose=
 
     return results
 
+def post_ci_bot_comment(auth_token, pull_request_number, mrkdwn_comment, repo_name="anki/victor"):
+    """
+    Returns a :class:`github.CommitComment.CommitComment`
 
-class GitRefCollect(object):
-    def __init__(self):
-        try:
-            self.auth_token = os.environ['ANKI_AUTH_TOKEN']
-        except KeyError:
-            sys.exit("Please set the environment variable [ANKI_AUTH_TOKEN]")
+    :param auth_token: string
+    :param pull_request_number: int
+    :param mrkdwn_comment: string
+    :param repo_name: string
+    :return: :class:`github.CommitComment.CommitComment`
+    """
+    try:
+        gh = Github(auth_token)
+        head_commit = get_pr_head_commit(auth_token, pull_request_number, repo_name)
+        rendered_markdown_comment = gh.render_markdown(mrkdwn_comment)
+        comment = head_commit.create_comment(rendered_markdown_comment)
+        return comment
+        
+    except GithubException as e:
+        print("Exception thrown because of {0}".format(e))
+        sys.exit("GITHUB ERROR: {0}".format(e.data['message']))
 
-        self.repos = ["cozmo-one", "victor"]  # can be changed to include more repos
-        self.tags_list = ["no-release/final-1.5.1", "release-1.0.0",
-                          "release/candidate-1.1.0.156", "release/candidate-1.1.0.157",
-                          "release/final-1.1.0", "release/final-1.1.1",
-                          "release/final-1.3.0", "release/final-1.4.0",
-                          "release/final-1.4.1", "release/final-1.5.0",
-                          "release/final-1.6.0-android", "release/final-1.6.0",
-                          "release/final-1.7.1", "release/final-2.0.0",
-                          "release/final-2.0.1", "release/final-2.0.2",
-                          "release/final-2.0.3", "release/final-2.0.4",
-                          "release/final-2.1.0", "release/final-2.2.0",
-                          "release/final-2.3.0", "release/final-2.3.1",
-                          "release/final-2.4.0", "release/final-2.5.0",
-                          "release/final-2.6.0", "release/final-2.6.1",
-                          "release/final-2.7.0", "release/final-2.8.0",
-                          "release/final-2.9.0", "release/patch-it-1.0.1.115",
-                          "release/patch-it-1.0.2.136", "release/patch-it-1.0.3.140",
-                          "release/ship-it-merge-01", "release/ship-it-origin"]
+def get_pr_head_commit(auth_token, pull_request_number, repo_name="anki/victor"):
+    """
+    Returns a :class:`github.CommitComment.CommitComment`
 
-    def collect_old_branches(self, repo_name):
-        """
-        Returns a dictionary of branches with pr number as key, and branch name as value
-        This does the same logic as above get_branch_name, but without the need for the PR number as a param
-        :return: Dictionary
-        """
-        try:
-            pull_requests = requests.get(
-                "https://api.github.com/repos/anki/{0}/pulls?state=closed&base=master".format(repo_name),
-                auth=HTTPBasicAuth("ankibuildserver", gitrefobj.auth_token)).json()
-            git_reference = requests.get("https://api.github.com/repos/anki/{0}/git/refs/heads".format(repo_name),
-                                         auth=HTTPBasicAuth("ankibuildserver", gitrefobj.auth_token)).json()
-            del_branches = {}
-            refs_dict = {}
-            for pull_request in pull_requests:
-                pr_num = pull_request['number']
-                pr_branch_ref = "refs/heads/%s" % pull_request['head']['ref']
-                pr_merged_data = requests.get(
-                    "https://api.github.com/repos/anki/{0}/pulls/{1}".format(repo_name, pr_num),
-                    auth=HTTPBasicAuth("ankibuildserver", gitrefobj.auth_token)).json()
-                pr_is_merged = pr_merged_data['merged']  # boolean
-                if pr_is_merged is True:
-                    del_branches[pr_branch_ref] = pr_num
-            for reference in git_reference:
-                ref_name = reference['ref']
-                for item_name, item_num in del_branches.items():
-                    if ref_name == item_name:
-                        refs_dict[ref_name] = item_num
-            return refs_dict
-        except Exception as e:
-            sys.exit("GITHUB ERROR: {0}".format(e))
-
-    def collect_old_tags(self, tag_list, repo_name='victor'):
-        """
-        Returns a dictionary of branches with pr number as key, and branch name as value
-        This does the same logic as above get_branch_name, but without the need for the PR number as a param
-        :return: Dictionary
-        """
-        try:
-            git_reference = requests.get("https://api.github.com/repos/anki/{0}/git/refs/tags".format(repo_name),
-                                         auth=HTTPBasicAuth("ankibuildserver", gitrefobj.auth_token)).json()
-            tags_to_delete = ["{0}/{1}".format("refs/tags", tag_name) for tag_name in tag_list]
-            tags_ref_list = []
-            for reference in git_reference:
-                ref_tag_name = reference['ref']
-                for item_name in tags_to_delete:
-                    if ref_tag_name == item_name:
-                        tags_ref_list.append(ref_tag_name)
-            return tags_ref_list
-        except Exception as e:
-            sys.exit("GITHUB ERROR: {0}".format(e))
-
-    def delete_tag(self, repo_name, tag_ref_name):
-        return requests.delete("https://api.github.com/repos/anki/{0}/git/{1}".format(repo_name, tag_ref_name),
-                               auth=HTTPBasicAuth("ankibuildserver", gitrefobj.auth_token))
-
-    def delete_branch(self, repo_name, branch_ref):
-        return requests.delete("https://api.github.com/repos/anki/{0}/git/{1}".format(repo_name, branch_ref),
-                               auth=HTTPBasicAuth("ankibuildserver", gitrefobj.auth_token))
+    :param auth_token: string
+    :param pull_request_number: int
+    :param mrkdwn_comment: string
+    :param repo_name: string
+    :return: :class:`github.Commit.Commit`
+    """
+    try:
+        gh = Github(auth_token)
+        repo = gh.get_repo(repo_name)
+        pull = repo.get_pull(pull_request_number)
+        head_commit_sha = repo.get_commit(pull.head.sha)
+        return head_commit_sha
+        
+    except GithubException as e:
+        print("Exception thrown because of {0}".format(e))
+        sys.exit("GITHUB ERROR: {0}".format(e.data['message']))
 
 
-if __name__ == '__main__':
-    dry_run = '--confirm' not in sys.argv
-    gitrefobj = GitRefCollect()
-    for repo in gitrefobj.repos:
-        if dry_run:
-            print("Performing Dry-run. Currently checking <{0}> repo for closed, merged but not deleted branches.\n{1}."
-                  .format(repo, gitrefobj.collect_old_branches(repo)))
-            if '--tags' in sys.argv:
-                print("Currently checking <{0}> repo.\nFound old tags: {1}."
-                      .format(repo, gitrefobj.collect_old_tags(gitrefobj.tags_list, repo)))
-        else:
-            print("Currently checking <{0}> repo for closed, merged but not deleted branches.".format(repo))
-            for branch in gitrefobj.collect_old_branches(repo):
-                print(gitrefobj.delete_branch(repo, branch))
-            print("Currently checking <{0}> repo. Deleting old tags: {1}"
-                  .format(repo, gitrefobj.collect_old_tags(gitrefobj.tags_list, repo)))
-            for tag in gitrefobj.collect_old_tags(gitrefobj.tags_list, repo):
-                print(gitrefobj.delete_tag(repo, tag))
-    if dry_run:
-        print('*****************************************************************')
-        print('Did not actually delete anything yet, pass in --confirm to delete')
-        print('*****************************************************************')
+def post_pending_commit_status(auth_token, pull_request_number, build_url, 
+    build_ctx, description_msg, repo_name="anki/victor"):
+    """
+    Returns a :class:`github.CommitComment.CommitComment`
+
+    :param auth_token: string
+    :param pull_request_number: int
+    :param build_url: string
+    :param build_ctx: string
+    :param description_msg: string
+    :param repo_name: string
+    :return: :class:`github.CommitStatus.CommitStatus`
+    """
+    try:
+        head_commit = get_pr_head_commit(auth_token, pull_request_number)
+        status = head_commit.create_status(
+            state="pending",
+            target_url=build_url,
+            description=description_msg,
+            context=build_ctx,
+        )
+        return status
+        
+    except GithubException as e:
+        print("Exception thrown because of {0}".format(e))
+        sys.exit("GITHUB ERROR: {0}".format(e.data['message']))
+    

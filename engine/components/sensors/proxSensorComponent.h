@@ -27,19 +27,12 @@ namespace Vector {
 // Storage for processed prox sensor reading with useful metadata
 struct ProxSensorData
 {
-  // Convenience function to see if all validity conditions are met
-  bool IsValid() const { 
-    return isInValidRange && isValidSignalQuality && !isLiftInFOV && !isTooPitched && hasValidRangeStatus;
-  }
-
   u16  distance_mm;
   f32  signalQuality;
 
-  bool isInValidRange;        // Distance is within valid range
-  bool isValidSignalQuality;  // Signal quality is sufficiently strong to trust that something was detected
+  bool unobstructed;          // The sensor has not detected anything up to its max range
+  bool foundObject;           // The sensor detected an object in the valid operating range
   bool isLiftInFOV;           // Lift (or object on lift) is occluding the sensor
-  bool isTooPitched;          // Robot is too far pitched up or down
-  bool hasValidRangeStatus;   // RangeStatus reported internally by sensor is valid
 };
 
 
@@ -61,91 +54,41 @@ public:
   // end IDependencyManagedComponent functions
   //////
 
+  // check its return value rather than calling this method.
+  const ProxSensorData& GetLatestProxData() const { return _latestData; }
+  
+  // enable or disable this entire component's ability to update the nav map
+  void SetNavMapUpdateEnabled(bool enabled) { _mapEnabled = enabled; }
+  
+  // loads raw prox sensor data to a string for different logging systems
+  std::string GetDebugString(const std::string& delimeter = "\n");
+
+  // checks if the history to test if sensor is potentially picking up readings
+  // from the lift, and recalibrates the lift motors if so. Returns true
+  // if motors are being calibrated
+  bool VerifyLiftCalibration() const;
+
 protected:
   virtual void NotifyOfRobotStateInternal(const RobotState& msg) override;
   
   virtual std::string GetLogHeader() override;
-  virtual std::string GetLogRow() override;
+  virtual std::string GetLogRow() override { return GetDebugString(", "); }
   
-public:
-  // Populates distance_mm with the latest distance value.
-  // Returns true if the sensor reading is considered valid (see UpdateReadingValidity()). 
-  // Returns false if not valid.
-  bool GetLatestDistance_mm(u16& distance_mm) const;
-  
-  // Returns true if the latest distance sensor reading is valid,
-  // same as what GetLatestDistance_mm() would return only you don't get distance also.
-  bool IsLatestReadingValid() const { return _latestData.IsValid(); }
-  
-  // Note: If you just need distance data, prefer to use GetLatestDistance_mm() and
-  // check its return value rather than calling this method.
-  const ProxSensorDataRaw& GetLatestProxDataRaw() const { return _latestDataRaw; }
-
-  const ProxSensorData& GetLatestProxData() const { return _latestData; }
-  
-  // Returns true if the latest sensor reading was of sufficiently
-  // high signal strength as to be trusted that something was 
-  // actually detected. Distance may not be accurate, but it
-  // should be in the ballpark.
-  bool IsValidSignalQuality() const { return _latestData.isValidSignalQuality; }
-
-  // Returns the current pose of the prox sensor w.r.t. robot. Computed on-the-fly
-  // since it depends on the robot's pose.
-  Pose3d GetPose() const;
-  
-  // Outputs true if the given pose falls within the sensor's field of view
-  Result IsInFOV(const Pose3d&, bool& isInFOV) const;
-  
-  // Returns true if any part of the lift (or object that it's carrying)
-  // falls within the sensor's field of view
-  bool IsLiftInFOV() const { return _latestData.isLiftInFOV; }
-
-  // Returns true if the robot is too pitched for the reading to be considered valid
-  bool IsTooPitched() const {return _latestData.isTooPitched; }
-
-  // calculate the pose directly in front of the robot where the prox sensor is indicating an object
-  // returns false if sensor reading isn't valid
-  bool CalculateSensedObjectPose(Pose3d& sensedObjectPose) const;
-
-  // enable or disable this entire component's ability to update the nav map
-  void SetNavMapUpdateEnabled(bool enabled) { _enabled = enabled; }
 
 private:
 
-  void UpdateNavMap();
+  // Pushes processed prox data into the NavMap
+  void UpdateNavMap(uint32_t timestamp);
   
-  // Updates the flags indicating whether or not the 
-  // latest sensor reading is valid. 
-  //   1) Is within a reliable obstacle detection range
-  //   2) Is not being obstructed by the lift
-  //   3) Has a reasonable signal quality
-  void UpdateReadingValidity();
+  // Checks if the lift is currently blocking any sensor regions
+  bool CheckLiftOcclusion();
   
-  // Returns a unitless metric of "signal quality", which is computed as the
-  // signal intensity (which is the total signal intensity of the reading)
-  // divided by the number of active SPADs (which are the actual imaging sensors)
-  static float GetSignalQuality(const ProxSensorDataRaw& proxData) {
-    return proxData.signalIntensity / proxData.spadCount;
-  }
-  
-  ProxSensorDataRaw _latestDataRaw;
-  ProxSensorData    _latestData;
-  Pose3d            _previousRobotPose;
-  float             _previousMeasurement;
-  u8                _measurementsAtPose;
-
-  // The timestamp of the RobotState message with the
-  // latest distance sensor data
-  uint32_t _lastMsgTimestamp = 0;
-
-  // The pose frame ID of the RobotState message with the
-  // latest distance sensor data
-  uint32_t _lastMsgPoseFrameID = 0;
-
-  uint32_t _numTicsLiftOutOfFOV = 0;
-
-  // Whether or not navmap updates are enabled
-  bool _enabled = true;
+  ProxSensorDataRaw _latestDataRaw;           // raw data sent from robot process - should only be used for debugging purposes
+  ProxSensorData    _latestData;              // processed data that has additional cleanup and state
+  Pose3d            _currentRobotPose;        // robot pose at current sensor reading
+  uint32_t          _measurementsAtPose = 0;  // counter to limit number of map updates while not moving
+  uint32_t          _numTicsLiftOutOfFOV = 0; // counter for lift FOV checks to account for sensor delay
+  bool              _mapEnabled = true;       // disable map updates entirely (currently for low-power mode)
   
 };
 

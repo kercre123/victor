@@ -102,12 +102,31 @@
           "y": 0.4
         }
       ]
+    },
+    {
+      "emotionType": "Trust",
+      "graphType": "ValueSlope",
+      // x here is the emotion value
+      // y is the amount it decays (towards zero) per _minute_ as a fixed amount (not a ratio)
+      // The default here is 0 to impose no additional decay based on value
+      // Decay will never cross the value to "cross" 0
+      "nodes": [
+        {
+          "x": 0,
+          "y": 0.0
+        }
+      ]
     }
   ],
 
   "valueRanges": [
     {
       "emotionType": "Stimulated",
+      "min": 0.0,
+      "max": 1.0
+    },
+    {
+      "emotionType": "Trust",
       "min": 0.0,
       "max": 1.0
     }
@@ -121,7 +140,8 @@
     // "Happy": "Robot_Vic_Happy",
     // "Confident": "Robot_Vic_Confident",
     // "Social": "Robot_Vic_Social",
-    "Stimulated": "Robot_Vic_Stimulation"
+    "Stimulated": "Robot_Vic_Stimulation",
+    "Trust": "Robot_Vic_Held_Trust"
   },
 
   // If desired, we can uncomment this (and remove the above) to send values based on simple mood instead of

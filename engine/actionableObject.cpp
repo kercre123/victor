@@ -15,7 +15,7 @@
 
 #include "engine/actionableObject.h"
 
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/quad.h"
  
 #include "util/math/math.h"
 

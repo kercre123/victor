@@ -96,7 +96,7 @@ bool BehaviorPutDownBlockAtPose::WantsToBeActivatedBehavior() const
 void BehaviorPutDownBlockAtPose::GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const
 {
   modifiers.wantsToBeActivatedWhenCarryingObject = true;
-  modifiers.visionModesForActiveScope->insert({ VisionMode::DetectingMarkers, EVisionUpdateFrequency::High });
+  modifiers.visionModesForActiveScope->insert({ VisionMode::Markers, EVisionUpdateFrequency::High });
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -200,7 +200,7 @@ IActionRunner* BehaviorPutDownBlockAtPose::CreateLookAfterPlaceAction()
                                 new DriveStraightAction(kBackupVerifyDist_mm)});
 
   action->AddAction(parallel);
-  action->AddAction(new WaitForImagesAction(kBackupVerifyNumFrames, VisionMode::DetectingMarkers));
+  action->AddAction(new WaitForImagesAction(kBackupVerifyNumFrames, VisionMode::Markers));
 
   return action;
 }

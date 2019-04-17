@@ -16,8 +16,10 @@
 #include "cubeBleClient/cubeBleClient.h" // alias BleFactoryId (should be moved to CLAD)
 
 #include "engine/cozmoObservableObject.h" // alias ActiveID
+#include "engine/robotComponents_fwd.h"
 
 #include "util/entityComponent/entity.h"
+#include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/simpleSignal_fwd.h" // Signal::SmartHandle
 

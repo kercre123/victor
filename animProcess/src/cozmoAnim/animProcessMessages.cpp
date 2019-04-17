@@ -74,12 +74,12 @@ namespace {
   constexpr int MAX_PACKET_BUFFER_SIZE = 2048;
   u8 pktBuffer_[MAX_PACKET_BUFFER_SIZE];
 
-  Anki::Vector::AnimEngine*                   _animEngine = nullptr;
-  Anki::Vector::AnimationStreamer*            _animStreamer = nullptr;
-  Anki::Vector::StreamingAnimationModifier*   _streamingAnimationModifier = nullptr;
+  Anki::Vector::Anim::AnimEngine*             _animEngine = nullptr;
+  Anki::Vector::Anim::AnimationStreamer*            _animStreamer = nullptr;
+  Anki::Vector::Anim::StreamingAnimationModifier*   _streamingAnimationModifier = nullptr;
   Anki::Vector::Audio::EngineRobotAudioInput* _engAudioInput = nullptr;
   Anki::Vector::Audio::ProceduralAudioClient* _proceduralAudioClient = nullptr;
-  const Anki::Vector::AnimContext*            _context = nullptr;
+  const Anki::Vector::Anim::AnimContext*      _context = nullptr;
 
   bool _connectionFlowInited = false;
 
@@ -94,7 +94,7 @@ namespace {
 
   // Whether or not we have already told the boot anim to stop
   bool _bootAnimStopped = false;
-  
+
 #if REMOTE_CONSOLE_ENABLED
   Anki::Util::Dispatch::Queue* _dispatchQueue = nullptr;
 
@@ -300,24 +300,19 @@ void Process_playCompositeAnimation(const Anki::Vector::RobotInterface::PlayComp
   _animStreamer->Process_playCompositeAnimation(animName, msg.tag);
 }
 
+void Process_playAnimWithSpriteBoxRemaps(const Anki::Vector::RobotInterface::PlayAnimWithSpriteBoxRemaps& msg)
+{
+  _animStreamer->Process_playAnimWithSpriteBoxRemaps(msg);
+}
 
 void Process_enableKeepFaceAlive(const Anki::Vector::RobotInterface::EnableKeepFaceAlive& msg)
 {
   _animStreamer->EnableKeepFaceAlive(msg.enable, msg.disableTimeout_ms);
 }
 
-void Process_setDefaultKeepFaceAliveParameters(const Anki::Vector::RobotInterface::SetDefaultKeepFaceAliveParameters& msg)
+void Process_setKeepFaceAliveFocus(const Anki::Vector::RobotInterface::SetKeepFaceAliveFocus& msg)
 {
-  _animStreamer->SetDefaultKeepFaceAliveParams();
-}
-
-void Process_setKeepFaceAliveParameter(const Anki::Vector::RobotInterface::SetKeepFaceAliveParameter& msg)
-{
-  if (msg.setToDefault) {
-    _animStreamer->SetParamToDefault(msg.param);
-  } else {
-    _animStreamer->SetParam(msg.param, msg.value);
-  }
+  _animStreamer->SetKeepFaceAliveFocus(msg.enable);
 }
 
 void Process_addOrUpdateEyeShift(const Anki::Vector::RobotInterface::AddOrUpdateEyeShift& msg)
@@ -440,7 +435,7 @@ void Process_setTriggerWordResponse(const Anki::Vector::RobotInterface::SetTrigg
 
   showStreamStateManager->SetTriggerWordResponse(msg);
 }
-  
+
 void Process_setAlexaUXResponses(const Anki::Vector::RobotInterface::SetAlexaUXResponses& msg)
 {
   auto* showStreamStateManager = _context->GetShowAudioStreamStateManager();
@@ -464,7 +459,7 @@ void Process_setAlexaUsage(const Anki::Vector::RobotInterface::SetAlexaUsage& ms
     alexa->SetAlexaUsage( msg.optedIn );
   }
 }
-  
+
 void Process_setButtonWakeWord(const Anki::Vector::RobotInterface::SetButtonWakeWord& msg)
 {
   auto* micDataSystem = _context->GetMicDataSystem();
@@ -521,6 +516,26 @@ void Process_runDebugConsoleFuncMessage(const Anki::Vector::RobotInterface::RunD
   }
 }
 
+void Process_externalAudioChunk(const RobotInterface::ExternalAudioChunk& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
+void Process_externalAudioPrepare(const RobotInterface::ExternalAudioPrepare& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
+void Process_externalAudioComplete(const RobotInterface::ExternalAudioComplete& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
+void Process_externalAudioCancel(const RobotInterface::ExternalAudioCancel& msg)
+{
+  _animEngine->HandleMessage(msg);
+}
+
 void Process_textToSpeechPrepare(const RobotInterface::TextToSpeechPrepare& msg)
 {
   _animEngine->HandleMessage(msg);
@@ -563,6 +578,11 @@ void Process_setBLEPin(const Anki::Vector::SwitchboardInterface::SetBLEPin& msg)
   SetBLEPin(msg.pin);
 }
 
+void Process_rangeDataToDisplay(const Anki::Vector::RobotInterface::RangeDataToDisplay& msg)
+{
+  FaceInfoScreenManager::getInstance()->DrawToF(msg.data);
+}
+
 void Process_sendBLEConnectionStatus(const Anki::Vector::SwitchboardInterface::SendBLEConnectionStatus& msg)
 {
   // todo
@@ -584,7 +604,7 @@ void Process_batteryStatus(const RobotInterface::BatteryStatus& msg)
   _context->GetBackpackLightComponent()->UpdateBatteryStatus(msg);
   _context->GetMicDataSystem()->SetBatteryLowStatus(msg.isLow);
 }
-  
+
 void Process_acousticTestEnabled(const Anki::Vector::RobotInterface::AcousticTestEnabled& msg)
 {
   bool enabled = msg.enabled;
@@ -769,7 +789,12 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
       {
         alexa->SetOnCharger( onChargerContacts );
       }
-      
+
+    }
+    break;
+    case RobotInterface::RobotToEngine::Tag_stillAlive:
+    {
+      _pendingRobotDisconnectTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kNoRobotStateDisconnectTimeout_sec;
     }
     break;
     case RobotInterface::RobotToEngine::Tag_robotStopped:
@@ -801,11 +826,11 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
 // ========== START OF CLASS METHODS ==========
 // #pragma mark "Class methods"
 
-Result AnimProcessMessages::Init(AnimEngine* animEngine,
-                                 AnimationStreamer* animStreamer,
-                                 StreamingAnimationModifier* streamingAnimationModifier,
+Result AnimProcessMessages::Init(Anim::AnimEngine* animEngine,
+                                 Anim::AnimationStreamer* animStreamer,
+                                 Anim::StreamingAnimationModifier* streamingAnimationModifier,
                                  Audio::EngineRobotAudioInput* audioInput,
-                                 const AnimContext* context)
+                                 const Anim::AnimContext* context)
 {
   // Preconditions
   DEV_ASSERT(nullptr != animEngine, "AnimProcessMessages.Init.InvalidAnimEngine");

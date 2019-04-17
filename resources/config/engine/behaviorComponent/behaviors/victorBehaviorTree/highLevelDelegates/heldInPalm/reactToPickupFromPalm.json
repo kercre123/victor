@@ -1,36 +1,70 @@
 {
   "behaviorID": "ReactToPickupFromPalm",
-  "behaviorClass" : "AnimGetInLoop",
+  "behaviorClass" : "DispatcherStrictPriority",
   
-  // TODO(GB): Change to corresponding held-on-palm pickup anim
-  "getIn"            : "HeldOnPalmPickupRelaxed",
-  // Maybe make some animation that keeps asking the user to put them
-  // back in the palm of their hand
-  "loopAnimation"    : "NeutralFace",
-  "getOut"           : "ReactToPutDown",
-  "loopEndCondition" : {
-    // If the robot is put down on its treads prior to any of the cancellation
-    // conditions below, play the get-out anim and then cancel the entire behavior
-    // to allow the ReactToPutDownFromPalm to be activated by the HeldInPalmDispatcher
-    "conditionType": "OffTreadsState",
-    "targetState": "OnTreads"
-  },
+  "interruptActiveBehavior": true,
+  "actAsSelector": true,
   
-  "shouldCheckEndCondDuringAnim": true,
-  "lockTreads"       : false,
+  "behaviors": [
+    "RelaxedReactToPickupFromPalmInternal",
+    "NervousReactToPickupFromPalmInternal"
+  ],
+  
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "RelaxedReactToPickupFromPalmInternal",
+      "behaviorClass" : "AnimGetInLoop",
+      
+      "getIn"            : "HeldOnPalmPickupRelaxed",
+      "loopAnimation"    : "NeutralFace",
+      "getOut"           : "NeutralFace",
+      
+      "shouldCheckEndCondDuringAnim": false,
+      "lockTreads"       : false,
+      
+      "wantsToBeActivatedCondition": {
+        "conditionType": "Emotion",
+        "emotion": "Trust",
+        "min": 0.5
+      }
+    },
+    {
+      "behaviorName": "NervousReactToPickupFromPalmInternal",
+      "behaviorClass" : "AnimGetInLoop",
+      
+      "getIn"            : "HeldOnPalmPickupNervous",
+      "loopAnimation"    : "NeutralFace",
+      "getOut"           : "NeutralFace",
+      
+      "shouldCheckEndCondDuringAnim": false,
+      // NOTE(GB): Tread motion is too aggressive with current animation,
+      // can cause robot to not detect OnTreads even when not put down on
+      // the ground again, which can cause a whole host of issues, so lock
+      // the treads for now until animation is revised.
+      "lockTreads"       : true
+    }
+  ],
   
   "wantsToBeActivatedCondition": {
     "conditionType": "Compound",
     "and": [
       {
+        // The get-in animation makes the robot initially look "down" at the ground,
+        // so this behavior should only activate when the robot is upright in the air.
+        // If the robot is tilted when it tries to activate this behavior, the
+        // HeldInPalmDispatcher will just cancel itself and control will be delegated
+        // back to the WhileInAirDispatcher.
+        //
+        // Or if for some reason, the robot is able to transition back to OnTreads
+        // (not on the charger, however) prior to activating this, we shouldn't activate
+        // this behavior, to allow the HeldInPalmDispatcher to delegate to
+        // ReactToPutDownFromPalm immediately instead.
         "conditionType": "OffTreadsState",
         "targetState": "InAir"
       },
       {
-        // A pick-up from the palm of the user is triggered only if at least 2
-        // of the robot's cliff sensors peak over the edge of the palm.
-        "conditionType": "CliffDetected",
-        "numCliffDetectionsToTrigger": 2
+        "conditionType": "RobotHeldInPalm",
+        "shouldBeHeldInPalm": false
       }
     ]
   },
@@ -40,22 +74,24 @@
     "or": [
       {
         // If the user just keeps holding the robot in the air, stop the animation
-        // loop without playing the get-out animation and let the HeldInPalmDispatcher
-        // cancel itself, which in turn will allow the WhileInAirDispatcher to
-        // re-activate and start playing the InAir animations again.
+        // loop and let the HeldInPalmDispatcher cancel itself, which in turn will
+        // will allow the WhileInAirDispatcher to re-activate.
         "conditionType": "TimerInRange",
         "begin_s": 5.0
       },
       {
         // Check whether the user returned the robot to the palm of their hand, and
-        // if so, then just immediately kill this animation loop without playing
-        // the get-out animation, since the HeldInPalmDispatcher will just cycle
-        // back to the HeldInPalmResponses
-        "conditionType": "Compound",
-        "not": {
-          "conditionType": "CliffDetected",
-          "numCliffDetectionsToTrigger": 2
-        }
+        // if so, then just kill the animation loop since the HeldInPalmDispatcher
+        // will just cycle back to the HeldInPalmResponses
+        "conditionType": "RobotHeldInPalm",
+        "shouldBeHeldInPalm": true
+      },
+      {
+        // If the robot is sure that it has been put down on its treads prior to any
+        // of the other cancellation conditions above, cancel the behavior to allow the
+        // ReactToPutDownFromPalm to be activated by the HeldInPalmDispatcher
+        "conditionType": "OffTreadsState",
+        "targetState": "OnTreads"
       }
     ]
   }

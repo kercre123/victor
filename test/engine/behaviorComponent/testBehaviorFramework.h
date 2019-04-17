@@ -39,6 +39,8 @@ class BehaviorEventComponent;
 class TestBehaviorWithHelpers;
 class TestBehaviorFramework;
 
+struct MetaUserIntent_SimpleVoiceResponse;
+
 // Function to do ticks on a behavior
 void DoTicks_(TestBehaviorFramework& testFramework, Robot& robot, TestBehaviorWithHelpers& behavior, int num, bool expectComplete = false);
 void DoBehaviorInterfaceTicks(Robot& robot, ICozmoBehavior& behavior, int num=1);
@@ -125,6 +127,9 @@ public:
   
   // Adds objectType if one doesnt already exist, either at origin or at pose, if specified
   void AddFakeFirstObject( ObjectType objectType, Pose3d* pose = nullptr );
+
+  // iterate the simple voice responses from the user intent map / component
+  void IterateSimpleVoiceResponse(std::function< void( const MetaUserIntent_SimpleVoiceResponse& ) > lambda);
   
 
 private:

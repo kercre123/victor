@@ -48,6 +48,9 @@ struct VisionSystemInput
 
   // Quality at which to jpg compress images for display
   s32 imageCompressQuality = 50;
+
+  // Size of images broadcasted to the Viz
+  std::atomic<Vision::ImageCacheSize> vizImageBroadcastSize {Vision::ImageCacheSize::Half};
 };
 
 }

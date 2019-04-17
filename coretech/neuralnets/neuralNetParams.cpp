@@ -67,19 +67,30 @@ Result NeuralNetParams::SetFromConfig(const Json::Value& config)
   }
   
   GetFromConfig(verbose);
-  GetFromConfig(labelsFile);
-  GetFromConfig(minScore);
-  GetFromConfig(graphFile);
   GetFromConfig(inputHeight);
   GetFromConfig(inputWidth);
-  GetFromConfig(architecture);
-  GetFromConfig(memoryMapGraph);
-  GetFromConfig(benchmarkRuns);
-
+  
   if (config.isMember(JsonKeys::VisualizationDir))
   {
     GetFromConfig(visualizationDirectory);
   }
+  
+  if(config[JsonKeys::ModelType].asString() == JsonKeys::OffboardModelType)
+  {
+    // No other fields are relevant for Offboard models
+    if(verbose)
+    {
+      LOG_INFO("NeuralNetParams.SetFromConfig.OffboardSummary", "%dx%d",
+               inputWidth, inputHeight);
+    }
+    return RESULT_OK;
+  }
+  
+  GetFromConfig(labelsFile);
+  GetFromConfig(minScore);
+  GetFromConfig(benchmarkRuns);
+  GetFromConfig(architecture);
+  GetFromConfig(graphFile);
   
   if("ssd_mobilenet" == architecture)
   {
@@ -123,13 +134,18 @@ Result NeuralNetParams::SetFromConfig(const Json::Value& config)
       SetFromConfigHelper(config["useGrayscale"], useGrayscale);
     }
   }
+  else if(JsonKeys::OffboardModelType == architecture)
+  {
+    // NOTE: intentionally leaving layer names empty
+    useFloatInput = false;
+  }
   else
   {
     PRINT_NAMED_ERROR("NeuralNetParams.SetFromConfig.UnrecognizedArchitecture", "%s",
                       architecture.c_str());
     return RESULT_FAIL;
   }
-  
+ 
   if(verbose)
   {
     std::string outputNames;
@@ -142,6 +158,8 @@ Result NeuralNetParams::SetFromConfig(const Json::Value& config)
              architecture.c_str(), (useGrayscale ? "Grayscale" : "Color"),
              inputLayerName.c_str(), outputNames.c_str());
   }
+
+  // GetFromConfig(memoryMapGraph); // VIC-3141
   
   if(useFloatInput)
   {

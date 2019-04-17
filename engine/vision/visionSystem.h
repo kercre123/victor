@@ -13,7 +13,7 @@
 #ifndef ANKI_COZMO_BASESTATION_VISIONSYSTEM_H
 #define ANKI_COZMO_BASESTATION_VISIONSYSTEM_H
 
-#include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/engine/math/polygon_fwd.h"
 #include "coretech/common/shared/types.h"
 
 #include "anki/cozmo/shared/cozmoConfig.h"
@@ -58,6 +58,10 @@
 #include <queue>
 
 namespace Anki {
+  
+namespace NeuralNets {
+  class NeuralNetRunner;
+}
  
 namespace Vision {
   class Benchmark;
@@ -66,8 +70,8 @@ namespace Vision {
   class FaceTracker;
   class ImageCache;
   class MarkerDetector;
-  class NeuralNetRunner;
   class PetTracker;
+  class ImageCompositor;
 }
   
 namespace Vector {
@@ -167,7 +171,7 @@ namespace Vector {
                                    const f32 currentGain,
                                    const GammaCurve& gammaCurve);
 
-    // When SavingImages mode is enabled, how to save them
+    // When SaveImages mode is enabled, how to save them
     void SetSaveParameters(const ImageSaverParams& params);
 
     Vision::CameraParams GetCurrentCameraParams() const;
@@ -236,6 +240,7 @@ namespace Vector {
     std::unique_ptr<Vision::BrightColorDetector>    _brightColorDetector;
     std::unique_ptr<LaserPointDetector>             _laserPointDetector;
     std::unique_ptr<MotionDetector>                 _motionDetector;
+    std::unique_ptr<Vision::ImageCompositor>        _imageCompositor;
     std::unique_ptr<OverheadEdgesDetector>          _overheadEdgeDetector;
     std::unique_ptr<CameraCalibrator>               _cameraCalibrator;
     std::unique_ptr<OverheadMap>                    _overheadMap;
@@ -245,10 +250,8 @@ namespace Vector {
     std::unique_ptr<MirrorModeManager>              _mirrorModeManager;
     std::unique_ptr<Vision::Benchmark>              _benchmark;
     
-    std::map<std::string, std::unique_ptr<Vision::NeuralNetRunner>> _neuralNetRunners;
+    std::map<std::string, std::unique_ptr<NeuralNets::NeuralNetRunner>> _neuralNetRunners;
     
-    Vision::ImageRGB                                _neuralNetRunnerImage;
-
     Vision::CompressedImage _compressedDisplayImg;
     s32 _imageCompressQuality = 0;
     
@@ -273,11 +276,11 @@ namespace Vector {
     // Uses grayscale
     Result ApplyCLAHE(Vision::ImageCache& imageCache, const MarkerDetectionCLAHE useCLAHE, Vision::Image& claheImage);
     
-    Result DetectMarkersWithCLAHE(Vision::ImageCache& imageCache,
-                                  const Vision::Image& claheImage,
-                                  std::vector<Anki::Rectangle<s32>>& detectionRects,
-                                  MarkerDetectionCLAHE useCLAHE,
-                                  const VisionPoseData& poseData);
+    Result DetectMarkers(Vision::ImageCache& imageCache,
+                         const Vision::Image& claheImage,
+                         std::vector<Anki::Rectangle<s32>>& detectionRects,
+                         MarkerDetectionCLAHE useCLAHE,
+                         const VisionPoseData& poseData);
     
     // Uses grayscale
     static u8 ComputeMean(Vision::ImageCache& imageCache, const s32 sampleInc);
@@ -322,7 +325,7 @@ namespace Vector {
     Result UpdateGroundPlaneClassifier(Vision::ImageCache& image);
     
     void CheckForNeuralNetResults();
-    void AddFakeDetections(const std::set<VisionMode>& modes); // For debugging
+    void AddFakeDetections(const TimeStamp_t atTimestamp, const std::set<VisionMode>& modes); // For debugging
     
     Result SaveSensorData() const;
 
@@ -336,6 +339,21 @@ namespace Vector {
     std::mutex _mutex;
     std::queue<VisionProcessingResult> _results;
     VisionProcessingResult _currentResult;
+
+    // Image compositor settings, 
+    // Used to manage the cycles of Reset()
+    //  and MarkerDetection runs
+
+    // Number of frames composited in order to mark the image
+    //  as ready to be used in MarkerDetection.
+    u32 _imageCompositorReadyPeriod = 0;
+
+    // Number of frames composited after which the image is Reset
+    // Note: if set to zero, the image is never reset
+    u32 _imageCompositorResetPeriod = 0;
+
+    // Size of images broadcasted to the Viz
+    Vision::ImageCacheSize _vizImageBroadcastSize = Vision::ImageCacheSize::Half;
 
 }; // class VisionSystem
   

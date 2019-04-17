@@ -1,0 +1,33 @@
+{
+  "behaviorID": "ReactToPutDownFromPalmAnimSelector",
+  "behaviorClass": "DispatcherStrictPriority",
+  
+  "interruptActiveBehavior": true,
+  "actAsSelector": true,
+  
+  "behaviors": [
+    "RelaxedPutDownFromPalmAnimInternal",
+    "NervousPutDownFromPalmAnimInternal"
+  ],
+  
+  "anonymousBehaviors": [
+    {
+      "behaviorName": "RelaxedPutDownFromPalmAnimInternal",
+      "behaviorClass": "AnimSequence",
+      
+      "animTriggers": ["HeldOnPalmPutDownRelaxed"],
+      "wantsToBeActivatedCondition": {
+        "conditionType": "Emotion",
+        "emotion": "Trust",
+        "min": 0.5
+      }
+    },
+    {
+      "behaviorName": "NervousPutDownFromPalmAnimInternal",
+      "behaviorClass" : "AnimSequence",
+      
+      "animTriggers": ["HeldOnPalmPutDownNervous"]
+    }
+  ]
+
+}

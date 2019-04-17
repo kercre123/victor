@@ -47,34 +47,18 @@
 #include <iomanip>
 #include <sstream>
 
-
 namespace {
-
 #define LOG_CHANNEL "Microphones"
-# define CONSOLE_GROUP "MicData"
+#define CONSOLE_GROUP "MicData"
+#define RECOGNIZER_CONSOLE_GROUP "SpeechRecognizer"
 
 #if ANKI_DEV_CHEATS
-
 CONSOLE_VAR_RANGED(u32, kMicData_ClipRecordTime_ms, CONSOLE_GROUP, 4000, 500, 15000);
-CONSOLE_VAR(bool, kSuppressTriggerResponse, "SpeechRecognizer", false);
-
-std::string _debugMicDataWriteLocation = "";
-void ClearMicData(ConsoleFunctionContextRef context)
-{
-  if (!_debugMicDataWriteLocation.empty())
-  {
-    Anki::Util::FileUtils::RemoveDirectory(_debugMicDataWriteLocation);
-  }
-}
-CONSOLE_FUNC(ClearMicData, "zHiddenForSafety");
- 
+CONSOLE_VAR(bool, kSuppressTriggerResponse, RECOGNIZER_CONSOLE_GROUP, false);
 #endif // ANKI_DEV_CHEATS
 
-# undef CONSOLE_GROUP
-
-  const std::string kMicSettingsFile = "micMuted";
-  
-  const std::string kSpeechRecognizerWebvizName = "speechrecognizersys";
+const std::string kMicSettingsFile = "micMuted";
+const std::string kSpeechRecognizerWebvizName = "speechrecognizersys";
 }
 
 namespace Anki {
@@ -87,7 +71,8 @@ CONSOLE_VAR_EXTERN(bool, kAlexaEnabledInAU);
 namespace MicData {
 
 constexpr auto kCladMicDataTypeSize = sizeof(RobotInterface::MicData::data)/sizeof(RobotInterface::MicData::data[0]);
-static_assert(kCladMicDataTypeSize == kRawAudioChunkSize, "Expecting size of MicData::data to match RawAudioChunk");
+static_assert(kCladMicDataTypeSize == kIncomingAudioChunkSize, 
+              "Expecting size of MicData::data to match DeinterlacedAudioChunk");
 
 static_assert(
   std::is_same<std::remove_reference<decltype(RobotInterface::MicDirection::confidenceList[0])>::type,
@@ -102,9 +87,33 @@ static_assert(
   decltype(MicDirectionData::confidenceList)().size(),
   "Expecting length of RobotInterface::MicDirection::confidenceList to match MicDirectionData::confidenceList");
 
+void MicDataSystem::SetupConsoleFuncs()
+{
+#if ANKI_DEV_CHEATS
+  const auto enableTriggerHistoryFunc = [this](ConsoleFunctionContextRef context)
+  {
+    const bool enable = ConsoleArg_Get_Bool( context, "enable" );
+    EnableTriggerHistory(enable);
+    context->channel->WriteLog("EnableRecentTriggers %s", enable ? "enabled" : "disable");
+  };
+  _devConsoleFuncs.emplace_front("EnableTriggerResults", std::move(enableTriggerHistoryFunc),
+                                 RECOGNIZER_CONSOLE_GROUP, "bool enable");
+  
+  const auto clearMicDataFunc = [this](ConsoleFunctionContextRef context)
+  {
+    if (!_writeLocationDir.empty()) {
+      Anki::Util::FileUtils::RemoveDirectory(_writeLocationDir);
+      context->channel->WriteLog("Removed directory '%s'", _writeLocationDir.c_str());
+    }
+  };
+  _devConsoleFuncs.emplace_front("ClearMicData", std::move(clearMicDataFunc), CONSOLE_GROUP".zHiddenForSafety", "");
+#endif
+}
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
-                             const AnimContext* context)
+                             const Anim::AnimContext* context)
 : _context(context)
 , _udpServer(new LocalUdpServer())
 , _fftResultData(new FFTResultData())
@@ -124,7 +133,6 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
   {
   #if ANKI_DEV_CHEATS
     Util::FileUtils::CreateDirectory(_writeLocationDir);
-    _debugMicDataWriteLocation = _writeLocationDir;
   #endif
   }
 
@@ -138,7 +146,7 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
               sockName.c_str());
 }
 
-void MicDataSystem::Init(const RobotDataLoader& dataLoader)
+void MicDataSystem::Init(const Anim::RobotDataLoader& dataLoader)
 {
   // SpeechRecognizerSystem
   SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info) {
@@ -176,6 +184,7 @@ void MicDataSystem::Init(const RobotDataLoader& dataLoader)
       [this] (const auto& sendFunc) { SendRecentTriggerDetectionToWebViz(sendFunc); }
     ));
   }
+  SetupConsoleFuncs();
 #endif
 }
 
@@ -204,6 +213,7 @@ void MicDataSystem::RecordProcessedAudio(uint32_t duration_ms, const std::string
 
 void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool playGetInFromAnimProcess)
 {
+  
   if(HasStreamingJob())
   {
     // We "fake" having a streaming job in order to achieve the "feel" of a minimum streaming time for UX
@@ -463,6 +473,10 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
   // lock the job mutex
   {
     std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
+
+    //  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+    // ... this block is where we kick off a new stream to the cloud ...
+
     // check if the pointer to the currently streaming job is valid
     if (!_currentlyStreaming && HasStreamingJob()
       #if ANKI_DEV_CHEATS
@@ -499,21 +513,28 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       }
     }
 
+    //  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -  -
+    // ... this block is where we actually do the streaming of the mic data up to the cloud ...
+
     if (_currentlyStreaming)
     {
+      bool realStreamHasFinished = false;
+
       // Are we done with what we want to stream?
       if (!_streamingComplete)
       {
-        static constexpr size_t kMaxRecordNumChunks = (kStreamingTimeout_ms / kTimePerSEBlock_ms) + 1;
+        static constexpr size_t kMaxRecordNumChunks = (kStreamingTimeout_ms / kTimePerChunk_ms) + 1;
         const bool didTimeout = _streamingAudioIndex >= kMaxRecordNumChunks;
         if (receivedStopMessage || didTimeout)
         {
           _streamingComplete = true;
+          realStreamHasFinished = true;
+
           if (didTimeout)
           {
             SendUdpMessage(CloudMic::Message::CreateaudioDone({}));
           }
-          LOG_INFO("MicDataSystem.Update.StreamingEnd", "%zu ms", _streamingAudioIndex * kTimePerSEBlock_ms);
+          LOG_INFO("MicDataSystem.Update.StreamingEnd", "%zu ms", _streamingAudioIndex * kTimePerChunk_ms);
           #if ANKI_DEV_CHEATS
             _fakeStreamingState = false;
           #endif
@@ -551,7 +572,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
         uint32_t minStreamingDuration_ms = _context->GetShowAudioStreamStateManager()->GetMinStreamingDuration();
         const BaseStationTime_t minStreamDuration_ns = minStreamingDuration_ms * 1000 * 1000;
         const BaseStationTime_t minStreamEnd_ns = _streamBeginTime_ns + minStreamDuration_ns;
-        if (currTime_nanosec >= minStreamEnd_ns)
+        if ( ( currTime_nanosec >= minStreamEnd_ns ) || realStreamHasFinished )
         {
           LOG_INFO("MicDataSystem.Update.StreamingComplete.ClearJob", "Clearing streaming job now that enough time has elapsed");
           ClearCurrentStreamingJob();
@@ -975,20 +996,18 @@ void MicDataSystem::SendTriggerDetectionToWebViz(const AudioUtil::SpeechRecogniz
     data["notch"] = ignoreReason.notch;
     data["playback"] = ignoreReason.playback;
     
-    // don't let result buffer grow infinitely
-    if (_devTriggerResults.size() > 8 && _devTriggerResults.size() == _devTriggerResults.capacity()) {
-      for (int i = 0; i < _devTriggerResults.size() - 1; i++) {
-        _devTriggerResults[i] = std::move(_devTriggerResults[i+1]);
+    if (_devEnableTriggerHistory) {
+      // don't let result buffer grow infinitely
+      if ( _devTriggerResults.size() >= 10 ) {
+        _devTriggerResults.pop_front();
       }
-      _devTriggerResults[_devTriggerResults.size()-1] = std::move(data);
-    }
-    else {
-      _devTriggerResults.emplace_back(std::move(data));
+      _devTriggerResults.emplace_back( std::move(data) );
     }
     
     auto* webService = _context->GetWebService();
     if( webService != nullptr && webService->IsWebVizClientSubscribed( kSpeechRecognizerWebvizName ) ) {
-      webService->SendToWebViz( kSpeechRecognizerWebvizName, _devTriggerResults.back() );
+      const Json::Value& webVizData = _devEnableTriggerHistory ? _devTriggerResults.back() : data;
+      webService->SendToWebViz( kSpeechRecognizerWebvizName, webVizData );
     }
   }
 #endif
@@ -1005,6 +1024,15 @@ void MicDataSystem::SendRecentTriggerDetectionToWebViz(const std::function<void(
 #endif
 }
 
+#if ANKI_DEV_CHEATS
+void MicDataSystem::EnableTriggerHistory(bool enable)
+{
+  _devEnableTriggerHistory = enable;
+  if ( !_devEnableTriggerHistory ) {
+    _devTriggerResults.clear();
+  }
+}
+#endif
 
 void MicDataSystem::SendRecognizerDasLog(const AudioUtil::SpeechRecognizerCallbackInfo& info,
                                          const char* stateStr) const

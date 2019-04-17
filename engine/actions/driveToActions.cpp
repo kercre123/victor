@@ -17,7 +17,9 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/dockActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/carryingComponent.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/dockingComponent.h"
@@ -306,7 +308,6 @@ namespace Anki {
     
     ActionResult DriveToObjectAction::Init()
     {
-      ActionResult result = ActionResult::SUCCESS;
       ActionableObject* object = dynamic_cast<ActionableObject*>(GetRobot().GetBlockWorld().GetLocatedObjectByID(_objectID));
       if(object == nullptr)
       {
@@ -317,7 +318,7 @@ namespace Anki {
       }
 
       // Use a helper here so that it can be shared with DriveToPlaceCarriedObjectAction
-      result = InitHelper(object);
+      ActionResult result = InitHelper(object);
 
       // Only set cube lights if the dock object is a light cube
       _shouldSetCubeLights = IsValidLightCube(object->GetType(), false);
@@ -404,8 +405,7 @@ namespace Anki {
     void DriveToObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
       ObjectInteractionCompleted interactionCompleted;
-      interactionCompleted.objectIDs[0] = _objectID.GetValue();
-      interactionCompleted.numObjects = 1;
+      interactionCompleted.objectID = _objectID.GetValue();
       completionUnion.Set_objectInteractionCompleted(interactionCompleted);
     }
     
@@ -622,7 +622,7 @@ namespace Anki {
     
     void DriveToPoseAction::GetRequiredVisionModes(std::set<VisionModeRequest>& requests) const
     {
-      requests.insert({ VisionMode::DetectingMarkers , EVisionUpdateFrequency::Low });
+      requests.insert({ VisionMode::Markers , EVisionUpdateFrequency::Low });
     }
 
     f32 DriveToPoseAction::GetTimeoutInSeconds() const { return kDriveToPoseTimeout; }  
@@ -634,6 +634,11 @@ namespace Anki {
       ActionResult result = ActionResult::SUCCESS;
 
       auto& pathComponent = GetRobot().GetPathComponent();
+
+      // Just in case, ask the ProxSensor to check if the lift might need calibration
+      // TODO: if we later follow up and decide we should calibrate the motors, we should delegate
+      //       to CalibrateMotorAction here.
+      GetRobot().GetProxSensorComponent().VerifyLiftCalibration();
       
       _timeToAbortPlanning = -1.0f;
       

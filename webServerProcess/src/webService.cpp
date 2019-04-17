@@ -27,6 +27,7 @@
 #include "util/logging/logging.h"
 #include "util/console/consoleSystem.h"
 #include "util/console/consoleChannel.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/ankiDefines.h"
@@ -52,9 +53,12 @@ using namespace Anki::Vector;
 
 namespace {
 #ifndef SIMULATOR
-  bool s_WaitingForProcessStatus = false;
+  bool                     s_WaitingForProcessStatus = false;
   std::vector<std::string> s_ProcessStatuses;
+  std::mutex               s_ProcessStatusMutex;
+  std::condition_variable  s_ProcessStatusCondition;
 #endif
+  std::atomic_bool         s_ShuttingDown{false};
 }
 
 // Used websockets codes, see websocket RFC pg 29
@@ -190,7 +194,7 @@ LogHandler(struct mg_connection *conn, void *cbdata)
 void ExecCommand(const std::vector<std::string>& args)
 {
   LOG_INFO("WebService.ExecCommand", "Called with cmd: %s (and %i arguments)",
-                   args[0].c_str(), (int)(args.size() - 1));
+           args[0].c_str(), (int)(args.size() - 1));
 
   pid_t pID = fork();
   if (pID == 0) // child
@@ -228,6 +232,11 @@ ProcessRequest(struct mg_connection *conn, WebService::WebService::RequestType r
                bool waitAndSendResponse = true, WebService::WebService::ExternalCallback extCallback = nullptr,
                void* cbdata = nullptr)
 {
+  if (s_ShuttingDown)
+  {
+    return 1;
+  }
+
   WebService::WebService::Request* requestPtr = new WebService::WebService::Request(requestType, param1, param2,
                                                                                     param3, extCallback, cbdata);
 
@@ -236,28 +245,20 @@ ProcessRequest(struct mg_connection *conn, WebService::WebService::RequestType r
 
   that->AddRequest(requestPtr);
 
-  if( waitAndSendResponse ) {
-
-    // Now wait until the main thread processes the request
+  if (waitAndSendResponse)
+  {
+    // Wait until the main thread processes the request
     using namespace std::chrono;
-    static const double kTimeoutDuration_s = 10.0;
-    const auto startTime = steady_clock::now();
-    bool timedOut = false;
-    do
-    {
-      std::this_thread::sleep_for(std::chrono::milliseconds(5));
-      const auto now = steady_clock::now();
-      const auto elapsed_s = duration_cast<seconds>(now - startTime).count();
-      if (elapsed_s > kTimeoutDuration_s)
-      {
-        timedOut = true;
-        break;
-      }
-    } while (!requestPtr->_resultReady);
+    static const long long kTimeoutDuration_s = 10;
 
-    // We check if result is there because we just slept and it may have come in
-    // just before the timeout
-    if (timedOut && !requestPtr->_resultReady)
+    {
+      std::unique_lock<std::mutex> lk{requestPtr->_readyMutex};
+      requestPtr->_readyCondition.wait_for(lk,
+                                           seconds(kTimeoutDuration_s),
+                                           [requestPtr]{ return requestPtr->_resultReady; });
+    }
+
+    if (!requestPtr->_resultReady)
     {
       std::lock_guard<std::mutex> lock(that->_requestMutex);
       requestPtr->_result = "Timed out after " + std::to_string(kTimeoutDuration_s) + " seconds";
@@ -281,8 +282,14 @@ ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
 {
   const mg_request_info* info = mg_get_request_info(conn);
   std::string category = ((info->query_string) ? info->query_string : "");
+  std::string standalone = "standalone";
+  if (category == "embedded")
+  {
+    category = "";
+    standalone = "";
+  }
 
-  const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarsUI, category, "");
+  const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarsUI, category, standalone);
 
   return returnCode;
 }
@@ -600,6 +607,11 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
 
 static int GetPerfStats(struct mg_connection *conn, void *cbdata)
 {
+  if (s_ShuttingDown)
+  {
+    return 1;
+  }
+  
   using namespace std::chrono;
   const auto startTime = steady_clock::now();
 
@@ -769,6 +781,11 @@ static int SystemCtl(struct mg_connection *conn, void *cbdata)
 
 static int GetProcessStatus(struct mg_connection *conn, void *cbdata)
 {
+  if (s_ShuttingDown)
+  {
+    return 1;
+  }
+
   std::string resultsString;
 
   using namespace std::chrono;
@@ -801,40 +818,33 @@ static int GetProcessStatus(struct mg_connection *conn, void *cbdata)
       }
     }
 
-    s_WaitingForProcessStatus = true;
     ExecCommand(args);
 
-    static const double kTimeoutDuration_s = 10.0;
-    const auto startWaitTime = steady_clock::now();
-    bool timedOut = false;
-    do
+    static const long long kTimeoutDuration_s = 10;
     {
-      std::this_thread::sleep_for(std::chrono::milliseconds(100));
-      const auto now = steady_clock::now();
-      const auto elapsed_s = duration_cast<seconds>(now - startWaitTime).count();
-      if (elapsed_s > kTimeoutDuration_s)
+      std::unique_lock<std::mutex> lk{s_ProcessStatusMutex};
+      s_WaitingForProcessStatus = true;
+      s_ProcessStatusCondition.wait_for(lk,
+                                        seconds(kTimeoutDuration_s),
+                                        []{ return !s_WaitingForProcessStatus; });
+
+      if (s_WaitingForProcessStatus)
       {
-        timedOut = true;
-        break;
+        LOG_INFO("WebService.GetProcessStatus", "GetProcessStatus timed out after %lld seconds",
+                 kTimeoutDuration_s);
       }
-    } while (s_WaitingForProcessStatus);
 
-    // We check if result is there because we just slept and it may have come in
-    // just before the timeout
-    if (timedOut && s_WaitingForProcessStatus)
-    {
-      LOG_INFO("WebService.GetProcessStatus", "GetProcessStatus timed out after %f seconds", kTimeoutDuration_s);
-    }
-
-    bool firstDone = false;
-    for (const auto& result : s_ProcessStatuses) {
-      if (firstDone) {
-        resultsString += "\n";
+      bool firstDone = false;
+      for (const auto& result : s_ProcessStatuses) {
+        if (firstDone) {
+          resultsString += "\n";
+        }
+        resultsString += result;
+        firstDone = true;
       }
-      resultsString += result;
-      firstDone = true;
     }
   }
+
   mg_printf(conn,
             "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
             "close\r\n\r\n");
@@ -853,20 +863,26 @@ static int ProcessStatus(struct mg_connection *conn, void *cbdata)
   const mg_request_info* info = mg_get_request_info(conn);
   std::string results = info->query_string ? info->query_string : "";
 
-  s_ProcessStatuses.clear();
-  while (!results.empty()) {
-    const size_t amp = results.find('&');
-    if (amp != std::string::npos) {
-      s_ProcessStatuses.push_back(results.substr(0, amp));
-      results = results.substr(amp + 1);
-    }
-    else {
-      s_ProcessStatuses.push_back(results);
-      break;
-    }
-  }
+  {
+    std::unique_lock<std::mutex> lk{s_ProcessStatusMutex};
 
-  s_WaitingForProcessStatus = false;
+    s_ProcessStatuses.clear();
+    while (!results.empty()) {
+      const size_t amp = results.find('&');
+      if (amp != std::string::npos) {
+        s_ProcessStatuses.push_back(results.substr(0, amp));
+        results = results.substr(amp + 1);
+      }
+      else {
+        s_ProcessStatuses.push_back(results);
+        break;
+      }
+    }
+
+    // Notify the requesting thread that the result is now ready
+    s_WaitingForProcessStatus = false;
+  }
+  s_ProcessStatusCondition.notify_all();
 
   mg_printf(conn,
             "HTTP/1.1 200 OK\r\nContent-Type: text/html\r\nConnection: "
@@ -1003,6 +1019,8 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
 // This is called from the main thread
 void WebService::Update()
 {
+  ANKI_CPU_PROFILE("WebService::Update");
+
   std::lock_guard<std::mutex> lock(_requestMutex);
 
   // First pass:  Delete any completely-finished requests from the list (and delete the requests themselves)
@@ -1036,7 +1054,8 @@ void WebService::Update()
       {
         case RT_ConsoleVarsUI:
           {
-            GenerateConsoleVarsUI(requestPtr->_result, requestPtr->_param1);
+            const bool standalone = (requestPtr->_param2 == "standalone");
+            GenerateConsoleVarsUI(requestPtr->_result, requestPtr->_param1, standalone);
           }
           break;
         case RT_ConsoleVarGet:
@@ -1224,22 +1243,45 @@ void WebService::Update()
       }
 
       // Notify the requesting thread that the result is now ready
-      requestPtr->_resultReady = true;
+      {
+        std::unique_lock<std::mutex> lk{requestPtr->_readyMutex};
+        requestPtr->_resultReady = true;
+      }
+      requestPtr->_readyCondition.notify_all();
     }
   }
 }
 
 void WebService::Stop()
 {
-  if (_ctx) {
+  s_ShuttingDown = true;
+  if (_ctx)
+  {
+    // Call update to process any pending request(s) and wake up the
+    // thread(s) that are waiting for those request(s) to be processed.
+    // This will allow the mg_stop call below to not take forever waiting
+    // for threads to shut down.
+    Update();
+
+#ifndef SIMULATOR
+    // Notify any pending thread that's waiting for process status, so that
+    // the mg_stop call below will not hang waiting for it
+    {
+      std::unique_lock<std::mutex> lk{s_ProcessStatusMutex};
+      s_ProcessStatuses.clear();
+      s_WaitingForProcessStatus = false;
+    }
+    s_ProcessStatusCondition.notify_all();
+#endif
+
 #ifdef VICOS
     // shutdown nicely on the robot but let the OS handle it for the simulator, mg_stop triggers
     // the thread sanitizer and execution stops here, by removing this line in SIMULATOR builds
     // it allows the thread sanitizier to continue to do useful work.
     mg_stop(_ctx);
 #endif
+    _ctx = nullptr;
   }
-  _ctx = nullptr;
 }
 
 
@@ -1278,14 +1320,27 @@ static std::string sanitize_tag(const std::string& tag)
   return sanitizedTag;
 }
 
-void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& category)
+void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& category,
+                                       const bool standalone)
 {
+  ANKI_CPU_PROFILE("GenerateConsoleVarsUI");
+
+  std::string styleSheetIncludes;
+  std::string jqueryIncludes;
   std::string style;
   std::string script;
   std::string html;
   std::map<std::string, std::string> category_html;
 
   const Anki::Util::ConsoleSystem& consoleSystem = Anki::Util::ConsoleSystem::Instance();
+  
+  if (standalone)
+  {
+    styleSheetIncludes += "<link rel=\"stylesheet\" href=\"jquery-ui.css\">\n";
+    styleSheetIncludes += "<link rel=\"stylesheet\" href=\"style.css\">\n";
+    jqueryIncludes += "<script src=\"jquery-1.12.4.js\"></script>\n";
+    jqueryIncludes += "<script src=\"jquery-ui.js\"></script>\n";
+  }
 
   // Variables
 
@@ -1457,6 +1512,18 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
 
   std::string tmp;
   size_t pos;
+
+  tmp = "/* -- generated stylesheet includes -- */";
+  pos = page.find(tmp);
+  if (pos != std::string::npos) {
+    page = page.replace(pos, tmp.length(), styleSheetIncludes);
+  }
+
+  tmp = "/* -- generated jquery includes -- */";
+  pos = page.find(tmp);
+  if (pos != std::string::npos) {
+    page = page.replace(pos, tmp.length(), jqueryIncludes);
+  }
 
   tmp = "/* -- generated style -- */";
   pos = page.find(tmp);
@@ -1719,4 +1786,4 @@ namespace WebService {
 } // namespace Vector
 } // namespace Anki
 
-#endif // ANKI_WEBSERVICE_ENABLED
+#endif // ANKI_NO_WEBSERVER_ENABLED

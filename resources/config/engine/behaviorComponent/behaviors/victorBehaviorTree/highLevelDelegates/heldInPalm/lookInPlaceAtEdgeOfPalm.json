@@ -1,0 +1,19 @@
+{
+  // This is a dispatcher that selects which behavior to execute when
+  // the robot is being held on an unstable surface (e.g. the palm of
+  // a user's hand) and is part of HeldInPalmResponses
+  "behaviorID": "LookInPlaceAtEdgeOfPalm",
+  "behaviorClass": "DispatcherStrictPriority",
+  
+  "associatedActiveFeature": "HeldInPalm",
+  
+  "interruptActiveBehavior": true,
+  "actAsSelector": true,
+
+  // Most of these behaviors should try to limit forward/backward
+  // motion, and should actively monitor for treads slipping.
+  "behaviors": [
+    "LookInPlaceHeadDownRelaxed", // Activates when Trust level > 0.5
+    "LookInPlaceHeadDownNervous"  // Default behavior to activate for any Trust level
+  ]
+}

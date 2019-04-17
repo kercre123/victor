@@ -98,6 +98,11 @@ public:
   
   const CameraParams& GetNextCameraParams() const { return _currentCameraParams; }
   ImageQuality GetImageQuality() const { return _imageQuality; }
+
+  // Whether we've reached the end of the cycle of exposure values to try
+  // In the following call to cycling exposure, the first value will be picked
+  bool IsExposureCyclingComplete() const { return (_cycleTargetIter == _cyclingTargetValues.end()); }
+  void ResetTargetAutoExposure_Cycling() { _cycleTargetIter = _cyclingTargetValues.begin(); }
   
 private:
   

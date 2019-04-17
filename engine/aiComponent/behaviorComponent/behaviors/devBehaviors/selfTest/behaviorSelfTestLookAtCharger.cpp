@@ -15,6 +15,7 @@
 #include "engine/actions/basicActions.h"
 #include "engine/actions/visuallyVerifyActions.h"
 #include "engine/blockWorld/blockWorld.h"
+#include "engine/blockWorld/blockWorldFilter.h"
 #include "engine/components/sensors/proxSensorComponent.h"
 #include "engine/components/visionComponent.h"
 #include "engine/factory/factoryTestLogger.h"
@@ -99,7 +100,7 @@ Result BehaviorSelfTestLookAtCharger::OnBehaviorActivatedInternal()
   TurnInPlaceAction* turn = new TurnInPlaceAction(_angleToTurn.ToFloat(), false);
 
   // After turning wait to process 10 images before trying to refine the turn
-  WaitForImagesAction* wait = new WaitForImagesAction(5, VisionMode::DetectingMarkers);
+  WaitForImagesAction* wait = new WaitForImagesAction(5, VisionMode::Markers);
   
   CompoundActionSequential* action = new CompoundActionSequential({liftHeadDrive, turn, wait});
   DelegateIfInControl(action, [this]() { TransitionToRefineTurn(); });
@@ -123,9 +124,9 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestLookAtCharger::SelfTestUpdateI
   {
     --_numRecordedReadingsLeft;
     
-    const auto& proxData = robot.GetProxSensorComponent().GetLatestProxDataRaw();
+    const auto& proxData = robot.GetProxSensorComponent().GetLatestProxData();
     DistanceSensorData data;
-    data.proxSensorData = proxData;
+    data.proxDistanceToTarget_mm = proxData.distance_mm;
     data.visualDistanceToTarget_mm = 0;
     data.visualAngleAwayFromTarget_rad = 0;
     
@@ -153,13 +154,13 @@ IBehaviorSelfTest::SelfTestStatus BehaviorSelfTestLookAtCharger::SelfTestUpdateI
       bias = 0;
     }
     
-    if(!Util::IsNear(data.proxSensorData.distance_mm - bias, 
+    if(!Util::IsNear(data.proxDistanceToTarget_mm - bias, 
                      data.visualDistanceToTarget_mm,
                      SelfTestConfig::kDistanceSensorReadingThresh_mm))
     {
       PRINT_NAMED_WARNING("BehaviorSelfTestLookAtCharger.SelfTestUpdateInternal.ReadingOutsideThresh",
-                          "Sensor reading %u - %f not near visual reading %f with threshold %f",
-                          data.proxSensorData.distance_mm,
+                          "Sensor reading %f - %f not near visual reading %f with threshold %f",
+                          data.proxDistanceToTarget_mm,
                           SelfTestConfig::kDistanceSensorBiasAdjustment_mm,
                           data.visualDistanceToTarget_mm,
                           SelfTestConfig::kDistanceSensorReadingThresh_mm);

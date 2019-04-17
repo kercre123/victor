@@ -29,7 +29,8 @@ enum uint_8 RtsConnType {
 }
 
 enum uint_16 RtsResponseCode {
-    NotCloudAuthorized,
+    NotCloudAuthorized = 0,
+    UnsupportedRequest = 1,
 }
 
 enum uint_8 RtsCloudStatus {

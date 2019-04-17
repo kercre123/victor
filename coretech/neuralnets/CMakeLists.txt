@@ -33,6 +33,7 @@ set(COMMON_LIBS
   jsoncpp
   util
   cti_common
+  cti_messaging    # For offboard neural net comms
   cti_vision
   ${OPENCV_LIBS}
 )
@@ -47,7 +48,7 @@ set(COMMON_FLAGS
 
 set(PLATFORM_DEFINITIONS "")
 
-set(TENSORFLOW_PATH ${ANKI_EXTERNAL_DIR}/tensorflow)
+set(TENSORFLOW_PATH ${ANKI_THIRD_PARTY_DIR}/tensorflow)
 
 if(NEURAL_NET_PLATFORM STREQUAL "TensorFlow")
 
@@ -63,7 +64,7 @@ if(NEURAL_NET_PLATFORM STREQUAL "TensorFlow")
     )
     
     set(PLATFORM_INCLUDES
-      ${ANKI_EXTERNAL_DIR}/opencv/vicos/include
+      ${ANKI_THIRD_PARTY_DIR}/opencv/vicos/include
       ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/proto
       ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/protobuf/armeabi-v7a/include
       ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen_VICOS/downloads/eigen
@@ -90,7 +91,7 @@ if(NEURAL_NET_PLATFORM STREQUAL "TensorFlow")
     )
     
     set(PLATFORM_INCLUDES
-      ${ANKI_EXTERNAL_DIR}/opencv/mac
+      ${ANKI_THIRD_PARTY_DIR}/opencv/mac
       ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/proto
       ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/protobuf/include
       ${TENSORFLOW_PATH}/tensorflow/contrib/makefile/gen/downloads/eigen

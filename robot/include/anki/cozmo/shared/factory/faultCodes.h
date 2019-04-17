@@ -46,6 +46,8 @@ enum : uint16_t {
 
   IMU_FAILURE           = 960,
 
+  TOF_FAILURE           = 950,
+
   //critical processes
   NO_CLOUD_PROCESS      = 923,
   NO_GATEWAY            = 921,
@@ -63,6 +65,8 @@ enum : uint16_t {
   NO_BODY               = 899, //no response from syscon
   SPINE_SELECT_TIMEOUT  = 898,
 
+  RAMPOST_ERROR         = 897,
+  
   //Sensor Errors
   TOUCH_SENSOR          = 895,
   TOF                   = 894,
@@ -93,15 +97,16 @@ enum : uint16_t {
 
 
   // --------- Shutdown codes ----------
-
-  // The battery_overheated icon is displayed by faultCodeDisplay.cpp
-  // when it receives this code. Power will be cut in 30s.
+  // These codes result in only vic-dasmgr being stopped so that
+  // a DAS message for the shutdown can be backed up to file 
+  // (and in some cases a graphic displayed) as quickly as possible.
+  
+  // An appropriate graphic is displayed by faultCodeDisplay.cpp
+  // when it receives these codes.
   SHUTDOWN_BATTERY_CRITICAL_TEMP  = 705,
-
-  // These codes result in only vic-dasmgr be stopped
-  // Also, no fault code is displayed since power to the
-  // head will be cut shortly.
   SHUTDOWN_BATTERY_CRITICAL_VOLT  = 702,
+
+  // No fault code is displayed when it receives these codes.
   SHUTDOWN_GYRO_NOT_CALIBRATING   = 701,
   SHUTDOWN_BUTTON                 = 700,
   // ------ End of Shutdown codes ------

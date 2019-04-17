@@ -21,7 +21,6 @@
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "engine/actions/actionInterface.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
-#include "clad/types/keepFaceAliveParameters.h"
 #include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
 #include "util/helpers/noncopyable.h"
 #include "util/signals/signalHolder.h"
@@ -108,7 +107,9 @@ public:
   const std::string& GetAnimationNameFromGroup(const std::string& name,
                                                bool strictCooldown = false,
                                                int recursionCount = 0) const;
-  
+
+  bool IsAnimationGroup(const std::string& group) const;
+
   // Tell animation process to play the specified animation
   // If a non-empty callback is specified, the actionTag of the calling action must be specified
   Result PlayAnimByName(const std::string& animName,
@@ -130,6 +131,13 @@ public:
                                 bool interruptRunning = true,
                                 bool emptySpriteBoxesAreValid = false,
                                 AnimationCompleteCallback callback = nullptr);
+
+  using RemapMap = std::unordered_map<Vision::SpriteBoxName, std::string>;
+  Result PlayAnimWithSpriteBoxRemaps(const std::string& animName,
+                                     const RemapMap& remaps,
+                                     bool interruptRunning = true,
+                                     AnimationCompleteCallback callback = nullptr,
+                                     const std::string& lockFaceAtEndOfAnimTag = "");
   
   bool IsPlayingAnimation() const { return _callbackMap.size() > 0; }
   
@@ -187,16 +195,6 @@ public:
   // lock". If any disable locks are present, the keep alive will be disabled
   void AddKeepFaceAliveDisableLock(const std::string& lockName);
   void RemoveKeepFaceAliveDisableLock(const std::string& lockName);
-
-  // Restore all KeepFaceAlive parameters to defaults. Note that this does not enable or disable the keep
-  // alive
-  Result SetDefaultKeepFaceAliveParameters() const;
-  
-  // Set KeepFaceAliveParameterToDefault
-  Result SetKeepFaceAliveParameterToDefault(KeepFaceAliveParameter param) const;
-  
-  // Set KeepFaceAlive parameter to specified value
-  Result SetKeepFaceAliveParameter(KeepFaceAliveParameter param, f32 value) const;
 
   // Either start an eye shift or update an already existing eye shift with new params
   // Note: Eye shift will continue until removed so if eye shift with the same name

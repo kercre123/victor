@@ -13,7 +13,6 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorCoordinateWeather.h"
 
-#include "clad/types/behaviorComponent/userIntent.h"
 #include "clad/types/featureGateTypes.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"

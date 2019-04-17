@@ -14,7 +14,7 @@
  **/
 
 
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/engine/colorRGBA.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
@@ -41,7 +41,6 @@ bool has_any_digits(const std::string& s)
 
 namespace Anki {
   namespace Vector {
-    
 #pragma mark -
 #pragma mark IKeyFrame
     
@@ -453,16 +452,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
       return updatesForCurrentFrame;
     }
 
-
-    bool SpriteSequenceKeyFrame::GetFaceImageHandle(const TimeStamp_t timeSinceAnimStart_ms,
-                                                    Vision::SpriteHandle& handle,
-                                                    uint16_t& numLayers)
+    bool SpriteSequenceKeyFrame::ApplyCompositeImageUpdates(const TimeStamp_t timeSinceAnimStart_ms)
     {
-      ANKI_CPU_PROFILE("SpriteSequenceKeyFrame::GetFaceImageHandle");
-      if(GetTimestampActionComplete_ms() <= timeSinceAnimStart_ms) {
-        return false;
-      }
-
       // Apply any composite image updates queued
       auto iter = _compositeImageUpdateMap.begin();
       while(iter != _compositeImageUpdateMap.end()){
@@ -478,47 +469,14 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         }
       }
 
-      if (HaveKeyframeForTimeStamp(timeSinceAnimStart_ms) || _compositeImageUpdated)
-      {
-        const auto& layerLayoutMap = _compositeImage->GetLayerLayoutMap();
-        numLayers = layerLayoutMap.size();
-
-        const auto height = _compositeImage->GetHeight();
-        const auto width  = _compositeImage->GetWidth();
-        auto* img = new Vision::ImageRGBA(height, width);
-
-        bool needToClearBuffer = (numLayers == 0);
-        if (!needToClearBuffer)
-        {
-          const auto& firstCompositeImageLayer = layerLayoutMap.begin()->second;
-          const auto& firstSpriteBox = firstCompositeImageLayer.GetLayoutMap().begin()->second;
-          if (firstSpriteBox.GetWidth() != width || firstSpriteBox.GetHeight() != height)
-          {
-            needToClearBuffer = true;
-          }
-        }
-        if (needToClearBuffer)
-        {
-          ANKI_CPU_PROFILE("img->FillWith"); // This takes roughly 0.205 ms on robot.
-          img->FillWith(Vision::PixelRGBA());
-        }
-
-        const u32 curFrame = GetFrameNumberForTime(timeSinceAnimStart_ms);
-        _compositeImage->OverlayImageWithFrame(*img, curFrame);
-        handle = std::make_shared<Vision::SpriteWrapper>(img);
-        _compositeImageUpdated = false;
-        return true;
-      }else{
-        return false;
-      }
+      return _compositeImageUpdated;
     }
-    
+
     void SpriteSequenceKeyFrame::OverrideShouldRenderInEyeHue(bool shouldRenderInEyeHue)
     {
       auto renderMethod = shouldRenderInEyeHue ? Vision::SpriteRenderMethod::CustomHue : Vision::SpriteRenderMethod::RGBA;
       _compositeImage->OverrideRenderMethod(renderMethod);
     }
-
 
     void SpriteSequenceKeyFrame::CacheInternalSprites(Vision::SpriteCache* cache, const TimeStamp_t endTime_ms)
     {
@@ -1443,6 +1401,6 @@ _streamMsg.lights[__LED_NAME__].offset_ms = 0; } while(0)
         return new RobotInterface::EngineToRobot(_streamMsg);
       }
     #endif
-    
+
   } // namespace Vector
 } // namespace Anki

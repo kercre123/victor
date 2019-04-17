@@ -1,11 +1,11 @@
 {
   // This is a copy of ObservingLookAtFaces that should only be activated
-  // when the tread state is InAir, and is part of whileInAirResponses
+  // when the tread state is InAir, and is part of HeldInPalmResponses
   "behaviorID": "ObservingLookAtFacesInAir",
   "behaviorClass": "ObservingLookAtFaces",
 
   // Because this behavior runs in the air, it must delegate to a copy
-  // of FindFaces that can also run only while the robot is in the air
+  // of FindFaces that can also run while the robot is in the air
   "anonymousBehaviors": [
     {
       "behaviorName": "ObservingFindFacesInAirInternal",
@@ -14,7 +14,10 @@
       "maxFaceAgeToLook_ms": 15000,
 
       "stoppingCondition": "None",
-      "searchBehavior": "LookInPlaceHeadUpInAir"
+      // Since this is part of HeldInPalmResponses, must delegate to a
+      // search behavior that actively monitors all actions for tread
+      // slippage.
+      "searchBehavior": "LookInPlaceHeadUpInPalm"
     }
   ],
   

@@ -16,12 +16,16 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/sdkBehaviors/behaviorSDKInterface.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/basicWorldInteractions/behaviorDriveOffCharger.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
+#include "engine/aiComponent/behaviorComponent/userIntentData.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/sdkComponent.h"
 #include "engine/components/settingsManager.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "engine/externalInterface/gatewayInterface.h"
+
+#define LOG_CHANNEL "BehaviorSDKInterface"
 
 namespace Anki {
 namespace Vector {
@@ -31,6 +35,73 @@ const char* const kBehaviorControlLevelKey = "behaviorControlLevel";
 const char* const kDisableCliffDetection = "disableCliffDetection";
 const char* const kDriveOffChargerBehaviorKey = "driveOffChargerBehavior";
 const char* const kFindAndGoToHomeBehaviorKey = "findAndGoToHomeBehavior";
+const char* const kFindFacesBehaviorKey = "findFacesBehavior";
+const char* const kLookAroundInPlaceBehaviorKey = "lookAroundInPlaceBehavior";
+const char* const kRollBlockBehaviorKey = "rollBlockBehavior";
+const char* const kEnrollFaceBehaviorKey = "enrollFaceBehavior";
+
+
+/* UserIntents that the SDK can relay to the user
+ *
+ * We don't relay messages that are consumed by higher-level behaviors
+ * We don't relay messages that aren't released
+ * We don't don't relay messages that are part of a multi-part behavior
+ * 
+ * This needs to be updated when the SDK wants to notify of new UserIntents, 
+ * or if UserIntents are replaced.
+ * 
+ * Keep the IDs (second part of the tuples) intact to avoid breaking users.
+*/
+const std::set<std::tuple<UserIntentTag, unsigned int>> kIntentWhitelist = { 
+  { UserIntentTag::character_age, 0 },
+  { UserIntentTag::check_timer, 1 },
+  { UserIntentTag::explore_start, 2 },
+  { UserIntentTag::global_stop, 3 },
+  { UserIntentTag::greeting_goodbye, 4 },
+  { UserIntentTag::greeting_goodmorning, 5 },
+  { UserIntentTag::imperative_abuse, 7 },
+  { UserIntentTag::imperative_affirmative, 8 },
+  { UserIntentTag::imperative_apology, 9 },
+  { UserIntentTag::imperative_come, 10 },
+  { UserIntentTag::imperative_dance, 11 },
+  { UserIntentTag::imperative_fetchcube, 12 },
+  { UserIntentTag::imperative_findcube, 13 },
+  { UserIntentTag::imperative_lookatme, 14 },
+  { UserIntentTag::imperative_love, 15 },
+  { UserIntentTag::imperative_praise, 16 },
+  { UserIntentTag::imperative_negative, 17 },
+  { UserIntentTag::imperative_scold, 18 },
+  { UserIntentTag::imperative_volumelevel, 19 },
+  { UserIntentTag::imperative_volumeup, 20 },
+  { UserIntentTag::imperative_volumedown, 21 },
+  { UserIntentTag::movement_backward, 23 },
+  { UserIntentTag::movement_turnleft, 24 },
+  { UserIntentTag::movement_turnright, 25 },
+  { UserIntentTag::movement_turnaround, 26 },
+  { UserIntentTag::knowledge_question, 27 },
+  { UserIntentTag::names_ask, 28 },
+  { UserIntentTag::play_anygame, 29 },
+  { UserIntentTag::play_anytrick, 30 },
+  { UserIntentTag::play_blackjack, 31 },
+  { UserIntentTag::play_fistbump, 32 },
+  { UserIntentTag::play_pickupcube, 33 },
+  { UserIntentTag::play_popawheelie, 34 },
+  { UserIntentTag::play_rollcube, 35 },
+  { UserIntentTag::seasonal_happyholidays, 36 },
+  { UserIntentTag::seasonal_happynewyear, 37 },
+  { UserIntentTag::set_timer, 38 },
+  { UserIntentTag::show_clock, 39 },
+  { UserIntentTag::take_a_photo, 40 },
+  { UserIntentTag::weather_response, 41 }
+};
+
+// special case: simple voice responses are mapped to an int via their animation group since they all live
+// under the same UserIntentTag (see VIC-14247)
+const std::set<std::tuple<std::string, unsigned int>> kSimpleVoiceResponseMap = {
+  { "ag_greeting_hello", 6},
+  { "ag_movement_forward_01", 22},
+};
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -54,6 +125,10 @@ BehaviorSDKInterface::BehaviorSDKInterface(const Json::Value& config)
   _iConfig.disableCliffDetection = JsonTools::ParseBool(config, kDisableCliffDetection, debugName);
   _iConfig.driveOffChargerBehaviorStr = JsonTools::ParseString(config, kDriveOffChargerBehaviorKey, debugName);
   _iConfig.findAndGoToHomeBehaviorStr = JsonTools::ParseString(config, kFindAndGoToHomeBehaviorKey, debugName);
+  _iConfig.findFacesBehaviorStr = JsonTools::ParseString(config, kFindFacesBehaviorKey, debugName);
+  _iConfig.lookAroundInPlaceBehaviorStr = JsonTools::ParseString(config, kLookAroundInPlaceBehaviorKey, debugName);
+  _iConfig.rollBlockBehaviorStr = JsonTools::ParseString(config, kRollBlockBehaviorKey, debugName);
+  _iConfig.enrollFaceBehaviorStr = JsonTools::ParseString(config, kEnrollFaceBehaviorKey, debugName);
 
   SubscribeToTags({
     EngineToGameTag::RobotCompletedAction,
@@ -62,6 +137,11 @@ BehaviorSDKInterface::BehaviorSDKInterface(const Json::Value& config)
   SubscribeToAppTags({
     AppToEngineTag::kDriveOffChargerRequest,
     AppToEngineTag::kDriveOnChargerRequest,
+    AppToEngineTag::kFindFacesRequest,
+    AppToEngineTag::kLookAroundInPlaceRequest,
+    AppToEngineTag::kRollBlockRequest,
+    AppToEngineTag::kEnrollFaceRequest,
+    AppToEngineTag::kCancelBehaviorRequest
   });
 }
 
@@ -88,6 +168,10 @@ void BehaviorSDKInterface::GetAllDelegates(std::set<IBehavior*>& delegates) cons
 {
   delegates.insert(_iConfig.driveOffChargerBehavior.get());
   delegates.insert(_iConfig.findAndGoToHomeBehavior.get());
+  delegates.insert(_iConfig.findFacesBehavior.get());
+  delegates.insert(_iConfig.lookAroundInPlaceBehavior.get());
+  delegates.insert(_iConfig.rollBlockBehavior.get());
+  delegates.insert(_iConfig.enrollFaceBehavior.get());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -96,11 +180,27 @@ void BehaviorSDKInterface::InitBehavior()
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.driveOffChargerBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.driveOffChargerBehaviorStr));
   DEV_ASSERT(_iConfig.driveOffChargerBehavior != nullptr,
-             "BehaviorFindFaces.InitBehavior.NullDriveOffChargerBehavior");
+             "BehaviorSDKInterface.InitBehavior.NullDriveOffChargerBehavior");
 
   _iConfig.findAndGoToHomeBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.findAndGoToHomeBehaviorStr));
   DEV_ASSERT(_iConfig.findAndGoToHomeBehavior != nullptr,
-             "BehaviorFindFaces.InitBehavior.NullFindAndGoToHomeBehavior");
+             "BehaviorSDKInterface.InitBehavior.NullFindAndGoToHomeBehavior");
+
+  _iConfig.findFacesBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.findFacesBehaviorStr));
+  DEV_ASSERT(_iConfig.findFacesBehavior != nullptr,
+             "BehaviorSDKInterface.InitBehavior.NullFindFacesBehavior");
+
+  _iConfig.lookAroundInPlaceBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.lookAroundInPlaceBehaviorStr));
+  DEV_ASSERT(_iConfig.lookAroundInPlaceBehavior != nullptr,
+             "BehaviorSDKInterface.InitBehavior.NullLookAroundInPlaceBehavior");
+
+  _iConfig.rollBlockBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.rollBlockBehaviorStr));
+  DEV_ASSERT(_iConfig.rollBlockBehavior != nullptr,
+             "BehaviorSDKInterface.InitBehavior.NullRollBlockBehavior");
+
+  _iConfig.enrollFaceBehavior = BC.FindBehaviorByID(BehaviorTypesWrapper::BehaviorIDFromString(_iConfig.enrollFaceBehaviorStr));
+  DEV_ASSERT(_iConfig.enrollFaceBehavior != nullptr,
+             "BehaviorSDKInterface.InitBehavior.NullEnrollFaceBehavior");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -111,6 +211,10 @@ void BehaviorSDKInterface::GetBehaviorJsonKeys(std::set<const char*>& expectedKe
     kDisableCliffDetection,
     kDriveOffChargerBehaviorKey,
     kFindAndGoToHomeBehaviorKey,
+    kFindFacesBehaviorKey,
+    kLookAroundInPlaceBehaviorKey,
+    kRollBlockBehaviorKey,
+    kEnrollFaceBehaviorKey,
   };
   expectedKeys.insert( std::begin(list), std::end(list) );
 }
@@ -143,6 +247,9 @@ void BehaviorSDKInterface::OnBehaviorDeactivated()
   auto& sdkComponent = robotInfo.GetSDKComponent();
   sdkComponent.SDKBehaviorActivation(false);
 
+  // Set camera back to auto-exposure
+  sdkComponent.ReleaseCameraExposure();
+
   // Unsets eye color. Also unsets any other changes though SDK only changes eye color but this is good future proofing.
   SettingsManager& settings = GetBEI().GetSettingsManager();
   settings.ApplyAllCurrentSettings();
@@ -157,6 +264,71 @@ void BehaviorSDKInterface::OnBehaviorDeactivated()
   }
 }
 
+void BehaviorSDKInterface::ProcessUserIntents()
+{
+  //pull any pending user intents so we can send them to the SDK
+  //then drop them so they are not used
+  //only accept whitelisted events to avoid unexpecxted side-effects
+  UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+  if( uic.IsAnyUserIntentPending() ) {
+    const auto* userIntentDataPtr = uic.GetPendingUserIntent();
+    if( userIntentDataPtr != nullptr ) {
+      auto intent = userIntentDataPtr->intent;
+      LOG_INFO("BehaviorSDKInterface.ProcessUserIntents.InterceptedIntent",
+               "Intercepted pending user untent ID %u json: %s",
+               (unsigned int)intent.GetTag(), intent.GetJSON().toStyledString().c_str());
+
+      unsigned int sdkIntentTag = 0;
+
+      //Special case for simple voice responses, which are all under the same intent tag
+      if( intent.GetTag() == UserIntentTag::simple_voice_response ) {
+        //Find the tuple matching the animation group from the simple response
+        const std::string& animGroup = intent.Get_simple_voice_response().anim_group;
+
+        auto it = std::find_if(kSimpleVoiceResponseMap.begin(),
+                               kSimpleVoiceResponseMap.end(),
+                               [&animGroup](const std::tuple<std::string, unsigned int>& e) {
+                                 return std::get<0>(e) == animGroup;
+                               });
+
+        if (it == kSimpleVoiceResponseMap.end()) {
+          //not found in simple voice mapping
+          LOG_INFO("BehaviorSDKInterface.ProcessUserIntents.SimpleVoiceMapMissing",
+                   "Not forwarding simple voice response, no entry for animation group '%s'",
+                   animGroup.c_str());
+          return;
+        }
+
+        sdkIntentTag = std::get<1>(*it);
+      }
+      else {
+        //Not a simple voice response intent, check the normal intent map based on the intent tag
+        auto it = std::find_if(kIntentWhitelist.begin(),
+                               kIntentWhitelist.end(),
+                               [&intent](const std::tuple<UserIntentTag, unsigned int>& e) {
+                                 return std::get<0>(e) == intent.GetTag();
+                               });
+
+        if (it == kIntentWhitelist.end()) {
+          //not found in list, not ours
+          LOG_INFO("BehaviorSDKInterface.ProcessUserIntents.IntentWhitelistMissing", "Not forwarding user intent");
+          return;
+        }
+
+        sdkIntentTag = std::get<1>(*it);
+      }
+
+      uic.DropUserIntent(intent.GetTag());
+
+      auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
+      if( gi != nullptr ) {
+        auto* userIntentMsg = new external_interface::UserIntent(sdkIntentTag, intent.GetJSON().toStyledString().c_str());
+        gi->Broadcast( ExternalMessageRouter::Wrap(userIntentMsg) );
+      }
+    }
+  }
+}
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSDKInterface::BehaviorUpdate() 
 {
@@ -165,35 +337,26 @@ void BehaviorSDKInterface::BehaviorUpdate()
   }
 
   // TODO Consider which slot should be deactivated once SDK occupies multiple slots.
-  //
-  // TODO If the external SDK code (e.g., Python) crashes or otherwise does not release
-  // control, then currently behavior will be activated indefinitely until a higher
-  // priority behavior takes over.
   auto& robotInfo = GetBEI().GetRobotInfo();
   auto& sdkComponent = robotInfo.GetSDKComponent();
   if (!sdkComponent.SDKWantsControl())
   {
     CancelSelf();
   }
+
+  ProcessUserIntents();
 }
 
-void BehaviorSDKInterface::HandleDriveOffChargerComplete() {
+template <class ResponseType>
+void BehaviorSDKInterface::HandleBehaviorComplete() {
   SetAllowExternalMovementCommands(true);
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
-    auto* driveOffChargerResponse = new external_interface::DriveOffChargerResponse;
-    driveOffChargerResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
-    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOffChargerResponse) );
-  }
-}  
-
-void BehaviorSDKInterface::HandleDriveOnChargerComplete() {
-  SetAllowExternalMovementCommands(true);
-  auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
-  if( gi != nullptr ) {
-    auto* driveOnChargerResponse = new external_interface::DriveOnChargerResponse;
-    driveOnChargerResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
-    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOnChargerResponse) );
+    auto* behaviorResponse = new ResponseType;
+    behaviorResponse->set_result( _cancelling_behaviors ? 
+                                  external_interface::BehaviorResults::BEHAVIOR_INVALID_STATE
+                                  : external_interface::BehaviorResults::BEHAVIOR_COMPLETE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(behaviorResponse) );
   }
 }
 
@@ -229,14 +392,42 @@ void BehaviorSDKInterface::SetAllowExternalMovementCommands(const bool allow) {
 }
 
 void BehaviorSDKInterface::HandleWhileActivated(const AppToEngineEvent& event) {
+  using namespace external_interface;
+  LOG_INFO("BehaviorSDKInterface::HandleWhileActivated", "Received AppToEngine message %u", (unsigned int)event.GetData().GetTag());
   switch(event.GetData().GetTag())
   {
-    case external_interface::GatewayWrapperTag::kDriveOffChargerRequest:
-      DriveOffChargerRequest(event.GetData().drive_off_charger_request());
+    case GatewayWrapperTag::kDriveOffChargerRequest:
+      BehaviorRequest<external_interface::DriveOffChargerRequest, external_interface::DriveOffChargerResponse> 
+                     (event.GetData().drive_off_charger_request(), _iConfig.driveOffChargerBehavior, "DriveOffCharger");
       break;
 
-    case external_interface::GatewayWrapperTag::kDriveOnChargerRequest:
-      DriveOnChargerRequest(event.GetData().drive_on_charger_request());
+    case GatewayWrapperTag::kDriveOnChargerRequest:
+      BehaviorRequest<external_interface::DriveOnChargerRequest, external_interface::DriveOnChargerResponse> 
+                     (event.GetData().drive_on_charger_request(), _iConfig.findAndGoToHomeBehavior, "DriveOnCharger");
+      break;
+
+    case GatewayWrapperTag::kFindFacesRequest:
+      BehaviorRequest<external_interface::FindFacesRequest, external_interface::FindFacesResponse> 
+                     (event.GetData().find_faces_request(), _iConfig.findFacesBehavior, "FindFaces");
+      break;
+
+    case GatewayWrapperTag::kLookAroundInPlaceRequest:
+      BehaviorRequest<external_interface::LookAroundInPlaceRequest, external_interface::LookAroundInPlaceResponse> 
+                     (event.GetData().look_around_in_place_request(), _iConfig.lookAroundInPlaceBehavior, "LookAroundInPlace");
+      break;
+
+    case GatewayWrapperTag::kRollBlockRequest:
+      BehaviorRequest<external_interface::RollBlockRequest, external_interface::RollBlockResponse> 
+                     (event.GetData().roll_block_request(), _iConfig.rollBlockBehavior, "RollBlock");
+      break;
+
+    case GatewayWrapperTag::kEnrollFaceRequest:
+      BehaviorRequest<external_interface::EnrollFaceRequest, external_interface::EnrollFaceResponse> 
+                     (event.GetData().enroll_face_request(), _iConfig.enrollFaceBehavior, "EnrollFace");
+      break;
+
+    case GatewayWrapperTag::kCancelBehaviorRequest:
+      StopDelegatedBehavior();
       break;
 
     default:
@@ -247,39 +438,43 @@ void BehaviorSDKInterface::HandleWhileActivated(const AppToEngineEvent& event) {
   }
 }
 
-// Delegate to the DriveOffCharger behavior
-void BehaviorSDKInterface::DriveOffChargerRequest(const external_interface::DriveOffChargerRequest& driveOffChargerRequest) {
-  if (_iConfig.driveOffChargerBehavior->WantsToBeActivated()) {
-    if (DelegateIfInControl(_iConfig.driveOffChargerBehavior.get(), &BehaviorSDKInterface::HandleDriveOffChargerComplete)) {
-      SetAllowExternalMovementCommands(false);
-      return;
-    }
-  }
+void BehaviorSDKInterface::StopDelegatedBehavior() {
+  LOG_INFO("BehaviorSDKInterface::StopDelegatedBehavior", "Stopping delegates");
+  _cancelling_behaviors = true;
+  bool result = CancelDelegates(true);
+  _cancelling_behaviors = false;
 
-  // If we got this far, we failed to activate the requested behavior.
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
-    auto* driveOffChargerResponse = new external_interface::DriveOffChargerResponse;
-    driveOffChargerResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
-    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOffChargerResponse) );
+    using namespace external_interface;
+    auto* cancelBehaviorResponse = new CancelBehaviorResponse;
+    ResponseStatus* status = new ResponseStatus(result ? 
+                                                ResponseStatus::OK
+                                                : ResponseStatus::FORBIDDEN);
+    cancelBehaviorResponse->set_allocated_status( status );
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(cancelBehaviorResponse) );
   }
 }
 
-// Delegate to FindAndGoToHome
-void BehaviorSDKInterface::DriveOnChargerRequest(const external_interface::DriveOnChargerRequest& driveOnChargerRequest) {
-  if (_iConfig.findAndGoToHomeBehavior->WantsToBeActivated()) {
-    if (DelegateIfInControl(_iConfig.findAndGoToHomeBehavior.get(), &BehaviorSDKInterface::HandleDriveOnChargerComplete)) {
+template <class RequestType, class ResponseType>
+void BehaviorSDKInterface::BehaviorRequest(const RequestType& request, ICozmoBehaviorPtr behavior, std::string behaviorName) {
+  using namespace external_interface;
+  if (behavior->WantsToBeActivated()) {
+    LOG_INFO("BehaviorSDKInterface::BehaviorRequest", "Delegating to behavior %s", behaviorName.c_str());
+
+    if (DelegateIfInControl(behavior.get(), &BehaviorSDKInterface::HandleBehaviorComplete<ResponseType>)) {
       SetAllowExternalMovementCommands(false);
       return;
     }
   }
 
   // If we got this far, we failed to activate the requested behavior.
+  LOG_ERROR("BehaviorSDKInterface::BehaviorRequest", "Behavior %s did not want to be activated/delegated", behaviorName.c_str());
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
   if( gi != nullptr ) {
-    auto* driveOnChargerResponse = new external_interface::DriveOnChargerResponse;
-    driveOnChargerResponse->set_result(external_interface::BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
-    gi->Broadcast( ExternalMessageRouter::WrapResponse(driveOnChargerResponse) );
+    auto* behaviorResponse = new ResponseType;
+    behaviorResponse->set_result(BehaviorResults::BEHAVIOR_WONT_ACTIVATE_STATE);
+    gi->Broadcast( ExternalMessageRouter::WrapResponse(behaviorResponse) );
   }
 }
 

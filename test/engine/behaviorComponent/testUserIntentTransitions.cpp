@@ -16,7 +16,6 @@
 
 #include "clad/types/behaviorComponent/behaviorClasses.h"
 #include "clad/types/behaviorComponent/behaviorIDs.h"
-#include "clad/types/behaviorComponent/userIntent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorSystemManager.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
@@ -58,12 +57,7 @@ bool IntentHelper( const UserIntent& intent, BehaviorID behavior, bool onlyCheck
   const bool res = tif.TestUserIntentTransition(tbf, stack, intent, behavior, onlyCheckInStack );
   return res;
 }
-  
-bool PlaySpecificHelper( std::string entityBehavior, BehaviorID behavior, bool onlyCheckInStack = false )
-{
-  UserIntent intent( UserIntent_PlaySpecific{entityBehavior} );  
-  return IntentHelper( intent, behavior, onlyCheckInStack );
-}
+
 
 // keep_away was removed from entity_behavior_entries_en.json in April
 // (see https://github.com/anki/voice-intent-resolution-config/pull/33/files)
@@ -76,13 +70,13 @@ bool PlaySpecificHelper( std::string entityBehavior, BehaviorID behavior, bool o
 
 TEST_INTENT(UserIntentsTransitions, FistBump, "fist_bump")
 {
-  const bool res = PlaySpecificHelper( "fist_bump", BehaviorID::FistBumpVoiceCommand, true );
+  const bool res = IntentHelper( UserIntent::Createplay_fistbump({}), BehaviorID::FistBumpVoiceCommand, true );
   EXPECT_TRUE(res);
 }
   
 TEST_INTENT(UserIntentsTransitions, RollCube, "roll_cube")
 {
-  const bool res = PlaySpecificHelper( "roll_cube", BehaviorID::RollCubeVoiceCommand, true );
+  const bool res = IntentHelper( UserIntent::Createplay_rollcube({}), BehaviorID::RollCubeVoiceCommand, true );
   EXPECT_TRUE(res);
 }
 

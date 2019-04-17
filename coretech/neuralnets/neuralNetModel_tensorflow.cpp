@@ -13,10 +13,10 @@
 #ifdef ANKI_NEURALNETS_USE_TENSORFLOW
 
 #include "coretech/common/shared/types.h"
-#include "coretech/common/engine/math/polygon_impl.h"
-#include "coretech/common/shared/math/rect_impl.h"
+#include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/shared/math/rect.h"
 #include "coretech/neuralnets/neuralNetModel_tensorflow.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 
 #include "tensorflow/core/framework/graph.pb.h"
 #include "tensorflow/core/framework/graph_def_util.h"

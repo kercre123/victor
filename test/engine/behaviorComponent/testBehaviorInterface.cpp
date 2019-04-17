@@ -14,7 +14,6 @@
 
 #include "clad/types/behaviorComponent/behaviorClasses.h"
 #include "clad/types/behaviorComponent/behaviorIDs.h"
-#include "clad/types/behaviorComponent/userIntent.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/basicActions.h"
 #include "engine/aiComponent/aiComponent.h"
@@ -708,9 +707,6 @@ public:
       intent.Set_test_name( UserIntent_Test_Name{""} );
       AddWaitForUserIntent( std::move(intent) );
     }
-    else if( _type == "trigger" ) {
-      SetRespondToTriggerWord( true );
-    }
     // otherwise don't do anything
   }
   
@@ -760,9 +756,6 @@ TEST(BehaviorInterface, BehaviorRespondsToUserIntents)
     }
     else if( i == 10 || i == 11 ) { // 10-11 are intents with null string (intent with null string, intent with nonnull string)
       config["responseType"] = "user intent intent empty";
-    }
-    else if( i == 12 ) { // 12 is trigger
-      config["responseType"] = "trigger";
     }
     TestBehavior_RespondsUserIntents b(config);
     
@@ -857,15 +850,6 @@ TEST(BehaviorInterface, BehaviorRespondsToUserIntents)
         b.OnActivated();
         EXPECT_FALSE( uic.IsUserIntentPending(USER_INTENT(test_name)) );
         EXPECT_FALSE( uic.IsAnyUserIntentPending() );
-      }
-        break;
-      case 12: // behavior is waiting for a trigger
-      {
-        EXPECT_FALSE( b.WantsToBeActivated() );
-        uic.SetTriggerWordPending(true);
-        EXPECT_TRUE( b.WantsToBeActivated() );
-        b.OnActivated();
-        EXPECT_FALSE( uic.IsTriggerWordPending() );
       }
         break;
     }

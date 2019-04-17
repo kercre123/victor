@@ -46,12 +46,13 @@
 
 namespace Anki {
 namespace Vector {
+namespace Anim {
 
 namespace{
 const char* kPathToExternalIndependentSprites = "assets/sprites/independentSprites/";
-const char* kPathToEngineIndependentSprites = "config/devOnlySprites/independentSprites/";
+const char* kPathToEngineIndependentSprites = "config/sprites/independentSprites/";
 const char* kPathToExternalSpriteSequences = "assets/sprites/spriteSequences/";
-const char* kPathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequences/";
+const char* kPathToEngineSpriteSequences   = "config/sprites/spriteSequences/";
 const char* kProceduralAnimName = "_PROCEDURAL_";
 }
 
@@ -332,6 +333,6 @@ void RobotDataLoader::LoadBackpackLightAnimationFile(const std::string& path)
   }
 }
 
-  
+}
 }
 }

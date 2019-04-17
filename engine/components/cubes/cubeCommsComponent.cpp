@@ -324,11 +324,12 @@ bool CubeCommsComponent::SendCubeLights(const CubeLights& cubeLights)
                             cubeLightKeyframeChunks);
   
   for (auto& keyframeMsg : cubeLightKeyframeChunks) {
+    const auto startingIndex = keyframeMsg.startingIndex;
     MessageEngineToCube cubeKeyframeChunkMsg(std::move(keyframeMsg));
     if (!SendCubeMessage(cubeKeyframeChunkMsg)) {
       PRINT_NAMED_WARNING("CubeCommsComponent.SendCubeLights.FailedSendingChunk",
                           "Failed to send CubeLightKeyframeChunk message (starting index %d)",
-                          keyframeMsg.startingIndex);
+                          startingIndex);
       return false;
     }
   }
@@ -621,10 +622,8 @@ void CubeCommsComponent::OnCubeConnected(const BleFactoryId& factoryId)
     LOG_INFO("CubeCommsComponent.OnCubeConnected.Connected",
                      "Object %d (activeID %d, factoryID %s)",
                      objID.GetValue(), activeId, factoryId.c_str());
-  }
   
-  // TODO: arguably blockworld should do this, because when do we want to remove/add objects and not notify?
-  if (objID.IsSet()) {
+    // TODO: arguably blockworld should do this, because when do we want to remove/add objects and not notify?
     // Send connection message to game
     using namespace ExternalInterface;
     _robot->Broadcast(MessageEngineToGame(ObjectConnectionState(objID.GetValue(),

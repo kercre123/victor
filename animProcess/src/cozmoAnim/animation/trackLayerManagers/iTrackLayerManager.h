@@ -22,6 +22,7 @@
 
 namespace Anki {
 namespace Vector {
+namespace Anim {
 
 template<class FRAME_TYPE>
 class ITrackLayerManager
@@ -94,6 +95,7 @@ private:
   void ValidateTrack(const Animations::Track<FRAME_TYPE>& track);
 };
 
+}
 }
 }
 
