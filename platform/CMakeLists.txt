@@ -33,6 +33,8 @@ add_subdirectory(arf_tester)
 
 add_subdirectory(royale_depth_node)
 
+add_subdirectory(robot_to_arf)
+
 #
 # Macro command to create build rules for full symbol files
 #

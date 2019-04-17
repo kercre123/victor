@@ -4,7 +4,8 @@ cxx_project(
                         excludes = ['*_vicos.*',
                                     'vicos/**/*',
                                     '**/test/*',
-                                    '*_mac.*']),
+                                    '*_mac.*',
+                                    '*_opencv.*']),
     platform_srcs = [
         ('vicos', glob(['vicos/**/*.cpp',
                           '**/*_vicos.cpp'])),
