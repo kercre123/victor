@@ -123,7 +123,9 @@
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Localized to object ID",    units:"" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Status flags",              units:"" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Mic recent direction",      units:"" },
-        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Mic selected direction",    units:"" }
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Mic selected direction",    units:"" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:15,     desc:"Camera frame rate",         units:"fps" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:15,     desc:"Vision processing rate",    units:"fps" }
     ];
 
     var pmAutoUpdate = true;
@@ -195,11 +197,6 @@
     }
 
     var dialogOKFunction = undefined;
-
-    function newlineToBr(str) {
-      var breakTag = '<br>';
-      return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1'+ breakTag +'$2');
-    }
 
     function preserveSpaces(str) {
       return str.replace(" ","&nbsp;");
@@ -1089,7 +1086,7 @@
         $("input[type='submit']").click(function(event) {
             if (event.target.value == 'consolevars') {
                 $('#content_console_vars').html("Loading...");
-                $.post("/" + event.target.value, function(data) {
+                $.post("/" + event.target.value + "?embedded", function(data) {
                     $('#content_console_vars').html(data);
                     $('#content_console_vars').show();
                     InitConfirmDialog();

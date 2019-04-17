@@ -35,7 +35,7 @@ fi
 # Deploy to robot?  We put the executable into /usr/bin so that it will not be
 # affected by deployments into /anki.
 #
-DEPLOY_FROM="${TOPLEVEL}/EXTERNALS/lldb-server/vicos/bin/lldb-server"
+DEPLOY_FROM="${TOPLEVEL}/3rd/lldb-server/vicos/bin/lldb-server"
 DEPLOY_TO="/usr/bin/lldb-server"
 
 robot_sh "test -f ${DEPLOY_TO}"

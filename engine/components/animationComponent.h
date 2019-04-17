@@ -131,6 +131,13 @@ public:
                                 bool interruptRunning = true,
                                 bool emptySpriteBoxesAreValid = false,
                                 AnimationCompleteCallback callback = nullptr);
+
+  using RemapMap = std::unordered_map<Vision::SpriteBoxName, std::string>;
+  Result PlayAnimWithSpriteBoxRemaps(const std::string& animName,
+                                     const RemapMap& remaps,
+                                     bool interruptRunning = true,
+                                     AnimationCompleteCallback callback = nullptr,
+                                     const std::string& lockFaceAtEndOfAnimTag = "");
   
   bool IsPlayingAnimation() const { return _callbackMap.size() > 0; }
   

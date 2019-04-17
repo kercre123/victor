@@ -29,6 +29,7 @@ namespace Animations{
 
 namespace{
 const char* kClearSpriteBox  = "clear_sprite_box";
+const char* kEmptySpriteBox  = "empty_sprite_box";
 
 const char* kSpriteBoxNameKey = "spriteBoxName";
 const char* kTriggerTimeKey   = "triggerTime_ms";
@@ -166,6 +167,36 @@ Result SpriteBoxCompositor::AddKeyFrameInternal(const std::string& spriteBoxName
   }
 
   return Result::RESULT_OK;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpriteBoxCompositor::AddSpriteBoxRemap(const Vision::SpriteBoxName spriteBox, const std::string& remappedAssetName)
+{
+  if(kClearSpriteBox == remappedAssetName){
+    LOG_WARNING("SpriteBoxCompositor.AddSpriteBoxRemap.InvalidRemap",
+                "kClearSpriteBox is not valid from engine, use kEmptySpriteBox to override an SB to display nothing");
+    return;
+  }
+
+  const std::string& spriteBoxName = Vision::SpriteBoxNameToString(spriteBox);
+  if(IsEmpty()){
+    LOG_ERROR("SpriteBoxCompositor.AddSpriteBoxRemap.EmptyCompositor",
+              "Attempted to add remap for SpriteBox %s with remapped asset name %s",
+              spriteBoxName.c_str(),
+              remappedAssetName.c_str());
+    return;
+  }
+
+  auto iter = _spriteBoxMap->find(spriteBoxName);
+  if(_spriteBoxMap->end() == iter){
+    LOG_ERROR("SpriteBoxCompositor.AddSpriteBoxRemap.InvalidSpriteBox",
+              "Attempted to add remap for invalid SpriteBox %s with remapped asset name %s",
+              spriteBoxName.c_str(),
+              remappedAssetName.c_str());
+    return;
+  }
+
+  iter->second.SetAssetRemap(remappedAssetName);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -337,6 +368,20 @@ SpriteBoxTrack::SpriteBoxTrack()
 , _firstKeyFrameTime_ms(std::numeric_limits<TimeStamp_t>::max())
 , _lastKeyFrameTime_ms(0)
 , _iteratorsAreValid(false)
+, _remappedAssetName()
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SpriteBoxTrack::SpriteBoxTrack(const SpriteBoxTrack& other)
+:_track(other._track)
+// last access should not copy
+, _lastAccessTime_ms(0)
+, _firstKeyFrameTime_ms(other._firstKeyFrameTime_ms)
+, _lastKeyFrameTime_ms(other._lastKeyFrameTime_ms)
+// Remaps and iterators do not copy
+, _iteratorsAreValid(false)
+, _remappedAssetName()
 {
 }
 
@@ -382,12 +427,7 @@ void SpriteBoxTrack::ClearUpToTime(const TimeStamp_t toTime_ms)
     _firstKeyFrameTime_ms = _track.begin()->triggerTime_ms;
   }
 
-  if(kClearSpriteBox == currentKeyFrameIter->assetName){
-    _track.erase(currentKeyFrameIter);
-    modifiedTrack = true;
-  }
-
-  _iteratorsAreValid = !modifiedTrack;
+  _iteratorsAreValid &= !modifiedTrack;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -414,8 +454,19 @@ bool SpriteBoxTrack::GetCurrentKeyFrame(const TimeStamp_t timeSinceAnimStart_ms,
   }
   outKeyFrame = *_currentKeyFrameIter;
 
-  if(outKeyFrame.assetName == kClearSpriteBox){
-    // This "clear" keyframe is simply terminating whatever was being displayed.
+  // Clear keyframes take precedence over remaps
+  if(kClearSpriteBox == outKeyFrame.assetName){
+    // Nothing to display
+    return false;
+  }
+
+  if(!_remappedAssetName.empty()){
+    outKeyFrame.assetName = _remappedAssetName;
+  }
+
+  // SpriteBoxes can be remapped to Empty from the engine
+  if(kEmptySpriteBox == outKeyFrame.assetName){
+    // Nothing to display
     return false;
   }
 

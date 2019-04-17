@@ -69,6 +69,7 @@ message Event {
     UserIntent                       user_intent                         = 19;
     RobotObservedMotion              robot_observed_motion               = 20;
     RobotErasedEnrolledFace          robot_erased_enrolled_face          = 21;
+    RobotRenamedEnrolledFace         robot_renamed_enrolled_face         = 22;
   }
 }
 
@@ -299,6 +300,8 @@ message GatewayWrapper {
     SetEyeColorResponse           set_eye_color_response             = 1701;
     MasterVolumeRequest           master_volume_request              = 1702;
     MasterVolumeResponse          master_volume_response             = 1703;
+    SetCameraSettingsRequest      set_camera_settings_request        = 1704;
+    SetCameraSettingsResponse     set_camera_settings_response       = 1705;
 
     // ------------ Streaming audio playback (SDK only) ------------
     ExternalAudioStreamPrepare    external_audio_stream_prepare      = 1800;

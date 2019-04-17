@@ -27,7 +27,7 @@ buildConfigMap = [:]
 
 def server = Artifactory.server 'artifactory-dev'
 library 'victor-helpers@master'
-@Library('static-libs')
+@Library('static-libs@master')
 import com.anki.*
 
 primaryStageName = ''
@@ -266,24 +266,22 @@ stage("${primaryStageName} Build") {
                     def ghsb = new GithubStatusMsgBuilder(this, buildFlavor)
                     gitCheckout(true)
                     withDockerEnv {
-                        ghsb.postBuildStart()
-                        buildPRStepsVicOS type: buildFlavor
-                        ghsb.postBuildFinished('SUCCESS')
-                        notifyBuildStatus('Success', buildFlavor)
+                        try {
+                            ghsb.postBuildStart()
+                            buildPRStepsVicOS type: buildFlavor
+                            ghsb.postBuildFinished('SUCCESS')
+                            notifyBuildStatus('Success', buildFlavor)
+                        } catch (exc) {
+                            ghsb.postBuildFinished('FAILURE')
+                            notifyBuildStatus('Failure', buildFlavor)
+                            throw exc
+                        }
                     }
                 }
             }
         }
         parallel buildConfigMap
-    } catch (FlowInterruptedException ae) {
-        node(uuid) {
-            notifyBuildStatus('Aborted', 'shipping')
-        }
-        throw ae
     } catch (exc) {
-        node(uuid) {
-            notifyBuildStatus('Failure', 'shipping')
-        }
         throw exc
     } finally {
         node('master') {

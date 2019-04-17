@@ -2745,7 +2745,7 @@ bool Robot::UpdateGyroCalibChecks(Result& res)
     // but we haven't received syncTime yet likely because the gyro hasn't calibrated
     GetAnimationComponent().Init();
 
-    static const std::string kGyroNotCalibratedImg = "config/devOnlySprites/independentSprites/battery_low.png";
+    static const std::string kGyroNotCalibratedImg = "config/sprites/independentSprites/battery_low.png";
     const std::string imgPath = GetContextDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
                                                                          kGyroNotCalibratedImg);
     Vision::ImageRGB img;

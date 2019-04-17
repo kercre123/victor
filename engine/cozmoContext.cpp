@@ -1,3 +1,16 @@
+/**
+ * File: cozmoContext.cpp
+ *
+ * Author: Lee Crippen
+ * Created: 1/29/2016
+ *
+ * Description: Holds references to components and systems that are used often by all different parts of code,
+ *              where it is unclear who the appropriate owner of that system would be.
+ *              NOT intended to be a container to hold ALL systems and components, which would simply be lazy.
+ *
+ * Copyright: Anki, Inc. 2016
+ *
+ **/
 
 #include "engine/cozmoContext.h"
 
@@ -6,6 +19,7 @@
 #include "engine/perfMetricEngine.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotManager.h"
+#include "engine/robotTest.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/cozmoFeatureGate.h"
 #include "engine/viz/vizManager.h"
@@ -41,6 +55,7 @@ CozmoContext::CozmoContext(Util::Data::DataPlatform* dataPlatform, IExternalInte
   , _cozmoExperiments(new CozmoExperiments(this))
   , _perfMetric(new PerfMetricEngine(this))
   , _webService(new WebService::WebService())
+  , _robotTest(new RobotTest(this))
 {
 }
 

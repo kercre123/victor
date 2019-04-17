@@ -4,11 +4,11 @@ endif(PFFFT_INCLUDED)
 set(PFFFT_INCLUDED true)
 
 if (VICOS)
-  set(LIBPFFFT_INCLUDE_PATH "${ANKI_EXTERNAL_DIR}/pffft/vicos/include")
-  set(LIBPFFFT_LIB_PATH "${ANKI_EXTERNAL_DIR}/pffft/vicos/lib")
+  set(LIBPFFFT_INCLUDE_PATH "${ANKI_THIRD_PARTY_DIR}/pffft/vicos/include")
+  set(LIBPFFFT_LIB_PATH "${ANKI_THIRD_PARTY_DIR}/pffft/vicos/lib")
 elseif (MACOSX)
-  set(LIBPFFFT_INCLUDE_PATH "${ANKI_EXTERNAL_DIR}/pffft/mac/include")
-  set(LIBPFFFT_LIB_PATH "${ANKI_EXTERNAL_DIR}/pffft/mac/lib")
+  set(LIBPFFFT_INCLUDE_PATH "${ANKI_THIRD_PARTY_DIR}/pffft/mac/include")
+  set(LIBPFFFT_LIB_PATH "${ANKI_THIRD_PARTY_DIR}/pffft/mac/lib")
 endif()
 
 

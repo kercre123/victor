@@ -134,12 +134,6 @@ message EnrolledNamesResponse {
   LoadedKnownFace faces[uint_8],
 }
 
-// NOTE: This is separate from deleting an _observed_ face.
-message RobotErasedEnrolledFace {
-    int_32 faceID,
-    string name
-}
-
 structure AccelData {
   float_32 x,  // mm/s^2
   float_32 y,
@@ -250,52 +244,6 @@ message RobotChangedObservedFaceID {
     int_32   newID
 }
 
-// RobotObservedMotion
-message RobotObservedMotion {
-    uint_32  timestamp,     // Of the corresponding image
-
-    // Area of the supporting region for the point, as a fraction of the image
-    float_32 img_area,
-    // Pixel coordinate of the point in the image, relative to top-left corner.
-    int_16   img_x,
-    int_16   img_y,
-
-    // Area of the supporting region for the point, as a fraction of the ground ROI
-    // If unable to map to the ground, area=0
-    float_32 ground_area,
-    // Coordinates of the point on the ground, relative to robot, in mm
-    int_16   ground_x,
-    int_16   ground_y,
-
-    // Top area
-    // Area of the supporting region for the point, as a fraction of the top region (size specified in vision_config.json)
-    float_32 top_img_area,
-    // Pixel coordinate of the point in the image, relative to top-left corner.
-    int_16   top_img_x,
-    int_16   top_img_y,
-
-    // Bottom area
-    // Area of the supporting region for the point, as a fraction of the bottom region (size specified in vision_config.json)
-    float_32 bottom_img_area,
-    // Pixel coordinate of the point in the image, relative to top-left corner.
-    int_16   bottom_img_x,
-    int_16   bottom_img_y,
-
-    // Left area
-    // Area of the supporting region for the point, as a fraction of the left region (size specified in vision_config.json)
-    float_32 left_img_area,
-    // Pixel coordinate of the point in the image, relative to top-left corner.
-    int_16   left_img_x,
-    int_16   left_img_y,
-
-    // Right area
-    // Area of the supporting region for the point, as a fraction of the right region (size specified in vision_config.json)
-    float_32 right_img_area,
-    // Pixel coordinate of the point in the image, relative to top-left corner.
-    int_16   right_img_x,
-    int_16   right_img_y
-}
-
 // Anything that the robot wishes to push to the app that 
 // is not a response to a request from the app.
 // DEPRECATED. Please try to use protobuf's Event instead
@@ -392,8 +340,6 @@ union MessageRobotToExternal {
   MemoryMapMessageBegin             MemoryMapMessageBegin              = 0x16,
   MemoryMapMessage                  MemoryMapMessage                   = 0x17,
   MemoryMapMessageEnd               MemoryMapMessageEnd                = 0x18,
-  RobotObservedMotion               RobotObservedMotion                = 0x19,
-  RobotErasedEnrolledFace           RobotErasedEnrolledFace            = 0x20,
 }
 
 } // Gateway

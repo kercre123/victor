@@ -94,15 +94,17 @@ if [[ $returnString = *"Not found"* ]]; then
   echo "The build of Victor running on ${ANKI_ROBOT_HOST} may not have PerfMetric enabled (ANKI_PERF_METRIC_ENABLED)"
   exit 1
 fi
+curl -s "${ANKI_ROBOT_HOST}:8889/$cmd"
 sleep ${RECORDING_TIME_SECONDS}
-cmd='perfmetric?stop&dumplogall&dumpfiles&dumpresponse'
+cmd='perfmetric?dumpfiles&dumpresponse'
 if [ ${VERBOSE} -eq "1" ]; then
   cmd=${cmd}all
 fi
 curl -s ${ANKI_ROBOT_HOST}:8888/$cmd
+curl -s ${ANKI_ROBOT_HOST}:8889/$cmd
 
 echo "Done"
-echo "Results also dumped to log, and to .csv and .txt files on host (cache/perfMetricLogs)"
+echo "Results also dumped .csv and .txt files on host (cache/perfMetricLogs)"
 
 # Below is sample script code for pulling latest file out of a folder.
 # We could do something like this to pull the latest dump file(s) off

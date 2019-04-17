@@ -2,11 +2,10 @@
   "behaviorClass": "DisplayWeather",
   "behaviorID" : "WeatherCloudyGeneric",
 
-  "animationName" : "anim_weather_cloud_01",
-  "imageLayouts" : [
-    "WeatherCondCloudy_01"
-  ],
-  "imageMaps" : [
-    "WeatherCondCloudy_01"
-  ]
+  // VIC-14450 Convert Weather to animation groups and refactor animations
+  // Hand(engineer) built placeholder animations made by adding SpriteBoxKeyFrames to the original
+  // animations are providing Weather functionality for now. This way the animation team can convert
+  // the existing animations (if desired) and they can be substituted when ready without an interruption
+  // to Weather's functionality in Master, at which time the placeholders can be deleted.
+  "animationName" : "anim_weather_cloud_01_temp_remap"
 }

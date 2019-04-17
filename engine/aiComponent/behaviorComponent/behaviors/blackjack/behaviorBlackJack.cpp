@@ -571,7 +571,7 @@ void BehaviorBlackJack::TransitionToPlayAgain()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorBlackJack::TransitionToGetOut()
 {
-  _visualizer.ClearCards(GetBEI());
+  _visualizer.ResetHands();
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::BlackJack_Quit), [this]()
     {
       CancelSelf();

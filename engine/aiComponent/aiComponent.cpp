@@ -133,7 +133,7 @@ void AIComponent::CheckForSuddenObstacle(Robot& robot)
   std::vector<Radians> angleVec;  // set of angles from history
   angleVec.reserve(kNumRequiredSamples);
 
-  const auto&            states  = robot.GetStateHistory()->GetRawPoses();
+  const auto&            states  = robot.GetStateHistory()->GetRawStates();
   const RobotTimeStamp_t endTime = robot.GetLastMsgTimestamp() - kObsSampleWindow_ms;
 
   int n = 0;

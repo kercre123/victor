@@ -225,42 +225,6 @@ func CladRobotChangedObservedFaceIDToProto(msg *gw_clad.RobotChangedObservedFace
 	}
 }
 
-func CladRobotObservedMotionToProto(msg *gw_clad.RobotObservedMotion) *extint.RobotObservedMotion {
-	return &extint.RobotObservedMotion{
-		Timestamp:     msg.Timestamp,
-		ImgArea:       msg.ImgArea,
-		ImgX:          int32(msg.ImgX),
-		ImgY:          int32(msg.ImgY),
-
-		GroundArea:    msg.GroundArea,
-		GroundX:       int32(msg.GroundX),
-		GroundY:       int32(msg.GroundY),
-
-		TopImgArea:    msg.TopImgArea,
-		TopImgX:       int32(msg.TopImgX),
-		TopImgY:       int32(msg.TopImgY),
-
-		BottomImgArea: msg.BottomImgArea,
-		BottomImgX:    int32(msg.BottomImgX),
-		BottomImgY:    int32(msg.BottomImgY),
-
-		LeftImgArea:   msg.LeftImgArea,
-		LeftImgX:      int32(msg.LeftImgX),
-		LeftImgY:      int32(msg.LeftImgY),
-
-		RightImgArea:  msg.RightImgArea,
-		RightImgX:     int32(msg.RightImgX),
-		RightImgY:     int32(msg.RightImgY),
-	}
-}
-
-func CladRobotErasedEnrolledFaceToProto(msg *gw_clad.RobotErasedEnrolledFace) *extint.RobotErasedEnrolledFace {
-	return &extint.RobotErasedEnrolledFace{
-		FaceId:         msg.FaceID,
-		Name:           msg.Name,
-	}
-}
-
 func CladPoseToProto(msg *gw_clad.PoseStruct3d) *extint.PoseStruct {
 	return &extint.PoseStruct{
 		X:        msg.X,
@@ -3481,7 +3445,8 @@ func newServer() *rpcService {
 }
 
 // Set Eye Color (SDK only)
-// TODO Set eye color back to Settings value in internal code when SDK program ends or loses behavior control (e.g., in go code or when SDK behavior deactivates)
+// TODO Set eye color back to Settings value in internal code when SDK program ends or loses behavior control
+// (e.g., in go code or when SDK behavior deactivates)
 func (service *rpcService) SetEyeColor(ctx context.Context, in *extint.SetEyeColorRequest) (*extint.SetEyeColorResponse, error) {
 	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_SetEyeColorRequest{
@@ -3496,6 +3461,31 @@ func (service *rpcService) SetEyeColor(ctx context.Context, in *extint.SetEyeCol
 			Code: extint.ResponseStatus_REQUEST_PROCESSING,
 		},
 	}, nil
+}
+
+// Set Camera Settings
+func (service *rpcService) SetCameraSettings(ctx context.Context, in *extint.SetCameraSettingsRequest) (*extint.SetCameraSettingsResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_SetCameraSettingsResponse{}, 1)
+	defer f()
+
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_SetCameraSettingsRequest{
+			SetCameraSettingsRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := payload.GetSetCameraSettingsResponse()
+	response.Status = &extint.ResponseStatus{
+		Code: extint.ResponseStatus_RESPONSE_RECEIVED,
+	}
+	return response, nil
 }
 
 func (service *rpcService) ExternalAudioStreamRequestToGatewayWrapper(request *extint.ExternalAudioStreamRequest) (*extint.GatewayWrapper, error) {

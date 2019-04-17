@@ -76,6 +76,7 @@ public:
 
   template<typename T>
   void HandleMessage(const T& msg);
+  void ReleaseCameraExposure();
 
 private:
 
@@ -115,6 +116,7 @@ private:
   void HandleAudioStreamCancelRequest(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void HandleStreamStatusEvent(SDKAudioStreamingState streamStatusId, int audioFramesReceived, int audioFramesPlayed);
   void SetMasterVolume(const AnkiEvent<external_interface::GatewayWrapper>& event);
+  void SetCameraSettings(const AnkiEvent<external_interface::GatewayWrapper>& event);
 };
 
 } // namespace Vector

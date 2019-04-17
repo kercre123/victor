@@ -351,7 +351,7 @@ void MovementComponent::CheckForUnexpectedMovement(const Vector::RobotState& rob
     const bool isValidTypeOfUnexpectedMovement = (unexpectedMovementType == UnexpectedMovementType::TURNED_BUT_STOPPED ||
                                                   unexpectedMovementType == UnexpectedMovementType::TURNED_IN_OPPOSITE_DIRECTION);
     
-    if (kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement)
+    if (kCreateUnexpectedMovementObstacles && isValidTypeOfUnexpectedMovement && !_heldInPalmModeEnabled)
     {
       // Add obstacle based on when this started and how robot was trying to turn
       // TODO: Broadcast sufficient information to blockworld and do it there?
@@ -990,6 +990,18 @@ void MovementComponent::LockTracks(uint8_t tracks, const std::string& who, const
              debugName.c_str(),
              who.c_str());
     PrintLockState();
+  }
+}
+
+void MovementComponent::RecordTracksLocked(u8 tracks, const std::string& who)
+{
+  for (int i=0; i < (int)AnimConstants::NUM_TRACKS; i++)
+  {
+    uint8_t curTrack = (1 << i);
+    if ((tracks & curTrack) == curTrack)
+    {
+      _trackLockCount[i].insert({who, who});
+    }
   }
 }
 

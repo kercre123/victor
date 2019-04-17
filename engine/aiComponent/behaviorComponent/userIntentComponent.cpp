@@ -27,6 +27,7 @@
 #include "engine/robot.h"
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
+#include "engine/robotTest.h"
 #include "engine/unitTestKey.h"
 #include "engine/utils/cozmoFeatureGate.h"
 
@@ -243,7 +244,7 @@ void UserIntentComponent::DeactivateUserIntent(UserIntentTag userIntent)
   if (userIntent != UserIntentTag::INVALID) {
     _activeIntentFeedback.Deactivate(userIntent);
   }
-    
+
   if (!IsUserIntentActive(userIntent)) {
     LOG_ERROR("UserIntentComponent.DeactivateUserIntent.NotActive",
               "Attempting to deactivate intent '%s' (activated by %s) but '%s' is active",
@@ -260,6 +261,11 @@ void UserIntentComponent::DeactivateUserIntent(UserIntentTag userIntent)
   _activeIntent.reset();
   _activeIntentOwner.clear();
 
+  if (_robot) // No robot pointer in 'test_engine', so must check here at runtime
+  {
+    auto* rt = _robot->GetContext()->GetRobotTest();
+    rt->OnCloudIntentCompleted();
+  }
 }
 
 void UserIntentComponent::StopActiveUserIntentFeedback()

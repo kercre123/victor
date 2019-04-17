@@ -30,7 +30,8 @@ namespace Vector {
     Illumination,
     Viz,                    // For getting images out of VisionSystem to send to Viz/SDK
     MirrorMode,             // Draw images/detections on the robot's face, mirrored
-    
+    Offboard,               // Attempts to send images over a network for development
+
     // This is a gross thing to do: a mode to disable another mode. TODO: Remove with VIC-6838
     // If this is "enabled", then it takes precedence over Markers mode above and will force that
     // mode to be skipped.
@@ -107,7 +108,8 @@ namespace Vector {
     Faces_Blink              = 1,
     Faces_Crop               = 1,
     AutoExp_MinGain          = 1,
-
+    Offboard                 = 1,
+    
     AutoExp_Cycling          = 0,
     Markers_Composite        = 0,
 

@@ -824,6 +824,32 @@ namespace Anim {
     _expectingCompositeImage = true;
   }
 
+  void AnimationStreamer::Process_playAnimWithSpriteBoxRemaps(const RobotInterface::PlayAnimWithSpriteBoxRemaps& msg)
+  {
+    const u32 numLoops = 1;
+    const u32 startAtTime_ms = 0;
+    const bool interruptRunning = true;
+    const bool shouldOverrideEyeHue = true;
+    const bool shouldRenderInEyeHue = false;
+    const bool isInternalAnim = false;
+
+    // Hack: if _streamingAnimation == _proceduralAnimation, the subsequent CopyIntoProceduralAnimation call
+    // will delete *_streamingAnimation without assigning it to nullptr. This assignment prevents associated
+    // undefined behavior
+    _streamingAnimation = _neutralFaceAnimation;
+    const std::string animName(msg.animName, msg.animName_length);
+    CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(animName));
+    const Vision::SpritePathMap& spritePathMap = *_context->GetDataLoader()->GetSpritePaths();
+    for (int i = 0; i < msg.numRemaps; ++i)
+    {
+      _proceduralAnimation->AddSpriteBoxRemap(msg.spriteBoxRemaps[i].spriteBoxName,
+                                              spritePathMap.GetAssetName(msg.spriteBoxRemaps[i].remappedAssetID));
+    }
+    SetStreamingAnimation(_proceduralAnimation, msg.tag, numLoops, startAtTime_ms, interruptRunning,
+                          shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
+    _lockFaceTrackAtEndOfStreamingAnimation = msg.lockFaceAtEndOfAnim;
+  }
+
   // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
   // refactor this method around the SpriteBoxCompositor
   Result AnimationStreamer::SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms)
@@ -1007,6 +1033,7 @@ namespace Anim {
     }
     _relativeStreamTime_ms = 0;
     _expectingCompositeImage = false;
+    _lockFaceTrackAtEndOfStreamingAnimation = false;
   } // Abort()
 
 
@@ -1671,8 +1698,8 @@ namespace Anim {
     static const bool kStoreFace = true;
     ExtractMessagesRelatedToProceduralTrackComponent(_context, _streamingAnimation, _proceduralTrackComponent.get(),
                                                      _lockedTracks, _relativeStreamTime_ms, kStoreFace, stateToSend);
-    // Functionally, this checks whether we rendered the SpriteTrack during EMRTPTC above.
 
+    // Functionally, this checks whether we rendered the SpriteTrack during EMRTPTC above.
     // If we did, we note it by preventing procedural face draws for a while. Move it somewhere appropriate.
     auto & spriteSeqTrack = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>();
     if (ShouldRenderSpriteTrack(spriteSeqTrack, _lockedTracks, _relativeStreamTime_ms, false))
@@ -1870,6 +1897,10 @@ namespace Anim {
         {
           StopTracksInUse(false);
           lastResult = SendEndOfAnimation();
+          if(_lockFaceTrackAtEndOfStreamingAnimation){
+            LockTrack(AnimTrackFlag::FACE_TRACK);
+            _lockFaceTrackAtEndOfStreamingAnimation = false;
+          }
           if (_animAudioClient->HasActiveEvents())
           {
             LOG_WARNING("AnimationStreamer.ExtractMessagesFromStreamingAnim.EndOfAnimation.ActiveAudioEvent",

@@ -282,8 +282,14 @@ ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
 {
   const mg_request_info* info = mg_get_request_info(conn);
   std::string category = ((info->query_string) ? info->query_string : "");
+  std::string standalone = "standalone";
+  if (category == "embedded")
+  {
+    category = "";
+    standalone = "";
+  }
 
-  const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarsUI, category, "");
+  const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarsUI, category, standalone);
 
   return returnCode;
 }
@@ -1048,7 +1054,8 @@ void WebService::Update()
       {
         case RT_ConsoleVarsUI:
           {
-            GenerateConsoleVarsUI(requestPtr->_result, requestPtr->_param1);
+            const bool standalone = (requestPtr->_param2 == "standalone");
+            GenerateConsoleVarsUI(requestPtr->_result, requestPtr->_param1, standalone);
           }
           break;
         case RT_ConsoleVarGet:
@@ -1313,16 +1320,27 @@ static std::string sanitize_tag(const std::string& tag)
   return sanitizedTag;
 }
 
-void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& category)
+void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& category,
+                                       const bool standalone)
 {
   ANKI_CPU_PROFILE("GenerateConsoleVarsUI");
-  
+
+  std::string styleSheetIncludes;
+  std::string jqueryIncludes;
   std::string style;
   std::string script;
   std::string html;
   std::map<std::string, std::string> category_html;
 
   const Anki::Util::ConsoleSystem& consoleSystem = Anki::Util::ConsoleSystem::Instance();
+  
+  if (standalone)
+  {
+    styleSheetIncludes += "<link rel=\"stylesheet\" href=\"jquery-ui.css\">\n";
+    styleSheetIncludes += "<link rel=\"stylesheet\" href=\"style.css\">\n";
+    jqueryIncludes += "<script src=\"jquery-1.12.4.js\"></script>\n";
+    jqueryIncludes += "<script src=\"jquery-ui.js\"></script>\n";
+  }
 
   // Variables
 
@@ -1494,6 +1512,18 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
 
   std::string tmp;
   size_t pos;
+
+  tmp = "/* -- generated stylesheet includes -- */";
+  pos = page.find(tmp);
+  if (pos != std::string::npos) {
+    page = page.replace(pos, tmp.length(), styleSheetIncludes);
+  }
+
+  tmp = "/* -- generated jquery includes -- */";
+  pos = page.find(tmp);
+  if (pos != std::string::npos) {
+    page = page.replace(pos, tmp.length(), jqueryIncludes);
+  }
 
   tmp = "/* -- generated style -- */";
   pos = page.find(tmp);

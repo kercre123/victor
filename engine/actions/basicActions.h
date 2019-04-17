@@ -97,7 +97,7 @@ namespace Vector {
       const f32 _kDefaultAccel        = 10.f;
       const f32 _kDefaultTimeoutFactor = 1.5f;
       const f32 _kMaxRelativeTurnRevs = 25.f; // Maximum number of revolutions allowed for a relative turn.
-      const f32 _kDefaultProgressTimeoutFactor = 3.0f;
+      const Radians _kHeldInPalmAngleTolerance = DEG_TO_RAD(5.f);
       const std::string _kEyeShiftLayerName = "TurnInPlaceEyeShiftLayer";
       
       bool       _inPosition = false;

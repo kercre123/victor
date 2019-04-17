@@ -52,6 +52,7 @@ SVN_CRED = "--username %s --password %s --no-auth-cache --non-interactive --trus
 PROJECT_ROOT_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..'))
 DEPS_FILE = os.path.join(PROJECT_ROOT_DIR, 'DEPS')
 EXTERNALS_DIR = os.path.join(PROJECT_ROOT_DIR, 'EXTERNALS')
+THIRD_PARTY_DIR = os.path.join(PROJECT_ROOT_DIR, '3rd')
 DIFF_BRANCH_MSG = "is already a working copy for a different URL"
 
 # Most animation tar files in SVN are packages of JSON files that should be unpacked in the root
@@ -324,12 +325,12 @@ def get_flatc_dir():
   target_triple = platform_map.get(platform_name)
 
   if target_triple:
-    flatc_dir = os.path.join(DEPENDENCY_LOCATION,
+    flatc_dir = os.path.join(THIRD_PARTY_DIR,
                              'flatbuffers', 'host-prebuilts',
                              'current', target_triple, 'bin')
   else: 
     # default
-    flatc_dir = os.path.join(DEPENDENCY_LOCATION,
+    flatc_dir = os.path.join(THIRD_PARTY_DIR,
                              'flatbuffers', 'mac', 'Release')
  
   return flatc_dir

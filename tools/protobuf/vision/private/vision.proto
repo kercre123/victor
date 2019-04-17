@@ -1,0 +1,221 @@
+// Copyright 2019 Anki, Inc.
+
+// to generate code for go:
+// TODO update this for non chipper cloud business
+// protoc --proto_path=proto/anki/chipperpb -I=. --go_out=plugins=grpc:$GOPATH/src/github.com/anki/sai-chipper-voice/proto/anki/chipperpb chipperpb.proto
+
+syntax = "proto3";
+
+package chippergrpc2;
+
+//import "google/protobuf/struct.proto";
+//import "google/protobuf/timestamp.proto";
+
+option go_package = "offboardvisiongrpc2";
+
+service OffboardVisionGrpc {
+    // main elemental-box image demo
+    rpc AnalyzeImage (ImageRequest) returns (ImageResponse);
+}
+
+/////////////////////////
+// Computer Vision API //
+/////////////////////////
+
+enum FaceAttribute {
+    AGE = 0;
+    GENDER = 1;
+    HEAD_POSE = 2;
+    SMILE = 3;
+    FACIAL_HAIR = 4;
+    GLASSES = 5;
+    EMOTION = 6;
+    HAIR = 7;
+    MAKEUP = 8;
+    OCCLUSION = 9;
+    ACCESSORIES = 10;
+    BLUR = 11;
+    EXPOSURE = 12;
+    NOISE = 13;
+}
+
+enum VisualFeature {
+    ADULT = 0;
+    CATEGORIES = 1;
+    COLOR = 2;
+    DESCRIPTION = 3;
+    FACES = 4;
+    IMAGE_TYPE = 5;
+    OBJECTS = 6;
+    TAGS = 7;
+}
+
+message ImageConfig {
+    // all fields are optional
+
+    //
+    // Mode IDENTIFY_FACE
+    //
+
+    // group to search for person.
+    string groupName = 1;
+
+    // max candidates to return for face to identify. [1, 100], default=10
+    int32 max_candidates = 2;
+
+    // confidence for identify person, [0, 1]
+    double confidence_threshold = 3;
+
+    // list of face attributes to analyze
+    // default: AGE, GENDER, HAIR, EMOTION
+    repeated FaceAttribute face_attributes = 4;
+
+    // indicate whether to return landmarks (like nose position) for detected faces
+    bool face_landmarks = 5;
+
+    //
+    // Mode DESCRIBE_SCENE
+    //
+
+    // visual features to return.
+    // default: "CATEGORIES", "DESCRIPTION", "FACES" and "TAGS"
+    repeated VisualFeature visual_features = 6;
+
+}
+
+message ImageRequest {
+    // Required. unique identifier
+    string session = 1;
+
+    // Required. robot or device identifier
+    string device_id = 2;
+
+    // Required. timestamp in milliseconds
+    uint32 timestamp_ms = 3;
+
+    // Required. lang for labels, default should be "en"
+    string lang = 4;
+
+    // Optional. payload for image data
+    bytes image_data = 5;
+
+    // Optional. payload image format.
+    // Only supports: JPEG, PNG, GIF, BMP format, size must be less than 4MB, dimensions must be at least 50 x 50
+    ImageFormat format = 6;
+
+    // Optional. Mode to run to be handled by server.
+    repeated string modes = 7;
+
+    // Optional. Pass an image url to analyze
+    string image_url = 8;
+
+    // Optional. configs for various modes. If empty, use server defaults
+    ImageConfig configs = 9;
+}
+
+message ImageResponse {
+    // Required. unique identifier for request
+    string session = 1;
+
+    // Required. robot or device identifier
+    string device_id = 2;
+
+    // Required. timetamp in milliseconds
+    uint32 timestamp_ms = 3;
+
+    // Required. raw json string of output from image analyzer
+    string raw_result = 4;
+
+}
+
+enum ImageFormat {
+    JPG = 0;
+    PNG = 1;
+    GIF = 2;
+    GMP = 3;
+}
+
+///////////////////////
+// Face Identify API //
+///////////////////////
+
+// for CreatePerson API
+enum PersonStatus {
+    NONE = 0;
+    CREATED = 1;
+    DELETED = 2;
+    ADDED_FACE = 3;
+    DELETED_FACE = 4;
+}
+
+enum PersonAction {
+    CREATE = 0; // create a person in a group
+    ADD_FACE = 1; // add a face to an existing person
+    GET = 2; // get info for a particular person
+    LIST = 3; // list all persons in a group
+    DELETE = 4; // delete the person from the group
+}
+message PersonRequest {
+    // Optional. PersonGroup Name (used to create the group) to add this person
+    // if missing, server will use the default group
+    string group_name = 1;
+
+    // task to do
+    PersonAction action = 2;
+
+    // Required for CREATE, ADD_FACE, GET actions.
+    string person_name = 3;
+
+    // Required for CREATE and ADD_FACE action.
+    // payload for face image data. assume that there's only one face in the image
+    bytes face_data = 4;
+
+    // Optional. for CREATE action. Description of this person
+    string description = 16;
+
+}
+
+message Person {
+    string person_id = 1;
+
+    // Required. name of person from the request
+    string person_name = 2;
+
+    // Optional. Description of this person
+    string description = 3;
+
+    // Optional. face_id of face image used to add this person
+    repeated string persisted_face_id = 4;
+
+    PersonStatus status = 5;
+}
+
+message PersonResponse {
+    // group that action is performed on
+    string groupName = 1;
+
+    // array of Person. Except for list-action, there should only be one entry
+    repeated Person persons = 2;
+}
+
+
+// for additional functionalities
+
+// Person Group related
+message PersonGroup {
+    // Required. Name for the group.
+    // a string composed by numbers, English letters in lower case, '-', '_', and no longer than 64 characters
+    string group_name = 1;
+
+    // Optional. Description for this group
+    string user_data = 2;
+}
+
+message PersonGroupResponse {
+    bool success = 1;
+    string group_name = 3;
+}
+
+message PersonGroupList {
+    repeated PersonGroup groups = 1;
+}
