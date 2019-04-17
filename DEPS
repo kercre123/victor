@@ -4,8 +4,7 @@
         "root_url": "http://10.10.7.40:8081/artifactory"
     },
     "deptool": {
-        "deps": {
-        },
+        "deps": {},
         "project": "victor",
         "url_prefix": "https://sai-general.s3.amazonaws.com/build-assets/deps/victor/"
     },
@@ -42,7 +41,7 @@
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "178"
+                "version": "179"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"
