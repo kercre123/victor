@@ -490,7 +490,7 @@ void BehaviorGoHome::TransitionToPostVisualVerification(const RobotTimeStamp_t v
   // have moved. This is the last chance to verify that we're in a
   // good position to start the docking sequence.
   bool poseOk = false;
-  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
+  ObservableObject* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
   if (charger != nullptr) {
     const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
     Pose3d robotPoseWrtCharger;
@@ -525,14 +525,33 @@ void BehaviorGoHome::TransitionToPostVisualVerification(const RobotTimeStamp_t v
   }
 
   // Has to be seen sometime after the observe action
-  ObservableObject* object = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
-  const bool chargerSeen = (object != nullptr) && (object->GetLastObservedTime() >= verifyStartTime);
+  const bool chargerSeen = (charger != nullptr) && (charger->GetLastObservedTime() >= verifyStartTime);
 
-  if (poseOk && chargerSeen) {
+  const bool canRetryTurnToDock = (_dVars.turnToDockRetryCount++ < _iConfig.turnToDockRetryCount);
+
+  const bool chargerExists = (charger != nullptr);
+
+  // !chargerExists implies !poseOk, !chargerSeen
+  DEV_ASSERT_MSG( (!chargerExists && !chargerSeen) || (!chargerExists && !poseOk) || (chargerExists), 
+                  "BlockWorld.TransitionToPostVisualVerification.ChargerExistImplications", 
+                  "If the charger does not exist, then the pose cannot be ok, and the charger cannot be seen");
+  
+  if(!chargerExists) {
+    // No recovery action for GoHome, we must find the charger all over again.
+    TransitionToFailureReaction();
+  } else if(!canRetryTurnToDock && (!poseOk || !chargerSeen)) {
+    // Out of retries
+    TransitionToFailureReaction();
+  } else if( canRetryTurnToDock && (!poseOk || !chargerSeen)) {
+    // Simply go back to the starting pose, which will 
+    // subsequently retry visual verification
+    TransitionToDriveToCharger();
+  } else if( poseOk && chargerSeen ) {
+    // Successfully verified, proceed with Docking
     TransitionToTurn();
-  } else if (!chargerSeen) {
+  } else if( !chargerSeen ) {
     // If visual observation failed, then we've successfully gotten to the charger
-    // pre-action pose, but it is no longer there. Delete the charger from the map.
+    //  pre-action pose, but it is no longer there. Delete the charger from the map.
     LOG_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.NoChargerSeen",
                         "Charger id=%d failed visual verification (start=%u end=%u)",
                         _dVars.chargerID.GetValue(),
@@ -540,13 +559,9 @@ void BehaviorGoHome::TransitionToPostVisualVerification(const RobotTimeStamp_t v
                         (TimeStamp_t)GetBEI().GetRobotInfo().GetLastMsgTimestamp());
     DASMSG(go_home_charger_not_visible, "go_home.charger_not_visible", "GoHome behavior failure because the charger is not seen when should be.");
     DASMSG_SEND();
-    TransitionToFailureReaction();
-  } else if (_dVars.turnToDockRetryCount++ < _iConfig.turnToDockRetryCount) {
-    // Simply go back to the starting pose, which will allow visual
-    // verification to happen again, etc.
-    TransitionToDriveToCharger();
-  } else {
-    // Out of retries
+    // Marking the object as dirty will delegate the responsibility of clearing it
+    //  to Blockworld instead, When it runs CheckForUnobservedObjects().
+    GetBEI().GetBlockWorld().MarkObjectDirty(charger);
     TransitionToFailureReaction();
   }
 }
