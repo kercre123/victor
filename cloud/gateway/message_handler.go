@@ -3421,8 +3421,8 @@ func (service *rpcService) AudioStream(in *extint.AudioStreamRequest, stream ext
 				WinningConfidence: int32(micSDKData.WinningConfidence),
 			}
 			for _, amplitude := range micSDKData.Samples {
-				audioStreamResponse.AudioData = append(audioStreamResponse.AudioData, byte(amplitude>>8))
 				audioStreamResponse.AudioData = append(audioStreamResponse.AudioData, byte(amplitude&0xff))
+				audioStreamResponse.AudioData = append(audioStreamResponse.AudioData, byte(amplitude>>8))
 			}
 			stream.Send(audioStreamResponse)
 		}
