@@ -55,9 +55,10 @@ namespace Anki {
 
         // If the lift angle falls outside of the range defined by these thresholds, do not use D control.
         // This is to prevent vibrating that tends to occur at the physical limits.
-        const f32 NO_D_ANGULAR_RANGE_RAD = DEG_TO_RAD(5.f);
-        const f32 USE_PI_CONTROL_LIFT_ANGLE_LOW_THRESH_RAD = LIFT_ANGLE_LOW_LIMIT_RAD + NO_D_ANGULAR_RANGE_RAD;
-        const f32 USE_PI_CONTROL_LIFT_ANGLE_HIGH_THRESH_RAD = LIFT_ANGLE_HIGH_LIMIT_RAD - NO_D_ANGULAR_RANGE_RAD;
+        const f32 NO_D_TERM_LIFT_ANGLE_LOW_RANGE_MAX_RAD = LIFT_ANGLE_LOW_LIMIT_RAD + DEG_TO_RAD(5.f);
+        const f32 NO_D_TERM_LIFT_ANGLE_LOW_RANGE_MIN_RAD = LIFT_ANGLE_LOW_LIMIT_RAD;
+        const f32 NO_D_TERM_LIFT_ANGLE_HIGH_RANGE_MIN_RAD = LIFT_ANGLE_HIGH_LIMIT_RAD - DEG_TO_RAD(5.f);
+        const f32 NO_D_TERM_LIFT_ANGLE_HIGH_RANGE_MAX_RAD = LIFT_ANGLE_HIGH_LIMIT_RAD;
 
 #ifdef SIMULATOR
         // Only angles greater than this can contribute to error
@@ -833,11 +834,22 @@ namespace Anki {
         const f32 powerI = Ki_ * angleErrorSum_;
         power_ = powerP + powerD + powerI;
 
-        // Remove D term if lift is near limits
-        if ((currentAngle_rad_ < USE_PI_CONTROL_LIFT_ANGLE_LOW_THRESH_RAD &&
-             currDesiredAngle_rad_ < USE_PI_CONTROL_LIFT_ANGLE_LOW_THRESH_RAD) ||
-            (currentAngle_rad_ > USE_PI_CONTROL_LIFT_ANGLE_HIGH_THRESH_RAD &&
-             currDesiredAngle_rad_ > USE_PI_CONTROL_LIFT_ANGLE_HIGH_THRESH_RAD)) {
+        // Remove D term if lift is within certain range of limits
+        const bool inPiLowRange = (IN_RANGE(currentAngle_rad_,
+                                            NO_D_TERM_LIFT_ANGLE_LOW_RANGE_MIN_RAD,
+                                            NO_D_TERM_LIFT_ANGLE_LOW_RANGE_MAX_RAD) &&
+                                   IN_RANGE(currDesiredAngle_rad_,
+                                            NO_D_TERM_LIFT_ANGLE_LOW_RANGE_MIN_RAD,
+                                            NO_D_TERM_LIFT_ANGLE_LOW_RANGE_MAX_RAD));
+        const bool inPiHighRange = (IN_RANGE(currentAngle_rad_,
+                                             NO_D_TERM_LIFT_ANGLE_HIGH_RANGE_MIN_RAD,
+                                             NO_D_TERM_LIFT_ANGLE_HIGH_RANGE_MAX_RAD) &&
+                                    IN_RANGE(currDesiredAngle_rad_,
+                                             NO_D_TERM_LIFT_ANGLE_HIGH_RANGE_MIN_RAD,
+                                             NO_D_TERM_LIFT_ANGLE_HIGH_RANGE_MAX_RAD));
+
+        if(inPiLowRange || inPiHighRange)
+        {
           power_ -= powerD;
         }
 
