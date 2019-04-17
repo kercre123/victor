@@ -519,6 +519,11 @@ void UserIntentComponent::SetUserIntentPending(UserIntent&& userIntent, const Us
     _robot->GetComponent<AIComponent>().GetComponent<AIWhiteboard>().NotifyNewUserIntentPending(
       _pendingIntent->intent.GetTag() );
   }
+
+  // call any registered callbacks
+  for(auto& cb : _newUserIntentCallbacks) {
+    cb.callback();
+  }
 }
 
 void UserIntentComponent::DevSetUserIntentPending(UserIntentTag userIntent, const UserIntentSource& source)
@@ -565,6 +570,8 @@ bool UserIntentComponent::SetCloudIntentPendingFromExpandedJSON(const std::strin
 
   return SetIntentPendingFromCloudJSONValue(std::move(json));
 }
+
+
 bool UserIntentComponent::SetIntentPendingFromCloudJSONValue(Json::Value json)
 {
   std::string cloudIntent;
@@ -1141,6 +1148,44 @@ std::vector<std::string> UserIntentComponent::DevGetAppIntentsList() const
   return _intentMap->DevGetAppIntentsList();
 }
 
+  void UserIntentComponent::SendWebVizIntents()
+  {
+    if (_context != nullptr) {
+      if( auto webSender = WebService::WebVizSender::CreateWebVizSender("intents",
+                                                                        _context->GetWebService()) ) {
+
+        Json::Value& toSend = webSender->Data();
+        toSend = Json::arrayValue;
+
+        {
+          Json::Value blob;
+          blob["intentType"] = "user";
+          blob["type"] = "current-intent";
+          blob["value"] = UserIntentTagToString( _pendingIntent->intent.GetTag() );
+          toSend.append(blob);
+        }
+
+        if( !_devLastReceivedCloudIntent.empty() ) {
+          Json::Value blob;
+          blob["intentType"] = "cloud";
+          blob["type"] = "current-intent";
+          blob["value"] = _devLastReceivedCloudIntent;
+          toSend.append(blob);
+          _devLastReceivedCloudIntent.clear();
+        }
+
+        if( !_devLastReceivedAppIntent.empty() ) {
+          Json::Value blob;
+          blob["intentType"] = "app";
+          blob["type"] = "current-intent";
+          blob["value"] = _devLastReceivedAppIntent;
+          toSend.append(blob);
+          _devLastReceivedAppIntent.clear();
+        }
+      } // if (webSender ...
+    }
+  }
+
 void UserIntentComponent::HandleTriggerWordEventForDas(const RobotInterface::TriggerWordDetected& msg)
 {
   DASMSG(wakeword_triggered, "wakeword.triggered", "Wake word was detected");
@@ -1148,44 +1193,6 @@ void UserIntentComponent::HandleTriggerWordEventForDas(const RobotInterface::Tri
   DASMSG_SET(i2, msg.isButtonPress, "Source (0=Voice, 1=Button)");
   DASMSG_SET(i3, msg.willOpenStream, "Will stream (0=No, 1=Yes)");
   DASMSG_SEND();
-}
-
-void UserIntentComponent::SendWebVizIntents()
-{
-  if (_context != nullptr) {
-    if( auto webSender = WebService::WebVizSender::CreateWebVizSender("intents",
-                                                                      _context->GetWebService()) ) {
-
-      Json::Value& toSend = webSender->Data();
-      toSend = Json::arrayValue;
-
-      {
-        Json::Value blob;
-        blob["intentType"] = "user";
-        blob["type"] = "current-intent";
-        blob["value"] = UserIntentTagToString( _pendingIntent->intent.GetTag() );
-        toSend.append(blob);
-      }
-
-      if( !_devLastReceivedCloudIntent.empty() ) {
-        Json::Value blob;
-        blob["intentType"] = "cloud";
-        blob["type"] = "current-intent";
-        blob["value"] = _devLastReceivedCloudIntent;
-        toSend.append(blob);
-        _devLastReceivedCloudIntent.clear();
-      }
-
-      if( !_devLastReceivedAppIntent.empty() ) {
-        Json::Value blob;
-        blob["intentType"] = "app";
-        blob["type"] = "current-intent";
-        blob["value"] = _devLastReceivedAppIntent;
-        toSend.append(blob);
-        _devLastReceivedAppIntent.clear();
-      }
-    } // if (webSender ...
-  }
 }
 
 void UserIntentComponent::SetupConsoleFuncs()
@@ -1209,6 +1216,44 @@ void UserIntentComponent::SetupConsoleFuncs()
     };
     _consoleFuncs.emplace_front( "EnableDevTriggerWord", std::move(enableTrigger), "UserIntentComponent", "" );
   }
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+UserIntentCallbackId UserIntentComponent::RegisterNewUserIntentCallback(OnNewUserIntentCallback callback)
+{
+  static UserIntentCallbackId sLastId = 0;
+
+  // get the next good id
+  ++sLastId;
+  // we'll have a problem if we register 4294967295 listeners
+  // if we were really worried we could use uuids with a larger range for ids,
+  // and/or check for duplicate ids when we roll over.
+  // But if we registered callbacks at 10Hz it would take about 13 years to exhaust a uint32.
+  if (sLastId == 0) {
+    LOG_WARNING("UserIntentComponent.RegisterNewUserIntentCallback.IdOverflow",
+                "UserIntentComponent UserIntentCallbackId overflowed its range. This probably indicates a pathological number of callback registrations.");
+  }
+  _newUserIntentCallbacks.push_back( { sLastId, callback } );
+  return sLastId;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void UserIntentComponent::UnRegisterNewUserIntentCallback(UserIntentCallbackId id)
+{
+  for (size_t index = _newUserIntentCallbacks.size(); index > 0;)
+  {
+    --index;
+    if (id == _newUserIntentCallbacks[index].id) {
+      _newUserIntentCallbacks[index] = _newUserIntentCallbacks.back();
+      _newUserIntentCallbacks.pop_back();
+
+      return;
+    }
+  }
+
+  LOG_WARNING("UserIntentComponent.UnRegisterNewUserIntentCallback", "No UserIntentCallback found with id %d", (int)id);
 }
 
 }

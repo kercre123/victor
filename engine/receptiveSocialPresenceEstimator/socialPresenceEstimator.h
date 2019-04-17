@@ -110,21 +110,35 @@ public:
   //////
   // IDependencyManagedComponent functions
   //////
+  virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
+    dependencies.insert(RobotComponentID::AIComponent);
+  };
   virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   //virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override {}
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
+    dependencies.insert(RobotComponentID::AIComponent);
   }
-  //virtual void AdditionalUpdateAccessibleComponents(RobotCompIDSet& components) const override {}
+  virtual void AdditionalUpdateAccessibleComponents(RobotCompIDSet& components) const override {
 
+  }
   virtual void UpdateDependent(const RobotCompMap& dependentComps) override;
+
+
+  // ******** Input Event Handlers ********
+
+  void OnNewUserIntent();
+
 
 private:
   // -------------------------- Private Member Funcs ---------------------------
   void SubscribeToWebViz();
   void SendDataToWebViz(const CozmoContext* context);
+  void UpdateInputs(const RobotCompMap& dependentComps);
   void UpdateRSPI();
-  void TriggerInputEvent(SocialPresenceEvent& inputEvent);
+  void TriggerInputEvent(SocialPresenceEvent* inputEvent);
+
+
 
   // -------------------------- Private Member Vars ----------------------------
   Robot* _robot = nullptr;
@@ -133,11 +147,30 @@ private:
   float _lastInputEventsUpdateTime_s = 0.0f;
   float _rspi;
 
+  // input events
   // singleton input events are created once per input type and re-triggered whenever we get that input type
-  std::vector<SocialPresenceEvent> _inputEvents;
+  SocialPresenceEvent _SPEUserIntent =
+      SocialPresenceEvent("UserIntent", std::make_shared<ExponentialDecay>(0.1f), 1.0f, 1.0f, 1.0f, 1.0f, true);
+  // name, delay, independent effect, independent effect max, reinforcement effect, reinforcement effect max
+  SocialPresenceEvent _spete1 = SocialPresenceEvent("ExplicitPositive", std::make_shared<ExponentialDecay>(0.1f), 1.0f, 1.0f, 1.0f, 1.0f, true);
+  SocialPresenceEvent _spete2 = SocialPresenceEvent("ImplicitPositive", std::make_shared<ExponentialDecay>(0.3f), 0.5f, 1.0f, 0.5f, 1.0f);
+  SocialPresenceEvent _spete3 = SocialPresenceEvent("ExplicitInhibitor", std::make_shared<ExponentialDecay>(0.1f), -1.0f, 0, -1.0, 0, true);
+  SocialPresenceEvent _spete4 = SocialPresenceEvent("PowerDecayNegative", std::make_shared<PowerDecay>(1.2f), -1.0f, 0.0f, -1.0f, 0.0f, true);
+  SocialPresenceEvent _spete5 = SocialPresenceEvent("PowerDecayPositive", std::make_shared<PowerDecay>(1.2f), 1.0f, 1.0f, 1.0f, 1.0f, true);
+
   // if needed, we can also have dynamic input events, where a new event instance is created for each triggering
   // event, and then culled once it's value drops to zero.
   // Just make sure the rest of the mechanism works either way.
+
+  std::vector<SocialPresenceEvent*> _inputEvents = {
+      &_SPEUserIntent,
+      &_spete1,
+      &_spete2,
+      &_spete3,
+      &_spete4,
+      &_spete5
+  };
+
 };
 
 }

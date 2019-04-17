@@ -60,12 +60,21 @@ namespace RobotInterface{
 struct TriggerWordDetected;
 }
 
+using OnNewUserIntentCallback = std::function<void()>;
+using UserIntentCallbackId = uint32_t;
+
 // helper to avoid .h dependency on userIntent.clad
 const UserIntentSource& GetIntentSource(const UserIntentData& intentData);
 
 class UserIntentComponent : public IDependencyManagedComponent<BCComponentID>, private Util::noncopyable
 {
 public:
+
+  struct UserIntentCallbackHandle
+  {
+    UserIntentCallbackId id;
+    OnNewUserIntentCallback callback;
+  };
   
   UserIntentComponent(const Robot& robot, const Json::Value& userIntentMapConfig);
 
@@ -237,6 +246,9 @@ public:
   // have some work to do at the moment
   // note: this is re-enabled with each new intent
   void SetUserIntentTimeoutEnabled(bool isEnabled);
+
+  UserIntentCallbackId RegisterNewUserIntentCallback(OnNewUserIntentCallback callback);
+  void UnRegisterNewUserIntentCallback(UserIntentCallbackId id);
   
 
   ////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -378,6 +390,8 @@ private:
   AnimationTag _tagForTriggerWordGetInCallbacks;
   bool _waitingForTriggerWordGetInToFinish = false;
   float _waitingForTriggerWordGetInToFinish_setTime_s = 0.0f;
+
+  std::vector<UserIntentCallbackHandle> _newUserIntentCallbacks;
 
 };
 
