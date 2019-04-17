@@ -68,6 +68,13 @@ message RtsConnRequest {
     uint_8      publicKey[32]
 }
 
+message RtsConnRequest_6 {
+    uint_8      publicKey[32],
+    bool        isPairing,
+    uint_8      bluetoothSigCompanyId[2],
+    uint_8      productId
+}
+
 message RtsConnResponse {
     RtsConnType connectionType,
     uint_8      publicKey[32]
@@ -308,6 +315,32 @@ message RtsSdkProxyResponse {
   string[uint_16]   responseBody,
 }
 
+message RtsVersionListRequest {
+  // 
+}
+
+message RtsVersionListResponse {
+  string[uint_8]    supportedVersions[uint_16]
+}
+
+message RtsDevSshOverBleRequest {
+  string[uint_16]   key
+}
+
+message RtsDevSshOverBleResponse {
+}
+
+message RtsDevSshCommandRequest {
+  string[uint_16]   command 
+}
+
+message RtsDevSshCommandResponse {
+  bool              success,
+  uint_32           exit_code,
+  string[uint_16]   stdout,
+  string[uint_16]   stderr
+}
+
 message Error {
     //
 }
@@ -461,6 +494,52 @@ union RtsConnection_5 {
     RtsSdkProxyResponse             RtsSdkProxyResponse         = 0x23,   // * new in V5
 }
 
+// Rts Version 6
+union RtsConnection_6 {
+    Error                           Error                       = 0x00,
+    RtsConnRequest_6                RtsConnRequest_6            = 0x01,   // * modified in V6
+    RtsConnResponse                 RtsConnResponse             = 0x02,
+    RtsNonceMessage                 RtsNonceMessage             = 0x03,
+    RtsChallengeMessage             RtsChallengeMessage         = 0x04,
+    RtsChallengeSuccessMessage      RtsChallengeSuccessMessage  = 0x05,
+    RtsWifiConnectRequest           RtsWifiConnectRequest       = 0x06,
+    RtsWifiConnectResponse_3        RtsWifiConnectResponse_3    = 0x07,
+    RtsWifiIpRequest                RtsWifiIpRequest            = 0x08,
+    RtsWifiIpResponse               RtsWifiIpResponse           = 0x09,
+    RtsStatusRequest                RtsStatusRequest            = 0x0A,
+    RtsStatusResponse_5             RtsStatusResponse_5         = 0x0B,
+    RtsWifiScanRequest              RtsWifiScanRequest          = 0x0C,
+    RtsWifiScanResponse_3           RtsWifiScanResponse_3       = 0x0D,
+    RtsOtaUpdateRequest             RtsOtaUpdateRequest         = 0x0E,
+    RtsOtaUpdateResponse            RtsOtaUpdateResponse        = 0x0F,
+    RtsCancelPairing                RtsCancelPairing            = 0x10,
+    RtsForceDisconnect              RtsForceDisconnect          = 0x11,
+    RtsAck                          RtsAck                      = 0x12,
+    RtsWifiAccessPointRequest       RtsWifiAccessPointRequest   = 0x13,
+    RtsWifiAccessPointResponse      RtsWifiAccessPointResponse  = 0x14,
+    RtsSshRequest                   RtsSshRequest               = 0x15,
+    RtsSshResponse                  RtsSshResponse              = 0x16,
+    RtsOtaCancelRequest             RtsOtaCancelRequest         = 0x17,     
+    RtsLogRequest                   RtsLogRequest               = 0x18,     
+    RtsLogResponse                  RtsLogResponse              = 0x19,     
+    RtsFileDownload                 RtsFileDownload             = 0x1A,
+    RtsWifiForgetRequest            RtsWifiForgetRequest        = 0x1B,  
+    RtsWifiForgetResponse           RtsWifiForgetResponse       = 0x1C,  
+    RtsCloudSessionRequest_5        RtsCloudSessionRequest_5    = 0x1D,
+    RtsCloudSessionResponse         RtsCloudSessionResponse     = 0x1E,  
+    RtsAppConnectionIdRequest       RtsAppConnectionIdRequest   = 0x1F,
+    RtsAppConnectionIdResponse      RtsAppConnectionIdResponse  = 0x20,
+    RtsResponse                     RtsResponse                 = 0x21,
+    RtsSdkProxyRequest              RtsSdkProxyRequest          = 0x22,
+    RtsSdkProxyResponse             RtsSdkProxyResponse         = 0x23,
+    RtsVersionListRequest           RtsVersionListRequest       = 0x24,   // * new in V6 
+    RtsVersionListResponse          RtsVersionListResponse      = 0x25,   // * new in V6
+    RtsDevSshOverBleRequest         RtsDevSshOverBleRequest     = 0x26,   // * new in V6
+    RtsDevSshOverBleResponse        RtsDevSshOverBleResponse    = 0x27,   // * new in V6 
+    RtsDevSshCommandRequest         RtsDevSshCommandRequest     = 0x28,   // * new in V6
+    RtsDevSshCommandResponse        RtsDevSshCommandResponse    = 0x29,   // * new in V6 
+}
+
 // The factory set of supported messages
 union RtsConnection_1 {
     Error                           Error                       = 0x00,
@@ -497,6 +576,7 @@ union RtsConnection {
     RtsConnection_3                 RtsConnection_3             = 0x03,
     RtsConnection_4                 RtsConnection_4             = 0x04,
     RtsConnection_5                 RtsConnection_5             = 0x05,
+    RtsConnection_6                 RtsConnection_6             = 0x06,
 }
 
 message DeprecatedAndReserved {

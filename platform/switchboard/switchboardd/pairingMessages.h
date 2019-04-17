@@ -13,7 +13,7 @@
 #ifndef SecurePairingMessages_h
 #define SecurePairingMessages_h
 
-#define SB_PAIRING_PROTOCOL_VERSION V5
+#define SB_PAIRING_PROTOCOL_VERSION V6
 #define SB_IPv4_SIZE 4
 #define SB_IPv6_SIZE 16
 
@@ -28,8 +28,9 @@ namespace Switchboard {
     V3                        = 3,
     V4                        = 4,
     V5                        = 5,
+    V6                        = 6,
     FACTORY                   = V2,
-    CURRENT                   = V5,
+    CURRENT                   = V6,
   };
   
   enum SetupMessage : uint8_t {
