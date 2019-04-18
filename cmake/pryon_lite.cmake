@@ -1,4 +1,4 @@
-set(PRYON_LITE_HOME "${ANKI_EXTERNAL_DIR}/anki-thirdparty/pryon_lite")
+set(PRYON_LITE_HOME "${ANKI_THIRD_PARTY_DIR}/pryon_lite")
 set(PRYON_LITE_INCLUDE_PATH "${PRYON_LITE_HOME}/armv7a-anki")
 
 # TODO: Waiting for Amazon to provide Libs for Mac platform
