@@ -1,5 +1,15 @@
 package main
 
+/*
+//                            DO NOT ALTER THIS COMMENT IN ANY WAY
+#include <string.h>
+//                            DO NOT ALTER THIS COMMENT IN ANY WAY
+//                   AND DO NOT ADD A BLANK LINE BETWEEN IT AND THE import "C"
+//                   AND DO NOT MOVE THE import "C" into the import() SECTION!
+//                   (For docs on this disaster, read up on the cgo pseudo-lib)
+*/
+import "C"
+
 import (
 	"encoding/binary"
 	"fmt"
@@ -13,6 +23,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unsafe"
 
 	"anki/log"
 	"anki/robot/loguploader"
@@ -3420,10 +3431,12 @@ func (service *rpcService) AudioStream(in *extint.AudioStreamRequest, stream ext
 				WinningDirection:  int32(micSDKData.WinningDirection),
 				WinningConfidence: int32(micSDKData.WinningConfidence),
 			}
-			for _, amplitude := range micSDKData.Samples {
-				audioStreamResponse.AudioData = append(audioStreamResponse.AudioData, byte(amplitude>>8))
-				audioStreamResponse.AudioData = append(audioStreamResponse.AudioData, byte(amplitude&0xff))
-			}
+
+			C.memcpy(
+				unsafe.Pointer(&audioStreamResponse.AudioData[0]),
+				unsafe.Pointer(&micSDKData.Samples[0]),
+				2*C.size_t(len(micSDKData.Samples)))
+
 			if err := stream.Send(audioStreamResponse); err != nil {
 				return err
 			} else if err = stream.Context().Err(); err != nil {
