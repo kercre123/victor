@@ -1,6 +1,7 @@
 #include "arf/Introspection.h"
 #include "arf/TypeHelpers.h"
 #include "arf/datatypes_to_proto.h"
+#include "arf/ProtoStreamHelpers.h"
 #include <sstream>
 #include <iomanip>
 
@@ -271,7 +272,7 @@ void Logger::LogDataEvent( const DataEvent& event )
     Lock lock( _mutex );
     arf_proto::ArfEventItem proto;
     ConvertDataEventToProto( event, proto.mutable_data_event() );
-    stream_proto( proto, _logStream );
+    write_proto( proto, _logStream );
     _eventCount++;
 }
 
@@ -280,7 +281,7 @@ void Logger::LogTaskEvent( const TaskEvent& event )
     Lock lock( _mutex );
     arf_proto::ArfEventItem proto;
     ConvertTaskEventToProto( event, proto.mutable_task_event() );
-    stream_proto( proto, _logStream );
+    write_proto( proto, _logStream );
     _eventCount++;
 }
 
@@ -289,7 +290,7 @@ void Logger::LogInitEvent( const InitEvent& event )
     Lock lock( _mutex );
     arf_proto::ArfEventItem proto;
     ConvertInitEventToProto( event, proto.mutable_init_event() );
-    stream_proto( proto, _logStream );
+    write_proto( proto, _logStream );
     _eventCount++;
 }
 

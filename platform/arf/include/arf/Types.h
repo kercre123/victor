@@ -15,8 +15,14 @@ namespace ARF
 // ============================
 // Sync-related classes/methods
 // ============================
-typedef std::mutex Mutex;
-typedef std::unique_lock<Mutex> Lock;
+// TODO C++14
+typedef std::mutex                  Mutex;
+// typedef std::shared_timed_mutex     Mutex;
+typedef std::unique_lock<Mutex>     Lock;
+typedef std::unique_lock<Mutex>     WriteLock;
+// typedef std::shared_lock<Mutex>     ReadLock; 
+typedef Lock ReadLock;
+// typedef std::condition_variable_any ConditionVariable;
 typedef std::condition_variable ConditionVariable;
 
 // ============================
@@ -75,7 +81,7 @@ template <typename T>
 T time_from_parts( const TimeParts& p )
 {
     namespace chr = std::chrono;
-    return chr::seconds( p.secs ) + chr::nanoseconds( p.nanosecs );
+    return chr::duration_cast<T>(chr::seconds( p.secs ) + chr::nanoseconds( p.nanosecs ));
 }
 
 template <typename T>

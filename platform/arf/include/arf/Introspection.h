@@ -261,7 +261,7 @@ public:
     T item;
 
     // TODO Ensure copy/move/assign do the right thing
-    TaggedItem() : uuid( Anki::Util::GetUUIDString() ) {}
+    TaggedItem() : uuid() {}
 
     TaggedItem( const T& t ) 
     : uuid( Anki::Util::GetUUIDString() ), item( t ) {}
@@ -286,17 +286,6 @@ public:
 
 // Logging
 // =======
-// TODO Move streaming/destreaming functionality to a different file
-
-template <typename T>
-size_t stream_proto( const T& proto, std::ostream& os )
-{
-    size_t size = proto.ByteSizeLong();
-    os.write( reinterpret_cast<char*>( &size ), sizeof( size ) );
-    proto.SerializeToOstream( &os );
-    return size;
-}
-
 std::string to_string( const UUID& uuid );
 // Commented out for now since UUIDs are std::strings
 // std::ostream& operator<<( std::ostream& os, const UUID& uuid );

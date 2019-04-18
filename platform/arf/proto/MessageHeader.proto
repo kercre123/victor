@@ -2,9 +2,11 @@ syntax = "proto2";
 
 package arf_proto;
 
-import "DoubleMatrix.proto";
+import "Time.proto";
 
 message MessageHeader {
-  required double time = 1;
-  optional DoubleMatrix transform = 2;
+  // Represents the true production time of the data - like the center of exposure for an image.
+  optional Time production_time = 1;
+  // Represents the time that the data hit the system, generally through a callback.  Will be used for replay purposes.
+  optional Time callback_time = 2;
 }

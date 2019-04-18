@@ -60,6 +60,7 @@
 #include <fstream>
 
 #include "arf/arf.h"
+#include "arf/datatypes_to_proto.h"
 #include "generated/proto/arf/ArfMessage.pb.h"
 
 #include "opencv2/calib3d/calib3d.hpp"
@@ -823,10 +824,17 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
   }
 
   arf_proto::ArfMessage arf_message;
+  ARF::WallTime wall_time =
+      ARF::float_to_time<ARF::WallTime>(grayImage.GetTimestamp());
+  ARF::MonotonicTime mono_time =
+      ARF::float_to_time<ARF::MonotonicTime>(grayImage.GetTimestamp());
+  ARF::ConvertWallTimeToProto(
+      wall_time, arf_message.mutable_header()->mutable_callback_time());
+  ARF::ConvertMonoTimeToProto(
+      mono_time, arf_message.mutable_header()->mutable_callback_time());
   arf_proto::TrackedFacesAndImage* tracked_faces_and_image = arf_message.mutable_tracked_faces_and_image();
 
   arf_proto::Image* arf_image = tracked_faces_and_image->mutable_image();
-  arf_image->mutable_header()->set_time(grayImage.GetTimestamp());
   arf_image->set_rows(grayImage.GetNumRows());
   arf_image->set_cols(grayImage.GetNumCols());
   arf_image->set_encoding("gray");
@@ -861,7 +869,6 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
     DEV_ASSERT(currentFace.GetTimeStamp() == grayImage.GetTimestamp(), "VisionSystem.DetectFaces.BadFaceTimestamp");
 
     arf_proto::TrackedFace* face_proto = tracked_faces_and_image->add_face();
-    face_proto->mutable_header()->set_time(grayImage.GetTimestamp());
     face_proto->set_x(currentFace.GetRect().GetX()); 
     face_proto->set_y(currentFace.GetRect().GetY()); 
     face_proto->set_width(currentFace.GetRect().GetWidth()); 

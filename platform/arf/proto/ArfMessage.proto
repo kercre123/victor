@@ -2,17 +2,20 @@ syntax = "proto2";
 
 package arf_proto;
 
+import "MessageHeader.proto";
 import "DepthData.proto";
 import "Image.proto";
 import "TrackedFacesAndImage.proto";
 
 message ArfMessage {
 
+  required MessageHeader header = 1;
+
   oneof arf_message {
-      string arf_string = 1;
-      DepthData depth_data = 2;
-      Image image = 3;
-      TrackedFacesAndImage tracked_faces_and_image = 4;
+      string arf_string = 2;
+      DepthData depth_data = 3;
+      Image image = 4;
+      TrackedFacesAndImage tracked_faces_and_image = 5;
   }
 
 }
