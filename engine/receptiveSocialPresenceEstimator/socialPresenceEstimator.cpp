@@ -19,6 +19,7 @@
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/ankiEventUtil.h"
 #include "engine/cozmoContext.h"
+#include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "util/console/consoleInterface.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
@@ -126,7 +127,11 @@ SocialPresenceEstimator::SocialPresenceEstimator()
 }
 
 
-SocialPresenceEstimator::~SocialPresenceEstimator() {}
+SocialPresenceEstimator::~SocialPresenceEstimator()
+{
+  // huh. We don't have access to the UserIntentComponent here, so we can't unsubscribe.
+  // TODO: Need a smart handle or something, which I'm sure exists somewhere...but this is just a prototype at this point.
+}
 
 
 void SocialPresenceEstimator::InitDependent(Vector::Robot *robot, const RobotCompMap &dependentComps)
@@ -134,9 +139,13 @@ void SocialPresenceEstimator::InitDependent(Vector::Robot *robot, const RobotCom
   _robot = robot;
 
   // subscribe to inputs
+  // new user intent
   auto& uic = dependentComps.GetComponent<AIComponent>().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
-  uic.RegisterNewUserIntentCallback( std::bind( &SocialPresenceEstimator::OnNewUserIntent, this) );
-  // TODO: record callback ID and unsubscribe on destruction!
+  _newUserIntentHandle = uic.RegisterNewUserIntentCallback( std::bind( &SocialPresenceEstimator::OnNewUserIntent, this) );
+  // various vision-based things
+  _faceHandle = _robot->GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedFace,
+      std::bind( &SocialPresenceEstimator::OnRobotObservedFace, this, std::placeholders::_1) );
+
 
   if( ANKI_DEV_CHEATS ) {
     SubscribeToWebViz();
@@ -191,8 +200,8 @@ void SocialPresenceEstimator::UpdateRSPI()
     // TODO (AS): I'm not totally happy with this implementation yet: hard to follow, at least.
     float newRSPI = 0;
     for (SocialPresenceEvent* inputEvent : _inputEvents) {
-      LOG_WARNING("SocialPresenceEstimator.UpdateRSPI.inputEventIteration",
-          "inputEvent name %s value %f", inputEvent->GetName().c_str(), inputEvent->GetValue());
+      //LOG_WARNING("SocialPresenceEstimator.UpdateRSPI.inputEventIteration",
+      //    "inputEvent name %s value %f", inputEvent->GetName().c_str(), inputEvent->GetValue());
       if (_rspi >= inputEvent->GetIndependentEffectMax()) {
         newRSPI = fmax(-1.0, fmin(1.0, fmin( fmax(newRSPI, inputEvent->GetReinforcementEffectMax()),
                                              (newRSPI + inputEvent->GetValue()) ) ));
@@ -232,6 +241,18 @@ void SocialPresenceEstimator::OnNewUserIntent()
 
   // trigger input event
   TriggerInputEvent(&_SPEUserIntent);
+}
+
+
+void SocialPresenceEstimator::OnRobotObservedFace(const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg)
+{
+  LOG_WARNING("SocialPresenceEstimator.OnRobotObservedFace.GotCallback", "");
+  // Do some kind of DAS logging/data collection
+
+  // we might want to do dynamic event creation here, for different face identities.
+  // For now we treat all faces as the same event
+
+  TriggerInputEvent(&_SPEFace);
 }
 
 

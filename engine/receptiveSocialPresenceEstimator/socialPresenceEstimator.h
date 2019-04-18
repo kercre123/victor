@@ -13,6 +13,7 @@
 #ifndef __VICTOR_SOCIALPRESENCEESTIMATOR_H__
 #define __VICTOR_SOCIALPRESENCEESTIMATOR_H__
 
+#include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
 #include "util/helpers/noncopyable.h"
@@ -128,6 +129,7 @@ public:
   // ******** Input Event Handlers ********
 
   void OnNewUserIntent();
+  void OnRobotObservedFace(const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg);
 
 
 private:
@@ -149,8 +151,11 @@ private:
 
   // input events
   // singleton input events are created once per input type and re-triggered whenever we get that input type
+  // decay, independent effect, independent effect max, reinforcement effect, reinforcement effect max, reset
   SocialPresenceEvent _SPEUserIntent =
       SocialPresenceEvent("UserIntent", std::make_shared<ExponentialDecay>(0.1f), 1.0f, 1.0f, 1.0f, 1.0f, true);
+  SocialPresenceEvent _SPEFace =
+      SocialPresenceEvent("Face", std::make_shared<ExponentialDecay>(0.1), 0.8f, 1.0f, 0.8f, 1.0f, false);
   // name, delay, independent effect, independent effect max, reinforcement effect, reinforcement effect max
   SocialPresenceEvent _spete1 = SocialPresenceEvent("ExplicitPositive", std::make_shared<ExponentialDecay>(0.1f), 1.0f, 1.0f, 1.0f, 1.0f, true);
   SocialPresenceEvent _spete2 = SocialPresenceEvent("ImplicitPositive", std::make_shared<ExponentialDecay>(0.3f), 0.5f, 1.0f, 0.5f, 1.0f);
@@ -164,12 +169,17 @@ private:
 
   std::vector<SocialPresenceEvent*> _inputEvents = {
       &_SPEUserIntent,
+      &_SPEFace,
       &_spete1,
       &_spete2,
       &_spete3,
       &_spete4,
       &_spete5
   };
+
+  // subscription handles
+  uint32_t _newUserIntentHandle;
+  Signal::SmartHandle _faceHandle;
 
 };
 
