@@ -16,7 +16,7 @@ variable "robots_per_process" {
 // Note: number of container instances per cluster: 1000
 variable "instance_count" {
   description = "Number of load test Docker containers per Fargate cluster"
-  default = 998
+  default = 0
 }
 
 // Note: number of tasks using the Fargate launch type, per region, per account: 20 (ECS=1000)
