@@ -6,7 +6,7 @@
 #include "coretech/vision/engine/camera.h"
 #include "coretech/vision/engine/faceTracker.h"
 #include "coretech/vision/engine/compressedImage.h"
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/vision/engine/image.h"
 #include "arf/arf.h"
 #include "util/logging/logging.h"

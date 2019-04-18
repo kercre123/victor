@@ -27,7 +27,8 @@ target_link_libraries(robot_to_arf_converter
   PUBLIC
   # anki libs
   util
-  cti_messaging
+  cti_messaging_robot
+  robot_clad_cpplite
   # platform
   ${PLATFORM_LIBS}
   ${ASAN_EXE_LINKER_FLAGS}
