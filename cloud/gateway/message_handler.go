@@ -3421,8 +3421,8 @@ func (service *rpcService) AudioStream(in *extint.AudioStreamRequest, stream ext
 				WinningConfidence: int32(micSDKData.WinningConfidence),
 			}
 			for _, amplitude := range micSDKData.Samples {
-				audioStreamResponse.AudioData = append(audioStreamResponse.AudioData, byte(amplitude&0xff))
 				audioStreamResponse.AudioData = append(audioStreamResponse.AudioData, byte(amplitude>>8))
+				audioStreamResponse.AudioData = append(audioStreamResponse.AudioData, byte(amplitude&0xff))
 			}
 			if err := stream.Send(audioStreamResponse); err != nil {
 				return err
@@ -3431,7 +3431,6 @@ func (service *rpcService) AudioStream(in *extint.AudioStreamRequest, stream ext
 				// We should still return the err in case the user doesn't think they disconnected
 				return err
 			}
-
 		}
 	}
 	return nil
