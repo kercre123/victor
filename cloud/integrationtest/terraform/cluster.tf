@@ -64,8 +64,11 @@ resource "aws_ecs_service" "load_test" {
   name            = "load_test_${count.index}"
   cluster         = "${aws_ecs_cluster.load_test.id}"
   task_definition = "${aws_ecs_task_definition.load_test.arn}"
-  desired_count   = "${var.instance_count}"
   launch_type     = "FARGATE"
+
+  desired_count                      = "${var.instance_count}"
+  deployment_maximum_percent         = 200
+  deployment_minimum_healthy_percent = 0
 
   network_configuration {
     security_groups  = ["${aws_security_group.ecs_tasks.id}"]

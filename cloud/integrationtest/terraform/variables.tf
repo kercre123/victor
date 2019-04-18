@@ -13,7 +13,9 @@ variable "robots_per_process" {
   default = 100
 }
 
-// Note: number of container instances per cluster: 1000
+// Note: maximum number of container instances (tasks) per cluster: 1000
+//       considering redis & wavefront each require a container that leaves a maxium of 998
+//       robot task instances -> total = instance_count * service_count
 variable "instance_count" {
   description = "Number of load test Docker containers per Fargate cluster"
   default = 0
@@ -95,10 +97,10 @@ variable "ramp_durations" {
   }
 }
 
-// Fargate Pricing (us-west-2): per vCPU per hour $0.0506, per GB per hour $0.0127
+// Fargate Pricing (us-west-2): per vCPU per hour $0.04048, per GB per hour $0.004445
 // See (for supported configurations and pricing): https://aws.amazon.com/fargate/pricing/
-// Total: service_count * instance_count * (fargate_cpu * $0.0506 + fargate_memory * $0.0127) per hour
-// Example (1 service, 1000 containers): 1 * 1000 * (0.25*0.0506 + 0.5*0.0127) = $19 per hour
+// Total: service_count * instance_count * (fargate_cpu * $0.04048 + fargate_memory * $0.004445) per hour
+// Example (1 service, 1000 containers): 1 * 1000 * (0.25*0.04048 + 0.5*0.004445) = $12.34 per hour
 variable "fargate_cpu" {
   description = "Fargate instance CPU units to provision (1 vCPU = 1024 CPU units)"
   default     = "256"
