@@ -429,7 +429,7 @@ def handle_delta(current_slot, target_slot, manifest, tar_stream):
     delta_bytes = manifest.getint("DELTA", "bytes")
     download_progress_denominator = 10  # Download expected not to take more than 10% of the time
     write_status(EXPECTED_WRITE_SIZE_FILE, delta_bytes*download_progress_denominator)
-    write_status(PROGRESS_FILE, 0)
+    write_status(PROGRESS_FILE, 1) # Set to 1 instead of 0 so that vic-gateway knows we are downloading
 
     def progress_update(progress):
         "Update delta download progress"
