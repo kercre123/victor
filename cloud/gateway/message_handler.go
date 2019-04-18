@@ -3410,7 +3410,7 @@ func (service *rpcService) AudioStream(in *extint.AudioStreamRequest, stream ext
 	client := NewSharedCircularBuffer("micDataSharedCircularBuffer")
 	defer client.Close()
 
-	for {
+	for len(connectionId) > 0 {
 		micSDKData, offset, getStatus := client.GetNext()
 		if getStatus == "please wait" {
 			time.Sleep(10 * time.Millisecond)
@@ -3424,7 +3424,14 @@ func (service *rpcService) AudioStream(in *extint.AudioStreamRequest, stream ext
 				audioStreamResponse.AudioData = append(audioStreamResponse.AudioData, byte(amplitude&0xff))
 				audioStreamResponse.AudioData = append(audioStreamResponse.AudioData, byte(amplitude>>8))
 			}
-			stream.Send(audioStreamResponse)
+			if err := stream.Send(audioStreamResponse); err != nil {
+				return err
+			} else if err = stream.Context().Err(); err != nil {
+				// This is the case where the user disconnects the stream
+				// We should still return the err in case the user doesn't think they disconnected
+				return err
+			}
+
 		}
 	}
 	return nil
