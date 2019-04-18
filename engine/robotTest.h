@@ -43,6 +43,7 @@ namespace WebService {
 class RobotTest
 {
 public:
+
   explicit RobotTest(const CozmoContext* context);
   virtual ~RobotTest();
 
@@ -59,11 +60,14 @@ public:
   void ExecuteWebCommandStatus(std::string* resultStr);
   void ExecuteWebCommandListScripts(std::string* resultStr);
   void ExecuteWebCommandGetScript(const std::string& scriptName, std::string* resultStr);
+  void ExecuteWebCommandRefreshUploadedScripts(std::string* resultStr);
 
   void OnCloudIntentCompleted() { _waitingForCloudIntent = false; }
 
 private:
 
+  void LoadScripts(const std::string& path, const bool isUploadedScriptsFolder,
+                   std::string* resultStr = nullptr);
   bool ValidateScript(const Json::Value& scriptJson);
 
   bool StartScript(const std::string& scriptName);
@@ -112,6 +116,7 @@ private:
     STATUS,
     LIST_SCRIPTS,
     GET_SCRIPT,
+    REFRESH_UPLOADED_SCRIPTS,
   };
 
   struct RobotTestWebCommand
@@ -134,7 +139,7 @@ private:
   struct RobotTestScript
   {
     std::string _name;
-    bool        _wasUploaded = false;       // Was this script uploaded to cache? (Otherwise found in resources)
+    bool        _wasUploaded = false;       // Was this script uploaded to persistent folder? (Otherwise found in resources)
     Json::Value _scriptJson;
   };
 

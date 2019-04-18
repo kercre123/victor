@@ -90,6 +90,14 @@ namespace
   }
   CONSOLE_FUNC(GetScript, kConsoleGroup, const char* scriptName);
 
+  void RefreshUploadedScripts(ConsoleFunctionContextRef context)
+  {
+    std::string response;
+    s_RobotTest->ExecuteWebCommandRefreshUploadedScripts(&response);
+    context->channel->WriteLog("%s", response.c_str());
+  }
+  CONSOLE_FUNC(RefreshUploadedScripts, kConsoleGroup);
+
 #endif  // REMOTE_CONSOLE_ENABLED
 }
 
@@ -153,61 +161,27 @@ void RobotTest::Init(Util::Data::DataPlatform* dataPlatform, WebService::WebServ
   _webService->RegisterRequestHandler("/robottest", RobotTestWebServerHandler, this);
 
   _platform = dataPlatform;
-  _uploadedScriptsPath = _platform->pathToResource(Util::Data::Scope::Cache,
+  _uploadedScriptsPath = _platform->pathToResource(Util::Data::Scope::Persistent,
                                                    "robotTestScripts");
-  Util::FileUtils::CreateDirectory(_uploadedScriptsPath);
-
-  // Find and load all scripts in the resources folder
-  std::string scriptsPath = _platform->pathToResource(Util::Data::Scope::Resources,
-                                                      "config/engine/robotTestFramework");
-  static const bool kUseFullPath = true;
-  static const bool kRecurse = true;
-  auto fileList = Util::FileUtils::FilesInDirectory(scriptsPath, kUseFullPath, "json", kRecurse);
-  for (const auto& scriptFilePath : fileList)
+  if (!Util::FileUtils::CreateDirectory(_uploadedScriptsPath))
   {
-    Json::Value scriptJson;
-    const bool success = _platform->readAsJson(scriptFilePath, scriptJson);
-    if (!success)
-    {
-      LOG_ERROR("RobotTest.Init.ScriptLoadError",
-                "Robot test script file %s failed to parse as JSON",
-                scriptFilePath.c_str());
-    }
-    else
-    {
-      const bool isValid = ValidateScript(scriptJson);
-      if (!isValid)
-      {
-        LOG_ERROR("RobotTest.Init.ScriptValidationError",
-                  "Robot test script file %s is valid JSON but has one or more errors",
-                  scriptFilePath.c_str());
-      }
-      else
-      {
-        static const bool kMustHaveExtension = true;
-        static const bool kRemoveExtension = true;
-        const std::string name = Util::FileUtils::GetFileName(scriptFilePath, kMustHaveExtension, kRemoveExtension);
-        ScriptsMap::const_iterator it = _scripts.find(name);
-        if (it != _scripts.end())
-        {
-          LOG_ERROR("RobotTest.Init.DuplicateScriptName",
-                    "Duplicate test script file name %s; ignoring script with duplicate name",
-                    scriptFilePath.c_str());
-        }
-        else
-        {
-          RobotTestScript script;
-          script._name = name;
-          script._wasUploaded = false;
-          script._scriptJson = scriptJson;
-          _scripts[name] = script;
-        }
-      }
-    }
+    LOG_ERROR("RobotTest.Init", "Failed to create folder %s", _uploadedScriptsPath.c_str());
+    return;
   }
-  LOG_INFO("RobotTest.Init",
-           "Successfully loaded and validated %i robot test script files out of %i found in resources",
-           static_cast<int>(_scripts.size()), static_cast<int>(fileList.size()));
+
+  {
+    // Find and load all scripts in the resources folder
+    std::string scriptsPath = _platform->pathToResource(Util::Data::Scope::Resources,
+                                                        "config/engine/robotTestFramework");
+    static const bool kisUploadedScriptsFolder = false;
+    LoadScripts(scriptsPath, kisUploadedScriptsFolder);
+  }
+
+  {
+    // Find and load all uploaded scripts in the persistent folder
+    static const bool kisUploadedScriptsFolder = true;
+    LoadScripts(_uploadedScriptsPath, kisUploadedScriptsFolder);
+  }
 }
 
 
@@ -271,6 +245,11 @@ int RobotTest::ParseWebCommands(std::string& queryString)
       RobotTestWebCommand cmd(WebCommandType::LIST_SCRIPTS);
       cmds.push_back(cmd);
     }
+    else if (current == "refreshuploadedscripts")
+    {
+      RobotTestWebCommand cmd(WebCommandType::REFRESH_UPLOADED_SCRIPTS);
+      cmds.push_back(cmd);
+    }
     else
     {
       // Commands that have arguments:
@@ -329,6 +308,9 @@ void RobotTest::ExecuteQueuedWebCommands(std::string* resultStr)
         break;
       case WebCommandType::GET_SCRIPT:
         ExecuteWebCommandGetScript(cmd._paramString, resultStr);
+        break;
+      case WebCommandType::REFRESH_UPLOADED_SCRIPTS:
+        ExecuteWebCommandRefreshUploadedScripts(resultStr);
         break;
     }
   }
@@ -389,6 +371,76 @@ void RobotTest::ExecuteWebCommandGetScript(const std::string& scriptName, std::s
   std::string stringifiedJSON;
   stringifiedJSON = writer.write(it->second._scriptJson);
   *resultStr += stringifiedJSON;
+}
+
+
+void RobotTest::ExecuteWebCommandRefreshUploadedScripts(std::string* resultStr)
+{
+  static const bool kisUploadedScriptsFolder = true;
+  LoadScripts(_uploadedScriptsPath, kisUploadedScriptsFolder, resultStr);
+}
+
+
+void RobotTest::LoadScripts(const std::string& path, const bool isUploadedScriptsFolder,
+                            std::string* resultStr)
+{
+  static const bool kUseFullPath = true;
+  static const bool kRecurse = true;
+  auto fileList = Util::FileUtils::FilesInDirectory(path, kUseFullPath, "json", kRecurse);
+  int numValidScripts = 0;
+  for (const auto& scriptFilePath : fileList)
+  {
+    Json::Value scriptJson;
+    const bool success = _platform->readAsJson(scriptFilePath, scriptJson);
+    if (!success)
+    {
+      LOG_ERROR("RobotTest.LoadScripts.ScriptLoadError",
+                "Robot test script file %s failed to parse as JSON",
+                scriptFilePath.c_str());
+    }
+    else
+    {
+      const bool isValid = ValidateScript(scriptJson);
+      if (!isValid)
+      {
+        LOG_ERROR("RobotTest.LoadScripts.ScriptValidationError",
+                  "Robot test script file %s is valid JSON but has one or more errors",
+                  scriptFilePath.c_str());
+      }
+      else
+      {
+        static const bool kMustHaveExtension = true;
+        static const bool kRemoveExtension = true;
+        const std::string name = Util::FileUtils::GetFileName(scriptFilePath, kMustHaveExtension, kRemoveExtension);
+        ScriptsMap::const_iterator it = _scripts.find(name);
+        if (it != _scripts.end() && !isUploadedScriptsFolder)
+        {
+          LOG_ERROR("RobotTest.LoadScripts.DuplicateScriptName",
+                    "Duplicate test script file name %s in resources; ignoring script with duplicate name",
+                    scriptFilePath.c_str());
+        }
+        else
+        {
+          RobotTestScript script;
+          script._name = name;
+          script._wasUploaded = isUploadedScriptsFolder;
+          script._scriptJson = scriptJson;
+          _scripts[name] = script;
+          numValidScripts++;
+        }
+      }
+    }
+  }
+
+  LOG_INFO("RobotTest.LoadScripts",
+           "Successfully loaded and validated %i robot test scripts out of %i found in %s folder",
+           numValidScripts, static_cast<int>(fileList.size()),
+           isUploadedScriptsFolder ? "persistent" : "resources");
+
+  if (resultStr)
+  {
+    *resultStr += "Loaded " + std::to_string(numValidScripts) + " valid robot test scripts from persistent folder";
+  }
 }
 
 
