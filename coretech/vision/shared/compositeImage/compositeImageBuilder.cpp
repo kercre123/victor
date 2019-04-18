@@ -64,8 +64,7 @@ bool CompositeImageBuilder::AddImageChunk(SpriteCache* cache,
 
     // If its an empty SpriteBox, don't add it to the image map
     if(Vision::SpritePathMap::kEmptySpriteBoxID != chunk.assetID){
-      std::string assetName = cache->GetSpritePathMap()->GetAssetName(chunk.assetID);
-      layerIter->second.AddToImageMap(cache, seqContainer, chunk.spriteBox.name, assetName);
+      layerIter->second.AddToImageMap(cache, seqContainer, chunk.spriteBox.name, chunk.assetID);
     } 
   }
 

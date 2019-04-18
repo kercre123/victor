@@ -85,7 +85,7 @@ public:
   // Functions which add on to the current layout
   void AddToLayout(SpriteBoxName sbName, const SpriteBox& spriteBox);
   void AddToImageMap(SpriteCache* cache, SpriteSequenceContainer* seqContainer,
-                     SpriteBoxName sbName, const std::string& assetName);
+                     SpriteBoxName sbName, const SpritePathMap::AssetID assetID);
   void AddToImageMap(SpriteBoxName sbName, const SpriteEntry& spriteEntry);
   void AddOrUpdateSpriteBoxWithEntry(const SpriteBox& spriteBox, const SpriteEntry& spriteEntry);
 
@@ -168,7 +168,7 @@ struct CompositeImageLayer::SpriteEntry{
 
   SpriteEntry(SpriteCache* cache,
               SpriteSequenceContainer* seqContainer,
-              const std::string& assetName,
+              const SpritePathMap::AssetID assetID,
               uint frameStartOffset = 0);
 
   // These constructors are used only within the anim process since the resulting

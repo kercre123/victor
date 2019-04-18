@@ -27,6 +27,7 @@
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/vision/shared/spritePathMap.h"
 
 namespace Anki {
 namespace Vector {
@@ -117,7 +118,8 @@ void BehaviorProceduralClock::InitBehavior()
   using Entry = Vision::CompositeImageLayer::SpriteEntry;
   // set static quadrants
   for(auto& entry : _instanceParams.staticElements){
-    auto mapEntry = Entry(spriteCache, seqContainer,  entry.second);
+    Vision::SpritePathMap::AssetID assetID = Vision::SpritePathMap::GetAssetID(entry.second);
+    auto mapEntry = Entry(spriteCache, seqContainer,  assetID);
     _instanceParams.staticImageMap.emplace(entry.first, std::move(mapEntry));
   }
 
@@ -264,6 +266,7 @@ void BehaviorProceduralClock::BuildAndDisplayProceduralClock(const int clockOffs
   auto* spriteCache = accessorComp.GetSpriteCache();
   auto* seqContainer = accessorComp.GetSpriteSequenceContainer();
   using Entry = Vision::CompositeImageLayer::SpriteEntry;
+  using SpritePathMap = Vision::SpritePathMap;
 
   // set digits
   bool isLeadingZero = ShouldDimLeadingZeros();
@@ -274,10 +277,12 @@ void BehaviorProceduralClock::BuildAndDisplayProceduralClock(const int clockOffs
   for(auto& pair : digitMap){
     isLeadingZero &= (pair.second == 0);
     if(isLeadingZero){
-      auto mapEntry = Entry(spriteCache, seqContainer, kClockEmptyGridSpriteName);
+      SpritePathMap::AssetID assetID = SpritePathMap::GetAssetID(kClockEmptyGridSpriteName);
+      auto mapEntry = Entry(spriteCache, seqContainer, assetID);
       imageMap.emplace(pair.first, std::move(mapEntry));
     }else{
-      auto mapEntry = Entry(spriteCache, seqContainer, _instanceParams.intsToSpriteNames[pair.second]);
+      SpritePathMap::AssetID assetID = SpritePathMap::GetAssetID(_instanceParams.intsToSpriteNames[pair.second]);
+      auto mapEntry = Entry(spriteCache, seqContainer, assetID);
       imageMap.emplace(pair.first, std::move(mapEntry));
     }
   }

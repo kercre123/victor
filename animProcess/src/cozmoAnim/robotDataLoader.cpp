@@ -170,6 +170,10 @@ void RobotDataLoader::LoadNonConfigData()
     animLoader.LoadAnimationsIntoContainer(fileInfo, _cannedAnimations.get());
   }
 
+  // After we've finished loading Sprites and SpriteSequences, retroactively verify
+  // any AssetID's requested before/during loading
+  _spritePathMap->CheckUnverifiedAssetIDs();
+
   // Backpack light animations
   {
     // Use the CannedAnimationLoader to collect the backpack light json files

@@ -72,127 +72,119 @@ const std::vector<Vision::SpriteBoxName> kDealerFinalSpriteBoxes = {
 };
 
 // Asset Lookup
-const char* kEmptySpriteBoxAssetName = "empty_sprite_box";
-const char* kCharlieFrameAssetName = "charlieframe";
+const Vision::SpritePathMap::AssetID kCharlieFrameAssetID = Vision::SpritePathMap::GetAssetID("charlieframe");
 
 // These vectors provide index-based conversion from CardID(0-51) to string AssetName
-const std::vector<const char* const> kPlayerCardAssets = {
-  // Spades
-  "blackjack_player_spadeace",
-  "blackjack_player_spade2",
-  "blackjack_player_spade3",
-  "blackjack_player_spade4",
-  "blackjack_player_spade5",
-  "blackjack_player_spade6",
-  "blackjack_player_spade7",
-  "blackjack_player_spade8",
-  "blackjack_player_spade9",
-  "blackjack_player_spade10",
-  "blackjack_player_spadejack",
-  "blackjack_player_spadequeen",
-  "blackjack_player_spadeking",
-  // Hearts
-  "blackjack_player_heartace",
-  "blackjack_player_heart2",
-  "blackjack_player_heart3",
-  "blackjack_player_heart4",
-  "blackjack_player_heart5",
-  "blackjack_player_heart6",
-  "blackjack_player_heart7",
-  "blackjack_player_heart8",
-  "blackjack_player_heart9",
-  "blackjack_player_heart10",
-  "blackjack_player_heartjack",
-  "blackjack_player_heartqueen",
-  "blackjack_player_heartking",
-  // Diamonds
-  "blackjack_player_diamondace",
-  "blackjack_player_diamond2",
-  "blackjack_player_diamond3",
-  "blackjack_player_diamond4",
-  "blackjack_player_diamond5",
-  "blackjack_player_diamond6",
-  "blackjack_player_diamond7",
-  "blackjack_player_diamond8",
-  "blackjack_player_diamond9",
-  "blackjack_player_diamond10",
-  "blackjack_player_diamondjack",
-  "blackjack_player_diamondqueen",
-  "blackjack_player_diamondking",
-  // Clubs
-  "blackjack_player_clubsace",
-  "blackjack_player_clubs2",
-  "blackjack_player_clubs3",
-  "blackjack_player_clubs4",
-  "blackjack_player_clubs5",
-  "blackjack_player_clubs6",
-  "blackjack_player_clubs7",
-  "blackjack_player_clubs8",
-  "blackjack_player_clubs9",
-  "blackjack_player_clubs10",
-  "blackjack_player_clubsjack",
-  "blackjack_player_clubsqueen",
-  "blackjack_player_clubsking"
+const std::vector<Vision::SpritePathMap::AssetID> kPlayerCardAssets = {
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spadeace"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spade2"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spade3"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spade4"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spade5"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spade6"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spade7"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spade8"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spade9"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spade10"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spadejack"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spadequeen"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spadeking"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_heartace"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_heart2"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_heart3"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_heart4"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_heart5"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_heart6"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_heart7"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_heart8"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_heart9"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_heart10"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_heartjack"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_heartqueen"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_heartking"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_diamondace"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_diamond2"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_diamond3"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_diamond4"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_diamond5"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_diamond6"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_diamond7"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_diamond8"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_diamond9"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_diamond10"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_diamondjack"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_diamondqueen"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_diamondking"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_clubsace"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_clubs2"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_clubs3"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_clubs4"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_clubs5"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_clubs6"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_clubs7"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_clubs8"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_clubs9"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_clubs10"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_clubsjack"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_clubsqueen"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_clubsking")
 };
 
-const char* kDealerCardBackSpriteName = "blackjack_vector_card_back";
-const std::vector<const char* const> kDealerCardAssets = {
-  // Spades
-  "blackjack_vector_spadeace",
-  "blackjack_vector_spade2",
-  "blackjack_vector_spade3",
-  "blackjack_vector_spade4",
-  "blackjack_vector_spade5",
-  "blackjack_vector_spade6",
-  "blackjack_vector_spade7",
-  "blackjack_vector_spade8",
-  "blackjack_vector_spade9",
-  "blackjack_vector_spade10",
-  "blackjack_vector_spadejack",
-  "blackjack_vector_spadequeen",
-  "blackjack_vector_spadeking",
-  // Hearts
-  "blackjack_vector_heartace",
-  "blackjack_vector_heart2",
-  "blackjack_vector_heart3",
-  "blackjack_vector_heart4",
-  "blackjack_vector_heart5",
-  "blackjack_vector_heart6",
-  "blackjack_vector_heart7",
-  "blackjack_vector_heart8",
-  "blackjack_vector_heart9",
-  "blackjack_vector_heart10",
-  "blackjack_vector_heartjack",
-  "blackjack_vector_heartqueen",
-  "blackjack_vector_heartking",
-  // Diamonds
-  "blackjack_vector_diamondace",
-  "blackjack_vector_diamond2",
-  "blackjack_vector_diamond3",
-  "blackjack_vector_diamond4",
-  "blackjack_vector_diamond5",
-  "blackjack_vector_diamond6",
-  "blackjack_vector_diamond7",
-  "blackjack_vector_diamond8",
-  "blackjack_vector_diamond9",
-  "blackjack_vector_diamond10",
-  "blackjack_vector_diamondjack",
-  "blackjack_vector_diamondqueen",
-  "blackjack_vector_diamondking",
-  // Clubs
-  "blackjack_vector_clubsace",
-  "blackjack_vector_clubs2",
-  "blackjack_vector_clubs3",
-  "blackjack_vector_clubs4",
-  "blackjack_vector_clubs5",
-  "blackjack_vector_clubs6",
-  "blackjack_vector_clubs7",
-  "blackjack_vector_clubs8",
-  "blackjack_vector_clubs9",
-  "blackjack_vector_clubs10",
-  "blackjack_vector_clubsjack",
-  "blackjack_vector_clubsqueen",
-  "blackjack_vector_clubsking"
+const Vision::SpritePathMap::AssetID kDealerCardBackSpriteID =
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_card_back");
+const std::vector<Vision::SpritePathMap::AssetID> kDealerCardAssets = {
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spadeace"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spade2"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spade3"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spade4"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spade5"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spade6"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spade7"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spade8"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spade9"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spade10"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spadejack"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spadequeen"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spadeking"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_heartace"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_heart2"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_heart3"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_heart4"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_heart5"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_heart6"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_heart7"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_heart8"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_heart9"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_heart10"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_heartjack"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_heartqueen"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_heartking"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_diamondace"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_diamond2"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_diamond3"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_diamond4"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_diamond5"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_diamond6"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_diamond7"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_diamond8"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_diamond9"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_diamond10"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_diamondjack"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_diamondqueen"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_diamondking"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_clubsace"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_clubs2"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_clubs3"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_clubs4"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_clubs5"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_clubs6"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_clubs7"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_clubs8"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_clubs9"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_clubs10"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_clubsjack"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_clubsqueen"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_clubsking")
 };
 
 // Robot motion animations
@@ -207,9 +199,12 @@ const char* kSwipeAnimationName = "anim_blackjack_swipe_01_temp_remap";
 const char* kTrackLockingKey = "BlackJackVisualizer_track_lock";
 
 // Card SpriteSequences
-const char* kDealPlayerSpriteSeqName = "blackjack_player_back";
-const char* kDealDealerSpriteSeqName = "blackjack_vector_back";
-const char* kDealerFlopSpriteSeqName = "blackjack_vector_flipover";
+const Vision::SpritePathMap::AssetID kDealPlayerSpriteSeqID =
+  Vision::SpritePathMap::GetAssetID("blackjack_player_back");
+const Vision::SpritePathMap::AssetID kDealDealerSpriteSeqID =
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_back");
+const Vision::SpritePathMap::AssetID kDealerFlopSpriteSeqID =
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_flipover");
 
 }
 
@@ -260,13 +255,13 @@ void BlackJackVisualizer::DealToPlayer(BehaviorExternalInterface& bei, std::func
   }
 
   const int cardPositionIndex = static_cast<int>(playerHand.size()) - 1;
-  const std::string cardSpriteName(kPlayerCardAssets[playerHand.back().GetID()]);
+  const Vision::SpritePathMap::AssetID cardSpriteID = kPlayerCardAssets[playerHand.back().GetID()];
   Vision::SpriteBoxName dealSeqSBName = kPlayerDealingSpriteBoxes[cardPositionIndex];
   Vision::SpriteBoxName revealSBName = kPlayerRevealSpriteBoxes[cardPositionIndex];
   Vision::SpriteBoxName finalSBName = kPlayerFinalSpriteBoxes[cardPositionIndex];
 
   _animCompletedCallback = callback;
-  DealCard(bei, dealSeqSBName, kDealPlayerSpriteSeqName, revealSBName, finalSBName, cardSpriteName);
+  DealCard(bei, dealSeqSBName, kDealPlayerSpriteSeqID, revealSBName, finalSBName, cardSpriteID);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -289,11 +284,11 @@ void BlackJackVisualizer::DealToDealer(BehaviorExternalInterface& bei, std::func
   Card card = dealerHand.back();
 
   // Handle face up/down display
-  std::string cardSpriteName;
+  Vision::SpritePathMap::AssetID cardSpriteID;
   if(card.IsFaceUp()){
-    cardSpriteName = kDealerCardAssets[card.GetID()];
+    cardSpriteID = kDealerCardAssets[card.GetID()];
   } else {
-    cardSpriteName = kDealerCardBackSpriteName;
+    cardSpriteID = kDealerCardBackSpriteID;
   }
 
   const int cardPositionIndex = static_cast<int>(dealerHand.size()) - 1;
@@ -302,7 +297,7 @@ void BlackJackVisualizer::DealToDealer(BehaviorExternalInterface& bei, std::func
   Vision::SpriteBoxName finalSBName = kDealerFinalSpriteBoxes[cardPositionIndex];
 
   _animCompletedCallback = callback;
-  DealCard(bei, dealSeqSBName, kDealDealerSpriteSeqName, revealSBName, finalSBName, cardSpriteName);
+  DealCard(bei, dealSeqSBName, kDealDealerSpriteSeqID, revealSBName, finalSBName, cardSpriteID);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -326,7 +321,7 @@ void BlackJackVisualizer::Flop(BehaviorExternalInterface& bei, std::function<voi
 
   // Always flipping the dealer's first card
   Card card = dealerHand.front();
-  const std::string cardSpriteName = kDealerCardAssets[card.GetID()];
+  Vision::SpritePathMap::AssetID cardSpriteID = kDealerCardAssets[card.GetID()];
   const int cardPositionIndex = 0;
 
   Vision::SpriteBoxName dealSeqSBName = kDealerDealingSpriteBoxes[cardPositionIndex];
@@ -334,17 +329,17 @@ void BlackJackVisualizer::Flop(BehaviorExternalInterface& bei, std::function<voi
   Vision::SpriteBoxName finalSBName = kDealerFinalSpriteBoxes[cardPositionIndex];
 
   // Clear off the card back image holding the dealer's first card position before starting the animation,
-  _cardAssetMap[finalSBName] = kEmptySpriteBoxAssetName;
-  DealCard(bei, dealSeqSBName, kDealerFlopSpriteSeqName, revealSBName, finalSBName, cardSpriteName);
+  _cardAssetMap[finalSBName] = Vision::SpritePathMap::kEmptySpriteBoxID;
+  DealCard(bei, dealSeqSBName, kDealerFlopSpriteSeqID, revealSBName, finalSBName, cardSpriteID);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BlackJackVisualizer::DealCard(const BehaviorExternalInterface& bei,
                                    const Vision::SpriteBoxName& dealSeqSBName,
-                                   const std::string& dealSpriteSeqName,
+                                   const Vision::SpritePathMap::AssetID dealSpriteSeqName,
                                    const Vision::SpriteBoxName& revealSBName,
                                    const Vision::SpriteBoxName& finalSBName,
-                                   const std::string& cardSpriteName)
+                                   const Vision::SpritePathMap::AssetID cardSpriteName)
 {
   bei.GetMovementComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK, kTrackLockingKey);
 
@@ -370,8 +365,8 @@ void BlackJackVisualizer::DealCard(const BehaviorExternalInterface& bei,
                                                           kTrackLockingKey);
 
   // Clear the dealing animation assets and reveal spriteBox...
-  _cardAssetMap[dealSeqSBName] = kEmptySpriteBoxAssetName;
-  _cardAssetMap[revealSBName] = kEmptySpriteBoxAssetName;
+  _cardAssetMap[dealSeqSBName] = Vision::SpritePathMap::kEmptySpriteBoxID;
+  _cardAssetMap[revealSBName] = Vision::SpritePathMap::kEmptySpriteBoxID;
   // ...and store the dealt card in the final spritebox so its there in future animations
   _cardAssetMap[finalSBName] = cardSpriteName;
 }
@@ -382,7 +377,7 @@ void BlackJackVisualizer::DisplayCharlieFrame(BehaviorExternalInterface& bei, st
   bei.GetMovementComponent().UnlockTracks((u8)AnimTrackFlag::FACE_TRACK, kTrackLockingKey);
   _animCompletedCallback = callback;
 
-  _cardAssetMap[kCharlieFrameSpriteBox] = kCharlieFrameAssetName;
+  _cardAssetMap[kCharlieFrameSpriteBox] = kCharlieFrameAssetID;
 
   auto animationCallback = [this, &bei](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded)
   {
@@ -441,30 +436,30 @@ void BlackJackVisualizer::ResetHands()
   _cardAssetMap.clear();
 
   for(const auto& spriteBox : kPlayerDealingSpriteBoxes){
-    _cardAssetMap.insert({spriteBox, kEmptySpriteBoxAssetName});
+    _cardAssetMap.insert({spriteBox, Vision::SpritePathMap::kEmptySpriteBoxID});
   }
 
   for(const auto& spriteBox : kPlayerRevealSpriteBoxes){
-    _cardAssetMap.insert({spriteBox, kEmptySpriteBoxAssetName});
+    _cardAssetMap.insert({spriteBox, Vision::SpritePathMap::kEmptySpriteBoxID});
   }
 
   for(const auto& spriteBox : kPlayerFinalSpriteBoxes){
-    _cardAssetMap.insert({spriteBox, kEmptySpriteBoxAssetName});
+    _cardAssetMap.insert({spriteBox, Vision::SpritePathMap::kEmptySpriteBoxID});
   }
 
   for(const auto& spriteBox : kDealerDealingSpriteBoxes){
-    _cardAssetMap.insert({spriteBox, kEmptySpriteBoxAssetName});
+    _cardAssetMap.insert({spriteBox, Vision::SpritePathMap::kEmptySpriteBoxID});
   }
 
   for(const auto& spriteBox : kDealerRevealSpriteBoxes){
-    _cardAssetMap.insert({spriteBox, kEmptySpriteBoxAssetName});
+    _cardAssetMap.insert({spriteBox, Vision::SpritePathMap::kEmptySpriteBoxID});
   }
 
   for(const auto& spriteBox : kDealerFinalSpriteBoxes){
-    _cardAssetMap.insert({spriteBox, kEmptySpriteBoxAssetName});
+    _cardAssetMap.insert({spriteBox, Vision::SpritePathMap::kEmptySpriteBoxID});
   }
 
-  _cardAssetMap.insert({kCharlieFrameSpriteBox, kEmptySpriteBoxAssetName});
+  _cardAssetMap.insert({kCharlieFrameSpriteBox, Vision::SpritePathMap::kEmptySpriteBoxID});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -480,27 +475,6 @@ void BlackJackVisualizer::ReleaseControlAndClearState(BehaviorExternalInterface&
 
   _animCompletedLastFrame = false;
   _animCompletedCallback = nullptr;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BlackJackVisualizer::VerifySpriteAssets(BehaviorExternalInterface& bei)
-{
-  auto& dataAccessorComp = bei.GetComponentWrapper(BEIComponentID::DataAccessor).GetComponent<DataAccessorComponent>();
-  auto* spritePathMap = dataAccessorComp.GetSpriteCache()->GetSpritePathMap();
-
-  for(auto& assetName : kPlayerCardAssets){
-    ANKI_VERIFY(spritePathMap->IsValidAssetName(assetName),
-                "BlackJack.VerifySpriteAssets.InvalidAssetName",
-                "Asset name: %s does not map to a valid sprite",
-                assetName);
-  }
-
-  for(auto& assetName : kDealerCardAssets){
-    ANKI_VERIFY(spritePathMap->IsValidAssetName(assetName),
-                "BlackJack.VerifySpriteAssets.InvalidAssetName",
-                "Asset name: %s does not map to a valid sprite",
-                assetName);
-  }
 }
 
 } // namespace Vector
