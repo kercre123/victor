@@ -261,7 +261,7 @@ bool BehaviorDisplayWeather::GenerateTemperatureRemaps(int temp,
   }
 
   const DigitMap& digitMap = (ABS(temp) < 10) ? kSingleDigitMap :
-                             ( (ABS(temp) > 10) && (ABS(temp) < 100) ) ? kDoubleDigitMap :
+                             ( (ABS(temp) >= 10) && (ABS(temp) < 100) ) ? kDoubleDigitMap :
                              kTripleDigitMap;
 
   if(temp < 0){

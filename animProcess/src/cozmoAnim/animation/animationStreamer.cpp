@@ -849,6 +849,52 @@ namespace Anim {
     _lockFaceTrackAtEndOfStreamingAnimation = msg.lockFaceAtEndOfAnim;
   }
 
+  void AnimationStreamer::Process_playAnimWithSpriteBoxKeyFrames(
+    const RobotInterface::PlayAnimWithSpriteBoxKeyFrames& msg)
+  {
+    const u32 numLoops = 1;
+    const u32 startAtTime_ms = 0;
+    const bool interruptRunning = true;
+    const bool shouldOverrideEyeHue = true;
+    const bool shouldRenderInEyeHue = false;
+    const bool isInternalAnim = false;
+
+    _streamingAnimation = _neutralFaceAnimation;
+    const std::string animName(msg.animName, msg.animName_length);
+    if(animName.empty())
+    {
+      _proceduralAnimation->Clear();
+    }
+    else
+    {
+      CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(animName));
+    }
+
+    for(int i = 0; i < msg.numKeyFrames; ++i)
+    {
+      Vision::SpriteBoxKeyFrame keyFrame(msg.spriteBoxKeyFrames[i]);
+      _proceduralAnimation->AddSpriteBoxKeyFrame(std::move(keyFrame));
+    }
+    
+    SetStreamingAnimation(_proceduralAnimation, msg.tag, numLoops, startAtTime_ms, interruptRunning,
+                          shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
+  }
+
+  void AnimationStreamer::Process_addSpriteBoxKeyFrames(const RobotInterface::AddSpriteBoxKeyFrames& msg)
+  {
+    if(_streamingAnimation != _proceduralAnimation){
+      LOG_ERROR("AnimationStreamer.AddSpriteBoxKeyFrames.NoAnimation",
+                "Attempted to add keyframes to running anim, but no _proceduralAnim was running");
+      return;
+    }
+
+    for(int i = 0; i < msg.numKeyFrames; ++i)
+    {
+      Vision::SpriteBoxKeyFrame keyFrame(msg.spriteBoxKeyFrames[i]);
+      _proceduralAnimation->AddSpriteBoxKeyFrame(std::move(keyFrame));
+    }
+  }
+
   // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
   // refactor this method around the SpriteBoxCompositor
   Result AnimationStreamer::SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms)

@@ -72,9 +72,9 @@ SpriteBoxCompositor::SpriteBoxCompositor()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result SpriteBoxCompositor::AddKeyFrame(const CozmoAnim::SpriteBox* spriteBox)
 {
-  const std::string& spriteBoxName(spriteBox->spriteBoxName()->str());
   Vision::SpriteBoxKeyFrame newKeyFrame;
   newKeyFrame.triggerTime_ms = (u32)spriteBox->triggerTime_ms();
+  newKeyFrame.spriteBox.name = Vision::SpriteBoxNameFromString(spriteBox->spriteBoxName()->str());
   newKeyFrame.spriteBox.assetID = Vision::SpritePathMap::GetAssetID(spriteBox->assetName()->str());
   newKeyFrame.spriteBox.alpha = spriteBox->alpha();
   newKeyFrame.spriteBox.xPos = spriteBox->xPos();
@@ -84,15 +84,16 @@ Result SpriteBoxCompositor::AddKeyFrame(const CozmoAnim::SpriteBox* spriteBox)
   newKeyFrame.spriteBox.layer = Vision::LayerNameFromString(spriteBox->layer()->str());
   newKeyFrame.spriteBox.renderMethod = Vision::SpriteRenderMethodFromString(spriteBox->renderMethod()->str());
   newKeyFrame.spriteBox.spriteSeqEndType = Vision::SpriteSeqEndTypeFromString(spriteBox->spriteSeqEndType()->str());
-  return AddKeyFrameInternal(spriteBoxName, std::move(newKeyFrame));
+  return AddKeyFrameInternal(std::move(newKeyFrame));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result SpriteBoxCompositor::AddKeyFrame(const Json::Value& json, const std::string& animName)
 {
-  const std::string spriteBoxName = JsonTools::ParseString(json, kSpriteBoxNameKey, animName);
   Vision::SpriteBoxKeyFrame newKeyFrame;
   newKeyFrame.triggerTime_ms = JsonTools::ParseInt32(json, kTriggerTimeKey, animName);
+  newKeyFrame.spriteBox.name =
+    Vision::SpriteBoxNameFromString(JsonTools::ParseString(json, kSpriteBoxNameKey, animName));
   newKeyFrame.spriteBox.assetID = 
     Vision::SpritePathMap::GetAssetID(JsonTools::ParseString(json, kAssetNameKey, animName));
   newKeyFrame.spriteBox.alpha = JsonTools::ParseInt32(json, kAlphaKey, animName);
@@ -105,32 +106,32 @@ Result SpriteBoxCompositor::AddKeyFrame(const Json::Value& json, const std::stri
     JsonTools::ParseString(json, kRenderMethodKey, animName));
   newKeyFrame.spriteBox.spriteSeqEndType = Vision::SpriteSeqEndTypeFromString(
     JsonTools::ParseString(json, kSpriteSeqEndKey, animName));
-  return AddKeyFrameInternal(spriteBoxName, std::move(newKeyFrame));
+  return AddKeyFrameInternal(std::move(newKeyFrame));
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-Result SpriteBoxCompositor::AddKeyFrameInternal(const std::string& spriteBoxName, Vision::SpriteBoxKeyFrame&& spriteBox)
+Result SpriteBoxCompositor::AddKeyFrameInternal(Vision::SpriteBoxKeyFrame&& spriteBoxKeyFrame)
 {
   if(nullptr == _spriteBoxMap){
     _spriteBoxMap = std::make_unique<SpriteBoxMap>();
   }
 
-  // Grab a copy to simplify the _lastKeyFrameTime_ms check since insertion operations
-  // will invoke std::move
-  const TimeStamp_t triggerTime_ms = spriteBox.triggerTime_ms;
+  // Grab a couple of copies since insertion operations will invoke std::move
+  const Vision::SpriteBoxName name = spriteBoxKeyFrame.spriteBox.name;
+  const TimeStamp_t triggerTime_ms = spriteBoxKeyFrame.triggerTime_ms;
 
-  auto iter = _spriteBoxMap->find(spriteBoxName);
+  auto iter = _spriteBoxMap->find(name);
   if(_spriteBoxMap->end() == iter){
     // This is the first keyframe for this SpriteBoxName. Add a new track.
     SpriteBoxTrack newTrack;
-    newTrack.InsertKeyFrame(std::move(spriteBox));
-    _spriteBoxMap->insert({spriteBoxName, newTrack});
+    newTrack.InsertKeyFrame(std::move(spriteBoxKeyFrame));
+    _spriteBoxMap->insert({name, newTrack});
   } else {
     auto& track = iter->second;
-    if(!track.InsertKeyFrame(std::move(spriteBox))){
+    if(!track.InsertKeyFrame(std::move(spriteBoxKeyFrame))){
       LOG_ERROR("SpriteBoxCompositor.AddKeyFrame.DuplicateKeyFrame",
                 "Attempted to add overlapping keyframe for SpriteBoxName: %s at time: %d ms",
-                spriteBoxName.c_str(),
+                EnumToString(name),
                 triggerTime_ms);
       return Result::RESULT_FAIL;
     }
@@ -154,20 +155,19 @@ void SpriteBoxCompositor::AddSpriteBoxRemap(const Vision::SpriteBoxName spriteBo
     return;
   }
 
-  const std::string& spriteBoxName = Vision::EnumToString(spriteBox);
   if(IsEmpty()){
     LOG_ERROR("SpriteBoxCompositor.AddSpriteBoxRemap.EmptyCompositor",
               "Attempted to add remap for SpriteBox %s with remapped AssetID %d",
-              spriteBoxName.c_str(),
+              EnumToString(spriteBox),
               remappedAssetID);
     return;
   }
 
-  auto iter = _spriteBoxMap->find(spriteBoxName);
+  auto iter = _spriteBoxMap->find(spriteBox);
   if(_spriteBoxMap->end() == iter){
     LOG_ERROR("SpriteBoxCompositor.AddSpriteBoxRemap.InvalidSpriteBox",
               "Attempted to add remap for invalid SpriteBox %s with remapped AssetID %d",
-              spriteBoxName.c_str(),
+              EnumToString(spriteBox),
               remappedAssetID);
     return;
   }
@@ -191,7 +191,7 @@ void SpriteBoxCompositor::AppendTracks(const SpriteBoxCompositor& other, const T
       for(const auto& spriteBoxKeyFrame : spriteBoxTrackIter.second.GetKeyFrames()){
         Vision::SpriteBoxKeyFrame newKeyFrame = spriteBoxKeyFrame;
         newKeyFrame.triggerTime_ms += animOffset_ms;
-        AddKeyFrameInternal(spriteBoxTrackIter.first, std::move(newKeyFrame));
+        AddKeyFrameInternal(std::move(newKeyFrame));
       }
     }
   }
@@ -201,6 +201,8 @@ void SpriteBoxCompositor::AppendTracks(const SpriteBoxCompositor& other, const T
 void SpriteBoxCompositor::Clear()
 {
   if(nullptr != _spriteBoxMap){
+    _lastKeyFrameTime_ms = 0;
+    _advanceTime_ms = 0;
     _spriteBoxMap->clear();
     _spriteBoxMap.reset();
   }
@@ -293,9 +295,8 @@ bool SpriteBoxCompositor::PopulateCompositeImage(Vision::SpriteCache& spriteCach
       spriteHandle = spriteCache.GetSpriteHandleForAssetID(currentKeyFrame.spriteBox.assetID);
     }
 
-    const Vision::SpriteBoxName currentSpriteBoxName = Vision::SpriteBoxNameFromString(trackPair.first);
     outCompImg.AddImage(spriteHandle,
-                        currentSpriteBoxName,
+                        trackPair.first,
                         currentKeyFrame.spriteBox.layer,
                         currentKeyFrame.spriteBox.renderMethod,
                         currentKeyFrame.spriteBox.xPos,
