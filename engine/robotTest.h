@@ -82,10 +82,14 @@ private:
     WAIT_UNTIL_ENGINE_TICK_COUNT,
     WAIT_TICKS,
     WAIT_SECONDS,
+    CPU_START,
+    CPU_STOP,
   };
   void FetchNextScriptCommand();
   bool StringToScriptCommand(const std::string& commandStr, ScriptCommandType& command);
   bool ExecuteScriptCommand(ScriptCommandType command);
+
+  void SampleCPU(const bool calculateUsage);
 
 #if ANKI_ROBOT_TEST_ENABLED
   const CozmoContext*       _context;
@@ -108,6 +112,7 @@ private:
   int                       _waitTickCount = 0;
   float                     _waitTimeToExpire = 0.0f;
   bool                      _waitingForCloudIntent = false;
+  bool                      _cpuStartCommandExecuted = false;
 
   enum class WebCommandType
   {
@@ -153,6 +158,14 @@ private:
 
   using ScriptsMap = std::map<std::string, RobotTestScript, comp>;
   ScriptsMap                _scripts;
+
+  struct cpuTime
+  {
+    int _usedTimeCounter;
+    int _totalTimeCounter;
+  };
+
+  std::vector<cpuTime>      _prevCPUTime;
 };
 
 } // namespace Vector

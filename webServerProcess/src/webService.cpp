@@ -611,7 +611,7 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
   {
     return 1;
   }
-  
+
   using namespace std::chrono;
   const auto startTime = steady_clock::now();
 

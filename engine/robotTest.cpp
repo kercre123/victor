@@ -21,6 +21,7 @@
 #include "engine/robot.h"
 #include "engine/robotManager.h"
 #include "engine/robotTest.h"
+#include "osState/osState.h"
 #include "util/console/consoleInterface.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
@@ -40,9 +41,12 @@ const std::string RobotTest::kInactiveScriptName = "(NONE)";
 namespace
 {
   RobotTest* s_RobotTest = nullptr;
+
   const char* kScriptCommandsKey = "scriptCommands";
   const char* kCommandKey = "command";
   const char* kParametersKey = "parameters";
+
+  static const int kNumCPUStatLines = 5;
 
 #if REMOTE_CONSOLE_ENABLED
 
@@ -182,6 +186,8 @@ void RobotTest::Init(Util::Data::DataPlatform* dataPlatform, WebService::WebServ
     static const bool kisUploadedScriptsFolder = true;
     LoadScripts(_uploadedScriptsPath, kisUploadedScriptsFolder);
   }
+
+  _prevCPUTime.resize(kNumCPUStatLines);
 }
 
 
@@ -521,6 +527,10 @@ bool RobotTest::ValidateScript(const Json::Value& scriptJson)
         break;
       case ScriptCommandType::WAIT_SECONDS:
         break;
+      case ScriptCommandType::CPU_START:
+        break;
+      case ScriptCommandType::CPU_STOP:
+        break;
     }
   }
 
@@ -550,6 +560,7 @@ bool RobotTest::StartScript(const std::string& scriptName)
   _waitTickCount = 0;
   _waitTimeToExpire = 0.0f;
   _waitingForCloudIntent = false;
+  _cpuStartCommandExecuted = false;
   FetchNextScriptCommand();
   return true;
 }
@@ -602,6 +613,8 @@ bool RobotTest::StringToScriptCommand(const std::string& commandStr, ScriptComma
     {"waitUntilEngineTickCount", RobotTest::ScriptCommandType::WAIT_UNTIL_ENGINE_TICK_COUNT},
     {"waitTicks", RobotTest::ScriptCommandType::WAIT_TICKS},
     {"waitSeconds", RobotTest::ScriptCommandType::WAIT_SECONDS},
+    {"cpuStart", RobotTest::ScriptCommandType::CPU_START},
+    {"cpuStop", RobotTest::ScriptCommandType::CPU_STOP},
   };
 
   auto it = stringToEnumMap.find(commandStr);
@@ -721,10 +734,96 @@ bool RobotTest::ExecuteScriptCommand(ScriptCommandType command)
       }
     }
     break;
+
+    case ScriptCommandType::CPU_START:
+    {
+      _cpuStartCommandExecuted = true;
+      static const bool kCalculateUsage = false;
+      SampleCPU(kCalculateUsage);
+    }
+    break;
+
+    case ScriptCommandType::CPU_STOP:
+    {
+      if (!_cpuStartCommandExecuted)
+      {
+        LOG_ERROR("RobotTest.ExecuteScriptCommand",
+                  "Error: cpuStop script command attempted but there has been no cpuStart script command");
+        StopScript();
+        commandCompleted = false;
+        break;
+      }
+      static const bool kCalculateUsage = true;
+      SampleCPU(kCalculateUsage);
+    }
+    break;
   }
 
   return commandCompleted;
 }
+
+
+void RobotTest::SampleCPU(const bool calculateUsage)
+{
+  ANKI_CPU_PROFILE("RobotTest::SampleCPU");
+
+  std::vector<std::string> cpuTimeStatsStrings;
+  {
+    ANKI_CPU_PROFILE("RobotTest::SampleCPUCallOS");
+    // Request CPU time data from the OS; this gets five strings containing time data;
+    // one is for overall CPU, and the other four are for each of the four cores
+    const auto& osState = OSState::getInstance();
+    osState->UpdateCPUTimeStats();
+    osState->GetCPUTimeStats(cpuTimeStatsStrings);
+    DEV_ASSERT_MSG(cpuTimeStatsStrings.size() >= kNumCPUStatLines, "RobotTest.SampleCPU",
+                   "Insufficient number of cpu time stats lines (%i) returned from osState; should be %i",
+                   static_cast<int>(cpuTimeStatsStrings.size()), kNumCPUStatLines);
+  }
+
+  for (int lineIndex = 0; lineIndex < kNumCPUStatLines; lineIndex++)
+  {
+    auto& line = cpuTimeStatsStrings[lineIndex];
+    static const int kOffsetForCoreIndicator = 3;
+    const char coreIndicator = line[kOffsetForCoreIndicator];
+    const int infoIndex = (coreIndicator == ' ' ? 0 : (coreIndicator - '0') + 1);
+
+    // Parse out the time values
+    static const int kNumCPUTimeValues = 8;
+    size_t indexInString = kOffsetForCoreIndicator + 2;  // Skip core indicator char and space char
+    int totalTimeCounter = 0;
+    std::array<int, kNumCPUTimeValues> times;
+    for (int i = 0; i < kNumCPUTimeValues; i++)
+    {
+      line = line.substr(indexInString);
+      const int val = std::stoi(line, &indexInString);
+      times[i] = val;
+      totalTimeCounter += val;
+    }
+
+    // Calculate idle time and used time
+    const int idleTimeCounter = times[3] + times[4]; // 'idle' + 'iowait'
+    const int usedTimeCounter = totalTimeCounter - idleTimeCounter;
+
+    auto& prevCPUTime = _prevCPUTime[infoIndex];
+
+    if (calculateUsage)
+    {
+      const int deltaUsedTime  = usedTimeCounter  - prevCPUTime._usedTimeCounter;
+      const int deltaTotalTime = totalTimeCounter - prevCPUTime._totalTimeCounter;
+      float usedPercent = 0.0f;
+      if (deltaTotalTime > 0)
+      {
+        usedPercent = ((static_cast<float>(deltaUsedTime) * 100.0f) / static_cast<float>(deltaTotalTime));
+      }
+      LOG_INFO("RobotTest.SampleCPU", "CPU used = %.2f%% (%s)\n", usedPercent,
+               lineIndex == 0 ? "Overall" : std::string("Core " + std::to_string(lineIndex - 1)).c_str());
+    }
+
+    prevCPUTime._usedTimeCounter = usedTimeCounter;
+    prevCPUTime._totalTimeCounter = totalTimeCounter;
+  }
+}
+
 
 #else  // ANKI_ROBOT_TEST_ENABLED
 
