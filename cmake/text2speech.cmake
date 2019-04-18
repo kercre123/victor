@@ -2,7 +2,7 @@
 # cmake directories for use with Acapela TTS SDK
 #
 # Path to third-party repo
-set(TEXT2SPEECH_HOME "${ANKI_EXTERNAL_DIR}/anki-thirdparty/acapela")
+set(TEXT2SPEECH_HOME "${ANKI_THIRD_PARTY_DIR}/acapela")
 
 # Path to third-party header files for this platform
 set(TEXT2SPEECH_INCLUDE_DIRS "")
