@@ -404,3 +404,7 @@ robot_ip.txt
 # Allow us to include okaoVision libs
 !okaoVision/lib/Android/armeabi-v7a/*.a
 !okaoVision/lib/MacOSX/*.a
+
+# The 3rd directory contains drops from 3rd party vendors and all files should be allowed
+!3rd/**
+
