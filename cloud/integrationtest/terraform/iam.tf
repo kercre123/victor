@@ -41,3 +41,20 @@ resource "aws_iam_policy_attachment" "ecs_execution" {
   roles = ["${aws_iam_role.ecs_execution.name}"]
   policy_arn = "${aws_iam_policy.ecs_execution.arn}"
 }
+
+// This role gives the admin host rights to use the ECS API
+resource "aws_iam_role" "ecs_admin" {
+  name = "ecs_admin_role"
+  assume_role_policy = "${file("policy/AmazonECSAdminRole.json")}"
+}
+
+resource "aws_iam_policy" "ecs_admin" {
+  name = "ecs_admin_policy"
+  policy = "${file("policy/AmazonECSAdminRolePolicy.json")}"
+}
+
+resource "aws_iam_policy_attachment" "ecs_admin" {
+  name = "ecs_admin_role"
+  roles = ["${aws_iam_role.ecs_admin.name}"]
+  policy_arn = "${aws_iam_policy.ecs_admin.arn}"
+}

@@ -45,9 +45,15 @@ data "aws_ami" "ubuntu" {
   owners = ["099720109477"]
 }
 
+resource "aws_iam_instance_profile" "admin_instance_profile" {
+  name = "admin_instance_profile"
+  role = "${aws_iam_role.ecs_admin.name}"
+}
+
 resource "aws_instance" "admin" {
   ami           = "${data.aws_ami.ubuntu.id}"
   instance_type = "t2.micro"
+  iam_instance_profile = "${aws_iam_instance_profile.admin_instance_profile.id}"
 
   vpc_security_group_ids = ["${aws_security_group.admin.id}"]
   associate_public_ip_address = true
