@@ -132,12 +132,23 @@ public:
                                 bool emptySpriteBoxesAreValid = false,
                                 AnimationCompleteCallback callback = nullptr);
 
+  // Used to procedurally alter animations which manage onscreen position and timing of sprites
+  // with as little engine generated information as possible
   using RemapMap = std::unordered_map<Vision::SpriteBoxName, Vision::SpritePathMap::AssetID>;
   Result PlayAnimWithSpriteBoxRemaps(const std::string& animName,
                                      const RemapMap& remaps,
                                      bool interruptRunning = true,
                                      AnimationCompleteCallback callback = nullptr,
                                      const std::string& lockFaceAtEndOfAnimTag = "");
+
+  // Used to add full SpriteBoxKeyFrames to an animation, then play it. If animName is empty, plays
+  // an anim constructed from ONLY the supplied keyframes
+  Result PlayAnimWithSpriteBoxKeyFrames(const std::string& animName,
+                                        const std::vector<Vision::SpriteBoxKeyFrame>& keyframes,
+                                        bool interruptRunning = true,
+                                        AnimationCompleteCallback callback = nullptr);
+
+  Result AddSpriteBoxKeyFramesToRunningAnim(const std::vector<Vision::SpriteBoxKeyFrame>& keyframes);
   
   bool IsPlayingAnimation() const { return _callbackMap.size() > 0; }
   

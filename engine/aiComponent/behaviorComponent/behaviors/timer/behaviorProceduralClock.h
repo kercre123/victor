@@ -14,7 +14,6 @@
 #define __Engine_Behaviors_BehaviorProceduralClock_H__
 
 #include "clad/types/compositeImageTypes.h"
-#include "coretech/vision/shared/compositeImage/compositeImage.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/smartFaceId.h"
 
@@ -25,9 +24,6 @@ namespace Vector {
 class BehaviorProceduralClock : public ICozmoBehavior
 {
 public:
-  // List of digit display boxes for external systems to specify
-  // the time to put in each box
-  static const std::vector<Vision::SpriteBoxName> DigitDisplayList;
 
   // Determine the digit to put in a given sprite box
   // offset specifies a time offset so that values can be pre-computed 
@@ -65,8 +61,6 @@ protected:
   virtual bool WantsToBeActivatedBehavior() const override { return true;}
 
   virtual bool ShouldDimLeadingZeros() const { return true; }
-  virtual void OnProceduralClockActivatedInternal(){}
-  virtual void UpdateProceduralClockInternal(){}
 
   void TransitionToTurnToFace();
   void TransitionToGetIn();
@@ -82,6 +76,10 @@ protected:
   // Function which builds and displays the proceduralClock - adds the 4 core digits on top
   // of any quadrant images passed into the function
   void BuildAndDisplayProceduralClock(const int clockOffset_s = 0, const int displayOffset_ms = 0);
+  
+  void AddKeyFramesForOffset(const int clockOffset_s = 0, const int displayTime_ms = 0);
+
+  void DisplayClock();
 
 private:
   enum class BehaviorState{
@@ -91,10 +89,7 @@ private:
     GetOut,
   };
 
-
   struct InstanceParams{
-    std::unique_ptr<Vision::CompositeImage> compImg;
-    
     // User facing properties
     AnimationTrigger getInAnim;
     AnimationTrigger getOutAnim;
@@ -103,33 +98,24 @@ private:
     float totalTimeDisplayClock_sec;
     bool shouldPlayAudioOnClockUpdates = true;
 
-    // Asset properties
-    Vision::CompositeImageLayer::ImageMap staticImageMap;
-    std::map<Vision::SpriteBoxName, std::string> staticElements;
-    std::map<int, std::string> intsToSpriteNames;
-
     // Playback properties
     GetDigitsFunction getDigitFunction;
     std::function<void()> showClockCallback; 
   };
 
   struct LifetimeParams{
-    float timeShowClockStarted = 0.0f;
     BehaviorState currentState = BehaviorState::TurnToFace;
     SmartFaceID targetFaceID;
     bool hasBaseImageBeenSent = false;
+    std::vector<Vision::SpriteBoxKeyFrame> keyFrames;
+    std::vector<int> audioTickTimes;
   };
 
-  
   InstanceParams _instanceParams;
   LifetimeParams _lifetimeParams;
 
-
   // Updates the target face within lifetime params - returns the member face for checking success inline
   SmartFaceID UpdateTargetFace();
-
-
-
 
 };
 

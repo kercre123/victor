@@ -461,7 +461,78 @@ Result AnimationComponent::PlayAnimWithSpriteBoxRemaps(const std::string& animNa
   return _robot->SendRobotMessage<RobotInterface::PlayAnimWithSpriteBoxRemaps>(msg);
 }
 
-  
+
+Result AnimationComponent::PlayAnimWithSpriteBoxKeyFrames(const std::string& animName,
+                                                          const std::vector<Vision::SpriteBoxKeyFrame>& keyframes,
+                                                          bool interruptRunning,
+                                                          AnimationCompleteCallback callback)
+{
+  if (!_isInitialized) {
+    LOG_WARNING("AnimationComponent.PlayAnimWithSpriteBoxRemaps.Uninitialized", "");
+    return RESULT_FAIL;
+  }
+
+  // Empty animName will play a constructed animation containing ONLY the provided SpriteBoxKeyFrames
+  if(!animName.empty()){
+    // Check that animName is valid
+    auto it = _availableAnims.find(animName);
+    if (it == _availableAnims.end()) {
+      LOG_WARNING("AnimationComponent.PlayAnimWithSpriteBoxRemaps.AnimNotFound", "%s", animName.c_str());
+      return RESULT_FAIL;
+    }
+  }
+
+  if (IsPlayingAnimation() && !interruptRunning) {
+    LOG_INFO("AnimationComponent.PlayAnimWithSpriteBoxRemaps.WontInterruptCurrentAnim", "");
+    return RESULT_FAIL;
+  }
+
+  RobotInterface::PlayAnimWithSpriteBoxKeyFrames msg;
+  if(keyframes.size() > msg.spriteBoxKeyFrames.size()){
+    LOG_ERROR("AnimationComponent.PlayAnimWithSpriteBoxKeyFrames.MessageOverflow",
+              "Attempted to send %zu KeyFrames, message can only carry %zu",
+              keyframes.size(),
+              msg.spriteBoxKeyFrames.size());
+    return RESULT_FAIL;
+  }
+
+  const Tag currTag = GetNextTag();
+  msg.tag = currTag;
+  msg.numKeyFrames = keyframes.size();
+  std::memcpy(&msg.spriteBoxKeyFrames, keyframes.data(), keyframes.size() * sizeof(keyframes[0]));
+  msg.animName = animName;
+
+  if(callback != nullptr){
+    SetAnimationCallback(animName, callback, currTag, 0, 0, 0);
+  }
+
+  return _robot->SendRobotMessage<RobotInterface::PlayAnimWithSpriteBoxKeyFrames>(msg);
+}
+
+
+Result AnimationComponent::AddSpriteBoxKeyFramesToRunningAnim(const std::vector<Vision::SpriteBoxKeyFrame>& keyframes)
+{
+  if (!_isInitialized) {
+    LOG_WARNING("AnimationComponent.PlayAnimWithSpriteBoxRemaps.Uninitialized", "");
+    return RESULT_FAIL;
+  }
+
+  RobotInterface::AddSpriteBoxKeyFrames msg;
+  if(keyframes.size() > msg.spriteBoxKeyFrames.size()){
+    LOG_ERROR("AnimationComponent.AddSpriteBoxKeyFramesToRunningAnim.MessageOverflow",
+              "Attempted to send %zu KeyFrames, message can only carry %zu",
+              keyframes.size(),
+              msg.spriteBoxKeyFrames.size());
+    return RESULT_FAIL;
+  }
+
+  msg.numKeyFrames = keyframes.size();
+  std::memcpy(&msg.spriteBoxKeyFrames, keyframes.data(), keyframes.size() * sizeof(keyframes[0]));
+
+  return _robot->SendRobotMessage<RobotInterface::AddSpriteBoxKeyFrames>(msg);
+}
+
+
 AnimationComponent::Tag AnimationComponent::IsAnimPlaying(const std::string& animName)
 {
   for (auto it = _callbackMap.begin(); it != _callbackMap.end(); ++it) {

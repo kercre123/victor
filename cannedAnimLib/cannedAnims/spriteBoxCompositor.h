@@ -52,8 +52,8 @@ public:
 
   Result AddKeyFrame(const CozmoAnim::SpriteBox* spriteBoxKeyFrame);
   Result AddKeyFrame(const Json::Value& jsonRoot, const std::string& animName);
-  Result AddKeyFrame(const std::string& spriteBoxName, Vision::SpriteBoxKeyFrame&& keyFrame) {
-    return AddKeyFrameInternal(spriteBoxName, std::move(keyFrame));
+  Result AddKeyFrame(Vision::SpriteBoxKeyFrame&& keyFrame) {
+    return AddKeyFrameInternal(std::move(keyFrame));
   }
 
   void AddSpriteBoxRemap(const Vision::SpriteBoxName spriteBox,
@@ -86,7 +86,7 @@ private:
   SpriteBoxCompositor& operator=(SpriteBoxCompositor&& other); // Move assignment
   SpriteBoxCompositor& operator=(const SpriteBoxCompositor& other); // Copy assignment
 
-  Result AddKeyFrameInternal(const std::string& spriteBoxName, Vision::SpriteBoxKeyFrame&& spriteBox);
+  Result AddKeyFrameInternal(Vision::SpriteBoxKeyFrame&& spriteBox);
 
   Vision::SpriteBoxKeyFrame InterpolateKeyFrames(const Vision::SpriteBoxKeyFrame& thisKeyFrame,
                                                  const Vision::SpriteBoxKeyFrame& nextKeyFrame,
@@ -96,7 +96,7 @@ private:
   TimeStamp_t _advanceTime_ms;
 
   // Map from SpriteBoxName to set of keyframes ordered by triggerTime_ms
-  using SpriteBoxMap = std::unordered_map<std::string, SpriteBoxTrack>;
+  using SpriteBoxMap = std::unordered_map<Vision::SpriteBoxName, SpriteBoxTrack>;
   std::unique_ptr<SpriteBoxMap> _spriteBoxMap;
 
 };

@@ -104,6 +104,9 @@ namespace Anim {
 
     void Process_playAnimWithSpriteBoxRemaps(const RobotInterface::PlayAnimWithSpriteBoxRemaps& msg);
 
+    void Process_playAnimWithSpriteBoxKeyFrames(const RobotInterface::PlayAnimWithSpriteBoxKeyFrames& msg);
+    void Process_addSpriteBoxKeyFrames(const RobotInterface::AddSpriteBoxKeyFrames& msg);
+
     Result SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms);
     Result SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms, u32 duration_ms);
     Result UpdateCompositeImage(Vision::LayerName layerName,

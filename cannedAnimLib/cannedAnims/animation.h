@@ -60,9 +60,9 @@ public:
   template<class KeyFrameType>
   Result AddKeyFrameByTime(const KeyFrameType& kf);
 
-  Result AddSpriteBoxKeyFrame(const std::string& spriteBoxName, Vision::SpriteBoxKeyFrame&& keyFrame)
+  Result AddSpriteBoxKeyFrame(Vision::SpriteBoxKeyFrame&& keyFrame)
   {
-    return _spriteBoxCompositor.AddKeyFrame(spriteBoxName, std::move(keyFrame));
+    return _spriteBoxCompositor.AddKeyFrame(std::move(keyFrame));
   }
 
   void AddSpriteBoxRemap(const Vision::SpriteBoxName& spriteBoxName,
