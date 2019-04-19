@@ -4,29 +4,32 @@
  * Author: Ron Barry
  * Created: 2019-01-07
  *
- * Description: A three-dimensional steering wheel - with 8 corners.
+ * Description: A three-dimensional steering wheel - with 8 corners. Holding the cube upright,
+ *              with the flashing light indicating the "forward" direction, move it around like
+ *              a joystick to drive the robot. A quick, GENTLE, shake of the cube will cause the
+ *              bot to jerk his lift up and down.
  *
  * Copyright: Anki, Inc. 2019
  *
  **/
 
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorCubeDrive.h"
-
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "clad/types/activeObjectAccel.h"
-#include "engine/activeObject.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
+#include "engine/block.h"
 #include "engine/blockWorld/blockWorld.h"
 #include "engine/components/cubes/cubeAccelComponent.h"
 #include "engine/components/cubes/cubeAccelListeners/lowPassFilterListener.h"
 #include "engine/components/cubes/cubeCommsComponent.h"
+#include "engine/components/cubes/cubeConnectionCoordinator.h"
 #include "engine/components/movementComponent.h"
 
 #include "clad/externalInterface/messageEngineToGame.h"
 
 namespace Anki {
 namespace Vector {
-  
+
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCubeDrive::InstanceConfig::InstanceConfig()
@@ -43,22 +46,28 @@ BehaviorCubeDrive::DynamicVariables::DynamicVariables()
 BehaviorCubeDrive::BehaviorCubeDrive(const Json::Value& config)
  : ICozmoBehavior(config)
 {
-  if (not JsonTools::GetValueOptional(config, kTriggerLiftGs, _iConfig.trigger_lift_gs))
+  if (not JsonTools::GetValueOptional(config, kTriggerLiftGs, _iConfig.trigger_lift_gs)) {
     _iConfig.trigger_lift_gs = 0.5;
-  if (not JsonTools::GetValueOptional(config, kDeadZoneSize, _iConfig.dead_zone_size))
+  }
+  if (not JsonTools::GetValueOptional(config, kDeadZoneSize, _iConfig.dead_zone_size)) {
     _iConfig.dead_zone_size = 13.0;
-  if (not JsonTools::GetValueOptional(config, kTimeBetweenLiftActions, _iConfig.time_between_lift_actions))
+  }
+  if (not JsonTools::GetValueOptional(
+      config, kTimeBetweenLiftActions, _iConfig.time_between_lift_actions)) {
+
     _iConfig.time_between_lift_actions = 0.75;
-  if (not JsonTools::GetValueOptional(config, kHighHeadAngle, _iConfig.high_head_angle))
+  }
+  if (not JsonTools::GetValueOptional(config, kHighHeadAngle, _iConfig.high_head_angle)) {
     _iConfig.high_head_angle = 0.3;
-  if (not JsonTools::GetValueOptional(config, kLowHeadAngle, _iConfig.low_head_angle))
+  }
+  if (not JsonTools::GetValueOptional(config, kLowHeadAngle, _iConfig.low_head_angle)) {
     _iConfig.low_head_angle = 0.0;
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorCubeDrive::~BehaviorCubeDrive()
 {
-  LOG_WARNING("cube_drive", "BehaviorCubeDrive()");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -114,8 +123,11 @@ void BehaviorCubeDrive::SetLiftState(bool up) {
   _dVars.lift_up = up;
   GetBEI().GetRobotInfo().GetMoveComponent().MoveLiftToHeight(
     up ? LIFT_HEIGHT_CARRY : LIFT_HEIGHT_LOWDOCK, MAX_LIFT_SPEED_RAD_PER_S, MAX_LIFT_ACCEL_RAD_PER_S2, 0.1, nullptr);
+
+  // Set the head angle to follow the lift, somewhat. This way, if you're using the camera view to
+  // drive, you have a way to look up/down, too.
   GetBEI().GetRobotInfo().GetMoveComponent().MoveHeadToAngle(
-    up ? _iConfig.high_head_angle : _iConfig.low_head_angle, 3.14, 1000.);
+    up ? _iConfig.high_head_angle : _iConfig.low_head_angle, 3.14, 1000.0);
 }
 
 void BehaviorCubeDrive::RestartAnimation() {
@@ -136,7 +148,7 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
 
   // Get the ObjectId of the connected cube and hold onto it so we can....
   ActiveID connected_cube_active_id = GetBEI().GetCubeCommsComponent().GetConnectedCubeActiveId();
-  ActiveObject* active_object = GetBEI().GetBlockWorld().GetConnectedActiveObjectByActiveID(connected_cube_active_id);
+  Block* active_object = GetBEI().GetBlockWorld().GetConnectedBlockByActiveID(connected_cube_active_id);
   
   if(active_object == nullptr) {
     LOG_ERROR("cube_drive", "active_object came back NULL: %d", connected_cube_active_id);
@@ -157,10 +169,10 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
 }
 
 void BehaviorCubeDrive::OnBehaviorDeactivated() {
-  LOG_WARNING("cube_drive", "OnBehaviorDeactivated()");
   _dVars = DynamicVariables();
   SetLiftState(false);
 
+  // Set left and right wheel velocities to 0.0, at maximum acceleration.
   GetBEI().GetRobotInfo().GetMoveComponent().DriveWheels(0.0, 0.0, 1000.0, 1000.0);
 }
 
@@ -207,8 +219,10 @@ void BehaviorCubeDrive::BehaviorUpdate() {
     } else {
       right_wheel_mmps -= dead_zone_size;
     }
-     
-    GetBEI().GetRobotInfo().GetMoveComponent().DriveWheels(left_wheel_mmps, right_wheel_mmps, 1000.0, 1000.0);
+
+    // Set left and right wheel velocities to computed values, at maximum acceleration.
+    GetBEI().GetRobotInfo().GetMoveComponent().DriveWheels(
+        left_wheel_mmps, right_wheel_mmps, 1000.0, 1000.0);
   }
 }
 
