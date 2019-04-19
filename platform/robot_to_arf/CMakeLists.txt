@@ -26,6 +26,7 @@ anki_build_target_license(robot_to_arf_converter "ANKI")
 target_link_libraries(robot_to_arf_converter
   PUBLIC
   # anki libs
+  arf
   util
   cti_messaging_robot
   robot_clad_cpplite

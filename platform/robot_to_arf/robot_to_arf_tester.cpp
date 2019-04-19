@@ -1,31 +1,27 @@
-#include <mutex>
-#include <thread>
-#include <termios.h>
 #include <stdio.h>
+#include <termios.h>
+#include <thread>
 #include <unistd.h>
 
+#include "arf/BulletinBoard.h"
 #include "robot_to_arf_converter.h"
 
 static struct termios old_term, new_term;
 
 /* Initialize new terminal i/o settings */
-void initTermios() 
-{
-  tcgetattr(0, &old_term); /* grab old terminal i/o settings */
-  new_term = old_term; /* make new settings same as old settings */
+void initTermios() {
+  tcgetattr(0, &old_term);     /* grab old terminal i/o settings */
+  new_term = old_term;         /* make new settings same as old settings */
   new_term.c_lflag &= ~ICANON; /* disable buffered i/o */
-  new_term.c_lflag &= ~ECHO; /* set no echo mode */
-  tcsetattr(0, TCSANOW, &new_term); /* use these new terminal i/o settings now */
+  new_term.c_lflag &= ~ECHO;   /* set no echo mode */
+  tcsetattr(0, TCSANOW,
+            &new_term); /* use these new terminal i/o settings now */
 }
 
 /* Restore old terminal i/o settings */
-void resetTermios(void) 
-{
-  tcsetattr(0, TCSANOW, &old_term);
-}
+void resetTermios(void) { tcsetattr(0, TCSANOW, &old_term); }
 
-char getch() 
-{
+char getch() {
   char ch;
   ch = getchar();
   return ch;
@@ -40,6 +36,22 @@ static constexpr int kKeyboardCheckUsec = 100000;
 
 void intHandler(int /*dummy*/) { g_run = false; }
 
+void InitVectorBoard(ARF::BulletinBoard *board,
+                     ARF::TopicPoster<Anki::Vector::RobotState> *state_poster) {
+  board->Declare<Anki::Vector::RobotState>("state");
+  board->Declare<float>("head_angle");
+
+  *state_poster = board->MakePoster<Anki::Vector::RobotState>("state");
+  ARF::TopicPoster<float> head_angle_poster =
+      board->MakePoster<float>("head_angle");
+
+  board->RegisterCallback<Anki::Vector::RobotState>(
+      "state",
+      [head_angle_poster](const Anki::Vector::RobotState &state) mutable {
+        head_angle_poster.Post(state.headAngle);
+      });
+}
+
 int main(int argc, char **argv) {
   g_run = true;
   initTermios();
@@ -52,51 +64,56 @@ int main(int argc, char **argv) {
     return -1;
   }
   std::cout << "Successfully connected." << std::endl;
+
+  ARF::BulletinBoard board;
+  ARF::TopicPoster<Anki::Vector::RobotState> state_poster;
+  InitVectorBoard(&board, &state_poster);
+
   converter.SendSync();
 
-  std::mutex state_mutex;
-  bool got_recent_state = false;
-  Anki::Vector::RobotState state;
-
-  std::thread keyboard_input_thread([&converter, &state_mutex, &got_recent_state, &state]() {
+  std::thread keyboard_input_thread([&converter, &board]() mutable {
+    ARF::TopicViewer<float> head_viewer = board.MakeViewer<float>("head_angle");
     while (g_run) {
       uint8_t action_id = 0;
       char g = getch();
-      if (!got_recent_state)
+      if (!head_viewer.IsInitialized())
         continue;
       switch (g) {
       case 'y': {
-        std::lock_guard<std::mutex> lock(state_mutex);
         Anki::Vector::RobotInterface::SetHeadAngle head_command;
         head_command.actionID = action_id;
         ++action_id;
-        head_command.angle_rad = state.headAngle + .05;
-        std::cout << "Sending command up " << head_command.angle_rad << std::endl;
+        head_viewer.Retrieve(head_command.angle_rad);
+        head_command.angle_rad += .05;
+        std::cout << "Sending command up " << head_command.angle_rad
+                  << std::endl;
         head_command.duration_sec = kKeyboardCheckUsec * 1e-6;
         converter.SendHeadCommand(head_command);
         break;
       }
       case 'h': {
-        std::lock_guard<std::mutex> lock(state_mutex);
         Anki::Vector::RobotInterface::SetHeadAngle head_command;
         head_command.actionID = action_id;
         ++action_id;
-        head_command.angle_rad = state.headAngle - .05;
-        std::cout << "Sending command down " << head_command.angle_rad << std::endl;
+        head_viewer.Retrieve(head_command.angle_rad);
+        head_command.angle_rad -= .05;
+        std::cout << "Sending command down " << head_command.angle_rad
+                  << std::endl;
         head_command.duration_sec = kKeyboardCheckUsec * 1e-6;
         converter.SendHeadCommand(head_command);
         break;
       }
       }
-      std::cout << "Current head angle: " << state.headAngle << std::endl;
       usleep(kKeyboardCheckUsec);
     }
   });
 
+  Anki::Vector::RobotState state;
   while (g_run) {
     {
-      std::lock_guard<std::mutex> lock(state_mutex);
-      got_recent_state = converter.ReadMessages(&state);
+      if (converter.ReadMessages(&state)) {
+        state_poster.Post(state);
+      };
     }
     usleep(kReadMessagesUsec);
   }
