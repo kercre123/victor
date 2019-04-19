@@ -148,7 +148,6 @@ void BehaviorCubeDrive::OnBehaviorActivated() {
   // Get the ObjectId of the connected cube and hold onto it so we can....
   ActiveID connected_cube_active_id = GetBEI().GetCubeCommsComponent().GetConnectedCubeActiveId();
   Block* active_object = GetBEI().GetBlockWorld().GetConnectedBlockByActiveID(connected_cube_active_id);
-
   if(active_object == nullptr) {
     LOG_ERROR("cube_drive", "active_object came back NULL: %d", connected_cube_active_id);
     CancelSelf();
