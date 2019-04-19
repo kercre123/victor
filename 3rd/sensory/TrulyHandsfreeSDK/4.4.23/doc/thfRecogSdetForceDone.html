@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfRecogSdetForceDone</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+int thfRecogSdetForceDone(thf_t **thf, <a href="objects.html#recog_t">recog_t</a> *r);
+</pre>
+<h3>Description</h3>
+ Forces the speech detector into a 'RECOG_DONE' state. It provides a means to manually override the speech detector in order to retrieve a recognition result. Typically recognition results are only available when the speech detector enters a 'done' state. For instance, it allows an application to implement a 'press to stop' feature in conjunction with traditional speech detected recognition. 
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><a href="objects.html#recog_t"><code>recog_t *</code></a></td>
+<td nowrap valign="top"><code>r</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Recognizer object.</td>
+</tr>
+</table>
+<h3>Return</h3>
+ Returns 1 on success or 0 on error.
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>recog object not found</code></td>
+<td valign="top">Invalid recognizer object handle.</td>
+</tr>
+<tr>
+<td valign="top"><code>no speech detector configured</code></td>
+<td valign="top">Recognizer not configured to use a speech detector.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a>, <a href="thfRecogCreateFromFunc.html">thfRecogCreateFromFunc</a> and <a href="thfRecogCreateFromStatic.html">thfRecogCreateFromStatic</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

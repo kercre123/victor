@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h2>How to Define the Recognition Task</h2>
+
+The speech recognizer works on a closed recognition vocabulary. The
+set of words or phrases making up the vocabulary are defined as a
+<em>vocabulary specification</em> which must be compiled into a
+binary format, known as a <em>search object</em>. The process of
+creating a search object is illustrated in Figure 1:
+<table align="center">
+<tr><td><img src="build.gif"></td></tr>
+<tr><th>Figure 1: Creating a search object from a vocabulary specification
+</th></tr>
+</table>
+
+<p>The SDK provides two ways to create the search object, which differ in the type information and format of vocabulary specification:
+<ul>
+<li><b>Phrase List</b> (<em>easy</em>) : This is the simplest approach and involves providing a list of words or phrases to be recognized. It can take optional pronunciations but will generate them automatically if none are provided. (See <a href="buildList.html">Defining a Vocabulary Using a Phrase List</a>)
+<br>
+<li><b>Grammar</b> (<em>advanced</em>) : A grammar is a more powerful representation that is capable of specifying complex vocabularies more efficiently. (See <a href="buildGrammar.html">Defining a Vocabulary Using a Grammar</a>)
+
+</ul>
+</p>
+
+<p>
+Before we describe these methodologies in detail, we will introduce
+the notation needed to describe <a href="wordmodels.html">pronunciations</a> and <a href="grammar.html"> grammars</a>.
+
+
+</p>
+
+<!----------------------------------------------------------------------- -->
+</body>

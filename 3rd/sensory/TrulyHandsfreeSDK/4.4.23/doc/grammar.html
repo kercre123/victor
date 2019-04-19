@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h2>Syntax of Grammar Specification</h2>
+
+
+A grammar specification is a set of rules that describe the sequence of words that make up the recognition vocabulary. The rules typically employ variables to represent sub-sequences of words.
+
+The following syntactic conventions are used to specify grammars:
+<ul>
+<li>A grammar is a series of rules representing variable definitions, where the final rule represents the entire grammar.
+<li>A rule is of the form: <pre>X = a b ... c;</pre> where X is the
+defined variable. Variable references must include the $ prefix (e.g., $X).
+<li>Each rule must terminate with a semicolon.
+<li>Variables must be defined before they can be referenced.
+<li>() Parentheses enclose items that are grouped together.
+<li>[] Square brackets enclose optional items.
+<li>&lt;&gt; Angle brackets denote one or more repetitions.
+<li>{} Curly braces denote zero or more repetitions (same as "[&lt; &gt;]").
+<li>| A pipe symbol separates alternative items.
+<li>%% A double percent suffix suppresses the word from being returned in the recognition result.
+<li>% A single percent sign conjoining two words forces the first word
+to be substituted for the second word in the recognition result (E.g.,
+<em>one%1</em> would recognize <em>one</em> but return <em>1</em>).
+</ul>
+
+<p>The last two conventions are used to format the text returned by
+the recognition, and thus easing parsing in your application.
+</p>
+
+<p>Typically the input utterance is a word or phrase that is framed by
+silence. Therefore, it is usual to include silence at the beginning
+and the end of a grammar.</p>
+
+<h3>Simple Grammar Specification:</h3>
+
+The grammar comprises of a hierarchical set of phrase definitions, as follows:
+<ul><pre>
+  size       = small | medium | large;
+  topping    = vegetarian | pepperoni | cheese;
+  pizzaorder = *sil%% ($size | $topping) [*sil%%] pizza *sil%%;
+</pre></ul>
+
+<p>This grammar will allow 6 phrases, all ending in the word
+<em>pizza</em>, and starting with <em>small</em>, <em>medium</em>,
+<em>large</em>, <em>vegetarian</em>, <em>pepperoni</em> or
+<em>cheese</em>. Notice that the silence will not return
+anything in the result string if it matches because of the %% symbol. </p>
+
+<p>
+See also:
+ <ul>
+<li><a href="phrasespot.html">PhraseSpotting Grammars</a>
+<li><a href="wordspot.html">Word-Spotting Grammars</a>
+<li><a href="nota.html">Out-of-Vocabulary Rejection</a>
+<li><a href="nbest.html">N-Best Grammars</a>
+</ul>
+</P>
+
+
+
+<!----------------------------------------------------------------------- -->
+</body>

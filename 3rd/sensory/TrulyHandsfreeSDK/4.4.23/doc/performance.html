@@ -1,0 +1,254 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h2>Improving Performance</h2>
+
+In this section, we consider various aspects of performance,
+specifically its footprint, memory and computational requirements, and
+recognition accuracy. We look at factors that influence behavior in
+each area and ways to improve or tune performance. Typically these factors have to be traded off against each other and each application will have a different optimal point of performance.
+
+<h3>Recognition Accuracy Considerations</h3>
+<h4>Audio Quality</h4>
+All audio hardware is not created equal and one of the most important
+sources of variability in the speech recognition problem is the audio
+digitizer channel. It is beyond the scope of this document to deal
+with this subject in detail, but the casual user is encouraged to use
+the services of a signal processing expert when designing the audio
+channel. We will highlight some of the more common issues.
+</p>
+<p>
+The closer a microphone is to the mouth of the user, the more the speech
+will be separated from background noise, and the higher the resulting
+accuracy will be. However, gain settings are harder in this case
+because you potentially have to deal with lip-smacks, breath noise and
+other such sudden and loud sounds that may saturate the amplification circuitry
+and lead to <em>clipping</em> which is discussed below. Careful mounting of the
+microphone on the user, particularly on the head, can minimize movement
+of the speaker relative to the microphone and thus help eliminate gain
+problems arising from varying distances the acoustic signal
+has to travel to reach the microphone.  In general, try to minimize
+the distance between the speaker and the microphone and maximize the
+distance between the microphone and a known noise source.
+</p>
+<p>
+Lip smacks, breath noise and wind noises are effectively dealt with
+by using a screen around the active element.
+</p>
+<p>
+Hand-held microphones have to be heavy and specially packaged to
+eliminate mechanical noise when handled by the speaker. In most cases
+it is better to ensure that the speaker will not handle the microphone
+while speaking. In hand-held devices, special care must be taken with
+the packaging of the microphone to ensure that mechanical noise is
+minimized.
+</p>
+<p>
+Some microphones manipulate the acoustic paths in such a way that
+background noise is reduced. The most common technique assumes the
+speaker is in a specific direction relative to the microphone and
+directs audio from that side onto one side of a membrane, while audio
+from other directions is directed to both opposite sides of the same
+membrane and thus canceling itself because an equal amount of
+pressure is applied to both sides. Other microphones work on a similar
+principle of assuming one direction contains more speech and the other
+more background noise and try and remove similar background sounds
+from the speech side.  These microphones usually increase recognition
+accuracy when properly positioned.
+</p>
+<p>
+Background speech reduces recognition accuracy more than stationary
+background noise.
+</p>
+<p>
+Acoustic information needed for speech recognition is in the
+200Hz-5kHz range, and to capture this information, the audio signal
+has to be sampled at 10kHz or higher. In most applications, we can
+get away with fine distinctions between fricatives and an 8kHz
+sampling rate suffices. However, distinguishing
+between words such as <em>help</em> and <em>health</em>, or the
+spelling of say <em>f</em> and <em>s</em> becomes very difficult at the lower sampling rate.
+</p>
+<p>
+Speech has a large dynamic range and when sampled linearly, we require
+at least 16 bits to capture the acoustic nuances needed for
+recognition. When your gain is such that only the lower few bits are
+actually used, then the definition is such that these fine changes
+cannot be detected and accuracy will be poor. For good recognition, at
+least 12 bits of dynamic range is required. Companding the input with
+a mu-law compander reduces the dynamic range requirements to 7 or 8
+bits. Ensure that your gain is such that this dynamic range
+requirement is met.
+</p>
+<p>
+The digitizer is but one element that should allow for the capture of
+the acoustic information. The microphone element itself should provide
+for capturing the acoustic information over the full spectrum, without
+introducing any spectral tilt, and provide for the dynamic range
+needed.
+</p>
+<p>
+There are two non-linear amplification problems that severely impact
+recognition accuracy. The first is <em>clipping</em>, which introduces
+an immediate distortion of the spectrum and is very hard to
+distinguish from a plosive sound.  This should be avoided at all
+cost. The second is automatic gain control or <em>AGC</em>, which
+almost always adapts too fast and introduces spectral features that
+are very confusing to speech recognizers. Avoid using an AGC, and
+rather change gain settings in steps and while not recognizing,
+utilizing levels as measured during a previous recognition instance.
+</p>
+<p>
+The SDK has a function call to perform simple checks of a recording,
+<a href="thfCheckRecording.html">thfCheckRecording</a>.  This function
+takes as input a single waveform that is assumed to contain speech,
+and checks it for clipping and simple energy measures.  The feedback
+that is provided is specific to the type of problem found, so that
+the application can provide useful information to the user to obtain
+better recordings in the future.
+</p>
+
+<h4>Vocabulary Size and Selection</h4>
+The complexity of the problem is related to the recognition accuracy,
+and in general a simple small vocabulary problem results in higher accuracy than
+a large vocabulary problem. The larger the vocabulary, the higher the
+probability of encountering acoustically confusing words that will
+result in more misrecognitions. However, sometimes even small
+vocabularies can contain acoustically similar words and the
+application will behave better if such words can be avoided.
+</p>
+<p>
+The computational complexity of the problem increases faster than
+linear with vocabulary size and the recognition engine will usually be forced
+to make sub-optimal decisions earlier in the utterance, to ensure that
+an answer is ready in time.  The application designer has to make
+this tradeoff of speed versus accuracy in terms of vocabulary size.
+
+<h4>Dialog Design</h4>
+The holy grail of dialog design is the open-ended <em>natural</em>
+interface. However, that usually results in unintended consequences
+that have to be considered by the prudent application designer.  One
+consequence of an open-ended dialogue is that neither the user, nor
+the application is certain who should lead the dialogue and where in
+the dialogue one is at any moment.  This could lead to an awkward
+synchronization problem that is especially hard to do when dealing
+with recognition errors.  Another consequence is that the vocabulary
+size increases, because the application has to allow for a much
+broader range of responses, which then leads to slower and more
+inaccurate recognition.
+</p>
+<p>
+An arguably better design criterion than <em>naturalness</em> is
+transaction speed, or user feedback based on the whole interaction and
+not just the recognition dialog.  In most cases this leads to more
+structured, and computationally less expensive, interfaces where the
+application takes the dialog lead.
+</p>
+<p>
+A well designed dialog also promotes speaker cooperation, which
+usually leads to better accuracy.
+
+<h4>Speaker Attributes</h4>
+The recognizer matches acoustic input to sequences of expected phonemes,
+thus the key to good recognition is to accurately model word
+pronunciations and their variations. In a speaker-independent system,
+there may be many ways that different speakers say the same words. The
+extent to which we can capture the pronunciation variability of target
+users will impact recognition accuracy.  On the other hand, allowing for too
+much variability increases the complexity and confusability of the recognizer, which can result in lower accuracy. Hence, only those pronunciation alternates that
+are statistically significant should be added. See <a
+href="tuning.html">Improving Accuracy: Tuning Pronunciations</a> for detail.
+</p>
+
+<h4>Pruning and Beam Size</h4>
+The speed of the search through the vocabulary space can be increased
+through pruning as described below.  This results in locally optimal
+decisions to ignore paths through the vocabulary space that score low
+anywhere along the path.  These paths might score much better towards
+the end, but because they are pruned away early for computational
+reasons, will never be selected.  Sometimes such paths are the correct
+ones with maybe a badly pronounced phoneme, and thus an error is
+introduced.
+
+<h3>Computational Complexity Considerations</h3>
+<h4>Frame Size</h4>
+The recognition engine chops speech up in frames that are a few
+milliseconds in length. Each of these frames is analyzed for acoustic
+evidence that might suggest which phoneme was spoken, by assigning a
+probability to each of the possible phonemes in that
+language. Then the score of all the paths through the vocabulary are
+updated. When the utterance is complete, the path that scored the
+highest is selected. From this high-level description of the algorithm it is clear that a
+significant speedup can be achieved by increasing the size of a
+frame. However, when this frame becomes longer than the duration of a
+phoneme, the recognition accuracy decreases.
+
+<h4>Sample Rate</h4>
+With higher sampling rates, more speech samples make up a frame and
+the feature extraction or spectral analysis, involving Fourier
+transforms, becomes numerically more complex.
+
+<h4>Acoustic Model Size</h4>
+The acoustic model is implemented as a neural net, which due to its
+regular organization is implemented very efficiently on most
+architectures, and its implementation is therefore not as
+computationally significant as the vocabulary search portion, but of
+the order of the feature extraction component. However,
+smaller acoustic models do require less computation.
+
+<h4>Vocabulary Size</h4>
+Vocabulary size is the most significant factor in determining
+computational complexity. Each word in the vocabulary is expanded  into
+the set of phonemes that makes up its pronunciation. Then each phoneme
+is split into acoustically unique parts that usually are determined by
+the phonemes around it.  The collection of all these states and the
+way they are connected constitutes the search space, which has to be
+searched (scored) for the best explanation of what is said. The larger
+the search space, the more states have to be scored for each frame
+update.
+
+<h4>Pruning and Beam Size</h4>
+To reduce the number of states that are searched at each frame update,
+those paths that score too low (percentage pruning) or are much lower
+than the maximum scoring state (beam pruning) are removed from the
+search space.  By reducing the search space to a subset of more
+probable paths, the algorithm can execute much faster.
+
+<h3>Memory Size Considerations</h3>
+<h4>Acoustic Model Size</h4>
+The acoustic model (recog object) is stored in read-only
+memory (ROM). Larger acoustic models are more accurate, but require more ROM.
+Different acoustic model files, implementing different size acoustic
+models, may be available.
+
+<h4>Vocabulary Size</h4>
+The size of the search object is determined by grammar complexity,
+number of words and number of pronunciations in vocabulary; i.e. the
+search space as discussed above. The description of the search space
+is stored in ROM, while the state (score etc.) is stored in read-write
+memory (RAM).
+
+<h4>Pruning and Beam Size</h4>
+To determine which path scored best, information on state transitions
+is stored on each frame update. This <em>backtrace</em> information is
+sorted in RAM. When the active acoustic space is reduced in size
+through pruning, the number of state transitions are reduced, and thus
+also the size of the backtrace.
+
+<h4>Pronunciation Model Size</h4>
+The pronunciation object is stored in ROM. Different pronunciation
+models files may be available for each language, where the larger
+models provide more accurate pronunciation predictions. This object
+will only be required when online vocabulary changes occur.
+
+<!----------------------------------------------------------------------- -->
+</body>

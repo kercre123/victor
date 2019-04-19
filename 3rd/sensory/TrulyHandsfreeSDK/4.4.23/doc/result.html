@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+
+<h2>Getting the Recognition Result</h2>
+
+<p>Use <a href="thfRecogResult.html">thfRecogResult</a> to get the
+recognition result. It returns the recognized word or phrase and a
+confidence score. The confidence score reflects how well the input
+speech matched the underlying grammar and pronunciation
+model. Typically, a score >=1.0 is regarded as a good result and <1.0
+as a poor result. The actual confidence score calculation is dependent
+on the <a href="params.html">Garbage</a> parameter.</p>
+
+<p>If your grammar is set up to detect <a
+href="nota.html">out-of-vocabulary</a> input, you can reject the
+utterance if the highest scoring result is <em>*nota</em>.</p>
+
+<p>Call <a href="thfRecogResult.html">thfRecogResult</a> multiple times in
+order to retrieve the top N results, referred to as
+<a href="nbest.html">N-best</a>.
+The N-best results may include duplicate phrases that differ with respect to
+their scores and alignment.
+When there are no
+(more) recognition results available, it will return NULL and a score
+of 0.0.</p>
+
+<p>The Beam and Pruning parameters (see <a
+href="params.html">Parameters</a>) affect how many results are
+available.
+</p>
+
+<p>The start and end times of the speech identified by the speech
+detector can be obtained by calling <a
+href="thfRecogGetSpeechRange.html">thfRecogGetSpeechRange</a>. Also,
+use <a href="thfRecogGetClipping.html">thfRecogGetClipping</a> to
+determine whether the audio input was clipped (i.e., too loud).</p>
+
+<!----------------------------------------------------------------------- -->
+</body>

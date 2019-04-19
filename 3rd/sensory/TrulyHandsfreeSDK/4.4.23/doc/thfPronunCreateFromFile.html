@@ -1,0 +1,82 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfPronunCreateFromFile</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+<a href="objects.html#pronuns_t">pronuns_t</a> *thfPronunCreateFromFile(thf_t **thf, const char *pronunfile, 
+                                   unsigned short dialextIndex);
+</pre>
+<h3>Description</h3>
+ Creates a pronunciation object that is used in generating N-best pronunciations for words/phrases. The pronunciation model is read from pronunfile. Pronunciation models are language-specific and are provided as part of the SDK. They often support a variety of dialects. The desired dialect must be specified by providing the corresponding dialect index. See language pack documentation for a list of supported dialects and indices. Call <a href="thfPronunDestroy.html"> thfPronunDestroy</a> to destroy the pronunciation object when no longer needed.
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>const char *</code></td>
+<td nowrap valign="top"><code>pronunfile</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Pronunciation model file.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned short</code></td>
+<td nowrap valign="top"><code>dialextIndex</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Dialect index.</td>
+</tr>
+</table>
+<h3>Return</h3>
+ Returns a unique handle to the pronunciation object (see <a href="objects.html#pronuns_t">pronuns_t</a>). Returns NULL in the event of an error. 
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>Could not open raw file</code></td>
+<td valign="top">The datafile does not exist or the application had insufficient privileges to open the file for reading.</td>
+</tr>
+<tr>
+<td valign="top"><code>Error reading raw file:</code></td>
+<td valign="top">The datafile did not decode correctly. Was the file damaged?</td>
+</tr>
+<tr>
+<td valign="top"><code>Unlicensed pronunciation data</code></td>
+<td valign="top">Data object not properly licensed. Contact customer support.</td>
+</tr>
+<tr>
+<td valign="top"><code>Unknown pronunciation object type in file</code></td>
+<td valign="top">Data file could not be decoded. Probably an older or newer version.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfPronunDestroy.html">thfPronunDestroy</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

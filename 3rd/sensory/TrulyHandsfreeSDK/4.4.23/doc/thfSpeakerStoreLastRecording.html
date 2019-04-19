@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfSpeakerStoreLastRecording</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+int thfSpeakerStoreLastRecording(thf_t **thf, <a href="objects.html#recog_t">recog_t</a> *r, unsigned short sID, 
+                                 short score, short force);
+</pre>
+<h3>Description</h3>
+ Takes the last utterance identified by <a href="thfRecogResult.html">thfRecogResult</a> and stores it internally as a recording spoken by the specified speaker.
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><a href="objects.html#recog_t"><code>recog_t *</code></a></td>
+<td nowrap valign="top"><code>r</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Recognizer object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned short</code></td>
+<td nowrap valign="top"><code>sID</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">The identification (integer value) of the speaker who uttered the last trigger identified by <a href="thfRecogResult.html">thfRecogResult</a>.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>short</code></td>
+<td nowrap valign="top"><code>score</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">A score that indicates the quality of the recording. Typically, this is the confidence score returned by <a href="thfRecogResult.html">thfRecogResult</a> multiplied by some large constant in order to convert from floating-point to integer.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>short</code></td>
+<td nowrap valign="top"><code>force</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">A flag that indicates whether this recording must be stored (potentially overwriting an earlier recording of this user) or not. If 'force' is 1, then this recording will always be stored, regardless of the 'score' value. If 'force' is 0 and this function has been called more times than the number of desired recordings (specified in <a href="thfSpeakerInit.html">thfSpeakerInit</a>, then this recording will only be stored if it has a 'score' value greater than or equal to at least one of the previously-stored recordings. In this case, the recording with the lowest score will be replaced. If two recordings have the same score, the more recent recording is considered better.</td>
+</tr>
+</table>
+<h3>Return</h3>
+ Returns 1 on success or 0 on error.
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>recog object not found</code></td>
+<td valign="top">Invalid recognizer object handle.</td>
+</tr>
+<tr>
+<td valign="top"><code>speaker object not yet initialized</code></td>
+<td valign="top">Invalid speaker object handle.</td>
+</tr>
+<tr>
+<td valign="top"><code>internal error: failed to store last recording</code></td>
+<td valign="top">Unexpected internal error. Contact customer support.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfSpeakerInit.html">thfSpeakerInit</a>, <a href="thfRecogResult.html">thfRecogResult</a>, <a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a>, <a href="thfRecogCreateFromFunc.html">thfRecogCreateFromFunc</a> and <a href="thfRecogCreateFromStatic.html">thfRecogCreateFromStatic</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

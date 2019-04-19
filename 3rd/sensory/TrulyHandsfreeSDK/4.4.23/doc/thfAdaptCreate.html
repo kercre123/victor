@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfAdaptCreate</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+adaptObj_t *thfAdaptCreate(thf_t **thf);
+</pre>
+<h3>Description</h3>
+ <p> Creates an 'adapt' object to be used in the creation of user-defined triggers  and/or enrolled fixed triggers.  The created object is empty, and will need to have task-specific data added to it with <a href="thfAdaptTaskCreate.html">thfAdaptTaskCreate</a>. Multiple tasks (e.g. a user-defined trigger and an enrolled fixed trigger) can be included in the same adapt object. </p>
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+</table>
+<h3>Return</h3>
+ Returns a pointer to an 'adapt' object on success, or NULL on error.  
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>Error creating adapt object</code></td>
+<td valign="top">Unexpected internal error. Contact customer support.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfAdaptDestroy.html">thfAdaptDestroy</a> and <a href="thfAdaptTaskCreate.html">thfAdaptTaskCreate</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

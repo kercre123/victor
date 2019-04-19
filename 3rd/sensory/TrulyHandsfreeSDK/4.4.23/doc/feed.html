@@ -1,0 +1,141 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+
+<h2>How to Recognize</h2>
+
+<p>Audio can be directly fed to the recognizer using <a
+href="thfRecogPipe.html">thfRecogPipe</a>. Refer to the <a href="samples.html">RecogPipe</a> Sample for an example of how to use this call. The manner in which
+it is employed is determined by the granularity of the recognition
+process. Let's consider the following factors:
+
+ <ul>
+ <li>Batch vs. Pipelined Recognition
+ <li>Full vs. Partial Recognition
+ </ul>
+
+<h3>Batch vs. Pipelined Recognition</h3>
+
+<p>Audio can be processed all at once (<em>batch</em>) or a bit at a
+time (<em>pipelined</em>). For example, if recognizing from an audio
+file, we might choose to pass the audio to the recognizer in a single
+large chunk. In contrast, if we're dealing with <em>live</em> audio, we're
+more likely to want to perform recognition on smaller audio chunks, as
+soon as they become available from the audio device. Pipelined
+recognition typically requires asynchronous processing, but yields
+recognition results faster because we begin recognizing the audio
+stream immediately, rather than waiting for the entire utterance to be
+available before starting.</p>
+
+<table align="center">
+<tr><td><img src="pipeR.gif"></td></tr>
+<tr><th>Figure 3: Batch Recognition
+</th></tr>
+</table>
+
+<p>The <a href="thfRecogPipe.html">thfRecogPipe</a> function supports
+both approaches:
+<ul>
+ <li>Batch: call <a href="thfRecogPipe.html">thfRecogPipe</a> once with
+ the entire block of audio.
+ <li>Pipelined: call <a href="thfRecogPipe.html">thfRecogPipe</a>
+ multiple times with successive blocks of audio.</p>
+</ul>
+<p><em>NOTE:</em> Audio can be passed to <a
+href="thfRecogPipe.html">thfRecogPipe</a> in blocks of any size but
+must <b>not</b> exceed the maximum buffer size specified when the recognizer
+was created (see <a
+href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a>), or an
+error will be returned.</p>
+
+<h3>Full vs. Partial Recognition</h3>
+<p>The <a href="thfRecogPipe.html">thfRecogPipe</a> function is responsible for both speech detection (optional) and recognition. When calling it you get to decide whether to perform both tasks together (<em>full</em>) or just one of these tasks (<em>partial</em>) in a single call. </p>
+
+<table align="center">
+<tr><td><img src="pipeSR.gif"></td></tr>
+<tr><th>Figure 4: Full Recognition
+</th></tr>
+</table>
+
+<p>Full recognition is preferred for simplicity, however you may opt
+for partial recognition if your recognizer runs slower than real time
+in a single threaded application. For example, in order to avoid
+dropping or overflowing the audio buffer when using <em>live</em> audio
+input, you may decide to only do speech detection on the audio and
+delay recognition until you're done recording. Speech detection is not
+only quicker than recognition, it can also be used to decide when to
+stop recording.
+
+<p>The following control flags are used when calling the function:
+   <ul>
+   <li> SDET_ONLY: performs speech detection only.
+   <li> RECOG_ONLY: performs recognition only.
+   <li> SDET_RECOG: performs both speech detection and recognition.
+   </ul>
+</p>
+
+<p>To perform full recognition, call <a href="thfRecogPipe.html">thfRecogPipe</a> once per audio block
+with the SDET_RECOG flag. For partial recognition, call it twice per
+block (assuming you've decided to use speech detection), first with
+the SDET_ONLY flag and later with the RECOG_ONLY flag. </p>
+
+<table align="center">
+<tr><td><img src="pipeS.gif"></td></tr>
+<tr><th>Figure 5: Partial Recognition
+</th></tr>
+</table>
+
+<p><em>NOTE:</em>
+Use <a href="thfRecogGetSpeechRange.html">thfRecogGetSpeechRange</a>
+to retrieve the location of the speech region in the audio block.
+When doing partial recognition, we only want to
+pass the speech region identified during the SDET_ONLY phase to the
+RECOG_ONLY phase, rather than the entire audio block. Failing to do so
+will be equivalent to not using the speech detector, and performing
+many fruitless calculations.  In addition, the grammar specification
+might depend on a speech-detected utterance.
+
+<h3>When to Stop Recognizing</h3>
+The <a href="thfRecogPipe.html">thfRecogPipe</a> function returns the status of the speech detector, as follows:
+<ul>
+  <li>RECOG_QUIET: No speech has been detected yet.
+  <li>RECOG_SOUND: Speech activity detected. No end of utterance yet.
+  <li>RECOG_SILENCE: Timed out waiting for start of speech (<em>end condition</em>).
+  <li>RECOG_DONE: End of utterance detected (<em>end condition</em>).
+  <li>RECOG_MAXREC: Timed out waiting for end of utterance (<em>end condition</em>).
+  <li>RECOG_IGNORE: Speech detector triggered but failed the minduration test. Probably not speech (<em>end condition</em>).
+  <li>RECOG_NODATA: The input audio buffer was empty (<em>error condition</em>).
+</ul>
+<p>Once an end condition is reached, the recognizer must be reset using <a href="thfRecogReset.html">thfRecogReset</a> before it can be used again.</p>
+
+<p>The status information can be used to determine what action to take
+next. Typically, in a pipelined system you would keep calling
+<a href="thfRecogPipe.html">thfRecogPipe</a> until an end condition was reached or until there's no more
+audio. For example, if the status is RECOG_QUIET or RECOG_SOUND,
+continue calling <a href="thfRecogPipe.html">thfRecogPipe</a> with more audio. If the status is
+RECOG_DONE or RECOG_MAXREC, stop recording (if appropriate); Process
+any remaining buffered audio; Call for the recognition result. If the
+status is RECOG_SILENCE or RECOG_IGNORE, no speech was detected so no
+result will be available; Reset or destroy recognizer.
+</p>
+
+<p>For partial recognition, the status returned by the first phase
+(SDET_ONLY) must be passed as input to the second phase
+(RECOG_ONLY). If no speech detector is used, call only the second
+phase.</p>
+
+<p><em>NOTE:</em> Audio fed to the recognizer must be the same sample
+rate as that of the acoustic model. Use <a
+href="thfRecogSampleConvert.html">thfRecogSampleConvert</a> to
+convert it if needed. </p>
+<!----------------------------------------------------------------------- -->
+</body>

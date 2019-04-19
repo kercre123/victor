@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+
+<h2>pseval</h2>
+
+<h3>Syntax</h3>
+<pre>TrulyHandsfree SDK\&lt;platform&gt;\bin\pseval [options] -n netfile -s searchfile wavefile</pre>
+
+<h3>Description</h3>
+<p>
+An evaluation tool for a phrasespot recognizer. Given an acoustic model, search, and an audio
+file, print to stdout a time-stamped list of all occurrences of
+spotted phrases. Optionally displays word and phoneme alignments, and
+speaker verification scores.
+</p>
+<p>
+When the input to pseval comes from the output of enroll, the console
+output from enroll indicates recommended values for several of the optional
+pseval parameters.
+</p>
+
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Name</th>
+<th align="left">Default</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-n netfile</code></td>
+<td align="center" valign="top"></td>
+<td width="500">Neural network (acoustic model) file name.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-s searchfile</code></td>
+<td align="center" valign="top"></td>
+<td width="500">Compiled phrase-spotting search file name.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>wavefile</code></td>
+<td align="center" valign="top"></td>
+<td width="500">Audio file. This can be in RIFF (.wav) format with
+  16-bit linear PCM encoding, or a headerless 16-bit linear PCM file
+  in host byte order. If the latter, the <em>-r rate</em> flag is
+  required to specify the sample rate.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-a offset</code></td>
+<td align="center" valign="top">0</td>
+<td width="500">Sets the phrase
+  spotting <a href="params.html#paramA">param A</a> offset</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-d delay</code></td>
+<td align="center" valign="top">300</td>
+<td width="500">Sets the phrase spotting
+  <a href="params.html#delay">delay</a> in ms.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-m thr</code></td>
+<td align="center" valign="top">-5.0</td>
+<td width="500">Sets the <a href='params.html#epqMin'>EPQ minimum</a> threshold.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-e 0|1</code></td>
+<td align="center" valign="top">0</td>
+<td width="500">Enable (1) or disable (0) EPQ; see <a href='params.html#epqEnable'>epqEnable</a>.  The default is 0 (not enabled).</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-f</code></td>
+<td align="center" valign="top">disabled</td>
+<td width="500">Disable audio check and force evaluation.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-r rate</code></td>
+<td align="center" valign="top"> read from wavfile </td>
+<td width="500">Audio sample rate in Hz, required if the wave file is
+  in PCM format.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-t threshold</code></td>
+<td align="center" valign="top">disabled</td>
+<td width="500">Sets the speaker verification (SV) score threshold. SV
+  scores will only be printed if this option is given. If the search
+  does not support SV, an SV score of -1000 will be returned.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-p</code></td>
+<td align="center" valign="top">disabled</td>
+<td width="500">Show phoneme alignments.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-q</code></td>
+<td align="center" valign="top">disabled</td>
+<td width="500">Show EPQ SNR.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-w</code></td>
+<td align="center" valign="top">disabled</td>
+<td width="500">Show word alignments.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-v</code></td>
+<td align="center" valign="top">disabled</td>
+<td width="500">Produce verbose progress messages.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-x</code></td>
+<td align="center" valign="top">disabled</td>
+<td width="500">Resets the recognizer after each spot. This will also
+  reset the alignment time stamps.</td>
+</tr>
+</table>
+
+<h3>See Also</h3>
+<a href="Getting Started.html">Overview</a>, <a href="enroll.html">enroll</a>.
+<!----------------------------------------------------------------------- -->
+</body>

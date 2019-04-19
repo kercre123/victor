@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h2>How to Detect Speech</h2>
+
+<p>The recognizer can be configured to use an internal speech detector
+as a front end to the recognition process (see <a
+href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a>). As the
+name suggests, the purpose of a speech detector is to distinguish
+speech from non-speech events. The intent is for it to act as a form
+of audio filter such that we only perform speech recognition on the
+speech regions. Not only does this reduce processing requirements (the
+recognizer being more computationally <em>expensive</em> than the speech
+detector), it can also improve recognition accuracy and reduce false
+alarms. </p>
+
+<p>More specifically, blocks of audio are fed through the speech detector.
+Each block is identified as either speech or non-speech. Typically, non-speech
+audio blocks are discarded until speech activity is detected. Subsequently
+contiguous speech blocks are passed onto the recognizer, until the end of
+utterance is detected. The end of utterance is determined by observing
+sufficient silence following a speech region.</p>
+
+<p>Several speech detector parameters that can be queried and
+  configured
+  using <a href="thfRecogConfigGet.html">thfRecogConfigGet</a>
+  and  <a href="thfRecogConfigSet.html">thfRecogConfigSet</a>.
+
+<!----------------------------------------------------------------------- -->
+</body>

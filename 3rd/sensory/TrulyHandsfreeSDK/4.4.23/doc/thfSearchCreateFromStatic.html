@@ -1,0 +1,87 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfSearchCreateFromStatic</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+<a href="objects.html#searchs_t">searchs_t</a> *thfSearchCreateFromStatic(thf_t **thf, <a href="objects.html#recog_t">recog_t</a> *r, <a href="objects.html#sdata_t">sdata_t</a> *global, 
+                                     unsigned short index, 
+                                     unsigned short nbest);
+</pre>
+<h3>Description</h3>
+ Reads pre-compiled search from static memory and creates a search object. The pre-compiled search and the recognition object must have the same frame size. Call <a href="thfSearchDestroy.html">thfSearchDestroy</a> to destroy the search object when no longer needed. 
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><a href="objects.html#recog_t"><code>recog_t *</code></a></td>
+<td nowrap valign="top"><code>r</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Recognizer object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><a href="objects.html#sdata_t"><code>sdata_t *</code></a></td>
+<td nowrap valign="top"><code>global</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Generic static object linked to static memory search object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned short</code></td>
+<td nowrap valign="top"><code>index</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Search index to static memory.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned short</code></td>
+<td nowrap valign="top"><code>nbest</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Number of recognition results required</td>
+</tr>
+</table>
+<h3>Return</h3>
+ Returns a unique handle to the search object (see <a href="objects.html#searchs_t">searchs_t</a>). Returns NULL in the event of error. 
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>recog object not found</code></td>
+<td valign="top">Invalid recognizer object handle.</td>
+</tr>
+<tr>
+<td valign="top"><code>index is out of range</code></td>
+<td valign="top">The static object array contains less pronunC_t objects than expected.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="static.html">Compiling data into application</a>, <a href="thfSearchDestroy.html">thfSearchDestroy</a>, <a href="thfSearchSaveToFile.html">thfSearchSaveToFile</a>, <a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a>, <a href="thfRecogCreateFromFunc.html">thfRecogCreateFromFunc</a> and <a href="thfRecogCreateFromStatic.html">thfRecogCreateFromStatic</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

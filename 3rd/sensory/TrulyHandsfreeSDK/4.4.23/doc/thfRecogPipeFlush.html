@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfRecogPipeFlush</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+int thfRecogPipeFlush(thf_t **thf, <a href="objects.html#recog_t">recog_t</a> *r, char mode, 
+                      unsigned short *stateResult);
+</pre>
+<h3>Description</h3>
+ Forces a flush of the recognition pipeline. This function is primarily intended for use when recognizing from file, especially when performing phrasespotting. In particular, it is possible that recognition results are still pending (i.e., not reported until the phrasespot delay period has passed) after feeding all available audio into the recognizer pipeline.  This thfRecogPipeFlush command will force any pending results to be available, as reported by the 'stateResult' status. Results can be retrieved by calling thfRecogResult. It should called only if the recognizer has not returned RECOG_DONE status after feeding all available audio into thfRecogPipe.  <b>NOTE:</b> Flushing is performed by feeding additional audio into the pipeline which may affect returned speech detector samples. The mode can be configured by supplying one of the following flags:  <table align="center"> <tr><td><b>SDET_ONLY</b></td><td>performs speech detection only</td></tr> <tr><td><b>RECOG_ONLY</b></td><td>performs recognition only</td></tr> <tr><td><b>SDET_RECOG</b></td><td>performs speech detection and recognition</td></tr> </table> </p> <p>The state of the speech detector is returned in <em>stateResult</em> and is one of: <table align="center"> <tr><td><b>RECOG_QUIET</b></td><td>audio buffer contains no speech</td></tr> <tr><td><b>RECOG_SILENCE</b></td><td>audio buffer contains silence  						exceeding lsilence value</td></tr> <tr><td><b>RECOG_SOUND</b></td><td>audio buffer contains speech</td></tr> <tr><td><b>RECOG_DONE</b></td><td>audio buffer contains end of speech</td></tr> <tr><td><b>RECOG_MAXREC</b></td><td>maximum recording timeout reached in audio  					    buffer</td></tr> <tr><td><b>RECOG_IGNORE</b></td><td>speech found of insufficient length</td></tr> <tr><td><b>RECOG_NODATA</b></td><td>no data found in audio buffer</td></tr> </table>
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><a href="objects.html#recog_t"><code>recog_t *</code></a></td>
+<td nowrap valign="top"><code>r</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Recognizer object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>char</code></td>
+<td nowrap valign="top"><code>mode</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Mode flag indicates whether to perform speech detection, recognition or both.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned short *</code></td>
+<td nowrap valign="top"><code>stateResult</code></td>
+<td align="center" valign="top">out</td>
+<td width="500">Speech detector status. Ignore in RECOG_ONLY mode.</td>
+</tr>
+</table>
+<h3>Return</h3>
+Returns 1 to indicate success and 0 for an error. 
+Use <a href="thfGetLastError.html">thfGetLastError</a> to get error message.
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>recog object not found</code></td>
+<td valign="top">Invalid recognizer object handle.</td>
+</tr>
+<tr>
+<td valign="top"><code>speech detector not found</code></td>
+<td valign="top">The recognizer object was created without a speech detector and mode flags other than RECOG_ONLY cannot be used.</td>
+</tr>
+<tr>
+<td valign="top"><code>audio buffer exceeds maxbuf size</code></td>
+<td valign="top">Speech buffer size exceeds maximum size of audio buffer value that was configured during recognizer creation.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a>, <a href="thfRecogCreateFromFunc.html">thfRecogCreateFromFunc</a> and <a href="thfRecogCreateFromStatic.html">thfRecogCreateFromStatic</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

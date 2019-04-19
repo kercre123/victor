@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+
+<h2>Saving a Recognizer and Search</h2>
+The parameters used by a recognizer and/or search may be modified by calls
+to
+<a href="thfRecogConfigSet.html">thfRecogConfigSet</a>,
+<a href="thfPhrasespotConfigSet.html">thfPhrasespotConfigSet</a>, or
+<a href="thfSearchConfigSet.html">thfSearchConfigSet</a>.
+<p>
+When saving a recognizer and/or search to file using
+<a href="thfSpeakerSaveRecogToFile.html">thfSpeakerSaveRecogToFile</a>,
+<a href="thfSearchSaveToFile.html">thfSearchSaveToFile</a>, or
+<a href="thfUdtSaveToFile.html">thfUdtSaveToFile</a>,
+then the following parameters are written to file and will be used
+when reading those files, until another call to
+<a href="thfRecogConfigSet.html">thfRecogConfigSet</a>,
+<a href="thfPhrasespotConfigSet.html">thfPhrasespotConfigSet</a>, or
+<a href="thfSearchConfigSet.html">thfSearchConfigSet</a>.
+is made for that parameter.
+<p>
+The following recognizer parameters are saved in the recognizer file:
+<ul>
+<li> <a href='params.html#epqMin'>epqMin</a>
+<li> <a href='params.html#epqEnable'>epqEnable</a>
+</ul>
+
+The following phrasespotting parameters are saved in the search file:
+<ul>
+<li> <a href='params.html#pslongpen'>Longpen</a>
+<li> <a href='params.html#delay'>Delay</a>
+</ul>
+
+The following <em>search</em> parameters are saved in the <em>recognizer</em>
+file:
+<ul>
+<li> <a href='params.html#garbage'>Garbage</a>
+<li> <a href='params.html#any'>Any</a>
+<li> <a href='params.html#nota'>Nota</a>
+</ul>
+
+<p>
+Other configurable parameters, e.g. parameters related to speech detection
+(<a href='params.html#lsilence'>Lsilence</a>,
+<a href='params.html#tsilence'>Tsilence</a>, etc)
+and enrollment-checking parameters (e.g.
+<a ID='thfRecogConfig_t'>poorRecordings</a>,
+<a ID='thfRecogConfig_t'>clippingPercent</a>, etc.)
+are not saved. For phrasespotting,
+<a href='constants.html#thfRecogConfig_t'>PARAMA_OFFSET</a>,
+<a href='params.html#psbeam'>beam</a>, and
+<a href='params.html#psabsbeam'>absbeam</a>
+are not saved. For the search,
+<a href='params.html#pruning'>pruning</a> and
+<a href='params.html#beam'>beam</a>
+are not saved.
+<p>
+The motivation behind which parameters are saved and which are not is that
+EPQ, longpen, delay, garbage, any, and nota are things that the developer will
+want to set once for a particular recognizer/search.  The developer will then
+not have to worry about setting the same values in every application.  On
+the other hand, speech-detection and enrollment-checking parameters,
+paramAoffset, beam, and absbeam will need to be decided upon differently
+for each application.
+<p>
+One exception to this is if the developer does
+<a href="SVsimple.html">speaker verification and phrasespotting using the
+Recommended API</a>,
+and sets a value for
+<a href='constants.html#thfRecogConfig_t'>PARAMA_OFFSET</a>
+(paramAoffset) using
+<a href="thfPhrasespotConfigSet.html">thfPhrasespotConfigSet</a>
+before adaptation.  In this case, the value of paramAoffset is related to
+the adaptation parameter values (different adaptation parameter values may
+require a different paramAoffset), and so this offset is added to the
+internal paramA value when the search is written to file.  Therefore, the
+developer doesn't have to know at run-time what paramAoffset was used
+for adaptation.
+<p>
+
+
+<!----------------------------------------------------------------------- -->
+</body>

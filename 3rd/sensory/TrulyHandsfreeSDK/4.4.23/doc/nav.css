@@ -1,0 +1,115 @@
+P  {}
+
+OLDH1  {
+	color : #5AB861;
+	font-size : large;
+}
+
+H2  {
+	color : #357EC7;
+	font-size : medium;
+	text-decoration : underline
+}
+
+H3  {
+	color : #357EC7;
+	font-size : small;
+}
+
+H4  {
+	color : #357EC7;
+	font-size : small;
+}
+
+/*
+A  {
+	color : #FF5151; 
+	text-decoration : none
+}
+
+A:Visited  {
+	color : #FF5151; 
+	text-decoration : none
+}
+
+
+A:Active  {
+	color : Orange;
+	text-decoration : none
+}
+
+A:Hover  {
+	color : Orange;
+	text-decoration : none
+}
+*/
+
+PRE {
+	color : #4040ff;
+	font-size: small;
+	background: #f8f8f8;
+}
+
+BODY  {
+	font-size : small;
+/*	font-family : sans-serif; */
+	color : #444;
+	margin-left : 5%;
+	margin-right : 5%;
+	margin-top : 10px;
+	margin-bottom : 10px;
+}
+
+.ghosted  {
+	color : #cdcdcd;
+}
+
+.frozen  {
+	color : #70d0ff;
+	font-weight : bold;
+}
+
+th  {
+	font-size : small;
+/*	font-family : sans-serif; */
+	font-weight : bold;
+	color : #666666;
+	background-color : White;
+	padding-left : 2;
+	padding-right : 2;
+}
+
+td  {
+	font-size : small;
+/*	font-family : sans-serif; */
+	color : #666666;
+	background-color : White;
+	padding-left : 2;
+	padding-right : 2;
+}
+
+.invertfrozen  {
+	font-weight : bold;
+	color : White;
+	background-color : #70d0ff;
+}
+
+table  {
+	background-color: #f8f8f8;
+}
+
+code {
+	font-size: small;
+}
+
+.smallghosted  {
+	color : #cdcdcd;
+	font-size : 10;
+}
+
+
+ul {padding-left: 1em;}
+a {text-decoration: none;}
+* {
+    font-family: "HelveticaNeue-Light", "Helvetica Neue Light", "Helvetica Neue", Helvetica, Arial, "Lucida Grande", sans-serif;
+}

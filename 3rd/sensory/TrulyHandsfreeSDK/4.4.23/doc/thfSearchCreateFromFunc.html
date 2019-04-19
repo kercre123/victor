@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfSearchCreateFromFunc</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+<a href="objects.html#searchs_t">searchs_t</a> *thfSearchCreateFromFunc(thf_t **thf, <a href="objects.html#recog_t">recog_t</a> *r, 
+                                   <a href='thfReadFunc_t.html'>thfReadFunc_t</a> readFunc, 
+                                   void *privateData, unsigned short nbest);
+</pre>
+<h3>Description</h3>
+ <p>Reads pre-compiled search from file and creates a search object. The pre-compiled search and the recognition object must have the same frame size, otherwise an error is returned. Each object has a unique handle. Call <a href="thfSearchDestroy.html">thfSearchDestroy</a> to destroy the search object when no longer needed.</p> <p>This function differs from <a href="thfSearchCreateFromFile.html">thfSearchCreateFromFile</a> in that it takes a function pointer instead of a file name as argument. This function is used instead of fread() to load the acoustic model.</p>
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><a href="objects.html#recog_t"><code>recog_t *</code></a></td>
+<td nowrap valign="top"><code>r</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Recognition object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code><a href='thfReadFunc_t.html'>thfReadFunc_t</a></code></td>
+<td nowrap valign="top"><code>readFunc</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">function used to read the acoustic model.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>void *</code></td>
+<td nowrap valign="top"><code>privateData</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">arbitrary user data, provides context to readFunc.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned short</code></td>
+<td nowrap valign="top"><code>nbest</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Number of recognition results required</td>
+</tr>
+</table>
+<h3>Return</h3>
+ Returns a unique handle to the search object (see <a href="objects.html#searchs_t">searchs_t</a>). Returns NULL in the event of error. 
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>recog object not found</code></td>
+<td valign="top">Invalid recognizer object handle.</td>
+</tr>
+<tr>
+<td valign="top"><code>Could not open raw file</code></td>
+<td valign="top">The datafile does not exist or the application had insufficient privileges to open the file for reading.</td>
+</tr>
+<tr>
+<td valign="top"><code>Error reading raw file:</code></td>
+<td valign="top">The datafile did not decode correctly. Was the file damaged?</td>
+</tr>
+<tr>
+<td valign="top"><code>net and search have different frame rates</code></td>
+<td valign="top">Incompatible acoustic model and search objects have been used in combination during initialization.</td>
+</tr>
+<tr>
+<td valign="top"><code>Unknown search type in file</code></td>
+<td valign="top">Data file could not be decoded. Probably an older or newer version.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfSearchDestroy.html">thfSearchDestroy</a>, <a href="thfSearchSaveToFile.html">thfSearchSaveToFile</a>, <a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a>, <a href="thfRecogCreateFromFunc.html">thfRecogCreateFromFunc</a> and <a href="thfRecogCreateFromStatic.html">thfRecogCreateFromStatic</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h2>Batch Testing</h2>
+
+In this section, we consider various aspects of "batch testing" the
+performance of a speech recognizer and/or speaker verification system.
+Batch testing is a type of testing method that is conducted in as
+controlled a manner as possible, using a large number of recordings.
+Batch testing yields a quantitative estimate of system performance.
+("Live testing," or testing by speaking directly to a running system,
+is also a useful testing method for obtaining a qualitative evaluation
+of system performance and for quickly evaluating a system in different
+environments.  Live testing does not require any SDK design considerations,
+however, and so we restrict our discussion to batch testing.)
+
+In order to conduct a batch test that will most closely reflect
+real-world performance, several issues need to be considered.
+
+<h3>Recordings</h3>
+It is important to capture the audio using the microphone and
+other hardware that will be used in the final application.  For
+example, some (older) Android phones perform "noise reduction" that
+filters out energies above 4000 Hz in voiced sounds, while other
+(newer) Android phones do not perform this processing if, in Java,
+AudioSource is set to VOICE_RECOGNITION.  Every hardware system for
+capturing audio will have its own characteristics that will affect
+speech recognition and speaker verification performance.  If
+the application may be used by multiple devices, then recordings
+should be made from a representative sample of these devices, with
+the number of recordings from a particular device proportional to
+the expected number of times this device will be used in the
+final application.  (In other words, if an application may be used
+with both older and newer Android phones, with the expectation of
+80% newer phones and 20% older phones, then several types of Android
+phones should be used to capture the recordings, with 20% of the
+recordings obtained from the older phone(s).  One should keep in
+mind, however, that what is a newer phone today will not be
+considered new for very long).
+<p>
+The sampling frequency during audio recording should be at least as large
+as the sampling frequency of the speech recognition/verification
+application. (If they are different, the application should
+down-sample the audio to the sampling frequency expected by the
+recognizer). The audio signal should not be compressed.
+<p>
+The recordings may be captured in a very quiet environment (e.g.
+an anechoic chamber) with noise added to the recordings later, or
+the recordings may be captured in the noise environment expected
+when the application will be used.  (These two cases have different
+costs and benefits, but in short either case will yield useful results.)
+
+<h3>Passing Audio to the Application</h3>
+It is important to have the audio signal captured only once by
+the recording hardware.  Therefore, one should not play the recordings
+through a speaker and capture them (again) on the application device,
+since this will (a) apply channel characteristics to the recording that
+will be different from those found in live testing, and (b) cause
+artifacts in the signal, no matter how close or how far the distance is
+between speaker and microphone (although the type of artifacts will
+differ depending on the distance). Instead, the application should
+be modified specifically for batch-testing purposes to read the audio
+from file, and the test recordings (possibly with added noise) should
+be passed as .wav files into the application.
+
+<h3>Padding the Speech Signal</h3>
+The audio signal passed to the application must <em>not</em> be chopped
+so that only the word to be recognized or verified is present.  There
+must be some "padding" both before and after the word, and this padding
+must contain audio collected from the same hardware, and at the same
+time, as the word recordings.  Padding is be simply regions of silence
+(or silence with added noise) before and after the target word.
+There should be at least 200 ms of audio padding before the target word
+(500 ms is preferable) and at least 100 ms <em>plus</em> the amount of
+time specified in the phrasespot delay (set with a call to
+<a href="thfPhrasespotConfigSet.html">thfPhrasespotConfigSet</a>)
+after the target word.   Again, this padding must not be synthetically
+created (e.g. a signal with all values of zero), but obtained from
+the recording hardware.
+<p>
+The reasons for padding the speech signal are threefold.  First, the
+features that are passed to the recognizer include audio data within
+100 ms of each timepoint being analyzed; in order for all of the
+audio data to be processed, the end of the recording must contain
+at least 100 ms of audio past the end of the target word.  Second, in
+order to ensure that the recognizer is as responsive as it would be in a live
+application, an additional amount of audio, equal to the delay time,
+must also be present after the target word.  Third, a channel normalization
+technique is used that requires approximately 200 ms to stabilize;
+therefore at least 200 ms of audio signal must be present prior to the
+target word.  This audio padding (especially the initial padding) must
+be obtained from the recording hardware, in order to ensure proper
+channel normalization.
+
+<h4>Flushing the Speech Signal</h3>
+The application may read the recordings from file as a single block
+or in multiple blocks, passing each audio block to
+<a href="thfRecogPipe.html">thfRecogPipe</a>.
+Once all of the audio has been passed to thfRecogPipe, a final
+call should be made to
+<a href="thfRecogPipeFlush.html">thfRecogPipeFlush</a>.
+This call to thfRecogPipeFlush flushes the internal audio buffers
+and ensures that all of the audio signal is processed.
+
+
+
+
+
+<!----------------------------------------------------------------------- -->
+</body>

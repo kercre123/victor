@@ -1,0 +1,924 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h2>Data Structures</h2>
+The following data structures are used to maintain the state of the
+recognition engine. These are <em>internal</em> data structures whose
+members are hidden from the user. You will be provided with a unique
+handle to these structures when appropriate and can manipulate their
+contents via API calls.
+
+<h3 ID='thf_t'>Session object (thf_t)</h3>
+The session object contains high-level SDK-specific data. Most SDK
+functions require this object as a parameter. You should begin your SDK
+utilization by creating this object and end your SDK utilization by
+destroying this object.
+<ul>
+<li>Create with: <a href="thfSessionCreate.html">thfSessionCreate</a>.
+<li>Destroy with: <a href="thfSessionDestroy.html">thfSessionDestroy</a>
+</ul>
+
+
+
+<h3 ID='recog_t'>Recognizer object (recog_t)</h3>
+<ul>
+<li>Create with: <a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a>, <a href="thfRecogCreateFromStatic.html">thfRecogCreateFromStatic</a>.
+<li>Destroy with: <a href="thfRecogDestroy.html">thfRecogDestroy</a>
+</ul>
+
+<h3 ID='searchs_t'>Search object (searchs_t)</h3>
+<ul>
+<li>Create with: <a href="thfSearchCreateFromFile.html">thfSearchCreateFromFile</a>, <a href="thfSearchCreateFromStatic.html">thfSearchCreateFromStatic</a>, <a href="thfSearchCreateFromGrammar.html">thfSearchCreateFromGrammar</a>, <a href="thfSearchCreateFromList.html">thfSearchCreateFromList</a>.
+
+<li>Destroy with: <a href="thfSearchDestroy.html">thfSearchDestroy</a>
+</ul>
+
+<h3 ID='pronuns_t'>Pronunciation object (pronuns_t)</h3>
+<ul>
+<li>Create with: <a
+href="thfPronunCreateFromFile.html">thfPronunCreateFromFile</a>, <a
+href="thfPronunCreateFromStatic.html">thfPronunCreateFromStatic</a>.
+<li>Destroy with: <a href="thfPronunDestroy.html">thfPronunDestroy</a>
+</ul>
+
+
+<h3 ID='tts_t'>Text-to-Speech object (tts_t)</h3>
+<ul>
+<li>Create with: <a
+href="thfTtsCreateFromFile.html">thfTtsCreateFromFile</a>, <a
+href="thfTtsCreateFromStatic.html">thfTtsCreateFromStatic</a>.
+<li>Destroy with: <a href="thfTtsDestroy.html">thfTtsDestroy</a>
+</ul>
+
+<h3 ID='ifsearchC_t'>Static search model (ifsearchC_t)</h3>
+The data structure that encapsulates the read-only component of a
+search object in application memory.
+<ul>
+<li>Create with: <a href="DumpRaw.html">DumpRaw</a>, from a previously
+compiled search that was saved using <a
+href="thfSearchSaveToFile.html">thfSearchSaveToFile</a>, and <a
+href="static.html">compile into application</a>.
+</ul>
+
+<h3 ID='recogC_t'>Static acoustic model (recogC_t)</h3>
+The data structure that encapsulates the read-only component of a
+recognizer object in application memory.
+<ul>
+<li>Create with: <a href="DumpRaw.html">DumpRaw</a>, from supplied SDK
+acoustic model, and <a href="static.html">compile into application</a>.
+</ul>
+
+<h3 ID='pronunC_t'>Static pronunciation model (pronunC_t)</h3>
+The data structure that encapsulates the read-only component of a
+pronunciation object in application memory.
+<ul>
+<li>Create with: <a href="DumpRaw.html">DumpRaw</a>, from supplied SDK
+pronunciation model files, and <a href="static.html">compile into
+application</a>.
+</ul>
+
+<h3 ID='sdata_t'>Static data object (sdata_t)</h3>
+The data structure that stores the number of static objects of a
+specific type (e.g. recogC_t, ifsearchC_t or pronunC_t) and a pointer to
+each. Defined in <em>trulyhandsfree.h</em>.
+
+
+<!-------------- Adaptation Structures ---------------------------- -->
+
+<h3 ID='adaptObj_t'>Adaptation object (adaptObj_t)</h3>
+The data structure containing information about zero or more adaptation tasks.
+This structure will include everything needed by the adaptation functions,
+including user information, enrollment data, and generated models.
+<ul>
+<li> Create with: <a href="thfAdaptCreate.html">thfAdaptCreate</a>
+<li> Destroy with: <a href="thfAdaptDestroy.html">thfAdaptDestroy</a>
+</ul>
+
+<h3 ID='thfAdaptTaskInfo_t'>Adaptation task information object (thfAdaptTaskInfo_t)</h3>
+The data structure containing information about the task (read in from a task
+data file).
+<ul>
+<li> Create with: <a href="thfAdaptTaskInfo.html">thfAdaptTaskInfo</a>
+<li> Destroy with: <a href="thfAdaptTaskInfoDestroy.html">thfAdaptTaskInfoDestroy</a>
+</ul>
+Most of the parameters in the data structure can be read with
+<a href="thfAdaptTaskGet.html">thfAdaptTaskGet</a> using the
+specified "parameter name" to identify the parameter.  If a
+parameter can not be read with this function, the 'Parameter Name'
+field is marked N/A.
+Some of the parameters (as indicated below) can be set with
+<a href="thfAdaptTaskSet.html">thfAdaptTaskSet</a> using the
+specified "parameter name" character string to identify the parameter.
+The data structure contains the following:
+<p>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Variable Name</th>
+<th align="left">Parameter Name</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td>char *</td>
+<td>taskID</td>
+<td>N/A</td>
+<td>This field specifies an identifier for the task.  This identifier
+provides a general indication of what the trigger is, for example
+'UDT' or 'hello blue genie'.
+This parameter can not be set, nor can it be queried with
+<a href="thfAdaptTaskGet.html">thfAdaptTaskGet</a>.
+It can only be obtained with a call to
+<a href="thfAdaptTaskInfo.html">thfAdaptTaskInfo</a>.
+</td>
+</tr>
+<tr>
+<td>char *</td>
+<td>taskLanguage</td>
+<td>N/A</td>
+<td>THis field specifies the target language for the task.  The
+language may be indicated as a four-letter code, for example 'US English'
+may be represented as 'enUS'.
+This parameter can not be set, nor can it be queried with
+<a href="thfAdaptTaskGet.html">thfAdaptTaskGet</a>.
+It can only be obtained with a call to
+<a href="thfAdaptTaskInfo.html">thfAdaptTaskInfo</a>.
+</td>
+</tr>
+<tr>
+<td>char *</td>
+<td>taskVersion</td>
+<td>N/A</td>
+<td>This field specifies the version of the task.  This string can
+be used to confirm that the version information in the task data file
+is the expected version, if more than one version is possible.
+This parameter can not be set, nor can it be queried with
+<a href="thfAdaptTaskGet.html">thfAdaptTaskGet</a>.
+It can only be obtained with a call to
+<a href="thfAdaptTaskInfo.html">thfAdaptTaskInfo</a>.
+</td>
+</tr>
+<tr>
+<td>int</td>
+<td>userDefinedTrigger</td>
+<td>ADAPT_UDT</td>
+<td>This field is 1 if the task is for a user-defined trigger or
+user-defined passphrase; otherwise, 0. This parameter can be
+read but not set.</td>
+</tr>
+<tr>
+<td>int</td>
+<td>featureType</td>
+<td>ADAPT_FEATURE_TYPE</td>
+<td>This field identifies the type of features used in processing
+recordings.  Currently, the only valid value is '1'.  This parameter
+can be read but not set.</td>
+</tr>
+<tr>
+<td>int</td>
+<td>sampleRate</td>
+<td>ADAPT_SAMPLE_RATE</td>
+<td>This field identifies the sampling frequency of the recognizer.
+This parameter can be read but not set.</td>
+</tr>
+<tr>
+<td>int</td>
+<td>frameSize</td>
+<td>ADAPT_FRAME_SIZE</td>
+<td>This field identifies the frame size of the recognzier.
+This parameter can be read but not set.</td>
+</tr>
+<tr>
+<td>int</td>
+<td>saveEnrollmentAudio</td>
+<td>ADAPT_SAVE_ENROLLMENT_AUDIO</td>
+<td>This field specified whether or not the enrollment audio should
+be saved in the
+<a href='#thfAdaptUserInfo_t'>thfAdaptEnrollInfo_t</a> structure.
+A value of 0 specifies that the original enrollment audio will not be stored
+anywhere in the Fluent codebase after returning from a call to
+<a href="thfAdaptEnrollmentAddTrigger.html">thfAdaptEnrollmentAddTrigger</a>.
+A value of 1 specifies that the enrollment audio will be kept in memory and
+copied into the  <a href='#thfAdaptUserInfo_t'>thfAdaptEnrollInfo_t</a>
+structure.  This parameter can be both read and set.
+When this parameter is set, it will affect all <em>subsequent</em> calls to
+<a href="thfAdaptEnrollmentAddTrigger.html">thfAdaptEnrollmentAddTrigger</a>.
+</td>
+</tr>
+<tr>
+<td>int</td>
+<td>numEnrollments</td>
+<td>ADAPT_NUM_ENROLLMENTS</td>
+<td>This field identifies the number of enrollments recommended for this task.
+The application may use fewer or more enrollments than the recommended
+number, but performance may then be different from expected results.
+In particular, with more enrollments the False Reject rate tends to decrease,
+while the Imposter Accept rate and Noise Accept rate tend to increase.
+This parameter can be read but not set.</td>
+</tr>
+<tr>
+<td>int</td>
+<td>numEnrollmentsWithContext</td>
+<td>ADAPT_NUM_ENROLLMENTS_WITH_CONTEXT</td>
+<td>This field identifies the number of enrollments with context that
+are recommended for this task.  An "enrollment with context" is the trigger
+phrase spoken with an immediately-following context phrase.
+The application may use fewer or more enrollments with contex than the
+recommended number.  If using a different number than the recommended value,
+the impact on performance will probably be less than the impact of using
+a different value for ADAPT_NUM_ENROLLMENTS.
+This parameter can be read but not set.</td>
+</tr>
+<tr>
+<td>int</td>
+<td>delay1</td>
+<td>ADAPT_DELAY1</td>
+<td>The delay when a trigger resulting from
+adaptation with this task is used with a single user.  </td>
+</tr>
+<tr>
+<td>int</td>
+<td>delayM</td>
+<td>ADAPT_DELAYM</td>
+<td>The delay when a trigger resulting from adaptation with this
+task is used with multiple users.  (Maximum performance usually
+requires a longer delay for multiple users than a single user.)</td>
+</tr>
+<tr>
+<td>float</td>
+<td>epqMin</td>
+<td>ADAPT_EPQ_MIN</td>
+<td>The threshold used in EPQ. See the
+<a href='params.html#epqMin'>epqMin</a> parameter.
+</td>
+</tr>
+<tr>
+<td>float</td>
+<td>svThresh</td>
+<td>ADAPT_SVTHRESH</td>
+<td>The default speaker-verification threshold.</td>
+</tr>
+<tr>
+<td>int</td>
+<td>paramAoffset</td>
+<td>ADAPT_PARAM_A_OFFSET</td>
+<td>The default value for the PARAMA_OFFSET used during
+phrasespotting.  See
+<a href="constants.html">Constants</a>
+for more information about PS_PARAMA_OFFSET.</td>
+</tr>
+<tr>
+<td>int</td>
+<td>doSpeechDetect</td>
+<td>ADAPT_DO_SPEECH_DETECT</td>
+<td>This field specifies whether speech detection should be
+performed on the enrollment recordings during adaptation.
+This additional step is usually not necessary, as speech
+detection will have been used to collect the enrollment
+recordings.</td>
+</tr>
+<tr>
+<td>int</td>
+<td>contextPostProcess</td>
+<td>ADAPT_CONTEXT_POSTPROCESS</td>
+<td>This field specifies whether post processing of UDT enrollments should
+be performed when one or more enrollments have context.  A value of
+1 indicates that UDT post processing will be performed; 0 indicates it won't
+be.  Post processing can improve overall performance, in particular the
+enrollment quality checks, but at the cost of additional time during
+<a href="thfAdaptEnrollmentCheck.html">thfAdaptEnrollmentCheck</a>.  This
+parameter has no effect on EFT performance or execution time.
+</td>
+</tr>
+<tr>
+<td>float</td>
+<td>checkPhraseQuality</td>
+<td>ADAPT_CHECK_TRIGGER_PHRASE_QUALITY</td>
+<td>The threshold (minimum value) for phrase quality.</td>
+</tr>
+<tr>
+<td>float</td>
+<td>checkEnergyMin</td>
+<td>ADAPT_CHECK_TRIGGER_ENERGY_MIN</td>
+<td>The threshold (minimum value) for minium energy of the
+word in the recording.</td>
+</tr>
+<tr>
+<td>float</td>
+<td>checkEnergyStdDev</td>
+<td>ADAPT_CHECK_TRIGGER_ENERGY_STD_DEV</td>
+<td>The threshold (minimum value) for standard deviation of
+energy within the word in the
+recording.</td>
+</tr>
+<tr>
+<td>float</td>
+<td>checkSilBegMsec</td>
+<td>ADAPT_CHECK_TRIGGER_SIL_BEG_MSEC</td>
+<td>The threshold (minimum value) for silence that must preceed
+the beginning of the word.</td>
+</tr>
+<tr>
+<td>float</td>
+<td>checkSilEndMsec</td>
+<td>ADAPT_CHECK_TRIGGER_SIL_END_MSEC</td>
+<td>The threshold (minimum value) for silence that must occur
+after the end of the word.</td>
+</tr>
+<tr>
+<td>float</td>
+<td>checkSNR</td>
+<td>ADAPT_CHECK_TRIGGER_SNR</td>
+<td>The threshold (minimum value) for the signal-to-noise ratio
+of the word in the recording.</td>
+</tr>
+<tr>
+<td>float</td>
+<td>checkRecordingVariance</td>
+<td>ADAPT_CHECK_TRIGGER_RECORDING_VARIANCE</td>
+<td>The threshold (maximum value) for the amount of tolerated
+variance between recordings.</td>
+</tr>
+<tr>
+<td>float</td>
+<td>checkPoorRecordingsLimit</td>
+<td>ADAPT_CHECK_TRIGGER_POOR_RECORDINGS_LIMIT</td>
+<td>The threshold (maximum value) for the quality of an individual
+recording.</td>
+</tr>
+<tr>
+<td>float</td>
+<td>checkClippingFrames</td>
+<td>ADAPT_CHECK_TRIGGER_CLIPPING_FRAMES</td>
+<td>The threshold (maximum value) for the number of frames in the
+recording that can contain clipping or saturation.</td>
+</tr>
+<tr>
+<td>float</td>
+<td>checkVowelDur</td>
+<td>ADAPT_CHECK_TRIGGER_VOWEL_DUR</td>
+<td>The threshold (minimum value) for vowel duration within the word,
+in milliseconds.</td>
+</tr>
+<tr>
+<td>float</td>
+<td>checkRepetition</td>
+<td>ADAPT_CHECK_TRIGGER_REPETITION</td>
+<td>The threshold (maximum value) for repetitive sounds within an
+enrollment.</td>
+</tr>
+<tr>
+<td>float</td>
+<td>checkSilInPhrase</td>
+<td>ADAPT_CHECK_TRIGGER_SIL_IN_PHRASE</td>
+<td>The threshold (maximum value) for silence within a phrase.</td>
+</tr>
+<tr>
+<td>float</td>
+<td>checkSpot</td>
+<td>ADAPT_CHECK_TRIGGER_SPOT</td>
+<td>The threshold (minimum value) for whether this recording would have
+spotted using a speaker-independent trigger.</td>
+</tr>
+</table>
+</p>
+
+<h3 ID='thfAdaptUserInfo_t'>Adaptation user information object (thfAdaptUserInfo_t)</h3>
+The data structure for information about each user (and the enrollments for
+each user) currently stored for a given task.
+<ul>
+<li> Create with: <a href="thfAdaptUserInfo.html">thfAdaptUserInfo</a>
+<li> Destroy with: <a href="thfAdaptUserInfoDestroy.html">thfAdaptUserInfoDestroy</a>
+</ul>
+The thfAdaptUserInfo_t data structure contains the following:
+<p>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td>int</td>
+<td>numUsers</td>
+<td>The number of users known by the adapt object for this task.</td>
+</tr>
+<tr>
+<td>thfAdaptUser_t *</td>
+<td>user</td>
+<td>A pointer to more specific information about each user.</td>
+</tr>
+</table>
+</p>
+
+The thfAdaptUser_t structure contains the following:
+<p>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td>char *</td>
+<td>name</td>
+<td>The username associated with this user.</td>
+</tr>
+<tr>
+<td>int</td>
+<td>numEnroll</td>
+<td>The number of enrollment recordings that have been saved for
+this user</td>
+</tr>
+<tr>
+<td>thfAdaptEnrollInfo_t *</td>
+<td>enrollInfo</td>
+<td>A pointer to more specific information about each enrollment.</td>
+</tr>
+</table>
+</p>
+
+The thfAdaptEnrollInfo_t structure contains the following:
+<p>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td>long</td>
+<td>ID</td>
+<td>A unique ID (unique to the current adapt object) associated
+with this enrollment.  This ID is created by
+<a href="thfAdaptEnrollmentAddTrigger.html">thfAdaptEnrollmentAddTrigger</a>.
+</td>
+</tr>
+<tr>
+<td>int</td>
+<td>used</td>
+<td>A binary indicator of whether or not this enrollment will be
+used in adaptation.</td>
+</tr>
+<tr>
+<td>int</td>
+<td>score</td>
+<td>A user-specified score associated with this enrollment.</td>
+</tr>
+<tr>
+<td>time_t</td>
+<td>time</td>
+<td>A user-specified time associated with this enrollment.</td>
+</tr>
+<tr>
+<td>long</td>
+<td>phraseBeginTime</td>
+<td>The estimated time (from beginning of the enrollment audio) at which
+the enrollment phrase begins (in milliseconds).  This estimate is approximate
+and tends to be somewhat "conservative"; in other words, the estimated word
+begin time may be a little bit after the actual word begin time.
+For UDT, this estimate is available immediately after calling
+<a href="thfAdaptEnrollmentAddTrigger.html">thfAdaptEnrollmentAddTrigger</a>,
+but an updated estimate is available after calling
+<a href="thfAdaptEnrollmentCheck.html">thfAdaptEnrollmentCheck</a>.
+</td>
+</tr>
+<tr>
+<td>long</td>
+<td>phraseEndTime</td>
+<td>The estimated time (from beginning of the enrollment audio) at which
+the enrollment phrase ends (in milliseconds).  This estimate is approximate
+and tends to be somewhat "conservative"; in other words, the estimated word
+end time may be a little bit before the actual word end time.
+For UDT, this estimate is available immediately after calling
+<a href="thfAdaptEnrollmentAddTrigger.html">thfAdaptEnrollmentAddTrigger</a>,
+but an updated estimate is available after calling
+<a href="thfAdaptEnrollmentCheck.html">thfAdaptEnrollmentCheck</a>.
+</td>
+</tr>
+<tr>
+<td>long</td>
+<td>audioLen</td>
+<td>If the enrollment audio is saved (as specified with a call to
+<a href="thfAdaptTaskSet.html">thfAdaptTaskSet</a> using the
+ADAPT_SAVE_ENROLLMENT_AUDIO parameter), then 'audioLen' specifies the
+length of the enrollment audio, in samples.  If the enrollment audio
+is not saved, then this value will be 0.</td>
+</tr>
+<tr>
+<td>short *</td>
+<td>audio</td>
+<td>If the enrollment audio is saved (as specified with a call to
+<a href="thfAdaptTaskSet.html">thfAdaptTaskSet</a> using the
+ADAPT_SAVE_ENROLLMENT_AUDIO parameter), then 'audio' is a pointer
+to a copy of the enrollment audio samples.  If the enrollment audio
+is not saved, then this value will be NULL.</td>
+</tr>
+</table>
+</p>
+
+<h3 ID='thfTriggerEnrollment_t'>Adaptation trigger enrollment object (thfTriggerEnrollment_t)</h3>
+The data structure used when adding a trigger recording to the set of
+enrollments for a user, in UDT or EFT model creation.
+<em>The user is responsible for allocating, populating, and freeing the
+data for this structure.</em>
+<em>Any unused values (e.g. reserved1) must be set to NULL or 0.</em>
+The data structure contains the following:
+<p>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td>long</td>
+<td>sampFreq</td>
+<td>The sampling frequency of the audio being used to create an enrollment.
+(If this value is greater than the sampling frequency of the task, the audio
+will be converted to the appropriate sampling frequency for the task.  If
+this value is less than the sampling frequency of the task, an error will
+be generated.)</td>
+</tr>
+<tr>
+<td>short *</td>
+<td>audio</td>
+<td>A pointer to the audio of the enrollment recording, in PCM format.</td>
+</tr>
+<tr>
+<td>unsigned long</td>
+<td>audioLen</td>
+<td>The number of samples of audio in the enrollment recordings.</td>
+</tr>
+<tr>
+<td>long</td>
+<td>score</td>
+<td>A user-defined score associated with this enrollment.
+This score is currently not used.</td>
+</tr>
+<tr>
+<td>time_t</td>
+<td>time</td>
+<td>A user-defined time associated with this enrollment.
+This time value is currently not used.</td>
+</tr>
+<tr>
+<td>long</td>
+<td>enrollmentID</td>
+<td>An ID that uniquely specifies this enrollment (unique to the
+current adapt object). This value is set by
+<a href="thfAdaptEnrollmentAddTrigger.html">thfAdaptEnrollmentAddTrigger</a>
+and can be read after a call to this function.
+</td>
+</tr>
+<tr>
+<td>char *</td>
+<td>reserved1</td>
+<td>A reserved pointer.  This value <em>must</em> be set to NULL.</td>
+</tr>
+<tr>
+<td>char *</td>
+<td>reserved2</td>
+<td>A reserved pointer.  This value <em>must</em> be set to NULL.</td>
+</tr>
+<tr>
+<td>char *</td>
+<td>transcription</td>
+<td>A reserved pointer.  This value <em>must</em> be set to NULL.</td>
+</tr>
+<tr>
+<td>char *</td>
+<td>context</td>
+<td>This parameter is NULL if the enrollment phrase is uttered in isolation
+(e.g. with no subsequent context phrase).  If the enrollment is a trigger
+with a subsequent context phrase (e.g. "Hello Blue Genie, how fast is a
+parsec?"), then this parameter must point to a valid non-NULL character
+string.  Any context phrase <em>must</em> follow the trigger; the context
+phrase must never precede the trigger.
+It is not required that this character string be the transcription
+of the context, but it can be.</td>
+</tr>
+
+</table>
+</p>
+
+<h3 ID='thfEnrollmentCheck_t'>Adaptation enrollment check object (thfEnrollmentCheck_t)</h3>
+The data structure that contains results from checking one or more
+enrollments.
+<ul>
+<li> Create with: <a href="thfAdaptEnrollmentCheck.html">thfAdaptEnrollmentCheck</a>
+               or <a href="thfAdaptEnrollmentQuickCheck.html">thfAdaptEnrollmentQuickCheck</a>
+<li> Destroy with: <a href="thfAdaptEnrollmentCheckDestroy.html">thfAdaptEnrollmentCheckDestroy</a>
+</ul>
+The data structure contains the following:
+<p>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td>int</td>
+<td>allPass</td>
+<td>a binary indicator of whether or not all enrollment recordings
+passed all quality checks.  The value is 1 if all checks were passed;
+else 0.</td>
+</tr>
+<tr>
+<td>float</td>
+<td>quality</td>
+<td>The estimated phrase quality, on a scale from 0 to 1.
+This field is set to the phrase quality threshold for "quick" enrollment
+checks.
+</td>
+</tr>
+<tr>
+<td>float</td>
+<td>qualityThresh</td>
+<td>The default threshold (minimum value) for phrase quality.</td>
+</tr>
+<tr>
+<td>int</td>
+<td>numEnroll</td>
+<td>The number of enrollments that were checked.
+This value will be 1 for "quick" enrollment checks.
+</td>
+</tr>
+<tr>
+<td>thfEnrollmentCheckOne_t *</td>
+<td>enroll</td>
+<td>A pointer to more specific information about each checked
+enrollment.</td>
+</tr>
+</table>
+</p>
+
+The thfEnrollmentCheckOne_t structure contains the following:
+<p>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td>int</td>
+<td>numChecks</td>
+<td>The number of enrollment checks.  This value defines the
+size of each of the following arrays. The list of parameter
+names is defined in
+<a href="constants.html#thfTriggerEnrollmentCheckTypes_t">thfTriggerEnrollmentCheckTypes_t</a>.
+</td>
+</tr>
+<tr>
+<td>int *</td>
+<td>pass</td>
+<td>An array indicating whether or not the enrollment
+passed each check specified by thfTriggerEnrollmentCheckTypes_t.</td>
+</tr>
+<tr>
+<td>float *</td>
+<td>score</td>
+<td>An array containing the score for each check specified
+by thfTriggerEnrollmentCheckTypes_t.</td>
+</tr>
+<tr>
+<td>float *</td>
+<td>thresh</td>
+<td>An array containing the thresholds for each check
+specified by thfTriggerEnrollmentCheckTypes_t.</td>
+</tr>
+</table>
+</p>
+
+<h3 ID='thfModelTrigger_t'>Adaptation trigger result (thfModelTrigger_t)</h3>
+The data structure containing the output from trigger adaptation.
+<ul>
+<li> Create with: <a href="thfAdaptModelGetTrigger.html">thfAdaptModelGetTrigger</a>
+<li> Destroy with: <a href="thfAdaptModelDestroyTrigger.html">thfAdaptModelDestroyTrigger</a>
+</ul>
+The data structure contains the following:
+<p>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td>char *</td>
+<td>taskName</td>
+<td>The name of the current task.</td>
+</tr>
+<tr>
+<td>int</td>
+<td>numUsers</td>
+<td>The number of users who have been adapted in the last call to
+<a href="thfAdaptModelAdapt.html">thfAdaptModelAdapt</a>
+for this task.</td>
+</tr>
+<tr>
+<td>float *</td>
+<td>spotParams</td>
+<td>An array of recognition parameters. The list of parameters
+is defined in
+<a href="constants.html#thfTriggerEnrollParams_t">thfTriggerEnrollParams</a>.
+The recognizer (below) has been configured with these values.</td>
+</tr>
+<tr>
+<td>int</td>
+<td>numSpotParams</td>
+<td>The number of recognition parameters; this is the size
+of the array 'spotParams'.</td>
+</tr>
+<tr>
+<td>recog_t *</td>
+<td>recog</td>
+<td>A task- and user-specific recognizer returned from
+<a href="thfAdaptModelGetTrigger.html">thfAdaptModelGetTrigger</a>.  This
+recognizer has already been initialized and configured with
+default parameters.
+</td>
+</tr>
+<tr>
+<td>searchs_t *</td>
+<td>search</td>
+<td>A task- and user-specific search returned from
+<a href="thfAdaptModelGetTrigger.html">thfAdaptModelGetTrigger</a>.  This
+search has already been initialized and configured with
+default parameters.
+</tr>
+</table>
+</p>
+
+<!-------------- END Adaptation Structures ---------------------------- -->
+
+<h3 ID='phsearch_t'>Phoneme search object (phsearch_t)</h3>
+The data structure for phoneme-level search.
+<ul>
+<li> Create with: <a href="thfPhonemeSearchCreateFromFile.html">thfPhonemeSearchCreateFromFile</a>
+<li> Destroy with: <a href="thfPhonemeSearchDestroy.html">thfPhonemeSearchDestroy</a>
+</ul>
+
+<h3 ID='udt_t'>UDT object (udt_t)</h3>
+The data structure for udt object, including recognizer, phoneme search object, UDT data object,
+and UDT parameters.
+<ul>
+<li> Create with: <a href="thfUdtCreate.html">thfUdtCreate</a>
+<li> Destroy with: <a href="thfUdtDestroy.html">thfUdtDestroy</a>
+</ul>
+
+<h3 ID='udtUser_t'>UDT user data structure (udtUser_t)</h3>
+The data structure for one UDT user.  Normally, an array of these data
+structures is created, with one element for each user.  The UDT user data
+structure contains the following:
+<p>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td>char *</td>
+<td>userName</td>
+<td>a user-specified character string to identify this user or phrase</td>
+</tr>
+<tr>
+<td>char *</td>
+<td>tag</td>
+<td>a tag field used by RTA (experimental)</td>
+</tr>
+<tr>
+<td>unsigned short</td>
+<td>numEnroll</td>
+<td>the number of enrollment recordings that exist for this user.  This
+value must be the same as the number of elements allocated for the 'enroll'
+array.</td>
+</tr>
+<tr>
+<td>udtEnrollment_t *</td>
+<td>enroll</td>
+<td>data structure to hold each enrollment recording.  It is an array
+of length 'numEnroll'.</td>
+</tr>
+<tr>
+<td>char *</td>
+<td>reserved1</td>
+<td>reserved field. Set to NULL.</td>
+</tr>
+<tr>
+<td>char *</td>
+<td>reserved2</td>
+<td>reserved field. Set to NULL.</td>
+</tr>
+</table>
+</p>
+
+<p>
+where the udtEnrollment_t data structure is an array of 'numEnroll' elements,
+and contains the following (one for each enrollment recording):
+</p>
+<p>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td>short *</td>
+<td>audio</td>
+<td>an array containing one enrollment recording in PCM format (with one
+short integer per sample).  The sampling frequency must be the same that
+was specified in the call to <a href="thfUdtCreate.html">thfUdtCreate</a>.</td>
+The length of this array must be equal to the value of the 'audioLen' field.
+</tr>
+<tr>
+<td>unsigned long</td>
+<td>audioLen</td>
+<td>the number of samples in the 'audio' array. This value must be the
+number of short integers allocated for the 'audio' array field.</td>
+</tr>
+<tr>
+<td>unsigned long</td>
+<td>audioSignature</td>
+<td>checksum used to keep audio and internal cache in sync. This field is automatically written when calling thfUdtCheckEnrollments.</td>
+</tr>
+<tr>
+<td>char *</td>
+<td>filename</td>
+<td>an optional filename to save or read this enrollment recording.  If
+not used, this value should be NULL.</td>
+</tr>
+<tr>
+<td>char *</td>
+<td>reserved1</td>
+<td>reserved field. Set to NULL.</td>
+</tr>
+<tr>
+<td>char *</td>
+<td>pronun</td>
+<td>optional input field used to specify pronunciation to be used during enrollment. This pronunciation can be generated using a phoneme recognizer. </td>
+</tr>
+
+</table>
+</p>
+
+<h3 ID='UDT_CBdata_t'>UDT callback data object (UDT_CBdata_t)</h3>
+The data structure for udt callback data, used as a parameter to the callback function
+in <a href="thfUdtEnroll.html">thfUdtEnroll</a>.  This callback function is not
+currently supported, and is listed here for informational purposes only.
+Elements may include:
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td>UDT_CBfunction_t</td>
+<td nowrap valign="top"><code>cbFunction</code></td>
+<td width="500">address of callback function</td>
+</tr>
+<tr>
+<td>void *</td>
+<td nowrap valign="top"><code>cbData</code></td>
+<td width="500">Not currently used.</td>
+</tr>
+<tr>
+<td>unsigned long</td>
+<td nowrap valign="top"><code>where</code></td>
+<td width="500">integer indication of from where in
+<a href="thfUdtEnroll.html">thfUdtEnroll</a>
+the callback function has been called.</td>
+</tr>
+<tr>
+<td>unsigned long</td>
+<td nowrap valign="top"><code>whereMax</code></td>
+<td width="500">maximum value of 'where'</td>
+</tr>
+<tr>
+<td>recog_t *</td>
+<td nowrap valign="top"><code>tempRecog</code></td>
+<td width="500">Not currently used.</td>
+</tr>
+<tr>
+<td>searchs_t *</td>
+<td nowrap valign="top"><code>tempSearch</code></td>
+<td width="500">Not currently used.</td>
+</tr>
+</table>
+
+
+<!----------------------------------------------------------------------- -->
+</body>

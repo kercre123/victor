@@ -1,0 +1,295 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+
+<h2>How to Implement User-Defined Triggers or Enrolled Fixed Triggers (With or
+Without Speaker Verification) (Recommended API)</h2>
+This <em>recommended</em> approach to implementing a user-defined trigger
+(UDT) or enrolled fixed trigger (EFT) can be used with or without speaker
+verification.  This approach provides a much easier-to-use API than previously,
+and is preferred over previous approaches to UDT and/or speaker verification
+described elsewhere in this documentation.
+
+<h3>Overview of User-Defined Triggers and Enrolled Fixed Triggers</h3>
+<p>
+A user-defined trigger (UDT) is a phrase-spotting trigger that is specified
+by the user at the time of enrollment.  An enrolled fixed trigger (EFT) is a
+phrase-spotting trigger in which the phrase is specified in advance by the
+application.  Both of these require a set of enrollments from the user.
+By enrolling with user-specific speech, (1) accuracy is improved over
+speaker-independent models and (2) there is the option of performing
+speaker verification.    When a user-defined trigger is used in conjuntion
+with speaker verification, it is referred to as a user-defined passphrase (UDP).
+</p>
+
+<p>A set of enrollments consists of several recordings of the desired trigger
+from the user.  <em>All recordings used in enrollment for a user should be
+of the same trigger phrase.  They should not contain extraneous speech, with
+the exception that some enrollments deliberately contain "context" speech.
+The trigger phrase should not contain any between-word pauses.  Background
+noise and reverberation during enrollment should be minimized.</em>  The SDK
+can perform simple error-checking for these requirements (see
+<a href="thfAdaptEnrollmentCheck.html">thfAdaptEnrollmentCheck</a>),
+but these error checks are not foolproof.  If bad data is detected, new
+enrollment recordings must be supplied, and so it is best to provide good
+data initially.
+</p>
+
+<p>
+Once the user-specific recognizer and search are obtained, they can be used
+for phrase spotting in the same way as other phrase spotting in the SDK.
+</p>
+
+<p>The enrollment and recognition process has been designed to allow for
+more than one user. With UDT, different users can enroll with the same trigger
+phrase or different trigger phrases. The adaptation step processes all of the
+enrollment recordings from all users in a single block, generating a single
+recognizer and search that is capable of spotting the trigger phrase(s) from
+all users. (In other words, a new user cannot be added to an existing UDT or
+EFT model (or removed from an existing UDT or EFT model) without re-processing
+all enrollment recordings from all users.)
+</p>
+
+<p>Enrollment phrases may be spoken in isolation, or with subsequent context,
+e.g. "Hello Blue Genie, what time is it in Hanoi?"  The context gives the
+end user practice in saying the trigger followed by a search phrase, and may
+improve overall trigger performance.  Having the trigger followed by a
+context phrase is recommended but not required; zero or more enrollments may
+have context.  For EFT, all enrollments may have context.  For UDT, at least
+one enrollment must be spoken in isolation.  An enrollment is specified as
+having context or not by setting a field in the enrollment data structure.
+
+<h3>Overview of Terminology, API, and Program Flow</h3>
+<p>
+Two terms are commonly used in UDT and EFT development: 'enrollment' and
+'adaptation'.  In this context, enrollment refers to the process of
+collecting, checking, and preparing data for adaptation.  Adaptation
+refers to the process of taking prepared enrollment data and tuning a
+model to the data.
+</p>
+<p>
+The code is designed to eventually support adaptation of different kinds
+of tasks.
+At this time, only the 'trigger' task (including both UDT and EFT) is
+supported.  Each task can have one or more users.  A user is a person
+who enrolls with task-specific data.  A user can have one or more enrollments.
+The output of adaptation using the enrollment data is a user-specific
+'model'.  A model contains everything needed by an application
+to use the results of adaptation.
+</p>
+<p>
+The API uses function names that group the functions.  For UDT or EFT
+enrollment and adaptation, functions begin with the keyword "Adapt".
+Following that keyword is usually another keyword, "Task", "User",
+"Enrollment", or "Model", indicating that the function deals with a
+particular level of the process.
+</p>
+<p>
+The typical program flow is to create an 'adapt' object, which starts
+out empty.  Then, a task is added to the adapt object.  This task uses
+task-specific data, such as US English data or a specific fixed-trigger
+phrase.  Tasks are referred to in the API by name (ASCII character string).
+Once a task has been created, users are added to this task.  Users
+can be added to (or removed from) a task at any time.  Usually, once a
+user is added, enrollment recordings are added for this user.  Recordings
+are often read in 'live' (with speech detection to get the speech event plus
+surrounding silence).  Each recording is passed to a 'quick
+check' that performs a preliminary evaluation of recording quality.
+If the evaluation is not successful, the user should be prompted for an
+additional recording, until an acceptable recording is obtained.
+Each successful recording is added as an enrollment for that user.
+Once the pre-determined number of enrollments is obtained, the set
+of all enrollments is checked more thoroughly.  Any enrollments that
+do not pass the more thorough check should be replaced with new
+recordigns, until the enrollment check is successful.  Once all
+enrollments have been successfully added for all users, model
+adaptation is performed.  Then, the resulting speaker-adapted model is
+obtained, and either used directly for phrase spotting or saved for later use.
+Finally, any objects created as part of this process are destroyed.
+</p>
+<p>
+In most cases, objects associated with the Adapt functions are created
+and destroyed by different functions.  One data structure needs to be
+created and manipulated by the application: the enrollment data structure.
+This structure contains a pointer to the enrollment recording, the
+length of the recording, and optional supporting information.  The
+application is responsible for creating, assigning, and finally
+destroying the data associated with this structure.
+</p>
+
+
+<h3>Step 1: Initialization</h3>
+<p>
+Developing a UDT or EFT model requires a task data file.  This file
+includes all of the data and default settings required for UDT or EFT
+development.  The SDK includes a task data file for UDT in US English;
+other task data files may be available upon request.
+</p>
+
+<p>The process of UDT or EFT model development starts with creation
+of an "adaptation" object (through
+<a href="thfAdaptCreate.html">thfAdaptCreate</a>) and loading of the
+task data file into this object (through
+<a href="thfAdaptTaskCreate.html">thfAdaptTaskCreate</a>).
+The task is referred to in later functions by name, which is
+an ASCII character string.
+</p>
+
+<h3>Step 2: Add User(s)</h3>
+<p>
+Users are added to the enrollment task through a call to
+<a href="thfAdaptUserAdd.html">thfAdaptUserAdd</a>.  All that is needed
+to add a user is the name of the task (defined in the call to
+<a href="thfAdaptTaskCreate.html">thfAdaptTaskCreate</a>) and
+the name of the new user.  If the number or names of all users are
+not known in advance, new users can be added as their information
+becomes available.
+</p>
+
+<h3>Step 3: Collect (and Check) Individual Enrollment Recordings</h3>
+<p>
+Typically, the enrollment recordings will be either loaded from file or
+obtained through a live recording process.  Each individual enrollment
+recording can be optionally evaluated for potential issues by calling
+<a href="thfAdaptEnrollmentQuickCheck.html">thfAdaptEnrollmentQuickCheck</a>.
+This will provide immediate, preliminary feedback on audio quality which
+may be useful in deciding whether to use the existing audio or re-record
+prior to adding this recording to the set of enrollment recordings.
+</p>
+
+<p> If an enrollment recording is to be used in creating this trigger, then
+it is added to the set of enrollment recordings through a call to
+<a href="thfAdaptEnrollmentAddTrigger.html">thfAdaptEnrollmentAddTrigger</a>.
+If the end user has been asked to say this enrollment with following
+context, e.g. "Hello Blue Genie, how do I get to San Jose?", then a
+character string in the enrollment data structure is set to indicate that
+such context exists.  The text of the context phrase does not need to be
+passed in, but it can be this character string that is passed in.
+</p>
+
+<p>NOTE: in general, three or four enrollment recordings is recommended
+per user.   The exact number of recommended enrollment recordings can
+be obtained with a call to
+<a href="thfAdaptTaskInfo.html">thfAdaptTaskInfo</a>.
+</p>
+
+<h3>Step 4: Check Set of Enrollment Recordings</h3>
+<p>
+Once all enrollment recordings for a phrase have been collected, the set must
+be evaluated collectively and assessed for consistency and quality using
+<a href="thfAdaptEnrollmentCheck.html">thfAdaptEnrollmentCheck</a>.   This
+check must be performed for all users with enrollment recordings.  This check
+provides a more detailed evaluation than is possible with
+<a href="thfAdaptEnrollmentQuickCheck.html">thfAdaptEnrollmentQuickCheck</a>.
+The feedback provided can be used to decide whether to re-record any or all
+of the enrollment set.
+</p>
+
+<p>NOTE: The enrollment checking thresholds (and other task-specific parameters)
+can be configured as needed using
+<a href="thfAdaptTaskSet.html">thfAdaptTaskSet</a>.
+</p>
+
+<p>NOTE: If an enrollment fails the checks, then a new recording can be obtained
+(and the bad enrollment replaced) through a call to
+<a href="thfAdaptEnrollmentReplaceTrigger.html">thfAdaptEnrollmentReplaceTrigger</a>.
+In this case,
+<a href="thfAdaptEnrollmentCheck.html">thfAdaptEnrollmentCheck</a>
+must be called again.
+</p>
+
+<h3>Step 5: Learning Recordings</h3>
+<p>
+Adapting the trigger to the users' speech is performed through a call to
+<a href="thfAdaptModelAdapt.html">thfAdaptModelAdapt</a>.
+The resulting model (adapted trigger) is stored internally.  To make the
+adapted model available, use
+<a href="thfAdaptModelGetTrigger.html">thfAdaptModelGetTrigger</a>.
+This function will return a data structure containing the number of users,
+default phrasespotting parameters, a recognizer object, and a search object.
+</p>
+
+<h3>Step 6: Save Speaker-Adapted Models (Optional)</h3>
+<p>
+The adapted search and recognizer can be saved to file using
+<a href="thfAdaptModelSaveTriggerToFile.html">thfAdaptModelSaveTriggerToFile</a>
+and re-loaded at any time in the future. They can be treated like any other
+fixed-phrase search and recognizer, but they will be adapted to the enrolled
+users' speech.
+Additionally, the models can also be saved in <em>embedded</em> format for
+integration in deeply-embedded DSP-type applications, using
+<a href="thfSaveEmbedded.html">thfSaveEmbedded</a>.
+</p>
+
+
+<h3>Step 7: Perform Spotting and Optional Speaker Verification</h3>
+<p>
+Now that we have enrolled and created the necessary speaker-adapted models,
+they can be used to perform phrasespotting and/or speaker verification.
+This process is very similar to traditional phrasespotting, with an optional
+post-recognition verification step.
+</p>
+
+<p>First, load the speaker-adapted models using
+<a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a> and
+<a href="thfSearchCreateFromFile.html">thfSearchCreateFromFile</a>, or
+simply use the pointers to the recognizer and search that are returned by
+<a href="thfAdaptModelGetTrigger.html">thfAdaptModelGetTrigger</a>.
+</p>
+
+<p>Optionally re-configure any relevant parameters, such as <em>phrasespot
+delay</em>, using
+<a href="thfPhrasespotConfigSet.html">thfPhrasespotConfigSet</a>.
+Next, begin feeding audio into the recognizer using
+<a href="thfRecogPipe.html">thfRecogPipe</a> until the <em>RECOG_DONE</em>
+status is returned indicating a result is available, followed by a call to
+<a href="thfRecogResult.html">thfRecogResult</a> to retrieve the recognized
+phrase (which should be the enrolled phrase).
+</p>
+
+<p>Now we are ready to perform the optional speaker verification step. Call
+<a href="thfRecogSVscore.html">thfRecogSVscore</a> to obtain a speaker
+verification score and compare this score with the phrase-specific speaker
+verification threshold to determine whether to accept or reject the speaker.</p>
+</p>
+
+<h3>Step 8: Cleaning Up</h3>
+<p>
+After enrollment is completed and the recognizer and search have been
+obtained (through the call to
+<a href="thfAdaptModelGetTrigger.html">thfAdaptModelGetTrigger</a>),
+the adaptation object(s) can be removed.  A single call to
+<a href="thfAdaptDestroy.html">thfAdaptDestroy</a> will remove all
+adaptation objects, including users and enrollment data.  More
+precise control over what is removed can be obtained by separate
+calls to
+<a href="thfAdaptTaskDestroy.html">thfAdaptTaskDestroy</a>,
+<a href="thfAdaptUserDestroy.html">thfAdaptUserDestroy</a>, and/or
+<a href="thfAdaptEnrollmentRemove.html">thfAdaptEnrollmentRemove</a>.
+The object containing the recognizer and search returned from
+<a href="thfAdaptModelGetTrigger.html">thfAdaptModelGetTrigger</a> can be
+destroyed with a call to
+<a href="thfAdaptModelDestroyTrigger.html">thfAdaptModelDestroyTrigger</a>
+with binary specifications of whether to keep or destroy the adapted
+recognizer and search.
+</p>
+
+<p> After recognition, call
+<a href="thfRecogReset.html">thfRecogReset</a> if you
+intend to reuse the recognizer. Otherwise, call
+<a href="thfRecogDestroy.html">thfRecogDestroy</a> and
+<a href="thfSearchDestroy.html">thfSearchDestroy</a> as normal to
+destroy the model and free memory.
+</p>
+
+
+</body>

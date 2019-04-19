@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+
+<h2>How to Perform Gender Identification</h2>
+Gender identification is similar to speaker identification, except that the only two identities are 'female' and 'male', and enrollment and training a speaker is not required.
+
+<h3>Step 1: Read in a Gender Model</h3>
+<p>
+An existing gender model is read from file into the recognizer object using <a href="thfSpeakerReadGenderModel.html">thfSpeakerReadGenderModel</a>.
+Gender models are currently specific to a target phrase.
+Please contact Sensory for development of a phrase-specific gender model.
+</p>
+<h3>Step 2: Perform Gender Identification</h3>
+<p>
+Gender identification is performed after a call to <a href="thfRecogResult.html">thfRecogResult</a> returns a value indicating that the target phrase has been recognized.
+Identification is done by calling <a href="thfSpeakerGender.html">thfSpeakerGender</a>, which returns a gender score between 0.0 and 1.0.  A value less than 0.5 indicates a male speaker, and a value greater than or equal to 0.5 indicates a female speaker.
+</p>
+
+
+<!----------------------------------------------------------------------- -->
+</body>
