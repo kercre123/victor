@@ -87,8 +87,7 @@ namespace {
 //
 static void RadioRead(struct ev_loop * loop, struct ev_io * w, int)
 {
-  static constexpr size_t RECV_BUFFER_SIZE = 1024 * 4;
-  static u8 buf[RECV_BUFFER_SIZE];
+  static u8 buf[Anki::Vector::ROBOT_RADIO_BUFSIZ];
 
   // Read incoming message
   ssize_t bytesRead = server.Recv((char *) buf, sizeof(buf));

@@ -35,7 +35,7 @@ namespace Anki {
 
       namespace {
 
-        u8 pktBuffer_[2048];
+        u8 pktBuffer_[ROBOT_RADIO_BUFSIZ];
 
         static RobotState robotState_;
 
@@ -98,7 +98,7 @@ namespace Anki {
         robotState_.gyro.x = IMUFilter::GetBiasCorrectedGyroData()[0];
         robotState_.gyro.y = IMUFilter::GetBiasCorrectedGyroData()[1];
         robotState_.gyro.z = IMUFilter::GetBiasCorrectedGyroData()[2];
-        
+
         auto& imuDataBuffer = IMUFilter::GetImuDataBuffer();
         for (int i=0 ; i < IMUConstants::IMU_FRAMES_PER_ROBOT_STATE ; i++) {
           if (!imuDataBuffer.empty()) {
@@ -113,13 +113,13 @@ namespace Anki {
         for (int i=0 ; i < HAL::CLIFF_COUNT ; i++) {
           robotState_.cliffDataRaw[i] = ProxSensors::GetCliffValue(i);
         }
-        
+
         robotState_.proxData = ProxSensors::GetProxData();
 
         robotState_.backpackTouchSensorRaw = HAL::GetButtonState(HAL::BUTTON_CAPACITIVE);
 
         robotState_.cliffDetectedFlags = ProxSensors::GetCliffDetectedFlags();
-        
+
         robotState_.whiteDetectedFlags = ProxSensors::GetWhiteDetectedFlags();
 
         robotState_.currPathSegment = PathFollower::GetCurrPathSegment();
@@ -130,7 +130,7 @@ namespace Anki {
 
         robotState_.status = 0;
         #define SET_STATUS_BIT(expr, bit) robotState_.status |= ((expr) ? EnumToUnderlyingType(RobotStatusFlag::bit) : 0)
-        const bool areWheelsMoving = WheelController::AreWheelsMoving() || 
+        const bool areWheelsMoving = WheelController::AreWheelsMoving() ||
                                      SteeringController::GetMode() == SteeringController::SM_POINT_TURN;
         const bool isMoving        = HeadController::IsMoving() || LiftController::IsMoving() || areWheelsMoving;
         SET_STATUS_BIT(areWheelsMoving,                             ARE_WHEELS_MOVING);
@@ -206,9 +206,9 @@ namespace Anki {
         // NOTE: This used to actually enable calm mode in syscon, but since "quiet" mode
         //       was implemented in syscon where encoders are "off" when the motors are
         //       not being driven leaving minimal difference between calm mode and active mode
-        //       in terms of battery life, this now only throttles RobotState messages being 
+        //       in terms of battery life, this now only throttles RobotState messages being
         //       sent to engine since it still results in a 10+% reduction in CPU consumption.
-        //       Not going into syscon calm mode also means that motor calibrations are no 
+        //       Not going into syscon calm mode also means that motor calibrations are no
         //       longer necessary as a precaution when leaving calm mode.
         AnkiInfo("Messages.Process_calmPowerMode.enable", "enable: %d", msg.enable);
         calmModeEnabledByEngine_ = msg.enable;
@@ -279,7 +279,7 @@ namespace Anki {
           }
         }
 
-        // Temporarily unset calm mode when button is pressed so that 
+        // Temporarily unset calm mode when button is pressed so that
         // we can still go into pairing/debug screens
         TimeStamp_t now_ms = HAL::GetTimeStamp();
         static const u32 TEMP_CALM_MODE_DISABLE_TIME_MS = 1000;
@@ -358,7 +358,7 @@ namespace Anki {
                  msg.action, msg.dockingMethod, msg.doLiftLoadCheck, msg.backUpWhileLiftingCube, msg.speed_mmps, msg.accel_mmps2, msg.decel_mmps2);
 
         PickAndPlaceController::SetBackUpWhileLiftingCube(msg.backUpWhileLiftingCube);
-        
+
         DockingController::SetDockingMethod(msg.dockingMethod);
 
         // Currently passing in default values for rel_x, rel_y, and rel_angle
@@ -442,8 +442,8 @@ namespace Anki {
       }
 
       void Process_setLiftAngle(const RobotInterface::SetLiftAngle& msg) {
-        // AnkiInfo( "Messages.Process_liftAngle.Recvd", 
-        //           "height %f, maxSpeed %f, duration %f", 
+        // AnkiInfo( "Messages.Process_liftAngle.Recvd",
+        //           "height %f, maxSpeed %f, duration %f",
         //           msg.angle_rad, msg.max_speed_rad_per_sec, msg.duration_sec);
         if (msg.duration_sec > 0) {
           LiftController::SetDesiredAngleByDuration(msg.angle_rad, 0.1f, 0.1f, msg.duration_sec);
@@ -614,14 +614,14 @@ namespace Anki {
       {
         ProxSensors::EnableStopOnWhite(msg.enable);
       }
-      
+
       void Process_setCliffDetectThresholds(const SetCliffDetectThresholds& msg)
       {
         for (int i = 0 ; i < HAL::CLIFF_COUNT ; i++) {
           ProxSensors::SetCliffDetectThreshold(i, msg.thresholds[i]);
         }
       }
-      
+
       void Process_setWhiteDetectThresholds(const SetWhiteDetectThresholds& msg)
       {
         for (int i = 0 ; i < HAL::CLIFF_COUNT ; i++) {
@@ -673,7 +673,7 @@ namespace Anki {
       void Process_setBackpackLayer(const RobotInterface::BackpackSetLayer& msg) {
         BackpackLightController::EnableLayer((BackpackLightLayer)msg.layer);
       }
-      
+
 // ----------- Send messages -----------------
 
       Result SendRobotStateMsg()
@@ -715,7 +715,7 @@ namespace Anki {
         return RobotInterface::SendMessage(m) ? RESULT_OK : RESULT_FAIL;
       }
 
-      Result SendMicDataFunction(const s16* latestMicData, uint32_t numSamples) 
+      Result SendMicDataFunction(const s16* latestMicData, uint32_t numSamples)
       {
         static int chunkID = 0;
         static const int numChannels = 4;
@@ -730,9 +730,9 @@ namespace Anki {
         /*
         Deinterlace the audio before sending it to Engine/Anim. Coming into this method, we
         have chunks of 80 samples each, but the data for 4 mics are interleaved;
-        
+
             m0, m1, m2, m3, m0, m1, m2, m3....
-        
+
         What we need is;
 
             m0 (80x), m1 (80x), ....

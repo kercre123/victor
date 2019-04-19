@@ -236,7 +236,7 @@ u8 BatteryGetTemperature_C();
 // Syscon will shutoff 30s after this first becomes true.
 bool BatteryIsOverheated();
 
-// Battery is low. 
+// Battery is low.
 // Time until shutdown: POWER_DOWN_WARNING_TIME
 bool BatteryIsLow();
 
@@ -311,7 +311,8 @@ bool RadioIsConnected();
 void DisconnectRadio(bool sendDisconnectMsg = true);
 
 /** Gets the next packet from the radio
- * @param buffer [out] A buffer into which to copy the packet. Must have MTU bytes available
+ * @param buffer [out] A buffer into which to copy incoming packet.
+ *                     Must be able to hold at least ROBOT_RADIO_BUFSIZ bytes.
  * return The number of bytes of the packet or 0 if no packet was available.
  */
 u32 RadioGetNextPacket(u8* buffer);
