@@ -1,6 +1,7 @@
 package main
 
 import (
+	"anki/log"
 	"syscall"
 	"unsafe"
 )
@@ -46,7 +47,7 @@ type SharedCircularBuffer struct {
 func NewSharedCircularBuffer(name string) *SharedCircularBuffer {
 	client := SharedCircularBuffer{Name: name}
 	client.init()
-	client.Offset = 0xffffffffffffffff
+	client.Offset = 0
 	return &client
 }
 
@@ -68,22 +69,21 @@ func (client *SharedCircularBuffer) Close() {
 // you'll be fast-forwarded to the most recent entry. In this case, the second part of
 // the return tuple will be "behind".
 func (client *SharedCircularBuffer) GetNext() (*MicSDKData, uint64, string) {
-	client.Offset++
 	if (!client.Initted && !client.init()) ||
-		client.Buffer.QueuedCount == 0 ||
-		client.Buffer.QueuedCount <= client.Offset {
+		client.Offset == client.Buffer.QueuedCount {
 
-		client.Offset--
 		return nil, 0, "please wait"
 	}
 
 	getStatus := "okay"
-	if client.Offset < client.Buffer.QueuedCount-(3*bufferSize/4) {
-		client.Offset = client.Buffer.QueuedCount - 1
+	if client.Offset > (3*bufferSize/4) && client.Offset < client.Buffer.QueuedCount-(3*bufferSize/4) {
+		client.Offset = client.Buffer.QueuedCount
 		getStatus = "behind"
 	}
 
-	return &client.Buffer.Objects[client.Offset%bufferSize], client.Offset, getStatus
+	objectPtr := &client.Buffer.Objects[client.Offset%bufferSize]
+	client.Offset++
+	return objectPtr, client.Offset - 1, getStatus
 }
 
 func (client *SharedCircularBuffer) init() bool {
@@ -97,6 +97,7 @@ func (client *SharedCircularBuffer) init() bool {
 
 	if err != nil {
 		client.MapFile = -1
+		log.Println("Cannot open shared circular buffer file, ", fullBufferPathName)
 		return false
 	}
 
@@ -110,12 +111,14 @@ func (client *SharedCircularBuffer) init() bool {
 		syscall.MAP_SHARED)
 
 	if err != nil {
+		log.Println("Cannot mmap shared circular buffer file, ", fullBufferPathName)
 		return false
 	}
 
 	client.Buffer = (*memoryMap)(unsafe.Pointer(&mmap[0]))
 
 	if client.Buffer.HeaderMagicNum != headerMagicNum {
+		log.Println("Waiting for writer to complete initialization of circular buffer.")
 		return false
 	}
 

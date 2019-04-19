@@ -54,7 +54,7 @@ public:
       _name(name),
       _initted(false),
       _owner(owner),
-      _offset(N-1)
+      _offset(0)
   {
     Init();
   }
@@ -81,19 +81,17 @@ public:
       return GET_STATE_PLEASE_WAIT;
     }
 
-    ++_offset;
-
     if (not _buffer->queued_count || _offset >= _buffer->queued_count) {
-      --_offset;
       return GET_STATE_PLEASE_WAIT;
     }
 
     GetState get_state = GET_STATE_OKAY;
-    if (_offset < _buffer->queued_count - (3*N/4)) {
-      _offset = _buffer->queued_count - 1;
+    if (_offset > (3*N/4) && _offset < _buffer->queued_count - (3*N/4)) {
+      _offset = _buffer->queued_count;
       get_state = GET_STATE_BEHIND;
     }
 
+    ++_offset;
     *object = _buffer->objects[_offset%N];
 
     return get_state;
@@ -154,7 +152,7 @@ private:
     }
 
     if(_owner) {
-      _buffer->queued_count = N-1;
+      _buffer->queued_count = 0;
       _buffer->reader_count = 0;
       _buffer->header_magic_num = header_magic_num;
     } else {
