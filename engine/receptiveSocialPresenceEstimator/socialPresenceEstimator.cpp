@@ -141,7 +141,8 @@ void SocialPresenceEstimator::InitDependent(Vector::Robot *robot, const RobotCom
   // subscribe to inputs
   // new user intent
   auto& uic = dependentComps.GetComponent<AIComponent>().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
-  _newUserIntentHandle = uic.RegisterNewUserIntentCallback( std::bind( &SocialPresenceEstimator::OnNewUserIntent, this) );
+  _newUserIntentHandle =
+      uic.RegisterNewUserIntentCallback( std::bind( &SocialPresenceEstimator::OnNewUserIntent, this, std::placeholders::_1) );
   // various vision-based things
   _faceHandle = _robot->GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedFace,
       std::bind( &SocialPresenceEstimator::OnRobotObservedFace, this, std::placeholders::_1) );
@@ -234,13 +235,19 @@ void SocialPresenceEstimator::TriggerInputEvent(SocialPresenceEvent* inputEvent)
 
 // ******** Input Event Handlers ********
 
-void SocialPresenceEstimator::OnNewUserIntent()
+void SocialPresenceEstimator::OnNewUserIntent(const UserIntentTag tag)
 {
   LOG_WARNING("SocialPresenceEstimator.OnNewUserIntent.GotCallback", "");
   // Do some kind of DAS logging/data collection
 
-  // trigger input event
-  TriggerInputEvent(&_SPEUserIntent);
+  // filter out specific intents here
+  if (tag == USER_INTENT(system_sleep)) {
+    LOG_WARNING("SocialPresenceEstimator.OnNewUserIntent.Specific", "system_sleep");
+    TriggerInputEvent(&_SPESleep);
+  } else {
+    // trigger input event
+    TriggerInputEvent(&_SPEUserIntent);
+  }
 }
 
 

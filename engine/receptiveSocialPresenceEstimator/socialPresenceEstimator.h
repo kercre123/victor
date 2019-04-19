@@ -13,6 +13,7 @@
 #ifndef __VICTOR_SOCIALPRESENCEESTIMATOR_H__
 #define __VICTOR_SOCIALPRESENCEESTIMATOR_H__
 
+#include "engine/aiComponent/behaviorComponent/userIntents.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
@@ -128,7 +129,7 @@ public:
 
   // ******** Input Event Handlers ********
 
-  void OnNewUserIntent();
+  void OnNewUserIntent(const UserIntentTag tag);
   void OnRobotObservedFace(const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg);
 
 
@@ -156,6 +157,8 @@ private:
       SocialPresenceEvent("UserIntent", std::make_shared<ExponentialDecay>(0.1f), 1.0f, 1.0f, 1.0f, 1.0f, true);
   SocialPresenceEvent _SPEFace =
       SocialPresenceEvent("Face", std::make_shared<ExponentialDecay>(0.1), 0.8f, 1.0f, 0.8f, 1.0f, false);
+  SocialPresenceEvent _SPESleep =
+      SocialPresenceEvent("Sleep", std::make_shared<PowerDecay>(1.1f), -0.9f, 0.0f, -0.9f, 0.0f, true);
   // name, delay, independent effect, independent effect max, reinforcement effect, reinforcement effect max
   SocialPresenceEvent _spete1 = SocialPresenceEvent("ExplicitPositive", std::make_shared<ExponentialDecay>(0.1f), 1.0f, 1.0f, 1.0f, 1.0f, true);
   SocialPresenceEvent _spete2 = SocialPresenceEvent("ImplicitPositive", std::make_shared<ExponentialDecay>(0.3f), 0.5f, 1.0f, 0.5f, 1.0f);
@@ -170,6 +173,7 @@ private:
   std::vector<SocialPresenceEvent*> _inputEvents = {
       &_SPEUserIntent,
       &_SPEFace,
+      &_SPESleep,
       &_spete1,
       &_spete2,
       &_spete3,

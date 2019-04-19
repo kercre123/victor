@@ -522,7 +522,7 @@ void UserIntentComponent::SetUserIntentPending(UserIntent&& userIntent, const Us
 
   // call any registered callbacks
   for(auto& cb : _newUserIntentCallbacks) {
-    cb.callback();
+    cb.callback( _pendingIntent->intent.GetTag() );
   }
 }
 

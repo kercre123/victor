@@ -60,7 +60,7 @@ namespace RobotInterface{
 struct TriggerWordDetected;
 }
 
-using OnNewUserIntentCallback = std::function<void()>;
+using OnNewUserIntentCallback = std::function<void(const UserIntentTag)>;
 using UserIntentCallbackId = uint32_t;
 
 // helper to avoid .h dependency on userIntent.clad
