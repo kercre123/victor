@@ -23,6 +23,7 @@
 #include "engine/robot.h"
 #include "util/console/consoleInterface.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
+#include "util/logging/DAS.h"
 #include "util/logging/logging.h"
 #include "webServerProcess/src/webService.h"
 
@@ -233,6 +234,15 @@ void SocialPresenceEstimator::TriggerInputEvent(SocialPresenceEvent* inputEvent)
 }
 
 
+void SocialPresenceEstimator::LogInputEvent(SocialPresenceEvent* inputEvent)
+{
+  DASMSG(rspe_inputEvent, "RSPE.InputEvent", "Receptive Social Presence Estimator Input Event");
+  DASMSG_SET(s1, inputEvent->GetName(), "Event Name");
+  // could add additional detail here if needed
+  DASMSG_SEND();
+}
+
+
 // ******** Input Event Handlers ********
 
 void SocialPresenceEstimator::OnNewUserIntent(const UserIntentTag tag)
@@ -243,8 +253,10 @@ void SocialPresenceEstimator::OnNewUserIntent(const UserIntentTag tag)
   // filter out specific intents here
   if (tag == USER_INTENT(system_sleep)) {
     LOG_WARNING("SocialPresenceEstimator.OnNewUserIntent.Specific", "system_sleep");
+    LogInputEvent(&_SPESleep);
     TriggerInputEvent(&_SPESleep);
   } else {
+    LogInputEvent(&_SPEUserIntent);
     // trigger input event
     TriggerInputEvent(&_SPEUserIntent);
   }
@@ -258,7 +270,7 @@ void SocialPresenceEstimator::OnRobotObservedFace(const AnkiEvent<ExternalInterf
 
   // we might want to do dynamic event creation here, for different face identities.
   // For now we treat all faces as the same event
-
+  LogInputEvent(&_SPEFace);
   TriggerInputEvent(&_SPEFace);
 }
 

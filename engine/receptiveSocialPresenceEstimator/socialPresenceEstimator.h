@@ -140,6 +140,7 @@ private:
   void UpdateInputs(const RobotCompMap& dependentComps);
   void UpdateRSPI();
   void TriggerInputEvent(SocialPresenceEvent* inputEvent);
+  void LogInputEvent(SocialPresenceEvent* inputEvent);
 
 
 
