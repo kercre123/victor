@@ -39,7 +39,7 @@ namespace Util{
  * The startup process needs to remove the run/SharedCircularBuffer directory
  */ 
 
-static const uint64_t header_magic_num = 0x08675309;
+static const uint64_t header_magic_num = 0x08675309001a2b3c;
 
 typedef enum {
   GET_STATE_OKAY = 0,
@@ -81,18 +81,14 @@ public:
       return GET_STATE_PLEASE_WAIT;
     }
 
-    if (not _buffer->queued_count || _offset >= _buffer->queued_count) {
-      return GET_STATE_PLEASE_WAIT;
-    }
-
     GetState get_state = GET_STATE_OKAY;
-    if (_offset > (3*N/4) && _offset < _buffer->queued_count - (3*N/4)) {
+    if (_buffer->queued_count > (3*N/4) && _offset < _buffer->queued_count - (3*N/4)) {
       _offset = _buffer->queued_count;
       get_state = GET_STATE_BEHIND;
     }
 
-    ++_offset;
     *object = _buffer->objects[_offset%N];
+    ++_offset;
 
     return get_state;
   }

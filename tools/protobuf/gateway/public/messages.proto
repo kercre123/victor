@@ -1078,7 +1078,7 @@ message AudioStreamRequest {
 
 message AudioStreamResponse {
   uint64   packet_id          = 1;    // 
-  bytes    audio_data         = 2;    // 160 samples of 15675Hz audio data. Mono. Signed 16-bit. Big Endian.
+  bytes    audio_data         = 2;    // 160 samples of 15675Hz audio data. Mono. Signed 16-bit. Little Endian.
   int32    winning_direction  = 3;    //
   int32    winning_confidence = 4;
 }

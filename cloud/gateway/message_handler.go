@@ -3422,8 +3422,8 @@ func (service *rpcService) AudioStream(in *extint.AudioStreamRequest, stream ext
 			}
 			audioStreamResponse.AudioData = make([]byte, len(micSDKData.Samples)*2)
 			for index, amplitude := range micSDKData.Samples {
-				audioStreamResponse.AudioData[index] = byte(amplitude >> 8)
-				audioStreamResponse.AudioData[index+1] = byte(amplitude & 0xff)
+				audioStreamResponse.AudioData[index*2] = byte(amplitude & 0xff)
+				audioStreamResponse.AudioData[index*2+1] = byte(amplitude >> 8)
 			}
 			if err := stream.Send(audioStreamResponse); err != nil {
 				return err
