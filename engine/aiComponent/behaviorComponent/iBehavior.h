@@ -96,6 +96,8 @@ protected:
   // Allow all behavior functions access to the bei after initialization
   BehaviorExternalInterface& GetBEI() const {assert(_beiWrapper); return _beiWrapper->_bei;}
 
+  bool IsInActivatableScope() const { return (0 < _currentInScopeCount); }
+
 private:
   // string for identifying Behaviors (different than an ID since the latter might just be "Anonymous")
   std::string _debugLabel;

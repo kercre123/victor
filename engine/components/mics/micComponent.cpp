@@ -12,6 +12,7 @@
 
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/mics/micDirectionHistory.h"
+#include "engine/components/mics/micStreamingComponent.h"
 #include "engine/components/mics/voiceMessageSystem.h"
 #include "engine/cozmoContext.h"
 #include "engine/robot.h"
@@ -30,7 +31,8 @@ namespace Vector {
 MicComponent::MicComponent() :
   IDependencyManagedComponent<RobotComponentID>( this, RobotComponentID::MicComponent ),
   _micHistory( new MicDirectionHistory() ),
-  _messageSystem( new VoiceMessageSystem() )
+  _messageSystem( new VoiceMessageSystem() ),
+  _streamingComponent( new MicStreamingComponent() )
 {
 
 }
@@ -40,6 +42,7 @@ MicComponent::~MicComponent()
 {
   Util::SafeDelete( _messageSystem );
   Util::SafeDelete( _micHistory );
+  Util::SafeDelete( _streamingComponent );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -53,9 +56,11 @@ void MicComponent::GetInitDependencies( RobotCompIDSet& dependencies ) const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MicComponent::InitDependent( Vector::Robot* robot, const RobotCompMap& dependentComps )
 {
+  _robot = robot;
+
   _micHistory->Initialize( robot->GetContext() );
   _messageSystem->Initialize( robot );
-  _robot = robot;
+  _streamingComponent->Initialize( _robot );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

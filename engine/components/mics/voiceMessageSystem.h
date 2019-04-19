@@ -33,7 +33,7 @@ namespace Vector {
 class Robot;
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-class VoiceMessageSystem : public Util::SignalHolder
+class VoiceMessageSystem : private Util::SignalHolder
 {
 public:
 

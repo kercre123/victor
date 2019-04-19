@@ -15,6 +15,7 @@
 #include "clad/types/imu.clad"
 #include "clad/types/lcdTypes.clad"
 #include "clad/types/ledTypes.clad"
+#include "clad/types/micStreamingTypes.clad"
 #include "clad/types/motorTypes.clad"
 #include "clad/types/proceduralFaceTypes.clad"
 #include "clad/types/proxMessages.clad"
@@ -450,6 +451,12 @@ message SetTriggerWordResponse
   bool shouldTriggerWordSimulateStream = 0,
   uint_8 getInAnimationTag = 0,
   string getInAnimationName,
+}
+
+// Engine -> Anim : signal to the MicStreamingController to stop the current mic stream
+message StopCurrentMicStream
+{
+  MicStreamResult reason,
 }
 
 message SetAlexaUXResponses
@@ -900,10 +907,11 @@ union EngineToRobot
   StartWakeWordlessStreaming    startWakeWordlessStreaming = 0x99,
   SetTriggerWordResponse        setTriggerWordResponse     = 0x9A,
   SetAlexaUXResponses           setAlexaUXResponses        = 0x9B,
+  StopCurrentMicStream          stopCurrentMicStream       = 0x9C,
 
-  ResetBeatDetector             resetBeatDetector           = 0x9C,
+  ResetBeatDetector             resetBeatDetector           = 0x9D,
 
-  SetAlexaUsage                 setAlexaUsage               = 0x9D,
+  SetAlexaUsage                 setAlexaUsage               = 0x9E,
 
   SwitchboardInterface::SetConnectionStatus     setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin               setBLEPin                 = 0xA1,

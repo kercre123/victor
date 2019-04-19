@@ -30,7 +30,5 @@
   "animListeningGetOut"     : "VC_SleepingToListeningGetOut",
   "backpackLights"          : false,
 
-  "behaviorOnIntent"        : "ReactToTriggerDirectionAwake",
-  
-  "exitAfterListeningIfNotStreaming" : true
+"behaviorOnIntent"        : "ReactToTriggerDirectionAwake"
 }

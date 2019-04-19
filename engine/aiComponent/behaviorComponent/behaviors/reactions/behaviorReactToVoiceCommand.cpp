@@ -34,6 +34,7 @@
 #include "engine/components/backpackLights/engineBackpackLightComponent.h"
 #include "engine/components/mics/micComponent.h"
 #include "engine/components/mics/micDirectionHistory.h"
+#include "engine/components/mics/micStreamingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalMessageRouter.h"
@@ -48,6 +49,9 @@
 #include "clad/types/behaviorComponent/behaviorClasses.h"
 
 #include "coretech/common/engine/utils/timer.h"
+
+// todo: jmeh
+// + handle getting another trigger word event when we're still active (transition to intent, etc)
 
 
 #define DEBUG_TRIGGER_WORD_VERBOSE 0 // add some verbose debugging if trying to track down issues
@@ -80,8 +84,6 @@ namespace {
   const char* kAnimListeningGetIn                  = "animListeningGetIn";
   const char* kAnimListeningLoop                   = "animListeningLoop";
   const char* kAnimListeningGetOut                 = "animListeningGetOut";
-  const char* kExitAfterGetInKey                   = "exitAfterGetIn";
-  const char* kExitAfterListeningIfNotStreamingKey = "exitAfterListeningIfNotStreaming";
   const char* kPushResponseKey                     = "pushResponse";
   const char* kNotifyOnWifiErrorsKey               = "notifyOnWifiErrors";
   const char* kNotifyOnCloudErrorsKey              = "notifyOnCloudErrors";
@@ -125,8 +127,6 @@ BehaviorReactToVoiceCommand::InstanceConfig::InstanceConfig() :
   animListeningLoop( AnimationTrigger::VC_ListeningLoop ),
   animListeningGetOut( AnimationTrigger::VC_ListeningGetOut ),
   backpackLights( true ),
-  exitAfterGetIn( false ),
-  exitAfterListeningIfNotStreaming( false ),
   cloudErrorTracker( "VoiceCommandErrorTracker_nocloud" ),
   wifiErrorTracker( "VoiceCommandErrorTracker_nowifi" )
 {
@@ -140,8 +140,7 @@ BehaviorReactToVoiceCommand::DynamicVariables::DynamicVariables() :
   streamingBeginTime( 0.0 ),
   streamingEndTime( 0.0 ),
   intentStatus( EIntentStatus::NoIntentHeard ),
-  timestampToDisableTurnFor(0),
-  expectingStream(false)
+  timestampToDisableTurnFor(0)
 {
 
 }
@@ -158,7 +157,7 @@ BehaviorReactToVoiceCommand::DynamicVariables::Persistent::Persistent() :
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& config ) :
   ICozmoBehavior( config ),
-  _triggerDirection( kMicDirectionUnknown )
+  triggerWordDetected( false )
 {
   // do we play ear-con sounds to notify the user when Victor is listening
   {
@@ -211,10 +210,6 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
                  "Get-in %s is not a valid animation trigger",
                  animGetOut.c_str() );
   }
-
-  JsonTools::GetValueOptional( config, kExitAfterGetInKey, _iVars.exitAfterGetIn );
-
-  JsonTools::GetValueOptional( config, kExitAfterListeningIfNotStreamingKey, _iVars.exitAfterListeningIfNotStreaming );
 
   _iVars.pushResponse = config.get(kPushResponseKey, true).asBool();
 
@@ -281,8 +276,6 @@ void BehaviorReactToVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& exp
     kAnimListeningGetIn,
     kAnimListeningLoop,
     kAnimListeningGetOut,
-    kExitAfterGetInKey,
-    kExitAfterListeningIfNotStreamingKey,
     kPushResponseKey,
     kNotifyOnWifiErrorsKey,
     kNotifyOnCloudErrorsKey,
@@ -321,16 +314,18 @@ void BehaviorReactToVoiceCommand::InitBehavior()
   DEV_ASSERT( _iVars.noWifiBehavior != nullptr,
               "BehaviorReactToVoiceCommand.Init.NoWifiBehaviorMissing");
 
-  SubscribeToTags(
-  {
-    RobotInterface::RobotToEngineTag::triggerWordDetected
-  });
-
   if( nullptr != _iVars.intentWhitelistCondition )
   {
     _iVars.intentWhitelistCondition->SetOwnerDebugLabel(GetDebugLabel());
     _iVars.intentWhitelistCondition->Init(GetBEI());
   }
+
+  // register for mic stream updates
+  MicStreamingComponent& micStreamingComponent = GetBEI().GetMicComponent().GetMicStreamingComponent();
+  micStreamingComponent.RegisterStreamEventCallback( std::bind( &BehaviorReactToVoiceCommand::OnStreamingEventDetected,
+                                                                this,
+                                                                std::placeholders::_1,
+                                                                std::placeholders::_2 ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -363,32 +358,15 @@ void BehaviorReactToVoiceCommand::GetBehaviorOperationModifiers( BehaviorOperati
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior() const
 {
-  const UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
-  return kRespondsToTriggerWord && uic.IsTriggerWordPending();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToVoiceCommand::AlwaysHandleInScope( const RobotToEngineEvent& event )
-{
-  if ( event.GetData().GetTag() == RobotInterface::RobotToEngineTag::triggerWordDetected )
-  {
-    const auto& msg = event.GetData().Get_triggerWordDetected();
-    _triggerDirection = msg.direction;
-
-    #if DEBUG_TRIGGER_WORD_VERBOSE
-    {
-      LOG_DEBUG( "BehaviorReactToVoiceCommand.Debug",
-                 "Received TriggerWordDetected event with direction [%d]", (int)_triggerDirection );
-    }
-    #endif
-  }
+  return kRespondsToTriggerWord && triggerWordDetected;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnBehaviorEnteredActivatableScope()
 {
   // don't push a custom response if disabled via config, in case, e.g., a parent wants control of the response
-  if( _iVars.pushResponse ) {
+  if( _iVars.pushResponse )
+  {
     namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
     auto postAudioEvent = AECH::CreatePostAudioEvent( _iVars.earConBegin, AudioMetaData::GameObjectType::Behavior, 0 );
     GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord( GetDebugLabel(),
@@ -406,11 +384,13 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
   _dVars = DynamicVariables();
   _dVars.persistent = persistent;
 
+  // todo: jmeh - remove this
   UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
   uic.ClearPendingTriggerWord();
 
   auto* gi = GetBEI().GetRobotInfo().GetGatewayInterface();
-  if( gi != nullptr ) {
+  if ( gi != nullptr )
+  {
     auto* wakeWordBegin = new external_interface::WakeWordBegin;
     gi->Broadcast( ExternalMessageRouter::Wrap(wakeWordBegin) );
   }
@@ -421,15 +401,15 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
     moodManager.TriggerEmotionEvent( "ReactToTriggerWord", MoodManager::GetCurrentTimeInSeconds() );
   }
 
-  _dVars.expectingStream = uic.WillPendingTriggerWordOpenStream();
+
 
   // Trigger word is heard (since we've been activated) ...
   LOG_DEBUG( "BehaviorReactToVoiceCommand.Activated",
              "Reacting to trigger word from direction [%d] (%s stream)",
-             (int)_triggerDirection,
-             _dVars.expectingStream ? "expecting" : "not expecting" );
+             (int)triggerWordData.direction,
+             !triggerWordData.isStreamSimulated ? "expecting" : "not expecting" );
 
-  if( nullptr != _iVars.intentWhitelistCondition )
+  if ( nullptr != _iVars.intentWhitelistCondition )
   {
     const bool setActive = true;
     _iVars.intentWhitelistCondition->SetActive(GetBEI(), setActive);
@@ -483,15 +463,15 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
   // we've done all we can, now it's up to the next behavior to consume the user intent
   GetBehaviorComp<UserIntentComponent>().SetUserIntentTimeoutEnabled( true );
 
-  // reset this bad boy
-  _triggerDirection = kMicDirectionUnknown;
-  
+  // we need to reset this after we're done so that we don't re-activate right away
+  triggerWordDetected = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnBehaviorLeftActivatableScope()
 {
-  if( _iVars.pushResponse ) {
+  if( _iVars.pushResponse )
+  {
     GetBehaviorComp<UserIntentComponent>().PopResponseToTriggerWord(GetDebugLabel());
   }
 }
@@ -499,95 +479,155 @@ void BehaviorReactToVoiceCommand::OnBehaviorLeftActivatableScope()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::BehaviorUpdate()
 {
-  if(!IsActivated()){
-    if (_dVars.persistent.listeningAnimsResetQueued) {
+  if ( !IsActivated() )
+  {
+    if ( _dVars.persistent.listeningAnimsResetQueued )
+    {
       ResetListeningAnimsToConfig();
     }
+
     return;
   }
 
-  DEV_ASSERT( ( GetStreamingDuration() >= ( MicData::kStreamingTimeout_ms / 1000.0 ) ),
-              "BehaviorReactToVoiceCommand: Behavior streaming timeout is less than mic streaming timeout" );
-
-  const bool wasStreaming = ( _dVars.streamingBeginTime > 0.0 );
-  const bool isStreaming = GetBehaviorComp<UserIntentComponent>().IsCloudStreamOpen();
-
-  // track when our stream opens and closes; technically this is not synced with our states which is why we track
-  // it independently.
-  if ( !wasStreaming )
-  {
-    if ( isStreaming )
-    {
-      OnStreamingBegin();
-    }
-  }
-  else
-  {
-    const bool notAlreadyRecordedEnd = ( _dVars.streamingEndTime <= 0.0 );
-    if ( !isStreaming && notAlreadyRecordedEnd )
-    {
-      OnStreamingEnd();
-    }
-  }
-
-
-  if ( _dVars.state == EState::ListeningGetIn )
-  {
-    // Once the animation process's GetIn animation has finished, queue the listening loop animation
-    if(!GetBehaviorComp<UserIntentComponent>().WaitingForTriggerWordGetInToFinish()){
-
-      // we don't want to enter EState::Listening until we're in our loop or else
-      // we could end up exiting too soon and looking like garbage
-      if( _iVars.exitAfterGetIn )
-      {
-        OnVictorListeningEnd();
-        CancelSelf();
-      }
-
-      // we now loop indefinitely and wait for the timeout in the update function
-      // this is because we don't know when the streaming will begin (if it hasn't already) so we can't time it accurately
-      if ( _dVars.persistent.forcedAnimListeningLoop != AnimationTrigger::Count ) {
-        DelegateIfInControl( new ReselectingLoopAnimationAction( _dVars.persistent.forcedAnimListeningLoop ) );
-      } else {
-        DelegateIfInControl( new ReselectingLoopAnimationAction( _iVars.animListeningLoop ) );
-      }
-      _dVars.state = EState::ListeningLoop;
-    }
-  }
-  else if ( _dVars.state == EState::ListeningLoop )
+  if ( _dVars.state == EState::ListeningLoop )
   {
     const bool isIntentPending = GetBehaviorComp<UserIntentComponent>().IsAnyUserIntentPending();
     if ( isIntentPending )
     {
-      // kill delegates, we'll handle next steps with callbacks
       // note: passing true to CancelDelegates doesn't call the callback if we also delegate
       LOG_INFO( "BehaviorReactToVoiceCommand.StopListening.IntentPending",
                 "Stopping listening because an intent is pending" );
-      CancelDelegates( false );
+
+      // now that we have a valid intent, tell the stream to close
+      MicStreamingComponent& micStreamingComponent = GetBEI().GetMicComponent().GetMicStreamingComponent();
+      micStreamingComponent.StopCurrentStream( MicStreamResult::Success );
+
       StopListening();
-    }
-    else
-    {
-      // there are a few ways we can timeout from the Listening state;
-      // + error received
-      // + streaming never started
-      // + streaming started but no intent came back
-      const double currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-      const double listeningTimeout = GetListeningTimeout();
-      if ( currTime_s >= listeningTimeout )
-      {
-        LOG_INFO( "BehaviorReactToVoiceCommand.StopListening.Error",
-                  "Stopping listening because of a(n) %s",
-                  GetBehaviorComp<UserIntentComponent>().WasUserIntentError() ? "error" : "timeout" );
-        CancelDelegates( false );
-        StopListening();
-      }
     }
   }
 
+  // we always delegate, EXCEPT in the case of the get-in when we're waiting for the stream to open
   if ( ( _dVars.state != EState::ListeningGetIn ) && !IsControlDelegated() )
   {
     CancelSelf();
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool BehaviorReactToVoiceCommand::OnStreamingEventDetected( StreamingEvent event, StreamingEventData data )
+{
+  bool wasEventHandled = false;
+
+  if ( !IsActivated() )
+  {
+    // ignore streaming events if we're not in scope
+    if ( IsInActivatableScope() )
+    {
+      if ( StreamingEvent::TriggerWordDetected == event )
+      {
+        // only respond to the trigger word if we're going to be streaming.
+        triggerWordDetected = true;
+        triggerWordData     = data.triggerWordData;
+
+        #if DEBUG_TRIGGER_WORD_VERBOSE
+        {
+          LOG_DEBUG( "BehaviorReactToVoiceCommand.OnStreamingEventDetected",
+                     "Received TriggerWordDetected event with direction [%d], %s",
+                     (int)triggerWordData.direction,
+                     triggerWordData.isStreamSimulated ? "will stream" : "faking stream" );
+        }
+        #endif
+
+        wasEventHandled = true;
+      }
+      else
+      {
+        LOG_WARNING( "BehaviorReactToVoiceCommand.OnStreamingEventDetected",
+                     "Received unexpected StreamingEvent (%s) while waiting for TriggerWordDetected event",
+                     StreamingEventToString( event ) );
+      }
+    }
+  }
+  else
+  {
+    // we're currently active, so let's respond to the change in streaming state
+    // we assume that having received the TriggerWordDetected event and being activated means the streaming process
+    // has already begun ...
+
+    LOG_INFO( "BehaviorReactToVoiceCommand::OnStreamingEventDetected", "Received streaming event (%s)",
+              StreamingEventToString(event) );
+
+    wasEventHandled = true;
+
+    switch ( event )
+    {
+      case StreamingEvent::StreamOpen:
+      {
+        ASSERT_NAMED_EVENT( EState::ListeningGetIn == _dVars.state, "BehaviorReactToVoiceCommand.OnStreamingEventDetected",
+                            "Trigger word stream opened while we are in the wrong state [%hhu]", _dVars.state  );
+
+        ASSERT_NAMED_EVENT( triggerWordData.isStreamSimulated == data.streamStateData.isSimulated, "BehaviorReactToVoiceCommand.OnStreamingEventDetected",
+                            "TriggerWord event (%s) and StreamOpen event (%s) don't agree on if stream is simulated",
+                            !triggerWordData.isStreamSimulated ? "not simulated" : "simulated",
+                            !data.streamStateData.isSimulated ? "not simulated" : "simulated" );
+
+        // we've finished our get-in animation and now streaming has begun
+        // we are guaranteed to open a stream (simulated or not) each time we get a trigger word
+        TransitionToListeningLoop();
+        break;
+      }
+
+      case StreamingEvent::StreamProcessEnd:
+      {
+        // if we were in the listening loop state, stop listening and transition out because the stream has closed
+        // and we're not going to get an intent
+        if ( EState::ListeningLoop == _dVars.state )
+        {
+          StopListening();
+        }
+        else if ( EState::ListeningGetIn == _dVars.state )
+        {
+          // Something went wrong during the get in, so let's just bail since the get-in animaiton was not successful
+          // note: this should never really happen, it can only happen if there's no get-in earcon set, but
+          //       we should never respond to the trigger word if there's no get-in
+          CancelSelf();
+        }
+        break;
+      }
+
+      default:
+        break;
+    }
+  }
+
+  return wasEventHandled;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToVoiceCommand::OnStreamingBegin()
+{
+  LOG_INFO( "BehaviorReactToVoiceCommand.OnStreamingBegin", "Got notice that cloud stream is open" );
+
+  _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+  _dVars.streamingEndTime = 0.0; // reset this to we can match our start/ends
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToVoiceCommand::OnStreamingEnd()
+{
+  // only record end time if we've begun streaming
+  const bool hasBegunStreaming = ( _dVars.streamingBeginTime > 0.0 );
+  const bool notAlreadyRecordedEnd = ( _dVars.streamingEndTime <= 0.0 );
+  if ( hasBegunStreaming && notAlreadyRecordedEnd )
+  {
+    LOG_INFO( "BehaviorReactToVoiceCommand.OnStreamingEnd",
+             "Got notice that cloud stream is closed" );
+
+    _dVars.streamingEndTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+
+    // let's attempt to compute the reaction direction as soon as we know the stream is closed
+    // note: this can be called outside of IsActivated(), but it doesn't matter to us
+    ComputeReactionDirectionFromStream();
   }
 }
 
@@ -688,7 +728,7 @@ MicDirectionIndex BehaviorReactToVoiceCommand::GetReactionDirection() const
     // fallback to our trigger direction
     // accuracy is generally off by the amount the robot has turned
     // there's been some observed inaccuracy with this direction reported from trigger word event
-    direction = _triggerDirection;
+    direction = triggerWordData.direction;
   }
 
   if ( kMicDirectionUnknown == direction )
@@ -715,34 +755,6 @@ MicDirectionIndex BehaviorReactToVoiceCommand::GetDirectionFromMicHistory() cons
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToVoiceCommand::OnStreamingBegin()
-{
-  LOG_INFO( "BehaviorReactToVoiceCommand.OnStreamingBegin",
-            "Got notice that cloud stream is open" );
-  _dVars.streamingBeginTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-  _dVars.streamingEndTime = 0.0; // reset this to we can match our start/ends
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorReactToVoiceCommand::OnStreamingEnd()
-{
-  // only record end time if we've begun streaming
-  const bool hasBegunStreaming = ( _dVars.streamingBeginTime > 0.0 );
-  const bool notAlreadyRecordedEnd = ( _dVars.streamingEndTime <= 0.0 );
-  if ( hasBegunStreaming && notAlreadyRecordedEnd )
-  {
-    LOG_INFO( "BehaviorReactToVoiceCommand.OnStreamingEnd",
-              "Got notice that cloud stream is closed" );
-
-    _dVars.streamingEndTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-
-    // let's attempt to compute the reaction direction as soon as we know the stream is closed
-    // note: this can be called outside of IsActivated(), but it doesn't matter to us
-    ComputeReactionDirectionFromStream();
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::StartListening()
 {
   _dVars.state = EState::ListeningGetIn;
@@ -762,7 +774,10 @@ void BehaviorReactToVoiceCommand::StopListening()
   // force our model of the streaming to close, in the case that we timed out (etc) before the actual stream closed
   OnStreamingEnd();
 
+  // cancel our listening loop
+  CancelDelegates( false );
   UpdateUserIntentStatus();
+
   OnVictorListeningEnd();
   TransitionToThinking();
 }
@@ -874,12 +889,32 @@ void BehaviorReactToVoiceCommand::UpdateUserIntentStatus()
       uic.StartTransitionIntoActiveUserIntentFeedback();
     }
   }
-  else if( uic.WasUserIntentError() ) {
+  else if ( uic.WasUserIntentError() )
+  {
     uic.ResetUserIntentError();
     _dVars.intentStatus = EIntentStatus::Error;
     LOG_DEBUG( "BehaviorReactToVoiceCommand.UpdateUserIntentStatus.Error",
                "latest user intent was an error" );
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorReactToVoiceCommand::TransitionToListeningLoop()
+{
+  OnStreamingBegin();
+
+  // we now loop indefinitely and wait for the timeout in the update function
+  // this is because we don't know when the streaming will begin (if it hasn't already) so we can't time it accurately
+  if ( _dVars.persistent.forcedAnimListeningLoop != AnimationTrigger::Count )
+  {
+    DelegateIfInControl( new ReselectingLoopAnimationAction( _dVars.persistent.forcedAnimListeningLoop ) );
+  }
+  else
+  {
+    DelegateIfInControl( new ReselectingLoopAnimationAction( _iVars.animListeningLoop ) );
+  }
+
+  _dVars.state = EState::ListeningLoop;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -891,60 +926,69 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
 
   auto callback = [this]()
   {
-    const bool streamingToCloud = _dVars.expectingStream;
-    if (!streamingToCloud && _iVars.exitAfterListeningIfNotStreaming) {
+    // only react when we had a valid cloud stream open.  In the case where we were simulating a stream, we obviously
+    // wont get back an intent from the cloud so we need to handle that differently.
+    if ( !triggerWordData.isStreamSimulated )
+    {
+      // Play a reaction behavior if we were told to ...
+      // ** only in the case that we've heard a valid intent **
+      const bool heardValidIntent = ( _dVars.intentStatus == EIntentStatus::IntentHeard );
+      if ( heardValidIntent && _iVars.reactionBehavior )
+      {
+        if( IsTurnEnabled() )
+        {
+          const MicDirectionIndex triggerDirection = GetReactionDirection();
+          PRINT_CH_INFO("Behaviors", "BehaviorReactToVoiceCommand.TransitionToThinking.ReactionDirection","%d",triggerDirection);
+          _iVars.reactionBehavior->SetReactDirection( triggerDirection );
+
+          LOG_DEBUG( "BehaviorReactToVoiceCommand.Thinking.SetReactionDirection",
+                     "Setting reaction behavior direction to [%d]",
+                     (int)triggerDirection );
+
+          // allow the reaction to not want to run in certain directions/states
+          if ( _iVars.reactionBehavior->WantsToBeActivated() )
+          {
+            DelegateIfInControl( _iVars.reactionBehavior.get(), &BehaviorReactToVoiceCommand::TransitionToIntentReceived );
+          }
+          else
+          {
+            LOG_DEBUG( "BehaviorReactToVoiceCommand.Thinking.ReactionDoesntWantToActivate",
+                       "%s: intent reaction behavior '%s' doesn't want to activate",
+                       GetDebugLabel().c_str(),
+                       _iVars.reactionBehavior->GetDebugLabel().c_str() );
+          }
+        }
+        else
+        {
+          LOG_DEBUG( "BehaviorReactToVoiceCommand.Thinking.TurnDisabled",
+                     "Turn after intent is received has been disabled this tick, skipping" );
+        }
+      }
+
+      if ( !IsControlDelegated() )
+      {
+        // handle intent now
+        TransitionToIntentReceived();
+      }
+    }
+    else
+    {
+      // we were simulating the stream, so therefore no intent would have come back.  Play the neutral animation
+      // and then the behavior will exit from a CancelSelf() call within the Update() function
       PRINT_CH_INFO("Behaviors", "BehaviorReactToVoiceCommand.TransitionToThinkingCallback.NotStreaming",
                     "We are not streaming to the cloud currently, so no point in continuing with the behavior (since "
                     "we do not want to increment the error count, etc.). Playing the \"unheard\" anim then exiting");
       DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::VC_IntentNeutral ) );
-      return;
-    }
-
-    // Play a reaction behavior if we were told to ...
-    // ** only in the case that we've heard a valid intent **
-    const bool heardValidIntent = ( _dVars.intentStatus == EIntentStatus::IntentHeard );
-    if ( heardValidIntent && _iVars.reactionBehavior )
-    {
-      if( IsTurnEnabled() ) {
-        const MicDirectionIndex triggerDirection = GetReactionDirection();
-        PRINT_CH_INFO("Behaviors", "BehaviorReactToVoiceCommand.TransitionToThinking.ReactionDirection","%d",triggerDirection);
-        _iVars.reactionBehavior->SetReactDirection( triggerDirection );
-
-        LOG_DEBUG( "BehaviorReactToVoiceCommand.Thinking.SetReactionDirection",
-                   "Setting reaction behavior direction to [%d]",
-                   (int)triggerDirection );
-
-        // allow the reaction to not want to run in certain directions/states
-        if ( _iVars.reactionBehavior->WantsToBeActivated() )
-        {
-          DelegateIfInControl( _iVars.reactionBehavior.get(), &BehaviorReactToVoiceCommand::TransitionToIntentReceived );
-        }
-        else
-        {
-          LOG_DEBUG( "BehaviorReactToVoiceCommand.Thinking.ReactionDoesntWantToActivate",
-                     "%s: intent reaction behavior '%s' doesn't want to activate",
-                     GetDebugLabel().c_str(),
-                     _iVars.reactionBehavior->GetDebugLabel().c_str() );
-        }
-      }
-      else
-      {
-        LOG_DEBUG( "BehaviorReactToVoiceCommand.Thinking.TurnDisabled",
-                   "Turn after intent is received has been disabled this tick, skipping" );
-      }
-    }
-
-    if ( !IsControlDelegated() )
-    {
-      // handle intent now
-      TransitionToIntentReceived();
     }
   };
 
   // we need to get out of our listening loop anim before we react
-  if ( _dVars.persistent.forcedAnimListeningGetOut != AnimationTrigger::Count ) {
+  if ( _dVars.persistent.forcedAnimListeningGetOut != AnimationTrigger::Count )
+  {
     DelegateIfInControl( new TriggerLiftSafeAnimationAction( _dVars.persistent.forcedAnimListeningGetOut ), callback );
-  } else {
+  }
+  else
+  {
     DelegateIfInControl( new TriggerLiftSafeAnimationAction( _iVars.animListeningGetOut ), callback );
   }
 }
@@ -1162,35 +1206,6 @@ bool BehaviorReactToVoiceCommand::IsTurnEnabled() const
 
   // otherwise, we're ok to turn
   return true;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-double BehaviorReactToVoiceCommand::GetStreamingDuration() const
-{
-  // our streaming duration is how long after streaming begins do we wait for an intent
-  return kMaxStreamingDuration_s;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-double BehaviorReactToVoiceCommand::GetListeningTimeout() const
-{
-  double timeout = 0.0;
-
-  const bool errorPending = GetBehaviorComp<UserIntentComponent>().WasUserIntentError();
-  const bool streamingHasBegun = ( _dVars.streamingBeginTime > 0.0 );
-
-  if ( errorPending || !streamingHasBegun || !_dVars.expectingStream )
-  {
-    // we haven't started streaming (or we won't), so timeout this much after we've been active
-    timeout = ( GetTimeActivated_s() + kMinListeningTimeout_s );
-  }
-  else
-  {
-    // we're currently streaming, so timeout when we hit our streaming duration
-    timeout = ( _dVars.streamingBeginTime + GetStreamingDuration() );
-  }
-
-  return timeout;
 }
 
 } // namespace Vector

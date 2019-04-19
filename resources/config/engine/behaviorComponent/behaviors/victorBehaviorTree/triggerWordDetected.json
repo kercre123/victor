@@ -27,7 +27,5 @@
   "earConAudioEventNeutral" : "Play__Robot_Vic_Sfx__Wake_Word_Fail",
   "backpackLights"          : false,
 
-  "behaviorOnIntent"        : "ReactToTriggerDirectionAwake",
-  
-  "exitAfterListeningIfNotStreaming" : true
+  "behaviorOnIntent"        : "ReactToTriggerDirectionAwake"
 }

@@ -98,10 +98,6 @@ public:
   // Note: Overlap size is only as large as the audio buffer, see kTriggerAudioLengthShipping_ms
   std::unique_ptr<MicDataInfo> CreateStreamingJob(CloudMic::StreamType streamType, uint32_t overlapLength_ms = 0);
 
-  void VoiceTriggerWordDetection(const AudioUtil::SpeechRecognizerCallbackInfo& info);
-
-  void FakeTriggerWordDetection(bool fromMute = false);
-
   void GetLatestMicDirectionData(MicDirectionData& out_lastSample, DirectionIndex& out_dominantDirection) const;
 
 
@@ -172,20 +168,10 @@ private:
 
   // Aubio beat detector
   std::unique_ptr<BeatDetector> _beatDetector;
-  
-  enum class TriggerWordDetectSource : uint8_t {
-    Invalid=0,
-    Voice,
-    Button,
-    ButtonFromMute,
-  };
-  
 
   void InitVAD();
   
-  void TriggerWordDetectCallback(TriggerWordDetectSource source,
-                                 const AudioUtil::SpeechRecognizerCallbackInfo& info);
-  
+ 
   void ProcessRawAudio(RobotTimeStamp_t timestamp,
                        const AudioUtil::AudioSample* audioChunk,
                        uint32_t robotStatus,

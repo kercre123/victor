@@ -35,6 +35,7 @@ namespace MicData {
   static constexpr uint32_t kTriggerAudioLengthDebug_ms     = 1500; // We only hold onto more audio for FP testing during development
   static constexpr uint32_t kTriggerAudioLengthShipping_ms  = 750;
   static constexpr uint32_t kStreamingTimeout_ms            = 6000 + kTriggerOverlapSize_ms;
+  static constexpr uint32_t kStreamingTimeoutCloudExt_ms    = 1000; // this is the post-timeout additional time we give the cloud to think about the stream
   static constexpr uint32_t kStreamingDefaultMinDuration_ms = 4000;
   static constexpr uint32_t kRawAudioPerBuffer_ms           = 1000;
 

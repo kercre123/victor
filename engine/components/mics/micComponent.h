@@ -22,6 +22,7 @@ namespace Anki {
 namespace Vector {
 
 class MicDirectionHistory;
+class MicStreamingComponent;
 class VoiceMessageSystem;
 class Robot;
 
@@ -51,6 +52,10 @@ public:
   VoiceMessageSystem& GetVoiceMessageSystem() { return *_messageSystem; }
   const VoiceMessageSystem& GetVoiceMessageSystem() const { return *_messageSystem; }
 
+  MicStreamingComponent& GetMicStreamingComponent() { return *_streamingComponent; }
+  const MicStreamingComponent& GetMicStreamingComponent() const { return *_streamingComponent; }
+  
+
   // set / get the fullness of the audio processing buffer on the robot (float from 0 to 1)
   void  SetBufferFullness(float val);
   float GetBufferFullness() const { return _fullness; }
@@ -61,6 +66,7 @@ private:
   // Member Data
   MicDirectionHistory*      _micHistory;
   VoiceMessageSystem*       _messageSystem;
+  MicStreamingComponent*    _streamingComponent;
   Robot*                    _robot;
   float                     _fullness;
   

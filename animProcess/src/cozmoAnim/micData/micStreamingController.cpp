@@ -14,8 +14,10 @@
 #include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 #include "cozmoAnim/micData/micDataProcessor.h"
 #include "cozmoAnim/micData/micDataSystem.h"
+#include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
 
+#include "audioUtil/speechRecognizer.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "util/logging/logging.h"
 #include "util/global/globalDefinitions.h"
@@ -62,8 +64,10 @@ void MicStreamingController::Initialize( const Anim::AnimContext* animContext )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MicStreamingController::Update()
 {
-  if ( IsActivelyStreaming() )
+  // we're either actively streaming or simulating a stream
+  if ( IsInStreamingState() )
   {
+    // keep streaming to the cloud as long as we can
     if ( CanStreamToCloud() )
     {
       static constexpr size_t kMaxRecordNumChunks = ( kStreamingTimeout_ms / kTimePerChunk_ms ) + 1;
@@ -72,15 +76,14 @@ void MicStreamingController::Update()
       // check to see if we've reached the max duration of recording
       if ( chunksStreamed >= kMaxRecordNumChunks )
       {
-        LOG_INFO( "MicStreamingController.Update", "Mic streaming job timed out after %zu ms",
-                  ( chunksStreamed * kTimePerChunk_ms ) );
-        StopCurrentMicStreaming( StreamingResult::Timeout );
+        LOG_INFO( "MicStreamingController.Update", "Mic streaming job finished streaming after %fs",
+                  ( ( chunksStreamed * kTimePerChunk_ms ) / 1000.0 ) );
+        TransitionToState( MicStreamState::TransitionOut );
       }
     }
     else
     {
       const ShowAudioStreamStateManager* streamAnimManager = _animContext->GetShowAudioStreamStateManager();
-      DEV_ASSERT( nullptr != streamAnimManager, "MicStreamingController.CanStartNewMicStream" );
 
       // if we're actively streaming, but can't stream to the cloud, it means we're faking a stream for whatever reason
       // let's wait for our min time before closing our fake stream
@@ -91,37 +94,128 @@ void MicStreamingController::Update()
       const BaseStationTime_t minStreamEnd_ns = ( _streamingData.streamBeginTime + minStreamDuration_ns );
       if ( currentTime_ns >= minStreamEnd_ns )
       {
-        LOG_INFO( "MicStreamingController.Update", "Simulated streaming job timed out after %zu ms",
-                  minStreamingDuration_ms );
-        StopCurrentMicStreaming( StreamingResult::Timeout );
+        LOG_INFO( "MicStreamingController.Update", "Simulated streaming job timed out after %fs",
+                  ( minStreamingDuration_ms / 1000.0 ) );
+
+        // note: treating this as a success since we're simluating a stream and can only "time out" in this case
+        //       so therefore, a time out is our success
+        StopCurrentMicStreaming( MicStreamResult::Success );
       }
+    }
+  }
+  else if ( IsWaitingForCloudResponse() )
+  {
+    // we're not streaming, so we're in the TransitionOut state which means we're giving the cloud some extra
+    // time to see if it can figure out what was streamed
+    const BaseStationTime_t currentTime_ns = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
+
+    const BaseStationTime_t extendedThinkTime_ns = ( kStreamingTimeoutCloudExt_ms * 1000 * 1000 );
+    const BaseStationTime_t endTime_ns = ( _streamingData.streamEndTime + extendedThinkTime_ns );
+    if ( currentTime_ns >= endTime_ns )
+    {
+      LOG_INFO( "MicStreamingController.Update", "Mic stream timed out with no response from cloud after %fs",
+                ( kStreamingTimeout_ms / 1000.0 ) + ( kStreamingTimeoutCloudExt_ms / 1000.0 ) );
+      StopCurrentMicStreaming( MicStreamResult::Timeout );
     }
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MicStreamingController::CanStartNewMicStream() const
+bool MicStreamingController::CanStartOpenMicStream() const
 {
   const ShowAudioStreamStateManager* streamAnimManager = _animContext->GetShowAudioStreamStateManager();
-  DEV_ASSERT( nullptr != streamAnimManager, "MicStreamingController.CanStartNewMicStream" );
 
+  // DO NOT STREAM IF ...
+  // + we're already streaming
+  // + we don't have a "stream open" response (this is because everything is done from the earcon callback)
   return ( !HasStreamingBegun() && streamAnimManager->HasValidTriggerResponse() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool MicStreamingController::StartNewMicStream( StreamingArguments args )
+bool MicStreamingController::CanStartWakeWordStream() const
 {
-  LOG_DEBUG( "MicStreamingController.StartNewMicStream", "Received request to start a new mic stream" );
+  const ShowAudioStreamStateManager* streamAnimManager = _animContext->GetShowAudioStreamStateManager();
 
-  StreamData streamData =
+  // todo: jmeh - merge the concept of HasValidTriggerResponse() && ShouldStreamAfterTriggerWordResponse()
+  //              within ShowAudioStreamStateManager
+
+  // DO NOT STREAM IF ...
+  // + we're already streaming
+  // + we've been explicitely told not to stream after hearing the trigger word
+  return ( !HasStreamingBegun() && streamAnimManager->ShouldStreamAfterTriggerWordResponse() );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool MicStreamingController::StartWakeWordStream( WakeWordSource source, const AudioUtil::SpeechRecognizerCallbackInfo* info )
+{
+  LOG_DEBUG( "MicStreamingController.StartWakeWordStream",
+             "Received request to start a wakeword stream from source %s",
+             WakeWordSourceToString( source ) );
+
+  if ( CanStartWakeWordStream() )
   {
-    .args = args
-  };
+    const bool muteButton = ( source == WakeWordSource::ButtonFromMute );
+    const bool buttonPress = ( source == WakeWordSource::Button ) || muteButton;
+
+    // get our direction information
+    DirectionIndex wakeWordDirection = kDirectionUnknown;
+    if ( WakeWordSource::Voice == source )
+    {
+      MicDirectionData wakeWordData;
+      _micDataSystem->GetMicDataProcessor()->GetLatestMicDirectionData( wakeWordData, wakeWordDirection );
+    }
+
+    const uint32_t triggerScore = ( ( nullptr != info ) ? static_cast<uint32_t>(info->score) : 0 );
+
+    // Set up a message to send out about the triggerword
+    // Fire off the trigger word detected message BEFORE we open the stream
+    RobotInterface::TriggerWordDetected twDetectedMessage;
+    {
+      twDetectedMessage.direction       = wakeWordDirection;
+      twDetectedMessage.isButtonPress   = buttonPress;
+      twDetectedMessage.fromMute        = muteButton;
+      twDetectedMessage.triggerScore    = triggerScore;
+      twDetectedMessage.willOpenStream  = true;
+    }
+    AnimProcessMessages::SendAnimToEngine( twDetectedMessage );
+
+    LOG_INFO( "MicDataProcessor.TriggerWordDetectCallback", "Direction index %d", wakeWordDirection );
+
+
+    // don't play the get-in if this trigger word started from mute, because the mute animation should be playing
+    StreamingArguments args =
+    {
+      .streamType                 = CloudMic::StreamType::Normal,
+      .shouldPlayTransitionAnim   = !muteButton,
+      .shouldRecordTriggerWord    = true,
+      .isSimulated                = ShouldSimulateWakeWordStreaming()
+    };
+    StartStreamInternal( args );
+
+    return true;
+  }
+
+  return false;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool MicStreamingController::StartOpenMicStream( CloudMic::StreamType streamType, bool shouldPlayTransitionAnim )
+{
+  LOG_DEBUG( "MicStreamingController.StartOpenMicStream", "Received request to start a new mic stream" );
 
   // don't start a new stream if we're not supposed to
-  if ( CanStartNewMicStream() )
+  if ( CanStartOpenMicStream() )
   {
-    StartStreamInternal( streamData );
+    StreamingArguments args =
+    {
+      .streamType                 = streamType,
+      .shouldPlayTransitionAnim   = shouldPlayTransitionAnim,
+      .shouldRecordTriggerWord    = false,
+      .isSimulated                = false
+    };
+
+    StartStreamInternal( args );
+
     return true;
   }
 
@@ -135,136 +229,140 @@ void MicStreamingController::StartCloudTestStream()
   {
     .streamType                 = CloudMic::StreamType::Normal,
     .shouldPlayTransitionAnim   = false,
-    .shouldRecordTriggerWord    = false
+    .shouldRecordTriggerWord    = false,
+    .isSimulated                = false
   };
 
-  StreamData streamData =
-  {
-    .args = args
-  };
-
-  StartStreamInternal( streamData );
+  StartStreamInternal( args );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicStreamingController::StartStreamInternal( StreamData streamData )
+void MicStreamingController::StartStreamInternal( StreamingArguments args )
 {
-  _streamingData = streamData;
+  _streamingData.args = args;
 
   // we consider ourselves transitioning regardless of if there is a get-in animation or not
   // this is because we want to wait until we actually get the callback to stream before setting our stream state
   // in case something goes wrong (callback returns sucess == false)
-  TransitionToState( MicState::TransitionToStreaming );
+  TransitionToState( MicStreamState::TransitionIn );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicStreamingController::StopCurrentMicStreaming( StreamingResult reason )
+void MicStreamingController::StopCurrentMicStreaming( MicStreamResult reason )
 {
   if ( HasStreamingBegun() )
   {
     _streamingData.result = reason;
-    TransitionToState( MicState::Listening );
+    TransitionToState( MicStreamState::Listening );
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void MicStreamingController::TransitionToState( MicState nextState )
+void MicStreamingController::TransitionToState( MicStreamState nextState )
 {
   if ( nextState != _state )
   {
     LOG_INFO( "MicStreamingController.TransitionToState",
-              "Transition from MicState::%s to MicState::%s",
-              GetStateString( _state ), GetStateString( nextState ) );
+              "Transition from MicStreamState::%s to MicStreamState::%s",
+              EnumToString( _state ), EnumToString( nextState ) );
 
-    const MicState previousState = _state;
+    const MicStreamState previousState = _state;
     _state = nextState;
+
+    // any time we leave the Streaming state, we need to close down the stream
+    if ( MicStreamState::Streaming == previousState )
+    {
+      OnStreamingEnd();
+    }
 
     switch ( _state )
     {
-      case MicState::TransitionToStreaming:
+      case MicStreamState::TransitionIn:
       {
-        DEV_ASSERT_MSG( MicState::Listening == previousState, "MicStreamingController.TransitionToState",
-                        "Can only enter Transition state from Listening state (currently in %s state)",
-                        GetStateString( previousState ) );
+        DEV_ASSERT_MSG( MicStreamState::Listening == previousState, "MicStreamingController.TransitionToState",
+                        "Can only enter TransitionIn state from Listening state (currently in %s state)",
+                        EnumToString( previousState ) );
 
         OnStreamingTransitionBegin();
         break;
       }
 
-      case MicState::Streaming:
+      case MicStreamState::Streaming:
       {
-        DEV_ASSERT_MSG( MicState::TransitionToStreaming == previousState, "MicStreamingController.TransitionToState",
-                       "Can only enter Streaming state from Transition state (currently in %s state)",
-                       GetStateString( previousState ) );
+        DEV_ASSERT_MSG( MicStreamState::TransitionIn == previousState, "MicStreamingController.TransitionToState",
+                       "Can only enter Streaming state from TransitionIn state (currently in %s state)",
+                       EnumToString( previousState ) );
 
         OnStreamingBegin();
         break;
       }
 
-      case MicState::Listening:
+      case MicStreamState::TransitionOut:
       {
-        if ( MicState::Streaming == previousState )
-        {
-          OnStreamingEnd();
-        }
+        DEV_ASSERT_MSG( MicStreamState::Streaming == previousState, "MicStreamingController.TransitionToState",
+                        "Can only enter TransitionOut state from Streaming state (currently in %s state)",
+                        EnumToString( previousState ) );
+
+        break;
+      }
+
+      case MicStreamState::Listening:
+      {
+        break;
       }
     }
+
+    // send our stream state sync message to the engine
+    RobotInterface::MicStreamingStateSync event =
+    {
+      .state        = _state,
+      .isSimulated  = _streamingData.args.isSimulated,
+    };
+
+    AnimProcessMessages::SendAnimToEngine( event );
   }
   else
   {
     LOG_ERROR( "MicStreamingController.TransitionToState",
                "Attempting to transition into a state we are already in (%s)",
-               GetStateString( _state ) );
+               EnumToString( _state ) );
   }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MicStreamingController::OnStreamingTransitionBegin()
 {
-  // todo: jmeh
-  // + why do we even play the transition if we're not going to stream afterwards?
-
   // we're going to attempt the stream (doesn't mean it will succeed)
   // something can go wrong in ShowAudioStreamStateManager and we can still fail (we'll get a callback with success/fail)
 
   ShowAudioStreamStateManager* streamAnimManager = _animContext->GetShowAudioStreamStateManager();
-  DEV_ASSERT( nullptr != streamAnimManager, "MicStreamingController.OnStreamingTransitionBegin" );
 
   // wrap the streaming callback in our own so we know when streaming is about to begin
-  const bool shouldStream = streamAnimManager->ShouldStreamAfterTriggerWordResponse();
-  NotifyTriggerWordDetectedCallbacks( shouldStream );
-
   // this callback is fired as soon as the "earcon" is finished
   // this is so that we do not include the earcon audio in the stream
   auto streamingCallback = [=]( bool success )
   {
-    if ( shouldStream )
+    if ( success )
     {
-      if ( success )
-      {
-        // all is good, let's kick off the streaming job
-        TransitionToState( MicState::Streaming );
-      }
-      else
-      {
-        // something went wrong, notify our callbacks that we're bailing
-        // note: this is legacy and I don't like it
-        NotifyTriggerWordDetectedCallbacks( false );
-      }
+      // all is good, let's kick off the streaming job
+      TransitionToState( MicStreamState::Streaming );
     }
-
-    // if we're not going to progress into streaming, then we're done with this stream job
-    // no need to stop any streaming at this point since it hasn't begun
-    if ( !success || !shouldStream )
+    else
     {
-      // note: again, why the hell are we starting a stream when shouldStream is false?!?
-      const StreamingResult result = ( success ? StreamingResult::Success : StreamingResult::Error );
-      StopCurrentMicStreaming( result );
+      // something went wrong, notify our callbacks that we're bailing
+      // note: this is legacy and I don't like it
+      NotifyTriggerWordDetectedCallbacks( false );
+
+      // if we're not going to progress into streaming, then we're done with this stream job
+      StopCurrentMicStreaming( MicStreamResult::Error );
     }
   };
 
-  LOG_INFO( "MicStreamingController.OnStreamingTransitionBegin", "Starting ww transition to streaming (%s stream)",
-            shouldStream ? "will" : "will not" );
+  LOG_INFO( "MicStreamingController.OnStreamingTransitionBegin", "Starting ww transition to streaming (%s simulated)",
+            _streamingData.args.isSimulated ? "is" : "not" );
+
+  // tell everybody we're about to start streaming
+  NotifyTriggerWordDetectedCallbacks( true );
 
   // start our transition, if we have one, else we jump right into streaming
   // note: streaming is kicked off from the callback
@@ -294,7 +392,11 @@ void MicStreamingController::OnStreamingBegin()
     }
 
     // Now let's kick off our streaming job
-    _streamingData.streamJobCreated = _micDataSystem->StartMicStreamingJob( _streamingData.args.streamType );
+    MicDataSystem::CloudStreamResponseCallback callback = std::bind( &MicStreamingController::OnCloudStreamResponseCallback,
+                                                                     this,
+                                                                     std::placeholders::_1 );
+
+    _streamingData.streamJobCreated = _micDataSystem->StartMicStreamingJob( _streamingData.args.streamType, callback );
   }
   else
   {
@@ -307,13 +409,13 @@ void MicStreamingController::OnStreamingBegin()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MicStreamingController::OnStreamingEnd()
 {
+  // track the end time for both regular and simluated stream
+  _streamingData.streamEndTime = BaseStationTimer::getInstance()->GetCurrentTimeInNanoSeconds();
+
   // only need to kill the streaming job if we've created one
   if ( _streamingData.streamJobCreated )
   {
-    // if we timed out, we need to notify the cloud that we're no longer streaming
-    const bool shouldNotifyCloud = ( StreamingResult::Success != _streamingData.result );
-
-    _micDataSystem->StopMicStreamingJob( shouldNotifyCloud );
+    _micDataSystem->StopMicStreamingJob();
     _streamingData.streamJobCreated = false;
   }
   else
@@ -322,6 +424,41 @@ void MicStreamingController::OnStreamingEnd()
   }
 
   NotifyStreamingStateChangedCallbacks( false );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MicStreamingController::OnCloudStreamResponseCallback( MicStreamResult reason )
+{
+  if ( IsInStreamingState() )
+  {
+    // if our stream finished properly, transition out of our streaming state
+    // this allows some extra time for the intent to make it's way to the behavior before we kill the stream
+    if ( MicStreamResult::Success == reason )
+    {
+      TransitionToState( MicStreamState::TransitionOut );
+    }
+    else
+    {
+      // there was some sort of error, so kill the stream
+      StopCurrentMicStreaming( reason );
+    }
+  }
+  else
+  {
+    LOG_WARNING( "MicStreamingController.OnCloudStreamResponseCallback",
+                 "Received StreamComplete callback but not in the Streaming state" );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool MicStreamingController::ShouldSimulateWakeWordStreaming() const
+{
+  ShowAudioStreamStateManager* streamAnimManager = _animContext->GetShowAudioStreamStateManager();
+
+  const bool simulationRequested = streamAnimManager->ShouldSimulateStreamAfterTriggerWord();
+  const bool isLowBattery = _micDataSystem->_batteryLow; // todo: jmeh - register for our own "battery callbacks"
+
+  return ( isLowBattery || simulationRequested );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -351,20 +488,6 @@ void MicStreamingController::NotifyStreamingStateChangedCallbacks( bool streamSt
     {
       func( streamStarted );
     }
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const char* MicStreamingController::GetStateString( MicState state ) const
-{
-  switch ( state )
-  {
-    case MicState::Listening:
-      return "Listening";
-    case MicState::TransitionToStreaming:
-      return "TransitionToStreaming";
-    case MicState::Streaming:
-      return "Streaming";
   }
 }
 

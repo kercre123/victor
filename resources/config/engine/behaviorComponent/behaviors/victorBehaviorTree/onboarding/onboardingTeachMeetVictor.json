@@ -40,8 +40,6 @@
       "backpackLights"          : false,
 
       "behaviorOnIntent"        : "ReactToTriggerDirectionAwake",
-      
-      "exitAfterListeningIfNotStreaming" : true,
 
       "whiteListedIntents" : [
         {

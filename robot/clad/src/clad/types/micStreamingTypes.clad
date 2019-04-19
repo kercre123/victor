@@ -1,0 +1,24 @@
+// Mic data streaming types required to sync between anim and engine processes
+//
+// Copyright: Anki Inc (c) 2019
+
+namespace Anki {
+namespace Vector {
+
+enum uint_8 MicStreamState {
+  Listening,        // this is our general state when nothing is currently streaming, listening for a wakeword
+  TransitionIn,     // we play a get-in animation/audio on the anim process to kick off the reation asap
+  Streaming,        // at this point we either have an open stream to the cloud, or we're simulating one
+  TransitionOut,    // after our stream has timed out, we allow some extra time for the cloud to get back to us
+}
+
+enum uint_8 MicStreamResult
+{
+  Success,
+  Canceled,
+  Timeout,
+  Error
+}
+
+} // namespace Vector
+} // namespace Anki

@@ -137,10 +137,6 @@ public:
   void SetBatteryLowStatus( bool isLow ) { _batteryLow = isLow; }
   void SetEnableDataCollectionSettings( bool isEnable ) { _enableDataCollection = isEnable; }
 
-  // simulated streaming is when we make everything look like we're streaming normally, but we're not actually
-  // sending any data to the cloud; this lasts for a set duration
-  bool ShouldSimulateStreaming() const;
-
   MicStreamingController& GetMicStreamingController() { return _micStateController; }
 
 
@@ -223,19 +219,30 @@ private:
   //     data is bad
   friend class MicStreamingController;
 
+  void OnTriggerWordDetected(const AudioUtil::SpeechRecognizerCallbackInfo&);
+
   // These streaming related data and functions that are manipulated via MicStreamingController ...
   // Do not call these from anywhere else unless you know what you're doing
 
   // creates the trigger word detected audio job (recording)
   void StartTriggerWordDetectedJob();
   // creates the mic streaming job and then preps the system for streaming said job
-  bool StartMicStreamingJob(CloudMic::StreamType streamType);
+  using CloudStreamResponseCallback = std::function<void(MicStreamResult)>;
+  bool StartMicStreamingJob(CloudMic::StreamType streamType, CloudStreamResponseCallback callback);
   // stops the current mic streaming job
-  void StopMicStreamingJob(bool shouldNotifyCloud);
+  void StopMicStreamingJob();
 
   // this will send our latest mic streaming job data up to the cloud
   // returns the number of audio chunks we've streamed so far
   size_t SendLatestMicStreamingJobDataToCloud();
+
+
+  // have we told the cloud that we've started a stream or not?
+  // this is so we can tell the cloud when we're done
+  bool _cloudStreamOpen = false;
+
+  // callback for when the cloud stream is finished
+  CloudStreamResponseCallback _cloudStreamResponseCallback;
 
   // this is the MicDataInfo job that we're currently streaming (a.k.a. mic streaming job referred to above)
   std::shared_ptr<MicDataInfo> _currentStreamingJob;

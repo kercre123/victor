@@ -18,10 +18,16 @@
 
 #include "micDataTypes.h"
 #include "coretech/common/shared/types.h"
+#include "clad/types/micStreamingTypes.h"
 #include "clad/cloud/mic.h"
 
 
 namespace Anki {
+
+  namespace AudioUtil {
+    struct SpeechRecognizerCallbackInfo;
+  }
+
 namespace Vector {
 
   namespace Anim {
@@ -67,22 +73,30 @@ public:
     _streamingStateChangedCallbacks.push_back(callback);
   }
 
+  bool CanStartWakeWordStream() const;
+
+  // this kicks off a new streaming job specific to receiving a wakeword event
+  // call this when detecting the wakeword or when wanting to simulate hearing it (eg. button press)
+  enum class WakeWordSource
+  {
+    Voice,
+    Button,
+    ButtonFromMute,
+  };
+  bool StartWakeWordStream( WakeWordSource, const AudioUtil::SpeechRecognizerCallbackInfo* = nullptr );
+
 
   // are we allowed to start a new stream at this time
   // limit to one stream at a time
-  // must have appropriate "permission" from the engine
-  bool CanStartNewMicStream() const;
+  // Note: if this returns true, then a call to StartOpenMicStream(...) is guaranteed to be successful
+  bool CanStartOpenMicStream() const;
 
   // this kicks off the start of a new streaming job
+  // CloudMic::StreamType - what type of stream is this
+  // bool - should we attempt to play the get-in animation or not
   // returns true if the process was started successfully, false otherwise (eg. we're already streaming)
-  struct StreamingArguments
-  {
-    CloudMic::StreamType      streamType; // what type of stream is this
-    bool                      shouldPlayTransitionAnim; // attempt to play the get-in animation or not
-    bool                      shouldRecordTriggerWord;
-    bool                      isSimulated = false;
-  };
-  bool StartNewMicStream( StreamingArguments args );
+  bool StartOpenMicStream( CloudMic::StreamType streamType, bool shouldPlayTransitionAnim );
+
 
   // kick off a new streaming job, bypassing any safety checks, and setting default parameters
   // this is meant to be kicked off from the cloud, but could be used whenever we want to force a stream for testing
@@ -90,20 +104,11 @@ public:
   void StartCloudTestStream();
 
   // this ends the current streaming job and cleans up any state needed so that we are ready to begin a new stream
-  enum class StreamingResult
-  {
-    Success,
-    Timeout,
-    Error
-  };
-  void StopCurrentMicStreaming( StreamingResult reason );
+  void StopCurrentMicStreaming( MicStreamResult reason );
 
-  // returns true if we kicked off the process of starting a new streaming job by calling StartNewMicStream(...)
-  // this includes actively streaming, as well as the transition animations into streaming
-  bool HasStreamingBegun() const { return ( MicState::Listening != _state ); }
-  // returns true if we are actively in the midst of streaming mic data to the cloud
-  // does not include the transition animations into streaming
-  bool IsActivelyStreaming() const { return ( MicState::Streaming == _state ); }
+  // returns true if we kicked off the process of starting a new streaming job by calling StartOpenMicStream(...)
+  // this includes actively streaming, as well as the transition animations in/our streaming
+  bool HasStreamingBegun() const { return ( MicStreamState::Listening != _state ); }
 
 
 private:
@@ -111,20 +116,22 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Structs and Enums ...
 
-  enum class MicState : uint8_t
+  struct StreamingArguments
   {
-    Listening,
-    TransitionToStreaming,
-    Streaming,
+    CloudMic::StreamType    streamType                = CloudMic::StreamType::Normal;
+    bool                    shouldPlayTransitionAnim  = false;
+    bool                    shouldRecordTriggerWord   = false;
+    bool                    isSimulated               = false;
   };
 
   struct StreamData
   {
     StreamingArguments      args;
 
-    BaseStationTime_t       streamBeginTime   = 0;
-    bool                    streamJobCreated  = false;
-    StreamingResult         result            = StreamingResult::Success;
+    BaseStationTime_t       streamBeginTime           = 0;
+    BaseStationTime_t       streamEndTime             = 0;
+    bool                    streamJobCreated          = false;
+    MicStreamResult         result                    = MicStreamResult::Success;
   };
 
 
@@ -132,12 +139,12 @@ private:
   // Helper Functions ...
 
   // kicks off the streaming process
-  // this assumes all checks and requirements have already been taken care of (eg. CanStartNewMicStream())
-  void StartStreamInternal( StreamData streamData );
+  // this assumes all checks and requirements have already been taken care of (eg. !HasStreamingBegun())
+  void StartStreamInternal( StreamingArguments args );
 
   // starts the transition from the current state to the specified state
   // use this function to move throughout the states
-  void TransitionToState( MicState nextState );
+  void TransitionToState( MicStreamState nextState );
 
   // called whenever each "event" is hit, generally through state transition
   void OnStreamingTransitionBegin();
@@ -150,11 +157,23 @@ private:
   // this tells all of our callbacks that streaming has either started or stopped
   void NotifyStreamingStateChangedCallbacks( bool streamStarted ) const;
 
-  bool CanStreamToCloud() const;
+  // simulated streaming is when we make everything look like we're streaming normally, but we're not actually
+  // sending any data to the cloud
+  bool ShouldSimulateWakeWordStreaming() const;
   bool IsStreamSimulated() const { return _streamingData.args.isSimulated; }
+  bool CanStreamToCloud() const;
+
+  // returns true if we are in the streaming state (ignores transitional states)
+  // note: this also includes simulated streaming state
+  bool IsInStreamingState() const { return ( MicStreamState::Streaming == _state ); }
+  // returns true if we're in the post-stream state, waiting for the engine to recieve it's data
+  bool IsWaitingForCloudResponse() const { return ( MicStreamState::TransitionOut == _state ); }
+
+  // this is called when the cloud let's us know that it's no longer streaming
+  void OnCloudStreamResponseCallback( MicStreamResult reason );
 
   // debug state strings
-  const char* GetStateString( MicState state ) const;
+  inline const char* WakeWordSourceToString( WakeWordSource source ) const;
 
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -163,12 +182,26 @@ private:
   MicDataSystem*            _micDataSystem    = nullptr;
   const Anim::AnimContext*  _animContext      = nullptr;
 
-  MicState                  _state            = MicState::Listening;
+  MicStreamState            _state            = MicStreamState::Listening;
   StreamData                _streamingData;
 
   std::vector<OnTriggerWordDetectedCallback>  _triggerWordDetectedCallbacks;
   std::vector<OnStreamingStateChanged>        _streamingStateChangedCallbacks;
 };
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const char* MicStreamingController::WakeWordSourceToString( WakeWordSource source ) const
+{
+  switch ( source )
+  {
+    case WakeWordSource::Voice:
+      return "Voice";
+    case WakeWordSource::Button:
+      return "Button";
+    case WakeWordSource::ButtonFromMute:
+      return "ButtonFromMute";
+  }
+}
 
 } // namespace MicData
 } // namespace Vector

@@ -28,6 +28,7 @@
 #include "cozmoAnim/faceDisplay/faceDisplay.h"
 #include "cozmoAnim/faceDisplay/faceInfoScreenManager.h"
 #include "cozmoAnim/micData/micDataSystem.h"
+#include "cozmoAnim/micData/micStreamingController.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
@@ -434,6 +435,16 @@ void Process_setTriggerWordResponse(const Anki::Vector::RobotInterface::SetTrigg
   }
 
   showStreamStateManager->SetTriggerWordResponse(msg);
+}
+
+void Process_stopCurrentMicStream(const Anki::Vector::RobotInterface::StopCurrentMicStream& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if(micDataSystem == nullptr){
+    return;
+  }
+
+  micDataSystem->GetMicStreamingController().StopCurrentMicStreaming( msg.reason );
 }
 
 void Process_setAlexaUXResponses(const Anki::Vector::RobotInterface::SetAlexaUXResponses& msg)

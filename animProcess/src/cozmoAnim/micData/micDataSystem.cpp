@@ -150,27 +150,10 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
 void MicDataSystem::Init(const Anim::RobotDataLoader& dataLoader)
 {
   // SpeechRecognizerSystem
-  SpeechRecognizerSystem::TriggerWordDetectedCallback callback = [this] (const AudioUtil::SpeechRecognizerCallbackInfo& info) {
-    
- #if ANKI_DEV_CHEATS
-    SendTriggerDetectionToWebViz(info, {});
-    if (kSuppressTriggerResponse) {
-      return;
-    }
-#endif
-    
-    if( _alexaState == AlexaSimpleState::Active ) {
-      // Don't run "hey vector" when alexa is in the middle of an interaction, or if the mic is muted
-      return;
-    }
-    
-    // saying "hey vector" should exit certain alexa debug screens and cancel auth. FaceInfoScreen isn't
-    // currently set up to handle threads, so set a flag that is handled in Update()
-    _abortAlexaScreenDueToHeyVector = true;
-    
-    _micDataProcessor->VoiceTriggerWordDetection( info );
-    SendRecognizerDasLog( info, nullptr );
-  };
+  SpeechRecognizerSystem::TriggerWordDetectedCallback callback = std::bind(&MicDataSystem::OnTriggerWordDetected,
+                                                                           this,
+                                                                           std::placeholders::_1);
+
   _speechRecognizerSystem->InitVector(dataLoader, _locale, callback);
   _micDataProcessor->Init();
 
@@ -214,24 +197,36 @@ void MicDataSystem::RecordProcessedAudio(uint32_t duration_ms, const std::string
   RecordAudioInternal(duration_ms, path, MicDataType::Processed, false);
 }
 
+void MicDataSystem::OnTriggerWordDetected(const AudioUtil::SpeechRecognizerCallbackInfo& info)
+{
+  #if ANKI_DEV_CHEATS
+  SendTriggerDetectionToWebViz(info, {});
+  if (kSuppressTriggerResponse) {
+    return;
+  }
+  #endif
+
+  if( _alexaState == AlexaSimpleState::Active ) {
+    // Don't run "hey vector" when alexa is in the middle of an interaction, or if the mic is muted
+    return;
+  }
+
+  // saying "hey vector" should exit certain alexa debug screens and cancel auth. FaceInfoScreen isn't
+  // currently set up to handle threads, so set a flag that is handled in Update()
+  _abortAlexaScreenDueToHeyVector = true;
+
+  _micStateController.StartWakeWordStream(MicStreamingController::WakeWordSource::Voice, &info);
+  SendRecognizerDasLog( info, nullptr );
+}
+
 void MicDataSystem::StartWakeWordlessStreaming(CloudMic::StreamType type, bool playGetInFromAnimProcess)
 {
   // if we can start a new stream, go ahead and do that now
   // the streaming controller will handle the rest for us
-  if( _micStateController.CanStartNewMicStream() )
-  {
-    MicStreamingController::StreamingArguments args =
-    {
-      .streamType                 = type,
-      .shouldPlayTransitionAnim   = playGetInFromAnimProcess,
-      .shouldRecordTriggerWord    = false,
-    };
-    _micStateController.StartNewMicStream( args );
-  }
-  else
+  if ( !_micStateController.StartOpenMicStream( type, playGetInFromAnimProcess ) )
   {
     LOG_INFO( "MicDataSystem.StartWakeWordlessStreaming",
-              "Trying to start a new streaming job while one is already active ... ignoring this request" );
+             "Trying to start a new streaming job while one is already active ... ignoring this request" );
   }
 }
 
@@ -265,7 +260,9 @@ void MicDataSystem::FakeTriggerWordDetection()
     // This next check is probably not necessary, but for symmetry, the hey vector button press shouldn't trigger
     // if alexa is in the middle of an interaction
     if( _alexaState != AlexaSimpleState::Active ) {
-      _micDataProcessor->FakeTriggerWordDetection( wasMuted );
+      MicStreamingController::WakeWordSource source = wasMuted ? MicStreamingController::WakeWordSource::ButtonFromMute :
+                                                                 MicStreamingController::WakeWordSource::Button;
+      _micStateController.StartWakeWordStream(source);
     }
   }
 }
@@ -342,7 +339,11 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
 
       case CloudMic::MessageTag::stopSignal:
         LOG_INFO("MicDataSystem.Update.RecvCloudProcess.StopSignal", "");
-        _micStateController.StopCurrentMicStreaming(MicStreamingController::StreamingResult::Success);
+        _cloudStreamOpen = false;
+        if (_cloudStreamResponseCallback)
+        {
+          _cloudStreamResponseCallback(MicStreamResult::Success);
+        }
         break;
 
       #if ANKI_DEV_CHEATS
@@ -381,8 +382,13 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       }
 
       default:
-        // note(jmeh): should this be an error?  (It wasn't previously)
-        _micStateController.StopCurrentMicStreaming( MicStreamingController::StreamingResult::Success );
+        _cloudStreamOpen = false;
+        if (_cloudStreamResponseCallback)
+        {
+          _cloudStreamResponseCallback(MicStreamResult::Error);
+        }
+        LOG_INFO("MicDataSystem.Update.RecvCloudProcess", "Received unhandled message from cloud server (%s)",
+                 MessageTagToString(msg.GetTag()));
         break;
     }
   }
@@ -555,12 +561,14 @@ void MicDataSystem::StartTriggerWordDetectedJob()
   }
 }
 
-bool MicDataSystem::StartMicStreamingJob(CloudMic::StreamType streamType)
+bool MicDataSystem::StartMicStreamingJob(CloudMic::StreamType streamType, CloudStreamResponseCallback callback)
 {
   if (!_currentStreamingJob)
   {
     if (_udpServer->HasClient())
     {
+      _cloudStreamResponseCallback = std::move(callback);
+
       // create the mic job that will record our audio that we will then stream to the cloud
       _currentStreamingJob = _micDataProcessor->CreateStreamingJob(streamType, kTriggerLessOverlapSize_ms);
       AddMicDataJob(_currentStreamingJob);
@@ -571,6 +579,7 @@ bool MicDataSystem::StartMicStreamingJob(CloudMic::StreamType streamType)
       // Send out the message announcing the trigger word has been detected
       auto hw = CloudMic::Hotword{ streamType, _locale.ToString(), _timeZone, !_enableDataCollection };
       SendUdpMessage(CloudMic::Message::Createhotword(std::move(hw)));
+      _cloudStreamOpen = true;
 
       LOG_INFO( "MicDataSystem.StartMicStreamingJob", "Mic streaming job started" );
       return true;
@@ -589,8 +598,10 @@ bool MicDataSystem::StartMicStreamingJob(CloudMic::StreamType streamType)
   }
 }
 
-void MicDataSystem::StopMicStreamingJob(bool shouldNotifyCloud)
+void MicDataSystem::StopMicStreamingJob()
 {
+  _cloudStreamResponseCallback = nullptr;
+
   if (_currentStreamingJob)
   {
     std::lock_guard<std::recursive_mutex> lock(_dataRecordJobMutex);
@@ -599,7 +610,7 @@ void MicDataSystem::StopMicStreamingJob(bool shouldNotifyCloud)
     _currentStreamingJob = nullptr;
 
     // let the cloud know that we're done streaming if we ended it on our side
-    if (shouldNotifyCloud && _udpServer->HasClient())
+    if (_cloudStreamOpen && _udpServer->HasClient())
     {
       SendUdpMessage(CloudMic::Message::CreateaudioDone({}));
     }
@@ -609,6 +620,8 @@ void MicDataSystem::StopMicStreamingJob(bool shouldNotifyCloud)
     LOG_ERROR("MicDataSystem.StopMicStreamingJob",
               "Attempting to stop a mic streaming job when no job has been created");
   }
+
+  _cloudStreamOpen = false;
 
   LOG_INFO( "MicDataSystem.StopMicStreamingJob", "Mic streaming job stopped" );
   ResetMicListenDirection();
@@ -718,7 +731,7 @@ void MicDataSystem::SetAlexaState(AlexaSimpleState state)
       }
 #endif
       
-      if( ignore || _micStateController.IsActivelyStreaming() ) {
+      if( ignore || _micStateController.HasStreamingBegun() ) {
         // Don't run alexa wakeword if
         // 1. there's a "hey vector" streaming job
         // 2. if the mic is muted
@@ -851,17 +864,6 @@ bool MicDataSystem::IsSpeakerPlayingAudio() const
 bool MicDataSystem::HasConnectionToCloud() const
 {
   return _udpServer->HasClient();
-}
-
-bool MicDataSystem::ShouldSimulateStreaming() const
-{
-  if( _batteryLow ) {
-    return true;
-  } else {
-    ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
-    const bool fakeIt = showStreamState->ShouldSimulateStreamAfterTriggerWord();
-    return fakeIt;
-  }
 }
 
 void MicDataSystem::RequestConnectionStatus()

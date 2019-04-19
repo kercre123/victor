@@ -18,6 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
 #include "engine/components/backpackLights/engineBackpackLightComponentTypes.h"
 #include "engine/components/mics/micDirectionTypes.h"
+#include "engine/components/mics/micStreamingComponentTypes.h"
 #include "engine/engineTimeStamp.h"
 
 namespace Anki {
@@ -88,8 +89,6 @@ protected:
   virtual void InitBehavior() override;
   virtual void GetAllDelegates( std::set<IBehavior*>& delegates ) const override;
 
-  virtual void AlwaysHandleInScope( const RobotToEngineEvent& event ) override;
-
   virtual void OnBehaviorEnteredActivatableScope() override;
   virtual void OnBehaviorActivated() override;
   virtual void OnBehaviorDeactivated() override;
@@ -104,12 +103,9 @@ protected:
   void StartListening();
   void StopListening();
 
+  void TransitionToListeningLoop();
   void TransitionToThinking();
   void TransitionToIntentReceived();
-
-  // coincide with the beginning of the stream being opened
-  void OnStreamingBegin();
-  void OnStreamingEnd();
 
   // this is the state when victor is "listening" for the users intent
   // and should therefore cue the user to speak
@@ -117,6 +113,11 @@ protected:
   void OnVictorListeningEnd();
 
   void HandleStreamFailure();
+
+  bool OnStreamingEventDetected( StreamingEvent, StreamingEventData );
+  void OnStreamingBegin();
+  void OnStreamingEnd();
+
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Direction Helpers
@@ -128,12 +129,8 @@ protected:
   MicDirectionIndex GetReactionDirection() const;
   // get the "best recent" direction from the mic history
   MicDirectionIndex GetDirectionFromMicHistory() const;
-  
-  // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-  // Time Helpers
 
-  double GetStreamingDuration() const;
-  double GetListeningTimeout() const;
+  bool IsTurnEnabled() const;
 
 
 private:
@@ -156,13 +153,6 @@ private:
 
     bool backpackLights;
     
-    bool exitAfterGetIn;
-    
-    // If we are not streaming audio to the cloud, then this causes the behavior to exit after playing the "unheard"
-    // animation. This is to prevent the accumulation of "errors" due to unreceived intents (we would not expect any
-    // intents to come down if we are not streaming)
-    bool exitAfterListeningIfNotStreaming;
-
     // response behavior to hearing the trigger word (or intent)
     std::string reactionBehaviorString;
     std::shared_ptr<BehaviorReactToMicDirection> reactionBehavior;
@@ -203,8 +193,6 @@ private:
 
     EIntentStatus             intentStatus;
     EngineTimeStamp_t         timestampToDisableTurnFor;
-
-    bool                      expectingStream;
     
     struct Persistent {
 
@@ -218,10 +206,12 @@ private:
     Persistent persistent;
   } _dVars;
 
-  // these are dynamic vars that live beyond the activation scope ...
-  MicDirectionIndex         _triggerDirection;
 
-  bool IsTurnEnabled() const;
+  // these are dynamic vars that live beyond the activation scope ...
+
+  // trigger word event related data
+  bool                      triggerWordDetected;
+  StreamEventTriggerWord    triggerWordData;
 
 }; // class BehaviorReactToVoiceCommand
 
