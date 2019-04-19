@@ -39,7 +39,7 @@ namespace Util{
  * The startup process needs to remove the run/SharedCircularBuffer directory
  */ 
 
-static const uint64_t header_magic_num = 0x08675309deadbeef;
+static const uint64_t header_magic_num = 0x08675309;
 
 typedef enum {
   GET_STATE_OKAY = 0,
@@ -54,7 +54,7 @@ public:
       _name(name),
       _initted(false),
       _owner(owner),
-      _offset(-1)
+      _offset(N-1)
   {
     Init();
   }
@@ -154,7 +154,7 @@ private:
     }
 
     if(_owner) {
-      _buffer->queued_count = 0;
+      _buffer->queued_count = N-1;
       _buffer->reader_count = 0;
       _buffer->header_magic_num = header_magic_num;
     } else {
