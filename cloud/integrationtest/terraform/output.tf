@@ -1,3 +1,4 @@
 output "admin_address" {
-  value = "${aws_instance.admin.public_dns}"
+  description = "Public DNS for the admin host"
+  value       = "${aws_instance.admin.public_dns}"
 }

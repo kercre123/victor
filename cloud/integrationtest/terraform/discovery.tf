@@ -9,10 +9,12 @@ resource "aws_service_discovery_service" "redis" {
 
   dns_config {
     namespace_id = "${aws_service_discovery_private_dns_namespace.redis.id}"
+
     dns_records {
-      ttl = 10
+      ttl  = 10
       type = "A"
     }
+
     routing_policy = "MULTIVALUE"
   }
 
@@ -26,10 +28,12 @@ resource "aws_service_discovery_service" "wavefront" {
 
   dns_config {
     namespace_id = "${aws_service_discovery_private_dns_namespace.redis.id}"
+
     dns_records {
-      ttl = 10
+      ttl  = 10
       type = "A"
     }
+
     routing_policy = "MULTIVALUE"
   }
 

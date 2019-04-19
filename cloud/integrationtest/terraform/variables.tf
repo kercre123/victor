@@ -1,16 +1,17 @@
 variable "region" {
-  default = "us-west-2"
+  description = "Deployment region"
+  default     = "us-west-2"
 }
 
 // Note: Oregon (us-west-2) has three availability zones
 variable "az_count" {
   description = "Number of AZs to use for deployment (maximize AZs per region)"
-  default = 3
+  default     = 3
 }
 
 variable "robots_per_process" {
   description = "Number of robot instances per load test Docker container"
-  default = 100
+  default     = 100
 }
 
 // Note: maximum number of container instances (tasks) per cluster: 1000
@@ -18,27 +19,25 @@ variable "robots_per_process" {
 //       robot task instances -> total = instance_count * service_count
 variable "instance_count" {
   description = "Number of load test Docker containers per Fargate cluster"
-  default = 0
+  default     = 0
 }
 
 // Note: number of tasks using the Fargate launch type, per region, per account: 20 (ECS=1000)
 variable "service_count" {
   description = "Number of load test services running per Fargate cluster"
-  default = 1
-}
-
-variable "app_image" {
-  default = "649949066229.dkr.ecr.us-west-2.amazonaws.com/load_test:latest"
+  default     = 1
 }
 
 variable "logging" {
-  type    = "map"
+  description = "Splunk logging related settings"
+  type        = "map"
+
   default = {
-    role = "arn:aws:iam::792379844846:role/cross-account-kinesis-logging-loadtest"
-    source = "robot_fleet"
-    stream = "splunk_logs_loadtest"
-    index = "sai_loadtest"
-    type = "kinesis"
+    role        = "arn:aws:iam::792379844846:role/cross-account-kinesis-logging-loadtest"
+    source      = "robot_fleet"
+    stream      = "splunk_logs_loadtest"
+    index       = "sai_loadtest"
+    type        = "kinesis"
     source_type = "sai_go_general"
   }
 }
@@ -49,11 +48,13 @@ variable "logging" {
 //    = (instance_count + (reporting_tasks * num_periodic_actions * datapoints_per_action)) / reporting_interval
 //    = (998 + 3 * 5 * 15) / 30 = 40 datapoints per second
 variable "wavefront" {
-  type    = "map"
+  description = "Wavefront monitoring related settings"
+  type        = "map"
+
   default = {
-    token = "DUMMY_WF_URL_API_TOKEN"
-    url = "https://metrics.wavefront.com/api"
-    reporting_tasks = 3
+    token              = "DUMMY_WF_URL_API_TOKEN"
+    url                = "https://metrics.wavefront.com/api"
+    reporting_tasks    = 3
     reporting_interval = "30s"
   }
 }
@@ -69,30 +70,33 @@ variable "enable_distributed_control" {
 }
 
 variable "timer_params" {
-  type    = "map"
+  description = "Test action related statistical settings (intervals and standard deviations)"
+  type        = "map"
+
   default = {
     "heart_beat_interval" = "0s"
-    "heart_beat_stddev" = "0s"
+    "heart_beat_stddev"   = "0s"
 
     "jdocs_interval" = "5m"
-    "jdocs_stddev" = "3m"
+    "jdocs_stddev"   = "3m"
 
     "log_collector_interval" = "10m"
-    "log_collector_stddev" = "4m"
+    "log_collector_stddev"   = "4m"
 
     "token_refresh_interval" = "0s"
-    "token_refresh_stddev" = "0s"
+    "token_refresh_stddev"   = "0s"
 
     "connection_check_interval" = "10m"
-    "connection_check_stddev" = "5m"
+    "connection_check_stddev"   = "5m"
   }
 }
 
 variable "ramp_durations" {
   description = "Duration for robots (across all containers) to ramp up/down (Go time.Duration format)"
-  type    = "map"
+  type        = "map"
+
   default = {
-    "up" = "15m"
+    "up"   = "15m"
     "down" = "0s"
   }
 }

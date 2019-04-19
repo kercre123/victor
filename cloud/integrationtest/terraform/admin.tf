@@ -1,21 +1,21 @@
 resource "aws_security_group" "admin" {
-  name        = "loadtest_admin"
-  vpc_id      = "${aws_vpc.main.id}"
+  name   = "loadtest_admin"
+  vpc_id = "${aws_vpc.main.id}"
 
   description = "Allow SSH access from Anki Office IPs only"
 
   ingress {
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
+    from_port = 22
+    to_port   = 22
+    protocol  = "tcp"
+
     cidr_blocks = [
       "4.15.77.82/32",
       "173.46.64.74/32",
       "173.46.64.90/32",
-      "4.15.74.6/32"
+      "4.15.74.6/32",
     ]
   }
-
 
   egress {
     protocol    = "-1"
@@ -51,14 +51,14 @@ resource "aws_iam_instance_profile" "admin_instance_profile" {
 }
 
 resource "aws_instance" "admin" {
-  ami           = "${data.aws_ami.ubuntu.id}"
-  instance_type = "t2.micro"
+  ami                  = "${data.aws_ami.ubuntu.id}"
+  instance_type        = "t2.micro"
   iam_instance_profile = "${aws_iam_instance_profile.admin_instance_profile.id}"
 
-  vpc_security_group_ids = ["${aws_security_group.admin.id}"]
+  vpc_security_group_ids      = ["${aws_security_group.admin.id}"]
   associate_public_ip_address = true
-  key_name = "load_test"
-  subnet_id = "${aws_subnet.public.0.id}" // TODO: is this notation ok?
+  key_name                    = "load_test"
+  subnet_id                   = "${aws_subnet.public.0.id}"        // TODO: is this notation ok?
 
   tags {
     Name = "load_test_admin"
