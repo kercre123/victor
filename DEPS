@@ -18,10 +18,6 @@
         "default_usr": "ankibuildserver",
         "pwd": "FoDmKuxMUjsmNhA49BnWysEfVLWaLdGY",
         "repo_names": {
-            "anki-thirdparty": {
-                "branch": "branches/victor",
-                "version": "209"
-            },
             "victor-animation-assets": {
                 "additional_files": [
                     "${PROJECT_ROOT_DIR}/resources/config/engine/animations/"
