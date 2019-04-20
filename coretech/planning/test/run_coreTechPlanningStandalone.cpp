@@ -59,7 +59,7 @@ int main(int argc, char *argv[])
 
   std::string contextFilenameBase;
 
-  static struct option opts[] = {
+  struct option opts[] = {
     {"help", no_argument, 0, 'h'},
     {"mprim", required_argument, 0, 'p'},
     {"manual", no_argument, &doManualPlanner, 1},
