@@ -24,7 +24,7 @@
 
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 namespace {
   unsigned int kTicksPerGameUpdate = 1;
@@ -113,7 +113,7 @@ void BehaviorSnakeGame::BehaviorUpdate()
       _dVars.lost = true;
       CancelDelegates(false);
       // lost. play an animation and end
-      auto* newAction = new TriggerLiftSafeAnimationAction( AnimationTrigger::MajorFail );
+      auto* newAction = new TriggerLiftSafeAnimationAction( AnimationTrigger::AudioOnlyHuh );
       DelegateIfInControl(newAction, [this](ActionResult result) {
         CancelSelf();
       });

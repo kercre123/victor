@@ -21,7 +21,7 @@ namespace Vision {
 class Image;
 }
   
-namespace Cozmo {
+namespace Vector {
   
 class SnakeGame;
 class SnakeGameSolver;
@@ -39,6 +39,7 @@ protected:
 
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override ;
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
   
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;

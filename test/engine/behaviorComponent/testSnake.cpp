@@ -20,7 +20,7 @@
 #include "util/random/randomGenerator.h"
 
 using namespace Anki;
-using namespace Anki::Cozmo;
+using namespace Anki::Vector;
 
 #define TEST_PRINT_SNAKE_GAME 0
 void PrintGame(const SnakeGame& game, int k)

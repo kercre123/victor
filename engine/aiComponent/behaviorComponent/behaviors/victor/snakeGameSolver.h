@@ -17,7 +17,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/victor/snakeGame.h"
 
 namespace Anki {
-namespace Cozmo {
+namespace Vector {
   
 
 class SnakeGameSolver
