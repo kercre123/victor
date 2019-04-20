@@ -41,6 +41,9 @@ const char* kYPosKey          = "yPos";
 const char* kWidthKey         = "width";
 const char* kHeightKey        = "height";
 
+// Legacy support
+const char* kFaceKeyFrameAssetNameKey = "animName";
+
 // Fwd declare local helper
 bool GetFrameFromSpriteSequenceHelper(const Vision::SpriteSequence& sequence,
                                       const uint16_t frameIdx,
@@ -111,6 +114,54 @@ Result SpriteBoxCompositor::AddKeyFrame(const Json::Value& json, const std::stri
   newKeyFrame.spriteBox.spriteSeqEndType = Vision::SpriteSeqEndTypeFromString(
     JsonTools::ParseString(json, kSpriteSeqEndKey, animName));
   return AddKeyFrameInternal(std::move(newKeyFrame));
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result SpriteBoxCompositor::AddFullFaceSpriteSeq(const CozmoAnim::FaceAnimation* faceAnimationKeyFrame,
+                                                 const Vision::SpriteSequenceContainer& spriteSeqContainer)
+{
+  return AddFullFaceSpriteSeqInternal(Vision::SpritePathMap::GetAssetID(faceAnimationKeyFrame->animName()->str()),
+                                      (u32)faceAnimationKeyFrame->triggerTime_ms(),
+                                      spriteSeqContainer);
+}
+
+ // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result SpriteBoxCompositor::AddFullFaceSpriteSeq(const Json::Value& json,
+                                                 const Vision::SpriteSequenceContainer& spriteSeqContainer,
+                                                 const std::string& animName)
+{
+  return AddFullFaceSpriteSeqInternal(
+    Vision::SpritePathMap::GetAssetID(JsonTools::ParseString(json, kFaceKeyFrameAssetNameKey, animName)),
+    JsonTools::ParseUInt32(json, kTriggerTimeKey, animName),
+    spriteSeqContainer);
+}
+
+ // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+Result SpriteBoxCompositor::AddFullFaceSpriteSeqInternal(const Vision::SpritePathMap::AssetID assetID,
+                                                         const TimeStamp_t triggerTime_ms,
+                                                         const Vision::SpriteSequenceContainer& spriteSeqContainer)
+{
+  Vision::SpriteBoxKeyFrame startKeyFrame;
+  startKeyFrame.triggerTime_ms = triggerTime_ms;
+  startKeyFrame.spriteBox.alpha = 100;
+  startKeyFrame.spriteBox.assetID = assetID;
+  startKeyFrame.spriteBox.xPos = 0;
+  startKeyFrame.spriteBox.yPos = 0;
+  startKeyFrame.spriteBox.width = FACE_DISPLAY_WIDTH;
+  startKeyFrame.spriteBox.height = FACE_DISPLAY_HEIGHT;
+  startKeyFrame.spriteBox.name = Vision::SpriteBoxName::SpriteBox_40;
+  startKeyFrame.spriteBox.layer = Vision::LayerName::Layer_10;
+  startKeyFrame.spriteBox.renderMethod = Vision::SpriteRenderMethod::RGBA;
+  startKeyFrame.spriteBox.spriteSeqEndType = Vision::SpriteSeqEndType::Clear;
+
+  Vision::SpriteBoxKeyFrame clearKeyFrame(startKeyFrame);
+  clearKeyFrame.spriteBox.assetID = Vision::SpritePathMap::kClearSpriteBoxID;
+  clearKeyFrame.triggerTime_ms += spriteSeqContainer.GetSpriteSequence(assetID)->GetNumFrames() * ANIM_TIME_STEP_MS;
+
+  if( Result::RESULT_OK == AddKeyFrameInternal(std::move(startKeyFrame)) ){
+    return AddKeyFrameInternal(std::move(clearKeyFrame));
+  }
+  return Result::RESULT_FAIL;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
