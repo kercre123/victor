@@ -211,7 +211,23 @@ stage("${primaryStageName} Build") {
             buildConfigMap[buildFlavor] = {
                 node('mac-slaves') {
                     def ghsb = new GithubStatusMsgBuilder(this, buildFlavor)
-                    gitCheckout(true, true)
+                    stage('Checkout SCM') {
+                        checkout([
+                            $class: 'GitSCM',
+                            branches: scm.branches,
+                            gitTool: 'homebrew-git',
+                            doGenerateSubmoduleConfigurations: scm.doGenerateSubmoduleConfigurations,
+                            extensions: [
+                                [$class: 'GitLFSPull'],
+                                [$class: 'CheckoutOption', timeout: 20]
+                            ],
+                            userRemoteConfigs: scm.userRemoteConfigs
+                        ])
+                    }
+                    stage('Update submodules') {
+                        sh 'git submodule update --init --recursive'
+                        sh 'git submodule update --recursive'
+                    }
                     withDockerEnv(isMacHost: true) {
                         try {
                             ghsb.postBuildStart()
