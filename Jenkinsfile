@@ -212,7 +212,7 @@ stage("${primaryStageName} Build") {
                 node('mac-slaves') {
                     def ghsb = new GithubStatusMsgBuilder(this, buildFlavor)
                     gitCheckout(true)
-                    withDockerEnv {
+                    withDockerEnv(isMacHost: true) {
                         try {
                             ghsb.postBuildStart()
                             buildPRStepsVicOS type: buildFlavor
@@ -238,9 +238,6 @@ stage("${primaryStageName} Build") {
                 dir("${workspace}@script") {
                     deleteDir()
                 }
-            }
-            stage('Detach ephemeral build agent from Jenkins') {
-                agent.Detach()
             }
         }
     }
