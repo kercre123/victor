@@ -6,9 +6,9 @@
 
   "behaviors": [
     "MandatoryPhysicalReactions",
-    "TriggerWordDetected",
     "SDKDefault",
     "SDKLock",
+    "TriggerWordDetected",
     "SingletonWallTimeCoordinator",
     "TimerUtilityCoordinator",
     "WeatherResponses",
