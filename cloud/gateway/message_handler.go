@@ -2891,6 +2891,13 @@ func ReadInt64FromFile(filename string, defaultValue int64) int64 {
 	return returnValue
 }
 
+const (
+	otaExitCodeNotAvailable  = int64(-1)
+	otaExitCodeSuccess       = int64(0)
+	otaExitCodeIOError       = int64(208)
+	otaExitCodeSocketTimeout = int64(215)
+)
+
 // GetUpdateStatus tells if the robot is ready to reboot and update.
 func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse, error) {
 	updateStatus := &extint.CheckUpdateStatusResponse{
@@ -2900,7 +2907,7 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 		UpdateStatus:  extint.CheckUpdateStatusResponse_NO_UPDATE,
 		Progress:      ReadInt64FromFile("/run/update-engine/progress", -1),
 		Expected:      ReadInt64FromFile("/run/update-engine/expected-size", -1),
-		ExitCode:      ReadInt64FromFile("/run/update-engine/exit_code", -1),
+		ExitCode:      ReadInt64FromFile("/run/update-engine/exit_code", otaExitCodeNotAvailable),
 		Error:         ReadStringFromFile("/run/update-engine/error", ""),
 		UpdatePhase:   ReadStringFromFile("/run/update-engine/phase", ""),
 		UpdateVersion: "",
@@ -2914,17 +2921,17 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 		}
 	}
 
-	// With one exception, an ExitCode > 0 means we encountered an error and need to
+	// With one exception, an ExitCode > otaExitCodeSuccess means we encountered an error and need to
 	// report it
-	if updateStatus.ExitCode > 0 {
+	if updateStatus.ExitCode > otaExitCodeSuccess {
 		updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_FAILURE_OTHER
 
 		// If we are in the 'download' phase, make our failure status more precise
 		// depending on the exit code
 		if updateStatus.UpdatePhase == "download" {
 			if updateStatus.Error == "Failed to open URL: <urlopen error [Errno -2] Name or service not known>" ||
-				updateStatus.ExitCode == 208 ||
-				updateStatus.ExitCode == 215 {
+				updateStatus.ExitCode == otaExitCodeIOError ||
+				updateStatus.ExitCode == otaExitCodeSocketTimeout {
 				updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_FAILURE_INTERRUPTED_DOWNLOAD
 			}
 		}
@@ -2934,7 +2941,7 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 		if strings.Contains(updateStatus.Error, "Failed to open URL: HTTP Error 403: Forbidden") {
 			updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_NO_UPDATE
 			updateStatus.Error = ""
-			updateStatus.ExitCode = 0
+			updateStatus.ExitCode = otaExitCodeSuccess
 		}
 		return updateStatus, nil
 	}
@@ -2946,12 +2953,12 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 		updateStatus.UpdateStatus =
 			extint.CheckUpdateStatusResponse_READY_TO_REBOOT_INTO_NEW_OS_VERSION
 		updateStatus.Error = ""
-		updateStatus.ExitCode = 0
+		updateStatus.ExitCode = otaExitCodeSuccess
 		return updateStatus, nil
 	}
 
 	// If we don't have an exit code yet, we are in progress
-	if updateStatus.ExitCode == -1 {
+	if updateStatus.ExitCode == otaExitCodeNotAvailable {
 		updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_IN_PROGRESS_STARTING
 		// If we don't have an exit code, we should not report an error until we do
 		updateStatus.Error = ""
@@ -3042,7 +3049,7 @@ func (service *rpcService) UpdateStatusStream() {
 		// sending status updates as we will just be repeating ourselves.  We could
 		// probably stop after a single update, but the smartphone app doesn't seem
 		// to display the very first status change it receives.
-		if status.ExitCode != -1 && updateStarted {
+		if status.ExitCode != otaExitCodeNotAvailable && updateStarted {
 			break
 		}
 		updateStarted = true
