@@ -211,7 +211,7 @@ stage("${primaryStageName} Build") {
             buildConfigMap[buildFlavor] = {
                 node('mac-slaves') {
                     def ghsb = new GithubStatusMsgBuilder(this, buildFlavor)
-                    withDockerEnv(isMacHost: true) {
+                    withDockerEnv(true) {
                         try {
                             checkout scm
                             stage('Update submodules') {
