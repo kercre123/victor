@@ -1,8 +1,8 @@
 cxx_project(
   name = 'switchboard',
-  srcs = cxx_src_glob(['switchboardd', 'bleClient', 'anki-wifi', 'signals', 'auto-test'],
+  srcs = cxx_src_glob(['switchboardd', 'bleClient', 'anki-wifi', 'signals', 'auto-test', 'blesh'],
     excludes = ['switchboardd/switchboardMain.cpp']),
-  headers = cxx_header_glob(['switchboardd', 'bleClient', 'anki-wifi', 'signals', 'auto-test'])
+  headers = cxx_header_glob(['switchboardd', 'bleClient', 'anki-wifi', 'signals', 'auto-test', 'blesh'])
 )
 
 cxx_project(

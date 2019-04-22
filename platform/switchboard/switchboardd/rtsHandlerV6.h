@@ -21,6 +21,7 @@
 #include "switchboardd/taskExecutor.h"
 #include "switchboardd/gatewayMessagingServer.h"
 #include "switchboardd/externalCommsCladHandlerV6.h"
+#include "blesh/blesh.h"
 #include "anki-wifi/wifi.h"
 
 #include <unordered_map>
@@ -153,8 +154,10 @@ private:
   std::vector<std::shared_ptr<SafeHandle>> _handles;
   std::unordered_map<std::string, std::string> _sdkRequestIds;
 
+  std::unique_ptr<Blesh> _blesh;
+
   //
-  // V3 Request to Listen for
+  // V6 Request to Listen for
   //
   Signal::SmartHandle _rtsConnResponseHandle;
   void HandleRtsConnResponse(const Vector::ExternalComms::RtsConnection_6& msg);
@@ -210,11 +213,17 @@ private:
   Signal::SmartHandle _rtsVersionListHandle;
   void HandleRtsVersionListRequest(const Vector::ExternalComms::RtsConnection_6& msg);
 
-  Signal::SmartHandle _rtsDevSshOverBleHandle;
-  void HandleRtsDevSshOverBleRequest(const Vector::ExternalComms::RtsConnection_6& msg);
+  Signal::SmartHandle _rtsBleshConnectHandle;
+  void HandleBleshConnectRequest(const Vector::ExternalComms::RtsConnection_6& msg);
 
-  Signal::SmartHandle _rtsDevSshCommandHandle;
-  void HandleRtsDevSshCommandRequest(const Vector::ExternalComms::RtsConnection_6& msg);
+  Signal::SmartHandle _rtsBleshDisconnectHandle;
+  void HandleBleshDisconnectRequest(const Vector::ExternalComms::RtsConnection_6& msg);
+
+  Signal::SmartHandle _rtsBleshToServerHandle;
+  void HandleBleshToServerRequest(const Vector::ExternalComms::RtsConnection_6& msg);
+
+  Signal::SmartHandle _rtsBleshToClientHandle;
+  void HandleBleshToClientRequest(const std::vector<uint8_t>& data);
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Send messages method

@@ -11,6 +11,7 @@
  **/
 
 #include "anki-ble/common/anki_ble_uuids.h"
+#include "auto-test/autoTest.h"
 #include "exec_command.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/logging/logging.h"
@@ -79,6 +80,11 @@ _wifiConnectTimeout_s(15)
   // Initialize the message handler
   _cladHandler = std::make_unique<ExternalCommsCladHandlerV6>();
   SubscribeToCladMessages();
+
+  // Initialize Blesh
+  _blesh = std::make_unique<Blesh>(_loop);
+  _rtsBleshToClientHandle = _blesh->OnReceiveData().ScopedSubscribe(
+    std::bind(&RtsHandlerV6::HandleBleshToClientRequest, this, std::placeholders::_1));
 
   // Initialize ev timer
   _handleInternet.signal = &_internetTimerSignal;
@@ -156,8 +162,9 @@ void RtsHandlerV6::SubscribeToCladMessages() {
   _rtsAckHandle = _cladHandler->OnReceiveRtsAck().ScopedSubscribe(std::bind(&RtsHandlerV6::HandleRtsAck, this, std::placeholders::_1));
   _rtsSdkProxyHandle = _cladHandler->OnReceiveRtsSdkRequest().ScopedSubscribe(std::bind(&RtsHandlerV6::HandleRtsSdkProxyRequest, this, std::placeholders::_1));
   _rtsVersionListHandle = _cladHandler->OnReceiveRtsVersionListRequest().ScopedSubscribe(std::bind(&RtsHandlerV6::HandleRtsVersionListRequest, this, std::placeholders::_1));
-  _rtsDevSshOverBleHandle = _cladHandler->OnReceiveRtsDevSshOverBleRequest().ScopedSubscribe(std::bind(&RtsHandlerV6::HandleRtsDevSshOverBleRequest, this, std::placeholders::_1));
-  _rtsDevSshCommandHandle = _cladHandler->OnReceiveRtsDevSshCommandRequest().ScopedSubscribe(std::bind(&RtsHandlerV6::HandleRtsDevSshCommandRequest, this, std::placeholders::_1));
+  _rtsBleshConnectHandle = _cladHandler->OnReceiveRtsBleshConnectRequest().ScopedSubscribe(std::bind(&RtsHandlerV6::HandleBleshConnectRequest, this, std::placeholders::_1));
+  _rtsBleshDisconnectHandle = _cladHandler->OnReceiveRtsBleshDisconnectRequest().ScopedSubscribe(std::bind(&RtsHandlerV6::HandleBleshDisconnectRequest, this, std::placeholders::_1));
+  _rtsBleshToServerHandle = _cladHandler->OnReceiveRtsBleshToServerRequest().ScopedSubscribe(std::bind(&RtsHandlerV6::HandleBleshToServerRequest, this, std::placeholders::_1));
 }
 
 bool RtsHandlerV6::IsAuthenticated() {
@@ -667,15 +674,68 @@ void RtsHandlerV6::HandleRtsSdkProxyRequest(const Vector::ExternalComms::RtsConn
 }
 
 void RtsHandlerV6::HandleRtsVersionListRequest(const Vector::ExternalComms::RtsConnection_6& msg) {
-
+  SendRtsMessage<RtsVersionListResponse>(kRtsVersions);
 }
 
-void RtsHandlerV6::HandleRtsDevSshOverBleRequest(const Vector::ExternalComms::RtsConnection_6& msg) {
+void RtsHandlerV6::HandleBleshConnectRequest(const Vector::ExternalComms::RtsConnection_6& msg) {
+  if(!AutoTest::IsDisclaimerBot()) {
+    SendRtsMessage<RtsResponse>(RtsResponseCode::UnsupportedRequest, "Dev only feature.");
+    return;
+  }
 
+  if(!AssertState(RtsCommsType::Encrypted)) {
+    return;
+  }
+
+  bool success = _blesh->Connect();
+  uint8_t result = success? 0 : 1;
+
+  SendRtsMessage<RtsBleshConnectResponse>(result);
 }
 
-void RtsHandlerV6::HandleRtsDevSshCommandRequest(const Vector::ExternalComms::RtsConnection_6& msg) {
+void RtsHandlerV6::HandleBleshDisconnectRequest(const Vector::ExternalComms::RtsConnection_6& msg) {
+  if(!AutoTest::IsDisclaimerBot()) {
+    SendRtsMessage<RtsResponse>(RtsResponseCode::UnsupportedRequest, "Dev only feature.");
+    return;
+  }
 
+  if(!AssertState(RtsCommsType::Encrypted)) {
+    return;
+  }
+
+  bool success = _blesh->Disconnect();
+  uint8_t result = success? 0 : 1;
+
+  SendRtsMessage<RtsBleshDisconnectResponse>(result);
+}
+
+void RtsHandlerV6::HandleBleshToServerRequest(const Vector::ExternalComms::RtsConnection_6& msg) {
+  if(!AutoTest::IsDisclaimerBot()) {
+    SendRtsMessage<RtsResponse>(RtsResponseCode::UnsupportedRequest, "Dev only feature.");
+    return;
+  }
+
+  if(!AssertState(RtsCommsType::Encrypted)) {
+    return;
+  }
+
+  Anki::Vector::ExternalComms::RtsBleshToServerRequest m = msg.Get_RtsBleshToServerRequest();
+  bool success = _blesh->SendData(m.data);
+  uint8_t result = success? 0 : 1;
+
+  SendRtsMessage<RtsBleshToServerResponse>(result);  
+}
+
+void RtsHandlerV6::HandleBleshToClientRequest(const std::vector<uint8_t>& data) {
+  if(!AutoTest::IsDisclaimerBot()) {
+    return;
+  }
+
+  if(!AssertState(RtsCommsType::Encrypted)) {
+    return;
+  }
+
+  SendRtsMessage<RtsBleshToClientRequest>(data);  
 }
 
 void RtsHandlerV6::HandleRtsForceDisconnect(const Vector::ExternalComms::RtsConnection_6& msg) {

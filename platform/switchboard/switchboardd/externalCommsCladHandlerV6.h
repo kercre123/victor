@@ -91,12 +91,16 @@ namespace Switchboard {
       return _receiveRtsVersionListRequest;
     }
 
-    RtsConnectionSignal& OnReceiveRtsDevSshOverBleRequest() {
-      return _receiveRtsDevSshOverBleRequest;
+    RtsConnectionSignal& OnReceiveRtsBleshConnectRequest() {
+      return _receiveRtsBleshConnectRequest;
     }
 
-    RtsConnectionSignal& OnReceiveRtsDevSshCommandRequest() {
-      return _receiveRtsDevSshCommandRequest;
+    RtsConnectionSignal& OnReceiveRtsBleshDisconnectRequest() {
+      return _receiveRtsBleshDisconnectRequest;
+    }
+
+    RtsConnectionSignal& OnReceiveRtsBleshToServerRequest() {
+      return _receiveRtsBleshToServerRequest;
     }
 
     // RtsSsh
@@ -203,12 +207,16 @@ namespace Switchboard {
             _receiveRtsVersionListRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Vector::ExternalComms::RtsConnection_6Tag::RtsDevSshOverBleRequest: {
-            _receiveRtsDevSshOverBleRequest.emit(rtsMsg);
+          case Anki::Vector::ExternalComms::RtsConnection_6Tag::RtsBleshConnectRequest: {
+            _receiveRtsBleshConnectRequest.emit(rtsMsg);
             break;
           }
-          case Anki::Vector::ExternalComms::RtsConnection_6Tag::RtsDevSshCommandRequest: {
-            _receiveRtsDevSshCommandRequest.emit(rtsMsg);
+          case Anki::Vector::ExternalComms::RtsConnection_6Tag::RtsBleshDisconnectRequest: {
+            _receiveRtsBleshDisconnectRequest.emit(rtsMsg);
+            break;
+          }
+          case Anki::Vector::ExternalComms::RtsConnection_6Tag::RtsBleshToServerRequest: {
+            _receiveRtsBleshToServerRequest.emit(rtsMsg);
             break;
           }
           // RtsSsh
@@ -258,8 +266,9 @@ namespace Switchboard {
       RtsConnectionSignal _receiveRtsAppConnectionIdRequest;
       RtsConnectionSignal _receiveRtsSdkProxyRequest;
       RtsConnectionSignal _receiveRtsVersionListRequest;
-      RtsConnectionSignal _receiveRtsDevSshOverBleRequest;
-      RtsConnectionSignal _receiveRtsDevSshCommandRequest;
+      RtsConnectionSignal _receiveRtsBleshConnectRequest;
+      RtsConnectionSignal _receiveRtsBleshDisconnectRequest;
+      RtsConnectionSignal _receiveRtsBleshToServerRequest;
 
       // RtsSsh 
       RtsConnectionSignal _DEV_ReceiveSshKey;

@@ -21,6 +21,8 @@
 
 namespace Anki {
 namespace Switchboard {
+  const std::vector<uint16_t> kRtsVersions = { 2, 4, 5, 6 };
+
   enum PairingProtocolVersion : uint32_t {
     INVALID                   = 0,
     V1                        = 1,

@@ -320,26 +320,39 @@ message RtsVersionListRequest {
 }
 
 message RtsVersionListResponse {
-  string[uint_8]    supportedVersions[uint_16]
+  uint_16           supportedVersions[uint_16]
 }
 
-message RtsDevSshOverBleRequest {
-  string[uint_16]   key
+message RtsBleshConnectRequest {
 }
 
-message RtsDevSshOverBleResponse {
+message RtsBleshConnectResponse {
+  uint_8            result
 }
 
-message RtsDevSshCommandRequest {
-  string[uint_16]   command 
+message RtsBleshDisconnectRequest {
 }
 
-message RtsDevSshCommandResponse {
-  bool              success,
-  uint_32           exit_code,
-  string[uint_16]   stdout,
-  string[uint_16]   stderr
+message RtsBleshDisconnectResponse {
+  uint_8            result
 }
+
+message RtsBleshToServerRequest {
+  uint_8            data[uint_16]
+}
+
+message RtsBleshToServerResponse {
+  uint_8            result 
+}
+
+message RtsBleshToClientRequest {
+  uint_8            data[uint_16]
+}
+
+message RtsBleshToClientResponse {
+  uint_8            result
+}
+
 
 message Error {
     //
@@ -534,10 +547,14 @@ union RtsConnection_6 {
     RtsSdkProxyResponse             RtsSdkProxyResponse         = 0x23,
     RtsVersionListRequest           RtsVersionListRequest       = 0x24,   // * new in V6 
     RtsVersionListResponse          RtsVersionListResponse      = 0x25,   // * new in V6
-    RtsDevSshOverBleRequest         RtsDevSshOverBleRequest     = 0x26,   // * new in V6
-    RtsDevSshOverBleResponse        RtsDevSshOverBleResponse    = 0x27,   // * new in V6 
-    RtsDevSshCommandRequest         RtsDevSshCommandRequest     = 0x28,   // * new in V6
-    RtsDevSshCommandResponse        RtsDevSshCommandResponse    = 0x29,   // * new in V6 
+    RtsBleshConnectRequest          RtsBleshConnectRequest      = 0x26,   // * new in V6
+    RtsBleshConnectResponse         RtsBleshConnectResponse     = 0x27,   // * new in V6 
+    RtsBleshToServerRequest         RtsBleshToServerRequest     = 0x28,   // * new in V6
+    RtsBleshToServerResponse        RtsBleshToServerResponse    = 0x29,   // * new in V6
+    RtsBleshToClientRequest         RtsBleshToClientRequest     = 0x2A,   // * new in V6
+    RtsBleshToClientResponse        RtsBleshToClientResponse    = 0x2B,   // * new in V6 
+    RtsBleshDisconnectRequest       RtsBleshDisconnectRequest   = 0x2C,   // * new in V6 
+    RtsBleshDisconnectResponse      RtsBleshDisconnectResponse  = 0x2D,   // * new in V6
 }
 
 // The factory set of supported messages
