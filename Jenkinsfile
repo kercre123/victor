@@ -211,7 +211,7 @@ stage("${primaryStageName} Build") {
             buildConfigMap[buildFlavor] = {
                 node('mac-slaves') {
                     def ghsb = new GithubStatusMsgBuilder(this, buildFlavor)
-                    gitCheckout(submoduleConfig: true, isMacHost: true)
+                    gitCheckout(true, true)
                     withDockerEnv(isMacHost: true) {
                         try {
                             ghsb.postBuildStart()
