@@ -2921,9 +2921,12 @@ func (service *rpcService) GetUpdateStatus() (*extint.CheckUpdateStatusResponse,
 
 		// If we are in the 'download' phase, make our failure status more precise
 		// depending on the exit code
-		if updateStatus.UpdatePhase == "download" &&
-			(updateStatus.ExitCode == 208 || updateStatus.ExitCode == 215) {
-			updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_FAILURE_INTERRUPTED_DOWNLOAD
+		if updateStatus.UpdatePhase == "download" {
+			if updateStatus.Error == "Failed to open URL: <urlopen error [Errno -2] Name or service not known>" ||
+				updateStatus.ExitCode == 208 ||
+				updateStatus.ExitCode == 215 {
+				updateStatus.UpdateStatus = extint.CheckUpdateStatusResponse_FAILURE_INTERRUPTED_DOWNLOAD
+			}
 		}
 		// I do this, rather than checking for the 203 because the 203 has other meanings.
 		// The below unique error string is what we expect when there is no update available.
