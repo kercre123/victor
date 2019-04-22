@@ -55,7 +55,7 @@ protected:
   
   virtual void OnBehaviorActivated() override;
   
-  virtual void OnAnimationsComplete() {}
+  virtual void OnAnimationsComplete() { CancelSelf(); }
 
   // Returns an action that will play all animations in the class the appropriate number of times for one loop
   IActionRunner* GetAnimationAction();
