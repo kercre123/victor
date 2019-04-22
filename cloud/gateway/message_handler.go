@@ -2413,130 +2413,6 @@ func AudioSendModeRequest(mode extint.AudioProcessingMode) error {
 	return err
 }
 
-type AudioFeedCache struct {
-	Data        []byte
-	GroupId     int32
-	Invalid     bool
-	Size        int32
-	LastChunkId int32
-}
-
-func ResetAudioCache(cache *AudioFeedCache) error {
-	cache.Data = nil
-	cache.GroupId = -1
-	cache.Invalid = false
-	cache.Size = 0
-	cache.LastChunkId = -1
-	return nil
-}
-
-func UnpackAudioChunk(audioChunk *extint.AudioChunk, cache *AudioFeedCache) bool {
-	groupId := int32(audioChunk.GetGroupId())
-	chunkId := int32(audioChunk.GetChunkId())
-
-	if cache.GroupId != -1 && chunkId == 0 {
-		if !cache.Invalid {
-			log.Errorln("Lost final chunk of audio group; discarding")
-		}
-		cache.GroupId = -1
-	}
-
-	if cache.GroupId == -1 {
-		if chunkId != 0 {
-			if !cache.Invalid {
-				log.Errorln("Received chunk of broken audio stream")
-			}
-			cache.Invalid = true
-			return false
-		}
-		// discard any previous in-progress image
-		ResetAudioCache(cache)
-
-		cache.Data = make([]byte, extint.AudioConstants_SAMPLE_COUNTS_PER_SDK_MESSAGE*2)
-		cache.GroupId = int32(groupId)
-	}
-
-	if chunkId != cache.LastChunkId+1 || groupId != cache.GroupId {
-		log.Errorf("Audio missing chunks; discarding (last_chunk_id=%i partial_audio_group_id=%i)\n", cache.LastChunkId, cache.GroupId)
-		ResetAudioCache(cache)
-		cache.Invalid = true
-		return false
-	}
-
-	dataSize := int32(len(audioChunk.GetSignalPower()))
-	copy(cache.Data[cache.Size:cache.Size+dataSize], audioChunk.GetSignalPower()[:])
-	cache.Size += dataSize
-	cache.LastChunkId = chunkId
-
-	return chunkId == int32(audioChunk.GetAudioChunkCount()-1)
-}
-
-// Long running message for sending audio feed to listening sdk users
-func (service *rpcService) AudioFeed(in *extint.AudioFeedRequest, stream extint.ExternalInterface_AudioFeedServer) error {
-	// @TODO: Expose other audio processing modes
-	//
-	// The composite multi-microphone non-beamforming (AUDIO_VOICE_DETECT_MODE) mode has been identified as the best for voice detection,
-	// as well as incidentally calculating directional and noise_floor data.  As such it's most reasonable as the SDK's default mode.
-	//
-	// While this mode will send directional source data, it is different from DIRECTIONAL_MODE in that it does not isolate and clean
-	// up the sound stream with respect to the loudest direction (which makes the result more human-ear pleasing but more ml difficult).
-	//
-	// It should however be noted that the robot will automatically shift into FAST_MODE (cleaned up single microphone) when
-	// entering low power mode, so its important to leave this exposed.
-	//
-
-	// Enable audio stream
-	err := AudioSendModeRequest(extint.AudioProcessingMode_AUDIO_VOICE_DETECT_MODE)
-	if err != nil {
-		return err
-	}
-
-	// Disable audio stream
-	defer AudioSendModeRequest(extint.AudioProcessingMode_AUDIO_OFF)
-
-	// Forward audio data from engine
-	f, audioFeedChannel := engineProtoManager.CreateChannel(&extint.GatewayWrapper_AudioChunk{}, 1024)
-	defer f()
-
-	cache := AudioFeedCache{
-		Data:    nil,
-		GroupId: -1,
-		Invalid: false,
-		Size:    0,
-	}
-
-	for result := range audioFeedChannel {
-
-		audioChunk := result.GetAudioChunk()
-
-		readyToSend := UnpackAudioChunk(audioChunk, &cache)
-		if readyToSend {
-			audioFeedResponse := &extint.AudioFeedResponse{
-				RobotTimeStamp:     audioChunk.GetRobotTimeStamp(),
-				GroupId:            uint32(audioChunk.GetGroupId()),
-				SignalPower:        cache.Data[0:cache.Size],
-				DirectionStrengths: audioChunk.GetDirectionStrengths(),
-				SourceDirection:    audioChunk.GetSourceDirection(),
-				SourceConfidence:   audioChunk.GetSourceConfidence(),
-				NoiseFloorPower:    audioChunk.GetNoiseFloorPower(),
-			}
-			ResetAudioCache(&cache)
-
-			if err := stream.Send(audioFeedResponse); err != nil {
-				return err
-			} else if err = stream.Context().Err(); err != nil {
-				// This is the case where the user disconnects the stream
-				// We should still return the err in case the user doesn't think they disconnected
-				return err
-			}
-		}
-	}
-
-	errMsg := "AudioChunk engine stream died unexpectedly"
-	log.Errorln(errMsg)
-	return grpc.Errorf(codes.Internal, errMsg)
-}
-
 func (service *rpcService) EnableMarkerDetection(ctx context.Context, request *extint.EnableMarkerDetectionRequest) (*extint.EnableMarkerDetectionResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_EnableMarkerDetectionResponse{}, 1)
 	defer f()
@@ -3410,9 +3286,10 @@ func (service *rpcService) AudioStream(in *extint.AudioStreamRequest, stream ext
 	client := NewSharedCircularBuffer("micDataSharedCircularBuffer")
 	defer client.Close()
 
+	numCommandsSentFromSDK++
 	for len(connectionId) > 0 {
 		micSDKData, offset, getStatus := client.GetNext()
-		if getStatus == "please wait" {
+		if getStatus == getStatePleaseWait {
 			time.Sleep(10 * time.Millisecond)
 		} else {
 			audioStreamResponse := &extint.AudioStreamResponse{

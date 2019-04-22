@@ -8,9 +8,12 @@ import (
 
 const (
 	// If you change the buffer size (300) to something else, you need to make the same change in micDataProcessor.cpp
-	bufferSize      = 300
-	samplesPerCycle = 160
-	headerMagicNum  = 0x08675309001a2b3c
+	bufferSize         = 300
+	samplesPerCycle    = 160
+	headerMagicNum     = 0x08675309001a2b3c
+	getStateOkay       = "okay"
+	getStateBehind     = "behind"
+	getStatePleaseWait = "please wait"
 )
 
 type MicSDKData struct {
@@ -69,15 +72,15 @@ func (client *SharedCircularBuffer) Close() {
 // the return tuple will be "behind".
 func (client *SharedCircularBuffer) GetNext() (*MicSDKData, uint64, string) {
 	if (!client.Initted && !client.init()) ||
-		client.Offset == client.Buffer.QueuedCount {
+		client.Offset >= client.Buffer.QueuedCount {
 
-		return nil, client.Offset, "please wait"
+		return nil, client.Offset, getStatePleaseWait
 	}
 
-	getStatus := "okay"
+	getStatus := getStateOkay
 	if client.Buffer.QueuedCount > (3*bufferSize/4) && client.Offset < client.Buffer.QueuedCount-(3*bufferSize/4) {
 		client.Offset = client.Buffer.QueuedCount
-		getStatus = "behind"
+		getStatus = getStateBehind
 	}
 
 	objectPtr := &client.Buffer.Objects[client.Offset%bufferSize]

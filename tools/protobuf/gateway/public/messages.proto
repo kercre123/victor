@@ -1003,22 +1003,6 @@ message AudioChunk {
   uint32 noise_floor_power   = 9; // power value, convert to db with log_10(value)
 }
 
-// Request the robot to send audio data
-message AudioFeedRequest {}
-
-// Streamed audio data from the robot
-message AudioFeedResponse {
-  option (streamed) = true;
-
-  uint32 robot_time_stamp    = 1; // robot time at the transmission of this audio sample group
-  uint32 group_id            = 2; // the index of this audio feed response
-  bytes  signal_power        = 3; // mono audio amplitude samples
-  bytes  direction_strengths = 4; // histogram data of which directions this audio chunk came from
-  uint32 source_direction    = 5; // 0-11, with 12 representing "invalid"
-  uint32 source_confidence   = 6; // accuracy of the calculated source_direction
-  uint32 noise_floor_power   = 7; // power value, convert to db with log_10(value)
-}
-
 // Preflight and initialization for audio streaming to robot
 message ExternalAudioStreamPrepare {
   uint32 audio_frame_rate = 1;    // 8000 - 16025
