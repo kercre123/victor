@@ -44,6 +44,8 @@ const char* kHeightKey        = "height";
 // Legacy support
 const char* kFaceKeyFrameAssetNameKey = "animName";
 
+constexpr TimeStamp_t kOverrideIndefinitely = std::numeric_limits<TimeStamp_t>::infinity();
+
 // Fwd declare local helper
 bool GetFrameFromSpriteSequenceHelper(const Vision::SpriteSequence& sequence,
                                       const uint16_t frameIdx,
@@ -57,6 +59,8 @@ bool GetFrameFromSpriteSequenceHelper(const Vision::SpriteSequence& sequence,
 SpriteBoxCompositor::SpriteBoxCompositor(const SpriteBoxCompositor& other)
 : _lastKeyFrameTime_ms(other._lastKeyFrameTime_ms)
 , _advanceTime_ms(0)
+, _faceImageOverride(nullptr)
+, _faceImageOverrideEndTime_ms(0)
 {
   if(nullptr != other._spriteBoxMap){
     _spriteBoxMap = std::make_unique<SpriteBoxMap>(*other._spriteBoxMap);
@@ -69,6 +73,8 @@ SpriteBoxCompositor::SpriteBoxCompositor(const SpriteBoxCompositor& other)
 SpriteBoxCompositor::SpriteBoxCompositor()
 : _lastKeyFrameTime_ms(0)
 , _advanceTime_ms(0)
+, _faceImageOverride(nullptr)
+, _faceImageOverrideEndTime_ms(0)
 {
 }
 
@@ -199,6 +205,15 @@ Result SpriteBoxCompositor::AddKeyFrameInternal(Vision::SpriteBoxKeyFrame&& spri
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpriteBoxCompositor::SetFaceImageOverride(const Vision::SpriteHandle& spriteHandle,
+                                               const TimeStamp_t relativeStreamTime_ms,
+                                               const TimeStamp_t duration_ms)
+{
+  _faceImageOverride = spriteHandle;
+  _faceImageOverrideEndTime_ms = duration_ms != 0 ? (relativeStreamTime_ms + duration_ms) : kOverrideIndefinitely;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpriteBoxCompositor::AddSpriteBoxRemap(const Vision::SpriteBoxName spriteBox,
                                             const Vision::SpritePathMap::AssetID remappedAssetID)
 {
@@ -254,9 +269,12 @@ void SpriteBoxCompositor::AppendTracks(const SpriteBoxCompositor& other, const T
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void SpriteBoxCompositor::Clear()
 {
+  _lastKeyFrameTime_ms = 0;
+  _advanceTime_ms = 0;
+  _faceImageOverride = nullptr;
+  _faceImageOverrideEndTime_ms = 0;
+
   if(nullptr != _spriteBoxMap){
-    _lastKeyFrameTime_ms = 0;
-    _advanceTime_ms = 0;
     _spriteBoxMap->clear();
     _spriteBoxMap.reset();
   }
@@ -300,6 +318,13 @@ void SpriteBoxCompositor::ClearUpToCurrent()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SpriteBoxCompositor::HasFramesLeft() const
 {
+  // If we've been given an override image, keep this animation running as expected by the caller
+  if( (nullptr != _faceImageOverride) &&
+      ( (kOverrideIndefinitely == _faceImageOverrideEndTime_ms) || 
+        (_advanceTime_ms < _faceImageOverrideEndTime_ms) ) ){
+    return true;
+  }
+
   // TODO(str): VIC-13519 Linearize Face Rendering
   // Keep tabs on this when working in AnimationStreamer. It currently has to use '<=' in
   // order to have the final frame displayed due to calling locations in AnimationStreamer,
@@ -320,6 +345,20 @@ bool SpriteBoxCompositor::PopulateCompositeImage(Vision::SpriteCache& spriteCach
                                                  TimeStamp_t timeSinceAnimStart_ms,
                                                  Vision::CompositeImage& outCompImg) const
 {
+  if( (nullptr != _faceImageOverride) &&
+      ((kOverrideIndefinitely == _faceImageOverrideEndTime_ms) || 
+       (timeSinceAnimStart_ms < _faceImageOverrideEndTime_ms)) ){
+    outCompImg.AddImage(_faceImageOverride,
+                        Vision::SpriteBoxName::SpriteBox_40,
+                        Vision::LayerName::Layer_10,
+                        Vision::SpriteRenderMethod::RGBA,
+                        0,
+                        0,
+                        FACE_DISPLAY_WIDTH,
+                        FACE_DISPLAY_HEIGHT);
+    return true;
+  }
+
   if(IsEmpty()){
     return false;
   }

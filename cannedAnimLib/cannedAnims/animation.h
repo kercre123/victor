@@ -65,6 +65,13 @@ public:
     return _spriteBoxCompositor.AddKeyFrame(std::move(keyFrame));
   }
 
+  void SetFaceImageOverride(const Vision::SpriteHandle& spriteHandle,
+                            const TimeStamp_t relativeStreamTime_ms,
+                            const TimeStamp_t duration_ms)
+  {
+    return _spriteBoxCompositor.SetFaceImageOverride(spriteHandle, relativeStreamTime_ms, duration_ms);
+  }
+
   void AddSpriteBoxRemap(const Vision::SpriteBoxName& spriteBoxName,
                          const Vision::SpritePathMap::AssetID remappedAssetID)
   {

@@ -905,54 +905,16 @@ namespace Anim {
       FaceInfoScreenManager::getInstance()->DrawCameraImage(debugImg);
 
       // TODO: Return here or will that screw up stuff on the engine side?
-      //return RESULT_OK;
+      return RESULT_OK;
     }
 
     DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetFaceImage.NullProceduralAnimation");
 
-    auto& spriteSeqTrack = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>();
-
-    if (_streamingAnimation == _proceduralAnimation)
-    {
-      // If the current keyframe will end, leave it alone
-      // Otherwise, clear the track and set the streaming animation to nullptr so that the new
-      // procedural animation will be initialized below
-      if ( spriteSeqTrack.HasFramesLeft() &&
-          !spriteSeqTrack.GetCurrentKeyFrame().SequenceShouldAdvance())
-      {
-        spriteSeqTrack.Clear();
-        SetStreamingAnimation(nullptr, 0);
-      }
-    }
-    else
-    {
-      // Procedural animation is not playing, so clear the previous track
-      spriteSeqTrack.Clear();
-    }
-
-    TimeStamp_t triggerTime_ms = 0;
-    // If procedural animation is playing relative stream time has been incrementing
-    // to play this keyframe immediately, set the keyframe to the current stream time
-    if ((spriteSeqTrack.GetLastKeyFrame() == nullptr) &&
-        (_streamingAnimation == _proceduralAnimation))
-    {
-      triggerTime_ms = _relativeStreamTime_ms;
-    }
-
-    SpriteSequenceKeyFrame kf(spriteHandle, triggerTime_ms, shouldRenderInEyeHue);
-    kf.SetKeyframeActiveDuration_ms(duration_ms);
-
-    Result result = _proceduralAnimation->AddKeyFrameToBack(kf);
-    if (!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetFaceImage.FailedToAddKeyFrame", "")))
-    {
-      return result;
-    }
-
-    if (_streamingAnimation != _proceduralAnimation)
-    {
-      result = SetStreamingAnimation(_proceduralAnimation, 0);
-    }
-    return result;
+    _proceduralAnimation->SetFaceImageOverride(spriteHandle, _relativeStreamTime_ms, duration_ms);
+    if (_streamingAnimation != _proceduralAnimation){
+      return SetStreamingAnimation(_proceduralAnimation, 0);
+    } 
+    return RESULT_OK;
   }
 
   Result AnimationStreamer::SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms,
@@ -1922,6 +1884,11 @@ namespace Anim {
             LOG_INFO("AnimationStreamer.Update.FinishedStreaming",
                      "Finished streaming '%s' animation.",
                      _streamingAnimation->GetName().c_str());
+          }
+
+          if (_streamingAnimation == _proceduralAnimation)
+          {
+            _proceduralAnimation->Clear();
           }
 
           _streamingAnimation = nullptr;
