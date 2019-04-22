@@ -29,7 +29,6 @@
 #include "coretech/common/shared/array2d.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
-#include "coretech/vision/shared/compositeImage/compositeImage.h"
 #include "coretech/vision/shared/rgb565Image/rgb565ImageBuilder.h"
 
 #include "json/json.h"
@@ -332,62 +331,6 @@ Result AnimationComponent::PlayAnimByName(const std::string& animName,
   }
   
   return RESULT_OK;
-}
-
-
-Result AnimationComponent::PlayCompositeAnimation(const std::string& animName,
-                                                  const Vision::CompositeImage& compositeImage, 
-                                                  u32 frameInterval_ms,
-                                                  int& outDuration_ms,
-                                                  bool interruptRunning,
-                                                  bool emptySpriteBoxesAreValid,
-                                                  AnimationCompleteCallback callback)
-{
-  if (!_isInitialized) {
-    LOG_WARNING("AnimationComponent.PlayCompositeAnimation.Uninitialized", "");
-    return RESULT_FAIL;
-  }
-
-  // Check that animName is valid
-  auto it = _availableAnims.find(animName);
-  if (it == _availableAnims.end()) {
-    LOG_WARNING("AnimationComponent.PlayCompositeAnimation.AnimNotFound", "%s", animName.c_str());
-    return RESULT_FAIL;
-  }
-  
-  LOG_DEBUG("AnimationComponent.PlayCompositeAnimation.PlayingAnim", "%s", it->first.c_str());
-  
-  // TODO: Is this what interruptRunning should mean?
-  //       Or should it queue on anim process side and optionally interrupt currently executing anim?
-  if (IsPlayingAnimation() && !interruptRunning) {
-    LOG_INFO("AnimationComponent.PlayCompositeAnimation.WontInterruptCurrentAnim", "");
-    return RESULT_FAIL;
-  }
-
-  const Animation* anim = nullptr;
-  bool gotAnim = false;
-  if(_dataAccessor != nullptr){
-    const auto* animContainer = _dataAccessor->GetCannedAnimationContainer();
-    if(animContainer != nullptr){
-      anim = animContainer->GetAnimation(animName);
-      gotAnim = (anim != nullptr);
-    }
-  }
-  
-  if(!gotAnim){
-    LOG_WARNING("AnimationComponent.PlayCompositeAnimation.AnimationNotFoundInContainer",
-                "Animations need to be manually loaded on engine side - %s is not", animName.c_str());
-    return RESULT_FAIL;
-  }
-
-  const Tag currTag = GetNextTag();
-  _robot->SendRobotMessage<RobotInterface::PlayCompositeAnimation>(_compositeImageID, currTag, animName);
-  if(callback != nullptr){
-    SetAnimationCallback(animName, callback, currTag, 0, 0, 0);
-  }
-
-  outDuration_ms = anim->GetLastKeyFrameEndTime_ms();
-  return DisplayFaceImage(compositeImage, frameInterval_ms, outDuration_ms, interruptRunning, emptySpriteBoxesAreValid);
 }
 
 Result AnimationComponent::PlayAnimWithSpriteBoxRemaps(const std::string& animName,
@@ -752,68 +695,6 @@ void AnimationComponent::SetAnimationCallback(const std::string& animName,
   _callbackMap.emplace(std::piecewise_construct,
                         std::forward_as_tuple(currTag),
                         std::forward_as_tuple(animName, callback, actionTag, abortTime_sec, callbackStillValidEvenIfTagIsNot));
-}
-
-
-Result AnimationComponent::DisplayFaceImage(const Vision::CompositeImage& compositeImage, 
-                                            u32 frameInterval_ms, u32 duration_ms, 
-                                            bool interruptRunning, bool emptySpriteBoxesAreValid)
-{
-  // TODO: Is this what interruptRunning should mean?
-  //       Or should it queue on anim process side and optionally interrupt currently executing anim?
-  if (IsPlayingAnimation() && !interruptRunning) {
-    LOG_INFO("AnimationComponent.DisplayFaceImage.WontInterruptCurrentAnim", "");
-    return RESULT_FAIL;
-  }
-
-  // Send the image to the animation process in chunks
-  const std::vector<Vision::CompositeImageChunk> imageChunks = compositeImage.GetImageChunks(emptySpriteBoxesAreValid);
-  for(const auto& chunk: imageChunks){
-    _robot->SendRobotMessage<RobotInterface::DisplayCompositeImageChunk>(_compositeImageID, frameInterval_ms, duration_ms, chunk);
-  }
-  
-  if(imageChunks.empty()){
-    LOG_WARNING("AnimationComponent.DisplayFaceImage.NoImageChunksToSend", "");
-    return RESULT_FAIL;
-  }
-
-  _compositeImageID++;
-  return RESULT_OK;
-}
-
-void AnimationComponent::UpdateCompositeImage(const Vision::CompositeImage& compositeImage, u32 applyAt_ms)
-{
-  for(const auto& layoutPair : compositeImage.GetLayerLayoutMap()){
-    Vision::LayerName layerName = layoutPair.first;
-    for(const auto& spritePair : layoutPair.second.GetLayoutMap()){
-      Vision::SerializedSpriteBox serializedSpriteBox = spritePair.second.Serialize();
-      Vision::CompositeImageLayer::SpriteEntry entry;
-      layoutPair.second.GetSpriteEntry(spritePair.second, entry);
-
-      _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(serializedSpriteBox, 
-                                                                     applyAt_ms, 
-                                                                     entry.GetAssetID(),
-                                                                     layerName);
-    }
-  }
-}
-
-
-void AnimationComponent::ClearCompositeImageLayer(Vision::LayerName layerName, u32 applyAt_ms)
-{
-  // Setup empty sprite entry
-  Vision::CompositeImageLayer::SpriteEntry entry;
-
-  // Setup empty spriteBox
-  Vision::SpriteRenderConfig renderConfig;
-  renderConfig.renderMethod = Vision::SpriteRenderMethod::RGBA;
-  Point2i topLeft(0,0);
-  Vision::CompositeImageLayer::SpriteBox sb(Vision::SpriteBoxName::Count, renderConfig, topLeft, 0, 0);
-  
-  _robot->SendRobotMessage<RobotInterface::UpdateCompositeImage>(sb.Serialize(), 
-                                                                 applyAt_ms, 
-                                                                 entry.GetAssetID(),
-                                                                 layerName); 
 }
 
 void AnimationComponent::AddKeepFaceAliveDisableLock(const std::string& lockName)

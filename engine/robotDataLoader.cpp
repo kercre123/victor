@@ -216,6 +216,7 @@ void RobotDataLoader::LoadNonConfigData()
 
     {
       ANKI_CPU_PROFILE("RobotDataLoader::LoadCompositeImageMaps");
+      // DNM Tear this shit out by the roots :)
       LoadCompositeImageMaps();
     }
 

@@ -17,7 +17,7 @@
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "cozmoAnim/animation/animationStreamer.h"
-#include "coretech/vision/shared/compositeImage/compositeImageBuilder.h"
+#include "coretech/vision/shared/compositeImage/compositeImage.h"
 
 #include "cannedAnimLib/cannedAnims/animationInterpolator.h"
 #include "cannedAnimLib/proceduralFace/proceduralFaceDrawer.h"
@@ -88,6 +88,7 @@ namespace Anim {
   static bool s_faceDataReset = false;
 
   uint16_t AnimationStreamer::_numLayersRendered = 0;
+  AnimTimeStamp_t AnimationStreamer::_nextProceduralFaceAllowedTime_ms = 0;
 
 #if ANKI_DEV_CHEATS
   static const Anim::AnimContext* s_context; // copy of AnimContext in first constructed AnimationStreamer, needed for GetDataPlatform
@@ -753,77 +754,6 @@ namespace Anim {
     }
   }
 
-  void AnimationStreamer::Process_displayCompositeImageChunk(const RobotInterface::DisplayCompositeImageChunk& msg)
-  {
-    // Check for image ID mismatches
-    if (_compositeImageBuilder != nullptr) {
-      if (msg.compositeImageID != _compositeImageID) {
-        _compositeImageBuilder.reset();
-        LOG_WARNING("AnimationStreamer.Process_displayCompositeImageChunk.MissingChunk",
-                    "Composite image was being built with image ID %d, but new ID %d received so wiping image",
-                    _compositeImageID, msg.compositeImageID);
-      }
-    }
-    _compositeImageID = msg.compositeImageID;
-
-    auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
-    auto* spriteSeqContainer = _context->GetDataLoader()->GetSpriteSequenceContainer();
-
-    // Add the chunk to the builder
-    if (_compositeImageBuilder == nullptr)
-    {
-      auto* builder = new Vision::CompositeImageBuilder(spriteCache, spriteSeqContainer, msg.compositeImageChunk);
-      _compositeImageBuilder.reset(builder);
-    }
-    else
-    {
-      _compositeImageBuilder->AddImageChunk(spriteCache, spriteSeqContainer, msg.compositeImageChunk);
-    }
-
-    // Display the image if all chunks received
-    if (_compositeImageBuilder->CanBuildImage()) {
-      Vision::HSImageHandle faceHueAndSaturation = ProceduralFace::GetHueSatWrapper();
-      auto* outImage = new Vision::CompositeImage(_context->GetDataLoader()->GetSpriteCache(),
-                                                  faceHueAndSaturation,
-                                                  _context->GetDataLoader()->GetSpritePaths());
-      const bool builtImage = _compositeImageBuilder->GetCompositeImage(*outImage);
-      if (ANKI_VERIFY(builtImage,
-                      "AnimationStreamer.Process_displayCompositeImageChunk.FailedToBuildImage",
-                      "Composite image failed to build")){
-        SetCompositeImage(outImage, msg.get_frame_interval_ms, msg.duration_ms);
-      }
-
-      _compositeImageBuilder.reset();
-    }
-
-  }
-
-  void AnimationStreamer::Process_updateCompositeImage(const RobotInterface::UpdateCompositeImage& msg)
-  {
-    Vision::CompositeImageLayer::SpriteBox sb(msg.serializedSpriteBox);
-    UpdateCompositeImage(msg.layerName, sb, msg.assetID, msg.applyAt_ms);
-  }
-
-  void AnimationStreamer::Process_playCompositeAnimation(const std::string& name, Tag tag)
-  {
-    const u32 numLoops = 1;
-    const u32 startAtTime_ms = 0;
-    const bool interruptRunning = true;
-    const bool shouldOverrideEyeHue = true;
-    const bool shouldRenderInEyeHue = false;
-    const bool isInternalAnim = false;
-
-    // Hack: if _streamingAnimation == _proceduralAnimation, the subsequent CopyIntoProceduralAnimation call
-    // will delete *_streamingAnimation without assigning it to nullptr. This assignment prevents associated
-    // undefined behavior
-    _streamingAnimation = _neutralFaceAnimation;
-    CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(name));
-    SetStreamingAnimation(_proceduralAnimation, tag, numLoops, startAtTime_ms, interruptRunning,
-                          shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
-
-    _expectingCompositeImage = true;
-  }
-
   void AnimationStreamer::Process_playAnimWithSpriteBoxRemaps(const RobotInterface::PlayAnimWithSpriteBoxRemaps& msg)
   {
     const u32 numLoops = 1;
@@ -905,6 +835,7 @@ namespace Anim {
       FaceInfoScreenManager::getInstance()->DrawCameraImage(debugImg);
 
       // TODO: Return here or will that screw up stuff on the engine side?
+      // DNM Verify this
       return RESULT_OK;
     }
 
@@ -915,91 +846,6 @@ namespace Anim {
       return SetStreamingAnimation(_proceduralAnimation, 0);
     } 
     return RESULT_OK;
-  }
-
-  Result AnimationStreamer::SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms,
-                                              u32 duration_ms)
-  {
-    _expectingCompositeImage = false;
-    DEV_ASSERT(nullptr != _proceduralAnimation, "AnimationStreamer.SetCompositeImage.NullProceduralAnimation");
-    // If procedural animation is streaming set the streaming animation to nullptr
-    // without clearing it out so that the animation can be restarted with the composite image data
-    Tag preserveTag = 0;
-    if (_streamingAnimation == _proceduralAnimation)
-    {
-      preserveTag = _tag;
-      const u32 numLoops = 1;
-      const u32 startTime_ms = 0;
-      const bool interruptRunning = true;
-      const bool shouldOverrideEyeHue = false;
-      const bool shouldRenderInEyeHue = false;
-      const bool isInternalAnim = true;
-      const bool shouldClearProceduralAnim = false;
-      SetStreamingAnimation(nullptr, 0, numLoops, startTime_ms, interruptRunning,
-                            shouldOverrideEyeHue, shouldRenderInEyeHue,
-                            isInternalAnim, shouldClearProceduralAnim);
-    }
-
-    // Clear out any runtime sequences currently set on the procedural animation
-    auto& spriteSeqTrack = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>();
-    spriteSeqTrack.Clear();
-
-    const bool shouldRenderInEyeHue = false;
-    // Trigger time of keyframe is 0 since we want it to start playing immediately
-    auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
-    SpriteSequenceKeyFrame kf(spriteCache, compImg, frameInterval_ms,
-                              shouldRenderInEyeHue);
-    kf.SetKeyframeActiveDuration_ms(duration_ms);
-    Result result = _proceduralAnimation->AddKeyFrameToBack(kf);
-    if (!(ANKI_VERIFY(RESULT_OK == result, "AnimationStreamer.SetCompositeImage.FailedToAddKeyFrame", "")))
-    {
-      return result;
-    }
-
-    const u32 numLoops = 1;
-    const u32 startTime_ms = 0;
-    const bool interruptRunning = true;
-    const bool shouldOverrideEyeHue = false;
-    const bool isInternalAnim = false;
-    return SetStreamingAnimation(_proceduralAnimation, preserveTag, numLoops, startTime_ms, interruptRunning,
-                                 shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
-  }
-
-  Result AnimationStreamer::UpdateCompositeImage(Vision::LayerName layerName,
-                                                 const Vision::CompositeImageLayer::SpriteBox& spriteBox,
-                                                 uint16_t assetID,
-                                                 u32 applyAt_ms)
-  {
-    if (_streamingAnimation != _proceduralAnimation)
-    {
-      return Result::RESULT_FAIL;
-    }
-
-    auto& track = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>();
-    if (track.HasFramesLeft())
-    {
-      auto& keyframe =  track.GetCurrentKeyFrame();
-      auto* spriteCache = _context->GetDataLoader()->GetSpriteCache();
-      auto* spriteSeqContainer = _context->GetDataLoader()->GetSpriteSequenceContainer();
-      SpriteSequenceKeyFrame::CompositeImageUpdateSpec spec(spriteCache,
-                                                            spriteSeqContainer,
-                                                            layerName,
-                                                            spriteBox,
-                                                            assetID);
-
-      // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
-      // This is a mess. A single KeyFrame is now responsible for updating the
-      // face image any time it is updated. This dilutes the "moment in time" notion
-      // of a KeyFrame pretty deeply
-      keyframe.QueueCompositeImageUpdate(std::move(spec), applyAt_ms);
-    }
-    else
-    {
-      LOG_WARNING("AnimationStreamer.UpdateCompositeImage.NoCompositeImage",
-                  "Keyframe does not have a composite image to update");
-    }
-
-    return Result::RESULT_OK;
   }
 
   void AnimationStreamer::Abort(Tag tag, bool shouldClearProceduralAnim)
@@ -1039,7 +885,6 @@ namespace Anim {
       _wasAnimationInterruptedWithNothing = true;
     }
     _relativeStreamTime_ms = 0;
-    _expectingCompositeImage = false;
     _lockFaceTrackAtEndOfStreamingAnimation = false;
   } // Abort()
 
@@ -1059,16 +904,17 @@ namespace Anim {
     Result lastResult = _streamingAnimation->Init(spriteCache);
     if (lastResult == RESULT_OK)
     {
+      // DNM Remove the stupid EyeHue crap! Hooray!
       // Only update should render in eye hue if not looping
-      if (shouldOverrideEyeHue)
-      {
-        auto& spriteTrack = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>();
-        std::list<SpriteSequenceKeyFrame>& allKeyframes = spriteTrack.GetAllKeyframes();
-        for (auto& frame: allKeyframes)
-        {
-          frame.OverrideShouldRenderInEyeHue(shouldRenderInEyeHue);
-        }
-      }
+      // if (shouldOverrideEyeHue)
+      // {
+      //   auto& spriteTrack = _streamingAnimation->GetTrack<SpriteSequenceiKeyFrame>();
+      //   std::list<SpriteSequenceiKeyFrame>& allKeyframes = spriteTrack.GetAllKeyframes();
+      //   for (auto& frame: allKeyframes)
+      //   {
+      //     frame.OverrideShouldRenderInEyeHue(shouldRenderInEyeHue);
+      //   }
+      // }
 
       _tag = withTag;
 
@@ -1643,17 +1489,6 @@ namespace Anim {
       return RESULT_OK;
     }
 
-    // TODO(str): VIC-13521 SpritepathMap::OverrideAssetPath
-    // This can likely be removed if we simplify runtime engine based animation overrides to simply
-    // redirecting asset paths, that way the required messages would be radically simpler.
-    // Removing this logic will require some refactoring for weather, timer, clock, and blackjack
-    // TEMP (Kevin K.): We're waiting on messages that have been delayed - don't start
-    // the animation yet
-    if (_expectingCompositeImage)
-    {
-      return RESULT_OK;
-    }
-
     if (!_startOfAnimationSent)
     {
       SendStartOfAnimation();
@@ -1706,14 +1541,15 @@ namespace Anim {
     ExtractMessagesRelatedToProceduralTrackComponent(_context, _streamingAnimation, _proceduralTrackComponent.get(),
                                                      _lockedTracks, _relativeStreamTime_ms, kStoreFace, stateToSend);
 
+    // DNM Verify that this doesn't break anything
     // Functionally, this checks whether we rendered the SpriteTrack during EMRTPTC above.
     // If we did, we note it by preventing procedural face draws for a while. Move it somewhere appropriate.
-    auto & spriteSeqTrack = _streamingAnimation->GetTrack<SpriteSequenceKeyFrame>();
-    if (ShouldRenderSpriteTrack(spriteSeqTrack, _lockedTracks, _relativeStreamTime_ms, false))
-    {
-      const AnimTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
-      _nextProceduralFaceAllowedTime_ms = currTime_ms + kMinTimeBetweenLastNonProcFaceAndNextProcFace_ms;
-    }
+    // auto & spriteSeqTrack = _streamingAnimation->GetTrack<SpriteSequenceiKeyFrame>();
+    // if (ShouldRenderSpriteTrack(spriteSeqTrack, _lockedTracks, _relativeStreamTime_ms, false))
+    // {
+    //   const AnimTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+    //   _nextProceduralFaceAllowedTime_ms = currTime_ms + kMinTimeBetweenLastNonProcFaceAndNextProcFace_ms;
+    // }
 
     return lastResult;
   } // ExtractMessagesFromStreamingAnim()
@@ -1753,19 +1589,10 @@ namespace Anim {
     // of a huge, apparently unrelated call stack. Takes forever to discover this stuff
     // ----- Face Rendering Code -----
 
-    bool needToRenderStreamable = !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::FACE_TRACK);
-    if (anim != nullptr)
-    {
-      // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
-      // once the spriteSeqTrack is gone this will collapse to only the first check
-      const auto & spriteSeqTrack = anim->GetTrack<SpriteSequenceKeyFrame>();
-      needToRenderStreamable &= layeredKeyFrames.haveFaceKeyFrame &&
-                                ShouldRenderProceduralFace(spriteSeqTrack,
-                                                           tracksCurrentlyLocked,
-                                                           timeSinceAnimStart_ms);
-    }
+    bool haveEyesToRender = layeredKeyFrames.haveFaceKeyFrame &&
+                            !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::FACE_TRACK);
 
-    if (needToRenderStreamable)
+    if (haveEyesToRender)
     {
       GetStreamableFace(context, layeredKeyFrames.faceKeyFrame.GetFace(), stateToSend.faceImg);
       stateToSend.haveFaceToSend = true;
@@ -1782,24 +1609,9 @@ namespace Anim {
       bool renderFromCompImage = anim->PopulateCompositeImage(*context->GetDataLoader()->GetSpriteCache(),
                                                               *context->GetDataLoader()->GetSpriteSequenceContainer(),
                                                               timeSinceAnimStart_ms, compImg);
-
-      // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
-      // CompImageUpdates should just go into the SpriteBoxCompositor as SpriteBoxKeyframes. Then
-      // this whole block will go away
-      u32 curFrameIdx = 0;
-      const auto & spriteSeqTrack = anim->GetTrack<SpriteSequenceKeyFrame>();
-      if (ShouldRenderSpriteTrack(spriteSeqTrack, tracksCurrentlyLocked, timeSinceAnimStart_ms, needToRenderStreamable))
-      {
-        auto & faceKeyFrame = spriteSeqTrack.GetCurrentKeyFrame();
-        faceKeyFrame.ApplyCompositeImageUpdates(timeSinceAnimStart_ms);
-        compImg.MergeInImage(faceKeyFrame.GetCompositeImage());
-        curFrameIdx = faceKeyFrame.GetFrameNumberForTime(timeSinceAnimStart_ms);
-        renderFromCompImage = true;
-      }
-
       if (renderFromCompImage)
       {
-        if (needToRenderStreamable)
+        if (haveEyesToRender)
         {
           // TODO(str): VIC-13519 Linearize Face Rendering 
           // We should just always be overlaying the procedural face onto the comp image above after rendering
@@ -1835,10 +1647,17 @@ namespace Anim {
           img.FillWith(Vision::PixelRGBA());
         }
 
-        compImg.OverlayImageWithFrame(img, curFrameIdx);
+        // DNM Remove CompositeImage currFrameIdx. It should not be used.
+        compImg.OverlayImageWithFrame(img, 0);
         stateToSend.faceImg.SetFromImageRGB(img);
 
         stateToSend.haveFaceToSend = true;
+      }
+
+      if(renderFromCompImage || haveEyesToRender)
+      {
+        const AnimTimeStamp_t currTime_ms = BaseStationTimer::getInstance()->GetCurrentTimeStamp();
+        _nextProceduralFaceAllowedTime_ms = currTime_ms + kMinTimeBetweenLastNonProcFaceAndNextProcFace_ms;
       }
     }
 
@@ -2086,10 +1905,11 @@ namespace Anim {
     // Send animState message
     if (--_numTicsToSendAnimState == 0)
     {
-      const auto numKeyframes = _proceduralAnimation->GetTrack<SpriteSequenceKeyFrame>().TrackLength();
+      // DNM Verify that this doesn't break mirror mode. Adjust if it does.
+      // const auto numKeyframes = _proceduralAnimation->GetTrack<SpriteSequenceiKeyFrame>().TrackLength();
 
       AnimationState msg;
-      msg.numProcAnimFaceKeyframes = static_cast<uint32_t>(numKeyframes);
+      // msg.numProcAnimFaceKeyframes = static_cast<uint32_t>(numKeyframes);
       msg.lockedTracks             = _lockedTracks;
       msg.tracksInUse              = _tracksInUse;
 
@@ -2291,49 +2111,6 @@ namespace Anim {
 
     // add layer to comp image
     image.AddLayer(std::move(eyeLayer));
-  }
-
-  bool AnimationStreamer::ShouldRenderProceduralFace(const Animations::Track<SpriteSequenceKeyFrame>& spriteTrack,
-                                                     const u8 tracksCurrentlyLocked,
-                                                     const TimeStamp_t relativeStreamTime_ms)
-  {
-    const bool spriteSeqHasData = !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::FACE_TRACK) &&
-                                  spriteTrack.HasFramesLeft() &&
-                                  spriteTrack.GetCurrentKeyFrame().IsTimeToPlay(relativeStreamTime_ms);
-
-    bool newSpriteSeqData =  false;
-    bool allowEyeOverlays = false;
-    if (spriteSeqHasData)
-    {
-      auto& faceKeyFrame = spriteTrack.GetCurrentKeyFrame();
-      newSpriteSeqData = faceKeyFrame.NewImageContentAvailable(relativeStreamTime_ms);
-      allowEyeOverlays = faceKeyFrame.AllowProceduralEyeOverlays();
-    }
-
-    return !newSpriteSeqData || allowEyeOverlays;
-  }
-
-  bool AnimationStreamer::ShouldRenderSpriteTrack(const Animations::Track<SpriteSequenceKeyFrame>& spriteTrack,
-                                                  const u8 tracksCurrentlyLocked,
-                                                  const TimeStamp_t relativeStreamTime_ms,
-                                                  const bool proceduralFaceRendered)
-  {
-    // Non-procedural faces (raw pixel data/images) take precedence over procedural faces (parameterized faces
-    // like idles, keep alive, or normal animated faces)
-    const bool spriteSeqHasData = !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::FACE_TRACK) &&
-                                  spriteTrack.HasFramesLeft() &&
-                                  spriteTrack.GetCurrentKeyFrame().IsTimeToPlay(relativeStreamTime_ms);
-
-    bool newSpriteSeqData =  false;
-    bool needToRenderFaceIntoCompositeImage = false;
-    if (spriteSeqHasData)
-    {
-      auto& faceKeyFrame = spriteTrack.GetCurrentKeyFrame();
-
-      newSpriteSeqData = faceKeyFrame.NewImageContentAvailable(relativeStreamTime_ms);
-      needToRenderFaceIntoCompositeImage = proceduralFaceRendered;
-    }
-    return newSpriteSeqData || needToRenderFaceIntoCompositeImage;
   }
 
   void AnimationStreamer::InvalidateBannedTracks(const std::string& animName,

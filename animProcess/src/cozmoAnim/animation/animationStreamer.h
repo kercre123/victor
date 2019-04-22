@@ -27,7 +27,6 @@
 
 namespace Anki {
 namespace Vision{
-class CompositeImageBuilder;
 }
 
 namespace Vector {
@@ -98,9 +97,6 @@ namespace Anim {
     void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageBinaryChunk& msg);
     void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageGrayscaleChunk& msg);
     void Process_displayFaceImageChunk(const RobotInterface::DisplayFaceImageRGBChunk& msg);
-    void Process_displayCompositeImageChunk(const RobotInterface::DisplayCompositeImageChunk& msg);
-    void Process_updateCompositeImage(const RobotInterface::UpdateCompositeImage& msg);
-    void Process_playCompositeAnimation(const std::string& name, Tag tag);
 
     void Process_playAnimWithSpriteBoxRemaps(const RobotInterface::PlayAnimWithSpriteBoxRemaps& msg);
 
@@ -108,11 +104,6 @@ namespace Anim {
     void Process_addSpriteBoxKeyFrames(const RobotInterface::AddSpriteBoxKeyFrames& msg);
 
     Result SetFaceImage(Vision::SpriteHandle spriteHandle, bool shouldRenderInEyeHue, u32 duration_ms);
-    Result SetCompositeImage(Vision::CompositeImage* compImg, u32 frameInterval_ms, u32 duration_ms);
-    Result UpdateCompositeImage(Vision::LayerName layerName,
-                                const Vision::CompositeImageLayer::SpriteBox& spriteBox,
-                                uint16_t assetID,
-                                u32 applyAt_ms);
 
     Audio::ProceduralAudioClient* GetProceduralAudioClient() const { return _proceduralAudioClient.get(); }
 
@@ -233,13 +224,6 @@ namespace Anim {
     bool _startOfAnimationSent = false;
     bool _endOfAnimationSent   = false;
 
-    // TEMP (Kevin K.): To minimize changes to the animation streamer legacy messages/functions
-    // were used when introducing composite image functionality. Unfortunately if these messages
-    // don't come in on the same tick it can create lots of strange issues. This temp hack
-    // may cause the animation not to play for a few additional ticks, but it's the safest change
-    // to make that solves synchronization issues
-    bool _expectingCompositeImage = false;
-
     bool _wasAnimationInterruptedWithNothing = false;
 
     bool _backpackAnimationLayerEnabled = false;
@@ -269,7 +253,7 @@ namespace Anim {
     // to smooth over gaps in between non-procedural frames that can occur
     // when trying to render them at near real-time. Otherwise, procedural
     // face layers like eye darts could play during these gaps.
-    AnimTimeStamp_t _nextProceduralFaceAllowedTime_ms = 0;
+    static AnimTimeStamp_t _nextProceduralFaceAllowedTime_ms;
 
     // Last time we streamed anything
     f32 _lastAnimationStreamTime = std::numeric_limits<f32>::lowest();
@@ -314,10 +298,6 @@ namespace Anim {
     u32                 _faceImageRGBId                    = 0;          // Used only for tracking chunks of the same image as they are received
     u32                 _faceImageRGBChunksReceivedBitMask = 0;
     const u32           kAllFaceImageRGBChunksReceivedMask = 0x3fffffff; // 30 bits for 30 expected chunks (FACE_DISPLAY_NUM_PIXELS / 600 pixels_per_msg ~= 30)
-
-    // Composite images
-    u32 _compositeImageID = 0;
-    std::unique_ptr<Vision::CompositeImageBuilder> _compositeImageBuilder;
 
     // Tic counter for sending animState message
     u32           _numTicsToSendAnimState            = 0;
@@ -419,16 +399,6 @@ namespace Anim {
     
     void InvalidateBannedTracks(const std::string& animName,
                                 AnimationMessageWrapper& messageWrapper) const;
-
-    // Inspects streaming track's sprite sequence track to see whether procedural
-    // eyes are needed this tick
-    static bool ShouldRenderProceduralFace(const Animations::Track<SpriteSequenceKeyFrame>& spriteTrack,
-                                           const u8 tracksCurrentlyLocked,
-                                           const TimeStamp_t relativeStreamTime_ms);
-    static bool ShouldRenderSpriteTrack(const Animations::Track<SpriteSequenceKeyFrame>& spriteTrack,
-                                        const u8 tracksCurrentlyLocked,
-                                        const TimeStamp_t relativeStreamTime_ms,
-                                        const bool proceduralFaceRendered);
 
     static void GetStreamableFace(const Anim::AnimContext* context, const ProceduralFace& procFace, Vision::ImageRGB565& outImage);
     void BufferFaceToSend(Vision::ImageRGB565& image);

@@ -43,7 +43,6 @@ bool Animation::operator==(const Animation &other) const {
   return (_name == other._name) &&
          (_headTrack == other._headTrack) &&
          (_liftTrack == other._liftTrack) &&
-         (_spriteSequenceTrack == other._spriteSequenceTrack) &&
          (_proceduralFaceTrack == other._proceduralFaceTrack) &&
          (_eventTrack == other._eventTrack) &&
          (_backpackLightsTrack == other._backpackLightsTrack) &&
@@ -344,11 +343,6 @@ Animations::Track<LiftHeightKeyFrame>& Animation::GetTrack() {
 }
 
 template<>
-Animations::Track<SpriteSequenceKeyFrame>& Animation::GetTrack() {
-  return _spriteSequenceTrack;
-}
-
-template<>
 Animations::Track<EventKeyFrame>& Animation::GetTrack() {
   return _eventTrack;
 }
@@ -397,7 +391,6 @@ Result Animation::AddKeyFrameToBack(const HeadAngleKeyFrame& kf)
 #define ALL_TRACKS(__METHOD__, __COMBINE_WITH__, ...) \
 _headTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _liftTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
-_spriteSequenceTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _proceduralFaceTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _eventTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _robotAudioTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
@@ -444,13 +437,6 @@ void Animation::ClearUpToCurrent()
 void Animation::CacheAnimationSprites(Vision::SpriteCache* cache)
 {
   _spriteBoxCompositor.CacheInternalSprites(cache); 
-
-  // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
-  auto& frameList = _spriteSequenceTrack.GetAllFrames();
-  auto endTime_ms = GetLastKeyFrameEndTime_ms();
-  for(auto& frame: frameList){
-    frame.CacheInternalSprites(cache, endTime_ms);
-  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -480,7 +466,6 @@ void Animation::AppendAnimation(const Animation& appendAnim)
   // Append animation tracks
   _headTrack.AppendTrack(appendAnim.GetTrack<HeadAngleKeyFrame>(), animOffest_ms);
   _liftTrack.AppendTrack(appendAnim.GetTrack<LiftHeightKeyFrame>(), animOffest_ms);
-  _spriteSequenceTrack.AppendTrack(appendAnim.GetTrack<SpriteSequenceKeyFrame>(), animOffest_ms);
   _proceduralFaceTrack.AppendTrack(appendAnim.GetTrack<ProceduralFaceKeyFrame>(), animOffest_ms);
   _eventTrack.AppendTrack(appendAnim.GetTrack<EventKeyFrame>(), animOffest_ms);
   _backpackLightsTrack.AppendTrack(appendAnim.GetTrack<BackpackLightsKeyFrame>(), animOffest_ms);
@@ -505,7 +490,6 @@ uint32_t Animation::GetLastKeyFrameTime_ms() const
   lastFrameTime_ms = CompareLastFrameTime<RecordHeadingKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<TurnToRecordedHeadingKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<EventKeyFrame>(lastFrameTime_ms);
-  lastFrameTime_ms = CompareLastFrameTime<SpriteSequenceKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<BackpackLightsKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<ProceduralFaceKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = _spriteBoxCompositor.CompareLastFrameTime(lastFrameTime_ms);
@@ -527,7 +511,6 @@ uint32_t Animation::GetLastKeyFrameEndTime_ms() const
   lastFrameTime_ms = CompareLastFrameEndTime<RecordHeadingKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<TurnToRecordedHeadingKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<EventKeyFrame>(lastFrameTime_ms);
-  lastFrameTime_ms = CompareLastFrameEndTime<SpriteSequenceKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<BackpackLightsKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<ProceduralFaceKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = _spriteBoxCompositor.CompareLastFrameTime(lastFrameTime_ms);

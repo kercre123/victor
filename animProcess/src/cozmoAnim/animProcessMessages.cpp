@@ -283,23 +283,6 @@ void Process_displayFaceImageRGBChunk(const Anki::Vector::RobotInterface::Displa
   _animStreamer->Process_displayFaceImageChunk(msg);
 }
 
-void Process_displayCompositeImageChunk(const Anki::Vector::RobotInterface::DisplayCompositeImageChunk& msg)
-{
-  _animStreamer->Process_displayCompositeImageChunk(msg);
-}
-
-void Process_updateCompositeImage(const Anki::Vector::RobotInterface::UpdateCompositeImage& msg)
-{
-  _animStreamer->Process_updateCompositeImage(msg);
-}
-
-void Process_playCompositeAnimation(const Anki::Vector::RobotInterface::PlayCompositeAnimation& msg)
-{
-  const std::string animName(msg.animName, msg.animName_length);
-
-  _animStreamer->Process_playCompositeAnimation(animName, msg.tag);
-}
-
 void Process_playAnimWithSpriteBoxRemaps(const Anki::Vector::RobotInterface::PlayAnimWithSpriteBoxRemaps& msg)
 {
   _animStreamer->Process_playAnimWithSpriteBoxRemaps(msg);

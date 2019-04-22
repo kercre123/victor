@@ -192,6 +192,7 @@ private:
   
   void LoadSpritePaths();
 
+  // DNM Tear this shit out entirely :)
   void LoadCompositeImageMaps();
 
   void LoadWeatherResponseMaps();
