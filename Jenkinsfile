@@ -239,9 +239,6 @@ stage("${primaryStageName} Build") {
                     deleteDir()
                 }
             }
-            stage('Destroy ephemeral VM') {
-                vSphere buildStep: [$class: 'Delete', failOnNoExist: true, vm: uuid], serverName: vSphereServer
-            }
             stage('Detach ephemeral build agent from Jenkins') {
                 agent.Detach()
             }
