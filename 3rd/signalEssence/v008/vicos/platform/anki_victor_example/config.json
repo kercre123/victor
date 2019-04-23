@@ -1,0 +1,28 @@
+{
+    "@": "use online json parser to validate-- json.parser.online.fr",
+
+    "block_reader": {
+	"dir_path": "./",
+
+	"sin": {
+	    "fname": "sin1004hz_16khz.rmsdb_-24.wav",
+	    "src_file_chan_index": [0, 0, 0, 0]
+	},
+	"refin": {
+	    "fname": "",
+            
+	    "src_file_chan_index": [0]
+	},
+	"rin": {
+	    "fname": "sin1004hz_16khz.rmsdb_-24.wav",
+	    "src_file_chan_index": [0]
+	}
+
+    },
+
+    "block_writer": {
+        "dir_path": "out/",
+        "sout" : "example_sout.wav",
+        "rout" : "example_rout.wav"
+    }
+}

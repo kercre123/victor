@@ -305,6 +305,16 @@ void Process_playAnimWithSpriteBoxRemaps(const Anki::Vector::RobotInterface::Pla
   _animStreamer->Process_playAnimWithSpriteBoxRemaps(msg);
 }
 
+void Process_playAnimWithSpriteBoxKeyFrames(const Anki::Vector::RobotInterface::PlayAnimWithSpriteBoxKeyFrames& msg)
+{
+  _animStreamer->Process_playAnimWithSpriteBoxKeyFrames(msg);
+}
+
+void Process_addSpriteBoxKeyFrames(const Anki::Vector::RobotInterface::AddSpriteBoxKeyFrames& msg)
+{
+  _animStreamer->Process_addSpriteBoxKeyFrames(msg);
+}
+
 void Process_enableKeepFaceAlive(const Anki::Vector::RobotInterface::EnableKeepFaceAlive& msg)
 {
   _animStreamer->EnableKeepFaceAlive(msg.enable, msg.disableTimeout_ms);

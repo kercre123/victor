@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfPhrasespotCreateFromList</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+<a href="objects.html#searchs_t">searchs_t</a> *thfPhrasespotCreateFromList(thf_t **thf, <a href="objects.html#recog_t">recog_t</a> *r, <a href="objects.html#pronuns_t">pronuns_t</a> *p, 
+                                       const char **phrases, 
+                                       unsigned short phraseCount, 
+                                       const char **words, 
+                                       const char **pronuns, 
+                                       unsigned short wordCount, 
+                                       unsigned short listenWindow);
+</pre>
+<h3>Description</h3>
+ Creates a phrasespot search object for the specified array of phrases. Phrasespot parameters (paramA, paramB) are automatically assigned based on the specified listening window duration. To further affect phrasespot accept/reject behavior, adjustments can be made to the PHRASESPOT_PARAMA_OFFSET parameter using <a href="thfPhrasespotConfigSet.html">thfPhrasespotConfigSet</a>.  The array of unique words contained in the phrases and their associated pronunciations can be optionally specified. If 'words' and 'pronun' arguments are set to NULL, pronunciations are automatically generated using the specified pronunciation model. The search object can be used immediately or saved to file for later use. Call <a href="thfSearchDestroy.html">thfSearchDestroy</a> to destroy the search object when no longer needed.</p> <p>The listening window duration directly affects phrasespotting behavior, such that a shorter listening duration will have a higher per-hour false accept rate than a longer listening duration. The listening window can have one of the following values: <ul> <li>PHRASESPOT_LISTEN_SHORT <li>PHRASESPOT_LISTEN_MEDIUM <li>PHRASESPOT_LISTEN_LONG <li>PHRASESPOT_LISTEN_CONTINUOUS </ul>
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><a href="objects.html#recog_t"><code>recog_t *</code></a></td>
+<td nowrap valign="top"><code>r</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Recognizer object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><a href="objects.html#pronuns_t"><code>pronuns_t *</code></a></td>
+<td nowrap valign="top"><code>p</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Pronunciation object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>const char **</code></td>
+<td nowrap valign="top"><code>phrases</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Array of phrases to build.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned short</code></td>
+<td nowrap valign="top"><code>phraseCount</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Number of phrases in array.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>const char **</code></td>
+<td nowrap valign="top"><code>words</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Array of unique words in phrases. Can be NULL if pronunciations are to be generated internally to SDK.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>const char **</code></td>
+<td nowrap valign="top"><code>pronuns</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Array of word pronunciations. Can be NULL if pronunciations are to be generated internally to SDK.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned short</code></td>
+<td nowrap valign="top"><code>wordCount</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Number of words and pronunciations in array (if provided).</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned short</code></td>
+<td nowrap valign="top"><code>listenWindow</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Duration of intended listening window (in seconds).</td>
+</tr>
+</table>
+<h3>Return</h3>
+ Returns a unique handle to the search object (see <a href="objects.html#searchs_t">searchs_t</a>). Returns NULL in the event of error. 
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>recog object not found</code></td>
+<td valign="top">Invalid recognizer object handle</td>
+</tr>
+<tr>
+<td valign="top"><code>pronun object not found</code></td>
+<td valign="top">Invalid pronunciation object handle.</td>
+</tr>
+<tr>
+<td valign="top"><code>Undefined acoustic model state names</code></td>
+<td valign="top">The acoustic model data seems to be damaged or incompatible.</td>
+</tr>
+<tr>
+<td valign="top"><code>Uninitialized pronunciation engine</code></td>
+<td valign="top">Invalid Pronunciation object handle.</td>
+</tr>
+<tr>
+<td valign="top"><code>must provide phrases. phraseCount cannot be zero</code></td>
+<td valign="top">Empty phrase list or phraseCount is zero.</td>
+</tr>
+<tr>
+<td valign="top"><code>word/pronun mismatch</code></td>
+<td valign="top">Word and pronun list must be of equal length.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfSearchDestroy.html">thfSearchDestroy</a>, <a href="thfSearchSaveToFile.html">thfSearchSaveToFile</a>, <a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a>, <a href="thfRecogCreateFromFunc.html">thfRecogCreateFromFunc</a>, <a href="thfRecogCreateFromStatic.html">thfRecogCreateFromStatic</a>, <a href="thfPronunCreateFromFile.html">thfPronunCreateFromFile</a> and <a href="thfPronunCreateFromStatic.html">thfPronunCreateFromStatic</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

@@ -31,6 +31,7 @@ namespace {
   std::mt19937 randomEngine(randomDevice());
   const std::vector<const char*> imageFileExts{"jpg", "png"};
   const bool kUseFullPath = true;
+  Anki::Util::PrintfLoggerProvider printfLogger;
 }
 
 using namespace Anki;
@@ -175,9 +176,9 @@ static Result GetImageFiles(const std::string& rootDir,
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 int main(int argc, char* argv[])
 {
-  Util::PrintfLoggerProvider printfLoggerProvider;
-  printfLoggerProvider.SetMinLogLevel(Util::LOG_LEVEL_DEBUG);
-  Util::gLoggerProvider = &printfLoggerProvider;
+
+  printfLogger.SetMinLogLevel(Util::LOG_LEVEL_DEBUG);
+  Util::gLoggerProvider = &printfLogger;
   
   const Vision::SimpleArgParser argParser(argc, argv);
   

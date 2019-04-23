@@ -366,9 +366,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
         }
       }else{
         // If it wasn't a clearing case, add or update as appropriate
-        const std::string& assetName = updateSpec.spriteCache->GetSpritePathMap()->GetAssetName(updateSpec.assetID);
         Vision::CompositeImageLayer::SpriteEntry entry(updateSpec.spriteCache, updateSpec.seqContainer, 
-                                                       assetName, currentFrameNumber);
+                                                       updateSpec.assetID, currentFrameNumber);
         if(nullptr != layer){
           // Update/Add SB to layer
           layer->AddOrUpdateSpriteBoxWithEntry(updateSpec.spriteBox, entry);
@@ -389,7 +388,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
     {
       DEV_ASSERT(faceAnimKeyframe != nullptr, "SpriteSequenceKeyFrame.DefineFromFlatBuf.NullAnim");
       auto seqNameStr = faceAnimKeyframe->animName()->str();
-      outSeq = seqContainer->GetSpriteSequence(seqNameStr);
+      Vision::SpritePathMap::AssetID assetID = Vision::SpritePathMap::GetAssetID(seqNameStr);
+      outSeq = seqContainer->GetSpriteSequence(assetID);
 
       SafeNumericCast(faceAnimKeyframe->triggerTime_ms(),  triggerTime_ms, seqNameStr.c_str());
       return nullptr != outSeq;
@@ -414,7 +414,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           strSeqName = strSeqName.substr(lastSlash+1, std::string::npos);
         }
         
-        outSeq = seqContainer->GetSpriteSequence(strSeqName);
+        Vision::SpritePathMap::AssetID assetID = Vision::SpritePathMap::GetAssetID(strSeqName);
+        outSeq = seqContainer->GetSpriteSequence(assetID);
       }
 
       JsonTools::GetValueOptional(jsonRoot, "frameDuration_ms", frameUpdateInterval);

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h1>Overview of the Recognizer</h1>
+
+This section will guide you through the process of using the SDK to
+build and run a speech recognizer.
+
+<p>
+Conceptually, a speech recognizer is simply an algorithm that takes
+digitized audio as input and produces a text representation of the
+recognized words as output. In practice, there are a number of
+assumptions that are typically made to achieve this, such as what
+language we're dealing with and what's the set of possible words or
+phrases we're expected to recognize. The expected sequence of words is
+known as the <em>recognition task</em> and consists of a grammar
+specification and a list of words and their pronunciations.
+</p>
+
+<p>
+Sensory's <i>TrulyHandsfree</i> recognition engine is made up of two parts:
+<ul>
+<li><b>Acoustic module</b>: This performs acoustic processing of the
+audio input, including speech detection, signal processing, feature
+extraction and phoneme probability estimation. It requires an acoustic
+model in the form of a neural network datafile that must be loaded
+during initialization. This datafile determines the language-specific
+and speaker-independent characteristics of the recognizer. The
+(hidden) data structure representing the acoustic module is referred
+to as the <b><em>recog object</em></b>.
+
+<li><b>Search module</b>: This processes the phoneme probability
+estimates with respect to the vocabulary specification to determine
+the highest scoring word sequence. It requires a pre-compiled grammar
+and vocabulary specification that identifies the allowable word and
+pronunciations sequences. The compilation can occur off-line or just
+in time (online). The (hidden) data structure representing the search
+module is referred to as the <b><em>search object</em></b>.  </ul>
+</p>
+<p>The recognition process is broken down into the following tasks:
+<ol>
+<li><a href="session.html">How to create an SDK session</a>
+<li><a href="building.html">How to define the recognition task</a>
+<li><a href="process.html">How to build and run the recognizer</a>
+</ol>
+</p>
+
+<!----------------------------------------------------------------------- -->
+</body>

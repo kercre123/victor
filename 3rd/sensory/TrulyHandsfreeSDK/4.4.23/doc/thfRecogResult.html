@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfRecogResult</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+int thfRecogResult(thf_t **thf, <a href="objects.html#recog_t">recog_t</a> *r, float *score, const char **res, 
+                   const char **wordAlign, const char **phoneAlign, 
+                   const short **inSpeech, unsigned long *inSpeechSamples, 
+                   const short **sdetSpeech, unsigned long *sdetSpeechSamples);
+</pre>
+<h3>Description</h3>
+ Returns the top-most recognized word/phrase and confidence score. The remainder of this description only applies to non-phrasespot recognition. <p>In addition, this command can return the input wave, sdet wave, word alignment and phoneme alignment by configuring <a href="thfRecogInit.html">thfRecogInit</a> appropriately.</p>  <p>The confidence score provides an indication of how well the input audio matched the vocabulary specification. The score  increases for more confident audio matches and decreases for less confident audio matches. It can be used to determine whether to accept or reject the result (a better way is to use <a href="nota.html">out-of-vocabulary rejection</a>), based on its value relative to some threshold. For instance, using a threshold of 1.0, scores smaller than 1.0 may be rejected and scores equal or larger than 1.0 may be accepted. A suitable confidence threshold should be determined empirically. The relative value of confidence scores are dependent of the Garbage parameter (see <a href="params.html">Parameters</a>). Increasing the Garbage parameter would result in larger confidence values and decreasing the garbage parameter would result in smaller confidence values.</p> <p>This function can be called multiple times to retrieve further (i.e., N-best) results in order of likelihood (see <a href="result.html">Getting the Recognition Result</a>). When no more results are available, the result returned is NULL with score 0.0. </p> 
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><a href="objects.html#recog_t"><code>recog_t *</code></a></td>
+<td nowrap valign="top"><code>r</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Recognizer object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>float *</code></td>
+<td nowrap valign="top"><code>score</code></td>
+<td align="center" valign="top">out</td>
+<td width="500">Confidence score.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>const char **</code></td>
+<td nowrap valign="top"><code>res</code></td>
+<td align="center" valign="top">out</td>
+<td width="500">String of recognized word/s or NULL if no words are recognized. This string belongs to, and its memory is managed by the SDK.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>const char **</code></td>
+<td nowrap valign="top"><code>wordAlign</code></td>
+<td align="center" valign="top">out</td>
+<td width="500">Word alignment information (e.g., start time, end time and confidence score) if keepMode is configured (see <a href="thfRecogInit.html">thfRecogInit</a>), otherwise NULL. The returned string belongs to, and its memory is managed by the SDK. Set to NULL if no output is expected or desired.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>const char **</code></td>
+<td nowrap valign="top"><code>phoneAlign</code></td>
+<td align="center" valign="top">out</td>
+<td width="500">Phoneme alignment information (e.g., start time, end time and confidence score) if keepMode is configured (see <a href="thfRecogInit.html">thfRecogInit</a>), otherwise NULL. The returned string belongs to, and its memory is managed by the SDK. Set to NULL if no output is expected or desired.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>const short **</code></td>
+<td nowrap valign="top"><code>inSpeech</code></td>
+<td align="center" valign="top">out</td>
+<td width="500">Input audio samples (i.e., accumulated audio samples fed to recognizer) if keepMode is configured (see <a Set to NULL if no output is expected or desired. href="thfRecogInit.html">thfRecogInit</a>), otherwise NULL. The returned speech belongs to, and its memory is managed by the SDK. Set to NULL if no output is expected or desired.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned long *</code></td>
+<td nowrap valign="top"><code>inSpeechSamples</code></td>
+<td align="center" valign="top">out</td>
+<td width="500">Input audio length (i.e., accumulated audio samples fed to recognizer) if keepMode is configured (see <a href="thfRecogInit.html">thfRecogInit</a>), otherwise 0. Set to NULL if no output is expected or desired.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>const short **</code></td>
+<td nowrap valign="top"><code>sdetSpeech</code></td>
+<td align="center" valign="top">out</td>
+<td width="500">Speech detected audio samples (i.e., region of input audio containing speech) if keepMode is configured (see <a href="thfRecogInit.html">thfRecogInit</a>), otherwise NULL. The returned speech belongs to, and its memory is managed by the SDK. Set to NULL if no output is expected or desired.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned long *</code></td>
+<td nowrap valign="top"><code>sdetSpeechSamples</code></td>
+<td align="center" valign="top">out</td>
+<td width="500">Speech detected audio length (i.e., region of input audio containing speech) if keepMode is configured (see <a href="thfRecogInit.html">thfRecogInit</a>), otherwise 0. Set to NULL if no output is expected or desired.</td>
+</tr>
+</table>
+<h3>Return</h3>
+Returns 1 to indicate success and 0 for an error. 
+Use <a href="thfGetLastError.html">thfGetLastError</a> to get error message.
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>recog object not found</code></td>
+<td valign="top">Invalid recognizer object handle.</td>
+</tr>
+<tr>
+<td valign="top"><code>speech detector not found</code></td>
+<td valign="top">The recognizer object was created without a speech detector and thus there is no speech detected output to retrieve.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a>, <a href="thfRecogCreateFromFunc.html">thfRecogCreateFromFunc</a> and <a href="thfRecogCreateFromStatic.html">thfRecogCreateFromStatic</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

@@ -124,9 +124,7 @@ private:
   
   // An action failed such that we must exit the behavior, or
   // we're out of retries for action failures.
-  // Optionally remove the charger from BlockWorld if we failed in
-  // such a way that we definitely don't know where the charger is
-  void ActionFailure(bool removeChargerFromBlockWorld);
+  void TransitionToFailureReaction();
   
   void PushDrivingAnims();
   void PopDrivingAnims();

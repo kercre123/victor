@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfRecogSampleConvert</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+int thfRecogSampleConvert(thf_t **thf, <a href="objects.html#recog_t">recog_t</a> *r, unsigned long inrate, 
+                          short *inbuf, unsigned long inlen, short *outbuf, 
+                          unsigned long *outlen);
+</pre>
+<h3>Description</h3>
+ Converts the sample rate of the specified audio block to match the sample rate of the recognizer. Use <a href="thfFree.html">thfFree</a> to free "outbuf" memory when you're done. 
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><a href="objects.html#recog_t"><code>recog_t *</code></a></td>
+<td nowrap valign="top"><code>r</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Recognizer object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned long</code></td>
+<td nowrap valign="top"><code>inrate</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Sample rate of input audio.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>short *</code></td>
+<td nowrap valign="top"><code>inbuf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Block of 16-bit linear PCM audio.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned long</code></td>
+<td nowrap valign="top"><code>inlen</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Number of samples of input audio.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>short *</code></td>
+<td nowrap valign="top"><code>outbuf</code></td>
+<td align="center" valign="top">out</td>
+<td width="500">Block of 16-bit linear PCM audio. Ownership of the associated memory is transferred to the application. It should be managed by the application and eventually deallocated using the <a href="thfFree.html">thfFree</a> function.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned long *</code></td>
+<td nowrap valign="top"><code>outlen</code></td>
+<td align="center" valign="top">out</td>
+<td width="500">Number of samples in converted output audio.</td>
+</tr>
+</table>
+<h3>Return</h3>
+Returns 1 to indicate success and 0 for an error. 
+Use <a href="thfGetLastError.html">thfGetLastError</a> to get error message.
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>recog object not found</code></td>
+<td valign="top">Invalid recognizer object handle.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfFree.html">thfFree</a>, <a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a>, <a href="thfRecogCreateFromFunc.html">thfRecogCreateFromFunc</a> and <a href="thfRecogCreateFromStatic.html">thfRecogCreateFromStatic</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

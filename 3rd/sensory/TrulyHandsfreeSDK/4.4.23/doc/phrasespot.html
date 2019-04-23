@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h2>PhraseSpotting Grammars:</h2>
+<p><b>NOTE:</b> Phrasespotting is orthogonal to and preferred over the older <a href="wordspot.html">word-spotting</a> technology.</p>
+
+<p>Phrasespotting is implemented using Sensory's TrulyHandsfree&#8482; Voice Control 3.0 technology. Phrasespotting is commonly used to implement trigger phrase(s) or for continuous-listening style applications.</p>
+
+<p>Refer to the PhraseSpot Sample provided with the SDK distribution.</p>
+
+<p>A phrasespot vocabulary can either be loaded from file (see <a href="thfSearchCreateFromFile.html">thfSearchCreateFromFile</a>) or specified from scratch as a grammar (see <a href="thfSearchCreateFromGrammar.html">thfSearchCreateFromGrammar</a>). NOTE: phrasespotting is not supported with Lists.  Phrasespotting is initiated by passing the <em>PHRASESPOTTING</em> argument to <a href="thfSearchCreateFromGrammar.html">thfSearchCreateFromGrammar</a>. There are also additional parameters that can be configured using <a href="thfPhrasespotConfigSet.html">thfPhrasespotConfigSet</a>.</p>
+
+<p>A phrasespotting grammar is a simple collection of phrases to be spotted plus a set of parameters for each phrase. A grammar with a single phrasespot phrase might look as follows:
+<ul><pre>
+  grammar = this is a trigger;
+    paramA:$grammar -1000;
+    paramB:$grammar 610;
+</pre></ul>
+
+ We specify 'paramA' and 'paramB' (and optionally 'paramC') for each phrase in the grammar. These parameters alter the recognition behavior. The parameters must be tuned for each individual grammar. Unfortunately there is no one-size-fits-all. Suitable parameter values (i.e., paramA, paramB, paramC) should be determined empirically using both in-vocabulary and out-of-vocabulary recordings. See  <a href="params.html">Phrasespot Parameters</a> for further details. Contact Sensory for assistance with tuning phrasespot parameters. </p>
+
+<p>Notice that the grammar does not include <em>*nota</em> or employ the use of surrounding silence <em>*sil</em> unlike a conventional grammar. This is because we want to be able to spot the phrase in continuous speech, rather than require the user to pause before and after the phrase. Phrasespotting usage does not require a speech detector, however, it could be paired with one to force the recognition to time-out after a specified period. </p>
+
+<p>
+Multiple phrases can be supported too, for example:
+
+<ul><pre>
+  g1 = this is a phrase;
+  g2 = this is another phrase;
+  g = $g1 | $g2;
+  paramA:$g1 -1000;
+  paramB:$g1 610;
+  paramA:$g2 -750;
+  paramB:$g2 500;
+</pre></ul>
+
+Here each phrase is assigned to a separate variable (i.e., g1, g2). The complete grammar 'g' is then specified in term of these variables. Finally, parameters 'paramA' and 'parmaB' are defined for each phrase/variable. Again the parameters must be tuned specifically for the grammar. Tuning is more involved for multiple phrases because the number of possible permutations are much larger.</p>
+
+<!----------------------------------------------------------------------- -->
+</body>

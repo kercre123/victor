@@ -69,7 +69,7 @@ namespace { // "Private members"
 
   HAL::PowerState desiredPowerMode_;
 
-  // Flag to prevent spamming of unexepected power mode warning
+  // Flag to prevent spamming of unexpected power mode warning
   bool reportUnexpectedPowerMode_ = false;
 
   // Time since the desired power mode was last set
@@ -109,7 +109,7 @@ namespace { // "Private members"
   bool maxNumSelectTimeoutsReached_ = false;
 
   VersionInfo _sysconVersionInfo;
-  
+
   const u32 SELECT_TIMEOUT_SEC = 1;
   const u32 SELECT_TIMEOUT_ATTEMPTS = 5;
   const u32 SPINE_GET_FRAME_TIMEOUT_MS = 1000 * SELECT_TIMEOUT_SEC * (SELECT_TIMEOUT_ATTEMPTS + 1);
@@ -146,30 +146,35 @@ extern "C" {
 // If it times out too many times then
 // syscon must be hosed or there is no spine
 // connection
-bool check_select_timeout(spine_ctx_t spine)
+bool check_spine_readable(spine_ctx_t spine)
 {
-  int fd = spine_get_fd(spine);
-
   static u8 selectTimeoutCount = 0;
-  if(selectTimeoutCount >= SELECT_TIMEOUT_ATTEMPTS)
-  {
-    AnkiError("spine.check_select_timeout.timeoutCountReached","");
+  if (selectTimeoutCount >= SELECT_TIMEOUT_ATTEMPTS) {
+    AnkiError("HAL.check_spine_readable.timeoutCountReached","");
     FaultCode::DisplayFaultCode(FaultCode::SPINE_SELECT_TIMEOUT);
     maxNumSelectTimeoutsReached_ = true;
-    return true;
+    return false;
   }
+
+  const int fd = spine_get_fd(spine);
 
   static fd_set fdSet;
   FD_ZERO(&fdSet);
   FD_SET(fd, &fdSet);
+
   static timeval timeout;
   timeout.tv_sec = SELECT_TIMEOUT_SEC;
   timeout.tv_usec = 0;
-  ssize_t s = select(FD_SETSIZE, &fdSet, NULL, NULL, &timeout);
-  if(s == 0)
-  {
+
+  const ssize_t nfds = select(FD_SETSIZE, &fdSet, NULL, NULL, &timeout);
+  if (nfds < 0) {
+    AnkiWarn("HAL.check_spine_readable.error", "select error %s", strerror(errno));
+    return false;
+  }
+
+  if (nfds == 0) {
     selectTimeoutCount++;
-    AnkiWarn("spine.check_select_timeout.selectTimedout", "%u", selectTimeoutCount);
+    AnkiWarn("HAL.check_spine_readable.timeout", "select timeout %u", selectTimeoutCount);
 
     // Let anim know that robot is still alive since we haven't
     // been sending RobotState messages for the last second.
@@ -177,21 +182,23 @@ bool check_select_timeout(spine_ctx_t spine)
     RobotInterface::StillAlive msg;
     RobotInterface::SendMessage(msg);
 
-    return true;
+    return false;
   }
-  return false;
+
+  return true;
 }
 
 ssize_t robot_io(spine_ctx_t spine)
 {
-  int fd = spine_get_fd(spine);
 
   EventStart(EventType::ROBOT_IO_READ);
 
-  if(check_select_timeout(spine))
-  {
+  if (!check_spine_readable(spine)) {
+    // Spine is not readable at this time
     return -1;
   }
+
+  const int fd = spine_get_fd(spine);
 
   ssize_t r = read(fd, readBuffer_, sizeof(readBuffer_));
 
@@ -550,10 +557,10 @@ Result HAL::Step(void)
       // Repeatedly request syscon version until we get it
       // Sometimes the initial request in HAL::Init is lost due to
       // an "RX Buffer Overrun Detected" or an invalid crc error
-      // This may end up sending some unneccessary requests (2 or 3 of them) as
+      // This may end up sending some unnecessary requests (2 or 3 of them) as
       // the response is not immediate
       request_version();
-      
+
       if (desiredPowerMode_ == POWER_MODE_CALM && !commander_is_active) {
         if (++calmModeSkipFrameCount_ > NUM_CALM_MODE_SKIP_FRAMES) {
           spine_set_lights(&spine_, &(h2bp->lightState));
@@ -605,7 +612,7 @@ Result HAL::Step(void)
     result = spine_get_frame();
 
     // It's taking too long to get a frame!
-    // Timeout is tuned to accomodate worst case back-to-back spine select timeouts
+    // Timeout is tuned to accommodate worst case back-to-back spine select timeouts
     const u32 timeSinceStartOfGetFrame_ms = GetTimeStamp() - startSpineGetFrameTime_ms;
     if (timeSinceStartOfGetFrame_ms > SPINE_GET_FRAME_TIMEOUT_MS) {
       AnkiError("HAL.Step.SpineLoopTimeout", "");
@@ -888,7 +895,7 @@ void ProcessProxData()
   {
     return;
   }
-  
+
   if (HAL::PowerGetMode() == POWER_MODE_CALM) {
     proxData_.distance_mm      = PROX_CALM_MODE_DIST_MM;
     proxData_.signalIntensity  = 0.f;
@@ -917,7 +924,7 @@ void ProcessProxData()
         AnkiWarn("HAL.ProcessProxData.UnhandledStatus", "%s", EnumToString(proxData_.rangeStatus));
         break;
     }
-  
+
     proxData_.distance_mm      = FlipBytes(bodyData_->proximity.rangeMM);
     // Signal/Ambient Rate are fixed point 9.7, so convert to float:
     proxData_.signalIntensity  = static_cast<float>(FlipBytes(bodyData_->proximity.signalRate)) / 128.f;
@@ -925,7 +932,7 @@ void ProcessProxData()
     // SPAD count is fixed point 8.8, so convert to float:
     proxData_.spadCount        = static_cast<float>(FlipBytes(bodyData_->proximity.spadCount)) / 256.f;
     proxData_.timestamp_ms     = HAL::GetTimeStamp();
-    
+
     lastProxDataSampleCount_ = bodyData_->proximity.sampleCount;
   }
 }
@@ -1016,7 +1023,7 @@ u8 HAL::BatteryGetTemperature_C()
 
 bool HAL::IsShutdownImminent()
 {
-  return (bodyData_->battery.flags & POWER_BATTERY_SHUTDOWN); 
+  return (bodyData_->battery.flags & POWER_BATTERY_SHUTDOWN);
 }
 
 u8 HAL::GetWatchdogResetCounter()
@@ -1044,13 +1051,13 @@ void PrintBodyDataUpdate()
         const MotorState& lift = bodyData_->motor[MOTOR_LIFT];
         const MotorState& left = bodyData_->motor[MOTOR_LEFT];
         const MotorState& right = bodyData_->motor[MOTOR_RIGHT];
-        AnkiInfo("HAL.BodyData.Motors", 
+        AnkiInfo("HAL.BodyData.Motors",
                  "Status 0x%02x, "
                  "H: (pos %d, dlt %d, tm %u), "
                  "L: (pos %d, dlt %d, tm %u), "
                  "WL: (pos %d, dlt %d, tm %u), "
                  "WR: (pos %d, dlt %d, tm %u)",
-                 bodyData_->flags, 
+                 bodyData_->flags,
                  head.position, head.delta, head.time,
                  lift.position, lift.delta, lift.time,
                  left.position, left.delta, left.time,
@@ -1063,13 +1070,13 @@ void PrintBodyDataUpdate()
                  "Status 0x%02x, "
                  "Cliff: %4u %4u %4u %4u, "
                  "Prox: range %u, sig %u, amb %u, spadCnt %u, sampCnt %u, calibRes %u",
-                 bodyData_->flags, 
+                 bodyData_->flags,
                  cliff[0], cliff[1], cliff[2], cliff[3],
                  prox.rangeMM, prox.signalRate, prox.ambientRate, prox.spadCount, prox.sampleCount, prox.calibrationResult);
       }
       if (_bodyDataPrintBattery) {
-        const BatteryState& batt = bodyData_->battery;               
-        AnkiInfo("HAL.BodyData.Battery", 
+        const BatteryState& batt = bodyData_->battery;
+        AnkiInfo("HAL.BodyData.Battery",
                  "Status 0x%02x, battV %d, chgr %d, temp %d, battFlags 0x%4x",
                  bodyData_->flags, batt.main_voltage, batt.charger, batt.temperature, batt.flags);
       }

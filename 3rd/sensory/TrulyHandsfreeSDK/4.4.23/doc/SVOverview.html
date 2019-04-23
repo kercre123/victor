@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+
+
+
+
+<!------------------------------------------ -->
+<h1>Overview of Enrolled Triggers, Speaker Verification, Speaker ID, and Gender ID</h1>
+<p>
+An enrolled trigger is a trigger (either user-defined or specified in advance)
+that is adapted to a user's voice.  The adaptation requires several recordings
+of the user saying the trigger.  These recordings are collected during an
+enrollment phrase.  After adaptation, the trigger will respond better to the
+enrolled user's voice than other users.  Enrolled triggers have the advantage
+of lower false reject errors and lower false accept errors than
+speaker-independent triggers.
+<p>
+Speaker Verification (SV) and Speaker ID (SID) provide text-dependent
+voice security.
+These techniques authenticate a user's claimed identity based on a spoken
+password or phrase.
+This differs from text-independent speaker identification, where the goal
+is to identify a speaker based on unknown or free-form speech.
+Sensory's text-dependent speaker verification and speaker ID are similar
+to phrase-spotting speech recognition, a method of speech recognition
+that recognizes a single pre-defined target phrase;
+however, SV and SID attempt to detect individual differences in the way a
+word is spoken, making it more sensitive to a particular person's voice.
+As with an enrolled trigger, SV and SID adaptation requires multiple enrollments
+of a target phase and training of one or more user-specific models. It also
+requires subsequent verification against the set of trained models.
+Usually, the collection of enrollments and adaptation steps are the same
+for both creating an enrolled trigger and for speaker verification.
+<p>
+NOTE: For best performance, the enrollment recordings should be obtained in an
+environment that is quiet and has minimal room reverberation.
+</p>
+<p>
+<a href="genderSteps.html">Gender Identification</a> (gender ID) provides an indication as to whether the user of an application is male or female.  While this currently uses a text-dependent model, no enrollment or training is required.
+</p>
+
+
+</body>

@@ -1,0 +1,14 @@
+{
+    "@": "use online json parser to validate-- json.parser.online.fr",
+
+    "block_reader": {
+        "dir_path": "./",
+        
+        "sin": {
+            "fname": "miccapture_0000_0004_resamp.wav",
+            
+            "@": "only need one channel for vad testing",
+            "chanmap": [ 0 ]
+        }
+  }
+}

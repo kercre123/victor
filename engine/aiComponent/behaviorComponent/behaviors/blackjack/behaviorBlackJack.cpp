@@ -148,8 +148,6 @@ void BehaviorBlackJack::InitBehavior()
   BC.FindBehaviorByIDAndDowncast( BEHAVIOR_ID(BlackJackLookAtFaceInFront),
                                   BEHAVIOR_CLASS(LookAtFaceInFront),
                                   _iConfig.lookAtFaceInFrontBehavior );
-
-  _visualizer.VerifySpriteAssets(GetBEI());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

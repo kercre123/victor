@@ -5,7 +5,7 @@
   "interruptActiveBehavior": true,
 
   "behaviors": [
-    "HeldInPalmDispatcher",
+    "ReactToAlmostPutDownInternal",
     "ReactToPickupAnimLoopInternal"
   ],
   
@@ -21,7 +21,45 @@
       "behaviorClass" : "AnimSequence",
       
       "animTriggers": ["ReactToPickupLoop"],
-      "num_loops": 0 // loop forever
+      "num_loops": 0
+    },
+    {
+      "behaviorName": "ReactToAlmostPutDownInternal",
+      "behaviorClass" : "Wait",
+      
+      "wantsToBeActivatedCondition":  {
+        "conditionType": "Compound",
+        "and": [
+          {
+            "conditionType": "Compound",
+            "not": {
+              "conditionType": "CliffDetected",
+              "numCliffDetectionsToTrigger": 3
+            }
+          },
+          {
+            "conditionType":  "OffTreadsState",
+            "targetState": "InAir"
+          }
+        ]
+      },
+      
+      "wantsToCancelSelfCondition":  {
+        "conditionType": "Compound",
+        "or": [
+          {
+            "conditionType": "CliffDetected",
+            "numCliffDetectionsToTrigger": 3
+          },
+          {
+            "conditionType": "Compound",
+            "not": {
+              "conditionType":  "OffTreadsState",
+              "targetState": "InAir"
+            }
+          }
+        ]
+      }
     }
   ]
 }

@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfPronunCompute</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+const char *thfPronunCompute(thf_t **thf, <a href="objects.html#pronuns_t">pronuns_t</a> *p, const char *word, 
+                             unsigned short n, const char *suffix, 
+                             const char *pos);
+</pre>
+<h3>Description</h3>
+ Computes a pronunciation string for the specified word or phrase. The number of pronunciations returned for each word/phrase can be specified however a single pronunciation is usually sufficient. If the phrase contains multiple words, this function does not insert silence (or optional silence) between words in the resulting pronunciation.    The supplied suffix is appended to the pronunciation string. This is typically either a 'required' or 'optional' <em>. .pau .</em> and/or <em>. .any .</em>, or NULL if no suffix is required.   Part-of-speech tags can be used to differentiate between alternate syntactic forms of a word. For instance, the pronunciation for the word 'record' in English may differ when used as a 'noun' versus a 'verb'. Part-of-speech values depend on the language and listed in the language-specific SDK documentation. The following values are supported where applicable:  <br> <table align="center"> <tr><td>Value</td><td>Description</td></tr> <tr><td><b>adj</b></td><td>ADJECTIVE</td></tr> <tr><td><b>adv</b></td><td>ADVERB</td></tr> <tr><td><b>pre</b></td><td>PREPOSITION</td></tr> <tr><td><b>pro</b></td><td>PRONOUN</td></tr> <tr><td><b>verb</b></td><td>VERB</td></tr> <tr><td><b>noun</b></td><td>NOUN</td></tr> <tr><td><b>interjection</b></td><td>INTERJECTION</td></tr> <tr><td><b>determinent</b></td><td>DETERMINENT</td></tr> <tr><td><b>conjunction</b></td><td>CONJUNCTION</td></tr> </table> <br> <b>NOTE:</b> The returned string represents a 'base' pronunciation, including syllable boundaries and stress markings. Phonology rules are applied to this base pronunciation when creating the search object using <a href="thfSearchCreateFromList.html">thfSearchCreateFromList</a> or <a href="thfSearchCreateFromGrammar.html">thfSearchCreateFromGrammar</a>. The phonology rules account for common pronunciation variations that result from contextual effects and regional dialects.
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><a href="objects.html#pronuns_t"><code>pronuns_t *</code></a></td>
+<td nowrap valign="top"><code>p</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Pronunciation object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>const char *</code></td>
+<td nowrap valign="top"><code>word</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Word or phrase for which to compute a pronunciation. Encoding is UTF-8.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned short</code></td>
+<td nowrap valign="top"><code>n</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Target number of unique pronunciations to be computed.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>const char *</code></td>
+<td nowrap valign="top"><code>suffix</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Suffix string to be added to end of pronunciation string, or NULL if no suffix is needed.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>const char *</code></td>
+<td nowrap valign="top"><code>pos</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Part-of-speech of word or NULL.</td>
+</tr>
+</table>
+<h3>Return</h3>
+ Returns a pronunciation string for input word or phrase. The string belongs to, and its memory is managed by, the SDK. Returns NULL in the event of an error.   
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>failed for word</code></td>
+<td valign="top">Supplied word could not be decoded (assuming UTF-8) or contained a character that does not exist in the language writing system.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfPronunCreateFromFile.html">thfPronunCreateFromFile</a> and <a href="thfPronunCreateFromStatic.html">thfPronunCreateFromStatic</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

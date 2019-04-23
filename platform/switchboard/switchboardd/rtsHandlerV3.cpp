@@ -150,7 +150,7 @@ void RtsHandlerV3::SubscribeToCladMessages() {
 }
 
 bool RtsHandlerV3::IsAuthenticated() {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!HasState(RtsCommsType::Encrypted)) {
     return false;
   }
 
@@ -209,7 +209,7 @@ void RtsHandlerV3::SaveSessionKeys() {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 void RtsHandlerV3::HandleRtsConnResponse(const Anki::Vector::ExternalComms::RtsConnection_3& msg) {
-  if(!AssertState(RtsCommsType::Unencrypted)) {
+  if(!HasState(RtsCommsType::Unencrypted)) {
     return;
   }
 
@@ -254,7 +254,7 @@ void RtsHandlerV3::HandleRtsConnResponse(const Anki::Vector::ExternalComms::RtsC
 }
 
 void RtsHandlerV3::HandleRtsChallengeMessage(const Vector::ExternalComms::RtsConnection_3& msg) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!HasState(RtsCommsType::Encrypted)) {
     return;
   }
 
@@ -386,7 +386,7 @@ void RtsHandlerV3::HandleRtsWifiForgetRequest(const Vector::ExternalComms::RtsCo
 }
 
 void RtsHandlerV3::HandleRtsOtaUpdateRequest(const Vector::ExternalComms::RtsConnection_3& msg) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!HasState(RtsCommsType::Encrypted)) {
     return;
   }
 
@@ -400,7 +400,7 @@ void RtsHandlerV3::HandleRtsOtaUpdateRequest(const Vector::ExternalComms::RtsCon
 }
 
 void RtsHandlerV3::HandleRtsOtaCancelRequest(const Vector::ExternalComms::RtsConnection_3& msg) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!HasState(RtsCommsType::Encrypted)) {
     return;
   }
 
@@ -499,7 +499,7 @@ void RtsHandlerV3::ProcessCloudAuthResponse(bool isPrimary, Anki::Vector::TokenE
 
 void RtsHandlerV3::HandleRtsCloudSessionRequest(const Vector::ExternalComms::RtsConnection_3& msg) {
   // Handle Cloud Session Request
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!HasState(RtsCommsType::Encrypted)) {
     return;
   }
 
@@ -564,8 +564,8 @@ void RtsHandlerV3::HandleRtsCloudSessionRequest(const Vector::ExternalComms::Rts
 }
 
 void RtsHandlerV3::HandleRtsForceDisconnect(const Vector::ExternalComms::RtsConnection_3& msg) {
-  if(!(AssertState(RtsCommsType::Encrypted) || 
-    AssertState(RtsCommsType::Unencrypted))) {
+  if(!(HasState(RtsCommsType::Encrypted) || 
+    HasState(RtsCommsType::Unencrypted))) {
     return;
   }
 
@@ -573,7 +573,7 @@ void RtsHandlerV3::HandleRtsForceDisconnect(const Vector::ExternalComms::RtsConn
 }
 
 void RtsHandlerV3::HandleRtsLogRequest(const Vector::ExternalComms::RtsConnection_3& msg) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!HasState(RtsCommsType::Encrypted)) {
     return;
   }
 
@@ -709,7 +709,7 @@ void RtsHandlerV3::HandleChallengeResponse(uint8_t* pingChallengeAnswer, uint32_
 //
 
 void RtsHandlerV3::SendPublicKey() {
-  if(!AssertState(RtsCommsType::Unencrypted)) {
+  if(!HasState(RtsCommsType::Unencrypted)) {
     return;
   }
 
@@ -728,7 +728,7 @@ void RtsHandlerV3::SendPublicKey() {
 }
 
 void RtsHandlerV3::SendNonce() {
-  if(!AssertState(RtsCommsType::Unencrypted)) {
+  if(!HasState(RtsCommsType::Unencrypted)) {
     return;
   }
 
@@ -755,7 +755,7 @@ void RtsHandlerV3::SendNonce() {
 }
 
 void RtsHandlerV3::SendChallenge() {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!HasState(RtsCommsType::Encrypted)) {
     return;
   }
 
@@ -771,7 +771,7 @@ void RtsHandlerV3::SendChallenge() {
 }
 
 void RtsHandlerV3::SendChallengeSuccess() {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!HasState(RtsCommsType::Encrypted)) {
     return;
   }
 
@@ -850,7 +850,7 @@ void RtsHandlerV3::SendWifiConnectResult(Wifi::ConnectWifiResult result) {
 }
 
 void RtsHandlerV3::SendFile(uint32_t fileId, std::vector<uint8_t> fileBytes) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!HasState(RtsCommsType::Encrypted)) {
     return;
   }
 
@@ -882,7 +882,7 @@ void RtsHandlerV3::SendCancelPairing() {
 }
 
 void RtsHandlerV3::SendOtaProgress(int status, uint64_t progress, uint64_t expectedTotal) {
-  if(!AssertState(RtsCommsType::Encrypted)) {
+  if(!HasState(RtsCommsType::Encrypted)) {
     return;
   }
   // Send Ota Progress

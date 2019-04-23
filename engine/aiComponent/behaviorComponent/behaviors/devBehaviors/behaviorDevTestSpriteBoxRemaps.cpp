@@ -63,29 +63,30 @@ const std::vector<Vision::SpriteBoxName> kDealerCardSpriteBoxes = {
   Vision::SpriteBoxName::SpriteBox_30
 };
 
-const std::vector<std::string> kPlayerCards = {
-  "blackjack_player_spadeace",
-  "blackjack_player_spade3",
-  "blackjack_player_spade5",
-  "blackjack_player_spade7",
-  "blackjack_player_spade9",
+const std::vector<Vision::SpritePathMap::AssetID> kPlayerCards = {
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spadeace"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spade3"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spade5"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spade7"),
+  Vision::SpritePathMap::GetAssetID("blackjack_player_spade9")
 };
 
-const std::vector<std::string> kDealerCards = {
-  "blackjack_vector_spade2",
-  "blackjack_vector_spade4",
-  "blackjack_vector_spade6",
-  "blackjack_vector_spade8",
-  "blackjack_vector_spade10",
+const std::vector<Vision::SpritePathMap::AssetID> kDealerCards = {
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spade2"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spade4"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spade6"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spade8"),
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_spade10")
 };
 
 const Vision::SpriteBoxName kCharlieFrameSpriteBox = Vision::SpriteBoxName::SpriteBox_31;
-const char* kEmptySpriteBoxAssetName = "empty_sprite_box";
-const char* kCharlieFrameAssetName = "charlieframe";
+const Vision::SpritePathMap::AssetID kCharlieFrameAssetID = Vision::SpritePathMap::GetAssetID("charlieframe");
 const std::string kDealAnimationName = "anim_test_spriteboxremaps";
 
-const std::string kDealPlayerSpriteSeqName = "blackjack_player_back";
-const std::string kDealDealerSpriteSeqName = "blackjack_vector_back";
+const Vision::SpritePathMap::AssetID kDealPlayerSpriteSeqID =
+  Vision::SpritePathMap::GetAssetID("blackjack_player_back");
+const Vision::SpritePathMap::AssetID kDealDealerSpriteSeqID =
+  Vision::SpritePathMap::GetAssetID("blackjack_vector_back");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -148,37 +149,37 @@ void BehaviorDevTestSpriteBoxRemaps::ClearAllPositions()
   _dVars.remapMap.clear();
 
   for(const auto& spriteBox : kPlayerDealingSpriteBoxes){
-    _dVars.remapMap.insert({spriteBox, kEmptySpriteBoxAssetName});
+    _dVars.remapMap.insert({spriteBox, Vision::SpritePathMap::kEmptySpriteBoxID});
   }
 
   for(const auto& spriteBox : kPlayerShowCardSpriteBoxes){
-    _dVars.remapMap.insert({spriteBox, kEmptySpriteBoxAssetName});
+    _dVars.remapMap.insert({spriteBox, Vision::SpritePathMap::kEmptySpriteBoxID});
   }
 
   for(const auto& spriteBox : kPlayerCardSpriteBoxes){
-    _dVars.remapMap.insert({spriteBox, kEmptySpriteBoxAssetName});
+    _dVars.remapMap.insert({spriteBox, Vision::SpritePathMap::kEmptySpriteBoxID});
   }
 
   for(const auto& spriteBox : kDealerDealingSpriteBoxes){
-    _dVars.remapMap.insert({spriteBox, kEmptySpriteBoxAssetName});
+    _dVars.remapMap.insert({spriteBox, Vision::SpritePathMap::kEmptySpriteBoxID});
   }
 
   for(const auto& spriteBox : kDealerShowCardSpriteBoxes){
-    _dVars.remapMap.insert({spriteBox, kEmptySpriteBoxAssetName});
+    _dVars.remapMap.insert({spriteBox, Vision::SpritePathMap::kEmptySpriteBoxID});
   }
 
   for(const auto& spriteBox : kDealerCardSpriteBoxes){
-    _dVars.remapMap.insert({spriteBox, kEmptySpriteBoxAssetName});
+    _dVars.remapMap.insert({spriteBox, Vision::SpritePathMap::kEmptySpriteBoxID});
   }
 
-  _dVars.remapMap.insert({kCharlieFrameSpriteBox, kEmptySpriteBoxAssetName});
+  _dVars.remapMap.insert({kCharlieFrameSpriteBox, Vision::SpritePathMap::kEmptySpriteBoxID});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDevTestSpriteBoxRemaps::DealNextPlayerCard()
 {
   if(_dVars.playerCardIndex >= kPlayerCards.size()){
-    _dVars.remapMap[kCharlieFrameSpriteBox] = kCharlieFrameAssetName;
+    _dVars.remapMap[kCharlieFrameSpriteBox] = kCharlieFrameAssetID;
 
     auto animationCallback = [this](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded){
       CancelSelf();
@@ -192,7 +193,7 @@ void BehaviorDevTestSpriteBoxRemaps::DealNextPlayerCard()
   else{
     // Show the animated card dealing
     _dVars.remapMap[kPlayerShowCardSpriteBoxes[_dVars.playerCardIndex]] = kPlayerCards[_dVars.playerCardIndex];
-    _dVars.remapMap[kPlayerDealingSpriteBoxes[_dVars.playerCardIndex]] = kDealPlayerSpriteSeqName;
+    _dVars.remapMap[kPlayerDealingSpriteBoxes[_dVars.playerCardIndex]] = kDealPlayerSpriteSeqID;
 
     auto animationCallback = [this](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded){
       DealNextDealerCard();
@@ -204,8 +205,8 @@ void BehaviorDevTestSpriteBoxRemaps::DealNextPlayerCard()
                                                                  animationCallback);
 
     // Clear the dealing animation...
-    _dVars.remapMap[kPlayerShowCardSpriteBoxes[_dVars.playerCardIndex]] = kEmptySpriteBoxAssetName;
-    _dVars.remapMap[kPlayerDealingSpriteBoxes[_dVars.playerCardIndex]] = kEmptySpriteBoxAssetName;
+    _dVars.remapMap[kPlayerShowCardSpriteBoxes[_dVars.playerCardIndex]] = Vision::SpritePathMap::kEmptySpriteBoxID;
+    _dVars.remapMap[kPlayerDealingSpriteBoxes[_dVars.playerCardIndex]] = Vision::SpritePathMap::kEmptySpriteBoxID;
     // ...and store the dealt card
     _dVars.remapMap[kPlayerCardSpriteBoxes[_dVars.playerCardIndex]] = kPlayerCards[_dVars.playerCardIndex];
     ++_dVars.playerCardIndex;
@@ -218,7 +219,7 @@ void BehaviorDevTestSpriteBoxRemaps::DealNextDealerCard()
 {
   // Show the animated card dealing
   _dVars.remapMap[kDealerShowCardSpriteBoxes[_dVars.dealerCardIndex]] = kDealerCards[_dVars.dealerCardIndex];
-  _dVars.remapMap[kDealerDealingSpriteBoxes[_dVars.dealerCardIndex]] = kDealPlayerSpriteSeqName;
+  _dVars.remapMap[kDealerDealingSpriteBoxes[_dVars.dealerCardIndex]] = kDealPlayerSpriteSeqID;
 
   auto animationCallback = [this](const AnimationComponent::AnimResult res, u32 streamTimeAnimEnded){
     DealNextPlayerCard();
@@ -230,8 +231,8 @@ void BehaviorDevTestSpriteBoxRemaps::DealNextDealerCard()
                                                                animationCallback);
 
   // Clear the dealing animation...
-  _dVars.remapMap[kDealerShowCardSpriteBoxes[_dVars.dealerCardIndex]] = kEmptySpriteBoxAssetName;
-  _dVars.remapMap[kDealerDealingSpriteBoxes[_dVars.dealerCardIndex]] = kEmptySpriteBoxAssetName;
+  _dVars.remapMap[kDealerShowCardSpriteBoxes[_dVars.dealerCardIndex]] = Vision::SpritePathMap::kEmptySpriteBoxID;
+  _dVars.remapMap[kDealerDealingSpriteBoxes[_dVars.dealerCardIndex]] = Vision::SpritePathMap::kEmptySpriteBoxID;
   // ...and store the dealt card
   _dVars.remapMap[kDealerCardSpriteBoxes[_dVars.dealerCardIndex]] = kDealerCards[_dVars.dealerCardIndex];
   ++_dVars.dealerCardIndex;

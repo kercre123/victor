@@ -822,14 +822,6 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
                                          GetPoseOriginList().GetSize(),
                                          GetWorldOrigin().GetName().c_str());
 
-  DASMSG(robot_localized_to_object, "robot.localized_to_object", "The robot has localized to an object");
-  DASMSG_SET(s1, EnumToString(object->GetType()), "object type");
-  DASMSG_SET(i1, object->GetPose().GetTranslation().x(), "x coordinate of object pose");
-  DASMSG_SET(i2, object->GetPose().GetTranslation().y(), "y coordinate of object pose");
-  DASMSG_SET(i3, object->GetPose().GetTranslation().z(), "z coordinate of object pose");
-  DASMSG_SET(i4, GetPose().GetTranslation().z(), "z coordinate of robot pose");
-  DASMSG_SEND();
-
   return RESULT_OK;
 
 } // SetLocalizedTo()

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfSessionCreate</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+thf_t *thfSessionCreate(void);
+</pre>
+<h3>Description</h3>
+ Creates an SDK session object that encapsulates session-specific data. You must create a session object before using other SDK API calls and destroy the session object when you've finished with the SDK (see <a href="thfSessionDestroy.html">thfSessionDestroy</a>).
+<h3>Parameters</h3>
+None.
+<h3>Return</h3>
+ A pointer to the session object (see thf_t), or NULL on error.
+<h3>See Also</h3>
+<a href="thfSessionDestroy.html">thfSessionDestroy</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

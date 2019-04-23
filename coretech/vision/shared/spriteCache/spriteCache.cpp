@@ -40,19 +40,19 @@ SpriteCache::~SpriteCache()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SpriteHandle SpriteCache::GetSpriteHandleForNamedSprite(const std::string& spriteName, 
-                                                        const HSImageHandle& hueAndSaturation)
+SpriteHandle SpriteCache::GetSpriteHandleForAssetID(const SpritePathMap::AssetID assetID,
+                                                    const HSImageHandle& hueAndSaturation)
 {
   std::string fullSpritePath;
-  if(_spritePathMap->IsSpriteSequence(spriteName)){
-    LOG_ERROR("SpriteCache.GetSpriteHandleForNamedSprite.InvalidSpriteName",
-              "Asset name: %s refers to a SpriteSequence, not a sprite. Returning missing sprite asset",
-              spriteName.c_str());
+  if(_spritePathMap->IsSpriteSequence(assetID)){
+    LOG_ERROR("SpriteCache.GetSpriteHandleForNamedSprite.InvalidSpriteID",
+              "AssetID: %d refers to a SpriteSequence, not a sprite. Returning missing sprite asset",
+              assetID);
     fullSpritePath = _spritePathMap->GetPlaceholderAssetPath();
   }else{
     // NOTE: If there is no sprite for this spriteName, the SpritePathMap will return a path to the 
     //       default missing_sprite asset and it will render in place of the desired sprite
-    fullSpritePath = _spritePathMap->GetAssetPath(spriteName);
+    fullSpritePath = _spritePathMap->GetAssetPath(assetID);
   }
   return GetSpriteHandleInternal(fullSpritePath, hueAndSaturation);
 }

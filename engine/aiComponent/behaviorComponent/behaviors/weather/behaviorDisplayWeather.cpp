@@ -38,23 +38,24 @@ namespace Vector {
 namespace {
 const char* kAnimationNameKey   = "animationName";
 
-const char* kFahrenheitIndicatorSpriteName = "weather_fahrenheit_indicator";
-const char* kCelsiusIndicatorSpriteName = "weather_celsius_indicator";
-const char* kNegativeTempIndicatorSpriteName = "weather_negative_indicator";
+const Vision::SpritePathMap::AssetID kFahrenheitIndicatorSpriteID =
+  Vision::SpritePathMap::GetAssetID("weather_fahrenheit_indicator");
+const Vision::SpritePathMap::AssetID kCelsiusIndicatorSpriteID =
+  Vision::SpritePathMap::GetAssetID("weather_celsius_indicator");
+const Vision::SpritePathMap::AssetID kNegativeTempIndicatorSpriteID =
+   Vision::SpritePathMap::GetAssetID("weather_negative_indicator");
 
-// statically defined for now - can be moved into JSON easily if
-// we need to support different asset designs
-const std::vector<std::string> kTemperatureAssets = {
-  "weather_temp_0",
-  "weather_temp_1",
-  "weather_temp_2",
-  "weather_temp_3",
-  "weather_temp_4",
-  "weather_temp_5",
-  "weather_temp_6",
-  "weather_temp_7",
-  "weather_temp_8",
-  "weather_temp_9",
+const std::vector<Vision::SpritePathMap::AssetID> kTemperatureAssets = {
+  Vision::SpritePathMap::GetAssetID("weather_temp_0"),
+  Vision::SpritePathMap::GetAssetID("weather_temp_1"),
+  Vision::SpritePathMap::GetAssetID("weather_temp_2"),
+  Vision::SpritePathMap::GetAssetID("weather_temp_3"),
+  Vision::SpritePathMap::GetAssetID("weather_temp_4"),
+  Vision::SpritePathMap::GetAssetID("weather_temp_5"),
+  Vision::SpritePathMap::GetAssetID("weather_temp_6"),
+  Vision::SpritePathMap::GetAssetID("weather_temp_7"),
+  Vision::SpritePathMap::GetAssetID("weather_temp_8"),
+  Vision::SpritePathMap::GetAssetID("weather_temp_9"),
 };
 
 enum class DigitType : uint8_t {
@@ -65,7 +66,6 @@ enum class DigitType : uint8_t {
   DegreeSymbol
 };
 
-const char* kEmptySpriteBoxAssetName = "empty_sprite_box";
 const Vision::SpriteBoxName kDigitSpriteBoxes [] {
   Vision::SpriteBoxName::SpriteBox_1,
   Vision::SpriteBoxName::SpriteBox_2,
@@ -257,15 +257,15 @@ bool BehaviorDisplayWeather::GenerateTemperatureRemaps(int temp,
 {
   // Clear out all the SBs to start
   for(const auto& spriteBox : kDigitSpriteBoxes){
-    spriteBoxRemaps[spriteBox] = kEmptySpriteBoxAssetName;
+    spriteBoxRemaps[spriteBox] = Vision::SpritePathMap::kEmptySpriteBoxID;
   }
 
   const DigitMap& digitMap = (ABS(temp) < 10) ? kSingleDigitMap :
-                             ( (ABS(temp) > 10) && (ABS(temp) < 100) ) ? kDoubleDigitMap :
+                             ( (ABS(temp) >= 10) && (ABS(temp) < 100) ) ? kDoubleDigitMap :
                              kTripleDigitMap;
 
   if(temp < 0){
-    spriteBoxRemaps[digitMap.at(DigitType::NegativeSymbol)] = kNegativeTempIndicatorSpriteName;
+    spriteBoxRemaps[digitMap.at(DigitType::NegativeSymbol)] = kNegativeTempIndicatorSpriteID;
   }
 
   spriteBoxRemaps[digitMap.at(DigitType::Ones)] = kTemperatureAssets[ABS(temp) % 10];
@@ -279,8 +279,8 @@ bool BehaviorDisplayWeather::GenerateTemperatureRemaps(int temp,
   }
 
   spriteBoxRemaps[digitMap.at(DigitType::DegreeSymbol)] = isFahrenheit ?
-                                                          kFahrenheitIndicatorSpriteName :
-                                                          kCelsiusIndicatorSpriteName;
+                                                          kFahrenheitIndicatorSpriteID :
+                                                          kCelsiusIndicatorSpriteID;
 
   return true;
 }

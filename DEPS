@@ -18,10 +18,6 @@
         "default_usr": "ankibuildserver",
         "pwd": "FoDmKuxMUjsmNhA49BnWysEfVLWaLdGY",
         "repo_names": {
-            "anki-thirdparty": {
-                "branch": "branches/victor",
-                "version": "208"
-            },
             "victor-animation-assets": {
                 "additional_files": [
                     "${PROJECT_ROOT_DIR}/resources/config/engine/animations/"
@@ -37,11 +33,11 @@
                     "animationGroups",
                     "sprites/spriteSequences"
                 ],
-                "version": "4995"
+                "version": "5000"
             },
             "victor-audio-assets": {
                 "allow_extra_files": "True",
-                "version": "179"
+                "version": "181"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfRecogCreateFromFunc</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+<a href="objects.html#recog_t">recog_t</a> *thfRecogCreateFromFunc(thf_t **thf, 
+                                <a href='thfReadFunc_t.html'>thfReadFunc_t</a> readFunc, 
+                                void *privateData, unsigned long maxbuf, 
+                                unsigned short backoff, char useSdet);
+</pre>
+<h3>Description</h3>
+ <p>Reads in the acoustic model file and creates a recognizer object. The recognizer object must be initialized before it can be used (see <a href="thfRecogInit.html">thfRecogInit</a>). Memory buffers are allocated internally for the audio and speech detector. Set the backoff parameter to 0xffff to use the default value. If no speech  detector is required then the backoff parameter is ignored. Call <a href="thfRecogDestroy.html">thfRecogDestroy</a> to destroy the recognizer object when no longer needed.</p> <p>This function differs from <a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a> in that it takes a function pointer instead of a file name as argument. This function is used instead of fread() to load the acoustic model.</p>
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code><a href='thfReadFunc_t.html'>thfReadFunc_t</a></code></td>
+<td nowrap valign="top"><code>readFunc</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">function used to read the acoustic model.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>void *</code></td>
+<td nowrap valign="top"><code>privateData</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">arbitrary user data, provides context to readFunc.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned long</code></td>
+<td nowrap valign="top"><code>maxbuf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Maximum size of audio buffer (in samples) to be fed to recognizer.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned short</code></td>
+<td nowrap valign="top"><a href="params.html#backoff"><code>backoff</code></a></td>
+<td align="center" valign="top">in</td>
+<td width="500">Size of speech detector backoff buffer (in milliseconds). Set to 0xffff for default values.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>char</code></td>
+<td nowrap valign="top"><code>useSdet</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Binary flag indicates whether to create an speech detector for use during recognition (see <a href="create.html">Creating a Recognizer</a>).</td>
+</tr>
+</table>
+<h3>Return</h3>
+ Returns a unique handle to the recognizer object (see <a href="objects.html#recog_t">recog_t</a>). Returns NULL in the event of error.  
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>Could not open raw file</code></td>
+<td valign="top">The datafile does not exist or the application had insufficient privilege to open the file for reading.</td>
+</tr>
+<tr>
+<td valign="top"><code>Error reading raw file</code></td>
+<td valign="top">The datafile did not decode correctly. Was the file damaged?</td>
+</tr>
+<tr>
+<td valign="top"><code>No net found in raw file</code></td>
+<td valign="top">The datafile appears to be a valid SDK data file, but did not contain any acoustic model data.</td>
+</tr>
+<tr>
+<td valign="top"><code>Incompatible net found in raw file</code></td>
+<td valign="top">The acoustic model file is based on an unknown feature extraction module.</td>
+</tr>
+<tr>
+<td valign="top"><code>No feats found in raw file</code></td>
+<td valign="top">The datafile does not contain a description of the feature extraction methodology. Damaged file?</td>
+</tr>
+<tr>
+<td valign="top"><code>Error initializing net</code></td>
+<td valign="top">Could not allocate scratch memory</td>
+</tr>
+<tr>
+<td valign="top"><code>Error starting DSP Node</code></td>
+<td valign="top">Could not start feature extraction module (applicable only on some multiprocessor platforms).</td>
+</tr>
+<tr>
+<td valign="top"><code>Could not start async thread</code></td>
+<td valign="top">Could not start feature extraction module (applicable only on some multithreaded platforms).</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfRecogDestroy.html">thfRecogDestroy</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

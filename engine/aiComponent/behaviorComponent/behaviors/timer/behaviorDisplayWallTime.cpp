@@ -71,7 +71,8 @@ void BehaviorDisplayWallTime::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWallTime::TransitionToShowClockInternal()
 {
-  BuildAndDisplayProceduralClock(0, 0);
+  AddKeyFramesForOffset(0, 0);
+  DisplayClock();
 }
 
 

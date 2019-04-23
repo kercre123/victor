@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+
+<h2>sdet</h2>
+
+<h3>Syntax</h3>
+<pre>TrulyHandsfree SDK\&lt;platform&gt;\bin\sdet [options] -n netfile -i inputwavefile -o outputwavefile</pre>
+
+<h3>Description</h3>
+Takes a net file and input wave file, writes the speech-detected portion of the input wave file to an output wave file.
+
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Name</th>
+<th align="left">Default</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-n netfile</code></td>
+<td align="center" valign="top"></td>
+<td width="500">Neural network (acoustic model) file name.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-i inputwavefile</code></td>
+<td align="center" valign="top"></td>
+<td width="500">Wave file to perform speech detection on. This can
+  be in RIFF (.wav) format with 16-bit linear PCM encoding, or a
+  headerless 16-bit linear PCM file in host byte order. If the latter,
+  the <em>-r rate</em> flag is required to specify the sample rate.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-o outputwavefile</code></td>
+<td align="center" valign="top"></td>
+<td width="500">Output wave file containing detected speech of input file.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-d mind</code></td>
+<td align="center" valign="top">100.0</td>
+<td width="500">Sets the <a href="params.html#MinDuration">minimum duration </a> parameter.
+  parameter.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-m mr</code></td>
+<td align="center" valign="top">10000.0</td>
+<td width="500">Sets the <a href="params.html#MaxRecord">maximum record time</a> parameter.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-l ls</code></td>
+<td align="center" valign="top">5000.0</td>
+<td width="500">Sets the <a href="params.html#Lsilence">pre-speech silence</a> parameter.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-t ts</code></td>
+<td align="center" valign="top"> 400.0 </td>
+<td width="500">Sets the <a href="params.html#Tsilence">trailing silence</a> parameter.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-L ltw</code></td>
+<td align="center" valign="top"> 1500.0 </td>
+<td width="500">Sets the <a href="params.html#longTermMs">long term window size</a> parameter.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-S stw</code></td>
+<td align="center" valign="top">60.0</td>
+<td width="500">Sets the <a href="params.html#shortTermMs">short term window size</a> parameter.</td>
+</tr>
+<tr>
+<tr>
+<td nowrap valign="top"><code>-E espt</code></td>
+<td align="center" valign="top">0</td>
+<td width="500">Sets the <a href="params.html#eSpeechT">speech energy threshold</a> parameter.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-e espt</code></td>
+<td align="center" valign="top">0.4</td>
+<td width="500">Sets the <a href="params.html#eSpeechT">silence energy threshold</a> parameter.</td>
+</tr>
+<tr>
+<tr>
+<td nowrap valign="top"><code>-r rate</code></td>
+<td align="center" valign="top"> read from wavfile </td>
+<td width="500">Audio sample rate in Hz, required if the wave file is
+  in PCM format.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-v</code></td>
+<td align="center" valign="top">disabled</td>
+<td width="500">Produce verbose progress messages.</td>
+</tr>
+</table>
+
+<h3>See Also</h3>
+<a href="Getting Started.html">Overview</a>
+
+<!----------------------------------------------------------------------- -->
+</body>

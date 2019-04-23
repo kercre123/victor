@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+
+<h2>How to Enroll a User-Defined Trigger (Deprecated API)</h2>
+A user-defined trigger is enrolled using a five-step process.
+<p>
+THIS SECTION HAS BEEN SUPERCEDED BY
+<a href="UDTandEFT.html">How to Implement User-Defined Triggers or Enrolled Fixed Triggers (With or
+Without Speaker Verification)</a>
+</p>
+<br>
+<h3>Step 1: Create a UDT object and User Array Datastructure</h3>
+<p>A "udt" object must be created with a call to
+<a href="thfUdtCreate.html">thfUdtCreate</a>.  This function requires passing in
+three files: a file containing a recognizer for general-purpose recognition,
+a file containing a search for phoneme-level recognition, and either an
+SVSID data file or UDT+SVSID data file.  In addition to these files, two more
+parameters specify the number of enrollments per user and the target sampling frequency.
+</p>
+<p>
+In addition to the UDT object, a UDT user data structure must be initialized.
+This data structure will hold the enrollment recordings (and optional filenames)
+for all users.  The application is responsible for the management of this user
+data structure (memory allocation, assigning variables, and freeing memory).
+See the <a href="objects.html">data structures section</a>
+for specifics on each field within this structure.
+</p>
+
+<br>
+<h3>Step 2: Obtain enrollment recordings</h3>
+<p>
+For each user, several enrollment recordings need to be obtained and stored in
+the
+<a href="objects.html">UDT user data structure</a>.
+These recordings can be read from file or obtained live.
+It is very important that these recordings contain only the trigger word spoken
+by the current user.  There may be leading and trailing silence around the word,
+but no speech other than the trigger word.
+As one example of checking the data, recordings may be played back to the user
+for confirmation that they are acceptable renditions of the target word.
+As the recordings are collected, it is convenient at this time to assign
+each user an unique character-string ID, e.g. "user1" or "user2", and store
+this string in the UDT user data structure under the "userName" field.
+</p>
+<p>
+To obtain enrollment recordings live, one can use a phoneme recognizer with
+speech detection.  The phoneme-level results can be discarded, but the
+resulting speech-detected waveform can be used for enrollment.
+The phoneme recognizer is typically initialized in four steps.
+In the first step, the recognizer is created using a call to
+<a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a> with the
+recognizer set to perform speech detection.
+In the second step, a phoneme-level search is created using a call to
+<a href="thfPhonemeSearchCreateFromFile.html">thfPhonemeSearchCreateFromFile</a>.
+In the third step, the phoneme recognizer is configured with a call to
+<a href="thfRecogConfigSet.html">thfRecogConfigSet</a>, setting
+parameters such as leading silence, maximum record time, trailing silence,
+and minimum duration for speech detection.
+In the fourth step, the recognizer and search are tied, and the search is
+set to keep the waveform, word, and phoneme results, using a call to
+<a href="thfPhonemeRecogInit.html">thfPhonemeRecogInit</a>.
+</p>
+
+<br>
+<h3 ID="checkEnrollments">Step 3: Check enrollment recordings</h3>
+<p>
+A call to <a href="thfUdtCheckEnrollments.html">thfUdtCheckEnrollments</a>
+can be used to perform a quick evaluation of the quality of the phrase and
+the recordings from a specific user.  If an error is detected in any of the
+recordings, those recordings should be re-recorded.  If too many recordings
+have errors, or if the phrase is considered of insufficient quality, the
+user should be prompted to re-enroll from scratch, and/or choose a different
+enrollment phrase.  If the application does not obtain new recordings, then
+performance of the triggers is unpredictable and there may be a large number
+of false accepts.
+<p>
+<a href="thfUdtCheckEnrollments.html">thfUdtCheckEnrollments</a>
+returns three types of feedback: (1) a 'global' indicator of quality of all
+enrollment recordings (in the variable 'globalFeedback'), (2) feedback
+specific to each enrollment recording (in the variable 'feedbackArray'),
+and (3) an estimation of the quality of the phrase (in the variable
+'phraseQuality').
+<p>
+The global feedback is zero if no problems were detected in any of the
+enrollment recordings.  If the value is non-zero, then one or more bits
+indicate the specific type of problem that was detected, and the specific
+problems can be determined by masking with a bitfield.  The list of
+bitfields is given in the list of
+<a href="params.html#recordingQuality">recording quality parameters</a>.
+As an example, if globalFeedback is masked with CHECKRECORDING_BITFIELD_ENERGY_MIN,
+then at least one of the enrollment recordings did not meet the minimum
+energy requirement.
+<p>
+The enrollment-specific feedback stored in 'feedbackArray' provides
+information about each enrollment recording.  The bitfields have the
+same meanings, as provided in the list of
+<a href="params.html#recordingQuality">recording quality parameters</a>.
+If feedbackArray[0] contains
+0, feedbackArray[1] has bitfields CHECKRECORDING_BITFIELD_CLIPPING_PERCENT
+and CHECKRECORDING_BITFIELD_CLIPPING_MSEC set, and feedbackArray[2]
+has bitfield CHECKRECORDING_BITFIELD_SCORE_DIFF set, then the following
+can be concluded: (1) the first enrollment recording has no detected
+problems, (2) the second enrollment recording has significant amounts
+of waveform clipping (expressed as both percentage of the recording
+duration and milliseconds of clipped signal), and (3) the third enrollment
+has a recognition score difference indicating that the phrase is a
+different phrase from the first two recordings (e.g. the first two
+recordings are of the phrase "hello blue genie" and the third recording
+is of the phrase "hold on I'm enrolling".
+<p>
+The phrase quality feedback provides a <em>rough estimate</em> of the suitability of
+the enrollment word as a trigger phrase.
+Better phrases are those that are (a) longer, (b) have more syllables,
+and (c) have more vowels.  Better phrases are more likely to be recognized
+when the user says it (more true accepts), and are less likely to cause
+a recognition response in the presence of background noise (fewer false
+accepts).  Phrase quality scores have the following approximate meanings:
+<p>
+<table>
+<tr>
+<th align="left">Score range</th>
+<th align="left">Meaning</th>
+</tr>
+<tr>
+<td>0.0 - 0.35</td>
+<td>very poor</td>
+</tr>
+<tr>
+<td>0.35 - 0.50</td>
+<td>poor</td>
+</tr>
+<tr>
+<td>0.50 - 0.70</td>
+<td>fair</td>
+</tr>
+<tr>
+<td>0.70 - 1.00</td>
+<td>good</td>
+</tr>
+</table>
+<p>
+We recommend that the user re-enroll if the phrase quality is too low;
+the recommended minimum threshold for this decision is 0.35.
+
+<br>
+<h3>Step 4: Process enrollment recordings</h3>
+<p>
+Once the data from all users has been collected and checked, the data from all
+users are passed to an enrollment function, <a href="thfUdtEnroll.html">thfUdtEnroll</a>.
+This function takes as input the udt object and the UDT user data structure
+with enrollment recordings for all users.  The output consists of a UDT recognizer
+and a UDT search.  This recognizer and search can be used for phrasespotting the
+users' triggers.
+
+<p>
+NOTE: EPQ is turned on during the call to
+<a href="thfUdtEnroll.html">thfUdtEnroll</a>.  EPQ can be turned
+off with a subsequent call to
+<a href="thfRecogConfigSet.html">thfRecogConfigSet</a> with the REC_EPQ_ENABLE key.
+See the <a href="epq.html">EPQ Guidelines</a> for more information about EPQ.
+</p>
+<p>
+<i>Optional Step:</i><br>
+During enrollment, intermediate data is generated and cached which can be preserved across sessions to reduce the re-processing time. Call <a href="thfUdtCacheSaveToFile.html">thfUdtCacheSaveToFile</a> after enrollment to save the cached data, and <a href="thfUdtCacheLoadFromFile.html">thfUdtCacheLoadFromFile</a> during initialization to load cached data.  Another advantage of saving the cache is that the original audio is no longer needed once a user's enrollment has been processed. This eliminates the need to save the original audio to file to support later enrollment, such as when enrolling an additional new user.
+</p>
+<br>
+<h3>Step 5: Save UDT recognizer and search, destroy UDT object</h3>
+<p>
+The recognizer and search returned by <a href="thfUdtEnroll.html">thfUdtEnroll</a>
+can be used directly for spotting and speaker verification.  However, if
+the recognizer and search are not saved to file, the enrollment process
+will have to be repeated every time the application runs.  If the recognizer
+and search are saved to file, then the application can check for these
+files and skip the enrollment step, going directly to trigger spotting.
+To save the recognizer and search, call <a href="thfUdtSaveToFile.html">thfUdtSaveToFile</a>
+with the recognizer and search objects, and filenames to write these objects to.
+</p>
+<p>
+Once the UDT recognizer and search have been saved to file and the udt
+object is no longer needed, it should be destroyed with a call to
+<a href="thfUdtDestroy.html">thfUdtDestroy</a>.
+</p>
+
+</body>

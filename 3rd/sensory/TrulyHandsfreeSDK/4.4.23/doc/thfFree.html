@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfFree</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+void thfFree(void *p);
+</pre>
+<h3>Description</h3>
+ Frees memory that was allocated internally by one of the SDK functions.  Certain documented functions return data structures that must be deallocated when no longer needed.
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>void *</code></td>
+<td nowrap valign="top"><code>p</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">A pointer to memory previously allocated by another SDK function.</td>
+</tr>
+</table>
+<h3>Return</h3>
+None.
+<h3>See Also</h3>
+<a href="thfRecogSampleConvert.html">thfRecogSampleConvert</a>, <a href="thfWaveFromFile.html">thfWaveFromFile</a>, <a href="thfTtsSynthesize.html">thfTtsSynthesize</a> and <a href="thfMalloc.html">thfMalloc</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

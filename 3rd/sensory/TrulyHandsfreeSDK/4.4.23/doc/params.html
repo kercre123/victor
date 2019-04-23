@@ -1,0 +1,388 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h2>Parameters</h2>
+<h3>Recognizer Parameters</h3>
+The following recognition parameters (controlling the internal speech
+detector) can be both queried and set using <a
+href="thfRecogConfigSet.html">thfRecogConfigSet</a>:
+<ul>
+
+<li ID="lsilence"><b>Lsilence</b> : Amount of leading or pre-speech
+silence (milliseconds) allowed before the speech detector times
+out. Default is 5000.0ms. The practical range is 40.0 to 60000.0. If
+it's too short, it will tend to time out before seeing speech. If it's
+too long, you risk long delays if speech fails to trigger the
+detector.
+
+<li ID="tsilence"><b>Tsilence</b> : Amount of trailing or post-speech
+silence (milliseconds) required before the speech detector decides it
+has found the end of speech. Default is 750.0ms. The practical range
+is 40.0 to 2000.0. If tsilence is too short it will tend to return end
+of utterance in the middle of multi-word phrases. If it's too long
+then it forces a long delay after speaking which can delay the
+recognition result.
+
+<li ID="maxrecord"><b>MaxRecord</b> : Maximum record time
+(milliseconds). If the end of speech is not encountered, it will
+time-out after this duration. Default is 10000.0ms. The practical
+range is from 1000.0 to 60000.0. If it's too short the speech may be
+truncated. If it's too long then you risk long delays if the
+background level is confused with speech and triggers the speech
+detector.
+
+<li ID="backoff"><b>Backoff</b> : Back-off buffer size
+(milliseconds). The speech detector adds this amount of speech to
+the beginning of where speech activity was detected. Default is 500.0ms. The
+practical range is from 50.0 to 1000.0. If it is too short, you may
+miss the start of the speech, and initial recognition accuracy will be
+poor.
+
+<li ID="eSilenceT"><b>eSilenceT</b> : Energy threshold used to find the start of speech.
+Represents the difference between the short term and long term energy averages.
+Default is 0.4. Practical range is 0.0 to 2.0.
+
+<li ID="eSpeechT"><b>eSpeechT</b> : Energy threshold used to detect the end of speech.
+Represents the difference between the short term and long term energy averages.
+Default is 0.2. Practical range is -2.0 to 2.0.
+
+<li ID="shortTermMs"><b>shortTermMs</b> : Short term window size (in milliseconds)
+over which to accumulate energy. The difference between short term and long term average
+is used to identify speech/non-speech boundaries. Default is 300.0.
+The practical range is 50.0 to 1000.0. If this value is too large then the
+speech detector may find the start of speech too late.
+
+<li ID="longTermMs"><b>longTermMs</b> : Long term window size (in milliseconds)
+over which to accumulate energy. The difference between short term and long term energy
+is used to identify speech/non-speech boundaries. Default is 3000.0. The practical
+range is 500.0 to 10000.0. If this value is too short the speech detector may find
+the end of speech too early. <b>NOTE: </b>longTermMs is reset to 2500.0 whenever
+MaxRecord is set to 5000.0 or greater.
+
+<li ID="minduration"><b>MinDuration</b> : Minimum duration for speech
+(milliseconds). If the speech is too short it gets ignored. Default is
+200.0ms. The practical range is 40.0 to 1000.0, depending on the
+vocabulary.
+
+<li ID="epqEnable"><b>epqEnable</b> : Whether or not to use EPQ technique on trigger
+results.  If EPQ is enabled (via a non-zero value), and if the EPQ value
+is less than the threshold (see <a href='params.html#epqMin'>epqMin</a>),
+the result is discarded.  Default is 0.  Legal values are 0 or non-zero. See  <a
+href="epq.html">EPQ Guidelines</a> for recommended usage.
+
+<li ID="epqMin"><b>epqMin</b> : If EPQ is enabled and the EPQ value of a
+recognized trigger result is less than this threshold, the result is discarded.
+Default is -5.0.  Practical range is -20.0 to 20.0, or -1024.0 to disable. See  <a href="epq.html">EPQ Guidelines</a> for recommended usage.
+<li ID="SVadjustMethod"><b>SVadjustMethod</b> : Set the method used for
+        adjusting SV scores.  Currently only a single method is supported,
+        with value 1.
+<li ID="SVadjust1"><b>SVadjust1</b> : First parameter used in adjusting SV
+        scores.  Larger values cause SVadjust2 to be applied more frequently.
+        A value of -1024 or less disables this parameter.  The practical
+        range is 0 to 50.
+<li ID="SVadjust2"><b>SVadjust2</b> : Second parameter used in adjusting
+        SV scores.  A non-zero value adjusts some percentage of the SV scores.
+        A value of 0 disables this parameter.  The practical range is
+        0 to 0.1.
+<li ID="SVadjust3"><b>SVadjust3</b> : Third parameter used in adjusting
+        SV scores.  Smaller values cause SVadjust4 to be applied more
+        frequently.  A value of 1024 or greater disables this parameter.
+        The practical range is 0 to 50.
+<li ID="SVadjust4"><b>SVadjust4</b> : Fourth parameter used in adjusting
+        SV scores.  A non-zero value adjusts some percentage of the SV scores.
+        A value of 0 disables this parameter.  The practical range is
+        0 to 0.1.
+<li ID="paramAadjustMethod"><b>paramAadjustMethod</b> : Set the method
+        used in adjusting paramA.
+        Currently only a single method is supported, with value 1.
+<li ID="paramAadjust1"><b>paramAadjust1</b> : First parameter used in
+        adjusting paramA.  Larger values make it easier to spot phrases.
+        A value of -4096 or less disables this parameter.  The practical range
+      is -2000 to 0.
+<li ID="paramAadjust2"><b>paramAadjust2</b> : Second parameter used in
+        adjusting paramA.  Larger values cause paramAadjust4 to have more
+        effect than paramAadjust3.  A value of -1024 or less disables this
+        parameter.  The practical range is 0 to 50.
+<li ID="paramAadjust3"><b>paramAadjust3</b> : Third parameter used in
+        adjusting paramA.  Larger values decrease the chances of spotting.
+        A value of 0 disables this parameter.  The practical range is 0 to 500.
+<li ID="paramAadjust4"><b>paramAadjust4</b> : Fourth parameter used in
+        adjusting paramA.  Larger values decrease the chances of spotting.
+        A value of 0 disables this parameter.  The practical range is 0 to 500.
+<li ID="useFeat"><b>useFeat</b> : For a given recognizer, this parameter
+        indicates whether the large set of features is used (1) or not (0).
+        When used in UDT or EFT enrollment, this parameter specifies whether or
+        not the resulting recognizer will use the large set of features.
+</ul>
+
+
+<h3>Search Parameters</h3>
+The following search parameters can be both queried and set using <a
+href="thfSearchConfigSet.html">thfSearchConfigSet</a>:
+<ul>
+<li ID="garbage"><b>Garbage</b> : Used to compute the confidence score
+associated with recognition results, which in turn is used to decide
+whether it's a good or bad result. Default value 0.5. Range is from
+0.0 to 1.0. Smaller values will result in more confidant scores.
+
+<li ID="any"><b>Any</b> : Used to control the amount of <a
+href="wordspot.html">word-spotting</a> during
+recognition, if applicable. Default value is 0.5. Range is from 0.0 to 1.0. Smaller
+values will result in less word-spotting. Caution: too much
+word-spotting will cause increasing amounts of speech to be ignored,
+leaving insufficient evidence to match the pronunciation
+specifications. This parameter is probably best left alone by the
+novice user.
+
+<li ID="nota"><b>Nota</b> : Used to control <a href="nota.html">out-of-vocabulary</a> rejection behavior during recognition, if applicable. Default 0.5. Range is 0.0 to 1.0. Smaller values decrease the out-of-vocabulary rejection and larger values increase it.
+
+<li ID="beam"><b>Beam</b> : Provides a means of managing the size of
+the search during recognition. If the difference in accumulated score
+(log probability) between the best path and the current path falls
+below the beam threshold, then the current path is discarded. Larger
+beam values imply more paths remain active. Default is 250.0. Range is
+50.0 to 5000.0. Both pruning and beam thresholds are applied,
+producing the fewest number of active paths.
+
+<li ID="pruning"><b>Pruning</b> : Fraction of search paths kept active during
+recognition. Default is 1.0. Range is 0.0 to 1.0. It is preferable to
+adjust the beam parameter rather than the pruning parameter. Larger
+pruning values imply more states remain active, resulting in a larger,
+more accurate but slower search. Increasing the recognition speed is
+best achieved by adjusting this parameter. Caution: if you prune too
+much, you risk discarding the correct recognition result. The number
+of results available for N-best will also depend on this
+parameter.
+
+<li ID="longpen"><b>Longpen</b> : Reserved parameter.
+</ul>
+
+<h3>Phrasespot Parameters</h3>
+The following <a href="phrasespot.html">phrasespotting</a> parameters are used to define recognition behavior and configured using <a href="thfPhrasespotConfigSet.html">thfPhrasespotConfigSet</a>:
+<ul>
+
+<li ID="psbeam"><b>Beam</b> : Provides a means of managing the size of
+the search during phrasespotting. Larger
+beam values imply more paths remain active. Default is 250.0. Range is
+50.0 to 1000.0.
+<li ID="psabsbeam"><b>Absbeam</b> : Provides a secondary means of managing the size of
+the search during phrasespotting. Typically this is set to be larger than or equal to the beam. Default is 250.0. Range is 50.0 to 1000.0.
+<li ID="delay"><b>Delay</b> : Delays the final result (in milliseconds) allowing competing paths the opportunity to beat the current best score. This is most useful when there are multiple phrasespotting phrases of differing lengths. A value of 0 is a special early-stop condition causing the result to be returned immediately that any path scores above threshold. A value of PHRASESPOT_DELAY_ASAP (defined in trulyhandsfree.h) is a special condition that stops as soon as a probable result is found, taking into account similar sounding phrases and shared paths, thereby balancing speed and accuracy. Default is PHRASESPOT_DELAY_ASAP.
+<li ID="paramA"><b>ParamA</b> : Primary parameter for controlling sensitivity. Typically '-1200' is a reasonable initial value. Working range is from 0 to -2000. Values closer to zero will result in more phrasespotting. The optimal value is usually determined by batch testing on adequate quantities of in-vocabulary and out-of-vocabulary data and balancing the ratio of false-accepts and false-rejects, as appropriate to the application.  NOTE: an offset can be applied to this parameter after the vocabulary has been built using <a href="thfPhrasespotConfigSet.html">thfPhrasespotConfigSet</a>.
+<li ID="paramB"><b>ParamB</b> : Secondary parameter for controlling sensitivity. Typically '500' is a reasonable initial value. For easy tuning, it's best to leave this fixed and only adjust 'paramA'. Practical range is from 100 to 1000. Smaller values result in less phrasespotting.
+<li ID="paramC"><b>ParamC</b> : Reserved parameter.
+<li ID="paramD"><b>ParamD</b> : Reserved parameter; a typical value is 200.
+<li ID="pslongpen"><b>Longpen</b> : Reserved parameter.
+</ul>
+
+<h3>Speaker Verification and Speaker ID Parameters</h3>
+The following <a href="SVOverview.html">speaker verification and speaker ID</a> parameters are used to define the verification and ID behavior.  These parameters are configured using <a href="thfSpeakerConfigSet.html">thfSpeakerConfigSet</a>, <a href="thfSpeakerConfigSet.html">thfSpeakerConfigSet</a>, and/or <a href="thfSpeakerConfigGet.html">thfSpeakerConfigGet</a>:
+<ul>
+<li ID="wantNumRecordings"><b>wantNumRecordings</b> : The number of recordings that are desired for enrolling the specified speaker.  There is no default, but a typical value is 3.  The value must be at least 1.
+<li ID="haveNumRecordings"><b>haveNumRecordings</b> : The number of recordings that a speaker has currently enrolled with.  This parameter cannot be set, but can be queried.
+<li ID="doneAdaptation"><b>doneAdaptation</b> : Whether or not adaptation (or training) has been done on the specified speaker.  The value is 0 if it has not yet been successfully done, otherwise 1.  This parameter cannot be set, but can be queried.
+<li ID="recogWithAdapted"><b>recogWithAdapted</b> : reserved.
+<li ID="speedAccuracy"><b>speedAccuracy</b> : Specifies a speed/accuracy tradeoff.  The speed of adaptation can be decreased to cause a potential increase in speaker verification accuracy, and vice versa.  The speedAccuracy value is an integer of at least 1.  The decrease in adaptation speed is a linear function of this parameter, but the increase in verification accuracy is not easily predicted.
+<li ID="sampPerCat"><b>sampPerCat</b> : Amount of data to use in adaptation for the specified speaker when using the low-level API, namely <a href="thfSpeakerAdapt.html">thfSpeakerAdapt</a>.
+<li ID="triggerSampPerCat"><b>triggerSampPerCat</b> : The number of samples per category to use in adaptation for all speakers for whom there is enrollment data, using the recommended API, namely <a href='thfSpeakerEnroll.html'>thfSpeakerEnroll</a>.
+<li ID="sampPerCatWithin"><b>sampPerCatWithin</b> : An additional learning parameter. Greater values make the speaker-adapted recognizer more discriminating, and may require adjustment of other parameter values.
+<li ID="targetSNR"><b>targetSNR</b> : Target signal-to-noise ratio for enrollment recordings. To disable this feature, use a targetSNR of 1024.0.
+<li ID="durMinFactor"><b>durMinFactor</b> : Factor to multiply minimum durations by. If this value is greater than durMaxFactor, then no duration modification is performed.
+<li ID="durMaxFactor"><b>durMaxFactor</b> : Factor to multiply maximum durations by. If this value is less than durMinFactor, then no duration modification is performed.
+<li ID="trainIterations"><b>trainIterations</b> :
+Number of training iterations.  More iterations performs more training but
+increases the adaptation time.  The practical range is 1 to 5.
+Default value is 1.
+<li ID="trainIterationsWithin"><b>trainIterationsWithin</b> :
+Number of training iterations for the 'within' class.  More iterations
+performs more training, but increases the adaptation time.  The practical
+range is 1 to 5.
+Default value is 1.
+<li ID="learnRate"><b>learnRate</b> :
+Learning rate.  The practical range is 0.01 to 1.00.
+Default value is 0.1640625.
+<li ID="learnRateWithin"><b>learnRateWithin</b> :
+Learning rate for the 'within' class. The practical range is 0.01 to 1.00.
+Default value is 0.1640625.
+<li ID="dropoutWithin"><b>dropoutWithin</b> :
+Amount of dropout to perform. The practical range is 0 to 0.5.
+Default value is 0.
+<li ID="adaptType"><b>adaptType</b> :
+The type of adaptation to perform.  Type 0 performs faster than type 1.
+Legal values are 0 and 1.
+Default value is 0.
+<li ID="dspSvThresh"><b>dspSvThresh</b> : When writing files for DSP-level speaker verification (e.g. using <a href="thfSaveEmbedded.html">thfSaveEmbedded</a>), the default speaker verification threshold is included.  Setting this parameter changes this default SV threshold.
+</ul>
+
+<h3 ID="recordingQuality">Recording Quality Parameters</h3>
+The following bitfields are set when, in evaluating a recording or set of recordings,
+the following specific problems are encountered.  The values of each may be obtained
+with the <a href='thfUdtCheckEnrollments.html'>thfUdtCheckEnrollments</a> and
+<a href='thfUdtConfigGet.html'>thfUdtConfigGet</a> functions for UDT, and with the
+<a href='thfSpeakerCheckEnrollments.html'>thfSpeakerCheckEnrollments</a> and
+<a href='thfSpeakerConfigGet.html'>thfSpeakerConfigGet</a> functions for fixed-phrase
+speaker verification.
+
+<table align="center">
+<tr>
+  <td><a ID='CBF_ENERGY_MIN'>CHECKRECORDING_BITFIELD_ENERGY_MIN</a></td>
+    <td>this bit is set when there is insufficient energy levels. The default is 30.
+        </td></tr>
+<tr>
+  <td><a ID='CBF_ENERGY_STD_DEV'>CHECKRECORDING_BITFIELD_ENERGY_STD_DEV</a></td>
+    <td>this bit is set when there is insufficient energy variation
+        in the energy levels that is typical for speech. The default is 2.5.</td></tr>
+<tr><td><a ID='CBF_SIL_BEG_MSEC'>CHECKRECORDING_BITFIELD_SIL_BEG_MSEC</a></td>
+    <td>this bit is set when there is insufficient silence at the
+        beginning of the recording.  The default is 180 ms.</td></tr>
+<tr><td><a ID='CBF_SIL_END_MSEC'>CHECKRECORDING_BITFIELD_SIL_END_MSEC</a></td>
+    <td>this bit is set when there is insufficient silence at the
+        end of the recording.  The default is currently 180 ms. </td></tr>
+<tr><td><a ID='CBF_SNR'>CHECKRECORDING_BITFIELD_SNR</a></td>
+    <td>this bit is set when there is insufficient signal-to-noise
+        ratio in the signal.  The default is 7.0 dB.</td></tr>
+<tr><td><a ID='CBF_RECORDING_VARIANCE'>CHECKRECORDING_BITFIELD_RECORDING_VARIANCE</a></td>
+    <td>this bit is set when there is too much variance between
+        recordings.  This may happen if, for example, the words
+        contained in the different recordings are not the same.
+        This flag is not used if the number of recordings is equal to 1.
+        The default is 50.0</td></tr>
+<tr><td><a ID='CBF_CLIPPING_PERCENT'>CHECKRECORDING_BITFIELD_CLIPPING_PERCENT</a></td>
+    <td>this bitfield is set if the recording contains an excessive
+        amount of clipping, expressed as percent of the entire recording.
+        The default is 0.01.
+        </td></tr>
+<tr><td><a ID='CBF_CLIPPING_MSEC'>CHECKRECORDING_BITFIELD_CLIPPING_MSEC</a></td>
+    <td>this bitfield is set if the recordings contains an excessive
+        amount of clipping, expressed as a total number of milliseconds
+        of clipped recording.  The default is 0.2.</td></tr>
+<tr><td><a ID='CBF_POOR_RECORDINGS'>CHECKRECORDING_BITFIELD_POOR_RECORDINGS</a></td>
+    <td>this bitfield is set if the recording is of generally poor quality,
+        as measured by the recognizer. The default is -150.0</td></tr>
+<tr><td><a ID='CBF_VOWEL_DUR'>CHECKRECORDING_BITFIELD_VOWEL_DUR</a></td>
+    <td>this bitfield is set if the recording does not have sufficient total
+        vowel duration, as measured by the recognizer. The default is 150.0</td></tr>
+<tr><td><a ID='CBF_REPETITION'>CHECKRECORDING_BITFIELD_REPTITION</a></td>
+    <td>this bitfield is set if the recording contains too many repeated sounds.
+    The default is 0.15.  This bitfield is only set for UDT enrollment
+    checking; it is never set when calling SpeakerCheckEnrollments()
+    CheckRecording()</td></tr>
+<tr><td><a ID='CBF_SPOT'>CHECKRECORDING_BITFIELD_SPOT</a></td>
+    <td>this bitfield is set if the recording would <em>not</em> have been
+        spotted by the phrase-spotting search.  This bit is not set in the
+        case of a user-defined trigger.</td></tr>
+</table>
+
+<h3 ID="UDTparameters">UDT Parameters</h3>
+The following UDT parameters can be both queried and set using
+<a href="thfUdtConfigGet.html">thfUdtConfigGet</a> and
+<a href="thfUdtConfigSet.html">thfUdtConfigSet</a>, although the default
+values provide reasonable behavior:
+<ul>
+<li ID="sampPerCat"><b>sampPerCat</b> : Amount of data to use in adaptation.
+Default value is 512.
+
+<li ID="paramAstart"><b>paramAstart</b> :
+Starting value to be used in the search for optimal value of parameter A.
+Default value is -1300.
+
+<li ID="paramAnum"><b>paramAnum</b> :
+Size of search space to be used when finding optimal value of parameter A.
+Default value is 1.
+
+<li ID="paramAstep"><b>paramAstep</b> :
+Increment to be used when finding optimal value of parameter A.
+Default value is 20.
+
+<li ID="paramBstart"><b>paramBstart</b> :
+Starting value to be used in the search for optimal value of parameter B.
+Default value is 850.
+
+<li ID="paramBnum"><b>paramBnum</b> :
+Size of search space to be used when finding optimal value of parameter B.
+Default value is 1.
+
+<li ID="paramBstep"><b>paramBstep</b> :
+Increment to be used when finding optimal value of parameter B.
+Default value is 100.
+
+<li ID="maxParamD"><b>maxParamD</b> :
+maximum value to be used for parameter D.
+Default value is 200.
+
+<li ID="numChunks"><b>numChunks</b> :
+Number of chunks to divide UDT database into.
+Default value is 20.
+
+<li ID="maxMemory"><b>maxMemory</b> :
+Maximum amount of memory to use when searching parameters.
+Default value is 20000000.
+
+<li ID="udtabsbeam"><b>absbeam</b> :
+Absolute beam value to be used in resulting UDT search.
+Default value is 1000.
+
+<li ID="requireSilence"><b>requireSilence</b> :
+Whether or not to require silence around the target phrase for each user.
+A value of 0 indicates that silence is not required around the target
+phrase; a value of 1 indicates that silence is required.
+Default value is 0.
+
+<li ID="sampPerCatWithin"><b>sampPerCatWithin</b> :
+An additional learning parameter.  Greater values make the UDT recognizer
+more discriminating, and may require adjustment of the
+<a href='params.html#paramAstart'>paramAstart</a> parameter.
+Default value is 16.
+
+<li ID="ignoreType"><b>ignoreType</b> :
+Types of sounds to ignore during adaptation.  A value of 0 ignores
+sounds that are less useful for speaker verification.  A value of
+1 does not ignore any speech sounds.
+Default value is 1.
+
+<li ID="silPercent"><b>silPercent</b> :
+Percentage of data that targets 'silence'.
+Default value is 10.
+
+<li ID="noisePercent"><b>noisePercent</b> :
+Percentage of data that targets 'noise'.
+Default value is 40.
+
+<li ID="phonemeRecSearchType"><b>phonemeRecSearchType</b> :
+The type of phoneme recognition to perform with older phoneme search objects.
+A value of 0 uses an older method.  A value of 1 uses a newer method.
+With newer phoneme search objects (as of SDK release v3.13.0), the newer
+method is always used.
+Default value is 1.
+
+<li ID="sanitize"><b>sanitize</b> :
+The type of sanitization to perform.  A value of 0 is used for no
+sanitization (not recommended).  A value of 1 performs extensive
+sanitization.  A value of 5 performs moderate sanitization.
+Default value is 5.
+
+<li ID="popThresh"><b>popThresh</b> :
+If the short-term change in energy is greater than this threshold,
+a 'pop' or 'click' is detected in an enrollment recording.  A value
+of 0 will turn off this detection.
+Default value is 10.0.
+
+<li ID="dbaFilter"><b>dbaFilter</b> :
+Whether or not to apply a dBA filter to enrollment recordings.
+Default value is 1.
+
+</ul>
+
+
+
+<!----------------------------------------------------------------------- -->
+</body>

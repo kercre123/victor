@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfAdaptUserForget</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+int thfAdaptUserForget(thf_t **thf, adaptObj_t *aObj, char *taskName, 
+                       char *userName);
+</pre>
+<h3>Description</h3>
+ <p> Forget (but do not destroy) all information about the specified user. A user that is 'forgotten' in this manner can later be 'remembered' with a call to <a href="thfAdaptUserRemember.html">thfAdaptUserRemember</a>. </p>
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>adaptObj_t *</code></td>
+<td nowrap valign="top"><code>aObj</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">adapt object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>char *</code></td>
+<td nowrap valign="top"><code>taskName</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">name of current task.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>char *</code></td>
+<td nowrap valign="top"><code>userName</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">name of user being forgotten</td>
+</tr>
+</table>
+<h3>Return</h3>
+ Returns 1 on success or 0 on error.
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>adapt object not found</code></td>
+<td valign="top">A NULL pointer was passed in for the adapt object; pass in a correctly-initialized adapt object pointer created by thfAdaptCreate.</td>
+</tr>
+<tr>
+<td valign="top"><code>adapt object not initialized</code></td>
+<td valign="top">A non-NULL pointer was passed in for the adapt object, but this pointer does not contain a properly-initialized adapt object that is the output of thfAdaptCreate.</td>
+</tr>
+<tr>
+<td valign="top"><code>task name not specified</code></td>
+<td valign="top">A valid task name must be provided; a task with this name must have been created with a previous call to thfAdaptTaskCreate.</td>
+</tr>
+<tr>
+<td valign="top"><code>user name not specified</code></td>
+<td valign="top">A NULL pointer was passed in for the user name. A valid user name (a string of one or more ASCII characters, no spaces) must be provided.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfAdaptCreate.html">thfAdaptCreate</a>, <a href="thfAdaptTaskCreate.html">thfAdaptTaskCreate</a>, <a href="thfAdaptUserAdd.html">thfAdaptUserAdd</a>, <a href="thfAdaptUserDestroy.html">thfAdaptUserDestroy</a> and <a href="thfAdaptUserRemember.html">thfAdaptUserRemember</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

@@ -40,9 +40,9 @@ public:
 
   const Vision::SpritePathMap* GetSpritePathMap(){ return _spritePathMap;}  
 
-  // Returns a SpriteHandle for an independent sprite given the filename
-  SpriteHandle GetSpriteHandleForNamedSprite(const std::string& spriteName, 
-                                             const HSImageHandle& hueAndSaturation = {});
+  // Returns a SpriteHandle for an independent sprite given the assetID
+  SpriteHandle GetSpriteHandleForAssetID(const SpritePathMap::AssetID assetID,
+                                         const HSImageHandle& hueAndSaturation = {});  
 
   // Returns a SpriteHandle for a Sprite given the full path to the sprite
   SpriteHandle GetSpriteHandleForSpritePath(const std::string& fullSpritePath,

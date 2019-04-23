@@ -129,7 +129,7 @@ void SpriteSequenceLoader::LoadSequence(Vision::SpriteCache* cache, const std::s
 
   // Place the sequence in the appropriate map
   std::lock_guard<std::mutex> guard(_mapMutex);
-  _spriteSequences.emplace(Util::FileUtils::GetFileName(fullDirectoryPath), seq);
+  _spriteSequences.emplace(Vision::SpritePathMap::GetAssetID(Util::FileUtils::GetFileName(fullDirectoryPath)), seq);
 }
 
 

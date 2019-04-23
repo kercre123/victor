@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfSpeakerInit</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+int thfSpeakerInit(thf_t **thf, <a href="objects.html#recog_t">recog_t</a> *r, unsigned short sID, 
+                   unsigned short wantNumRecordings);
+</pre>
+<h3>Description</h3>
+ Creates a speaker-verification and speaker-ID object within the given  recognizer object, and initializes internal data structures.  This function must be called in the following circumstances: Before calling any other thfSpeaker function; After initializing a recognizer with  <a href="thfRecogInit.html">thfRecogInit</a>.  Also, the recognizer must be  initialized with the flag RECOG_KEEP_WAVE_WORD_PHONEME, as described in <a href="thfRecogInit.html">thfRecogInit</a>.  Finally, with a single user and the recommended API for SV, the phrasespot  delay can be set as short as 15 msec (but 0 msec should not be used).   With multiple users and/or the low-level API for SV, the phrasespot delay  should be set to at least 250 msec to maintain accuracy. The delay can be configured using <a href="thfPhrasespotConfigSet.html">thfPhrasespotConfigSet</a>. <p>The first speaker who will be enrolled is assigned an identification  number equal to the 'sID' parameter.  The 'wantNumRecordings' parameter specifies how many recordings of the target word or phrase are desired for enrollment.  If more recordings are obtained than is specified in 'wantNumRecordings', then some recordings are discarded, as explained in <a href="thfSpeakerStoreLastRecording.html">thfSpeakerStoreLastRecording</a>.
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><a href="objects.html#recog_t"><code>recog_t *</code></a></td>
+<td nowrap valign="top"><code>r</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Recognizer object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned short</code></td>
+<td nowrap valign="top"><code>sID</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">The identification (integer value) assigned to the first speaker</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned short</code></td>
+<td nowrap valign="top"><code>wantNumRecordings</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">How many recordings are to be collected for enrollment of each speaker</td>
+</tr>
+</table>
+<h3>Return</h3>
+ Returns 1 on success or 0 on error.
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>recog object not found</code></td>
+<td valign="top">Invalid recognizer object handle.</td>
+</tr>
+<tr>
+<td valign="top"><code>thfRecogInit keepwave arg must be RECOG_KEEP_WAVE_WORD_PHONEME</code></td>
+<td valign="top">The recognizer was initialized with a flag other than RECOG_KEEP_WAVE_WORD_PHONEME.</td>
+</tr>
+<tr>
+<td valign="top"><code>internal error: search ROM struct not found</code></td>
+<td valign="top">The search object was found, but the ROM struct within this object was not found. This might indicate corrupt data.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfRecogInit.html">thfRecogInit</a>, <a href="thfSpeakerRemove.html">thfSpeakerRemove</a>, <a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a>, <a href="thfRecogCreateFromFunc.html">thfRecogCreateFromFunc</a> and <a href="thfRecogCreateFromStatic.html">thfRecogCreateFromStatic</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

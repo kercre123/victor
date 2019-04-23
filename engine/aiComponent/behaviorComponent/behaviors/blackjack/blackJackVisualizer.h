@@ -14,6 +14,8 @@
 #ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BlackJackVisualizer__
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BlackJackVisualizer__
 
+#include "coretech/vision/shared/spritePathMap.h"
+
 #include <functional>
 #include <memory>
 #include <unordered_map>
@@ -35,8 +37,6 @@ class BlackJackGame;
 class BlackJackVisualizer{
 public:
   BlackJackVisualizer(const BlackJackGame* game);
-
-  void VerifySpriteAssets(BehaviorExternalInterface& bei);
 
   void Init(BehaviorExternalInterface& bei);
 
@@ -67,14 +67,14 @@ private:
 
   void DealCard(const BehaviorExternalInterface& bei,
                 const Vision::SpriteBoxName& dealSeqSBName,
-                const std::string& dealSpriteSeqName,
+                const Vision::SpritePathMap::AssetID dealSpriteSeqName,
                 const Vision::SpriteBoxName& revealSBName,
                 const Vision::SpriteBoxName& finalSBName,
-                const std::string& cardSpriteName);
+                const Vision::SpritePathMap::AssetID cardSpriteName);
 
   const BlackJackGame* _game;
 
-  using AnimRemapMap = std::unordered_map<Vision::SpriteBoxName, std::string>;
+  using AnimRemapMap = std::unordered_map<Vision::SpriteBoxName, Vision::SpritePathMap::AssetID>;
   AnimRemapMap _cardAssetMap;
 
   uint32_t _dealCardSeqApplyAt_ms = 0;
