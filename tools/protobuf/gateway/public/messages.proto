@@ -980,11 +980,6 @@ enum AudioProcessingMode {
   AUDIO_VOICE_DETECT_MODE = 4; // multi-microphone non-beamforming - best for voice detection programs
 }
 
-// Request how the robot should process and send audio
-message AudioSendModeRequest {
-  AudioProcessingMode mode = 1;
-}
-
 // Event sent when the robot changes the mode it's processing and sending audio
 message AudioSendModeChanged {
   AudioProcessingMode mode = 1;

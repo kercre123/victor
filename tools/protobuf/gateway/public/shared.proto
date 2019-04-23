@@ -277,7 +277,6 @@ message GatewayWrapper {
     CheckCloudResponse            check_cloud_response               = 1201;
 
     // ------------ Audio chunks sent from the animProcess ------------
-    AudioSendModeRequest          audio_send_mode_request            = 1300;
     AudioSendModeChanged          audio_send_mode_changed            = 1301;
     AudioChunk                    audio_chunk                        = 1302;
 

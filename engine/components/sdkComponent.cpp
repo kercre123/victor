@@ -90,8 +90,6 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPickupObjectRequest,  callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kPlaceObjectOnGroundHereRequest,  callback));
 
-    _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kAudioSendModeRequest, callback));
-
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kEnableMarkerDetectionRequest, callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kEnableFaceDetectionRequest,   callback));
     _signalHandles.push_back(gi->Subscribe(external_interface::GatewayWrapperTag::kEnableMotionDetectionRequest, callback));
@@ -315,29 +313,6 @@ void SDKComponent::IsImageStreamingEnabledRequest(
   gi->Broadcast(ExternalMessageRouter::WrapResponse(isEnabledResponse));
 }
 
-void SDKComponent::OnSendAudioModeRequest(const AnkiEvent<external_interface::GatewayWrapper>& event)
-{
-  // @TODO: JMRivas - Replace this functionality with a call or message to whichever process controls
-  //        the robot's audio processing mode, and lock it into an "SDK OWNED" state until receiving
-  //        the "AUDIO_OFF" id.
-  //
-  //        Any internal change in the audioProcessing state should be broadcast in an AudioSendModeChanged
-  //        message, whether a direct response to a request or incidental from underlying behavior.
-
-  auto* gi = _robot->GetGatewayInterface();
-  if (gi == nullptr) return;
-
-  external_interface::AudioProcessingMode mode = event.GetData().audio_send_mode_request().mode();
-
-  _SDK_WANTS_AUDIO = (mode != external_interface::AUDIO_OFF);
-
-  // Signal audio mode changed to gateway
-  external_interface::AudioSendModeChanged* changedEvent = new external_interface::AudioSendModeChanged();
-  changedEvent->set_mode(mode);
-
-  gi->Broadcast(ExternalMessageRouter::WrapResponse(changedEvent));
-}
-
 //keep ID for multiple exclusive user attempts
 void SDKComponent::SetBehaviorLock(uint64_t controlId)
 {
@@ -401,11 +376,6 @@ void SDKComponent::HandleProtoMessage(const AnkiEvent<external_interface::Gatewa
       }
       _sdkWantsControl = false;
       _sdkControlConnId = 0;
-      break;
-
-    case external_interface::GatewayWrapperTag::kAudioSendModeRequest:
-      LOG_INFO("SDKComponent.HandleMessageRelease", "Changing audio mode");
-      OnSendAudioModeRequest(event);
       break;
 
     // All of the vision mode requests are gated behind the sdk behavior being activated

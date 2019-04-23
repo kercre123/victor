@@ -2399,20 +2399,6 @@ func (service *rpcService) SayText(ctx context.Context, in *extint.SayTextReques
 	return sayTextResponse, nil
 }
 
-func AudioSendModeRequest(mode extint.AudioProcessingMode) error {
-	log.Println("SDK Requesting Audio with mode(", mode, ")")
-
-	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
-		OneofMessageType: &extint.GatewayWrapper_AudioSendModeRequest{
-			AudioSendModeRequest: &extint.AudioSendModeRequest{
-				Mode: mode,
-			},
-		},
-	})
-
-	return err
-}
-
 func (service *rpcService) EnableMarkerDetection(ctx context.Context, request *extint.EnableMarkerDetectionRequest) (*extint.EnableMarkerDetectionResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_EnableMarkerDetectionResponse{}, 1)
 	defer f()
