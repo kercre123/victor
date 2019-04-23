@@ -58,11 +58,11 @@ rm -f ${SCRIPT_PATH}/robot_simulator
 
 # Build test executable
 cd ${BUILD_PATH}
-./build-cloud-linux.sh -d integrationtest
+./build-cloud-linux.sh -d robotfleet
 
 # Move executable into Docker build context
 cd ${SCRIPT_PATH}
-cp ../../_build/cloud/integrationtest robot_simulator
+cp ../../_build/cloud/robotfleet robot_simulator
 
 if [ "$LOCAL_MODE" = true ] ; then
     docker-compose build

@@ -145,7 +145,7 @@ func newFromEnvironment(app *cli.Cli) *options {
 		Name:   "c url-config",
 		Desc:   "Config file for Service URLs",
 		EnvVar: "URL_CONFIG_FILE",
-		Value:  "integrationtest/server_config.json",
+		Value:  "robotfleet/server_config.json",
 	})
 
 	options.testLogFile = app.String(cli.StringOpt{

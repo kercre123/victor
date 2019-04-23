@@ -18,7 +18,7 @@ ENV TASKS_PER_CLUSTER 1
 ENV TEST_USER_PASSWORD ankisecret
 
 ENV TEST_LOG_FILE /var/log/dmesg
-ENV URL_CONFIG_FILE /integrationtest/server_config.json
+ENV URL_CONFIG_FILE /robotfleet/server_config.json
 
 # default to stdout logging (for local testing)
 ENV LOG_TYPE stdout
@@ -38,7 +38,7 @@ ENV CONNECTION_CHECK_INTERVAL 5m
 ENV CONNECTION_CHECK_STDDEV 0s
 
 # provision configuration files
-ADD ./server_load_config.json /integrationtest/server_config.json
+ADD ./server_load_config.json /robotfleet/server_config.json
 ADD ./saiconfig /root/.saiconfig
 ADD ./certs/trust.* /tmp/anki/gateway/
 
