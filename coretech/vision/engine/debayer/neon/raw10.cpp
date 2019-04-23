@@ -1,6 +1,20 @@
+/**
+ * File: neon/raw10.cpp
+ *
+ * Author: Patrick Doran
+ * Date: 03/25/2019
+ *
+ * Description: Debayering for RAW10 on Vector. This contains Debayer::Op instances that run on CPU using Neon
+ *              acceleration.
+ *
+ * Copyright: Anki, Inc. 2019
+ */
+
 #ifdef __ARM_NEON__
 
 #include "coretech/vision/engine/debayer/neon/raw10.h"
+
+#include "util/logging/logging.h"
 
 #include <arm_neon.h>
 #include <cmath>
@@ -47,8 +61,9 @@ struct SetupInfo
 {
   SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outArgs);
 
+  bool valid;                 //! Whether the setup information is usable. If not, there was an error.
   std::array<u8,8> indexes;   //! Index table for extracting inBufferPtr data 
-  std::array<u8,4> offsets;   //! Offsets from the inBufferPtr
+  std::array<u8,4> offsets;   //! Offsets from the inBufferPtr to load bytes into the table. Unused values are UINT8_MAX
   u32 rowStep;                //! Steps for the for loop
   u32 colStep;                //! Steps for the for loop
   u32 inColSkip;              //! Number of bytes in the input to skip per extraction
@@ -60,6 +75,7 @@ struct SetupInfo
 
 
 SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outArgs)
+  : valid(false)
 {
   this->outChannels = 3;
   switch(outArgs.format)
@@ -75,7 +91,8 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
       break;
     }
     default:
-      throw std::runtime_error("Invalid format");
+      PRINT_NAMED_ERROR("Debayer.Neon.RAW10.SetupInfo","Unknown output format");
+      return;
   }
 
   // Since this a bayer format, we are always reading 2x2 blocks so always create 2xN output pixels where N depends
@@ -243,8 +260,12 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
     break;
   }
   default:
-    throw std::runtime_error("Invalid value");
+  {
+      PRINT_NAMED_ERROR("Debayer.Neon.RAW10.SetupInfo","Unknown scale");
+      return;
   }
+  }
+  this->valid = true;
 }
 
 inline void GammaCorrect(const std::array<uint8x8x4_t,4>& gammaLUT, const uint8x8_t& value_32, uint8x8_t& data)
@@ -281,12 +302,12 @@ HandleRAW10::HandleRAW10(f32 gamma) : Op()
   }
 
   ADD_FUNC(_functions,    FULL, RGB24, RAW10_to_RGB24_FULL);
-  ADD_FUNC(_functions,    HALF, RGB24, RAW10_to_RGB24_HALF);
-  ADD_FUNC(_functions, QUARTER, RGB24, RAW10_to_RGB24_QUARTER);
+  ADD_FUNC(_functions,    HALF, RGB24, RAW10_to_RGB24_HALF_or_QUARTER);
+  ADD_FUNC(_functions, QUARTER, RGB24, RAW10_to_RGB24_HALF_or_QUARTER);
   ADD_FUNC(_functions,  EIGHTH, RGB24, RAW10_to_RGB24_EIGHTH);
   ADD_FUNC(_functions,    FULL,    Y8, RAW10_to_Y8_FULL);
-  ADD_FUNC(_functions,    HALF,    Y8, RAW10_to_Y8_HALF);
-  ADD_FUNC(_functions, QUARTER,    Y8, RAW10_to_Y8_QUARTER);
+  ADD_FUNC(_functions,    HALF,    Y8, RAW10_to_Y8_HALF_or_QUARTER);
+  ADD_FUNC(_functions, QUARTER,    Y8, RAW10_to_Y8_HALF_or_QUARTER);
   ADD_FUNC(_functions,  EIGHTH,    Y8, RAW10_to_Y8_EIGHTH);
 }
 
@@ -308,7 +329,11 @@ Result HandleRAW10::operator()(const Debayer::InArgs& inArgs, Debayer::OutArgs& 
 Result HandleRAW10::RAW10_to_RGB24_FULL(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
 {
   SetupInfo setup(inArgs, outArgs);
-  
+  if (!setup.valid)
+  {
+    return RESULT_FAIL;
+  }
+
   // The index to pull values from the table of loaded bytes
   const uint8x8_t index = vld1_u8(setup.indexes.data());
 
@@ -419,110 +444,14 @@ Result HandleRAW10::RAW10_to_RGB24_FULL(const Debayer::InArgs& inArgs, Debayer::
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-Result HandleRAW10::RAW10_to_RGB24_HALF(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
+Result HandleRAW10::RAW10_to_RGB24_HALF_or_QUARTER(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
 {
   SetupInfo setup(inArgs, outArgs);
-  
-  // The index to pull values from the table of loaded bytes
-  const uint8x8_t index = vld1_u8(setup.indexes.data());
-
-  StoreInfo store;
-  for (int i = 0; i < store.gammaLUT.size(); ++i){
-    for (int j = 0; j < 4; ++j){
-      store.gammaLUT[i].val[j] = vld1_u8(_gammaLUT.data()+8*(i*4+j));
-    }
-  }
-  store.value_32 = vdup_n_u8(32);
-
-  u8* inBufferPtr1 = inArgs.data;
-  u8* inBufferPtr2 = inBufferPtr1 + setup.inRowSkip;
-  u8* outBufferPtr = outArgs.data;
-
-  // Inner Loop variables; filled out during each iteration.
-  uint8x8x2_t table;
-  uint8x8x4_t block;
-  uint8x8x2_t unzipped1;
-  uint8x8x2_t unzipped2;
-  uint8x8x3_t rgb;
-
-  // Explanation of the iteration:
-  //  - Neon allows us to look at and fill out 8 bytes of data
-  //  - To get 8 bytes of Red, Blue, and Green, we need to look at 4 blocks of bayer data
-  //  - We are either computing 2 rows of output data (FULL) or 1 row (HALF, QUARTER, EIGHTH)
-  //  - We are either computing 16 cols of output data (FULL) or 8 cols (HALF, QUARTER, EIGHTH)
-  for (u32 row = 0; row < outArgs.height; row += setup.rowStep)
+  if (!setup.valid)
   {
-    for (u32 col = 0; col < outArgs.width; col += setup.colStep)
-    {
-      // Load and Extract the bytes
-      table.val[0] = vld1_u8(inBufferPtr1);
-      table.val[1] = vld1_u8(inBufferPtr1+setup.offsets[1]);
-      block.val[0] = vtbl2_u8(table, index);
-      inBufferPtr1 += setup.inColSkip;
-
-      table.val[0] = vld1_u8(inBufferPtr1);
-      table.val[1] = vld1_u8(inBufferPtr1+setup.offsets[1]);
-      block.val[1] = vtbl2_u8(table, index);
-      inBufferPtr1 += setup.inColSkip;
-
-      table.val[0] = vld1_u8(inBufferPtr2);
-      table.val[1] = vld1_u8(inBufferPtr2+setup.offsets[1]);
-      block.val[2] = vtbl2_u8(table, index);
-      inBufferPtr2 += setup.inColSkip;
-
-      table.val[0] = vld1_u8(inBufferPtr2);
-      table.val[1] = vld1_u8(inBufferPtr2+setup.offsets[1]);
-      block.val[3] = vtbl2_u8(table, index);
-      inBufferPtr2 += setup.inColSkip;
-
-      // Unzip the bytes so that each part of the block is eight consecutive R, G, G, B
-      unzipped1 = vuzp_u8(block.val[0], block.val[1]);
-      unzipped2 = vuzp_u8(block.val[2], block.val[3]);
-
-      block.val[0] = unzipped1.val[0];
-      block.val[1] = unzipped1.val[1];
-      block.val[2] = unzipped2.val[0];
-      block.val[3] = unzipped2.val[1];
-
-      // Gamma Correct is the most expensive step timewise. Doing it as a helper function seems to have no effect on
-      // the time to complete this step.
-      
-#if DO_GREEN_AVG
-      GammaCorrect(store.gammaLUT, store.value_32, block.val[0]);
-      GammaCorrect(store.gammaLUT, store.value_32, block.val[1]);
-      GammaCorrect(store.gammaLUT, store.value_32, block.val[2]);
-      GammaCorrect(store.gammaLUT, store.value_32, block.val[3]);
-      rgb.val[0] = block.val[0];
-      rgb.val[1] = vhadd_u8(block.val[1], block.val[2]);
-      rgb.val[2] = block.val[3];
-#else
-      GammaCorrect(store.gammaLUT, store.value_32, block.val[0]);
-      GammaCorrect(store.gammaLUT, store.value_32, block.val[1]);
-      GammaCorrect(store.gammaLUT, store.value_32, block.val[3]);
-      rgb.val[0] = block.val[0];
-      rgb.val[1] = block.val[1];
-      rgb.val[2] = block.val[3];
-#endif
-
-      vst3_u8(outBufferPtr, rgb);
-
-      outBufferPtr += setup.outColSkip;
-    }
-    inBufferPtr1 += setup.inRowSkip;
-    inBufferPtr2 += setup.inRowSkip;
-    
-    // NOTE: Don't need to skip any output rows, we're iterating over all of them.
+    return RESULT_FAIL;
   }
 
-  return RESULT_OK;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-Result HandleRAW10::RAW10_to_RGB24_QUARTER(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
-{
-  SetupInfo setup(inArgs, outArgs);
-  
   // The index to pull values from the table of loaded bytes
   const uint8x8_t index = vld1_u8(setup.indexes.data());
 
@@ -622,7 +551,11 @@ Result HandleRAW10::RAW10_to_RGB24_QUARTER(const Debayer::InArgs& inArgs, Debaye
 Result HandleRAW10::RAW10_to_RGB24_EIGHTH(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
 {
   SetupInfo setup(inArgs, outArgs);
-  
+  if (!setup.valid)
+  {
+    return RESULT_FAIL;
+  }
+
   // The index to pull values from the table of loaded bytes
   const uint8x8_t index = vld1_u8(setup.indexes.data());
 
@@ -730,7 +663,11 @@ Result HandleRAW10::RAW10_to_RGB24_EIGHTH(const Debayer::InArgs& inArgs, Debayer
 Result HandleRAW10::RAW10_to_Y8_FULL(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
 {
   SetupInfo setup(inArgs, outArgs);
-  
+  if (!setup.valid)
+  {
+    return RESULT_FAIL;
+  }
+
   // The index to pull values from the table of loaded bytes
   const uint8x8_t index = vld1_u8(setup.indexes.data());
 
@@ -821,10 +758,14 @@ Result HandleRAW10::RAW10_to_Y8_FULL(const Debayer::InArgs& inArgs, Debayer::Out
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-Result HandleRAW10::RAW10_to_Y8_HALF(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
+Result HandleRAW10::RAW10_to_Y8_HALF_or_QUARTER(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
 {
   SetupInfo setup(inArgs, outArgs);
-  
+  if (!setup.valid)
+  {
+    return RESULT_FAIL;
+  }
+
   // The index to pull values from the table of loaded bytes
   const uint8x8_t index = vld1_u8(setup.indexes.data());
 
@@ -908,96 +849,14 @@ Result HandleRAW10::RAW10_to_Y8_HALF(const Debayer::InArgs& inArgs, Debayer::Out
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-Result HandleRAW10::RAW10_to_Y8_QUARTER(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
-{
-  SetupInfo setup(inArgs, outArgs);
-  
-  // The index to pull values from the table of loaded bytes
-  const uint8x8_t index = vld1_u8(setup.indexes.data());
-
-  StoreInfo store;
-  for (int i = 0; i < store.gammaLUT.size(); ++i){
-    for (int j = 0; j < 4; ++j){
-      store.gammaLUT[i].val[j] = vld1_u8(_gammaLUT.data()+8*(i*4+j));
-    }
-  }
-  store.value_32 = vdup_n_u8(32);
-
-  u8* inBufferPtr1 = inArgs.data;
-  u8* inBufferPtr2 = inBufferPtr1 + setup.inRowSkip;
-  u8* outBufferPtr = outArgs.data;
-
-  // Inner Loop variables; filled out during each iteration.
-  uint8x8x2_t table;
-  uint8x8x4_t block;
-  uint8x8x2_t unzipped1;
-  uint8x8x2_t unzipped2;
-
-  // Explanation of the iteration:
-  //  - Neon allows us to look at and fill out 8 bytes of data
-  //  - To get 8 bytes of Red, Blue, and Green, we need to look at 4 blocks of bayer data
-  //  - We are either computing 2 rows of output data (FULL) or 1 row (HALF, QUARTER, EIGHTH)
-  //  - We are either computing 16 cols of output data (FULL) or 8 cols (HALF, QUARTER, EIGHTH)
-  for (u32 row = 0; row < outArgs.height; row += setup.rowStep)
-  {
-    for (u32 col = 0; col < outArgs.width; col += setup.colStep)
-    {
-      // Load and Extract the bytes
-      table.val[0] = vld1_u8(inBufferPtr1);
-      table.val[1] = vld1_u8(inBufferPtr1+setup.offsets[1]);
-      block.val[0] = vtbl2_u8(table, index);
-      inBufferPtr1 += setup.inColSkip;
-
-      table.val[0] = vld1_u8(inBufferPtr1);
-      table.val[1] = vld1_u8(inBufferPtr1+setup.offsets[1]);
-      block.val[1] = vtbl2_u8(table, index);
-      inBufferPtr1 += setup.inColSkip;
-
-      table.val[0] = vld1_u8(inBufferPtr2);
-      table.val[1] = vld1_u8(inBufferPtr2+setup.offsets[1]);
-      block.val[2] = vtbl2_u8(table, index);
-      inBufferPtr2 += setup.inColSkip;
-
-      table.val[0] = vld1_u8(inBufferPtr2);
-      table.val[1] = vld1_u8(inBufferPtr2+setup.offsets[1]);
-      block.val[3] = vtbl2_u8(table, index);
-      inBufferPtr2 += setup.inColSkip;
-
-      // Unzip the bytes so that each part of the block is eight consecutive R, G, G, B
-      unzipped1 = vuzp_u8(block.val[0], block.val[1]);
-      unzipped2 = vuzp_u8(block.val[2], block.val[3]);
-
-      block.val[0] = unzipped1.val[0];
-      block.val[1] = unzipped1.val[1];
-      block.val[2] = unzipped2.val[0];
-      block.val[3] = unzipped2.val[1];
-
-#if DO_GREEN_AVG
-      GammaCorrect(store.gammaLUT, store.value_32, block.val[1]);
-      GammaCorrect(store.gammaLUT, store.value_32, block.val[2]);
-      vst1_u8(outBufferPtr, vhadd_u8(block.val[1], block.val[2]));
-#else
-      GammaCorrect(store.gammaLUT, store.value_32, block.val[1]);
-      vst1_u8(outBufferPtr, block.val[1]);
-#endif
-
-      outBufferPtr += setup.outColSkip;
-    }
-    inBufferPtr1 += setup.inRowSkip;
-    inBufferPtr2 += setup.inRowSkip;
-    
-    // NOTE: Don't need to skip any output rows, we're iterating over all of them.
-  }
-
-  return RESULT_OK;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 Result HandleRAW10::RAW10_to_Y8_EIGHTH(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
 {
   SetupInfo setup(inArgs, outArgs);
-  
+  if (!setup.valid)
+  {
+    return RESULT_FAIL;
+  }
+
   // The index to pull values from the table of loaded bytes
   const uint8x8_t index = vld1_u8(setup.indexes.data());
 

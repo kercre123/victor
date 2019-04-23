@@ -1,3 +1,26 @@
+/**
+ * File: debayer.cpp
+ *
+ * Author: Patrick Doran
+ * Date: 03/25/2019
+ *
+ * Description: Debayering functor definition. The architecture here is a common "Debayer" functor class that can have
+ *              several different debayer operators registered to it via "Keys". These keys are just the set of options
+ *              that a user may choose to create the different types of output. The interface is agnostic to image type
+ *              because the interface takes an pointer to bytes as the "image". The interface only cares about the 
+ *              bytes it's given, how they're laid out, and what the output options are.
+ * 
+ *              The goal with this approach is that we can easily separate out the different types of debayering that
+ *              are available/implemented on a platform and then quickly be able to switch between them via the
+ *              different options.
+ * 
+ * See Also: platform/debayer - it contains a regression tool that can create debayering output images as well as
+ *           test to see if anything is changed. The stored images are the bytes that came from the existing debayering
+ *           functions and this list can be extended if there are more options supported later.
+ *
+ * Copyright: Anki, Inc. 2019
+ */
+
 #include "debayer.h"
 
 #include <array>

@@ -6,7 +6,6 @@
  *
  * Description: Debayering for RAW10 on Vector. This contains Debayer::Op instances that run on CPU using Neon
  *              acceleration.
- * 
  *
  * Copyright: Anki, Inc. 2019
  */
@@ -52,12 +51,10 @@ private:
   }
 
   Result RAW10_to_RGB24_FULL(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
-  Result RAW10_to_RGB24_HALF(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
-  Result RAW10_to_RGB24_QUARTER(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
+  Result RAW10_to_RGB24_HALF_or_QUARTER(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
   Result RAW10_to_RGB24_EIGHTH(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
   Result RAW10_to_Y8_FULL(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
-  Result RAW10_to_Y8_HALF(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
-  Result RAW10_to_Y8_QUARTER(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
+  Result RAW10_to_Y8_HALF_or_QUARTER(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
   Result RAW10_to_Y8_EIGHTH(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
 
   std::map<Key,Function> _functions;

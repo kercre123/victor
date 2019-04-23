@@ -1,5 +1,16 @@
-
+/**
+ * File: raw10.cpp
+ *
+ * Author: Patrick Doran
+ * Date: 03/25/2019
+ *
+ * Description: Debayering for RAW10 on Vector. This contains Debayer::Op instances that run on CPU
+ * 
+ * Copyright: Anki, Inc. 2019
+ */
 #include "coretech/vision/engine/debayer/raw10.h"
+
+#include "util/logging/logging.h"
 
 #include <cmath>
 #include <exception>
@@ -16,6 +27,7 @@ struct SetupInfo
 {
   SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outArgs);
 
+  bool valid;                 //! Whether the setup information is usable. If not, there was an error.
   u32 rowStep;                //! Steps for the for loop
   u32 colStep;                //! Steps for the for loop
   u32 inColSkip;              //! Number of bytes in the input to skip per extraction
@@ -27,7 +39,9 @@ struct SetupInfo
 
 
 SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outArgs)
+  : valid(false)
 {
+
   this->outChannels = 3;
   switch(outArgs.format)
   {
@@ -42,7 +56,10 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
       break;
     }
     default:
-      throw std::runtime_error("Invalid format");
+    {
+      PRINT_NAMED_ERROR("Debayer.RAW10.SetupInfo","Unknown output format");
+      return;
+    }
   }
 
   // Since this a bayer format, we are always reading 2x2 blocks so always create 2xN output pixels where N depends
@@ -118,8 +135,13 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
     break;
   }
   default:
-    throw std::runtime_error("Invalid value");
+  {
+      PRINT_NAMED_ERROR("Debayer.RAW10.SetupInfo","Unknown scale");
+      this->valid = false;
+      return;
   }
+  }
+  this->valid = true;
 }
 
 } /* anomymous namespace */
@@ -140,12 +162,12 @@ HandleRAW10::HandleRAW10(f32 gamma) : Op()
 
   ADD_FUNC(_functions,    FULL, RGB24, RAW10_to_RGB24_FULL);
   ADD_FUNC(_functions,    HALF, RGB24, RAW10_to_RGB24_HALF);
-  ADD_FUNC(_functions, QUARTER, RGB24, RAW10_to_RGB24_downscale);
-  ADD_FUNC(_functions,  EIGHTH, RGB24, RAW10_to_RGB24_downscale);
+  ADD_FUNC(_functions, QUARTER, RGB24, RAW10_to_RGB24_QUARTER_or_EIGHTH);
+  ADD_FUNC(_functions,  EIGHTH, RGB24, RAW10_to_RGB24_QUARTER_or_EIGHTH);
   ADD_FUNC(_functions,    FULL,    Y8, RAW10_to_Y8_FULL);
   ADD_FUNC(_functions,    HALF,    Y8, RAW10_to_Y8_HALF);
-  ADD_FUNC(_functions, QUARTER,    Y8, RAW10_to_Y8_downscale);
-  ADD_FUNC(_functions,  EIGHTH,    Y8, RAW10_to_Y8_downscale);
+  ADD_FUNC(_functions, QUARTER,    Y8, RAW10_to_Y8_QUARTER_or_EIGHTH);
+  ADD_FUNC(_functions,  EIGHTH,    Y8, RAW10_to_Y8_QUARTER_or_EIGHTH);
 }
 
 Result HandleRAW10::operator()(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
@@ -166,6 +188,10 @@ Result HandleRAW10::operator()(const Debayer::InArgs& inArgs, Debayer::OutArgs& 
 Result HandleRAW10::RAW10_to_RGB24_FULL(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
 {
   SetupInfo setup(inArgs, outArgs);
+  if (!setup.valid)
+  {
+    return RESULT_FAIL;
+  }
 
   u8* inBufferPtr1 = inArgs.data;
   u8* inBufferPtr2 = inBufferPtr1 + setup.inRowSkip;
@@ -239,6 +265,10 @@ Result HandleRAW10::RAW10_to_RGB24_FULL(const Debayer::InArgs& inArgs, Debayer::
 Result HandleRAW10::RAW10_to_RGB24_HALF(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
 {
   SetupInfo setup(inArgs, outArgs);
+  if (!setup.valid)
+  {
+    return RESULT_FAIL;
+  }
 
   u8* inBufferPtr1 = inArgs.data;
   u8* inBufferPtr2 = inBufferPtr1 + setup.inRowSkip;
@@ -282,7 +312,7 @@ Result HandleRAW10::RAW10_to_RGB24_HALF(const Debayer::InArgs& inArgs, Debayer::
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-Result HandleRAW10::RAW10_to_RGB24_downscale(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
+Result HandleRAW10::RAW10_to_RGB24_QUARTER_or_EIGHTH(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
 {
   SetupInfo setup(inArgs, outArgs);
 
@@ -327,6 +357,10 @@ Result HandleRAW10::RAW10_to_RGB24_downscale(const Debayer::InArgs& inArgs, Deba
 Result HandleRAW10::RAW10_to_Y8_FULL(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
 {
   SetupInfo setup(inArgs, outArgs);
+  if (!setup.valid)
+  {
+    return RESULT_FAIL;
+  }
 
   u8* inBufferPtr1 = inArgs.data;
   u8* inBufferPtr2 = inBufferPtr1 + setup.inRowSkip;
@@ -377,7 +411,11 @@ Result HandleRAW10::RAW10_to_Y8_FULL(const Debayer::InArgs& inArgs, Debayer::Out
 
 Result HandleRAW10::RAW10_to_Y8_HALF(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
 {
-    SetupInfo setup(inArgs, outArgs);
+  SetupInfo setup(inArgs, outArgs);
+  if (!setup.valid)
+  {
+    return RESULT_FAIL;
+  }
 
   u8* inBufferPtr1 = inArgs.data;
   u8* inBufferPtr2 = inBufferPtr1 + setup.inRowSkip;
@@ -417,9 +455,13 @@ Result HandleRAW10::RAW10_to_Y8_HALF(const Debayer::InArgs& inArgs, Debayer::Out
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-Result HandleRAW10::RAW10_to_Y8_downscale(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
+Result HandleRAW10::RAW10_to_Y8_QUARTER_or_EIGHTH(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
 {
   SetupInfo setup(inArgs, outArgs);
+  if (!setup.valid)
+  {
+    return RESULT_FAIL;
+  }
 
   u8* inBufferPtr1 = inArgs.data;
   u8* inBufferPtr2 = inBufferPtr1 + setup.inRowSkip;

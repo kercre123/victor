@@ -6,7 +6,6 @@
  *
  * Description: Debayering for RAW10 on Vector. This contains Debayer::Op instances that run on CPU
  * 
- *
  * Copyright: Anki, Inc. 2019
  */
 
@@ -20,7 +19,7 @@ namespace Anki {
 namespace Vision {
 
 /**
- * @brief Convert RAW10 RGGB bayer input to RGB24 or Y8 and downscale (if requested).
+ * @brief Convert RAW10 RGGB bayer input to RGB24 or Y8 and QUARTER_or_EIGHTH (if requested).
  */
 class HandleRAW10: public Debayer::Op
 {
@@ -41,10 +40,10 @@ private:
 
   Result RAW10_to_RGB24_FULL(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
   Result RAW10_to_RGB24_HALF(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
-  Result RAW10_to_RGB24_downscale(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
+  Result RAW10_to_RGB24_QUARTER_or_EIGHTH(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
   Result RAW10_to_Y8_FULL(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
   Result RAW10_to_Y8_HALF(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
-  Result RAW10_to_Y8_downscale(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
+  Result RAW10_to_Y8_QUARTER_or_EIGHTH(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const;
 
   std::map<Key,Function> _functions;
   std::array<u8, 1024> _gammaLUT;
