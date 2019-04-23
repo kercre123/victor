@@ -211,17 +211,9 @@ stage("${primaryStageName} Build") {
             buildConfigMap[buildFlavor] = {
                 node('mac-slaves') {
                     def ghsb = new GithubStatusMsgBuilder(this, buildFlavor)
+                    gitCheckout(true, true)
                     withDockerEnv(true) {
                         try {
-                            checkout scm
-                            stage('Update submodules') {
-                                sh 'git submodule update --init --recursive'
-                                sh 'git submodule update --recursive'
-                            }
-                            stage('Run git-lfs install on the repo...') {
-                                sh 'git lfs install --force'
-                                sh 'git lfs pull'
-                            }
                             ghsb.postBuildStart()
                             buildPRStepsVicOS type: buildFlavor
                             ghsb.postBuildFinished('SUCCESS')
