@@ -31,34 +31,34 @@ namespace Vector {
 
 namespace {
 # define CONSOLE_GROUP_NAME "Vision.MotionDetection"
-  
+
   // For speed, compute motion detection at lower resolution (1 for full resolution, 2 for half, etc)
   CONSOLE_VAR_RANGED(s32, kMotionDetection_ScaleMultiplier,          CONSOLE_GROUP_NAME, 4, 1, 8);
-  
+
   // How long we have to wait between motion detections. This may be reduce-able, but can't get
   // too small or we'll hallucinate image change (i.e. "motion") due to the robot moving.
   CONSOLE_VAR(u32,  kMotionDetection_LastMotionDelay_ms,  CONSOLE_GROUP_NAME, 500);
-  
+
   // Affects sensitivity (darker pixels are inherently noisier and should be ignored for
   // change detection). Range is [0,255]
   WRAP_EXTERN_CONSOLE_VAR(u8,   kMotionDetection_MinBrightness,       CONSOLE_GROUP_NAME);
-  
+
   // This is the main sensitivity parameter: higher means more image difference is required
   // to register a change and thus report motion.
   WRAP_EXTERN_CONSOLE_VAR(f32,  kMotionDetection_RatioThreshold,      CONSOLE_GROUP_NAME);
   CONSOLE_VAR(f32,  kMotionDetection_MinAreaFraction,     CONSOLE_GROUP_NAME, 1.f/225.f); // 1/15 of each image dimension
-  
+
   // For computing robust "centroid" of motion
   CONSOLE_VAR(f32,  kMotionDetection_CentroidPercentileX,       CONSOLE_GROUP_NAME, 0.5f);  // In image coordinates
   CONSOLE_VAR(f32,  kMotionDetection_CentroidPercentileY,       CONSOLE_GROUP_NAME, 0.5f);  // In image coordinates
   CONSOLE_VAR(f32,  kMotionDetection_GroundCentroidPercentileX, CONSOLE_GROUP_NAME, 0.05f); // In robot coordinates (Most important for pounce: distance from robot)
   CONSOLE_VAR(f32,  kMotionDetection_GroundCentroidPercentileY, CONSOLE_GROUP_NAME, 0.50f); // In robot coordinates
-  
+
   // Tight constraints on max movement allowed to attempt frame differencing for "motion detection"
   CONSOLE_VAR(f32,  kMotionDetection_MaxHeadAngleChange_deg,    CONSOLE_GROUP_NAME, 0.1f);
   CONSOLE_VAR(f32,  kMotionDetection_MaxBodyAngleChange_deg,    CONSOLE_GROUP_NAME, 0.1f);
   CONSOLE_VAR(f32,  kMotionDetection_MaxPoseChange_mm,          CONSOLE_GROUP_NAME, 0.5f);
-  
+
   CONSOLE_VAR(bool, kMotionDetection_DrawGroundDetectionsInCameraView, CONSOLE_GROUP_NAME, false);
 
   // The smaller this value the more broken up will be the motion areas, leading to fragmented ones.
@@ -71,12 +71,12 @@ namespace {
 
   // How much blurring to apply to the camera image before doing motion detection.
   CONSOLE_VAR(u32,  kMotionDetection_BlurFilterSize_pix, CONSOLE_GROUP_NAME, 21);
-  
+
   CONSOLE_VAR(bool, kMotionDetectionDebug, CONSOLE_GROUP_NAME, false);
-  
+
 # undef CONSOLE_GROUP_NAME
 }
-  
+
 
 // This class is used to accumulate data for peripheral motion detection. The image area is divided in three sections:
 // top, right and left. If the centroid of a motion patch falls inside one these areas, it's increased, otherwise it's
@@ -407,9 +407,9 @@ s32 MotionDetector::RatioTest(const Vision::ImageRGB& image, Vision::Image& rati
 {
   DEV_ASSERT(ratioImg.GetNumRows() == image.GetNumRows() && ratioImg.GetNumCols() == image.GetNumCols(),
              "MotionDetector.RatioTestColor.MismatchedSize");
-  
+
   u32 numAboveThresh = 0;
-  
+
 #ifdef __ARM_NEON__
 
   return RatioTestNeon(image, ratioImg);
@@ -435,11 +435,11 @@ s32 MotionDetector::RatioTest(const Vision::ImageRGB& image, Vision::Image& rati
 
     return retVal;
   };
-  
+
   image.ApplyScalarFunction(ratioTest, _prevImageRGB, ratioImg);
 
 #endif
-  
+
   return numAboveThresh;
 }
 
@@ -447,7 +447,7 @@ s32 MotionDetector::RatioTest(const Vision::Image& image, Vision::Image& ratioIm
 {
   DEV_ASSERT(ratioImg.GetNumRows() == image.GetNumRows() && ratioImg.GetNumCols() == image.GetNumCols(),
              "MotionDetector.RatioTestGray.MismatchedSize");
-  
+
   s32 numAboveThresh = 0;
 
 #ifdef __ARM_NEON__
@@ -455,7 +455,7 @@ s32 MotionDetector::RatioTest(const Vision::Image& image, Vision::Image& ratioIm
   return RatioTestNeon(image, ratioImg);
 
 #else
-  
+
   std::function<u8(const u8& thisElem, const u8& otherElem)> ratioTest = [&numAboveThresh](const u8& p1, const u8& p2)
   {
     u8 retVal = 0;
@@ -468,14 +468,14 @@ s32 MotionDetector::RatioTest(const Vision::Image& image, Vision::Image& ratioIm
         retVal = 255; // use 255 because it will actually display
       }
     } // if both pixels are bright enough
-    
+
     return retVal;
   };
-  
+
   image.ApplyScalarFunction(ratioTest, _prevImageGray, ratioImg);
 
 #endif
-  
+
   return numAboveThresh;
 }
 
@@ -491,8 +491,8 @@ Result MotionDetector::Detect(Vision::ImageCache&     imageCache,
   // Call the right helper based on image's color
   if(imageCache.HasColor())
   {
-    const Vision::ImageRGB& imageColor = imageCache.GetRGB(imageSize);
-    return DetectHelper(imageColor,
+    const std::shared_ptr<const Vision::ImageRGB> imageColor = imageCache.GetRGB(imageSize);
+    return DetectHelper(*imageColor,
                         imageCache.GetNumRows(Vision::ImageCacheSize::Half),
                         imageCache.GetNumCols(Vision::ImageCacheSize::Half),
                         kMotionDetection_ScaleMultiplier,
@@ -500,15 +500,15 @@ Result MotionDetector::Detect(Vision::ImageCache&     imageCache,
   }
   else
   {
-    const Vision::Image& imageGray = imageCache.GetGray(imageSize);
-    return DetectHelper(imageGray,
+    const std::shared_ptr<const Vision::Image> imageGray = imageCache.GetGray(imageSize);
+    return DetectHelper(*imageGray,
                         imageCache.GetNumRows(Vision::ImageCacheSize::Half),
                         imageCache.GetNumCols(Vision::ImageCacheSize::Half),
                         kMotionDetection_ScaleMultiplier,
                         crntPoseData, prevPoseData, observedMotions, debugImages);
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 template<class ImageType>
 Result MotionDetector::DetectHelper(const ImageType &image,
@@ -553,11 +553,11 @@ Result MotionDetector::DetectHelper(const ImageType &image,
 
 
   const bool headSame = crntPoseData.IsHeadAngleSame(prevPoseData, DEG_TO_RAD(kMotionDetection_MaxHeadAngleChange_deg));
-  
+
   const bool poseSame = crntPoseData.IsBodyPoseSame(prevPoseData,
                                                     DEG_TO_RAD(kMotionDetection_MaxBodyAngleChange_deg),
                                                     kMotionDetection_MaxPoseChange_mm);
-  
+
   //PRINT_STREAM_INFO("pose_angle diff = %.1f\n", RAD_TO_DEG(std::abs(_robotState.pose_angle - _prevRobotState.pose_angle)));
 
   //Often this will be false
@@ -599,11 +599,11 @@ Result MotionDetector::DetectHelper(const ImageType &image,
       }
       observedMotions.emplace_back(std::move(msg));
     }
-    
+
     // Store a blurred copy of the current image for next time (at correct resolution!)
     const bool kBlurHappened = true;
     SetPrevImage(blurredImage, kBlurHappened);
-    
+
   } // if(headSame && poseSame)
   else
   {
@@ -611,9 +611,9 @@ Result MotionDetector::DetectHelper(const ImageType &image,
     const bool kBlurHappened = false;
     SetPrevImage(image, kBlurHappened);
   }
-  
+
   return RESULT_OK;
-  
+
 }
 
 bool MotionDetector::DetectGroundAndImageHelper(Vision::Image &foregroundMotion, int numAboveThresh, s32 origNumRows,
@@ -858,7 +858,7 @@ inline Vision::ImageRGB& MotionDetector::GetPrevImage()
 {
   return _prevImageRGB;
 }
- 
+
 template<>
 inline bool MotionDetector::WasPrevImageBlurred<Vision::Image>() const {
   return _wasPrevImageGrayBlurred;
@@ -868,7 +868,7 @@ template<>
 inline bool MotionDetector::WasPrevImageBlurred<Vision::ImageRGB>() const {
   return _wasPrevImageRGBBlurred;
 }
-  
+
 template <class ImageType>
 void MotionDetector::FilterImageAndPrevImages(const ImageType& image, ImageType& blurredImage)
 {
@@ -1114,13 +1114,13 @@ template Result MotionDetector::DetectHelper(const Vision::ImageRGB&, s32, s32, 
                                              const VisionPoseData&,
                                              std::list<ExternalInterface::RobotObservedMotion>&,
                                              Vision::DebugImageList<Vision::CompressedImage>&);
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Computes "centroid" at specified percentiles in X and Y
 size_t MotionDetector::GetCentroid(const Vision::Image& motionImg, Point2f& centroid, f32 xPercentile, f32 yPercentile)
 {
   std::vector<s32> xValues, yValues;
-  
+
   for(s32 y=0; y<motionImg.GetNumRows(); ++y)
   {
     const u8* motionData_y = motionImg.GetRow(y);
@@ -1131,9 +1131,9 @@ size_t MotionDetector::GetCentroid(const Vision::Image& motionImg, Point2f& cent
       }
     }
   }
-  
+
   DEV_ASSERT(xValues.size() == yValues.size(), "MotionDetector.GetCentroid.xyValuesSizeMismatch");
-  
+
   if(xValues.empty()) {
     centroid = 0.f;
     return 0;
@@ -1155,10 +1155,9 @@ size_t MotionDetector::GetCentroid(const Vision::Image& motionImg, Point2f& cent
                    "ycen=%f, not in [0,%d)", centroid.y(), motionImg.GetNumRows());
     return area;
   }
-  
+
 }
 // GetCentroid()
 
 } // namespace Vector
 } // namespace Anki
-

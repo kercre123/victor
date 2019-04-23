@@ -77,7 +77,7 @@ namespace {
   const char* kImageCompositorReadyPeriodKey = "imageReadyPeriod";
   const char* kImageCompositorReadyCycleResetKey = "numImageReadyCyclesBeforeReset";
 }
-  
+
 CONSOLE_VAR_RANGED(u8,  kUseCLAHE_u8,     "Vision.PreProcessing", 0, 0, 4);  // One of MarkerDetectionCLAHE enum
 CONSOLE_VAR(s32, kClaheClipLimit,         "Vision.PreProcessing", 32);
 CONSOLE_VAR(s32, kClaheTileSize,          "Vision.PreProcessing", 4);
@@ -87,16 +87,16 @@ CONSOLE_VAR(s32, kMarkerDetector_ScaleMultiplier, "Vision.MarkerDetection", 2);
 CONSOLE_VAR(f32, kHeadTurnSpeedThreshBlock_degs, "Vision.MarkerDetection",   10.f);
 CONSOLE_VAR(f32, kBodyTurnSpeedThreshBlock_degs, "Vision.MarkerDetection",   30.f);
 
-  
+
 // This is fraction of full width we use with the CropScheduler to crop the image for marker detection.
 CONSOLE_VAR_RANGED(f32, kMarkerDetector_CropWidthFraction, "Vision.MarkerDetection", 0.65f, 0.5f, 1.f);
-  
+
 // Show the crops being used for MarkerDetection. Need to increase Viz debug windows if enabled.
 CONSOLE_VAR(bool, kMarkerDetector_VizCropScheduler, "Vision.MarkerDetection", false);
-  
+
 // How long to disable auto exposure after using detections to meter
 CONSOLE_VAR(u32, kMeteringHoldTime_ms,    "Vision.PreProcessing", 2000);
-  
+
 // Loose constraints on how fast Cozmo can move and still trust tracker (which has no
 // knowledge of or access to camera movement). Rough means of deciding these angles:
 // look at angle created by distance between two faces seen close together at the max
@@ -124,7 +124,7 @@ CONSOLE_VAR_RANGED(f32, kFakeCatDetectionProbability,  "Vision.NeuralNets", 0.f,
 CONSOLE_VAR_RANGED(f32, kFakeDogDetectionProbability,  "Vision.NeuralNets", 0.f, 0.f, 1.f);
 
 CONSOLE_VAR(bool, kDisplayUndistortedImages,"Vision.General", false);
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 namespace {
   // These are initialized from Json config:
@@ -171,7 +171,7 @@ VisionSystem::VisionSystem(const CozmoContext* context)
 Result VisionSystem::Init(const Json::Value& config)
 {
   _isInitialized = false;
-  
+
   std::string dataPath("");
   std::string cachePath("");
   if(_context->GetDataPlatform() != nullptr) {
@@ -187,8 +187,8 @@ Result VisionSystem::Init(const Json::Value& config)
     PRINT_NAMED_ERROR("VisionSystem.Init.MissingImageQualityConfigField", "");
     return RESULT_FAIL;
   }
-    
-  
+
+
   // Helper macro to try to get the specified field and store it in the given variable
   // and return RESULT_FAIL if that doesn't work
 #   define GET_JSON_PARAMETER(__json__, __fieldName__, __variable__) \
@@ -206,23 +206,23 @@ Result VisionSystem::Init(const Json::Value& config)
     GET_JSON_PARAMETER(imageQualityConfig, "MeterFromDetections", kMeterFromDetections);
     GET_JSON_PARAMETER(imageQualityConfig, "LowPercentile",       kLowPercentile);
     GET_JSON_PARAMETER(imageQualityConfig, "HighPercentile",      kHighPercentile);
-    
+
     u8  targetValue=0;
     f32 maxChangeFraction = -1.f;
     s32 subSample = 0;
-    
+
     GET_JSON_PARAMETER(imageQualityConfig, "TargetPercentile",    kTargetPercentile);
     GET_JSON_PARAMETER(imageQualityConfig, "TargetValue",         targetValue);
     GET_JSON_PARAMETER(imageQualityConfig, "MaxChangeFraction",   maxChangeFraction);
     GET_JSON_PARAMETER(imageQualityConfig, "SubSample",           subSample);
-    
+
     std::vector<u8> cyclingTargetValues;
     if(!JsonTools::GetVectorOptional(imageQualityConfig, "CyclingTargetValues", cyclingTargetValues))
     {
       PRINT_NAMED_ERROR("VisionSystem.Init.MissingJsonParameter", "%s", "CyclingTargetValues");
       return RESULT_FAIL;
     }
-    
+
     Result result = _cameraParamsController->SetExposureParameters(targetValue,
                                                                    cyclingTargetValues,
                                                                    kTargetPercentile,
@@ -239,7 +239,7 @@ Result VisionSystem::Init(const Json::Value& config)
       PRINT_NAMED_ERROR("VisionSystem.Init.SetExposureParametersFailed", "");
       return result;
     }
-    
+
     result = _cameraParamsController->SetImageQualityParameters(kTooDarkValue,   kHighPercentile,
                                                                 kTooBrightValue, kLowPercentile);
     if(RESULT_OK != result)
@@ -248,22 +248,22 @@ Result VisionSystem::Init(const Json::Value& config)
       return result;
     }
   }
-  
+
   {
     // Set up profiler logging frequencies
     f32 timeBetweenProfilerInfoPrints_sec = 5.f;
     f32 timeBetweenProfilerDasLogs_sec = 60.f;
-    
+
     const Json::Value& performanceConfig = config["PerformanceLogging"];
     GET_JSON_PARAMETER(performanceConfig, "TimeBetweenProfilerInfoPrints_sec", timeBetweenProfilerInfoPrints_sec);
     GET_JSON_PARAMETER(performanceConfig, "TimeBetweenProfilerDasLogs_sec",    timeBetweenProfilerDasLogs_sec);
-    
+
     Profiler::SetProfileGroupName("VisionSystem.Profiler");
     Profiler::SetPrintChannelName(kLogChannelName);
     Profiler::SetPrintFrequency(Util::SecToMilliSec(timeBetweenProfilerInfoPrints_sec));
     Profiler::SetDasLogFrequency(Util::SecToMilliSec(timeBetweenProfilerDasLogs_sec));
   }
-  
+
   PRINT_CH_INFO(kLogChannelName, "VisionSystem.Init.InstantiatingFaceTracker",
                 "With model path %s.", dataPath.c_str());
   _faceTracker.reset(new Vision::FaceTracker(_camera, dataPath, config));
@@ -279,14 +279,14 @@ Result VisionSystem::Init(const Json::Value& config)
 
   const Json::Value& imageCompositeCfg = config["ImageCompositing"];
   {
-    _imageCompositorReadyPeriod = JsonTools::ParseUInt32(imageCompositeCfg, 
-                                    kImageCompositorReadyPeriodKey, 
+    _imageCompositorReadyPeriod = JsonTools::ParseUInt32(imageCompositeCfg,
+                                    kImageCompositorReadyPeriodKey,
                                     "VisionSystem.Ctor");
 
     // The Reset Period is an integer multiple of the Ready Period
-    _imageCompositorResetPeriod = _imageCompositorReadyPeriod * 
-                                    JsonTools::ParseUInt32(imageCompositeCfg, 
-                                    kImageCompositorReadyCycleResetKey, 
+    _imageCompositorResetPeriod = _imageCompositorReadyPeriod *
+                                    JsonTools::ParseUInt32(imageCompositeCfg,
+                                    kImageCompositorReadyCycleResetKey,
                                     "VisionSystem.Ctor");
   }
   _imageCompositor.reset(new Vision::ImageCompositor(imageCompositeCfg));
@@ -299,39 +299,39 @@ Result VisionSystem::Init(const Json::Value& config)
     PRINT_NAMED_ERROR("VisionSystem.Init.PetTrackerInitFailed", "");
     return petTrackerInitResult;
   }
-  
+
   if(!config.isMember(NeuralNets::JsonKeys::NeuralNets))
   {
     PRINT_NAMED_ERROR("VisionSystem.Init.MissingNeuralNetsConfigField", "");
     return RESULT_FAIL;
   }
-  
+
   const std::string modelPath = Util::FileUtils::FullFilePath({dataPath, "dnn_models"});
   if(Util::FileUtils::DirectoryExists(modelPath)) // TODO: Remove once DNN models are checked in somewhere (VIC-1071)
   {
     const Json::Value& neuralNetConfig = config[NeuralNets::JsonKeys::NeuralNets];
-    
+
     if(!neuralNetConfig.isMember(NeuralNets::JsonKeys::Models))
     {
       PRINT_NAMED_ERROR("VisionSystem.Init.MissingNeuralNetsModelsConfigField", "");
       return RESULT_FAIL;
     }
-    
+
     const Json::Value& modelsConfig = neuralNetConfig[NeuralNets::JsonKeys::Models];
-    
+
     if(!modelsConfig.isArray())
     {
       PRINT_NAMED_ERROR("VisionSystem.Init.NeuralNetsModelsConfigNotArray", "");
       return RESULT_FAIL;
     }
-    
+
 #   ifdef VICOS
     // Use faster tmpfs partition for the cache, to make I/O less of a bottleneck
     const std::string dnnCachePath = "/tmp/vision/neural_nets";
 #   else
     const std::string dnnCachePath = Util::FileUtils::FullFilePath({cachePath, "neural_nets"});
 #   endif
-    
+
     for(const auto& modelConfig : modelsConfig)
     {
       if(!modelConfig.isMember(NeuralNets::JsonKeys::NetworkName))
@@ -339,7 +339,7 @@ Result VisionSystem::Init(const Json::Value& config)
         PRINT_NAMED_ERROR("VisionSystem.Init.MissingNeuralNetModelName", "");
         continue;
       }
-      
+
       const std::string& name = modelConfig[NeuralNets::JsonKeys::NetworkName].asString();
       auto addModelResult = _neuralNetRunners.emplace(name, new Vision::NeuralNetRunner());
       if(!addModelResult.second)
@@ -358,7 +358,7 @@ Result VisionSystem::Init(const Json::Value& config)
       }
     }
   }
-   
+
   if(!config.isMember("IlluminationDetector"))
   {
     PRINT_NAMED_ERROR("VisionSystem.Init.MissingIlluminationDetectorConfigField", "");
@@ -372,12 +372,12 @@ Result VisionSystem::Init(const Json::Value& config)
   }
 
   _modes.Clear();
-  
+
   _clahe->setClipLimit(kClaheClipLimit);
   _clahe->setTilesGridSize(cv::Size(kClaheTileSize, kClaheTileSize));
   _lastClaheTileSize = kClaheTileSize;
   _lastClaheClipLimit = kClaheClipLimit;
-  
+
   _isInitialized = true;
   return RESULT_OK;
 }
@@ -392,7 +392,7 @@ Result VisionSystem::UpdateCameraCalibration(std::shared_ptr<Vision::CameraCalib
     // Camera already calibrated with same settings, no need to do anything
     return result;
   }
-  
+
   // Re-initialize the marker detector for the new image size
   _markerDetector->Init(camCalib->GetNrows(), camCalib->GetNcols());
 
@@ -400,14 +400,14 @@ Result VisionSystem::UpdateCameraCalibration(std::shared_ptr<Vision::CameraCalib
   // Also pre-cache distortion maps for Sensor resolution, since we use that for photos
   _imageSaver->SetCalibration(camCalib);
   _imageSaver->CacheUndistortionMaps(CAMERA_SENSOR_RESOLUTION_HEIGHT, CAMERA_SENSOR_RESOLUTION_WIDTH);
-  
+
   return result;
 } // Init()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 VisionSystem::~VisionSystem()
 {
-  
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -421,7 +421,7 @@ Result VisionSystem::SetNextCameraParams(const Vision::CameraParams& params)
                            params.whiteBalanceGainR, params.whiteBalanceGainG, params.whiteBalanceGainB);
     return RESULT_FAIL;
   }
-  
+
   bool& nextParamsSet = _nextCameraParams.first;
   if(nextParamsSet)
   {
@@ -433,10 +433,10 @@ Result VisionSystem::SetNextCameraParams(const Vision::CameraParams& params)
                         params.exposureTime_ms, params.gain,
                         params.whiteBalanceGainR, params.whiteBalanceGainB);
   }
-  
+
   _nextCameraParams.second = params;
   nextParamsSet = true;
-  
+
   return RESULT_OK;
 }
 
@@ -444,7 +444,7 @@ Result VisionSystem::SetNextCameraParams(const Vision::CameraParams& params)
 void VisionSystem::SetSaveParameters(const ImageSaverParams& params)
 {
   const Result result = _imageSaver->SetParams(params);
-  
+
   if(RESULT_OK != result)
   {
     PRINT_NAMED_ERROR("VisionSystem.SetSaveParameters.BadParams", "");
@@ -456,7 +456,7 @@ Result VisionSystem::UpdatePoseData(const VisionPoseData& poseData)
 {
   std::swap(_prevPoseData, _poseData);
   _poseData = poseData;
-  
+
   // Update cameraPose and historical state's pose to use the vision system's pose origin
   {
     // We expect the passed-in historical pose to be w.r.t. to an origin and have its parent removed
@@ -467,13 +467,13 @@ Result VisionSystem::UpdatePoseData(const VisionPoseData& poseData)
                "VisionSystem.UpdatePoseData.BadPoseDataCameraPose");
     _poseData.histState.SetPoseParent(_poseOrigin);
   }
-  
+
   if(_wasCalledOnce) {
     _havePrevPoseData = true;
   } else {
     _wasCalledOnce = true;
   }
-  
+
   return RESULT_OK;
 } // UpdateRobotState()
 
@@ -512,14 +512,14 @@ bool VisionSystem::IsInitialized() const
 u8 VisionSystem::ComputeMean(Vision::ImageCache& imageCache, const s32 sampleInc)
 {
   DEV_ASSERT(sampleInc >= 1, "VisionSystem.ComputeMean.BadIncrement");
-  
-  const Vision::Image& inputImageGray = imageCache.GetGray();
+
+  const std::shared_ptr<const Vision::Image> inputImageGray = imageCache.GetGray();
   s32 sum=0;
-  const s32 numRows = inputImageGray.GetNumRows();
-  const s32 numCols = inputImageGray.GetNumCols();
+  const s32 numRows = inputImageGray->GetNumRows();
+  const s32 numCols = inputImageGray->GetNumCols();
   for(s32 i=0; i<numRows; i+=sampleInc)
   {
-    const u8* image_i = inputImageGray.GetRow(i);
+    const u8* image_i = inputImageGray->GetRow(i);
     for(s32 j=0; j<numCols; j+=sampleInc)
     {
       sum += image_i[j];
@@ -532,12 +532,12 @@ u8 VisionSystem::ComputeMean(Vision::ImageCache& imageCache, const s32 sampleInc
   const u8 mean = Util::numeric_cast_clamped<u8>(sum/count);
   return mean;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::UpdateMeteringRegions(TimeStamp_t currentTime_ms, DetectionRectsByMode&& detectionsByMode)
 {
   const bool meterFromChargerOnly = IsModeEnabled(VisionMode::Markers_ChargerOnly);
-  
+
   // Before we do image quality / auto exposure, swap in the detections for any mode that actually ran,
   // in case we need them for metering
   // - if a mode ran but detected nothing, then an empty vector of rects will be swapped in
@@ -551,7 +551,7 @@ void VisionSystem::UpdateMeteringRegions(TimeStamp_t currentTime_ms, DetectionRe
     }
     std::swap(_meteringRegions[mode], current.second);
   }
-  
+
   // Clear out any stale "previous" detections for modes that are completely disabled by the current schedule
   // Also remove empty vectors of rectangles that got swapped in above
   auto iter = _meteringRegions.begin();
@@ -569,12 +569,12 @@ void VisionSystem::UpdateMeteringRegions(TimeStamp_t currentTime_ms, DetectionRe
     }
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
 {
 # define DEBUG_IMAGE_HISTOGRAM 0
-  
+
   Vision::CameraParamsController::AutoExpMode aeMode = Vision::CameraParamsController::AutoExpMode::Off;
   if(IsModeEnabled(VisionMode::AutoExp))
   {
@@ -586,15 +586,15 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
       aeMode = Vision::CameraParamsController::AutoExpMode::MinTime;
     }
   }
-  
+
   Vision::CameraParamsController::WhiteBalanceMode wbMode = Vision::CameraParamsController::WhiteBalanceMode::Off;
   if(IsModeEnabled(VisionMode::WhiteBalance))
   {
     wbMode = Vision::CameraParamsController::WhiteBalanceMode::GrayWorld;
   }
-  
+
   _cameraParamsController->ClearMeteringRegions();
-  
+
   bool useCycling = false;
   if(!kMeterFromDetections || _meteringRegions.empty())
   {
@@ -605,16 +605,16 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
       PRINT_CH_INFO("VisionSystem", "VisionSystem.UpdateCameraParams.HoldingExposureAfterRecentMeteredRegions", "");
       return RESULT_OK;
     }
-    
+
     useCycling = IsModeEnabled(VisionMode::AutoExp_Cycling);
   }
   else
-  {   
+  {
     // When we have detections to weight, don't use cycling exposures. Just let the detections drive the exposure.
     useCycling = false;
-    
+
     _lastMeteringTimestamp_ms = imageCache.GetTimeStamp();
-    
+
     for(auto const& entry : _meteringRegions)
     {
       for(auto const& rect : entry.second)
@@ -623,32 +623,32 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
       }
     }
   }
-  
+
   Vision::CameraParams nextParams;
   Result expResult = RESULT_FAIL;
   if(imageCache.HasColor())
   {
-    const Vision::ImageRGB& inputImage = imageCache.GetRGB();
-    expResult = _cameraParamsController->ComputeNextCameraParams(inputImage, aeMode, wbMode, useCycling, nextParams);
+    const std::shared_ptr<const Vision::ImageRGB> inputImage = imageCache.GetRGB();
+    expResult = _cameraParamsController->ComputeNextCameraParams(*inputImage, aeMode, wbMode, useCycling, nextParams);
   }
   else
   {
-    const Vision::Image& inputImage = imageCache.GetGray();
-    expResult = _cameraParamsController->ComputeNextCameraParams(inputImage, aeMode, useCycling, nextParams);
+    const std::shared_ptr<const Vision::Image> inputImage = imageCache.GetGray();
+    expResult = _cameraParamsController->ComputeNextCameraParams(*inputImage, aeMode, useCycling, nextParams);
   }
-  
+
   if(RESULT_OK != expResult)
   {
     PRINT_NAMED_WARNING("VisionSystem.UpdateCameraParams.ComputeNewExposureFailed", "");
     return expResult;
   }
-  
+
   if(DEBUG_IMAGE_HISTOGRAM)
   {
     const Vision::ImageBrightnessHistogram& hist = _cameraParamsController->GetHistogram();
     std::vector<u8> values = hist.ComputePercentiles({kLowPercentile, kTargetPercentile, kHighPercentile});
     auto valueIter = values.begin();
-    
+
     Vision::ImageRGB histImg(hist.GetDisplayImage(128));
     histImg.DrawText(Anki::Point2f((s32)hist.GetCounts().size()/3, 12),
                      std::string("L:")  + std::to_string(*valueIter++) +
@@ -656,9 +656,9 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
                      std::string(" H:") + std::to_string(*valueIter++),
                      NamedColors::RED, 0.45f);
     _currentResult.debugImages.emplace_back("ImageHist", histImg);
-    
+
   } // if(DEBUG_IMAGE_HISTOGRAM)
-  
+
   // Put the new values in the output result:
   std::swap(_currentResult.cameraParams, nextParams);
   _currentResult.imageQuality = _cameraParamsController->GetImageQuality();
@@ -676,8 +676,8 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
     // Whenever we are not cycling the exposure, make sure the
     //  iterator starts with the first value in the cycle.
     // This is necessary because of the asynchronous nature of
-    //  VisionSystem, we cannot predict whether we ticked an 
-    //  extra frame of processing after the mode is turned off 
+    //  VisionSystem, we cannot predict whether we ticked an
+    //  extra frame of processing after the mode is turned off
     //  by the VisionSchedule.
     // Because of this potential extra-tick, and because of how
     //  we track the current exposure as state-var, it could
@@ -685,10 +685,10 @@ Result VisionSystem::UpdateCameraParams(Vision::ImageCache& imageCache)
     //  through the exposure values we have gone through.
     _cameraParamsController->ResetTargetAutoExposure_Cycling();
   }
-  
+
   _currentResult.modesProcessed.Enable(VisionMode::AutoExp_MinGain,
                                        (aeMode == Vision::CameraParamsController::AutoExpMode::MinGain));
-  
+
   return RESULT_OK;
 }
 
@@ -697,7 +697,7 @@ bool VisionSystem::CanAddNamedFace() const
 {
   return _faceTracker->CanAddNamedFace();
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::AssignNameToFace(Vision::FaceID_t faceID, const std::string& name, Vision::FaceID_t mergeWithID)
 {
@@ -707,9 +707,9 @@ Result VisionSystem::AssignNameToFace(Vision::FaceID_t faceID, const std::string
                         name.c_str(), faceID);
     return RESULT_FAIL;
   }
-  
+
   DEV_ASSERT(_faceTracker != nullptr, "VisionSystem.AssignNameToFace.NullFaceTracker");
-  
+
   return _faceTracker->AssignNameToID(faceID, name, mergeWithID);
 }
 
@@ -764,19 +764,19 @@ Vision::Image BlackOutRects(const Vision::Image& img, const std::vector<Anki::Re
   // Black out detected markers so we don't find faces in them
   Vision::Image maskedImage;
   img.CopyTo(maskedImage);
-  
+
   DEV_ASSERT(maskedImage.GetTimestamp() == img.GetTimestamp(), "VisionSystem.DetectFaces.BadImageTimestamp");
-  
+
   for(auto rect : rects) // Deliberate copy because GetROI can modify 'rect'
   {
     Vision::Image roi = maskedImage.GetROI(rect);
-    
+
     if(!roi.IsEmpty())
     {
       roi.FillWith(0);
     }
   }
-  
+
   return maskedImage;
 }
 
@@ -785,8 +785,8 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
                                  const bool useCropping)
 {
   DEV_ASSERT(_faceTracker != nullptr, "VisionSystem.DetectFaces.NullFaceTracker");
- 
-  const Vision::Image& grayImage = imageCache.GetGray();
+
+  const std::shared_ptr<const Vision::Image> grayImage = imageCache.GetGray();
 
   /*
   // Periodic printouts of face tracker timings
@@ -796,13 +796,13 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
     lastProfilePrint = grayImage.GetTimestamp();
   }
    */
-  
+
   if(_faceTracker == nullptr) {
     PRINT_NAMED_ERROR("VisionSystem.Update.NullFaceTracker",
                       "In detecting faces mode, but face tracker is null.");
     return RESULT_FAIL;
   }
-  
+
   // If we've moved too much, reset the tracker so we don't accidentally mistake
   // one face for another. (If one face it was tracking from the last image is
   // now on top of a nearby face in the image, the tracker can't tell if that's
@@ -823,32 +823,32 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
   if(!detectionRects.empty())
   {
     // Black out previous detections so we don't find faces in them
-    Vision::Image maskedImage = BlackOutRects(grayImage, detectionRects);
-    
+    Vision::Image maskedImage = BlackOutRects(*grayImage, detectionRects);
+
 #     if DEBUG_FACE_DETECTION
     //_currentResult.debugImages.push_back({"MaskedFaceImage", maskedImage});
 #     endif
-    
+
     _faceTracker->Update(maskedImage, cropFactor, _currentResult.faces, _currentResult.updatedFaceIDs,
                          _currentResult.debugImages);
   }
   else
   {
     // Nothing already detected, so nothing to black out before looking for faces
-    _faceTracker->Update(grayImage, cropFactor, _currentResult.faces, _currentResult.updatedFaceIDs, _currentResult.debugImages);
+    _faceTracker->Update(*grayImage, cropFactor, _currentResult.faces, _currentResult.updatedFaceIDs, _currentResult.debugImages);
   }
-  
+
   for(auto faceIter = _currentResult.faces.begin(); faceIter != _currentResult.faces.end(); ++faceIter)
   {
     auto & currentFace = *faceIter;
-    
-    DEV_ASSERT(currentFace.GetTimeStamp() == grayImage.GetTimestamp(), "VisionSystem.DetectFaces.BadFaceTimestamp");
+
+    DEV_ASSERT(currentFace.GetTimeStamp() == grayImage->GetTimestamp(), "VisionSystem.DetectFaces.BadFaceTimestamp");
 
     detectionRects.emplace_back((s32)std::round(faceIter->GetRect().GetX()),
                                 (s32)std::round(faceIter->GetRect().GetY()),
                                 (s32)std::round(faceIter->GetRect().GetWidth()),
                                 (s32)std::round(faceIter->GetRect().GetHeight()));
-    
+
     // Make head pose w.r.t. the historical world origin
     Pose3d headPose = currentFace.GetHeadPose();
     headPose.SetParent(_poseData.cameraPose);
@@ -861,15 +861,15 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
 
     DEV_ASSERT(headPose.IsChildOf(_poseOrigin), "VisionSystem.DetectFaces.BadHeadPoseParent");
     DEV_ASSERT(eyePose.IsChildOf(_poseOrigin), "VisionSystem.DetectFaces.BadEyePoseParent");
-    
+
     // Leave faces in the output result with no parent pose (b/c we will assume they are w.r.t. the origin)
     headPose.ClearParent();
     eyePose.ClearParent();
-    
+
     currentFace.SetHeadPose(headPose);
     currentFace.SetEyePose(eyePose);
   }
-  
+
   return RESULT_OK;
 } // DetectFaces()
 
@@ -877,24 +877,24 @@ Result VisionSystem::DetectFaces(Vision::ImageCache& imageCache, std::vector<Ank
 Result VisionSystem::DetectPets(Vision::ImageCache& imageCache,
                                 std::vector<Anki::Rectangle<s32>>& detections)
 {
-  const Vision::Image& grayImage = imageCache.GetGray();
+  const std::shared_ptr<const Vision::Image> grayImage = imageCache.GetGray();
   Result result = RESULT_FAIL;
-  
+
   if(detections.empty())
   {
-    result = _petTracker->Update(grayImage, _currentResult.pets);
+    result = _petTracker->Update(*grayImage, _currentResult.pets);
   }
   else
   {
     // Don't look for pets where we've already found something else
-    Vision::Image maskedImage = BlackOutRects(grayImage, detections);
+    Vision::Image maskedImage = BlackOutRects(*grayImage, detections);
     result = _petTracker->Update(maskedImage, _currentResult.pets);
   }
-  
+
   if(RESULT_OK != result) {
     PRINT_NAMED_WARNING("VisionSystem.DetectPets.PetTrackerUpdateFailed", "");
   }
-  
+
   for(auto const& pet : _currentResult.pets)
   {
     detections.emplace_back((s32)std::round(pet.GetRect().GetX()),
@@ -903,44 +903,44 @@ Result VisionSystem::DetectPets(Vision::ImageCache& imageCache,
                             (s32)std::round(pet.GetRect().GetHeight()));
   }
   return result;
-  
+
 } // DetectPets()
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::DetectMotion(Vision::ImageCache& imageCache)
 {
 
   Result result = RESULT_OK;
-  
+
   _motionDetector->Detect(imageCache, _poseData, _prevPoseData,
                           _currentResult.observedMotions, _currentResult.debugImages);
-  
+
   return result;
-  
+
 } // DetectMotion()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::DetectBrightColors(Vision::ImageCache& imageCache)
 {
   DEV_ASSERT(imageCache.HasColor(), "VisionSystem.DetectBrightColors.NoColor");
-  const Vision::ImageRGB& image = imageCache.GetRGB();
-  Result result = _brightColorDetector->Detect(image, _currentResult.salientPoints);
+  const std::shared_ptr<const Vision::ImageRGB> image = imageCache.GetRGB();
+  Result result = _brightColorDetector->Detect(*image, _currentResult.salientPoints);
   return result;
 } // DetectBrightColors()
 
 Result VisionSystem::UpdateOverheadMap(Vision::ImageCache& imageCache)
 {
   DEV_ASSERT(imageCache.HasColor(), "VisionSystem.UpdateOverheadMap.NoColor");
-  const Vision::ImageRGB& image = imageCache.GetRGB();
-  Result result = _overheadMap->Update(image, _poseData, _currentResult.debugImages);
+  const std::shared_ptr<const Vision::ImageRGB> image = imageCache.GetRGB();
+  Result result = _overheadMap->Update(*image, _poseData, _currentResult.debugImages);
   return result;
 }
 
 Result VisionSystem::UpdateGroundPlaneClassifier(Vision::ImageCache& imageCache)
 {
   DEV_ASSERT(imageCache.HasColor(), "VisionSystem.UpdateGroundPlaneClassifier.NoColor");
-  const Vision::ImageRGB& image = imageCache.GetRGB();
-  Result result = _groundPlaneClassifier->Update(image, _poseData, _currentResult.debugImages,
+  const std::shared_ptr<const Vision::ImageRGB> image = imageCache.GetRGB();
+  Result result = _groundPlaneClassifier->Update(*image, _poseData, _currentResult.debugImages,
                                                  _currentResult.visualObstacles);
   return result;
 }
@@ -950,19 +950,19 @@ Result VisionSystem::DetectLaserPoints(Vision::ImageCache& imageCache)
 {
   const bool isDarkExposure = (Util::IsNear(_currentCameraParams.exposureTime_ms, GetMinCameraExposureTime_ms()) &&
                                Util::IsNear(_currentCameraParams.gain, GetMinCameraGain()));
-  
+
   Result result = _laserPointDetector->Detect(imageCache, _poseData, isDarkExposure,
                                               _currentResult.laserPoints,
                                               _currentResult.debugImages);
-  
+
   return result;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result VisionSystem::DetectIllumination(Vision::ImageCache& imageCache)
 {
-  Result result = _illuminationDetector->Detect(imageCache, 
-                                                _poseData, 
+  Result result = _illuminationDetector->Detect(imageCache,
+                                                _poseData,
                                                 _currentResult.illumination);
   return result;
 }
@@ -988,30 +988,30 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
                                 Vision::Image& claheImage)
 {
   const Vision::ImageCacheSize whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier);
-  
+
   switch(useCLAHE)
   {
     case MarkerDetectionCLAHE::Off:
       _currentUseCLAHE = false;
       break;
-      
+
     case MarkerDetectionCLAHE::On:
     case MarkerDetectionCLAHE::Both:
       _currentUseCLAHE = true;
       break;
-      
+
     case MarkerDetectionCLAHE::Alternating:
       _currentUseCLAHE = !_currentUseCLAHE;
       break;
-      
+
     case MarkerDetectionCLAHE::WhenDark:
     {
-      const Vision::Image& inputImageGray = imageCache.GetGray(whichSize);
-        
+      const std::shared_ptr<const Vision::Image> inputImageGray = imageCache.GetGray(whichSize);
+
       // Use CLAHE on the current image if it is dark enough
       static const s32 subSample = 3;
-      const s32 numRows = inputImageGray.GetNumRows();
-      const s32 numCols = inputImageGray.GetNumCols();
+      const s32 numRows = inputImageGray->GetNumRows();
+      const s32 numCols = inputImageGray->GetNumCols();
       // Consider that in the loop below, we always start at row 0, and we always start at column 0
       const s32 count = ((numRows + subSample - 1) / subSample) *
                         ((numCols + subSample - 1) / subSample);
@@ -1021,7 +1021,7 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
       s32 meanValue = 0;
       for(s32 i=0; i<numRows; i+=subSample)
       {
-        const u8* img_i = inputImageGray.GetRow(i);
+        const u8* img_i = inputImageGray->GetRow(i);
         for(s32 j=0; j<numCols; j+=subSample)
         {
           meanValue += img_i[j];
@@ -1035,39 +1035,39 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
       }
       break;
     }
-      
+
     case MarkerDetectionCLAHE::Count:
       assert(false);
       break;
   }
-  
+
   if(!_currentUseCLAHE)
   {
     // Nothing to do: not currently using CLAHE
     return RESULT_OK;
   }
-  
+
   if(_lastClaheTileSize != kClaheTileSize) {
     PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.Update.ClaheTileSizeUpdated",
                       "%d -> %d", _lastClaheTileSize, kClaheTileSize);
-    
+
     _clahe->setTilesGridSize(cv::Size(kClaheTileSize, kClaheTileSize));
     _lastClaheTileSize = kClaheTileSize;
   }
-  
+
   if(_lastClaheClipLimit != kClaheClipLimit) {
     PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.Update.ClaheClipLimitUpdated",
                       "%d -> %d", _lastClaheClipLimit, kClaheClipLimit);
-    
+
     _clahe->setClipLimit(kClaheClipLimit);
     _lastClaheClipLimit = kClaheClipLimit;
   }
 
-  const Vision::Image& inputImageGray = imageCache.GetGray(whichSize);
-    
+  const std::shared_ptr<const Vision::Image> inputImageGray = imageCache.GetGray(whichSize);
+
   Tic("CLAHE");
-  _clahe->apply(inputImageGray.get_CvMat_(), claheImage.get_CvMat_());
-  
+  _clahe->apply(inputImageGray->get_CvMat_(), claheImage.get_CvMat_());
+
   if(kPostClaheSmooth > 0)
   {
     s32 kSize = 3*kPostClaheSmooth;
@@ -1084,15 +1084,15 @@ Result VisionSystem::ApplyCLAHE(Vision::ImageCache& imageCache,
     std::swap(claheImage, temp);
   }
   Toc("CLAHE");
-  
+
   if(DEBUG_DISPLAY_CLAHE_IMAGE) {
     _currentResult.debugImages.emplace_back("ImageCLAHE", claheImage);
   }
-  
-  claheImage.SetTimestamp(inputImageGray.GetTimestamp()); // make sure to preserve timestamp!
-  
+
+  claheImage.SetTimestamp(inputImageGray->GetTimestamp()); // make sure to preserve timestamp!
+
   return RESULT_OK;
-  
+
 } // ApplyCLAHE()
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -1104,39 +1104,39 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
 {
   // Currently assuming we detect markers first, so we won't make use of anything already detected
   DEV_ASSERT(detectionRects.empty(), "VisionSystem.DetectMarkersWithCLAHE.ExpectingEmptyDetectionRects");
-  
+
   const auto whichSize = imageCache.GetSize(kMarkerDetector_ScaleMultiplier);
-  
+
   std::vector<const Vision::Image*> imagePtrs;
-  
+
   switch(useCLAHE)
   {
     case MarkerDetectionCLAHE::Off:
     {
-      imagePtrs.push_back(&imageCache.GetGray(whichSize));
+      imagePtrs.push_back(imageCache.GetGray(whichSize).get());
       break;
     }
-      
+
     case MarkerDetectionCLAHE::On:
     {
       DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useOn.ImageIsEmpty");
       imagePtrs.push_back(&claheImage);
       break;
     }
-      
+
     case MarkerDetectionCLAHE::Both:
     {
       DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useBoth.ImageIsEmpty");
-      
+
       // First run will put quads into detectionRects
-      imagePtrs.push_back(&imageCache.GetGray(whichSize));
-      
+      imagePtrs.push_back(imageCache.GetGray(whichSize).get());
+
       // Second run will white out existing markerQuads (so we don't
       // re-detect) and also add new ones
       imagePtrs.push_back(&claheImage);
       break;
     }
-      
+
     case MarkerDetectionCLAHE::Alternating:
     {
       if(_currentUseCLAHE) {
@@ -1144,26 +1144,26 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
         imagePtrs.push_back(&claheImage);
       }
       else {
-        imagePtrs.push_back(&imageCache.GetGray(whichSize));
+        imagePtrs.push_back(imageCache.GetGray(whichSize).get());
       }
       break;
     }
-      
+
     case MarkerDetectionCLAHE::WhenDark:
     {
       // NOTE: _currentUseCLAHE should have been set based on image brightness already
-      
+
       if(_currentUseCLAHE)
       {
         DEV_ASSERT(!claheImage.IsEmpty(), "VisionSystem.DetectMarkersWithCLAHE.useWhenDark.ImageIsEmpty");
         imagePtrs.push_back(&claheImage);
       }
       else {
-        imagePtrs.push_back(&imageCache.GetGray(whichSize));
+        imagePtrs.push_back(imageCache.GetGray(whichSize).get());
       }
       break;
     }
-      
+
     case MarkerDetectionCLAHE::Count:
       assert(false); // should never get here
       break;
@@ -1173,10 +1173,10 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
   #if(DEBUG_IMAGE_COMPOSITING)
   static Vision::Image dispCompositeImg;
   #endif
-  
+
   Vision::Image compositeImage;
   if(IsModeEnabled(VisionMode::Markers_Composite)) {
-    _imageCompositor->ComposeWith(imageCache.GetGray(whichSize));
+    _imageCompositor->ComposeWith(*imageCache.GetGray(whichSize));
     const size_t numImagesComposited = _imageCompositor->GetNumImagesComposited();
 
     const bool shouldRunOnComposite = (numImagesComposited % _imageCompositorReadyPeriod) == 0;
@@ -1208,7 +1208,7 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
     _currentResult.debugImages.emplace_back("ImageCompositing", dispCompositeImg);
   }
   #endif
-  
+
   // Set up cropping rectangles to cycle through each time DetectMarkers is called
   DEV_ASSERT(!imagePtrs.empty(), "VisionSystem.DetectMarkersWithCLAHE.NoImagePointers");
   static CropScheduler cropScheduler(_camera);
@@ -1216,7 +1216,7 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
   {
     cropScheduler.Reset(kMarkerDetector_CropWidthFraction, CropScheduler::CyclingMode::Middle_Left_Middle_Right);
   }
-  
+
   Rectangle<s32> cropRect;
   if(IsModeEnabled(VisionMode::Markers_FullFrame))
   {
@@ -1238,26 +1238,26 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
       PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.DetectMarkersWithCLAHE.CropRectOOB", "");
       return RESULT_OK;
     }
-    
+
     DEV_ASSERT(cropRect.Area() > 0, "VisionSystem.DetectMarkersWithCLAHE.EmptyCrop");
-    
+
     _currentResult.modesProcessed.Enable(VisionMode::Markers_FullWidth, !useHorizontalCycling);
     _currentResult.modesProcessed.Enable(VisionMode::Markers_FullHeight, !useVariableHeight);
   }
-  
+
   Result lastResult = RESULT_OK;
   for(auto imgPtr : imagePtrs)
   {
     DEV_ASSERT(imgPtr->GetNumRows() == imagePtrs.front()->GetNumRows() &&
                imgPtr->GetNumCols() == imagePtrs.front()->GetNumCols(),
                "VisionSystem.DetectMarkersWithCLAHE.DifferingImageSizes");
-    
+
     const Vision::Image& imgROI = imgPtr->GetROI(cropRect);
     lastResult = _markerDetector->Detect(imgROI, _currentResult.observedMarkers);
     if(RESULT_OK != lastResult) {
       break;
     }
-    
+
     // Debug crop windows
     if(kMarkerDetector_VizCropScheduler)
     {
@@ -1274,18 +1274,18 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
 
   const bool meterFromChargerOnly = IsModeEnabled(VisionMode::Markers_ChargerOnly);
   _currentResult.modesProcessed.Enable(VisionMode::Markers_ChargerOnly, meterFromChargerOnly);
-  
+
   auto markerIter = _currentResult.observedMarkers.begin();
   while(markerIter != _currentResult.observedMarkers.end())
   {
     auto & marker = *markerIter;
-    
+
     if(meterFromChargerOnly && (marker.GetCode() != Vision::MARKER_CHARGER_HOME))
     {
       markerIter = _currentResult.observedMarkers.erase(markerIter);
       continue;
     }
-    
+
     // Adjust the marker for the crop rectangle / processing resolution, to put it back in original image coordinates
     Quad2f scaledCorners(marker.GetImageCorners());
     if(cropRect.GetX() > 0 || cropRect.GetY() > 0 || kMarkerDetector_ScaleMultiplier != 1)
@@ -1301,10 +1301,10 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
         const f32 defaultScaleMultiplier = ImageCacheSizeToScaleFactor(Vision::ImageCache::GetDefaultImageCacheSize());
         corner *= (defaultScaleMultiplier / scaleMultiplier);
       }
-      
+
       marker.SetImageCorners(scaledCorners);
     }
-    
+
     // Add the bounding rect of the (unwarped) marker to the detection rectangles
     // Note that the scaled corners might get changed slightly by rolling shutter warping
     // below, making the detection rect slightly inaccurate, but these rectangles don't need
@@ -1312,7 +1312,7 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
     // even if the warping pushes a corner OOB, thereby removing the marker from the
     // actual reported list.
     detectionRects.emplace_back(scaledCorners);
-    
+
     // Instead of correcting the entire image only correct the quads
     // Apply the appropriate shift to each of the corners of the quad to get a shifted quad
     if(_doRollingShutterCorrection)
@@ -1326,7 +1326,7 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
         DEV_ASSERT_MSG(warpIndex >= 0 && warpIndex < _rollingShutterCorrector.GetPixelShifts().size(),
                        "VisionSystem.DetectMarkersWithCLAHE.WarpIndexOOB", "Index:%d Corner y:%f",
                        warpIndex, corner.y());
-        
+
         const Vec2f& pixelShift = _rollingShutterCorrector.GetPixelShifts().at(warpIndex);
         corner -= pixelShift;
 
@@ -1342,7 +1342,7 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
           break; // no need to warp remaining corners once any one is OOB
         }
       }
-      
+
       if(!allCornersInBounds)
       {
         // Remove this OOB marker from the list entirely
@@ -1351,17 +1351,17 @@ Result VisionSystem::DetectMarkers(Vision::ImageCache& imageCache,
         markerIter = _currentResult.observedMarkers.erase(markerIter);
         continue;
       }
-      
+
       marker.SetImageCorners(scaledCorners); // "scaled" corners are now the warped corners
     }
-    
+
     ++markerIter;
   }
-  
+
   return lastResult;
-  
+
 } // DetectMarkers
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::CheckForNeuralNetResults()
 {
@@ -1373,18 +1373,18 @@ void VisionSystem::CheckForNeuralNetResults()
       PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.CheckForNeuralNetResults.GotDetections",
                      "Network:%s NumSalientPoints:%zu",
                      neuralNetRunner.first.c_str(), _currentResult.salientPoints.size());
-      
+
       std::set<VisionMode> modes;
       const bool success = GetVisionModesForNeuralNet(neuralNetRunner.first, modes);
       if(ANKI_VERIFY(success, "VisionSystem.CheckForNeuralNetResults.NoModeForNetworkName", "Name: %s",
                      neuralNetRunner.first.c_str()))
       {
-        
+
         for(auto & mode : modes)
         {
           _currentResult.modesProcessed.Insert(mode);
         }
-        
+
         if(IsModeEnabled(VisionMode::SaveImages) &&
            !_neuralNetRunnerImage.IsEmpty() &&
            _imageSaver->WantsToSave(_currentResult, _neuralNetRunnerImage.GetTimestamp()))
@@ -1394,7 +1394,7 @@ void VisionSystem::CheckForNeuralNetResults()
           {
             _currentResult.modesProcessed.Insert(VisionMode::SaveImages);
           }
-          
+
           const std::string jsonFilename = _imageSaver->GetFullFilename(_frameNumber, "json");
           Json::Value jsonSalientPoints;
           NeuralNets::INeuralNetMain::ConvertSalientPointsToJson(_currentResult.salientPoints, false,
@@ -1407,7 +1407,7 @@ void VisionSystem::CheckForNeuralNetResults()
                         _currentResult.salientPoints.size(), jsonFilename.c_str());
           }
         }
-        
+
         if(ANKI_DEV_CHEATS)
         {
           AddFakeDetections(modes);
@@ -1429,7 +1429,7 @@ void VisionSystem::AddFakeDetections(const std::set<VisionMode>& modes)
     for(auto & mode : modes)
     {
       _currentResult.modesProcessed.Insert(mode);
-      
+
       static Util::RandomGenerator rng;
       if((VisionMode::Hands == mode) && (rng.RandDbl() < kFakeHandDetectionProbability))
       {
@@ -1456,7 +1456,7 @@ void VisionSystem::AddFakeDetections(const std::set<VisionMode>& modes)
     }
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::UpdateRollingShutter(const VisionPoseData& poseData, const Vision::ImageCache& imageCache)
 {
@@ -1481,7 +1481,7 @@ Result VisionSystem::Update(const VisionSystemInput& input)
   _modes = input.modesToProcess;
   _futureModes = input.futureModesToProcess;
   _imageCompressQuality = input.imageCompressQuality;
-  
+
   return Update(input.poseData, *_imageCache);
 }
 
@@ -1491,38 +1491,38 @@ Result VisionSystem::Update(const VisionSystemInput& input)
 Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& imageCache)
 {
   Result lastResult = RESULT_OK;
-  
+
   if(!_isInitialized || !_camera.IsCalibrated())
   {
     PRINT_NAMED_WARNING("VisionSystem.Update.NotReady",
                         "Must be initialized and have calibrated camera to Update");
     return RESULT_FAIL;
   }
-  
+
   _frameNumber++;
-  
+
   // Set up the results for this frame:
   VisionProcessingResult result;
   result.timestamp = imageCache.GetTimeStamp();
   result.imageQuality = Vision::ImageQuality::Unchecked;
   result.cameraParams.exposureTime_ms = -1;
   std::swap(result, _currentResult);
-  
+
   auto& visionModesProcessed = _currentResult.modesProcessed;
   visionModesProcessed.Clear();
-  
+
   // Store the new robot state and keep a copy of the previous one
   UpdatePoseData(poseData);
-  
+
   bool& cameraParamsRequested = _nextCameraParams.first;
   if(cameraParamsRequested)
   {
     _currentCameraParams = _nextCameraParams.second;
     cameraParamsRequested = false;
-    
+
     _cameraParamsController->UpdateCurrentCameraParams(_currentCameraParams);
   }
-  
+
   if(_modes.IsEmpty())
   {
     // Push the empty result and bail
@@ -1531,24 +1531,24 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     _mutex.unlock();
     return RESULT_OK;
   }
-  
+
   if(kVisionSystemSimulatedDelay_ms > 0)
   {
     std::this_thread::sleep_for(std::chrono::milliseconds(kVisionSystemSimulatedDelay_ms));
   }
-  
+
   // Begin image processing
   // Apply CLAHE if enabled:
   DEV_ASSERT(kUseCLAHE_u8 < Util::EnumToUnderlying(MarkerDetectionCLAHE::Count),
              "VisionSystem.ApplyCLAHE.BadUseClaheVal");
   MarkerDetectionCLAHE useCLAHE = static_cast<MarkerDetectionCLAHE>(kUseCLAHE_u8);
   Vision::Image claheImage;
-  
+
   // Note: this will do nothing and leave claheImage empty if CLAHE is disabled
   // entirely or for this frame.
   lastResult = ApplyCLAHE(imageCache, useCLAHE, claheImage);
   ANKI_VERIFY(RESULT_OK == lastResult, "VisionSystem.Update.FailedCLAHE", "ApplyCLAHE supposedly has no failure mode");
-  
+
   if(IsModeEnabled(VisionMode::Stats))
   {
     Tic("TotalStats");
@@ -1560,8 +1560,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   DetectionRectsByMode detectionsByMode;
 
   bool anyModeFailures = false;
-  
-  
+
+
   if(IsModeEnabled(VisionMode::Markers))
   {
     if(IsModeEnabled(VisionMode::Markers_Off))
@@ -1580,10 +1580,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       {
         // Marker detection uses rolling shutter compensation
         UpdateRollingShutter(poseData, imageCache);
-        
+
         Tic("TotalMarkers");
         lastResult = DetectMarkers(imageCache, claheImage, detectionsByMode[VisionMode::Markers], useCLAHE, poseData);
-        
+
         if(RESULT_OK != lastResult) {
           PRINT_NAMED_ERROR("VisionSystem.Update.DetectMarkersFailed", "");
           anyModeFailures = true;
@@ -1595,14 +1595,14 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       }
     }
   }
-  
-  if(!IsModeEnabled(VisionMode::Markers_Composite) && 
+
+  if(!IsModeEnabled(VisionMode::Markers_Composite) &&
      _imageCompositor->GetNumImagesComposited() > 0) {
     // Clears any leftover artifacts from prematurely cancelled ImageCompositing
     // Check this here to avoid gating it on whether or not DetectMarkers
     _imageCompositor->Reset();
   }
-  
+
   if(IsModeEnabled(VisionMode::Faces))
   {
     const bool estimatingFacialExpression = IsModeEnabled(VisionMode::Faces_Expression);
@@ -1617,10 +1617,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     const bool detectingBlink = IsModeEnabled(VisionMode::Faces_Blink);
     _faceTracker->EnableBlinkDetection(detectingBlink);
 
-    
+
     Tic("TotalFaces");
     // NOTE: To use rolling shutter in DetectFaces, call UpdateRollingShutterHere
-    // See: VIC-1417 
+    // See: VIC-1417
     // UpdateRollingShutter(poseData, imageCache);
     const bool useCropping = IsModeEnabled(VisionMode::Faces_Crop);
     if((lastResult = DetectFaces(imageCache, detectionsByMode[VisionMode::Faces], useCropping)) != RESULT_OK) {
@@ -1636,7 +1636,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
     Toc("TotalFaces");
   }
-  
+
   if(IsModeEnabled(VisionMode::Pets))
   {
     Tic("TotalPets");
@@ -1648,7 +1648,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
     Toc("TotalPets");
   }
-  
+
   if(IsModeEnabled(VisionMode::Motion))
   {
     Tic("TotalMotion");
@@ -1693,7 +1693,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       PRINT_NAMED_WARNING("VisionSystem.Update.NoColorImage", "Could not process overhead map. No color image!");
     }
   }
-  
+
   if (IsModeEnabled(VisionMode::Obstacles))
   {
     if (imageCache.HasColor()) {
@@ -1716,7 +1716,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     Tic("TotalOverheadEdges");
 
     lastResult = _overheadEdgeDetector->Detect(imageCache, _poseData, _currentResult);
-    
+
     if(lastResult != RESULT_OK) {
       PRINT_NAMED_ERROR("VisionSystem.Update.DetectOverheadEdgesFailed", "");
       anyModeFailures = true;
@@ -1725,7 +1725,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     }
     Toc("TotalOverheadEdges");
   }
-  
+
   if(IsModeEnabled(VisionMode::Calibration))
   {
     switch(kCalibTargetType)
@@ -1742,7 +1742,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
         // Marker detection needs to have run before trying to do single target calibration
         DEV_ASSERT(visionModesProcessed.Contains(VisionMode::Markers),
                    "VisionSystem.Update.Calibration.MarkersNotDetected");
-        
+
         CameraCalibrator::CalibTargetType targetType = static_cast<CameraCalibrator::CalibTargetType>(kCalibTargetType);
         lastResult = _cameraCalibrator->ComputeCalibrationFromSingleTarget(targetType,
                                                                            _currentResult.observedMarkers,
@@ -1758,7 +1758,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       visionModesProcessed.Insert(VisionMode::Calibration);
     }
   }
-  
+
   if(IsModeEnabled(VisionMode::Lasers))
   {
     // Skip laser point detection if the Laser FeatureGate is disabled.
@@ -1780,7 +1780,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   // will be from a different image than the one in the cache and will use their own
   // VisionProcessingResult.
   CheckForNeuralNetResults();
-  
+
   // Figure out if any modes requiring neural nets are enabled and keep up with the
   // set of networks needed to satisfy those modes (multiple modes could use the same
   // network!)
@@ -1797,7 +1797,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       }
     }
   }
-  
+
   // Run the set of required networks
   for(const auto& networkName : networksToRun)
   {
@@ -1808,7 +1808,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       // if saving is enabled
       if(IsModeEnabled(VisionMode::SaveImages))
       {
-        _neuralNetRunnerImage = imageCache.GetRGB(_imageSaver->GetParams().size);
+        _neuralNetRunnerImage = *(imageCache.GetRGB(_imageSaver->GetParams().size));
       }
       else
       {
@@ -1819,7 +1819,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       }
     }
   }
-  
+
   // Check for illumination state
   if(IsModeEnabled(VisionMode::Illumination) &&
      !IsModeEnabled(VisionMode::AutoExp_Cycling)) // don't check for illumination if cycling exposure
@@ -1836,7 +1836,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   }
 
   UpdateMeteringRegions(imageCache.GetTimeStamp(), std::move(detectionsByMode));
-  
+
   // NOTE: This should come after any detectors that add things to "detectionRects"
   //       since it meters exposure based on those.
   const bool isWhiteBalancing = IsModeEnabled(VisionMode::WhiteBalance);
@@ -1846,7 +1846,7 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
     Tic("UpdateCameraParams");
     lastResult = UpdateCameraParams(imageCache);
     Toc("UpdateCameraParams");
-    
+
     if(RESULT_OK != lastResult) {
       PRINT_NAMED_ERROR("VisionSystem.Update.UpdateCameraParamsFailed", "");
       anyModeFailures = true;
@@ -1855,13 +1855,13 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       visionModesProcessed.Enable(VisionMode::WhiteBalance, isWhiteBalancing);
     }
   }
-  
+
   if(IsModeEnabled(VisionMode::Benchmark))
   {
     Tic("Benchmarking");
     const Result benchMarkResult = _benchmark->Update(imageCache);
     Toc("BenchMarking");
-    
+
     if(RESULT_OK != benchMarkResult) {
       PRINT_NAMED_ERROR("VisionSystem.Update.BenchmarkFailed", "");
       // Continue processing, since this should be independent of other modes
@@ -1869,18 +1869,18 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       visionModesProcessed.Insert(VisionMode::Benchmark);
     }
   }
-  
+
   if(IsModeEnabled(VisionMode::SaveImages) && _imageSaver->WantsToSave(_currentResult, imageCache.GetTimeStamp()))
   {
     Tic("SaveImages");
-    
+
     // Check this before calling Save(), since that can modify imageSaver's state
     const bool shouldSaveSensorData = _imageSaver->ShouldSaveSensorData();
-    
+
     const Result saveResult = _imageSaver->Save(imageCache, _frameNumber);
-    
+
     const Result saveSensorResult = (shouldSaveSensorData ? SaveSensorData() : RESULT_OK);
-    
+
     Toc("SaveImages");
 
     if((RESULT_OK != saveResult) || (RESULT_OK != saveSensorResult)) // || (RESULT_OK != thumbnailResult))
@@ -1899,7 +1899,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   {
     Tic("Viz");
 
-    _currentResult.compressedDisplayImg.Compress(imageCache.GetRGB(), _imageCompressQuality);
+    const std::shared_ptr<const Vision::ImageRGB> img = imageCache.GetRGB();
+    _currentResult.compressedDisplayImg.Compress(*img, _imageCompressQuality);
 
     Toc("Viz");
 
@@ -1908,10 +1909,10 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
 
   if(kDisplayUndistortedImages)
   {
-    Vision::ImageRGB img = imageCache.GetRGB();
-    Vision::ImageRGB imgUndistorted(img.GetNumRows(),img.GetNumCols());
+    const std::shared_ptr<const Vision::ImageRGB> img = imageCache.GetRGB();
+    Vision::ImageRGB imgUndistorted(img->GetNumRows(),img->GetNumCols());
     DEV_ASSERT(_camera.IsCalibrated(), "VisionComponent.GetCalibrationImageJpegData.NoCalibration");
-    img.Undistort(*_camera.GetCalibration(), imgUndistorted);
+    img->Undistort(*_camera.GetCalibration(), imgUndistorted);
     _currentResult.debugImages.emplace_back("undistorted", imgUndistorted);
   }
 
@@ -1920,7 +1921,8 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
   if(IsModeEnabled(VisionMode::MirrorMode))
   {
     // TODO: Add an ImageCache::Size for MirrorMode directly
-    const Result result = _mirrorModeManager->CreateMirrorModeImage(imageCache.GetRGB(), _currentResult);
+    const std::shared_ptr<const Vision::ImageRGB> img = imageCache.GetRGB();
+    const Result result = _mirrorModeManager->CreateMirrorModeImage(*img, _currentResult);
     if(RESULT_OK != result)
     {
       PRINT_NAMED_ERROR("VisionSystem.Update.MirrorModeFailed", "");
@@ -1928,13 +1930,13 @@ Result VisionSystem::Update(const VisionPoseData& poseData, Vision::ImageCache& 
       visionModesProcessed.Insert(VisionMode::MirrorMode);
     }
   }
-  
+
   // We've computed everything from this image that we're gonna compute.
   // Push it onto the queue of results all together.
   _mutex.lock();
   _results.push(_currentResult);
   _mutex.unlock();
-  
+
   return (anyModeFailures ? RESULT_FAIL : RESULT_OK);
 } // Update()
 
@@ -1945,7 +1947,7 @@ Result VisionSystem::SaveSensorData() const {
 
   PRINT_CH_DEBUG(kLogChannelName, "VisionSystem.SaveSensorData.Filename", "Saving to %s",
                  fullFilename.c_str());
-  
+
   std::ofstream outFile(fullFilename);
   if (! outFile.is_open()) {
     PRINT_NAMED_ERROR("VisionSystem.SaveSensorData.CantOpenFile", "Can't open file %s for writing",
@@ -2024,22 +2026,22 @@ Result VisionSystem::SetCameraExposureParams(const s32 currentExposureTime_ms,
   static const std::vector<u8> kKneeLocations{
     0, 8, 16, 24, 32, 40, 48, 64, 80, 96, 112, 128, 144, 160, 192, 224, 255
   };
-  
+
   std::vector<u8> gammaVector(gammaCurve.begin(), gammaCurve.end());
-  
+
   Result result = _cameraParamsController->SetGammaTable(kKneeLocations, gammaVector);
   if(RESULT_OK != result)
   {
     PRINT_NAMED_WARNING("VisionSystem.SetCameraExposureParams.BadGammaCurve", "");
   }
-  
+
   const Vision::CameraParams cameraParams(currentExposureTime_ms, currentGain,
                                           _currentCameraParams.whiteBalanceGainR,
                                           _currentCameraParams.whiteBalanceGainG,
                                           _currentCameraParams.whiteBalanceGainB);
-  
+
   SetNextCameraParams(cameraParams);
-  
+
   PRINT_CH_INFO(kLogChannelName, "VisionSystem.SetCameraExposureParams.Success",
                 "Current Exposure Time:%dms, Gain:%.3f",
                 currentExposureTime_ms, currentGain);
@@ -2077,7 +2079,7 @@ Result VisionSystem::SaveFaceAlbum(const std::string& albumName)
   DEV_ASSERT(nullptr != _faceTracker, "VisionSystem.SaveFaceAlbum.NullFaceTracker");
   return _faceTracker->SaveAlbum(albumName);
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void VisionSystem::SetFaceRecognitionIsSynchronous(bool isSynchronous)
 {

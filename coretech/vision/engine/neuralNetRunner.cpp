@@ -4,7 +4,7 @@
  * Author: Andrew Stein
  * Date:   6/29/2017
  *
- * Description: 
+ * Description:
  *
  * Copyright: Anki, Inc. 2017
  **/
@@ -51,10 +51,10 @@
 
 namespace Anki {
 namespace Vision {
- 
+
 // Log channel name currently expected to be defined by one of the model cpp files...
 // static const char * const kLogChannelName = "VisionSystem";
- 
+
 namespace {
 #define CONSOLE_GROUP "Vision.NeuralNetRunner"
 
@@ -69,18 +69,18 @@ namespace {
 
 #undef CONSOLE_GROUP
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NeuralNetRunner::NeuralNetRunner()
 : _profiler("NeuralNetRunner")
 {
-  
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 NeuralNetRunner::~NeuralNetRunner()
 {
-  
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -90,7 +90,7 @@ Result NeuralNetRunner::Init(const std::string& modelPath, const std::string& ca
 
   _isInitialized = false;
   _cachePath = cachePath;
-  
+
   std::string modelTypeString;
   if(JsonTools::GetValueOptional(config, NeuralNets::JsonKeys::ModelType, modelTypeString))
   {
@@ -113,17 +113,17 @@ Result NeuralNetRunner::Init(const std::string& modelPath, const std::string& ca
     LOG_ERROR("NeuralNetRunner.Init.MissingConfig", "%s", NeuralNets::JsonKeys::ModelType);
     return RESULT_FAIL;
   }
-    
+
   _profiler.Tic("LoadModel");
   result = _model->LoadModel(modelPath, config);
   _profiler.Toc("LoadModel");
-  
+
   if(RESULT_OK != result)
   {
     LOG_ERROR("NeuralNetRunner.Init.LoadModelFailed", "");
     return result;
   }
-  
+
   // Get the input height/width so we can do the resize and only need to share/copy/write as
   // small an image as possible for the standalone CNN process to pick up
   if(false == JsonTools::GetValueOptional(config, NeuralNets::JsonKeys::InputHeight, _processingHeight))
@@ -131,7 +131,7 @@ Result NeuralNetRunner::Init(const std::string& modelPath, const std::string& ca
     LOG_ERROR("NeuralNetRunner.Init.MissingConfig", "%s", NeuralNets::JsonKeys::InputHeight);
     return RESULT_FAIL;
   }
-  
+
   if(false == JsonTools::GetValueOptional(config, NeuralNets::JsonKeys::InputWidth, _processingWidth))
   {
     LOG_ERROR("NeuralNetRunner.Init.MissingConfig", "%s", NeuralNets::JsonKeys::InputWidth);
@@ -167,9 +167,9 @@ void NeuralNetRunner::ApplyGamma(ImageRGB& img)
   {
     return;
   }
-  
+
   auto ticToc = _profiler.TicToc("Gamma");
-  
+
   if(!Util::IsFltNear(kNeuralNetRunner_Gamma, _currentGamma))
   {
     _currentGamma = kNeuralNetRunner_Gamma;
@@ -180,7 +180,7 @@ void NeuralNetRunner::ApplyGamma(ImageRGB& img)
       _gammaLUT[value] = std::round(255.f * std::powf((f32)value * divisor, gamma));
     }
   }
-  
+
   s32 nrows = img.GetNumRows();
   s32 ncols = img.GetNumCols();
   if(img.IsContinuous()) {
@@ -215,7 +215,7 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
     LOG_INFO("NeuralNetRunner.StartProcessingIfIdle.NotInitialized", "t:%ums", imageCache.GetTimeStamp());
     return false;
   }
-  
+
   // If we're not already processing an image with a "future", create one to process this image asynchronously.
   if(!_future.valid())
   {
@@ -225,10 +225,10 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
       LOG_PERIODIC_DEBUG(30, "NeuralNetRunner.StartProcessingIfIdle.NeedColorData", "");
       return false;
     }
-  
+
     if(kNeuralNetRunner_SaveImages == 2)
     {
-      const Vision::ImageRGB& img = imageCache.GetRGB(ImageCacheSize::Half);
+      const Vision::ImageRGB& img = *(imageCache.GetRGB(ImageCacheSize::Half));
       const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "half",
         std::to_string(img.GetTimestamp()) + ".png"});
       img.Save(saveFilename);
@@ -238,12 +238,12 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
     _imgBeingProcessed.Allocate(_processingHeight, _processingWidth);
     const ImageCacheSize kImageSize = ImageCacheSize::Half;
     const Vision::ResizeMethod kResizeMethod = Vision::ResizeMethod::Linear;
-    const Vision::ImageRGB& imgOrig = imageCache.GetRGB(kImageSize);
-    imgOrig.Resize(_imgBeingProcessed, kResizeMethod);
-    
+    const std::shared_ptr<const ImageRGB> imgOrig = imageCache.GetRGB(kImageSize);
+    imgOrig->Resize(_imgBeingProcessed, kResizeMethod);
+
     // Apply gamma (no-op if gamma is set to 1.0)
     ApplyGamma(_imgBeingProcessed);
-    
+
     if(kNeuralNetRunner_SaveImages == 1)
     {
       const std::string saveFilename = Util::FileUtils::FullFilePath({_cachePath, "resized",
@@ -252,22 +252,22 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
     }
 
     // Store its size relative to original size so we can rescale object detections later
-    _heightScale = (f32)imgOrig.GetNumRows();
-    _widthScale  = (f32)imgOrig.GetNumCols();
-    
+    _heightScale = (f32)imgOrig->GetNumRows();
+    _widthScale  = (f32)imgOrig->GetNumCols();
+
     if(_model->IsVerbose())
     {
       LOG_INFO("NeuralNetRunner.StartProcessingIfIdle.ProcessingImage",
                "Detecting salient points in %dx%d image t=%u",
                _imgBeingProcessed.GetNumCols(), _imgBeingProcessed.GetNumRows(), _imgBeingProcessed.GetTimestamp());
     }
-    
+
     _future = std::async(std::launch::async, [this]() { return RunModel(); });
-    
+
     // We did start processing the given image
     return true;
   }
-  
+
   // We were not idle, so did not start processing the new image
   return false;
 }
@@ -276,9 +276,9 @@ bool NeuralNetRunner::StartProcessingIfIdle(ImageCache& imageCache)
 std::list<SalientPoint> NeuralNetRunner::RunModel()
 {
   Util::SetThreadName(pthread_self(), _model->GetName());
-  
+
   std::list<SalientPoint> salientPoints;
-  
+
   _profiler.Tic("Model.Detect");
   Result result = _model->Detect(_imgBeingProcessed, salientPoints);
   _profiler.Toc("Model.Detect");
@@ -286,10 +286,10 @@ std::list<SalientPoint> NeuralNetRunner::RunModel()
   {
     LOG_WARNING("NeuralNetRunner.RunModel.ModelDetectFailed", "");
   }
-  
+
   return salientPoints;
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool NeuralNetRunner::GetDetections(std::list<SalientPoint>& salientPoints)
 {
@@ -305,7 +305,7 @@ bool NeuralNetRunner::GetDetections(std::list<SalientPoint>& salientPoints)
       std::copy(newSalientPoints.begin(), newSalientPoints.end(), std::back_inserter(salientPoints));
 
       DEV_ASSERT(!_future.valid(), "NeuralNetRunner.GetDetections.FutureStillValid");
-      
+
       if(ANKI_DEV_CHEATS && _model->IsVerbose())
       {
         if(salientPoints.empty())
@@ -320,13 +320,13 @@ bool NeuralNetRunner::GetDetections(std::list<SalientPoint>& salientPoints)
                    _imgBeingProcessed.GetTimestamp(), salientPoint.description.c_str(), salientPoint.score);
         }
       }
-      
+
       return true;
     }
   }
-  
+
   return false;
 }
-  
+
 } // namespace Vision
 } // namespace Anki

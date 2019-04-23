@@ -1,11 +1,11 @@
 /**
  * File: illuminationDetector.cpp
- * 
+ *
  * Author: Humphrey Hu
  * Date:   2018-05-25
- * 
+ *
  * Description: Vision system component for detecting scene illumination state/changes.
- * 
+ *
  * Copyright: Anki, Inc. 2018
  **/
 
@@ -38,7 +38,7 @@ namespace {
 namespace Anki {
 namespace Vector {
 
-IlluminationDetector::IlluminationDetector() 
+IlluminationDetector::IlluminationDetector()
 : _featureGate( nullptr )
 , _classifier( new LinearClassifier() ) {}
 
@@ -103,7 +103,7 @@ Result IlluminationDetector::Init( const Json::Value& config, const CozmoContext
   PARSE_PARAM(config, "IlluminatedMinProbability", _illumMinProb, f32, GetValueOptional);
   PARSE_PARAM(config, "DarkenedMaxProbability", _darkMaxProb, f32, GetValueOptional);
   PARSE_PARAM(config, "AllowMovement", _allowMovement, bool, GetValueOptional);
-  
+
   _featureGate = context->GetFeatureGate();
 
   return RESULT_OK;
@@ -121,13 +121,13 @@ Result IlluminationDetector::Detect( Vision::ImageCache& cache,
   {
     return RESULT_OK;
   }
-  
+
   if( !CanRunDetection( poseData ) )
   {
     _featureBuffer.clear();
     return RESULT_OK;
   }
-  
+
   GenerateFeatures( cache );
 
   // If not enough buffered timepoints, bail
@@ -174,7 +174,7 @@ Result IlluminationDetector::Detect( Vision::ImageCache& cache,
 bool IlluminationDetector::CanRunDetection( const VisionPoseData& poseData ) const
 {
   const HistRobotState& state = poseData.histState;
-  const bool notMoving = !state.WasMoving() && !state.WasHeadMoving() && 
+  const bool notMoving = !state.WasMoving() && !state.WasHeadMoving() &&
                          !state.WasLiftMoving() && !state.WereWheelsMoving();
   return !state.WasCarryingObject() && !state.WasPickedUp() && (_allowMovement || notMoving);
 }
@@ -182,9 +182,9 @@ bool IlluminationDetector::CanRunDetection( const VisionPoseData& poseData ) con
 void IlluminationDetector::GenerateFeatures( Vision::ImageCache& cache )
 {
   Vision::ImageBrightnessHistogram hist;
-  hist.FillFromImage( cache.GetGray(), _featPercSubsample );
+  hist.FillFromImage( *cache.GetGray(), _featPercSubsample );
   const std::vector<u8> percentiles = hist.ComputePercentiles( _featPercentiles );
-  
+
   if(kEnableExtraIlluminationDetectorDebug)
   {
     std::string f;

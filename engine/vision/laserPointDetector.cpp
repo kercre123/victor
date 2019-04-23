@@ -254,19 +254,14 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
 
   const Vision::ImageCacheSize scaleSize = Vision::ImageCache::GetSize(Params::kLaser_scaleMultiplier);
 
-  Vision::ImageRGB imageColor;
-  if(imageCache.HasColor())
-  {
-    imageColor = imageCache.GetRGB(scaleSize);
-  }
-
-  const Vision::Image& imageGray = imageCache.GetGray(scaleSize);
+  const std::shared_ptr<const Vision::ImageRGB> imageColor = imageCache.GetRGB(scaleSize);;
+  const std::shared_ptr<const Vision::Image> imageGray = imageCache.GetGray(scaleSize);
 
   // Choose the thresholds based on the exposure
   const u8 lowThreshold  = (isDarkExposure ? Params::kLaser_lowThreshold_darkExposure  : Params::kLaser_lowThreshold_normalExposure );
   const u8 highThreshold = (isDarkExposure ? Params::kLaser_highThreshold_darkExposure : Params::kLaser_highThreshold_normalExposure);
 
-  Result result = FindConnectedComponents(imageColor, imageGray, lowThreshold, highThreshold);
+  Result result = FindConnectedComponents(*imageColor, *imageGray, lowThreshold, highThreshold);
 
   if(RESULT_OK != result)
   {
@@ -285,7 +280,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
 
   // Find centroid(s) of saliency inside the ground plane
   const f32 imgQuadArea = imgQuad.ComputeArea();
-  f32 groundRegionArea = FindLargestRegionCentroid(imageColor, imageGray, imgQuad, isDarkExposure,
+  f32 groundRegionArea = FindLargestRegionCentroid(*imageColor, *imageGray, imgQuad, isDarkExposure,
                                                    groundCentroidInImage);
 
   if(Util::IsNearZero(groundRegionArea))
@@ -346,7 +341,7 @@ Result LaserPointDetector::Detect(Vision::ImageCache&   imageCache,
 
   {
     // Note that we convert area to fraction of image area (to be resolution-independent)
-    ExternalInterface::RobotObservedLaserPoint laserPoint(imageGray.GetTimestamp(),
+    ExternalInterface::RobotObservedLaserPoint laserPoint(imageGray->GetTimestamp(),
                                                           groundRegionArea / imgQuadArea,
                                                           std::round(groundPlaneCentroid.x()),
                                                           std::round(groundPlaneCentroid.y()));
@@ -406,19 +401,14 @@ Result LaserPointDetector::Detect(Vision::ImageCache& imageCache,
 
   const Vision::ImageCacheSize scaleSize = Vision::ImageCache::GetSize(Params::kLaser_scaleMultiplier);
 
-  Vision::ImageRGB imageColor;
-  if(imageCache.HasColor())
-  {
-    imageColor = imageCache.GetRGB(scaleSize);
-  }
-
-  const Vision::Image& imageGray = imageCache.GetGray(scaleSize);
+  const std::shared_ptr<const Vision::ImageRGB> imageColor = imageCache.GetRGB(scaleSize);
+  const std::shared_ptr<const Vision::Image> imageGray = imageCache.GetGray(scaleSize);
 
   // Choose the thresholds based on the exposure
   const u8 lowThreshold  = (isDarkExposure ? Params::kLaser_lowThreshold_darkExposure  : Params::kLaser_lowThreshold_normalExposure );
   const u8 highThreshold = (isDarkExposure ? Params::kLaser_highThreshold_darkExposure : Params::kLaser_highThreshold_normalExposure);
 
-  Result result = FindConnectedComponents(imageColor, imageGray, lowThreshold, highThreshold);
+  Result result = FindConnectedComponents(*imageColor, *imageGray, lowThreshold, highThreshold);
 
   if(RESULT_OK != result)
   {
@@ -429,11 +419,11 @@ Result LaserPointDetector::Detect(Vision::ImageCache& imageCache,
   // Find centroid(s) of saliency inside the image
   // Use a whole image quad to search everywhere
   const Quad2f wholeImageQuad(Point2f(0, 0),
-                              Point2f(0, imageGray.GetNumRows()),
-                              Point2f(imageGray.GetNumCols(), 0),
-                              Point2f(imageGray.GetNumCols(), imageGray.GetNumRows()));
+                              Point2f(0, imageGray->GetNumRows()),
+                              Point2f(imageGray->GetNumCols(), 0),
+                              Point2f(imageGray->GetNumCols(), imageGray->GetNumRows()));
 
-  f32 regionArea = FindLargestRegionCentroid(imageColor, imageGray,
+  f32 regionArea = FindLargestRegionCentroid(*imageColor, *imageGray,
                                              wholeImageQuad,
                                              isDarkExposure,
                                              centroidInImage);
@@ -458,8 +448,8 @@ Result LaserPointDetector::Detect(Vision::ImageCache& imageCache,
 
   {
     // Note that we convert area to fraction of image area (to be resolution-independent)
-    ExternalInterface::RobotObservedLaserPoint laserPoint(imageGray.GetTimestamp(),
-                                                          regionArea / imageGray.GetNumElements(),
+    ExternalInterface::RobotObservedLaserPoint laserPoint(imageGray->GetTimestamp(),
+                                                          regionArea / imageGray->GetNumElements(),
                                                           std::round(centroidInImage.x()),
                                                           std::round(centroidInImage.y()));
 

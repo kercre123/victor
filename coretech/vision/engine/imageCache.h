@@ -6,6 +6,7 @@
  *
  * Description: Caches resized/gray/color version of an image so that different parts of the vision system
  *              can re-use already-requested sizes/colorings of an image without needing to know about each other.
+ *              Thread safe
  *
  * Copyright: Anki, Inc. 2017
  *
@@ -23,30 +24,30 @@
 
 namespace Anki {
 namespace Vision {
-  
+
 class ImageCache
 {
 public:
-  
+
   ImageCache();
-  
+
   // Invalidate all cached data and start with new image data at ImageCacheSize::Full.
   // Will use 'method' when resizing the image
   // May not release associated image memory.
   void Reset(const Image& imgGray, ResizeMethod method = ResizeMethod::Linear);
-  
+
   void Reset(const ImageRGB& imgColor, ResizeMethod method = ResizeMethod::Linear);
 
   void Reset(const ImageBuffer& buffer);
-  
+
   // Invalidate the cache and release all the memory associated with it.
   void ReleaseMemory();
-  
+
   // HasColor is true iff Reset was called with an ImageRGB (even if cached "colorized gray" data exists)
   bool HasColor() const { return _hasColor; }
-  
+
   // Get the timestamp of the image this cache was initialized with
-  TimeStamp_t GetTimeStamp() const { return _timeStamp; }  
+  TimeStamp_t GetTimeStamp() const { return _timeStamp; }
 
   // Get the image dimensions of the image returned for a given Size, based on
   // the dimensions of the image with which the cache was reset.
@@ -56,12 +57,12 @@ public:
 
   // Returns true or false depending on whether or not 'method' was set
   bool GetResizeMethod(ResizeMethod& method) const;
-  
+
   // Look up a Size enum, given a subsample increment
   // NOTE: subsample = 1 always means "Full" processing resolution, irrespective of the relationship
   //       between Full and Sensor resolution. Size::Sensor will never be returned.
   static ImageCacheSize GetSize(s32 subsample);
-  
+
   // Interprets a scale string into a Size enum
   // Valid scales are: "full", "half", "quarter", and "eighth"
   static ImageCacheSize StringToSize(const std::string& scaleStr);
@@ -74,7 +75,7 @@ public:
     ComputeFromExisting,
     FullyCached
   };
-  
+
   // Get color or gray image data at a given scale factor / resize method.
   // If Reset with a color image, the gray version will be computed by averaging (and cached).
   // If Reset with a gray image, the "RGB" version will be computed by replicating channels (and cached).
@@ -85,21 +86,29 @@ public:
   //  * The result of HasColor is not changed by calling GetRGB.
   //  * These are non-const because they could compute a resized version on demand.
   static constexpr ImageCacheSize GetDefaultImageCacheSize() { return ImageCacheSize::Half; }
-  const Image&    GetGray(ImageCacheSize size = GetDefaultImageCacheSize(), GetType* getType = nullptr);
-  const ImageRGB& GetRGB(ImageCacheSize size  = GetDefaultImageCacheSize(), GetType* getType = nullptr);
+  const std::shared_ptr<const Image> GetGray(ImageCacheSize size = GetDefaultImageCacheSize(), GetType* getType = nullptr);
+  const std::shared_ptr<const ImageRGB> GetRGB(ImageCacheSize size  = GetDefaultImageCacheSize(), GetType* getType = nullptr);
 
   const ImageBuffer& GetBuffer() const { return _buffer; }
-  
+
+  // Returns true if any of this cache's entries are actively in use (shared_ptr use count > 1)
+  bool AreEntriesInUse() const;
+
 private:
 
-  s32          _sensorNumRows = 0;
-  s32          _sensorNumCols = 0;
-  bool         _hasColor = false;
-  TimeStamp_t  _timeStamp = 0;
-  
+  // Atomic for thread safety
+  std::atomic<s32>          _sensorNumRows;
+  std::atomic<s32>          _sensorNumCols;
+  std::atomic<bool>         _hasColor;
+  std::atomic<TimeStamp_t>  _timeStamp;
+
   // When we are Reset with an image buffer, we need keep a copy of it around to
   // give to any newly created ResizedEntrys
   ImageBuffer  _buffer;
+
+  // Mutex to protect access to _buffer
+  // Mutable because there are const functions that query _buffer
+  mutable std::mutex _bufferMutex;
 
   // Container class to hold ImageBuffer, Image, and/or ImageRGB that
   // were created at a specific ImageCacheSize using a ResizeMethod
@@ -109,45 +118,69 @@ private:
   {
     ImageBuffer    _buffer;
     ImageCacheSize _size;
-    
-    Image     _gray;
+
+    std::shared_ptr<Image>     _gray;
     bool     _hasValidGray = false;
 
-    ImageRGB _rgb;
+    std::shared_ptr<ImageRGB> _rgb;
     bool     _hasValidRGB  = false;
-    
+
+    // Mutex to protect access to this entry
+    // Mutable because there are const functions that query this entry
+    mutable std::mutex _mutex;
+
   public:
     template<class ImageType>
     ResizedEntry(const ImageType& origImg, ImageCacheSize size)
     {
       Update(origImg, size);
     }
-    
-    void Invalidate() { _hasValidGray = false; _hasValidRGB = false; _buffer.Invalidate(); }
-    
+
+    void Invalidate() {
+      std::lock_guard<std::mutex> lock(_mutex);
+      _hasValidGray = false;
+      _hasValidRGB = false;
+      _buffer.Invalidate();
+    }
+
     template<class ImageType>
-    ImageType& Get();
-    
+    const std::shared_ptr<const ImageType> Get();
+
     template<class ImageType>
-    bool IsValid() const { return (_hasValidRGB || _hasValidGray || _buffer.HasValidData()); }
+    bool IsValid() const {
+      std::lock_guard<std::mutex> lock(_mutex);
+      return (_hasValidRGB || _hasValidGray || _buffer.HasValidData());
+    }
 
     template<class ImageType>
     void Update(const ImageType& origImg, ImageCacheSize size);
+
+    // Returns true as long as someone else has a shared_ptr to one
+    // or this entry's images
+    bool IsInUse() const {
+      std::lock_guard<std::mutex> lock(_mutex);
+      return ((_gray.use_count() > 1) || (_rgb.use_count() > 1));
+    }
   };
 
   using ResizeVersionsMap = std::map<ImageCacheSize, ResizedEntry>;
   ResizeVersionsMap _resizedVersions;
-  
+
+  // Mutex to protect access to _resizedVersions and functions called on its entries/iterators
+  // Recursive because GetImageHelper calls itself once when resizing into an existing entry
+  // Mutable because there are const functions that query _resizedVersions
+  mutable std::recursive_mutex _resizedMutex;
+
   ResizeMethod GetMethod(ImageCacheSize size) const;
-  
+
   template<class ImageType>
   void ResetHelper(const ImageType& img);
-  
+
   template<class ImageType>
-  const ImageType& GetImageHelper(ImageCacheSize size, GetType& getType);
-  
+  const std::shared_ptr<const ImageType> GetImageHelper(ImageCacheSize size, GetType& getType);
+
 }; // class ImageCache
-  
+
 } // namespace Vision
 } // namespace Anki
 

@@ -66,10 +66,12 @@ Result OverheadEdgesDetector::Detect(Anki::Vision::ImageCache &imageCache, const
                                      VisionProcessingResult &currentResult)
 {
   if (imageCache.HasColor()) {
-    return DetectHelper<ImageRGBTrait>(imageCache.GetRGB(), crntPoseData, currentResult);
+    auto img = imageCache.GetRGB();
+    return DetectHelper<ImageRGBTrait>(*img, crntPoseData, currentResult);
   }
   else {
-    return DetectHelper<ImageGrayTrait>(imageCache.GetGray(), crntPoseData, currentResult);
+    auto img = imageCache.GetGray();
+    return DetectHelper<ImageGrayTrait>(*img, crntPoseData, currentResult);
   }
 }
 
@@ -231,7 +233,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
   // create edge frame info to send
   OverheadEdgeFrame edgeFrame;
   OverheadEdgeChainVector& candidateChains = edgeFrame.chains;
-  
+
   // Find first strong edge in each column, in the ground plane mask, working
   // upward from bottom.
   // Note: looping only over the ROI portion of full image, but working in
@@ -375,7 +377,7 @@ Result OverheadEdgesDetector::DetectHelper(const typename ImageTraitType::ImageT
 
   // Copy only the chains with at least k points (less is considered noise)
   edgeFrame.chains.RemoveChainsShorterThan(_kMinChainLength);
-  
+
   // Transform border points into 3D, and into camera view and render
   static const bool kRenderEdgesInCameraView = false;
   if (kRenderEdgesInCameraView) {
