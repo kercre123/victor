@@ -18,7 +18,6 @@
 
 #include "coretech/common/shared/types.h"
 #include "coretech/vision/engine/image.h"
-#include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
 #include "cozmoAnim/animation/trackLayerComponent.h"
 #include "cozmoAnim/animTimeStamp.h"
 #include "cannedAnimLib/cannedAnims/animation.h"
@@ -86,8 +85,7 @@ namespace Anim {
                                  u32 numLoops = 1,
                                  u32 startAt_ms = 0,
                                  bool interruptRunning = true,
-                                 bool shouldOverrideEyeHue = false,
-                                 bool shouldRenderInEyeHue = true);
+                                 bool overrideAllSpritesToEyeHue = false);
 
     // Subset of the function above that is applied in the ::Update function and called from PlayAnimation
     void SetPendingStreamingAnimation(const std::string& name, u32 numLoops);
@@ -324,16 +322,15 @@ namespace Anim {
                                  u32 numLoops = 1,
                                  u32 startAt_ms = 0,
                                  bool interruptRunning = true,
-                                 bool shouldOverrideEyeHue = false,
-                                 bool shouldRenderInEyeHue = true,
+                                 bool overrideAllSpritesToEyeHue = false,
                                  bool isInternalAnim = true,
                                  bool shouldClearProceduralAnim = true);
 
     // Initialize the streaming of an animation with a given tag
     // (This will call anim->Init())
-    // if shouldOverrideEyeHue is set to true the value of shouldRenderInEyeHue will be applied
-    // to all sprites in the animation's SpriteSequenceTrack
-    Result InitStreamingAnimation(Tag withTag, u32 startAt_ms = 0, bool shouldOverrideEyeHue = false, bool shouldRenderInEyeHue = true);
+    Result InitStreamingAnimation(Tag withTag,
+                                  u32 startAt_ms = 0,
+                                  bool overrideAllSpritesToEyeHue = false);
 
     // Update Stream of either the streaming animation or procedural tracks
     Result ExtractAnimationMessages(AnimationMessageWrapper& stateToSend);

@@ -45,8 +45,6 @@ void DataAccessorComponent::InitDependent(Vector::Robot* robot, const RobotCompM
   _spritePaths = dataLoader.GetSpritePaths();
   _spriteCache = dataLoader.GetSpriteCache();
   _spriteSequenceContainer = dataLoader.GetSpriteSequenceContainer();
-  _compImgMap = dataLoader.GetCompImageMap();
-  _compLayoutMap = dataLoader.GetCompLayoutMap();
   _cannedAnimationContainer = dataLoader.GetCannedAnimationContainer();
   _weatherResponseMap = dataLoader.GetWeatherResponseMap();
   _weatherRemaps = dataLoader.GetWeatherRemapsPtr();

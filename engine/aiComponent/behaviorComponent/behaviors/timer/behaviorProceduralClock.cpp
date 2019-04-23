@@ -57,10 +57,8 @@ const std::vector<Vision::SpritePathMap::AssetID> kDigitMap =
 
 // SpriteBoxKeyFrame Definitions
 const Vision::SpriteBoxKeyFrame kTensLeftOfColonKeyFrame(
-  0.0f,
   Vision::SpriteBox(
     100.0f,
-    kClockEmptyGridSpriteID,
     27,
     26,
     29,
@@ -68,16 +66,17 @@ const Vision::SpriteBoxKeyFrame kTensLeftOfColonKeyFrame(
     Vision::SpriteBoxName::TensLeftOfColon,
     Anki::Vision::LayerName::Layer_6,
     Anki::Vision::SpriteRenderMethod::EyeColor,
-    Anki::Vision::SpriteSeqEndType::Clear,
-    {{0,0}}
-  )
+    0
+  ),
+  0.0f,
+  kClockEmptyGridSpriteID,
+  Anki::Vision::SpriteSeqEndType::Clear,
+  0
 );
 
 const Vision::SpriteBoxKeyFrame kOnesLeftOfColonKeyFrame(
-  0.0f,
   Vision::SpriteBox(
     100.0f,
-    kClockEmptyGridSpriteID,
     57,
     26,
     29,
@@ -85,16 +84,17 @@ const Vision::SpriteBoxKeyFrame kOnesLeftOfColonKeyFrame(
     Vision::SpriteBoxName::OnesLeftOfColon,
     Anki::Vision::LayerName::Layer_6,
     Anki::Vision::SpriteRenderMethod::EyeColor,
-    Anki::Vision::SpriteSeqEndType::Clear,
-    {{0,0}}
-  )
+    0
+  ),
+  0.0f,
+  kClockEmptyGridSpriteID,
+  Anki::Vision::SpriteSeqEndType::Clear,
+  0
 );
 
 const Vision::SpriteBoxKeyFrame kColonKeyFrame(
-  0.0f,
   Vision::SpriteBox(
     100.0f,
-    Vision::SpritePathMap::GetAssetID("clock_colon"),
     87,
     27,
     10,
@@ -102,16 +102,17 @@ const Vision::SpriteBoxKeyFrame kColonKeyFrame(
     Vision::SpriteBoxName::Colon,
     Anki::Vision::LayerName::Layer_6,
     Anki::Vision::SpriteRenderMethod::EyeColor,
-    Anki::Vision::SpriteSeqEndType::Clear,
-    {{0,0}}
-  )
+    0
+  ),
+  0.0f,
+  Vision::SpritePathMap::GetAssetID("clock_colon"),
+  Anki::Vision::SpriteSeqEndType::Clear,
+  0
 );
 
 const Vision::SpriteBoxKeyFrame kTensRightOfColonKeyFrame(
-  0.0f,
   Vision::SpriteBox(
     100.0f,
-    kClockEmptyGridSpriteID,
     98,
     26,
     29,
@@ -119,16 +120,17 @@ const Vision::SpriteBoxKeyFrame kTensRightOfColonKeyFrame(
     Vision::SpriteBoxName::TensRightOfColon,
     Anki::Vision::LayerName::Layer_6,
     Anki::Vision::SpriteRenderMethod::EyeColor,
-    Anki::Vision::SpriteSeqEndType::Clear,
-    {{0,0}}
-  )
+    0
+  ),
+  0.0f,
+  kClockEmptyGridSpriteID,
+  Anki::Vision::SpriteSeqEndType::Clear,
+  0
 );
 
 const Vision::SpriteBoxKeyFrame kOnesRightOfColonKeyFrame(
-  0.0f,
   Vision::SpriteBox(
     100.0f,
-    kClockEmptyGridSpriteID,
     128,
     26,
     29,
@@ -136,9 +138,12 @@ const Vision::SpriteBoxKeyFrame kOnesRightOfColonKeyFrame(
     Vision::SpriteBoxName::OnesRightOfColon,
     Anki::Vision::LayerName::Layer_6,
     Anki::Vision::SpriteRenderMethod::EyeColor,
-    Anki::Vision::SpriteSeqEndType::Clear,
-    {{0,0}}
-  )
+    0
+  ),
+  0.0f,
+  kClockEmptyGridSpriteID,
+  Anki::Vision::SpriteSeqEndType::Clear,
+  0
 );
 
 const std::map<Vision::SpriteBoxName, Vision::SpriteBoxKeyFrame> kKeyFrameMap =
@@ -320,7 +325,7 @@ void BehaviorProceduralClock::AddKeyFramesForOffset(const int clockOffset_s, con
 
     isLeadingZero &= (pair.second == 0);
     if(!isLeadingZero){
-      newKeyFrame.spriteBox.assetID = kDigitMap.at(pair.second);
+      newKeyFrame.assetID = kDigitMap.at(pair.second);
     }
 
     _lifetimeParams.keyFrames.push_back(std::move(newKeyFrame));

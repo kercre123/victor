@@ -168,7 +168,6 @@ enum uint_8 SpriteSeqEndType{
 
 structure SpriteBox{
   float_32           alpha,
-  int_16             assetID,
   int_16             xPos,
   int_16             yPos,
   int_16             width,
@@ -176,13 +175,15 @@ structure SpriteBox{
   SpriteBoxName      name,
   LayerName          layer,
   SpriteRenderMethod renderMethod,
-  SpriteSeqEndType   spriteSeqEndType,
-  uint_8             padding[2]
+  uint_8             padding
 }
 
 structure SpriteBoxKeyFrame{
-  uint_32   triggerTime_ms,
-  SpriteBox spriteBox
+  SpriteBox          spriteBox,
+  uint_32            triggerTime_ms,
+  int_16             assetID,
+  SpriteSeqEndType   spriteSeqEndType,
+  uint_8             padding
 }
 
 // Wrap render method and rgb color (represented as RGB565) for messaging

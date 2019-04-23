@@ -72,6 +72,16 @@ public:
     return _spriteBoxCompositor.SetFaceImageOverride(spriteHandle, relativeStreamTime_ms, duration_ms);
   }
 
+  void SetOverrideAllSpritesToEyeHue()
+  {
+    _spriteBoxCompositor.SetOverrideAllSpritesToEyeHue();
+  }
+
+  void ClearOverrides()
+  {
+    _spriteBoxCompositor.ClearOverrides();
+  }
+
   void AddSpriteBoxRemap(const Vision::SpriteBoxName& spriteBoxName,
                          const Vision::SpritePathMap::AssetID remappedAssetID)
   {

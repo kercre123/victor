@@ -241,8 +241,13 @@ void Process_playAnim(const Anki::Vector::RobotInterface::PlayAnim& msg)
            animName.c_str(), msg.tag);
 
   const bool interruptRunning = true;
-  const bool overrideEyes = !msg.renderInEyeHue;
-  _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops, msg.startAt_ms, interruptRunning, overrideEyes, msg.renderInEyeHue);
+  const bool overrideAllSpritesToEyeHue = msg.renderInEyeHue;
+  _animStreamer->SetStreamingAnimation(animName,
+                                       msg.tag,
+                                       msg.numLoops,
+                                       msg.startAt_ms,
+                                       interruptRunning,
+                                       overrideAllSpritesToEyeHue);
 }
 
 void Process_abortAnimation(const Anki::Vector::RobotInterface::AbortAnimation& msg)

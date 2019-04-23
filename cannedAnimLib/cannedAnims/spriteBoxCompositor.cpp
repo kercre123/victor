@@ -51,6 +51,19 @@ bool GetFrameFromSpriteSequenceHelper(const Vision::SpriteSequence& sequence,
                                       const uint16_t frameIdx,
                                       const Vision::SpriteSeqEndType& spriteSeqEndType,
                                       Vision::SpriteHandle& outSpriteHandle);
+
+const Vision::SpriteBox kFullFaceSpriteBox {
+  100.0f,
+  0,
+  0,
+  FACE_DISPLAY_WIDTH,
+  FACE_DISPLAY_HEIGHT,
+  Vision::SpriteBoxName::SpriteBox_40,
+  Vision::LayerName::Layer_10,
+  Vision::SpriteRenderMethod::RGBA,
+  0
+};
+
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -61,6 +74,7 @@ SpriteBoxCompositor::SpriteBoxCompositor(const SpriteBoxCompositor& other)
 , _advanceTime_ms(0)
 , _faceImageOverride(nullptr)
 , _faceImageOverrideEndTime_ms(0)
+, _overrideAllSpritesToEyeHue(false)
 {
   if(nullptr != other._spriteBoxMap){
     _spriteBoxMap = std::make_unique<SpriteBoxMap>(*other._spriteBoxMap);
@@ -75,6 +89,7 @@ SpriteBoxCompositor::SpriteBoxCompositor()
 , _advanceTime_ms(0)
 , _faceImageOverride(nullptr)
 , _faceImageOverrideEndTime_ms(0)
+, _overrideAllSpritesToEyeHue(false)
 {
 }
 
@@ -87,16 +102,16 @@ Result SpriteBoxCompositor::AddKeyFrame(const CozmoAnim::SpriteBox* spriteBox)
 
   Vision::SpriteBoxKeyFrame newKeyFrame;
   newKeyFrame.triggerTime_ms = (u32)spriteBox->triggerTime_ms();
-  newKeyFrame.spriteBox.name = Vision::SpriteBoxNameFromString(spriteBox->spriteBoxName()->str());
-  newKeyFrame.spriteBox.assetID = Vision::SpritePathMap::GetAssetID(spriteBox->assetName()->str());
+  newKeyFrame.assetID = Vision::SpritePathMap::GetAssetID(spriteBox->assetName()->str());
+  newKeyFrame.spriteSeqEndType = Vision::SpriteSeqEndTypeFromString(spriteBox->spriteSeqEndType()->str());
   newKeyFrame.spriteBox.alpha = spriteBox->alpha();
+  newKeyFrame.spriteBox.name = Vision::SpriteBoxNameFromString(spriteBox->spriteBoxName()->str());
+  newKeyFrame.spriteBox.layer = Vision::LayerNameFromString(spriteBox->layer()->str());
+  newKeyFrame.spriteBox.renderMethod = Vision::SpriteRenderMethodFromString(spriteBox->renderMethod()->str());
   newKeyFrame.spriteBox.xPos = spriteBox->xPos();
   newKeyFrame.spriteBox.yPos = spriteBox->yPos();
   newKeyFrame.spriteBox.width = spriteBox->width();
   newKeyFrame.spriteBox.height = spriteBox->height();
-  newKeyFrame.spriteBox.layer = Vision::LayerNameFromString(spriteBox->layer()->str());
-  newKeyFrame.spriteBox.renderMethod = Vision::SpriteRenderMethodFromString(spriteBox->renderMethod()->str());
-  newKeyFrame.spriteBox.spriteSeqEndType = Vision::SpriteSeqEndTypeFromString(spriteBox->spriteSeqEndType()->str());
   return AddKeyFrameInternal(std::move(newKeyFrame));
 }
 
@@ -105,20 +120,21 @@ Result SpriteBoxCompositor::AddKeyFrame(const Json::Value& json, const std::stri
 {
   Vision::SpriteBoxKeyFrame newKeyFrame;
   newKeyFrame.triggerTime_ms = JsonTools::ParseInt32(json, kTriggerTimeKey, animName);
-  newKeyFrame.spriteBox.name =
-    Vision::SpriteBoxNameFromString(JsonTools::ParseString(json, kSpriteBoxNameKey, animName));
-  newKeyFrame.spriteBox.assetID = 
-    Vision::SpritePathMap::GetAssetID(JsonTools::ParseString(json, kAssetNameKey, animName));
+  newKeyFrame.assetID = Vision::SpritePathMap::GetAssetID(JsonTools::ParseString(json, kAssetNameKey, animName));
+  newKeyFrame.spriteSeqEndType = Vision::SpriteSeqEndTypeFromString(JsonTools::ParseString(json,
+                                                                                           kSpriteSeqEndKey,
+                                                                                           animName));
+  newKeyFrame.spriteBox.name = Vision::SpriteBoxNameFromString(JsonTools::ParseString(json,
+                                                                                      kSpriteBoxNameKey,
+                                                                                      animName));
   newKeyFrame.spriteBox.alpha = JsonTools::ParseInt32(json, kAlphaKey, animName);
+  newKeyFrame.spriteBox.layer = Vision::LayerNameFromString(JsonTools::ParseString(json, kLayerNameKey, animName));
   newKeyFrame.spriteBox.xPos = JsonTools::ParseInt32(json, kXPosKey, animName);
   newKeyFrame.spriteBox.yPos = JsonTools::ParseInt32(json, kYPosKey, animName);
   newKeyFrame.spriteBox.width = JsonTools::ParseInt32(json, kWidthKey, animName);
   newKeyFrame.spriteBox.height = JsonTools::ParseInt32(json, kHeightKey, animName);
-  newKeyFrame.spriteBox.layer = Vision::LayerNameFromString(JsonTools::ParseString(json, kLayerNameKey, animName));
   newKeyFrame.spriteBox.renderMethod = Vision::SpriteRenderMethodFromString(
     JsonTools::ParseString(json, kRenderMethodKey, animName));
-  newKeyFrame.spriteBox.spriteSeqEndType = Vision::SpriteSeqEndTypeFromString(
-    JsonTools::ParseString(json, kSpriteSeqEndKey, animName));
   return AddKeyFrameInternal(std::move(newKeyFrame));
 }
 
@@ -149,8 +165,9 @@ Result SpriteBoxCompositor::AddFullFaceSpriteSeqInternal(const Vision::SpritePat
 {
   Vision::SpriteBoxKeyFrame startKeyFrame;
   startKeyFrame.triggerTime_ms = triggerTime_ms;
+  startKeyFrame.assetID = assetID;
+  startKeyFrame.spriteSeqEndType = Vision::SpriteSeqEndType::Clear;
   startKeyFrame.spriteBox.alpha = 100;
-  startKeyFrame.spriteBox.assetID = assetID;
   startKeyFrame.spriteBox.xPos = 0;
   startKeyFrame.spriteBox.yPos = 0;
   startKeyFrame.spriteBox.width = FACE_DISPLAY_WIDTH;
@@ -158,10 +175,9 @@ Result SpriteBoxCompositor::AddFullFaceSpriteSeqInternal(const Vision::SpritePat
   startKeyFrame.spriteBox.name = Vision::SpriteBoxName::SpriteBox_40;
   startKeyFrame.spriteBox.layer = Vision::LayerName::Layer_10;
   startKeyFrame.spriteBox.renderMethod = Vision::SpriteRenderMethod::RGBA;
-  startKeyFrame.spriteBox.spriteSeqEndType = Vision::SpriteSeqEndType::Clear;
 
   Vision::SpriteBoxKeyFrame clearKeyFrame(startKeyFrame);
-  clearKeyFrame.spriteBox.assetID = Vision::SpritePathMap::kClearSpriteBoxID;
+  clearKeyFrame.assetID = Vision::SpritePathMap::kClearSpriteBoxID;
   clearKeyFrame.triggerTime_ms += spriteSeqContainer.GetSpriteSequence(assetID)->GetNumFrames() * ANIM_TIME_STEP_MS;
 
   if( Result::RESULT_OK == AddKeyFrameInternal(std::move(startKeyFrame)) ){
@@ -211,6 +227,14 @@ void SpriteBoxCompositor::SetFaceImageOverride(const Vision::SpriteHandle& sprit
 {
   _faceImageOverride = spriteHandle;
   _faceImageOverrideEndTime_ms = duration_ms != 0 ? (relativeStreamTime_ms + duration_ms) : kOverrideIndefinitely;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpriteBoxCompositor::ClearOverrides()
+{
+  _faceImageOverride.reset();
+  _faceImageOverrideEndTime_ms = 0;
+  _overrideAllSpritesToEyeHue = false;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -271,8 +295,7 @@ void SpriteBoxCompositor::Clear()
 {
   _lastKeyFrameTime_ms = 0;
   _advanceTime_ms = 0;
-  _faceImageOverride = nullptr;
-  _faceImageOverrideEndTime_ms = 0;
+  ClearOverrides();
 
   if(nullptr != _spriteBoxMap){
     _spriteBoxMap->clear();
@@ -348,14 +371,7 @@ bool SpriteBoxCompositor::PopulateCompositeImage(Vision::SpriteCache& spriteCach
   if( (nullptr != _faceImageOverride) &&
       ((kOverrideIndefinitely == _faceImageOverrideEndTime_ms) || 
        (timeSinceAnimStart_ms < _faceImageOverrideEndTime_ms)) ){
-    outCompImg.AddImage(_faceImageOverride,
-                        Vision::SpriteBoxName::SpriteBox_40,
-                        Vision::LayerName::Layer_10,
-                        Vision::SpriteRenderMethod::RGBA,
-                        0,
-                        0,
-                        FACE_DISPLAY_WIDTH,
-                        FACE_DISPLAY_HEIGHT);
+    outCompImg.AddImage(kFullFaceSpriteBox, _faceImageOverride);
     return true;
   }
 
@@ -373,29 +389,26 @@ bool SpriteBoxCompositor::PopulateCompositeImage(Vision::SpriteCache& spriteCach
       continue;
     }
 
+    if(_overrideAllSpritesToEyeHue){
+      currentKeyFrame.spriteBox.renderMethod = Vision::SpriteRenderMethod::EyeColor;
+    }
+
     // Get a SpriteHandle to the image we want to display
     Vision::SpriteHandle spriteHandle;
-    if(spriteSeqContainer.IsValidSpriteSequenceID(currentKeyFrame.spriteBox.assetID)){
+    if(spriteSeqContainer.IsValidSpriteSequenceID(currentKeyFrame.assetID)){
       const uint16_t frameIdx = (timeSinceAnimStart_ms - currentKeyFrame.triggerTime_ms) / ANIM_TIME_STEP_MS;
       const Vision::SpriteSequence& sequence = 
-        *spriteSeqContainer.GetSpriteSequence(currentKeyFrame.spriteBox.assetID);
+        *spriteSeqContainer.GetSpriteSequence(currentKeyFrame.assetID);
 
-      if(!GetFrameFromSpriteSequenceHelper(sequence, frameIdx, currentKeyFrame.spriteBox.spriteSeqEndType, spriteHandle)){
+      if(!GetFrameFromSpriteSequenceHelper(sequence, frameIdx, currentKeyFrame.spriteSeqEndType, spriteHandle)){
         // The spriteSequence has nothing to draw. Skip to the next track
         continue;
       }
     } else {
-      spriteHandle = spriteCache.GetSpriteHandleForAssetID(currentKeyFrame.spriteBox.assetID);
+      spriteHandle = spriteCache.GetSpriteHandleForAssetID(currentKeyFrame.assetID);
     }
 
-    outCompImg.AddImage(spriteHandle,
-                        trackPair.first,
-                        currentKeyFrame.spriteBox.layer,
-                        currentKeyFrame.spriteBox.renderMethod,
-                        currentKeyFrame.spriteBox.xPos,
-                        currentKeyFrame.spriteBox.yPos,
-                        currentKeyFrame.spriteBox.width,
-                        currentKeyFrame.spriteBox.height);
+    outCompImg.AddImage(currentKeyFrame.spriteBox, spriteHandle);
     addedImage = true;
   }
 
@@ -533,17 +546,17 @@ bool SpriteBoxTrack::GetCurrentKeyFrame(const TimeStamp_t timeSinceAnimStart_ms,
   outKeyFrame = *_currentKeyFrameIter;
 
   // "Clear" keyframes override everything, including remaps and "Empty"s. Render nothing for this keyframe
-  if(Vision::SpritePathMap::kClearSpriteBoxID == outKeyFrame.spriteBox.assetID){
+  if(Vision::SpritePathMap::kClearSpriteBoxID == outKeyFrame.assetID){
     // Nothing to display
     return false;
   }
 
   if(Vision::SpritePathMap::kInvalidSpriteID != _remappedAssetID){
-    outKeyFrame.spriteBox.assetID = _remappedAssetID;
+    outKeyFrame.assetID = _remappedAssetID;
   }
 
   // Could have remapped to Empty, so check after remaps are applied
-  if(Vision::SpritePathMap::kEmptySpriteBoxID == outKeyFrame.spriteBox.assetID){
+  if(Vision::SpritePathMap::kEmptySpriteBoxID == outKeyFrame.assetID){
     // Nothing to render for an empty spritebox
     return false;
   }

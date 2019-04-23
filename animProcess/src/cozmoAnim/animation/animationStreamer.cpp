@@ -459,7 +459,7 @@ namespace Anim {
   }
 
   Result AnimationStreamer::SetStreamingAnimation(const std::string& name, Tag tag, u32 numLoops, u32 startAt_ms,
-                                                  bool interruptRunning, bool shouldOverrideEyeHue, bool shouldRenderInEyeHue)
+                                                  bool interruptRunning, bool overrideAllSpritesToEyeHue)
   {
     // Special case: stop streaming the current animation
     if (name.empty()) {
@@ -474,7 +474,7 @@ namespace Anim {
     }
     auto* anim = _context->GetDataLoader()->GetCannedAnimation(name);
     return SetStreamingAnimation(anim, tag, numLoops, startAt_ms, interruptRunning,
-                                 shouldOverrideEyeHue, shouldRenderInEyeHue, false);
+                                 overrideAllSpritesToEyeHue, false);
   }
 
   void AnimationStreamer::SetPendingStreamingAnimation(const std::string& name, u32 numLoops)
@@ -486,7 +486,7 @@ namespace Anim {
 
   Result AnimationStreamer::SetStreamingAnimation(Animation* anim, Tag tag, u32 numLoops, u32 startAt_ms,
                                                   bool interruptRunning,
-                                                  bool shouldOverrideEyeHue, bool shouldRenderInEyeHue,
+                                                  bool overrideAllSpritesToEyeHue,
                                                   bool isInternalAnim, bool shouldClearProceduralAnim)
   {
     if (DEBUG_ANIMATION_STREAMING)
@@ -530,7 +530,7 @@ namespace Anim {
     _loopCtr = 0;
     _numLoops = numLoops;
     // Get the animation ready to play
-    InitStreamingAnimation(tag, startAt_ms, shouldOverrideEyeHue, shouldRenderInEyeHue);
+    InitStreamingAnimation(tag, startAt_ms, overrideAllSpritesToEyeHue);
 
     _playingInternalAnim = isInternalAnim;
 
@@ -759,8 +759,7 @@ namespace Anim {
     const u32 numLoops = 1;
     const u32 startAtTime_ms = 0;
     const bool interruptRunning = true;
-    const bool shouldOverrideEyeHue = true;
-    const bool shouldRenderInEyeHue = false;
+    const bool overrideAllSpritesToEyeHue = false;
     const bool isInternalAnim = false;
 
     // Hack: if _streamingAnimation == _proceduralAnimation, the subsequent CopyIntoProceduralAnimation call
@@ -775,7 +774,7 @@ namespace Anim {
                                               msg.spriteBoxRemaps[i].remappedAssetID);
     }
     SetStreamingAnimation(_proceduralAnimation, msg.tag, numLoops, startAtTime_ms, interruptRunning,
-                          shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
+                          overrideAllSpritesToEyeHue, isInternalAnim);
     _lockFaceTrackAtEndOfStreamingAnimation = msg.lockFaceAtEndOfAnim;
   }
 
@@ -785,8 +784,7 @@ namespace Anim {
     const u32 numLoops = 1;
     const u32 startAtTime_ms = 0;
     const bool interruptRunning = true;
-    const bool shouldOverrideEyeHue = true;
-    const bool shouldRenderInEyeHue = false;
+    const bool overrideAllSpritesToEyeHue = false;
     const bool isInternalAnim = false;
 
     _streamingAnimation = _neutralFaceAnimation;
@@ -807,7 +805,7 @@ namespace Anim {
     }
     
     SetStreamingAnimation(_proceduralAnimation, msg.tag, numLoops, startAtTime_ms, interruptRunning,
-                          shouldOverrideEyeHue, shouldRenderInEyeHue, isInternalAnim);
+                          overrideAllSpritesToEyeHue, isInternalAnim);
   }
 
   void AnimationStreamer::Process_addSpriteBoxKeyFrames(const RobotInterface::AddSpriteBoxKeyFrames& msg)
@@ -876,6 +874,8 @@ namespace Anim {
       if ((_streamingAnimation == _proceduralAnimation) &&
           shouldClearProceduralAnim) {
         _proceduralAnimation->Clear();
+      } else {
+        _streamingAnimation->ClearOverrides();
       }
 
       // Reset animation pointer
@@ -891,7 +891,7 @@ namespace Anim {
 
 
   Result AnimationStreamer::InitStreamingAnimation(Tag withTag, u32 startAt_ms,
-                                                   bool shouldOverrideEyeHue, bool shouldRenderInEyeHue)
+                                                   bool overrideAllSpritesToEyeHue)
   {
     // Perform new animation callbacks
     for (const auto& callback: _newAnimationCallbacks)
@@ -904,17 +904,11 @@ namespace Anim {
     Result lastResult = _streamingAnimation->Init(spriteCache);
     if (lastResult == RESULT_OK)
     {
-      // DNM Remove the stupid EyeHue crap! Hooray!
       // Only update should render in eye hue if not looping
-      // if (shouldOverrideEyeHue)
-      // {
-      //   auto& spriteTrack = _streamingAnimation->GetTrack<SpriteSequenceiKeyFrame>();
-      //   std::list<SpriteSequenceiKeyFrame>& allKeyframes = spriteTrack.GetAllKeyframes();
-      //   for (auto& frame: allKeyframes)
-      //   {
-      //     frame.OverrideShouldRenderInEyeHue(shouldRenderInEyeHue);
-      //   }
-      // }
+      if (overrideAllSpritesToEyeHue)
+      {
+        _streamingAnimation->SetOverrideAllSpritesToEyeHue();
+      }
 
       _tag = withTag;
 
@@ -1600,10 +1594,7 @@ namespace Anim {
 
     if (anim != nullptr)
     {
-      Vision::CompositeImage compImg(context->GetDataLoader()->GetSpriteCache(),
-                                     ProceduralFace::GetHueSatWrapper(),
-                                     FACE_DISPLAY_WIDTH,
-                                     FACE_DISPLAY_HEIGHT);
+      Vision::CompositeImage compImg(ProceduralFace::GetHueSatWrapper());
 
       // Get the data from the SpriteBoxCompositor
       bool renderFromCompImage = anim->PopulateCompositeImage(*context->GetDataLoader()->GetSpriteCache(),
@@ -1621,34 +1612,8 @@ namespace Anim {
           InsertStreamableFaceIntoCompImg(stateToSend.faceImg, compImg);
         }
 
-        const auto& layerLayoutMap = compImg.GetLayerLayoutMap();
-        const uint16_t numLayers = layerLayoutMap.size();
-
-        const auto height = compImg.GetHeight();
-        const auto width  = compImg.GetWidth();
-        Vision::ImageRGBA img(height, width);
-
-        // if the first layer rendered is going to be full-screen and draw all pixels, then there's
-        // no need to clear the buffer (with FillWith) since all of those blank pixels will be
-        // immediately overwritten. This saves about 1/5 ms when those conditions are true.
-        bool needToClearBuffer = (numLayers == 0);
-        if (!needToClearBuffer)
-        {
-          const auto& firstCompositeImageLayer = layerLayoutMap.begin()->second;
-          const auto& firstSpriteBox = firstCompositeImageLayer.GetLayoutMap().begin()->second;
-          if (firstSpriteBox.GetWidth() != width || firstSpriteBox.GetHeight() != height)
-          {
-            needToClearBuffer = true;
-          }
-        }
-        if (needToClearBuffer)
-        {
-          ANKI_CPU_PROFILE("img->FillWith"); // This takes roughly 0.205 ms on robot.
-          img.FillWith(Vision::PixelRGBA());
-        }
-
-        // DNM Remove CompositeImage currFrameIdx. It should not be used.
-        compImg.OverlayImageWithFrame(img, 0);
+        Vision::ImageRGBA img(FACE_DISPLAY_HEIGHT, FACE_DISPLAY_WIDTH);
+        compImg.DrawIntoImage(img);
         stateToSend.faceImg.SetFromImageRGB(img);
 
         stateToSend.haveFaceToSend = true;
@@ -1708,6 +1673,8 @@ namespace Anim {
           if (_streamingAnimation == _proceduralAnimation)
           {
             _proceduralAnimation->Clear();
+          } else {
+            _streamingAnimation->ClearOverrides();
           }
 
           _streamingAnimation = nullptr;
@@ -2089,28 +2056,19 @@ namespace Anim {
     rgbaImg->SetFromRGB565(streamableFace);
     auto handle = std::make_shared<Vision::SpriteWrapper>(rgbaImg);
 
-    using namespace Vision;
-    using Entry = Vision::CompositeImageLayer::SpriteEntry;
+    static const Vision::SpriteBox kEyeSpriteBox {
+      100.0f,
+      0,
+      0,
+      FACE_DISPLAY_WIDTH,
+      FACE_DISPLAY_HEIGHT,
+      Vision::SpriteBoxName::SpriteBox_40,
+      Vision::LayerName::Procedural_Eyes,
+      Vision::SpriteRenderMethod::RGBA,
+      0
+    };
 
-    SpriteRenderConfig renderConfig;
-    renderConfig.renderMethod = SpriteRenderMethod::CustomHue;
-    // Set up sprite box layout
-    CompositeImageLayer::SpriteBox sb(SpriteBoxName::FaceKeyframe, renderConfig,
-                                      Point2i(0,0), FACE_DISPLAY_WIDTH, FACE_DISPLAY_HEIGHT);
-    CompositeImageLayer::LayoutMap map;
-    map.emplace(SpriteBoxName::FaceKeyframe, sb);
-    CompositeImageLayer eyeLayer(LayerName::Procedural_Eyes, std::move(map));
-
-    // set up image map for layer
-    SpriteSequence seq;
-    seq.AddFrame(handle);
-
-    CompositeImageLayer::ImageMap imageMap;
-    imageMap.emplace(SpriteBoxName::FaceKeyframe, Entry(std::move(seq)));
-    eyeLayer.SetImageMap(std::move(imageMap));
-
-    // add layer to comp image
-    image.AddLayer(std::move(eyeLayer));
+    image.AddImage(kEyeSpriteBox, handle);
   }
 
   void AnimationStreamer::InvalidateBannedTracks(const std::string& animName,

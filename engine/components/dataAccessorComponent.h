@@ -56,8 +56,6 @@ public:
   Vision::SpriteCache* GetSpriteCache() const { assert(_spriteCache != nullptr); return _spriteCache;  }
   Vision::SpriteSequenceContainer* GetSpriteSequenceContainer() const { assert(_spriteSequenceContainer != nullptr); return _spriteSequenceContainer;}
 
-  const RobotDataLoader::CompImageMap* GetCompImgMap() const { assert(_compImgMap); return _compImgMap; }
-  const RobotDataLoader::CompLayoutMap* GetCompLayoutMap() const { assert(_compLayoutMap); return _compLayoutMap; }
   const CannedAnimationContainer* GetCannedAnimationContainer() const { assert(_cannedAnimationContainer); return _cannedAnimationContainer; }
   const RobotDataLoader::WeatherResponseMap* GetWeatherResponseMap() const { assert(_weatherResponseMap); return _weatherResponseMap; }
   const RobotDataLoader::WeatherConditionTTSMap* GetWeatherConditionTTSMap() const { assert(_weatherConditionTTSMap); return _weatherConditionTTSMap;}
@@ -72,8 +70,6 @@ private:
   const Vision::SpritePathMap* _spritePaths = nullptr;
   Vision::SpriteCache* _spriteCache = nullptr;
   Vision::SpriteSequenceContainer* _spriteSequenceContainer = nullptr;
-  const RobotDataLoader::CompImageMap* _compImgMap = nullptr;
-  const RobotDataLoader::CompLayoutMap* _compLayoutMap = nullptr;
   const CannedAnimationContainer* _cannedAnimationContainer = nullptr;
   const RobotDataLoader::WeatherResponseMap* _weatherResponseMap = nullptr;
   const RobotDataLoader::WeatherConditionTTSMap* _weatherConditionTTSMap = nullptr;

@@ -71,6 +71,8 @@ public:
   void SetFaceImageOverride(const Vision::SpriteHandle& spriteHandle,
                             const TimeStamp_t relativeStreamTime_ms,
                             const TimeStamp_t duration_ms);
+  void SetOverrideAllSpritesToEyeHue(){ _overrideAllSpritesToEyeHue = true; }
+  void ClearOverrides();
 
   void AddSpriteBoxRemap(const Vision::SpriteBoxName spriteBox,
                          const Vision::SpritePathMap::AssetID remappedAssetID);
@@ -113,6 +115,8 @@ private:
 
   Vision::SpriteHandle _faceImageOverride = nullptr;
   TimeStamp_t _faceImageOverrideEndTime_ms;
+
+  bool _overrideAllSpritesToEyeHue;
 
   // Map from SpriteBoxName to set of keyframes ordered by triggerTime_ms
   using SpriteBoxMap = std::unordered_map<Vision::SpriteBoxName, SpriteBoxTrack>;

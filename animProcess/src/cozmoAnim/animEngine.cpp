@@ -32,6 +32,7 @@
 
 #include "coretech/common/engine/opencvThreading.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
 #include "webServerProcess/src/webService.h"
