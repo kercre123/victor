@@ -22,7 +22,7 @@ enum buildConfig {
     }
 }
 
-enabledBuildConfigs = [buildConfig.SHIPPING.getBuildType(), buildConfig.DEBUG.getBuildType()]
+enabledBuildConfigs = [buildConfig.SHIPPING.getBuildType(), buildConfig.DEBUG.getBuildType(), buildConfig.RELEASE.getBuildType()]
 buildConfigMap = [:]
 
 def server = Artifactory.server 'artifactory-dev'
