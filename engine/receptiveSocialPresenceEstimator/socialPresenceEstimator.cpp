@@ -254,9 +254,16 @@ void SocialPresenceEstimator::OnNewUserIntent(const UserIntentTag tag)
     LOG_WARNING("SocialPresenceEstimator.OnNewUserIntent.Specific", "system_sleep");
     LogInputEvent(&_SPESleep);
     TriggerInputEvent(&_SPESleep);
+  } else if (tag == USER_INTENT(imperative_quiet)) {
+    LOG_WARNING("SocialPresenceEstimator.OnNewUserIntent.Specific", "imperative_quiet");
+    LogInputEvent(&_SPEQuiet);
+    TriggerInputEvent(&_SPEQuiet);
+  } else if (tag == USER_INTENT(imperative_shutup)) {
+    LOG_WARNING("SocialPresenceEstimator.OnNewUserIntent.Specific", "imperative_shutup");
+    LogInputEvent(&_SPEShutUp);
+    TriggerInputEvent(&_SPEShutUp);
   } else {
     LogInputEvent(&_SPEUserIntent);
-    // trigger input event
     TriggerInputEvent(&_SPEUserIntent);
   }
 }
@@ -278,7 +285,6 @@ void SocialPresenceEstimator::OnRobotObservedFace(const AnkiEvent<ExternalInterf
 
 void SocialPresenceEstimator::PollTouch(const TouchSensorComponent& touchSensorComponent)
 {
-  LOG_WARNING("SocialPresenceEstimator.PollTouch.Polling", "");
   if (touchSensorComponent.GetIsPressed()) {
     LogInputEvent(&_SPETouch);
     TriggerInputEvent(&_SPETouch);

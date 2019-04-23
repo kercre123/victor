@@ -163,6 +163,10 @@ private:
       SocialPresenceEvent("Face", std::make_shared<ExponentialDecay>(0.1), 0.8f, 1.0f, 0.8f, 1.0f, false);
   SocialPresenceEvent _SPESleep =
       SocialPresenceEvent("Sleep", std::make_shared<PowerDecay>(1.1f), -0.9f, 0.0f, -0.9f, 0.0f, true);
+  SocialPresenceEvent _SPEQuiet =
+      SocialPresenceEvent("Quiet", std::make_shared<PowerDecay>(1.2f), -0.9f, 0.0f, -0.9f, 0.0f, true);
+  SocialPresenceEvent _SPEShutUp =
+      SocialPresenceEvent("ShutUp", std::make_shared<PowerDecay>(1.15f), -0.9f, 0.0f, -0.9f, 0.0f, true);
   SocialPresenceEvent _SPETouch =
       SocialPresenceEvent("Touch", std::make_shared<ExponentialDecay>(0.2f), 0.8f, 1.0f, 0.8f, 1.0f, false);
   // name, delay, independent effect, independent effect max, reinforcement effect, reinforcement effect max
@@ -180,6 +184,8 @@ private:
       &_SPEUserIntent,
       &_SPEFace,
       &_SPESleep,
+      &_SPEQuiet,
+      &_SPEShutUp,
       &_SPETouch,
       &_spete1,
       &_spete2,
