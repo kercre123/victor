@@ -200,10 +200,10 @@ target_include_directories(cozmo_engine PRIVATE
 if (VICOS)
   include(vicos-sdk-stl-config)
   include(gen-version)
+endif()
 
-  if (ANKI_TEST_SWITCHBOARD)
-    add_subdirectory("test/switchboard")
-  endif()
+if (VICOS)
+  add_subdirectory("auto-test")
 endif()
 
 add_subdirectory("resources")

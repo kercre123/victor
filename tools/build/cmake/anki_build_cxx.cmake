@@ -80,3 +80,14 @@ target_compile_options(${target_name}
 )
 
 endmacro()
+
+macro(anki_test_build_cxx_executable target_name srclist_dir)
+
+anki_build_cxx_executable(${target_name} ${srclist_dir})
+
+set_target_properties(${target_name}
+  PROPERTIES
+  RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/auto-test/bin"
+)
+
+endmacro()
