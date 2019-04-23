@@ -857,14 +857,13 @@ namespace Anim {
     const bool isInternalAnim = false;
 
     _streamingAnimation = _neutralFaceAnimation;
-    const std::string animName(msg.animName, msg.animName_length);
-    if(animName.empty())
+    if(msg.animName.empty())
     {
       _proceduralAnimation->Clear();
     }
     else
     {
-      CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(animName));
+      CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(msg.animName));
     }
 
     for(int i = 0; i < msg.numKeyFrames; ++i)
