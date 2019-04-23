@@ -16,6 +16,7 @@
 #include "test_INetworkStreamV3.h"
 #include "test_INetworkStreamV4.h"
 #include "test_INetworkStreamV5.h"
+#include "test_INetworkStreamV6.h"
 
 struct TestData {
   bool(*method)();
@@ -407,6 +408,42 @@ bool Test_SecurePairingV5() {
   return true;
 }
 
+bool Test_SecurePairingV6() {
+  RtsKeys oldKeys = SavedSessionManager::LoadRtsKeys();
+
+  // Create objects for testing
+  Test_INetworkStreamV6* netStream = new Test_INetworkStreamV6();
+  std::shared_ptr<Anki::TaskExecutor> taskExecutor = std::make_shared<Anki::TaskExecutor>(ev_default_loop(0));
+  Anki::Wifi::Initialize(taskExecutor);
+  std::shared_ptr<WifiWatcher> wifiWatcher = std::make_shared<WifiWatcher>(ev_default_loop(0));
+
+  // securePairing deleted by Test_INetworkStreamV4
+  RtsComms* securePairing = new RtsComms(
+    netStream,            // 
+    ev_default_loop(0),   // ev loop
+    nullptr,              // engineClient (don't need--only for updating face)
+    nullptr,              // gatewayServer
+    nullptr,              // tokenClient
+    nullptr,              // connectionIdManager
+    wifiWatcher,
+    taskExecutor,
+    false,                // is pairing
+    false,                // is ota-ing
+    false);               // has cloud owner
+
+  // Start Test loop
+  // Right now this tests will just be a simple runthrough of the
+  // messages to form a secure connection.
+  //
+  netStream->Test(securePairing);
+
+  // cleanup
+  SavedSessionManager::SaveRtsKeys(oldKeys);
+  delete netStream;
+
+  return true;
+}
+
 int main() {
   TestData tests[] = {
     { Test_ExecCommand,             "ExecCommand not returning expected status code." },
@@ -416,7 +453,8 @@ int main() {
     { Test_ChristenNameGeneration,  "Christening generated invalid name." },
     { Test_SecurePairing,           "SecurePairing V2 failed tests." },
     { Test_SecurePairingV4,         "SecurePairing V4 failed tests." },
-    { Test_SecurePairingV5,         "SecurePairing V5 failed tests." }
+    { Test_SecurePairingV5,         "SecurePairing V5 failed tests." },
+    { Test_SecurePairingV6,         "SecurePairing V6 failed tests." }
   };
 
   int totalPassed = 0;

@@ -5,7 +5,8 @@ cxx_project(
       'test_INetworkStreamV2.cpp',
       'test_INetworkStreamV3.cpp',
       'test_INetworkStreamV4.cpp',
-      'test_INetworkStreamV5.cpp'
+      'test_INetworkStreamV5.cpp',
+      'test_INetworkStreamV6.cpp'
     ]),
     platform_srcs = [],
     headers = [
@@ -13,10 +14,12 @@ cxx_project(
       'test_INetworkStreamV3.h',
       'test_INetworkStreamV4.h',
       'test_INetworkStreamV5.h',
+      'test_INetworkStreamV6.h',
       'test_CladHandler.h',
       'test_CladHandlerV3.h',
       'test_CladHandlerV4.h',
-      'test_CladHandlerV5.h'
+      'test_CladHandlerV5.h',
+      'test_CladHandlerV6.h'
     ],
     platform_headers = []
 )
