@@ -230,7 +230,8 @@ bool ImageBuffer::GetRGBFromBAYER(ImageRGB& rgb, ImageCacheSize size) const
   rgb.Allocate(outHeight, outWidth);
   Debayer::OutArgs outArgs(rgb.get_CvMat_().data, outHeight, outWidth, outScale, outFormat);
 
-  return Debayer::Instance().Invoke(method, inArgs, outArgs) == RESULT_OK;
+  Result res = Debayer::Instance().Invoke(method, inArgs, outArgs);
+  return res == RESULT_OK;
 }
 
 bool ImageBuffer::GetRGBFromRawRGB(ImageRGB& rgb, ImageCacheSize size) const
@@ -332,7 +333,8 @@ bool ImageBuffer::GetGrayFromBAYER(Image& gray, ImageCacheSize size) const
   gray.Allocate(outHeight, outWidth);
   Debayer::OutArgs outArgs(gray.get_CvMat_().data, outHeight, outWidth, outScale, outFormat);
 
-  return Debayer::Instance().Invoke(method, inArgs, outArgs) == RESULT_OK;
+  Result res = Debayer::Instance().Invoke(method, inArgs, outArgs);
+  return res == RESULT_OK;
 }
 
 bool ImageBuffer::GetGrayFromRawRGB(Image& gray, ImageCacheSize size) const

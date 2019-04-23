@@ -48,15 +48,17 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
   // Since this a bayer format, we are always reading 2x2 blocks so always create 2xN output pixels where N depends
   // on the scale
 
+  // RAW10 means their are 5 bytes for every 4 pixels of a row. Hence, there are W*5/4 bytes per row.
   u32 inBytesPerRow = (inArgs.width*5)/4;
+
   switch(outArgs.scale)
   {
   case Debayer::Scale::FULL:
   { 
     this->inColSkip = 5;
 
-    // Skip one row, it's bayer format and we want to get to the next R/G or G/R (use every block)
-    this->inRowSkip = 1 * inBytesPerRow;
+    // Skip one row, it's bayer format and we want to get to the next R/G or G/B (use every block)
+    this->inRowSkip = inBytesPerRow;
 
     // We create 2x4 output pixels per iteration
     this->rowStep = 2;
@@ -70,8 +72,8 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
   { 
     this->inColSkip = 5;
 
-    // Skip one row, then skip 1 block (for  blocks total)
-    this->inRowSkip = 1 * inBytesPerRow;
+    // Skip one row, it's bayer format and we want to get to the next R/G or G/B (use every block)
+    this->inRowSkip = inBytesPerRow;
 
 
     // We create 1x2 output pixels per iteration
@@ -87,7 +89,7 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
   {
     this->inColSkip = 5;
 
-    // Skip one row, then skip 3 blocks (for two blocks total)
+    // Skip one row to get to the next block, then skip 2 rows (to move down two blocks total)
     this->inRowSkip = 3 * inBytesPerRow;
 
     // We create 1x1 output pixels per iteration
@@ -103,7 +105,7 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
   {
     this->inColSkip = 10;
 
-    // Skip one row, then skip 3 blocks (for four blocks total)
+    // Skip one row to get to the next block, then skip 6 rows (to move down four blocks total)
     this->inRowSkip = 7 * inBytesPerRow;
 
     // We create 1x1 output pixels per iteration
@@ -122,19 +124,28 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
 
 } /* anomymous namespace */
 
+/**
+ * @brief Convenience macro to shorten the function adding line
+ */
+#define ADD_FUNC(funcs, scale, format, function) { \
+  funcs[MakeKey(Debayer::Scale::scale, Debayer::OutputFormat::format)] = \
+    std::bind(&HandleRAW10::function, this, std::placeholders::_1, std::placeholders::_2); \
+}
+
 HandleRAW10::HandleRAW10(f32 gamma) : Op()
 {
   for (int i = 0; i < _gammaLUT.size(); ++i){
     _gammaLUT[i] = 255 * std::powf((f32)i/1023.0f, gamma);
   }
-  _functions[MakeKey(Debayer::Scale::FULL,    Debayer::OutputFormat::RGB24)]  = std::bind(&HandleRAW10::RAW10_to_RGB24_FULL,       this, std::placeholders::_1, std::placeholders::_2);
-  _functions[MakeKey(Debayer::Scale::HALF,    Debayer::OutputFormat::RGB24)]  = std::bind(&HandleRAW10::RAW10_to_RGB24_HALF,  this, std::placeholders::_1, std::placeholders::_2);
-  _functions[MakeKey(Debayer::Scale::QUARTER, Debayer::OutputFormat::RGB24)]  = std::bind(&HandleRAW10::RAW10_to_RGB24_downscale,  this, std::placeholders::_1, std::placeholders::_2);
-  _functions[MakeKey(Debayer::Scale::EIGHTH,  Debayer::OutputFormat::RGB24)]  = std::bind(&HandleRAW10::RAW10_to_RGB24_downscale,  this, std::placeholders::_1, std::placeholders::_2);
-  _functions[MakeKey(Debayer::Scale::FULL,    Debayer::OutputFormat::Y8)]     = std::bind(&HandleRAW10::RAW10_to_Y8_FULL,          this, std::placeholders::_1, std::placeholders::_2);
-  _functions[MakeKey(Debayer::Scale::HALF,    Debayer::OutputFormat::Y8)]     = std::bind(&HandleRAW10::RAW10_to_Y8_HALF,     this, std::placeholders::_1, std::placeholders::_2);
-  _functions[MakeKey(Debayer::Scale::QUARTER, Debayer::OutputFormat::Y8)]     = std::bind(&HandleRAW10::RAW10_to_Y8_downscale,     this, std::placeholders::_1, std::placeholders::_2);
-  _functions[MakeKey(Debayer::Scale::EIGHTH,  Debayer::OutputFormat::Y8)]     = std::bind(&HandleRAW10::RAW10_to_Y8_downscale,     this, std::placeholders::_1, std::placeholders::_2);
+
+  ADD_FUNC(_functions,    FULL, RGB24, RAW10_to_RGB24_FULL);
+  ADD_FUNC(_functions,    HALF, RGB24, RAW10_to_RGB24_HALF);
+  ADD_FUNC(_functions, QUARTER, RGB24, RAW10_to_RGB24_downscale);
+  ADD_FUNC(_functions,  EIGHTH, RGB24, RAW10_to_RGB24_downscale);
+  ADD_FUNC(_functions,    FULL,    Y8, RAW10_to_Y8_FULL);
+  ADD_FUNC(_functions,    HALF,    Y8, RAW10_to_Y8_HALF);
+  ADD_FUNC(_functions, QUARTER,    Y8, RAW10_to_Y8_downscale);
+  ADD_FUNC(_functions,  EIGHTH,    Y8, RAW10_to_Y8_downscale);
 }
 
 Result HandleRAW10::operator()(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const

@@ -28,8 +28,8 @@ namespace Neon {
  * @details Convert RAW10 Bayer images to RGB24 using neon by ignoring the bottom 3 bits and gamma correcting
  * the remaining 7 bits via a lookup table. This results in data loss of the input images and some flat areas depending
  * on the gamma value. If gamma is greater than 1 (i.e. 1/G < 1), then this results in flatter coloring in dark areas.
- * The reason for doing this is that it is simply more efficient to use a lookup table for 10-bit images than to try
- * to do lookup tables in NEON or calculate the gamma correction directly. While the images are not the 'prettiest' 
+ * The reason for not doing full 10-bit lookup is that it is more efficient to use a lookup table for 10-bit images than 
+ * to try to do lookup tables in NEON or calculate gamma correction directly. While the images are not the 'prettiest' 
  * they could be, they still are sufficient for most perception algorithms. In the case of needing a perception quality
  * image, then losing some information from the least significant bits will not drastically effect the results of 
  * most perception algorithms.

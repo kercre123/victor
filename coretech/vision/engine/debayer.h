@@ -42,8 +42,8 @@ class Debayer
 {
 public:
   static Debayer& Instance();
-  Debayer(Debayer const&) = delete;
-  void operator=(Debayer const&) = delete;
+  Debayer(const Debayer&) = delete;
+  void operator=(const Debayer&) = delete;
 
   /**
    * @brief The method of debayering. This is akin to the level of quality of the image.

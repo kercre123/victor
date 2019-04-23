@@ -19,6 +19,9 @@
 namespace Anki {
 namespace Vision {
 
+/**
+ * @brief Convert RAW10 RGGB bayer input to RGB24 or Y8 and downscale (if requested).
+ */
 class HandleRAW10: public Debayer::Op
 {
 public:

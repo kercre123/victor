@@ -48,7 +48,7 @@ struct SetupInfo
   SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outArgs);
 
   std::array<u8,8> indexes;   //! Index table for extracting inBufferPtr data 
-  std::vector<u8> offsets;    //! Offsets from the inBufferPtr
+  std::array<u8,4> offsets;   //! Offsets from the inBufferPtr
   u32 rowStep;                //! Steps for the for loop
   u32 colStep;                //! Steps for the for loop
   u32 inColSkip;              //! Number of bytes in the input to skip per extraction
@@ -81,12 +81,26 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
   // Since this a bayer format, we are always reading 2x2 blocks so always create 2xN output pixels where N depends
   // on the scale
 
+  // Scale Comment Legend:
+  // Data - The input bytes from the source image. The values in the comment are the offset from the current input 
+  //      image pointer. The values in the vector are the byte values of the source image.
+  // Table - The input bytes will be loaded into a uint8x8xN_t. The values in the comment are the Data index values and 
+  //      where they will be in the table. Anything that is "xx" is a value we don't actually care about. The values in 
+  //      those locations will be the sequential bytes following the ones that are not "xx". The values in the vector
+  //      are the byte values of the source image.
+  // Mapping - The indexes into the table from which to create a new vector. Look up VTBL and vtblN_u8 instructions
+  //      for a complete understanding of how to use this. The values in the comment and the vector are the same; they
+  //      are indexes into the table.
+  // Extract - The resulting uint8x8_t vector from doing the table lookup. The values in the comment are the indexes
+  //      from source image. The values in the vector will be the byte values of the source image.
+
+  // RAW10 means their are 5 bytes for every 4 pixels of a row. Hence, there are W*5/4 bytes per row.
   u32 inBytesPerRow = (inArgs.width*5)/4;
+  
   switch(outArgs.scale)
   {
   case Debayer::Scale::FULL:
   {
-  
     // Data:          [ 00 01 02 03 04 05 06 07 08 09 10 11 12 ]
     // Table.val[0]:  [ 00 01 02 03 xx xx xx xx ]
     // Table.val[1]:  [ 05 06 07 08 xx xx xx xx ]
@@ -101,15 +115,15 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
     this->indexes[6] = 10;
     this->indexes[7] = 11;
 
-    this->offsets.resize(2);
     this->offsets[0] = 0;
     this->offsets[1] = 5;
+    this->offsets[2] = std::numeric_limits<u8>::max(); // Invalid
+    this->offsets[3] = std::numeric_limits<u8>::max(); // Invalid
     
     this->inColSkip = 10;
 
-    // Skip one row, it's bayer format and we want to get to the next R/G or G/R (use every block)
-    this->inRowSkip = 1 * inBytesPerRow;
-
+    // Skip one row, it's bayer format and we want to get to the next R/G or G/B (use every block)
+    this->inRowSkip = inBytesPerRow;
 
     // We create 2x16 output pixels per iteration
     this->rowStep = 2;
@@ -135,17 +149,17 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
     this->indexes[6] = 10;
     this->indexes[7] = 11;
 
-    this->offsets.resize(2);
     this->offsets[0] = 0;
     this->offsets[1] = 5;
+    this->offsets[2] = std::numeric_limits<u8>::max(); // Invalid
+    this->offsets[3] = std::numeric_limits<u8>::max(); // Invalid
     
     this->inColSkip = 10;
 
-    // Skip one row, then skip 1 block (for  blocks total)
-    this->inRowSkip = 1 * inBytesPerRow;
+    // Skip one row, it's bayer format and we want to get to the next R/G or G/B (use every block)
+    this->inRowSkip = inBytesPerRow;
 
-
-    // We create 1x8 output pixels per iteration where M is the number of rows
+    // We create 1x8 output pixels per iteration
     this->rowStep = 1;
     this->colStep = 8;
 
@@ -170,16 +184,17 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
     this->indexes[6] = 13;
     this->indexes[7] = 14;
 
-    this->offsets.resize(2);
     this->offsets[0] = 0;
     this->offsets[1] = 10;
+    this->offsets[2] = std::numeric_limits<u8>::max(); // Invalid
+    this->offsets[3] = std::numeric_limits<u8>::max(); // Invalid
 
     this->inColSkip = 20;
 
-    // Skip one row, then skip 3 blocks (for two blocks total)
+    // Skip one row to get to the next block, then skip 2 rows (to move down two blocks total)
     this->inRowSkip = 3 * inBytesPerRow;
 
-    // We create 1x8 output pixels per iteration where M is the number of rows
+    // We create 1x8 output pixels per iteration
     this->rowStep = 1;
     this->colStep = 8;
 
@@ -207,7 +222,7 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
     this->indexes[6] = 24;
     this->indexes[7] = 25;
 
-    this->offsets.resize(4);
+    // this->offsets.resize(4);
     this->offsets[0] = 0;
     this->offsets[1] = 10;
     this->offsets[2] = 20;
@@ -215,10 +230,10 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
 
     this->inColSkip = 40;
 
-    // Skip one row, then skip 3 blocks (for four blocks total)
+    // Skip one row to get to the next block, then skip 6 rows (to move down four blocks total)
     this->inRowSkip = 7 * inBytesPerRow;
 
-    // We create Mx8 output pixels per iteration where M is the number of rows
+    // We create 1x8 output pixels per iteration
     this->rowStep = 1;
     this->colStep = 8;
 
@@ -250,20 +265,29 @@ inline void GammaCorrect(const std::array<uint8x8x4_t,4>& gammaLUT, const uint8x
 // End anonymous namespace
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+/**
+ * @brief Convenience macro to shorten the function adding line
+ */
+#define ADD_FUNC(funcs, scale, format, function) { \
+  funcs[MakeKey(Debayer::Scale::scale, Debayer::OutputFormat::format)] = \
+    std::bind(&HandleRAW10::function, this, std::placeholders::_1, std::placeholders::_2); \
+}
+
 HandleRAW10::HandleRAW10(f32 gamma) : Op()
 {
   // Setup a gamma table for 128 (2^7) possible input values
   for (int i = 0; i < _gammaLUT.size(); ++i){
     _gammaLUT[i] = 255 * std::powf((f32)i/127.0f, gamma);
   }
-  _functions[MakeKey(Debayer::Scale::FULL,    Debayer::OutputFormat::RGB24)]  = std::bind(&HandleRAW10::RAW10_to_RGB24_FULL,     this, std::placeholders::_1, std::placeholders::_2);
-  _functions[MakeKey(Debayer::Scale::HALF,    Debayer::OutputFormat::RGB24)]  = std::bind(&HandleRAW10::RAW10_to_RGB24_HALF,     this, std::placeholders::_1, std::placeholders::_2);
-  _functions[MakeKey(Debayer::Scale::QUARTER, Debayer::OutputFormat::RGB24)]  = std::bind(&HandleRAW10::RAW10_to_RGB24_QUARTER,  this, std::placeholders::_1, std::placeholders::_2);
-  _functions[MakeKey(Debayer::Scale::EIGHTH,  Debayer::OutputFormat::RGB24)]  = std::bind(&HandleRAW10::RAW10_to_RGB24_EIGHTH,   this, std::placeholders::_1, std::placeholders::_2);
-  _functions[MakeKey(Debayer::Scale::FULL,    Debayer::OutputFormat::Y8)]     = std::bind(&HandleRAW10::RAW10_to_Y8_FULL,        this, std::placeholders::_1, std::placeholders::_2);
-  _functions[MakeKey(Debayer::Scale::HALF,    Debayer::OutputFormat::Y8)]     = std::bind(&HandleRAW10::RAW10_to_Y8_HALF,        this, std::placeholders::_1, std::placeholders::_2);
-  _functions[MakeKey(Debayer::Scale::QUARTER, Debayer::OutputFormat::Y8)]     = std::bind(&HandleRAW10::RAW10_to_Y8_QUARTER,     this, std::placeholders::_1, std::placeholders::_2);
-  _functions[MakeKey(Debayer::Scale::EIGHTH,  Debayer::OutputFormat::Y8)]     = std::bind(&HandleRAW10::RAW10_to_Y8_EIGHTH,      this, std::placeholders::_1, std::placeholders::_2);
+
+  ADD_FUNC(_functions,    FULL, RGB24, RAW10_to_RGB24_FULL);
+  ADD_FUNC(_functions,    HALF, RGB24, RAW10_to_RGB24_HALF);
+  ADD_FUNC(_functions, QUARTER, RGB24, RAW10_to_RGB24_QUARTER);
+  ADD_FUNC(_functions,  EIGHTH, RGB24, RAW10_to_RGB24_EIGHTH);
+  ADD_FUNC(_functions,    FULL,    Y8, RAW10_to_Y8_FULL);
+  ADD_FUNC(_functions,    HALF,    Y8, RAW10_to_Y8_HALF);
+  ADD_FUNC(_functions, QUARTER,    Y8, RAW10_to_Y8_QUARTER);
+  ADD_FUNC(_functions,  EIGHTH,    Y8, RAW10_to_Y8_EIGHTH);
 }
 
 Result HandleRAW10::operator()(const Debayer::InArgs& inArgs, Debayer::OutArgs& outArgs) const
@@ -286,7 +310,7 @@ Result HandleRAW10::RAW10_to_RGB24_FULL(const Debayer::InArgs& inArgs, Debayer::
   SetupInfo setup(inArgs, outArgs);
   
   // The index to pull values from the table of loaded bytes
-  uint8x8_t index = vld1_u8(setup.indexes.data());
+  const uint8x8_t index = vld1_u8(setup.indexes.data());
 
   StoreInfo store;
   for (int i = 0; i < store.gammaLUT.size(); ++i){
@@ -316,10 +340,9 @@ Result HandleRAW10::RAW10_to_RGB24_FULL(const Debayer::InArgs& inArgs, Debayer::
 
   // Explanation of the iteration:
   //  - Neon allows us to look at and fill out 8 bytes of data
-  //  - To get 8 bytes of Red, Blue, and Green (twice, one for each row), we need to look at 4 blocks of bayer data
-  //  - We are always computing 2 rows of output data because we're always looking at 1 vertical Bayer block (2x2)
+  //  - To get 8 bytes of Red, Blue, and Green, we need to look at 4 blocks of bayer data
+  //  - We are either computing 2 rows of output data (FULL) or 1 row (HALF, QUARTER, EIGHTH)
   //  - We are either computing 16 cols of output data (FULL) or 8 cols (HALF, QUARTER, EIGHTH)
-  //  - We need to fill out 2 rows x 16 columns of output per iteration
   for (u32 row = 0; row < outArgs.height; row += setup.rowStep)
   {
     for (u32 col = 0; col < outArgs.width; col += setup.colStep)
@@ -401,7 +424,7 @@ Result HandleRAW10::RAW10_to_RGB24_HALF(const Debayer::InArgs& inArgs, Debayer::
   SetupInfo setup(inArgs, outArgs);
   
   // The index to pull values from the table of loaded bytes
-  uint8x8_t index = vld1_u8(setup.indexes.data());
+  const uint8x8_t index = vld1_u8(setup.indexes.data());
 
   StoreInfo store;
   for (int i = 0; i < store.gammaLUT.size(); ++i){
@@ -424,10 +447,9 @@ Result HandleRAW10::RAW10_to_RGB24_HALF(const Debayer::InArgs& inArgs, Debayer::
 
   // Explanation of the iteration:
   //  - Neon allows us to look at and fill out 8 bytes of data
-  //  - To get 8 bytes of Red, Blue, and Green (twice, one for each row), we need to look at 4 blocks of bayer data
-  //  - We are always computing 2 rows of output data because we're always looking at 1 vertical Bayer block (2x2)
+  //  - To get 8 bytes of Red, Blue, and Green, we need to look at 4 blocks of bayer data
+  //  - We are either computing 2 rows of output data (FULL) or 1 row (HALF, QUARTER, EIGHTH)
   //  - We are either computing 16 cols of output data (FULL) or 8 cols (HALF, QUARTER, EIGHTH)
-  //  - We need to fill out 2 rows x 16 columns of output per iteration
   for (u32 row = 0; row < outArgs.height; row += setup.rowStep)
   {
     for (u32 col = 0; col < outArgs.width; col += setup.colStep)
@@ -464,19 +486,23 @@ Result HandleRAW10::RAW10_to_RGB24_HALF(const Debayer::InArgs& inArgs, Debayer::
 
       // Gamma Correct is the most expensive step timewise. Doing it as a helper function seems to have no effect on
       // the time to complete this step.
+      
+#if DO_GREEN_AVG
       GammaCorrect(store.gammaLUT, store.value_32, block.val[0]);
       GammaCorrect(store.gammaLUT, store.value_32, block.val[1]);
       GammaCorrect(store.gammaLUT, store.value_32, block.val[2]);
       GammaCorrect(store.gammaLUT, store.value_32, block.val[3]);
-      
-      // Store RGB24
       rgb.val[0] = block.val[0];
-#if DO_GREEN_AVG
       rgb.val[1] = vhadd_u8(block.val[1], block.val[2]);
-#else
-      rgb.val[1] = block.val[1];
-#endif
       rgb.val[2] = block.val[3];
+#else
+      GammaCorrect(store.gammaLUT, store.value_32, block.val[0]);
+      GammaCorrect(store.gammaLUT, store.value_32, block.val[1]);
+      GammaCorrect(store.gammaLUT, store.value_32, block.val[3]);
+      rgb.val[0] = block.val[0];
+      rgb.val[1] = block.val[1];
+      rgb.val[2] = block.val[3];
+#endif
 
       vst3_u8(outBufferPtr, rgb);
 
@@ -498,7 +524,7 @@ Result HandleRAW10::RAW10_to_RGB24_QUARTER(const Debayer::InArgs& inArgs, Debaye
   SetupInfo setup(inArgs, outArgs);
   
   // The index to pull values from the table of loaded bytes
-  uint8x8_t index = vld1_u8(setup.indexes.data());
+  const uint8x8_t index = vld1_u8(setup.indexes.data());
 
   StoreInfo store;
   for (int i = 0; i < store.gammaLUT.size(); ++i){
@@ -521,10 +547,9 @@ Result HandleRAW10::RAW10_to_RGB24_QUARTER(const Debayer::InArgs& inArgs, Debaye
 
   // Explanation of the iteration:
   //  - Neon allows us to look at and fill out 8 bytes of data
-  //  - To get 8 bytes of Red, Blue, and Green (twice, one for each row), we need to look at 4 blocks of bayer data
-  //  - We are always computing 2 rows of output data because we're always looking at 1 vertical Bayer block (2x2)
+  //  - To get 8 bytes of Red, Blue, and Green, we need to look at 4 blocks of bayer data
+  //  - We are either computing 2 rows of output data (FULL) or 1 row (HALF, QUARTER, EIGHTH)
   //  - We are either computing 16 cols of output data (FULL) or 8 cols (HALF, QUARTER, EIGHTH)
-  //  - We need to fill out 2 rows x 16 columns of output per iteration
   for (u32 row = 0; row < outArgs.height; row += setup.rowStep)
   {
     for (u32 col = 0; col < outArgs.width; col += setup.colStep)
@@ -561,19 +586,23 @@ Result HandleRAW10::RAW10_to_RGB24_QUARTER(const Debayer::InArgs& inArgs, Debaye
 
       // Gamma Correct is the most expensive step timewise. Doing it as a helper function seems to have no effect on
       // the time to complete this step.
+      
+#if DO_GREEN_AVG
       GammaCorrect(store.gammaLUT, store.value_32, block.val[0]);
       GammaCorrect(store.gammaLUT, store.value_32, block.val[1]);
       GammaCorrect(store.gammaLUT, store.value_32, block.val[2]);
       GammaCorrect(store.gammaLUT, store.value_32, block.val[3]);
-      
-      // Store RGB24
       rgb.val[0] = block.val[0];
-#if DO_GREEN_AVG
       rgb.val[1] = vhadd_u8(block.val[1], block.val[2]);
-#else
-      rgb.val[1] = block.val[1];
-#endif
       rgb.val[2] = block.val[3];
+#else
+      GammaCorrect(store.gammaLUT, store.value_32, block.val[0]);
+      GammaCorrect(store.gammaLUT, store.value_32, block.val[1]);
+      GammaCorrect(store.gammaLUT, store.value_32, block.val[3]);
+      rgb.val[0] = block.val[0];
+      rgb.val[1] = block.val[1];
+      rgb.val[2] = block.val[3];
+#endif
 
       vst3_u8(outBufferPtr, rgb);
 
@@ -595,7 +624,7 @@ Result HandleRAW10::RAW10_to_RGB24_EIGHTH(const Debayer::InArgs& inArgs, Debayer
   SetupInfo setup(inArgs, outArgs);
   
   // The index to pull values from the table of loaded bytes
-  uint8x8_t index = vld1_u8(setup.indexes.data());
+  const uint8x8_t index = vld1_u8(setup.indexes.data());
 
   StoreInfo store;
   for (int i = 0; i < store.gammaLUT.size(); ++i){
@@ -618,10 +647,9 @@ Result HandleRAW10::RAW10_to_RGB24_EIGHTH(const Debayer::InArgs& inArgs, Debayer
 
   // Explanation of the iteration:
   //  - Neon allows us to look at and fill out 8 bytes of data
-  //  - To get 8 bytes of Red, Blue, and Green (twice, one for each row), we need to look at 4 blocks of bayer data
-  //  - We are always computing 2 rows of output data because we're always looking at 1 vertical Bayer block (2x2)
+  //  - To get 8 bytes of Red, Blue, and Green, we need to look at 4 blocks of bayer data
+  //  - We are either computing 2 rows of output data (FULL) or 1 row (HALF, QUARTER, EIGHTH)
   //  - We are either computing 16 cols of output data (FULL) or 8 cols (HALF, QUARTER, EIGHTH)
-  //  - We need to fill out 2 rows x 16 columns of output per iteration
   for (u32 row = 0; row < outArgs.height; row += setup.rowStep)
   {
     for (u32 col = 0; col < outArgs.width; col += setup.colStep)
@@ -666,19 +694,23 @@ Result HandleRAW10::RAW10_to_RGB24_EIGHTH(const Debayer::InArgs& inArgs, Debayer
 
       // Gamma Correct is the most expensive step timewise. Doing it as a helper function seems to have no effect on
       // the time to complete this step.
+      
+#if DO_GREEN_AVG
       GammaCorrect(store.gammaLUT, store.value_32, block.val[0]);
       GammaCorrect(store.gammaLUT, store.value_32, block.val[1]);
       GammaCorrect(store.gammaLUT, store.value_32, block.val[2]);
       GammaCorrect(store.gammaLUT, store.value_32, block.val[3]);
-      
-      // Store RGB24
       rgb.val[0] = block.val[0];
-#if DO_GREEN_AVG
       rgb.val[1] = vhadd_u8(block.val[1], block.val[2]);
-#else
-      rgb.val[1] = block.val[1];
-#endif
       rgb.val[2] = block.val[3];
+#else
+      GammaCorrect(store.gammaLUT, store.value_32, block.val[0]);
+      GammaCorrect(store.gammaLUT, store.value_32, block.val[1]);
+      GammaCorrect(store.gammaLUT, store.value_32, block.val[3]);
+      rgb.val[0] = block.val[0];
+      rgb.val[1] = block.val[1];
+      rgb.val[2] = block.val[3];
+#endif
 
       vst3_u8(outBufferPtr, rgb);
 
@@ -700,7 +732,7 @@ Result HandleRAW10::RAW10_to_Y8_FULL(const Debayer::InArgs& inArgs, Debayer::Out
   SetupInfo setup(inArgs, outArgs);
   
   // The index to pull values from the table of loaded bytes
-  uint8x8_t index = vld1_u8(setup.indexes.data());
+  const uint8x8_t index = vld1_u8(setup.indexes.data());
 
   StoreInfo store;
   for (int i = 0; i < store.gammaLUT.size(); ++i){
@@ -729,10 +761,9 @@ Result HandleRAW10::RAW10_to_Y8_FULL(const Debayer::InArgs& inArgs, Debayer::Out
 
   // Explanation of the iteration:
   //  - Neon allows us to look at and fill out 8 bytes of data
-  //  - To get 8 bytes of Red, Blue, and Green (twice, one for each row), we need to look at 4 blocks of bayer data
-  //  - We are always computing 2 rows of output data because we're always looking at 1 vertical Bayer block (2x2)
+  //  - To get 8 bytes of Red, Blue, and Green, we need to look at 4 blocks of bayer data
+  //  - We are either computing 2 rows of output data (FULL) or 1 row (HALF, QUARTER, EIGHTH)
   //  - We are either computing 16 cols of output data (FULL) or 8 cols (HALF, QUARTER, EIGHTH)
-  //  - We need to fill out 2 rows x 16 columns of output per iteration
   for (u32 row = 0; row < outArgs.height; row += setup.rowStep)
   {
     for (u32 col = 0; col < outArgs.width; col += setup.colStep)
@@ -795,7 +826,7 @@ Result HandleRAW10::RAW10_to_Y8_HALF(const Debayer::InArgs& inArgs, Debayer::Out
   SetupInfo setup(inArgs, outArgs);
   
   // The index to pull values from the table of loaded bytes
-  uint8x8_t index = vld1_u8(setup.indexes.data());
+  const uint8x8_t index = vld1_u8(setup.indexes.data());
 
   StoreInfo store;
   for (int i = 0; i < store.gammaLUT.size(); ++i){
@@ -817,10 +848,9 @@ Result HandleRAW10::RAW10_to_Y8_HALF(const Debayer::InArgs& inArgs, Debayer::Out
 
   // Explanation of the iteration:
   //  - Neon allows us to look at and fill out 8 bytes of data
-  //  - To get 8 bytes of Red, Blue, and Green (twice, one for each row), we need to look at 4 blocks of bayer data
-  //  - We are always computing 2 rows of output data because we're always looking at 1 vertical Bayer block (2x2)
+  //  - To get 8 bytes of Red, Blue, and Green, we need to look at 4 blocks of bayer data
+  //  - We are either computing 2 rows of output data (FULL) or 1 row (HALF, QUARTER, EIGHTH)
   //  - We are either computing 16 cols of output data (FULL) or 8 cols (HALF, QUARTER, EIGHTH)
-  //  - We need to fill out 2 rows x 16 columns of output per iteration
   for (u32 row = 0; row < outArgs.height; row += setup.rowStep)
   {
     for (u32 col = 0; col < outArgs.width; col += setup.colStep)
@@ -883,7 +913,7 @@ Result HandleRAW10::RAW10_to_Y8_QUARTER(const Debayer::InArgs& inArgs, Debayer::
   SetupInfo setup(inArgs, outArgs);
   
   // The index to pull values from the table of loaded bytes
-  uint8x8_t index = vld1_u8(setup.indexes.data());
+  const uint8x8_t index = vld1_u8(setup.indexes.data());
 
   StoreInfo store;
   for (int i = 0; i < store.gammaLUT.size(); ++i){
@@ -905,10 +935,9 @@ Result HandleRAW10::RAW10_to_Y8_QUARTER(const Debayer::InArgs& inArgs, Debayer::
 
   // Explanation of the iteration:
   //  - Neon allows us to look at and fill out 8 bytes of data
-  //  - To get 8 bytes of Red, Blue, and Green (twice, one for each row), we need to look at 4 blocks of bayer data
-  //  - We are always computing 2 rows of output data because we're always looking at 1 vertical Bayer block (2x2)
+  //  - To get 8 bytes of Red, Blue, and Green, we need to look at 4 blocks of bayer data
+  //  - We are either computing 2 rows of output data (FULL) or 1 row (HALF, QUARTER, EIGHTH)
   //  - We are either computing 16 cols of output data (FULL) or 8 cols (HALF, QUARTER, EIGHTH)
-  //  - We need to fill out 2 rows x 16 columns of output per iteration
   for (u32 row = 0; row < outArgs.height; row += setup.rowStep)
   {
     for (u32 col = 0; col < outArgs.width; col += setup.colStep)
@@ -970,7 +999,7 @@ Result HandleRAW10::RAW10_to_Y8_EIGHTH(const Debayer::InArgs& inArgs, Debayer::O
   SetupInfo setup(inArgs, outArgs);
   
   // The index to pull values from the table of loaded bytes
-  uint8x8_t index = vld1_u8(setup.indexes.data());
+  const uint8x8_t index = vld1_u8(setup.indexes.data());
 
   StoreInfo store;
   for (int i = 0; i < store.gammaLUT.size(); ++i){
@@ -992,10 +1021,9 @@ Result HandleRAW10::RAW10_to_Y8_EIGHTH(const Debayer::InArgs& inArgs, Debayer::O
 
   // Explanation of the iteration:
   //  - Neon allows us to look at and fill out 8 bytes of data
-  //  - To get 8 bytes of Red, Blue, and Green (twice, one for each row), we need to look at 4 blocks of bayer data
-  //  - We are always computing 2 rows of output data because we're always looking at 1 vertical Bayer block (2x2)
+  //  - To get 8 bytes of Red, Blue, and Green, we need to look at 4 blocks of bayer data
+  //  - We are either computing 2 rows of output data (FULL) or 1 row (HALF, QUARTER, EIGHTH)
   //  - We are either computing 16 cols of output data (FULL) or 8 cols (HALF, QUARTER, EIGHTH)
-  //  - We need to fill out 2 rows x 16 columns of output per iteration
   for (u32 row = 0; row < outArgs.height; row += setup.rowStep)
   {
     for (u32 col = 0; col < outArgs.width; col += setup.colStep)
