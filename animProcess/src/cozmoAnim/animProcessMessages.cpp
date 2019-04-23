@@ -222,25 +222,21 @@ void Process_setFullAnimTrackLockState(const Anki::Vector::RobotInterface::SetFu
 
 void Process_addAnim(const Anki::Vector::RobotInterface::AddAnim& msg)
 {
-  const std::string path = msg.animPath;
-
   LOG_INFO("AnimProcessMessages.Process_addAnim",
-           "Animation File: %s", path.c_str());
+           "Animation File: %s", msg.animPath.c_str());
 
-  _context->GetDataLoader()->LoadAnimationFile(path);
+  _context->GetDataLoader()->LoadAnimationFile(msg.animPath);
 }
 
 void Process_playAnim(const Anki::Vector::RobotInterface::PlayAnim& msg)
 {
-  const std::string animName = msg.animName;
-
   LOG_INFO("AnimProcessMessages.Process_playAnim",
            "Anim: %s, Tag: %d",
-           animName.c_str(), msg.tag);
+           msg.animName.c_str(), msg.tag);
 
   const bool interruptRunning = true;
   const bool overrideEyes = !msg.renderInEyeHue;
-  _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops, msg.startAt_ms, interruptRunning, overrideEyes, msg.renderInEyeHue);
+  _animStreamer->SetStreamingAnimation(msg.animName, msg.tag, msg.numLoops, msg.startAt_ms, interruptRunning, overrideEyes, msg.renderInEyeHue);
 }
 
 void Process_abortAnimation(const Anki::Vector::RobotInterface::AbortAnimation& msg)
@@ -293,9 +289,7 @@ void Process_updateCompositeImage(const Anki::Vector::RobotInterface::UpdateComp
 
 void Process_playCompositeAnimation(const Anki::Vector::RobotInterface::PlayCompositeAnimation& msg)
 {
-  const std::string animName =msg.animName;
-
-  _animStreamer->Process_playCompositeAnimation(animName, msg.tag);
+  _animStreamer->Process_playCompositeAnimation(msg.animName, msg.tag);
 }
 
 void Process_playAnimWithSpriteBoxRemaps(const Anki::Vector::RobotInterface::PlayAnimWithSpriteBoxRemaps& msg)
@@ -661,8 +655,7 @@ void Process_updatedSettings(const RobotInterface::UpdatedSettings& msg)
       _context->GetMicDataSystem()->SetEnableDataCollectionSettings(msg.enableDataCollection);
       break;
     case SettingBeingChanged::SETTING_TIME_ZONE:
-      std::string timeZone = msg.timeZone;
-      _context->GetMicDataSystem()->UpdateTimeZone(timeZone);
+      _context->GetMicDataSystem()->UpdateTimeZone(msg.timeZone);
       break;
   }
 }
@@ -678,13 +671,13 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
   bool forwardToRobot = false;
   switch (msg.GetTag())
   {
-    case RobotInterface::EngineToRobot::Tag::absLocalizationUpdate:
+    case RobotInterface::EngineToRobotTag::absLocalizationUpdate:
     {
       forwardToRobot = true;
       _context->GetMicDataSystem()->ResetMicListenDirection();
       break;
     }
-    case RobotInterface::EngineToRobot::Tag::calmPowerMode:
+    case RobotInterface::EngineToRobotTag::calmPowerMode:
     {
       // Remember the power mode specified by engine so that we can go back to
       // it when pairing/debug screens are exited.
@@ -693,7 +686,7 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
       forwardToRobot = FaceInfoScreenManager::getInstance()->GetCurrScreenName() == ScreenName::None;
       break;
     }
-    case RobotInterface::EngineToRobot::Tag::setBackpackLights:
+    case RobotInterface::EngineToRobotTag::setBackpackLights:
     {
       // Intercept the SetBackpackLights message from engine
       _context->GetBackpackLightComponent()->SetBackpackAnimation({msg.Get_setBackpackLights()});
@@ -709,9 +702,7 @@ void AnimProcessMessages::ProcessMessageFromEngine(const RobotInterface::EngineT
 
   if (forwardToRobot) {
     // Send message along to robot if it wasn't handled here
-    uint8_t data[msg.Size()];
-    msg.Pack(data, msg.Size());
-    AnimComms::SendPacketToRobot((char*)data, (int)msg.Size());
+    AnimProcessMessages::SendAnimToRobot(msg);
   }
 
 } // ProcessMessageFromEngine()
@@ -762,12 +753,12 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
   const auto tag = msg.GetTag();
   switch (tag)
   {
-    case RobotInterface::RobotToEngine::Tag::robotServerDisconnect:
+    case RobotInterface::RobotToEngineTag::robotServerDisconnect:
     {
       AnimComms::DisconnectRobot();
     }
     break;
-    case RobotInterface::RobotToEngine::Tag::prepForShutdown:
+    case RobotInterface::RobotToEngineTag::prepForShutdown:
     {
       PRINT_NAMED_INFO("AnimProcessMessages.ProcessMessageFromRobot.Shutdown","");
       // Need to wait a couple ticks before actually shutting down so that this message
@@ -775,14 +766,14 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
       _countToShutdown = kNumTicksToShutdown;
     }
     break;
-    case RobotInterface::RobotToEngine::Tag::micData:
+    case RobotInterface::RobotToEngineTag::micData:
     {
       const auto& payload = msg.Get_micData();
       ProcessMicDataMessage(payload);
       return;
     }
     break;
-    case RobotInterface::RobotToEngine::Tag::state:
+    case RobotInterface::RobotToEngineTag::state:
     {
       HandleRobotStateUpdate(msg.Get_state());
       const bool onChargerContacts = (msg.Get_state().status & (uint32_t)RobotStatusFlag::IS_ON_CHARGER);
@@ -800,18 +791,18 @@ void AnimProcessMessages::ProcessMessageFromRobot(const RobotInterface::RobotToE
 
     }
     break;
-    case RobotInterface::RobotToEngine::Tag::stillAlive:
+    case RobotInterface::RobotToEngineTag::stillAlive:
     {
       _pendingRobotDisconnectTime_sec = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds() + kNoRobotStateDisconnectTimeout_sec;
     }
     break;
-    case RobotInterface::RobotToEngine::Tag::robotStopped:
+    case RobotInterface::RobotToEngineTag::robotStopped:
     {
       LOG_INFO("AnimProcessMessages.ProcessMessageFromRobot.RobotStopped", "Abort animation");
       _animStreamer->Abort();
     }
     break;
-    case RobotInterface::RobotToEngine::Tag::syncRobotAck:
+    case RobotInterface::RobotToEngineTag::syncRobotAck:
     {
       std::string version((const char*)&msg.Get_syncRobotAck().sysconVersion, 16);
       FaceInfoScreenManager::getInstance()->SetSysconVersion(version);
@@ -971,10 +962,6 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
                     (int)msg.Size(), dataLen);
         continue;
       }
-      // TODO:REG if (!msg.IsValid()) {
-      //   LOG_WARNING("AnimProcessMessages.Update.EngineToRobot.InvalidData", "Invalid message from engine");
-      //   continue;
-      // }
       ProcessMessageFromEngine(msg);
     }
   }
@@ -994,10 +981,6 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
                     (int)msg.Size(), dataLen);
         continue;
       }
-// TODO:REG     if (!msg.IsValid()) {
-//        LOG_WARNING("AnimProcessMessages.Update.RobotToEngine.InvalidData", "Invalid message from robot");
-//        continue;
-//      }
       ProcessMessageFromRobot(msg);
       _proceduralAudioClient->ProcessMessage(msg);
     }
@@ -1028,6 +1011,8 @@ Result AnimProcessMessages::Update(BaseStationTime_t currTime_nanosec)
   return RESULT_OK;
 }
 
+
+
 bool AnimProcessMessages::SendAnimToRobotEx(const RobotInterface::EngineToRobot& msg)  
 {  
   static Util::MessageProfiler msgProfiler("AnimProcessMessages::SendAnimToRobot");  
@@ -1048,7 +1033,7 @@ bool AnimProcessMessages::SendAnimToEngineEx(const RobotInterface::RobotToEngine
 {  
   static Util::MessageProfiler msgProfiler("AnimProcessMessages::SendAnimToEngine");  
 
-   LOG_TRACE("AnimProcessMessages.SendAnimToEngine", "Send tag %d size %u", (int)msg.GetTag(), msg.Size());  
+  LOG_TRACE("AnimProcessMessages.SendAnimToEngine", "Send tag %d size %u", (int)msg.GetTag(), msg.Size());  
   uint8_t data[msg.Size()];
   msg.Pack(data, msg.Size());
   bool result = AnimComms::SendPacketToEngine(data, (int)msg.Size());  

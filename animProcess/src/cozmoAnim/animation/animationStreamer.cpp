@@ -835,8 +835,7 @@ namespace Anim {
     // will delete *_streamingAnimation without assigning it to nullptr. This assignment prevents associated
     // undefined behavior
     _streamingAnimation = _neutralFaceAnimation;
-    const std::string animName = msg.animName;
-    CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(animName));
+    CopyIntoProceduralAnimation(_context->GetDataLoader()->GetCannedAnimation(msg.animName));
     for (int i = 0; i < msg.numRemaps; ++i)
     {
       _proceduralAnimation->AddSpriteBoxRemap(msg.spriteBoxRemaps[i].spriteBoxName,
@@ -1772,7 +1771,7 @@ namespace Anim {
     if (layeredKeyFrames.haveBackpackKeyFrame &&
         !IsTrackLocked(tracksCurrentlyLocked, (u8)AnimTrackFlag::BACKPACK_LIGHTS_TRACK))
     {
-      // TODO:REG stateToSend.backpackLightsMessage = layeredKeyFrames.backpackKeyFrame.GetStreamMessage(timeSinceAnimStart_ms);
+      stateToSend.backpackLightsMessage = layeredKeyFrames.backpackKeyFrame.GetStreamMessage(timeSinceAnimStart_ms);
     }
 
     if (layeredKeyFrames.haveAudioKeyFrame &&
@@ -2174,8 +2173,7 @@ namespace Anim {
 
   void AnimationStreamer::ProcessAddOrUpdateEyeShift(const RobotInterface::AddOrUpdateEyeShift& msg)
   {
-    const std::string layerName = msg.name;
-    _proceduralTrackComponent->AddOrUpdateEyeShift(layerName,
+    _proceduralTrackComponent->AddOrUpdateEyeShift(msg.name,
                                                    msg.xPix,
                                                    msg.yPix,
                                                    msg.duration_ms,
@@ -2189,14 +2187,12 @@ namespace Anim {
 
   void AnimationStreamer::ProcessRemoveEyeShift(const RobotInterface::RemoveEyeShift& msg)
   {
-    const std::string layerName = msg.name;
-    _proceduralTrackComponent->RemoveEyeShift(layerName, _relativeStreamTime_ms, msg.disableTimeout_ms);
+    _proceduralTrackComponent->RemoveEyeShift(msg.name, _relativeStreamTime_ms, msg.disableTimeout_ms);
   }
 
   void AnimationStreamer::ProcessAddSquint(const RobotInterface::AddSquint& msg)
   {
-    const std::string layerName = msg.name;
-    _proceduralTrackComponent->AddSquint(layerName,
+    _proceduralTrackComponent->AddSquint(msg.name,
                                          msg.squintScaleX,
                                          msg.squintScaleY,
                                          msg.upperLidAngle,
@@ -2205,8 +2201,7 @@ namespace Anim {
 
   void AnimationStreamer::ProcessRemoveSquint(const RobotInterface::RemoveSquint& msg)
   {
-    const std::string layerName = msg.name;
-    _proceduralTrackComponent->RemoveSquint(layerName, _relativeStreamTime_ms, msg.disableTimeout_ms);
+    _proceduralTrackComponent->RemoveSquint(msg.name, _relativeStreamTime_ms, msg.disableTimeout_ms);
   }
 
   void AnimationStreamer::StopTracks(const u8 whichTracks)

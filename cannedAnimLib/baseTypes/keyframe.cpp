@@ -152,7 +152,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           streamHeadMsg.angle_rad = DEG_TO_RAD(_angle_deg);
         }
         
-        return new RobotInterface::EngineToRobot(streamHeadMsg);
+        auto cpy = streamHeadMsg;
+        return new RobotInterface::EngineToRobot(std::move(cpy));
       }
 
     #endif
@@ -212,7 +213,8 @@ void SafeNumericCast(const FromType& fromVal, ToType& toVal, const char* debugNa
           streamLiftMsg.height_mm = _height_mm;
         }
 
-        return new RobotInterface::EngineToRobot(streamLiftMsg);
+        auto cpy = streamLiftMsg;
+        return new RobotInterface::EngineToRobot(std::move(cpy));
       }
     #endif
 
@@ -1078,7 +1080,8 @@ _streamMsg.lights[__LED_NAME__].offset_ms = 0; } while(0)
         if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
           return nullptr;
         }
-        return new RobotInterface::EngineToRobot(_streamMsg);
+        auto cpy = _streamMsg;
+        return new RobotInterface::EngineToRobot(std::move(cpy));
       }
     #endif
     
@@ -1232,10 +1235,12 @@ _streamMsg.lights[__LED_NAME__].offset_ms = 0; } while(0)
         //                 "currentTime=%d, duration=%d\n", timeSinceAnimStart_ms, _keyframeActiveDuration_ms);
         if(IsFirstKeyframeTick(timeSinceAnimStart_ms)) {
           // Send the motion command at the beginning
-          return new RobotInterface::EngineToRobot(_streamMsg);
+          auto cpy = _streamMsg;
+          return new RobotInterface::EngineToRobot(std::move(cpy));
         } else if(_enableStopMessage && GetTimeSinceTrigger(timeSinceAnimStart_ms) >= _keyframeActiveDuration_ms) {
           // Send a stop command when the duration has passed
-          return new RobotInterface::EngineToRobot(_stopMsg);
+          auto cpy = _stopMsg;
+          return new RobotInterface::EngineToRobot(std::move(cpy));
         } else {
           // Do nothing in the middle or if no done message is required.
           return nullptr;
@@ -1284,7 +1289,8 @@ _streamMsg.lights[__LED_NAME__].offset_ms = 0; } while(0)
         if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
           return nullptr;
         }
-        return new RobotInterface::EngineToRobot(_streamMsg);
+        auto cpy = _streamMsg;
+        return new RobotInterface::EngineToRobot(std::move(cpy));
       }
     #endif
     
@@ -1399,7 +1405,8 @@ _streamMsg.lights[__LED_NAME__].offset_ms = 0; } while(0)
         if(!IsFirstKeyframeTick(timeSinceAnimStart_ms)){
           return nullptr;
         }
-        return new RobotInterface::EngineToRobot(_streamMsg);
+        auto cpy = _streamMsg;
+        return new RobotInterface::EngineToRobot(std::move(cpy));
       }
     #endif
 
