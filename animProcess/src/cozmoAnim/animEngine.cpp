@@ -266,16 +266,14 @@ void AnimEngine::HandleMessage(const RobotInterface::TextToSpeechCancel & msg)
 
 void AnimEngine::HandleMessage(const RobotInterface::SetLocale & msg)
 {
-  const std::string locale = msg.locale;
-
-  LOG_INFO("AnimEngine.SetLocale", "Set locale to %s", locale.c_str());
+  LOG_INFO("AnimEngine.SetLocale", "Set locale to %s", msg.locale.c_str());
 
   if (_context != nullptr) {
-    _context->SetLocale(locale);
+    _context->SetLocale(msg.locale);
   }
 
   if (_ttsComponent != nullptr) {
-    _ttsComponent->SetLocale(locale);
+    _ttsComponent->SetLocale(msg.locale);
   }
 }
 

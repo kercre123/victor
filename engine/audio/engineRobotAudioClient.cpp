@@ -212,19 +212,19 @@ void EngineRobotAudioClient::HandleRobotEngineMessage( const AnkiEvent<RobotInte
 {
   switch ( static_cast<RobotInterface::RobotToEngineTag>( message.GetType() ) ) {
     
-    case RobotInterface::RobotToEngine::Tag::audioCallbackDuration:
+    case RobotInterface::RobotToEngineTag::audioCallbackDuration:
       HandleCallbackEvent( message.GetData().Get_audioCallbackDuration() );
       break;
     
-    case RobotInterface::RobotToEngine::Tag::audioCallbackMarker:
+    case RobotInterface::RobotToEngineTag::audioCallbackMarker:
       HandleCallbackEvent( message.GetData().Get_audioCallbackMarker() );
       break;
       
-    case RobotInterface::RobotToEngine::Tag::audioCallbackComplete:
+    case RobotInterface::RobotToEngineTag::audioCallbackComplete:
       HandleCallbackEvent( message.GetData().Get_audioCallbackComplete() );
       break;
       
-    case RobotInterface::RobotToEngine::Tag::audioCallbackError:
+    case RobotInterface::RobotToEngineTag::audioCallbackError:
       HandleCallbackEvent( message.GetData().Get_audioCallbackError() );
       break;
       

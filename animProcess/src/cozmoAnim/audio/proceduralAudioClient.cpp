@@ -129,13 +129,13 @@ void ProceduralAudioClient::ProcessMessage(const RobotInterface::RobotToEngine &
 {
   using namespace RobotInterface;
   switch (msg.GetTag()) {
-    case RobotToEngine::Tag::state:
+    case RobotToEngineTag::state:
     {
       HandleStateMessage(msg);
       break;
     }
       
-    case RobotToEngine::Tag::syncRobotAck:
+    case RobotToEngineTag::syncRobotAck:
     {
       // Wait for syncRobotAck to indicate the robot's motors are settled and ready to start making noise
       // NOTE: This may need improvments, perhaps use motor calibration messages

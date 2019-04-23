@@ -593,14 +593,14 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
   #endif
   for (auto& msg : stolenMessages)
   {
-    if (msg->GetTag() == RobotInterface::RobotToEngine::Tag::triggerWordDetected)
+    if (msg->GetTag() == RobotInterface::RobotToEngineTag::triggerWordDetected)
     {
       AnimProcessMessages::SendAnimToEngine(*msg);
 
       ShowAudioStreamStateManager* showStreamState = _context->GetShowAudioStreamStateManager();
       SetWillStream(showStreamState->ShouldStreamAfterTriggerWordResponse());
     }
-    else if (msg->GetTag() == RobotInterface::RobotToEngine::Tag::micDirection)
+    else if (msg->GetTag() == RobotInterface::RobotToEngineTag::micDirection)
     {
       _latestMicDirectionMsg = msg->Get_micDirection();
       #if ANKI_DEV_CHEATS
@@ -608,7 +608,7 @@ void MicDataSystem::Update(BaseStationTime_t currTime_nanosec)
       #endif
       AnimProcessMessages::SendAnimToEngine(*msg);
     }
-    else if (msg->GetTag() == RobotInterface::RobotToEngine::Tag::beatDetectorState)
+    else if (msg->GetTag() == RobotInterface::RobotToEngineTag::beatDetectorState)
     {
       AnimProcessMessages::SendAnimToEngine(*msg);
     }

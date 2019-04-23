@@ -196,8 +196,7 @@ void AudioPlaybackSystem::OnAudioPlaybackBegin()
   {
     RobotInterface::AudioPlaybackBegin event;
 
-    const std::string& filename = _currentJob->GetFilename();
-    event.path = filename;
+    event.path = _currentJob->GetFilename();
 
     AnimProcessMessages::SendAnimToEngine( std::move( event ) );
   }
@@ -210,8 +209,7 @@ void AudioPlaybackSystem::OnAudioPlaybackEnd()
   {
     RobotInterface::AudioPlaybackEnd event;
 
-    const std::string& filename = _currentJob->GetFilename();
-    event.path = filename;
+    event.path = _currentJob->GetFilename();
 
     AnimProcessMessages::SendAnimToEngine( std::move( event ) );
   }

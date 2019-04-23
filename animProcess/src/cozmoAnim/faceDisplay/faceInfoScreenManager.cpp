@@ -249,7 +249,7 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
   auto noneEnterFcn = [this]() {
     // Restore power mode as specified by engine
     auto cpy = _calmModeMsgOnNone;
-    AnimProcessMessages::SendAnimToRobot(std::move(_calmModeMsgOnNone));
+    AnimProcessMessages::SendAnimToRobot(std::move(cpy));
 
     if (FACTORY_TEST) {
       InitConnectionFlow(_animationStreamer);
@@ -1529,7 +1529,7 @@ void FaceInfoScreenManager::SetCustomText(const RobotInterface::DrawTextOnScreen
 
 void FaceInfoScreenManager::DrawCustomText()
 {
-  DrawTextOnScreen({std::string(_customText.text)},
+  DrawTextOnScreen({_customText.text},
                    ColorRGBA(_customText.textColor.r,
                              _customText.textColor.g,
                              _customText.textColor.b),

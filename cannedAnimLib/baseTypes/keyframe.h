@@ -29,8 +29,6 @@
 #ifndef CAN_STREAM
 #define CAN_STREAM true
 #endif
-#undef CAN_STREAM
-#define CAN_STREAM 0
 
 namespace CozmoAnim {
   struct HeadAngle;
