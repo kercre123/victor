@@ -202,14 +202,14 @@ do
 
   # Upload test results
   if [ $JENKINS_UPLOAD -eq 1 ]; then
-    CRUMB_JSON=`curl -s -u $JENKINS_USER:$JENKINS_PASSWORD http://$JENKINS_URL/crumbIssuer/api/json`
+    CRUMB_JSON=`curl -s -u $JENKINS_USER:$JENKINS_PASSWORD https://$JENKINS_URL/crumbIssuer/api/json`
     CRUMB_HEADER=Jenkins-Crumb:`echo $CRUMB_JSON | cut -c62-93`
 
-    curl -X POST $JENKINS_URL/job/sample/build \
+    curl -X POST https://$JENKINS_URL/job/treadmill/build \
           --user $JENKINS_USER:$JENKINS_PASSWORD \
           --header $CRUMB_HEADER \
           --form file0=@$TAP_FILE_PATH \
-          --form json='{"parameter": [{"name":"upload.txt", "file":"file0"}]}'
+          --form json='{"parameter": [{"name":"results.tap", "file":"file0"}]}'
   fi
 
 done
