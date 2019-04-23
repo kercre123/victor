@@ -1341,7 +1341,7 @@ namespace Vector {
       _vizManager->SendCameraParams(params);
 
       {
-        // Still needed?
+        // Used by SDK
         // TODO: Add WB params to message?
         using namespace ExternalInterface;
         const u16 exposure_ms_u16 = Util::numeric_cast<u16>(params.exposureTime_ms);

@@ -76,7 +76,7 @@ public:
 
   template<typename T>
   void HandleMessage(const T& msg);
-  void ReleaseCameraExposure();
+  void EnableCameraAutoExposure(bool enable = true);
 
 private:
 

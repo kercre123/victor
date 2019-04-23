@@ -75,6 +75,11 @@ bool ProtoCladInterpreter::Redirect(
       ProtoSetFaceToEnrollRequestToClad(proto_message, clad_message);
       break;
     }
+    case external_interface::GatewayWrapper::kCameraConfigRequest:
+    {
+      ProtoCameraConfigRequestToClad(proto_message, clad_message);
+      break;
+    }
     default:
     {
       return false;
@@ -100,6 +105,16 @@ bool ProtoCladInterpreter::Redirect(
     case ExternalInterface::MessageEngineToGameTag::EndOfMessage:
     {
       CladEndOfMessageToProto(message, proto_message);
+      break;
+    }
+    case ExternalInterface::MessageEngineToGameTag::PerRobotSettings:
+    {
+      CladPerRobotSettingsToProto(message, proto_message);
+      break;
+    }
+    case ExternalInterface::MessageEngineToGameTag::CurrentCameraParams:
+    { 
+      CladCurrentCameraParamsToProto(message, proto_message);
       break;
     }
     default:
@@ -219,6 +234,13 @@ void ProtoCladInterpreter::ProtoSetFaceToEnrollRequestToClad(
   clad_message.Set_SetFaceToEnroll(set_face_to_enroll);
 }
 
+void ProtoCladInterpreter::ProtoCameraConfigRequestToClad(
+    const external_interface::GatewayWrapper& proto_message,
+    ExternalInterface::MessageGameToEngine& clad_message) {
+  Anki::Vector::ExternalInterface::RequestRobotSettings request_settings;
+  clad_message.Set_RequestRobotSettings(request_settings);
+}
+
 void ProtoCladInterpreter::CladDriveWheelsToProto(
     const ExternalInterface::MessageGameToEngine& clad_message,
     external_interface::GatewayWrapper& proto_message) { 
@@ -267,6 +289,32 @@ void ProtoCladInterpreter::CladEndOfMessageToProto(
   proto_message = ExternalMessageRouter::WrapResponse(end_of_list_animations_response);
 }
 
+void ProtoCladInterpreter::CladPerRobotSettingsToProto(
+    const ExternalInterface::MessageEngineToGame& clad_message, 
+    external_interface::GatewayWrapper& proto_message) {
+  external_interface::CameraConfigResponse* camera_config_response = new external_interface::CameraConfigResponse;
+  camera_config_response->set_focal_length_x(clad_message.Get_PerRobotSettings().cameraConfig.focalLengthX);
+  camera_config_response->set_focal_length_y(clad_message.Get_PerRobotSettings().cameraConfig.focalLengthY);
+  camera_config_response->set_center_x(clad_message.Get_PerRobotSettings().cameraConfig.centerX);
+  camera_config_response->set_center_y(clad_message.Get_PerRobotSettings().cameraConfig.centerY);
+  camera_config_response->set_fov_x(clad_message.Get_PerRobotSettings().cameraConfig.fovX);  // Full FOV in degrees
+  camera_config_response->set_fov_y(clad_message.Get_PerRobotSettings().cameraConfig.fovY);  // Full FOV in degrees
+  camera_config_response->set_min_camera_exposure_time_ms(clad_message.Get_PerRobotSettings().cameraConfig.minCameraExposureTime_ms);
+  camera_config_response->set_max_camera_exposure_time_ms(clad_message.Get_PerRobotSettings().cameraConfig.maxCameraExposureTime_ms);
+  camera_config_response->set_min_camera_gain(clad_message.Get_PerRobotSettings().cameraConfig.minCameraGain);
+  camera_config_response->set_max_camera_gain(clad_message.Get_PerRobotSettings().cameraConfig.maxCameraGain);
+  proto_message = ExternalMessageRouter::WrapResponse(camera_config_response);
+}
+
+void ProtoCladInterpreter::CladCurrentCameraParamsToProto(
+    const ExternalInterface::MessageEngineToGame& clad_message, 
+    external_interface::GatewayWrapper& proto_message) {
+  external_interface::CameraSettingsUpdate* current_camera_settings = new external_interface::CameraSettingsUpdate;
+  current_camera_settings->set_gain(clad_message.Get_CurrentCameraParams().cameraGain);
+  current_camera_settings->set_exposure_ms(clad_message.Get_CurrentCameraParams().exposure_ms);
+  current_camera_settings->set_auto_exposure_enabled(clad_message.Get_CurrentCameraParams().autoExposureEnabled);
+  proto_message = ExternalMessageRouter::Wrap(current_camera_settings);
+}
 
 } // namespace Vector
 } // namespace Anki

@@ -3512,6 +3512,28 @@ func (service *rpcService) SetEyeColor(ctx context.Context, in *extint.SetEyeCol
 	}, nil
 }
 
+// Get Camera Configuration
+func (service *rpcService) GetCameraConfig(ctx context.Context, in *extint.CameraConfigRequest) (*extint.CameraConfigResponse, error) {
+	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_CameraConfigResponse{}, 1)
+	defer f()
+
+	_, _, err := engineProtoManager.Write(&extint.GatewayWrapper{
+		OneofMessageType: &extint.GatewayWrapper_CameraConfigRequest{
+			CameraConfigRequest: in,
+		},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	payload, ok := <-responseChan
+	if !ok {
+		return nil, grpc.Errorf(codes.Internal, "Failed to retrieve message")
+	}
+	response := payload.GetCameraConfigResponse()
+	return response, nil
+}
+
 // Set Camera Settings
 func (service *rpcService) SetCameraSettings(ctx context.Context, in *extint.SetCameraSettingsRequest) (*extint.SetCameraSettingsResponse, error) {
 	f, responseChan := engineProtoManager.CreateChannel(&extint.GatewayWrapper_SetCameraSettingsResponse{}, 1)

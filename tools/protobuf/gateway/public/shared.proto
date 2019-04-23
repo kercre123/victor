@@ -70,6 +70,7 @@ message Event {
     RobotObservedMotion              robot_observed_motion               = 20;
     RobotErasedEnrolledFace          robot_erased_enrolled_face          = 21;
     RobotRenamedEnrolledFace         robot_renamed_enrolled_face         = 22;
+    CameraSettingsUpdate             camera_settings_update              = 23;
   }
 }
 
@@ -302,6 +303,8 @@ message GatewayWrapper {
     MasterVolumeResponse          master_volume_response             = 1703;
     SetCameraSettingsRequest      set_camera_settings_request        = 1704;
     SetCameraSettingsResponse     set_camera_settings_response       = 1705;
+    CameraConfigRequest           camera_config_request              = 1706;
+    CameraConfigResponse          camera_config_response             = 1707;
 
     // ------------ Streaming audio playback (SDK only) ------------
     ExternalAudioStreamPrepare    external_audio_stream_prepare      = 1800;
