@@ -23,6 +23,8 @@ DAS_SRC_FILES := \
 vpath %.cpp $(DAS_SRC_DIR) $(DAS_TESTING_DIR)
 
 CXX := clang++
+AR := /usr/bin/ar
+
 CXXFLAGS += -g
 CXXFLAGS += -I$(DAS_INC_DIR)
 CXXFLAGS += -I$(DAS_INC_DIR)/DAS
