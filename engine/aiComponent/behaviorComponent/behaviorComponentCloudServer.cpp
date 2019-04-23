@@ -75,15 +75,15 @@ void BehaviorComponentCloudServer::RunThread(std::string sockName)
     while (!ready)
     {
       // Block until a message arrives, with timeout.  We use a timeout simply to prevent
-      // this thread from hanging on shutdown of engine.  The timeout (1 second) is longer
+      // this thread from hanging on shutdown of engine.  The timeout (100 ms) is longer
       // than the 40ms sleep we had when polling, and well within the approximately 12
       // seconds it takes for the thread to crash after engine starts shutting down.
       fd_set fdset;
       FD_ZERO(&fdset);
       FD_SET(fd, &fdset);
       timeval timeout;
-      timeout.tv_sec = 1;
-      timeout.tv_usec = 0;
+      timeout.tv_sec = 0;
+      timeout.tv_usec = 100000;
       const int n = select(nfds, &fdset, nullptr, nullptr, &timeout);
       if (_shutdown)
       {
