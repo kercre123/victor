@@ -18,6 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/ankiEventUtil.h"
+#include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
@@ -161,6 +162,7 @@ void SocialPresenceEstimator::UpdateDependent(const RobotCompMap& dependentComps
   const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
   // update inputs here
+  UpdateInputs(dependentComps);
 
   UpdateRSPI();
 
@@ -175,11 +177,8 @@ void SocialPresenceEstimator::UpdateDependent(const RobotCompMap& dependentComps
 void SocialPresenceEstimator::UpdateInputs(const RobotCompMap& dependentComps)
 {
   // poll the inputs we need to poll
-
-  // let's start with user intent
-  // just check IsAnyUserIntentPending? I don't see a way to get notified when it arrives
-  // would need to keep track of whether it's new.
-  // alternative: add a callback method to UserIntentComponent
+  auto& touch = dependentComps.GetComponent<TouchSensorComponent>();
+  PollTouch(touch);
 }
 
 
@@ -272,6 +271,19 @@ void SocialPresenceEstimator::OnRobotObservedFace(const AnkiEvent<ExternalInterf
   // For now we treat all faces as the same event
   LogInputEvent(&_SPEFace);
   TriggerInputEvent(&_SPEFace);
+}
+
+
+// ******** Input Event pollers ********
+
+void SocialPresenceEstimator::PollTouch(const TouchSensorComponent& touchSensorComponent)
+{
+  LOG_WARNING("SocialPresenceEstimator.PollTouch.Polling", "");
+  if (touchSensorComponent.GetIsPressed()) {
+    LogInputEvent(&_SPETouch);
+    TriggerInputEvent(&_SPETouch);
+  }
+
 }
 
 

@@ -119,7 +119,8 @@ public:
   //virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override {}
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
-    dependencies.insert(RobotComponentID::AIComponent);
+    //dependencies.insert(RobotComponentID::AIComponent);
+    dependencies.insert(RobotComponentID::TouchSensor);
   }
   virtual void AdditionalUpdateAccessibleComponents(RobotCompIDSet& components) const override {
 
@@ -142,6 +143,8 @@ private:
   void TriggerInputEvent(SocialPresenceEvent* inputEvent);
   void LogInputEvent(SocialPresenceEvent* inputEvent);
 
+  void PollTouch(const TouchSensorComponent& touchSensorComponent);
+
 
 
   // -------------------------- Private Member Vars ----------------------------
@@ -160,6 +163,8 @@ private:
       SocialPresenceEvent("Face", std::make_shared<ExponentialDecay>(0.1), 0.8f, 1.0f, 0.8f, 1.0f, false);
   SocialPresenceEvent _SPESleep =
       SocialPresenceEvent("Sleep", std::make_shared<PowerDecay>(1.1f), -0.9f, 0.0f, -0.9f, 0.0f, true);
+  SocialPresenceEvent _SPETouch =
+      SocialPresenceEvent("Touch", std::make_shared<ExponentialDecay>(0.2f), 0.8f, 1.0f, 0.8f, 1.0f, false);
   // name, delay, independent effect, independent effect max, reinforcement effect, reinforcement effect max
   SocialPresenceEvent _spete1 = SocialPresenceEvent("ExplicitPositive", std::make_shared<ExponentialDecay>(0.1f), 1.0f, 1.0f, 1.0f, 1.0f, true);
   SocialPresenceEvent _spete2 = SocialPresenceEvent("ImplicitPositive", std::make_shared<ExponentialDecay>(0.3f), 0.5f, 1.0f, 0.5f, 1.0f);
@@ -175,6 +180,7 @@ private:
       &_SPEUserIntent,
       &_SPEFace,
       &_SPESleep,
+      &_SPETouch,
       &_spete1,
       &_spete2,
       &_spete3,
