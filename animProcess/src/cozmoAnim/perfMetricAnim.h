@@ -55,8 +55,8 @@ private:
                                 const int dumpBufferOffset,
                                 const int lineIndex) override final;
 
-  // Frame size:  Base struct is 16 bytes; plus this struct is 20 bytes = 36 bytes total
-  // x 1000 frames is roughly 35 KB
+  // Frame size:  Base struct is 16 bytes; plus this struct is 24 bytes = 40 bytes total
+  // x 2000 frames is roughly 78 KB
   struct FrameMetricAnim : public FrameMetric
   {
     uint32_t _messageCountAnimToRobot;

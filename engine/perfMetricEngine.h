@@ -51,7 +51,7 @@ private:
                                 const int lineIndex) override final;
 
   // Frame size:  Base struct is 16 bytes; here is 10 words * 4 (40 bytes), plus 32 bytes = 88 bytes
-  // x 4000 frames is ~344 KB
+  // x 1000 frames is ~86 KB
   struct FrameMetricEngine : public FrameMetric
   {
     uint32_t _messageCountRobotToEngine;

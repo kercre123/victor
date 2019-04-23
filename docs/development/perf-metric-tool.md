@@ -1,15 +1,17 @@
 # PerfMetric Tool
 
-PerfMetric is a tool that is compiled into Victor's engine and anim processes, and records information about each tick in a circular buffer. After a short recording session, one can examine the buffer of recorded tick information. PerfMetric's CPU overhead is minimal. PerfMetric is compiled out of shipping builds.
+PerfMetric is a tool that is compiled into Victor's engine and anim processes, and records information about each tick in a circular buffer in memory. After a short recording session, one can examine the buffer of recorded tick information. PerfMetric's CPU overhead is minimal. PerfMetric is compiled out of shipping builds.
 
 Some uses:
-* See how spikey or smooth the engine or anim tick rate is
+* See how spikey the engine or anim tick rate is
 * See that certain behaviors or activities use more or less CPU
-* Measure before-and-after average tick rates, for optimization attempts
+* Measure before-and-after average tick durations, for optimization attempts
 * Compare Debug vs. Release performance
-* For automated performance testing
+* Identify extra-long ticks which might indicate some initialization code that could be optimized
+* Use with automated performance testing
 
 What is recorded for each vic-engine tick:
+* Corresponding robot time which can be used to compare this information with logs
 * Engine duration: The time the engine tick took to execute, in ms
 * Engine frequency: The total time of the engine tick, including sleep, in ms
 * Sleep intended: The duration the engine intended to sleep, in ms
@@ -28,47 +30,50 @@ What is recorded for each vic-engine tick:
 * Behavior: The current top-of-stack behavior
 
 What is recorded for each vic-anim tick:
+* Corresponding robot time which can be used to compare this information with logs
 * Anim duration: The time the anim tick took to execute, in ms
 * Anim frequency: The total time of the anim tick, including sleep, in ms
 * Sleep intended: The duration the anim process intended to sleep, in ms
 * Sleep actual: The duration the anim process actually slept, in ms; this is often more than what was intended
 * Oversleep: How much longer the anim process slept than intended, in ms
-* (more to come later)
+* RtA Count: How many robot-to-anim messages were received
+* AtR Count: How many anim-to-robot messages were sent
+* EtA Count: How many engine-to-anim messages were received
+* AtE Count: How many anim-to-engine messages were sent
+* Anim Time: The time offset within the current animation, in ms; hard-incremented by 33 ms each frame
+* Layer Count: The number of composite layers being rendered
 
-When results are dumped, a summary section shows extra information, including the mininum, maximum, average, and standard deviation for each of the appropriate stats. This allows you to see, for example, the average tick rate, or the longest tick.
+When results are dumped, a summary section shows extra information, including the mininum, maximum, average, and standard deviation for each of the appropriate stats. This allows you to see, for example, the average tick duration, or the longest tick.
 
 ### Sample output (for vic-engine)
 
 ```
-         Engine   Engine    Sleep    Sleep     Over      RtE   EtR   GtE   EtG   Viz  Battery
-       Duration     Freq Intended   Actual    Sleep    Count Count Count Count Count  Voltage  Active Feature/Behavior
-     0   25.839   59.744   33.591   33.904    0.313       24     0     0     7     0    3.970  Observing  LookInPlaceHeadUp
-     1   10.074   59.930   49.611   49.855    0.244       13     0     0     5     0    3.970  Observing  LookInPlaceHeadUp
-     2   13.431   59.941   46.324   46.509    0.185       25     0     0     4     0    3.970  Observing  LookInPlaceHeadUp
-     3   39.082   60.016   20.732   20.933    0.201       26     1     0     8     0    3.970  Observing  LookInPlaceHeadUp
-     4   12.754   59.972   47.044   47.217    0.173       24     1     0     6     0    3.970  Observing  LookInPlaceHeadUp
-     5   14.375   60.007   45.451   45.632    0.181       22     0     0     5     0    3.970  Observing  LookInPlaceHeadUp
-     6   17.166   59.973   42.652   42.806    0.154       28     1     0     4     0    3.970  Observing  LookInPlaceHeadUp
-     7   16.485   60.175   43.360   43.689    0.329       14     0     0     4     0    3.970  Observing  LookInPlaceHeadUp
-     8   30.402   59.971   29.268   29.569    0.301       23     0     0    10     0    3.970  Observing  LookInPlaceHeadUp
-     9   16.012   60.048   43.686   44.036    0.350       26     0     0     5     0    3.970  Observing  LookInPlaceHeadUp
-    10   18.250   59.882   41.399   41.631    0.232       24     0     0     7     0    3.970  Observing  LookInPlaceHeadUp
-    11   34.827   64.321   24.939   29.493    4.554       23     0     0     5     0    3.970  Observing  LookInPlaceHeadUp
-    12   14.444   55.636   41.001   41.191    0.190       24     0     0     7     0    3.970  Observing  LookInPlaceHeadUp
-    13   18.323   60.091   41.486   41.768    0.282       14     0     0     5     0    3.970  Observing  LookInPlaceHeadUp
-    14   24.480   59.900   35.238   35.420    0.182       27     0     0     9     0    3.970  Observing  LookInPlaceHeadUp
-    15   27.245   59.978   32.572   32.733    0.161       24     1     0     4     0    3.970  Observing  LookInPlaceHeadUp
-    16   11.492   60.740   48.347   49.247    0.900       24     0     0     4     0    3.969  Observing  LookInPlaceHeadUp
-    17   17.585   59.299   41.514   41.713    0.199       25     0     0     6     0    3.969  Observing  LookInPlaceHeadUp
-    18   11.974   59.962   47.825   47.987    0.162       13     0     0     7     0    3.969  Observing  LookInPlaceHeadUp
-    19   29.614   64.440   30.223   34.825    4.602       24     0     0     4     0    3.969  Observing  LookInPlaceHeadUp
- Summary:  (RELEASE build; VICOS; 20 engine ticks; 1.204 seconds total)
-         Engine   Engine    Sleep    Sleep     Over      RtE   EtR   GtE   EtG   Viz  Battery
-       Duration     Freq Intended   Actual    Sleep    Count Count Count Count Count  Voltage
-  Min:   10.074   55.636   20.732   20.933    0.154     13.0   0.0   0.0   4.0   0.0    3.969
-  Max:   39.082   64.440   49.611   49.855    4.602     28.0   1.0   0.0  10.0   0.0    3.970
- Mean:   20.193   60.201   39.313   40.008    0.695     22.4   0.2   0.0   5.8   0.0    3.970
-  Std:    8.161    1.700    8.063    7.553    1.304      4.6   0.4   0.0   1.7   0.0    0.000
+                      Engine   Engine    Sleep    Sleep     Over      RtE   EtR   GtE   EtG  GWtE  EtGW   Viz  Battery    CPU
+                    Duration     Freq Intended   Actual    Sleep    Count Count Count Count Count Count Count  Voltage   Freq  Active Feature/Behavior
+ 13:07:12.076     0  110.063  110.181    0.000    0.118    0.118       26     2     0     2     0     1     0    3.585 200000  Sleeping  Asleep
+ 13:07:12.188     1   11.051   11.154    0.000    0.103    0.103        0     0     0     2     0     1     0    3.585 200000  Sleeping  Asleep
+ 13:07:12.200     2   15.981   59.057   42.117   43.075    0.958        4     0     0     2     0     1     0    3.585 200000  Sleeping  Asleep
+ 13:07:12.260     3   12.284   59.879   46.756   47.595    0.839        6     0     0     4     0     2     0    3.585 200000  Sleeping  Asleep
+ 13:07:12.320     4   15.335   60.018   43.826   44.682    0.856       10     0     0     2     0     1     0    3.585 200000  Sleeping  Asleep
+ 13:07:12.380     5   14.099   59.964   45.044   45.865    0.821        9     0     0     2     0     1     0    3.585 200000  Sleeping  Asleep
+ 13:07:12.440     6   12.435   63.838   46.743   51.403    4.660        7     0     0     2     0     1     0    3.585 200000  Sleeping  Asleep
+ 13:07:12.504     7   16.663   56.356   38.676   39.693    1.017       13     0     0     2     0     1     0    3.585 200000  Sleeping  Asleep
+ 13:07:12.560     8   15.083   61.063   43.899   45.980    2.081        6     0     0     2     0     1     0    3.585 200000  Sleeping  Asleep
+ 13:07:12.620     9   22.696   58.712   35.222   36.015    0.793        9     2     0     2     0     1     0    3.585 200000  Sleeping  Asleep
+ 13:07:12.680    10   12.696   59.890   46.510   47.193    0.683        9     0     0     2     0     1     0    3.585 200000  Sleeping  Asleep
+ 13:07:12.740    11   13.494   61.002   45.822   47.508    1.686       10     0     0     2     0     1     0    3.585 200000  Sleeping  Asleep
+ 13:07:12.800    12   12.743   60.781   45.569   48.037    2.468       10     0     0     2     0     1     0    3.585 200000  Sleeping  Asleep
+ 13:07:12.860    13   13.110   58.175   44.421   45.065    0.644        7     0     0     2     0     1     0    3.585 200000  Sleeping  Asleep
+ 13:07:12.920    14   19.807   62.536   39.548   42.729    3.181        7     0     0     2     0     1     0    3.585 200000  Sleeping  Asleep
+ 13:07:12.984    15   14.361   57.213   42.457   42.852    0.395       10     0     0     2     0     1     0    3.585 200000  Sleeping  Asleep
+ 13:07:13.040    16   15.967   60.214   43.637   44.247    0.610       10     0     0     2     0     1     0    3.585 200000  Sleeping  Asleep
+ Summary:  (RELEASE build; VICOS; 17 ticks; 1.020 seconds total)
+                      Engine   Engine    Sleep    Sleep     Over      RtE   EtR   GtE   EtG  GWtE  EtGW   Viz  Battery    CPU
+                    Duration     Freq Intended   Actual    Sleep    Count Count Count Count Count Count Count  Voltage   Freq
+               Min:   11.051   11.154    0.000    0.103    0.103      0.0   0.0   0.0   2.0   0.0   1.0   0.0    3.585 200000
+               Max:  110.063  110.181   46.756   51.403    4.660     26.0   2.0   0.0   4.0   0.0   2.0   0.0    3.585 200000
+              Mean:   20.463   60.002   38.250   39.539    1.289      9.0   0.2   0.0   2.1   0.0   1.1   0.0    3.585 200000
+               Std:   22.575   17.072   14.286   14.785    1.163      5.1   0.6   0.0   0.5   0.0   0.2   0.0    0.000      0
 ```
 
 ### Prerequisites
@@ -76,7 +81,7 @@ PerfMetric is compiled into the engine and anim processes by default for Debug a
 
 ```-DANKI_PERF_METRIC_ENABLED=1```
 
-(or 0 to disable)
+(use 0 to disable)
 
 ### Use from command line
 The interface to PerfMetric is through Victor's embedded web server. From the command line, this will start a recording session for vic-engine, assuming ANKI_ROBOT_HOST is set to your robot IP (use port 8889 for vic-anim):
@@ -103,10 +108,14 @@ Here is the complete list of commands and what they do:
 * "dumplogall" dumps the entire recorded tick buffer, along with the summary, to the log
 * "dumpresponse" returns summary as HTTP response
 * "dumpresponseall" returns all info as HTTP response
-* "dumpfiles" writes all info to two files on the robot: One is a formatted txt file, and the other a csv file. These go in /data/data/com.anki.victor/cache/perfMetricLogs. The filename has the time of the file write baked in, as well as "R" or "D" to indicate Release or Debug build, and "Eng" or "Anim" to indicate vic-engine or vic-anim. An example: "perfMetric_2018-11-29_17-41-05_R_Eng.txt"
+* "dumpfiles" writes all info to two files on the robot: One is a formatted txt file, and the other a csv file. These go in /data/data/com.anki.victor/cache/perfMetricLogs. The filename has the time of the file write baked in, as well as "R" or "D" to indicate Release or Debug build, and "Eng" or "Anim" to indicate vic-engine or vic-anim. An example: "perfMetric_2018-11-29_17-41-05_R_Eng.txt".  Only the last 50 files are kept, to prevent running out of disk space on the robot.
+* "waitticksN", where N is an integer, waits for that number of ticks before proceeding to the next of these commands.
+* "waitsecondsN", where N is a float number, waits for that number of seconds before proceeding to the next of these commands.
 
 ### Use from webserver page in a browser
 The engine (port 8888) and anim (port 8889) webserver pages have a "PERF METRIC" page button. This brings you to a page with all of the PerfMetric controls, including the ability to dump the formatted output to the page itself.
+
+There is also a graph feature that can be used to see a graph of any combination of 1 to 3 of the recorded per-tick pieces of data.  To use, first either click 'Dump all' or 'Toggle Graph Auto Update' to get some data.  Next, use one of the "Data Selectors" pull-down menus (which get populated only after the first dump) to select one of the data categories.  Then click "Render Graph".  If you had toggled on 'graph auto update' then the graph will continually update and scroll over time.
 
 ### Helper script
 A script has been created for convenience and as an example:
@@ -114,9 +123,8 @@ A script has been created for convenience and as an example:
 ```tools/perfMetric/autoPerfMetric.sh```
 
 ### Use with webots (pure simulator)
-When using with webots pure simulator, use 'localhost' as your IP. Also note that webots pure simulator does NOT sleep between engine ticks, so the output will reflect that.
+When using with webots pure simulator, use 'localhost' as your IP. Also note that webots pure simulator does NOT sleep between engine ticks, so the output will reflect webots' fake sleep.
 
-### Future features
-* Create a bucket-based histogram feature that can help us quickly find code issue culprits
-* Record visual schedule mediator info
-* More vic-anim stats
+### Size of circular buffer in memory
+The number of frames stored in the circular buffer is defined with `kNumFramesInBuffer` and is 1000 for vic-engine, and 2000 for vic-anim.  The difference is because vic-anim's target tick duration is 33 ms and vic-engine's target tick duration is 60 ms.  The total size in memory of vic-engine's PerfMetric buffer is about 86 KB.  The size of vic-anim's buffer is about 78 KB.
+
