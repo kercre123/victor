@@ -51,7 +51,7 @@ public:
   int RandIntInRange(int minVal, int maxVal) const;
 
   // Returns a random boolean
-  bool RandBool() const;
+  bool RandBool(double probTrue = 0.5) const;
   
 private:
 

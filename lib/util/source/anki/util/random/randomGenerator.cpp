@@ -82,9 +82,9 @@ int RandomGenerator::RandIntInRange(int minVal, int maxVal) const
 }
 
 
-bool RandomGenerator::RandBool() const
+bool RandomGenerator::RandBool(double probTrue) const
 {
-  return (RandDbl(1.0) < 0.5);
+  return (RandDbl(1.0) < probTrue);
 }
 
 } // namespace BaseStation
