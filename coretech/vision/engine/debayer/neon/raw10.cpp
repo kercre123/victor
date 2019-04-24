@@ -91,7 +91,7 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
       break;
     }
     default:
-      PRINT_NAMED_ERROR("Debayer.Neon.RAW10.SetupInfo","Unknown output format");
+      PRINT_NAMED_ERROR("Debayer.Neon.RAW10.SetupInfo","Unknown output format: %d", outArgs.format);
       return;
   }
 
@@ -239,7 +239,6 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
     this->indexes[6] = 24;
     this->indexes[7] = 25;
 
-    // this->offsets.resize(4);
     this->offsets[0] = 0;
     this->offsets[1] = 10;
     this->offsets[2] = 20;
@@ -261,7 +260,7 @@ SetupInfo::SetupInfo(const Debayer::InArgs& inArgs, const Debayer::OutArgs& outA
   }
   default:
   {
-      PRINT_NAMED_ERROR("Debayer.Neon.RAW10.SetupInfo","Unknown scale");
+      PRINT_NAMED_ERROR("Debayer.Neon.RAW10.SetupInfo","Unknown scale %d",outArgs.scale);
       return;
   }
   }
