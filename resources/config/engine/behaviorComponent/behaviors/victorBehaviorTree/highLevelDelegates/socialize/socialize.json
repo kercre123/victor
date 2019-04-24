@@ -9,6 +9,11 @@
     "ShortLookAroundForFaceAndCube",
     "InteractWithFaces",
 
+    // TEMP: // TEMP: this doesn't work well becuase it's _so_ damn easy to get interrupted out of interact
+    // with faces (e.g. react to sound or beats). Maybe we need a cooldown here on interact with faces, so
+    // that if we re-enter socializing soon afterwards, we skip it and go straight to one of these
+    // TEMP: 
+    
     // TEMP: maybe only one of these  // TEMP:  // TEMP: 
     "PossibleIntentionalPerformance",
     "ReactToGazeDirection",
