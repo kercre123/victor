@@ -202,14 +202,12 @@ enum uint_16 BehaviorID {
   LookInPlaceHeadDownRelaxed,
   LookInPlaceHeadUpInPalm,
   LookingNervousInPalmAnim,
-  NestleWhileHeldInPalmAnim,
+  NestlingAndSleepingInPalmDispatcher,
   ReactToPalmTilt,
   ReactToPickupFromPalm,
   ReactToPutDownFromPalm,
   ReactToPutDownFromPalmAnimSelector,
   SleepWhileHeldInPalm,
-  SleepWhileHeldInPalmLoop,
-  WakeGentlyFromHeldInPalmSleep,
 
   // victorBehaviorTree/highLevelDelegates
   InitialPickupAnimation,

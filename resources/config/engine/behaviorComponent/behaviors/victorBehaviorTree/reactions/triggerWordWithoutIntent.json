@@ -2,5 +2,6 @@
   "behaviorClass": "AnimSequence",
   "behaviorID": "TriggerWordWithoutIntent",
 
+  // Possibly lock treads if this is triggered in mid-air?
   "animTriggers": ["VC_IntentNeutral"]
 }

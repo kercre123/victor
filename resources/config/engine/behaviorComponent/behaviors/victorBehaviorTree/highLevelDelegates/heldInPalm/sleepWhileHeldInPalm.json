@@ -1,28 +1,49 @@
 {
   "behaviorID"    : "SleepWhileHeldInPalm",
-  "behaviorClass" : "DispatcherStrictPriority",
+  "behaviorClass" : "AnimSequence",
   "associatedActiveFeature": "HeldInPalm",
   
-  "interruptActiveBehavior": true,
-  "linkScope": true,
+  // The actual "sleeping" is handled by the SleepCycle behavior, which
+  // searches through the AI Whiteboard for the "SleepOnPalm" post-
+  // behavior suggestion, and delegates to the necessary animations &
+  // behaviors to have the robot enter a "HeldInPalm" sleep mode.
+  "postBehaviorSuggestion": "SleepOnPalm",
   
-  "behaviors": [
-    "WakeGentlyFromHeldInPalmSleep",
-    "SleepWhileHeldInPalmLoop"
-  ],
+  // The get-in animation played by the SleepCycle behavior after this
+  // starts with the robot's head looking up, so play an animation here
+  // to move the head into place and avoid a jarring transition.
+  "animTriggers": ["ObservingLookUp"],
   
-  // When the HeldInPalmResponses dispatcher is deactivated
-  // while still held in a user's palm because of a higher-priority
-  // behavior such as TriggerWordDetected, the robot should not
-  // want to sleep again as soon as that higher priority behavior
-  // deactivates and allows HeldInPalmResponses to re-activate.
-  // Instead, the sleeping behavior should wait to be in-scope
-  // for a few seconds, to allow some other HIP response behavior
-  // to be active, then return the robot to sleep. This prevents
-  // the robot from abruptly just activating the sleep animations
-  // as soon as the robot is done with the higher-priority behavior
+  // Go to "sleep" in the user's palm after 5 minutes of held-in-palm
+  // activity with no jolts or shocks experienced. The robot must have
+  // a high "Trust" level from being placed in user's palm enough times
+  // or has been pet a lot while held in user's palm.
   "wantsToBeActivatedCondition": {
-    "conditionType": "TimerInRange",
-    "begin_s": 10.0
+    "conditionType": "Compound",
+    "and": [
+      {
+        // When the robot is jolted or shocked, the "Trust" level should
+        // drop to 0 again, and hence stop this from activating.
+        "conditionType": "Emotion",
+        "emotion": "Trust",
+        "min": 0.5
+      },
+      {
+        "conditionType": "RobotHeldInPalm",
+        "shouldBeHeldInPalm": true,
+        "minDuration_s": 300.0
+      },
+      {
+        "conditionType": "BehaviorTimer",
+        "timerName": "ReactToTouchPetting",
+        // If the user pets Vector while he's awake, we want to wait
+        // a little bit longer before starting or continuing to sleep.
+        // The cooldown should be set to value that is approximately
+        // the difference between the time it normally takes to
+        // activate NestleWhileHeldInPalm and the time it normally
+        // takes to activate this behavior.
+        "cooldown_s": 180.0
+      }
+    ]
   }
 }

@@ -11,9 +11,5 @@
     "WeatherResponses",
     "ShowWallTime",
     "TimerUtilityCoordinator"
-  ],
-  
-  "sleepingSupressedBehaviors": [
-    "ReactToTouchPetting"
   ]
 }

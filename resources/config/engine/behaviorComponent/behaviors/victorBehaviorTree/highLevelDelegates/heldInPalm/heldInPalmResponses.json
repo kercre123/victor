@@ -12,15 +12,11 @@
       "cooldown_s": 0.0
     },
     {
-      "behavior": "SleepWhileHeldInPalm",
-      "cooldown_s": 0.0
-    },
-    {
       "behavior": "LookingNervousInPalmAnim",
       "cooldown_s": 0.0
     },
     {
-      "behavior": "NestleWhileHeldInPalmAnim",
+      "behavior": "NestlingAndSleepingInPalmDispatcher",
       "cooldown_s": 10.0
     },
     {

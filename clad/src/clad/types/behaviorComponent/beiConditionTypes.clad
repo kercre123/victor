@@ -19,6 +19,7 @@ enum uint_8 BEIConditionType {
   BatteryLevel,
   BeatDetected,
   BecameTrueThisTick,
+  BehaviorSuggested,
   BehaviorTimer,
   BeingHeld,
   CarryingCube,

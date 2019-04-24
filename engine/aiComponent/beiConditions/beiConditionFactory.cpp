@@ -18,6 +18,7 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionBatteryLevel.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBeatDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBecameTrueThisTick.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionBehaviorSuggested.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBehaviorTimer.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBeingHeld.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCarryingCube.h"
@@ -240,6 +241,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::BecameTrueThisTick:
     {
       condition = std::make_shared<ConditionBecameTrueThisTick>(config);
+      break;
+    }
+    case BEIConditionType::BehaviorSuggested:
+    {
+      condition = std::make_shared<ConditionBehaviorSuggested>(config);
       break;
     }
     case BEIConditionType::BehaviorTimer:

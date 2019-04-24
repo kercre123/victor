@@ -1,8 +1,14 @@
 {
-  "behaviorClass": "ReactToPutDown",
-  "behaviorID": "ReactToPutDown",
-
-  "associatedActiveFeature": "NoFeature",
+  "behaviorID"   : "ReactToPutDown",
+  "behaviorClass": "DispatcherStrictPriority",
+  
+  "interruptActiveBehavior": true,
+  "actAsSelector": true,
+  
+  "behaviors": [
+    "ReactToPutDownFromPalm",
+    "ReactToPutDownInternal"
+  ],
   
   "wantsToBeActivatedCondition": {
     "conditionType": "Compound",
@@ -37,29 +43,38 @@
 
   "anonymousBehaviors": [
     {
-      "behaviorName": "PutDownWaitInternal",
-      "behaviorClass": "AnimSequence",
-
-      "animTriggers": ["ObservingIdleWithHeadLookingUp"],
-      "num_loops": 100,
-      "tracksToLock": ["BODY_TRACK"],
-
-      "wantsToCancelSelfCondition": {
-        "conditionType": "Compound",
-        "and": [
-          {
-            // Stable off charger
-            "conditionType": "OffTreadsState",
-            "targetState": "OnTreads",
-            "minTimeSinceChange_ms": 3000
-          },
-          {
-            // Wait anim has been playing for > 3 seconds (don't cound the time from the put down reaction)
-            "conditionType": "TimerInRange",
-            "begin_s": 3.0
+      "behaviorName" : "ReactToPutDownInternal",
+      "behaviorClass": "ReactToPutDown",
+      
+      "associatedActiveFeature": "NoFeature",
+      
+      "anonymousBehaviors": [
+        {
+          "behaviorName": "PutDownWaitInternal",
+          "behaviorClass": "AnimSequence",
+          
+          "animTriggers": ["ObservingIdleWithHeadLookingUp"],
+          "num_loops": 100,
+          "tracksToLock": ["BODY_TRACK"],
+          
+          "wantsToCancelSelfCondition": {
+            "conditionType": "Compound",
+            "and": [
+              {
+                // Stable off charger
+                "conditionType": "OffTreadsState",
+                "targetState": "OnTreads",
+                "minTimeSinceChange_ms": 3000
+              },
+              {
+                // Wait anim has been playing for > 3 seconds (don't cound the time from the put down reaction)
+                "conditionType": "TimerInRange",
+                "begin_s": 3.0
+              }
+            ]
           }
-        ]
-      }
+        }
+      ]
     }
   ]
 }

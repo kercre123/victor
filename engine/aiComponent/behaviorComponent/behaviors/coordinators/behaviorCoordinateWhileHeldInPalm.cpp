@@ -18,7 +18,6 @@
 #include "engine/aiComponent/behaviorComponent/activeBehaviorIterator.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
-#include "engine/aiComponent/behaviorComponent/behaviors/reactions/behaviorReactToVoiceCommand.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
 #include "engine/aiComponent/behaviorComponent/heldInPalmTracker.h"
 #include "util/console/consoleInterface.h"
@@ -34,11 +33,7 @@ namespace{
   const BehaviorID kHeldInPalmDispatcher = BEHAVIOR_ID(HeldInPalmDispatcher);
   const BehaviorID kInitialHeldInPalmReaction = BEHAVIOR_ID(InitialHeldInPalmReaction);
   
-  const BehaviorID kHeldInPalmSleepingBehavior = BEHAVIOR_ID(SleepWhileHeldInPalm);
-  const BehaviorID kHeldInPalmTriggerWordBehavior = BEHAVIOR_ID(TriggerWordDetected);
-  
   const char* const kBehaviorStatesToSuppressHeldInPalmReactionsKey = "suppressingBehaviors";
-  const char* const kBehaviorsToSupressWhenSleepingInPalmKey = "sleepingSupressedBehaviors";
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -49,13 +44,6 @@ BehaviorCoordinateWhileHeldInPalm::InstanceConfig::InstanceConfig(const Json::Va
               (debugName + ".MissingVectorOfSuppressingBehaviorNames").c_str(),"");
   for(const auto& name : tmpNames) {
     behaviorStatesToSuppressHeldInPalmReactions.insert( BehaviorTypesWrapper::BehaviorIDFromString(name) );
-  }
-  
-  tmpNames.clear();
-  ANKI_VERIFY(JsonTools::GetVectorOptional(config, kBehaviorsToSupressWhenSleepingInPalmKey, tmpNames),
-              (debugName + ".MissingVectorOfSleepSuppressedBehaviorNames").c_str(),"");
-  for(const auto& name : tmpNames) {
-    behaviorsToSuppressWhenSleepingInPalm.insert( BehaviorTypesWrapper::BehaviorIDFromString(name) );
   }
 }
 
@@ -75,7 +63,6 @@ BehaviorCoordinateWhileHeldInPalm::~BehaviorCoordinateWhileHeldInPalm()
 void BehaviorCoordinateWhileHeldInPalm::GetPassThroughJsonKeys(std::set<const char*>& expectedKeys) const
 {
   expectedKeys.insert( kBehaviorStatesToSuppressHeldInPalmReactionsKey );
-  expectedKeys.insert( kBehaviorsToSupressWhenSleepingInPalmKey );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -84,21 +71,10 @@ void BehaviorCoordinateWhileHeldInPalm::InitPassThrough()
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.heldInPalmDispatcher = BC.FindBehaviorByID(kHeldInPalmDispatcher);
   _iConfig.initialHeldInPalmReaction = BC.FindBehaviorByID(kInitialHeldInPalmReaction);
-  _iConfig.heldInPalmSleepingBehavior = BC.FindBehaviorByID(kHeldInPalmSleepingBehavior);
-  
-  BC.FindBehaviorByIDAndDowncast<BehaviorReactToVoiceCommand>(kHeldInPalmTriggerWordBehavior,
-                                                              BEHAVIOR_CLASS(ReactToVoiceCommand),
-                                                              _iConfig.heldInPalmTriggerWordBehavior);
-  DEV_ASSERT(_iConfig.heldInPalmTriggerWordBehavior != nullptr,
-             "BehaviorCoordinateWhileHeldInpalm.InitBehavior.NullTriggerWordBehavior");
   
   {
-    _iConfig.suppressHeldInPalmBehaviorSet = std::make_unique<AreBehaviorsActivatedHelper>(BC, _iConfig.behaviorStatesToSuppressHeldInPalmReactions);
-    
-    // Get behaviors to be suppressed when the Held-In-Palm sleeping behavior is activated.
-    for(const auto& id : _iConfig.behaviorsToSuppressWhenSleepingInPalm){
-      _iConfig.sleepSuppressedBehaviorSet.insert(BC.FindBehaviorByID(id));
-    }
+    _iConfig.suppressHeldInPalmBehaviorSet =
+        std::make_unique<AreBehaviorsActivatedHelper>(BC, _iConfig.behaviorStatesToSuppressHeldInPalmReactions);
   }
 }
 
@@ -110,16 +86,6 @@ void BehaviorCoordinateWhileHeldInPalm::OnPassThroughActivated()
   const auto persistent = _dVars.persistent;
   _dVars = DynamicVariables();
   _dVars.persistent = persistent;
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCoordinateWhileHeldInPalm::OnPassThroughDeactivated()
-{
-  if ( _dVars.persistent.hasSetNewTriggerWordListeningAnims ) {
-    _iConfig.heldInPalmTriggerWordBehavior->ResetListeningAnimsToConfig();
-    _dVars.persistent.hasSetNewTriggerWordListeningAnims = false;
-  }
 }
 
 
@@ -142,13 +108,8 @@ void BehaviorCoordinateWhileHeldInPalm::PassThroughUpdate()
       SuppressInitialHeldInPalmReactionIfAppropriate();
     } else {
       _dVars.persistent.hasInitialHIPReactionPlayed = false;
-      _dVars.persistent.hasStartedSleepingInPalm = false;
     }
-  } else if (!_iConfig.heldInPalmSleepingBehavior->IsActivated()) {
-    _dVars.persistent.hasStartedSleepingInPalm = false;
   }
-  
-  SuppressNonGentleWakeUpBehaviorsIfAppropriate();
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -177,35 +138,6 @@ void BehaviorCoordinateWhileHeldInPalm::SuppressInitialHeldInPalmReactionIfAppro
   if( shouldSuppressInitialReaction || _dVars.persistent.hasInitialHIPReactionPlayed ){
     _iConfig.initialHeldInPalmReaction->SetDontActivateThisTick(GetDebugLabel());
     _dVars.persistent.hasInitialHIPReactionPlayed = true;
-  }
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCoordinateWhileHeldInPalm::SuppressNonGentleWakeUpBehaviorsIfAppropriate()
-{
-  const bool shouldStartSuppressingWakeupBehaviors = _iConfig.heldInPalmSleepingBehavior->IsActivated();
-  _dVars.persistent.hasStartedSleepingInPalm |= shouldStartSuppressingWakeupBehaviors;
-  
-  if ( _dVars.persistent.hasStartedSleepingInPalm ) {
-    for (const auto behavior : _iConfig.sleepSuppressedBehaviorSet ) {
-      behavior->SetDontActivateThisTick(GetDebugLabel());
-    }
-    // We shouldn't suppress the trigger word response behavior, so instead we force it to use new
-    // listening animations to give the impression to the user that a new version of the behavior
-    // now activates that looks like a sleepy response to the trigger word. Note that this is only
-    // possible when the trigger word response is not already activated.
-    if ( !_dVars.persistent.hasSetNewTriggerWordListeningAnims &&
-         !_iConfig.heldInPalmTriggerWordBehavior->IsActivated() ) {
-      _iConfig.heldInPalmTriggerWordBehavior->SetListeningAnims(AnimationTrigger::VC_SleepingToListeningLoop,
-                                                                AnimationTrigger::VC_SleepingToListeningGetOut);
-      _dVars.persistent.hasSetNewTriggerWordListeningAnims = true;
-    }
-  } else if ( _dVars.persistent.hasSetNewTriggerWordListeningAnims ) {
-    // Since we "suppressed" the trigger word response by altering its listening animations in a
-    // previous update, we now have to reset those animations back to the trigger word response's
-    // default configuration animations.
-    _iConfig.heldInPalmTriggerWordBehavior->ResetListeningAnimsToConfig();
-    _dVars.persistent.hasSetNewTriggerWordListeningAnims = false;
   }
 }
   
