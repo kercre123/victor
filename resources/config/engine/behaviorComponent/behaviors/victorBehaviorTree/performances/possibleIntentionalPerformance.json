@@ -1,0 +1,13 @@
+{
+  "behaviorID": "PossibleIntentionalPerformance",
+  "behaviorClass": "PossiblePerformance",
+
+  "cooldown_hours": 0.02, // 12.0, // TEMP: 
+
+  "probability": 0.2,
+  "period_hours": 0.015,  // TEMP: 
+  
+  "animTrigger": "IntentionalPerformance"
+
+  // TEMP: feature flags
+}

@@ -2073,5 +2073,13 @@
   {
     "CladEvent": "LowlightChargerSearchGetout",
     "AnimName": "ag_lowlightcharger_search_getout"
+  },
+  {
+    "CladEvent": "UnintentionalPerformance",
+    "AnimName": "ag_uperformance"
+  },
+  {
+    "CladEvent": "IntentionalPerformance",
+    "AnimName": "ag_iperformance"
   }
 ]

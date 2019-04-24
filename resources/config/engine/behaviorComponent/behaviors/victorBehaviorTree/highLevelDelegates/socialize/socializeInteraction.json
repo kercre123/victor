@@ -1,5 +1,5 @@
 {
-  "behaviorID" : "SocializeGame",
+  "behaviorID" : "SocializeInteraction",
   "behaviorClass" : "DispatcherRandom",
 
   "behaviors" : [

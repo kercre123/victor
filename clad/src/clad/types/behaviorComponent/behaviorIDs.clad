@@ -310,7 +310,7 @@ enum uint_16 BehaviorID {
   // victorBehaviorTree/highLevelDelegates/socialize
   DriveOffChargerIntoSocializing,
   Socialize,
-  SocializeGame,
+  SocializeInteraction,
 
   // victorBehaviorTree/highLevelDelegates
   TrackCube,
@@ -373,6 +373,10 @@ enum uint_16 BehaviorID {
   OnboardingTeachMeetVictor,
   OnboardingTeachWakeWord,
   OnboardingWakeUp,
+
+  // victorBehaviorTree/performances
+  PossibleIntentionalPerformance,
+  PossibleUnintentionalPerformance,
 
   // victorBehaviorTree/prDemo
   PRDemoBigGreeting,

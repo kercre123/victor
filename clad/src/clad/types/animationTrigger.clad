@@ -234,6 +234,7 @@ enum int_32 AnimationTrigger
 
   ICantDoThat,
   InitialWakeUp,
+  IntentionalPerformance,
   InteractWithFaceTrackingIdle,
   InteractWithFacesInitialNamed,
   InteractWithFacesInitialUnnamed,
@@ -532,6 +533,7 @@ enum int_32 AnimationTrigger
   TextToSpeechGetIn,
   TextToSpeechGetLoop,
   TextToSpeechGetOut,
+  UnintentionalPerformance,
   UnitTestAnim,
   VC_ListeningGetIn,
   VC_ListeningLoop,

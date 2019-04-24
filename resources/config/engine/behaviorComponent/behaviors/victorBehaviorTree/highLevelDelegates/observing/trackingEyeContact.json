@@ -8,6 +8,7 @@
 
   "behaviors" : [
     "ObservingEyeContact",
-    "InteractWithFaces"
+    "InteractWithFaces",
+    "PossibleIntentionalPerformance"
   ]
 }

@@ -8,7 +8,12 @@
     "DriveOffChargerFace",
     "ShortLookAroundForFaceAndCube",
     "InteractWithFaces",
+
+    // TEMP: maybe only one of these  // TEMP:  // TEMP: 
+    "PossibleIntentionalPerformance",
     "ReactToGazeDirection",
-    "SocializeGame"
+    "SocializeInteraction"
+
+    // TEMP: add intentional and unintentional after "look at me" voice command?
   ]
 }

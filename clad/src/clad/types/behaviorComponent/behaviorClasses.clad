@@ -197,6 +197,9 @@ enum uint_8 BehaviorClass {
   OnboardingTeachWakeWord,
   OnboardingWakeUp,
 
+  // performaces
+  PossiblePerformance,
+
   // photoTaking
   AestheticallyCenterFaces,
   TakeAPhotoCoordinator,

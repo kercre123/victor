@@ -1,0 +1,11 @@
+{
+  "behaviorID": "PossibleUnintentionalPerformance",
+  "behaviorClass": "PossiblePerformance",
+
+  "cooldown_hours": 0.05,  // TEMP: 
+
+  "probability": 0.7, // TEMP: 
+  "period_hours": 0.01, // TEMP: 
+  
+  "animTrigger": "UnintentionalPerformance"
+}
