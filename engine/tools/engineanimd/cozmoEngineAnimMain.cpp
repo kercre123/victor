@@ -10,6 +10,8 @@
 *
 */
 
+#ifdef USE_ENGINEANIM_COMBINED
+
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -111,7 +113,7 @@ namespace {
 static void sigterm(int signum)
 {
   Anki::Util::DropBreadcrumb(false, nullptr, -1);
-  LOG_INFO("CozmoEngineAnimMain.SIGTERM", "Shutting down on signal %d", signum);
+  LOG_INFO("cozmoEngineAnimMain.SIGTERM", "Shutting down on signal %d", signum);
   gShutdown = true;
 }
 
@@ -161,7 +163,7 @@ Anki::Util::Data::DataPlatform* createPlatform()
     printf("jsonContents: %s", jsonContents.c_str());
     Json::Reader reader;
     if (!reader.parse(jsonContents, config)) {
-      PRINT_STREAM_ERROR("CozmoAnimMain.createPlatform",
+      PRINT_STREAM_ERROR("cozmoEngineAnimMain.createPlatform",
         "json configuration parsing error: " << reader.getFormattedErrorMessages());
     }
   }
@@ -173,19 +175,19 @@ Anki::Util::Data::DataPlatform* createPlatform()
   if (config.isMember("DataPlatformPersistentPath")) {
     persistentPath = config["DataPlatformPersistentPath"].asCString();
   } else {
-    LOG_ERROR("cozmoAnimMain.createPlatform.DataPlatformPersistentPathUndefined", "");
+    LOG_ERROR("cozmoEngineAnimMain.createPlatform.DataPlatformPersistentPathUndefined", "");
   }
 
   if (config.isMember("DataPlatformCachePath")) {
     cachePath = config["DataPlatformCachePath"].asCString();
   } else {
-    LOG_ERROR("cozmoAnimMain.createPlatform.DataPlatformCachePathUndefined", "");
+    LOG_ERROR("cozmoEngineAnimMain.createPlatform.DataPlatformCachePathUndefined", "");
   }
 
   if (config.isMember("DataPlatformResourcesPath")) {
     resourcesPath = config["DataPlatformResourcesPath"].asCString();
   } else {
-    LOG_ERROR("cozmoAnimMain.createPlatform.DataPlatformResourcesPathUndefined", "");
+    LOG_ERROR("cozmoEngineAnimMain.createPlatform.DataPlatformResourcesPathUndefined", "");
   }
 
   return createPlatform(persistentPath, cachePath, resourcesPath);
@@ -293,7 +295,7 @@ static bool cozmo_start(const Json::Value& configuration)
 }
 
 static void cozmo_stop() {
-  LOG_INFO("CozmoEngineMain.main", "Stopping engine");
+  LOG_INFO("cozmoEngineAnimMain.cozmo_stop", "Stopping engine");
 
   Anki::Util::SafeDelete(gEngineAPI);
 }
@@ -308,7 +310,7 @@ static bool anim_start()
 
   Result result = gAnimEngine->Init();
   if (RESULT_OK != result) {
-    LOG_ERROR("CozmoAnimMain.main.InitFailed", "Unable to initialize (exit %d)", result);
+    LOG_ERROR("cozmoEngineAnimMain.anim_start.InitFailed", "Unable to initialize (exit %d)", result);
     delete gAnimEngine;
     return false;
   }
@@ -336,7 +338,7 @@ static void* anim_main(void*)
 
     Result result = gAnimEngine->Update(curTime_ns);
     if (RESULT_OK != result) {
-      LOG_WARNING("CozmoAnimMain.main.UpdateFailed", "Unable to update (result %d)", result);
+      LOG_WARNING("cozmoEngineAnimMain.anim_main.UpdateFailed", "Unable to update (result %d)", result);
 
       // Don't exit with error code so as not to trigger
       // fault code 800 on what is actually a clean shutdown.
@@ -355,7 +357,7 @@ static void* anim_main(void*)
     // Complain if we're going overtime
     if (remaining_us < microseconds(-ANIM_OVERTIME_WARNING_THRESH_US))
     {
-      LOG_WARNING("CozmoAnimMain.overtime", "Update() (%dms max) is behind by %.3fms",
+      LOG_WARNING("cozmoEngineAnimMain.anim_main.overtime", "Update() (%dms max) is behind by %.3fms",
                   ANIM_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
     }
 #endif
@@ -381,7 +383,7 @@ static void* anim_main(void*)
       const auto forwardJumpDuration = kusPerFrame * framesBehind;
       targetEndFrameTime += (microseconds)forwardJumpDuration;
 #if ENABLE_TICK_TIME_WARNINGS
-      LOG_WARNING("CozmoAnimMain.catchup",
+      LOG_WARNING("cozmoEngineAnimMain.anim_main.catchup",
                   "Update was too far behind so moving target end frame time forward by an additional %.3fms",
                   (float)(forwardJumpDuration * 0.001f));
 #endif
@@ -402,7 +404,7 @@ static void* anim_main(void*)
 }
 
 static void anim_stop() {
-  LOG_INFO("CozmoAnimMain.main.Shutdown", "Shutting down.");
+  LOG_INFO("cozmoEngineAnimMain.anim_stop.Shutdown", "Shutting down.");
 
   delete gAnimEngine;
 }
@@ -496,7 +498,7 @@ int main(int argc, char* argv[])
     printf("jsonContents: %s", jsonContents.c_str());
     Json::Reader reader;
     if (!reader.parse(jsonContents, config)) {
-      printf("CozmoEngineMain.main: json configuration parsing error: %s\n",
+      printf("cozmoEngineAnimMain.main: json configuration parsing error: %s\n",
              reader.getFormattedErrorMessages().c_str());
       Anki::Vector::UninstallCrashReporter();
       return 1;
@@ -522,7 +524,7 @@ int main(int argc, char* argv[])
     return 1;
   }
 
-  LOG_INFO("CozmoEngineMain.main", "Engine started");
+  LOG_INFO("cozmoEngineAnimMain.main", "Engine started");
 
   pthread_t vicanim_thread;
   pthread_attr_t vicanim_attr;
@@ -557,7 +559,7 @@ int main(int argc, char* argv[])
     // Only complain if we're more than 10ms behind
     if (remaining_us < microseconds(-10000))
     {
-      LOG_WARNING("CozmoEngineMain.main.overtime", "Update() (%dms max) is behind by %.3fms",
+      LOG_WARNING("cozmoEngineAnimMain.main.overtime", "Update() (%dms max) is behind by %.3fms",
                   Anki::Vector::BS_TIME_STEP_MS, (float)(-remaining_us).count() * 0.001f);
     }
 #endif
@@ -568,7 +570,7 @@ int main(int argc, char* argv[])
     const auto sleepTime_us = std::max(minimumSleepTime_us, remaining_us);
     {
       using namespace Anki;
-      ANKI_CPU_PROFILE("CozmoEngineMain.main.Sleep");
+      ANKI_CPU_PROFILE("cozmoEngineAnimMain.main.Sleep");
 
       std::this_thread::sleep_for(sleepTime_us);
     }
@@ -588,7 +590,7 @@ int main(int argc, char* argv[])
       const auto forwardJumpDuration = kusPerFrame * framesBehind;
       targetEndFrameTime += (microseconds)forwardJumpDuration;
 #if ENABLE_TICK_TIME_WARNINGS
-      LOG_WARNING("CozmoEngineMain.main.catchup",
+      LOG_WARNING("cozmoEngineAnimMain.main.catchup",
                   "Update was too far behind so moving target end frame time forward by an additional %.3fms",
                   (float)(forwardJumpDuration * 0.001f));
 #endif
@@ -608,7 +610,7 @@ int main(int argc, char* argv[])
     if (!tickSuccess)
     {
       // If we fail to update properly, stop running (but after we've recorded the above stuff)
-      LOG_INFO("CozmoEngineMain.main", "Engine has stopped");
+      LOG_INFO("cozmoEngineAnimMain.main", "Engine has stopped");
       break;
     }
   } // End of tick loop
@@ -693,4 +695,6 @@ int main(int argc, char* argv[])
 
   return 1;
 }
+#endif
+
 #endif

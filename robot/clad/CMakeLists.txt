@@ -208,6 +208,27 @@ generate_clad(
 
 list(APPEND CLAD_UNION_EMITTER_SRCS ${CLAD_SUPERVISOR_GEN_ANIM_SRCS})
 
+# Piggyback .def generation for engine on the robot task
+
+set(CLAD_SWITCH "${VICTOR_EMITTER_DIR}/cozmo_CPP_switch_emitter.py")
+set(CLAD_SWITCH_ANIM_EXTS "_switch_from_${ANIM_START_TAG}_to_${ANIM_END_TAG}.def")
+set(CLAD_SWITCH_ANIM_FLAGS 
+    --start ${ANIM_START_TAG}
+    --end ${ANIM_END_TAG})
+
+generate_clad(
+    SRCS "${ROBOT_UNION_SRCS}"
+    RELATIVE_SRC_DIR "src"
+    OUTPUT_DIR "${ENGINE_OUTPUT_DIR}"
+    EMITTER ${CLAD_SWITCH}
+    OUTPUT_EXTS ${CLAD_SWITCH_ANIM_EXTS}
+    FLAGS ${CLAD_SWITCH_ANIM_FLAGS}
+    INCLUDES "${CLAD_INCLUDES}"
+    OUTPUT_SRCS CLAD_ENGINE_GEN_ANIM_SRCS
+)
+
+list(APPEND CLAD_UNION_EMITTER_SRCS ${CLAD_ENGINE_GEN_ANIM_SRCS})
+
 #
 # send helper
 #

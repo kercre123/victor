@@ -17,13 +17,10 @@
 
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "audioEngine/audioTypes.h"
-
+#include "clad/robotInterface/messageRobotToEngine.h"
 
 namespace Anki {
 namespace Vector {
-namespace RobotInterface {
-struct RobotToEngine;
-}
 namespace Audio {
 class CozmoAudioController;
 class AudioProceduralFrame;

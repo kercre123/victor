@@ -10,6 +10,8 @@
 *
 */
 
+#ifndef USE_ENGINEANIM_COMBINED
+
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -437,19 +439,4 @@ int main(int argc, char* argv[])
   return 0;
 }
 
-// entry point for vic-engine running as a thread
-
-struct argcv {
-  int argc;
-  char **argv;
-};
-
-extern "C" void* threadmain(struct argcv* p)
-{
-  int argc = p->argc;
-  char **argv = p->argv;
-
-  main(argc, argv);
-
-  return NULL;
-}
+#endif

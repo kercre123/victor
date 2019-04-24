@@ -1,11 +1,5 @@
 cxx_project(
   name = 'vic-engine',
-  srcs = cxx_src_glob(['engined']),
-  headers = cxx_header_glob(['engined'])
-)
-
-cxx_project(
-  name = 'vic-engine-anim',
-  srcs = cxx_src_glob(['engineanimd']),
-  headers = cxx_header_glob(['engineanimd'])
+  srcs = cxx_src_glob(['engined','engineanimd']),
+  headers = cxx_header_glob(['engined','engineanimd'])
 )

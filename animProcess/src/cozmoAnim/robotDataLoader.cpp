@@ -250,10 +250,9 @@ std::vector<std::string> RobotDataLoader::GetAnimationNames()
 void RobotDataLoader::NotifyAnimAdded(const std::string& animName, uint32_t animLength)
 {
   AnimationAdded msg;
-  memcpy(msg.animName, animName.c_str(), animName.length());
-  msg.animName_length = animName.length();
+  msg.animName = animName;
   msg.animLength = animLength;
-  AnimProcessMessages::SendAnimToEngine(msg);
+  AnimProcessMessages::SendAnimToEngine(std::move(msg));
 }
   
 void RobotDataLoader::SetupProceduralAnimation()

@@ -33,11 +33,11 @@ namespace {
   
   const char* const kAubioTempoMethod = "default";
   
-  BeatInfo kInvalidBeatInfo{
-    .tempo_bpm  = -1.f,
-    .confidence = -1.f,
-    .time_sec   = -1.f
-  };
+  BeatInfo kInvalidBeatInfo(
+    -1.f,
+    -1.f,
+    -1.f
+  );
 }
 
 BeatDetector::BeatDetector()

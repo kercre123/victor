@@ -223,7 +223,7 @@ target_link_libraries(webotsCtrlAnim
   robot_interface
   webotsCtrlCommon
   victor_anim
-  robot_clad_cpplite
+  robot_clad
   osState
   ${OPENCV_LIBS}
   ${PLATFORM_LIBS}

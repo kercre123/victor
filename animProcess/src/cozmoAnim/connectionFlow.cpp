@@ -25,7 +25,6 @@
 #include "coretech/vision/engine/image.h"
 
 #include "clad/robotInterface/messageEngineToRobot.h"
-#include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
 
 #include "util/console/consoleSystem.h"
 #include "util/logging/logging.h"
@@ -208,7 +207,7 @@ void UpdateConnectionFlow(const SwitchboardInterface::SetConnectionStatus& msg,
     msg.accel_rad_per_sec2    = DEG_TO_RAD(360);
     msg.duration_sec          = 0;
     msg.actionID              = 0;
-    SendAnimToRobot(std::move(msg));
+    AnimProcessMessages::SendAnimToRobot(std::move(msg));
   }
 
 

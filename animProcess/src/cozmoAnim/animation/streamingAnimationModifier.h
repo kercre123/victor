@@ -20,12 +20,13 @@
 #include "coretech/common/shared/types.h"
 #include <map>
 
+#include "clad/robotInterface/messageEngineToRobot.h"
+
 namespace Anki {
 namespace Vector {
 
 namespace RobotInterface{
 struct AlterStreamingAnimationAtTime;
-struct EngineToRobot;
 }
 
 namespace Anim {

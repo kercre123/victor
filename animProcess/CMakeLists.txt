@@ -44,13 +44,13 @@ target_link_libraries(victor_anim
   util_audio
   canned_anim_lib
   # cti
-  cti_common_robot
+  cti_common
   cti_vision
-  cti_messaging_robot
-  robot_clad_cpplite
+  cti_messaging
+  robot_clad
   cloud_clad_cpp
   audio_engine
-  audio_multiplexer_robot
+  audio_multiplexer_engine
   osState
   micdata
   libev
@@ -94,11 +94,10 @@ target_include_directories(victor_anim
 # mac implementation uses (webotsCtrlAnim)
 if (VICOS)
 
-  if (USE_ENGINEANIM_COMBINED)
-    add_library(vic-anim SHARED src/cozmoAnim/cozmoAnimMain.cpp)
-  else ()
-    anki_build_cxx_executable(vic-anim ${ANKI_SRCLIST_DIR})
-  endif()
+  anki_build_cxx_executable(vic-anim ${ANKI_SRCLIST_DIR})
+if (USE_ENGINEANIM_COMBINED)
+  target_compile_definitions(vic-anim PUBLIC USE_ENGINEANIM_COMBINED=1)
+endif()
   anki_build_target_license(vic-anim "ANKI" "Commercial,${CMAKE_SOURCE_DIR}/licenses/acapela.license")
 
   target_link_libraries(vic-anim
@@ -122,7 +121,6 @@ if (VICOS)
   )
 
   anki_build_strip(TARGET vic-anim)
-
 
   project(vic-bootAnim)
 

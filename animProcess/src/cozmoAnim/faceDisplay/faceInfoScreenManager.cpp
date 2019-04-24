@@ -40,8 +40,6 @@
 #include "util/logging/DAS.h"
 
 #include "clad/robotInterface/messageRobotToEngine.h"
-#include "clad/robotInterface/messageEngineToRobot_sendAnimToRobot_helper.h"
-#include "clad/robotInterface/messageRobotToEngine_sendAnimToEngine_helper.h"
 
 #include "json/json.h"
 #include "osState/osState.h"
@@ -250,7 +248,8 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
   // === None screen ===
   auto noneEnterFcn = [this]() {
     // Restore power mode as specified by engine
-    SendAnimToRobot(_calmModeMsgOnNone);
+    auto cpy = _calmModeMsgOnNone;
+    AnimProcessMessages::SendAnimToRobot(std::move(cpy));
 
     if (FACTORY_TEST) {
       InitConnectionFlow(_animationStreamer);
@@ -260,7 +259,7 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
     // Disable calm mode
     RobotInterface::CalmPowerMode msg;
     msg.enable = false;
-    SendAnimToRobot(std::move(msg));
+    AnimProcessMessages::SendAnimToRobot(std::move(msg));
   };
   SET_ENTER_ACTION(None, noneEnterFcn);
   SET_EXIT_ACTION(None, noneExitFcn);
@@ -308,7 +307,7 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
     animStreamer->Abort();
     animStreamer->EnableKeepFaceAlive(false, 0);
     _context->GetBackpackLightComponent()->SetSelfTestRunning(true);
-    RobotInterface::SendAnimToEngine(RobotInterface::StartSelfTest());
+    AnimProcessMessages::SendAnimToEngine(RobotInterface::StartSelfTest());
     return ScreenName::SelfTestRunning;
   };
   ADD_MENU_ITEM_WITH_ACTION(SelfTest, "CONFIRM", confirmSelfTest);
@@ -354,13 +353,13 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
   FaceInfoScreen::ScreenAction cameraEnterAction = [this]() {
     StreamCameraImages m;
     m.enable = true;
-    RobotInterface::SendAnimToEngine(std::move(m));
+    AnimProcessMessages::SendAnimToEngine(std::move(m));
     _animationStreamer->RedirectFaceImagesToDebugScreen(true);
   };
   auto cameraExitAction = [this]() {
     StreamCameraImages m;
     m.enable = false;
-    RobotInterface::SendAnimToEngine(std::move(m));
+    AnimProcessMessages::SendAnimToEngine(std::move(m));
     _animationStreamer->RedirectFaceImagesToDebugScreen(false);
   };
   SET_ENTER_ACTION(Camera, cameraEnterAction);
@@ -415,7 +414,7 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
 
   auto cameraMotorTestExitAction = [cameraExitAction]() {
     cameraExitAction();
-    SendAnimToRobot(RobotInterface::StopAllMotors());
+    AnimProcessMessages::SendAnimToRobot(RobotInterface::StopAllMotors());
   };
   SET_ENTER_ACTION(CameraMotorTest, cameraEnterAction);
   SET_EXIT_ACTION(CameraMotorTest, cameraMotorTestExitAction);
@@ -426,7 +425,7 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
     FaceInfoScreen::ScreenAction enterToFScreen = []() {
                                                     RobotInterface::SendRangeData msg;
                                                     msg.enable = true;
-                                                    RobotInterface::SendAnimToEngine(std::move(msg));
+                                                    AnimProcessMessages::SendAnimToEngine(std::move(msg));
                                                   };
     SET_ENTER_ACTION(ToF, enterToFScreen);
 
@@ -434,7 +433,7 @@ void FaceInfoScreenManager::Init(Anim::AnimContext* context, Anim::AnimationStre
     FaceInfoScreen::ScreenAction exitToFScreen = []() {
                                                    RobotInterface::SendRangeData msg;
                                                    msg.enable = false;
-                                                   RobotInterface::SendAnimToEngine(std::move(msg));
+                                                   AnimProcessMessages::SendAnimToEngine(std::move(msg));
                                                  };
     SET_EXIT_ACTION(ToF, exitToFScreen);
   }
@@ -555,7 +554,7 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
     msg.needsWait = currScreenNeedsWait;
     // leaving the mute screen via single press may coincide with the start of a wake word trigger, so don't clear it
     msg.fromMute = prevScreenWasMute;
-    RobotInterface::SendAnimToEngine(std::move(msg));
+    AnimProcessMessages::SendAnimToEngine(std::move(msg));
   }
 
 #ifndef SIMULATOR
@@ -565,7 +564,7 @@ void FaceInfoScreenManager::SetScreen(ScreenName screen)
   msg.enable = (!currScreenIsDebug ||
                 GetCurrScreenName() == ScreenName::CameraMotorTest ||
                 GetCurrScreenName() == ScreenName::SelfTestRunning);
-  SendAnimToRobot(std::move(msg));
+  AnimProcessMessages::SendAnimToRobot(std::move(msg));
 #endif
 
   _scratchDrawingImg->FillWith(0);
@@ -726,9 +725,7 @@ void FaceInfoScreenManager::DrawConfidenceClock(
     drawTextData.bgColor.r = NamedColors::BLACK.r();
     drawTextData.bgColor.g = NamedColors::BLACK.g();
     drawTextData.bgColor.b = NamedColors::BLACK.b();
-    std::copy(drawText.c_str(), drawText.c_str() + drawText.length(), &(drawTextData.text[0]));
-    drawTextData.text[drawText.length()] = '\0';
-    drawTextData.text_length = drawText.length();
+    drawTextData.text = drawText;
 
     SET_TIMEOUT(CustomText, (1.f + (float)secondsRemaining), None);
     SetCustomText(drawTextData);
@@ -968,7 +965,7 @@ void FaceInfoScreenManager::CheckForButtonEvent(const bool buttonPressed,
                                      (GetCurrScreenName() == ScreenName::None);
   if (shouldTriggerShutdown && !shutdownSent) {
     LOG_INFO("FaceInfoScreenManager.CheckForButtonEvent.StartShutdownAnim", "");
-    RobotInterface::SendAnimToEngine(StartShutdownAnim());
+    AnimProcessMessages::SendAnimToEngine(StartShutdownAnim());
     lastPressTime_ms    = 0;
     singlePressPending  = false;
     singlePressDetected = false;
@@ -1036,7 +1033,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
       // screens that are normally active during playpen test
       CanEnterPairingFromScreen(currScreenName)) {
     LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.GotDoublePress", "Entering pairing");
-    RobotInterface::SendAnimToEngine(SwitchboardInterface::EnterPairing());
+    AnimProcessMessages::SendAnimToEngine(SwitchboardInterface::EnterPairing());
 
     if (FORCE_TRANSITION_TO_PAIRING) {
       LOG_WARNING("FaceInfoScreenManager.ProcessMenuNavigation.ForcedPairing",
@@ -1132,7 +1129,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
         SetScreen(_currScreen->ConfirmMenuItemAndGetNextScreen());
       } else if (GetCurrScreenName() == ScreenName::Pairing) {
         LOG_INFO("FaceInfoScreenManager.ProcessMenuNavigation.ExitPairing", "Going to Customer Service Main from Pairing");
-        RobotInterface::SendAnimToEngine(SwitchboardInterface::ExitPairing());
+        AnimProcessMessages::SendAnimToEngine(SwitchboardInterface::ExitPairing());
         SetScreen(ScreenName::Main);
 
         // DAS msg for entering customer care screen
@@ -1532,8 +1529,7 @@ void FaceInfoScreenManager::SetCustomText(const RobotInterface::DrawTextOnScreen
 
 void FaceInfoScreenManager::DrawCustomText()
 {
-  DrawTextOnScreen({std::string(_customText.text,
-                                _customText.text_length)},
+  DrawTextOnScreen({_customText.text},
                    ColorRGBA(_customText.textColor.r,
                              _customText.textColor.g,
                              _customText.textColor.b),
@@ -1645,7 +1641,7 @@ void FaceInfoScreenManager::DrawAlexaFace()
   headAction.duration_sec = 1.0;
   headAction.max_speed_rad_per_sec = MAX_HEAD_SPEED_RAD_PER_S;
   headAction.accel_rad_per_sec2 = MAX_HEAD_ACCEL_RAD_PER_S2;
-  SendAnimToRobot(std::move(headAction));
+  AnimProcessMessages::SendAnimToRobot(std::move(headAction));
 }
   
 void FaceInfoScreenManager::DrawMuteAnimation()
@@ -2023,9 +2019,9 @@ void FaceInfoScreenManager::UpdateCameraTestMode(uint32_t curTime_ms)
     wheels.lwheel_accel_mmps2 = MAX_WHEEL_ACCEL_MMPS2;
     wheels.rwheel_accel_mmps2 = MAX_WHEEL_ACCEL_MMPS2;
 
-    SendAnimToRobot(std::move(head));
-    SendAnimToRobot(std::move(lift));
-    SendAnimToRobot(std::move(wheels));
+    AnimProcessMessages::SendAnimToRobot(std::move(head));
+    AnimProcessMessages::SendAnimToRobot(std::move(lift));
+    AnimProcessMessages::SendAnimToRobot(std::move(wheels));
 
     up = !up;
   }

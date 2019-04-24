@@ -114,6 +114,10 @@ int main(void)
 
   InstallCrashReporter(LOG_PROCNAME);
 
+#ifdef USE_ENGINEANIM_COMBINED
+  while(1);
+#endif
+  
   // - create and set logger
   auto logger = std::make_unique<Anki::Util::VictorLogger>(LOG_PROCNAME);
 
@@ -253,13 +257,4 @@ int main(void)
   UninstallCrashReporter();
   sync();
   exit(result);
-}
-
-// entry point for vic-anim running as a thread
-
-extern "C" void* threadmain(void*)
-{
-  main();
-
-  return NULL;
 }
