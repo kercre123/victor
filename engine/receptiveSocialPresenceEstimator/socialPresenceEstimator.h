@@ -130,6 +130,7 @@ public:
 
   void OnNewUserIntent(const UserIntentTag tag);
   void OnRobotObservedFace(const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg);
+  void OnRobotObservedMotion(const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg);
 
 
 private:
@@ -159,6 +160,8 @@ private:
       SocialPresenceEvent("UserIntent", std::make_shared<ExponentialDecay>(0.1f), 1.0f, 1.0f, 1.0f, 1.0f, true);
   SocialPresenceEvent _SPEFace =
       SocialPresenceEvent("Face", std::make_shared<ExponentialDecay>(0.1), 0.8f, 1.0f, 0.8f, 1.0f, false);
+  SocialPresenceEvent _SPEMotion =
+      SocialPresenceEvent("Motion", std::make_shared<ExponentialDecay>(0.2), 0.2f, 0.5f, 0.3f, 0.8f, false);
   SocialPresenceEvent _SPESleep =
       SocialPresenceEvent("Sleep", std::make_shared<PowerDecay>(1.1f), -0.9f, 0.0f, -0.9f, 0.0f, true);
   SocialPresenceEvent _SPEQuiet =
@@ -181,6 +184,7 @@ private:
   std::vector<SocialPresenceEvent*> _inputEvents = {
       &_SPEUserIntent,
       &_SPEFace,
+      &_SPEMotion,
       &_SPESleep,
       &_SPEQuiet,
       &_SPEShutUp,
@@ -195,6 +199,7 @@ private:
   // subscription handles
   uint32_t _newUserIntentHandle;
   Signal::SmartHandle _faceHandle;
+  Signal::SmartHandle _motionHandle;
 
 };
 

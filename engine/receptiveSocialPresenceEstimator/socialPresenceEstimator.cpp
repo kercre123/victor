@@ -96,9 +96,7 @@ SocialPresenceEvent::~SocialPresenceEvent()
 
 void SocialPresenceEvent::Update(float dt_s)
 {
-  //LOG_WARNING("SocialPresenceEvent.Update.AboutToCallDecay", "");
   _value = (*_decay)(_value, dt_s);
-  //LOG_WARNING("SocialPresenceEvent.Update.SuccessfullyCalledDecay", "");
 }
 
 void SocialPresenceEvent::Trigger(float& rspi) {
@@ -150,6 +148,8 @@ void SocialPresenceEstimator::InitDependent(Vector::Robot *robot, const RobotCom
   _faceHandle = _robot->GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedFace,
       std::bind( &SocialPresenceEstimator::OnRobotObservedFace, this, std::placeholders::_1) );
   // TODO: add motion here
+  _faceHandle = _robot->GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedMotion,
+      std::bind( &SocialPresenceEstimator::OnRobotObservedMotion, this, std::placeholders::_1) );
 
   if( ANKI_DEV_CHEATS ) {
     SubscribeToWebViz();
@@ -270,6 +270,13 @@ void SocialPresenceEstimator::OnRobotObservedFace(const AnkiEvent<ExternalInterf
   // For now we treat all faces as the same event
   LogInputEvent(&_SPEFace);
   TriggerInputEvent(&_SPEFace);
+}
+
+
+void SocialPresenceEstimator::OnRobotObservedMotion(const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg)
+{
+  LogInputEvent(&_SPEMotion);
+  TriggerInputEvent(&_SPEMotion);
 }
 
 
