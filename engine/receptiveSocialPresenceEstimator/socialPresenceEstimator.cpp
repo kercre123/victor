@@ -48,6 +48,7 @@ float ExponentialDecay::operator()(float value, float dt_s)
   return ret;
 }
 
+// TODO: change this so that it applies the decay to a multiplier that starts at ~1.0, rather than directly on the value
 float PowerDecay::operator()(float value, float dt_s)
 {
   if (fabs(value) < kEpsilon) {
@@ -148,12 +149,11 @@ void SocialPresenceEstimator::InitDependent(Vector::Robot *robot, const RobotCom
   // various vision-based things
   _faceHandle = _robot->GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedFace,
       std::bind( &SocialPresenceEstimator::OnRobotObservedFace, this, std::placeholders::_1) );
-
+  // TODO: add motion here
 
   if( ANKI_DEV_CHEATS ) {
     SubscribeToWebViz();
   }
-
 }
 
 
@@ -161,7 +161,6 @@ void SocialPresenceEstimator::UpdateDependent(const RobotCompMap& dependentComps
 {
   const float currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
 
-  // update inputs here
   UpdateInputs(dependentComps);
 
   UpdateRSPI();
@@ -201,8 +200,6 @@ void SocialPresenceEstimator::UpdateRSPI()
     // TODO (AS): I'm not totally happy with this implementation yet: hard to follow, at least.
     float newRSPI = 0;
     for (SocialPresenceEvent* inputEvent : _inputEvents) {
-      //LOG_WARNING("SocialPresenceEstimator.UpdateRSPI.inputEventIteration",
-      //    "inputEvent name %s value %f", inputEvent->GetName().c_str(), inputEvent->GetValue());
       if (_rspi >= inputEvent->GetIndependentEffectMax()) {
         newRSPI = fmax(-1.0, fmin(1.0, fmin( fmax(newRSPI, inputEvent->GetReinforcementEffectMax()),
                                              (newRSPI + inputEvent->GetValue()) ) ));
@@ -219,7 +216,7 @@ void SocialPresenceEstimator::UpdateRSPI()
 
 
 void SocialPresenceEstimator::TriggerInputEvent(SocialPresenceEvent* inputEvent) {
-  LOG_WARNING("SocialPresenceEstimator.TriggerInputEvent.Triggering",
+  LOG_INFO("SocialPresenceEstimator.TriggerInputEvent.Triggering",
       "Triggering input event %s", inputEvent->GetName().c_str());
   if (inputEvent->GetReset()) {
     // reset all inputEvents
@@ -228,11 +225,12 @@ void SocialPresenceEstimator::TriggerInputEvent(SocialPresenceEvent* inputEvent)
     }
   }
   inputEvent->Trigger(_rspi);
-  LOG_WARNING("SocialPresenceEstimator.TriggerInputEvent.TriggeredValue",
+  LOG_INFO("SocialPresenceEstimator.TriggerInputEvent.TriggeredValue",
       "Triggered value of %s: %f", inputEvent->GetName().c_str(), inputEvent->GetValue());
 }
 
 
+// DAS logging for data collection
 void SocialPresenceEstimator::LogInputEvent(SocialPresenceEvent* inputEvent)
 {
   DASMSG(rspe_inputEvent, "RSPE.InputEvent", "Receptive Social Presence Estimator Input Event");
@@ -246,20 +244,17 @@ void SocialPresenceEstimator::LogInputEvent(SocialPresenceEvent* inputEvent)
 
 void SocialPresenceEstimator::OnNewUserIntent(const UserIntentTag tag)
 {
-  LOG_WARNING("SocialPresenceEstimator.OnNewUserIntent.GotCallback", "");
-  // Do some kind of DAS logging/data collection
-
   // filter out specific intents here
   if (tag == USER_INTENT(system_sleep)) {
-    LOG_WARNING("SocialPresenceEstimator.OnNewUserIntent.Specific", "system_sleep");
+    LOG_DEBUG("SocialPresenceEstimator.OnNewUserIntent.Specific", "system_sleep");
     LogInputEvent(&_SPESleep);
     TriggerInputEvent(&_SPESleep);
   } else if (tag == USER_INTENT(imperative_quiet)) {
-    LOG_WARNING("SocialPresenceEstimator.OnNewUserIntent.Specific", "imperative_quiet");
+    LOG_DEBUG("SocialPresenceEstimator.OnNewUserIntent.Specific", "imperative_quiet");
     LogInputEvent(&_SPEQuiet);
     TriggerInputEvent(&_SPEQuiet);
   } else if (tag == USER_INTENT(imperative_shutup)) {
-    LOG_WARNING("SocialPresenceEstimator.OnNewUserIntent.Specific", "imperative_shutup");
+    LOG_DEBUG("SocialPresenceEstimator.OnNewUserIntent.Specific", "imperative_shutup");
     LogInputEvent(&_SPEShutUp);
     TriggerInputEvent(&_SPEShutUp);
   } else {
@@ -271,9 +266,6 @@ void SocialPresenceEstimator::OnNewUserIntent(const UserIntentTag tag)
 
 void SocialPresenceEstimator::OnRobotObservedFace(const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg)
 {
-  LOG_WARNING("SocialPresenceEstimator.OnRobotObservedFace.GotCallback", "");
-  // Do some kind of DAS logging/data collection
-
   // we might want to do dynamic event creation here, for different face identities.
   // For now we treat all faces as the same event
   LogInputEvent(&_SPEFace);
@@ -289,7 +281,6 @@ void SocialPresenceEstimator::PollTouch(const TouchSensorComponent& touchSensorC
     LogInputEvent(&_SPETouch);
     TriggerInputEvent(&_SPETouch);
   }
-
 }
 
 
@@ -312,7 +303,6 @@ void SocialPresenceEstimator::SubscribeToWebViz()
   auto onSubscribedBehaviors = [this](const std::function<void(const Json::Value&)>& sendToClient) {
     // a client subscribed.
     // send them a list of events to spoof
-
     Json:: Value subscriptionData;
     auto& data = subscriptionData["info"];
     auto& events = data["events"];
@@ -322,19 +312,15 @@ void SocialPresenceEstimator::SubscribeToWebViz()
       eventEntry["eventName"] = eventName;
       events[eventName] = eventEntry;
     }
-
     sendToClient( subscriptionData );
   };
 
   auto onDataBehaviors = [this](const Json::Value& data, const std::function<void(const Json::Value&)>& sendToClient) {
     // if the client sent any emotion types, set them
-    LOG_WARNING("RSPE.SubscribeToWebViz.onDataBehaviors.GotEvent", "RSPE got WebViz event %s", data["eventName"].asString().c_str());
+    LOG_DEBUG("RSPE.SubscribeToWebViz.onDataBehaviors.GotEvent", "RSPE got WebViz event %s", data["eventName"].asString().c_str());
     // TODO: a name : inputEvent map would be more efficient
     for (auto* inputEvent : _inputEvents) {
-      LOG_WARNING("RSPE.SubscribeToWebViz.onDataBehaviors.nameComp",
-          "got name %s, compare to %s", data["eventName"].asString().c_str(), inputEvent->GetName().c_str());
       if (data["eventName"].asString() == inputEvent->GetName()) {
-        LOG_WARNING("RSPE.SubscribeToWebViz.onDataBehaviors.trigger", "triggering %s", inputEvent->GetName().c_str());
         TriggerInputEvent(inputEvent);
         break;
       }
@@ -372,26 +358,7 @@ void SocialPresenceEstimator::SendDataToWebViz(const CozmoContext* context)
       iedata["value"] = inputEvent->GetValue();
       graphData.append(iedata);
     }
-    /*
-    auto& moodData = data["moods"];
 
-    for (size_t i = 0; i < (size_t)EmotionType::Count; ++i)
-    {
-      const EmotionType emotionType = (EmotionType)i;
-      const float val = GetEmotionByIndex(i).GetValue();
-
-      Json::Value entry;
-      entry["emotion"] = EmotionTypeToString( emotionType );
-      entry["value"] = val;
-      moodData.append( entry );
-    }
-
-    if( ! emotionEvent.empty() ) {
-      data["emotionEvent"] = emotionEvent;
-    }
-
-    data["simpleMood"] = SimpleMoodTypeToString(GetSimpleMood());
-    */
     webService->SendToWebViz( kWebVizModuleName, data );
   }
 

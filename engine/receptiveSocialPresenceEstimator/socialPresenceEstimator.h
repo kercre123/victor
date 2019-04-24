@@ -46,12 +46,11 @@ private:
 
 class PowerDecay: public IDecayFunction {
 public:
-  PowerDecay(float power/*, float duration*/) : _power(power)/*, _duration(duration)*/ {};
+  PowerDecay(float power) : _power(power) {};
   virtual float operator()(float value, float dt_s) override;
 
 private:
   float _power;
-  //float _duration;
 };
 
 
@@ -119,7 +118,6 @@ public:
   //virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override {}
   virtual void GetUpdateDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::CozmoContextWrapper);
-    //dependencies.insert(RobotComponentID::AIComponent);
     dependencies.insert(RobotComponentID::TouchSensor);
   }
   virtual void AdditionalUpdateAccessibleComponents(RobotCompIDSet& components) const override {
@@ -156,7 +154,7 @@ private:
 
   // input events
   // singleton input events are created once per input type and re-triggered whenever we get that input type
-  // decay, independent effect, independent effect max, reinforcement effect, reinforcement effect max, reset
+  // name decay, independent effect, independent effect max, reinforcement effect, reinforcement effect max, reset
   SocialPresenceEvent _SPEUserIntent =
       SocialPresenceEvent("UserIntent", std::make_shared<ExponentialDecay>(0.1f), 1.0f, 1.0f, 1.0f, 1.0f, true);
   SocialPresenceEvent _SPEFace =
@@ -169,7 +167,7 @@ private:
       SocialPresenceEvent("ShutUp", std::make_shared<PowerDecay>(1.15f), -0.9f, 0.0f, -0.9f, 0.0f, true);
   SocialPresenceEvent _SPETouch =
       SocialPresenceEvent("Touch", std::make_shared<ExponentialDecay>(0.2f), 0.8f, 1.0f, 0.8f, 1.0f, false);
-  // name, delay, independent effect, independent effect max, reinforcement effect, reinforcement effect max
+  // these ones are temporary for testing, obviously
   SocialPresenceEvent _spete1 = SocialPresenceEvent("ExplicitPositive", std::make_shared<ExponentialDecay>(0.1f), 1.0f, 1.0f, 1.0f, 1.0f, true);
   SocialPresenceEvent _spete2 = SocialPresenceEvent("ImplicitPositive", std::make_shared<ExponentialDecay>(0.3f), 0.5f, 1.0f, 0.5f, 1.0f);
   SocialPresenceEvent _spete3 = SocialPresenceEvent("ExplicitInhibitor", std::make_shared<ExponentialDecay>(0.1f), -1.0f, 0, -1.0, 0, true);
