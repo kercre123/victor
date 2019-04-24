@@ -3,6 +3,27 @@
   "behaviorClass" : "DispatcherStrictPriority",
   "interruptActiveBehavior": true,
   
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "and": [
+      {
+        "conditionType": "FeatureGate",
+        "feature": "PounceOnMotion",
+        "expected": true
+      },
+      {
+        "conditionType": "Emotion",
+        "emotion": "Stimulated",
+        "min": 0.5
+      },
+      {
+        "conditionType": "BehaviorTimer",
+        "timerName": "PounceOnMotion",
+        "cooldown_s": 30.0
+      }
+    ]
+  },
+  
   "wantsToCancelSelfCondition": {
     "conditionType": "TimerInRange",
     "begin_s": 30.0
@@ -11,8 +32,8 @@
   "behaviors": [
     "SingletonPounceTurnLeft",        // Ground motion on the side causes a quick, inaccurate, pounce
     "SingletonPounceTurnRight",       // Ground motion on the side causes a quick, inaccurate, pounce
-    "SingletonPounceWithProx",         // Use the prox sensor to approach/pounce on a verified object 
-    // "SingletonPounceApproachWithProx", // This is currently broken for the whiskey ToF sensor
+    "SingletonPounceWithProx",         // Use the prox sensor to approach/pounce on a verified object
+    "SingletonPounceApproachWithProx", // Use the prox sensor to drive the robot to within 35-55mm of a possible object
     "Wait"
   ]
 }

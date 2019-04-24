@@ -67,6 +67,10 @@ public:
   // from the lift, and recalibrates the lift motors if so. Returns true
   // if motors are being calibrated
   bool VerifyLiftCalibration() const;
+  
+  // Calculates the pose directly in front of the robot where sensor is indicating an object
+  // Returns false if no object is currently found by sensor
+  bool CalculateSensedObjectPose(Pose2d& sensedObjectPose) const;
 
 protected:
   virtual void NotifyOfRobotStateInternal(const RobotState& msg) override;

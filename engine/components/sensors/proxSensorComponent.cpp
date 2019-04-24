@@ -283,6 +283,14 @@ bool ProxSensorComponent::VerifyLiftCalibration() const
 
   return needsToCalibrate;
 }
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ProxSensorComponent::CalculateSensedObjectPose(Pose2d& sensedObjectPose) const
+{
+  const float measurement = _latestData.distance_mm;
+  sensedObjectPose = static_cast<Pose2d>(_currentRobotPose) * Pose2d(0, {measurement, 0});
+  return _latestData.foundObject;
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 // Map Update Methods

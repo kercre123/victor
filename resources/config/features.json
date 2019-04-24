@@ -118,6 +118,10 @@
   {
     "feature": "EyeColorVC",
     "enabled": true
+  },
+  {
+    "feature": "PounceOnMotion",
+    "enabled": false
   }
 ]
 
