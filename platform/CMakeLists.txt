@@ -33,6 +33,8 @@ add_subdirectory(ion-sample)
 
 add_subdirectory(gpio)
 
+add_subdirectory(parallelProcessing)
+
 #
 # Macro command to create build rules for full symbol files
 #

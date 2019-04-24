@@ -86,7 +86,7 @@ public:
   ~ImageCacheProvider();
 
   // Reset the ICP with a new image, will clean up any unused caches
-  void Reset(const ImageBuffer& buffer);
+  void Reset(const ImageBuffer& buffer, std::vector<uint32_t>& cleanedIds);
 
   // Get the most recent image of a specific type/size
   const std::shared_ptr<const Image> GetGray(ImageCacheSize size = ImageCache::GetDefaultImageCacheSize(),
@@ -95,10 +95,12 @@ public:
   const std::shared_ptr<const ImageRGB> GetRGB(ImageCacheSize size  = ImageCache::GetDefaultImageCacheSize(),
                                                ImageCache::GetType* getType = nullptr);
 
+  uint32_t GetLatestImageId() { return _caches.back().GetBuffer().GetImageId(); }
+
   size_t GetNumCaches() const { return _caches.size(); }
 
   // Remove caches that are no longer in use
-  void CleanCaches();
+  void CleanCaches(std::vector<uint32_t>& cleanedIds);
 
 private:
 

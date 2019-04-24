@@ -1,0 +1,31 @@
+cxx_project(
+    name = 'parallel_processing',
+    srcs = cxx_src_glob(['.'],
+                        excludes = [
+                            '**/vicos/*',
+                            'tools/**/*',
+                        ]),
+    platform_srcs = [
+        ('vicos', glob([
+                            '**/*_vicos.cpp',
+                            '**/vicos/*.cpp',
+                         ])),
+        ('mac', glob([
+                        '**/*_iososx*.mm',
+                        '**/*_osx.mm',
+                        '**/*_osx.cpp',
+                     ]))
+    ],
+    headers = cxx_header_glob(['.'],
+                              excludes = []),
+    platform_headers = [
+        ('vicos', glob([
+                            '**/*_vicos.h',
+                            '**/vicos/*.h',
+                         ])),
+        ('mac', glob([
+                        '**/*_ios*.h',
+                        '**/*_osx.h',
+                     ])),
+    ]
+)

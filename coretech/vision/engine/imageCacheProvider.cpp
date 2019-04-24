@@ -22,16 +22,23 @@ ImageCacheProvider::ImageCacheProvider()
 
 ImageCacheProvider::~ImageCacheProvider()
 {
-  CleanCaches();
+  std::vector<uint32_t> cleanedIds;
+  CleanCaches(cleanedIds);
+
+  if(!cleanedIds.empty())
+  {
+    PRINT_NAMED_WARNING("ImageCacheProvider.Destroy.LeakingCacheImageIds",
+                        "Destruction cleaned caches, imageIDs are being leaked");
+  }
 }
 
-void ImageCacheProvider::Reset(const ImageBuffer& buffer)
+void ImageCacheProvider::Reset(const ImageBuffer& buffer, std::vector<uint32_t>& cleanedIds)
 {
   // Lock for writing
   _cacheMutex.writeLock();
 
   // Clean old caches
-  CleanCaches();
+  CleanCaches(cleanedIds);
 
   // Add a new cache and reset it with this new image
   _caches.emplace_back();
@@ -40,8 +47,10 @@ void ImageCacheProvider::Reset(const ImageBuffer& buffer)
   _cacheMutex.writeUnlock();
 }
 
-void ImageCacheProvider::CleanCaches()
+void ImageCacheProvider::CleanCaches(std::vector<uint32_t>& cleanedIds)
 {
+  cleanedIds.clear();
+
   // CleanCaches is called from Reset which already locks the mutex however
   // Unit tests do directly call CleanCaches so we still need to lock the mutex
   // in those cases
@@ -61,6 +70,7 @@ void ImageCacheProvider::CleanCaches()
     const bool cacheInUse = cache.AreEntriesInUse();
     if(!cacheInUse)
     {
+      cleanedIds.push_back(cache.GetBuffer().GetImageId());
       cache.ReleaseMemory();
       iter = _caches.erase(iter);
     }
