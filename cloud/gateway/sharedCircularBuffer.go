@@ -8,12 +8,13 @@ import (
 
 const (
 	// If you change the buffer size (300) to something else, you need to make the same change in micDataProcessor.cpp
-	bufferSize         = 300
+	bufferSize         = 400
 	samplesPerCycle    = 160
 	headerMagicNum     = 0x08675309001a2b3c
 	getStateOkay       = "okay"
 	getStateBehind     = "behind"
 	getStatePleaseWait = "please wait"
+	getStateWarning    = "warning"
 )
 
 type MicSDKData struct {
@@ -78,7 +79,11 @@ func (client *SharedCircularBuffer) GetNext() (*MicSDKData, uint64, string) {
 	}
 
 	getStatus := getStateOkay
-	if client.Buffer.QueuedCount > (3*bufferSize/4) && client.Offset < client.Buffer.QueuedCount-(3*bufferSize/4) {
+	lag := client.Buffer.QueuedCount - client.Offset
+	if lag >= bufferSize/2 {
+		getStatus = getStateWarning
+	}
+	if lag >= (3*bufferSize)/4 {
 		client.Offset = client.Buffer.QueuedCount
 		getStatus = getStateBehind
 	}

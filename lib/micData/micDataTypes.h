@@ -16,6 +16,8 @@
 #include <array>
 #include <cstdint>
 
+#include "audioUtil/audioDataTypes.h"
+
 namespace Anki {
 namespace Vector {
 namespace MicData {
@@ -62,9 +64,9 @@ namespace MicData {
 
   struct MicSDKData
   {
-    int16_t               winningDirection;
-    int16_t               winningConfidence;
-    int16_t               data[kSamplesPerBlockPerChannel];
+    int16_t                winningDirection;
+    int16_t                winningConfidence;
+    AudioUtil::AudioSample data[kSamplesPerBlockPerChannel];
   };
 } // namespace MicData
 } // namespace Vector

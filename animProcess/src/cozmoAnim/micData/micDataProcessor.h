@@ -21,6 +21,7 @@
 #include "cozmoAnim/micData/micTriggerConfig.h"
 #include "clad/cloud/mic.h"
 #include "util/container/fixedCircularBuffer.h"
+#include "util/container/sharedCircularBuffer.h"
 #include "util/global/globalDefinitions.h"
 
 #include <array>
@@ -202,6 +203,11 @@ private:
   const char* GetProcessingStateName(ProcessingState state) const;
   
   void SetupConsoleFuncs();
+
+  // Set up a fast means of moving SE data back to the gateway. A buffer length of 400 means
+  // that the buffer will hold 400 10ms data chunks. IF YOU CHANGE EITHER THE BUFFER LENGTH
+  // OR ITS NAME, you MUST do the same in sharedCircularBuffer.go
+  Util::SharedCircularBuffer<struct MicData::MicSDKData, 400> _micDataSharedCircularBuffer;
 };
 
 } // namespace MicData

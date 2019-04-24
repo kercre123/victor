@@ -30,11 +30,12 @@ const faceImagePixelsPerChunk = 600
 const endOfAnimationList = "EndOfListAnimationsResponses"
 
 var (
-	connectionIdLock    sync.Mutex
-	connectionId        string
-	statusStreamRunning bool
-	lastProgress        int64
-	lastExpected        int64
+	connectionIdLock             sync.Mutex
+	connectionId                 string
+	statusStreamRunning          bool
+	lastProgress                 int64
+	lastExpected                 int64
+	robotUnderSDKBehaviorControl bool = false
 )
 
 // TODO: we should find a way to auto-generate the equivalent of this function as part of clad or protoc
@@ -1218,6 +1219,7 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 		},
 	}
 
+	defer func() { robotUnderSDKBehaviorControl = false }()
 	pingTicker := time.Tick(time.Second)
 
 	for {
@@ -1242,6 +1244,7 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 				log.Printf("Closing BehaviorControl stream: %s connID %d\n", err, connID)
 				return err
 			}
+			robotUnderSDKBehaviorControl = true
 		case <-pingTicker: // ping to check connection liveness after one second.
 			if err := out.Send(&ping); err != nil {
 				log.Printf("Closing BehaviorControl stream (on send): %s connID %d\n", err.Error(), connID)
@@ -3278,6 +3281,9 @@ func (service *rpcService) AudioStream(in *extint.AudioStreamRequest, stream ext
 		if getStatus == getStatePleaseWait {
 			time.Sleep(10 * time.Millisecond)
 		} else {
+			if !robotUnderSDKBehaviorControl {
+				continue
+			}
 			audioStreamResponse := &extint.AudioStreamResponse{
 				PacketId:          offset,
 				WinningDirection:  int32(micSDKData.WinningDirection),

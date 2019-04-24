@@ -30,7 +30,6 @@
 #include "audioUtil/speechRecognizer.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleFunction.h"
-#include "util/container/sharedCircularBuffer.h"
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/fileUtils/fileUtils.h"
 #include "util/helpers/ankiDefines.h"
@@ -113,6 +112,7 @@ MicDataProcessor::MicDataProcessor(const Anim::AnimContext* context, MicDataSyst
 , _writeLocationDir(writeLocation)
 , _micImmediateDirection(std::make_unique<MicImmediateDirection>())
 , _beatDetector(std::make_unique<BeatDetector>())
+, _micDataSharedCircularBuffer("micDataSharedCircularBuffer", true)
 {
   // Init the various SE processing
   MMIfInit(0, nullptr);
@@ -389,10 +389,6 @@ void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
 {
   ANKI_CPU_PROFILE("MicDataProcessor::ProcessRawAudio");
 
-  //If you change the size of the buffer, you MUST also change it in sharedCircularBuffer.go
-  static Util::SharedCircularBuffer<struct MicData::MicSDKData, 300> 
-      micDataSharedCircularBuffer("micDataSharedCircularBuffer", true);
-
   TimedMicData* nextSampleSpot = nullptr;
   {
     // Note we don't bother to free any slots here that have been consumed (by comparing size to _procAudioXferCount)
@@ -425,12 +421,13 @@ void MicDataProcessor::ProcessRawAudio(RobotTimeStamp_t timestamp,
     robotStatus,
     robotAngle);
 
-  if (micDataSharedCircularBuffer.GetNumReaders()) {
-    MicData::MicSDKData* micSDKData = micDataSharedCircularBuffer.GetWritePtr();
+  if (_micDataSharedCircularBuffer.GetNumReaders() != 0) {
+    MicData::MicSDKData* micSDKData = _micDataSharedCircularBuffer.GetWritePtr();
     micSDKData->winningDirection = directionResult.winningDirection;
     micSDKData->winningConfidence = directionResult.winningConfidence;
-    memcpy(micSDKData->data, nextSample.audioBlock.data(), sizeof(uint16_t)*kSamplesPerBlockPerChannel);
-    micDataSharedCircularBuffer.Advance();
+    memcpy(micSDKData->data, nextSample.audioBlock.data(), 
+           sizeof(AudioUtil::AudioSample)*kSamplesPerBlockPerChannel);
+    _micDataSharedCircularBuffer.Advance();
   }
 
   // Feed the samples to the beat detector. Optionally either use a raw single channel (the first quarter of the

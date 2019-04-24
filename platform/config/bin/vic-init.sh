@@ -43,4 +43,5 @@ fi
 #
 # Create the directory to contain shared memory buffers
 #
+rm -rf /run/sharedCircularBuffer
 mkdir -p /run/sharedCircularBuffer

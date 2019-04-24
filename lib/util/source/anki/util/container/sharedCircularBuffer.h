@@ -35,26 +35,23 @@
 namespace Anki{
 namespace Util{
 
-/* TODO
- * The startup process needs to remove the run/SharedCircularBuffer directory
- */ 
-
 static const uint64_t header_magic_num = 0x08675309001a2b3c;
 
 typedef enum {
   GET_STATE_OKAY = 0,
   GET_STATE_BEHIND,
   GET_STATE_PLEASE_WAIT,
+  GET_STATE_WARNING,
 } GetState;
 
-template<class T, uint32_t N>
+template<class T, uint32_t bufferSize>
 class SharedCircularBuffer {
 public:
-  SharedCircularBuffer(const std::string name, bool owner) :
-      _name(name),
-      _initted(false),
-      _owner(owner),
-      _offset(0)
+  SharedCircularBuffer(const std::string name, bool owner)
+  : _name(name)
+  , _initted(false)
+  , _owner(owner)
+  , _offset(0)
   {
     Init();
   }
@@ -66,7 +63,10 @@ public:
   }
 
   T* GetWritePtr() {
-    return &_buffer->objects[_buffer->queued_count % N];
+    if (not _owner || not _initted) {
+      return nullptr;
+    }
+    return &_buffer->objects[_buffer->queued_count % bufferSize];
   }
 
   void Advance() {
@@ -76,18 +76,23 @@ public:
   }
 
   GetState GetNext(T** object) {
-    if (not _initted && not Init()) {
+    if ((not _initted && not Init()) || _offset >= _buffer->queued_count) {
       // The writer hasn't started providing data yet.
+      *object = nullptr;
       return GET_STATE_PLEASE_WAIT;
     }
 
     GetState get_state = GET_STATE_OKAY;
-    if (_buffer->queued_count > (3*N/4) && _offset < _buffer->queued_count - (3*N/4)) {
-      _offset = _buffer->queued_count;
+    uint64_t lag = _buffer->queued_count - _offset;
+    if (lag >= bufferSize/2) {
+      get_state = GET_STATE_WARNING;
+    }
+    if (lag >= (3*bufferSize)/4) {
+      _offset = _buffer->queued_count - 1;
       get_state = GET_STATE_BEHIND;
     }
 
-    *object = _buffer->objects[_offset%N];
+    *object = &_buffer->objects[_offset%bufferSize];
     ++_offset;
 
     return get_state;
@@ -100,10 +105,10 @@ public:
 
 private:
   struct MemoryMap {
-    uint64_t          header_magic_num; // This is a pointer because the value is stored in the memory map.
-    uint64_t          queued_count;     // This is a pointer because the value is stored in the memory map.
-    uint64_t          reader_count;     // Current number of buffer subscribers. NOT CURRENTLY SEMAPHORE-GUARDED
-    T                 objects[N];
+    uint64_t          header_magic_num;   // Once this is written, the buffer is initted and ready to use.
+    uint64_t          queued_count;       // Number of objects that have been queued, ready for consumption.
+    uint64_t          reader_count;       // Current number of subscribers. NOT CURRENTLY SEMAPHORE-GUARDED
+    T                 objects[bufferSize];
   };
 
   std::string        _name;             // The name of the file in /run that is mapped to this buffer.
@@ -113,41 +118,48 @@ private:
   uint64_t           _offset;           // For non-owners, the last object ID they retrieved.
 
   bool Init() {
-    if(_initted) {
+    if (_initted) {
       return true;
     }
 
     uint32_t buffer_size = sizeof(struct MemoryMap);
 
-    std::string fd_share_filename("/run/sharedCircularBuffer/");
+    std::string fd_share_filename;
+    DIR* dir = opendir("/run");
+    if (dir) {
+      fd_share_filename = "/run/sharedCircularBuffer/";
+    } else {
+      fd_share_filename = "/tmp/sharedCircularBuffer/";
+      mkdir(fd_share_filename.c_str(), 0770);
+    }
     fd_share_filename += _name;
 
     int fd;
-    if(_owner) {
+    if (_owner) {
       //TODO: Other applications may require a security review to lock down this file.
       fd = open(fd_share_filename.c_str(), O_RDWR | O_CREAT, 0777);  
-      if(fd < 0) {
+      if (fd < 0) {
         LOG_ERROR("SharedCircularBuffer", "Init() open of map file failed: %s", strerror(errno));
         return false;
       }
-      if(ftruncate(fd, buffer_size) != 0) {
+      if (ftruncate(fd, buffer_size) != 0) {
         LOG_ERROR("SharedCircularBuffer", "Init() ftruncate call failed: %s", strerror(errno));
         return false;
       }
     } else {
       fd = open(fd_share_filename.c_str(), O_RDWR);
-      if(fd < 0) {
+      if (fd < 0) {
         LOG_ERROR("SharedCircularBuffer", "Init() open of map file failed: %s", strerror(errno));
         return false;
       }
     }
     _buffer = static_cast<struct MemoryMap*>(mmap(NULL, buffer_size, PROT_READ|PROT_WRITE, MAP_SHARED, fd, 0));
-    if(_buffer == MAP_FAILED) {
+    if (_buffer == MAP_FAILED) {
       LOG_ERROR("SharedCircularBuffer", "Init() mmap call failed: %s", strerror(errno));
       return false;
     }
 
-    if(_owner) {
+    if (_owner) {
       _buffer->queued_count = 0;
       _buffer->reader_count = 0;
       _buffer->header_magic_num = header_magic_num;
