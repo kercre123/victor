@@ -223,18 +223,20 @@ void BehaviorSayName::SayDontKnow()
     if (_dVars.waitingForRecognition) {
       // Now that animation has played, eating a little more time, check one last time
       // to see if the face has a name yet. Say it if so.
-      const Vision::TrackedFace* facePtr = GetBEI().GetFaceWorld().GetFace( GetTargetFace() );
-      const std::string nameToSay = facePtr->GetBestGuessName();
-      if (!nameToSay.empty()) {
-        DASMSG(behavior_sayname_switch_to_do_know, "behavior.sayname.switch_to_do_know",
+      const Vision::TrackedFace * facePtr = GetBEI().GetFaceWorld().GetFace(GetTargetFace());
+      if (facePtr != nullptr) {
+        const auto & nameToSay = facePtr->GetBestGuessName();
+        if (!nameToSay.empty()) {
+          DASMSG(behavior_sayname_switch_to_do_know, "behavior.sayname.switch_to_do_know",
                "Name realized after initially playing 'don't know' animation");
-        DASMSG_SEND();
-        if (haveDontKnowText) {
-          // Remember to clear the generated TTS
-          _iConfig.ttsBehavior->ClearTextToSay();
+          DASMSG_SEND();
+          if (haveDontKnowText) {
+            // Remember to clear the generated TTS
+            _iConfig.ttsBehavior->ClearTextToSay();
+          }
+          SayName(nameToSay, !facePtr->HasName());
+          return;
         }
-        SayName(nameToSay, !facePtr->HasName());
-        return;
       }
     }
 
