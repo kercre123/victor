@@ -35,6 +35,7 @@
 #include "engine/robotManager.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotEventHandler.h"
+#include "engine/externalInterface/cladProtoTypeTranslator.h"
 #include "engine/externalInterface/gatewayInterface.h"
 #include "engine/externalInterface/externalMessageRouter.h"
 #include "proto/external_interface/shared.pb.h"
@@ -120,6 +121,7 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotObservedMotion>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotErasedEnrolledFace>();
     helper.SubscribeEngineToGame<MessageEngineToGameTag::RobotRenamedEnrolledFace>();
+    helper.SubscribeEngineToGame<MessageEngineToGameTag::UnexpectedMovement>();
   }
 
   // Disable/Unsubscribe from MirrorMode when we enter pairing.
@@ -172,6 +174,17 @@ void SDKComponent::HandleMessage(const ExternalInterface::RobotObservedMotion& m
   observedMsg->set_right_img_y(msg.right_img_y);
   
   gi->Broadcast(ExternalMessageRouter::Wrap(observedMsg));
+}
+
+template<>
+void SDKComponent::HandleMessage(const ExternalInterface::UnexpectedMovement& msg)
+{
+  auto* gi = _robot->GetGatewayInterface();
+  auto* unexpMsg = new external_interface::UnexpectedMovement(msg.timestamp, 
+                                                              CladProtoTypeTranslator::ToProtoEnum(msg.movementType), 
+                                                              CladProtoTypeTranslator::ToProtoEnum(msg.movementSide));
+  ANKI_VERIFY(gi != nullptr, "SDKComponent.HandleMessage.NullGatewayInterface", "");
+  gi->Broadcast(ExternalMessageRouter::Wrap(unexpMsg));
 }
 
 template<>

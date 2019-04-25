@@ -19,6 +19,7 @@
 #include "clad/externalInterface/messageGameToEngine.h"
 #include "clad/types/alexaTypes.h"
 #include "clad/types/behaviorComponent/attentionTransferTypes.h"
+#include "clad/types/unexpectedMovementTypes.h"
 #include "clad/types/onboardingPhase.h"
 #include "clad/types/onboardingPhaseState.h"
 
@@ -58,6 +59,14 @@ namespace CladProtoTypeTranslator {
   
   constexpr external_interface::AlexaAuthState ToProtoEnum( AlexaAuthState value ){
     return static_cast<external_interface::AlexaAuthState>( static_cast<std::underlying_type_t<AlexaAuthState>>(value) );
+  }
+
+  constexpr external_interface::UnexpectedMovementSide ToProtoEnum( UnexpectedMovementSide value ){
+    return static_cast<external_interface::UnexpectedMovementSide>( static_cast<std::underlying_type_t<UnexpectedMovementSide>>(value) );
+  }
+
+  constexpr external_interface::UnexpectedMovementType ToProtoEnum( UnexpectedMovementType value ){
+    return static_cast<external_interface::UnexpectedMovementType>( static_cast<std::underlying_type_t<UnexpectedMovementType>>(value) );
   }
 
   #define CLAD_PROTO_COMPARE_ASSERT(T,V) static_assert(ToProtoEnum(T::V) == external_interface::T::V, "Invalid cast " #T "::" #V )
@@ -102,6 +111,18 @@ namespace CladProtoTypeTranslator {
   CLAD_PROTO_COMPARE_ASSERT2(AlexaAuthState, RequestingAuth, ALEXA_AUTH_REQUESTING_AUTH);
   CLAD_PROTO_COMPARE_ASSERT2(AlexaAuthState, WaitingForCode, ALEXA_AUTH_WAITING_FOR_CODE);
   CLAD_PROTO_COMPARE_ASSERT2(AlexaAuthState, Authorized, ALEXA_AUTH_AUTHORIZED);
+
+  CLAD_PROTO_COMPARE_ASSERT(UnexpectedMovementSide, UNKNOWN);
+  CLAD_PROTO_COMPARE_ASSERT(UnexpectedMovementSide, FRONT);
+  CLAD_PROTO_COMPARE_ASSERT(UnexpectedMovementSide, BACK);
+  CLAD_PROTO_COMPARE_ASSERT(UnexpectedMovementSide, LEFT);
+  CLAD_PROTO_COMPARE_ASSERT(UnexpectedMovementSide, RIGHT);
+  
+  CLAD_PROTO_COMPARE_ASSERT(UnexpectedMovementType, TURNED_BUT_STOPPED);
+  CLAD_PROTO_COMPARE_ASSERT(UnexpectedMovementType, TURNED_IN_SAME_DIRECTION);
+  CLAD_PROTO_COMPARE_ASSERT(UnexpectedMovementType, TURNED_IN_OPPOSITE_DIRECTION);
+  CLAD_PROTO_COMPARE_ASSERT(UnexpectedMovementType, ROTATING_WITHOUT_MOTORS);
+
 }
 
 
