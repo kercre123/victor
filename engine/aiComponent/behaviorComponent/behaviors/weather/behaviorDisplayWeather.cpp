@@ -13,9 +13,9 @@
 
 #include "engine/aiComponent/behaviorComponent/behaviors/weather/behaviorDisplayWeather.h"
 
-
 #include "clad/audio/audioSwitchTypes.h"
-#include "components/textToSpeech/textToSpeechCoordinator.h"
+#include "clad/types/featureGateTypes.h"
+
 #include "engine/actions/animActions.h"
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
@@ -25,10 +25,11 @@
 #include "engine/components/animationComponent.h"
 #include "engine/components/dataAccessorComponent.h"
 #include "engine/components/localeComponent.h"
+#include "engine/components/textToSpeech/textToSpeechCoordinator.h"
 
 #include "coretech/common/engine/utils/timer.h"
 
-#include "clad/types/featureGateTypes.h"
+
 
 #define LOG_CHANNEL "Behaviors"
 
@@ -311,12 +312,12 @@ void BehaviorDisplayWeather::StartTTSGeneration()
     const auto & localeComponent = robotInfo.GetLocaleComponent();
     const auto & ttsString = localeComponent.GetString(ttsIter->second, std::to_string(temperature));
 
-    // Generate TTS utterance for localized string using KeyFrame type trigger so that it plays 
+    // Generate TTS utterance for localized string using KeyFrame type trigger so that it plays
     // at a time determined from within the animation
     auto & ttsCoordinator = bei.GetTextToSpeechCoordinator();
     const UtteranceTriggerType triggerType = UtteranceTriggerType::KeyFrame;
     const AudioTtsProcessingStyle style = AudioTtsProcessingStyle::Default_Processed;
-    _dVars.utteranceID = ttsCoordinator.CreateUtterance(ttsString, triggerType, style, 1.0f, callback);
+    _dVars.utteranceID = ttsCoordinator.CreateUtterance(ttsString, triggerType, style, callback);
   }
 
   if (kInvalidUtteranceID == _dVars.utteranceID) {

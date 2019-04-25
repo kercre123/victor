@@ -17,7 +17,7 @@
 #ifndef __Engine_Components_TextToSpeechWrapper_H__
 #define __Engine_Components_TextToSpeechWrapper_H__
 
-#include "components/textToSpeech/textToSpeechTypes.h"
+#include "textToSpeechTypes.h"
 #include <functional>
 #include <string>
 

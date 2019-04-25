@@ -78,6 +78,7 @@ private:
   std::string                     _text;
   AudioTtsProcessingStyle         _style              = AudioTtsProcessingStyle::Invalid;
   float                           _durationScalar     = 1.f;
+  float                           _pitchScalar        = 0.f;
 
   // Accompanying animation, if any
   AnimationTrigger                _animTrigger;  // Count == use built-in animation

@@ -57,7 +57,7 @@ BehaviorTextToSpeechLoop::InstanceConfig::InstanceConfig()
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorTextToSpeechLoop::DynamicVariables::DynamicVariables() 
+BehaviorTextToSpeechLoop::DynamicVariables::DynamicVariables()
 : textToSay("")
 , state(State::IdleLoop)
 , utteranceID(kInvalidUtteranceID)
@@ -94,7 +94,7 @@ BehaviorTextToSpeechLoop::BehaviorTextToSpeechLoop(const Json::Value& config)
   _iConfig.tracksToLock = lockTreads
                           ? static_cast<uint8_t>(AnimTrackFlag::BODY_TRACK)
                           : static_cast<uint8_t>(AnimTrackFlag::NO_TRACKS);
-  
+
   JsonTools::GetValueOptional(config, kDevTestUtteranceKey, _iConfig.devTestUtteranceString);
 }
 
@@ -152,11 +152,9 @@ void BehaviorTextToSpeechLoop::SetTextToSay(const std::string& textToSay,
   if(_iConfig.triggeredByAnim){
     triggerType = UtteranceTriggerType::KeyFrame;
   }
-  _dVars.utteranceID = GetBEI().GetTextToSpeechCoordinator().CreateUtterance(_dVars.textToSay,
-                                                                             triggerType,
-                                                                             style,
-                                                                             1.0f,
-                                                                             callback);
+
+  auto & ttsCoordinator = GetBEI().GetTextToSpeechCoordinator();
+  _dVars.utteranceID = ttsCoordinator.CreateUtterance(_dVars.textToSay, triggerType, style, callback);
 
   // if we failed to created the utterance, let the callback know so they aren't waiting forever ...
   if((kInvalidUtteranceID == _dVars.utteranceID) && readyCallback){
@@ -171,9 +169,9 @@ void BehaviorTextToSpeechLoop::ClearTextToSay()
     GetBEI().GetTextToSpeechCoordinator().CancelUtterance(_dVars.utteranceID);
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorTextToSpeechLoop::WantsToBeActivatedBehavior() const 
+bool BehaviorTextToSpeechLoop::WantsToBeActivatedBehavior() const
 {
   return ((kInvalidUtteranceID != _dVars.utteranceID) || !_iConfig.devTestUtteranceString.empty());
 }
@@ -189,7 +187,7 @@ void BehaviorTextToSpeechLoop::OnBehaviorActivated()
   if(kInvalidUtteranceID == _dVars.utteranceID) {
     PRINT_NAMED_WARNING("BehaviorTextToSpeechLoop.InvalidUtteranceID",
                         "Utterance text must be set before this behavior is activated");
-    // In practice, we should never be here, but for unit tests and realworld MISuse-cases, its best if 
+    // In practice, we should never be here, but for unit tests and realworld MISuse-cases, its best if
     // we exit smoothly rather than outright CancelSelf() here
     if(AnimationTrigger::Count != _iConfig.emergencyGetOutTrigger){
       TransitionToEmergencyGetOut();

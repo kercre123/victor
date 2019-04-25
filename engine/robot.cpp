@@ -172,14 +172,16 @@ CONSOLE_FUNC(PrintBodyData, "Syscon", uint32_t printPeriod_tics, optional bool m
 
 // Perform Text to Speech Coordinator from debug console
 namespace {
+// TTS console group
+constexpr const char * kTextToSpeechPath = "TextToSpeech";
 
-constexpr const char * kTtsCoordinatorPath = "TtSCoordinator";
 // NOTE: Need to keep kVoiceStyles in sync with AudioMetaData::SwitchState::Robot_Vic_External_Processing in
 //       clad/audio/audioSwitchTypes.clad
 constexpr const char * kVoiceStyles = "Default_Processed,Unprocessed";
 
-CONSOLE_VAR_ENUM(u8, kVoiceStyle, kTtsCoordinatorPath, 0, kVoiceStyles);
-CONSOLE_VAR_RANGED(f32, kDurationScalar, kTtsCoordinatorPath, 1.f, 0.25f, 4.f);
+CONSOLE_VAR_ENUM(u8, kVoiceStyle, kTextToSpeechPath, 0, kVoiceStyles);
+CONSOLE_VAR_RANGED(f32, kDurationScalar, kTextToSpeechPath, 1.f, 0.25f, 4.f);
+CONSOLE_VAR_RANGED(f32, kPitchScalar, kTextToSpeechPath, 0.f, -1.f, 1.f);
 
 void SayText(ConsoleFunctionContextRef context)
 {
@@ -216,13 +218,19 @@ void SayText(ConsoleFunctionContextRef context)
       break;
   }
 
- LOG_INFO("Robot.TtSCoordinator", "text(%s) style(%s) duration(%f)",
-          Util::HidePersonallyIdentifiableInfo(textStr.c_str()), EnumToString(style), kDurationScalar);
+  LOG_INFO("Robot.SayText",
+           "text(%s) style(%s) durationScalar(%.2f) pitchScalar(%.2f)",
+           Util::HidePersonallyIdentifiableInfo(textStr.c_str()),
+           EnumToString(style),
+           kDurationScalar,
+           kPitchScalar);
 
-  robot->GetTextToSpeechCoordinator().CreateUtterance(textStr, UtteranceTriggerType::Immediate, style);
+  auto & ttsCoordinator = robot->GetTextToSpeechCoordinator();
+  const auto triggerType = UtteranceTriggerType::Immediate;
+  ttsCoordinator.CreateUtterance(textStr, triggerType, style, kDurationScalar, kPitchScalar);
 }
 
-CONSOLE_FUNC(SayText, kTtsCoordinatorPath, const char* text);
+CONSOLE_FUNC(SayText, kTextToSpeechPath, const char* text);
 
 } // end namespace
 
