@@ -16,6 +16,7 @@
 
 #include "coretech/common/shared/types.h"
 #include "util/global/globalDefinitions.h"
+#include "util/stringTable/stringID.h"
 
 #include <set>
 #include <string>
@@ -34,7 +35,7 @@ public:
   virtual ~IBehavior(){};
 
   const std::string& GetDebugLabel() const { return _debugLabel; }
-  void SetDebugLabel(const std::string& debugLabel) { _debugLabel = debugLabel; }
+  Util::StringID GetUID() const { return _labelId; }
 
   // Function that allows the behavior to initialize variables/subscribe
   // through the behaviorExternalInterface
@@ -101,6 +102,7 @@ protected:
 private:
   // string for identifying Behaviors (different than an ID since the latter might just be "Anonymous")
   std::string _debugLabel;
+  Util::StringID _labelId; // efficient unique label for comparing Behaviors (just a StringID of _debugLabel)
   // Track the number of EnteredScope requests
   uint32_t _currentInScopeCount;
   mutable size_t _lastTickWantsToBeActivatedCheckedOn;

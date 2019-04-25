@@ -76,15 +76,12 @@ namespace Vector {
 
 namespace {
 
-  const char* kEarConBegin                         = "earConAudioEventBegin";
   const char* kEarConSuccess                       = "earConAudioEventSuccess";
   const char* kEarConFail                          = "earConAudioEventNeutral";
   const char* kIntentBehaviorKey                   = "behaviorOnIntent";
   const char* kProceduralBackpackLights            = "backpackLights";
-  const char* kAnimListeningGetIn                  = "animListeningGetIn";
   const char* kAnimListeningLoop                   = "animListeningLoop";
   const char* kAnimListeningGetOut                 = "animListeningGetOut";
-  const char* kPushResponseKey                     = "pushResponse";
   const char* kNotifyOnWifiErrorsKey               = "notifyOnWifiErrors";
   const char* kNotifyOnCloudErrorsKey              = "notifyOnCloudErrors";
 
@@ -120,10 +117,8 @@ namespace {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToVoiceCommand::InstanceConfig::InstanceConfig() :
-  earConBegin( AudioMetaData::GameEvent::GenericEvent::Invalid ),
   earConSuccess( AudioMetaData::GameEvent::GenericEvent::Invalid ),
   earConFail( AudioMetaData::GameEvent::GenericEvent::Invalid ),
-  animListeningGetIn( AnimationTrigger::VC_ListeningGetIn ),
   animListeningLoop( AnimationTrigger::VC_ListeningLoop ),
   animListeningGetOut( AnimationTrigger::VC_ListeningGetOut ),
   backpackLights( true ),
@@ -162,11 +157,6 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
   // do we play ear-con sounds to notify the user when Victor is listening
   {
     std::string earConString;
-    if ( JsonTools::GetValueOptional( config, kEarConBegin, earConString ) )
-    {
-      _iVars.earConBegin = AudioMetaData::GameEvent::GenericEventFromString( earConString );
-    }
-
     if ( JsonTools::GetValueOptional( config, kEarConSuccess, earConString ) )
     {
       _iVars.earConSuccess = AudioMetaData::GameEvent::GenericEventFromString( earConString );
@@ -183,15 +173,6 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
 
   // get the behavior to play after an intent comes in
   JsonTools::GetValueOptional( config, kIntentBehaviorKey, _iVars.reactionBehaviorString );
-
-  std::string animGetIn;
-  if( JsonTools::GetValueOptional( config, kAnimListeningGetIn, animGetIn ) && !animGetIn.empty() )
-  {
-    ANKI_VERIFY( AnimationTriggerFromString(animGetIn, _iVars.animListeningGetIn),
-                 "BehaviorReactToVoiceCommand.Ctor.InvalidGetIn",
-                 "Get-in %s is not a valid animation trigger",
-                 animGetIn.c_str() );
-  }
 
   std::string animLoop;
   if( JsonTools::GetValueOptional( config, kAnimListeningLoop, animLoop ) && !animLoop.empty() )
@@ -210,8 +191,6 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
                  "Get-in %s is not a valid animation trigger",
                  animGetOut.c_str() );
   }
-
-  _iVars.pushResponse = config.get(kPushResponseKey, true).asBool();
 
   if( !config[kNotifyOnWifiErrorsKey].isNull() )
   {
@@ -268,15 +247,12 @@ BehaviorReactToVoiceCommand::~BehaviorReactToVoiceCommand()
 void BehaviorReactToVoiceCommand::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   const char* list[] = {
-    kEarConBegin,
     kEarConSuccess,
     kEarConFail,
     kProceduralBackpackLights,
     kIntentBehaviorKey,
-    kAnimListeningGetIn,
     kAnimListeningLoop,
     kAnimListeningGetOut,
-    kPushResponseKey,
     kNotifyOnWifiErrorsKey,
     kNotifyOnCloudErrorsKey,
     kIntentWhitelistKey
@@ -364,16 +340,10 @@ bool BehaviorReactToVoiceCommand::WantsToBeActivatedBehavior() const
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnBehaviorEnteredActivatableScope()
 {
-  // don't push a custom response if disabled via config, in case, e.g., a parent wants control of the response
-  if( _iVars.pushResponse )
-  {
-    namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
-    auto postAudioEvent = AECH::CreatePostAudioEvent( _iVars.earConBegin, AudioMetaData::GameObjectType::Behavior, 0 );
-    GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord( GetDebugLabel(),
-                                                                      _iVars.animListeningGetIn,
-                                                                      postAudioEvent,
-                                                                      StreamAndLightEffect::StreamingEnabled );
-  }
+  // if nothing else is on the stack to override us, we will fall back to the "default" behavior since
+  // we should always be in scope
+  MicStreamingComponent& micStreamingComponent = GetBEI().GetMicComponent().GetMicStreamingComponent();
+  micStreamingComponent.PushRecognizerBehaviorResponse( GetUID(), "default" );
 }
 
 
@@ -383,6 +353,10 @@ void BehaviorReactToVoiceCommand::OnBehaviorActivated()
   const auto persistent = _dVars.persistent;
   _dVars = DynamicVariables();
   _dVars.persistent = persistent;
+
+  // grab the anims/earcons we should be using for our response
+  const MicStreamingComponent& micStreamingComponent = GetBEI().GetMicComponent().GetMicStreamingComponent();
+  _dVars._recognizerResponse = micStreamingComponent.GetRecognizerBehaviorResponse();
 
   // todo: jmeh - remove this
   UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
@@ -470,10 +444,8 @@ void BehaviorReactToVoiceCommand::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorReactToVoiceCommand::OnBehaviorLeftActivatableScope()
 {
-  if( _iVars.pushResponse )
-  {
-    GetBehaviorComp<UserIntentComponent>().PopResponseToTriggerWord(GetDebugLabel());
-  }
+  MicStreamingComponent& micStreamingComponent = GetBEI().GetMicComponent().GetMicStreamingComponent();
+  micStreamingComponent.PopRecognizerBehaviorResponse( GetUID() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -820,18 +792,18 @@ void BehaviorReactToVoiceCommand::OnVictorListeningEnd()
   BehaviorExternalInterface& bei = GetBEI();
   if ( EIntentStatus::IntentHeard == _dVars.intentStatus )
   {
-    if ( GenericEvent::Invalid != _iVars.earConSuccess )
+    if ( GenericEvent::Invalid != _dVars._recognizerResponse.earConSuccess )
     {
       // Play earcon end audio
-      bei.GetRobotAudioClient().PostEvent( _iVars.earConSuccess, AudioMetaData::GameObjectType::Behavior );
+      bei.GetRobotAudioClient().PostEvent( _dVars._recognizerResponse.earConSuccess, AudioMetaData::GameObjectType::Behavior );
     }
   }
   else
   {
-    if ( GenericEvent::Invalid != _iVars.earConFail )
+    if ( GenericEvent::Invalid != _dVars._recognizerResponse.earConFail )
     {
       // Play earcon end audio
-      bei.GetRobotAudioClient().PostEvent( _iVars.earConFail, AudioMetaData::GameObjectType::Behavior );
+      bei.GetRobotAudioClient().PostEvent( _dVars._recognizerResponse.earConFail, AudioMetaData::GameObjectType::Behavior );
     }
   }
 }
@@ -911,7 +883,7 @@ void BehaviorReactToVoiceCommand::TransitionToListeningLoop()
   }
   else
   {
-    DelegateIfInControl( new ReselectingLoopAnimationAction( _iVars.animListeningLoop ) );
+    DelegateIfInControl( new ReselectingLoopAnimationAction( _dVars._recognizerResponse.animLooping ) );
   }
 
   _dVars.state = EState::ListeningLoop;
@@ -989,7 +961,7 @@ void BehaviorReactToVoiceCommand::TransitionToThinking()
   }
   else
   {
-    DelegateIfInControl( new TriggerLiftSafeAnimationAction( _iVars.animListeningGetOut ), callback );
+    DelegateIfInControl( new TriggerLiftSafeAnimationAction( _dVars._recognizerResponse.animGetOut ), callback );
   }
 }
 

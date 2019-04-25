@@ -36,8 +36,7 @@
       },
 
       "behaviorOnIntent": "ReactToTriggerDirectionAwake",
-      "backpackLights": false,
-      "pushResponse": false
+      "backpackLights": false
     }
   ]
 }

@@ -447,6 +447,16 @@ void Process_stopCurrentMicStream(const Anki::Vector::RobotInterface::StopCurren
   micDataSystem->GetMicStreamingController().StopCurrentMicStreaming( msg.reason );
 }
 
+void Process_setRecognizerResponse(const Anki::Vector::RobotInterface::SetRecognizerResponse& msg)
+{
+  auto* micDataSystem = _context->GetMicDataSystem();
+  if(micDataSystem == nullptr){
+    return;
+  }
+
+  micDataSystem->GetMicStreamingController().SetRecognizerResponse( msg.responseId );
+}
+
 void Process_setAlexaUXResponses(const Anki::Vector::RobotInterface::SetAlexaUXResponses& msg)
 {
   auto* showStreamStateManager = _context->GetShowAudioStreamStateManager();

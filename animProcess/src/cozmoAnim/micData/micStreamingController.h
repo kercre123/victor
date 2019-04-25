@@ -18,8 +18,11 @@
 
 #include "micDataTypes.h"
 #include "coretech/common/shared/types.h"
-#include "clad/types/micStreamingTypes.h"
+#include "clad/audio/audioMessage.h"
 #include "clad/cloud/mic.h"
+#include "clad/types/micStreamingTypes.h"
+
+#include <unordered_map>
 
 
 namespace Anki {
@@ -111,6 +114,13 @@ public:
   bool HasStreamingBegun() const { return ( MicStreamState::Listening != _state ); }
 
 
+  // custom recognizer responses control how we react to hearing the trigger word
+  // we play the get-in animation (if set) from here so that we respond as quickly as possible, vs. playing an
+  // animation from the engine which incurs latency from all of the messaging required
+  // responseId comes from pre-set responses defined in micStreamingConfig.json
+  void SetRecognizerResponse( const std::string& responseId );
+
+
 private:
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -134,9 +144,28 @@ private:
     MicStreamResult         result                    = MicStreamResult::Success;
   };
 
+  enum class RecognizerResponseType
+  {
+    ResponseEnabled,
+    ResponseDisabled,
+    ResponseSimulated,
+  };
+
+  inline const char* RecognizerResponseTypeToString( RecognizerResponseType type ) const;
+  inline bool RecognizerResponseTypeFromString( const std::string& typeString, RecognizerResponseType& outType ) const;
+
+  struct RecognizerResponse
+  {
+    RecognizerResponseType  type = RecognizerResponseType::ResponseDisabled;
+    std::string             animation;
+  };
+
 
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Helper Functions ...
+
+  void LoadStreamingReactions( const Json::Value& config );
+  RecognizerResponse LoadRecognizerResponse( const Json::Value& config, const std::string& id );
 
   // kicks off the streaming process
   // this assumes all checks and requirements have already been taken care of (eg. !HasStreamingBegun())
@@ -185,8 +214,13 @@ private:
   MicStreamState            _state            = MicStreamState::Listening;
   StreamData                _streamingData;
 
+  AudioEngine::Multiplexer::PostAudioEvent    _streamingEarcon;
+
   std::vector<OnTriggerWordDetectedCallback>  _triggerWordDetectedCallbacks;
   std::vector<OnStreamingStateChanged>        _streamingStateChangedCallbacks;
+
+  RecognizerResponse                          _recognizerResponse;
+  std::unordered_map<std::string, RecognizerResponse> _recognizerResponseMap;
 };
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -201,6 +235,40 @@ const char* MicStreamingController::WakeWordSourceToString( WakeWordSource sourc
     case WakeWordSource::ButtonFromMute:
       return "ButtonFromMute";
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+const char* MicStreamingController::RecognizerResponseTypeToString( RecognizerResponseType type ) const
+{
+  switch ( type )
+  {
+    case RecognizerResponseType::ResponseEnabled:
+      return "ResponseEnabled";
+    case RecognizerResponseType::ResponseDisabled:
+      return "ResponseDisabled";
+    case RecognizerResponseType::ResponseSimulated:
+      return "ResponseSimulated";
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool MicStreamingController::RecognizerResponseTypeFromString( const std::string& typeString, RecognizerResponseType& outType ) const
+{
+  static const std::unordered_map<std::string, RecognizerResponseType> stringToEnumMap =
+  {
+    { "ResponseEnabled",    RecognizerResponseType::ResponseEnabled },
+    { "ResponseDisabled",   RecognizerResponseType::ResponseDisabled },
+    { "ResponseSimulated",  RecognizerResponseType::ResponseSimulated },
+  };
+
+  const auto it = stringToEnumMap.find( typeString );
+  if ( it != stringToEnumMap.end() )
+  {
+    outType = it->second;
+    return true;
+  }
+
+  return false;
 }
 
 } // namespace MicData

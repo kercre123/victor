@@ -453,6 +453,11 @@ message SetTriggerWordResponse
   string getInAnimationName,
 }
 
+message SetRecognizerResponse
+{
+  string responseId,
+}
+
 // Engine -> Anim : signal to the MicStreamingController to stop the current mic stream
 message StopCurrentMicStream
 {
@@ -908,10 +913,11 @@ union EngineToRobot
   SetTriggerWordResponse        setTriggerWordResponse     = 0x9A,
   SetAlexaUXResponses           setAlexaUXResponses        = 0x9B,
   StopCurrentMicStream          stopCurrentMicStream       = 0x9C,
+  SetRecognizerResponse         setRecognizerResponse      = 0x9D,
 
-  ResetBeatDetector             resetBeatDetector           = 0x9D,
+  ResetBeatDetector             resetBeatDetector           = 0x9E,
 
-  SetAlexaUsage                 setAlexaUsage               = 0x9E,
+  SetAlexaUsage                 setAlexaUsage               = 0x9F,
 
   SwitchboardInterface::SetConnectionStatus     setConnectionStatus = 0xA0,
   SwitchboardInterface::SetBLEPin               setBLEPin                 = 0xA1,

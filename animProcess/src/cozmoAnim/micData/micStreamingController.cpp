@@ -18,16 +18,28 @@
 #include "cozmoAnim/showAudioStreamStateManager.h"
 
 #include "audioUtil/speechRecognizer.h"
+#include "coretech/common/engine/jsonTools.h"
+#include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "util/logging/logging.h"
+#include "util/fileUtils/fileUtils.h"
 #include "util/global/globalDefinitions.h"
 
 
 // todo: jmeh
-// + move ShowAudioStreamStateManager logic into here?
+// + DESTROY ShowAudioStreamStateManager and implement it here (but better)
+// + make trigger word detection API private and set a callback
+// + change all required INFO's back to DEBUG's
 
 
 #define LOG_CHANNEL "Microphones"
+
+namespace {
+  const std::string   kConfigFilename                   = "config/micData/micStreamingConfig.json";
+  const char*         kKeyResponsesField                = "recognizer_responses";
+  const char*         kKeyResponseType                  = "response_type";
+  const char*         kKeyResponsesAnimation            = "response_animation";
+}
 
 namespace Anki {
 namespace Vector {
@@ -59,6 +71,65 @@ void MicStreamingController::Initialize( const Anim::AnimContext* animContext )
   // these should all exist by now ...
   DEV_ASSERT( nullptr != _micDataSystem, "MicStreamingController.Initialize" );
   DEV_ASSERT( nullptr != _micDataSystem->GetMicDataProcessor(), "MicStreamingController.Initialize" );
+
+  {
+    using namespace Util;
+
+    Json::Value streamingConfig;
+
+    const Data::DataPlatform* platform = animContext->GetDataPlatform();
+    if ( platform->readAsJson( Data::Scope::Resources, kConfigFilename, streamingConfig ) )
+    {
+      LoadStreamingReactions( streamingConfig );
+    }
+    else
+    {
+      LOG_ERROR( "MicStreamingController.Initialize",
+                 "Error loading mic streaming response config file (%s), check the formatting (extra comma, etc)",
+                 kConfigFilename.c_str() );
+    }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MicStreamingController::LoadStreamingReactions( const Json::Value& config )
+{
+  const Json::Value& allResponsesConfig = config[kKeyResponsesField];
+  for( Json::Value::const_iterator it = allResponsesConfig.begin() ; it != allResponsesConfig.end() ; it++ )
+  {
+    const std::string id = it.key().asString();
+    RecognizerResponse recognizerResponse = LoadRecognizerResponse( *it, id );
+
+    _recognizerResponseMap.emplace( id, recognizerResponse );
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+MicStreamingController::RecognizerResponse MicStreamingController::LoadRecognizerResponse( const Json::Value& config, const std::string& id )
+{
+  RecognizerResponse response;
+
+  ASSERT_NAMED_EVENT( config.isMember( kKeyResponseType ), "MicStreamingController.LoadRecognizerResponse",
+                      "Response %s missing required field %s", id.c_str(), kKeyResponseType );
+  const std::string typeString = JsonTools::ParseString( config, kKeyResponseType, "MicStreamingController.LoadRecognizerResponse" );
+  ANKI_VERIFY( RecognizerResponseTypeFromString( typeString, response.type ),
+               "MicStreamingController.LoadRecognizerResponse",
+               "Response %s supplied an invalid value for field %s",
+               id.c_str(), kKeyResponseType );
+
+  // don't need a response animation if we're disabled
+  if ( RecognizerResponseType::ResponseDisabled != response.type )
+  {
+    JsonTools::GetValueOptional( config, kKeyResponsesAnimation, response.animation );
+  }
+
+  LOG_DEBUG( "MicStreamingController.LoadRecognizerResponse",
+             "Loaded RecognizerResponse %s, with type [%s] and animation [%s]",
+             id.c_str(),
+             RecognizerResponseTypeToString( response.type ),
+             response.animation.c_str() );
+
+  return response;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -465,6 +536,34 @@ bool MicStreamingController::ShouldSimulateWakeWordStreaming() const
 bool MicStreamingController::CanStreamToCloud() const
 {
   return ( !IsStreamSimulated() && _streamingData.streamJobCreated );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MicStreamingController::SetRecognizerResponse( const std::string& responseId )
+{
+  if ( !responseId.empty() )
+  {
+    const auto it = _recognizerResponseMap.find( responseId );
+    if ( it != _recognizerResponseMap.end() )
+    {
+      _recognizerResponse = it->second;
+      LOG_INFO( "MicStreamingController.SetRecognizerResponse", "Updated recognizer response to (%s)",
+                 responseId.c_str() );
+    }
+    else
+    {
+      _recognizerResponse = RecognizerResponse();
+      LOG_ERROR( "MicStreamingController.SetRecognizerResponse",
+                 "Attempted to set an invalid recognizer response (%s), disabling instead", responseId.c_str() );
+    }
+  }
+  else
+  {
+    // default response is disabled
+    _recognizerResponse = RecognizerResponse();
+    LOG_INFO( "MicStreamingController.SetRecognizerResponse",
+               "Disabling recognizer response since empty id was given" );
+  }
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

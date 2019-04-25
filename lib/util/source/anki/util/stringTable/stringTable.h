@@ -27,7 +27,7 @@ namespace Util{
 class StringTable
 {
 public:
-  typedef unsigned int STRID;
+  typedef uint32_t STRID;
   static const STRID STRID_INDEX_NONE = 0;
 
   //----------------------------------------------------------------------------------------------------------------------------

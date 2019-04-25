@@ -1,0 +1,42 @@
+{
+  // response_type      : is a enum RecognizerResponseType value (found in MicStreamingController)
+  // response_animation : is the name of the get-in animation (empty string denotes no animation)
+  "recognizer_responses" :
+  {
+    "default" :
+    {
+      "response_type"         : "ResponseEnabled",
+      "response_animation"    : "ag_vc_listening",
+
+      "anim_trigger_loop"     : "VC_ListeningLoop",
+      "anim_trigger_get_out"  : "VC_ListeningGetOut",
+
+      "earcon_success"        : "Play__Robot_Vic_Sfx__Wake_Word_Success",
+      "earcon_fail"           : "Play__Robot_Vic_Sfx__Wake_Word_Fail"
+    },
+
+    "disabled" :
+    {
+      "response_type"         : "ResponseDisabled",
+      "response_animation"    : "",
+
+      "anim_trigger_loop"     : "InvalidAnimTrigger",
+      "anim_trigger_get_out"  : "InvalidAnimTrigger",
+
+      "earcon_success"        : "Invalid",
+      "earcon_fail"           : "Invalid"
+    },
+
+    "sleeping" :
+    {
+      "response_type"         : "ResponseEnabled",
+      "response_animation"    : "ag_wakeword_groggyeyes_getin",
+
+      "anim_trigger_loop"     : "VC_SleepingToListeningLoop",
+      "anim_trigger_get_out"  : "VC_SleepingToListeningGetOut",
+
+      "earcon_success"        : "Play__Robot_Vic_Sfx__Wake_Word_Success",
+      "earcon_fail"           : "Play__Robot_Vic_Sfx__Wake_Word_Fail"
+    }
+  }
+}

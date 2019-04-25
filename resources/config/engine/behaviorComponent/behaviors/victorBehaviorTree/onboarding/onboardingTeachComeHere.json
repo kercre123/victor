@@ -51,7 +51,6 @@
         }
       },
 
-      "earConAudioEventBegin"   : "Play__Robot_Vic_Sfx__Wake_Word_On",
       "earConAudioEventSuccess" : "Play__Robot_Vic_Sfx__Wake_Word_Success",
       "backpackLights"          : false,
 

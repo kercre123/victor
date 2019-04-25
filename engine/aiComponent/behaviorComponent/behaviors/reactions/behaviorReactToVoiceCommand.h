@@ -141,13 +141,9 @@ private:
     InstanceConfig();
 
     // earcon is an audible cue to tell the user victor is listening
-    AudioMetaData::GameEvent::GenericEvent earConBegin;
     AudioMetaData::GameEvent::GenericEvent earConSuccess;
     AudioMetaData::GameEvent::GenericEvent earConFail;
-    
-    bool pushResponse;
-    
-    AnimationTrigger animListeningGetIn;
+        
     AnimationTrigger animListeningLoop;
     AnimationTrigger animListeningGetOut;
 
@@ -187,6 +183,8 @@ private:
     EState                    state;
     MicDirectionIndex         reactionDirection;
     BackpackLightDataLocator  lightsHandle;
+
+    RecognizerBehaviorResponse _recognizerResponse;
 
     double                    streamingBeginTime;
     double                    streamingEndTime;

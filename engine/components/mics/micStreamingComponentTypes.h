@@ -21,9 +21,18 @@
 
 
 namespace Anki {
+
+  namespace AudioMetaData {
+  namespace GameEvent {
+    enum class GenericEvent : uint32_t;
+  }
+  }
+
 namespace Vector {
 
-enum class StreamingEvent
+  enum class AnimationTrigger : int32_t;
+
+enum class StreamingEvent : uint8_t
 {
   TriggerWordDetected,    // we've detected a trigger word and have begun prepping the stream
   StreamProcessBegin,     // we are prepping to stream mic data (independent of TriggerWordDetected)
@@ -67,6 +76,15 @@ inline const char* StreamingEventToString( StreamingEvent event )
     case StreamingEvent::StreamProcessEnd:      return "StreamProcessEnd";
   }
 }
+
+struct RecognizerBehaviorResponse
+{
+  AnimationTrigger animLooping;
+  AnimationTrigger animGetOut;
+
+  AudioMetaData::GameEvent::GenericEvent earConSuccess;
+  AudioMetaData::GameEvent::GenericEvent earConFail;
+};
 
 } // namespace Vector
 } // namespace Anki

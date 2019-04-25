@@ -35,6 +35,7 @@ namespace {
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 IBehavior::IBehavior(const std::string& debugLabel)
 : _debugLabel(debugLabel)
+, _labelId(_debugLabel)
 , _currentInScopeCount(0)
 , _lastTickWantsToBeActivatedCheckedOn(0)
 , _lastTickOfUpdate(0)
