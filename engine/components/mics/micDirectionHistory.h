@@ -63,7 +63,7 @@ public:
   MicDirectionNodeList GetHistoryAtTime(EngineTimeStamp_t timestampEnd, TimeStamp_t timeLength_ms) const;
 
 
-  // currently we only allow the listerner to supply an OnSound "reaction", but could easily have them supply
+  // currently we only allow the listener to supply an OnSound "reaction", but could easily have them supply
   // the "testing" function to determine themselves what is considered a valid sound reaction
   SoundReactorId RegisterSoundReactor(OnMicPowerSampledCallback callback);
   void UnRegisterSoundReactor(SoundReactorId id);

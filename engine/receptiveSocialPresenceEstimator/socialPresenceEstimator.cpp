@@ -18,6 +18,9 @@
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
 #include "engine/aiComponent/behaviorComponent/userIntentComponent.h"
 #include "engine/ankiEventUtil.h"
+#include "engine/components/mics/micComponent.h"
+#include "engine/components/mics/micDirectionHistory.h"
+#include "engine/components/mics/micDirectionTypes.h"
 #include "engine/components/sensors/touchSensorComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/externalInterface/externalInterface.h"
@@ -35,6 +38,7 @@ namespace Vector {
 
 namespace {
   float kEpsilon = 0.01; // threshold for calling a SocialPresenceEvent's value zero
+  float kmicPowerScoreThreshold = 1.0; // TODO: not tuned at all, and definitely will want to be.
 }
 
 
@@ -140,16 +144,21 @@ void SocialPresenceEstimator::InitDependent(Vector::Robot *robot, const RobotCom
   _robot = robot;
 
   // subscribe to inputs
+
   // new user intent
   auto& uic = dependentComps.GetComponent<AIComponent>().GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
   _newUserIntentHandle =
       uic.RegisterNewUserIntentCallback( std::bind( &SocialPresenceEstimator::OnNewUserIntent, this, std::placeholders::_1) );
+
   // various vision-based things
   _faceHandle = _robot->GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedFace,
       std::bind( &SocialPresenceEstimator::OnRobotObservedFace, this, std::placeholders::_1) );
-  // TODO: add motion here
   _faceHandle = _robot->GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedMotion,
       std::bind( &SocialPresenceEstimator::OnRobotObservedMotion, this, std::placeholders::_1) );
+
+  _micPowerSampleHandle = dependentComps.GetComponent<MicComponent>().GetMicDirectionHistory().RegisterSoundReactor(
+      std::bind( &SocialPresenceEstimator::OnMicPowerSample, this,
+          std::placeholders::_1, std::placeholders::_2, std::placeholders::_3) );
 
   if( ANKI_DEV_CHEATS ) {
     SubscribeToWebViz();
@@ -277,6 +286,19 @@ void SocialPresenceEstimator::OnRobotObservedMotion(const AnkiEvent<ExternalInte
 {
   LogInputEvent(&_SPEMotion);
   TriggerInputEvent(&_SPEMotion);
+}
+
+
+bool SocialPresenceEstimator::OnMicPowerSample(double micPowerLevel, MicDirectionConfidence conf, MicDirectionIndex dir)
+{
+  //LOG_WARNING("SocialPresenceEstimator.OnMicPowerSample.GotSample", "power score: %f", micPowerLevel);
+  // probably we need some kind of threshold on the power score
+  if (micPowerLevel > kmicPowerScoreThreshold) {
+    LOG_DEBUG("SocialPresenceEstimator.OnMicPowerSample.GotSampleAboveThreshold", "power score: %f", micPowerLevel);
+    LogInputEvent(&_SPESound);
+    TriggerInputEvent(&_SPESound);
+  }
+  return true;
 }
 
 

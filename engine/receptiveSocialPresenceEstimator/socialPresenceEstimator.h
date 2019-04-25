@@ -14,6 +14,7 @@
 #define __VICTOR_SOCIALPRESENCEESTIMATOR_H__
 
 #include "engine/aiComponent/behaviorComponent/userIntents.h"
+#include "engine/components/mics/micDirectionTypes.h"
 #include "engine/externalInterface/externalInterface.h"
 #include "engine/robot.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
@@ -113,6 +114,7 @@ public:
   //////
   virtual void GetInitDependencies(RobotCompIDSet& dependencies) const override {
     dependencies.insert(RobotComponentID::AIComponent);
+    dependencies.insert(RobotComponentID::MicComponent);
   };
   virtual void InitDependent(Vector::Robot* robot, const RobotCompMap& dependentComps) override;
   //virtual void AdditionalInitAccessibleComponents(RobotCompIDSet& components) const override {}
@@ -131,6 +133,7 @@ public:
   void OnNewUserIntent(const UserIntentTag tag);
   void OnRobotObservedFace(const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg);
   void OnRobotObservedMotion(const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg);
+  bool OnMicPowerSample(double micPowerLevel, MicDirectionConfidence conf, MicDirectionIndex dir);
 
 
 private:
@@ -170,6 +173,8 @@ private:
       SocialPresenceEvent("ShutUp", std::make_shared<PowerDecay>(1.15f), -0.9f, 0.0f, -0.9f, 0.0f, true);
   SocialPresenceEvent _SPETouch =
       SocialPresenceEvent("Touch", std::make_shared<ExponentialDecay>(0.2f), 0.8f, 1.0f, 0.8f, 1.0f, false);
+  SocialPresenceEvent _SPESound =
+      SocialPresenceEvent("Sound", std::make_shared<ExponentialDecay>(0.2f), 0.2f, 0.5f, 0.3f, 0.8f, false);
   // these ones are temporary for testing, obviously
   SocialPresenceEvent _spete1 = SocialPresenceEvent("ExplicitPositive", std::make_shared<ExponentialDecay>(0.1f), 1.0f, 1.0f, 1.0f, 1.0f, true);
   SocialPresenceEvent _spete2 = SocialPresenceEvent("ImplicitPositive", std::make_shared<ExponentialDecay>(0.3f), 0.5f, 1.0f, 0.5f, 1.0f);
@@ -189,6 +194,7 @@ private:
       &_SPEQuiet,
       &_SPEShutUp,
       &_SPETouch,
+      &_SPESound,
       &_spete1,
       &_spete2,
       &_spete3,
@@ -200,6 +206,7 @@ private:
   uint32_t _newUserIntentHandle;
   Signal::SmartHandle _faceHandle;
   Signal::SmartHandle _motionHandle;
+  uint32_t _micPowerSampleHandle;
 
 };
 
