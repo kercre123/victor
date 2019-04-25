@@ -32,26 +32,11 @@ void AnimationInterpolator::GetInterpolationMessages(const Animation* animation,
     return;
   }
 
-  outMessage.haveFaceToSend = ExtractInterpolatedFaceMessage(
-                                animation->GetTrack<ProceduralFaceKeyFrame>(), 
-                                animation->GetTrack<SpriteSequenceKeyFrame>(),
-                                frameNum,
-                                outMessage.faceImg);
   ExtractInterpolatedHeadMessage(animation->GetTrack<HeadAngleKeyFrame>(), frameNum, outMessage.moveHeadMessage);
   ExtractInterpolatedLiftMessage(animation->GetTrack<LiftHeightKeyFrame>(), frameNum, outMessage.moveLiftMessage);
   ExtractInterpolatedBodyMessage(animation->GetTrack<BodyMotionKeyFrame>(), frameNum, outMessage.bodyMotionMessage);
   ExtractInterpolatedBackpackMessage(animation->GetTrack<BackpackLightsKeyFrame>(), frameNum, outMessage.backpackLightsMessage);
 }
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool AnimationInterpolator::ExtractInterpolatedFaceMessage(const Animations::Track<ProceduralFaceKeyFrame>& proceduralFaceTrack,
-                                                           const Animations::Track<SpriteSequenceKeyFrame>& spriteSequenceTrack,
-                                                           const int frameNum, 
-                                                           Vision::ImageRGB565& outFace) 
-{
-  return true;
-}
-
 
 } // namespace Vector
 } // namespace Anki

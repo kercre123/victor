@@ -18,6 +18,7 @@
 
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/shared/types.h"
+#include "coretech/vision/shared/spriteCache/spriteWrapper.h"
 #include "coretech/vision/shared/spritePathMap.h"
 
 #include <set>
@@ -26,6 +27,7 @@
 // Fwd Decl
 namespace CozmoAnim {
   struct SpriteBox;
+  struct FaceAnimation;
 }
 
 namespace Anki{
@@ -55,6 +57,22 @@ public:
   Result AddKeyFrame(Vision::SpriteBoxKeyFrame&& keyFrame) {
     return AddKeyFrameInternal(std::move(keyFrame));
   }
+
+  // Legacy SpriteSequence animation support
+  Result AddFullFaceSpriteSeq(const CozmoAnim::FaceAnimation* faceAnimationKeyFrame, 
+                              const Vision::SpriteSequenceContainer& spriteSeqContainer);
+  Result AddFullFaceSpriteSeq(const Json::Value& faceAnimationKeyFrame, 
+                              const Vision::SpriteSequenceContainer& spriteSeqContainer,
+                              const std::string& animName);
+  Result AddFullFaceSpriteSeqInternal(const Vision::SpritePathMap::AssetID assetID,
+                                      const TimeStamp_t triggerTime_ms,
+                                      const Vision::SpriteSequenceContainer& spriteSeqContainer);
+
+  void SetFaceImageOverride(const Vision::SpriteHandle& spriteHandle,
+                            const TimeStamp_t relativeStreamTime_ms,
+                            const TimeStamp_t duration_ms);
+  void SetOverrideAllSpritesToEyeHue(){ _overrideAllSpritesToEyeHue = true; }
+  void ClearOverrides();
 
   void AddSpriteBoxRemap(const Vision::SpriteBoxName spriteBox,
                          const Vision::SpritePathMap::AssetID remappedAssetID);
@@ -94,6 +112,11 @@ private:
 
   TimeStamp_t _lastKeyFrameTime_ms;
   TimeStamp_t _advanceTime_ms;
+
+  Vision::SpriteHandle _faceImageOverride = nullptr;
+  TimeStamp_t _faceImageOverrideEndTime_ms;
+
+  bool _overrideAllSpritesToEyeHue;
 
   // Map from SpriteBoxName to set of keyframes ordered by triggerTime_ms
   using SpriteBoxMap = std::unordered_map<Vision::SpriteBoxName, SpriteBoxTrack>;

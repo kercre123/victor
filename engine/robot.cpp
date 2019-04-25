@@ -856,13 +856,6 @@ void UpdateFaceImageRGBExample(Robot& robot)
     }
   }
 
-  // Throttle frames
-  // Don't send if the number of procAnim keyframes gets large enough
-  // (One keyframe == 33ms)
-  if (robot.GetAnimationComponent().GetAnimState_NumProcAnimFaceKeyframes() > 30) {
-    return;
-  }
-
   // Move 'X' through the image
   const f32 xStep = 5.f;
   pos.x() += xStep;
@@ -1176,7 +1169,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Send state to visualizer for displaying
   VizInterface::RobotStateMessage vizState(stateMsg,
                                            _robotImuTemperature_degC,
-                                           GetAnimationComponent().GetAnimState_NumProcAnimFaceKeyframes(),
                                            GetCliffSensorComponent().GetCliffDetectThresholds(),
                                            imageFramePeriod_ms,
                                            imageProcPeriod_ms,

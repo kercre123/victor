@@ -282,8 +282,8 @@ bool ShowAudioStreamStateManager::StartAlexaResponse(AlexaUXState state, bool ig
                      "ShowAudioStreamStateManager.StartAlexaResponse.NoValidGetInAnim",
                      "Animation not found for get in %s", response->getInAnimName.c_str() ) )
     {
-      // start animation, but don't render in eye hue
-      _streamer->SetStreamingAnimation( response->getInAnimName, response->getInAnimTag, 1, 0, true, true, false );
+      const bool interruptRunning = true;
+      _streamer->SetStreamingAnimation( response->getInAnimName, response->getInAnimTag, 1, 0, interruptRunning);
     }
   }
 

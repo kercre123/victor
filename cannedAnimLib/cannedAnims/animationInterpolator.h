@@ -40,12 +40,6 @@ public:
                                        const int frameNum, 
                                        AnimationMessageWrapper& outMessage);
 private:
-  // returns true if a face was set
-  static bool ExtractInterpolatedFaceMessage(const Animations::Track<ProceduralFaceKeyFrame>& proceduralFaceTrack,
-                                             const Animations::Track<SpriteSequenceKeyFrame>& spriteSequenceTrack,
-                                             const int frameNum, 
-                                             Vision::ImageRGB565& outFace);
-
   // To be implemented as time allows
   static void ExtractInterpolatedHeadMessage(const Animations::Track<HeadAngleKeyFrame>& headTrack,
                                              const int frameNum, 

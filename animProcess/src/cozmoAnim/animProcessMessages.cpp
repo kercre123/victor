@@ -241,8 +241,13 @@ void Process_playAnim(const Anki::Vector::RobotInterface::PlayAnim& msg)
            animName.c_str(), msg.tag);
 
   const bool interruptRunning = true;
-  const bool overrideEyes = !msg.renderInEyeHue;
-  _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops, msg.startAt_ms, interruptRunning, overrideEyes, msg.renderInEyeHue);
+  const bool overrideAllSpritesToEyeHue = msg.renderInEyeHue;
+  _animStreamer->SetStreamingAnimation(animName,
+                                       msg.tag,
+                                       msg.numLoops,
+                                       msg.startAt_ms,
+                                       interruptRunning,
+                                       overrideAllSpritesToEyeHue);
 }
 
 void Process_abortAnimation(const Anki::Vector::RobotInterface::AbortAnimation& msg)
@@ -281,23 +286,6 @@ void Process_displayFaceImageGrayscaleChunk(const Anki::Vector::RobotInterface::
 void Process_displayFaceImageRGBChunk(const Anki::Vector::RobotInterface::DisplayFaceImageRGBChunk& msg)
 {
   _animStreamer->Process_displayFaceImageChunk(msg);
-}
-
-void Process_displayCompositeImageChunk(const Anki::Vector::RobotInterface::DisplayCompositeImageChunk& msg)
-{
-  _animStreamer->Process_displayCompositeImageChunk(msg);
-}
-
-void Process_updateCompositeImage(const Anki::Vector::RobotInterface::UpdateCompositeImage& msg)
-{
-  _animStreamer->Process_updateCompositeImage(msg);
-}
-
-void Process_playCompositeAnimation(const Anki::Vector::RobotInterface::PlayCompositeAnimation& msg)
-{
-  const std::string animName(msg.animName, msg.animName_length);
-
-  _animStreamer->Process_playCompositeAnimation(animName, msg.tag);
 }
 
 void Process_playAnimWithSpriteBoxRemaps(const Anki::Vector::RobotInterface::PlayAnimWithSpriteBoxRemaps& msg)

@@ -65,6 +65,23 @@ public:
     return _spriteBoxCompositor.AddKeyFrame(std::move(keyFrame));
   }
 
+  void SetFaceImageOverride(const Vision::SpriteHandle& spriteHandle,
+                            const TimeStamp_t relativeStreamTime_ms,
+                            const TimeStamp_t duration_ms)
+  {
+    return _spriteBoxCompositor.SetFaceImageOverride(spriteHandle, relativeStreamTime_ms, duration_ms);
+  }
+
+  void SetOverrideAllSpritesToEyeHue()
+  {
+    _spriteBoxCompositor.SetOverrideAllSpritesToEyeHue();
+  }
+
+  void ClearOverrides()
+  {
+    _spriteBoxCompositor.ClearOverrides();
+  }
+
   void AddSpriteBoxRemap(const Vision::SpriteBoxName& spriteBoxName,
                          const Vision::SpritePathMap::AssetID remappedAssetID)
   {
@@ -144,8 +161,6 @@ private:
   // All the animation tracks, storing different kinds of KeyFrames
   Animations::Track<HeadAngleKeyFrame>      _headTrack;
   Animations::Track<LiftHeightKeyFrame>     _liftTrack;
-  // TODO(str): VIC-13524 Merge the SpriteSequence track into the SpriteBoxCompositor.
-  Animations::Track<SpriteSequenceKeyFrame> _spriteSequenceTrack;
   Animations::Track<ProceduralFaceKeyFrame> _proceduralFaceTrack;
   Animations::Track<EventKeyFrame>          _eventTrack;
   Animations::Track<BackpackLightsKeyFrame> _backpackLightsTrack;

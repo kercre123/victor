@@ -526,15 +526,6 @@ message SetButtonWakeWord
     bool isAlexa,
 }
 
-// Play animation as part of a composite image
-// Image chunks are sent separately
-message PlayCompositeAnimation
-{
-  uint_32 compositeImageID, // Link to composite image chunks
-  uint_8  tag,
-  string  animName
-}
-
 structure SpriteBoxRemap
 {
   Vision::SpriteBoxName spriteBoxName,
@@ -564,23 +555,6 @@ message AddSpriteBoxKeyFrames
   Vision::SpriteBoxKeyFrame spriteBoxKeyFrames[50],
   uint_8                    numKeyFrames,
 }
-
-message DisplayCompositeImageChunk
-{
-  uint_32 compositeImageID, // Ensures chunks are for the same image
-  uint_32 get_frame_interval_ms, // Interval at which to call Composite Image's GetFrame
-  uint_32 duration_ms,      // Use uint_32 max value to keep the image on the screen
-  Vision::CompositeImageChunk compositeImageChunk
-}
-
-message UpdateCompositeImage
-{
-  Vision::SerializedSpriteBox serializedSpriteBox, // SpriteBox named count indicates clear the whole layer
-  uint_32                     applyAt_ms, // specify the time in ms from the start of the animation that the update should be applied
-  uint_16                     assetID,
-  Vision::LayerName           layerName,
-}
-
 
 // TODO: Move to messageGameToEngine.clad or shared file
 // DisplayFaceImageBinaryChunk
@@ -879,15 +853,12 @@ union EngineToRobot
   RemoveSquint                  removeSquint                = 0x61,
 
   DisplayFaceImageGrayscaleChunk   displayFaceImageGrayscaleChunk      = 0x62,
-  DisplayCompositeImageChunk       displayCompositeImageChunk          = 0x63,
-  UpdateCompositeImage             updateCompositeImage                = 0x64,
-  PlayCompositeAnimation           playCompositeAnimation              = 0x65,
-  PlayAnimWithSpriteBoxRemaps      playAnimWithSpriteBoxRemaps         = 0x66,
-  PlayAnimWithSpriteBoxKeyFrames   playAnimWithSpriteBoxKeyFrames      = 0x67, 
-  AddSpriteBoxKeyFrames            addSpriteBoxKeyFrames               = 0x68,
-  EnableMirrorModeScreen           enableMirrorModeScreen              = 0x69,
+  PlayAnimWithSpriteBoxRemaps      playAnimWithSpriteBoxRemaps         = 0x63,
+  PlayAnimWithSpriteBoxKeyFrames   playAnimWithSpriteBoxKeyFrames      = 0x64, 
+  AddSpriteBoxKeyFrames            addSpriteBoxKeyFrames               = 0x65,
+  EnableMirrorModeScreen           enableMirrorModeScreen              = 0x66,
 
-  SetButtonWakeWord                setButtonWakeWord                   = 0x6A,
+  SetButtonWakeWord                setButtonWakeWord                   = 0x67,
 
   AudioEngine::Multiplexer::PostAudioEvent        postAudioEvent       = 0x70,
   AudioEngine::Multiplexer::StopAllAudioEvents    stopAllAudioEvents   = 0x71,

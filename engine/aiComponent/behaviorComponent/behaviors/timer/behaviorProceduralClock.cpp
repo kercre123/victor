@@ -57,97 +57,102 @@ const std::vector<Vision::SpritePathMap::AssetID> kDigitMap =
 
 // SpriteBoxKeyFrame Definitions
 const Vision::SpriteBoxKeyFrame kTensLeftOfColonKeyFrame(
-  0.0f,
   Vision::SpriteBox(
     100.0f,
-    kClockEmptyGridSpriteID,
     27,
     26,
     29,
     43,
-    Vision::SpriteBoxName::TensLeftOfColon,
+    Vision::SpriteBoxName::SpriteBox_1,
     Anki::Vision::LayerName::Layer_6,
     Anki::Vision::SpriteRenderMethod::EyeColor,
-    Anki::Vision::SpriteSeqEndType::Clear,
-    {{0,0}}
-  )
+    0
+  ),
+  0.0f,
+  kClockEmptyGridSpriteID,
+  Anki::Vision::SpriteSeqEndType::Clear,
+  0
 );
 
 const Vision::SpriteBoxKeyFrame kOnesLeftOfColonKeyFrame(
-  0.0f,
   Vision::SpriteBox(
     100.0f,
-    kClockEmptyGridSpriteID,
     57,
     26,
     29,
     43,
-    Vision::SpriteBoxName::OnesLeftOfColon,
+    Vision::SpriteBoxName::SpriteBox_2,
     Anki::Vision::LayerName::Layer_6,
     Anki::Vision::SpriteRenderMethod::EyeColor,
-    Anki::Vision::SpriteSeqEndType::Clear,
-    {{0,0}}
-  )
+    0
+  ),
+  0.0f,
+  kClockEmptyGridSpriteID,
+  Anki::Vision::SpriteSeqEndType::Clear,
+  0
 );
 
 const Vision::SpriteBoxKeyFrame kColonKeyFrame(
-  0.0f,
   Vision::SpriteBox(
     100.0f,
-    Vision::SpritePathMap::GetAssetID("clock_colon"),
     87,
     27,
     10,
     43,
-    Vision::SpriteBoxName::Colon,
+    Vision::SpriteBoxName::SpriteBox_3,
     Anki::Vision::LayerName::Layer_6,
     Anki::Vision::SpriteRenderMethod::EyeColor,
-    Anki::Vision::SpriteSeqEndType::Clear,
-    {{0,0}}
-  )
+    0
+  ),
+  0.0f,
+  Vision::SpritePathMap::GetAssetID("clock_colon"),
+  Anki::Vision::SpriteSeqEndType::Clear,
+  0
 );
 
 const Vision::SpriteBoxKeyFrame kTensRightOfColonKeyFrame(
-  0.0f,
   Vision::SpriteBox(
     100.0f,
-    kClockEmptyGridSpriteID,
     98,
     26,
     29,
     43,
-    Vision::SpriteBoxName::TensRightOfColon,
+    Vision::SpriteBoxName::SpriteBox_4,
     Anki::Vision::LayerName::Layer_6,
     Anki::Vision::SpriteRenderMethod::EyeColor,
-    Anki::Vision::SpriteSeqEndType::Clear,
-    {{0,0}}
-  )
+    0
+  ),
+  0.0f,
+  kClockEmptyGridSpriteID,
+  Anki::Vision::SpriteSeqEndType::Clear,
+  0
 );
 
 const Vision::SpriteBoxKeyFrame kOnesRightOfColonKeyFrame(
-  0.0f,
   Vision::SpriteBox(
     100.0f,
-    kClockEmptyGridSpriteID,
     128,
     26,
     29,
     43,
-    Vision::SpriteBoxName::OnesRightOfColon,
+    Vision::SpriteBoxName::SpriteBox_5,
     Anki::Vision::LayerName::Layer_6,
     Anki::Vision::SpriteRenderMethod::EyeColor,
-    Anki::Vision::SpriteSeqEndType::Clear,
-    {{0,0}}
-  )
+    0
+  ),
+  0.0f,
+  kClockEmptyGridSpriteID,
+  Anki::Vision::SpriteSeqEndType::Clear,
+  0
 );
 
 const std::map<Vision::SpriteBoxName, Vision::SpriteBoxKeyFrame> kKeyFrameMap =
 {
-  {Vision::SpriteBoxName::TensLeftOfColon,  kTensLeftOfColonKeyFrame},
-  {Vision::SpriteBoxName::OnesLeftOfColon,  kOnesLeftOfColonKeyFrame},
-  {Vision::SpriteBoxName::Colon,            kColonKeyFrame},
-  {Vision::SpriteBoxName::TensRightOfColon, kTensRightOfColonKeyFrame},
-  {Vision::SpriteBoxName::OnesRightOfColon, kOnesRightOfColonKeyFrame}
+  {Vision::SpriteBoxName::SpriteBox_1,  kTensLeftOfColonKeyFrame},
+  {Vision::SpriteBoxName::SpriteBox_2,  kOnesLeftOfColonKeyFrame},
+  {Vision::SpriteBoxName::SpriteBox_3,            kColonKeyFrame},
+  {Vision::SpriteBoxName::SpriteBox_4, kTensRightOfColonKeyFrame},
+  {Vision::SpriteBoxName::SpriteBox_5, kOnesRightOfColonKeyFrame}
 };
 
 } // namespace
@@ -189,22 +194,22 @@ void BehaviorProceduralClock::InitBehavior()
       const int currentTime_s = timerUtility.GetSystemTime_s() + offset;
       // Ten Mins Digit
       {          
-        outMap.emplace(std::make_pair(Vision::SpriteBoxName::TensLeftOfColon, 
+        outMap.emplace(std::make_pair(Vision::SpriteBoxName::SpriteBox_1, 
                                       TimerHandle::SecondsToDisplayMinutes(currentTime_s)/10));
       }
       // One Mins Digit
       {
-        outMap.emplace(std::make_pair(Vision::SpriteBoxName::OnesLeftOfColon, 
+        outMap.emplace(std::make_pair(Vision::SpriteBoxName::SpriteBox_2, 
                                             TimerHandle::SecondsToDisplayMinutes(currentTime_s) % 10));
       }
       // Ten seconds digit
       {
-        outMap.emplace(std::make_pair(Vision::SpriteBoxName::TensRightOfColon, 
+        outMap.emplace(std::make_pair(Vision::SpriteBoxName::SpriteBox_4, 
                                       TimerHandle::SecondsToDisplaySeconds(currentTime_s)/10));
       }
       // One seconds digit
       {
-        outMap.emplace(std::make_pair(Vision::SpriteBoxName::OnesRightOfColon, 
+        outMap.emplace(std::make_pair(Vision::SpriteBoxName::SpriteBox_5, 
                        TimerHandle::SecondsToDisplaySeconds(currentTime_s) % 10));
       }
       return outMap;
@@ -221,8 +226,8 @@ void BehaviorProceduralClock::OnBehaviorActivated()
   _lifetimeParams = LifetimeParams();
 
   // Set up the colon keyframes and use them to set the animation duration
-  Vision::SpriteBoxKeyFrame colonStartKeyFrame = kKeyFrameMap.at(Vision::SpriteBoxName::Colon);
-  Vision::SpriteBoxKeyFrame colonEndKeyFrame = kKeyFrameMap.at(Vision::SpriteBoxName::Colon);
+  Vision::SpriteBoxKeyFrame colonStartKeyFrame = kKeyFrameMap.at(Vision::SpriteBoxName::SpriteBox_3);
+  Vision::SpriteBoxKeyFrame colonEndKeyFrame = kKeyFrameMap.at(Vision::SpriteBoxName::SpriteBox_3);
 
   int timeToDisplay_ms = Util::SecToMilliSec(_instanceParams.totalTimeDisplayClock_sec);
   colonEndKeyFrame.triggerTime_ms = timeToDisplay_ms - (timeToDisplay_ms % ANIM_TIME_STEP_MS);
@@ -320,7 +325,7 @@ void BehaviorProceduralClock::AddKeyFramesForOffset(const int clockOffset_s, con
 
     isLeadingZero &= (pair.second == 0);
     if(!isLeadingZero){
-      newKeyFrame.spriteBox.assetID = kDigitMap.at(pair.second);
+      newKeyFrame.assetID = kDigitMap.at(pair.second);
     }
 
     _lifetimeParams.keyFrames.push_back(std::move(newKeyFrame));

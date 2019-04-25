@@ -1658,10 +1658,7 @@ void FaceInfoScreenManager::DrawMuteAnimation()
   // so play the on/off or off/on anim to reflect that
   const std::string animName = muted ? "anim_micstate_micoff_01" : "anim_micstate_micon_01";
   const bool shouldInterrupt = true;
-  const bool shouldOverrideEyeHue = true;
-  const bool shouldRenderInEyeHue = false;
-  _animationStreamer->SetStreamingAnimation(animName, 0, 1, shouldInterrupt,
-                                            shouldOverrideEyeHue, shouldRenderInEyeHue);
+  _animationStreamer->SetStreamingAnimation(animName, 0, 1, shouldInterrupt);
   
 }
   
@@ -1673,10 +1670,7 @@ void FaceInfoScreenManager::DrawAlexaNotification()
 
   const std::string animName = "anim_avs_notification_loop_01";
   const bool shouldInterrupt = true;
-  const bool shouldOverrideEyeHue = true;
-  const bool shouldRenderInEyeHue = false;
-  _animationStreamer->SetStreamingAnimation(animName, 0, 1, 0, shouldInterrupt,
-                                            shouldOverrideEyeHue, shouldRenderInEyeHue);
+  _animationStreamer->SetStreamingAnimation(animName, 0, 1, 0, shouldInterrupt);
 }
 
 // Draws each element of the textVec on a separate line (spacing determined by textSpacing_pix)

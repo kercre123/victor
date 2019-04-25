@@ -1460,7 +1460,7 @@ namespace Vector {
 
     // Send as face display animation
     auto & animComponent = _robot->GetAnimationComponent();
-    if(isMirrorModeEnabled && animComponent.GetAnimState_NumProcAnimFaceKeyframes() < 5) // Don't get too far ahead
+    if(isMirrorModeEnabled)
     {
       // NOTE: This creates a non-const image "header" around the same data as is in procResult.mirrorModeImg.
       // Due to a bug / design flaw in OpenCV, this actually allows us to draw on that image, even though

@@ -838,12 +838,6 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     payload.state.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED ? 'D' : ' ');
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_BATTERY, Anki::NamedColors::GREEN, txt);
 
-  sprintf(txt, "Anim: %32s [%d], ProcFaceFrames: %d",
-        _currAnimName.c_str(), 
-        _currAnimTag,
-         payload.numProcAnimFaceKeyframes);
-  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ANIM, Anki::NamedColors::GREEN, txt);
-
   sprintf(txt, "Locked: %c%c%c, InUse: %c%c%c",
         (payload.lockedAnimTracks & (u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',
         (payload.lockedAnimTracks & (u8)AnimTrackFlag::HEAD_TRACK) ? 'H' : ' ',
