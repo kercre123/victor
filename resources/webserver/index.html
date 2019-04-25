@@ -42,18 +42,19 @@
     var perfSavedTriggeredByTimer = false;
 
     var perfItems = [
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:1500000, desc:"CPU freq",        units:"kHz" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:1500000, desc:"CPU Freq",        units:"kHz" },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:150,     desc:"Temperature",     units:"Celsius" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Uptime",          units:"seconds" },
-        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Idle time",       units:"seconds" },
-        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Real time clock", units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Idle Time",       units:"seconds" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Real Time Clock", units:"" },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:438388,  desc:"Memory Claimed",  units:"kB",      updateFunction:MemUseInfo1 },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:438388,  desc:"Memory Used",     units:"kB",      updateFunction:MemUseInfo2 },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"Overall CPU",     units:"%",       updateFunction:CPUTimeInfo },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU0",            units:"%",       updateFunction:CPUTimeInfo },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU1",            units:"%",       updateFunction:CPUTimeInfo },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU2",            units:"%",       updateFunction:CPUTimeInfo },
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU3",            units:"%",       updateFunction:CPUTimeInfo }
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU3",            units:"%",       updateFunction:CPUTimeInfo },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:100000,  desc:"/data Disk Space",units:"kB",      updateFunction:DiskSpaceInfo }
     ];
 
     const kNumCPUTimeValues = 8;    // Number of time values to read per cpu
@@ -495,6 +496,18 @@
             prev["prevUsedTime"] = usedTime;
             prev["prevTotalTime"] = totalTime;
         }
+    }
+
+    function DiskSpaceInfo(payload, itemIndex) {
+        var values = payload.split(',');
+        var total_kB = parseInt(values[0]);
+        var avail_kB = parseInt(values[1]);
+        var used_kB = total_kB - avail_kB;
+        var v = used_kB + " used, " + avail_kB + " available";
+        $("#id_perf_row_value_" + itemIndex).html(v);
+        var graph = $('#' + 'id_graph_' + itemIndex);
+        graph.progressbar( "option", "value", used_kB );
+        graph.progressbar( "option", "max", total_kB );
     }
 
     function UpdateProcHeader() {

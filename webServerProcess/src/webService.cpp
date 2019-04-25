@@ -628,6 +628,7 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
     kStat_Cpu1,
     kStat_Cpu2,
     kStat_Cpu3,
+    kStat_UserDiskSpace,
     kNumStats
   };
 
@@ -714,6 +715,22 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
     stat_cpuStat.resize(kNumCPUTimeStats);
   }
 
+  std::string stat_userDiskSpace;
+  if (active[kStat_UserDiskSpace]) {
+#ifdef ANKI_PLATFORM_VICOS
+    OSState::DiskInfo info;
+    const bool success = osState->GetDiskInfo("/data", info);
+    if (success) {
+      stat_userDiskSpace = std::to_string(info.total_kB) + "," + std::to_string(info.avail_kB);
+    }
+    else {
+      stat_userDiskSpace = "1,0";
+    }
+#else
+    stat_userDiskSpace = "1,0"; // Not really applicable to webots
+#endif
+  }
+
   const auto now = steady_clock::now();
   const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
   LOG_INFO("WebService.Perf", "GetPerfStats took %lld microseconds to read", elapsed_us);
@@ -730,12 +747,13 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
             stat_rtc.c_str(),
             stat_mem1.c_str(),
             stat_mem2.c_str());
-  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n",
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n",
             stat_cpuStat[0].c_str(),
             stat_cpuStat[1].c_str(),
             stat_cpuStat[2].c_str(),
             stat_cpuStat[3].c_str(),
-            stat_cpuStat[4].c_str());
+            stat_cpuStat[4].c_str(),
+            stat_userDiskSpace.c_str());
 
   return 1;
 }
