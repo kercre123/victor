@@ -22,6 +22,10 @@ function usage() {
     echo "  -s                      skips Docker image upload to AWS ECR"
 }
 
+if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+    echo "Have AWS credentials been provioned ( e.g. 'aws-okta exec loadtest-account -- ./build-container.sh')?"
+fi
+
 while getopts "i:a:r:hsl" opt; do
     case $opt in
         h)
@@ -73,7 +77,7 @@ docker build -t ${IMAGE_NAME} .
 
 if [ "$SKIP_UPLOAD" = false ] ; then
     # Push the image to the ECR repo
-    $(aws-okta exec loadtest-account -- aws ecr get-login --no-include-email --region ${AWS_REGION})
+    $(aws ecr get-login --no-include-email --region ${AWS_REGION})
     docker tag ${IMAGE_NAME}:latest ${REPO_DNS_NAME}/${IMAGE_NAME}:latest
     docker push ${REPO_DNS_NAME}/${IMAGE_NAME}:latest
 fi
