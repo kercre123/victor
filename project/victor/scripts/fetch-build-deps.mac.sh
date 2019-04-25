@@ -48,6 +48,7 @@ vlog "Go"
 
 vlog "git-lfs"
 $GIT lfs install
+$GIT lfs pull
 
 if [ -d "/Applications/Webots.app" ]; then
   vlog "check webots version"

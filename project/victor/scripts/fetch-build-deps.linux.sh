@@ -56,6 +56,7 @@ vlog "Go"
 
 vlog "git lfs"
 $GIT lfs install
+$GIT lfs pull
 
 vlog "Build output dirs"
 mkdir -p generated
