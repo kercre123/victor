@@ -3,6 +3,8 @@
   "behaviorClass" : "DispatcherStrictPriority",
   "interruptActiveBehavior": true,
   
+  "associatedActiveFeature": "PounceOnMotion",
+
   "wantsToBeActivatedCondition": {
     "conditionType": "Compound",
     "and": [

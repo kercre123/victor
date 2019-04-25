@@ -1,6 +1,7 @@
 {
   "behaviorClass": "PounceWithProx",
   "behaviorID": "SingletonPounceWithProx",
+  "associatedActiveFeature": "PounceOnMotion",
   "wantsToBeActivatedCondition": {
     "conditionType"       : "ProxInRange",
     "minProxDist_mm"      : 40.0,
