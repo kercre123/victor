@@ -14,9 +14,7 @@
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BehaviorCubeDrive__
 #pragma once
 
-#include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
-#include "engine/cozmoObservableObject.h"
 
 #include <chrono>
 #include <memory>
@@ -58,27 +56,27 @@ protected:
   virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
-  void SetLiftState(bool up);
+  void SetLiftState(bool up, double now);
   void RestartAnimation();
 
 private:
 
   struct InstanceConfig {
     InstanceConfig();
-    float                                                       trigger_lift_gs;
-    float                                                       dead_zone_size;
-    float                                                       time_between_lift_actions;
-    float                                                       high_head_angle;
-    float                                                       low_head_angle;
+    float                                                       triggerLiftGs;
+    float                                                       deadZoneSize;
+    float                                                       timeBetweenLiftActions;
+    float                                                       highHeadAngle;
+    float                                                       lowHeadAngle;
   };
 
   struct DynamicVariables {
     DynamicVariables();
-    ObjectID                                                    object_id;
-    std::shared_ptr<ActiveAccel>                                filtered_cube_accel;
-    std::shared_ptr<CubeAccelListeners::LowPassFilterListener>  low_pass_filter_listener;
-    double                                                      last_lift_action_time;
-    bool                                                        lift_up;
+    ObjectID                                                    objectId;
+    std::shared_ptr<ActiveAccel>                                filteredCubeAccel;
+    std::shared_ptr<CubeAccelListeners::LowPassFilterListener>  lowPassFilterListener;
+    double                                                      lastLiftActionTime;
+    bool                                                        liftUp;
   };
 
   InstanceConfig _iConfig;
