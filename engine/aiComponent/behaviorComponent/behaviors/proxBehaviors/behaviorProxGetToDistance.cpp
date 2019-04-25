@@ -178,14 +178,14 @@ const Util::GraphEvaluator2d::Node* BehaviorProxGetToDistance::GetNodeClosestToD
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool BehaviorProxGetToDistance::ShouldRecalculateDrive()
 {
-  Pose2d sensedObjectPose;
-  f32 distSqrSensedChanged_mm = 0.f;
   auto& proxSensor = GetBEI().GetComponentWrapper(BEIComponentID::ProxSensor).GetComponent<ProxSensorComponent>();
-  const bool recalculate = proxSensor.CalculateSensedObjectPose(sensedObjectPose) &&
-        ComputeDistanceSQBetween(_previousProxObjectPose, sensedObjectPose, distSqrSensedChanged_mm) &&
-        distSqrSensedChanged_mm > (kThresholdSensedMoved_mm * kThresholdSensedMoved_mm);
+  const auto& proxData = proxSensor.GetLatestProxData();
+  f32 distSqrSensedChanged_mm = 0.f;
+  const bool recalculate = proxData.foundObject &&
+      ComputeDistanceSQBetween(_previousProxObjectPose, proxData.objectPose, distSqrSensedChanged_mm) &&
+      distSqrSensedChanged_mm > (kThresholdSensedMoved_mm * kThresholdSensedMoved_mm);
   if(recalculate){
-   _previousProxObjectPose = sensedObjectPose;
+   _previousProxObjectPose = proxData.objectPose;
   }
   return recalculate;
 }

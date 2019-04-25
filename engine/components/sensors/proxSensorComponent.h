@@ -33,6 +33,8 @@ struct ProxSensorData
   bool unobstructed;          // The sensor has not detected anything up to its max range
   bool foundObject;           // The sensor detected an object in the valid operating range
   bool isLiftInFOV;           // Lift (or object on lift) is occluding the sensor
+  
+  Pose2d objectPose;
 };
 
 
@@ -67,10 +69,6 @@ public:
   // from the lift, and recalibrates the lift motors if so. Returns true
   // if motors are being calibrated
   bool VerifyLiftCalibration() const;
-  
-  // Calculates the pose directly in front of the robot where sensor is indicating an object
-  // Returns false if no object is currently found by sensor
-  bool CalculateSensedObjectPose(Pose2d& sensedObjectPose) const;
 
 protected:
   virtual void NotifyOfRobotStateInternal(const RobotState& msg) override;
