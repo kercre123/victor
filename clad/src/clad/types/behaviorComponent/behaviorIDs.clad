@@ -18,7 +18,7 @@ enum uint_16 BehaviorID {
   // devBehaviors
   AcousticTestMode,
   CubeDrive,
-  CubeDriveCoordinator,
+  CubeDriveConnectionGate,
   DevBaseBehavior,
   DevBatteryLogging,
   DevCubeSpinner,
