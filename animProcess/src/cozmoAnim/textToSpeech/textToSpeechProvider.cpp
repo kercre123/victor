@@ -59,12 +59,13 @@ Result TextToSpeechProvider::SetLocale(const std::string & locale)
 
 Result TextToSpeechProvider::GetFirstAudioData(const std::string & text,
                                                float durationScalar,
+                                               float pitchScalar,
                                                TextToSpeechProviderData & data,
                                                bool & done)
 {
   // Forward to implementation
   DEV_ASSERT(_impl != nullptr, "TextToSpeechProvider.GetFirstAudioData.InvalidImplementation");
-  return _impl->GetFirstAudioData(text, durationScalar, data, done);
+  return _impl->GetFirstAudioData(text, durationScalar, pitchScalar, data, done);
 }
 
 Result TextToSpeechProvider::GetNextAudioData(TextToSpeechProviderData & data, bool & done)

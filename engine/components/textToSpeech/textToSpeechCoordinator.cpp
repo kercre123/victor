@@ -165,7 +165,9 @@ const uint8_t TextToSpeechCoordinator::CreateUtterance(const std::string& uttera
   msg.style = style;
   msg.triggerMode = GetTriggerMode(triggerType);
   msg.durationScalar = durationScalar;
-  // copy our null-terminated string
+  msg.pitchScalar = 0.f;
+
+  // Copy our null-terminated string
   std::memcpy( msg.text.data(), utteranceString.c_str(), utteranceString.size() + 1 );
 
   // Send request to animation process

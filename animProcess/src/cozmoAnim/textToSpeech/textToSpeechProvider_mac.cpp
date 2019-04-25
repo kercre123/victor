@@ -230,6 +230,7 @@ Result TextToSpeechProviderImpl::SetLocale(const std::string & locale)
 
 Result TextToSpeechProviderImpl::GetFirstAudioData(const std::string & text,
                                                    float durationScalar,
+                                                   float pitchScalar,
                                                    TextToSpeechProviderData & data,
                                                    bool & done)
 {
@@ -252,13 +253,19 @@ Result TextToSpeechProviderImpl::GetFirstAudioData(const std::string & text,
   }
 
   // TODO: VIC-6894 [Tech Debt] Update Text to Speech Mac provider to be consistent with Vicos
-  
+
   // Get base speed for this utterance, then adjust by duration scalar
   const auto baseSpeed = _tts_config->GetSpeed(_rng, text.size());
   const auto adjustedSpeed = AcapelaTTS::GetSpeechRate(baseSpeed, durationScalar);
-  const int speed = Anki::Util::numeric_cast<int>(std::round(adjustedSpeed));
+  const auto speed = Anki::Util::numeric_cast<int>(std::round(adjustedSpeed));
+
+  // Get base pitch for this utterance, then adjust by pitch scalar
+  const auto basePitch = _tts_config->GetPitch();
+  const auto adjustedPitch = AcapelaTTS::GetAdjustedPitch(basePitch, pitchScalar);
+  const auto pitch = Anki::Util::numeric_cast<int>(std::round(adjustedPitch));
+
+  // Get shaping
   const int shaping = _tts_config->GetShaping();
-  const int pitch = _tts_config->GetPitch();
 
   LOG_DEBUG("TextToSpeechProvider.GetFirstAudioData",
             "size=%zu speed=%d shaping=%d pitch=%d",

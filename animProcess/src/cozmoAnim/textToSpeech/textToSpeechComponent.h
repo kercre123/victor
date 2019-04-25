@@ -162,7 +162,11 @@ private:
   // Initialize TTS utterance and get first chunk of TTS audio.
   // Returns RESULT_OK on success, else error code.
   // Sets done to true when audio generation is complete.
-  Result GetFirstAudioData(const std::string & text, float durationScalar, const StreamingWaveDataPtr & data, bool & done);
+  Result GetFirstAudioData(const std::string & text,
+                           float durationScalar,
+                           float pitchScalar,
+                           const StreamingWaveDataPtr & data,
+                           bool & done);
 
   // Get next chunk of TTS audio.
   // Returns RESULT_OK on success, else error code.
@@ -180,7 +184,8 @@ private:
                       const TextToSpeechTriggerMode triggerMode,
                       const std::string& text,
                       const AudioTtsProcessingStyle style,
-                      const float durationScalar);
+                      const float durationScalar,
+                      const float pitchScalar);
 
   // Set up Audio Engine to play text's audio data
   // out_duration_ms provides approximate duration of event before processing in audio engine
