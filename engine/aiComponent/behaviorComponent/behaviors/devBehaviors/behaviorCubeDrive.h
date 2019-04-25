@@ -19,14 +19,6 @@
 #include <chrono>
 #include <memory>
 
-namespace {
-  const char* kTriggerLiftGs           = "triggerLiftGs";
-  const char* kDeadZoneSize            = "deadZoneSize";
-  const char* kTimeBetweenLiftActions  = "timeBetweenLiftActions";
-  const char* kHighHeadAngle           = "highHeadAngle";
-  const char* kLowHeadAngle            = "lowHeadAngle";
-}
-
 namespace Anki {
 namespace Vector {
 

@@ -2,12 +2,10 @@
   "behaviorClass": "CubeDrive",
   "behaviorID": "CubeDrive",
 
-  "vectorPlayerConfig" : {
-    "triggerLiftGs": 0.5,
-    "deadZoneSize": 13.0,
-    "timeBetweenLiftActions": 0.75,
-    "highHeadAngle": 0.3,
-    "lowHeadAngle": 0.0
-  }
+  "triggerLiftGs": 0.5,
+  "deadZoneSize": 13.0,
+  "timeBetweenLiftActions": 0.75,
+  "highHeadAngle": 0.3,
+  "lowHeadAngle": 0.0
 }
 
