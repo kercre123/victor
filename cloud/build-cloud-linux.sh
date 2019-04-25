@@ -67,7 +67,6 @@ fi
 
 # Export environment variables for go build
 export CGO_ENABLED=1
-export GOCACHE=off
 
 export GOPATH=${SCRIPT_PATH}/cloud/go:${SCRIPT_PATH}/generated/cladgo:${SCRIPT_PATH}/generated/go:${SCRIPT_PATH}/victor-clad/tools/message-buffers/support/go
 export CGO_FLAGS=-g
