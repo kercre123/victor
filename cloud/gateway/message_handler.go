@@ -1213,17 +1213,12 @@ func (service *rpcService) BehaviorControlRequestHandler(in extint.ExternalInter
 }
 
 // Used to maintain current SDK Control state
-func UpdateSDKControl(response *extint.GatewayWrapper) {
-	msg := response.GetBehaviorControlResponse()
-	log.Printf("behavior control msg", msg.String())
-
+func UpdateSDKControlStatus(msg *extint.BehaviorControlResponse) {
 	switch msg.ResponseType.(type) {
 	case *extint.BehaviorControlResponse_ControlGrantedResponse:
 		robotUnderSDKBehaviorControl = true
-		log.Printf("RON!  CONTROL GRANTED RESPONSE")
 	case *extint.BehaviorControlResponse_ControlLostEvent:
 		robotUnderSDKBehaviorControl = false
-		log.Printf("RON!  CONTROL LOST RESPONSE")
 	}
 }
 
@@ -1259,7 +1254,7 @@ func (service *rpcService) BehaviorControlResponseHandler(out extint.ExternalInt
 				log.Printf("Closing BehaviorControl stream: %s connID %d\n", err, connID)
 				return err
 			}
-			UpdateSDKControl(&response)
+			UpdateSDKControlStatus(msg)
 		case <-pingTicker: // ping to check connection liveness after one second.
 			if err := out.Send(&ping); err != nil {
 				log.Printf("Closing BehaviorControl stream (on send): %s connID %d\n", err.Error(), connID)
@@ -3297,10 +3292,8 @@ func (service *rpcService) AudioStream(in *extint.AudioStreamRequest, stream ext
 			time.Sleep(10 * time.Millisecond)
 		} else {
 			if !robotUnderSDKBehaviorControl {
-				log.Printf("RON! NOT STREAMING")
 				continue
 			}
-			log.Printf("RON! STREAMING")
 			audioStreamResponse := &extint.AudioStreamResponse{
 				PacketId:          offset,
 				WinningDirection:  int32(micSDKData.WinningDirection),
