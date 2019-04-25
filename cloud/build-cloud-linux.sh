@@ -11,8 +11,6 @@ OUTPUT_DIR=${SCRIPT_PATH}/_build/cloud
 COMMAND="build"
 TARGET_DIR="process"
 
-CHIPPER_SECRET="zzz"
-
 function usage() {
     echo "$SCRIPT_NAME [OPTIONS]"
     echo "  -h                      print this message"
@@ -84,14 +82,12 @@ if [ $COMMAND = "test" ]; then
         -tags shipping \
         -c -o ${TARGET_PATH} \
         -pkgdir ${SCRIPT_PATH}/_build/cloud/pkgdir \
-        -ldflags -X\ \'anki/voice.ChipperSecret=${CHIPPER_SECRET}\'\ \
         ./${TARGET_DIR}
 else
     go ${COMMAND} \
         -tags shipping \
         -o ${TARGET_PATH} \
         -pkgdir ${SCRIPT_PATH}/_build/cloud/pkgdir \
-        -ldflags -X\ \'anki/voice.ChipperSecret=${CHIPPER_SECRET}\'\ \
         ./${TARGET_DIR}
 fi
 
