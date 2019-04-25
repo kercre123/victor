@@ -110,13 +110,6 @@ void BehaviorCubeDrive::GetBehaviorOperationModifiers(BehaviorOperationModifiers
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorCubeDrive::GetAllDelegates(std::set<IBehavior*>& delegates) const
-{
-  // TODO: insert any behaviors this will delegate to into delegates.
-  // TODO: delete this function if you don't need it
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCubeDrive::GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const
 {
   static const char* list[] = {
