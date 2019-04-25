@@ -1051,11 +1051,11 @@ message ExternalAudioStreamResponse {
   }
 }
 
-message AudioStreamRequest {
+// Request a single stream of audio from the Robot's microphones
+message MicrophoneStreamRequest {}
 
-}
-
-message AudioStreamResponse {
+// Microphone audio samples and detected direction response
+message MicrophoneStreamResponse {
   uint64   packet_id          = 1;    // 
   bytes    audio_data         = 2;    // 160 samples of 15675Hz audio data. Mono. Signed 16-bit. Little Endian.
   int32    winning_direction  = 3;    //

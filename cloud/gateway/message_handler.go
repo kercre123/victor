@@ -3281,7 +3281,7 @@ func (service *rpcService) AlexaOptIn(ctx context.Context, in *extint.AlexaOptIn
 	}, nil
 }
 
-func (service *rpcService) AudioStream(in *extint.AudioStreamRequest, stream extint.ExternalInterface_AudioStreamServer) error {
+func (service *rpcService) MicrophoneFeed(in *extint.MicrophoneStreamRequest, stream extint.ExternalInterface_MicrophoneFeedServer) error {
 	client := NewSharedCircularBuffer("micDataSharedCircularBuffer")
 	defer client.Close()
 
@@ -3294,7 +3294,7 @@ func (service *rpcService) AudioStream(in *extint.AudioStreamRequest, stream ext
 			if !robotUnderSDKBehaviorControl {
 				continue
 			}
-			audioStreamResponse := &extint.AudioStreamResponse{
+			audioStreamResponse := &extint.MicrophoneStreamResponse{
 				PacketId:          offset,
 				WinningDirection:  int32(micSDKData.WinningDirection),
 				WinningConfidence: int32(micSDKData.WinningConfidence),
