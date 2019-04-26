@@ -1075,9 +1075,12 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
       HistRobotState histState;
       lastResult = GetStateHistory()->GetLastStateWithFrameID(msg.pose_frame_id, histState);
       if (lastResult != RESULT_OK) {
-        LOG_ERROR("Robot.UpdateFullRobotState.GetLastPoseWithFrameIdError",
-                  "Failed to get last pose from history with frame ID=%d",
-                  msg.pose_frame_id);
+        // Don't print warning if frame_id 0 because this can sometimes happen on startup
+        if (msg.pose_frame_id != 0) {
+          LOG_WARNING("Robot.UpdateFullRobotState.GetLastPoseWithFrameIdError",
+                      "Failed to get last pose from history with frame ID=%d",
+                      msg.pose_frame_id);
+        }
         return lastResult;
       }
       pose_z = histState.GetPose().GetWithRespectToRoot().GetTranslation().z();
