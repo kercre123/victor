@@ -83,7 +83,7 @@
             "name": "mac:launch:test_engine",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceRoot}/_build/mac/Debug/bin/test_engine",
+            "program": "${workspaceFolder}/_build/mac/Debug/bin/test_engine",
             "env": {
                 "GTEST_FILTER": "-BlockWorld*:-Localization*",
                 "ANKIWORKROOT": "_build/tmp",
@@ -92,7 +92,7 @@
             },
             "stopOnEntry": false,
             "initCommands": [
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/mac/Debug/lib"
+                "settings set target.exec-search-paths ${workspaceFolder}/_build/mac/Debug/lib"
             ]
         },
         {

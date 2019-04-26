@@ -67,8 +67,8 @@
     ],
     "lldb.dbgconfig": {
         "host": "ANKI-ROBOT-HOST-IP",
-        "bin": "${workspaceRoot}/_build/vicos/Debug/bin",
-        "lib": "${workspaceRoot}/_build/vicos/Debug/lib"
+        "bin": "${workspaceFolder}/_build/vicos/Debug/bin",
+        "lib": "${workspaceFolder}/_build/vicos/Debug/lib"
     },
     "editor.tabSize": 8
 }

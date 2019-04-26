@@ -1,111 +1,106 @@
 {
+    "env": {
+        "WWISE": "${env:HOME}/.anki/wwise/versions/2017.2.7_a",
+        "VICOS_SDK": "${env:HOME}/.anki/vicos-sdk/dist/1.1.0-r04"
+    },
     "configurations": [
         {
             "name": "Mac",
             "includePath": [
-                "${workspaceRoot}",
-                "${workspaceRoot}/animProcess/src",
-                "${workspaceRoot}/robot/include",
-                "${workspaceRoot}/robot/hal/include",
-                "${workspaceRoot}/robot/hal/sim/include",
-                "${workspaceRoot}/lib/audio/include",
-                "${workspaceRoot}/lib/util",
-                "${workspaceRoot}/lib/util/source/anki",
-                "${workspaceRoot}/lib/util/source/3rd",
-                "${workspaceRoot}/lib/util/source/3rd/jsoncpp",
-                "${workspaceRoot}/generated/clad/engine",
-                "${workspaceRoot}/generated/clad/robot",
-                "${workspaceRoot}/generated/clad/util",
-                "${workspaceRoot}/generated/coretech/common",
-                "${workspaceRoot}/generated/coretech/vision",
-                "${workspaceRoot}/tools/message-buffers/support/cpp/include",
-                "${workspaceRoot}/EXTERNALS/coretech_external/opencv-3.1.0/modules/core/include",
-                "${workspaceRoot}/EXTERNALS/coretech_external/opencv-3.1.0/modules/highgui/include",
-                "${workspaceRoot}/EXTERNALS/coretech_external/opencv-3.1.0/modules/imgcodecs/include",
-                "${workspaceRoot}/EXTERNALS/coretech_external/opencv-3.1.0/modules/videoio/include",
-                "${workspaceRoot}/EXTERNALS/coretech_external/opencv-3.1.0/modules/imgproc/include",
-                "${HOME}/.anki/wwise/versions/2016.2.1_b_victor/includes",
-                "/Applications/Webots.app/include/controller/cpp",
-                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",
-                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/9.0.0/include",
-                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
-                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include",
-                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/4.2.1",
-                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include/c++/4.2.1/tr1",
-                "/usr/local/include"
+                "${workspaceFolder}",
+                "${workspaceFolder}/animProcess/src",
+                "${workspaceFolder}/engine",
+                "${workspaceFolder}/platform",
+                "${workspaceFolder}/robot/include",
+                "${workspaceFolder}/generated",
+                "${workspaceFolder}/generated/clad/engine",
+                "${workspaceFolder}/generated/clad/robot",
+                "${workspaceFolder}/generated/clad/util",
+                "${workspaceFolder}/generated/coretech/common",
+                "${workspaceFolder}/generated/coretech/vision",
+                "${workspaceFolder}/lib/audio/include",
+                "${workspaceFolder}/lib/micData",
+                "${workspaceFolder}/lib/util/source/anki",
+                "${workspaceFolder}/lib/util/source/3rd",
+                "${workspaceFolder}/lib/util/source/3rd/jsoncpp",
+                "${workspaceFolder}/victor-clad/tools/message-buffers/support/cpp/include",
+                "${workspaceFolder}/3rd/opencv/mac",
+                "${workspaceFolder}/3rd/opencv/modules/core/include",
+                "${workspaceFolder}/3rd/opencv/modules/imgproc/include",
+                "${workspaceFolder}/3rd/opencv/modules/highgui/include",
+                "${workspaceFolder}/3rd/opencv/modules/imgcodecs/include",
+                "${workspaceFolder}/3rd/opencv/modules/videoio/include",
+                "${WWISE}/include"
+            ],
+            "macFrameworkPath": [
+                "${workspaceFolder}/lib/util/libs/framework"
             ],
             "defines": [
                 "MACOSX",
-                "SIMULATOR"
+                "SIMULATOR",
+                "FACTORY_TEST=0"
             ],
             "intelliSenseMode": "clang-x64",
             "browse": {
                 "path": [
-                    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",
-                    "/usr/local/include",
-                    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/lib/clang/9.0.0/include",
-                    "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include",
-                    "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include",
-                    "/Applications/Webots.app/include/controller/cpp",
-                    "${workspaceRoot}"
+                    "${workspaceFolder}",
+                    "/Applications/Webots.app/include/controller/cpp"
                 ],
-                "limitSymbolsToIncludedHeaders": true,
-                "databaseFilename": ""
+                "limitSymbolsToIncludedHeaders": true
             },
-            "macFrameworkPath": [
-                "/System/Library/Frameworks",
-                "/Library/Frameworks"
-            ],
             "compilerPath": "/usr/bin/clang",
             "cStandard": "c11",
-            "cppStandard": "c++17"
+            "cppStandard": "c++14"
         },
         {
-            "name": "Android",
+            "name": "VicOS",
             "includePath": [
-                "${workspaceRoot}",
-                "${workspaceRoot}/animProcess/src",
-                "${workspaceRoot}/robot/include",
-                "${workspaceRoot}/robot/hal/include",
-                "${workspaceRoot}/robot/hal/sim/include",
-                "${workspaceRoot}/lib/audio/include",
-                "${workspaceRoot}/lib/util",
-                "${workspaceRoot}/lib/util/source/anki",
-                "${workspaceRoot}/lib/util/source/3rd",
-                "${workspaceRoot}/lib/util/source/3rd/jsoncpp",
-                "${workspaceRoot}/generated/clad/engine",
-                "${workspaceRoot}/generated/clad/robot",
-                "${workspaceRoot}/generated/clad/util",
-                "${workspaceRoot}/generated/coretech/common",
-                "${workspaceRoot}/generated/coretech/vision",
-                "${workspaceRoot}/tools/message-buffers/support/cpp/include",
-                "${workspaceRoot}/EXTERNALS/coretech_external/opencv-3.1.0/modules/core/include",
-                "${workspaceRoot}/EXTERNALS/coretech_external/opencv-3.1.0/modules/highgui/include",
-                "${workspaceRoot}/EXTERNALS/coretech_external/opencv-3.1.0/modules/imgcodecs/include",
-                "${workspaceRoot}/EXTERNALS/coretech_external/opencv-3.1.0/modules/videoio/include",
-                "${workspaceRoot}/EXTERNALS/coretech_external/opencv-3.1.0/modules/imgproc/include",
-                "${HOME}/.anki/wwise/versions/2016.2.1_b_victor/includes",
-                "${HOME}/.anki/android/ndk-repository/android-ndk-r15b/sysroot/usr/include",
-                "${HOME}/.anki/android/ndk-repository/android-ndk-r15b/toolchains/arm-linux-androideabi-4.9/prebuilt/darwin-x86_64/lib/gcc/arm-linux-androideabi/4.9.x/include",
-                "${HOME}/.anki/android/ndk-repository/android-ndk-r15b/sources/cxx-stl/llvm-libc++/include",
-                "${HOME}/.anki/android/ndk-repository/android-ndk-r15b/sysroot/usr/include/arm-linux-androideabi",
-                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",
-                "/Applications/Xcode.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/include/c++/v1",
-                "/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX.sdk/usr/include"
+                "${workspaceFolder}",
+                "${workspaceFolder}/animProcess/src",
+                "${workspaceFolder}/engine",
+                "${workspaceFolder}/platform",
+                "${workspaceFolder}/robot/include",
+                "${workspaceFolder}/generated",
+                "${workspaceFolder}/generated/clad/engine",
+                "${workspaceFolder}/generated/clad/robot",
+                "${workspaceFolder}/generated/clad/util",
+                "${workspaceFolder}/generated/coretech/common",
+                "${workspaceFolder}/generated/coretech/vision",
+                "${workspaceFolder}/lib/audio/include",
+                "${workspaceFolder}/lib/micData",
+                "${workspaceFolder}/lib/util/source/anki",
+                "${workspaceFolder}/lib/util/source/3rd",
+                "${workspaceFolder}/lib/util/source/3rd/jsoncpp",
+                "${workspaceFolder}/victor-clad/tools/message-buffers/support/cpp/include",
+                "${workspaceFolder}/3rd/opencv/vicos/include",
+                "${workspaceFolder}/3rd/opencv/modules/core/include",
+                "${workspaceFolder}/3rd/opencv/modules/imgproc/include",
+                "${workspaceFolder}/3rd/opencv/modules/highgui/include",
+                "${workspaceFolder}/3rd/opencv/modules/imgcodecs/include",
+                "${workspaceFolder}/3rd/opencv/modules/videoio/include",
+                "${WWISE}/include",
+                "${VICOS_SDK}/prebuilt/include",
+                "${VICOS_SDK}/prebuilt/include/clang/AST",
+                "${VICOS_SDK}/sysroot/usr/include",
+                "${VICOS_SDK}/sysroot/usr/include/c++/v1"
             ],
             "defines": [
-                "ANDROID",
-                "DEVELOPER"
+                "VICOS",
+                "ANKI_PLATFORM_VICOS=1",
+                "FACTORY_TEST=0"
             ],
             "intelliSenseMode": "clang-x64",
             "browse": {
                 "path": [
-                    "${workspaceRoot}",
-                    "${workspaceRoot}/animProcess/src"
+                    "${workspaceFolder}",
+                    "${VICOS_SDK}/prebuilt/include",
+                    "${VICOS_SDK}/sysroot/usr/include"
                 ],
-                "limitSymbolsToIncludedHeaders": true,
-                "databaseFilename": ""
-            }
+                "limitSymbolsToIncludedHeaders": true
+            },
+            "compilerPath": "/usr/bin/clang",
+            "cStandard": "c11",
+            "cppStandard": "c++14"
         }
     ],
     "version": 4

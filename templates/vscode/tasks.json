@@ -6,7 +6,7 @@
         {
             "label": "build:debug",
             "type": "shell",
-            "command": "${workspaceRoot}/project/victor/build-victor.sh",
+            "command": "${workspaceFolder}/project/victor/build-victor.sh",
             "group": {
                 "kind": "build",
                 "isDefault": true
@@ -20,19 +20,18 @@
             "label": "deploy:debug",
             "dependsOn": [ "build:debug" ],
             "type": "shell",
-            "command": "${workspaceRoot}/project/victor/scripts/deploy.sh"
+            "command": "${workspaceFolder}/project/victor/scripts/deploy.sh"
         },
         {
             "label": "debug:debug",
             "dependsOn": [ "deploy:debug" ],
             "type": "shell",
-            "command": "${workspaceRoot}/project/victor/scripts/start-lldb.sh"
+            "command": "${workspaceFolder}/project/victor/scripts/start-lldb.sh"
         },
         {
             "label": "debugonly:debug",
             "type": "shell",
-            "command": "${workspaceRoot}/project/victor/scripts/start-lldb.sh"
+            "command": "${workspaceFolder}/project/victor/scripts/start-lldb.sh"
         }
     ]
 }
-
