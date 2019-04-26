@@ -14,10 +14,6 @@
     "behavior_RecentLocationsMax": 0,
     "behavior_AngleOfFocus_deg": 0,
     "behavior_NumberOfScansBeforeStop": 1,
-    
-    // TODO(GB): Delete this once animation is updated to not move treads so much, currently too
-    // risky to enable since it can cause the robot to slowly inch off the user's palm.
-    "behavior_LockTreadsDuringWaitAnims": true,
 
     // shared speeds
     "sx_BodyTurnSpeed_degPerSec":  40.0,  // turn speed (reduced since treads probably aren't on solid surface)

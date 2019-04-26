@@ -122,6 +122,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/gateBehaviors/behaviorConnectToCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/habitat/behaviorConfirmHabitat.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/heldInPalm/behaviorInitialHeldInPalmReaction.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/heldInPalm/behaviorReactToPalmEdge.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/knowledgeGraph/behaviorKnowledgeGraphQuestion.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorEnrollFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorRespondToRenameFace.h"
@@ -882,6 +883,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::InitialHeldInPalmReaction:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorInitialHeldInPalmReaction(config));
+      break;
+    }
+    
+    case BehaviorClass::ReactToPalmEdge:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToPalmEdge(config));
       break;
     }
     

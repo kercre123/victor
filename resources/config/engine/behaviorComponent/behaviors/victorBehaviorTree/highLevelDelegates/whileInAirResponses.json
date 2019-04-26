@@ -1,32 +1,32 @@
 {
   "behaviorID" : "WhileInAirResponses",
   "behaviorClass" : "DispatcherStrictPriority",
-  
+
   "interruptActiveBehavior": true,
 
   "behaviors": [
     "ReactToAlmostPutDownInternal",
     "ReactToPickupAnimLoopInternal"
   ],
-  
+
   "wantsToBeActivatedCondition":  {
     "conditionType": "FeatureGate",
     "feature": "PRDemo",
     "expected": false
   },
-  
+
   "anonymousBehaviors": [
     {
       "behaviorName": "ReactToPickupAnimLoopInternal",
       "behaviorClass" : "AnimSequence",
-      
+
       "animTriggers": ["ReactToPickupLoop"],
       "num_loops": 0
     },
     {
       "behaviorName": "ReactToAlmostPutDownInternal",
       "behaviorClass" : "Wait",
-      
+
       "wantsToBeActivatedCondition":  {
         "conditionType": "Compound",
         "and": [
@@ -43,7 +43,7 @@
           }
         ]
       },
-      
+
       "wantsToCancelSelfCondition":  {
         "conditionType": "Compound",
         "or": [

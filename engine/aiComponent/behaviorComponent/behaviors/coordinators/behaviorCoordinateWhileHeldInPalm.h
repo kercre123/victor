@@ -23,7 +23,7 @@ namespace Vector {
 
 class BehaviorCoordinateWhileHeldInPalm : public BehaviorDispatcherPassThrough
 {
-public: 
+public:
   virtual ~BehaviorCoordinateWhileHeldInPalm();
 
 protected:
@@ -36,36 +36,35 @@ protected:
   virtual void OnPassThroughActivated() override;
   virtual void OnFirstPassThroughUpdate() override;
   virtual void PassThroughUpdate() override;
-  
+
   virtual void OnBehaviorLeftActivatableScope() override;
-  
+
 private:
-  
+
   struct InstanceConfig {
     InstanceConfig() {}
     InstanceConfig(const Json::Value& config, const std::string& debugName);
-    
+
     ICozmoBehaviorPtr heldInPalmDispatcher;
     ICozmoBehaviorPtr initialHeldInPalmReaction;
-    
     std::set<BehaviorID> behaviorStatesToSuppressHeldInPalmReactions;
     std::unique_ptr<AreBehaviorsActivatedHelper> suppressHeldInPalmBehaviorSet;
   };
-  
+
   InstanceConfig _iConfig;
-  
+
   struct DynamicVariables {
     DynamicVariables() {}
-    
+
     struct Persistent {
       // For tracking initial pickup reaction
       bool hasInitialHIPReactionPlayed = false;
     };
     Persistent persistent;
   };
-  
+
   DynamicVariables _dVars;
-  
+
   void SuppressHeldInPalmReactionsIfAppropriate();
   void SuppressInitialHeldInPalmReactionIfAppropriate();
 };

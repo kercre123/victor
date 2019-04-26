@@ -30,9 +30,8 @@ namespace Vector {
 CONSOLE_VAR_RANGED(u32, kMaxTimeForInitialHeldInPalmReaction_ms, "HeldInPalm.Coordinator", 1000, 0, 5000);
 
 namespace{
-  const BehaviorID kHeldInPalmDispatcher = BEHAVIOR_ID(HeldInPalmDispatcher);
-  const BehaviorID kInitialHeldInPalmReaction = BEHAVIOR_ID(InitialHeldInPalmReaction);
-  
+  const BehaviorID kHeldInPalmDispatcher          = BEHAVIOR_ID(HeldInPalmDispatcher);
+  const BehaviorID kInitialHeldInPalmReaction     = BEHAVIOR_ID(InitialHeldInPalmReaction);
   const char* const kBehaviorStatesToSuppressHeldInPalmReactionsKey = "suppressingBehaviors";
 }
 
@@ -58,7 +57,7 @@ BehaviorCoordinateWhileHeldInPalm::BehaviorCoordinateWhileHeldInPalm(const Json:
 BehaviorCoordinateWhileHeldInPalm::~BehaviorCoordinateWhileHeldInPalm()
 {
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCoordinateWhileHeldInPalm::GetPassThroughJsonKeys(std::set<const char*>& expectedKeys) const
 {
@@ -71,7 +70,6 @@ void BehaviorCoordinateWhileHeldInPalm::InitPassThrough()
   const auto& BC = GetBEI().GetBehaviorContainer();
   _iConfig.heldInPalmDispatcher = BC.FindBehaviorByID(kHeldInPalmDispatcher);
   _iConfig.initialHeldInPalmReaction = BC.FindBehaviorByID(kInitialHeldInPalmReaction);
-  
   {
     _iConfig.suppressHeldInPalmBehaviorSet =
         std::make_unique<AreBehaviorsActivatedHelper>(BC, _iConfig.behaviorStatesToSuppressHeldInPalmReactions);
@@ -140,7 +138,7 @@ void BehaviorCoordinateWhileHeldInPalm::SuppressInitialHeldInPalmReactionIfAppro
     _dVars.persistent.hasInitialHIPReactionPlayed = true;
   }
 }
-  
+
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCoordinateWhileHeldInPalm::OnFirstPassThroughUpdate()
 {
@@ -155,7 +153,7 @@ void BehaviorCoordinateWhileHeldInPalm::OnFirstPassThroughUpdate()
                 "BehaviorCoordinateWhileHeldInPalm.OnFirstUpdate.BehaviorCantRunInAir",
                 "Behavior %s is listed as a behavior that suppresses the held-in-palm reactions, \
                 but modifier says it can't run while in the air", BehaviorTypesWrapper::BehaviorIDToString(id));
-    
+
   }
 }
 

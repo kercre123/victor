@@ -18,6 +18,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviorContainer.h"
 #include "engine/aiComponent/behaviorComponent/behaviorExternalInterface/beiRobotInfo.h"
 #include "engine/aiComponent/behaviorComponent/behaviorTypesWrapper.h"
+#include "engine/aiComponent/behaviorComponent/heldInPalmTracker.h"
 #include "engine/components/animationComponent.h"
 #include "engine/components/movementComponent.h"
 
@@ -140,7 +141,8 @@ void BehaviorCoordinateWhileInAir::PassThroughUpdate()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorCoordinateWhileInAir::LockTracksIfAppropriate()
 {
-  const bool shouldLockTracks = !_dontLockTracksBehaviorSet->AreBehaviorsActivated();
+  const bool shouldLockTracks = !_dontLockTracksBehaviorSet->AreBehaviorsActivated() &&
+    !GetBEI().GetHeldInPalmTracker().IsHeldInPalm();
   if(!_areTreadsLocked && shouldLockTracks){
     SmartLockTracks(static_cast<u8>(AnimTrackFlag::BODY_TRACK), GetDebugLabel(), GetDebugLabel());
     _areTreadsLocked = true;

@@ -1,0 +1,56 @@
+{
+  "behaviorID": "StuckOnPalmEdge",
+  "behaviorClass" : "DispatcherStrictPriority",
+  "associatedActiveFeature": "HeldInPalm",
+
+  "interruptActiveBehavior": true,
+  
+  "behaviors": [
+    "ReactToJoltInPalm",
+    "StuckOnPalmEdgeInternal"
+  ],
+  
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "and": [
+      {
+        "conditionType": "RobotHeldInPalm",
+        "shouldBeHeldInPalm": true
+      },
+      {
+        "conditionType": "FeatureGate",
+        "feature": "HeldInPalm",
+        "expected": true
+      },
+      {
+        "conditionType": "StuckOnEdge",
+        "enableWhileHeldOnPalm": true
+      }
+    ]
+  },
+  
+  "wantsToCancelSelfCondition": {
+    "conditionType": "RobotHeldInPalm",
+    "shouldBeHeldInPalm": false
+  },
+  
+  "anonymousBehaviors": [
+    {
+      "behaviorName" : "StuckOnPalmEdgeInternal",
+      "behaviorClass": "AskForHelp",
+      "associatedActiveFeature": "HeldInPalm",
+      
+      "wantsToBeActivatedCondition": {
+        "conditionType": "StuckOnEdge",
+        "enableWhileHeldOnPalm": true
+      },
+      
+      "wantsToCancelSelfCondition": {
+        "conditionType": "Compound",
+        "not": {
+          "conditionType": "CliffDetected"
+        }
+      }
+    }
+  ]
+}

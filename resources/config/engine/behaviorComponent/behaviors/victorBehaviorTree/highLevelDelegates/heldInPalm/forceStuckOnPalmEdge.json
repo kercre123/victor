@@ -1,0 +1,16 @@
+{
+  "behaviorClass": "AskForHelp",
+  "behaviorID": "ForceStuckOnPalmEdge",
+  "associatedActiveFeature": "HeldInPalm",
+  
+  "wantsToCancelSelfCondition": {
+    // Observe less than 2 cliffs, since ReactToPalmEdge
+    // can only fail when 2 or more cliffs are still being
+    // detected after multiple attempts to back away.
+    "conditionType": "Compound",
+    "not": {
+      "conditionType": "CliffDetected",
+      "numCliffDetectionsToTrigger": 2
+    }
+  }
+}

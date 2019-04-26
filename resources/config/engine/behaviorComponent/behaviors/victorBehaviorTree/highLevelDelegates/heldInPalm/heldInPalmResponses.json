@@ -5,7 +5,7 @@
   "associatedActiveFeature": "HeldInPalm",
 
   "interruptActiveBehavior": true,
-  
+
   "behaviors": [
     {
       "behavior": "ReactToJoltInPalm",
