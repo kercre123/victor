@@ -1,0 +1,285 @@
+// Copyright 2017 Anki, Inc.
+
+// to generate code for go:
+// protoc --proto_path=proto/anki/chipperpb -I=. --go_out=plugins=grpc:$GOPATH/src/github.com/anki/sai-chipper-voice/proto/anki/chipperpb chipperpb.proto
+
+syntax = "proto3";
+
+package chippergrpc2;
+
+//import "google/protobuf/struct.proto";
+//import "google/protobuf/timestamp.proto";
+
+option go_package = "chippergrpc2";
+
+service ChipperGrpc {
+    // send text for intent matching
+    rpc TextIntent(TextRequest) returns (IntentResponse) {};
+
+    // Sends a streaming audio request. Responses are streamed to the client. (bidirectional)
+    rpc StreamingIntent(stream StreamingIntentRequest) returns (stream IntentResponse);
+
+    // Sends a knowledge graph request. This requenst looks very similar to an intent request, but with a different response
+    rpc StreamingKnowledgeGraph(stream StreamingKnowledgeGraphRequest) returns (stream KnowledgeGraphResponse);
+
+    // Performs a conenction check. This will take in streaming audio, but not call out to any services.
+    rpc StreamingConnectionCheck(stream StreamingConnectionCheckRequest) returns (stream ConnectionCheckResponse);
+}
+
+message TextRequest {
+    // Required. Can be random number or user identifier.
+    string session = 1;
+
+    // Required. Robot identifier.
+    string device_id = 2;
+
+    // Required. Text of query
+    string text_input = 3;
+
+    // Optional. Specify language for intent-service, default is ENGLISH_US
+    LanguageCode language_code = 4;
+
+    // Optional. Choose intent-service to process request, default is server's default
+    IntentService intent_service = 5;
+
+    // Required. Robot firmware version. Use to choose intent-service version.
+    string firmware_version = 6;
+
+    // Optional. Robot mode for games and knowledge-graph. default is VOICE_COMMAND
+    RobotMode mode = 7;
+
+    // Required. Skip DAS will turn off DAS logging, for GDPR
+    bool skip_das = 8;
+
+}
+
+message StreamingIntentRequest {
+    // Required. Can be random number or user identifier.
+    string session = 1;
+
+    // Required. Robot identifier.
+    string device_id = 2;
+
+    // Required. Input audio content format: 16k SR, 1-channel, 100ms chunks.
+    bytes input_audio = 3;
+
+    // Optional. Specify language for intent-service, default is ENGLISH_US
+    LanguageCode language_code = 4;
+
+    // Optional. ASR only using Bing Speech (for now).
+    // Returns text transcript with intent_speech_only. Default is false
+    bool speech_only = 5;
+
+    // Required. Robot firmware version. Use to choose intent-service version.
+    string firmware_version = 6;
+
+    // Optional. Robot mode for games and knowledge-graph. default is VOICE_COMMAND
+    RobotMode mode = 7;
+
+    // Optional. boot_id for DAS cloud event
+    string boot_id = 8;
+
+    // Required. Skip DAS will turn off DAS logging, for GDPR
+    bool skip_das = 9;
+
+    // Optional. Choose audio encoding, default is PCM 16K
+    AudioEncoding audio_encoding = 13;
+
+    // Optional. If using dialogflow, set single_utterance true to use dialogflow-VAD.
+    bool single_utterance = 14;
+
+    // Optional. Default is whatever that is defined on Chipper Cloud.
+    IntentService intent_service = 15;
+
+    // Required for now till TMS is ready. Anki application key
+    string app_key = 16;
+
+    // Optional. Set whether to save-audio in Dev
+    bool save_audio = 17;
+}
+
+message StreamingKnowledgeGraphRequest {
+    // Required. Can be random number or user identifier.
+    string session = 1;
+
+    // Required. Robot identifier.
+    string device_id = 2;
+
+    // Required. Input audio content format: 16k SR, 1-channel, 100ms chunks
+    bytes input_audio = 3;
+
+    // Optional. Specify language for intent-service, default is ENGLISH_US
+    LanguageCode language_code = 4;
+
+    // Required. Robot firmware version. Use for stats
+    string firmware_version = 5;
+
+    // Optional. Choose audio encoding, default is PCM 16K
+    AudioEncoding audio_encoding = 6;
+
+    // Required for now till TMS is ready. Anki application key
+    string app_key = 7;
+
+    // Optional. Set whether to save-audio in Dev
+    bool save_audio = 8;
+
+    // Optional. boot_id for DAS cloud event
+    string boot_id = 9;
+
+    // Required. Skip DAS will turn off DAS logging, for GDPR
+    bool skip_das = 10;
+
+    // Optional. Timezone from robot
+    string timezone = 11;
+}
+
+message StreamingConnectionCheckRequest {
+    // Required. Can be random number or user identifier.
+    string session = 1;
+
+    // Required. Robot identifier.
+    string device_id = 2;
+
+    // Required. Fake audio for connection check. 100ms chunks of 16k SR, 1-channel
+    bytes input_audio = 3;
+
+    // Required. Robot firmware version. Use for stats
+    string firmware_version = 4;
+	
+    // Required for now till TMS is ready. Anki application key
+    string app_key = 5;
+
+    // Required. How many ms of audio total will be sent up
+    uint32 total_audio_ms = 6;
+
+    // Required. How many ms of audio will be sent per request
+    uint32 audio_per_request = 7;
+}
+
+// Response message from server
+message IntentResponse {
+    // Session of the request.
+    string session = 1;
+
+    // Robot identifier.
+    string device_id = 2;
+
+    // Final response flag. If set to `true`, this will be the last response.
+    bool is_final = 3;
+
+    // Intent result. Only available when is_final is `true`.
+    IntentResult intent_result = 4;
+
+    // Speech result. Available in the interim as speech is transcribed.
+    SpeechResult speech_result = 5;
+
+    // Optional. Robot mode for games and knowledge-graph. default is VOICE_COMMAND
+    RobotMode mode = 6;
+
+    // blob-id to audio saved in BlobStore, dev only for debugging.
+    string audio_id = 16;
+}
+
+message SpeechResult {
+    // Text from transcribed audio.
+    string transcript = 1;
+
+    // Final result flag. If `false`, represents an interim result.
+    // If `true`, the ASR will not process any additional audio.
+    bool is_final = 2;
+
+}
+
+message IntentResult {
+
+    // Transcribed text used for matching.
+    string query_text = 1;
+
+    // Matched intent name.
+    string action = 2;
+
+    // Intent-matching confidence. Value between 0.0 and 1.0 (absolutely certain).
+    float intent_confidence = 3;
+
+    // Speech recognition confidence. Higher is better.
+    // 0.0 is a sentinel value representing no value set.
+    float speech_confidence = 4;
+
+    // Collection of extracted entities if available.
+    // google.protobuf.Struct parameters = 5;
+    map<string, string> parameters = 5;
+
+    // All expected entities are parsed correctly.
+    bool all_parameters_present = 6;
+
+    // Context flag. If `true`, next request should use same session string
+    bool has_context = 7;
+
+    IntentService service = 8;
+
+}
+
+message KnowledgeGraphResponse {
+    // Session of the request.
+    string session = 1;
+
+    // Robot identifier.
+    string device_id = 2;
+
+    // Transcribed text
+    string query_text = 3;
+
+    // Response to be spoken
+    string spoken_text = 4;
+
+    // What type of command is matched
+    string command_type = 5;
+
+    // which domains were used to match
+    repeated string domains_used = 6;
+
+    // blob-id to audio saved in BlobStore, dev only for debugging.
+    string audio_id = 7;
+}
+
+message ConnectionCheckResponse {
+    // Status of the connection
+    string status = 1;
+
+    // Number of frames successfully received
+    uint32 frames_received = 2;
+}
+
+// Supported languages
+enum LanguageCode {
+    ENGLISH_US = 0; // default if not specified
+    ENGLISH_UK = 1;
+    ENGLISH_AU = 2;
+    GERMAN = 3;
+    FRENCH = 4;
+}
+
+enum IntentService {
+    DEFAULT = 0;
+    DIALOGFLOW = 1;
+    BING_LUIS = 2;
+    LEX = 3;
+}
+
+enum AudioEncoding {
+    LINEAR_PCM = 0;
+    OGG_OPUS = 1;
+}
+
+message WeatherLocation {
+    string city = 1;
+    string state = 2;
+
+    // ISO 2-letter
+    string country = 3;
+}
+
+enum RobotMode {
+    VOICE_COMMAND = 0; // default is voice command mode if not specified
+    GAME = 1;
+}

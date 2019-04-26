@@ -1,0 +1,19 @@
+{{ define "content" }}
+
+Thank you for activating your child’s Anki account!
+
+For more information regarding Anki’s privacy policy, visit the “Children” section on anki.com/privacy.
+
+Thanks,
+The Anki Team
+
+**********************************************
+
+If you didn't create an account, or wish to revoke your consent, please contact us https://anki.com/support/contact
+This is an automatically generated email.
+
+To view our Privacy Policy visit: https://anki.com/privacy
+
+This email was sent to {{ .ToEmail }} by Anki, Inc. 55 2nd Street, San Francisco, CA 94105
+
+{{ end }}

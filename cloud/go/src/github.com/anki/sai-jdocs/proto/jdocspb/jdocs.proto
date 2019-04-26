@@ -1,0 +1,110 @@
+syntax = "proto3";
+
+package jdocspb;
+
+service Jdocs {
+    rpc Echo(EchoReq) returns (EchoResp) {};  // handy for testing
+
+    // Write = Create or Update one document
+    rpc WriteDoc(WriteDocReq) returns (WriteDocResp) {}; 
+
+    // Read latest version of one or more documents (single account/thing)
+    rpc ReadDocs(ReadDocsReq) returns (ReadDocsResp) {};
+
+    // Delete one document. If the document does not exist, the request 
+    // quietly succeeds (no error).
+    rpc DeleteDoc(DeleteDocReq) returns (DeleteDocResp) {}; 
+}
+
+//////////////////////////////////////////////////////////////////////
+
+message Jdoc {
+    uint64 doc_version     = 1; // first version = 1; 0 => invalid or doesn't exist
+    uint64 fmt_version     = 2; // first version = 1; 0 => invalid
+    string client_metadata = 3; // arbitrary client-defined string, eg a data fingerprint (typ "", 32 chars max)
+    string json_doc        = 4; // must be a valid JSON document
+                                // max depth = 16 levels
+                                // max string length = 200KB (204800 bytes)
+}
+
+// All JDOCS documents are keyed by account, thing, or account+thing.
+//   account = Anki account ID (globally unique)
+//   thing   = globally unique identifier; often a physical robot, but 
+//               can be a virtual thing, or a device such as a laptop
+//             Victor robot with ESN="00e14567" => "vic:00e14567"
+//             Anki developer for testing       => "joe.developer@anki.com:0"
+//
+// To keep the API simple, all document commands have explicit arguments
+// for both account and thing, even if one or the other is not used. If a
+// particular document does not use account or thing for its key, that
+// field’s value is ignored.
+//
+// account and thing values have a maximum string length of 64 characters.
+
+//////////////////////////////////////////////////////////////////////
+
+message EchoReq {
+    string Data = 1;
+}
+
+message EchoResp {
+    string Data = 1;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+message WriteDocReq {
+    string account  = 1; // 64 chars max
+    string thing    = 2; // 64 chars max
+    string doc_name = 3;
+    Jdoc   doc      = 4; // write rejected if (doc.doc_version != svc.doc_version)
+                         // To create a document, set doc.doc_version=0
+}
+
+message WriteDocResp {
+    enum Status {
+      ACCEPTED                 = 0;
+      REJECTED_BAD_DOC_VERSION = 1; // soft error
+      REJECTED_BAD_FMT_VERSION = 2; // soft error
+      ERROR                    = 3;
+    }
+    Status status             = 1;
+    uint64 latest_doc_version = 2; // latest version on service
+}
+
+//////////////////////////////////////////////////////////////////////
+
+message ReadDocsReq {
+    message Item {
+        string doc_name       = 1;
+        uint64 my_doc_version = 2; // 0 => always return latest version
+     }
+    string        account = 1;
+    string        thing   = 2;
+    repeated Item items   = 3;
+}
+
+message ReadDocsResp {
+    enum Status {
+        UNCHANGED         = 0; // (svc.doc_version == my_doc_version)
+        CHANGED           = 1; // (svc.doc_version  > my_doc_version) || (svc.doc_version < my_doc_version)
+        NOT_FOUND         = 2; // soft error
+        PERMISSION_DENIED = 3; // soft error
+    }
+    message Item {
+        Status status = 1;
+        Jdoc   doc    = 2; // json_doc=="" if (svc.doc_version==my_doc_version)
+    }
+    repeated Item items = 1;
+}
+
+//////////////////////////////////////////////////////////////////////
+
+message DeleteDocReq {
+    string  account  = 1; 
+    string  thing    = 2; 
+    string  doc_name = 3;
+}
+
+message DeleteDocResp {
+}

@@ -1,0 +1,132 @@
+<html>
+    <body>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/jquery.bootstrapvalidator/0.5.0/css/bootstrapValidator.min.css"/>
+    <script type="text/javascript" src="https://maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery.bootstrapvalidator/0.5.0/js/bootstrapValidator.min.js"></script>
+    
+    <link rel="stylesheet" type="text/css" href="https://fonts.googleapis.com/css?family=Jockey+One" />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    
+    <div id="wrapper">
+            
+            <div id="graphic-header">
+                <p>Anki Accounts</p>
+            </div>
+    <div id="innerContent">
+    <script type="text/javascript">
+    // parseUri 1.2.2 (http://blog.stevenlevithan.com/archives/parseuri)
+    // (c) Steven Levithan <stevenlevithan.com> - Thank you!
+    // MIT License  
+function parseUri (str) {
+    var	o   = parseUri.options,
+	m   = o.parser[o.strictMode ? "strict" : "loose"].exec(str),
+	uri = {},
+	i   = 14;    
+    while (i--) uri[o.key[i]] = m[i] || "";
+    uri[o.q.name] = {};
+    uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
+	if ($1) uri[o.q.name][$1] = $2;
+    });    
+    return uri;
+};
+parseUri.options = {
+    strictMode: false,
+    key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
+    q:   {
+	name:   "queryKey",
+	parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+    },
+    parser: {
+	strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+	loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+    }
+};
+
+$(document).ready(function(){
+    $('#user_id').val(parseUri(window.location).queryKey['user_id'])
+    $('#token').val(parseUri(window.location).queryKey['token'])
+    var dloc = (parseUri(window.location).queryKey['dloc'] || "").replace(/[^a-z]*/g, '');
+    if (dloc != "" && dloc != undefined) {
+        $('#pwform').attr("action", "https://accounts-" + dloc + ".api.anki.com/1/reset_password_confirm")
+    }
+    
+    $('#pwform').bootstrapValidator({
+        feedbackIcons: {
+            valid: 'glyphicon glyphicon-ok',
+            invalid: 'glyphicon glyphicon-remove',
+            validating: 'glyphicon glyphicon-refresh'
+        },
+        fields: {
+            password: {
+                message: 'The password is not valid',
+                validators: {
+                    identical: {
+                        field: 'confirmPassword',
+                        message: 'The password and its confirm are not the same'
+                    },
+                    notEmpty: {
+                        message: 'The password is required and cannot be empty'
+                    },
+                    stringLength: {
+                        min: 6,
+                        max: 100,
+                        message: 'The password must be more than 6 characters long'
+                    }
+                }
+            },
+            confirmPassword: {
+                message: 'The password is not valid',
+                validators: {
+                    identical: {
+                        field: 'password',
+                        message: 'The password and its confirm are not the same'
+                    },
+                    notEmpty: {
+                        message: 'The password is required and cannot be empty'
+                    },
+                    stringLength: {
+                        min: 6,
+                        max: 100,
+                        message: 'The password must be more than 6 characters long'
+                    }
+                }
+            }
+        }
+    }).on('error.validator.bv', function(e, data) {
+        // Only show one error at a time
+        data.element
+            .data('bv.messages')
+            .find('.help-block[data-bv-for="' + data.field + '"]').hide()
+            .filter('[data-bv-validator="' + data.validator + '"]').show();
+    });
+});
+</script>
+
+<form class="form-horizontal" id="pwform" action="https://accounts.api.anki.com/1/reset_password_confirm" method="POST">
+    <h2>Anki DRIVE Password Reset</h2><br>
+    <input type="hidden" name="user_id" id="user_id" />
+    <input type="hidden" name="token" id="token" />
+    <div class="form-group">
+        <label class="col-md-3 control-label">Password</label>
+        <div class="col-md-6">
+            <input type="password" class="form-control" name="password" />
+        </div>
+    </div>
+    <div class="form-group">
+        <label class="col-md-3 control-label">Re-Enter Password</label>
+        <div class="col-md-6">
+            <input type="password" class="form-control" name="confirmPassword" />
+        </div>
+    </div>
+    <div class="form-group">
+    <div class="col-md-5 col-md-offset-3">
+    <button type="submit" class="btn btn-default">Submit</button>
+    </div>
+    </div>
+</form>
+        </div><!-- END INNERCONTENT DIV -->
+        </div><!-- END WRAPPER DIV --> 
+  </body>
+</html>

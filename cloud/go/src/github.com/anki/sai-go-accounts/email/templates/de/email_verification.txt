@@ -1,0 +1,27 @@
+{{ define "content" }}
+
+WILLKOMMEN, COMMANDER!
+
+Hallo {{ .Username }} -
+
+Danke, dass Du einen Anki-Fahrernamen reserviert hast. Um Dein Konto zu aktivieren, klicke auf den Link.
+
+{{ .URL }}
+
+Hinweis: Alle Konten die nicht innerhalb von 15 Tagen aktiviert werden, werden gelöscht.
+
+Viel Erfolg in der Arena!
+
+Das Anki-Team
+
+**********************************************
+
+
+Wenn Du keinen Account eröffnet hast, dann kontaktiere uns bitte unter: https://anki.com/supoort/contact
+Diese E-Mail wurde automatisch generiert.
+
+Datenschutzerklärung: https://anki.com/privacy
+
+Diese E-Mail wurde von Anki, Inc {{ .ToEmail }} gesendet.
+55 2nd Street, San Francisco, CA 94105
+{{ end }}

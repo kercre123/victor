@@ -1,0 +1,16 @@
+{{ define "content" }}
+
+Vielen Dank, dass Sie das Anki-Konto Ihres Kindes aktiviert haben. Weitere Informationen zum Datenschutz bei Anki finden Sie im Abschnitt "Kinder" auf https://anki.com/privacy.
+Wenn Sie Ihr Konto oder das Konto Ihres Kindes nicht aktiviert haben, dann kontaktieren Sie uns bitte unter https://anki.com/support/contact
+
+Das Anki Team
+
+**********************************************
+
+Diese E-Mail wurde automatisch generiert.
+
+Datenschutzerklärung: https://anki.com/privacy
+
+Diese E-Mail wurde von Anki, Inc {{ .ToEmail }} gesendet.
+55 2nd Street, San Francisco, CA 94105
+{{ end }}

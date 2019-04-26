@@ -1,0 +1,19 @@
+# ADMIN_PASSWORD for this is "changeme"
+#
+export POSTMARK_API_KEY=NO_EMAIL 
+export EMAIL_DIR=$PWD/email/templates 
+export URL_ROOT="http://localhost:8000" 
+export DB_TYPE=sqlite 
+export HTTP_PORT=8000 
+export MYSQL_DB=testdb 
+export SQLITE_DB_PATH=_rundb.db 
+export ADMIN_PASSWORD='scrypt$16384$8$1$32$wlefY2w7TAHdSVV5$+3zdnsaqWEPKhlt3OJ9bG9OlAmMdb0+Ri0rUKnyNylE=' 
+
+
+make build
+
+sai-go-accounts create-tables
+sai-go-accounts create-app-key -desc="bin/run app key - USER" -expiry="2035-08-13T22:13:29" -scopemask="user" -token="usertoken"
+sai-go-accounts create-app-key -desc="bin/run app key - USER" -expiry="2035-08-13T22:13:29" -scopemask="admin" -token="admintoken"
+
+sai-go-accounts start

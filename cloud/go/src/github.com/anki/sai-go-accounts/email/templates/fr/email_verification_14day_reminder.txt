@@ -1,0 +1,24 @@
+{{ define "content" }}
+
+Bonjour {{ .Username }} !
+
+C'est votre dernier jour pour activer votre compte Anki !
+Comme vous avez déjà défini votre nom d'utilisateur unique, il ne vous reste plus qu'à activer votre compte en cliquant sur le lien ci-dessous.
+
+{{ .URL }}
+
+Si vous ne l'activez pas aujourd'hui, votre nom d'utilisateur pourra être supprimé. Vous devrez alors créer un autre compte pour enregistrer vos scores et votre progression.
+
+Merci,
+L'équipe Anki
+
+**********************************************
+
+Si vous n'avez pas créé de compte, merci de nous le faire savoir en contactant notre service Relation Client Anki https://anki.com/support/contact
+Cet e-mail a été généré automatiquement.
+
+Politique de confidentialité: https://anki.com/privacy
+
+Cet e-mail a été envoyé à {{ .ToEmail }} de la part d'Anki.
+55 2nd Street, San Francisco, CA 94105
+{{ end }}

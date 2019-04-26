@@ -1,0 +1,27 @@
+{{ define "content" }}
+
+Hallo {{ .Username }} -
+
+Du hast noch sieben Tage Zeit, um Dein Anki-Konto zu aktivieren.
+Wenn Du Dein Konto nicht aktivierst, kann es sein, dass Du Deinen gewählten Fahrernamen verlierst
+und Du musst dann, um Deinen Fortschritt in Anki OVERDRIVE zu speichern, ein neues Konto einrichten.
+
+Du hast bereits einen Anki-Fahrernamen reserviert. Jetzt musst Du nur noch Dein Konto aktivieren. Klicke dazu unten auf den Link.
+
+{{ .URL }}
+
+Viel Erfolg in der Arena!
+
+Das Anki-Team
+
+**********************************************
+
+
+Wenn Du kein Anki-Konto angelegt hast, dann kontaktiere uns bitte unter: https://anki.com/support/contact
+Diese E-Mail wurde automatisch generiert.
+
+Datenschutzerklärung: https://anki.com/privacy
+
+Diese E-Mail wurde von Anki, Inc {{ .ToEmail }} gesendet.
+55 2nd Street, San Francisco, CA 94105
+{{ end }}

@@ -1,0 +1,47 @@
+{{ define "content" }}
+
+YOUR CHILD'S ANKI PROFILE NEEDS YOUR APPROVAL!
+
+Dear Parent,
+    Your child has requested an Anki account. Anki is the developer of Anki DRIVE, Anki OVERDRIVE and Cozmo.
+This free account lets them keep track of their in-game achievements and register a unique Username.
+
+For more information, visit the "Children" section on https://anki.com/privacy.
+
+Your child has provided the following information:
+
+Your email address: {{ .ToEmail }}
+Your child’s birthday: {{ .Dob }}
+Username: {{ .Username }}
+
+To confirm that you approve of your child‘s Anki account request, please click the link below to activate.
+{{ .URL }}
+
+Thanks,
+The Anki Team
+
+
+**We want you to be comfortable about your child's privacy while using the Anki DRIVE, Anki OVERDRIVE and Cozmo Apps, so we encourage you to read this email. Anki collects the following information regarding your child’s account: Parent email address (for activation and contacting you about your child’s account), an Anki Username, password, birthdate, IP address, and gameplay data (such as points and scores) associated with your child’s account. Anki will also ask your child’s permission to send them notifications relevant to their gameplay experience. Note that Anki provides this parental notice to help explain our collection, use, and disclosure practices.
+
+Your child has registered a unique Username {{ .Username }}; however, if you do not activate your child’s account within 15 days of account creation, Anki reserves the right to delete your contact information and the Username associated with this account. By activating your child's account you are agreeing to the above in accordance with our Privacy Policy.   We strive to keep the level of information collected from your child to a minimum, and in no event do we collect more information from your child than is necessary for them to participate in an activity.
+Unless you sign up for the Anki newsletter, your Online Contact Information will not be used for any other purpose other than to provide you with this notice.
+
+If you have questions or suggestions, or if you would like to request deletion of any information collected from you or your child, please contact us https://anki.com/support/contact.
+
+Please keep this email for your records.
+
+ANKI
+55 2nd. St
+San Francisco, CA 94105
+(415) 800-1040
+
+**********************************************
+
+If you didn't create an account, please contact us https://anki.com/support/contact
+This is an automatically generated email.
+
+To view our Privacy Policy visit: https://anki.com/privacy
+
+This email was sent to {{ .ToEmail }} by Anki, Inc. 55 2nd Street, San Francisco, CA 94105
+
+{{ end }}

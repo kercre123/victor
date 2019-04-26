@@ -1,0 +1,1 @@
+POSTMARK_API_KEY=NO_EMAIL URL_ROOT="https://accounts.api.anki.com" DB_TYPE=sqlite go test .

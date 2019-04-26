@@ -1,0 +1,24 @@
+{{ define "content" }}
+
+Hello {{ .Username }} -
+
+Thanks for reserving your Username! Now it's time to activate your account by clicking the link below.
+
+Please visit this URL to verify your email address: {{ .URL }}
+
+Note: All accounts not activated within 15 days of creation will be deleted.
+
+Thanks,
+The Anki Team
+
+**********************************************
+
+
+If you didn't create an account, please contact us https://anki.com/support/contact
+This is an automatically generated email.
+
+To view our Privacy Policy visit: https://anki.com/privacy
+
+This email was sent to {{ .ToEmail }} by Anki, Inc.
+55 2nd Street, San Francisco, CA 94105
+{{ end }}

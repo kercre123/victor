@@ -1,0 +1,39 @@
+version: '2'
+
+services:
+
+  dynamo:
+    image: instructure/dynamo-local-admin
+    expose:
+      - "8000"
+    ports:
+      - "5000:8000"
+
+  s3:
+    image: minio/minio
+    expose:
+      - "9000"
+    ports:
+      - "5001:9000"
+    environment:
+      - MINIO_ACCESS_KEY=accesskey
+      - MINIO_SECRET_KEY=secretkey
+    command: server /data
+
+  accounts:
+    build: accounts
+    environment:
+      DB_TYPE: sqlite
+      POSTMARK_API_KEY: NO_EMAIL
+      FB_APP_ID: NO_CHECK
+      URL_ROOT: http://accounts:8000
+      HTTP_PORT: 8000
+      PROFILE_PORT: 8001
+      METRICS_STRUCTURED: 'false'
+      CORS_DOMAINS: '*'
+    expose:
+      - "8000"
+      - "8001"
+    ports:
+      - ":5002:8000"
+      - ":5003:8001"

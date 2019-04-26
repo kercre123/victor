@@ -341,17 +341,6 @@ if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ] || [ $CONFIGURE -eq 1 ] ; then
       ${METABUILD_INPUTS}
 fi
 
-if [ $IGNORE_EXTERNAL_DEPENDENCIES -eq 0 ]; then
-  echo "Getting Go dependencies"
-  # Check out specified revisions of repositories we've versioned
-  # Append a dummy dir to the GOPATH so that `go get` doesn't barf
-  # on nonexistent clad files
-  GODUMMY=${TOPLEVEL}/cloud/dummy
-  (cd ${TOPLEVEL}; PATH="$(dirname $GO_EXE):$PATH" GOPATH="$GOPATH:$GODUMMY" ./godeps.js execute ${GEN_SRC_DIR})
-else
-  echo "Ignore Go dependencies"
-fi
-
 # Set protobuf location
 HOST=`uname -a | awk '{print tolower($1);}' | sed -e 's/darwin/mac/'`
 PROTOBUF_HOME=${TOPLEVEL}/3rd/protobuf/${HOST}

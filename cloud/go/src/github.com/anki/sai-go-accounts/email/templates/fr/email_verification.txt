@@ -1,0 +1,24 @@
+{{ define "content" }}
+
+Bonjour {{ .Username }} !
+
+Merci d'avoir défini votre nom d'utilisateur !
+Il est désormais temps d'activer votre compte en cliquant sur le lien ci-dessous.
+
+{{ .URL }}
+
+A noter : les comptes non activés dans un délai de 15 jours à compter de leur création seront supprimés.
+
+Merci,
+L'équipe Anki
+
+**********************************************
+
+Si vous n'avez pas créé de compte, merci de nous le faire savoir en contactant notre service Relation Client Anki https://anki.com/support/contact
+Cet e-mail a été généré automatiquement.
+
+Politique de confidentialité: https://anki.com/privacy
+
+Cet e-mail a été envoyé à {{ .ToEmail }} de la part d'Anki.
+55 2nd Street, San Francisco, CA 94105
+{{ end }}

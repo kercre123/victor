@@ -1,0 +1,60 @@
+<html>
+    <body>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+    
+    <link rel="stylesheet" type="text/css" href="http://fonts.googleapis.com/css?family=Jockey+One" />
+    <link rel="stylesheet" type="text/css" href="style.css" />
+    
+    <script type="text/javascript">
+    // parseUri 1.2.2 (http://blog.stevenlevithan.com/archives/parseuri)
+    // (c) Steven Levithan <stevenlevithan.com> - Thank you!
+    // MIT License  
+function parseUri (str) {
+    var	o   = parseUri.options,
+	m   = o.parser[o.strictMode ? "strict" : "loose"].exec(str),
+	uri = {},
+	i   = 14;    
+    while (i--) uri[o.key[i]] = m[i] || "";
+    uri[o.q.name] = {};
+    uri[o.key[12]].replace(o.q.parser, function ($0, $1, $2) {
+	if ($1) uri[o.q.name][$1] = $2;
+    });    
+    return uri;
+};
+parseUri.options = {
+    strictMode: false,
+    key: ["source","protocol","authority","userInfo","user","password","host","port","relative","path","directory","file","query","anchor"],
+    q:   {
+	name:   "queryKey",
+	parser: /(?:^|&)([^&=]*)=?([^&]*)/g
+    },
+    parser: {
+	strict: /^(?:([^:\/?#]+):)?(?:\/\/((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?))?((((?:[^?#\/]*\/)*)([^?#]*))(?:\?([^#]*))?(?:#(.*))?)/,
+	loose:  /^(?:(?![^:@]+:[^:@\/]*@)([^:\/?#.]+):)?(?:\/\/)?((?:(([^:@]*)(?::([^:@]*))?)?@)?([^:\/?#]*)(?::(\d*))?)(((\/(?:[^?#](?![^?#\/]*\.[^?#\/.]+(?:[?#]|$)))*\/?)?([^?#\/]*))(?:\?([^#]*))?(?:#(.*))?)/
+    }
+};
+$(document).ready(function(){
+    var user_id = parseUri(window.location).queryKey['user_id'];
+    var token = parseUri(window.location).queryKey['token'];
+    if (token != "" && token != undefined && user_id != "" && user_id != undefined) {
+        var dloc = (parseUri(window.location).queryKey['dloc'] || "").replace(/[^a-z\-]*/g, '');
+        var url = "https://accounts.api.anki.com/1/users/" + user_id +  "/verify_email_confirm/" + token;
+        if (dloc != "" && dloc != undefined) {
+            url = "https://accounts-" + dloc + ".api.anki.com/1/users/" + user_id +  "/verify_email_confirm/" + token;
+        }
+        window.location.href = url;
+    }
+});
+</script>
+
+<div id="wrapper">
+            <div id="graphic-header">
+                <p>Anki Accounts</p>
+            </div>
+            <div id="innerContent">
+                <h2><img src="images/loader.gif" height="25" width="auto" alt="&nbsp;" />&nbsp;&nbsp;
+                Verifying email...</h2>
+            </div><!-- END INNERCONTENT DIV -->
+        </div><!-- END WRAPPER DIV -->  
+  </body>
+</html>

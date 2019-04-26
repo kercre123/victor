@@ -1,0 +1,19 @@
+{{ define "content" }}
+
+Merci d'avoir activé le compte Anki de votre enfant !
+
+Pour en savoir plus, rendez-vous dans la section « Enfants » sur anki.com/privacy.
+
+Merci,
+L'équipe Anki
+
+**********************************************
+
+Si vous n'avez pas créé de compte, merci de nous le faire savoir en contactant notre service Relation Client Anki https://anki.com/support/contact
+Cet e-mail a été généré automatiquement.
+
+Politique de confidentialité: https://anki.com/privacy
+
+Cet e-mail a été envoyé à {{ .ToEmail }} de la part d'Anki.
+55 2nd Street, San Francisco, CA 94105
+{{ end }}
