@@ -3592,9 +3592,7 @@ func (service *rpcService) ExternalAudioStreamRequestToGatewayWrapper(request *e
 	return msg, nil
 }
 
-func (service *rpcService) ExternalAudioStreamCancel() {
-	println("ExternalAudioStreamRequestHandler sending cancel")
-
+func (service *rpcService) ExternalAudioStreamClose() {
 	count, id, err := engineProtoManager.Write(&extint.GatewayWrapper{
 		OneofMessageType: &extint.GatewayWrapper_ExternalAudioStreamCancel{
 			ExternalAudioStreamCancel: &extint.ExternalAudioStreamCancel{},
@@ -3602,7 +3600,7 @@ func (service *rpcService) ExternalAudioStreamCancel() {
 	})
 
 	if err != nil {
-		log.Printf("ExternalAudioStreamCancel count %u id %u err %s\n", count, id, err.Error())
+		log.Printf("ExternalAudioStreamClose count %u id %u err %s\n", count, id, err.Error())
 	}
 }
 
@@ -3615,14 +3613,11 @@ func (service *rpcService) ExternalAudioStreamRequestHandler(in extint.ExternalI
 			log.Printf("AudioStreamRequestHandler.close: %s\n", err.Error())
 			return
 		}
-		log.Println("External AudioStream playback incoming request") //not printing message, lengthy sample data too busy for logs
-
 		msg, err := service.ExternalAudioStreamRequestToGatewayWrapper(request)
 		if err != nil {
 			log.Println(err)
 			return
 		}
-
 		numCommandsSentFromSDK++
 		_, _, err = engineProtoManager.Write(msg)
 		if err != nil {
@@ -3632,8 +3627,7 @@ func (service *rpcService) ExternalAudioStreamRequestHandler(in extint.ExternalI
 }
 
 func (service *rpcService) ExternalAudioStreamResponseHandler(out extint.ExternalInterface_ExternalAudioStreamPlaybackServer, responses chan extint.GatewayWrapper, done chan struct{}) error {
-	streamComplete := service.ExternalAudioStreamCancel
-	defer streamComplete()
+	defer service.ExternalAudioStreamClose()
 	ping := extint.ExternalAudioStreamResponse{
 		AudioResponseType: &extint.ExternalAudioStreamResponse_KeepAlive{
 			KeepAlive: &extint.KeepAlivePing{},
@@ -3662,7 +3656,6 @@ func (service *rpcService) ExternalAudioStreamResponseHandler(out extint.Externa
 			}
 			switch interface{}(msg).(type) {
 			case *extint.ExternalAudioStreamPlaybackComplete:
-				streamComplete = func() {}
 				log.Printf("External Audio Stream complete")
 			}
 		case <-pingTicker: // ping to check connection liveness after one second.

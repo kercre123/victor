@@ -81,7 +81,7 @@ void SdkAudioComponent::HandleMessage(const RobotInterface::ExternalAudioCancel&
 {
   if (ANKI_VERIFY(_audioPrepared, 
                     "SdkAudioComponent.HandleMessage.ExternalAudioCancel", 
-                    "Audio stream cancel message received without start")) {
+                    "Audio stream not active")) {
     CleanupAudioEngine();
     SendAnimToEngine(SDKAudioStreamingState::Cancelled);
   }

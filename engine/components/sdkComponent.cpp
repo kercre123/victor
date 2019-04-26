@@ -205,7 +205,7 @@ void SDKComponent::HandleMessage(const Vision::RobotRenamedEnrolledFace& msg)
 
 void SDKComponent::HandleStreamStatusEvent(SDKAudioStreamingState streamStatusId, int audioFramesReceived, int audioFramesPlayed) {
   auto* gi = _robot->GetGatewayInterface();
-  LOG_INFO("SDKComponent::HandleStreamStatusEvent","Received audio playback stream state %u received %u, played %u",
+  LOG_DEBUG("SDKComponent::HandleStreamStatusEvent","Received audio playback stream state %u received %u, played %u",
             (int)streamStatusId, audioFramesReceived, audioFramesPlayed);
   switch (streamStatusId) {
     case SDKAudioStreamingState::Completed:
@@ -745,7 +745,7 @@ void SDKComponent::HandleAudioStreamChunkRequest(const AnkiEvent<external_interf
   const std::string samplesStr = event.GetData().external_audio_stream_chunk().audio_chunk_samples();
   RobotInterface::ExternalAudioChunk msg;
   msg.audio_chunk_size = (u16)event.GetData().external_audio_stream_chunk().audio_chunk_size_bytes();
-  LOG_INFO("SDKComponent.HandleAudioStreamChunkRequest", "SDKPassing audio_chunk_size %d", msg.audio_chunk_size);
+  LOG_DEBUG("SDKComponent.HandleAudioStreamChunkRequest", "SDKPassing audio_chunk_size %d", msg.audio_chunk_size);
 
   if (!ANKI_VERIFY(msg.audio_chunk_size <= 1024,
           "SDKComponent.HandleAudioStreamChunkRequest","Invalid audio playback chunk size %u sent", msg.audio_chunk_size)) {
