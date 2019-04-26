@@ -120,6 +120,9 @@ public:
   void OnEngineLoaded() {_engineLoaded = true;}
 
   void SetSysconVersion(const std::string& version) { _sysconVersion = version; }
+  
+  // Forcibly exit any screen
+  void ExitCCScreen(Anim::AnimationStreamer* animStreamer);
 
 private:
   const Anim::AnimContext* _context = nullptr;

@@ -570,6 +570,12 @@ void Process_showUrlFace(const RobotInterface::ShowUrlFace& msg)
     UpdateConnectionFlow(std::move(connMsg), _animStreamer, _context);
   }
 }
+  
+void Process_exitCCScreen(const RobotInterface::ExitCCScreen& msg)
+{
+  FaceInfoScreenManager::getInstance()->ExitCCScreen(_animStreamer);
+}
+
 
 void Process_setBLEPin(const Anki::Vector::SwitchboardInterface::SetBLEPin& msg)
 {

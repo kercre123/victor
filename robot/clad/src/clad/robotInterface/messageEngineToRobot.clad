@@ -495,6 +495,10 @@ message ShowUrlFace
   bool show
 }
 
+message ExitCCScreen
+{
+}
+
 // Switch to the debug screen used for the vision system's "MirrorMode"
 message EnableMirrorModeScreen
 {
@@ -873,6 +877,7 @@ union EngineToRobot
 
   FakeWakeWordFromExternalInterface fakeWakeWordFromExternalInterface = 0x80,
   ShowUrlFace                   showUrlFace                 = 0x81,
+  ExitCCScreen                  exitCCScreen                = 0x82,
 
   SetDebugConsoleVarMessage     setDebugConsoleVarMessage   = 0x90,
   RunDebugConsoleFuncMessage    runDebugConsoleFuncMessage  = 0x91,
