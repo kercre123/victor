@@ -48,8 +48,8 @@ if [ -z ${TARGET_NAME+x} ]; then
 fi
 
 if [ ! -d ${SCRIPT_PATH}/generated/cladgo ]; then
-    echo "ERROR: required CLAD source files not generated (use regular build environment scripts)"
-    exit 1
+    echo "Generating missing Go source files from CLAD input files"
+    ./clad_processing.sh
 fi
 
 if [ ! -f /usr/include/opus/opus.h ]; then
