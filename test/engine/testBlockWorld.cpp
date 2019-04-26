@@ -236,7 +236,7 @@ TEST_F(BlockWorldTest, ConnectToObservedBlock)
   ASSERT_EQ(1, blockWorld._locatedObjects.size());
 }
 
-TEST_F(BlockWorldTest, LocalizeToCharger)
+TEST_F(BlockWorldTest, DISABLED_LocalizeToCharger)
 {
   // See a charger for the first time - should immediately localize to it
   ASSERT_FALSE(_robot->IsLocalized());
@@ -382,7 +382,7 @@ TEST_F(BlockWorldTest, ObservationDistance)
   const auto& code = charger.GetMarkers().front().GetCode();
   ObserveMarker(code, fakeTimestamp_ms, farCorners);
   
-  // This observation should be ignored because the charger is so 'far' away.
+  // This observation should not localize to the charger if it is too far away.
   auto& blockWorld = _robot->GetBlockWorld();
   ASSERT_FALSE(_robot->IsLocalized());
   ASSERT_EQ(0, blockWorld._locatedObjects.size());

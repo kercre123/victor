@@ -878,77 +878,66 @@ Result BlockWorld::ProcessVisualObservations(const std::vector<std::shared_ptr<O
     observedCharger = *chargerIt;
   }
 
+  // Do we have any existing chargers?
+  BlockWorldFilter filt;
+  filt.SetAllowedTypes({ObjectType::Charger_Basic});
+  filt.SetOriginMode(BlockWorldFilter::OriginMode::InRobotFrame);
+  ObservableObject* existingCharger = FindLocatedMatchingObject(filt);
+
   const bool wasCameraMoving = (_robot->GetMoveComponent().IsCameraMoving() ||
                                 _robot->GetMoveComponent().WasCameraMoving(atTimestamp));
   const bool canRobotLocalize = (_robot->GetLocalizedTo().IsUnknown() || _robot->HasMovedSinceBeingLocalized()) &&
-                                !wasCameraMoving;
+                                !wasCameraMoving && 
+                                (observedCharger != nullptr);
   
   auto result = Result::RESULT_OK;
 
-  // Now see if we should localize to the charger. The order of localizing vs. updating object poses is important.
-  // For example, if we see the charger and match it in the current origin, we want to localize to the charger
-  // _first_, then update all other object poses, since localizing to the charger will shift the robot's own position.
-  // However, if we are seeing the charger for the first time and localizing to it, we want to update all object poses
-  // (including the charger) first, _then_ localize to the charger.
-  if ((observedCharger != nullptr) && canRobotLocalize) {
-    // Do we have any existing chargers?
-    BlockWorldFilter filt;
-    filt.SetAllowedTypes({ObjectType::Charger_Basic});
-    filt.SetOriginMode(BlockWorldFilter::OriginMode::InAnyFrame);
-    ObservableObject* existingCharger = FindLocatedMatchingObject(filt);
 
-    if (existingCharger == nullptr) {
-      // No match in any origin. Simply update all the seen objects and localize to the charger.
-      UpdateKnownObjects(objectsSeen, atTimestamp);
-      result = _robot->LocalizeToObject(observedCharger.get(), observedCharger.get());
-    } else if (existingCharger->GetPose().GetRootID() == _robot->GetWorldOriginID()) {
-      // We already have a charger in the current origin - is it close enough to its last pose to localize to it?
-      const bool localizeToCharger = existingCharger->GetPose().IsSameAs(observedCharger->GetPose(),
-                                                                         existingCharger->GetSameDistanceTolerance(),
-                                                                         existingCharger->GetSameAngleTolerance());
-      if (localizeToCharger) {
-        // Keep track of poses of the observed objects wrt to robot so 
-        // that they can be corrected after the robot has relocalized
-        std::vector<Pose3d> objectsSeenPosesWrtRobot;
-        for (const auto& obj : objectsSeen) {
-          Pose3d poseWrtRobot;
-          obj->GetPose().GetWithRespectTo(_robot->GetPose(), poseWrtRobot);
-          objectsSeenPosesWrtRobot.push_back(poseWrtRobot);
-        }
-
-        // Localize to the charger instance in this origin
-        _robot->LocalizeToObject(observedCharger.get(), existingCharger);
-
-        // Update pose of objects seen after robot relocalization
-        auto newObjSeenIt = objectsSeenPosesWrtRobot.begin();
-        for (auto& obj : objectsSeen) {
-          obj->SetPose(newObjSeenIt->GetWithRespectToRoot(),
-                       obj->GetLastPoseUpdateDistance(), 
-                       obj->GetPoseState());
-          ++newObjSeenIt;
-        }
+  // VIC-14462: we no longer relocalize to objects in other origins due to rejiggering bugs, and the map timing out anyway
+  if (canRobotLocalize && (existingCharger != nullptr)) {
+    // We already have a charger in the current origin - is it close enough to its last pose to localize to it?
+    const bool localizeToCharger = existingCharger->GetPose().IsSameAs(observedCharger->GetPose(),
+                                                                        existingCharger->GetSameDistanceTolerance(),
+                                                                        existingCharger->GetSameAngleTolerance());
+    if (localizeToCharger) {
+      // Keep track of poses of the observed objects wrt to robot so 
+      // that they can be corrected after the robot has relocalized
+      std::vector<Pose3d> objectsSeenPosesWrtRobot;
+      for (const auto& obj : objectsSeen) {
+        Pose3d poseWrtRobot;
+        obj->GetPose().GetWithRespectTo(_robot->GetPose(), poseWrtRobot);
+        objectsSeenPosesWrtRobot.push_back(poseWrtRobot);
       }
 
-      // Update object poses, but ignore the charger if we've just localized to it
-      UpdateKnownObjects(objectsSeen, atTimestamp);
-    } else {
-      // We have a match for the charger in a previous origin. First update all objects _except_ the charger, then
-      // localize to charger from the previous origin.
-      UpdateKnownObjects(objectsSeen, atTimestamp, true);
-      
-      // Localize to the charger instance in the old origin
-      result = _robot->LocalizeToObject(observedCharger.get(), existingCharger);
-      if (result == Result::RESULT_OK) {
-        existingCharger->SetObservationTimes(observedCharger.get());
+      // Localize to the charger instance in this origin
+      _robot->LocalizeToObject(observedCharger.get(), existingCharger);
+
+      // Update pose of objects seen after robot relocalization
+      auto newObjSeenIt = objectsSeenPosesWrtRobot.begin();
+      for (auto& obj : objectsSeen) {
+        obj->SetPose(newObjSeenIt->GetWithRespectToRoot(),
+                      obj->GetLastPoseUpdateDistance(), 
+                      obj->GetPoseState());
+        ++newObjSeenIt;
       }
     }
-  } else {
-    UpdateKnownObjects(objectsSeen, atTimestamp);
+  }
+
+  UpdateKnownObjects(objectsSeen, atTimestamp);
+  
+
+  if (canRobotLocalize && (existingCharger == nullptr)) {
+    // We found a charger and can localize to it, but there was no prior charger
+    // NOTE: this just sets the "localizedTo" fields, and shouldn't update the robot
+    // pose since the pose transformation with itself is the identity transformation
+    result = _robot->LocalizeToObject(observedCharger.get(), observedCharger.get());	
   }
 
   // For any objects whose poses were just updated, broadcast information about them now. Note that this list could
   // be different from the objectsSeen list, since we may have decided to ignore an object observation for some
   // reason (e.g. robot was moving too fast)
+
+  // TODO: this can go right into the last step of `UpdateKnownObjects`
   BlockWorldFilter updatedNowFilter;
   updatedNowFilter.SetFilterFcn([&atTimestamp](const ObservableObject* obj){
     return (obj->GetLastObservedTime() == atTimestamp);
@@ -1631,8 +1620,8 @@ void BlockWorld::MarkObjectDirty(ObservableObject* object)
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BlockWorld::OnRobotDelocalized(PoseOriginID_t newWorldOriginID)
 {
-  // delete origins that have become useless since we delocalized last time
-  DeleteZombieOrigins();
+  // Since we are no longer relocalizing between deloc events, clear the current set of objects
+  _locatedObjects.clear();
 
   // create a new memory map for this origin
   _robot->GetMapComponent().CreateLocalizedMemoryMap(newWorldOriginID);
