@@ -48,6 +48,9 @@ void InitVectorBoard(ARF::BulletinBoard *board,
   board->RegisterCallback<Anki::Vector::RobotState>(
       "state",
       [head_angle_poster](const Anki::Vector::RobotState &state) mutable {
+        std::cout << "Pose frame id " << state.pose_frame_id << " origin "
+                  << state.pose_origin_id << " pose " << state.pose.x << " "
+                  << state.pose.y << " " << state.pose.z << std::endl;
         head_angle_poster.Post(state.headAngle);
       });
 }
@@ -74,8 +77,10 @@ int main(int argc, char **argv) {
   std::thread keyboard_input_thread([&converter, &board]() mutable {
     ARF::TopicViewer<float> head_viewer = board.MakeViewer<float>("head_angle");
     while (g_run) {
+      bool commanding_robot_speed = false;
       uint8_t action_id = 0;
       char g = getch();
+      fflush(stdin);
       if (!head_viewer.IsInitialized())
         continue;
       switch (g) {
@@ -102,6 +107,33 @@ int main(int argc, char **argv) {
         head_command.duration_sec = kKeyboardCheckUsec * 1e-6;
         converter.SendHeadCommand(head_command);
         break;
+      }
+      case 'i': {
+        commanding_robot_speed = true;
+        Anki::Vector::RobotInterface::DriveWheelsCurvature curvature_command;
+        curvature_command.speed = 25.0;
+        curvature_command.accel = 0;
+        curvature_command.curvatureRadius_mm =
+            std::numeric_limits<int16_t>::max();
+        converter.SendMessage(
+            Anki::Vector::RobotInterface::EngineToRobot(curvature_command));
+        break;
+      }
+      case 'k': {
+        commanding_robot_speed = true;
+        Anki::Vector::RobotInterface::DriveWheelsCurvature curvature_command;
+        curvature_command.speed = -25.0;
+        curvature_command.accel = 0;
+        curvature_command.curvatureRadius_mm =
+            std::numeric_limits<int16_t>::max();
+        converter.SendMessage(
+            Anki::Vector::RobotInterface::EngineToRobot(curvature_command));
+        break;
+      }
+      case 'o': {
+        Anki::Vector::RobotInterface::StopAllMotors stop_command;
+        converter.SendMessage(
+            Anki::Vector::RobotInterface::EngineToRobot(stop_command));
       }
       }
       usleep(kKeyboardCheckUsec);

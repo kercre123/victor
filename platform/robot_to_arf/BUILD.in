@@ -1,5 +1,7 @@
 cxx_project(
     name = 'robot_to_arf_converter',
-    srcs = ['robot_to_arf_tester.cpp'],
-    headers = ['robot_to_arf_converter.h']
+    srcs = ['robot_to_arf_tester.cpp',
+            'simple_vision_system.cpp'],
+    headers = ['robot_to_arf_converter.h',
+               'simple_vision_system.h']
 )

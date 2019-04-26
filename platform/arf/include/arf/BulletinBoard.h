@@ -293,7 +293,7 @@ public:
         // If cast failed, we have the wrong type or it isn't declared
         if( !buff ) 
         {
-            return nullptr;
+            return TopicPoster<T>();
         }
         else
         {

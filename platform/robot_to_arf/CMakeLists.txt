@@ -28,6 +28,7 @@ target_link_libraries(robot_to_arf_converter
   # anki libs
   arf
   util
+  cti_vision
   cti_messaging_robot
   robot_clad_cpplite
   # platform
