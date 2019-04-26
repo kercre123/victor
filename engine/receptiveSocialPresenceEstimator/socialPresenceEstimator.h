@@ -133,6 +133,7 @@ public:
   void OnNewUserIntent(const UserIntentTag tag);
   void OnRobotObservedFace(const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg);
   void OnRobotObservedMotion(const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg);
+  void OnRobotObservedSalientPoint(const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg);
   bool OnMicPowerSample(double micPowerLevel, MicDirectionConfidence conf, MicDirectionIndex dir);
 
 
@@ -165,6 +166,10 @@ private:
       SocialPresenceEvent("Face", std::make_shared<ExponentialDecay>(0.1), 0.8f, 1.0f, 0.8f, 1.0f, false);
   SocialPresenceEvent _SPEMotion =
       SocialPresenceEvent("Motion", std::make_shared<ExponentialDecay>(0.2), 0.2f, 0.5f, 0.3f, 0.8f, false);
+  SocialPresenceEvent _SPEHand =
+      SocialPresenceEvent("Hand", std::make_shared<ExponentialDecay>(0.2f), 0.3f, 0.5f, 0.35f, 0.9f, false);
+  SocialPresenceEvent _SPEPerson =
+      SocialPresenceEvent("Person", std::make_shared<ExponentialDecay>(0.1f), 0.6f, 0.75f, 0.6f, 1.0f, false);
   SocialPresenceEvent _SPESleep =
       SocialPresenceEvent("Sleep", std::make_shared<PowerDecay>(1.1f), -0.9f, 0.0f, -0.9f, 0.0f, true);
   SocialPresenceEvent _SPEQuiet =
@@ -190,6 +195,8 @@ private:
       &_SPEUserIntent,
       &_SPEFace,
       &_SPEMotion,
+      &_SPEHand,
+      &_SPEPerson,
       &_SPESleep,
       &_SPEQuiet,
       &_SPEShutUp,
@@ -206,6 +213,7 @@ private:
   uint32_t _newUserIntentHandle;
   Signal::SmartHandle _faceHandle;
   Signal::SmartHandle _motionHandle;
+  Signal::SmartHandle _salientHandle;
   uint32_t _micPowerSampleHandle;
 
 };

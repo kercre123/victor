@@ -1201,6 +1201,10 @@ namespace Vector {
       for(auto const& salientPoint : procResult.salientPoints)
       {
         _salientPointsToDraw.emplace_back(currentTime_ms, salientPoint);
+        // broadcast message
+        ExternalInterface::RobotObservedSalientPoint msg;
+        msg.salientPoint = salientPoint;
+        _robot->Broadcast(ExternalInterface::MessageEngineToGame(std::move(msg)));
       }
     }
 

@@ -13,6 +13,7 @@
 #include "socialPresenceEstimator.h"
 
 #include "clad/externalInterface/messageGameToEngine.h"
+#include "clad/types/salientPointTypes.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/aiComponent/aiComponent.h"
 #include "engine/aiComponent/behaviorComponent/behaviorComponent.h"
@@ -38,7 +39,7 @@ namespace Vector {
 
 namespace {
   float kEpsilon = 0.01; // threshold for calling a SocialPresenceEvent's value zero
-  float kmicPowerScoreThreshold = 1.0; // TODO: not tuned at all, and definitely will want to be.
+  float kmicPowerScoreThreshold = 2.0; // TODO: not tuned at all, and definitely will want to be.
 }
 
 
@@ -155,6 +156,8 @@ void SocialPresenceEstimator::InitDependent(Vector::Robot *robot, const RobotCom
       std::bind( &SocialPresenceEstimator::OnRobotObservedFace, this, std::placeholders::_1) );
   _faceHandle = _robot->GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedMotion,
       std::bind( &SocialPresenceEstimator::OnRobotObservedMotion, this, std::placeholders::_1) );
+  _salientHandle = _robot->GetExternalInterface()->Subscribe(ExternalInterface::MessageEngineToGameTag::RobotObservedSalientPoint,
+      std::bind( &SocialPresenceEstimator::OnRobotObservedSalientPoint, this, std::placeholders::_1) );
 
   _micPowerSampleHandle = dependentComps.GetComponent<MicComponent>().GetMicDirectionHistory().RegisterSoundReactor(
       std::bind( &SocialPresenceEstimator::OnMicPowerSample, this,
@@ -289,10 +292,33 @@ void SocialPresenceEstimator::OnRobotObservedMotion(const AnkiEvent<ExternalInte
 }
 
 
+void SocialPresenceEstimator::OnRobotObservedSalientPoint(const AnkiEvent<ExternalInterface::MessageEngineToGame>& msg)
+{
+  LOG_WARNING("SocialPresenceEstimator.OnRobotObservedSalientPoint.GotCallback", "");
+  // distinguish between different salient points and dispatch
+  DEV_ASSERT(ExternalInterface::MessageEngineToGameTag::RobotObservedSalientPoint == msg.GetData().GetTag(),
+             "SocialPresenceEstimator.OnRobotObservedSalientPoint.MessageTypeNotHandled");
+  const ExternalInterface::RobotObservedSalientPoint& spMsg = msg.GetData().Get_RobotObservedSalientPoint();
+  switch(spMsg.salientPoint.salientType) {
+    case Vision::SalientPointType::Person:
+      LogInputEvent(&_SPEPerson);
+      TriggerInputEvent(&_SPEPerson);
+      break;
+    case Vision::SalientPointType::Hand:
+      LogInputEvent(&_SPEHand);
+      TriggerInputEvent(&_SPEHand);
+      break;
+    default:
+      LOG_WARNING("SocialPresenceEstimator.OnRobotObservedSalientPoint.UnhandledSalientType","");
+  }
+}
+
+
 bool SocialPresenceEstimator::OnMicPowerSample(double micPowerLevel, MicDirectionConfidence conf, MicDirectionIndex dir)
 {
   //LOG_WARNING("SocialPresenceEstimator.OnMicPowerSample.GotSample", "power score: %f", micPowerLevel);
   // probably we need some kind of threshold on the power score
+  // TODO: can we make the power score an input to the event, with a proportional effect?
   if (micPowerLevel > kmicPowerScoreThreshold) {
     LOG_DEBUG("SocialPresenceEstimator.OnMicPowerSample.GotSampleAboveThreshold", "power score: %f", micPowerLevel);
     LogInputEvent(&_SPESound);
