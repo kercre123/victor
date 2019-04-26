@@ -60,6 +60,12 @@ void MicrophoneAudioClient::ProcessMessage( const RobotInterface::MicDirection& 
                                     normNoiseFloor,
                                     AudioEngine::kInvalidAudioGameObject ); // Set Global Parameter
   }
+
+  LOG_ERROR("BRUCE", "In microphoneAudioClient");
+  MicrophoneDirectionEvent evt;
+  evt.direction = msg.direction;
+  auto result = AnimProcessMessages::SendAnimToEngine(std::move(evt));
+
 }
 
 }

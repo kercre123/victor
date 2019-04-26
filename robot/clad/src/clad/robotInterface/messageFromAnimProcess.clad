@@ -99,5 +99,10 @@ message AudioStreamStatusEvent
   SDKAudioStreamingState streamResultID
 }
 
+message MicrophoneDirectionEvent
+{
+  uint_32 direction
+}
+
 } // Cozmo
 } // Anki

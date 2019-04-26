@@ -115,6 +115,7 @@ private:
   void HandleAudioStreamCompleteRequest(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void HandleAudioStreamCancelRequest(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void HandleStreamStatusEvent(SDKAudioStreamingState streamStatusId, int audioFramesReceived, int audioFramesPlayed);
+  void HandleMicrophoneDirectionEvent(int direction);
   void SetMasterVolume(const AnkiEvent<external_interface::GatewayWrapper>& event);
   void SetCameraSettings(const AnkiEvent<external_interface::GatewayWrapper>& event);
 };

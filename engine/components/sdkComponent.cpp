@@ -146,6 +146,11 @@ void SDKComponent::InitDependent(Vector::Robot* robot, const RobotCompMap& depen
       HandleStreamStatusEvent(streamEvent.streamResultID, streamEvent.audioReceived,
                   streamEvent.audioPlayed);
   }));
+  _signalHandles.push_back(messageHandler->Subscribe(RobotInterface::RobotToEngineTag::microphoneDirectionEvent, [this](const AnkiEvent<RobotInterface::RobotToEngine>& event) {
+      auto streamEvent = event.GetData().Get_microphoneDirectionEvent();
+      HandleMicrophoneDirectionEvent(streamEvent.direction);
+  }));
+
 }
 
 template<>
@@ -201,6 +206,10 @@ void SDKComponent::HandleMessage(const Vision::RobotRenamedEnrolledFace& msg)
   auto* gi = _robot->GetGatewayInterface();
   auto* renamedMsg = new external_interface::RobotRenamedEnrolledFace(msg.faceID, msg.name);
   gi->Broadcast(ExternalMessageRouter::Wrap(renamedMsg));
+}
+
+void SDKComponent::HandleMicrophoneDirectionEvent(int direction) {
+  LOG_ERROR("BRUCE!","In SDKComponent, direction %u", direction);
 }
 
 void SDKComponent::HandleStreamStatusEvent(SDKAudioStreamingState streamStatusId, int audioFramesReceived, int audioFramesPlayed) {
