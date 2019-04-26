@@ -40,11 +40,7 @@
       "getOut"           : "NeutralFace",
       
       "shouldCheckEndCondDuringAnim": false,
-      // NOTE(GB): Tread motion is too aggressive with current animation,
-      // can cause robot to not detect OnTreads even when not put down on
-      // the ground again, which can cause a whole host of issues, so lock
-      // the treads for now until animation is revised.
-      "lockTreads"       : true
+      "lockTreads"       : false
     }
   ],
   
