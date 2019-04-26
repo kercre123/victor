@@ -91,7 +91,7 @@ void StreamingAnimationModifier::HandleMessage(const RobotInterface::AlterStream
   switch(static_cast<RobotInterface::EngineToRobotTag>(msg.internalTag)){
     case RobotInterface::EngineToRobotTag::setFullAnimTrackLockState:
     {
-      CLAD::SafeMessageBuffer buff;
+      CLAD::SafeMessageBuffer buff(msg.setFullAnimTrackLockState.Size());
       msg.setFullAnimTrackLockState.Pack(buff);
       RobotInterface::EngineToRobot alterationMessage(buff);
       AddToMapStreamMap(relativeStreamTime_ms, std::move(alterationMessage));
@@ -107,7 +107,7 @@ void StreamingAnimationModifier::HandleMessage(const RobotInterface::AlterStream
                     "All game objects sent through alter streaming animation must have object type Animation");
       }
 
-      CLAD::SafeMessageBuffer buff;
+      CLAD::SafeMessageBuffer buff(msg.postAudioEvent.Size());
       msg.postAudioEvent.Pack(buff);
       RobotInterface::EngineToRobot alterationMessage(buff);
       AddToMapStreamMap(relativeStreamTime_ms, std::move(alterationMessage));
@@ -115,7 +115,7 @@ void StreamingAnimationModifier::HandleMessage(const RobotInterface::AlterStream
     }
     case RobotInterface::EngineToRobotTag::textToSpeechPlay:
     {
-      CLAD::SafeMessageBuffer buff;
+      CLAD::SafeMessageBuffer buff(msg.textToSpeechPlay.Size());
       msg.textToSpeechPlay.Pack(buff);
       RobotInterface::EngineToRobot alterationMessage(buff);
       AddToMapStreamMap(relativeStreamTime_ms, std::move(alterationMessage));
