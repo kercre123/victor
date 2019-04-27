@@ -37,7 +37,7 @@ class BehaviorComponentCloudServer : private Util::SignalHolder {
 public:
   using CallbackFunc = std::function<void(CloudMic::Message)>;
 
-  BehaviorComponentCloudServer(const CozmoContext* context, CallbackFunc callback, const std::string& name);
+  BehaviorComponentCloudServer(const CozmoContext* context, CallbackFunc callback, const std::string& name, int sleepMs = 40);
   ~BehaviorComponentCloudServer();
 
 private:
@@ -47,6 +47,7 @@ private:
   std::thread _listenThread;
   LocalUdpServer _server;
   std::atomic_bool _shutdown;
+  const int _sleepMs;
 
   #define SEND_CLOUD_DEV_RESULTS ANKI_DEV_CHEATS
   #if SEND_CLOUD_DEV_RESULTS
