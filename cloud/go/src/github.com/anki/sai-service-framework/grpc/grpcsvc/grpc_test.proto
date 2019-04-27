@@ -1,0 +1,11 @@
+syntax = "proto3";
+
+package grpcsvc;
+
+service Echo {
+    rpc Echo(EchoData) returns (EchoData) {};
+}
+
+message EchoData {
+    string s = 1;
+}

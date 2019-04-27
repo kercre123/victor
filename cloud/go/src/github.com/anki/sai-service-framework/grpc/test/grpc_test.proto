@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+package grpctest;
+
+service Echo {
+    rpc Echo(EchoData) returns (EchoData) {};
+    rpc StreamingEcho(stream EchoData) returns (stream EchoData);
+}
+
+message EchoData {
+    string s = 1;
+}
+
+message RepeatedData {
+  repeated EchoData data = 1;
+}

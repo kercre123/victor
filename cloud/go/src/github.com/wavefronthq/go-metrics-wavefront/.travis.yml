@@ -1,0 +1,31 @@
+language: go
+
+# workaround for case sensitive build issues with wavefrontHQ
+go_import_path: github.com/wavefronthq/go-metrics-wavefront
+
+go:
+  - "1.9.x"
+  - "1.10.x"
+  - master 
+
+install:
+  - # Skip
+
+matrix:
+  # It's ok if our code fails on unstable development versions of Go.
+  allow_failures:
+    - go: master
+  # Don't wait for tip tests to finish. Mark the test run green if the
+  # tests pass on the stable versions of Go.
+  fast_finish: true
+
+# Don't email me the results of the test runs.
+notifications:
+  email: false
+
+# script always run to completion (set +e).
+script:
+  - go get -t -v ./...
+  - diff -u <(echo -n) <(gofmt -d .)
+  - go test -v -race ./...                   # Run all the tests with the race detector enabled
+  - go vet ./...                             # go vet is the official Go static analyzer

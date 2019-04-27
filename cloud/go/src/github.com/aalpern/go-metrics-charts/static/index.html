@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title></title>
+        <meta charset="utf-8" />
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/bulma/0.2.3/css/bulma.min.css" rel="stylesheet"></link>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" rel="stylesheet"></link>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.1.1/jquery.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/handlebars.js/4.0.6/handlebars.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.15.3/axios.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/bean/1.0.15/bean.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/URI.js/1.18.4/URI.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/1.3.3/FileSaver.min.js"></script>
+        <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    </head>
+
+    <body>
+
+        <div class="hero is-light">
+            <div class="hero-body">
+                <div class="container is-fluid">
+                    <!-- Chart Area -->
+                    <div class="box">
+                        <div id="chart">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container"
+            <!-- Chart Controls -->
+            <nav class="level">
+                <div class="level-left">
+                    <div class="level-item">
+                        <p class="control has-addons">
+                            <input id="input-filter" title="Filter by metric name, accepts regular expressions"
+                                   class="input" type="text" placeholder="Filter metrics...">
+                            <a class="button" id="btn-clear-filter">
+                                <span class="icon is-small">
+                                    <i class="fa fa-close"></i>
+                                </span>
+                            </a>
+                        </p>
+                    </div>
+                    <div class="level-item">
+                        <span id="filtered-count">X</span> of <span id="metrics-count">Y</span>
+                    </div>
+                </div>
+                <div class="level-right">
+
+                    <!-- Chart type buttons -->
+                    <div class="level-item">
+                        <p class="control has-addons">
+                            <a class="button chart-button is-active" id="btn-line-chart">
+                                <span class="icon is-small">
+                                    <i class="fa fa-line-chart"></i>
+                                </span>
+                            </a>
+                            <a class="button chart-button" id="btn-area-chart">
+                                <span class="icon is-small">
+                                    <i class="fa fa-area-chart"></i>
+                                </span>
+                            </a>
+                            <a class="button chart-button" id="btn-bar-chart">
+                                <span class="icon is-small">
+                                    <i class="fa fa-bar-chart"></i>
+                                </span>
+                            </a>
+                        </p>
+                    </div>
+
+                    <!-- Start/stop and refresh period -->
+                    <div class="level-item">
+                        <p class="control has-addons">
+                            <a class="button" id="btn-pause">
+                                <span class="icon is-small">
+                                    <i class="fa fa-pause"></i>
+                                </span>
+                            </a>
+                            <input id="input-period" title="Refresh period, in seconds"
+                                   class="input" type="number" min="1" value="5">
+                        </p>
+                    </div>
+
+                    <!-- Misc actions -->
+                    <div class="level-item">
+                        <p class="control has-addons">
+                            <a id="btn-export-png" class="button">
+                                <span class="icon is-small">
+                                    <i class="fa fa-download"></i>
+                                </span>
+                                <span>PNG</span>
+                            </a>
+                            <a id="btn-open-raw" class="button" href="/debug/metrics" target="_blank">
+                                <span class="icon is-small">
+                                    <i class="fa fa-code"></i>
+                                </span>
+                                <span>Raw</span>
+                            </a>
+                        </p>
+                    </div>
+                    <div class="level-item">
+                        <p class="control has-addons">
+                            <a id="btn-clear-data" class="button">Clear Data</a>
+                            <a id="btn-clear" class="button is-danger is-outlined">Clear All</a>
+                        </p>
+                    </div>
+                </div>
+            </nav> <!-- End Chart Controls -->
+
+            <!-- Metrics List -->
+            <div id="metrics">
+                <div class="columns">
+                    <div class="column">
+                        <div class="box">
+                            <div id="metric-table"></div>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- End Metrics List -->
+
+        </div>
+        <script src="main.js"></script>
+        <style>
+         #chart {
+             width: 100%;
+             height: 500px;
+         }
+         tr.metric-row.is-selected td {
+             font-weight: bold;
+         }
+         #input-period {
+             width: 4em;
+         }
+        </style>
+    </body>
+
+    <!-- Templates -->
+    <script id="metric-table-template" type="text/x-handlebars-template">
+        <table class="table is-striped">
+            <thead>
+                <tr>
+                    <th>Metric</th>
+                    <th>Current Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each data}}
+                <tr class="metric-row {{#if selected}}is-selected{{/if}}">
+                    <td class="name">{{name}}</td>
+                    <td class="value">{{value}}</td>
+                </tr>
+                {{/each}}
+            </tbody>
+            <tfoot>
+                <tr>
+                    <th>Metric</th>
+                    <th>Current Value</th>
+                </tr>
+            </tfoot>
+        </table>
+    </script>
+
+</html>

@@ -1,0 +1,313 @@
+<!doctype html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Anki Authn/Authz</title>
+		<meta name="description" content="Authentication & Authorization in the Anki Service Framework">
+		<meta name="author" content="Adam Alpern (adam@anki.com)">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/css/reveal.min.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/lib/css/zenburn.min.css">
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/css/theme/solarized.min.css" id="theme">
+	</head>
+
+	<body>
+		<div class="reveal">
+			<div class="slides">
+
+			  <section>
+			      <h1>Authn/Authz</h1>
+                  <h2>Authentication & Authorization in the Anki Service Framework</h2>
+                  adam@anki.com
+			  </section>
+
+			  <section>
+                  <h1>Terminology</h1>
+			  </section>
+
+              <section>
+                  <h2>Authentication (authn)</h2>
+                  Authentication is about <b>determining identity</b>.
+                  <ul>
+                      <li class="fragment">Robot: Hello</li>
+                      <li class="fragment">Server: Who are you?</li>
+                      <li class="fragment">Robot: Hi, I'm robot vic:001</li>
+                      <li class="fragment">Server: OK, I believe you. </li>
+                      <li class="fragment">Or maybe: Sorry, I think you're lying. Bye!</li>
+                  </ul>
+              </section>
+
+              <section>
+              <section>
+                  <h2>Authorization (authz)</h2>
+                  Authorization is about <b>controlling access</b>.
+                  <ul>
+                      <li class="fragment">Robot vic:001 - Please give me my document</li>
+                      <li class="fragment">Server: Here it is</li>
+                      <li class="fragment">Robot vic:001 - Please give me vic:002's document</li>
+                      <li class="fragment">Server: No</li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h2>401 vs 403</h2>
+                  <p>This is easily illustrated by two response codes in HTTP, the 401 and 403. </p>
+                  <p class="fragment">401 - I don't know who you are</p>
+                  <p class="fragment">403 - I know who you are, and you're not allowed to proceeed</p>
+              </section>
+              </section>
+
+              <section>
+                  <h2>Token</h2>
+                  <blockquote>
+                      1. A thing serving as a visible or tangible representation of a fact, quality, feeling, etc.
+                  </blockquote>
+                  <blockquote class="fragment">
+                      2. A voucher that can be exchanged for goods or services.
+                  </blockquote>
+              </section>
+
+              <section>
+                  <h2>Token</h2>
+                  In the context of the Anki Service Framework, a <b>token</b> is a piece of data that <b>authorizes</b> an <b>authenticated</b> entity
+                  to perform actions.
+                  <p class="fragment">(e.g. to invoke particular APIs)</p>
+              </section>
+
+              <section>
+                  <h2>Authority</h2>
+                  A <b>security authority</b> (or just <b>authority</b>)
+                  is an entity that can grant and validate tokens.
+              </section>
+
+              <section>
+                  <h2>User</h2>
+                  A human being with a username and password.
+              </section>
+
+              <section>
+                  <h2>Session</h2>
+                  A kind of <b>token</b> granted to an <b>authenticated</b> User, allowing access for a period of time.
+                  <p class="fragment"><small>Also known as user session, session id, session token</small></p>
+              </section>
+
+              <section>
+                  <h2>App Key</h2>
+                      A token representing a software product.
+                  <ul class="fragment">
+                      <li>Overdrive</li>
+                      <li>Cozmo</li>
+                      <li>Victor Companion App</li>
+                      <li>Victor Robot</li>
+                  </ul>
+                  <p class="fragment">App keys are non-expiring</p>
+                  <p class="fragment"><small>Also known as API key, or App ID (or apikey, ApiKey, appid, appkey, AppKey, etc...)</small></p>
+
+              </section>
+
+              <section>
+                  <h2>Terminology Review</h2>
+                  <ul>
+                      <li class="fragment">Authentication - who are you?</li>
+                      <li class="fragment">Authorization - what are you allowed to do?</li>
+                      <li class="fragment">Token - grants the bearer access</li>
+                      <li class="fragment">Authority - issues and validates tokens</li>
+                      <li class="fragment">User - humans</li>
+                      <li class="fragment">Session - an expiring access token</li>
+                      <li class="fragment">AppKey - Anki application identifier</li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h1>Accounts Service</h1>
+              </section>
+
+              <section>
+                  <h2>Accounts Service</h2>
+                  Anki's primary security authority.
+                  <ul>
+                      <li class="fragment">Authenticates users (via username & password)
+                          <ul class="fragment">
+                              <li>Issues session tokens</li>
+                              <li class="fragment">Those session tokens are the primary means of authenticating to other REST services (Ankival, Virtual Rewards, etc...)</li>
+                          </ul>
+                      </li>
+
+                      <li class="fragment">Validates session tokens</li>
+                      <li class="fragment">Validates app keys</li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h2>More Terminology: Scope</h2>
+                  What is a scope?
+                  <ul>
+                    <li class="fragment">Scope is an attribute of <b>tokens</b> (sessions & app keys)
+                      <li class="fragment">A scope is just like a role
+                      - it places an entity into a group which has a
+                      set of permissions, granting the holder of the
+                      token those permissions</li>
+                      <li class="fragment">Very coarse grained - we have a very limited number of scopes</li>
+                      <li class="fragment">Not hierarchical</li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h2>Defined Scopes</h2>
+                  <ul>
+                      <li class="fragment">Root - all access.<br/>
+                          <small class="fragment">I don't think we actually use this anywhere</small>
+                      </li>
+                      <li class="fragment">Admin - perform administrative actions. <br/>
+                          <small class="fragment">Typically able to access data from any user.</small></li>
+                      <li class="fragment">Support - our Customer Care dashboard</li>
+                      <li class="fragment">Service - for internal usage by other services. <br/>
+                          <small class="fragment">Example: Ankival calling Accounts is a Service-scoped operation</small></li>
+                      <li class="fragment">User - regular end user access<br/>
+                          <small class="fragment">Users can only ever access their own data</small>
+                      </li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h3>Session Scope</h3>
+                  Every session has exactly one scope.
+                  <p class="fragment">Nearly every session has <b>user</b> scope. </p>
+                  <h3 class="fragment">AppKey Scope</h3>
+                  <p class="fragment">Every app key can have one or more scopes (roles).</p>
+              </section>
+
+              <section>
+                  <h3>Session Validation</h3>
+                  The accounts service provides an API for other services to call to <b>validate</b> sessions (and appkeys).
+                  <p class="fragment">Succesful validation returns everything the Accounts service knows about the session, the user associated with the session, and the appkey involved.</p>
+                  <p class="fragment">Most importantly, that includes the <b>scope</b> of both.
+                  <p class="fragment">Validation is part of <b>authentication</b>, not authorization.
+              </section>
+
+              <section>
+                  <h3>Accounts-Based Authorization</h3>
+                  <b>Authorization</b> based on appkey and session means matching up the scope of the
+                  session (or appkey) to the required <b>scope mask</b> of
+                  the API endpoint. The <b>scope mask</b> is simply a
+                  set of acceptable scopes.
+              </section>
+
+              <section>
+                  <h1>Token Service</h1>
+              </section>
+
+              <section>
+                  <h3>Token Service</h3>
+                  <ul>
+                      <li class="fragment">Anki's second security authority, specifically for Vector (and beyond).</li>
+                      <li class="fragment">Adds additional layer of authentication, based on client-side certificates (aka "mutual TLS")</li>
+                      <li class="fragment">Allows us to authenticate the <b>robot</b> as well as the <b>user</b></li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h3>Token Service (continued)</h3>
+                  <ul>
+                      <li class="fragment">Clients must first obtain a session token from the Accounts service to authenticate the <b>user</b></li>
+                      <li class="fragment">Then they can obtain a token from the Token Service representing the <b>user+robot</b></li>
+                      <li class="fragment">Tokens are cryptographically signed</li>
+                      <li class="fragment"><b>Validation</b> does not require an API call to the token service
+                          <ul>
+                              <li>Tokens can be validated locally, in the API service accepting the token</li>
+                          </ul>
+                      </li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h1>OK, OK, enough with the theory....</h1>
+                  <h3 class="fragment">let's make this concrete</h3>
+              </section>
+
+              <section>
+                  <h3>Service Framework Authn/Authz Support</h3>
+                  The service framework provides a seamless way to
+                  enforce coarse-grained authorization on a per-endpoint basis.
+                  <ul>
+                      <li class="fragment">Authentication and authorization are both handled by <b>interceptors</b></li>
+                      <li class="fragment">Interceptors are classes that get to run before and after the primary RPC handler</li>
+                      <li class="fragment">They can modify context, provide logging, or reject calls with an error</li>
+                  </ul>
+              </section>
+
+              <section>
+                  <h3>Initializing a gRPC Service with Authn+Authz</h3>
+                  <pre><code data-trim>
+grpcsvc.New(
+  grpcsvc.WithInterceptor(
+    auth.NewAccountsAuthenticator()),
+
+  grpcsvc.WithInterceptor(
+    auth.NewTokenAuthenticator(
+            auth.WithTokenClient())),
+
+  grpcsvc.WithInterceptor(
+    auth.NewGrpcAuthorizer(
+      auth.WithAuthorizationSpecs(specs)))))
+                  </code></pre>
+              </section>
+
+              <section>
+                  <h3>Authorization Specs</h3>
+                  <pre><code data-trim>
+specs := []auth.GrpcAuthorizationSpec{{
+  Method: "/tokenpb.Token/AssociatePrimaryUser",
+  Auth: auth.AuthorizationSpec{
+    AuthMethod:    auth.AuthAccounts,
+    SessionStatus: auth.RequireSession,
+    ScopeMask:     auth.UserScopeMask,
+  },
+}, {
+  Method: "/tokenpb.Token/RefreshToken",
+  Auth: auth.AuthorizationSpec{
+    AuthMethod: auth.AuthToken,
+    ScopeMask:  auth.UserScopeMask,
+  },
+}}
+
+                  </code></pre>
+              </section>
+
+              <section>
+                  <h3>Accessing Credentials</h3>
+                  Within an RPC method, you can access credentials with simpler accessor functions that extract them from the <b>context</b>.
+                  <pre><code data-trim>
+func (s *Server) DoSomething(ctx context.Context, req *pb.Req)
+    (*pb.Resp, error)
+{
+  userId := auth.GetUserId(ctx)
+  creds := auth.GetAccountsCredentials(ctx)
+  token := token.GetAccessToken(ctx)
+  // etc...
+}
+                  </code></pre>
+              </section>
+
+			</div> <!-- /.slides -->
+		</div> <!-- /.reveal -->
+
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/lib/js/head.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/js/reveal.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/plugin/markdown/marked.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/plugin/markdown/markdown.js"></script>
+		<script>
+			Reveal.initialize({
+				controls: true,
+				progress: false,
+				history: true,
+				center: true,
+				transition: 'slide',
+				transitionSpeed: 'fast',
+				dependencies: [
+					{ src: 'https://cdnjs.cloudflare.com/ajax/libs/reveal.js/3.6.0/plugin/highlight/highlight.min.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } }
+				]
+			});
+		</script>
+	</body>
+</html>
