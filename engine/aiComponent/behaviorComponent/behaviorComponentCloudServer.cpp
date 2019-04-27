@@ -62,14 +62,7 @@ void BehaviorComponentCloudServer::RunThread(std::string sockName)
 
   // Start UDP server
   _server.SetBindClients(false);
-  const bool success = _server.StartListening(AI_SERVER_BASE_PATH + sockName);
-  if (!success)
-  {
-    LOG_ERROR("BehaviorComponentCloudServer.RunThread.FailedStartListening",
-              "Failed to start listening to socket %s",
-              (AI_SERVER_BASE_PATH + sockName).c_str());
-    return;
-  }
+  _server.StartListening(AI_SERVER_BASE_PATH + sockName);
 
   char buf[4096];
   const int fd = _server.GetSocket();
