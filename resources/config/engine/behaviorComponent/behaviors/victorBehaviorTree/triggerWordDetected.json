@@ -22,6 +22,8 @@
     }
   },
 
+  "recognizerResponseId"    : "default",
+
   "earConAudioEventSuccess" : "Play__Robot_Vic_Sfx__Wake_Word_Success",
   "earConAudioEventNeutral" : "Play__Robot_Vic_Sfx__Wake_Word_Fail",
   "backpackLights"          : false,

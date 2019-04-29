@@ -10,6 +10,13 @@ using AnimationTag = uint8_t;
 
 static const AnimationTag kNotAnimatingTag  = 0;
 
+enum
+{
+  kAnimationTag_NotAnimating = 0,
+  kAnimationTag_RecognizerResponse,
+  kAnimationTag_FirstValidIndex
+};
+
 }
 }
 

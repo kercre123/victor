@@ -454,7 +454,8 @@ void Process_setRecognizerResponse(const Anki::Vector::RobotInterface::SetRecogn
     return;
   }
 
-  micDataSystem->GetMicStreamingController().SetRecognizerResponse( msg.responseId );
+  const std::string responseId( msg.responseId, msg.responseId_length );
+  micDataSystem->GetMicStreamingController().SetRecognizerResponse( responseId );
 }
 
 void Process_setAlexaUXResponses(const Anki::Vector::RobotInterface::SetAlexaUXResponses& msg)

@@ -131,7 +131,7 @@ Result AnimEngine::Init()
 
   // set up audio stream state manager
   {
-    _context->GetShowAudioStreamStateManager()->SetAnimationStreamer(_animationStreamer.get());
+    _context->GetMicDataSystem()->GetMicStreamingController().SetAnimationStreamer(_animationStreamer.get());
   }
 
 

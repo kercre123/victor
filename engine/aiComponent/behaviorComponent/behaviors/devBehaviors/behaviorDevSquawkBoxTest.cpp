@@ -202,12 +202,7 @@ void BehaviorDevSquawkBoxTest::OnBehaviorActivated()
   _dVars = DynamicVariables();
   
   // Push trigger word detection
-  namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
-  const auto earConBegin = AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Wake_Word_On;
-  auto postAudioEvent = AECH::CreatePostAudioEvent( earConBegin, AudioMetaData::GameObjectType::Behavior, 0 );
-  SmartPushResponseToTriggerWord(AnimationTrigger::Count,
-                                 postAudioEvent,
-                                 StreamAndLightEffect::StreamingDisabled);
+  SmartPushResponseToTriggerWord("disabled");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

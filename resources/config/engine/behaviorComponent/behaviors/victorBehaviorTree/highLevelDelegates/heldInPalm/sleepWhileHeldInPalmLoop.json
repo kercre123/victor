@@ -12,11 +12,7 @@
   
   // Force the get-in animation for the trigger-word response behavior
   // to be a gentle, slow, wake-up animation, when this behavior is active.
-  "pushTriggerWordResponse": {
-    "postAudioEvent": "Play__Robot_Vic_Sfx__Wake_Word_On",
-    "streamAndLightEffect": "StreamingEnabled",
-    "getInTrigger": "VC_SleepingToListeningGetIn"
-  },
+  "recognizerResponseId"    : "sleeping",
   
   // Go to "sleep" in the user's palm after 5 minutes of held-in-palm
   // activity with no jolts or shocks experienced. The robot must have

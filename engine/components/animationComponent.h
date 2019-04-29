@@ -27,6 +27,7 @@
 
 #include <unordered_map>
 #include <unordered_set>
+#include <algorithm>
 
 namespace Anki {
 
@@ -278,8 +279,9 @@ private:
   // Returns Tag if animation is playing.
   // Return NotAnimating otherwise.
   Tag IsAnimPlaying(const std::string& animName);
-  
-  Tag GetNextTag() { return ++_tagCtr; }
+
+  // properly handle overflow
+  Tag GetNextTag() { return _tagCtr++; std::max(_tagCtr, (AnimationTag)kAnimationTag_FirstValidIndex); }
 
   template <typename MessageType, typename ImageType>
   Result DisplayFaceImageHelper(const ImageType& imgRGB565, u32 duration_ms, bool interruptRunning);
@@ -378,7 +380,6 @@ private:
   // Map of animation tags to info needed for handling callbacks when the animation completes
   std::unordered_multimap<Tag, AnimCallbackInfo> _callbackMap;
   // Special tag associated with the userIntentComponent's triggerWordGetInAnimation
-  AnimationTag _tagForTriggerWordGetInCallbacks;
   std::function<void(bool)> _triggerWordGetInCallbackFunction;
   
   AnimationTag _tagForAlexaListening;

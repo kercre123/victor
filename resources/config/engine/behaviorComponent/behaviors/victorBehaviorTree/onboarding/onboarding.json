@@ -60,4 +60,23 @@
   "appDisconnectTimeout_s" : 180.0, // Exit timeout from default phase if the App disconnects after starting onboarding
   "idleTimeout_s" : 300.0, // Exit timeout from idle state after phase completion
   "allowPowerOffFromIdle" : true // Should the power button work if we're idling outside any onboarding phase?
+
+
+  // have an anonymous trigger word detector behavior here on the stack ready to go
+  // default reaction for this behavior is disabled
+  // each phase behavior can set a reaction if they so choose
+
+  // OR
+
+  // each phase can have their own trigger word detector behavior and check for WantsToBeActivated() within it's class
+
+  // ... just depends on if each behavior requires specific configs????
+  //     ideally we never want to do this, as their priority on the stack will be different, meaning a higher behavior
+  //     could kick the trigger word off the stack which is one of the problems we were solving in the first place
+
+  // OR
+
+  // have the phases that actually need a trigger word detector be DispatcherStrictPriority (like they are now)
+  // and have the trigger word at the bottom of their stack
+  // ... fuck that was too easy, TeachMeetVictor just needs to be a dispatcher like the others
 }

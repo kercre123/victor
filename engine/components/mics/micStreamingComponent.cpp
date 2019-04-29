@@ -42,6 +42,8 @@
 //   - looks like BehaviorPromptUserForVoiceCommand does for some behaviors (when playListeningGetIn is true)
 // + need to be able to unregister for callbacks (use handles like I did for the sound reaction stuff)
 // + note: EmergencyModeTriggerWord did not push a trigger word response; probably doesn't want to respond?
+// + kill UserIntentComponent::_disableTriggerWordNames and all things trigger word
+// + move the hard coded recognizer response strings in behavior to configs
 
 
 #define LOG_CHANNEL "Microphones"

@@ -31,9 +31,16 @@ namespace Anki {
     struct SpeechRecognizerCallbackInfo;
   }
 
+  namespace AudioMetaData {
+    namespace GameEvent {
+      enum class GenericEvent : uint32_t;
+    }
+  }
+
 namespace Vector {
 
   namespace Anim {
+    class AnimationStreamer;
     class AnimContext;
   }
 
@@ -55,6 +62,10 @@ public:
   MicStreamingController& operator=( const MicStreamingController& )  = delete;
 
   void Initialize( const Anim::AnimContext* animContext );
+  void SetAnimationStreamer( Anim::AnimationStreamer* streamer )
+  {
+    _animationStreamer = streamer;
+  }
 
   void Update();
 
@@ -164,6 +175,7 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Helper Functions ...
 
+  void LoadSettings( const Json::Value& config );
   void LoadStreamingReactions( const Json::Value& config );
   RecognizerResponse LoadRecognizerResponse( const Json::Value& config, const std::string& id );
 
@@ -201,6 +213,8 @@ private:
   // this is called when the cloud let's us know that it's no longer streaming
   void OnCloudStreamResponseCallback( MicStreamResult reason );
 
+  bool IsRecognizerResponseEnabled() const;
+
   // debug state strings
   inline const char* WakeWordSourceToString( WakeWordSource source ) const;
 
@@ -208,13 +222,18 @@ private:
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // Member Variables ...
 
-  MicDataSystem*            _micDataSystem    = nullptr;
-  const Anim::AnimContext*  _animContext      = nullptr;
+  MicDataSystem*            _micDataSystem      = nullptr;
+  const Anim::AnimContext*  _animContext        = nullptr;
+  Anim::AnimationStreamer*  _animationStreamer  = nullptr;
 
-  MicStreamState            _state            = MicStreamState::Listening;
+  MicStreamState            _state              = MicStreamState::Listening;
   StreamData                _streamingData;
 
-  AudioEngine::Multiplexer::PostAudioEvent    _streamingEarcon;
+  AudioMetaData::GameEvent::GenericEvent _streamingEarcon;
+
+  // our trigger word comes in from a callbcak on a different thread, so we need to lock it down
+  // when handling things
+  mutable std::recursive_mutex  _recognizerResponseCallback;
 
   std::vector<OnTriggerWordDetectedCallback>  _triggerWordDetectedCallbacks;
   std::vector<OnStreamingStateChanged>        _streamingStateChangedCallbacks;

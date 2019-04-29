@@ -219,13 +219,7 @@ void BehaviorPromptUserForVoiceCommand::OnBehaviorActivated()
   // _dVars are reset on deactivation so that the effects of SetPrompt/SetReprompt persist
 
   // Configure streaming params with defaults in case they're not set due to behaviorStack state
-  namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
-  const auto postAudioEvent
-    = AECH::CreatePostAudioEvent( AudioMetaData::GameEvent::GenericEvent::Play__Robot_Vic_Sfx__Wake_Word_On,
-                                  AudioMetaData::GameObjectType::Behavior, 0 );
-  SmartPushResponseToTriggerWord(AnimationTrigger::VC_ListeningGetIn,
-                                 postAudioEvent,
-                                 StreamAndLightEffect::StreamingEnabled );
+  SmartPushResponseToTriggerWord( "default" );
 
   if(_iConfig.shouldTurnToFace){
     TransitionToTurnToFace();

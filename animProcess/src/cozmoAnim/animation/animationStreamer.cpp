@@ -13,10 +13,10 @@
  *
  **/
 
+#include "cozmoAnim/animation/animationStreamer.h"
 #include "coretech/common/shared/array2d.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
-#include "cozmoAnim/animation/animationStreamer.h"
 #include "coretech/vision/shared/compositeImage/compositeImageBuilder.h"
 
 #include "cannedAnimLib/cannedAnims/animationInterpolator.h"

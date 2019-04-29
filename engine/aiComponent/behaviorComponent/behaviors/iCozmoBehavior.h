@@ -496,18 +496,10 @@ protected:
   // de-activate an intent activated through the smart function above.
   void SmartDeactivateUserIntent();
 
-  // Disables engine's response to trigger words sent from the animation process
-  void SmartDisableEngineResponseToTriggerWord();
-  void SmartEnableEngineResponseToTriggerWord();
-
   // Change the response to the trigger word until the behavior is deactivated
-  void SmartPushResponseToTriggerWord(const AnimationTrigger& getInAnimTrigger,
-                                      const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent,
-                                      StreamAndLightEffect streamAndLightEffect,
-                                      int32_t minStreamingDuration_ms = -1);
   void SmartPushEmptyResponseToTriggerWord();
 
-  void SmartPushResponseToTriggerWord(const TriggerWordResponseData& newState);
+  void SmartPushResponseToTriggerWord(const std::string& responseId);
   void SmartPopResponseToTriggerWord();
 
   
@@ -645,8 +637,7 @@ private:
 
   bool _hasSetMotionProfile = false;
 
-  std::unique_ptr<StreamAndLightEffect> _alterStreamAfterWakeword;
-  std::unique_ptr<TriggerWordResponseData> _triggerStreamStateToPush;
+  std::string recognizerResponseId;
   bool _pushedCustomTriggerResponse = false;
   
   //A list of object IDs that have had a custom light pattern set

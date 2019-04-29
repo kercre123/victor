@@ -28,6 +28,8 @@
 #include "engine/aiComponent/timerUtility.h"
 #include "engine/audio/engineRobotAudioClient.h"
 #include "engine/components/battery/batteryComponent.h"
+#include "engine/components/mics/micComponent.h"
+#include "engine/components/mics/micStreamingComponent.h"
 #include "engine/components/sdkComponent.h"
 #include "engine/cozmoContext.h"
 #include "engine/faceWorld.h"
@@ -159,14 +161,6 @@ void BehaviorSleepCycle::CreateCustomWakeReasonConditions()
     },
     GetDebugLabel() ) );
 
-  _iConfig.wakeConditions.emplace( WakeReason::VoiceCommand,
-                                   new ConditionLambda( [this](BehaviorExternalInterface& bei) {
-      const bool isIntentPending = GetBehaviorComp<UserIntentComponent>().IsAnyUserIntentPending();
-      const bool isListening = ( _dVars.reactionState == SleepReactionType::TriggerWord );
-      return isIntentPending && !isListening;
-    },
-    GetDebugLabel() ) );
-
   _iConfig.wakeConditions.emplace( WakeReason::Sound, new ConditionLambda( [this](BehaviorExternalInterface& bei) {
       const bool isDoneReacting = (_dVars.reactionState == SleepReactionType::Sound && !IsControlDelegated());
       return isDoneReacting;
@@ -256,7 +250,6 @@ void BehaviorSleepCycle::GetAllDelegates(std::set<IBehavior*>& delegates) const
   delegates.insert(_iConfig.personCheckBehavior.get());
   delegates.insert(_iConfig.findChargerBehavior.get());
   delegates.insert(_iConfig.sleepingSoundReactionBehavior.get());
-  delegates.insert(_iConfig.sleepingWakeWordBehavior.get());
   delegates.insert(_iConfig.wiggleBackOntoChargerBehavior.get());
   delegates.insert(_iConfig.emergencyModeAnimBehavior.get());
 }
@@ -296,7 +289,6 @@ void BehaviorSleepCycle::InitBehavior()
   _iConfig.goToSleepBehavior             = BC.FindBehaviorByID( BEHAVIOR_ID( GoToSleep ) );
   _iConfig.wakeUpBehavior                = BC.FindBehaviorByID( BEHAVIOR_ID( SleepingWakeUp ) );
   _iConfig.sleepingSoundReactionBehavior = BC.FindBehaviorByID( BEHAVIOR_ID( ReactToSoundAsleep ) );
-  _iConfig.sleepingWakeWordBehavior      = BC.FindBehaviorByID( BEHAVIOR_ID( SleepingTriggerWord ) );
   _iConfig.wiggleBackOntoChargerBehavior = BC.FindBehaviorByID( BEHAVIOR_ID( WiggleBackOntoChargerFromPlatform ) );
   _iConfig.emergencyModeAnimBehavior     = BC.FindBehaviorByID( BEHAVIOR_ID( EmergencyModeAnimDispatcher ) );
   _iConfig.personCheckBehavior           = BC.FindBehaviorByID( BEHAVIOR_ID( SleepingPersonCheck ) );
@@ -387,7 +379,11 @@ void BehaviorSleepCycle::OnBehaviorDeactivated()
       const auto& alexaComp = GetAIComp<AlexaComponent>();
       const bool alexaIsIdle = alexaComp.IsIdle();
 
-      if( !alexaIsIdle ) {
+      // if wakeword behavior is taking control, don't play a getout (it's already handled)
+      const MicStreamingComponent& micStreamingComponent = GetBEI().GetMicComponent().GetMicStreamingComponent();
+      const bool isStreaming = micStreamingComponent.HasStreamingProcessBegun();
+
+      if( !alexaIsIdle || isStreaming ) {
         break;
       }
 
@@ -498,14 +494,6 @@ void BehaviorSleepCycle::BehaviorUpdate()
   }
   else {
     // some sleeping state (or go to charger / person check) is active
-
-    // first check wake word
-    if( _iConfig.sleepingWakeWordBehavior->WantsToBeActivated() ) {
-      CancelDelegates(false);
-      SetReactionState(SleepReactionType::TriggerWord);
-      DelegateIfInControl(_iConfig.sleepingWakeWordBehavior.get());
-      return;
-    }
 
     // check always-on wake conditions
     for( const auto& reason : _iConfig.alwaysWakeReasons ) {
@@ -809,6 +797,7 @@ void BehaviorSleepCycle::WakeUp(const WakeReason& reason, bool playWakeUp)
 
   // if we went to sleep due to a voice intent, clear that now
   SmartDeactivateUserIntent();
+  SmartPopResponseToTriggerWord();
 
   // clear charger contacts (may be on or off now)
   _dVars.wasOnChargerContacts = false;
@@ -973,6 +962,9 @@ void BehaviorSleepCycle::TransitionToLightSleep()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorSleepCycle::SleepIfInControl(bool playGetIn)
 {
+  // we're sleeping now, so we want to respond to the trigger word using our sleepy animations
+  SmartPushResponseToTriggerWord("sleeping");
+
   if( !IsControlDelegated() ) {
     // if we get here but are in a state like GoingToCharger then something broke and we are about to
     // fall asleep in an invalid state

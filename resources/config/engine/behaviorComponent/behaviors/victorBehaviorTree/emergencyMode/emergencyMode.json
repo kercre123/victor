@@ -50,11 +50,7 @@
  
   // Do not stream after hearing the wakeword, since we ignore voice commands while low battery anyway, but
   // fake streaming so the behavior will run
-  "pushTriggerWordResponse": {
-    "postAudioEvent": "Play__Robot_Vic_Sfx__Wake_Word_On",
-    "streamAndLightEffect": "StreamingDisabledButWithLight",
-    "getInTrigger": "VC_ListeningGetIn"
-  },
+  "recognizerResponseId"    : "simulated",
   
   "behaviors" : [
     "EmergencyModeAnimDispatcher",

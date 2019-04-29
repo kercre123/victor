@@ -58,7 +58,7 @@ CONSOLE_VAR(f32, kEyeDartFocusValue_pix, "Animation", 1.0f);
 AnimationComponent::AnimationComponent()
 : IDependencyManagedComponent(this, RobotComponentID::Animation)
 , _isInitialized(false)
-, _tagCtr(kInvalidAnimationTag)
+, _tagCtr(kAnimationTag_FirstValidIndex)
 , _isDolingAnims(false)
 , _nextAnimToDole("")
 , _currPlayingAnim("")
@@ -66,7 +66,6 @@ AnimationComponent::AnimationComponent()
 , _currAnimName("")
 , _currAnimTag(0)
 , _oledImageBuilder(new Vision::RGB565ImageBuilder)
-, _tagForTriggerWordGetInCallbacks(GetNextTag())
 , _tagForAlexaListening(GetNextTag())
 , _tagForAlexaThinking(GetNextTag())
 , _tagForAlexaSpeaking(GetNextTag())
@@ -863,7 +862,7 @@ Result AnimationComponent::SetFaceSaturation(float level)
 AnimationTag AnimationComponent::SetTriggerWordGetInCallback(std::function<void(bool)> callbackFunction)
 {
   _triggerWordGetInCallbackFunction = callbackFunction;
-  return _tagForTriggerWordGetInCallbacks;
+  return kAnimationTag_RecognizerResponse;
 }
   
 std::array<AnimationTag,4> AnimationComponent::SetAlexaUXResponseCallback(std::function<void(unsigned int, bool)> callback)
@@ -989,7 +988,7 @@ void AnimationComponent::HandleAnimStarted(const AnkiEvent<RobotInterface::Robot
   // let's not complain about it since it's expected
   // note: we could have a "started" callback for this similar to _triggerWordGetInCallbackFunction
   //       this way UserIntentComponent knows exactly when the trigger word anim starts instead of just assuming
-  const bool isTriggerWordGetIn = (payload.tag == _tagForTriggerWordGetInCallbacks);
+  const bool isTriggerWordGetIn = (payload.tag == kAnimationTag_RecognizerResponse);
   // same thing for alexa
   const bool isAlexa = TagIsAlexa( payload.tag );
 
@@ -1004,8 +1003,8 @@ void AnimationComponent::HandleAnimStarted(const AnkiEvent<RobotInterface::Robot
   _isAnimating = true;
   _currAnimName = payload.animName;
   _currAnimTag = payload.tag;
-  
-  if( payload.tag == _tagForTriggerWordGetInCallbacks ){
+
+  if( payload.tag == kAnimationTag_RecognizerResponse ){
     const bool playing = true;
     _triggerWordGetInCallbackFunction(playing);
   } else if( TagIsAlexa(payload.tag) ) {
@@ -1035,7 +1034,7 @@ void AnimationComponent::HandleAnimEnded(const AnkiEvent<RobotInterface::RobotTo
   }
 
   // Special callback for the trigger word response that persists
-  if(payload.tag == _tagForTriggerWordGetInCallbacks){
+  if(payload.tag == kAnimationTag_RecognizerResponse){
     // this wont be in our _callbackMap, so for debug's sake let's print this out
     // LOG_INFO("AnimEnded.Tag", "name=%s, tag=%d", payload.animName.c_str(), payload.tag);
     atLeastOneCallback = true;

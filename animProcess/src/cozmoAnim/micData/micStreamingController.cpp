@@ -11,12 +11,18 @@
 // #include "cozmoAnim/micData/micStreamingController.h"
 #include "micStreamingController.h"
 #include "cozmoAnim/animContext.h"
+#include "cozmoAnim/animProcessMessages.h"
+#include "cozmoAnim/animation/animationStreamer.h"
+#include "cozmoAnim/audio/cozmoAudioController.h"
 #include "cozmoAnim/backpackLights/animBackpackLightComponent.h"
 #include "cozmoAnim/micData/micDataProcessor.h"
 #include "cozmoAnim/micData/micDataSystem.h"
-#include "cozmoAnim/animProcessMessages.h"
+#include "cozmoAnim/robotDataLoader.h"
 #include "cozmoAnim/showAudioStreamStateManager.h"
 
+#include "audioEngine/audioCallback.h"
+#include "audioEngine/audioTypeTranslator.h"
+#include "audioEngine/multiplexer/audioCladMessageHelper.h"
 #include "audioUtil/speechRecognizer.h"
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
@@ -30,6 +36,8 @@
 // + DESTROY ShowAudioStreamStateManager and implement it here (but better)
 // + make trigger word detection API private and set a callback
 // + change all required INFO's back to DEBUG's
+// + HANDLE THREADING : have trigger callback only set needed info and handle next tick so minimal locking
+// + have this controller send what responseId it used to react so that way it's sync'd with the component
 
 
 #define LOG_CHANNEL "Microphones"
@@ -39,6 +47,9 @@ namespace {
   const char*         kKeyResponsesField                = "recognizer_responses";
   const char*         kKeyResponseType                  = "response_type";
   const char*         kKeyResponsesAnimation            = "response_animation";
+
+  const char*         kKeySettingsField                 = "mic_controller_settings";
+  const char*         kKeyEarcon                        = "earcon_begin";
 }
 
 namespace Anki {
@@ -67,6 +78,7 @@ void MicStreamingController::Initialize( const Anim::AnimContext* animContext )
   DEV_ASSERT( nullptr != _animContext, "MicStreamingController.Initialize" );
   DEV_ASSERT( nullptr != _animContext->GetBackpackLightComponent(), "MicStreamingController.Initialize" );
   DEV_ASSERT( nullptr != _animContext->GetShowAudioStreamStateManager(), "MicStreamingController.Initialize" );
+  DEV_ASSERT( nullptr != _animContext->GetDataLoader(), "MicStreamingController.Initialize" );
 
   // these should all exist by now ...
   DEV_ASSERT( nullptr != _micDataSystem, "MicStreamingController.Initialize" );
@@ -80,7 +92,11 @@ void MicStreamingController::Initialize( const Anim::AnimContext* animContext )
     const Data::DataPlatform* platform = animContext->GetDataPlatform();
     if ( platform->readAsJson( Data::Scope::Resources, kConfigFilename, streamingConfig ) )
     {
-      LoadStreamingReactions( streamingConfig );
+      const Json::Value& settingsConfig = streamingConfig[kKeySettingsField];
+      LoadSettings( settingsConfig );
+
+      const Json::Value& allResponsesConfig = streamingConfig[kKeyResponsesField];
+      LoadStreamingReactions( allResponsesConfig );
     }
     else
     {
@@ -92,10 +108,25 @@ void MicStreamingController::Initialize( const Anim::AnimContext* animContext )
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void MicStreamingController::LoadSettings( const Json::Value& config )
+{
+  using namespace AudioMetaData::GameEvent;
+  using namespace AudioEngine::Multiplexer::CladMessageHelper;
+
+  ASSERT_NAMED_EVENT( config.isMember( kKeyEarcon ), "MicStreamingController.LoadSettings",
+                      "Missing field %s in config", kKeyEarcon );
+
+  const std::string earconString = JsonTools::ParseString( config, kKeyEarcon, "MicStreamingController.LoadSettings" );
+  _streamingEarcon = GenericEventFromString( earconString );
+  ASSERT_NAMED_EVENT( ( _streamingEarcon != GenericEvent::Invalid ), "MicStreamingController.LoadSettings",
+                      "Value supplied in field %s is not a valid audio event",
+                      kKeyEarcon );
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MicStreamingController::LoadStreamingReactions( const Json::Value& config )
 {
-  const Json::Value& allResponsesConfig = config[kKeyResponsesField];
-  for( Json::Value::const_iterator it = allResponsesConfig.begin() ; it != allResponsesConfig.end() ; it++ )
+  for( Json::Value::const_iterator it = config.begin() ; it != config.end() ; it++ )
   {
     const std::string id = it.key().asString();
     RecognizerResponse recognizerResponse = LoadRecognizerResponse( *it, id );
@@ -121,9 +152,18 @@ MicStreamingController::RecognizerResponse MicStreamingController::LoadRecognize
   if ( RecognizerResponseType::ResponseDisabled != response.type )
   {
     JsonTools::GetValueOptional( config, kKeyResponsesAnimation, response.animation );
+
+    // if they supplied an animation, verify that it actually exists
+    if ( !response.animation.empty() )
+    {
+      ASSERT_NAMED_EVENT( nullptr != _animContext->GetDataLoader()->GetCannedAnimation( response.animation ),
+                          "MicStreamingController.LoadRecognizerResponse",
+                          "Response %s supplied an invalide animation (%s)",
+                          id.c_str(), response.animation.c_str() );
+    }
   }
 
-  LOG_DEBUG( "MicStreamingController.LoadRecognizerResponse",
+  LOG_INFO( "MicStreamingController.LoadRecognizerResponse",
              "Loaded RecognizerResponse %s, with type [%s] and animation [%s]",
              id.c_str(),
              RecognizerResponseTypeToString( response.type ),
@@ -135,9 +175,13 @@ MicStreamingController::RecognizerResponse MicStreamingController::LoadRecognize
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MicStreamingController::Update()
 {
-  // we're either actively streaming or simulating a stream
-  if ( IsInStreamingState() )
+  if ( MicStreamState::Listening == _state )
   {
+    // check to see if we've gotten a trigger word callaback request
+  }
+  else if ( IsInStreamingState() )
+  {
+    // we're either actively streaming or simulating a stream
     // keep streaming to the cloud as long as we can
     if ( CanStreamToCloud() )
     {
@@ -194,32 +238,25 @@ void MicStreamingController::Update()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool MicStreamingController::CanStartOpenMicStream() const
 {
-  const ShowAudioStreamStateManager* streamAnimManager = _animContext->GetShowAudioStreamStateManager();
-
   // DO NOT STREAM IF ...
   // + we're already streaming
   // + we don't have a "stream open" response (this is because everything is done from the earcon callback)
-  return ( !HasStreamingBegun() && streamAnimManager->HasValidTriggerResponse() );
+  return ( !HasStreamingBegun() && IsRecognizerResponseEnabled() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool MicStreamingController::CanStartWakeWordStream() const
 {
-  const ShowAudioStreamStateManager* streamAnimManager = _animContext->GetShowAudioStreamStateManager();
-
-  // todo: jmeh - merge the concept of HasValidTriggerResponse() && ShouldStreamAfterTriggerWordResponse()
-  //              within ShowAudioStreamStateManager
-
   // DO NOT STREAM IF ...
   // + we're already streaming
   // + we've been explicitely told not to stream after hearing the trigger word
-  return ( !HasStreamingBegun() && streamAnimManager->ShouldStreamAfterTriggerWordResponse() );
+  return ( !HasStreamingBegun() && IsRecognizerResponseEnabled() );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool MicStreamingController::StartWakeWordStream( WakeWordSource source, const AudioUtil::SpeechRecognizerCallbackInfo* info )
 {
-  LOG_DEBUG( "MicStreamingController.StartWakeWordStream",
+  LOG_INFO( "MicStreamingController.StartWakeWordStream",
              "Received request to start a wakeword stream from source %s",
              WakeWordSourceToString( source ) );
 
@@ -264,6 +301,20 @@ bool MicStreamingController::StartWakeWordStream( WakeWordSource source, const A
     StartStreamInternal( args );
 
     return true;
+  }
+  else
+  {
+    if ( HasStreamingBegun() )
+    {
+      LOG_INFO( "MicStreamingController.StartWakeWordStream",
+                "Couldn't start wakeword stream, stream already in progress" );
+    }
+    else
+    {
+      LOG_INFO( "MicStreamingController.StartWakeWordStream",
+                "Couldn't start wakeword stream, recognizer response is set to %s",
+                RecognizerResponseTypeToString( _recognizerResponse.type ) );
+    }
   }
 
   return false;
@@ -403,31 +454,7 @@ void MicStreamingController::TransitionToState( MicStreamState nextState )
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void MicStreamingController::OnStreamingTransitionBegin()
 {
-  // we're going to attempt the stream (doesn't mean it will succeed)
-  // something can go wrong in ShowAudioStreamStateManager and we can still fail (we'll get a callback with success/fail)
-
-  ShowAudioStreamStateManager* streamAnimManager = _animContext->GetShowAudioStreamStateManager();
-
-  // wrap the streaming callback in our own so we know when streaming is about to begin
-  // this callback is fired as soon as the "earcon" is finished
-  // this is so that we do not include the earcon audio in the stream
-  auto streamingCallback = [=]( bool success )
-  {
-    if ( success )
-    {
-      // all is good, let's kick off the streaming job
-      TransitionToState( MicStreamState::Streaming );
-    }
-    else
-    {
-      // something went wrong, notify our callbacks that we're bailing
-      // note: this is legacy and I don't like it
-      NotifyTriggerWordDetectedCallbacks( false );
-
-      // if we're not going to progress into streaming, then we're done with this stream job
-      StopCurrentMicStreaming( MicStreamResult::Error );
-    }
-  };
+  using namespace AudioEngine;
 
   LOG_INFO( "MicStreamingController.OnStreamingTransitionBegin", "Starting ww transition to streaming (%s simulated)",
             _streamingData.args.isSimulated ? "is" : "not" );
@@ -435,16 +462,35 @@ void MicStreamingController::OnStreamingTransitionBegin()
   // tell everybody we're about to start streaming
   NotifyTriggerWordDetectedCallbacks( true );
 
-  // start our transition, if we have one, else we jump right into streaming
-  // note: streaming is kicked off from the callback
-  if ( _streamingData.args.shouldPlayTransitionAnim )
+  // to begin our streaming, we first need to play our pre-set "get in" animation and sound
+  // do all of that now, and once that transition is finished, we will kick off the actual physical stream
+  // via the callback above
+
+  // start our get-in animation if we have one
+  if ( !_recognizerResponse.animation.empty() )
   {
-    streamAnimManager->SetPendingTriggerResponseWithGetIn( streamingCallback );
+    if ( nullptr != _animationStreamer )
+    {
+      _animationStreamer->SetStreamingAnimation( _recognizerResponse.animation, kAnimationTag_RecognizerResponse );
+    }
   }
-  else
+
+  // now play our earcon which begins the entire chain of events that we call streaming
+  AudioCallbackContext* audioCallback = new AudioCallbackContext();
+  audioCallback->SetCallbackFlags( AudioCallbackFlag::Complete );
+  audioCallback->SetExecuteAsync( false ); // Execute callbacks synchronously (on main thread)
+  audioCallback->SetEventCallbackFunc( [this]( const AudioCallbackContext*, const AudioCallbackInfo& )
   {
-    streamAnimManager->SetPendingTriggerResponseWithoutGetIn( streamingCallback );
-  }
+    // this callback is fired as soon as the "earcon" is finished
+    // this is so that we do not include the earcon audio in the stream
+    TransitionToState( MicStreamState::Streaming );
+  } );
+
+  Audio::CozmoAudioController* audioController = _animContext->GetAudioController();
+  ASSERT_NAMED( nullptr != audioController, "MicStreamingController.BeginRecognizerResponse" );
+  audioController->PostAudioEvent( AudioEngine::ToAudioEventId( _streamingEarcon ),
+                                   AudioEngine::ToAudioGameObject( AudioMetaData::GameObjectType::Behavior ),
+                                   audioCallback );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -524,12 +570,10 @@ void MicStreamingController::OnCloudStreamResponseCallback( MicStreamResult reas
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool MicStreamingController::ShouldSimulateWakeWordStreaming() const
 {
-  ShowAudioStreamStateManager* streamAnimManager = _animContext->GetShowAudioStreamStateManager();
-
-  const bool simulationRequested = streamAnimManager->ShouldSimulateStreamAfterTriggerWord();
   const bool isLowBattery = _micDataSystem->_batteryLow; // todo: jmeh - register for our own "battery callbacks"
+  const bool isSimulateResponseRequested = ( RecognizerResponseType::ResponseSimulated == _recognizerResponse.type );
 
-  return ( isLowBattery || simulationRequested );
+  return ( isLowBattery || isSimulateResponseRequested );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -564,6 +608,12 @@ void MicStreamingController::SetRecognizerResponse( const std::string& responseI
     LOG_INFO( "MicStreamingController.SetRecognizerResponse",
                "Disabling recognizer response since empty id was given" );
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool MicStreamingController::IsRecognizerResponseEnabled() const
+{
+  return ( RecognizerResponseType::ResponseDisabled != _recognizerResponse.type );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

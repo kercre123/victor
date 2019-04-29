@@ -7,11 +7,11 @@
 
   "behaviors" : [
     {
-      "behavior" : "MandatoryPhysicalReactions",
+      "behavior" : "OnboardingComeHereTriggerWordDetected",
       "cooldown_s" : 0.0
     },
     {
-      "behavior" : "OnboardingComeHereTriggerWordDetected",
+      "behavior" : "MandatoryPhysicalReactions",
       "cooldown_s" : 0.0
     },
     {
@@ -50,6 +50,8 @@
           "amountOfSeconds": 60.0
         }
       },
+
+      "recognizerResponseId"    : "onboarding_streaming",
 
       "earConAudioEventSuccess" : "Play__Robot_Vic_Sfx__Wake_Word_Success",
       "backpackLights"          : false,

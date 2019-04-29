@@ -37,6 +37,7 @@
 #include "engine/components/cubes/cubeConnectionCoordinator.h"
 #include "engine/components/cubes/cubeLights/cubeLightComponent.h"
 #include "engine/components/mics/micComponent.h"
+#include "engine/components/mics/micStreamingComponent.h"
 #include "engine/components/movementComponent.h"
 #include "engine/components/pathComponent.h"
 #include "engine/components/powerStateManager.h"
@@ -89,8 +90,7 @@ static const char* kPostBehaviorSuggestionKey        = "postBehaviorSuggestion";
 static const char* kAssociatedActiveFeature          = "associatedActiveFeature";
 static const char* kBehaviorStatToIncrement          = "behaviorStatToIncrement";
 static const char* kTracksToLockWhileActivatedKey    = "tracksToLockWhileActivated";
-static const char* kAlterStreamAfterWakewordStateKey = "alterStreamAfterWakeword";
-static const char* kPushTriggerWordResponseKey       = "pushTriggerWordResponse";
+static const char* kRecognizerResponseId             = "recognizerResponseId";
 
 static const std::string kIdleLockPrefix             = "Behavior_";
 
@@ -371,35 +371,10 @@ bool ICozmoBehavior::ReadFromJson(const Json::Value& config)
     for(const auto& track : config[kTracksToLockWhileActivatedKey]){
       _tracksToLockWhileActivated |= static_cast<u8>(AnimTrackFlagFromString(track.asString()));
     }
-  }            
-  
-  {
-    StreamAndLightEffect alterState;
-    const bool assertIfMissing = false; // key is optional
-    if( JsonTools::GetCladEnumFromJSON(config,
-                                       kAlterStreamAfterWakewordStateKey,
-                                       alterState,
-                                       GetDebugLabel(),
-                                       assertIfMissing) ) {
-      _alterStreamAfterWakeword = std::make_unique<StreamAndLightEffect>(std::move(alterState));
-    }
   }
 
-  {
-    TriggerWordResponseData triggerStateToPush;
-    if( config[kPushTriggerWordResponseKey].isObject() &&
-      triggerStateToPush.SetFromJSON( config[ kPushTriggerWordResponseKey ] ) ) {
-
-      if( ANKI_VERIFY(_alterStreamAfterWakeword == nullptr,
-                      "ICozmoBehavior.ReadFromJson.MultipleStreamStateArguments",
-                      "Behavior '%s' specified both '%s' and '%s', pick one!",
-                      GetDebugLabel().c_str(),
-                      kAlterStreamAfterWakewordStateKey,
-                      kPushTriggerWordResponseKey) ) {
-        _triggerStreamStateToPush = std::make_unique<TriggerWordResponseData>(std::move(triggerStateToPush));
-      }
-    }
-  }
+  // allow the config to set any custom reaction to the trigger word
+  JsonTools::GetValueOptional(config, kRecognizerResponseId, recognizerResponseId);
 
   return true;
 }
@@ -453,8 +428,7 @@ std::vector<const char*> ICozmoBehavior::GetAllJsonKeys() const
     kAssociatedActiveFeature,
     kBehaviorStatToIncrement,
     kTracksToLockWhileActivatedKey,
-    kAlterStreamAfterWakewordStateKey,
-    kPushTriggerWordResponseKey
+    kRecognizerResponseId
   };
   expectedKeys.insert( expectedKeys.end(), std::begin(baseKeys), std::end(baseKeys) );
 
@@ -851,12 +825,8 @@ void ICozmoBehavior::OnActivatedInternal()
     SmartLockTracks(_tracksToLockWhileActivated, kTracksLockedWhileActivatedID, GetDebugLabel());
   }
   
-  if( _alterStreamAfterWakeword != nullptr ) {
-    SmartAlterStreamStateForCurrentResponse(*_alterStreamAfterWakeword);
-  }
-
-  if( _triggerStreamStateToPush != nullptr ) {
-    SmartPushResponseToTriggerWord(*_triggerStreamStateToPush);
+  if( !recognizerResponseId.empty() ) {
+    SmartPushResponseToTriggerWord(recognizerResponseId);
   }
 
   // Handle Vision Mode Subscriptions
@@ -1004,11 +974,6 @@ void ICozmoBehavior::OnDeactivatedInternal()
   
   if (_pushedCustomTriggerResponse) {
     SmartPopResponseToTriggerWord();
-  }
-
-  auto& uic = GetBehaviorComp<UserIntentComponent>();
-  if(uic.IsTriggerWordDisabledByName(GetDebugLabel())){
-    SmartEnableEngineResponseToTriggerWord();
   }
 
   if( !_powerSaveRequest.empty() ) {
@@ -1649,55 +1614,28 @@ void ICozmoBehavior::DeactivateUserIntentHelper(UserIntentTag tag)
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SmartDisableEngineResponseToTriggerWord()
-{
-  auto& uic = GetBehaviorComp<UserIntentComponent>();
-  if(!uic.IsTriggerWordDisabledByName(GetDebugLabel())){
-    uic.DisableEngineResponseToTriggerWord(GetDebugLabel(), true);
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SmartEnableEngineResponseToTriggerWord()
-{
-  auto& uic = GetBehaviorComp<UserIntentComponent>();
-  if(uic.IsTriggerWordDisabledByName(GetDebugLabel())){
-    uic.DisableEngineResponseToTriggerWord(GetDebugLabel(), false);
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SmartPushResponseToTriggerWord(const AnimationTrigger& getInAnimTrigger, 
-                                                    const AudioEngine::Multiplexer::PostAudioEvent& postAudioEvent, 
-                                                    StreamAndLightEffect streamAndLightEffect,
-                                                    int32_t minStreamingDuration_ms)
-{
-  _pushedCustomTriggerResponse = true;
-  GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord(GetDebugLabel(),
-                                                                   getInAnimTrigger,
-                                                                   postAudioEvent,
-                                                                   streamAndLightEffect,
-                                                                   minStreamingDuration_ms);
-}
-  
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SmartPushEmptyResponseToTriggerWord()
 {
-  SmartPushResponseToTriggerWord(AnimationTrigger::Count, {}, StreamAndLightEffect::StreamingDisabled);
+  SmartPushResponseToTriggerWord("disabled");
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void ICozmoBehavior::SmartPushResponseToTriggerWord(const TriggerWordResponseData& newState)
+void ICozmoBehavior::SmartPushResponseToTriggerWord(const std::string& responseId)
 {
+  // if we already had a response pushed, remove it and add a new one since it could have changed.
+  SmartPopResponseToTriggerWord();
+
   _pushedCustomTriggerResponse = true;
-  GetBehaviorComp<UserIntentComponent>().PushResponseToTriggerWord(GetDebugLabel(), newState);
+  MicStreamingComponent& streamingComponent = GetBEI().GetMicComponent().GetMicStreamingComponent();
+  streamingComponent.PushRecognizerBehaviorResponse(GetUID(), responseId);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void ICozmoBehavior::SmartPopResponseToTriggerWord()
 {
   if(_pushedCustomTriggerResponse){
-    GetBehaviorComp<UserIntentComponent>().PopResponseToTriggerWord(GetDebugLabel());
+    MicStreamingComponent& streamingComponent = GetBEI().GetMicComponent().GetMicStreamingComponent();
+    streamingComponent.PopRecognizerBehaviorResponse(GetUID());
   }
   _pushedCustomTriggerResponse = false;
 }

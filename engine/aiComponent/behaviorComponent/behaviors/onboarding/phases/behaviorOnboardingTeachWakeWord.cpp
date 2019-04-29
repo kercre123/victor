@@ -210,13 +210,7 @@ void BehaviorOnboardingTeachWakeWord::TransitionToCelebrateSuccess()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorOnboardingTeachWakeWord::EnableWakeWordDetection()
 {
-  namespace AECH = AudioEngine::Multiplexer::CladMessageHelper;
-  auto earConBegin = AudioMetaData::GameEvent::GenericEventFromString( "Play__Robot_Vic_Sfx__Wake_Word_On" );
-  auto postAudioEvent = AECH::CreatePostAudioEvent( earConBegin, AudioMetaData::GameObjectType::Behavior, 0 );
-  SmartPushResponseToTriggerWord( _iConfig.listenGetInAnimTrigger,
-                                  postAudioEvent,
-                                  StreamAndLightEffect::StreamingDisabledButWithLight,
-                                  _iConfig.simulatedStreamingDuration_ms );
+  SmartPushResponseToTriggerWord( "onboarding_simulated" );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

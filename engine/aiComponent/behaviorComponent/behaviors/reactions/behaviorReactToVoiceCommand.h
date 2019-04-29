@@ -140,6 +140,9 @@ private:
   {
     InstanceConfig();
 
+    std::string recognizerResponseId;
+
+    // todo: jmeh - kill all of these :)
     // earcon is an audible cue to tell the user victor is listening
     AudioMetaData::GameEvent::GenericEvent earConSuccess;
     AudioMetaData::GameEvent::GenericEvent earConFail;

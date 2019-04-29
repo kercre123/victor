@@ -84,6 +84,7 @@ namespace {
   const char* kAnimListeningGetOut                 = "animListeningGetOut";
   const char* kNotifyOnWifiErrorsKey               = "notifyOnWifiErrors";
   const char* kNotifyOnCloudErrorsKey              = "notifyOnCloudErrors";
+  const char* kDefaultRecognizerResponse           = "recognizerResponseId";
 
   // If supplied, any received intent not whitelisted will be consumed and the "unknown intent" outcome execized
   const char* kIntentWhitelistKey                  = "whiteListedIntents";
@@ -117,6 +118,7 @@ namespace {
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 BehaviorReactToVoiceCommand::InstanceConfig::InstanceConfig() :
+  recognizerResponseId( "default" ),
   earConSuccess( AudioMetaData::GameEvent::GenericEvent::Invalid ),
   earConFail( AudioMetaData::GameEvent::GenericEvent::Invalid ),
   animListeningLoop( AnimationTrigger::VC_ListeningLoop ),
@@ -154,6 +156,8 @@ BehaviorReactToVoiceCommand::BehaviorReactToVoiceCommand( const Json::Value& con
   ICozmoBehavior( config ),
   triggerWordDetected( false )
 {
+  JsonTools::GetValueOptional( config, kDefaultRecognizerResponse, _iVars.recognizerResponseId );
+
   // do we play ear-con sounds to notify the user when Victor is listening
   {
     std::string earConString;
@@ -343,7 +347,7 @@ void BehaviorReactToVoiceCommand::OnBehaviorEnteredActivatableScope()
   // if nothing else is on the stack to override us, we will fall back to the "default" behavior since
   // we should always be in scope
   MicStreamingComponent& micStreamingComponent = GetBEI().GetMicComponent().GetMicStreamingComponent();
-  micStreamingComponent.PushRecognizerBehaviorResponse( GetUID(), "default" );
+  micStreamingComponent.PushRecognizerBehaviorResponse( GetUID(), _iVars.recognizerResponseId );
 }
 
 
