@@ -29,5 +29,9 @@
         "maxTicksForSuggestion": 1
       }
     ]
+  },
+  
+  "wantsToCancelSelfCondition": {
+    "conditionType": "RobotPickedUp"
   }
 }
