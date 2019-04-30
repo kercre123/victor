@@ -1280,6 +1280,11 @@ message SetCameraSettingsResponse {
   string  status_message = 2;
 }
 
+// Event for percieved audio source
+message MicrophoneDirectionSource {
+  uint32 direction = 1;
+}
+
 // Event sent when camera exposure settings change
 message CameraSettingsUpdate {
   float   gain = 1;

@@ -210,6 +210,13 @@ void SDKComponent::HandleMessage(const Vision::RobotRenamedEnrolledFace& msg)
 
 void SDKComponent::HandleMicrophoneDirectionEvent(int direction) {
   LOG_ERROR("BRUCE!","In SDKComponent, direction %u", direction);
+
+  //relay on to Gateway
+  auto* gi = _robot->GetGatewayInterface();
+  auto* directionMsg = new external_interface::MicrophoneDirectionSource();
+  directionMsg->set_direction(direction);
+
+  gi->Broadcast(ExternalMessageRouter::Wrap(directionMsg));
 }
 
 void SDKComponent::HandleStreamStatusEvent(SDKAudioStreamingState streamStatusId, int audioFramesReceived, int audioFramesPlayed) {

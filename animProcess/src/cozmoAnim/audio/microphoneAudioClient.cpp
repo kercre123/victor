@@ -17,6 +17,7 @@
 
 #include "audioEngine/audioTypeTranslator.h"
 #include "clad/robotInterface/messageRobotToEngine.h"
+#include "cozmoAnim/animProcessMessages.h"
 #include "cozmoAnim/audio/cozmoAudioController.h"
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
@@ -64,7 +65,7 @@ void MicrophoneAudioClient::ProcessMessage( const RobotInterface::MicDirection& 
   LOG_ERROR("BRUCE", "In microphoneAudioClient");
   MicrophoneDirectionEvent evt;
   evt.direction = msg.direction;
-  auto result = AnimProcessMessages::SendAnimToEngine(std::move(evt));
+  AnimProcessMessages::SendAnimToEngine(std::move(evt));
 
 }
 

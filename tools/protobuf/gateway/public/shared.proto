@@ -72,6 +72,7 @@ message Event {
     RobotRenamedEnrolledFace         robot_renamed_enrolled_face         = 22;
     CameraSettingsUpdate             camera_settings_update              = 23;
     UnexpectedMovement               unexpected_movement                 = 24;
+    MicrophoneDirectionSource        microphone_direction_source         = 25;
   }
 }
 
