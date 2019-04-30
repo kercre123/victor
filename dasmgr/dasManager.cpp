@@ -919,6 +919,9 @@ Result DASManager::Run(const bool & shutdown)
 
   RollLogFile();
 
+  // Cancel upload in progress (if any)
+  DAS::PostToServerShutdown();
+
   //
   // If uploads are allowed, move transient logs to persistent storage
   // so they can be sent after service restarts.

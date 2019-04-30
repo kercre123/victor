@@ -676,10 +676,17 @@ void getDASGlobalsAndDataString(const std::map<std::string,std::string>* globals
 }
 
 #if defined(VICOS)
+
 bool PostToServer(const std::string & url, const std::string & body, std::string & response)
 {
   return dasPostToServer(url, body, response);
 }
+
+void PostToServerShutdown()
+{
+  return dasPostToServerShutdown();
+}
+
 #endif
 
 #ifdef __cplusplus

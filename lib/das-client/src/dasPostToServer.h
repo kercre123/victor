@@ -23,6 +23,8 @@ extern "C" {
 
 bool dasPostToServer(const std::string& url, const std::string& postBody, std::string& out_response);
 
+void dasPostToServerShutdown();
+
 #ifdef __cplusplus
 }
 #endif

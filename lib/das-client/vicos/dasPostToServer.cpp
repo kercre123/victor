@@ -23,13 +23,13 @@
 #define ENABLE_LOGD 0
 
 #if ENABLE_LOGE
-# define LOGE(fmt, ...) fprintf(stderr, fmt "\n", ##__VA_ARGS__)
+# define LOGE(fmt, ...) { fprintf(stderr, fmt "\n", ##__VA_ARGS__); fflush(stderr); }
 #else
 # define LOGE(fmt, ...) {}
 #endif
 
 #if ENABLE_LOGD
-# define LOGD(fmt, ...) fprintf(stdout, fmt "\n", ##__VA_ARGS__)
+# define LOGD(fmt, ...) { fprintf(stdout, fmt "\n", ##__VA_ARGS__); fflush(stdout); }
 #else
 # define LOGD(fmt, ...) {}
 #endif
@@ -64,6 +64,9 @@ std::string base64_encode(const unsigned char * in, unsigned long inlen)
   return out;
 }
 
+// Asynchronous shutdown request
+std::atomic_bool gPostToServerShutdown(false);
+
 } // end anonymous namespace
 
 #ifdef __cplusplus
@@ -74,6 +77,17 @@ size_t curl_write_function(char *ptr, size_t size, size_t nmemb, std::string *us
 {
   userdata->append(ptr, size*nmemb);
   return size*nmemb;
+}
+
+int curl_xfer_fn(void *, curl_off_t dltotal, curl_off_t dlnow, curl_off_t ultotal, curl_off_t ulnow)
+{
+  LOGD("dasPostToServer: %ld/%ld down %ld/%ld up", (long) dlnow, (long) dltotal, (long) ulnow, (long) ultotal);
+
+  if (gPostToServerShutdown) {
+    LOGE("dasPostToServer: cancel during upload");
+    return -1;
+  }
+  return 0;
 }
 
 bool dasPostToServer(const std::string& url, const std::string& postInfo, std::string& out_response)
@@ -134,6 +148,11 @@ bool dasPostToServer(const std::string& url, const std::string& postInfo, std::s
 
   LOGD("dasPostToServer: compressed %zu to %zu", postInfo.size(), totalOut);
 
+  if (gPostToServerShutdown) {
+    LOGD("dasPostToServer: cancel before upload");
+    return false;
+  }
+
   long site_response_code = 0;
 
   curl_global_init(CURL_GLOBAL_ALL);
@@ -183,6 +202,9 @@ bool dasPostToServer(const std::string& url, const std::string& postInfo, std::s
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &response_info);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, curl_write_function);
 
+    // Set up a callback to track progress
+    curl_easy_setopt(curl, CURLOPT_XFERINFOFUNCTION, curl_xfer_fn);
+
     CURLcode res = curl_easy_perform(curl);
     if (res != CURLE_OK) {
       const char * strerr = curl_easy_strerror(res);
@@ -204,6 +226,12 @@ bool dasPostToServer(const std::string& url, const std::string& postInfo, std::s
   }
 
   return false;
+}
+
+void dasPostToServerShutdown()
+{
+  LOGD("dasPostToServerShutdown");
+  gPostToServerShutdown = true;
 }
 
 #ifdef __cplusplus
