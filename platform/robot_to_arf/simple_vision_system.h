@@ -21,19 +21,22 @@ class SimpleVisionSystem {
 
   SimpleVisionSystem(ARF::BulletinBoard &b);
 
+  ~SimpleVisionSystem();
+
 private:
-  std::mutex mutex_;
-  std::shared_ptr<Anki::Vision::ImageBuffer> latest_image_buffer_;
-  std::thread vision_thread_;
+  void ProcessingThread();
+
+  std::atomic<bool> stop_processing_;
+  std::thread processing_thread_;
   std::unique_ptr<Anki::Vision::FaceTracker> face_tracker_;
   std::unique_ptr<Anki::Vision::MarkerDetector> marker_detector_;
   Anki::Vision::Camera camera_;
 
   ARF::TopicViewer<Anki::Vision::ImageBuffer> image_buffer_viewer_;
-  using ImageCacheTopicDataType =
-      ARF::TimeLimitedTemporalBuffer<std::shared_ptr<const Vision::ImageCache>,
-                                     RobotTimeStamp_t>;
-  ARF::TopicPoster<ImageCacheTopicDataType> image_cache_poster_;
+//  using ImageCacheTopicDataType =
+//      ARF::TimeLimitedTemporalBuffer<std::shared_ptr<const Vision::ImageCache>,
+//                                     RobotTimeStamp_t>;
+//  ARF::TopicPoster<ImageCacheTopicDataType> image_cache_poster_;
   using TrackedFacesTopicDataType = ARF::TimeLimitedTemporalBuffer<
       std::shared_ptr<const std::list<Vision::TrackedFace>>, RobotTimeStamp_t>;
   ARF::TopicPoster<TrackedFacesTopicDataType> tracked_faces_poster_;

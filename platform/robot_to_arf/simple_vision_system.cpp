@@ -41,6 +41,34 @@ SimpleVisionSystem::SimpleVisionSystem(ARF::BulletinBoard &b) {
       b.MakePoster<TrackedFacesTopicDataType>("tracked_faces");
   observed_markers_poster_ =
       b.MakePoster<ObservedMarkersTopicDataType>("observed_markers");
+
+  stop_processing_ = false;
+  processing_thread_ = std::thread(&SimpleVisionSystem::ProcessingThread, this);
+}
+
+void SimpleVisionSystem::ProcessingThread() {
+  while (!stop_processing_) {
+    std::shared_ptr<Anki::Vision::ImageBuffer> image_buffer;
+    if (!image_buffer_viewer_.Retrieve(&image_buffer)) {
+      usleep(50000);
+      continue;
+    }
+    std::shared_ptr<Vision::ImageCache> image_cache =
+        std::make_shared<Vision::ImageCache>();
+    image_cache->Reset(*image_buffer);
+
+    const Vision::Image gray_image = image_cache->GetGray();
+    std::shared_ptr<std::list<Vision::TrackedFace>> tracked_faces;
+    std::list<Anki::Vision::UpdatedFaceID> updated_ids_list;
+    Anki::Vision::DebugImageList<Anki::Vision::CompressedImage> debug_images;
+    Anki::Result face_tracker_->Update(gray_image, 1.f, tracked_faces,
+                                       updated_ids_list, debug_images);
+    if (result == 0) {
+        tracked_faces_poster_.InvokePost([](TrackedFacesTopicData& buffer){
+            
+        });
+    }
+  }
 }
 
 } // namespace Anki
