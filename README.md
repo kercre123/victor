@@ -67,6 +67,17 @@ git submodule update --init --recursive
 git submodule update --recursive
 ```
 
+### Git LFS
+
+We use a the git-lfs extension to handle large files in the source. To
+use it:
+
+    brew install git-lfs # initial config
+    cd <victor-dir>
+	git lfs install
+	git lfs pull
+ 
+
 ### Miscellaneous setup
 
 1. To speed up builds, [install `ccache`](/docs/ccache.md) on your system and the build system will automatically start using it.
