@@ -567,20 +567,20 @@
 				DEVELOPMENT_TEAM = 6N4JN4E7V7;
 				HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/../../../../victor-clad/tools/message-buffers/support/cpp/include/**",
-					"$(PROJECT_DIR)/../../../../EXTERNALS/libsodium/mac/include",
+					"/usr/local/include",
 					"$(PROJECT_DIR)/**",
 				);
 				"HEADER_SEARCH_PATHS[arch=*]" = (
 					"$(PROJECT_DIR)/../../../../victor-clad/tools/message-buffers/support/cpp/include/**",
-					"$(PROJECT_DIR)/../../../../EXTERNALS/libsodium/mac/include",
+					"/usr/local/include",
 					"$(PROJECT_DIR)",
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
-					"$(PROJECT_DIR)/../../../../EXTERNALS/libsodium/mac/lib",
+					"/usr/local/lib",
 				);
-				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../../../EXTERNALS/libsodium/mac/lib/libsodium.a";
+				OTHER_LDFLAGS = "/usr/local/lib/libsodium.a";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -593,15 +593,15 @@
 				DEVELOPMENT_TEAM = 6N4JN4E7V7;
 				HEADER_SEARCH_PATHS = (
 					"$(PROJECT_DIR)/../../../../victor-clad/tools/message-buffers/support/cpp/include/**",
-					"$(PROJECT_DIR)/../../../../EXTERNALS/libsodium/mac/include",
+					"/usr/local/include",
 					"$(PROJECT_DIR)",
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
-					"$(PROJECT_DIR)/../../../../EXTERNALS/libsodium/mac/lib",
+					"/usr/local/lib",
 				);
-				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../../../EXTERNALS/libsodium/mac/lib/libsodium.a";
+				OTHER_LDFLAGS = "/usr/local/lib/libsodium.a";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;
