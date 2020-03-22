@@ -236,6 +236,11 @@ Alternatively, use an authorized iPhone/Android test phone and the Vector Robot 
  
 1. If the operation times out, power cycle the robot and try again.
 
+### Fixing rsync
+
+If you get the error `rsync: --chown=:2901: unknown option` on a Mac
+run `brew install rsync` to get a version that supports this option.
+
 ### Updating `VICTOR_COMPAT_VERSION` for breaking changes
 
 If you are making breaking changes to the code here that require corresponding changes in the `vicos-oelinux.git` repository, then you will need to increment `VICTOR_COMPAT_VERSION` in both repositories.  This will ensure that other developers cannot accidentally try to deploy on old robots that don't have your change.  In addition, if someone is working on an outdated branch and they try to deploy onto a newer robot, they will fail and be prompted to rebase their branch.
