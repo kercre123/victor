@@ -39,6 +39,9 @@ set(WEBOTS_SIM_LIBS
 
 set(WEBOTS_LIB_TARGETS
   "${WEBOTS_LIBS}"
+)
+
+set(WEBOTS_SIM_LIB_TARGETS
   "${WEBOTS_SIM_LIBS}"
 )
 
@@ -52,7 +55,18 @@ foreach(LIB ${WEBOTS_LIB_TARGETS})
         add_library(${LIB} SHARED IMPORTED)
         set_target_properties(${LIB} PROPERTIES
             IMPORTED_LOCATION
-            "${WEBOTS_LIB_PATH}/lib${LIB}.dylib"
+            "${WEBOTS_LIB_PATH}/controller/lib${LIB}.dylib"
+            INTERFACE_INCLUDE_DIRECTORIES
+            "${WEBOTS_INCLUDE_PATHS}")
+    endif()
+endforeach()
+
+foreach(LIB ${WEBOTS_SIM_LIB_TARGETS})
+    if (NOT TARGET ${LIB})
+        add_library(${LIB} SHARED IMPORTED)
+        set_target_properties(${LIB} PROPERTIES
+            IMPORTED_LOCATION
+            "${WEBOTS_LIB_PATH}/webots/lib${LIB}.dylib"
             INTERFACE_INCLUDE_DIRECTORIES
             "${WEBOTS_INCLUDE_PATHS}")
     endif()

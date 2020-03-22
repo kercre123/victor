@@ -699,7 +699,7 @@ namespace Anki {
 
 
         DEV_ASSERT(cozmoBotNodeInfo.nodePtr != nullptr, "UiGameController.UpdateActualObjectPoses.NoCozmoBot");
-        DEV_ASSERT(cozmoBotNodeInfo.type == webots::Node::SUPERVISOR, "UiGameController.UpdateActualObjectPoses.CozmoBotNotSupervisor");
+        DEV_ASSERT(cozmoBotNodeInfo.type == webots::Node::ROBOT, "UiGameController.UpdateActualObjectPoses.CozmoBotNotSupervisor");
 
         PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses",
                          "Found robot with name %s", cozmoBotNodeInfo.typeName.c_str());

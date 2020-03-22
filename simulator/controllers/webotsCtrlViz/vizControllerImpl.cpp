@@ -179,7 +179,7 @@ void VizControllerImpl::Init()
 
   const auto* nd = nodeInfo.nodePtr;
   if (nd != nullptr) {
-    DEV_ASSERT(nodeInfo.type == webots::Node::SUPERVISOR, "VizControllerImpl.Init.CozmoBotNotASupervisor");
+    DEV_ASSERT(nodeInfo.type == webots::Node::ROBOT, "VizControllerImpl.Init.CozmoBotNotASupervisor");
     
     // Get the vizMode status
     bool vizMode = false;
