@@ -323,11 +323,14 @@ void BehaviorProceduralClock::AddKeyFramesForOffset(const int clockOffset_s, con
     Vision::SpriteBoxKeyFrame newKeyFrame = kKeyFrameMap.at(pair.first);
     newKeyFrame.triggerTime_ms = triggerTime_ms;
 
+     int digit = pair.second;
+     if (digit < 0) { digit = 0; };  // The timer is shorted than the initial diplay time
+     
     isLeadingZero &= (pair.second == 0);
     if(!isLeadingZero){
-      newKeyFrame.assetID = kDigitMap.at(pair.second);
+      newKeyFrame.assetID = kDigitMap.at(digit);
     }
-
+      
     _lifetimeParams.keyFrames.push_back(std::move(newKeyFrame));
   }
 
