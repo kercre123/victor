@@ -122,9 +122,9 @@ def show_minidump(minidump, options):
       cmd = ["scp", "-p", "root@"+ANKI_ROBOT_HOST+":"+remote_minidump,"."]
       subprocess.call(cmd)
 
-  minidump_stackwalk = os.path.join(TOPLEVEL, 'tools/crash-tools/linux/minidump_stackwalk')
+  minidump_stackwalk = os.path.join(TOPLEVEL, 'tools/crash-tools/osx/minidump_stackwalk')
   symbols = os.path.join(TOPLEVEL, '_build/vicos', options.configuration, 'symbols')
-  cmd = ['noah', minidump_stackwalk, minidump, symbols]
+  cmd = [minidump_stackwalk, minidump, symbols]
   output = exec(cmd)
   output = output.split('\n')
   # Process minidump

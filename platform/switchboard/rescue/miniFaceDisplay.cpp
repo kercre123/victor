@@ -25,11 +25,11 @@ namespace Anki {
 namespace Vector {
 
 namespace {
-  constexpr const char * kSupportURL = "support.anki.com";
+  constexpr const char * kSupportURL = "support.ddl.io";
   constexpr const char * kVectorWillRestart = "Vector will restart";
 
   const f32 kRobotNameScale = 0.6f;
-  const std::string kAppURL = "anki.com/v";
+  const std::string kAppURL = "ddl.io/v";
   const ColorRGBA kWhiteColor(0.9f, 0.9f, 0.9f, 1.f);
   const int kTextThickness = 1;
   const int kNormalFont = CV_FONT_NORMAL;

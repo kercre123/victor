@@ -24,7 +24,7 @@ namespace Anki {
 namespace Vector {
 
 namespace {
-  constexpr const char * kSupportURL = "support.anki.com";
+  constexpr const char * kSupportURL = "support.ddl.io";
   constexpr const char * kVectorWillRestart = "Vector will restart";
 
   // Map of fault codes that map to images that should be drawn instead of the number
