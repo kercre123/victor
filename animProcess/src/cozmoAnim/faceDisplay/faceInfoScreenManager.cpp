@@ -1282,7 +1282,7 @@ void FaceInfoScreenManager::DrawMain()
   const std::string ssid     = "SSID: " + osstate->GetSSID(true);
 
 #if ANKI_DEV_CHEATS
-  const std::string sha      = "SHAMALAN: "  + osstate->GetBuildSha();
+  const std::string sha      = "SHA: "  + osstate->GetBuildSha();
 #endif
 
   std::string ip             = osstate->GetIPAddress();
