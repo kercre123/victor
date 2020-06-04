@@ -135,12 +135,13 @@ if (NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
 endif()
 
 set(ANKI_EXTERNAL_DIR "${CMAKE_CURRENT_SOURCE_DIR}/EXTERNALS")
+set(ANKI_THIRD_PARTY_DIR "${CMAKE_CURRENT_SOURCE_DIR}/3rd")
 set(OKAO_VISION_DIR "${CMAKE_CURRENT_SOURCE_DIR}/okaoVision")
 
 set(ANKI_SRCLIST_DIR "${CMAKE_SOURCE_DIR}/generated/cmake")
 
-set(CLAD_BASE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/victor-clad/tools/message-buffers")
-set(CLAD_VICTOR_EMITTER_DIR "${CMAKE_CURRENT_SOURCE_DIR}/victor-clad/victorEmitters")
+set(CLAD_BASE_DIR "${CMAKE_SOURCE_DIR}/victor-clad/tools/message-buffers")
+set(CLAD_VICTOR_EMITTER_DIR "${CMAKE_SOURCE_DIR}/victor-clad/victorEmitters")
 add_subdirectory("victor-clad") # includes clad via message-buffers
 
 # Current DEFAULT (android or mac platforms)
@@ -199,10 +200,10 @@ target_include_directories(cozmo_engine PRIVATE
 if (VICOS)
   include(vicos-sdk-stl-config)
   include(gen-version)
+endif()
 
-  if (ANKI_TEST_SWITCHBOARD)
-    add_subdirectory("test/switchboard")
-  endif()
+if (VICOS)
+  add_subdirectory("auto-test")
 endif()
 
 add_subdirectory("resources")
@@ -233,6 +234,7 @@ include(sodium)
 include(aubio)
 include(sensory)
 include(signalessence)
+include(pryon_lite)
 
 write_license_html()
 check_licenses()

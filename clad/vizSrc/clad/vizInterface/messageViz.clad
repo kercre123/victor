@@ -23,7 +23,6 @@ message RobotStateMessage
 {
   RobotState     state,
   float_32       imuTemperature_degC,
-  uint_32        numProcAnimFaceKeyframes,
   uint_16        cliffThresholds[4],
   uint_16        videoFramePeriodMs,
   uint_16        imageProcPeriodMs,

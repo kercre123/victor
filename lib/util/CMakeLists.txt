@@ -20,7 +20,7 @@ endif()
 
 if (NOT TARGET clad)
   if (NOT CLAD_SOURCE_DIR)
-    set(CLAD_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../tools/message-buffers")
+    set(CLAD_SOURCE_DIR "${CMAKE_SOURCE_DIR}/victor-clad/tools/message-buffers")
   endif()
   add_subdirectory(${CLAD_SOURCE_DIR} "${CMAKE_BINARY_DIR}/message-buffers")
 endif()

@@ -16,8 +16,6 @@
 #include "clad/types/behaviorComponent/behaviorIDs.h"
 #include "clad/types/behaviorComponent/beiConditionTypes.h"
 #include "clad/types/behaviorComponent/weatherConditionTypes.h"
-#include "clad/types/compositeImageLayouts.h"
-#include "clad/types/compositeImageMaps.h"
 #include "clad/types/cubeAnimationTrigger.h"
 #include "clad/types/variableSnapshotIds.h"
 
@@ -48,7 +46,6 @@ class DataPlatform;
 }
 
 namespace Vision{
-class CompositeImage;
 class SpriteCache;
 class SpriteSequenceContainer;
 }
@@ -140,13 +137,6 @@ public:
   Vision::SpriteSequenceContainer* GetSpriteSequenceContainer() { return _spriteSequenceContainer.get();}
   Vision::SpriteCache* GetSpriteCache() const { assert(_spriteCache != nullptr); return _spriteCache.get();  }
 
-  // composite image assets loaded from externals
-  using CompImageMap      = std::unordered_map<Vision::CompositeImageMap, Vision::CompositeImage::LayerImageMap, Anki::Util::EnumHasher>;
-  using CompLayoutMap     = std::unordered_map<Vision::CompositeImageLayout, Vision::CompositeImage, Anki::Util::EnumHasher>;
-  
-  const CompImageMap*  GetCompImageMap()  const { assert(_compImageMap); return _compImageMap.get();}
-  const CompLayoutMap* GetCompLayoutMap() const { assert(_compLayoutMap); return _compLayoutMap.get();}
-
   // weather response map
   using WeatherResponseMap = std::unordered_map<std::string, WeatherConditionType>;
   using WeatherConditionTTSMap = std::unordered_map<WeatherConditionType, std::string>;
@@ -191,8 +181,6 @@ private:
   void LoadDasBlacklistedAnimations();
   
   void LoadSpritePaths();
-
-  void LoadCompositeImageMaps();
 
   void LoadWeatherResponseMaps();
   void LoadWeatherRemaps();
@@ -262,9 +250,6 @@ private:
   std::unique_ptr<Vision::SpritePathMap> _spritePaths;
   std::unique_ptr<Vision::SpriteCache>   _spriteCache;
   std::unique_ptr<Vision::SpriteSequenceContainer> _spriteSequenceContainer;
-
-  std::unique_ptr<CompImageMap>  _compImageMap;
-  std::unique_ptr<CompLayoutMap> _compLayoutMap;
 
   std::unique_ptr<WeatherResponseMap>      _weatherResponseMap;
   std::unique_ptr<WeatherConditionTTSMap>  _weatherConditionTTSMap;

@@ -99,7 +99,7 @@ void PowerStateManager::UpdateDependent(const RobotCompMap& dependentComps)
     return;
   }
 
- static bool wasForceCalmMode = false;
+  static bool wasForceCalmMode = false;
   if (kForceCalmMode != wasForceCalmMode) {
     _context->GetRobotManager()->GetMsgHandler()->SendMessage(
         RobotInterface::EngineToRobot(RobotInterface::CalmPowerMode(kForceCalmMode)));
@@ -437,13 +437,6 @@ void PowerStateManager::ExitPowerSave(const RobotCompMap& components)
   _inPowerSaveMode = false;
   _timePowerSaveToggled_s = currTime_s;
 }
-
-
-void PowerStateManager::NotifyOfRobotState(const RobotState& msg)
-{
-  _inSysconCalmMode = static_cast<bool>(msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE);
-}
-
 
 }
 }

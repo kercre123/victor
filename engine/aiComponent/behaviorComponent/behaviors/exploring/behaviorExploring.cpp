@@ -14,7 +14,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/exploring/behaviorExploring.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "engine/actions/animActions.h"
 #include "engine/actions/basicActions.h"

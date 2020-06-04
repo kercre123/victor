@@ -1,0 +1,47 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h2>N-Best Grammars</h2>
+If you require multiple (i.e., N-best) recognition results, the
+grammar must be structured in a specific way.
+
+<p>
+In order to minimize memory usage, the decoding algorithm employed during recognition only keeps track of the 'best' partial path at any state in the
+search graph. As a result, when two paths combine in the search graph, only the one with the best score at that state survives. When decoding is complete, only the surviving paths can be retrieved for inclusion in the N-best list. Because of this, the N-best recognition results are not guaranteed to contain close sounding candidate phrases as might be expected. Instead, the available results are a function of how the grammar is specified. In particular, any phrases that explicitly share common parts will be recombined in the search graph and thus only the best one will be available. In contrast, not sharing/recombining paths is expensive and will result in a much larger and slower search.
+</p>
+
+<h3>1-best Grammar:</h3>
+<p>Consider the following grammar
+<ul><pre>
+  size       = small | medium | large;
+  topping    = vegetarian | pepperoni | cheese;
+  pizzaorder = *sil%% ($size | $topping) [*sil%%] pizza *sil%%;
+</pre></ul>
+In this example few results will survive, in particular only the best ones
+that ends with <em>*sil</em> and <em>pizza</em>. </p>
+
+<h3>N-best Grammar:</h3>
+<p>In order to preserve more results, a more suitable N-best grammar specification would be:
+<ul><pre>
+  pizza      = [*sil%%] pizza *sil%%;
+  size       = small $pizza | medium $pizza | large $pizza;
+  topping    = vegetarian $pizza | pepperoni $pizza | cheese $pizza;
+  pizzaorder = *sil%% ($size | $topping);
+</pre></ul>
+When visualized as a graph, you will see that this grammar avoids any recombining of words, by duplicating the common word rather than sharing it (e.g., pizza).
+</p>
+
+<p>An alternative representation, involves defining compound words such as <em>small_pizza</em> with
+pronunciation <em>. s m >1 l . [. .pau .] . p i1 t . s & .</em></p>
+
+<!----------------------------------------------------------------------- -->
+</body>

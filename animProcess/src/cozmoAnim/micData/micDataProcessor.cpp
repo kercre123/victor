@@ -866,6 +866,15 @@ float MicDataProcessor::GetIncomingMicDataPercentUsed()
 
 void MicDataProcessor::SetActiveMicDataProcessingState(MicDataProcessor::ProcessingState state)
 {
+  // Set the correct flag for Signal Essence lib version
+#if SE_V009
+  // v009
+  static const FallbackFlag_t kEcho_Cancel_Flag = FBF_FORCE_ECHO_CANCEL_WITH_NR;
+#else
+  // v008
+  static const FallbackFlag_t kEcho_Cancel_Flag = FBF_FORCE_ECHO_CANCEL;
+#endif
+  
   if (state != _activeProcState) {
     if (ENABLE_MIC_PROCESSING_STATE_UPDATE_LOG) {
       LOG_INFO("MicDataProcessor.SetActiveMicDataProcessingState", "Current state '%s' new state '%s'",
@@ -880,9 +889,8 @@ void MicDataProcessor::SetActiveMicDataProcessingState(MicDataProcessor::Process
       case ProcessingState::SigEsBeamformingOff:
       case ProcessingState::SigEsBeamformingOn:
       {
-        // Setting policy for SE v008
         const bool shouldUseFallbackPolicy = (state == ProcessingState::SigEsBeamformingOff);
-        const FallbackFlag_t policySetting = shouldUseFallbackPolicy ? FBF_FORCE_ECHO_CANCEL : FBF_AUTO_SELECT;
+        const FallbackFlag_t policySetting = shouldUseFallbackPolicy ? kEcho_Cancel_Flag : FBF_AUTO_SELECT;
         SEDiagSetEnumAsInt(_policyFallbackFlag, policySetting);
         break;
       }

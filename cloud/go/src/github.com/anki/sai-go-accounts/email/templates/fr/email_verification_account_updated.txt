@@ -1,0 +1,19 @@
+{{ define "content" }}
+
+Compte mis à jour
+
+Un compte Anki associé à cette adresse e-mail a été mis à jour.
+
+Si vous pensez avoir reçu cet e-mail par erreur ou avez des questions au sujet de votre compte,
+contactez notre service Relation Client Anki https://anki.com/support/contact
+
+Merci, L'équipe Anki
+
+**********************************************
+
+Politique de confidentialité: https://anki.com/privacy
+
+Cet e-mail a été envoyé à {{ .ToEmail }} de la part d'Anki.
+55 2nd Street, San Francisco, CA 94105
+
+{{ end }}

@@ -226,7 +226,7 @@ namespace Anki {
           const ObjectInteractionCompleted info = msg.completionInfo.Get_objectInteractionCompleted();
           printf("Robot %s picking up object with ID: %d ",
                  ActionResultToString(msg.result),
-                 info.objectIDs[0]);
+                 info.objectID);
           printf("[Tag=%d]\n", msg.idTag);
         }
           break;
@@ -237,7 +237,7 @@ namespace Anki {
           const ObjectInteractionCompleted info = msg.completionInfo.Get_objectInteractionCompleted();
           printf("Robot %s placing object with ID: %d ",
                  ActionResultToString(msg.result),
-                 info.objectIDs[0]);
+                 info.objectID);
           printf("[Tag=%d]\n", msg.idTag);
         }
           break;
@@ -699,7 +699,7 @@ namespace Anki {
 
 
         DEV_ASSERT(cozmoBotNodeInfo.nodePtr != nullptr, "UiGameController.UpdateActualObjectPoses.NoCozmoBot");
-        DEV_ASSERT(cozmoBotNodeInfo.type == webots::Node::SUPERVISOR, "UiGameController.UpdateActualObjectPoses.CozmoBotNotSupervisor");
+        DEV_ASSERT(cozmoBotNodeInfo.type == webots::Node::ROBOT, "UiGameController.UpdateActualObjectPoses.CozmoBotNotSupervisor");
 
         PRINT_NAMED_INFO("UiGameController.UpdateActualObjectPoses",
                          "Found robot with name %s", cozmoBotNodeInfo.typeName.c_str());

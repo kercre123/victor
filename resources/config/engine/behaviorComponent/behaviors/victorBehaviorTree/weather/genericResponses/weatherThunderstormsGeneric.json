@@ -2,11 +2,10 @@
   "behaviorClass": "DisplayWeather",
   "behaviorID" : "WeatherThunderstormsGeneric",
 
-  "animationName" : "anim_weather_thunderstorm_01",
-  "imageLayouts" : [
-    "WeatherCondThunderstorms_01"
-  ],
-  "imageMaps" : [
-    "WeatherCondThunderstorms_01"
-  ]
+  // VIC-14450 Convert Weather to animation groups and refactor animations
+  // Hand(engineer) built placeholder animations made by adding SpriteBoxKeyFrames to the original
+  // animations are providing Weather functionality for now. This way the animation team can convert
+  // the existing animations (if desired) and they can be substituted when ready without an interruption
+  // to Weather's functionality in Master, at which time the placeholders can be deleted.
+  "animationName" : "anim_weather_thunderstorm_01_temp_remap"
 }

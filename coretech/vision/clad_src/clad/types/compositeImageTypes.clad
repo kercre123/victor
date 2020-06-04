@@ -5,160 +5,108 @@ namespace Anki {
 namespace Vision {
 
 // Layer names that allow composite image layers to be:
-//  1) Referenced/set in code or JSON
+//  1) Referenced/set in code or animations
 //  2) Composite image layers are rendered in the order of this enum
 enum uint_8 LayerName 
 {
-  // Utility layers
-  EmptyBoxLayer,
-
-  // Special layer names that lots of images can use
-  StaticBackground = 0,
-
-  // "Numbered" layers for arbitrary layouts
   Layer_1,
   Layer_2,
   Layer_3,
+  Layer_4,
+  Layer_5,
 
   // Layer which procedural keyframes will be rendered to
   Procedural_Eyes,
-  
-  Weather_Temperature,
-  Clock_Display,
 
-  // Blackjack Layers
-  Dealer_1,
-  Dealer_2,
-  Dealer_3,
-  Dealer_4,
-  Dealer_5,
-  Player_1,
-  Player_2,
-  Player_3,
-  Player_4,
-  Player_5,
-  PlayerCardOverlay,
-
-  Layer_4,
-  Layer_5,
   Layer_6,
   Layer_7,
-  Layer_8
+  Layer_8,
+  Layer_9,
+  Layer_10
 }
 
 // Names for SpriteBoxes
 enum uint_8 SpriteBoxName
 {
-  // Utility SpriteBoxes
-  EmptyBox,
-  StaticBackground,
-
-  // SpritBoxNames for procedural clock
-  TensLeftOfColon,
-  OnesLeftOfColon,
-  Colon,
-  TensRightOfColon,
-  OnesRightOfColon,
-
-  // Box for rendering animation keyframes into composite images
-  FaceKeyframe,
-
-  // Boxes for rendering weather temperature
-  TemperatureNegativeIndicator,
-  TemperatureDegreeIndicator,
-  TemperatureOnesDigit,
-  TemperatureTensDigit,
-  TemperatureHundredsDigit,
-
-  // Boxes for rendering weather conditions
-  WeatherBox_1,
-  WeatherBox_2,
-  WeatherBox_3,
-  WeatherBox_4,
-  WeatherBox_5,
-
-  // Boxes for rendering cards in Blackjack
-  DealerCardSlot_1,
-  DealerCardSlot_2,
-  DealerCardSlot_3,
-  DealerCardSlot_4,
-  DealerCardSlot_5,
-  PlayerCardSlot_1,
-  PlayerCardSlot_2,
-  PlayerCardSlot_3,
-  PlayerCardSlot_4,
-  PlayerCardSlot_5,
-  PlayerCardOverlay,
-
-  Count
-
+  // TODO(str): Convert SpriteBoxNames to ID's 
+  // These are temporary Placeholders to allow animations to use SpriteBoxKeyFrames.
+  // SpriteBoxNames should be converted to hashed-string ID's analagous to AssetID's
+  SpriteBox_1,
+  SpriteBox_2,
+  SpriteBox_3,
+  SpriteBox_4,
+  SpriteBox_5,
+  SpriteBox_6,
+  SpriteBox_7,
+  SpriteBox_8,
+  SpriteBox_9,
+  SpriteBox_10,
+  SpriteBox_11,
+  SpriteBox_12,
+  SpriteBox_13,
+  SpriteBox_14,
+  SpriteBox_15,
+  SpriteBox_16,
+  SpriteBox_17,
+  SpriteBox_18,
+  SpriteBox_19,
+  SpriteBox_20,
+  SpriteBox_21,
+  SpriteBox_22,
+  SpriteBox_23,
+  SpriteBox_24,
+  SpriteBox_25,
+  SpriteBox_26,
+  SpriteBox_27,
+  SpriteBox_28,
+  SpriteBox_29,
+  SpriteBox_30,
+  SpriteBox_31,
+  SpriteBox_32,
+  SpriteBox_33,
+  SpriteBox_34,
+  SpriteBox_35,
+  SpriteBox_36,
+  SpriteBox_37,
+  SpriteBox_38,
+  SpriteBox_39,
+  SpriteBox_40
 }
 
-// Define how the contents of this sprite box should be rendered
-// RGBA - load the image off disk as an RGBA image and render it as is
-// CustomHue - load the image off disk as a Grayscale image and render it in the specified color
 enum uint_8 SpriteRenderMethod{
   RGBA,
-  CustomHue
+  EyeColor
 }
 
-// Wrap render method and rgb color (represented as RGB565) for messaging
-structure SpriteRenderConfig{
-  uint_8 hue = 0,
-  uint_8 saturation = 0,
+// Define how a SpriteSequence should behave in a given SpriteBoxKeyFrame
+// loop - start the sequence over when it reaches the end
+// hold - stop and hold the last frame of the sequence when it reaches the end
+// clear - clear the SpriteBox and hold it empty when the sequence reaches the end
+enum uint_8 SpriteSeqEndType{
+  Loop,
+  Hold,
+  Clear
+}
+
+structure SpriteBox{
+  float_32           alpha,
+  int_16             xPos,
+  int_16             yPos,
+  int_16             width,
+  int_16             height,
+  SpriteBoxName      name,
+  LayerName          layer,
   SpriteRenderMethod renderMethod,
-  uint_8 padding = 0,
+  uint_8             padding
 }
 
-structure SerializedLayoutModifier
-{
-  int_32 interleavedModifierList[250] // TODO: Make size a clad const, until then keep in sync with compositeImageLayer.cpp
+structure SpriteBoxKeyFrame{
+  SpriteBox          spriteBox,
+  uint_32            triggerTime_ms,
+  int_16             assetID,
+  SpriteSeqEndType   spriteSeqEndType,
+  uint_8             padding
 }
 
-// Structures for serializing CompositeImages as clad
-structure SerializedSpriteBox
-{
-  int_16 topLeftX,
-  int_16 topLeftY,
-  int_16 width,
-  int_16 height,
-  SpriteRenderConfig renderConfig,
-  SpriteBoxName name,
-
-  // For unit tests we compare sprite boxes - if padding values are uninitialized
-  // then the comparison sometimes fails erroneously
-  // Seperated the padding out into three ints that are initialized to fix this problem
-  uint_8 padding_1 = 0,
-  uint_8 padding_2 = 0,
-  uint_8 layoutModifierInterleavedLength = 0,
-
-  SerializedLayoutModifier layoutModifier,
-
-}
-
-// Structures for serializing CompositeImages as clad
-structure CompositeImageChunk
-{
-  uint_32 imageWidth,
-  uint_32 imageHeight,
-
-  uint_16 assetID,
-
-  // Information for re-building the composite images from its chunks
-  uint_8 layerIndex,
-  uint_8 layerMax,
-
-  uint_8 spriteBoxIndex,
-  uint_8 spriteBoxMax,
-
-  uint_16 padding = 0,
-
-  // Implementation details
-  SerializedSpriteBox  spriteBox,
-
-  LayerName         layerName,
-
-}
-      
 } // namespace Vision
 } // namespace Anki

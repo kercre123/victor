@@ -12,11 +12,19 @@
 #include "util/logging/logging.h"
 #include "util/math/math.h"
 
-static const float kDurationScalarMin = 0.05f;
-static const float kDurationScalarMax = 20.0f;
+namespace {
+  constexpr float kDurationScalarMin = 0.05f;
+  constexpr float kDurationScalarMax = 20.0f;
 
-static const float kSpeechRateMin = 30.0f;
-static const float kSpeechRateMax = 300.0f;
+  constexpr float kSpeechRateMin = 30.0f;
+  constexpr float kSpeechRateMax = 300.0f;
+
+  constexpr float kPitchScalarMin = -1.0f;
+  constexpr float kPitchScalarMax = 1.0f;
+
+  constexpr float kPitchMin = 2.f;
+  constexpr float kPitchMax = 200.f;
+}
 
 //
 // String values are obscured by XORing with a constant.
@@ -72,6 +80,18 @@ float AcapelaTTS::GetSpeechRate(int speed, float durationScalar)
   // Clamp adjusted rate to allowable range
   return Anki::Util::Clamp(speechRate, kSpeechRateMin, kSpeechRateMax);
 
+}
+
+float AcapelaTTS::GetAdjustedPitch(int basePitch, float pitchScalar)
+{
+  // Clamp pitch scalar to allowed range [-1,+1]
+  pitchScalar = Anki::Util::Clamp(pitchScalar, kPitchScalarMin, kPitchScalarMax);
+
+  // Adjust base pitch by scalar [-1,+1]
+  float pitch = basePitch + pitchScalar * (kPitchMax - kPitchMin);
+
+  // Clamp adjusted pitch to allowed range
+  return Anki::Util::Clamp(pitch, kPitchMin, kPitchMax);
 }
 
 int AcapelaTTS::GetUserid() {

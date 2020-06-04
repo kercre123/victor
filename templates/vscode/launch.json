@@ -8,8 +8,8 @@
             "program": "vic-robot",
             "initCommands": [
                 "platform select remote-linux",
-                "platform connect connect://victor:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Release/bin ${workspaceRoot}/_build/vicos/Release/lib"
+                "platform connect connect://${dbgconfig:host}:55001",
+                "settings set target.exec-search-paths ${dbgconfig:lib} ${dbgconfig:bin}"
             ]
         },
         {
@@ -19,8 +19,8 @@
             "program": "vic-anim",
             "initCommands": [
                 "platform select remote-linux",
-                "platform connect connect://victor:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Release/bin ${workspaceRoot}/_build/vicos/Release/lib"
+                "platform connect connect://${dbgconfig:host}:55001",
+                "settings set target.exec-search-paths ${dbgconfig:lib} ${dbgconfig:bin}"
             ]
         },
         {
@@ -30,8 +30,8 @@
             "program": "vic-engine",
             "initCommands": [
                 "platform select remote-linux",
-                "platform connect connect://victor:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Release/bin ${workspaceRoot}/_build/vicos/Release/lib",
+                "platform connect connect://${dbgconfig:host}:55001",
+                "settings set target.exec-search-paths ${dbgconfig:lib} ${dbgconfig:bin}",
             ]
         },
         {
@@ -43,8 +43,8 @@
             "program": "/anki/bin/vic-robot",
             "initCommands": [
                 "platform select remote-linux",
-                "platform connect connect://victor:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Release/bin ${workspaceRoot}/_build/vicos/Release/lib"
+                "platform connect connect://${dbgconfig:host}:55001",
+                "settings set target.exec-search-paths ${dbgconfig:lib} ${dbgconfig:bin}"
             ]
         },
         {
@@ -59,8 +59,8 @@
             },
             "initCommands": [
                 "platform select remote-linux",
-                "platform connect connect://victor:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Release/bin ${workspaceRoot}/_build/vicos/Release/lib"
+                "platform connect connect://${dbgconfig:host}:55001",
+                "settings set target.exec-search-paths ${dbgconfig:lib} ${dbgconfig:bin}"
             ]
         },
         {
@@ -75,15 +75,15 @@
             },
             "initCommands": [
                 "platform select remote-linux",
-                "platform connect connect://victor:55001",
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/vicos/Release/bin ${workspaceRoot}/_build/vicos/Release/lib",
+                "platform connect connect://${dbgconfig:host}:55001",
+                "settings set target.exec-search-paths ${dbgconfig:lib} ${dbgconfig:bin}",
             ]
         },
         {
             "name": "mac:launch:test_engine",
             "type": "lldb",
             "request": "launch",
-            "program": "${workspaceRoot}/_build/mac/Debug/bin/test_engine",
+            "program": "${workspaceFolder}/_build/mac/Debug/bin/test_engine",
             "env": {
                 "GTEST_FILTER": "-BlockWorld*:-Localization*",
                 "ANKIWORKROOT": "_build/tmp",
@@ -92,7 +92,7 @@
             },
             "stopOnEntry": false,
             "initCommands": [
-                "settings set target.exec-search-paths ${workspaceRoot}/_build/mac/Debug/lib"
+                "settings set target.exec-search-paths ${workspaceFolder}/_build/mac/Debug/lib"
             ]
         },
         {
@@ -142,7 +142,7 @@
             "configurations": [
                 "webots:attach:webotsCtrlRobot2",
                 "webots:attach:webotsCtrlAnim",
-                "webots:attach:webotsCtrlEngine2"
+                "webots:attach:webotsCtrlGameEngine2"
             ]
         }
     ]

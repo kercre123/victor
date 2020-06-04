@@ -18,7 +18,7 @@
 #include "coretech/common/engine/jsonTools.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/data/dataScope.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 #include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "coretech/vision/shared/spriteSequence/spriteSequenceContainer.h"
 
@@ -129,7 +129,7 @@ void SpriteSequenceLoader::LoadSequence(Vision::SpriteCache* cache, const std::s
 
   // Place the sequence in the appropriate map
   std::lock_guard<std::mutex> guard(_mapMutex);
-  _spriteSequences.emplace(Util::FileUtils::GetFileName(fullDirectoryPath), seq);
+  _spriteSequences.emplace(Vision::SpritePathMap::GetAssetID(Util::FileUtils::GetFileName(fullDirectoryPath)), seq);
 }
 
 

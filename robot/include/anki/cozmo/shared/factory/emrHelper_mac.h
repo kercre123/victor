@@ -31,7 +31,7 @@ namespace Vector {
 
 namespace Factory {
 
-  namespace 
+  namespace
   {
     // The simulated EMR is created at runtime by webotsCtrlRobot2.cpp which allows us
     // to determine if the simulated robot is Whiskey or Vector. As such it needs to be created
@@ -48,7 +48,7 @@ namespace Factory {
     // Memory maps the EMR file and returns a pointer to it
     static Factory::EMR* OpenEMR(int openFlags, int protFlags)
     {
-      int fd = open(kEMRFile, openFlags);
+      int fd = open(kEMRFile, openFlags, 0600);
 
       if(fd == -1)
       {
@@ -60,7 +60,7 @@ namespace Factory {
 
       // Memory map the file as shared since multiple processes have access to these functions
       Factory::EMR* emr = (Factory::EMR*)(mmap(nullptr, sizeof(EMR), protFlags, MAP_SHARED, fd, 0));
-      
+
       if(emr == MAP_FAILED)
       {
         LOG_ERROR("Factory.CheckEMRForPackout.MmapFailed", "%d", errno);
@@ -70,10 +70,10 @@ namespace Factory {
 
       // Close our fd, mmap will add a reference to it so the mapping will still be valid
       close(fd);
-      
+
       return emr;
     }
-  
+
     // Attempt to read the emr file with the appropriate flags
     // First opens as readonly and then may reopen as writable depending
     // on flags and build type
@@ -134,7 +134,7 @@ static void CreateFakeEMR()
   static void SetWhiskey(bool whiskey)
   {
     WriteEMR(offsetof(Factory::EMR::Fields, HW_VER)/sizeof(uint32_t), (whiskey ? 7 : 6));
-  } 
+  }
 
   class ScopedWhiskey
   {
@@ -148,7 +148,7 @@ static void CreateFakeEMR()
 
 static inline bool IsWhiskey()
 {
-  /* 
+  /*
     From robot/fixture/stm/hwid.h
     #define HEADID_HWREV_EMPTY      0 //unprogrammed/empty value
     #define HEADID_HWREV_DEBUG      1 //debug use and DVT1-3
@@ -157,7 +157,7 @@ static inline bool IsWhiskey()
     #define HEADID_HWREV_MP         6
     #define HEADID_HWREV_WHSK_DVT1  7 //Whiskey (Vector 2019)
   */
-  
+
   return (Factory::GetEMR()->fields.HW_VER >= 7);
 }
 

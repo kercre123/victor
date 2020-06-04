@@ -59,7 +59,11 @@ private:
   // These messages are handled ONLY locally by the OnboardingMessageHandler
   void HandleOnboardingStateRequest(const AppToEngineEvent& event);
   void HandleOnboardingCompleteRequest(const AppToEngineEvent& event);
+  void HandleOnboardingWakeUpRequest(const AppToEngineEvent& event);
+  void HandleOnboardingSetPhaseRequest(const AppToEngineEvent& event);
   // - - - - - Message Handling functions - - - - -
+  
+  void HandleWakeUpRequest();
 
   std::list<Anki::Util::IConsoleFunction> _consoleFuncs;
 

@@ -10,7 +10,7 @@
  * Copyright: Anki, Inc. 2017
  **/
 
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 
 #include "coretech/vision/engine/benchmark.h"
 #include "coretech/vision/engine/image.h"

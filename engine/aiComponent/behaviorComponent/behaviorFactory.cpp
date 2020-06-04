@@ -12,6 +12,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorHighLevelAI.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorLookAroundInPlace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorResetState.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/behaviorSimpleVoiceResponse.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorStayOnChargerUntilCharged.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/behaviorWait.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/alexa/behaviorAlexa.h"
@@ -65,6 +66,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevImageCapture.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevSquawkBoxTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTestBlackjackViz.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTestSpriteBoxRemaps.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTouchDataCollection.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevTurnInPlaceTest.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/devBehaviors/behaviorDevViewCubeBackpackLights.h"
@@ -120,6 +122,7 @@
 #include "engine/aiComponent/behaviorComponent/behaviors/gateBehaviors/behaviorConnectToCube.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/habitat/behaviorConfirmHabitat.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/heldInPalm/behaviorInitialHeldInPalmReaction.h"
+#include "engine/aiComponent/behaviorComponent/behaviors/heldInPalm/behaviorReactToPalmEdge.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/knowledgeGraph/behaviorKnowledgeGraphQuestion.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorEnrollFace.h"
 #include "engine/aiComponent/behaviorComponent/behaviors/meetCozmo/behaviorRespondToRenameFace.h"
@@ -220,6 +223,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::ResetState:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorResetState(config));
+      break;
+    }
+    
+    case BehaviorClass::SimpleVoiceResponse:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorSimpleVoiceResponse(config));
       break;
     }
     
@@ -538,6 +547,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::DevTestBlackjackViz:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorDevTestBlackjackViz(config));
+      break;
+    }
+    
+    case BehaviorClass::DevTestSpriteBoxRemaps:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorDevTestSpriteBoxRemaps(config));
       break;
     }
     
@@ -868,6 +883,12 @@ ICozmoBehaviorPtr BehaviorFactory::CreateBehavior(const Json::Value& config)
     case BehaviorClass::InitialHeldInPalmReaction:
     {
       newBehavior = ICozmoBehaviorPtr(new BehaviorInitialHeldInPalmReaction(config));
+      break;
+    }
+    
+    case BehaviorClass::ReactToPalmEdge:
+    {
+      newBehavior = ICozmoBehaviorPtr(new BehaviorReactToPalmEdge(config));
       break;
     }
     

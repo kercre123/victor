@@ -33,7 +33,7 @@ struct RootNodeInfo {
   {};
   
   webots::Node* nodePtr;  // pointer to the node
-  int type;               // node type (e.g. SUPERVISOR)
+  int type;               // node type (e.g. ROBOT)
   std::string typeName;   // type name. For protos, it's just the proto name e.g. "CozmoBot"
 };
   

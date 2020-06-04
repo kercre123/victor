@@ -1,0 +1,133 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h2>Using Application Memory Instead of Data Files</h2>
+
+<p>The SDK includes a set of functions that make it possible to work
+directly from application (usually read-only) memory rather than from
+data files. Static data is simply a C code representation of the data
+object which is compiled into your application. At runtime, an API
+call is made to read the data from static memory rather than reading
+it from file. This is useful if there is no file system available or
+if you wish to encapsulate data within your compiled application.</p>
+
+SDK data files are stored in a proprietary binary file format with a
+<em>.raw</em> file extension. These include acoustic models, pronunciation
+models and compiled searches.  Use the command-line utility <a
+href="DumpRaw.html">DumpRaw</a> to convert these
+files to static data files, i.e. C-code, suitable for inclusion in
+your application code.  These files are created such that you can
+include more than one in the same code file and requires you to define
+the macro <b>INDEX</b> before inclusion to be a unique identifier across
+all included static objects of the same type.  The static objects of a
+type are then combined into an array, which is indexed to retrieve a
+specific instance of that type. E.g. you can include 3 search objects
+from files <em>first.raw</em>, <em>second.raw</em> and
+<em>third.raw</em> in your application by dumping them to
+<em>first.c</em>, <em>second.c</em> and <em>third.c</em> and
+including the following code in your application:<pre>
+#define INDEX first
+#include "firstSearch.c"
+#undef INDEX
+
+#define INDEX second
+#include "secondSearch.c"
+#undef INDEX
+
+#define INDEX third
+#include "thirdSearch.c"
+#undef INDEX
+
+static const void *searches[] = {
+  &searchfirst, &searchsecond, &searchthird,
+};
+const sdata_t appSearch = {sizeof(searches)/sizeof(void *), (const void **)searches};
+</pre>
+<p>After inclusion of the associated <em>.c</em> file, the search data
+has the name made up from the literal string <em>search</em> and the value of
+the <b>INDEX</b> macro. It is of type <em>ifsearchC_t *</em>, of which
+the details are hidden from the user. (The <em>.c</em> file does
+contain sufficient information to enable the use of the C
+<em>sizeof</em> operator.)
+</p>
+
+<p>Similarly acoustic model data have names starting with <em>recog</em> and
+are of type <em>recogC_t *</em>. </p>
+
+<p>The pronunciation model has five parts: a data component starting with the name <em>pronun</em>, a phonological-rule component starting with the name <em>phonrules</em>, an optional text normalization component starting with the name <em>textnorm</em> and two optional orthographic normalization components starting with the names <em>ortnormA</em> and <em>ortnormB</em>, as follows:
+
+<pre>
+#define INDEX 0
+#include "pronunModel.c"
+#undef INDEX
+static const void *pronuns[] = {&pronun0, &phonrules0,
+#ifdef HAVE_textnorm
+				 &textnorm0,
+#undef HAVE_textnorm
+#else
+				 NULL,
+#endif
+#ifdef HAVE_ortnormA
+				 &ortmormA0,
+#undef HAVE_ortnormA
+#else
+				 NULL,
+#endif
+#ifdef HAVE_ortnormB
+				 &ortnormB0,
+#undef HAVE_ortnormB
+#else
+				 NULL,
+#endif
+};
+sdata_t appPronun = {5, (const void **)pronuns};
+</pre>
+</p>
+
+<p><em>sdata_t</em> is defined in <em>trulyhandsfree.h</em> and is the type
+needed by all object creation routines in the SDK to reference static
+memory objects.
+</p>
+
+<h3>Static Recognizer</h3>
+
+Each acoustic model is supplied in a binary file format (.raw), in
+<em>TrulyHandsfree SDK\Data\</em>. Dump, compile and link a static
+acoustic model into your application, then use <a
+href="thfRecogCreateFromStatic.html">thfRecogCreateFromStatic</a>
+(similar to <a
+href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a>) to
+create the recognizer object at run time.
+
+<h3>Static Pronunciation Model</h3>
+A pronunciation model is supplied in binary file format (.raw) in
+<em>TrulyHandsfree SDK\Data</em>. Dump, compile and link the static
+pronunciation model into your application, then use <a
+href="thfPronunCreateFromStatic.html">thfPronunCreateFromStatic</a>
+(similar to <a
+href="thfPronunCreateFromFile.html">thfPronunCreateFromFile</a>) to
+create the pronunciation model object at run time.
+
+<h3>Static Search</h3>
+Use the <a href="DumpRaw.html">DumpRaw</a> utility to dump a conventional search file (created with <a href="thfSearchSaveToFile.html">thfSearchSaveToFile</a>)
+into a static data file. Compile and link the static data file into your application, then use
+<a
+href="thfSearchCreateFromStatic.html">thfSearchCreateFromStatic</a>
+(similar to <a
+href="thfSearchCreateFromFile.html">thfSearchCreateFromFile</a>) to
+create the search object at run time.
+
+<p>
+<b>NOTE:</b> Refer to the <a href="samples.html">Sample C Code</a> for examples of static data usage.
+</p>
+<!----------------------------------------------------------------------- -->
+</body>

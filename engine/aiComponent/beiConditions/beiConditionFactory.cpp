@@ -14,9 +14,11 @@
 
 #include "engine/aiComponent/beiConditions/conditions/conditionAlexaInteractionActive.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionAnyStimuli.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionAnyUserIntent.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBatteryLevel.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBeatDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBecameTrueThisTick.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionBehaviorSuggested.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBehaviorTimer.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBeingHeld.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionCarryingCube.h"
@@ -33,7 +35,6 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionFeatureGate.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionHighTemperature.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionIlluminationDetected.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionInCalmMode.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionIsMaintenanceReboot.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionIsNightTime.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionMotionDetected.h"
@@ -49,8 +50,8 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionProxInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotHeldInPalm.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotInHabitat.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionRobotPitchInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPickedUp.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionRobotPitchInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPlacedOnSlope.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPoked.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotRollInRange.h"
@@ -222,6 +223,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
       condition = std::make_shared<ConditionAnyStimuli>(config);
       break;
     }
+    case BEIConditionType::AnyUserIntent:
+    {
+      condition = std::make_shared<ConditionAnyUserIntent>(config);
+      break;
+    }
     case BEIConditionType::BatteryLevel:
     {
       condition = std::make_shared<ConditionBatteryLevel>(config);
@@ -235,6 +241,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::BecameTrueThisTick:
     {
       condition = std::make_shared<ConditionBecameTrueThisTick>(config);
+      break;
+    }
+    case BEIConditionType::BehaviorSuggested:
+    {
+      condition = std::make_shared<ConditionBehaviorSuggested>(config);
       break;
     }
     case BEIConditionType::BehaviorTimer:
@@ -490,11 +501,6 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::UnitTestCondition:
     {
       condition = std::make_shared<ConditionUnitTest>(config);
-      break;
-    }
-    case BEIConditionType::InCalmMode:
-    {
-      condition = std::make_shared<ConditionInCalmMode>(config);
       break;
     }
     case BEIConditionType::IsMaintenanceReboot:

@@ -50,9 +50,9 @@ namespace Anim {
 
 namespace{
 const char* kPathToExternalIndependentSprites = "assets/sprites/independentSprites/";
-const char* kPathToEngineIndependentSprites = "config/devOnlySprites/independentSprites/";
+const char* kPathToEngineIndependentSprites = "config/sprites/independentSprites/";
 const char* kPathToExternalSpriteSequences = "assets/sprites/spriteSequences/";
-const char* kPathToEngineSpriteSequences   = "config/devOnlySprites/spriteSequences/";
+const char* kPathToEngineSpriteSequences   = "config/sprites/spriteSequences/";
 const char* kProceduralAnimName = "_PROCEDURAL_";
 }
 
@@ -169,6 +169,10 @@ void RobotDataLoader::LoadNonConfigData()
     const auto& fileInfo = animLoader.CollectAnimFiles(paths);
     animLoader.LoadAnimationsIntoContainer(fileInfo, _cannedAnimations.get());
   }
+
+  // After we've finished loading Sprites and SpriteSequences, retroactively verify
+  // any AssetID's requested before/during loading
+  _spritePathMap->CheckUnverifiedAssetIDs();
 
   // Backpack light animations
   {

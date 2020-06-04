@@ -9,13 +9,13 @@
  * Copyright: Anki, Inc. 2018
  **/
 
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/polygon_impl.h"
-#include "coretech/common/shared/math/rect_impl.h"
+#include "coretech/common/engine/math/polygon.h"
+#include "coretech/common/shared/math/rect.h"
 #include "coretech/neuralnets/neuralNetJsonKeys.h"
 #include "coretech/neuralnets/neuralNetModel_interface.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 
 #include "util/console/consoleInterface.h"
 #include "util/fileUtils/fileUtils.h"
@@ -66,6 +66,12 @@ Result INeuralNetModel::LoadModel(const std::string& modelPath, const Json::Valu
   {
     LOG_ERROR("INeuralNetModel.LoadModel.MissingName", "");
     return RESULT_FAIL;
+  }
+ 
+  const Result paramsResult = _params.SetFromConfig(config);
+  if(RESULT_OK != paramsResult)
+  {
+    return paramsResult;
   }
   
   return LoadModelInternal(modelPath, config);
@@ -171,7 +177,7 @@ void INeuralNetModel::ClassificationOutputHelper(const T* outputData, TimeStamp_
   
   // Special case: If the first label is "background", don't report it
   DEV_ASSERT(!_labels.empty(), "INeuralNetModel.ClassificationOutputHelper.EmptyLabels");
-  static const bool minLabel = (Util::StringCaseInsensitiveEquals(_labels.front(), "background") ? 1 : 0);
+  static const int minLabel = (Util::StringCaseInsensitiveEquals(_labels.front(), "background") ? 1 : 0);
   
   // Add the score to the sliding window of scores for this label (or create one
   // if needed)

@@ -1,0 +1,15 @@
+{{ define "content" }}
+
+An Anki account associated with this email address has been updated.
+If you feel you have received this email by mistake or have any questions about your account, please contact us https://anki.com/support/contact.
+
+Thanks,
+The Anki Team
+
+**********************************************
+
+To view our Privacy Policy visit: https://anki.com/privacy
+
+This email was sent to {{ .ToEmail }} by Anki, Inc. 55 2nd Street, San Francisco, CA 94105
+
+{{ end }}

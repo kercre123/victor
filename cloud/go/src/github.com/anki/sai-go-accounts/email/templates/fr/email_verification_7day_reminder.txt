@@ -1,0 +1,29 @@
+{{ define "content" }}
+
+Bonjour {{ .Username }} !
+
+Nous avons remarqué qu'un compte Anki associé au nom d'utilisateur {{ .Username }} a été créé le {{ .CreatedTimeEN }}, mais n'a toujours pas été activé.
+Nous ne voudrions pas que vos scores, votre progression et, plus important encore, votre nom d'utilisateur unique, soient supprimés.
+
+Pour éviter cela, il vous suffit de l'activer en cliquant sur le bouton ci-dessous.
+{{ .URL }}
+
+Merci,
+L'équipe Anki
+
+A noter : vous avez 7 jours pour activer ce compte.
+Si vous pensez avoir reçu cet e-mail par erreur ou avez des questions au sujet de votre compte, contactez notre service Relation Client Anki https://anki.com/support/contact
+Si vous ne l'activez pas, nous vous enverrons un autre rappel avant de procéder à sa suppression définitive.
+
+
+**********************************************
+
+
+Si vous n'avez pas créé de compte, merci de nous le faire savoir en contactant notre service Relation Client Anki https://anki.com/support/contact
+Cet e-mail a été généré automatiquement.
+
+Politique de confidentialité: https://anki.com/privacy
+
+Cet e-mail a été envoyé à {{ .ToEmail }} de la part d'Anki.
+55 2nd Street, San Francisco, CA 94105
+{{ end }}

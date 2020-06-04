@@ -32,7 +32,6 @@ message StartShutdownAnim
 
 message AnimationState
 {
-  uint_32 numProcAnimFaceKeyframes,
   uint_8  lockedTracks,
   uint_8  tracksInUse,
 }

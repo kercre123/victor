@@ -71,7 +71,8 @@ void BehaviorDisplayWallTime::OnBehaviorDeactivated()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void BehaviorDisplayWallTime::TransitionToShowClockInternal()
 {
-  BuildAndDisplayProceduralClock(0, 0);
+  AddKeyFramesForOffset(0, 0);
+  DisplayClock();
 }
 
 
@@ -124,25 +125,25 @@ BehaviorProceduralClock::GetDigitsFunction BehaviorDisplayWallTime::BuildTimerFu
     // Tens Digit (left of colon)
     {
       const int tensDigit = currentHours/10;
-      outMap.emplace(std::make_pair(Vision::SpriteBoxName::TensLeftOfColon, tensDigit));
+      outMap.emplace(std::make_pair(Vision::SpriteBoxName::SpriteBox_1, tensDigit));
     }
     
     // Ones Digit (left of colon)
     {
       const int onesDigit = currentHours % 10;
-      outMap.emplace(std::make_pair(Vision::SpriteBoxName::OnesLeftOfColon, onesDigit));
+      outMap.emplace(std::make_pair(Vision::SpriteBoxName::SpriteBox_2, onesDigit));
     }
 
     // Tens Digit (right of colon)
     {
       const int tensDigit = currentMins/10;
-      outMap.emplace(std::make_pair(Vision::SpriteBoxName::TensRightOfColon, tensDigit));
+      outMap.emplace(std::make_pair(Vision::SpriteBoxName::SpriteBox_4, tensDigit));
     }
 
     // Ones Digit (right of colon)
     {
       const int onesDigit = currentMins % 10;
-      outMap.emplace(std::make_pair(Vision::SpriteBoxName::OnesRightOfColon, onesDigit));
+      outMap.emplace(std::make_pair(Vision::SpriteBoxName::SpriteBox_5, onesDigit));
     }
 
     return outMap;

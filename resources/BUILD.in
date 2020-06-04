@@ -6,9 +6,9 @@ asset_project(
                 ('assets', 'RewardedActions/RewardedActions.json'),
                 ('assets', 'cubeFirmware/cube.dfu'),
                 ('assets', 'LocalizedStrings/**/*.json'),
-                ('externals/anki-thirdparty/sensory', 'sensorySpeechRecModels/hey_vector/**/*.raw'),
-                ('externals/anki-thirdparty/sensory', 'sensorySpeechRecModels/alexa/**/*.raw'),
-                ('externals/anki-thirdparty/pryon_lite', 'pryonSpeechRecModels/**/*.bin'),
+                ('3rd/sensory', 'sensorySpeechRecModels/hey_vector/**/*.raw'),
+                ('3rd/sensory', 'sensorySpeechRecModels/alexa/**/*.raw'),
+                ('3rd/pryon_lite', 'pryonSpeechRecModels/**/*.bin'),
                 ('externals/animation-assets', 'animations/**/*.bin'),
                 ('externals/animation-assets', 'animationGroups/**/*.json'),
                 ('externals/animation-assets', 'sprites/**/*.png'),
@@ -110,12 +110,12 @@ asset_project(
     srcs = [],
     platform_srcs = [
         ('mac', subdir_glob([
-            ('externals/anki-thirdparty/acapela/AcapelaTTS_for_Mac_V9.450','**/*'),
+            ('3rd/acapela/AcapelaTTS_for_Mac_V9.450','**/*'),
             ],
             prefix = 'tts')
         ),
         ('vicos', subdir_glob([
-            ('externals/anki-thirdparty/acapela/Voices_for_Android_iOS_LinuxEmbedded','**/*'),
+            ('3rd/acapela/Voices_for_Android_iOS_LinuxEmbedded','**/*'),
             ],
             prefix = 'tts')
         ),

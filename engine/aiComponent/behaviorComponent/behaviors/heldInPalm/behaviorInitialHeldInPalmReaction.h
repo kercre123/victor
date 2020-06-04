@@ -15,6 +15,7 @@
 #pragma once
 
 #include "engine/aiComponent/behaviorComponent/behaviors/iCozmoBehavior.h"
+#include <unordered_set>
 
 namespace Anki {
 namespace Vector {
@@ -33,19 +34,25 @@ protected:
   virtual void GetBehaviorOperationModifiers(BehaviorOperationModifiers& modifiers) const override;
   virtual void GetAllDelegates(std::set<IBehavior*>& delegates) const override;
   virtual void InitBehavior() override;
-  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override {}
+  virtual void GetBehaviorJsonKeys(std::set<const char*>& expectedKeys) const override;
   
   virtual bool WantsToBeActivatedBehavior() const override;
   virtual void OnBehaviorActivated() override;
+  virtual void OnBehaviorDeactivated() override;
   virtual void BehaviorUpdate() override;
 
 private:
 
   struct InstanceConfig {
     InstanceConfig();
-    ICozmoBehaviorPtr joltInPalmReaction;
-    ICozmoBehaviorPtr palmTiltReaction;
+    InstanceConfig(const Json::Value& config);
     
+    std::unordered_set<std::string> interruptingBehaviorNames;
+    // NOTE(GB): The behaviors in this set can only cause this reaction to cancel itself, this
+    // reaction is not responsible for delegating to these behaviors.
+    std::unordered_set<ICozmoBehaviorPtr> interruptingBehaviors;
+    
+    ICozmoBehaviorPtr joltInPalmReaction;
     ICozmoBehaviorPtr animSelectorBehavior;
   };
 
@@ -56,6 +63,9 @@ private:
 
   InstanceConfig _iConfig;
   DynamicVariables _dVars;
+  
+  // Checks whether any of the behaviors in `interruptingBehaviors` wants to activate
+  bool BehaviorShouldBeInterrupted() const;
   
 };
 

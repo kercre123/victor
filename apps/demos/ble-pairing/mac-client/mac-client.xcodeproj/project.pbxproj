@@ -566,21 +566,21 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 6N4JN4E7V7;
 				HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/../../../../tools/message-buffers/support/cpp/include/**",
-					"$(PROJECT_DIR)/../../../../EXTERNALS/libsodium/mac/include",
+					"$(PROJECT_DIR)/../../../../victor-clad/tools/message-buffers/support/cpp/include/**",
+					"$(PROJECT_DIR)/../../../../3rd/libsodium/mac/include",
 					"$(PROJECT_DIR)/**",
 				);
 				"HEADER_SEARCH_PATHS[arch=*]" = (
-					"$(PROJECT_DIR)/../../../../tools/message-buffers/support/cpp/include/**",
-					"$(PROJECT_DIR)/../../../../EXTERNALS/libsodium/mac/include",
+					"$(PROJECT_DIR)/../../../../victor-clad/tools/message-buffers/support/cpp/include/**",
+					"$(PROJECT_DIR)/../../../../3rd/libsodium/mac/include",
 					"$(PROJECT_DIR)",
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
-					"$(PROJECT_DIR)/../../../../EXTERNALS/libsodium/mac/lib",
+					"$(PROJECT_DIR)/../../../../3rd/libsodium/mac/lib",
 				);
-				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../../../EXTERNALS/libsodium/mac/lib/libsodium.a";
+				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../../../3rd/libsodium/mac/lib/libsodium.a";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Debug;
@@ -592,16 +592,16 @@
 				CODE_SIGN_STYLE = Automatic;
 				DEVELOPMENT_TEAM = 6N4JN4E7V7;
 				HEADER_SEARCH_PATHS = (
-					"$(PROJECT_DIR)/../../../../tools/message-buffers/support/cpp/include/**",
-					"$(PROJECT_DIR)/../../../../EXTERNALS/libsodium/mac/include",
+					"$(PROJECT_DIR)/../../../../victor-clad/tools/message-buffers/support/cpp/include/**",
+					"$(PROJECT_DIR)/../../../../3rd/libsodium/mac/include",
 					"$(PROJECT_DIR)",
 				);
 				LIBRARY_SEARCH_PATHS = (
 					"$(inherited)",
 					"$(PROJECT_DIR)",
-					"$(PROJECT_DIR)/../../../../EXTERNALS/libsodium/mac/lib",
+					"$(PROJECT_DIR)/../../../../3rd/libsodium/mac/lib",
 				);
-				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../../../EXTERNALS/libsodium/mac/lib/libsodium.a";
+				OTHER_LDFLAGS = "$(PROJECT_DIR)/../../../../3rd/libsodium/mac/lib/libsodium.a";
 				PRODUCT_NAME = "$(TARGET_NAME)";
 			};
 			name = Release;

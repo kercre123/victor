@@ -71,10 +71,9 @@ func testReader(serv ipc.Server, send voice.MsgSender) {
 }
 
 func main() {
-	log.Println("Hello, world!")
-	log.Das("vic.cloud.hello.world", (&log.DasFields{}).SetStrings("one").SetInts(1))
 
-	log.Println("Install crash reporter")
+	log.Println("Starting up")
+
 	robot.InstallCrashReporter(log.Tag)
 
 	// if we want to error, we should do it after we get socket connections, to make sure
@@ -172,7 +171,6 @@ func main() {
 
 	cloudproc.Run(context.Background(), options...)
 
-	log.Println("Uninstall crash reporter")
 	robot.UninstallCrashReporter()
 
 	log.Println("All processes exited, shutting down")
@@ -184,7 +182,6 @@ func signalHandler() {
 	go func() {
 		<-ch
 		fmt.Println("Received SIGTERM, shutting down immediately")
-		fmt.Println("Uninstall crash reporter")
 		robot.UninstallCrashReporter()
 		os.Exit(0)
 	}()

@@ -144,6 +144,7 @@ const uint8_t TextToSpeechCoordinator::CreateUtterance(const std::string& uttera
                                                        const UtteranceTriggerType& triggerType,
                                                        const AudioTtsProcessingStyle& style,
                                                        const float durationScalar,
+                                                       const float pitchScalar,
                                                        const UtteranceUpdatedCallback callback)
 {
   RobotInterface::TextToSpeechPrepare msg;
@@ -165,7 +166,9 @@ const uint8_t TextToSpeechCoordinator::CreateUtterance(const std::string& uttera
   msg.style = style;
   msg.triggerMode = GetTriggerMode(triggerType);
   msg.durationScalar = durationScalar;
-  // copy our null-terminated string
+  msg.pitchScalar = pitchScalar;
+
+  // Copy our null-terminated string
   std::memcpy( msg.text.data(), utteranceString.c_str(), utteranceString.size() + 1 );
 
   // Send request to animation process
@@ -196,6 +199,13 @@ const uint8_t TextToSpeechCoordinator::CreateUtterance(const std::string& uttera
   return utteranceID;
 }
 
+const uint8_t TextToSpeechCoordinator::CreateUtterance(const std::string & text,
+                                                       const UtteranceTriggerType & triggerType,
+                                                       const AudioTtsProcessingStyle & style,
+                                                       UtteranceUpdatedCallback callback)
+{
+  return CreateUtterance(text, triggerType, style, 1.f, 0.f, callback);
+}
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 const UtteranceState TextToSpeechCoordinator::GetUtteranceState(const uint8_t utteranceID) const
 {

@@ -1,0 +1,107 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfUdtCacheLoadFromFile</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+int thfUdtCacheLoadFromFile(thf_t **thf, thfUser_t *user, 
+                            unsigned short maxUsers, <a href="objects.html#udt_t">udt_t</a> *udt, 
+                            const char *filename);
+</pre>
+<h3>Description</h3>
+ Reads a set of enrollment data from file, into the udt object.   <p> This function must be used in careful conjunction with the data from the thfUser_t object.   In particular, thfUdtCacheLoadFromFile loads the enrollment data, but not the user name, which  must be retrieved or re-created separately.   Enrollments are stored in the udt object (an array of type thfUser_t *) beginning at user index 0,  and continuing with increasing index values for all users stored in the file.   This function assumes that the array of thfUser_t elements has been properly allocated with the  correct number of users (at least the number contained in the cache file) and the correct number of  enrollments per user.  In other words, for each user iIdx in the array users[], users[iIdx].numEnroll must be set to the number of enrollments stored for this user in the enrollment cache file. This function further assumes that the user name stored in the thfUser_t object at each index  value corresponds with the user whose data is stored in the cache.   Finally, the function assumes that the enrollment object for each user (an array of type thfEnrollment_t *) has been properly allocated for each user in the cache and the memory of each element in the array has been set to NULL. <p> If additional users are to be enrolled on (with new recordings), these new users must be put at the end of the thfUser_t array of users. <p>
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thfUser_t *</code></td>
+<td nowrap valign="top"><code>user</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">user object, containing enrollment data.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned short</code></td>
+<td nowrap valign="top"><code>maxUsers</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">maximum number of users in the thfUser_t array.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><a href="objects.html#udt_t"><code>udt_t *</code></a></td>
+<td nowrap valign="top"><code>udt</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">udt object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>const char *</code></td>
+<td nowrap valign="top"><code>filename</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">character string containing the name of the file to read cache data from.</td>
+</tr>
+</table>
+<h3>Return</h3>
+ Returns 1 on success or 0 on error.
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>UDT object not found</code></td>
+<td valign="top">Invalid udt object handle.</td>
+</tr>
+<tr>
+<td valign="top"><code>Failed to read udt cache file</code></td>
+<td valign="top">The input file could not be read from. The file system denied access for reading from the datafile.</td>
+</tr>
+<tr>
+<td valign="top"><code>User cache is active.  It must be empty to load from file.</code></td>
+<td valign="top"><a href="thfUdtCheckEnrollments.html">thfUdtCheckEnrollments</a> must be called after this function.</td>
+</tr>
+<tr>
+<td valign="top"><code>Cache contains more users than thfUser_t structure allows. Increase users?</code></td>
+<td valign="top">Not enough space has been allocated in the thfUser_t array to hold all users contained in the cache.</td>
+</tr>
+<tr>
+<td valign="top"><code>internal error: udtCache unallocated</code></td>
+<td valign="top">internal error</td>
+</tr>
+<tr>
+<td valign="top"><code>Cache contains more enrollments than thfUser_t structure allows.  Increase enrollments?</code></td>
+<td valign="top">Not enough space has been allocated in the thfUser_t array to hold all of the enrollments for the current user.</td>
+</tr>
+<tr>
+<td valign="top"><code>Unsupported cache type</code></td>
+<td valign="top">The cache contains information not known to the current SDK version.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfUdtCheckEnrollments.html">thfUdtCheckEnrollments</a>, <a href="thfUdtCacheSaveToFile.html">thfUdtCacheSaveToFile</a> and <a href="thfUdtSaveToFile.html">thfUdtSaveToFile</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

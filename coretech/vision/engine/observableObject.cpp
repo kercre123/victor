@@ -23,7 +23,7 @@
 #include "coretech/common/engine/exceptions.h"
 
 #include "coretech/common/engine/math/pose.h"
-#include "coretech/common/engine/math/quad_impl.h"
+#include "coretech/common/engine/math/quad.h"
 
 // Ignore rotation completely when calling IsSameAs()? If so, just match position
 // (translation) and block type.

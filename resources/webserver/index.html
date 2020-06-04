@@ -42,18 +42,19 @@
     var perfSavedTriggeredByTimer = false;
 
     var perfItems = [
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:1500000, desc:"CPU freq",        units:"kHz" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:1500000, desc:"CPU Freq",        units:"kHz" },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:150,     desc:"Temperature",     units:"Celsius" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Uptime",          units:"seconds" },
-        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Idle time",       units:"seconds" },
-        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Real time clock", units:"" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Idle Time",       units:"seconds" },
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,       desc:"Real Time Clock", units:"" },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:438388,  desc:"Memory Claimed",  units:"kB",      updateFunction:MemUseInfo1 },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:438388,  desc:"Memory Used",     units:"kB",      updateFunction:MemUseInfo2 },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"Overall CPU",     units:"%",       updateFunction:CPUTimeInfo },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU0",            units:"%",       updateFunction:CPUTimeInfo },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU1",            units:"%",       updateFunction:CPUTimeInfo },
         { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU2",            units:"%",       updateFunction:CPUTimeInfo },
-        { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU3",            units:"%",       updateFunction:CPUTimeInfo }
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:100,     desc:"CPU3",            units:"%",       updateFunction:CPUTimeInfo },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:100000,  desc:"/data Disk Space",units:"kB",      updateFunction:DiskSpaceInfo }
     ];
 
     const kNumCPUTimeValues = 8;    // Number of time values to read per cpu
@@ -123,7 +124,9 @@
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Localized to object ID",    units:"" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Status flags",              units:"" },
         { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Mic recent direction",      units:"" },
-        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Mic selected direction",    units:"" }
+        { activeUpdate:true, val:"", hasGraph:false, graphMax:0,      desc:"Mic selected direction",    units:"" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:15,     desc:"Camera frame rate",         units:"fps" },
+        { activeUpdate:true, val:"", hasGraph:true,  graphMax:15,     desc:"Vision processing rate",    units:"fps" }
     ];
 
     var pmAutoUpdate = true;
@@ -184,7 +187,6 @@
     var pmXModeLastN = 100;
     var pmXModeFirst = 50;
     var pmXModeLast = 150;
-    var pmDataSelectorDescriptions = [];
     var pmDataSelectorInitialized = false;
     const pmNumDataSelectors = 3;
     var pmShowMsInYAxis = false;
@@ -196,11 +198,6 @@
     }
 
     var dialogOKFunction = undefined;
-
-    function newlineToBr(str) {
-      var breakTag = '<br>';
-      return (str + '').replace(/([^>\r\n]?)(\r\n|\n\r|\r|\n)/g, '$1'+ breakTag +'$2');
-    }
 
     function preserveSpaces(str) {
       return str.replace(" ","&nbsp;");
@@ -218,7 +215,9 @@
 
     function SetPage(pageName) {
         // Page EXIT actions:
-        if (curPageName == "page_perf") {
+        if (curPageName == "page_consolevars") {
+            $('#content_console_vars').hide();
+        } else if (curPageName == "page_perf") {
             if (perfAutoUpdate) {
                 clearTimeout(perfAutoUpdateTimerId);
             }
@@ -267,6 +266,7 @@
             if (allowConsoleVarsPage) {
                 $("#consolevars_main_section").show();
                 $("#consolevars_page_disabled").hide();
+                $('#content_console_vars').show();
             } else {
                 $("#consolevars_main_section").hide();
                 $("#consolevars_page_disabled").show();
@@ -496,6 +496,18 @@
             prev["prevUsedTime"] = usedTime;
             prev["prevTotalTime"] = totalTime;
         }
+    }
+
+    function DiskSpaceInfo(payload, itemIndex) {
+        var values = payload.split(',');
+        var total_kB = parseInt(values[0]);
+        var avail_kB = parseInt(values[1]);
+        var used_kB = total_kB - avail_kB;
+        var v = used_kB + " used, " + avail_kB + " available";
+        $("#id_perf_row_value_" + itemIndex).html(v);
+        var graph = $('#' + 'id_graph_' + itemIndex);
+        graph.progressbar( "option", "value", used_kB );
+        graph.progressbar( "option", "max", total_kB );
     }
 
     function UpdateProcHeader() {
@@ -855,19 +867,25 @@
             var lines = result.split("\n");
             if (!pmDataSelectorInitialized) {
                 pmDataSelectorInitialized = true;
+                if (pmGraphAutoUpdate) {
+                    // If user had toggled graph auto update on before the first 'dump all', we are
+                    // in the midst of that but need to set up the next graph update request (to
+                    // happen immediately)
+                    pmGraphAutoUpdateTimerId = setTimeout(SendPerfMetricGraphUpdateRequest, 0, true);
+                }
                 // Parse the header lines to auto-construct data series selectors:
                 var headingsLine1 = lines[0].match(/\S+/g);
                 var headingsLine2 = lines[1].match(/\S+/g);
-                pmDataSelectorDescriptions = [];
-                for (var i = 0; i < headingsLine1.length; i++) {
-                    pmDataSelectorDescriptions[i] = headingsLine1[i] + ' ' + headingsLine2[i];
-                    for (var j = 0; j < pmNumDataSelectors; j++) {
-                        $('#menu_pm_data_' + j).append($('<option>', {
-                            value: i,
-                            text: pmDataSelectorDescriptions[i]
+                for (var i = 0; i < pmNumDataSelectors; i++) {
+                    var selectorId = '#menu_pm_data_' + i;
+                    for (var j = 0; j < headingsLine1.length; j++) {
+                        var dataSelectorItemText = headingsLine1[j] + ' ' + headingsLine2[j];
+                        $(selectorId).append($('<option>', {
+                            value: j,
+                            text: dataSelectorItemText
                         }));
-                        $('#menu_pm_data_' + j).selectmenu('refresh');
                     }
+                    $(selectorId).selectmenu('refresh');
                 }
             }
             // Parse into data we can use in a graph
@@ -932,6 +950,7 @@
             // If we haven't dumped all data yet (which also populates the data selectors),
             // then do that now (INSTEAD of getting frames since last dump)
             ButtonHandler_PerfMetricDumpAll();
+            return;
         }
         else {
             pmGraphAutoUpdateRequestInProgress = true;
@@ -1067,9 +1086,6 @@
         }
     });
     $(function() {
-        // $(".widget input[type=submit], .widget a, .widget button").button();
-        // $(".widget input[type=submit]").button();
-
         $("button").click(function(event) {
             var name = event.target.name;
             if (name.startsWith('page_')) {
@@ -1081,11 +1097,21 @@
             event.preventDefault();
         });
         $("input[type='submit']").click(function(event) {
-            $.post("/"+event.target.value, function(data) {
-                $("#content").html(data);
-                $("#content").show();
-                InitConfirmDialog();
-            });
+            if (event.target.value == 'consolevars') {
+                $('#content_console_vars').html("Loading...");
+                $.post("/" + event.target.value + "?embedded", function(data) {
+                    $('#content_console_vars').html(data);
+                    $('#content_console_vars').show();
+                    InitConfirmDialog();
+                });
+            }
+            else {
+                $.post("/" + event.target.value, function(data) {
+                    $("#content").html(data);
+                    $("#content").show();
+                    InitConfirmDialog();
+                });
+            }
             event.preventDefault();
         });
         $(".pmxmodelistbox").each(function() {
@@ -1377,6 +1403,8 @@
     </div>
 
     <div id="content">
+    </div>
+    <div id='content_console_vars'>
     </div>
 </body>
 

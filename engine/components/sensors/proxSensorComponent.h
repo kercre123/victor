@@ -63,6 +63,11 @@ public:
   // loads raw prox sensor data to a string for different logging systems
   std::string GetDebugString(const std::string& delimeter = "\n");
 
+  // checks if the history to test if sensor is potentially picking up readings
+  // from the lift, and recalibrates the lift motors if so. Returns true
+  // if motors are being calibrated
+  bool VerifyLiftCalibration() const;
+
 protected:
   virtual void NotifyOfRobotStateInternal(const RobotState& msg) override;
   

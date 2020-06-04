@@ -27,6 +27,7 @@
 #include "util/logging/logging.h"
 #include "util/console/consoleSystem.h"
 #include "util/console/consoleChannel.h"
+#include "util/cpuProfiler/cpuProfiler.h"
 #include "util/dispatchQueue/dispatchQueue.h"
 #include "util/global/globalDefinitions.h"
 #include "util/helpers/ankiDefines.h"
@@ -57,6 +58,7 @@ namespace {
   std::mutex               s_ProcessStatusMutex;
   std::condition_variable  s_ProcessStatusCondition;
 #endif
+  std::atomic_bool         s_ShuttingDown{false};
 }
 
 // Used websockets codes, see websocket RFC pg 29
@@ -192,7 +194,7 @@ LogHandler(struct mg_connection *conn, void *cbdata)
 void ExecCommand(const std::vector<std::string>& args)
 {
   LOG_INFO("WebService.ExecCommand", "Called with cmd: %s (and %i arguments)",
-                   args[0].c_str(), (int)(args.size() - 1));
+           args[0].c_str(), (int)(args.size() - 1));
 
   pid_t pID = fork();
   if (pID == 0) // child
@@ -230,6 +232,11 @@ ProcessRequest(struct mg_connection *conn, WebService::WebService::RequestType r
                bool waitAndSendResponse = true, WebService::WebService::ExternalCallback extCallback = nullptr,
                void* cbdata = nullptr)
 {
+  if (s_ShuttingDown)
+  {
+    return 1;
+  }
+
   WebService::WebService::Request* requestPtr = new WebService::WebService::Request(requestType, param1, param2,
                                                                                     param3, extCallback, cbdata);
 
@@ -275,8 +282,14 @@ ConsoleVarsUI(struct mg_connection *conn, void *cbdata)
 {
   const mg_request_info* info = mg_get_request_info(conn);
   std::string category = ((info->query_string) ? info->query_string : "");
+  std::string standalone = "standalone";
+  if (category == "embedded")
+  {
+    category = "";
+    standalone = "";
+  }
 
-  const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarsUI, category, "");
+  const int returnCode = ProcessRequest(conn, WebService::WebService::RequestType::RT_ConsoleVarsUI, category, standalone);
 
   return returnCode;
 }
@@ -594,6 +607,11 @@ static int GetMainRobotInfo(struct mg_connection *conn, void *cbdata)
 
 static int GetPerfStats(struct mg_connection *conn, void *cbdata)
 {
+  if (s_ShuttingDown)
+  {
+    return 1;
+  }
+
   using namespace std::chrono;
   const auto startTime = steady_clock::now();
 
@@ -610,6 +628,7 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
     kStat_Cpu1,
     kStat_Cpu2,
     kStat_Cpu3,
+    kStat_UserDiskSpace,
     kNumStats
   };
 
@@ -696,6 +715,22 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
     stat_cpuStat.resize(kNumCPUTimeStats);
   }
 
+  std::string stat_userDiskSpace;
+  if (active[kStat_UserDiskSpace]) {
+#ifdef ANKI_PLATFORM_VICOS
+    OSState::DiskInfo info;
+    const bool success = osState->GetDiskInfo("/data", info);
+    if (success) {
+      stat_userDiskSpace = std::to_string(info.total_kB) + "," + std::to_string(info.avail_kB);
+    }
+    else {
+      stat_userDiskSpace = "1,0";
+    }
+#else
+    stat_userDiskSpace = "1,0"; // Not really applicable to webots
+#endif
+  }
+
   const auto now = steady_clock::now();
   const auto elapsed_us = duration_cast<microseconds>(now - startTime).count();
   LOG_INFO("WebService.Perf", "GetPerfStats took %lld microseconds to read", elapsed_us);
@@ -712,12 +747,13 @@ static int GetPerfStats(struct mg_connection *conn, void *cbdata)
             stat_rtc.c_str(),
             stat_mem1.c_str(),
             stat_mem2.c_str());
-  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n",
+  mg_printf(conn, "%s\n%s\n%s\n%s\n%s\n%s\n",
             stat_cpuStat[0].c_str(),
             stat_cpuStat[1].c_str(),
             stat_cpuStat[2].c_str(),
             stat_cpuStat[3].c_str(),
-            stat_cpuStat[4].c_str());
+            stat_cpuStat[4].c_str(),
+            stat_userDiskSpace.c_str());
 
   return 1;
 }
@@ -763,6 +799,11 @@ static int SystemCtl(struct mg_connection *conn, void *cbdata)
 
 static int GetProcessStatus(struct mg_connection *conn, void *cbdata)
 {
+  if (s_ShuttingDown)
+  {
+    return 1;
+  }
+
   std::string resultsString;
 
   using namespace std::chrono;
@@ -996,6 +1037,8 @@ void WebService::Start(Anki::Util::Data::DataPlatform* platform, const Json::Val
 // This is called from the main thread
 void WebService::Update()
 {
+  ANKI_CPU_PROFILE("WebService::Update");
+
   std::lock_guard<std::mutex> lock(_requestMutex);
 
   // First pass:  Delete any completely-finished requests from the list (and delete the requests themselves)
@@ -1029,7 +1072,8 @@ void WebService::Update()
       {
         case RT_ConsoleVarsUI:
           {
-            GenerateConsoleVarsUI(requestPtr->_result, requestPtr->_param1);
+            const bool standalone = (requestPtr->_param2 == "standalone");
+            GenerateConsoleVarsUI(requestPtr->_result, requestPtr->_param1, standalone);
           }
           break;
         case RT_ConsoleVarGet:
@@ -1228,15 +1272,34 @@ void WebService::Update()
 
 void WebService::Stop()
 {
-  if (_ctx) {
+  s_ShuttingDown = true;
+  if (_ctx)
+  {
+    // Call update to process any pending request(s) and wake up the
+    // thread(s) that are waiting for those request(s) to be processed.
+    // This will allow the mg_stop call below to not take forever waiting
+    // for threads to shut down.
+    Update();
+
+#ifndef SIMULATOR
+    // Notify any pending thread that's waiting for process status, so that
+    // the mg_stop call below will not hang waiting for it
+    {
+      std::unique_lock<std::mutex> lk{s_ProcessStatusMutex};
+      s_ProcessStatuses.clear();
+      s_WaitingForProcessStatus = false;
+    }
+    s_ProcessStatusCondition.notify_all();
+#endif
+
 #ifdef VICOS
     // shutdown nicely on the robot but let the OS handle it for the simulator, mg_stop triggers
     // the thread sanitizer and execution stops here, by removing this line in SIMULATOR builds
     // it allows the thread sanitizier to continue to do useful work.
     mg_stop(_ctx);
 #endif
+    _ctx = nullptr;
   }
-  _ctx = nullptr;
 }
 
 
@@ -1275,14 +1338,27 @@ static std::string sanitize_tag(const std::string& tag)
   return sanitizedTag;
 }
 
-void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& category)
+void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& category,
+                                       const bool standalone)
 {
+  ANKI_CPU_PROFILE("GenerateConsoleVarsUI");
+
+  std::string styleSheetIncludes;
+  std::string jqueryIncludes;
   std::string style;
   std::string script;
   std::string html;
   std::map<std::string, std::string> category_html;
 
   const Anki::Util::ConsoleSystem& consoleSystem = Anki::Util::ConsoleSystem::Instance();
+  
+  if (standalone)
+  {
+    styleSheetIncludes += "<link rel=\"stylesheet\" href=\"jquery-ui.css\">\n";
+    styleSheetIncludes += "<link rel=\"stylesheet\" href=\"style.css\">\n";
+    jqueryIncludes += "<script src=\"jquery-1.12.4.js\"></script>\n";
+    jqueryIncludes += "<script src=\"jquery-ui.js\"></script>\n";
+  }
 
   // Variables
 
@@ -1454,6 +1530,18 @@ void WebService::GenerateConsoleVarsUI(std::string& page, const std::string& cat
 
   std::string tmp;
   size_t pos;
+
+  tmp = "/* -- generated stylesheet includes -- */";
+  pos = page.find(tmp);
+  if (pos != std::string::npos) {
+    page = page.replace(pos, tmp.length(), styleSheetIncludes);
+  }
+
+  tmp = "/* -- generated jquery includes -- */";
+  pos = page.find(tmp);
+  if (pos != std::string::npos) {
+    page = page.replace(pos, tmp.length(), jqueryIncludes);
+  }
 
   tmp = "/* -- generated style -- */";
   pos = page.find(tmp);
@@ -1716,4 +1804,4 @@ namespace WebService {
 } // namespace Vector
 } // namespace Anki
 
-#endif // ANKI_WEBSERVICE_ENABLED
+#endif // ANKI_NO_WEBSERVER_ENABLED

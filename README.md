@@ -67,6 +67,17 @@ git submodule update --init --recursive
 git submodule update --recursive
 ```
 
+### Git LFS
+
+We use a the git-lfs extension to handle large files in the source. To
+use it:
+
+    brew install git-lfs # initial config
+    cd <victor-dir>
+	git lfs install
+	git lfs pull
+ 
+
 ### Miscellaneous setup
 
 1. To speed up builds, [install `ccache`](/docs/ccache.md) on your system and the build system will automatically start using it.
@@ -224,6 +235,11 @@ Alternatively, use an authorized iPhone/Android test phone and the Vector Robot 
 1. Run `victor_deploy_release` to deploy the binaries and asset files to the robot. To deploy the debug version, use `victor_deploy_debug`.
  
 1. If the operation times out, power cycle the robot and try again.
+
+### Fixing rsync
+
+If you get the error `rsync: --chown=:2901: unknown option` on a Mac
+run `brew install rsync` to get a version that supports this option.
 
 ### Updating `VICTOR_COMPAT_VERSION` for breaking changes
 

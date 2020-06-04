@@ -14,14 +14,19 @@
 #ifndef __Cozmo_Basestation_Components_AnimationComponent_H__
 #define __Cozmo_Basestation_Components_AnimationComponent_H__
 
-#include "coretech/common/shared/types.h"
-#include "coretech/vision/engine/image.h"
 #include "anki/cozmo/shared/animationTag.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/cozmoEngineConfig.h"
-#include "engine/actions/actionInterface.h"
+
 #include "clad/robotInterface/messageRobotToEngine.h"
-#include "coretech/vision/shared/compositeImage/compositeImageLayer.h"
+#include "clad/types/compositeImageTypes.h"
+
+#include "coretech/common/shared/types.h"
+#include "coretech/vision/engine/image.h"
+#include "coretech/vision/shared/spritePathMap.h"
+
+#include "engine/actions/actionInterface.h"
+
 #include "util/helpers/noncopyable.h"
 #include "util/signals/signalHolder.h"
 
@@ -32,7 +37,6 @@ namespace Anki {
 
 // Forward declarations
 namespace Vision{
-class CompositeImage;
 class RGB565ImageBuilder;
 }
 
@@ -107,7 +111,9 @@ public:
   const std::string& GetAnimationNameFromGroup(const std::string& name,
                                                bool strictCooldown = false,
                                                int recursionCount = 0) const;
-  
+
+  bool IsAnimationGroup(const std::string& group) const;
+
   // Tell animation process to play the specified animation
   // If a non-empty callback is specified, the actionTag of the calling action must be specified
   Result PlayAnimByName(const std::string& animName,
@@ -119,16 +125,23 @@ public:
                         u32 startAt_ms = 0,
                         bool renderInEyeHue = true);
 
-  // Tell animation process to render the specified animation
-  // to the Procedural_Eyes layer of the specified composite image
-  // OutDuration_ms is set to the length of the animation that is playing back
-  Result PlayCompositeAnimation(const std::string& animName,
-                                const Vision::CompositeImage& compositeImage, 
-                                u32 frameInterval_ms,
-                                int& outDuration_ms,
-                                bool interruptRunning = true,
-                                bool emptySpriteBoxesAreValid = false,
-                                AnimationCompleteCallback callback = nullptr);
+  // Used to procedurally alter animations which manage onscreen position and timing of sprites
+  // with as little engine generated information as possible
+  using RemapMap = std::unordered_map<Vision::SpriteBoxName, Vision::SpritePathMap::AssetID>;
+  Result PlayAnimWithSpriteBoxRemaps(const std::string& animName,
+                                     const RemapMap& remaps,
+                                     bool interruptRunning = true,
+                                     AnimationCompleteCallback callback = nullptr,
+                                     const std::string& lockFaceAtEndOfAnimTag = "");
+
+  // Used to add full SpriteBoxKeyFrames to an animation, then play it. If animName is empty, plays
+  // an anim constructed from ONLY the supplied keyframes
+  Result PlayAnimWithSpriteBoxKeyFrames(const std::string& animName,
+                                        const std::vector<Vision::SpriteBoxKeyFrame>& keyframes,
+                                        bool interruptRunning = true,
+                                        AnimationCompleteCallback callback = nullptr);
+
+  Result AddSpriteBoxKeyFramesToRunningAnim(const std::vector<Vision::SpriteBoxKeyFrame>& keyframes);
   
   bool IsPlayingAnimation() const { return _callbackMap.size() > 0; }
   
@@ -156,31 +169,12 @@ public:
   //  be used to init a static constexpr.)
   //
   // If the durations are too short, it may allow for procedural faces to (sporadically) interrupt the
-  // face images. If the durations are too long, you won't be streaming in real-time. In either case you
-  // should use GetAnimState_NumProcAnimFaceKeyframes() to monitor how many frames are currently in the
-  // buffer and not call these DisplayFaceImage functions so frequently such that it grows too large,
-  // otherwise there will be increasing lag in the stream.
+  // face images. If the durations are too long, you won't be streaming in real-time.
   Result DisplayFaceImageBinary(const Vision::Image& img, u32 duration_ms, bool interruptRunning = false);
   Result DisplayFaceImage(const Vision::Image& img, u32 duration_ms, bool interruptRunning = false);
   Result DisplayFaceImage(const Vision::ImageRGB& img, u32 duration_ms, bool interruptRunning = false);
   Result DisplayFaceImage(const Vision::ImageRGB565& imgRGB565, u32 duration_ms, bool interruptRunning = false);
-  // There is only one composite image in the animation process - duration is the amount of time the image will be displayed on screen
-  // frameInterval_ms defines how often the composite images' GetFrame function should be called for internal sprite sequences
-  Result DisplayFaceImage(const Vision::CompositeImage& compositeImage, 
-                          u32 frameInterval_ms, u32 duration_ms, 
-                          bool interruptRunning = false, bool emptySpriteBoxesAreValid = false);
   
-  // Calling this function provides no guarantee that the assets will actually be displayed
-  // If a compositeFaceImage is currently displayed on the face all layers/image maps within
-  // the compositeImage argument will be updated to their new values 
-  // - Set SpriteBoxName::Count in the layerMap to clear layers by name
-  // - Default construct a SpriteEntry into the imageMap for any SpriteBox you wish to clear
-  void UpdateCompositeImage(const Vision::CompositeImage& compositeImage, u32 applyAt_ms = 0);
-  
-  // Helper function that clears composite image layer - can be accomplished through UpdateCompositeImage
-  // as well by specifying count values for sprite boxes/sprites if more nuance is required
-  void ClearCompositeImageLayer(Vision::LayerName layerName, u32 applyAt_ms = 0);
-
   // KeepFaceAlive is a procedural way to add small eye movements and blinks to the eyes. It defaults to on to
   // make sure the robot always feels "alive", but it can be locked out by adding (or removing) a "disable
   // lock". If any disable locks are present, the keep alive will be disabled
@@ -237,7 +231,6 @@ public:
 
 
   // Accessors for latest animState values
-  u32 GetAnimState_NumProcAnimFaceKeyframes() const { return _animState.numProcAnimFaceKeyframes; }   
   u8  GetAnimState_TracksInUse()              const { return _animState.tracksInUse;              }
 
   // Event/Message handling

@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+
+<h2>combine</h2>
+
+<h3>Syntax</h3>
+<pre>TrulyHandsfree SDK\&lt;platform&gt;\bin\combine [options] -n netfile1 -N netfile2 -s searchfile1 -S searchfile2 -x outputnetfile -y outputsearchfile</pre>
+
+<h3>Description</h3>
+
+Combine two recognizers (acoustic models and phrase spot searches) into a single
+recognizer, with one acoustic model and one search.
+<br/></br>
+The <b>-p</b> and <b>-P</b> options are used to supply string prefixes
+added to the results from the first and second searches,
+respectively. These can be used to disambiguate results from the two
+searches, should these produce results that use the same
+tag. (E.g. when combining a speaker-independent "Hello Blue Genie"
+trigger with a enrolled speaker verification version of the same phrase.)
+
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Name</th>
+<th align="left">Default</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-n netfile1</code></td>
+<td align="center" valign="top"></td>
+<td width="500">First neural network (acoustic model) file name.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-N netfile2</code></td>
+<td align="center" valign="top"></td>
+<td width="500">First neural network (acoustic model) file name.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-s searchfile1</code></td>
+<td align="center" valign="top"></td>
+<td width="500">First compiled phrase-spotting search file name.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-S searchfile2</code></td>
+<td align="center" valign="top"></td>
+<td width="500">Second compiled phrase-spotting search file name.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-x outputnetfile</code></td>
+<td align="center" valign="top"></td>
+<td width="500">Output file name used for combined acoustic model.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-y outputsearchfile</code></td>
+<td align="center" valign="top"></td>
+<td width="500">Output file name used for combined search.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-m mapfile</code></td>
+<td align="center" valign="top"></td>
+<td width="500">Output file name used for phrase IDs in the combined search.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-p prefix1</code></td>
+<td align="center" valign="top"></td>
+<td width="500">Add the prefix1 string to searchfile1 results.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-P prefix2</code></td>
+<td align="center" valign="top"></td>
+<td width="500">Add the prefix2 string to searchfile2 results.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>-v</code></td>
+<td align="center" valign="top"></td>
+<td width="500">Show progress messages. If this flag is used and no
+phrase map file is specified with -m, the phrase map will be printed
+  to stdout.
+</tr>
+</table>
+
+<h3>See Also</h3>
+<a href="thfRecogCombine.html">thfRecogCombine</a>.
+
+
+
+

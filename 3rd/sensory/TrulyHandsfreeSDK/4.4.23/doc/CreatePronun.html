@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+
+<h2>CreatePronun</h2>
+
+<h3>Syntax</h3>
+<pre>TrulyHandsfree SDK\&lt;platform&gt;\bin\createPronun ltsDataFile
+   inputTextFile outputSrcFile variableName dialectIndex [nBest [Suffix]]</pre>
+
+<h3>Description</h3>
+ Generates an ordered list of pronunciations from given vocabulary and stores them in C-language arrays, suitable for compilation into an application.
+
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>ltsDataFile</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">The language specific pronunciation model data file.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>inputTextFile</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">The text file containing the Carriage-Return terminated words or phrases.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>outputSrcFile</code></td>
+<td align="center" valign="top">out</td>
+<td width="500">The output Source file to be created containing the vocabulary and pronunciation C-language arrays.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>variableName</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">The variable name to be used for the resulting vocabulary and pronunciation arrays in the source file.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>dialectIndex</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Dialect Index. See corresponding language pack for supported dialects.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>nBest</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Optional target number of unique pronunciations to be created per phrase or word.
+The default nBest setting is 2.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>Suffix</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Optional suffix string to be added to end of the pronunciation string.
+The default suffix setting is an empty string.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfSearchCreateFromList.html">thfSearchCreateFromList</a>, <a href="thfSearchCreateFromGrammar.html">thfSearchCreateFromGrammar</a>.
+
+<!----------------------------------------------------------------------- -->
+</body>

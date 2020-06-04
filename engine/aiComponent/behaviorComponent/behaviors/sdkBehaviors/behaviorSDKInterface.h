@@ -27,6 +27,7 @@ namespace external_interface {
   class FindFacesRequest;
   class LookAroundInPlaceRequest;
   class RollBlockRequest;
+  class EnrollFaceRequest;
 }
   
 class BehaviorSDKInterface : public ICozmoBehavior
@@ -50,17 +51,11 @@ protected:
   virtual void HandleWhileActivated(const EngineToGameEvent& event) override;
 
 private:
-  void DriveOffChargerRequest(const external_interface::DriveOffChargerRequest& driveOffChargerRequest);
-  void DriveOnChargerRequest(const external_interface::DriveOnChargerRequest& driveOnChargerRequest);
-  void FindFacesRequest(const external_interface::FindFacesRequest& findFacesRequest);
-  void LookAroundInPlaceRequest(const external_interface::LookAroundInPlaceRequest& lookAroundInPlaceRequest);
-  void RollBlockRequest(const external_interface::RollBlockRequest& rollBlockRequest);
-
-  void HandleDriveOffChargerComplete();
-  void HandleDriveOnChargerComplete();
-  void HandleFindFacesComplete();
-  void HandleLookAroundInPlaceComplete();
-  void HandleRollBlockComplete();
+  template <class ResponseType>
+  void HandleBehaviorComplete();
+  template <class RequestType, class ResponseType>
+  void BehaviorRequest(const RequestType& request, ICozmoBehaviorPtr behavior, std::string behaviorName);
+  void StopDelegatedBehavior();
 
   // Use this to prevent (or allow) raw movement commands from the SDK. We only want to allow these when the SDK
   // behavior is activated and _not_ delegating to another behavior.
@@ -78,11 +73,13 @@ private:
     std::string findFacesBehaviorStr;
     std::string lookAroundInPlaceBehaviorStr;
     std::string rollBlockBehaviorStr;
+    std::string enrollFaceBehaviorStr;
     ICozmoBehaviorPtr driveOffChargerBehavior;
     ICozmoBehaviorPtr findAndGoToHomeBehavior;
     ICozmoBehaviorPtr findFacesBehavior;
     ICozmoBehaviorPtr lookAroundInPlaceBehavior;
     ICozmoBehaviorPtr rollBlockBehavior;
+    ICozmoBehaviorPtr enrollFaceBehavior;
   };
 
   struct DynamicVariables {
@@ -95,6 +92,8 @@ private:
   
   std::vector<Signal::SmartHandle> _signalHandles;
   AnkiEventMgr<external_interface::GatewayWrapper> _eventMgr;
+
+  bool _cancelling_behaviors;
 };
 } // namespace Vector
 } // namespace Anki

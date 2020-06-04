@@ -172,14 +172,16 @@ CONSOLE_FUNC(PrintBodyData, "Syscon", uint32_t printPeriod_tics, optional bool m
 
 // Perform Text to Speech Coordinator from debug console
 namespace {
+// TTS console group
+constexpr const char * kTextToSpeechPath = "TextToSpeech";
 
-constexpr const char * kTtsCoordinatorPath = "TtSCoordinator";
 // NOTE: Need to keep kVoiceStyles in sync with AudioMetaData::SwitchState::Robot_Vic_External_Processing in
 //       clad/audio/audioSwitchTypes.clad
 constexpr const char * kVoiceStyles = "Default_Processed,Unprocessed";
 
-CONSOLE_VAR_ENUM(u8, kVoiceStyle, kTtsCoordinatorPath, 0, kVoiceStyles);
-CONSOLE_VAR_RANGED(f32, kDurationScalar, kTtsCoordinatorPath, 1.f, 0.25f, 4.f);
+CONSOLE_VAR_ENUM(u8, kVoiceStyle, kTextToSpeechPath, 0, kVoiceStyles);
+CONSOLE_VAR_RANGED(f32, kDurationScalar, kTextToSpeechPath, 1.f, 0.25f, 4.f);
+CONSOLE_VAR_RANGED(f32, kPitchScalar, kTextToSpeechPath, 0.f, -1.f, 1.f);
 
 void SayText(ConsoleFunctionContextRef context)
 {
@@ -216,13 +218,19 @@ void SayText(ConsoleFunctionContextRef context)
       break;
   }
 
- LOG_INFO("Robot.TtSCoordinator", "text(%s) style(%s) duration(%f)",
-          Util::HidePersonallyIdentifiableInfo(textStr.c_str()), EnumToString(style), kDurationScalar);
+  LOG_INFO("Robot.SayText",
+           "text(%s) style(%s) durationScalar(%.2f) pitchScalar(%.2f)",
+           Util::HidePersonallyIdentifiableInfo(textStr.c_str()),
+           EnumToString(style),
+           kDurationScalar,
+           kPitchScalar);
 
-  robot->GetTextToSpeechCoordinator().CreateUtterance(textStr, UtteranceTriggerType::Immediate, style);
+  auto & ttsCoordinator = robot->GetTextToSpeechCoordinator();
+  const auto triggerType = UtteranceTriggerType::Immediate;
+  ttsCoordinator.CreateUtterance(textStr, triggerType, style, kDurationScalar, kPitchScalar);
 }
 
-CONSOLE_FUNC(SayText, kTtsCoordinatorPath, const char* text);
+CONSOLE_FUNC(SayText, kTextToSpeechPath, const char* text);
 
 } // end namespace
 
@@ -822,14 +830,6 @@ Result Robot::SetLocalizedTo(const ObservableObject* object)
                                          GetPoseOriginList().GetSize(),
                                          GetWorldOrigin().GetName().c_str());
 
-  DASMSG(robot_localized_to_object, "robot.localized_to_object", "The robot has localized to an object");
-  DASMSG_SET(s1, EnumToString(object->GetType()), "object type");
-  DASMSG_SET(i1, object->GetPose().GetTranslation().x(), "x coordinate of object pose");
-  DASMSG_SET(i2, object->GetPose().GetTranslation().y(), "y coordinate of object pose");
-  DASMSG_SET(i3, object->GetPose().GetTranslation().z(), "z coordinate of object pose");
-  DASMSG_SET(i4, GetPose().GetTranslation().z(), "z coordinate of robot pose");
-  DASMSG_SEND();
-
   return RESULT_OK;
 
 } // SetLocalizedTo()
@@ -862,13 +862,6 @@ void UpdateFaceImageRGBExample(Robot& robot)
     if (--framesToSend < 0) {
       return;
     }
-  }
-
-  // Throttle frames
-  // Don't send if the number of procAnim keyframes gets large enough
-  // (One keyframe == 33ms)
-  if (robot.GetAnimationComponent().GetAnimState_NumProcAnimFaceKeyframes() > 30) {
-    return;
   }
 
   // Move 'X' through the image
@@ -1082,9 +1075,12 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
       HistRobotState histState;
       lastResult = GetStateHistory()->GetLastStateWithFrameID(msg.pose_frame_id, histState);
       if (lastResult != RESULT_OK) {
-        LOG_ERROR("Robot.UpdateFullRobotState.GetLastPoseWithFrameIdError",
-                  "Failed to get last pose from history with frame ID=%d",
-                  msg.pose_frame_id);
+        // Don't print warning if frame_id 0 because this can sometimes happen on startup
+        if (msg.pose_frame_id != 0) {
+          LOG_WARNING("Robot.UpdateFullRobotState.GetLastPoseWithFrameIdError",
+                      "Failed to get last pose from history with frame ID=%d",
+                      msg.pose_frame_id);
+        }
         return lastResult;
       }
       pose_z = histState.GetPose().GetWithRespectToRoot().GetTranslation().z();
@@ -1150,7 +1146,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   GetCliffSensorComponent().NotifyOfRobotState(msg);
   GetProxSensorComponent().NotifyOfRobotState(msg);
   GetTouchSensorComponent().NotifyOfRobotState(msg);
-  GetPowerStateManager().NotifyOfRobotState(msg);
 
   // Update processed proxSensorData in history after ProxSensorComponent was updated
   GetStateHistory()->UpdateProxSensorData(msg.timestamp, GetProxSensorComponent().GetLatestProxData());
@@ -1185,7 +1180,6 @@ Result Robot::UpdateFullRobotState(const RobotState& msg)
   // Send state to visualizer for displaying
   VizInterface::RobotStateMessage vizState(stateMsg,
                                            _robotImuTemperature_degC,
-                                           GetAnimationComponent().GetAnimState_NumProcAnimFaceKeyframes(),
                                            GetCliffSensorComponent().GetCliffDetectThresholds(),
                                            imageFramePeriod_ms,
                                            imageProcPeriod_ms,
@@ -2727,7 +2721,7 @@ bool Robot::UpdateToFStartupChecks(Result& res)
 bool Robot::UpdateGyroCalibChecks(Result& res)
 {
   // Wait this much time after sending sync to robot before checking if we
-  // should be displaying the gyro not calibrated image
+  // should be displaying the low battery image to encourage user to put the robot down.
   // Note that by the time that the sync has been sent, the face has already
   // been blank for around 7 seconds.
   const float kTimeAfterSyncSent_sec = 2.f;
@@ -2746,7 +2740,7 @@ bool Robot::UpdateGyroCalibChecks(Result& res)
     // but we haven't received syncTime yet likely because the gyro hasn't calibrated
     GetAnimationComponent().Init();
 
-    static const std::string kGyroNotCalibratedImg = "config/devOnlySprites/independentSprites/gyro_not_calibrated.png";
+    static const std::string kGyroNotCalibratedImg = "config/sprites/independentSprites/battery_low.png";
     const std::string imgPath = GetContextDataPlatform()->pathToResource(Anki::Util::Data::Scope::Resources,
                                                                          kGyroNotCalibratedImg);
     Vision::ImageRGB img;
@@ -2800,6 +2794,16 @@ bool Robot::SetLocale(const std::string & locale)
 
   DEV_ASSERT(_context != nullptr, "Robot.SetLocale.InvalidContext");
   _context->SetLocale(locale);
+
+  //
+  // Attempt to load localized strings for given locale.
+  // If that fails, fall back to default locale.
+  //
+  auto & localeComponent = GetLocaleComponent();
+  if (!localeComponent.SetLocale(locale)) {
+    LOG_WARNING("Robot.SetLocale", "Unable to set locale %s", locale.c_str());
+    localeComponent.SetLocale(Anki::Util::Locale::kDefaultLocale.ToString());
+  }
 
   // Notify animation process
   SendRobotMessage<RobotInterface::SetLocale>(locale);

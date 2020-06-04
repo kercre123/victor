@@ -22,11 +22,15 @@
 #include "anki/cozmo/shared/factory/emrHelper.h"
 
 #include "coretech/common/engine/math/convexIntersection.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "clad/robotInterface/messageEngineToRobot.h"
+
 #include "util/console/consoleInterface.h"
+#include "util/logging/DAS.h"
 
 #include <iomanip>
+
+#define LOG_CHANNEL "ProxSensor"
 
 namespace Anki {
 namespace Vector {
@@ -58,6 +62,13 @@ namespace {
   const float   kMeasurementTolerance = .05f;  // percentage based tolerance
   const Radians kRobotRotationTolerance_rad = 0.01f;
   const u8      kNumMeasurementsAtPose = 32;
+
+  // control max rate we want check for potential obstacles in case we
+  // are getting sensor dithering from lift
+  const u32   kNoiseTolerance_mm = 25;
+  const u32   kLiftSensorDistance_mm = 15;
+  const u32   kLiftCalibrationWindow_ms = 2000;
+  const float kMaxSensorFlicker_Hz = 5.f;  
 
   // Returns a unitless metric of "signal quality", which is computed as the
   // signal intensity (which is the total signal intensity of the reading)
@@ -183,11 +194,10 @@ void ProxSensorComponent::NotifyOfRobotStateInternal(const RobotState& msg)
   }
 
   // check if we should bother updating the map
-  const bool isCalmPowerMode    = static_cast<bool>(msg.status & (uint32_t)RobotStatusFlag::CALM_POWER_MODE); // Reading is meaningless in calm mode so just skip map update
   const bool stillUpdating      = (_measurementsAtPose < kNumMeasurementsAtPose);                             // if the robot hasn't moved but we still need to update the belief state
   const bool measurementInFrame = (histState.GetFrameId() != _robot->GetPoseFrameID());                       // if measurement frame is not the current robot frame
 
-  if (_mapEnabled && !isCalmPowerMode && stillUpdating && !measurementInFrame) {
+  if (_mapEnabled && stillUpdating && !measurementInFrame) {
     UpdateNavMap(measurmentTime);
   }
 }
@@ -219,10 +229,59 @@ bool ProxSensorComponent::CheckLiftOcclusion()
 
   } else {
     // Lift might not be calibrated if bracing while falling
-    PRINT_NAMED_INFO("ProxSensorComponent.ProcessRawSensorData.LiftNotCalibrated",
-                     "Lift is not calibrated! Considering it not in FOV.");
+    LOG_INFO("ProxSensorComponent.ProcessRawSensorData.LiftNotCalibrated",
+             "Lift is not calibrated! Considering it not in FOV.");
   }
   return isInFOV;
+}
+
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+bool ProxSensorComponent::VerifyLiftCalibration() const
+{
+  // track the number of transitions in history outside allowed noise range
+  int  nSuddenTransitions  = 0;
+  int  prevDistance_mm     = 0;
+  bool prevFoundObject     = false;
+  bool allReadingsTooClose = true;
+
+
+  // check the sensor and lift values for previous robot messages
+  const auto lastMsgTime  = _robot->GetLastMsgTimestamp();
+  const auto firstMsgTime = _robot->GetLastMsgTimestamp() - kLiftCalibrationWindow_ms;
+
+
+  for ( const auto& state : _robot->GetStateHistory()->GetRawStates() ) {
+    if ( IN_RANGE(state.first, firstMsgTime, lastMsgTime) ) {
+      const auto& histProxData = state.second.GetProxSensorData();
+      if (histProxData.foundObject != prevFoundObject) {
+        ++nSuddenTransitions; 
+      } else if (histProxData.foundObject) {
+        if (abs(prevDistance_mm - (int)histProxData.distance_mm) > kNoiseTolerance_mm) {
+          ++nSuddenTransitions;
+        } 
+        prevDistance_mm = histProxData.distance_mm;
+      }
+
+      prevFoundObject = histProxData.foundObject;
+      allReadingsTooClose &= (histProxData.foundObject && histProxData.distance_mm < kLiftSensorDistance_mm);
+    }
+  }
+
+  const float samplePeriod_s    = kLiftCalibrationWindow_ms / 1000.f;
+  const bool  readingsDithering = FLT_GT(nSuddenTransitions / samplePeriod_s, kMaxSensorFlicker_Hz);
+  const bool  needsToCalibrate  = readingsDithering || allReadingsTooClose;
+
+  // only send a calibration if we are not carrying an object
+  if (needsToCalibrate && !_robot->GetCarryingComponent().IsCarryingObject()) {
+    // fire DAS event
+    DASMSG(robot.bad_prox_data, "robot.bad_prox_data", "Calibration found noisy data although signal quality is good");
+    DASMSG_SET(s1, allReadingsTooClose ? "true" : "false", "readings too close");
+    DASMSG_SET(s2, readingsDithering   ? "true" : "false", "readings dithering");
+    DASMSG_SEND();
+  }
+
+  return needsToCalibrate;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

@@ -89,7 +89,7 @@ struct client_ctx {
   pthread_t ipc_thread;
   pthread_mutex_t ipc_mutex;
   int waiting_for_delete;
-  
+
   int fd;
   int is_running;
   int request_close;
@@ -128,7 +128,7 @@ static ssize_t read_fd(int fd, void *ptr, size_t nbytes, int *recvfd)
   struct msghdr msg;
   struct iovec iov[1];
   ssize_t n;
-  int newfd;
+
   *recvfd = -1; /* default: descriptor was not passed */
 
   union {
@@ -176,29 +176,6 @@ static int configure_socket(int socket)
   const int status = setsockopt(socket, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable));
 
   return status;
-}
-
-static ssize_t writen(int fd, const void *vptr, size_t n)
-{
-  ssize_t nleft;
-  ssize_t nwritten;
-  const char *ptr;
-
-  ptr = vptr;
-  nleft = n;
-  while (nleft > 0) {
-    if ( (nwritten = write(fd, ptr, nleft)) <= 0) {
-      if (nwritten < 0 && errno == EINTR) {
-        nwritten = 0;   /* and call write() again */
-      } else {
-        return (-1);    /* error */
-      }
-
-      nleft -= nwritten;
-      ptr += nwritten;
-    }
-  }
-  return (n);
 }
 
 static int socket_connect(int *out_fd)
@@ -320,8 +297,13 @@ static int mmap_camera_capture_buf(struct client_ctx *ctx)
   }
 
   size_t buf_size = mem_info->size;
+
+  #if !defined(NDEBUG)
+  // Buffer size should always be a multiple of 4K block size
   size_t buf_size_align = (buf_size + 4095U) & (~4095U);
   assert(buf_size == buf_size_align);
+  #endif
+
   uint8_t *buf = mmap(NULL,
                       buf_size,
                       PROT_READ | PROT_WRITE,
@@ -387,7 +369,7 @@ static void lock_all_slots(struct client_ctx *ctx)
   if (data == NULL) {
     return;
   }
-  
+
   anki_camera_buf_header_t *header = (anki_camera_buf_header_t *)data;
 
   for (uint32_t slot = 0; slot < ANKI_CAMERA_MAX_FRAME_COUNT; ++slot) {
@@ -409,7 +391,7 @@ static void unlock_all_slots(struct client_ctx *ctx)
   if (data == NULL) {
     return;
   }
-  
+
   anki_camera_buf_header_t *header = (anki_camera_buf_header_t *)data;
 
   for (uint32_t slot = 0; slot < ANKI_CAMERA_MAX_FRAME_COUNT; ++slot) {
@@ -431,7 +413,7 @@ static void unlock_slots_except(struct client_ctx *ctx, uint32_t slot)
   if (data == NULL) {
     return;
   }
-  
+
   anki_camera_buf_header_t *header = (anki_camera_buf_header_t *)data;
 
   for(int i = 0; i < ANKI_CAMERA_MAX_FRAME_COUNT; i++)
@@ -500,7 +482,7 @@ static int remove_locked_slot(struct client_ctx *ctx, uint32_t frame_id, uint32_
 static int write_outgoing_data(struct client_ctx *ctx)
 {
   uint32_t i;
-  int rc;
+  int rc = 0;
   uint32_t msg_count = ctx->tx_cursor;
   for (i = 0; i < msg_count; ++i) {
     struct anki_camera_msg *msg = &(ctx->tx_packets[i]);
@@ -526,10 +508,10 @@ static int enqueue_message(struct client_ctx *ctx, anki_camera_msg_id_t msg_id)
     loge("%s: tx message buffer full, dropping message %d", __func__, msg_id);
     return -1;
   }
-  
+
   struct anki_camera_msg *msg = &ctx->tx_packets[cursor];
   msg->msg_id = msg_id;
-  ctx->tx_cursor = cursor + 1;     
+  ctx->tx_cursor = cursor + 1;
   pthread_mutex_unlock(&ctx->ipc_mutex);
   logv("%s: enqueue_message: %d", __func__, msg_id);
   return 0;
@@ -559,7 +541,7 @@ static int enqueue_message_with_payload(struct client_ctx *ctx, anki_camera_msg_
     return -1;
   }
   memcpy(msg->payload, buf, num);
-  
+
   ctx->tx_cursor = cursor + 1;
   pthread_mutex_unlock(&ctx->ipc_mutex);
   logv("%s: enqueue_message: %d", __func__, msg_id);
@@ -613,7 +595,7 @@ static int process_one_message(struct client_ctx *ctx, struct anki_camera_msg *m
 
     s_camera_handle.current_frame_id = UINT32_MAX;
     s_camera_handle.last_frame_slot = UINT32_MAX;
-    
+
     // payload contains len
     uint32_t buffer_size;
     memcpy(&buffer_size, msg->payload, sizeof(buffer_size));
@@ -640,7 +622,7 @@ static int process_one_message(struct client_ctx *ctx, struct anki_camera_msg *m
 static int process_incoming_messages(struct client_ctx *ctx)
 {
   uint32_t i;
-  int rc;
+  int rc = 0;
   uint32_t msg_count = ctx->rx_cursor;
   for (i = 0; i < msg_count; ++i) {
     struct anki_camera_msg *msg = &(ctx->rx_packets[i]);
@@ -757,7 +739,7 @@ static int event_loop(struct client_ctx *ctx)
   {
     return -1;
   }
-  
+
   return rc;
 }
 
@@ -819,14 +801,14 @@ int camera_init(struct anki_camera_handle **camera)
   {
     gpio_close(s_pwdn_gpio);
   }
-  
+
   int res = gpio_create(PWDN_PIN, gpio_DIR_OUTPUT, gpio_LOW, &s_pwdn_gpio);
   if(res < 0)
   {
     loge("%s: failed to create pwdn gpio %d", __func__, res);
     return -1;
   }
-  
+
   // configure logging
   setAndroidLoggingTag("anki-cam-client");
 
@@ -844,7 +826,7 @@ int camera_init(struct anki_camera_handle **camera)
   }
 
   pthread_mutex_init(&client->ipc_mutex, NULL);
-  
+
   if (pthread_create(&client->ipc_thread, NULL, camera_client_thread, &s_camera_handle)) {
     loge("%s: error creating thread: %s", __func__, strerror(errno));
     return -1;
@@ -904,7 +886,7 @@ void camera_pause(struct anki_camera_handle *camera, int pause)
       return;
     }
   }
-  
+
   if(pause)
   {
     // Camera is being paused so all existing images should be marked as invalid
@@ -950,7 +932,7 @@ int camera_destroy(struct anki_camera_handle* camera)
   {
     return 0;
   }
-  
+
   pthread_mutex_destroy(&CAMERA_HANDLE_P(camera)->camera_client.ipc_mutex);
 
   struct client_ctx *client = &CAMERA_HANDLE_P(camera)->camera_client;
@@ -968,7 +950,7 @@ int camera_destroy(struct anki_camera_handle* camera)
   }
 
   client->waiting_for_delete = 0;
-  
+
   return 1;
 }
 
@@ -995,7 +977,7 @@ int camera_frame_acquire(struct anki_camera_handle *camera,
   // Lock all slots so we can iterate over them and find the one
   // that has a timestamp closest to or before frame_timestamp
   lock_all_slots(client);
-  
+
   // Start with the most recently written frame slot
   uint32_t wSlot = atomic_load(&header->locks.write_idx);
   if(wSlot >= ANKI_CAMERA_MAX_FRAME_COUNT)
@@ -1014,8 +996,6 @@ int camera_frame_acquire(struct anki_camera_handle *camera,
   uint64_t bestTime = 0;
   uint32_t bestSlot = wSlot;
 
-  uint32_t lock_status = 0;
-  
   for(uint32_t slot = 0; slot < ANKI_CAMERA_MAX_FRAME_COUNT; slot++)
   {
     uint32_t fid = 0;
@@ -1044,8 +1024,8 @@ int camera_frame_acquire(struct anki_camera_handle *camera,
       bestSlot = slot;
       bestTime = frame->timestamp;
     }
-  }  
-  
+  }
+
   // lock best slot for reading
   uint32_t slot = bestSlot;
 
@@ -1080,7 +1060,7 @@ int camera_frame_acquire(struct anki_camera_handle *camera,
 
   // Unlock the rest of the slots
   unlock_slots_except(client, slot);
-  
+
   if (out_frame != NULL) {
     *out_frame = frame;
   }
@@ -1133,7 +1113,7 @@ anki_camera_status_t camera_status(struct anki_camera_handle *camera)
   {
     return ANKI_CAMERA_STATUS_OFFLINE;
   }
-  
+
   struct client_ctx *client = &CAMERA_HANDLE_P(camera)->camera_client;
   if (client == NULL) {
     return ANKI_CAMERA_STATUS_OFFLINE;
@@ -1148,12 +1128,12 @@ int camera_set_exposure(struct anki_camera_handle* camera, uint16_t exposure_ms,
   anki_camera_exposure_t exposure;
   exposure.exposure_ms = exposure_ms;
   exposure.gain = gain;
-  
+
   anki_camera_msg_params_payload_t payload;
   payload.id = ANKI_CAMERA_MSG_C2S_PARAMS_ID_EXP;
   memcpy(payload.data, &exposure, sizeof(exposure));
 
-  return enqueue_message_with_payload(&CAMERA_HANDLE_P(camera)->camera_client, 
+  return enqueue_message_with_payload(&CAMERA_HANDLE_P(camera)->camera_client,
                                       ANKI_CAMERA_MSG_C2S_PARAMS, &payload, sizeof(payload));
 }
 
@@ -1163,12 +1143,12 @@ int camera_set_awb(struct anki_camera_handle* camera, float r_gain, float g_gain
   awb.r_gain = r_gain;
   awb.g_gain = g_gain;
   awb.b_gain = b_gain;
-  
+
   anki_camera_msg_params_payload_t payload;
   payload.id = ANKI_CAMERA_MSG_C2S_PARAMS_ID_AWB;
   memcpy(payload.data, &awb, sizeof(awb));
 
-  return enqueue_message_with_payload(&CAMERA_HANDLE_P(camera)->camera_client, 
+  return enqueue_message_with_payload(&CAMERA_HANDLE_P(camera)->camera_client,
                                       ANKI_CAMERA_MSG_C2S_PARAMS, &payload, sizeof(payload));
 }
 
@@ -1177,12 +1157,12 @@ int camera_set_capture_format(struct anki_camera_handle* camera, anki_camera_pix
   // Lock all slots to prevent access to the shared memory that is
   // going to be deallocated by changing the capture format
   lock_all_slots(&CAMERA_HANDLE_P(camera)->camera_client);
-  
+
   anki_camera_msg_params_payload_t payload;
   payload.id = ANKI_CAMERA_MSG_C2S_PARAMS_ID_FORMAT;
   memcpy(payload.data, &format, sizeof(format));
 
-  return enqueue_message_with_payload(&CAMERA_HANDLE_P(camera)->camera_client, 
+  return enqueue_message_with_payload(&CAMERA_HANDLE_P(camera)->camera_client,
                                       ANKI_CAMERA_MSG_C2S_PARAMS, &payload, sizeof(payload));
 }
 
@@ -1193,8 +1173,6 @@ int camera_set_capture_snapshot(struct anki_camera_handle* camera,
   payload.id = ANKI_CAMERA_MSG_C2S_PARAMS_ID_SNAPSHOT;
   memcpy(payload.data, &start, sizeof(start));
 
-  return enqueue_message_with_payload(&CAMERA_HANDLE_P(camera)->camera_client, 
+  return enqueue_message_with_payload(&CAMERA_HANDLE_P(camera)->camera_client,
                                       ANKI_CAMERA_MSG_C2S_PARAMS, &payload, sizeof(payload));
 }
-
-

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h1>EPQ Guidelines</h1>
+
+<p>
+EPQ is an optional energy-based filter that can be used with phrasespotting applications. Specifically, EPQ is available with both fixed-phrase and UDT phrasespotting (both with and without speaker verification). EPQ helps in certain situations, however it has some tradeoffs so it's important to know when to use it. </p>
+
+<p>
+By default, EPQ is disabled when performing speaker-independent recognition, but EPQ is enabled for UDT and Enrolled Fixed-Phrase (EFT) speaker-verification recognizers (see parameter <a href='params.html#epqEnable'>epqEnable</a>). The default minimum EPQ threshold (see parameter <a href='params.html#epqMin'>epqMin</a>) is -5 dB SNR; which is only relevant when EPQ is enabled. Both epqEnable and epqMin can be configured using the <a href='thfRecogConfigGet.html'>thfRecogConfigGet</a> and <a href='thfRecogConfigSet.html'>thfRecogConfigSet</a> functions.</p>
+
+<p>
+Basically, EPQ works by only returning phrasespot recognition results that have acceptable signal-to-noise (SNR) levels. The minimum SNR threshold is defined by the <a href='params.html#epqMin'>epqMin</a> parameter. Any recognition result with an SNR measurement below the minimum EPQ threshold is simply not reported.</p>
+
+<p>The SNR measurement compares the energy in the 'signal' (i.e., phrasespot trigger) with the energy in the background 'noise' region preceding the trigger. The SNR calculation assumes the background noise is additive (i.e., noise also occurs within the trigger region). NOTE: If the latter assumption is untrue it will skew the SNR measurement significantly.</p>
+
+</p>
+<h3>So when should EPQ be used? </h3>
+
+EPQ is intended for use in continuous-listening phrasespotting scenarios where <b>ALL</b> the following requirements are valid :-
+<ul>
+
+<li>No user speech occurs immediately before the trigger.
+
+<li>The phrasespot trigger should be louder than the background noise conditions.
+
+<li>Background noise is additive in the phrasespot trigger region.
+</ul>
+
+<p>If all the above criteria are met, then a positive SNR measurement should result, making it suitable for EPQ usage. If <b>ANY</b> of the above criteria are not met, we recommend not using EPQ.</p>
+
+<p>Some examples scenarios where EPQ usage is NOT recommended include the following :-
+
+<ul>
+<li>The phrasespot trigger might be embedded in a speech context.
+
+<li>Spotted commands where there may be a tendency to add extraneous speech.
+
+<li>A system prompt (e.g., a beep) precedes the phrasespot trigger.
+
+<li>Highly variable background-noise conditions are expected.
+
+<li>Low SNR conditions are expected.
+
+<li>Full-duplex mode where audio input and output may occur simultaneously.
+</ul>
+
+<p>In typical real world scenarios, the preceding noise levels are likely to be somewhat unpredictable. EPQ can tolerate some noise and background speech in front of a trigger, but ultimately relies on the trigger being louder than the background. The minimum EPQ threshold is conservatively set to -5 dB. This allows for fluctuations in SNR levels and possible variations in energy measurements. Care should be taken when adjusting this threshold to avoid excessive false rejects. Testing in the target noise environment is the best way to fine tune this setting.</p>
+
+<!----------------------------------------------------------------------- -->
+</body>

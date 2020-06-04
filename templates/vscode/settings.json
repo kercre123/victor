@@ -64,5 +64,11 @@
         "cpplite",
         "cxx",
         "library"
-    ]
+    ],
+    "lldb.dbgconfig": {
+        "host": "ANKI-ROBOT-HOST-IP",
+        "bin": "${workspaceFolder}/_build/vicos/Debug/bin",
+        "lib": "${workspaceFolder}/_build/vicos/Debug/lib"
+    },
+    "editor.tabSize": 8
 }

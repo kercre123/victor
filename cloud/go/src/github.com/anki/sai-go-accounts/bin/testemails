@@ -1,0 +1,107 @@
+#!/usr/bin/env bash
+#
+# THIS SCRIPT WILL MODIFY THE DATABASE AND SEND EMAILS
+#
+# This script will take an email address as a parameter, and will send all configured emails
+# to that email address.
+#
+# Use:
+if [ -z "$EMAIL" ] || [ -z "$URL" ] || [ -z "$APPKEY" ] || [ -z "$EMAIL_LANG" ]
+then
+    echo "an ENV Parameter is missing - Use: EMAIL=<your email address> APPKEY=<App Key> URL=https://accounts-tom.api.anki.com EMAIL_LANG=en-US ./testemails"
+    exit 1
+fi
+
+function update_username {
+         RAND=$(openssl rand -base64 3)
+         USERNAME="$1-$RAND"
+}
+
+function update_data {
+         DATA=$GENERIC_DATA
+         DATA=${DATA/EMAIL/$EMAIL}
+         DATA=${DATA/@/+$STEP_NAME@}
+         DATA=${DATA/USERNAME/$USERNAME}
+         DATA=${DATA/DOB/$STEP_DOB}
+         DATA=${DATA/APP_CREATED/$APP_CREATED}
+         DATA=${DATA/EMAIL_LANG/$EMAIL_LANG}
+}
+
+function reset_globals {
+    USERNAME=""
+    USER_ID=""
+    SESSION_ID=""
+    STEP_DOB="2010-01-01"
+    APP_CREATED="drive"
+}
+
+function create_account {
+    curl -o /tmp/user.json -X POST -H "Anki-App-Key: $APPKEY" -H "Content-Type: application/json;charset=utf-8" --data "$1" "$URL"/1/users 
+    USER_ID=$(cat /tmp/user.json |  perl -ne '/"user_id":"([^"]+)/ && print "$1"')
+    SESSION_ID=$(cat /tmp/user.json |  perl -ne '/"session_token":"([^"]+)/ && print "$1"')
+}
+
+function reset_password {
+    curl -X POST -H "Anki-App-Key: $APPKEY" --data-urlencode "username=$USERNAME" "$URL"/1/reset_user_password
+}
+
+function update_account {
+    curl -X PATCH -H "Anki-App-Key: $APPKEY" -H "Authorization: Anki $SESSION_ID" -H "Content-Type: application/json;charset=utf-8" --data '{"password":"changeme"}' "$URL"/1/users/$USER_ID
+}
+
+#############
+# DATA BLOCKS
+#############
+GENERIC_DATA='{"email": "EMAIL", "email_lang": "EMAIL_LANG", "username": "USERNAME","dob": "DOB","created_by_app_name": "APP_CREATED","created_by_app_version": "2.3.1","created_by_app_platform": "ios 6.0.1; iPhone5s","drive_guest_id": "1234-1234-1234-1234","password": "tomtomtom","given_name": "Tom","family_name": "Eliaz","gender": "M"}'
+
+######## STEP 1 # CREATE ADULT FROM APP #########
+STEP="1"
+STEP_NAME="CreateAdultFromApp"
+update_username $STEP
+
+STEP_DOB="1979-01-01"
+APP_CREATED="drive"
+update_data
+create_account "$DATA"
+reset_password
+update_account
+reset_globals
+#
+######## STEP 2 # CREATE CHILD FROM APP #########
+STEP="2"
+STEP_NAME="CreateChildFromApp"
+update_username $STEP
+
+STEP_DOB="2014-01-01"
+APP_CREATED="drive"
+update_data
+create_account "$DATA"
+reset_password
+update_account
+reset_globals
+
+######## STEP 3 # CREATE ADULT FROM WEB #########
+STEP="3"
+STEP_NAME="CreateAdultFromWeb"
+update_username $STEP
+
+STEP_DOB="1979-01-01"
+APP_CREATED="web"
+update_data
+create_account "$DATA"
+reset_password
+update_account
+reset_globals
+
+######## STEP 4 # CREATE CHILD FROM WEB #########
+STEP="4"
+STEP_NAME="CreateChildFromWeb"
+update_username $STEP
+
+STEP_DOB="2014-01-01"
+APP_CREATED="web"
+update_data
+create_account "$DATA"
+reset_password
+update_account
+reset_globals

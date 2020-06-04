@@ -135,6 +135,7 @@ void BehaviorAnimSequence::StartPlayingAnimations()
     IActionRunner* action = GetAnimationAction();    
     DelegateIfInControl(action, [this]() {
       CallToListeners();
+      CancelSelf();
     });
   }
 }

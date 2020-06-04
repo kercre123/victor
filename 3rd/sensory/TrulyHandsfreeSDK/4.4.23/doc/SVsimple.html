@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+
+<h2>How to Perform Speaker Verification (Deprecated API)</h2>
+
+
+This <em>DEPRECATED</em> approach to speaker verification utilizes a much
+simpler API and is preferred over the low-level approach described in the
+following section. However, since it is deprecated, the process described
+above using the "Adapt" functions is preferred over this method.
+
+<h3>Step 1: Initialize a Recognizer for Speaker Verification</h3>
+<p>Text-dependent speaker verification requires creating and initializing a standard phrasespot recognizer specific to the target phrase. Typically this involves calls to <a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a>, <a href="thfSearchCreateFromFile.html">thfSearchCreateFromFile</a> and <a href="thfRecogInit.html">thfRecogInit</a>. Ideally, the search and acoustic model are customized for the target phrase.
+
+Once this recognizer object exists, it can be configured for speaker verification by calling
+<a href="thfSpeakerCreateFromFile.html">thfSpeakerCreateFromFile</a> with arguments specifying how many recordings of the phrase are
+desired for enrollment and the speaker verification <em>background</em> model. The background model is used to identify speaker-specific characteristics that provide distinguishing features from the general population. The background model is phrase-specific. Contact Sensory for assistance in creating a phrase-specific background model.
+<p>
+When implementing an enrolled fixed-phrase (EFT) speaker verification system, the
+recommended search point will usually be a good search point to use in most
+cases.  (The recommended search point for EFT will often be different from
+the best-performing search point in non-adapted phrasespotting, but results
+after enrollment will be much better overall.)
+The recommended search point will usually yield an FR rate of about 10% in
+a variety of noise types and conditions after the user enrolls.  This
+recommended point will also yield a reduction in false accepts that is 30
+to 600 times lower than the FA rate indicated for that (non-adapted) search
+point on the frontier graph.
+<p>
+If the developer desires to reduce FR, they may choose a looser (higher)
+point.  The relative percentage of performance change on old and new FR
+search points will approximately represent the relationship of FR performance
+for the enrolled trigger using the old and new search points.  FA will
+increase by roughly that same percentage relationship.  For accurate
+assessment of such changes, volume batch testing (including the enrollment
+process) should be conducted.
+<p>
+NOTE: a phrase-specific background model is tied to a specific recognizer. Care should be taken to use acoustic, search and background models that are designed to work together. Using mis-matched models will result in an error. </p>
+
+NOTE: the phrasespotting delay parameter should <em>not</em> be 0 or PHRASPOT_DELAY_ASAP for speaker verification; performance will be sub-optimal with these settings.
+
+<h3>Step 2: Check Individual Recordings (Optional but Recommended)</h3>
+Typically, the enrollment recordings will be either loaded from file or obtained through a live recording process.  Each <em>individual</em> enrollment recording can be optionally evaluated for potential issues by calling <a href="thfCheckRecording.html">thfCheckRecording</a>. This will provide feedback on audio quality which may be useful in deciding whether to use the existing audio or re-record prior to enrollment.
+
+<h3>Step 3: Check Set of Enrollment Recordings</h3>
+Once all enrollment recordings for a phrase have been collected, the set can be evaluated collectively and assessed for consistency and quality using <a href="thfSpeakerCheckEnrollments.html">thfSpeakerCheckEnrollments</a>. This provides a more detailed evaluation than is possible with <a href="thfCheckRecording.html">thfCheckRecording</a>. The detailed feedback provided can be used to decide whether to re-record any or all of the enrollment set.</p>
+
+NOTE: The enrollment checking thresholds can be configured as needed using  <a href="thfRecogConfigSet.html">thfRecogConfigSet</a>.
+
+<h3>Step 4: Learning Recordings</h3>
+
+Now the enrollment recordings have been collected and checked for suitability, it's time to conclude the enrollment process and attempt to learn the speaker's voice characteristics. </p><p>
+
+First, some parameters that will affect final performance (false reject, false accept, and imposter accept rates) may be set.  The default values are generally suitable, but some triggers will work better with non-default settings.  It is up to the application developer to determine the best settings for a particular trigger. Parameters can be set using
+<a href='thfSpeakerConfigSet.html'>thfSpeakerConfigSet</a> and <a href="thfPhrasespotConfigSet.html">thfPhrasespotConfigSet</a>.</p><p>
+
+Learning the speaker's voice characteristics is performed by calling <a href="thfSpeakerEnroll.html">thfSpeakerEnroll</a>. This returns a speaker-adapted search and acoustic model.</p>
+
+NOTE: in general, a minimum of three enrollment recordings is recommended per phrase. More recordings are better, with diminishing returns beyond five.
+<p>
+NOTE: EPQ is turned on during the call to
+<a href="thfSpeakerEnroll.html">thfSpeakerEnroll</a>.  EPQ can be turned
+off with a subsequent call to
+<a href="thfRecogConfigSet.html">thfRecogConfigSet</a> with the REC_EPQ_ENABLE key.
+See the  <a href="epq.html">EPQ Guidelines</a> for more information about EPQ.
+
+
+<h3>Step 5: Save Speaker-Adapted Models (Optional)</h3>
+
+<!--
+The newly adapted search and acoustic models <em>MUST</em> be saved to file using <a href="thfSpeakerSaveRecogToFile.html">thfSpeakerSaveRecogToFile</a> and re-loaded before use.
+Additionally, the models can also be saved in <em>embedded</em> format for integration in deeply-embedded DSP-type applications, using <a href="thfSaveEmbedded.html">thfSaveEmbedded</a>.
+-->
+The newly adapted search and acoustic models can be saved to file using  <a href="thfSpeakerSaveRecogToFile.html">thfSpeakerSaveRecogToFile</a> and re-loaded at any time in the future; they can be treated like any other fixed-phrase search and recognizer, but they will be enabled for speaker verification.
+Additionally, the models can also be saved in <em>embedded</em> format for integration in deeply-embedded DSP-type applications, using <a href="thfSaveEmbedded.html">thfSaveEmbedded</a>.
+
+
+<h3>Step 6: Perform Speaker Verification</h3>
+<p>
+Now that we have enrolled and created the necessary speaker-adapted models, they can be used to perform speaker verification. This process is very similar to traditional phrasespotting with an additional post-recognition verification step.
+
+First, load the speaker-adapted models using
+ <a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a> and <a href="thfSearchCreateFromFile.html">thfSearchCreateFromFile</a>. Initialize the phrasespot recognizer as normal using <a href="thfRecogInit.html">thfRecogInit</a> and configure any relevant parameters, such as <em>phrasespot delay</em> using <a href="thfPhrasespotConfigSet.html">thfPhrasespotConfigSet</a>.  Next, begin feeding audio into the recognizer using <a href="thfRecogPipe.html">thfRecogPipe</a> until the <em>RECOG_DONE</em> status is returned indicating a result is available, followed by a call to <a href="thfRecogResult.html">thfRecogResult</a> to retrieve the recognized phrase (which should be the enrolled phrase).
+
+Now we are ready to perform the speaker verification step. Call <a href="thfRecogSVscore.html">thfRecogSVscore</a> to obtain a speaker verification score and compare this score with the phrase-specific speaker verification threshold to determine whether to accept or reject the speaker.</p>
+
+NOTE: ideally the speaker verification threshold should be determined empirically on a case-by-case, phrase-specific basis. When using the generic speaker verification background model (e.g., svsid_1_1.raw), a value of 0.60 is often a good first approximation.
+</p>
+
+<h3>Step 7: Cleaning Up</h3>
+<p>
+After recognition, call <a href="thfRecogReset.html">thfRecogReset</a> if you intend to reuse the recognizer. Otherwise, call <a href="thfRecogDestroy.html">thfRecogDestroy</a> and <a href="thfSearchDestroy.html">thfSearchDestroy</a> as normal to destroy the model and free memory.
+</p>
+
+</body>

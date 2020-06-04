@@ -1,19 +1,19 @@
 if(VICOS)
-  set(OPENCV_3RDPARTY_LIB_DIR ${ANKI_EXTERNAL_DIR}/opencv/vicos/3rdparty/lib)
+  set(OPENCV_3RDPARTY_LIB_DIR ${ANKI_THIRD_PARTY_DIR}/opencv/vicos/3rdparty/lib)
 
-  set(OPENCV_LIB_DIR ${ANKI_EXTERNAL_DIR}/opencv/vicos/lib)
+  set(OPENCV_LIB_DIR ${ANKI_THIRD_PARTY_DIR}/opencv/vicos/lib)
 
   set(OPENCV_INCLUDE_PATHS
-      ${ANKI_EXTERNAL_DIR}/opencv
-      ${ANKI_EXTERNAL_DIR}/opencv/vicos
-      ${ANKI_EXTERNAL_DIR}/opencv/vicos/include)
+      ${ANKI_THIRD_PARTY_DIR}/opencv
+      ${ANKI_THIRD_PARTY_DIR}/opencv/vicos
+      ${ANKI_THIRD_PARTY_DIR}/opencv/vicos/include)
 
 else()
-  set(OPENCV_3RDPARTY_LIB_DIR ${ANKI_EXTERNAL_DIR}/opencv/mac/3rdparty/lib/Release)
+  set(OPENCV_3RDPARTY_LIB_DIR ${ANKI_THIRD_PARTY_DIR}/opencv/mac/3rdparty/lib/Release)
 
-  set(OPENCV_LIB_DIR ${ANKI_EXTERNAL_DIR}/opencv/mac/lib/Release)
+  set(OPENCV_LIB_DIR ${ANKI_THIRD_PARTY_DIR}/opencv/mac/lib/Release)
 
-  set(OPENCV_INCLUDE_PATHS ${ANKI_EXTERNAL_DIR}/opencv/mac)
+  set(OPENCV_INCLUDE_PATHS ${ANKI_THIRD_PARTY_DIR}/opencv/mac)
 
 endif()
 
@@ -44,7 +44,7 @@ endif()
 foreach(OPENCV_MODULE ${OPENCV_LIBS})
   add_library(${OPENCV_MODULE} ${LIB_TYPE} IMPORTED)
 
-  set(MODULE_INCLUDE_PATH "${ANKI_EXTERNAL_DIR}/opencv/modules/${OPENCV_MODULE}/include")
+  set(MODULE_INCLUDE_PATH "${ANKI_THIRD_PARTY_DIR}/opencv/modules/${OPENCV_MODULE}/include")
 
   set(include_paths
       ${MODULE_INCLUDE_PATH}

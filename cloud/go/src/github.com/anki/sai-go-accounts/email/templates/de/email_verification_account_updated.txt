@@ -1,0 +1,19 @@
+{{ define "content" }}
+
+Ein Anki Konto, dass dieser Email-Adresse zugeordnet ist, wurde aktualisiert.
+
+Wenn Du der Meinung bist, dass Du diese E-Mail
+irrtümlicherweise erhalten hast, oder Fragen zu
+Deinem Konto hast, bitte kontaktiere uns unter: https://anki.com/support/contact
+
+– Das Anki-Team
+
+**********************************************
+
+Diese E-Mail wurde automatisch generiert.
+
+Datenschutzerklärung: https://anki.com/privacy
+
+Diese E-Mail wurde von Anki, Inc {{ .ToEmail }} gesendet.
+55 2nd Street, San Francisco, CA 94105
+{{ end }}

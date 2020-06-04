@@ -1,5 +1,5 @@
 
-set(SPEEXDSP_HOME "${ANKI_EXTERNAL_DIR}/speexdsp")
+set(SPEEXDSP_HOME "${ANKI_THIRD_PARTY_DIR}/speexdsp")
 
 set(PLATFORM_DIR "")
 

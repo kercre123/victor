@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h2>Improving Accuracy: Tuning Pronunciations</h2>
+
+<p>The recognizer needs to know how to pronounce the words in the
+recognition vocabulary. The key to good recognition is to accurately
+model word pronunciations and their variations. In a
+speaker-independent system, there may be many ways that different
+speakers say the same words. The extent to which we can capture the
+pronunciation variability of target users will impact recognition
+accuracy. However, allowing for too much variability increases the
+complexity of the recognizer, which results in lower accuracy. Only
+those pronunciation alternates that are statistically significant should be added.
+</p>
+
+<p> A common source of pronunciations is a commercial dictionary. Some
+dictionaries are better than others and some will list
+<em>idealized</em> or <em>proper</em> pronunciations that are seldom
+used by speakers of the language. E.g. the word <em>deleted</em> might
+be listed with a pronunciation such as <em>/d I l i: th ^ d/</em>, when
+it is usually pronounced <em>/d I l i: th_( & d/</em>. Notice the
+<em>proper</em> t that is usually flapped and the final vowel which
+changes from its <em>proper</em> pronouncement as a back vowel to a
+under-emphasized <em>schwa</em>. Accuracy will improve when your
+pronunciations are closer to that actually used by speakers. </p>
+
+<p>It is recommended that you specify pronunciations explicitly when
+defining a vocabulary. This allows you to modify and refine them
+during the application development process. Pronunciation tuning is
+best done empirically as either a batch process or using live
+input. It would typically involve carefully reviewing cases where the
+recognizer yields the incorrect result, paying attention to both the
+pronunciation of the target phrase and actual phrase recognized and
+modifying them as appropriate. In highly confusable cases, this may
+involve actually modifying vocabulary itself. Note that the recognizer
+can be configured to return the actual phonemes recognized, which can
+be useful during the development and tuning process (see <a
+href="thfRecogInit.html">thfRecogInit</a>). Through an iterative
+process, it's usually possible to improve overall accuracy
+significantly by addressing frequent erroneous cases. </p>
+
+<p><b>NOTE:</b> Pronunciation tuning requires familiarity with both the
+<a href="wordmodels.html">Syntax of Pronunciations</a> and with the Worldbet phonetic alphabet (see language-specific documentation for a list of Worldbet symbols supported by a particular language pack).</p>
+
+<!----------------------------------------------------------------------- -->
+</body>

@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h2>Syntax of Pronunciation Specification</h2>
+
+The phonetic symbols used for pronunciation specification are based on the Worldbet symbol set (see language-specific documentation for a complete list of Worldbet symbols for  available languages).
+
+<p>The actual phonetic symbols vary with language and dialect, and are
+determined by which acoustic model is selected for use by the
+recognizer. Refer to the language-specific documentation accompanying the acoustic model(s)
+for a list of supported phonemes.</p>
+
+
+The syntax of a word pronunciation comprises a series of phonemes, separated by one of the following optional symbols:
+<ul>
+<li>() Parentheses enclose items that are grouped together.
+<li>[] Square brackets enclose optional items.
+<li>| A pipe symbol separates alternative items.
+</ul>
+
+<p>
+Certain phonemes may include a stress suffix, where '1' denotes primary stress and '2' denotes secondary stress. For example, 'A' is unstressed, 'A1' is primary stress and 'A2' is secondary stress. Stress markings are important when phonology rules are applied internally. Not all phonemes can be stressed. Refer to the language-specific documentation for the phonetic alphabet and list of stressable phonemes.
+</p>
+
+<p>A single period '.' is used to denote a syllable boundary including the start and end of a word's pronunciation. Syllable boundaries are used internally during the application of phonology rules. In multi-word phrases, it is important to preserve the start and end boundary for each word, thus resulting in two adjacent periods, for example '. h E . l oU1 . . w 3r1 l d .'</p>
+
+<p>
+Example pronunciation specifications of English words:
+<ul><table>
+<tr><th>Word</th><th>Pronunciation</th></tr>
+<tr><td>vegetarian</td><td>. v E . dZ I . t E1 9 . i . & n .</td></tr>
+<tr><td>pepperoni</td><td>. p E1 . p & . 9 oU . n i .</td></tr>
+<tr><td>cheese</td><td>. tS i1 z .</td></tr>
+<tr><td>pizza</td><td>. p i1 t . s & .</td></tr>
+<tr><td>hello world</td><td>. h E . l oU1 . [. .pau .] . w 3r1 l d .</td></tr>
+</table></ul>
+</p>
+
+<p>It is possible to model single words or entire phrases as a single
+pronunciation unit, as in the <em>hello world</em> example above.  The
+<em>.pau</em> phoneme is used to represent <em>silence</em>, and in this
+example we allow for the speaker to optionally pause between <em>hello</em>
+and <em>world</em>, by inserting an optional <em>.pau.</em> between the
+pronunciation of each, as indicated by the square parentheses.
+</p>
+
+<p>Each phoneme has an implied duration model, which is based on the
+statistics of that phoneme in the current language and dialect.  In
+the case of the special phoneme <em>.pau</em>, the associated duration models
+allow for anything longer than 10ms and shorter than 5000ms.
+</p>
+<!----------------------------------------------------------------------- -->
+</body>

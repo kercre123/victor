@@ -72,18 +72,18 @@ symlink_target(TARGET test_engine
 # Set up symlinks to satisfy webots dynamic loading
 #
 symlink_target(TARGET test_engine
-  SRC ${WEBOTS_HOME}/lib/libController.dylib
-  DST $<TARGET_FILE_DIR:cozmo_engine>/lib/
+  SRC ${WEBOTS_HOME}/lib/controller/libController.dylib
+  DST $<TARGET_FILE_DIR:cozmo_engine>/lib/controller/
 )
 
 symlink_target(TARGET test_engine
-  SRC ${WEBOTS_HOME}/lib/libCppController.dylib
-  DST $<TARGET_FILE_DIR:cozmo_engine>/lib/
+  SRC ${WEBOTS_HOME}/lib/controller/libCppController.dylib
+  DST $<TARGET_FILE_DIR:cozmo_engine>/lib/controller/
 )
 
 symlink_target(TARGET test_engine
-  SRC ${WEBOTS_HOME}/lib/libode.dylib
-  DST $<TARGET_FILE_DIR:cozmo_engine>/lib/
+  SRC ${WEBOTS_HOME}/lib/webots/libode.dylib
+  DST $<TARGET_FILE_DIR:cozmo_engine>/lib/webots/
 )
 
 if (MACOSX)

@@ -766,10 +766,14 @@ static void SignalCallback(struct ev_loop* loop, struct ev_signal* w, int revent
 {
   logi("Exiting for signal %d", w->signum);
 
+  // Deinitialize Wifi
+  Anki::Wifi::Deinitialize();
+
   if(_daemon != nullptr) {
     _daemon->Stop();
   }
 
+  // Stop timers and end our ev loop.
   ev_timer_stop(sLoop, &sTimer);
   ev_unloop(sLoop, EVUNLOOP_ALL);
   ExitHandler();

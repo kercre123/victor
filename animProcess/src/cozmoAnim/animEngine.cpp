@@ -32,6 +32,7 @@
 
 #include "coretech/common/engine/opencvThreading.h"
 #include "coretech/common/engine/utils/timer.h"
+#include "coretech/vision/shared/spriteCache/spriteCache.h"
 #include "audioEngine/multiplexer/audioMultiplexer.h"
 
 #include "webServerProcess/src/webService.h"
@@ -80,6 +81,8 @@ AnimEngine::AnimEngine(Util::Data::DataPlatform* dataPlatform)
 
 AnimEngine::~AnimEngine()
 {
+  _context->GetWebService()->Stop();
+
 #if ANKI_PROFILE_ANIMCOMMS_SOCKET_BUFFER_STATS
   AnimComms::ReportSocketBufferStats();
 #endif

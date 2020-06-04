@@ -19,7 +19,7 @@
 #include "cannedAnimLib/proceduralFace/proceduralFace.h"
 #include "clad/externalInterface/messageEngineToGame.h"
 #include "coretech/common/engine/colorRGBA.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image_fwd.h"
 
 
 namespace Anki {

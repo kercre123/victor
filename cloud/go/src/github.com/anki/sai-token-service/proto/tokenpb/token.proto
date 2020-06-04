@@ -1,0 +1,176 @@
+syntax = "proto3";
+
+package tokenpb;
+
+service Token {
+
+  //
+  // Robot Calls
+  //
+
+  // AssociatePrimaryUser
+  // Authentication: cert + appkey + user session
+  //
+  // Sets the owner of a robot, issuing an access token for further
+  // access and a client token for Chewy. Requires a valid user
+  // session and revokes all previously existing tokens. The identity
+  // of the robot is derived from the CN of the robot factory
+  // certificate.
+  rpc AssociatePrimaryUser(AssociatePrimaryUserRequest) returns (AssociatePrimaryUserResponse);
+
+  // ReassociatePrimaryUser
+  // Authentication: cert + appkey + user session
+  //
+  // TODO - documentation
+  rpc ReassociatePrimaryUser(ReassociatePrimaryUserRequest) returns (ReassociatePrimaryUserResponse);
+
+  // AssociateSecondaryClient
+  // Authentication: cert + appkey + token
+  //
+  // Associates a secondary app for the primary user, generating a
+  // client token for the secondary app to use. Associating a
+  // non-primary user is not currently supported.
+  rpc AssociateSecondaryClient(AssociateSecondaryClientRequest) returns (AssociateSecondaryClientResponse);
+
+  // DisassociatePrimaryUser
+  // Authentication: cert + token
+  //
+  // Remove the primary user's access from the robot - immediately
+  // revokes all access tokens for robot.
+  rpc DisassociatePrimaryUser(DisassociatePrimaryUserRequest) returns (DisassociatePrimaryUserResponse);
+
+  // RefreshToken
+  // Authentication: cert + token
+  //
+  // Refresh an existing access token. The access token may be
+  // refreshed for up to one year, as long as it has not been revoked
+  // (e.g. by DisassociatePrimaryUser).
+  rpc RefreshToken(RefreshTokenRequest) returns (RefreshTokenResponse);
+
+  //
+  // Service Calls
+  //
+
+  // ListRevokedTokens
+  // Authentication: appkey
+  //
+  // Lists all currently revoked tokens, for populating the cache of
+  // revoked tokens in each service which handles token-based
+  // authentication. Only callable by other services (e.g. Chipper,
+  // Jdocs, etc...)
+  rpc ListRevokedTokens(ListRevokedTokensRequest) returns (ListRevokedTokensResponse);
+
+  //
+  // Admin calls
+  //
+
+  // RevokeFactoryCertificate
+  // Authentication: cert + appkey (TBD, admin only)
+  //
+  // RevokeFactoryCertificate blacklists one of the factory-issued
+  // robot certificates.
+  rpc RevokeFactoryCertificate(RevokeFactoryCertificateRequest) returns (RevokeFactoryCertificateResponse);
+
+  // RevokeTokens
+  // Authentication: cert + appkey (TBD, admin only)
+  //
+  // Revoke tokens matching a user or robot.
+  rpc RevokeTokens(RevokeTokensRequest) returns (RevokeTokensResponse);
+}
+
+//
+// Shared types
+//
+
+message TokenBundle {
+  string token = 1;
+  string client_token = 2;
+  //string sts_token = 3;
+  StsToken sts_token = 4;
+}
+
+message StsToken {
+  string access_key_id = 1;
+  string secret_access_key = 2;
+  string session_token = 3;
+  string expiration = 4;
+}
+
+message AssociatePrimaryUserRequest {
+  // string robot_id = 1;
+  // string user_session = 2;
+  bool generate_sts_token = 3;
+  bytes session_certificate = 4;
+  string client_name = 5;
+  string app_id = 6;
+}
+
+message ReassociatePrimaryUserRequest {
+  bool generate_sts_token = 1;
+  string client_name = 2;
+  string app_id = 3;
+}
+
+message ReassociatePrimaryUserResponse {
+  TokenBundle data = 1;
+}
+
+message AssociatePrimaryUserResponse {
+  TokenBundle data = 1;
+}
+
+message AssociateSecondaryClientRequest {
+  // string token = 1;
+  string user_session = 2;
+  string client_name = 3;
+  string app_id = 4;
+}
+
+message AssociateSecondaryClientResponse {
+  TokenBundle data = 1;
+}
+
+message DisassociatePrimaryUserRequest {
+  // string token = 1;
+}
+
+message DisassociatePrimaryUserResponse {}
+
+message RefreshTokenRequest {
+  // string token = 1;
+  bool refresh_jwt_tokens = 2;
+  bool refresh_sts_tokens = 3;
+}
+
+message RefreshTokenResponse {
+  TokenBundle data = 1;
+}
+
+message TokensPage {
+  repeated string tokens = 1;
+  string last_key = 2;
+  bool done = 3;
+}
+
+message ListRevokedTokensRequest {
+  string previous_key = 1;
+}
+
+message ListRevokedTokensResponse {
+  TokensPage data = 1;
+}
+
+message RevokeFactoryCertificateRequest {
+  string certificate_id = 1;
+}
+
+message RevokeFactoryCertificateResponse {}
+
+message RevokeTokensRequest {
+  string search_by_index = 1;
+  string key = 2;
+}
+
+message RevokeTokensResponse {
+  uint32 tokens_revoked = 1;
+}

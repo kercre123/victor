@@ -128,7 +128,7 @@ public:
     return _durationForFastCalibration != 0 || !IsCalibrated();
   }
   
-  void UpdateBaseline(float reading, bool isPickedUp, bool isPressed);
+  void UpdateBaseline(float reading, bool isPressed);
   
   float GetBaseline() const
   {

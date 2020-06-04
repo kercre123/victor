@@ -314,21 +314,11 @@ void FaceEvalIdentify::TestIdentification()
       //const float verifyScore = faceTracker.ComputePairwiseMatchScore(matchedID, img, face);
       
       const int matchedID = matches.front().first;
-      
-      bool scoreAboveThreshold = false;
       const float score = matches.front().second;
       const float score2 = (matches.size() > 1 ? matches[1].second : score);
       const bool aboveHighThreshold = Util::IsFltGT(score, _params.recognitionThreshold);
       const bool aboveLowThresholdWithMargin = (Util::IsFltGT(score, _params.recognitionThreshold2) &&
                                                 Util::IsFltGT(score-score2, _params.recognitionMargin));
-      if(aboveHighThreshold)
-      {
-        scoreAboveThreshold = true;
-      }
-      else if(aboveLowThresholdWithMargin)
-      {
-        scoreAboveThreshold = true;
-      }
       
       testResults.emplace_back(TestResult{score, score2, (matchedID == expectedID)});
       

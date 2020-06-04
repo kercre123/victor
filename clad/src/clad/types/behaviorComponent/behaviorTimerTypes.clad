@@ -21,7 +21,6 @@ enum uint_8 BehaviorTimerTypes {
   ObservingOnCharger,
   ObservingOffCharger,
   ReactToTouchPetting,
-  WakeGentlyFromHeldInPalmSleep,
   
 }
 

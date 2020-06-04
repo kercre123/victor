@@ -14,15 +14,18 @@
 #ifndef __Engine_AiComponent_BehaviorComponent_Behaviors_BlackJackVisualizer__
 #define __Engine_AiComponent_BehaviorComponent_Behaviors_BlackJackVisualizer__
 
-#include "coretech/vision/shared/compositeImage/compositeImage.h"
+#include "coretech/vision/shared/spritePathMap.h"
 
+#include <functional>
 #include <memory>
+#include <unordered_map>
 
 namespace Anki{
 
 // Fwd Declaration
 namespace Vision{
 class CompositeImage;
+enum class SpriteBoxName : uint8_t;
 }
 
 namespace Vector{
@@ -34,8 +37,6 @@ class BlackJackGame;
 class BlackJackVisualizer{
 public:
   BlackJackVisualizer(const BlackJackGame* game);
-
-  void VerifySpriteAssets(BehaviorExternalInterface& bei);
 
   void Init(BehaviorExternalInterface& bei);
 
@@ -52,7 +53,7 @@ public:
   void Flop(BehaviorExternalInterface& bei, std::function<void()> callback = nullptr);
   void DisplayCharlieFrame(BehaviorExternalInterface& bei, std::function<void()> callback = nullptr);
   void SwipeToClearFace(BehaviorExternalInterface& bei, std::function<void()> callback = nullptr);
-  void ClearCards(BehaviorExternalInterface& bei, uint32_t applyAt_ms = 0);
+  void ResetHands();
 
   // If the visualizer has control of parts of the robot (face track etc) this function
   // will release that control (probably becasue the behavior is ending) and clear out any lasting
@@ -64,21 +65,21 @@ private:
   // No copy, no default construction
   BlackJackVisualizer();
 
-  void PlayCompositeCardAnimationAndLock(const BehaviorExternalInterface& bei,
-                                         const char*                  compAnimName,
-                                         const Vision::LayerName&     layerName,
-                                         const Vision::SpriteBoxName& spriteBoxName,
-                                         const std::string&           cardImageName,
-                                         const uint                   showDealtCardAt_ms,
-                                         const std::string&           cardAnimSeqName = "",
-                                         const uint                   applyCardSeqAt_ms = 0);
+  void DealCard(const BehaviorExternalInterface& bei,
+                const Vision::SpriteBoxName& dealSeqSBName,
+                const Vision::SpritePathMap::AssetID dealSpriteSeqName,
+                const Vision::SpriteBoxName& revealSBName,
+                const Vision::SpriteBoxName& finalSBName,
+                const Vision::SpritePathMap::AssetID cardSpriteName);
 
   const BlackJackGame* _game;
-  std::unique_ptr<Vision::CompositeImage> _compImg;
 
-  uint _dealCardSeqApplyAt_ms = 0;
-  uint _displayDealtCardsAt_ms = 0;
-  uint _clearCardsDuringSwipeAt_ms = 0;
+  using AnimRemapMap = std::unordered_map<Vision::SpriteBoxName, Vision::SpritePathMap::AssetID>;
+  AnimRemapMap _cardAssetMap;
+
+  uint32_t _dealCardSeqApplyAt_ms = 0;
+  uint32_t _displayDealtCardsAt_ms = 0;
+  uint32_t _clearCardsDuringSwipeAt_ms = 0;
 
   bool                  _shouldClearLocksOnCallback = false;
   bool                  _animCompletedLastFrame = false;

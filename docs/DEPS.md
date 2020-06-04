@@ -1,12 +1,12 @@
 # DEPS (dependencies)
 
 To build Victor, we rely on a number of 3rd party dependencies and
-build artifacts from other projects.  We keep track of most of those
-dependencies in the top-level `DEPS` file.
+build artifacts from other projects.  We store most of these dependencies
+in the top-level `3rd` directory.
 
-## Dependencies from deptool
+## Dependencies in the 3rd directory
 
-### How to add a new deptool dependency
+### How to add a new dependency
 
 Let's assume you have decided to add a new open source project called
 `whizbang`.  It has a suitable open source license that has been
@@ -39,31 +39,24 @@ script and the second uploads artifacts to S3.  If you want, you can test your
 build without uploading to S3 by disabling step 2.  If you get stuck, ask for help.
 3. Merge your PR for the `build-tools` repo that you created above.
 4. Run the `whizbang` build on TeamCity and the `whizbang-v1.4.tar.bz2` and
-`whizbang-v1.4-SHA-256.txt` artifacts will be uploaded to S3.
-5. Take note in the build log of the SHA256 hash of your artifact.
-6. Add an entry to the `deptool` section of the `DEPS` file for `whizbang`:
-```
-"whizbang": {
-    "checksums": {
-        "sha256": "<the full sha256 hash>"
-    },
-    "version": "v1.4"
-}
-```
-7. The next time you run a build, a symlink for `whizbang` will be
-created under the `EXTERNALS` directory pointing to
-`~/.anki/deps/victor/whizbang/dist/v1.4`
+`whizbang-v1.4-SHA-256.txt` artifacts will be uploaded to S3.  This step
+may be removed in the future.
+5. Download the `whizbang-v1.4.tar.bz2` artifact from TeamCity
+6. Untar it under the `3rd` directory to create `3rd/whizbang`
+7. Following the examples in the other sub directories of `3rd`, create
+a `.gitattributes` and `.gitignore` file to configure which files will
+be stored via `git lfs`.  Typically, we want to store the static and shared
+libraries and any binary programs via LFS.  Text files, like headers and
+C++ source files, can be stored as regular git objects.  When in doubt,
+ask someone.
+8. Prepare a commit for `3rd/whizbang` and in the commit message describe
+which version you are bringing in and what `whizbang` will be used for.
+9. As a reminder you can do `git lfs ls-files -I 3rd/whizbang` to see what
+files will be uploaded to `git lfs` for `whizbang`.
+10. Push your branch to github and open up a PR.  This should upload the
+appropriate files to LFS for you.
 
-### How to remove a deptool dependency
-
-If you are no longer using a dependency, please remove it from `DEPS`.
-1. Remove all code that references the dependency's headers and
-libs.
-2. Remove references in the documentation about the dependency.
-3. Go into `DEPS` and remove the entry.
-4. Do test builds to make sure everything still works.
-
-### How to upgrade / downgrade a deptool dependency
+### How to upgrade / downgrade a '3rd' dependency
 
 Following the above example, let's assume that `whizbang` `v1.5` comes
 out and you decide that we should upgrade to it.  Do the following:
@@ -72,9 +65,11 @@ out and you decide that we should upgrade to it.  Do the following:
 parameter to `v1.5`.
 2. Run a new build and `whizbang-v1.5.tar.bz2` will be uploaded to S3
 and give you a new SHA256.
-3. Go to the `DEPS` file and update the `version` field to `v1.5`
-and the `sha256` field to the new SHA256 value.
-4. Write up a commit message that explains why you upgraded to `v1.5`
+3. Download the `whizbang-v1.5.tar.bz2` artifact from TeamCity.
+4. Delete `3rd/whizbang` and untar `whizbang-v1.5.tar.bz2` in its place
+5. Check to see if you need to add any additional files to `.gitattributes`
+or `.gitignore` for LFS.
+6. Write up a commit message that explains why you upgraded to `v1.5`
 from `v1.4`.
 
 ## Dependencies from Artifactory

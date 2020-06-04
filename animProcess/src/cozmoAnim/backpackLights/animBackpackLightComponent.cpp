@@ -113,6 +113,10 @@ void BackpackLightComponent::UpdateCriticalBackpackLightConfig(bool isCloudStrea
     // N        | N            | Y (no charging taking place)
     trigger = BackpackAnimationTrigger::LowBattery;
   }
+  else if(_selfTestRunning)
+  {
+    trigger = BackpackAnimationTrigger::Off;
+  }
   // If we have been offline for long enough
   else if(_offlineAtTime_ms > 0 &&
           ((TimeStamp_t)curTime_ms - _offlineAtTime_ms > kOfflineTimeBeforeLights_ms))

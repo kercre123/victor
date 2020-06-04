@@ -17,6 +17,7 @@ enum uint_8 BehaviorClass {
   HighLevelAI,
   LookAroundInPlace,
   ResetState,
+  SimpleVoiceResponse,
   StayOnChargerUntilCharged,
   Wait,
 
@@ -94,6 +95,7 @@ enum uint_8 BehaviorClass {
   DevImageCapture,
   DevSquawkBoxTest,
   DevTestBlackjackViz,
+  DevTestSpriteBoxRemaps,
   DevTouchDataCollection,
   DevTurnInPlaceTest,
   DevViewCubeBackpackLights,
@@ -169,6 +171,7 @@ enum uint_8 BehaviorClass {
 
   // heldInPalm
   InitialHeldInPalmReaction,
+  ReactToPalmEdge,
 
   // knowledgeGraph
   KnowledgeGraphQuestion,

@@ -405,8 +405,7 @@ namespace Anki {
     void DriveToObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
       ObjectInteractionCompleted interactionCompleted;
-      interactionCompleted.objectIDs[0] = _objectID.GetValue();
-      interactionCompleted.numObjects = 1;
+      interactionCompleted.objectID = _objectID.GetValue();
       completionUnion.Set_objectInteractionCompleted(interactionCompleted);
     }
     
@@ -635,6 +634,11 @@ namespace Anki {
       ActionResult result = ActionResult::SUCCESS;
 
       auto& pathComponent = GetRobot().GetPathComponent();
+
+      // Just in case, ask the ProxSensor to check if the lift might need calibration
+      // TODO: if we later follow up and decide we should calibrate the motors, we should delegate
+      //       to CalibrateMotorAction here.
+      GetRobot().GetProxSensorComponent().VerifyLiftCalibration();
       
       _timeToAbortPlanning = -1.0f;
       

@@ -13,7 +13,7 @@
 #include "vizControllerImpl.h"
 
 #include "simulator/controllers/shared/webotsHelpers.h"
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/engine/colorRGBA.h"
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "coretech/vision/engine/image.h"
@@ -179,7 +179,7 @@ void VizControllerImpl::Init()
 
   const auto* nd = nodeInfo.nodePtr;
   if (nd != nullptr) {
-    DEV_ASSERT(nodeInfo.type == webots::Node::SUPERVISOR, "VizControllerImpl.Init.CozmoBotNotASupervisor");
+    DEV_ASSERT(nodeInfo.type == webots::Node::ROBOT, "VizControllerImpl.Init.CozmoBotNotASupervisor");
     
     // Get the vizMode status
     bool vizMode = false;
@@ -837,12 +837,6 @@ void VizControllerImpl::ProcessVizRobotStateMessage(const AnkiEvent<VizInterface
     payload.state.status & (uint32_t)RobotStatusFlag::IS_BATTERY_OVERHEATED ? 'H' : ' ',
     payload.state.status & (uint32_t)RobotStatusFlag::IS_BATTERY_DISCONNECTED ? 'D' : ' ');
   DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_BATTERY, Anki::NamedColors::GREEN, txt);
-
-  sprintf(txt, "Anim: %32s [%d], ProcFaceFrames: %d",
-        _currAnimName.c_str(), 
-        _currAnimTag,
-         payload.numProcAnimFaceKeyframes);
-  DrawText(_disp, (u32)VizTextLabelType::TEXT_LABEL_ANIM, Anki::NamedColors::GREEN, txt);
 
   sprintf(txt, "Locked: %c%c%c, InUse: %c%c%c",
         (payload.lockedAnimTracks & (u8)AnimTrackFlag::LIFT_TRACK) ? 'L' : ' ',

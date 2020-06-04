@@ -1,0 +1,95 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+
+<h2>Creating a Recognizer</h2>
+
+In this section, we describe the following steps:
+<ol>
+<li>Create a <a href"objects.html">recog object</a>
+<li>Create a <a href"objects.html">search object</a>
+<li>Configure the recognizer
+<li>Initialize the recognizer
+</ol>
+
+<h3>Step 1: Create a Recog Object</h3>
+<p>The <em>recog object</em> is the main data structure of the
+recognizer. Create it with <a
+href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a> that
+will return a unique handle to the object. It requires you to specify
+an acoustic model file to load, the maximum audio buffer size, the
+maximum backoff size and whether or not you want to use a <a
+href="sdet.html">speech detector</a>. </p>
+
+<p>A selection of speaker-independent acoustic models is provided in
+the SDK's <em>TrulyHandsfree SDK\Data</em>
+directory. These vary in size and purpose, including general purpose
+and task-specific acoustic models. In
+general, larger acoustic models are more accurate but require more
+computation. Some are trained on 8kHz and others at 16kHz. Choose
+the one that is
+most appropriate for your task and hardware.</p>
+
+<p>It is feasible to create and maintain multiple recog objects in
+memory, if needed. Each object has a unique handle. In one application
+one might have the need for a task-specific acoustic model such as
+digit strings and a general purpose acoustic model for the generic
+vocabularies. </p>
+
+<h3>Step 2: Create a Search Object</h3>
+<p>The <em>search object</em> specifies the recognition vocabulary and
+was explained in  <a href="building.html">How to define the recognition
+task</a> section. Additionally, you can load a pre-compiled search
+object from file using <a
+href="thfSearchCreateFromFile.html">thfSearchCreateFromFile</a>.<p>
+
+<p>It is feasible to create and maintain multiple search objects in
+memory, if needed. Each object has a unique handle. In a typical
+dialogue one can switch between vocabularies by swapping in the
+appropriate search object when needed.</p>
+
+<h3>Step 3: Configure the Recognizer</h3>
+
+Many parameters influence recognition behavior, such as the size,
+speed and accuracy of the recognizer. The recog and search objects are
+created with default values that should be configured as needed. Use
+<a href="thfRecogConfigSet.html">thfRecogConfigSet</a> and <a
+href="thfSearchConfigSet.html">thfSearchConfigSet</a> to get and set
+recog and search object parameters, respectively. See <a
+href="params.html">Parameters</a> for a description of available
+parameters and their defaults values.
+
+<p>
+In general, parameters can be configured at any time. However, some
+parameter changes will require reallocation of buffers and on
+platforms where memory reallocation can only occur at predictable
+times, make sure to configure parameters prior to initializing the
+recognizer.
+</p>
+
+<h3>Step 4: Initialize the Recognizer</h3>
+<p>The recognizer must be initialized with <a
+href="thfRecogInit.html">thfRecogInit</a> before it can be used. This
+associates the search object with the recognizer, amongst other
+things. </p>
+
+<p>Also, you can use <a href="thfRecogInit.html">thfRecogInit</a> to
+change the vocabulary of an existing recognizer, simply by calling
+ <a href="thfRecogInit.html">thfRecogInit</a> with the new search
+ object. All internal data structures (i.e., recognizer, search, and
+speech detector) are reset during this call.</p>
+
+<em>NOTE:</em> The search object is acoustic model specific. Ensure the
+recog object uses the same acoustic model file for building the search
+and recognizing with the search.
+<!----------------------------------------------------------------------- -->
+</body>

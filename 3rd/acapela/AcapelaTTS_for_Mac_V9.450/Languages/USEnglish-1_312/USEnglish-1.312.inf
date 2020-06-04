@@ -1,0 +1,27 @@
+[VAR]
+%NAME%=USEnglish-1.312
+%SHORTNAME%=USEnglish-1.312
+%LANGUAGE%=USEnglish-1.312
+%LANGUAGEVERSION%=1.312
+%INSTALLPATH%=%babtts.DATADIR%\USEnglish\%LANGUAGE%
+%PACKAGE%=ACATTS
+%VERSION%=9_2_36342_0
+
+[INSTALL]
+Copy=Copy
+
+[Copy]
+*.inf=%babtts.INFDIR%,*,1
+*.crc=%babtts.CRCDIR%,*,1
+*.*=%INSTALLPATH%
+
+[INFO]
+Name=%NAME%
+Description=%NAME% NLP Data
+Tree=%PACKAGE%/Languages/%SHORTNAME%/%LANGUAGEVERSION%
+Version=9,2,36342,0
+Selected=YES
+Optional=YES
+Visible=NO
+uninstall=%babtts.UNINSTALLDIR%\%LANGUAGE%.unst
+Required=BabTTS

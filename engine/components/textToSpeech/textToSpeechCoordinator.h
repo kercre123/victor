@@ -14,7 +14,7 @@
 #define __Engine_Components_TextToSpeechCoordinator_H__
 
 #include "engine/robotComponents_fwd.h"
-#include "components/textToSpeech/textToSpeechTypes.h"
+#include "engine/components/textToSpeech/textToSpeechTypes.h"
 #include "coretech/common/shared/types.h"
 #include "clad/audio/audioSwitchTypes.h"
 #include "util/entityComponent/iDependencyManagedComponent.h"
@@ -57,10 +57,15 @@ public:
 
   const uint8_t CreateUtterance(const std::string& utteranceString,
                                 const UtteranceTriggerType& triggerType,
-                                const AudioTtsProcessingStyle& style = AudioTtsProcessingStyle::Default_Processed,
-                                const float durationScalar = 1.f,
+                                const AudioTtsProcessingStyle& style,
+                                const float durationScalar,
+                                const float pitchScalar,
                                 UtteranceUpdatedCallback callback = nullptr);
 
+  const uint8_t CreateUtterance(const std::string& utteranceString,
+                                const UtteranceTriggerType& triggerType,
+                                const AudioTtsProcessingStyle& style = AudioTtsProcessingStyle::Default_Processed,
+                                UtteranceUpdatedCallback callback = nullptr);
 
   const UtteranceState GetUtteranceState( const uint8_t utteranceID) const;
   const bool           PlayUtterance(const uint8_t utteranceID);
@@ -84,10 +89,10 @@ private:
     size_t                    tickReadyForCleanup         = 0;
     UtteranceUpdatedCallback  callback                    = nullptr;
   };
-  
+
   std::unordered_map<uint8_t, UtteranceRecord> _utteranceMap;
 
-  Signal::SmartHandle            _signalHandle;
+  Signal::SmartHandle _signalHandle;
 
   Robot* _robot = nullptr;
 }; // class TextToSpeechCoordinator
@@ -95,4 +100,4 @@ private:
 } // namespace Vector
 } // namespace Anki
 
-#endif //__Engine_Components_TextToSpeechCoordinator_H__ 
+#endif //__Engine_Components_TextToSpeechCoordinator_H__

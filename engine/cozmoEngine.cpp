@@ -33,7 +33,7 @@
 #include "engine/robotDataLoader.h"
 #include "engine/robotInterface/messageHandler.h"
 #include "engine/robotManager.h"
-#include "engine/util/transferQueue/transferQueueMgr.h"
+#include "engine/robotTest.h"
 #include "engine/utils/cozmoExperiments.h"
 #include "engine/utils/parsingConstants/parsingConstants.h"
 #include "engine/viz/vizManager.h"
@@ -161,6 +161,13 @@ static int GetEngineStatsWebServerImpl(WebService::WebService::Request* request)
   const auto& micDirectionHistory = robot->GetMicComponent().GetMicDirectionHistory();
   ss << micDirectionHistory.GetRecentDirection() << '\n';
   ss << micDirectionHistory.GetSelectedDirection() << '\n';
+
+  const auto& visionComp = robot->GetVisionComponent();
+  const TimeStamp_t framePeriod_ms = visionComp.GetFramePeriod_ms();
+  const TimeStamp_t procPeriod_ms = visionComp.GetProcessingPeriod_ms();
+  
+  ss << std::fixed << std::setprecision(3) << 1.f / Util::MilliSecToSec((f32)framePeriod_ms) << '\n';
+  ss << std::fixed << std::setprecision(3) << 1.f / Util::MilliSecToSec((f32)procPeriod_ms) << '\n';
 
   request->_result = ss.str();
 
@@ -324,11 +331,14 @@ Result CozmoEngine::Init(const Json::Value& config) {
   _context->SetRandomSeed(seed);
 
   const auto& webService = _context->GetWebService();
-  webService->Start(_context->GetDataPlatform(),
+  const auto& dataPlatform = _context->GetDataPlatform();
+
+  webService->Start(dataPlatform,
                     _context->GetDataLoader()->GetWebServerEngineConfig());
   webService->RegisterRequestHandler("/getenginestats", GetEngineStatsWebServerHandler, this);
 
-  _context->GetPerfMetric()->Init(_context->GetDataPlatform(), _context->GetWebService());
+  _context->GetPerfMetric()->Init(dataPlatform, webService);
+  _context->GetRobotTest()->Init(dataPlatform, webService);
 
   LOG_INFO("CozmoEngine.Init.Version", "2");
 
@@ -339,9 +349,9 @@ Result CozmoEngine::Init(const Json::Value& config) {
   // data: Unused
   Anki::Util::sInfo("cozmo_engine.init.build_configuration", {},
 #if defined(NDEBUG)
-                     "RELEASE");
+                    "RELEASE");
 #else
-                     "DEBUG");
+                    "DEBUG");
 #endif
 
   _isInitialized = true;
@@ -379,6 +389,8 @@ Result CozmoEngine::Update(const BaseStationTime_t currTime_nanosec)
   _context->GetVizManager()->ResetMessageCount();
 
   _context->GetWebService()->Update();
+
+  _context->GetRobotTest()->Update();
 
   // Handle UI
   if (!_uiWasConnected && _uiMsgHandler->HasDesiredNumUiDevices()) {

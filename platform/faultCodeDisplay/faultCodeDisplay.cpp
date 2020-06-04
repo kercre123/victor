@@ -12,7 +12,6 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 #include "anki/cozmo/shared/factory/faultCodes.h"
 #include "core/lcd.h"
-#include "coretech/common/shared/array2d_impl.h"
 #include "coretech/vision/engine/image.h"
 
 #include "opencv2/highgui.hpp"
@@ -25,12 +24,13 @@ namespace Anki {
 namespace Vector {
 
 namespace {
-  constexpr const char * kSupportURL = "support.anki.com";
+  constexpr const char * kSupportURL = "support.ddl.io";
   constexpr const char * kVectorWillRestart = "Vector will restart";
 
   // Map of fault codes that map to images that should be drawn instead of the number
   std::unordered_map<uint16_t, std::string> kFaultImageMap = {
-    {FaultCode::SHUTDOWN_BATTERY_CRITICAL_TEMP, "/anki/data/assets/cozmo_resources/config/devOnlySprites/independentSprites/battery_overheated.png"},
+    {FaultCode::SHUTDOWN_BATTERY_CRITICAL_TEMP, "/anki/data/assets/cozmo_resources/config/sprites/independentSprites/battery_overheated.png"},
+    {FaultCode::SHUTDOWN_BATTERY_CRITICAL_VOLT, "/anki/data/assets/cozmo_resources/config/sprites/independentSprites/battery_low.png"},
   };
 }
 

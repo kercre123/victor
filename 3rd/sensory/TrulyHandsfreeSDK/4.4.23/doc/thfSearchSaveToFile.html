@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfSearchSaveToFile</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+int thfSearchSaveToFile(thf_t **thf, <a href="objects.html#searchs_t">searchs_t</a> *s, const char *filename);
+</pre>
+<h3>Description</h3>
+ Saves the search object to file. The search object still persists in  memory. Use <a href="thfSearchDestroy.html">thfSearchDestroy</a> to  destroy the search object when no longer needed. 
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><a href="objects.html#searchs_t"><code>searchs_t *</code></a></td>
+<td nowrap valign="top"><code>s</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Search object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>const char *</code></td>
+<td nowrap valign="top"><code>filename</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">File that search gets saved into.</td>
+</tr>
+</table>
+<h3>Return</h3>
+Returns 1 to indicate success and 0 for an error. 
+Use <a href="thfGetLastError.html">thfGetLastError</a> to get error message.
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>Error writing output file</code></td>
+<td valign="top">The output file could not be written to. The file system denied access for writing to the datafile.</td>
+</tr>
+<tr>
+<td valign="top"><code>Could not open file</code></td>
+<td valign="top">The file name is not valid on this operating system, or the file is in use and no shared access is allowed on this operating system, or the application had insufficient privileges to open the file for writing.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfSearchCreateFromFile.html">thfSearchCreateFromFile</a>, <a href="thfSearchCreateFromFunc.html">thfSearchCreateFromFunc</a>, <a href="thfSearchCreateFromGrammar.html">thfSearchCreateFromGrammar</a>, <a href="thfSearchCreateFromList.html">thfSearchCreateFromList</a> and <a href="thfSearchCreateFromStatic.html">thfSearchCreateFromStatic</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

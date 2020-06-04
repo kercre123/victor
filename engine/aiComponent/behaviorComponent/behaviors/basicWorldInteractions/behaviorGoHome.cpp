@@ -34,7 +34,7 @@
 #include "util/cladHelpers/cladFromJSONHelpers.h"
 
 #include "coretech/common/engine/jsonTools.h"
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #include "clad/types/behaviorComponent/behaviorStats.h"
@@ -449,7 +449,7 @@ void BehaviorGoHome::TransitionToDriveToCharger()
                           }
                         } else {
                           // Either out of retries or we got another failure type
-                          ActionFailure(false);
+                          TransitionToFailureReaction();
                         }
                       });
 }
@@ -490,7 +490,7 @@ void BehaviorGoHome::TransitionToPostVisualVerification(const RobotTimeStamp_t v
   // have moved. This is the last chance to verify that we're in a
   // good position to start the docking sequence.
   bool poseOk = false;
-  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
+  ObservableObject* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
   if (charger != nullptr) {
     const auto& robotPose = GetBEI().GetRobotInfo().GetPose();
     Pose3d robotPoseWrtCharger;
@@ -525,30 +525,52 @@ void BehaviorGoHome::TransitionToPostVisualVerification(const RobotTimeStamp_t v
   }
 
   // Has to be seen sometime after the observe action
-  ObservableObject* object = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
-  const bool chargerSeen = (object != nullptr) && (object->GetLastObservedTime() >= verifyStartTime);
+  const bool chargerSeen = (charger != nullptr) && (charger->GetLastObservedTime() >= verifyStartTime);
 
-  if (poseOk && chargerSeen) {
-    TransitionToTurn();
-  } else if (!chargerSeen) {
-    // If visual observation failed, then we've successfully gotten to the charger
-    // pre-action pose, but it is no longer there. Delete the charger from the map.
-    LOG_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.DeletingCharger",
-                        "Deleting charger with ID %d since visual verification failed (start=%u end=%u)",
-                        _dVars.chargerID.GetValue(),
-                        (TimeStamp_t)verifyStartTime,
-                        (TimeStamp_t)GetBEI().GetRobotInfo().GetLastMsgTimestamp());
-    const bool removeChargerFromBlockworld = true;
-    DASMSG(go_home_charger_not_visible, "go_home.charger_not_visible", "GoHome behavior failure because the charger is not seen when should be.");
-    DASMSG_SEND();
-    ActionFailure(removeChargerFromBlockworld);
-  } else if (_dVars.turnToDockRetryCount++ < _iConfig.turnToDockRetryCount) {
-    // Simply go back to the starting pose, which will allow visual
-    // verification to happen again, etc.
-    TransitionToDriveToCharger();
+  const bool canRetryTurnToDock = (_dVars.turnToDockRetryCount++ < _iConfig.turnToDockRetryCount);
+
+  const bool chargerExists = (charger != nullptr);
+
+  // !chargerExists implies !poseOk, !chargerSeen
+  DEV_ASSERT_MSG( (!chargerExists && !poseOk) || (chargerExists), 
+                  "BlockWorld.TransitionToPostVisualVerification.NullChargerImpliesNotPoseOk", 
+                  "If the charger does not exist, then the pose cannot be ok");
+  DEV_ASSERT_MSG( (!chargerExists && !chargerSeen) || (chargerExists), 
+                  "BlockWorld.TransitionToPostVisualVerification.NullChargerImpliesNotSeenCharger", 
+                  "If the charger does not exist, then the charger cannot be seen");
+  
+  if(chargerExists) {
+    if(poseOk && chargerSeen) {
+      // Successfully verified, proceed with Docking
+      TransitionToTurn();
+    } else {
+      if(canRetryTurnToDock) {
+        // Simply go back to the starting pose, which will 
+        // subsequently retry visual verification
+        TransitionToDriveToCharger();
+      } else {
+        if(!chargerSeen) {
+          // If visual observation failed, then we've successfully gotten to the charger
+          //  pre-action pose, but it is no longer there
+          LOG_WARNING("BehaviorGoHome.TransitionToCheckPreTurnPosition.NoChargerSeen",
+                              "Charger id=%d failed visual verification (start=%u end=%u)",
+                              _dVars.chargerID.GetValue(),
+                              (TimeStamp_t)verifyStartTime,
+                              (TimeStamp_t)GetBEI().GetRobotInfo().GetLastMsgTimestamp());
+          DASMSG(go_home_charger_not_visible, "go_home.charger_not_visible", "GoHome behavior failure because the charger is not seen when should be.");
+          DASMSG_SEND();
+          // Marking the object as dirty will delegate the responsibility of clearing it
+          //  to Blockworld instead, When it runs CheckForUnobservedObjects().
+          GetBEI().GetBlockWorld().MarkObjectDirty(charger);
+        }
+        
+        // Out of retries
+        TransitionToFailureReaction();
+      }
+    }
   } else {
-    // Out of retries
-    ActionFailure(false);
+    // No recovery action for GoHome, we must find the charger all over again.
+    TransitionToFailureReaction();
   }
 }
   
@@ -574,7 +596,7 @@ void BehaviorGoHome::TransitionToTurn()
                           TransitionToDriveToCharger();
                         } else {
                           // Either out of retries or we got another failure type
-                          ActionFailure(false);
+                          TransitionToFailureReaction();
                         }
                       });
 }
@@ -616,13 +638,10 @@ void BehaviorGoHome::TransitionToMountCharger()
                                                                         DEFAULT_PATH_MOTION_PROFILE.speed_mmps,
                                                                         false),
                                                 [this]() {
-                                                  ActionFailure(false);
+                                                  TransitionToFailureReaction();
                                                 });
                           } else {
-                            // If the robot did not end the action on the charger, then clear the charger from the
-                            // world since we clearly do not know where it is.
-                            const bool removeChargerFromBlockworld = (result == ActionResult::NOT_ON_CHARGER_ABORT);
-                            ActionFailure(removeChargerFromBlockworld);
+                            TransitionToFailureReaction();
                           }
                         }
                       });
@@ -658,33 +677,11 @@ void BehaviorGoHome::TransitionToOnChargerCheck()
 
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorGoHome::ActionFailure(bool removeChargerFromBlockWorld)
+void BehaviorGoHome::TransitionToFailureReaction()
 {
-  // If we are ending due to an action failure, now is a good time to check
-  // how recently we have seen the charger. If we haven't seen the charger
-  // in a while, just remove it from the world since it's possible that we
-  // really don't know where it is. 
-  const auto* charger = GetBEI().GetBlockWorld().GetLocatedObjectByID(_dVars.chargerID);
-  const auto nowTimestamp = GetBEI().GetRobotInfo().GetLastMsgTimestamp();
-  const TimeStamp_t kMaxObservedAge_ms = Util::SecToMilliSec(120.f);
-  if ((charger != nullptr) &&
-      (nowTimestamp > charger->GetLastObservedTime() + kMaxObservedAge_ms)) {
-    removeChargerFromBlockWorld = true;
-  }
-  
-  LOG_WARNING("BehaviorGoHome.ActionFailure",
-                      "BehaviorGoHome had an action failure. Delegating to the request to go home. %s",
-                      removeChargerFromBlockWorld ? "Removing charger from block world." : "");
-  
-  if (removeChargerFromBlockWorld) {
-    BlockWorldFilter deleteFilter;
-    deleteFilter.AddAllowedID(_dVars.chargerID);
-    GetBEI().GetBlockWorld().DeleteLocatedObjects(deleteFilter);
-  }
-  
+  LOG_WARNING("BehaviorGoHome.TransitionToFailureReaction", "BehaviorGoHome had an action failure.");
   // Play the "charger face" animation indicating that we have failed, then allow the behavior to exit
   DelegateIfInControl(new TriggerAnimationAction(AnimationTrigger::ChargerDockingFailure));
-  
   _dVars.SetSucceeded(false);
 }
 

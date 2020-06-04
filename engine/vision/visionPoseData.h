@@ -14,7 +14,7 @@
 #define __Anki_Cozmo_Basestation_VisionPoseData_H__
 
 #include "coretech/common/shared/types.h"
-#include "coretech/common/shared/math/matrix.h"
+#include "coretech/common/shared/math/matrix_fwd.h"
 #include "coretech/common/engine/robotTimeStamp.h"
 
 #include "engine/components/sensors/imuComponent.h"

@@ -3,6 +3,11 @@
   "behaviorClass": "InitialHeldInPalmReaction",
   "associatedActiveFeature": "HeldInPalm",
   
+  "wantsToCancelSelfCondition": {
+    "conditionType": "RobotHeldInPalm",
+    "shouldBeHeldInPalm": false
+  },
+  
   "anonymousBehaviors": [
     {
       "behaviorName" : "InitialHeldInPalmReactionInternal",
@@ -37,6 +42,12 @@
         }
       ]
     }
+  ],
+  
+  "interruptingBehaviors": [
+    "LookingNervousInPalmAnim",
+    "ReactToPalmEdge",
+    "StuckOnPalmEdge"
   ]
 
 }

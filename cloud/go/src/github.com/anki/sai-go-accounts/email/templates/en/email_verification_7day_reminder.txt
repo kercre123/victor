@@ -1,0 +1,29 @@
+{{ define "content" }}
+
+Hello {{ .Username }},
+
+We noticed an Anki account with the Username {{ .Username }} was created on {{ .CreatedTimeEN }}
+that has not yet been activated. We would hate to see you lose all your saved progress and, more importantly,
+the Username associated with your account. Please activate this account by clicking on the button below.
+
+Please activate this account by clicking on the link {{ .URL }}
+
+Thanks,
+The Anki Team
+
+Note: Unfortunately, if you do not activate this account in 7 days, it will be deleted.
+If you have any questions about your Anki account or if you feel you have received this email by mistake, please contact us https://anki.com/support/contact.
+If you do not activate your account, we'll send you one more reminder before your account is deleted.
+
+
+**********************************************
+
+
+If you didn't create an account, please contact us https://anki.com/support/contact
+This is an automatically generated email.
+
+To view our Privacy Policy visit: https://anki.com/privacy
+
+This email was sent to {{ .ToEmail }} by Anki, Inc. 55 2nd Street, San Francisco, CA 94105
+
+{{ end }}

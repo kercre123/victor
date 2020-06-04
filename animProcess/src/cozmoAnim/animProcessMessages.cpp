@@ -241,8 +241,13 @@ void Process_playAnim(const Anki::Vector::RobotInterface::PlayAnim& msg)
            animName.c_str(), msg.tag);
 
   const bool interruptRunning = true;
-  const bool overrideEyes = !msg.renderInEyeHue;
-  _animStreamer->SetStreamingAnimation(animName, msg.tag, msg.numLoops, msg.startAt_ms, interruptRunning, overrideEyes, msg.renderInEyeHue);
+  const bool overrideAllSpritesToEyeHue = msg.renderInEyeHue;
+  _animStreamer->SetStreamingAnimation(animName,
+                                       msg.tag,
+                                       msg.numLoops,
+                                       msg.startAt_ms,
+                                       interruptRunning,
+                                       overrideAllSpritesToEyeHue);
 }
 
 void Process_abortAnimation(const Anki::Vector::RobotInterface::AbortAnimation& msg)
@@ -283,23 +288,20 @@ void Process_displayFaceImageRGBChunk(const Anki::Vector::RobotInterface::Displa
   _animStreamer->Process_displayFaceImageChunk(msg);
 }
 
-void Process_displayCompositeImageChunk(const Anki::Vector::RobotInterface::DisplayCompositeImageChunk& msg)
+void Process_playAnimWithSpriteBoxRemaps(const Anki::Vector::RobotInterface::PlayAnimWithSpriteBoxRemaps& msg)
 {
-  _animStreamer->Process_displayCompositeImageChunk(msg);
+  _animStreamer->Process_playAnimWithSpriteBoxRemaps(msg);
 }
 
-void Process_updateCompositeImage(const Anki::Vector::RobotInterface::UpdateCompositeImage& msg)
+void Process_playAnimWithSpriteBoxKeyFrames(const Anki::Vector::RobotInterface::PlayAnimWithSpriteBoxKeyFrames& msg)
 {
-  _animStreamer->Process_updateCompositeImage(msg);
+  _animStreamer->Process_playAnimWithSpriteBoxKeyFrames(msg);
 }
 
-void Process_playCompositeAnimation(const Anki::Vector::RobotInterface::PlayCompositeAnimation& msg)
+void Process_addSpriteBoxKeyFrames(const Anki::Vector::RobotInterface::AddSpriteBoxKeyFrames& msg)
 {
-  const std::string animName(msg.animName, msg.animName_length);
-
-  _animStreamer->Process_playCompositeAnimation(animName, msg.tag);
+  _animStreamer->Process_addSpriteBoxKeyFrames(msg);
 }
-
 
 void Process_enableKeepFaceAlive(const Anki::Vector::RobotInterface::EnableKeepFaceAlive& msg)
 {
@@ -568,6 +570,12 @@ void Process_showUrlFace(const RobotInterface::ShowUrlFace& msg)
     UpdateConnectionFlow(std::move(connMsg), _animStreamer, _context);
   }
 }
+  
+void Process_exitCCScreen(const RobotInterface::ExitCCScreen& msg)
+{
+  FaceInfoScreenManager::getInstance()->ExitCCScreen(_animStreamer);
+}
+
 
 void Process_setBLEPin(const Anki::Vector::SwitchboardInterface::SetBLEPin& msg)
 {

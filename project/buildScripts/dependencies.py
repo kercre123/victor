@@ -52,6 +52,7 @@ SVN_CRED = "--username %s --password %s --no-auth-cache --non-interactive --trus
 PROJECT_ROOT_DIR = os.path.normpath(os.path.join(os.path.dirname(__file__), '..', '..'))
 DEPS_FILE = os.path.join(PROJECT_ROOT_DIR, 'DEPS')
 EXTERNALS_DIR = os.path.join(PROJECT_ROOT_DIR, 'EXTERNALS')
+THIRD_PARTY_DIR = os.path.join(PROJECT_ROOT_DIR, '3rd')
 DIFF_BRANCH_MSG = "is already a working copy for a different URL"
 
 # Most animation tar files in SVN are packages of JSON files that should be unpacked in the root
@@ -324,12 +325,12 @@ def get_flatc_dir():
   target_triple = platform_map.get(platform_name)
 
   if target_triple:
-    flatc_dir = os.path.join(DEPENDENCY_LOCATION,
+    flatc_dir = os.path.join(THIRD_PARTY_DIR,
                              'flatbuffers', 'host-prebuilts',
                              'current', target_triple, 'bin')
   else: 
     # default
-    flatc_dir = os.path.join(DEPENDENCY_LOCATION,
+    flatc_dir = os.path.join(THIRD_PARTY_DIR,
                              'flatbuffers', 'mac', 'Release')
  
   return flatc_dir
@@ -847,11 +848,7 @@ def extract_dependencies(version_file, location=EXTERNALS_DIR, validate_assets=T
     if validate_assets and len(set(updated_deps) & set(ASSET_VALIDATION_TRIGGERS)) > 0:
         # At least one of the asset validation triggers was updated, so perform validation...
         validate_anim_data.check_anims_all_anim_groups(location)
-        try:
-            validate_anim_data.check_audio_events_all_anims(location)
-        except ValueError, e:
-            print(str(e))
-            print("WARNING: This build may contain animations that reference missing audio events")
+        validate_anim_data.check_audio_events_all_anims(location)
 
 
 def json_parser(version_file):

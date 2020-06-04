@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h2>How to Create a Semantic Parser Grammar file</h2>
+
+<p>
+The grammar file contains a series of context-free grammar rules. The rules are referred to
+by a named 'net'. The net names and terminals appear in the final parse string. See <a href=
+"Phoenix_Manual.pdf">the Phoenix Parser User Manual</a> for more information on how to write
+the grammar file.
+</p>
+
+<p>
+The syntax for a net definition is as follows:
+<pre>
+#comment
+#include &lt;external grammar file name&gt;
+
+[&lt;net name&gt;]
+    (&lt;pattern&gt;)
+    (&lt;pattern&gt;)
+    (&lt;pattern&gt;)
+    ...
+&lt;macro name&gt;
+    (&lt;pattern&gt;)
+    ...
+&lt;macro name&gt;
+    (&lt;pattern&gt;)
+    ...
+...
+;
+</pre>
+</p>
+
+<p>
+Lines beginning with a '#' are comments. Other grammar files can be included with the '#include'
+keyword. These are prefixed with the same directory path given to thfSemCreateFromFile.
+The net name is given in square brackets at the top, followed by patterns in parentheses. Optionally,
+macros can be defined for the net. Macro names are uppercase and they have rewrite rules defined beneath.
+Macro names are not included in the parse. The net definition must end with a semi-colon.
+</p>
+
+<p>
+The syntax of the pattern specification is as follows:
+<pre>
+(terminal MACRO [net] *&lt;optional item&gt; +&lt;one or more items&gt; +*&lt;zero or more items&gt;)
+</pre>
+</p>
+
+<p>
+Lowercase strings are terminals- i.e. words of the input. Uppercase strings are macros.
+Strings surrounded by square brackets are nets. Any of these can be prefixed by '*', '+' or '*+'.
+A '*' indicates zero or one repetitions of the item, in other words, it makes the item optional.
+A '+' indicates one or more repetitions of the item. Combining them '+*' indicates zero or more
+repetitions of the item. Any number or combination of items is allowed in the pattern specification.
+</p>
+
+<h3>Notes on Extracted Parses</h3>
+
+<p>
+In the grammar file you can also define items that you want to appear in the extracted parse.
+The extracted parse is a simplified and restricted version of the full parse. It only includes
+nets (and the words under them) that are flagged to appear in the extracted parse.
+</p>
+
+<p>
+In order to have a net included in the extracted parse, it must begin with an uppercase letter.
+Words that are directly under that net (including ones under a macro) are included as the
+value of that net in the extracted parse.
+</p>
+
+<p>
+A net that begins with an underscore (_) are pre-terminals. When these are in the pattern of
+a net marked for inclusion in the extracted parse, the name of this net replaces the value in
+the extracted parse.
+</p>
+
+<h3>Example 1</h3>
+
+<p>
+Given the frame file:
+<pre>
+FRAME: Music
+NETS:
+ [music]
+;
+</pre>
+And the grammar file:
+<pre>
+[Song]
+(brown sugar)
+(help)
+(stairway to heaven)
+;
+
+[Artist]
+(led zeppelin)
+(the beatles)
+(the rolling stones)
+(the police)
+;
+
+[music]
+  ([Song])
+  ([Artist])
+  ([Song] [Artist])
+  ([Song] by [Artist])
+  ([Artist] [Song])
+;
+</pre>
+And the input "please play help by the beatles", the full parse will be:
+<pre>
+Music:[music]([Song](help) by [Artist](the beatles))
+</pre>
+And the extracted parse will be:
+<pre>
+Music:[Song].help
+Music:[Artist].the beatles
+</pre>
+</p>
+
+<h3>Example 2</h3>
+
+<p>
+Given the frame file:
+<pre>
+FRAME: Places
+NETS:
+    [CityState]
+;
+</pre>
+And the grammar file:
+<pre>
+[CityState]
+    ([City] [State])
+;
+
+[City]
+    ([_san_francisco])
+    ([_portland])
+;
+
+[_san_francisco]
+    (san francisco)
+    (san fran)
+    (s f)
+;
+
+[_portland]
+    (portland)
+    (p d x)
+    (ptown)
+;
+
+[State]
+    (oregon)
+    ([_california])
+;
+
+[_california]
+    (california)
+    (cali)
+;
+</pre>
+And the input "i live in san fran california", the full parse would be:
+<pre>
+Places:[CityState]([City]([_san_francisco](san fran)) [State]([_californa](california)))
+</pre>
+And the extracted parse would be:
+<pre>
+Places:[CityState].[City]._san_francisco [State]._california
+</pre>
+</p>
+
+<!-- /Ceara -->
+
+
+<!----------------------------------------------------------------------- -->
+</body>

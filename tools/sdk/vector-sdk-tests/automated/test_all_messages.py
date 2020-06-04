@@ -208,7 +208,7 @@ MESSAGES_TO_TEST = [
     # SetFaceToEnroll message
     (Interface.SetFaceToEnroll,
      protocol.SetFaceToEnrollRequest(name="Boberta", observed_id=1, save_id=0, save_to_robot=True, say_name=True, use_music=True),
-     TestResultMatches(protocol.SetFaceToEnrollResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.REQUEST_PROCESSING)))),  # pylint: disable=no-member
+     TestResultMatches(protocol.SetFaceToEnrollResponse(status=protocol.ResponseStatus(code=protocol.ResponseStatus.RESPONSE_RECEIVED)))),  # pylint: disable=no-member
 
     # Coming in next SDK release.
     # TODO Turn on when is available in public SDK proto

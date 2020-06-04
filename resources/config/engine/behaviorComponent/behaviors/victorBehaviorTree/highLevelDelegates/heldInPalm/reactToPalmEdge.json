@@ -1,0 +1,28 @@
+{
+  "behaviorID": "ReactToPalmEdge",
+  "behaviorClass": "ReactToPalmEdge",
+  "associatedActiveFeature": "HeldInPalm",
+  
+  "cliffBackupDistance_mm": 25.0,
+  "cliffBackupSpeed_mmps": 40.0,
+  
+  "wantsToBeActivatedCondition": {
+    "conditionType": "Compound",
+    "and": [
+      {
+        "conditionType": "RobotHeldInPalm",
+        "shouldBeHeldInPalm": true
+      },
+      {
+        "conditionType": "FeatureGate",
+        "feature": "HeldInPalm",
+        "expected": true
+      }
+    ]
+  },
+  
+  "wantsToCancelSelfCondition": {
+    "conditionType": "RobotHeldInPalm",
+    "shouldBeHeldInPalm": false
+  }
+}

@@ -37,6 +37,17 @@
         }
       }
     },
+    
+    {
+      "reason": "NotInAir",
+      "condition": {
+        "conditionType": "Compound",
+        "not": {
+          "conditionType": "OffTreadsState",
+          "targetState": "InAir"
+        }
+      }
+    },
 
     {
       "reason": "Touched",
@@ -45,7 +56,7 @@
         "minTouchTime": 0.1
       }
     },
-
+    
     {
       "reason": "Poked",
       "condition": {
@@ -81,6 +92,15 @@
   // in addition to the "always wakes" conditions
   "wakeFromStates": [
     // no addiitional wake reasons from emergency sleep or comatose sleep
+    {
+      "fromState": "HeldInPalmSleep",
+      "reasons": [
+        "PickedUpFromPalm",
+        "Jolted",
+        "Touched",
+        "NotInAir"
+      ]
+    },
     {
       "fromState": "DeepSleep",
       "reasons": [

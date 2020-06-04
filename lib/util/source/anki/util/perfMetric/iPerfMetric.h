@@ -62,7 +62,7 @@ public:
 
   bool GetAutoRecord() const { return _autoRecord; }
 
-  int  ParseCommands(std::string& queryString);
+  bool ParseCommands(const std::string& queryStr, const bool queueForExecution = true);
   void ExecuteQueuedCommands(std::string* resultStr = nullptr);
 
 protected:

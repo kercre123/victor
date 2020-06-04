@@ -13,7 +13,7 @@
 #ifdef ANKI_NEURALNETS_USE_TFLITE
 
 #include "coretech/neuralnets/neuralNetModel_tflite.h"
-#include "coretech/vision/engine/image_impl.h"
+#include "coretech/vision/engine/image.h"
 #include <list>
 #include <queue>
 
@@ -66,12 +66,6 @@ TFLiteModel::~TFLiteModel()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result TFLiteModel::LoadModelInternal(const std::string& modelPath, const Json::Value& config)
 {
-  const Result paramsResult = _params.SetFromConfig(config);
-  if(RESULT_OK != paramsResult)
-  {
-    return paramsResult;
-  }
-
   DEV_ASSERT(!modelPath.empty(), "TFLiteModel.LoadModelInternal.EmptyModelPath");
 
   std::vector<int> sizes = {1, _params.inputHeight, _params.inputWidth, 3};

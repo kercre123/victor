@@ -1,0 +1,86 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfCheckRecording</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+int thfCheckRecording(thf_t **thf, <a href="objects.html#recog_t">recog_t</a> *r, short *wave, 
+                      unsigned long waveLen, unsigned long *feedback);
+</pre>
+<h3>Description</h3>
+ <p>Performs simple evaluation of the quality of a waveform that is assumed to  contain speech.  The evaluation result is put in the output variable 'feedback'. Specific bits of 'feedback' are set to 1 to indicate a problem; therefore, if 'feedback' is 0, the recording passed the evaluation check with no detected problems.  The definitions of specific bits are specified in trulyhandsfree.h, in #define statements of the form CHECKRECORDING_BITFIELD_*. The meanings of the bitfields are given in the list of <a href="params.html#recordingQuality">recording quality parameters</a>.</p> <p>Quality measure thresholds have reasonable default values, but can be modified using <a href='thfRecogConfigSet.html'>thfRecogConfigSet</a>.</p>
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><a href="objects.html#recog_t"><code>recog_t *</code></a></td>
+<td nowrap valign="top"><code>r</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Recognizer object that will be used to process the recording.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>short *</code></td>
+<td nowrap valign="top"><code>wave</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">waveform, expressed as an array of short integers.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned long</code></td>
+<td nowrap valign="top"><code>waveLen</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">length of waveform 'wave'.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned long *</code></td>
+<td nowrap valign="top"><code>feedback</code></td>
+<td align="center" valign="top">out</td>
+<td width="500">evaluation results.</td>
+</tr>
+</table>
+<h3>Return</h3>
+ Returns 1 on success or 0 on error.  In case of error, feedback output  is set to 0xFFFF.
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>recog object not found</code></td>
+<td valign="top">Invalid recognizer object handle.</td>
+</tr>
+<tr>
+<td valign="top"><code>internal error: recog ROM struct not found</code></td>
+<td valign="top">Unexpected internal error. Contact customer support.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a>, <a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a>, <a href="thfRecogCreateFromFunc.html">thfRecogCreateFromFunc</a> and <a href="thfRecogCreateFromStatic.html">thfRecogCreateFromStatic</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

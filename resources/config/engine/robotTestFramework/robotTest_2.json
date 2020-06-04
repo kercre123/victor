@@ -1,0 +1,34 @@
+
+{
+  "scriptCommands" : [
+    {
+      "command" : "waitUntilEngineTickCount",
+      "parameters" : 83
+    },
+    {
+      "command" : "cloudIntent",
+      "parameters" : {
+        "intent" : "intent_weather_extend",
+        "metadata" : "text: what's the weather confidence: 0.000000 handler: LEX",
+        "parameters" : "{\"condition\":\"Cloudy\",\"is_forecast\":\"false\",\"local_datetime\":\"2019-01-30T10:32:52-0800\",\"speakable_location_string\":\"San Francisco\",\"temperature\":\"50\",\"temperature_unit\":\"F\",\"weather_service\":\"TWC\"}\n","type":"result"
+      }
+    },
+    {
+      "command" : "perfMetric",
+      "parameters" : "start"
+    },
+    {
+      "command" : "cpuStart"
+    },
+    {
+      "command" : "waitCloudIntent"
+    },
+    {
+      "command" : "cpuStop"
+    },
+    {
+      "command" : "perfMetric",
+      "parameters" : "dumpLogAll"
+    }
+  ]
+}

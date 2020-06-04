@@ -53,7 +53,8 @@ enum uint_8 SelfTestResultCode {
   MIC_FL_NOT_WORKING, 
   MIC_BR_NOT_WORKING,
   MIC_FR_NOT_WORKING,
-  SPEAKER_NOT_WORKING
+  SPEAKER_NOT_WORKING,
+  NO_FFT_RESULT
 }
 
 } // namespace Vector

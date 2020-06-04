@@ -16,7 +16,7 @@
 #include "engine/robot.h"
 
 #include "coretech/common/engine/math/pose.h"
-#include "coretech/common/engine/math/quad.h"
+#include "coretech/common/engine/math/quad_fwd.h"
 #include "coretech/common/engine/math/fastPolygon2d.h"
 
 #include "util/console/consoleInterface.h"

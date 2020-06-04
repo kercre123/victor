@@ -42,6 +42,8 @@ BleCentral* centralContext;
   printf("  ssh-send [filename]                          Generates/Sends a public SSH key to Victor.\n");
   printf("  ssh-start                                    Tries to start an SSH session with Victor.\n");
   printf("  logs [directory]                             Downloads logs tar from Victor, with optional supplied directory path.\n");
+  printf("\n");
+  printf("# Use \\ to escape spaces and \\\\ to escape a literal \\.\n");
 }
 
 - (void)showProgress: (float)current expected:(float)expected {
@@ -2250,10 +2252,12 @@ didUpdateValueForCharacteristic:(CBCharacteristic *)characteristic
   
   for(int i = 0; i < line.length(); i++) {
     char c = line.c_str()[i];
-    
+
     if(i == line.length() - 1) {
       w += line.c_str()[i];
       c = ' ';
+    } else if(c == '\\') {
+      i++;
     }
     
     if((c == ' ') && w != "") {

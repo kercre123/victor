@@ -59,8 +59,7 @@ message Event {
     PhotoTaken                       photo_taken                         = 9;
     RobotState                       robot_state                         = 10;
     CubeBattery                      cube_battery                        = 11;
-    // Used by Vector to verify the connection is still alive.
-    KeepAlivePing                    keep_alive                          = 12;
+    KeepAlivePing                    keep_alive                          = 12; // Used by Vector to verify the connection is still alive.
     ConnectionResponse               connection_response                 = 13;
     JdocsChanged                     jdocs_changed                       = 14; // App only
     AlexaAuthEvent                   alexa_auth_event                    = 15; // App only
@@ -68,6 +67,11 @@ message Event {
     VisionModesAutoDisabled          vision_modes_auto_disabled          = 17;
     CheckUpdateStatusResponse        check_update_status_response        = 18; // App only
     UserIntent                       user_intent                         = 19;
+    RobotObservedMotion              robot_observed_motion               = 20;
+    RobotErasedEnrolledFace          robot_erased_enrolled_face          = 21;
+    RobotRenamedEnrolledFace         robot_renamed_enrolled_face         = 22;
+    CameraSettingsUpdate             camera_settings_update              = 23;
+    UnexpectedMovement               unexpected_movement                 = 24;
   }
 }
 
@@ -176,6 +180,12 @@ message GatewayWrapper {
     LookAroundInPlaceResponse     look_around_in_place_response      = 407;
     RollBlockRequest              roll_block_request                 = 408;
     RollBlockResponse             roll_block_response                = 409;
+    EnrollFaceRequest             enroll_face_request                = 410;
+    EnrollFaceResponse            enroll_face_response               = 411;
+    SetFaceToEnrollRequest        set_face_to_enroll_request         = 412;
+    SetFaceToEnrollResponse       set_face_to_enroll_response        = 413;
+    CancelBehaviorRequest         cancel_behavior_request            = 414;
+    CancelBehaviorResponse        cancel_behavior_response           = 415;
 
     // ------------ movement request/response pairs ----------------------
     TurnInPlaceRequest              turn_in_place_request                = 500;
@@ -292,6 +302,10 @@ message GatewayWrapper {
     SetEyeColorResponse           set_eye_color_response             = 1701;
     MasterVolumeRequest           master_volume_request              = 1702;
     MasterVolumeResponse          master_volume_response             = 1703;
+    SetCameraSettingsRequest      set_camera_settings_request        = 1704;
+    SetCameraSettingsResponse     set_camera_settings_response       = 1705;
+    CameraConfigRequest           camera_config_request              = 1706;
+    CameraConfigResponse          camera_config_response             = 1707;
 
     // ------------ Streaming audio playback (SDK only) ------------
     ExternalAudioStreamPrepare    external_audio_stream_prepare      = 1800;

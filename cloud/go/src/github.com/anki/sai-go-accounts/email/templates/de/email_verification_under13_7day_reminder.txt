@@ -1,0 +1,47 @@
+{{ define "content" }}
+
+NOCH EINE WOCHE
+
+Hallo von Anki,
+
+Ihr Kind hat am  {{ .CreatedTimeDE }} ein Anki-Konto angefordert. Anki ist das Unternehmen, das Anki DRIVE und Anki OVERDRIVE entwickelt hat. In diesen robotergesteuerten Rennspielen treten die Fahrer gegen Freunde oder Supercars mit künstlicher Intelligenz an. Mit einem kostenlosen Konto kann Ihr Kind seine Erfolge im Auge behalten und sich mit einem einzigartigen Fahrernamen registrieren. Die Spieler gegen die Ihr Kind in Anki DRIVE und Anki OVERDRIVE antreten kann, sind auf persönliche Runden mit Freunden und Familie begrenzt. Weitere Informationen finden Sie im Bereich“„Kinder“ unter anki.com/privacy.
+
+Ihr Kind hat folgende Informationen angegeben:
+
+Ihre E-Mail-Adresse: {{ .ToEmail }}
+Geburtsdatum Ihres Kindes: {{ .Dob }}
+Fahrernamen: {{ .Username }}
+
+Um sich damit einverstanden zu erklären, dass Ihr Kind ein Anki OVERDRIVE-Konto führt, klicken Sie bitte den untenstehenden Link, um es zu aktivieren. Hinweis: Sie haben noch eine Woche Zeit, um das Anki-Konto Ihres Kindes zu aktivieren.  Wenn Sie das Konto Ihres Kindes nicht aktivieren, werden Sie von uns noch eine weitere Erinnerung erhalten, bevor das Konto gelöscht wird.
+
+{{ .URL }}
+
+Mit freundlichen Grüßen
+
+Das Anki-Team
+
+**Wir möchten Ihnen versichern, dass uns der Schutz der Daten Ihres Kindes, wenn es die Anki DRIVE- und Anki OVERDRIVE-Apps nutzt, sehr wichtig ist. Bitte lesen Sie daher diese E-Mail. Anki erfasst im Zusammenhang mit dem Konto Ihres Kindes folgende Daten: die E-Mail-Adresse des bzw. der Erziehungsberechtigten (für die Kontoaktivierung und die Benachrichtigung an Sie, dass Ihr Kind sich für ein Konto registriert hat) sowie den Anki-Fahrernamen, das Passwort, das Geburtsdatum, die IP-Adresse und die Spieledaten (z. B. Punkte und Spielstände) Ihres Kindes. Außerdem fragt Anki Ihr Kind, ob es damit einverstanden ist, Benachrichtigungen im Zusammenhang mit dem Spiel zu erhalten. Anki informiert Erziehungsberechtigte mit dieser Benachrichtigung darüber, wie wir Daten erfassen, nutzen und offenlegen.
+
+Ihr Kind hat den Fahrernamen ({{ .Username }}) registriert.; Wenn Sie das Konto Ihres Kindes jedoch nicht innerhalb von 15 Tagen aktivieren, behält sich Anki das Recht vor, Ihre Kontaktinformationen sowie den Fahrernamen für das entsprechende Konto zu löschen. Wenn Sie das Konto Ihres Kindes aktivieren, stimmen Sie den oben genannten Punkten gemäß unserer Datenschutzerklärung zu.
+
+Wir erfassen die geringstmögliche Anzahl an Daten Ihres Kindes. Wir erfassen lediglich die Informationen, die nötig sind, damit Ihr Kind an gewissen Aktivitäten teilnehmen kann. Ihre Online-Kontaktinformationen werden nur dafür genutzt um Ihnen diese Benachrichtigung zu senden, es sei denn, Sie melden sich für den Anki-Newsletter an. Wenn Sie Anregungen oder Fragen haben, oder möchten alle Ihrer, oder die Daten Ihres Kindes gelöscht haben, bitte kontaktieren Sie uns https://anki.com/support/contact
+
+Bitte bewahren Sie diese E-Mail auf.
+
+ANKI
+55 2nd. St
+San Francisco, CA 94105
+(415) 800-1040
+
+
+**********************************************
+
+
+Wenn Sie oder Ihr Kind diese Email nicht angefordert haben, dann kontaktieren Sie uns bitte unter: https://anki.com/support/contact
+Diese E-Mail wurde automatisch generiert.
+
+Datenschutzerklärung: https://anki.com/privacy
+
+Diese E-Mail wurde von Anki, Inc {{ .ToEmail }} gesendet.
+55 2nd Street, San Francisco, CA 94105
+{{ end }}

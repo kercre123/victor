@@ -918,6 +918,15 @@ void TestBehaviorFramework::AddFakeFirstObject( ObjectType objectType, Pose3d* p
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void TestBehaviorFramework::IterateSimpleVoiceResponse(std::function< void( const MetaUserIntent_SimpleVoiceResponse& ) > lambda)
+{
+  if( ANKI_VERIFY(_aiComponent != nullptr, "TestBehaviorFramework.IterateSimpleVoiceResponse.NullAIComponent", "") ) {
+    auto& uic = _aiComponent->GetComponent<BehaviorComponent>().GetComponent<UserIntentComponent>();
+    uic.DEVONLY_IterateSimpleVoiceResponse({}, lambda);
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool CheckStackSuffixMatch(const std::vector<IBehavior*>& a, const std::vector<IBehavior*>& b)
 {
   auto aIter = a.rbegin();

@@ -1,0 +1,272 @@
+{
+	"ImportPath": "github.com/anki/sai-blobstore",
+	"GoVersion": "go1.7.3",
+	"Packages": [
+		"github.com/anki/sai-blobstore/..."
+	],
+	"Deps": [
+		{
+			"ImportPath": "github.com/GeertJohan/go.rice",
+			"Rev": "0f3f5fde32fd1f755632a3d31ba2ec6d449e387b"
+		},
+		{
+			"ImportPath": "github.com/aalpern/go-metrics",
+			"Comment": "structured-metrics-1.2",
+			"Rev": "ca55a2b39058cad545afddd21b8a4006438a697f"
+		},
+		{
+			"ImportPath": "github.com/aalpern/go-metrics-charts",
+			"Comment": "1.2",
+			"Rev": "b3486d1ba0a8b37f16435a45886c50c82552ca74"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-accounts/apierrors",
+			"Rev": "71076583008691b45498adce0872462c0f92754e"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-accounts/db",
+			"Rev": "71076583008691b45498adce0872462c0f92754e"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-accounts/email",
+			"Rev": "71076583008691b45498adce0872462c0f92754e"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-accounts/models/session",
+			"Rev": "71076583008691b45498adce0872462c0f92754e"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-accounts/models/user",
+			"Rev": "71076583008691b45498adce0872462c0f92754e"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-accounts/util",
+			"Rev": "71076583008691b45498adce0872462c0f92754e"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-accounts/validate",
+			"Rev": "71076583008691b45498adce0872462c0f92754e"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/buildinfo",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/cli",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/date",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/dynamoutil",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/envconfig",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/http/apiclient",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/http/apirouter",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/http/corshandler",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/http/httpcapture",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/http/httplog",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/http/memlimit",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/http/metrics/metricsclient",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/http/metrics/metricshandler",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/http/ratelimit",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/http/statushandler",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/http/xfwdhandler",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/jsonutil",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/log",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/metricsutil",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/postmarkapp",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/strutil",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/task",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/timedtoken",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-go-util/validate",
+			"Rev": "f487acdd79c25e4b0e9bf0aa2abdef7208428e28"
+		},
+		{
+			"ImportPath": "github.com/anki/sai-kinlog/logsender",
+			"Rev": "ab867c56d24c00af5782e0cfec4ec2f9013bc910"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/aws",
+			"Comment": "v1.6.27",
+			"Rev": "00fb2125993965df739fa3398b03bef3eb2e198f"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/private/protocol",
+			"Comment": "v1.6.27",
+			"Rev": "00fb2125993965df739fa3398b03bef3eb2e198f"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/private/waiter",
+			"Comment": "v1.6.27",
+			"Rev": "00fb2125993965df739fa3398b03bef3eb2e198f"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/dynamodb",
+			"Comment": "v1.6.27",
+			"Rev": "00fb2125993965df739fa3398b03bef3eb2e198f"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/kinesis",
+			"Comment": "v1.6.27",
+			"Rev": "00fb2125993965df739fa3398b03bef3eb2e198f"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/s3",
+			"Comment": "v1.6.27",
+			"Rev": "00fb2125993965df739fa3398b03bef3eb2e198f"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/service/sts",
+			"Comment": "v1.6.27",
+			"Rev": "00fb2125993965df739fa3398b03bef3eb2e198f"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/vendor/github.com/go-ini/ini",
+			"Comment": "v1.6.27",
+			"Rev": "00fb2125993965df739fa3398b03bef3eb2e198f"
+		},
+		{
+			"ImportPath": "github.com/aws/aws-sdk-go/vendor/github.com/jmespath/go-jmespath",
+			"Comment": "v1.6.27",
+			"Rev": "00fb2125993965df739fa3398b03bef3eb2e198f"
+		},
+		{
+			"ImportPath": "github.com/cenkalti/backoff",
+			"Comment": "v1.0.0",
+			"Rev": "32cd0c5b3aef12c76ed64aaf678f6c79736be7dc"
+		},
+		{
+			"ImportPath": "github.com/coopernurse/gorp",
+			"Comment": "1.2-90-g9cd2b5e",
+			"Rev": "9cd2b5ef5b82fde4e7c51776ac3f94398b8af076"
+		},
+		{
+			"ImportPath": "github.com/daaku/go.zipexe",
+			"Rev": "a5fe2436ffcb3236e175e5149162b41cd28bd27d"
+		},
+		{
+			"ImportPath": "github.com/go-sql-driver/mysql",
+			"Comment": "v1.2-196-g3654d25",
+			"Rev": "3654d25ec346ee8ce71a68431025458d52a38ac0"
+		},
+		{
+			"ImportPath": "github.com/google/martian",
+			"Comment": "v2.0.0-beta.2-175-g5574555",
+			"Rev": "557455530d3790cf5bb2a1d9c2c5cc7a133ad660"
+		},
+		{
+			"ImportPath": "github.com/gorilla/context",
+			"Rev": "14f550f51af52180c2eefed15e5fd18d63c0a64a"
+		},
+		{
+			"ImportPath": "github.com/gorilla/handlers",
+			"Rev": "470089673c69baefb2d80b13019a4ab6f05e2aad"
+		},
+		{
+			"ImportPath": "github.com/gorilla/mux",
+			"Rev": "14cafe28513321476c73967a5a4f3454b6129c46"
+		},
+		{
+			"ImportPath": "github.com/gwatts/manners",
+			"Comment": "0.3.1-2-g274b9b6",
+			"Rev": "274b9b6b94851e6fda7a9ad05f199011fb544a34"
+		},
+		{
+			"ImportPath": "github.com/gwatts/profile",
+			"Comment": "v1.2.0-1-ga1776ed",
+			"Rev": "a1776ed66938eefb62344cbd33cd4aa94aa0ac3f"
+		},
+		{
+			"ImportPath": "github.com/gwatts/rootcerts",
+			"Rev": "3738de08e1e2afe9a7f5517262bbe204370836a7"
+		},
+		{
+			"ImportPath": "github.com/huandu/facebook",
+			"Comment": "v1.6.0",
+			"Rev": "e7512237e5dc620be55f6bd9ab2d75e7ebbb914c"
+		},
+		{
+			"ImportPath": "github.com/juju/ratelimit",
+			"Rev": "77ed1c8a01217656d2080ad51981f6e99adaa177"
+		},
+		{
+			"ImportPath": "github.com/kardianos/osext",
+			"Rev": "29ae4ffbc9a6fe9fb2bc5029050ce6996ea1d3bc"
+		},
+		{
+			"ImportPath": "github.com/mattn/go-sqlite3",
+			"Comment": "v1.1.0-69-g38ee283",
+			"Rev": "38ee283dabf11c9cbdb968eebd79b1fa7acbabe6"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/pbkdf2",
+			"Rev": "5bcd134fee4dd1475da17714aac19c0aa0142e2f"
+		},
+		{
+			"ImportPath": "golang.org/x/crypto/scrypt",
+			"Rev": "5bcd134fee4dd1475da17714aac19c0aa0142e2f"
+		}
+	]
+}

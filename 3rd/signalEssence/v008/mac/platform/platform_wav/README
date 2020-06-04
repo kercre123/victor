@@ -1,0 +1,173 @@
+platform_wav
+
+This directory contains a program that will read/write wave files and process them with the aec.
+
+To Make:
+----------
+premake4 --rtenv=beagle --proj=smart gmake  # (substitute your runtime environment and project name)
+make -C build
+
+
+Compile Options
+---------------
+compile options can be added with the CFLAGS & LDFLAGS environment variables like this:
+make -k CFLAGS='-DSCRATCH_MEM_DEBUG_PRINTF -DSE_THREADED_AEC'  -j10  
+
+Some useful options are:
+   -DSCRATCH_MEM_DEBUG_PRINTF   Debug scratch memory alloc/free verbosely
+   -DSE_THREADED_AEC            use multithreading int the AEC.
+   -DUSE_SE_TIMER               print out some timing information on how long each part of the algorithm takes.
+
+
+Dependencies:
+-------------
+You may need to sudo apt-get install libsndfile-dev
+
+
+Help
+----
+./wav -?
+
+
+
+
+To Process the data through the aec.
+-----------------------------------
+./wav --sin=sin.wav --sout=sout.1.wav --beam=0
+./wav --sin=sin.wav --sout=sout.2.wav --beam=1
+./wav --sin=sin.wav --sout=sout.3.wav --beam=2
+./wav --sin=sin.wav --sout=sout.4.wav --beam=3
+
+
+Timing 
+--------------------------------------------
+Try this:
+  time nice ./wav --sin 10sec-16ch.wav --rin 10sec-1ch.wav --sout sout.wav --rout rout.wav
+
+Cycle Profiling with gprof
+--------------------------------------------
+To run with gprof:
+specify --profile when running premake4, e.g.
+$ premake4 --profile --rtenv=beagle --proj=smart gmake
+$ make -C build
+$ build/wav --profile    # run for 1000 blocks w/ forced adaptation
+
+After execution, you should see a file called gmon.out in your current working directory.
+In the same directory, execute gprof and specify the executable file:
+$ ls gmon.out
+-rw-r--r-- 1 501 161K Feb 11 08:33 gmon.out
+$ gprof build/wav 
+
+See https://sites.google.com/a/signalessence.com/sewiki/home/profiling-mmfx-cpu-load-cycle-load
+
+Setting/Getting Sediag Values
+----------------------------------
+Create a json file to specify which sediag entries should be written or dumped.
+(see platform/src/settings_example.json).
+
+Then use -j or --diag-settings=my_settings.json
+
+Process sin through various impulse responses
+---------------------------------------------
+You can process multiple sin/ir paris.  The following example processes 2 sin files, through different impulse responses.
+This is useful for adding room noise, alternate talkers to the mix. 
+Multiple --sin parameters are summed.
+A 3rd field in the sin argument will be interpreted as a floating point gain, in dB. 
+
+./wav --sin=sin1.wav:ir1.txt:-3  \
+      --sin=sin2.wav:ir2.txt     \
+      --sin=sin3.wav             \
+      --sin=sin4.wav::2.2        \
+      --sout=sout.wav --beam=0 
+
+will process sin1.wav through ir1.txt and put a -3 dB gain on it,
+sin2.wav will be processed through ir2.txt with unity gain, and sin3
+will go through a unity impulse response -- no delay at all, and no
+gain, while sin4.wav fill get a 2.2dB gain and no impulse repsonse.
+
+Include an impulse response in the rout->sin pathway
+----------------------------------------------------
+./wav --sin=sin1.wav --rin=rin.wav --spkir=spk_ir.txt --rout=rout.wav --sout=sout.wav --beam=3
+
+
+The impulse responses can be either floating point .txt files, or
+fixed or floating point .wav files. They must contain multiple
+channels, one for each microphone.  A .wav file will be interpreted
+simply as channel 0 -> mic 0, channel 0 -> mic 1, etc.  A .txt file is
+similar, but with a format that looks like this:
+
+For illustration, the floating point nubers in the following ir.txt
+are channel.sample
+
+ir.txt:
+-------
+0.0 1.0 2.0 3.0 4.0
+0.1 1.1 2.1 3.1 4.1
+0.2 1.2 2.2 3.2 4.2
+0.3 1.3 2.3 3.3 4.3
+0.4 1.4 2.4 3.4 4.4
+.....
+0.100 1.100 2.100 3.100 4.100   <-- 100th sample
+
+Example
+-------
+reference in = playback_16.wav channel 10
+sin          = capture_16.wav
+rin          = capture_16.wav channel 10
+
+skip first 53530 input samples
+
+via example.json, set dc filters, disable SENR, and dump a subset of the diagnostics
+
+build/wav  --refin=../../../audio_data/hp_demo/150415_doubletalk/playback_16.wav:10 --sin=../../../audio_data/hp_demo/150415_doubletalk/capture_16.wav --rout=rout.wav -S sout.wav --rout-delay=1100  --rin=../../../audio_data/hp_demo/150415_doubletalk/capture_16.wav:10 --skipsamps=53530 --diag-settings=example.json
+
+contents of example.json:
+{
+    "set" : 
+    [
+	{
+            "comment"  : "set tx-path dc filters, disable noise reduction",
+	    "at_block" : 0,
+            "diags"    : 
+	    {
+                "mmfx_post_sf_hpf_cutoff_hz":200,
+                "preproc_dc_rmv_cutoff_hz"  :200,
+                "mmfx_senr_output_selector" :"SENR_DISABLE_NOISE_REDUCTION"
+	    }
+        }
+    ],
+    "dump_filename" : "dump/",
+    "dump"          :
+    [
+	{
+	    "comment"  : "always dump blocksize and sample rate for the dump analyzer app",
+            "comment"  : "can also specify diags=* to dump all diags",
+	    "at_block" : "*",
+	    "diags"    : ["mmfx_blocksize",
+                          "mmfx_sample_rate_khz",
+                          "aecmon_erle_deep_db_per_mic",
+                          "multiaec_filter_coefs_00",
+                          "mmfx_post_sf_hpf_cutoff_hz",
+                          "preproc_dc_rmv_cutoff_hz",
+                          "mmfx_rout_num_samples_delay"]
+	}
+    ]
+}
+
+Use devtools/dump_analyzer/dump_analyzer.py to visualize the data.
+
+
+Sensitivity Analysis
+----------------------
+     To run a sensitivity analysis, you do the following steps:
+     1)  Build you wav in the normal way (i.e. premake4, make, etc...)
+     2) Run source_creator to generate the impulse responses.
+            ../../devtools/array_designer/source_creator.py  --impulse --mag  .1   --all-locations --beamfile=files.json -n brussels 100 0 0
+        This generates 1 source file per beam
+     
+     3) Then run the sensitivity analyzer:
+           ./sensitivity_analysis.py -b 1 -g 3 files.json  
+        This creates a bunch of files, one per possible gain setting
+     
+     4) Then visualize like this:
+         ../../devtools/array_designer/plotwav.py brussels-impulse-086,-49,000.wav.*  --ylim 80 100

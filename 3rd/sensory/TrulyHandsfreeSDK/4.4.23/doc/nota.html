@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h2>Out-of-Vocabulary Rejection</h2>
+If you need to be able to detect when a complete utterance is not in your vocabulary, you can do so by adding the special word <em>*nota</em> with a corresponding pronunciation <em>.nota</em> to the grammar. If this special word <em>*nota</em> (stands for "none-of-the-above") scores higher than all the other words in the vocabulary, then we conclude that the utterance was indeed out-of-vocabulary. The out-of-vocabulary behavior is controlled by the <a href="params.html">nota</a> parameter.</p>
+
+<!-- EK TODO: Add section on using .nota within large vocabulary grammars -->
+<p>An example grammar specification including out-of-vocabulary (and wordspotting) is as follows:
+<ul><pre>
+  size       = small | medium | large;
+  topping    = vegetarian | pepperoni | cheese;
+  pizza      = ($size | $topping) [*sil%%] pizza;
+  pizzaorder = (*sil%% | *any%%) (*nota | $pizza) (*sil%% | *any%%);
+</pre></ul>
+
+
+<!----------------------------------------------------------------------- -->
+</body>

@@ -25,6 +25,8 @@ namespace Anki {
 namespace Vector {
 
 static const char* kNameKey = "Name";
+static const char* kSpriteBoxKeyFrameName = "SpriteBoxKeyFrame";
+static const char* kFaceAnimKeyFrameName = "FaceAnimationKeyFrame";
 CONSOLE_VAR(bool, kShouldPreCacheSprites, "Animation", false);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -41,7 +43,6 @@ bool Animation::operator==(const Animation &other) const {
   return (_name == other._name) &&
          (_headTrack == other._headTrack) &&
          (_liftTrack == other._liftTrack) &&
-         (_spriteSequenceTrack == other._spriteSequenceTrack) &&
          (_proceduralFaceTrack == other._proceduralFaceTrack) &&
          (_eventTrack == other._eventTrack) &&
          (_backpackLightsTrack == other._backpackLightsTrack) &&
@@ -170,33 +171,28 @@ Result Animation::DefineFromFlatBuf(const std::string& name,
     }
   }
 
+  auto spriteBoxData = keyframes->SpriteBoxKeyFrame();
+  if (nullptr != spriteBoxData) {
+    for(int sbIdx=0; sbIdx < spriteBoxData->size(); sbIdx++){
+      const CozmoAnim::SpriteBox* spriteBox = spriteBoxData->Get(sbIdx);
+      const Result addResult = _spriteBoxCompositor.AddKeyFrame(spriteBox);
+      if (RESULT_OK != addResult){
+        LOG_ERROR("Animation.DefineFromFlatBuf.AddKeyFrameFailure", "Adding SpriteBox frame %d failed", sbIdx);
+        return addResult;
+      }
+    }
+  }
+
   auto spriteSequenceData = keyframes->FaceAnimationKeyFrame();
   if (spriteSequenceData != nullptr) {
     for (int faIdx=0; faIdx < spriteSequenceData->size(); faIdx++) {
       const CozmoAnim::FaceAnimation* faceAnimKeyframe = spriteSequenceData->Get(faIdx);
-      const Vision::SpriteSequence* spriteSeq = nullptr;
-      TimeStamp_t triggerTime_ms = 0;
-
-      // Note that ExtractDataFromFlatBuf() will return false for unmapped sprite sequences, even though spriteSeq
-      // points to a valid sequence.
-      const bool success = SpriteSequenceKeyFrame::ExtractDataFromFlatBuf(faceAnimKeyframe, seqContainer,
-                                                                          spriteSeq, triggerTime_ms);
-      if (spriteSeq == nullptr) {
-        LOG_ERROR("Animation.DefineFromFlatBuf.ExtractDataFromFlatBuf",
-                  "Unable to extract sprite sequence for animation %s keyframe %d",
-                  name.c_str(), faIdx);
-        return RESULT_FAIL_INVALID_OBJECT;
-      }
-
-      // Construct a keyframe for this sprite sequence
-      const u32 frameInterval_ms = ANIM_TIME_STEP_MS;
-      const bool shouldRenderInEyeHue = true;
-      SpriteSequenceKeyFrame kf(spriteSeq, triggerTime_ms, frameInterval_ms, shouldRenderInEyeHue);
-
-      // Add keyframe to animation track
-      const Result addResult = _spriteSequenceTrack.AddKeyFrameToBack(kf);
-      if (success && addResult != RESULT_OK) {
-        LOG_ERROR("Animation.DefineFromFlatBuf.AddKeyFrameFailure", "Adding FaceAnimation frame %d failed", faIdx);
+      const Result addResult = _spriteBoxCompositor.AddFullFaceSpriteSeq(faceAnimKeyframe, *seqContainer);
+      if (RESULT_OK != addResult){
+        LOG_ERROR("Animation.DefineFromFlatBuf.AddKeyFrameFailure",
+                  "Adding Legacy SpriteBox frame %d failed for animation %s",
+                  faIdx,
+                  name.c_str());
         return addResult;
       }
     }
@@ -295,20 +291,10 @@ Result Animation::DefineFromJson(const std::string& name, const Json::Value &jso
       addResult = _headTrack.AddKeyFrameToBack(jsonFrame, name);
     } else if(frameName == LiftHeightKeyFrame::GetClassName()) {
       addResult = _liftTrack.AddKeyFrameToBack(jsonFrame, name);
-    } else if(frameName == SpriteSequenceKeyFrame::GetClassName()) {
-      const Vision::SpriteSequence* spriteSeq = nullptr;
-      TimeStamp_t triggerTime_ms = 0;
-      TimeStamp_t frameUpdateInterval = ANIM_TIME_STEP_MS;
-      const bool success = SpriteSequenceKeyFrame::ExtractDataFromJson(jsonFrame, seqContainer,
-                                                                       spriteSeq, triggerTime_ms,
-                                                                       frameUpdateInterval);
-      if(success){
-        const bool shouldRenderInEyeHue = true;
-        SpriteSequenceKeyFrame kf(spriteSeq, triggerTime_ms, frameUpdateInterval, shouldRenderInEyeHue);
-        addResult = _spriteSequenceTrack.AddKeyFrameToBack(kf);
-      }else{
-        addResult = RESULT_FAIL;
-      }
+    } else if(frameName == kSpriteBoxKeyFrameName) {
+      addResult = _spriteBoxCompositor.AddKeyFrame(jsonFrame, name);
+    } else if(frameName == kFaceAnimKeyFrameName) {
+      addResult = _spriteBoxCompositor.AddFullFaceSpriteSeq(jsonFrame, *seqContainer, name);
     } else if(frameName == EventKeyFrame::GetClassName()) {
       addResult = _eventTrack.AddKeyFrameToBack(jsonFrame, name);
     } else if(frameName == "DeviceAudioKeyFrame") {
@@ -354,11 +340,6 @@ Animations::Track<HeadAngleKeyFrame>& Animation::GetTrack() {
 template<>
 Animations::Track<LiftHeightKeyFrame>& Animation::GetTrack() {
   return _liftTrack;
-}
-
-template<>
-Animations::Track<SpriteSequenceKeyFrame>& Animation::GetTrack() {
-  return _spriteSequenceTrack;
 }
 
 template<>
@@ -410,14 +391,14 @@ Result Animation::AddKeyFrameToBack(const HeadAngleKeyFrame& kf)
 #define ALL_TRACKS(__METHOD__, __COMBINE_WITH__, ...) \
 _headTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _liftTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
-_spriteSequenceTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _proceduralFaceTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _eventTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _robotAudioTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _backpackLightsTrack.__METHOD__(__VA_ARGS__) __COMBINE_WITH__ \
 _bodyPosTrack.__METHOD__(__VA_ARGS__)  __COMBINE_WITH__  \
 _recordHeadingTrack.__METHOD__(__VA_ARGS__)  __COMBINE_WITH__  \
-_turnToRecordedHeadingTrack.__METHOD__(__VA_ARGS__)
+_turnToRecordedHeadingTrack.__METHOD__(__VA_ARGS__)  __COMBINE_WITH__  \
+_spriteBoxCompositor.__METHOD__(__VA_ARGS__)
 
 
 //# define ALL_TRACKS(__METHOD__, __ARG__, __COMBINE_WITH__) ALL_TRACKS_WITH_ARG(__METHOD__, void, __COMBINE_WITH__)
@@ -455,11 +436,7 @@ void Animation::ClearUpToCurrent()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void Animation::CacheAnimationSprites(Vision::SpriteCache* cache)
 {
-  auto& frameList = _spriteSequenceTrack.GetAllFrames();
-  auto endTime_ms = GetLastKeyFrameEndTime_ms();
-  for(auto& frame: frameList){
-    frame.CacheInternalSprites(cache, endTime_ms);
-  }
+  _spriteBoxCompositor.CacheInternalSprites(cache); 
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -489,7 +466,6 @@ void Animation::AppendAnimation(const Animation& appendAnim)
   // Append animation tracks
   _headTrack.AppendTrack(appendAnim.GetTrack<HeadAngleKeyFrame>(), animOffest_ms);
   _liftTrack.AppendTrack(appendAnim.GetTrack<LiftHeightKeyFrame>(), animOffest_ms);
-  _spriteSequenceTrack.AppendTrack(appendAnim.GetTrack<SpriteSequenceKeyFrame>(), animOffest_ms);
   _proceduralFaceTrack.AppendTrack(appendAnim.GetTrack<ProceduralFaceKeyFrame>(), animOffest_ms);
   _eventTrack.AppendTrack(appendAnim.GetTrack<EventKeyFrame>(), animOffest_ms);
   _backpackLightsTrack.AppendTrack(appendAnim.GetTrack<BackpackLightsKeyFrame>(), animOffest_ms);
@@ -497,6 +473,7 @@ void Animation::AppendAnimation(const Animation& appendAnim)
   _recordHeadingTrack.AppendTrack(appendAnim.GetTrack<RecordHeadingKeyFrame>(), animOffest_ms);
   _turnToRecordedHeadingTrack.AppendTrack(appendAnim.GetTrack<TurnToRecordedHeadingKeyFrame>(), animOffest_ms);
   _robotAudioTrack.AppendTrack(appendAnim.GetTrack<RobotAudioKeyFrame>(), animOffest_ms);
+  _spriteBoxCompositor.AppendTracks(appendAnim.GetSpriteBoxCompositor(), animOffest_ms);
 
 }
 
@@ -513,9 +490,9 @@ uint32_t Animation::GetLastKeyFrameTime_ms() const
   lastFrameTime_ms = CompareLastFrameTime<RecordHeadingKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<TurnToRecordedHeadingKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<EventKeyFrame>(lastFrameTime_ms);
-  lastFrameTime_ms = CompareLastFrameTime<SpriteSequenceKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<BackpackLightsKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameTime<ProceduralFaceKeyFrame>(lastFrameTime_ms);
+  lastFrameTime_ms = _spriteBoxCompositor.CompareLastFrameTime(lastFrameTime_ms);
 
   return lastFrameTime_ms;
 }
@@ -534,9 +511,9 @@ uint32_t Animation::GetLastKeyFrameEndTime_ms() const
   lastFrameTime_ms = CompareLastFrameEndTime<RecordHeadingKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<TurnToRecordedHeadingKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<EventKeyFrame>(lastFrameTime_ms);
-  lastFrameTime_ms = CompareLastFrameEndTime<SpriteSequenceKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<BackpackLightsKeyFrame>(lastFrameTime_ms);
   lastFrameTime_ms = CompareLastFrameEndTime<ProceduralFaceKeyFrame>(lastFrameTime_ms);
+  lastFrameTime_ms = _spriteBoxCompositor.CompareLastFrameTime(lastFrameTime_ms);
 
   return lastFrameTime_ms;
 }

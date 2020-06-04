@@ -319,7 +319,7 @@ void BehaviorReactToTouchPetting::BehaviorUpdate()
           auto& moodManager = GetBEI().GetMoodManager();
           
           if ( GetBEI().GetHeldInPalmTracker().IsHeldInPalm() ) {
-            moodManager.TriggerEmotionEvent("PettingReachedMaxBlissOnPalm");
+            moodManager.TriggerEmotionEvent("PettingBlissLevelIncreaseOnPalm");
           }
           moodManager.TriggerEmotionEvent("PettingBlissLevelIncrease");
           GetBehaviorComp<RobotStatsTracker>().IncrementBehaviorStat(BehaviorStat::PettingBlissIncrease);

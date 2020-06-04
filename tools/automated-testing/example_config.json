@@ -1,0 +1,10 @@
+{
+  "ssid":"Anki Robits",
+  "pw":"<password>",
+  "auth":6,
+  "anki_username":"paluri@anki.com",
+  "anki_password":"<password>",
+  "anki_app_token":"<client app token>",
+  "auto_test_bin":"../../_build/vicos/Release/auto-test/bin",
+  "update":false
+}

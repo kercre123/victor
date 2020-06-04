@@ -47,34 +47,18 @@
 #include <iomanip>
 #include <sstream>
 
-
 namespace {
-
 #define LOG_CHANNEL "Microphones"
-# define CONSOLE_GROUP "MicData"
+#define CONSOLE_GROUP "MicData"
+#define RECOGNIZER_CONSOLE_GROUP "SpeechRecognizer"
 
 #if ANKI_DEV_CHEATS
-
 CONSOLE_VAR_RANGED(u32, kMicData_ClipRecordTime_ms, CONSOLE_GROUP, 4000, 500, 15000);
-CONSOLE_VAR(bool, kSuppressTriggerResponse, "SpeechRecognizer", false);
-
-std::string _debugMicDataWriteLocation = "";
-void ClearMicData(ConsoleFunctionContextRef context)
-{
-  if (!_debugMicDataWriteLocation.empty())
-  {
-    Anki::Util::FileUtils::RemoveDirectory(_debugMicDataWriteLocation);
-  }
-}
-CONSOLE_FUNC(ClearMicData, "zHiddenForSafety");
- 
+CONSOLE_VAR(bool, kSuppressTriggerResponse, RECOGNIZER_CONSOLE_GROUP, false);
 #endif // ANKI_DEV_CHEATS
 
-# undef CONSOLE_GROUP
-
-  const std::string kMicSettingsFile = "micMuted";
-  
-  const std::string kSpeechRecognizerWebvizName = "speechrecognizersys";
+const std::string kMicSettingsFile = "micMuted";
+const std::string kSpeechRecognizerWebvizName = "speechrecognizersys";
 }
 
 namespace Anki {
@@ -103,7 +87,31 @@ static_assert(
   decltype(MicDirectionData::confidenceList)().size(),
   "Expecting length of RobotInterface::MicDirection::confidenceList to match MicDirectionData::confidenceList");
 
+void MicDataSystem::SetupConsoleFuncs()
+{
+#if ANKI_DEV_CHEATS
+  const auto enableTriggerHistoryFunc = [this](ConsoleFunctionContextRef context)
+  {
+    const bool enable = ConsoleArg_Get_Bool( context, "enable" );
+    EnableTriggerHistory(enable);
+    context->channel->WriteLog("EnableRecentTriggers %s", enable ? "enabled" : "disable");
+  };
+  _devConsoleFuncs.emplace_front("EnableTriggerResults", std::move(enableTriggerHistoryFunc),
+                                 RECOGNIZER_CONSOLE_GROUP, "bool enable");
+  
+  const auto clearMicDataFunc = [this](ConsoleFunctionContextRef context)
+  {
+    if (!_writeLocationDir.empty()) {
+      Anki::Util::FileUtils::RemoveDirectory(_writeLocationDir);
+      context->channel->WriteLog("Removed directory '%s'", _writeLocationDir.c_str());
+    }
+  };
+  _devConsoleFuncs.emplace_front("ClearMicData", std::move(clearMicDataFunc), CONSOLE_GROUP".zHiddenForSafety", "");
+#endif
+}
 
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
                              const Anim::AnimContext* context)
 : _context(context)
@@ -125,7 +133,6 @@ MicDataSystem::MicDataSystem(Util::Data::DataPlatform* dataPlatform,
   {
   #if ANKI_DEV_CHEATS
     Util::FileUtils::CreateDirectory(_writeLocationDir);
-    _debugMicDataWriteLocation = _writeLocationDir;
   #endif
   }
 
@@ -177,6 +184,7 @@ void MicDataSystem::Init(const Anim::RobotDataLoader& dataLoader)
       [this] (const auto& sendFunc) { SendRecentTriggerDetectionToWebViz(sendFunc); }
     ));
   }
+  SetupConsoleFuncs();
 #endif
 }
 
@@ -988,20 +996,18 @@ void MicDataSystem::SendTriggerDetectionToWebViz(const AudioUtil::SpeechRecogniz
     data["notch"] = ignoreReason.notch;
     data["playback"] = ignoreReason.playback;
     
-    // don't let result buffer grow infinitely
-    if (_devTriggerResults.size() > 8 && _devTriggerResults.size() == _devTriggerResults.capacity()) {
-      for (int i = 0; i < _devTriggerResults.size() - 1; i++) {
-        _devTriggerResults[i] = std::move(_devTriggerResults[i+1]);
+    if (_devEnableTriggerHistory) {
+      // don't let result buffer grow infinitely
+      if ( _devTriggerResults.size() >= 10 ) {
+        _devTriggerResults.pop_front();
       }
-      _devTriggerResults[_devTriggerResults.size()-1] = std::move(data);
-    }
-    else {
-      _devTriggerResults.emplace_back(std::move(data));
+      _devTriggerResults.emplace_back( std::move(data) );
     }
     
     auto* webService = _context->GetWebService();
     if( webService != nullptr && webService->IsWebVizClientSubscribed( kSpeechRecognizerWebvizName ) ) {
-      webService->SendToWebViz( kSpeechRecognizerWebvizName, _devTriggerResults.back() );
+      const Json::Value& webVizData = _devEnableTriggerHistory ? _devTriggerResults.back() : data;
+      webService->SendToWebViz( kSpeechRecognizerWebvizName, webVizData );
     }
   }
 #endif
@@ -1018,6 +1024,15 @@ void MicDataSystem::SendRecentTriggerDetectionToWebViz(const std::function<void(
 #endif
 }
 
+#if ANKI_DEV_CHEATS
+void MicDataSystem::EnableTriggerHistory(bool enable)
+{
+  _devEnableTriggerHistory = enable;
+  if ( !_devEnableTriggerHistory ) {
+    _devTriggerResults.clear();
+  }
+}
+#endif
 
 void MicDataSystem::SendRecognizerDasLog(const AudioUtil::SpeechRecognizerCallbackInfo& info,
                                          const char* stateStr) const

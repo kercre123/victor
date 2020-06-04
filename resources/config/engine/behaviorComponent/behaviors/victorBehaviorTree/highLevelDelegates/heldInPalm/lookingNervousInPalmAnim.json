@@ -11,13 +11,13 @@
       "and": [
         {
           "conditionType": "RobotPitchInRange",
-          "minPitchThreshold_deg": -20.0,
-          "maxPitchThreshold_deg": 20.0
+          "minPitchThreshold_deg": -30.0,
+          "maxPitchThreshold_deg": 30.0
         },
         {
           "conditionType": "RobotRollInRange",
-          "minRollThreshold_deg": -20.0,
-          "maxRollThreshold_deg": 20.0
+          "minRollThreshold_deg": -30.0,
+          "maxRollThreshold_deg": 30.0
         }
       ]
     }

@@ -17,7 +17,6 @@
 #include "localization.h"
 #include "pathFollower.h"
 #include "pickAndPlaceController.h"
-#include "powerModeManager.h"
 #include "proxSensors.h"
 #include "speedController.h"
 #include "steeringController.h"
@@ -47,6 +46,14 @@ namespace Anki {
 #ifdef SIMULATOR
         bool isForcedDelocalizing_ = false;
 #endif
+
+        // For only sending robot state messages every STATE_MESSAGE_FREQUENCY
+        // times through the main loop
+        u32 robotStateMessageCounter_ = 0;
+        bool calmModeEnabledByEngine_ = false;
+        bool calmMode_ = false;
+        TimeStamp_t timeToEnableCalmMode_ms_ = 0;
+
       } // private namespace
 
 // #pragma mark --- Messages Method Implementations ---
@@ -137,7 +144,7 @@ namespace Anki {
         SET_STATUS_BIT(PathFollower::IsTraversingPath(),            IS_PATHING);
         SET_STATUS_BIT(LiftController::IsInPosition(),              LIFT_IN_POS);
         SET_STATUS_BIT(HeadController::IsInPosition(),              HEAD_IN_POS);
-        SET_STATUS_BIT(HAL::PowerGetMode() == HAL::POWER_MODE_CALM, CALM_POWER_MODE);
+        SET_STATUS_BIT(calmMode_,                                   CALM_POWER_MODE);
         SET_STATUS_BIT(HAL::BatteryIsDisconnected(),                IS_BATTERY_DISCONNECTED);
         SET_STATUS_BIT(HAL::BatteryIsOnCharger(),                   IS_ON_CHARGER);
         SET_STATUS_BIT(HAL::BatteryIsCharging(),                    IS_CHARGING);
@@ -153,6 +160,16 @@ namespace Anki {
         SET_STATUS_BIT(isForcedDelocalizing_,                       IS_PICKED_UP);
 #endif
         #undef SET_STATUS_BIT
+
+
+        // Send state message
+        ++robotStateMessageCounter_;
+        const s32 messagePeriod = calmMode_ ? STATE_MESSAGE_FREQUENCY_CALM : STATE_MESSAGE_FREQUENCY;
+        if(robotStateMessageCounter_ >= messagePeriod) {
+          SendRobotStateMsg();
+          robotStateMessageCounter_ = 0;
+        }
+
       }
 
       RobotState const& GetRobotStateMsg() {
@@ -186,8 +203,16 @@ namespace Anki {
 
       void Process_calmPowerMode(const RobotInterface::CalmPowerMode& msg)
       {
-        AnkiInfo("Messages.Process_calmPowerMode.enable", "%d", msg.enable);
-        PowerModeManager::EnableActiveMode(!msg.enable);
+        // NOTE: This used to actually enable calm mode in syscon, but since "quiet" mode
+        //       was implemented in syscon where encoders are "off" when the motors are
+        //       not being driven leaving minimal difference between calm mode and active mode
+        //       in terms of battery life, this now only throttles RobotState messages being 
+        //       sent to engine since it still results in a 10+% reduction in CPU consumption.
+        //       Not going into syscon calm mode also means that motor calibrations are no 
+        //       longer necessary as a precaution when leaving calm mode.
+        AnkiInfo("Messages.Process_calmPowerMode.enable", "enable: %d", msg.enable);
+        calmModeEnabledByEngine_ = msg.enable;
+        calmMode_ = msg.enable;
       }
 
       void Process_absLocalizationUpdate(const RobotInterface::AbsoluteLocalizationUpdate& msg)
@@ -254,6 +279,20 @@ namespace Anki {
           }
         }
 
+        // Temporarily unset calm mode when button is pressed so that 
+        // we can still go into pairing/debug screens
+        TimeStamp_t now_ms = HAL::GetTimeStamp();
+        static const u32 TEMP_CALM_MODE_DISABLE_TIME_MS = 1000;
+        if (calmModeEnabledByEngine_) {
+          if (HAL::GetButtonState(HAL::BUTTON_POWER)) {
+            calmMode_ = false;
+            timeToEnableCalmMode_ms_ = now_ms + TEMP_CALM_MODE_DISABLE_TIME_MS;
+          } else if (timeToEnableCalmMode_ms_ != 0 && timeToEnableCalmMode_ms_ < now_ms) {
+            calmMode_ = true;
+            timeToEnableCalmMode_ms_ = 0;
+          }
+        }
+
         // Process incoming messages
         u32 dataLen;
 
@@ -309,8 +348,8 @@ namespace Anki {
       }
 
       void Process_executePath(const RobotInterface::ExecutePath& msg) {
-        AnkiInfo( "Messages.Process_executePath.StartingPath", "%d", msg.pathID);
-        PathFollower::StartPathTraversal(msg.pathID);
+        const bool result = PathFollower::StartPathTraversal(msg.pathID);
+        AnkiInfo( "Messages.Process_executePath.Result", "id=%d result=%d", msg.pathID, result);
       }
 
       void Process_dockWithObject(const DockWithObject& msg)

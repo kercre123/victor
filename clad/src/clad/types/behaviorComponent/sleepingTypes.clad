@@ -20,6 +20,9 @@ enum uint_8 SleepStateID {
   // deep sleep where only voice command will wake (not movement)
   Comatose,
   EmergencySleep,
+  
+  // deep sleep when the robot is held in a user's palm, petting will wake (not movement)
+  HeldInPalmSleep,
 
   DeepSleep,
   LightSleep,
@@ -33,6 +36,11 @@ enum uint_8 WakeReason {
   SDK,
   TimerShouldRing,
   VoiceCommand,
+  
+  // wakes from held-in-palm sleep
+  Jolted,
+  NotInAir,
+  PickedUpFromPalm,
 
   // wakes from deep sleep or above
   PickedUp,
@@ -56,7 +64,10 @@ enum_concept bool ShouldPlayWakeUpAnimForReason[WakeReason] {
   SDK = 1,
   TimerShouldRing = 1,
   VoiceCommand = 0, // already awake from the wake word behavior
+  Jolted = 0, // already awake from the jolt reaction
+  NotInAir = 1,
   PickedUp = 1,
+  PickedUpFromPalm = 0, // already awake from the palm pick-up reaction
   Poked = 1,
   Touched = 1,
   Sound = 0, // already awake from the sound reaction
@@ -72,6 +83,9 @@ enum uint_8 SleepReason {
   ConsoleVar,
   SleepCommand,
   GoodnightCommand,
+  
+  // Robot has been on a palm for a long time and trusts the user
+  HeldInPalmSleep,
 
   // set by some reaction behavior (probably ReactToDarkness)
   SleepOnChargerSuggestion,
@@ -92,6 +106,8 @@ enum uint_8 SleepReason {
 
 enum uint_8 SleepReactionType {
   NotReacting = 0,
+  Jolted,
+  PickedUpFromPalm,
   Sound,
   TriggerWord,
   WiggleOntoCharger,

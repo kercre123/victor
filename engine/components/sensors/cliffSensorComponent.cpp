@@ -28,7 +28,7 @@
 #include "util/helpers/ankiDefines.h"
 #include "util/logging/logging.h"
 
-#include "coretech/common/engine/math/polygon_impl.h"
+#include "coretech/common/engine/math/polygon.h"
 #include "coretech/common/engine/utils/timer.h"
 
 #define LOG_CHANNEL "CliffSensor"

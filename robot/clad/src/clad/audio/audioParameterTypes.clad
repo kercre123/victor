@@ -6,6 +6,7 @@ namespace GameParameter {
 
 enum uint_32 ParameterType
 {
+  Dev_Squawk_Volume = 847280258,
   Dev_Tone_Freq = 2324555758,
   Event_Volume = 3530059848,
   External_Shape = 1292394150,

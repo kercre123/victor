@@ -1,0 +1,52 @@
+{{ define "content" }}
+
+Cher parent,
+Votre enfant souhaite créer un compte Anki.
+Comme vous le savez sûrement, Anki est le développeur de Cozmo.
+Ce compte gratuit lui permettra de définir un nom d'utilisateur unique pour suivre ses scores et sa progression.
+Pour plus de détails, rendez-vous dans la section « Enfants » sur https://anki.com/privacy.
+
+Votre enfant a fourni les informations suivantes :
+
+Adresse e-mail : {{ .ToEmail }}
+Date de naissance : {{ .Dob }}
+Nom d'utilisateur : {{ .Username }}
+
+Pour approuver la demande de votre enfant et activer son compte Anki, cliquez sur le lien ci-dessous.
+A noter : Il vous reste 1 jour pour activer le compte de votre enfant.
+{{ .URL }}
+
+Merci,
+L'équipe Anki
+
+**Si vous n'avez pas créé de compte, merci de nous le faire savoir en nous contactant à l'adresse support@anki.com.
+Cet e-mail a été généré automatiquement.
+Nous vous invitons à lire cet e-mail pour avoir la certitude que l'application Cozmo respecte pleinement la confidentialité de votre enfant.
+Nous collectons les informations suivantes au sujet du compte de votre enfant : adresse e-mail d'un parent légal (nécessaire afin de pouvoir vous contacter et activer le compte), nom d'utilisateur Anki, mot de passe, date de naissance, adresse IP et données de jeu (telles que les points et les scores).
+Nous demanderons également l'autorisation de votre enfant avant de lui envoyer des notifications relatives à son expérience de jeu.
+Cet avis parental vise à expliquer nos pratiques de collecte, d'utilisation et de diffusion de renseignements personnels.
+Votre enfant a défini un nom d'utilisateur unique {{ .Username }}.
+Toutefois, si vous n'activez pas son compte dans un délai de 15 jours à compter de sa création, nous nous réservons le droit de supprimer le nom d'utilisateur et les coordonnées associées.
+En activant ce compte, vous acceptez les conditions énoncées ci-dessus conformément à notre politique de confidentialité.
+Nous nous efforçons de limiter au maximum la quantité d'informations recueillies auprès de votre enfant et ciblons exclusivement celles nécessaires à l'utilisation raisonnable du produit.
+À moins de vous inscrire à la newsletter Anki, vos coordonnées ne seront pas utilisées à d'autres fins que le strict envoi de cet avis.
+
+Pour toute question, suggestion et demande de suppression d'informations collectées auprès de votre enfant ou vous-même, contactez notre servive Relation Client Anki https://anki.com/support/contact
+
+Veuillez conserver cet e-mail.
+
+ANKI
+55 2nd. St
+San Francisco, CA 94105
+(415) 800-1040
+
+**********************************************
+
+Si vous n'avez pas créé de compte, merci de nous le faire savoir en contactant notre service Relation Client Anki https://anki.com/support/contact
+Cet e-mail a été généré automatiquement.
+
+Politique de confidentialité: https://anki.com/privacy
+
+Cet e-mail a été envoyé à {{ .ToEmail }} de la part d'Anki.
+55 2nd Street, San Francisco, CA 94105
+{{ end }}

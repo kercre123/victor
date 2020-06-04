@@ -1,7 +1,8 @@
 {
   "behaviorID": "ReactToPickupFromPalm",
   "behaviorClass" : "DispatcherStrictPriority",
-  
+  "associatedActiveFeature": "HeldInPalm",
+
   "interruptActiveBehavior": true,
   "actAsSelector": true,
   
@@ -14,7 +15,8 @@
     {
       "behaviorName": "RelaxedReactToPickupFromPalmInternal",
       "behaviorClass" : "AnimGetInLoop",
-      
+      "associatedActiveFeature": "HeldInPalm",
+
       "getIn"            : "HeldOnPalmPickupRelaxed",
       "loopAnimation"    : "NeutralFace",
       "getOut"           : "NeutralFace",
@@ -31,17 +33,14 @@
     {
       "behaviorName": "NervousReactToPickupFromPalmInternal",
       "behaviorClass" : "AnimGetInLoop",
-      
+      "associatedActiveFeature": "HeldInPalm",
+
       "getIn"            : "HeldOnPalmPickupNervous",
       "loopAnimation"    : "NeutralFace",
       "getOut"           : "NeutralFace",
       
       "shouldCheckEndCondDuringAnim": false,
-      // NOTE(GB): Tread motion is too aggressive with current animation,
-      // can cause robot to not detect OnTreads even when not put down on
-      // the ground again, which can cause a whole host of issues, so lock
-      // the treads for now until animation is revised.
-      "lockTreads"       : true
+      "lockTreads"       : false
     }
   ],
   
@@ -88,11 +87,14 @@
       },
       {
         // If the robot is sure that it has been put down on its treads prior to any
-        // of the other cancellation conditions above, cancel the behavior to allow the
+        // of the other cancellation conditions above, cancel the behavior. The
+        // post-behavior suggestion that is offered by this behavior will then allow
         // ReactToPutDownFromPalm to be activated by the HeldInPalmDispatcher
         "conditionType": "OffTreadsState",
         "targetState": "OnTreads"
       }
     ]
-  }
+  },
+  
+  "postBehaviorSuggestion": "ReactToPutDownFromPalm"
 }

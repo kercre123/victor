@@ -21,6 +21,8 @@
 #include "util/console/consoleInterface.h"
 #include "util/logging/logging.h"
 
+#define LOG_CHANNEL "Behaviors"
+
 namespace Anki {
 namespace Vector {
 
@@ -62,11 +64,12 @@ void IBehavior::OnEnteredActivatableScope()
 
   _currentInScopeCount++;
   // If this isn't the first EnteredActivatableScope don't call internal functions
-  if(_currentInScopeCount != 1){
-    PRINT_CH_DEBUG("Behaviors",
-                  "IBehavior.OnEnteredActivatableScope.AlreadyInScope",
-                  "Behavior '%s' is already in scope, ignoring request to enter scope",
-                  _debugLabel.c_str());
+  if (_currentInScopeCount != 1) {
+    if (kDebugActivationState) {
+      LOG_DEBUG("IBehavior.OnEnteredActivatableScope.AlreadyInScope",
+                "Behavior '%s' is already in scope, ignoring request to enter scope",
+                _debugLabel.c_str());
+    }
     return;
   }
 
@@ -157,12 +160,13 @@ void IBehavior::OnLeftActivatableScope()
   }
   _currentInScopeCount--;
 
-  if(_currentInScopeCount != 0){
-    PRINT_CH_INFO("Behaviors",
-                  "IBehavior.OnLeftActivatableScope.StillInScope",
-                  "There's still an in scope count of %d on %s",
-                  _currentInScopeCount,
-                  _debugLabel.c_str());
+  if (_currentInScopeCount != 0) {
+    if (kDebugActivationState) {
+      LOG_DEBUG("IBehavior.OnLeftActivatableScope.StillInScope",
+                "There's still an in scope count of %d on %s",
+                _currentInScopeCount,
+                _debugLabel.c_str());
+    }
     return;
   }
 

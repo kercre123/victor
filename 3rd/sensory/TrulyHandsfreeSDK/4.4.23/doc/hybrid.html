@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h2>Hybrid Recognizer</h2>
+
+<p>A hybrid recognizer is basically a collection of individual recognizers. It allows different parts of the vocabulary to be recognized with different recognition objects. This would typically offer improved performance in areas where task-specific or language-specific models are available. For instance, it's possible to construct a hybrid recognizer that combines a generic acoustic model with a task-specific digits acoustic model to support recognition of phrases like 'Dial 503-123-4567' where the word 'Dial' would be recognized using the generic acoustic model and the remainder with the digits acoustic model. Similarly, in a multi-lingual scenario, it would be possible to combine English and foreign language models into the same hybrid recognizer.</p>
+
+<p>The hybrid recognizer is created by providing a set of recognition objects and corresponding pronunciation objects, words and pronunciations. There is a single call <a href="thfRecogCreateHybrid.html">thfRecogCreateHybrid</a> which will returns a handle to two new objects: a hybrid recognition object and hybrid pronunciation object. These two objects can then be used with standard SDK calls to create a search with <a href="thfSearchCreateFromGrammar.html">thfSearchCreateFromGrammar</a> or load a pre-built search using <a href="thfSearchCreateFromFile.html">thfSearchCreateFromFile</a>.</p>
+
+<p>The grammar specification for a hybrid recognizer must include some extra information. In particular, it is necessary to detail which words in the grammar will be recognized by which recognition object. By default, it will associate all words with the first recognition object in the list unless otherwise specified. The following hybrid grammar demonstrates how to associate a word or grammar variable with a particular recognition object index using the command: <em>acoustic model: &lt;item&gt; &lt;index&gt;;</em>. It assumes the recognition list passed into thfRecogCreateHybrid included a digits recognizer object first (i.e., index 0) followed by generic recognition object second (i.e., index 1):</p>
+
+<pre>
+digit = one | two | three | four | five | six | seven | eight | nine | zero | oh;
+digits = $digit $digit $digit [*sil%%] $digit $digit $digit [*sil%%] $digit $digit $digit $digit;
+contact = home | john smith;
+g = *sil%% call ($contact | $digits) *sil%%;
+acoustic model: call 1;
+acoustic model: $contact 1;
+acoustic model: $g/*sil 1;
+</pre>
+
+So this basically states that the word 'call' is to be recognized with the recognition object at index 1 (i.e., generic recognizer). Likewise for all the words in the 'contact' variable definition (i.e., 'home', 'john', 'smith') and the '*sil' that appears in the 'g' variable definition. <b>Note:</b> the latter is used to differentiate the generic '*sil' from the one supported by the task-specific digit acoustic model.
+
+<!----------------------------------------------------------------------- -->
+</body>

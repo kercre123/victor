@@ -25,9 +25,9 @@
 #include "anki/cozmo/shared/cozmoConfig.h"
 
 #include "coretech/neuralnets/neuralNetJsonKeys.h"
+#include "coretech/neuralnets/neuralNetRunner.h"
 
 #include "coretech/vision/engine/imageCache.h"
-#include "coretech/vision/engine/neuralNetRunner.h"
 #include "coretech/vision/shared/MarkerCodeDefinitions.h"
 
 #include "util/console/consoleSystem.h"
@@ -773,22 +773,28 @@ GTEST_TEST(NeuralNets, InitFromConfig)
   ASSERT_TRUE(allModelsConfig.isArray());
   for(const auto& modelConfig : allModelsConfig)
   {
-    Vision::NeuralNetRunner neuralNetRunner;
-    const Result loadRunnerResult = neuralNetRunner.Init(modelPath, dnnCachePath, modelConfig);
+    NeuralNets::NeuralNetRunner neuralNetRunner(modelPath);
+    const Result loadRunnerResult = neuralNetRunner.Init(dnnCachePath, modelConfig);
     ASSERT_EQ(RESULT_OK, loadRunnerResult);
     
-    ASSERT_TRUE(modelConfig.isMember(NeuralNets::JsonKeys::GraphFile));
-    const std::string modelFileName = modelConfig[NeuralNets::JsonKeys::GraphFile].asString();
-    
-    // Make sure we have correct extension
-    const size_t extIndex = modelFileName.find_last_of(".");
-    ASSERT_NE(std::string::npos, extIndex); // must have extension
-    const std::string extension = modelFileName.substr(extIndex, std::string::npos);
-    ASSERT_EQ(".tflite", extension); // TODO: make this depend on which neural net platform we're building with?
-    
-    // Make sure model file exists
-    const std::string fullModelPath = Util::FileUtils::FullFilePath({modelPath, modelFileName});
-    ASSERT_TRUE(Util::FileUtils::FileExists(fullModelPath));
+    // Check that the model file exists and is a .tflite model (unless this is an "offboard" model definition)
+    ASSERT_TRUE(modelConfig.isMember(NeuralNets::JsonKeys::ModelType));
+    const std::string modelTypeStr = modelConfig[NeuralNets::JsonKeys::ModelType].asString();
+    if(modelTypeStr != NeuralNets::JsonKeys::OffboardModelType)
+    {
+      ASSERT_TRUE(modelConfig.isMember(NeuralNets::JsonKeys::GraphFile));
+      const std::string modelFileName = modelConfig[NeuralNets::JsonKeys::GraphFile].asString();
+      
+      // Make sure we have correct extension
+      const size_t extIndex = modelFileName.find_last_of(".");
+      ASSERT_NE(std::string::npos, extIndex); // must have extension
+      const std::string extension = modelFileName.substr(extIndex, std::string::npos);
+      ASSERT_EQ(".tflite", extension); // TODO: make this depend on which neural net platform we're building with?
+      
+      // Make sure model file exists
+      const std::string fullModelPath = Util::FileUtils::FullFilePath({modelPath, modelFileName});
+      ASSERT_TRUE(Util::FileUtils::FileExists(fullModelPath));
+    }
   }
 }
 

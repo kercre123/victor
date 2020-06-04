@@ -1,4 +1,4 @@
-set(SENSORY_HOME "${ANKI_EXTERNAL_DIR}/anki-thirdparty/sensory")
+set(SENSORY_HOME "${ANKI_THIRD_PARTY_DIR}/sensory")
 set(SENSORY_INCLUDE_PATH "${SENSORY_HOME}/TrulyHandsfreeSDK/4.4.23/android/include")
 
 if (VICOS)

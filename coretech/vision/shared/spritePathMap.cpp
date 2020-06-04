@@ -13,19 +13,36 @@
 
 #include "util/logging/logging.h"
 
+#define LOG_CHANNEL "SpritePathMap"
+
 namespace Anki {
 namespace Vision {
 
-const uint16_t SpritePathMap::kEmptySpriteBoxID = std::hash<std::string>()("EmptySpriteBox");
-const uint16_t SpritePathMap::kInvalidSpriteID = std::hash<std::string>()("InvalidSpriteBox");
+bool SpritePathMap::_loadingComplete = false;
+std::unique_ptr<std::vector<std::string>> SpritePathMap::_unverifiedAssets;
+std::unordered_map<SpritePathMap::AssetID, SpritePathMap::AssetInfo> SpritePathMap::_idToInfoMap;
+
+const SpritePathMap::AssetID SpritePathMap::kClearSpriteBoxID = SpritePathMap::HashAssetName("clear_sprite_box");
+const SpritePathMap::AssetID SpritePathMap::kEmptySpriteBoxID = SpritePathMap::HashAssetName("empty_sprite_box");
+const SpritePathMap::AssetID SpritePathMap::kInvalidSpriteID = SpritePathMap::HashAssetName("invalid_sprite_box");
+
+const char* SpritePathMap::kPlaceHolderAssetName= "missing_asset_placeholder";
+const SpritePathMap::AssetID SpritePathMap::kPlaceHolderAssetID =
+  SpritePathMap::HashAssetName(kPlaceHolderAssetName);
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-SpritePathMap::AssetInfo::AssetInfo(uint16_t wireID,
-                                    const bool isSpriteSeq,
+SpritePathMap::AssetInfo::AssetInfo()
+:isSpriteSequence(false)
+, assetName("")
+, filePath("")
+{
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SpritePathMap::AssetInfo::AssetInfo(const bool isSpriteSeq,
                                     const std::string& assetName,
                                     const std::string& filePath)
-: wireID(wireID)
-, isSpriteSequence(isSpriteSeq)
+: isSpriteSequence(isSpriteSeq)
 , assetName(assetName)
 , filePath(filePath)
 {
@@ -35,126 +52,141 @@ SpritePathMap::AssetInfo::AssetInfo(uint16_t wireID,
 SpritePathMap::SpritePathMap()
 {
   // Make sure these ID's don't conflict with any of the hashed AssetNames
-  _idToInfoMap.emplace(kEmptySpriteBoxID, nullptr);
-  _idToInfoMap.emplace(kInvalidSpriteID, nullptr);
+  _idToInfoMap.emplace(kClearSpriteBoxID, AssetInfo{false, "ClearSpriteBox", ""});
+  _idToInfoMap.emplace(kEmptySpriteBoxID, AssetInfo{false, "EmptySpriteBox", ""});
+  _idToInfoMap.emplace(kInvalidSpriteID, AssetInfo{false, "InvalidSpriteBox", ""});
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SpritePathMap::AddAsset(const std::string& assetName, const std::string& filePath, const bool isSpriteSequence)
+SpritePathMap::AssetID SpritePathMap::HashAssetName(const std::string& assetName)
 {
-  {
-    const auto& iter = _nameToInfoMap.find(assetName);
-    if(iter != _nameToInfoMap.end()){
-      PRINT_NAMED_WARNING("SpritePathMap.AddAsset.DuplicateAssetName",
-                          "Attempted to AddAsset with name %s, but name is already used",
-                          assetName.c_str());
-      return false;
-    }
-  }
-
-  uint16_t newAssetID = static_cast<uint16_t>(std::hash<std::string>()(assetName));
   // Here we use only the bottom 16 bits of the hash. This increases probability of collision, 
   // but given the sample size is just our asset names, the probability is still very small.
-  {
-    const auto& iter = _idToInfoMap.find(newAssetID);
-    if(iter != _idToInfoMap.end()){
-      PRINT_NAMED_ERROR("SpritePathMap.AddAsset.InvalidHash",
-                        "Asset name: %s produced a hash duplicated by asset name: %s",
-                        assetName.c_str(),
-                        iter->second->assetName.c_str());
-      return false;
-    }
-  }
-  AssetInfo newAssetInfo(newAssetID, isSpriteSequence, assetName, filePath);
-  auto emplacePair = _nameToInfoMap.emplace(assetName, newAssetInfo);
-  _idToInfoMap.emplace(newAssetID, &emplacePair.first->second);
+  return static_cast<AssetID>(std::hash<std::string>()(assetName));
+}
 
-  return true;
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SpritePathMap::AssetID SpritePathMap::GetAssetID(const std::string& assetName)
+{
+  if(!_loadingComplete){
+    // We haven't loaded assets yet. Hash the name, return the ID, and make a note
+    // so we can verify the asset after loading is finished
+    if(nullptr == _unverifiedAssets){
+      _unverifiedAssets = std::make_unique<std::vector<std::string>>();
+    }
+    _unverifiedAssets->push_back(assetName);
+    return HashAssetName(assetName);
+  }
+
+  AssetID assetID = HashAssetName(assetName);
+  if(_idToInfoMap.end() == _idToInfoMap.find(assetID)){
+    LOG_ERROR("SpritePathMap.GetAssetID.InvalidAssetName",
+              "No asset with name %s is available. Returning asset ID for %s",
+              assetName.c_str(),
+              kPlaceHolderAssetName);
+    return kPlaceHolderAssetID;
+  }
+  return assetID;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+SpritePathMap::AssetID SpritePathMap::AddAsset(const std::string& assetName,
+                                               const std::string& filePath,
+                                               const bool isSpriteSequence)
+{
+  AssetID newAssetID = HashAssetName(assetName);
+
+  AssetInfo newAssetInfo(isSpriteSequence, assetName, filePath);
+  auto emplacePair = _idToInfoMap.emplace(newAssetID, newAssetInfo);
+  if(!emplacePair.second){
+    if(emplacePair.first->second.assetName == assetName){
+      LOG_WARNING("SpritePathMap.AddAsset.DuplicateAssetName",
+                  "Attempted to Add Asset with name %s, but name is already used",
+                  assetName.c_str());
+    } else {
+      LOG_ERROR("SpritePathMap.AddAsset.InvalidHash",
+                "Asset name: %s produced a hash duplicated by asset name: %s",
+                assetName.c_str(),
+                emplacePair.first->second.assetName.c_str());
+    }
+    return kInvalidSpriteID;
+  }
+
+  return newAssetID;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SpritePathMap::VerifyPlaceholderAsset() const
 {
-  const auto& iter = _nameToInfoMap.find(kPlaceHolderAssetName);
-  return ANKI_VERIFY(iter != _nameToInfoMap.end(),
+  const auto& iter = _idToInfoMap.find(kPlaceHolderAssetID);
+  return ANKI_VERIFY(iter != _idToInfoMap.end(),
                      "SpritePathMap.VerifyPlaceholderAsset.AssetNotFound",
                      "Placeholder asset specified as: %s not found",
                      kPlaceHolderAssetName);
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SpritePathMap::IsValidAssetName(const std::string& assetName) const
+bool SpritePathMap::IsValidAssetID(const AssetID assetID) const
 {
-  if(kPlaceHolderAssetName == assetName){
+  if(kInvalidSpriteID == assetID){
     return false;
-  }
+  } 
 
-  const auto& iter = _nameToInfoMap.find(assetName);
-  return (iter != _nameToInfoMap.end());
+  const auto& iter = _idToInfoMap.find(assetID);
+  return (iter != _idToInfoMap.end());
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool SpritePathMap::IsSpriteSequence(const std::string& assetName) const
+bool SpritePathMap::IsSpriteSequence(const AssetID assetID) const
 {
-  return GetInfoForAsset(assetName)->isSpriteSequence;
+  return GetInfoForAsset(assetID)->isSpriteSequence;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const std::string& SpritePathMap::GetAssetPath(const std::string& assetName) const
+const std::string& SpritePathMap::GetAssetPath(const AssetID assetID) const
 {
-  return GetInfoForAsset(assetName)->filePath;
+  return GetInfoForAsset(assetID)->filePath;
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-uint16_t SpritePathMap::GetAssetID(const std::string& assetName) const
-{
-  return GetInfoForAsset(assetName)->wireID; 
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const std::string& SpritePathMap::GetAssetName(const uint16_t& assetID) const
-{
-  ANKI_VERIFY(kEmptySpriteBoxID != assetID,
-              "SpritePathMap.GetAssetName.EmptySpriteBox",
-              "Requested an asset name for an empty SpriteBox, this indicates a usage error");
-  return GetInfoForAsset(assetID)->assetName;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const SpritePathMap::AssetInfo* const SpritePathMap::GetInfoForAsset(const uint16_t& assetID) const
+const SpritePathMap::AssetInfo* const SpritePathMap::GetInfoForAsset(const AssetID assetID) const
 {
   const auto& iter = _idToInfoMap.find(assetID);
-  if(iter != _idToInfoMap.end()){
-    return iter->second;
-  }
-
-  return GetInfoForAsset(kPlaceHolderAssetName);
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-const SpritePathMap::AssetInfo* const SpritePathMap::GetInfoForAsset(const std::string& assetName) const
-{
-  {
-    const auto& iter = _nameToInfoMap.find(assetName);
-    if(iter != _nameToInfoMap.end()){
-      return &iter->second;
-    }
-
-    PRINT_NAMED_ERROR("SpritePathMap.SpriteNotFound",
-                      "No sprite found for name: %s. Attempting to return path for %s",
-                      assetName.c_str(),
-                      kPlaceHolderAssetName);
-  }
-
-  const auto& iter = _nameToInfoMap.find(kPlaceHolderAssetName);
-  if(iter != _nameToInfoMap.end()){
+  if(_idToInfoMap.end() != iter){
     return &iter->second;
+  }
+
+  if(VerifyPlaceholderAsset()){
+    LOG_ERROR("SpritePathMap.GetAssetID.InvalidAssetID",
+              "No asset with ID %d is available. Returning asset info for %s",
+              assetID,
+              kPlaceHolderAssetName);
+    return GetInfoForAsset(kPlaceHolderAssetID);
   }
 
   PRINT_NAMED_ERROR("SpritePathMap.DefaultSpriteNotFound",
                     "There must be a sprite named %s among the sprite assets, and isn't. CRASH IMMINENT.",
                     kPlaceHolderAssetName);
   return nullptr;
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void SpritePathMap::CheckUnverifiedAssetIDs() const
+{
+  _loadingComplete = true;
+
+  if(nullptr == _unverifiedAssets){
+    return;
+  }
+
+  for(const auto& assetName : *_unverifiedAssets){
+    ANKI_VERIFY(_idToInfoMap.end() != _idToInfoMap.find(HashAssetName(assetName)),
+                "SpritePathMap.GetAssetID.InvalidAssetName",
+                "No asset with name %s is available. Ensure that it is present in EXTERNALS",
+                assetName.c_str());
+  }
+
+  _unverifiedAssets.reset(nullptr);
 }
 
 } // namespace Vision

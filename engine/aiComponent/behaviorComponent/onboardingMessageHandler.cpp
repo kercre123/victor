@@ -54,6 +54,12 @@ void OnboardingMessageHandler::InitDependent( Robot* robot, const BCCompMap& dep
 
     _eventHandles.push_back(_gatewayInterface->Subscribe(AppToEngineTag::kOnboardingCompleteRequest,
       std::bind(&OnboardingMessageHandler::HandleOnboardingCompleteRequest, this, std::placeholders::_1)));
+    
+    _eventHandles.push_back(_gatewayInterface->Subscribe(AppToEngineTag::kOnboardingWakeUpRequest,
+      std::bind(&OnboardingMessageHandler::HandleOnboardingWakeUpRequest, this, std::placeholders::_1)));
+    
+    _eventHandles.push_back(_gatewayInterface->Subscribe(AppToEngineTag::kOnboardingSetPhaseRequest,
+      std::bind(&OnboardingMessageHandler::HandleOnboardingSetPhaseRequest, this, std::placeholders::_1)));
   }
 
   // Onboarding dev console functionality
@@ -183,6 +189,32 @@ void OnboardingMessageHandler::HandleOnboardingCompleteRequest(const AppToEngine
       auto* onboardingComplete = new external_interface::OnboardingCompleteResponse{ completed };
       _gatewayInterface->Broadcast( ExternalMessageRouter::WrapResponse(onboardingComplete) );
     }
+  }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void OnboardingMessageHandler::HandleOnboardingWakeUpRequest(const AppToEngineEvent& event)
+{
+  // This event is primarily handled by BehaviorOnboardingCoordinator, but from OnboardingMessageHandler we want to make
+  // sure that the robot isn't stuck in some customer care screen
+  HandleWakeUpRequest();
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void OnboardingMessageHandler::HandleOnboardingSetPhaseRequest(const AppToEngineEvent& event)
+{
+  // This event is primarily handled by BehaviorOnboardingCoordinator, but from OnboardingMessageHandler we want to make
+  // sure that the robot isn't stuck in some customer care screen
+  if(event.GetData().onboarding_set_phase_request().phase() == external_interface::OnboardingPhase::WakeUp){
+    HandleWakeUpRequest();
+  }
+}
+  
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void OnboardingMessageHandler::HandleWakeUpRequest()
+{
+  if(_robot){
+    _robot->SendRobotMessage<RobotInterface::ExitCCScreen>();
   }
 }
 

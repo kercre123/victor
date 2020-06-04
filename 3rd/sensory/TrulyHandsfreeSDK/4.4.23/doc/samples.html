@@ -1,0 +1,359 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+</OBJECT><HEADER><CENTER>Sensory Confidential</CENTER></HEADER>
+<h2> Sample C Code</h2>
+
+<p>The SDK includes platform-specific C code examples in the <em>TrulyHandsfree SDK\&lt;platform&gt;\Samples</em> directory that illustrate most of the API function calls and address common uses. Everything needed to compile and run each sample is provided, including:</p>
+
+<ul>
+<li><b>Project files and/or Makefiles</b> : Individual and group
+project files and solutions for both Microsoft Visual Studio 2008 (<em>*_vc9.sln</em>) and Microsoft Visual Studio 2013 Express for Windows (<em>*_v12.sln</em>). Makefiles for other platforms. Note that MSVS 2008 corresponds to MS internal version 9, while MSVS 2013 Express, which can be freely downloaded and used, corresponds to MS internal version 12.
+<li><b>Data files</b> : Vocabulary lists, audio files, and compiled search objects.
+<li><b>Support files</b> : Various resources used by the samples, including a text-based console for displaying feedback messages and a basic audio interface for asynchronous recording. <em>NOTE</em> Supported code is provided for convenience only and not intended for actual application development. </p>
+</ul>
+
+<p>Each sample is now described in outline. </p>
+
+
+<h3>BuildList Sample</h3> Example of how to compile a vocabulary to create a search object from a simple word-list specification:
+<ol>
+<li>Start session.
+<li>Reads list of <em>names</em> from a text file.
+<li>Creates a recognizer object w/o speech detector.
+<li>Creates a pronunciation object.
+<li>Creates a search object from the word-list specification:
+<ul>
+ <li>Case 1: Generates pronunciations externally (explicitly) and applies them during search creation.
+ <li>Case 2: Generates pronunciations internally (automatically).
+</ul>
+<li>Saves search object to file.
+<li>Cleans up.
+<li>End session.
+</ol>
+
+<h3>BuildGrammar Sample</h3>
+Example of how to compile a vocabulary to create a search object from a grammar specification. Grammars are more advanced yet more powerful than the simple list specification:
+ <ol>
+<li>Start session.
+ <li>Specifies <em>time</em> grammar, words in grammar and pronunciations of words.
+ <li>Creates a recognizer object w/o speech detector.
+ <li>Creates a search object from the grammar specification.
+ <li>Saves search object to file.
+ <li>Cleans up.
+<li>End session.
+ </ol>
+
+<h3>RecogList Sample</h3>
+Example of recognizing from a RIFF wave file. Uses the search object created by BuildList:
+<ol>
+<li>Start session.
+<li>Read input wave file.
+<li>Creates recog object w/speech detector.
+<li>Loads search object from file (created by BuildList example).
+<li>Configures search object parameters.
+<li>Initializes recognizer.
+<li>Converts samplerate of wave if different from acoustic model.
+<li>Configures speech detector
+<li>Passes speech data thru recognizer.
+<li>Gets speech alignment information.
+<li>Checks if speech was clipped.
+<li>Gets N-best recognition result.
+<li>Cleans up.
+<li>End session.
+</ol>
+
+<h3>RecogGrammar Sample</h3>
+Example of pipelined recognition from a RAW wave file. Uses the search object created by BuildGrammar:
+<ol>
+<li>Start session.
+<li>Creates a recog object w/speech detector.
+<li>Loads search object from file (created by BuildGrammar example).
+<li>Initializes the recognizer.
+<li>Configures search parameters.
+<li>Configures speech detector.
+<li>Open unformatted (no header) binary 16-bit little-endian PCM wave file.
+<li>Performs pipelined recognition on 250ms blocks of audio from
+binary wave file.
+<li>Reports speech detector status.
+<li>Reports speech alignment.
+<li>Gets 1-best results.
+<li>Cleans up.
+<li>End session.
+</ol>
+
+<!--
+<h3>RecogLive Sample</h3>
+Example of pipelined recognition with live audio input, using the SDK integrated audio support. Records up to 5000ms. Uses the search object created by BuildList:
+<ol>
+<li>Start session with audio control.
+<li>Creates recog object w/speech detector
+<li>Loads search object from file (created by BuildList example).
+<li>Configures search parameters.
+<li>Configures recognizer parameters.
+<li>Initializes the recognizer in keep_wave_word_phoneme mode.
+<li>Sets audio mixer gain
+<li>Generates and plays a beep
+<li>Starts recognition using integrated audio; This blocks until recognition is complete or an end condition is reached.
+<li>Retrieves speech duration information.
+<li>Check if audio was clipped.
+<li>Retrieves N-best results including wave and alignment information.
+<ul><li>Save input wave.
+<li>Save speech detected wave.
+<li>Save word alignment information.
+<li>Save phoneme alignment information
+</ul>
+<li>Clean up.
+<li>End session.
+</ol>
+-->
+
+<h3>RecogPipe Sample</h3>
+Example of pipelined recognition with live audio input, using an explicit audio interface. Records up to 5000ms. Uses the search object created by BuildList:
+<ol>
+<li>Start session with audio control.
+<li>Creates recog object w/speech detector
+<li>Loads search object from file (created by BuildList example).
+<li>Configures search parameters.
+<li>Configures recognizer parameters.
+<li>Initializes the recognizer in keep_wave_word_phoneme mode.
+<li>Initialize audio device.
+<li>Starts recording.
+<li>Retrieves audio block (loop).
+<li>Case 1: Full recognition
+ <ul>
+ <li>Feeds it thru recognizer (including speech detector).
+ <li>Use speech detector status to decide when to stop recording.
+</ul>
+<li>Case 2: Partial recognition
+ <ul>
+ <li>Feeds it thru speech detector only.
+ <li>Use speech detector status to decide when to stop recording.
+ <li>Feed buffered audio thru recognizer.
+ </ul>
+
+<li>Retrieves speech duration information.
+<li>Check if audio was clipped.
+<li>Retrieves N-best results including wave and alignment information.
+<ul><li>Save input wave.
+<li>Save speech detected wave.
+<li>Save word alignment information.
+<li>Save phoneme alignment information
+</ul>
+<li>Clean up.
+<li>End session.
+</ol>
+
+<h3>PhraseSpot Sample</h3>
+Example of pipelined phrasespotting with live audio input, using an explicit audio interface :
+<ol>
+ <li>Specifies <em>phrasespot</em> grammar, words in grammar and pronunciations of words.
+<li>Start session.
+<li>Creates recog object.
+<li>Creates pronunciation object.
+<li>Creates a phrasespotting search object from the grammar specification.
+<li>Configures phrasespot parameters.
+<li>Configures recognizer parameters.
+<li>Initializes the recognizer.
+<li>Initialize audio device.
+<li>Starts recording.
+<li>Retrieves audio block (loop).
+<li>Feeds it thru recognizer
+<li>Use recognition status to decide when to stop recording.
+<li>Retrieves phrasespot results
+</ul>
+<li>Clean up.
+<li>End session.
+</ol>
+
+<h3>StaticBuildList Sample</h3>
+Example of how to create a search object from a word-list specification, using a static recognizer and static pronunciation model, which are compiled into the application.
+
+<ol>
+<li>Start session.
+<li>Read word-list from file.
+<li>Creates a recognizer object w/o speech detector from static memory.
+<li>Creates a pronunciation object from static memory.
+<li>Creates a search object:
+<ul>
+ <li>Case 1: Generates pronunciations externally and uses them during search creation.
+ <li>Case 2: Generates pronunciations internally.
+</ul>
+<li>Saves search object to file.
+<li>Cleans up.
+<li>End session.
+</ol>
+
+<h3>StaticRecogList Sample</h3>
+Example of how to perform recognition using a static recognizer and
+static search. The static search was built with the
+<em>StaticBuildList</em> example and converted to a static data format
+using the <a href="DumpRaw.html">DumpRaw</a> tool.
+<ol>
+<li>Start session.
+<li>Reads wave file from file.
+<li>Creates a recognizer object w/speech detector from static memory.
+<li>Creates a search object from static memory.
+<li>Configures search parameters.
+<li>Initializes the recognizer.
+<li>Converts the sample rate of wave file to match acoustic model, if needed.
+<li>Configures speech detector.
+<li>Feeds wave file thru recognizer (and speech detector).
+<li>Reports N-best recognition results.
+<li>Clean up.
+<li>End session.
+</ol>
+
+<h3>SpeakerVerification Sample</h3>
+Example of how to perform speaker verification using a phrase-specific
+recognizer and search.
+<ol>
+<li>Start session.
+<li>Creates a phrase-spotting recognizer object from static memory.
+<li>If the search is built on the fly, then a pronunciation object is created from static
+    memory, the search is created from a grammar, phrase-spotting search
+    parameters are set, and the search is saved to file.
+<li>If the search is not built on the fly, a search object is created from static memory
+    and search parameters are set.
+<li>Initializes the recognizer.
+<li>Makes sure that the sampling frequency of the audio is compatible with the
+    sampling frequency of the recognizer.
+<li>Initializes the recognizer for speaker verification, specifying the user ID
+    and the number of enrollment recordings to be used.
+<li>Reads "anti-speaker" (or universal background model) data from static memory
+    into the recognizer.
+<li>Adds a new user, called the anti-speaker, to the recognizer.
+<li>Adds 512 samples from the anti-speaker data to the anti-speaker object in the recognizer.
+<li>If potentially using a saved enrollment session, the saved model is read from
+    static memory and assigned to the user ID.  In this case, the number of
+    enrollments is set to zero.
+<li>Initializes audio device.
+<li>Starts a loop for phrase-spotting; loop for the total number of enrollments
+    plus the total number of verification trials.
+<li>If we are doing enrollment and we have the correct number of enrollment
+    recordings, speaker adaptation is performed and the model is saved to file.
+<li>Start recording.
+<li>Retrieves audio block (loop).
+<li>Feeds it thru recognizer
+<li>Use recognition status to decide when to stop recording.
+<li>Retrieves phrasespot results
+<li>If we do not yet have enough enrollment recordings, then store this most
+    recent phrase-spotting recording for future use.
+<li>If we do have enough enrollment recordings, then perform speaker verification
+    on the most recent phrase-spotting recording.  Decide if the speaker verification
+    score is high enough to accept the user or not.
+<li>Reset the recognizer and continue phrase-spotting loop.
+<li>Clean up.
+<li>End session.
+</ol>
+
+<h3>SpeakerIdentification Sample</h3>
+Example of how to perform speaker identification (selecting one user from multiple
+enrolled users) using a phrase-specific recognizer and search.
+<ol>
+<li>Number of enrollment recordings is set to three.
+<li>Start session.
+<li>Creates a phrase-spotting recognizer object from static memory.
+<li>If the search is built on the fly, then a pronunciation object is created from static
+    memory, the search is created from a grammar, phrase-spotting search
+    parameters are set, and the search is saved to file.
+<li>If the search is not built on the fly, a search object is created from static memory
+    and search parameters are set.
+<li>Makes sure that the sampling frequency of the audio is compatible with the
+    sampling frequency of the recognizer.
+<li>Initializes the recognizer.
+<li>Initializes audio device.
+<li>Loops over all users for enrollment, plus an extra pass for testing.
+<li>If the loop is on the first user, then initialize the recognizer for speaker
+    identification, specifying the first user ID
+    and the number of enrollment recordings to be used.
+<li>If the loop is not on the first user but not on the testing pass, then add
+    this user to the recognizer's speaker object.
+<li>If the loop is at the beginning of the testing pass, then loop over all users
+    and perform speaker adaptation on each user.  This step must be performed after
+    having enrolled all users.  Set the number of testing repetitions to five.
+<li>Loop over the number of enrollment or testing repetitions.
+<li>Display a prompt to the user, depending on whether enrollment or testing is
+    being performed.
+<li>Start recording
+<li>Retrieves audio block (loop).
+<li>Feeds it thru recognizer
+<li>Use recognition status to decide when to stop recording.
+<li>Retrieves phrasespot results
+<li>If we have not yet enrolled all users, then store this most recent phrase-spotting
+    recording for future use, and associate it with the current user.
+<li>If we have enrolled all users, then perform speaker identification
+    on the most recent phrase-spotting recording.  This identification step
+    consists of getting a verification score from each user and selecting
+    the highest score.  The user with the highest score is the one who is
+    identified.
+<li>Reset the recognizer and continue phrase-spotting loop.
+<li>Clean up.
+<li>End session.
+</ol>
+
+<h3>User-Defined Trigger with Speaker ID (udtsid) Sample</h3>
+Example of how to create user-defined triggers (UDT) and perform speaker ID.
+<ol>
+<li>Start session.
+<li>Start audio, but then stop recording while we load data from file.
+<li>If not always enrolling, then read existing UDT recognizer and search from file.
+<li>If always enroll or not able to read UDT recognizer and search from file, then:
+<ol>
+<li>Create and initialize a "udtUser" structure, setting the user name, and initializing
+    the number of existing enrollments and array of enrollments to 0 and NULL,
+    respectively.
+<li>Optionally create an array of enrollment-specific feedback values, and initialize to 0.
+<li>Create a UDT object.
+<li>Create and initialize a phoneme recognizer and search (with speech detection),
+    for obtaining enrollment recordings.
+<li>For each user:
+<ol>
+<li>For each enrollment of that user:
+<ol>
+<li>Start recording, retrieve an audio block in a loop, feed it through the phoneme
+    recognizer pipe, and use the recognition status to decide when to stop recording.
+    Stop recording when done.
+<li>Retrieve the recognizer results, in particular the speech-detected region of the waveform.
+<li>Modify the udtUser structure for the current user, increasing the number of
+    existing enrollment recordings and saving the just-recognized waveform in the
+    'audio' array of the enrollment array.
+<li>Reset the phoneme recognizer.
+</ol>
+<li>After having obtained the desired number of enrollment recordings, check
+the enrollments for this user.  If problems are detected in one or more enrollments,
+obtain new recordings and replace them in the udtUser structure.
+</ol>
+<li>Perform UDT enrollment of all recordings from all users.
+<li>Save the UDT recognizer and search (one recognizer and search for all users) to file.
+</ol>
+<li>Configure the word-spotting delay of the UDT recognizer
+<li>Initialize the UDT recognizer.
+<li>Loop for the number of test cases:
+<ol>
+<li>Start recording, retrieve an audio block in a loop, feed
+    it through the UDT recognizer, and use the recognition status to decide when to
+    stop recording.  Stop recording when done.
+<li>If the recognition status is 'done', then retrieve the UDT recognizer result,
+    which is an indication of which user spoke their trigger phrase.
+<li>If speaker verification is to be performed, get the speaker verification score
+    for this recognition result, and decide if the score is high enough to conclude
+    that the recording was spoken by the identified user.
+<li>Reset the recognizer and continue the testing loop.
+</ol>
+<li>Clean up.
+<li>End session.
+</ol>
+
+
+
+<!----------------------------------------------------------------------- -->
+</body>

@@ -123,13 +123,16 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
                                            const TextToSpeechTriggerMode triggerMode,
                                            const std::string& text,
                                            const AudioTtsProcessingStyle style,
-                                           const float durationScalar)
+                                           const float durationScalar,
+                                           const float pitchScalar)
 {
   // Prepare to generate TTS on other thread
   LOG_INFO("TextToSpeechComponent.CreateSpeech",
-           "ttsID %d triggerMode %s text '%s' style '%s' durationScalar %.2f",
+           "ttsID %d triggerMode %s text '%s' style '%s' durationScalar %.2f pitchScalar %.2f",
            ttsID, EnumToString(triggerMode), Util::HidePersonallyIdentifiableInfo(text.c_str()),
-           EnumToString(style), durationScalar);
+           EnumToString(style),
+           durationScalar,
+           pitchScalar);
 
   // Add Acapela Silence tag to remove trailing silence at end of audio stream
   // Trim white space
@@ -169,7 +172,7 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
   }
 
   // Dispatch work onto another thread
-  Util::Dispatch::Async(_dispatchQueue, [this, ttsID, ttsStr, durationScalar, waveData]
+  Util::Dispatch::Async(_dispatchQueue, [this, ttsID, ttsStr, durationScalar, pitchScalar, waveData]
   {
 
     // Have we sent TextToSpeechState::Playable for this utterance?
@@ -178,7 +181,7 @@ Result TextToSpeechComponent::CreateSpeech(const TTSID_t ttsID,
     // Have we finished generating audio for this utterance?
     bool done = false;
 
-    Result result = GetFirstAudioData(ttsStr, durationScalar, waveData, done);
+    Result result = GetFirstAudioData(ttsStr, durationScalar, pitchScalar, waveData, done);
     if (RESULT_OK != result) {
       LOG_ERROR("TextToSpeechComponent.CreateSpeech", "Unable to get first audio data (error %d)", result);
       PushEvent({ttsID, TextToSpeechState::Invalid, 0.f});
@@ -388,11 +391,12 @@ static void AppendAudioData(const std::shared_ptr<AudioEngine::StreamingWaveData
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Result TextToSpeechComponent::GetFirstAudioData(const std::string & text,
                                                 float durationScalar,
+                                                float pitchScalar,
                                                 const StreamingWaveDataPtr & data,
                                                 bool & done)
 {
   TextToSpeech::TextToSpeechProviderData ttsData;
-  const Result result = _pvdr->GetFirstAudioData(text, durationScalar, ttsData, done);
+  const Result result = _pvdr->GetFirstAudioData(text, durationScalar, pitchScalar, ttsData, done);
 
   if (RESULT_OK != result) {
     LOG_ERROR("TextToSpeechComponent.GetFirstAudioData", "Unable to get first audio data (error %d)", result);
@@ -537,15 +541,16 @@ void TextToSpeechComponent::HandleMessage(const RobotInterface::TextToSpeechPrep
   const auto triggerMode = msg.triggerMode;
   const auto style = msg.style;
   const auto durationScalar = msg.durationScalar;
+  const auto pitchScalar = msg.pitchScalar;
   const std::string text( reinterpret_cast<const char*>(msg.text) );
 
   LOG_DEBUG("TextToSpeechComponent.TextToSpeechPrepare",
-            "ttsID %d triggerMode %s style %s durationScalar %f text %s",
-            ttsID, EnumToString(triggerMode), EnumToString(style), durationScalar,
+            "ttsID %d triggerMode %s style %s durationScalar %.2f pitchScalar %.2f text %s",
+            ttsID, EnumToString(triggerMode), EnumToString(style), durationScalar, pitchScalar,
             HidePersonallyIdentifiableInfo(text.c_str()));
 
   // Enqueue request on worker thread
-  const Result result = CreateSpeech(ttsID, triggerMode, text, style, durationScalar);
+  const Result result = CreateSpeech(ttsID, triggerMode, text, style, durationScalar, pitchScalar);
   if (RESULT_OK != result) {
     LOG_ERROR("TextToSpeechComponent.TextToSpeechPrepare", "Unable to create ttsID %d (result %d)", ttsID, result);
     SendAnimToEngine(ttsID, TextToSpeechState::Invalid);

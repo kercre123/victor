@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "mdns-js": "^1.0.3",
+    "node-wifi": "^2.0.5",
+    "ping": "^0.2.2",
+    "request": "^2.88.0",
+    "tap": "^12.6.1"
+  }
+}

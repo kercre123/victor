@@ -28,11 +28,10 @@
 
 #include "micDataTypes.h"
 
-#include "coretech/common/shared/array2d_impl.h"
+#include "coretech/common/shared/array2d.h"
 #include "coretech/common/engine/utils/data/dataPlatform.h"
 #include "coretech/common/engine/utils/timer.h"
 #include "coretech/vision/engine/image.h"
-#include "coretech/vision/engine/image_impl.h"
 #include "util/console/consoleInterface.h"
 #include "util/console/consoleSystem.h"
 #include "util/fileUtils/fileUtils.h"
@@ -1015,7 +1014,7 @@ void FaceInfoScreenManager::ProcessMenuNavigation(const RobotState& state)
 
   const ScreenName currScreenName = GetCurrScreenName();
 
-  if (singlePressDetected) {
+  if (singlePressDetected && _engineLoaded) {
     if (IsAlexaScreen(currScreenName)) {
       // Single press should exit any uncompleted alexa authorization
       Alexa* alexa = _context->GetAlexa();
@@ -1659,10 +1658,8 @@ void FaceInfoScreenManager::DrawMuteAnimation()
   // so play the on/off or off/on anim to reflect that
   const std::string animName = muted ? "anim_micstate_micoff_01" : "anim_micstate_micon_01";
   const bool shouldInterrupt = true;
-  const bool shouldOverrideEyeHue = true;
-  const bool shouldRenderInEyeHue = false;
-  _animationStreamer->SetStreamingAnimation(animName, 0, 1, shouldInterrupt,
-                                            shouldOverrideEyeHue, shouldRenderInEyeHue);
+  const bool overrideAllSpritesToEyeColor = true;
+  _animationStreamer->SetStreamingAnimation(animName, 0, 1, 0, shouldInterrupt, overrideAllSpritesToEyeColor);
   
 }
   
@@ -1674,10 +1671,7 @@ void FaceInfoScreenManager::DrawAlexaNotification()
 
   const std::string animName = "anim_avs_notification_loop_01";
   const bool shouldInterrupt = true;
-  const bool shouldOverrideEyeHue = true;
-  const bool shouldRenderInEyeHue = false;
-  _animationStreamer->SetStreamingAnimation(animName, 0, 1, 0, shouldInterrupt,
-                                            shouldOverrideEyeHue, shouldRenderInEyeHue);
+  _animationStreamer->SetStreamingAnimation(animName, 0, 1, 0, shouldInterrupt);
 }
 
 // Draws each element of the textVec on a separate line (spacing determined by textSpacing_pix)
@@ -2093,6 +2087,18 @@ void FaceInfoScreenManager::SelfTestEnd(Anim::AnimationStreamer* animStreamer)
   _context->GetBackpackLightComponent()->SetSelfTestRunning(false);
   
   SetScreen(ScreenName::Main);
+}
+  
+void FaceInfoScreenManager::ExitCCScreen(Anim::AnimationStreamer* animStreamer)
+{
+  const ScreenName curScreen = FaceInfoScreenManager::getInstance()->GetCurrScreenName();
+  if(curScreen == ScreenName::SelfTestRunning)
+  {
+    animStreamer->EnableKeepFaceAlive(true, 0);
+    _context->GetBackpackLightComponent()->SetSelfTestRunning(false);
+  }
+  
+  SetScreen(ScreenName::None);
 }
 
 } // namespace Vector

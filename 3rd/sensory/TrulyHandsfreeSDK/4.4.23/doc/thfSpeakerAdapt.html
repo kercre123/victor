@@ -1,0 +1,109 @@
+<?xml version="1.0" encoding="utf-8" ?>
+ <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+ "http://www.w3.org/TR/html4/loose.dtd">
+ <html>
+ <head>
+ <!--Copyright (C)2010-2015 Sensory Inc-->
+ <link rel="stylesheet" type="text/css" href="frozen.css" >
+ <title>TrulyHandsfree Software Development Kit</title>
+ </head>
+ <body bgcolor="#ffffff" text="#000000">
+
+<header><center>Sensory Confidential</center></header>
+<h2>thfSpeakerAdapt</h2>
+<h3>Syntax</h3>
+<pre>
+#include &lt;trulyhandsfree.h&gt;
+int thfSpeakerAdapt(thf_t **thf, <a href="objects.html#recog_t">recog_t</a> *r, unsigned short sID, 
+                    unsigned short trainMethod, char *ignorePhnSpec, 
+                    unsigned short trainSampWant);
+</pre>
+<h3>Description</h3>
+ Adapt, or train, a model to learn the characteristics of a speaker's voice.  This function does <em>NOT</em> check whether the number of recordings enrolled through <a href="thfSpeakerStoreLastRecording.html">thfSpeakerStoreLastRecording</a> is equal to the desired number of recordings specified in  <a href="thfSpeakerInit.html">thfSpeakerInit</a>.  
+<h3>Parameters</h3>
+<table>
+<tr>
+<th align="left">Type</th>
+<th align="left">Name</th>
+<th align="left">Dir.</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td nowrap valign="top"><code>thf_t *</code></td>
+<td nowrap valign="top"><code>*thf</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Session object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><a href="objects.html#recog_t"><code>recog_t *</code></a></td>
+<td nowrap valign="top"><code>r</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">Recognizer object.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned short</code></td>
+<td nowrap valign="top"><code>sID</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">The identification (integer value) of the speaker data to be learned</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned short</code></td>
+<td nowrap valign="top"><code>trainMethod</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">The only currently-supported method is for a value of 0, which is appropriate for speaker verification and speaker identification.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>char *</code></td>
+<td nowrap valign="top"><code>ignorePhnSpec</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">A string that specifies what types of phonemes to ignore during adaptation. Supported values are 'IGNORE_SV_DEFAULT' and 'IGNORE_PAUSE'. 'IGNORE_SV_DEFAULT' will cause the function to ignore phonemes in the recording that are less important for speaker verification and speaker ID, e.g. the /f/ sound in 'foo'. 'IGNORE_PAUSE' will cause the function to ignore only the 'pause' phoneme. Performance is typically better with 'IGNORE_SV_DEFAULT', but 'IGNORE_PAUSE' is made available for experimentation.</td>
+</tr>
+<tr>
+<td nowrap valign="top"><code>unsigned short</code></td>
+<td nowrap valign="top"><code>trainSampWant</code></td>
+<td align="center" valign="top">in</td>
+<td width="500">The number of training samples to be used in adaptation. Typical values are 512 or 1024. Smaller values reduce the time required to learn the speaker's voice characteristics, usually at the expense of verification accuracy. Larger values increase the time required for training and may (or may not) improve verification performance. A value of 0 is not supported.</td>
+</tr>
+</table>
+<h3>Return</h3>
+ Returns 1 on success or 0 on error.
+<h3>Errors</h3>
+<table>
+<tr>
+<th align="left">String</th>
+<th align="left">Description</th>
+</tr>
+<tr>
+<td valign="top"><code>recog object not found</code></td>
+<td valign="top">Invalid recognizer object handle.</td>
+</tr>
+<tr>
+<td valign="top"><code>internal error: recog ROM struct not found</code></td>
+<td valign="top">Unexpected internal error. Contact customer support.</td>
+</tr>
+<tr>
+<td valign="top"><code>internal error: search ROM names not found</code></td>
+<td valign="top">Unexpected internal error. Contact customer support.</td>
+</tr>
+<tr>
+<td valign="top"><code>internal error: recog ROM struct acoustic model not found</code></td>
+<td valign="top">Unexpected internal error. Contact customer support.</td>
+</tr>
+<tr>
+<td valign="top"><code>speaker object not yet initialized</code></td>
+<td valign="top">Invalid speaker object handle.</td>
+</tr>
+<tr>
+<td valign="top"><code>internal error: failed to adapt</code></td>
+<td valign="top">Invalid speaker object handle.</td>
+</tr>
+</table>
+<h3>See Also</h3>
+<a href="thfSpeakerInit.html">thfSpeakerInit</a>, <a href="thfSpeakerStoreLastRecording.html">thfSpeakerStoreLastRecording</a>, <a href="thfSpeakerAddAntiData.html">thfSpeakerAddAntiData</a>, <a href="thfRecogCreateFromFile.html">thfRecogCreateFromFile</a>, <a href="thfRecogCreateFromFunc.html">thfRecogCreateFromFunc</a> and <a href="thfRecogCreateFromStatic.html">thfRecogCreateFromStatic</a>
+<h3>Link To</h3>
+<a href="platforms.html#sdklib">thf</a>
+
+
+
+<!-- --------------------------------------------------------------------- -->
+</body>

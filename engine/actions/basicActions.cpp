@@ -49,13 +49,17 @@ namespace Anki {
   namespace Vector {
     
     // Whether or not to insert WaitActions before and after TurnTowardsObject's VisuallyVerifyAction
-    CONSOLE_VAR(bool, kInsertWaitsInTurnTowardsObjectVerify,"TurnTowardsObject", false);
+    CONSOLE_VAR(bool, kInsertWaitsInTurnTowardsObjectVerify,"BasicActions.TurnTowardsObject", false);
 
-    CONSOLE_VAR(u32, kDefaultNumFramesToWait, "WaitForImages", 3);
+    CONSOLE_VAR(u32, kDefaultNumFramesToWait, "BasicActions.WaitForImages", 3);
     
-    CONSOLE_VAR(f32, kMaxTimeToWaitForRecognition_sec, "TurnTowardsFace", 3.f);
+    CONSOLE_VAR(f32, kMaxTimeToWaitForRecognition_sec, "BasicActions.TurnTowardsFace", 3.f);
+    
+    // The value of this console var should always be set to a value less than the value of
+    // `kMaxUnexpectedMovementCountWhileHeldInPalm` from the MovementComponent/UnexpectedMovement
+    // implementation, in order for `IsActionMakingProgress` to detect/trigger correctly.
+    CONSOLE_VAR_RANGED(u8, kMaxUnexpectedMoveCountHeldInPalm, "BasicActions.TurnInPlace", 11, 1, 200);
 
-    
     TurnInPlaceAction::TurnInPlaceAction(const float angle_rad, const bool isAbsolute)
     : IAction("TurnInPlace",
               RobotActionType::TURN_IN_PLACE,
@@ -267,10 +271,26 @@ namespace Anki {
       // since the treads tend to slip often, so we decrease the timeout according to the expected
       // runtime of the action.
       if ( GetRobot().GetMoveComponent().IsHeldInPalmModeEnabled() ) {
+        // Increase the tolerance for reaching the target angle, since the robot often experiences
+        // tread-slippage and the user is always rotating the robot at least slightly when holding
+        // it in the palm, this decreases rate of point-turn failures.
+        SetTolerance(_kHeldInPalmAngleTolerance);
+        
+        // The movement component automatically clamps the robot's rotational speed when it is
+        // being held in a palm, so in order to not mess up the calculations in
+        // RecalculateTimeout(), clamp the max speed here too.
+        const f32 speedCapWhileHeldInPalm = GetRobot().GetMoveComponent().GetMaxTurnSpeedWhileHeldInPalm_radps();
+        if (fabs(_maxSpeed_radPerSec) > speedCapWhileHeldInPalm) {
+          LOG_INFO("TurnInPlaceAction.Init.CappedMaxSpeed",
+                   "Movement component has HeldInPalmMode enabled, but max speed commanded was "
+                   "%.2f [rad/s], clamping to %.2f [rad/s]", fabs(_maxSpeed_radPerSec),
+                   speedCapWhileHeldInPalm);
+          SetMaxSpeed(std::copysign(speedCapWhileHeldInPalm, _maxSpeed_radPerSec));
+        }
+        
         _timeout_s = _kDefaultTimeoutFactor * RecalculateTimeout();
         LOG_DEBUG("TurnInPlaceAction.Init.RecalculatedTimeout",
-                  "Action will timeout after %.1f s",
-                  _timeout_s);
+                  "Action will timeout after %.1f s", _timeout_s);
       }
 
       // reset angular distance traversed and previousAngle (used in CheckIfDone):
@@ -454,13 +474,12 @@ namespace Anki {
           } else if ( GetRobot().GetMoveComponent().IsHeldInPalmModeEnabled() && !IsActionMakingProgress()) {
             LOG_INFO("TurnInPlaceAction.CheckIfDone.StoppedMakingProgress",
                      "[%d] giving up, robot not turning at expected speed, "
-                     "currentAngle=%.1f [deg], target=%.1f [deg], angDistExp=%.1f [deg], angDistTrav=%.1f [deg] (pfid: %d)",
+                     "currentAngle=%.1f [deg], target=%.1f [deg], angDistExp=%.1f [deg], angDistTrav=%.1f [deg]",
                      GetTag(),
                      _currentAngle.getDegrees(),
                      _currentTargetAngle.getDegrees(),
                      RAD_TO_DEG(_angularDistExpected_rad),
-                     RAD_TO_DEG(_angularDistTraversed_rad),
-                     GetRobot().GetPoseFrameID());
+                     RAD_TO_DEG(_angularDistTraversed_rad));
             result = ActionResult::TIMEOUT;
           }
         }
@@ -476,51 +495,19 @@ namespace Anki {
     }
     
     bool TurnInPlaceAction::IsActionMakingProgress() const {
-      const float currRunTime_sec = GetCurrentRunTimeSeconds();
-      // Calculate the time that the action expected to take to reach _angularDistanceTraversed
-      float expectedTraversalTime_sec;
-      const float accelTime_sec = _expectedTotalAccelTime_s / 2.0;
-      if (_expectedMaxSpeedTime_s <= 0) {
-        const float accelDistance_rad = fabs(_angularDistExpected_rad / 2.0);
-        if (fabs(_angularDistTraversed_rad) > accelDistance_rad) {
-          // Robot should be decelerating by this point, approaching end of point-turn
-          const float expectedMidwaySpeed_radPerSec = accelTime_sec * _accel_radPerSec2;
-          const float expectedSpeed_radPerSec = sqrt(pow(expectedMidwaySpeed_radPerSec, 2.0) - 2 * _accel_radPerSec2 * (fabs(_angularDistTraversed_rad) - accelDistance_rad));
-          expectedTraversalTime_sec = accelTime_sec + (fabs(expectedSpeed_radPerSec - expectedMidwaySpeed_radPerSec) / _accel_radPerSec2);
-        } else {
-          // Robot still accelerating towards mid-point of turn.
-          expectedTraversalTime_sec = sqrt(2.0 * fabs(_angularDistTraversed_rad) / _accel_radPerSec2);
-        }
-      } else {
-        const float accelDistance_rad = 0.5 * _accel_radPerSec2 * pow(accelTime_sec, 2.0);
-        if (fabs(_angularDistTraversed_rad) < accelDistance_rad) {
-          // Robot still accelerating
-          expectedTraversalTime_sec = sqrt(2.0 * fabs(_angularDistTraversed_rad) / _accel_radPerSec2);
-        } else if (fabs(_angularDistTraversed_rad) > (fabs(_angularDistExpected_rad) - accelDistance_rad)) {
-          // Robot should be decelerating,, approaching end of point-turn
-          const float expectedTotalTimeAtMaxSpeed_sec = (fabs(_angularDistExpected_rad) - accelDistance_rad) / fabs(_maxSpeed_radPerSec);
-          const float expectedTimeAtDecelStart_sec = accelTime_sec + expectedTotalTimeAtMaxSpeed_sec;
-          const float expectedSpeed_radPerSec = sqrt(pow(_maxSpeed_radPerSec, 2.0)
-                                                     - 2 * _accel_radPerSec2 * (fabs(_angularDistTraversed_rad) - fabs(_angularDistExpected_rad) + accelDistance_rad));
-          expectedTraversalTime_sec = expectedTimeAtDecelStart_sec + fabs(expectedSpeed_radPerSec - fabs(_maxSpeed_radPerSec)) / _accel_radPerSec2;
-        } else {
-          // Robot turning at constant rate, as allowed by _maxSpeed_radPerSec
-          const float expectedTimeAtMaxSpeed_sec = (fabs(_angularDistTraversed_rad) - accelDistance_rad) / fabs(_maxSpeed_radPerSec);
-          expectedTraversalTime_sec = accelTime_sec + expectedTimeAtMaxSpeed_sec;
-        }
+      // This function is a custom implementation of how to handle unexpected movement for point-
+      // turns when the robot is held in a palm, and essentially triggers a "silent" failure of
+      // the action so as to not interrupt the flow of the behavior that delegated to the action.
+      // This is because the normal `ReactToUnexpectedMovementInAir` behavior is too jarring.
+      const u8 unexpectedMovementCount = GetRobot().GetMoveComponent().GetUnexpectedMovementCount();
+      const bool isActionMakingProgress = unexpectedMovementCount < kMaxUnexpectedMoveCountHeldInPalm;
+      if (!isActionMakingProgress) {
+        LOG_INFO("TurnInPlaceAction.IsActionMakingProgress.UnexpectedMovementDetected",
+                 "Current Progress: Completed %.1f%% of turn, currRunTime: %.1f [sec]",
+                 (_angularDistTraversed_rad/_angularDistExpected_rad) * 100.0f,
+                 GetCurrentRunTimeSeconds());
       }
       
-      // If it's taken much longer than expected to reach the current orientation (scaled by the same timeout factor),
-      // this will trigger and warn the caller that the action might be stalled.
-      const bool isActionMakingProgress = expectedTraversalTime_sec > 0.2f ?
-          (currRunTime_sec < (_kDefaultProgressTimeoutFactor * expectedTraversalTime_sec)) : (currRunTime_sec < 0.5f);
-      if(!isActionMakingProgress) {
-        LOG_INFO("TurnInPlaceAction.IsActionMakingProgress.CurrentProgress",
-                 "Completed %.1f%% of turn, expectedTraversalTime=%.1fsec, currRunTime=%.1fsec",
-                 (_angularDistTraversed_rad/_angularDistExpected_rad) * 100.0f,
-                 expectedTraversalTime_sec,
-                 currRunTime_sec);
-      }
       return isActionMakingProgress;
     }
     
@@ -1929,8 +1916,7 @@ namespace Anki {
     void TurnTowardsObjectAction::GetCompletionUnion(ActionCompletedUnion& completionUnion) const
     {
       ObjectInteractionCompleted info;
-      info.objectIDs[0] = _objectID;
-      info.numObjects = 1;
+      info.objectID = _objectID;
       completionUnion.Set_objectInteractionCompleted(std::move( info ));
     }
     

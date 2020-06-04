@@ -1,0 +1,5 @@
+package-lock.json
+node_modules
+tap_output
+settings.json
+config.json
