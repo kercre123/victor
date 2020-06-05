@@ -346,7 +346,9 @@ def report_problems(problems, msg_title):
     msg += os.linesep
     msg += os.linesep.join(msgs)
     msg += os.linesep
-    raise ValueError(msg)
+
+    print(msg)
+    # raise ValueError(msg)
 
 
 def get_anim_length(keyframe_list):
