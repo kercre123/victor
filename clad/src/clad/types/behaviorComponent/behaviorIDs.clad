@@ -401,6 +401,7 @@ enum uint_16 BehaviorID {
   CheckForAndReactToHand,
   ForceStuckOnEdge,
   MandatoryPhysicalReactions,
+  OptionalReactions,
   ProceduralTurnToMicDirection,
   ReactToAbuse,
   ReactToAffirmative,

@@ -14,6 +14,7 @@
 
 #include "engine/aiComponent/beiConditions/conditions/conditionAlexaInteractionActive.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionAnyStimuli.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionAnyUserIntent.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBatteryLevel.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBeatDetected.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionBecameTrueThisTick.h"
@@ -49,8 +50,8 @@
 #include "engine/aiComponent/beiConditions/conditions/conditionProxInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotHeldInPalm.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotInHabitat.h"
-#include "engine/aiComponent/beiConditions/conditions/conditionRobotPitchInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPickedUp.h"
+#include "engine/aiComponent/beiConditions/conditions/conditionRobotPitchInRange.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPlacedOnSlope.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotPoked.h"
 #include "engine/aiComponent/beiConditions/conditions/conditionRobotRollInRange.h"
@@ -220,6 +221,11 @@ IBEIConditionPtr BEIConditionFactory::CreateBEICondition(const Json::Value& conf
     case BEIConditionType::AnyStimuli:
     {
       condition = std::make_shared<ConditionAnyStimuli>(config);
+      break;
+    }
+    case BEIConditionType::AnyUserIntent:
+    {
+      condition = std::make_shared<ConditionAnyUserIntent>(config);
       break;
     }
     case BEIConditionType::BatteryLevel:
