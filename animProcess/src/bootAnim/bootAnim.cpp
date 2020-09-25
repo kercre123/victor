@@ -98,7 +98,7 @@ int main(int argc, char** argv)
 
   // Keep track of how far in time we are in this loop of the animation
   // since drawing the frame takes longer than the frame should actually
-  // be displayed (~50ms to draw vs a desired frame rate of 30fps)
+  // be displayed (~41ms to draw vs a desired frame rate of 24fps)
   // we need to skip frames
   uint32_t timeCount = 0;
   
@@ -106,7 +106,7 @@ int main(int argc, char** argv)
   {
     // Figure out which frame we should play in order to adhere to
     // a frame rate of kFrameDuration_ms
-    static const uint32_t kFrameDuration_ms = 33;
+    static const uint32_t kFrameDuration_ms = 41;
     const uint32_t nextFrameToDraw = timeCount / kFrameDuration_ms;
 
     // Time how long it takes to animate/draw this frame
