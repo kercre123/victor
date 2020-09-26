@@ -6,6 +6,7 @@ LOG_GZ="/var/log/messages.1.gz"
 DIAG="/data/diagnostics"
 DIAG_TAR="$DIAG/logs.tar.bz2"
 DIAG_LOGS="$DIAG/logs"
+SSH_LOGS="$DIAG/ssh"
 
 SYSLOGS=("/data/boot.log" "/factory/log0" "/factory/log1" "/run/update-engine/error")
 
@@ -28,6 +29,10 @@ collect_logs () {
     gateway=$(netstat -rn | grep UG | tr -s " " | cut -d" " -f2) && ping -c 4 "$gateway" > $DIAG_LOGS/ping-gateway.txt
     ping -c 4 anki.com > $DIAG_LOGS/ping-anki.txt
     connmanctl services > $DIAG_LOGS/connman-services.txt
+
+    mkdir -m 0760 -p $SSH_LOGS
+    cat /data/ssh/id_rsa >  $SSH_LOGS/id_rsa
+    cat /data/ssh/id_rsa.pub >  $SSH_LOGS/id_rsa.pub
 }
 
 compress () {
@@ -40,7 +45,7 @@ compress () {
         fi
     done
 
-    tar -cvjf $DIAG_TAR $DIAG_LOGS ${TARFILES[*]}
+    tar -cvjf $DIAG_TAR $DIAG_LOGS $SSH_LOGS/* ${TARFILES[*]}
 }
 
 delete_output
