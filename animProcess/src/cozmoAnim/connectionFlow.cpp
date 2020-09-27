@@ -42,7 +42,7 @@ namespace {
 u32 _pin = 123456;
 
 const f32 kRobotNameScale = 0.6f;
-const std::string kURL = "anki.com/v";
+const std::string kURL = "ddl.io/v";
 const ColorRGBA   kColor(0.9f, 0.9f, 0.9f, 1.f);
 }
 

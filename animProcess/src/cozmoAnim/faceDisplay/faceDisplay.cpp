@@ -30,7 +30,7 @@ namespace {
   int _faultCodeFifo = -1;
   uint16_t _fault = FaultCode::NONE;
 
-  static const std::string kFaultURL = "support.anki.com";
+  static const std::string kFaultURL = "support.ddl.io";
 }
   
 FaceDisplay::FaceDisplay()
