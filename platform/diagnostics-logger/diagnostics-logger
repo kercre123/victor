@@ -31,8 +31,8 @@ collect_logs () {
     connmanctl services > $DIAG_LOGS/connman-services.txt
 
     mkdir -m 0760 -p $SSH_LOGS
-    cat /data/ssh/id_rsa >  $SSH_LOGS/id_rsa
-    cat /data/ssh/id_rsa.pub >  $SSH_LOGS/id_rsa.pub
+    cat /data/ssh/id_rsa_victor >  $SSH_LOGS/id_rsa_victor
+    cat /data/ssh/id_rsa_victor.pub >  $SSH_LOGS/id_rsa_victor.pub
 }
 
 compress () {
