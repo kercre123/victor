@@ -100,8 +100,8 @@ void AlexaComponent::InitDependent(Robot *robot, const AICompMap& dependentComps
   };
   _consoleFuncs.emplace_front( "ForceAlexaOptOut", std::move(forceOptOut), "Alexa", "" );
   
-  
-  
+
+#if !(ANKI_DISABLE_ALEXA)
   // check Alexa feature flag
   const auto* ctx = robot->GetContext();
   if( ctx != nullptr ) {
@@ -112,6 +112,9 @@ void AlexaComponent::InitDependent(Robot *robot, const AICompMap& dependentComps
     // authenticated. However, messaging to anim might not be init'd yet. Instead, SendAuthStateToApp will
     // check the feature flag and disable alexa if it some how ends up initialized without the feature flag.
   }
+#else
+  _featureFlagEnabled = false;
+#endif //ANKI_DISABLE_ALEXA
   
   // setup anim tags for getins to various ux states
   auto& animComponent = robot->GetAnimationComponent();
@@ -128,7 +131,7 @@ void AlexaComponent::InitDependent(Robot *robot, const AICompMap& dependentComps
   const float currTime_s = BaseStationTimer::getInstance()->GetCurrentTimeInSeconds();
   _lastUxStateTransition_s = currTime_s;
 }
-
+  
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 void AlexaComponent::AdditionalUpdateAccessibleComponents(AICompIDSet& components) const
 {
