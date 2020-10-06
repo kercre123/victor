@@ -13,6 +13,7 @@ __author__ = "Daniel Casner <daniel@anki.com>"
 
 import sys
 import os
+import glob
 import urllib2
 import subprocess
 import tarfile
@@ -155,6 +156,23 @@ def verify_signature(file_path_name, sig_path_name, public_key):
     ret_code = openssl.wait()
     openssl_out, openssl_err = openssl.communicate()
     return ret_code == 0, ret_code, openssl_out, openssl_err
+
+def verify_signature_or_die(file_path_name, sig_path_name):
+    pub_key_paths = [OTA_PUB_KEY]
+
+    if os.path.isdir("/data/etc/ota_keys"):
+        for user_key in glob.glob("/data/etc/ota_keys/*.pub"):
+            logv("Adding key " + user_key)
+            pub_key_paths.append(user_key)
+            
+    for key in pub_key_paths:
+        results = verify_signature(file_path_name, sig_path_name, key)
+        if results[0]:
+            logv("Key %s passed" % key)
+            return True
+        else:
+            logv("Key %s failed" % key)
+    die(209, "Manifest failed signature validation, signature didn't match any known keys")
 
 
 def get_prop(property_name):
@@ -606,10 +624,7 @@ def update_from_url(url):
             die(200, "Expected manifest signature after manifest.ini. Found \"{0.name}\"".format(manifest_sig_ti))
         with open(MANIFEST_SIG, "wb") as signature:
             signature.write(tar_stream.extractfile(manifest_sig_ti).read())
-        verification_status = verify_signature(MANIFEST_FILE, MANIFEST_SIG, OTA_PUB_KEY)
-        if not verification_status[0]:
-            die(209,
-                "Manifest failed signature validation, openssl returned {1:d} {2:s} {3:s}".format(*verification_status))
+        verify_signature_or_die(MANIFEST_FILE, MANIFEST_SIG)
         # Manifest was signed correctly
         manifest = get_manifest(open(MANIFEST_FILE, "r"))
         # Inspect the manifest
