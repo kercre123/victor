@@ -70,7 +70,12 @@ if (ANKI_AMAZON_ENDPOINTS_ENABLED)
 
 else()
 
-  if(ANKI_RESOURCE_SHIPPING)
+  if(ANKI_RESOURCE_SHIPPING AND OSKR_ENDPOINTS)
+    set(BASE_URL "https://ota.global.anki-services.com/vic/osrk/")
+    set(ANKIDEV_BASE_URL "https://ota.global.anki-dev-services.com/vic/oskr/")
+    configure_file(oskr/etc-template/update-engine.env.in ${CMAKE_BINARY_DIR}/etc/update-engine.env)
+    set(platform_config_etc_extra platform_config_etc_shipping)
+  elseif(ANKI_RESOURCE_SHIPPING AND NOT OSKR_ENDPOINTS)
     set(BASE_URL "https://ota.global.anki-services.com/vic/prod/")
     set(ANKIDEV_BASE_URL "https://ota.global.anki-dev-services.com/vic/master/lo8awreh23498sf/")
     configure_file(shipping/etc-template/update-engine.env.in ${CMAKE_BINARY_DIR}/etc/update-engine.env)
