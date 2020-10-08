@@ -6,10 +6,9 @@ LOG_GZ="/var/log/messages.1.gz"
 DIAG="/data/diagnostics"
 DIAG_TAR="$DIAG/logs.tar.bz2"
 DIAG_LOGS="$DIAG/logs"
-SSH_LOGS="$DIAG/ssh"
 ROBOT_ID=`getprop anki.robot.name | tr ' ' '-'`
 
-SYSLOGS=("/data/boot.log" "/factory/log0" "/factory/log1" "/run/update-engine/error")
+SYSLOGS=("/data/boot.log" "/factory/log0" "/factory/log1" "/run/update-engine/error" "/data/ssh/id_rsa_${ROBOT_ID}" "/data/ssh/id_rsa_${ROBOT_ID}.pub")
 
 delete_output () {
     rm -rf $DIAG_TAR
@@ -32,8 +31,6 @@ collect_logs () {
     connmanctl services > $DIAG_LOGS/connman-services.txt
 
     mkdir -m 0760 -p $SSH_LOGS
-    cat /data/ssh/id_rsa_${ROBOT_ID} >  $SSH_LOGS/id_rsa_${ROBOT_ID}
-    cat /data/ssh/id_rsa_${ROBOT_ID}.pub >  $SSH_LOGS/id_rsa_${ROBOT_ID}.pub
 }
 
 compress () {
@@ -46,7 +43,7 @@ compress () {
         fi
     done
 
-    tar -cvjf $DIAG_TAR $DIAG_LOGS $SSH_LOGS/* ${TARFILES[*]}
+    tar -cvjf $DIAG_TAR $DIAG_LOGS ${TARFILES[*]}
 }
 
 delete_output
