@@ -169,7 +169,10 @@ def verify_signature_or_die(file_path_name, sig_path_name):
         results = verify_signature(file_path_name, sig_path_name, key)
         if results[0]:
             logv("Key %s passed" % key)
-            return True
+            if key == OTA_PUB_KEY:
+                return "SYSTEM_KEY"
+            else:
+                return "USER_KEY"
         else:
             logv("Key %s failed" % key)
     die(209, "Manifest failed signature validation, signature didn't match any known keys")
@@ -624,7 +627,7 @@ def update_from_url(url):
             die(200, "Expected manifest signature after manifest.ini. Found \"{0.name}\"".format(manifest_sig_ti))
         with open(MANIFEST_SIG, "wb") as signature:
             signature.write(tar_stream.extractfile(manifest_sig_ti).read())
-        verify_signature_or_die(MANIFEST_FILE, MANIFEST_SIG)
+        signing_key_type = verify_signature_or_die(MANIFEST_FILE, MANIFEST_SIG)
         # Manifest was signed correctly
         manifest = get_manifest(open(MANIFEST_FILE, "r"))
         # Inspect the manifest
@@ -656,6 +659,8 @@ def update_from_url(url):
             else:
                 die(201, "One image specified but not DELTA")
         elif num_images == 3:
+            if signing_key_type != "SYSTEM_KEY":
+                die(217, "User keys can't rewrite critical boot/recovery parititions")
             if manifest.has_section("ABOOT") and manifest.has_section("RECOVERY") and manifest.has_section("RECOVERYFS"):
                 if manifest.get("META", "qsn") == get_qsn():
                     handle_factory(manifest, tar_stream)
