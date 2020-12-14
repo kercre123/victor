@@ -87,6 +87,12 @@ asset_project(
            ]),
 )
 
+asset_project(
+    name = 'cozmo_resources_escapepod',
+    srcs = subdir_glob([
+                ('escapepod', '**/*'),
+           ]),
+)
 
 asset_project(
     name = 'cozmo_resources_test',
@@ -95,7 +101,6 @@ asset_project(
                 ],
            ),
 )
-
 
 asset_project(
     name = 'cozmo_resources_webserver',
