@@ -5,7 +5,6 @@ ${GIT_PROJ_ROOT}/project/victor/build-victor.sh \
 		-c Release \
 		-DANKI_DISABLE_ALEXA=1 \
 		-DANKI_PRIVACY_GUARD=1 \
-                -DANKI_RESOURCE_SHIPPING=1 \
 		-DOSKR_ENDPOINTS=1 \
 		-DREMOTE_CONSOLE_ENABLED=1 \
 		-DANKI_PROFILING_ENABLED=0 \
