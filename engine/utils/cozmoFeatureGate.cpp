@@ -215,10 +215,16 @@ CozmoFeatureGate::CozmoFeatureGate( Util::Data::DataPlatform* platform )
     InitFeatureOverrides( platform );
   }
   #endif
+  
 }
 
 bool CozmoFeatureGate::IsFeatureEnabled(FeatureType feature) const
 {
+
+  #if (ANKI_DISABLE_ALEXA)
+  if (feature == FeatureType::Alexa) { return false;}
+  #endif
+  
   #if FEATURE_OVERRIDES_ENABLED
   {
     const uint8_t featureIndex = static_cast<uint8_t>(feature);
@@ -254,6 +260,7 @@ void CozmoFeatureGate::Init(const CozmoContext* context, const std::string& json
           const std::string& featureName = msg.GetData().feature_flag_request().feature_name();
           FeatureType featureType = FeatureType::Invalid;
           const bool valid = FeatureTypeFromString( featureName, featureType ) && (featureType != FeatureType::Invalid);
+	  
           const bool enabled = valid ? IsFeatureEnabled( featureType ) : false;
           auto* featureFlagResponse = new external_interface::FeatureFlagResponse;
           featureFlagResponse->set_valid_feature( valid );

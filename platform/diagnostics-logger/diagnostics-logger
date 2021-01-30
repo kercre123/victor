@@ -6,8 +6,9 @@ LOG_GZ="/var/log/messages.1.gz"
 DIAG="/data/diagnostics"
 DIAG_TAR="$DIAG/logs.tar.bz2"
 DIAG_LOGS="$DIAG/logs"
+ROBOT_ID=`getprop anki.robot.name | tr ' ' '-'`
 
-SYSLOGS=("/data/boot.log" "/factory/log0" "/factory/log1" "/run/update-engine/error")
+SYSLOGS=("/data/boot.log" "/factory/log0" "/factory/log1" "/run/update-engine/error" "/data/ssh/id_rsa_${ROBOT_ID}" "/data/ssh/id_rsa_${ROBOT_ID}.pub")
 
 delete_output () {
     rm -rf $DIAG_TAR
@@ -28,6 +29,8 @@ collect_logs () {
     gateway=$(netstat -rn | grep UG | tr -s " " | cut -d" " -f2) && ping -c 4 "$gateway" > $DIAG_LOGS/ping-gateway.txt
     ping -c 4 anki.com > $DIAG_LOGS/ping-anki.txt
     connmanctl services > $DIAG_LOGS/connman-services.txt
+
+    mkdir -m 0760 -p $SSH_LOGS
 }
 
 compress () {
