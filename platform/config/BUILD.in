@@ -87,3 +87,13 @@ asset_project(
                 prefix = 'etc'
             ),
 )
+
+asset_project(
+    name = 'platform_config_bin_epdev',
+    srcs = subdir_glob([
+                ('epdev/bin', '**/*'),
+                ],
+                prefix = 'bin'
+            ),
+)
+
