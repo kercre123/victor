@@ -581,7 +581,7 @@ def validate_new_os_version(current_os_version, new_os_version, cmdline):
     allow_downgrade = os.getenv("UPDATE_ENGINE_ALLOW_DOWNGRADE", "False") in TRUE_SYNONYMS
     if allow_downgrade and is_dev_robot(cmdline):
         return
-    os_version_regex = re.compile('^(?:\d+\.){2,3}\d+(d|ud|oskr)?$')
+    os_version_regex = re.compile('^(?:\d+\.){2,3}\d+(d|ud|oskr|ep|epdev)?$')
     m = os_version_regex.match(new_os_version)
     if not m:
         die(216, "OS version " + new_os_version + " does not match regular expression")
