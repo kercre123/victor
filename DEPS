@@ -15,6 +15,9 @@
         }
     },
     "svn": {
+        "bucket_name": "ddl-private",
+        "main_folder": "svn-export",
+        "branch": "trunk",
         "default_usr": "ankibuildserver",
         "pwd": "FoDmKuxMUjsmNhA49BnWysEfVLWaLdGY",
         "repo_names": {
