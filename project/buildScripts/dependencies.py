@@ -538,11 +538,12 @@ def svn_package(svn_dict):
 #        unpack = [ptool] + ptool_options + [package, '-C', loc]
 #        l_rev = 'unknown'
 
-        print("Downloading " + export_dirname + "...")
-        # Remove old assets
+        # Move on to next asset if the current one already exists
         if os.path.isdir(loc):
-            shutil.rmtree(loc)
+            print(export_dirname + " already exist!")
+            continue
         # Download the SVN assets from S3
+        print("Downloading " + export_dirname + "...")
         remote_loc = svn_dict.get("main_folder", "") + "/" + repo + ".zip"
         local_loc = loc + ".zip"
         try:
