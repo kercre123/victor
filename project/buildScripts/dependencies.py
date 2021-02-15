@@ -502,18 +502,18 @@ def svn_package(svn_dict):
     """
     checked_out_repos = []
 
-#    tool = "svn"
-#    ptool = "tar"
-#    ptool_options = ['-v', '-x', '-z', '-f']
-#    assert is_tool(tool)
-#    assert is_tool(ptool)
-#    assert isinstance(svn_dict, dict)
-#    root_url = svn_dict.get("root_url", "undefined_url")
-#    password = svn_dict.get("pwd", "")
+    # tool = "svn"
+    # ptool = "tar"
+    # ptool_options = ['-v', '-x', '-z', '-f']
+    # assert is_tool(tool)
+    # assert is_tool(ptool)
+    # assert isinstance(svn_dict, dict)
+    # root_url = svn_dict.get("root_url", "undefined_url")
+    # password = svn_dict.get("pwd", "")
     repos = svn_dict.get("repo_names", "")
     bucket_name = svn_dict.get("bucket_name", "")
-#    user = svn_dict.get("default_usr", "undefined")
-#    cred = SVN_CRED % (user, password)
+    # user = svn_dict.get("default_usr", "undefined")
+    # cred = SVN_CRED % (user, password)
     stale_warning = "WARNING: If this build succeeds, it may contain stale external data"
 
     # Initialize S3 object
@@ -521,22 +521,22 @@ def svn_package(svn_dict):
     bucket = s3_resource.Bucket(bucket_name)
 
     for repo in repos:
-#        r_rev = repos[repo].get("version", "head")
-#        pk_name = repos[repo].get("package_name", "STUB")
+        # r_rev = repos[repo].get("version", "head")
+        # pk_name = repos[repo].get("package_name", "STUB")
         branch = repos[repo].get("branch", "trunk")
         export_dirname = repos[repo].get("export_dirname", repo)
         loc = os.path.join(DEPENDENCY_LOCATION, export_dirname)
-#        url = os.path.join(root_url, repo, branch)
+        # url = os.path.join(root_url, repo, branch)
         sub_dirs = repos[repo].get("subdirs", [])
-#        subdirs = map(lambda x: os.path.join(loc,x), subdirs)
-        allow_extra_files = bool(repos[repo].get("allow_extra_files", False))
+        # subdirs = map(lambda x: os.path.join(loc,x), subdirs)
+        # allow_extra_files = bool(repos[repo].get("allow_extra_files", False))
         additional_files = repos[repo].get("additional_files", [])
         extract_types = repos[repo].get("extract_types_from_tar", [])
-#        package = os.path.join(loc, pk_name)
-#        checkout = [tool, 'checkout', '-r', '{0}'.format(r_rev)] + cred.split() + [url, loc]
-#        cleanup = [tool, 'status', '--no-ignore'] + cred.split() + [loc]
-#        unpack = [ptool] + ptool_options + [package, '-C', loc]
-#        l_rev = 'unknown'
+        # package = os.path.join(loc, pk_name)
+        # checkout = [tool, 'checkout', '-r', '{0}'.format(r_rev)] + cred.split() + [url, loc]
+        # cleanup = [tool, 'status', '--no-ignore'] + cred.split() + [loc]
+        # unpack = [ptool] + ptool_options + [package, '-C', loc]
+        # l_rev = 'unknown'
 
         # Move on to next asset if the current one already exists
         if os.path.isdir(loc):
@@ -594,80 +594,83 @@ def svn_package(svn_dict):
                 print("After unpacking tar files, '%s' contains the following files: %s"
                       % (os.path.basename(sub_dir), file_stats))
 
-#        for subdir in subdirs:
-#          if not os.path.isdir(subdir):
-#            l_rev = 0
-#            break
-#        if l_rev != 0 and os.path.isdir(loc):
-#            l_rev = get_svn_file_rev(loc, cred)
-#            #print("The version of [%s] is [%s]" % (loc, l_rev))
-#            if l_rev is None:
-#                l_rev = 0
-#                msg = "Clearing out [%s] directory before getting a fresh copy."
-#                if subdirs:
-#                    for subdir in subdirs:
-#                        if os.path.exists(subdir):
-#                            print(msg % subdir)
-#                            shutil.rmtree(subdir)
-#                elif os.path.exists(loc):
-#                    print(msg % loc)
-#                    shutil.rmtree(loc)
-#        else:
-#            l_rev = 0
-#
-#        try:
-#            r_rev = int(r_rev)
-#        except ValueError:
-#            pass
-#
-#        no_update_msg  = "{0} does not need to be updated.  ".format(repo)
-#        no_update_msg += "Current {0} revision at {1}".format(tool, l_rev)
-#
-#        # Do dependencies need to be checked out?
-#        need_to_checkout = (r_rev == "head" or l_rev != r_rev)
-#
-#        # Check if manifest file exists
-#        manifest_file_path = os.path.join(loc, MANIFEST_FILE_NAME)
-#        manifest_file_exists = os.path.exists(manifest_file_path)
-#
-#        if need_to_checkout or not manifest_file_exists:
-#            if need_to_checkout:
-#                print("Checking out '{0}'".format(repo))
-#                checked_out_repos.append(repo)
-#                err = svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
-#                                   unpack, package, allow_extra_files, stale_warning)
-#                if err:
-#                    print("Error in checking out {0}: {1}".format(repo, err.strip()))
-#                    if DIFF_BRANCH_MSG in err:
-#                        print("Clearing out [%s] directory to replace it with a fresh copy" % loc)
-#                        shutil.rmtree(loc)
-#                        print("Checking out '{0}' again".format(repo))
-#                        err = svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
-#                                           unpack, package, allow_extra_files, stale_warning)
-#                        if err:
-#                            print("Error in checking out {0}: {1}".format(repo, err.strip()))
-#                            print(stale_warning)
-#                    else:
-#                        print(stale_warning)
-#            else:
-#                print(no_update_msg)
-#            if extract_types:
-#                for subdir in subdirs:
-#                    put_in_subdir = os.path.basename(subdir) in UNPACK_INTO_SUBDIR
-#                    try:
-#                        anim_name_length_mapping = extract_files_from_tar(subdir, extract_types, put_in_subdir)
-#                    except EnvironmentError, e:
-#                        anim_name_length_mapping = {}
-#                        print("Failed to unpack one or more tar files in [%s] because: %s" % (subdir, e))
-#                        print(stale_warning)
-#                    file_stats = get_file_stats(subdir)
-#                    if anim_name_length_mapping:
-#                        write_animation_manifest(loc, anim_name_length_mapping, additional_files)
-#                    print("After unpacking tar files, '%s' contains the following files: %s"
-#                          % (os.path.basename(subdir), file_stats))
-#
-#        else:
-#            print(no_update_msg)
+    # Old code below: Retrieves and extracts SVN assets using Anki servers
+    """
+       for subdir in subdirs:
+         if not os.path.isdir(subdir):
+           l_rev = 0
+           break
+       if l_rev != 0 and os.path.isdir(loc):
+           l_rev = get_svn_file_rev(loc, cred)
+           #print("The version of [%s] is [%s]" % (loc, l_rev))
+           if l_rev is None:
+               l_rev = 0
+               msg = "Clearing out [%s] directory before getting a fresh copy."
+               if subdirs:
+                   for subdir in subdirs:
+                       if os.path.exists(subdir):
+                           print(msg % subdir)
+                           shutil.rmtree(subdir)
+               elif os.path.exists(loc):
+                   print(msg % loc)
+                   shutil.rmtree(loc)
+       else:
+           l_rev = 0
+
+       try:
+           r_rev = int(r_rev)
+       except ValueError:
+           pass
+
+       no_update_msg  = "{0} does not need to be updated.  ".format(repo)
+       no_update_msg += "Current {0} revision at {1}".format(tool, l_rev)
+
+       # Do dependencies need to be checked out?
+       need_to_checkout = (r_rev == "head" or l_rev != r_rev)
+
+       # Check if manifest file exists
+       manifest_file_path = os.path.join(loc, MANIFEST_FILE_NAME)
+       manifest_file_exists = os.path.exists(manifest_file_path)
+
+       if need_to_checkout or not manifest_file_exists:
+           if need_to_checkout:
+               print("Checking out '{0}'".format(repo))
+               checked_out_repos.append(repo)
+               err = svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
+                                  unpack, package, allow_extra_files, stale_warning)
+               if err:
+                   print("Error in checking out {0}: {1}".format(repo, err.strip()))
+                   if DIFF_BRANCH_MSG in err:
+                       print("Clearing out [%s] directory to replace it with a fresh copy" % loc)
+                       shutil.rmtree(loc)
+                       print("Checking out '{0}' again".format(repo))
+                       err = svn_checkout(url, r_rev, loc, cred, checkout, cleanup,
+                                          unpack, package, allow_extra_files, stale_warning)
+                       if err:
+                           print("Error in checking out {0}: {1}".format(repo, err.strip()))
+                           print(stale_warning)
+                   else:
+                       print(stale_warning)
+           else:
+               print(no_update_msg)
+           if extract_types:
+               for subdir in subdirs:
+                   put_in_subdir = os.path.basename(subdir) in UNPACK_INTO_SUBDIR
+                   try:
+                       anim_name_length_mapping = extract_files_from_tar(subdir, extract_types, put_in_subdir)
+                   except EnvironmentError, e:
+                       anim_name_length_mapping = {}
+                       print("Failed to unpack one or more tar files in [%s] because: %s" % (subdir, e))
+                       print(stale_warning)
+                   file_stats = get_file_stats(subdir)
+                   if anim_name_length_mapping:
+                       write_animation_manifest(loc, anim_name_length_mapping, additional_files)
+                   print("After unpacking tar files, '%s' contains the following files: %s"
+                         % (os.path.basename(subdir), file_stats))
+
+       else:
+           print(no_update_msg)
+    """
 
     return checked_out_repos
 
