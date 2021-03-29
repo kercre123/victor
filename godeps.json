@@ -27,11 +27,11 @@
     "commit": "b63a9887d320becede259f24ba8ba7b2459659da",
     "branch": "master"
   },
-  "golang.org/x/net": {
+  "github.com/golang/net": {
     "commit": "f5dfe339be1d06f81b22525fe34671ee7d2c8904",
     "branch": "master"
   },
-  "golang.org/x/text": {
+  "github.com/golang/text": {
     "commit": "4e4a3210bb54bb31f6ab2cdca2edcc0b50c420c1",
     "branch": "master"
   },
