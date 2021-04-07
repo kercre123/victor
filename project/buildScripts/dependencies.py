@@ -251,7 +251,6 @@ def extract_files_from_tar(extract_dir, file_types, put_in_subdir=False):
   anim_name_length_mapping = {}
 
   for (dir_path, dir_names, file_names) in os.walk(extract_dir):
-
     # Generate list of all .tar files in/under the directory provided by the caller (extract_dir)
     all_files = map(lambda x: os.path.join(dir_path, x), file_names)
     tar_files = [a_file for a_file in all_files if a_file.endswith('.tar')]
@@ -375,7 +374,7 @@ def unpack_tarball(tar_file, file_types=[], put_in_subdir=False, add_metadata=Fa
   # so we need to specify the path to the directory that contains that FlatBuffers tool. See
   # https://google.github.io/flatbuffers/flatbuffers_guide_using_schema_compiler.html for additional
   # info about the "flatc" schema compiler.
-#  flatc_dir = get_flatc_dir()
+  flatc_dir = get_flatc_dir()
 
   # Set the destination directory where the contents of the .tar file will be unpacked.
   dest_dir = os.path.dirname(tar_file)
@@ -578,12 +577,12 @@ def svn_package(svn_dict):
                 shutil.move(src_loc, dst_loc)
         shutil.rmtree(os.path.join(loc, branch))
         # Extract the tar files
-        print("Extracting tar files from SVN assets...")
         if extract_types:
+            print("Extracting tar files from SVN assets...")
             for sub_dir in sub_dirs:
                 put_in_sub_dir = os.path.basename(sub_dir) in UNPACK_INTO_SUBDIR
                 try:
-                    anim_name_length_mapping = extract_files_from_tar(sub_dir, extract_types, put_in_sub_dir)
+                    anim_name_length_mapping = extract_files_from_tar(os.path.join(loc, sub_dir), extract_types, put_in_sub_dir)
                 except EnvironmentError, e:
                     anim_name_length_mapping = {}
                     print("Failed to unpack one or more tar files in [%s] because: %s" % (sub_dir, e))
