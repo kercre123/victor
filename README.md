@@ -90,6 +90,18 @@ use it:
 
     This will give you access to very useful aliases for the various build/deploy scripts. These aliases will be referenced extensively in this doc.
 
+### Configure AWS
+1. Now that we have shifted from Anki servers to AWS S3 buckets, AWS command line needs to be set up on your system to download dependencies.
+2. Get your AWS credentials from your supervisor.
+3. Download and install [AWS Command Line Interface](https://aws.amazon.com/cli/) on your system.
+4. Open terminal and configure AWS using the command: `aws configure`
+5. Enter the various credentials and for region use: `us-east-1`
+6. Install `Boto 3` to access S3 objects via Python:
+```
+pip2 install boto3
+pip3 install boto3
+```
+
 ## Building Victor
 
 If you're a developer, it is highly recommended that you check out the [Victor Build System Walkthrough](/docs/build-system-walkthrough.md) doc to familiarize yourself with the build system. The underlying build system for victor is [`CMake`](https://cmake.org/).  The appropriate version of CMake and other dependencies required for building victor will be fetched automatically.
