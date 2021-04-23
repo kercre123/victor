@@ -48,6 +48,21 @@ Alternatively when fetching the code:
 git clone --recursive <git url>
 ```
 
+### Legacy extrnals setup
+
+This branch is old so has a wildly out-of-date way to install external
+dependencies. A hack bootstrap script has been provide and must be run
+manually. Before doing so the four dependencies must be installed to a
+directory which is `~/src/victor-packages` by default. The four files
+required are:
+
+* anki-thirdparty-vector-163.tar.gz
+* vector-audio-assets-17.tar.gz
+* victor-animation-assets-2645.tar.gz
+* Cte_192.tar.gz
+
+
+
 ### ADB setup
 
 1. Make sure you do not have Android SDK or Android NDK installed from `brew`:
