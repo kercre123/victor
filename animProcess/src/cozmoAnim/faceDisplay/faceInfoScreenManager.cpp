@@ -935,7 +935,7 @@ void FaceInfoScreenManager::DrawMain()
 
   auto *osstate = OSState::getInstance();
   const std::string osVer    = "OS: "   + osstate->GetOSBuildVersion() +
-                                          (FACTORY_TEST ? " (V4)" : "") +
+                                          (FACTORY_TEST ? " (V5)" : "") +
                                           (osstate->IsInRecoveryMode() ? " U" : "");
   const std::string ssid     = "SSID: " + osstate->GetSSID(true);
 
