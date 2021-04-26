@@ -28,7 +28,6 @@ fi
 vlog "Check homebrew dependencies"
 ./tools/build/tools/ankibuild/installBuildDeps.py \
     -d python2 \
-    ninja \
     python3 \
     git-lfs \
     libsndfile \
