@@ -14,7 +14,7 @@ function usage() {
     echo "  -c [CONFIGURATION]      build configuration {Debug,Release}"
     echo "  -p [PLATFORM]           build target platform {mac,vicos}"
     echo "  -a                      append cmake platform argument {arg}"
-    echo "  -g [GENERATOR]          CMake generator {Ninja,Xcode,Makefiles}"
+    echo "  -g [GENERATOR]          CMake generator {Xcode,Makefiles}"
     echo "  -f                      force-run filelist updates and cmake configure before building"
     echo "  -X                      delete build assets, forcing assets to be re-copied"
     echo "  -d                      DEBUG: generate file lists and exit"
@@ -46,7 +46,7 @@ BUILD_SHARED_LIBS=1
 
 CONFIGURATION=Debug
 PLATFORM=vicos
-GENERATOR=Ninja
+GENERATOR=Makefiles
 FEATURES=""
 DEFINES=""
 ADDITIONAL_PLATFORM_ARGS=()
@@ -195,9 +195,6 @@ esac
 # Validate generator
 #
 case "${GENERATOR}" in
-  [Nn][Ii][Nn][Jj][Aa])
-    GENERATOR="Ninja"
-    ;;
   [Xx][Cc][Oo][Dd][Ee])
     GENERATOR="Xcode"
     ;;
@@ -250,15 +247,10 @@ fi
 
 # For non-ninja builds, add generator type to build dir
 BUILD_SYSTEM_TAG=""
-if [ "${GENERATOR}" != "Ninja" ]; then
-    BUILD_SYSTEM_TAG="-${GENERATOR}"
-fi
+BUILD_SYSTEM_TAG="-${GENERATOR}"
 : ${BUILD_DIR:="${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}${BUILD_SYSTEM_TAG}"}
 
 case ${GENERATOR} in
-    "Ninja")
-        PROJECT_FILE="build.ninja"
-        ;;
     "Xcode")
         PROJECT_FILE="victor.xcodeproj"
         ;;
@@ -456,21 +448,6 @@ if [ $RUN_BUILD -ne 1 ]; then
     exit 0
 fi
 
-# Use shake (http://shakebuild.com/) to execute ninja files (if available)
-# Shake provides a `--digest-and-input` option that uses digests of inputs instead
-# of only file mtimes and therefore avoid unnecessary rebuilds caused by branch changes
-set +e
-which shake > /dev/null 2>&1
-: ${USE_SHAKE:=$?}
-set -e
-
-if [ $USE_SHAKE -eq 0 ]; then
-  VERBOSE_ARG=""
-  if [ $VERBOSE -eq 1 ]; then
-    VERBOSE_ARG="--verbose"
-  fi
-  shake --digest-and-input --report -j $VERBOSE_ARG $*
-else
   TARGET_ARG=""
   if [ -n "$CMAKE_TARGET" ]; then
     TARGET_ARG="--target $CMAKE_TARGET"
@@ -480,6 +457,5 @@ else
     # run install target on robot-platforms
     $CMAKE_EXE --build . --target install
   fi
-fi
 
 popd > /dev/null 2>&1
