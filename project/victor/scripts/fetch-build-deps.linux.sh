@@ -29,7 +29,7 @@ function check_dep()
     echo ""
     echo "sudo apt install gawk chrpath texinfo p7zip-full android-tools-fsutils"
     echo ""
-    echo "sudo apt install ruby ninja-build subversion libssl-dev nodejs"
+    echo "sudo apt install ruby subversion libssl-dev nodejs"
     echo ""
     exit 1
 }
@@ -39,7 +39,6 @@ pushd "${TOPLEVEL}" > /dev/null 2>&1
 # Check for required programs
 check_dep which python2
 check_dep which python3
-check_dep which ninja
 check_dep which git-lfs
 
 
