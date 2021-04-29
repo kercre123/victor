@@ -34,6 +34,8 @@
                 "subdirs": [
                     "animations",
                     "animationGroups",
+                    "compositeImageResources",
+                    "sprites/independentSprites",
                     "sprites/spriteSequences"
                 ],
                 "version": "5030"
