@@ -247,7 +247,7 @@ fi
 
 # For non-ninja builds, add generator type to build dir
 BUILD_SYSTEM_TAG=""
-BUILD_SYSTEM_TAG="-${GENERATOR}"
+#BUILD_SYSTEM_TAG="-${GENERATOR}"
 : ${BUILD_DIR:="${TOPLEVEL}/_build/${PLATFORM}/${CONFIGURATION}${BUILD_SYSTEM_TAG}"}
 
 case ${GENERATOR} in
