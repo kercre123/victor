@@ -360,6 +360,10 @@ function getCloneCommand(name) {
     return 'git clone git@github.com:' + name.substr('github.com/'.length);
   }
 
+  if (name.startsWith('golang.org/x/')) {
+    return 'git clone git@github.com:golang/' + name.substr('golang.org/x/'.length);
+  }
+    
   // otherwise, get meta tags
   const curlOut = execSyncTrim('curl -s ' + name + '?go-get=1 | grep go-import');
   const startIdx = curlOut.indexOf(name);
