@@ -27,20 +27,20 @@
     "commit": "b63a9887d320becede259f24ba8ba7b2459659da",
     "branch": "master"
   },
-  "github.com/golang/net": {
-    "commit": "f5dfe339be1d06f81b22525fe34671ee7d2c8904",
-    "branch": "master"
-  },
-  "github.com/golang/text": {
-    "commit": "4e4a3210bb54bb31f6ab2cdca2edcc0b50c420c1",
-    "branch": "master"
-  },
   "github.com/hashicorp/go-multierror": {
     "commit": "b7773ae218740a7be65057fc60b366a49b538a44",
     "branch": "master"
   },
   "github.com/gwatts/rootcerts": {
     "commit": "bfd86e4fe5adc76db72b682148820bdcf104f308",
+    "branch": "master"
+  },
+  "golang.org/x/net": {
+    "commit": "4163338589ed626ba11276b63facaef1f55349d4",
+    "branch": "master"
+  },
+  "golang.org/x/text": {
+    "commit": "5c7c50ebbd4f5b0d53b9b2fcdbeb92ffb732a06e",
     "branch": "master"
   }
 }
