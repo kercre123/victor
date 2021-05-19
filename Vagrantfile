@@ -12,7 +12,9 @@ Vagrant.configure(2) do |config|
 
   # Every Vagrant development environment requires a box. You can search for
   # boxes at https://atlas.hashicorp.com/search.
-  config.vm.box = "ubuntu/trusty64"
+  config.vm.box = "hashicorp-vagrant/ubuntu-16.04"
+
+  config.ssh.forward_agent = true
 
   # Disable automatic box update checking. If you disable this, then
   # boxes will only be checked for updates when the user runs
@@ -22,7 +24,7 @@ Vagrant.configure(2) do |config|
   # Create a forwarded port mapping which allows access to a specific port
   # within the machine from a port on the host machine. In the example below,
   # accessing "localhost:8080" will access port 80 on the guest machine.
-  # config.vm.network "forwarded_port", guest: 80, host: 8080
+  config.vm.network "forwarded_port", guest: 8000, host: 8080
 
   # Create a private network, which allows host-only access to the machine
   # using a specific IP.
@@ -48,7 +50,8 @@ Vagrant.configure(2) do |config|
      #vb.gui = true
   
      # Customize the amount of memory on the VM:
-     vb.memory = "512"
+     vb.memory = "5120"
+     vb.cpus = 4
   end
   #
   # View the documentation for the provider you are using for more
@@ -64,23 +67,26 @@ Vagrant.configure(2) do |config|
   # Enable provisioning with a shell script. Additional provisioners such as
   # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
   # documentation for more information about their specific syntax and use.
-  config.vm.provision "shell", inline: <<-SHELL
-    # Install some dependancies
-    sudo apt-get update
-    sudo apt-get install -y autoconf build-essential gperf bison flex texinfo libtool libncurses5-dev wget gawk libc6-dev libexpat-dev git
+  # config.vm.provision "shell", inline: <<-SHELL
+  #   # Install some dependancies
+  #   sudo apt-get update
+  #   sudo apt-get install -y autoconf build-essential gperf bison flex texinfo libtool libncurses5-dev wget gawk libc6-dev libexpat-dev git
 
-    # Start getting python in order
-    sudo apt-get install -y python python3
-    sudo apt-get install -y python-pip python3-pip
+  #   # Start getting python in order
+  #   sudo apt-get install -y python python3
+  #   sudo apt-get install -y python-pip python3-pip
 
-    # Install pyserial for programming
-    sudo pip install pyserial  # for python2 for programming the Espressif
-    sudo pip3 install pyserial pycrypto pyelftools # Optionally for python3 for running test scripts etc.
+  #   # Install pyserial for programming
+  #   sudo pip install pyserial  # for python2 for programming the Espressif
+  #   sudo pip3 install pyserial pycrypto pyelftools # Optionally for python3 for running test scripts etc.
 
-    # Move binaries into place
-    sudo mkdir -p /opt
-    cd /opt
-    sudo tar -xjvf /vagrant/vagtools/xtensa-lx106-elf-linux.tar.bz2
-    sudo chown `whoami`: /opt/xtensa-lx106-elf
-  SHELL
+  #   # Move binaries into place
+  #   sudo mkdir -p /opt
+  #   cd /opt
+  #   sudo tar -xjvf /vagrant/vagtools/xtensa-lx106-elf-linux.tar.bz2
+  #   sudo chown `whoami`: /opt/xtensa-lx106-elf
+  # SHELL
+  config.vm.provision "ansible" do |ansible|
+    ansible.playbook = "../vic-os-vm-config/site.yml"
+  end  
   end
