@@ -12,7 +12,7 @@ Raising and lowering the lift cycles through a set of class names defined in the
 
 The behavior can also be used for "hard example mining" for training neural nets by using special class names "FalsePositives" and "FalseNegatives". See also the "Saving Images" section here. 
 
-The saved files are located <cachePath>/vision/camera/images and can be retrieved (or erased) using the `project/victor/scripts/get-dev-images.sh` (or wipe-dev-images.sh) scripts.
+The saved files are located <cachePath>`/vision/camera/images` and can be retrieved (or erased) using the `project/victor/scripts/get-dev-images.sh` (or wipe-dev-images.sh) scripts.
 
 Other options include the ability to capture multiple images with each button press (with head/body movement between captures), enabling/disabling a camera shutter noise, enabling VisionModes, etc. See also documentation in the Json configuration file for more. Specific versions of the behavior with predefined settings can be created by saving new Json files with specific configurations for a specific task. Because this is just like any other behavior, it can be accessed using the WebViz Behaviors tab.
 
