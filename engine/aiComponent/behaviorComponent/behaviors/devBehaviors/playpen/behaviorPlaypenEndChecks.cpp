@@ -131,19 +131,19 @@ Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal()
     PRINT_NAMED_INFO("BehaviorPlaypenEndChecks.OnActivated.SkippingActiveObjectCheck","");
   }
 
-  // Check if we detected any wifi APs and that this check is even enabled
-  if(!(Factory::GetEMR()->fields.playpenTestDisableMask & PlaypenTestMask::WifiScanError))
-  {
-    if(!_wifiScanPassed)
-    {
-      PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::NO_WIFI_APS_DISCOVERED, RESULT_FAIL);
-    }
-  }
-  // Else test is disabled via emr print message
-  else
-  {
-    PRINT_NAMED_INFO("BehaviorPlaypenEndChecks.OnActivated.SkippingWifiScanCheck","");
-  }
+  // // Check if we detected any wifi APs and that this check is even enabled
+  // if(!(Factory::GetEMR()->fields.playpenTestDisableMask & PlaypenTestMask::WifiScanError))
+  // {
+  //   if(!_wifiScanPassed)
+  //   {
+  //     PLAYPEN_SET_RESULT_WITH_RETURN_VAL(FactoryTestResultCode::NO_WIFI_APS_DISCOVERED, RESULT_FAIL);
+  //   }
+  // }
+  // // Else test is disabled via emr print message
+  // else
+  // {
+  //   PRINT_NAMED_INFO("BehaviorPlaypenEndChecks.OnActivated.SkippingWifiScanCheck","");
+  // }
 
   if(!DidReceiveFFTResult())
   {

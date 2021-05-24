@@ -47,7 +47,9 @@ CONSOLE_VAR(u32,   kMinNumCalibImages,             "Vision.Calibration", 1);
 CONSOLE_VAR(u32,   kCheckerboardWidth,             "Vision.Calibration", 11);
 CONSOLE_VAR(u32,   kCheckerboardHeight,            "Vision.Calibration", 4);
 CONSOLE_VAR(f32,   kCheckerboardSquareSize_mm,     "Vision.Calibration", 0.05);
-CONSOLE_VAR(f32,   kSingleTargetReprojErr_pix,     "Vision.Calibration", 1.5);
+// Changed the calibratuon reprojection err from 1.5 to 3.0 as we are building a newer playpen
+CONSOLE_VAR(f32,   kSingleTargetReprojErr_pix,            "Vision.Calibration", 3.0);
+CONSOLE_VAR(f32,   kSingleTargetReprojErrRecommended_pix, "Vision.Calibration", 1.5);
 
 // TODO Figure out min number of markers (what if top row is cut off thats like 12 markers)
 CONSOLE_VAR(u32,   kNumMarkersNeededForCalibration,"Vision.Calibration", 10);
@@ -459,6 +461,14 @@ Result CameraCalibrator::ComputeCalibrationFromSingleTarget(CalibTargetType targ
   
   
   // Check if average reprojection error is too high
+  if ((rms >= kSingleTargetReprojErrRecommended_pix) && 
+      (kSingleTargetReprojErr_pix > rms))
+  {
+    PRINT_NAMED_WARNING("CameraCalibrator.ComputeCalibrationFromSingleTarget.ReprojectionErrorHigherThanRecommended",
+                        "%f > %f", rms, kSingleTargetReprojErrRecommended_pix);
+  }
+
+  // Check if average reprojection error is too high
   if (rms > kSingleTargetReprojErr_pix)
   {
     PRINT_NAMED_WARNING("CameraCalibrator.ComputeCalibrationFromSingleTarget.ReprojectionErrorTooHigh",
@@ -597,7 +607,7 @@ void CameraCalibrator::GetCalibTargetMarkersTo3dCoords_Qbert(std::map<Vision::Ma
   markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_LEFT]   = GetCoordsForFace(false, 1, -1, 0);
   markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_FRONT]  = GetCoordsForFace(true, 1, -1, 0);
   
-  markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_TOP]    = GetCoordsForFace(false, 2, -2, 0);
+  markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_BOTTOM]    = GetCoordsForFace(false, 2, -2, 0);
   markersTo3dCoords[Vision::MARKER_LIGHTCUBEK_BACK]   = GetCoordsForFace(true, 2, -2, 0);
   
   markersTo3dCoords[Vision::MARKER_LIGHTCUBEJ_TOP]    = GetCoordsForFace(false, 3, -3, 0);
