@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # source: https://crascit.com/2016/04/09/using-ccache-with-cmake/
 
