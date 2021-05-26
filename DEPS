@@ -11,7 +11,7 @@
     "files": {
         "victor-blobstore-qalogs-key": {
             "sha256": "579ee035e4aea9be4678fbc440375eba47608ce2e127deab0dd49efb148db39d",
-            "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-blobstore-qalogs-client-key/victor-blobstore-qalogs-key"
+            "url": "http://assets.digitaldreamlabs.com/3B4TiDdjzj7WpSoH/victor-blobstore-qalogs-key"
         }
     },
     "svn": {
