@@ -93,13 +93,10 @@ use it:
 ### Configure AWS
 1. Now that we have shifted from Anki servers to AWS S3 buckets, AWS command line needs to be set up on your system to download dependencies.
 2. Get your AWS credentials from your supervisor.
-3. Download and install [AWS Command Line Interface](https://aws.amazon.com/cli/) on your system.
+3. Download and install [AWS Command Line Interface](https://aws.amazon.com/cli/) on your system. OSX: `brew install awscli` Ubuntu: `apt install awscli`
 4. Open terminal and configure AWS using the command: `aws configure`
 5. Enter the various credentials and for region use: `us-east-1`
-6. Install `Boto 3` to access S3 objects via Python:
-```
-pip2 install boto3
-pip3 install boto3
+6. Install `Boto 3` to access S3 objects via Python: `pip2 install boto3 && pip3 install boto3` Ubuntu 16.04: `apt install python-pip && pip install boto3==1.3.1`
 ```
 
 ## Building Victor
