@@ -51,6 +51,7 @@ def log_console():
                     elif line[0:9] == ">>logstop":
                         print("-------------- LOG %i START --------------" % log_index)
                         log_index = log_index + 1
+                    stdout.write(line)
                         
                 else:
                     stdout.write(line)
