@@ -8,6 +8,8 @@ import argparse
 ser = serial.Serial()
 ser.baudrate = 1000000
 
+verbose = False
+
 def print_output():
     sleep(0.01)
     while ser.in_waiting > 1:
@@ -51,7 +53,8 @@ def log_console():
                     elif line[0:9] == ">>logstop":
                         print("-------------- LOG %i START --------------" % log_index)
                         log_index = log_index + 1
-                    stdout.write(line)
+                    if verbose:
+                        stdout.write(line)
                         
                 else:
                     stdout.write(line)
@@ -81,13 +84,16 @@ def main():
     parser.add_argument('command', metavar='CMD', type=str, help='log/console/update')
     parser.add_argument('--device', type=str, required=True, help='USB Device /dev/cu.usbserialXXXXXX on mac or COM99 on windows')
     parser.add_argument('--firmware', type=str, help='Fixture firmware to update')
-                    
+    parser.add_argument('--verbose', default=False, action='store_true', help='Show all output including screen updates in log mode')
     args = parser.parse_args()
     print(repr(args))
 
     ser.port = args.device
     ser.open()
 
+    if args.verbose != False:
+        global verbose
+        verbose = True
     if args.command == 'log':
         log_console()
     elif args.command == 'console':
