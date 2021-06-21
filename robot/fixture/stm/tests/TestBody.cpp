@@ -264,8 +264,16 @@ static void BodyLoadProductionFirmware(void)
   
   //assign ESN & HW ids (preserve, if exist)
   bodyid.model = BODYID_MODEL_BLACK_STD;
-  if( bodyid.hwrev == BODYID_HWREV_EMPTY && g_fixmode == FIXMODE_BODY1 )
-    bodyid.hwrev = CURRENT_BODY_HW_REV; //only set valid hwrev in production mode
+
+  // Anki only used to set this on production runs, but now
+  // newer firmware will think 0xFFFF is a Whiskey-Bot and
+  // run the wrong code. So we always want to set this to a good value.
+  //
+  // TODO: Figure out how we can safely increment versions without breaking
+  // victor code paths
+  if( bodyid.hwrev == BODYID_HWREV_EMPTY)
+    bodyid.hwrev = CURRENT_BODY_HW_REV;
+  
   if( !bodyid.esn || bodyid.esn == BODYID_ESN_EMPTY )
   {
     if( g_fixmode == FIXMODE_BODY1 )
