@@ -50,7 +50,23 @@ typedef struct {
 
 #define BODYID_MODEL_EMPTY      0xffff //unprogrammed/empty value
 #define BODYID_MODEL_BLACK_STD  1
-#define BODYID_MODEL_IS_VALID(m)  ((m) > 0 && (m) <= BODYID_MODEL_BLACK_STD)
+#define BODYID_MODEL_IS_VALID(m)  ((m & 0xFF) > 0 && (m & 0xFF) <= BODYID_MODEL_BLACK_STD)
+#define BODYID_MODEL_GET(m) (m & 0xFF)
+
+// Because Anki decided there would be no more versions of Vector
+// And only whiskey, firmware in the wild won't like a HWREV >
+// BODYID_HWREV_MP and will treat it like a Whiskey causing all sorts
+// of problems.
+//
+// To work around this, we pack next revision in the Model field which
+// doesn't seem to be used. This limits us to 32 upgrades of the body board
+// and 32 model types.
+
+#define BODYID_HWREV2_DDL_DVT   1
+#define BODYID_HWREV2_IS_VALID(r) ((r >> 8) <= BODYID_HWREV2_DDL_DVT)
+#define BODYID_HWREV2_GET(r) (r >> 8)
+#define BODYID_HWREV2_SHIFT(r) (r << 8)
+
 //#define BODYID_MODEL_SE_{COLOR} 2
 
 typedef struct {

@@ -37,6 +37,7 @@
 #define SYSCON_EVIL               0x4F4D3243 /*first word of syscon header, indicates valid app*/
 
 static const int CURRENT_BODY_HW_REV = BODYID_HWREV_MP;
+static const int CURRENT_BODY_HW_REV2 = BODYID_HWREV2_DDL_DVT;
 
 //-----------------------------------------------------------------------------
 //                  STM Load
@@ -178,10 +179,10 @@ static void BodyTryReadSerial(void)
   mcu_power_down_();
   
   ConsolePrintf("read ESN %08x %08x %08x %08x\n", bodyid.esn, ein1, ein2, ein3);
-  ConsolePrintf("read hwrev %u model %u\n", bodyid.hwrev, bodyid.model);
+  ConsolePrintf("read hwrev %u hwrev2 %u model %u\n", bodyid.hwrev, BODYID_HWREV2_GET(bodyid.model), BODYID_MODEL_GET(bodyid.model));
   
   //invalidate ESN if there is garbage in the other fields - generate a new one
-  if( !BODYID_HWREV_IS_VALID(bodyid.hwrev) || !BODYID_MODEL_IS_VALID(bodyid.model) || 
+  if( !BODYID_HWREV_IS_VALID(bodyid.hwrev) || BODYID_HWREV2_IS_VALID(bodyid.model) || !BODYID_MODEL_IS_VALID(bodyid.model) || 
       ein1 != BODYID_ESN_EMPTY || ein2 != BODYID_ESN_EMPTY || ein3 != BODYID_ESN_EMPTY )
   {
     bodyid.hwrev = BODYID_HWREV_EMPTY;
@@ -263,7 +264,8 @@ static void BodyLoadProductionFirmware(void)
   mcu_power_down_();
   
   //assign ESN & HW ids (preserve, if exist)
-  bodyid.model = BODYID_MODEL_BLACK_STD;
+  if (bodyid.model == BODYID_MODEL_EMPTY)
+    bodyid.model = BODYID_MODEL_BLACK_STD + BODYID_HWREV2_SHIFT(CURRENT_BODY_HW_REV2);
 
   // Anki only used to set this on production runs, but now
   // newer firmware will think 0xFFFF is a Whiskey-Bot and
@@ -299,7 +301,7 @@ static void BodyLoadProductionFirmware(void)
   }
   
   //Erase and flash boot/app
-  ConsolePrintf("load: ESN %08x, hwrev %u, model %u\n", bodyid.esn, bodyid.hwrev, bodyid.model);
+  ConsolePrintf("load: ESN %08x, hwrev %u, hwrev2 %u, model %u\n", bodyid.esn, bodyid.hwrev, BODYID_HWREV2_GET(bodyid.model), BODYID_MODEL_GET(bodyid.model));
   mcu_power_up_();
   mcu_swd_init_();
   mcu_flash_program_(FLASH_ADDR_SYSBOOT, bodyboot, bodyboot+bodybootSize, 1, "bootloader");
@@ -431,7 +433,7 @@ static void BodyCheckProgramLockout(void)
 
 static void BodyFlexFlowReport(void)
 {
-  FLEXFLOW::printf("<flex> ESN %08x HwRev %u Model %u </flex>\n", bodyid.esn, bodyid.hwrev, bodyid.model);
+  FLEXFLOW::printf("<flex> ESN %08x HwRev %u Model %u </flex>\n", bodyid.esn, bodyid.hwrev, BODYID_HWREV2_GET(bodyid.model), BODYID_MODEL_GET(bodyid.model));
 }
 
 static void BodyChargeContactElectricalDebug(void)
