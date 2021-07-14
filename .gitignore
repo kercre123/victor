@@ -398,3 +398,7 @@ apps/xamarin/chewie/codelab.iOS/obj
 
 # Victor SDK Clad
 victor-sdk-clad
+
+# Misc 
+victor-packages
+log.txt

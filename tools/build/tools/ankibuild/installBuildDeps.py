@@ -28,7 +28,11 @@ class DependencyInstaller(object):
     return True
 
   def isPythonPackageInstalled(self, package, version):
-    pip = 'pip' + str(version)
+    # pip = 'pip' + str(version)
+    pip = 'pip'
+    if version > 2:
+      pip += str(version)
+
     # this prints a warning that can be disabled with '--format=columns',
     # but that param isn't supported by older versions of pip
     allPackages = subprocess.check_output([pip, 'list'])
@@ -61,7 +65,10 @@ class DependencyInstaller(object):
   def installPythonPackage(self, package, version):
     if not self.isPythonPackageInstalled(package, version):
       print "Installing %s" % package
-      pip = 'pip' + str(version)
+      pip = 'pip'
+      if version > 2:
+        pip += str(version)
+
       result = subprocess.call([pip, 'install', package])
       if result:
         print("Error: Failed to install python{0} package {1}!".format(version, package))

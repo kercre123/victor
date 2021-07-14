@@ -123,7 +123,12 @@ If you're a developer, it is highly recommended that you check out the [Victor B
     ```
 
     If this command fails for some reason, try running `project/victor/build-victor.sh -f -X`<sup>1</sup>.
+    If you need to install pip 
 
+    ```
+    curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
+    python get-pip.py
+    ```
 1. To build for mac, run
 
     ```
@@ -149,6 +154,7 @@ If you're a developer, it is highly recommended that you check out the [Victor B
 <sup>1.</sup> Note about the `-f` and `-X` flags: We use a helper script to generate file lists to tell CMake what to build. Sometimes, when changing branches, CMake doesn't notice that it needs to regenerate build files. The `-f` flag forces it to do so. Also, asset files can be force-updated by using the `-X` flag.
 
 For a more thorough description of build options, run `project/victor/build-victor.sh -h` or check out the [build-instructions](/docs/development/build-instructions.md) document.
+
 
 ## Deploying Victor
 
