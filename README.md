@@ -123,12 +123,22 @@ If you're a developer, it is highly recommended that you check out the [Victor B
     ```
 
     If this command fails for some reason, try running `project/victor/build-victor.sh -f -X`<sup>1</sup>.
-    If you need to install pip 
 
-    ```
-    curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
-    python get-pip.py
-    ```
+   ### Troubleshooting build
+
+   1. If you need to install pip
+
+   ```
+   curl https://bootstrap.pypa.io/pip/2.7/get-pip.py -o get-pip.py
+   python get-pip.py
+   ```
+
+   2. You might need to use earlier go version to work to allow
+
+   ```
+    export PATH=~/.anki/go/dist/1.9.4/bin:$PATH
+   ```
+
 1. To build for mac, run
 
     ```
@@ -155,7 +165,6 @@ If you're a developer, it is highly recommended that you check out the [Victor B
 
 For a more thorough description of build options, run `project/victor/build-victor.sh -h` or check out the [build-instructions](/docs/development/build-instructions.md) document.
 
-
 ## Deploying Victor
 
 ### Connecting over Wifi
@@ -164,51 +173,51 @@ For a more thorough description of build options, run `project/victor/build-vict
 
 1. Power on your robot and wait until the eyes appear on the screen. Then click the backpack button once to show the debug display. The robot's IP address appears on the first line.
 
-    If that method doesn't work, you can also try running
+   If that method doesn't work, you can also try running
 
-    ```
-    tools/victor-ble-cli/vic_show_ip.sh VICTOR_xxxxxx
-    ```
+   ```
+   tools/victor-ble-cli/vic_show_ip.sh VICTOR_xxxxxx
+   ```
 
-    where `xxxxxx` is the bluetooth ID of the robot (which is displayed on the screen when the robot is powered up). You may need to put the robot physically near your computer when you run the script.
+   where `xxxxxx` is the bluetooth ID of the robot (which is displayed on the screen when the robot is powered up). You may need to put the robot physically near your computer when you run the script.
 
-    The `inet addr` for `wlan0` is the robot's IP address.
+   The `inet addr` for `wlan0` is the robot's IP address.
 
 1. We no longer use adb to connect to the robot. Instead we use SSH which is more reliable. You need to do this ONE-TIME operation for each different robot you want to connect to, on the laptop you're connecting from. Run this script:
 
-    ```
-    ./tools/victor-ble-cli/vic_robot_set_key.sh VICTOR_xxxxxx
-    ```
+   ```
+   ./tools/victor-ble-cli/vic_robot_set_key.sh VICTOR_xxxxxx
+   ```
 
-    where 'xxxxxx' is the bluetooth ID of the robot (as mentioned above, for example VICTOR_1a3d273d, or "VECTOR R2D2"). This script will generate an SSH key pair, install it on your laptop, and then connect to the robot and install the public key on the robot. It will also modify your `~/.ssh/config` file to add some lines that will prevent unnecessary prompts and warnings. Finally, it will show you the robot's IP address, and write that IP address to a file on your laptop.
+   where 'xxxxxx' is the bluetooth ID of the robot (as mentioned above, for example VICTOR_1a3d273d, or "VECTOR R2D2"). This script will generate an SSH key pair, install it on your laptop, and then connect to the robot and install the public key on the robot. It will also modify your `~/.ssh/config` file to add some lines that will prevent unnecessary prompts and warnings. Finally, it will show you the robot's IP address, and write that IP address to a file on your laptop.
 
 1. Once that one-time step is done, all of the existing scripts (victor_start, victor_deploy, victor_log, etc.) will work as before, but without using adb.<br/><br/>You can also run a command on the robot with:
 
-    ```
-    ssh root@<robotIP> <command> <arguments>
-    ```
+   ```
+   ssh root@<robotIP> <command> <arguments>
+   ```
 
-    where 'robotIP' is the robot's IP address. You can also shell in to the robot with:
+   where 'robotIP' is the robot's IP address. You can also shell in to the robot with:
 
-    ```
-    ssh root@<robotIP>
-    ```
+   ```
+   ssh root@<robotIP>
+   ```
 
 1. Unless you're running the `ssh` command, however, you won't need to enter the robot IP address again, for the other scripts, e.g. victor_log, victor_deploy, etc. If you want to switch to another robot, first make sure the vic_robot_set_key script (above) has been run on your laptop for that robot, if you haven't done so already. Then, run
 
-    ```
-    ./project/victor/scripts/victor_set_robot_ip.sh <robotIP>
-    ```
+   ```
+   ./project/victor/scripts/victor_set_robot_ip.sh <robotIP>
+   ```
 
-    to switch to the new robot's IP address. From that point forward the victor_log, etc. scripts will use that new IP address.
+   to switch to the new robot's IP address. From that point forward the victor_log, etc. scripts will use that new IP address.
 
 1. For convenience when working with multiple robots, or if you just want to be sure you're targeting a specific robot, almost all of the commands accept a robot IP with the -s option. For example:
 
-    ```
-    victor_deploy_release -s 192.168.43.45
-    ```
+   ```
+   victor_deploy_release -s 192.168.43.45
+   ```
 
-    will deploy the release version to the robot at 192.168.43.45.
+   will deploy the release version to the robot at 192.168.43.45.
 
 ### Deploying binaries and assets to physical robot
 
@@ -220,9 +229,9 @@ For a more thorough description of build options, run `project/victor/build-vict
 
 1. If you want to deploy the debug build (you should not normally have to do this), run
 
-    ```
-    ANKI_BUILD_TYPE=Debug ./project/victor/scripts/deploy.sh
-    ```
+   ```
+   ANKI_BUILD_TYPE=Debug ./project/victor/scripts/deploy.sh
+   ```
 
 ## Running Victor
 
@@ -232,11 +241,11 @@ You can view output from all processes by running `victor_log`.
 
 ## Connect to Victor with Webots
 
-Note that we have floating licenses for Webots. Check with your friendly producers to see if it's OK for you to install and use Webots, since you may be taking a license from someone who really needs it. 
+Note that we have floating licenses for Webots. Check with your friendly producers to see if it's OK for you to install and use Webots, since you may be taking a license from someone who really needs it.
 
 1. First, make sure you have built for mac (see instructions above) on the same branch as the binaries on the physical robot.
 
-1. Open the world [cozmo2Viz.wbt](/simulator/worlds/cozmo2Viz.wbt) in a text editor, and set the field `engineIP` to match your robot's IP address. 
+1. Open the world [cozmo2Viz.wbt](/simulator/worlds/cozmo2Viz.wbt) in a text editor, and set the field `engineIP` to match your robot's IP address.
 
 1. Run the world to connect to the robot. The processes must be fully up and running before connecting with webots. If in doubt, stop the world and run `victor_restart` first.
 
@@ -248,9 +257,9 @@ See [simulator/README.md](/simulator/README.md).
 
 Most developers shouldn't have to do this. Better to ask someone in hardware or Al or Kevin Y.
 
-1. To build syscon, run `vmake.sh` in [robot/](/robot). 
+1. To build syscon, run `vmake.sh` in [robot/](/robot).
 
-1. If the robot has previously run the robot process since last boot then you'll need to first reboot the robot. 
+1. If the robot has previously run the robot process since last boot then you'll need to first reboot the robot.
 
 1. Run [dfu.sh](/robot/dfu.sh) in [robot/](/robot). There should be a bunch of messages indicating transfer of data. Might need to run twice.
 
