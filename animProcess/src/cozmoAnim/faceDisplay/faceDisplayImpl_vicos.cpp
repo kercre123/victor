@@ -38,7 +38,8 @@ namespace Cozmo {
   
   void FaceDisplayImpl::FaceDraw(const u16* frame)
   {
-    lcd_draw_frame2(frame, FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*sizeof(u16));
+    // lcd_draw_frame2(frame, FACE_DISPLAY_WIDTH*FACE_DISPLAY_HEIGHT*sizeof(u16));
+    lcd_draw_frame2(frame, (FACE_DISPLAY_HEIGHT + FACE_DISPLAY_VERTICAL_BUFFER) * (FACE_DISPLAY_WIDTH + FACE_DISPLAY_HORIZONTAL_BUFFER)*sizeof(u16));
   }
   
   void FaceDisplayImpl::FacePrintf(const char* format, ...)

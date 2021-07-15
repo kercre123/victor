@@ -426,6 +426,7 @@ message SetFaceHue
 message DisplayFaceImageBinaryChunk {
     uint_32  duration_ms,     // Use uint_32 max value to keep the image on the screen
     uint_8   faceData[1104],  // TODO: Make size a clad const
+    // uint_8   faceData[800],  // TODO: Make size a clad const
     uint_8   imageId,         // ID for this image, used only to track chunks of the same image
     uint_8   chunkIndex
 }
