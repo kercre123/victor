@@ -238,6 +238,7 @@ void SpriteWrapper::LoadSprite(Image* outImage) const
               "CompositeImage.SpriteBoxImpl.Constructor.GrayLoadFailed",
               "Failed to load sprite %s",
               _fullSpritePath.c_str());
+  outImage->Resize((s32) 80, (s32) 160);
 }
 
 
@@ -269,6 +270,7 @@ void SpriteWrapper::LoadSprite(ImageRGBA* outImage, const HSImageHandle& hsImage
                 "Failed to load sprite %s",
                 _fullSpritePath.c_str());
   }
+  outImage->Resize((s32) 80, (s32) 160);
 }
 
 

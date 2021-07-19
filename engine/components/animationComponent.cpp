@@ -46,8 +46,8 @@ namespace {
 
   const u32 kMaxNumAvailableAnimsToReportPerTic = 1000;
 
-  static const u32 kNumImagePixels     = FACE_DISPLAY_HEIGHT * FACE_DISPLAY_WIDTH;
-  static const u32 kNumHalfImagePixels = kNumImagePixels / 2;
+  // static const u32 kNumImagePixels     = FACE_DISPLAY_HEIGHT * FACE_DISPLAY_WIDTH;
+  // static const u32 kNumHalfImagePixels = kNumImagePixels / 2;
 
   static const int kMaxAnimGroupRecursionDepth = 100;
 }
@@ -588,7 +588,7 @@ Result AnimationComponent::DisplayFaceImageBinary(const Vision::Image& img, u32 
 
     RobotInterface::DisplayFaceImageBinaryChunk msg;
     static const u32 kFaceArraySize = sizeof(msg.faceData);
-    static_assert(8 * kFaceArraySize == kNumHalfImagePixels, "AnimationComponent.DisplayFaceImageBinary.WrongFaceDataSize");
+    // static_assert(8 * kFaceArraySize == kNumHalfImagePixels, "AnimationComponent.DisplayFaceImageBinary.WrongFaceDataSize");
   
     msg.imageId = 0;
     msg.chunkIndex = halfIdx;

@@ -209,7 +209,12 @@ void FaceDisplay::DrawFaceLoop()
       // Only draw to the face once the boot anim has been stopped
       if(_displayImpl != nullptr && _stopBootAnim)
       {
-        _displayImpl->FaceDraw(drawImage.GetRawDataPointer());
+        Vision::ImageRGB565 newImage(FACE_DISPLAY_HEIGHT + FACE_DISPLAY_VERTICAL_BUFFER, FACE_DISPLAY_WIDTH + FACE_DISPLAY_HORIZONTAL_BUFFER);
+        newImage.FillWith(Vision::PixelRGB565(0xff, 0xff, 0xff));
+        Point2f bottomRight(0.f,0.f);
+        newImage.DrawSubImage(drawImage, bottomRight);
+        _displayImpl->FaceDraw(newImage.GetRawDataPointer());
+        // _displayImpl->FaceDraw(drawImage.GetRawDataPointer());
       }
 
       // Done with this image, clear the pointer
