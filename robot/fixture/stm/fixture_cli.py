@@ -8,6 +8,9 @@ import argparse
 ser = serial.Serial()
 ser.baudrate = 1000000
 
+logfile_name = None
+logfile = None
+
 def print_output():
     sleep(0.01)
     while ser.in_waiting > 1:
@@ -33,8 +36,18 @@ def newline_at(s):
         return s.index('\n')
     except ValueError:
         return -1
-        
+
+def log_print(s):
+    stdout.write(s)
+    if logfile is not None:
+        logfile.write(s)
+	
 def log_console():
+
+    if logfile_name:
+      global logfile
+      logfile = open(logfile_name,"w+")
+
     log_index = 0
     buf = ""
     while True:
@@ -47,14 +60,12 @@ def log_console():
 
                 if line[0:2] in [">>", "<<"]:
                     if line[0:10] == ">>logstart":
-                        print("-------------- LOG %i START --------------" % log_index)
+                        log_print("-------------- LOG %i START --------------\n" % log_index)
                     elif line[0:9] == ">>logstop":
-                        print("-------------- LOG %i START --------------" % log_index)
+                        log_print("-------------- LOG %i START --------------\n" % log_index)
                         log_index = log_index + 1
-                    stdout.write(line)
-                        
                 else:
-                    stdout.write(line)
+                    log_print(line)
                 buf = buf[idx+1:]
                 idx = newline_at(buf)
             sleep(0.01)
@@ -67,7 +78,6 @@ def firmware_update(fixture_safe):
     file_contents = fixture_safe.read(2048+32-4)
 
     while file_contents != b'':
-#        print("LEN %s\n" % len(file_contents))
         ser.write(file_contents)
         stdout.write(ser.read(1).decode('utf-8')) # wait until this packet is programmed.
         stdout.flush()
@@ -81,10 +91,14 @@ def main():
     parser.add_argument('command', metavar='CMD', type=str, help='log/console/update')
     parser.add_argument('--device', type=str, required=True, help='USB Device /dev/cu.usbserialXXXXXX on mac or COM99 on windows')
     parser.add_argument('--firmware', type=str, help='Fixture firmware to update')
-                    
+    parser.add_argument('--logfile', type=str, help='Write file to logger.')
+
     args = parser.parse_args()
     print(repr(args))
 
+    global logfile_name
+    logfile_name = args.logfile
+    
     ser.port = args.device
     ser.open()
 
