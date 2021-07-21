@@ -90,6 +90,8 @@ int main(void) {
   Analog::init();
   timer_init();
 
+	
+	#ifndef UNSIGNED
   // If fingerprint is invalid, cert is invalid, or reset counter is zero
   // 1) Wipe flash
   // 2) Start recovery
@@ -103,14 +105,17 @@ int main(void) {
     // Hardware watchdog trap
     Comms::run();
   }
-
+  #endif
+	
   // Clear reset pin flag (for reset detect).
   RCC->CSR |= RCC_CSR_RMVF;
 
+	#ifndef UNSIGNED
   // This flag is only set when DFU has validated the image
   if (APP->fingerPrint != COZMO_APPLICATION_FINGERPRINT) {
     NVIC_SystemReset();
   }
+	#endif
 
   Analog::stop();
 
