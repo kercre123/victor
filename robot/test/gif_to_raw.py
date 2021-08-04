@@ -50,7 +50,7 @@ def extractGifFrames(inGif):
         while frame:
 #            newframe = frame.rotate(90).resize( SIZE, Image.ANTIALIAS).convert('RGBA')
             data = convert_frame_to_data(frame)
-            f.write(data.tostring())
+            f.write(data.tobytes())
             nframes += 1
             try:
                 frame.seek( nframes )
