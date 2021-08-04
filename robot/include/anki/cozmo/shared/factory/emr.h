@@ -23,8 +23,9 @@ namespace Factory {
   union EMR {
     struct Fields {
       uint32_t ESN;
-      uint32_t HW_VER;
-      uint32_t MODEL;
+      uint32_t HW_VER; // 6 
+      uint16_t HW_SUB_VER;
+      uint16_t MODEL; // Model >> 8 > 0 newwer  if == 0 older 
       uint32_t LOT_CODE;
       uint32_t PLAYPEN_READY_FLAG; //fixture approves all previous testing. OK to run playpen
       uint32_t PLAYPEN_PASSED_FLAG;

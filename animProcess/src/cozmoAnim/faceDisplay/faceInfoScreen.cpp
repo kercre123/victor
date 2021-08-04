@@ -106,7 +106,7 @@ void FaceInfoScreen::DrawMenu(Vision::ImageRGB565& img) const
   const ColorRGBA& menuItemColor = NamedColors::WHITE;
   const f32 locX = 10;
   const f32 stepY = 11;
-  const f32 textScale = 0.4f;
+  const f32 textScale = 0.3f;
 
   f32 locY = stepY;
   for (auto& text : _staticText) {

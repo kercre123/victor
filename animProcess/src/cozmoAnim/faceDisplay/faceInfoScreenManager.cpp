@@ -88,7 +88,7 @@ namespace Vector {
 // Default values for text rendering
 const Point2f FaceInfoScreenManager::kDefaultTextStartingLoc_pix = {0,10};
 const u32 FaceInfoScreenManager::kDefaultTextSpacing_pix = 11;
-const f32 FaceInfoScreenManager::kDefaultTextScale = 0.4f;
+const f32 FaceInfoScreenManager::kDefaultTextScale = 0.3f;
 
 namespace {
   // Number of tics that a wheel needs to be moving for before it registers

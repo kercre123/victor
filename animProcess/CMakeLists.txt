@@ -133,6 +133,9 @@ if (VICOS)
     PRIVATE
     robot_core
     ${ASAN_EXE_LINKER_FLAGS}
+    util
+    PUBLIC
+    robot_interface  # Needs to be public for cozmoConfig.h
   )
 
   anki_build_strip(TARGET vic-bootAnim)

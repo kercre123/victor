@@ -161,6 +161,29 @@ static inline bool IsWhiskey()
   return (Factory::GetEMR()->fields.HW_VER >= 7);
 }
 
+
+  static void SetXray(bool xray)
+  {
+    WriteEMR(offsetof(Factory::EMR::Fields, HW_SUB_VER)/sizeof(uint32_t), (xray ? 1 : 0));
+  }
+
+  class ScopedXray
+  {
+  public:
+    ScopedXray() { SetXray(true); }
+    ~ScopedXray() { SetXray(false); }
+  };
+}
+
+#define UNIT_TEST_WHISKEY Factory::ScopedXray xrayEMR;
+
+static inline const bool IsXray()
+{  
+  const uint32_t hardware = Factory::GetEMR()->fields.HW_VER;
+  const uint32_t subVer = Factory::GetEMR()->fields.HW_SUB_VER;
+  return hardware == 6 && subVer > 0;
+}
+
 }
 }
 

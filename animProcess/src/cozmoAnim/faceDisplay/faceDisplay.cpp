@@ -20,6 +20,7 @@
 #include "util/cpuProfiler/cpuProfiler.h"
 #include "util/threading/threadPriority.h"
 #include "cozmoAnim/execCommand/exec_command.h"
+#include "anki/cozmo/shared/factory/emrHelper.h"
 
 #define LOG_CHANNEL "FaceDisplay"
 
@@ -209,12 +210,16 @@ void FaceDisplay::DrawFaceLoop()
       // Only draw to the face once the boot anim has been stopped
       if(_displayImpl != nullptr && _stopBootAnim)
       {
-        Vision::ImageRGB565 newImage(FACE_DISPLAY_HEIGHT + FACE_DISPLAY_VERTICAL_BUFFER, FACE_DISPLAY_WIDTH + FACE_DISPLAY_HORIZONTAL_BUFFER);
-        newImage.FillWith(Vision::PixelRGB565(0xff, 0xff, 0xff));
-        Point2f bottomRight(0.f,0.f);
-        newImage.DrawSubImage(drawImage, bottomRight);
-        _displayImpl->FaceDraw(newImage.GetRawDataPointer());
-        // _displayImpl->FaceDraw(drawImage.GetRawDataPointer());
+        if (IsXray()) {
+          Vision::ImageRGB565 newImage(FACE_DISPLAY_HEIGHT + FACE_DISPLAY_VERTICAL_BUFFER, FACE_DISPLAY_WIDTH + FACE_DISPLAY_HORIZONTAL_BUFFER);
+          newImage.FillWith(Vision::PixelRGB565(0x00, 0x00, 0xff));
+          Point2f bottomRight(0.f,0.f);
+          newImage.DrawSubImage(drawImage, bottomRight);
+          _displayImpl->FaceDraw(newImage.GetRawDataPointer());
+        } else {
+          _displayImpl->FaceDraw(drawImage.GetRawDataPointer());
+        }
+        
       }
 
       // Done with this image, clear the pointer
