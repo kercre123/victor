@@ -54,13 +54,14 @@ enum JdocResolveMethod {
 enum RobotSetting {
   clock_24_hour      = 0;
   eye_color          = 1;
-  default_location   = 2;
-  dist_is_metric     = 3;
-  locale             = 4;
-  master_volume      = 5;
-  temp_is_fahrenheit = 6;
-  time_zone          = 7;
-  button_wakeword    = 8;
+  custom_eye_color   = 2;
+  default_location   = 3;
+  dist_is_metric     = 4;
+  locale             = 5;
+  master_volume      = 6;
+  temp_is_fahrenheit = 7;
+  time_zone          = 8;
+  button_wakeword    = 9;
 }
 
 enum EyeColor {
@@ -73,6 +74,12 @@ enum EyeColor {
   CONFUSION_MATRIX_GREEN = 6;
 }
 
+message CustomEyeColor {
+  float hue = 1;
+  float saturation = 2;
+  bool enabled = 3;
+}
+
 enum ButtonWakeWord {
   BUTTON_WAKEWORD_HEY_VECTOR    = 0;
   BUTTON_WAKEWORD_ALEXA         = 1;
@@ -81,13 +88,14 @@ enum ButtonWakeWord {
 message RobotSettingsConfig {
   oneof oneof_clock_24_hour { bool clock_24_hour = 1; }
   oneof oneof_eye_color { EyeColor eye_color = 2; }
-  oneof oneof_default_location { string default_location = 3; }
-  oneof oneof_dist_is_metric { bool dist_is_metric = 4; }
-  oneof oneof_locale { string locale = 5; }
-  oneof oneof_master_volume { Volume master_volume = 6; }
-  oneof oneof_temp_is_fahrenheit { bool temp_is_fahrenheit = 7; }
-  oneof oneof_time_zone { string time_zone = 8; }
-  oneof oneof_button_wakeword { ButtonWakeWord button_wakeword = 9; }
+  oneof oneof_custom_eye_color { CustomEyeColor custom_eye_color = 3; }
+  oneof oneof_default_location { string default_location = 4; }
+  oneof oneof_dist_is_metric { bool dist_is_metric = 5; }
+  oneof oneof_locale { string locale = 6; }
+  oneof oneof_master_volume { Volume master_volume = 7; }
+  oneof oneof_temp_is_fahrenheit { bool temp_is_fahrenheit = 8; }
+  oneof oneof_time_zone { string time_zone = 9; }
+  oneof oneof_button_wakeword { ButtonWakeWord button_wakeword = 10; }
 }
 
 enum AccountSetting {

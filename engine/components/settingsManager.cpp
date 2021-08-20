@@ -36,6 +36,10 @@ namespace Vector {
 namespace {
   static const char* kConfigDefaultValueKey = "defaultValue";
   static const char* kConfigUpdateCloudOnChangeKey = "updateCloudOnChange";
+  static const char* kCustomEyeColorEnabledKey = "enabled";
+  static const char* kCustomEyeColorHueKey = "hue";
+  static const char* kCustomEyeColorSaturationKey = "saturation";
+
   const size_t kMaxTicksToClear = 3;
 }
 
@@ -105,10 +109,24 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
     if (!_currentSettings.isMember(it.name()))
     {
       const Json::Value& item = (*it);
-      _currentSettings[it.name()] = item[kConfigDefaultValueKey];
+      const Json::Value defaultValue = item[kConfigDefaultValueKey];
+
+      _currentSettings[it.name()] = defaultValue;
+
+      if (!defaultValue.isObject()) 
+      {
+        LOG_INFO("SettingsManager.InitDependent.AddDefaultItem", "Adding setting with key %s and default value %s",
+                  it.name().c_str(), defaultValue.asString().c_str());
+      }
+      else 
+      {
+        Json::StyledWriter writer;
+
+        LOG_INFO("SettingsManager.InitDependent.AddDefaultItem", "Adding setting with key %s and default value %s",
+                  it.name().c_str(), writer.write(defaultValue).c_str());
+      }
+
       settingsDirty = true;
-      LOG_INFO("SettingsManager.InitDependent.AddDefaultItem", "Adding setting with key %s and default value %s",
-               it.name().c_str(), item[kConfigDefaultValueKey].asString().c_str());
     }
   }
 
@@ -138,11 +156,18 @@ void SettingsManager::InitDependent(Robot* robot, const RobotCompMap& dependentC
   }
 
   // Register the actual setting application methods, for those settings that want to execute code when changed:
-  _settingSetters[external_interface::RobotSetting::master_volume] = { false, &SettingsManager::ValidateSettingMasterVolume, &SettingsManager::ApplySettingMasterVolume };
-  _settingSetters[external_interface::RobotSetting::eye_color]     = { true,  &SettingsManager::ValidateSettingEyeColor,     &SettingsManager::ApplySettingEyeColor     };
-  _settingSetters[external_interface::RobotSetting::locale]        = { false, &SettingsManager::ValidateSettingLocale,       &SettingsManager::ApplySettingLocale       };
-  _settingSetters[external_interface::RobotSetting::time_zone]     = { false, nullptr,                                       &SettingsManager::ApplySettingTimeZone     };
-  _settingSetters[external_interface::RobotSetting::default_location] = { false, &SettingsManager::ValidateSettingDefaultLocation, nullptr                              };
+  _settingSetters[external_interface::RobotSetting::master_volume]    
+    = { false, &SettingsManager::ValidateSettingMasterVolume,     &SettingsManager::ApplySettingMasterVolume };
+  _settingSetters[external_interface::RobotSetting::eye_color]        
+    = { true,  &SettingsManager::ValidateSettingEyeColor,         &SettingsManager::ApplySettingEyeColor     };
+  _settingSetters[external_interface::RobotSetting::custom_eye_color] 
+    = { true,  &SettingsManager::ValidateSettingEyeColor,         &SettingsManager::ApplySettingEyeColor     };
+  _settingSetters[external_interface::RobotSetting::locale]           
+    = { false, &SettingsManager::ValidateSettingLocale,           &SettingsManager::ApplySettingLocale       };
+  _settingSetters[external_interface::RobotSetting::time_zone]        
+    = { false, nullptr,                                           &SettingsManager::ApplySettingTimeZone     };
+  _settingSetters[external_interface::RobotSetting::default_location] 
+    = { false, &SettingsManager::ValidateSettingDefaultLocation,  nullptr                                    };
   _settingSetters[external_interface::RobotSetting::button_wakeword]
     = { false, &SettingsManager::ValidateSettingButtonWakeWord, &SettingsManager::ApplySettingButtonWakeWord };
 
@@ -418,30 +443,63 @@ bool SettingsManager::ApplySettingMasterVolume()
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::ValidateSettingEyeColor()
 {
-  static const std::string& key = RobotSetting_Name(external_interface::RobotSetting::eye_color);
-  const auto& value = _currentSettings[key].asUInt();
-  if (!external_interface::EyeColor_IsValid(value))
+  static const std::string& presetEyeColorKey = RobotSetting_Name(external_interface::RobotSetting::eye_color);
+  static const std::string& customEyeColorKey = RobotSetting_Name(external_interface::RobotSetting::custom_eye_color);
+  const Json::Value customEyeColor = _currentSettings[customEyeColorKey];
+  const auto& isUsingCustomColor = customEyeColor[kCustomEyeColorEnabledKey].asBool();
+
+  if (!isUsingCustomColor) 
   {
-    LOG_ERROR("SettingsManager.ApplySettingEyeColor.Invalid", "Invalid eye color value %i", value);
-    return false;
+    const auto& presetColor = _currentSettings[presetEyeColorKey].asUInt();
+    if (!external_interface::EyeColor_IsValid(presetColor))
+    {
+      LOG_ERROR("SettingsManager.ApplySettingEyeColor.Invalid", "Invalid eye color value %i", presetColor);
+      return false;
+    }
+  } 
+  else 
+  {
+    const std::string values[] = {kCustomEyeColorHueKey, kCustomEyeColorSaturationKey};
+    const int length = sizeof(values) / sizeof(values[0]);
+    for (int i = 0; i < length; i++ ) {
+      const auto& key = values[i];
+      const auto& value = customEyeColor[key].asFloat();
+      if (value > 1 || value < 0) 
+      {
+        LOG_ERROR("SettingsManager.ApplySettingEyeColor.Invalid", "Invalid custom %s value %f", key.c_str(), value);
+        return false;
+      }
+    }
   }
 
   return true;
 }
 
-
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 bool SettingsManager::ApplySettingEyeColor()
 {
   static const std::string& key = RobotSetting_Name(external_interface::RobotSetting::eye_color);
-  const auto& value = _currentSettings[key].asUInt();
-  const auto& eyeColorName = EyeColor_Name(static_cast<external_interface::EyeColor>(value));
-  LOG_INFO("SettingsManager.ApplySettingEyeColor.Apply", "Setting robot eye color to %s", eyeColorName.c_str());
+  static const std::string& customEyeColorKey = RobotSetting_Name(external_interface::RobotSetting::custom_eye_color);
+  const Json::Value customEyeColor = _currentSettings[customEyeColorKey];
+  const auto& isUsingCustomColor = customEyeColor[kCustomEyeColorEnabledKey].asBool();
 
-  const auto& config = _robot->GetContext()->GetDataLoader()->GetEyeColorConfig();
-  const auto& eyeColorData = config[eyeColorName];
-  const float hue = eyeColorData["Hue"].asFloat();
-  const float saturation = eyeColorData["Saturation"].asFloat();
+  float hue, saturation;
+  if (!isUsingCustomColor) 
+  {
+    const auto& value = _currentSettings[key].asUInt();
+    const auto& eyeColorName = EyeColor_Name(static_cast<external_interface::EyeColor>(value));
+    LOG_INFO("SettingsManager.ApplySettingEyeColor.Apply", "Setting robot eye color to %s", eyeColorName.c_str());
+
+    const auto& config = _robot->GetContext()->GetDataLoader()->GetEyeColorConfig();
+    const auto& eyeColorData = config[eyeColorName];
+    hue = eyeColorData["Hue"].asFloat();
+    saturation = eyeColorData["Saturation"].asFloat();
+  }
+  else 
+  {
+    hue = customEyeColor[kCustomEyeColorHueKey].asFloat();
+    saturation = customEyeColor[kCustomEyeColorSaturationKey].asFloat();
+  }
 
   _robot->SendRobotMessage<RobotInterface::SetFaceHue>(hue);
   _robot->SendRobotMessage<RobotInterface::SetFaceSaturation>(saturation);
@@ -749,8 +807,23 @@ void SettingsManager::DoJdocFormatMigration()
     return;
   }
 
-  // When we change 'format version' on this jdoc, migration
-  // to a newer format version is performed here
+  // performing migration to a newer format version
+  switch (curFormatVersion)
+  {
+    case 1:
+      LOG_ERROR("SettingsManager.DoJdocFormatMigration.Error",
+                "Jdoc format version is older than it is supposed to");
+      return;
+    case 2:
+      LOG_INFO("SettingsManager.DoJdocFormatMigration",
+                "No change required for migration to %llu format", curFormatVersion);
+      break;
+
+    default:
+      LOG_ERROR("SettingsManager.DoJdocFormatMigration.Error",
+                "Jdoc format version %llu is not known", curFormatVersion);
+      return;
+  }
 
   // Now update the format version of this jdoc to the current format version
   _jdocsManager->SetJdocFmtVersionToCurrent(jdocType);
