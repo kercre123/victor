@@ -209,17 +209,10 @@ void BehaviorKnowledgeGraphQuestion::BehaviorUpdate()
   if ( IsActivated() )
   {
     UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
-    UserIntentPtr intentDataPtr2 = uic.GetActiveUserIntent();
-
     UserIntentPtr intentDataPtr = uic.GetUserIntentIfActive(USER_INTENT(knowledge_response_bypass));
 
     // Enter if the a knowledge response was returned and activated
     if(intentDataPtr != nullptr) {
-      const UserIntent_KnowledgeResponse& intentResponse = intentDataPtr->intent.Get_knowledge_response();
-
-      unsigned char ch = (unsigned char)_dVars.state;
-
-
       if ( EState::WaitingToStream == _dVars.state ) {
         CancelDelegates( false );
         // This skips over the streaming because the results were alreday returned
