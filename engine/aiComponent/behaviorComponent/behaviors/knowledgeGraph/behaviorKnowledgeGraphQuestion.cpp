@@ -140,10 +140,20 @@ void BehaviorKnowledgeGraphQuestion::OnBehaviorActivated()
   const auto & bei = GetBEI();
   const auto & robotInfo = bei.GetRobotInfo();
   const auto & localeComponent = robotInfo.GetLocaleComponent();
-  const std::string & readyText = localeComponent.GetString(_iVars.readyStringID);
+  std::string readyText = localeComponent.GetString(_iVars.readyStringID);
+
+  // Remove ready for intent graph responses
+  UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+  UserIntentPtr intentDataPtr = uic.GetUserIntentIfActive(USER_INTENT(knowledge_response_bypass));
+  if(intentDataPtr != nullptr) {
+    readyText = "";
+  }
+
+  const std::string & readyTextAddr = readyText;
+
 
   // start generating our ready text; if we fail, then we'll simply exit the behavior, and cry :(
-  if ( _readyTTSWrapper.SetUtteranceText( readyText, {} ) )
+  if ( _readyTTSWrapper.SetUtteranceText( readyTextAddr, {} ) )
   {
     auto callback = [this]()
     {
@@ -159,7 +169,7 @@ void BehaviorKnowledgeGraphQuestion::OnBehaviorActivated()
   }
   else
   {
-    PRINT_NAMED_WARNING( "BehaviorKnowledgeGraphQuestion", "Failed to generate Ready TTS (%s)", readyText.c_str() );
+    PRINT_NAMED_WARNING( "BehaviorKnowledgeGraphQuestion", "Failed to generate Ready TTS (%s)", readyTextAddr.c_str() );
   }
 }
 
@@ -199,9 +209,25 @@ void BehaviorKnowledgeGraphQuestion::BehaviorUpdate()
   if ( IsActivated() )
   {
     UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+    UserIntentPtr intentDataPtr2 = uic.GetActiveUserIntent();
 
+    UserIntentPtr intentDataPtr = uic.GetUserIntentIfActive(USER_INTENT(knowledge_response_bypass));
+
+    // Enter if the a knowledge response was returned and activated
+    if(intentDataPtr != nullptr) {
+      const UserIntent_KnowledgeResponse& intentResponse = intentDataPtr->intent.Get_knowledge_response();
+
+      unsigned char ch = (unsigned char)_dVars.state;
+
+
+      if ( EState::WaitingToStream == _dVars.state ) {
+        CancelDelegates( false );
+        // This skips over the streaming because the results were alreday returned
+        OnStreamingComplete( true ) ;
+      }
+    }
     // at this point our get in animation is complete, so as soon as the audio is finished playing we can transition in
-    if ( EState::WaitingToStream == _dVars.state )
+    else if ( EState::WaitingToStream == _dVars.state )
     {
       // once we've finished speaking our ready text, we can start streaming
       // hopefully the ready text is already finished by the time we even get into this state
@@ -233,7 +259,7 @@ void BehaviorKnowledgeGraphQuestion::BehaviorUpdate()
       if ( IsResponsePending() || timeIsUp )
       {
         CancelDelegates( false );
-        OnStreamingComplete();
+        OnStreamingComplete( false );
       }
     }
     else if ( EState::Responding == _dVars.state )
@@ -263,7 +289,7 @@ void BehaviorKnowledgeGraphQuestion::BeginStreamingQuestion()
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::OnStreamingComplete()
+void BehaviorKnowledgeGraphQuestion::OnStreamingComplete(bool skipResponsePending)
 {
   // go into searching state until we can generate our response
   _dVars.state = EState::Searching;
@@ -271,9 +297,11 @@ void BehaviorKnowledgeGraphQuestion::OnStreamingComplete()
   PlayEarconEnd();
 
   // see if we got a response from knowledge graph
-  if ( IsResponsePending() )
-  {
-    // need to consume the response immediately or the system gets cranky
+  if (skipResponsePending) {
+    ConsumeIntentGraphResponse();
+  }
+  else if ( IsResponsePending()  ) {
+  // need to consume the response immediately or the system gets cranky
     ConsumeResponse();
   }
 
@@ -368,6 +396,22 @@ void BehaviorKnowledgeGraphQuestion::ConsumeResponse()
     }
     #endif
   }
+}
+
+// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+void BehaviorKnowledgeGraphQuestion::ConsumeIntentGraphResponse()
+{
+
+  // if we have a valid knowledge graph response intent, grab the response string from it
+  // if it's not the knowledge graph response, we simply return the empty string which will be handled appropriately
+  UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
+  UserIntentPtr intentDataPtr = uic.GetUserIntentIfActive(USER_INTENT(knowledge_response_bypass));
+  const UserIntent_KnowledgeResponse& intentResponse = intentDataPtr->intent.Get_knowledge_response();
+
+  _dVars.responseString = intentResponse.answer;
+
+  PRINT_DEBUG( "Intent Graph Question: %s", Util::HidePersonallyIdentifiableInfo( intentResponse.query_text.c_str() ) );
+  PRINT_DEBUG( "Intent Graph Response: %s", Util::HidePersonallyIdentifiableInfo( intentResponse.answer.c_str() ) );
 }
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

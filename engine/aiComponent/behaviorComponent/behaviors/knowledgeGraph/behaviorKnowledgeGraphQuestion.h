@@ -78,8 +78,12 @@ protected:
   // translate that response intent into and answer string and store it for later
   void ConsumeResponse();
 
+  // translate that response intent into an answer string and store it for later
+  // if it was a knowledge graph response
+  void ConsumeIntentGraphResponse();
+
   // we're done listening to the question
-  void OnStreamingComplete();
+  void OnStreamingComplete( bool );
   // we allow the response audio to be interrupted under certain conditions
   void OnResponseInterrupted();
 
