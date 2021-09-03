@@ -36,9 +36,6 @@ namespace Vector {
 namespace {
   static const char* kConfigDefaultValueKey = "defaultValue";
   static const char* kConfigUpdateCloudOnChangeKey = "updateCloudOnChange";
-  static const char* kCustomEyeColorEnabledKey = "enabled";
-  static const char* kCustomEyeColorHueKey = "hue";
-  static const char* kCustomEyeColorSaturationKey = "saturation";
 
   const size_t kMaxTicksToClear = 3;
 }

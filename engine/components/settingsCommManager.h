@@ -42,6 +42,11 @@ namespace external_interface {
   class UpdateSettingsRequest;
 }
 
+namespace {
+  static const char* kCustomEyeColorEnabledKey = "enabled";
+  static const char* kCustomEyeColorHueKey = "hue";
+  static const char* kCustomEyeColorSaturationKey = "saturation";
+}
 // callback signature for being notified of a volume change
 using OnVolumeChangedCallback = std::function<void()>;
 using SettingsReactorId = uint32_t;
