@@ -32,454 +32,491 @@
 #include "util/logging/logging.h"
 #include "clad/types/animationTrigger.h"
 
-#define PRINT_DEBUG( format, ... ) \
-  PRINT_CH_DEBUG( "KnowledgeGraph", "BehaviorKnowledgeGraphQuestion", format, ##__VA_ARGS__ )
+#define PRINT_DEBUG(format, ...) \
+  PRINT_CH_DEBUG("KnowledgeGraph", "BehaviorKnowledgeGraphQuestion", format, ##__VA_ARGS__)
 
-#define PRINT_INFO( format, ... ) \
-  PRINT_CH_INFO( "KnowledgeGraph", "BehaviorKnowledgeGraphQuestion", format, ##__VA_ARGS__ )
+#define PRINT_INFO(format, ...) \
+  PRINT_CH_INFO("KnowledgeGraph", "BehaviorKnowledgeGraphQuestion", format, ##__VA_ARGS__)
 
-
-namespace Anki {
-namespace Vector {
-
-namespace
+namespace Anki
 {
-  const char* kKey_Duration                       = "streamingTimeout";
-  const char* kKey_ReadyStringID                  = "readyStringID";
-  const char* kKey_EarConEnd                      = "earConAudioEventEnd";
-
-  const double kDefaultDuration                   = 10.0;
-  const char * kDefaultReadyStringID              = "BehaviorKnowledgeGraphQuestion.Ready";
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorKnowledgeGraphQuestion::InstanceConfig::InstanceConfig() :
-  streamingDuration( kDefaultDuration ),
-  earConEnd( AudioMetaData::GameEvent::GenericEvent::Invalid )
-{
-
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorKnowledgeGraphQuestion::DynamicVariables::DynamicVariables() :
-  state( EState::GettingIn ),
-  streamingBeginTime( 0.0 ),
-  ttsGenerationStatus( EGenerationStatus::None ),
-  wasPickedUp( false )
-{
-
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-BehaviorKnowledgeGraphQuestion::BehaviorKnowledgeGraphQuestion( const Json::Value& config ) :
-  ICozmoBehavior( config ),
-  _readyTTSWrapper( UtteranceTriggerType::Immediate )
-{
-  JsonTools::GetValueOptional( config, kKey_Duration, _iVars.streamingDuration );
-  _iVars.readyStringID = JsonTools::ParseString( config, kKey_ReadyStringID, kDefaultReadyStringID );
-
-  std::string earConString;
-  if ( JsonTools::GetValueOptional( config, kKey_EarConEnd, earConString ) )
+  namespace Vector
   {
-    _iVars.earConEnd = AudioMetaData::GameEvent::GenericEventFromString( earConString );
-  }
 
-  SubscribeToTags({{
-    ExternalInterface::MessageEngineToGameTag::TouchButtonEvent,
-    ExternalInterface::MessageEngineToGameTag::RobotFallingEvent, // do we need this?
-  }});
-}
-
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::GetBehaviorJsonKeys( std::set<const char*>& expectedKeys ) const
-{
-  expectedKeys.insert( kKey_Duration );
-  expectedKeys.insert( kKey_ReadyStringID );
-  expectedKeys.insert( kKey_EarConEnd );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::InitBehavior()
-{
-  const BehaviorContainer& container = GetBEI().GetBehaviorContainer();
-  container.FindBehaviorByIDAndDowncast<BehaviorTextToSpeechLoop>( BEHAVIOR_ID(KnowledgeGraphTTS),
-                                                                   BEHAVIOR_CLASS(TextToSpeechLoop),
-                                                                   _iVars.ttsBehavior );
-
-  _readyTTSWrapper.Initialize( GetBEI().GetTextToSpeechCoordinator() );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::GetAllDelegates( std::set<IBehavior*>& delegates ) const
-{
-  delegates.insert( _iVars.ttsBehavior.get() );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::GetBehaviorOperationModifiers( BehaviorOperationModifiers& modifiers ) const
-{
-  modifiers.wantsToBeActivatedWhenCarryingObject  = true;
-  modifiers.wantsToBeActivatedWhenOnCharger       = true;
-  modifiers.wantsToBeActivatedWhenOffTreads       = true;
-  modifiers.behaviorAlwaysDelegates               = true;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorKnowledgeGraphQuestion::WantsToBeActivatedBehavior() const
-{
-  return true;
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::OnBehaviorActivated()
-{
-  _dVars = DynamicVariables();
-
-  // Get ready text for current locale
-  const auto & bei = GetBEI();
-  const auto & robotInfo = bei.GetRobotInfo();
-  const auto & localeComponent = robotInfo.GetLocaleComponent();
-  const std::string & readyText = localeComponent.GetString(_iVars.readyStringID);
-
-  // start generating our ready text; if we fail, then we'll simply exit the behavior, and cry :(
-  if ( _readyTTSWrapper.SetUtteranceText( readyText, {} ) )
-  {
-    auto callback = [this]()
+    namespace
     {
-      // after our getin animation, we can prompt the user to speak
-      _dVars.state = EState::WaitingToStream;
+      const char *kKey_Duration = "streamingTimeout";
+      const char *kKey_ReadyStringID = "readyStringID";
+      const char *kKey_EarConEnd = "earConAudioEventEnd";
 
-      // Need to loop this forever and we'll just cancel it on our own after a timeout
-      DelegateIfInControl( new ReselectingLoopAnimationAction( AnimationTrigger::KnowledgeGraphListening ) );
-    };
-
-    // open up streaming after we play our get-in to avoid motor noise
-    DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphGetIn ), callback );
-  }
-  else
-  {
-    PRINT_NAMED_WARNING( "BehaviorKnowledgeGraphQuestion", "Failed to generate Ready TTS (%s)", readyText.c_str() );
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::OnBehaviorDeactivated()
-{
-  // make sure we cancel the ready utterance if we bail during it playing
-  _readyTTSWrapper.CancelUtterance();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::HandleWhileActivated( const EngineToGameEvent& event )
-{
-  using namespace ExternalInterface;
-
-  const MessageEngineToGameTag tag = event.GetData().GetTag();
-  switch ( tag )
-  {
-    case MessageEngineToGameTag::TouchButtonEvent:
-    case MessageEngineToGameTag::RobotFallingEvent:
-    {
-      if ( EState::Responding == _dVars.state )
-      {
-        OnResponseInterrupted();
-      }
-      break;
+      const double kDefaultDuration = 10.0;
+      const char *kDefaultReadyStringID = "BehaviorKnowledgeGraphQuestion.Ready";
     }
 
-    default:
-      break;
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::BehaviorUpdate()
-{
-  if ( IsActivated() )
-  {
-    UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
-
-    // at this point our get in animation is complete, so as soon as the audio is finished playing we can transition in
-    if ( EState::WaitingToStream == _dVars.state )
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    BehaviorKnowledgeGraphQuestion::InstanceConfig::InstanceConfig() : streamingDuration(kDefaultDuration),
+                                                                       earConEnd(AudioMetaData::GameEvent::GenericEvent::Invalid)
     {
-      // once we've finished speaking our ready text, we can start streaming
-      // hopefully the ready text is already finished by the time we even get into this state
-      if ( _readyTTSWrapper.IsFinished() )
-      {
-        BeginStreamingQuestion();
-      }
-      else if ( !_readyTTSWrapper.IsValid() )
-      {
-        PRINT_NAMED_WARNING( "BehaviorKnowledgeGraphQuestion", "Ready prompt TTS failed to play, not cool man" );
-
-        // we need to bail, luckily TransitionToNoResponse() handles this exact transition for us
-        CancelDelegates( false );
-        TransitionToNoResponse();
-      }
     }
-    // if we're recording the user's question, we need to be listening for a response
-    else if ( EState::Listening == _dVars.state )
-    {
-      // if we've gotten a response from knowledge graph, transition into the response state
-      const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
-      if(FLT_NEAR(_dVars.streamingBeginTime, 0.f) &&
-         uic.IsCloudStreamOpen()){
-        _dVars.streamingBeginTime = currentTime;
-      }
 
-      const bool timeIsUp = ( !FLT_NEAR( _dVars.streamingBeginTime, 0.f ) ) &&
-                              ( currentTime >= ( _dVars.streamingBeginTime + _iVars.streamingDuration ) );
-      if ( IsResponsePending() || timeIsUp )
-      {
-        CancelDelegates( false );
-        OnStreamingComplete();
-      }
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    BehaviorKnowledgeGraphQuestion::DynamicVariables::DynamicVariables() : state(EState::GettingIn),
+                                                                           streamingBeginTime(0.0),
+                                                                           ttsGenerationStatus(EGenerationStatus::None),
+                                                                           wasPickedUp(false)
+    {
     }
-    else if ( EState::Responding == _dVars.state )
-    {
-      const bool isPickedUp = GetBEI().GetRobotInfo().IsPickedUp();
 
-      // if we're playing our response, allow victor to be interrupted
-      // require victor to be on the ground prior to being picked up, else ignore it if he's already in the air
-      if ( !_dVars.wasPickedUp && isPickedUp )
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    BehaviorKnowledgeGraphQuestion::BehaviorKnowledgeGraphQuestion(const Json::Value &config) : ICozmoBehavior(config),
+                                                                                                _readyTTSWrapper(UtteranceTriggerType::Immediate)
+    {
+      JsonTools::GetValueOptional(config, kKey_Duration, _iVars.streamingDuration);
+      _iVars.readyStringID = JsonTools::ParseString(config, kKey_ReadyStringID, kDefaultReadyStringID);
+
+      std::string earConString;
+      if (JsonTools::GetValueOptional(config, kKey_EarConEnd, earConString))
       {
-        OnResponseInterrupted();
+        _iVars.earConEnd = AudioMetaData::GameEvent::GenericEventFromString(earConString);
       }
 
-      _dVars.wasPickedUp = isPickedUp;
+      SubscribeToTags({{
+          ExternalInterface::MessageEngineToGameTag::TouchButtonEvent,
+          ExternalInterface::MessageEngineToGameTag::RobotFallingEvent, // do we need this?
+      }});
     }
-  }
-}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::BeginStreamingQuestion()
-{
-  PRINT_DEBUG( "Knowledge Graph streaming begun ..." );
-
-  _dVars.state = EState::Listening;
-
-  GetBehaviorComp<UserIntentComponent>().StartWakeWordlessStreaming( CloudMic::StreamType::KnowledgeGraph );
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::OnStreamingComplete()
-{
-  // go into searching state until we can generate our response
-  _dVars.state = EState::Searching;
-
-  PlayEarconEnd();
-
-  // see if we got a response from knowledge graph
-  if ( IsResponsePending() )
-  {
-    // need to consume the response immediately or the system gets cranky
-    ConsumeResponse();
-  }
-
-  // did we get a response from knowledge graph?
-  if ( !_dVars.responseString.empty() )
-  {
-    PRINT_INFO( "Streaming is complete ... valid response received" );
-
-    // start generating the response now so that we can minimize the wait time
-    auto callback = [this]( bool success )
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::GetBehaviorJsonKeys(std::set<const char *> &expectedKeys) const
     {
-      if ( success )
+      expectedKeys.insert(kKey_Duration);
+      expectedKeys.insert(kKey_ReadyStringID);
+      expectedKeys.insert(kKey_EarConEnd);
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::InitBehavior()
+    {
+      const BehaviorContainer &container = GetBEI().GetBehaviorContainer();
+      container.FindBehaviorByIDAndDowncast<BehaviorTextToSpeechLoop>(BEHAVIOR_ID(KnowledgeGraphTTS),
+                                                                      BEHAVIOR_CLASS(TextToSpeechLoop),
+                                                                      _iVars.ttsBehavior);
+
+      _readyTTSWrapper.Initialize(GetBEI().GetTextToSpeechCoordinator());
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::GetAllDelegates(std::set<IBehavior *> &delegates) const
+    {
+      delegates.insert(_iVars.ttsBehavior.get());
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::GetBehaviorOperationModifiers(BehaviorOperationModifiers &modifiers) const
+    {
+      modifiers.wantsToBeActivatedWhenCarryingObject = true;
+      modifiers.wantsToBeActivatedWhenOnCharger = true;
+      modifiers.wantsToBeActivatedWhenOffTreads = true;
+      modifiers.behaviorAlwaysDelegates = true;
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    bool BehaviorKnowledgeGraphQuestion::WantsToBeActivatedBehavior() const
+    {
+      return true;
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::OnBehaviorActivated()
+    {
+      _dVars = DynamicVariables();
+
+      // Get ready text for current locale
+      const auto &bei = GetBEI();
+      const auto &robotInfo = bei.GetRobotInfo();
+      const auto &localeComponent = robotInfo.GetLocaleComponent();
+      std::string readyText = localeComponent.GetString(_iVars.readyStringID);
+
+      // Remove ready for intent graph responses
+      UserIntentComponent &uic = GetBehaviorComp<UserIntentComponent>();
+      UserIntentPtr intentDataPtr = uic.GetUserIntentIfActive(USER_INTENT(knowledge_response_bypass));
+      if (intentDataPtr != nullptr)
       {
-        PRINT_INFO( "TTS generation is complete" );
-        _dVars.ttsGenerationStatus = EGenerationStatus::Success;
+        readyText = "";
+      }
+
+      const std::string &readyTextAddr = readyText;
+
+      // start generating our ready text; if we fail, then we'll simply exit the behavior, and cry :(
+      if (_readyTTSWrapper.SetUtteranceText(readyTextAddr, {}))
+      {
+        auto callback = [this]()
+        {
+          // after our getin animation, we can prompt the user to speak
+          _dVars.state = EState::WaitingToStream;
+
+          // Need to loop this forever and we'll just cancel it on our own after a timeout
+          DelegateIfInControl(new ReselectingLoopAnimationAction(AnimationTrigger::KnowledgeGraphListening));
+        };
+
+        // open up streaming after we play our get-in to avoid motor noise
+        DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::KnowledgeGraphGetIn), callback);
       }
       else
       {
-        PRINT_INFO( "TTS generation FAILED" );
-        _dVars.ttsGenerationStatus = EGenerationStatus::Fail;
+        PRINT_NAMED_WARNING("BehaviorKnowledgeGraphQuestion", "Failed to generate Ready TTS (%s)", readyTextAddr.c_str());
       }
-    };
-
-    _iVars.ttsBehavior->SetTextToSay( _dVars.responseString, callback );
-
-    // let's transition into our "searching" loop
-    // since we always want to loop at least once, play the get in + loop anim before we do any logic for the tts
-    CompoundActionSequential* messageAnimation = new CompoundActionSequential();
-    messageAnimation->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearchingGetIn ), true );
-    messageAnimation->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearching ), true );
-
-    DelegateIfInControl( messageAnimation,
-                         &BehaviorKnowledgeGraphQuestion::TransitionToSearchingLoop );
-  }
-  else
-  {
-    PRINT_INFO( "Streaming is complete ... NO response received" );
-
-    // if not, let the user know we failed ...
-    TransitionToNoResponse();
-  }
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-bool BehaviorKnowledgeGraphQuestion::IsResponsePending() const
-{
-  const UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
-  return uic.IsAnyUserIntentPending();
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::ConsumeResponse()
-{
-  PRINT_DEBUG( "Checking for response" );
-
-  // if we have a valid knowledge graph response intent, grab the response string from it
-  // if it's not the knowledge graph response, we simply return the empty string which will be handled appropriately
-  UserIntentComponent& uic = GetBehaviorComp<UserIntentComponent>();
-
-  UserIntent intent;
-  if ( uic.IsUserIntentPending( USER_INTENT(knowledge_response), intent ) )
-  {
-    uic.DropUserIntent( intent.GetTag() );
-
-    // grab the response string
-    const UserIntent_KnowledgeResponse& intentResponse = intent.Get_knowledge_response();
-    _dVars.responseString = intentResponse.answer;
-
-    PRINT_DEBUG( "Knowledge Graph Question: %s", Util::HidePersonallyIdentifiableInfo( intentResponse.query_text.c_str() ) );
-    PRINT_DEBUG( "Knowledge Graph Response: %s", Util::HidePersonallyIdentifiableInfo( intentResponse.answer.c_str() ) );
-  }
-  else if ( uic.IsUserIntentPending( USER_INTENT(knowledge_unknown) ) )
-  {
-    // don't need to do anything other than clear the response
-    uic.DropUserIntent( USER_INTENT(knowledge_unknown) );
-  }
-  else if ( uic.IsUserIntentPending( USER_INTENT(unmatched_intent) ) )
-  {
-    // this shouldn't really happen, but handle it safely regardless
-    uic.DropUserIntent( USER_INTENT(unmatched_intent) );
-    PRINT_NAMED_WARNING( "BehaviorKnowledgeGraphQuestion", "unmatched_intent returned as response from knowledge graph" );
-  }
-  else
-  {
-    #if ALLOW_DEBUG_LOGGING
-    {
-      // this really shouldn't happen, something went wrong
-      // this will be handled fine, but we should let dev know about it
-      const UserIntentData* intentData = uic.GetPendingUserIntent();
-      const std::string intentString = UserIntentTagToString( intentData ? intentData->intent.GetTag() : UserIntentTag::INVALID );
-      PRINT_NAMED_ERROR( "BehaviorKnowledgeGraphQuestion", "Invalid intent returned from Knowledge Graph: %s", intentString.c_str() );
     }
-    #endif
-  }
-}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::BeginResponseTTS()
-{
-  PRINT_DEBUG( "Starting TTS behavior ..." );
-
-  // delegate to our tts behavior
-  if ( _iVars.ttsBehavior->WantsToBeActivated() )
-  {
-    auto callback = [this]()
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::OnBehaviorDeactivated()
     {
-      // don't play the success anim if we've been interrupted
-      if ( EState::Interrupted != _dVars.state )
+      // make sure we cancel the ready utterance if we bail during it playing
+      _readyTTSWrapper.CancelUtterance();
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::HandleWhileActivated(const EngineToGameEvent &event)
+    {
+      using namespace ExternalInterface;
+
+      const MessageEngineToGameTag tag = event.GetData().GetTag();
+      switch (tag)
       {
-        // play our "woot woot" animation
-        DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSuccessReaction ) );
+      case MessageEngineToGameTag::TouchButtonEvent:
+      case MessageEngineToGameTag::RobotFallingEvent:
+      {
+        if (EState::Responding == _dVars.state)
+        {
+          OnResponseInterrupted();
+        }
+        break;
       }
-    };
 
-    DelegateIfInControl( _iVars.ttsBehavior.get(), callback );
-  }
-
-  // ... annnnnd we're done
-}
-
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::TransitionToSearchingLoop()
-{
-  // keep looping back here until the tts audio has been generated ...
-  if ( EGenerationStatus::None != _dVars.ttsGenerationStatus )
-  {
-    if ( EGenerationStatus::Success == _dVars.ttsGenerationStatus )
-    {
-      // TTS generation is done, so let's transition out of the searching animation and into the hearts all over the world!!!
-      DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearchingGetOutSuccess ),
-                           &BehaviorKnowledgeGraphQuestion::TransitionToBeginResponse );
+      default:
+        break;
+      }
     }
-    else
-    {
-      // we failed to generate the tts, but since we've already looped our searching anim, we just need to get out now
-      CompoundActionSequential* messageAnimation = new CompoundActionSequential();
-      messageAnimation->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearchingFail ), true );
-      messageAnimation->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearchingFailGetOut ), true );
 
-      DelegateIfInControl( messageAnimation );
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::BehaviorUpdate()
+    {
+      if (IsActivated())
+      {
+        UserIntentComponent &uic = GetBehaviorComp<UserIntentComponent>();
+        UserIntentPtr intentDataPtr = uic.GetUserIntentIfActive(USER_INTENT(knowledge_response_bypass));
+
+        // Enter if the a knowledge response was returned and activated
+        if (intentDataPtr != nullptr)
+        {
+          if (EState::WaitingToStream == _dVars.state)
+          {
+            CancelDelegates(false);
+            // This skips over the streaming because the results were alreday returned
+            OnStreamingComplete(true);
+          }
+        }
+        // at this point our get in animation is complete, so as soon as the audio is finished playing we can transition in
+        else if (EState::WaitingToStream == _dVars.state)
+        {
+          // once we've finished speaking our ready text, we can start streaming
+          // hopefully the ready text is already finished by the time we even get into this state
+          if (_readyTTSWrapper.IsFinished())
+          {
+            BeginStreamingQuestion();
+          }
+          else if (!_readyTTSWrapper.IsValid())
+          {
+            PRINT_NAMED_WARNING("BehaviorKnowledgeGraphQuestion", "Ready prompt TTS failed to play, not cool man");
+
+            // we need to bail, luckily TransitionToNoResponse() handles this exact transition for us
+            CancelDelegates(false);
+            TransitionToNoResponse();
+          }
+        }
+        // if we're recording the user's question, we need to be listening for a response
+        else if (EState::Listening == _dVars.state)
+        {
+          // if we've gotten a response from knowledge graph, transition into the response state
+          const double currentTime = BaseStationTimer::getInstance()->GetCurrentTimeInSecondsDouble();
+          if (FLT_NEAR(_dVars.streamingBeginTime, 0.f) &&
+              uic.IsCloudStreamOpen())
+          {
+            _dVars.streamingBeginTime = currentTime;
+          }
+
+          const bool timeIsUp = (!FLT_NEAR(_dVars.streamingBeginTime, 0.f)) &&
+                                (currentTime >= (_dVars.streamingBeginTime + _iVars.streamingDuration));
+          if (IsResponsePending() || timeIsUp)
+          {
+            CancelDelegates(false);
+            OnStreamingComplete(false);
+          }
+        }
+        else if (EState::Responding == _dVars.state)
+        {
+          const bool isPickedUp = GetBEI().GetRobotInfo().IsPickedUp();
+
+          // if we're playing our response, allow victor to be interrupted
+          // require victor to be on the ground prior to being picked up, else ignore it if he's already in the air
+          if (!_dVars.wasPickedUp && isPickedUp)
+          {
+            OnResponseInterrupted();
+          }
+
+          _dVars.wasPickedUp = isPickedUp;
+        }
+      }
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::BeginStreamingQuestion()
+    {
+      PRINT_DEBUG("Knowledge Graph streaming begun ...");
+
+      _dVars.state = EState::Listening;
+
+      GetBehaviorComp<UserIntentComponent>().StartWakeWordlessStreaming(CloudMic::StreamType::KnowledgeGraph);
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::OnStreamingComplete(bool skipResponsePending)
+    {
+      // go into searching state until we can generate our response
+      _dVars.state = EState::Searching;
+
+      PlayEarconEnd();
+
+      // see if we got a response from knowledge graph
+      if (skipResponsePending)
+      {
+        ConsumeIntentGraphResponse();
+      }
+      else if (IsResponsePending())
+      {
+        // need to consume the response immediately or the system gets cranky
+        ConsumeResponse();
+      }
+
+      // did we get a response from knowledge graph?
+      if (!_dVars.responseString.empty())
+      {
+        PRINT_INFO("Streaming is complete ... valid response received");
+
+        // start generating the response now so that we can minimize the wait time
+        auto callback = [this](bool success)
+        {
+          if (success)
+          {
+            PRINT_INFO("TTS generation is complete");
+            _dVars.ttsGenerationStatus = EGenerationStatus::Success;
+          }
+          else
+          {
+            PRINT_INFO("TTS generation FAILED");
+            _dVars.ttsGenerationStatus = EGenerationStatus::Fail;
+          }
+        };
+
+        _iVars.ttsBehavior->SetTextToSay(_dVars.responseString, callback);
+
+        // let's transition into our "searching" loop
+        // since we always want to loop at least once, play the get in + loop anim before we do any logic for the tts
+        CompoundActionSequential *messageAnimation = new CompoundActionSequential();
+        messageAnimation->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::KnowledgeGraphSearchingGetIn), true);
+        messageAnimation->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::KnowledgeGraphSearching), true);
+
+        DelegateIfInControl(messageAnimation,
+                            &BehaviorKnowledgeGraphQuestion::TransitionToSearchingLoop);
+      }
+      else
+      {
+        PRINT_INFO("Streaming is complete ... NO response received");
+
+        // if not, let the user know we failed ...
+        TransitionToNoResponse();
+      }
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    bool BehaviorKnowledgeGraphQuestion::IsResponsePending() const
+    {
+      const UserIntentComponent &uic = GetBehaviorComp<UserIntentComponent>();
+      return uic.IsAnyUserIntentPending();
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::ConsumeResponse()
+    {
+      PRINT_DEBUG("Checking for response");
+
+      // if we have a valid knowledge graph response intent, grab the response string from it
+      // if it's not the knowledge graph response, we simply return the empty string which will be handled appropriately
+      UserIntentComponent &uic = GetBehaviorComp<UserIntentComponent>();
+
+      UserIntent intent;
+      if (uic.IsUserIntentPending(USER_INTENT(knowledge_response), intent))
+      {
+        uic.DropUserIntent(intent.GetTag());
+
+        // grab the response string
+        const UserIntent_KnowledgeResponse &intentResponse = intent.Get_knowledge_response();
+        _dVars.responseString = intentResponse.answer;
+
+        PRINT_DEBUG("Knowledge Graph Question: %s", Util::HidePersonallyIdentifiableInfo(intentResponse.query_text.c_str()));
+        PRINT_DEBUG("Knowledge Graph Response: %s", Util::HidePersonallyIdentifiableInfo(intentResponse.answer.c_str()));
+      }
+      else if (uic.IsUserIntentPending(USER_INTENT(knowledge_unknown)))
+      {
+        // don't need to do anything other than clear the response
+        uic.DropUserIntent(USER_INTENT(knowledge_unknown));
+      }
+      else if (uic.IsUserIntentPending(USER_INTENT(unmatched_intent)))
+      {
+        // this shouldn't really happen, but handle it safely regardless
+        uic.DropUserIntent(USER_INTENT(unmatched_intent));
+        PRINT_NAMED_WARNING("BehaviorKnowledgeGraphQuestion", "unmatched_intent returned as response from knowledge graph");
+      }
+      else
+      {
+#if ALLOW_DEBUG_LOGGING
+        {
+          // this really shouldn't happen, something went wrong
+          // this will be handled fine, but we should let dev know about it
+          const UserIntentData *intentData = uic.GetPendingUserIntent();
+          const std::string intentString = UserIntentTagToString(intentData ? intentData->intent.GetTag() : UserIntentTag::INVALID);
+          PRINT_NAMED_ERROR("BehaviorKnowledgeGraphQuestion", "Invalid intent returned from Knowledge Graph: %s", intentString.c_str());
+        }
+#endif
+      }
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::ConsumeIntentGraphResponse()
+    {
+
+      // if we have a valid knowledge graph response intent, grab the response string from it
+      // if it's not the knowledge graph response, we simply return the empty string which will be handled appropriately
+      UserIntentComponent &uic = GetBehaviorComp<UserIntentComponent>();
+      UserIntentPtr intentDataPtr = uic.GetUserIntentIfActive(USER_INTENT(knowledge_response_bypass));
+      const UserIntent_KnowledgeResponse &intentResponse = intentDataPtr->intent.Get_knowledge_response();
+
+      _dVars.responseString = intentResponse.answer;
+
+      PRINT_DEBUG("Intent Graph Question: %s", Util::HidePersonallyIdentifiableInfo(intentResponse.query_text.c_str()));
+      PRINT_DEBUG("Intent Graph Response: %s", Util::HidePersonallyIdentifiableInfo(intentResponse.answer.c_str()));
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::BeginResponseTTS()
+    {
+      PRINT_DEBUG("Starting TTS behavior ...");
+
+      // delegate to our tts behavior
+      if (_iVars.ttsBehavior->WantsToBeActivated())
+      {
+        auto callback = [this]()
+        {
+          // don't play the success anim if we've been interrupted
+          if (EState::Interrupted != _dVars.state)
+          {
+            // play our "woot woot" animation
+            DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::KnowledgeGraphSuccessReaction));
+          }
+        };
+
+        DelegateIfInControl(_iVars.ttsBehavior.get(), callback);
+      }
 
       // ... annnnnd we're done
     }
-  }
-  else
-  {
-    DelegateIfInControl( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearching ),
-                         &BehaviorKnowledgeGraphQuestion::TransitionToSearchingLoop );
-  }
-}
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::TransitionToBeginResponse()
-{
-  _dVars.state = EState::Responding;
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::TransitionToSearchingLoop()
+    {
+      // keep looping back here until the tts audio has been generated ...
+      if (EGenerationStatus::None != _dVars.ttsGenerationStatus)
+      {
+        if (EGenerationStatus::Success == _dVars.ttsGenerationStatus)
+        {
+          // TTS generation is done, so let's transition out of the searching animation and into the hearts all over the world!!!
+          DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::KnowledgeGraphSearchingGetOutSuccess),
+                              &BehaviorKnowledgeGraphQuestion::TransitionToBeginResponse);
+        }
+        else
+        {
+          // we failed to generate the tts, but since we've already looped our searching anim, we just need to get out now
+          CompoundActionSequential *messageAnimation = new CompoundActionSequential();
+          messageAnimation->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::KnowledgeGraphSearchingFail), true);
+          messageAnimation->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::KnowledgeGraphSearchingFailGetOut), true);
 
-  DEV_ASSERT( !_dVars.responseString.empty(), "Responding to knowledge graph request but no response string exists" );
+          DelegateIfInControl(messageAnimation);
 
-  _dVars.wasPickedUp = GetBEI().GetRobotInfo().IsPickedUp();
+          // ... annnnnd we're done
+        }
+      }
+      else
+      {
+        DelegateIfInControl(new TriggerLiftSafeAnimationAction(AnimationTrigger::KnowledgeGraphSearching),
+                            &BehaviorKnowledgeGraphQuestion::TransitionToSearchingLoop);
+      }
+    }
 
-  // nothing to do but speak the response
-  BeginResponseTTS();
-}
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::TransitionToBeginResponse()
+    {
+      _dVars.state = EState::Responding;
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::TransitionToNoResponse()
-{
-  _dVars.state = EState::NoResponse;
+      DEV_ASSERT(!_dVars.responseString.empty(), "Responding to knowledge graph request but no response string exists");
 
-  // our get-out from listening is simply a series of animations
-  CompoundActionSequential* messageAnimation = new CompoundActionSequential();
-  messageAnimation->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearchingGetIn ), true );
-  messageAnimation->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearching ), true );
-  messageAnimation->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearchingFail ), true );
-  messageAnimation->AddAction( new TriggerLiftSafeAnimationAction( AnimationTrigger::KnowledgeGraphSearchingFailGetOut ), true );
+      _dVars.wasPickedUp = GetBEI().GetRobotInfo().IsPickedUp();
 
-  DelegateIfInControl( messageAnimation );
+      // nothing to do but speak the response
+      BeginResponseTTS();
+    }
 
-  // ... annnnnd we're done
-}
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::TransitionToNoResponse()
+    {
+      _dVars.state = EState::NoResponse;
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::OnResponseInterrupted()
-{
-  DEV_ASSERT( EState::Responding == _dVars.state, "Should only allow interruptions during response state" );
-  PRINT_INFO( "Interruption event received, cancelling TTS" );
+      // our get-out from listening is simply a series of animations
+      CompoundActionSequential *messageAnimation = new CompoundActionSequential();
+      messageAnimation->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::KnowledgeGraphSearchingGetIn), true);
+      messageAnimation->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::KnowledgeGraphSearching), true);
+      messageAnimation->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::KnowledgeGraphSearchingFail), true);
+      messageAnimation->AddAction(new TriggerLiftSafeAnimationAction(AnimationTrigger::KnowledgeGraphSearchingFailGetOut), true);
 
-  _dVars.state = EState::Interrupted;
-  if ( IsControlDelegated() && _iVars.ttsBehavior.get()->IsActivated() )
-  {
-    _iVars.ttsBehavior.get()->Interrupt( false );
-  }
-}
+      DelegateIfInControl(messageAnimation);
 
-// - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-void BehaviorKnowledgeGraphQuestion::PlayEarconEnd()
-{
-  using namespace AudioMetaData::GameEvent;
-  BehaviorExternalInterface& bei = GetBEI();
+      // ... annnnnd we're done
+    }
 
-  if ( GenericEvent::Invalid != _iVars.earConEnd )
-  {
-    // Play earcon end audio
-    bei.GetRobotAudioClient().PostEvent( _iVars.earConEnd, AudioMetaData::GameObjectType::Behavior );
-  }
-}
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::OnResponseInterrupted()
+    {
+      DEV_ASSERT(EState::Responding == _dVars.state, "Should only allow interruptions during response state");
+      PRINT_INFO("Interruption event received, cancelling TTS");
 
-} // namespace Vector
+      _dVars.state = EState::Interrupted;
+      if (IsControlDelegated() && _iVars.ttsBehavior.get()->IsActivated())
+      {
+        _iVars.ttsBehavior.get()->Interrupt(false);
+      }
+    }
+
+    // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+    void BehaviorKnowledgeGraphQuestion::PlayEarconEnd()
+    {
+      using namespace AudioMetaData::GameEvent;
+      BehaviorExternalInterface &bei = GetBEI();
+
+      if (GenericEvent::Invalid != _iVars.earConEnd)
+      {
+        // Play earcon end audio
+        bei.GetRobotAudioClient().PostEvent(_iVars.earConEnd, AudioMetaData::GameObjectType::Behavior);
+      }
+    }
+
+  } // namespace Vector
 } // namespace Anki

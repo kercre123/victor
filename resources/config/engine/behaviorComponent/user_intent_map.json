@@ -220,6 +220,13 @@
       "feature_gate": "KnowledgeGraph"
     },
     {
+      "user_intent": "knowledge_response_bypass",
+      "cloud_intent": "intent_knowledge_response_extend_bypass",
+      "app_intent": "knowledge_response_bypass",
+      "test_parsing": false,
+      "feature_gate": "KnowledgeGraph"
+    },    
+    {
       "user_intent": "knowledge_unknown",
       "cloud_intent": "intent_knowledge_no_response",
       "app_intent": "knowledge_unknown",
