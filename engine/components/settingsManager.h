@@ -61,6 +61,10 @@ public:
                        const bool updateSettingsJdoc,
                        bool& ignoredDueToNoChange);
 
+  bool SetRobotEyeColorSetting(const Json::Value& valueJson,
+                              const bool updateSettingsJdoc,
+                              bool& ignoredDueToNoChange);
+                             
   using SettingsCallbackOnSetFunc = void (void);
   Signal::SmartHandle RegisterSettingsCallbackOnSet(const external_interface::RobotSetting key, const std::function<SettingsCallbackOnSetFunc>& cbFun);
 

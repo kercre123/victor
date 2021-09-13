@@ -265,6 +265,34 @@ bool SettingsManager::SetRobotSetting(const external_interface::RobotSetting rob
   return success;
 }
 
+bool SettingsManager::SetRobotEyeColorSetting(const Json::Value& valueJson,
+                                      const bool updateSettingsJdoc,
+                                      bool& ignoredDueToNoChange)
+{
+  const std::string key = RobotSetting_Name(external_interface::RobotSetting::eye_color);
+  static const std::string& customEyeColorKey = RobotSetting_Name(external_interface::RobotSetting::custom_eye_color);
+  ignoredDueToNoChange = false;
+
+  const Json::Value prevValue = _currentSettings[key];
+  if (prevValue == valueJson)
+  {
+    // If the value is not actually changing, don't do anything.
+    // Currently (8/22/2018) the app sends the UpdateSettings request with all robot
+    // settings in it, whether they've changed or not.  This is until they get some
+    // proto code generation issue worked on.  In the meantime, this helps because
+    // otherwise the application methods all get called; one bad effect is that if
+    // the user changes ANY setting, they always get the 'robot eye color change'
+    // behavior.
+    ignoredDueToNoChange = true;
+    return false;
+  }
+
+  Json::Value customEyeColor = _currentSettings[customEyeColorKey];
+  customEyeColor[kCustomEyeColorEnabledKey] = false;
+  _currentSettings[customEyeColorKey] = customEyeColor;
+
+  return SetRobotSetting(external_interface::RobotSetting::eye_color, valueJson, updateSettingsJdoc, ignoredDueToNoChange);
+}
 
 // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 Signal::SmartHandle SettingsManager::RegisterSettingsCallbackOnSet(const external_interface::RobotSetting key, const std::function<SettingsCallbackOnSetFunc>& cbFun)
