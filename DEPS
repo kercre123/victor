@@ -38,11 +38,10 @@
                     "sprites/independentSprites",
                     "sprites/spriteSequences"
                 ],
-                "version": "5030"
+                "version": "2"
             },
             "victor-audio-assets": {
-                "allow_extra_files": "True",
-                "version": "186"
+                "allow_extra_files": "True"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

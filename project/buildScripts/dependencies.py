@@ -520,6 +520,7 @@ def svn_package(svn_dict):
     bucket = s3_resource.Bucket(bucket_name)
 
     for repo in repos:
+        version = repos[repo].get("version",None)
         # r_rev = repos[repo].get("version", "head")
         # pk_name = repos[repo].get("package_name", "STUB")
         branch = repos[repo].get("branch", "trunk")
@@ -543,7 +544,10 @@ def svn_package(svn_dict):
             continue
         # Download the SVN assets from S3
         print("Downloading " + export_dirname + "...")
-        remote_loc = svn_dict.get("main_folder", "") + "/" + repo + ".zip"
+        if version is not None:
+            remote_loc = svn_dict.get("main_folder", "") + "/" + repo + '-' + version + ".zip"
+        else:
+            remote_loc = svn_dict.get("main_folder", "") + "/" + repo + ".zip"
         local_loc = loc + ".zip"
         try:
             bucket.download_file(remote_loc, local_loc)
