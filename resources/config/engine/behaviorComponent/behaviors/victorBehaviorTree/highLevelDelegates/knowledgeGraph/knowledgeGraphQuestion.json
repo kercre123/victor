@@ -6,7 +6,8 @@
 
   "respondToUserIntents" :
   [
-    { "type": "knowledge_question" }
+    { "type": "knowledge_question" },
+    { "type": "knowledge_response_bypass" }
   ],
 
   "readyStringID"           : "BehaviorKnowledgeGraphQuestion.Ready",

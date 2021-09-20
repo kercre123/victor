@@ -11,10 +11,13 @@
     "files": {
         "victor-blobstore-qalogs-key": {
             "sha256": "579ee035e4aea9be4678fbc440375eba47608ce2e127deab0dd49efb148db39d",
-            "url": "http://sai-platform-temp.s3-website-us-west-2.amazonaws.com/victor-blobstore-qalogs-client-key/victor-blobstore-qalogs-key"
+            "url": "http://assets.digitaldreamlabs.com/3B4TiDdjzj7WpSoH/victor-blobstore-qalogs-key"
         }
     },
     "svn": {
+        "bucket_name": "ddl-private",
+        "main_folder": "svn-export",
+        "branch": "trunk",
         "default_usr": "ankibuildserver",
         "pwd": "FoDmKuxMUjsmNhA49BnWysEfVLWaLdGY",
         "repo_names": {
@@ -32,13 +35,14 @@
                 "subdirs": [
                     "animations",
                     "animationGroups",
+                    "compositeImageResources",
+                    "sprites/independentSprites",
                     "sprites/spriteSequences"
                 ],
-                "version": "5030"
+                "version": "2"
             },
             "victor-audio-assets": {
-                "allow_extra_files": "True",
-                "version": "186"
+                "allow_extra_files": "True"
             }
         },
         "root_url": "https://svn.ankicore.com/svn"

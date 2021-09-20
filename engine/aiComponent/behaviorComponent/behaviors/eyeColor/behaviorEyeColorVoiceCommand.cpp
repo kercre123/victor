@@ -153,8 +153,7 @@ bool BehaviorEyeColorVoiceCommand::SetEyeColor(external_interface::EyeColor desi
 {
   SettingsManager& settings = GetBEI().GetSettingsManager();
   bool ignoredDueToNoChange;
-  const bool success = settings.SetRobotSetting(external_interface::RobotSetting::eye_color,
-      desiredEyeColor, true, ignoredDueToNoChange);
+  const bool success = settings.SetRobotEyeColorSetting(desiredEyeColor, true, ignoredDueToNoChange);
   if (success) {
     LOG_INFO("BehaviorEyeColorVoiceCommand.SetEyeColor.Success", "Successfully changed eye color to %u", desiredEyeColor);
   } else {

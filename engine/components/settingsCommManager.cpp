@@ -44,10 +44,10 @@ namespace
 
 #if REMOTE_CONSOLE_ENABLED
 
+
   static const char* kConsoleGroup = "RobotSettings";
   static const char* kConsoleGroupAccountSettings = "AccountSettings";
   static const char* kConsoleGroupUserEntitlements = "UserEntitlements";
-
   // - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
   // ROBOT SETTINGS console vars and functions:
 
@@ -442,6 +442,20 @@ void SettingsCommManager::OnRequestUpdateSettings(const external_interface::Upda
     {
       updateSettingsJdoc = true;
       saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(external_interface::RobotSetting::eye_color);
+    }
+  }
+
+  if (settings.oneof_custom_eye_color_case() == external_interface::RobotSettingsConfig::OneofCustomEyeColorCase::kCustomEyeColor)
+  {
+    const auto it = settings.custom_eye_color();
+    Json::Value customEyeColor;
+    customEyeColor[kCustomEyeColorEnabledKey]     = it.enabled();
+    customEyeColor[kCustomEyeColorHueKey]         = it.hue();
+    customEyeColor[kCustomEyeColorSaturationKey]  = it.saturation();
+    if (HandleRobotSettingChangeRequest(external_interface::RobotSetting::custom_eye_color, customEyeColor))
+    {
+      updateSettingsJdoc = true;
+      saveToCloudImmediately |= _settingsManager->DoesSettingUpdateCloudImmediately(external_interface::RobotSetting::custom_eye_color);
     }
   }
 

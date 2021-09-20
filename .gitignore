@@ -408,3 +408,5 @@ robot_ip.txt
 # The 3rd directory contains drops from 3rd party vendors and all files should be allowed
 !3rd/**
 
+victor-packages
+log.txt
