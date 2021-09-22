@@ -26,7 +26,6 @@
                     "${PROJECT_ROOT_DIR}/resources/config/engine/animations/"
                 ],
                 "allow_extra_files": "True",
-                "branch": "branches/release_1.6.0",
                 "export_dirname": "animation-assets",
                 "extract_types_from_tar": [
                     ".json",
