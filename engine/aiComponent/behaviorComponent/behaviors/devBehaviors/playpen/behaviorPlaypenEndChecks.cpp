@@ -131,7 +131,7 @@ Result BehaviorPlaypenEndChecks::OnBehaviorActivatedInternal()
     PRINT_NAMED_INFO("BehaviorPlaypenEndChecks.OnActivated.SkippingActiveObjectCheck","");
   }
 
-  // Check if we detected any wifi APs and that this check is even enabled
+  // // Check if we detected any wifi APs and that this check is even enabled
   if(!(Factory::GetEMR()->fields.playpenTestDisableMask & PlaypenTestMask::WifiScanError))
   {
     if(!_wifiScanPassed)
