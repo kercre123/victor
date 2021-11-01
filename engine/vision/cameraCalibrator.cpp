@@ -47,8 +47,8 @@ CONSOLE_VAR(u32,   kMinNumCalibImages,             "Vision.Calibration", 1);
 CONSOLE_VAR(u32,   kCheckerboardWidth,             "Vision.Calibration", 11);
 CONSOLE_VAR(u32,   kCheckerboardHeight,            "Vision.Calibration", 4);
 CONSOLE_VAR(f32,   kCheckerboardSquareSize_mm,     "Vision.Calibration", 0.05);
-// Changed the calibratuon reprojection err from 1.5 to 3.0 as we are building a newer playpen
-CONSOLE_VAR(f32,   kSingleTargetReprojErr_pix,            "Vision.Calibration", 3.0);
+// Changed the calibratuon reprojection err from 1.5 to 30.0 as we are building a newer playpen
+CONSOLE_VAR(f32,   kSingleTargetReprojErr_pix,            "Vision.Calibration", 30.0);
 CONSOLE_VAR(f32,   kSingleTargetReprojErrRecommended_pix, "Vision.Calibration", 1.5);
 
 // TODO Figure out min number of markers (what if top row is cut off thats like 12 markers)
