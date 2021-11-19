@@ -322,7 +322,7 @@ static void ShortCircuitTest(void)
 
 //led test array
 const int iRED_nominal=27, iRED_variance=5;
-const int iGRN_nominal=28, iGRN_variance=8;
+const int iGRN_nominal=30, iGRN_variance=10;
 const int iBLU_nominal=28, iBLU_variance=8;
 typedef struct { char* name; uint16_t bits; int duty; int i_meas; int i_nominal; int i_variance; error_t e; } led_test_t;
 led_test_t ledtest[] = {
