@@ -93,6 +93,10 @@ void Daemon::Start() {
   InitializeGatewayComms();
   InitializeEngineComms();
 
+  // Initialize Cloud Stack Status
+  _usesEscapePod = IsVectorConnectedToEscapePod();
+  Log::Write("Vector %s escape pod", _usesEscapePod ? "uses" : "does not use");
+
   // Log the initial wifi state
   LogWifiState();
   Log::Write("Finished Starting");
@@ -157,6 +161,29 @@ void Daemon::InitializeEngineComms() {
   _engineTimer.data = this;
   ev_timer_init(&_engineTimer, HandleEngineTimer, kRetryInterval_s, kRetryInterval_s);
   ev_timer_start(_loop, &_engineTimer);
+}
+
+bool Daemon::IsVectorConnectedToEscapePod() {
+  std::string jsonContents = Anki::Util::FileUtils::ReadFile(kServerConfigFilePath);
+  Json::Reader reader;
+  Json::Value config;
+  if (!reader.parse(jsonContents, config)) {
+    Log::Write("Failed to Initialize CloudStackStatus ...");
+    const std::string& errors = reader.getFormattedErrorMessages();
+    if (!errors.empty()) {
+     Log::Write("Json reader errors [%s]", errors.c_str());
+    }
+   
+    return false;
+  }
+
+  if (!config.isMember("chipper")) {
+    Log::Write("Failed to Find chipper url in config file ... ");
+    return false;
+  }
+
+  std::string chipperUrl = config["chipper"].asCString();
+  return chipperUrl.find("escapepod.local") != std::string::npos;
 }
 
 void Daemon::InitializeGatewayComms() {
@@ -272,7 +299,7 @@ void Daemon::UpdateAdvertisement(bool pairing) {
   settings.GetAdvertisement().SetServiceUUID(Anki::kAnkiSingleMessageService_128_BIT_UUID);
   settings.GetAdvertisement().SetIncludeDeviceName(true);
   std::vector<uint8_t> mdata = Anki::kAnkiBluetoothSIGCompanyIdentifier;
-  mdata.push_back(Anki::kVictorProductIdentifier); // distinguish from future Anki products
+  mdata.push_back(_usesEscapePod ? Anki::kVictorProductEscapePodIdentifier : Anki::kVictorProductIdentifier); // distinguish from future Anki products
   mdata.push_back(pairing?'p':0x00); // to indicate whether we are pairing
   settings.GetAdvertisement().SetManufacturerData(mdata);
 

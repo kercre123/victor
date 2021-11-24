@@ -24,6 +24,7 @@ const std::string kAnkiSingleMessageService_128_BIT_UUID("0000FEE3-0000-1000-800
 const std::string kAnkiSingleMessageService_16_BIT_UUID("FEE3");
 const std::vector<uint8_t> kAnkiBluetoothSIGCompanyIdentifier({0xF8, 0x05});
 const uint8_t kVictorProductIdentifier = (uint8_t) 'v';
+const uint8_t kVictorProductEscapePodIdentifier = (uint8_t) 'e';
 const std::string kAppWriteCharacteristicUUID("7D2A4BDA-D29B-4152-B725-2491478C5CD7");
 const std::string kAppReadCharacteristicUUID("30619F2D-0F54-41BD-A65A-7588D8C85B45");
 
